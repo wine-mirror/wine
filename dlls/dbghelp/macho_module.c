@@ -1232,9 +1232,7 @@ static BOOL try_dsym(struct process *pcs, const WCHAR* path, struct macho_file_m
     return FALSE;
 }
 
-static const WCHAR dsym_subpath[] = {'\\','C','o','n','t','e','n','t','s',
-                                     '\\','R','e','s','o','u','r','c','e','s',
-                                     '\\','D','W','A','R','F','\\',0};
+static const WCHAR dsym_subpath[] = L"'\\Contents\\Resources\\DWARF\\";
 
 static WCHAR *query_dsym(const GUID *uuid, const WCHAR *filename)
 {
@@ -1287,8 +1285,6 @@ static WCHAR *query_dsym(const GUID *uuid, const WCHAR *filename)
  */
 static void find_and_map_dsym(struct process *pcs, struct module* module)
 {
-    static const WCHAR dot_dsym[] = {'.','d','S','Y','M',0};
-    static const WCHAR dot_dwarf[] = {'.','d','w','a','r','f',0};
     struct macho_file_map* fmap = &module->format_info[DFI_MACHO]->u.macho_info->file_map.u.macho;
     const WCHAR* p;
     size_t len;
@@ -1300,19 +1296,19 @@ static void find_and_map_dsym(struct process *pcs, struct module* module)
         return;
 
     p = file_name(module->module.LoadedImageName);
-    len = lstrlenW(module->module.LoadedImageName) + lstrlenW(dot_dsym) + lstrlenW(dsym_subpath) + lstrlenW(p) + 1;
+    len = lstrlenW(module->module.LoadedImageName) + lstrlenW(L".dSYM") + lstrlenW(dsym_subpath) + lstrlenW(p) + 1;
     path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (!path)
         return;
     lstrcpyW(path, module->module.LoadedImageName);
-    lstrcatW(path, dot_dsym);
+    lstrcatW(path, L".dSYM");
     lstrcatW(path, dsym_subpath);
     lstrcatW(path, p);
 
     if (try_dsym(pcs, path, fmap))
         goto found;
 
-    lstrcpyW(path + lstrlenW(module->module.LoadedImageName), dot_dwarf);
+    lstrcpyW(path + lstrlenW(module->module.LoadedImageName), L".dwarf");
 
     if (try_dsym(pcs, path, fmap))
         goto found;
@@ -1552,7 +1548,6 @@ static BOOL macho_search_and_load_file(struct process* pcs, const WCHAR* filenam
 {
     BOOL                ret = FALSE;
     struct module*      module;
-    static const WCHAR  S_libstdcPPW[] = {'l','i','b','s','t','d','c','+','+','\0'};
     const WCHAR*        p;
     struct macho_load_params load_params;
 
@@ -1567,7 +1562,7 @@ static BOOL macho_search_and_load_file(struct process* pcs, const WCHAR* filenam
         return module->module.SymType;
     }
 
-    if (wcsstr(filename, S_libstdcPPW)) return FALSE; /* We know we can't do it */
+    if (wcsstr(filename, L"libstdc++")) return FALSE; /* We know we can't do it */
 
     load_params.process    = pcs;
     load_params.load_addr  = load_addr;

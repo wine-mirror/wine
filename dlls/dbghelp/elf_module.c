@@ -1429,7 +1429,6 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
 {
     BOOL                ret = FALSE;
     struct module*      module;
-    static const WCHAR  S_libstdcPPW[] = {'l','i','b','s','t','d','c','+','+','\0'};
 
     if (filename == NULL || *filename == '\0') return FALSE;
     if ((module = module_is_already_loaded(pcs, filename)))
@@ -1439,7 +1438,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
         return module->module.SymType;
     }
 
-    if (wcsstr(filename, S_libstdcPPW)) return FALSE; /* We know we can't do it */
+    if (wcsstr(filename, L"libstdc++")) return FALSE; /* We know we can't do it */
     ret = elf_load_file(pcs, filename, load_offset, dyn_addr, elf_info);
     /* if relative pathname, try some absolute base dirs */
     if (!ret && filename == file_name(filename))
@@ -1563,10 +1562,7 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
         ULONG_PTR ehdr_addr;
 
         if (elf_search_auxv(pcs, ELF_AT_SYSINFO_EHDR, &ehdr_addr))
-        {
-            static const WCHAR vdsoW[] = {'[','v','d','s','o',']','.','s','o',0};
-            cb(vdsoW, ehdr_addr, 0, TRUE, user);
-        }
+            cb(L"[vdso].so", ehdr_addr, 0, TRUE, user);
     }
     return TRUE;
 }

@@ -37,8 +37,6 @@ WINE_DECLARE_DEBUG_CHANNEL(dbghelp_symt);
 extern char * CDECL __unDName(char *buffer, const char *mangled, int len,
         void * (CDECL *pfn_alloc)(size_t), void (CDECL *pfn_free)(void *), unsigned short flags);
 
-static const WCHAR starW[] = {'*','\0'};
-
 static inline int cmp_addr(ULONG64 a1, ULONG64 a2)
 {
     if (a1 > a2) return 1;
@@ -1089,7 +1087,7 @@ static BOOL symt_enum_locals(struct process* pcs, const WCHAR* mask,
 
     if (sym->symt.tag == SymTagFunction)
     {
-        return symt_enum_locals_helper(&pair, mask ? mask : starW, se, (struct symt_function*)sym,
+        return symt_enum_locals_helper(&pair, mask ? mask : L"*", se, (struct symt_function*)sym,
                                        &((struct symt_function*)sym)->vchildren);
     }
     return FALSE;
@@ -1210,7 +1208,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
         Mask = bang + 1;
     }
 
-    symt_enum_module(&pair, Mask ? Mask : starW, se);
+    symt_enum_module(&pair, Mask ? Mask : L"*", se);
 
     return TRUE;
 }
@@ -2154,7 +2152,7 @@ static BOOL re_match_multi(const WCHAR** pstring, const WCHAR** pre, BOOL _case)
         case WILDCHAR(']'): case WILDCHAR('+'): case WILDCHAR('#'): return FALSE;
         case WILDCHAR('*'):
             /* transform '*' into '?#' */
-            {static const WCHAR qmW[] = {'?',0}; re_beg = qmW;}
+            re_beg = L"?";
             goto closure;
         case WILDCHAR('['):
             do

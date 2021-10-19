@@ -430,28 +430,26 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     {
         unsigned        size;
         unsigned        len;
-        static const WCHAR      sym_path[] = {'_','N','T','_','S','Y','M','B','O','L','_','P','A','T','H',0};
-        static const WCHAR      alt_sym_path[] = {'_','N','T','_','A','L','T','E','R','N','A','T','E','_','S','Y','M','B','O','L','_','P','A','T','H',0};
 
         pcs->search_path = HeapAlloc(GetProcessHeap(), 0, (len = MAX_PATH) * sizeof(WCHAR));
         while ((size = GetCurrentDirectoryW(len, pcs->search_path)) >= len)
             pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (len *= 2) * sizeof(WCHAR));
         pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (size + 1) * sizeof(WCHAR));
 
-        len = GetEnvironmentVariableW(sym_path, NULL, 0);
+        len = GetEnvironmentVariableW(L"_NT_SYMBOL_PATH", NULL, 0);
         if (len)
         {
             pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (size + 1 + len + 1) * sizeof(WCHAR));
             pcs->search_path[size] = ';';
-            GetEnvironmentVariableW(sym_path, pcs->search_path + size + 1, len);
+            GetEnvironmentVariableW(L"_NT_SYMBOL_PATH", pcs->search_path + size + 1, len);
             size += 1 + len;
         }
-        len = GetEnvironmentVariableW(alt_sym_path, NULL, 0);
+        len = GetEnvironmentVariableW(L"_NT_ALTERNATE_SYMBOL_PATH", NULL, 0);
         if (len)
         {
             pcs->search_path = HeapReAlloc(GetProcessHeap(), 0, pcs->search_path, (size + 1 + len + 1) * sizeof(WCHAR));
             pcs->search_path[size] = ';';
-            GetEnvironmentVariableW(alt_sym_path, pcs->search_path + size + 1, len);
+            GetEnvironmentVariableW(L"_NT_ALTERNATE_SYMBOL_PATH", pcs->search_path + size + 1, len);
         }
     }
 

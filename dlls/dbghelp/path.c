@@ -242,14 +242,11 @@ static BOOL do_searchW(PCWSTR file, PWSTR buffer, BOOL recurse,
     WIN32_FIND_DATAW    fd;
     unsigned            pos;
     BOOL                found = FALSE;
-    static const WCHAR  S_AllW[] = {'*','.','*','\0'};
-    static const WCHAR  S_DotW[] = {'.','\0'};
-    static const WCHAR  S_DotDotW[] = {'.','.','\0'};
 
     pos = lstrlenW(buffer);
     if (pos == 0) return FALSE;
     if (buffer[pos - 1] != '\\') buffer[pos++] = '\\';
-    lstrcpyW(buffer + pos, S_AllW);
+    lstrcpyW(buffer + pos, L"*.*");
     if ((h = FindFirstFileW(buffer, &fd)) == INVALID_HANDLE_VALUE)
         return FALSE;
     /* doc doesn't specify how the tree is enumerated...
@@ -257,7 +254,7 @@ static BOOL do_searchW(PCWSTR file, PWSTR buffer, BOOL recurse,
      */
     do
     {
-        if (!wcscmp(fd.cFileName, S_DotW) || !wcscmp(fd.cFileName, S_DotDotW)) continue;
+        if (!wcscmp(fd.cFileName, L".") || !wcscmp(fd.cFileName, L"..")) continue;
 
         lstrcpyW(buffer + pos, fd.cFileName);
         if (recurse && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -723,10 +720,6 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
     {
         const WCHAR dllsW[] = { '\\','d','l','l','s','\\' };
         const WCHAR programsW[] = { '\\','p','r','o','g','r','a','m','s','\\' };
-        const WCHAR dot_dllW[] = {'.','d','l','l',0};
-        const WCHAR dot_exeW[] = {'.','e','x','e',0};
-        const WCHAR dot_soW[] = {'.','s','o',0};
-
 
         len = lstrlenW(env);
         if (!(buf = heap_alloc((len + 8 + 3 * lstrlenW(name)) * sizeof(WCHAR)))) return FALSE;
@@ -735,8 +728,8 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
 
         memcpy(end, dllsW, sizeof(dllsW));
         lstrcpyW(end + ARRAY_SIZE(dllsW), name);
-        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, dot_soW)) *p = 0;
-        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, dot_dllW)) *p = 0;
+        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, L".so")) *p = 0;
+        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, L".dll")) *p = 0;
         p = end + lstrlenW(end);
         *p++ = '\\';
         lstrcpyW(p, name);
@@ -751,8 +744,8 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
         memcpy(end, programsW, sizeof(programsW));
         end += ARRAY_SIZE(programsW);
         lstrcpyW(end, name);
-        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, dot_soW)) *p = 0;
-        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, dot_exeW)) *p = 0;
+        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, L".so")) *p = 0;
+        if ((p = wcsrchr(end, '.')) && !lstrcmpW(p, L".exe")) *p = 0;
         p = end + lstrlenW(end);
         *p++ = '\\';
         lstrcpyW(p, name);

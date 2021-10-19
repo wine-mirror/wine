@@ -35,18 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 #define NOTE_GNU_BUILD_ID  3
 
-const WCHAR        S_ElfW[]         = {'<','e','l','f','>','\0'};
-const WCHAR        S_WineLoaderW[]  = {'<','w','i','n','e','-','l','o','a','d','e','r','>','\0'};
-static const WCHAR S_DotSoW[]       = {'.','s','o','\0'};
-const WCHAR        S_SlashW[]       = {'/','\0'};
-
-static const WCHAR S_AcmW[] = {'.','a','c','m','\0'};
-static const WCHAR S_DllW[] = {'.','d','l','l','\0'};
-static const WCHAR S_DrvW[] = {'.','d','r','v','\0'};
-static const WCHAR S_ExeW[] = {'.','e','x','e','\0'};
-static const WCHAR S_OcxW[] = {'.','o','c','x','\0'};
-static const WCHAR S_VxdW[] = {'.','v','x','d','\0'};
-static const WCHAR * const ext[] = {S_AcmW, S_DllW, S_DrvW, S_ExeW, S_OcxW, S_VxdW, NULL};
+const WCHAR S_ElfW[] = L"<elf>";
+const WCHAR S_WineLoaderW[] = L"<wine-loader>";
+static const WCHAR * const ext[] = {L".acm", L".dll", L".drv", L".exe", L".ocx", L".vxd", NULL};
 
 static int match_ext(const WCHAR* ptr, size_t len)
 {
@@ -77,8 +68,6 @@ static const WCHAR* get_filename(const WCHAR* name, const WCHAR* endptr)
 
 static BOOL is_wine_loader(const WCHAR *module)
 {
-    static const WCHAR wineW[] = {'w','i','n','e',0};
-    static const WCHAR suffixW[] = {'6','4',0};
     const WCHAR *filename = get_filename(module, NULL);
     const char *ptr;
     BOOL ret = FALSE;
@@ -94,14 +83,14 @@ static BOOL is_wine_loader(const WCHAR *module)
     }
     else
     {
-        buffer = heap_alloc( sizeof(wineW) + 2 * sizeof(WCHAR) );
-        lstrcpyW( buffer, wineW );
+        buffer = heap_alloc( sizeof(L"wine") + 2 * sizeof(WCHAR) );
+        lstrcpyW( buffer, L"wine" );
     }
 
     if (!wcscmp( filename, buffer ))
         ret = TRUE;
 
-    lstrcatW( buffer, suffixW );
+    lstrcatW( buffer, L"64" );
     if (!wcscmp( filename, buffer ))
         ret = TRUE;
 
@@ -124,9 +113,9 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
         lstrcpynW(out, S_WineLoaderW, size);
     else
     {
-        if (len > 3 && !wcsicmp(&out[len - 3], S_DotSoW) &&
+        if (len > 3 && !wcsicmp(&out[len - 3], L".so") &&
             (l = match_ext(out, len - 3)))
-            lstrcpyW(&out[len - l - 3], S_ElfW);
+            lstrcpyW(&out[len - l - 3], L"<elf>");
     }
     while ((*out = towlower(*out))) out++;
 }
@@ -464,7 +453,7 @@ static BOOL module_is_container_loaded(const struct process* pcs,
         {
             modname = get_filename(module->module.LoadedImageName, NULL);
             if (!wcsnicmp(modname, filename, len) &&
-                !memcmp(modname + len, S_DotSoW, 3 * sizeof(WCHAR)))
+                !memcmp(modname + len, L".so", 3 * sizeof(WCHAR)))
             {
                 return TRUE;
             }
@@ -746,7 +735,6 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
 {
     static const WCHAR globalDebugDirW[] = {'/','u','s','r','/','l','i','b','/','d','e','b','u','g','/'};
     static const WCHAR buildidW[] = {'.','b','u','i','l','d','-','i','d','/'};
-    static const WCHAR dotDebug0W[] = {'.','d','e','b','u','g',0};
     struct image_file_map* fmap_link = NULL;
     WCHAR* p;
     WCHAR* z;
@@ -757,7 +745,7 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
 
     p = HeapAlloc(GetProcessHeap(), 0,
                   sizeof(globalDebugDirW) + sizeof(buildidW) +
-                  (idlen * 2 + 1) * sizeof(WCHAR) + sizeof(dotDebug0W));
+                  (idlen * 2 + 1) * sizeof(WCHAR) + sizeof(L".debug"));
     z = p;
     memcpy(z, globalDebugDirW, sizeof(globalDebugDirW));
     z += ARRAY_SIZE(globalDebugDirW);
@@ -778,7 +766,7 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
         *z++ = "0123456789abcdef"[*id & 0x0F];
         id++;
     }
-    memcpy(z, dotDebug0W, sizeof(dotDebug0W));
+    memcpy(z, L".debug", sizeof(L".debug"));
     TRACE("checking %s\n", wine_dbgstr_w(p));
 
     if (image_check_debug_link_gnu_id(p, fmap_link, idend - idlen, idlen))
