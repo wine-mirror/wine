@@ -609,6 +609,8 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
     struct process* pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
 
+    if (!module_find_by_addr(pcs, StackFrame->InstructionOffset, DMT_UNKNOWN))
+        return FALSE;
     if (pcs->ctx_frame.ReturnOffset == StackFrame->ReturnOffset &&
         pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
         pcs->ctx_frame.StackOffset  == StackFrame->StackOffset)
@@ -618,12 +620,12 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
               pcs->ctx_frame.FrameOffset,
               pcs->ctx_frame.StackOffset);
         pcs->ctx_frame.InstructionOffset = StackFrame->InstructionOffset;
-        SetLastError(ERROR_ACCESS_DENIED); /* latest MSDN says ERROR_SUCCESS */
+        SetLastError(ERROR_SUCCESS);
         return FALSE;
     }
 
     pcs->ctx_frame = *StackFrame;
-    /* MSDN states that Context is not (no longer?) used */
+    /* Context is not (no longer?) used */
     return TRUE;
 }
 
