@@ -2351,21 +2351,87 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
         0x00000003, 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x10000001, 0x00000001, 0x00000000,
         0x00000001, 0x00000000, 0x00000000, 0x00000004, 0x00000003, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
     };
+#if 0
+float f1[2] = { 0.4f, 0.1f };
+bool b1 = false;
+float4 f2;
+bool b2[2];
+
+struct s
+{
+    bool b3;
+    float f3;
+    float4 f4;
+    uint i1;
+    int i2;
+};
+
+struct s s1;
+
+float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
+{
+    float t = b2[0] * b2[1] * f2.x + s1.i2;
+    return float4(pos, f1[0] + f1[1] + b1 * 0.6f + t);
+}
+#endif
+    static const DWORD shader_code2[] =
+    {
+        0x54580100, 0x0074fffe, 0x42415443, 0x0000001c, 0x000001a3, 0x54580100, 0x00000005, 0x0000001c,
+        0x00000100, 0x000001a0, 0x00000080, 0x00090002, 0x00000001, 0x00000084, 0x00000094, 0x000000a4,
+        0x00070002, 0x00000002, 0x000000a8, 0x00000000, 0x000000b8, 0x00050002, 0x00000002, 0x000000bc,
+        0x000000cc, 0x000000ec, 0x000a0002, 0x00000001, 0x000000f0, 0x00000000, 0x00000100, 0x00000002,
+        0x00000005, 0x00000190, 0x00000000, 0xab003162, 0x00010000, 0x00010001, 0x00000001, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xab003262, 0x00010000, 0x00010001, 0x00000002,
+        0x00000000, 0xab003166, 0x00030000, 0x00010001, 0x00000002, 0x00000000, 0x3ecccccd, 0x00000000,
+        0x00000000, 0x00000000, 0x3dcccccd, 0x00000000, 0x00000000, 0x00000000, 0xab003266, 0x00030001,
+        0x00040001, 0x00000001, 0x00000000, 0x62003173, 0xabab0033, 0x00010000, 0x00010001, 0x00000001,
+        0x00000000, 0xab003366, 0x00030000, 0x00010001, 0x00000001, 0x00000000, 0xab003466, 0x00030001,
+        0x00040001, 0x00000001, 0x00000000, 0xab003169, 0x00020000, 0x00010001, 0x00000001, 0x00000000,
+        0xab003269, 0x00020000, 0x00010001, 0x00000001, 0x00000000, 0x00000103, 0x00000108, 0x00000118,
+        0x0000011c, 0x0000012c, 0x00000130, 0x00000140, 0x00000144, 0x00000154, 0x00000158, 0x00000005,
+        0x00080001, 0x00050001, 0x00000168, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,
+        0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x0062fffe, 0x54494c43,
+        0x00000030, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x40000000, 0x3fe33333, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x0059fffe, 0x434c5846, 0x00000008, 0xa0500001, 0x00000002, 0x00000000, 0x00000002,
+        0x0000001c, 0x00000000, 0x00000002, 0x00000020, 0x00000000, 0x00000007, 0x00000000, 0xa0500001,
+        0x00000002, 0x00000000, 0x00000007, 0x00000000, 0x00000000, 0x00000002, 0x00000028, 0x00000000,
+        0x00000007, 0x00000004, 0xa0400001, 0x00000002, 0x00000000, 0x00000007, 0x00000004, 0x00000000,
+        0x00000002, 0x00000010, 0x00000000, 0x00000007, 0x00000000, 0xa0400001, 0x00000002, 0x00000000,
+        0x00000002, 0x00000014, 0x00000000, 0x00000002, 0x00000018, 0x00000000, 0x00000007, 0x00000001,
+        0xa0500001, 0x00000002, 0x00000000, 0x00000002, 0x00000024, 0x00000000, 0x00000001, 0x0000002c,
+        0x00000000, 0x00000007, 0x00000002, 0xa0400001, 0x00000002, 0x00000000, 0x00000007, 0x00000002,
+        0x00000000, 0x00000007, 0x00000001, 0x00000000, 0x00000007, 0x00000004, 0xa0400001, 0x00000002,
+        0x00000000, 0x00000007, 0x00000000, 0x00000000, 0x00000007, 0x00000004, 0x00000000, 0x00000004,
+        0x00000003, 0x10000003, 0x00000001, 0x00000000, 0x00000003, 0x00000000, 0x00000000, 0x00000004,
+        0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    };
     IDirect3DVolumeTexture9 *volume_texture;
     IDirect3DCubeTexture9 *cube_texture;
     D3DXCONSTANTTABLE_DESC ctab_desc;
     ID3DXBuffer *buffer, *buffer2;
+    D3DXCONSTANT_DESC const_desc;
+    unsigned int x, y, z, count;
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DTexture9 *texture;
     IDirect3DDevice9 *device;
     ID3DXTextureShader *tx;
-    unsigned int x, y, z;
     unsigned int *data;
     D3DLOCKED_RECT lr;
     D3DLOCKED_BOX lb;
+    D3DXHANDLE h, h2;
     IDirect3D9 *d3d;
     D3DCAPS9 caps;
-    D3DXHANDLE h;
     DWORD size;
     HRESULT hr;
     HWND wnd;
@@ -2576,6 +2642,127 @@ todo_wine
     ok(SUCCEEDED(hr), "Unlocking texture failed, hr %#x.\n", hr);
 
     IDirect3DVolumeTexture9_Release(volume_texture);
+
+    IUnknown_Release(tx);
+
+    /* With constant table */
+    hr = D3DXCreateTextureShader(shader_code2, &tx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = tx->lpVtbl->GetConstantBuffer(tx, &buffer);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to get texture shader constant buffer.\n");
+    if (FAILED(hr))
+    {
+        skip("Texture shaders not supported, skipping further tests.\n");
+        IUnknown_Release(tx);
+        return;
+    }
+
+    size = ID3DXBuffer_GetBufferSize(buffer);
+    ok(size == 176, "Unexpected buffer size %u.\n", size);
+
+    hr = tx->lpVtbl->GetDesc(tx, &ctab_desc);
+    ok(hr == S_OK, "Failed to get constant description, hr %#x.\n", hr);
+    ok(ctab_desc.Constants == 5, "Unexpected number of constants %u.\n", ctab_desc.Constants);
+
+    h = tx->lpVtbl->GetConstant(tx, NULL, 0);
+    ok(!!h, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "b1"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 9, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 1, "Unexpected register count %u.\n", const_desc.RegisterCount);
+
+    h = tx->lpVtbl->GetConstant(tx, NULL, 1);
+    ok(!!h, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "b2"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 7, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 2, "Unexpected register count %u.\n", const_desc.RegisterCount);
+
+    h = tx->lpVtbl->GetConstant(tx, NULL, 2);
+    ok(!!h, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "f1"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 5, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 2, "Unexpected register count %u.\n", const_desc.RegisterCount);
+    ok(const_desc.Elements == 2, "Unexpected elements count %u.\n", const_desc.Elements);
+
+    /* Array */
+    h2 = tx->lpVtbl->GetConstantElement(tx, h, 0);
+    ok(!!h2, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h2, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "f1"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 5, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 1, "Unexpected register count %u.\n", const_desc.RegisterCount);
+    ok(const_desc.Elements == 1, "Unexpected elements count %u.\n", const_desc.Elements);
+
+    h2 = tx->lpVtbl->GetConstantElement(tx, h, 1);
+    ok(!!h2, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h2, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "f1"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 6, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 1, "Unexpected register count %u.\n", const_desc.RegisterCount);
+    ok(const_desc.Elements == 1, "Unexpected elements count %u.\n", const_desc.Elements);
+
+    h2 = tx->lpVtbl->GetConstantElement(tx, h, 2);
+    ok(!h2, "Unexpected handle %p.\n", h);
+
+    h = tx->lpVtbl->GetConstant(tx, NULL, 3);
+    ok(!!h, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "f2"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 10, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 1, "Unexpected register count %u.\n", const_desc.RegisterCount);
+
+    /* Structure */
+    h = tx->lpVtbl->GetConstant(tx, NULL, 4);
+    ok(!!h, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "s1"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 0, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 5, "Unexpected register count %u.\n", const_desc.RegisterCount);
+    ok(const_desc.Class == D3DXPC_STRUCT, "Unexpected class %u.\n", const_desc.Class);
+    ok(const_desc.StructMembers == 5, "Unexpected member count %u.\n", const_desc.StructMembers);
+
+    h2 = tx->lpVtbl->GetConstant(tx, h, 0);
+    ok(!!h2, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h2, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "b3"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 0, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 1, "Unexpected register count %u.\n", const_desc.RegisterCount);
+    ok(const_desc.Elements == 1, "Unexpected elements count %u.\n", const_desc.Elements);
+
+    h2 = tx->lpVtbl->GetConstant(tx, h, 1);
+    ok(!!h2, "Unexpected handle %p.\n", h);
+    hr = tx->lpVtbl->GetConstantDesc(tx, h2, &const_desc, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(const_desc.Name, "f3"), "Unexpected name %s.\n", const_desc.Name);
+    ok(const_desc.RegisterSet == D3DXRS_FLOAT4, "Unexpected register set %u.\n", const_desc.RegisterSet);
+    ok(const_desc.RegisterIndex == 1, "Unexpected register index %u.\n", const_desc.RegisterIndex);
+    ok(const_desc.RegisterCount == 1, "Unexpected register count %u.\n", const_desc.RegisterCount);
+    ok(const_desc.Elements == 1, "Unexpected elements count %u.\n", const_desc.Elements);
+
+    h2 = tx->lpVtbl->GetConstant(tx, h, 10);
+    ok(!h2, "Unexpected handle %p.\n", h);
+
+    ID3DXBuffer_Release(buffer);
 
  cleanup:
     IDirect3DDevice9_Release(device);
