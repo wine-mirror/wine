@@ -169,8 +169,8 @@
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
 @ stdcall SymSetScopeFromAddr(ptr int64)
-@ stub SymSetScopeFromIndex
-@ stub SymSetScopeFromInlineContext
+@ stdcall SymSetScopeFromIndex(ptr int64 long)
+@ stdcall SymSetScopeFromInlineContext(ptr int64 long)
 @ stdcall SymSetSearchPath(long str)
 @ stdcall SymSetSearchPathW(long wstr)
 @ stub SymSrvDeltaName

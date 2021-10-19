@@ -613,10 +613,10 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
         pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
         pcs->ctx_frame.StackOffset  == StackFrame->StackOffset)
     {
-        TRACE("Setting same frame {rtn=%s frm=%s stk=%s}\n",
-              wine_dbgstr_longlong(pcs->ctx_frame.ReturnOffset),
-              wine_dbgstr_longlong(pcs->ctx_frame.FrameOffset),
-              wine_dbgstr_longlong(pcs->ctx_frame.StackOffset));
+        TRACE("Setting same frame {rtn=%I64x frm=%I64x stk=%I64x}\n",
+              pcs->ctx_frame.ReturnOffset,
+              pcs->ctx_frame.FrameOffset,
+              pcs->ctx_frame.StackOffset);
         pcs->ctx_frame.InstructionOffset = StackFrame->InstructionOffset;
         SetLastError(ERROR_ACCESS_DENIED); /* latest MSDN says ERROR_SUCCESS */
         return FALSE;
@@ -624,6 +624,45 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
 
     pcs->ctx_frame = *StackFrame;
     /* MSDN states that Context is not (no longer?) used */
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymSetScopeFromAddr (DBGHELP.@)
+ */
+BOOL WINAPI SymSetScopeFromAddr(HANDLE hProcess, ULONG64 addr)
+{
+    struct process*     pcs;
+
+    FIXME("(%p %#I64x): stub\n", hProcess, addr);
+
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymSetScopeFromIndex (DBGHELP.@)
+ */
+BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
+{
+    struct process*     pcs;
+
+    FIXME("(%p %#I64x %u): stub\n", hProcess, addr, index);
+
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+    return TRUE;
+}
+
+/******************************************************************
+ *		SymSetScopeFromInlineContext (DBGHELP.@)
+ */
+BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD inlinectx)
+{
+    struct process*     pcs;
+
+    FIXME("(%p %#I64x %u): stub\n", hProcess, addr, inlinectx);
+
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
     return TRUE;
 }
 
