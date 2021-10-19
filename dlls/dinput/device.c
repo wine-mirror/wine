@@ -1186,59 +1186,105 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects( IDirectInputDevice8W *iface
     return DI_OK;
 }
 
-/******************************************************************************
- *	GetProperty
- */
-
-HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph)
+static BOOL CALLBACK find_object( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    *(DIDEVICEOBJECTINSTANCEW *)context = *instance;
+    return DIENUM_STOP;
+}
 
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
-    _dump_DIPROPHEADER(pdiph);
+HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
+                                                     DIPROPHEADER *header )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD object_mask = DIDFT_AXIS | DIDFT_BUTTON | DIDFT_POV;
+    DIDEVICEOBJECTINSTANCEW instance;
+    HRESULT hr;
 
-    if (!IS_DIPROP(rguid)) return DI_OK;
+    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
 
-    switch (LOWORD(rguid))
+    if (!header) return DIERR_INVALIDPARAM;
+    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
+    if (!IS_DIPROP( guid )) return DI_OK;
+
+    switch (LOWORD( guid ))
     {
-        case (DWORD_PTR) DIPROP_BUFFERSIZE:
+    case (DWORD_PTR)DIPROP_PRODUCTNAME:
+    case (DWORD_PTR)DIPROP_INSTANCENAME:
+        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
+        if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        return impl->vtbl->get_property( iface, LOWORD( guid ), header, NULL );
+
+    case (DWORD_PTR)DIPROP_VIDPID:
+    case (DWORD_PTR)DIPROP_JOYSTICKID:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        return impl->vtbl->get_property( iface, LOWORD( guid ), header, NULL );
+
+    case (DWORD_PTR)DIPROP_GUIDANDPATH:
+        if (header->dwSize != sizeof(DIPROPGUIDANDPATH)) return DIERR_INVALIDPARAM;
+        if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        return impl->vtbl->get_property( iface, LOWORD( guid ), header, NULL );
+
+    case (DWORD_PTR)DIPROP_RANGE:
+        if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        hr = impl->vtbl->enum_objects( iface, header, object_mask, find_object, &instance );
+        if (FAILED(hr)) return hr;
+        if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
+        if (!(instance.dwType & DIDFT_AXIS)) return DIERR_UNSUPPORTED;
+        return impl->vtbl->get_property( iface, LOWORD( guid ), header, &instance );
+
+    case (DWORD_PTR)DIPROP_DEADZONE:
+    case (DWORD_PTR)DIPROP_SATURATION:
+    case (DWORD_PTR)DIPROP_GRANULARITY:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        hr = impl->vtbl->enum_objects( iface, header, object_mask, find_object, &instance );
+        if (FAILED(hr)) return hr;
+        if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
+        if (!(instance.dwType & DIDFT_AXIS)) return DIERR_UNSUPPORTED;
+        return impl->vtbl->get_property( iface, LOWORD( guid ), header, &instance );
+
+    case (DWORD_PTR)DIPROP_KEYNAME:
+        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
+        hr = impl->vtbl->enum_objects( iface, header, object_mask, find_object, &instance );
+        if (FAILED(hr)) return hr;
+        if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
+        if (!(instance.dwType & DIDFT_BUTTON)) return DIERR_UNSUPPORTED;
+        return impl->vtbl->get_property( iface, LOWORD( guid ), header, &instance );
+
+    case (DWORD_PTR)DIPROP_AUTOCENTER:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        return DIERR_UNSUPPORTED;
+
+    case (DWORD_PTR)DIPROP_BUFFERSIZE:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        value->dwData = impl->buffersize;
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_USERNAME:
+    {
+        DIPROPSTRING *value = (DIPROPSTRING *)header;
+        struct DevicePlayer *device_player;
+        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
+        LIST_FOR_EACH_ENTRY( device_player, &impl->dinput->device_players, struct DevicePlayer, entry )
         {
-            LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
-
-            if (pdiph->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-
-            pd->dwData = This->buffersize;
-            TRACE("buffersize = %d\n", pd->dwData);
-            break;
-        }
-        case (DWORD_PTR) DIPROP_USERNAME:
-        {
-            LPDIPROPSTRING ps = (LPDIPROPSTRING)pdiph;
-            struct DevicePlayer *device_player;
-
-            if (pdiph->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
-
-            LIST_FOR_EACH_ENTRY(device_player, &This->dinput->device_players,
-                struct DevicePlayer, entry)
+            if (IsEqualGUID( &device_player->instance_guid, &impl->guid ))
             {
-                if (IsEqualGUID(&device_player->instance_guid, &This->guid))
-                {
-                    if (*device_player->username)
-                    {
-                        lstrcpynW(ps->wsz, device_player->username, ARRAY_SIZE(ps->wsz));
-                        return DI_OK;
-                    }
-                    else break;
-                }
+                if (!*device_player->username) break;
+                lstrcpynW( value->wsz, device_player->username, ARRAY_SIZE(value->wsz) );
+                return DI_OK;
             }
-            return S_FALSE;
         }
-        case (DWORD_PTR) DIPROP_VIDPID:
-            FIXME("DIPROP_VIDPID not implemented\n");
-            return DIERR_UNSUPPORTED;
-        default:
-            FIXME("Unknown property %s\n", debugstr_guid(rguid));
-            return DIERR_INVALIDPARAM;
+        return S_FALSE;
+    }
+    case (DWORD_PTR)DIPROP_CALIBRATION:
+        return DIERR_INVALIDPARAM;
+    default:
+        FIXME( "Unknown property %s\n", debugstr_guid( guid ) );
+        return DIERR_UNSUPPORTED;
     }
 
     return DI_OK;

@@ -1291,18 +1291,14 @@ static void test_mouse_info(void)
     prop_dword.diph.dwHow = DIPH_BYOFFSET;
     prop_dword.diph.dwObj = DIMOFS_X;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
     prop_range.diph.dwHow = DIPH_BYOFFSET;
     prop_range.diph.dwObj = DIMOFS_X;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_RANGE returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_DEVICE;
@@ -1340,44 +1336,34 @@ static void test_mouse_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_INSTANCENAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_INSTANCENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_PRODUCTNAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_PRODUCTNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_TYPENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
     ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#x\n", hr );
     ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
     ok( hr == DIERR_INVALIDPARAM, "GetProperty DIPROP_CALIBRATION returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYOFFSET;
@@ -1387,18 +1373,14 @@ static void test_mouse_info(void)
     ok( hr == DI_OK, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
     ok( prop_dword.dwData == 1, "got %d expected 1\n", prop_dword.dwData );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
     prop_range.lMin = 0xdeadbeef;
     prop_range.lMax = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "GetProperty DIPROP_RANGE returned %#x\n", hr );
-    todo_wine
     ok( prop_range.lMin == DIPROPRANGE_NOMIN, "got %d expected %d\n", prop_range.lMin, DIPROPRANGE_NOMIN );
-    todo_wine
     ok( prop_range.lMax == DIPROPRANGE_NOMAX, "got %d expected %d\n", prop_range.lMax, DIPROPRANGE_NOMAX );
 
     res = 0;
@@ -1632,18 +1614,14 @@ static void test_keyboard_info(void)
     prop_dword.diph.dwHow = DIPH_BYOFFSET;
     prop_dword.diph.dwObj = 1;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
     prop_range.diph.dwHow = DIPH_BYOFFSET;
     prop_range.diph.dwObj = 1;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_RANGE returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_DEVICE;
@@ -1681,56 +1659,43 @@ static void test_keyboard_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_INSTANCENAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_INSTANCENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_PRODUCTNAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_PRODUCTNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_TYPENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
     ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#x\n", hr );
     ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
     ok( hr == DIERR_INVALIDPARAM, "GetProperty DIPROP_CALIBRATION returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_KEYBOARD_LCTRL, HID_USAGE_PAGE_KEYBOARD );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYOFFSET;
     prop_dword.diph.dwObj = 1;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
     prop_range.diph.dwHow = DIPH_BYOFFSET;
     prop_range.diph.dwObj = 1;

@@ -62,6 +62,8 @@ struct dinput_device_vtbl
     HRESULT (*unacquire)( IDirectInputDevice8W *iface );
     HRESULT (*enum_objects)( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
                              LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context );
+    HRESULT (*get_property)( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
+                             DIDEVICEOBJECTINSTANCEW *instance );
 };
 
 #define DEVICE_STATE_MAX_SIZE 1024

@@ -4004,7 +4004,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );

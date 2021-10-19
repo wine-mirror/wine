@@ -273,46 +273,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
     return DI_OK;
 }
 
-/******************************************************************************
- *      GetProperty : Retrieves information about the input device.
- */
-static HRESULT WINAPI SysKeyboardWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
-                                                   REFGUID rguid, LPDIPROPHEADER pdiph)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
-    _dump_DIPROPHEADER(pdiph);
-
-    if (!IS_DIPROP(rguid)) return DI_OK;
-
-    switch (LOWORD(rguid))
-    {
-        case (DWORD_PTR)DIPROP_KEYNAME:
-        {
-            HRESULT hr;
-            LPDIPROPSTRING ps = (LPDIPROPSTRING)pdiph;
-            DIDEVICEOBJECTINSTANCEW didoi;
-
-            if (pdiph->dwSize != sizeof(DIPROPSTRING))
-                return DIERR_INVALIDPARAM;
-
-            didoi.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
-
-            hr = IDirectInputDevice8_GetObjectInfo( iface, &didoi, ps->diph.dwObj, ps->diph.dwHow );
-            if (hr == DI_OK)
-                memcpy(ps->wsz, didoi.tszName, sizeof(ps->wsz));
-            return hr;
-        }
-        case (DWORD_PTR) DIPROP_VIDPID:
-        case (DWORD_PTR) DIPROP_RANGE:
-            return DIERR_UNSUPPORTED;
-        default:
-            return IDirectInputDevice2WImpl_GetProperty( iface, rguid, pdiph );
-    }
-    return DI_OK;
-}
-
 static HRESULT keyboard_internal_acquire( IDirectInputDevice8W *iface )
 {
     return DI_OK;
@@ -388,12 +348,28 @@ static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, cons
     return DIENUM_CONTINUE;
 }
 
+static HRESULT keyboard_internal_get_property( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
+                                               DIDEVICEOBJECTINSTANCEW *instance )
+{
+    switch (property)
+    {
+    case (DWORD_PTR)DIPROP_KEYNAME:
+    {
+        DIPROPSTRING *value = (DIPROPSTRING *)header;
+        lstrcpynW( value->wsz, instance->tszName, ARRAY_SIZE(value->wsz) );
+        return DI_OK;
+    }
+    }
+    return DIERR_UNSUPPORTED;
+}
+
 static const struct dinput_device_vtbl keyboard_internal_vtbl =
 {
     NULL,
     keyboard_internal_acquire,
     keyboard_internal_unacquire,
     keyboard_internal_enum_objects,
+    keyboard_internal_get_property,
 };
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
@@ -403,7 +379,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice2WImpl_Release,
     IDirectInputDevice2WImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    SysKeyboardWImpl_GetProperty,
+    IDirectInputDevice2WImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,

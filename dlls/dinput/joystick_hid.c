@@ -661,97 +661,56 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
     return ref;
 }
 
-static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
-                                     DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
-    DIPROPRANGE *value = data;
-    value->lMin = extra->range_min;
-    value->lMax = extra->range_max;
-    return DIENUM_STOP;
-}
-
-static BOOL get_property_prop_deadzone( struct hid_joystick *impl, struct hid_value_caps *caps,
-                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
-    DIPROPDWORD *deadzone = data;
-    deadzone->dwData = extra->deadzone;
-    return DIENUM_STOP;
-}
-
-static BOOL get_property_prop_saturation( struct hid_joystick *impl, struct hid_value_caps *caps,
-                                          DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
-    DIPROPDWORD *saturation = data;
-    saturation->dwData = extra->saturation;
-    return DIENUM_STOP;
-}
-
-static BOOL get_property_prop_granularity( struct hid_joystick *impl, struct hid_value_caps *caps,
-                                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    DIPROPDWORD *granularity = data;
-    granularity->dwData = 1;
-    return DIENUM_STOP;
-}
-
-static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
-                                                DIPROPHEADER *header )
+static HRESULT hid_joystick_internal_get_property( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
+                                                   DIDEVICEOBJECTINSTANCEW *instance )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    struct extra_caps *extra = NULL;
 
-    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
+    if (instance) extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
 
-    if (!header) return DIERR_INVALIDPARAM;
-    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
-    if (!IS_DIPROP( guid )) return DI_OK;
-
-    switch (LOWORD( guid ))
+    switch (property)
     {
     case (DWORD_PTR)DIPROP_RANGE:
-        if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
-        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header ) == DIENUM_STOP)
-            return DI_OK;
-        return DIERR_NOTFOUND;
+    {
+        DIPROPRANGE *value = (DIPROPRANGE *)header;
+        value->lMin = extra->range_min;
+        value->lMax = extra->range_max;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_DEADZONE:
-        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_deadzone, header ) == DIENUM_STOP)
-            return DI_OK;
-        return DIERR_NOTFOUND;
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        value->dwData = extra->deadzone;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_SATURATION:
-        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_saturation, header ) == DIENUM_STOP)
-            return DI_OK;
-        return DIERR_NOTFOUND;
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        value->dwData = extra->saturation;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_GRANULARITY:
-        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_granularity, header ) == DIENUM_STOP)
-            return DI_OK;
-        return DIERR_NOTFOUND;
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        value->dwData = 1;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
-        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
         lstrcpynW( value->wsz, impl->base.instance.tszProductName, MAX_PATH );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_INSTANCENAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
-        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
         lstrcpynW( value->wsz, impl->base.instance.tszInstanceName, MAX_PATH );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_VIDPID:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
-        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         if (!impl->attrs.VendorID || !impl->attrs.ProductID) return DIERR_UNSUPPORTED;
         value->dwData = MAKELONG( impl->attrs.VendorID, impl->attrs.ProductID );
         return DI_OK;
@@ -759,25 +718,18 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     case (DWORD_PTR)DIPROP_JOYSTICKID:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
-        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         value->dwData = impl->base.instance.guidInstance.Data3;
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_GUIDANDPATH:
     {
         DIPROPGUIDANDPATH *value = (DIPROPGUIDANDPATH *)header;
-        if (header->dwSize != sizeof(DIPROPGUIDANDPATH)) return DIERR_INVALIDPARAM;
         lstrcpynW( value->wszPath, impl->device_path, MAX_PATH );
         return DI_OK;
     }
-    case (DWORD_PTR)DIPROP_AUTOCENTER:
-        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        return DIERR_UNSUPPORTED;
-    default:
-        return IDirectInputDevice2WImpl_GetProperty( iface, guid, header );
     }
 
-    return DI_OK;
+    return DIERR_UNSUPPORTED;
 }
 
 static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
@@ -1298,7 +1250,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     /*** IDirectInputDevice methods ***/
     IDirectInputDevice2WImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    hid_joystick_GetProperty,
+    IDirectInputDevice2WImpl_GetProperty,
     hid_joystick_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
@@ -1551,6 +1503,7 @@ static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
     hid_joystick_internal_acquire,
     hid_joystick_internal_unacquire,
     hid_joystick_internal_enum_objects,
+    hid_joystick_internal_get_property,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )

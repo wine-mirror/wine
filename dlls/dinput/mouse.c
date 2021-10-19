@@ -495,65 +495,6 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
-/******************************************************************************
-  *     GetProperty : get input device properties
-  */
-static HRESULT WINAPI SysMouseWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-
-    TRACE("(%p) %s,%p\n", This, debugstr_guid(rguid), pdiph);
-    _dump_DIPROPHEADER(pdiph);
-
-    if (IS_DIPROP(rguid)) {
-	switch (LOWORD(rguid)) {
-	    case (DWORD_PTR) DIPROP_GRANULARITY: {
-		LPDIPROPDWORD pr = (LPDIPROPDWORD) pdiph;
-		
-		if (
-		    ((pdiph->dwHow == DIPH_BYOFFSET) &&
-		     ((pdiph->dwObj == DIMOFS_X) ||
-		      (pdiph->dwObj == DIMOFS_Y)))
-		    ||
-		    ((pdiph->dwHow == DIPH_BYID) &&
-		     ((pdiph->dwObj == (DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS)) ||
-		      (pdiph->dwObj == (DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS))))
-		){
-		    /* Set granularity of X/Y Axis to 1. See MSDN on DIPROP_GRANULARITY */
-		    pr->dwData = 1;
-		} else {
-		    /* We'll just assume that the app asks about the Z axis */
-		    pr->dwData = WHEEL_DELTA;
-		}
-		
-		break;
-	    }
-	      
-	    case (DWORD_PTR) DIPROP_RANGE: {
-		LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-		
-		if ((pdiph->dwHow == DIPH_BYID) &&
-		    ((pdiph->dwObj == (DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS)) ||
-		     (pdiph->dwObj == (DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS)))) {
-		    /* Querying the range of either the X or the Y axis.  As I do
-		       not know the range, do as if the range were
-		       unrestricted...*/
-		    pr->lMin = DIPROPRANGE_NOMIN;
-		    pr->lMax = DIPROPRANGE_NOMAX;
-		}
-		
-		break;
-	    }
-            case (DWORD_PTR) DIPROP_VIDPID:
-                return DIERR_UNSUPPORTED;
-	    default:
-                return IDirectInputDevice2WImpl_GetProperty(iface, rguid, pdiph);
-        }
-    }
-
-    return DI_OK;
-}
-
 static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
@@ -731,12 +672,36 @@ static HRESULT mouse_internal_enum_objects( IDirectInputDevice8W *iface, const D
     return DIENUM_CONTINUE;
 }
 
+static HRESULT mouse_internal_get_property( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
+                                            DIDEVICEOBJECTINSTANCEW *instance )
+{
+    switch (property)
+    {
+    case (DWORD_PTR)DIPROP_RANGE:
+    {
+        DIPROPRANGE *range = (DIPROPRANGE *)header;
+        range->lMin = DIPROPRANGE_NOMIN;
+        range->lMax = DIPROPRANGE_NOMAX;
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_GRANULARITY:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (instance->dwType == DIMOFS_Z) value->dwData = WHEEL_DELTA;
+        else value->dwData = 1;
+        return DI_OK;
+    }
+    }
+    return DIERR_UNSUPPORTED;
+}
+
 static const struct dinput_device_vtbl mouse_internal_vtbl =
 {
     NULL,
     mouse_internal_acquire,
     mouse_internal_unacquire,
     mouse_internal_enum_objects,
+    mouse_internal_get_property,
 };
 
 static const IDirectInputDevice8WVtbl SysMouseWvt =
@@ -746,7 +711,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_Release,
     IDirectInputDevice2WImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    SysMouseWImpl_GetProperty,
+    IDirectInputDevice2WImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
