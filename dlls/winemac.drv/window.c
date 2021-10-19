@@ -2873,6 +2873,8 @@ BOOL query_resize_start(HWND hwnd)
 {
     TRACE("hwnd %p\n", hwnd);
 
+    ClipCursor(NULL);
+
     sync_window_min_max_info(hwnd);
     SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
 
