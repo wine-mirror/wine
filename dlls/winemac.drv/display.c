@@ -1601,6 +1601,7 @@ static BOOL macdrv_init_gpu(HDEVINFO devinfo, const struct macdrv_gpu *gpu, int 
     if (RegSetValueExW(hkey, dac_typeW, 0, REG_BINARY, (const BYTE *)ramdacW, sizeof(ramdacW)))
         goto done;
     RegCloseKey(hkey);
+    hkey = NULL;
 
     /* Retrieve driver value for adapters */
     if (!SetupDiGetDeviceRegistryPropertyW(devinfo, &device_data, SPDRP_DRIVER, NULL, (BYTE *)bufferW, sizeof(bufferW),
