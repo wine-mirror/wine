@@ -1032,14 +1032,7 @@ BOOL module_remove(struct process* pcs, struct module* module)
  */
 BOOL WINAPI SymUnloadModule(HANDLE hProcess, DWORD BaseOfDll)
 {
-    struct process*     pcs;
-    struct module*      module;
-
-    pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
-    module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!module) return FALSE;
-    return module_remove(pcs, module);
+    return SymUnloadModule64(hProcess, BaseOfDll);
 }
 
 /******************************************************************
