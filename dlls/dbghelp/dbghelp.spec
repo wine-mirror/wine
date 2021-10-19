@@ -32,12 +32,15 @@
 @ stdcall SearchTreeForFileW(wstr wstr ptr)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
+@ stub StackWalkEx
 @ stub SymAddSourceStream
 @ stub SymAddSourceStreamA
 @ stub SymAddSourceStreamW
 @ stdcall SymAddSymbol(ptr int64 str int64 long long)
 @ stdcall SymAddSymbolW(ptr int64 wstr int64 long long)
+@ stub SymAddrIncludeInlineTrace
 @ stdcall SymCleanup(long)
+@ stub SymCompareInlineTrace
 @ stub SymDeleteSymbol
 @ stub SymDeleteSymbolW
 @ stdcall SymEnumLines(ptr int64 str str ptr ptr)
@@ -74,6 +77,8 @@
 @ stdcall SymFromAddrW(ptr int64 ptr ptr)
 @ stdcall SymFromIndex(long int64 long ptr)
 @ stdcall SymFromIndexW(long int64 long ptr)
+@ stub SymFromInlineContext
+@ stub SymFromInlineContextW
 @ stdcall SymFromName(long str ptr)
 @ stdcall SymFromNameW(long wstr ptr)
 @ stub SymFromToken
@@ -87,6 +92,8 @@
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stdcall SymGetLineFromAddr64(long int64 ptr ptr)
 @ stdcall SymGetLineFromAddrW64(long int64 ptr ptr)
+@ stub SymGetLineFromInlineContext
+@ stub SymGetLineFromInlineContextW
 @ stdcall SymGetLineFromName(long str str long ptr ptr)
 @ stdcall SymGetLineFromName64(long str str long ptr ptr)
 @ stdcall SymGetLineFromNameW64(long wstr wstr long ptr ptr)
@@ -130,6 +137,7 @@
 @ stub SymGetTypeFromNameW
 @ stdcall SymGetTypeInfo(ptr int64 long long ptr)
 @ stub SymGetTypeInfoEx
+@ stub SymGetUnwindInfo
 @ stdcall SymInitialize(long str long)
 @ stdcall SymInitializeW(long wstr long)
 @ stdcall SymLoadModule(long long str str long long)
@@ -145,6 +153,7 @@
 @ stub SymNextW
 @ stub SymPrev
 @ stub SymPrevW
+@ stub SymQueryInlineTrace
 @ stdcall SymRefreshModuleList(long)
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterCallback64(long ptr int64)
@@ -161,6 +170,7 @@
 @ stdcall SymSetParentWindow(long)
 @ stdcall SymSetScopeFromAddr(ptr int64)
 @ stub SymSetScopeFromIndex
+@ stub SymSetScopeFromInlineContext
 @ stdcall SymSetSearchPath(long str)
 @ stdcall SymSetSearchPathW(long wstr)
 @ stub SymSrvDeltaName
