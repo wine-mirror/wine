@@ -19,11 +19,16 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dlfcn.h>
 
 #include "main.h"
 
