@@ -92,8 +92,8 @@
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stdcall SymGetLineFromAddr64(long int64 ptr ptr)
 @ stdcall SymGetLineFromAddrW64(long int64 ptr ptr)
-@ stub SymGetLineFromInlineContext
-@ stub SymGetLineFromInlineContextW
+@ stdcall SymGetLineFromInlineContext(long int64 long int64 ptr ptr)
+@ stdcall SymGetLineFromInlineContextW(long int64 long int64 ptr ptr)
 @ stdcall SymGetLineFromName(long str str long ptr ptr)
 @ stdcall SymGetLineFromName64(long str str long ptr ptr)
 @ stdcall SymGetLineFromNameW64(long wstr wstr long ptr ptr)

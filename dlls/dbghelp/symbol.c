@@ -2540,3 +2540,27 @@ BOOL WINAPI SymFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG inline_ct
     HeapFree(GetProcessHeap(), 0, si);
     return ret;
 }
+
+/******************************************************************
+ *		SymGetLineFromInlineContext (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLineFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, DWORD64 mod_addr, PDWORD disp, PIMAGEHLP_LINE64 line)
+{
+    FIXME("(%p, %#I64x, 0x%x, %#I64x, %p, %p): stub!\n",
+          hProcess, addr, inline_ctx, mod_addr, disp, line);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************
+ *		SymGetLineFromInlineContextW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLineFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, DWORD64 mod_addr, PDWORD disp, PIMAGEHLP_LINEW64 line)
+{
+    FIXME("(%p, %#I64x, 0x%x, %#I64x, %p, %p): stub!\n",
+          hProcess, addr, inline_ctx, mod_addr, disp, line);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
