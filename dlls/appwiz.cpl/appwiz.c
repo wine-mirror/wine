@@ -542,7 +542,7 @@ static void SetInfoDialogText(HKEY hKey, LPCWSTR lpKeyName, LPCWSTR lpAltMessage
     }
     else
     {
-        buflen = MAX_STRING_LEN;
+        buflen = sizeof(buf);
 
         if ((RegQueryValueExW(hKey, lpKeyName, 0, 0, (LPBYTE) buf, &buflen) ==
            ERROR_SUCCESS) && buf[0])
