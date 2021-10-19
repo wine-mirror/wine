@@ -691,6 +691,12 @@ static HRESULT mouse_internal_get_property( IDirectInputDevice8W *iface, DWORD p
     return DIERR_UNSUPPORTED;
 }
 
+static HRESULT mouse_internal_set_property( IDirectInputDevice8W *iface, DWORD property, const DIPROPHEADER *header,
+                                            const DIDEVICEOBJECTINSTANCEW *instance )
+{
+    return DIERR_UNSUPPORTED;
+}
+
 static const struct dinput_device_vtbl mouse_internal_vtbl =
 {
     NULL,
@@ -698,6 +704,7 @@ static const struct dinput_device_vtbl mouse_internal_vtbl =
     mouse_internal_unacquire,
     mouse_internal_enum_objects,
     mouse_internal_get_property,
+    mouse_internal_set_property,
 };
 
 static const IDirectInputDevice8WVtbl SysMouseWvt =

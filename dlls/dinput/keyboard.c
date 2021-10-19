@@ -360,6 +360,12 @@ static HRESULT keyboard_internal_get_property( IDirectInputDevice8W *iface, DWOR
     return DIERR_UNSUPPORTED;
 }
 
+static HRESULT keyboard_internal_set_property( IDirectInputDevice8W *iface, DWORD property, const DIPROPHEADER *header,
+                                               const DIDEVICEOBJECTINSTANCEW *instance )
+{
+    return DIERR_UNSUPPORTED;
+}
+
 static const struct dinput_device_vtbl keyboard_internal_vtbl =
 {
     NULL,
@@ -367,6 +373,7 @@ static const struct dinput_device_vtbl keyboard_internal_vtbl =
     keyboard_internal_unacquire,
     keyboard_internal_enum_objects,
     keyboard_internal_get_property,
+    keyboard_internal_set_property,
 };
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
