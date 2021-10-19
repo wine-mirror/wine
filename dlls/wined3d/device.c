@@ -1182,7 +1182,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
         wined3d_texture_decref(texture);
     }
 
-    wined3d_device_context_emit_reset_state(&device->cs->c, false);
+    wined3d_device_context_emit_reset_state(&device->cs->c, true);
     state_cleanup(state);
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
