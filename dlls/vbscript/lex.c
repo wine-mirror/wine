@@ -237,7 +237,7 @@ static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
     rptr[len] = 0;
     res = VarDateFromStr(rptr, ctx->lcid, 0, ret);
     heap_free(rptr);
-    if (!SUCCEEDED(res)) {
+    if (FAILED(res)) {
         FIXME("Invalid date literal\n");
         return 0;
     }
