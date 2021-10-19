@@ -707,6 +707,8 @@ ZLIB_PE_LIBS
 ZLIB_PE_CFLAGS
 PNG_PE_LIBS
 PNG_PE_CFLAGS
+JPEG_PE_LIBS
+JPEG_PE_CFLAGS
 EXCESS_PRECISION_CFLAGS
 CROSSDEBUG
 DELAYLOADFLAG
@@ -1783,6 +1785,7 @@ enable_dmoguids
 enable_dxerr8
 enable_dxerr9
 enable_dxguid
+enable_jpeg
 enable_mfuuid
 enable_png
 enable_strmiids
@@ -1921,6 +1924,8 @@ CPP
 OBJC
 OBJCFLAGS
 OBJCPP
+JPEG_PE_CFLAGS
+JPEG_PE_LIBS
 PNG_PE_CFLAGS
 PNG_PE_LIBS
 ZLIB_PE_CFLAGS
@@ -2706,6 +2711,10 @@ Some influential environment variables:
   OBJC        Objective C compiler command
   OBJCFLAGS   Objective C compiler flags
   OBJCPP      Objective C preprocessor
+  JPEG_PE_CFLAGS
+              C compiler flags for the PE jpeg, overriding the bundled version
+  JPEG_PE_LIBS
+              Linker flags for the PE jpeg, overriding the bundled version
   PNG_PE_CFLAGS
               C compiler flags for the PE png, overriding the bundled version
   PNG_PE_LIBS Linker flags for the PE png, overriding the bundled version
@@ -10702,6 +10711,19 @@ esac
 
 fi
 
+
+if ${JPEG_PE_CFLAGS:+false} :; then :
+  JPEG_PE_CFLAGS="-I\$(top_srcdir)/libs/jpeg"
+else
+  enable_jpeg=no
+fi
+if ${JPEG_PE_LIBS:+false} :; then :
+  JPEG_PE_LIBS=jpeg
+else
+  enable_jpeg=no
+fi
+$as_echo "$as_me:${as_lineno-$LINENO}: jpeg cflags: $JPEG_PE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: jpeg libs: $JPEG_PE_LIBS" >&5
 
 if ${PNG_PE_CFLAGS:+false} :; then :
   PNG_PE_CFLAGS="-I\$(top_srcdir)/libs/png"
@@ -19557,6 +19579,8 @@ QUICKTIME_LIBS = $QUICKTIME_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
 EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
+JPEG_PE_CFLAGS = $JPEG_PE_CFLAGS
+JPEG_PE_LIBS = $JPEG_PE_LIBS
 PNG_PE_CFLAGS = $PNG_PE_CFLAGS
 PNG_PE_LIBS = $PNG_PE_LIBS
 ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
@@ -20851,6 +20875,7 @@ wine_fn_config_makefile libs/dmoguids enable_dmoguids
 wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
+wine_fn_config_makefile libs/jpeg enable_jpeg
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/png enable_png
 wine_fn_config_makefile libs/strmiids enable_strmiids
