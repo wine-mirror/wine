@@ -1473,8 +1473,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         if (!cursorClippingEventTap && ![self installEventTap])
             return FALSE;
 
-        if (clippingCursor && CGRectEqualToRect(rect, cursorClipRect) &&
-            CGEventTapIsEnabled(cursorClippingEventTap))
+        if (clippingCursor && CGRectEqualToRect(rect, cursorClipRect))
             return TRUE;
 
         err = CGAssociateMouseAndMouseCursorPosition(false);
