@@ -2406,6 +2406,8 @@ void macdrv_app_activated(void)
  */
 void macdrv_app_deactivated(void)
 {
+    ClipCursor(NULL);
+
     if (GetActiveWindow() == GetForegroundWindow())
     {
         TRACE("setting fg to desktop\n");
