@@ -68,26 +68,12 @@ struct SysMouseImpl
     BOOL                            need_warp;
     DWORD                           last_warped;
 
-    /* This is for mouse reporting. */
-    DIMOUSESTATE2                   m_state;
-
     WARP_MOUSE                      warp_override;
 };
 
 static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysMouseImpl, base);
-}
-
-static void _dump_mouse_state(const DIMOUSESTATE2 *m_state)
-{
-    int i;
-
-    if (!TRACE_ON(dinput)) return;
-
-    TRACE("(X: %d Y: %d Z: %d", m_state->lX, m_state->lY, m_state->lZ);
-    for (i = 0; i < 5; i++) TRACE(" B%d: %02x", i, m_state->rgbButtons[i]);
-    TRACE(")\n");
 }
 
 static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD version) {
@@ -213,6 +199,7 @@ const struct dinput_device mouse_device = {
 void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
 {
     SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
+    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)This->base.device_state;
     POINT rel, pt;
     DWORD seq;
     int i, wdata = 0;
@@ -246,13 +233,13 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
         rel.y -= pt.y;
     }
 
-    This->m_state.lX += rel.x;
-    This->m_state.lY += rel.y;
+    state->lX += rel.x;
+    state->lY += rel.y;
 
     if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
     {
-        pt.x = This->m_state.lX;
-        pt.y = This->m_state.lY;
+        pt.x = state->lX;
+        pt.y = state->lY;
     }
     else
     {
@@ -282,7 +269,7 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
 
     if (ri->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
     {
-        This->m_state.lZ += (wdata = (SHORT)ri->data.mouse.usButtonData);
+        state->lZ += (wdata = (SHORT)ri->data.mouse.usButtonData);
         queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS,
                      wdata, GetCurrentTime(), seq );
         notify = TRUE;
@@ -292,12 +279,16 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     {
         if (ri->data.mouse.usButtonFlags & mouse_button_flags[i])
         {
-            This->m_state.rgbButtons[i / 2] = 0x80 - (i % 2) * 0x80;
-            queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE +(i / 2) ) | DIDFT_PSHBUTTON,
-                         This->m_state.rgbButtons[i / 2], GetCurrentTime(), seq );
+            state->rgbButtons[i / 2] = 0x80 - (i % 2) * 0x80;
+            queue_event( iface, DIDFT_MAKEINSTANCE( WINE_MOUSE_BUTTONS_INSTANCE + (i / 2) ) | DIDFT_PSHBUTTON,
+                         state->rgbButtons[i / 2], GetCurrentTime(), seq );
             notify = TRUE;
         }
     }
+
+    TRACE( "buttons %02x %02x %02x %02x %02x, x %d, y %d, w %d\n", state->rgbButtons[0],
+           state->rgbButtons[1], state->rgbButtons[2], state->rgbButtons[3], state->rgbButtons[4],
+           state->lX, state->lY, state->lZ );
 
     if (notify && This->base.hEvent) SetEvent( This->base.hEvent );
     LeaveCriticalSection( &This->base.crit );
@@ -308,6 +299,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
+    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)This->base.device_state;
     int wdata = 0, inst_id = -1, ret = 0;
     BOOL notify = FALSE;
 
@@ -321,13 +313,13 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
             POINT pt, pt1;
 
             GetCursorPos(&pt);
-            This->m_state.lX += pt.x = hook->pt.x - pt.x;
-            This->m_state.lY += pt.y = hook->pt.y - pt.y;
+            state->lX += pt.x = hook->pt.x - pt.x;
+            state->lY += pt.y = hook->pt.y - pt.y;
 
             if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
             {
-                pt1.x = This->m_state.lX;
-                pt1.y = This->m_state.lY;
+                pt1.x = state->lX;
+                pt1.y = state->lY;
             } else
                 pt1 = pt;
 
@@ -359,53 +351,56 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
         }
         case WM_MOUSEWHEEL:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS;
-            This->m_state.lZ += wdata = (short)HIWORD(hook->mouseData);
+            state->lZ += wdata = (short)HIWORD( hook->mouseData );
             /* FarCry crashes if it gets a mouse wheel message */
             /* FIXME: should probably filter out other messages too */
             ret = This->clipped;
             break;
         case WM_LBUTTONDOWN:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[0] = wdata = 0x80;
-	    break;
-	case WM_LBUTTONUP:
+            state->rgbButtons[0] = wdata = 0x80;
+            break;
+        case WM_LBUTTONUP:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[0] = wdata = 0x00;
-	    break;
-	case WM_RBUTTONDOWN:
+            state->rgbButtons[0] = wdata = 0x00;
+            break;
+        case WM_RBUTTONDOWN:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 1) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[1] = wdata = 0x80;
-	    break;
-	case WM_RBUTTONUP:
+            state->rgbButtons[1] = wdata = 0x80;
+            break;
+        case WM_RBUTTONUP:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 1) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[1] = wdata = 0x00;
-	    break;
-	case WM_MBUTTONDOWN:
+            state->rgbButtons[1] = wdata = 0x00;
+            break;
+        case WM_MBUTTONDOWN:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[2] = wdata = 0x80;
-	    break;
-	case WM_MBUTTONUP:
+            state->rgbButtons[2] = wdata = 0x80;
+            break;
+        case WM_MBUTTONUP:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[2] = wdata = 0x00;
-	    break;
+            state->rgbButtons[2] = wdata = 0x00;
+            break;
         case WM_XBUTTONDOWN:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[2 + HIWORD(hook->mouseData)] = wdata = 0x80;
+            state->rgbButtons[2 + HIWORD( hook->mouseData )] = wdata = 0x80;
             break;
         case WM_XBUTTONUP:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
-            This->m_state.rgbButtons[2 + HIWORD(hook->mouseData)] = wdata = 0x00;
+            state->rgbButtons[2 + HIWORD( hook->mouseData )] = wdata = 0x00;
             break;
     }
 
 
     if (inst_id != -1)
     {
-        _dump_mouse_state(&This->m_state);
         queue_event(iface, inst_id,
                     wdata, GetCurrentTime(), This->base.dinput->evsequence++);
         notify = TRUE;
     }
+
+    TRACE( "buttons %02x %02x %02x %02x %02x, x %d, y %d, w %d\n", state->rgbButtons[0],
+           state->rgbButtons[1], state->rgbButtons[2], state->rgbButtons[3], state->rgbButtons[4],
+           state->lX, state->lY, state->lZ );
 
     if (notify && This->base.hEvent) SetEvent( This->base.hEvent );
     LeaveCriticalSection(&This->base.crit);
@@ -456,6 +451,7 @@ static void warp_check( SysMouseImpl* This, BOOL force )
 static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
 {
     SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
+    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)This->base.device_state;
     TRACE("(%p)->(%u,%p)\n", This, len, ptr);
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
@@ -463,17 +459,16 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
     check_dinput_events();
 
     EnterCriticalSection(&This->base.crit);
-    _dump_mouse_state(&This->m_state);
 
     /* Copy the current mouse state */
-    fill_DataFormat(ptr, len, &This->m_state, &This->base.data_format);
+    fill_DataFormat( ptr, len, state, &This->base.data_format );
 
     /* Initialize the buffer when in relative mode */
     if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
     {
-	This->m_state.lX = 0;
-	This->m_state.lY = 0;
-	This->m_state.lZ = 0;
+        state->lX = 0;
+        state->lY = 0;
+        state->lZ = 0;
     }
     LeaveCriticalSection(&This->base.crit);
 
@@ -498,25 +493,26 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
 static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
     POINT point;
 
     /* Init the mouse state */
     GetCursorPos( &point );
     if (impl->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
     {
-        impl->m_state.lX = point.x;
-        impl->m_state.lY = point.y;
+        state->lX = point.x;
+        state->lY = point.y;
     }
     else
     {
-        impl->m_state.lX = 0;
-        impl->m_state.lY = 0;
+        state->lX = 0;
+        state->lY = 0;
         impl->org_coords = point;
     }
-    impl->m_state.lZ = 0;
-    impl->m_state.rgbButtons[0] = GetKeyState( VK_LBUTTON ) & 0x80;
-    impl->m_state.rgbButtons[1] = GetKeyState( VK_RBUTTON ) & 0x80;
-    impl->m_state.rgbButtons[2] = GetKeyState( VK_MBUTTON ) & 0x80;
+    state->lZ = 0;
+    state->rgbButtons[0] = GetKeyState( VK_LBUTTON ) & 0x80;
+    state->rgbButtons[1] = GetKeyState( VK_RBUTTON ) & 0x80;
+    state->rgbButtons[2] = GetKeyState( VK_MBUTTON ) & 0x80;
 
     if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
