@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 #include "wine/asm.h"
 
 #ifdef __ASM_OBSOLETE

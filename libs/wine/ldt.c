@@ -20,14 +20,15 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "windef.h"
 #include "winbase.h"
