@@ -2486,6 +2486,9 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 record->nSize = dataSize + 8;
                 memcpy(record->dParm, data, dataSize);
 
+                if (record->iType == EMR_BITBLT || record->iType == EMR_STRETCHBLT)
+                    SetStretchBltMode(metafile->playback_dc, STRETCH_HALFTONE);
+
                 if(PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
                         record, metafile->handle_count) == 0)
                     ERR("PlayEnhMetaFileRecord failed\n");
