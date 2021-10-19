@@ -3689,10 +3689,10 @@ static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct l
         {
         case RULE_EXPRESSION:
             FIXME("Too complex expression for frame_CFA resolution (RULE_EXPRESSION)\n");
-            break;
+            return FALSE;
         case RULE_VAL_EXPRESSION:
             FIXME("Too complex expression for frame_CFA resolution (RULE_VAL_EXPRESSION)\n");
-            break;
+            return FALSE;
         default:
             frame->kind = loc_regrel;
             frame->reg = dbghelp_current_cpu->map_dwarf_register(info.state.cfa_reg, module, TRUE);
