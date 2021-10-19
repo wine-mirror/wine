@@ -34,8 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-#define WINE_DINPUT_KEYBOARD_MAX_KEYS 256
-
 static const IDirectInputDevice8WVtbl SysKeyboardWvt;
 static const struct dinput_device_vtbl keyboard_internal_vtbl;
 
@@ -43,7 +41,6 @@ typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
     struct IDirectInputDeviceImpl base;
-    BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS];
 };
 
 static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
@@ -115,11 +112,10 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
 
     /* returns now if key event already known */
-    if (new_diks == This->DInputKeyState[dik_code])
-        return ret;
+    if (new_diks == This->base.device_state[dik_code]) return ret;
 
-    This->DInputKeyState[dik_code] = new_diks;
-    TRACE(" setting %02X to %02X\n", dik_code, This->DInputKeyState[dik_code]);
+    This->base.device_state[dik_code] = new_diks;
+    TRACE( " setting key %02x to %02x\n", dik_code, This->base.device_state[dik_code] );
 
     EnterCriticalSection(&This->base.crit);
     queue_event(iface, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON,
@@ -248,6 +244,8 @@ const struct dinput_device keyboard_device = {
 static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
+    DWORD i;
+
     TRACE("(%p)->(%d,%p)\n", This, len, ptr);
 
     if (!This->base.acquired) return DIERR_NOTACQUIRED;
@@ -259,15 +257,14 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
 
     EnterCriticalSection(&This->base.crit);
 
-    if (TRACE_ON(dinput)) {
-	int i;
-	for (i = 0; i < WINE_DINPUT_KEYBOARD_MAX_KEYS; i++) {
-	    if (This->DInputKeyState[i] != 0x00)
-		TRACE(" - %02X: %02x\n", i, This->DInputKeyState[i]);
-	}
+    if (TRACE_ON(dinput))
+    {
+        TRACE( "pressed keys:" );
+        for (i = 0; i < len; i++) if (This->base.device_state[i]) TRACE( " %02x", i );
+        TRACE( "\n" );
     }
 
-    fill_DataFormat(ptr, len, This->DInputKeyState, &This->base.data_format);
+    fill_DataFormat( ptr, len, This->base.device_state, &This->base.data_format );
     LeaveCriticalSection(&This->base.crit);
 
     return DI_OK;
@@ -281,7 +278,7 @@ static HRESULT keyboard_internal_acquire( IDirectInputDevice8W *iface )
 static HRESULT keyboard_internal_unacquire( IDirectInputDevice8W *iface )
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
-    memset( This->DInputKeyState, 0, sizeof(This->DInputKeyState) );
+    memset( This->base.device_state, 0, sizeof(This->base.device_state) );
     return DI_OK;
 }
 
