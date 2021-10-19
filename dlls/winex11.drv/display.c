@@ -567,6 +567,7 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
         goto done;
 
     RegCloseKey(hkey);
+    hkey = NULL;
 
     /* Retrieve driver value for adapters */
     if (!SetupDiGetDeviceRegistryPropertyW(devinfo, &device_data, SPDRP_DRIVER, NULL, (BYTE *)bufferW, sizeof(bufferW),
