@@ -275,6 +275,9 @@ void macdrv_handle_event(const macdrv_event *event)
     case WINDOW_CLOSE_REQUESTED:
         macdrv_window_close_requested(hwnd);
         break;
+    case WINDOW_DID_MINIMIZE:
+        macdrv_window_did_minimize(hwnd);
+        break;
     case WINDOW_DID_UNMINIMIZE:
         macdrv_window_did_unminimize(hwnd);
         break;

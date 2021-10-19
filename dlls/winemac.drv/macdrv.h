@@ -170,6 +170,7 @@ extern void macdrv_app_deactivated(void) DECLSPEC_HIDDEN;
 extern void macdrv_app_quit_requested(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_maximize_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_minimize_requested(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_window_did_minimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_brought_forward(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_resize_ended(HWND hwnd) DECLSPEC_HIDDEN;

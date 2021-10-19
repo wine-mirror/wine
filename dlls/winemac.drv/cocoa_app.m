@@ -1553,6 +1553,17 @@ static NSString* WineLocalizedString(unsigned int stringID)
         }
     }
 
+    - (BOOL) isAnyWineWindowVisible
+    {
+        for (WineWindow* w in [NSApp windows])
+        {
+            if ([w isKindOfClass:[WineWindow class]] && ![w isMiniaturized] && [w isVisible])
+                return YES;
+        }
+
+        return NO;
+    }
+
     - (void) handleWindowDrag:(WineWindow*)window begin:(BOOL)begin
     {
         macdrv_event* event;
@@ -2822,4 +2833,15 @@ void macdrv_set_cocoa_retina_mode(int new_mode)
     OnMainThread(^{
         [[WineApplicationController sharedController] setRetinaMode:new_mode];
     });
+}
+
+int macdrv_is_any_wine_window_visible(void)
+{
+    __block int ret = FALSE;
+
+    OnMainThread(^{
+        ret = [[WineApplicationController sharedController] isAnyWineWindowVisible];
+    });
+
+    return ret;
 }

@@ -2896,9 +2896,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void)windowDidMiniaturize:(NSNotification *)notification
     {
+        macdrv_event* event;
+
         if (fullscreen && [self isOnActiveSpace])
             [[WineApplicationController sharedController] updateFullscreenWindows];
+
         [self checkWineDisplayLink];
+
+        event = macdrv_create_event(WINDOW_DID_MINIMIZE, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
     }
 
     - (void)windowDidMove:(NSNotification *)notification

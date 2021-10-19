@@ -339,6 +339,7 @@ enum {
     STATUS_ITEM_MOUSE_MOVE,
     WINDOW_BROUGHT_FORWARD,
     WINDOW_CLOSE_REQUESTED,
+    WINDOW_DID_MINIMIZE,
     WINDOW_DID_UNMINIMIZE,
     WINDOW_DRAG_BEGIN,
     WINDOW_DRAG_END,
@@ -598,6 +599,7 @@ extern void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2
 extern uint32_t macdrv_window_background_color(void) DECLSPEC_HIDDEN;
 extern void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
                                          void* data, int* done) DECLSPEC_HIDDEN;
+extern int macdrv_is_any_wine_window_visible(void) DECLSPEC_HIDDEN;
 
 
 /* keyboard */
