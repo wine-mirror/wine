@@ -81,7 +81,6 @@ AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio s
 AC_ARG_WITH(quicktime, AS_HELP_STRING([--without-quicktime],[do not use QuickTime support]))
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
-AC_ARG_WITH(tiff,      AS_HELP_STRING([--without-tiff],[do not use TIFF]))
 AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
 AC_ARG_WITH(unwind,    AS_HELP_STRING([--without-unwind],[do not use the libunwind library (exception handling)]))
 AC_ARG_WITH(usb,       AS_HELP_STRING([--without-usb],[do not use the libusb library]))
@@ -1813,19 +1812,6 @@ then
 fi
 WINE_NOTICE_WITH(jxrlib,[test "x$ac_cv_lib_soname_jxrglue" = "x"],
                  [jxrlib ${notice_platform}development files not found, JPEG-XR won't be supported.])
-
-dnl **** Check for libtiff ****
-if test "x$with_tiff" != "xno"
-then
-    WINE_PACKAGE_FLAGS(TIFF,[libtiff-4],,,,
-        [AC_CHECK_HEADERS([tiffio.h])
-        if test "$ac_cv_header_tiffio_h" = "yes"
-        then
-            WINE_CHECK_SONAME(tiff,TIFFClientOpen,,,[$TIFF_LIBS])
-        fi])
-fi
-WINE_NOTICE_WITH(tiff,[test "x$ac_cv_lib_soname_tiff" = "x"],
-                 [libtiff ${notice_platform}development files not found, TIFF won't be supported.])
 
 dnl **** Check for mpg123 ****
 if test "x$with_mpg123" != "xno"

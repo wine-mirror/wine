@@ -827,9 +827,6 @@
 /* Define to 1 if you have the `thr_kill2' function. */
 #undef HAVE_THR_KILL2
 
-/* Define to 1 if you have the <tiffio.h> header file. */
-#undef HAVE_TIFFIO_H
-
 /* Define to 1 if you have the `udev' library (-ludev). */
 #undef HAVE_UDEV
 
@@ -1027,9 +1024,6 @@
 
 /* Define to the soname of the libSDL2 library. */
 #undef SONAME_LIBSDL2
-
-/* Define to the soname of the libtiff library. */
-#undef SONAME_LIBTIFF
 
 /* Define to the soname of the libv4l2 library. */
 #undef SONAME_LIBV4L2

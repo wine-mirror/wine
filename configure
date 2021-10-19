@@ -639,8 +639,6 @@ NETAPI_CFLAGS
 PROCSTAT_LIBS
 MPG123_LIBS
 MPG123_CFLAGS
-TIFF_LIBS
-TIFF_CFLAGS
 JXRLIB_LIBS
 JXRLIB_CFLAGS
 JPEG_LIBS
@@ -888,7 +886,6 @@ with_pulse
 with_quicktime
 with_sane
 with_sdl
-with_tiff
 with_udev
 with_unwind
 with_usb
@@ -1986,8 +1983,6 @@ JPEG_CFLAGS
 JPEG_LIBS
 JXRLIB_CFLAGS
 JXRLIB_LIBS
-TIFF_CFLAGS
-TIFF_LIBS
 MPG123_CFLAGS
 MPG123_LIBS
 NETAPI_CFLAGS
@@ -2677,7 +2672,6 @@ Optional Packages:
   --without-quicktime     do not use QuickTime support
   --without-sane          do not use SANE (scanner support)
   --without-sdl           do not use SDL
-  --without-tiff          do not use TIFF
   --without-udev          do not use udev (plug and play support)
   --without-unwind        do not use the libunwind library (exception
                           handling)
@@ -2804,8 +2798,6 @@ Some influential environment variables:
   JXRLIB_CFLAGS
               C compiler flags for jxrlib, overriding pkg-config
   JXRLIB_LIBS Linker flags for jxrlib, overriding pkg-config
-  TIFF_CFLAGS C compiler flags for libtiff-4, overriding pkg-config
-  TIFF_LIBS   Linker flags for libtiff-4, overriding pkg-config
   MPG123_CFLAGS
               C compiler flags for libmpg123, overriding pkg-config
   MPG123_LIBS Linker flags for libmpg123, overriding pkg-config
@@ -4214,12 +4206,6 @@ fi
 # Check whether --with-sdl was given.
 if test "${with_sdl+set}" = set; then :
   withval=$with_sdl;
-fi
-
-
-# Check whether --with-tiff was given.
-if test "${with_tiff+set}" = set; then :
-  withval=$with_tiff;
 fi
 
 
@@ -16053,108 +16039,6 @@ esac
 
 fi
 
-if test "x$with_tiff" != "xno"
-then
-    if ${TIFF_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  TIFF_CFLAGS=`$PKG_CONFIG --cflags libtiff-4 2>/dev/null`
-fi
-fi
-
-if ${TIFF_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  TIFF_LIBS=`$PKG_CONFIG --libs libtiff-4 2>/dev/null`
-fi
-fi
-
-
-$as_echo "$as_me:${as_lineno-$LINENO}: libtiff-4 cflags: $TIFF_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libtiff-4 libs: $TIFF_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $TIFF_CFLAGS"
-for ac_header in tiffio.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "tiffio.h" "ac_cv_header_tiffio_h" "$ac_includes_default"
-if test "x$ac_cv_header_tiffio_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_TIFFIO_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_tiffio_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ltiff" >&5
-$as_echo_n "checking for -ltiff... " >&6; }
-if ${ac_cv_lib_soname_tiff+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-ltiff $TIFF_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char TIFFClientOpen ();
-int
-main ()
-{
-return TIFFClientOpen ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_tiff=`$ac_cv_path_LDD conftest.exe | grep "tiff" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_tiff=`$OTOOL -L conftest$ac_exeext | grep "libtiff\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libtiff\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_tiff=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libtiff\\.$LIBEXT" | sed -e "s/^.*\\[\\(libtiff\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_tiff:+false} :; then :
-  ac_cv_lib_soname_tiff=`$LDD conftest$ac_exeext | grep "libtiff\\.$LIBEXT" | sed -e "s/^.*\(libtiff\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_tiff=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_tiff:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_tiff" >&5
-$as_echo "$ac_cv_lib_soname_tiff" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBTIFF "$ac_cv_lib_soname_tiff"
-_ACEOF
-
-
-fi
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_soname_tiff" = "x"; then :
-  case "x$with_tiff" in
-  x)   as_fn_append wine_notices "|libtiff ${notice_platform}development files not found, TIFF won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libtiff ${notice_platform}development files not found, TIFF won't be supported.
-This is an error since --with-tiff was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
 if test "x$with_mpg123" != "xno"
 then
     if ${MPG123_CFLAGS:+false} :; then :
@@ -19670,8 +19554,6 @@ JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
 JXRLIB_CFLAGS = $JXRLIB_CFLAGS
 JXRLIB_LIBS = $JXRLIB_LIBS
-TIFF_CFLAGS = $TIFF_CFLAGS
-TIFF_LIBS = $TIFF_LIBS
 MPG123_CFLAGS = $MPG123_CFLAGS
 MPG123_LIBS = $MPG123_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
