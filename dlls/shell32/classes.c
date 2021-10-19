@@ -212,11 +212,11 @@ static BOOL HCR_RegOpenClassIDKey(REFIID riid, HKEY *hkey)
 
 static BOOL HCR_RegGetDefaultIconW(HKEY hkey, LPWSTR szDest, DWORD len, int* picon_idx)
 {
-    DWORD dwType;
+    DWORD dwType, size = len * sizeof(WCHAR);
     WCHAR sTemp[MAX_PATH];
     WCHAR sNum[5];
 
-    if (!RegQueryValueExW(hkey, NULL, 0, &dwType, (LPBYTE)szDest, &len))
+    if (!RegQueryValueExW(hkey, NULL, 0, &dwType, (LPBYTE)szDest, &size))
     {
       if (dwType == REG_EXPAND_SZ)
       {
@@ -316,13 +316,13 @@ BOOL HCR_GetClassNameW(REFIID riid, LPWSTR szDest, DWORD len)
 {	
 	HKEY	hkey;
 	BOOL ret = FALSE;
-	DWORD buflen = len;
+	DWORD buflen = len * sizeof(WCHAR);
 
  	szDest[0] = 0;
 	if (HCR_RegOpenClassIDKey(riid, &hkey))
 	{
-          if (!RegLoadMUIStringW(hkey, L"LocalizedString", szDest, len, NULL, 0, NULL) ||
-              !RegQueryValueExW(hkey, L"", 0, NULL, (LPBYTE)szDest, &len))
+          if (!RegLoadMUIStringW(hkey, L"LocalizedString", szDest, buflen, NULL, 0, NULL) ||
+              !RegQueryValueExW(hkey, L"", 0, NULL, (LPBYTE)szDest, &buflen))
           {
 	    ret = TRUE;
 	  }
@@ -333,12 +333,12 @@ BOOL HCR_GetClassNameW(REFIID riid, LPWSTR szDest, DWORD len)
 	{
 	  if(IsEqualIID(riid, &CLSID_ShellDesktop))
 	  {
-	    if (LoadStringW(shell32_hInstance, IDS_DESKTOP, szDest, buflen))
+	    if (LoadStringW(shell32_hInstance, IDS_DESKTOP, szDest, len))
 	      ret = TRUE;
 	  }
 	  else if (IsEqualIID(riid, &CLSID_MyComputer))
 	  {
-	    if(LoadStringW(shell32_hInstance, IDS_MYCOMPUTER, szDest, buflen))
+	    if(LoadStringW(shell32_hInstance, IDS_MYCOMPUTER, szDest, len))
 	      ret = TRUE;
 	  }
 	}
