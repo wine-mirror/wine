@@ -2619,7 +2619,7 @@ static HRESULT WINAPI hid_joystick_effect_Start( IDirectInputEffect *iface, DWOR
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if ((flags & DIES_NODOWNLOAD) && !impl->index)
         hr = DIERR_NOTDOWNLOADED;
-    else if ((flags & DIES_NODOWNLOAD) || !FAILED(hr = IDirectInputEffect_Download( iface )))
+    else if ((flags & DIES_NODOWNLOAD) || SUCCEEDED(hr = IDirectInputEffect_Download( iface )))
     {
         count = 1;
         status = HidP_InitializeReportForID( HidP_Output, effect_control->id, preparsed,
@@ -2764,7 +2764,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if ((impl->flags & complete_mask) != complete_mask)
         hr = DIERR_INCOMPLETEEFFECT;
-    else if (!impl->index && !FAILED(hr = find_next_effect_id( impl->joystick, &impl->index )))
+    else if (!impl->index && SUCCEEDED(hr = find_next_effect_id( impl->joystick, &impl->index )))
     {
         if (!impl->type_specific_buf[0][0]) status = HIDP_STATUS_SUCCESS;
         else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
@@ -2929,7 +2929,7 @@ static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
     EnterCriticalSection( &joystick->base.crit );
     if (!impl->index)
         hr = DI_NOEFFECT;
-    else if (!FAILED(hr = IDirectInputEffect_Stop( iface )))
+    else if (SUCCEEDED(hr = IDirectInputEffect_Stop( iface )))
     {
         impl->joystick->effect_inuse[impl->index - 1] = FALSE;
         impl->index = 0;
