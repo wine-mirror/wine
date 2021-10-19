@@ -32,7 +32,7 @@
 @ stdcall SearchTreeForFileW(wstr wstr ptr)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
-@ stub StackWalkEx
+@ stdcall StackWalkEx(long long long ptr ptr ptr ptr ptr ptr long)
 @ stub SymAddSourceStream
 @ stub SymAddSourceStreamA
 @ stub SymAddSourceStreamW
