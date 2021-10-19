@@ -1510,6 +1510,11 @@ static BOOL link_device(const WCHAR *instance, const GUID *guid)
 static BOOL macdrv_init_gpu(HDEVINFO devinfo, const struct macdrv_gpu *gpu, int gpu_index, WCHAR *guid_string,
                             WCHAR *driver, LUID *gpu_luid)
 {
+    static const WCHAR adapter_stringW[] = {'H','a','r','d','w','a','r','e','I','n','f','o','r','m','a','t','i','o','n','.','A','d','a','p','t','e','r','S','t','r','i','n','g',0};
+    static const WCHAR bios_stringW[] = {'H','a','r','d','w','a','r','e','I','n','f','o','r','m','a','t','i','o','n','.','B','i','o','s','S','t','r','i','n','g',0};
+    static const WCHAR chip_typeW[] = {'H','a','r','d','w','a','r','e','I','n','f','o','r','m','a','t','i','o','n','.','C','h','i','p','T','y','p','e',0};
+    static const WCHAR dac_typeW[] = {'H','a','r','d','w','a','r','e','I','n','f','o','r','m','a','t','i','o','n','.','D','a','c','T','y','p','e',0};
+    static const WCHAR ramdacW[] = {'I','n','t','e','r','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
     static const BOOL present = TRUE;
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     WCHAR instanceW[MAX_PATH];
@@ -1578,12 +1583,22 @@ static BOOL macdrv_init_gpu(HDEVINFO devinfo, const struct macdrv_gpu *gpu, int 
      * This is where HKLM\System\CurrentControlSet\Control\Video\{GPU GUID}\{Adapter Index} links to */
     hkey = SetupDiCreateDevRegKeyW(devinfo, &device_data, DICS_FLAG_GLOBAL, 0, DIREG_DRV, NULL, NULL);
 
+    size = (lstrlenW(nameW) + 1) * sizeof(WCHAR);
     /* Write DriverDesc value */
-    if (RegSetValueExW(hkey, driver_descW, 0, REG_SZ, (const BYTE *)nameW, (lstrlenW(nameW) + 1) * sizeof(WCHAR)))
+    if (RegSetValueExW(hkey, driver_descW, 0, REG_SZ, (const BYTE *)nameW, size))
         goto done;
     /* Write DriverDateData value, using current time as driver date, needed by Evoland */
     GetSystemTimeAsFileTime(&filetime);
     if (RegSetValueExW(hkey, driver_date_dataW, 0, REG_BINARY, (BYTE *)&filetime, sizeof(filetime)))
+        goto done;
+    /* The following hardware information value type may be REG_BINARY or REG_SZ */
+    if (RegSetValueExW(hkey, adapter_stringW, 0, REG_BINARY, (const BYTE *)nameW, size))
+        goto done;
+    if (RegSetValueExW(hkey, bios_stringW, 0, REG_BINARY, (const BYTE *)nameW, size))
+        goto done;
+    if (RegSetValueExW(hkey, chip_typeW, 0, REG_BINARY, (const BYTE *)nameW, size))
+        goto done;
+    if (RegSetValueExW(hkey, dac_typeW, 0, REG_BINARY, (const BYTE *)ramdacW, sizeof(ramdacW)))
         goto done;
     RegCloseKey(hkey);
 
