@@ -73,6 +73,11 @@ static inline const char *debugstr_hid_collection_node( struct hid_collection_no
 
 struct extra_caps
 {
+    LONG bit_size;
+    LONG logical_min;
+    LONG logical_max;
+    LONG range_min;
+    LONG range_max;
     LONG deadzone;
     LONG saturation;
 };
@@ -659,19 +664,18 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
 static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     DIPROPRANGE *value = data;
-    value->lMin = caps->physical_min;
-    value->lMax = caps->physical_max;
+    value->lMin = extra->range_min;
+    value->lMax = extra->range_max;
     return DIENUM_STOP;
 }
 
 static BOOL get_property_prop_deadzone( struct hid_joystick *impl, struct hid_value_caps *caps,
                                         DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
-    struct extra_caps *extra;
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     DIPROPDWORD *deadzone = data;
-    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     deadzone->dwData = extra->deadzone;
     return DIENUM_STOP;
 }
@@ -679,10 +683,8 @@ static BOOL get_property_prop_deadzone( struct hid_joystick *impl, struct hid_va
 static BOOL get_property_prop_saturation( struct hid_joystick *impl, struct hid_value_caps *caps,
                                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
-    struct extra_caps *extra;
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     DIPROPDWORD *saturation = data;
-    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     saturation->dwData = extra->saturation;
     return DIENUM_STOP;
 }
@@ -781,22 +783,23 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
 static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     DIPROPRANGE *value = data;
     LONG tmp;
 
-    caps->physical_min = value->lMin;
-    caps->physical_max = value->lMax;
+    extra->range_min = value->lMin;
+    extra->range_max = value->lMax;
 
     if (instance->dwType & DIDFT_AXIS)
     {
-        if (!caps->physical_min) tmp = caps->physical_max / 2;
-        else tmp = round( (caps->physical_min + caps->physical_max) / 2.0 );
+        if (!extra->range_min) tmp = extra->range_max / 2;
+        else tmp = round( (extra->range_min + extra->range_max) / 2.0 );
         *(LONG *)(impl->base.device_state + instance->dwOfs) = tmp;
     }
     else if (instance->dwType & DIDFT_POV)
     {
-        tmp = caps->logical_max - caps->logical_min;
-        if (tmp > 0) caps->physical_max -= value->lMax / (tmp + 1);
+        tmp = extra->logical_max - extra->logical_min;
+        if (tmp > 0) extra->range_max -= value->lMax / (tmp + 1);
         *(LONG *)(impl->base.device_state + instance->dwOfs) = -1;
     }
     return DIENUM_CONTINUE;
@@ -805,10 +808,8 @@ static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_value
 static BOOL set_property_prop_deadzone( struct hid_joystick *impl, struct hid_value_caps *caps,
                                         DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
-    struct extra_caps *extra;
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     DIPROPDWORD *deadzone = data;
-    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     extra->deadzone = deadzone->dwData;
     return DIENUM_CONTINUE;
 }
@@ -816,10 +817,8 @@ static BOOL set_property_prop_deadzone( struct hid_joystick *impl, struct hid_va
 static BOOL set_property_prop_saturation( struct hid_joystick *impl, struct hid_value_caps *caps,
                                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
-    struct extra_caps *extra;
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     DIPROPDWORD *saturation = data;
-    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     extra->saturation = saturation->dwData;
     return DIENUM_CONTINUE;
 }
@@ -1357,29 +1356,34 @@ static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_val
     return DIENUM_CONTINUE;
 }
 
-static LONG sign_extend( ULONG value, struct hid_value_caps *caps )
+static LONG sign_extend( ULONG value, struct extra_caps *caps )
 {
     UINT sign = 1 << (caps->bit_size - 1);
     if (sign <= 1 || caps->logical_min >= 0) return value;
     return value - ((value & sign) << 1);
 }
 
-static LONG scale_value( ULONG value, struct hid_value_caps *caps, LONG min, LONG max )
+static LONG scale_value( ULONG value, struct extra_caps *caps )
 {
-    LONG tmp = sign_extend( value, caps );
-    if (caps->logical_min > tmp || caps->logical_max < tmp) return -1; /* invalid / null value */
-    return min + MulDiv( tmp - caps->logical_min, max - min, caps->logical_max - caps->logical_min );
+    LONG tmp = sign_extend( value, caps ), log_min, log_max, phy_min, phy_max;
+    log_min = caps->logical_min;
+    log_max = caps->logical_max;
+    phy_min = caps->range_min;
+    phy_max = caps->range_max;
+
+    if (log_min > tmp || log_max < tmp) return -1; /* invalid / null value */
+    return phy_min + MulDiv( tmp - log_min, phy_max - phy_min, log_max - log_min );
 }
 
-static LONG scale_axis_value( ULONG value, struct hid_value_caps *caps, struct extra_caps *extra )
+static LONG scale_axis_value( ULONG value, struct extra_caps *caps )
 {
     LONG tmp = sign_extend( value, caps ), log_ctr, log_min, log_max, phy_ctr, phy_min, phy_max;
     ULONG bit_max = (1 << caps->bit_size) - 1;
 
     log_min = caps->logical_min;
     log_max = caps->logical_max;
-    phy_min = caps->physical_min;
-    phy_max = caps->physical_max;
+    phy_min = caps->range_min;
+    phy_max = caps->range_max;
     /* xinput HID gamepad have bogus logical value range, let's use the bit range instead */
     if (log_min == 0 && log_max == -1) log_max = bit_max;
 
@@ -1391,14 +1395,14 @@ static LONG scale_axis_value( ULONG value, struct hid_value_caps *caps, struct e
     tmp -= log_ctr;
     if (tmp <= 0)
     {
-        log_max = MulDiv( log_min - log_ctr, extra->deadzone, 10000 );
-        log_min = MulDiv( log_min - log_ctr, extra->saturation, 10000 );
+        log_max = MulDiv( log_min - log_ctr, caps->deadzone, 10000 );
+        log_min = MulDiv( log_min - log_ctr, caps->saturation, 10000 );
         phy_max = phy_ctr;
     }
     else
     {
-        log_min = MulDiv( log_max - log_ctr, extra->deadzone, 10000 );
-        log_max = MulDiv( log_max - log_ctr, extra->saturation, 10000 );
+        log_min = MulDiv( log_max - log_ctr, caps->deadzone, 10000 );
+        log_max = MulDiv( log_max - log_ctr, caps->saturation, 10000 );
         phy_min = phy_ctr;
     }
 
@@ -1410,24 +1414,22 @@ static LONG scale_axis_value( ULONG value, struct hid_value_caps *caps, struct e
 static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
     IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
     ULONG logical_value, report_len = impl->caps.InputReportByteLength;
     struct parse_device_state_params *params = data;
     char *report_buf = impl->input_report_buf;
-    struct extra_caps *extra;
     LONG old_value, value;
     NTSTATUS status;
 
     if (instance->wReportId != impl->base.device_state_report_id) return DIENUM_CONTINUE;
 
-    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
                                  &logical_value, impl->preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
                                              instance->wUsagePage, instance->wUsage, status );
-    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, caps, extra );
-    else value = scale_value( logical_value, caps, caps->physical_min, caps->physical_max );
+    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, extra );
+    else value = scale_value( logical_value, extra );
 
     old_value = *(LONG *)(params->old_state + instance->dwOfs);
     *(LONG *)(impl->base.device_state + instance->dwOfs) = value;
@@ -1807,6 +1809,18 @@ static HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTAN
     return DI_OK;
 }
 
+static BOOL init_extra_caps( struct hid_joystick *impl, struct hid_value_caps *caps,
+                             DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct extra_caps *extra = impl->input_extra_caps + instance->dwOfs / sizeof(LONG);
+    extra->bit_size = caps->bit_size;
+    extra->logical_min = caps->logical_min;
+    extra->logical_max = caps->logical_max;
+    extra->range_min = caps->physical_min;
+    extra->range_max = caps->physical_max;
+    return DIENUM_CONTINUE;
+}
+
 static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *caps,
                               DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
@@ -2124,6 +2138,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     size = preparsed->input_caps_count * sizeof(struct extra_caps);
     if (!(extra = calloc( 1, size ))) goto failed;
     impl->input_extra_caps = extra;
+    enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, init_extra_caps, NULL );
 
     size = impl->caps.InputReportByteLength;
     if (!(buffer = malloc( size ))) goto failed;
