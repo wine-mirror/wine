@@ -25,7 +25,6 @@
 #ifdef __i386__
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -34,9 +33,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <assert.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif

@@ -23,17 +23,20 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
 #include <math.h>
-#ifdef HAVE_LINK_H
-# include <link.h>
-#endif
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dlfcn.h>
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif

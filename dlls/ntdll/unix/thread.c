@@ -23,17 +23,18 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <unistd.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
