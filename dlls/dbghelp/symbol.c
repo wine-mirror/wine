@@ -2503,3 +2503,40 @@ PWSTR WINAPI SymSetHomeDirectoryW(HANDLE hProcess, PCWSTR dir)
 
     return NULL;
 }
+
+/******************************************************************
+ *		SymFromInlineContext (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, PDWORD64 disp, PSYMBOL_INFO si)
+{
+    FIXME("(%p, %#I64x, 0x%x, %p, %p): stub\n", hProcess, addr, inline_ctx, disp, si);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************
+ *		SymFromInlineContextW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, PDWORD64 disp, PSYMBOL_INFOW siW)
+{
+    PSYMBOL_INFO        si;
+    unsigned            len;
+    BOOL                ret;
+
+    TRACE("(%p, %#I64x, 0x%x, %p, %p)\n", hProcess, addr, inline_ctx, disp, siW);
+
+    len = sizeof(*si) + siW->MaxNameLen * sizeof(WCHAR);
+    si = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!si) return FALSE;
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = siW->MaxNameLen;
+    if ((ret = SymFromInlineContext(hProcess, addr, inline_ctx, disp, si)))
+    {
+        copy_symbolW(siW, si);
+    }
+    HeapFree(GetProcessHeap(), 0, si);
+    return ret;
+}

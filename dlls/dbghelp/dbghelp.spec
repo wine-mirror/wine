@@ -77,8 +77,8 @@
 @ stdcall SymFromAddrW(ptr int64 ptr ptr)
 @ stdcall SymFromIndex(long int64 long ptr)
 @ stdcall SymFromIndexW(long int64 long ptr)
-@ stub SymFromInlineContext
-@ stub SymFromInlineContextW
+@ stdcall SymFromInlineContext(long int64 long ptr ptr)
+@ stdcall SymFromInlineContextW(long int64 long ptr ptr)
 @ stdcall SymFromName(long str ptr)
 @ stdcall SymFromNameW(long wstr ptr)
 @ stub SymFromToken
