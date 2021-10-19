@@ -705,6 +705,8 @@ XMKMF
 PTHREAD_LIBS
 ZLIB_PE_LIBS
 ZLIB_PE_CFLAGS
+TIFF_PE_LIBS
+TIFF_PE_CFLAGS
 PNG_PE_LIBS
 PNG_PE_CFLAGS
 JPEG_PE_LIBS
@@ -1789,6 +1791,7 @@ enable_jpeg
 enable_mfuuid
 enable_png
 enable_strmiids
+enable_tiff
 enable_uuid
 enable_wbemuuid
 enable_wine
@@ -1928,6 +1931,8 @@ JPEG_PE_CFLAGS
 JPEG_PE_LIBS
 PNG_PE_CFLAGS
 PNG_PE_LIBS
+TIFF_PE_CFLAGS
+TIFF_PE_LIBS
 ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS
 XMKMF
@@ -2718,6 +2723,10 @@ Some influential environment variables:
   PNG_PE_CFLAGS
               C compiler flags for the PE png, overriding the bundled version
   PNG_PE_LIBS Linker flags for the PE png, overriding the bundled version
+  TIFF_PE_CFLAGS
+              C compiler flags for the PE tiff, overriding the bundled version
+  TIFF_PE_LIBS
+              Linker flags for the PE tiff, overriding the bundled version
   ZLIB_PE_CFLAGS
               C compiler flags for the PE zlib, overriding the bundled version
   ZLIB_PE_LIBS
@@ -10737,6 +10746,19 @@ else
 fi
 $as_echo "$as_me:${as_lineno-$LINENO}: png cflags: $PNG_PE_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: png libs: $PNG_PE_LIBS" >&5
+
+if ${TIFF_PE_CFLAGS:+false} :; then :
+  TIFF_PE_CFLAGS="-I\$(top_srcdir)/libs/tiff/libtiff"
+else
+  enable_tiff=no
+fi
+if ${TIFF_PE_LIBS:+false} :; then :
+  TIFF_PE_LIBS=tiff
+else
+  enable_tiff=no
+fi
+$as_echo "$as_me:${as_lineno-$LINENO}: tiff cflags: $TIFF_PE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: tiff libs: $TIFF_PE_LIBS" >&5
 
 if ${ZLIB_PE_CFLAGS:+false} :; then :
   ZLIB_PE_CFLAGS="-I\$(top_srcdir)/libs/zlib -DFAR= -DZ_SOLO"
@@ -19583,6 +19605,8 @@ JPEG_PE_CFLAGS = $JPEG_PE_CFLAGS
 JPEG_PE_LIBS = $JPEG_PE_LIBS
 PNG_PE_CFLAGS = $PNG_PE_CFLAGS
 PNG_PE_LIBS = $PNG_PE_LIBS
+TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
+TIFF_PE_LIBS = $TIFF_PE_LIBS
 ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS = $ZLIB_PE_LIBS
 PTHREAD_LIBS = $PTHREAD_LIBS
@@ -20879,6 +20903,7 @@ wine_fn_config_makefile libs/jpeg enable_jpeg
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/png enable_png
 wine_fn_config_makefile libs/strmiids enable_strmiids
+wine_fn_config_makefile libs/tiff enable_tiff
 wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
 wine_fn_config_makefile libs/wine enable_wine
