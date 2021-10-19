@@ -432,6 +432,7 @@ static HRESULT WINAPI InputProcessorProfiles_GetDefaultLanguageProfile(
     }
     CLSIDFromString(buf,pclsid);
 
+    count = sizeof(buf);
     res = RegQueryValueExW(hkey, szwProfile, 0, NULL, (LPBYTE)buf, &count);
     if (res == ERROR_SUCCESS)
         CLSIDFromString(buf,pguidProfile);
