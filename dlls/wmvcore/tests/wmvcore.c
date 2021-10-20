@@ -86,30 +86,30 @@ static void test_wmreader_interfaces(void)
     check_interface(reader, &IID_IWMSyncReader, FALSE);
     check_interface(reader, &IID_IWMSyncReader2, FALSE);
 
+    check_interface(reader, &IID_IReferenceClock, TRUE);
+    check_interface(reader, &IID_IWMHeaderInfo, TRUE);
+    check_interface(reader, &IID_IWMHeaderInfo2, TRUE);
+    check_interface(reader, &IID_IWMHeaderInfo3, TRUE);
+    check_interface(reader, &IID_IWMLanguageList, TRUE);
+    check_interface(reader, &IID_IWMPacketSize, TRUE);
+    check_interface(reader, &IID_IWMPacketSize2, TRUE);
+    check_interface(reader, &IID_IWMProfile, TRUE);
+    check_interface(reader, &IID_IWMProfile2, TRUE);
+    check_interface(reader, &IID_IWMProfile3, TRUE);
     check_interface(reader, &IID_IWMReader, TRUE);
+    check_interface(reader, &IID_IWMReaderAccelerator, TRUE);
     check_interface(reader, &IID_IWMReaderAdvanced, TRUE);
     check_interface(reader, &IID_IWMReaderAdvanced2, TRUE);
     check_interface(reader, &IID_IWMReaderAdvanced3, TRUE);
     check_interface(reader, &IID_IWMReaderAdvanced4, TRUE);
     check_interface(reader, &IID_IWMReaderAdvanced5, TRUE);
     check_interface(reader, &IID_IWMReaderAdvanced6, TRUE);
-    check_interface(reader, &IID_IWMHeaderInfo, TRUE);
-    check_interface(reader, &IID_IWMHeaderInfo2, TRUE);
-    check_interface(reader, &IID_IWMHeaderInfo3, TRUE);
-    check_interface(reader, &IID_IWMProfile, TRUE);
-    check_interface(reader, &IID_IWMProfile2, TRUE);
-    check_interface(reader, &IID_IWMProfile3, TRUE);
-    check_interface(reader, &IID_IWMPacketSize, TRUE);
-    check_interface(reader, &IID_IWMPacketSize2, TRUE);
-    check_interface(reader, &IID_IWMReaderAccelerator, TRUE);
-    check_interface(reader, &IID_IWMReaderTimecode, TRUE);
     check_interface(reader, &IID_IWMReaderNetworkConfig, TRUE);
     check_interface(reader, &IID_IWMReaderNetworkConfig2, TRUE);
-    check_interface(reader, &IID_IWMReaderStreamClock, TRUE);
-    check_interface(reader, &IID_IWMReaderTypeNegotiation, TRUE);
     check_interface(reader, &IID_IWMReaderPlaylistBurn, TRUE);
-    check_interface(reader, &IID_IWMLanguageList, TRUE);
-    check_interface(reader, &IID_IReferenceClock, TRUE);
+    check_interface(reader, &IID_IWMReaderStreamClock, TRUE);
+    check_interface(reader, &IID_IWMReaderTimecode, TRUE);
+    check_interface(reader, &IID_IWMReaderTypeNegotiation, TRUE);
 
     IWMReader_Release(reader);
 }
@@ -127,6 +127,7 @@ static void test_wmsyncreader_interfaces(void)
         return;
     }
 
+    check_interface(reader, &IID_IReferenceClock, FALSE);
     check_interface(reader, &IID_IWMDRMReader, FALSE);
     check_interface(reader, &IID_IWMDRMReader2, FALSE);
     check_interface(reader, &IID_IWMDRMReader3, FALSE);
@@ -142,21 +143,20 @@ static void test_wmsyncreader_interfaces(void)
     check_interface(reader, &IID_IWMReaderNetworkConfig2, FALSE);
     check_interface(reader, &IID_IWMReaderStreamClock, FALSE);
     check_interface(reader, &IID_IWMReaderTypeNegotiation, FALSE);
-    check_interface(reader, &IID_IReferenceClock, FALSE);
 
-    check_interface(reader, &IID_IWMSyncReader, TRUE);
-    check_interface(reader, &IID_IWMSyncReader2, TRUE);
     todo_wine check_interface(reader, &IID_IWMHeaderInfo, TRUE);
     todo_wine check_interface(reader, &IID_IWMHeaderInfo2, TRUE);
     todo_wine check_interface(reader, &IID_IWMHeaderInfo3, TRUE);
+    todo_wine check_interface(reader, &IID_IWMLanguageList, TRUE);
+    todo_wine check_interface(reader, &IID_IWMPacketSize, TRUE);
+    todo_wine check_interface(reader, &IID_IWMPacketSize2, TRUE);
     check_interface(reader, &IID_IWMProfile, TRUE);
     check_interface(reader, &IID_IWMProfile2, TRUE);
     check_interface(reader, &IID_IWMProfile3, TRUE);
-    todo_wine check_interface(reader, &IID_IWMPacketSize, TRUE);
-    todo_wine check_interface(reader, &IID_IWMPacketSize2, TRUE);
-    todo_wine check_interface(reader, &IID_IWMReaderTimecode, TRUE);
     todo_wine check_interface(reader, &IID_IWMReaderPlaylistBurn, TRUE);
-    todo_wine check_interface(reader, &IID_IWMLanguageList, TRUE);
+    todo_wine check_interface(reader, &IID_IWMReaderTimecode, TRUE);
+    check_interface(reader, &IID_IWMSyncReader, TRUE);
+    check_interface(reader, &IID_IWMSyncReader2, TRUE);
 
     IWMSyncReader_Release(reader);
 }
