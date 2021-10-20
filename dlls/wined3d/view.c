@@ -2021,7 +2021,7 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
 
     if (format_id == WINED3DFMT_UNKNOWN)
     {
-        ERR("Unsupported format %s.", debug_d3dformat(view_format->id));
+        ERR("Unsupported format %s.\n", debug_d3dformat(view_format->id));
         return;
     }
 
