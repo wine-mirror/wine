@@ -1404,16 +1404,14 @@ static void process_monitor_event(struct udev_monitor *monitor)
 
     if (!action)
         WARN("No action received\n");
-    else if (strcmp(action, "add") == 0)
+    else if (strcmp(action, "remove"))
         udev_add_device(dev);
-    else if (strcmp(action, "remove") == 0)
+    else
     {
         impl = find_device_from_udev(dev);
         if (impl) bus_event_queue_device_removed(&event_queue, &impl->unix_device);
         else WARN("failed to find device for udev device %p\n", dev);
     }
-    else
-        WARN("Unhandled action %s\n", debugstr_a(action));
 
     udev_device_unref(dev);
 }
