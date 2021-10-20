@@ -233,9 +233,9 @@ static void init_libxslt(void)
 static int to_utf8(int cp, unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
 {
     WCHAR *tmp;
-    int len;
+    int len = 0;
 
-    if (!in || !inlen) return 0;
+    if (!in || !inlen) goto done;
 
     len = MultiByteToWideChar(cp, 0, (const char *)in, *inlen, NULL, 0);
     tmp = heap_alloc(len * sizeof(WCHAR));
@@ -245,7 +245,7 @@ static int to_utf8(int cp, unsigned char *out, int *outlen, const unsigned char 
     len = WideCharToMultiByte(CP_UTF8, 0, tmp, len, (char *)out, *outlen, NULL, NULL);
     heap_free(tmp);
     if (!len) return -1;
-
+done:
     *outlen = len;
     return len;
 }
@@ -253,9 +253,9 @@ static int to_utf8(int cp, unsigned char *out, int *outlen, const unsigned char 
 static int from_utf8(int cp, unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
 {
     WCHAR *tmp;
-    int len;
+    int len = 0;
 
-    if (!in || !inlen) return 0;
+    if (!in || !inlen) goto done;
 
     len = MultiByteToWideChar(CP_UTF8, 0, (const char *)in, *inlen, NULL, 0);
     tmp = heap_alloc(len * sizeof(WCHAR));
@@ -265,7 +265,7 @@ static int from_utf8(int cp, unsigned char *out, int *outlen, const unsigned cha
     len = WideCharToMultiByte(cp, 0, tmp, len, (char *)out, *outlen, NULL, NULL);
     heap_free(tmp);
     if (!len) return -1;
-
+done:
     *outlen = len;
     return len;
 }
