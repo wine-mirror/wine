@@ -6848,6 +6848,185 @@ static void test_register_typelib(BOOL system_registration)
     DeleteFileW(filename);
 }
 
+static void test_register_typelib_64(void)
+{
+    ICreateTypeInfo *createti, *createti_co;
+    ELEMDESC elemdesc[5], elemdesc2[5];
+    FUNCDESC funcdesc, funcdesc2;
+    ITypeInfo *unknown, *tinfo;
+    ITypeLib *stdole, *typelib;
+    ICreateTypeLib2 *createtl;
+    WCHAR filename[MAX_PATH];
+    HREFTYPE hreftype;
+    HRESULT hr;
+
+    static const WCHAR wszStdOle2[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
+
+    static OLECHAR typelibW[] = { 'W','i','n','e','T','e','s','t','T','y','p','e','L','i','b',0};
+    static OLECHAR helpfileW[] = { 'C',':','\\','b','o','g','u','s','.','h','l','p',0 };
+    static OLECHAR dllfileW[] = { 'C',':','\\','b','o','g','u','s','.','d','l','l',0 };
+    static OLECHAR interface1W[] = { 'I','T','e','s','t','W','i','n','e','6', '4', 0};
+    static OLECHAR coclassW[] = {'W','i','n','e','T','e','s','t','C','o','c','l','a','s','s',0 };
+    static OLECHAR func1W[] = { 'f','u','n','c','1',0 };
+    static OLECHAR func2W[] = { 'f','u','n','c','2',0 };
+    static OLECHAR param1W[] = { 'p','a','r','a','m','1',0 };
+    static OLECHAR param2W[] = { 'p','a','r','a','m','2',0 };
+    static OLECHAR *names1[] = { func1W, param1W, param2W };
+    static OLECHAR *names2[] = { func2W, param1W };
+    static const GUID tlcustguid = { 0x512d2fec,0xcaf6,0x4c33,{0xbc,0x38,0x84,0x2f,0x2e,0x37,0x0d,0x7b} };
+    static const GUID coclassguid = { 0x317cd4dd,0x0ce0,0x4525,{0x8d,0x33,0x68,0x14,0x4c,0x53,0x60,0xe9} };
+    static const GUID interfaceguid = { 0x35cc5cea,0x11cc,0x4bca,{0x89,0x8c,0xf8,0x92,0x8e,0xb8,0xda,0x24} };
+
+    static const SYSKIND sys = SYS_WIN64;
+
+    hr = LoadTypeLib(wszStdOle2, &stdole);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &unknown);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    GetTempFileNameW(L".", L"tlb", 0, filename);
+
+    hr = CreateTypeLib2(sys, filename, &createtl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetName(createtl, typelibW);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetHelpFileName(createtl, helpfileW);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetHelpStringDll(createtl, dllfileW);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetGuid(createtl, &tlcustguid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetVersion(createtl, 1, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(createtl, coclassW, TKIND_COCLASS, &createti_co);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(createtl,  interface1W, TKIND_INTERFACE, &createti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_LayOut(createti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetGuid(createti, &interfaceguid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetVersion(createti, 1, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddRefTypeInfo(createti, unknown, &hreftype);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddImplType(createti, 0, hreftype);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    elemdesc[0].tdesc.vt = VT_UINT;
+    U(elemdesc[0]).idldesc.dwReserved = 0;
+    U(elemdesc[0]).idldesc.wIDLFlags = IDLFLAG_FIN;
+
+    elemdesc[1].tdesc.vt = VT_DECIMAL;
+    U(elemdesc[1]).idldesc.dwReserved = 0;
+    U(elemdesc[1]).idldesc.wIDLFlags = IDLFLAG_FIN;
+
+    memset(&funcdesc, 0, sizeof(FUNCDESC));
+    funcdesc.funckind = FUNC_PUREVIRTUAL;
+    funcdesc.invkind = INVOKE_FUNC;
+    funcdesc.callconv = CC_STDCALL;
+    funcdesc.cParams = 2;
+    funcdesc.memid = 0x1;
+    funcdesc.elemdescFunc.tdesc.vt = VT_HRESULT;
+    funcdesc.lprgelemdescParam = elemdesc;
+
+    hr = ICreateTypeInfo_AddFuncDesc(createti, 0, &funcdesc);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    elemdesc2[0].tdesc.vt = VT_UINT;
+    U(elemdesc2[0]).idldesc.dwReserved = 0;
+    U(elemdesc2[0]).idldesc.wIDLFlags = IDLFLAG_FIN | IDLFLAG_FOUT;
+
+    memset(&funcdesc2, 0, sizeof(FUNCDESC));
+    funcdesc2.funckind = FUNC_PUREVIRTUAL;
+    funcdesc2.invkind = INVOKE_FUNC;
+    funcdesc.callconv = CC_STDCALL;
+    funcdesc2.cParams = 1;
+    funcdesc2.memid = 0x2;
+    funcdesc2.elemdescFunc.tdesc.vt = VT_HRESULT;
+    funcdesc2.lprgelemdescParam = elemdesc2;
+
+    hr = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncHelpContext(createti, 0, 0xabcdefab);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncHelpContext(createti, 1, 0xabcdefab);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncAndParamNames(createti, 0, names1, 3);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncAndParamNames(createti, 1, names2, 2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetTypeFlags(createti, TYPEFLAG_FOLEAUTOMATION | TYPEFLAG_FNONEXTENSIBLE | TYPEFLAG_FDUAL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_QueryInterface(createti, &IID_ITypeInfo, (void**)&tinfo);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(tinfo, 0, &hreftype);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetGuid(createti_co, &coclassguid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddRefTypeInfo(createti_co, tinfo, &hreftype);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_AddImplType(createti_co, 0, hreftype);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_SetImplTypeFlags(createti_co, 0, IMPLTYPEFLAG_FDEFAULT);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeInfo_Release(createti_co);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ICreateTypeInfo_Release(createti);
+
+    hr = ICreateTypeLib2_SaveAllChanges(createtl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ICreateTypeLib2_Release(createtl);
+
+    trace("TypeLib to load: %ls\n", filename);
+    hr = LoadTypeLibEx(filename, REGKIND_NONE, &typelib);
+    ok(hr == S_OK, "got: %08x\n", hr);
+
+    if(typelib)
+    {
+        hr = RegisterTypeLib(typelib, filename, NULL);
+        if (hr == TYPE_E_REGISTRYACCESS)
+        {
+            win_skip("Insufficient privileges to register typelib in the registry\n");
+            ITypeLib_Release(typelib);
+            DeleteFileW(filename);
+            return;
+        }
+        ok(hr == S_OK, "got: %08x\n", hr);
+
+        ITypeLib_Release(typelib);
+    }
+
+    DeleteFileW(filename);
+}
+
 static void test_LoadTypeLib(void)
 {
     ITypeLib *tl;
@@ -8351,6 +8530,7 @@ START_TEST(typelib)
 
     test_register_typelib(TRUE);
     test_register_typelib(FALSE);
+    test_register_typelib_64();
     test_create_typelibs();
     test_LoadTypeLib();
     test_TypeInfo2_GetContainingTypeLib();
