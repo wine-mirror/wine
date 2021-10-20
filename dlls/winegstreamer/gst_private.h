@@ -115,6 +115,7 @@ HRESULT audio_converter_create(REFIID riid, void **ret) DECLSPEC_HIDDEN;
 
 struct wm_reader
 {
+    IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMProfile3 IWMProfile3_iface;
     LONG refcount;
 

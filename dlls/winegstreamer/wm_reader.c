@@ -31,7 +31,13 @@ static HRESULT WINAPI profile_QueryInterface(IWMProfile3 *iface, REFIID iid, voi
 
     TRACE("reader %p, iid %s, out %p.\n", reader, debugstr_guid(iid), out);
 
-    if (IsEqualIID(iid, &IID_IUnknown)
+    if (IsEqualIID(iid, &IID_IWMHeaderInfo)
+            || IsEqualIID(iid, &IID_IWMHeaderInfo2)
+            || IsEqualIID(iid, &IID_IWMHeaderInfo3))
+    {
+        *out = &reader->IWMHeaderInfo3_iface;
+    }
+    else if (IsEqualIID(iid, &IID_IUnknown)
             || IsEqualIID(iid, &IID_IWMProfile)
             || IsEqualIID(iid, &IID_IWMProfile2)
             || IsEqualIID(iid, &IID_IWMProfile3))
@@ -300,8 +306,215 @@ static const IWMProfile3Vtbl profile_vtbl =
     profile_GetExpectedPacketCount,
 };
 
+static struct wm_reader *impl_from_IWMHeaderInfo3(IWMHeaderInfo3 *iface)
+{
+    return CONTAINING_RECORD(iface, struct wm_reader, IWMHeaderInfo3_iface);
+}
+
+static HRESULT WINAPI header_info_QueryInterface(IWMHeaderInfo3 *iface, REFIID iid, void **out)
+{
+    struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
+
+    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+}
+
+static ULONG WINAPI header_info_AddRef(IWMHeaderInfo3 *iface)
+{
+    struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
+
+    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+}
+
+static ULONG WINAPI header_info_Release(IWMHeaderInfo3 *iface)
+{
+    struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
+
+    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+}
+
+static HRESULT WINAPI header_info_GetAttributeCount(IWMHeaderInfo3 *iface, WORD stream_number, WORD *count)
+{
+    FIXME("iface %p, stream_number %u, count %p, stub!\n", iface, stream_number, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetAttributeByIndex(IWMHeaderInfo3 *iface, WORD index, WORD *stream_number,
+        WCHAR *name, WORD *name_len, WMT_ATTR_DATATYPE *type, BYTE *value, WORD *size)
+{
+    FIXME("iface %p, index %u, stream_number %p, name %p, name_len %p, type %p, value %p, size %p, stub!\n",
+            iface, index, stream_number, name, name_len, type, value, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetAttributeByName(IWMHeaderInfo3 *iface, WORD *stream_number,
+        const WCHAR *name, WMT_ATTR_DATATYPE *type, BYTE *value, WORD *size)
+{
+    FIXME("iface %p, stream_number %p, name %s, type %p, value %p, size %p, stub!\n",
+            iface, stream_number, debugstr_w(name), type, value, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_SetAttribute(IWMHeaderInfo3 *iface, WORD stream_number,
+        const WCHAR *name, WMT_ATTR_DATATYPE type, const BYTE *value, WORD size)
+{
+    FIXME("iface %p, stream_number %u, name %s, type %#x, value %p, size %u, stub!\n",
+            iface, stream_number, debugstr_w(name), type, value, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetMarkerCount(IWMHeaderInfo3 *iface, WORD *count)
+{
+    FIXME("iface %p, count %p, stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetMarker(IWMHeaderInfo3 *iface,
+        WORD index, WCHAR *name, WORD *len, QWORD *time)
+{
+    FIXME("iface %p, index %u, name %p, len %p, time %p, stub!\n", iface, index, name, len, time);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_AddMarker(IWMHeaderInfo3 *iface, const WCHAR *name, QWORD time)
+{
+    FIXME("iface %p, name %s, time %s, stub!\n", iface, debugstr_w(name), debugstr_time(time));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_RemoveMarker(IWMHeaderInfo3 *iface, WORD index)
+{
+    FIXME("iface %p, index %u, stub!\n", iface, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetScriptCount(IWMHeaderInfo3 *iface, WORD *count)
+{
+    FIXME("iface %p, count %p, stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetScript(IWMHeaderInfo3 *iface, WORD index, WCHAR *type,
+        WORD *type_len, WCHAR *command, WORD *command_len, QWORD *time)
+{
+    FIXME("iface %p, index %u, type %p, type_len %p, command %p, command_len %p, time %p, stub!\n",
+            iface, index, type, type_len, command, command_len, time);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_AddScript(IWMHeaderInfo3 *iface,
+        const WCHAR *type, const WCHAR *command, QWORD time)
+{
+    FIXME("iface %p, type %s, command %s, time %s, stub!\n",
+            iface, debugstr_w(type), debugstr_w(command), debugstr_time(time));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_RemoveScript(IWMHeaderInfo3 *iface, WORD index)
+{
+    FIXME("iface %p, index %u, stub!\n", iface, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetCodecInfoCount(IWMHeaderInfo3 *iface, DWORD *count)
+{
+    FIXME("iface %p, count %p, stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetCodecInfo(IWMHeaderInfo3 *iface, DWORD index, WORD *name_len,
+        WCHAR *name, WORD *desc_len, WCHAR *desc, WMT_CODEC_INFO_TYPE *type, WORD *size, BYTE *info)
+{
+    FIXME("iface %p, index %u, name_len %p, name %p, desc_len %p, desc %p, type %p, size %p, info %p, stub!\n",
+            iface, index, name_len, name, desc_len, desc, type, size, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetAttributeCountEx(IWMHeaderInfo3 *iface, WORD stream_number, WORD *count)
+{
+    FIXME("iface %p, stream_number %u, count %p, stub!\n", iface, stream_number, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetAttributeIndices(IWMHeaderInfo3 *iface, WORD stream_number,
+        const WCHAR *name, WORD *lang_index, WORD *indices, WORD *count)
+{
+    FIXME("iface %p, stream_number %u, name %s, lang_index %p, indices %p, count %p, stub!\n",
+            iface, stream_number, debugstr_w(name), lang_index, indices, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_GetAttributeByIndexEx(IWMHeaderInfo3 *iface,
+        WORD stream_number, WORD index, WCHAR *name, WORD *name_len,
+        WMT_ATTR_DATATYPE *type, WORD *lang_index, BYTE *value, DWORD *size)
+{
+    FIXME("iface %p, stream_number %u, index %u, name %p, name_len %p,"
+            " type %p, lang_index %p, value %p, size %p, stub!\n",
+            iface, stream_number, index, debugstr_w(name), name_len, type, lang_index, value, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_ModifyAttribute(IWMHeaderInfo3 *iface, WORD stream_number,
+        WORD index, WMT_ATTR_DATATYPE type, WORD lang_index, const BYTE *value, DWORD size)
+{
+    FIXME("iface %p, stream_number %u, index %u, type %#x, lang_index %u, value %p, size %u, stub!\n",
+            iface, stream_number, index, type, lang_index, value, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_AddAttribute(IWMHeaderInfo3 *iface,
+        WORD stream_number, const WCHAR *name, WORD *index,
+        WMT_ATTR_DATATYPE type, WORD lang_index, const BYTE *value, DWORD size)
+{
+    FIXME("iface %p, stream_number %u, name %s, index %p, type %#x, lang_index %u, value %p, size %u, stub!\n",
+            iface, stream_number, debugstr_w(name), index, type, lang_index, value, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_DeleteAttribute(IWMHeaderInfo3 *iface, WORD stream_number, WORD index)
+{
+    FIXME("iface %p, stream_number %u, index %u, stub!\n", iface, stream_number, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI header_info_AddCodecInfo(IWMHeaderInfo3 *iface, const WCHAR *name,
+        const WCHAR *desc, WMT_CODEC_INFO_TYPE type, WORD size, BYTE *info)
+{
+    FIXME("iface %p, name %s, desc %s, type %#x, size %u, info %p, stub!\n",
+            info, debugstr_w(name), debugstr_w(desc), type, size, info);
+    return E_NOTIMPL;
+}
+
+static const IWMHeaderInfo3Vtbl header_info_vtbl =
+{
+    header_info_QueryInterface,
+    header_info_AddRef,
+    header_info_Release,
+    header_info_GetAttributeCount,
+    header_info_GetAttributeByIndex,
+    header_info_GetAttributeByName,
+    header_info_SetAttribute,
+    header_info_GetMarkerCount,
+    header_info_GetMarker,
+    header_info_AddMarker,
+    header_info_RemoveMarker,
+    header_info_GetScriptCount,
+    header_info_GetScript,
+    header_info_AddScript,
+    header_info_RemoveScript,
+    header_info_GetCodecInfoCount,
+    header_info_GetCodecInfo,
+    header_info_GetAttributeCountEx,
+    header_info_GetAttributeIndices,
+    header_info_GetAttributeByIndexEx,
+    header_info_ModifyAttribute,
+    header_info_AddAttribute,
+    header_info_DeleteAttribute,
+    header_info_AddCodecInfo,
+};
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
+    reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
     reader->IWMProfile3_iface.lpVtbl = &profile_vtbl;
     reader->refcount = 1;
     reader->ops = ops;

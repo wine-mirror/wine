@@ -32,7 +32,6 @@ struct async_reader
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
-    IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMLanguageList IWMLanguageList_iface;
     IReferenceClock IReferenceClock_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
@@ -1258,226 +1257,6 @@ static const IWMReaderPlaylistBurnVtbl WMReaderPlaylistBurnVtbl =
     playlist_EndPlaylistBurn
 };
 
-static struct async_reader *impl_from_IWMHeaderInfo3(IWMHeaderInfo3 *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, IWMHeaderInfo3_iface);
-}
-
-static HRESULT WINAPI headerinfo_QueryInterface(IWMHeaderInfo3 *iface, REFIID riid, void **ppv)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
-}
-
-static ULONG WINAPI headerinfo_AddRef(IWMHeaderInfo3 *iface)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    return IWMReader_AddRef(&This->IWMReader_iface);
-}
-
-static ULONG WINAPI headerinfo_Release(IWMHeaderInfo3 *iface)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    return IWMReader_Release(&This->IWMReader_iface);
-}
-
-static HRESULT WINAPI headerinfo_GetAttributeCount(IWMHeaderInfo3 *iface, WORD stream_num, WORD *attributes)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %p\n", This, stream_num, attributes);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetAttributeByIndex(IWMHeaderInfo3 *iface, WORD index, WORD *stream_num,
-        WCHAR *name, WORD *name_len, WMT_ATTR_DATATYPE *type, BYTE *value, WORD *length)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %p, %p, %p, %p, %p, %p\n", This, index, stream_num, name, name_len, type,
-            value, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetAttributeByName(IWMHeaderInfo3 *iface, WORD *stream_num, LPCWSTR name,
-        WMT_ATTR_DATATYPE *type, BYTE *value, WORD *length)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %p, %s, %p, %p, %p\n", This, stream_num, debugstr_w(name), type, value, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_SetAttribute(IWMHeaderInfo3 *iface, WORD stream_num, LPCWSTR name,
-        WMT_ATTR_DATATYPE type, const BYTE *value, WORD length)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %s, %d, %p, %d\n", This, stream_num, debugstr_w(name), type, value, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetMarkerCount(IWMHeaderInfo3 *iface, WORD *markers)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %p\n", This, markers);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetMarker(IWMHeaderInfo3 *iface, WORD index, WCHAR *marker_name,
-        WORD *marker_len, QWORD *marker_time)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %p, %p, %p\n", This, index, marker_name, marker_len, marker_time);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_AddMarker(IWMHeaderInfo3 *iface, LPCWSTR_WMSDK_TYPE_SAFE marker_name,
-        QWORD marker_time)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %p, %s\n", This, marker_name, wine_dbgstr_longlong(marker_time));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_RemoveMarker(IWMHeaderInfo3 *iface, WORD index)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d\n", This, index);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetScriptCount(IWMHeaderInfo3 *iface, WORD *scripts)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %p\n", This, scripts);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetScript(IWMHeaderInfo3 *iface, WORD index, WCHAR *type,
-        WORD *type_len, WCHAR *command, WORD *command_len, QWORD *script_time)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %p, %p, %p, %p, %p\n", This, index, type, type_len, command, command_len, script_time);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_AddScript(IWMHeaderInfo3 *iface, LPCWSTR_WMSDK_TYPE_SAFE type,
-        LPCWSTR_WMSDK_TYPE_SAFE command, QWORD script_time)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %s, %s, %s\n", This, debugstr_w(type), debugstr_w(command), wine_dbgstr_longlong(script_time));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_RemoveScript(IWMHeaderInfo3 *iface, WORD index)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d\n", This, index);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetCodecInfoCount(IWMHeaderInfo3 *iface, DWORD *codec_infos)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %p\n", This, codec_infos);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetCodecInfo(IWMHeaderInfo3 *iface, DWORD index, WORD *name_len,
-        WCHAR *name, WORD *description_len, WCHAR *description, WMT_CODEC_INFO_TYPE *codec_type,
-        WORD *codec_info_cnt, BYTE *codec_info)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %p, %p, %p, %p, %p, %p, %p\n", This, index, name_len, name, description_len,
-            description, codec_type, codec_info_cnt, codec_info);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetAttributeCountEx(IWMHeaderInfo3 *iface, WORD stream_num, WORD *attributes)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %p\n", This, stream_num, attributes);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetAttributeIndices(IWMHeaderInfo3 *iface, WORD stream_num, LPCWSTR name,
-        WORD *lang_index, WORD *indices, WORD *count)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %s, %p, %p, %p\n", This, stream_num, debugstr_w(name), lang_index, indices, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_GetAttributeByIndexEx(IWMHeaderInfo3 *iface, WORD stream_num,
-        WORD index, LPWSTR name, WORD *name_len, WMT_ATTR_DATATYPE *type, WORD *lang_index,
-        BYTE *value, DWORD *data_len)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %d, %s, %p, %p, %p, %p, %p\n", This, stream_num, index, debugstr_w(name), name_len,
-            type, lang_index, value, data_len);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_ModifyAttribute(IWMHeaderInfo3 *iface, WORD stream_num,
-        WORD index, WMT_ATTR_DATATYPE type, WORD lang_index, const BYTE *value, DWORD length)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %d, %d, %d, %p, %d\n", This, stream_num, index, type, lang_index, value, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_AddAttribute(IWMHeaderInfo3 *iface, WORD stream_num, LPCWSTR name,
-        WORD *index, WMT_ATTR_DATATYPE type, WORD lang_index, const BYTE *value, DWORD length)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %s, %p, %d, %d, %p, %d\n", This, stream_num, debugstr_w(name), index,
-            type, lang_index, value, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_DeleteAttribute(IWMHeaderInfo3 *iface, WORD stream_num, WORD index)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %d, %d\n", This, stream_num, index);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI headerinfo_AddCodecInfo(IWMHeaderInfo3 *iface, LPCWSTR_WMSDK_TYPE_SAFE name,
-        LPCWSTR_WMSDK_TYPE_SAFE description, WMT_CODEC_INFO_TYPE codec_type, WORD codec_info_cnt,
-        BYTE *codec_info)
-{
-    struct async_reader *This = impl_from_IWMHeaderInfo3(iface);
-    FIXME("%p, %p, %p, %d, %d, %p\n", This, name, description, codec_type, codec_info_cnt,
-            codec_info);
-    return E_NOTIMPL;
-}
-
-static const IWMHeaderInfo3Vtbl WMHeaderInfo3Vtbl =
-{
-    headerinfo_QueryInterface,
-    headerinfo_AddRef,
-    headerinfo_Release,
-    headerinfo_GetAttributeCount,
-    headerinfo_GetAttributeByIndex,
-    headerinfo_GetAttributeByName,
-    headerinfo_SetAttribute,
-    headerinfo_GetMarkerCount,
-    headerinfo_GetMarker,
-    headerinfo_AddMarker,
-    headerinfo_RemoveMarker,
-    headerinfo_GetScriptCount,
-    headerinfo_GetScript,
-    headerinfo_AddScript,
-    headerinfo_RemoveScript,
-    headerinfo_GetCodecInfoCount,
-    headerinfo_GetCodecInfo,
-    headerinfo_GetAttributeCountEx,
-    headerinfo_GetAttributeIndices,
-    headerinfo_GetAttributeByIndexEx,
-    headerinfo_ModifyAttribute,
-    headerinfo_AddAttribute,
-    headerinfo_DeleteAttribute,
-    headerinfo_AddCodecInfo
-};
-
-
 static struct async_reader *impl_from_IWMLanguageList(IWMLanguageList *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, IWMLanguageList_iface);
@@ -1676,11 +1455,6 @@ static void *async_reader_query_interface(struct wm_reader *iface, REFIID iid)
     if (IsEqualIID(iid, &IID_IReferenceClock))
         return &reader->IReferenceClock_iface;
 
-    if (IsEqualIID(iid, &IID_IWMHeaderInfo)
-            || IsEqualIID(iid, &IID_IWMHeaderInfo2)
-            || IsEqualIID(iid, &IID_IWMHeaderInfo3))
-        return &reader->IWMHeaderInfo3_iface;
-
     if (IsEqualIID(iid, &IID_IWMLanguageList))
         return &reader->IWMLanguageList_iface;
 
@@ -1748,7 +1522,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     wm_reader_init(&object->reader, &async_reader_ops);
 
     object->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
-    object->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
     object->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
     object->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
     object->IWMReader_iface.lpVtbl = &WMReaderVtbl;
