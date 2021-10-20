@@ -472,27 +472,14 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
     }
     LeaveCriticalSection(&This->base.crit);
 
-    warp_check( This, FALSE );
     return DI_OK;
-}
-
-/******************************************************************************
-  *     GetDeviceData : gets buffered input data.
-  */
-static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
-        DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    HRESULT res;
-
-    res = IDirectInputDevice2WImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
-    if (SUCCEEDED(res)) warp_check( This, FALSE );
-    return res;
 }
 
 static HRESULT mouse_internal_poll( IDirectInputDevice8W *iface )
 {
+    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
     check_dinput_events();
+    warp_check( impl, FALSE );
     return DI_OK;
 }
 
@@ -710,7 +697,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
     SysMouseWImpl_GetDeviceState,
-    SysMouseWImpl_GetDeviceData,
+    IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
