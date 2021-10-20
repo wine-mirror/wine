@@ -140,7 +140,7 @@ static DWORD get_drive_type( char letter )
     else
     {
         WCHAR buffer[80];
-        DWORD size = ARRAY_SIZE(buffer);
+        DWORD size = sizeof(buffer);
 
         if (!RegQueryValueExW( hKey, driveValue, NULL, NULL, (LPBYTE)buffer, &size ))
         {
