@@ -701,6 +701,8 @@ XMKMF
 PTHREAD_LIBS
 ZLIB_PE_LIBS
 ZLIB_PE_CFLAGS
+XSLT_PE_LIBS
+XSLT_PE_CFLAGS
 XML2_PE_LIBS
 XML2_PE_CFLAGS
 TIFF_PE_LIBS
@@ -1796,6 +1798,7 @@ enable_wbemuuid
 enable_wine
 enable_wmcodecdspuuid
 enable_xml2
+enable_xslt
 enable_zlib
 enable_loader
 enable_nls
@@ -1937,6 +1940,8 @@ TIFF_PE_CFLAGS
 TIFF_PE_LIBS
 XML2_PE_CFLAGS
 XML2_PE_LIBS
+XSLT_PE_CFLAGS
+XSLT_PE_LIBS
 ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS
 XMKMF
@@ -2735,6 +2740,11 @@ Some influential environment variables:
               version
   XML2_PE_LIBS
               Linker flags for the PE libxml2, overriding the bundled version
+  XSLT_PE_CFLAGS
+              C compiler flags for the PE libxslt, overriding the bundled
+              version
+  XSLT_PE_LIBS
+              Linker flags for the PE libxslt, overriding the bundled version
   ZLIB_PE_CFLAGS
               C compiler flags for the PE zlib, overriding the bundled version
   ZLIB_PE_LIBS
@@ -10776,6 +10786,19 @@ else
 fi
 $as_echo "$as_me:${as_lineno-$LINENO}: libxml2 cflags: $XML2_PE_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libxml2 libs: $XML2_PE_LIBS" >&5
+
+if ${XSLT_PE_CFLAGS:+false} :; then :
+  XSLT_PE_CFLAGS="-I\$(top_srcdir)/libs/xslt"
+else
+  enable_libxslt=no
+fi
+if ${XSLT_PE_LIBS:+false} :; then :
+  XSLT_PE_LIBS=xslt
+else
+  enable_libxslt=no
+fi
+$as_echo "$as_me:${as_lineno-$LINENO}: libxslt cflags: $XSLT_PE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libxslt libs: $XSLT_PE_LIBS" >&5
 
 if ${ZLIB_PE_CFLAGS:+false} :; then :
   ZLIB_PE_CFLAGS="-I\$(top_srcdir)/libs/zlib -DFAR= -DZ_SOLO"
@@ -19432,6 +19455,8 @@ TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
 TIFF_PE_LIBS = $TIFF_PE_LIBS
 XML2_PE_CFLAGS = $XML2_PE_CFLAGS
 XML2_PE_LIBS = $XML2_PE_LIBS
+XSLT_PE_CFLAGS = $XSLT_PE_CFLAGS
+XSLT_PE_LIBS = $XSLT_PE_LIBS
 ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS = $ZLIB_PE_LIBS
 PTHREAD_LIBS = $PTHREAD_LIBS
@@ -20731,6 +20756,7 @@ wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile libs/wmcodecdspuuid enable_wmcodecdspuuid
 wine_fn_config_makefile libs/xml2 enable_xml2
+wine_fn_config_makefile libs/xslt enable_xslt
 wine_fn_config_makefile libs/zlib enable_zlib
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
