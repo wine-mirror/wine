@@ -279,13 +279,19 @@ _FUNCTION_ {
 			*(format + 2) == '4') {
 			I64_prefix = 1;
 			format += 2;
+			break;
 		    }
-		    break;
+		    else if (*(format + 1) == '3' &&
+			     *(format + 2) == '2') {
+			format += 2;
+			break;
+		    }
+		    /* fall through */
 #if _MSVCR_VER == 0 || _MSVCR_VER >= 140
                 case 'z':
+#endif
                     if (sizeof(void *) == sizeof(LONGLONG)) I64_prefix = 1;
                     break;
-#endif
 		default:
 		    prefix_finished = 1;
 		}
