@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <dirent.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -46,6 +48,9 @@
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
+#endif
+#ifdef HAVE_SYS_INOTIFY_H
+# include <sys/inotify.h>
 #endif
 
 #ifdef HAVE_LINUX_INPUT_H
@@ -112,6 +117,7 @@ struct base_device
     void (*read_report)(struct unix_device *iface);
 
     struct udev_device *udev_device;
+    char devnode[MAX_PATH];
     int device_fd;
 };
 
@@ -1177,7 +1183,7 @@ static void hidraw_set_quirks(struct hidraw_device *impl, DWORD bus_type, WORD v
         impl->quirks |= QUIRK_DS4_BT;
 }
 
-static void udev_add_device(struct udev_device *dev)
+static void udev_add_device(struct udev_device *dev, int fd)
 {
     struct device_desc desc =
     {
@@ -1186,12 +1192,15 @@ static void udev_add_device(struct udev_device *dev)
     struct base_device *impl;
     const char *subsystem;
     const char *devnode;
-    int fd, bus = 0;
+    int bus = 0;
 
     if (!(devnode = udev_device_get_devnode(dev)))
+    {
+        if (fd >= 0) close(fd);
         return;
+    }
 
-    if ((fd = open(devnode, O_RDWR)) == -1)
+    if (fd < 0 && (fd = open(devnode, O_RDWR)) == -1)
     {
         WARN("Unable to open udev device %s: %s\n", debugstr_a(devnode), strerror(errno));
         return;
@@ -1277,6 +1286,7 @@ static void udev_add_device(struct udev_device *dev)
         list_add_tail(&device_list, &impl->unix_device.entry);
         impl->read_report = hidraw_device_read_report;
         impl->udev_device = udev_device_ref(dev);
+        strcpy(impl->devnode, devnode);
         impl->device_fd = fd;
         hidraw_set_quirks((struct hidraw_device *)impl, bus, desc.vid, desc.pid);
 
@@ -1289,6 +1299,7 @@ static void udev_add_device(struct udev_device *dev)
         list_add_tail(&device_list, &impl->unix_device.entry);
         impl->read_report = lnxev_device_read_report;
         impl->udev_device = udev_device_ref(dev);
+        strcpy(impl->devnode, devnode);
         impl->device_fd = fd;
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
@@ -1296,7 +1307,229 @@ static void udev_add_device(struct udev_device *dev)
 #endif
 }
 
-static void build_initial_deviceset(void)
+#ifdef HAVE_SYS_INOTIFY_H
+static int dev_watch = -1;
+#ifdef HAS_PROPER_INPUT_HEADER
+static int devinput_watch = -1;
+#endif
+
+static void maybe_add_devnode(const char *base, const char *dir, const char *subsystem)
+{
+    char *syspath = NULL, devnode[MAX_PATH], syslink[MAX_PATH];
+    struct udev_device *dev = NULL;
+    const char *udev_devnode;
+    int fd = -1;
+
+    TRACE("Considering %s/%s...\n", dir, base);
+
+    snprintf(devnode, sizeof(devnode), "%s/%s", dir, base);
+    if ((fd = open(devnode, O_RDWR)) < 0)
+    {
+        /* When using inotify monitoring, quietly ignore device nodes that we cannot read,
+         * without emitting a warning.
+         *
+         * We can expect that a significant number of device nodes will be permanently
+         * unreadable, such as the device nodes for keyboards and mice. We can also expect
+         * that joysticks and game controllers will be temporarily unreadable until udevd
+         * chmods them; we'll get another chance to open them when their attributes change. */
+        TRACE("Unable to open %s, ignoring: %s\n", debugstr_a(devnode), strerror(errno));
+        return;
+    }
+
+    snprintf(syslink, sizeof(syslink), "/sys/class/%s/%s", subsystem, base);
+    TRACE("Resolving real path to %s\n", debugstr_a(syslink));
+
+    if (!(syspath = realpath(syslink, NULL)))
+    {
+        WARN("Unable to resolve path \"%s\" for \"%s/%s\": %s\n",
+             debugstr_a(syslink), dir, base, strerror(errno));
+        goto error;
+    }
+
+    TRACE("Creating udev_device for %s\n", syspath);
+    if (!(dev = udev_device_new_from_syspath(udev_context, syspath)))
+    {
+        WARN("failed to create udev device from syspath %s\n", syspath);
+        goto error;
+    }
+
+    if (!(udev_devnode = udev_device_get_devnode(dev)) || strcmp(devnode, udev_devnode) != 0)
+    {
+        WARN("Tried to get udev device for \"%s\" but device node of \"%s\" -> \"%s\" is \"%s\"\n",
+             debugstr_a(devnode), debugstr_a(syslink), debugstr_a(syspath), debugstr_a(udev_devnode));
+        goto error;
+    }
+
+    TRACE("Adding device for %s\n", syspath);
+    udev_add_device(dev, fd);
+    udev_device_unref(dev);
+    return;
+
+error:
+    if (dev) udev_device_unref(dev);
+    free(syspath);
+    close(fd);
+}
+
+static void build_initial_deviceset_direct(void)
+{
+    struct dirent *dent;
+    int n, len;
+    DIR *dir;
+
+    if (!options.disable_hidraw)
+    {
+        TRACE("Initial enumeration of /dev/hidraw*\n");
+        if (!(dir = opendir("/dev"))) WARN("Unable to open /dev: %s\n", strerror(errno));
+        else
+        {
+            for (dent = readdir(dir); dent; dent = readdir(dir))
+            {
+                if (sscanf(dent->d_name, "hidraw%u%n", &n, &len) != 1 || len != strlen(dent->d_name))
+                    WARN("ignoring %s, name doesn't match hidraw%%u\n", debugstr_a(dent->d_name));
+                else
+                    maybe_add_devnode(dent->d_name, "/dev", "hidraw");
+            }
+            closedir(dir);
+        }
+    }
+#ifdef HAS_PROPER_INPUT_HEADER
+    if (!options.disable_input)
+    {
+        TRACE("Initial enumeration of /dev/input/event*\n");
+        if (!(dir = opendir("/dev/input"))) WARN("Unable to open /dev/input: %s\n", strerror(errno));
+        else
+        {
+            for (dent = readdir(dir); dent; dent = readdir(dir))
+            {
+                if (sscanf(dent->d_name, "event%u%n", &n, &len) != 1 || len != strlen(dent->d_name))
+                    WARN("ignoring %s, name doesn't match event%%u\n", debugstr_a(dent->d_name));
+                else
+                    maybe_add_devnode(dent->d_name, "/dev/input", "input");
+            }
+            closedir(dir);
+        }
+    }
+#endif
+}
+
+static int create_inotify(void)
+{
+    int systems = 0, fd, flags = IN_CREATE | IN_DELETE | IN_MOVE | IN_ATTRIB;
+
+    if ((fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC)) < 0)
+    {
+        WARN("Unable to get inotify fd\n");
+        return fd;
+    }
+
+    if (!options.disable_hidraw)
+    {
+        /* We need to watch for attribute changes in addition to
+         * creation, because when a device is first created, it has
+         * permissions that we can't read. When udev chmods it to
+         * something that we maybe *can* read, we'll get an
+         * IN_ATTRIB event to tell us. */
+        dev_watch = inotify_add_watch(fd, "/dev", flags);
+        if (dev_watch < 0) WARN("Unable to initialize inotify for /dev: %s\n", strerror(errno));
+        else systems++;
+    }
+#ifdef HAS_PROPER_INPUT_HEADER
+    if (!options.disable_input)
+    {
+        devinput_watch = inotify_add_watch(fd, "/dev/input", flags);
+        if (devinput_watch < 0) WARN("Unable to initialize inotify for /dev/input: %s\n", strerror(errno));
+        else systems++;
+    }
+#endif
+    if (systems == 0)
+    {
+        WARN("No subsystems added to monitor\n");
+        close(fd);
+        return -1;
+    }
+
+    return fd;
+}
+
+static struct base_device *find_device_from_devnode(const char *path)
+{
+    struct base_device *impl;
+
+    LIST_FOR_EACH_ENTRY(impl, &device_list, struct base_device, unix_device.entry)
+        if (!strcmp(impl->devnode, path)) return impl;
+
+    return NULL;
+}
+
+static void maybe_remove_devnode(const char *base, const char *dir)
+{
+    struct base_device *impl;
+    char devnode[MAX_PATH];
+
+    snprintf(devnode, sizeof(devnode), "%s/%s", dir, base);
+    impl = find_device_from_devnode(devnode);
+    if (impl) bus_event_queue_device_removed(&event_queue, &impl->unix_device);
+    else WARN("failed to find device for path %s\n", devnode);
+}
+
+static void process_inotify_event(int fd)
+{
+    union
+    {
+        struct inotify_event event;
+        char storage[4096];
+        char enough_for_inotify[sizeof(struct inotify_event) + NAME_MAX + 1];
+    } buf;
+    ssize_t bytes;
+    int n, len;
+
+    if ((bytes = read(fd, &buf, sizeof(buf))) < 0)
+        WARN("read failed: %u %s\n", errno, strerror(errno));
+    else while (bytes > 0)
+    {
+        if (buf.event.len > 0)
+        {
+            if (buf.event.wd == dev_watch)
+            {
+                if (sscanf(buf.event.name, "hidraw%u%n", &n, &len) != 1 || len != strlen(buf.event.name))
+                    WARN("ignoring %s, name doesn't match hidraw%%u\n", debugstr_a(buf.event.name));
+                else if (buf.event.mask & (IN_DELETE | IN_MOVED_FROM))
+                    maybe_remove_devnode(buf.event.name, "/dev");
+                else if (buf.event.mask & (IN_CREATE | IN_MOVED_TO))
+                    maybe_add_devnode(buf.event.name, "/dev", "hidraw");
+                else if (buf.event.mask & IN_ATTRIB)
+                {
+                    maybe_remove_devnode(buf.event.name, "/dev");
+                    maybe_add_devnode(buf.event.name, "/dev", "hidraw");
+                }
+            }
+#ifdef HAS_PROPER_INPUT_HEADER
+            else if (buf.event.wd == devinput_watch)
+            {
+                if (sscanf(buf.event.name, "event%u%n", &n, &len) != 1 || len != strlen(buf.event.name))
+                    WARN("ignoring %s, name doesn't match event%%u\n", debugstr_a(buf.event.name));
+                else if (buf.event.mask & (IN_DELETE | IN_MOVED_FROM))
+                    maybe_remove_devnode(buf.event.name, "/dev/input");
+                else if (buf.event.mask & (IN_CREATE | IN_MOVED_TO))
+                    maybe_add_devnode(buf.event.name, "/dev/input", "input");
+                else if (buf.event.mask & IN_ATTRIB)
+                {
+                    maybe_remove_devnode(buf.event.name, "/dev/input");
+                    maybe_add_devnode(buf.event.name, "/dev/input", "input");
+                }
+            }
+#endif
+        }
+
+        len = sizeof(struct inotify_event) + buf.event.len;
+        bytes -= len;
+        if (bytes > 0) memmove(&buf.storage[0], &buf.storage[len], bytes);
+    }
+}
+#endif /* HAVE_SYS_INOTIFY_H */
+
+static void build_initial_deviceset_udevd(void)
 {
     struct udev_enumerate *enumerate;
     struct udev_list_entry *devices, *dev_list_entry;
@@ -1331,7 +1564,7 @@ static void build_initial_deviceset(void)
         path = udev_list_entry_get_name(dev_list_entry);
         if ((dev = udev_device_new_from_syspath(udev_context, path)))
         {
-            udev_add_device(dev);
+            udev_add_device(dev, -1);
             udev_device_unref(dev);
         }
     }
@@ -1405,7 +1638,7 @@ static void process_monitor_event(struct udev_monitor *monitor)
     if (!action)
         WARN("No action received\n");
     else if (strcmp(action, "remove"))
-        udev_add_device(dev);
+        udev_add_device(dev, -1);
     else
     {
         impl = find_device_from_udev(dev);
@@ -1418,7 +1651,7 @@ static void process_monitor_event(struct udev_monitor *monitor)
 
 NTSTATUS udev_bus_init(void *args)
 {
-    int monitor_fd;
+    int monitor_fd = -1;
 
     TRACE("args %p\n", args);
 
@@ -1436,11 +1669,21 @@ NTSTATUS udev_bus_init(void *args)
         goto error;
     }
 
-    if (!(udev_monitor = create_monitor(&monitor_fd)))
+#if HAVE_SYS_INOTIFY_H
+    if (options.disable_udevd) monitor_fd = create_inotify();
+    if (monitor_fd < 0) options.disable_udevd = FALSE;
+#else
+    if (options.disable_udevd) ERR("inotify support not compiled in!\n");
+    options.disable_udevd = FALSE;
+#endif
+
+    if (monitor_fd < 0 && !(udev_monitor = create_monitor(&monitor_fd)))
     {
         ERR("UDEV monitor creation failed\n");
         goto error;
     }
+
+    if (monitor_fd < 0) goto error;
 
     poll_fds[0].fd = monitor_fd;
     poll_fds[0].events = POLLIN;
@@ -1450,10 +1693,15 @@ NTSTATUS udev_bus_init(void *args)
     poll_fds[1].revents = 0;
     poll_count = 2;
 
-    build_initial_deviceset();
+    if (!options.disable_udevd) build_initial_deviceset_udevd();
+#if HAVE_SYS_INOTIFY_H
+    else build_initial_deviceset_direct();
+#endif
+
     return STATUS_SUCCESS;
 
 error:
+    if (udev_monitor) udev_monitor_unref(udev_monitor);
     if (udev_context) udev_unref(udev_context);
     udev_context = NULL;
     close(deviceloop_control[0]);
@@ -1486,7 +1734,13 @@ NTSTATUS udev_bus_wait(void *args)
         while (poll(pfd, count, -1) <= 0) {}
 
         pthread_mutex_lock(&udev_cs);
-        if (pfd[0].revents) process_monitor_event(udev_monitor);
+        if (pfd[0].revents)
+        {
+            if (udev_monitor) process_monitor_event(udev_monitor);
+#if HAVE_SYS_INOTIFY_H
+            else process_inotify_event(pfd[0].fd);
+#endif
+        }
         if (pfd[1].revents) read(deviceloop_control[0], &ctrl, 1);
         for (i = 2; i < count; ++i)
         {
@@ -1499,7 +1753,7 @@ NTSTATUS udev_bus_wait(void *args)
 
     TRACE("UDEV main loop exiting\n");
     bus_event_queue_destroy(&event_queue);
-    udev_monitor_unref(udev_monitor);
+    if (udev_monitor) udev_monitor_unref(udev_monitor);
     udev_unref(udev_context);
     udev_context = NULL;
     close(deviceloop_control[0]);

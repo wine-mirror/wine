@@ -56,6 +56,7 @@ struct udev_bus_options
 {
     BOOL disable_hidraw;
     BOOL disable_input;
+    BOOL disable_udevd;
 };
 
 struct iohid_bus_options
