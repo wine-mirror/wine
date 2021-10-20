@@ -3091,7 +3091,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
 
                 buffer_vk = wined3d_buffer_vk(buffer);
                 wined3d_buffer_load(buffer, &context_vk->c, state);
-                if (!buffer_vk->bo_user.valid)
+                if (!buffer_vk->b.bo_user.valid)
                 {
                     if (pipeline == WINED3D_PIPELINE_GRAPHICS)
                         context_invalidate_state(&context_vk->c, STATE_GRAPHICS_CONSTANT_BUFFER(binding->shader_type));
@@ -3257,7 +3257,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         buffer_vk = wined3d_buffer_vk(buffer);
         wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
         wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_VERTEX_BUFFER);
-        if (!buffer_vk->bo_user.valid)
+        if (!buffer_vk->b.bo_user.valid)
             context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     }
 
@@ -3272,7 +3272,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
             wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_STREAM_OUTPUT);
             wined3d_buffer_invalidate_location(&buffer_vk->b, ~WINED3D_LOCATION_BUFFER);
-            if (!buffer_vk->bo_user.valid)
+            if (!buffer_vk->b.bo_user.valid)
                 context_vk->update_stream_output = 1;
         }
         context_vk->c.transform_feedback_active = 1;
@@ -3283,7 +3283,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         buffer_vk = wined3d_buffer_vk(state->index_buffer);
         wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
         wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_INDEX_BUFFER);
-        if (!buffer_vk->bo_user.valid)
+        if (!buffer_vk->b.bo_user.valid)
             context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     }
 

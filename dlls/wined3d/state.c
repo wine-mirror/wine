@@ -4458,7 +4458,7 @@ static void indexbuffer(struct wined3d_context *context, const struct wined3d_st
 
     buffer_gl = wined3d_buffer_gl(state->index_buffer);
     GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_gl->bo.id));
-    buffer_gl->bo_user.valid = true;
+    buffer_gl->b.bo_user.valid = true;
 }
 
 static void depth_clip(const struct wined3d_rasterizer_state *r, const struct wined3d_gl_info *gl_info)
@@ -4575,7 +4575,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
         buffer_gl = wined3d_buffer_gl(buffer_state->buffer);
         GL_EXTCALL(glBindBufferRange(GL_UNIFORM_BUFFER, base + i, buffer_gl->bo.id,
                 buffer_state->offset, buffer_state->size));
-        buffer_gl->bo_user.valid = true;
+        buffer_gl->b.bo_user.valid = true;
     }
     checkGLcall("bind constant buffers");
 }
@@ -4649,7 +4649,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
         }
         size = buffer_gl->b.resource.size - offset;
         GL_EXTCALL(glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i, buffer_gl->bo.id, offset, size));
-        buffer_gl->bo_user.valid = true;
+        buffer_gl->b.bo_user.valid = true;
     }
     checkGLcall("bind transform feedback buffers");
 }

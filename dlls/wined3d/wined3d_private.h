@@ -5012,6 +5012,7 @@ struct wined3d_buffer
     DWORD locations;
     void *map_ptr;
     uintptr_t buffer_object;
+    struct wined3d_bo_user bo_user;
 
     struct wined3d_range *maps;
     SIZE_T maps_size, modified_areas;
@@ -5054,7 +5055,6 @@ struct wined3d_buffer_gl
     struct wined3d_buffer b;
 
     struct wined3d_bo_gl bo;
-    struct wined3d_bo_user bo_user;
 };
 
 static inline struct wined3d_buffer_gl *wined3d_buffer_gl(struct wined3d_buffer *buffer)
@@ -5076,7 +5076,6 @@ struct wined3d_buffer_vk
     struct wined3d_buffer b;
 
     struct wined3d_bo_vk bo;
-    struct wined3d_bo_user bo_user;
     VkDescriptorBufferInfo buffer_info;
     uint32_t bind_mask;
 };
