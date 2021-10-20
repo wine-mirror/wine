@@ -636,17 +636,22 @@ HRESULT WINAPI RegisterTypeLib(ITypeLib *ptlib, const WCHAR *szFullPath, const W
         KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS)
     {
         LPOLESTR doc;
+        LPOLESTR libName;
 
-        /* Set the human-readable name of the typelib */
-        if (FAILED(ITypeLib_GetDocumentation(ptlib, -1, NULL, &doc, NULL, NULL)))
+        /* Set the human-readable name of the typelib to
+           the typelib's doc, if it exists, else to the typelib's name. */
+        if (FAILED(ITypeLib_GetDocumentation(ptlib, -1, &libName, &doc, NULL, NULL)))
             res = E_FAIL;
-        else if (doc)
+        else if (doc || libName)
         {
+            WCHAR *name = doc ? doc : libName;
+
             if (RegSetValueExW(key, NULL, 0, REG_SZ,
-                (BYTE *)doc, (lstrlenW(doc)+1) * sizeof(OLECHAR)) != ERROR_SUCCESS)
+                (BYTE *)name, (lstrlenW(name)+1) * sizeof(OLECHAR)) != ERROR_SUCCESS)
                 res = E_FAIL;
 
             SysFreeString(doc);
+            SysFreeString(libName);
         }
 
         /* Make up the name of the typelib path subkey */

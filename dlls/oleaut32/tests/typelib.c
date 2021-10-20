@@ -6850,6 +6850,7 @@ static void test_register_typelib(BOOL system_registration)
 
 static void test_register_typelib_64(void)
 {
+    REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
     ICreateTypeInfo *createti, *createti_co;
     ELEMDESC elemdesc[5], elemdesc2[5];
     FUNCDESC funcdesc, funcdesc2;
@@ -6857,6 +6858,7 @@ static void test_register_typelib_64(void)
     ITypeLib *stdole, *typelib;
     ICreateTypeLib2 *createtl;
     WCHAR filename[MAX_PATH];
+    BOOL is_wow64 = FALSE;
     HREFTYPE hreftype;
     HRESULT hr;
 
@@ -6878,6 +6880,9 @@ static void test_register_typelib_64(void)
     static const GUID interfaceguid = { 0x35cc5cea,0x11cc,0x4bca,{0x89,0x8c,0xf8,0x92,0x8e,0xb8,0xda,0x24} };
 
     static const SYSKIND sys = SYS_WIN64;
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
     hr = LoadTypeLib(wszStdOle2, &stdole);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -7011,6 +7016,11 @@ static void test_register_typelib_64(void)
 
     if(typelib)
     {
+        WCHAR key_name[MAX_PATH], uuid[40];
+        OLECHAR tlb_name[16];
+        HKEY hkey;
+        LONG size;
+
         hr = RegisterTypeLib(typelib, filename, NULL);
         if (hr == TYPE_E_REGISTRYACCESS)
         {
@@ -7022,6 +7032,35 @@ static void test_register_typelib_64(void)
         ok(hr == S_OK, "got: %08x\n", hr);
 
         ITypeLib_Release(typelib);
+
+        StringFromGUID2(&tlcustguid, uuid, ARRAY_SIZE(uuid));
+        swprintf(key_name, sizeof(key_name), L"TypeLib\\%ls\\1.0", uuid);
+
+        hr = RegOpenKeyExW(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        size = sizeof(tlb_name);
+        hr = RegQueryValueW(hkey, L"", tlb_name, &size);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        /* The typelib should be registered in WoW64_32 and WoW64_64 mode */
+        if(is_win64 || is_wow64)
+        {
+            hr = RegOpenKeyExW(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ | opposite, &hkey);
+            ok(hr == S_OK, "got %08x\n", hr);
+
+            if(hkey)
+            {
+                size = sizeof(tlb_name);
+                hr = RegQueryValueW(hkey, L"", tlb_name, &size);
+                ok(hr == S_OK, "got %08x\n", hr);
+
+                RegCloseKey(hkey);
+            }
+        }
+
+        ok(!wcscmp(tlb_name, typelibW),
+            "Got unexpected TypLib description: %ls\n", tlb_name);
     }
 
     DeleteFileW(filename);
