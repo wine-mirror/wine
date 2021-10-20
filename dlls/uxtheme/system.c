@@ -85,7 +85,7 @@ static BOOL CALLBACK UXTHEME_broadcast_msg (HWND hWnd, LPARAM msg)
 static DWORD query_reg_path (HKEY hKey, LPCWSTR lpszValue,
                              LPVOID pvData)
 {
-  DWORD dwRet, dwType, dwUnExpDataLen = MAX_PATH, dwExpDataLen;
+  DWORD dwRet, dwType, dwUnExpDataLen = MAX_PATH * sizeof(WCHAR), dwExpDataLen;
 
   TRACE("(hkey=%p,%s,%p)\n", hKey, debugstr_w(lpszValue),
         pvData);
@@ -147,7 +147,7 @@ static void UXTHEME_LoadTheme(void)
     /* Get current theme configuration */
     if(!RegOpenKeyW(HKEY_CURRENT_USER, szThemeManager, &hKey)) {
         TRACE("Loading theme config\n");
-        buffsize = ARRAY_SIZE(tmp);
+        buffsize = sizeof(tmp);
         if (!RegQueryValueExW(hKey, L"ThemeActive", NULL, NULL, (BYTE*)tmp, &buffsize)) {
             bThemeActive = (tmp[0] != '0');
         }
@@ -155,10 +155,10 @@ static void UXTHEME_LoadTheme(void)
             bThemeActive = FALSE;
             TRACE("Failed to get ThemeActive: %d\n", GetLastError());
         }
-        buffsize = ARRAY_SIZE(szCurrentColor);
+        buffsize = sizeof(szCurrentColor);
         if (RegQueryValueExW(hKey, L"ColorName", NULL, NULL, (BYTE*)szCurrentColor, &buffsize))
             szCurrentColor[0] = '\0';
-        buffsize = ARRAY_SIZE(szCurrentSize);
+        buffsize = sizeof(szCurrentSize);
         if (RegQueryValueExW(hKey, L"SizeName", NULL, NULL, (BYTE*)szCurrentSize, &buffsize))
             szCurrentSize[0] = '\0';
         if (query_reg_path (hKey, L"DllName", szCurrentTheme))
