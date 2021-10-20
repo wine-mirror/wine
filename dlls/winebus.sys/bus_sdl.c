@@ -629,7 +629,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         break;
 
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
-        FIXME("not implemented!");
+        FIXME("not implemented!\n");
         break;
     }
 
