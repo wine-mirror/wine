@@ -434,7 +434,7 @@ static BOOL link_device(const WCHAR *instance, const GUID *guid)
         if (lr)
             continue;
 
-        length = ARRAY_SIZE(device_instance);
+        length = sizeof(device_instance);
         lr = RegQueryValueExW(device_key, device_instanceW, NULL, NULL, (BYTE *)device_instance, &length);
         if (lr || lstrcmpiW(device_instance, instance))
         {
