@@ -629,10 +629,6 @@ HRESULT WINAPI RegisterTypeLib(ITypeLib *ptlib, const WCHAR *szFullPath, const W
     if (FAILED(ITypeLib_GetLibAttr(ptlib, &attr)))
         return E_FAIL;
 
-#ifndef _WIN64
-    if (attr->syskind == SYS_WIN64) return TYPE_E_BADMODULEKIND;
-#endif
-
     get_typelib_key( &attr->guid, attr->wMajorVerNum, attr->wMinorVerNum, keyName );
 
     res = S_OK;
