@@ -37,6 +37,10 @@ static HRESULT WINAPI profile_QueryInterface(IWMProfile3 *iface, REFIID iid, voi
     {
         *out = &reader->IWMHeaderInfo3_iface;
     }
+    else if (IsEqualIID(iid, &IID_IWMLanguageList))
+    {
+        *out = &reader->IWMLanguageList_iface;
+    }
     else if (IsEqualIID(iid, &IID_IUnknown)
             || IsEqualIID(iid, &IID_IWMProfile)
             || IsEqualIID(iid, &IID_IWMProfile2)
@@ -512,9 +516,66 @@ static const IWMHeaderInfo3Vtbl header_info_vtbl =
     header_info_AddCodecInfo,
 };
 
+static struct wm_reader *impl_from_IWMLanguageList(IWMLanguageList *iface)
+{
+    return CONTAINING_RECORD(iface, struct wm_reader, IWMLanguageList_iface);
+}
+
+static HRESULT WINAPI language_list_QueryInterface(IWMLanguageList *iface, REFIID iid, void **out)
+{
+    struct wm_reader *reader = impl_from_IWMLanguageList(iface);
+
+    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+}
+
+static ULONG WINAPI language_list_AddRef(IWMLanguageList *iface)
+{
+    struct wm_reader *reader = impl_from_IWMLanguageList(iface);
+
+    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+}
+
+static ULONG WINAPI language_list_Release(IWMLanguageList *iface)
+{
+    struct wm_reader *reader = impl_from_IWMLanguageList(iface);
+
+    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+}
+
+static HRESULT WINAPI language_list_GetLanguageCount(IWMLanguageList *iface, WORD *count)
+{
+    FIXME("iface %p, count %p, stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI language_list_GetLanguageDetails(IWMLanguageList *iface,
+        WORD index, WCHAR *lang, WORD *len)
+{
+    FIXME("iface %p, index %u, lang %p, len %p, stub!\n", iface, index, lang, len);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI language_list_AddLanguageByRFC1766String(IWMLanguageList *iface,
+        const WCHAR *lang, WORD *index)
+{
+    FIXME("iface %p, lang %s, index %p, stub!\n", iface, debugstr_w(lang), index);
+    return E_NOTIMPL;
+}
+
+static const IWMLanguageListVtbl language_list_vtbl =
+{
+    language_list_QueryInterface,
+    language_list_AddRef,
+    language_list_Release,
+    language_list_GetLanguageCount,
+    language_list_GetLanguageDetails,
+    language_list_AddLanguageByRFC1766String,
+};
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
+    reader->IWMLanguageList_iface.lpVtbl = &language_list_vtbl;
     reader->IWMProfile3_iface.lpVtbl = &profile_vtbl;
     reader->refcount = 1;
     reader->ops = ops;

@@ -32,7 +32,6 @@ struct async_reader
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
-    IWMLanguageList IWMLanguageList_iface;
     IReferenceClock IReferenceClock_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
 };
@@ -1257,62 +1256,6 @@ static const IWMReaderPlaylistBurnVtbl WMReaderPlaylistBurnVtbl =
     playlist_EndPlaylistBurn
 };
 
-static struct async_reader *impl_from_IWMLanguageList(IWMLanguageList *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, IWMLanguageList_iface);
-}
-
-static HRESULT WINAPI langlist_QueryInterface(IWMLanguageList *iface, REFIID riid, void **ppv)
-{
-    struct async_reader *This = impl_from_IWMLanguageList(iface);
-    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
-}
-
-static ULONG WINAPI langlist_AddRef(IWMLanguageList *iface)
-{
-    struct async_reader *This = impl_from_IWMLanguageList(iface);
-    return IWMReader_AddRef(&This->IWMReader_iface);
-}
-
-static ULONG WINAPI langlist_Release(IWMLanguageList *iface)
-{
-    struct async_reader *This = impl_from_IWMLanguageList(iface);
-    return IWMReader_Release(&This->IWMReader_iface);
-}
-
-static HRESULT WINAPI langlist_GetLanguageCount(IWMLanguageList *iface, WORD *count)
-{
-    struct async_reader *This = impl_from_IWMLanguageList(iface);
-    FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI langlist_GetLanguageDetails(IWMLanguageList *iface, WORD index,
-        WCHAR *language, WORD *length)
-{
-    struct async_reader *This = impl_from_IWMLanguageList(iface);
-    FIXME("%p, %d, %p, %p\n", This, index, language, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI langlist_AddLanguageByRFC1766String(IWMLanguageList *iface, LPCWSTR_WMSDK_TYPE_SAFE language,
-        WORD *index)
-{
-    struct async_reader *This = impl_from_IWMLanguageList(iface);
-    FIXME("%p, %p, %p\n", This, language, index);
-    return E_NOTIMPL;
-}
-
-static const IWMLanguageListVtbl WMLanguageListVtbl =
-{
-    langlist_QueryInterface,
-    langlist_AddRef,
-    langlist_Release,
-    langlist_GetLanguageCount,
-    langlist_GetLanguageDetails,
-    langlist_AddLanguageByRFC1766String
-};
-
 static struct async_reader *impl_from_IReferenceClock(IReferenceClock *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, IReferenceClock_iface);
@@ -1455,9 +1398,6 @@ static void *async_reader_query_interface(struct wm_reader *iface, REFIID iid)
     if (IsEqualIID(iid, &IID_IReferenceClock))
         return &reader->IReferenceClock_iface;
 
-    if (IsEqualIID(iid, &IID_IWMLanguageList))
-        return &reader->IWMLanguageList_iface;
-
     if (IsEqualIID(iid, &IID_IWMPacketSize)
             || IsEqualIID(iid, &IID_IWMPacketSize2))
         return &reader->IWMPacketSize2_iface;
@@ -1522,7 +1462,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     wm_reader_init(&object->reader, &async_reader_ops);
 
     object->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
-    object->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
     object->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
     object->IWMReader_iface.lpVtbl = &WMReaderVtbl;
     object->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
