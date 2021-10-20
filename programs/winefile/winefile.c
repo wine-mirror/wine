@@ -1220,20 +1220,22 @@ static windowOptions load_registry_settings(void)
         RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
                        0, KEY_QUERY_VALUE, &hKey );
 
-	size = sizeof(DWORD);
-
+        size = sizeof(opts.start_x);
         if( RegQueryValueExW( hKey, reg_start_x, NULL, &type,
                               (LPBYTE) &opts.start_x, &size ) != ERROR_SUCCESS )
 		opts.start_x = CW_USEDEFAULT;
 
+        size = sizeof(opts.start_y);
         if( RegQueryValueExW( hKey, reg_start_y, NULL, &type,
                               (LPBYTE) &opts.start_y, &size ) != ERROR_SUCCESS )
 		opts.start_y = CW_USEDEFAULT;
 
+        size = sizeof(opts.width);
         if( RegQueryValueExW( hKey, reg_width, NULL, &type,
                               (LPBYTE) &opts.width, &size ) != ERROR_SUCCESS )
 		opts.width = CW_USEDEFAULT;
 
+        size = sizeof(opts.height);
         if( RegQueryValueExW( hKey, reg_height, NULL, &type,
                               (LPBYTE) &opts.height, &size ) != ERROR_SUCCESS )
 		opts.height = CW_USEDEFAULT;
