@@ -1058,6 +1058,7 @@ WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],
 
 dnl **** External libraries ****
 
+WINE_EXTLIB_FLAGS(GSM, gsm, gsm, "-I\$(top_srcdir)/libs/gsm/inc")
 WINE_EXTLIB_FLAGS(JPEG, jpeg, jpeg, "-I\$(top_srcdir)/libs/jpeg")
 WINE_EXTLIB_FLAGS(LCMS2, lcms2, lcms2, "-I\$(top_srcdir)/libs/lcms2/include")
 WINE_EXTLIB_FLAGS(PNG, png, "png \$(ZLIB_PE_LIBS)", "-I\$(top_srcdir)/libs/png")
@@ -3714,6 +3715,7 @@ WINE_CONFIG_MAKEFILE(libs/dmoguids)
 WINE_CONFIG_MAKEFILE(libs/dxerr8)
 WINE_CONFIG_MAKEFILE(libs/dxerr9)
 WINE_CONFIG_MAKEFILE(libs/dxguid)
+WINE_CONFIG_MAKEFILE(libs/gsm)
 WINE_CONFIG_MAKEFILE(libs/jpeg)
 WINE_CONFIG_MAKEFILE(libs/lcms2)
 WINE_CONFIG_MAKEFILE(libs/mfuuid)
