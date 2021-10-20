@@ -4134,10 +4134,8 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
     TRACE( "window %p win %s client %s\n", hwnd,
            wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
 
-    if (!USER_Driver->pUpdateLayeredWindow( hwnd, info, &window_rect )) return FALSE;
-
     set_window_pos( hwnd, 0, flags, &window_rect, &client_rect, NULL );
-    return TRUE;
+    return USER_Driver->pUpdateLayeredWindow( hwnd, info, &window_rect );
 }
 
 
