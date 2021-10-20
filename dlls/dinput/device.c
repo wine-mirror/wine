@@ -1661,13 +1661,17 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Escape(LPDIRECTINPUTDEVICE8W iface, LPDI
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_Poll(LPDIRECTINPUTDEVICE8W iface)
+HRESULT WINAPI IDirectInputDevice2WImpl_Poll( IDirectInputDevice8W *iface )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr = DI_NOEFFECT;
 
-    if (!This->acquired) return DIERR_NOTACQUIRED;
+    EnterCriticalSection( &impl->crit );
+    if (!impl->acquired) hr = DIERR_NOTACQUIRED;
+    LeaveCriticalSection( &impl->crit );
+    if (hr != DI_OK) return hr;
 
-    check_dinput_events();
+    if (impl->vtbl->poll) return impl->vtbl->poll( iface );
     return DI_OK;
 }
 

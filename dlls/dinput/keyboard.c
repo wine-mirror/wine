@@ -270,6 +270,12 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
     return DI_OK;
 }
 
+static HRESULT keyboard_internal_poll( IDirectInputDevice8W *iface )
+{
+    check_dinput_events();
+    return DI_OK;
+}
+
 static HRESULT keyboard_internal_acquire( IDirectInputDevice8W *iface )
 {
     return DI_OK;
@@ -353,6 +359,7 @@ static HRESULT keyboard_internal_set_property( IDirectInputDevice8W *iface, DWOR
 
 static const struct dinput_device_vtbl keyboard_internal_vtbl =
 {
+    keyboard_internal_poll,
     NULL,
     keyboard_internal_acquire,
     keyboard_internal_unacquire,

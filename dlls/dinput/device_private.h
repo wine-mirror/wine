@@ -57,6 +57,7 @@ typedef HRESULT dinput_device_read_state( IDirectInputDevice8W *iface );
 
 struct dinput_device_vtbl
 {
+    HRESULT (*poll)( IDirectInputDevice8W *iface );
     HRESULT (*read)( IDirectInputDevice8W *iface );
     HRESULT (*acquire)( IDirectInputDevice8W *iface );
     HRESULT (*unacquire)( IDirectInputDevice8W *iface );

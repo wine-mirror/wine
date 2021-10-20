@@ -490,6 +490,12 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
+static HRESULT mouse_internal_poll( IDirectInputDevice8W *iface )
+{
+    check_dinput_events();
+    return DI_OK;
+}
+
 static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
@@ -683,6 +689,7 @@ static HRESULT mouse_internal_set_property( IDirectInputDevice8W *iface, DWORD p
 
 static const struct dinput_device_vtbl mouse_internal_vtbl =
 {
+    mouse_internal_poll,
     NULL,
     mouse_internal_acquire,
     mouse_internal_unacquire,

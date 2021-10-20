@@ -1162,18 +1162,6 @@ static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8
     return DI_OK;
 }
 
-static HRESULT WINAPI hid_joystick_Poll( IDirectInputDevice8W *iface )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    HRESULT hr = DI_NOEFFECT;
-
-    EnterCriticalSection( &impl->base.crit );
-    if (!impl->base.acquired) hr = DIERR_NOTACQUIRED;
-    LeaveCriticalSection( &impl->base.crit );
-
-    return hr;
-}
-
 static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
 {
     /*** IUnknown methods ***/
@@ -1204,7 +1192,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_SendForceFeedbackCommand,
     hid_joystick_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
-    hid_joystick_Poll,
+    IDirectInputDevice2WImpl_Poll,
     IDirectInputDevice2WImpl_SendDeviceData,
     /*** IDirectInputDevice7 methods ***/
     IDirectInputDevice7WImpl_EnumEffectsInFile,
@@ -1432,6 +1420,7 @@ static HRESULT hid_joystick_internal_enum_objects( IDirectInputDevice8W *iface, 
 
 static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
 {
+    NULL,
     hid_joystick_internal_read,
     hid_joystick_internal_acquire,
     hid_joystick_internal_unacquire,
