@@ -330,6 +330,7 @@ static HRESULT keyboard_internal_set_property( IDirectInputDevice8W *iface, DWOR
 
 static const struct dinput_device_vtbl keyboard_internal_vtbl =
 {
+    NULL,
     keyboard_internal_poll,
     NULL,
     keyboard_internal_acquire,

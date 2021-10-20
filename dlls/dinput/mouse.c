@@ -643,6 +643,7 @@ static HRESULT mouse_internal_set_property( IDirectInputDevice8W *iface, DWORD p
 
 static const struct dinput_device_vtbl mouse_internal_vtbl =
 {
+    NULL,
     mouse_internal_poll,
     NULL,
     mouse_internal_acquire,

@@ -57,6 +57,7 @@ typedef HRESULT dinput_device_read_state( IDirectInputDevice8W *iface );
 
 struct dinput_device_vtbl
 {
+    void (*release)( IDirectInputDevice8W *iface );
     HRESULT (*poll)( IDirectInputDevice8W *iface );
     HRESULT (*read)( IDirectInputDevice8W *iface );
     HRESULT (*acquire)( IDirectInputDevice8W *iface );
@@ -116,6 +117,7 @@ struct IDirectInputDeviceImpl
 extern HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtbl, const struct dinput_device_vtbl *internal_vtbl,
                                           const GUID *guid, IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
 extern HRESULT direct_input_device_init( IDirectInputDevice8W *iface );
+extern void direct_input_device_destroy( IDirectInputDevice8W *iface );
 extern const IDirectInputDevice8AVtbl dinput_device_a_vtbl DECLSPEC_HIDDEN;
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;

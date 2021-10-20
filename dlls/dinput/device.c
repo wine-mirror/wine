@@ -1049,15 +1049,11 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetEventNotification(LPDIRECTINPUTDEVICE
     return DI_OK;
 }
 
-
-ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
+void direct_input_device_destroy( IDirectInputDevice8W *iface )
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    ULONG ref = InterlockedDecrement(&(This->ref));
 
-    TRACE("(%p) ref %d\n", This, ref);
-
-    if (ref) return ref;
+    TRACE( "iface %p.\n", iface );
 
     IDirectInputDevice_Unacquire(iface);
     /* Reset the FF state, free all effects, etc */
@@ -1078,6 +1074,20 @@ ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
     DeleteCriticalSection(&This->crit);
 
     free( This );
+}
+
+ULONG WINAPI IDirectInputDevice2WImpl_Release( IDirectInputDevice8W *iface )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p, ref %u.\n", iface, ref );
+
+    if (!ref)
+    {
+        if (impl->vtbl->release) impl->vtbl->release( iface );
+        else direct_input_device_destroy( iface );
+    }
 
     return ref;
 }
@@ -1132,11 +1142,11 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W ifa
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectInputDevice2WImpl_AddRef(LPDIRECTINPUTDEVICE8W iface)
+ULONG WINAPI IDirectInputDevice2WImpl_AddRef( IDirectInputDevice8W *iface )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE( "(%p) ref %d\n", This, ref );
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %u.\n", iface, ref );
     return ref;
 }
 
