@@ -2700,7 +2700,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
                   size = sizeof(DWORD);
                   RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
               } else if (type == REG_SZ) {
-                  size = ARRAY_SIZE(strvalue);
+                  size = sizeof(strvalue);
                   RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
                   value = wcstoul(strvalue, NULL, 10);
               }
@@ -2719,7 +2719,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
                   size = sizeof(DWORD);
                   RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
               } else if (type == REG_SZ) {
-                  size = ARRAY_SIZE(strvalue);
+                  size = sizeof(strvalue);
                   RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
                   value = wcstoul(strvalue, NULL, 10);
               }
