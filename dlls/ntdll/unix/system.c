@@ -3064,7 +3064,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
         len = sizeof(SYSTEM_CODEINTEGRITY_INFORMATION);
 
-        if (size < len)
+        if (size >= len)
             integrity_info->CodeIntegrityOptions = CODEINTEGRITY_OPTION_ENABLED;
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
