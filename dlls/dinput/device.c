@@ -1186,6 +1186,24 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects( IDirectInputDevice8W *iface
     return DI_OK;
 }
 
+static HRESULT enum_object_filter_init( IDirectInputDeviceImpl *impl, DIPROPHEADER *filter )
+{
+    DIDATAFORMAT *format = impl->data_format.wine_df;
+    int i, *offsets = impl->data_format.offsets;
+
+    if (filter->dwHow > DIPH_BYUSAGE) return DIERR_INVALIDPARAM;
+    if (filter->dwHow == DIPH_BYUSAGE && !(impl->instance.dwDevType & DIDEVTYPE_HID)) return DIERR_UNSUPPORTED;
+    if (filter->dwHow != DIPH_BYOFFSET) return DI_OK;
+
+    if (!offsets) return DIERR_NOTFOUND;
+
+    for (i = 0; i < format->dwNumObjs; ++i) if (offsets[i] == filter->dwObj) break;
+    if (i == format->dwNumObjs) return DIERR_NOTFOUND;
+
+    filter->dwObj = format->rgodf[i].dwOfs;
+    return DI_OK;
+}
+
 static BOOL CALLBACK find_object( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
 {
     *(DIDEVICEOBJECTINSTANCEW *)context = *instance;
@@ -1198,6 +1216,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
     DWORD object_mask = DIDFT_AXIS | DIDFT_BUTTON | DIDFT_POV;
     DIDEVICEOBJECTINSTANCEW instance;
+    DIPROPHEADER filter;
     HRESULT hr;
 
     TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
@@ -1205,6 +1224,9 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface
     if (!header) return DIERR_INVALIDPARAM;
     if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
     if (!IS_DIPROP( guid )) return DI_OK;
+
+    filter = *header;
+    if (FAILED(hr = enum_object_filter_init( impl, &filter ))) return hr;
 
     switch (LOWORD( guid ))
     {
@@ -1228,7 +1250,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface
     case (DWORD_PTR)DIPROP_RANGE:
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        hr = impl->vtbl->enum_objects( iface, header, object_mask, find_object, &instance );
+        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
         if (!(instance.dwType & DIDFT_AXIS)) return DIERR_UNSUPPORTED;
@@ -1239,7 +1261,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface
     case (DWORD_PTR)DIPROP_GRANULARITY:
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        hr = impl->vtbl->enum_objects( iface, header, object_mask, find_object, &instance );
+        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
         if (!(instance.dwType & DIDFT_AXIS)) return DIERR_UNSUPPORTED;
@@ -1247,7 +1269,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface
 
     case (DWORD_PTR)DIPROP_KEYNAME:
         if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
-        hr = impl->vtbl->enum_objects( iface, header, object_mask, find_object, &instance );
+        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
         if (!(instance.dwType & DIDFT_BUTTON)) return DIERR_UNSUPPORTED;
@@ -1317,6 +1339,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty( IDirectInputDevice8W *iface
 {
     struct set_object_property_params params = {.iface = iface, .header = header, .property = LOWORD( guid )};
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DIPROPHEADER filter;
     HRESULT hr;
 
     TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
@@ -1325,6 +1348,9 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty( IDirectInputDevice8W *iface
     if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
     if (!IS_DIPROP( guid )) return DI_OK;
 
+    filter = *header;
+    if (FAILED(hr = enum_object_filter_init( impl, &filter ))) return hr;
+
     switch (LOWORD( guid ))
     {
     case (DWORD_PTR)DIPROP_RANGE:
@@ -1332,7 +1358,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty( IDirectInputDevice8W *iface
         const DIPROPRANGE *value = (const DIPROPRANGE *)header;
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         if (value->lMin > value->lMax) return DIERR_INVALIDPARAM;
-        hr = impl->vtbl->enum_objects( iface, header, DIDFT_AXIS, set_object_property, &params );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, set_object_property, &params );
         if (FAILED(hr)) return hr;
         return DI_OK;
     }
@@ -1342,7 +1368,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty( IDirectInputDevice8W *iface
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         if (value->dwData > 10000) return DIERR_INVALIDPARAM;
-        hr = impl->vtbl->enum_objects( iface, header, DIDFT_AXIS, set_object_property, &params );
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, set_object_property, &params );
         if (FAILED(hr)) return hr;
         return DI_OK;
     }
@@ -1473,7 +1499,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo( IDirectInputDevice8W *ifa
                                                        DWORD obj, DWORD how )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
-    const DIPROPHEADER filter =
+    DIPROPHEADER filter =
     {
         .dwSize = sizeof(filter),
         .dwHeaderSize = sizeof(filter),
@@ -1488,6 +1514,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo( IDirectInputDevice8W *ifa
     if (instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W) && instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
         return DIERR_INVALIDPARAM;
     if (how == DIPH_DEVICE) return DIERR_INVALIDPARAM;
+    if (FAILED(hr = enum_object_filter_init( impl, &filter ))) return hr;
 
     hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_ALL, get_object_info, instance );
     if (FAILED(hr)) return hr;

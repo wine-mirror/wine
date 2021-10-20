@@ -302,7 +302,7 @@ static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDE
     return DIENUM_CONTINUE;
 }
 
-static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *header, DWORD flags,
+static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
                                                LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
 {
     SysKeyboardImpl *impl = impl_from_IDirectInputDevice8W( iface );
@@ -314,23 +314,8 @@ static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, cons
         .dwOfs = DIK_ESCAPE,
         .dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( DIK_ESCAPE ),
     };
-    DIDATAFORMAT *format = impl->base.data_format.wine_df;
-    int *offsets = impl->base.data_format.offsets;
-    DIPROPHEADER filter = *header;
     DWORD i, dik;
     BOOL ret;
-
-    if (header->dwHow != DIPH_DEVICE && header->dwHow != DIPH_BYOFFSET && header->dwHow != DIPH_BYID)
-        return DIERR_UNSUPPORTED;
-
-    if (filter.dwHow == DIPH_BYOFFSET)
-    {
-        if (!offsets) return DIENUM_CONTINUE;
-        for (i = 0; i < format->dwNumObjs; ++i)
-            if (offsets[i] == filter.dwObj) break;
-        if (i == format->dwNumObjs) return DIENUM_CONTINUE;
-        filter.dwObj = format->rgodf[i].dwOfs;
-    }
 
     for (i = 0; i < 512; ++i)
     {
@@ -338,7 +323,7 @@ static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, cons
         if (!(dik = map_dik_code( i, 0, subtype, impl->base.dinput->dwVersion ))) continue;
         instance.dwOfs = dik;
         instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( dik );
-        ret = try_enum_object( &filter, flags, callback, &instance, context );
+        ret = try_enum_object( filter, flags, callback, &instance, context );
         if (ret != DIENUM_CONTINUE) return DIENUM_STOP;
     }
 

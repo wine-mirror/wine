@@ -392,27 +392,15 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
     seen[i] = TRUE;
 }
 
-static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header, DWORD flags,
+static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
                           enum_object_callback callback, void *data )
 {
-    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
+    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, j;
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     struct hid_value_caps *caps, *caps_end, *nary, *nary_end, *effect_caps;
-    DIDATAFORMAT *format = impl->base.data_format.wine_df;
-    int *offsets = impl->base.data_format.offsets;
     struct hid_collection_node *node, *node_end;
-    DIPROPHEADER filter = *header;
     BOOL ret, seen_axis[6] = {0};
-
-    if (filter.dwHow == DIPH_BYOFFSET)
-    {
-        if (!offsets) return DIENUM_CONTINUE;
-        for (i = 0; i < format->dwNumObjs; ++i)
-            if (offsets[i] == filter.dwObj) break;
-        if (i == format->dwNumObjs) return DIENUM_CONTINUE;
-        filter.dwObj = format->rgodf[i].dwOfs;
-    }
 
     button_ofs += impl->caps.NumberInputValueCaps * sizeof(LONG);
     button_ofs += impl->caps.NumberOutputValueCaps * sizeof(LONG);
@@ -489,7 +477,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.dwDimension = caps->units;
             instance.wExponent = caps->units_exp;
             check_pid_effect_axis_caps( impl, &instance );
-            ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
+            ret = enum_object( impl, filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
             value_ofs += sizeof(LONG);
             object++;
@@ -532,7 +520,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.wCollectionNumber = caps->link_collection;
             instance.dwDimension = caps->units;
             instance.wExponent = caps->units_exp;
-            ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
+            ret = enum_object( impl, filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
             button_ofs++;
             object++;
@@ -567,7 +555,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 instance.wCollectionNumber = nary->link_collection;
                 instance.dwDimension = caps->units;
                 instance.wExponent = caps->units_exp;
-                ret = enum_object( impl, &filter, flags, callback, nary, &instance, data );
+                ret = enum_object( impl, filter, flags, callback, nary, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 button_ofs++;
             }
@@ -586,7 +574,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.wCollectionNumber = caps->link_collection;
             instance.dwDimension = caps->units;
             instance.wExponent = caps->units_exp;
-            ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
+            ret = enum_object( impl, filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
 
             if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) button_ofs++;
@@ -612,7 +600,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.wCollectionNumber = node->parent;
             instance.dwDimension = 0;
             instance.wExponent = 0;
-            ret = enum_object( impl, &filter, flags, callback, NULL, &instance, data );
+            ret = enum_object( impl, filter, flags, callback, NULL, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
     }
