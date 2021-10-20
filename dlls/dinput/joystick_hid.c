@@ -818,22 +818,6 @@ static HRESULT hid_joystick_internal_unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, DWORD len, void *ptr )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    HRESULT hr = DI_OK;
-
-    if (!ptr) return DIERR_INVALIDPARAM;
-    if (len != impl->base.data_format.user_df->dwDataSize) return DIERR_INVALIDPARAM;
-
-    EnterCriticalSection( &impl->base.crit );
-    if (!impl->base.acquired) hr = DIERR_NOTACQUIRED;
-    else fill_DataFormat( ptr, len, impl->base.device_state, &impl->base.data_format );
-    LeaveCriticalSection( &impl->base.crit );
-
-    return hr;
-}
-
 static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirectInputEffect **out );
 
 static HRESULT WINAPI hid_joystick_CreateEffect( IDirectInputDevice8W *iface, const GUID *guid,
@@ -1175,7 +1159,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
-    hid_joystick_GetDeviceState,
+    IDirectInputDevice2WImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,

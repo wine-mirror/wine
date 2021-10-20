@@ -241,35 +241,6 @@ const struct dinput_device keyboard_device = {
   keyboarddev_create_device
 };
 
-static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DWORD i;
-
-    TRACE("(%p)->(%d,%p)\n", This, len, ptr);
-
-    if (!This->base.acquired) return DIERR_NOTACQUIRED;
-
-    if (len != This->base.data_format.user_df->dwDataSize )
-        return DIERR_INVALIDPARAM;
-
-    check_dinput_events();
-
-    EnterCriticalSection(&This->base.crit);
-
-    if (TRACE_ON(dinput))
-    {
-        TRACE( "pressed keys:" );
-        for (i = 0; i < len; i++) if (This->base.device_state[i]) TRACE( " %02x", i );
-        TRACE( "\n" );
-    }
-
-    fill_DataFormat( ptr, len, This->base.device_state, &This->base.data_format );
-    LeaveCriticalSection(&This->base.crit);
-
-    return DI_OK;
-}
-
 static HRESULT keyboard_internal_poll( IDirectInputDevice8W *iface )
 {
     check_dinput_events();
@@ -379,7 +350,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
-    SysKeyboardWImpl_GetDeviceState,
+    IDirectInputDevice2WImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,

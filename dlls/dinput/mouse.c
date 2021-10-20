@@ -442,39 +442,6 @@ static void warp_check( SysMouseImpl* This, BOOL force )
     }
 }
 
-/******************************************************************************
-  *     GetDeviceState : returns the "state" of the mouse.
-  *
-  *   For the moment, only the "standard" return structure (DIMOUSESTATE) is
-  *   supported.
-  */
-static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)This->base.device_state;
-    TRACE("(%p)->(%u,%p)\n", This, len, ptr);
-
-    if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
-
-    check_dinput_events();
-
-    EnterCriticalSection(&This->base.crit);
-
-    /* Copy the current mouse state */
-    fill_DataFormat( ptr, len, state, &This->base.data_format );
-
-    /* Initialize the buffer when in relative mode */
-    if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
-    {
-        state->lX = 0;
-        state->lY = 0;
-        state->lZ = 0;
-    }
-    LeaveCriticalSection(&This->base.crit);
-
-    return DI_OK;
-}
-
 static HRESULT mouse_internal_poll( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
@@ -696,7 +663,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
-    SysMouseWImpl_GetDeviceState,
+    IDirectInputDevice2WImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,

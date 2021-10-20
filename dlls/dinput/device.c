@@ -1522,6 +1522,47 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo( IDirectInputDevice8W *ifa
     return DI_OK;
 }
 
+static BOOL CALLBACK reset_axis_data( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    *(ULONG *)((char *)data + instance->dwOfs) = 0;
+    return DIENUM_CONTINUE;
+}
+
+HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceState( IDirectInputDevice8W *iface, DWORD size, void *data )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = DIPH_DEVICE,
+        .dwObj = 0,
+    };
+    HRESULT hr;
+
+    TRACE( "iface %p, size %u, data %p.\n", iface, size, data );
+
+    if (!data) return DIERR_INVALIDPARAM;
+
+    IDirectInputDevice2_Poll( iface );
+
+    EnterCriticalSection( &impl->crit );
+    if (!impl->acquired)
+        hr = DIERR_NOTACQUIRED;
+    else if (size != impl->data_format.user_df->dwDataSize)
+        hr = DIERR_INVALIDPARAM;
+    else
+    {
+        fill_DataFormat( data, size, impl->device_state, &impl->data_format );
+        if (!(impl->data_format.user_df->dwFlags & DIDF_ABSAXIS))
+            impl->vtbl->enum_objects( iface, &filter, DIDFT_RELAXIS, reset_axis_data, impl->device_state );
+        hr = DI_OK;
+    }
+    LeaveCriticalSection( &impl->crit );
+
+    return hr;
+}
+
 HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface, DWORD dodsize,
                                                       LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags)
 {
