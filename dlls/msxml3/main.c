@@ -19,31 +19,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define COBJMACROS
 
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# ifdef SONAME_LIBXSLT
-#  ifdef HAVE_LIBXSLT_PATTERN_H
-#   include <libxslt/pattern.h>
-#  endif
-#  ifdef HAVE_LIBXSLT_TRANSFORM_H
-#   include <libxslt/transform.h>
-#  endif
-#  include <libxslt/imports.h>
-#  include <libxslt/xsltutils.h>
-#  include <libxslt/variables.h>
-#  include <libxslt/xsltInternals.h>
-#  include <libxslt/documents.h>
-#  include <libxslt/extensions.h>
-#  include <libxslt/extra.h>
-# endif
-#endif
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
+#include <libxslt/pattern.h>
+#include <libxslt/transform.h>
+#include <libxslt/imports.h>
+#include <libxslt/xsltutils.h>
+#include <libxslt/variables.h>
+#include <libxslt/xsltInternals.h>
+#include <libxslt/documents.h>
+#include <libxslt/extensions.h>
+#include <libxslt/extra.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -54,14 +43,11 @@
 #include "msxml2.h"
 #include "msxml6.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "msxml_private.h"
 
 HINSTANCE MSXML_hInstance = NULL;
-
-#ifdef HAVE_LIBXML2
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -166,68 +152,14 @@ static int wineXmlFileCloseCallback (void * context)
     return CloseHandle(context) ? 0 : -1;
 }
 
-void* libxslt_handle = NULL;
-#ifdef SONAME_LIBXSLT
-# define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
-DECL_FUNCPTR(xsltApplyStylesheet);
-DECL_FUNCPTR(xsltApplyStylesheetUser);
-DECL_FUNCPTR(xsltCleanupGlobals);
-DECL_FUNCPTR(xsltFreeStylesheet);
-DECL_FUNCPTR(xsltFreeTransformContext);
-DECL_FUNCPTR(xsltFunctionNodeSet);
-DECL_FUNCPTR(xsltNewTransformContext);
-DECL_FUNCPTR(xsltNextImport);
-DECL_FUNCPTR(xsltParseStylesheetDoc);
-DECL_FUNCPTR(xsltQuoteUserParams);
-DECL_FUNCPTR(xsltRegisterExtModuleFunction);
-DECL_FUNCPTR(xsltSaveResultTo);
-DECL_FUNCPTR(xsltSetLoaderFunc);
-# undef DECL_FUNCPTR
-#endif
-
 static void init_libxslt(void)
 {
-#ifdef SONAME_LIBXSLT
-    void (*pxsltInit)(void); /* Missing in libxslt <= 1.1.14 */
-
-    libxslt_handle = dlopen(SONAME_LIBXSLT, RTLD_NOW);
-    if (!libxslt_handle)
-        return;
-
-#define LOAD_FUNCPTR(f, needed) \
-    if ((p##f = dlsym(libxslt_handle, #f)) == NULL) \
-        if (needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
-    LOAD_FUNCPTR(xsltInit, 0);
-    LOAD_FUNCPTR(xsltApplyStylesheet, 1);
-    LOAD_FUNCPTR(xsltApplyStylesheetUser, 1);
-    LOAD_FUNCPTR(xsltCleanupGlobals, 1);
-    LOAD_FUNCPTR(xsltFreeStylesheet, 1);
-    LOAD_FUNCPTR(xsltFreeTransformContext, 1);
-    LOAD_FUNCPTR(xsltFunctionNodeSet, 1);
-    LOAD_FUNCPTR(xsltNewTransformContext, 1);
-    LOAD_FUNCPTR(xsltNextImport, 1);
-    LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
-    LOAD_FUNCPTR(xsltQuoteUserParams, 1);
-    LOAD_FUNCPTR(xsltRegisterExtModuleFunction, 1);
-    LOAD_FUNCPTR(xsltSaveResultTo, 1);
-    LOAD_FUNCPTR(xsltSetLoaderFunc, 1);
-#undef LOAD_FUNCPTR
-
-    if (pxsltInit)
-        pxsltInit();
-
-    pxsltSetLoaderFunc(xslt_doc_default_loader);
-    pxsltRegisterExtModuleFunction(
+    xsltInit();
+    xsltSetLoaderFunc(xslt_doc_default_loader);
+    xsltRegisterExtModuleFunction(
         (const xmlChar *)"node-set",
         (const xmlChar *)"urn:schemas-microsoft-com:xslt",
-        pxsltFunctionNodeSet);
-
-    return;
-
- sym_not_found:
-    dlclose(libxslt_handle);
-    libxslt_handle = NULL;
-#endif
+        xsltFunctionNodeSet);
 }
 
 static int to_utf8(int cp, unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
@@ -392,8 +324,6 @@ static void init_char_encoders(void)
     }
 }
 
-#endif  /* HAVE_LIBXML2 */
-
 const CLSID* DOMDocument_version(MSXML_VERSION v)
 {
     switch (v)
@@ -413,7 +343,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
-#ifdef HAVE_LIBXML2
         xmlInitParser();
 
         /* Set the default indent character to a single tab,
@@ -430,26 +359,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
 
         schemasInit();
         init_libxslt();
-#endif
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-#ifdef HAVE_LIBXML2
-#ifdef SONAME_LIBXSLT
-        if (libxslt_handle)
-        {
-            pxsltCleanupGlobals();
-            dlclose(libxslt_handle);
-        }
-#endif
+        xsltCleanupGlobals();
         /* Restore default Callbacks */
         xmlCleanupInputCallbacks();
         xmlRegisterDefaultInputCallbacks();
 
         xmlCleanupParser();
         schemasCleanup();
-#endif
         release_typelib();
         break;
     }

@@ -20,13 +20,9 @@
 
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-#endif
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -38,8 +34,6 @@
 #include "msxml_private.h"
 
 #include "wine/debug.h"
-
-#ifdef HAVE_LIBXML2
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -198,7 +192,7 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
     if(hr == S_OK)
     {
         static const WCHAR xmlW[] = {'x','m','l',0};
-        if(!strcmpW(target, xmlW))
+        if(!wcscmp(target, xmlW))
         {
             SysFreeString(target);
             return E_FAIL;
@@ -438,7 +432,7 @@ static HRESULT WINAPI dom_pi_get_attributes(
     hr = node_get_nodeName(&This->node, &name);
     if (hr != S_OK) return hr;
 
-    if (!strcmpW(name, xmlW))
+    if (!wcscmp(name, xmlW))
     {
         if (!This->node.node->properties)
         {
@@ -754,7 +748,7 @@ static HRESULT WINAPI dom_pi_put_data(
     if(hr == S_OK)
     {
         static const WCHAR xmlW[] = {'x','m','l',0};
-        if(!strcmpW(target, xmlW))
+        if(!wcscmp(target, xmlW))
         {
             SysFreeString(target);
             return E_FAIL;
@@ -947,5 +941,3 @@ IUnknown* create_pi( xmlNodePtr pi )
 
     return (IUnknown*)&This->IXMLDOMProcessingInstruction_iface;
 }
-
-#endif

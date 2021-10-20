@@ -688,10 +688,6 @@ DBUS_LIBS
 DBUS_CFLAGS
 INOTIFY_LIBS
 INOTIFY_CFLAGS
-XSLT_LIBS
-XSLT_CFLAGS
-XML2_LIBS
-XML2_CFLAGS
 PCAP_LIBS
 X_EXTRA_LIBS
 X_LIBS
@@ -901,12 +897,10 @@ with_xfixes
 with_xinerama
 with_xinput
 with_xinput2
-with_xml
 with_xrandr
 with_xrender
 with_xshape
 with_xshm
-with_xslt
 with_xxf86vm
 with_wine_tools
 with_wine64
@@ -1945,10 +1939,6 @@ XSLT_PE_LIBS
 ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS
 XMKMF
-XML2_CFLAGS
-XML2_LIBS
-XSLT_CFLAGS
-XSLT_LIBS
 INOTIFY_CFLAGS
 INOTIFY_LIBS
 DBUS_CFLAGS
@@ -2694,12 +2684,10 @@ Optional Packages:
   --without-xinerama      do not use Xinerama (legacy multi-monitor support)
   --without-xinput        do not use the Xinput extension
   --without-xinput2       do not use the Xinput 2 extension
-  --without-xml           do not use XML
   --without-xrandr        do not use Xrandr (multi-monitor support)
   --without-xrender       do not use the Xrender extension
   --without-xshape        do not use the Xshape extension
   --without-xshm          do not use XShm (shared memory extension)
-  --without-xslt          do not use XSLT
   --without-xxf86vm       do not use XFree video mode extension
   --with-wine-tools=DIR   use Wine tools from directory DIR
   --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
@@ -2750,10 +2738,6 @@ Some influential environment variables:
   ZLIB_PE_LIBS
               Linker flags for the PE zlib, overriding the bundled version
   XMKMF       Path to xmkmf, Makefile generator for X Window System
-  XML2_CFLAGS C compiler flags for libxml-2.0, overriding pkg-config
-  XML2_LIBS   Linker flags for libxml-2.0, overriding pkg-config
-  XSLT_CFLAGS C compiler flags for libxslt, overriding pkg-config
-  XSLT_LIBS   Linker flags for libxslt, overriding pkg-config
   INOTIFY_CFLAGS
               C compiler flags for libinotify, overriding pkg-config
   INOTIFY_LIBS
@@ -4296,12 +4280,6 @@ if test "${with_xinput2+set}" = set; then :
 fi
 
 
-# Check whether --with-xml was given.
-if test "${with_xml+set}" = set; then :
-  withval=$with_xml;
-fi
-
-
 # Check whether --with-xrandr was given.
 if test "${with_xrandr+set}" = set; then :
   withval=$with_xrandr; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xrandr_h=no; fi
@@ -4323,12 +4301,6 @@ fi
 # Check whether --with-xshm was given.
 if test "${with_xshm+set}" = set; then :
   withval=$with_xshm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XShm_h=no; fi
-fi
-
-
-# Check whether --with-xslt was given.
-if test "${with_xslt+set}" = set; then :
-  withval=$with_xslt;
 fi
 
 
@@ -12935,428 +12907,6 @@ esac
 enable_wpcap=${enable_wpcap:-no}
 fi
 
-
-if test "x$with_xml" != "xno"
-then
-    if ${XML2_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  XML2_CFLAGS=`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || XML2_CFLAGS=${XML2_CFLAGS:-`${XML2_CONFIG:-xml2-config} --cflags 2>/dev/null`}
-if ${XML2_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  XML2_LIBS=`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || XML2_LIBS=${XML2_LIBS:-`${XML2_CONFIG:-xml2-config} --libs 2>/dev/null`}
-XML2_LIBS=${XML2_LIBS:-"-lxml2"}
-$as_echo "$as_me:${as_lineno-$LINENO}: libxml-2.0 cflags: $XML2_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libxml-2.0 libs: $XML2_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $XML2_CFLAGS"
-for ac_header in libxml/parser.h libxml/xmlsave.h libxml/SAX2.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseMemory in -lxml2" >&5
-$as_echo_n "checking for xmlParseMemory in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlParseMemory+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 $XML2_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlParseMemory ();
-int
-main ()
-{
-return xmlParseMemory ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlParseMemory=yes
-else
-  ac_cv_lib_xml2_xmlParseMemory=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlParseMemory" >&5
-$as_echo "$ac_cv_lib_xml2_xmlParseMemory" >&6; }
-if test "x$ac_cv_lib_xml2_xmlParseMemory" = xyes; then :
-
-$as_echo "#define HAVE_LIBXML2 1" >>confdefs.h
-
-else
-  XML2_LIBS=""
-fi
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlReadMemory in -lxml2" >&5
-$as_echo_n "checking for xmlReadMemory in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlReadMemory+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 $XML2_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlReadMemory ();
-int
-main ()
-{
-return xmlReadMemory ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlReadMemory=yes
-else
-  ac_cv_lib_xml2_xmlReadMemory=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlReadMemory" >&5
-$as_echo "$ac_cv_lib_xml2_xmlReadMemory" >&6; }
-if test "x$ac_cv_lib_xml2_xmlReadMemory" = xyes; then :
-
-$as_echo "#define HAVE_XMLREADMEMORY 1" >>confdefs.h
-
-fi
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlNewDocPI in -lxml2" >&5
-$as_echo_n "checking for xmlNewDocPI in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlNewDocPI+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 $XML2_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlNewDocPI ();
-int
-main ()
-{
-return xmlNewDocPI ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlNewDocPI=yes
-else
-  ac_cv_lib_xml2_xmlNewDocPI=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlNewDocPI" >&5
-$as_echo "$ac_cv_lib_xml2_xmlNewDocPI" >&6; }
-if test "x$ac_cv_lib_xml2_xmlNewDocPI" = xyes; then :
-
-$as_echo "#define HAVE_XMLNEWDOCPI 1" >>confdefs.h
-
-fi
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetParserStructuredErrors in -lxml2" >&5
-$as_echo_n "checking for xmlSchemaSetParserStructuredErrors in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 $XML2_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlSchemaSetParserStructuredErrors ();
-int
-main ()
-{
-return xmlSchemaSetParserStructuredErrors ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors=yes
-else
-  ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors" >&5
-$as_echo "$ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors" >&6; }
-if test "x$ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors" = xyes; then :
-
-$as_echo "#define HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS 1" >>confdefs.h
-
-fi
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetValidStructuredErrors in -lxml2" >&5
-$as_echo_n "checking for xmlSchemaSetValidStructuredErrors in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 $XML2_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlSchemaSetValidStructuredErrors ();
-int
-main ()
-{
-return xmlSchemaSetValidStructuredErrors ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors=yes
-else
-  ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors" >&5
-$as_echo "$ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors" >&6; }
-if test "x$ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors" = xyes; then :
-
-$as_echo "#define HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS 1" >>confdefs.h
-
-fi
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in -lxml2" >&5
-$as_echo_n "checking for xmlFirstElementChild in -lxml2... " >&6; }
-if ${ac_cv_lib_xml2_xmlFirstElementChild+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 $XML2_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xmlFirstElementChild ();
-int
-main ()
-{
-return xmlFirstElementChild ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_xml2_xmlFirstElementChild=yes
-else
-  ac_cv_lib_xml2_xmlFirstElementChild=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlFirstElementChild" >&5
-$as_echo "$ac_cv_lib_xml2_xmlFirstElementChild" >&6; }
-if test "x$ac_cv_lib_xml2_xmlFirstElementChild" = xyes; then :
-
-$as_echo "#define HAVE_XMLFIRSTELEMENTCHILD 1" >>confdefs.h
-
-fi
-
-            ac_fn_c_check_type "$LINENO" "xmlDocProperties" "ac_cv_type_xmlDocProperties" "#include <libxml/tree.h>
-"
-if test "x$ac_cv_type_xmlDocProperties" = xyes; then :
-
-$as_echo "#define HAVE_XMLDOC_PROPERTIES 1" >>confdefs.h
-
-fi
-
-        else
-            XML2_CFLAGS=""
-            XML2_LIBS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then :
-  case "x$with_xml" in
-  x)   as_fn_append wine_warnings "|libxml2 ${notice_platform}development files not found (or too old), XML won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libxml2 ${notice_platform}development files not found (or too old), XML won't be supported.
-This is an error since --with-xml was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
-if test "x$with_xslt" != "xno"
-then
-    if ${XSLT_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  XSLT_CFLAGS=`$PKG_CONFIG --cflags libxslt 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || XSLT_CFLAGS=${XSLT_CFLAGS:-`${XSLT_CONFIG:-xslt-config} --cflags 2>/dev/null`}
-if ${XSLT_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  XSLT_LIBS=`$PKG_CONFIG --libs libxslt 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || XSLT_LIBS=${XSLT_LIBS:-`${XSLT_CONFIG:-xslt-config} --libs 2>/dev/null`}
-XSLT_LIBS=${XSLT_LIBS:-"-lxml2"}
-$as_echo "$as_me:${as_lineno-$LINENO}: libxslt cflags: $XSLT_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libxslt libs: $XSLT_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $XSLT_CFLAGS"
-for ac_header in libxslt/pattern.h libxslt/transform.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_LIBXSLT_PATTERN_H
-# include <libxslt/pattern.h>
-#endif
-"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_libxslt_transform_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lxslt" >&5
-$as_echo_n "checking for -lxslt... " >&6; }
-if ${ac_cv_lib_soname_xslt+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lxslt $XSLT_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char xsltCompilePattern ();
-int
-main ()
-{
-return xsltCompilePattern ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_xslt=`$ac_cv_path_LDD conftest.exe | grep "xslt" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_xslt=`$OTOOL -L conftest$ac_exeext | grep "libxslt\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libxslt\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_xslt=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libxslt\\.$LIBEXT" | sed -e "s/^.*\\[\\(libxslt\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_xslt:+false} :; then :
-  ac_cv_lib_soname_xslt=`$LDD conftest$ac_exeext | grep "libxslt\\.$LIBEXT" | sed -e "s/^.*\(libxslt\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_xslt=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_xslt:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_xslt" >&5
-$as_echo "$ac_cv_lib_soname_xslt" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBXSLT "$ac_cv_lib_soname_xslt"
-_ACEOF
-
-
-fi
-        else
-            XSLT_CFLAGS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_soname_xslt" = "x"; then :
-  case "x$with_xslt" in
-  x)   as_fn_append wine_warnings "|libxslt ${notice_platform}development files not found, xslt won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libxslt ${notice_platform}development files not found, xslt won't be supported.
-This is an error since --with-xslt was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
 if test "x$with_inotify" != "xno"
 then
     if ${INOTIFY_CFLAGS:+false} :; then :
@@ -19465,10 +19015,6 @@ X_PRE_LIBS = $X_PRE_LIBS
 X_LIBS = $X_LIBS
 X_EXTRA_LIBS = $X_EXTRA_LIBS
 PCAP_LIBS = $PCAP_LIBS
-XML2_CFLAGS = $XML2_CFLAGS
-XML2_LIBS = $XML2_LIBS
-XSLT_CFLAGS = $XSLT_CFLAGS
-XSLT_LIBS = $XSLT_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS
 INOTIFY_LIBS = $INOTIFY_LIBS
 DBUS_CFLAGS = $DBUS_CFLAGS

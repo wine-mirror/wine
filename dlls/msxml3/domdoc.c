@@ -21,18 +21,14 @@
 
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# include <libxml/xpathInternals.h>
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
+#include <libxml/xpathInternals.h>
 # include <libxml/xmlsave.h>
-# include <libxml/SAX2.h>
-# include <libxml/parserInternals.h>
-#endif
+#include <libxml/SAX2.h>
+#include <libxml/parserInternals.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -50,8 +46,6 @@
 #include "wine/debug.h"
 
 #include "msxml_private.h"
-
-#ifdef HAVE_LIBXML2
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -2140,12 +2134,7 @@ static HRESULT WINAPI domdoc_createNode(
         xmlnode = xmlNewReference(get_doc(This), xml_name);
         break;
     case NODE_PROCESSING_INSTRUCTION:
-#ifdef HAVE_XMLNEWDOCPI
         xmlnode = xmlNewDocPI(get_doc(This), xml_name, NULL);
-#else
-        FIXME("xmlNewDocPI() not supported, use libxml2 2.6.15 or greater\n");
-        xmlnode = NULL;
-#endif
         break;
     case NODE_COMMENT:
         xmlnode = xmlNewDocComment(get_doc(This), NULL);
@@ -2496,9 +2485,9 @@ static HRESULT WINAPI domdoc_loadXML(
 
             /* skip leading spaces if needed */
             if (This->properties->version == MSXML_DEFAULT || This->properties->version == MSXML26)
-                while (*ptr && isspaceW(*ptr)) ptr++;
+                while (*ptr && iswspace(*ptr)) ptr++;
 
-            xmldoc = doparse(This, (char*)ptr, strlenW(ptr)*sizeof(WCHAR), XML_CHAR_ENCODING_UTF16LE);
+            xmldoc = doparse(This, (char*)ptr, lstrlenW(ptr)*sizeof(WCHAR), XML_CHAR_ENCODING_UTF16LE);
             if ( !xmldoc )
             {
                 This->error = E_FAIL;
@@ -2901,32 +2890,7 @@ static HRESULT WINAPI domdoc_putref_schemas(
 
 static inline BOOL is_wellformed(xmlDocPtr doc)
 {
-#ifdef HAVE_XMLDOC_PROPERTIES
     return doc->properties & XML_DOC_WELLFORMED;
-#else
-    /* Not a full check, but catches the worst violations */
-    xmlNodePtr child;
-    int root = 0;
-
-    for (child = doc->children; child != NULL; child = child->next)
-    {
-        switch (child->type)
-        {
-        case XML_ELEMENT_NODE:
-            if (++root > 1)
-                return FALSE;
-            break;
-        case XML_TEXT_NODE:
-        case XML_CDATA_SECTION_NODE:
-            return FALSE;
-            break;
-        default:
-            break;
-        }
-    }
-
-    return root == 1;
-#endif
 }
 
 static void LIBXML2_LOG_CALLBACK validate_error(void* ctx, char const* msg, ...)
@@ -3837,14 +3801,3 @@ IUnknown* create_domdoc( xmlNodePtr document )
 
     return obj;
 }
-
-#else
-
-HRESULT dom_document_create(MSXML_VERSION version, void **ppObj)
-{
-    MESSAGE("This program tried to use a DOMDocument object, but\n"
-            "libxml2 support was not present at compile time.\n");
-    return E_NOTIMPL;
-}
-
-#endif

@@ -20,15 +20,11 @@
  */
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# include <libxml/SAX2.h>
-# include <libxml/parserInternals.h>
-#endif
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
+#include <libxml/SAX2.h>
+#include <libxml/parserInternals.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -44,8 +40,6 @@
 #include "wine/debug.h"
 
 #include "msxml_private.h"
-
-#ifdef HAVE_LIBXML2
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -136,7 +130,7 @@ static saxreader_feature get_saxreader_feature(const WCHAR *name)
     {
         n = (min+max)/2;
 
-        c = strcmpW(saxreader_feature_map[n].name, name);
+        c = wcscmp(saxreader_feature_map[n].name, name);
         if (!c)
             return saxreader_feature_map[n].feature;
 
@@ -456,10 +450,10 @@ static BSTR build_qname(BSTR prefix, BSTR local)
         WCHAR *ptr;
 
         ptr = qname;
-        strcpyW(ptr, prefix);
+        lstrcpyW(ptr, prefix);
         ptr += SysStringLen(prefix);
         *ptr++ = ':';
-        strcpyW(ptr, local);
+        lstrcpyW(ptr, local);
         return qname;
     }
     else
@@ -536,7 +530,7 @@ static BSTR find_element_uri(saxlocator *locator, const xmlChar *uri)
     LIST_FOR_EACH_ENTRY(element, &locator->elements, element_entry, entry)
     {
         for (i=0; i < element->ns_count; i++)
-            if (!strcmpW(uriW, element->ns[i].uri))
+            if (!wcscmp(uriW, element->ns[i].uri))
             {
                 SysFreeString(uriW);
                 return element->ns[i].uri;
@@ -1417,7 +1411,7 @@ static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
     if (len != -1) str[str_len-1] = 0;
 
     ptrW = str;
-    while ((dest = strstrW(ptrW, ampescW)))
+    while ((dest = wcsstr(ptrW, ampescW)))
     {
         WCHAR *src;
 
@@ -1426,7 +1420,7 @@ static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
         dest++;
 
         /* move together with null terminator */
-        memmove(dest, src, (strlenW(src) + 1)*sizeof(WCHAR));
+        memmove(dest, src, (lstrlenW(src) + 1)*sizeof(WCHAR));
 
         ptrW++;
     }
@@ -1922,7 +1916,7 @@ static void libxmlComment(void *ctx, const xmlChar *value)
         format_error_message_from_id(This, hr);
 }
 
-static void libxmlFatalError(void *ctx, const char *msg, ...)
+static void WINAPIV libxmlFatalError(void *ctx, const char *msg, ...)
 {
     saxlocator *This = ctx;
     struct saxerrorhandler_iface *handler = saxreader_get_errorhandler(This->saxreader);
@@ -2653,7 +2647,7 @@ static HRESULT internal_parse(
         case VT_BSTR|VT_BYREF:
         {
             BSTR str = V_ISBYREF(&varInput) ? *V_BSTRREF(&varInput) : V_BSTR(&varInput);
-            hr = internal_parseBuffer(This, (const char*)str, strlenW(str)*sizeof(WCHAR), vbInterface);
+            hr = internal_parseBuffer(This, (const char*)str, lstrlenW(str)*sizeof(WCHAR), vbInterface);
             break;
         }
         case VT_ARRAY|VT_UI1: {
@@ -3491,14 +3485,3 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, LPVOID *ppObj)
 
     return S_OK;
 }
-
-#else
-
-HRESULT SAXXMLReader_create(MSXML_VERSION version, LPVOID *ppObj)
-{
-    MESSAGE("This program tried to use a SAX XML Reader object, but\n"
-            "libxml2 support was not present at compile time.\n");
-    return E_NOTIMPL;
-}
-
-#endif

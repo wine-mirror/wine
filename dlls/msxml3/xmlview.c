@@ -31,7 +31,6 @@
 #include "docobj.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "msxml_dispex.h"
 
@@ -426,12 +425,12 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
     }
 
     /* TODO: fix parsing processing instruction value */
-    if((p = strstrW(V_BSTR(&var), hrefW))) {
+    if((p = wcsstr(V_BSTR(&var), hrefW))) {
         p += ARRAY_SIZE(hrefW) - 1;
         if(*p!='\'' && *p!='\"') p = NULL;
         else {
             href = p+1;
-            p = strchrW(href, *p);
+            p = wcschr(href, *p);
         }
     }
     if(p) {

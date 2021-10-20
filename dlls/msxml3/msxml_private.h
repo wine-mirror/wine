@@ -23,15 +23,10 @@
 
 #include "dispex.h"
 
-#include "wine/unicode.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
 #include "msxml_dispex.h"
-
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
 
 extern const CLSID * DOMDocument_version(MSXML_VERSION v) DECLSPEC_HIDDEN;
 
@@ -97,7 +92,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);
@@ -120,23 +115,8 @@ struct xslprocessor_params
     unsigned int count;
 };
 
-#ifdef HAVE_LIBXML2
-
 extern void schemasInit(void) DECLSPEC_HIDDEN;
 extern void schemasCleanup(void) DECLSPEC_HIDDEN;
-
-#ifndef HAVE_XMLFIRSTELEMENTCHILD
-static inline xmlNodePtr wine_xmlFirstElementChild(xmlNodePtr parent)
-{
-    xmlNodePtr child;
-    for (child = parent->children; child != NULL; child = child->next)
-        if (child->type == XML_ELEMENT_NODE)
-            break;
-
-    return child;
-}
-#define xmlFirstElementChild wine_xmlFirstElementChild
-#endif
 
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
@@ -211,7 +191,7 @@ extern HRESULT XMLElement_create( xmlNodePtr node, LPVOID *ppObj, BOOL own ) DEC
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap) DECLSPEC_HIDDEN;
 extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err) DECLSPEC_HIDDEN;
 
-#define LIBXML2_LOG_CALLBACK __WINE_PRINTF_ATTR(2,3)
+#define LIBXML2_LOG_CALLBACK WINAPIV __WINE_PRINTF_ATTR(2,3)
 
 #define LIBXML2_CALLBACK_TRACE(caller, msg, ap) \
         wineXmlCallbackLog(#caller, XML_ERR_NONE, msg, ap)
@@ -281,11 +261,9 @@ extern BSTR EnsureCorrectEOL(BSTR) DECLSPEC_HIDDEN;
 
 extern xmlChar* tagName_to_XPath(const BSTR tagName) DECLSPEC_HIDDEN;
 
-#ifdef SONAME_LIBXSLT
-#  include <libxslt/documents.h>
+#include <libxslt/documents.h>
 extern xmlDocPtr xslt_doc_default_loader(const xmlChar *uri, xmlDictPtr dict, int options,
     void *_ctxt, xsltLoadType type) DECLSPEC_HIDDEN;
-#endif /* SONAME_LIBXSLT */
 
 static inline BSTR bstr_from_xmlChar(const xmlChar *str)
 {
@@ -336,8 +314,6 @@ static inline xmlChar *heap_strdupxmlChar(const xmlChar *str)
 
     return ret;
 }
-
-#endif
 
 static inline HRESULT return_null_node(IXMLDOMNode **p)
 {

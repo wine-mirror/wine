@@ -236,12 +236,12 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, DISPID id
     data->func_cnt++;
 }
 
-static int dispid_cmp(const void *p1, const void *p2)
+static int __cdecl dispid_cmp(const void *p1, const void *p2)
 {
     return ((const func_info_t*)p1)->id - ((const func_info_t*)p2)->id;
 }
 
-static int func_name_cmp(const void *p1, const void *p2)
+static int __cdecl func_name_cmp(const void *p1, const void *p2)
 {
     return lstrcmpiW((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
 }
@@ -426,7 +426,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
         c = lstrcmpiW(data->name_table[n]->name, bstrName);
         if(!c) {
-            if((grfdex & fdexNameCaseSensitive) && lstrcmpW(data->name_table[n]->name, bstrName))
+            if((grfdex & fdexNameCaseSensitive) && wcscmp(data->name_table[n]->name, bstrName))
                 break;
 
             *pid = data->name_table[n]->id;

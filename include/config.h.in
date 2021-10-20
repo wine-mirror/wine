@@ -243,26 +243,8 @@
 /* Define to 1 if you have the `unwind' library (-lunwind). */
 #undef HAVE_LIBUNWIND
 
-/* Define if you have the libxml2 library */
-#undef HAVE_LIBXML2
-
-/* Define to 1 if you have the <libxml/parser.h> header file. */
-#undef HAVE_LIBXML_PARSER_H
-
-/* Define to 1 if you have the <libxml/SAX2.h> header file. */
-#undef HAVE_LIBXML_SAX2_H
-
-/* Define to 1 if you have the <libxml/xmlsave.h> header file. */
-#undef HAVE_LIBXML_XMLSAVE_H
-
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
-
-/* Define to 1 if you have the <libxslt/pattern.h> header file. */
-#undef HAVE_LIBXSLT_PATTERN_H
-
-/* Define to 1 if you have the <libxslt/transform.h> header file. */
-#undef HAVE_LIBXSLT_TRANSFORM_H
 
 /* Define if you have the X Shm extension */
 #undef HAVE_LIBXXSHM
@@ -890,24 +872,6 @@
 /* Define if you have the XKB extension */
 #undef HAVE_XKB
 
-/* Define if libxml2 has the xmlDocProperties enum */
-#undef HAVE_XMLDOC_PROPERTIES
-
-/* Define if libxml2 has the xmlFirstElementChild function */
-#undef HAVE_XMLFIRSTELEMENTCHILD
-
-/* Define if libxml2 has the xmlNewDocPI function */
-#undef HAVE_XMLNEWDOCPI
-
-/* Define if libxml2 has the xmlReadMemory function */
-#undef HAVE_XMLREADMEMORY
-
-/* Define if libxml2 has the xmlSchemaSetParserStructuredErrors function */
-#undef HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS
-
-/* Define if libxml2 has the xmlSchemaSetValidStructuredErrors function */
-#undef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
-
 /* Define if Xrender has the XRenderCreateLinearGradient function */
 #undef HAVE_XRENDERCREATELINEARGRADIENT
 
@@ -1057,9 +1021,6 @@
 
 /* Define to the soname of the libXrender library. */
 #undef SONAME_LIBXRENDER
-
-/* Define to the soname of the libxslt library. */
-#undef SONAME_LIBXSLT
 
 /* Define to the soname of the libXxf86vm library. */
 #undef SONAME_LIBXXF86VM

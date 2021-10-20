@@ -19,10 +19,6 @@
  */
 
 %{
-#include "config.h"
-#include "wine/port.h"
-
-#ifdef HAVE_LIBXML2
 #include "xslpattern.h"
 #include <libxml/xpathInternals.h>
 #include "wine/debug.h"
@@ -750,5 +746,3 @@ static void xslpattern_error(parser_param* param, void const* scanner, char cons
     ;
 
 %%
-
-#endif  /* HAVE_LIBXML2 */

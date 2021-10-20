@@ -30,7 +30,6 @@
 #include "msxml6.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "msxml_dispex.h"
 
@@ -3077,10 +3076,10 @@ static HRESULT WINAPI SAXAttributes_getIndexFromName(ISAXAttributes *iface, cons
     for (i = 0; i < This->length; i++)
     {
         if (uri_len != SysStringLen(This->attr[i].uri)) continue;
-        if (strncmpW(uri, This->attr[i].uri, uri_len)) continue;
+        if (wcsncmp(uri, This->attr[i].uri, uri_len)) continue;
 
         if (len != SysStringLen(This->attr[i].local)) continue;
-        if (strncmpW(name, This->attr[i].local, len)) continue;
+        if (wcsncmp(name, This->attr[i].local, len)) continue;
 
         *index = i;
         return S_OK;
@@ -3105,7 +3104,7 @@ static HRESULT WINAPI SAXAttributes_getIndexFromQName(ISAXAttributes *iface, con
     for (i = 0; i < This->length; i++)
     {
         if (len != SysStringLen(This->attr[i].qname)) continue;
-        if (strncmpW(qname, This->attr[i].qname, len)) continue;
+        if (wcsncmp(qname, This->attr[i].qname, len)) continue;
 
         *index = i;
         return S_OK;

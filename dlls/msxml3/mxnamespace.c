@@ -94,7 +94,7 @@ static HRESULT declare_prefix(namespacemanager *This, const WCHAR *prefix, const
 
     ns = NULL;
     for (i = 0; i < ctxt->count; i++)
-        if (!lstrcmpW(ctxt->ns[i].prefix, prefix))
+        if (!wcscmp(ctxt->ns[i].prefix, prefix))
         {
             ns = &ctxt->ns[i];
             break;
@@ -143,7 +143,7 @@ static HRESULT get_declared_prefix_uri(const struct list *ctxts, const WCHAR *ur
     {
         int i;
         for (i = 0; i < ctxt->count; i++)
-            if (!lstrcmpW(ctxt->ns[i].uri, uri))
+            if (!wcscmp(ctxt->ns[i].uri, uri))
             {
                 *prefix = ctxt->ns[i].prefix;
                 return S_OK;
@@ -159,7 +159,7 @@ static HRESULT get_uri_from_prefix(const struct nscontext *ctxt, const WCHAR *pr
     int i;
 
     for (i = 0; i < ctxt->count; i++)
-        if (!lstrcmpW(ctxt->ns[i].prefix, prefix))
+        if (!wcscmp(ctxt->ns[i].prefix, prefix))
         {
             *uri = ctxt->ns[i].uri;
             return S_OK;
@@ -279,7 +279,7 @@ static HRESULT WINAPI namespacemanager_declarePrefix(IMXNamespaceManager *iface,
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
 
-    if (prefix && (!lstrcmpW(prefix, xmlW) || !lstrcmpW(prefix, xmlnsW) || !namespaceURI))
+    if (prefix && (!wcscmp(prefix, xmlW) || !wcscmp(prefix, xmlnsW) || !namespaceURI))
         return E_INVALIDARG;
 
     return declare_prefix(This, prefix, namespaceURI);

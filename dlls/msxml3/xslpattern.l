@@ -19,11 +19,6 @@
  */
 
 %{
-#include "config.h"
-#include "wine/port.h"
-
-#ifdef HAVE_LIBXML2
-
 #include "xslpattern.h"
 #include "xslpattern.tab.h"
 #include "wine/debug.h"
@@ -181,5 +176,3 @@ xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str)
     }
 
 }
-
-#endif /* HAVE_LIBXML2 */

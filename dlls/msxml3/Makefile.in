@@ -1,9 +1,6 @@
 MODULE    = msxml3.dll
-IMPORTS   = uuid urlmon shlwapi oleaut32 ole32 user32 advapi32
-EXTRALIBS = $(XML2_LIBS)
-EXTRAINCL = $(XML2_CFLAGS) $(XSLT_CFLAGS)
-
-EXTRADLLFLAGS = -mcygwin
+IMPORTS   = $(XSLT_PE_LIBS) $(XML2_PE_LIBS) uuid urlmon shlwapi oleaut32 ole32 user32 advapi32
+EXTRAINCL = $(XSLT_PE_CFLAGS) $(XML2_PE_CFLAGS)
 
 C_SRCS = \
 	attribute.c \
