@@ -33,6 +33,7 @@
 #define NONAMELESSUNION
 #include "dshow.h"
 #include "mfidl.h"
+#include "wmsdk.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
@@ -111,5 +112,21 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format) DE
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HIDDEN;
 
 HRESULT audio_converter_create(REFIID riid, void **ret) DECLSPEC_HIDDEN;
+
+struct wm_reader
+{
+    IWMProfile3 IWMProfile3_iface;
+    LONG refcount;
+
+    const struct wm_reader_ops *ops;
+};
+
+struct wm_reader_ops
+{
+    void *(*query_interface)(struct wm_reader *reader, REFIID iid);
+    void (*destroy)(struct wm_reader *reader);
+};
+
+void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
 
 #endif /* __GST_PRIVATE_INCLUDED__ */

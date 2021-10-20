@@ -20,16 +20,18 @@
 
 #define WINE_NO_NAMELESS_EXTENSION
 
+#define EXTERN_GUID DEFINE_GUID
+#include "initguid.h"
 #include "gst_private.h"
 #include "winternl.h"
 #include "rpcproxy.h"
-
-#include "initguid.h"
 #include "gst_guids.h"
 
 static unixlib_handle_t unix_handle;
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+
+DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

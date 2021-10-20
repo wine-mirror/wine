@@ -17,12 +17,13 @@
  */
 
 #include "gst_private.h"
-#include "wmsdk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
 struct async_reader
 {
+    struct wm_reader reader;
+
     IWMReader IWMReader_iface;
     IWMReaderAdvanced6 IWMReaderAdvanced6_iface;
     IWMReaderAccelerator IWMReaderAccelerator_iface;
@@ -34,9 +35,7 @@ struct async_reader
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMLanguageList IWMLanguageList_iface;
     IReferenceClock IReferenceClock_iface;
-    IWMProfile3 IWMProfile3_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
-    LONG ref;
 };
 
 static struct async_reader *impl_from_IWMReader(IWMReader *iface)
@@ -44,116 +43,25 @@ static struct async_reader *impl_from_IWMReader(IWMReader *iface)
     return CONTAINING_RECORD(iface, struct async_reader, IWMReader_iface);
 }
 
-static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID iid, void **out)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
+    struct async_reader *reader = impl_from_IWMReader(iface);
 
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IWMReader_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReader)) {
-        TRACE("(%p)->(IID_IWMReader %p)\n", This, ppv);
-        *ppv = &This->IWMReader_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced)) {
-        TRACE("(%p)->(IID_IWMReaderAdvanced %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAdvanced6_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced2)) {
-        TRACE("(%p)->(IID_IWMReaderAdvanced2 %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAdvanced6_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced3)) {
-        TRACE("(%p)->(IID_IWMReaderAdvanced3 %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAdvanced6_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced4)) {
-        TRACE("(%p)->(IID_IWMReaderAdvanced4 %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAdvanced6_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced5)) {
-        TRACE("(%p)->(IID_IWMReaderAdvanced5 %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAdvanced6_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced6)) {
-        TRACE("(%p)->(IID_IWMReaderAdvanced6 %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAdvanced6_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderAccelerator)) {
-        TRACE("(%p)->(IID_IWMReaderAccelerator %p)\n", This, ppv);
-        *ppv = &This->IWMReaderAccelerator_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderNetworkConfig)) {
-        TRACE("(%p)->(IWMReaderNetworkConfig %p)\n", This, ppv);
-        *ppv = &This->IWMReaderNetworkConfig2_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderNetworkConfig2)) {
-        TRACE("(%p)->(IWMReaderNetworkConfig2 %p)\n", This, ppv);
-        *ppv = &This->IWMReaderNetworkConfig2_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderStreamClock)) {
-        TRACE("(%p)->(IWMReaderStreamClock %p)\n", This, ppv);
-        *ppv = &This->IWMReaderStreamClock_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderTypeNegotiation)) {
-        TRACE("(%p)->(IWMReaderTypeNegotiation %p)\n", This, ppv);
-        *ppv = &This->IWMReaderTypeNegotiation_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderTimecode)) {
-        TRACE("(%p)->(IWMReaderTimecode %p)\n", This, ppv);
-        *ppv = &This->IWMReaderTimecode_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMReaderPlaylistBurn)) {
-        TRACE("(%p)->(IWMReaderPlaylistBurn %p)\n", This, ppv);
-        *ppv = &This->IWMReaderPlaylistBurn_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMHeaderInfo)) {
-        TRACE("(%p)->(IWMHeaderInfo %p)\n", This, ppv);
-        *ppv = &This->IWMHeaderInfo3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMHeaderInfo2)) {
-        TRACE("(%p)->(IWMHeaderInfo2 %p)\n", This, ppv);
-        *ppv = &This->IWMHeaderInfo3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMHeaderInfo3)) {
-        TRACE("(%p)->(IWMHeaderInfo3 %p)\n", This, ppv);
-        *ppv = &This->IWMHeaderInfo3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMLanguageList)) {
-        TRACE("(%p)->(IWMLanguageList %p)\n", This, ppv);
-        *ppv = &This->IWMLanguageList_iface;
-    }else if(IsEqualGUID(riid, &IID_IReferenceClock)) {
-        TRACE("(%p)->(IWMLanguageList %p)\n", This, ppv);
-        *ppv = &This->IReferenceClock_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMProfile)) {
-        TRACE("(%p)->(IWMProfile %p)\n", This, ppv);
-        *ppv = &This->IWMProfile3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMProfile2)) {
-        TRACE("(%p)->(IWMProfile2 %p)\n", This, ppv);
-        *ppv = &This->IWMProfile3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMProfile3)) {
-        TRACE("(%p)->(IWMProfile3 %p)\n", This, ppv);
-        *ppv = &This->IWMProfile3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMPacketSize)) {
-        TRACE("(%p)->(IWMPacketSize %p)\n", This, ppv);
-        *ppv = &This->IWMPacketSize2_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMPacketSize2)) {
-        TRACE("(%p)->(IWMPacketSize2 %p)\n", This, ppv);
-        *ppv = &This->IWMPacketSize2_iface;
-    }else {
-        *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return IWMProfile3_QueryInterface(&reader->reader.IWMProfile3_iface, iid, out);
 }
 
 static ULONG WINAPI WMReader_AddRef(IWMReader *iface)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    struct async_reader *reader = impl_from_IWMReader(iface);
 
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
+    return IWMProfile3_AddRef(&reader->reader.IWMProfile3_iface);
 }
 
 static ULONG WINAPI WMReader_Release(IWMReader *iface)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    struct async_reader *reader = impl_from_IWMReader(iface);
 
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref)
-        free(This);
-
-    return ref;
+    return IWMProfile3_Release(&reader->reader.IWMProfile3_iface);
 }
 
 static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url, IWMReaderCallback *callback, void *context)
@@ -1692,289 +1600,6 @@ static const IReferenceClockVtbl ReferenceClockVtbl =
     refclock_Unadvise
 };
 
-static struct async_reader *impl_from_IWMProfile3(IWMProfile3 *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, IWMProfile3_iface);
-}
-
-static HRESULT WINAPI profile3_QueryInterface(IWMProfile3 *iface, REFIID riid, void **ppv)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
-}
-
-static ULONG WINAPI profile3_AddRef(IWMProfile3 *iface)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    return IWMReader_AddRef(&This->IWMReader_iface);
-}
-
-static ULONG WINAPI profile3_Release(IWMProfile3 *iface)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    return IWMReader_Release(&This->IWMReader_iface);
-}
-
-static HRESULT WINAPI profile3_GetVersion(IWMProfile3 *iface, WMT_VERSION *version)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, version);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetName(IWMProfile3 *iface, WCHAR *name, DWORD *length)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p, %p\n", This, name, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_SetName(IWMProfile3 *iface, const WCHAR *name)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s\n", This, debugstr_w(name));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetDescription(IWMProfile3 *iface, WCHAR *description, DWORD *length)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p, %p\n", This, description, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_SetDescription(IWMProfile3 *iface, const WCHAR *description)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s\n", This, debugstr_w(description));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetStreamCount(IWMProfile3 *iface, DWORD *count)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, count);
-
-    if (!count)
-        return E_INVALIDARG;
-
-    *count = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI profile3_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **config)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetStreamByNumber(IWMProfile3 *iface, WORD stream, IWMStreamConfig **config)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, stream, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_RemoveStream(IWMProfile3 *iface, IWMStreamConfig *config)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_RemoveStreamByNumber(IWMProfile3 *iface, WORD stream)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_AddStream(IWMProfile3 *iface, IWMStreamConfig *config)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_ReconfigStream(IWMProfile3 *iface, IWMStreamConfig *config)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_CreateNewStream(IWMProfile3 *iface, REFGUID type, IWMStreamConfig **config)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s, %p\n", This, debugstr_guid(type), config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetMutualExclusionCount(IWMProfile3 *iface, DWORD *count)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetMutualExclusion(IWMProfile3 *iface, DWORD index, IWMMutualExclusion **mutual)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_RemoveMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion *mutual)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_AddMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion *mutual)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_CreateNewMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion **mutual)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetProfileID(IWMProfile3 *iface, GUID *guid)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, guid);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetStorageFormat(IWMProfile3 *iface, WMT_STORAGE_FORMAT *storage)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, storage);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_SetStorageFormat(IWMProfile3 *iface, WMT_STORAGE_FORMAT storage)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d\n", This, storage);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetBandwidthSharingCount(IWMProfile3 *iface, DWORD *count)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetBandwidthSharing(IWMProfile3 *iface, DWORD index, IWMBandwidthSharing **bandwidth)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_RemoveBandwidthSharing( IWMProfile3 *iface, IWMBandwidthSharing *bandwidth)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_AddBandwidthSharing(IWMProfile3 *iface, IWMBandwidthSharing *bandwidth)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_CreateNewBandwidthSharing( IWMProfile3 *iface, IWMBandwidthSharing **bandwidth)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization **stream)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_SetStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization *stream)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_RemoveStreamPrioritization(IWMProfile3 *iface)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_CreateNewStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization **stream)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI profile3_GetExpectedPacketCount(IWMProfile3 *iface, QWORD duration, QWORD *packets)
-{
-    struct async_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s, %p\n", This, wine_dbgstr_longlong(duration), packets);
-    return E_NOTIMPL;
-}
-
-static const IWMProfile3Vtbl WMProfile3Vtbl =
-{
-    profile3_QueryInterface,
-    profile3_AddRef,
-    profile3_Release,
-    profile3_GetVersion,
-    profile3_GetName,
-    profile3_SetName,
-    profile3_GetDescription,
-    profile3_SetDescription,
-    profile3_GetStreamCount,
-    profile3_GetStream,
-    profile3_GetStreamByNumber,
-    profile3_RemoveStream,
-    profile3_RemoveStreamByNumber,
-    profile3_AddStream,
-    profile3_ReconfigStream,
-    profile3_CreateNewStream,
-    profile3_GetMutualExclusionCount,
-    profile3_GetMutualExclusion,
-    profile3_RemoveMutualExclusion,
-    profile3_AddMutualExclusion,
-    profile3_CreateNewMutualExclusion,
-    profile3_GetProfileID,
-    profile3_GetStorageFormat,
-    profile3_SetStorageFormat,
-    profile3_GetBandwidthSharingCount,
-    profile3_GetBandwidthSharing,
-    profile3_RemoveBandwidthSharing,
-    profile3_AddBandwidthSharing,
-    profile3_CreateNewBandwidthSharing,
-    profile3_GetStreamPrioritization,
-    profile3_SetStreamPrioritization,
-    profile3_RemoveStreamPrioritization,
-    profile3_CreateNewStreamPrioritization,
-    profile3_GetExpectedPacketCount
-};
-
 static struct async_reader *impl_from_IWMPacketSize2(IWMPacketSize2 *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, IWMPacketSize2_iface);
@@ -2037,6 +1662,80 @@ static const IWMPacketSize2Vtbl WMPacketSize2Vtbl =
     packetsize_SetMinPacketSize
 };
 
+static struct async_reader *impl_from_wm_reader(struct wm_reader *iface)
+{
+    return CONTAINING_RECORD(iface, struct async_reader, reader);
+}
+
+static void *async_reader_query_interface(struct wm_reader *iface, REFIID iid)
+{
+    struct async_reader *reader = impl_from_wm_reader(iface);
+
+    TRACE("reader %p, iid %s.\n", reader, debugstr_guid(iid));
+
+    if (IsEqualIID(iid, &IID_IReferenceClock))
+        return &reader->IReferenceClock_iface;
+
+    if (IsEqualIID(iid, &IID_IWMHeaderInfo)
+            || IsEqualIID(iid, &IID_IWMHeaderInfo2)
+            || IsEqualIID(iid, &IID_IWMHeaderInfo3))
+        return &reader->IWMHeaderInfo3_iface;
+
+    if (IsEqualIID(iid, &IID_IWMLanguageList))
+        return &reader->IWMLanguageList_iface;
+
+    if (IsEqualIID(iid, &IID_IWMPacketSize)
+            || IsEqualIID(iid, &IID_IWMPacketSize2))
+        return &reader->IWMPacketSize2_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReader))
+        return &reader->IWMReader_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderAccelerator))
+        return &reader->IWMReaderAccelerator_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderAdvanced)
+            || IsEqualIID(iid, &IID_IWMReaderAdvanced2)
+            || IsEqualIID(iid, &IID_IWMReaderAdvanced3)
+            || IsEqualIID(iid, &IID_IWMReaderAdvanced4)
+            || IsEqualIID(iid, &IID_IWMReaderAdvanced5)
+            || IsEqualIID(iid, &IID_IWMReaderAdvanced6))
+        return &reader->IWMReaderAdvanced6_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderNetworkConfig)
+            || IsEqualIID(iid, &IID_IWMReaderNetworkConfig2))
+        return &reader->IWMReaderNetworkConfig2_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderPlaylistBurn))
+        return &reader->IWMReaderPlaylistBurn_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderStreamClock))
+        return &reader->IWMReaderStreamClock_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderTimecode))
+        return &reader->IWMReaderTimecode_iface;
+
+    if (IsEqualIID(iid, &IID_IWMReaderTypeNegotiation))
+        return &reader->IWMReaderTypeNegotiation_iface;
+
+    return NULL;
+}
+
+static void async_reader_destroy(struct wm_reader *iface)
+{
+    struct async_reader *reader = impl_from_wm_reader(iface);
+
+    TRACE("reader %p.\n", reader);
+
+    free(reader);
+}
+
+static const struct wm_reader_ops async_reader_ops =
+{
+    .query_interface = async_reader_query_interface,
+    .destroy = async_reader_destroy,
+};
+
 HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
 {
     struct async_reader *object;
@@ -2046,11 +1745,12 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    wm_reader_init(&object->reader, &async_reader_ops);
+
     object->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
     object->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
     object->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
     object->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
-    object->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
     object->IWMReader_iface.lpVtbl = &WMReaderVtbl;
     object->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
     object->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
@@ -2059,7 +1759,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     object->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
     object->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
     object->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
-    object->ref = 1;
 
     TRACE("Created async reader %p.\n", object);
     *reader = (IWMReader *)&object->IWMReader_iface;
