@@ -1,6 +1,5 @@
 MODULE    = msgsm32.acm
-IMPORTS   = winmm user32
-
-EXTRADLLFLAGS = -mcygwin
+IMPORTS   = $(GSM_PE_LIBS) winmm user32
+EXTRAINCL = $(GSM_PE_CFLAGS)
 
 C_SRCS = msgsm32.c

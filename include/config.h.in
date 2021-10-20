@@ -141,12 +141,6 @@
 /* Define if we have the libgphoto2_port development environment */
 #undef HAVE_GPHOTO2_PORT
 
-/* Define to 1 if you have the <gsm/gsm.h> header file. */
-#undef HAVE_GSM_GSM_H
-
-/* Define to 1 if you have the <gsm.h> header file. */
-#undef HAVE_GSM_H
-
 /* Define to 1 if you have the <gssapi/gssapi_ext.h> header file. */
 #undef HAVE_GSSAPI_GSSAPI_EXT_H
 
@@ -943,9 +937,6 @@
 
 /* Define to the soname of the libgnutls library. */
 #undef SONAME_LIBGNUTLS
-
-/* Define to the soname of the libgsm library. */
-#undef SONAME_LIBGSM
 
 /* Define to the soname of the libgssapi_krb5 library. */
 #undef SONAME_LIBGSSAPI_KRB5

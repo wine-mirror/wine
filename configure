@@ -864,7 +864,6 @@ with_gettext
 with_gettextpo
 with_gphoto
 with_gnutls
-with_gsm
 with_gssapi
 with_gstreamer
 with_hal
@@ -2653,7 +2652,6 @@ Optional Packages:
   --with-gettextpo        use the GetTextPO library to rebuild po files
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-gnutls        do not use GnuTLS (schannel support)
-  --without-gsm           do not use libgsm (GSM 06.10 codec support)
   --without-gssapi        do not use GSSAPI (Kerberos SSP support)
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
@@ -4075,12 +4073,6 @@ fi
 # Check whether --with-gnutls was given.
 if test "${with_gnutls+set}" = set; then :
   withval=$with_gnutls;
-fi
-
-
-# Check whether --with-gsm was given.
-if test "${with_gsm+set}" = set; then :
-  withval=$with_gsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi
 fi
 
 
@@ -7482,8 +7474,6 @@ for ac_header in \
 	elf.h \
 	float.h \
 	gettext-po.h \
-	gsm.h \
-	gsm/gsm.h \
 	ieeefp.h \
 	libproc.h \
 	link.h \
@@ -15079,74 +15069,6 @@ if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
   xno) ;;
   *)   as_fn_error $? "fontconfig ${notice_platform}development files not found, fontconfig won't be supported.
 This is an error since --with-fontconfig was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
-if test "$ac_cv_header_gsm_h" = "yes" -o "$ac_cv_header_gsm_gsm_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lgsm" >&5
-$as_echo_n "checking for -lgsm... " >&6; }
-if ${ac_cv_lib_soname_gsm+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lgsm  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gsm_create ();
-int
-main ()
-{
-return gsm_create ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_gsm=`$ac_cv_path_LDD conftest.exe | grep "gsm" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_gsm=`$OTOOL -L conftest$ac_exeext | grep "libgsm\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libgsm\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_gsm=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libgsm\\.$LIBEXT" | sed -e "s/^.*\\[\\(libgsm\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_gsm:+false} :; then :
-  ac_cv_lib_soname_gsm=`$LDD conftest$ac_exeext | grep "libgsm\\.$LIBEXT" | sed -e "s/^.*\(libgsm\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_gsm=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_gsm:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_gsm" >&5
-$as_echo "$ac_cv_lib_soname_gsm" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBGSM "$ac_cv_lib_soname_gsm"
-_ACEOF
-
-
-fi
-fi
-if test "x$ac_cv_lib_soname_gsm" = "x"; then :
-  case "x$with_gsm" in
-  x)   as_fn_append wine_notices "|libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.
-This is an error since --with-gsm was requested." "$LINENO" 5 ;;
 esac
 
 fi
