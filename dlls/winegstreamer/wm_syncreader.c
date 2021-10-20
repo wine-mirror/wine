@@ -22,9 +22,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
 struct sync_reader
 {
-    IWMProfile3 IWMProfile3_iface;
+    struct wm_reader reader;
+
     IWMSyncReader2 IWMSyncReader2_iface;
-    LONG ref;
 };
 
 static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
@@ -32,59 +32,25 @@ static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
     return CONTAINING_RECORD(iface, struct sync_reader, IWMSyncReader2_iface);
 }
 
-static HRESULT WINAPI WMSyncReader_QueryInterface(IWMSyncReader2 *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI WMSyncReader_QueryInterface(IWMSyncReader2 *iface, REFIID iid, void **out)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IWMSyncReader2_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMProfile)) {
-        TRACE("(%p)->(IID_IWMProfile %p)\n", This, ppv);
-        *ppv = &This->IWMProfile3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMProfile2)) {
-        TRACE("(%p)->(IID_IWMProfile2 %p)\n", This, ppv);
-        *ppv = &This->IWMProfile3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMProfile3)) {
-        TRACE("(%p)->(IID_IWMProfile3 %p)\n", This, ppv);
-        *ppv = &This->IWMProfile3_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMSyncReader)) {
-        TRACE("(%p)->(IID_IWMSyncReader %p)\n", This, ppv);
-        *ppv = &This->IWMSyncReader2_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMSyncReader2)) {
-        TRACE("(%p)->(IID_IWMSyncReader2 %p)\n", This, ppv);
-        *ppv = &This->IWMSyncReader2_iface;
-    }else {
-        *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return IWMProfile3_QueryInterface(&reader->reader.IWMProfile3_iface, iid, out);
 }
 
 static ULONG WINAPI WMSyncReader_AddRef(IWMSyncReader2 *iface)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
+    return IWMProfile3_AddRef(&reader->reader.IWMProfile3_iface);
 }
 
 static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref)
-        free(This);
-
-    return ref;
+    return IWMProfile3_Release(&reader->reader.IWMProfile3_iface);
 }
 
 static HRESULT WINAPI WMSyncReader_Close(IWMSyncReader2 *iface)
@@ -319,287 +285,37 @@ static const IWMSyncReader2Vtbl WMSyncReader2Vtbl = {
     WMSyncReader2_GetAllocateForStream
 };
 
-static struct sync_reader *impl_from_IWMProfile3(IWMProfile3 *iface)
+static struct sync_reader *impl_from_wm_reader(struct wm_reader *iface)
 {
-    return CONTAINING_RECORD(iface, struct sync_reader, IWMProfile3_iface);
+    return CONTAINING_RECORD(iface, struct sync_reader, reader);
 }
 
-static HRESULT WINAPI WMProfile_QueryInterface(IWMProfile3 *iface, REFIID riid, void **ppv)
+static void *sync_reader_query_interface(struct wm_reader *iface, REFIID iid)
 {
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    return IWMSyncReader2_QueryInterface(&This->IWMSyncReader2_iface, riid, ppv);
+    struct sync_reader *reader = impl_from_wm_reader(iface);
+
+    TRACE("reader %p, iid %s.\n", reader, debugstr_guid(iid));
+
+    if (IsEqualIID(iid, &IID_IWMSyncReader)
+            || IsEqualIID(iid, &IID_IWMSyncReader2))
+        return &reader->IWMSyncReader2_iface;
+
+    return NULL;
 }
 
-static ULONG WINAPI WMProfile_AddRef(IWMProfile3 *iface)
+static void sync_reader_destroy(struct wm_reader *iface)
 {
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    return IWMSyncReader2_AddRef(&This->IWMSyncReader2_iface);
+    struct sync_reader *reader = impl_from_wm_reader(iface);
+
+    TRACE("reader %p.\n", reader);
+
+    free(reader);
 }
 
-static ULONG WINAPI WMProfile_Release(IWMProfile3 *iface)
+static const struct wm_reader_ops sync_reader_ops =
 {
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    return IWMSyncReader2_Release(&This->IWMSyncReader2_iface);
-}
-
-static HRESULT WINAPI WMProfile_GetVersion(IWMProfile3 *iface, WMT_VERSION *version)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, version);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_GetName(IWMProfile3 *iface, WCHAR *name, DWORD *length)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p, %p\n", This, name, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_SetName(IWMProfile3 *iface, const WCHAR *name)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s\n", This, debugstr_w(name));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_GetDescription(IWMProfile3 *iface, WCHAR *description, DWORD *length)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p, %p\n", This, description, length);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_SetDescription(IWMProfile3 *iface, const WCHAR *description)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s\n", This, debugstr_w(description));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_GetStreamCount(IWMProfile3 *iface, DWORD *count)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, count);
-
-    if (!count)
-        return E_INVALIDARG;
-
-    *count = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI WMProfile_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **config)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_GetStreamByNumber(IWMProfile3 *iface, WORD stream, IWMStreamConfig **config)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, stream, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_RemoveStream(IWMProfile3 *iface, IWMStreamConfig *config)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_RemoveStreamByNumber(IWMProfile3 *iface, WORD stream)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_AddStream(IWMProfile3 *iface, IWMStreamConfig *config)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_ReconfigStream(IWMProfile3 *iface, IWMStreamConfig *config)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_CreateNewStream(IWMProfile3 *iface, REFGUID type, IWMStreamConfig **config)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s, %p\n", This, debugstr_guid(type), config);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_GetMutualExclusionCount(IWMProfile3 *iface, DWORD *count)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_GetMutualExclusion(IWMProfile3 *iface, DWORD index, IWMMutualExclusion **mutual)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_RemoveMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion *mutual)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_AddMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion *mutual)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile_CreateNewMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion **mutual)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, mutual);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile2_GetProfileID(IWMProfile3 *iface, GUID *guid)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, guid);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_GetStorageFormat(IWMProfile3 *iface, WMT_STORAGE_FORMAT *storage)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, storage);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_SetStorageFormat(IWMProfile3 *iface, WMT_STORAGE_FORMAT storage)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d\n", This, storage);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_GetBandwidthSharingCount(IWMProfile3 *iface, DWORD *count)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_GetBandwidthSharing(IWMProfile3 *iface, DWORD index, IWMBandwidthSharing **bandwidth)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_RemoveBandwidthSharing( IWMProfile3 *iface, IWMBandwidthSharing *bandwidth)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_AddBandwidthSharing(IWMProfile3 *iface, IWMBandwidthSharing *bandwidth)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_CreateNewBandwidthSharing( IWMProfile3 *iface, IWMBandwidthSharing **bandwidth)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, bandwidth);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_GetStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization **stream)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_SetStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization *stream)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_RemoveStreamPrioritization(IWMProfile3 *iface)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_CreateNewStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization **stream)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %p\n", This, stream);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI WMProfile3_GetExpectedPacketCount(IWMProfile3 *iface, QWORD duration, QWORD *packets)
-{
-    struct sync_reader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %s, %p\n", This, wine_dbgstr_longlong(duration), packets);
-    return E_NOTIMPL;
-}
-
-static const IWMProfile3Vtbl WMProfile3Vtbl =
-{
-    WMProfile_QueryInterface,
-    WMProfile_AddRef,
-    WMProfile_Release,
-    WMProfile_GetVersion,
-    WMProfile_GetName,
-    WMProfile_SetName,
-    WMProfile_GetDescription,
-    WMProfile_SetDescription,
-    WMProfile_GetStreamCount,
-    WMProfile_GetStream,
-    WMProfile_GetStreamByNumber,
-    WMProfile_RemoveStream,
-    WMProfile_RemoveStreamByNumber,
-    WMProfile_AddStream,
-    WMProfile_ReconfigStream,
-    WMProfile_CreateNewStream,
-    WMProfile_GetMutualExclusionCount,
-    WMProfile_GetMutualExclusion,
-    WMProfile_RemoveMutualExclusion,
-    WMProfile_AddMutualExclusion,
-    WMProfile_CreateNewMutualExclusion,
-    WMProfile2_GetProfileID,
-    WMProfile3_GetStorageFormat,
-    WMProfile3_SetStorageFormat,
-    WMProfile3_GetBandwidthSharingCount,
-    WMProfile3_GetBandwidthSharing,
-    WMProfile3_RemoveBandwidthSharing,
-    WMProfile3_AddBandwidthSharing,
-    WMProfile3_CreateNewBandwidthSharing,
-    WMProfile3_GetStreamPrioritization,
-    WMProfile3_SetStreamPrioritization,
-    WMProfile3_RemoveStreamPrioritization,
-    WMProfile3_CreateNewStreamPrioritization,
-    WMProfile3_GetExpectedPacketCount
+    .query_interface = sync_reader_query_interface,
+    .destroy = sync_reader_destroy,
 };
 
 HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader)
@@ -611,9 +327,9 @@ HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader)
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
+    wm_reader_init(&object->reader, &sync_reader_ops);
+
     object->IWMSyncReader2_iface.lpVtbl = &WMSyncReader2Vtbl;
-    object->ref = 1;
 
     TRACE("Created sync reader %p.\n", object);
     *reader = (IWMSyncReader *)&object->IWMSyncReader2_iface;
