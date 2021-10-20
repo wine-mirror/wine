@@ -136,6 +136,34 @@ static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct w
     wined3d_context_gl_bind_bo(context_gl, buffer_gl->bo.binding, buffer_gl->bo.id);
 }
 
+static GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info, uint32_t bind_flags)
+{
+    if (!bind_flags)
+        return GL_PIXEL_UNPACK_BUFFER;
+
+    if (bind_flags == WINED3D_BIND_INDEX_BUFFER)
+        return GL_ELEMENT_ARRAY_BUFFER;
+
+    if (bind_flags & (WINED3D_BIND_SHADER_RESOURCE | WINED3D_BIND_UNORDERED_ACCESS)
+            && gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
+        return GL_TEXTURE_BUFFER;
+
+    if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
+        return GL_UNIFORM_BUFFER;
+
+    if (bind_flags & WINED3D_BIND_STREAM_OUTPUT)
+        return GL_TRANSFORM_FEEDBACK_BUFFER;
+
+    if (bind_flags & WINED3D_BIND_INDIRECT_BUFFER
+            && gl_info->supported[ARB_DRAW_INDIRECT])
+        return GL_DRAW_INDIRECT_BUFFER;
+
+    if (bind_flags & ~(WINED3D_BIND_VERTEX_BUFFER | WINED3D_BIND_INDEX_BUFFER))
+        FIXME("Unhandled bind flags %#x.\n", bind_flags);
+
+    return GL_ARRAY_BUFFER;
+}
+
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *buffer_gl,
         struct wined3d_context_gl *context_gl)
@@ -1115,34 +1143,6 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_sub_resource_map,
     buffer_resource_sub_resource_unmap,
 };
-
-GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info, uint32_t bind_flags)
-{
-    if (!bind_flags)
-        return GL_PIXEL_UNPACK_BUFFER;
-
-    if (bind_flags == WINED3D_BIND_INDEX_BUFFER)
-        return GL_ELEMENT_ARRAY_BUFFER;
-
-    if (bind_flags & (WINED3D_BIND_SHADER_RESOURCE | WINED3D_BIND_UNORDERED_ACCESS)
-            && gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
-        return GL_TEXTURE_BUFFER;
-
-    if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
-        return GL_UNIFORM_BUFFER;
-
-    if (bind_flags & WINED3D_BIND_STREAM_OUTPUT)
-        return GL_TRANSFORM_FEEDBACK_BUFFER;
-
-    if (bind_flags & WINED3D_BIND_INDIRECT_BUFFER
-            && gl_info->supported[ARB_DRAW_INDIRECT])
-        return GL_DRAW_INDIRECT_BUFFER;
-
-    if (bind_flags & ~(WINED3D_BIND_VERTEX_BUFFER | WINED3D_BIND_INDEX_BUFFER))
-        FIXME("Unhandled bind flags %#x.\n", bind_flags);
-
-    return GL_ARRAY_BUFFER;
-}
 
 static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d_device *device,
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
