@@ -1,5 +1,5 @@
 EXTLIB    = libxslt.a
-EXTRAINCL = $(XML2_PE_CFLAGS)
+EXTRAINCL = $(XML2_PE_CFLAGS) $(XSLT_PE_CFLAGS)
 
 C_SRCS = \
 	libxslt/attributes.c \
