@@ -772,6 +772,71 @@ void output_spec32_file( DLLSPEC *spec )
 }
 
 
+struct sec_data
+{
+    char         name[8];
+    const void  *ptr;
+    unsigned int size;
+    unsigned int flags;
+    unsigned int file_size;
+    unsigned int virt_size;
+    unsigned int filepos;
+    unsigned int rva;
+};
+
+struct dir_data
+{
+    unsigned int rva;
+    unsigned int size;
+};
+
+static struct
+{
+    unsigned int    section_align;
+    unsigned int    file_align;
+    unsigned int    sec_count;
+    struct dir_data dir[16];
+    struct sec_data sec[8];
+} pe;
+
+static void set_dir( unsigned int idx, unsigned int rva, unsigned int size )
+{
+    pe.dir[idx].rva  = rva;
+    pe.dir[idx].size = size;
+}
+
+static unsigned int current_rva(void)
+{
+    if (!pe.sec_count) return pe.section_align;
+    return pe.sec[pe.sec_count - 1].rva + pe.sec[pe.sec_count - 1].virt_size;
+}
+
+static unsigned int current_filepos(void)
+{
+    if (!pe.sec_count) return pe.file_align;
+    return pe.sec[pe.sec_count - 1].filepos + pe.sec[pe.sec_count - 1].file_size;
+}
+
+static unsigned int flush_output_to_section( const char *name, int dir_idx, unsigned int flags )
+{
+    struct sec_data *sec = &pe.sec[pe.sec_count];
+
+    if (!output_buffer_pos) return 0;
+
+    strncpy( sec->name, name, sizeof(sec->name) );
+    sec->ptr       = output_buffer;
+    sec->size      = output_buffer_pos;
+    sec->flags     = flags;
+    sec->rva       = current_rva();
+    sec->filepos   = current_filepos();
+    sec->file_size = (sec->size + pe.file_align - 1) & ~(pe.file_align - 1);
+    sec->virt_size = (sec->size + pe.section_align - 1) & ~(pe.section_align - 1);
+    if (dir_idx >= 0) set_dir( dir_idx, sec->rva, sec->size );
+    init_output_buffer();
+    pe.sec_count++;
+    return sec->size;
+}
+
 /*******************************************************************
  *         output_fake_module
  *
@@ -784,26 +849,31 @@ void output_fake_module( DLLSPEC *spec )
 
     static const unsigned char exe_code_section[] = { 0xb8, 0x01, 0x00, 0x00, 0x00,  /* movl $1,%eax */
                                                       0xc2, 0x04, 0x00 };            /* ret $4 */
-
     const unsigned int page_size = get_page_size();
-    const unsigned int section_align = page_size;
-    const unsigned int file_align = 0x200;
-    const unsigned int reloc_size = 8;
     const unsigned int lfanew = 0x40 + sizeof(fakedll_signature);
-    const unsigned int nb_sections = 2 + (spec->nb_resources != 0);
-    const unsigned int text_size = (spec->characteristics & IMAGE_FILE_DLL) ?
-                                    sizeof(dll_code_section) : sizeof(exe_code_section);
-    unsigned char *resources;
-    unsigned int resources_size;
-    unsigned int image_size = 3 * section_align;
+    unsigned int i;
 
     resolve_imports( spec );
-    output_bin_resources( spec, 3 * section_align );
-    resources = output_buffer;
-    resources_size = output_buffer_pos;
-    if (resources_size) image_size += (resources_size + section_align - 1) & ~(section_align - 1);
-
     init_output_buffer();
+
+    pe.section_align = page_size;
+    pe.file_align    = 0x200;
+
+    /* .text section */
+    if (spec->characteristics & IMAGE_FILE_DLL) put_data( dll_code_section, sizeof(dll_code_section) );
+    else put_data( exe_code_section, sizeof(exe_code_section) );
+    flush_output_to_section( ".text", -1, 0x60000020 /* CNT_CODE|MEM_EXECUTE|MEM_READ */ );
+
+    /* .reloc section */
+    put_dword( 0 );  /* VirtualAddress */
+    put_dword( 0 );  /* Size */
+    flush_output_to_section( ".reloc", 5 /* IMAGE_DIRECTORY_ENTRY_BASERELOC */,
+                             0x42000040 /* CNT_INITIALIZED_DATA|MEM_DISCARDABLE|MEM_READ */ );
+
+    /* .rsrc section */
+    output_bin_resources( spec, current_rva() );
+    flush_output_to_section( ".rsrc", 2 /* IMAGE_DIRECTORY_ENTRY_RESOURCE */,
+                             0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ );
 
     put_word( 0x5a4d );       /* e_magic */
     put_word( 0x40 );         /* e_cblp */
@@ -841,7 +911,7 @@ void output_fake_module( DLLSPEC *spec )
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
     case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
     }
-    put_word( nb_sections );                         /* NumberOfSections */
+    put_word( pe.sec_count );                        /* NumberOfSections */
     put_dword( hash_filename(spec->file_name) );     /* TimeDateStamp */
     put_dword( 0 );                                  /* PointerToSymbolTable */
     put_dword( 0 );                                  /* NumberOfSymbols */
@@ -854,15 +924,15 @@ void output_fake_module( DLLSPEC *spec )
               IMAGE_NT_OPTIONAL_HDR32_MAGIC );       /* Magic */
     put_byte(  7 );                                  /* MajorLinkerVersion */
     put_byte(  10 );                                 /* MinorLinkerVersion */
-    put_dword( text_size );                          /* SizeOfCode */
+    put_dword( pe.sec[0].size );                     /* SizeOfCode */
     put_dword( 0 );                                  /* SizeOfInitializedData */
     put_dword( 0 );                                  /* SizeOfUninitializedData */
-    put_dword( section_align );                      /* AddressOfEntryPoint */
-    put_dword( section_align );                      /* BaseOfCode */
+    put_dword( pe.sec[0].rva );                      /* AddressOfEntryPoint */
+    put_dword( pe.sec[0].rva );                      /* BaseOfCode */
     if (get_ptr_size() == 4) put_dword( 0 );         /* BaseOfData */
     put_pword( 0x10000000 );                         /* ImageBase */
-    put_dword( section_align );                      /* SectionAlignment */
-    put_dword( file_align );                         /* FileAlignment */
+    put_dword( pe.section_align );                   /* SectionAlignment */
+    put_dword( pe.file_align );                      /* FileAlignment */
     put_word( 1 );                                   /* MajorOperatingSystemVersion */
     put_word( 0 );                                   /* MinorOperatingSystemVersion */
     put_word( 0 );                                   /* MajorImageVersion */
@@ -870,8 +940,8 @@ void output_fake_module( DLLSPEC *spec )
     put_word( spec->subsystem_major );               /* MajorSubsystemVersion */
     put_word( spec->subsystem_minor );               /* MinorSubsystemVersion */
     put_dword( 0 );                                  /* Win32VersionValue */
-    put_dword( image_size );                         /* SizeOfImage */
-    put_dword( file_align );                         /* SizeOfHeaders */
+    put_dword( current_rva() );                      /* SizeOfImage */
+    put_dword( pe.file_align );                      /* SizeOfHeaders */
     put_dword( 0 );                                  /* CheckSum */
     put_word( spec->subsystem );                     /* Subsystem */
     put_word( spec->dll_characteristics );           /* DllCharacteristics */
@@ -882,91 +952,35 @@ void output_fake_module( DLLSPEC *spec )
     put_dword( 0 );                                  /* LoaderFlags */
     put_dword( 16 );                                 /* NumberOfRvaAndSizes */
 
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-    if (resources_size)   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
+    /* image directories */
+    for (i = 0; i < 16; i++)
     {
-        put_dword( 3 * section_align );
-        put_dword( resources_size );
-    }
-    else
-    {
-        put_dword( 0 );
-        put_dword( 0 );
+        put_dword( pe.dir[i].rva );  /* VirtualAddress */
+        put_dword( pe.dir[i].size ); /* Size */
     }
 
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY] */
-    put_dword( 2 * section_align );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC] */
-    put_dword( reloc_size );
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_COPYRIGHT] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_GLOBALPTR] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IAT] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR] */
-    put_dword( 0 ); put_dword( 0 );   /* DataDirectory[15] */
-
-    /* .text section */
-    put_data( ".text\0\0", 8 );    /* Name */
-    put_dword( section_align );    /* VirtualSize */
-    put_dword( section_align );    /* VirtualAddress */
-    put_dword( text_size );        /* SizeOfRawData */
-    put_dword( file_align );       /* PointerToRawData */
-    put_dword( 0 );                /* PointerToRelocations */
-    put_dword( 0 );                /* PointerToLinenumbers */
-    put_word( 0 );                 /* NumberOfRelocations */
-    put_word( 0 );                 /* NumberOfLinenumbers */
-    put_dword( 0x60000020 /* CNT_CODE|MEM_EXECUTE|MEM_READ */ ); /* Characteristics  */
-
-    /* .reloc section */
-    put_data( ".reloc\0", 8 );     /* Name */
-    put_dword( section_align );    /* VirtualSize */
-    put_dword( 2 * section_align );/* VirtualAddress */
-    put_dword( reloc_size );       /* SizeOfRawData */
-    put_dword( 2 * file_align );   /* PointerToRawData */
-    put_dword( 0 );                /* PointerToRelocations */
-    put_dword( 0 );                /* PointerToLinenumbers */
-    put_word( 0 );                 /* NumberOfRelocations */
-    put_word( 0 );                 /* NumberOfLinenumbers */
-    put_dword( 0x42000040 /* CNT_INITIALIZED_DATA|MEM_DISCARDABLE|MEM_READ */ ); /* Characteristics */
-
-    /* .rsrc section */
-    if (resources_size)
+    /* sections */
+    for (i = 0; i < pe.sec_count; i++)
     {
-        put_data( ".rsrc\0\0", 8 );    /* Name */
-        put_dword( (resources_size + section_align - 1) & ~(section_align - 1) ); /* VirtualSize */
-        put_dword( 3 * section_align );/* VirtualAddress */
-        put_dword( resources_size );   /* SizeOfRawData */
-        put_dword( 3 * file_align );   /* PointerToRawData */
-        put_dword( 0 );                /* PointerToRelocations */
-        put_dword( 0 );                /* PointerToLinenumbers */
-        put_word( 0 );                 /* NumberOfRelocations */
-        put_word( 0 );                 /* NumberOfLinenumbers */
-        put_dword( 0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ ); /* Characteristics */
+        put_data( pe.sec[i].name, 8 );    /* Name */
+        put_dword( pe.sec[i].virt_size ); /* VirtualSize */
+        put_dword( pe.sec[i].rva );       /* VirtualAddress */
+        put_dword( pe.sec[i].size );      /* SizeOfRawData */
+        put_dword( pe.sec[i].filepos );   /* PointerToRawData */
+        put_dword( 0 );                   /* PointerToRelocations */
+        put_dword( 0 );                   /* PointerToLinenumbers */
+        put_word( 0 );                    /* NumberOfRelocations */
+        put_word( 0 );                    /* NumberOfLinenumbers */
+        put_dword( pe.sec[i].flags );     /* Characteristics  */
     }
 
-    /* .text contents */
-    align_output( file_align );
-    if (spec->characteristics & IMAGE_FILE_DLL)
-        put_data( dll_code_section, sizeof(dll_code_section) );
-    else
-        put_data( exe_code_section, sizeof(exe_code_section) );
-
-    /* .reloc contents */
-    align_output( file_align );
-    put_dword( 0 );   /* VirtualAddress */
-    put_dword( 0 );   /* SizeOfBlock */
-
-    /* .rsrc contents */
-    if (resources_size)
+    /* section data */
+    for (i = 0; i < pe.sec_count; i++)
     {
-        align_output( file_align );
-        put_data( resources, resources_size );
+        align_output( pe.file_align );
+        put_data( pe.sec[i].ptr, pe.sec[i].size );
     }
+
     flush_output_buffer();
 }
 
