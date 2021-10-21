@@ -838,77 +838,6 @@ failed:
     return hr;
 }
 
-static HRESULT WINAPI hid_joystick_EnumEffects( IDirectInputDevice8W *iface, LPDIENUMEFFECTSCALLBACKW callback,
-                                                void *context, DWORD type )
-{
-    DIEFFECTINFOW info = {.dwSize = sizeof(info)};
-    HRESULT hr;
-
-    TRACE( "iface %p, callback %p, context %p, type %#x.\n", iface, callback, context, type );
-
-    if (!callback) return DIERR_INVALIDPARAM;
-
-    type = DIEFT_GETTYPE( type );
-
-    if (type == DIEFT_ALL || type == DIEFT_CONSTANTFORCE)
-    {
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_ConstantForce );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-    }
-
-    if (type == DIEFT_ALL || type == DIEFT_RAMPFORCE)
-    {
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_RampForce );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-    }
-
-    if (type == DIEFT_ALL || type == DIEFT_PERIODIC)
-    {
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Square );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Sine );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Triangle );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_SawtoothUp );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_SawtoothDown );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-    }
-
-    if (type == DIEFT_ALL || type == DIEFT_CONDITION)
-    {
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Spring );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Damper );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Inertia );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-
-        hr = IDirectInputDevice8_GetEffectInfo( iface, &info, &GUID_Friction );
-        if (FAILED(hr) && hr != DIERR_DEVICENOTREG) return hr;
-        if (hr == DI_OK && callback( &info, context ) == DIENUM_STOP) return DI_OK;
-    }
-
-    return DI_OK;
-}
-
 static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
                                                   const GUID *guid )
 {
@@ -1155,7 +1084,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_Initialize,
     /*** IDirectInputDevice2 methods ***/
     hid_joystick_CreateEffect,
-    hid_joystick_EnumEffects,
+    IDirectInputDevice2WImpl_EnumEffects,
     hid_joystick_GetEffectInfo,
     hid_joystick_GetForceFeedbackState,
     hid_joystick_SendForceFeedbackCommand,
