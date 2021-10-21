@@ -236,217 +236,182 @@ static const WCHAR * const SysColorsNames[] =
 
 static const WCHAR strColorKey[] = L"Control Panel\\Colors";
 
-static const struct BackupSysParam
-{
-    int spiGet, spiSet;
-    const WCHAR* keyName;
-} backupSysParams[] = 
-{
-    {SPI_GETFLATMENU, SPI_SETFLATMENU, L"FlatMenu"},
-    {SPI_GETGRADIENTCAPTIONS, SPI_SETGRADIENTCAPTIONS, L"GradientCaption"},
-    {-1, -1, 0}
-};
-
 #define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
 
-static void save_sys_colors (HKEY baseKey)
+struct system_metrics
 {
-    WCHAR colorStr[13];
-    HKEY hKey;
-    int i, length;
+    COLORREF system_colors[NUM_SYS_COLORS];
+    NONCLIENTMETRICSW non_client_metrics;
+    LOGFONTW icon_title_font;
+    DWORD gradient_caption;
+    DWORD flat_menu;
+};
 
-    if (RegCreateKeyExW( baseKey, strColorKey,
-                         0, 0, 0, KEY_ALL_ACCESS,
-                         0, &hKey, 0 ) == ERROR_SUCCESS)
-    {
-        for (i = 0; i < NUM_SYS_COLORS; i++)
-        {
-            COLORREF col = GetSysColor (i);
-
-            length = swprintf(colorStr, ARRAY_SIZE(colorStr), L"%d %d %d", GetRValue(col),
-                              GetGValue(col), GetBValue(col));
-            RegSetValueExW(hKey, SysColorsNames[i], 0, REG_SZ, (BYTE *)colorStr,
-                           (length + 1) * sizeof(WCHAR));
-        }
-        RegCloseKey (hKey);
-    }
-}
-
-/* Before activating a theme, query current system colors, certain settings 
- * and backup them in the registry, so they can be restored when the theme 
- * is deactivated */
-static void UXTHEME_BackupSystemMetrics(void)
+static BOOL UXTHEME_GetSystemMetrics(struct system_metrics *metrics)
 {
     DPI_AWARENESS_CONTEXT old_context;
-    HKEY hKey;
-    const struct BackupSysParam* bsp = backupSysParams;
+    BOOL ret = FALSE;
+    int i;
+
+    for (i = 0; i < NUM_SYS_COLORS; ++i)
+        metrics->system_colors[i] = GetSysColor(i);
 
     old_context = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
 
-    if (RegCreateKeyExW( HKEY_CURRENT_USER, szThemeManager,
-                         0, 0, 0, KEY_ALL_ACCESS,
-                         0, &hKey, 0) == ERROR_SUCCESS)
-    {
-        NONCLIENTMETRICSW ncm;
-        LOGFONTW iconTitleFont;
-        
-        /* back up colors */
-        save_sys_colors (hKey);
-    
-        /* back up "other" settings */
-        while (bsp->spiGet >= 0)
-        {
-            DWORD value;
-            
-            SystemParametersInfoW (bsp->spiGet, 0, &value, 0);
-            RegSetValueExW (hKey, bsp->keyName, 0, REG_DWORD, 
-                (LPBYTE)&value, sizeof (value));
-        
-            bsp++;
-        }
-        
-	/* back up non-client metrics */
-        memset (&ncm, 0, sizeof (ncm));
-        ncm.cbSize = sizeof (ncm);
-        SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, sizeof (ncm), &ncm, 0);
-        RegSetValueExW (hKey, L"NonClientMetrics", 0, REG_BINARY, (BYTE*)&ncm,
-            sizeof (ncm));
-	memset (&iconTitleFont, 0, sizeof (iconTitleFont));
-	SystemParametersInfoW (SPI_GETICONTITLELOGFONT, sizeof (iconTitleFont),
-	    &iconTitleFont, 0);
-        RegSetValueExW (hKey, L"IconTitleFont", 0, REG_BINARY,
-	    (LPBYTE)&iconTitleFont, sizeof (iconTitleFont));
-    
-        RegCloseKey (hKey);
-    }
+    memset(&metrics->non_client_metrics, 0, sizeof(metrics->non_client_metrics));
+    metrics->non_client_metrics.cbSize = sizeof(metrics->non_client_metrics);
+    if (!SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(metrics->non_client_metrics),
+                               &metrics->non_client_metrics, 0))
+        goto done;
+    memset(&metrics->icon_title_font, 0, sizeof(metrics->icon_title_font));
+    if (!SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(metrics->icon_title_font),
+                               &metrics->icon_title_font, 0))
+        goto done;
+    if (!SystemParametersInfoW(SPI_GETGRADIENTCAPTIONS, 0, &metrics->gradient_caption, 0))
+        goto done;
+    if (!SystemParametersInfoW(SPI_GETFLATMENU, 0, &metrics->flat_menu, 0))
+        goto done;
 
+    ret = TRUE;
+done:
     SetThreadDpiAwarenessContext(old_context);
+    return ret;
 }
 
 /* Read back old settings after a theme was deactivated */
-static void UXTHEME_RestoreSystemMetrics(void)
+static BOOL UXTHEME_GetUnthemedSystemMetrics(struct system_metrics *metrics)
 {
-    DPI_AWARENESS_CONTEXT old_context;
-    HKEY hKey;
-    const struct BackupSysParam* bsp = backupSysParams;
+    HKEY theme_manager_key = NULL, color_key = NULL;
+    BOOL ret = FALSE;
+    WCHAR string[13];
+    int i, r, g, b;
+    DWORD size;
 
-    old_context = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, szThemeManager, 0, KEY_QUERY_VALUE, &theme_manager_key))
+        goto done;
 
-    if (RegOpenKeyExW (HKEY_CURRENT_USER, szThemeManager,
-                       0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) 
+    if (RegOpenKeyExW(theme_manager_key, strColorKey, 0, KEY_QUERY_VALUE, &color_key))
+        goto done;
+
+    for (i = 0; i < NUM_SYS_COLORS; ++i)
     {
-        HKEY colorKey;
-    
-        /* read backed-up colors */
-        if (RegOpenKeyExW (hKey, strColorKey,
-                           0, KEY_QUERY_VALUE, &colorKey) == ERROR_SUCCESS) 
-        {
-            int i;
-            COLORREF sysCols[NUM_SYS_COLORS];
-            int sysColsIndices[NUM_SYS_COLORS];
-            int sysColCount = 0;
-        
-            for (i = 0; i < NUM_SYS_COLORS; i++)
-            {
-                DWORD type;
-                WCHAR colorStr[13];
-                DWORD count = sizeof(colorStr);
+        size = sizeof(string);
+        if (RegQueryValueExW(color_key, SysColorsNames[i], 0, NULL, (BYTE *)string, &size))
+            goto done;
 
-                if (RegQueryValueExW(colorKey, SysColorsNames[i], 0, &type, (LPBYTE)colorStr,
-                                     &count) == ERROR_SUCCESS)
-                {
-                    int r, g, b;
-                    if (swscanf(colorStr, L"%d %d %d", &r, &g, &b) == 3)
-                    {
-                        sysColsIndices[sysColCount] = i;
-                        sysCols[sysColCount] = RGB(r, g, b);
-                        sysColCount++;
-                    }
-                }
-            }
-            RegCloseKey (colorKey);
-          
-            SetSysColors (sysColCount, sysColsIndices, sysCols);
-        }
-    
-        /* read backed-up other settings */
-        while (bsp->spiGet >= 0)
-        {
-            DWORD value;
-            DWORD count = sizeof(value);
-            DWORD type;
-            
-            if (RegQueryValueExW (hKey, bsp->keyName, 0,
-                &type, (LPBYTE)&value, &count) == ERROR_SUCCESS)
-            {
-                SystemParametersInfoW (bsp->spiSet, 0, UlongToPtr(value), SPIF_UPDATEINIFILE);
-            }
-        
-            bsp++;
-        }
-    
-        /* read backed-up non-client metrics */
-        {
-            NONCLIENTMETRICSW ncm;
-            LOGFONTW iconTitleFont;
-            DWORD count = sizeof(ncm);
-            DWORD type;
+        if (swscanf(string, L"%d %d %d", &r, &g, &b) != 3)
+            goto done;
 
-            if (RegQueryValueExW (hKey, L"NonClientMetrics", 0,
-		&type, (LPBYTE)&ncm, &count) == ERROR_SUCCESS)
-	    {
-		SystemParametersInfoW (SPI_SETNONCLIENTMETRICS, 
-                    count, &ncm, SPIF_UPDATEINIFILE);
-	    }
-	    
-            count = sizeof(iconTitleFont);
-
-            if (RegQueryValueExW (hKey, L"IconTitleFont", 0,
-		&type, (LPBYTE)&iconTitleFont, &count) == ERROR_SUCCESS)
-	    {
-		SystemParametersInfoW (SPI_SETICONTITLELOGFONT, 
-                    count, &iconTitleFont, SPIF_UPDATEINIFILE);
-	    }
-	}
-      
-        RegCloseKey (hKey);
+        metrics->system_colors[i] = RGB(r, g, b);
     }
 
-    SetThreadDpiAwarenessContext(old_context);
+    size = sizeof(metrics->non_client_metrics);
+    if (RegQueryValueExW(theme_manager_key, L"NonClientMetrics", 0, NULL,
+                         (BYTE *)&metrics->non_client_metrics, &size))
+        goto done;
+    size = sizeof(metrics->icon_title_font);
+    if (RegQueryValueExW(theme_manager_key, L"IconTitleFont", 0, NULL,
+                         (BYTE *)&metrics->icon_title_font, &size))
+        goto done;
+    size = sizeof(metrics->gradient_caption);
+    if (RegQueryValueExW(theme_manager_key, L"GradientCaption", 0, NULL,
+                         (BYTE *)&metrics->gradient_caption, &size))
+        goto done;
+    size = sizeof(metrics->flat_menu);
+    if (RegQueryValueExW(theme_manager_key, L"FlatMenu", 0, NULL, (BYTE *)&metrics->flat_menu,
+                         &size))
+        goto done;
+
+    ret = TRUE;
+done:
+    RegCloseKey(color_key);
+    RegCloseKey(theme_manager_key);
+    return ret;
+}
+
+static void UXTHEME_SaveUnthemedSystemMetrics(struct system_metrics *metrics)
+{
+    HKEY theme_manager_key, color_key;
+    WCHAR string[13];
+    DWORD length;
+    int i;
+
+    if (!RegCreateKeyExW(HKEY_CURRENT_USER, szThemeManager, 0, 0, 0, KEY_ALL_ACCESS, 0,
+                         &theme_manager_key, 0))
+    {
+        if (!RegCreateKeyExW(theme_manager_key, strColorKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &color_key,
+                             0))
+        {
+            for (i = 0; i < NUM_SYS_COLORS; ++i)
+            {
+                length = swprintf(string, ARRAY_SIZE(string), L"%d %d %d",
+                                  GetRValue(metrics->system_colors[i]),
+                                  GetGValue(metrics->system_colors[i]),
+                                  GetBValue(metrics->system_colors[i]));
+                RegSetValueExW(color_key, SysColorsNames[i], 0, REG_SZ, (BYTE *)string,
+                               (length + 1) * sizeof(WCHAR));
+            }
+
+            RegCloseKey(color_key);
+        }
+
+        RegSetValueExW(theme_manager_key, L"NonClientMetrics", 0, REG_BINARY,
+                       (BYTE *)&metrics->non_client_metrics, sizeof(metrics->non_client_metrics));
+        RegSetValueExW(theme_manager_key, L"IconTitleFont", 0, REG_BINARY,
+                       (BYTE *)&metrics->icon_title_font, sizeof(metrics->icon_title_font));
+        RegSetValueExW(theme_manager_key, L"GradientCaption", 0, REG_DWORD,
+                       (BYTE *)&metrics->gradient_caption, sizeof(metrics->gradient_caption));
+        RegSetValueExW(theme_manager_key, L"FlatMenu", 0, REG_DWORD, (BYTE *)&metrics->flat_menu,
+                       sizeof(metrics->flat_menu));
+        RegCloseKey(theme_manager_key);
+    }
 }
 
 /* Make system settings persistent, so they're in effect even w/o uxtheme 
  * loaded.
  * For efficiency reasons, only the last SystemParametersInfoW sets
  * SPIF_SENDWININICHANGE */
-static void UXTHEME_SaveSystemMetrics(void)
+static void UXTHEME_SaveSystemMetrics(struct system_metrics *metrics, BOOL send_syscolor_change)
 {
-    const struct BackupSysParam* bsp = backupSysParams;
-    NONCLIENTMETRICSW ncm;
-    LOGFONTW iconTitleFont;
+    int i, length, index[NUM_SYS_COLORS];
+    DPI_AWARENESS_CONTEXT old_context;
+    WCHAR string[13];
+    HKEY hkey;
 
-    save_sys_colors (HKEY_CURRENT_USER);
-
-    while (bsp->spiGet >= 0)
+    if (!RegCreateKeyExW(HKEY_CURRENT_USER, strColorKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, 0))
     {
-        DWORD value;
-        
-        SystemParametersInfoW (bsp->spiGet, 0, &value, 0);
-        SystemParametersInfoW (bsp->spiSet, 0, UlongToPtr(value), SPIF_UPDATEINIFILE);
-        bsp++;
+        for (i = 0; i < NUM_SYS_COLORS; ++i)
+        {
+            length = swprintf(string, ARRAY_SIZE(string), L"%d %d %d",
+                              GetRValue(metrics->system_colors[i]),
+                              GetGValue(metrics->system_colors[i]),
+                              GetBValue(metrics->system_colors[i]));
+            RegSetValueExW(hkey, SysColorsNames[i], 0, REG_SZ, (BYTE *)string,
+                           (length + 1) * sizeof(WCHAR));
+        }
+        RegCloseKey(hkey);
     }
-    
-    memset (&ncm, 0, sizeof (ncm));
-    ncm.cbSize = sizeof (ncm);
-    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, sizeof (ncm), &ncm, 0);
-    SystemParametersInfoW (SPI_SETNONCLIENTMETRICS, sizeof (ncm), &ncm,
-        SPIF_UPDATEINIFILE);
 
-    memset (&iconTitleFont, 0, sizeof (iconTitleFont));
-    SystemParametersInfoW (SPI_GETICONTITLELOGFONT, sizeof (iconTitleFont),
-        &iconTitleFont, 0);
-    SystemParametersInfoW (SPI_SETICONTITLELOGFONT, sizeof (iconTitleFont),
-        &iconTitleFont, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+    if (send_syscolor_change)
+    {
+        for (i = 0; i < NUM_SYS_COLORS; ++i)
+            index[i] = i;
+
+        SetSysColors(NUM_SYS_COLORS, index, metrics->system_colors);
+    }
+
+    old_context = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+
+    SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(metrics->non_client_metrics),
+                          &metrics->non_client_metrics, SPIF_UPDATEINIFILE);
+    SystemParametersInfoW(SPI_SETICONTITLELOGFONT, sizeof(metrics->icon_title_font),
+                          &metrics->icon_title_font, SPIF_UPDATEINIFILE);
+    SystemParametersInfoW(SPI_SETGRADIENTCAPTIONS, 0, (void *)(INT_PTR)metrics->gradient_caption,
+                          SPIF_UPDATEINIFILE);
+    SystemParametersInfoW(SPI_SETFLATMENU, 0, (void *)(INT_PTR)metrics->flat_menu,
+                          SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+
+    SetThreadDpiAwarenessContext(old_context);
 }
 
 /***********************************************************************
@@ -456,11 +421,17 @@ static void UXTHEME_SaveSystemMetrics(void)
  */
 static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
 {
+    struct system_metrics metrics;
     HKEY hKey;
     WCHAR tmp[2];
     HRESULT hr;
 
-    if(tf && !bThemeActive) UXTHEME_BackupSystemMetrics();
+    if (tf && !bThemeActive)
+    {
+        if (UXTHEME_GetSystemMetrics(&metrics))
+            UXTHEME_SaveUnthemedSystemMetrics(&metrics);
+    }
+
     hr = MSSTYLES_SetActiveTheme(tf, TRUE);
     if(FAILED(hr))
         return hr;
@@ -471,7 +442,6 @@ static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
         lstrcpynW(szCurrentSize, tf->pszSelectedSize, ARRAY_SIZE(szCurrentSize));
     }
     else {
-        UXTHEME_RestoreSystemMetrics();
         bThemeActive = FALSE;
         szCurrentTheme[0] = '\0';
         szCurrentColor[0] = '\0';
@@ -501,9 +471,17 @@ static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
     }
     else
         TRACE("Failed to open theme registry key\n");
-    
-    UXTHEME_SaveSystemMetrics ();
-    
+
+    if (bThemeActive)
+    {
+        if (UXTHEME_GetSystemMetrics(&metrics))
+            UXTHEME_SaveSystemMetrics(&metrics, FALSE);
+    }
+    else
+    {
+        if (UXTHEME_GetUnthemedSystemMetrics(&metrics))
+            UXTHEME_SaveSystemMetrics(&metrics, TRUE);
+    }
     return hr;
 }
 
