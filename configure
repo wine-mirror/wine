@@ -637,8 +637,6 @@ VKD3D_CFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
 PROCSTAT_LIBS
-MPG123_LIBS
-MPG123_CFLAGS
 JPEG_LIBS
 JPEG_CFLAGS
 GSSAPI_LIBS
@@ -874,7 +872,6 @@ with_jpeg
 with_krb5
 with_ldap
 with_mingw
-with_mpg123
 with_netapi
 with_openal
 with_opencl
@@ -1992,8 +1989,6 @@ GSSAPI_CFLAGS
 GSSAPI_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
-MPG123_CFLAGS
-MPG123_LIBS
 NETAPI_CFLAGS
 NETAPI_LIBS
 VKD3D_CFLAGS
@@ -2665,7 +2660,6 @@ Optional Packages:
   --without-krb5          do not use krb5 (Kerberos)
   --without-ldap          do not use LDAP
   --without-mingw         do not use the MinGW cross-compiler
-  --without-mpg123        do not use the mpg123 library
   --without-netapi        do not use the Samba NetAPI library
   --without-openal        do not use OpenAL
   --without-opencl        do not use OpenCL
@@ -2818,9 +2812,6 @@ Some influential environment variables:
   GSSAPI_LIBS Linker flags for krb5-gssapi, overriding pkg-config
   JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
-  MPG123_CFLAGS
-              C compiler flags for libmpg123, overriding pkg-config
-  MPG123_LIBS Linker flags for libmpg123, overriding pkg-config
   NETAPI_CFLAGS
               C compiler flags for netapi, overriding pkg-config
   NETAPI_LIBS Linker flags for netapi, overriding pkg-config
@@ -4130,12 +4121,6 @@ fi
 # Check whether --with-mingw was given.
 if test "${with_mingw+set}" = set; then :
   withval=$with_mingw;
-fi
-
-
-# Check whether --with-mpg123 was given.
-if test "${with_mpg123+set}" = set; then :
-  withval=$with_mpg123;
 fi
 
 
@@ -15416,99 +15401,6 @@ esac
 
 fi
 
-if test "x$with_mpg123" != "xno"
-then
-    if ${MPG123_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  MPG123_CFLAGS=`$PKG_CONFIG --cflags libmpg123 2>/dev/null`
-fi
-fi
-
-if ${MPG123_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  MPG123_LIBS=`$PKG_CONFIG --libs libmpg123 2>/dev/null`
-fi
-fi
-
-MPG123_LIBS=${MPG123_LIBS:-"-lmpg123"}
-$as_echo "$as_me:${as_lineno-$LINENO}: libmpg123 cflags: $MPG123_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libmpg123 libs: $MPG123_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $MPG123_CFLAGS"
-for ac_header in mpg123.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "mpg123.h" "ac_cv_header_mpg123_h" "$ac_includes_default"
-if test "x$ac_cv_header_mpg123_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_MPG123_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_mpg123_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpg123_feed in -lmpg123" >&5
-$as_echo_n "checking for mpg123_feed in -lmpg123... " >&6; }
-if ${ac_cv_lib_mpg123_mpg123_feed+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmpg123 $MPG123_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char mpg123_feed ();
-int
-main ()
-{
-return mpg123_feed ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_mpg123_mpg123_feed=yes
-else
-  ac_cv_lib_mpg123_mpg123_feed=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpg123_mpg123_feed" >&5
-$as_echo "$ac_cv_lib_mpg123_mpg123_feed" >&6; }
-if test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes; then :
-  :
-else
-  MPG123_LIBS=""
-fi
-
-        else
-            MPG123_CFLAGS=""
-            MPG123_LIBS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes; then :
-  case "x$with_mpg123" in
-  x)   as_fn_append wine_notices "|libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.
-This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
-esac
-enable_l3codeca_acm=${enable_l3codeca_acm:-no}
-fi
-test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes || enable_mp3dmod=${enable_mp3dmod:-no}
-
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lopenal" >&5
@@ -18935,8 +18827,6 @@ GSSAPI_CFLAGS = $GSSAPI_CFLAGS
 GSSAPI_LIBS = $GSSAPI_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
-MPG123_CFLAGS = $MPG123_CFLAGS
-MPG123_LIBS = $MPG123_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS

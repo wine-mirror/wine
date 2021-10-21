@@ -327,9 +327,6 @@
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
-/* Define to 1 if you have the <mpg123.h> header file. */
-#undef HAVE_MPG123_H
-
 /* Define if MTLDevice protocol has registryID property. */
 #undef HAVE_MTLDEVICE_REGISTRYID
 

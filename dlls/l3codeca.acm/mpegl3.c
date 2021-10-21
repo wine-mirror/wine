@@ -19,13 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
-
 #include <mpg123.h>
 
 #include "windef.h"
@@ -212,14 +208,12 @@ static LRESULT MPEG3_StreamOpen(ACMDRVSTREAMINSTANCE *instance)
     instance->dwDriver = (DWORD_PTR)handle;
     mpg123_open_feed(handle);
 
-#if MPG123_API_VERSION >= 31 /* needed for MPG123_IGNORE_FRAMEINFO enum value */
     /* mpg123 may find a XING header in the mp3 and use that information
      * to ask for seeks in order to read specific frames in the file.
      * We cannot allow that since the caller application is feeding us.
      * This fixes problems for mp3 files encoded with LAME (bug 42361)
      */
     mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_IGNORE_INFOFRAME, 0);
-#endif
 
     return MMSYSERR_NOERROR;
 }

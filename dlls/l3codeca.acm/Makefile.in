@@ -1,9 +1,6 @@
 MODULE    = l3codeca.acm
-IMPORTS   = winmm user32
-EXTRAINCL = $(MPG123_CFLAGS)
-EXTRALIBS = $(MPG123_LIBS)
-
-EXTRADLLFLAGS = -mcygwin
+IMPORTS   = $(MPG123_PE_LIBS) winmm user32 kernelbase
+EXTRAINCL = $(MPG123_PE_CFLAGS)
 
 C_SRCS = \
 	mpegl3.c
