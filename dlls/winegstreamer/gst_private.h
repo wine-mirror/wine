@@ -119,6 +119,7 @@ struct wm_reader
     IWMLanguageList IWMLanguageList_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
     IWMProfile3 IWMProfile3_iface;
+    IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     LONG refcount;
 
     const struct wm_reader_ops *ops;

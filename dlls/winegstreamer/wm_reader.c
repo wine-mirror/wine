@@ -53,6 +53,10 @@ static HRESULT WINAPI profile_QueryInterface(IWMProfile3 *iface, REFIID iid, voi
     {
         *out = &reader->IWMProfile3_iface;
     }
+    else if (IsEqualIID(iid, &IID_IWMReaderPlaylistBurn))
+    {
+        *out = &reader->IWMReaderPlaylistBurn_iface;
+    }
     else if (!(*out = reader->ops->query_interface(reader, iid)))
     {
         WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
@@ -638,12 +642,76 @@ static const IWMPacketSize2Vtbl packet_size_vtbl =
     packet_size_SetMinPacketSize,
 };
 
+static struct wm_reader *impl_from_IWMReaderPlaylistBurn(IWMReaderPlaylistBurn *iface)
+{
+    return CONTAINING_RECORD(iface, struct wm_reader, IWMReaderPlaylistBurn_iface);
+}
+
+static HRESULT WINAPI playlist_QueryInterface(IWMReaderPlaylistBurn *iface, REFIID iid, void **out)
+{
+    struct wm_reader *reader = impl_from_IWMReaderPlaylistBurn(iface);
+
+    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+}
+
+static ULONG WINAPI playlist_AddRef(IWMReaderPlaylistBurn *iface)
+{
+    struct wm_reader *reader = impl_from_IWMReaderPlaylistBurn(iface);
+
+    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+}
+
+static ULONG WINAPI playlist_Release(IWMReaderPlaylistBurn *iface)
+{
+    struct wm_reader *reader = impl_from_IWMReaderPlaylistBurn(iface);
+
+    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+}
+
+static HRESULT WINAPI playlist_InitPlaylistBurn(IWMReaderPlaylistBurn *iface, DWORD count,
+        const WCHAR **filenames, IWMStatusCallback *callback, void *context)
+{
+    FIXME("iface %p, count %u, filenames %p, callback %p, context %p, stub!\n",
+            iface, count, filenames, callback, context);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI playlist_GetInitResults(IWMReaderPlaylistBurn *iface, DWORD count, HRESULT *hrs)
+{
+    FIXME("iface %p, count %u, hrs %p, stub!\n", iface, count, hrs);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI playlist_Cancel(IWMReaderPlaylistBurn *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI playlist_EndPlaylistBurn(IWMReaderPlaylistBurn *iface, HRESULT hr)
+{
+    FIXME("iface %p, hr %#x, stub!\n", iface, hr);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderPlaylistBurnVtbl playlist_vtbl =
+{
+    playlist_QueryInterface,
+    playlist_AddRef,
+    playlist_Release,
+    playlist_InitPlaylistBurn,
+    playlist_GetInitResults,
+    playlist_Cancel,
+    playlist_EndPlaylistBurn,
+};
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
     reader->IWMLanguageList_iface.lpVtbl = &language_list_vtbl;
     reader->IWMPacketSize2_iface.lpVtbl = &packet_size_vtbl;
     reader->IWMProfile3_iface.lpVtbl = &profile_vtbl;
+    reader->IWMReaderPlaylistBurn_iface.lpVtbl = &playlist_vtbl;
     reader->refcount = 1;
     reader->ops = ops;
 }

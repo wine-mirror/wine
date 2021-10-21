@@ -31,7 +31,6 @@ struct async_reader
     IWMReaderStreamClock IWMReaderStreamClock_iface;
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
-    IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IReferenceClock IReferenceClock_iface;
 };
 
@@ -1191,70 +1190,6 @@ static const IWMReaderTimecodeVtbl WMReaderTimecodeVtbl =
     timecode_GetTimecodeRangeBounds
 };
 
-
-static struct async_reader *impl_from_IWMReaderPlaylistBurn(IWMReaderPlaylistBurn *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, IWMReaderPlaylistBurn_iface);
-}
-
-static HRESULT WINAPI playlist_QueryInterface(IWMReaderPlaylistBurn *iface, REFIID riid, void **ppv)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
-}
-
-static ULONG WINAPI playlist_AddRef(IWMReaderPlaylistBurn *iface)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    return IWMReader_AddRef(&This->IWMReader_iface);
-}
-
-static ULONG WINAPI playlist_Release(IWMReaderPlaylistBurn *iface)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    return IWMReader_Release(&This->IWMReader_iface);
-}
-
-static HRESULT WINAPI playlist_InitPlaylistBurn(IWMReaderPlaylistBurn *iface, DWORD count,
-        LPCWSTR_WMSDK_TYPE_SAFE *filenames, IWMStatusCallback *callback, void *context)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    FIXME("%p, %d, %p, %p, %p\n", This, count, filenames, callback, context);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI playlist_GetInitResults(IWMReaderPlaylistBurn *iface, DWORD count, HRESULT *stat)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    FIXME("%p, %d, %p\n", This, count, stat);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI playlist_Cancel(IWMReaderPlaylistBurn *iface)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI playlist_EndPlaylistBurn(IWMReaderPlaylistBurn *iface, HRESULT result)
-{
-    struct async_reader *This = impl_from_IWMReaderPlaylistBurn(iface);
-    FIXME("%p, 0x%08x\n", This, result);
-    return E_NOTIMPL;
-}
-
-static const IWMReaderPlaylistBurnVtbl WMReaderPlaylistBurnVtbl =
-{
-    playlist_QueryInterface,
-    playlist_AddRef,
-    playlist_Release,
-    playlist_InitPlaylistBurn,
-    playlist_GetInitResults,
-    playlist_Cancel,
-    playlist_EndPlaylistBurn
-};
-
 static struct async_reader *impl_from_IReferenceClock(IReferenceClock *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, IReferenceClock_iface);
@@ -1353,9 +1288,6 @@ static void *async_reader_query_interface(struct wm_reader *iface, REFIID iid)
             || IsEqualIID(iid, &IID_IWMReaderNetworkConfig2))
         return &reader->IWMReaderNetworkConfig2_iface;
 
-    if (IsEqualIID(iid, &IID_IWMReaderPlaylistBurn))
-        return &reader->IWMReaderPlaylistBurn_iface;
-
     if (IsEqualIID(iid, &IID_IWMReaderStreamClock))
         return &reader->IWMReaderStreamClock_iface;
 
@@ -1399,7 +1331,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     object->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
     object->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
     object->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
-    object->IWMReaderPlaylistBurn_iface.lpVtbl = &WMReaderPlaylistBurnVtbl;
     object->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
     object->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
     object->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;

@@ -153,7 +153,7 @@ static void test_wmsyncreader_interfaces(void)
     check_interface(reader, &IID_IWMProfile, TRUE);
     check_interface(reader, &IID_IWMProfile2, TRUE);
     check_interface(reader, &IID_IWMProfile3, TRUE);
-    todo_wine check_interface(reader, &IID_IWMReaderPlaylistBurn, TRUE);
+    check_interface(reader, &IID_IWMReaderPlaylistBurn, TRUE);
     todo_wine check_interface(reader, &IID_IWMReaderTimecode, TRUE);
     check_interface(reader, &IID_IWMSyncReader, TRUE);
     check_interface(reader, &IID_IWMSyncReader2, TRUE);
