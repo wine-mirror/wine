@@ -803,40 +803,7 @@ static HRESULT hid_joystick_internal_unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirectInputEffect **out );
-
-static HRESULT WINAPI hid_joystick_CreateEffect( IDirectInputDevice8W *iface, const GUID *guid,
-                                                 const DIEFFECT *params, IDirectInputEffect **out,
-                                                 IUnknown *outer )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    DWORD flags = DIEP_ALLPARAMS;
-    HRESULT hr;
-
-    TRACE( "iface %p, guid %s, params %p, out %p, outer %p\n", iface, debugstr_guid( guid ),
-           params, out, outer );
-
-    if (!out) return E_POINTER;
-    *out = NULL;
-
-    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
-    if (FAILED(hr = hid_joystick_effect_create( impl, out ))) return hr;
-
-    hr = IDirectInputEffect_Initialize( *out, DINPUT_instance, impl->base.dinput->dwVersion, guid );
-    if (FAILED(hr)) goto failed;
-
-    if (!params) return DI_OK;
-    if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE))
-        flags |= DIEP_NODOWNLOAD;
-    hr = IDirectInputEffect_SetParameters( *out, params, flags );
-    if (FAILED(hr)) goto failed;
-    return hr;
-
-failed:
-    IDirectInputEffect_Release( *out );
-    *out = NULL;
-    return hr;
-}
+static HRESULT hid_joystick_internal_create_effect( IDirectInputDevice8W *iface, IDirectInputEffect **out );
 
 static HRESULT hid_joystick_internal_get_effect_info( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
                                                       const GUID *guid )
@@ -1068,7 +1035,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
     /*** IDirectInputDevice2 methods ***/
-    hid_joystick_CreateEffect,
+    IDirectInputDevice2WImpl_CreateEffect,
     IDirectInputDevice2WImpl_EnumEffects,
     IDirectInputDevice2WImpl_GetEffectInfo,
     IDirectInputDevice2WImpl_GetForceFeedbackState,
@@ -1312,6 +1279,7 @@ static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
     hid_joystick_internal_get_property,
     hid_joystick_internal_set_property,
     hid_joystick_internal_get_effect_info,
+    hid_joystick_internal_create_effect,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )
@@ -2826,8 +2794,9 @@ static IDirectInputEffectVtbl hid_joystick_effect_vtbl =
     hid_joystick_effect_Escape,
 };
 
-static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirectInputEffect **out )
+static HRESULT hid_joystick_internal_create_effect( IDirectInputDevice8W *iface, IDirectInputEffect **out )
 {
+    struct hid_joystick *joystick = impl_from_IDirectInputDevice8W( iface );
     struct hid_joystick_effect *impl;
     ULONG report_len;
 

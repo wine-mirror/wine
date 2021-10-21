@@ -1645,20 +1645,37 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Initialize(LPDIRECTINPUTDEVICE8W iface, 
     return DI_OK;
 }
 
-/******************************************************************************
- *	IDirectInputDevice2A
- */
-
-HRESULT WINAPI IDirectInputDevice2WImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPCDIEFFECT lpeff,
-                                                     LPDIRECTINPUTEFFECT *ppdef, LPUNKNOWN pUnkOuter)
+HRESULT WINAPI IDirectInputDevice2WImpl_CreateEffect( IDirectInputDevice8W *iface, const GUID *guid,
+                                                      const DIEFFECT *params, IDirectInputEffect **out,
+                                                      IUnknown *outer )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    FIXME("(%p)->(%s,%p,%p,%p): stub!\n", This, debugstr_guid(rguid), lpeff, ppdef, pUnkOuter);
-    if (!ppdef) return E_POINTER;
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD flags = DIEP_ALLPARAMS;
+    HRESULT hr;
 
-    FIXME("not available in the generic implementation\n");
-    *ppdef = NULL;
-    return DIERR_UNSUPPORTED;
+    TRACE( "iface %p, guid %s, params %p, out %p, outer %p\n", iface, debugstr_guid( guid ),
+           params, out, outer );
+
+    if (!out) return E_POINTER;
+    *out = NULL;
+
+    if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (!impl->vtbl->create_effect) return DIERR_UNSUPPORTED;
+    if (FAILED(hr = impl->vtbl->create_effect( iface, out ))) return hr;
+
+    hr = IDirectInputEffect_Initialize( *out, DINPUT_instance, impl->dinput->dwVersion, guid );
+    if (FAILED(hr)) goto failed;
+
+    if (!params) return DI_OK;
+    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) flags |= DIEP_NODOWNLOAD;
+    hr = IDirectInputEffect_SetParameters( *out, params, flags );
+    if (FAILED(hr)) goto failed;
+    return hr;
+
+failed:
+    IDirectInputEffect_Release( *out );
+    *out = NULL;
+    return hr;
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects( IDirectInputDevice8W *iface, LPDIENUMEFFECTSCALLBACKW callback,
