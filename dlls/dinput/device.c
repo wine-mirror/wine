@@ -1770,11 +1770,33 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetForceFeedbackState( IDirectInputDevic
     return DIERR_UNSUPPORTED;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE8W iface, DWORD dwFlags)
+HRESULT WINAPI IDirectInputDevice2WImpl_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    TRACE("(%p)->(0x%08x)\n", This, dwFlags);
-    return DI_NOEFFECT;
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, flags %x.\n", iface, command );
+
+    switch (command)
+    {
+    case DISFFC_RESET: break;
+    case DISFFC_STOPALL: break;
+    case DISFFC_PAUSE: break;
+    case DISFFC_CONTINUE: break;
+    case DISFFC_SETACTUATORSON: break;
+    case DISFFC_SETACTUATORSOFF: break;
+    default: return DIERR_INVALIDPARAM;
+    }
+
+    if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (!impl->vtbl->send_force_feedback_command) return DIERR_UNSUPPORTED;
+
+    EnterCriticalSection( &impl->crit );
+    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else hr = impl->vtbl->send_force_feedback_command( iface, command );
+    LeaveCriticalSection( &impl->crit );
+
+    return hr;
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE8W iface,

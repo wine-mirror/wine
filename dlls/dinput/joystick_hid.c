@@ -946,7 +946,7 @@ static BOOL CALLBACK unload_effect_object( IDirectInputEffect *effect, void *con
     return DIENUM_CONTINUE;
 }
 
-static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
+static HRESULT hid_joystick_internal_send_force_feedback_command( IDirectInputDevice8W *iface, DWORD command )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct pid_control_report *report = &impl->pid_device_control;
@@ -955,7 +955,6 @@ static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8
     NTSTATUS status;
     USAGE usage;
     ULONG count;
-    HRESULT hr;
 
     TRACE( "iface %p, flags %x.\n", iface, command );
 
@@ -967,31 +966,20 @@ static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8
     case DISFFC_CONTINUE: usage = PID_USAGE_DC_DEVICE_CONTINUE; break;
     case DISFFC_SETACTUATORSON: usage = PID_USAGE_DC_ENABLE_ACTUATORS; break;
     case DISFFC_SETACTUATORSOFF: usage = PID_USAGE_DC_DISABLE_ACTUATORS; break;
-    default: return DIERR_INVALIDPARAM;
     }
 
-    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (command == DISFFC_RESET) IDirectInputDevice8_EnumCreatedEffectObjects( iface, unload_effect_object, NULL, 0 );
 
-    EnterCriticalSection( &impl->base.crit );
-    if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE))
-        hr = DIERR_NOTEXCLUSIVEACQUIRED;
-    else
-    {
-        if (command == DISFFC_RESET) IDirectInputDevice8_EnumCreatedEffectObjects( iface, unload_effect_object, NULL, 0 );
+    count = 1;
+    status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) return status;
 
-        count = 1;
-        status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
-        if (status != HIDP_STATUS_SUCCESS) hr = status;
-        else status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, report->control_coll, &usage,
-                                      &count, impl->preparsed, report_buf, report_len );
+    status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, report->control_coll, &usage,
+                             &count, impl->preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) return status;
 
-        if (status != HIDP_STATUS_SUCCESS) hr = status;
-        else if (WriteFile( impl->device, report_buf, report_len, NULL, NULL )) hr = DI_OK;
-        else hr = DIERR_GENERIC;
-    }
-    LeaveCriticalSection( &impl->base.crit );
-
-    return hr;
+    if (!WriteFile( impl->device, report_buf, report_len, NULL, NULL )) return DIERR_INPUTLOST;
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8W *iface,
@@ -1039,7 +1027,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_EnumEffects,
     IDirectInputDevice2WImpl_GetEffectInfo,
     IDirectInputDevice2WImpl_GetForceFeedbackState,
-    hid_joystick_SendForceFeedbackCommand,
+    IDirectInputDevice2WImpl_SendForceFeedbackCommand,
     hid_joystick_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
     IDirectInputDevice2WImpl_Poll,
@@ -1280,6 +1268,7 @@ static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
     hid_joystick_internal_set_property,
     hid_joystick_internal_get_effect_info,
     hid_joystick_internal_create_effect,
+    hid_joystick_internal_send_force_feedback_command,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )
