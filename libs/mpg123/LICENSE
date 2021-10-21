@@ -1,0 +1,19 @@
+This is the file that contains the terms of use, copying, etc. for the mpg123 distribution package.
+
+Main message, to include in "About ..." boxes, etc:
+
+	Copyright (c) 1995-2020 by Michael Hipp and others,
+	free software under the terms of the LGPL v2.1
+
+There is an attempt to cover the actual list of authors in the AUTHORS file.
+Project maintainer since 2006 is Thomas Orgis and many people have contributed
+since the Michael Hipp era, but he stays the initial source and it would
+be impractical to count them all individually, so it's "and others".
+Source files contain the phrase "the mpg123 project" to the same effect
+in their license boilerplate; especially those that were added after
+maintainership changed. The person mainly responsible for the first version
+is usually named in the phrase "initially written by ...".
+
+All files in the distribution that don't carry a license note on their own are
+licensed under the terms of the LGPL 2.1; exceptions may apply, especially to
+files not in the official distribution but in the revision control repository.
