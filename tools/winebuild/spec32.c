@@ -790,19 +790,34 @@ struct dir_data
     unsigned int size;
 };
 
+struct exp_data
+{
+    unsigned int rva;
+    const char  *name;
+};
+
 static struct
 {
     unsigned int    section_align;
     unsigned int    file_align;
     unsigned int    sec_count;
+    unsigned int    exp_count;
     struct dir_data dir[16];
     struct sec_data sec[8];
+    struct exp_data exp[8];
 } pe;
 
 static void set_dir( unsigned int idx, unsigned int rva, unsigned int size )
 {
     pe.dir[idx].rva  = rva;
     pe.dir[idx].size = size;
+}
+
+static void add_export( unsigned int rva, const char *name )
+{
+    pe.exp[pe.exp_count].rva  = rva;
+    pe.exp[pe.exp_count].name = name;
+    pe.exp_count++;
 }
 
 static unsigned int current_rva(void)
@@ -864,16 +879,68 @@ void output_fake_module( DLLSPEC *spec )
     else put_data( exe_code_section, sizeof(exe_code_section) );
     flush_output_to_section( ".text", -1, 0x60000020 /* CNT_CODE|MEM_EXECUTE|MEM_READ */ );
 
+    if (spec->type == SPEC_WIN16)
+    {
+        add_export( current_rva(), "__wine_spec_dos_header" );
+
+        /* .rodata section */
+        output_fake_module16( spec );
+        if (spec->main_module)
+        {
+            add_export( current_rva() + output_buffer_pos, "__wine_spec_main_module" );
+            put_data( spec->main_module, strlen(spec->main_module) + 1 );
+        }
+        flush_output_to_section( ".rodata", -1, 0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ );
+    }
+
+    if (pe.exp_count)
+    {
+        /* .edata section */
+        unsigned int exp_rva = current_rva() + 40; /* sizeof(IMAGE_EXPORT_DIRECTORY) */
+        unsigned int pos, str_rva = exp_rva + 10 * pe.exp_count;
+
+	put_dword( 0 );               /* Characteristics */
+        put_dword( hash_filename(spec->file_name) );     /* TimeDateStamp */
+        put_word( 0 );                /* MajorVersion */
+        put_word( 0 );                /* MinorVersion */
+        put_dword( str_rva );         /* Name */
+        put_dword( 1 );               /* Base */
+        put_dword( pe.exp_count );    /* NumberOfFunctions */
+        put_dword( pe.exp_count );    /* NumberOfNames */
+        put_dword( exp_rva );         /* AddressOfFunctions */
+        put_dword( exp_rva + 4 * pe.exp_count );     /* AddressOfNames */
+        put_dword( exp_rva + 8 * pe.exp_count );     /* AddressOfNameOrdinals */
+
+        /* functions */
+        for (i = 0; i < pe.exp_count; i++) put_dword( pe.exp[i].rva );
+        /* names */
+        for (i = 0, pos = str_rva + strlen(spec->file_name) + 1; i < pe.exp_count; i++)
+        {
+            put_dword( pos );
+            pos += strlen( pe.exp[i].name ) + 1;
+        }
+        /* ordinals */
+        for (i = 0; i < pe.exp_count; i++) put_word( i );
+        /* strings */
+        put_data( spec->file_name, strlen(spec->file_name) + 1 );
+        for (i = 0; i < pe.exp_count; i++) put_data( pe.exp[i].name, strlen(pe.exp[i].name) + 1 );
+        flush_output_to_section( ".edata", 0 /* IMAGE_DIRECTORY_ENTRY_EXPORT */,
+                                 0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ );
+    }
+
     /* .reloc section */
     put_dword( 0 );  /* VirtualAddress */
     put_dword( 0 );  /* Size */
     flush_output_to_section( ".reloc", 5 /* IMAGE_DIRECTORY_ENTRY_BASERELOC */,
                              0x42000040 /* CNT_INITIALIZED_DATA|MEM_DISCARDABLE|MEM_READ */ );
 
-    /* .rsrc section */
-    output_bin_resources( spec, current_rva() );
-    flush_output_to_section( ".rsrc", 2 /* IMAGE_DIRECTORY_ENTRY_RESOURCE */,
-                             0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ );
+    if (spec->type == SPEC_WIN32)
+    {
+        /* .rsrc section */
+        output_bin_resources( spec, current_rva() );
+        flush_output_to_section( ".rsrc", 2 /* IMAGE_DIRECTORY_ENTRY_RESOURCE */,
+                                 0x40000040 /* CNT_INITIALIZED_DATA|MEM_READ */ );
+    }
 
     put_word( 0x5a4d );       /* e_magic */
     put_word( 0x40 );         /* e_cblp */

@@ -727,8 +727,7 @@ int main(int argc, char **argv)
 
         if (fake_module)
         {
-            if (spec->type == SPEC_WIN16) output_fake_module16( spec );
-            else output_fake_module( spec );
+            output_fake_module( spec );
             break;
         }
         if (!is_pe())
