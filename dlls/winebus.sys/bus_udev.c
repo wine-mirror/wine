@@ -141,15 +141,63 @@ static inline struct hidraw_device *hidraw_impl_from_unix_device(struct unix_dev
 
 #ifdef HAS_PROPER_INPUT_HEADER
 
-#define HID_REL_MAX (REL_MISC+1)
-#define HID_ABS_MAX (ABS_VOLUME+1)
+static const USAGE_AND_PAGE absolute_usages[] =
+{
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_X},              /* ABS_X */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_Y},              /* ABS_Y */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_Z},              /* ABS_Z */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_RX},             /* ABS_RX */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_RY},             /* ABS_RY */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_RZ},             /* ABS_RZ */
+    {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_THROTTLE},    /* ABS_THROTTLE */
+    {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_RUDDER},      /* ABS_RUDDER */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_WHEEL},          /* ABS_WHEEL */
+    {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_ACCELERATOR}, /* ABS_GAS */
+    {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_BRAKE},       /* ABS_BRAKE */
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},                                                                                 /* ABS_HAT0X */
+    {0},                                                                                 /* ABS_HAT0Y */
+    {0},                                                                                 /* ABS_HAT1X */
+    {0},                                                                                 /* ABS_HAT1Y */
+    {0},                                                                                 /* ABS_HAT2X */
+    {0},                                                                                 /* ABS_HAT2Y */
+    {0},                                                                                 /* ABS_HAT3X */
+    {0},                                                                                 /* ABS_HAT3Y */
+    {.UsagePage = HID_USAGE_PAGE_DIGITIZER,  .Usage = HID_USAGE_DIGITIZER_TIP_PRESSURE}, /* ABS_PRESSURE */
+    {0},                                                                                 /* ABS_DISTANCE */
+    {.UsagePage = HID_USAGE_PAGE_DIGITIZER,  .Usage = HID_USAGE_DIGITIZER_X_TILT},       /* ABS_TILT_X */
+    {.UsagePage = HID_USAGE_PAGE_DIGITIZER,  .Usage = HID_USAGE_DIGITIZER_Y_TILT},       /* ABS_TILT_Y */
+    {0},                                                                                 /* ABS_TOOL_WIDTH */
+    {0},
+    {0},
+    {0},
+    {.UsagePage = HID_USAGE_PAGE_CONSUMER,   .Usage = HID_USAGE_CONSUMER_VOLUME},        /* ABS_VOLUME */
+};
+
+static const USAGE_AND_PAGE relative_usages[] =
+{
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},     /* REL_X */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},     /* REL_Y */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Z},     /* REL_Z */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RX},    /* REL_RX */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RY},    /* REL_RY */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RZ},    /* REL_RZ */
+    {0},                                                                     /* REL_HWHEEL */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_DIAL},  /* REL_DIAL */
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_WHEEL}, /* REL_WHEEL */
+    {0},                                                                     /* REL_MISC */
+};
 
 struct lnxev_device
 {
     struct base_device base;
 
-    BYTE abs_map[HID_ABS_MAX];
-    BYTE rel_map[HID_REL_MAX];
+    BYTE abs_map[ARRAY_SIZE(absolute_usages)];
+    BYTE rel_map[ARRAY_SIZE(relative_usages)];
     BYTE hat_map[8];
     BYTE button_map[KEY_MAX];
 
@@ -459,58 +507,6 @@ static struct base_device *find_device_from_syspath(const char *path)
     return NULL;
 }
 
-static const BYTE ABS_TO_HID_MAP[][2] = {
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},              /*ABS_X*/
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Y},              /*ABS_Y*/
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Z},              /*ABS_Z*/
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RX},             /*ABS_RX*/
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RY},             /*ABS_RY*/
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RZ},             /*ABS_RZ*/
-    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_THROTTLE}, /*ABS_THROTTLE*/
-    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_RUDDER},   /*ABS_RUDDER*/
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_WHEEL},          /*ABS_WHEEL*/
-    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_ACCELERATOR}, /*ABS_GAS*/
-    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_BRAKE},    /*ABS_BRAKE*/
-    {0,0},
-    {0,0},
-    {0,0},
-    {0,0},
-    {0,0},
-    {0,0},                                                      /*ABS_HAT0X*/
-    {0,0},                                                      /*ABS_HAT0Y*/
-    {0,0},                                                      /*ABS_HAT1X*/
-    {0,0},                                                      /*ABS_HAT1Y*/
-    {0,0},                                                      /*ABS_HAT2X*/
-    {0,0},                                                      /*ABS_HAT2Y*/
-    {0,0},                                                      /*ABS_HAT3X*/
-    {0,0},                                                      /*ABS_HAT3Y*/
-    {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_TIP_PRESSURE}, /*ABS_PRESSURE*/
-    {0, 0},                                                     /*ABS_DISTANCE*/
-    {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_X_TILT},     /*ABS_TILT_X*/
-    {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_Y_TILT},     /*ABS_TILT_Y*/
-    {0, 0},                                                     /*ABS_TOOL_WIDTH*/
-    {0, 0},
-    {0, 0},
-    {0, 0},
-    {HID_USAGE_PAGE_CONSUMER, HID_USAGE_CONSUMER_VOLUME}        /*ABS_VOLUME*/
-};
-C_ASSERT(ARRAY_SIZE(ABS_TO_HID_MAP) == HID_ABS_MAX);
-#define TOP_ABS_PAGE (HID_USAGE_PAGE_DIGITIZER+1)
-
-static const BYTE REL_TO_HID_MAP[][2] = {
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},     /* REL_X */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Y},     /* REL_Y */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Z},     /* REL_Z */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RX},    /* REL_RX */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RY},    /* REL_RY */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RZ},    /* REL_RZ */
-    {0, 0},                                            /* REL_HWHEEL */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_DIAL},  /* REL_DIAL */
-    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_WHEEL}, /* REL_WHEEL */
-    {0, 0}                                             /* REL_MISC */
-};
-#define TOP_REL_PAGE (HID_USAGE_PAGE_CONSUMER+1)
-
 #define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
 
 static const BYTE* what_am_I(struct udev_device *dev)
@@ -584,17 +580,17 @@ static INT count_abs_axis(int device_fd)
         return 0;
     }
 
-    for (i = 0; i < HID_ABS_MAX; i++)
+    for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
         if (test_bit(absbits, i) &&
-            (ABS_TO_HID_MAP[i][1] >= HID_USAGE_GENERIC_X &&
-             ABS_TO_HID_MAP[i][1] <= HID_USAGE_GENERIC_WHEEL))
+            (absolute_usages[i].Usage >= HID_USAGE_GENERIC_X &&
+             absolute_usages[i].Usage <= HID_USAGE_GENERIC_WHEEL))
                 abs_count++;
     return abs_count;
 }
 
 static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_device *dev)
 {
-    struct input_absinfo abs_info[HID_ABS_MAX];
+    struct input_absinfo abs_info[ARRAY_SIZE(absolute_usages)];
     BYTE absbits[(ABS_MAX+7)/8];
     BYTE relbits[(REL_MAX+7)/8];
     BYTE ffbits[(FF_MAX+7)/8];
@@ -629,14 +625,12 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         return STATUS_NO_MEMORY;
 
     abs_count = 0;
-    for (i = 0; i < HID_ABS_MAX; i++)
+    for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
     {
+        usage = absolute_usages[i];
         if (!test_bit(absbits, i)) continue;
         ioctl(impl->base.device_fd, EVIOCGABS(i), abs_info + i);
-
-        if (!(usage.UsagePage = ABS_TO_HID_MAP[i][0])) continue;
-        if (!(usage.Usage = ABS_TO_HID_MAP[i][1])) continue;
-
+        if (!usage.UsagePage || !usage.Usage) continue;
         if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, FALSE,
                                  LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
             return STATUS_NO_MEMORY;
@@ -645,12 +639,11 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     }
 
     rel_count = 0;
-    for (i = 0; i < HID_REL_MAX; i++)
+    for (i = 0; i < ARRAY_SIZE(relative_usages); i++)
     {
+        usage = relative_usages[i];
         if (!test_bit(relbits, i)) continue;
-        if (!(usage.UsagePage = REL_TO_HID_MAP[i][0])) continue;
-        if (!(usage.Usage = REL_TO_HID_MAP[i][1])) continue;
-
+        if (!usage.UsagePage || !usage.Usage) continue;
         if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, TRUE,
                                  INT32_MIN, INT32_MAX))
             return STATUS_NO_MEMORY;
@@ -719,7 +712,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         return STATUS_NO_MEMORY;
 
     /* Initialize axis in the report */
-    for (i = 0; i < HID_ABS_MAX; i++)
+    for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
     {
         if (!test_bit(absbits, i)) continue;
         if (i < ABS_HAT0X || i > ABS_HAT3Y)
