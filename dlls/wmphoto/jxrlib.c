@@ -1,5 +1,5 @@
 /*
- * unix_lib.c - This is the Unix side of the Unix interface.
+ * Interface with jxr library
  *
  * Copyright 2020 Esme Povirk
  *
@@ -18,43 +18,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #define NONAMELESSUNION
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "winbase.h"
 #include "objbase.h"
-
-#include "initguid.h"
-#ifdef SONAME_LIBJXRGLUE
 #define ERR JXR_ERR
-#define __in_win    __in
-#define __out_win   __out
-#include <JXRGlue.h>
+#include "JXRGlue.h"
 #undef ERR
-#endif
 
 #include "wincodecs_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
-
-#include "wincodecs_common.h"
-
-#ifdef SONAME_LIBJXRGLUE
-static void *libjxrglue;
-static typeof(PKImageDecode_Create_WMP) *pPKImageDecode_Create_WMP;
 
 static const struct
 {
@@ -375,7 +355,7 @@ HRESULT CDECL wmp_decoder_create(struct decoder_info *info, struct decoder **res
     struct wmp_decoder *This;
     PKImageDecode *decoder;
 
-    if (!pPKImageDecode_Create_WMP || pPKImageDecode_Create_WMP(&decoder)) return E_FAIL;
+    if (PKImageDecode_Create_WMP(&decoder)) return E_FAIL;
     This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
@@ -401,86 +381,4 @@ HRESULT CDECL wmp_decoder_create(struct decoder_info *info, struct decoder **res
     info->clsid = CLSID_WICWmpDecoder;
 
     return S_OK;
-}
-#endif
-
-static const struct win32_funcs *win32_funcs;
-
-HRESULT CDECL stream_getsize(IStream *stream, ULONGLONG *size)
-{
-    return win32_funcs->stream_getsize(stream, size);
-}
-
-HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read)
-{
-    return win32_funcs->stream_read(stream, buffer, read, bytes_read);
-}
-
-HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position)
-{
-    return win32_funcs->stream_seek(stream, ofs, origin, new_position);
-}
-
-HRESULT CDECL stream_write(IStream *stream, const void *buffer, ULONG write, ULONG *bytes_written)
-{
-    return win32_funcs->stream_write(stream, buffer, write, bytes_written);
-}
-
-HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result)
-{
-    if (IsEqualGUID(decoder_clsid, &CLSID_WICWmpDecoder))
-#ifdef SONAME_LIBJXRGLUE
-        return wmp_decoder_create(info, result);
-#else
-    {
-        WARN("jxrlib support not compiled in, returning E_NOINTERFACE.\n");
-        return E_NOINTERFACE;
-    }
-#endif
-
-    FIXME("encoder_clsid %s, info %p, result %p, stub!\n", debugstr_guid(decoder_clsid), info, result);
-    return E_NOTIMPL;
-}
-
-HRESULT CDECL encoder_create(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result)
-{
-    FIXME("encoder_clsid %s, info %p, result %p, stub!\n", debugstr_guid(encoder_clsid), info, result);
-    return E_NOTIMPL;
-}
-
-static const struct unix_funcs unix_funcs = {
-    decoder_create,
-    decoder_initialize,
-    decoder_get_frame_info,
-    decoder_copy_pixels,
-    decoder_get_metadata_blocks,
-    decoder_get_color_context,
-    decoder_destroy,
-    encoder_create,
-    encoder_initialize,
-    encoder_get_supported_format,
-    encoder_create_frame,
-    encoder_write_lines,
-    encoder_commit_frame,
-    encoder_commit_file,
-    encoder_destroy
-};
-
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-
-    win32_funcs = ptr_in;
-
-#ifdef SONAME_LIBJXRGLUE
-    if (!(libjxrglue = dlopen(SONAME_LIBJXRGLUE, RTLD_NOW)))
-        ERR("failed to load %s\n", SONAME_LIBJXRGLUE);
-    else if (!(pPKImageDecode_Create_WMP = dlsym(libjxrglue, "PKImageDecode_Create_WMP")))
-        ERR("unable to find PKImageDecode_Create_WMP in %s!\n", SONAME_LIBJXRGLUE);
-#else
-    ERR("jxrlib support not compiled in!\n");
-#endif
-
-    *(const struct unix_funcs **)ptr_out = &unix_funcs;
-    return STATUS_SUCCESS;
 }

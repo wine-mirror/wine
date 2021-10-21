@@ -1,15 +1,14 @@
-MODULE = wmphoto.dll
-IMPORTS = windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi
+MODULE    = wmphoto.dll
+IMPORTS   = $(JXR_PE_LIBS) windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi
+EXTRAINCL = $(JXR_PE_CFLAGS)
 PARENTSRC = ../windowscodecs
-EXTRAINCL = $(JXRLIB_CFLAGS)
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	decoder.c \
+	jxrlib.c \
 	main.c \
-	unix_iface.c \
-	unix_lib.c \
 	wincodecs_common.c
 
 IDL_SRCS = wmphoto.idl

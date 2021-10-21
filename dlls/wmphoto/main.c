@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+extern HRESULT CDECL wmp_decoder_create(struct decoder_info *info, struct decoder **result);
+
 HRESULT create_instance(const CLSID *clsid, const IID *iid, void **ppv)
 {
     return CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, iid, ppv);
@@ -98,7 +100,7 @@ static HRESULT WINAPI wmp_class_factory_CreateInstance(IClassFactory *iface, IUn
     *out = NULL;
     if (outer) return CLASS_E_NOAGGREGATION;
 
-    hr = get_unix_decoder(&CLSID_WICWmpDecoder, &decoder_info, &decoder);
+    hr = wmp_decoder_create(&decoder_info, &decoder);
 
     if (SUCCEEDED(hr))
         hr = CommonDecoder_CreateInstance(decoder, &decoder_info, iid, out);

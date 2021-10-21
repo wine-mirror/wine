@@ -639,8 +639,6 @@ NETAPI_CFLAGS
 PROCSTAT_LIBS
 MPG123_LIBS
 MPG123_CFLAGS
-JXRLIB_LIBS
-JXRLIB_CFLAGS
 JPEG_LIBS
 JPEG_CFLAGS
 GSSAPI_LIBS
@@ -871,7 +869,6 @@ with_gstreamer
 with_hal
 with_inotify
 with_jpeg
-with_jxrlib
 with_krb5
 with_ldap
 with_mingw
@@ -1990,8 +1987,6 @@ GSSAPI_CFLAGS
 GSSAPI_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
-JXRLIB_CFLAGS
-JXRLIB_LIBS
 MPG123_CFLAGS
 MPG123_LIBS
 NETAPI_CFLAGS
@@ -2662,7 +2657,6 @@ Optional Packages:
   --without-hal           do not use HAL (dynamic device support)
   --without-inotify       do not use inotify (filesystem change notifications)
   --without-jpeg          do not use JPEG
-  --without-jxrlib        do not use JPEG-XR
   --without-krb5          do not use krb5 (Kerberos)
   --without-ldap          do not use LDAP
   --without-mingw         do not use the MinGW cross-compiler
@@ -2814,9 +2808,6 @@ Some influential environment variables:
   GSSAPI_LIBS Linker flags for krb5-gssapi, overriding pkg-config
   JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
-  JXRLIB_CFLAGS
-              C compiler flags for jxrlib, overriding pkg-config
-  JXRLIB_LIBS Linker flags for jxrlib, overriding pkg-config
   MPG123_CFLAGS
               C compiler flags for libmpg123, overriding pkg-config
   MPG123_LIBS Linker flags for libmpg123, overriding pkg-config
@@ -4111,12 +4102,6 @@ fi
 # Check whether --with-jpeg was given.
 if test "${with_jpeg+set}" = set; then :
   withval=$with_jpeg;
-fi
-
-
-# Check whether --with-jxrlib was given.
-if test "${with_jxrlib+set}" = set; then :
-  withval=$with_jxrlib;
 fi
 
 
@@ -15408,111 +15393,6 @@ esac
 
 fi
 
-if test "x$with_jxrlib" != "xno"
-then
-    if ${JXRLIB_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  JXRLIB_CFLAGS=`$PKG_CONFIG --cflags jxrlib 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || JXRLIB_CFLAGS=${JXRLIB_CFLAGS:-${JXRLIB_CFLAGS:--I/usr/include/jxrlib}}
-if ${JXRLIB_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  JXRLIB_LIBS=`$PKG_CONFIG --libs jxrlib 2>/dev/null`
-fi
-fi
-
-
-$as_echo "$as_me:${as_lineno-$LINENO}: jxrlib cflags: $JXRLIB_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: jxrlib libs: $JXRLIB_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $JXRLIB_CFLAGS"
-for ac_header in JXRGlue.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "JXRGlue.h" "ac_cv_header_JXRGlue_h" "#define FAR
-"
-if test "x$ac_cv_header_JXRGlue_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_JXRGLUE_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_JXRGlue_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ljxrglue" >&5
-$as_echo_n "checking for -ljxrglue... " >&6; }
-if ${ac_cv_lib_soname_jxrglue+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-ljxrglue $JXRLIB_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char PKImageDecode_Create_WMP ();
-int
-main ()
-{
-return PKImageDecode_Create_WMP ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_jxrglue=`$ac_cv_path_LDD conftest.exe | grep "jxrglue" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_jxrglue=`$OTOOL -L conftest$ac_exeext | grep "libjxrglue\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libjxrglue\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_jxrglue=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libjxrglue\\.$LIBEXT" | sed -e "s/^.*\\[\\(libjxrglue\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_jxrglue:+false} :; then :
-  ac_cv_lib_soname_jxrglue=`$LDD conftest$ac_exeext | grep "libjxrglue\\.$LIBEXT" | sed -e "s/^.*\(libjxrglue\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_jxrglue=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_jxrglue:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-       JXRLIB_CFLAGS=""
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_jxrglue" >&5
-$as_echo "$ac_cv_lib_soname_jxrglue" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBJXRGLUE "$ac_cv_lib_soname_jxrglue"
-_ACEOF
-
-
-fi
-        else
-            JXRLIB_CFLAGS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_soname_jxrglue" = "x"; then :
-  case "x$with_jxrlib" in
-  x)   as_fn_append wine_notices "|jxrlib ${notice_platform}development files not found, JPEG-XR won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "jxrlib ${notice_platform}development files not found, JPEG-XR won't be supported.
-This is an error since --with-jxrlib was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
 if test "x$with_mpg123" != "xno"
 then
     if ${MPG123_CFLAGS:+false} :; then :
@@ -19030,8 +18910,6 @@ GSSAPI_CFLAGS = $GSSAPI_CFLAGS
 GSSAPI_LIBS = $GSSAPI_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
-JXRLIB_CFLAGS = $JXRLIB_CFLAGS
-JXRLIB_LIBS = $JXRLIB_LIBS
 MPG123_CFLAGS = $MPG123_CFLAGS
 MPG123_LIBS = $MPG123_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS

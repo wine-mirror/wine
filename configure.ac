@@ -56,7 +56,6 @@ AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreame
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(inotify,   AS_HELP_STRING([--without-inotify],[do not use inotify (filesystem change notifications)]))
 AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]))
-AC_ARG_WITH(jxrlib,    AS_HELP_STRING([--without-jxrlib],[do not use JPEG-XR]))
 AC_ARG_WITH(krb5,      AS_HELP_STRING([--without-krb5],[do not use krb5 (Kerberos)]))
 AC_ARG_WITH(ldap,      AS_HELP_STRING([--without-ldap],[do not use LDAP]),
             [if test "x$withval" = "xno"; then ac_cv_header_ldap_h=no; ac_cv_header_lber_h=no; fi])
@@ -1721,21 +1720,6 @@ then
 fi
 WINE_WARNING_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
                  [libjpeg ${notice_platform}development files not found, JPEG won't be supported.])
-
-dnl **** Check for libjxrglue ****
-if test "x$with_jxrlib" != "xno"
-then
-    WINE_PACKAGE_FLAGS(JXRLIB,[jxrlib],,[${JXRLIB_CFLAGS:--I/usr/include/jxrlib}],,
-        [AC_CHECK_HEADERS([JXRGlue.h],,,[#define FAR])
-        if test "$ac_cv_header_JXRGlue_h" = "yes"
-        then
-            WINE_CHECK_SONAME(jxrglue,PKImageDecode_Create_WMP,,[JXRLIB_CFLAGS=""],[$JXRLIB_LIBS])
-        else
-            JXRLIB_CFLAGS=""
-        fi])
-fi
-WINE_NOTICE_WITH(jxrlib,[test "x$ac_cv_lib_soname_jxrglue" = "x"],
-                 [jxrlib ${notice_platform}development files not found, JPEG-XR won't be supported.])
 
 dnl **** Check for mpg123 ****
 if test "x$with_mpg123" != "xno"
