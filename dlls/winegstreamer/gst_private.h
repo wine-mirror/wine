@@ -117,6 +117,7 @@ struct wm_reader
 {
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMLanguageList IWMLanguageList_iface;
+    IWMPacketSize2 IWMPacketSize2_iface;
     IWMProfile3 IWMProfile3_iface;
     LONG refcount;
 

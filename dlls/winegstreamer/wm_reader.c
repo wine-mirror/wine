@@ -41,6 +41,11 @@ static HRESULT WINAPI profile_QueryInterface(IWMProfile3 *iface, REFIID iid, voi
     {
         *out = &reader->IWMLanguageList_iface;
     }
+    else if (IsEqualIID(iid, &IID_IWMPacketSize)
+            || IsEqualIID(iid, &IID_IWMPacketSize2))
+    {
+        *out = &reader->IWMPacketSize2_iface;
+    }
     else if (IsEqualIID(iid, &IID_IUnknown)
             || IsEqualIID(iid, &IID_IWMProfile)
             || IsEqualIID(iid, &IID_IWMProfile2)
@@ -572,10 +577,72 @@ static const IWMLanguageListVtbl language_list_vtbl =
     language_list_AddLanguageByRFC1766String,
 };
 
+static struct wm_reader *impl_from_IWMPacketSize2(IWMPacketSize2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct wm_reader, IWMPacketSize2_iface);
+}
+
+static HRESULT WINAPI packet_size_QueryInterface(IWMPacketSize2 *iface, REFIID iid, void **out)
+{
+    struct wm_reader *reader = impl_from_IWMPacketSize2(iface);
+
+    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+}
+
+static ULONG WINAPI packet_size_AddRef(IWMPacketSize2 *iface)
+{
+    struct wm_reader *reader = impl_from_IWMPacketSize2(iface);
+
+    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+}
+
+static ULONG WINAPI packet_size_Release(IWMPacketSize2 *iface)
+{
+    struct wm_reader *reader = impl_from_IWMPacketSize2(iface);
+
+    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+}
+
+static HRESULT WINAPI packet_size_GetMaxPacketSize(IWMPacketSize2 *iface, DWORD *size)
+{
+    FIXME("iface %p, size %p, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI packet_size_SetMaxPacketSize(IWMPacketSize2 *iface, DWORD size)
+{
+    FIXME("iface %p, size %u, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI packet_size_GetMinPacketSize(IWMPacketSize2 *iface, DWORD *size)
+{
+    FIXME("iface %p, size %p, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI packet_size_SetMinPacketSize(IWMPacketSize2 *iface, DWORD size)
+{
+    FIXME("iface %p, size %u, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static const IWMPacketSize2Vtbl packet_size_vtbl =
+{
+    packet_size_QueryInterface,
+    packet_size_AddRef,
+    packet_size_Release,
+    packet_size_GetMaxPacketSize,
+    packet_size_SetMaxPacketSize,
+    packet_size_GetMinPacketSize,
+    packet_size_SetMinPacketSize,
+};
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
     reader->IWMLanguageList_iface.lpVtbl = &language_list_vtbl;
+    reader->IWMPacketSize2_iface.lpVtbl = &packet_size_vtbl;
     reader->IWMProfile3_iface.lpVtbl = &profile_vtbl;
     reader->refcount = 1;
     reader->ops = ops;

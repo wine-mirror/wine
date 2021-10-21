@@ -33,7 +33,6 @@ struct async_reader
     IWMReaderTimecode IWMReaderTimecode_iface;
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IReferenceClock IReferenceClock_iface;
-    IWMPacketSize2 IWMPacketSize2_iface;
 };
 
 static struct async_reader *impl_from_IWMReader(IWMReader *iface)
@@ -1322,68 +1321,6 @@ static const IReferenceClockVtbl ReferenceClockVtbl =
     refclock_Unadvise
 };
 
-static struct async_reader *impl_from_IWMPacketSize2(IWMPacketSize2 *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, IWMPacketSize2_iface);
-}
-
-static HRESULT WINAPI packetsize_QueryInterface(IWMPacketSize2 *iface, REFIID riid, void **ppv)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
-}
-
-static ULONG WINAPI packetsize_AddRef(IWMPacketSize2 *iface)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    return IWMReader_AddRef(&This->IWMReader_iface);
-}
-
-static ULONG WINAPI packetsize_Release(IWMPacketSize2 *iface)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    return IWMReader_Release(&This->IWMReader_iface);
-}
-
-static HRESULT WINAPI packetsize_GetMaxPacketSize(IWMPacketSize2 *iface, DWORD *size)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    FIXME("%p, %p\n", This, size);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI packetsize_SetMaxPacketSize(IWMPacketSize2 *iface, DWORD size)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    FIXME("%p, %d\n", This, size);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI packetsize_GetMinPacketSize(IWMPacketSize2 *iface, DWORD *size)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    FIXME("%p, %p\n", This, size);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI packetsize_SetMinPacketSize(IWMPacketSize2 *iface, DWORD size)
-{
-    struct async_reader *This = impl_from_IWMPacketSize2(iface);
-    FIXME("%p, %d\n", This, size);
-    return E_NOTIMPL;
-}
-
-static const IWMPacketSize2Vtbl WMPacketSize2Vtbl =
-{
-    packetsize_QueryInterface,
-    packetsize_AddRef,
-    packetsize_Release,
-    packetsize_GetMaxPacketSize,
-    packetsize_SetMaxPacketSize,
-    packetsize_GetMinPacketSize,
-    packetsize_SetMinPacketSize
-};
-
 static struct async_reader *impl_from_wm_reader(struct wm_reader *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, reader);
@@ -1397,10 +1334,6 @@ static void *async_reader_query_interface(struct wm_reader *iface, REFIID iid)
 
     if (IsEqualIID(iid, &IID_IReferenceClock))
         return &reader->IReferenceClock_iface;
-
-    if (IsEqualIID(iid, &IID_IWMPacketSize)
-            || IsEqualIID(iid, &IID_IWMPacketSize2))
-        return &reader->IWMPacketSize2_iface;
 
     if (IsEqualIID(iid, &IID_IWMReader))
         return &reader->IWMReader_iface;
@@ -1462,7 +1395,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     wm_reader_init(&object->reader, &async_reader_ops);
 
     object->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
-    object->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
     object->IWMReader_iface.lpVtbl = &WMReaderVtbl;
     object->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
     object->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
