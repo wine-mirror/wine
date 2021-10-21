@@ -57,6 +57,10 @@ static HRESULT WINAPI profile_QueryInterface(IWMProfile3 *iface, REFIID iid, voi
     {
         *out = &reader->IWMReaderPlaylistBurn_iface;
     }
+    else if (IsEqualIID(iid, &IID_IWMReaderTimecode))
+    {
+        *out = &reader->IWMReaderTimecode_iface;
+    }
     else if (!(*out = reader->ops->query_interface(reader, iid)))
     {
         WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
@@ -705,6 +709,56 @@ static const IWMReaderPlaylistBurnVtbl playlist_vtbl =
     playlist_EndPlaylistBurn,
 };
 
+static struct wm_reader *impl_from_IWMReaderTimecode(IWMReaderTimecode *iface)
+{
+    return CONTAINING_RECORD(iface, struct wm_reader, IWMReaderTimecode_iface);
+}
+
+static HRESULT WINAPI timecode_QueryInterface(IWMReaderTimecode *iface, REFIID iid, void **out)
+{
+    struct wm_reader *reader = impl_from_IWMReaderTimecode(iface);
+
+    return IWMProfile3_QueryInterface(&reader->IWMProfile3_iface, iid, out);
+}
+
+static ULONG WINAPI timecode_AddRef(IWMReaderTimecode *iface)
+{
+    struct wm_reader *reader = impl_from_IWMReaderTimecode(iface);
+
+    return IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+}
+
+static ULONG WINAPI timecode_Release(IWMReaderTimecode *iface)
+{
+    struct wm_reader *reader = impl_from_IWMReaderTimecode(iface);
+
+    return IWMProfile3_Release(&reader->IWMProfile3_iface);
+}
+
+static HRESULT WINAPI timecode_GetTimecodeRangeCount(IWMReaderTimecode *iface,
+        WORD stream_number, WORD *count)
+{
+    FIXME("iface %p, stream_number %u, count %p, stub!\n", iface, stream_number, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI timecode_GetTimecodeRangeBounds(IWMReaderTimecode *iface,
+        WORD stream_number, WORD index, DWORD *start, DWORD *end)
+{
+    FIXME("iface %p, stream_number %u, index %u, start %p, end %p, stub!\n",
+            iface, stream_number, index, start, end);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderTimecodeVtbl timecode_vtbl =
+{
+    timecode_QueryInterface,
+    timecode_AddRef,
+    timecode_Release,
+    timecode_GetTimecodeRangeCount,
+    timecode_GetTimecodeRangeBounds,
+};
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
@@ -712,6 +766,7 @@ void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
     reader->IWMPacketSize2_iface.lpVtbl = &packet_size_vtbl;
     reader->IWMProfile3_iface.lpVtbl = &profile_vtbl;
     reader->IWMReaderPlaylistBurn_iface.lpVtbl = &playlist_vtbl;
+    reader->IWMReaderTimecode_iface.lpVtbl = &timecode_vtbl;
     reader->refcount = 1;
     reader->ops = ops;
 }

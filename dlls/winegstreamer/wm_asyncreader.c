@@ -30,7 +30,6 @@ struct async_reader
     IWMReaderNetworkConfig2 IWMReaderNetworkConfig2_iface;
     IWMReaderStreamClock IWMReaderStreamClock_iface;
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
-    IWMReaderTimecode IWMReaderTimecode_iface;
     IReferenceClock IReferenceClock_iface;
 };
 
@@ -1143,53 +1142,6 @@ static const IWMReaderTypeNegotiationVtbl WMReaderTypeNegotiationVtbl =
     negotiation_TryOutputProps
 };
 
-static struct async_reader *impl_from_IWMReaderTimecode(IWMReaderTimecode *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, IWMReaderTimecode_iface);
-}
-
-static HRESULT WINAPI timecode_QueryInterface(IWMReaderTimecode *iface, REFIID riid, void **ppv)
-{
-    struct async_reader *This = impl_from_IWMReaderTimecode(iface);
-    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
-}
-
-static ULONG WINAPI timecode_AddRef(IWMReaderTimecode *iface)
-{
-    struct async_reader *This = impl_from_IWMReaderTimecode(iface);
-    return IWMReader_AddRef(&This->IWMReader_iface);
-}
-
-static ULONG WINAPI timecode_Release(IWMReaderTimecode *iface)
-{
-    struct async_reader *This = impl_from_IWMReaderTimecode(iface);
-    return IWMReader_Release(&This->IWMReader_iface);
-}
-
-static HRESULT WINAPI timecode_GetTimecodeRangeCount(IWMReaderTimecode *iface, WORD num, WORD *count)
-{
-    struct async_reader *This = impl_from_IWMReaderTimecode(iface);
-    FIXME("%p, %d, %p\n", This, num, count);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI timecode_GetTimecodeRangeBounds(IWMReaderTimecode *iface, WORD stream, WORD range,
-        DWORD *start_timecode, DWORD *end_timecode)
-{
-    struct async_reader *This = impl_from_IWMReaderTimecode(iface);
-    FIXME("%p, %d, %d, %p, %p\n", This, stream, range, start_timecode, end_timecode);
-    return E_NOTIMPL;
-}
-
-static const IWMReaderTimecodeVtbl WMReaderTimecodeVtbl =
-{
-    timecode_QueryInterface,
-    timecode_AddRef,
-    timecode_Release,
-    timecode_GetTimecodeRangeCount,
-    timecode_GetTimecodeRangeBounds
-};
-
 static struct async_reader *impl_from_IReferenceClock(IReferenceClock *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, IReferenceClock_iface);
@@ -1291,9 +1243,6 @@ static void *async_reader_query_interface(struct wm_reader *iface, REFIID iid)
     if (IsEqualIID(iid, &IID_IWMReaderStreamClock))
         return &reader->IWMReaderStreamClock_iface;
 
-    if (IsEqualIID(iid, &IID_IWMReaderTimecode))
-        return &reader->IWMReaderTimecode_iface;
-
     if (IsEqualIID(iid, &IID_IWMReaderTypeNegotiation))
         return &reader->IWMReaderTypeNegotiation_iface;
 
@@ -1332,7 +1281,6 @@ HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
     object->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
     object->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
     object->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
-    object->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
     object->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
 
     TRACE("Created async reader %p.\n", object);
