@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-27 17:07+0200\n"
+"PO-Revision-Date: 2021-10-21 09:30+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3715,30 +3715,24 @@ msgid "&Disable"
 msgstr "&Deaktivieren"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Reset"
+msgstr "&Reset"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Aktivieren"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Überschreibung bearbeiten"
+msgstr "Ü&berschreiben"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Verbunden"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Spracheingabegerät:"
+msgstr "Verbunden (xinput-Geräte)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
