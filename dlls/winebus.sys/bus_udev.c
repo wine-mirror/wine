@@ -581,10 +581,7 @@ static INT count_abs_axis(int device_fd)
     }
 
     for (i = 0; i < ARRAY_SIZE(absolute_usages); i++)
-        if (test_bit(absbits, i) &&
-            (absolute_usages[i].Usage >= HID_USAGE_GENERIC_X &&
-             absolute_usages[i].Usage <= HID_USAGE_GENERIC_WHEEL))
-                abs_count++;
+        if (test_bit(absbits, i)) abs_count++;
     return abs_count;
 }
 
