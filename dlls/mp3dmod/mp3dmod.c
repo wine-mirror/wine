@@ -513,7 +513,7 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
         else if (err != MPG123_OK)
             ERR("mpg123_read() returned %d\n", err);
         if (written < framesize)
-            ERR("short write: %zd/%u\n", written, framesize);
+            ERR("short write: %Id/%u\n", written, framesize);
 
         got_data = 1;
 
@@ -668,7 +668,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **obj)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    static const WCHAR nameW[] = {'M','P','3',' ','D','e','c','o','d','e','r',' ','D','M','O',0};
     DMO_PARTIAL_MEDIATYPE in, out;
     HRESULT hr;
 
@@ -676,7 +675,7 @@ HRESULT WINAPI DllRegisterServer(void)
     in.subtype = WMMEDIASUBTYPE_MP3;
     out.type = WMMEDIATYPE_Audio;
     out.subtype = WMMEDIASUBTYPE_PCM;
-    hr = DMORegister(nameW, &CLSID_CMP3DecMediaObject, &DMOCATEGORY_AUDIO_DECODER,
+    hr = DMORegister(L"MP3 Decoder DMO", &CLSID_CMP3DecMediaObject, &DMOCATEGORY_AUDIO_DECODER,
         0, 1, &in, 1, &out);
     if (FAILED(hr)) return hr;
 
