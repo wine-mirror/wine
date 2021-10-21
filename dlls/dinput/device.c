@@ -1732,14 +1732,18 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects( IDirectInputDevice8W *iface
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_GetEffectInfo(
-	LPDIRECTINPUTDEVICE8W iface,
-	LPDIEFFECTINFOW lpdei,
-	REFGUID rguid)
+HRESULT WINAPI IDirectInputDevice2WImpl_GetEffectInfo( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
+                                                       const GUID *guid )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    FIXME("(%p)->(%p,%s): stub!\n", This, lpdei, debugstr_guid(rguid));
-    return DI_OK;
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p, info %p, guid %s.\n", iface, info, debugstr_guid( guid ) );
+
+    if (!info) return E_POINTER;
+    if (info->dwSize != sizeof(DIEFFECTINFOW)) return DIERR_INVALIDPARAM;
+    if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_DEVICENOTREG;
+    if (!impl->vtbl->get_effect_info) return DIERR_UNSUPPORTED;
+    return impl->vtbl->get_effect_info( iface, info, guid );
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_GetForceFeedbackState(LPDIRECTINPUTDEVICE8W iface, LPDWORD pdwOut)

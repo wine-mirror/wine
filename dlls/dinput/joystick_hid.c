@@ -838,8 +838,8 @@ failed:
     return hr;
 }
 
-static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
-                                                  const GUID *guid )
+static HRESULT hid_joystick_internal_get_effect_info( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
+                                                      const GUID *guid )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
@@ -852,12 +852,6 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
     NTSTATUS status;
     USAGE usage = 0;
     USHORT count;
-
-    TRACE( "iface %p, info %p, guid %s.\n", iface, info, debugstr_guid( guid ) );
-
-    if (!info) return E_POINTER;
-    if (info->dwSize != sizeof(DIEFFECTINFOW)) return DIERR_INVALIDPARAM;
-    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_DEVICENOTREG;
 
     switch ((usage = effect_guid_to_usage( guid )))
     {
@@ -1085,7 +1079,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     /*** IDirectInputDevice2 methods ***/
     hid_joystick_CreateEffect,
     IDirectInputDevice2WImpl_EnumEffects,
-    hid_joystick_GetEffectInfo,
+    IDirectInputDevice2WImpl_GetEffectInfo,
     hid_joystick_GetForceFeedbackState,
     hid_joystick_SendForceFeedbackCommand,
     hid_joystick_EnumCreatedEffectObjects,
@@ -1326,6 +1320,7 @@ static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
     hid_joystick_internal_enum_objects,
     hid_joystick_internal_get_property,
     hid_joystick_internal_set_property,
+    hid_joystick_internal_get_effect_info,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )

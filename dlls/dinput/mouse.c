@@ -651,6 +651,7 @@ static const struct dinput_device_vtbl mouse_internal_vtbl =
     mouse_internal_enum_objects,
     mouse_internal_get_property,
     mouse_internal_set_property,
+    NULL,
 };
 
 static const IDirectInputDevice8WVtbl SysMouseWvt =
