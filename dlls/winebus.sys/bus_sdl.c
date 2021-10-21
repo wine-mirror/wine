@@ -227,33 +227,47 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
 
 static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
 {
-    static const USAGE joystick_usages[] =
+    static const USAGE_AND_PAGE absolute_usages[] =
     {
-        HID_USAGE_GENERIC_X,
-        HID_USAGE_GENERIC_Y,
-        HID_USAGE_GENERIC_Z,
-        HID_USAGE_GENERIC_RX,
-        HID_USAGE_GENERIC_RY,
-        HID_USAGE_GENERIC_RZ,
-        HID_USAGE_GENERIC_SLIDER,
-        HID_USAGE_GENERIC_DIAL,
-        HID_USAGE_GENERIC_WHEEL
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_X},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_Y},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_Z},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_RX},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_RY},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_RZ},
+        {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_THROTTLE},
+        {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_RUDDER},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC,    .Usage = HID_USAGE_GENERIC_WHEEL},
+        {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_ACCELERATOR},
+        {.UsagePage = HID_USAGE_PAGE_SIMULATION, .Usage = HID_USAGE_SIMULATION_BRAKE},
+    };
+    static const USAGE_AND_PAGE relative_usages[] =
+    {
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RX},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RY},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Z},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RZ},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_SLIDER},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_DIAL},
+        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_WHEEL},
     };
     struct sdl_device *impl = impl_from_unix_device(iface);
     int i, button_count, axis_count, ball_count, hat_count;
 
     axis_count = pSDL_JoystickNumAxes(impl->sdl_joystick);
-    if (axis_count > 6)
+    if (axis_count > ARRAY_SIZE(absolute_usages))
     {
-        FIXME("Clamping joystick to 6 axis\n");
-        axis_count = 6;
+        FIXME("More than %zu absolute axes found, ignoring.\n", ARRAY_SIZE(absolute_usages));
+        axis_count = ARRAY_SIZE(absolute_usages);
     }
 
     ball_count = pSDL_JoystickNumBalls(impl->sdl_joystick);
-    if (axis_count + ball_count * 2 > ARRAY_SIZE(joystick_usages))
+    if (ball_count > ARRAY_SIZE(relative_usages) / 2)
     {
-        FIXME("Capping ball + axis at 9\n");
-        ball_count = (ARRAY_SIZE(joystick_usages) - axis_count) / 2;
+        FIXME("More than %zu relative axes found, ignoring.\n", ARRAY_SIZE(relative_usages));
+        ball_count = ARRAY_SIZE(relative_usages) / 2;
     }
 
     hat_count = pSDL_JoystickNumHats(impl->sdl_joystick);
@@ -265,13 +279,19 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     if (!hid_device_begin_input_report(iface))
         return STATUS_NO_MEMORY;
 
-    if (axis_count && !hid_device_add_axes(iface, axis_count, HID_USAGE_PAGE_GENERIC,
-                                           joystick_usages, FALSE, -32768, 32767))
-        return STATUS_NO_MEMORY;
+    for (i = 0; i < axis_count; i++)
+    {
+        if (!hid_device_add_axes(iface, 1, absolute_usages[i].UsagePage,
+                                 &absolute_usages[i].Usage, FALSE, -32768, 32767))
+            return STATUS_NO_MEMORY;
+    }
 
-    if (ball_count && !hid_device_add_axes(iface, ball_count * 2, HID_USAGE_PAGE_GENERIC,
-                                           &joystick_usages[axis_count], TRUE, INT32_MIN, INT32_MAX))
-        return STATUS_NO_MEMORY;
+    for (i = 0; i < ball_count; i++)
+    {
+        if (!hid_device_add_axes(iface, 2, relative_usages[2 * i].UsagePage,
+                                 &relative_usages[2 * i].Usage, TRUE, INT32_MIN, INT32_MAX))
+            return STATUS_NO_MEMORY;
+    }
 
     if (hat_count && !hid_device_add_hatswitch(iface, hat_count))
         return STATUS_NO_MEMORY;
