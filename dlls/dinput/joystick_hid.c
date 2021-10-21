@@ -982,17 +982,14 @@ static HRESULT hid_joystick_internal_send_force_feedback_command( IDirectInputDe
     return DI_OK;
 }
 
-static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8W *iface,
-                                                             LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
-                                                             void *context, DWORD flags )
+static HRESULT hid_joystick_internal_enum_created_effect_objects( IDirectInputDevice8W *iface,
+                                                                  LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
+                                                                  void *context, DWORD flags )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct hid_joystick_effect *effect, *next;
 
     TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
-
-    if (!callback) return DIERR_INVALIDPARAM;
-    if (flags) return DIERR_INVALIDPARAM;
 
     LIST_FOR_EACH_ENTRY_SAFE(effect, next, &impl->effect_list, struct hid_joystick_effect, entry)
         if (callback( &effect->IDirectInputEffect_iface, context ) != DIENUM_CONTINUE) break;
@@ -1028,7 +1025,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_GetEffectInfo,
     IDirectInputDevice2WImpl_GetForceFeedbackState,
     IDirectInputDevice2WImpl_SendForceFeedbackCommand,
-    hid_joystick_EnumCreatedEffectObjects,
+    IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
     IDirectInputDevice2WImpl_Poll,
     IDirectInputDevice2WImpl_SendDeviceData,
@@ -1269,6 +1266,7 @@ static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
     hid_joystick_internal_get_effect_info,
     hid_joystick_internal_create_effect,
     hid_joystick_internal_send_force_feedback_command,
+    hid_joystick_internal_enum_created_effect_objects,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )

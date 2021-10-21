@@ -1799,12 +1799,20 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SendForceFeedbackCommand( IDirectInputDe
     return hr;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE8W iface,
-        LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID lpvRef, DWORD dwFlags)
+HRESULT WINAPI IDirectInputDevice2WImpl_EnumCreatedEffectObjects( IDirectInputDevice8W *iface,
+                                                                  LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
+                                                                  void *context, DWORD flags )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    FIXME("(%p)0>(%p,%p,0x%08x): stub!\n", This, lpCallback, lpvRef, dwFlags);
-    return DI_OK;
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+    if (flags) return DIERR_INVALIDPARAM;
+    if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DI_OK;
+    if (!impl->vtbl->enum_created_effect_objects) return DIERR_UNSUPPORTED;
+
+    return impl->vtbl->enum_created_effect_objects( iface, callback, context, flags );
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_Escape(LPDIRECTINPUTDEVICE8W iface, LPDIEFFESCAPE lpDIEEsc)

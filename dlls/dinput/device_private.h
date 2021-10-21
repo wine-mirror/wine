@@ -71,6 +71,8 @@ struct dinput_device_vtbl
     HRESULT (*get_effect_info)( IDirectInputDevice8W *iface, DIEFFECTINFOW *info, const GUID *guid );
     HRESULT (*create_effect)( IDirectInputDevice8W *iface, IDirectInputEffect **out );
     HRESULT (*send_force_feedback_command)( IDirectInputDevice8W *iface, DWORD command );
+    HRESULT (*enum_created_effect_objects)( IDirectInputDevice8W *iface, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
+                                            void *context, DWORD flags );
 };
 
 #define DEVICE_STATE_MAX_SIZE 1024
