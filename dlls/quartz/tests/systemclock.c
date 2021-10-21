@@ -22,8 +22,6 @@
 #include "dshow.h"
 #include "wine/test.h"
 
-static ULONGLONG (WINAPI *pGetTickCount64)(void);
-
 static IReferenceClock *create_system_clock(void)
 {
     IReferenceClock *clock = NULL;
@@ -178,10 +176,7 @@ static void test_get_time(void)
     ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
             wine_dbgstr_longlong(time1));
 
-    if (pGetTickCount64)
-        ticks = pGetTickCount64() * 10000;
-    else
-        ticks = (REFERENCE_TIME)GetTickCount() * 10000;
+    ticks = (REFERENCE_TIME)timeGetTime() * 10000;
 
     hr = IReferenceClock_GetTime(clock, &time2);
     ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#x.\n", hr);
@@ -290,8 +285,6 @@ static void test_advise(void)
 START_TEST(systemclock)
 {
     CoInitialize(NULL);
-
-    pGetTickCount64 = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetTickCount64");
 
     test_interfaces();
     test_aggregation();
