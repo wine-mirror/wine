@@ -3284,18 +3284,13 @@ typedef struct _LDR_DDAG_NODE
     LIST_ENTRY Modules;
     LDR_SERVICE_TAG_RECORD *ServiceTagList;
     ULONG LoadCount;
-    ULONG ReferenceCount;
-    ULONG DependencyCount;
-    union
-    {
-        LDRP_CSLIST Dependencies;
-        SINGLE_LIST_ENTRY RemovalLink;
-    };
+    ULONG LoadWhileUnloadingCount;
+    ULONG LowestLink;
+    LDRP_CSLIST Dependencies;
     LDRP_CSLIST IncomingDependencies;
     LDR_DDAG_STATE State;
     SINGLE_LIST_ENTRY CondenseLink;
     ULONG PreorderNumber;
-    ULONG LowestLink;
 } LDR_DDAG_NODE, *PLDR_DDAG_NODE;
 
 typedef enum _LDR_DLL_LOAD_REASON
