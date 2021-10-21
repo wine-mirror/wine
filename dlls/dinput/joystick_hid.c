@@ -973,15 +973,6 @@ static HRESULT hid_joystick_internal_get_effect_info( IDirectInputDevice8W *ifac
     return DI_OK;
 }
 
-static HRESULT WINAPI hid_joystick_GetForceFeedbackState( IDirectInputDevice8W *iface, DWORD *out )
-{
-    FIXME( "iface %p, out %p stub!\n", iface, out );
-
-    if (!out) return E_POINTER;
-
-    return DIERR_UNSUPPORTED;
-}
-
 static BOOL CALLBACK unload_effect_object( IDirectInputEffect *effect, void *context )
 {
     IDirectInputEffect_Unload( effect );
@@ -1080,7 +1071,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_CreateEffect,
     IDirectInputDevice2WImpl_EnumEffects,
     IDirectInputDevice2WImpl_GetEffectInfo,
-    hid_joystick_GetForceFeedbackState,
+    IDirectInputDevice2WImpl_GetForceFeedbackState,
     hid_joystick_SendForceFeedbackCommand,
     hid_joystick_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,

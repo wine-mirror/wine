@@ -1746,11 +1746,11 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetEffectInfo( IDirectInputDevice8W *ifa
     return impl->vtbl->get_effect_info( iface, info, guid );
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_GetForceFeedbackState(LPDIRECTINPUTDEVICE8W iface, LPDWORD pdwOut)
+HRESULT WINAPI IDirectInputDevice2WImpl_GetForceFeedbackState( IDirectInputDevice8W *iface, DWORD *out )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    FIXME("(%p)->(%p): stub!\n", This, pdwOut);
-    return DI_OK;
+    FIXME( "iface %p, out %p stub!\n", iface, out );
+    if (!out) return E_POINTER;
+    return DIERR_UNSUPPORTED;
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE8W iface, DWORD dwFlags)
