@@ -16,21 +16,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <FACT.h>
 
 #define NONAMELESSUNION
 #define COBJMACROS
+#include "objbase.h"
 
-#include "initguid.h"
 #if XACT3_VER < 0x0300
+#include "xact2wb.h"
+#include "initguid.h"
 #include "xact.h"
 #else
+#include "xact3wb.h"
+#include "xaudio2.h"
+#include "initguid.h"
 #include "xact3.h"
 #endif
-#include "rpcproxy.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xact3);
@@ -1464,11 +1466,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinstDLL );
-
-#ifdef HAVE_FAUDIOLINKEDVERSION
         TRACE("Using FAudio version %d\n", FAudioLinkedVersion() );
-#endif
-
         break;
     }
     return TRUE;

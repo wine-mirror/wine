@@ -26,8 +26,6 @@
 #include <FAudio.h>
 #include <FAPO.h>
 
-#include <pthread.h>
-
 #if XAUDIO2_VER == 0
 #define COMPAT_E_INVALID_CALL E_INVALIDARG
 #define COMPAT_E_DEVICE_INVALIDATED XAUDIO20_E_DEVICE_INVALIDATED
@@ -96,10 +94,6 @@ typedef struct _XA2VoiceImpl {
         FAudio *faudio;
         float *stream;
     } engine_params;
-
-    HANDLE engine_thread;
-    pthread_cond_t engine_done, engine_ready;
-    pthread_mutex_t engine_lock;
 
     struct list entry;
 } XA2VoiceImpl;

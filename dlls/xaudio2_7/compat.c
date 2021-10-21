@@ -89,8 +89,6 @@
  *     Add SideDelay member to XAUDIO2FX_REVERB_PARAMETERS
  */
 
-#include "config.h"
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #define COBJMACROS
@@ -2162,16 +2160,6 @@ static HRESULT WINAPI XA20_CreateMasteringVoice(IXAudio20 *iface,
 
     This->mst.effect_chain = wrap_effect_chain(pEffectChain);
 
-    pthread_mutex_lock(&This->mst.engine_lock);
-
-    This->mst.engine_thread = CreateThread(NULL, 0, &engine_thread, &This->mst, 0, NULL);
-
-    pthread_cond_wait(&This->mst.engine_done, &This->mst.engine_lock);
-
-    pthread_mutex_unlock(&This->mst.engine_lock);
-
-    FAudio_SetEngineProcedureEXT(This->faudio, &engine_cb, &This->mst);
-
     FAudio_CreateMasteringVoice(This->faudio, &This->mst.faudio_voice, inputChannels,
             inputSampleRate, flags, deviceIndex, This->mst.effect_chain);
 
@@ -2397,16 +2385,6 @@ static HRESULT WINAPI XA22_CreateMasteringVoice(IXAudio22 *iface,
 
     This->mst.effect_chain = wrap_effect_chain(pEffectChain);
 
-    pthread_mutex_lock(&This->mst.engine_lock);
-
-    This->mst.engine_thread = CreateThread(NULL, 0, &engine_thread, &This->mst, 0, NULL);
-
-    pthread_cond_wait(&This->mst.engine_done, &This->mst.engine_lock);
-
-    pthread_mutex_unlock(&This->mst.engine_lock);
-
-    FAudio_SetEngineProcedureEXT(This->faudio, &engine_cb, &This->mst);
-
     FAudio_CreateMasteringVoice(This->faudio, &This->mst.faudio_voice, inputChannels,
             inputSampleRate, flags, deviceIndex, This->mst.effect_chain);
 
@@ -2631,16 +2609,6 @@ static HRESULT WINAPI XA23_CreateMasteringVoice(IXAudio23 *iface,
 
     This->mst.effect_chain = wrap_effect_chain(pEffectChain);
 
-    pthread_mutex_lock(&This->mst.engine_lock);
-
-    This->mst.engine_thread = CreateThread(NULL, 0, &engine_thread, &This->mst, 0, NULL);
-
-    pthread_cond_wait(&This->mst.engine_done, &This->mst.engine_lock);
-
-    pthread_mutex_unlock(&This->mst.engine_lock);
-
-    FAudio_SetEngineProcedureEXT(This->faudio, &engine_cb, &This->mst);
-
     FAudio_CreateMasteringVoice(This->faudio, &This->mst.faudio_voice, inputChannels,
             inputSampleRate, flags, deviceIndex, This->mst.effect_chain);
 
@@ -2818,16 +2786,6 @@ static HRESULT WINAPI XA27_CreateMasteringVoice(IXAudio27 *iface,
     LeaveCriticalSection(&This->lock);
 
     This->mst.effect_chain = wrap_effect_chain(pEffectChain);
-
-    pthread_mutex_lock(&This->mst.engine_lock);
-
-    This->mst.engine_thread = CreateThread(NULL, 0, &engine_thread, &This->mst, 0, NULL);
-
-    pthread_cond_wait(&This->mst.engine_done, &This->mst.engine_lock);
-
-    pthread_mutex_unlock(&This->mst.engine_lock);
-
-    FAudio_SetEngineProcedureEXT(This->faudio, &engine_cb, &This->mst);
 
     FAudio_CreateMasteringVoice(This->faudio, &This->mst.faudio_voice, inputChannels,
             inputSampleRate, flags, deviceIndex, This->mst.effect_chain);
