@@ -711,6 +711,8 @@ JPEG_PE_LIBS
 JPEG_PE_CFLAGS
 GSM_PE_LIBS
 GSM_PE_CFLAGS
+FAUDIO_PE_LIBS
+FAUDIO_PE_CFLAGS
 EXCESS_PRECISION_CFLAGS
 CROSSDEBUG
 DELAYLOADFLAG
@@ -1780,6 +1782,7 @@ enable_dmoguids
 enable_dxerr8
 enable_dxerr9
 enable_dxguid
+enable_faudio
 enable_gsm
 enable_jpeg
 enable_jxr
@@ -1926,6 +1929,8 @@ CPP
 OBJC
 OBJCFLAGS
 OBJCPP
+FAUDIO_PE_CFLAGS
+FAUDIO_PE_LIBS
 GSM_PE_CFLAGS
 GSM_PE_LIBS
 JPEG_PE_CFLAGS
@@ -2708,6 +2713,11 @@ Some influential environment variables:
   OBJC        Objective C compiler command
   OBJCFLAGS   Objective C compiler flags
   OBJCPP      Objective C preprocessor
+  FAUDIO_PE_CFLAGS
+              C compiler flags for the PE faudio, overriding the bundled
+              version
+  FAUDIO_PE_LIBS
+              Linker flags for the PE faudio, overriding the bundled version
   GSM_PE_CFLAGS
               C compiler flags for the PE gsm, overriding the bundled version
   GSM_PE_LIBS Linker flags for the PE gsm, overriding the bundled version
@@ -10679,6 +10689,19 @@ esac
 
 fi
 
+
+if ${FAUDIO_PE_CFLAGS:+false} :; then :
+  FAUDIO_PE_CFLAGS="-I\$(top_srcdir)/libs/faudio/include"
+else
+  enable_faudio=no
+fi
+if ${FAUDIO_PE_LIBS:+false} :; then :
+  FAUDIO_PE_LIBS="faudio mfplat mfreadwrite mfuuid propsys"
+else
+  enable_faudio=no
+fi
+$as_echo "$as_me:${as_lineno-$LINENO}: faudio cflags: $FAUDIO_PE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: faudio libs: $FAUDIO_PE_LIBS" >&5
 
 if ${GSM_PE_CFLAGS:+false} :; then :
   GSM_PE_CFLAGS="-I\$(top_srcdir)/libs/gsm/inc"
@@ -18754,6 +18777,8 @@ QUICKTIME_LIBS = $QUICKTIME_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
 EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
+FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
+FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
 GSM_PE_CFLAGS = $GSM_PE_CFLAGS
 GSM_PE_LIBS = $GSM_PE_LIBS
 JPEG_PE_CFLAGS = $JPEG_PE_CFLAGS
@@ -20052,6 +20077,7 @@ wine_fn_config_makefile libs/dmoguids enable_dmoguids
 wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
+wine_fn_config_makefile libs/faudio enable_faudio
 wine_fn_config_makefile libs/gsm enable_gsm
 wine_fn_config_makefile libs/jpeg enable_jpeg
 wine_fn_config_makefile libs/jxr enable_jxr
