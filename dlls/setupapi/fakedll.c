@@ -253,7 +253,8 @@ static int read_file( const WCHAR *name, void **data, SIZE_T *size )
               st.st_size - header_size ) == st.st_size - header_size)
     {
         *data = file_buffer;
-        if (lstrlenW(name) > 2 && !wcscmp( name + lstrlenW(name) - 2, L"16" ))
+        if ((lstrlenW(name) > 2 && !wcscmp( name + lstrlenW(name) - 2, L"16" )) ||
+            (lstrlenW(name) > 7 && !wcscmp( name + lstrlenW(name) - 7, L"16.fake" )))
             extract_16bit_image( nt, data, size );
         ret = 1;
     }
