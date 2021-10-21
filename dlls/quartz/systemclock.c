@@ -206,6 +206,7 @@ static HRESULT add_sink(struct system_clock *clock, DWORD_PTR handle,
     sink->due_time = due_time;
     sink->period = period;
     sink->cookie = InterlockedIncrement(&cookie_counter);
+    *cookie = sink->cookie;
 
     EnterCriticalSection(&clock->cs);
     list_add_tail(&clock->sinks, &sink->entry);
@@ -217,7 +218,6 @@ static HRESULT add_sink(struct system_clock *clock, DWORD_PTR handle,
     }
     WakeConditionVariable(&clock->cv);
 
-    *cookie = sink->cookie;
     return S_OK;
 }
 
