@@ -3260,6 +3260,14 @@ typedef struct _LDRP_CSLIST
     SINGLE_LIST_ENTRY *Tail;
 } LDRP_CSLIST, *PLDRP_CSLIST;
 
+typedef struct _LDR_DEPENDENCY
+{
+    LDRP_CSLIST dependency_to_entry;
+    struct _LDR_DDAG_NODE *dependency_to;
+    LDRP_CSLIST dependency_from_entry;
+    struct _LDR_DDAG_NODE *dependency_from;
+} LDR_DEPENDENCY, *PLDR_DEPENDENCY;
+
 typedef enum _LDR_DDAG_STATE
 {
     LdrModulesMerged = -5,
@@ -3283,7 +3291,7 @@ typedef struct _LDR_DDAG_NODE
 {
     LIST_ENTRY Modules;
     LDR_SERVICE_TAG_RECORD *ServiceTagList;
-    ULONG LoadCount;
+    LONG LoadCount;
     ULONG LoadWhileUnloadingCount;
     ULONG LowestLink;
     LDRP_CSLIST Dependencies;

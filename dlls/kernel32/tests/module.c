@@ -1329,6 +1329,108 @@ static void test_LdrGetDllFullName(void)
             wine_dbgstr_w(expected_path), wine_dbgstr_w(path_buffer) );
 }
 
+static void test_ddag_node(void)
+{
+    static const struct
+    {
+        const WCHAR *dllname;
+        BOOL optional;
+    }
+    expected_exe_dependencies[] =
+    {
+        { L"advapi32.dll" },
+        { L"msvcrt.dll", TRUE },
+        { L"user32.dll", TRUE },
+    };
+    LDR_DDAG_NODE *node, *dep_node, *prev_node;
+    LDR_DATA_TABLE_ENTRY *mod, *mod2;
+    SINGLE_LIST_ENTRY *se, *se2;
+    LDR_DEPENDENCY *dep, *dep2;
+    NTSTATUS status;
+    unsigned int i;
+    HMODULE hexe;
+
+    hexe = GetModuleHandleW( NULL );
+    ok( !!hexe, "Got NULL exe handle.\n" );
+
+    status = LdrFindEntryForAddress( hexe, &mod );
+    ok( !status, "Got unexpected status %#x.\n", status );
+
+    if (!(node = mod->DdagNode))
+    {
+        skip( "DdagNode is NULL, skipping tests.\n" );
+        return;
+    }
+
+    ok( !!node->Modules.Flink, "Got NULL module link.\n" );
+    mod2 = CONTAINING_RECORD(node->Modules.Flink, LDR_DATA_TABLE_ENTRY, NodeModuleLink);
+    ok( mod2 == mod || broken( (void **)mod2 == (void **)mod - 1 ), "Got unexpected mod2 %p, expected %p.\n",
+            mod2, mod );
+    if (mod2 != mod)
+    {
+        win_skip( "Old LDR_DATA_TABLE_ENTRY structure, skipping tests.\n" );
+        return;
+    }
+    ok( node->Modules.Flink->Flink == &node->Modules, "Expected one element in list.\n" );
+
+    ok( !node->IncomingDependencies.Tail, "Expected empty incoming dependencies list.\n" );
+
+    /* node->Dependencies.Tail is NULL on Windows 10 1507-1607 32 bit test, maybe due to broken structure layout. */
+    ok( !!node->Dependencies.Tail || broken( sizeof(void *) == 4 && !node->Dependencies.Tail),
+            "Expected nonempty dependencies list.\n" );
+    if (!node->Dependencies.Tail)
+    {
+        win_skip( "Empty dependencies list.\n" );
+        return;
+    }
+    ok( node->LoadCount == -1, "Got unexpected LoadCount %d.\n", node->LoadCount );
+
+    prev_node = NULL;
+    se = node->Dependencies.Tail;
+    for (i = 0; i < ARRAY_SIZE(expected_exe_dependencies); ++i)
+    {
+        winetest_push_context( "Dep %u (%s)", i, debugstr_w(expected_exe_dependencies[i].dllname) );
+
+        se = se->Next;
+
+        ok( !!se, "Got NULL list element.\n" );
+        dep = CONTAINING_RECORD(se, LDR_DEPENDENCY, dependency_to_entry);
+        ok( dep->dependency_from == node, "Got unexpected dependency_from %p.\n", dep->dependency_from );
+        ok( !!dep->dependency_to, "Got null dependency_to.\n" );
+        dep_node = dep->dependency_to;
+        ok( !!dep_node, "Got NULL dep_node.\n" );
+
+        if (dep_node == prev_node && expected_exe_dependencies[i].optional)
+        {
+            win_skip( "Module is not directly referenced.\n" );
+            winetest_pop_context();
+            prev_node = dep_node;
+            continue;
+        }
+
+        mod2 = CONTAINING_RECORD(dep_node->Modules.Flink, LDR_DATA_TABLE_ENTRY, NodeModuleLink);
+        ok( !lstrcmpW( mod2->BaseDllName.Buffer, expected_exe_dependencies[i].dllname ),
+                "Got unexpected module %s.\n", debugstr_w(mod2->BaseDllName.Buffer));
+
+        se2 = dep_node->IncomingDependencies.Tail;
+        ok( !!se2, "Got empty incoming dependencies list.\n" );
+        do
+        {
+            se2 = se2->Next;
+            dep2 = CONTAINING_RECORD(se2, LDR_DEPENDENCY, dependency_from_entry);
+        }
+        while (dep2 != dep && se2 != dep_node->IncomingDependencies.Tail);
+        ok( dep2 == dep, "Dependency not found in incoming deps list.\n" );
+
+        ok( dep_node->LoadCount > 0 || broken(!dep_node->LoadCount) /* Win8 */,
+                "Got unexpected LoadCount %d.\n", dep_node->LoadCount );
+
+        winetest_pop_context();
+        prev_node = dep_node;
+    }
+    ok( se == node->Dependencies.Tail, "Expected end of the list.\n" );
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1363,4 +1465,5 @@ START_TEST(module)
     test_SetDefaultDllDirectories();
     test_LdrGetDllHandleEx();
     test_LdrGetDllFullName();
+    test_ddag_node();
 }
