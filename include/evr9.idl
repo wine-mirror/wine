@@ -41,6 +41,17 @@ typedef struct MFVideoAlphaBitmap
     MFVideoAlphaBitmapParams params;
 } MFVideoAlphaBitmap;
 
+typedef enum
+{
+    MFVideoAlphaBitmap_EntireDDS = 0x1,
+    MFVideoAlphaBitmap_SrcColorKey = 0x2,
+    MFVideoAlphaBitmap_SrcRect = 0x4,
+    MFVideoAlphaBitmap_DestRect = 0x8,
+    MFVideoAlphaBitmap_FilterMode = 0x10,
+    MFVideoAlphaBitmap_Alpha = 0x20,
+    MFVideoAlphaBitmap_BitMask = 0x3f
+} MFVideoAlphaBitmapFlags;
+
 [
     object,
     uuid(814c7b20-0fdb-4eec-af8f-f957c8f69edc),
