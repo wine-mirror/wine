@@ -2857,13 +2857,14 @@ void * __cdecl memcpy(void *dst, const void *src, size_t n)
 
 static inline void memset_aligned_32(unsigned char *d, uint64_t v, size_t n)
 {
-    while (n >= 32)
+    unsigned char *end = d + n;
+    while (d < end)
     {
-        *(uint64_t *)(d + n - 32) = v;
-        *(uint64_t *)(d + n - 24) = v;
-        *(uint64_t *)(d + n - 16) = v;
-        *(uint64_t *)(d + n -  8) = v;
-        n -= 32;
+        *(uint64_t *)(d + 0) = v;
+        *(uint64_t *)(d + 8) = v;
+        *(uint64_t *)(d + 16) = v;
+        *(uint64_t *)(d + 24) = v;
+        d += 32;
     }
 }
 
