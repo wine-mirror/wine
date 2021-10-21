@@ -185,7 +185,7 @@ static void UXTHEME_LoadTheme(void)
             lstrcpynW(szCurrentColor, pt->pszSelectedColor, ARRAY_SIZE(szCurrentColor));
             lstrcpynW(szCurrentSize, pt->pszSelectedSize, ARRAY_SIZE(szCurrentSize));
 
-            MSSTYLES_SetActiveTheme(pt, FALSE);
+            UXTHEME_SetActiveTheme(pt);
             TRACE("Theme active: %s %s %s\n", debugstr_w(szCurrentTheme),
                 debugstr_w(szCurrentColor), debugstr_w(szCurrentSize));
             MSSTYLES_CloseThemeFile(pt);
@@ -419,27 +419,38 @@ static void UXTHEME_SaveSystemMetrics(struct system_metrics *metrics, BOOL send_
  *
  * Change the current active theme
  */
-static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
+HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
 {
+    BOOL ret, loaded_before = FALSE;
     struct system_metrics metrics;
+    DWORD size;
     HKEY hKey;
     WCHAR tmp[2];
     HRESULT hr;
 
-    if (tf && !bThemeActive)
-    {
-        if (UXTHEME_GetSystemMetrics(&metrics))
-            UXTHEME_SaveUnthemedSystemMetrics(&metrics);
-    }
-
-    hr = MSSTYLES_SetActiveTheme(tf, TRUE);
-    if(FAILED(hr))
-        return hr;
     if(tf) {
         bThemeActive = TRUE;
         lstrcpynW(szCurrentTheme, tf->szThemeFile, ARRAY_SIZE(szCurrentTheme));
         lstrcpynW(szCurrentColor, tf->pszSelectedColor, ARRAY_SIZE(szCurrentColor));
         lstrcpynW(szCurrentSize, tf->pszSelectedSize, ARRAY_SIZE(szCurrentSize));
+
+        ret = UXTHEME_GetSystemMetrics(&metrics);
+
+        /* Check if theming is already active */
+        if (!RegOpenKeyW(HKEY_CURRENT_USER, szThemeManager, &hKey))
+        {
+            size = sizeof(tmp);
+            if (!RegQueryValueExW(hKey, L"LoadedBefore", NULL, NULL, (BYTE *)tmp, &size))
+                loaded_before = (tmp[0] != '0');
+            else
+                WARN("Failed to get LoadedBefore: %d\n", GetLastError());
+            RegCloseKey(hKey);
+        }
+        if (loaded_before)
+            return MSSTYLES_SetActiveTheme(tf, FALSE);
+
+        if (ret)
+            UXTHEME_SaveUnthemedSystemMetrics(&metrics);
     }
     else {
         bThemeActive = FALSE;
@@ -460,18 +471,20 @@ static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
 		(lstrlenW(szCurrentSize)+1)*sizeof(WCHAR));
             RegSetValueExW(hKey, L"DllName", 0, REG_SZ, (const BYTE*)szCurrentTheme,
 		(lstrlenW(szCurrentTheme)+1)*sizeof(WCHAR));
+            RegSetValueExW(hKey, L"LoadedBefore", 0, REG_SZ, (const BYTE *)tmp, sizeof(WCHAR) * 2);
         }
         else {
             RegDeleteValueW(hKey, L"ColorName");
             RegDeleteValueW(hKey, L"SizeName");
             RegDeleteValueW(hKey, L"DllName");
-
+            RegDeleteValueW(hKey, L"LoadedBefore");
         }
         RegCloseKey(hKey);
     }
     else
         TRACE("Failed to open theme registry key\n");
 
+    hr = MSSTYLES_SetActiveTheme(tf, TRUE);
     if (bThemeActive)
     {
         if (UXTHEME_GetSystemMetrics(&metrics))
