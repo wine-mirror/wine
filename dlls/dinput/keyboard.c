@@ -80,7 +80,8 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD vers
             break;
         }
     }
-    return scanCode;
+    if (scanCode & 0x100) scanCode |= 0x80;
+    return (BYTE)scanCode;
 }
 
 int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
@@ -89,6 +90,7 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
     BYTE new_diks, subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
     int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
+    DWORD scan_code;
 
     if (wparam != WM_KEYDOWN && wparam != WM_KEYUP &&
         wparam != WM_SYSKEYDOWN && wparam != WM_SYSKEYUP)
@@ -105,9 +107,9 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
         case VK_NUMLOCK : dik_code = DIK_NUMLOCK; break;
         case VK_SUBTRACT: dik_code = DIK_SUBTRACT; break;
         default:
-            dik_code = map_dik_code( hook->scanCode & 0xff, hook->vkCode, subtype,
-                                     This->base.dinput->dwVersion );
-            if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
+            scan_code = hook->scanCode & 0xff;
+            if (hook->flags & LLKHF_EXTENDED) scan_code |= 0x100;
+            dik_code = map_dik_code( scan_code, hook->vkCode, subtype, This->base.dinput->dwVersion );
     }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
 
