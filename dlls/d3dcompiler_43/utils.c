@@ -716,7 +716,7 @@ HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob)
     return S_OK;
 }
 
-void compilation_message(struct compilation_messages *msg, const char *fmt, __ms_va_list args)
+void compilation_message(struct compilation_messages *msg, const char *fmt, va_list args)
 {
     char* buffer;
     int rc, size;

@@ -287,7 +287,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 
 void WINAPIV pp_writestring(const char *format, ...)
 {
-	__ms_va_list valist;
+	va_list valist;
 	int len;
 	static char *buffer;
 	static int buffercapacity;
@@ -301,10 +301,10 @@ void WINAPIV pp_writestring(const char *format, ...)
 		buffercapacity = BUFFERINITIALCAPACITY;
 	}
 
-	__ms_va_start(valist, format);
+	va_start(valist, format);
 	len = vsnprintf(buffer, buffercapacity,
 			format, valist);
-	__ms_va_end(valist);
+	va_end(valist);
         /* If the string is longer than buffersize, vsnprintf returns
          * the string length with glibc >= 2.1, -1 with glibc < 2.1 */
 	while(len > buffercapacity || len < 0)
@@ -318,10 +318,10 @@ void WINAPIV pp_writestring(const char *format, ...)
 		if(new_buffer == NULL)
 			return;
 		buffer = new_buffer;
-		__ms_va_start(valist, format);
+		va_start(valist, format);
 		len = vsnprintf(buffer, buffercapacity,
 				format, valist);
-		__ms_va_end(valist);
+		va_end(valist);
 	}
 
 	wpp_write(buffer, len);

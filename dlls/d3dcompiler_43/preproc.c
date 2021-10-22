@@ -437,11 +437,11 @@ int pp_get_if_depth(void)
 
 void WINAPIV pp_internal_error(const char *file, int line, const char *s, ...)
 {
-	__ms_va_list ap;
-	__ms_va_start(ap, s);
+	va_list ap;
+	va_start(ap, s);
 	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
-	__ms_va_end(ap);
+	va_end(ap);
 	exit(3);
 }

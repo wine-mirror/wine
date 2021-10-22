@@ -269,7 +269,7 @@ struct bwriter_shader *parse_asm_shader(char **messages) DECLSPEC_HIDDEN;
 #define PRINTF_ATTR(fmt,args)
 #endif
 
-void compilation_message(struct compilation_messages *msg, const char *fmt, __ms_va_list args) DECLSPEC_HIDDEN;
+void compilation_message(struct compilation_messages *msg, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 void WINAPIV asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
 static inline void set_parse_status(enum parse_status *current, enum parse_status update)
 {

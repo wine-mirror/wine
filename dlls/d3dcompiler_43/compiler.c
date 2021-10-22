@@ -83,7 +83,7 @@ static CRITICAL_SECTION_DEBUG wpp_mutex_debug =
 static CRITICAL_SECTION wpp_mutex = { &wpp_mutex_debug, -1, 0, 0, 0, 0 };
 
 /* Preprocessor error reporting functions */
-static void wpp_write_message(const char *fmt, __ms_va_list args)
+static void wpp_write_message(const char *fmt, va_list args)
 {
     char* newbuffer;
     int rc, newsize;
@@ -125,37 +125,37 @@ static void wpp_write_message(const char *fmt, __ms_va_list args)
 
 static void WINAPIV PRINTF_ATTR(1,2) wpp_write_message_var(const char *fmt, ...)
 {
-    __ms_va_list args;
+    va_list args;
 
-    __ms_va_start(args, fmt);
+    va_start(args, fmt);
     wpp_write_message(fmt, args);
-    __ms_va_end(args);
+    va_end(args);
 }
 
 int WINAPIV ppy_error(const char *msg, ...)
 {
-    __ms_va_list ap;
-    __ms_va_start(ap, msg);
+    va_list ap;
+    va_start(ap, msg);
     wpp_write_message_var("%s:%d:%d: %s: ",
                           pp_status.input ? pp_status.input : "'main file'",
                           pp_status.line_number, pp_status.char_number, "Error");
     wpp_write_message(msg, ap);
     wpp_write_message_var("\n");
-    __ms_va_end(ap);
+    va_end(ap);
     pp_status.state = 1;
     return 1;
 }
 
 int WINAPIV ppy_warning(const char *msg, ...)
 {
-    __ms_va_list ap;
-    __ms_va_start(ap, msg);
+    va_list ap;
+    va_start(ap, msg);
     wpp_write_message_var("%s:%d:%d: %s: ",
                           pp_status.input ? pp_status.input : "'main file'",
                           pp_status.line_number, pp_status.char_number, "Warning");
     wpp_write_message(msg, ap);
     wpp_write_message_var("\n");
-    __ms_va_end(ap);
+    va_end(ap);
     return 0;
 }
 
