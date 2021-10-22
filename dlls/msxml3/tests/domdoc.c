@@ -8596,7 +8596,6 @@ static void test_createProcessingInstruction(void)
     hr = IXMLDOMDocument_createProcessingInstruction(doc, NULL, _bstr_("version=\"1.0\" encoding=\"UTF-8\""), &pi);
     ok(hr == E_FAIL, "got 0x%08x\n", hr);
     hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), NULL, &pi);
-todo_wine
     ok(hr == XML_E_XMLDECLSYNTAX, "got 0x%08x\n", hr);
     hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding=UTF-8"), &pi);
     ok(hr == XML_E_MISSINGQUOTE, "got 0x%08x\n", hr);

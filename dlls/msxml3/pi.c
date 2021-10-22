@@ -754,6 +754,9 @@ HRESULT dom_pi_put_xml_decl(IXMLDOMNode *node, BSTR data)
     HRESULT hr;
     BSTR name;
 
+    if (!data)
+        return XML_E_XMLDECLSYNTAX;
+
     node_obj = get_node_obj(node);
     hr = node_set_content(node_obj, data);
     if (FAILED(hr))
