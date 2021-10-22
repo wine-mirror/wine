@@ -298,7 +298,7 @@ static HRESULT xml_get_value(xmlChar **p, xmlChar **value)
 
     v = *p;
     while (**p && **p != q) *p += 1;
-    if (!**p) return XML_E_EXPECTINGCLOSEQUOTE;
+    if (!**p) return XML_E_BADCHARINSTRING;
     len = *p - v;
     if (!len) return XML_E_MISSINGNAME;
     *p += 1;

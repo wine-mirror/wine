@@ -8601,10 +8601,8 @@ todo_wine
     hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding=UTF-8"), &pi);
     ok(hr == XML_E_MISSINGQUOTE, "got 0x%08x\n", hr);
     hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding='UTF-8\""), &pi);
-todo_wine
     ok(hr == XML_E_BADCHARINSTRING, "got 0x%08x\n", hr);
     hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding=\"UTF-8"), &pi);
-todo_wine
     ok(hr == XML_E_BADCHARINSTRING, "got 0x%08x\n", hr);
     pi = NULL;
     hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding='UTF-8'"), &pi);
