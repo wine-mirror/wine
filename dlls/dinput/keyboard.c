@@ -34,8 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static const IDirectInputDevice8WVtbl SysKeyboardWvt;
-static const struct dinput_device_vtbl keyboard_internal_vtbl;
+static const struct dinput_device_vtbl keyboard_vtbl;
 
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
@@ -185,7 +184,7 @@ static HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *gui
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysKeyboard, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &keyboard_internal_vtbl,
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &keyboard_vtbl,
                                                guid, dinput, (void **)&impl )))
         return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
@@ -211,18 +210,18 @@ const struct dinput_device keyboard_device = {
   keyboard_create_device
 };
 
-static HRESULT keyboard_internal_poll( IDirectInputDevice8W *iface )
+static HRESULT keyboard_poll( IDirectInputDevice8W *iface )
 {
     check_dinput_events();
     return DI_OK;
 }
 
-static HRESULT keyboard_internal_acquire( IDirectInputDevice8W *iface )
+static HRESULT keyboard_acquire( IDirectInputDevice8W *iface )
 {
     return DI_OK;
 }
 
-static HRESULT keyboard_internal_unacquire( IDirectInputDevice8W *iface )
+static HRESULT keyboard_unacquire( IDirectInputDevice8W *iface )
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
     memset( This->base.device_state, 0, sizeof(This->base.device_state) );
@@ -249,8 +248,8 @@ static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDE
     return DIENUM_CONTINUE;
 }
 
-static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
-                                               LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+static HRESULT keyboard_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter,
+                                      DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
 {
     SysKeyboardImpl *impl = impl_from_IDirectInputDevice8W( iface );
     BYTE subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
@@ -277,8 +276,8 @@ static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, cons
     return DIENUM_CONTINUE;
 }
 
-static HRESULT keyboard_internal_get_property( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
-                                               DIDEVICEOBJECTINSTANCEW *instance )
+static HRESULT keyboard_get_property( IDirectInputDevice8W *iface, DWORD property,
+                                      DIPROPHEADER *header, DIDEVICEOBJECTINSTANCEW *instance )
 {
     switch (property)
     {
@@ -292,60 +291,24 @@ static HRESULT keyboard_internal_get_property( IDirectInputDevice8W *iface, DWOR
     return DIERR_UNSUPPORTED;
 }
 
-static HRESULT keyboard_internal_set_property( IDirectInputDevice8W *iface, DWORD property, const DIPROPHEADER *header,
-                                               const DIDEVICEOBJECTINSTANCEW *instance )
+static HRESULT keyboard_set_property( IDirectInputDevice8W *iface, DWORD property,
+                                      const DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
 {
     return DIERR_UNSUPPORTED;
 }
 
-static const struct dinput_device_vtbl keyboard_internal_vtbl =
+static const struct dinput_device_vtbl keyboard_vtbl =
 {
     NULL,
-    keyboard_internal_poll,
+    keyboard_poll,
     NULL,
-    keyboard_internal_acquire,
-    keyboard_internal_unacquire,
-    keyboard_internal_enum_objects,
-    keyboard_internal_get_property,
-    keyboard_internal_set_property,
-    NULL,
-    NULL,
+    keyboard_acquire,
+    keyboard_unacquire,
+    keyboard_enum_objects,
+    keyboard_get_property,
+    keyboard_set_property,
     NULL,
     NULL,
-};
-
-static const IDirectInputDevice8WVtbl SysKeyboardWvt =
-{
-    IDirectInputDevice2WImpl_QueryInterface,
-    IDirectInputDevice2WImpl_AddRef,
-    IDirectInputDevice2WImpl_Release,
-    IDirectInputDevice2WImpl_GetCapabilities,
-    IDirectInputDevice2WImpl_EnumObjects,
-    IDirectInputDevice2WImpl_GetProperty,
-    IDirectInputDevice2WImpl_SetProperty,
-    IDirectInputDevice2WImpl_Acquire,
-    IDirectInputDevice2WImpl_Unacquire,
-    IDirectInputDevice2WImpl_GetDeviceState,
-    IDirectInputDevice2WImpl_GetDeviceData,
-    IDirectInputDevice2WImpl_SetDataFormat,
-    IDirectInputDevice2WImpl_SetEventNotification,
-    IDirectInputDevice2WImpl_SetCooperativeLevel,
-    IDirectInputDevice2WImpl_GetObjectInfo,
-    IDirectInputDevice2WImpl_GetDeviceInfo,
-    IDirectInputDevice2WImpl_RunControlPanel,
-    IDirectInputDevice2WImpl_Initialize,
-    IDirectInputDevice2WImpl_CreateEffect,
-    IDirectInputDevice2WImpl_EnumEffects,
-    IDirectInputDevice2WImpl_GetEffectInfo,
-    IDirectInputDevice2WImpl_GetForceFeedbackState,
-    IDirectInputDevice2WImpl_SendForceFeedbackCommand,
-    IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
-    IDirectInputDevice2WImpl_Escape,
-    IDirectInputDevice2WImpl_Poll,
-    IDirectInputDevice2WImpl_SendDeviceData,
-    IDirectInputDevice7WImpl_EnumEffectsInFile,
-    IDirectInputDevice7WImpl_WriteEffectToFile,
-    IDirectInputDevice8WImpl_BuildActionMap,
-    IDirectInputDevice8WImpl_SetActionMap,
-    IDirectInputDevice8WImpl_GetImageInfo
+    NULL,
+    NULL,
 };

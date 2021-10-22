@@ -43,8 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_MOUSE_Z_AXIS_INSTANCE   2
 #define WINE_MOUSE_BUTTONS_INSTANCE  3
 
-static const IDirectInputDevice8WVtbl SysMouseWvt;
-static const struct dinput_device_vtbl mouse_internal_vtbl;
+static const struct dinput_device_vtbl mouse_vtbl;
 
 typedef struct SysMouseImpl SysMouseImpl;
 
@@ -117,7 +116,7 @@ static HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, 
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysMouse, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &SysMouseWvt, &mouse_internal_vtbl,
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &mouse_vtbl,
                                                guid, dinput, (void **)&impl )))
         return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
@@ -410,7 +409,7 @@ static void warp_check( SysMouseImpl* This, BOOL force )
     }
 }
 
-static HRESULT mouse_internal_poll( IDirectInputDevice8W *iface )
+static HRESULT mouse_poll( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
     check_dinput_events();
@@ -418,7 +417,7 @@ static HRESULT mouse_internal_poll( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
+static HRESULT mouse_acquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
     DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
@@ -462,7 +461,7 @@ static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT mouse_internal_unacquire( IDirectInputDevice8W *iface )
+static HRESULT mouse_unacquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
 
@@ -503,8 +502,8 @@ static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDE
     return DIENUM_CONTINUE;
 }
 
-static HRESULT mouse_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
-                                            LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+static HRESULT mouse_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter,
+                                   DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
 {
     DIDEVICEOBJECTINSTANCEW instances[] =
     {
@@ -580,8 +579,8 @@ static HRESULT mouse_internal_enum_objects( IDirectInputDevice8W *iface, const D
     return DIENUM_CONTINUE;
 }
 
-static HRESULT mouse_internal_get_property( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
-                                            DIDEVICEOBJECTINSTANCEW *instance )
+static HRESULT mouse_get_property( IDirectInputDevice8W *iface, DWORD property,
+                                   DIPROPHEADER *header, DIDEVICEOBJECTINSTANCEW *instance )
 {
     switch (property)
     {
@@ -603,60 +602,24 @@ static HRESULT mouse_internal_get_property( IDirectInputDevice8W *iface, DWORD p
     return DIERR_UNSUPPORTED;
 }
 
-static HRESULT mouse_internal_set_property( IDirectInputDevice8W *iface, DWORD property, const DIPROPHEADER *header,
-                                            const DIDEVICEOBJECTINSTANCEW *instance )
+static HRESULT mouse_set_property( IDirectInputDevice8W *iface, DWORD property,
+                                   const DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
 {
     return DIERR_UNSUPPORTED;
 }
 
-static const struct dinput_device_vtbl mouse_internal_vtbl =
+static const struct dinput_device_vtbl mouse_vtbl =
 {
     NULL,
-    mouse_internal_poll,
+    mouse_poll,
     NULL,
-    mouse_internal_acquire,
-    mouse_internal_unacquire,
-    mouse_internal_enum_objects,
-    mouse_internal_get_property,
-    mouse_internal_set_property,
-    NULL,
-    NULL,
+    mouse_acquire,
+    mouse_unacquire,
+    mouse_enum_objects,
+    mouse_get_property,
+    mouse_set_property,
     NULL,
     NULL,
-};
-
-static const IDirectInputDevice8WVtbl SysMouseWvt =
-{
-    IDirectInputDevice2WImpl_QueryInterface,
-    IDirectInputDevice2WImpl_AddRef,
-    IDirectInputDevice2WImpl_Release,
-    IDirectInputDevice2WImpl_GetCapabilities,
-    IDirectInputDevice2WImpl_EnumObjects,
-    IDirectInputDevice2WImpl_GetProperty,
-    IDirectInputDevice2WImpl_SetProperty,
-    IDirectInputDevice2WImpl_Acquire,
-    IDirectInputDevice2WImpl_Unacquire,
-    IDirectInputDevice2WImpl_GetDeviceState,
-    IDirectInputDevice2WImpl_GetDeviceData,
-    IDirectInputDevice2WImpl_SetDataFormat,
-    IDirectInputDevice2WImpl_SetEventNotification,
-    IDirectInputDevice2WImpl_SetCooperativeLevel,
-    IDirectInputDevice2WImpl_GetObjectInfo,
-    IDirectInputDevice2WImpl_GetDeviceInfo,
-    IDirectInputDevice2WImpl_RunControlPanel,
-    IDirectInputDevice2WImpl_Initialize,
-    IDirectInputDevice2WImpl_CreateEffect,
-    IDirectInputDevice2WImpl_EnumEffects,
-    IDirectInputDevice2WImpl_GetEffectInfo,
-    IDirectInputDevice2WImpl_GetForceFeedbackState,
-    IDirectInputDevice2WImpl_SendForceFeedbackCommand,
-    IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
-    IDirectInputDevice2WImpl_Escape,
-    IDirectInputDevice2WImpl_Poll,
-    IDirectInputDevice2WImpl_SendDeviceData,
-    IDirectInputDevice7WImpl_EnumEffectsInFile,
-    IDirectInputDevice7WImpl_WriteEffectToFile,
-    IDirectInputDevice8WImpl_BuildActionMap,
-    IDirectInputDevice8WImpl_SetActionMap,
-    IDirectInputDevice8WImpl_GetImageInfo
+    NULL,
+    NULL,
 };

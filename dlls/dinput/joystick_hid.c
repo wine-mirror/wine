@@ -608,14 +608,14 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
     return DIENUM_CONTINUE;
 }
 
-static void hid_joystick_internal_addref( IDirectInputDevice8W *iface )
+static void hid_joystick_addref( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG ref = InterlockedIncrement( &impl->internal_ref );
     TRACE( "iface %p, internal ref %u.\n", iface, ref );
 }
 
-static void hid_joystick_internal_release( IDirectInputDevice8W *iface )
+static void hid_joystick_release( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG ref = InterlockedDecrement( &impl->internal_ref );
@@ -634,8 +634,8 @@ static void hid_joystick_internal_release( IDirectInputDevice8W *iface )
     }
 }
 
-static HRESULT hid_joystick_internal_get_property( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
-                                                   DIDEVICEOBJECTINSTANCEW *instance )
+static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD property,
+                                          DIPROPHEADER *header, DIDEVICEOBJECTINSTANCEW *instance )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct extra_caps *extra = NULL;
@@ -728,8 +728,8 @@ static void set_extra_caps_range( struct hid_joystick *impl, const DIDEVICEOBJEC
     }
 }
 
-static HRESULT hid_joystick_internal_set_property( IDirectInputDevice8W *iface, DWORD property, const DIPROPHEADER *header,
-                                                   const DIDEVICEOBJECTINSTANCEW *instance )
+static HRESULT hid_joystick_set_property( IDirectInputDevice8W *iface, DWORD property,
+                                          const DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct extra_caps *extra = NULL;
@@ -761,7 +761,7 @@ static HRESULT hid_joystick_internal_set_property( IDirectInputDevice8W *iface, 
     return DIERR_UNSUPPORTED;
 }
 
-static HRESULT hid_joystick_internal_acquire( IDirectInputDevice8W *iface )
+static HRESULT hid_joystick_acquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG report_len = impl->caps.InputReportByteLength;
@@ -788,7 +788,7 @@ static HRESULT hid_joystick_internal_acquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT hid_joystick_internal_unacquire( IDirectInputDevice8W *iface )
+static HRESULT hid_joystick_unacquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     BOOL ret;
@@ -803,10 +803,9 @@ static HRESULT hid_joystick_internal_unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT hid_joystick_internal_create_effect( IDirectInputDevice8W *iface, IDirectInputEffect **out );
+static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectInputEffect **out );
 
-static HRESULT hid_joystick_internal_get_effect_info( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
-                                                      const GUID *guid )
+static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFECTINFOW *info, const GUID *guid )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
@@ -946,7 +945,7 @@ static BOOL CALLBACK unload_effect_object( IDirectInputEffect *effect, void *con
     return DIENUM_CONTINUE;
 }
 
-static HRESULT hid_joystick_internal_send_force_feedback_command( IDirectInputDevice8W *iface, DWORD command )
+static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *iface, DWORD command )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct pid_control_report *report = &impl->pid_device_control;
@@ -982,9 +981,9 @@ static HRESULT hid_joystick_internal_send_force_feedback_command( IDirectInputDe
     return DI_OK;
 }
 
-static HRESULT hid_joystick_internal_enum_created_effect_objects( IDirectInputDevice8W *iface,
-                                                                  LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
-                                                                  void *context, DWORD flags )
+static HRESULT hid_joystick_enum_created_effect_objects( IDirectInputDevice8W *iface,
+                                                         LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
+                                                         void *context, DWORD flags )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct hid_joystick_effect *effect, *next;
@@ -996,47 +995,6 @@ static HRESULT hid_joystick_internal_enum_created_effect_objects( IDirectInputDe
 
     return DI_OK;
 }
-
-static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
-{
-    /*** IUnknown methods ***/
-    IDirectInputDevice2WImpl_QueryInterface,
-    IDirectInputDevice2WImpl_AddRef,
-    IDirectInputDevice2WImpl_Release,
-    /*** IDirectInputDevice methods ***/
-    IDirectInputDevice2WImpl_GetCapabilities,
-    IDirectInputDevice2WImpl_EnumObjects,
-    IDirectInputDevice2WImpl_GetProperty,
-    IDirectInputDevice2WImpl_SetProperty,
-    IDirectInputDevice2WImpl_Acquire,
-    IDirectInputDevice2WImpl_Unacquire,
-    IDirectInputDevice2WImpl_GetDeviceState,
-    IDirectInputDevice2WImpl_GetDeviceData,
-    IDirectInputDevice2WImpl_SetDataFormat,
-    IDirectInputDevice2WImpl_SetEventNotification,
-    IDirectInputDevice2WImpl_SetCooperativeLevel,
-    IDirectInputDevice2WImpl_GetObjectInfo,
-    IDirectInputDevice2WImpl_GetDeviceInfo,
-    IDirectInputDevice2WImpl_RunControlPanel,
-    IDirectInputDevice2WImpl_Initialize,
-    /*** IDirectInputDevice2 methods ***/
-    IDirectInputDevice2WImpl_CreateEffect,
-    IDirectInputDevice2WImpl_EnumEffects,
-    IDirectInputDevice2WImpl_GetEffectInfo,
-    IDirectInputDevice2WImpl_GetForceFeedbackState,
-    IDirectInputDevice2WImpl_SendForceFeedbackCommand,
-    IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
-    IDirectInputDevice2WImpl_Escape,
-    IDirectInputDevice2WImpl_Poll,
-    IDirectInputDevice2WImpl_SendDeviceData,
-    /*** IDirectInputDevice7 methods ***/
-    IDirectInputDevice7WImpl_EnumEffectsInFile,
-    IDirectInputDevice7WImpl_WriteEffectToFile,
-    /*** IDirectInputDevice8 methods ***/
-    IDirectInputDevice8WImpl_BuildActionMap,
-    IDirectInputDevice8WImpl_SetActionMap,
-    IDirectInputDevice8WImpl_GetImageInfo,
-};
 
 struct parse_device_state_params
 {
@@ -1147,7 +1105,7 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_value
     return DIENUM_CONTINUE;
 }
 
-static HRESULT hid_joystick_internal_read( IDirectInputDevice8W *iface )
+static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
 {
     static const DIPROPHEADER filter =
     {
@@ -1245,28 +1203,28 @@ static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_value_c
     return params->callback( instance, params->context );
 }
 
-static HRESULT hid_joystick_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
-                                                   LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+static HRESULT hid_joystick_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter,
+                                          DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
 {
     struct enum_objects_params params = {.callback = callback, .context = context};
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     return enum_objects( impl, filter, flags, enum_objects_callback, &params );
 }
 
-static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
+static const struct dinput_device_vtbl hid_joystick_vtbl =
 {
-    hid_joystick_internal_release,
+    hid_joystick_release,
     NULL,
-    hid_joystick_internal_read,
-    hid_joystick_internal_acquire,
-    hid_joystick_internal_unacquire,
-    hid_joystick_internal_enum_objects,
-    hid_joystick_internal_get_property,
-    hid_joystick_internal_set_property,
-    hid_joystick_internal_get_effect_info,
-    hid_joystick_internal_create_effect,
-    hid_joystick_internal_send_force_feedback_command,
-    hid_joystick_internal_enum_created_effect_objects,
+    hid_joystick_read,
+    hid_joystick_acquire,
+    hid_joystick_unacquire,
+    hid_joystick_enum_objects,
+    hid_joystick_get_property,
+    hid_joystick_set_property,
+    hid_joystick_get_effect_info,
+    hid_joystick_create_effect,
+    hid_joystick_send_force_feedback_command,
+    hid_joystick_enum_created_effect_objects,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )
@@ -1824,7 +1782,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     else
         return DIERR_DEVICENOTREG;
 
-    hr = direct_input_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl, &hid_joystick_internal_vtbl,
+    hr = direct_input_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl,
                                     guid, dinput, (void **)&impl );
     if (FAILED(hr)) return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
@@ -1953,7 +1911,7 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
         EnterCriticalSection( &impl->joystick->base.crit );
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
-        hid_joystick_internal_release( &impl->joystick->base.IDirectInputDevice8W_iface );
+        hid_joystick_release( &impl->joystick->base.IDirectInputDevice8W_iface );
         free( impl->type_specific_buf[1] );
         free( impl->type_specific_buf[0] );
         free( impl->effect_update_buf );
@@ -2781,7 +2739,7 @@ static IDirectInputEffectVtbl hid_joystick_effect_vtbl =
     hid_joystick_effect_Escape,
 };
 
-static HRESULT hid_joystick_internal_create_effect( IDirectInputDevice8W *iface, IDirectInputEffect **out )
+static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectInputEffect **out )
 {
     struct hid_joystick *joystick = impl_from_IDirectInputDevice8W( iface );
     struct hid_joystick_effect *impl;
@@ -2791,7 +2749,7 @@ static HRESULT hid_joystick_internal_create_effect( IDirectInputDevice8W *iface,
     impl->IDirectInputEffect_iface.lpVtbl = &hid_joystick_effect_vtbl;
     impl->ref = 1;
     impl->joystick = joystick;
-    hid_joystick_internal_addref( &joystick->base.IDirectInputDevice8W_iface );
+    hid_joystick_addref( &joystick->base.IDirectInputDevice8W_iface );
 
     EnterCriticalSection( &joystick->base.crit );
     list_add_tail( &joystick->effect_list, &impl->entry );
