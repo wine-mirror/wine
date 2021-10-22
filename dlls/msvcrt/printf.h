@@ -965,7 +965,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
 
 int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const APICHAR *fmt,
         _locale_t locale, DWORD options,
-        args_clbk pf_args, void *args_ctx, __ms_va_list *valist)
+        args_clbk pf_args, void *args_ctx, va_list *valist)
 {
     const APICHAR *q, *p = fmt;
     APICHAR buf[32];
@@ -1228,7 +1228,7 @@ enum types_clbk_flags {
 };
 
 /* This functions stores types of arguments. It uses args[0] internally */
-static printf_arg arg_clbk_type(void *ctx, int pos, int type, __ms_va_list *valist)
+static printf_arg arg_clbk_type(void *ctx, int pos, int type, va_list *valist)
 {
     static const printf_arg ret;
     printf_arg *args = ctx;
@@ -1250,7 +1250,7 @@ static printf_arg arg_clbk_type(void *ctx, int pos, int type, __ms_va_list *vali
 }
 #endif
 
-int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *format, __ms_va_list valist)
+int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *format, va_list valist)
 {
     struct FUNC_NAME(_str_ctx) puts_ctx = {INT_MAX, NULL};
     printf_arg *args = args_ctx;

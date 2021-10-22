@@ -525,7 +525,7 @@ static int puts_clbk_console_w(void *ctx, int len, const wchar_t *str)
 /*********************************************************************
  *		_vcprintf (MSVCRT.@)
  */
-int CDECL _vcprintf(const char* format, __ms_va_list valist)
+int CDECL _vcprintf(const char* format, va_list valist)
 {
     return pf_printf_a(puts_clbk_console_a, NULL, format, NULL, 0, arg_clbk_valist, NULL, &valist);
 }
@@ -536,11 +536,11 @@ int CDECL _vcprintf(const char* format, __ms_va_list valist)
 int WINAPIV _cprintf(const char* format, ...)
 {
   int retval;
-  __ms_va_list valist;
+  va_list valist;
 
-  __ms_va_start( valist, format );
+  va_start( valist, format );
   retval = _vcprintf(format, valist);
-  __ms_va_end(valist);
+  va_end(valist);
 
   return retval;
 }
@@ -549,7 +549,7 @@ int WINAPIV _cprintf(const char* format, ...)
 /*********************************************************************
  *		_vcwprintf (MSVCRT.@)
  */
-int CDECL _vcwprintf(const wchar_t* format, __ms_va_list valist)
+int CDECL _vcwprintf(const wchar_t* format, va_list valist)
 {
     return pf_printf_w(puts_clbk_console_w, NULL, format, NULL, 0, arg_clbk_valist, NULL, &valist);
 }
@@ -560,11 +560,11 @@ int CDECL _vcwprintf(const wchar_t* format, __ms_va_list valist)
 int WINAPIV _cwprintf(const wchar_t* format, ...)
 {
   int retval;
-  __ms_va_list valist;
+  va_list valist;
 
-  __ms_va_start( valist, format );
+  va_start( valist, format );
   retval = _vcwprintf(format, valist);
-  __ms_va_end(valist);
+  va_end(valist);
 
   return retval;
 }
@@ -575,7 +575,7 @@ int WINAPIV _cwprintf(const wchar_t* format, ...)
  *		__conio_common_vcprintf (UCRTBASE.@)
  */
 int CDECL __conio_common_vcprintf(unsigned __int64 options, const char* format,
-                                        _locale_t locale, __ms_va_list valist)
+                                        _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
@@ -587,7 +587,7 @@ int CDECL __conio_common_vcprintf(unsigned __int64 options, const char* format,
  *		__conio_common_vcwprintf (UCRTBASE.@)
  */
 int CDECL __conio_common_vcwprintf(unsigned __int64 options, const wchar_t* format,
-                                         _locale_t locale, __ms_va_list valist)
+                                         _locale_t locale, va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));

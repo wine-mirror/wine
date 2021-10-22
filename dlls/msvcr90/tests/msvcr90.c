@@ -110,8 +110,8 @@ static int* (__cdecl *p_fpecode)(void);
 static int (__cdecl *p_configthreadlocale)(int);
 static void* (__cdecl *p_get_terminate)(void);
 static void* (__cdecl *p_get_unexpected)(void);
-static int (__cdecl *p__vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, __ms_va_list);
-static int (__cdecl *p_vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, __ms_va_list);
+static int (__cdecl *p__vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, va_list);
+static int (__cdecl *p_vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, va_list);
 static FILE* (__cdecl *p_fopen)(const char*, const char*);
 static int (__cdecl *p_fclose)(FILE*);
 static int (__cdecl *p_unlink)(const char*);
@@ -134,7 +134,7 @@ static int (__cdecl *p__setmbcp)(int);
 static int (__cdecl *p__fpieee_flt)(ULONG, EXCEPTION_POINTERS*, int (__cdecl *handler)(_FPIEEE_RECORD*));
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
-static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, va_list valist);
 static size_t (__cdecl *p___strncnt)(const char *str, size_t count);
 static int (WINAPIV *p_swscanf)(const wchar_t *str, const wchar_t* format, ...);
 static int (__cdecl *p____mb_cur_max_l_func)(_locale_t locale);
@@ -1220,10 +1220,10 @@ static int WINAPIV __vswprintf_l_wrapper(wchar_t *buf,
         const wchar_t *format, _locale_t locale, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, locale);
+    va_list valist;
+    va_start(valist, locale);
     ret = p__vswprintf_l(buf, format, locale, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -1231,10 +1231,10 @@ static int WINAPIV _vswprintf_l_wrapper(wchar_t *buf,
         const wchar_t *format, _locale_t locale, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, locale);
+    va_list valist;
+    va_start(valist, locale);
     ret = p_vswprintf_l(buf, format, locale, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -1898,10 +1898,10 @@ static void test__memicmp_l(void)
 static int WINAPIV _vsnwprintf_wrapper(wchar_t *str, size_t len, const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vsnwprintf(str, len, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 

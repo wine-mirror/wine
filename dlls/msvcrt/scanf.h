@@ -52,15 +52,15 @@
 #define _UNLOCK_FILE_(file) _unlock_file(MSVCRT_stdin)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int vcwscanf_s_l(const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vcwscanf_s_l(const wchar_t *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vcwscanf_l(const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vcwscanf_l(const wchar_t *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #else  /* WIDE_SCANF */
 #ifdef SECURE
-#define _FUNCTION_ static int vcscanf_s_l(const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vcscanf_s_l(const char *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vcscanf_l(const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vcscanf_l(const char *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
 #else
@@ -84,15 +84,15 @@
 #define _UNLOCK_FILE_(file) do {} while(0)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int vsnwscanf_s_l(const wchar_t *file, size_t length, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vsnwscanf_s_l(const wchar_t *file, size_t length, const wchar_t *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vsnwscanf_l(const wchar_t *file, size_t length, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vsnwscanf_l(const wchar_t *file, size_t length, const wchar_t *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #ifdef SECURE
-#define _FUNCTION_ static int vsnscanf_s_l(const char *file, size_t length, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vsnscanf_s_l(const char *file, size_t length, const char *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vsnscanf_l(const char *file, size_t length, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vsnscanf_l(const char *file, size_t length, const char *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
 #else /* STRING_LEN */
@@ -106,15 +106,15 @@
 #define _UNLOCK_FILE_(file) do {} while(0)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int vswscanf_s_l(const wchar_t *file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vswscanf_s_l(const wchar_t *file, const wchar_t *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vswscanf_l(const wchar_t *file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vswscanf_l(const wchar_t *file, const wchar_t *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #ifdef SECURE
-#define _FUNCTION_ static int vsscanf_s_l(const char *file, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vsscanf_s_l(const char *file, const char *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vsscanf_l(const char *file, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vsscanf_l(const char *file, const char *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
 #endif /* STRING_LEN */
@@ -127,9 +127,9 @@
 #define _LOCK_FILE_(file) _lock_file(file)
 #define _UNLOCK_FILE_(file) _unlock_file(file)
 #ifdef SECURE
-#define _FUNCTION_ static int vfwscanf_s_l(FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vfwscanf_s_l(FILE* file, const wchar_t *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vfwscanf_l(FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vfwscanf_l(FILE* file, const wchar_t *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #define _GETC_FUNC_(file) fgetc(file)
@@ -139,9 +139,9 @@
 #define _LOCK_FILE_(file) _lock_file(file)
 #define _UNLOCK_FILE_(file) _unlock_file(file)
 #ifdef SECURE
-#define _FUNCTION_ static int vfscanf_s_l(FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vfscanf_s_l(FILE* file, const char *format, _locale_t locale, va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int vfscanf_l(FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int vfscanf_l(FILE* file, const char *format, _locale_t locale, va_list ap)
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
 #endif /* STRING */

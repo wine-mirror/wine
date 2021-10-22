@@ -536,9 +536,9 @@ BOOL CDECL __crtInitializeCriticalSectionEx(
 /*********************************************************************
  * _vacopy (MSVCR120.@)
  */
-void CDECL _vacopy(__ms_va_list *dest, __ms_va_list src)
+void CDECL _vacopy(va_list *dest, va_list src)
 {
-    __ms_va_copy(*dest, src);
+    va_copy(*dest, src);
 }
 #endif
 

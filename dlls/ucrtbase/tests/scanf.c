@@ -30,10 +30,10 @@
 static int WINAPIV vsscanf_wrapper(unsigned __int64 options, const char *str, size_t len, const char *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = __stdio_common_vsscanf(options, str, len, format, NULL, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 

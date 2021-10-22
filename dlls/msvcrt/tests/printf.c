@@ -43,11 +43,11 @@ static inline float __port_ind(void)
 }
 #define IND __port_ind()
 
-static int (__cdecl *p__vscprintf)(const char *format, __ms_va_list valist);
-static int (__cdecl *p__vscwprintf)(const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vscprintf)(const char *format, va_list valist);
+static int (__cdecl *p__vscwprintf)(const wchar_t *format, va_list valist);
 static int (__cdecl *p__vsnwprintf_s)(wchar_t *str, size_t sizeOfBuffer,
                                       size_t count, const wchar_t *format,
-                                      __ms_va_list valist);
+                                      va_list valist);
 static int (__cdecl *p__ecvt_s)(char *buffer, size_t length, double number,
                                 int ndigits, int *decpt, int *sign);
 static int (__cdecl *p__fcvt_s)(char *buffer, size_t length, double number,
@@ -55,17 +55,17 @@ static int (__cdecl *p__fcvt_s)(char *buffer, size_t length, double number,
 static unsigned int (__cdecl *p__get_output_format)(void);
 static unsigned int (__cdecl *p__set_output_format)(unsigned int);
 static int (WINAPIV *p_sprintf)(char*, ...);
-static int (__cdecl *p__vsprintf_p)(char*, size_t, const char*, __ms_va_list);
-static int (__cdecl *p_vswprintf)(wchar_t *str, const wchar_t *format, __ms_va_list valist);
-static int (__cdecl *p__vswprintf)(wchar_t *str, const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vsprintf_p)(char*, size_t, const char*, va_list);
+static int (__cdecl *p_vswprintf)(wchar_t *str, const wchar_t *format, va_list valist);
+static int (__cdecl *p__vswprintf)(wchar_t *str, const wchar_t *format, va_list valist);
 static int (__cdecl *p__vswprintf_l)(wchar_t *str, const wchar_t *format,
-                                     void *locale, __ms_va_list valist);
+                                     void *locale, va_list valist);
 static int (__cdecl *p__vswprintf_c)(wchar_t *str, size_t size, const wchar_t *format,
-                                     __ms_va_list valist);
+                                     va_list valist);
 static int (__cdecl *p__vswprintf_c_l)(wchar_t *str, size_t size, const wchar_t *format,
-                                       void *locale, __ms_va_list valist);
+                                       void *locale, va_list valist);
 static int (__cdecl *p__vswprintf_p_l)(wchar_t *str, size_t size, const wchar_t *format,
-                                       void *locale, __ms_va_list valist);
+                                       void *locale, va_list valist);
 
 static void init( void )
 {
@@ -783,10 +783,10 @@ static void test_xcvt(void)
 static int WINAPIV _vsnwprintf_wrapper(wchar_t *str, size_t len, const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = _vsnwprintf(str, len, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -811,60 +811,60 @@ static void test_vsnwprintf(void)
 static int WINAPIV vswprintf_wrapper(wchar_t *str, const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p_vswprintf(str, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
 static int WINAPIV _vswprintf_wrapper(wchar_t *str, const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vswprintf(str, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
 static int WINAPIV _vswprintf_l_wrapper(wchar_t *str, const wchar_t *format, void *locale, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, locale);
+    va_list valist;
+    va_start(valist, locale);
     ret = p__vswprintf_l(str, format, locale, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
 static int WINAPIV _vswprintf_c_wrapper(wchar_t *str, size_t size, const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vswprintf_c(str, size, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
 static int WINAPIV _vswprintf_c_l_wrapper(wchar_t *str, size_t size, const wchar_t *format, void *locale, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, locale);
+    va_list valist;
+    va_start(valist, locale);
     ret = p__vswprintf_c_l(str, size, format, locale, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
 static int WINAPIV _vswprintf_p_l_wrapper(wchar_t *str, size_t size, const wchar_t *format, void *locale, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, locale);
+    va_list valist;
+    va_start(valist, locale);
     ret = p__vswprintf_p_l(str, size, format, locale, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -918,10 +918,10 @@ static void test_vswprintf(void)
 static int WINAPIV _vscprintf_wrapper(const char *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vscprintf(format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -942,10 +942,10 @@ static void test_vscprintf(void)
 static int WINAPIV _vscwprintf_wrapper(const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vscwprintf(format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -967,10 +967,10 @@ static int WINAPIV _vsnwprintf_s_wrapper(wchar_t *str, size_t sizeOfBuffer,
                                  size_t count, const wchar_t *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vsnwprintf_s(str, sizeOfBuffer, count, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -1016,10 +1016,10 @@ static int WINAPIV _vsprintf_p_wrapper(char *str, size_t sizeOfBuffer,
                                  const char *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p__vsprintf_p(str, sizeOfBuffer, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 

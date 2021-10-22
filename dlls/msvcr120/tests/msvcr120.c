@@ -191,7 +191,7 @@ static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
 static unsigned short (__cdecl *p_wctype)(const char*);
-static int (__cdecl *p_vsscanf)(const char*, const char *, __ms_va_list valist);
+static int (__cdecl *p_vsscanf)(const char*, const char *, va_list valist);
 static _Dcomplex* (__cdecl *p__Cbuild)(_Dcomplex*, double, double);
 static double (__cdecl *p_creal)(_Dcomplex);
 static double (__cdecl *p_nexttoward)(double, double);
@@ -1114,10 +1114,10 @@ static void test_wctype(void)
 static int WINAPIV _vsscanf_wrapper(const char *buffer, const char *format, ...)
 {
     int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, format);
+    va_list valist;
+    va_start(valist, format);
     ret = p_vsscanf(buffer, format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 

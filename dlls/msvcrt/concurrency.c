@@ -1026,7 +1026,7 @@ SchedulerPolicy* WINAPIV SchedulerPolicy_ctor_policies(
         SchedulerPolicy *this, size_t n, ...)
 {
     unsigned int min_concurrency, max_concurrency;
-    __ms_va_list valist;
+    va_list valist;
     size_t i;
 
     TRACE("(%p %Iu)\n", this, n);
@@ -1035,7 +1035,7 @@ SchedulerPolicy* WINAPIV SchedulerPolicy_ctor_policies(
     min_concurrency = this->policy_container->policies[MinConcurrency];
     max_concurrency = this->policy_container->policies[MaxConcurrency];
 
-    __ms_va_start(valist, n);
+    va_start(valist, n);
     for(i=0; i<n; i++) {
         PolicyElementKey policy = va_arg(valist, PolicyElementKey);
         unsigned int val = va_arg(valist, unsigned int);
@@ -1047,7 +1047,7 @@ SchedulerPolicy* WINAPIV SchedulerPolicy_ctor_policies(
         else
             SchedulerPolicy_SetPolicyValue(this, policy, val);
     }
-    __ms_va_end(valist);
+    va_end(valist);
 
     SchedulerPolicy_SetConcurrencyLimits(this, min_concurrency, max_concurrency);
     return this;
