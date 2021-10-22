@@ -422,10 +422,10 @@ int WINAPIV ShellMessageBoxW(
 	WCHAR	szText[100],szTitle[100];
 	LPCWSTR pszText = szText, pszTitle = szTitle;
 	LPWSTR  pszTemp;
-	__ms_va_list args;
+	va_list args;
 	int	ret;
 
-	__ms_va_start(args, uType);
+	va_start(args, uType);
 	/* wvsprintfA(buf,fmt, args); */
 
 	TRACE("(%p,%p,%p,%p,%08x)\n",
@@ -444,7 +444,7 @@ int WINAPIV ShellMessageBoxW(
 	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
 		       pszText, 0, 0, (LPWSTR)&pszTemp, 0, &args);
 
-	__ms_va_end(args);
+	va_end(args);
 
 	ret = MessageBoxW(hWnd,pszTemp,pszTitle,uType);
         LocalFree(pszTemp);
@@ -480,10 +480,10 @@ int WINAPIV ShellMessageBoxA(
 	char	szText[100],szTitle[100];
 	LPCSTR  pszText = szText, pszTitle = szTitle;
 	LPSTR   pszTemp;
-	__ms_va_list args;
+	va_list args;
 	int	ret;
 
-	__ms_va_start(args, uType);
+	va_start(args, uType);
 	/* wvsprintfA(buf,fmt, args); */
 
 	TRACE("(%p,%p,%p,%p,%08x)\n",
@@ -502,7 +502,7 @@ int WINAPIV ShellMessageBoxA(
 	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
 		       pszText, 0, 0, (LPSTR)&pszTemp, 0, &args);
 
-	__ms_va_end(args);
+	va_end(args);
 
 	ret = MessageBoxA(hWnd,pszTemp,pszTitle,uType);
         LocalFree(pszTemp);

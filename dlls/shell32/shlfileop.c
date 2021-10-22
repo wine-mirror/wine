@@ -287,7 +287,7 @@ static BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir, FI
 
         args[0] = (DWORD_PTR)szDir;
         FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-            szText, 0, 0, szBuffer, ARRAY_SIZE(szBuffer), (__ms_va_list*)args);
+            szText, 0, 0, szBuffer, ARRAY_SIZE(szBuffer), (va_list*)args);
 
         hIcon = LoadIconW(ids.hIconInstance, (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id));
 

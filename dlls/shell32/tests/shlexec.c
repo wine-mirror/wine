@@ -114,13 +114,13 @@ static char* decodeA(const char* str)
 
 static void WINAPIV __WINE_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
-    __ms_va_list valist;
+    va_list valist;
     char        buffer[1024];
     DWORD       w;
 
-    __ms_va_start(valist, fmt);
+    va_start(valist, fmt);
     vsprintf(buffer, fmt, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     WriteFile(h, buffer, strlen(buffer), &w, NULL);
 }
 
@@ -348,14 +348,14 @@ static void dump_child_(const char* file, int line)
 static char shell_call[2048];
 static void WINAPIV __WINE_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, ...)
 {
-    __ms_va_list valist;
+    va_list valist;
     char buffer[2048];
 
     strcpy(buffer, shell_call);
     strcat(buffer, " ");
-    __ms_va_start(valist, msg);
+    va_start(valist, msg);
     vsprintf(buffer+strlen(buffer), msg, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     winetest_ok(condition, "%s", buffer);
 }
 #define okShell_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : _okShell
