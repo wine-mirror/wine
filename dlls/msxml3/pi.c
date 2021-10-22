@@ -284,7 +284,7 @@ static HRESULT WINAPI dom_pi_get_nextSibling(
 
 static HRESULT xml_get_value(xmlChar **p, xmlChar **value)
 {
-    xmlChar *v;
+    xmlChar *v, q;
     int len;
 
     while (isspace(**p)) *p += 1;
@@ -292,11 +292,12 @@ static HRESULT xml_get_value(xmlChar **p, xmlChar **value)
     *p += 1;
 
     while (isspace(**p)) *p += 1;
-    if (**p != '"') return XML_E_MISSINGQUOTE;
+    if (**p != '"' && **p != '\'') return XML_E_MISSINGQUOTE;
+    q = **p;
     *p += 1;
 
     v = *p;
-    while (**p && **p != '"') *p += 1;
+    while (**p && **p != q) *p += 1;
     if (!**p) return XML_E_EXPECTINGCLOSEQUOTE;
     len = *p - v;
     if (!len) return XML_E_MISSINGNAME;
