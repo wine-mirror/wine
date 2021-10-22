@@ -2325,6 +2325,22 @@ static void test_saxreader(void)
         WriteFile(file, testXML, sizeof(testXML)-1, &written, NULL);
         CloseHandle(file);
 
+        /* crashes on newer versions */
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader) ||
+            IsEqualGUID(table->clsid, &CLSID_SAXXMLReader30))
+        {
+            IVBSAXXMLReader *vb_reader;
+
+            hr = ISAXXMLReader_parseURL(reader, NULL);
+            ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+            hr = ISAXXMLReader_QueryInterface(reader, &IID_IVBSAXXMLReader, (void **)&vb_reader);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            hr = IVBSAXXMLReader_parseURL(vb_reader, NULL);
+            ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+            IVBSAXXMLReader_Release(vb_reader);
+        }
+
         if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40) ||
             IsEqualGUID(table->clsid, &CLSID_SAXXMLReader60))
             test_seq = content_handler_test1_alternate;

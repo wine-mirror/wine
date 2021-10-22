@@ -2728,23 +2728,23 @@ static HRESULT internal_onDataAvailable(void *obj, char *ptr, DWORD len)
     return internal_parseBuffer(This, ptr, len, FALSE);
 }
 
-static HRESULT internal_parseURL(
-        saxreader* This,
-        const WCHAR *url,
-        BOOL vbInterface)
+static HRESULT internal_parseURL(saxreader *reader, const WCHAR *url, BOOL vbInterface)
 {
     IMoniker *mon;
     bsc_t *bsc;
     HRESULT hr;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(url));
+    TRACE("%p, %s.\n", reader, debugstr_w(url));
+
+    if (!url && reader->version < MSXML4)
+        return E_INVALIDARG;
 
     hr = create_moniker_from_url(url, &mon);
     if(FAILED(hr))
         return hr;
 
-    if(vbInterface) hr = bind_url(mon, internal_vbonDataAvailable, This, &bsc);
-    else hr = bind_url(mon, internal_onDataAvailable, This, &bsc);
+    if(vbInterface) hr = bind_url(mon, internal_vbonDataAvailable, reader, &bsc);
+    else hr = bind_url(mon, internal_onDataAvailable, reader, &bsc);
     IMoniker_Release(mon);
 
     if(FAILED(hr))
