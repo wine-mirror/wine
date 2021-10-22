@@ -3728,7 +3728,7 @@ static const WCHAR *get_message( DWORD flags, const void *src, UINT id, UINT lan
  *	FormatMessageA   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageA( DWORD flags, const void *source, DWORD msgid, DWORD langid,
-                                               char *buffer, DWORD size, __ms_va_list *args )
+                                               char *buffer, DWORD size, va_list *args )
 {
     DWORD ret = 0;
     ULONG len, retsize = 0;
@@ -3811,7 +3811,7 @@ done:
  *	FormatMessageW   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, DWORD msgid, DWORD langid,
-                                               WCHAR *buffer, DWORD size, __ms_va_list *args )
+                                               WCHAR *buffer, DWORD size, va_list *args )
 {
     ULONG retsize = 0;
     ULONG width = (flags & FORMAT_MESSAGE_MAX_WIDTH_MASK);
