@@ -307,13 +307,13 @@ static void     get_file_name(char* buf)
  */
 static void WINAPIV __WINE_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
-    __ms_va_list valist;
+    va_list valist;
     char        buffer[1024+4*MAX_LISTED_ENV_VAR];
     DWORD       w;
 
-    __ms_va_start(valist, fmt);
+    va_start(valist, fmt);
     vsprintf(buffer, fmt, valist);
-    __ms_va_end(valist);
+    va_end(valist);
     WriteFile(h, buffer, strlen(buffer), &w, NULL);
 }
 
