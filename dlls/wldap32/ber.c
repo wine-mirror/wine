@@ -318,12 +318,12 @@ ULONG CDECL ber_skip_tag( BerElement *ber, ULONG *len )
  */
 int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
 {
-    __ms_va_list list;
+    va_list list;
     int ret = 0;
     char new_fmt[2];
 
     new_fmt[1] = 0;
-    __ms_va_start( list, fmt );
+    va_start( list, fmt );
     while (*fmt)
     {
         new_fmt[0] = *fmt++;
@@ -392,7 +392,7 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
         }
         if (ret == -1) break;
     }
-    __ms_va_end( list );
+    va_end( list );
     return ret;
 }
 
@@ -417,12 +417,12 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
  */
 ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
 {
-    __ms_va_list list;
+    va_list list;
     int ret = 0;
     char new_fmt[2];
 
     new_fmt[1] = 0;
-    __ms_va_start( list, fmt );
+    va_start( list, fmt );
     while (*fmt)
     {
         new_fmt[0] = *fmt++;
@@ -508,6 +508,6 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         }
         if (ret == -1) break;
     }
-    __ms_va_end( list );
+    va_end( list );
     return ret;
 }
