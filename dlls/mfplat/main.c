@@ -5946,9 +5946,9 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
 {
     static const char streamhandlerspath[] = "Software\\Microsoft\\Windows Media Foundation\\ByteStreamHandlers";
     static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
+    WCHAR *mimeW = NULL, *urlW = NULL;
     IMFAttributes *attributes;
     const WCHAR *url_ext;
-    WCHAR *mimeW = NULL;
     HRESULT hr = E_FAIL;
     unsigned int i, j;
     UINT32 length;
@@ -5959,6 +5959,11 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     if (SUCCEEDED(IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
     {
         IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &mimeW, &length);
+        if (!url)
+        {
+            IMFAttributes_GetAllocatedString(attributes, &MF_BYTESTREAM_ORIGIN_NAME, &urlW, &length);
+            url = urlW;
+        }
         IMFAttributes_Release(attributes);
     }
 
@@ -5967,7 +5972,7 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
 
     if (!url_ext && !mimeW)
     {
-        CoTaskMemFree(mimeW);
+        CoTaskMemFree(urlW);
         return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
     }
 
@@ -5991,7 +5996,11 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
         LeaveCriticalSection(&local_handlers_section);
 
         if (*handler)
+        {
+            CoTaskMemFree(mimeW);
+            CoTaskMemFree(urlW);
             return hr;
+        }
     }
 
     for (i = 0, hr = E_FAIL; i < ARRAY_SIZE(hkey_roots); ++i)
@@ -6030,6 +6039,7 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     }
 
     CoTaskMemFree(mimeW);
+    CoTaskMemFree(urlW);
     return hr;
 }
 
