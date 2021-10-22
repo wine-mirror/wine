@@ -1224,12 +1224,16 @@ static HRESULT media_item_create_topology(struct media_player *player, struct me
 static HRESULT WINAPI media_player_SetMediaItem(IMFPMediaPlayer *iface, IMFPMediaItem *item_iface)
 {
     struct media_player *player = impl_from_IMFPMediaPlayer(iface);
-    struct media_item *item = unsafe_impl_from_IMFPMediaItem(item_iface);
+    struct media_item *item;
     IMFTopology *topology;
     HRESULT hr;
 
     TRACE("%p, %p.\n", iface, item_iface);
 
+    if (!item_iface)
+        return E_POINTER;
+
+    item = unsafe_impl_from_IMFPMediaItem(item_iface);
     if (item->player != iface)
         return E_INVALIDARG;
 

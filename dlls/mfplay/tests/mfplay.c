@@ -198,8 +198,23 @@ static void test_shutdown(void)
     IMFPMediaPlayer_Release(player);
 }
 
+static void test_media_item(void)
+{
+    IMFPMediaPlayer *player;
+    HRESULT hr;
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetMediaItem(player, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    IMFPMediaPlayer_Release(player);
+}
+
 START_TEST(mfplay)
 {
     test_create_player();
     test_shutdown();
+    test_media_item();
 }
