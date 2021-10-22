@@ -261,6 +261,8 @@ extern BSTR EnsureCorrectEOL(BSTR) DECLSPEC_HIDDEN;
 
 extern xmlChar* tagName_to_XPath(const BSTR tagName) DECLSPEC_HIDDEN;
 
+extern HRESULT dom_pi_put_xml_decl(IXMLDOMNode *node, BSTR data) DECLSPEC_HIDDEN;
+
 #include <libxslt/documents.h>
 extern xmlDocPtr xslt_doc_default_loader(const xmlChar *uri, xmlDictPtr dict, int options,
     void *_ctxt, xsltLoadType type) DECLSPEC_HIDDEN;
