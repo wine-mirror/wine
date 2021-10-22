@@ -34,7 +34,6 @@
 #include "wmcodecdsp.h"
 
 DEFINE_GUID(WMMEDIASUBTYPE_WMV1,0x31564d57,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-static const GUID testguid = {0x22222222, 0x2222, 0x2222, {0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22}};
 
 static IBaseFilter *create_asf_reader(void)
 {
@@ -347,14 +346,14 @@ static void test_filesourcefilter(void)
     const WCHAR *filename = load_resource(L"test.wmv");
     IBaseFilter *filter = create_asf_reader();
     IFileSourceFilter *filesource;
+    AM_MEDIA_TYPE mt, expect_mt;
     IFilterGraph2 *graph;
     IEnumPins *enumpins;
-    AM_MEDIA_TYPE type;
     LPOLESTR olepath;
     IPin *pins[4];
     HRESULT hr;
     ULONG ref;
-    BYTE *ptr;
+    BOOL ret;
 
     ref = get_refcount(filter);
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
@@ -369,22 +368,18 @@ static void test_filesourcefilter(void)
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     olepath = (void *)0xdeadbeef;
-    memset(&type, 0x22, sizeof(type));
-    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!olepath, "Got %s.\n", wine_dbgstr_w(olepath));
-    ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
-            wine_dbgstr_guid(&type.majortype));
-    ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
-            wine_dbgstr_guid(&type.subtype));
-    ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
-    ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
-    ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
-    ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
-    memset(&ptr, 0x22, sizeof(ptr));
-    ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+
+    memset(&expect_mt, 0x22, sizeof(expect_mt));
+    expect_mt.majortype = GUID_NULL;
+    expect_mt.subtype = GUID_NULL;
+    expect_mt.lSampleSize = 0;
+    expect_mt.pUnk = NULL;
+    expect_mt.cbFormat = 0;
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
 
     hr = IFileSourceFilter_Load(filesource, L"nonexistent.wmv", NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -395,22 +390,12 @@ static void test_filesourcefilter(void)
     ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     olepath = (void *)0xdeadbeef;
-    memset(&type, 0x22, sizeof(type));
-    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(olepath, L"nonexistent.wmv"), "Expected path %s, got %s.\n",
             wine_dbgstr_w(L"nonexistent.wmv"), wine_dbgstr_w(olepath));
-    ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
-            wine_dbgstr_guid(&type.majortype));
-    ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
-            wine_dbgstr_guid(&type.subtype));
-    ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
-    ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
-    ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
-    ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
-    ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
     CoTaskMemFree(olepath);
 
     hr = IBaseFilter_EnumPins(filter, &enumpins);
@@ -430,23 +415,16 @@ static void test_filesourcefilter(void)
     hr = IFileSourceFilter_Load(filesource, L"nonexistent2.wmv", NULL);
     ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
+    hr = IFileSourceFilter_Load(filesource, filename, NULL);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
     olepath = (void *)0xdeadbeef;
-    memset(&type, 0x22, sizeof(type));
-    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(olepath, L"nonexistent.wmv"), "Expected path %s, got %s.\n",
             wine_dbgstr_w(L"nonexistent.wmv"), wine_dbgstr_w(olepath));
-    ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
-            wine_dbgstr_guid(&type.majortype));
-    ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
-            wine_dbgstr_guid(&type.subtype));
-    ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
-    ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
-    ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
-    ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
-    ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
     CoTaskMemFree(olepath);
 
     hr = IFileSourceFilter_Load(filesource, filename, NULL);
@@ -458,6 +436,29 @@ static void test_filesourcefilter(void)
     ref = IFileSourceFilter_Release(filesource);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
+    /* Specify a bogus media type along with the file. */
+
+    filter = create_asf_reader();
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    memset(&mt, 0x11, sizeof(mt));
+    hr = IFileSourceFilter_Load(filesource, L"nonexistent.wmv", &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    olepath = (void *)0xdeadbeef;
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(olepath, L"nonexistent.wmv"), "Got filename %s.\n", debugstr_w(olepath));
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
+    CoTaskMemFree(olepath);
+
+    IBaseFilter_Release(filter);
+    ref = IFileSourceFilter_Release(filesource);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    /* With a real file this time. */
 
     filter = create_asf_reader();
     hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
@@ -472,21 +473,11 @@ static void test_filesourcefilter(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     olepath = (void *)0xdeadbeef;
-    memset(&type, 0x22, sizeof(type));
-    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!wcscmp(olepath, filename), "Got file %s.\n", wine_dbgstr_w(olepath));
-    ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
-            wine_dbgstr_guid(&type.majortype));
-    ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
-            wine_dbgstr_guid(&type.subtype));
-    ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
-    ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
-    ok(!type.lSampleSize, "Got sample size %lu.\n", type.lSampleSize);
-    ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
-    ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
-    ok(!type.cbFormat, "Got format size %lu.\n", type.cbFormat);
-    ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
     CoTaskMemFree(olepath);
 
     hr = IBaseFilter_EnumPins(filter, &enumpins);
@@ -511,6 +502,49 @@ static void test_filesourcefilter(void)
     IBaseFilter_Release(filter);
     ref = IFileSourceFilter_Release(filesource);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    /* Specify a bogus media type along with the file. */
+
+    filter = create_asf_reader();
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    memset(&mt, 0x11, sizeof(mt));
+    hr = IFileSourceFilter_Load(filesource, filename, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    olepath = (void *)0xdeadbeef;
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(olepath, filename), "Expected filename %s, got %s.\n",
+            debugstr_w(filename), debugstr_w(olepath));
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
+    CoTaskMemFree(olepath);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, filter, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    olepath = (void *)0xdeadbeef;
+    memset(&mt, 0x22, sizeof(mt));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(olepath, filename), "Expected filename %s, got %s.\n",
+            debugstr_w(filename), debugstr_w(olepath));
+    ok(compare_media_types(&mt, &expect_mt), "Media types didn't match.\n");
+    CoTaskMemFree(olepath);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IBaseFilter_Release(filter);
+    ref = IFileSourceFilter_Release(filesource);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
 static void test_filter_state(void)
