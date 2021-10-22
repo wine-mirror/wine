@@ -65,14 +65,14 @@ static HINSTANCE aclui_instance;
 
 static WCHAR *WINAPIV load_formatstr(UINT resource, ...)
 {
-    __ms_va_list valist;
+    va_list valist;
     WCHAR *str;
     DWORD ret;
 
-    __ms_va_start(valist, resource);
+    va_start(valist, resource);
     ret = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,
                          aclui_instance, resource, 0, (WCHAR*)&str, 0, &valist);
-    __ms_va_end(valist);
+    va_end(valist);
     return ret ? str : NULL;
 }
 
