@@ -143,7 +143,7 @@ static inline void winetest_set_location( const char *file, int line )
     data->current_line = line;
 }
 
-static inline void kvprintf( const char *format, __ms_va_list ap )
+static inline void kvprintf( const char *format, va_list ap )
 {
     struct tls_data *data = get_tls_data();
     IO_STATUS_BLOCK io;
@@ -154,23 +154,23 @@ static inline void kvprintf( const char *format, __ms_va_list ap )
 static inline void WINAPIV kprintf( const char *format, ... ) __WINE_PRINTF_ATTR( 1, 2 );
 static inline void WINAPIV kprintf( const char *format, ... )
 {
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start( valist, format );
+    va_start( valist, format );
     kvprintf( format, valist );
-    __ms_va_end( valist );
+    va_end( valist );
 }
 
 static inline void WINAPIV winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR( 1, 2 );
 static inline void WINAPIV winetest_printf( const char *msg, ... )
 {
     struct tls_data *data = get_tls_data();
-    __ms_va_list valist;
+    va_list valist;
 
     kprintf( "%s:%d: ", data->current_file, data->current_line );
-    __ms_va_start( valist, msg );
+    va_start( valist, msg );
     kvprintf( msg, valist );
-    __ms_va_end( valist );
+    va_end( valist );
 }
 
 static inline NTSTATUS winetest_init(void)
@@ -283,7 +283,7 @@ static inline LONG winetest_add_line(void)
     return count;
 }
 
-static inline int winetest_vok( int condition, const char *msg, __ms_va_list args )
+static inline int winetest_vok( int condition, const char *msg, va_list args )
 {
     struct tls_data *data = get_tls_data();
 
@@ -332,13 +332,13 @@ static inline int winetest_vok( int condition, const char *msg, __ms_va_list arg
 static inline void WINAPIV winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR( 2, 3 );
 static inline void WINAPIV winetest_ok( int condition, const char *msg, ... )
 {
-    __ms_va_list args;
-    __ms_va_start( args, msg );
+    va_list args;
+    va_start( args, msg );
     winetest_vok( condition, msg, args );
-    __ms_va_end( args );
+    va_end( args );
 }
 
-static inline void winetest_vskip( const char *msg, __ms_va_list args )
+static inline void winetest_vskip( const char *msg, va_list args )
 {
     if (winetest_add_line() < winetest_mute_threshold)
     {
@@ -352,34 +352,34 @@ static inline void winetest_vskip( const char *msg, __ms_va_list args )
 static inline void WINAPIV winetest_skip( const char *msg, ... ) __WINE_PRINTF_ATTR( 1, 2 );
 static inline void WINAPIV winetest_skip( const char *msg, ... )
 {
-    __ms_va_list args;
-    __ms_va_start( args, msg );
+    va_list args;
+    va_start( args, msg );
     winetest_vskip( msg, args );
-    __ms_va_end( args );
+    va_end( args );
 }
 
 static inline void WINAPIV winetest_win_skip( const char *msg, ... ) __WINE_PRINTF_ATTR( 1, 2 );
 static inline void WINAPIV winetest_win_skip( const char *msg, ... )
 {
-    __ms_va_list args;
-    __ms_va_start( args, msg );
+    va_list args;
+    va_start( args, msg );
     if (!running_under_wine) winetest_vskip( msg, args );
     else winetest_vok( 0, msg, args );
-    __ms_va_end( args );
+    va_end( args );
 }
 
 static inline void WINAPIV winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR( 1, 2 );
 static inline void WINAPIV winetest_trace( const char *msg, ... )
 {
-    __ms_va_list args;
+    va_list args;
 
     if (!winetest_debug) return;
     if (winetest_add_line() < winetest_mute_threshold)
     {
         winetest_print_context( "" );
-        __ms_va_start( args, msg );
+        va_start( args, msg );
         kvprintf( msg, args );
-        __ms_va_end( args );
+        va_end( args );
     }
     else InterlockedIncrement( &muted_traces );
 }
@@ -409,13 +409,13 @@ static inline void WINAPIV winetest_push_context( const char *fmt, ... ) __WINE_
 static inline void WINAPIV winetest_push_context( const char *fmt, ... )
 {
     struct tls_data *data = get_tls_data();
-    __ms_va_list valist;
+    va_list valist;
 
     if (data->context_count < ARRAY_SIZE(data->context))
     {
-        __ms_va_start( valist, fmt );
+        va_start( valist, fmt );
         vsnprintf( data->context[data->context_count], sizeof(data->context[data->context_count]), fmt, valist );
-        __ms_va_end( valist );
+        va_end( valist );
         data->context[data->context_count][sizeof(data->context[data->context_count]) - 1] = 0;
     }
     ++data->context_count;
