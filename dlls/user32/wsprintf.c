@@ -336,7 +336,7 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
 /***********************************************************************
  *           wvsnprintfA   (internal)
  */
-static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list args )
+static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
@@ -456,7 +456,7 @@ static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list arg
 /***********************************************************************
  *           wvsnprintfW   (internal)
  */
-static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list args )
+static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
 {
     WPRINTF_FORMAT format;
     LPWSTR p = buffer;
@@ -574,7 +574,7 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
 /***********************************************************************
  *           wvsprintfA   (USER32.@)
  */
-INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, __ms_va_list args )
+INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, va_list args )
 {
     INT res = wvsnprintfA( buffer, 1024, spec, args );
     return ( res == -1 ) ? 1024 : res;
@@ -584,7 +584,7 @@ INT WINAPI wvsprintfA( LPSTR buffer, LPCSTR spec, __ms_va_list args )
 /***********************************************************************
  *           wvsprintfW   (USER32.@)
  */
-INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, __ms_va_list args )
+INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, va_list args )
 {
     INT res = wvsnprintfW( buffer, 1024, spec, args );
     return ( res == -1 ) ? 1024 : res;
@@ -596,12 +596,12 @@ INT WINAPI wvsprintfW( LPWSTR buffer, LPCWSTR spec, __ms_va_list args )
  */
 INT WINAPIV wsprintfA( LPSTR buffer, LPCSTR spec, ... )
 {
-    __ms_va_list valist;
+    va_list valist;
     INT res;
 
-    __ms_va_start( valist, spec );
+    va_start( valist, spec );
     res = wvsnprintfA( buffer, 1024, spec, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ( res == -1 ) ? 1024 : res;
 }
 
@@ -611,11 +611,11 @@ INT WINAPIV wsprintfA( LPSTR buffer, LPCSTR spec, ... )
  */
 INT WINAPIV wsprintfW( LPWSTR buffer, LPCWSTR spec, ... )
 {
-    __ms_va_list valist;
+    va_list valist;
     INT res;
 
-    __ms_va_start( valist, spec );
+    va_start( valist, spec );
     res = wvsnprintfW( buffer, 1024, spec, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ( res == -1 ) ? 1024 : res;
 }
