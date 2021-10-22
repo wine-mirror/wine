@@ -507,6 +507,7 @@ my @dll_groups =
  [
   "bcrypt",
   "ncrypt",
+  "cng.sys",
  ],
  [
   "ntoskrnl.exe",
