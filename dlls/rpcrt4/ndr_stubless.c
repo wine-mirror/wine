@@ -1023,12 +1023,12 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
  */
 CLIENT_CALL_RETURN WINAPIV NdrClientCall2( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
 {
-    __ms_va_list args;
+    va_list args;
     LONG_PTR ret;
 
-    __ms_va_start( args, format );
+    va_start( args, format );
     ret = ndr_client_call( desc, format, va_arg( args, void ** ), NULL );
-    __ms_va_end( args );
+    va_end( args );
     return *(CLIENT_CALL_RETURN *)&ret;
 }
 
@@ -1923,12 +1923,12 @@ __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
  */
 CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
 {
-    __ms_va_list args;
+    va_list args;
     LONG_PTR ret;
 
-    __ms_va_start( args, format );
+    va_start( args, format );
     ret = ndr_async_client_call( desc, format, va_arg( args, void ** ));
-    __ms_va_end( args );
+    va_end( args );
     return *(CLIENT_CALL_RETURN *)&ret;
 }
 
@@ -2263,12 +2263,12 @@ __ASM_GLOBAL_FUNC( NdrClientCall3,
  */
 CLIENT_CALL_RETURN WINAPIV NdrClientCall3( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
 {
-    __ms_va_list args;
+    va_list args;
     LONG_PTR ret;
 
-    __ms_va_start( args, retval );
+    va_start( args, retval );
     ret = ndr64_client_call( info, proc, retval, va_arg( args, void ** ), NULL );
-    __ms_va_end( args );
+    va_end( args );
     return *(CLIENT_CALL_RETURN *)&ret;
 }
 
@@ -2323,12 +2323,12 @@ __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
  */
 CLIENT_CALL_RETURN WINAPIV Ndr64AsyncClientCall( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
 {
-    __ms_va_list args;
+    va_list args;
     LONG_PTR ret;
 
-    __ms_va_start( args, retval );
+    va_start( args, retval );
     ret = ndr64_async_client_call( info, proc, retval, va_arg( args, void ** ), NULL );
-    __ms_va_end( args );
+    va_end( args );
     return *(CLIENT_CALL_RETURN *)&ret;
 }
 

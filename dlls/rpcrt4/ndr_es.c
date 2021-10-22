@@ -407,7 +407,7 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     const RPC_CLIENT_INTERFACE *client_interface;
-    __ms_va_list args;
+    va_list args;
     unsigned int number_of_params;
     ULONG_PTR arg_buffer[256];
 
@@ -474,9 +474,9 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
     TRACE("MIDL stub version = 0x%x\n", pStubDesc->MIDLVersion);
 
     /* needed for conformance of top-level objects */
-    __ms_va_start( args, pFormat );
+    va_start( args, pFormat );
     pEsMsg->StubMsg.StackTop = va_arg( args, unsigned char * );
-    __ms_va_end( args );
+    va_end( args );
 
     pFormat = convert_old_args( &pEsMsg->StubMsg, pFormat, stack_size, FALSE,
                                 arg_buffer, sizeof(arg_buffer), &number_of_params );
