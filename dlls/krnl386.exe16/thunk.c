@@ -2381,9 +2381,9 @@ INT WINAPI k32LoadStringA(HINSTANCE instance, UINT resource_id,
 /***********************************************************************
  *		k32wvsprintfA   (KERNEL32.16)
  */
-INT WINAPI k32wvsprintfA(LPSTR buffer, LPCSTR spec, __ms_va_list args)
+INT WINAPI k32wvsprintfA(LPSTR buffer, LPCSTR spec, va_list args)
 {
-    static INT (WINAPI *pwvsprintfA)(LPSTR, LPCSTR, __ms_va_list);
+    static INT (WINAPI *pwvsprintfA)(LPSTR, LPCSTR, va_list);
 
     if(!pwvsprintfA) pwvsprintfA = user32_proc_address("wvsprintfA");
     return (*pwvsprintfA)(buffer, spec, args);
@@ -2394,12 +2394,12 @@ INT WINAPI k32wvsprintfA(LPSTR buffer, LPCSTR spec, __ms_va_list args)
  */
 INT WINAPIV k32wsprintfA(LPSTR buffer, LPCSTR spec, ...)
 {
-    __ms_va_list args;
+    va_list args;
     INT res;
 
-    __ms_va_start(args, spec);
+    va_start(args, spec);
     res = k32wvsprintfA(buffer, spec, args);
-    __ms_va_end(args);
+    va_end(args);
     return res;
 }
 
