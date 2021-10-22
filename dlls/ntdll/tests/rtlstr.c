@@ -72,7 +72,7 @@ static BOOLEAN (WINAPI *pRtlIsTextUnicode)(LPVOID, INT, INT *);
 static NTSTATUS (WINAPI *pRtlHashUnicodeString)(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pRtlUnicodeToUTF8N)(CHAR *, ULONG, ULONG *, const WCHAR *, ULONG);
 static NTSTATUS (WINAPI *pRtlUTF8ToUnicodeN)(WCHAR *, ULONG, ULONG *, const CHAR *, ULONG);
-static NTSTATUS (WINAPI *pRtlFormatMessage)(const WCHAR*,ULONG,BOOLEAN,BOOLEAN,BOOLEAN,__ms_va_list*,LPWSTR,ULONG,ULONG*);
+static NTSTATUS (WINAPI *pRtlFormatMessage)(const WCHAR*,ULONG,BOOLEAN,BOOLEAN,BOOLEAN,va_list*,LPWSTR,ULONG,ULONG*);
 
 /*static VOID (WINAPI *pRtlFreeOemString)(PSTRING);*/
 /*static VOID (WINAPI *pRtlCopyUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *);*/
@@ -2614,27 +2614,27 @@ static void test_RtlUTF8ToUnicodeN(void)
 static NTSTATUS WINAPIV fmt( const WCHAR *src, ULONG width, BOOLEAN ignore_inserts, BOOLEAN ansi,
                              WCHAR *buffer, ULONG size, ULONG *retsize, ... )
 {
-    __ms_va_list args;
+    va_list args;
     NTSTATUS status;
 
     *retsize = 0xdeadbeef;
-    __ms_va_start( args, retsize );
+    va_start( args, retsize );
     status = pRtlFormatMessage( src, width, ignore_inserts, ansi, FALSE, &args, buffer, size, retsize );
-    __ms_va_end( args );
+    va_end( args );
     return status;
 }
 
 static void WINAPIV testfmt( const WCHAR *src, const WCHAR *expect, ULONG width, BOOL ansi, ... )
 {
-    __ms_va_list args;
+    va_list args;
     NTSTATUS status;
     WCHAR buffer[128];
     ULONG size = 0xdeadbeef;
 
     memset( buffer, 0xcc, sizeof(buffer) );
-    __ms_va_start( args, ansi );
+    va_start( args, ansi );
     status = pRtlFormatMessage( src, width, FALSE, ansi, FALSE, &args, buffer, sizeof(buffer), &size );
-    __ms_va_end( args );
+    va_end( args );
     ok( !status, "%s: failed %x\n", debugstr_w(src), status );
     ok( !lstrcmpW( buffer, expect ), "%s: got %s expected %s\n", debugstr_w(src),
         debugstr_w(buffer), debugstr_w(expect) );
@@ -2689,11 +2689,11 @@ static void test_RtlFormatMessage(void)
         ULONG_PTR args[] = { 19, 17, 15, 13, 11, 9, 7 };
         memset( buffer, 0xcc, sizeof(buffer) );
         status = pRtlFormatMessage( L"%2!*.*I64x! %1!u! %4!u! %2!u!", 0, FALSE, FALSE, TRUE,
-                                    (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+                                    (va_list *)args, buffer, sizeof(buffer), &size );
         ok( !lstrcmpW( buffer, L"  00000000000000d 19 13 17" ), "got %s\n", wine_dbgstr_w(buffer) );
         memset( buffer, 0xcc, sizeof(buffer) );
         status = pRtlFormatMessage( L"%1!I64u! %2!u! %4!.*I64x! %5!I64u!", 0, FALSE, FALSE, TRUE,
-                                    (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+                                    (va_list *)args, buffer, sizeof(buffer), &size );
         ok( !lstrcmpW( buffer, L"19 17 000000000000b 11" ), "got %s\n", wine_dbgstr_w(buffer) );
     }
 #else
@@ -2712,11 +2712,11 @@ static void test_RtlFormatMessage(void)
             ULONG_PTR args[] = { 19, 17, 15, 13, 11, 9, 7 };
             memset( buffer, 0xcc, sizeof(buffer) );
             status = pRtlFormatMessage( L"%2!*.*I64x! %1!u! %4!u! %2!u!", 0, FALSE, FALSE, TRUE,
-                                        (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+                                        (va_list *)args, buffer, sizeof(buffer), &size );
             ok( !lstrcmpW( buffer, L"        d0000000f 19 13 17" ), "got %s\n", wine_dbgstr_w(buffer) );
             memset( buffer, 0xcc, sizeof(buffer) );
             status = pRtlFormatMessage( L"%1!I64u! %2!u! %4!.*I64x! %5!I64u!", 0, FALSE, FALSE, TRUE,
-                                        (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+                                        (va_list *)args, buffer, sizeof(buffer), &size );
             ok( !lstrcmpW( buffer, L"19 17 0000b00000000 11" ), "got %s\n", wine_dbgstr_w(buffer) );
         }
     }
@@ -2775,11 +2775,11 @@ static void test_RtlFormatMessage(void)
     {
         ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
         memset( buffer, 0xcc, sizeof(buffer) );
-        status = pRtlFormatMessage( L"%1!*.*u!,%1!*.*u!", 0, FALSE, FALSE, TRUE, (__ms_va_list *)args,
+        status = pRtlFormatMessage( L"%1!*.*u!,%1!*.*u!", 0, FALSE, FALSE, TRUE, (va_list *)args,
                                     buffer, sizeof(buffer), &size );
         ok( !lstrcmpW( buffer, L"  0002, 00003" ), "got %s\n", wine_dbgstr_w(buffer) );
         memset( buffer, 0xcc, sizeof(buffer) );
-        status = pRtlFormatMessage( L"%1!*.*u!,%4!*.*u!", 0, FALSE, FALSE, TRUE, (__ms_va_list *)args,
+        status = pRtlFormatMessage( L"%1!*.*u!,%4!*.*u!", 0, FALSE, FALSE, TRUE, (va_list *)args,
                                     buffer, sizeof(buffer), &size );
         ok( !lstrcmpW( buffer, L"  0002,  001" ), "got %s\n", wine_dbgstr_w(buffer) );
     }

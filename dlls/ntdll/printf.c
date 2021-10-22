@@ -52,7 +52,7 @@ typedef struct pf_flags_t
 /*********************************************************************
  *                  _vsnprintf   (NTDLL.@)
  */
-int CDECL _vsnprintf( char *str, size_t len, const char *format, __ms_va_list args )
+int CDECL _vsnprintf( char *str, size_t len, const char *format, va_list args )
 {
     pf_output_a out = { str, len };
     int r = pf_vsnprintf_a( &out, format, args );
@@ -65,7 +65,7 @@ int CDECL _vsnprintf( char *str, size_t len, const char *format, __ms_va_list ar
 /***********************************************************************
  *                  _vsnwprintf   (NTDLL.@)
  */
-int CDECL _vsnwprintf( WCHAR *str, size_t len, const WCHAR *format, __ms_va_list args )
+int CDECL _vsnwprintf( WCHAR *str, size_t len, const WCHAR *format, va_list args )
 {
     pf_output_w out = { str, len };
     int r = pf_vsnprintf_w( &out, format, args );
@@ -81,11 +81,11 @@ int CDECL _vsnwprintf( WCHAR *str, size_t len, const WCHAR *format, __ms_va_list
 int WINAPIV NTDLL__snprintf( char *str, size_t len, const char *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start( valist, format );
+    va_start( valist, format );
     ret = _vsnprintf( str, len, format, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ret;
 }
 
@@ -96,11 +96,11 @@ int WINAPIV NTDLL__snprintf( char *str, size_t len, const char *format, ... )
 int WINAPIV _snwprintf( WCHAR *str, size_t len, const WCHAR *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start(valist, format);
+    va_start(valist, format);
     ret = _vsnwprintf( str, len, format, valist );
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -108,7 +108,7 @@ int WINAPIV _snwprintf( WCHAR *str, size_t len, const WCHAR *format, ... )
 /*********************************************************************
  *                  _vsnprintf_s   (NTDLL.@)
  */
-int CDECL _vsnprintf_s( char *str, size_t size, size_t len, const char *format, __ms_va_list args )
+int CDECL _vsnprintf_s( char *str, size_t size, size_t len, const char *format, va_list args )
 {
     pf_output_a out = { str, min( size, len ) };
     int r = pf_vsnprintf_a( &out, format, args );
@@ -123,7 +123,7 @@ int CDECL _vsnprintf_s( char *str, size_t size, size_t len, const char *format, 
 /***********************************************************************
  *                  _vsnwprintf_s   (NTDLL.@)
  */
-int CDECL _vsnwprintf_s( WCHAR *str, size_t size, size_t len, const WCHAR *format, __ms_va_list args )
+int CDECL _vsnwprintf_s( WCHAR *str, size_t size, size_t len, const WCHAR *format, va_list args )
 {
     pf_output_w out = { str, min( size, len ) };
     int r = pf_vsnprintf_w( &out, format, args );
@@ -141,11 +141,11 @@ int CDECL _vsnwprintf_s( WCHAR *str, size_t size, size_t len, const WCHAR *forma
 int WINAPIV _snprintf_s( char *str, size_t size, size_t len, const char *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start( valist, format );
+    va_start( valist, format );
     ret = _vsnprintf_s( str, size, len, format, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ret;
 }
 
@@ -156,11 +156,11 @@ int WINAPIV _snprintf_s( char *str, size_t size, size_t len, const char *format,
 int WINAPIV _snwprintf_s( WCHAR *str, size_t size, size_t len, const WCHAR *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start( valist, format );
+    va_start( valist, format );
     ret = _vsnwprintf_s( str, size, len, format, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ret;
 }
 
@@ -168,7 +168,7 @@ int WINAPIV _snwprintf_s( WCHAR *str, size_t size, size_t len, const WCHAR *form
 /*********************************************************************
  *                  vsprintf   (NTDLL.@)
  */
-int CDECL vsprintf( char *str, const char *format, __ms_va_list args )
+int CDECL vsprintf( char *str, const char *format, va_list args )
 {
     return _vsnprintf( str, size_max, format, args );
 }
@@ -177,7 +177,7 @@ int CDECL vsprintf( char *str, const char *format, __ms_va_list args )
 /*********************************************************************
  *                  vsprintf_s   (NTDLL.@)
  */
-int CDECL vsprintf_s( char *str, size_t size, const char *format, __ms_va_list args )
+int CDECL vsprintf_s( char *str, size_t size, const char *format, va_list args )
 {
     return _vsnprintf_s( str, size, size, format, args );
 }
@@ -186,7 +186,7 @@ int CDECL vsprintf_s( char *str, size_t size, const char *format, __ms_va_list a
 /*********************************************************************
  *                  _vswprintf   (NTDLL.@)
  */
-int CDECL _vswprintf( WCHAR *str, const WCHAR *format, __ms_va_list args )
+int CDECL _vswprintf( WCHAR *str, const WCHAR *format, va_list args )
 {
     return _vsnwprintf( str, size_max, format, args );
 }
@@ -195,7 +195,7 @@ int CDECL _vswprintf( WCHAR *str, const WCHAR *format, __ms_va_list args )
 /*********************************************************************
  *                  vswprintf_s   (NTDLL.@)
  */
-int CDECL vswprintf_s( WCHAR *str, size_t size, const WCHAR *format, __ms_va_list args )
+int CDECL vswprintf_s( WCHAR *str, size_t size, const WCHAR *format, va_list args )
 {
     return _vsnwprintf_s( str, size, size, format, args );
 }
@@ -207,11 +207,11 @@ int CDECL vswprintf_s( WCHAR *str, size_t size, const WCHAR *format, __ms_va_lis
 int WINAPIV NTDLL_sprintf( char *str, const char *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start( valist, format );
+    va_start( valist, format );
     ret = _vsnprintf( str, size_max, format, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ret;
 }
 
@@ -222,11 +222,11 @@ int WINAPIV NTDLL_sprintf( char *str, const char *format, ... )
 int WINAPIV sprintf_s( char *str, size_t size, const char *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start( valist, format );
+    va_start( valist, format );
     ret = vsprintf_s( str, size, format, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ret;
 }
 
@@ -237,11 +237,11 @@ int WINAPIV sprintf_s( char *str, size_t size, const char *format, ... )
 int WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start(valist, format);
+    va_start(valist, format);
     ret = _vsnwprintf( str, size_max, format, valist );
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }
 
@@ -252,10 +252,10 @@ int WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... )
 int WINAPIV swprintf_s( WCHAR *str, size_t size, const WCHAR *format, ... )
 {
     int ret;
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start(valist, format);
+    va_start(valist, format);
     ret = vswprintf_s( str, size, format, valist );
-    __ms_va_end(valist);
+    va_end(valist);
     return ret;
 }

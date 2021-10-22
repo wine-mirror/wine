@@ -1709,7 +1709,7 @@ struct format_message_args
 {
     int           last;         /* last used arg */
     ULONG_PTR    *array;        /* args array */
-    __ms_va_list *list;         /* args va_list */
+    va_list      *list;         /* args va_list */
     UINT64        arglist[102]; /* arguments fetched from va_list */
 };
 
@@ -1808,7 +1808,7 @@ static NTSTATUS add_format( WCHAR **buffer, WCHAR *end, const WCHAR **src, int i
  *	RtlFormatMessage  (NTDLL.@)
  */
 NTSTATUS WINAPI RtlFormatMessage( const WCHAR *src, ULONG width, BOOLEAN ignore_inserts,
-                                  BOOLEAN ansi, BOOLEAN is_array, __ms_va_list *args,
+                                  BOOLEAN ansi, BOOLEAN is_array, va_list *args,
                                   WCHAR *buffer, ULONG size, ULONG *retsize )
 {
     return RtlFormatMessageEx( src, width, ignore_inserts, ansi, is_array, args, buffer, size, retsize, 0 );
@@ -1819,7 +1819,7 @@ NTSTATUS WINAPI RtlFormatMessage( const WCHAR *src, ULONG width, BOOLEAN ignore_
  *	RtlFormatMessageEx  (NTDLL.@)
  */
 NTSTATUS WINAPI RtlFormatMessageEx( const WCHAR *src, ULONG width, BOOLEAN ignore_inserts,
-                                    BOOLEAN ansi, BOOLEAN is_array, __ms_va_list *args,
+                                    BOOLEAN ansi, BOOLEAN is_array, va_list *args,
                                     WCHAR *buffer, ULONG size, ULONG *retsize, ULONG flags )
 {
     static const WCHAR spaceW = ' ';

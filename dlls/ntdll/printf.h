@@ -283,7 +283,7 @@ static void FUNC_NAME(pf_integer_conv)( APICHAR *buf, pf_flags *flags, LONGLONG 
     }
 }
 
-static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *format, __ms_va_list valist )
+static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *format, va_list valist )
 {
     int r;
     const APICHAR *q, *p = format;

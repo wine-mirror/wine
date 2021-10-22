@@ -3524,20 +3524,20 @@ static LONG CALLBACK test_dbg_print_except_handler( EXCEPTION_POINTERS *eptrs )
 static NTSTATUS WINAPIV test_vDbgPrintEx( ULONG id, ULONG level, const char *fmt, ... )
 {
     NTSTATUS status;
-    __ms_va_list args;
-    __ms_va_start( args, fmt );
+    va_list args;
+    va_start( args, fmt );
     status = vDbgPrintEx( id, level, fmt, args );
-    __ms_va_end( args );
+    va_end( args );
     return status;
 }
 
 static NTSTATUS WINAPIV test_vDbgPrintExWithPrefix( const char *prefix, ULONG id, ULONG level, const char *fmt, ... )
 {
     NTSTATUS status;
-    __ms_va_list args;
-    __ms_va_start( args, fmt );
+    va_list args;
+    va_start( args, fmt );
     status = vDbgPrintExWithPrefix( prefix, id, level, fmt, args );
-    __ms_va_end( args );
+    va_end( args );
     return status;
 }
 

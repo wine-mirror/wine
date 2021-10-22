@@ -515,7 +515,7 @@ ULONG WINAPI EtwLogTraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER Ev
  *                  EtwTraceMessageVa (NTDLL.@)
  */
 ULONG WINAPI EtwTraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number,
-                                __ms_va_list args )
+                                va_list args )
 {
     FIXME("(%s %x %s %d) : stub\n", wine_dbgstr_longlong(handle), flags, debugstr_guid(guid), number);
     return ERROR_SUCCESS;
@@ -526,12 +526,12 @@ ULONG WINAPI EtwTraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, US
  */
 ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, /*USHORT*/ ULONG number, ... )
 {
-    __ms_va_list valist;
+    va_list valist;
     ULONG ret;
 
-    __ms_va_start( valist, number );
+    va_start( valist, number );
     ret = EtwTraceMessageVa( handle, flags, guid, number, valist );
-    __ms_va_end( valist );
+    va_end( valist );
     return ret;
 }
 
