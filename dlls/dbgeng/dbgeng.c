@@ -2782,7 +2782,7 @@ static HRESULT STDMETHODVCALLTYPE debugcontrol_Output(IDebugControl2 *iface, ULO
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_OutputVaList(IDebugControl2 *iface, ULONG mask, const char *format,
-        __ms_va_list args)
+        va_list args)
 {
     FIXME("%p, %#x, %s stub.\n", iface, mask, debugstr_a(format));
 
@@ -2798,7 +2798,7 @@ static HRESULT STDMETHODVCALLTYPE debugcontrol_ControlledOutput(IDebugControl2 *
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_ControlledOutputVaList(IDebugControl2 *iface, ULONG output_control,
-        ULONG mask, const char *format, __ms_va_list args)
+        ULONG mask, const char *format, va_list args)
 {
     FIXME("%p, %u, %#x, %s stub.\n", iface, output_control, mask, debugstr_a(format));
 
@@ -2814,7 +2814,7 @@ static HRESULT STDMETHODVCALLTYPE debugcontrol_OutputPrompt(IDebugControl2 *ifac
 }
 
 static HRESULT STDMETHODCALLTYPE debugcontrol_OutputPromptVaList(IDebugControl2 *iface, ULONG output_control,
-        const char *format, __ms_va_list args)
+        const char *format, va_list args)
 {
     FIXME("%p, %u, %s stub.\n", iface, output_control, debugstr_a(format));
 
