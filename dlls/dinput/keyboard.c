@@ -145,102 +145,70 @@ static DWORD get_keyboard_subtype(void)
     return dev_subtype;
 }
 
-static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD version, DWORD subtype) {
-    DWORD dwSize;
-    DIDEVICEINSTANCEW ddi;
-    
-    dwSize = lpddi->dwSize;
-
-    TRACE("%d %p\n", dwSize, lpddi);
-    
-    memset(lpddi, 0, dwSize);
-    memset(&ddi, 0, sizeof(ddi));
- 
-    ddi.dwSize = dwSize;
-    ddi.guidInstance = GUID_SysKeyboard;/* DInput's GUID */
-    ddi.guidProduct = GUID_SysKeyboard;
-    if (version >= 0x0800)
-        ddi.dwDevType = DI8DEVTYPE_KEYBOARD | (subtype << 8);
-    else
-        ddi.dwDevType = DIDEVTYPE_KEYBOARD | (subtype << 8);
-    MultiByteToWideChar(CP_ACP, 0, "Keyboard", -1, ddi.tszInstanceName, MAX_PATH);
-    MultiByteToWideChar(CP_ACP, 0, "Wine Keyboard", -1, ddi.tszProductName, MAX_PATH);
-
-    memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
-}
- 
-static HRESULT keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
-{
-  if (id != 0)
-    return E_FAIL;
-
-  if (dwFlags & DIEDFL_FORCEFEEDBACK)
-    return S_FALSE;
-
-  if ((dwDevType == 0) ||
-      ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||
-      (((dwDevType == DI8DEVCLASS_KEYBOARD) || (dwDevType == DI8DEVTYPE_KEYBOARD)) && (version >= 0x0800))) {
-    TRACE("Enumerating the Keyboard device\n");
-
-    fill_keyboard_dideviceinstanceW(lpddi, version, get_keyboard_subtype());
-    
-    return S_OK;
-  }
-
-  return S_FALSE;
-}
-
-static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboardImpl **out )
+static HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
 {
     BYTE subtype = get_keyboard_subtype();
-    SysKeyboardImpl* newDevice;
-    HRESULT hr;
+    DWORD size;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &keyboard_internal_vtbl,
-                                               rguid, dinput, (void **)&newDevice )))
-        return hr;
-    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
+    TRACE( "type %#x, flags %#x, instance %p, version %#04x, index %d\n", type, flags, instance, version, index );
 
-    fill_keyboard_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion, subtype );
-    newDevice->base.caps.dwDevType = newDevice->base.instance.dwDevType;
-    newDevice->base.caps.dwFirmwareRevision = 100;
-    newDevice->base.caps.dwHardwareRevision = 100;
+    if (index != 0) return DIERR_GENERIC;
+    if (flags & DIEDFL_FORCEFEEDBACK) return DI_NOEFFECT;
+    if (version < 0x0800 && type != 0 && type != DIDEVTYPE_KEYBOARD) return DI_NOEFFECT;
+    if (version >= 0x0800 && type != DI8DEVCLASS_ALL && type != DI8DEVCLASS_KEYBOARD && type != DI8DEVTYPE_KEYBOARD)
+        return DI_NOEFFECT;
 
-    if (FAILED(hr = direct_input_device_init( &newDevice->base.IDirectInputDevice8W_iface )))
-    {
-        IDirectInputDevice_Release( &newDevice->base.IDirectInputDevice8W_iface );
-        return hr;
-    }
+    if (instance->dwSize != sizeof(DIDEVICEINSTANCEW) &&
+        instance->dwSize != sizeof(DIDEVICEINSTANCE_DX3W))
+        return DIERR_INVALIDPARAM;
 
-    *out = newDevice;
+    size = instance->dwSize;
+    memset( instance, 0, size );
+    instance->dwSize = size;
+    instance->guidInstance = GUID_SysKeyboard;
+    instance->guidProduct = GUID_SysKeyboard;
+    if (version >= 0x0800) instance->dwDevType = DI8DEVTYPE_KEYBOARD | (subtype << 8);
+    else instance->dwDevType = DIDEVTYPE_KEYBOARD | (subtype << 8);
+    MultiByteToWideChar( CP_ACP, 0, "Keyboard", -1, instance->tszInstanceName, MAX_PATH );
+    MultiByteToWideChar( CP_ACP, 0, "Wine Keyboard", -1, instance->tszProductName, MAX_PATH );
+
     return DI_OK;
 }
 
-static HRESULT keyboarddev_create_device( IDirectInputImpl *dinput, REFGUID rguid, IDirectInputDevice8W **out )
+static HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
-    TRACE( "%p %s %p\n", dinput, debugstr_guid( rguid ), out );
+    SysKeyboardImpl *impl;
+    HRESULT hr;
+
+    TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
+
     *out = NULL;
+    if (!IsEqualGUID( &GUID_SysKeyboard, guid )) return DIERR_DEVICENOTREG;
 
-    if (IsEqualGUID(&GUID_SysKeyboard, rguid)) /* Wine Keyboard */
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &keyboard_internal_vtbl,
+                                               guid, dinput, (void **)&impl )))
+        return hr;
+    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
+
+    keyboard_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion, 0 );
+    impl->base.caps.dwDevType = impl->base.instance.dwDevType;
+    impl->base.caps.dwFirmwareRevision = 100;
+    impl->base.caps.dwHardwareRevision = 100;
+
+    if (FAILED(hr = direct_input_device_init( &impl->base.IDirectInputDevice8W_iface )))
     {
-        SysKeyboardImpl *This;
-        HRESULT hr;
-
-        if (FAILED(hr = alloc_device( rguid, dinput, &This ))) return hr;
-
-        TRACE( "Created a Keyboard device (%p)\n", This );
-
-        *out = &This->base.IDirectInputDevice8W_iface;
-        return DI_OK;
+        IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
+        return hr;
     }
 
-    return DIERR_DEVICENOTREG;
+    *out = &impl->base.IDirectInputDevice8W_iface;
+    return DI_OK;
 }
 
 const struct dinput_device keyboard_device = {
   "Wine keyboard driver",
-  keyboarddev_enum_device,
-  keyboarddev_create_device
+  keyboard_enum_device,
+  keyboard_create_device
 };
 
 static HRESULT keyboard_internal_poll( IDirectInputDevice8W *iface )
