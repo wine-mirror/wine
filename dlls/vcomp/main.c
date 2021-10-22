@@ -94,7 +94,7 @@ struct vcomp_team_data
     /* callback arguments */
     int                     nargs;
     void                    *wrapper;
-    __ms_va_list            valist;
+    va_list                 valist;
 
     /* barrier */
     unsigned int            barrier;
@@ -120,12 +120,12 @@ struct vcomp_task_data
     unsigned int            dynamic_chunksize;
 };
 
-static void **ptr_from_va_list(__ms_va_list valist)
+static void **ptr_from_va_list(va_list valist)
 {
     return *(void ***)&valist;
 }
 
-static void copy_va_list_data(void **args, __ms_va_list valist, int args_count)
+static void copy_va_list_data(void **args, va_list valist, int args_count)
 {
     unsigned int i;
 
@@ -1474,7 +1474,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     team_data.finished_threads  = 0;
     team_data.nargs             = nargs;
     team_data.wrapper           = wrapper;
-    __ms_va_start(team_data.valist, wrapper);
+    va_start(team_data.valist, wrapper);
     team_data.barrier           = 0;
     team_data.barrier_count     = 0;
 
@@ -1572,7 +1572,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
         assert(list_empty(&thread_data.entry));
     }
 
-    __ms_va_end(team_data.valist);
+    va_end(team_data.valist);
 }
 
 static CRITICAL_SECTION *alloc_critsect(void)
@@ -1687,7 +1687,7 @@ static unsigned int get_step_count(int start, int end, int range_offset, int ste
 }
 
 static void CDECL c2vectparallel_wrapper(int start, int end, int step, int end_included, BOOL dynamic_distribution,
-        int volatile *dynamic_start, void *function, int nargs, __ms_va_list valist)
+        int volatile *dynamic_start, void *function, int nargs, va_list valist)
 {
     void *wrapper_args[MAX_VECT_PARALLEL_CALLBACK_ARGS];
     unsigned int step_count, steps_per_call, remainder;
@@ -1779,7 +1779,7 @@ void WINAPIV C2VectParallel(int start, int end, int step, BOOL end_included, int
     struct vcomp_thread_data *thread_data;
     int volatile dynamic_start;
     int prev_thread_count;
-    __ms_va_list valist;
+    va_list valist;
 
     TRACE("start %d, end %d, step %d, end_included %d, thread_count %d, dynamic_distribution %#x,"
             " function %p, nargs %d.\n", start, end, step, end_included, thread_count,
@@ -1793,7 +1793,7 @@ void WINAPIV C2VectParallel(int start, int end, int step, BOOL end_included, int
         return;
     }
 
-    __ms_va_start(valist, nargs);
+    va_start(valist, nargs);
 
     /* This expression can result in integer overflow. According to the tests,
      * native vcomp runs the function as a single thread both for empty range
@@ -1807,7 +1807,7 @@ void WINAPIV C2VectParallel(int start, int end, int step, BOOL end_included, int
         wrapper_args[1] = (void *)(ULONG_PTR)end;
         copy_va_list_data(&wrapper_args[2], valist, nargs - 2);
         _vcomp_fork_call_wrapper(function, nargs, wrapper_args);
-        __ms_va_end(valist);
+        va_end(valist);
         return;
     }
 
@@ -1821,7 +1821,7 @@ void WINAPIV C2VectParallel(int start, int end, int step, BOOL end_included, int
             &dynamic_start, function, nargs, valist);
 
     thread_data->fork_threads = prev_thread_count;
-    __ms_va_end(valist);
+    va_end(valist);
 }
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
