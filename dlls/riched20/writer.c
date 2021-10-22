@@ -125,11 +125,11 @@ ME_StreamOutPrint(ME_OutStream *pStream, const char *format, ...)
 {
   char string[STREAMOUT_BUFFER_SIZE]; /* This is going to be enough */
   int len;
-  __ms_va_list valist;
+  va_list valist;
 
-  __ms_va_start(valist, format);
+  va_start(valist, format);
   len = vsnprintf(string, sizeof(string), format, valist);
-  __ms_va_end(valist);
+  va_end(valist);
 
   return ME_StreamOutMove(pStream, string, len);
 }
