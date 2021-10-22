@@ -189,7 +189,6 @@ struct asf_reader
     struct strmbase_filter filter;
     IFileSourceFilter IFileSourceFilter_iface;
 
-    AM_MEDIA_TYPE media_type;
     WCHAR *file_name;
 
     HRESULT result;
@@ -409,7 +408,6 @@ static void asf_reader_destroy(struct strmbase_filter *iface)
     }
 
     free(filter->file_name);
-    FreeMediaType(&filter->media_type);
     IWMReaderCallback_Release(filter->callback);
     IWMReader_Release(filter->reader);
 
@@ -652,12 +650,6 @@ static HRESULT WINAPI file_source_Load(IFileSourceFilter *iface, LPCOLESTR file_
         return E_FAIL;
     }
 
-    if (media_type && FAILED(hr = CopyMediaType(&filter->media_type, media_type)))
-    {
-        LeaveCriticalSection(&filter->filter.filter_cs);
-        return hr;
-    }
-
     EnterCriticalSection(&filter->status_cs);
     if (SUCCEEDED(hr = IWMReader_Open(filter->reader, filter->file_name, filter->callback, NULL)))
     {
@@ -688,11 +680,11 @@ static HRESULT WINAPI file_source_GetCurFile(IFileSourceFilter *iface, LPOLESTR 
 
     if (media_type)
     {
-        media_type->majortype = filter->media_type.majortype;
-        media_type->subtype = filter->media_type.subtype;
-        media_type->lSampleSize = filter->media_type.lSampleSize;
-        media_type->pUnk = filter->media_type.pUnk;
-        media_type->cbFormat = filter->media_type.cbFormat;
+        media_type->majortype = GUID_NULL;
+        media_type->subtype = GUID_NULL;
+        media_type->lSampleSize = 0;
+        media_type->pUnk = NULL;
+        media_type->cbFormat = 0;
     }
 
     if (filter->file_name)
