@@ -191,12 +191,12 @@ static void delnode_test(void)
 
 static void WINAPIV append_str(char **str, const char *data, ...)
 {
-    __ms_va_list valist;
+    va_list valist;
 
-    __ms_va_start(valist, data);
+    va_start(valist, data);
     vsprintf(*str, data, valist);
     *str += strlen(*str);
-    __ms_va_end(valist);
+    va_end(valist);
 }
 
 static void create_inf_file(void)
