@@ -28,8 +28,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 #include <unistd.h>
 #include <dlfcn.h>
 #ifdef HAVE_PWD_H
@@ -56,8 +60,6 @@ static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 static const char exe_link[] = "/proc/self/exe";
-#elif defined (__FreeBSD__) || defined(__DragonFly__)
-static const char exe_link[] = "/proc/curproc/file";
 #else
 static const char exe_link[] = "";
 #endif
@@ -141,8 +143,18 @@ static char *symlink_dirname( const char *name )
 /* return the directory that contains the main exe at run-time */
 static char *get_runtime_exedir(void)
 {
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+    static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    size_t dir_size = PATH_MAX;
+    char *dir = malloc( dir_size );
+    if (dir && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), dir, &dir_size, NULL, 0 ))
+        return dir;
+    free( dir );
+    return NULL;
+#else
     if (exe_link[0]) return symlink_dirname( exe_link );
     return NULL;
+#endif
 }
 
 /* return the base directory from argv0 */
