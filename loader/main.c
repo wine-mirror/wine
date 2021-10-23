@@ -29,6 +29,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <limits.h>
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 
 #include "main.h"
 
@@ -83,8 +87,14 @@ static const char *get_self_exe( char *argv0 )
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return "/proc/self/exe";
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
-    return "/proc/curproc/file";
-#else
+    static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    size_t path_size = PATH_MAX;
+    char *path = malloc( path_size );
+    if (path && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), path, &path_size, NULL, 0 ))
+        return path;
+    free( path );
+#endif
+
     if (!strchr( argv0, '/' )) /* search in PATH */
     {
         char *p, *path = getenv( "PATH" );
@@ -104,7 +114,6 @@ static const char *get_self_exe( char *argv0 )
         return NULL;
     }
     return argv0;
-#endif
 }
 
 static void *try_dlopen( const char *dir, const char *name )
