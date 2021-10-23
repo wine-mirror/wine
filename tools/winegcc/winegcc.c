@@ -96,6 +96,11 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <limits.h>
+#include <sys/types.h>
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 
 #include "utils.h"
 
@@ -747,7 +752,12 @@ static void init_argv0_dir( const char *argv0 )
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
-    dir = realpath( "/proc/curproc/file", NULL );
+    static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    size_t path_size = PATH_MAX;
+    char *path = malloc( path_size );
+    if (path && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), path, &path_size, NULL, 0 ))
+        dir = realpath( path, NULL );
+    free( path );
 #else
     dir = realpath( argv0, NULL );
 #endif
