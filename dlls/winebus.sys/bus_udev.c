@@ -52,6 +52,7 @@
 #ifdef HAVE_SYS_INOTIFY_H
 # include <sys/inotify.h>
 #endif
+#include <limits.h>
 
 #ifdef HAVE_LINUX_INPUT_H
 # include <linux/input.h>

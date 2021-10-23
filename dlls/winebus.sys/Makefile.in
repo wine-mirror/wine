@@ -1,7 +1,7 @@
 MODULE    = winebus.sys
 UNIXLIB   = winebus.so
 IMPORTS   = ntoskrnl hidparse
-EXTRALIBS = $(IOKIT_LIBS) $(UDEV_LIBS) $(PTHREAD_LIBS)
+EXTRALIBS = $(IOKIT_LIBS) $(UDEV_LIBS) $(PTHREAD_LIBS) $(INOTIFY_LIBS)
 EXTRAINCL = $(UDEV_CFLAGS) $(SDL2_CFLAGS)
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
