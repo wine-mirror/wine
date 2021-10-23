@@ -25,6 +25,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <limits.h>
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 
 #include "windef.h"
 #include "winternl.h"
@@ -240,7 +244,17 @@ static char *get_nls_dir(void)
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
-    dir = realpath( "/proc/curproc/file", NULL );
+    static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    size_t dir_size = PATH_MAX;
+    dir = malloc( dir_size );
+    if (dir)
+    {
+        if (sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), dir, &dir_size, NULL, 0 ))
+        {
+            free( dir );
+            dir = NULL;
+        }
+    }
 #else
     dir = realpath( server_argv0, NULL );
 #endif
