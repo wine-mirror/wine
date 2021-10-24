@@ -142,8 +142,6 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "RAW_ASCENT",
     "RAW_DESCENT",
     "RAW_CAP_HEIGHT",
-    "Rel X",
-    "Rel Y",
     "WM_PROTOCOLS",
     "WM_DELETE_WINDOW",
     "WM_STATE",
