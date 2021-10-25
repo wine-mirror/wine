@@ -28,16 +28,16 @@
 
 static int WINAPIV myprintf(const char* format, ...)
 {
-    __ms_va_list va;
+    va_list va;
     char        tmp[8192];
     DWORD       w = 0;
     int         len;
 
-    __ms_va_start(va, format);
+    va_start(va, format);
     len = vsnprintf(tmp, sizeof(tmp), format, va);
     if (len > 0)
         WriteFile(GetStdHandle(STD_ERROR_HANDLE), tmp, len, &w, NULL);
-    __ms_va_end(va);
+    va_end(va);
     return w;
 }
 
