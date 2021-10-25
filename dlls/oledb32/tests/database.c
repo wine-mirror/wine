@@ -994,7 +994,7 @@ static void test_odbc_provider(void)
     };
 
     hr = CoCreateInstance( &CLSID_MSDASQL, NULL, CLSCTX_ALL, &IID_IDBProperties, (void **)&props);
-    todo_wine ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
     if (FAILED(hr))
     {
         return;
@@ -1006,7 +1006,7 @@ static void test_odbc_provider(void)
 
     infocount = 0;
     hr = IDBProperties_GetPropertyInfo(props, 1, &propidset, &infocount, &propinfoset, &desc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ULONG i;

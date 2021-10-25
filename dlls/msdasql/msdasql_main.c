@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "oledb.h"
 #include "rpcproxy.h"
 #include "wine/debug.h"
 
@@ -102,6 +103,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 struct msdasql
 {
     IUnknown         MSDASQL_iface;
+    IDBProperties    IDBProperties_iface;
 
     LONG     ref;
 };
@@ -109,6 +111,11 @@ struct msdasql
 static inline struct msdasql *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct msdasql, MSDASQL_iface);
+}
+
+static inline struct msdasql *impl_from_IDBProperties(IDBProperties *iface)
+{
+    return CONTAINING_RECORD(iface, struct msdasql, IDBProperties_iface);
 }
 
 static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void **out)
@@ -121,6 +128,10 @@ static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void *
        IsEqualGUID(riid, &CLSID_MSDASQL))
     {
         *out = &provider->MSDASQL_iface;
+    }
+    else if(IsEqualGUID(riid, &IID_IDBProperties))
+    {
+        *out = &provider->IDBProperties_iface;
     }
     else
     {
@@ -165,6 +176,69 @@ static const IUnknownVtbl msdsql_vtbl =
     msdsql_Release
 };
 
+static HRESULT WINAPI dbprops_QueryInterface(IDBProperties *iface, REFIID riid, void **ppvObject)
+{
+    struct msdasql *provider = impl_from_IDBProperties(iface);
+
+    return IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI dbprops_AddRef(IDBProperties *iface)
+{
+    struct msdasql *provider = impl_from_IDBProperties(iface);
+
+    return IUnknown_AddRef(&provider->MSDASQL_iface);
+}
+
+static ULONG WINAPI dbprops_Release(IDBProperties *iface)
+{
+    struct msdasql *provider = impl_from_IDBProperties(iface);
+
+    return IUnknown_Release(&provider->MSDASQL_iface);
+}
+
+static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG cPropertyIDSets,
+            const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
+{
+    struct msdasql *provider = impl_from_IDBProperties(iface);
+
+    FIXME("(%p)->(%d %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG cPropertyIDSets,
+            const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertyInfoSets,
+            DBPROPINFOSET **prgPropertyInfoSets, OLECHAR **ppDescBuffer)
+{
+    struct msdasql *provider = impl_from_IDBProperties(iface);
+
+    FIXME("(%p)->(%d %p %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertyInfoSets,
+                prgPropertyInfoSets, ppDescBuffer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG cPropertySets,
+            DBPROPSET rgPropertySets[])
+{
+    struct msdasql *provider = impl_from_IDBProperties(iface);
+
+    FIXME("(%p)->(%d %p)\n", provider, cPropertySets, rgPropertySets);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDBPropertiesVtbl dbprops_vtbl =
+{
+    dbprops_QueryInterface,
+    dbprops_AddRef,
+    dbprops_Release,
+    dbprops_GetProperties,
+    dbprops_GetPropertyInfo,
+    dbprops_SetProperties
+};
+
 static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 {
     struct msdasql *provider;
@@ -175,6 +249,7 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
         return E_OUTOFMEMORY;
 
     provider->MSDASQL_iface.lpVtbl = &msdsql_vtbl;
+    provider->IDBProperties_iface.lpVtbl = &dbprops_vtbl;
     provider->ref = 1;
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
