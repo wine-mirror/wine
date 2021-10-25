@@ -98,7 +98,7 @@ static int WINAPIV XCOPY_wprintf(const WCHAR *format, ...) {
     static BOOL  traceOutput  = FALSE;
 #define MAX_WRITECONSOLE_SIZE 65535
 
-    __ms_va_list parms;
+    va_list parms;
     DWORD   nOut;
     int len;
     DWORD   res = 0;
@@ -116,10 +116,10 @@ static int WINAPIV XCOPY_wprintf(const WCHAR *format, ...) {
       return 0;
     }
 
-    __ms_va_start(parms, format);
+    va_start(parms, format);
     len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, format, 0, 0, output_bufW,
                    MAX_WRITECONSOLE_SIZE/sizeof(*output_bufW), &parms);
-    __ms_va_end(parms);
+    va_end(parms);
     if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE) {
       WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
       return 0;
