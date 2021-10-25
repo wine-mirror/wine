@@ -50,7 +50,7 @@ static void output_writeconsole(const WCHAR *str, DWORD wlen)
     }
 }
 
-static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
+static void output_formatstring(const WCHAR *fmt, va_list va_args)
 {
     WCHAR *str;
     DWORD len;
@@ -69,31 +69,31 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
 void WINAPIV output_message(unsigned int id, ...)
 {
     WCHAR fmt[1536];
-    __ms_va_list va_args;
+    va_list va_args;
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         return;
     }
-    __ms_va_start(va_args, id);
+    va_start(va_args, id);
     output_formatstring(fmt, va_args);
-    __ms_va_end(va_args);
+    va_end(va_args);
 }
 
 void WINAPIV error_exit(unsigned int id, ...)
 {
     WCHAR fmt[1536];
-    __ms_va_list va_args;
+    va_list va_args;
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
         WINE_FIXME("LoadString failed with %u\n", GetLastError());
         return;
     }
-    __ms_va_start(va_args, id);
+    va_start(va_args, id);
     output_formatstring(fmt, va_args);
-    __ms_va_end(va_args);
+    va_end(va_args);
 
     exit(0); /* regedit.exe always terminates with error code zero */
 }

@@ -44,7 +44,7 @@ struct edit_params
     DWORD        size;
 };
 
-static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, __ms_va_list va_args)
+static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, va_list va_args)
 {
     WCHAR title[256];
     WCHAR fmt[1024];
@@ -64,23 +64,23 @@ static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, __ms_va_l
 
 int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...)
 {
-    __ms_va_list ap;
+    va_list ap;
     INT result;
 
-    __ms_va_start(ap, resId);
+    va_start(ap, resId);
     result = vmessagebox(hwnd, buttons, titleId, resId, ap);
-    __ms_va_end(ap);
+    va_end(ap);
 
     return result;
 }
 
 static void WINAPIV error_code_messagebox(HWND hwnd, unsigned int msg_id, ...)
 {
-    __ms_va_list ap;
+    va_list ap;
 
-    __ms_va_start(ap, msg_id);
+    va_start(ap, msg_id);
     vmessagebox(hwnd, MB_OK|MB_ICONERROR, IDS_ERROR, msg_id, ap);
-    __ms_va_end(ap);
+    va_end(ap);
 }
 
 static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
