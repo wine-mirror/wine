@@ -29,7 +29,7 @@
 void fatal (const char* msg);
 void warning (const char* msg);
 void WINAPIV xprintf (const char *fmt, ...);
-char *vstrmake (size_t *lenp, __ms_va_list ap);
+char *vstrmake (size_t *lenp, va_list ap);
 char * WINAPIV strmake (size_t *lenp, ...);
 int goodtagchar (char c);
 const char *findbadtagchar (const char *tag);

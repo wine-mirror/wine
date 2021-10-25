@@ -105,14 +105,14 @@ send_buf (SOCKET s, const char *buf, size_t length)
 
 static int WINAPIV send_str (SOCKET s, ...)
 {
-    __ms_va_list ap;
+    va_list ap;
     char *p;
     int ret;
     size_t len;
 
-    __ms_va_start (ap, s);
+    va_start (ap, s);
     p = vstrmake (&len, ap);
-    __ms_va_end (ap);
+    va_end (ap);
     if (!p) return 1;
     ret = send_buf (s, p, len);
     heap_free (p);

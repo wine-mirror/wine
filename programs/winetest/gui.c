@@ -60,7 +60,7 @@ MBdefault (int uType)
 
 /* report (R_STATUS, fmt, ...) */
 static int
-textStatus (__ms_va_list ap)
+textStatus (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -71,7 +71,7 @@ textStatus (__ms_va_list ap)
 }
 
 static int
-guiStatus (__ms_va_list ap)
+guiStatus (va_list ap)
 {
     size_t len;
     char *str = vstrmake (&len, ap);
@@ -84,7 +84,7 @@ guiStatus (__ms_va_list ap)
 
 /* report (R_PROGRESS, barnum, steps) */
 static int
-textProgress (__ms_va_list ap)
+textProgress (va_list ap)
 {
     progressGroup = va_arg (ap, int);
     progressMax = va_arg (ap, int);
@@ -93,7 +93,7 @@ textProgress (__ms_va_list ap)
 }
 
 static int
-guiProgress (__ms_va_list ap)
+guiProgress (va_list ap)
 {
     unsigned int max;
     HWND pb;
@@ -114,7 +114,7 @@ guiProgress (__ms_va_list ap)
 
 /* report (R_STEP, fmt, ...) */
 static int
-textStep (__ms_va_list ap)
+textStep (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -126,7 +126,7 @@ textStep (__ms_va_list ap)
 }
 
 static int
-guiStep (__ms_va_list ap)
+guiStep (va_list ap)
 {
     const int pgID = IDC_ST0 + progressGroup * 2;
     char *str = vstrmake (NULL, ap);
@@ -141,7 +141,7 @@ guiStep (__ms_va_list ap)
 
 /* report (R_DELTA, inc, fmt, ...) */
 static int
-textDelta (__ms_va_list ap)
+textDelta (va_list ap)
 {
     const int inc = va_arg (ap, int);
     char *str = vstrmake (NULL, ap);
@@ -154,7 +154,7 @@ textDelta (__ms_va_list ap)
 }
 
 static int
-guiDelta (__ms_va_list ap)
+guiDelta (va_list ap)
 {
     const int inc = va_arg (ap, int);
     const int pgID = IDC_ST0 + progressGroup * 2;
@@ -170,7 +170,7 @@ guiDelta (__ms_va_list ap)
 
 /* report (R_TAG) */
 static int
-textTag (__ms_va_list ap)
+textTag (va_list ap)
 {
     fputs ("Tag: ", stderr);
     fputs (tag, stderr);
@@ -179,7 +179,7 @@ textTag (__ms_va_list ap)
 }
 
 static int
-guiTag (__ms_va_list ap)
+guiTag (va_list ap)
 {
     SetDlgItemTextA (dialog, IDC_TAG, tag);
     return 0;
@@ -187,7 +187,7 @@ guiTag (__ms_va_list ap)
 
 /* report (R_DIR, fmt, ...) */
 static int
-textDir (__ms_va_list ap)
+textDir (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -199,7 +199,7 @@ textDir (__ms_va_list ap)
 }
 
 static int
-guiDir (__ms_va_list ap)
+guiDir (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -210,7 +210,7 @@ guiDir (__ms_va_list ap)
 
 /* report (R_OUT, fmt, ...) */
 static int
-textOut (__ms_va_list ap)
+textOut (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -222,7 +222,7 @@ textOut (__ms_va_list ap)
 }
 
 static int
-guiOut (__ms_va_list ap)
+guiOut (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -233,7 +233,7 @@ guiOut (__ms_va_list ap)
 
 /* report (R_WARNING, fmt, ...) */
 static int
-textWarning (__ms_va_list ap)
+textWarning (va_list ap)
 {
     fputs ("Warning: ", stderr);
     textStatus (ap);
@@ -241,7 +241,7 @@ textWarning (__ms_va_list ap)
 }
 
 static int
-guiWarning (__ms_va_list ap)
+guiWarning (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -252,7 +252,7 @@ guiWarning (__ms_va_list ap)
 
 /* report (R_ERROR, fmt, ...) */
 static int
-textError (__ms_va_list ap)
+textError (va_list ap)
 {
     fputs ("Error: ", stderr);
     textStatus (ap);
@@ -260,7 +260,7 @@ textError (__ms_va_list ap)
 }
 
 static int
-guiError (__ms_va_list ap)
+guiError (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
 
@@ -271,7 +271,7 @@ guiError (__ms_va_list ap)
 
 /* report (R_FATAL, fmt, ...) */
 static int
-textFatal (__ms_va_list ap)
+textFatal (va_list ap)
 {
     textError (ap);
     exit (1);
@@ -279,7 +279,7 @@ textFatal (__ms_va_list ap)
 }
 
 static int
-guiFatal (__ms_va_list ap)
+guiFatal (va_list ap)
 {
     guiError (ap);
     exit (1);
@@ -288,7 +288,7 @@ guiFatal (__ms_va_list ap)
 
 /* report (R_ASK, type, fmt, ...) */
 static int
-textAsk (__ms_va_list ap)
+textAsk (va_list ap)
 {
     int uType = va_arg (ap, int);
     int ret = MBdefault (uType);
@@ -301,7 +301,7 @@ textAsk (__ms_va_list ap)
 }
 
 static int
-guiAsk (__ms_va_list ap)
+guiAsk (va_list ap)
 {
     int uType = va_arg (ap, int);
     char *str = vstrmake (NULL, ap);
@@ -395,13 +395,13 @@ guiAskEmail (void)
 
 /* Quiet functions */
 static int
-qNoOp (__ms_va_list ap)
+qNoOp (va_list ap)
 {
     return 0;
 }
 
 static int
-qAsk (__ms_va_list ap)
+qAsk (va_list ap)
 {
     return MBdefault (va_arg (ap, int));
 }
@@ -480,9 +480,9 @@ DlgThreadProc (LPVOID param)
 
 int WINAPIV report (enum report_type t, ...)
 {
-    typedef int r_fun_t (__ms_va_list);
+    typedef int r_fun_t (va_list);
 
-    __ms_va_list ap;
+    va_list ap;
     int ret = 0;
     static r_fun_t * const text_funcs[] =
         {textStatus, textProgress, textStep, textDelta,
@@ -547,9 +547,9 @@ int WINAPIV report (enum report_type t, ...)
         }
     }
 
-    __ms_va_start (ap, t);
+    va_start (ap, t);
     if (t < ARRAY_SIZE(text_funcs)) ret = funcs[t](ap);
     else report (R_WARNING, "unimplemented report type: %d", t);
-    __ms_va_end (ap);
+    va_end (ap);
     return ret;
 }

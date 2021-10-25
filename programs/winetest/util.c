@@ -57,7 +57,7 @@ void heap_free (void *op)
     HeapFree(GetProcessHeap(), 0, op);
 }
 
-static char *vstrfmtmake (size_t *lenp, const char *fmt, __ms_va_list ap)
+static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
 {
     size_t size = 1000;
     char *p, *q;
@@ -81,7 +81,7 @@ static char *vstrfmtmake (size_t *lenp, const char *fmt, __ms_va_list ap)
     return p;
 }
 
-char *vstrmake (size_t *lenp, __ms_va_list ap)
+char *vstrmake (size_t *lenp, va_list ap)
 {
     const char *fmt;
 
@@ -91,27 +91,27 @@ char *vstrmake (size_t *lenp, __ms_va_list ap)
 
 char * WINAPIV strmake (size_t *lenp, ...)
 {
-    __ms_va_list ap;
+    va_list ap;
     char *p;
 
-    __ms_va_start (ap, lenp);
+    va_start (ap, lenp);
     p = vstrmake (lenp, ap);
     if (!p) report (R_FATAL, "Out of memory.");
-    __ms_va_end (ap);
+    va_end (ap);
     return p;
 }
 
 void WINAPIV xprintf (const char *fmt, ...)
 {
-    __ms_va_list ap;
+    va_list ap;
     size_t size;
     DWORD written;
     char *buffer, *head;
 
-    __ms_va_start (ap, fmt);
+    va_start (ap, fmt);
     buffer = vstrfmtmake (&size, fmt, ap);
     head = buffer;
-    __ms_va_end (ap);
+    va_end (ap);
     while (size) {
         if (!WriteFile( logfile, head, size, &written, NULL ))
             report (R_FATAL, "Can't write logs: %u", GetLastError());
