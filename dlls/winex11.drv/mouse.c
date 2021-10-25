@@ -262,25 +262,13 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
     for (i = 0; i < n_valuators; i++)
     {
         XIValuatorClassInfo *class = (XIValuatorClassInfo *)valuators[i];
-        struct x11drv_valuator_data *valuator_data = NULL;
-
         if (valuators[i]->type != XIValuatorClass) continue;
         if (class->label == x11drv_atom( Rel_X ) ||
             (!class->label && class->number == 0 && class->mode == XIModeRelative))
-        {
-            valuator_data = &thread_data->x_rel_valuator;
-        }
+            thread_data->x_rel_valuator = *class;
         else if (class->label == x11drv_atom( Rel_Y ) ||
                  (!class->label && class->number == 1 && class->mode == XIModeRelative))
-        {
-            valuator_data = &thread_data->y_rel_valuator;
-        }
-
-        if (valuator_data) {
-            valuator_data->number = class->number;
-            valuator_data->min = class->min;
-            valuator_data->max = class->max;
-        }
+            thread_data->y_rel_valuator = *class;
     }
 }
 #endif
@@ -638,7 +626,7 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     const double *values = event->valuators.values;
-    struct x11drv_valuator_data *x_rel, *y_rel;
+    XIValuatorClassInfo *x_rel, *y_rel;
     double dx = 0, dy = 0, val;
     RECT virtual_rect;
     int i;

@@ -36,6 +36,9 @@
 #ifdef HAVE_LIBXSHAPE
 #include <X11/extensions/shape.h>
 #endif /* HAVE_LIBXSHAPE */
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+#include <X11/extensions/XInput2.h>
+#endif
 
 /* avoid conflict with field names in included win32 headers */
 #undef Status
