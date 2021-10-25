@@ -22,6 +22,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <math.h>
+
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #include <stdarg.h>
@@ -270,6 +272,9 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
                  (!class->label && class->number == 1 && class->mode == XIModeRelative))
             thread_data->y_valuator = *class;
     }
+
+    thread_data->x_valuator.value = 0;
+    thread_data->y_valuator.value = 0;
 }
 #endif
 
@@ -351,6 +356,8 @@ static void disable_xinput2(void)
     pXIFreeDeviceInfo( data->xi2_devices );
     data->x_valuator.number = -1;
     data->y_valuator.number = -1;
+    data->x_valuator.value = 0;
+    data->y_valuator.value = 0;
     data->xi2_devices = NULL;
     data->xi2_core_pointer = 0;
     data->xi2_current_slave = 0;
@@ -626,8 +633,8 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     XIValuatorClassInfo *x = &thread_data->x_valuator, *y = &thread_data->y_valuator;
+    double x_value = 0, y_value = 0, x_scale, y_scale;
     const double *values = event->valuators.values;
-    double dx = 0, dy = 0, val;
     RECT virtual_rect;
     int i;
 
@@ -656,25 +663,41 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
 
     virtual_rect = get_virtual_screen_rect();
 
+    if (x->max <= x->min) x_scale = 1;
+    else x_scale = (virtual_rect.right - virtual_rect.left) / (x->max - x->min);
+    if (y->max <= y->min) y_scale = 1;
+    else y_scale = (virtual_rect.bottom - virtual_rect.top) / (y->max - y->min);
+
     for (i = 0; i <= max( x->number, y->number ); i++)
     {
         if (!XIMaskIsSet( event->valuators.mask, i )) continue;
-        val = *values++;
         if (i == x->number)
         {
-            input->u.mi.dx = dx = val;
-            if (x->min < x->max)
-                input->u.mi.dx = val * (virtual_rect.right - virtual_rect.left) / (x->max - x->min);
+            x_value = *values;
+            x->value += x_value * x_scale;
         }
         if (i == y->number)
         {
-            input->u.mi.dy = dy = val;
-            if (y->min < y->max)
-                input->u.mi.dy = val * (virtual_rect.bottom - virtual_rect.top) / (y->max - y->min);
+            y_value = *values;
+            y->value += y_value * y_scale;
         }
+        values++;
     }
 
-    TRACE( "pos %d,%d (event %f,%f)\n", input->u.mi.dx, input->u.mi.dy, dx, dy );
+    input->u.mi.dx = round( x->value );
+    input->u.mi.dy = round( y->value );
+
+    TRACE( "event %f,%f value %f,%f input %d,%d\n", x_value, y_value, x->value, y->value, input->u.mi.dx, input->u.mi.dy );
+
+    x->value -= input->u.mi.dx;
+    y->value -= input->u.mi.dy;
+
+    if (!input->u.mi.dx && !input->u.mi.dy)
+    {
+        TRACE( "accumulating motion\n" );
+        return FALSE;
+    }
+
     return TRUE;
 }
 
