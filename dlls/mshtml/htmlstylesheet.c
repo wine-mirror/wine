@@ -348,6 +348,7 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCol
     HTMLStyleSheetRulesCollection *This = impl_from_IHTMLStyleSheetRulesCollection(iface);
     nsIDOMCSSRule *nsstylesheetrule;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%d %p)\n", This, index, p);
 
@@ -357,7 +358,9 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCol
     if(!nsstylesheetrule)
         return E_INVALIDARG;
 
-    return create_style_sheet_rule(nsstylesheetrule, dispex_compat_mode(&This->dispex), p);
+    hres = create_style_sheet_rule(nsstylesheetrule, dispex_compat_mode(&This->dispex), p);
+    nsIDOMCSSRule_Release(nsstylesheetrule);
+    return hres;
 }
 
 static const IHTMLStyleSheetRulesCollectionVtbl HTMLStyleSheetRulesCollectionVtbl = {
