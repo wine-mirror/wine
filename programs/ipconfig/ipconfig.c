@@ -28,7 +28,7 @@
 
 #include "ipconfig.h"
 
-static int ipconfig_vprintfW(const WCHAR *msg, __ms_va_list va_args)
+static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
 {
     int wlen;
     DWORD count, ret;
@@ -64,27 +64,27 @@ static int ipconfig_vprintfW(const WCHAR *msg, __ms_va_list va_args)
 
 static int WINAPIV ipconfig_printfW(const WCHAR *msg, ...)
 {
-    __ms_va_list va_args;
+    va_list va_args;
     int len;
 
-    __ms_va_start(va_args, msg);
+    va_start(va_args, msg);
     len = ipconfig_vprintfW(msg, va_args);
-    __ms_va_end(va_args);
+    va_end(va_args);
 
     return len;
 }
 
 static int WINAPIV ipconfig_message_printfW(int msg, ...)
 {
-    __ms_va_list va_args;
+    va_list va_args;
     WCHAR msg_buffer[8192];
     int len;
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
-    __ms_va_start(va_args, msg);
+    va_start(va_args, msg);
     len = ipconfig_vprintfW(msg_buffer, va_args);
-    __ms_va_end(va_args);
+    va_end(va_args);
 
     return len;
 }
