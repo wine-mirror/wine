@@ -909,11 +909,27 @@ static HRESULT WINAPI media_player_GetPosition(IMFPMediaPlayer *iface, REFGUID p
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI media_player_GetDuration(IMFPMediaPlayer *iface, REFGUID postype, PROPVARIANT *position)
+static HRESULT WINAPI media_player_GetDuration(IMFPMediaPlayer *iface, REFGUID postype, PROPVARIANT *duration)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_guid(postype), position);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(postype), duration);
+
+    if (!postype || !duration)
+        return E_POINTER;
+
+    EnterCriticalSection(&player->cs);
+    if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!player->item)
+        hr = MF_E_INVALIDREQUEST;
+    else
+        /* FIXME: use start/stop markers for resulting duration */
+        hr = IMFPMediaItem_GetDuration(player->item, postype, duration);
+    LeaveCriticalSection(&player->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_SetRate(IMFPMediaPlayer *iface, float rate)

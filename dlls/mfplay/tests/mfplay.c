@@ -148,6 +148,7 @@ static void test_shutdown(void)
     IMFPMediaPlayer *player;
     float slowest, fastest;
     IMFPMediaItem *item;
+    PROPVARIANT propvar;
     COLORREF color;
     HWND window;
     DWORD mode;
@@ -216,6 +217,15 @@ todo_wine
 
     hr = IMFPMediaPlayer_GetVideoWindow(player, &window);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetDuration(player, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_Shutdown(player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -345,10 +355,33 @@ todo_wine
     DestroyWindow(window);
 }
 
+static void test_duration(void)
+{
+    IMFPMediaPlayer *player;
+    PROPVARIANT propvar;
+    HRESULT hr;
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* No media item. */
+    hr = IMFPMediaPlayer_GetDuration(player, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    IMFPMediaPlayer_Release(player);
+}
+
 START_TEST(mfplay)
 {
     test_create_player();
     test_shutdown();
     test_media_item();
     test_video_control();
+    test_duration();
 }
