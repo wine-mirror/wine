@@ -2050,10 +2050,16 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
             const char *name = all_libs.str[i] + 2;
 
             for (j = 0; j < subdirs.count; j++)
+            {
+                if (make == submakes[j]) continue;
                 if ((lib = get_static_lib( submakes[j], name ))) break;
+            }
             if (!lib && make->native_unix_lib)
                 for (j = 0; j < subdirs.count; j++)
+                {
+                    if (make == submakes[j]) continue;
                     if ((lib = get_native_unix_lib( submakes[j], name ))) break;
+                }
         }
 
         if (lib)
