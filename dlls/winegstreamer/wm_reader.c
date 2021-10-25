@@ -759,6 +759,34 @@ static const IWMReaderTimecodeVtbl timecode_vtbl =
     timecode_GetTimecodeRangeBounds,
 };
 
+HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
+{
+    EnterCriticalSection(&reader->cs);
+
+    IStream_AddRef(reader->source_stream = stream);
+
+    LeaveCriticalSection(&reader->cs);
+
+    return S_OK;
+}
+
+HRESULT wm_reader_close(struct wm_reader *reader)
+{
+    EnterCriticalSection(&reader->cs);
+
+    if (!reader->source_stream)
+    {
+        LeaveCriticalSection(&reader->cs);
+        return NS_E_INVALID_REQUEST;
+    }
+
+    IStream_Release(reader->source_stream);
+    reader->source_stream = NULL;
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
+}
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
@@ -769,4 +797,13 @@ void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
     reader->IWMReaderTimecode_iface.lpVtbl = &timecode_vtbl;
     reader->refcount = 1;
     reader->ops = ops;
+
+    InitializeCriticalSection(&reader->cs);
+    reader->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": wm_reader.cs");
+}
+
+void wm_reader_cleanup(struct wm_reader *reader)
+{
+    reader->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&reader->cs);
 }

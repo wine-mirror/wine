@@ -451,7 +451,7 @@ static void test_sync_reader_streaming(void)
 
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
 
     hr = IWMProfile_GetStreamCount(profile, NULL);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
@@ -603,17 +603,17 @@ static void test_sync_reader_streaming(void)
     todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_Close(reader);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_Close(reader);
-    todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
 
     ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
 
     SetFilePointer(stream.file, 0, NULL, FILE_BEGIN);
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
 
     IWMProfile_Release(profile);
     ref = IWMSyncReader_Release(reader);
@@ -692,7 +692,7 @@ static void test_sync_reader_types(void)
 
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
 
     for (i = 0; i < 2; ++i)
     {

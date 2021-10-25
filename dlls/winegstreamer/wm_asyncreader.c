@@ -1255,6 +1255,8 @@ static void async_reader_destroy(struct wm_reader *iface)
 
     TRACE("reader %p.\n", reader);
 
+    wm_reader_close(&reader->reader);
+    wm_reader_cleanup(&reader->reader);
     free(reader);
 }
 

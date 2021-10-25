@@ -55,9 +55,11 @@ static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
 
 static HRESULT WINAPI WMSyncReader_Close(IWMSyncReader2 *iface)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p): stub!\n", This);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p.\n", reader);
+
+    return wm_reader_close(&reader->reader);
 }
 
 static HRESULT WINAPI WMSyncReader_GetMaxOutputSampleSize(IWMSyncReader2 *iface, DWORD output, DWORD *max)
@@ -157,9 +159,11 @@ static HRESULT WINAPI WMSyncReader_Open(IWMSyncReader2 *iface, const WCHAR *file
 
 static HRESULT WINAPI WMSyncReader_OpenStream(IWMSyncReader2 *iface, IStream *stream)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%p): stub!\n", This, stream);
-    return S_OK;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, stream %p.\n", reader, stream);
+
+    return wm_reader_open_stream(&reader->reader, stream);
 }
 
 static HRESULT WINAPI WMSyncReader_SetOutputProps(IWMSyncReader2 *iface, DWORD output_num, IWMOutputMediaProps *output)
@@ -309,6 +313,8 @@ static void sync_reader_destroy(struct wm_reader *iface)
 
     TRACE("reader %p.\n", reader);
 
+    wm_reader_close(&reader->reader);
+    wm_reader_cleanup(&reader->reader);
     free(reader);
 }
 

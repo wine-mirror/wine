@@ -122,6 +122,9 @@ struct wm_reader
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
     LONG refcount;
+    CRITICAL_SECTION cs;
+
+    IStream *source_stream;
 
     const struct wm_reader_ops *ops;
 };
@@ -132,6 +135,9 @@ struct wm_reader_ops
     void (*destroy)(struct wm_reader *reader);
 };
 
+void wm_reader_cleanup(struct wm_reader *reader);
+HRESULT wm_reader_close(struct wm_reader *reader);
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
+HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 
 #endif /* __GST_PRIVATE_INCLUDED__ */
