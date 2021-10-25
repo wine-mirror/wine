@@ -634,6 +634,65 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
     input->u.mi.dy = pt.y;
 }
 
+static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
+{
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    const double *values = event->valuators.values;
+    struct x11drv_valuator_data *x_rel, *y_rel;
+    double dx = 0, dy = 0, val;
+    RECT virtual_rect;
+    int i;
+
+    if (thread_data->x_rel_valuator.number < 0 || thread_data->y_rel_valuator.number < 0) return FALSE;
+    if (!event->valuators.mask_len) return FALSE;
+    if (thread_data->xi2_state != xi_enabled) return FALSE;
+
+    /* If there is no slave currently detected, no previous motion nor device
+     * change events were received. Look it up now on the device list in this
+     * case.
+     */
+    if (!thread_data->xi2_current_slave)
+    {
+        XIDeviceInfo *devices = thread_data->xi2_devices;
+
+        for (i = 0; i < thread_data->xi2_device_count; i++)
+        {
+            if (devices[i].use != XISlavePointer) continue;
+            if (devices[i].deviceid != event->deviceid) continue;
+            if (devices[i].attachment != thread_data->xi2_core_pointer) continue;
+            thread_data->xi2_current_slave = event->deviceid;
+            break;
+        }
+    }
+    if (event->deviceid != thread_data->xi2_current_slave) return FALSE;
+
+    x_rel = &thread_data->x_rel_valuator;
+    y_rel = &thread_data->y_rel_valuator;
+
+    virtual_rect = get_virtual_screen_rect();
+
+    for (i = 0; i <= max( x_rel->number, y_rel->number ); i++)
+    {
+        if (!XIMaskIsSet( event->valuators.mask, i )) continue;
+        val = *values++;
+        if (i == x_rel->number)
+        {
+            input->u.mi.dx = dx = val;
+            if (x_rel->min < x_rel->max)
+                input->u.mi.dx = val * (virtual_rect.right - virtual_rect.left) / (x_rel->max - x_rel->min);
+        }
+        if (i == y_rel->number)
+        {
+            input->u.mi.dy = dy = val;
+            if (y_rel->min < y_rel->max)
+                input->u.mi.dy = val * (virtual_rect.bottom - virtual_rect.top) / (y_rel->max - y_rel->min);
+        }
+    }
+
+    TRACE( "pos %d,%d (event %f,%f)\n", input->u.mi.dx, input->u.mi.dy, dx, dy );
+    return TRUE;
+}
+
 
 /***********************************************************************
  *		send_mouse_input
@@ -1827,79 +1886,23 @@ static BOOL X11DRV_DeviceChanged( XGenericEventCookie *xev )
 static BOOL X11DRV_RawMotion( XGenericEventCookie *xev )
 {
     XIRawEvent *event = xev->data;
-    const double *values = event->valuators.values;
-    RECT virtual_rect;
     INPUT input;
-    int i;
-    double dx = 0, dy = 0, val;
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
-    struct x11drv_valuator_data *x_rel, *y_rel;
 
-    if (thread_data->x_rel_valuator.number < 0 || thread_data->y_rel_valuator.number < 0) return FALSE;
-    if (!event->valuators.mask_len) return FALSE;
-    if (thread_data->xi2_state != xi_enabled) return FALSE;
-
-    /* If there is no slave currently detected, no previous motion nor device
-     * change events were received. Look it up now on the device list in this
-     * case.
-     */
-    if (!thread_data->xi2_current_slave)
+    if (broken_rawevents && is_old_motion_event( xev->serial ))
     {
-        XIDeviceInfo *devices = thread_data->xi2_devices;
-
-        for (i = 0; i < thread_data->xi2_device_count; i++)
-        {
-            if (devices[i].use != XISlavePointer) continue;
-            if (devices[i].deviceid != event->deviceid) continue;
-            if (devices[i].attachment != thread_data->xi2_core_pointer) continue;
-            thread_data->xi2_current_slave = event->deviceid;
-            break;
-        }
+        TRACE( "old serial %lu, ignoring\n", xev->serial );
+        return FALSE;
     }
 
-    if (event->deviceid != thread_data->xi2_current_slave) return FALSE;
-
-    x_rel = &thread_data->x_rel_valuator;
-    y_rel = &thread_data->y_rel_valuator;
-
+    input.type = INPUT_MOUSE;
     input.u.mi.mouseData   = 0;
     input.u.mi.dwFlags     = MOUSEEVENTF_MOVE;
     input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.u.mi.dwExtraInfo = 0;
     input.u.mi.dx          = 0;
     input.u.mi.dy          = 0;
+    if (!map_raw_event_coords( event, &input )) return FALSE;
 
-    virtual_rect = get_virtual_screen_rect();
-
-    for (i = 0; i <= max ( x_rel->number, y_rel->number ); i++)
-    {
-        if (!XIMaskIsSet( event->valuators.mask, i )) continue;
-        val = *values++;
-        if (i == x_rel->number)
-        {
-            input.u.mi.dx = dx = val;
-            if (x_rel->min < x_rel->max)
-                input.u.mi.dx = val * (virtual_rect.right - virtual_rect.left)
-                                    / (x_rel->max - x_rel->min);
-        }
-        if (i == y_rel->number)
-        {
-            input.u.mi.dy = dy = val;
-            if (y_rel->min < y_rel->max)
-                input.u.mi.dy = val * (virtual_rect.bottom - virtual_rect.top)
-                                    / (y_rel->max - y_rel->min);
-        }
-    }
-
-    if (broken_rawevents && is_old_motion_event( xev->serial ))
-    {
-        TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, xev->serial );
-        return FALSE;
-    }
-
-    TRACE( "pos %d,%d (event %f,%f)\n", input.u.mi.dx, input.u.mi.dy, dx, dy );
-
-    input.type = INPUT_MOUSE;
     __wine_send_input( 0, &input, NULL );
     return TRUE;
 }
