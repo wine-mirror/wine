@@ -540,6 +540,7 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection 
         }
 
         hres = create_style_sheet(nsstylesheet, dispex_compat_mode(&This->dispex), &stylesheet);
+        nsIDOMStyleSheet_Release(nsstylesheet);
         if(FAILED(hres))
             return hres;
 
