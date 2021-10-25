@@ -142,13 +142,16 @@ static void test_create_player(void)
 
 static void test_shutdown(void)
 {
-    SIZE min_size, max_size;
+    SIZE size, min_size, max_size;
+    MFP_MEDIAPLAYER_STATE state;
+    MFVideoNormalizedRect rect;
     IMFPMediaPlayer *player;
     float slowest, fastest;
-    HRESULT hr;
-    MFP_MEDIAPLAYER_STATE state;
     IMFPMediaItem *item;
+    COLORREF color;
     HWND window;
+    DWORD mode;
+    HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -178,6 +181,28 @@ static void test_shutdown(void)
     ok(state == MFP_MEDIAPLAYER_STATE_SHUTDOWN, "Unexpected state %d.\n", state);
 
     hr = IMFPMediaPlayer_GetIdealVideoSize(player, &min_size, &max_size);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetVideoSourceRect(player, &rect);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetBorderColor(player, &color);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetAspectRatioMode(player, &mode);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetNativeVideoSize(player, &size, &size);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetBorderColor(player, 0);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetAspectRatioMode(player, MFVideoARMode_None);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_UpdateVideo(player);
+todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, &item);
@@ -212,9 +237,64 @@ static void test_media_item(void)
     IMFPMediaPlayer_Release(player);
 }
 
+static void test_video_control(void)
+{
+    MFVideoNormalizedRect rect;
+    IMFPMediaPlayer *player;
+    COLORREF color;
+    HWND window;
+    DWORD mode;
+    HRESULT hr;
+    SIZE size;
+
+    window = CreateWindowA("static", "mfplay_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create output window.\n");
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, window, &player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* No active media item */
+
+    rect.left = rect.top = 0.0f;
+    rect.right = rect.bottom = 1.0f;
+    hr = IMFPMediaPlayer_SetVideoSourceRect(player, &rect);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetBorderColor(player, 0);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetAspectRatioMode(player, MFVideoARMode_None);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetVideoSourceRect(player, &rect);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetBorderColor(player, &color);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetAspectRatioMode(player, &mode);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetIdealVideoSize(player, &size, &size);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetNativeVideoSize(player, &size, &size);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_UpdateVideo(player);
+todo_wine
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    IMFPMediaPlayer_Release(player);
+
+    DestroyWindow(window);
+}
+
 START_TEST(mfplay)
 {
     test_create_player();
     test_shutdown();
     test_media_item();
+    test_video_control();
 }

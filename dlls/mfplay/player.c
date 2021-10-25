@@ -1323,6 +1323,15 @@ static HRESULT WINAPI media_player_SetMute(IMFPMediaPlayer *iface, BOOL mute)
     return E_NOTIMPL;
 }
 
+static HRESULT media_player_get_display_control(const struct media_player *player,
+        IMFVideoDisplayControl **display_control)
+{
+    HRESULT hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)display_control);
+    if (SUCCEEDED(hr)) return hr;
+    return hr == MF_E_SHUTDOWN ? hr : MF_E_INVALIDREQUEST;
+}
+
 static HRESULT WINAPI media_player_GetNativeVideoSize(IMFPMediaPlayer *iface,
         SIZE *video, SIZE *arvideo)
 {
@@ -1332,8 +1341,7 @@ static HRESULT WINAPI media_player_GetNativeVideoSize(IMFPMediaPlayer *iface,
 
     TRACE("%p, %p, %p.\n", iface, video, arvideo);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, video, arvideo);
         IMFVideoDisplayControl_Release(display_control);
@@ -1351,8 +1359,7 @@ static HRESULT WINAPI media_player_GetIdealVideoSize(IMFPMediaPlayer *iface,
 
     TRACE("%p, %p, %p.\n", iface, min_size, max_size);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_GetIdealVideoSize(display_control, min_size, max_size);
         IMFVideoDisplayControl_Release(display_control);
@@ -1370,8 +1377,7 @@ static HRESULT WINAPI media_player_SetVideoSourceRect(IMFPMediaPlayer *iface,
 
     TRACE("%p, %p.\n", iface, rect);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_SetVideoPosition(display_control, rect, NULL);
         IMFVideoDisplayControl_Release(display_control);
@@ -1390,8 +1396,7 @@ static HRESULT WINAPI media_player_GetVideoSourceRect(IMFPMediaPlayer *iface,
 
     TRACE("%p, %p.\n", iface, rect);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_GetVideoPosition(display_control, rect, &dest);
         IMFVideoDisplayControl_Release(display_control);
@@ -1408,8 +1413,7 @@ static HRESULT WINAPI media_player_SetAspectRatioMode(IMFPMediaPlayer *iface, DW
 
     TRACE("%p, %u.\n", iface, mode);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_SetAspectRatioMode(display_control, mode);
         IMFVideoDisplayControl_Release(display_control);
@@ -1427,8 +1431,7 @@ static HRESULT WINAPI media_player_GetAspectRatioMode(IMFPMediaPlayer *iface,
 
     TRACE("%p, %p.\n", iface, mode);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_GetAspectRatioMode(display_control, mode);
         IMFVideoDisplayControl_Release(display_control);
@@ -1463,8 +1466,7 @@ static HRESULT WINAPI media_player_SetBorderColor(IMFPMediaPlayer *iface, COLORR
 
     TRACE("%p, %#x.\n", iface, color);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_SetBorderColor(display_control, color);
         IMFVideoDisplayControl_Release(display_control);
@@ -1481,8 +1483,7 @@ static HRESULT WINAPI media_player_GetBorderColor(IMFPMediaPlayer *iface, COLORR
 
     TRACE("%p, %p.\n", iface, color);
 
-    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
-            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
         hr = IMFVideoDisplayControl_GetBorderColor(display_control, color);
         IMFVideoDisplayControl_Release(display_control);
