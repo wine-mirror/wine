@@ -113,35 +113,22 @@ TW_UINT16 SANE_ImageLayoutGet (pTW_IDENTITY pOrigin,
                                 TW_MEMREF pData)
 {
     TW_IMAGELAYOUT *img = (TW_IMAGELAYOUT *) pData;
-    SANE_Fixed tlx_current;
-    SANE_Fixed tly_current;
-    SANE_Fixed brx_current;
-    SANE_Fixed bry_current;
+    int tlx, tly, brx, bry;
     TW_UINT16 rc;
 
     TRACE("DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET\n");
 
-    rc = sane_option_probe_scan_area("tl-x", &tlx_current, NULL, NULL, NULL, NULL);
-    if (rc == TWCC_SUCCESS)
-        rc = sane_option_probe_scan_area("tl-y", &tly_current, NULL, NULL, NULL, NULL);
-
-    if (rc == TWCC_SUCCESS)
-        rc = sane_option_probe_scan_area("br-x", &brx_current, NULL, NULL, NULL, NULL);
-
-    if (rc == TWCC_SUCCESS)
-        rc = sane_option_probe_scan_area("br-y", &bry_current, NULL, NULL, NULL, NULL);
-
+    rc = sane_option_get_scan_area( &tlx, &tly, &brx, &bry );
     if (rc != TWCC_SUCCESS)
     {
         activeDS.twCC = rc;
         return TWRC_FAILURE;
     }
 
-    convert_sane_res_to_twain(SANE_UNFIX(tlx_current), SANE_UNIT_MM, &img->Frame.Left, TWUN_INCHES);
-    convert_sane_res_to_twain(SANE_UNFIX(tly_current), SANE_UNIT_MM, &img->Frame.Top, TWUN_INCHES);
-    convert_sane_res_to_twain(SANE_UNFIX(brx_current), SANE_UNIT_MM, &img->Frame.Right, TWUN_INCHES);
-    convert_sane_res_to_twain(SANE_UNFIX(bry_current), SANE_UNIT_MM, &img->Frame.Bottom, TWUN_INCHES);
-
+    img->Frame.Left   = convert_sane_res_to_twain( tlx );
+    img->Frame.Top    = convert_sane_res_to_twain( tly );
+    img->Frame.Right  = convert_sane_res_to_twain( brx );
+    img->Frame.Bottom = convert_sane_res_to_twain( bry );
     img->DocumentNumber = 1;
     img->PageNumber = 1;
     img->FrameNumber = 1;
@@ -168,18 +155,6 @@ TW_UINT16 SANE_ImageLayoutReset (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
-static TW_UINT16 set_one_imagecoord(const char *option_name, TW_FIX32 val, BOOL *changed)
-{
-    int v = val.Whole * 65536 + val.Frac;
-    TW_UINT16 rc = sane_option_set_fixed(option_name, MulDiv( v, 254, 10 ), changed);
-    if (rc != TWCC_SUCCESS)
-    {
-        activeDS.twCC = rc;
-        return TWRC_FAILURE;
-    }
-    return TWRC_SUCCESS;
-}
-
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_SET */
 TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin,
                                 TW_MEMREF pData)
@@ -187,6 +162,7 @@ TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin,
     TW_IMAGELAYOUT *img = (TW_IMAGELAYOUT *) pData;
     BOOL changed = FALSE;
     TW_UINT16 twrc;
+    int tlx, tly, brx, bry;
 
     TRACE("DG_IMAGE/DAT_IMAGELAYOUT/MSG_SET\n");
     TRACE("Frame: [Left %x.%x|Top %x.%x|Right %x.%x|Bottom %x.%x]\n",
@@ -195,19 +171,12 @@ TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin,
             img->Frame.Right.Whole, img->Frame.Right.Frac,
             img->Frame.Bottom.Whole, img->Frame.Bottom.Frac);
 
-    twrc = set_one_imagecoord("tl-x", img->Frame.Left, &changed);
-    if (twrc != TWRC_SUCCESS)
-        return (twrc);
+    tlx = img->Frame.Left.Whole   * 65536 + img->Frame.Left.Frac;
+    tly = img->Frame.Top.Whole    * 65536 + img->Frame.Top.Frac;
+    brx = img->Frame.Right.Whole  * 65536 + img->Frame.Right.Frac;
+    bry = img->Frame.Bottom.Whole * 65536 + img->Frame.Bottom.Frac;
 
-    twrc = set_one_imagecoord("tl-y", img->Frame.Top, &changed);
-    if (twrc != TWRC_SUCCESS)
-        return (twrc);
-
-    twrc = set_one_imagecoord("br-x", img->Frame.Right, &changed);
-    if (twrc != TWRC_SUCCESS)
-        return (twrc);
-
-    twrc = set_one_imagecoord("br-y", img->Frame.Bottom, &changed);
+    twrc = sane_option_set_scan_area( tlx, tly, brx, bry, &changed );
     if (twrc != TWRC_SUCCESS)
         return (twrc);
 

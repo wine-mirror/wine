@@ -22,6 +22,8 @@
 #include "sane_i.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(twain);
+
 static TW_UINT16 sane_status_to_twcc(SANE_Status rc)
 {
     switch (rc)
@@ -137,16 +139,6 @@ TW_UINT16 sane_option_set_bool(const char *option_name, int val )
     return rc;
 }
 
-TW_UINT16 sane_option_set_fixed(const char *option_name, int val, BOOL *needs_reload )
-{
-    int optno;
-    const SANE_Option_Descriptor *opt;
-    TW_UINT16 rc = sane_find_option(option_name, &opt, &optno, SANE_TYPE_FIXED);
-
-    if (rc == TWCC_SUCCESS) rc = sane_option_set_value( optno, &val, needs_reload );
-    return rc;
-}
-
 TW_UINT16 sane_option_get_str(const char *option_name, char *val, int len)
 {
     int optno;
@@ -207,45 +199,64 @@ TW_UINT16 sane_option_probe_mode(const char * const **choices, char *current, in
 
 }
 
-TW_UINT16 sane_option_probe_scan_area(const char *option_name, SANE_Fixed *val,
-                                      SANE_Unit *unit, SANE_Fixed *min, SANE_Fixed *max, SANE_Fixed *quant)
+TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry )
 {
+    TW_UINT16 rc;
     int optno;
     const SANE_Option_Descriptor *opt;
-    TW_UINT16 rc = sane_find_option(option_name, &opt, &optno, SANE_TYPE_FIXED);
 
-    if (rc != TWCC_SUCCESS) return rc;
-    if (unit)
-        *unit = opt->unit;
-    if (min)
-        *min = opt->constraint.range->min;
-    if (max)
-        *max = opt->constraint.range->max;
-    if (quant)
-        *quant = opt->constraint.range->quant;
-
-    if (val)
-        rc = sane_option_get_value( optno, val );
-
+    if ((rc = sane_find_option( "tl-x", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_get_value( optno, tlx )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_find_option( "tl-y", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_get_value( optno, tly )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_find_option( "br-x", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_get_value( optno, brx )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_find_option( "br-y", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_get_value( optno, bry )) != TWCC_SUCCESS) return rc;
+    if (opt->unit != SANE_UNIT_MM) FIXME( "unsupported unit %u\n", opt->unit );
     return rc;
 }
 
-static void convert_double_fix32(double d, TW_FIX32 *fix32)
+TW_UINT16 sane_option_get_max_scan_area( int *tlx, int *tly, int *brx, int *bry )
 {
-    TW_INT32 value = (TW_INT32) (d * 65536.0 + 0.5);
-    fix32->Whole = value >> 16;
-    fix32->Frac = value & 0x0000ffffL;
+    TW_UINT16 rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
+
+    if ((rc = sane_find_option( "tl-x", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    *tlx = opt->constraint.range->min;
+    if ((rc = sane_find_option( "tl-y", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    *tly = opt->constraint.range->min;
+    if ((rc = sane_find_option( "br-x", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    *brx = opt->constraint.range->max;
+    if ((rc = sane_find_option( "br-y", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    *bry = opt->constraint.range->max;
+    if (opt->unit != SANE_UNIT_MM) FIXME( "unsupported unit %u\n", opt->unit );
+    return rc;
 }
 
-BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype)
+TW_UINT16 sane_option_set_scan_area( int tlx, int tly, int brx, int bry, BOOL *reload )
 {
-    if (unit != SANE_UNIT_MM)
-        return FALSE;
+    TW_UINT16 rc;
+    int optno;
+    const SANE_Option_Descriptor *opt;
 
-    if (twtype != TWUN_INCHES)
-        return FALSE;
+    if ((rc = sane_find_option( "tl-x", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_set_value( optno, &tlx, reload )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_find_option( "tl-y", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_set_value( optno, &tly, reload )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_find_option( "br-x", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_set_value( optno, &brx, reload )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_find_option( "br-y", &opt, &optno, SANE_TYPE_FIXED )) != TWCC_SUCCESS) return rc;
+    if ((rc = sane_option_set_value( optno, &bry, reload )) != TWCC_SUCCESS) return rc;
+    return rc;
+}
 
-    convert_double_fix32((sane_res / 10.0) / 2.54, twain_res);
-
-    return TRUE;
+TW_FIX32 convert_sane_res_to_twain(int res)
+{
+    TW_FIX32 value;
+    res = MulDiv( res, 10, 254 );  /* mm -> inch */
+    value.Whole = res / 65536;
+    value.Frac  = res & 0xffff;
+    return value;
 }

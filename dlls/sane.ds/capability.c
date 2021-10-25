@@ -641,25 +641,14 @@ static TW_UINT16 SANE_ICAPPhysical (pTW_CAPABILITY pCapability, TW_UINT16 action
 {
     TW_UINT16 twCC;
     TW_FIX32 res;
-    char option_name[64];
-    SANE_Fixed lower, upper;
-    SANE_Unit lowerunit, upperunit;
+    int tlx, tly, brx, bry;
 
     TRACE("ICAP_PHYSICAL%s\n", cap == ICAP_PHYSICALHEIGHT? "HEIGHT" : "WIDTH");
 
-    sprintf(option_name, "tl-%c", cap == ICAP_PHYSICALHEIGHT ? 'y' : 'x');
-    twCC = sane_option_probe_scan_area(option_name, NULL, &lowerunit, &lower, NULL, NULL);
+    twCC = sane_option_get_max_scan_area( &tlx, &tly, &brx, &bry );
     if (twCC != TWCC_SUCCESS) return twCC;
 
-    sprintf(option_name, "br-%c", cap == ICAP_PHYSICALHEIGHT ? 'y' : 'x');
-    twCC = sane_option_probe_scan_area(option_name, NULL, &upperunit, NULL, &upper, NULL);
-    if (twCC != TWCC_SUCCESS) return twCC;
-
-    if (upperunit != lowerunit)
-        return TWCC_BADCAP;
-
-    if (! convert_sane_res_to_twain(SANE_UNFIX(upper) - SANE_UNFIX(lower), upperunit, &res, TWUN_INCHES))
-        return TWCC_BADCAP;
+    res = convert_sane_res_to_twain( (cap == ICAP_PHYSICALHEIGHT) ? bry - tly : brx - tlx );
 
     switch (action)
     {
@@ -727,56 +716,22 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
 static TW_UINT16 get_width_height(double *width, double *height, BOOL max)
 {
     TW_UINT16 rc;
-    SANE_Fixed tlx_current, tlx_min, tlx_max;
-    SANE_Fixed tly_current, tly_min, tly_max;
-    SANE_Fixed brx_current, brx_min, brx_max;
-    SANE_Fixed bry_current, bry_min, bry_max;
+    int tlx, tly, brx, bry;
 
-    rc = sane_option_probe_scan_area("tl-x", &tlx_current, NULL, &tlx_min, &tlx_max, NULL);
-    if (rc != TWCC_SUCCESS) return rc;
+    if (max) rc = sane_option_get_max_scan_area( &tlx, &tly, &brx, &bry );
+    else rc = sane_option_get_scan_area( &tlx, &tly, &brx, &bry );
 
-    rc = sane_option_probe_scan_area("tl-y", &tly_current, NULL, &tly_min, &tly_max, NULL);
-    if (rc != TWCC_SUCCESS) return rc;
-
-    rc = sane_option_probe_scan_area("br-x", &brx_current, NULL, &brx_min, &brx_max, NULL);
-    if (rc != TWCC_SUCCESS) return rc;
-
-    rc = sane_option_probe_scan_area("br-y", &bry_current, NULL, &bry_min, &bry_max, NULL);
-    if (rc != TWCC_SUCCESS) return rc;
-
-    if (max)
-        *width = SANE_UNFIX(brx_max) - SANE_UNFIX(tlx_min);
-    else
-        *width = SANE_UNFIX(brx_current) - SANE_UNFIX(tlx_current);
-
-    if (max)
-        *height = SANE_UNFIX(bry_max) - SANE_UNFIX(tly_min);
-    else
-        *height = SANE_UNFIX(bry_current) - SANE_UNFIX(tly_current);
-
-    return(TWCC_SUCCESS);
-}
-
-static TW_UINT16 set_one_coord(const char *name, double coord)
-{
-    return sane_option_set_fixed(name, coord * 65536, NULL);
+    if (rc == TWCC_SUCCESS)
+    {
+        *width = (brx - tlx) / 65536.0;
+        *height = (bry - tly) / 65536.0;
+    }
+    return rc;
 }
 
 static TW_UINT16 set_width_height(double width, double height)
 {
-    TW_UINT16 rc = TWCC_SUCCESS;
-    rc = set_one_coord("tl-x", 0);
-    if (rc != TWCC_SUCCESS)
-        return rc;
-    rc = set_one_coord("br-x", width);
-    if (rc != TWCC_SUCCESS)
-        return rc;
-    rc = set_one_coord("tl-y", 0);
-    if (rc != TWCC_SUCCESS)
-        return rc;
-    rc = set_one_coord("br-y", height);
-
-    return rc;
+    return sane_option_set_scan_area( 0, 0, width * 65536, height * 65536, NULL );
 }
 
 typedef struct
