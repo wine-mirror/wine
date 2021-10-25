@@ -705,7 +705,7 @@ static HRESULT WINAPI media_item_GetMetadata(IMFPMediaItem *iface, IPropertyStor
     TRACE("%p, %p.\n", iface, metadata);
 
     return MFGetService((IUnknown *)item->source, &MF_PROPERTY_HANDLER_SERVICE,
-            &IID_IPropertyStore, (void **)&metadata);
+            &IID_IPropertyStore, (void **)metadata);
 }
 
 static const IMFPMediaItemVtbl media_item_vtbl =
