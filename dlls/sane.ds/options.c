@@ -22,7 +22,6 @@
 #include "sane_i.h"
 #include "wine/debug.h"
 
-#ifdef SONAME_LIBSANE
 static SANE_Status sane_find_option(SANE_Handle h, const char *option_name,
         const SANE_Option_Descriptor **opt_p, int *optno, SANE_Value_Type type)
 {
@@ -34,17 +33,17 @@ static SANE_Status sane_find_option(SANE_Handle h, const char *option_name,
     /* Debian, in 32_net_backend_standard_fix.dpatch,
      *  forces a frontend (that's us) to reload options
      *  manually by invoking get_option_descriptor. */
-    opt = psane_get_option_descriptor(h, 0);
+    opt = sane_get_option_descriptor(h, 0);
     if (! opt)
         return SANE_STATUS_EOF;
 
-    rc = psane_control_option(h, 0, SANE_ACTION_GET_VALUE, &optcount, NULL);
+    rc = sane_control_option(h, 0, SANE_ACTION_GET_VALUE, &optcount, NULL);
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
     for (i = 1; i < optcount; i++)
     {
-        opt = psane_get_option_descriptor(h, i);
+        opt = sane_get_option_descriptor(h, i);
         if (opt && (opt->name && strcmp(opt->name, option_name) == 0) &&
                opt->type == type)
         {
@@ -66,7 +65,7 @@ SANE_Status sane_option_get_int(SANE_Handle h, const char *option_name, SANE_Int
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
-    return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, val, NULL);
+    return sane_control_option(h, optno, SANE_ACTION_GET_VALUE, val, NULL);
 }
 
 SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int val, SANE_Int *status)
@@ -79,7 +78,7 @@ SANE_Status sane_option_set_int(SANE_Handle h, const char *option_name, SANE_Int
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
-    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
+    return sane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
 }
 
 SANE_Status sane_option_get_bool(SANE_Handle h, const char *option_name, SANE_Bool *val, SANE_Int *status)
@@ -92,7 +91,7 @@ SANE_Status sane_option_get_bool(SANE_Handle h, const char *option_name, SANE_Bo
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
-    return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, (void *) val, status);
+    return sane_control_option(h, optno, SANE_ACTION_GET_VALUE, (void *) val, status);
 }
 
 SANE_Status sane_option_set_bool(SANE_Handle h, const char *option_name, SANE_Bool val, SANE_Int *status)
@@ -105,7 +104,7 @@ SANE_Status sane_option_set_bool(SANE_Handle h, const char *option_name, SANE_Bo
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
-    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
+    return sane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
 }
 
 SANE_Status sane_option_set_fixed(SANE_Handle h, const char *option_name, SANE_Fixed val, SANE_Int *status)
@@ -118,7 +117,7 @@ SANE_Status sane_option_set_fixed(SANE_Handle h, const char *option_name, SANE_F
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
-    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
+    return sane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) &val, status);
 }
 
 SANE_Status sane_option_get_str(SANE_Handle h, const char *option_name, SANE_String val, size_t len, SANE_Int *status)
@@ -132,7 +131,7 @@ SANE_Status sane_option_get_str(SANE_Handle h, const char *option_name, SANE_Str
         return rc;
 
     if (opt->size < len)
-        return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, (void *) val, status);
+        return sane_control_option(h, optno, SANE_ACTION_GET_VALUE, (void *) val, status);
     else
         return SANE_STATUS_NO_MEM;
 }
@@ -148,7 +147,7 @@ SANE_Status sane_option_set_str(SANE_Handle h, const char *option_name, SANE_Str
     if (rc != SANE_STATUS_GOOD)
         return rc;
 
-    return psane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) val, status);
+    return sane_control_option(h, optno, SANE_ACTION_SET_VALUE, (void *) val, status);
 }
 
 SANE_Status sane_option_probe_resolution(SANE_Handle h, const char *option_name, SANE_Int *minval, SANE_Int *maxval, SANE_Int *quant)
@@ -184,7 +183,7 @@ SANE_Status sane_option_probe_mode(SANE_Handle h, SANE_String_Const **choices, c
         *choices = (SANE_String_Const *) opt->constraint.string_list;
 
     if (opt->size < current_size)
-        return psane_control_option(h, optno, SANE_ACTION_GET_VALUE, current, NULL);
+        return sane_control_option(h, optno, SANE_ACTION_GET_VALUE, current, NULL);
     else
         return SANE_STATUS_NO_MEM;
 
@@ -211,7 +210,7 @@ SANE_Status sane_option_probe_scan_area(SANE_Handle h, const char *option_name, 
         *quant = opt->constraint.range->quant;
 
     if (val)
-        rc = psane_control_option(h, optno, SANE_ACTION_GET_VALUE, val, NULL);
+        rc = sane_control_option(h, optno, SANE_ACTION_GET_VALUE, val, NULL);
 
     return rc;
 }
@@ -261,4 +260,3 @@ BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_
 
     return TRUE;
 }
-#endif

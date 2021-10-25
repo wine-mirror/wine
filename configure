@@ -13313,14 +13313,14 @@ ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
 if test "x$ac_cv_header_sane_sane_h" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lsane" >&5
-$as_echo_n "checking for -lsane... " >&6; }
-if ${ac_cv_lib_soname_sane+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sane_init in -lsane" >&5
+$as_echo_n "checking for sane_init in -lsane... " >&6; }
+if ${ac_cv_lib_sane_sane_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_soname_save_LIBS=$LIBS
+  ac_check_lib_save_LIBS=$LIBS
 LIBS="-lsane $SANE_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -13339,37 +13339,20 @@ return sane_init ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_sane=`$ac_cv_path_LDD conftest.exe | grep "sane" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_sane=`$OTOOL -L conftest$ac_exeext | grep "libsane\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libsane\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_sane=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libsane\\.$LIBEXT" | sed -e "s/^.*\\[\\(libsane\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_sane:+false} :; then :
-  ac_cv_lib_soname_sane=`$LDD conftest$ac_exeext | grep "libsane\\.$LIBEXT" | sed -e "s/^.*\(libsane\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
+  ac_cv_lib_sane_sane_init=yes
 else
-  ac_cv_lib_soname_sane=
+  ac_cv_lib_sane_sane_init=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
+LIBS=$ac_check_lib_save_LIBS
 fi
-if ${ac_cv_lib_soname_sane:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-       SANE_CFLAGS=""
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_sane" >&5
-$as_echo "$ac_cv_lib_soname_sane" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBSANE "$ac_cv_lib_soname_sane"
-_ACEOF
-
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sane_sane_init" >&5
+$as_echo "$ac_cv_lib_sane_sane_init" >&6; }
+if test "x$ac_cv_lib_sane_sane_init" = xyes; then :
+  :
 fi
-else
-  SANE_CFLAGS=""
+
 fi
 
 
@@ -13383,7 +13366,7 @@ if test "x$ac_cv_lib_soname_sane" = "x"; then :
   *)   as_fn_error $? "libsane ${notice_platform}development files not found, scanners won't be supported.
 This is an error since --with-sane was requested." "$LINENO" 5 ;;
 esac
-
+enable_sane_ds=${enable_sane_ds:-no}
 fi
 
 if test "x$with_usb" != "xno"

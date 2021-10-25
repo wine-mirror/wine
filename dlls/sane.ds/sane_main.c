@@ -32,71 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 struct tagActiveDS activeDS;
 
 DSMENTRYPROC SANE_dsmentry;
-
-#ifdef SONAME_LIBSANE
-#define MAKE_FUNCPTR(f) typeof(f) * p##f;
-MAKE_FUNCPTR(sane_init)
-MAKE_FUNCPTR(sane_exit)
-MAKE_FUNCPTR(sane_get_devices)
-MAKE_FUNCPTR(sane_open)
-MAKE_FUNCPTR(sane_close)
-MAKE_FUNCPTR(sane_get_option_descriptor)
-MAKE_FUNCPTR(sane_control_option)
-MAKE_FUNCPTR(sane_get_parameters)
-MAKE_FUNCPTR(sane_start)
-MAKE_FUNCPTR(sane_read)
-MAKE_FUNCPTR(sane_cancel)
-MAKE_FUNCPTR(sane_set_io_mode)
-MAKE_FUNCPTR(sane_get_select_fd)
-MAKE_FUNCPTR(sane_strstatus)
-#undef MAKE_FUNCPTR
-
 HINSTANCE SANE_instance;
-
-static void *libsane_handle;
-
-static void close_libsane(void *h)
-{
-    if (h)
-        dlclose(h);
-}
-
-static void *open_libsane(void)
-{
-    void *h;
-
-    h = dlopen(SONAME_LIBSANE, RTLD_GLOBAL | RTLD_NOW);
-    if (!h)
-    {
-        WARN("failed to load %s; %s\n", SONAME_LIBSANE, dlerror());
-        return NULL;
-    }
-
-#define LOAD_FUNCPTR(f) \
-    if((p##f = dlsym(h, #f)) == NULL) { \
-        close_libsane(h); \
-        ERR("Could not dlsym %s\n", #f); \
-        return NULL; \
-    }
-
-    LOAD_FUNCPTR(sane_init)
-    LOAD_FUNCPTR(sane_exit)
-    LOAD_FUNCPTR(sane_get_devices)
-    LOAD_FUNCPTR(sane_open)
-    LOAD_FUNCPTR(sane_close)
-    LOAD_FUNCPTR(sane_get_option_descriptor)
-    LOAD_FUNCPTR(sane_control_option)
-    LOAD_FUNCPTR(sane_get_parameters)
-    LOAD_FUNCPTR(sane_start)
-    LOAD_FUNCPTR(sane_read)
-    LOAD_FUNCPTR(sane_cancel)
-    LOAD_FUNCPTR(sane_set_io_mode)
-    LOAD_FUNCPTR(sane_get_select_fd)
-    LOAD_FUNCPTR(sane_strstatus)
-#undef LOAD_FUNCPTR
-
-    return h;
-}
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -107,11 +43,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH: {
 	    SANE_Int version_code;
 
-            libsane_handle = open_libsane();
-            if (! libsane_handle)
-                return FALSE;
-
-	    psane_init (&version_code, NULL);
+	    sane_init (&version_code, NULL);
 	    SANE_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
             break;
@@ -119,8 +51,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_DETACH:
             if (lpvReserved) break;
             TRACE("calling sane_exit()\n");
-	    psane_exit ();
-            close_libsane(libsane_handle);
+	    sane_exit ();
             break;
     }
 
@@ -129,9 +60,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static TW_UINT16 SANE_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
 static TW_UINT16 SANE_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
-
-#endif /* SONAME_LIBSANE */
-
 static TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData);
 
 static TW_UINT16 SANE_SourceControlHandler (
@@ -148,28 +76,13 @@ static TW_UINT16 SANE_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-#ifdef SONAME_LIBSANE
-		     psane_close (activeDS.deviceHandle);
-#else
-		     twRC = TWRC_FAILURE;
-                     activeDS.twCC = TWCC_CAPUNSUPPORTED;
-#endif
+		     sane_close (activeDS.deviceHandle);
 		     break;
 		case MSG_OPENDS:
-#ifdef SONAME_LIBSANE
 		     twRC = SANE_OpenDS( pOrigin, (pTW_IDENTITY)pData);
-#else
-		     twRC = TWRC_FAILURE;
-                     activeDS.twCC = TWCC_CAPUNSUPPORTED;
-#endif
 		     break;
 		case MSG_GET:
-#ifdef SONAME_LIBSANE
 		     twRC = SANE_GetIdentity( pOrigin, (pTW_IDENTITY)pData);
-#else
-		     twRC = TWRC_FAILURE;
-                     activeDS.twCC = TWCC_CAPUNSUPPORTED;
-#endif
 		     break;
 	    }
 	    break;
@@ -427,7 +340,6 @@ TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     return TWRC_SUCCESS;
 }
 
-#ifdef SONAME_LIBSANE
 /* Sane returns device names that are longer than the 32 bytes allowed
    by TWAIN.  However, it colon separates them, and the last bit is
    the most interesting.  So we use the last bit, and add a signature
@@ -466,7 +378,7 @@ static void
 detect_sane_devices(void) {
     if (sane_devlist && sane_devlist[0]) return;
     TRACE("detecting sane...\n");
-    if (psane_get_devices (&sane_devlist, SANE_FALSE) != SANE_STATUS_GOOD)
+    if (sane_get_devices (&sane_devlist, SANE_FALSE) != SANE_STATUS_GOOD)
 	return;
 }
 
@@ -538,7 +450,7 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	WARN("Scanner not found.\n");
 	return TWRC_FAILURE;
     }
-    status = psane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
+    status = sane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
     if (status == SANE_STATUS_GOOD) {
         activeDS.twCC = SANE_SaneSetDefaults();
         if (activeDS.twCC == TWCC_SUCCESS) {
@@ -548,10 +460,9 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	    return TWRC_SUCCESS;
         }
         else
-            psane_close(activeDS.deviceHandle);
+            sane_close(activeDS.deviceHandle);
     }
     else
-        ERR("sane_open(%s): %s\n", sane_devlist[i]->name, psane_strstatus (status));
+        ERR("sane_open(%s): %s\n", sane_devlist[i]->name, sane_strstatus (status));
     return TWRC_FAILURE;
 }
-#endif

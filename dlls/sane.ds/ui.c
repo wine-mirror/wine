@@ -35,8 +35,6 @@
 #include "resource.h"
 #include "wine/unicode.h"
 
-#ifdef SONAME_LIBSANE
-
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 #define ID_BASE 0x100
@@ -173,7 +171,7 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
     {
         SANE_Int i;
 
-        psane_control_option(activeDS.deviceHandle, id-ID_BASE,
+        sane_control_option(activeDS.deviceHandle, id-ID_BASE,
                 SANE_ACTION_GET_VALUE, &i,NULL);
 
         sprintf(buffer,"%i",i);
@@ -209,7 +207,7 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
 
         i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
 
-        psane_control_option(activeDS.deviceHandle, id-ID_BASE,
+        sane_control_option(activeDS.deviceHandle, id-ID_BASE,
                 SANE_ACTION_GET_VALUE, i, NULL);
 
         dd = SANE_UNFIX(*i);
@@ -253,7 +251,7 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
         }
         leading_len += create_leading_static(hdc, opt->title, &lead_static, y,
                 id+ID_STATIC_BASE);
-        psane_control_option(activeDS.deviceHandle, id-ID_BASE,
+        sane_control_option(activeDS.deviceHandle, id-ID_BASE,
                 SANE_ACTION_GET_VALUE, buffer,NULL);
 
         title = buffer;
@@ -391,7 +389,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
         int count;
         int hold_for_group = 0;
 
-        opt = psane_get_option_descriptor(activeDS.deviceHandle, i);
+        opt = sane_get_option_descriptor(activeDS.deviceHandle, i);
         if (!opt)
             continue;
         if (opt->type == SANE_TYPE_GROUP && split_tabs)
@@ -529,7 +527,7 @@ BOOL DoScannerUI(void)
     hdc = GetDC(0);
 
     memset(psp,0,sizeof(psp));
-    rc = psane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
+    rc = sane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
             &optcount, NULL);
     if (rc != SANE_STATUS_GOOD)
     {
@@ -542,7 +540,7 @@ BOOL DoScannerUI(void)
         const SANE_Option_Descriptor *opt;
         psp[page_count].u.pResource = create_options_page(hdc, &index,
                 optcount, TRUE);
-        opt = psane_get_option_descriptor(activeDS.deviceHandle, index);
+        opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
         if (opt->type == SANE_TYPE_GROUP)
         {
@@ -661,7 +659,7 @@ static BOOL UpdateSaneScrollOption(
         else
             si = position;
 
-        rc = psane_control_option (activeDS.deviceHandle,index,
+        rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, &si, &result);
 
     }
@@ -681,7 +679,7 @@ static BOOL UpdateSaneScrollOption(
 
         *sf = SANE_FIX(dd);
 
-        rc = psane_control_option (activeDS.deviceHandle,index,
+        rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, sf, &result);
 
         HeapFree(GetProcessHeap(),0,sf);
@@ -704,7 +702,7 @@ static BOOL UpdateSaneBoolOption(int index, BOOL position)
 
     si = position;
 
-    rc = psane_control_option (activeDS.deviceHandle,index,
+    rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, &si, &result);
 
     if(rc == SANE_STATUS_GOOD)
@@ -721,7 +719,7 @@ static BOOL UpdateSaneIntOption(int index, SANE_Int value)
     SANE_Status rc = SANE_STATUS_GOOD;
     SANE_Int result = 0;
 
-    rc = psane_control_option (activeDS.deviceHandle,index,
+    rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, &value, &result);
 
     if(rc == SANE_STATUS_GOOD)
@@ -738,7 +736,7 @@ static BOOL UpdateSaneStringOption(int index, SANE_String value)
     SANE_Status rc = SANE_STATUS_GOOD;  
     SANE_Int result = 0;
 
-    rc = psane_control_option (activeDS.deviceHandle,index,
+    rc = sane_control_option (activeDS.deviceHandle,index,
             SANE_ACTION_SET_VALUE, value, &result);
 
     if(rc == SANE_STATUS_GOOD)
@@ -757,7 +755,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
     HWND control;
     int i;
 
-    rc = psane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
+    rc = sane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
             &optcount, NULL);
     if (rc != SANE_STATUS_GOOD)
     {
@@ -774,7 +772,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
         if (!control)
             continue;
 
-        opt = psane_get_option_descriptor(activeDS.deviceHandle, i);
+        opt = sane_get_option_descriptor(activeDS.deviceHandle, i);
 
         TRACE("%i %s %i %i\n",i,opt->title,opt->type,opt->constraint_type);
         
@@ -796,13 +794,13 @@ static INT_PTR InitializeDialog(HWND hwnd)
                         (LPARAM)opt->constraint.string_list[j]);
                 j++;
             }
-            psane_control_option(activeDS.deviceHandle, i, SANE_ACTION_GET_VALUE, buffer,NULL);
+            sane_control_option(activeDS.deviceHandle, i, SANE_ACTION_GET_VALUE, buffer,NULL);
             SendMessageA(control,CB_SELECTSTRING,0,(LPARAM)buffer);
         }
         else if (opt->type == SANE_TYPE_BOOL)
         {
             SANE_Bool b;
-            psane_control_option(activeDS.deviceHandle, i,
+            sane_control_option(activeDS.deviceHandle, i,
                     SANE_ACTION_GET_VALUE, &b, NULL);
             if (b)
                 SendMessageA(control,BM_SETCHECK,BST_CHECKED,0);
@@ -819,7 +817,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
                 sprintf(buffer, "%d", opt->constraint.word_list[j]);
                 SendMessageA(control, CB_ADDSTRING, 0, (LPARAM)buffer);
             }
-            psane_control_option(activeDS.deviceHandle, i, SANE_ACTION_GET_VALUE, &val, NULL);
+            sane_control_option(activeDS.deviceHandle, i, SANE_ACTION_GET_VALUE, &val, NULL);
             sprintf(buffer, "%d", val);
             SendMessageA(control,CB_SELECTSTRING,0,(LPARAM)buffer);
         }
@@ -840,7 +838,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
 
                 SendMessageA(control,SBM_SETRANGE,min,max);
 
-                psane_control_option(activeDS.deviceHandle, i,
+                sane_control_option(activeDS.deviceHandle, i,
                         SANE_ACTION_GET_VALUE, &si,NULL);
                 if (opt->constraint.range->quant)
                     si = si / opt->constraint.range->quant;
@@ -876,7 +874,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
 
 
                 sf = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
-                psane_control_option(activeDS.deviceHandle, i,
+                sane_control_option(activeDS.deviceHandle, i,
                         SANE_ACTION_GET_VALUE, sf,NULL);
 
                 dd = SANE_UNFIX(*sf);
@@ -912,7 +910,7 @@ static INT_PTR ProcessScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (index < 0)
         return FALSE;
 
-    opt = psane_get_option_descriptor(activeDS.deviceHandle, index);
+    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
     if (!opt)
         return FALSE;
@@ -967,7 +965,7 @@ static void ButtonClicked(HWND hwnd, INT id, HWND control)
     if (index < 0)
         return;
 
-    opt = psane_get_option_descriptor(activeDS.deviceHandle, index);
+    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
     if (!opt)
         return;
@@ -992,7 +990,7 @@ static void ComboChanged(HWND hwnd, INT id, HWND control)
     if (index < 0)
         return;
 
-    opt = psane_get_option_descriptor(activeDS.deviceHandle, index);
+    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
 
     if (!opt)
         return;
@@ -1094,12 +1092,3 @@ HWND ScanningDialogBox(HWND dialog, LONG progress)
 
     return dialog;
 }
-
-#else  /* SONAME_LIBSANE */
-
-BOOL DoScannerUI(void)
-{
-    return FALSE;
-}
-
-#endif  /* SONAME_LIBSANE */

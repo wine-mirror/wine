@@ -1347,11 +1347,11 @@ if test "x$with_sane" != "xno"
 then
     WINE_PACKAGE_FLAGS(SANE,[sane-backends],,[`${SANE_CONFIG:-sane-config} --cflags 2>/dev/null`],[`${SANE_CONFIG:-sane-config} --ldflags 2>/dev/null`],
         [AC_CHECK_HEADER(sane/sane.h,
-            [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])],
-            [SANE_CFLAGS=""])])
+            [AC_CHECK_LIB(sane,sane_init,[:],,[$SANE_LIBS])])])
 fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
-                 [libsane ${notice_platform}development files not found, scanners won't be supported.])
+                 [libsane ${notice_platform}development files not found, scanners won't be supported.],
+                 [enable_sane_ds])
 
 dnl **** Check for libusb ****
 if test "x$with_usb" != "xno"

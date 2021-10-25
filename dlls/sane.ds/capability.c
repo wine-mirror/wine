@@ -129,7 +129,6 @@ static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *value
     return TWCC_SUCCESS;
 }
 
-#ifdef SONAME_LIBSANE
 static TW_UINT16 msg_get_range(pTW_CAPABILITY pCapability, TW_UINT16 type,
             TW_UINT32 minval, TW_UINT32 maxval, TW_UINT32 step, TW_UINT32 def,  TW_UINT32 current)
 {
@@ -155,7 +154,6 @@ static TW_UINT16 msg_get_range(pTW_CAPABILITY pCapability, TW_UINT16 type,
     GlobalUnlock(pCapability->hContainer);
     return TWCC_SUCCESS;
 }
-#endif
 
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
@@ -273,7 +271,6 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
     return twCC;
 }
 
-#ifdef SONAME_LIBSANE
 static BOOL pixeltype_to_sane_mode(TW_UINT16 pixeltype, SANE_String mode, int len)
 {
     SANE_String_Const m = NULL;
@@ -309,13 +306,11 @@ static BOOL sane_mode_to_pixeltype(SANE_String_Const mode, TW_UINT16 *pixeltype)
 
     return TRUE;
 }
-#endif
 
 /* ICAP_PIXELTYPE */
 static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     TW_UINT32 possible_values[3];
     int possible_value_count;
     TW_UINT32 val;
@@ -382,7 +377,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
                 if (rc != SANE_STATUS_GOOD)
                     return sane_status_to_twcc(rc);
                 if (status & SANE_INFO_RELOAD_PARAMS)
-                    psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+                    sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
             }
             break;
 
@@ -406,7 +401,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             if (rc != SANE_STATUS_GOOD)
                 return sane_status_to_twcc(rc);
             if (status & SANE_INFO_RELOAD_PARAMS)
-                psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+                sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
 
             /* .. fall through intentional .. */
 
@@ -416,7 +411,6 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             break;
     }
 
-#endif
     return twCC;
 }
 
@@ -467,7 +461,6 @@ static TW_UINT16 SANE_ICAPUnits (pTW_CAPABILITY pCapability, TW_UINT16 action)
 static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     TW_UINT32 possible_values[1];
 
     TRACE("ICAP_BITDEPTH\n");
@@ -494,7 +487,6 @@ static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
             twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.sane_param.depth);
             break;
     }
-#endif
     return twCC;
 }
 
@@ -565,7 +557,6 @@ static TW_UINT16 SANE_ICAPCompression (pTW_CAPABILITY pCapability, TW_UINT16 act
 static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 action,  TW_UINT16 cap)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     TW_UINT32 val;
     SANE_Int current_resolution;
     TW_FIX32 *default_res;
@@ -659,7 +650,6 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
             twCC = set_onevalue(pCapability, TWTY_FIX32, current_resolution);
             break;
     }
-#endif
     return twCC;
 }
 
@@ -667,7 +657,6 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
 static TW_UINT16 SANE_ICAPPhysical (pTW_CAPABILITY pCapability, TW_UINT16 action,  TW_UINT16 cap)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     TW_FIX32 res;
     char option_name[64];
     SANE_Fixed lower, upper;
@@ -708,7 +697,6 @@ static TW_UINT16 SANE_ICAPPhysical (pTW_CAPABILITY pCapability, TW_UINT16 action
             twCC = set_onevalue(pCapability, TWTY_FIX32, res.Whole | (res.Frac << 16));
             break;
     }
-#endif
     return twCC;
 }
 
@@ -716,7 +704,6 @@ static TW_UINT16 SANE_ICAPPhysical (pTW_CAPABILITY pCapability, TW_UINT16 action
 static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     static const TW_UINT32 possible_values[] = { TWPF_CHOCOLATE, TWPF_VANILLA };
     TW_UINT32 val;
     TW_UINT32 flavor = activeDS.sane_param.depth == 1 ? TWPF_VANILLA : TWPF_CHOCOLATE;
@@ -754,11 +741,9 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
             twCC = set_onevalue(pCapability, TWTY_UINT16, flavor);
             break;
     }
-#endif
     return twCC;
 }
 
-#ifdef SONAME_LIBSANE
 static TW_UINT16 get_width_height(double *width, double *height, BOOL max)
 {
     SANE_Status status;
@@ -911,13 +896,11 @@ static TW_UINT16 get_current_paper_size(const supported_size_t *s, int n)
 
     return TWSS_NONE;
 }
-#endif
 
 /* ICAP_SUPPORTEDSIZES */
 static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
 
     static TW_UINT32 possible_values[ARRAY_SIZE(supported_sizes)];
     unsigned int i;
@@ -975,7 +958,6 @@ static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 
             break;
     }
 
-#endif
     return twCC;
 }
 
@@ -983,7 +965,6 @@ static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 
 static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     TW_UINT32 val;
     SANE_Bool autofeed;
     SANE_Status status;
@@ -1016,7 +997,7 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
                 status = sane_option_set_bool(activeDS.deviceHandle, "batch-scan", autofeed, NULL);
                 if (status != SANE_STATUS_GOOD)
                 {
-                    ERR("Error %s: Could not set batch-scan to %d\n", psane_strstatus(status), autofeed);
+                    ERR("Error %s: Could not set batch-scan to %d\n", sane_strstatus(status), autofeed);
                     return sane_status_to_twcc(status);
                 }
             }
@@ -1031,7 +1012,7 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
             status = sane_option_set_bool(activeDS.deviceHandle, "batch-scan", autofeed, NULL);
             if (status != SANE_STATUS_GOOD)
             {
-                ERR("Error %s: Could not reset batch-scan to SANE_TRUE\n", psane_strstatus(status));
+                ERR("Error %s: Could not reset batch-scan to SANE_TRUE\n", sane_strstatus(status));
                 return sane_status_to_twcc(status);
             }
             /* .. fall through intentional .. */
@@ -1040,7 +1021,6 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
             twCC = set_onevalue(pCapability, TWTY_BOOL, autofeed);
             break;
     }
-#endif
     return twCC;
 }
 
@@ -1048,7 +1028,6 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
 static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-#ifdef SONAME_LIBSANE
     TW_UINT32 val;
     TW_BOOL enabled;
     SANE_Status status;
@@ -1088,7 +1067,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
                 }
                 if (status != SANE_STATUS_GOOD)
                 {
-                    ERR("Error %s: Could not set source to either ADF or Auto\n", psane_strstatus(status));
+                    ERR("Error %s: Could not set source to either ADF or Auto\n", sane_strstatus(status));
                     return sane_status_to_twcc(status);
                 }
             }
@@ -1108,7 +1087,6 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
             twCC = set_onevalue(pCapability, TWTY_BOOL, enabled);
             break;
     }
-#endif
     return twCC;
 }
 
@@ -1210,7 +1188,6 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
     return twCC;
 }
 
-#ifdef SONAME_LIBSANE
 TW_UINT16 SANE_SaneSetDefaults (void)
 {
     TW_CAPABILITY cap;
@@ -1238,4 +1215,3 @@ TW_UINT16 SANE_SaneSetDefaults (void)
 
    return TWCC_SUCCESS;
 }
-#endif

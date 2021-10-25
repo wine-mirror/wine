@@ -937,9 +937,6 @@
 /* Define to the soname of the libOSMesa library. */
 #undef SONAME_LIBOSMESA
 
-/* Define to the soname of the libsane library. */
-#undef SONAME_LIBSANE
-
 /* Define to the soname of the libSDL2 library. */
 #undef SONAME_LIBSDL2
 
