@@ -1280,7 +1280,7 @@ static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayCo
     struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %p, %s.\n", iface, src_rect, wine_dbgstr_rect(dst_rect));
+    TRACE("%p, %s, %s.\n", iface, debugstr_normalized_rect(src_rect), wine_dbgstr_rect(dst_rect));
 
     if (!src_rect && !dst_rect)
         return E_POINTER;

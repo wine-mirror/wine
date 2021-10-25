@@ -45,6 +45,12 @@ static inline const char *debugstr_time(LONGLONG time)
     return wine_dbg_sprintf("%s", rev);
 }
 
+static inline const char *debugstr_normalized_rect(const MFVideoNormalizedRect *rect)
+{
+    if (!rect) return "(null)";
+    return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom);
+}
+
 HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
 HRESULT evr_mixer_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
 HRESULT evr_presenter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;

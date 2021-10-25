@@ -25,6 +25,7 @@
 #include "mferror.h"
 
 #include "evr_classes.h"
+#include "evr_private.h"
 
 #include "initguid.h"
 #include "evr9.h"
@@ -1551,7 +1552,7 @@ static HRESULT WINAPI video_mixer_control_SetStreamOutputRect(IMFVideoMixerContr
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, rect);
+    TRACE("%p, %u, %s.\n", iface, id, debugstr_normalized_rect(rect));
 
     if (!rect)
         return E_POINTER;
