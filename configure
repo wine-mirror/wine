@@ -19411,6 +19411,7 @@ wine_fn_config_makefile dlls/msctf/tests enable_tests
 wine_fn_config_makefile dlls/msctfp enable_msctfp
 wine_fn_config_makefile dlls/msdaps enable_msdaps
 wine_fn_config_makefile dlls/msdasql enable_msdasql
+wine_fn_config_makefile dlls/msdasql/tests enable_tests
 wine_fn_config_makefile dlls/msdelta enable_msdelta
 wine_fn_config_makefile dlls/msdmo enable_msdmo
 wine_fn_config_makefile dlls/msdmo/tests enable_tests
