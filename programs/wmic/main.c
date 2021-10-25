@@ -95,14 +95,14 @@ static WCHAR *find_prop( IWbemClassObject *class, const WCHAR *prop )
 
 static int WINAPIV output_string( HANDLE handle, const WCHAR *msg, ... )
 {
-    __ms_va_list va_args;
+    va_list va_args;
     int len;
     DWORD count;
     WCHAR buffer[8192];
 
-    __ms_va_start( va_args, msg );
+    va_start( va_args, msg );
     len = vswprintf( buffer, ARRAY_SIZE(buffer), msg, va_args );
-    __ms_va_end( va_args );
+    va_end( va_args );
 
     if (!WriteConsoleW( handle, buffer, len, &count, NULL ))
         WriteFile( handle, buffer, len * sizeof(WCHAR), &count, FALSE );
