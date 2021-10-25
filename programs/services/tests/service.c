@@ -65,12 +65,12 @@ static inline void service_event(const char *event)
 static void WINAPIV service_ok(int cnd, const char *msg, ...) __WINE_PRINTF_ATTR(2,3);
 static void WINAPIV service_ok(int cnd, const char *msg, ...)
 {
-    __ms_va_list valist;
+    va_list valist;
     char buf[512];
 
-    __ms_va_start(valist, msg);
+    va_start(valist, msg);
     vsprintf(buf, msg, valist);
-    __ms_va_end(valist);
+    va_end(valist);
 
     send_msg(cnd ? "OK" : "FAIL", buf);
 }
