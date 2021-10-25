@@ -1,1 +1,4 @@
 MODULE    = dxtrans.dll
+
+C_SRCS = \
+	main.c

@@ -6,6 +6,6 @@
 @ stub ?DXOverArrayMMX@@YGXPAVDXPMSAMPLE@@PBV1@K@Z
 @ stdcall -private DllCanUnloadNow()
 @ stub DllEnumClassObjects
-@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
