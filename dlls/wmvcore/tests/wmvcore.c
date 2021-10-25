@@ -24,10 +24,19 @@
 #include "initguid.h"
 #include "wmsdk.h"
 #include "wmsecure.h"
+#include "amvideo.h"
+#include "uuids.h"
+#include "wmcodecdsp.h"
 
 #include "wine/test.h"
 
 HRESULT WINAPI WMCreateWriterPriv(IWMWriter **writer);
+
+static BOOL compare_media_types(const WM_MEDIA_TYPE *a, const WM_MEDIA_TYPE *b)
+{
+    return !memcmp(a, b, offsetof(WM_MEDIA_TYPE, pbFormat))
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
 
 static WCHAR *load_resource(const WCHAR *name)
 {
@@ -418,7 +427,7 @@ static void test_sync_reader_streaming(void)
     WORD stream_numbers[2], stream_number;
     IWMStreamConfig *config, *config2;
     bool eos[2] = {0}, first = true;
-    struct teststream stream = {0};
+    struct teststream stream = {{0}};
     ULONG i, j, count, ref;
     IWMSyncReader *reader;
     IWMProfile *profile;
@@ -616,6 +625,261 @@ static void test_sync_reader_streaming(void)
     ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 }
 
+static void check_video_type(const WM_MEDIA_TYPE *mt)
+{
+    const VIDEOINFOHEADER *video_info = (const VIDEOINFOHEADER *)mt->pbFormat;
+    static const RECT rect = {.right = 64, .bottom = 48};
+
+    ok(IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo), "Got format %s.\n", debugstr_guid(&mt->formattype));
+    todo_wine ok(mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", mt->bFixedSizeSamples);
+    todo_wine ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
+    ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
+
+    todo_wine ok(EqualRect(&video_info->rcSource, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&rect));
+    todo_wine ok(EqualRect(&video_info->rcTarget, &rect), "Got target rect %s.\n", wine_dbgstr_rect(&rect));
+    ok(!video_info->dwBitRate, "Got bit rate %u.\n", video_info->dwBitRate);
+    ok(!video_info->dwBitErrorRate, "Got bit error rate %u.\n", video_info->dwBitErrorRate);
+    ok(video_info->bmiHeader.biSize == sizeof(video_info->bmiHeader),
+            "Got size %u.\n", video_info->bmiHeader.biSize);
+    ok(video_info->bmiHeader.biWidth == 64, "Got width %d.\n", video_info->bmiHeader.biWidth);
+    ok(video_info->bmiHeader.biHeight == 48, "Got height %d.\n", video_info->bmiHeader.biHeight);
+    ok(video_info->bmiHeader.biPlanes == 1, "Got planes %d.\n", video_info->bmiHeader.biPlanes);
+}
+
+static void check_audio_type(const WM_MEDIA_TYPE *mt)
+{
+    const WAVEFORMATEX *wave_format = (const WAVEFORMATEX *)mt->pbFormat;
+
+    ok(IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
+    ok(IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx), "Got format %s.\n", debugstr_guid(&mt->formattype));
+    ok(mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", mt->bFixedSizeSamples);
+    ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
+    ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
+
+    ok(wave_format->wFormatTag == WAVE_FORMAT_PCM, "Got tag %#x.\n", wave_format->wFormatTag);
+}
+
+static void test_sync_reader_types(void)
+{
+    char mt_buffer[2000], mt2_buffer[2000];
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IWMOutputMediaProps *output_props, *output_props2;
+    WM_MEDIA_TYPE *mt2 = (WM_MEDIA_TYPE *)mt2_buffer;
+    WM_MEDIA_TYPE *mt = (WM_MEDIA_TYPE *)mt_buffer;
+    bool got_video = false, got_audio = false;
+    DWORD size, ret_size, output_number;
+    WORD stream_number, stream_number2;
+    struct teststream stream = {{0}};
+    IWMStreamConfig *config;
+    ULONG count, ref, i, j;
+    IWMSyncReader *reader;
+    IWMProfile *profile;
+    GUID majortype;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+
+    stream.IStream_iface.lpVtbl = &stream_vtbl;
+    stream.refcount = 1;
+    stream.file = file;
+
+    hr = WMCreateSyncReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IWMSyncReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
+
+    hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+
+    for (i = 0; i < 2; ++i)
+    {
+        winetest_push_context("Stream %u", i);
+
+        hr = IWMProfile_GetStream(profile, i, &config);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr != S_OK)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        stream_number = 0xdead;
+        hr = IWMStreamConfig_GetStreamNumber(config, &stream_number);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(stream_number == i + 1, "Got stream number %u.\n", stream_number);
+
+        hr = IWMStreamConfig_GetStreamType(config, &majortype);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (!i)
+            todo_wine ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+        else
+            todo_wine ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
+
+        ref = IWMStreamConfig_Release(config);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        output_number = 0xdeadbeef;
+        hr = IWMSyncReader_GetOutputNumberForStream(reader, stream_number, &output_number);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(output_number == 1 - i, "Got output number %u.\n", output_number);
+
+        stream_number2 = 0xdead;
+        hr = IWMSyncReader_GetStreamNumberForOutput(reader, output_number, &stream_number2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_number2 == stream_number, "Expected stream number %u, got %u.\n", stream_number, stream_number2);
+
+        hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ret_size = sizeof(mt_buffer);
+        hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ref = IWMOutputMediaProps_Release(output_props);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+        {
+            got_audio = true;
+            check_audio_type(mt);
+        }
+        else
+        {
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+            got_video = true;
+            check_video_type(mt);
+        }
+
+        count = 0;
+        hr = IWMSyncReader_GetOutputFormatCount(reader, output_number, &count);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(count > 0, "Got count %u.\n", count);
+
+        for (j = 0; j < count; ++j)
+        {
+            winetest_push_context("Format %u", j);
+
+            hr = IWMSyncReader_GetOutputFormat(reader, output_number, j, &output_props);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+            hr = IWMSyncReader_GetOutputFormat(reader, output_number, j, &output_props2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(output_props2 != output_props, "Expected different objects.\n");
+            ref = IWMOutputMediaProps_Release(output_props2);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+            size = 0xdeadbeef;
+            hr = IWMOutputMediaProps_GetMediaType(output_props, NULL, &size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %u.\n", size);
+
+            ret_size = size - 1;
+            hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
+            ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
+            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+
+            ret_size = sizeof(mt_buffer);
+            memset(mt_buffer, 0xcc, sizeof(mt_buffer));
+            hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %u, got %u.\n",
+                    sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
+
+            ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
+
+            if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+                check_audio_type(mt);
+            else
+                check_video_type(mt);
+
+            hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+            if (hr != S_OK)
+            {
+                ref = IWMOutputMediaProps_Release(output_props);
+                ok(!ref, "Got outstanding refcount %d.\n", ref);
+                winetest_pop_context();
+                continue;
+            }
+            hr = IWMSyncReader_SetOutputProps(reader, 1 - output_number, output_props);
+            if (!i)
+                todo_wine ok(hr == ASF_E_BADMEDIATYPE, "Got hr %#x.\n", hr);
+            else
+                ok(hr == NS_E_INCOMPATIBLE_FORMAT
+                        || hr == NS_E_INVALID_OUTPUT_FORMAT /* win10 */, "Got hr %#x.\n", hr);
+            hr = IWMSyncReader_SetOutputProps(reader, 2, output_props);
+            ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+            hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(output_props2 != output_props, "Expected different objects.\n");
+
+            ret_size = sizeof(mt2_buffer);
+            hr = IWMOutputMediaProps_GetMediaType(output_props2, mt2, &ret_size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+
+            ref = IWMOutputMediaProps_Release(output_props2);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ref = IWMOutputMediaProps_Release(output_props);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+            winetest_pop_context();
+        }
+
+        hr = IWMSyncReader_GetOutputFormat(reader, output_number, count, &output_props);
+        todo_wine ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
+
+        hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        if (hr == S_OK)
+        {
+            hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(output_props2 != output_props, "Expected different objects.\n");
+
+            ref = IWMOutputMediaProps_Release(output_props2);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ref = IWMOutputMediaProps_Release(output_props);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+        }
+
+        winetest_pop_context();
+    }
+
+    todo_wine ok(got_audio, "No audio stream was enumerated.\n");
+    todo_wine ok(got_video, "No video stream was enumerated.\n");
+
+    count = 0xdeadbeef;
+    hr = IWMSyncReader_GetOutputFormatCount(reader, 2, &count);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(count == 0xdeadbeef, "Got count %#x.\n", count);
+
+    output_props = (void *)0xdeadbeef;
+    hr = IWMSyncReader_GetOutputProps(reader, 2, &output_props);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
+
+    output_props = (void *)0xdeadbeef;
+    hr = IWMSyncReader_GetOutputFormat(reader, 2, 0, &output_props);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
+
+    IWMProfile_Release(profile);
+    ref = IWMSyncReader_Release(reader);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    CloseHandle(stream.file);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -633,6 +897,7 @@ START_TEST(wmvcore)
     test_urlextension();
     test_iscontentprotected();
     test_sync_reader_streaming();
+    test_sync_reader_types();
 
     CoUninitialize();
 }
