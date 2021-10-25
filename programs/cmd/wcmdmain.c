@@ -122,15 +122,15 @@ static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
 
 void WINAPIV WCMD_output (const WCHAR *format, ...) {
 
-  __ms_va_list ap;
+  va_list ap;
   WCHAR* string;
   DWORD len;
 
-  __ms_va_start(ap,format);
+  va_start(ap,format);
   string = NULL;
   len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
                        format, 0, 0, (LPWSTR)&string, 0, &ap);
-  __ms_va_end(ap);
+  va_end(ap);
   if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
     WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
   else
@@ -147,15 +147,15 @@ void WINAPIV WCMD_output (const WCHAR *format, ...) {
 
 void WINAPIV WCMD_output_stderr (const WCHAR *format, ...) {
 
-  __ms_va_list ap;
+  va_list ap;
   WCHAR* string;
   DWORD len;
 
-  __ms_va_start(ap,format);
+  va_start(ap,format);
   string = NULL;
   len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
                        format, 0, 0, (LPWSTR)&string, 0, &ap);
-  __ms_va_end(ap);
+  va_end(ap);
   if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
     WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
   else
@@ -172,14 +172,14 @@ void WINAPIV WCMD_output_stderr (const WCHAR *format, ...) {
 
 WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...)
 {
-  __ms_va_list ap;
+  va_list ap;
   WCHAR* string;
   DWORD len;
 
-  __ms_va_start(ap,format);
+  va_start(ap,format);
   len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
                        format, 0, 0, (LPWSTR)&string, 0, &ap);
-  __ms_va_end(ap);
+  va_end(ap);
   if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE) {
     WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
     string = (WCHAR*)LocalAlloc(LMEM_FIXED, 2);
