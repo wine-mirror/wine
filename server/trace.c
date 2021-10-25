@@ -2287,6 +2287,8 @@ static void dump_list_processes_reply( const struct list_processes_reply *req )
 {
     fprintf( stderr, " info_size=%u", req->info_size );
     fprintf( stderr, ", process_count=%d", req->process_count );
+    fprintf( stderr, ", total_thread_count=%d", req->total_thread_count );
+    fprintf( stderr, ", total_name_len=%u", req->total_name_len );
     dump_varargs_process_info( ", data=", min(cur_size,req->info_size) );
 }
 

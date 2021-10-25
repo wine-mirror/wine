@@ -1868,6 +1868,8 @@ DECL_HANDLER(list_processes)
     char *buffer;
 
     reply->process_count = 0;
+    reply->total_thread_count = 0;
+    reply->total_name_len = 0;
     reply->info_size = 0;
 
     LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
@@ -1877,6 +1879,8 @@ DECL_HANDLER(list_processes)
         reply->info_size = (reply->info_size + 7) & ~7;
         reply->info_size += process->running_threads * sizeof(struct thread_info);
         reply->process_count++;
+        reply->total_thread_count += process->running_threads;
+        reply->total_name_len += process->imagelen;
     }
 
     if (reply->info_size > get_reply_max_size())

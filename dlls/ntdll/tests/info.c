@@ -470,25 +470,30 @@ static void test_query_process(void)
         SYSTEM_THREAD_INFORMATION ti[1];
     } SYSTEM_PROCESS_INFORMATION_PRIVATE;
 
-    ULONG SystemInformationLength = sizeof(SYSTEM_PROCESS_INFORMATION_PRIVATE);
-    SYSTEM_PROCESS_INFORMATION_PRIVATE *spi, *spi_buf = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
+    SYSTEM_PROCESS_INFORMATION_PRIVATE *spi, *spi_buf;
+    BOOL current_process_found = FALSE;
 
     /* test ReturnLength */
     ReturnLength = 0;
     status = pNtQuerySystemInformation(SystemProcessInformation, NULL, 0, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH got %08x\n", status);
-    ok( ReturnLength > 0, "got 0 length\n");
+    ok( ReturnLength > 0, "got 0 length\n" );
 
-    /* W2K3 and later returns the needed length, the rest returns 0, so we have to loop */
-    for (;;)
+    /* W2K3 and later returns the needed length, the rest returns 0. */
+    if (!ReturnLength)
     {
-        status = pNtQuerySystemInformation(SystemProcessInformation, spi_buf, SystemInformationLength, &ReturnLength);
-
-        if (status != STATUS_INFO_LENGTH_MISMATCH) break;
-        
-        spi_buf = HeapReAlloc(GetProcessHeap(), 0, spi_buf , SystemInformationLength *= 2);
+        win_skip( "Zero return length, skipping tests." );
+        return;
     }
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    spi_buf = HeapAlloc(GetProcessHeap(), 0, ReturnLength);
+    status = pNtQuerySystemInformation(SystemProcessInformation, spi_buf, ReturnLength, &ReturnLength);
+
+    /* Sometimes new process or threads appear between the call and increase the size,
+     * otherwise the previously returned buffer size should be sufficient. */
+    ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH,
+        "Expected STATUS_SUCCESS, got %08x\n", status );
+
     spi = spi_buf;
 
     for (;;)
@@ -496,9 +501,16 @@ static void test_query_process(void)
         DWORD_PTR tid;
         DWORD j;
 
+        winetest_push_context( "i %u (%s)", i, debugstr_w(spi->ProcessName.Buffer) );
+
         i++;
 
         last_pid = (DWORD_PTR)spi->UniqueProcessId;
+        ok( !(last_pid & 3), "Unexpected PID low bits: %p\n", spi->UniqueProcessId );
+
+        if (last_pid == GetCurrentProcessId())
+            current_process_found = TRUE;
+
         ok(!(last_pid & 3), "Unexpected PID low bits: %p\n", spi->UniqueProcessId);
         for (j = 0; j < spi->dwThreadCount; j++)
         {
@@ -511,12 +523,17 @@ static void test_query_process(void)
             ok(!(tid & 3), "Unexpected TID low bits: %p\n", spi->ti[j].ClientId.UniqueThread);
         }
 
-        if (!spi->NextEntryOffset) break;
-
+        if (!spi->NextEntryOffset)
+        {
+            winetest_pop_context();
+            break;
+        }
         one_before_last_pid = last_pid;
 
         spi = (SYSTEM_PROCESS_INFORMATION_PRIVATE*)((char*)spi + spi->NextEntryOffset);
+        winetest_pop_context();
     }
+    ok( current_process_found, "Test process not found.\n" );
     if (winetest_debug > 1) trace("%u processes, %u threads\n", i, k);
 
     if (one_before_last_pid == 0) one_before_last_pid = last_pid;

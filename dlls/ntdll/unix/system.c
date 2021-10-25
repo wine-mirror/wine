@@ -2446,9 +2446,12 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemProcessInformation:  /* 5 */
     {
-        unsigned int process_count, i, j;
+        unsigned int process_count, total_thread_count, total_name_len, i, j;
         char *buffer = NULL;
         unsigned int pos = 0;
+
+C_ASSERT( sizeof(struct thread_info) <= sizeof(SYSTEM_THREAD_INFORMATION) );
+C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
 
         if (size && !(buffer = malloc( size )))
         {
@@ -2460,18 +2463,24 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         {
             wine_server_set_reply( req, buffer, size );
             ret = wine_server_call( req );
-            len = reply->info_size;
+            total_thread_count = reply->total_thread_count;
+            total_name_len = reply->total_name_len;
             process_count = reply->process_count;
         }
         SERVER_END_REQ;
 
+        len = 0;
+
         if (ret)
         {
+            if (ret == STATUS_INFO_LENGTH_MISMATCH)
+                len = sizeof(SYSTEM_PROCESS_INFORMATION) * process_count
+                      + (total_name_len + process_count) * sizeof(WCHAR)
+                      + total_thread_count * sizeof(SYSTEM_THREAD_INFORMATION);
+
             free( buffer );
             break;
         }
-
-        len = 0;
 
         for (i = 0; i < process_count; i++)
         {

@@ -2029,6 +2029,8 @@ struct list_processes_reply
     struct reply_header __header;
     data_size_t     info_size;
     int             process_count;
+    int             total_thread_count;
+    data_size_t     total_name_len;
     /* VARARG(data,process_info,info_size); */
 };
 
@@ -6259,7 +6261,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 733
+#define SERVER_PROTOCOL_VERSION 734
 
 /* ### protocol_version end ### */
 
