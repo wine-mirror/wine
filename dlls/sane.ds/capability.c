@@ -323,7 +323,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
 
     TRACE("ICAP_PIXELTYPE\n");
 
-    rc = sane_option_probe_mode(activeDS.deviceHandle, &choices, current_mode, sizeof(current_mode));
+    rc = sane_option_probe_mode(&choices, current_mode, sizeof(current_mode));
     if (rc != SANE_STATUS_GOOD)
     {
         ERR("Unable to retrieve mode from sane, ICAP_PIXELTYPE unsupported\n");
@@ -367,12 +367,12 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
                     return TWCC_BADVALUE;
 
                 status = 0;
-                rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+                rc = sane_option_set_str("mode", mode, &status);
                 /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
                 if (rc == SANE_STATUS_INVAL && strcmp(mode, SANE_VALUE_SCAN_MODE_GRAY) == 0)
                 {
                     strcpy(mode, "Grayscale");
-                    rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+                    rc = sane_option_set_str("mode", mode, &status);
                 }
                 if (rc != SANE_STATUS_GOOD)
                     return sane_status_to_twcc(rc);
@@ -391,12 +391,12 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
                 return TWCC_BADVALUE;
 
             status = 0;
-            rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+            rc = sane_option_set_str("mode", mode, &status);
             /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
             if (rc == SANE_STATUS_INVAL && strcmp(mode, SANE_VALUE_SCAN_MODE_GRAY) == 0)
             {
                 strcpy(mode, "Grayscale");
-                rc = sane_option_set_str(activeDS.deviceHandle, "mode", mode, &status);
+                rc = sane_option_set_str("mode", mode, &status);
             }
             if (rc != SANE_STATUS_GOOD)
                 return sane_status_to_twcc(rc);
@@ -578,10 +578,10 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
         best_option_name = "y-resolution";
         default_res = &activeDS.defaultYResolution;
     }
-    if (sane_option_get_int(activeDS.deviceHandle, best_option_name, &current_resolution) != SANE_STATUS_GOOD)
+    if (sane_option_get_int(best_option_name, &current_resolution) != SANE_STATUS_GOOD)
     {
         best_option_name = "resolution";
-        if (sane_option_get_int(activeDS.deviceHandle, best_option_name, &current_resolution) != SANE_STATUS_GOOD)
+        if (sane_option_get_int(best_option_name, &current_resolution) != SANE_STATUS_GOOD)
             return TWCC_BADCAP;
     }
 
@@ -610,7 +610,7 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
             break;
 
         case MSG_GET:
-            sane_rc = sane_option_probe_resolution(activeDS.deviceHandle, best_option_name, &minval, &maxval, &quantval);
+            sane_rc = sane_option_probe_resolution(best_option_name, &minval, &maxval, &quantval);
             if (sane_rc != SANE_STATUS_GOOD)
                 twCC = TWCC_BADCAP;
             else
@@ -624,7 +624,7 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
             {
                 TW_FIX32 f32;
                 memcpy(&f32, &val, sizeof(f32));
-                sane_rc = sane_option_set_int(activeDS.deviceHandle, best_option_name, f32.Whole, &set_status);
+                sane_rc = sane_option_set_int(best_option_name, f32.Whole, &set_status);
                 if (sane_rc != SANE_STATUS_GOOD)
                 {
                     FIXME("Status of %d not expected or handled\n", sane_rc);
@@ -640,7 +640,7 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
             break;
 
         case MSG_RESET:
-            sane_rc = sane_option_set_int(activeDS.deviceHandle, best_option_name, default_res->Whole, NULL);
+            sane_rc = sane_option_set_int(best_option_name, default_res->Whole, NULL);
             if (sane_rc != SANE_STATUS_GOOD)
                 return TWCC_BADCAP;
 
@@ -666,12 +666,12 @@ static TW_UINT16 SANE_ICAPPhysical (pTW_CAPABILITY pCapability, TW_UINT16 action
     TRACE("ICAP_PHYSICAL%s\n", cap == ICAP_PHYSICALHEIGHT? "HEIGHT" : "WIDTH");
 
     sprintf(option_name, "tl-%c", cap == ICAP_PHYSICALHEIGHT ? 'y' : 'x');
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, option_name, NULL, &lowerunit, &lower, NULL, NULL);
+    status = sane_option_probe_scan_area(option_name, NULL, &lowerunit, &lower, NULL, NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
 
     sprintf(option_name, "br-%c", cap == ICAP_PHYSICALHEIGHT ? 'y' : 'x');
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, option_name, NULL, &upperunit, NULL, &upper, NULL);
+    status = sane_option_probe_scan_area(option_name, NULL, &upperunit, NULL, &upper, NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
 
@@ -753,19 +753,19 @@ static TW_UINT16 get_width_height(double *width, double *height, BOOL max)
     SANE_Fixed brx_current, brx_min, brx_max;
     SANE_Fixed bry_current, bry_min, bry_max;
 
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-x", &tlx_current, NULL, &tlx_min, &tlx_max, NULL);
+    status = sane_option_probe_scan_area("tl-x", &tlx_current, NULL, &tlx_min, &tlx_max, NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
 
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-y", &tly_current, NULL, &tly_min, &tly_max, NULL);
+    status = sane_option_probe_scan_area("tl-y", &tly_current, NULL, &tly_min, &tly_max, NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
 
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-x", &brx_current, NULL, &brx_min, &brx_max, NULL);
+    status = sane_option_probe_scan_area("br-x", &brx_current, NULL, &brx_min, &brx_max, NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
 
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-y", &bry_current, NULL, &bry_min, &bry_max, NULL);
+    status = sane_option_probe_scan_area("br-y", &bry_current, NULL, &bry_min, &bry_max, NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
 
@@ -785,7 +785,7 @@ static TW_UINT16 get_width_height(double *width, double *height, BOOL max)
 static TW_UINT16 set_one_coord(const char *name, double coord)
 {
     SANE_Status status;
-    status = sane_option_set_fixed(activeDS.deviceHandle, name, SANE_FIX(coord), NULL);
+    status = sane_option_set_fixed(name, SANE_FIX(coord), NULL);
     if (status != SANE_STATUS_GOOD)
         return sane_status_to_twcc(status);
     return TWCC_SUCCESS;
@@ -971,7 +971,7 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
     TRACE("CAP_AUTOFEED\n");
 
-    if (sane_option_get_bool(activeDS.deviceHandle, "batch-scan", &autofeed, NULL) != SANE_STATUS_GOOD)
+    if (sane_option_get_bool("batch-scan", &autofeed, NULL) != SANE_STATUS_GOOD)
         return TWCC_BADCAP;
 
     switch (action)
@@ -994,7 +994,7 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
                 else
                     autofeed = SANE_FALSE;
 
-                status = sane_option_set_bool(activeDS.deviceHandle, "batch-scan", autofeed, NULL);
+                status = sane_option_set_bool("batch-scan", autofeed, NULL);
                 if (status != SANE_STATUS_GOOD)
                 {
                     ERR("Error %s: Could not set batch-scan to %d\n", sane_strstatus(status), autofeed);
@@ -1009,7 +1009,7 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case MSG_RESET:
             autofeed = SANE_TRUE;
-            status = sane_option_set_bool(activeDS.deviceHandle, "batch-scan", autofeed, NULL);
+            status = sane_option_set_bool("batch-scan", autofeed, NULL);
             if (status != SANE_STATUS_GOOD)
             {
                 ERR("Error %s: Could not reset batch-scan to SANE_TRUE\n", sane_strstatus(status));
@@ -1035,7 +1035,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
 
     TRACE("CAP_FEEDERENABLED\n");
 
-    if (sane_option_get_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, sizeof(source), NULL) != SANE_STATUS_GOOD)
+    if (sane_option_get_str(SANE_NAME_SCAN_SOURCE, source, sizeof(source), NULL) != SANE_STATUS_GOOD)
         return TWCC_BADCAP;
 
     if (strcmp(source, "Auto") == 0 || strcmp(source, "ADF") == 0)
@@ -1059,11 +1059,11 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
             if (twCC == TWCC_SUCCESS)
             {
                 strcpy(source, "ADF");
-                status = sane_option_set_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, NULL);
+                status = sane_option_set_str(SANE_NAME_SCAN_SOURCE, source, NULL);
                 if (status != SANE_STATUS_GOOD)
                 {
                     strcpy(source, "Auto");
-                    status = sane_option_set_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, NULL);
+                    status = sane_option_set_str(SANE_NAME_SCAN_SOURCE, source, NULL);
                 }
                 if (status != SANE_STATUS_GOOD)
                 {
@@ -1079,7 +1079,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
 
         case MSG_RESET:
             strcpy(source, "Auto");
-            if (sane_option_set_str(activeDS.deviceHandle, SANE_NAME_SCAN_SOURCE, source, NULL) == SANE_STATUS_GOOD)
+            if (sane_option_set_str(SANE_NAME_SCAN_SOURCE, source, NULL) == SANE_STATUS_GOOD)
                 enabled = TRUE;
             /* .. fall through intentional .. */
 

@@ -62,7 +62,7 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             activeDS.sane_param_valid = TRUE;
         }
 
-        if (sane_option_get_int(activeDS.deviceHandle, "resolution", &resolution) == SANE_STATUS_GOOD)
+        if (sane_option_get_int("resolution", &resolution) == SANE_STATUS_GOOD)
             pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = resolution;
         else
             pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = -1;
@@ -121,15 +121,15 @@ TW_UINT16 SANE_ImageLayoutGet (pTW_IDENTITY pOrigin,
 
     TRACE("DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET\n");
 
-    status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-x", &tlx_current, NULL, NULL, NULL, NULL);
+    status = sane_option_probe_scan_area("tl-x", &tlx_current, NULL, NULL, NULL, NULL);
     if (status == SANE_STATUS_GOOD)
-        status = sane_option_probe_scan_area(activeDS.deviceHandle, "tl-y", &tly_current, NULL, NULL, NULL, NULL);
+        status = sane_option_probe_scan_area("tl-y", &tly_current, NULL, NULL, NULL, NULL);
 
     if (status == SANE_STATUS_GOOD)
-        status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-x", &brx_current, NULL, NULL, NULL, NULL);
+        status = sane_option_probe_scan_area("br-x", &brx_current, NULL, NULL, NULL, NULL);
 
     if (status == SANE_STATUS_GOOD)
-        status = sane_option_probe_scan_area(activeDS.deviceHandle, "br-y", &bry_current, NULL, NULL, NULL, NULL);
+        status = sane_option_probe_scan_area("br-y", &bry_current, NULL, NULL, NULL, NULL);
 
     if (status != SANE_STATUS_GOOD)
     {
@@ -173,8 +173,7 @@ static TW_UINT16 set_one_imagecoord(const char *option_name, TW_FIX32 val, BOOL 
     double d = val.Whole + ((double) val.Frac / 65536.0);
     int set_status = 0;
     SANE_Status status;
-    status = sane_option_set_fixed(activeDS.deviceHandle, option_name,
-             SANE_FIX((d * 254) / 10), &set_status);
+    status = sane_option_set_fixed(option_name, SANE_FIX((d * 254) / 10), &set_status);
     if (status != SANE_STATUS_GOOD)
     {
         activeDS.twCC = sane_status_to_twcc(status);
