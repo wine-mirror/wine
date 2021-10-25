@@ -1411,6 +1411,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     {
         if (!strcmp( pFile->name, "stdarg.h" )) return NULL;
         if (!strcmp( pFile->name, "x86intrin.h" )) return NULL;
+        if (make->include_paths.count) return NULL;
         fprintf( stderr, "%s:%d: error: system header %s cannot be used with msvcrt\n",
                  pFile->included_by->file->name, pFile->included_line, pFile->name );
         exit(1);
@@ -1961,6 +1962,7 @@ static struct strarray get_local_dependencies( const struct makefile *make, cons
 static const char *get_static_lib( const struct makefile *make, const char *name )
 {
     if (!make->staticlib) return NULL;
+    if (make->disabled) return NULL;
     if (strncmp( make->staticlib, "lib", 3 )) return NULL;
     if (strncmp( make->staticlib + 3, name, strlen(name) )) return NULL;
     if (strcmp( make->staticlib + 3 + strlen(name), ".a" )) return NULL;
@@ -2085,8 +2087,19 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
     for (i = 0; i < imports.count; i++)
     {
-        const char *name = get_base_name( imports.str[i] );
+        const char *name = imports.str[i];
         const char *lib = NULL;
+
+        if (name[0] == '-')
+        {
+            switch (name[1])
+            {
+            case 'L': strarray_add( &ret, name ); continue;
+            case 'l': name += 2; break;
+            default: continue;
+            }
+        }
+        else name = get_base_name( name );
 
         for (j = 0; j < subdirs.count; j++)
         {
