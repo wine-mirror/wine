@@ -1,0 +1,7 @@
+MODULE    = msdasql.dll
+IMPORTS   = uuid
+
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+C_SRCS = \
+	msdasql_main.c
