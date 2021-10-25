@@ -51,12 +51,12 @@ static void output_write(const WCHAR *str, DWORD wlen)
 static int WINAPIV output_string(int msg, ...)
 {
     WCHAR out[8192];
-    __ms_va_list arguments;
+    va_list arguments;
     int len;
 
-    __ms_va_start(arguments, msg);
+    va_start(arguments, msg);
     len = FormatMessageW(FORMAT_MESSAGE_FROM_HMODULE, NULL, msg, 0, out, ARRAY_SIZE(out), &arguments);
-    __ms_va_end(arguments);
+    va_end(arguments);
 
     if (len == 0 && GetLastError() != NO_ERROR)
         WINE_FIXME("Could not format string: le=%u, msg=%d\n", GetLastError(), msg);
