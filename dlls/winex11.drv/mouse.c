@@ -256,8 +256,8 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     int i;
 
-    thread_data->x_rel_valuator.number = -1;
-    thread_data->y_rel_valuator.number = -1;
+    thread_data->x_valuator.number = -1;
+    thread_data->y_valuator.number = -1;
 
     for (i = 0; i < n_valuators; i++)
     {
@@ -265,10 +265,10 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
         if (valuators[i]->type != XIValuatorClass) continue;
         if (class->label == x11drv_atom( Rel_X ) ||
             (!class->label && class->number == 0 && class->mode == XIModeRelative))
-            thread_data->x_rel_valuator = *class;
+            thread_data->x_valuator = *class;
         else if (class->label == x11drv_atom( Rel_Y ) ||
                  (!class->label && class->number == 1 && class->mode == XIModeRelative))
-            thread_data->y_rel_valuator = *class;
+            thread_data->y_valuator = *class;
     }
 }
 #endif
@@ -349,8 +349,8 @@ static void disable_xinput2(void)
 
     pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
     pXIFreeDeviceInfo( data->xi2_devices );
-    data->x_rel_valuator.number = -1;
-    data->y_rel_valuator.number = -1;
+    data->x_valuator.number = -1;
+    data->y_valuator.number = -1;
     data->xi2_devices = NULL;
     data->xi2_core_pointer = 0;
     data->xi2_current_slave = 0;
@@ -625,13 +625,13 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
 static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    XIValuatorClassInfo *x = &thread_data->x_valuator, *y = &thread_data->y_valuator;
     const double *values = event->valuators.values;
-    XIValuatorClassInfo *x_rel, *y_rel;
     double dx = 0, dy = 0, val;
     RECT virtual_rect;
     int i;
 
-    if (thread_data->x_rel_valuator.number < 0 || thread_data->y_rel_valuator.number < 0) return FALSE;
+    if (x->number < 0 || y->number < 0) return FALSE;
     if (!event->valuators.mask_len) return FALSE;
     if (thread_data->xi2_state != xi_enabled) return FALSE;
 
@@ -654,26 +654,23 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
     }
     if (event->deviceid != thread_data->xi2_current_slave) return FALSE;
 
-    x_rel = &thread_data->x_rel_valuator;
-    y_rel = &thread_data->y_rel_valuator;
-
     virtual_rect = get_virtual_screen_rect();
 
-    for (i = 0; i <= max( x_rel->number, y_rel->number ); i++)
+    for (i = 0; i <= max( x->number, y->number ); i++)
     {
         if (!XIMaskIsSet( event->valuators.mask, i )) continue;
         val = *values++;
-        if (i == x_rel->number)
+        if (i == x->number)
         {
             input->u.mi.dx = dx = val;
-            if (x_rel->min < x_rel->max)
-                input->u.mi.dx = val * (virtual_rect.right - virtual_rect.left) / (x_rel->max - x_rel->min);
+            if (x->min < x->max)
+                input->u.mi.dx = val * (virtual_rect.right - virtual_rect.left) / (x->max - x->min);
         }
-        if (i == y_rel->number)
+        if (i == y->number)
         {
             input->u.mi.dy = dy = val;
-            if (y_rel->min < y_rel->max)
-                input->u.mi.dy = val * (virtual_rect.bottom - virtual_rect.top) / (y_rel->max - y_rel->min);
+            if (y->min < y->max)
+                input->u.mi.dy = val * (virtual_rect.bottom - virtual_rect.top) / (y->max - y->min);
         }
     }
 
