@@ -1920,6 +1920,8 @@ DECL_HANDLER(list_processes)
             thread_info->base_priority = thread->priority;
             thread_info->current_priority = thread->priority; /* FIXME */
             thread_info->unix_tid = thread->unix_tid;
+            thread_info->entry_point = thread->entry_point;
+            thread_info->teb = thread->teb;
             pos += sizeof(*thread_info);
         }
     }

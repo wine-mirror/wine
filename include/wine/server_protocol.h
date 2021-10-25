@@ -2001,6 +2001,8 @@ struct thread_info
     int             base_priority;
     int             current_priority;
     int             unix_tid;
+    client_ptr_t    teb;
+    client_ptr_t    entry_point;
 };
 
 struct process_info
@@ -6261,7 +6263,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 734
+#define SERVER_PROTOCOL_VERSION 735
 
 /* ### protocol_version end ### */
 
