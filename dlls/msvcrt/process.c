@@ -1040,113 +1040,140 @@ void msvcrt_free_popen_data(void)
  */
 FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
 {
-  FILE *ret;
-  BOOL readPipe = TRUE;
-  int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1, fmode;
-  const wchar_t *p;
-  wchar_t *comspec, *fullcmd;
-  unsigned int len;
-  struct popen_handle *container;
-  DWORD i;
+    wchar_t *comspec, *fullcmd, fullname[MAX_PATH];
+    int textmode, fds[2], fd_parent, fd_child;
+    struct popen_handle *container;
+    PROCESS_INFORMATION pi;
+    BOOL read_pipe = TRUE;
+    const wchar_t *p;
+    unsigned int len;
+    STARTUPINFOW si;
+    FILE *ret;
+    DWORD i;
+    BOOL r;
 
-  TRACE("(command=%s, mode=%s)\n", debugstr_w(command), debugstr_w(mode));
+    TRACE("(command=%s, mode=%s)\n", debugstr_w(command), debugstr_w(mode));
 
-  if (!command || !mode)
-    return NULL;
+    if (!command || !mode)
+        return NULL;
 
-  _get_fmode(&fmode);
-  textmode = fmode & (_O_BINARY | _O_TEXT);
-  for (p = mode; *p; p++)
-  {
-    switch (*p)
+    _get_fmode(&textmode);
+    textmode &= _O_BINARY | _O_TEXT;
+    textmode |= _O_NOINHERIT;
+    for (p = mode; *p; p++)
     {
-      case 'W':
-      case 'w':
-        readPipe = FALSE;
-        break;
-      case 'B':
-      case 'b':
-        textmode |= _O_BINARY;
-        textmode &= ~_O_TEXT;
-        break;
-      case 'T':
-      case 't':
-        textmode |= _O_TEXT;
-        textmode &= ~_O_BINARY;
-        break;
+        switch (*p)
+        {
+        case 'W':
+        case 'w':
+            read_pipe = FALSE;
+            break;
+        case 'B':
+        case 'b':
+            textmode |= _O_BINARY;
+            textmode &= ~_O_TEXT;
+            break;
+        case 'T':
+        case 't':
+            textmode |= _O_TEXT;
+            textmode &= ~_O_BINARY;
+            break;
+        }
     }
-  }
-  if (_pipe(fds, 0, textmode) == -1)
-    return NULL;
+    if (_pipe(fds, 0, textmode) == -1)
+        return NULL;
 
-  fdToDup = readPipe ? 1 : 0;
-  fdToOpen = readPipe ? 0 : 1;
-
-  _lock(_POPEN_LOCK);
-  for(i=0; i<popen_handles_size; i++)
-  {
-    if (!popen_handles[i].f)
-      break;
-  }
-  if (i==popen_handles_size)
-  {
-    i = (popen_handles_size ? popen_handles_size*2 : 8);
-    container = realloc(popen_handles, i*sizeof(*container));
-    if (!container) goto error;
-
-    popen_handles = container;
-    container = popen_handles+popen_handles_size;
-    memset(container, 0, (i-popen_handles_size)*sizeof(*container));
-    popen_handles_size = i;
-  }
-  else container = popen_handles+i;
-
-  if ((fdStdHandle = _dup(fdToDup)) == -1)
-    goto error;
-  if (_dup2(fds[fdToDup], fdToDup) != 0)
-    goto error;
-
-  _close(fds[fdToDup]);
-
-  if (!(comspec = msvcrt_get_comspec())) goto error;
-  len = wcslen(comspec) + wcslen(command) + 5;
-
-  if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
-  {
-    HeapFree(GetProcessHeap(), 0, comspec);
-    goto error;
-  }
-
-  wcscpy(fullcmd, comspec);
-  wcscat(fullcmd, L" /c ");
-  wcscat(fullcmd, command);
-
-  if ((container->proc = (HANDLE)msvcrt_spawn(_P_NOWAIT, comspec, fullcmd, NULL, 1))
-          == INVALID_HANDLE_VALUE)
-  {
-    _close(fds[fdToOpen]);
-    ret = NULL;
-  }
-  else
-  {
-    ret = _wfdopen(fds[fdToOpen], mode);
+    if (read_pipe)
+    {
+        fd_parent = fds[0];
+        fd_child = _dup(fds[1]);
+        _close(fds[1]);
+    }
+    else
+    {
+        fd_parent = fds[1];
+        fd_child = _dup(fds[0]);
+        _close(fds[0]);
+    }
+    if (fd_child == -1)
+    {
+        _close(fd_parent);
+        return NULL;
+    }
+    ret = _wfdopen(fd_parent, mode);
     if (!ret)
-      _close(fds[fdToOpen]);
+    {
+        _close(fd_child);
+        return NULL;
+    }
+
+    _lock(_POPEN_LOCK);
+    for (i = 0; i < popen_handles_size; i++)
+    {
+        if (!popen_handles[i].f)
+            break;
+    }
+    if (i == popen_handles_size)
+    {
+        i = (popen_handles_size ? popen_handles_size * 2 : 8);
+        container = realloc(popen_handles, i * sizeof(*container));
+        if (!container) goto error;
+
+        popen_handles = container;
+        container = popen_handles + popen_handles_size;
+        memset(container, 0, (i - popen_handles_size) * sizeof(*container));
+        popen_handles_size = i;
+    }
+    else container = popen_handles + i;
+
+    if (!(comspec = msvcrt_get_comspec())) goto error;
+    len = wcslen(comspec) + wcslen(command) + 5;
+
+    if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
+    {
+        HeapFree(GetProcessHeap(), 0, comspec);
+        goto error;
+    }
+
+    wcscpy(fullcmd, comspec);
+    wcscat(fullcmd, L" /c ");
+    wcscat(fullcmd, command);
+    msvcrt_search_executable(comspec, fullname, 1);
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESTDHANDLES;
+    if (read_pipe)
+    {
+        si.hStdInput = (HANDLE)_get_osfhandle(STDIN_FILENO);
+        si.hStdOutput = (HANDLE)_get_osfhandle(fd_child);
+    }
+    else
+    {
+        si.hStdInput = (HANDLE)_get_osfhandle(fd_child);
+        si.hStdOutput = (HANDLE)_get_osfhandle(STDOUT_FILENO);
+    }
+    si.hStdError = (HANDLE)_get_osfhandle(STDERR_FILENO);
+    r = CreateProcessW(fullname, fullcmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+    HeapFree(GetProcessHeap(), 0, comspec);
+    HeapFree(GetProcessHeap(), 0, fullcmd);
+    if (!r)
+    {
+        msvcrt_set_errno(GetLastError());
+        goto error;
+    }
+    CloseHandle(pi.hThread);
+    _close(fd_child);
+    container->proc = pi.hProcess;
     container->f = ret;
-  }
-  _unlock(_POPEN_LOCK);
-  HeapFree(GetProcessHeap(), 0, comspec);
-  HeapFree(GetProcessHeap(), 0, fullcmd);
-  _dup2(fdStdHandle, fdToDup);
-  _close(fdStdHandle);
-  return ret;
+    _unlock(_POPEN_LOCK);
+    return ret;
 
 error:
-  _unlock(_POPEN_LOCK);
-  if (fdStdHandle != -1) _close(fdStdHandle);
-  _close(fds[0]);
-  _close(fds[1]);
-  return NULL;
+    _unlock(_POPEN_LOCK);
+    _close(fd_child);
+    fclose(ret);
+    return NULL;
 }
 
 /*********************************************************************
