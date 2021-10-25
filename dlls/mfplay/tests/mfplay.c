@@ -226,12 +226,23 @@ todo_wine
 static void test_media_item(void)
 {
     IMFPMediaPlayer *player;
+    IMFPMediaItem *item;
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_SetMediaItem(player, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    /* Async mode, no callback was specified. */
+    hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", FALSE, 0, &item);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", FALSE, 0, NULL);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     IMFPMediaPlayer_Release(player);
