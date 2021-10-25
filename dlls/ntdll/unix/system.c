@@ -2359,6 +2359,115 @@ static void read_dev_urandom( void *buf, ULONG len )
     else WARN( "can't open /dev/urandom\n" );
 }
 
+static NTSTATUS get_system_process_info( void *info, ULONG size, ULONG *len )
+{
+    unsigned int process_count, total_thread_count, total_name_len, i, j;
+    unsigned int pos = 0;
+    char *buffer = NULL;
+    NTSTATUS ret;
+
+C_ASSERT( sizeof(struct thread_info) <= sizeof(SYSTEM_THREAD_INFORMATION) );
+C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
+
+    *len = 0;
+    if (size && !(buffer = malloc( size ))) return STATUS_NO_MEMORY;
+
+    SERVER_START_REQ( list_processes )
+    {
+        wine_server_set_reply( req, buffer, size );
+        ret = wine_server_call( req );
+        total_thread_count = reply->total_thread_count;
+        total_name_len = reply->total_name_len;
+        process_count = reply->process_count;
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        if (ret == STATUS_INFO_LENGTH_MISMATCH)
+            *len = sizeof(SYSTEM_PROCESS_INFORMATION) * process_count
+                  + (total_name_len + process_count) * sizeof(WCHAR)
+                  + total_thread_count * sizeof(SYSTEM_THREAD_INFORMATION);
+
+        free( buffer );
+        return ret;
+    }
+
+    for (i = 0; i < process_count; i++)
+    {
+        SYSTEM_PROCESS_INFORMATION *nt_process = (SYSTEM_PROCESS_INFORMATION *)((char *)info + *len);
+        const struct process_info *server_process;
+        const WCHAR *server_name, *file_part;
+        ULONG proc_len;
+        ULONG name_len = 0;
+
+        pos = (pos + 7) & ~7;
+        server_process = (const struct process_info *)(buffer + pos);
+        pos += sizeof(*server_process);
+
+        server_name = (const WCHAR *)(buffer + pos);
+        file_part = server_name + (server_process->name_len / sizeof(WCHAR));
+        pos += server_process->name_len;
+        while (file_part > server_name && file_part[-1] != '\\')
+        {
+            file_part--;
+            name_len++;
+        }
+
+        proc_len = sizeof(*nt_process) + server_process->thread_count * sizeof(SYSTEM_THREAD_INFORMATION)
+                     + (name_len + 1) * sizeof(WCHAR);
+        *len += proc_len;
+
+        if (*len <= size)
+        {
+            memset(nt_process, 0, sizeof(*nt_process));
+            if (i < process_count - 1)
+                nt_process->NextEntryOffset = proc_len;
+            nt_process->CreationTime.QuadPart = server_process->start_time;
+            nt_process->dwThreadCount = server_process->thread_count;
+            nt_process->dwBasePriority = server_process->priority;
+            nt_process->UniqueProcessId = UlongToHandle(server_process->pid);
+            nt_process->ParentProcessId = UlongToHandle(server_process->parent_pid);
+            nt_process->SessionId = server_process->session_id;
+            nt_process->HandleCount = server_process->handle_count;
+            get_thread_times( server_process->unix_pid, -1, &nt_process->KernelTime, &nt_process->UserTime );
+            fill_vm_counters( &nt_process->vmCounters, server_process->unix_pid );
+        }
+
+        pos = (pos + 7) & ~7;
+        for (j = 0; j < server_process->thread_count; j++)
+        {
+            const struct thread_info *server_thread = (const struct thread_info *)(buffer + pos);
+
+            if (*len <= size)
+            {
+                nt_process->ti[j].CreateTime.QuadPart = server_thread->start_time;
+                nt_process->ti[j].ClientId.UniqueProcess = UlongToHandle(server_process->pid);
+                nt_process->ti[j].ClientId.UniqueThread = UlongToHandle(server_thread->tid);
+                nt_process->ti[j].dwCurrentPriority = server_thread->current_priority;
+                nt_process->ti[j].dwBasePriority = server_thread->base_priority;
+                get_thread_times( server_process->unix_pid, server_thread->unix_tid,
+                                  &nt_process->ti[j].KernelTime, &nt_process->ti[j].UserTime );
+            }
+
+            pos += sizeof(*server_thread);
+        }
+
+        if (*len <= size)
+        {
+            nt_process->ProcessName.Buffer = (WCHAR *)&nt_process->ti[server_process->thread_count];
+            nt_process->ProcessName.Length = name_len * sizeof(WCHAR);
+            nt_process->ProcessName.MaximumLength = (name_len + 1) * sizeof(WCHAR);
+            memcpy(nt_process->ProcessName.Buffer, file_part, name_len * sizeof(WCHAR));
+            nt_process->ProcessName.Buffer[name_len] = 0;
+        }
+    }
+
+    if (*len > size) ret = STATUS_INFO_LENGTH_MISMATCH;
+    free( buffer );
+    return ret;
+}
+
 /******************************************************************************
  *              NtQuerySystemInformation  (NTDLL.@)
  */
@@ -2445,117 +2554,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemProcessInformation:  /* 5 */
-    {
-        unsigned int process_count, total_thread_count, total_name_len, i, j;
-        char *buffer = NULL;
-        unsigned int pos = 0;
-
-C_ASSERT( sizeof(struct thread_info) <= sizeof(SYSTEM_THREAD_INFORMATION) );
-C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
-
-        if (size && !(buffer = malloc( size )))
-        {
-            ret = STATUS_NO_MEMORY;
-            break;
-        }
-
-        SERVER_START_REQ( list_processes )
-        {
-            wine_server_set_reply( req, buffer, size );
-            ret = wine_server_call( req );
-            total_thread_count = reply->total_thread_count;
-            total_name_len = reply->total_name_len;
-            process_count = reply->process_count;
-        }
-        SERVER_END_REQ;
-
-        len = 0;
-
-        if (ret)
-        {
-            if (ret == STATUS_INFO_LENGTH_MISMATCH)
-                len = sizeof(SYSTEM_PROCESS_INFORMATION) * process_count
-                      + (total_name_len + process_count) * sizeof(WCHAR)
-                      + total_thread_count * sizeof(SYSTEM_THREAD_INFORMATION);
-
-            free( buffer );
-            break;
-        }
-
-        for (i = 0; i < process_count; i++)
-        {
-            SYSTEM_PROCESS_INFORMATION *nt_process = (SYSTEM_PROCESS_INFORMATION *)((char *)info + len);
-            const struct process_info *server_process;
-            const WCHAR *server_name, *file_part;
-            ULONG proc_len;
-            ULONG name_len = 0;
-
-            pos = (pos + 7) & ~7;
-            server_process = (const struct process_info *)(buffer + pos);
-            pos += sizeof(*server_process);
-
-            server_name = (const WCHAR *)(buffer + pos);
-            file_part = server_name + (server_process->name_len / sizeof(WCHAR));
-            pos += server_process->name_len;
-            while (file_part > server_name && file_part[-1] != '\\')
-            {
-                file_part--;
-                name_len++;
-            }
-
-            proc_len = sizeof(*nt_process) + server_process->thread_count * sizeof(SYSTEM_THREAD_INFORMATION)
-                         + (name_len + 1) * sizeof(WCHAR);
-            len += proc_len;
-
-            if (len <= size)
-            {
-                memset(nt_process, 0, sizeof(*nt_process));
-                if (i < process_count - 1)
-                    nt_process->NextEntryOffset = proc_len;
-                nt_process->CreationTime.QuadPart = server_process->start_time;
-                nt_process->dwThreadCount = server_process->thread_count;
-                nt_process->dwBasePriority = server_process->priority;
-                nt_process->UniqueProcessId = UlongToHandle(server_process->pid);
-                nt_process->ParentProcessId = UlongToHandle(server_process->parent_pid);
-                nt_process->SessionId = server_process->session_id;
-                nt_process->HandleCount = server_process->handle_count;
-                get_thread_times( server_process->unix_pid, -1, &nt_process->KernelTime, &nt_process->UserTime );
-                fill_vm_counters( &nt_process->vmCounters, server_process->unix_pid );
-            }
-
-            pos = (pos + 7) & ~7;
-            for (j = 0; j < server_process->thread_count; j++)
-            {
-                const struct thread_info *server_thread = (const struct thread_info *)(buffer + pos);
-
-                if (len <= size)
-                {
-                    nt_process->ti[j].CreateTime.QuadPart = server_thread->start_time;
-                    nt_process->ti[j].ClientId.UniqueProcess = UlongToHandle(server_process->pid);
-                    nt_process->ti[j].ClientId.UniqueThread = UlongToHandle(server_thread->tid);
-                    nt_process->ti[j].dwCurrentPriority = server_thread->current_priority;
-                    nt_process->ti[j].dwBasePriority = server_thread->base_priority;
-                    get_thread_times( server_process->unix_pid, server_thread->unix_tid,
-                                      &nt_process->ti[j].KernelTime, &nt_process->ti[j].UserTime );
-                }
-
-                pos += sizeof(*server_thread);
-            }
-
-            if (len <= size)
-            {
-                nt_process->ProcessName.Buffer = (WCHAR *)&nt_process->ti[server_process->thread_count];
-                nt_process->ProcessName.Length = name_len * sizeof(WCHAR);
-                nt_process->ProcessName.MaximumLength = (name_len + 1) * sizeof(WCHAR);
-                memcpy(nt_process->ProcessName.Buffer, file_part, name_len * sizeof(WCHAR));
-                nt_process->ProcessName.Buffer[name_len] = 0;
-            }
-        }
-
-        if (len > size) ret = STATUS_INFO_LENGTH_MISMATCH;
-        free( buffer );
+        ret = get_system_process_info( info, size, &len );
         break;
-    }
 
     case SystemProcessorPerformanceInformation:  /* 8 */
     {
