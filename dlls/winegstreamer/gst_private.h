@@ -129,6 +129,8 @@ struct wm_reader
     bool read_thread_shutdown;
     struct wg_parser *wg_parser;
 
+    WORD stream_count;
+
     const struct wm_reader_ops *ops;
 };
 

@@ -459,7 +459,7 @@ static void test_sync_reader_streaming(void)
     count = 0xdeadbeef;
     hr = IWMProfile_GetStreamCount(profile, &count);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(count == 2, "Got count %u.\n", count);
+    ok(count == 2, "Got count %u.\n", count);
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputCount(reader, &count);

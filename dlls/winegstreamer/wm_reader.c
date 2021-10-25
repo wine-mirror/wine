@@ -188,12 +188,16 @@ static HRESULT WINAPI profile_SetDescription(IWMProfile3 *iface, const WCHAR *de
 
 static HRESULT WINAPI profile_GetStreamCount(IWMProfile3 *iface, DWORD *count)
 {
-    FIXME("iface %p, count %p, stub!\n", iface, count);
+    struct wm_reader *reader = impl_from_IWMProfile3(iface);
+
+    TRACE("reader %p, count %p.\n", reader, count);
 
     if (!count)
         return E_INVALIDARG;
 
-    *count = 0;
+    EnterCriticalSection(&reader->cs);
+    *count = reader->stream_count;
+    LeaveCriticalSection(&reader->cs);
     return S_OK;
 }
 
@@ -852,6 +856,8 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
         ERR("Failed to connect parser, hr %#x.\n", hr);
         goto out_shutdown_thread;
     }
+
+    reader->stream_count = wg_parser_get_stream_count(reader->wg_parser);
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
