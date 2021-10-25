@@ -26,6 +26,9 @@
 #include "rpcproxy.h"
 #include "wine/debug.h"
 
+#include "initguid.h"
+#include "msdasql.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msdasql);
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)

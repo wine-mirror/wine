@@ -5,3 +5,7 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	msdasql_main.c
+
+RC_SRCS = msdasql.rc
+
+IDL_SRCS = msdasql_classes.idl
