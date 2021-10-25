@@ -35,7 +35,7 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEINFO pImageInfo = (pTW_IMAGEINFO) pData;
     SANE_Status status;
-    SANE_Int resolution;
+    int resolution;
 
     TRACE("DG_IMAGE/DAT_IMAGEINFO/MSG_GET\n");
 
@@ -62,7 +62,7 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             activeDS.sane_param_valid = TRUE;
         }
 
-        if (sane_option_get_int("resolution", &resolution) == SANE_STATUS_GOOD)
+        if (sane_option_get_int("resolution", &resolution) == TWCC_SUCCESS)
             pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = resolution;
         else
             pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = -1;
@@ -117,23 +117,23 @@ TW_UINT16 SANE_ImageLayoutGet (pTW_IDENTITY pOrigin,
     SANE_Fixed tly_current;
     SANE_Fixed brx_current;
     SANE_Fixed bry_current;
-    SANE_Status status;
+    TW_UINT16 rc;
 
     TRACE("DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET\n");
 
-    status = sane_option_probe_scan_area("tl-x", &tlx_current, NULL, NULL, NULL, NULL);
-    if (status == SANE_STATUS_GOOD)
-        status = sane_option_probe_scan_area("tl-y", &tly_current, NULL, NULL, NULL, NULL);
+    rc = sane_option_probe_scan_area("tl-x", &tlx_current, NULL, NULL, NULL, NULL);
+    if (rc == TWCC_SUCCESS)
+        rc = sane_option_probe_scan_area("tl-y", &tly_current, NULL, NULL, NULL, NULL);
 
-    if (status == SANE_STATUS_GOOD)
-        status = sane_option_probe_scan_area("br-x", &brx_current, NULL, NULL, NULL, NULL);
+    if (rc == TWCC_SUCCESS)
+        rc = sane_option_probe_scan_area("br-x", &brx_current, NULL, NULL, NULL, NULL);
 
-    if (status == SANE_STATUS_GOOD)
-        status = sane_option_probe_scan_area("br-y", &bry_current, NULL, NULL, NULL, NULL);
+    if (rc == TWCC_SUCCESS)
+        rc = sane_option_probe_scan_area("br-y", &bry_current, NULL, NULL, NULL, NULL);
 
-    if (status != SANE_STATUS_GOOD)
+    if (rc != TWCC_SUCCESS)
     {
-        activeDS.twCC = sane_status_to_twcc(status);
+        activeDS.twCC = rc;
         return TWRC_FAILURE;
     }
 
@@ -170,17 +170,13 @@ TW_UINT16 SANE_ImageLayoutReset (pTW_IDENTITY pOrigin,
 
 static TW_UINT16 set_one_imagecoord(const char *option_name, TW_FIX32 val, BOOL *changed)
 {
-    double d = val.Whole + ((double) val.Frac / 65536.0);
-    int set_status = 0;
-    SANE_Status status;
-    status = sane_option_set_fixed(option_name, SANE_FIX((d * 254) / 10), &set_status);
-    if (status != SANE_STATUS_GOOD)
+    int v = val.Whole * 65536 + val.Frac;
+    TW_UINT16 rc = sane_option_set_fixed(option_name, MulDiv( v, 254, 10 ), changed);
+    if (rc != TWCC_SUCCESS)
     {
-        activeDS.twCC = sane_status_to_twcc(status);
+        activeDS.twCC = rc;
         return TWRC_FAILURE;
     }
-    if (set_status & SANE_INFO_INEXACT)
-        *changed = TRUE;
     return TWRC_SUCCESS;
 }
 

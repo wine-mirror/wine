@@ -206,18 +206,19 @@ BOOL DoScannerUI(void) DECLSPEC_HIDDEN;
 HWND ScanningDialogBox(HWND dialog, LONG progress) DECLSPEC_HIDDEN;
 
 /* Option functions */
-SANE_Status sane_option_get_int(const char *option_name, SANE_Int *val) DECLSPEC_HIDDEN;
-SANE_Status sane_option_set_int(const char *option_name, SANE_Int val, SANE_Int *status) DECLSPEC_HIDDEN;
-SANE_Status sane_option_get_str(const char *option_name, SANE_String val, size_t len, SANE_Int *status) DECLSPEC_HIDDEN;
-SANE_Status sane_option_set_str(const char *option_name, SANE_String val, SANE_Int *status) DECLSPEC_HIDDEN;
-SANE_Status sane_option_probe_resolution(const char *option_name, SANE_Int *minval, SANE_Int *maxval, SANE_Int *quant) DECLSPEC_HIDDEN;
-SANE_Status sane_option_probe_mode(SANE_String_Const **choices, char *current, int current_size) DECLSPEC_HIDDEN;
-SANE_Status sane_option_probe_scan_area(const char *option_name, SANE_Fixed *val,
-                                        SANE_Unit *unit, SANE_Fixed *min, SANE_Fixed *max, SANE_Fixed *quant) DECLSPEC_HIDDEN;
-SANE_Status sane_option_get_bool(const char *option_name, SANE_Bool *val, SANE_Int *status) DECLSPEC_HIDDEN;
-SANE_Status sane_option_set_bool(const char *option_name, SANE_Bool val, SANE_Int *status) DECLSPEC_HIDDEN;
-SANE_Status sane_option_set_fixed(const char *option_name, SANE_Fixed val, SANE_Int *status) DECLSPEC_HIDDEN;
-TW_UINT16 sane_status_to_twcc(SANE_Status rc) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_get_value( int optno, void *val ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_get_int( const char *option_name, int *val ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_set_int( const char *option_name, int val, BOOL *reload ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_get_str( const char *option_name, char *val, int len ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_set_str( const char *option_name, char *val, BOOL *reload ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_probe_resolution( const char *option_name, int *minval, int *maxval, int *quant) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_probe_mode(const char * const **choices, char *current, int current_size) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_probe_scan_area(const char *option_name, SANE_Fixed *val,
+                                      SANE_Unit *unit, SANE_Fixed *min, SANE_Fixed *max, SANE_Fixed *quant) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_get_bool( const char *option_name, BOOL *val ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_set_bool( const char *option_name, BOOL val ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_set_fixed( const char *option_name, int val, BOOL *reload ) DECLSPEC_HIDDEN;
 BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype) DECLSPEC_HIDDEN;
 
 #endif
