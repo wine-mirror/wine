@@ -125,6 +125,9 @@ struct wm_reader
     CRITICAL_SECTION cs;
 
     IStream *source_stream;
+    HANDLE read_thread;
+    bool read_thread_shutdown;
+    struct wg_parser *wg_parser;
 
     const struct wm_reader_ops *ops;
 };

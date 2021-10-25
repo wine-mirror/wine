@@ -20,6 +20,68 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
+static DWORD CALLBACK read_thread(void *arg)
+{
+    struct wm_reader *reader = arg;
+    IStream *stream = reader->source_stream;
+    size_t buffer_size = 4096;
+    uint64_t file_size;
+    STATSTG stat;
+    void *data;
+
+    if (!(data = malloc(buffer_size)))
+        return 0;
+
+    IStream_Stat(stream, &stat, STATFLAG_NONAME);
+    file_size = stat.cbSize.QuadPart;
+
+    TRACE("Starting read thread for reader %p.\n", reader);
+
+    while (!reader->read_thread_shutdown)
+    {
+        LARGE_INTEGER stream_offset;
+        uint64_t offset;
+        ULONG ret_size;
+        uint32_t size;
+        HRESULT hr;
+
+        if (!wg_parser_get_next_read_offset(reader->wg_parser, &offset, &size))
+            continue;
+
+        if (offset >= file_size)
+            size = 0;
+        else if (offset + size >= file_size)
+            size = file_size - offset;
+
+        if (!size)
+        {
+            wg_parser_push_data(reader->wg_parser, data, 0);
+            continue;
+        }
+
+        if (!array_reserve(&data, &buffer_size, size, 1))
+        {
+            free(data);
+            return 0;
+        }
+
+        ret_size = 0;
+
+        stream_offset.QuadPart = offset;
+        if (SUCCEEDED(hr = IStream_Seek(stream, stream_offset, STREAM_SEEK_SET, NULL)))
+            hr = IStream_Read(stream, data, size, &ret_size);
+        if (FAILED(hr))
+            ERR("Failed to read %u bytes at offset %I64u, hr %#x.\n", size, offset, hr);
+        else if (ret_size != size)
+            ERR("Unexpected short read: requested %u bytes, got %u.\n", size, ret_size);
+        wg_parser_push_data(reader->wg_parser, SUCCEEDED(hr) ? data : NULL, ret_size);
+    }
+
+    free(data);
+    TRACE("Reader is shutting down; exiting.\n");
+    return 0;
+}
+
 static struct wm_reader *impl_from_IWMProfile3(IWMProfile3 *iface)
 {
     return CONTAINING_RECORD(iface, struct wm_reader, IWMProfile3_iface);
@@ -761,13 +823,53 @@ static const IWMReaderTimecodeVtbl timecode_vtbl =
 
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
 {
+    struct wg_parser *wg_parser;
+    STATSTG stat;
+    HRESULT hr;
+
+    if (FAILED(hr = IStream_Stat(stream, &stat, STATFLAG_NONAME)))
+    {
+        ERR("Failed to stat stream, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!(wg_parser = wg_parser_create(WG_PARSER_DECODEBIN, false)))
+        return E_OUTOFMEMORY;
+
     EnterCriticalSection(&reader->cs);
 
+    reader->wg_parser = wg_parser;
     IStream_AddRef(reader->source_stream = stream);
+    reader->read_thread_shutdown = false;
+    if (!(reader->read_thread = CreateThread(NULL, 0, read_thread, reader, 0, NULL)))
+    {
+        hr = E_OUTOFMEMORY;
+        goto out_destroy_parser;
+    }
+
+    if (FAILED(hr = wg_parser_connect(reader->wg_parser, stat.cbSize.QuadPart)))
+    {
+        ERR("Failed to connect parser, hr %#x.\n", hr);
+        goto out_shutdown_thread;
+    }
 
     LeaveCriticalSection(&reader->cs);
-
     return S_OK;
+
+out_shutdown_thread:
+    reader->read_thread_shutdown = true;
+    WaitForSingleObject(reader->read_thread, INFINITE);
+    CloseHandle(reader->read_thread);
+    reader->read_thread = NULL;
+
+out_destroy_parser:
+    wg_parser_destroy(reader->wg_parser);
+    reader->wg_parser = NULL;
+    IStream_Release(reader->source_stream);
+    reader->source_stream = NULL;
+
+    LeaveCriticalSection(&reader->cs);
+    return hr;
 }
 
 HRESULT wm_reader_close(struct wm_reader *reader)
@@ -780,6 +882,15 @@ HRESULT wm_reader_close(struct wm_reader *reader)
         return NS_E_INVALID_REQUEST;
     }
 
+    wg_parser_disconnect(reader->wg_parser);
+
+    reader->read_thread_shutdown = true;
+    WaitForSingleObject(reader->read_thread, INFINITE);
+    CloseHandle(reader->read_thread);
+    reader->read_thread = NULL;
+
+    wg_parser_destroy(reader->wg_parser);
+    reader->wg_parser = NULL;
     IStream_Release(reader->source_stream);
     reader->source_stream = NULL;
 
