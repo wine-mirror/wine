@@ -104,6 +104,7 @@ struct msdasql
 {
     IUnknown         MSDASQL_iface;
     IDBProperties    IDBProperties_iface;
+    IDBInitialize    IDBInitialize_iface;
 
     LONG     ref;
 };
@@ -116,6 +117,11 @@ static inline struct msdasql *impl_from_IUnknown(IUnknown *iface)
 static inline struct msdasql *impl_from_IDBProperties(IDBProperties *iface)
 {
     return CONTAINING_RECORD(iface, struct msdasql, IDBProperties_iface);
+}
+
+static inline struct msdasql *impl_from_IDBInitialize(IDBInitialize *iface)
+{
+    return CONTAINING_RECORD(iface, struct msdasql, IDBInitialize_iface);
 }
 
 static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void **out)
@@ -132,6 +138,10 @@ static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void *
     else if(IsEqualGUID(riid, &IID_IDBProperties))
     {
         *out = &provider->IDBProperties_iface;
+    }
+    else if ( IsEqualGUID(riid, &IID_IDBInitialize))
+    {
+        *out = &provider->IDBInitialize_iface;
     }
     else
     {
@@ -239,6 +249,55 @@ static const struct IDBPropertiesVtbl dbprops_vtbl =
     dbprops_SetProperties
 };
 
+static HRESULT WINAPI dbinit_QueryInterface(IDBInitialize *iface, REFIID riid, void **ppvObject)
+{
+    struct msdasql *provider = impl_from_IDBInitialize(iface);
+
+    return IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI dbinit_AddRef(IDBInitialize *iface)
+{
+    struct msdasql *provider = impl_from_IDBInitialize(iface);
+
+    return IUnknown_AddRef(&provider->MSDASQL_iface);
+}
+
+static ULONG WINAPI dbinit_Release(IDBInitialize *iface)
+{
+    struct msdasql *provider = impl_from_IDBInitialize(iface);
+
+    return IUnknown_Release(&provider->MSDASQL_iface);
+}
+
+static HRESULT WINAPI dbinit_Initialize(IDBInitialize *iface)
+{
+    struct msdasql *provider = impl_from_IDBInitialize(iface);
+
+    FIXME("%p stub\n", provider);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dbinit_Uninitialize(IDBInitialize *iface)
+{
+    struct msdasql *provider = impl_from_IDBInitialize(iface);
+
+    FIXME("%p stub\n", provider);
+
+    return S_OK;
+}
+
+
+static const struct IDBInitializeVtbl dbinit_vtbl =
+{
+    dbinit_QueryInterface,
+    dbinit_AddRef,
+    dbinit_Release,
+    dbinit_Initialize,
+    dbinit_Uninitialize
+};
+
 static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 {
     struct msdasql *provider;
@@ -250,6 +309,7 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 
     provider->MSDASQL_iface.lpVtbl = &msdsql_vtbl;
     provider->IDBProperties_iface.lpVtbl = &dbprops_vtbl;
+    provider->IDBInitialize_iface.lpVtbl = &dbinit_vtbl;
     provider->ref = 1;
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
