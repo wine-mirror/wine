@@ -227,6 +227,15 @@ todo_wine
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, &propvar);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFPMediaPlayer_GetPosition(player, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
     hr = IMFPMediaPlayer_Shutdown(player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -371,7 +380,22 @@ static void test_duration(void)
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFPMediaPlayer_GetDuration(player, &IID_IUnknown, &propvar);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMFPMediaPlayer_GetDuration(player, &MFP_POSITIONTYPE_100NS, &propvar);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetPosition(player, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetPosition(player, &IID_IUnknown, &propvar);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetPosition(player, &MFP_POSITIONTYPE_100NS, &propvar);
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
     IMFPMediaPlayer_Release(player);

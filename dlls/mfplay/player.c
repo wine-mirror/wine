@@ -904,9 +904,40 @@ static HRESULT WINAPI media_player_SetPosition(IMFPMediaPlayer *iface, REFGUID p
 
 static HRESULT WINAPI media_player_GetPosition(IMFPMediaPlayer *iface, REFGUID postype, PROPVARIANT *position)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_guid(postype), position);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFPresentationClock *presentation_clock;
+    IMFClock *clock;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(postype), position);
+
+    if (!position)
+        return E_POINTER;
+
+    if (!IsEqualGUID(postype, &MFP_POSITIONTYPE_100NS))
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&player->cs);
+    if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!player->item)
+        hr = MF_E_INVALIDREQUEST;
+    else
+    {
+        if (SUCCEEDED(hr = IMFMediaSession_GetClock(player->session, &clock)))
+        {
+            if (SUCCEEDED(hr = IMFClock_QueryInterface(clock, &IID_IMFPresentationClock, (void **)&presentation_clock)))
+            {
+                position->vt = VT_UI8;
+                hr = IMFPresentationClock_GetTime(presentation_clock, (MFTIME *)&position->uhVal.QuadPart);
+                IMFPresentationClock_Release(presentation_clock);
+            }
+            IMFClock_Release(clock);
+        }
+    }
+    LeaveCriticalSection(&player->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetDuration(IMFPMediaPlayer *iface, REFGUID postype, PROPVARIANT *duration)
@@ -916,8 +947,11 @@ static HRESULT WINAPI media_player_GetDuration(IMFPMediaPlayer *iface, REFGUID p
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(postype), duration);
 
-    if (!postype || !duration)
+    if (!duration)
         return E_POINTER;
+
+    if (!IsEqualGUID(postype, &MFP_POSITIONTYPE_100NS))
+        return E_INVALIDARG;
 
     EnterCriticalSection(&player->cs);
     if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
