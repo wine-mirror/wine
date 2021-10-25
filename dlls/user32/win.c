@@ -3893,9 +3893,15 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 {
     MSG msg;
     RECT rect;
-    WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
-    WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
+    WORD wDragWidth, wDragHeight;
 
+    TRACE( "%p,%s\n", hWnd, wine_dbgstr_point( &pt ) );
+
+    if (!(GetKeyState( VK_LBUTTON ) & 0x8000))
+        return FALSE;
+
+    wDragWidth = GetSystemMetrics(SM_CXDRAG);
+    wDragHeight= GetSystemMetrics(SM_CYDRAG);
     SetRect(&rect, pt.x - wDragWidth, pt.y - wDragHeight, pt.x + wDragWidth, pt.y + wDragHeight);
 
     SetCapture(hWnd);

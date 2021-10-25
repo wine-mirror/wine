@@ -12293,6 +12293,22 @@ static void test_cancel_mode(void)
     DestroyWindow(hwnd2);
 }
 
+static void test_DragDetect(void)
+{
+    POINT pt;
+    BOOL ret;
+
+    ok(!GetCapture(), "got capture window %p\n", GetCapture());
+    ok(!(GetKeyState( VK_LBUTTON ) & 0x8000), "got VK_LBUTTON\n");
+
+    GetCursorPos(&pt);
+    ret = DragDetect(hwndMain, pt);
+    ok(!ret, "got %d\n", ret);
+
+    ok(!GetCapture(), "got capture window %p\n", GetCapture());
+    ok(!(GetKeyState( VK_LBUTTON ) & 0x8000), "got VK_LBUTTON\n");
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -12461,6 +12477,7 @@ START_TEST(win)
     test_other_process_window(argv[0]);
     test_SC_SIZE();
     test_cancel_mode();
+    test_DragDetect();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
