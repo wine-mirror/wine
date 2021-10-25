@@ -147,12 +147,12 @@ void	dbg_outputW(const WCHAR* buffer, int len)
 int WINAPIV dbg_printf(const char* format, ...)
 {
     static    char	buf[4*1024];
-    __ms_va_list valist;
+    va_list valist;
     int		len;
 
-    __ms_va_start(valist, format);
+    va_start(valist, format);
     len = vsnprintf(buf, sizeof(buf), format, valist);
-    __ms_va_end(valist);
+    va_end(valist);
 
     if (len <= -1 || len >= sizeof(buf)) 
     {
