@@ -39,7 +39,7 @@ static BOOL Silent = FALSE;
 static void WINAPIV output_write(UINT id, ...)
 {
     WCHAR fmt[1024];
-    __ms_va_list va_args;
+    va_list va_args;
     WCHAR *str;
     DWORD len, nOut, ret;
 
@@ -51,10 +51,10 @@ static void WINAPIV output_write(UINT id, ...)
         return;
     }
 
-    __ms_va_start(va_args, id);
+    va_start(va_args, id);
     len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
                          fmt, 0, 0, (LPWSTR)&str, 0, &va_args);
-    __ms_va_end(va_args);
+    va_end(va_args);
     if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
     {
         WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
