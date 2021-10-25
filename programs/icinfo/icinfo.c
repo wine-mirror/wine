@@ -26,14 +26,14 @@ static int WINAPIV mywprintf(const WCHAR *format, ...)
 {
     static char output_bufA[65536];
     static WCHAR output_bufW[sizeof(output_bufA)];
-    __ms_va_list parms;
+    va_list parms;
     DWORD               nOut;
     BOOL                res = FALSE;
     HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    __ms_va_start(parms, format);
+    va_start(parms, format);
     vswprintf(output_bufW, ARRAY_SIZE(output_bufW), format, parms);
-    __ms_va_end(parms);
+    va_end(parms);
 
     /* Try to write as unicode whenever we think it's a console */
     if (((DWORD_PTR)hout & 3) == 3)
