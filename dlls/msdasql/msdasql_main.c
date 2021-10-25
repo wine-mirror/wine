@@ -64,11 +64,13 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
     return 1;
 }
 
-HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
-{
-    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+static HRESULT create_msdasql_provider(REFIID riid, void **ppv);
 
-    return CLASS_E_CLASSNOTAVAILABLE;
+HRESULT WINAPI msdasql_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+
+    return create_msdasql_provider(riid, ppv);
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
@@ -77,18 +79,105 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
     return S_OK;
 }
 
-static const IClassFactoryVtbl cffactoryVtbl = {
+static const IClassFactoryVtbl cfmsdasqlVtbl = {
     ClassFactory_QueryInterface,
     ClassFactory_AddRef,
     ClassFactory_Release,
-    ClassFactory_CreateInstance,
+    msdasql_CreateInstance,
     ClassFactory_LockServer
 };
 
-static IClassFactory cffactory = { &cffactoryVtbl };
+static IClassFactory cfmsdasql = { &cfmsdasqlVtbl };
 
 HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 {
-    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    return IClassFactory_QueryInterface(&cffactory, riid, ppv);
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(&CLSID_MSDASQL, rclsid))
+        return IClassFactory_QueryInterface(&cfmsdasql, riid, ppv);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+struct msdasql
+{
+    IUnknown         MSDASQL_iface;
+
+    LONG     ref;
+};
+
+static inline struct msdasql *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct msdasql, MSDASQL_iface);
+}
+
+static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void **out)
+{
+    struct msdasql *provider = impl_from_IUnknown(iface);
+
+    TRACE("(%p)->(%s %p)\n", provider, debugstr_guid(riid), out);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) ||
+       IsEqualGUID(riid, &CLSID_MSDASQL))
+    {
+        *out = &provider->MSDASQL_iface;
+    }
+    else
+    {
+        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI msdsql_AddRef(IUnknown *iface)
+{
+    struct msdasql *provider = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&provider->ref);
+
+    TRACE("(%p) ref=%u\n", provider, ref);
+
+    return ref;
+}
+
+static ULONG  WINAPI msdsql_Release(IUnknown *iface)
+{
+    struct msdasql *provider = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&provider->ref);
+
+    TRACE("(%p) ref=%u\n", provider, ref);
+
+    if (!ref)
+    {
+        free(provider);
+    }
+
+    return ref;
+}
+
+static const IUnknownVtbl msdsql_vtbl =
+{
+    msdsql_QueryInterface,
+    msdsql_AddRef,
+    msdsql_Release
+};
+
+static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
+{
+    struct msdasql *provider;
+    HRESULT hr;
+
+    provider = malloc(sizeof(struct msdasql));
+    if (!provider)
+        return E_OUTOFMEMORY;
+
+    provider->MSDASQL_iface.lpVtbl = &msdsql_vtbl;
+    provider->ref = 1;
+
+    hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
+    IUnknown_Release(&provider->MSDASQL_iface);
+    return hr;
 }
