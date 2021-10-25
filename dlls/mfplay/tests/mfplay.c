@@ -261,6 +261,49 @@ static void test_video_control(void)
     hr = IMFPMediaPlayer_SetVideoSourceRect(player, &rect);
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFPMediaPlayer_SetVideoSourceRect(player, NULL);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetBorderColor(player, 0);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetAspectRatioMode(player, MFVideoARMode_None);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetVideoSourceRect(player, &rect);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetBorderColor(player, &color);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetAspectRatioMode(player, &mode);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetIdealVideoSize(player, &size, &size);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetNativeVideoSize(player, &size, &size);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_UpdateVideo(player);
+todo_wine
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    IMFPMediaPlayer_Release(player);
+
+    /* No active media item, no output window.*/
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    rect.left = rect.top = 0.0f;
+    rect.right = rect.bottom = 1.0f;
+    hr = IMFPMediaPlayer_SetVideoSourceRect(player, &rect);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_SetVideoSourceRect(player, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Unexpected hr %#x.\n", hr);
+
     hr = IMFPMediaPlayer_SetBorderColor(player, 0);
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 

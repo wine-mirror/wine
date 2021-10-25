@@ -1373,13 +1373,16 @@ static HRESULT WINAPI media_player_SetVideoSourceRect(IMFPMediaPlayer *iface,
 {
     struct media_player *player = impl_from_IMFPMediaPlayer(iface);
     IMFVideoDisplayControl *display_control;
+    RECT dst_rect;
     HRESULT hr;
 
     TRACE("%p, %p.\n", iface, rect);
 
-    if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
+    if (!GetClientRect(player->output_window, &dst_rect))
+        hr = HRESULT_FROM_WIN32(GetLastError());
+    else if (SUCCEEDED(hr = media_player_get_display_control(player, &display_control)))
     {
-        hr = IMFVideoDisplayControl_SetVideoPosition(display_control, rect, NULL);
+        hr = IMFVideoDisplayControl_SetVideoPosition(display_control, rect, &dst_rect);
         IMFVideoDisplayControl_Release(display_control);
     }
 
