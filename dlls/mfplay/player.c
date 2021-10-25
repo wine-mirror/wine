@@ -1929,6 +1929,17 @@ static void media_player_create_forward_event(struct media_player *player, HRESU
     LeaveCriticalSection(&player->cs);
 }
 
+static void media_player_playback_ended(struct media_player *player, HRESULT event_status,
+        struct media_event **event)
+{
+    EnterCriticalSection(&player->cs);
+
+    media_player_set_state(player, MFP_MEDIAPLAYER_STATE_STOPPED);
+    media_event_create(player, MFP_EVENT_TYPE_PLAYBACK_ENDED, event_status, player->item, event);
+
+    LeaveCriticalSection(&player->cs);
+}
+
 static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallback *iface,
         IMFAsyncResult *result)
 {
@@ -1990,7 +2001,7 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
             if (SUCCEEDED(IMFMediaEvent_GetUINT32(session_event, &MF_EVENT_TOPOLOGY_STATUS, &status)) &&
                     status == MF_TOPOSTATUS_ENDED)
             {
-                media_event_create(player, MFP_EVENT_TYPE_PLAYBACK_ENDED, event_status, player->item, &event);
+                media_player_playback_ended(player, event_status, &event);
             }
 
             break;
