@@ -54,7 +54,7 @@ static int output_write(const WCHAR* str, int len)
     return count;
 }
 
-static int output_vprintf(const WCHAR* fmt, __ms_va_list va_args)
+static int output_vprintf(const WCHAR* fmt, va_list va_args)
 {
     WCHAR str[8192];
     int len;
@@ -69,23 +69,23 @@ static int output_vprintf(const WCHAR* fmt, __ms_va_list va_args)
 
 static int WINAPIV output_printf(const WCHAR* fmt, ...)
 {
-    __ms_va_list arguments;
+    va_list arguments;
 
-    __ms_va_start(arguments, fmt);
+    va_start(arguments, fmt);
     output_vprintf(fmt, arguments);
-    __ms_va_end(arguments);
+    va_end(arguments);
     return 0;
 }
 
 static int WINAPIV output_string(int msg, ...)
 {
     WCHAR fmt[8192];
-    __ms_va_list arguments;
+    va_list arguments;
 
     LoadStringW(GetModuleHandleW(NULL), msg, fmt, ARRAY_SIZE(fmt));
-    __ms_va_start(arguments, msg);
+    va_start(arguments, msg);
     output_vprintf(fmt, arguments);
-    __ms_va_end(arguments);
+    va_end(arguments);
     return 0;
 }
 
