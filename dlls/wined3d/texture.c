@@ -1887,7 +1887,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, unsig
      * requires a 4-byte aligned pitch and doesn't support texture formats
      * larger than 4 bytes per pixel nor any format using 3 bytes per pixel.
      * This check is here to verify that the assumption holds. */
-    if (pitch % texture->resource.format->byte_count)
+    if (pitch % format->byte_count)
     {
         WARN("Pitch unsupported, not a multiple of the texture format byte width.\n");
         return WINED3DERR_INVALIDCALL;
