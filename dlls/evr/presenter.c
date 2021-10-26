@@ -1295,8 +1295,14 @@ static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayCo
                 video_presenter_set_mixer_rect(presenter);
             }
         }
-        if (dst_rect)
+        if (dst_rect && !EqualRect(dst_rect, &presenter->dst_rect))
+        {
             presenter->dst_rect = *dst_rect;
+            hr = video_presenter_invalidate_media_type(presenter);
+            /* Mixer's input type hasn't been configured yet, this is not an error. */
+            if (hr == MF_E_TRANSFORM_TYPE_NOT_SET) hr = S_OK;
+            /* FIXME: trigger repaint */
+        }
     }
     LeaveCriticalSection(&presenter->cs);
 

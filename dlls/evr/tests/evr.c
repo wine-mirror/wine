@@ -2190,9 +2190,6 @@ static void test_presenter_media_type(void)
     hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFTransform_SetInputType(mixer, 0, input_type, 0);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -2204,12 +2201,20 @@ static void test_presenter_media_type(void)
     hr = IMFVideoDisplayControl_SetVideoWindow(display_control, window);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    /* Set destination rectangle before mixer types are configured. */
+    SetRect(&dst, 0, 0, 101, 51);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(mixer, 0, input_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     get_output_aperture(mixer, &frame_size, &aperture);
-    ok(frame_size.cx == 100 && frame_size.cy == 50, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
-    ok(aperture.Area.cx == 100 && aperture.Area.cy == 50, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
+    ok(frame_size.cx == 101 && frame_size.cy == 51, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
+    ok(aperture.Area.cx == 101 && aperture.Area.cy == 51, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
     ok(!aperture.OffsetX.value && !aperture.OffsetX.fract && !aperture.OffsetY.value && !aperture.OffsetY.fract,
             "Unexpected offset %u x %u.\n", aperture.OffsetX.value, aperture.OffsetY.value);
 
@@ -2218,10 +2223,8 @@ static void test_presenter_media_type(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     get_output_aperture(mixer, &frame_size, &aperture);
-todo_wine {
     ok(frame_size.cx == 199 && frame_size.cy == 298, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
     ok(aperture.Area.cx == 199 && aperture.Area.cy == 298, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
-}
     ok(!aperture.OffsetX.value && !aperture.OffsetX.fract && !aperture.OffsetY.value && !aperture.OffsetY.fract,
             "Unexpected offset %u x %u.\n", aperture.OffsetX.value, aperture.OffsetY.value);
 
@@ -2229,10 +2232,8 @@ todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     get_output_aperture(mixer, &frame_size, &aperture);
-todo_wine {
     ok(frame_size.cx == 199 && frame_size.cy == 298, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
     ok(aperture.Area.cx == 199 && aperture.Area.cy == 298, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
-}
     ok(!aperture.OffsetX.value && !aperture.OffsetX.fract && !aperture.OffsetY.value && !aperture.OffsetY.fract,
             "Unexpected offset %u x %u.\n", aperture.OffsetX.value, aperture.OffsetY.value);
 
