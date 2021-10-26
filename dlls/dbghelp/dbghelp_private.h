@@ -845,3 +845,24 @@ extern struct symt_pointer*
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name) DECLSPEC_HIDDEN;
+
+/* Inline context encoding (different from what native does):
+ * bits 31:30: 3 ignore (includes INLINE_FRAME_CONTEXT_IGNORE=0xFFFFFFFF)
+ *             2 regular frame
+ *             1 frame with inlined function(s).
+ *             0 init   (includes INLINE_FRAME_CONTEXT_INIT=0)
+ * so either stackwalkex is called with:
+ * - inlinectx=IGNORE, and we use (old) StackWalk64 behavior:
+ * - inlinectx=INIT, and StackWalkEx will upon return swing back&forth between:
+ *      INLINE when the frame is from an inline site (inside a function)
+ *      REGULAR when the frame is for a function without inline site
+ * bits 29:00  depth of inline site (way too big!!)
+ *             0 being the lowest inline site
+ */
+#define IFC_MODE_IGNORE  0xC0000000
+#define IFC_MODE_REGULAR 0x80000000
+#define IFC_MODE_INLINE  0x40000000
+#define IFC_MODE_INIT    0x00000000
+#define IFC_DEPTH_MASK   0x3FFFFFFF
+#define IFC_MODE(x)      ((x) & ~IFC_DEPTH_MASK)
+#define IFC_DEPTH(x)     ((x) & IFC_DEPTH_MASK)

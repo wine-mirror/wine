@@ -2497,9 +2497,18 @@ PWSTR WINAPI SymSetHomeDirectoryW(HANDLE hProcess, PCWSTR dir)
  */
 BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, PDWORD64 disp, PSYMBOL_INFO si)
 {
-    FIXME("(%p, %#I64x, 0x%x, %p, %p): stub\n", hProcess, addr, inline_ctx, disp, si);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("(%p, %#I64x, 0x%x, %p, %p)\n", hProcess, addr, inline_ctx, disp, si);
+
+    switch (IFC_MODE(inline_ctx))
+    {
+    case IFC_MODE_IGNORE:
+    case IFC_MODE_REGULAR:
+        return SymFromAddr(hProcess, addr, disp, si);
+    case IFC_MODE_INLINE:
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 }
 
 /******************************************************************
