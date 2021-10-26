@@ -32,6 +32,62 @@
 #include <cups/ppd.h>
 #endif
 
+#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+#define GetCurrentProcess GetCurrentProcess_Mac
+#define GetCurrentThread GetCurrentThread_Mac
+#define LoadResource LoadResource_Mac
+#define AnimatePalette AnimatePalette_Mac
+#define EqualRgn EqualRgn_Mac
+#define FillRgn FillRgn_Mac
+#define FrameRgn FrameRgn_Mac
+#define GetPixel GetPixel_Mac
+#define InvertRgn InvertRgn_Mac
+#define LineTo LineTo_Mac
+#define OffsetRgn OffsetRgn_Mac
+#define PaintRgn PaintRgn_Mac
+#define Polygon Polygon_Mac
+#define ResizePalette ResizePalette_Mac
+#define SetRectRgn SetRectRgn_Mac
+#define EqualRect EqualRect_Mac
+#define FillRect FillRect_Mac
+#define FrameRect FrameRect_Mac
+#define GetCursor GetCursor_Mac
+#define InvertRect InvertRect_Mac
+#define OffsetRect OffsetRect_Mac
+#define PtInRect PtInRect_Mac
+#define SetCursor SetCursor_Mac
+#define SetRect SetRect_Mac
+#define ShowCursor ShowCursor_Mac
+#define UnionRect UnionRect_Mac
+#include <ApplicationServices/ApplicationServices.h>
+#undef GetCurrentProcess
+#undef GetCurrentThread
+#undef LoadResource
+#undef AnimatePalette
+#undef EqualRgn
+#undef FillRgn
+#undef FrameRgn
+#undef GetPixel
+#undef InvertRgn
+#undef LineTo
+#undef OffsetRgn
+#undef PaintRgn
+#undef Polygon
+#undef ResizePalette
+#undef SetRectRgn
+#undef EqualRect
+#undef FillRect
+#undef FrameRect
+#undef GetCursor
+#undef InvertRect
+#undef OffsetRect
+#undef PtInRect
+#undef SetCursor
+#undef SetRect
+#undef ShowCursor
+#undef UnionRect
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -340,4 +396,45 @@ NTSTATUS unix_get_ppd( void *args )
     }
     free( unix_ppd );
     return status;
+}
+
+NTSTATUS unix_get_default_page_size( void *args )
+{
+#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+    struct get_default_page_size_params *params = args;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PMPrintSession session = NULL;
+    PMPageFormat format = NULL;
+    CFStringRef paper_name;
+    PMPaper paper;
+    CFRange range;
+    int size;
+
+    if (PMCreateSession( &session )) goto end;
+    if (PMCreatePageFormat( &format )) goto end;
+    if (PMSessionDefaultPageFormat( session, format )) goto end;
+    if (PMGetPageFormatPaper( format, &paper )) goto end;
+    if (PMPaperGetPPDPaperName( paper, &paper_name )) goto end;
+
+    range.location = 0;
+    range.length = CFStringGetLength( paper_name );
+    size = (range.length + 1) * sizeof(WCHAR);
+
+    if (params->name_size >= size)
+    {
+        CFStringGetCharacters( paper_name, range, (UniChar*)params->name );
+        params->name[range.length] = 0;
+        status = STATUS_SUCCESS;
+    }
+    else
+        status = STATUS_BUFFER_OVERFLOW;
+    params->name_size = size;
+
+end:
+    if (format) PMRelease( format );
+    if (session) PMRelease( session );
+    return status;
+#else
+    return STATUS_NOT_IMPLEMENTED;
+#endif
 }

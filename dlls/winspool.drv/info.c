@@ -48,62 +48,6 @@
 # include <cups/ppd.h>
 #endif
 
-#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
-#define GetCurrentProcess GetCurrentProcess_Mac
-#define GetCurrentThread GetCurrentThread_Mac
-#define LoadResource LoadResource_Mac
-#define AnimatePalette AnimatePalette_Mac
-#define EqualRgn EqualRgn_Mac
-#define FillRgn FillRgn_Mac
-#define FrameRgn FrameRgn_Mac
-#define GetPixel GetPixel_Mac
-#define InvertRgn InvertRgn_Mac
-#define LineTo LineTo_Mac
-#define OffsetRgn OffsetRgn_Mac
-#define PaintRgn PaintRgn_Mac
-#define Polygon Polygon_Mac
-#define ResizePalette ResizePalette_Mac
-#define SetRectRgn SetRectRgn_Mac
-#define EqualRect EqualRect_Mac
-#define FillRect FillRect_Mac
-#define FrameRect FrameRect_Mac
-#define GetCursor GetCursor_Mac
-#define InvertRect InvertRect_Mac
-#define OffsetRect OffsetRect_Mac
-#define PtInRect PtInRect_Mac
-#define SetCursor SetCursor_Mac
-#define SetRect SetRect_Mac
-#define ShowCursor ShowCursor_Mac
-#define UnionRect UnionRect_Mac
-#include <ApplicationServices/ApplicationServices.h>
-#undef GetCurrentProcess
-#undef GetCurrentThread
-#undef LoadResource
-#undef AnimatePalette
-#undef EqualRgn
-#undef FillRgn
-#undef FrameRgn
-#undef GetPixel
-#undef InvertRgn
-#undef LineTo
-#undef OffsetRgn
-#undef PaintRgn
-#undef Polygon
-#undef ResizePalette
-#undef SetRectRgn
-#undef EqualRect
-#undef FillRect
-#undef FrameRect
-#undef GetCursor
-#undef InvertRect
-#undef OffsetRect
-#undef PtInRect
-#undef SetCursor
-#undef SetRect
-#undef ShowCursor
-#undef UnionRect
-#endif
-
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 
@@ -987,46 +931,20 @@ end:
 
 static void set_ppd_overrides( HANDLE printer )
 {
-    WCHAR *wstr = NULL;
-    int size = 0;
-#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
-    OSStatus status;
-    PMPrintSession session = NULL;
-    PMPageFormat format = NULL;
-    PMPaper paper;
-    CFStringRef paper_name;
-    CFRange range;
+    WCHAR buffer[256];
+    struct get_default_page_size_params params = { .name = buffer, .name_size = sizeof(buffer) };
+    NTSTATUS status;
 
-    status = PMCreateSession( &session );
-    if (status) goto end;
-
-    status = PMCreatePageFormat( &format );
-    if (status) goto end;
-
-    status = PMSessionDefaultPageFormat( session, format );
-    if (status) goto end;
-
-    status = PMGetPageFormatPaper( format, &paper );
-    if (status) goto end;
-
-    status = PMPaperGetPPDPaperName( paper, &paper_name );
-    if (status) goto end;
-
-    range.location = 0;
-    range.length = CFStringGetLength( paper_name );
-    size = (range.length + 1) * sizeof(WCHAR);
-
-    wstr = HeapAlloc( GetProcessHeap(), 0, size );
-    CFStringGetCharacters( paper_name, range, (UniChar*)wstr );
-    wstr[range.length] = 0;
-
-end:
-    if (format) PMRelease( format );
-    if (session) PMRelease( session );
-#endif
-
-    SetPrinterDataExW( printer, PPD_Overrides, DefaultPageSize, REG_SZ, (BYTE*)wstr, size );
-    HeapFree( GetProcessHeap(), 0, wstr );
+    while (1)
+    {
+        status = UNIX_CALL( get_default_page_size, &params );
+        if (status != STATUS_BUFFER_OVERFLOW) break;
+        if (params.name != buffer) heap_free( params.name );
+        params.name = heap_alloc( params.name_size );
+        if (!params.name) break;
+    }
+    if (!status) SetPrinterDataExW( printer, PPD_Overrides, DefaultPageSize, REG_SZ, (BYTE*)params.name, params.name_size );
+    if (params.name != buffer) heap_free( params.name );
 }
 
 static BOOL update_driver( HANDLE printer )
