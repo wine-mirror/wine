@@ -837,7 +837,7 @@ NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flag
     if ((context_flags & 0x40) && !(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )))
         return STATUS_NOT_SUPPORTED;
 
-    context = (void *)(((ULONG_PTR)context + p->true_alignment) & ~p->true_alignment);
+    context = (void *)(((ULONG_PTR)context + p->true_alignment) & ~(ULONG_PTR)p->true_alignment);
     *(ULONG *)((BYTE *)context + p->flags_offset) = context_flags;
 
     *context_ex = c_ex = (CONTEXT_EX *)((BYTE *)context + p->context_size);
