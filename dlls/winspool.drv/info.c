@@ -750,20 +750,6 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     return open_printer_reg_key( name, phkey );
 }
 
-static void set_default_printer(const char *devname, const char *name)
-{
-    char *buf = HeapAlloc(GetProcessHeap(), 0, strlen(name)+strlen(devname)+strlen(",WINEPS.DRV,LPR:")+1);
-    HKEY hkey;
-
-    sprintf(buf, "%s,WINEPS.DRV,LPR:%s", devname, name);
-    if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey))
-    {
-        RegSetValueExA(hkey, "Device", 0, REG_SZ, (BYTE *)buf, strlen(buf) + 1);
-        RegCloseKey(hkey);
-    }
-    HeapFree(GetProcessHeap(), 0, buf);
-}
-
 static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
 {
     DRIVER_INFO_3W di3;
@@ -799,52 +785,6 @@ static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
     }
 
     return TRUE;
-}
-
-static inline char *expand_env_string( char *str, DWORD type )
-{
-    if (type == REG_EXPAND_SZ)
-    {
-        char *tmp;
-        DWORD needed = ExpandEnvironmentStringsA( str, NULL, 0 );
-        tmp = HeapAlloc( GetProcessHeap(), 0, needed );
-        if (tmp)
-        {
-            ExpandEnvironmentStringsA( str, tmp, needed );
-            HeapFree( GetProcessHeap(), 0, str );
-            return tmp;
-        }
-    }
-    return str;
-}
-
-static char *get_fallback_ppd_name( const char *printer_name )
-{
-    static const WCHAR ppds_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                     'P','r','i','n','t','i','n','g','\\','P','P','D',' ','F','i','l','e','s',0};
-    HKEY hkey;
-    DWORD needed, type;
-    char *ret = NULL;
-
-    if (RegOpenKeyW( HKEY_CURRENT_USER, ppds_key, &hkey ) == ERROR_SUCCESS )
-    {
-        const char *value_name = NULL;
-
-        if (RegQueryValueExA( hkey, printer_name, 0, NULL, NULL, &needed ) == ERROR_SUCCESS)
-            value_name = printer_name;
-        else if (RegQueryValueExA( hkey, "generic", 0, NULL, NULL, &needed ) == ERROR_SUCCESS)
-            value_name = "generic";
-
-        if (value_name)
-        {
-            ret = HeapAlloc( GetProcessHeap(), 0, needed );
-            if (!ret) return NULL;
-            RegQueryValueExA( hkey, value_name, 0, &type, (BYTE *)ret, &needed );
-        }
-        RegCloseKey( hkey );
-        if (ret) return expand_env_string( ret, type );
-    }
-    return NULL;
 }
 
 static BOOL copy_file( const char *src, const char *dst )
@@ -890,28 +830,6 @@ static BOOL get_internal_fallback_ppd( const WCHAR *ppd )
     CloseHandle( file );
     if (ret) TRACE( "using internal fallback for %s\n", debugstr_w( ppd ));
     else DeleteFileW( ppd );
-    return ret;
-}
-
-static BOOL get_fallback_ppd( const char *printer_name, const WCHAR *ppd )
-{
-    char *dst, *src = get_fallback_ppd_name( printer_name );
-    BOOL ret = FALSE;
-
-    if (!src) return get_internal_fallback_ppd( ppd );
-
-    TRACE( "(%s %s) found %s\n", debugstr_a(printer_name), debugstr_w(ppd), debugstr_a(src) );
-
-    if (!(dst = wine_get_unix_file_name( ppd ))) goto fail;
-
-    if (symlink( src, dst ) == -1)
-        if (errno != ENOSYS || !copy_file( src, dst ))
-            goto fail;
-
-    ret = TRUE;
-fail:
-    HeapFree( GetProcessHeap(), 0, dst );
-    HeapFree( GetProcessHeap(), 0, src );
     return ret;
 }
 
@@ -1039,7 +957,7 @@ static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
 
     TRACE( "failed to get ppd for printer %s from cups (status %d), calling fallback\n",
            debugstr_a(printer_name), http_status );
-    return get_fallback_ppd( printer_name, ppd );
+    return get_internal_fallback_ppd( ppd );
 }
 
 static WCHAR *get_cups_option( const char *name, int num_options, cups_option_t *options )
@@ -1106,17 +1024,11 @@ static BOOL CUPS_LoadPrinters(void)
             continue;
         }
 
-        port = HeapAlloc(GetProcessHeap(), 0, sizeof(CUPS_Port) + lstrlenW(nameW) * sizeof(WCHAR));
-        lstrcpyW(port, CUPS_Port);
-        lstrcatW(port, nameW);
-
         if(RegOpenKeyW(hkeyPrinters, nameW, &hkeyPrinter) == ERROR_SUCCESS) {
             DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
                and continue */
             TRACE("Printer already exists\n");
-            /* overwrite old LPR:* port */
-            RegSetValueExW(hkeyPrinter, PortW, 0, REG_SZ, (LPBYTE)port, (lstrlenW(port) + 1) * sizeof(WCHAR));
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             /* flag that the PPD file should be checked for an update */
             set_reg_DWORD( hkeyPrinter, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
@@ -1124,11 +1036,8 @@ static BOOL CUPS_LoadPrinters(void)
         } else {
             BOOL added_driver = FALSE;
 
-            if (!ppd_dir && !(ppd_dir = get_ppd_dir()))
-            {
-                HeapFree( GetProcessHeap(), 0, port );
-                break;
-            }
+            if (!ppd_dir && !(ppd_dir = get_ppd_dir())) break;
+
             ppd = get_ppd_filename( ppd_dir, nameW );
             if (get_cups_ppd( dests[i].name, ppd ))
             {
@@ -1136,11 +1045,11 @@ static BOOL CUPS_LoadPrinters(void)
                 unlink_ppd( ppd );
             }
             HeapFree( GetProcessHeap(), 0, ppd );
-            if (!added_driver)
-            {
-                HeapFree( GetProcessHeap(), 0, port );
-                continue;
-            }
+            if (!added_driver) continue;
+
+            port = heap_alloc( sizeof(CUPS_Port) + lstrlenW( nameW ) * sizeof(WCHAR) );
+            lstrcpyW( port, CUPS_Port );
+            lstrcatW( port, nameW );
 
             memset(&pi2, 0, sizeof(PRINTER_INFO_2W));
             pi2.pPrinterName    = nameW;
@@ -1159,10 +1068,10 @@ static BOOL CUPS_LoadPrinters(void)
             else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
                 ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError() );
 
+            heap_free( port );
             HeapFree( GetProcessHeap(), 0, pi2.pComment );
             HeapFree( GetProcessHeap(), 0, pi2.pLocation );
         }
-        HeapFree( GetProcessHeap(), 0, port );
 
         hadprinter = TRUE;
         if (dests[i].is_default) {
@@ -1292,7 +1201,7 @@ static BOOL update_driver( HANDLE printer )
         ret = get_cups_ppd( queue_name, ppd );
     else
 #endif
-        ret = get_fallback_ppd( queue_name, ppd );
+        ret = get_internal_fallback_ppd( ppd );
 
     if (ret)
     {
@@ -1310,199 +1219,6 @@ static BOOL update_driver( HANDLE printer )
     DocumentPropertiesW( 0, printer, NULL, NULL, NULL, 0 );
 
     return ret;
-}
-
-static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
-{
-    PRINTER_INFO_2A	pinfo2a;
-    const char	*r;
-    size_t		name_len;
-    char		*e,*s,*name,*prettyname,*devname;
-    BOOL		ret = FALSE, set_default = FALSE;
-    char *port = NULL, *env_default;
-    HKEY hkeyPrinter, hkeyPrinters = NULL;
-    WCHAR devnameW[MAX_PATH], *ppd_dir = NULL, *ppd;
-    HANDLE added_printer;
-
-    while (isspace(*pent)) pent++;
-    r = strchr(pent,':');
-    if (r)
-        name_len = r - pent;
-    else
-        name_len = strlen(pent);
-    name = HeapAlloc(GetProcessHeap(), 0, name_len + 1);
-    memcpy(name, pent, name_len);
-    name[name_len] = '\0';
-    if (r)
-        pent = r;
-    else
-        pent = "";
-
-    TRACE("name=%s entry=%s\n",name, pent);
-
-    if(ispunct(*name)) { /* a tc entry, not a real printer */
-        TRACE("skipping tc entry\n");
-        goto end;
-    }
-
-    if(strstr(pent,":server")) { /* server only version so skip */
-        TRACE("skipping server entry\n");
-        goto end;
-    }
-
-    /* Determine whether this is a postscript printer. */
-
-    ret = TRUE;
-    env_default = getenv("PRINTER");
-    prettyname = name;
-    /* Get longest name, usually the one at the right for later display. */
-    while((s=strchr(prettyname,'|'))) {
-        *s = '\0';
-        e = s;
-        while(isspace(*--e)) *e = '\0';
-        TRACE("\t%s\n", debugstr_a(prettyname));
-        if(env_default && !_strnicmp(prettyname, env_default, -1)) set_default = TRUE;
-        for(prettyname = s+1; isspace(*prettyname); prettyname++)
-            ;
-    }
-    e = prettyname + strlen(prettyname);
-    while(isspace(*--e)) *e = '\0';
-    TRACE("\t%s\n", debugstr_a(prettyname));
-    if(env_default && !_strnicmp(prettyname, env_default, -1)) set_default = TRUE;
-
-    /* prettyname must fit into the dmDeviceName member of DEVMODE struct,
-     * if it is too long, we use it as comment below. */
-    devname = prettyname;
-    if (strlen(devname)>=CCHDEVICENAME-1)
-	 devname = name;
-    if (strlen(devname)>=CCHDEVICENAME-1) {
-        ret = FALSE;
-        goto end;
-    }
-
-    port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(name)+1);
-    sprintf(port,"LPR:%s",name);
-
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
-        ERR("Can't create Printers key\n");
-	ret = FALSE;
-        goto end;
-    }
-
-    MultiByteToWideChar(CP_ACP, 0, devname, -1, devnameW, ARRAY_SIZE(devnameW));
-
-    if(RegOpenKeyA(hkeyPrinters, devname, &hkeyPrinter) == ERROR_SUCCESS) {
-        DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
-        /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
-           and continue */
-        TRACE("Printer already exists\n");
-        RegDeleteValueW(hkeyPrinter, May_Delete_Value);
-        /* flag that the PPD file should be checked for an update */
-        set_reg_DWORD( hkeyPrinter, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
-        RegCloseKey(hkeyPrinter);
-    } else {
-        static CHAR data_type[]   = "RAW",
-                    print_proc[]  = "WinPrint",
-                    comment[]     = "WINEPS Printer using LPR",
-                    params[]      = "<parameters?>",
-                    share_name[]  = "<share name?>",
-                    sep_file[]    = "<sep file?>";
-        BOOL added_driver = FALSE;
-
-        if (!ppd_dir && !(ppd_dir = get_ppd_dir())) goto end;
-        ppd = get_ppd_filename( ppd_dir, devnameW );
-        if (get_fallback_ppd( devname, ppd ))
-        {
-            added_driver = add_printer_driver( devnameW, ppd );
-            unlink_ppd( ppd );
-        }
-        HeapFree( GetProcessHeap(), 0, ppd );
-        if (!added_driver) goto end;
-
-        memset(&pinfo2a,0,sizeof(pinfo2a));
-        pinfo2a.pPrinterName    = devname;
-        pinfo2a.pDatatype       = data_type;
-        pinfo2a.pPrintProcessor = print_proc;
-        pinfo2a.pDriverName     = devname;
-        pinfo2a.pComment        = comment;
-        pinfo2a.pLocation       = prettyname;
-        pinfo2a.pPortName       = port;
-        pinfo2a.pParameters     = params;
-        pinfo2a.pShareName      = share_name;
-        pinfo2a.pSepFile        = sep_file;
-
-        added_printer = AddPrinterA( NULL, 2, (LPBYTE)&pinfo2a );
-        if (added_printer) ClosePrinter( added_printer );
-        else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
-            ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_a(name), GetLastError() );
-    }
-
-    if (isfirst || set_default)
-        set_default_printer(devname, name);
-
- end:
-    if (hkeyPrinters) RegCloseKey( hkeyPrinters );
-    if (ppd_dir)
-    {
-        RemoveDirectoryW( ppd_dir );
-        HeapFree( GetProcessHeap(), 0, ppd_dir );
-    }
-    HeapFree(GetProcessHeap(), 0, port);
-    HeapFree(GetProcessHeap(), 0, name);
-    return ret;
-}
-
-static BOOL
-PRINTCAP_LoadPrinters(void) {
-    BOOL		hadprinter = FALSE;
-    char		buf[200];
-    FILE		*f;
-    char *pent = NULL;
-    BOOL had_bash = FALSE;
-
-    f = fopen("/etc/printcap","r");
-    if (!f)
-	return FALSE;
-
-    while(fgets(buf,sizeof(buf),f)) {
-        char *start, *end;
-
-        end=strchr(buf,'\n');
-        if (end) *end='\0';
-    
-        start = buf;
-        while(isspace(*start)) start++;
-        if(*start == '#' || *start == '\0')
-            continue;
-
-        if(pent && !had_bash && *start != ':' && *start != '|') { /* start of new entry, parse the previous one */
-	    hadprinter |= PRINTCAP_ParseEntry(pent,!hadprinter);
-            HeapFree(GetProcessHeap(),0,pent);
-            pent = NULL;
-        }
-
-        if (end && *--end == '\\') {
-            *end = '\0';
-            had_bash = TRUE;
-        } else
-            had_bash = FALSE;
-
-        if (pent) {
-            pent=HeapReAlloc(GetProcessHeap(),0,pent,strlen(pent)+strlen(start)+1);
-            strcat(pent,start);
-        } else {
-            pent=HeapAlloc(GetProcessHeap(),0,strlen(start)+1);
-            strcpy(pent,start);
-        }
-
-    }
-    if(pent) {
-        hadprinter |= PRINTCAP_ParseEntry(pent,!hadprinter);
-        HeapFree(GetProcessHeap(),0,pent);
-    }
-    fclose(f);
-    return hadprinter;
 }
 
 static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *value)
@@ -1783,7 +1499,6 @@ void WINSPOOL_LoadSystemPrinters(void)
     HKEY                hkey, hkeyPrinters;
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
-    BOOL                done = FALSE;
 
     /* FIXME: The init code should be moved to spoolsv.exe */
     init_mutex = CreateMutexW( NULL, TRUE, winspool_mutex_name );
@@ -1823,11 +1538,8 @@ void WINSPOOL_LoadSystemPrinters(void)
     old_printer_check( FALSE );
 
 #ifdef SONAME_LIBCUPS
-    done = CUPS_LoadPrinters();
+    CUPS_LoadPrinters();
 #endif
-
-    if(!done) /* If we have any CUPS based printers, skip looking for printcap printers */
-        PRINTCAP_LoadPrinters();
 
     old_printer_check( TRUE );
 
