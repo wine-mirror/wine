@@ -752,29 +752,6 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     return open_printer_reg_key( name, phkey );
 }
 
-static BOOL copy_file( const char *src, const char *dst )
-{
-    int fds[2] = {-1, -1}, num;
-    char buf[1024];
-    BOOL ret = FALSE;
-
-    fds[0] = open( src, O_RDONLY );
-    fds[1] = open( dst, O_CREAT | O_TRUNC | O_WRONLY, 0666 );
-    if (fds[0] == -1 || fds[1] == -1) goto fail;
-
-    while ((num = read( fds[0], buf, sizeof(buf) )) != 0)
-    {
-        if (num == -1) goto fail;
-        if (write( fds[1], buf, num ) != num) goto fail;
-    }
-    ret = TRUE;
-
-fail:
-    if (fds[1] != -1) close( fds[1] );
-    if (fds[0] != -1) close( fds[0] );
-    return ret;
-}
-
 static BOOL get_internal_fallback_ppd( const WCHAR *ppd )
 {
     static const WCHAR typeW[] = {'P','P','D','F','I','L','E',0};
@@ -817,31 +794,22 @@ static WCHAR *get_ppd_filename( const WCHAR *dir, const WCHAR *file_name )
     return ppd;
 }
 
-static char *get_dest_name( const WCHAR *printer )
-{
-    int len = WideCharToMultiByte( CP_UNIXCP, 0, printer, -1, NULL, 0, NULL, NULL );
-    char *dest = heap_alloc( len );
-
-    if (dest) WideCharToMultiByte( CP_UNIXCP, 0, printer, -1, dest, len, NULL, NULL );
-    return dest;
-}
-
-static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd );
-static void unlink_ppd( const WCHAR *ppd );
-
 static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
 {
     WCHAR *ppd = get_ppd_filename( ppd_dir, name );
-    char *dest_name;
+    struct get_ppd_params ppd_params;
+    UNICODE_STRING nt_ppd;
     DRIVER_INFO_3W di3;
     unsigned int i;
     BOOL res = FALSE;
 
     if (!ppd) return FALSE;
-    dest_name = get_dest_name( name );
-    if (!dest_name) goto end;
+    RtlInitUnicodeString( &nt_ppd, NULL );
+    if (!RtlDosPathNameToNtPathName_U( ppd, &nt_ppd, NULL, NULL )) goto end;
 
-    res = get_cups_ppd( dest_name, ppd ) || get_internal_fallback_ppd( ppd );
+    ppd_params.printer = name;
+    ppd_params.ppd = nt_ppd.Buffer;
+    res = !UNIX_CALL( get_ppd, &ppd_params ) || get_internal_fallback_ppd( ppd );
     if (!res) goto end;
 
     memset( &di3, 0, sizeof(DRIVER_INFO_3W) );
@@ -872,10 +840,11 @@ static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
         }
         res = TRUE;
     }
-    unlink_ppd( ppd );
+    ppd_params.printer = NULL; /* unlink the ppd */
+    UNIX_CALL( get_ppd, &ppd_params );
 
 end:
-    heap_free( dest_name );
+    RtlFreeUnicodeString( &nt_ppd );
     heap_free( ppd );
     return res;
 }
@@ -904,13 +873,6 @@ static WCHAR *get_ppd_dir( void )
     return dir;
 }
 
-static void unlink_ppd( const WCHAR *ppd )
-{
-    char *unix_name = wine_get_unix_file_name( ppd );
-    unlink( unix_name );
-    HeapFree( GetProcessHeap(), 0, unix_name );
-}
-
 #ifdef SONAME_LIBCUPS
 
 extern void *libcups_handle;
@@ -932,56 +894,7 @@ extern void *libcups_handle;
 CUPS_FUNCS;
 #undef DO_FUNC
 extern cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
-extern const char *  (*pcupsGetPPD)(const char *);
-extern http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
 extern const char *  (*pcupsLastErrorString)(void);
-
-static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name,
-                                          time_t *modtime, char *buffer,
-                                          size_t bufsize )
-{
-    const char *ppd;
-
-    if (pcupsGetPPD3) return pcupsGetPPD3( http, name, modtime, buffer, bufsize );
-
-    if (!pcupsGetPPD) return HTTP_NOT_FOUND;
-
-    TRACE( "No cupsGetPPD3 implementation, so calling cupsGetPPD\n" );
-
-    *modtime = 0;
-    ppd = pcupsGetPPD( name );
-
-    TRACE( "cupsGetPPD returns %s\n", debugstr_a(ppd) );
-
-    if (!ppd) return HTTP_NOT_FOUND;
-
-    if (rename( ppd, buffer ) == -1)
-    {
-        BOOL res = copy_file( ppd, buffer );
-        unlink( ppd );
-        if (!res) return HTTP_NOT_FOUND;
-    }
-    return HTTP_OK;
-}
-
-static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
-{
-    time_t modtime = 0;
-    http_status_t http_status;
-    char *unix_name = wine_get_unix_file_name( ppd );
-
-    TRACE( "(%s, %s)\n", debugstr_a(printer_name), debugstr_w(ppd) );
-
-    if (!unix_name) return FALSE;
-
-    http_status = cupsGetPPD3_wrapper( 0, printer_name, &modtime,
-                                       unix_name, strlen( unix_name ) + 1 );
-
-    if (http_status != HTTP_OK) unlink( unix_name );
-    HeapFree( GetProcessHeap(), 0, unix_name );
-
-    return http_status == HTTP_OK;
-}
 #endif
 
 static BOOL init_unix_printers( void )

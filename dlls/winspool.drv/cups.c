@@ -22,6 +22,9 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 #ifdef HAVE_CUPS_CUPS_H
 #include <cups/cups.h>
 #endif
@@ -55,6 +58,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 static DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 {
     return MultiByteToWideChar( CP_UNIXCP, 0, src, srclen, dst, dstlen );
+}
+static int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
+{
+    /* FIXME: strict */
+    return WideCharToMultiByte( CP_UNIXCP, 0, src, srclen, dst, dstlen, NULL, NULL );
 }
 
 #ifdef SONAME_LIBCUPS
@@ -111,6 +119,56 @@ NTSTATUS unix_process_attach( void *arg )
 #endif /* SONAME_LIBCUPS */
 }
 
+static BOOL copy_file( const char *src, const char *dst )
+{
+    int fds[2] = { -1, -1 }, num;
+    char buf[1024];
+    BOOL ret = FALSE;
+
+    fds[0] = open( src, O_RDONLY );
+    fds[1] = open( dst, O_CREAT | O_TRUNC | O_WRONLY, 0666 );
+    if (fds[0] == -1 || fds[1] == -1) goto fail;
+
+    while ((num = read( fds[0], buf, sizeof(buf) )) != 0)
+    {
+        if (num == -1) goto fail;
+        if (write( fds[1], buf, num ) != num) goto fail;
+    }
+    ret = TRUE;
+
+fail:
+    if (fds[1] != -1) close( fds[1] );
+    if (fds[0] != -1) close( fds[0] );
+    return ret;
+}
+
+static char *get_unix_file_name( LPCWSTR path )
+{
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    ULONG size = 256;
+    char *buffer;
+
+    nt_name.Buffer = (WCHAR *)path;
+    nt_name.MaximumLength = nt_name.Length = lstrlenW( path ) * sizeof(WCHAR);
+    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
+    for (;;)
+    {
+        if (!(buffer = malloc( size ))) return NULL;
+        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        free( buffer );
+    }
+    if (status && status != STATUS_NO_SUCH_FILE)
+    {
+        free( buffer );
+        return NULL;
+    }
+    return buffer;
+}
+
+
 #ifdef SONAME_LIBCUPS
 static WCHAR *cups_get_optionW( const char *opt_name, int num_options, cups_option_t *options )
 {
@@ -144,6 +202,32 @@ static cups_ptype_t cups_get_printer_type( const cups_dest_t *dest )
 static BOOL cups_is_scanner( cups_dest_t *dest )
 {
     return cups_get_printer_type( dest ) & 0x2000000 /* CUPS_PRINTER_SCANNER */;
+}
+
+static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name, time_t *modtime,
+                                          char *buffer, size_t bufsize )
+{
+    const char *ppd;
+
+    if (pcupsGetPPD3) return pcupsGetPPD3( http, name, modtime, buffer, bufsize );
+    if (!pcupsGetPPD) return HTTP_NOT_FOUND;
+
+    TRACE( "No cupsGetPPD3 implementation, so calling cupsGetPPD\n" );
+
+    *modtime = 0;
+    ppd = pcupsGetPPD( name );
+
+    TRACE( "cupsGetPPD returns %s\n", debugstr_a(ppd) );
+
+    if (!ppd) return HTTP_NOT_FOUND;
+
+    if (rename( ppd, buffer ) == -1)
+    {
+        BOOL res = copy_file( ppd, buffer );
+        unlink( ppd );
+        if (!res) return HTTP_NOT_FOUND;
+    }
+    return HTTP_OK;
 }
 #endif /* SONAME_LIBCUPS */
 
@@ -215,4 +299,45 @@ NTSTATUS unix_enum_printers( void *args )
     params->num = 0;
     return STATUS_NOT_SUPPORTED;
 #endif /* SONAME_LIBCUPS */
+}
+
+NTSTATUS unix_get_ppd( void *args )
+{
+    struct get_ppd_params *params = args;
+    char *unix_ppd = get_unix_file_name( params->ppd );
+    NTSTATUS status = STATUS_SUCCESS;
+
+    TRACE( "(%s, %s)\n", debugstr_w( params->printer ), debugstr_w( params->ppd ) );
+
+    if (!unix_ppd) return STATUS_NO_SUCH_FILE;
+
+    if (!params->printer) /* unlink */
+    {
+        unlink( unix_ppd );
+    }
+    else
+    {
+#ifdef SONAME_LIBCUPS
+        http_status_t http_status;
+        time_t modtime = 0;
+        char *printer_name;
+        int len;
+
+        len = strlenW( params->printer );
+        printer_name = malloc( len * 3 + 1 );
+        ntdll_wcstoumbs( params->printer, len + 1, printer_name, len * 3 + 1, FALSE );
+
+        http_status = cupsGetPPD3_wrapper( 0, printer_name, &modtime, unix_ppd, strlen( unix_ppd ) + 1 );
+        if (http_status != HTTP_OK)
+        {
+            unlink( unix_ppd );
+            status = STATUS_DEVICE_UNREACHABLE;
+        }
+        free( printer_name );
+#else
+        status = STATUS_NOT_SUPPORTED;
+#endif
+    }
+    free( unix_ppd );
+    return status;
 }

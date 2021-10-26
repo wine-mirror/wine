@@ -52,7 +52,14 @@ struct enum_printers_params
     unsigned int num;
 };
 
+struct get_ppd_params
+{
+    const WCHAR *printer; /* set to NULL to unlink */
+    const WCHAR *ppd;
+};
+
 #define UNIX_CALL( func, params ) unix_ ## func( params )
 
 NTSTATUS unix_process_attach( void * ) DECLSPEC_HIDDEN;
 NTSTATUS unix_enum_printers( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_get_ppd( void * ) DECLSPEC_HIDDEN;
