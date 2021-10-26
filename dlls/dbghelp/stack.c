@@ -298,9 +298,13 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     }
     if (frame->InlineFrameContext != INLINE_FRAME_CONTEXT_IGNORE)
     {
-        FIXME("Inlined contexts are not supported yet\n");
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        static BOOL once;
+        if (!once)
+        {
+            FIXME("Inlined contexts are not supported yet\n");
+            once = TRUE;
+        }
+        frame->InlineFrameContext = INLINE_FRAME_CONTEXT_IGNORE;
     }
 
     csw.hProcess = hProcess;
