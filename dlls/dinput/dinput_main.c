@@ -605,38 +605,36 @@ static HRESULT WINAPI IDirectInput2WImpl_FindDevice(LPDIRECTINPUT7W iface, REFGU
     return DI_OK;
 }
 
-static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx( IDirectInput7W *iface, REFGUID rguid, REFIID riid,
-                                                         LPVOID *pvOut, LPUNKNOWN lpUnknownOuter )
+static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx( IDirectInput7W *iface, const GUID *guid,
+                                                         const GUID *iid, void **out, IUnknown *outer )
 {
+    IDirectInputImpl *impl = impl_from_IDirectInput7W( iface );
     IDirectInputDevice8W *device;
-    IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
     unsigned int i;
     HRESULT hr;
 
-    TRACE( "(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid( rguid ), debugstr_guid( riid ), pvOut, lpUnknownOuter );
+    TRACE( "iface %p, guid %s, iid %s, out %p, outer %p\n", iface, debugstr_guid( guid ),
+           debugstr_guid( iid ), out, outer );
 
-    if (pvOut)
-        *pvOut = NULL;
+    if (!out) return E_POINTER;
+    *out = NULL;
 
-    if (!rguid || !pvOut)
-        return E_POINTER;
-
-    if (!This->initialized)
-        return DIERR_NOTINITIALIZED;
+    if (!guid) return E_POINTER;
+    if (!impl->initialized) return DIERR_NOTINITIALIZED;
 
     /* Loop on all the devices to see if anyone matches the given GUID */
     for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
     {
         if (!dinput_devices[i]->create_device) continue;
-        if (SUCCEEDED(hr = dinput_devices[i]->create_device( This, rguid, &device )))
+        if (SUCCEEDED(hr = dinput_devices[i]->create_device( impl, guid, &device )))
         {
-            hr = IDirectInputDevice8_QueryInterface( device, riid, pvOut );
+            hr = IDirectInputDevice8_QueryInterface( device, iid, out );
             IDirectInputDevice8_Release( device );
             return hr;
         }
     }
 
-    WARN("invalid device GUID %s\n", debugstr_guid(rguid));
+    WARN( "invalid device GUID %s\n", debugstr_guid( guid ) );
     return DIERR_DEVICENOTREG;
 }
 
