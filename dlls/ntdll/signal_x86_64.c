@@ -1030,6 +1030,8 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 struct unwind_exception_frame
 {
     EXCEPTION_REGISTRATION_RECORD frame;
+    char dummy[0x10]; /* Layout 'dispatch' accessed from unwind_exception_handler() so it is above register
+                       * save space when .seh handler is used. */
     DISPATCHER_CONTEXT *dispatch;
 };
 
@@ -1038,8 +1040,8 @@ struct unwind_exception_frame
  *
  * Handler for exceptions happening while calling an unwind handler.
  */
-static DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     struct unwind_exception_frame *unwind_frame = (struct unwind_exception_frame *)frame;
     DISPATCHER_CONTEXT *dispatch = (DISPATCHER_CONTEXT *)dispatcher;
@@ -1058,26 +1060,56 @@ static DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_
     return ExceptionCollidedUnwind;
 }
 
+/***********************************************************************
+ *		unwind_handler_call_wrapper
+ */
+#ifdef __ASM_SEH_SUPPORTED
+DWORD WINAPI unwind_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
+                                   CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
+
+C_ASSERT( sizeof(struct unwind_exception_frame) == 0x28 );
+C_ASSERT( offsetof(struct unwind_exception_frame, dispatch) == 0x20 );
+C_ASSERT( offsetof(DISPATCHER_CONTEXT, LanguageHandler) == 0x30 );
+
+__ASM_GLOBAL_FUNC( unwind_handler_call_wrapper,
+                   ".seh_endprologue\n\t"
+                   "subq $0x28,%rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   "movq %r9,0x20(%rsp)\n\t"   /* unwind_exception_frame->dispatch */
+                   "callq *0x30(%r9)\n\t"      /* dispatch->LanguageHandler */
+                   "nop\n\t"                   /* avoid epilogue so handler is called */
+                   "addq $0x28, %rsp\n\t"
+                   "ret\n\t"
+                   ".seh_handler " __ASM_NAME("unwind_exception_handler") ", @except, @unwind\n\t" )
+#else
+static DWORD unwind_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
+                                          CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
+{
+    struct unwind_exception_frame wrapper_frame;
+    DWORD res;
+
+    wrapper_frame.frame.Handler = unwind_exception_handler;
+    wrapper_frame.dispatch = dispatch;
+    __wine_push_frame( &wrapper_frame.frame );
+    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    __wine_pop_frame( &wrapper_frame.frame );
+    return res;
+}
+#endif
+
 /**********************************************************************
  *           call_unwind_handler
  *
  * Call a single unwind handler.
  */
-static DWORD call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
+DWORD call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
 {
-    struct unwind_exception_frame frame;
     DWORD res;
-
-    frame.frame.Handler = unwind_exception_handler;
-    frame.dispatch = dispatch;
-    __wine_push_frame( &frame.frame );
 
     TRACE( "calling handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
            dispatch->LanguageHandler, rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    res = unwind_handler_call_wrapper( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     TRACE( "handler %p returned %lx\n", dispatch->LanguageHandler, res );
-
-    __wine_pop_frame( &frame.frame );
 
     switch (res)
     {
