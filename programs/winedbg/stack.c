@@ -80,8 +80,9 @@ static BOOL stack_set_local_scope(void)
      * Therefore, we decrement linear_pc in order to ensure that
      * the considered address is really inside the current function or inline site.
      */
-    return SymSetScopeFromAddr(dbg_curr_process->handle,
-                               (dbg_curr_thread->curr_frame) ? frm->linear_pc - 1 : frm->linear_pc);
+    return SymSetScopeFromInlineContext(dbg_curr_process->handle,
+                                        (dbg_curr_thread->curr_frame) ? frm->linear_pc - 1 : frm->linear_pc,
+                                        frm->inline_ctx);
 }
 
 static BOOL stack_set_frame_internal(int newframe)
@@ -149,7 +150,7 @@ BOOL stack_get_current_symbol(SYMBOL_INFO* symbol)
     struct dbg_frame*           frm = stack_get_curr_frame();
 
     if (frm == NULL) return FALSE;
-    return SymFromAddr(dbg_curr_process->handle, frm->linear_pc, &disp, symbol);
+    return SymFromInlineContext(dbg_curr_process->handle, frm->linear_pc, frm->inline_ctx, &disp, symbol);
 }
 
 static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD64 addr, 
@@ -173,21 +174,23 @@ static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD64 addr,
  */
 unsigned stack_fetch_frames(const dbg_ctx_t* _ctx)
 {
-    STACKFRAME64 sf;
-    unsigned     nf = 0;
+    STACKFRAME_EX sf;
+    unsigned      nf = 0;
     /* as native stackwalk can modify the context passed to it, simply copy
      * it to avoid any damage
      */
-    dbg_ctx_t ctx = *_ctx;
-    BOOL         ret;
+    dbg_ctx_t     ctx = *_ctx;
+    BOOL          ret;
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
     dbg_curr_thread->frames = NULL;
 
     memset(&sf, 0, sizeof(sf));
+    sf.StackFrameSize = sizeof(sf);
     dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_frame, &sf.AddrFrame);
     dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_pc, &sf.AddrPC);
     dbg_curr_process->be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_stack, &sf.AddrStack);
+    sf.InlineFrameContext = INLINE_FRAME_CONTEXT_INIT;
 
     /* don't confuse StackWalk by passing in inconsistent addresses */
     if ((sf.AddrPC.Mode == AddrModeFlat) && (sf.AddrFrame.Mode != AddrModeFlat))
@@ -196,9 +199,9 @@ unsigned stack_fetch_frames(const dbg_ctx_t* _ctx)
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 
-    while ((ret = StackWalk64(dbg_curr_process->be_cpu->machine, dbg_curr_process->handle,
+    while ((ret = StackWalkEx(dbg_curr_process->be_cpu->machine, dbg_curr_process->handle,
                               dbg_curr_thread->handle, &sf, &ctx, stack_read_mem,
-                              SymFunctionTableAccess64, SymGetModuleBase64, NULL)) ||
+                              SymFunctionTableAccess64, SymGetModuleBase64, NULL, SYM_STKWALK_DEFAULT)) ||
            nf == 0) /* we always register first frame information */
     {
         dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames,
@@ -211,6 +214,7 @@ unsigned stack_fetch_frames(const dbg_ctx_t* _ctx)
         dbg_curr_thread->frames[nf].addr_stack   = sf.AddrStack;
         dbg_curr_thread->frames[nf].linear_stack = (DWORD_PTR)memory_to_linear_addr(&sf.AddrStack);
         dbg_curr_thread->frames[nf].context      = ctx;
+        dbg_curr_thread->frames[nf].inline_ctx   = sf.InlineFrameContext;
         /* FIXME: can this heuristic be improved: we declare first context always valid, and next ones
          * if it has been modified by the call to StackWalk...
          */
@@ -268,7 +272,7 @@ static void stack_print_addr_and_args(void)
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (SymFromAddr(dbg_curr_process->handle, frm->linear_pc, &disp64, si))
+    if (SymFromInlineContext(dbg_curr_process->handle, frm->linear_pc, frm->inline_ctx, &disp64, si))
     {
         struct sym_enum se;
         DWORD           disp;
@@ -284,7 +288,8 @@ static void stack_print_addr_and_args(void)
         dbg_printf(")");
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr64(dbg_curr_process->handle, frm->linear_pc, &disp, &il))
+        if (SymGetLineFromInlineContext(dbg_curr_process->handle, frm->linear_pc, frm->inline_ctx,
+                                        0, &disp, &il))
             dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }

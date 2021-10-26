@@ -188,6 +188,7 @@ struct dbg_thread
         DWORD_PTR               linear_frame;
         DWORD_PTR               linear_stack;
         dbg_ctx_t               context;        /* context we got out of stackwalk for this frame */
+        DWORD                   inline_ctx;
         BOOL                    is_ctx_valid;   /* is the context above valid */
     }*                          frames;
     int                         num_frames;
