@@ -750,43 +750,6 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     return open_printer_reg_key( name, phkey );
 }
 
-static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
-{
-    DRIVER_INFO_3W di3;
-    unsigned int i;
-    BOOL res;
-
-    ZeroMemory(&di3, sizeof(DRIVER_INFO_3W));
-    di3.cVersion         = 3;
-    di3.pName            = (WCHAR*)name;
-    di3.pDriverPath      = driver_nt;
-    di3.pDataFile        = ppd;
-    di3.pConfigFile      = driver_nt;
-    di3.pDefaultDataType = rawW;
-
-    for (i = 0; i < ARRAY_SIZE(all_printenv); i++)
-    {
-        di3.pEnvironment = (WCHAR *) all_printenv[i]->envname;
-        if (all_printenv[i]->envname == envname_win40W)
-        {
-            /* We use wineps16.drv as driver for 16 bit */
-            di3.pDriverPath      = driver_9x;
-            di3.pConfigFile      = driver_9x;
-        }
-        res = AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY );
-        TRACE("got %d and %d for %s (%s)\n", res, GetLastError(), debugstr_w(name), debugstr_w(di3.pEnvironment));
-
-        if (!res && (GetLastError() != ERROR_PRINTER_DRIVER_ALREADY_INSTALLED))
-        {
-            ERR("failed with %u for %s (%s) %s\n", GetLastError(), debugstr_w(name),
-                debugstr_w(di3.pEnvironment), debugstr_w(di3.pDriverPath));
-                return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
 static BOOL copy_file( const char *src, const char *dst )
 {
     int fds[2] = {-1, -1}, num;
@@ -850,6 +813,69 @@ static WCHAR *get_ppd_filename( const WCHAR *dir, const WCHAR *file_name )
     while ((p = strpbrkW( p, invalid_chars ))) *p++ = '_';
 
     return ppd;
+}
+
+static char *get_dest_name( const WCHAR *printer )
+{
+    int len = WideCharToMultiByte( CP_UNIXCP, 0, printer, -1, NULL, 0, NULL, NULL );
+    char *dest = heap_alloc( len );
+
+    if (dest) WideCharToMultiByte( CP_UNIXCP, 0, printer, -1, dest, len, NULL, NULL );
+    return dest;
+}
+
+static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd );
+static void unlink_ppd( const WCHAR *ppd );
+
+static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
+{
+    WCHAR *ppd = get_ppd_filename( ppd_dir, name );
+    char *dest_name;
+    DRIVER_INFO_3W di3;
+    unsigned int i;
+    BOOL res = FALSE;
+
+    if (!ppd) return FALSE;
+    dest_name = get_dest_name( name );
+    if (!dest_name) goto end;
+
+    res = get_cups_ppd( dest_name, ppd ) || get_internal_fallback_ppd( ppd );
+    if (!res) goto end;
+
+    memset( &di3, 0, sizeof(DRIVER_INFO_3W) );
+    di3.cVersion         = 3;
+    di3.pName            = (WCHAR *)name;
+    di3.pDriverPath      = driver_nt;
+    di3.pDataFile        = ppd;
+    di3.pConfigFile      = driver_nt;
+    di3.pDefaultDataType = rawW;
+
+    for (i = 0; i < ARRAY_SIZE(all_printenv); i++)
+    {
+        di3.pEnvironment = (WCHAR *)all_printenv[i]->envname;
+        if (all_printenv[i]->envname == envname_win40W)
+        {
+            /* We use wineps16.drv as driver for 16 bit */
+            di3.pDriverPath = driver_9x;
+            di3.pConfigFile = driver_9x;
+        }
+        res = AddPrinterDriverExW( NULL, 3, (BYTE *)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY );
+        TRACE( "got %d and %d for %s (%s)\n", res, GetLastError(), debugstr_w( name ), debugstr_w( di3.pEnvironment ) );
+
+        if (!res && (GetLastError() != ERROR_PRINTER_DRIVER_ALREADY_INSTALLED))
+        {
+            ERR( "failed with %u for %s (%s) %s\n", GetLastError(), debugstr_w( name ),
+                 debugstr_w( di3.pEnvironment ), debugstr_w( di3.pDriverPath ) );
+            break;
+        }
+        res = TRUE;
+    }
+    unlink_ppd( ppd );
+
+end:
+    heap_free( dest_name );
+    heap_free( ppd );
+    return res;
 }
 
 static WCHAR *get_ppd_dir( void )
@@ -953,11 +979,7 @@ static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
     if (http_status != HTTP_OK) unlink( unix_name );
     HeapFree( GetProcessHeap(), 0, unix_name );
 
-    if (http_status == HTTP_OK) return TRUE;
-
-    TRACE( "failed to get ppd for printer %s from cups (status %d), calling fallback\n",
-           debugstr_a(printer_name), http_status );
-    return get_internal_fallback_ppd( ppd );
+    return http_status == HTTP_OK;
 }
 
 static WCHAR *get_cups_option( const char *name, int num_options, cups_option_t *options )
@@ -996,7 +1018,7 @@ static BOOL CUPS_LoadPrinters(void)
     BOOL                  hadprinter = FALSE, haddefault = FALSE;
     cups_dest_t          *dests;
     PRINTER_INFO_2W       pi2;
-    WCHAR *port, *ppd_dir = NULL, *ppd;
+    WCHAR *port, *ppd_dir = NULL;
     HKEY hkeyPrinter, hkeyPrinters;
     WCHAR   nameW[MAX_PATH];
     HANDLE  added_printer;
@@ -1024,7 +1046,8 @@ static BOOL CUPS_LoadPrinters(void)
             continue;
         }
 
-        if(RegOpenKeyW(hkeyPrinters, nameW, &hkeyPrinter) == ERROR_SUCCESS) {
+        if (RegOpenKeyW( hkeyPrinters, nameW, &hkeyPrinter ) == ERROR_SUCCESS)
+        {
             DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
                and continue */
@@ -1033,19 +1056,11 @@ static BOOL CUPS_LoadPrinters(void)
             /* flag that the PPD file should be checked for an update */
             set_reg_DWORD( hkeyPrinter, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
             RegCloseKey(hkeyPrinter);
-        } else {
-            BOOL added_driver = FALSE;
-
+        }
+        else
+        {
             if (!ppd_dir && !(ppd_dir = get_ppd_dir())) break;
-
-            ppd = get_ppd_filename( ppd_dir, nameW );
-            if (get_cups_ppd( dests[i].name, ppd ))
-            {
-                added_driver = add_printer_driver( nameW, ppd );
-                unlink_ppd( ppd );
-            }
-            HeapFree( GetProcessHeap(), 0, ppd );
-            if (!added_driver) continue;
+            if (!add_printer_driver( nameW, ppd_dir )) continue;
 
             port = heap_alloc( sizeof(CUPS_Port) + lstrlenW( nameW ) * sizeof(WCHAR) );
             lstrcpyW( port, CUPS_Port );
@@ -1097,43 +1112,6 @@ static BOOL CUPS_LoadPrinters(void)
 
 #endif
 
-static char *get_queue_name( HANDLE printer, BOOL *cups )
-{
-    WCHAR *port, *name = NULL;
-    DWORD err, needed, type;
-    char *ret = NULL;
-    HKEY key;
-
-    *cups = FALSE;
-
-    err = WINSPOOL_GetOpenedPrinterRegKey( printer, &key );
-    if (err) return NULL;
-    err = RegQueryValueExW( key, PortW, 0, &type, NULL, &needed );
-    if (err) goto end;
-    port = HeapAlloc( GetProcessHeap(), 0, needed );
-    if (!port) goto end;
-    RegQueryValueExW( key, PortW, 0, &type, (BYTE*)port, &needed );
-
-    if (!strncmpW( port, CUPS_Port, ARRAY_SIZE( CUPS_Port ) -1 ))
-    {
-        name = port + ARRAY_SIZE( CUPS_Port ) - 1;
-        *cups = TRUE;
-    }
-    else if (!strncmpW( port, LPR_Port, ARRAY_SIZE( LPR_Port ) -1 ))
-        name = port + ARRAY_SIZE( LPR_Port ) - 1;
-    if (name)
-    {
-        needed = WideCharToMultiByte( CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL );
-        ret = HeapAlloc( GetProcessHeap(), 0, needed );
-        if(ret) WideCharToMultiByte( CP_UNIXCP, 0, name, -1, ret, needed, NULL, NULL );
-    }
-    HeapFree( GetProcessHeap(), 0, port );
-end:
-    RegCloseKey( key );
-    return ret;
-}
-
-
 static void set_ppd_overrides( HANDLE printer )
 {
     WCHAR *wstr = NULL;
@@ -1180,38 +1158,17 @@ end:
 
 static BOOL update_driver( HANDLE printer )
 {
-    BOOL ret, is_cups;
+    BOOL ret;
     const WCHAR *name = get_opened_printer_name( printer );
-    WCHAR *ppd_dir, *ppd;
-    char *queue_name;
+    WCHAR *ppd_dir;
 
     if (!name) return FALSE;
-    queue_name = get_queue_name( printer, &is_cups );
-    if (!queue_name) return FALSE;
+    if (!(ppd_dir = get_ppd_dir())) return FALSE;
 
-    if (!(ppd_dir = get_ppd_dir()))
-    {
-        HeapFree( GetProcessHeap(), 0, queue_name );
-        return FALSE;
-    }
-    ppd = get_ppd_filename( ppd_dir, name );
+    TRACE( "updating driver %s\n", debugstr_w( name ) );
+    ret = add_printer_driver( name, ppd_dir );
 
-#ifdef SONAME_LIBCUPS
-    if (is_cups)
-        ret = get_cups_ppd( queue_name, ppd );
-    else
-#endif
-        ret = get_internal_fallback_ppd( ppd );
-
-    if (ret)
-    {
-        TRACE( "updating driver %s\n", debugstr_w( name ) );
-        ret = add_printer_driver( name, ppd );
-        unlink_ppd( ppd );
-    }
-    HeapFree( GetProcessHeap(), 0, ppd_dir );
-    HeapFree( GetProcessHeap(), 0, ppd );
-    HeapFree( GetProcessHeap(), 0, queue_name );
+    heap_free( ppd_dir );
 
     set_ppd_overrides( printer );
 
