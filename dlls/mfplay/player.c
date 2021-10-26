@@ -53,6 +53,12 @@ static void platform_shutdown(void)
         MFShutdown();
 }
 
+static inline const char *debugstr_normalized_rect(const MFVideoNormalizedRect *rect)
+{
+    if (!rect) return "(null)";
+    return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom);
+}
+
 struct media_item
 {
     IMFPMediaItem IMFPMediaItem_iface;
@@ -1437,7 +1443,7 @@ static HRESULT WINAPI media_player_SetVideoSourceRect(IMFPMediaPlayer *iface,
     RECT dst_rect;
     HRESULT hr;
 
-    TRACE("%p, %p.\n", iface, rect);
+    TRACE("%p, %s.\n", iface, debugstr_normalized_rect(rect));
 
     if (!GetClientRect(player->output_window, &dst_rect))
         hr = HRESULT_FROM_WIN32(GetLastError());
