@@ -1048,7 +1048,15 @@ BOOL WINAPI SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll)
     if (!pcs) return FALSE;
     module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
     if (!module) return FALSE;
-    return module_remove(pcs, module);
+    if (!module_remove(pcs, module)) return FALSE;
+    /* remove local scope if defined inside this module */
+    if (pcs->localscope_pc >= module->module.BaseOfImage &&
+        pcs->localscope_pc < module->module.BaseOfImage + module->module.ImageSize)
+    {
+        pcs->localscope_pc = 0;
+        pcs->localscope_symt = NULL;
+    }
+    return TRUE;
 }
 
 /******************************************************************

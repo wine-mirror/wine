@@ -606,11 +606,21 @@ BOOL WINAPI SymSetParentWindow(HWND hwnd)
 BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
                           PIMAGEHLP_CONTEXT Context)
 {
-    struct process* pcs = process_find_by_handle(hProcess);
+    struct process* pcs;
+    struct module_pair pair;
+    struct symt_ht* sym;
+
+    pair.pcs = pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
 
-    if (!module_find_by_addr(pcs, StackFrame->InstructionOffset, DMT_UNKNOWN))
+    pair.requested = module_find_by_addr(pair.pcs, StackFrame->InstructionOffset, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
         return FALSE;
+    if ((sym = symt_find_nearest(pair.effective, StackFrame->InstructionOffset)) == NULL) return FALSE;
+    if (sym->symt.tag != SymTagFunction) return FALSE;
+    pcs->localscope_pc = StackFrame->InstructionOffset;
+    pcs->localscope_symt = &sym->symt;
+
     if (pcs->ctx_frame.ReturnOffset == StackFrame->ReturnOffset &&
         pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
         pcs->ctx_frame.StackOffset  == StackFrame->StackOffset)

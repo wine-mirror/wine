@@ -1028,7 +1028,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
                                     struct symt_function* func, const struct vector* v)
 {
     struct symt*        lsym = NULL;
-    DWORD_PTR           pc = pair->pcs->ctx_frame.InstructionOffset;
+    DWORD_PTR           pc = pair->pcs->localscope_pc;
     unsigned int        i;
     WCHAR*              nameW;
     BOOL                ret;
@@ -1074,21 +1074,19 @@ static BOOL symt_enum_locals(struct process* pcs, const WCHAR* mask,
                              const struct sym_enum* se)
 {
     struct module_pair  pair;
-    struct symt_ht*     sym;
-    DWORD_PTR           pc = pcs->ctx_frame.InstructionOffset;
 
     se->sym_info->SizeOfStruct = sizeof(*se->sym_info);
     se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
 
     pair.pcs = pcs;
-    pair.requested = module_find_by_addr(pair.pcs, pc, DMT_UNKNOWN);
+    pair.requested = module_find_by_addr(pair.pcs, pcs->localscope_pc, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
-    if ((sym = symt_find_nearest(pair.effective, pc)) == NULL) return FALSE;
 
-    if (sym->symt.tag == SymTagFunction)
+    if (symt_check_tag(pcs->localscope_symt, SymTagFunction) ||
+        symt_check_tag(pcs->localscope_symt, SymTagInlineSite))
     {
-        return symt_enum_locals_helper(&pair, mask ? mask : L"*", se, (struct symt_function*)sym,
-                                       &((struct symt_function*)sym)->vchildren);
+        struct symt_function* func = (struct symt_function*)pcs->localscope_symt;
+        return symt_enum_locals_helper(&pair, mask ? mask : L"*", se, func, &func->vchildren);
     }
     return FALSE;
 }

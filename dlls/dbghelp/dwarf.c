@@ -3723,7 +3723,7 @@ static void dwarf2_location_compute(struct process* pcs,
     else
     {
         /* instruction pointer relative to compiland's start */
-        ip = pcs->ctx_frame.InstructionOffset - ((struct symt_compiland*)func->container)->address;
+        ip = pcs->localscope_pc - ((struct symt_compiland*)func->container)->address;
 
         if ((err = loc_compute_frame(pcs, modfmt, func, ip, head, &frame)) == 0)
         {

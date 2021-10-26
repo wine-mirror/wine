@@ -438,6 +438,8 @@ struct process
     ULONG_PTR                   dbg_hdr_addr;
 
     IMAGEHLP_STACK_FRAME        ctx_frame;
+    DWORD64                     localscope_pc;
+    struct symt*                localscope_symt;
 
     unsigned                    buffer_size;
     void*                       buffer;
