@@ -2076,6 +2076,65 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
     return S_OK;
 }
 
+static void parse_fx10_set_default_numeric_value(const char **ptr, struct d3d10_effect_variable *v)
+{
+    float *dst = (float *)(v->buffer->u.buffer.local_buffer + v->buffer_offset), *src;
+    BOOL col_major = v->type->type_class == D3D10_SVC_MATRIX_COLUMNS;
+    unsigned int col_count = v->type->column_count, col;
+    unsigned int row_count = v->type->row_count, row;
+
+    src = (float *)*ptr;
+
+    if (col_major)
+    {
+        for (col = 0; col < col_count; ++col)
+        {
+            for (row = 0; row < row_count; ++row)
+                dst[row] = src[row * col_count + col];
+            dst += 4;
+        }
+    }
+    else
+    {
+        for (row = 0; row < row_count; ++row)
+        {
+            memcpy(dst, src, col_count * sizeof(float));
+            src += col_count;
+            dst += 4;
+        }
+    }
+
+    *ptr += col_count * row_count * sizeof(float);
+}
+
+static void parse_fx10_default_value(const char **ptr, struct d3d10_effect_variable *var)
+{
+    unsigned int element_count = max(var->type->element_count, 1), i, m;
+    struct d3d10_effect_variable *v;
+
+    for (i = 0; i < element_count; ++i)
+    {
+        v = d3d10_array_get_element(var, i);
+
+        switch (v->type->type_class)
+        {
+            case D3D10_SVC_STRUCT:
+                for (m = 0; m < v->type->member_count; ++m)
+                    parse_fx10_default_value(ptr, &v->members[m]);
+                break;
+            case D3D10_SVC_SCALAR:
+            case D3D10_SVC_VECTOR:
+            case D3D10_SVC_MATRIX_COLUMNS:
+            case D3D10_SVC_MATRIX_ROWS:
+                parse_fx10_set_default_numeric_value(ptr, v);
+                break;
+            default:
+                FIXME("Unexpected initial value for type %#x.\n", v->type->basetype);
+                return;
+        }
+    }
+}
+
 static void d3d10_effect_variable_update_buffer_offsets(struct d3d10_effect_variable *v,
         unsigned int offset)
 {
@@ -2093,8 +2152,8 @@ static void d3d10_effect_variable_update_buffer_offsets(struct d3d10_effect_vari
 static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
         const char **ptr, BOOL local, struct d3d10_effect_variable *v)
 {
-    DWORD offset, flags, default_value_offset;
-    uint32_t buffer_offset;
+    uint32_t offset, flags, default_value_offset, buffer_offset;
+    const char *data_ptr;
     HRESULT hr;
 
     if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, v)))
@@ -2114,6 +2173,7 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
     TRACE("Variable offset in buffer: %#x.\n", buffer_offset);
 
     read_dword(ptr, &default_value_offset);
+    TRACE("Variable default value offset: %#x.\n", default_value_offset);
 
     read_dword(ptr, &flags);
     TRACE("Variable flags: %#x.\n", flags);
@@ -2127,7 +2187,17 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
     if (local)
     {
         if (default_value_offset)
-            FIXME("Set default variable value.\n");
+        {
+            if (!require_space(default_value_offset, 1, v->type->size_packed, data_size))
+            {
+                WARN("Invalid default value offset %#x, variable packed size %u.\n", default_value_offset,
+                        v->type->size_packed);
+                return E_FAIL;
+            }
+
+            data_ptr = data + default_value_offset;
+            parse_fx10_default_value(&data_ptr, v);
+        }
 
         read_dword(ptr, &v->annotations.count);
         TRACE("Variable has %u annotations.\n", v->annotations.count);

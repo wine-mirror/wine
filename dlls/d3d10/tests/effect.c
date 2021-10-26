@@ -7404,7 +7404,6 @@ static void test_effect_default_variable_value(void)
     vector = v->lpVtbl->AsVector(v);
     hr = vector->lpVtbl->GetFloatVector(vector, float_v);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(float_v[0] == 1.0f && float_v[1] == 2.0f && float_v[2] == 3.0f && float_v[3] == 4.0f,
             "Unexpected vector {%.8e,%.8e,%.8e,%.8e}\n", float_v[0], float_v[1], float_v[2], float_v[3]);
 
@@ -7414,7 +7413,6 @@ todo_wine
     vector = v->lpVtbl->AsVector(v);
     hr = vector->lpVtbl->GetFloatVector(vector, float_v);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(float_v[0] == 1.0f && float_v[1] == 2.0f && float_v[2] == 5.0f && float_v[3] == 5.0f,
             "Unexpected vector {%.8e,%.8e,%.8e,%.8e}\n", float_v[0], float_v[1], float_v[2], float_v[3]);
 
@@ -7424,7 +7422,6 @@ todo_wine
     vector = v->lpVtbl->AsVector(v);
     hr = vector->lpVtbl->GetFloatVector(vector, float_v);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(float_v[0] == 1.0f && float_v[1] == 5.0f && float_v[2] == 5.0f && float_v[3] == 5.0f,
             "Unexpected vector {%.8e,%.8e,%.8e,%.8e}\n", float_v[0], float_v[1], float_v[2], float_v[3]);
 
@@ -7433,7 +7430,6 @@ todo_wine
     scalar = v->lpVtbl->AsScalar(v);
     hr = scalar->lpVtbl->GetInt(scalar, &int_s);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(int_s == 10, "Unexpected value %d.\n", int_s);
 
     memset(int_v, 0, sizeof(int_v));
@@ -7441,7 +7437,6 @@ todo_wine
     scalar = v->lpVtbl->AsScalar(v);
     hr = scalar->lpVtbl->GetIntArray(scalar, int_v, 0, 2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(int_v[0] == 9 && int_v[1] == 12, "Unexpected vector {%d,%d}\n", int_v[0], int_v[1]);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -7460,7 +7455,6 @@ todo_wine
     scalar = v->lpVtbl->AsScalar(v);
     hr = scalar->lpVtbl->GetFloat(scalar, &float_s);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(float_s == 0.2f, "Unexpected value %.8e.\n", float_s);
 
     /* Matrix */
@@ -7472,10 +7466,7 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     set_test_matrix(&m_set, D3D10_SVT_INT, 2, 3, 1);
-todo_wine
-{
     compare_matrix("m1", __LINE__, &m_set, &m_ret, 2, 3, FALSE);
-}
 
     v = effect->lpVtbl->GetVariableByName(effect, "m2");
     matrix = v->lpVtbl->AsMatrix(v);
@@ -7485,10 +7476,8 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     set_test_matrix(&m_set, D3D10_SVT_INT, 2, 3, 1);
-todo_wine
-{
     compare_matrix("m2", __LINE__, &m_set, &m_ret, 2, 3, FALSE);
-}
+
     v = effect->lpVtbl->GetVariableByName(effect, "m3");
     matrix = v->lpVtbl->AsMatrix(v);
     ok(matrix->lpVtbl->IsValid(matrix), "Expected valid matrix.\n");
@@ -7503,16 +7492,7 @@ todo_wine
     *(unsigned int *)&m_set.m[1][0] = 0;
     *(unsigned int *)&m_set.m[1][1] = 1;
     *(unsigned int *)&m_set.m[1][2] = 0;
-
-todo_wine
-    ok(m_ret.m[0][0] == m_set.m[0][0], "Unexpected value.\n");
-    ok(m_ret.m[0][1] == m_set.m[0][1], "Unexpected value.\n");
-todo_wine
-    ok(m_ret.m[0][2] == m_set.m[0][2], "Unexpected value.\n");
-    ok(m_ret.m[1][0] == m_set.m[1][0], "Unexpected value.\n");
-todo_wine
-    ok(m_ret.m[1][1] == m_set.m[1][1], "Unexpected value.\n");
-    ok(m_ret.m[1][2] == m_set.m[1][2], "Unexpected value.\n");
+    compare_matrix("m3", __LINE__, &m_set, &m_ret, 2, 3, FALSE);
 
     v = effect->lpVtbl->GetVariableByName(effect, "m4");
     matrix = v->lpVtbl->AsMatrix(v);
@@ -7522,10 +7502,8 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     set_test_matrix(&m_set, D3D10_SVT_FLOAT, 2, 2, 1);
-todo_wine
-{
     compare_matrix("m4", __LINE__, &m_set, &m_ret, 2, 2, FALSE);
-}
+
     /* Struct */
     v = effect->lpVtbl->GetVariableByName(effect, "s1");
     ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
@@ -7535,7 +7513,6 @@ todo_wine
     scalar = m->lpVtbl->AsScalar(m);
     hr = scalar->lpVtbl->GetBool(scalar, &ret);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(ret == 1, "Unexpected value.\n");
 
     m = v->lpVtbl->GetMemberByName(v, "f2");
@@ -7543,7 +7520,6 @@ todo_wine
     scalar = m->lpVtbl->AsScalar(m);
     hr = scalar->lpVtbl->GetFloat(scalar, &float_s);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(float_s == -0.2f, "Unexpected value %f.\n", float_s);
 
     m = v->lpVtbl->GetMemberByName(v, "b2");
