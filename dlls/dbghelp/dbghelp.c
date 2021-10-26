@@ -677,12 +677,17 @@ BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
  */
 BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD inlinectx)
 {
-    struct process*     pcs;
+    TRACE("(%p %I64x %x)\n", hProcess, addr, inlinectx);
 
-    FIXME("(%p %#I64x %u): stub\n", hProcess, addr, inlinectx);
-
-    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
-    return TRUE;
+    switch (IFC_MODE(inlinectx))
+    {
+    case IFC_MODE_IGNORE:
+    case IFC_MODE_REGULAR: return SymSetScopeFromAddr(hProcess, addr);
+    case IFC_MODE_INLINE:
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 }
 
 /******************************************************************
