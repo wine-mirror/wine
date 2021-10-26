@@ -1211,6 +1211,58 @@ void CDECL _vcomp_for_static_simple_init(unsigned int first, unsigned int last, 
     *end   = *begin + (per_thread - 1) * step;
 }
 
+void CDECL _vcomp_for_static_simple_init_i8(ULONG64 first, ULONG64 last, LONG64 step,
+                                         BOOL increment, ULONG64 *begin, ULONG64 *end)
+{
+    ULONG64 iterations, per_thread, remaining;
+    struct vcomp_thread_data *thread_data = vcomp_init_thread_data();
+    struct vcomp_team_data *team_data = thread_data->team;
+    int num_threads = team_data ? team_data->num_threads : 1;
+    int thread_num = thread_data->thread_num;
+
+    TRACE("(%s, %s, %s, %x, %p, %p)\n", wine_dbgstr_longlong(first), wine_dbgstr_longlong(last),
+            wine_dbgstr_longlong(step), increment, begin, end);
+
+    if (num_threads == 1)
+    {
+        *begin = first;
+        *end   = last;
+        return;
+    }
+
+    if (step <= 0)
+    {
+        *begin = 0;
+        *end   = increment ? -1 : 1;
+        return;
+    }
+
+    if (increment)
+        iterations = 1 + (last - first) / step;
+    else
+    {
+        iterations = 1 + (first - last) / step;
+        step *= -1;
+    }
+
+    per_thread = iterations / num_threads;
+    remaining  = iterations - per_thread * num_threads;
+
+    if (thread_num < remaining)
+        per_thread++;
+    else if (per_thread)
+        first += remaining * step;
+    else
+    {
+        *begin = first;
+        *end   = first - step;
+        return;
+    }
+
+    *begin = first + per_thread * thread_num * step;
+    *end   = *begin + (per_thread - 1) * step;
+}
+
 void CDECL _vcomp_for_static_init(int first, int last, int step, int chunksize, unsigned int *loops,
                                   int *begin, int *end, int *next, int *lastchunk)
 {

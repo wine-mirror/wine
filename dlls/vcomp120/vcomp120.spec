@@ -64,7 +64,7 @@
 @ cdecl _vcomp_for_static_init(long long long long ptr ptr ptr ptr ptr)
 @ cdecl _vcomp_for_static_init_i8(int64 int64 int64 int64 ptr ptr ptr ptr ptr)
 @ cdecl _vcomp_for_static_simple_init(long long long long ptr ptr)
-@ stub _vcomp_for_static_simple_init_i8
+@ cdecl _vcomp_for_static_simple_init_i8(int64 int64 int64 long ptr ptr)
 @ varargs _vcomp_fork(long long ptr)
 @ cdecl _vcomp_get_thread_num()
 @ cdecl _vcomp_leave_critsect(ptr)
