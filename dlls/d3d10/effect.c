@@ -4495,9 +4495,11 @@ static inline struct d3d10_effect_variable *impl_from_ID3D10EffectConstantBuffer
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_constant_buffer_IsValid(ID3D10EffectConstantBuffer *iface)
 {
-    TRACE("iface %p\n", iface);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectConstantBuffer(iface);
 
-    return (struct d3d10_effect_variable *)iface != &null_local_buffer;
+    TRACE("iface %p.\n", iface);
+
+    return v != &null_local_buffer;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetType(ID3D10EffectConstantBuffer *iface)
