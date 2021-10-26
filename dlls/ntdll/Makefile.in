@@ -22,6 +22,7 @@ C_SRCS = \
 	large_int.c \
 	loader.c \
 	locale.c \
+	math.c \
 	misc.c \
 	path.c \
 	printf.c \
