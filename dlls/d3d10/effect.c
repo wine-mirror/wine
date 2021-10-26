@@ -21,6 +21,7 @@
 #include "d3d10_private.h"
 
 #include <float.h>
+#include <stdint.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
@@ -2075,10 +2076,25 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
     return S_OK;
 }
 
+static void d3d10_effect_variable_update_buffer_offsets(struct d3d10_effect_variable *v,
+        unsigned int offset)
+{
+    unsigned int i;
+
+    for (i = 0; i < v->type->member_count; ++i)
+        d3d10_effect_variable_update_buffer_offsets(&v->members[i], offset);
+
+    for (i = 0; i < v->type->element_count; ++i)
+        d3d10_effect_variable_update_buffer_offsets(&v->elements[i], offset);
+
+    v->buffer_offset += offset;
+}
+
 static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
         const char **ptr, BOOL local, struct d3d10_effect_variable *v)
 {
     DWORD offset, flags, default_value_offset;
+    uint32_t buffer_offset;
     HRESULT hr;
 
     if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, v)))
@@ -2094,8 +2110,8 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
     }
     TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
 
-    read_dword(ptr, &v->buffer_offset);
-    TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
+    read_dword(ptr, &buffer_offset);
+    TRACE("Variable offset in buffer: %#x.\n", buffer_offset);
 
     read_dword(ptr, &default_value_offset);
 
@@ -2103,6 +2119,10 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
     TRACE("Variable flags: %#x.\n", flags);
 
     v->flag |= flags;
+
+    /* At this point storage offsets for members and array elements are relative to containing
+       variable. Update them by moving to correct offset within a buffer. */
+    d3d10_effect_variable_update_buffer_offsets(v, buffer_offset);
 
     if (local)
     {

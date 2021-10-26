@@ -5126,16 +5126,17 @@ static void test_effect_scalar_variable(void)
         {"i_a", D3D10_SVT_INT, TRUE},
         {"b_a", D3D10_SVT_BOOL, TRUE},
     };
+    ID3D10EffectScalarVariable *s_v, *s_v2;
+    ID3D10EffectVariable *var, *var2;
     D3D10_EFFECT_TYPE_DESC type_desc;
     D3D10_EFFECT_DESC effect_desc;
-    ID3D10EffectScalarVariable *s_v;
-    ID3D10EffectVariable *var;
     ID3D10EffectType *type;
     ID3D10Device *device;
     ID3D10Effect *effect;
     unsigned int i;
     ULONG refcount;
     HRESULT hr;
+    float f;
 
     if (!(device = create_device()))
     {
@@ -5175,6 +5176,22 @@ static void test_effect_scalar_variable(void)
         if (tests[i].array)
             test_scalar_array_methods(s_v, tests[i].type, tests[i].name);
     }
+
+    /* Verify that offsets are working correctly between array elements and adjacent data. */
+    var = effect->lpVtbl->GetVariableByName(effect, "f0");
+    s_v = var->lpVtbl->AsScalar(var);
+    hr = s_v->lpVtbl->SetFloat(s_v, 1.0f);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    var2 = effect->lpVtbl->GetVariableByName(effect, "f_a");
+    var2 = var2->lpVtbl->GetElement(var2, 0);
+    s_v2 = var->lpVtbl->AsScalar(var2);
+    hr = s_v2->lpVtbl->SetFloat(s_v2, 2.0f);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = s_v->lpVtbl->GetFloat(s_v, &f);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(f == 1.0f, "Unexpected value %f.\n", f);
 
     effect->lpVtbl->Release(effect);
 
@@ -7310,10 +7327,11 @@ static DWORD fx_test_default_variable_value[] =
 
 static void test_effect_default_variable_value(void)
 {
+    D3D10_EFFECT_VARIABLE_DESC var_desc;
     ID3D10EffectVectorVariable *vector;
     ID3D10EffectScalarVariable *scalar;
+    ID3D10EffectVariable *v, *v2;
     float float_v[4], float_s;
-    ID3D10EffectVariable *v;
     ID3D10Effect *effect;
     ID3D10Device *device;
     int int_v[2], int_s;
@@ -7373,6 +7391,17 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 todo_wine
     ok(int_v[0] == 9 && int_v[1] == 12, "Unexpected vector {%d,%d}\n", int_v[0], int_v[1]);
+    hr = v->lpVtbl->GetDesc(v, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(var_desc.BufferOffset == 32, "Unexpected offset %u.\n", var_desc.BufferOffset);
+    v2 = v->lpVtbl->GetElement(v, 0);
+    hr = v2->lpVtbl->GetDesc(v2, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(var_desc.BufferOffset == 32, "Unexpected offset %u.\n", var_desc.BufferOffset);
+    v2 = v->lpVtbl->GetElement(v, 1);
+    hr = v2->lpVtbl->GetDesc(v2, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(var_desc.BufferOffset == 48, "Unexpected offset %u.\n", var_desc.BufferOffset);
 
     float_s = 0.0f;
     v = effect->lpVtbl->GetVariableByName(effect, "f");
