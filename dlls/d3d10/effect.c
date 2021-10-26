@@ -2346,19 +2346,13 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
     return S_OK;
 }
 
-static HRESULT create_variable_buffer(struct d3d10_effect_variable *v)
+static HRESULT create_buffer_object(struct d3d10_effect_variable *v)
 {
     D3D10_BUFFER_DESC buffer_desc;
     D3D10_SUBRESOURCE_DATA subresource_data;
     D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
     ID3D10Device *device = v->effect->device;
     HRESULT hr;
-
-    if (!(v->u.buffer.local_buffer = heap_alloc_zero(v->data_size)))
-    {
-        ERR("Failed to allocate local constant buffer memory.\n");
-        return E_OUTOFMEMORY;
-    }
 
     buffer_desc.ByteWidth = v->data_size;
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
@@ -2490,6 +2484,12 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
         return E_OUTOFMEMORY;
     }
 
+    if (local && !(l->u.buffer.local_buffer = heap_alloc_zero(l->data_size)))
+    {
+        ERR("Failed to allocate local constant buffer memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for (i = 0; i < l->type->member_count; ++i)
     {
         struct d3d10_effect_variable *v = &l->members[i];
@@ -2581,8 +2581,11 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
 
     if (local && l->data_size)
     {
-        if (FAILED(hr = create_variable_buffer(l)))
+        if (FAILED(hr = create_buffer_object(l)))
+        {
+            WARN("Failed to create a buffer object, hr %#x.\n", hr);
             return hr;
+        }
     }
 
     if (l->explicit_bind_point != ~0u)
