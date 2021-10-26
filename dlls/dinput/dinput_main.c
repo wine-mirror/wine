@@ -762,7 +762,8 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     DIDEVICEINSTANCEW didevi;
     LPDIRECTINPUTDEVICE8W lpdid;
     DWORD callbackFlags;
-    int i, j;
+    unsigned int i = 0;
+    HRESULT hr;
     int device_count = 0;
     int remain;
     DIDEVICEINSTANCEW *didevis = 0;
@@ -772,28 +773,17 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
 
     didevi.dwSize = sizeof(didevi);
 
-    /* Enumerate all the joysticks */
-    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
+    do
     {
-        HRESULT enumSuccess;
-
-        if (!dinput_devices[i]->enum_device) continue;
-
-        for (j = 0, enumSuccess = S_OK; SUCCEEDED(enumSuccess); j++)
+        hr = hid_joystick_enum_device( DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, i++ );
+        if (hr != DI_OK) continue;
+        if (should_enumerate_device( ptszUserName, dwFlags, &This->device_players, &didevi.guidInstance ))
         {
-            TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
-
-            /* Default behavior is to enumerate attached game controllers */
-            enumSuccess = dinput_devices[i]->enum_device(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
-            if (enumSuccess == S_OK &&
-                should_enumerate_device(ptszUserName, dwFlags, &This->device_players, &didevi.guidInstance))
-            {
-                device_count++;
-                didevis = realloc( didevis, sizeof(DIDEVICEINSTANCEW) * device_count );
-                didevis[device_count-1] = didevi;
-            }
+            device_count++;
+            didevis = realloc( didevis, sizeof(DIDEVICEINSTANCEW) * device_count );
+            didevis[device_count - 1] = didevi;
         }
-    }
+    } while (SUCCEEDED(hr));
 
     remain = device_count;
     /* Add keyboard and mouse to remaining device count */
