@@ -1867,13 +1867,6 @@ failed:
     return hr;
 }
 
-const struct dinput_device joystick_hid_device =
-{
-    "Wine HID joystick driver",
-    hid_joystick_enum_device,
-    hid_joystick_create_device,
-};
-
 static HRESULT WINAPI hid_joystick_effect_QueryInterface( IDirectInputEffect *iface, REFIID iid, void **out )
 {
     TRACE( "iface %p, iid %s, out %p\n", iface, debugstr_guid( iid ), out );

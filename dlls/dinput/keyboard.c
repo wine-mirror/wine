@@ -204,12 +204,6 @@ HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDir
     return DI_OK;
 }
 
-const struct dinput_device keyboard_device = {
-  "Wine keyboard driver",
-  keyboard_enum_device,
-  keyboard_create_device
-};
-
 static HRESULT keyboard_poll( IDirectInputDevice8W *iface )
 {
     check_dinput_events();

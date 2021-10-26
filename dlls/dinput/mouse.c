@@ -153,12 +153,6 @@ HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirect
     return DI_OK;
 }
 
-const struct dinput_device mouse_device = {
-    "Wine mouse driver",
-    mouse_enum_device,
-    mouse_create_device
-};
-
 /******************************************************************************
  *	SysMouseA (DInput Mouse support)
  */

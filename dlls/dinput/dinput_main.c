@@ -74,13 +74,6 @@ static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8W(IDirectInpu
     return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface);
 }
 
-static const struct dinput_device *dinput_devices[] =
-{
-    &mouse_device,
-    &keyboard_device,
-    &joystick_hid_device,
-};
-
 HINSTANCE DINPUT_instance;
 
 static HWND di_em_win;
@@ -927,10 +920,11 @@ static HRESULT WINAPI JoyConfig8Impl_DeleteType(IDirectInputJoyConfig8 *iface, L
 
 static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPDIJOYCONFIG info, DWORD flags)
 {
+    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     IDirectInputImpl *di = impl_from_IDirectInputJoyConfig8(iface);
+    unsigned int i = 0;
     UINT found = 0;
-    int i, j;
-    HRESULT r;
+    HRESULT hr;
 
     FIXME("(%p)->(%d, %p, 0x%08x): semi-stub!\n", iface, id, info, flags);
 
@@ -941,29 +935,14 @@ static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UI
     X(DIJC_CALLOUT)
 #undef X
 
-    /* Enumerate all joysticks in order */
-    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
+    do
     {
-        if (!dinput_devices[i]->enum_device) continue;
-
-        for (j = 0, r = S_OK; SUCCEEDED(r); j++)
-        {
-            DIDEVICEINSTANCEW dev;
-            dev.dwSize = sizeof(dev);
-            if ((r = dinput_devices[i]->enum_device(DI8DEVCLASS_GAMECTRL, 0, &dev, di->dwVersion, j)) == S_OK)
-            {
-                /* Only take into account the chosen id */
-                if (found == id)
-                {
-                    if (flags & DIJC_GUIDINSTANCE)
-                        info->guidInstance = dev.guidInstance;
-
-                    return DI_OK;
-                }
-                found += 1;
-            }
-        }
-    }
+        hr = hid_joystick_enum_device( DI8DEVCLASS_GAMECTRL, 0, &instance, di->dwVersion, i++ );
+        if (hr != DI_OK) continue;
+        if (flags & DIJC_GUIDINSTANCE) info->guidInstance = instance.guidInstance;
+        /* Only take into account the chosen id */
+        if (found++ == id) return DI_OK;
+    } while (SUCCEEDED(hr));
 
     return DIERR_NOMOREITEMS;
 }
