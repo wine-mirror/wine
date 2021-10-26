@@ -270,58 +270,6 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateW(HINSTANCE hinst, DWORD dwVer
     return DirectInputCreateEx(hinst, dwVersion, &IID_IDirectInput7W, (LPVOID *)ppDI, punkOuter);
 }
 
-static const char *_dump_DIDEVTYPE_value(DWORD dwDevType, DWORD dwVersion)
-{
-    if (dwVersion < 0x0800) {
-        switch (dwDevType) {
-            case 0: return "All devices";
-            case DIDEVTYPE_MOUSE: return "DIDEVTYPE_MOUSE";
-            case DIDEVTYPE_KEYBOARD: return "DIDEVTYPE_KEYBOARD";
-            case DIDEVTYPE_JOYSTICK: return "DIDEVTYPE_JOYSTICK";
-            case DIDEVTYPE_DEVICE: return "DIDEVTYPE_DEVICE";
-            default: return "Unknown";
-        }
-    } else {
-        switch (dwDevType) {
-            case DI8DEVCLASS_ALL: return "All devices";
-            case DI8DEVCLASS_POINTER: return "DI8DEVCLASS_POINTER";
-            case DI8DEVCLASS_KEYBOARD: return "DI8DEVCLASS_KEYBOARD";
-            case DI8DEVCLASS_DEVICE: return "DI8DEVCLASS_DEVICE";
-            case DI8DEVCLASS_GAMECTRL: return "DI8DEVCLASS_GAMECTRL";
-            default: return "Unknown";
-        }
-    }
-}
-
-static void _dump_EnumDevices_dwFlags(DWORD dwFlags)
-{
-    if (TRACE_ON(dinput)) {
-	unsigned int   i;
-	static const struct {
-	    DWORD       mask;
-	    const char  *name;
-	} flags[] = {
-#define FE(x) { x, #x}
-	    FE(DIEDFL_ALLDEVICES),
-	    FE(DIEDFL_ATTACHEDONLY),
-	    FE(DIEDFL_FORCEFEEDBACK),
-	    FE(DIEDFL_INCLUDEALIASES),
-            FE(DIEDFL_INCLUDEPHANTOMS),
-            FE(DIEDFL_INCLUDEHIDDEN)
-#undef FE
-	};
-	TRACE(" flags: ");
-	if (dwFlags == 0) {
-	    TRACE("DIEDFL_ALLDEVICES\n");
-	    return;
-	}
-	for (i = 0; i < ARRAY_SIZE(flags); i++)
-	    if (flags[i].mask & dwFlags)
-		TRACE("%s ",flags[i].name);
-    }
-    TRACE("\n");
-}
-
 static DWORD diactionformat_priorityW(LPDIACTIONFORMATW lpdiaf, DWORD genre)
 {
     int i;
@@ -371,38 +319,35 @@ __ASM_GLOBAL_FUNC( enum_callback_wrapper,
 /******************************************************************************
  *	IDirectInputW_EnumDevices
  */
-static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
-	LPDIRECTINPUT7W iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback,
-	LPVOID pvRef, DWORD dwFlags) 
+static HRESULT WINAPI IDirectInputWImpl_EnumDevices( IDirectInput7W *iface, DWORD type, LPDIENUMDEVICESCALLBACKW callback,
+                                                     void *context, DWORD flags )
 {
-    IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
-    DIDEVICEINSTANCEW devInstance;
-    unsigned int i;
-    int j;
-    HRESULT r;
+    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    IDirectInputImpl *impl = impl_from_IDirectInput7W( iface );
+    unsigned int i, j;
+    HRESULT hr;
 
-    TRACE("(this=%p,0x%04x '%s',%p,%p,0x%04x)\n",
-	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType, This->dwVersion),
-	  lpCallback, pvRef, dwFlags);
-    _dump_EnumDevices_dwFlags(dwFlags);
+    TRACE( "iface %p, type %#x, callback %p, context %p, flags %#x\n", iface, type, callback, context, flags );
 
-    if (!lpCallback ||
-        dwFlags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN) ||
-        (dwDevType > DI8DEVCLASS_GAMECTRL && dwDevType < DI8DEVTYPE_DEVICE) || dwDevType > DI8DEVTYPE_SUPPLEMENTAL)
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    if ((type > DI8DEVCLASS_GAMECTRL && type < DI8DEVTYPE_DEVICE) || type > DI8DEVTYPE_SUPPLEMENTAL)
+        return DIERR_INVALIDPARAM;
+    if (flags & ~(DIEDFL_ATTACHEDONLY|DIEDFL_FORCEFEEDBACK|DIEDFL_INCLUDEALIASES|DIEDFL_INCLUDEPHANTOMS|DIEDFL_INCLUDEHIDDEN))
         return DIERR_INVALIDPARAM;
 
-    if (!This->initialized)
+    if (!impl->initialized)
         return DIERR_NOTINITIALIZED;
 
-    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++) {
+    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
+    {
         if (!dinput_devices[i]->enum_device) continue;
-        for (j = 0, r = S_OK; SUCCEEDED(r); j++) {
-            devInstance.dwSize = sizeof(devInstance);
+        for (j = 0, hr = S_OK; SUCCEEDED(hr); j++)
+        {
             TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
-            r = dinput_devices[i]->enum_device(dwDevType, dwFlags, &devInstance, This->dwVersion, j);
-            if (r == S_OK)
-                if (enum_callback_wrapper(lpCallback, &devInstance, pvRef) == DIENUM_STOP)
-                    return S_OK;
+            hr = dinput_devices[i]->enum_device( type, flags, &instance, impl->dwVersion, j );
+            if (hr != S_OK) continue;
+            if (enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP) return S_OK;
         }
     }
 
