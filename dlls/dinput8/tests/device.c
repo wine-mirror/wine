@@ -1278,7 +1278,7 @@ static void test_mouse_info(void)
     todo_wine
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
-    check_member( caps, expect_caps, "%d", dwButtons );
+    ok( caps.dwButtons == 3 || caps.dwButtons == 5, "got dwButtons %d, expected 3 or 5\n", caps.dwButtons );
     check_member( caps, expect_caps, "%d", dwPOVs );
     check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
     check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
@@ -1384,7 +1384,8 @@ static void test_mouse_info(void)
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
-    ok( res == 8, "got %u expected %u\n", res, 8 );
+    ok( res == 3 + caps.dwButtons, "got %u expected %u\n", res, 3 + caps.dwButtons );
+    check_objects_params.expect_count = 3 + caps.dwButtons;
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
