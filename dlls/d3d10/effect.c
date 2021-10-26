@@ -2354,13 +2354,13 @@ static HRESULT create_variable_buffer(struct d3d10_effect_variable *v)
     ID3D10Device *device = v->effect->device;
     HRESULT hr;
 
-    if (!(v->u.buffer.local_buffer = heap_alloc_zero(v->type->size_unpacked)))
+    if (!(v->u.buffer.local_buffer = heap_alloc_zero(v->data_size)))
     {
         ERR("Failed to allocate local constant buffer memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    buffer_desc.ByteWidth = v->type->size_unpacked;
+    buffer_desc.ByteWidth = v->data_size;
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
@@ -2579,7 +2579,7 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
     TRACE("\tBasetype: %s.\n", debug_d3d10_shader_variable_type(l->type->basetype));
     TRACE("\tTypeclass: %s.\n", debug_d3d10_shader_variable_class(l->type->type_class));
 
-    if (local && l->type->size_unpacked)
+    if (local && l->data_size)
     {
         if (FAILED(hr = create_variable_buffer(l)))
             return hr;
