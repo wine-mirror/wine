@@ -110,22 +110,23 @@ BOOL load_backend(void)
  * Winspool entry point.
  *
  */
-BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD reason, LPVOID lpReserved)
+BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
-  switch (reason)
-  {
-    case DLL_PROCESS_ATTACH: {
-      WINSPOOL_hInstance = hInstance;
-      DisableThreadLibraryCalls(hInstance);
-      WINSPOOL_LoadSystemPrinters();
-      break;
-    }
-    case DLL_PROCESS_DETACH:
-      if (lpReserved) break;
-      DeleteCriticalSection(&backend_cs);
-      FreeLibrary(hlocalspl);
-      break;
-  }
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        WINSPOOL_hInstance = instance;
+        DisableThreadLibraryCalls( instance );
+        UNIX_CALL( process_attach, NULL );
+        WINSPOOL_LoadSystemPrinters();
+        break;
 
-  return TRUE;
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        DeleteCriticalSection(&backend_cs);
+        FreeLibrary(hlocalspl);
+        break;
+    }
+
+    return TRUE;
 }

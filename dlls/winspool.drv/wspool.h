@@ -21,6 +21,7 @@
 
 #include <windef.h>
 #include <winuser.h>
+#include <winternl.h>
 
 extern HINSTANCE WINSPOOL_hInstance DECLSPEC_HIDDEN;
 
@@ -35,3 +36,7 @@ extern void WINSPOOL_LoadSystemPrinters(void) DECLSPEC_HIDDEN;
 
 #define FILENAME_DIALOG  100
 #define EDITBOX 201
+
+#define UNIX_CALL( func, params ) unix_ ## func( params )
+
+NTSTATUS unix_process_attach( void * ) DECLSPEC_HIDDEN;

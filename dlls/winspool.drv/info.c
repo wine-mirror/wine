@@ -967,7 +967,7 @@ static void unlink_ppd( const WCHAR *ppd )
 
 #ifdef SONAME_LIBCUPS
 
-static void *cupshandle;
+extern void *libcups_handle;
 
 #define CUPS_FUNCS \
     DO_FUNC(cupsAddOption); \
@@ -983,13 +983,13 @@ static void *cupshandle;
     DO_FUNC(cupsGetPPD3); \
     DO_FUNC(cupsLastErrorString)
 
-#define DO_FUNC(f) static typeof(f) *p##f
+#define DO_FUNC(f) extern typeof(f) *p##f
 CUPS_FUNCS;
 #undef DO_FUNC
-static cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
-static const char *  (*pcupsGetPPD)(const char *);
-static http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
-static const char *  (*pcupsLastErrorString)(void);
+extern cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
+extern const char *  (*pcupsGetPPD)(const char *);
+extern http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
+extern const char *  (*pcupsLastErrorString)(void);
 
 static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name,
                                           time_t *modtime, char *buffer,
@@ -1072,28 +1072,6 @@ static cups_ptype_t get_cups_printer_type( const cups_dest_t *dest )
     return ret;
 }
 
-static void load_cups(void)
-{
-    cupshandle = dlopen( SONAME_LIBCUPS, RTLD_NOW );
-    if (!cupshandle) return;
-
-    TRACE("%p: %s loaded\n", cupshandle, SONAME_LIBCUPS);
-
-#define DO_FUNC(x) \
-    p##x = dlsym( cupshandle, #x ); \
-    if (!p##x) \
-    { \
-        ERR("failed to load symbol %s\n", #x); \
-        cupshandle = NULL; \
-        return; \
-    }
-    CUPS_FUNCS;
-#undef DO_FUNC
-#define DO_FUNC(x) p##x = dlsym( cupshandle, #x )
-    CUPS_OPT_FUNCS;
-#undef DO_FUNC
-}
-
 static BOOL CUPS_LoadPrinters(void)
 {
     int	                  i, nrofdests;
@@ -1106,7 +1084,7 @@ static BOOL CUPS_LoadPrinters(void)
     HANDLE  added_printer;
     cups_ptype_t printer_type;
 
-    if (!cupshandle) return FALSE;
+    if (!libcups_handle) return FALSE;
 
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
        ERROR_SUCCESS) {
@@ -1806,10 +1784,6 @@ void WINSPOOL_LoadSystemPrinters(void)
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
-
-#ifdef SONAME_LIBCUPS
-    load_cups();
-#endif
 
     /* FIXME: The init code should be moved to spoolsv.exe */
     init_mutex = CreateMutexW( NULL, TRUE, winspool_mutex_name );
