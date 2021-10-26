@@ -1974,8 +1974,10 @@ static void test_get_image_info(void)
 
 static void test_create_texture(void)
 {
+    static const WCHAR test_resource_name[] = L"resource.data";
     static const WCHAR test_filename[] = L"image.data";
     ID3D10Resource *resource;
+    HMODULE resource_module;
     ID3D10Device *device;
     WCHAR path[MAX_PATH];
     unsigned int i;
@@ -2072,6 +2074,53 @@ static void test_create_texture(void)
         }
 
         delete_file(test_filename);
+        winetest_pop_context();
+    }
+
+    /* D3DX10CreateTextureFromResource tests */
+
+    todo_wine
+    {
+    hr = D3DX10CreateTextureFromResourceW(device, NULL, NULL, NULL, NULL, &resource, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromResourceW(device, NULL, L"deadbeef", NULL, NULL, &resource, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromResourceA(device, NULL, NULL, NULL, NULL, &resource, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromResourceA(device, NULL, "deadbeef", NULL, NULL, &resource, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image); ++i)
+    {
+        winetest_push_context("Test %u", i);
+        resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
+
+        hr = D3DX10CreateTextureFromResourceW(device, resource_module,
+                test_resource_name, NULL, NULL, &resource, NULL);
+        todo_wine
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        hr = D3DX10CreateTextureFromResourceA(device, resource_module,
+                get_str_a(test_resource_name), NULL, NULL, &resource, NULL);
+        todo_wine
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        delete_resource_module(test_resource_name, resource_module);
         winetest_pop_context();
     }
 
