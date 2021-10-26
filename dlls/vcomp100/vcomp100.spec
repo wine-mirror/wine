@@ -61,7 +61,7 @@
 @ stub _vcomp_for_dynamic_next_i8
 @ cdecl _vcomp_for_static_end()
 @ cdecl _vcomp_for_static_init(long long long long ptr ptr ptr ptr ptr)
-@ stub _vcomp_for_static_init_i8
+@ cdecl _vcomp_for_static_init_i8(int64 int64 int64 int64 ptr ptr ptr ptr ptr)
 @ cdecl _vcomp_for_static_simple_init(long long long long ptr ptr)
 @ stub _vcomp_for_static_simple_init_i8
 @ varargs _vcomp_fork(long long ptr)
