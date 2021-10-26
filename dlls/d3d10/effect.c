@@ -4522,9 +4522,31 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_SetRawValue(ID3D10EffectV
 static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetRawValue(ID3D10EffectVariable *iface,
         void *data, UINT offset, UINT count)
 {
-    FIXME("iface %p, data %p, offset %u, count %u stub!\n", iface, data, offset, count);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable(iface);
+    BOOL is_buffer;
+    BYTE *src;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %p, offset %u, count %u.\n", iface, data, offset, count);
+
+    if (!iface->lpVtbl->IsValid(iface))
+    {
+        WARN("Invalid variable.\n");
+        return E_FAIL;
+    }
+
+    is_buffer = v->type->basetype == D3D10_SVT_CBUFFER || v->type->basetype == D3D10_SVT_TBUFFER;
+
+    if (v->type->type_class == D3D10_SVC_OBJECT && !is_buffer)
+    {
+        WARN("Not supported on object variables of type %s.\n",
+                debug_d3d10_shader_variable_type(v->type->basetype));
+        return D3DERR_INVALIDCALL;
+    }
+
+    src = is_buffer ? v->u.buffer.local_buffer : v->buffer->u.buffer.local_buffer + v->buffer_offset;
+    memcpy(data, src + offset, count);
+
+    return S_OK;
 }
 
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl =

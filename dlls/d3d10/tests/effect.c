@@ -7535,6 +7535,109 @@ static void test_effect_default_variable_value(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_effect_raw_value(void)
+{
+    ID3D10EffectConstantBuffer *cb;
+    ID3D10EffectVariable *v;
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    unsigned int i;
+    ULONG refcount;
+    int i_v[10];
+    HRESULT hr;
+    float f;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_default_variable_value, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect, hr %#x.\n", hr);
+
+    /* Read 1 float at a time, from float4 vector. */
+    v = effect->lpVtbl->GetVariableByName(effect, "f4");
+    for (i = 0; i < 4; ++i)
+    {
+        hr = v->lpVtbl->GetRawValue(v, &f, sizeof(f) * i, sizeof(f));
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(f == i + 1.0f, "Unexpected value %f.\n", f);
+    }
+    /* Offset outside of variable storage, returns adjacent memory contents. */
+    hr = v->lpVtbl->GetRawValue(v, &f, 16, sizeof(f));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(f == 1.0f, "Unexpected value %f.\n", f);
+    hr = v->lpVtbl->GetRawValue(v, &f, 20, sizeof(f));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(f == 2.0f, "Unexpected value %f.\n", f);
+
+    /* Array */
+    v = effect->lpVtbl->GetVariableByName(effect, "i2");
+    ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+    hr = v->lpVtbl->GetRawValue(v, i_v, 0, 8 * sizeof(float));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(i_v[0] == 9,  "Unexpected value %d.\n", i_v[0]);
+    ok(i_v[1] == 0,  "Unexpected value %d.\n", i_v[1]);
+    ok(i_v[2] == 0,  "Unexpected value %d.\n", i_v[2]);
+    ok(i_v[3] == 0,  "Unexpected value %d.\n", i_v[3]);
+    ok(i_v[4] == 12, "Unexpected value %d.\n", i_v[4]);
+
+    hr = v->lpVtbl->GetRawValue(v, &f, 20, sizeof(f));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(f == 0.2f, "Unexpected value %f.\n", f);
+
+    /* Matrix */
+    v = effect->lpVtbl->GetVariableByName(effect, "m1");
+    hr = v->lpVtbl->GetRawValue(v, i_v, 0, sizeof(i_v));
+    ok(i_v[0] == 1, "Unexpected value %d.\n", i_v[0]);
+    ok(i_v[1] == 4, "Unexpected value %d.\n", i_v[1]);
+    ok(i_v[2] == 0, "Unexpected value %d.\n", i_v[2]);
+    ok(i_v[3] == 0, "Unexpected value %d.\n", i_v[3]);
+    ok(i_v[4] == 2, "Unexpected value %d.\n", i_v[4]);
+    ok(i_v[5] == 5, "Unexpected value %d.\n", i_v[5]);
+    ok(i_v[6] == 0, "Unexpected value %d.\n", i_v[6]);
+    ok(i_v[7] == 0, "Unexpected value %d.\n", i_v[7]);
+    ok(i_v[8] == 3, "Unexpected value %d.\n", i_v[8]);
+    ok(i_v[9] == 6, "Unexpected value %d.\n", i_v[9]);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "m2");
+    hr = v->lpVtbl->GetRawValue(v, i_v, 0, 7 * sizeof(i_v[0]));
+    ok(i_v[0] == 1, "Unexpected value %d.\n", i_v[0]);
+    ok(i_v[1] == 2, "Unexpected value %d.\n", i_v[1]);
+    ok(i_v[2] == 3, "Unexpected value %d.\n", i_v[2]);
+    ok(i_v[3] == 0, "Unexpected value %d.\n", i_v[3]);
+    ok(i_v[4] == 4, "Unexpected value %d.\n", i_v[4]);
+    ok(i_v[5] == 5, "Unexpected value %d.\n", i_v[5]);
+    ok(i_v[6] == 6, "Unexpected value %d.\n", i_v[6]);
+
+    /* Read from constant buffer directly. */
+    cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+
+    for (i = 0; i < 4; ++i)
+    {
+        hr = cb->lpVtbl->GetRawValue(cb, &f, sizeof(f) * i, sizeof(f));
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(f == i + 1.0f, "Unexpected value %f.\n", f);
+    }
+    hr = cb->lpVtbl->GetRawValue(cb, &f, 16, sizeof(f));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(f == 1.0f, "Unexpected value %f.\n", f);
+    hr = cb->lpVtbl->GetRawValue(cb, &f, 20, sizeof(f));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(f == 2.0f, "Unexpected value %f.\n", f);
+
+    /* Invalid variable */
+    v = effect->lpVtbl->GetVariableByName(effect, "invalid");
+    hr = v->lpVtbl->GetRawValue(v, &f, 0, sizeof(f));
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -7557,4 +7660,5 @@ START_TEST(effect)
     test_effect_shader_object();
     test_effect_pool();
     test_effect_default_variable_value();
+    test_effect_raw_value();
 }
