@@ -59,6 +59,10 @@ struct dinput_device {
     HRESULT (*create_device)(IDirectInputImpl *dinput, REFGUID rguid, IDirectInputDevice8W **out);
 };
 
+extern HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index );
+extern HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index );
+extern HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index );
+
 struct DevicePlayer {
     GUID instance_guid;
     WCHAR username[MAX_PATH];

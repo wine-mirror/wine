@@ -324,7 +324,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices( IDirectInput7W *iface, DWOR
 {
     DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     IDirectInputImpl *impl = impl_from_IDirectInput7W( iface );
-    unsigned int i, j;
+    unsigned int i = 0;
     HRESULT hr;
 
     TRACE( "iface %p, type %#x, callback %p, context %p, flags %#x\n", iface, type, callback, context, flags );
@@ -339,19 +339,22 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices( IDirectInput7W *iface, DWOR
     if (!impl->initialized)
         return DIERR_NOTINITIALIZED;
 
-    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
-    {
-        if (!dinput_devices[i]->enum_device) continue;
-        for (j = 0, hr = S_OK; SUCCEEDED(hr); j++)
-        {
-            TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
-            hr = dinput_devices[i]->enum_device( type, flags, &instance, impl->dwVersion, j );
-            if (hr != S_OK) continue;
-            if (enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP) return S_OK;
-        }
-    }
+    hr = mouse_enum_device( type, flags, &instance, impl->dwVersion, 0 );
+    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+        return DI_OK;
+    hr = keyboard_enum_device( type, flags, &instance, impl->dwVersion, 0 );
+    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+        return DI_OK;
 
-    return S_OK;
+    do
+    {
+        hr = hid_joystick_enum_device( type, flags, &instance, impl->dwVersion, i++ );
+        if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+            return DI_OK;
+    }
+    while (SUCCEEDED(hr));
+
+    return DI_OK;
 }
 
 static ULONG WINAPI IDirectInputWImpl_AddRef( IDirectInput7W *iface )

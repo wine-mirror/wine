@@ -144,7 +144,7 @@ static DWORD get_keyboard_subtype(void)
     return dev_subtype;
 }
 
-static HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
+HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
 {
     BYTE subtype = get_keyboard_subtype();
     DWORD size;
