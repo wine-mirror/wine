@@ -2537,16 +2537,37 @@ BOOL WINAPI SymFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG inline_ct
     return ret;
 }
 
+static BOOL get_line_from_inline_context(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, DWORD64 mod_addr, PDWORD disp,
+                                         struct internal_line_t* intl)
+{
+    switch (IFC_MODE(inline_ctx))
+    {
+    case IFC_MODE_INLINE:
+    case IFC_MODE_IGNORE:
+    case IFC_MODE_REGULAR:
+        return get_line_from_addr(hProcess, addr, disp, intl);
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+}
+
 /******************************************************************
  *		SymGetLineFromInlineContext (DBGHELP.@)
  *
  */
 BOOL WINAPI SymGetLineFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, DWORD64 mod_addr, PDWORD disp, PIMAGEHLP_LINE64 line)
 {
-    FIXME("(%p, %#I64x, 0x%x, %#I64x, %p, %p): stub!\n",
+    struct internal_line_t intl;
+
+    TRACE("(%p, %#I64x, 0x%x, %#I64x, %p, %p)\n",
           hProcess, addr, inline_ctx, mod_addr, disp, line);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (line->SizeOfStruct < sizeof(*line)) return FALSE;
+    init_internal_line(&intl, FALSE);
+
+    if (!get_line_from_inline_context(hProcess, addr, inline_ctx, mod_addr, disp, &intl)) return FALSE;
+    return internal_line_copy_toA64(&intl, line);
 }
 
 /******************************************************************
@@ -2555,8 +2576,14 @@ BOOL WINAPI SymGetLineFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inl
  */
 BOOL WINAPI SymGetLineFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, DWORD64 mod_addr, PDWORD disp, PIMAGEHLP_LINEW64 line)
 {
-    FIXME("(%p, %#I64x, 0x%x, %#I64x, %p, %p): stub!\n",
+    struct internal_line_t intl;
+
+    TRACE("(%p, %#I64x, 0x%x, %#I64x, %p, %p)\n",
           hProcess, addr, inline_ctx, mod_addr, disp, line);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (line->SizeOfStruct < sizeof(*line)) return FALSE;
+    init_internal_line(&intl, TRUE);
+
+    if (!get_line_from_inline_context(hProcess, addr, inline_ctx, mod_addr, disp, &intl)) return FALSE;
+    return internal_line_copy_toW64(&intl, line);
 }
