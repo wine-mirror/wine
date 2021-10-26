@@ -111,10 +111,10 @@ BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
 
 BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pval)
 {
-    if (dbg_curr_thread->frames == NULL) return FALSE;
-    if (dbg_curr_thread->frames[dbg_curr_thread->curr_frame].is_ctx_valid)
-        *pval = (DWORD_PTR*)((char*)&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].context +
-                             (DWORD_PTR)div->pval);
+    struct dbg_frame* currfrm = stack_get_curr_frame();
+    if (currfrm == NULL) return FALSE;
+    if (currfrm->is_ctx_valid)
+        *pval = (DWORD_PTR*)((char*)&currfrm->context + (DWORD_PTR)div->pval);
     else
     {
         enum be_cpu_addr        kind;
@@ -125,13 +125,13 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pv
         switch (kind)
         {
         case be_cpu_addr_pc:
-            *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_pc;
+            *pval = &currfrm->linear_pc;
             break;
         case be_cpu_addr_stack:
-            *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_stack;
+            *pval = &currfrm->linear_stack;
             break;
         case be_cpu_addr_frame:
-            *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_frame;
+            *pval = &currfrm->linear_frame;
             break;
         }
     }
@@ -143,7 +143,7 @@ BOOL stack_set_frame(int newframe)
     ADDRESS64   addr;
     if (!stack_set_frame_internal(newframe)) return FALSE;
     addr.Mode = AddrModeFlat;
-    addr.Offset = (DWORD_PTR)memory_to_linear_addr(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
+    addr.Offset = (DWORD_PTR)memory_to_linear_addr(&stack_get_curr_frame()->addr_pc);
     source_list_from_addr(&addr, 0);
     return TRUE;
 }
