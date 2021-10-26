@@ -460,21 +460,6 @@ static HRESULT video_presenter_get_sample_surface(IMFSample *sample, IDirect3DSu
     return hr;
 }
 
-static void scale_rect(RECT *rect, unsigned int width, unsigned int height, const MFVideoNormalizedRect *scale)
-{
-    if (rect->left == 0.0f && rect->top == 0.0f && rect->right == 1.0f && rect->bottom == 1.0f)
-    {
-        SetRect(rect, 0, 0, width, height);
-    }
-    else
-    {
-        rect->left = width * scale->left;
-        rect->right = width * scale->right;
-        rect->top = height * scale->top;
-        rect->bottom = height * scale->bottom;
-    }
-}
-
 static void video_presenter_sample_present(struct video_presenter *presenter, IMFSample *sample)
 {
     IDirect3DSurface9 *surface, *backbuffer;
@@ -503,7 +488,7 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
     IDirect3DDevice9_StretchRect(device, surface, NULL, backbuffer, NULL, D3DTEXF_POINT);
 
     IDirect3DSurface9_GetDesc(surface, &desc);
-    scale_rect(&src, desc.Width, desc.Height, &presenter->src_rect);
+    SetRect(&src, 0, 0, desc.Width, desc.Height);
 
     IDirect3DSurface9_GetDesc(backbuffer, &desc);
     SetRect(&dst, 0, 0, desc.Width, desc.Height);
