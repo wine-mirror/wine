@@ -7321,12 +7321,25 @@ float1 f1 = {1};
 int i = 10;
 int i2[2] = {9,12};
 float f = 0.2f;
+
+struct test
+{
+    bool b1;
+    float f2;
+    bool b2;
+};
+test s1 = { true, -0.2f, false };
+
+matrix <uint, 2, 3> m1 = { 1, 2, 3, 4, 5, 6 };
+row_major matrix <uint, 2, 3> m2 = { 1, 2, 3, 4, 5, 6 };
+row_major matrix <bool, 2, 3> m3 = { true, false, true, false, true, false };
+float2x2 m4 = { 1.0f, 2.0f, 3.0f, 4.0f };
 #endif
 static DWORD fx_test_default_variable_value[] =
 {
-    0x43425844, 0xe57b41f2, 0x98392802, 0xed3d94b4, 0xc4074c4f, 0x00000001, 0x00000248, 0x00000001,
-    0x00000024, 0x30315846, 0x0000021c, 0xfeff1001, 0x00000001, 0x00000006, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000110, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x43425844, 0x3673286d, 0xd7bb3432, 0xb571508a, 0x5d70cc01, 0x00000001, 0x00000448, 0x00000001,
+    0x00000024, 0x30315846, 0x0000041c, 0xfeff1001, 0x00000001, 0x0000000b, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000284, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6f6c4724,
     0x736c6162, 0x6f6c6600, 0x00347461, 0x0000000d, 0x00000001, 0x00000000, 0x00000010, 0x00000010,
     0x00000010, 0x0000210a, 0x00003466, 0x003f8000, 0x00400000, 0x00404000, 0x66408000, 0x74616f6c,
@@ -7336,12 +7349,28 @@ static DWORD fx_test_default_variable_value[] =
     0x04000000, 0x10000000, 0x04000000, 0x11000000, 0x69000009, 0x00000a00, 0x00009b00, 0x00000100,
     0x00000200, 0x00001400, 0x00001000, 0x00000800, 0x00091100, 0x00326900, 0x00000009, 0x0000000c,
     0x616f6c66, 0x00e80074, 0x00010000, 0x00000000, 0x00040000, 0x00100000, 0x00040000, 0x09090000,
-    0x00660000, 0x3e4ccccd, 0x00000004, 0x00000040, 0x00000000, 0x00000006, 0xffffffff, 0x00000000,
-    0x00000030, 0x00000014, 0x00000000, 0x00000000, 0x00000033, 0x00000000, 0x00000000, 0x00000066,
-    0x0000004a, 0x00000000, 0x00000010, 0x00000069, 0x00000000, 0x00000000, 0x00000094, 0x00000078,
-    0x00000000, 0x00000018, 0x00000097, 0x00000000, 0x00000000, 0x000000bb, 0x0000009f, 0x00000000,
-    0x0000001c, 0x000000bd, 0x00000000, 0x00000000, 0x000000dd, 0x000000c1, 0x00000000, 0x00000020,
-    0x000000e0, 0x00000000, 0x00000000, 0x0000010a, 0x000000ee, 0x00000000, 0x00000034, 0x0000010c,
+    0x00660000, 0x3e4ccccd, 0x74736574, 0x00316200, 0x6c6f6f62, 0x00011800, 0x00000100, 0x00000000,
+    0x00000400, 0x00001000, 0x00000400, 0x00092100, 0x00326200, 0x00000110, 0x00000003, 0x00000000,
+    0x0000000c, 0x00000010, 0x0000000c, 0x00000003, 0x00000115, 0x00000000, 0x00000000, 0x0000011d,
+    0x00000066, 0x00000000, 0x00000004, 0x000000ee, 0x00000139, 0x00000000, 0x00000008, 0x0000011d,
+    0x01003173, 0xcd000000, 0x00be4ccc, 0x75000000, 0x32746e69, 0x97003378, 0x01000001, 0x00000000,
+    0x28000000, 0x30000000, 0x18000000, 0x1b000000, 0x6d00005a, 0x00010031, 0x00020000, 0x00030000,
+    0x00040000, 0x00050000, 0x00060000, 0x01970000, 0x00010000, 0x00000000, 0x001c0000, 0x00200000,
+    0x00180000, 0x1a1b0000, 0x326d0000, 0x00000100, 0x00000200, 0x00000300, 0x00000400, 0x00000500,
+    0x00000600, 0x6f6f6200, 0x3378326c, 0x00020d00, 0x00000100, 0x00000000, 0x00001c00, 0x00002000,
+    0x00001800, 0x001a2300, 0x00336d00, 0x00000001, 0x00000000, 0x00000001, 0x00000000, 0x00000001,
+    0x00000000, 0x616f6c66, 0x32783274, 0x00024c00, 0x00000100, 0x00000000, 0x00001800, 0x00002000,
+    0x00001000, 0x00520b00, 0x00346d00, 0x3f800000, 0x40000000, 0x40400000, 0x40800000, 0x00000004,
+    0x000000e0, 0x00000000, 0x0000000b, 0xffffffff, 0x00000000, 0x00000030, 0x00000014, 0x00000000,
+    0x00000000, 0x00000033, 0x00000000, 0x00000000, 0x00000066, 0x0000004a, 0x00000000, 0x00000010,
+    0x00000069, 0x00000000, 0x00000000, 0x00000094, 0x00000078, 0x00000000, 0x00000018, 0x00000097,
+    0x00000000, 0x00000000, 0x000000bb, 0x0000009f, 0x00000000, 0x0000001c, 0x000000bd, 0x00000000,
+    0x00000000, 0x000000dd, 0x000000c1, 0x00000000, 0x00000020, 0x000000e0, 0x00000000, 0x00000000,
+    0x0000010a, 0x000000ee, 0x00000000, 0x00000034, 0x0000010c, 0x00000000, 0x00000000, 0x00000188,
+    0x0000013c, 0x00000000, 0x00000040, 0x0000018b, 0x00000000, 0x00000000, 0x000001bb, 0x0000019f,
+    0x00000000, 0x00000050, 0x000001be, 0x00000000, 0x00000000, 0x000001f2, 0x000001d6, 0x00000000,
+    0x00000080, 0x000001f5, 0x00000000, 0x00000000, 0x00000231, 0x00000215, 0x00000000, 0x000000a0,
+    0x00000234, 0x00000000, 0x00000000, 0x00000271, 0x00000255, 0x00000000, 0x000000c0, 0x00000274,
     0x00000000, 0x00000000,
 };
 
@@ -7350,13 +7379,16 @@ static void test_effect_default_variable_value(void)
     D3D10_EFFECT_VARIABLE_DESC var_desc;
     ID3D10EffectVectorVariable *vector;
     ID3D10EffectScalarVariable *scalar;
-    ID3D10EffectVariable *v, *v2;
+    ID3D10EffectMatrixVariable *matrix;
+    struct d3d10_matrix m_set, m_ret;
+    ID3D10EffectVariable *v, *v2, *m;
     float float_v[4], float_s;
     ID3D10Effect *effect;
     ID3D10Device *device;
     int int_v[2], int_s;
     ULONG refcount;
     HRESULT hr;
+    BOOL ret;
 
     if (!(device = create_device()))
     {
@@ -7430,6 +7462,96 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 todo_wine
     ok(float_s == 0.2f, "Unexpected value %.8e.\n", float_s);
+
+    /* Matrix */
+    v = effect->lpVtbl->GetVariableByName(effect, "m1");
+    matrix = v->lpVtbl->AsMatrix(v);
+    ok(matrix->lpVtbl->IsValid(matrix), "Expected valid matrix.\n");
+    memset(&m_ret, 0, sizeof(m_ret));
+    hr = matrix->lpVtbl->GetMatrix(matrix, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    set_test_matrix(&m_set, D3D10_SVT_INT, 2, 3, 1);
+todo_wine
+{
+    compare_matrix("m1", __LINE__, &m_set, &m_ret, 2, 3, FALSE);
+}
+
+    v = effect->lpVtbl->GetVariableByName(effect, "m2");
+    matrix = v->lpVtbl->AsMatrix(v);
+    ok(matrix->lpVtbl->IsValid(matrix), "Expected valid matrix.\n");
+    memset(&m_ret, 0, sizeof(m_ret));
+    hr = matrix->lpVtbl->GetMatrix(matrix, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    set_test_matrix(&m_set, D3D10_SVT_INT, 2, 3, 1);
+todo_wine
+{
+    compare_matrix("m2", __LINE__, &m_set, &m_ret, 2, 3, FALSE);
+}
+    v = effect->lpVtbl->GetVariableByName(effect, "m3");
+    matrix = v->lpVtbl->AsMatrix(v);
+    ok(matrix->lpVtbl->IsValid(matrix), "Expected valid matrix.\n");
+    memset(&m_ret, 0, sizeof(m_ret));
+    hr = matrix->lpVtbl->GetMatrix(matrix, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&m_set, 0, sizeof(m_set));
+    *(unsigned int *)&m_set.m[0][0] = 1;
+    *(unsigned int *)&m_set.m[0][1] = 0;
+    *(unsigned int *)&m_set.m[0][2] = 1;
+    *(unsigned int *)&m_set.m[1][0] = 0;
+    *(unsigned int *)&m_set.m[1][1] = 1;
+    *(unsigned int *)&m_set.m[1][2] = 0;
+
+todo_wine
+    ok(m_ret.m[0][0] == m_set.m[0][0], "Unexpected value.\n");
+    ok(m_ret.m[0][1] == m_set.m[0][1], "Unexpected value.\n");
+todo_wine
+    ok(m_ret.m[0][2] == m_set.m[0][2], "Unexpected value.\n");
+    ok(m_ret.m[1][0] == m_set.m[1][0], "Unexpected value.\n");
+todo_wine
+    ok(m_ret.m[1][1] == m_set.m[1][1], "Unexpected value.\n");
+    ok(m_ret.m[1][2] == m_set.m[1][2], "Unexpected value.\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "m4");
+    matrix = v->lpVtbl->AsMatrix(v);
+    ok(matrix->lpVtbl->IsValid(matrix), "Expected valid matrix.\n");
+    memset(&m_ret, 0, sizeof(m_ret));
+    hr = matrix->lpVtbl->GetMatrix(matrix, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    set_test_matrix(&m_set, D3D10_SVT_FLOAT, 2, 2, 1);
+todo_wine
+{
+    compare_matrix("m4", __LINE__, &m_set, &m_ret, 2, 2, FALSE);
+}
+    /* Struct */
+    v = effect->lpVtbl->GetVariableByName(effect, "s1");
+    ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+
+    m = v->lpVtbl->GetMemberByName(v, "b1");
+    ok(m->lpVtbl->IsValid(m), "Expected valid variable.\n");
+    scalar = m->lpVtbl->AsScalar(m);
+    hr = scalar->lpVtbl->GetBool(scalar, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(ret == 1, "Unexpected value.\n");
+
+    m = v->lpVtbl->GetMemberByName(v, "f2");
+    ok(m->lpVtbl->IsValid(m), "Expected valid variable.\n");
+    scalar = m->lpVtbl->AsScalar(m);
+    hr = scalar->lpVtbl->GetFloat(scalar, &float_s);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(float_s == -0.2f, "Unexpected value %f.\n", float_s);
+
+    m = v->lpVtbl->GetMemberByName(v, "b2");
+    ok(m->lpVtbl->IsValid(m), "Expected valid variable.\n");
+    scalar = m->lpVtbl->AsScalar(m);
+    hr = scalar->lpVtbl->GetBool(scalar, &ret);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!ret, "Unexpected value.\n");
 
     effect->lpVtbl->Release(effect);
 
