@@ -64,6 +64,26 @@ void stack_info(int len)
     }
 }
 
+static BOOL stack_set_local_scope(void)
+{
+    struct dbg_frame* frm = stack_get_thread_frame(dbg_curr_thread, dbg_curr_thread->curr_frame);
+
+    if (!frm) return FALSE;
+    /* if we're not the first frame, linear_pc is the return address
+     * after the call instruction (at least on most processors I know of).
+     * However, there are cases where this address is outside of the
+     * current function or inline site.
+     * This happens when the called function is marked <NO RETURN>, in which
+     * case the compiler can omit the epilog (gcc 4 does it).
+     * This happens also for inline sites, where the epilog (of the inline
+     * site) isn't present.
+     * Therefore, we decrement linear_pc in order to ensure that
+     * the considered address is really inside the current function or inline site.
+     */
+    return SymSetScopeFromAddr(dbg_curr_process->handle,
+                               (dbg_curr_thread->curr_frame) ? frm->linear_pc - 1 : frm->linear_pc);
+}
+
 static BOOL stack_set_frame_internal(int newframe)
 {
     if (newframe >= dbg_curr_thread->num_frames)
@@ -73,40 +93,10 @@ static BOOL stack_set_frame_internal(int newframe)
 
     if (dbg_curr_thread->curr_frame != newframe)
     {
-        IMAGEHLP_STACK_FRAME    ihsf;
-
         dbg_curr_thread->curr_frame = newframe;
-        stack_get_current_frame(&ihsf);
-        SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
+        stack_set_local_scope();
     }
     return TRUE;
-}
-
-static BOOL stack_get_frame(int nf, IMAGEHLP_STACK_FRAME* ihsf)
-{
-    memset(ihsf, 0, sizeof(*ihsf));
-    ihsf->InstructionOffset = dbg_curr_thread->frames[nf].linear_pc;
-    /* if we're not the first frame, InstructionOffset is the return address
-     * after the call instruction (at least on most processors I know of).
-     * However, there are cases where this address is outside of the current function.
-     * This happens when the called function is marked <NO RETURN>, in which
-     * case the compiler can omit the epilog (gcc 4 does it)
-     * Therefore, we decrement InstructionOffset in order to ensure that
-     * the considered address is really inside the current function.
-     */
-    if (nf) ihsf->InstructionOffset--;
-    ihsf->FrameOffset = dbg_curr_thread->frames[nf].linear_frame;
-    ihsf->StackOffset = dbg_curr_thread->frames[nf].linear_stack;
-    return TRUE;
-}
-
-BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
-{
-    /*
-     * If we don't have a valid backtrace, then just return.
-     */
-    if (dbg_curr_thread->frames == NULL) return FALSE;
-    return stack_get_frame(dbg_curr_thread->curr_frame, ihsf);
 }
 
 BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pval)
@@ -155,12 +145,11 @@ BOOL stack_set_frame(int newframe)
  */
 BOOL stack_get_current_symbol(SYMBOL_INFO* symbol)
 {
-    IMAGEHLP_STACK_FRAME        ihsf;
     DWORD64                     disp;
+    struct dbg_frame*           frm = stack_get_curr_frame();
 
-    if (!stack_get_current_frame(&ihsf)) return FALSE;
-    return SymFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset,
-                       &disp, symbol);
+    if (frm == NULL) return FALSE;
+    return SymFromAddr(dbg_curr_process->handle, frm->linear_pc, &disp, symbol);
 }
 
 static BOOL CALLBACK stack_read_mem(HANDLE hProc, DWORD64 addr, 
@@ -260,27 +249,26 @@ static BOOL WINAPI sym_enum_cb(PSYMBOL_INFO sym_info, ULONG size, PVOID user)
     return TRUE;
 }
 
-static void stack_print_addr_and_args(int nf)
+static void stack_print_addr_and_args(void)
 {
     char                        buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*                si = (SYMBOL_INFO*)buffer;
-    IMAGEHLP_STACK_FRAME        ihsf;
     IMAGEHLP_LINE64             il;
     IMAGEHLP_MODULE             im;
     DWORD64                     disp64;
+    struct dbg_frame*           frm = stack_get_curr_frame();
 
-    print_bare_address(&dbg_curr_thread->frames[nf].addr_pc);
-
-    stack_get_frame(nf, &ihsf);
+    if (!frm) return;
+    print_bare_address(&frm->addr_pc);
 
     /* grab module where symbol is. If we don't have a module, we cannot print more */
     im.SizeOfStruct = sizeof(im);
-    if (!SymGetModuleInfo(dbg_curr_process->handle, ihsf.InstructionOffset, &im))
+    if (!SymGetModuleInfo(dbg_curr_process->handle, frm->linear_pc, &im))
         return;
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (SymFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset, &disp64, si))
+    if (SymFromAddr(dbg_curr_process->handle, frm->linear_pc, &disp64, si))
     {
         struct sym_enum se;
         DWORD           disp;
@@ -288,21 +276,19 @@ static void stack_print_addr_and_args(int nf)
         dbg_printf(" %s", si->Name);
         if (disp64) dbg_printf("+0x%I64x", disp64);
 
-        SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
+        stack_set_local_scope();
         se.first = TRUE;
-        se.frame = ihsf.FrameOffset;
+        se.frame = frm->linear_frame;
         dbg_printf("(");
         SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &se);
         dbg_printf(")");
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr64(dbg_curr_process->handle,
-				 ihsf.InstructionOffset, &disp, &il))
+        if (SymGetLineFromAddr64(dbg_curr_process->handle, frm->linear_pc, &disp, &il))
             dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }
-    else dbg_printf(" in %s (+0x%I64x)",
-                    im.ModuleName, ihsf.InstructionOffset - im.BaseOfImage);
+    else dbg_printf(" in %s (+0x%Ix)", im.ModuleName, frm->linear_pc - im.BaseOfImage);
 }
 
 /******************************************************************
@@ -313,7 +299,6 @@ static void stack_print_addr_and_args(int nf)
 static void backtrace(void)
 {
     unsigned                    cf = dbg_curr_thread->curr_frame;
-    IMAGEHLP_STACK_FRAME        ihsf;
 
     dbg_printf("Backtrace:\n");
     for (dbg_curr_thread->curr_frame = 0;
@@ -323,7 +308,7 @@ static void backtrace(void)
         dbg_printf("%s%d ", 
                    (cf == dbg_curr_thread->curr_frame ? "=>" : "  "),
                    dbg_curr_thread->curr_frame);
-        stack_print_addr_and_args(dbg_curr_thread->curr_frame);
+        stack_print_addr_and_args();
         dbg_printf(" (");
         print_bare_address(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_frame);
         dbg_printf(")\n");
@@ -331,8 +316,7 @@ static void backtrace(void)
     /* reset context to current stack frame */
     dbg_curr_thread->curr_frame = cf;
     if (!dbg_curr_thread->frames) return;
-    stack_get_frame(dbg_curr_thread->curr_frame, &ihsf);
-    SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
+    stack_set_local_scope();
 }
 
 /******************************************************************

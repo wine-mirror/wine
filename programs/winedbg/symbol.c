@@ -366,7 +366,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     int		                i;
     char                        buffer[512];
     BOOL                        opt;
-    IMAGEHLP_STACK_FRAME        ihsf;
+    struct dbg_frame*           frm;
 
     if (strlen(name) + 4 > sizeof(buffer))
     {
@@ -421,9 +421,9 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
     /* now grab local symbols */
-    if (stack_get_current_frame(&ihsf) && sgv.num < NUMDBGV)
+    if ((frm = stack_get_curr_frame()) && sgv.num < NUMDBGV)
     {
-        sgv.frame_offset = ihsf.FrameOffset;
+        sgv.frame_offset = frm->linear_frame;
         SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
     }
 
@@ -491,16 +491,16 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
 BOOL symbol_is_local(const char* name)
 {
     struct sgv_data             sgv;
-    IMAGEHLP_STACK_FRAME        ihsf;
+    struct dbg_frame*           frm;
 
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = name;
     sgv.do_thunks  = FALSE;
 
-    if (stack_get_current_frame(&ihsf))
+    if ((frm = stack_get_curr_frame()))
     {
-        sgv.frame_offset = ihsf.FrameOffset;
+        sgv.frame_offset = frm->linear_frame;
         SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
     }
     return sgv.num > 0;
@@ -748,15 +748,16 @@ static BOOL CALLBACK info_locals_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
 
 BOOL symbol_info_locals(void)
 {
-    IMAGEHLP_STACK_FRAME        ihsf;
     ADDRESS64                   addr;
+    struct dbg_frame*           frm;
 
-    stack_get_current_frame(&ihsf);
+    if (!(frm = stack_get_curr_frame())) return FALSE;
+
     addr.Mode = AddrModeFlat;
-    addr.Offset = ihsf.InstructionOffset;
+    addr.Offset = frm->linear_pc;
     print_address(&addr, FALSE);
-    dbg_printf(": (%0*lx)\n", ADDRWIDTH, (DWORD_PTR)ihsf.FrameOffset);
-    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, (void*)(DWORD_PTR)ihsf.FrameOffset);
+    dbg_printf(": (%0*lx)\n", ADDRWIDTH, (DWORD_PTR)frm->linear_frame);
+    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, (void*)frm->linear_frame);
 
     return TRUE;
 

@@ -386,7 +386,6 @@ extern void             source_free_files(struct dbg_process* p);
 extern void             stack_info(int len);
 extern void             stack_backtrace(DWORD threadID);
 extern BOOL             stack_set_frame(int newframe);
-extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
 extern BOOL             stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pval);
 extern unsigned         stack_fetch_frames(const dbg_ctx_t *ctx);
 extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
