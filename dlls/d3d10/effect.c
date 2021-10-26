@@ -8551,6 +8551,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
     if (FAILED(hr = d3d10_create_effect(data, data_size, device, pool, 0, &object)))
     {
         WARN("Failed to create an effect, hr %#x.\n", hr);
+        return hr;
     }
 
     *effect = &object->ID3D10Effect_iface;
