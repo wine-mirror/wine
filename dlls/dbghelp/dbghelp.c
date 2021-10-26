@@ -607,34 +607,27 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
                           PIMAGEHLP_CONTEXT Context)
 {
     struct process* pcs;
-    struct module_pair pair;
-    struct symt_ht* sym;
+    BOOL same;
 
-    pair.pcs = pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+    same = pcs->ctx_frame.ReturnOffset == StackFrame->ReturnOffset &&
+           pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
+           pcs->ctx_frame.StackOffset  == StackFrame->StackOffset;
 
-    pair.requested = module_find_by_addr(pair.pcs, StackFrame->InstructionOffset, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!SymSetScopeFromAddr(hProcess, StackFrame->InstructionOffset))
         return FALSE;
-    if ((sym = symt_find_nearest(pair.effective, StackFrame->InstructionOffset)) == NULL) return FALSE;
-    if (sym->symt.tag != SymTagFunction) return FALSE;
-    pcs->localscope_pc = StackFrame->InstructionOffset;
-    pcs->localscope_symt = &sym->symt;
 
-    if (pcs->ctx_frame.ReturnOffset == StackFrame->ReturnOffset &&
-        pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
-        pcs->ctx_frame.StackOffset  == StackFrame->StackOffset)
+    pcs->ctx_frame = *StackFrame;
+    if (same)
     {
         TRACE("Setting same frame {rtn=%I64x frm=%I64x stk=%I64x}\n",
               pcs->ctx_frame.ReturnOffset,
               pcs->ctx_frame.FrameOffset,
               pcs->ctx_frame.StackOffset);
-        pcs->ctx_frame.InstructionOffset = StackFrame->InstructionOffset;
         SetLastError(ERROR_SUCCESS);
         return FALSE;
     }
 
-    pcs->ctx_frame = *StackFrame;
     /* Context is not (no longer?) used */
     return TRUE;
 }
