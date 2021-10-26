@@ -62,9 +62,9 @@ int want_nl = 0;		/* Request next newlinw */
 int want_line = 0;		/* Request next complete line */
 int want_file = 0;		/* Request next ident as filename */
 
-node_t *nodehead = NULL;	/* The list of all parsed elements */
-static node_t *nodetail = NULL;
-lan_blk_t *lanblockhead;	/* List of parsed elements transposed */
+struct node *nodehead = NULL;	/* The list of all parsed elements */
+static struct node *nodetail;
+struct lan_blk *lanblockhead;	/* List of parsed elements transposed */
 
 static int base = 16;		/* Current printout base to use (8, 10 or 16) */
 static WCHAR *cast = NULL;	/* Current typecast to use */
@@ -77,31 +77,31 @@ static int have_sev;		/* Set if severity parsed for current message */
 static int have_fac;		/* Set if facility parsed for current message */
 static int have_sym;		/* Set is symbol parsed for current message */
 
-static cp_xlat_t *cpxlattab = NULL;	/* Codepage translation table */
+static struct cp_xlat *cpxlattab = NULL;	/* Codepage translation table */
 static int ncpxlattab = 0;
 
 /* Prototypes */
 static WCHAR *merge(WCHAR *s1, WCHAR *s2);
-static lanmsg_t *new_lanmsg(lan_cp_t *lcp, WCHAR *msg);
-static msg_t *add_lanmsg(msg_t *msg, lanmsg_t *lanmsg);
-static msg_t *complete_msg(msg_t *msg, int id);
-static void add_node(node_e type, void *p);
-static void do_add_token(tok_e type, token_t *tok, const char *code);
+static struct lanmsg *new_lanmsg(struct lan_cp *lcp, WCHAR *msg);
+static struct msg *add_lanmsg(struct msg *msg, struct lanmsg *lanmsg);
+static struct msg *complete_msg(struct msg *msg, int id);
+static void add_node(enum node_type type, void *p);
+static void do_add_token(enum tok_enum type, struct token *tok, const char *code);
 static void test_id(int id);
-static int check_languages(node_t *head);
-static lan_blk_t *block_messages(node_t *head);
+static int check_languages(struct node *head);
+static struct lan_blk *block_messages(struct node *head);
 static void add_cpxlat(int lan, int cpin, int cpout);
-static cp_xlat_t *find_cpxlat(int lan);
+static struct cp_xlat *find_cpxlat(int lan);
 
 %}
 
 %union {
 	WCHAR		*str;
 	unsigned	num;
-	token_t		*tok;
-	lanmsg_t	*lmp;
-	msg_t		*msg;
-	lan_cp_t	lcp;
+	struct token	*tok;
+	struct lanmsg	*lmp;
+	struct msg	*msg;
+	struct lan_cp	lcp;
 }
 
 
@@ -306,7 +306,7 @@ sym	: tSYMNAME '=' tIDENT	{ last_sym = $3; }
 	;
 
 sev	: tSEVERITY '=' token	{
-		token_t *tok = lookup_token($3->name);
+		struct token *tok = lookup_token($3->name);
 		if(!tok)
 			xyyerror("Undefined severityname\n");
 		if(tok->type != tok_severity)
@@ -318,7 +318,7 @@ sev	: tSEVERITY '=' token	{
 	;
 
 fac	: tFACILITY '=' token	{
-		token_t *tok = lookup_token($3->name);
+		struct token *tok = lookup_token($3->name);
 		if(!tok)
 			xyyerror("Undefined facilityname\n");
 		if(tok->type != tok_facility)
@@ -346,8 +346,8 @@ body	: lang setline lines tMSGEND	{ $$ = new_lanmsg(&$1, $3); }
 	 * message to be parsed.
 	 */
 lang	: tLANGUAGE setnl '=' token tNL	{
-		token_t *tok = lookup_token($4->name);
-		cp_xlat_t *cpx;
+		struct token *tok = lookup_token($4->name);
+		struct cp_xlat *cpx;
 		if(!tok)
 			xyyerror("Undefined language\n");
 		if(tok->type != tok_language)
@@ -358,7 +358,7 @@ lang	: tLANGUAGE setnl '=' token tNL	{
 		}
 		else if(!tok->codepage)
 		{
-			const language_t *lan = find_language(tok->token);
+			const struct language *lan = find_language(tok->token);
 			if(!lan)
 			{
 				/* Just set default; warning was given while parsing languagenames */
@@ -388,7 +388,7 @@ lines	: tLINE		{ $$ = $1; }
 /*----------------------------------------------------------------------
  * Helper rules
  */
-token	: tIDENT	{ $$ = xmalloc(sizeof(token_t)); memset($$,0,sizeof(*$$)); $$->name = $1; }
+token	: tIDENT	{ $$ = xmalloc(sizeof(struct token)); memset($$,0,sizeof(*$$)); $$->name = $1; }
 	| tTOKEN	{ $$ = $1; }
 	;
 
@@ -413,9 +413,9 @@ static WCHAR *merge(WCHAR *s1, WCHAR *s2)
 	return s1;
 }
 
-static void do_add_token(tok_e type, token_t *tok, const char *code)
+static void do_add_token(enum tok_enum type, struct token *tok, const char *code)
 {
-	token_t *tp = lookup_token(tok->name);
+	struct token *tp = lookup_token(tok->name);
 	if(tp)
 	{
 		if(tok->type != type)
@@ -434,9 +434,9 @@ static void do_add_token(tok_e type, token_t *tok, const char *code)
 	}
 }
 
-static lanmsg_t *new_lanmsg(lan_cp_t *lcp, WCHAR *msg)
+static struct lanmsg *new_lanmsg(struct lan_cp *lcp, WCHAR *msg)
 {
-	lanmsg_t *lmp = xmalloc(sizeof(lanmsg_t));
+	struct lanmsg *lmp = xmalloc(sizeof(*lmp));
 	lmp->lan = lcp->language;
 	lmp->cp  = lcp->codepage;
 	lmp->msg = msg;
@@ -448,12 +448,12 @@ static lanmsg_t *new_lanmsg(lan_cp_t *lcp, WCHAR *msg)
 	return lmp;
 }
 
-static msg_t *add_lanmsg(msg_t *msg, lanmsg_t *lanmsg)
+static struct msg *add_lanmsg(struct msg *msg, struct lanmsg *lanmsg)
 {
 	int i;
 	if(!msg)
 	{
-		msg = xmalloc(sizeof(msg_t));
+		msg = xmalloc(sizeof(*msg));
 		memset( msg, 0, sizeof(*msg) );
 	}
 	msg->msgs = xrealloc(msg->msgs, (msg->nmsgs+1) * sizeof(*(msg->msgs)));
@@ -469,10 +469,10 @@ static msg_t *add_lanmsg(msg_t *msg, lanmsg_t *lanmsg)
 
 static int sort_lanmsg(const void *p1, const void *p2)
 {
-	return (*(const lanmsg_t * const *)p1)->lan - (*(const lanmsg_t * const*)p2)->lan;
+	return (*(const struct lanmsg * const *)p1)->lan - (*(const struct lanmsg * const*)p2)->lan;
 }
 
-static msg_t *complete_msg(msg_t *mp, int id)
+static struct msg *complete_msg(struct msg *mp, int id)
 {
 	assert(mp != NULL);
 	mp->id = id;
@@ -491,9 +491,9 @@ static msg_t *complete_msg(msg_t *mp, int id)
 	return mp;
 }
 
-static void add_node(node_e type, void *p)
+static void add_node(enum node_type type, void *p)
 {
-	node_t *ndp = xmalloc(sizeof(node_t));
+	struct node *ndp = xmalloc(sizeof(*ndp));
 	memset( ndp, 0, sizeof(*ndp) );
 	ndp->type = type;
 	ndp->u.all = p;
@@ -512,7 +512,7 @@ static void add_node(node_e type, void *p)
 
 static void test_id(int id)
 {
-	node_t *ndp;
+	struct node *ndp;
 	for(ndp = nodehead; ndp; ndp = ndp->next)
 	{
 		if(ndp->type != nd_msg)
@@ -522,12 +522,12 @@ static void test_id(int id)
 	}
 }
 
-static int check_languages(node_t *head)
+static int check_languages(struct node *head)
 {
 	static const char err_missing[] = "Missing definition for language 0x%x; MessageID %d, facility 0x%x, severity 0x%x\n";
-	node_t *ndp;
+	struct node *ndp;
 	int nm = 0;
-	msg_t *msg = NULL;
+	struct msg *msg = NULL;
 
 	for(ndp = head; ndp; ndp = ndp->next)
 	{
@@ -540,8 +540,8 @@ static int check_languages(node_t *head)
 		else
 		{
 			int i;
-			msg_t *m1;
-			msg_t *m2;
+			struct msg *m1;
+			struct msg *m2;
 			if(ndp->u.msg->nmsgs > msg->nmsgs)
 			{
 				m1 = ndp->u.msg;
@@ -568,11 +568,10 @@ static int check_languages(node_t *head)
 	return nm;
 }
 
-#define MSGRID(x)	((*(const msg_t * const*)(x))->realid)
+#define MSGRID(x)	((*(const struct msg * const*)(x))->realid)
 static int sort_msg(const void *p1, const void *p2)
 {
 	return MSGRID(p1) > MSGRID(p2) ? 1 : (MSGRID(p1) == MSGRID(p2) ? 0 : -1);
-	/* return (*(msg_t **)p1)->realid - (*(msg_t **)p1)->realid; */
 }
 
 /*
@@ -580,13 +579,13 @@ static int sort_msg(const void *p1, const void *p2)
  * from ID/language based list to a language/ID
  * based list.
  */
-static lan_blk_t *block_messages(node_t *head)
+static struct lan_blk *block_messages(struct node *head)
 {
-	lan_blk_t *lbp;
-	lan_blk_t *lblktail = NULL;
-	lan_blk_t *lblkhead = NULL;
-	msg_t **msgtab = NULL;
-	node_t *ndp;
+	struct lan_blk *lbp;
+	struct lan_blk *lblktail = NULL;
+	struct lan_blk *lblkhead = NULL;
+	struct msg **msgtab = NULL;
+	struct node *ndp;
 	int nmsg = 0;
 	int i;
 	int nl;
@@ -605,7 +604,7 @@ static lan_blk_t *block_messages(node_t *head)
 
 	for(nl = 0; nl < msgtab[0]->nmsgs; nl++)	/* This should be equal for all after check_languages() */
 	{
-		lbp = xmalloc(sizeof(lan_blk_t));
+		lbp = xmalloc(sizeof(*lbp));
 		memset( lbp, 0, sizeof(*lbp) );
 		if(!lblktail)
 		{
@@ -630,7 +629,7 @@ static lan_blk_t *block_messages(node_t *head)
 
 		for(i = 1; i < nmsg; i++)
 		{
-			block_t *blk = &(lbp->blks[lbp->nblk-1]);
+			struct block *blk = &(lbp->blks[lbp->nblk-1]);
 			if(msgtab[i]->realid == blk->idhi+1)
 			{
 				blk->size += ((factor * msgtab[i]->msgs[nl]->len + 3) & ~3) + 4;
@@ -658,7 +657,7 @@ static lan_blk_t *block_messages(node_t *head)
 
 static int sc_xlat(const void *p1, const void *p2)
 {
-	return ((const cp_xlat_t *)p1)->lan - ((const cp_xlat_t *)p2)->lan;
+	return ((const struct cp_xlat *)p1)->lan - ((const struct cp_xlat *)p2)->lan;
 }
 
 static void add_cpxlat(int lan, int cpin, int cpout)
@@ -671,12 +670,12 @@ static void add_cpxlat(int lan, int cpin, int cpout)
 	qsort(cpxlattab, ncpxlattab, sizeof(*cpxlattab), sc_xlat);
 }
 
-static cp_xlat_t *find_cpxlat(int lan)
+static struct cp_xlat *find_cpxlat(int lan)
 {
-	cp_xlat_t t;
+	struct cp_xlat t;
 
 	if(!cpxlattab) return NULL;
 
 	t.lan = lan;
-	return (cp_xlat_t *)bsearch(&t, cpxlattab, ncpxlattab, sizeof(*cpxlattab), sc_xlat);
+	return (struct cp_xlat *)bsearch(&t, cpxlattab, ncpxlattab, sizeof(*cpxlattab), sc_xlat);
 }

@@ -31,7 +31,7 @@
  *
  * MUST be sorting ascending on language ID
  */
-static const language_t languages[] = {
+static const struct language languages[] = {
 
 	{0x0000, 437, "Neutral", NULL},
 	{0x0002, 866, "Bulgarian", NULL},
@@ -177,11 +177,11 @@ void show_languages(void)
 
 static int langcmp(const void *p1, const void *p2)
 {
-	return *(const unsigned *)p1 - ((const language_t *)p2)->id;
+	return *(const unsigned *)p1 - ((const struct language *)p2)->id;
 }
 
-const language_t *find_language(unsigned id)
+const struct language *find_language(unsigned id)
 {
-	return (const language_t *)bsearch(&id, languages, ARRAY_SIZE(languages),
+	return (const struct language *)bsearch(&id, languages, ARRAY_SIZE(languages),
 		sizeof(languages[0]), langcmp);
 }

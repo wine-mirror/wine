@@ -150,11 +150,11 @@ static int killcomment(char *s)
 
 void write_h_file(const char *fname)
 {
-	node_t *ndp;
+	struct node *ndp;
 	char *cptr;
 	char *cast;
 	FILE *fp;
-	token_t *ttab;
+	struct token *ttab;
 	int ntab;
 	int i;
 	int once = 0;
@@ -278,8 +278,8 @@ void write_h_file(const char *fname)
 
 static void write_rcbin(FILE *fp)
 {
-	lan_blk_t *lbp;
-	token_t *ttab;
+	struct lan_blk *lbp;
+	struct token *ttab;
 	int ntab;
 	int i;
 
@@ -370,7 +370,7 @@ static char *make_string(WCHAR *uc, int len)
 
 static void write_rcinline(FILE *fp)
 {
-	lan_blk_t *lbp;
+	struct lan_blk *lbp;
 	int i;
 	int j;
 
@@ -391,7 +391,7 @@ static void write_rcinline(FILE *fp)
 		}
 		for(i = 0; i < lbp->nblk; i++)
 		{
-			block_t *blk = &lbp->blks[i];
+			struct block *blk = &lbp->blks[i];
 			for(j = 0; j < blk->nmsg; j++)
 			{
 				char *cptr;
@@ -426,7 +426,7 @@ void write_rc_file(const char *fname)
 	fclose(fp);
 }
 
-static void output_bin_data( lan_blk_t *lbp )
+static void output_bin_data( struct lan_blk *lbp )
 {
     unsigned int offs = 4 * (lbp->nblk * 3 + 1);
     int i, j, k;
@@ -441,7 +441,7 @@ static void output_bin_data( lan_blk_t *lbp )
     }
     for (i = 0; i < lbp->nblk; i++)
     {
-        block_t *blk = &lbp->blks[i];
+        struct block *blk = &lbp->blks[i];
         for (j = 0; j < blk->nmsg; j++)
         {
             int len = (2 * blk->msgs[j]->len + 3) & ~3;
@@ -455,8 +455,8 @@ static void output_bin_data( lan_blk_t *lbp )
 
 void write_bin_files(void)
 {
-    lan_blk_t *lbp;
-    token_t *ttab;
+    struct lan_blk *lbp;
+    struct token *ttab;
     int ntab;
     int i;
 
@@ -487,7 +487,7 @@ void write_bin_files(void)
 
 void write_res_file( const char *name )
 {
-    lan_blk_t *lbp;
+    struct lan_blk *lbp;
     int i, j;
 
     init_output_buffer();
@@ -511,7 +511,7 @@ void write_res_file( const char *name )
 
         for (i = 0; i < lbp->nblk; i++)
         {
-            block_t *blk = &lbp->blks[i];
+            struct block *blk = &lbp->blks[i];
             for (j = 0; j < blk->nmsg; j++) data_size += 4 + ((blk->msgs[j]->len * 2 + 3) & ~3);
         }
 

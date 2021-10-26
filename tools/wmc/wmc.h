@@ -60,15 +60,15 @@ extern int mcy_debug;
 extern int want_nl;
 extern int want_line;
 extern int want_file;
-extern node_t *nodehead;
-extern lan_blk_t *lanblockhead;
+extern struct node *nodehead;
+extern struct lan_blk *lanblockhead;
 
 int mcy_lex(void);
 extern FILE *yyin;
 void set_codepage(int cp);
 
-void add_token(tok_e type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix);
-token_t *lookup_token(const WCHAR *s);
-void get_tokentable(token_t **tab, int *len);
+void add_token(enum tok_enum type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix);
+struct token *lookup_token(const WCHAR *s);
+void get_tokentable(struct token **tab, int *len);
 
 #endif

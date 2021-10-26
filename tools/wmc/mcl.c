@@ -486,21 +486,21 @@ static void newline(void)
 
 static int unisort(const void *p1, const void *p2)
 {
-	return unistricmp(((const token_t *)p1)->name, ((const token_t *)p2)->name);
+	return unistricmp(((const struct token *)p1)->name, ((const struct token *)p2)->name);
 }
 
-static token_t *tokentable = NULL;
+static struct token *tokentable = NULL;
 static int ntokentable = 0;
 
-token_t *lookup_token(const WCHAR *s)
+struct token *lookup_token(const WCHAR *s)
 {
-	token_t tok;
+	struct token tok;
 
 	tok.name = s;
-	return (token_t *)bsearch(&tok, tokentable, ntokentable, sizeof(*tokentable), unisort);
+	return (struct token *)bsearch(&tok, tokentable, ntokentable, sizeof(*tokentable), unisort);
 }
 
-void add_token(tok_e type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix)
+void add_token(enum tok_enum type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix)
 {
 	ntokentable++;
 	tokentable = xrealloc(tokentable, ntokentable * sizeof(*tokentable));
@@ -513,7 +513,7 @@ void add_token(tok_e type, const WCHAR *name, int tok, int cp, const WCHAR *alia
 	qsort(tokentable, ntokentable, sizeof(*tokentable), unisort);
 }
 
-void get_tokentable(token_t **tab, int *len)
+void get_tokentable(struct token **tab, int *len)
 {
 	assert(tab != NULL);
 	assert(len != NULL);
@@ -624,7 +624,7 @@ int mcy_lex(void)
 
 			if(char_table[ch] & CH_IDENT)
 			{
-				token_t *tok;
+				struct token *tok;
 				while(isisochar(ch) && (char_table[ch] & (CH_IDENT|CH_NUMBER)))
 				{
 					push_unichar(ch);

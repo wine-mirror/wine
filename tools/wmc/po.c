@@ -46,7 +46,7 @@ struct mo_file
     /* ... rest of file data here */
 };
 
-static lan_blk_t *new_top, *new_tail;
+static struct lan_blk *new_top, *new_tail;
 
 static const struct
 {
@@ -365,7 +365,7 @@ static BOOL is_english( int lan )
     return lan == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
 }
 
-static char *convert_msgid_ascii( const lanmsg_t *msg, int error_on_invalid_char )
+static char *convert_msgid_ascii( const struct lanmsg *msg, int error_on_invalid_char )
 {
     int i;
     char *buffer = xmalloc( msg->len * 4 + 1 );
@@ -445,7 +445,7 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
-static void add_po_string( po_file_t po, const lanmsg_t *msgid, const lanmsg_t *msgstr )
+static void add_po_string( po_file_t po, const struct lanmsg *msgid, const struct lanmsg *msgstr )
 {
     po_message_t msg;
     po_message_iterator_t iterator;
@@ -504,7 +504,7 @@ static po_file_t create_po_file(void)
 void write_pot_file( const char *outname )
 {
     int i, j;
-    lan_blk_t *lbp;
+    struct lan_blk *lbp;
     po_file_t po = create_po_file();
 
     for (lbp = lanblockhead; lbp; lbp = lbp->next)
@@ -512,7 +512,7 @@ void write_pot_file( const char *outname )
         if (!is_english( lbp->lan )) continue;
         for (i = 0; i < lbp->nblk; i++)
         {
-            block_t *blk = &lbp->blks[i];
+            struct block *blk = &lbp->blks[i];
             for (j = 0; j < blk->nmsg; j++) add_po_string( po, blk->msgs[j], NULL );
         }
     }
@@ -632,9 +632,9 @@ static const char *get_msgstr( const char *msgid, const char *context, int *foun
     return ret;
 }
 
-static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
+static struct lanmsg *translate_string( struct lanmsg *str, int lang, int *found )
 {
-    lanmsg_t *new;
+    struct lanmsg *new;
     const char *transl;
     char *buffer, *msgid, *context;
 
@@ -654,7 +654,7 @@ static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
     return new;
 }
 
-static void translate_block( block_t *blk, block_t *new, int lang, int *found )
+static void translate_block( struct block *blk, struct block *new, int lang, int *found )
 {
     int i;
 
@@ -673,7 +673,7 @@ static void translate_block( block_t *blk, block_t *new, int lang, int *found )
 static void translate_messages( int lang )
 {
     int i, found;
-    lan_blk_t *lbp, *new;
+    struct lan_blk *lbp, *new;
 
     for (lbp = lanblockhead; lbp; lbp = lbp->next)
     {
@@ -705,7 +705,7 @@ static void translate_messages( int lang )
 
 void add_translations( const char *po_dir )
 {
-    lan_blk_t *lbp;
+    struct lan_blk *lbp;
     char buffer[256];
     char *p, *tok, *name;
     unsigned int i;
