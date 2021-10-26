@@ -60,8 +60,11 @@ struct dinput_device {
 };
 
 extern HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index );
+extern HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out );
 extern HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index );
+extern HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out );
 extern HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index );
+extern HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out );
 
 struct DevicePlayer {
     GUID instance_guid;

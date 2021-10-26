@@ -610,7 +610,6 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx( IDirectInput7W *iface, 
 {
     IDirectInputImpl *impl = impl_from_IDirectInput7W( iface );
     IDirectInputDevice8W *device;
-    unsigned int i;
     HRESULT hr;
 
     TRACE( "iface %p, guid %s, iid %s, out %p, outer %p\n", iface, debugstr_guid( guid ),
@@ -622,20 +621,14 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx( IDirectInput7W *iface, 
     if (!guid) return E_POINTER;
     if (!impl->initialized) return DIERR_NOTINITIALIZED;
 
-    /* Loop on all the devices to see if anyone matches the given GUID */
-    for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
-    {
-        if (!dinput_devices[i]->create_device) continue;
-        if (SUCCEEDED(hr = dinput_devices[i]->create_device( impl, guid, &device )))
-        {
-            hr = IDirectInputDevice8_QueryInterface( device, iid, out );
-            IDirectInputDevice8_Release( device );
-            return hr;
-        }
-    }
+    if (IsEqualGUID( &GUID_SysKeyboard, guid )) hr = keyboard_create_device( impl, guid, &device );
+    else if (IsEqualGUID( &GUID_SysMouse, guid )) hr = mouse_create_device( impl, guid, &device );
+    else hr = hid_joystick_create_device( impl, guid, &device );
 
-    WARN( "invalid device GUID %s\n", debugstr_guid( guid ) );
-    return DIERR_DEVICENOTREG;
+    if (FAILED(hr)) return hr;
+    hr = IDirectInputDevice8_QueryInterface( device, iid, out );
+    IDirectInputDevice8_Release( device );
+    return hr;
 }
 
 static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7W iface, REFGUID rguid,

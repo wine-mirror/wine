@@ -174,7 +174,7 @@ HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instan
     return DI_OK;
 }
 
-static HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
+HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
     SysKeyboardImpl *impl;
     HRESULT hr;
