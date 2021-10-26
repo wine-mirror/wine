@@ -101,9 +101,12 @@ static void test_effect_constant_buffer_type(void)
     ID3D10EffectType *type, *type2, *null_type;
     D3D10_EFFECT_VARIABLE_DESC var_desc;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10ShaderResourceView *srv;
     ID3D10EffectVariable *v;
     D3D10_EFFECT_DESC desc;
     ID3D10Device *device;
+    ID3D10Buffer *buffer;
     ULONG refcount;
     HRESULT hr;
     LPCSTR string;
@@ -154,6 +157,20 @@ static void test_effect_constant_buffer_type(void)
     ok(type_desc.PackedSize == 0x8, "PackedSize is %#x, expected 0x8\n", type_desc.PackedSize);
     ok(type_desc.UnpackedSize == 0x10, "UnpackedSize is %#x, expected 0x10\n", type_desc.UnpackedSize);
     ok(type_desc.Stride == 0x10, "Stride is %#x, expected 0x10\n", type_desc.Stride);
+
+    hr = constantbuffer->lpVtbl->GetConstantBuffer(constantbuffer, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Buffer_GetDesc(buffer, &buffer_desc);
+    ok(buffer_desc.ByteWidth == type_desc.UnpackedSize, "Unexpected buffer size %u.\n", buffer_desc.ByteWidth);
+    ok(!buffer_desc.Usage, "Unexpected buffer usage %u.\n", buffer_desc.Usage);
+    ok(buffer_desc.BindFlags == D3D10_BIND_CONSTANT_BUFFER, "Unexpected bind flags %#x.\n",
+            buffer_desc.BindFlags);
+    ok(!buffer_desc.CPUAccessFlags, "Unexpected CPU access flags %#x.\n", buffer_desc.CPUAccessFlags);
+    ok(!buffer_desc.MiscFlags, "Unexpected misc flags %#x.\n", buffer_desc.MiscFlags);
+    ID3D10Buffer_Release(buffer);
+
+    hr = constantbuffer->lpVtbl->GetTextureBuffer(constantbuffer, &srv);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
 
     string = type->lpVtbl->GetMemberName(type, 0);
     ok(strcmp(string, "f1") == 0, "GetMemberName is \"%s\", expected \"f1\"\n", string);
@@ -243,6 +260,13 @@ static void test_effect_constant_buffer_type(void)
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT, "Unexpected variable flags %#x.\n", var_desc.Flags);
     ok(var_desc.BufferOffset == 0x20, "Unexpected buffer offset %#x.\n", var_desc.BufferOffset);
     ok(var_desc.ExplicitBindPoint == 0x20, "Unexpected bind point %#x.\n", var_desc.ExplicitBindPoint);
+
+    /* Invalid buffer variable */
+    constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 100);
+    hr = constantbuffer->lpVtbl->GetConstantBuffer(constantbuffer, &buffer);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    hr = constantbuffer->lpVtbl->GetTextureBuffer(constantbuffer, &srv);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
@@ -7160,15 +7184,11 @@ todo_wine {
     ok(cb->lpVtbl->IsValid(cb), "Expected valid constant buffer.\n");
 
     hr = cb->lpVtbl->GetConstantBuffer(cb, &buffer);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ID3D10Buffer_GetDevice(buffer, &device3);
-        ok(device3 == device2, "Unexpected device.\n");
-        ID3D10Device_Release(device3);
-        ID3D10Buffer_Release(buffer);
-    }
+    ID3D10Buffer_GetDevice(buffer, &device3);
+    ok(device3 == device2, "Unexpected device.\n");
+    ID3D10Device_Release(device3);
+    ID3D10Buffer_Release(buffer);
 
     child_effect->lpVtbl->Release(child_effect);
     pool2->lpVtbl->Release(pool2);

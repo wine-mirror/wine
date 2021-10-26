@@ -4488,6 +4488,11 @@ static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl =
 };
 
 /* ID3D10EffectVariable methods */
+static inline struct d3d10_effect_variable *impl_from_ID3D10EffectConstantBuffer(ID3D10EffectConstantBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
+}
+
 static BOOL STDMETHODCALLTYPE d3d10_effect_constant_buffer_IsValid(ID3D10EffectConstantBuffer *iface)
 {
     TRACE("iface %p\n", iface);
@@ -4649,9 +4654,26 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_constant_buffer_SetConstantBuffer(
 static HRESULT STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetConstantBuffer(ID3D10EffectConstantBuffer *iface,
         ID3D10Buffer **buffer)
 {
-    FIXME("iface %p, buffer %p stub!\n", iface, buffer);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectConstantBuffer(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, buffer %p.\n", iface, buffer);
+
+    if (!iface->lpVtbl->IsValid(iface))
+    {
+        WARN("Null variable specified.\n");
+        return E_FAIL;
+    }
+
+    if (v->type->basetype != D3D10_SVT_CBUFFER)
+    {
+        WARN("Wrong variable type %s.\n", debug_d3d10_shader_variable_type(v->type->basetype));
+        return D3DERR_INVALIDCALL;
+    }
+
+    *buffer = v->u.buffer.buffer;
+    ID3D10Buffer_AddRef(*buffer);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_constant_buffer_SetTextureBuffer(ID3D10EffectConstantBuffer *iface,
@@ -4665,7 +4687,21 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_constant_buffer_SetTextureBuffer(I
 static HRESULT STDMETHODCALLTYPE d3d10_effect_constant_buffer_GetTextureBuffer(ID3D10EffectConstantBuffer *iface,
         ID3D10ShaderResourceView **view)
 {
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectConstantBuffer(iface);
+
     FIXME("iface %p, view %p stub!\n", iface, view);
+
+    if (!iface->lpVtbl->IsValid(iface))
+    {
+        WARN("Null variable specified.\n");
+        return E_FAIL;
+    }
+
+    if (v->type->basetype != D3D10_SVT_TBUFFER)
+    {
+        WARN("Wrong variable type %s.\n", debug_d3d10_shader_variable_type(v->type->basetype));
+        return D3DERR_INVALIDCALL;
+    }
 
     return E_NOTIMPL;
 }
