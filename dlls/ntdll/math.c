@@ -183,10 +183,14 @@ double CDECL cos( double d )
 
 /*********************************************************************
  *                  fabs   (NTDLL.@)
+ *
+ * Copied from musl: src/math/fabsf.c
  */
-double CDECL fabs( double d )
+double CDECL fabs( double x )
 {
-    return unix_funcs->fabs( d );
+    union { double f; UINT64 i; } u = { x };
+    u.i &= ~0ull >> 1;
+    return u.f;
 }
 
 /*********************************************************************
