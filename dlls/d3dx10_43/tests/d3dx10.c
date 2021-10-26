@@ -1974,8 +1974,10 @@ static void test_get_image_info(void)
 
 static void test_create_texture(void)
 {
+    static const WCHAR test_filename[] = L"image.data";
     ID3D10Resource *resource;
     ID3D10Device *device;
+    WCHAR path[MAX_PATH];
     unsigned int i;
     HRESULT hr;
 
@@ -2025,6 +2027,51 @@ static void test_create_texture(void)
             ID3D10Resource_Release(resource);
         }
 
+        winetest_pop_context();
+    }
+
+    /* D3DX10CreateTextureFromFile tests */
+
+    todo_wine
+    {
+    hr = D3DX10CreateTextureFromFileW(device, NULL, NULL, NULL, &resource, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromFileW(device, L"deadbeef", NULL, NULL, &resource, NULL);
+    ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromFileA(device, NULL, NULL, NULL, &resource, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromFileA(device, "deadbeef", NULL, NULL, &resource, NULL);
+    ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image); ++i)
+    {
+        winetest_push_context("Test %u", i);
+        create_file(test_filename, test_image[i].data, test_image[i].size, path);
+
+        hr = D3DX10CreateTextureFromFileW(device, path, NULL, NULL, &resource, NULL);
+        todo_wine
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        hr = D3DX10CreateTextureFromFileA(device, get_str_a(path), NULL, NULL, &resource, NULL);
+        todo_wine
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        delete_file(test_filename);
         winetest_pop_context();
     }
 
