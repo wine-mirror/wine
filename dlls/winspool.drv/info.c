@@ -107,6 +107,8 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -917,7 +919,6 @@ extern void *libcups_handle;
     DO_FUNC(cupsAddOption); \
     DO_FUNC(cupsFreeDests); \
     DO_FUNC(cupsFreeOptions); \
-    DO_FUNC(cupsGetDests); \
     DO_FUNC(cupsGetOption); \
     DO_FUNC(cupsParseOptions); \
     DO_FUNC(cupsPrintFile)
@@ -981,136 +982,95 @@ static BOOL get_cups_ppd( const char *printer_name, const WCHAR *ppd )
 
     return http_status == HTTP_OK;
 }
+#endif
 
-static WCHAR *get_cups_option( const char *name, int num_options, cups_option_t *options )
+static BOOL init_unix_printers( void )
 {
-    const char *value;
-    WCHAR *ret;
-    int len;
+    WCHAR *port, *ppd_dir = NULL, *default_printer = NULL;
+    struct enum_printers_params enum_params;
+    HKEY printer_key, printers_key;
+    HANDLE added_printer;
+    PRINTER_INFO_2W pi2;
+    NTSTATUS status;
+    int i;
 
-    value = pcupsGetOption( name, num_options, options );
-    if (!value) return NULL;
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, value, -1, NULL, 0 );
-    ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    if (ret) MultiByteToWideChar( CP_UNIXCP, 0, value, -1, ret, len );
-
-    return ret;
-}
-
-static cups_ptype_t get_cups_printer_type( const cups_dest_t *dest )
-{
-    WCHAR *type = get_cups_option( "printer-type", dest->num_options, dest->options ), *end;
-    cups_ptype_t ret = 0;
-
-    if (type && *type)
+    if (RegCreateKeyW( HKEY_LOCAL_MACHINE, PrintersW, &printers_key ) != ERROR_SUCCESS)
     {
-        ret = (cups_ptype_t)strtoulW( type, &end, 10 );
-        if (*end) ret = 0;
-    }
-    HeapFree( GetProcessHeap(), 0, type );
-    return ret;
-}
-
-static BOOL CUPS_LoadPrinters(void)
-{
-    int	                  i, nrofdests;
-    BOOL                  hadprinter = FALSE, haddefault = FALSE;
-    cups_dest_t          *dests;
-    PRINTER_INFO_2W       pi2;
-    WCHAR *port, *ppd_dir = NULL;
-    HKEY hkeyPrinter, hkeyPrinters;
-    WCHAR   nameW[MAX_PATH];
-    HANDLE  added_printer;
-    cups_ptype_t printer_type;
-
-    if (!libcups_handle) return FALSE;
-
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
-        ERR("Can't create Printers key\n");
-	return FALSE;
+        ERR( "Can't create Printers key\n" );
+        return FALSE;
     }
 
-    nrofdests = pcupsGetDests(&dests);
-    TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
-    for (i=0;i<nrofdests;i++) {
-        MultiByteToWideChar(CP_UNIXCP, 0, dests[i].name, -1, nameW, ARRAY_SIZE(nameW));
-        printer_type = get_cups_printer_type( dests + i );
+    enum_params.size = 10000;
+    enum_params.printers = NULL;
+    do
+    {
+        enum_params.size *= 2;
+        heap_free( enum_params.printers );
+        enum_params.printers = heap_alloc( enum_params.size );
+        status = UNIX_CALL( enum_printers, &enum_params );
+    } while (status == STATUS_BUFFER_OVERFLOW);
+    if (status) goto end;
 
-        TRACE( "Printer %d: %s. printer_type %x\n", i, debugstr_w(nameW), printer_type );
+    TRACE( "Found %d CUPS %s:\n", enum_params.num, (enum_params.num == 1) ? "printer" : "printers" );
+    for (i = 0; i < enum_params.num; i++)
+    {
+        struct printer_info *printer = enum_params.printers + i;
 
-        if (printer_type & 0x2000000 /* CUPS_PRINTER_SCANNER */)
+        if (RegOpenKeyW( printers_key, printer->name, &printer_key ) == ERROR_SUCCESS)
         {
-            TRACE( "skipping scanner-only device\n" );
-            continue;
-        }
-
-        if (RegOpenKeyW( hkeyPrinters, nameW, &hkeyPrinter ) == ERROR_SUCCESS)
-        {
-            DWORD status = get_dword_from_reg( hkeyPrinter, StatusW );
+            DWORD status = get_dword_from_reg( printer_key, StatusW );
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
                and continue */
             TRACE("Printer already exists\n");
-            RegDeleteValueW(hkeyPrinter, May_Delete_Value);
+            RegDeleteValueW( printer_key, May_Delete_Value );
             /* flag that the PPD file should be checked for an update */
-            set_reg_DWORD( hkeyPrinter, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
-            RegCloseKey(hkeyPrinter);
+            set_reg_DWORD( printer_key, StatusW, status | PRINTER_STATUS_DRIVER_UPDATE_NEEDED );
+            RegCloseKey( printer_key );
         }
         else
         {
             if (!ppd_dir && !(ppd_dir = get_ppd_dir())) break;
-            if (!add_printer_driver( nameW, ppd_dir )) continue;
+            if (!add_printer_driver( printer->name, ppd_dir )) continue;
 
-            port = heap_alloc( sizeof(CUPS_Port) + lstrlenW( nameW ) * sizeof(WCHAR) );
+            port = heap_alloc( sizeof(CUPS_Port) + lstrlenW( printer->name ) * sizeof(WCHAR) );
             lstrcpyW( port, CUPS_Port );
-            lstrcatW( port, nameW );
+            lstrcatW( port, printer->name );
 
-            memset(&pi2, 0, sizeof(PRINTER_INFO_2W));
-            pi2.pPrinterName    = nameW;
+            memset( &pi2, 0, sizeof(PRINTER_INFO_2W) );
+            pi2.pPrinterName    = printer->name;
             pi2.pDatatype       = rawW;
             pi2.pPrintProcessor = WinPrintW;
-            pi2.pDriverName     = nameW;
-            pi2.pComment        = get_cups_option( "printer-info", dests[i].num_options, dests[i].options );
-            pi2.pLocation       = get_cups_option( "printer-location", dests[i].num_options, dests[i].options );
+            pi2.pDriverName     = printer->name;
+            pi2.pComment        = printer->comment;
+            pi2.pLocation       = printer->location;
             pi2.pPortName       = port;
             pi2.pParameters     = emptyStringW;
             pi2.pShareName      = emptyStringW;
             pi2.pSepFile        = emptyStringW;
 
-            added_printer = AddPrinterW( NULL, 2, (LPBYTE)&pi2 );
+            added_printer = AddPrinterW( NULL, 2, (BYTE *)&pi2 );
             if (added_printer) ClosePrinter( added_printer );
             else if (GetLastError() != ERROR_PRINTER_ALREADY_EXISTS)
-                ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_w(nameW), GetLastError() );
+                ERR( "printer '%s' not added by AddPrinter (error %d)\n", debugstr_w( printer->name ), GetLastError() );
 
             heap_free( port );
-            HeapFree( GetProcessHeap(), 0, pi2.pComment );
-            HeapFree( GetProcessHeap(), 0, pi2.pLocation );
         }
-
-        hadprinter = TRUE;
-        if (dests[i].is_default) {
-            SetDefaultPrinterW(nameW);
-            haddefault = TRUE;
-        }
+        if (printer->is_default) default_printer = printer->name;
     }
+
+    if (!default_printer && enum_params.num) default_printer = enum_params.printers[0].name;
+    if (default_printer) SetDefaultPrinterW( default_printer );
 
     if (ppd_dir)
     {
         RemoveDirectoryW( ppd_dir );
-        HeapFree( GetProcessHeap(), 0, ppd_dir );
+        heap_free( ppd_dir );
     }
-
-    if (hadprinter && !haddefault) {
-        MultiByteToWideChar(CP_UNIXCP, 0, dests[0].name, -1, nameW, ARRAY_SIZE(nameW));
-        SetDefaultPrinterW(nameW);
-    }
-    pcupsFreeDests(nrofdests, dests);
-    RegCloseKey(hkeyPrinters);
+end:
+    heap_free( enum_params.printers );
+    RegCloseKey( printers_key );
     return TRUE;
 }
-
-#endif
 
 static void set_ppd_overrides( HANDLE printer )
 {
@@ -1493,11 +1453,7 @@ void WINSPOOL_LoadSystemPrinters(void)
     }
 
     old_printer_check( FALSE );
-
-#ifdef SONAME_LIBCUPS
-    CUPS_LoadPrinters();
-#endif
-
+    init_unix_printers();
     old_printer_check( TRUE );
 
     ReleaseMutex( init_mutex );

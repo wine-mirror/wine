@@ -37,6 +37,22 @@ extern void WINSPOOL_LoadSystemPrinters(void) DECLSPEC_HIDDEN;
 #define FILENAME_DIALOG  100
 #define EDITBOX 201
 
+struct printer_info
+{
+    WCHAR *name;
+    WCHAR *comment;
+    WCHAR *location;
+    BOOL is_default;
+};
+
+struct enum_printers_params
+{
+    struct printer_info *printers;
+    unsigned int size;
+    unsigned int num;
+};
+
 #define UNIX_CALL( func, params ) unix_ ## func( params )
 
 NTSTATUS unix_process_attach( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_enum_printers( void * ) DECLSPEC_HIDDEN;
