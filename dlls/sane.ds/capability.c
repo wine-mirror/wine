@@ -293,19 +293,6 @@ static BOOL pixeltype_to_sane_mode(TW_UINT16 pixeltype, SANE_String mode, int le
     strcpy(mode, m);
     return TRUE;
 }
-static BOOL sane_mode_to_pixeltype(SANE_String_Const mode, TW_UINT16 *pixeltype)
-{
-    if (strcmp(mode, SANE_VALUE_SCAN_MODE_LINEART) == 0)
-        *pixeltype = TWPT_BW;
-    else if (memcmp(mode, SANE_VALUE_SCAN_MODE_GRAY, strlen(SANE_VALUE_SCAN_MODE_GRAY)) == 0)
-        *pixeltype = TWPT_GRAY;
-    else if (strcmp(mode, SANE_VALUE_SCAN_MODE_COLOR) == 0)
-        *pixeltype = TWPT_RGB;
-    else
-        return FALSE;
-
-    return TRUE;
-}
 
 /* ICAP_PIXELTYPE */
 static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 action)
@@ -315,21 +302,17 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
     int possible_value_count;
     TW_UINT32 val;
     BOOL reload = FALSE;
-    const char * const *choices;
-    char current_mode[64];
     TW_UINT16 current_pixeltype = TWPT_BW;
     SANE_Char mode[64];
 
     TRACE("ICAP_PIXELTYPE\n");
 
-    twCC = sane_option_probe_mode(&choices, current_mode, sizeof(current_mode));
+    twCC = sane_option_probe_mode(&current_pixeltype, possible_values, &possible_value_count);
     if (twCC != TWCC_SUCCESS)
     {
         ERR("Unable to retrieve mode from sane, ICAP_PIXELTYPE unsupported\n");
         return twCC;
     }
-
-    sane_mode_to_pixeltype(current_mode, &current_pixeltype);
 
     /* Sane does not support a concept of a default mode, so we simply cache
      *   the first mode we find */
@@ -347,12 +330,6 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             break;
 
         case MSG_GET:
-            for (possible_value_count = 0; choices && *choices && possible_value_count < 3; choices++)
-            {
-                TW_UINT16 pix;
-                if (sane_mode_to_pixeltype(*choices, &pix))
-                    possible_values[possible_value_count++] = pix;
-            }
             twCC = msg_get_enum(pCapability, possible_values, possible_value_count,
                     TWTY_UINT16, current_pixeltype, activeDS.defaultPixelType);
             break;

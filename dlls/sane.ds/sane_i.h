@@ -47,6 +47,25 @@ struct frame_parameters
     int  depth;
 };
 
+struct option_descriptor
+{
+    int optno;
+    int size;
+    int is_active;
+    enum { TYPE_BOOL, TYPE_INT, TYPE_FIXED, TYPE_STRING, TYPE_BUTTON, TYPE_GROUP } type;
+    enum { UNIT_NONE, UNIT_PIXEL, UNIT_BIT, UNIT_MM, UNIT_DPI, UNIT_PERCENT, UNIT_MICROSECOND } unit;
+    enum { CONSTRAINT_NONE, CONSTRAINT_RANGE, CONSTRAINT_WORD_LIST, CONSTRAINT_STRING_LIST } constraint_type;
+
+    WCHAR title[256];
+
+    union
+    {
+        WCHAR strings[256];
+        int word_list[256];	/* first element is list-length */
+        struct { int min, max, quant; } range;
+    } constraint;
+};
+
 /* internal information about an active data source */
 struct tagActiveDS
 {
@@ -216,12 +235,13 @@ HWND ScanningDialogBox(HWND dialog, LONG progress) DECLSPEC_HIDDEN;
 /* Option functions */
 TW_UINT16 sane_option_get_value( int optno, void *val ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload ) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_get_descriptor( struct option_descriptor *descr ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_get_int( const char *option_name, int *val ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_int( const char *option_name, int val, BOOL *reload ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_get_str( const char *option_name, char *val, int len ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_str( const char *option_name, char *val, BOOL *reload ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_probe_resolution( const char *option_name, int *minval, int *maxval, int *quant) DECLSPEC_HIDDEN;
-TW_UINT16 sane_option_probe_mode(const char * const **choices, char *current, int current_size) DECLSPEC_HIDDEN;
+TW_UINT16 sane_option_probe_mode(TW_UINT16 *current, TW_UINT32 *choices, int *count) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_get_bool( const char *option_name, BOOL *val ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_bool( const char *option_name, BOOL val ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry ) DECLSPEC_HIDDEN;

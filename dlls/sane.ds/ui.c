@@ -44,13 +44,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 static INT_PTR CALLBACK DialogProc (HWND , UINT , WPARAM , LPARAM );
 static INT CALLBACK PropSheetProc(HWND, UINT,LPARAM);
 
-static int create_leading_static(HDC hdc, LPCSTR text,
+static int create_leading_static(HDC hdc, const WCHAR *text,
         LPDLGITEMTEMPLATEW* template_out, int y, int id)
 {
     LPDLGITEMTEMPLATEW tpl =  NULL;
     INT len;
     SIZE size;
-    LPBYTE ptr;
+    WORD *ptr;
     LONG base;
 
     *template_out = NULL;
@@ -60,10 +60,9 @@ static int create_leading_static(HDC hdc, LPCSTR text,
 
     base = GetDialogBaseUnits();
 
-    len = MultiByteToWideChar(CP_ACP,0,text,-1,NULL,0);
-    len *= sizeof(WCHAR);
+    len = strlenW(text) * sizeof(WCHAR);
     len += sizeof(DLGITEMTEMPLATE);
-    len += 3*sizeof(WORD);
+    len += 4*sizeof(WORD);
 
     tpl = HeapAlloc(GetProcessHeap(),0,len);
     tpl->style=WS_VISIBLE;
@@ -72,28 +71,27 @@ static int create_leading_static(HDC hdc, LPCSTR text,
     tpl->y = y;
     tpl->id = ID_BASE;
 
-    GetTextExtentPoint32A(hdc,text,lstrlenA(text),&size);
+    GetTextExtentPoint32W(hdc,text,lstrlenW(text),&size);
 
     tpl->cx =  MulDiv(size.cx,4,LOWORD(base));
     tpl->cy =  MulDiv(size.cy,8,HIWORD(base)) * 2;
-    ptr = (LPBYTE)tpl + sizeof(DLGITEMTEMPLATE);
-    *(LPWORD)ptr = 0xffff;
-    ptr += sizeof(WORD);
-    *(LPWORD)ptr = 0x0082;
-    ptr += sizeof(WORD);
-    ptr += MultiByteToWideChar(CP_ACP,0,text,-1,(LPWSTR)ptr,len) * sizeof(WCHAR);
-    *(LPWORD)ptr = 0x0000;
+    ptr = (WORD *)(tpl + 1);
+    *ptr++ = 0xffff;
+    *ptr++ = 0x0082;
+    strcpyW( ptr, text );
+    ptr += strlenW(ptr) + 1;
+    *ptr = 0;
 
     *template_out = tpl;
     return len;
 }
 
 static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int id,
-        int y, LPCSTR text,BOOL is_int)
+        int y, const WCHAR *text,BOOL is_int)
 {
     LPDLGITEMTEMPLATEW tpl =  NULL;
     INT len;
-    LPBYTE ptr;
+    WORD *ptr;
     SIZE size;
     LONG base;
     static const char int_base[] = "0000 xxx";
@@ -101,10 +99,9 @@ static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int i
 
     base = GetDialogBaseUnits();
 
-    len = MultiByteToWideChar(CP_ACP,0,text,-1,NULL,0);
-    len *= sizeof(WCHAR);
+    len = strlenW(text) * sizeof(WCHAR);
     len += sizeof(DLGITEMTEMPLATE);
-    len += 3*sizeof(WORD);
+    len += 4*sizeof(WORD);
 
     tpl = HeapAlloc(GetProcessHeap(),0,len);
     tpl->style=WS_VISIBLE|ES_READONLY|WS_BORDER;
@@ -121,33 +118,32 @@ static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int i
     tpl->cx =  MulDiv(size.cx*2,4,LOWORD(base));
     tpl->cy =  MulDiv(size.cy,8,HIWORD(base)) * 2;
 
-    ptr = (LPBYTE)tpl + sizeof(DLGITEMTEMPLATE);
-    *(LPWORD)ptr = 0xffff;
-    ptr += sizeof(WORD);
-    *(LPWORD)ptr = 0x0081;
-    ptr += sizeof(WORD);
-    ptr += MultiByteToWideChar(CP_ACP,0,text,-1,(LPWSTR)ptr,len) * sizeof(WCHAR);
-    *(LPWORD)ptr = 0x0000;
+    ptr = (WORD *)(tpl + 1);
+    *ptr++ = 0xffff;
+    *ptr++ = 0x0081;
+    strcpyW( ptr, text );
+    ptr += strlenW(ptr) + 1;
+    *ptr = 0;
 
     *template_out = tpl;
     return len;
 }
 
 
-static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
+static int create_item(HDC hdc, const struct option_descriptor *opt,
         INT id, LPDLGITEMTEMPLATEW *template_out, int y, int *cx, int* count)
 {
     LPDLGITEMTEMPLATEW tpl = NULL,rc = NULL;
     WORD class = 0xffff;
     DWORD styles = WS_VISIBLE;
-    LPBYTE ptr = NULL;
+    WORD *ptr = NULL;
     LPDLGITEMTEMPLATEW lead_static = NULL;
     LPDLGITEMTEMPLATEW trail_edit = NULL;
     DWORD leading_len = 0;
     DWORD trail_len = 0;
     DWORD local_len = 0;
-    LPCSTR title = NULL;
-    CHAR buffer[255];
+    const WCHAR *title = NULL;
+    WCHAR buffer[255];
     int padding = 0;
     int padding2 = 0;
     int base_x = 0;
@@ -159,122 +155,110 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
     base = GetDialogBaseUnits();
     base_x = MulDiv(size.cx,4,LOWORD(base));
 
-    if (opt->type == SANE_TYPE_BOOL)
+    switch (opt->type)
     {
+    case TYPE_BOOL:
         class = 0x0080; /* Button */
         styles |= BS_AUTOCHECKBOX;
-        local_len += MultiByteToWideChar(CP_ACP,0,opt->title,-1,NULL,0);
-        local_len *= sizeof(WCHAR);
         title = opt->title;
-    }
-    else if (opt->type == SANE_TYPE_INT)
+        break;
+    case TYPE_INT:
     {
         int i;
-
+        static const WCHAR fmtW[] = {'%','i',0};
         sane_option_get_value( id - ID_BASE, &i );
-        sprintf(buffer,"%i",i);
+        sprintfW(buffer,fmtW,i);
 
-        if (opt->constraint_type == SANE_CONSTRAINT_NONE)
+        switch (opt->constraint_type)
         {
+        case CONSTRAINT_NONE:
             class = 0x0081; /* Edit*/
             styles |= ES_NUMBER;
             title = buffer;
-            local_len += MultiByteToWideChar(CP_ACP,0,title,-1,NULL,0);
-            local_len *= sizeof(WCHAR);
-        }
-        else if (opt->constraint_type == SANE_CONSTRAINT_RANGE)
-        {
+            break;
+        case CONSTRAINT_RANGE:
             class = 0x0084; /* scroll */
             ctl_cx = 10 * base_x;
             trail_len += create_trailing_edit(hdc, &trail_edit, id +
                     ID_EDIT_BASE, y,buffer,TRUE);
-        }
-        else
-        {
+            break;
+        default:
             class= 0x0085; /* Combo */
             ctl_cx = 10 * base_x;
             styles |= CBS_DROPDOWNLIST;
+            break;
         }
-        leading_len += create_leading_static(hdc, opt->title, &lead_static, y, 
-                id+ID_STATIC_BASE);
+        leading_len += create_leading_static(hdc, opt->title, &lead_static, y, id+ID_STATIC_BASE);
+        break;
     }
-    else if (opt->type == SANE_TYPE_FIXED)
+    case TYPE_FIXED:
     {
         SANE_Fixed *i;
         double dd;
+        static const WCHAR fmtW[] = {'%','f',0};
 
         i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
 
         sane_option_get_value( id - ID_BASE, i );
 
         dd = SANE_UNFIX(*i);
-        sprintf(buffer,"%f",dd);
+        sprintfW(buffer,fmtW,dd);
         HeapFree(GetProcessHeap(),0,i);
 
-        if (opt->constraint_type == SANE_CONSTRAINT_NONE)
+        switch (opt->constraint_type)
         {
+        case CONSTRAINT_NONE:
             class = 0x0081; /* Edit */
             title = buffer;
-            local_len += MultiByteToWideChar(CP_ACP,0,title,-1,NULL,0);
-            local_len *= sizeof(WCHAR);
-        }
-        else if (opt->constraint_type == SANE_CONSTRAINT_RANGE)
-        {
+            break;
+        case CONSTRAINT_RANGE:
             class= 0x0084; /* scroll */
             ctl_cx = 10 * base_x;
-            trail_len += create_trailing_edit(hdc, &trail_edit, id +
-                    ID_EDIT_BASE, y,buffer,FALSE);
-        }
-        else
-        {
+            trail_len += create_trailing_edit(hdc, &trail_edit, id + ID_EDIT_BASE, y,buffer,FALSE);
+            break;
+        default:
             class= 0x0085; /* Combo */
             ctl_cx = 10 * base_x;
             styles |= CBS_DROPDOWNLIST;
+            break;
         }
-        leading_len += create_leading_static(hdc, opt->title, &lead_static, y,
-                id+ID_STATIC_BASE);
+        leading_len += create_leading_static(hdc, opt->title, &lead_static, y, id+ID_STATIC_BASE);
+        break;
     }
-    else if (opt->type == SANE_TYPE_STRING)
+    case TYPE_STRING:
     {
-        if (opt->constraint_type == SANE_CONSTRAINT_NONE)
+        char str[256];
+        switch (opt->constraint_type)
         {
+        case CONSTRAINT_NONE:
             class = 0x0081; /* Edit*/
-        }
-        else
-        {
+            break;
+        default:
             class= 0x0085; /* Combo */
             ctl_cx = opt->size * base_x;
             styles |= CBS_DROPDOWNLIST;
+            break;
         }
-        leading_len += create_leading_static(hdc, opt->title, &lead_static, y,
-                id+ID_STATIC_BASE);
-        sane_option_get_value( id - ID_BASE, buffer );
-
+        leading_len += create_leading_static(hdc, opt->title, &lead_static, y, id+ID_STATIC_BASE);
+        sane_option_get_value( id - ID_BASE, str );
+        MultiByteToWideChar( CP_UNIXCP, 0, str, -1, buffer, ARRAY_SIZE(buffer) );
         title = buffer;
-        local_len += MultiByteToWideChar(CP_ACP,0,title,-1,NULL,0);
-        local_len *= sizeof(WCHAR);
+        break;
     }
-    else if (opt->type == SANE_TYPE_BUTTON)
-    {
+    case TYPE_BUTTON:
         class = 0x0080; /* Button */
-        local_len += MultiByteToWideChar(CP_ACP,0,opt->title,-1,NULL,0);
-        local_len *= sizeof(WCHAR);
         title = opt->title;
-    }
-    else if (opt->type == SANE_TYPE_GROUP)
-    {
+        break;
+    case TYPE_GROUP:
         class = 0x0080; /* Button */
         styles |= BS_GROUPBOX;
-        local_len += MultiByteToWideChar(CP_ACP,0,opt->title,-1,NULL,0);
-        local_len *= sizeof(WCHAR);
         title = opt->title;
+        break;
     }
 
     local_len += sizeof(DLGITEMTEMPLATE);
-    if (title)
-        local_len += 3*sizeof(WORD);
-    else
-        local_len += 4*sizeof(WORD);
+    if (title) local_len += strlenW(title) * sizeof(WCHAR);
+    local_len += 4*sizeof(WORD);
 
     if (lead_static)
     {
@@ -289,7 +273,7 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
     tpl->dwExtendedStyle = 0;
     if (lead_static)
         tpl->x = lead_static->x + lead_static->cx + 1;
-    else if (opt->type == SANE_TYPE_GROUP)
+    else if (opt->type == TYPE_GROUP)
         tpl->x = 2;
     else
         tpl->x = 4;
@@ -298,7 +282,7 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
 
     if (title)
     {
-        GetTextExtentPoint32A(hdc,title,lstrlenA(title),&size);
+        GetTextExtentPoint32W(hdc,title,lstrlenW(title),&size);
         tpl->cx = size.cx;
         tpl->cy = size.cy;
     }
@@ -314,23 +298,16 @@ static int create_item(HDC hdc, const SANE_Option_Descriptor *opt,
 
         tpl->cx = ctl_cx;
     }
-    ptr = (LPBYTE)tpl + sizeof(DLGITEMTEMPLATE);
-    *(LPWORD)ptr = 0xffff;
-    ptr += sizeof(WORD);
-    *(LPWORD)ptr = class;
-    ptr += sizeof(WORD);
+    ptr = (WORD *)(tpl + 1);
+    *ptr++ = 0xffff;
+    *ptr++ = class;
     if (title)
     {
-        ptr += MultiByteToWideChar(CP_ACP,0,title,-1,(LPWSTR)ptr,local_len) * sizeof(WCHAR);
+        strcpyW( ptr, title );
+        ptr += strlenW(ptr);
     }
-    else
-    {
-        *(LPWORD)ptr = 0x0000;
-        ptr += sizeof(WORD);
-    }
-
-    *((LPWORD)ptr) = 0x0000;
-    ptr += sizeof(WORD);
+    *ptr++ = 0;
+    *ptr = 0;
 
     if (trail_edit)
     {
@@ -378,17 +355,16 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
     for (i = *from_index; i < optcount; i++)
     {
         LPDLGITEMTEMPLATEW item_tpl = NULL;
-        const SANE_Option_Descriptor *opt;
+        struct option_descriptor opt;
         int len;
         int padding = 0;
         int x;
         int count;
         int hold_for_group = 0;
 
-        opt = sane_get_option_descriptor(activeDS.deviceHandle, i);
-        if (!opt)
-            continue;
-        if (opt->type == SANE_TYPE_GROUP && split_tabs)
+        opt.optno = i;
+        if (sane_option_get_descriptor( &opt )) continue;
+        if (opt.type == TYPE_GROUP && split_tabs)
         {
             if (control_len > 0)
             {
@@ -401,10 +377,10 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
                 return NULL;
             }
         }
-        if (!SANE_OPTION_IS_ACTIVE (opt->cap))
+        if (!opt.is_active)
             continue;
 
-        len = create_item(hdc, opt, ID_BASE + i, &item_tpl, y, &x, &count);
+        len = create_item(hdc, &opt, ID_BASE + i, &item_tpl, y, &x, &count);
 
         control_count += count;
 
@@ -445,7 +421,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
             }
         }
 
-        if (opt->type == SANE_TYPE_GROUP)
+        if (opt.type == TYPE_GROUP)
         {
             if (group_offset == -1)
             {
@@ -532,20 +508,17 @@ BOOL DoScannerUI(void)
 
     while (index < optcount)
     {
-        const SANE_Option_Descriptor *opt;
+        struct option_descriptor opt;
+
         psp[page_count].u.pResource = create_options_page(hdc, &index,
                 optcount, TRUE);
-        opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
+        opt.optno = index;
+        sane_option_get_descriptor( &opt );
 
-        if (opt->type == SANE_TYPE_GROUP)
+        if (opt.type == TYPE_GROUP)
         {
-            LPWSTR title = NULL;
-            INT len;
-
-            len = MultiByteToWideChar(CP_ACP,0,opt->title,-1,NULL,0);
-            title = HeapAlloc(GetProcessHeap(),0,len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP,0,opt->title,-1,title,len);
-
+            LPWSTR title = HeapAlloc(GetProcessHeap(),0,(strlenW(opt.title) + 1) * sizeof(WCHAR));
+            strcpyW( title, opt.title );
             psp[page_count].pszTitle = title;
         }
 
@@ -596,31 +569,33 @@ BOOL DoScannerUI(void)
         return FALSE;
 }
 
-static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt, 
-        int index, int position)
+static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, int position)
 {
     WCHAR buffer[244];
     HWND edit_w;
     int len;
 
-    if (opt->type == SANE_TYPE_INT)
+    switch (opt->type)
+    {
+    case TYPE_INT:
     {
         static const WCHAR formatW[] = {'%','i',0};
         INT si;
 
-        if (opt->constraint.range->quant)
-            si = position * opt->constraint.range->quant;
+        if (opt->constraint.range.quant)
+            si = position * opt->constraint.range.quant;
         else
             si = position;
 
         len = sprintfW( buffer, formatW, si );
+        break;
     }
-    else if  (opt->type == SANE_TYPE_FIXED)
+    case TYPE_FIXED:
     {
         static const WCHAR formatW[] = {'%','f',0};
         double s_quant, dd;
 
-        s_quant = SANE_UNFIX(opt->constraint.range->quant);
+        s_quant = SANE_UNFIX(opt->constraint.range.quant);
 
         if (s_quant)
             dd = position * s_quant;
@@ -628,39 +603,44 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
             dd = position * 0.01;
 
         len = sprintfW( buffer, formatW, dd );
+        break;
     }
-    else return;
+    default:
+        return;
+    }
 
     buffer[len++] = ' ';
     LoadStringW( SANE_instance, opt->unit, buffer + len, ARRAY_SIZE( buffer ) - len );
 
-    edit_w = GetDlgItem(hwnd,index+ID_BASE+ID_EDIT_BASE);
+    edit_w = GetDlgItem(hwnd,opt->optno + ID_BASE + ID_EDIT_BASE);
     if (edit_w) SetWindowTextW(edit_w,buffer);
 
 }
 
-static BOOL UpdateSaneScrollOption(
-        const SANE_Option_Descriptor *opt, int index, DWORD position)
+static BOOL UpdateSaneScrollOption(const struct option_descriptor *opt, DWORD position)
 {
     BOOL result = FALSE;
 
-    if (opt->type == SANE_TYPE_INT)
+    switch (opt->type)
+    {
+    case TYPE_INT:
     {
         int si;
 
-        if (opt->constraint.range->quant)
-            si = position * opt->constraint.range->quant;
+        if (opt->constraint.range.quant)
+            si = position * opt->constraint.range.quant;
         else
             si = position;
 
-        sane_option_set_value( index, &si, &result );
+        sane_option_set_value( opt->optno, &si, &result );
+        break;
     }
-    else if  (opt->type == SANE_TYPE_FIXED)
+    case TYPE_FIXED:
     {
         double s_quant, dd;
         SANE_Fixed *sf;
 
-        s_quant = SANE_UNFIX(opt->constraint.range->quant);
+        s_quant = SANE_UNFIX(opt->constraint.range.quant);
 
         if (s_quant)
             dd = position * s_quant;
@@ -671,9 +651,13 @@ static BOOL UpdateSaneScrollOption(
 
         *sf = SANE_FIX(dd);
 
-        sane_option_set_value( index, sf, &result );
+        sane_option_set_value( opt->optno, sf, &result );
 
         HeapFree(GetProcessHeap(),0,sf);
+        break;
+    }
+    default:
+        break;
     }
 
     return result;
@@ -695,39 +679,32 @@ static INT_PTR InitializeDialog(HWND hwnd)
 
     for ( i = 1; i < optcount; i++)
     {
-        const SANE_Option_Descriptor *opt;
+        struct option_descriptor opt;
 
         control = GetDlgItem(hwnd,i+ID_BASE);
 
         if (!control)
             continue;
 
-        opt = sane_get_option_descriptor(activeDS.deviceHandle, i);
+        opt.optno = i;
+        sane_option_get_descriptor( &opt );
 
-        TRACE("%i %s %i %i\n",i,opt->title,opt->type,opt->constraint_type);
-        
-        if (!SANE_OPTION_IS_ACTIVE(opt->cap))
-            EnableWindow(control,FALSE);
-        else
-            EnableWindow(control,TRUE);
+        TRACE("%i %s %i %i\n",i,debugstr_w(opt.title),opt.type,opt.constraint_type);
+        EnableWindow(control,opt.is_active);
 
         SendMessageA(control,CB_RESETCONTENT,0,0);
         /* initialize values */
-        if (opt->type == SANE_TYPE_STRING && opt->constraint_type !=
-                SANE_CONSTRAINT_NONE)
+        if (opt.type == TYPE_STRING && opt.constraint_type != CONSTRAINT_NONE)
         {
-            int j = 0;
             CHAR buffer[255];
-            while (opt->constraint.string_list[j]!=NULL)
-            {
-                SendMessageA(control,CB_ADDSTRING,0,
-                        (LPARAM)opt->constraint.string_list[j]);
-                j++;
-            }
+            WCHAR *p;
+
+            for (p = opt.constraint.strings; *p; p += strlenW(p) + 1)
+                SendMessageW( control,CB_ADDSTRING,0, (LPARAM)p );
             sane_option_get_value( i, buffer );
             SendMessageA(control,CB_SELECTSTRING,0,(LPARAM)buffer);
         }
-        else if (opt->type == SANE_TYPE_BOOL)
+        else if (opt.type == TYPE_BOOL)
         {
             BOOL b;
             sane_option_get_value( i, &b );
@@ -735,46 +712,43 @@ static INT_PTR InitializeDialog(HWND hwnd)
                 SendMessageA(control,BM_SETCHECK,BST_CHECKED,0);
 
         }
-        else if (opt->type == SANE_TYPE_INT &&
-                 opt->constraint_type == SANE_CONSTRAINT_WORD_LIST)
+        else if (opt.type == TYPE_INT && opt.constraint_type == CONSTRAINT_WORD_LIST)
         {
-            int j, count = opt->constraint.word_list[0];
+            int j, count = opt.constraint.word_list[0];
             CHAR buffer[16];
             int val;
             for (j=1; j<=count; j++)
             {
-                sprintf(buffer, "%d", opt->constraint.word_list[j]);
+                sprintf(buffer, "%d", opt.constraint.word_list[j]);
                 SendMessageA(control, CB_ADDSTRING, 0, (LPARAM)buffer);
             }
             sane_option_get_value( i, &val );
             sprintf(buffer, "%d", val);
             SendMessageA(control,CB_SELECTSTRING,0,(LPARAM)buffer);
         }
-        else if (opt->constraint_type == SANE_CONSTRAINT_RANGE)
+        else if (opt.constraint_type == CONSTRAINT_RANGE)
         {
-            if (opt->type == SANE_TYPE_INT)
+            if (opt.type == TYPE_INT)
             {
                 int si;
                 int min,max;
 
-                min = (SANE_Int)opt->constraint.range->min /
-                    (((SANE_Int)opt->constraint.range->quant)?
-                    (SANE_Int)opt->constraint.range->quant:1);
+                min = opt.constraint.range.min /
+                    (opt.constraint.range.quant ? opt.constraint.range.quant : 1);
 
-                max = (SANE_Int)opt->constraint.range->max /
-                    (((SANE_Int)opt->constraint.range->quant)
-                    ?(SANE_Int)opt->constraint.range->quant:1);
+                max = opt.constraint.range.max /
+                    (opt.constraint.range.quant ? opt.constraint.range.quant : 1);
 
                 SendMessageA(control,SBM_SETRANGE,min,max);
 
                 sane_option_get_value( i, &si );
-                if (opt->constraint.range->quant)
-                    si = si / opt->constraint.range->quant;
+                if (opt.constraint.range.quant)
+                    si = si / opt.constraint.range.quant;
 
                 SendMessageW(control,SBM_SETPOS, si, TRUE);
-                UpdateRelevantEdit(hwnd, opt, i, si);
+                UpdateRelevantEdit(hwnd, &opt, si);
             }
-            else if (opt->type == SANE_TYPE_FIXED)
+            else if (opt.type == TYPE_FIXED)
             {
                 SANE_Fixed *sf;
 
@@ -783,9 +757,9 @@ static INT_PTR InitializeDialog(HWND hwnd)
                 INT pos;
                 int min,max;
 
-                s_min = SANE_UNFIX(opt->constraint.range->min);
-                s_max = SANE_UNFIX(opt->constraint.range->max);
-                s_quant = SANE_UNFIX(opt->constraint.range->quant);
+                s_min = SANE_UNFIX(opt.constraint.range.min);
+                s_max = SANE_UNFIX(opt.constraint.range.max);
+                s_quant = SANE_UNFIX(opt.constraint.range.quant);
 
                 if (s_quant)
                 {
@@ -801,7 +775,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
                 SendMessageA(control,SBM_SETRANGE,min,max);
 
 
-                sf = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
+                sf = HeapAlloc(GetProcessHeap(),0,opt.size*sizeof(SANE_Word));
                 sane_option_get_value( i, sf );
 
                 dd = SANE_UNFIX(*sf);
@@ -818,7 +792,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
 
                 SendMessageW(control, SBM_SETPOS, pos, TRUE);
                 
-                UpdateRelevantEdit(hwnd, opt, i, pos);
+                UpdateRelevantEdit(hwnd, &opt, pos);
             }
         }
     }
@@ -828,19 +802,15 @@ static INT_PTR InitializeDialog(HWND hwnd)
 
 static INT_PTR ProcessScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    int index;
-    const SANE_Option_Descriptor *opt;
+    struct option_descriptor opt;
     WORD scroll;
     DWORD position;
 
-    index = GetDlgCtrlID((HWND)lParam)- ID_BASE;
-    if (index < 0)
+    opt.optno = GetDlgCtrlID((HWND)lParam)- ID_BASE;
+    if (opt.optno < 0)
         return FALSE;
 
-    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
-
-    if (!opt)
-        return FALSE;
+    if (sane_option_get_descriptor( &opt )) return FALSE;
 
     scroll = LOWORD(wParam);
 
@@ -875,8 +845,8 @@ static INT_PTR ProcessScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
     SendMessageW((HWND)lParam,SBM_SETPOS, position, TRUE);
     position = SendMessageW((HWND)lParam,SBM_GETPOS,0,0);
 
-    UpdateRelevantEdit(hwnd, opt, index, position);
-    if (UpdateSaneScrollOption(opt, index, position))
+    UpdateRelevantEdit(hwnd, &opt, position);
+    if (UpdateSaneScrollOption(&opt, position))
         InitializeDialog(hwnd);
 
     return TRUE;
@@ -885,44 +855,36 @@ static INT_PTR ProcessScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 static void ButtonClicked(HWND hwnd, INT id, HWND control)
 {
-    int index;
-    const SANE_Option_Descriptor *opt;
+    struct option_descriptor opt;
     BOOL changed = FALSE;
 
-    index = id - ID_BASE;
-    if (index < 0)
+    opt.optno = id - ID_BASE;
+    if (opt.optno < 0)
         return;
 
-    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
+    if (sane_option_get_descriptor( &opt )) return;
 
-    if (!opt)
-        return;
-
-    if (opt->type == SANE_TYPE_BOOL)
+    if (opt.type == TYPE_BOOL)
     {
         BOOL r = SendMessageW(control,BM_GETCHECK,0,0)==BST_CHECKED;
-        sane_option_set_value( index, &r, &changed );
+        sane_option_set_value( opt.optno, &r, &changed );
         if (changed) InitializeDialog(hwnd);
     }
 }
 
 static void ComboChanged(HWND hwnd, INT id, HWND control)
 {
-    int index;
     int selection;
     int len;
-    const SANE_Option_Descriptor *opt;
+    struct option_descriptor opt;
     SANE_String value;
     BOOL changed = FALSE;
 
-    index = id - ID_BASE;
-    if (index < 0)
+    opt.optno = id - ID_BASE;
+    if (opt.optno < 0)
         return;
 
-    opt = sane_get_option_descriptor(activeDS.deviceHandle, index);
-
-    if (!opt)
-        return;
+    if (sane_option_get_descriptor( &opt )) return;
 
     selection = SendMessageW(control,CB_GETCURSEL,0,0);
     len = SendMessageW(control,CB_GETLBTEXTLEN,selection,0);
@@ -931,14 +893,14 @@ static void ComboChanged(HWND hwnd, INT id, HWND control)
     value = HeapAlloc(GetProcessHeap(),0,len);
     SendMessageA(control,CB_GETLBTEXT,selection,(LPARAM)value);
 
-    if (opt->type == SANE_TYPE_STRING)
+    if (opt.type == TYPE_STRING)
     {
-        sane_option_set_value( index, value, &changed );
+        sane_option_set_value( opt.optno, value, &changed );
     }
-    else if (opt->type == SANE_TYPE_INT)
+    else if (opt.type == TYPE_INT)
     {
         int val = atoi( value );
-        sane_option_set_value( index, &val, &changed );
+        sane_option_set_value( opt.optno, &val, &changed );
     }
     if (changed) InitializeDialog(hwnd);
 }
