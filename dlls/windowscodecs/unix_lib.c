@@ -74,9 +74,6 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
 
 HRESULT CDECL encoder_create(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result)
 {
-    if (IsEqualGUID(encoder_clsid, &CLSID_WICIcnsEncoder))
-        return icns_encoder_create(info, result);
-
     return E_NOTIMPL;
 }
 

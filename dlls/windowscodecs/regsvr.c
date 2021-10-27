@@ -1466,11 +1466,6 @@ static GUID const * const tiff_encode_formats[] = {
     NULL
 };
 
-static GUID const * const icns_encode_formats[] = {
-    &GUID_WICPixelFormat32bppBGRA,
-    NULL
-};
-
 static struct regsvr_encoder const encoder_list[] = {
     {   &CLSID_WICBmpEncoder,
 	"The Wine Project",
@@ -1521,16 +1516,6 @@ static struct regsvr_encoder const encoder_list[] = {
 	"image/tiff",
 	".tif;.tiff",
 	tiff_encode_formats
-    },
-    {   &CLSID_WICIcnsEncoder,
-	"The Wine Project",
-	"ICNS Encoder",
-	"1.0.0.0",
-	&GUID_VendorWine,
-	&GUID_WineContainerFormatIcns,
-	"image/icns",
-	".icns",
-	icns_encode_formats
     },
     { NULL }			/* list terminator */
 };

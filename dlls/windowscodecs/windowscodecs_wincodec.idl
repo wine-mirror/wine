@@ -119,13 +119,6 @@ coclass WICTiffDecoder { interface IWICBitmapDecoder; }
 coclass WICTiffEncoder { interface IWICBitmapEncoder; }
 
 [
-    helpstring("WIC ICNS Encoder"),
-    threading(both),
-    uuid(312fb6f1-b767-409d-8a6d-0fc154d4f05c)
-]
-coclass WICIcnsEncoder { interface IWICBitmapEncoder; }
-
-[
     helpstring("WIC DDS Decoder"),
     threading(both),
     uuid(9053699f-a341-429d-9e90-ee437cf80c73)
