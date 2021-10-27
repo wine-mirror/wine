@@ -3799,7 +3799,7 @@ static nsresult NSAPI nsIOServiceHook_GetProtocolHandler(nsIIOServiceHook *iface
 
 static BOOL is_gecko_special_uri(const char *spec)
 {
-    static const char *special_schemes[] = {"chrome:", "data:", "jar:", "moz-safe-about", "resource:", "javascript:", "wyciwyg:"};
+    static const char *special_schemes[] = {"chrome:", "data:", "jar:", "moz-safe-about", "resource://gre/", "resource://gre-resources/", "javascript:", "wyciwyg:"};
     unsigned int i;
 
     for(i=0; i < ARRAY_SIZE(special_schemes); i++) {
