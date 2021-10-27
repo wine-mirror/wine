@@ -1754,11 +1754,40 @@ static void test_presenter_video_position(void)
     DWORD count;
     HWND hwnd;
 
+    hwnd = create_window();
+    ok(!!hwnd, "Failed to create a test window.\n");
+
+    /* Setting position without the mixer. */
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    SetRect(&dst_rect, 0, 0, 10, 10);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, hwnd);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFVideoDisplayControl_Release(display_control);
+    IMFVideoPresenter_Release(presenter);
+
+    /* With the mixer. */
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
     ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
 
     hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
     ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1785,9 +1814,6 @@ static void test_presenter_video_position(void)
     ok(src_rect.left == 0.0f && src_rect.top == 0.0f && src_rect.right == 1.0f &&
             src_rect.bottom == 1.0f, "Unexpected source rectangle.\n");
 
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
     hr = IMFVideoDisplayControl_GetVideoPosition(display_control, NULL, &dst_rect);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
@@ -1806,9 +1832,6 @@ static void test_presenter_video_position(void)
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     /* Setting position requires a window. */
-    hwnd = create_window();
-    ok(!!hwnd, "Failed to create a test window.\n");
-
     SetRect(&dst_rect, 0, 0, 10, 10);
     memset(&src_rect, 0, sizeof(src_rect));
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, &dst_rect);
@@ -2295,6 +2318,44 @@ static void test_presenter_media_type(void)
 
 done:
     DestroyWindow(window);
+}
+
+static void test_presenter_shutdown(void)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    IMFVideoPresenter *presenter;
+    HRESULT hr;
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFTopologyServiceLookupClient_Release(lookup_client);
+
+    IMFVideoPresenter_Release(presenter);
 }
 
 static void test_mixer_output_rectangle(void)
@@ -2848,6 +2909,7 @@ START_TEST(evr)
     test_presenter_video_window();
     test_presenter_quality_control();
     test_presenter_media_type();
+    test_presenter_shutdown();
     test_mixer_output_rectangle();
     test_mixer_zorder();
     test_mixer_samples();

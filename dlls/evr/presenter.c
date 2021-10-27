@@ -348,6 +348,9 @@ static HRESULT video_presenter_invalidate_media_type(struct video_presenter *pre
     RECT rect;
     HRESULT hr;
 
+    if (!presenter->mixer)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
     if (FAILED(hr = MFCreateMediaType(&media_type)))
         return hr;
 
@@ -965,7 +968,7 @@ static HRESULT WINAPI video_presenter_ProcessMessage(IMFVideoPresenter *iface, M
     switch (message)
     {
         case MFVP_MESSAGE_INVALIDATEMEDIATYPE:
-            hr = video_presenter_invalidate_media_type(presenter);
+            hr = presenter->mixer ? video_presenter_invalidate_media_type(presenter) : MF_E_INVALIDREQUEST;
             break;
         case MFVP_MESSAGE_BEGINSTREAMING:
             hr = video_presenter_start_streaming(presenter);
