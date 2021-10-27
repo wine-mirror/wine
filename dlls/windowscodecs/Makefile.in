@@ -35,8 +35,6 @@ C_SRCS = \
 	stream.c \
 	tgaformat.c \
 	ungif.c \
-	unix_iface.c \
-	unix_lib.c \
 	uuid.c \
 	wincodecs_common.c
 
