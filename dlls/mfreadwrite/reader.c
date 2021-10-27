@@ -2395,6 +2395,7 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
     static const unsigned char wavmagic[]  = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
     static const unsigned char wavmask[]   = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
     static const unsigned char isommagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4_magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', 'S', 'N', 'V',0x00,0x00,0x00,0x00};
     static const unsigned char mp42magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'm', 'p', '4', '2',0x00,0x00,0x00,0x00};
     static const unsigned char mp4mask[]   = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
     static const struct stream_content_url_hint
@@ -2409,6 +2410,7 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
         { wavmagic,  L".wav", wavmask },
         { isommagic, L".mp4", mp4mask },
         { mp42magic, L".mp4", mp4mask },
+        { mp4_magic, L".mp4", mp4mask },
     };
     unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
     unsigned int i, j, length = 0, caps = 0;
