@@ -38,6 +38,32 @@ static char mdbpath[MAX_PATH];
 
 static const VARTYPE intptr_vartype = (sizeof(void *) == 8 ? VT_I8 : VT_I4);
 
+static void test_msdasql(void)
+{
+    HRESULT hr;
+    IUnknown *unk;
+    IPersist *persist;
+    CLSID classid;
+
+    hr = CoCreateInstance( &CLSID_MSDASQL, NULL, CLSCTX_ALL, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        return;
+    }
+
+    hr = IUnknown_QueryInterface(unk, &IID_IPersist, (void**)&persist);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IPersist_GetClassID(persist, &classid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&classid, &CLSID_MSDASQL), "got %s\n", debugstr_guid(&classid));
+
+    IPersist_Release(persist);
+
+    IUnknown_Release(unk);
+}
+
 static void test_Properties(void)
 {
     HRESULT hr;
@@ -275,6 +301,7 @@ START_TEST(provider)
 
     setup_database();
 
+    test_msdasql();
     test_Properties();
     test_sessions();
 

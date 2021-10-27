@@ -176,6 +176,7 @@ struct msdasql
     IDBProperties    IDBProperties_iface;
     IDBInitialize    IDBInitialize_iface;
     IDBCreateSession IDBCreateSession_iface;
+    IPersist         IPersist_iface;
 
     LONG     ref;
 };
@@ -200,6 +201,11 @@ static inline struct msdasql *impl_from_IDBCreateSession(IDBCreateSession *iface
     return CONTAINING_RECORD(iface, struct msdasql, IDBCreateSession_iface);
 }
 
+static inline struct msdasql *impl_from_IPersist( IPersist *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql, IPersist_iface );
+}
+
 static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void **out)
 {
     struct msdasql *provider = impl_from_IUnknown(iface);
@@ -222,6 +228,10 @@ static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void *
     else if (IsEqualGUID(riid, &IID_IDBCreateSession))
     {
         *out = &provider->IDBCreateSession_iface;
+    }
+    else if(IsEqualGUID(&IID_IPersist, riid))
+    {
+        *out = &provider->IPersist_iface;
     }
     else
     {
@@ -455,6 +465,45 @@ static const struct IDBCreateSessionVtbl dbsess_vtbl =
     dbsess_CreateSession
 };
 
+static HRESULT WINAPI persist_QueryInterface(IPersist *iface, REFIID riid, void **ppv)
+{
+    struct msdasql *provider = impl_from_IPersist( iface );
+    return IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
+}
+
+static ULONG WINAPI persist_AddRef(IPersist *iface)
+{
+    struct msdasql *provider = impl_from_IPersist( iface );
+    return IUnknown_AddRef(&provider->MSDASQL_iface);
+}
+
+static ULONG WINAPI persist_Release(IPersist *iface)
+{
+    struct msdasql *provider = impl_from_IPersist( iface );
+    return IUnknown_Release(&provider->MSDASQL_iface);
+}
+
+static HRESULT WINAPI persist_GetClassID(IPersist *iface, CLSID *classid)
+{
+    struct msdasql *provider = impl_from_IPersist( iface );
+
+    TRACE("(%p)->(%p)\n", provider, classid);
+
+    if(!classid)
+        return E_INVALIDARG;
+
+    *classid = CLSID_MSDASQL;
+    return S_OK;
+
+}
+
+static const IPersistVtbl persistVtbl = {
+    persist_QueryInterface,
+    persist_AddRef,
+    persist_Release,
+    persist_GetClassID
+};
+
 static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 {
     struct msdasql *provider;
@@ -468,6 +517,7 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
     provider->IDBProperties_iface.lpVtbl = &dbprops_vtbl;
     provider->IDBInitialize_iface.lpVtbl = &dbinit_vtbl;
     provider->IDBCreateSession_iface.lpVtbl = &dbsess_vtbl;
+    provider->IPersist_iface.lpVtbl = &persistVtbl;
     provider->ref = 1;
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
