@@ -241,8 +241,21 @@ static void setup_database(void)
 
 static void cleanup_database(void)
 {
+    BOOL ret;
+
     if (winetest_interactive)
         return;
+
+    ret = SQLConfigDataSource(NULL, ODBC_REMOVE_DSN, "Microsoft Access Driver (*.mdb)", "DSN=wine_test\0\0");
+    if (!ret)
+    {
+        DWORD code;
+        char buffer[1024];
+        WORD size;
+
+        SQLInstallerError(1, &code, buffer, sizeof(buffer), &size);
+        trace("code  %d, buffer %s, size %d\n", code, debugstr_a(buffer), size);
+    }
 
     DeleteFileA(mdbpath);
 }
