@@ -36,16 +36,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static const struct dinput_device_vtbl keyboard_vtbl;
 
-typedef struct SysKeyboardImpl SysKeyboardImpl;
-struct SysKeyboardImpl
+struct keyboard
 {
     struct dinput_device base;
 };
 
-static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+static inline struct keyboard *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
 {
     return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ),
-                              SysKeyboardImpl, base );
+                              struct keyboard, base );
 }
 
 static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD version)
@@ -86,9 +85,9 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD vers
 
 int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
-    BYTE new_diks, subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
-    int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
+    struct keyboard *impl = impl_from_IDirectInputDevice8W( iface );
+    BYTE new_diks, subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
+    int dik_code, ret = impl->base.dwCoopLevel & DISCL_EXCLUSIVE;
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
     DWORD scan_code;
 
@@ -109,21 +108,21 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
         default:
             scan_code = hook->scanCode & 0xff;
             if (hook->flags & LLKHF_EXTENDED) scan_code |= 0x100;
-            dik_code = map_dik_code( scan_code, hook->vkCode, subtype, This->base.dinput->dwVersion );
+            dik_code = map_dik_code( scan_code, hook->vkCode, subtype, impl->base.dinput->dwVersion );
     }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
 
     /* returns now if key event already known */
-    if (new_diks == This->base.device_state[dik_code]) return ret;
+    if (new_diks == impl->base.device_state[dik_code]) return ret;
 
-    This->base.device_state[dik_code] = new_diks;
-    TRACE( " setting key %02x to %02x\n", dik_code, This->base.device_state[dik_code] );
+    impl->base.device_state[dik_code] = new_diks;
+    TRACE( " setting key %02x to %02x\n", dik_code, impl->base.device_state[dik_code] );
 
-    EnterCriticalSection(&This->base.crit);
-    queue_event(iface, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON,
-                new_diks, GetCurrentTime(), This->base.dinput->evsequence++);
-    if (This->base.hEvent) SetEvent( This->base.hEvent );
-    LeaveCriticalSection(&This->base.crit);
+    EnterCriticalSection( &impl->base.crit );
+    queue_event( iface, DIDFT_MAKEINSTANCE( dik_code ) | DIDFT_PSHBUTTON, new_diks,
+                 GetCurrentTime(), impl->base.dinput->evsequence++ );
+    if (impl->base.hEvent) SetEvent( impl->base.hEvent );
+    LeaveCriticalSection( &impl->base.crit );
 
     return ret;
 }
@@ -177,7 +176,7 @@ HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instan
 
 HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
-    SysKeyboardImpl *impl;
+    struct keyboard *impl;
     HRESULT hr;
 
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
@@ -185,9 +184,9 @@ HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDir
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysKeyboard, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = dinput_device_alloc( sizeof(SysKeyboardImpl), &keyboard_vtbl, guid, dinput, (void **)&impl )))
+    if (FAILED(hr = dinput_device_alloc( sizeof(struct keyboard), &keyboard_vtbl, guid, dinput, (void **)&impl )))
         return hr;
-    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
+    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": struct keyboard*->base.crit");
 
     keyboard_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion, 0 );
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
@@ -217,8 +216,8 @@ static HRESULT keyboard_acquire( IDirectInputDevice8W *iface )
 
 static HRESULT keyboard_unacquire( IDirectInputDevice8W *iface )
 {
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
-    memset( This->base.device_state, 0, sizeof(This->base.device_state) );
+    struct keyboard *impl = impl_from_IDirectInputDevice8W( iface );
+    memset( impl->base.device_state, 0, sizeof(impl->base.device_state) );
     return DI_OK;
 }
 
@@ -245,7 +244,7 @@ static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDE
 static HRESULT keyboard_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter,
                                       DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
 {
-    SysKeyboardImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    struct keyboard *impl = impl_from_IDirectInputDevice8W( iface );
     BYTE subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
     DIDEVICEOBJECTINSTANCEW instance =
     {
