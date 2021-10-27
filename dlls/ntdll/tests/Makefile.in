@@ -21,6 +21,7 @@ C_SRCS = \
 	rtlbitmap.c \
 	rtlstr.c \
 	string.c \
+	sync.c \
 	threadpool.c \
 	time.c \
 	virtual.c \
