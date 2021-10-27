@@ -30,6 +30,8 @@
 #include "initguid.h"
 #include "msdasql.h"
 
+#include "msdasql_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msdasql);
 
 DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
@@ -433,10 +435,16 @@ static HRESULT WINAPI dbsess_CreateSession(IDBCreateSession *iface, IUnknown *ou
         IUnknown **session)
 {
     struct msdasql *provider = impl_from_IDBCreateSession(iface);
+    HRESULT hr;
 
-    FIXME("%p, outer %p, riid %s, session %p stub\n", provider, outer, debugstr_guid(riid), session);
+    TRACE("%p, outer %p, riid %s, session %p stub\n", provider, outer, debugstr_guid(riid), session);
 
-    return E_FAIL;
+    if (outer)
+        FIXME("outer currently not supported.\n");
+
+    hr = create_db_session(riid, (void**)session);
+
+    return hr;
 }
 
 static const struct IDBCreateSessionVtbl dbsess_vtbl =

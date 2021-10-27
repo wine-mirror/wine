@@ -4,7 +4,8 @@ IMPORTS   = uuid ole32 oleaut32
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
-	msdasql_main.c
+	msdasql_main.c \
+	session.c
 
 RC_SRCS = msdasql.rc
 
