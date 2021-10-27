@@ -41,7 +41,6 @@
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
-WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static DRIVER_OBJECT *driver_obj;
 
@@ -1045,21 +1044,21 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_WRITE_REPORT:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE_(hid_report)("IOCTL_HID_WRITE_REPORT / IOCTL_HID_SET_OUTPUT_REPORT\n");
+            TRACE("IOCTL_HID_WRITE_REPORT / IOCTL_HID_SET_OUTPUT_REPORT\n");
             unix_device_set_output_report(device, packet, &irp->IoStatus);
             break;
         }
         case IOCTL_HID_GET_FEATURE:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE_(hid_report)("IOCTL_HID_GET_FEATURE\n");
+            TRACE("IOCTL_HID_GET_FEATURE\n");
             unix_device_get_feature_report(device, packet, &irp->IoStatus);
             break;
         }
         case IOCTL_HID_SET_FEATURE:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE_(hid_report)("IOCTL_HID_SET_FEATURE\n");
+            TRACE("IOCTL_HID_SET_FEATURE\n");
             unix_device_set_feature_report(device, packet, &irp->IoStatus);
             break;
         }

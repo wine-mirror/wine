@@ -59,8 +59,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 #ifdef SONAME_LIBSDL2
 
-WINE_DECLARE_DEBUG_CHANNEL(hid_report);
-
 static pthread_mutex_t sdl_cs = PTHREAD_MUTEX_INITIALIZER;
 static struct sdl_bus_options options;
 
@@ -847,7 +845,7 @@ static void process_device_event(SDL_Event *event)
     struct sdl_device *impl;
     SDL_JoystickID id;
 
-    TRACE_(hid_report)("Received action %x\n", event->type);
+    TRACE("Received action %x\n", event->type);
 
     pthread_mutex_lock(&sdl_cs);
 
