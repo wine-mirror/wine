@@ -25,51 +25,19 @@
 
 #include <stdarg.h>
 
-#include <sane/sane.h>
-#include <sane/saneopts.h>
-
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "twain.h"
+#include "unixlib.h"
 
 extern HINSTANCE SANE_instance DECLSPEC_HIDDEN;
 
 #define TWCC_CHECKSTATUS     (TWCC_CUSTOMBASE + 1)
 
-struct frame_parameters
-{
-    enum { FMT_GRAY, FMT_RGB, FMT_OTHER } format;
-    BOOL last_frame;
-    int  bytes_per_line;
-    int  pixels_per_line;
-    int  lines;
-    int  depth;
-};
-
-struct option_descriptor
-{
-    int optno;
-    int size;
-    int is_active;
-    enum { TYPE_BOOL, TYPE_INT, TYPE_FIXED, TYPE_STRING, TYPE_BUTTON, TYPE_GROUP } type;
-    enum { UNIT_NONE, UNIT_PIXEL, UNIT_BIT, UNIT_MM, UNIT_DPI, UNIT_PERCENT, UNIT_MICROSECOND } unit;
-    enum { CONSTRAINT_NONE, CONSTRAINT_RANGE, CONSTRAINT_WORD_LIST, CONSTRAINT_STRING_LIST } constraint_type;
-
-    WCHAR title[256];
-
-    union
-    {
-        WCHAR strings[256];
-        int word_list[256];	/* first element is list-length */
-        struct { int min, max, quant; } range;
-    } constraint;
-};
-
 /* internal information about an active data source */
 struct tagActiveDS
 {
-    struct tagActiveDS	*next;			/* next active DS */
     TW_IDENTITY		identity;		/* identity of the DS */
     TW_UINT16		currentState;		/* current state */
     TW_UINT16		twCC;			/* condition code */
@@ -77,10 +45,7 @@ struct tagActiveDS
     HWND		hwndOwner;		/* window handle of the app */
     HWND		progressWnd;		/* window handle of the scanning window */
 
-    SANE_Handle		deviceHandle;		/* device handle */
     struct frame_parameters frame_params;       /* parameters about the image transferred */
-    BOOL                sane_started;      /* If sane_start has been called */
-    INT                 deviceIndex;    /* index of the current device */
 
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
@@ -235,7 +200,6 @@ HWND ScanningDialogBox(HWND dialog, LONG progress) DECLSPEC_HIDDEN;
 /* Option functions */
 TW_UINT16 sane_option_get_value( int optno, void *val ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload ) DECLSPEC_HIDDEN;
-TW_UINT16 sane_option_get_descriptor( struct option_descriptor *descr ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_get_int( const char *option_name, int *val ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_int( const char *option_name, int val, BOOL *reload ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_get_str( const char *option_name, char *val, int len ) DECLSPEC_HIDDEN;

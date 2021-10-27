@@ -193,16 +193,12 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     }
     case TYPE_FIXED:
     {
-        SANE_Fixed *i;
-        double dd;
         static const WCHAR fmtW[] = {'%','f',0};
-
-        i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
+        int *i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(int));
 
         sane_option_get_value( id - ID_BASE, i );
 
-        dd = SANE_UNFIX(*i);
-        sprintfW(buffer,fmtW,dd);
+        sprintfW(buffer,fmtW, *i / 65536.0);
         HeapFree(GetProcessHeap(),0,i);
 
         switch (opt->constraint_type)
@@ -363,7 +359,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
         int hold_for_group = 0;
 
         opt.optno = i;
-        if (sane_option_get_descriptor( &opt )) continue;
+        if (SANE_CALL( option_get_descriptor, &opt )) continue;
         if (opt.type == TYPE_GROUP && split_tabs)
         {
             if (control_len > 0)
@@ -513,7 +509,7 @@ BOOL DoScannerUI(void)
         psp[page_count].u.pResource = create_options_page(hdc, &index,
                 optcount, TRUE);
         opt.optno = index;
-        sane_option_get_descriptor( &opt );
+        SANE_CALL( option_get_descriptor, &opt );
 
         if (opt.type == TYPE_GROUP)
         {
@@ -593,12 +589,10 @@ static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, i
     case TYPE_FIXED:
     {
         static const WCHAR formatW[] = {'%','f',0};
-        double s_quant, dd;
+        double dd;
 
-        s_quant = SANE_UNFIX(opt->constraint.range.quant);
-
-        if (s_quant)
-            dd = position * s_quant;
+        if (opt->constraint.range.quant)
+            dd = position * (opt->constraint.range.quant / 65536.0);
         else
             dd = position * 0.01;
 
@@ -620,13 +614,12 @@ static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, i
 static BOOL UpdateSaneScrollOption(const struct option_descriptor *opt, DWORD position)
 {
     BOOL result = FALSE;
+    int si;
 
     switch (opt->type)
     {
     case TYPE_INT:
     {
-        int si;
-
         if (opt->constraint.range.quant)
             si = position * opt->constraint.range.quant;
         else
@@ -636,26 +629,13 @@ static BOOL UpdateSaneScrollOption(const struct option_descriptor *opt, DWORD po
         break;
     }
     case TYPE_FIXED:
-    {
-        double s_quant, dd;
-        SANE_Fixed *sf;
-
-        s_quant = SANE_UNFIX(opt->constraint.range.quant);
-
-        if (s_quant)
-            dd = position * s_quant;
+        if (opt->constraint.range.quant)
+            si = position * opt->constraint.range.quant;
         else
-            dd = position * 0.01;
+            si = MulDiv( position, 65536, 100 );
 
-        sf = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(SANE_Word));
-
-        *sf = SANE_FIX(dd);
-
-        sane_option_set_value( opt->optno, sf, &result );
-
-        HeapFree(GetProcessHeap(),0,sf);
+        sane_option_set_value( opt->optno, &si, &result );
         break;
-    }
     default:
         break;
     }
@@ -687,7 +667,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
             continue;
 
         opt.optno = i;
-        sane_option_get_descriptor( &opt );
+        SANE_CALL( option_get_descriptor, &opt );
 
         TRACE("%i %s %i %i\n",i,debugstr_w(opt.title),opt.type,opt.constraint_type);
         EnableWindow(control,opt.is_active);
@@ -750,48 +730,36 @@ static INT_PTR InitializeDialog(HWND hwnd)
             }
             else if (opt.type == TYPE_FIXED)
             {
-                SANE_Fixed *sf;
+                int pos, min, max, *sf;
 
-                double dd;
-                double s_min,s_max,s_quant;
-                INT pos;
-                int min,max;
-
-                s_min = SANE_UNFIX(opt.constraint.range.min);
-                s_max = SANE_UNFIX(opt.constraint.range.max);
-                s_quant = SANE_UNFIX(opt.constraint.range.quant);
-
-                if (s_quant)
+                if (opt.constraint.range.quant)
                 {
-                    min = (s_min / s_quant);
-                    max = (s_max / s_quant);
+                    min = opt.constraint.range.min / opt.constraint.range.quant;
+                    max = opt.constraint.range.max / opt.constraint.range.quant;
                 }
                 else
                 {
-                    min = s_min / 0.01;
-                    max = s_max / 0.01;
+                    min = MulDiv( opt.constraint.range.min, 100, 65536 );
+                    max = MulDiv( opt.constraint.range.max, 100, 65536 );
                 }
 
                 SendMessageA(control,SBM_SETRANGE,min,max);
 
 
-                sf = HeapAlloc(GetProcessHeap(),0,opt.size*sizeof(SANE_Word));
+                sf = HeapAlloc(GetProcessHeap(),0,opt.size*sizeof(int));
                 sane_option_get_value( i, sf );
-
-                dd = SANE_UNFIX(*sf);
-                HeapFree(GetProcessHeap(),0,sf);
 
                 /* Note that conversion of float -> SANE_Fixed is lossy;
                  *   and when you truncate it into an integer, you can get
                  *   unfortunate results.  This calculation attempts
                  *   to mitigate that harm */
-                if (s_quant)
-                    pos = ((dd + (s_quant/2.0)) / s_quant);
+                if (opt.constraint.range.quant)
+                    pos = *sf / opt.constraint.range.quant;
                 else
-                    pos = (dd + 0.005) / 0.01;
+                    pos = MulDiv( *sf, 100, 65536 );
 
+                HeapFree(GetProcessHeap(),0,sf);
                 SendMessageW(control, SBM_SETPOS, pos, TRUE);
-                
                 UpdateRelevantEdit(hwnd, &opt, pos);
             }
         }
@@ -810,7 +778,7 @@ static INT_PTR ProcessScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (opt.optno < 0)
         return FALSE;
 
-    if (sane_option_get_descriptor( &opt )) return FALSE;
+    if (SANE_CALL( option_get_descriptor, &opt )) return FALSE;
 
     scroll = LOWORD(wParam);
 
@@ -862,7 +830,7 @@ static void ButtonClicked(HWND hwnd, INT id, HWND control)
     if (opt.optno < 0)
         return;
 
-    if (sane_option_get_descriptor( &opt )) return;
+    if (SANE_CALL( option_get_descriptor, &opt )) return;
 
     if (opt.type == TYPE_BOOL)
     {
@@ -877,14 +845,14 @@ static void ComboChanged(HWND hwnd, INT id, HWND control)
     int selection;
     int len;
     struct option_descriptor opt;
-    SANE_String value;
+    char *value;
     BOOL changed = FALSE;
 
     opt.optno = id - ID_BASE;
     if (opt.optno < 0)
         return;
 
-    if (sane_option_get_descriptor( &opt )) return;
+    if (SANE_CALL( option_get_descriptor, &opt )) return;
 
     selection = SendMessageW(control,CB_GETCURSEL,0,0);
     len = SendMessageW(control,CB_GETLBTEXTLEN,selection,0);

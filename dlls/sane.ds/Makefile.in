@@ -1,4 +1,5 @@
 MODULE    = sane.ds
+UNIXLIB   = sane.so
 IMPORTS   = comctl32 user32 gdi32
 EXTRALIBS = $(SANE_LIBS)
 EXTRAINCL = $(SANE_CFLAGS)
@@ -11,6 +12,7 @@ C_SRCS = \
 	ds_image.c \
 	options.c \
 	sane_main.c \
-	ui.c
+	ui.c \
+	unixlib.c
 
 RC_SRCS = sane.rc

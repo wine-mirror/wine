@@ -28,16 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-#ifndef SANE_VALUE_SCAN_MODE_COLOR
-#define SANE_VALUE_SCAN_MODE_COLOR		SANE_I18N("Color")
-#endif
-#ifndef SANE_VALUE_SCAN_MODE_GRAY
-#define SANE_VALUE_SCAN_MODE_GRAY		SANE_I18N("Gray")
-#endif
-#ifndef SANE_VALUE_SCAN_MODE_LINEART
-#define SANE_VALUE_SCAN_MODE_LINEART		SANE_I18N("Lineart")
-#endif
-
 static TW_UINT16 get_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 *type, TW_UINT32 *value)
 {
     if (pCapability->hContainer)
@@ -271,19 +261,19 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
     return twCC;
 }
 
-static BOOL pixeltype_to_sane_mode(TW_UINT16 pixeltype, SANE_String mode, int len)
+static BOOL pixeltype_to_sane_mode(TW_UINT16 pixeltype, char *mode, int len)
 {
-    SANE_String_Const m = NULL;
+    const char *m = NULL;
     switch (pixeltype)
     {
         case TWPT_GRAY:
-            m = SANE_VALUE_SCAN_MODE_GRAY;
+            m = "Gray";
             break;
         case TWPT_RGB:
-            m = SANE_VALUE_SCAN_MODE_COLOR;
+            m = "Color";
             break;
         case TWPT_BW:
-            m = SANE_VALUE_SCAN_MODE_LINEART;
+            m = "Lineart";
             break;
     }
     if (! m)
@@ -303,7 +293,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
     TW_UINT32 val;
     BOOL reload = FALSE;
     TW_UINT16 current_pixeltype = TWPT_BW;
-    SANE_Char mode[64];
+    char mode[64];
 
     TRACE("ICAP_PIXELTYPE\n");
 
@@ -344,7 +334,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
 
                 twCC = sane_option_set_str("mode", mode, &reload);
                 /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
-                if (twCC != TWCC_SUCCESS && strcmp(mode, SANE_VALUE_SCAN_MODE_GRAY) == 0)
+                if (twCC != TWCC_SUCCESS && strcmp(mode, "Gray") == 0)
                 {
                     strcpy(mode, "Grayscale");
                     twCC = sane_option_set_str("mode", mode, &reload);
@@ -364,7 +354,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
 
             twCC = sane_option_set_str("mode", mode, &reload);
             /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
-            if (twCC != TWCC_SUCCESS && strcmp(mode, SANE_VALUE_SCAN_MODE_GRAY) == 0)
+            if (twCC != TWCC_SUCCESS && strcmp(mode, "Gray") == 0)
             {
                 strcpy(mode, "Grayscale");
                 twCC = sane_option_set_str("mode", mode, &reload);
@@ -868,7 +858,7 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
     TW_UINT32 val;
-    SANE_Bool autofeed;
+    BOOL autofeed;
 
     TRACE("CAP_AUTOFEED\n");
 
@@ -889,22 +879,15 @@ static TW_UINT16 SANE_CAPAutofeed (pTW_CAPABILITY pCapability, TW_UINT16 action)
         case MSG_SET:
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
-            {
-                if (val)
-                    autofeed = SANE_TRUE;
-                else
-                    autofeed = SANE_FALSE;
-
-                twCC = sane_option_set_bool("batch-scan", autofeed);
-            }
+                twCC = sane_option_set_bool("batch-scan", !!val);
             break;
 
         case MSG_GETDEFAULT:
-            twCC = set_onevalue(pCapability, TWTY_BOOL, SANE_TRUE);
+            twCC = set_onevalue(pCapability, TWTY_BOOL, TRUE);
             break;
 
         case MSG_RESET:
-            autofeed = SANE_TRUE;
+            autofeed = TRUE;
             twCC = sane_option_set_bool("batch-scan", autofeed);
             if (twCC != TWCC_SUCCESS) break;
             /* .. fall through intentional .. */
@@ -922,11 +905,11 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
     TW_UINT16 twCC = TWCC_BADCAP;
     TW_UINT32 val;
     TW_BOOL enabled;
-    SANE_Char source[64];
+    char source[64];
 
     TRACE("CAP_FEEDERENABLED\n");
 
-    if (sane_option_get_str(SANE_NAME_SCAN_SOURCE, source, sizeof(source)) != TWCC_SUCCESS)
+    if (sane_option_get_str("source", source, sizeof(source)) != TWCC_SUCCESS)
         return TWCC_BADCAP;
 
     if (strcmp(source, "Auto") == 0 || strcmp(source, "ADF") == 0)
@@ -950,11 +933,11 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
             if (twCC == TWCC_SUCCESS)
             {
                 strcpy(source, "ADF");
-                twCC = sane_option_set_str(SANE_NAME_SCAN_SOURCE, source, NULL);
+                twCC = sane_option_set_str("source", source, NULL);
                 if (twCC != TWCC_SUCCESS)
                 {
                     strcpy(source, "Auto");
-                    twCC = sane_option_set_str(SANE_NAME_SCAN_SOURCE, source, NULL);
+                    twCC = sane_option_set_str("source", source, NULL);
                 }
             }
             break;
@@ -965,7 +948,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
 
         case MSG_RESET:
             strcpy(source, "Auto");
-            if (sane_option_set_str(SANE_NAME_SCAN_SOURCE, source, NULL) == TWCC_SUCCESS)
+            if (sane_option_set_str("source", source, NULL) == TWCC_SUCCESS)
                 enabled = TRUE;
             /* .. fall through intentional .. */
 

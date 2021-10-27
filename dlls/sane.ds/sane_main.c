@@ -33,6 +33,7 @@ struct tagActiveDS activeDS;
 
 DSMENTRYPROC SANE_dsmentry;
 HINSTANCE SANE_instance;
+unixlib_handle_t sane_handle = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -41,25 +42,55 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH: {
-	    SANE_Int version_code;
-
-	    sane_init (&version_code, NULL);
 	    SANE_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
+            if (NtQueryVirtualMemory( GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
+                                      &sane_handle, sizeof(sane_handle), NULL )) return FALSE;
+            SANE_CALL( process_attach, NULL );
             break;
 	}
         case DLL_PROCESS_DETACH:
             if (lpvReserved) break;
-            TRACE("calling sane_exit()\n");
-	    sane_exit ();
+            SANE_CALL( process_detach, NULL );
             break;
     }
 
     return TRUE;
 }
 
-static TW_UINT16 SANE_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
-static TW_UINT16 SANE_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
+static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
+{
+    struct open_ds_params params = { self };
+
+    if (SANE_dsmentry == NULL)
+    {
+        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
+        HMODULE moddsm = GetModuleHandleW(twain32W);
+
+        if (moddsm)
+            SANE_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
+
+        if (!SANE_dsmentry)
+        {
+            ERR("can't find DSM entry point\n");
+            return TWRC_FAILURE;
+        }
+    }
+
+    if (SANE_CALL( open_ds, &params )) return TWRC_FAILURE;
+
+    activeDS.twCC = SANE_SaneSetDefaults();
+    if (activeDS.twCC == TWCC_SUCCESS)
+    {
+        activeDS.currentState = 4;
+        activeDS.identity.Id = self->Id;
+        activeDS.appIdentity = *pOrigin;
+        return TWRC_SUCCESS;
+    }
+    SANE_CALL( close_ds, NULL );
+    return TWRC_FAILURE;
+}
+
 static TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData);
 
 static TW_UINT16 SANE_SourceControlHandler (
@@ -76,14 +107,21 @@ static TW_UINT16 SANE_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-		     sane_close (activeDS.deviceHandle);
-		     break;
+                    SANE_CALL( close_ds, NULL );
+                    break;
 		case MSG_OPENDS:
 		     twRC = SANE_OpenDS( pOrigin, (pTW_IDENTITY)pData);
 		     break;
 		case MSG_GET:
-		     twRC = SANE_GetIdentity( pOrigin, (pTW_IDENTITY)pData);
-		     break;
+                {
+                    struct get_identity_params params = { pData };
+                    if (SANE_CALL( get_identity, &params ))
+                    {
+                        activeDS.twCC = TWCC_CAPUNSUPPORTED;
+                        twRC = TWRC_FAILURE;
+                    }
+                    break;
+                }
 	    }
 	    break;
         case DAT_CAPABILITY:
@@ -338,131 +376,4 @@ TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     SANE_dsmentry = entry->DSM_Entry;
 
     return TWRC_SUCCESS;
-}
-
-/* Sane returns device names that are longer than the 32 bytes allowed
-   by TWAIN.  However, it colon separates them, and the last bit is
-   the most interesting.  So we use the last bit, and add a signature
-   to ensure uniqueness */
-static void copy_sane_short_name(const char *in, char *out, size_t outsize)
-{
-    const char *p;
-    int  signature = 0;
-
-    if (strlen(in) <= outsize - 1)
-    {
-        strcpy(out, in);
-        return;
-    }
-
-    for (p = in; *p; p++)
-        signature += *p;
-
-    p = strrchr(in, ':');
-    if (!p)
-        p = in;
-    else
-        p++;
-
-    if (strlen(p) > outsize - 7 - 1)
-        p += strlen(p) - (outsize - 7 - 1);
-
-    strcpy(out, p);
-    sprintf(out + strlen(out), "(%04X)", signature % 0x10000);
-
-}
-
-static const SANE_Device **sane_devlist;
-
-static void
-detect_sane_devices(void) {
-    if (sane_devlist && sane_devlist[0]) return;
-    TRACE("detecting sane...\n");
-    if (sane_get_devices (&sane_devlist, SANE_FALSE) != SANE_STATUS_GOOD)
-	return;
-}
-
-static TW_UINT16
-SANE_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
-    static int cursanedev = 0;
-
-    detect_sane_devices();
-    if (!sane_devlist[cursanedev])
-	return TWRC_FAILURE;
-    self->ProtocolMajor = TWON_PROTOCOLMAJOR;
-    self->ProtocolMinor = TWON_PROTOCOLMINOR;
-    self->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
-    copy_sane_short_name(sane_devlist[cursanedev]->name, self->ProductName, sizeof(self->ProductName) - 1);
-    lstrcpynA (self->Manufacturer, sane_devlist[cursanedev]->vendor, sizeof(self->Manufacturer) - 1);
-    lstrcpynA (self->ProductFamily, sane_devlist[cursanedev]->model, sizeof(self->ProductFamily) - 1);
-    cursanedev++;
-
-    if (!sane_devlist[cursanedev] 		||
-	!sane_devlist[cursanedev]->model	||
-	!sane_devlist[cursanedev]->vendor	||
-	!sane_devlist[cursanedev]->name
-    )
-	cursanedev = 0; /* wrap to begin */
-    return TWRC_SUCCESS;
-}
-
-static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
-    SANE_Status status;
-    int i;
-
-    if (SANE_dsmentry == NULL)
-    {
-        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
-        HMODULE moddsm = GetModuleHandleW(twain32W);
-
-        if (moddsm)
-            SANE_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
-
-        if (!SANE_dsmentry)
-        {
-            ERR("can't find DSM entry point\n");
-            return TWRC_FAILURE;
-        }
-    }
-
-    detect_sane_devices();
-    if (!sane_devlist[0]) {
-	ERR("No scanners? We should not get to OpenDS?\n");
-	return TWRC_FAILURE;
-    }
-
-    for (i=0; sane_devlist[i] && sane_devlist[i]->model; i++) {
-	TW_STR32 name;
-
-	/* To make string as short as above */
-	lstrcpynA(name, sane_devlist[i]->vendor, sizeof(name)-1);
-	if (*self->Manufacturer && strcmp(name, self->Manufacturer))
-	    continue;
-	lstrcpynA(name, sane_devlist[i]->model, sizeof(name)-1);
-	if (*self->ProductFamily && strcmp(name, self->ProductFamily))
-	    continue;
-        copy_sane_short_name(sane_devlist[i]->name, name, sizeof(name) - 1);
-	if (*self->ProductName && strcmp(name, self->ProductName))
-	    continue;
-	break;
-    }
-    if (!sane_devlist[i]) {
-	WARN("Scanner not found.\n");
-	return TWRC_FAILURE;
-    }
-    status = sane_open(sane_devlist[i]->name,&activeDS.deviceHandle);
-    if (status == SANE_STATUS_GOOD) {
-        activeDS.twCC = SANE_SaneSetDefaults();
-        if (activeDS.twCC == TWCC_SUCCESS) {
-	    activeDS.currentState = 4;
-            activeDS.identity.Id = self->Id;
-            activeDS.appIdentity = *pOrigin;
-	    return TWRC_SUCCESS;
-        }
-        else
-            sane_close(activeDS.deviceHandle);
-    }
-    else
-        ERR("sane_open(%s): %s\n", sane_devlist[i]->name, sane_strstatus (status));
-    return TWRC_FAILURE;
 }
