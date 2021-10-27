@@ -75,7 +75,7 @@
  85 cdecl ldap_compare_ext_sW(ptr wstr wstr wstr ptr ptr ptr)
  86 cdecl ldap_compare_sA(ptr str str str)
  87 cdecl ldap_compare_sW(ptr wstr wstr wstr)
- 88 cdecl ldap_connect(ptr ptr)
+ 88 cdecl ldap_connect(ptr ptr) WLDAP32_ldap_connect
  89 cdecl ldap_control_free(ptr) ldap_control_freeA
  90 cdecl ldap_control_freeA(ptr)
  91 cdecl ldap_control_freeW(ptr)

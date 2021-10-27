@@ -322,7 +322,7 @@ exit:
  *  The timeout parameter may be NULL in which case a default timeout
  *  value will be used.
  */
-ULONG CDECL ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
+ULONG CDECL WLDAP32_ldap_connect( WLDAP32_LDAP *ld, struct l_timeval *timeout )
 {
     TRACE( "(%p, %p)\n", ld, timeout );
 
