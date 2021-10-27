@@ -8781,32 +8781,7 @@ fi
 $as_echo "$ac_cv_cflags__Wl__no_new_main__e__main" >&6; }
 if test "x$ac_cv_cflags__Wl__no_new_main__e__main" = xyes; then :
   WINEPRELOADER_LDFLAGS="-Wl,-no_new_main $WINEPRELOADER_LDFLAGS"
-                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -nostartfiles -nodefaultlibs" >&5
-$as_echo_n "checking whether the compiler supports -Wl,-no_new_main -e _main -nostartfiles -nodefaultlibs... " >&6; }
-if ${ac_cv_cflags__Wl__no_new_main__e__main__nostartfiles__nodefaultlibs+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-no_new_main -e _main -nostartfiles -nodefaultlibs"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wl__no_new_main__e__main__nostartfiles__nodefaultlibs=yes
-else
-  ac_cv_cflags__Wl__no_new_main__e__main__nostartfiles__nodefaultlibs=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_new_main__e__main__nostartfiles__nodefaultlibs" >&5
-$as_echo "$ac_cv_cflags__Wl__no_new_main__e__main__nostartfiles__nodefaultlibs" >&6; }
-if test "x$ac_cv_cflags__Wl__no_new_main__e__main__nostartfiles__nodefaultlibs" = xyes; then :
-  EXTRACFLAGS="$EXTRACFLAGS -Wl,-no_new_main -e _main -nostartfiles -nodefaultlibs"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
 if ${ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -8833,32 +8808,6 @@ if test "x$ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nos
 else
   wine_can_build_preloader=no
 fi
-fi
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -nostartfiles -nodefaultlibs" >&5
-$as_echo_n "checking whether the compiler supports -nostartfiles -nodefaultlibs... " >&6; }
-if ${ac_cv_cflags__nostartfiles__nodefaultlibs+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__nostartfiles__nodefaultlibs=yes
-else
-  ac_cv_cflags__nostartfiles__nodefaultlibs=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__nostartfiles__nodefaultlibs" >&5
-$as_echo "$ac_cv_cflags__nostartfiles__nodefaultlibs" >&6; }
-if test "x$ac_cv_cflags__nostartfiles__nodefaultlibs" = xyes; then :
-  EXTRACFLAGS="$EXTRACFLAGS -nostartfiles -nodefaultlibs"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
 $as_echo_n "checking whether the compiler supports -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
@@ -8886,7 +8835,6 @@ if test "x$ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" 
   WINEPRELOADER_LDFLAGS="-mmacosx-version-min=10.7 $WINEPRELOADER_LDFLAGS"
 else
   wine_can_build_preloader=no
-fi
 fi
 fi
     if test "$wine_can_build_preloader" = "yes"
