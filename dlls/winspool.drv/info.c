@@ -126,37 +126,6 @@ static opened_printer_t **printer_handles;
 static UINT nb_printer_handles;
 static LONG next_job_id = 1;
 
-static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
-                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'c','o','n','t','r','o','l','\\',
-                                  'P','r','i','n','t','\\',
-                                  'E','n','v','i','r','o','n','m','e','n','t','s','\\',
-                                  '%','s','\\','D','r','i','v','e','r','s','%','s',0 };
-
-static const WCHAR PrintersW[] = {'S','y','s','t','e','m','\\',
-                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'C','o','n','t','r','o','l','\\',
-                                  'P','r','i','n','t','\\',
-                                  'P','r','i','n','t','e','r','s',0};
-
-static const WCHAR user_default_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
-                                              'M','i','c','r','o','s','o','f','t','\\',
-                                              'W','i','n','d','o','w','s',' ','N','T','\\',
-                                              'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                              'W','i','n','d','o','w','s',0};
-
-static const WCHAR user_printers_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
-                                               'M','i','c','r','o','s','o','f','t','\\',
-                                               'W','i','n','d','o','w','s',' ','N','T','\\',
-                                               'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                               'D','e','v','i','c','e','s',0};
-
-static const WCHAR WinNT_CV_PrinterPortsW[] = { 'S','o','f','t','w','a','r','e','\\',
-                                                'M','i','c','r','o','s','o','f','t','\\',
-                                                'W','i','n','d','o','w','s',' ','N','T','\\',
-                                                'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                                'P','r','i','n','t','e','r','P','o','r','t','s',0};
-
 static       WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
 static const WCHAR envname_x64W[] =   {'W','i','n','d','o','w','s',' ','x','6','4',0};
 static       WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
@@ -456,17 +425,18 @@ static HKEY WINSPOOL_OpenDriverReg(const void *pEnvironment)
     LPWSTR buffer;
     const printenv_t *env;
     unsigned int len;
+    static const WCHAR driver_fmt[] = L"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers%s";
 
     TRACE("(%s)\n", debugstr_w(pEnvironment));
 
     env = validate_envW(pEnvironment);
     if (!env) return NULL;
 
-    len = wcslen( DriversW ) + wcslen( env->envname ) + wcslen( env->versionregpath ) + 1;
+    len = ARRAY_SIZE( driver_fmt ) + wcslen( env->envname ) + wcslen( env->versionregpath );
     buffer = heap_alloc( len * sizeof(WCHAR) );
     if (buffer)
     {
-        swprintf( buffer, len, DriversW, env->envname, env->versionregpath );
+        swprintf( buffer, len, driver_fmt, env->envname, env->versionregpath );
         RegCreateKeyW( HKEY_LOCAL_MACHINE, buffer, &retval );
         heap_free( buffer );
     }
@@ -652,13 +622,37 @@ static HANDLE get_backend_handle( HANDLE hprn )
     return printer->backend_printer;
 }
 
+enum printers_key
+{
+    system_printers_key,
+    user_printers_key,
+    user_ports_key,
+    user_default_key,
+};
+
+static DWORD create_printers_reg_key( enum printers_key type, HKEY *key )
+{
+    switch( type )
+    {
+    case system_printers_key:
+        return RegCreateKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Print\\Printers", key );
+    case user_printers_key:
+        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices", key );
+    case user_ports_key:
+        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\PrinterPorts", key );
+    case user_default_key:
+        return RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows", key );
+    }
+    return ERROR_PATH_NOT_FOUND;
+}
+
 static DWORD open_printer_reg_key( const WCHAR *name, HKEY *key )
 {
     HKEY printers;
     DWORD err;
 
     *key = NULL;
-    err = RegCreateKeyW( HKEY_LOCAL_MACHINE, PrintersW, &printers );
+    err = create_printers_reg_key( system_printers_key, &printers );
     if (err) return err;
 
     err = RegOpenKeyW( printers, name, key );
@@ -810,7 +804,7 @@ static BOOL init_unix_printers( void )
     NTSTATUS status;
     int i;
 
-    if (RegCreateKeyW( HKEY_LOCAL_MACHINE, PrintersW, &printers_key ) != ERROR_SUCCESS)
+    if (create_printers_reg_key( system_printers_key, &printers_key ))
     {
         ERR( "Can't create Printers key\n" );
         return FALSE;
@@ -1207,7 +1201,7 @@ static HANDLE init_mutex;
 
 void WINSPOOL_LoadSystemPrinters(void)
 {
-    HKEY                hkey, hkeyPrinters;
+    HKEY printers_key, printer_key;
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
 
@@ -1229,21 +1223,18 @@ void WINSPOOL_LoadSystemPrinters(void)
     /* This ensures that all printer entries have a valid Name value.  If causes
        problems later if they don't.  If one is found to be missed we create one
        and set it equal to the name of the key */
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
-        if(RegQueryInfoKeyW(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
-                            NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
-            for(i = 0; i < num; i++) {
-                if(RegEnumKeyW(hkeyPrinters, i, PrinterName, ARRAY_SIZE(PrinterName)) == ERROR_SUCCESS) {
-                    if(RegOpenKeyW(hkeyPrinters, PrinterName, &hkey) == ERROR_SUCCESS) {
-                        if(RegQueryValueExW(hkey, NameW, 0, 0, 0, &needed) == ERROR_FILE_NOT_FOUND) {
-                            set_reg_szW(hkey, NameW, PrinterName);
-                        }
-                        RegCloseKey(hkey);
+    if (!create_printers_reg_key( system_printers_key, &printers_key ))
+    {
+        if (!RegQueryInfoKeyW( printers_key, NULL, NULL, NULL, &num, NULL, NULL, NULL, NULL, NULL, NULL, NULL ))
+            for (i = 0; i < num; i++)
+                if (!RegEnumKeyW( printers_key, i, PrinterName, ARRAY_SIZE(PrinterName) ))
+                    if (!RegOpenKeyW( printers_key, PrinterName, &printer_key ))
+                    {
+                        if (RegQueryValueExW( printer_key, NameW, 0, 0, 0, &needed ) == ERROR_FILE_NOT_FOUND)
+                            set_reg_szW( printer_key, NameW, PrinterName );
+                        RegCloseKey( printer_key );
                     }
-                }
-            }
-        }
-        RegCloseKey(hkeyPrinters);
+        RegCloseKey( printers_key );
     }
 
     old_printer_check( FALSE );
@@ -2684,7 +2675,7 @@ static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
 {
     DWORD portlen = wcslen( pi->pPortName ) * sizeof(WCHAR);
     WCHAR *devline;
-    HKEY  hkey;
+    HKEY key;
 
     TRACE("(%p) %s\n", pi, debugstr_w(pi->pPrinterName));
 
@@ -2697,17 +2688,19 @@ static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
         wcscat( devline, pi->pPortName );
 
         TRACE("using %s\n", debugstr_w(devline));
-        if (!RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey)) {
-            RegSetValueExW(hkey, pi->pPrinterName, 0, REG_SZ, (LPBYTE)devline,
-                            (wcslen( devline ) + 1) * sizeof(WCHAR));
-            RegCloseKey(hkey);
+        if (!create_printers_reg_key( user_printers_key, &key ))
+        {
+            RegSetValueExW( key, pi->pPrinterName, 0, REG_SZ, (BYTE *)devline,
+                            (wcslen( devline ) + 1) * sizeof(WCHAR) );
+            RegCloseKey( key );
         }
 
         wcscat( devline, timeout_15_45 );
-        if (!RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey)) {
-            RegSetValueExW(hkey, pi->pPrinterName, 0, REG_SZ, (LPBYTE)devline,
-                            (wcslen( devline ) + 1) * sizeof(WCHAR));
-            RegCloseKey(hkey);
+        if (!create_printers_reg_key( user_ports_key, &key ))
+        {
+            RegSetValueExW( key, pi->pPrinterName, 0, REG_SZ, (BYTE *)devline,
+                            (wcslen( devline ) + 1) * sizeof(WCHAR) );
+            RegCloseKey( key );
         }
         HeapFree(GetProcessHeap(), 0, devline);
     }
@@ -2721,7 +2714,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     PRINTER_INFO_2W *pi = (PRINTER_INFO_2W *) pPrinter;
     LPDEVMODEW dm;
     HANDLE retval;
-    HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
+    HKEY hkeyPrinter, printers_key, hkeyDriver, hkeyDrivers;
     LONG size;
 
     TRACE("(%s,%d,%p)\n", debugstr_w(pName), Level, pPrinter);
@@ -2740,16 +2733,17 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
         SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
+    if (create_printers_reg_key( system_printers_key, &printers_key ))
+    {
         ERR("Can't create Printers key\n");
 	return 0;
     }
-    if(!RegOpenKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter)) {
+    if (!RegOpenKeyW( printers_key, pi->pPrinterName, &hkeyPrinter ))
+    {
 	if (!RegQueryValueW(hkeyPrinter, AttributesW, NULL, NULL)) {
 	    SetLastError(ERROR_PRINTER_ALREADY_EXISTS);
 	    RegCloseKey(hkeyPrinter);
-	    RegCloseKey(hkeyPrinters);
+	    RegCloseKey( printers_key );
 	    return 0;
 	}
 	RegCloseKey(hkeyPrinter);
@@ -2757,13 +2751,13 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     hkeyDrivers = WINSPOOL_OpenDriverReg(NULL);
     if(!hkeyDrivers) {
         ERR("Can't create Drivers key\n");
-	RegCloseKey(hkeyPrinters);
+	RegCloseKey( printers_key );
 	return 0;
     }
     if(RegOpenKeyW(hkeyDrivers, pi->pDriverName, &hkeyDriver) !=
        ERROR_SUCCESS) {
         WARN("Can't find driver %s\n", debugstr_w(pi->pDriverName));
-	RegCloseKey(hkeyPrinters);
+	RegCloseKey( printers_key );
 	RegCloseKey(hkeyDrivers);
 	SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
 	return 0;
@@ -2775,15 +2769,15 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     {
         FIXME("Can't find processor %s\n", debugstr_w(pi->pPrintProcessor));
 	SetLastError(ERROR_UNKNOWN_PRINTPROCESSOR);
-	RegCloseKey(hkeyPrinters);
+	RegCloseKey( printers_key );
 	return 0;
     }
 
-    if(RegCreateKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter) !=
-       ERROR_SUCCESS) {
+    if (RegCreateKeyW( printers_key, pi->pPrinterName, &hkeyPrinter ))
+    {
         FIXME("Can't create printer %s\n", debugstr_w(pi->pPrinterName));
 	SetLastError(ERROR_INVALID_PRINTER_NAME);
-	RegCloseKey(hkeyPrinters);
+	RegCloseKey( printers_key );
 	return 0;
     }
 
@@ -2839,7 +2833,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     if (!pi->pDevMode) HeapFree( GetProcessHeap(), 0, dm );
 
     RegCloseKey(hkeyPrinter);
-    RegCloseKey(hkeyPrinters);
+    RegCloseKey( printers_key );
     if(!OpenPrinterW(pi->pPrinterName, &retval, NULL)) {
         ERR("OpenPrinter failing\n");
 	return 0;
@@ -2959,7 +2953,7 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 {
     LPCWSTR lpNameW = get_opened_printer_name(hPrinter);
     config_module_t *config_module;
-    HKEY hkeyPrinters, hkey;
+    HKEY key;
     WCHAR def[MAX_PATH];
     DWORD size = ARRAY_SIZE(def);
 
@@ -2975,27 +2969,30 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
     }
     LeaveCriticalSection(&config_modules_cs);
 
-    if(RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
-        RegDeleteTreeW(hkeyPrinters, lpNameW);
-        RegCloseKey(hkeyPrinters);
+    if (!create_printers_reg_key( system_printers_key, &key ))
+    {
+        RegDeleteTreeW( key, lpNameW );
+        RegCloseKey( key );
     }
 
-    if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
-        RegDeleteValueW(hkey, lpNameW);
-        RegCloseKey(hkey);
+    if (!create_printers_reg_key( user_printers_key, &key ))
+    {
+        RegDeleteValueW( key, lpNameW );
+        RegCloseKey( key );
     }
 
-    if(RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey) == ERROR_SUCCESS) {
-        RegDeleteValueW(hkey, lpNameW);
-        RegCloseKey(hkey);
+    if (!create_printers_reg_key( user_ports_key, &key ))
+    {
+        RegDeleteValueW( key, lpNameW );
+        RegCloseKey( key );
     }
 
     if (GetDefaultPrinterW( def, &size ) && !wcscmp( def, lpNameW ))
     {
-        if (!RegCreateKeyW( HKEY_CURRENT_USER, user_default_reg_key, &hkey ))
+        if (!create_printers_reg_key( user_default_key, &key ))
         {
-            RegDeleteValueW( hkey, deviceW );
-            RegCloseKey( hkey );
+            RegDeleteValueW( key, deviceW );
+            RegCloseKey( key );
         }
         SetDefaultPrinterW( NULL );
     }
@@ -4222,7 +4219,7 @@ static BOOL WINSPOOL_EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 				  LPDWORD lpdwReturned)
 
 {
-    HKEY hkeyPrinters, hkeyPrinter;
+    HKEY printers_key, hkeyPrinter;
     WCHAR PrinterName[255];
     DWORD needed = 0, number = 0;
     DWORD used, i, left;
@@ -4255,15 +4252,15 @@ static BOOL WINSPOOL_EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 	return FALSE;
     }
 
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
-       ERROR_SUCCESS) {
+    if (create_printers_reg_key( system_printers_key, &printers_key ))
+    {
         ERR("Can't create Printers key\n");
 	return FALSE;
     }
 
-    if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &number, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
-        RegCloseKey(hkeyPrinters);
+    if (RegQueryInfoKeyA( printers_key, NULL, NULL, NULL, &number, NULL, NULL, NULL, NULL, NULL, NULL, NULL ))
+    {
+        RegCloseKey( printers_key );
 	ERR("Can't query Printers key\n");
 	return FALSE;
     }
@@ -4285,22 +4282,23 @@ static BOOL WINSPOOL_EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 
     default:
         SetLastError(ERROR_INVALID_LEVEL);
-	RegCloseKey(hkeyPrinters);
+	RegCloseKey( printers_key );
 	return FALSE;
     }
     pi = (used <= cbBuf) ? lpbPrinters : NULL;
 
     for(i = 0; i < number; i++) {
-        if(RegEnumKeyW(hkeyPrinters, i, PrinterName, ARRAY_SIZE(PrinterName)) != ERROR_SUCCESS) {
+        if (RegEnumKeyW( printers_key, i, PrinterName, ARRAY_SIZE(PrinterName) ))
+        {
 	    ERR("Can't enum key number %d\n", i);
-	    RegCloseKey(hkeyPrinters);
+	    RegCloseKey( printers_key );
 	    return FALSE;
 	}
 	TRACE("Printer %d is %s\n", i, debugstr_w(PrinterName));
-	if(RegOpenKeyW(hkeyPrinters, PrinterName, &hkeyPrinter) !=
-	   ERROR_SUCCESS) {
+	if (RegOpenKeyW( printers_key, PrinterName, &hkeyPrinter ))
+        {
 	    ERR("Can't open key %s\n", debugstr_w(PrinterName));
-	    RegCloseKey(hkeyPrinters);
+	    RegCloseKey( printers_key );
 	    return FALSE;
 	}
 
@@ -4340,12 +4338,12 @@ static BOOL WINSPOOL_EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 	default:
 	    ERR("Shouldn't be here!\n");
 	    RegCloseKey(hkeyPrinter);
-	    RegCloseKey(hkeyPrinters);
+	    RegCloseKey( printers_key );
 	    return FALSE;
 	}
 	RegCloseKey(hkeyPrinter);
     }
-    RegCloseKey(hkeyPrinters);
+    RegCloseKey( printers_key );
 
     if(lpdwNeeded)
         *lpdwNeeded = used;
@@ -5609,16 +5607,16 @@ BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
 
         pszPrinter = NULL;
         /* we have no default Printer: search local Printers and use the first */
-        if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, PrintersW, 0, KEY_READ, &hreg)) {
-
+        if (!create_printers_reg_key( system_printers_key, &hreg ))
+        {
             default_printer[0] = '\0';
             size = ARRAY_SIZE(default_printer);
-            if (!RegEnumKeyExW(hreg, 0, default_printer, &size, NULL, NULL, NULL, NULL)) {
-
+            if (!RegEnumKeyExW( hreg, 0, default_printer, &size, NULL, NULL, NULL, NULL ))
+            {
                 pszPrinter = default_printer;
                 TRACE("using %s\n", debugstr_w(pszPrinter));
             }
-            RegCloseKey(hreg);
+            RegCloseKey( hreg );
         }
 
         if (pszPrinter == NULL) {
@@ -5632,8 +5630,8 @@ BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
     namelen = wcslen( pszPrinter );
     size = namelen + (MAX_PATH * 2) + 3; /* printer,driver,port and a 0 */
     buffer = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-    if (!buffer ||
-        (RegOpenKeyExW(HKEY_CURRENT_USER, user_printers_reg_key, 0, KEY_READ, &hreg) != ERROR_SUCCESS)) {
+    if (!buffer || create_printers_reg_key( user_printers_key, &hreg ))
+    {
         HeapFree(GetProcessHeap(), 0, buffer);
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
@@ -5650,7 +5648,7 @@ BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
     if (!lres) {
         HKEY hdev;
 
-        if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hdev))
+        if (!create_printers_reg_key( user_default_key, &hdev ))
         {
             RegSetValueExW(hdev, deviceW, 0, REG_SZ, (BYTE *)buffer, (wcslen( buffer ) + 1) * sizeof(WCHAR));
             RegCloseKey(hdev);
@@ -5777,7 +5775,7 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
 {
     opened_printer_t *printer;
-    HKEY hkeyPrinters, hkeyPrinter = 0, hkeySubkey = 0;
+    HKEY printers_key, hkeyPrinter = 0, hkeySubkey = 0;
     DWORD ret;
 
     TRACE("(%p, %s, %s, %p, %p, %u, %p)\n", hPrinter, debugstr_a(pKeyName),
@@ -5786,34 +5784,35 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     printer = get_opened_printer(hPrinter);
     if(!printer) return ERROR_INVALID_HANDLE;
 
-    ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters);
+    ret = create_printers_reg_key( system_printers_key, &printers_key );
     if (ret) return ret;
 
     TRACE("printer->name: %s\n", debugstr_w(printer->name));
 
     if (printer->name) {
 
-        ret = RegOpenKeyW(hkeyPrinters, printer->name, &hkeyPrinter);
-        if (ret) {
-            RegCloseKey(hkeyPrinters);
+        ret = RegOpenKeyW( printers_key, printer->name, &hkeyPrinter );
+        if (ret)
+        {
+            RegCloseKey( printers_key );
             return ret;
         }
         if((ret = RegOpenKeyA(hkeyPrinter, pKeyName, &hkeySubkey)) != ERROR_SUCCESS) {
             WARN("Can't open subkey %s: %d\n", debugstr_a(pKeyName), ret);
             RegCloseKey(hkeyPrinter);
-            RegCloseKey(hkeyPrinters);
+            RegCloseKey( printers_key );
             return ret;
         }
     }
     *pcbNeeded = nSize;
-    ret = RegQueryValueExA(printer->name ? hkeySubkey : hkeyPrinters, pValueName,
-                          0, pType, pData, pcbNeeded);
+    ret = RegQueryValueExA( printer->name ? hkeySubkey : printers_key, pValueName,
+                            0, pType, pData, pcbNeeded );
 
     if (!ret && !pData) ret = ERROR_MORE_DATA;
 
     RegCloseKey(hkeySubkey);
     RegCloseKey(hkeyPrinter);
-    RegCloseKey(hkeyPrinters);
+    RegCloseKey( printers_key );
 
     TRACE("--> %d\n", ret);
     return ret;
@@ -5827,7 +5826,7 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
 {
     opened_printer_t *printer;
-    HKEY hkeyPrinters, hkeyPrinter = 0, hkeySubkey = 0;
+    HKEY printers_key, hkeyPrinter = 0, hkeySubkey = 0;
     DWORD ret;
 
     TRACE("(%p, %s, %s, %p, %p, %u, %p)\n", hPrinter, debugstr_w(pKeyName),
@@ -5836,34 +5835,36 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     printer = get_opened_printer(hPrinter);
     if(!printer) return ERROR_INVALID_HANDLE;
 
-    ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters);
+    ret = create_printers_reg_key( system_printers_key, &printers_key );
     if (ret) return ret;
 
     TRACE("printer->name: %s\n", debugstr_w(printer->name));
 
-    if (printer->name) {
-
-        ret = RegOpenKeyW(hkeyPrinters, printer->name, &hkeyPrinter);
-        if (ret) {
-            RegCloseKey(hkeyPrinters);
+    if (printer->name)
+    {
+        ret = RegOpenKeyW( printers_key, printer->name, &hkeyPrinter);
+        if (ret)
+        {
+            RegCloseKey( printers_key );
             return ret;
         }
-        if((ret = RegOpenKeyW(hkeyPrinter, pKeyName, &hkeySubkey)) != ERROR_SUCCESS) {
+        if ((ret = RegOpenKeyW(hkeyPrinter, pKeyName, &hkeySubkey)) != ERROR_SUCCESS)
+        {
             WARN("Can't open subkey %s: %d\n", debugstr_w(pKeyName), ret);
             RegCloseKey(hkeyPrinter);
-            RegCloseKey(hkeyPrinters);
+            RegCloseKey( printers_key );
             return ret;
         }
     }
     *pcbNeeded = nSize;
-    ret = RegQueryValueExW(printer->name ? hkeySubkey : hkeyPrinters, pValueName,
-                          0, pType, pData, pcbNeeded);
+    ret = RegQueryValueExW( printer->name ? hkeySubkey : printers_key, pValueName,
+                            0, pType, pData, pcbNeeded );
 
     if (!ret && !pData) ret = ERROR_MORE_DATA;
 
     RegCloseKey(hkeySubkey);
     RegCloseKey(hkeyPrinter);
-    RegCloseKey(hkeyPrinters);
+    RegCloseKey( printers_key );
 
     TRACE("--> %d\n", ret);
     return ret;
