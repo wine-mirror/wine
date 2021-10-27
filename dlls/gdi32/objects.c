@@ -102,7 +102,7 @@ static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
 static HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
     unsigned int idx = entry - get_gdi_shared()->Handles;
-    return LongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
+    return ULongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
 }
 
 static DWORD get_object_type( HGDIOBJ obj )

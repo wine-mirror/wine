@@ -55,7 +55,7 @@ const struct user_callbacks *user_callbacks = NULL;
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
     unsigned int idx = entry - gdi_shared->Handles;
-    return LongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
+    return ULongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
 }
 
 static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
