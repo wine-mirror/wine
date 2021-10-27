@@ -64,9 +64,18 @@ struct get_ppd_params
     const WCHAR *ppd;
 };
 
+struct schedule_job_params
+{
+    const WCHAR *filename;
+    const WCHAR *port;
+    const WCHAR *document_title;
+    const WCHAR *wine_port;
+};
+
 #define UNIX_CALL( func, params ) unix_ ## func( params )
 
 NTSTATUS unix_process_attach( void * ) DECLSPEC_HIDDEN;
 NTSTATUS unix_enum_printers( void * ) DECLSPEC_HIDDEN;
 NTSTATUS unix_get_default_page_size( void * ) DECLSPEC_HIDDEN;
 NTSTATUS unix_get_ppd( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_schedule_job( void * ) DECLSPEC_HIDDEN;

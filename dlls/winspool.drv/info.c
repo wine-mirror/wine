@@ -25,7 +25,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -33,20 +32,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
-#include <errno.h>
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <signal.h>
-#ifdef HAVE_CUPS_CUPS_H
-# include <cups/cups.h>
-#endif
-#ifdef HAVE_CUPS_PPD_H
-# include <cups/ppd.h>
-#endif
 
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
@@ -77,7 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 /* ############################### */
 
 static CRITICAL_SECTION printer_handles_cs;
-static CRITICAL_SECTION_DEBUG printer_handles_cs_debug = 
+static CRITICAL_SECTION_DEBUG printer_handles_cs_debug =
 {
     0, 0, &printer_handles_cs,
     { &printer_handles_cs_debug.ProcessLocksList, &printer_handles_cs_debug.ProcessLocksList },
@@ -816,30 +801,6 @@ static WCHAR *get_ppd_dir( void )
     TRACE( "ppd temporary dir: %s\n", debugstr_w(dir) );
     return dir;
 }
-
-#ifdef SONAME_LIBCUPS
-
-extern void *libcups_handle;
-
-#define CUPS_FUNCS \
-    DO_FUNC(cupsAddOption); \
-    DO_FUNC(cupsFreeDests); \
-    DO_FUNC(cupsFreeOptions); \
-    DO_FUNC(cupsGetOption); \
-    DO_FUNC(cupsParseOptions); \
-    DO_FUNC(cupsPrintFile)
-#define CUPS_OPT_FUNCS \
-    DO_FUNC(cupsGetNamedDest); \
-    DO_FUNC(cupsGetPPD); \
-    DO_FUNC(cupsGetPPD3); \
-    DO_FUNC(cupsLastErrorString)
-
-#define DO_FUNC(f) extern typeof(f) *p##f
-CUPS_FUNCS;
-#undef DO_FUNC
-extern cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
-extern const char *  (*pcupsLastErrorString)(void);
-#endif
 
 static BOOL init_unix_printers( void )
 {
@@ -7806,214 +7767,6 @@ BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
     return get_job_info(hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded, TRUE);
 }
 
-/*****************************************************************************
- *          schedule_pipe
- */
-static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
-{
-#ifdef HAVE_FORK
-    char *unixname, *cmdA;
-    DWORD len;
-    int fds[2] = {-1, -1}, file_fd = -1, no_read;
-    BOOL ret = FALSE;
-    char buf[1024];
-    pid_t pid, wret;
-    int status;
-
-    if(!(unixname = wine_get_unix_file_name(filename)))
-        return FALSE;
-
-    len = WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, NULL, 0, NULL, NULL);
-    cmdA = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_UNIXCP, 0, cmd, -1, cmdA, len, NULL, NULL);
-
-    TRACE("printing with: %s\n", cmdA);
-
-    if((file_fd = open(unixname, O_RDONLY)) == -1)
-        goto end;
-
-    if (pipe(fds))
-    {
-        ERR("pipe() failed!\n");
-        goto end;
-    }
-
-    if ((pid = fork()) == 0)
-    {
-        close(0);
-        dup2(fds[0], 0);
-        close(fds[1]);
-
-        /* reset signals that we previously set to SIG_IGN */
-        signal(SIGPIPE, SIG_DFL);
-
-        execl("/bin/sh", "/bin/sh", "-c", cmdA, NULL);
-        _exit(1);
-    }
-    else if (pid == -1)
-    {
-        ERR("fork() failed!\n");
-        goto end;
-    }
-
-    close(fds[0]);
-    fds[0] = -1;
-    while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
-        write(fds[1], buf, no_read);
-
-    close(fds[1]);
-    fds[1] = -1;
-
-    /* reap child */
-    do {
-        wret = waitpid(pid, &status, 0);
-    } while (wret < 0 && errno == EINTR);
-    if (wret < 0)
-    {
-        ERR("waitpid() failed!\n");
-        goto end;
-    }
-    if (!WIFEXITED(status) || WEXITSTATUS(status))
-    {
-        ERR("child process failed! %d\n", status);
-        goto end;
-    }
-
-    ret = TRUE;
-
-end:
-    if(file_fd != -1) close(file_fd);
-    if(fds[0] != -1) close(fds[0]);
-    if(fds[1] != -1) close(fds[1]);
-
-    HeapFree(GetProcessHeap(), 0, cmdA);
-    HeapFree(GetProcessHeap(), 0, unixname);
-    return ret;
-#else
-    return FALSE;
-#endif
-}
-
-/*****************************************************************************
- *          schedule_lpr
- */
-static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
-{
-    static const WCHAR fmtW[] = {'l','p','r',' ','-','P','\'','%','s','\'',0};
-    WCHAR *cmd;
-    BOOL r;
-
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlenW(printer_name) * sizeof(WCHAR) + sizeof(fmtW));
-    sprintfW(cmd, fmtW, printer_name);
-
-    r = schedule_pipe(cmd, filename);
-
-    HeapFree(GetProcessHeap(), 0, cmd);
-    return r;
-}
-
-#ifdef SONAME_LIBCUPS
-/*****************************************************************************
- *          get_cups_jobs_ticket_options
- *
- * Explicitly set CUPS options based on any %cupsJobTicket lines.
- * The CUPS scheduler only looks for these in Print-File requests, and since
- * cupsPrintFile uses Create-Job / Send-Document, the ticket lines don't get
- * parsed.
- */
-static int get_cups_job_ticket_options( const char *file, int num_options, cups_option_t **options )
-{
-    FILE *fp = fopen( file, "r" );
-    char buf[257]; /* DSC max of 256 + '\0' */
-    const char *ps_adobe = "%!PS-Adobe-";
-    const char *cups_job = "%cupsJobTicket:";
-
-    if (!fp) return num_options;
-    if (!fgets( buf, sizeof(buf), fp )) goto end;
-    if (strncmp( buf, ps_adobe, strlen( ps_adobe ) )) goto end;
-    while (fgets( buf, sizeof(buf), fp ))
-    {
-        if (strncmp( buf, cups_job, strlen( cups_job ) )) break;
-        num_options = pcupsParseOptions( buf + strlen( cups_job ), num_options, options );
-    }
-
-end:
-    fclose( fp );
-    return num_options;
-}
-
-static int get_cups_default_options( const char *printer, int num_options, cups_option_t **options )
-{
-    cups_dest_t *dest;
-    int i;
-
-    if (!pcupsGetNamedDest) return num_options;
-
-    dest = pcupsGetNamedDest( NULL, printer, NULL );
-    if (!dest) return num_options;
-
-    for (i = 0; i < dest->num_options; i++)
-    {
-        if (!pcupsGetOption( dest->options[i].name, num_options, *options ))
-            num_options = pcupsAddOption( dest->options[i].name, dest->options[i].value,
-                                          num_options, options );
-    }
-
-    pcupsFreeDests( 1, dest );
-    return num_options;
-}
-#endif
-
-/*****************************************************************************
- *          schedule_cups
- */
-static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR document_title)
-{
-#ifdef SONAME_LIBCUPS
-    if(pcupsPrintFile)
-    {
-        char *unixname, *queue, *unix_doc_title;
-        DWORD len;
-        BOOL ret;
-        int num_options = 0, i;
-        cups_option_t *options = NULL;
-
-        if(!(unixname = wine_get_unix_file_name(filename)))
-            return FALSE;
-
-        len = WideCharToMultiByte(CP_UNIXCP, 0, printer_name, -1, NULL, 0, NULL, NULL);
-        queue = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_UNIXCP, 0, printer_name, -1, queue, len, NULL, NULL);
-
-        len = WideCharToMultiByte(CP_UNIXCP, 0, document_title, -1, NULL, 0, NULL, NULL);
-        unix_doc_title = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_UNIXCP, 0, document_title, -1, unix_doc_title, len, NULL, NULL);
-
-        num_options = get_cups_job_ticket_options( unixname, num_options, &options );
-        num_options = get_cups_default_options( queue, num_options, &options );
-
-        TRACE( "printing via cups with options:\n" );
-        for (i = 0; i < num_options; i++)
-            TRACE( "\t%d: %s = %s\n", i, options[i].name, options[i].value );
-
-        ret = pcupsPrintFile( queue, unixname, unix_doc_title, num_options, options );
-        if (ret == 0 && pcupsLastErrorString)
-            WARN("cupsPrintFile failed with error %s\n", debugstr_a(pcupsLastErrorString()));
-
-        pcupsFreeOptions( num_options, options );
-
-        HeapFree(GetProcessHeap(), 0, unix_doc_title);
-        HeapFree(GetProcessHeap(), 0, queue);
-        HeapFree(GetProcessHeap(), 0, unixname);
-        return ret;
-    }
-    else
-#endif
-    {
-        return schedule_lpr(printer_name, filename);
-    }
-}
-
 static INT_PTR CALLBACK file_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     LPWSTR filename;
@@ -8107,41 +7860,6 @@ static BOOL schedule_file(LPCWSTR filename)
 }
 
 /*****************************************************************************
- *          schedule_unixfile
- */
-static BOOL schedule_unixfile(LPCWSTR output, LPCWSTR filename)
-{
-    int in_fd, out_fd, no_read;
-    char buf[1024];
-    BOOL ret = FALSE;
-    char *unixname, *outputA;
-    DWORD len;
-
-    if(!(unixname = wine_get_unix_file_name(filename)))
-        return FALSE;
-
-    len = WideCharToMultiByte(CP_UNIXCP, 0, output, -1, NULL, 0, NULL, NULL);
-    outputA = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(CP_UNIXCP, 0, output, -1, outputA, len, NULL, NULL);
-    
-    out_fd = open(outputA, O_CREAT | O_TRUNC | O_WRONLY, 0666);
-    in_fd = open(unixname, O_RDONLY);
-    if(out_fd == -1 || in_fd == -1)
-        goto end;
-
-    while((no_read = read(in_fd, buf, sizeof(buf))) > 0)
-        write(out_fd, buf, no_read);
-
-    ret = TRUE;
-end:
-    if(in_fd != -1) close(in_fd);
-    if(out_fd != -1) close(out_fd);
-    HeapFree(GetProcessHeap(), 0, outputA);
-    HeapFree(GetProcessHeap(), 0, unixname);
-    return ret;
-}
-
-/*****************************************************************************
  *          ScheduleJob [WINSPOOL.@]
  *
  */
@@ -8169,6 +7887,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         {
             PRINTER_INFO_5W *pi5 = NULL;
             LPWSTR portname = job->portname;
+            UNICODE_STRING nt_name;
             DWORD needed;
             HKEY hkey;
             WCHAR output[1024];
@@ -8184,45 +7903,40 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             }
             TRACE("need to schedule job %d filename %s to port %s\n", job->job_id, debugstr_w(job->filename),
                   debugstr_w(portname));
-            
-            output[0] = 0;
 
-            /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
-            if(RegOpenKeyW(HKEY_CURRENT_USER, spooler_key, &hkey) == ERROR_SUCCESS)
+            if (!strncmpW( portname, FILE_Port, strlenW( FILE_Port ) ))
             {
-                DWORD type, count = sizeof(output);
-                RegQueryValueExW(hkey, portname, NULL, &type, (LPBYTE)output, &count);
-                RegCloseKey(hkey);
+                ret = schedule_file( job->filename );
             }
-            if(output[0] == '|')
+            else if (isalpha(portname[0]) && portname[1] == ':')
             {
-                ret = schedule_pipe(output + 1, job->filename);
+                TRACE( "copying to %s\n", debugstr_w( portname ) );
+                ret = CopyFileW( job->filename, portname, FALSE );
             }
-            else if(output[0])
+            else if (RtlDosPathNameToNtPathName_U( job->filename, &nt_name, NULL, NULL ))
             {
-                ret = schedule_unixfile(output, job->filename);
+                struct schedule_job_params params =
+                {
+                    .filename = nt_name.Buffer,
+                    .port = portname,
+                    .document_title = job->document_title,
+                    .wine_port = output
+                };
+
+                output[0] = 0;
+                /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
+                if (RegOpenKeyW( HKEY_CURRENT_USER, spooler_key, &hkey ) == ERROR_SUCCESS)
+                {
+                    DWORD type, count = sizeof(output);
+                    RegQueryValueExW( hkey, portname, NULL, &type, (BYTE *)output, &count );
+                    RegCloseKey( hkey );
+                }
+                ret = UNIX_CALL( schedule_job, &params );
+                RtlFreeUnicodeString( &nt_name );
             }
-            else if(!strncmpW(portname, LPR_Port, strlenW(LPR_Port)))
-            {
-                ret = schedule_lpr(portname + strlenW(LPR_Port), job->filename);
-            }
-            else if(!strncmpW(portname, CUPS_Port, strlenW(CUPS_Port)))
-            {
-                ret = schedule_cups(portname + strlenW(CUPS_Port), job->filename, job->document_title);
-            }
-            else if(!strncmpW(portname, FILE_Port, strlenW(FILE_Port)))
-            {
-                ret = schedule_file(job->filename);
-            }
-            else if(isalpha(portname[0]) && portname[1] == ':')
-            {
-                TRACE("copying to %s\n", debugstr_w(portname));
-                ret = CopyFileW(job->filename, portname, FALSE);
-            }
-            else
-            {
-                FIXME("can't schedule to port %s\n", debugstr_w(portname));
-            }
+            else ret = FALSE;
+
+            if (!ret) FIXME( "can't schedule to port %s\n", debugstr_w( portname ) );
             HeapFree(GetProcessHeap(), 0, pi5);
             CloseHandle(hf);
             DeleteFileW(job->filename);
