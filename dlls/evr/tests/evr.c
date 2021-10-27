@@ -2323,13 +2323,30 @@ done:
 static void test_presenter_shutdown(void)
 {
     IMFTopologyServiceLookupClient *lookup_client;
+    IMFVideoDisplayControl *display_control;
+    IMFVideoMediaType *media_type;
     IMFVideoPresenter *presenter;
+    IMFVideoDeviceID *deviceid;
+    HWND window, window2;
     HRESULT hr;
+    DWORD mode;
+    RECT rect;
+    SIZE size;
+    IID iid;
+
+    window = create_window();
+    ok(!!window, "Failed to create test window.\n");
 
     hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
     ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDeviceID, (void **)&deviceid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
@@ -2350,12 +2367,56 @@ todo_wine
 todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFVideoPresenter_GetCurrentMediaType(presenter, &media_type);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDeviceID_GetDeviceID(deviceid, &iid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &size);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetIdealVideoSize(display_control, &size, &size);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&rect, 0, 0, 10, 10);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &rect);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, NULL, &rect);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetAspectRatioMode(display_control, MFVideoARMode_None);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetAspectRatioMode(display_control, &mode);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, window);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &window2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_RepaintVideo(display_control);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
     hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    IMFVideoDeviceID_Release(deviceid);
+    IMFVideoDisplayControl_Release(display_control);
     IMFTopologyServiceLookupClient_Release(lookup_client);
 
     IMFVideoPresenter_Release(presenter);
+
+    DestroyWindow(window);
 }
 
 static void test_mixer_output_rectangle(void)
