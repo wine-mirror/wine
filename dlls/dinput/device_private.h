@@ -76,8 +76,7 @@ struct dinput_device_vtbl
 #define DEVICE_STATE_MAX_SIZE 1024
 
 /* Device implementation */
-typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
-struct IDirectInputDeviceImpl
+struct dinput_device
 {
     IDirectInputDevice8W        IDirectInputDevice8W_iface;
     IDirectInputDevice8A        IDirectInputDevice8A_iface;
@@ -117,10 +116,10 @@ struct IDirectInputDeviceImpl
     BYTE device_state[DEVICE_STATE_MAX_SIZE];
 };
 
-extern HRESULT direct_input_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl,
-                                          const GUID *guid, IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
-extern HRESULT direct_input_device_init( IDirectInputDevice8W *iface );
-extern void direct_input_device_destroy( IDirectInputDevice8W *iface );
+extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
+                                    IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
+extern HRESULT dinput_device_init( IDirectInputDevice8W *iface );
+extern void dinput_device_destroy( IDirectInputDevice8W *iface );
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;

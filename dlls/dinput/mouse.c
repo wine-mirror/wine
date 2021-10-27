@@ -56,7 +56,7 @@ typedef enum
 
 struct SysMouseImpl
 {
-    struct IDirectInputDeviceImpl   base;
+    struct dinput_device base;
 
     /* SysMouseAImpl */
     /* These are used in case of relative -> absolute transitions */
@@ -72,7 +72,7 @@ struct SysMouseImpl
 
 static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysMouseImpl, base);
+    return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ), SysMouseImpl, base );
 }
 
 HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
@@ -116,8 +116,7 @@ HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirect
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysMouse, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &mouse_vtbl,
-                                               guid, dinput, (void **)&impl )))
+    if (FAILED(hr = dinput_device_alloc( sizeof(SysMouseImpl), &mouse_vtbl, guid, dinput, (void **)&impl )))
         return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
 
@@ -136,7 +135,7 @@ HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirect
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
 
-    if (FAILED(hr = direct_input_device_init( &impl->base.IDirectInputDevice8W_iface )))
+    if (FAILED(hr = dinput_device_init( &impl->base.IDirectInputDevice8W_iface )))
     {
         IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
         return hr;

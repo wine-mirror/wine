@@ -39,12 +39,13 @@ static const struct dinput_device_vtbl keyboard_vtbl;
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
-    struct IDirectInputDeviceImpl base;
+    struct dinput_device base;
 };
 
 static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
-    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysKeyboardImpl, base);
+    return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ),
+                              SysKeyboardImpl, base );
 }
 
 static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD version)
@@ -184,8 +185,7 @@ HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDir
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysKeyboard, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &keyboard_vtbl,
-                                               guid, dinput, (void **)&impl )))
+    if (FAILED(hr = dinput_device_alloc( sizeof(SysKeyboardImpl), &keyboard_vtbl, guid, dinput, (void **)&impl )))
         return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
@@ -194,7 +194,7 @@ HRESULT keyboard_create_device( IDirectInputImpl *dinput, const GUID *guid, IDir
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
 
-    if (FAILED(hr = direct_input_device_init( &impl->base.IDirectInputDevice8W_iface )))
+    if (FAILED(hr = dinput_device_init( &impl->base.IDirectInputDevice8W_iface )))
     {
         IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
         return hr;

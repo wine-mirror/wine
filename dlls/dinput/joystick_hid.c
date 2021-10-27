@@ -157,7 +157,7 @@ struct pid_set_ramp_force
 
 struct hid_joystick
 {
-    IDirectInputDeviceImpl base;
+    struct dinput_device base;
     LONG internal_ref;
 
     HANDLE device;
@@ -189,7 +189,7 @@ struct hid_joystick
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
 {
-    return CONTAINING_RECORD( CONTAINING_RECORD( iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface ),
+    return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ),
                               struct hid_joystick, base );
 }
 
@@ -630,7 +630,7 @@ static void hid_joystick_release( IDirectInputDevice8W *iface )
         HidD_FreePreparsedData( impl->preparsed );
         CloseHandle( impl->base.read_event );
         CloseHandle( impl->device );
-        direct_input_device_destroy( iface );
+        dinput_device_destroy( iface );
     }
 }
 
@@ -1781,8 +1781,7 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
     else
         return DIERR_DEVICENOTREG;
 
-    hr = direct_input_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl,
-                                    guid, dinput, (void **)&impl );
+    hr = dinput_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl, guid, dinput, (void **)&impl );
     if (FAILED(hr)) return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
@@ -1856,8 +1855,7 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
         impl->base.caps.dwFFDriverVersion = 1;
     }
 
-    if (FAILED(hr = direct_input_device_init( &impl->base.IDirectInputDevice8W_iface )))
-        goto failed;
+    if (FAILED(hr = dinput_device_init( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
