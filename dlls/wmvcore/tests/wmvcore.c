@@ -715,7 +715,7 @@ static void test_sync_reader_types(void)
 
         output_number = 0xdeadbeef;
         hr = IWMSyncReader_GetOutputNumberForStream(reader, stream_number, &output_number);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         todo_wine ok(output_number == 1 - i, "Got output number %u.\n", output_number);
 
         stream_number2 = 0xdead;

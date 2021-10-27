@@ -112,11 +112,15 @@ static HRESULT WINAPI WMSyncReader_GetOutputFormatCount(IWMSyncReader2 *iface, D
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMSyncReader_GetOutputNumberForStream(IWMSyncReader2 *iface, WORD stream_num, DWORD *output_num)
+static HRESULT WINAPI WMSyncReader_GetOutputNumberForStream(IWMSyncReader2 *iface,
+        WORD stream_number, DWORD *output)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%u %p): stub!\n", This, stream_num, output_num);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, stream_number %u, output %p.\n", reader, stream_number, output);
+
+    *output = stream_number - 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMSyncReader_GetOutputProps(IWMSyncReader2 *iface, DWORD output_num, IWMOutputMediaProps **output)
