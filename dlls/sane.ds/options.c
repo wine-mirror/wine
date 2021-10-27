@@ -16,15 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "sane_i.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
@@ -143,14 +140,11 @@ TW_UINT16 sane_option_probe_mode(TW_UINT16 *current, TW_UINT32 *choices, int *co
     *count = 0;
     if (opt.constraint_type == CONSTRAINT_STRING_LIST)
     {
-        for (p = opt.constraint.strings; *p; p += strlenW(p) + 1)
+        for (p = opt.constraint.strings; *p; p += lstrlenW(p) + 1)
         {
-            static const WCHAR lineartW[] = {'L','i','n','e','a','r','t',0};
-            static const WCHAR colorW[] = {'C','o','l','o','r',0};
-            static const WCHAR grayW[] = {'G','r','a','y',0};
-            if (!strcmpW( p, lineartW )) choices[(*count)++] = TWPT_BW;
-            else if (!strcmpW( p, colorW )) choices[(*count)++] = TWPT_RGB;
-            else if (!strncmpW( p, grayW, 4 )) choices[(*count)++] = TWPT_GRAY;
+            if (!wcscmp( p, L"Lineart" )) choices[(*count)++] = TWPT_BW;
+            else if (!wcscmp( p, L"Color" )) choices[(*count)++] = TWPT_RGB;
+            else if (!wcsncmp( p, L"Gray", 4 )) choices[(*count)++] = TWPT_GRAY;
         }
     }
     return rc;

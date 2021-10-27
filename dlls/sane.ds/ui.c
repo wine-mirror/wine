@@ -18,8 +18,6 @@
 * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include "config.h"
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -33,7 +31,6 @@
 #include "prsht.h"
 #include "wine/debug.h"
 #include "resource.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
@@ -60,7 +57,7 @@ static int create_leading_static(HDC hdc, const WCHAR *text,
 
     base = GetDialogBaseUnits();
 
-    len = strlenW(text) * sizeof(WCHAR);
+    len = lstrlenW(text) * sizeof(WCHAR);
     len += sizeof(DLGITEMTEMPLATE);
     len += 4*sizeof(WORD);
 
@@ -78,8 +75,8 @@ static int create_leading_static(HDC hdc, const WCHAR *text,
     ptr = (WORD *)(tpl + 1);
     *ptr++ = 0xffff;
     *ptr++ = 0x0082;
-    strcpyW( ptr, text );
-    ptr += strlenW(ptr) + 1;
+    lstrcpyW( ptr, text );
+    ptr += lstrlenW(ptr) + 1;
     *ptr = 0;
 
     *template_out = tpl;
@@ -99,7 +96,7 @@ static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int i
 
     base = GetDialogBaseUnits();
 
-    len = strlenW(text) * sizeof(WCHAR);
+    len = lstrlenW(text) * sizeof(WCHAR);
     len += sizeof(DLGITEMTEMPLATE);
     len += 4*sizeof(WORD);
 
@@ -121,8 +118,8 @@ static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int i
     ptr = (WORD *)(tpl + 1);
     *ptr++ = 0xffff;
     *ptr++ = 0x0081;
-    strcpyW( ptr, text );
-    ptr += strlenW(ptr) + 1;
+    lstrcpyW( ptr, text );
+    ptr += lstrlenW(ptr) + 1;
     *ptr = 0;
 
     *template_out = tpl;
@@ -165,9 +162,8 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     case TYPE_INT:
     {
         int i;
-        static const WCHAR fmtW[] = {'%','i',0};
         sane_option_get_value( id - ID_BASE, &i );
-        sprintfW(buffer,fmtW,i);
+        swprintf(buffer, ARRAY_SIZE(buffer), L"%i", i);
 
         switch (opt->constraint_type)
         {
@@ -193,12 +189,11 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     }
     case TYPE_FIXED:
     {
-        static const WCHAR fmtW[] = {'%','f',0};
         int *i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(int));
 
         sane_option_get_value( id - ID_BASE, i );
 
-        sprintfW(buffer,fmtW, *i / 65536.0);
+        swprintf(buffer, ARRAY_SIZE(buffer), L"%f", *i / 65536.0);
         HeapFree(GetProcessHeap(),0,i);
 
         switch (opt->constraint_type)
@@ -253,7 +248,7 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     }
 
     local_len += sizeof(DLGITEMTEMPLATE);
-    if (title) local_len += strlenW(title) * sizeof(WCHAR);
+    if (title) local_len += lstrlenW(title) * sizeof(WCHAR);
     local_len += 4*sizeof(WORD);
 
     if (lead_static)
@@ -299,8 +294,8 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     *ptr++ = class;
     if (title)
     {
-        strcpyW( ptr, title );
-        ptr += strlenW(ptr);
+        lstrcpyW( ptr, title );
+        ptr += lstrlenW(ptr);
     }
     *ptr++ = 0;
     *ptr = 0;
@@ -513,8 +508,8 @@ BOOL DoScannerUI(void)
 
         if (opt.type == TYPE_GROUP)
         {
-            LPWSTR title = HeapAlloc(GetProcessHeap(),0,(strlenW(opt.title) + 1) * sizeof(WCHAR));
-            strcpyW( title, opt.title );
+            LPWSTR title = HeapAlloc(GetProcessHeap(),0,(lstrlenW(opt.title) + 1) * sizeof(WCHAR));
+            lstrcpyW( title, opt.title );
             psp[page_count].pszTitle = title;
         }
 
@@ -575,7 +570,6 @@ static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, i
     {
     case TYPE_INT:
     {
-        static const WCHAR formatW[] = {'%','i',0};
         INT si;
 
         if (opt->constraint.range.quant)
@@ -583,12 +577,11 @@ static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, i
         else
             si = position;
 
-        len = sprintfW( buffer, formatW, si );
+        len = swprintf( buffer, ARRAY_SIZE(buffer), L"%i", si );
         break;
     }
     case TYPE_FIXED:
     {
-        static const WCHAR formatW[] = {'%','f',0};
         double dd;
 
         if (opt->constraint.range.quant)
@@ -596,7 +589,7 @@ static void UpdateRelevantEdit(HWND hwnd, const struct option_descriptor *opt, i
         else
             dd = position * 0.01;
 
-        len = sprintfW( buffer, formatW, dd );
+        len = swprintf( buffer, ARRAY_SIZE(buffer), L"%f", dd );
         break;
     }
     default:
@@ -679,7 +672,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
             CHAR buffer[255];
             WCHAR *p;
 
-            for (p = opt.constraint.strings; *p; p += strlenW(p) + 1)
+            for (p = opt.constraint.strings; *p; p += lstrlenW(p) + 1)
                 SendMessageW( control,CB_ADDSTRING,0, (LPARAM)p );
             sane_option_get_value( i, buffer );
             SendMessageA(control,CB_SELECTSTRING,0,(LPARAM)buffer);

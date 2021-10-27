@@ -4,8 +4,6 @@ IMPORTS   = comctl32 user32 gdi32
 EXTRALIBS = $(SANE_LIBS)
 EXTRAINCL = $(SANE_CFLAGS)
 
-EXTRADLLFLAGS = -mcygwin
-
 C_SRCS = \
 	capability.c \
 	ds_ctrl.c \

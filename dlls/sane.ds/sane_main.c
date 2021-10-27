@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -64,8 +61,7 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
 
     if (SANE_dsmentry == NULL)
     {
-        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
-        HMODULE moddsm = GetModuleHandleW(twain32W);
+        HMODULE moddsm = GetModuleHandleW(L"twain_32");
 
         if (moddsm)
             SANE_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
