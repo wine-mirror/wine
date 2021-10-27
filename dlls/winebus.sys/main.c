@@ -401,6 +401,7 @@ static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
 {
     struct hid_report *report;
     struct list *entry;
+    ULONG i;
 
     if (!(entry = list_head(&ext->reports))) return FALSE;
     report = LIST_ENTRY(entry, struct hid_report, entry);
@@ -409,6 +410,19 @@ static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
     memcpy(irp->UserBuffer, report->buffer, report->length);
     irp->IoStatus.Information = report->length;
     irp->IoStatus.Status = STATUS_SUCCESS;
+
+    if (TRACE_ON(plugplay))
+    {
+        TRACE("read input report length %u:\n", report->length);
+        for (i = 0; i < report->length;)
+        {
+            char buffer[256], *buf = buffer;
+            buf += sprintf(buf, "%08x ", i);
+            do { buf += sprintf(buf, " %02x", report->buffer[i]); }
+            while (++i % 16 && i < report->length);
+            TRACE("%s\n", buffer);
+        }
+    }
 
     RtlFreeHeap(GetProcessHeap(), 0, report);
     return TRUE;
@@ -937,10 +951,8 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    ULONG code, buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    ULONG i, code, buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
     NTSTATUS status;
-
-    TRACE("(%p, %p)\n", device, irp);
 
     if (device == bus_fdo)
     {
@@ -1026,6 +1038,18 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             memcpy(packet->reportBuffer, ext->last_reports[packet->reportId], packet->reportBufferLen);
             irp->IoStatus.Information = packet->reportBufferLen;
             irp->IoStatus.Status = STATUS_SUCCESS;
+            if (TRACE_ON(plugplay))
+            {
+                TRACE("read input report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
+                for (i = 0; i < packet->reportBufferLen;)
+                {
+                    char buffer[256], *buf = buffer;
+                    buf += sprintf(buf, "%08x ", i);
+                    do { buf += sprintf(buf, " %02x", packet->reportBuffer[i]); }
+                    while (++i % 16 && i < packet->reportBufferLen);
+                    TRACE("%s\n", buffer);
+                }
+            }
             break;
         }
         case IOCTL_HID_READ_REPORT:
@@ -1043,22 +1067,55 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_SET_OUTPUT_REPORT:
         case IOCTL_HID_WRITE_REPORT:
         {
-            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE("IOCTL_HID_WRITE_REPORT / IOCTL_HID_SET_OUTPUT_REPORT\n");
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
+            if (TRACE_ON(plugplay))
+            {
+                TRACE("write output report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
+                for (i = 0; i < packet->reportBufferLen;)
+                {
+                    char buffer[256], *buf = buffer;
+                    buf += sprintf(buf, "%08x ", i);
+                    do { buf += sprintf(buf, " %02x", packet->reportBuffer[i]); }
+                    while (++i % 16 && i < packet->reportBufferLen);
+                    TRACE("%s\n", buffer);
+                }
+            }
             unix_device_set_output_report(device, packet, &irp->IoStatus);
             break;
         }
         case IOCTL_HID_GET_FEATURE:
         {
-            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE("IOCTL_HID_GET_FEATURE\n");
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
             unix_device_get_feature_report(device, packet, &irp->IoStatus);
+            if (!irp->IoStatus.Status && TRACE_ON(plugplay))
+            {
+                TRACE("read feature report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
+                for (i = 0; i < packet->reportBufferLen;)
+                {
+                    char buffer[256], *buf = buffer;
+                    buf += sprintf(buf, "%08x ", i);
+                    do { buf += sprintf(buf, " %02x", packet->reportBuffer[i]); }
+                    while (++i % 16 && i < packet->reportBufferLen);
+                    TRACE("%s\n", buffer);
+                }
+            }
             break;
         }
         case IOCTL_HID_SET_FEATURE:
         {
-            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE("IOCTL_HID_SET_FEATURE\n");
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
+            if (TRACE_ON(plugplay))
+            {
+                TRACE("write feature report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
+                for (i = 0; i < packet->reportBufferLen;)
+                {
+                    char buffer[256], *buf = buffer;
+                    buf += sprintf(buf, "%08x ", i);
+                    do { buf += sprintf(buf, " %02x", packet->reportBuffer[i]); }
+                    while (++i % 16 && i < packet->reportBufferLen);
+                    TRACE("%s\n", buffer);
+                }
+            }
             unix_device_set_feature_report(device, packet, &irp->IoStatus);
             break;
         }
