@@ -2,7 +2,7 @@
  *	Process synchronisation
  *
  * Copyright 1996, 1997, 1998 Marcus Meissner
- * Copyright 1997, 1999 Alexandre Julliard
+ * Copyright 1997, 1998, 1999 Alexandre Julliard
  * Copyright 1999, 2000 Juergen Schmied
  * Copyright 2003 Eric Pouech
  *
@@ -36,6 +36,8 @@
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(sync);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 /******************************************************************
  *              RtlRunOnceInitialize (NTDLL.@)
@@ -131,6 +133,337 @@ DWORD WINAPI RtlRunOnceComplete( RTL_RUN_ONCE *once, ULONG flags, void *context 
             return STATUS_UNSUCCESSFUL;
         }
     }
+}
+
+
+/***********************************************************************
+ * Critical sections
+ ***********************************************************************/
+
+
+static void *no_debug_info_marker = (void *)(ULONG_PTR)-1;
+
+static BOOL crit_section_has_debuginfo( const RTL_CRITICAL_SECTION *crit )
+{
+    return crit->DebugInfo != NULL && crit->DebugInfo != no_debug_info_marker;
+}
+
+static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
+{
+    HANDLE ret = crit->LockSemaphore;
+    if (!ret)
+    {
+        HANDLE sem;
+        if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
+        if (!(ret = InterlockedCompareExchangePointer( &crit->LockSemaphore, sem, 0 )))
+            ret = sem;
+        else
+            NtClose(sem);  /* somebody beat us to it */
+    }
+    return ret;
+}
+
+static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
+{
+    NTSTATUS ret;
+
+    /* debug info is cleared by MakeCriticalSectionGlobal */
+    if (!crit_section_has_debuginfo( crit ) ||
+        ((ret = unix_funcs->fast_RtlpWaitForCriticalSection( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
+    {
+        HANDLE sem = get_semaphore( crit );
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (LONGLONG)-10000000;
+        ret = NtWaitForSingleObject( sem, FALSE, &time );
+    }
+    return ret;
+}
+
+/******************************************************************************
+ *      RtlInitializeCriticalSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    return RtlInitializeCriticalSectionEx( crit, 0, 0 );
+}
+
+
+/******************************************************************************
+ *      RtlInitializeCriticalSectionAndSpinCount   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
+{
+    return RtlInitializeCriticalSectionEx( crit, spincount, 0 );
+}
+
+
+/******************************************************************************
+ *      RtlInitializeCriticalSectionEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeCriticalSectionEx( RTL_CRITICAL_SECTION *crit, ULONG spincount, ULONG flags )
+{
+    if (flags & (RTL_CRITICAL_SECTION_FLAG_DYNAMIC_SPIN|RTL_CRITICAL_SECTION_FLAG_STATIC_INIT))
+        FIXME("(%p,%u,0x%08x) semi-stub\n", crit, spincount, flags);
+
+    /* FIXME: if RTL_CRITICAL_SECTION_FLAG_STATIC_INIT is given, we should use
+     * memory from a static pool to hold the debug info. Then heap.c could pass
+     * this flag rather than initialising the process heap CS by hand. If this
+     * is done, then debug info should be managed through Rtlp[Allocate|Free]DebugInfo
+     * so (e.g.) MakeCriticalSectionGlobal() doesn't free it using HeapFree().
+     */
+    if (flags & RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO)
+        crit->DebugInfo = no_debug_info_marker;
+    else
+    {
+        crit->DebugInfo = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG ));
+        if (crit->DebugInfo)
+        {
+            crit->DebugInfo->Type = 0;
+            crit->DebugInfo->CreatorBackTraceIndex = 0;
+            crit->DebugInfo->CriticalSection = crit;
+            crit->DebugInfo->ProcessLocksList.Blink = &crit->DebugInfo->ProcessLocksList;
+            crit->DebugInfo->ProcessLocksList.Flink = &crit->DebugInfo->ProcessLocksList;
+            crit->DebugInfo->EntryCount = 0;
+            crit->DebugInfo->ContentionCount = 0;
+            memset( crit->DebugInfo->Spare, 0, sizeof(crit->DebugInfo->Spare) );
+        }
+    }
+    crit->LockCount      = -1;
+    crit->RecursionCount = 0;
+    crit->OwningThread   = 0;
+    crit->LockSemaphore  = 0;
+    if (NtCurrentTeb()->Peb->NumberOfProcessors <= 1) spincount = 0;
+    crit->SpinCount = spincount & ~0x80000000;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *      RtlSetCriticalSectionSpinCount   (NTDLL.@)
+ */
+ULONG WINAPI RtlSetCriticalSectionSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
+{
+    ULONG oldspincount = crit->SpinCount;
+    if (NtCurrentTeb()->Peb->NumberOfProcessors <= 1) spincount = 0;
+    crit->SpinCount = spincount;
+    return oldspincount;
+}
+
+
+/******************************************************************************
+ *      RtlDeleteCriticalSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    crit->LockCount      = -1;
+    crit->RecursionCount = 0;
+    crit->OwningThread   = 0;
+    if (crit_section_has_debuginfo( crit ))
+    {
+        /* only free the ones we made in here */
+        if (!crit->DebugInfo->Spare[0])
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, crit->DebugInfo );
+            crit->DebugInfo = NULL;
+        }
+        if (unix_funcs->fast_RtlDeleteCriticalSection( crit ) == STATUS_NOT_IMPLEMENTED)
+            NtClose( crit->LockSemaphore );
+    }
+    else NtClose( crit->LockSemaphore );
+    crit->LockSemaphore = 0;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *      RtlpWaitForCriticalSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    LONGLONG timeout = NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart / -10000000;
+
+    /* Don't allow blocking on a critical section during process termination */
+    if (RtlDllShutdownInProgress())
+    {
+        WARN( "process %s is shutting down, returning STATUS_SUCCESS\n",
+              debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer) );
+        return STATUS_SUCCESS;
+    }
+
+    for (;;)
+    {
+        EXCEPTION_RECORD rec;
+        NTSTATUS status = wait_semaphore( crit, 5 );
+        timeout -= 5;
+
+        if ( status == STATUS_TIMEOUT )
+        {
+            const char *name = NULL;
+            if (crit_section_has_debuginfo( crit )) name = (char *)crit->DebugInfo->Spare[0];
+            if (!name) name = "?";
+            ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (60 sec)\n",
+                 crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
+            status = wait_semaphore( crit, 60 );
+            timeout -= 60;
+
+            if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
+            {
+                ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (5 min)\n",
+                     crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
+                status = wait_semaphore( crit, 300 );
+                timeout -= 300;
+            }
+        }
+        if (status == STATUS_WAIT_0) break;
+
+        /* Throw exception only for Wine internal locks */
+        if (!crit_section_has_debuginfo( crit ) || !crit->DebugInfo->Spare[0]) continue;
+
+        /* only throw deadlock exception if configured timeout is reached */
+        if (timeout > 0) continue;
+
+        rec.ExceptionCode    = STATUS_POSSIBLE_DEADLOCK;
+        rec.ExceptionFlags   = 0;
+        rec.ExceptionRecord  = NULL;
+        rec.ExceptionAddress = RtlRaiseException;  /* sic */
+        rec.NumberParameters = 1;
+        rec.ExceptionInformation[0] = (ULONG_PTR)crit;
+        RtlRaiseException( &rec );
+    }
+    if (crit_section_has_debuginfo( crit )) crit->DebugInfo->ContentionCount++;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *      RtlpUnWaitCriticalSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    NTSTATUS ret;
+
+    /* debug info is cleared by MakeCriticalSectionGlobal */
+    if (!crit_section_has_debuginfo( crit ) ||
+        ((ret = unix_funcs->fast_RtlpUnWaitCriticalSection( crit )) == STATUS_NOT_IMPLEMENTED))
+    {
+        HANDLE sem = get_semaphore( crit );
+        ret = NtReleaseSemaphore( sem, 1, NULL );
+    }
+    if (ret) RtlRaiseStatus( ret );
+    return ret;
+}
+
+
+static inline void small_pause(void)
+{
+#ifdef __i386__
+    __asm__ __volatile__( "rep;nop" : : : "memory" );
+#else
+    __asm__ __volatile__( "" : : : "memory" );
+#endif
+}
+
+/******************************************************************************
+ *      RtlEnterCriticalSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    if (crit->SpinCount)
+    {
+        ULONG count;
+
+        if (RtlTryEnterCriticalSection( crit )) return STATUS_SUCCESS;
+        for (count = crit->SpinCount; count > 0; count--)
+        {
+            if (crit->LockCount > 0) break;  /* more than one waiter, don't bother spinning */
+            if (crit->LockCount == -1)       /* try again */
+            {
+                if (InterlockedCompareExchange( &crit->LockCount, 0, -1 ) == -1) goto done;
+            }
+            small_pause();
+        }
+    }
+
+    if (InterlockedIncrement( &crit->LockCount ))
+    {
+        if (crit->OwningThread == ULongToHandle(GetCurrentThreadId()))
+        {
+            crit->RecursionCount++;
+            return STATUS_SUCCESS;
+        }
+
+        /* Now wait for it */
+        RtlpWaitForCriticalSection( crit );
+    }
+done:
+    crit->OwningThread   = ULongToHandle(GetCurrentThreadId());
+    crit->RecursionCount = 1;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *      RtlTryEnterCriticalSection   (NTDLL.@)
+ */
+BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    BOOL ret = FALSE;
+    if (InterlockedCompareExchange( &crit->LockCount, 0, -1 ) == -1)
+    {
+        crit->OwningThread   = ULongToHandle(GetCurrentThreadId());
+        crit->RecursionCount = 1;
+        ret = TRUE;
+    }
+    else if (crit->OwningThread == ULongToHandle(GetCurrentThreadId()))
+    {
+        InterlockedIncrement( &crit->LockCount );
+        crit->RecursionCount++;
+        ret = TRUE;
+    }
+    return ret;
+}
+
+
+/******************************************************************************
+ *      RtlIsCriticalSectionLocked   (NTDLL.@)
+ */
+BOOL WINAPI RtlIsCriticalSectionLocked( RTL_CRITICAL_SECTION *crit )
+{
+    return crit->RecursionCount != 0;
+}
+
+
+/******************************************************************************
+ *      RtlIsCriticalSectionLockedByThread   (NTDLL.@)
+ */
+BOOL WINAPI RtlIsCriticalSectionLockedByThread( RTL_CRITICAL_SECTION *crit )
+{
+    return crit->OwningThread == ULongToHandle(GetCurrentThreadId()) &&
+           crit->RecursionCount;
+}
+
+
+/******************************************************************************
+ *      RtlLeaveCriticalSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlLeaveCriticalSection( RTL_CRITICAL_SECTION *crit )
+{
+    if (--crit->RecursionCount)
+    {
+        if (crit->RecursionCount > 0) InterlockedDecrement( &crit->LockCount );
+        else ERR( "section %p is not acquired\n", crit );
+    }
+    else
+    {
+        crit->OwningThread = 0;
+        if (InterlockedDecrement( &crit->LockCount ) >= 0)
+        {
+            /* someone is waiting */
+            RtlpUnWaitCriticalSection( crit );
+        }
+    }
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************

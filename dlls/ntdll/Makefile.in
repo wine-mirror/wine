@@ -11,7 +11,6 @@ EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 C_SRCS = \
 	actctx.c \
 	atom.c \
-	critsection.c \
 	crypt.c \
 	debugbuffer.c \
 	env.c \
