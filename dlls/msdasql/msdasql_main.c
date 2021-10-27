@@ -173,6 +173,7 @@ struct msdasql
     IUnknown         MSDASQL_iface;
     IDBProperties    IDBProperties_iface;
     IDBInitialize    IDBInitialize_iface;
+    IDBCreateSession IDBCreateSession_iface;
 
     LONG     ref;
 };
@@ -190,6 +191,11 @@ static inline struct msdasql *impl_from_IDBProperties(IDBProperties *iface)
 static inline struct msdasql *impl_from_IDBInitialize(IDBInitialize *iface)
 {
     return CONTAINING_RECORD(iface, struct msdasql, IDBInitialize_iface);
+}
+
+static inline struct msdasql *impl_from_IDBCreateSession(IDBCreateSession *iface)
+{
+    return CONTAINING_RECORD(iface, struct msdasql, IDBCreateSession_iface);
 }
 
 static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void **out)
@@ -210,6 +216,10 @@ static HRESULT WINAPI msdsql_QueryInterface(IUnknown *iface, REFIID riid, void *
     else if ( IsEqualGUID(riid, &IID_IDBInitialize))
     {
         *out = &provider->IDBInitialize_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IDBCreateSession))
+    {
+        *out = &provider->IDBCreateSession_iface;
     }
     else
     {
@@ -398,6 +408,45 @@ static const struct IDBInitializeVtbl dbinit_vtbl =
     dbinit_Uninitialize
 };
 
+static HRESULT WINAPI dbsess_QueryInterface(IDBCreateSession *iface, REFIID riid, void **ppvObject)
+{
+    struct msdasql *provider = impl_from_IDBCreateSession(iface);
+
+    return IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI dbsess_AddRef(IDBCreateSession *iface)
+{
+    struct msdasql *provider = impl_from_IDBCreateSession(iface);
+
+    return IUnknown_AddRef(&provider->MSDASQL_iface);
+}
+
+static ULONG WINAPI dbsess_Release(IDBCreateSession *iface)
+{
+    struct msdasql *provider = impl_from_IDBCreateSession(iface);
+
+    return IUnknown_Release(&provider->MSDASQL_iface);
+}
+
+static HRESULT WINAPI dbsess_CreateSession(IDBCreateSession *iface, IUnknown *outer, REFIID riid,
+        IUnknown **session)
+{
+    struct msdasql *provider = impl_from_IDBCreateSession(iface);
+
+    FIXME("%p, outer %p, riid %s, session %p stub\n", provider, outer, debugstr_guid(riid), session);
+
+    return E_FAIL;
+}
+
+static const struct IDBCreateSessionVtbl dbsess_vtbl =
+{
+    dbsess_QueryInterface,
+    dbsess_AddRef,
+    dbsess_Release,
+    dbsess_CreateSession
+};
+
 static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 {
     struct msdasql *provider;
@@ -410,6 +459,7 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
     provider->MSDASQL_iface.lpVtbl = &msdsql_vtbl;
     provider->IDBProperties_iface.lpVtbl = &dbprops_vtbl;
     provider->IDBInitialize_iface.lpVtbl = &dbinit_vtbl;
+    provider->IDBCreateSession_iface.lpVtbl = &dbsess_vtbl;
     provider->ref = 1;
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
