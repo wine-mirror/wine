@@ -675,14 +675,27 @@ static unsigned int video_mixer_get_interlace_mode_from_video_desc(const DXVA2_V
     }
 }
 
+static void mf_get_attribute_uint32(IMFMediaType *media_type, const GUID *key, UINT32 *value,
+        UINT32 default_value)
+{
+    if (FAILED(IMFMediaType_GetUINT32(media_type, key, value)))
+        *value = default_value;
+}
+
+static void mf_get_attribute_uint64(IMFMediaType *media_type, const GUID *key, UINT64 *value,
+        UINT64 default_value)
+{
+    if (FAILED(IMFMediaType_GetUINT64(media_type, key, value)))
+        *value = default_value;
+}
+
 static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const DXVA2_VideoDesc *video_desc,
         IMFMediaType *media_type, IDirectXVideoProcessorService *service, unsigned int device_count,
         const GUID *devices, unsigned int flags)
 {
-    unsigned int i, j, format_count, count, interlace_mode;
     struct rt_format *rt_formats = NULL, *ptr;
+    unsigned int i, j, format_count, count;
     HRESULT hr = MF_E_INVALIDMEDIATYPE;
-    MFVideoArea aperture;
     D3DFORMAT *formats;
     GUID subtype;
 
@@ -710,6 +723,10 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
 
     if (count && !(flags & MFT_SET_TYPE_TEST_ONLY))
     {
+        UINT32 fixed_samples, interlace_mode;
+        MFVideoArea aperture;
+        UINT64 par;
+
         if (!(mixer->output.rt_formats = calloc(count, sizeof(*mixer->output.rt_formats))))
         {
             free(rt_formats);
@@ -718,9 +735,16 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
 
         memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
         memset(&aperture, 0, sizeof(aperture));
-        aperture.Area.cx = video_desc->SampleWidth;
-        aperture.Area.cy = video_desc->SampleHeight;
+        if (FAILED(IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture,
+                sizeof(aperture), NULL)))
+        {
+            aperture.Area.cx = video_desc->SampleWidth;
+            aperture.Area.cy = video_desc->SampleHeight;
+        }
         interlace_mode = video_mixer_get_interlace_mode_from_video_desc(video_desc);
+        mf_get_attribute_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &par, (UINT64)1 << 32 | 1);
+        mf_get_attribute_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &fixed_samples, 1);
+
         for (i = 0; i < count; ++i)
         {
             IMFMediaType *rt_media_type;
@@ -731,9 +755,12 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
             MFCreateMediaType(&rt_media_type);
             IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)rt_media_type);
             IMFMediaType_SetGUID(rt_media_type, &MF_MT_SUBTYPE, &subtype);
+            IMFMediaType_SetUINT64(rt_media_type, &MF_MT_FRAME_SIZE, (UINT64)aperture.Area.cx << 32 | aperture.Area.cy);
             IMFMediaType_SetBlob(rt_media_type, &MF_MT_GEOMETRIC_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
             IMFMediaType_SetBlob(rt_media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
             IMFMediaType_SetUINT32(rt_media_type, &MF_MT_INTERLACE_MODE, interlace_mode);
+            IMFMediaType_SetUINT64(rt_media_type, &MF_MT_PIXEL_ASPECT_RATIO, par);
+            IMFMediaType_SetUINT32(rt_media_type, &MF_MT_FIXED_SIZE_SAMPLES, fixed_samples);
 
             mixer->output.rt_formats[i].media_type = rt_media_type;
         }

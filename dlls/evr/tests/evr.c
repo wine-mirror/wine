@@ -946,6 +946,7 @@ static void test_default_mixer_type_negotiation(void)
     IDirect3DDevice9 *device;
     IMFMediaType *video_type;
     IMFTransform *transform;
+    MFVideoArea aperture;
     DWORD index, count;
     IUnknown *unk;
     HWND window;
@@ -1020,9 +1021,18 @@ static void test_default_mixer_type_negotiation(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    memset(&aperture, 0, sizeof(aperture));
+    aperture.Area.cx = 100; aperture.Area.cy = 200;
+    hr = IMFMediaType_SetBlob(video_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_FIXED_SIZE_SAMPLES, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_SetInputType(transform, 0, video_type, MFT_SET_TYPE_TEST_ONLY);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
@@ -1040,25 +1050,69 @@ static void test_default_mixer_type_negotiation(void)
     IMFMediaType_Release(media_type);
     IMFMediaType_Release(media_type2);
 
+    /* Modified after type was set. */
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_PIXEL_ASPECT_RATIO, (UINT64)56 << 32 | 55);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     /* Check attributes on available output types. */
     index = 0;
     while (SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, index++, &media_type)))
     {
-        UINT64 frame_size;
+        UINT64 frame_size, ratio;
+        MFVideoArea aperture;
         GUID subtype, major;
         UINT32 value;
 
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &major);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(IsEqualGUID(&major, &MFMediaType_Video), "Unexpected major type.\n");
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(frame_size == ((UINT64)100 << 32 | 200), "Unexpected frame size %s.\n", wine_dbgstr_longlong(frame_size));
         hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         ok(value == MFVideoInterlace_Progressive, "Unexpected interlace mode.\n");
+        /* Ratio from input type */
+        hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(ratio == ((UINT64)1 << 32 | 1), "Unexpected PAR %s.\n", wine_dbgstr_longlong(ratio));
+        hr = IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture, sizeof(aperture), NULL);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(aperture.Area.cx == 100 && aperture.Area.cy == 200, "Unexpected aperture area.\n");
+        hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (UINT8 *)&aperture, sizeof(aperture), NULL);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(aperture.Area.cx == 100 && aperture.Area.cy == 200, "Unexpected aperture area.\n");
+        hr = IMFMediaType_GetUINT32(video_type, &MF_MT_FIXED_SIZE_SAMPLES, &value);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(value == 2, "Unexpected value %u.\n", value);
+
+        IMFMediaType_Release(media_type);
+    }
+    ok(index > 1, "Unexpected number of available types.\n");
+
+    hr = IMFMediaType_DeleteItem(video_type, &MF_MT_FIXED_SIZE_SAMPLES);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    index = 0;
+    while (SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, index++, &media_type)))
+    {
+        UINT32 value;
+        UINT64 ratio;
+
+        hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(ratio == ((UINT64)56 << 32 | 55), "Unexpected PAR %s.\n", wine_dbgstr_longlong(ratio));
+
+        hr = IMFMediaType_GetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &value);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(value == 1, "Unexpected value %u.\n", value);
 
         IMFMediaType_Release(media_type);
     }
