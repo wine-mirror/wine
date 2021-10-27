@@ -721,7 +721,7 @@ static void test_sync_reader_types(void)
         stream_number2 = 0xdead;
         hr = IWMSyncReader_GetStreamNumberForOutput(reader, output_number, &stream_number2);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
-        todo_wine ok(stream_number2 == stream_number, "Expected stream number %u, got %u.\n", stream_number, stream_number2);
+        ok(stream_number2 == stream_number, "Expected stream number %u, got %u.\n", stream_number, stream_number2);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);

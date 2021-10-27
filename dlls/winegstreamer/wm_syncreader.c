@@ -145,10 +145,14 @@ static HRESULT WINAPI WMSyncReader_GetReadStreamSamples(IWMSyncReader2 *iface, W
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMSyncReader_GetStreamNumberForOutput(IWMSyncReader2 *iface, DWORD output, WORD *stream_num)
+static HRESULT WINAPI WMSyncReader_GetStreamNumberForOutput(IWMSyncReader2 *iface,
+        DWORD output, WORD *stream_number)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%u %p): stub!\n", This, output, stream_num);
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, output %u, stream_number %p.\n", reader, output, stream_number);
+
+    *stream_number = output + 1;
     return S_OK;
 }
 
