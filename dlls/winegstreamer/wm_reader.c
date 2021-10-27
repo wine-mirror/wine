@@ -20,6 +20,148 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
+struct stream_config
+{
+    IWMStreamConfig IWMStreamConfig_iface;
+    LONG refcount;
+
+    const struct wm_stream *stream;
+};
+
+static struct stream_config *impl_from_IWMStreamConfig(IWMStreamConfig *iface)
+{
+    return CONTAINING_RECORD(iface, struct stream_config, IWMStreamConfig_iface);
+}
+
+static HRESULT WINAPI stream_config_QueryInterface(IWMStreamConfig *iface, REFIID iid, void **out)
+{
+    struct stream_config *config = impl_from_IWMStreamConfig(iface);
+
+    TRACE("config %p, iid %s, out %p.\n", config, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IWMStreamConfig))
+        *out = &config->IWMStreamConfig_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI stream_config_AddRef(IWMStreamConfig *iface)
+{
+    struct stream_config *config = impl_from_IWMStreamConfig(iface);
+    ULONG refcount = InterlockedIncrement(&config->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", config, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI stream_config_Release(IWMStreamConfig *iface)
+{
+    struct stream_config *config = impl_from_IWMStreamConfig(iface);
+    ULONG refcount = InterlockedDecrement(&config->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", config, refcount);
+
+    if (!refcount)
+    {
+        IWMProfile3_Release(&config->stream->reader->IWMProfile3_iface);
+        free(config);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI stream_config_GetStreamType(IWMStreamConfig *iface, GUID *type)
+{
+    FIXME("iface %p, type %p, stub!\n", iface, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetStreamNumber(IWMStreamConfig *iface, WORD *number)
+{
+    FIXME("iface %p, number %p, stub!\n", iface, number);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_SetStreamNumber(IWMStreamConfig *iface, WORD number)
+{
+    FIXME("iface %p, number %u, stub!\n", iface, number);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetStreamName(IWMStreamConfig *iface, WCHAR *name, WORD *len)
+{
+    FIXME("iface %p, name %p, len %p, stub!\n", iface, name, len);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_SetStreamName(IWMStreamConfig *iface, const WCHAR *name)
+{
+    FIXME("iface %p, name %s, stub!\n", iface, debugstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetConnectionName(IWMStreamConfig *iface, WCHAR *name, WORD *len)
+{
+    FIXME("iface %p, name %p, len %p, stub!\n", iface, name, len);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_SetConnectionName(IWMStreamConfig *iface, const WCHAR *name)
+{
+    FIXME("iface %p, name %s, stub!\n", iface, debugstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetBitrate(IWMStreamConfig *iface, DWORD *bitrate)
+{
+    FIXME("iface %p, bitrate %p, stub!\n", iface, bitrate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_SetBitrate(IWMStreamConfig *iface, DWORD bitrate)
+{
+    FIXME("iface %p, bitrate %u, stub!\n", iface, bitrate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_GetBufferWindow(IWMStreamConfig *iface, DWORD *window)
+{
+    FIXME("iface %p, window %p, stub!\n", iface, window);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_config_SetBufferWindow(IWMStreamConfig *iface, DWORD window)
+{
+    FIXME("iface %p, window %u, stub!\n", iface, window);
+    return E_NOTIMPL;
+}
+
+static const IWMStreamConfigVtbl stream_config_vtbl =
+{
+    stream_config_QueryInterface,
+    stream_config_AddRef,
+    stream_config_Release,
+    stream_config_GetStreamType,
+    stream_config_GetStreamNumber,
+    stream_config_SetStreamNumber,
+    stream_config_GetStreamName,
+    stream_config_SetStreamName,
+    stream_config_GetConnectionName,
+    stream_config_SetConnectionName,
+    stream_config_GetBitrate,
+    stream_config_SetBitrate,
+    stream_config_GetBufferWindow,
+    stream_config_SetBufferWindow,
+};
+
 static DWORD CALLBACK read_thread(void *arg)
 {
     struct wm_reader *reader = arg;
@@ -203,8 +345,36 @@ static HRESULT WINAPI profile_GetStreamCount(IWMProfile3 *iface, DWORD *count)
 
 static HRESULT WINAPI profile_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **config)
 {
-    FIXME("iface %p, index %d, config %p, stub!\n", iface, index, config);
-    return E_NOTIMPL;
+    struct wm_reader *reader = impl_from_IWMProfile3(iface);
+    struct stream_config *object;
+
+    TRACE("reader %p, index %u, config %p.\n", reader, index, config);
+
+    EnterCriticalSection(&reader->cs);
+
+    if (index >= reader->stream_count)
+    {
+        LeaveCriticalSection(&reader->cs);
+        WARN("Index %u exceeds stream count %u; returning E_INVALIDARG.\n", index, reader->stream_count);
+        return E_INVALIDARG;
+    }
+
+    if (!(object = calloc(1, sizeof(*object))))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    object->IWMStreamConfig_iface.lpVtbl = &stream_config_vtbl;
+    object->refcount = 1;
+    object->stream = &reader->streams[index];
+    IWMProfile3_AddRef(&reader->IWMProfile3_iface);
+
+    LeaveCriticalSection(&reader->cs);
+
+    TRACE("Created stream config %p.\n", object);
+    *config = &object->IWMStreamConfig_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI profile_GetStreamByNumber(IWMProfile3 *iface, WORD stream_number, IWMStreamConfig **config)
@@ -830,6 +1000,7 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
     struct wg_parser *wg_parser;
     STATSTG stat;
     HRESULT hr;
+    WORD i;
 
     if (FAILED(hr = IStream_Stat(stream, &stat, STATFLAG_NONAME)))
     {
@@ -859,8 +1030,25 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
 
     reader->stream_count = wg_parser_get_stream_count(reader->wg_parser);
 
+    if (!(reader->streams = calloc(reader->stream_count, sizeof(*reader->streams))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto out_disconnect_parser;
+    }
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        struct wm_stream *stream = &reader->streams[i];
+
+        stream->wg_stream = wg_parser_get_stream(reader->wg_parser, i);
+        stream->reader = reader;
+    }
+
     LeaveCriticalSection(&reader->cs);
     return S_OK;
+
+out_disconnect_parser:
+    wg_parser_disconnect(reader->wg_parser);
 
 out_shutdown_thread:
     reader->read_thread_shutdown = true;

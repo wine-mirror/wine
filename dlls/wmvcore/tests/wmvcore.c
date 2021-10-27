@@ -469,31 +469,28 @@ static void test_sync_reader_streaming(void)
     for (i = 0; i < 2; ++i)
     {
         hr = IWMProfile_GetStream(profile, i, &config);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IWMProfile_GetStream(profile, i, &config2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(config2 != config, "Expected different objects.\n");
+        ref = IWMStreamConfig_Release(config2);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        stream_numbers[i] = 0xdead;
+        hr = IWMStreamConfig_GetStreamNumber(config, &stream_numbers[i]);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(stream_numbers[i] == i + 1, "Got stream number %u.\n", stream_numbers[i]);
 
-        if (hr == S_OK)
-        {
-            hr = IWMProfile_GetStream(profile, i, &config2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(config2 != config, "Expected different objects.\n");
-            ref = IWMStreamConfig_Release(config2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
-
-            stream_numbers[i] = 0xdead;
-            hr = IWMStreamConfig_GetStreamNumber(config, &stream_numbers[i]);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(stream_numbers[i] == i + 1, "Got stream number %u.\n", stream_numbers[i]);
-
-            ref = IWMStreamConfig_Release(config);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
-        }
+        ref = IWMStreamConfig_Release(config);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
 
         hr = IWMSyncReader_SetReadStreamSamples(reader, stream_numbers[i], FALSE);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     }
 
     hr = IWMProfile_GetStream(profile, 2, &config);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     while (!eos[0] || !eos[1])
     {
@@ -699,12 +696,7 @@ static void test_sync_reader_types(void)
         winetest_push_context("Stream %u", i);
 
         hr = IWMProfile_GetStream(profile, i, &config);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        if (hr != S_OK)
-        {
-            winetest_pop_context();
-            continue;
-        }
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         stream_number = 0xdead;
         hr = IWMStreamConfig_GetStreamNumber(config, &stream_number);
@@ -733,6 +725,11 @@ static void test_sync_reader_types(void)
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr != S_OK)
+        {
+            winetest_pop_context();
+            continue;
+        }
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);

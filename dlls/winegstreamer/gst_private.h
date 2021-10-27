@@ -113,6 +113,12 @@ HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HI
 
 HRESULT audio_converter_create(REFIID riid, void **ret) DECLSPEC_HIDDEN;
 
+struct wm_stream
+{
+    struct wm_reader *reader;
+    struct wg_parser_stream *wg_stream;
+};
+
 struct wm_reader
 {
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
@@ -129,6 +135,7 @@ struct wm_reader
     bool read_thread_shutdown;
     struct wg_parser *wg_parser;
 
+    struct wm_stream *streams;
     WORD stream_count;
 
     const struct wm_reader_ops *ops;
