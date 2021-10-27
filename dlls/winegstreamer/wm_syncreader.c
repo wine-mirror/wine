@@ -85,11 +85,16 @@ static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface, WORD str
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMSyncReader_GetOutputCount(IWMSyncReader2 *iface, DWORD *outputs)
+static HRESULT WINAPI WMSyncReader_GetOutputCount(IWMSyncReader2 *iface, DWORD *count)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%p): stub!\n", This, outputs);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, count %p.\n", reader, count);
+
+    EnterCriticalSection(&reader->reader.cs);
+    *count = reader->reader.stream_count;
+    LeaveCriticalSection(&reader->reader.cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI WMSyncReader_GetOutputFormat(IWMSyncReader2 *iface, DWORD output_num, DWORD format_num,

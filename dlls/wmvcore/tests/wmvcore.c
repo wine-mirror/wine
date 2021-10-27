@@ -463,8 +463,8 @@ static void test_sync_reader_streaming(void)
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputCount(reader, &count);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(count == 2, "Got count %u.\n", count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
 
     for (i = 0; i < 2; ++i)
     {
