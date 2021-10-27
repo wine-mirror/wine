@@ -1246,9 +1246,7 @@ static void test_default_presenter(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
-    ok(hr == S_OK || broken(hr == E_FAIL) /* WinXP */, "Failed to create default presenter, hr %#x.\n", hr);
-    if (FAILED(hr))
-        return;
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
 
     check_interface(presenter, &IID_IQualProp, TRUE);
     check_interface(presenter, &IID_IMFVideoPositionMapper, TRUE);
@@ -2820,7 +2818,18 @@ static void test_MFIsFormatYUV(void)
 
 START_TEST(evr)
 {
+    IMFVideoPresenter *presenter;
+    HRESULT hr;
+
     CoInitialize(NULL);
+
+    if (FAILED(hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter)))
+    {
+        win_skip("Failed to create default presenter, hr %#x. Skipping tests.\n", hr);
+        CoUninitialize();
+        return;
+    }
+    IMFVideoPresenter_Release(presenter);
 
     test_aggregation();
     test_interfaces();
