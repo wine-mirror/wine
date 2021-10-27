@@ -178,7 +178,11 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
 static int obj_map_cmp( const void *key, const struct wine_rb_entry *entry )
 {
     struct obj_map_entry *obj_entry = WINE_RB_ENTRY_VALUE( entry, struct obj_map_entry, entry );
-    return HandleToLong( key ) - HandleToLong( obj_entry->obj );
+    UINT_PTR a = (UINT_PTR)key;
+    UINT_PTR b = (UINT_PTR)obj_entry->obj;
+    if (a > b) return 1;
+    if (a < b) return -1;
+    return 0;
 };
 
 struct wine_rb_tree obj_map = { obj_map_cmp };
