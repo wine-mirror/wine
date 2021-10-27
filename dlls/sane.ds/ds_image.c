@@ -34,7 +34,6 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEINFO pImageInfo = (pTW_IMAGEINFO) pData;
-    SANE_Status status;
     int resolution;
 
     TRACE("DG_IMAGE/DAT_IMAGEINFO/MSG_GET\n");
@@ -49,17 +48,15 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
         if (activeDS.currentState == 6)
         {
             /* return general image description information about the image about to be transferred */
-            status = sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
             TRACE("Getting parameters\n");
-            if (status != SANE_STATUS_GOOD)
+            if (get_sane_params( &activeDS.frame_params ))
             {
-                WARN("sane_get_parameters: %s\n", sane_strstatus (status));
+                WARN("sane_get_parameters failed\n");
                 sane_cancel (activeDS.deviceHandle);
                 activeDS.sane_started = FALSE;
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
-            activeDS.sane_param_valid = TRUE;
         }
 
         if (sane_option_get_int("resolution", &resolution) == TWCC_SUCCESS)
@@ -68,40 +65,39 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = -1;
         pImageInfo->XResolution.Frac = 0;
         pImageInfo->YResolution.Frac = 0;
-        pImageInfo->ImageWidth = activeDS.sane_param.pixels_per_line;
-        pImageInfo->ImageLength = activeDS.sane_param.lines;
+        pImageInfo->ImageWidth = activeDS.frame_params.pixels_per_line;
+        pImageInfo->ImageLength = activeDS.frame_params.lines;
 
-        TRACE("Bits per Sample %i\n",activeDS.sane_param.depth);
-        TRACE("Frame Format %i\n",activeDS.sane_param.format);
+        TRACE("Bits per Sample %i\n",activeDS.frame_params.depth);
+        TRACE("Frame Format %i\n",activeDS.frame_params.format);
 
-        if (activeDS.sane_param.format == SANE_FRAME_RGB )
+        switch (activeDS.frame_params.format)
         {
-            pImageInfo->BitsPerPixel = activeDS.sane_param.depth * 3;
+        case FMT_RGB:
+            pImageInfo->BitsPerPixel = activeDS.frame_params.depth * 3;
             pImageInfo->Compression = TWCP_NONE;
             pImageInfo->Planar = TRUE;
             pImageInfo->SamplesPerPixel = 3;
-            pImageInfo->BitsPerSample[0] = activeDS.sane_param.depth;
-            pImageInfo->BitsPerSample[1] = activeDS.sane_param.depth;
-            pImageInfo->BitsPerSample[2] = activeDS.sane_param.depth;
+            pImageInfo->BitsPerSample[0] = activeDS.frame_params.depth;
+            pImageInfo->BitsPerSample[1] = activeDS.frame_params.depth;
+            pImageInfo->BitsPerSample[2] = activeDS.frame_params.depth;
             pImageInfo->PixelType = TWPT_RGB;
-        }
-        else if (activeDS.sane_param.format == SANE_FRAME_GRAY)
-        {
-            pImageInfo->BitsPerPixel = activeDS.sane_param.depth;
+            break;
+        case FMT_GRAY:
+            pImageInfo->BitsPerPixel = activeDS.frame_params.depth;
             pImageInfo->Compression = TWCP_NONE;
             pImageInfo->Planar = TRUE;
             pImageInfo->SamplesPerPixel = 1;
-            pImageInfo->BitsPerSample[0] = activeDS.sane_param.depth;
-            if (activeDS.sane_param.depth == 1)
+            pImageInfo->BitsPerSample[0] = activeDS.frame_params.depth;
+            if (activeDS.frame_params.depth == 1)
                 pImageInfo->PixelType = TWPT_BW;
             else
                 pImageInfo->PixelType = TWPT_GRAY;
-        }
-        else
-        {
-            ERR("Unhandled source frame type %i\n",activeDS.sane_param.format);
+            break;
+        case FMT_OTHER:
             twRC = TWRC_FAILURE;
             activeDS.twCC = TWCC_SEQERROR;
+            break;
         }
     }
 
@@ -229,13 +225,9 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
                 activeDS.sane_started = TRUE;
             }
 
-            status = sane_get_parameters (activeDS.deviceHandle,
-                    &activeDS.sane_param);
-            activeDS.sane_param_valid = TRUE;
-
-            if (status != SANE_STATUS_GOOD)
+            if (get_sane_params( &activeDS.frame_params ))
             {
-                WARN("sane_get_parameters: %s\n", sane_strstatus (status));
+                WARN("sane_get_parameters failed\n");
                 sane_cancel (activeDS.deviceHandle);
                 activeDS.sane_started = FALSE;
                 activeDS.twCC = TWCC_OPERATIONERROR;
@@ -243,15 +235,15 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
             }
 
             TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
-              , activeDS.sane_param.pixels_per_line, activeDS.sane_param.lines,
-              activeDS.sane_param.depth, activeDS.sane_param.format,
-              activeDS.sane_param.last_frame);
+              , activeDS.frame_params.pixels_per_line, activeDS.frame_params.lines,
+              activeDS.frame_params.depth, activeDS.frame_params.format,
+              activeDS.frame_params.last_frame);
 
             activeDS.currentState = 7;
         }
 
         /* access memory buffer */
-        if (pImageMemXfer->Memory.Length < activeDS.sane_param.bytes_per_line)
+        if (pImageMemXfer->Memory.Length < activeDS.frame_params.bytes_per_line)
         {
             sane_cancel (activeDS.deviceHandle);
             activeDS.sane_started = FALSE;
@@ -271,14 +263,14 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
 
         ptr = buffer;
         consumed_len = 0;
-        rows = pImageMemXfer->Memory.Length / activeDS.sane_param.bytes_per_line;
+        rows = pImageMemXfer->Memory.Length / activeDS.frame_params.bytes_per_line;
 
         /* must fill full lines */
-        while (consumed_len < (activeDS.sane_param.bytes_per_line*rows) && 
+        while (consumed_len < (activeDS.frame_params.bytes_per_line*rows) &&
                 status == SANE_STATUS_GOOD)
         {
             status = sane_read (activeDS.deviceHandle, ptr,
-                    (activeDS.sane_param.bytes_per_line*rows) - consumed_len ,
+                    (activeDS.frame_params.bytes_per_line*rows) - consumed_len ,
                     &buff_len);
             consumed_len += buff_len;
             ptr += buff_len;
@@ -287,8 +279,8 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         if (status == SANE_STATUS_GOOD || status == SANE_STATUS_EOF)
         {
             pImageMemXfer->Compression = TWCP_NONE;
-            pImageMemXfer->BytesPerRow = activeDS.sane_param.bytes_per_line;
-            pImageMemXfer->Columns = activeDS.sane_param.pixels_per_line;
+            pImageMemXfer->BytesPerRow = activeDS.frame_params.bytes_per_line;
+            pImageMemXfer->Columns = activeDS.frame_params.pixels_per_line;
             pImageMemXfer->Rows = rows;
             pImageMemXfer->XOffset = 0;
             pImageMemXfer->YOffset = 0;
@@ -385,35 +377,34 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             activeDS.sane_started = TRUE;
         }
 
-        status = sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
-        activeDS.sane_param_valid = TRUE;
-        if (status != SANE_STATUS_GOOD)
+        if (get_sane_params( &activeDS.frame_params ))
         {
-            WARN("sane_get_parameters: %s\n", sane_strstatus (status));
+            WARN("sane_get_parameters failed\n");
             sane_cancel (activeDS.deviceHandle);
             activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
 
-        if (activeDS.sane_param.format == SANE_FRAME_GRAY)
+        switch (activeDS.frame_params.format)
         {
-            if (activeDS.sane_param.depth == 8)
+        case FMT_GRAY:
+            if (activeDS.frame_params.depth == 8)
                 color_size = (1 << 8) * sizeof(*colors);
-            else if (activeDS.sane_param.depth == 1)
+            else if (activeDS.frame_params.depth == 1)
                 ;
             else
             {
-                FIXME("For NATIVE, we support only 1 bit monochrome and 8 bit Grayscale, not %d\n", activeDS.sane_param.depth);
+                FIXME("For NATIVE, we support only 1 bit monochrome and 8 bit Grayscale, not %d\n", activeDS.frame_params.depth);
                 sane_cancel (activeDS.deviceHandle);
                 activeDS.sane_started = FALSE;
                 activeDS.twCC = TWCC_OPERATIONERROR;
                 return TWRC_FAILURE;
             }
-        }
-        else if (activeDS.sane_param.format != SANE_FRAME_RGB)
-        {
-            FIXME("For NATIVE, we support only GRAY and RGB, not %d\n", activeDS.sane_param.format);
+            break;
+        case FMT_RGB:
+            break;
+        default:
             sane_cancel (activeDS.deviceHandle);
             activeDS.sane_started = FALSE;
             activeDS.twCC = TWCC_OPERATIONERROR;
@@ -421,12 +412,12 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         }
 
         TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d bpl=%d) from sane...\n"
-              , activeDS.sane_param.pixels_per_line, activeDS.sane_param.lines,
-              activeDS.sane_param.depth, activeDS.sane_param.format,
-              activeDS.sane_param.last_frame, activeDS.sane_param.bytes_per_line);
+              , activeDS.frame_params.pixels_per_line, activeDS.frame_params.lines,
+              activeDS.frame_params.depth, activeDS.frame_params.format,
+              activeDS.frame_params.last_frame, activeDS.frame_params.bytes_per_line);
 
-        dib_bytes_per_line = ((activeDS.sane_param.bytes_per_line + 3) / 4) * 4;
-        dib_bytes = activeDS.sane_param.lines * dib_bytes_per_line;
+        dib_bytes_per_line = ((activeDS.frame_params.bytes_per_line + 3) / 4) * 4;
+        dib_bytes = activeDS.frame_params.lines * dib_bytes_per_line;
 
         hDIB = GlobalAlloc(GMEM_ZEROINIT, dib_bytes + sizeof(*header) + color_size);
         if (hDIB)
@@ -443,14 +434,21 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         }
 
         header->biSize = sizeof (*header);
-        header->biWidth = activeDS.sane_param.pixels_per_line;
-        header->biHeight = activeDS.sane_param.lines;
+        header->biWidth = activeDS.frame_params.pixels_per_line;
+        header->biHeight = activeDS.frame_params.lines;
         header->biPlanes = 1;
         header->biCompression = BI_RGB;
-        if (activeDS.sane_param.format == SANE_FRAME_RGB)
-            header->biBitCount = activeDS.sane_param.depth * 3;
-        if (activeDS.sane_param.format == SANE_FRAME_GRAY)
-            header->biBitCount = activeDS.sane_param.depth;
+        switch (activeDS.frame_params.format)
+        {
+        case FMT_RGB:
+            header->biBitCount = activeDS.frame_params.depth * 3;
+            break;
+        case FMT_GRAY:
+            header->biBitCount = activeDS.frame_params.depth;
+            break;
+        case FMT_OTHER:
+            break;
+        }
         header->biSizeImage = dib_bytes;
         header->biXPelsPerMeter = 0;
         header->biYPelsPerMeter = 0;
@@ -470,16 +468,16 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 
         /* Sane returns data in top down order.  Acrobat does best with
            a bottom up DIB being returned.  */
-        line = p + (activeDS.sane_param.lines - 1) * dib_bytes_per_line;
-        for (i = activeDS.sane_param.lines - 1; i >= 0; i--)
+        line = p + (activeDS.frame_params.lines - 1) * dib_bytes_per_line;
+        for (i = activeDS.frame_params.lines - 1; i >= 0; i--)
         {
             activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd,
-                    ((activeDS.sane_param.lines - 1 - i) * 100)
+                    ((activeDS.frame_params.lines - 1 - i) * 100)
                             /
-                    (activeDS.sane_param.lines - 1));
+                    (activeDS.frame_params.lines - 1));
 
             status = read_one_line(activeDS.deviceHandle, line,
-                            activeDS.sane_param.bytes_per_line);
+                            activeDS.frame_params.bytes_per_line);
             if (status != SANE_STATUS_GOOD)
                 break;
 

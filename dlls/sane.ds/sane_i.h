@@ -37,6 +37,16 @@ extern HINSTANCE SANE_instance DECLSPEC_HIDDEN;
 
 #define TWCC_CHECKSTATUS     (TWCC_CUSTOMBASE + 1)
 
+struct frame_parameters
+{
+    enum { FMT_GRAY, FMT_RGB, FMT_OTHER } format;
+    BOOL last_frame;
+    int  bytes_per_line;
+    int  pixels_per_line;
+    int  lines;
+    int  depth;
+};
+
 /* internal information about an active data source */
 struct tagActiveDS
 {
@@ -49,9 +59,7 @@ struct tagActiveDS
     HWND		progressWnd;		/* window handle of the scanning window */
 
     SANE_Handle		deviceHandle;		/* device handle */
-    SANE_Parameters     sane_param;             /* parameters about the image
-                                                   transferred */
-    BOOL                sane_param_valid;  /* true if valid sane_param*/
+    struct frame_parameters frame_params;       /* parameters about the image transferred */
     BOOL                sane_started;      /* If sane_start has been called */
     INT                 deviceIndex;    /* index of the current device */
 
@@ -220,5 +228,6 @@ TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry ) DE
 TW_UINT16 sane_option_get_max_scan_area( int *tlx, int *tly, int *brx, int *bry ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_scan_area( int tlx, int tly, int brx, int bry, BOOL *reload ) DECLSPEC_HIDDEN;
 TW_FIX32 convert_sane_res_to_twain( int res ) DECLSPEC_HIDDEN;
+TW_UINT16 get_sane_params( struct frame_parameters *params ) DECLSPEC_HIDDEN;
 
 #endif

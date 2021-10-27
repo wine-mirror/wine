@@ -372,8 +372,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
                     strcpy(mode, "Grayscale");
                     twCC = sane_option_set_str("mode", mode, &reload);
                 }
-                if (reload)
-                    sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+                if (reload) get_sane_params( &activeDS.frame_params );
             }
             break;
 
@@ -394,7 +393,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
                 twCC = sane_option_set_str("mode", mode, &reload);
             }
             if (twCC != TWCC_SUCCESS) break;
-            if (reload) sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
+            if (reload) get_sane_params( &activeDS.frame_params );
 
             /* .. fall through intentional .. */
 
@@ -458,7 +457,7 @@ static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
 
     TRACE("ICAP_BITDEPTH\n");
 
-    possible_values[0] = activeDS.sane_param.depth;
+    possible_values[0] = activeDS.frame_params.depth;
 
     switch (action)
     {
@@ -469,15 +468,15 @@ static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case MSG_GET:
             twCC = msg_get_enum(pCapability, possible_values, ARRAY_SIZE(possible_values),
-                    TWTY_UINT16, activeDS.sane_param.depth, activeDS.sane_param.depth);
+                    TWTY_UINT16, activeDS.frame_params.depth, activeDS.frame_params.depth);
             break;
 
         case MSG_GETDEFAULT:
             /* .. Fall through intentional .. */
 
         case MSG_GETCURRENT:
-            TRACE("Returning current bitdepth of %d\n", activeDS.sane_param.depth);
-            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.sane_param.depth);
+            TRACE("Returning current bitdepth of %d\n", activeDS.frame_params.depth);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.frame_params.depth);
             break;
     }
     return twCC;
@@ -675,7 +674,7 @@ static TW_UINT16 SANE_ICAPPixelFlavor (pTW_CAPABILITY pCapability, TW_UINT16 act
     TW_UINT16 twCC = TWCC_BADCAP;
     static const TW_UINT32 possible_values[] = { TWPF_CHOCOLATE, TWPF_VANILLA };
     TW_UINT32 val;
-    TW_UINT32 flavor = activeDS.sane_param.depth == 1 ? TWPF_VANILLA : TWPF_CHOCOLATE;
+    TW_UINT32 flavor = activeDS.frame_params.depth == 1 ? TWPF_VANILLA : TWPF_CHOCOLATE;
 
     TRACE("ICAP_PIXELFLAVOR\n");
 

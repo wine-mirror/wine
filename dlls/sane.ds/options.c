@@ -260,3 +260,30 @@ TW_FIX32 convert_sane_res_to_twain(int res)
     value.Frac  = res & 0xffff;
     return value;
 }
+
+TW_UINT16 get_sane_params( struct frame_parameters *params )
+{
+    SANE_Parameters sane_params;
+    TW_UINT16 rc = sane_status_to_twcc( sane_get_parameters( activeDS.deviceHandle, &sane_params ));
+
+    if (rc != TWCC_SUCCESS) return rc;
+    switch (sane_params.format)
+    {
+    case SANE_FRAME_GRAY:
+        params->format = FMT_GRAY;
+        break;
+    case SANE_FRAME_RGB:
+        params->format = FMT_RGB;
+        break;
+    default:
+        ERR("Unhandled source frame format %i\n", sane_params.format);
+        params->format = FMT_OTHER;
+        break;
+    }
+    params->last_frame = sane_params.last_frame;
+    params->bytes_per_line = sane_params.bytes_per_line;
+    params->pixels_per_line = sane_params.pixels_per_line;
+    params->lines = sane_params.lines;
+    params->depth = sane_params.depth;
+    return TWCC_SUCCESS;
+}

@@ -309,11 +309,11 @@ TW_UINT16 SANE_SetupMemXferGet (pTW_IDENTITY pOrigin,
     pTW_SETUPMEMXFER  pSetupMemXfer = (pTW_SETUPMEMXFER)pData;
 
     TRACE("DG_CONTROL/DAT_SETUPMEMXFER/MSG_GET\n");
-    if (activeDS.sane_param_valid)
+    if (activeDS.frame_params.bytes_per_line)
     {
-        pSetupMemXfer->MinBufSize = activeDS.sane_param.bytes_per_line;
-        pSetupMemXfer->MaxBufSize = activeDS.sane_param.bytes_per_line * 8;
-        pSetupMemXfer->Preferred = activeDS.sane_param.bytes_per_line * 2;
+        pSetupMemXfer->MinBufSize = activeDS.frame_params.bytes_per_line;
+        pSetupMemXfer->MaxBufSize = activeDS.frame_params.bytes_per_line * 8;
+        pSetupMemXfer->Preferred = activeDS.frame_params.bytes_per_line * 2;
     }
     else
     {
@@ -392,8 +392,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
             }
             else
             {
-                sane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
-                activeDS.sane_param_valid = TRUE;
+                get_sane_params( &activeDS.frame_params );
             }
         }
         else
