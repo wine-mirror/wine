@@ -45,8 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static const struct dinput_device_vtbl mouse_vtbl;
 
-typedef struct SysMouseImpl SysMouseImpl;
-
 typedef enum
 {
     WARP_DEFAULT,
@@ -54,11 +52,10 @@ typedef enum
     WARP_FORCE_ON
 } WARP_MOUSE;
 
-struct SysMouseImpl
+struct mouse
 {
     struct dinput_device base;
 
-    /* SysMouseAImpl */
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;
     BOOL                            clipped;
@@ -70,9 +67,9 @@ struct SysMouseImpl
     WARP_MOUSE                      warp_override;
 };
 
-static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
+static inline struct mouse *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
 {
-    return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ), SysMouseImpl, base );
+    return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ), struct mouse, base );
 }
 
 HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
@@ -106,7 +103,7 @@ HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance,
 
 HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
-    SysMouseImpl *impl;
+    struct mouse *impl;
     HKEY hkey, appkey;
     WCHAR buffer[20];
     HRESULT hr;
@@ -116,9 +113,9 @@ HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirect
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysMouse, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = dinput_device_alloc( sizeof(SysMouseImpl), &mouse_vtbl, guid, dinput, (void **)&impl )))
+    if (FAILED(hr = dinput_device_alloc( sizeof(struct mouse), &mouse_vtbl, guid, dinput, (void **)&impl )))
         return hr;
-    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
+    impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": struct mouse*->base.crit");
 
     mouse_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion, 0 );
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
@@ -152,14 +149,10 @@ HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirect
     return DI_OK;
 }
 
-/******************************************************************************
- *	SysMouseA (DInput Mouse support)
- */
-
 void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
 {
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
-    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)This->base.device_state;
+    struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
+    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
     POINT rel, pt;
     DWORD seq;
     int i, wdata = 0;
@@ -181,8 +174,8 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     if (ri->data.mouse.usFlags & MOUSE_ATTRIBUTES_CHANGED)
         FIXME( "Unimplemented MOUSE_ATTRIBUTES_CHANGED flag\n" );
 
-    EnterCriticalSection( &This->base.crit );
-    seq = This->base.dinput->evsequence++;
+    EnterCriticalSection( &impl->base.crit );
+    seq = impl->base.dinput->evsequence++;
 
     rel.x = ri->data.mouse.lLastX;
     rel.y = ri->data.mouse.lLastY;
@@ -196,7 +189,7 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     state->lX += rel.x;
     state->lY += rel.y;
 
-    if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
+    if (impl->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
     {
         pt.x = state->lX;
         pt.y = state->lY;
@@ -222,9 +215,9 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
 
     if (rel.x || rel.y)
     {
-        if ((This->warp_override == WARP_FORCE_ON) ||
-            (This->warp_override != WARP_DISABLE && (This->base.dwCoopLevel & DISCL_EXCLUSIVE)))
-            This->need_warp = TRUE;
+        if ((impl->warp_override == WARP_FORCE_ON) ||
+            (impl->warp_override != WARP_DISABLE && (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)))
+            impl->need_warp = TRUE;
     }
 
     if (ri->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
@@ -250,22 +243,22 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
            state->rgbButtons[1], state->rgbButtons[2], state->rgbButtons[3], state->rgbButtons[4],
            state->lX, state->lY, state->lZ );
 
-    if (notify && This->base.hEvent) SetEvent( This->base.hEvent );
-    LeaveCriticalSection( &This->base.crit );
+    if (notify && impl->base.hEvent) SetEvent( impl->base.hEvent );
+    LeaveCriticalSection( &impl->base.crit );
 }
 
 /* low-level mouse hook */
 int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
-    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)This->base.device_state;
+    struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
+    DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
     int wdata = 0, inst_id = -1, ret = 0;
     BOOL notify = FALSE;
 
     TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);
 
-    EnterCriticalSection(&This->base.crit);
+    EnterCriticalSection( &impl->base.crit );
 
     switch(wparam) {
         case WM_MOUSEMOVE:
@@ -276,7 +269,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
             state->lX += pt.x = hook->pt.x - pt.x;
             state->lY += pt.y = hook->pt.y - pt.y;
 
-            if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
+            if (impl->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
             {
                 pt1.x = state->lX;
                 pt1.y = state->lY;
@@ -293,8 +286,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
                 /* Already have X, need to queue it */
                 if (inst_id != -1)
                 {
-                    queue_event(iface, inst_id,
-                                wdata, GetCurrentTime(), This->base.dinput->evsequence);
+                    queue_event( iface, inst_id, wdata, GetCurrentTime(), impl->base.dinput->evsequence );
                     notify = TRUE;
                 }
                 inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS;
@@ -303,9 +295,9 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
 
             if (pt.x || pt.y)
             {
-                if ((This->warp_override == WARP_FORCE_ON) ||
-                    (This->warp_override != WARP_DISABLE && (This->base.dwCoopLevel & DISCL_EXCLUSIVE)))
-                    This->need_warp = TRUE;
+                if ((impl->warp_override == WARP_FORCE_ON) ||
+                    (impl->warp_override != WARP_DISABLE && (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)))
+                    impl->need_warp = TRUE;
             }
             break;
         }
@@ -314,7 +306,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
             state->lZ += wdata = (short)HIWORD( hook->mouseData );
             /* FarCry crashes if it gets a mouse wheel message */
             /* FIXME: should probably filter out other messages too */
-            ret = This->clipped;
+            ret = impl->clipped;
             break;
         case WM_LBUTTONDOWN:
             inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
@@ -353,8 +345,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
 
     if (inst_id != -1)
     {
-        queue_event(iface, inst_id,
-                    wdata, GetCurrentTime(), This->base.dinput->evsequence++);
+        queue_event( iface, inst_id, wdata, GetCurrentTime(), impl->base.dinput->evsequence++ );
         notify = TRUE;
     }
 
@@ -362,33 +353,33 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
            state->rgbButtons[1], state->rgbButtons[2], state->rgbButtons[3], state->rgbButtons[4],
            state->lX, state->lY, state->lZ );
 
-    if (notify && This->base.hEvent) SetEvent( This->base.hEvent );
-    LeaveCriticalSection(&This->base.crit);
+    if (notify && impl->base.hEvent) SetEvent( impl->base.hEvent );
+    LeaveCriticalSection( &impl->base.crit );
     return ret;
 }
 
-static void warp_check( SysMouseImpl* This, BOOL force )
+static void warp_check( struct mouse *impl, BOOL force )
 {
     DWORD now = GetCurrentTime();
-    const DWORD interval = This->clipped ? 500 : 10;
+    const DWORD interval = impl->clipped ? 500 : 10;
 
-    if (force || (This->need_warp && (now - This->last_warped > interval)))
+    if (force || (impl->need_warp && (now - impl->last_warped > interval)))
     {
         RECT rect, new_rect;
         POINT mapped_center;
 
-        This->last_warped = now;
-        This->need_warp = FALSE;
-        if (!GetClientRect(This->base.win, &rect)) return;
-        MapWindowPoints( This->base.win, 0, (POINT *)&rect, 2 );
-        if (!This->clipped)
+        impl->last_warped = now;
+        impl->need_warp = FALSE;
+        if (!GetClientRect( impl->base.win, &rect )) return;
+        MapWindowPoints( impl->base.win, 0, (POINT *)&rect, 2 );
+        if (!impl->clipped)
         {
             mapped_center.x = (rect.left + rect.right) / 2;
             mapped_center.y = (rect.top + rect.bottom) / 2;
             TRACE("Warping mouse to %d - %d\n", mapped_center.x, mapped_center.y);
             SetCursorPos( mapped_center.x, mapped_center.y );
         }
-        if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
+        if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
         {
             /* make sure we clip even if the window covers the whole screen */
             rect.left = max( rect.left, GetSystemMetrics( SM_XVIRTUALSCREEN ) + 1 );
@@ -397,14 +388,14 @@ static void warp_check( SysMouseImpl* This, BOOL force )
             rect.bottom = min( rect.bottom, rect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN ) - 2 );
             TRACE("Clipping mouse to %s\n", wine_dbgstr_rect( &rect ));
             ClipCursor( &rect );
-            This->clipped = GetClipCursor( &new_rect ) && EqualRect( &rect, &new_rect );
+            impl->clipped = GetClipCursor( &new_rect ) && EqualRect( &rect, &new_rect );
         }
     }
 }
 
 static HRESULT mouse_poll( IDirectInputDevice8W *iface )
 {
-    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
     check_dinput_events();
     warp_check( impl, FALSE );
     return DI_OK;
@@ -412,7 +403,7 @@ static HRESULT mouse_poll( IDirectInputDevice8W *iface )
 
 static HRESULT mouse_acquire( IDirectInputDevice8W *iface )
 {
-    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
     DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
     POINT point;
 
@@ -456,7 +447,7 @@ static HRESULT mouse_acquire( IDirectInputDevice8W *iface )
 
 static HRESULT mouse_unacquire( IDirectInputDevice8W *iface )
 {
-    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    struct mouse *impl = impl_from_IDirectInputDevice8W( iface );
 
     if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
