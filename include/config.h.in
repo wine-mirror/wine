@@ -74,9 +74,6 @@
 /* Define to 1 if you have the <fontconfig/fontconfig.h> header file. */
 #undef HAVE_FONTCONFIG_FONTCONFIG_H
 
-/* Define to 1 if you have the `fork' function. */
-#undef HAVE_FORK
-
 /* Define if FreeType 2 is installed */
 #undef HAVE_FREETYPE
 

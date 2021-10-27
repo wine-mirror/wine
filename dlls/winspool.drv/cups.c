@@ -17,8 +17,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -26,12 +29,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
-#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif
 #ifdef HAVE_CUPS_CUPS_H
 #include <cups/cups.h>
 #endif
@@ -108,6 +110,7 @@
 #include "ddk/winsplp.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/unixlib.h"
 
 #include "wspool.h"
 
@@ -115,21 +118,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
 static const WCHAR CUPS_Port[] = { 'C','U','P','S',':',0 };
 static const WCHAR LPR_Port[] = { 'L','P','R',':',0 };
-
-/* Temporary helpers until switch to unixlib */
-#include "winnls.h"
-#include "wine/heap.h"
-#define malloc( sz ) heap_alloc( sz )
-#define free( ptr ) heap_free( ptr )
-static DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
-{
-    return MultiByteToWideChar( CP_UNIXCP, 0, src, srclen, dst, dstlen );
-}
-static int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
-{
-    /* FIXME: strict */
-    return WideCharToMultiByte( CP_UNIXCP, 0, src, srclen, dst, dstlen, NULL, NULL );
-}
 
 #ifdef SONAME_LIBCUPS
 
@@ -159,7 +147,7 @@ static const char *  (*pcupsLastErrorString)(void);
 
 #endif /* SONAME_LIBCUPS */
 
-NTSTATUS unix_process_attach( void *arg )
+static NTSTATUS process_attach( void *args )
 {
 #ifdef SONAME_LIBCUPS
     libcups_handle = dlopen( SONAME_LIBCUPS, RTLD_NOW );
@@ -347,7 +335,7 @@ static int get_cups_default_options( const char *printer, int num_options, cups_
 }
 #endif /* SONAME_LIBCUPS */
 
-NTSTATUS unix_enum_printers( void *args )
+static NTSTATUS enum_printers( void *args )
 {
     struct enum_printers_params *params = args;
 #ifdef SONAME_LIBCUPS
@@ -417,7 +405,7 @@ NTSTATUS unix_enum_printers( void *args )
 #endif /* SONAME_LIBCUPS */
 }
 
-NTSTATUS unix_get_ppd( void *args )
+static NTSTATUS get_ppd( void *args )
 {
     struct get_ppd_params *params = args;
     char *unix_ppd = get_unix_file_name( params->ppd );
@@ -458,7 +446,7 @@ NTSTATUS unix_get_ppd( void *args )
     return status;
 }
 
-NTSTATUS unix_get_default_page_size( void *args )
+static NTSTATUS get_default_page_size( void *args )
 {
 #ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
     struct get_default_page_size_params *params = args;
@@ -504,7 +492,6 @@ end:
  */
 static BOOL schedule_pipe( const WCHAR *cmd, const WCHAR *filename )
 {
-#ifdef HAVE_FORK
     char *unixname, *cmdA;
     DWORD len;
     int fds[2] = { -1, -1 }, file_fd = -1, no_read;
@@ -580,9 +567,6 @@ end:
     free( cmdA );
     free( unixname );
     return ret;
-#else
-    return FALSE;
-#endif
 }
 
 /*****************************************************************************
@@ -677,7 +661,7 @@ static BOOL schedule_cups( const WCHAR *printer_name, const WCHAR *filename, con
     }
 }
 
-BOOL unix_schedule_job( void *args )
+static NTSTATUS schedule_job( void *args )
 {
     struct schedule_job_params *params = args;
 
@@ -695,3 +679,12 @@ BOOL unix_schedule_job( void *args )
 
     return FALSE;
 }
+
+unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    process_attach,
+    enum_printers,
+    get_default_page_size,
+    get_ppd,
+    schedule_job,
+};

@@ -1,11 +1,10 @@
 EXTRADEFS = -D_SPOOL32_
 MODULE    = winspool.drv
+UNIXLIB   = winspool.so
 IMPORTLIB = winspool
 IMPORTS   = user32 gdi32 advapi32
 EXTRAINCL = $(CUPS_CFLAGS)
 EXTRALIBS = $(APPLICATIONSERVICES_LIBS)
-
-EXTRADLLFLAGS = -mcygwin
 
 C_SRCS = \
 	cups.c \

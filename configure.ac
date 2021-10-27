@@ -1941,7 +1941,6 @@ ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
 	epoll_create \
-	fork \
 	fstatfs \
 	futimens \
 	futimes \

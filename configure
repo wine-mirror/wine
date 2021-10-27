@@ -16881,7 +16881,6 @@ ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 for ac_func in \
 	epoll_create \
-	fork \
 	fstatfs \
 	futimens \
 	futimes \
