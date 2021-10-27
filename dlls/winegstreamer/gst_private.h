@@ -117,6 +117,7 @@ struct wm_stream
 {
     struct wm_reader *reader;
     struct wg_parser_stream *wg_stream;
+    WORD index;
 };
 
 struct wm_reader

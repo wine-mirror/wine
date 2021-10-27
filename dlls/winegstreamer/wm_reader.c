@@ -86,8 +86,12 @@ static HRESULT WINAPI stream_config_GetStreamType(IWMStreamConfig *iface, GUID *
 
 static HRESULT WINAPI stream_config_GetStreamNumber(IWMStreamConfig *iface, WORD *number)
 {
-    FIXME("iface %p, number %p, stub!\n", iface, number);
-    return E_NOTIMPL;
+    struct stream_config *config = impl_from_IWMStreamConfig(iface);
+
+    TRACE("config %p, number %p.\n", config, number);
+
+    *number = config->stream->index + 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_config_SetStreamNumber(IWMStreamConfig *iface, WORD number)
@@ -1042,6 +1046,7 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
 
         stream->wg_stream = wg_parser_get_stream(reader->wg_parser, i);
         stream->reader = reader;
+        stream->index = i;
     }
 
     LeaveCriticalSection(&reader->cs);
