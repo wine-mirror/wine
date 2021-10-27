@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msdasql);
 
+DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -99,6 +101,72 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 
     return CLASS_E_CLASSNOTAVAILABLE;
 }
+
+struct dbproperty
+{
+    const WCHAR *name;
+    DBPROPID id;
+    DBPROPOPTIONS options;
+    VARTYPE type;
+    HRESULT (*convert_dbproperty)(const WCHAR *src, VARIANT *dest);
+};
+
+struct mode_propval
+{
+    const WCHAR *name;
+    DWORD value;
+};
+
+static int __cdecl dbmodeprop_compare(const void *a, const void *b)
+{
+    const WCHAR *src = a;
+    const struct mode_propval *propval = b;
+    return wcsicmp(src, propval->name);
+}
+
+static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
+{
+    struct mode_propval mode_propvals[] =
+    {
+        { L"Read", DB_MODE_READ },
+        { L"ReadWrite", DB_MODE_READWRITE },
+        { L"Share Deny None", DB_MODE_SHARE_DENY_NONE },
+        { L"Share Deny Read", DB_MODE_SHARE_DENY_READ },
+        { L"Share Deny Write", DB_MODE_SHARE_DENY_WRITE },
+        { L"Share Exclusive", DB_MODE_SHARE_EXCLUSIVE },
+        { L"Write", DB_MODE_WRITE },
+    };
+    struct mode_propval *prop;
+
+    if ((prop = bsearch(src, mode_propvals, ARRAY_SIZE(mode_propvals),
+                        sizeof(struct mode_propval), dbmodeprop_compare)))
+    {
+        V_VT(dest) = VT_I4;
+        V_I4(dest) = prop->value;
+        TRACE("%s = %#x\n", debugstr_w(src), prop->value);
+        return S_OK;
+    }
+
+    return E_FAIL;
+}
+
+static const struct dbproperty dbproperties[] =
+{
+    { L"Password",                 DBPROP_AUTH_PASSWORD,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Persist Security Info",    DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL },
+    { L"User ID",                  DBPROP_AUTH_USERID,                     DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Data Source",              DBPROP_INIT_DATASOURCE,                 DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { L"Window Handle",            DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, sizeof(void *) == 8 ? VT_I8 : VT_I4 },
+    { L"Location",                 DBPROP_INIT_LOCATION,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Mode",                     DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4, convert_dbproperty_mode },
+    { L"Prompt",                   DBPROP_INIT_PROMPT,                     DBPROPOPTIONS_OPTIONAL, VT_I2 },
+    { L"Connect Timeout",          DBPROP_INIT_TIMEOUT,                    DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Extended Properties",      DBPROP_INIT_PROVIDERSTRING,             DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { L"Locale Identifier",        DBPROP_INIT_LCID,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Initial Catalog",          DBPROP_INIT_CATALOG,                    DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"OLE DB Services",          DBPROP_INIT_OLEDBSERVICES,              DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"General Timeout",          DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
+};
 
 struct msdasql
 {
@@ -222,11 +290,43 @@ static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG cPrope
             DBPROPINFOSET **prgPropertyInfoSets, OLECHAR **ppDescBuffer)
 {
     struct msdasql *provider = impl_from_IDBProperties(iface);
+    int i;
+    DBPROPINFOSET *infoset;
+    int size = 1;
+    OLECHAR *ptr;
 
-    FIXME("(%p)->(%d %p %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertyInfoSets,
+    TRACE("(%p)->(%d %p %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertyInfoSets,
                 prgPropertyInfoSets, ppDescBuffer);
 
-    return E_NOTIMPL;
+    infoset = CoTaskMemAlloc(sizeof(DBPROPINFOSET));
+    memcpy(&infoset->guidPropertySet, &DBPROPSET_DBINIT, sizeof(GUID));
+    infoset->cPropertyInfos = ARRAY_SIZE(dbproperties);
+    infoset->rgPropertyInfos = CoTaskMemAlloc(sizeof(DBPROPINFO) * ARRAY_SIZE(dbproperties));
+
+    for(i=0; i < ARRAY_SIZE(dbproperties); i++)
+    {
+        size += lstrlenW(dbproperties[i].name) + 1;
+    }
+
+    ptr = *ppDescBuffer = CoTaskMemAlloc(size * sizeof(WCHAR));
+    memset(*ppDescBuffer, 0, size * sizeof(WCHAR));
+
+    for(i=0; i < ARRAY_SIZE(dbproperties); i++)
+    {
+        lstrcpyW(ptr, dbproperties[i].name);
+        infoset->rgPropertyInfos[i].pwszDescription = ptr;
+        infoset->rgPropertyInfos[i].dwPropertyID =  dbproperties[i].id;
+        infoset->rgPropertyInfos[i].dwFlags = DBPROPFLAGS_DBINIT | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE;
+        infoset->rgPropertyInfos[i].vtType =  dbproperties[i].type;
+        V_VT(&infoset->rgPropertyInfos[i].vValues) =  VT_EMPTY;
+
+        ptr += lstrlenW(dbproperties[i].name) + 1;
+    }
+
+    *pcPropertyInfoSets = 1;
+    *prgPropertyInfoSets = infoset;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG cPropertySets,

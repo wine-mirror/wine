@@ -22,6 +22,7 @@
 #include "msdasc.h"
 #include "oledb.h"
 #include "odbcinst.h"
+#include "wtypes.h"
 
 #include "initguid.h"
 
@@ -30,9 +31,12 @@
 #include "wine/test.h"
 
 DEFINE_GUID(DBPROPSET_DBINITALL, 0xc8b522ca, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 static BOOL db_created;
 static char mdbpath[MAX_PATH];
+
+static const VARTYPE intptr_vartype = (sizeof(void *) == 8 ? VT_I8 : VT_I4);
 
 static void test_Properties(void)
 {
@@ -52,16 +56,21 @@ static void test_Properties(void)
 
     infocount = 0;
     hr = IDBProperties_GetPropertyInfo(props, 1, &propidset, &infocount, &propinfoset, &desc);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ULONG i;
+        VARTYPE types[14] = { VT_BSTR, VT_BOOL, VT_BSTR, VT_BSTR, intptr_vartype, VT_BSTR, VT_I4, VT_I2 , VT_I4, VT_BSTR, VT_I4, VT_BSTR, VT_I4, VT_I4 };
 
+        ok(IsEqualGUID(&propinfoset->guidPropertySet, &DBPROPSET_DBINIT), "got %s\n", debugstr_guid(&propinfoset->guidPropertySet));
         ok(propinfoset->cPropertyInfos == 14, "got %d\n", propinfoset->cPropertyInfos);
 
         for (i = 0; i < propinfoset->cPropertyInfos; i++)
         {
             trace("%d: pwszDescription: %s\n", i, debugstr_w(propinfoset->rgPropertyInfos[i].pwszDescription) );
+            ok(propinfoset->rgPropertyInfos[i].vtType == types[i], "got %d\n", propinfoset->rgPropertyInfos[i].vtType);
+            ok(propinfoset->rgPropertyInfos[i].dwFlags == (DBPROPFLAGS_DBINIT | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE),
+                "got %d\n", propinfoset->rgPropertyInfos[i].dwFlags);
         }
 
         for (i = 0; i < propinfoset->cPropertyInfos; i++)

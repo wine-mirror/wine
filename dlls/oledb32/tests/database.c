@@ -82,7 +82,7 @@ static void test_GetDataSource(WCHAR *initstring)
             EXPECT_REF(dbinit, 2);
             EXPECT_REF(props, 2);
             hr = IDBProperties_GetPropertyInfo(props, 0, NULL, &cnt, &pInfoset, &ary);
-            todo_wine ok(hr == S_OK, "got %08x\n", hr);
+            ok(hr == S_OK, "got %08x\n", hr);
             if(hr == S_OK)
             {
                 ULONG i;
@@ -1006,7 +1006,7 @@ static void test_odbc_provider(void)
 
     infocount = 0;
     hr = IDBProperties_GetPropertyInfo(props, 1, &propidset, &infocount, &propinfoset, &desc);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ULONG i;
@@ -1039,7 +1039,8 @@ static void test_odbc_provider(void)
         CoTaskMemFree(propinfoset);
 
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK) { /* Remove if, once _GetProperties is implemented */
         ok(propidlist.cPropertyIDs == 14, "got %d\n", propinfoset->cPropertyInfos);
 
         for (i = 0; i < propidlist.cPropertyIDs; i++)
@@ -1048,6 +1049,7 @@ static void test_odbc_provider(void)
                     propidlist.rgPropertyIDs[i]);
 
             propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
+        }
         }
 
         CoTaskMemFree(propidlist.rgPropertyIDs);
