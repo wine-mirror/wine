@@ -1250,6 +1250,24 @@ struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
     return symt;
 }
 
+/* lookup in module for an inline site (from addr and inline_ctx) */
+struct symt_inlinesite* symt_find_inlined_site(struct module* module, DWORD64 addr, DWORD inline_ctx)
+{
+    struct symt_ht* symt = symt_find_nearest(module, addr);
+
+    if (symt_check_tag(&symt->symt, SymTagFunction))
+    {
+        struct symt_function* func = (struct symt_function*)symt;
+        struct symt_inlinesite* curr = symt_find_lowest_inlined(func, addr);
+        DWORD depth = IFC_DEPTH(inline_ctx);
+
+        if (curr)
+            for ( ; &curr->func != func; curr = (struct symt_inlinesite*)symt_get_upper_inlined(curr))
+                if (depth-- == 0) return curr;
+    }
+    return NULL;
+}
+
 DWORD symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr)
 {
     struct module_pair pair;
@@ -2626,6 +2644,9 @@ PWSTR WINAPI SymSetHomeDirectoryW(HANDLE hProcess, PCWSTR dir)
  */
 BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, PDWORD64 disp, PSYMBOL_INFO si)
 {
+    struct module_pair pair;
+    struct symt_inlinesite* inlined;
+
     TRACE("(%p, %#I64x, 0x%x, %p, %p)\n", hProcess, addr, inline_ctx, disp, si);
 
     switch (IFC_MODE(inline_ctx))
@@ -2634,6 +2655,15 @@ BOOL WINAPI SymFromInlineContext(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx
     case IFC_MODE_REGULAR:
         return SymFromAddr(hProcess, addr, disp, si);
     case IFC_MODE_INLINE:
+        if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
+        inlined = symt_find_inlined_site(pair.effective, addr, inline_ctx);
+        if (inlined)
+        {
+            symt_fill_sym_info(&pair, NULL, &inlined->func.symt, si);
+            *disp = addr - inlined->func.address;
+            return TRUE;
+        }
+        /* fall through */
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;

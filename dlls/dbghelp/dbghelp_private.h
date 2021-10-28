@@ -927,6 +927,9 @@ static inline struct symt_function*
         inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined);
     return &inlined->func;
 }
+extern struct symt_inlinesite*
+                    symt_find_inlined_site(struct module* module,
+                                           DWORD64 addr, DWORD inline_ctx) DECLSPEC_HIDDEN;
 extern DWORD        symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr) DECLSPEC_HIDDEN;
 
 /* Inline context encoding (different from what native does):
