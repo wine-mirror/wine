@@ -203,6 +203,8 @@ static void test_supported_protocols(CredHandle *handle, unsigned exprots)
     X(SP_PROT_TLS1_1_CLIENT, "TLS 1.1 client");
     X(SP_PROT_TLS1_2_CLIENT, "TLS 1.2 client");
     X(SP_PROT_TLS1_3_CLIENT, "TLS 1.3 client");
+    X(SP_PROT_DTLS1_0_CLIENT, "DTLS 1.0 client");
+    X(SP_PROT_DTLS1_2_CLIENT, "DTLS 1.2 client");
 #undef X
 
     if(protocols.grbitProtocol)
