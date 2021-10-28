@@ -1290,6 +1290,68 @@ HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output, IWMOu
     return *props ? S_OK : E_OUTOFMEMORY;
 }
 
+static const enum wg_video_format video_formats[] =
+{
+    /* Try to prefer YUV formats over RGB ones. Most decoders output in the
+     * YUV color space, and it's generally much less expensive for
+     * videoconvert to do YUV -> YUV transformations. */
+    WG_VIDEO_FORMAT_NV12,
+    WG_VIDEO_FORMAT_YV12,
+    WG_VIDEO_FORMAT_YUY2,
+    WG_VIDEO_FORMAT_UYVY,
+    WG_VIDEO_FORMAT_YVYU,
+    WG_VIDEO_FORMAT_BGRx,
+    WG_VIDEO_FORMAT_BGR,
+    WG_VIDEO_FORMAT_RGB16,
+    WG_VIDEO_FORMAT_RGB15,
+};
+
+HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
+        DWORD index, IWMOutputMediaProps **props)
+{
+    struct wm_stream *stream;
+    struct wg_format format;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+
+    switch (format.major_type)
+    {
+        case WG_MAJOR_TYPE_VIDEO:
+            if (index >= ARRAY_SIZE(video_formats))
+            {
+                LeaveCriticalSection(&reader->cs);
+                return NS_E_INVALID_OUTPUT_FORMAT;
+            }
+            format.u.video.format = video_formats[index];
+            break;
+
+        case WG_MAJOR_TYPE_AUDIO:
+            if (index)
+            {
+                LeaveCriticalSection(&reader->cs);
+                return NS_E_INVALID_OUTPUT_FORMAT;
+            }
+            format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
+            break;
+
+        case WG_MAJOR_TYPE_UNKNOWN:
+            break;
+    }
+
+    LeaveCriticalSection(&reader->cs);
+
+    *props = output_props_create(&format);
+    return *props ? S_OK : E_OUTOFMEMORY;
+}
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;

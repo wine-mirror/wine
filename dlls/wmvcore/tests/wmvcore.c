@@ -856,7 +856,7 @@ static void test_sync_reader_types(void)
 
     output_props = (void *)0xdeadbeef;
     hr = IWMSyncReader_GetOutputFormat(reader, 2, 0, &output_props);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     IWMProfile_Release(profile);
