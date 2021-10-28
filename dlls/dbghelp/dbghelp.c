@@ -677,6 +677,9 @@ BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
  */
 BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD inlinectx)
 {
+    struct module_pair pair;
+    struct symt_inlinesite* inlined;
+
     TRACE("(%p %I64x %x)\n", hProcess, addr, inlinectx);
 
     switch (IFC_MODE(inlinectx))
@@ -684,6 +687,15 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
     case IFC_MODE_IGNORE:
     case IFC_MODE_REGULAR: return SymSetScopeFromAddr(hProcess, addr);
     case IFC_MODE_INLINE:
+        if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
+        inlined = symt_find_inlined_site(pair.effective, addr, inlinectx);
+        if (inlined)
+        {
+            pair.pcs->localscope_pc = addr;
+            pair.pcs->localscope_symt = &inlined->func.symt;
+            return TRUE;
+        }
+        return FALSE;
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
