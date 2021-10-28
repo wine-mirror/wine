@@ -3764,6 +3764,7 @@ static void test_simple_joystick(void)
                 .dwHeaderSize = sizeof(DIPROPHEADER),
             },
     };
+    DIOBJECTDATAFORMAT objdataformat[32] = {{0}};
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEOBJECTDATA objdata[32] = {{0}};
     DIDEVICEOBJECTINSTANCEW objinst = {0};
@@ -4386,6 +4387,174 @@ static void test_simple_joystick(void)
         winetest_pop_context();
     }
 
+    send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    ok( hr == DI_OK, "GetDeviceState returned: %#x\n", hr );
+    check_member( state, expect_state[3], "%d", lX );
+    check_member( state, expect_state[3], "%d", lY );
+    check_member( state, expect_state[3], "%d", lZ );
+    check_member( state, expect_state[3], "%d", lRx );
+    check_member( state, expect_state[3], "%d", rgdwPOV[0] );
+    check_member( state, expect_state[3], "%d", rgdwPOV[1] );
+    check_member( state, expect_state[3], "%#x", rgbButtons[0] );
+    check_member( state, expect_state[3], "%#x", rgbButtons[1] );
+    check_member( state, expect_state[3], "%#x", rgbButtons[2] );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+
+    dataformat.dwSize = sizeof(DIDATAFORMAT);
+    dataformat.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    dataformat.dwFlags = DIDF_ABSAXIS;
+    dataformat.dwDataSize = sizeof(buffer);
+    dataformat.dwNumObjs = 0;
+    dataformat.rgodf = objdataformat;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+
+    dataformat.dwNumObjs = 1;
+    dataformat.dwDataSize = 8;
+    objdataformat[0].pguid = NULL;
+    objdataformat[0].dwOfs = 2;
+    objdataformat[0].dwType = DIDFT_AXIS|DIDFT_ANYINSTANCE;
+    objdataformat[0].dwFlags = 0;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[0].dwOfs = 4;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    dataformat.dwDataSize = 10;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    dataformat.dwDataSize = 8;
+    objdataformat[0].dwOfs = 2;
+    objdataformat[0].dwType = DIDFT_OPTIONAL|0xff|DIDFT_ANYINSTANCE;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+
+    dataformat.dwNumObjs = 2;
+    dataformat.dwDataSize = 5;
+    objdataformat[0].pguid = NULL;
+    objdataformat[0].dwOfs = 4;
+    objdataformat[0].dwType = DIDFT_BUTTON|DIDFT_ANYINSTANCE;
+    objdataformat[0].dwFlags = 0;
+    objdataformat[1].pguid = NULL;
+    objdataformat[1].dwOfs = 0;
+    objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 0 );
+    objdataformat[1].dwFlags = 0;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    dataformat.dwDataSize = 8;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+
+    dataformat.dwNumObjs = 4;
+    dataformat.dwDataSize = 12;
+    objdataformat[0].pguid = NULL;
+    objdataformat[0].dwOfs = 0;
+    objdataformat[0].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 0 );
+    objdataformat[0].dwFlags = 0;
+    objdataformat[1].pguid = NULL;
+    objdataformat[1].dwOfs = 0;
+    objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 0 );
+    objdataformat[1].dwFlags = 0;
+    objdataformat[2].pguid = &GUID_ZAxis;
+    objdataformat[2].dwOfs = 8;
+    objdataformat[2].dwType = 0xff|DIDFT_ANYINSTANCE;
+    objdataformat[2].dwFlags = 0;
+    objdataformat[3].pguid = &GUID_POV;
+    objdataformat[3].dwOfs = 0;
+    objdataformat[3].dwType = 0xff|DIDFT_ANYINSTANCE;
+    objdataformat[3].dwFlags = 0;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 12 );
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 0xff );
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 1 );
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].pguid = &GUID_RzAxis;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].pguid = &GUID_Unknown;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].pguid = &GUID_YAxis;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    objdataformat[1].pguid = NULL;
+    objdataformat[1].dwType = DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_MAKEINSTANCE( 0 );
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+
+    dataformat.dwNumObjs = 0;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+
+    send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    todo_wine
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, dataformat.dwDataSize, buffer );
+    ok( hr == DI_OK, "GetDeviceState returned: %#x\n", hr );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+
+    dataformat.dwNumObjs = 4;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+
+    send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    todo_wine
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+    send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, dataformat.dwDataSize, buffer );
+    ok( hr == DI_OK, "GetDeviceState returned: %#x\n", hr );
+    todo_wine
+    ok( ((ULONG *)buffer)[0] == 0x512b, "got %#x, expected %#x\n", ((ULONG *)buffer)[0], 0x512b );
+    ok( ((ULONG *)buffer)[1] == 0, "got %#x, expected %#x\n", ((ULONG *)buffer)[1], 0 );
+    ok( ((ULONG *)buffer)[2] == 0x7fff, "got %#x, expected %#x\n", ((ULONG *)buffer)[2], 0x7fff );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+
+    send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
     send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
