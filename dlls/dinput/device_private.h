@@ -39,7 +39,6 @@ typedef struct
 typedef struct
 {
     int                         size;
-    int                         internal_format_size;
     DataTransform              *dt;
 
     int                        *offsets;     /* object offsets */

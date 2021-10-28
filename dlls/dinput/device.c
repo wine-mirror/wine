@@ -342,10 +342,6 @@ static void fill_DataFormat( void *out, DWORD size, const void *in, const DataFo
     char *out_c = out;
 
     memset(out, 0, size);
-    if (df->dt == NULL) {
-	/* This means that the app uses Wine's internal data format */
-        memcpy(out, in, min(size, df->internal_format_size));
-    } else {
 	for (i = 0; i < df->size; i++) {
 	    if (df->dt[i].offset_in >= 0) {
 		switch (df->dt[i].size) {
@@ -396,7 +392,6 @@ static void fill_DataFormat( void *out, DWORD size, const void *in, const DataFo
 			break;
 		}
 	    }
-	}
     }
 }
 
@@ -444,7 +439,6 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
     DataFormat *format = &impl->data_format;
     DataTransform *dt;
     unsigned int i, j;
-    int same = 1;
     int *done;
     int index = 0;
     DWORD next = 0;
@@ -517,11 +511,8 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
                 format->offsets[i]   = asked_format->rgodf[j].dwOfs;
 		dt[index].value = 0;
                 next = next + dt[index].size;
-		
-                if (format->wine_df->rgodf[i].dwOfs != dt[index].offset_out)
-		    same = 0;
-		
-		index++;
+
+                index++;
 		break;
 	    }
 	}
@@ -540,8 +531,6 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
             TRACE("       * dwFlags: 0x%08x\n", asked_format->rgodf[j].dwFlags);
 	    TRACE("         "); _dump_ObjectDataFormat_flags(asked_format->rgodf[j].dwFlags); TRACE("\n");
 
-            same = 0;
-
             if (!(asked_format->rgodf[j].dwType & DIDFT_POV))
                 continue; /* fill_DataFormat memsets the buffer to 0 */
 
@@ -556,12 +545,7 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
 	}
     }
     
-    format->internal_format_size = format->wine_df->dwDataSize;
     format->size = index;
-    if (same) {
-        free( dt );
-        dt = NULL;
-    }
     format->dt = dt;
 
     free( done );
