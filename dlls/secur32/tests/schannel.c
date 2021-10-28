@@ -1517,6 +1517,76 @@ static void test_application_protocol_negotiation(void)
     closesocket(sock);
 }
 
+static void test_dtls(void)
+{
+    SECURITY_STATUS status;
+    TimeStamp exp;
+    SCHANNEL_CRED cred;
+    CredHandle cred_handle;
+    CtxtHandle ctx_handle;
+    SecBufferDesc buffers[3];
+    ULONG flags_req, flags_ret, attr;
+
+    init_cred( &cred );
+    cred.grbitEnabledProtocols = SP_PROT_DTLS_CLIENT | SP_PROT_DTLS1_2_CLIENT;
+    cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS;
+
+    status = AcquireCredentialsHandleA( NULL, unisp_name_a, SECPKG_CRED_OUTBOUND, NULL, &cred, NULL, NULL,
+                                        &cred_handle, &exp );
+    if (status == SEC_E_ALGORITHM_MISMATCH)
+    {
+        win_skip( "no DTLS support\n" );
+        return;
+    }
+    ok( status == SEC_E_OK, "got %08x\n", status );
+
+    flags_req = ISC_REQ_MANUAL_CRED_VALIDATION | ISC_REQ_EXTENDED_ERROR | ISC_REQ_DATAGRAM | ISC_REQ_USE_SUPPLIED_CREDS |
+                ISC_REQ_CONFIDENTIALITY | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT;
+
+    init_buffers( &buffers[0], 1, 128 );
+    buffers[0].pBuffers[0].BufferType = SECBUFFER_DTLS_MTU;
+    *(WORD *)(buffers[0].pBuffers[0].pvBuffer) = 1024;
+    buffers[0].pBuffers[0].cbBuffer = 2;
+
+    init_buffers( &buffers[1], 2, 2048 );
+    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    buffers[1].pBuffers[0].cbBuffer = 1420;
+    buffers[1].pBuffers[1].BufferType = SECBUFFER_ALERT;
+    buffers[1].pBuffers[1].cbBuffer = 1024;
+    buffers[1].pBuffers[1].pvBuffer = HeapAlloc( GetProcessHeap(), 0, 1024 );
+
+    attr = 0;
+    exp.LowPart = exp.HighPart = 0xdeadbeef;
+    status = InitializeSecurityContextA( &cred_handle, NULL, (SEC_CHAR *)"winetest", flags_req, 0, 16, &buffers[0], 0,
+                                         &ctx_handle, &buffers[1], &attr, &exp );
+    ok( status == SEC_I_CONTINUE_NEEDED, "got %08x\n", status );
+
+    flags_ret = ISC_RET_MANUAL_CRED_VALIDATION | ISC_RET_STREAM | ISC_RET_EXTENDED_ERROR | ISC_RET_DATAGRAM |
+                ISC_RET_USED_SUPPLIED_CREDS | ISC_RET_CONFIDENTIALITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT;
+    ok( attr == flags_ret, "got %08x\n", attr );
+    ok( !exp.LowPart, "got %08x\n", exp.LowPart );
+    ok( !exp.HighPart, "got %08x\n", exp.HighPart );
+
+    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    buffers[1].pBuffers[0].cbBuffer = 1420;
+
+    attr = 0;
+    exp.LowPart = exp.HighPart = 0xdeadbeef;
+    status = InitializeSecurityContextA( &cred_handle, &ctx_handle, (SEC_CHAR *)"winetest", flags_req, 0, 16, NULL, 0,
+                                         &ctx_handle, &buffers[1], &attr, &exp );
+    ok( status == SEC_E_INSUFFICIENT_MEMORY, "got %08x\n", status );
+
+    flags_ret = ISC_RET_CONFIDENTIALITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT;
+    todo_wine ok( attr == flags_ret, "got %08x\n", attr );
+    ok( !exp.LowPart, "got %08x\n", exp.LowPart );
+    ok( !exp.HighPart, "got %08x\n", exp.HighPart );
+
+    free_buffers( &buffers[0] );
+    free_buffers( &buffers[1] );
+    DeleteSecurityContext( &ctx_handle );
+    FreeCredentialsHandle( &cred_handle );
+}
+
 START_TEST(schannel)
 {
     WSADATA wsa_data;
@@ -1529,4 +1599,5 @@ START_TEST(schannel)
     test_InitializeSecurityContext();
     test_communication();
     test_application_protocol_negotiation();
+    test_dtls();
 }
