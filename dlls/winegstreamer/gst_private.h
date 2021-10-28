@@ -155,6 +155,7 @@ void wm_reader_cleanup(struct wm_reader *reader);
 HRESULT wm_reader_close(struct wm_reader *reader);
 HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
         DWORD index, IWMOutputMediaProps **props);
+HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output, DWORD *count);
 HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps **props);
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);

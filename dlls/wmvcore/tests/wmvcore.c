@@ -747,8 +747,8 @@ static void test_sync_reader_types(void)
 
         count = 0;
         hr = IWMSyncReader_GetOutputFormatCount(reader, output_number, &count);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        todo_wine ok(count > 0, "Got count %u.\n", count);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(count > 0, "Got count %u.\n", count);
 
         for (j = 0; j < count; ++j)
         {
@@ -824,7 +824,7 @@ static void test_sync_reader_types(void)
         }
 
         hr = IWMSyncReader_GetOutputFormat(reader, output_number, count, &output_props);
-        todo_wine ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
+        ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -846,7 +846,7 @@ static void test_sync_reader_types(void)
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputFormatCount(reader, 2, &count);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     ok(count == 0xdeadbeef, "Got count %#x.\n", count);
 
     output_props = (void *)0xdeadbeef;

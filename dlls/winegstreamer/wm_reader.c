@@ -1306,6 +1306,36 @@ static const enum wg_video_format video_formats[] =
     WG_VIDEO_FORMAT_RGB15,
 };
 
+HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output, DWORD *count)
+{
+    struct wm_stream *stream;
+    struct wg_format format;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+    switch (format.major_type)
+    {
+        case WG_MAJOR_TYPE_VIDEO:
+            *count = ARRAY_SIZE(video_formats);
+            break;
+
+        case WG_MAJOR_TYPE_AUDIO:
+        case WG_MAJOR_TYPE_UNKNOWN:
+            *count = 1;
+            break;
+    }
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
+}
+
 HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
         DWORD index, IWMOutputMediaProps **props)
 {

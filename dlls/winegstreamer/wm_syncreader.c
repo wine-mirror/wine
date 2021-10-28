@@ -107,11 +107,13 @@ static HRESULT WINAPI WMSyncReader_GetOutputFormat(IWMSyncReader2 *iface,
     return wm_reader_get_output_format(&reader->reader, output, index, props);
 }
 
-static HRESULT WINAPI WMSyncReader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD output_num, DWORD *formats)
+static HRESULT WINAPI WMSyncReader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD output, DWORD *count)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%u %p): stub!\n", This, output_num, formats);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, output %u, count %p.\n", reader, output, count);
+
+    return wm_reader_get_output_format_count(&reader->reader, output, count);
 }
 
 static HRESULT WINAPI WMSyncReader_GetOutputNumberForStream(IWMSyncReader2 *iface,
