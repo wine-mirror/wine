@@ -6411,9 +6411,11 @@ static inline struct d3d10_effect_variable *impl_from_ID3D10EffectShaderResource
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_shader_resource_variable_IsValid(ID3D10EffectShaderResourceVariable *iface)
 {
-    TRACE("iface %p\n", iface);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderResourceVariable(iface);
 
-    return (struct d3d10_effect_variable *)iface != &null_shader_resource_variable;
+    TRACE("iface %p.\n", iface);
+
+    return v != &null_shader_resource_variable;
 }
 
 static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_shader_resource_variable_GetType(
