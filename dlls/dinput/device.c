@@ -67,6 +67,20 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl( struct dinpu
     return &This->IDirectInputDevice8W_iface;
 }
 
+static inline const char *debugstr_didataformat( const DIDATAFORMAT *data )
+{
+    if (!data) return "(null)";
+    return wine_dbg_sprintf( "%p dwSize %u, dwObjsize %u, dwFlags %#x, dwDataSize %u, dwNumObjs %u, rgodf %p",
+                             data, data->dwSize, data->dwObjSize, data->dwFlags, data->dwDataSize, data->dwNumObjs, data->rgodf );
+}
+
+static inline const char *debugstr_diobjectdataformat( const DIOBJECTDATAFORMAT *data )
+{
+    if (!data) return "(null)";
+    return wine_dbg_sprintf( "%p pguid %s, dwOfs %#x, dwType %#x, dwFlags %#x", data,
+                             debugstr_guid( data->pguid ), data->dwOfs, data->dwType, data->dwFlags );
+}
+
 /******************************************************************************
  *	Various debugging tools
  */
@@ -223,40 +237,6 @@ static const char *_dump_dinput_GUID( const GUID *guid )
 	}
     }
     return debugstr_guid(guid);
-}
-
-static void _dump_DIDATAFORMAT( const DIDATAFORMAT *df )
-{
-    unsigned int i;
-
-    TRACE("Dumping DIDATAFORMAT structure:\n");
-    TRACE("  - dwSize: %d\n", df->dwSize);
-    if (df->dwSize != sizeof(DIDATAFORMAT)) {
-        WARN("Non-standard DIDATAFORMAT structure size %d\n", df->dwSize);
-    }
-    TRACE("  - dwObjsize: %d\n", df->dwObjSize);
-    if (df->dwObjSize != sizeof(DIOBJECTDATAFORMAT)) {
-        WARN("Non-standard DIOBJECTDATAFORMAT structure size %d\n", df->dwObjSize);
-    }
-    TRACE("  - dwFlags: 0x%08x (", df->dwFlags);
-    switch (df->dwFlags) {
-        case DIDF_ABSAXIS: TRACE("DIDF_ABSAXIS"); break;
-	case DIDF_RELAXIS: TRACE("DIDF_RELAXIS"); break;
-	default: TRACE("unknown"); break;
-    }
-    TRACE(")\n");
-    TRACE("  - dwDataSize: %d\n", df->dwDataSize);
-    TRACE("  - dwNumObjs: %d\n", df->dwNumObjs);
-    
-    for (i = 0; i < df->dwNumObjs; i++) {
-	TRACE("  - Object %d:\n", i);
-	TRACE("      * GUID: %s ('%s')\n", debugstr_guid(df->rgodf[i].pguid), _dump_dinput_GUID(df->rgodf[i].pguid));
-        TRACE("      * dwOfs: %d\n", df->rgodf[i].dwOfs);
-        TRACE("      * dwType: 0x%08x\n", df->rgodf[i].dwType);
-	TRACE("        "); _dump_EnumObjects_flags(df->rgodf[i].dwType); TRACE("\n");
-        TRACE("      * dwFlags: 0x%08x\n", df->rgodf[i].dwFlags);
-	TRACE("        "); _dump_ObjectDataFormat_flags(df->rgodf[i].dwFlags); TRACE("\n");
-    }
 }
 
 /******************************************************************************
@@ -933,11 +913,16 @@ static HRESULT WINAPI dinput_device_SetDataFormat( IDirectInputDevice8W *iface, 
 {
     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
     HRESULT res = DI_OK;
+    ULONG i;
 
     TRACE( "iface %p, format %p.\n", iface, format );
 
     if (!format) return E_POINTER;
-    _dump_DIDATAFORMAT( format );
+    if (TRACE_ON( dinput ))
+    {
+        TRACE( "user format %s\n", debugstr_didataformat( format ) );
+        for (i = 0; i < format->dwNumObjs; ++i) TRACE( "  %u: object %s\n", i, debugstr_diobjectdataformat( format->rgodf + i ) );
+    }
 
     if (format->dwSize != sizeof(DIDATAFORMAT)) return DIERR_INVALIDPARAM;
     if (format->dwObjSize != sizeof(DIOBJECTDATAFORMAT)) return DIERR_INVALIDPARAM;
@@ -2182,7 +2167,7 @@ HRESULT dinput_device_init( IDirectInputDevice8W *iface )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DIDATAFORMAT *format = impl->data_format.wine_df;
-    ULONG size;
+    ULONG i, size;
 
     IDirectInputDevice8_EnumObjects( iface, enum_objects_init, iface, DIDFT_ALL );
     if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
@@ -2198,6 +2183,12 @@ HRESULT dinput_device_init( IDirectInputDevice8W *iface )
     format->dwFlags = DIDF_ABSAXIS;
     format->dwNumObjs = 0;
     IDirectInputDevice8_EnumObjects( iface, enum_objects_init, iface, DIDFT_ALL );
+
+    if (TRACE_ON( dinput ))
+    {
+        TRACE( "device format %s\n", debugstr_didataformat( format ) );
+        for (i = 0; i < format->dwNumObjs; ++i) TRACE( "  %u: object %s\n", i, debugstr_diobjectdataformat( format->rgodf + i ) );
+    }
 
     return DI_OK;
 }
