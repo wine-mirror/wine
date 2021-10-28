@@ -400,16 +400,14 @@ static void fill_DataFormat( void *out, DWORD size, const void *in, const DataFo
     }
 }
 
-static void release_DataFormat( DataFormat *format )
+static void dinput_device_release_user_format( struct dinput_device *impl )
 {
-    TRACE("Deleting DataFormat: %p\n", format);
-
-    free( format->dt );
-    format->dt = NULL;
-    free( format->offsets );
-    format->offsets = NULL;
-    free( format->user_df );
-    format->user_df = NULL;
+    free( impl->data_format.dt );
+    impl->data_format.dt = NULL;
+    free( impl->data_format.offsets );
+    impl->data_format.offsets = NULL;
+    free( impl->user_format );
+    impl->user_format = NULL;
 }
 
 static inline LPDIOBJECTDATAFORMAT dataformat_to_odf(LPCDIDATAFORMAT df, int idx)
@@ -441,8 +439,9 @@ LPDIOBJECTDATAFORMAT dataformat_to_odf_by_type(LPCDIDATAFORMAT df, int n, DWORD 
     return NULL;
 }
 
-static HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
+static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const DIDATAFORMAT *asked_format )
 {
+    DataFormat *format = &impl->data_format;
     DataTransform *dt;
     unsigned int i, j;
     int same = 1;
@@ -456,8 +455,8 @@ static HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *forma
     if (!dt || !done) goto failed;
 
     if (!(format->offsets = malloc( format->wine_df->dwNumObjs * sizeof(int) ))) goto failed;
-    if (!(format->user_df = malloc( asked_format->dwSize ))) goto failed;
-    memcpy(format->user_df, asked_format, asked_format->dwSize);
+    if (!(impl->user_format = malloc( asked_format->dwSize ))) goto failed;
+    memcpy( impl->user_format, asked_format, asked_format->dwSize );
 
     TRACE("Creating DataTransform :\n");
     
@@ -575,8 +574,8 @@ failed:
     format->dt = NULL;
     free( format->offsets );
     format->offsets = NULL;
-    free( format->user_df );
-    format->user_df = NULL;
+    free( impl->user_format );
+    impl->user_format = NULL;
 
     return DIERR_OUTOFMEMORY;
 }
@@ -863,7 +862,7 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
     EnterCriticalSection( &impl->crit );
     if (impl->acquired)
         hr = DI_NOEFFECT;
-    else if (!impl->data_format.user_df)
+    else if (!impl->user_format)
         hr = DIERR_INVALIDPARAM;
     else if ((impl->dwCoopLevel & DISCL_FOREGROUND) && impl->win != GetForegroundWindow())
         hr = DIERR_OTHERAPPHASPRIO;
@@ -934,8 +933,8 @@ static HRESULT WINAPI dinput_device_SetDataFormat( IDirectInputDevice8W *iface, 
     This->action_map = NULL;
     This->num_actions = 0;
 
-    release_DataFormat(&This->data_format);
-    res = create_DataFormat( format, &This->data_format );
+    dinput_device_release_user_format( This );
+    res = dinput_device_init_user_format( This, format );
 
     LeaveCriticalSection(&This->crit);
     return res;
@@ -1036,7 +1035,7 @@ void dinput_device_destroy( IDirectInputDevice8W *iface )
     /* Free data format */
     free( This->data_format.wine_df->rgodf );
     free( This->data_format.wine_df );
-    release_DataFormat(&This->data_format);
+    dinput_device_release_user_format( This );
 
     /* Free action mapping */
     free( This->action_map );
@@ -1387,11 +1386,11 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         TRACE( "Axis mode: %s\n", value->dwData == DIPROPAXISMODE_ABS ? "absolute" : "relative" );
         EnterCriticalSection( &impl->crit );
         if (impl->acquired) hr = DIERR_ACQUIRED;
-        else if (!impl->data_format.user_df) hr = DI_OK;
+        else if (!impl->user_format) hr = DI_OK;
         else
         {
-            impl->data_format.user_df->dwFlags &= ~DIDFT_AXIS;
-            impl->data_format.user_df->dwFlags |= value->dwData == DIPROPAXISMODE_ABS ? DIDF_ABSAXIS : DIDF_RELAXIS;
+            impl->user_format->dwFlags &= ~DIDFT_AXIS;
+            impl->user_format->dwFlags |= value->dwData == DIPROPAXISMODE_ABS ? DIDF_ABSAXIS : DIDF_RELAXIS;
             hr = DI_OK;
         }
         LeaveCriticalSection( &impl->crit );
@@ -1531,12 +1530,12 @@ static HRESULT WINAPI dinput_device_GetDeviceState( IDirectInputDevice8W *iface,
     EnterCriticalSection( &impl->crit );
     if (!impl->acquired)
         hr = DIERR_NOTACQUIRED;
-    else if (size != impl->data_format.user_df->dwDataSize)
+    else if (size != impl->user_format->dwDataSize)
         hr = DIERR_INVALIDPARAM;
     else
     {
         fill_DataFormat( data, size, impl->device_state, &impl->data_format );
-        if (!(impl->data_format.user_df->dwFlags & DIDF_ABSAXIS))
+        if (!(impl->user_format->dwFlags & DIDF_ABSAXIS))
             impl->vtbl->enum_objects( iface, &filter, DIDFT_RELAXIS, reset_axis_data, impl->device_state );
         hr = DI_OK;
     }

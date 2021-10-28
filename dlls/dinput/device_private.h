@@ -44,7 +44,6 @@ typedef struct
 
     int                        *offsets;     /* object offsets */
     LPDIDATAFORMAT              wine_df;     /* wine internal data format */
-    LPDIDATAFORMAT              user_df;     /* user defined data format */
 } DataFormat;
 
 typedef struct
@@ -103,6 +102,7 @@ struct dinput_device
     DWORD                       buffersize;  /* size of the queue - set in 'SetProperty'    */
 
     DataFormat                  data_format; /* user data format and wine to user format converter */
+    DIDATAFORMAT *user_format;
 
     /* Action mapping */
     int                         num_actions; /* number of actions mapped */
