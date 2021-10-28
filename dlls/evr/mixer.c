@@ -81,6 +81,7 @@ struct video_mixer
 
     struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
     unsigned int input_ids[MAX_MIXER_INPUT_STREAMS];
+    struct input_stream *zorder[MAX_MIXER_INPUT_STREAMS];
     unsigned int input_count;
     struct output_stream output;
 
@@ -181,6 +182,22 @@ static void video_mixer_init_input(struct input_stream *stream)
         IMFAttributes_SetUINT32(stream->attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, 1);
     stream->rect.left = stream->rect.top = 0.0f;
     stream->rect.right = stream->rect.bottom = 1.0f;
+}
+
+static int __cdecl video_mixer_zorder_sort_compare(const void *a, const void *b)
+{
+    const struct input_stream *left = *(void **)a, *right = *(void **)b;
+    return left->zorder != right->zorder ? (left->zorder < right->zorder ? -1 : 1) : 0;
+};
+
+static void video_mixer_update_zorder_map(struct video_mixer *mixer)
+{
+    unsigned int i;
+
+    for (i = 0; i < mixer->input_count; ++i)
+        mixer->zorder[i] = &mixer->inputs[i];
+
+    qsort(mixer->zorder, mixer->input_count, sizeof(*mixer->zorder), video_mixer_zorder_sort_compare);
 }
 
 static void video_mixer_clear_types(struct video_mixer *mixer)
@@ -501,6 +518,7 @@ static HRESULT WINAPI video_mixer_transform_DeleteInputStream(IMFTransform *ifac
             memmove(&mixer->inputs[idx], &mixer->inputs[idx + 1], (mixer->input_count - idx) * sizeof(*mixer->inputs));
             memmove(&mixer->input_ids[idx], &mixer->input_ids[idx + 1], (mixer->input_count - idx) *
                     sizeof(*mixer->input_ids));
+            video_mixer_update_zorder_map(mixer);
         }
     }
 
@@ -570,6 +588,8 @@ static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface,
                     input->zorder = zorder;
                 zorder++;
             }
+
+            video_mixer_update_zorder_map(mixer);
         }
     }
     LeaveCriticalSection(&mixer->cs);
@@ -1227,13 +1247,13 @@ static void video_mixer_scale_rect(RECT *rect, unsigned int width, unsigned int 
 
 static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 {
-    DXVA2_VideoSample samples[1] = {{ 0 }};
+    DXVA2_VideoSample samples[MAX_MIXER_INPUT_STREAMS] = {{ 0 }};
     DXVA2_VideoProcessBltParams params = { 0 };
     MFVideoNormalizedRect zoom_rect;
     struct input_stream *stream;
-    IDirect3DSurface9 *surface;
     D3DSURFACE_DESC desc;
-    HRESULT hr;
+    HRESULT hr = S_OK;
+    unsigned int i;
 
     IDirect3DSurface9_GetDesc(rt, &desc);
 
@@ -1246,26 +1266,40 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
     video_mixer_scale_rect(&params.TargetRect, desc.Width, desc.Height, &zoom_rect);
 
-    /* FIXME: for now only handle reference stream. */
-
-    video_mixer_get_input(mixer, 0, &stream);
-
-    if (FAILED(hr = video_mixer_get_sample_surface(stream->sample, &surface)))
+    for (i = 0; i < mixer->input_count; ++i)
     {
-        WARN("Failed to get source surface, hr %#x.\n", hr);
-        return;
+        IDirect3DSurface9 *surface;
+
+        stream = mixer->zorder[i];
+
+        if (FAILED(hr = video_mixer_get_sample_surface(stream->sample, &surface)))
+        {
+            WARN("Failed to get source surface for stream %u, hr %#x.\n", i, hr);
+            break;
+        }
+
+        IDirect3DSurface9_GetDesc(surface, &desc);
+
+        samples[i].SampleFormat.SampleFormat = stream->id == 0 ? DXVA2_SampleProgressiveFrame : DXVA2_SampleSubStream;
+        samples[i].SrcSurface = surface;
+        SetRect(&samples[i].SrcRect, 0, 0, desc.Width, desc.Height);
+        video_mixer_scale_rect(&samples[i].DstRect, desc.Width, desc.Height, &stream->rect);
     }
 
-    IDirect3DSurface9_GetDesc(surface, &desc);
+    if (SUCCEEDED(hr))
+    {
+        if (FAILED(hr = IDirectXVideoProcessor_VideoProcessBlt(mixer->processor, rt, &params, samples,
+                mixer->input_count, NULL)))
+        {
+            WARN("Failed to process samples, hr %#x.\n", hr);
+        }
+    }
 
-    samples[0].SrcSurface = surface;
-    SetRect(&samples[0].SrcRect, 0, 0, desc.Width, desc.Height);
-    video_mixer_scale_rect(&samples[0].DstRect, desc.Width, desc.Height, &stream->rect);
-
-    if (FAILED(hr = IDirectXVideoProcessor_VideoProcessBlt(mixer->processor, rt, &params, samples, 1, NULL)))
-        WARN("Failed to process samples, hr %#x.\n", hr);
-
-    IDirect3DSurface9_Release(surface);
+    for (i = 0; i < mixer->input_count; ++i)
+    {
+        if (samples[i].SrcSurface)
+            IDirect3DSurface9_Release(samples[i].SrcSurface);
+    }
 }
 
 static HRESULT video_mixer_get_sample_desired_time(IMFSample *sample, LONGLONG *timestamp, LONGLONG *duration)
@@ -1542,8 +1576,11 @@ static HRESULT WINAPI video_mixer_control_SetStreamZOrder(IMFVideoMixerControl2 
         /* Lowest zorder only applies to reference stream. */
         if (id && !zorder)
             hr = MF_E_INVALIDREQUEST;
-        else
+        else if (stream->zorder != zorder)
+        {
             stream->zorder = zorder;
+            video_mixer_update_zorder_map(mixer);
+        }
     }
 
     LeaveCriticalSection(&mixer->cs);
@@ -2449,6 +2486,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->lower_bound = MFT_OUTPUT_BOUND_LOWER_UNBOUNDED;
     object->upper_bound = MFT_OUTPUT_BOUND_UPPER_UNBOUNDED;
     video_mixer_init_input(&object->inputs[0]);
+    video_mixer_update_zorder_map(object);
     InitializeCriticalSection(&object->cs);
     if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
     {
