@@ -80,8 +80,26 @@ static ULONG WINAPI stream_config_Release(IWMStreamConfig *iface)
 
 static HRESULT WINAPI stream_config_GetStreamType(IWMStreamConfig *iface, GUID *type)
 {
-    FIXME("iface %p, type %p, stub!\n", iface, type);
-    return E_NOTIMPL;
+    struct stream_config *config = impl_from_IWMStreamConfig(iface);
+    struct wm_reader *reader = config->stream->reader;
+    AM_MEDIA_TYPE mt;
+
+    TRACE("config %p, type %p.\n", config, type);
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!amt_from_wg_format(&mt, &config->stream->format))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    *type = mt.majortype;
+    FreeMediaType(&mt);
+
+    LeaveCriticalSection(&reader->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_config_GetStreamNumber(IWMStreamConfig *iface, WORD *number)
@@ -1047,6 +1065,7 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
         stream->wg_stream = wg_parser_get_stream(reader->wg_parser, i);
         stream->reader = reader;
         stream->index = i;
+        wg_parser_stream_get_preferred_format(stream->wg_stream, &stream->format);
     }
 
     LeaveCriticalSection(&reader->cs);

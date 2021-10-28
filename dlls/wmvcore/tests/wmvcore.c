@@ -704,11 +704,11 @@ static void test_sync_reader_types(void)
         ok(stream_number == i + 1, "Got stream number %u.\n", stream_number);
 
         hr = IWMStreamConfig_GetStreamType(config, &majortype);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         if (!i)
-            todo_wine ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
         else
-            todo_wine ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %d.\n", ref);

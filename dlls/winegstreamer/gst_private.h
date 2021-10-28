@@ -101,6 +101,8 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN
 HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT wave_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
+bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format);
+
 BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
 
 extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
@@ -118,6 +120,7 @@ struct wm_stream
     struct wm_reader *reader;
     struct wg_parser_stream *wg_stream;
     WORD index;
+    struct wg_format format;
 };
 
 struct wm_reader
