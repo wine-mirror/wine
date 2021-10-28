@@ -576,6 +576,42 @@ struct symt_hierarchy_point* symt_add_function_point(struct module* module,
     return sym;
 }
 
+/* low and high are absolute addresses */
+BOOL symt_add_inlinesite_range(struct module* module,
+                               struct symt_inlinesite* inlined,
+                               ULONG_PTR low, ULONG_PTR high)
+{
+    struct addr_range* p;
+
+    p = vector_add(&inlined->vranges, &module->pool);
+    p->low = low;
+    p->high = high;
+    if (TRUE)
+    {
+        int i;
+
+        /* see dbghelp_private.h for the assumptions */
+        for (i = 0; i < inlined->vranges.num_elts - 1; i++)
+        {
+            if (!addr_range_disjoint((struct addr_range*)vector_at(&inlined->vranges, i), p))
+            {
+                FIXME("Added addr_range isn't disjoint from siblings\n");
+            }
+        }
+        for ( ; inlined->func.symt.tag != SymTagFunction; inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined))
+        {
+            for (i = 0; i < inlined->vranges.num_elts; i++)
+            {
+                struct addr_range* ar = (struct addr_range*)vector_at(&inlined->vranges, i);
+                if (!addr_range_disjoint(ar, p) && !addr_range_inside(ar, p))
+                    FIXME("Added addr_range not compatible with parent\n");
+            }
+        }
+    }
+
+    return TRUE;
+}
+
 struct symt_thunk* symt_new_thunk(struct module* module, 
                                   struct symt_compiland* compiland, 
                                   const char* name, THUNK_ORDINAL ord,

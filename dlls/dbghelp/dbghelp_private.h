@@ -268,6 +268,18 @@ struct addr_range
     DWORD64                     high;           /* absolute address of first byte after the range */
 };
 
+/* tests whether ar2 is inside ar1 */
+static inline BOOL addr_range_inside(const struct addr_range* ar1, const struct addr_range* ar2)
+{
+    return ar1->low <= ar2->low && ar2->high <= ar1->high;
+}
+
+/* tests whether ar1 and ar2 are disjoint */
+static inline BOOL addr_range_disjoint(const struct addr_range* ar1, const struct addr_range* ar2)
+{
+    return ar1->high <= ar2->low || ar2->high <= ar1->low;
+}
+
 /* a symt_inlinesite* can be casted to a symt_function* to access all function bits */
 struct symt_inlinesite
 {
@@ -841,6 +853,9 @@ extern struct symt_hierarchy_point*
                                             enum SymTagEnum point, 
                                             const struct location* loc,
                                             const char* name) DECLSPEC_HIDDEN;
+extern BOOL         symt_add_inlinesite_range(struct module* module,
+                                              struct symt_inlinesite* inlined,
+                                              ULONG_PTR low, ULONG_PTR high) DECLSPEC_HIDDEN;
 extern struct symt_thunk*
                     symt_new_thunk(struct module* module, 
                                    struct symt_compiland* parent,

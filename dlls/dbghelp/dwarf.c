@@ -1272,6 +1272,66 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
     }
 }
 
+static BOOL dwarf2_feed_inlined_ranges(dwarf2_parse_context_t* ctx, const dwarf2_debug_info_t* di,
+                                       struct symt_inlinesite* inlined)
+{
+    struct attribute            range;
+
+    if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
+    {
+        dwarf2_traverse_context_t   traverse;
+
+        traverse.data = ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
+        traverse.end_data = ctx->module_ctx->sections[section_ranges].address +
+            ctx->module_ctx->sections[section_ranges].size;
+
+        while (traverse.data + 2 * ctx->head.word_size < traverse.end_data)
+        {
+            ULONG_PTR low = dwarf2_parse_addr_head(&traverse, &ctx->head);
+            ULONG_PTR high = dwarf2_parse_addr_head(&traverse, &ctx->head);
+            if (low == 0 && high == 0) break;
+            if (low == (ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
+                FIXME("unsupported yet (base address selection)\n");
+            /* range values are relative to start of compilation unit */
+            symt_add_inlinesite_range(ctx->module_ctx->module, inlined,
+                                      ctx->compiland->address + low, ctx->compiland->address + high);
+        }
+
+        return TRUE;
+    }
+    else
+    {
+        struct attribute            low_pc;
+        struct attribute            high_pc;
+
+        if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) ||
+            !dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc))
+            return FALSE;
+        if (ctx->head.version >= 4)
+            switch (high_pc.form)
+            {
+            case DW_FORM_addr:
+                break;
+            case DW_FORM_data1:
+            case DW_FORM_data2:
+            case DW_FORM_data4:
+            case DW_FORM_data8:
+            case DW_FORM_sdata:
+            case DW_FORM_udata:
+                /* From dwarf4 on, when FORM's class is constant, high_pc is an offset from low_pc */
+                high_pc.u.uvalue += low_pc.u.uvalue;
+                break;
+            default:
+                FIXME("Unsupported class for high_pc\n");
+                break;
+            }
+        symt_add_inlinesite_range(ctx->module_ctx->module, inlined,
+                                  ctx->module_ctx->load_offset + low_pc.u.uvalue,
+                                  ctx->module_ctx->load_offset + high_pc.u.uvalue);
+        return TRUE;
+    }
+}
+
 /******************************************************************
  *		dwarf2_read_one_debug_info
  *
@@ -2037,6 +2097,9 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   &sig_type->symt);
     subpgm->current_func = (struct symt_function*)inlined;
     subpgm->current_block = NULL;
+
+    if (!dwarf2_feed_inlined_ranges(subpgm->ctx, di, inlined))
+        WARN("cannot read ranges\n");
 
     children = dwarf2_get_di_children(di);
     if (children) for (i = 0; i < vector_length(children); i++)
