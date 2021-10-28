@@ -216,16 +216,63 @@ struct symt_data
     } u;
 };
 
+/* We must take into account that most debug formats (dwarf and pdb) report for
+ * code (esp. inlined functions) inside functions the following way:
+ * - block
+ *   + is represented by a contiguous area of memory,
+ *     or at least have lo/hi addresses to encompass it's contents
+ *   + but most importantly, block A's lo/hi range is always embedded within
+ *     its parent (block or function)
+ * - inline site:
+ *   + is most of the times represented by a set of ranges (instead of a
+ *     contiguous block)
+ *   + native dbghelp only exports the start address, not its size
+ *   + the set of ranges isn't always embedded in enclosing block (if any)
+ *   + the set of ranges is always embedded in top function
+ * - (top) function
+ *   + is described as a contiguous block of memory
+ *
+ * On top of the items above (taken as assumptions), we also assume that:
+ * - a range in inline site A, is disjoint from all the other ranges in
+ *   inline site A
+ * - a range in inline site A, is either disjoint or embedded into any of
+ *   the ranges of inline sites parent of A
+ *
+ * Therefore, we also store all inline sites inside a function:
+ * - available as a linked list to simplify the walk among them
+ * - this linked list shall preserve the weak order of the lexical-parent
+ *   relationship (eg for any inline site A, which has inline site B
+ *   as lexical parent, then A is present before B in the linked list)
+ * - hence (from the assumptions above), when looking up which inline site
+ *   contains a given address, the first range containing that address found
+ *   while walking the list of inline sites is the right one.
+ */
+
 struct symt_function
 {
-    struct symt                 symt;
+    struct symt                 symt;           /* SymTagFunction (or SymTagInlineSite when embedded in symt_inlinesite) */
     struct hash_table_elt       hash_elt;       /* if global symbol */
     ULONG_PTR                   address;
     struct symt*                container;      /* compiland */
     struct symt*                type;           /* points to function_signature */
     ULONG_PTR                   size;
     struct vector               vlines;
-    struct vector               vchildren;      /* locals, params, blocks, start/end, labels */
+    struct vector               vchildren;      /* locals, params, blocks, start/end, labels, inline sites */
+    struct symt_inlinesite*     next_inlinesite;/* linked list of inline sites in this function */
+};
+
+/* FIXME: this could be optimized later on by using relative offsets and smaller integral sizes */
+struct addr_range
+{
+    DWORD64                     low;            /* absolute address of first byte of the range */
+    DWORD64                     high;           /* absolute address of first byte after the range */
+};
+
+/* a symt_inlinesite* can be casted to a symt_function* to access all function bits */
+struct symt_inlinesite
+{
+    struct symt_function        func;
+    struct vector               vranges;        /* of addr_range: where the inline site is actually defined */
 };
 
 struct symt_hierarchy_point

@@ -366,7 +366,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
                          func, func->hash_elt.name, offset, 
                          source_get(module, source_idx), line_num);
 
-    assert(func->symt.tag == SymTagFunction);
+    assert(func->symt.tag == SymTagFunction || func->symt.tag == SymTagInlineSite);
 
     for (i=vector_length(&func->vlines)-1; i>=0; i--)
     {
@@ -424,8 +424,7 @@ struct symt_data* symt_add_func_local(struct module* module,
                          debugstr_w(module->modulename), func->hash_elt.name,
                          name, type);
 
-    assert(func);
-    assert(func->symt.tag == SymTagFunction);
+    assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
     assert(dt == DataIsParam || dt == DataIsLocal);
 
     locsym = pool_alloc(&module->pool, sizeof(*locsym));
@@ -462,8 +461,7 @@ struct symt_data* symt_add_func_constant(struct module* module,
                          debugstr_w(module->modulename), func->hash_elt.name,
                          name, type);
 
-    assert(func);
-    assert(func->symt.tag == SymTagFunction);
+    assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
 
     locsym = pool_alloc(&module->pool, sizeof(*locsym));
     locsym->symt.tag      = SymTagData;
@@ -489,8 +487,7 @@ struct symt_block* symt_open_func_block(struct module* module,
     struct symt_block*  block;
     struct symt**       p;
 
-    assert(func);
-    assert(func->symt.tag == SymTagFunction);
+    assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
 
     assert(!parent_block || parent_block->symt.tag == SymTagBlock);
     block = pool_alloc(&module->pool, sizeof(*block));
@@ -512,8 +509,7 @@ struct symt_block* symt_close_func_block(struct module* module,
                                          const struct symt_function* func,
                                          struct symt_block* block, unsigned pc)
 {
-    assert(func);
-    assert(func->symt.tag == SymTagFunction);
+    assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
 
     if (pc) block->size = func->address + pc - block->address;
     return (block->container->tag == SymTagBlock) ? 
@@ -781,6 +777,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
         }
         break;
     case SymTagFunction:
+    case SymTagInlineSite:
         symt_get_address(sym, &sym_info->Address);
         break;
     case SymTagThunk:
@@ -1061,6 +1058,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
         case SymTagCustom:
+        case SymTagInlineSite:
             break;
         default:
             FIXME("Unknown type: %u (%x)\n", lsym->tag, lsym->tag);

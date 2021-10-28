@@ -1446,7 +1446,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                 {
                     func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
                     /* FIXME: at least labels support line numbers */
-                    if (!func || func->symt.tag != SymTagFunction)
+                    if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
                     {
                         WARN("--not a func at %04x:%08x %lx tag=%d\n",
                              ltb->seg, ltb->offsets[k], addr, func ? func->symt.tag : -1);
@@ -1509,7 +1509,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
             source = source_new(msc_dbg->module, NULL, strimage + fd->offset);
             func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
             /* FIXME: at least labels support line numbers */
-            if (!func || func->symt.tag != SymTagFunction)
+            if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
             {
                 WARN("--not a func at %04x:%08x %lx tag=%d\n",
                      lines_blk->seg, lines_blk->start, addr, func ? func->symt.tag : -1);
