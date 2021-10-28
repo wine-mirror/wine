@@ -580,22 +580,6 @@ failed:
     return DIERR_OUTOFMEMORY;
 }
 
-static int verify_offset(const DataFormat *df, int offset)
-{
-    int i;
-
-    if (!df->offsets)
-        return -1;
-
-    for (i = df->wine_df->dwNumObjs - 1; i >= 0; i--)
-    {
-        if (df->offsets[i] == offset)
-            return offset;
-    }
-
-    return -1;
-}
-
 static int id_to_object( LPCDIDATAFORMAT df, int id )
 {
     int i;
@@ -1320,6 +1304,8 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
 {
     struct set_object_property_params params = {.iface = iface, .header = header, .property = LOWORD( guid )};
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD object_mask = DIDFT_AXIS | DIDFT_BUTTON | DIDFT_POV;
+    DIDEVICEOBJECTINSTANCEW instance;
     DIPROPHEADER filter;
     HRESULT hr;
 
@@ -1421,18 +1407,14 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
     case (DWORD_PTR)DIPROP_APPDATA:
     {
         const DIPROPPOINTER *value = (const DIPROPPOINTER *)header;
-        int offset = -1;
+        int user_offset;
         if (header->dwSize != sizeof(DIPROPPOINTER)) return DIERR_INVALIDPARAM;
-
-        if (header->dwHow == DIPH_BYID)
-            offset = id_to_offset( &impl->data_format, header->dwObj );
-        else if (header->dwHow == DIPH_BYOFFSET)
-            offset = verify_offset( &impl->data_format, header->dwObj );
-        else
-            return DIERR_UNSUPPORTED;
-
-        if (offset == -1) return DIERR_OBJECTNOTFOUND;
-        if (!set_app_data( impl, offset, value->uData )) return DIERR_OUTOFMEMORY;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
+        if (FAILED(hr)) return hr;
+        if (hr == DIENUM_CONTINUE) return DIERR_OBJECTNOTFOUND;
+        if ((user_offset = id_to_offset( &impl->data_format, instance.dwType )) < 0) return DIERR_OBJECTNOTFOUND;
+        if (!set_app_data( impl, user_offset, value->uData )) return DIERR_OUTOFMEMORY;
         return DI_OK;
     }
     default:

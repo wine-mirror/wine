@@ -4794,7 +4794,6 @@ static void test_simple_joystick(void)
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_pointer.uData = 0xfeedcafe;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_APPDATA returned %#x\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
