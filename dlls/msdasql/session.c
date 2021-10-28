@@ -38,6 +38,7 @@ struct msdasql_session
 {
     IUnknown session_iface;
     IGetDataSource IGetDataSource_iface;
+    IOpenRowset    IOpenRowset_iface;
     LONG refs;
 };
 
@@ -49,6 +50,11 @@ static inline struct msdasql_session *impl_from_IUnknown( IUnknown *iface )
 static inline struct msdasql_session *impl_from_IGetDataSource( IGetDataSource *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_session, IGetDataSource_iface );
+}
+
+static inline struct msdasql_session *impl_from_IOpenRowset( IOpenRowset *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_session, IOpenRowset_iface );
 }
 
 static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -67,6 +73,11 @@ static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void 
     {
         TRACE("(%p)->(IID_IGetDataSource %p)\n", iface, ppv);
         *ppv = &session->IGetDataSource_iface;
+    }
+    else if(IsEqualGUID(&IID_IOpenRowset, riid))
+    {
+        TRACE("(%p)->(IID_IOpenRowset %p)\n", iface, ppv);
+        *ppv = &session->IOpenRowset_iface;
     }
 
     if(*ppv)
@@ -142,6 +153,42 @@ static const IGetDataSourceVtbl datasourceVtbl =
     datasource_GetDataSource
 };
 
+HRESULT WINAPI openrowset_QueryInterface(IOpenRowset *iface, REFIID riid, void **out)
+{
+    struct msdasql_session *session = impl_from_IOpenRowset( iface );
+    return IUnknown_QueryInterface(&session->session_iface, riid, out);
+}
+
+ULONG WINAPI openrowset_AddRef(IOpenRowset *iface)
+{
+    struct msdasql_session *session = impl_from_IOpenRowset( iface );
+    return IUnknown_AddRef(&session->session_iface);
+}
+
+ULONG WINAPI openrowset_Release(IOpenRowset *iface)
+{
+    struct msdasql_session *session = impl_from_IOpenRowset( iface );
+    return IUnknown_Release(&session->session_iface);
+}
+
+HRESULT WINAPI openrowset_OpenRowset(IOpenRowset *iface, IUnknown *pUnkOuter, DBID *table,
+            DBID *index, REFIID riid, ULONG count, DBPROPSET propertysets[], IUnknown **rowset)
+{
+    struct msdasql_session *session = impl_from_IOpenRowset( iface );
+    FIXME("%p, %p, %p %p %s, %d %p %p stub\n", session, pUnkOuter, table, index, debugstr_guid(riid),
+            count, propertysets, rowset);
+
+    return E_NOTIMPL;
+}
+
+static const IOpenRowsetVtbl openrowsetVtbl =
+{
+    openrowset_QueryInterface,
+    openrowset_AddRef,
+    openrowset_Release,
+    openrowset_OpenRowset
+};
+
 HRESULT create_db_session(REFIID riid, void **unk)
 {
     struct msdasql_session *session;
@@ -153,6 +200,7 @@ HRESULT create_db_session(REFIID riid, void **unk)
 
     session->session_iface.lpVtbl = &unkfactoryVtbl;
     session->IGetDataSource_iface.lpVtbl = &datasourceVtbl;
+    session->IOpenRowset_iface.lpVtbl = &openrowsetVtbl;
     session->refs = 1;
 
     hr = IUnknown_QueryInterface(&session->session_iface, riid, unk);
