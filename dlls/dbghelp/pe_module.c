@@ -688,7 +688,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
                                                 IMAGE_DIRECTORY_ENTRY_EXPORT, &size)))
     {
         const WORD*             ordinals = NULL;
-        const DWORD_PTR*	functions = NULL;
+        const DWORD*	        functions = NULL;
         const DWORD*		names = NULL;
         unsigned int		j;
         char			buffer[16];
