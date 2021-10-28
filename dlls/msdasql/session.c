@@ -39,6 +39,7 @@ struct msdasql_session
     IUnknown session_iface;
     IGetDataSource IGetDataSource_iface;
     IOpenRowset    IOpenRowset_iface;
+    ISessionProperties ISessionProperties_iface;
     LONG refs;
 };
 
@@ -55,6 +56,11 @@ static inline struct msdasql_session *impl_from_IGetDataSource( IGetDataSource *
 static inline struct msdasql_session *impl_from_IOpenRowset( IOpenRowset *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_session, IOpenRowset_iface );
+}
+
+static inline struct msdasql_session *impl_from_ISessionProperties( ISessionProperties *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_session, ISessionProperties_iface );
 }
 
 static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -78,6 +84,11 @@ static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void 
     {
         TRACE("(%p)->(IID_IOpenRowset %p)\n", iface, ppv);
         *ppv = &session->IOpenRowset_iface;
+    }
+    else if(IsEqualGUID(&IID_ISessionProperties, riid))
+    {
+        TRACE("(%p)->(IID_ISessionProperties %p)\n", iface, ppv);
+        *ppv = &session->ISessionProperties_iface;
     }
 
     if(*ppv)
@@ -189,6 +200,52 @@ static const IOpenRowsetVtbl openrowsetVtbl =
     openrowset_OpenRowset
 };
 
+static HRESULT WINAPI properties_QueryInterface(ISessionProperties *iface, REFIID riid, void **out)
+{
+    struct msdasql_session *session = impl_from_ISessionProperties( iface );
+    return IUnknown_QueryInterface(&session->session_iface, riid, out);
+}
+
+static ULONG WINAPI properties_AddRef(ISessionProperties *iface)
+{
+    struct msdasql_session *session = impl_from_ISessionProperties( iface );
+    return IUnknown_AddRef(&session->session_iface);
+}
+
+static ULONG WINAPI properties_Release(ISessionProperties *iface)
+{
+    struct msdasql_session *session = impl_from_ISessionProperties( iface );
+    return IUnknown_Release(&session->session_iface);
+}
+
+
+static HRESULT WINAPI properties_GetProperties(ISessionProperties *iface, ULONG set_count,
+    const DBPROPIDSET id_sets[], ULONG *count, DBPROPSET **sets)
+{
+    struct msdasql_session *session = impl_from_ISessionProperties( iface );
+    FIXME("%p %d %p %p %p\n", session, set_count, id_sets, count, sets);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI properties_SetProperties(ISessionProperties *iface, ULONG count,
+    DBPROPSET sets[])
+{
+    struct msdasql_session *session = impl_from_ISessionProperties( iface );
+    FIXME("%p %d %p\n", session, count, sets);
+
+    return S_OK;
+}
+
+static const ISessionPropertiesVtbl propertiesVtbl =
+{
+    properties_QueryInterface,
+    properties_AddRef,
+    properties_Release,
+    properties_GetProperties,
+    properties_SetProperties
+};
+
 HRESULT create_db_session(REFIID riid, void **unk)
 {
     struct msdasql_session *session;
@@ -201,6 +258,7 @@ HRESULT create_db_session(REFIID riid, void **unk)
     session->session_iface.lpVtbl = &unkfactoryVtbl;
     session->IGetDataSource_iface.lpVtbl = &datasourceVtbl;
     session->IOpenRowset_iface.lpVtbl = &openrowsetVtbl;
+    session->ISessionProperties_iface.lpVtbl = &propertiesVtbl;
     session->refs = 1;
 
     hr = IUnknown_QueryInterface(&session->session_iface, riid, unk);
