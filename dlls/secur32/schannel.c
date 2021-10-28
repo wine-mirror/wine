@@ -1003,7 +1003,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             if (!expected_size)
             {
                 TRACE("Expected at least %lu bytes, but buffer only contains %u bytes.\n",
-                      max(6, record_size), buffer->cbBuffer);
+                      max(ctx->header_size + 1, record_size), buffer->cbBuffer);
                 return SEC_E_INCOMPLETE_MESSAGE;
             }
         }
