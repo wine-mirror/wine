@@ -271,6 +271,12 @@ static HRESULT WINAPI ftmarshaler_GetUnmarshalClass(IMarshal *iface, REFIID riid
     return S_OK;
 }
 
+union ftmarshaler_data
+{
+    UINT64 value;
+    IUnknown *object;
+};
+
 static HRESULT WINAPI ftmarshaler_GetMarshalSizeMax(IMarshal *iface, REFIID riid, void *pv,
         DWORD dest_context, void *pvDestContext, DWORD mshlflags, DWORD *size)
 {
@@ -283,7 +289,7 @@ static HRESULT WINAPI ftmarshaler_GetMarshalSizeMax(IMarshal *iface, REFIID riid
        copied between the apartments */
     if (dest_context == MSHCTX_INPROC || dest_context == MSHCTX_CROSSCTX)
     {
-        *size = sizeof(mshlflags) + sizeof(pv) + sizeof(DWORD) + sizeof(GUID);
+        *size = sizeof(mshlflags) + sizeof(union ftmarshaler_data) + sizeof(GUID);
         return S_OK;
     }
 
@@ -307,29 +313,23 @@ static HRESULT WINAPI ftmarshaler_MarshalInterface(IMarshal *iface, IStream *str
        copied between the apartments */
     if (dest_context == MSHCTX_INPROC || dest_context == MSHCTX_CROSSCTX)
     {
-        void *object;
-        DWORD constant = 0;
+        union ftmarshaler_data data;
         GUID unknown_guid = { 0 };
 
-        hr = IUnknown_QueryInterface((IUnknown *)pv, riid, &object);
+        data.value = 0;
+        hr = IUnknown_QueryInterface((IUnknown *)pv, riid, (void **)&data.object);
         if (FAILED(hr))
             return hr;
 
         /* don't hold a reference to table-weak marshaled interfaces */
         if (mshlflags & MSHLFLAGS_TABLEWEAK)
-            IUnknown_Release((IUnknown *)object);
+            IUnknown_Release(data.object);
 
         hr = IStream_Write(stream, &mshlflags, sizeof(mshlflags), NULL);
         if (hr != S_OK) return STG_E_MEDIUMFULL;
 
-        hr = IStream_Write(stream, &object, sizeof(object), NULL);
+        hr = IStream_Write(stream, &data, sizeof(data), NULL);
         if (hr != S_OK) return STG_E_MEDIUMFULL;
-
-        if (sizeof(object) == sizeof(DWORD))
-        {
-            hr = IStream_Write(stream, &constant, sizeof(constant), NULL);
-            if (hr != S_OK) return STG_E_MEDIUMFULL;
-        }
 
         hr = IStream_Write(stream, &unknown_guid, sizeof(unknown_guid), NULL);
         if (hr != S_OK) return STG_E_MEDIUMFULL;
@@ -346,9 +346,8 @@ static HRESULT WINAPI ftmarshaler_MarshalInterface(IMarshal *iface, IStream *str
 
 static HRESULT WINAPI ftmarshaler_UnmarshalInterface(IMarshal *iface, IStream *stream, REFIID riid, void **ppv)
 {
+    union ftmarshaler_data data;
     DWORD mshlflags;
-    IUnknown *object;
-    DWORD constant;
     GUID unknown_guid;
     HRESULT hr;
 
@@ -357,32 +356,23 @@ static HRESULT WINAPI ftmarshaler_UnmarshalInterface(IMarshal *iface, IStream *s
     hr = IStream_Read(stream, &mshlflags, sizeof(mshlflags), NULL);
     if (hr != S_OK) return STG_E_READFAULT;
 
-    hr = IStream_Read(stream, &object, sizeof(object), NULL);
+    hr = IStream_Read(stream, &data, sizeof(data), NULL);
     if (hr != S_OK) return STG_E_READFAULT;
-
-    if (sizeof(object) == sizeof(DWORD))
-    {
-        hr = IStream_Read(stream, &constant, sizeof(constant), NULL);
-        if (hr != S_OK) return STG_E_READFAULT;
-        if (constant != 0)
-            FIXME("constant is 0x%x instead of 0\n", constant);
-    }
 
     hr = IStream_Read(stream, &unknown_guid, sizeof(unknown_guid), NULL);
     if (hr != S_OK) return STG_E_READFAULT;
 
-    hr = IUnknown_QueryInterface(object, riid, ppv);
+    hr = IUnknown_QueryInterface(data.object, riid, ppv);
     if (!(mshlflags & (MSHLFLAGS_TABLEWEAK | MSHLFLAGS_TABLESTRONG)))
-        IUnknown_Release(object);
+        IUnknown_Release(data.object);
 
     return hr;
 }
 
 static HRESULT WINAPI ftmarshaler_ReleaseMarshalData(IMarshal *iface, IStream *stream)
 {
+    union ftmarshaler_data data;
     DWORD mshlflags;
-    IUnknown *object;
-    DWORD constant;
     GUID unknown_guid;
     HRESULT hr;
 
@@ -391,21 +381,13 @@ static HRESULT WINAPI ftmarshaler_ReleaseMarshalData(IMarshal *iface, IStream *s
     hr = IStream_Read(stream, &mshlflags, sizeof(mshlflags), NULL);
     if (hr != S_OK) return STG_E_READFAULT;
 
-    hr = IStream_Read(stream, &object, sizeof(object), NULL);
+    hr = IStream_Read(stream, &data, sizeof(data), NULL);
     if (hr != S_OK) return STG_E_READFAULT;
-
-    if (sizeof(object) == sizeof(DWORD))
-    {
-        hr = IStream_Read(stream, &constant, sizeof(constant), NULL);
-        if (hr != S_OK) return STG_E_READFAULT;
-        if (constant != 0)
-            FIXME("constant is 0x%x instead of 0\n", constant);
-    }
 
     hr = IStream_Read(stream, &unknown_guid, sizeof(unknown_guid), NULL);
     if (hr != S_OK) return STG_E_READFAULT;
 
-    IUnknown_Release(object);
+    IUnknown_Release(data.object);
     return S_OK;
 }
 

@@ -3181,6 +3181,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
 
 static void test_freethreadedmarshaler(void)
 {
+    DWORD size, expected_size;
     HRESULT hr;
     IUnknown *pFTUnknown;
     IMarshal *pFTMarshal;
@@ -3200,6 +3201,13 @@ static void test_freethreadedmarshaler(void)
     ok_ole_success(hr, CreateStreamOnHGlobal);
 
     /* inproc normal marshaling */
+
+    size = 0;
+    expected_size = sizeof(DWORD) /* flags */ + sizeof(UINT64) + sizeof(GUID);
+    hr = IMarshal_GetMarshalSizeMax(pFTMarshal, &IID_IClassFactory, &Test_ClassFactory, MSHCTX_INPROC,
+            NULL, MSHLFLAGS_NORMAL, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size == expected_size, "Unexpected marshal size %u, expected %u.\n", size, expected_size);
 
     hr = IMarshal_GetUnmarshalClass(pFTMarshal, &IID_IClassFactory,
             &Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &clsid);
