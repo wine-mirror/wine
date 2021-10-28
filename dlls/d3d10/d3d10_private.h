@@ -87,6 +87,7 @@ struct d3d10_effect_shader_variable
         ID3D10VertexShader *vs;
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;
+        IUnknown *object;
     } shader;
 
     unsigned int resource_count;

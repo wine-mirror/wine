@@ -2983,18 +2983,10 @@ static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_vari
     switch (type)
     {
         case D3D10_SVT_VERTEXSHADER:
-            if (s->shader.vs)
-                ID3D10VertexShader_Release(s->shader.vs);
-            break;
-
         case D3D10_SVT_PIXELSHADER:
-            if (s->shader.ps)
-                ID3D10PixelShader_Release(s->shader.ps);
-            break;
-
         case D3D10_SVT_GEOMETRYSHADER:
-            if (s->shader.gs)
-                ID3D10GeometryShader_Release(s->shader.gs);
+            if (s->shader.object)
+                IUnknown_Release(s->shader.object);
             break;
 
         default:
