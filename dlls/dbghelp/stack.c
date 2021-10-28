@@ -274,6 +274,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 {
     struct cpu_stack_walk       csw;
     struct cpu*                 cpu;
+    DWORD64                     addr;
 
     TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p, 0x%x)\n",
           MachineType, hProcess, hThread, frame, ctx,
@@ -296,16 +297,6 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (frame->InlineFrameContext != INLINE_FRAME_CONTEXT_IGNORE)
-    {
-        static BOOL once;
-        if (!once)
-        {
-            FIXME("Inlined contexts are not supported yet\n");
-            once = TRUE;
-        }
-        frame->InlineFrameContext = INLINE_FRAME_CONTEXT_IGNORE;
-    }
 
     csw.hProcess = hProcess;
     csw.hThread = hThread;
@@ -317,7 +308,32 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     csw.u.s64.f_tabl_acs = (FunctionTableAccessRoutine) ? FunctionTableAccessRoutine : SymFunctionTableAccess64;
     csw.u.s64.f_modl_bas = (GetModuleBaseRoutine) ? GetModuleBaseRoutine : SymGetModuleBase64;
 
-    if (!cpu->stack_walk(&csw, (STACKFRAME64*)frame, ctx)) return FALSE;
+    addr = sw_xlat_addr(&csw, &frame->AddrPC);
+
+    if (IFC_MODE(frame->InlineFrameContext) == IFC_MODE_INLINE)
+    {
+        DWORD depth = symt_get_inlinesite_depth(hProcess, addr);
+        if (IFC_DEPTH(frame->InlineFrameContext) + 1 < depth) /* move to next inlined function? */
+        {
+            TRACE("found inline ctx: depth=%u current=%u++\n",
+                  depth, frame->InlineFrameContext);
+            frame->InlineFrameContext++; /* just increase index, FIXME detect overflow */
+        }
+        else
+        {
+            frame->InlineFrameContext = IFC_MODE_REGULAR; /* move to next top level function */
+        }
+    }
+    else
+    {
+        if (!cpu->stack_walk(&csw, (STACKFRAME64*)frame, ctx)) return FALSE;
+        if (frame->InlineFrameContext != INLINE_FRAME_CONTEXT_IGNORE)
+        {
+            addr = sw_xlat_addr(&csw, &frame->AddrPC);
+            frame->InlineFrameContext = symt_get_inlinesite_depth(hProcess, addr) == 0 ? IFC_MODE_REGULAR : IFC_MODE_INLINE;
+            TRACE("setting IFC mode to %x\n", frame->InlineFrameContext);
+        }
+    }
 
     /* we don't handle KdHelp */
 

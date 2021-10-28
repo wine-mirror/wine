@@ -916,6 +916,8 @@ extern struct symt_pointer*
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name) DECLSPEC_HIDDEN;
+extern struct symt_inlinesite*
+                    symt_find_lowest_inlined(struct symt_function* func, DWORD64 addr) DECLSPEC_HIDDEN;
 extern struct symt*
                     symt_get_upper_inlined(struct symt_inlinesite* inlined) DECLSPEC_HIDDEN;
 static inline struct symt_function*
@@ -925,6 +927,7 @@ static inline struct symt_function*
         inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined);
     return &inlined->func;
 }
+extern DWORD        symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr) DECLSPEC_HIDDEN;
 
 /* Inline context encoding (different from what native does):
  * bits 31:30: 3 ignore (includes INLINE_FRAME_CONTEXT_IGNORE=0xFFFFFFFF)

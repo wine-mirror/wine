@@ -1213,6 +1213,26 @@ void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
     MultiByteToWideChar(CP_ACP, 0, si->Name, -1, siw->Name, siw->MaxNameLen);
 }
 
+/* return the lowest inline site inside a function */
+struct symt_inlinesite* symt_find_lowest_inlined(struct symt_function* func, DWORD64 addr)
+{
+    struct symt_inlinesite* current;
+    int i;
+
+    assert(func->symt.tag == SymTagFunction);
+    for (current = func->next_inlinesite; current; current = current->func.next_inlinesite)
+    {
+        for (i = 0; i < current->vranges.num_elts; ++i)
+        {
+            struct addr_range* ar = (struct addr_range*)vector_at(&current->vranges, i);
+            /* first matching range gives the lowest inline site; see dbghelp_private.h for details */
+            if (ar->low <= addr && addr < ar->high)
+                return current;
+        }
+    }
+    return NULL;
+}
+
 /* from an inline function, get either the enclosing inlined function, or the top function when no inlined */
 struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
 {
@@ -1228,6 +1248,27 @@ struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
     } while (symt->tag == SymTagBlock);
     assert(symt->tag == SymTagFunction || symt->tag == SymTagInlineSite);
     return symt;
+}
+
+DWORD symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr)
+{
+    struct module_pair pair;
+    DWORD depth = 0;
+
+    if (module_init_pair(&pair, hProcess, addr))
+    {
+        struct symt_ht* symt = symt_find_nearest(pair.effective, addr);
+        if (symt_check_tag(&symt->symt, SymTagFunction))
+        {
+            struct symt_inlinesite* inlined = symt_find_lowest_inlined((struct symt_function*)symt, addr);
+            if (inlined)
+            {
+                for ( ; &inlined->func.symt != &symt->symt; inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined))
+                    ++depth;
+            }
+        }
+    }
+    return depth;
 }
 
 /******************************************************************
