@@ -31,9 +31,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
+/*
+   Initial state represents just created object, presenter never returns to this state.
+   Shutdown state is entered on ReleaseServicePointers(), terminal state.
+   Started/stopped/paused states are controlled by clock state changes.
+*/
+
 enum presenter_state
 {
-    PRESENTER_STATE_SHUT_DOWN = 0,
+    PRESENTER_STATE_INITIAL = 0,
+    PRESENTER_STATE_SHUT_DOWN,
     PRESENTER_STATE_STARTED,
     PRESENTER_STATE_STOPPED,
     PRESENTER_STATE_PAUSED,
@@ -603,6 +610,9 @@ static HRESULT video_presenter_process_input(struct video_presenter *presenter)
     IMFSample *sample;
     DWORD status;
 
+    if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+        return MF_E_SHUTDOWN;
+
     if (!presenter->media_type)
         return S_OK;
 
@@ -707,6 +717,9 @@ static DWORD CALLBACK video_presenter_streaming_thread(void *arg)
 static HRESULT video_presenter_start_streaming(struct video_presenter *presenter)
 {
     HRESULT hr;
+
+    if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+        return MF_E_SHUTDOWN;
 
     if (presenter->thread.hthread)
         return S_OK;
@@ -968,7 +981,12 @@ static HRESULT WINAPI video_presenter_ProcessMessage(IMFVideoPresenter *iface, M
     switch (message)
     {
         case MFVP_MESSAGE_INVALIDATEMEDIATYPE:
-            hr = presenter->mixer ? video_presenter_invalidate_media_type(presenter) : MF_E_INVALIDREQUEST;
+            if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+                hr = MF_E_SHUTDOWN;
+            else if (!presenter->mixer)
+                hr = MF_E_INVALIDREQUEST;
+            else
+                hr = video_presenter_invalidate_media_type(presenter);
             break;
         case MFVP_MESSAGE_BEGINSTREAMING:
             hr = video_presenter_start_streaming(presenter);
@@ -1238,6 +1256,7 @@ static HRESULT WINAPI video_presenter_control_GetNativeVideoSize(IMFVideoDisplay
         SIZE *aspect_ratio)
 {
     struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %p, %p.\n", iface, video_size, aspect_ratio);
 
@@ -1245,21 +1264,40 @@ static HRESULT WINAPI video_presenter_control_GetNativeVideoSize(IMFVideoDisplay
         return E_POINTER;
 
     EnterCriticalSection(&presenter->cs);
-    if (video_size)
-        *video_size = presenter->native_size;
-    if (aspect_ratio)
-        *aspect_ratio = presenter->native_ratio;
+
+    if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        if (video_size)
+            *video_size = presenter->native_size;
+        if (aspect_ratio)
+            *aspect_ratio = presenter->native_ratio;
+    }
+
     LeaveCriticalSection(&presenter->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_control_GetIdealVideoSize(IMFVideoDisplayControl *iface, SIZE *min_size,
         SIZE *max_size)
 {
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    HRESULT hr;
+
     FIXME("%p, %p, %p.\n", iface, min_size, max_size);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&presenter->cs);
+
+    if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = E_NOTIMPL;
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayControl *iface,
@@ -1425,9 +1463,21 @@ static HRESULT WINAPI video_presenter_control_GetVideoWindow(IMFVideoDisplayCont
 
 static HRESULT WINAPI video_presenter_control_RepaintVideo(IMFVideoDisplayControl *iface)
 {
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    HRESULT hr;
+
     FIXME("%p.\n", iface);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&presenter->cs);
+
+    if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = E_NOTIMPL;
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayControl *iface, BITMAPINFOHEADER *header,
