@@ -728,24 +728,21 @@ static void test_sync_reader_types(void)
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         ref = IWMOutputMediaProps_Release(output_props);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-        if (hr == S_OK)
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
         {
-            if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
-            {
-                got_audio = true;
-                check_audio_type(mt);
-            }
-            else
-            {
-                ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
-                got_video = true;
-                check_video_type(mt);
-            }
+            got_audio = true;
+            check_audio_type(mt);
+        }
+        else
+        {
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+            got_video = true;
+            check_video_type(mt);
         }
 
         count = 0;
@@ -844,8 +841,8 @@ static void test_sync_reader_types(void)
         winetest_pop_context();
     }
 
-    todo_wine ok(got_audio, "No audio stream was enumerated.\n");
-    todo_wine ok(got_video, "No video stream was enumerated.\n");
+    ok(got_audio, "No audio stream was enumerated.\n");
+    ok(got_video, "No video stream was enumerated.\n");
 
     count = 0xdeadbeef;
     hr = IWMSyncReader_GetOutputFormatCount(reader, 2, &count);

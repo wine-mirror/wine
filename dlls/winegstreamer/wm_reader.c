@@ -32,6 +32,8 @@ struct output_props
 {
     IWMOutputMediaProps IWMOutputMediaProps_iface;
     LONG refcount;
+
+    AM_MEDIA_TYPE mt;
 };
 
 static inline struct output_props *impl_from_IWMOutputMediaProps(IWMOutputMediaProps *iface)
@@ -89,8 +91,23 @@ static HRESULT WINAPI output_props_GetType(IWMOutputMediaProps *iface, GUID *maj
 
 static HRESULT WINAPI output_props_GetMediaType(IWMOutputMediaProps *iface, WM_MEDIA_TYPE *mt, DWORD *size)
 {
-    FIXME("iface %p, mt %p, size %p, stub!\n", iface, mt, size);
-    return E_NOTIMPL;
+    const struct output_props *props = impl_from_IWMOutputMediaProps(iface);
+    const DWORD req_size = *size;
+
+    TRACE("iface %p, mt %p, size %p.\n", iface, mt, size);
+
+    *size = sizeof(*mt) + props->mt.cbFormat;
+    if (!mt)
+        return S_OK;
+    if (req_size < *size)
+        return ASF_E_BUFFERTOOSMALL;
+
+    strmbase_dump_media_type(&props->mt);
+
+    memcpy(mt, &props->mt, sizeof(*mt));
+    memcpy(mt + 1, props->mt.pbFormat, props->mt.cbFormat);
+    mt->pbFormat = (BYTE *)(mt + 1);
+    return S_OK;
 }
 
 static HRESULT WINAPI output_props_SetMediaType(IWMOutputMediaProps *iface, WM_MEDIA_TYPE *mt)
@@ -123,7 +140,7 @@ static const struct IWMOutputMediaPropsVtbl output_props_vtbl =
     output_props_GetConnectionName,
 };
 
-static IWMOutputMediaProps *output_props_create(void)
+static IWMOutputMediaProps *output_props_create(const struct wg_format *format)
 {
     struct output_props *object;
 
@@ -131,6 +148,12 @@ static IWMOutputMediaProps *output_props_create(void)
         return NULL;
     object->IWMOutputMediaProps_iface.lpVtbl = &output_props_vtbl;
     object->refcount = 1;
+
+    if (!amt_from_wg_format(&object->mt, format))
+    {
+        free(object);
+        return NULL;
+    }
 
     TRACE("Created output properties %p.\n", object);
     return &object->IWMOutputMediaProps_iface;
@@ -1182,6 +1205,24 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
         stream->reader = reader;
         stream->index = i;
         wg_parser_stream_get_preferred_format(stream->wg_stream, &stream->format);
+        if (stream->format.major_type == WG_MAJOR_TYPE_AUDIO)
+        {
+            /* R.U.S.E enumerates available audio types, picks the first one it
+             * likes, and then sets the wrong stream to that type. libav might
+             * give us WG_AUDIO_FORMAT_F32LE by default, which will result in
+             * the game incorrectly interpreting float data as integer.
+             * Therefore just match native and always set our default format to
+             * S16LE. */
+            stream->format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
+        }
+        else if (stream->format.major_type == WG_MAJOR_TYPE_VIDEO)
+        {
+            /* Call of Juarez: Bound in Blood breaks if I420 is enumerated.
+             * Some native decoders output I420, but the msmpeg4v3 decoder
+             * never does. */
+            if (stream->format.u.video.format == WG_VIDEO_FORMAT_I420)
+                stream->format.u.video.format = WG_VIDEO_FORMAT_YV12;
+        }
     }
 
     LeaveCriticalSection(&reader->cs);
@@ -1244,7 +1285,7 @@ HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output, IWMOu
         return E_INVALIDARG;
     }
 
-    *props = output_props_create();
+    *props = output_props_create(&stream->format);
     LeaveCriticalSection(&reader->cs);
     return *props ? S_OK : E_OUTOFMEMORY;
 }
