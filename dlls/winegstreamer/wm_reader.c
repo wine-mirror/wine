@@ -20,6 +20,122 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
+static struct wm_stream *get_stream_by_output_number(struct wm_reader *reader, DWORD output)
+{
+    if (output < reader->stream_count)
+        return &reader->streams[output];
+    WARN("Invalid output number %u.\n", output);
+    return NULL;
+}
+
+struct output_props
+{
+    IWMOutputMediaProps IWMOutputMediaProps_iface;
+    LONG refcount;
+};
+
+static inline struct output_props *impl_from_IWMOutputMediaProps(IWMOutputMediaProps *iface)
+{
+    return CONTAINING_RECORD(iface, struct output_props, IWMOutputMediaProps_iface);
+}
+
+static HRESULT WINAPI output_props_QueryInterface(IWMOutputMediaProps *iface, REFIID iid, void **out)
+{
+    struct output_props *props = impl_from_IWMOutputMediaProps(iface);
+
+    TRACE("props %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IWMOutputMediaProps))
+        *out = &props->IWMOutputMediaProps_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI output_props_AddRef(IWMOutputMediaProps *iface)
+{
+    struct output_props *props = impl_from_IWMOutputMediaProps(iface);
+    ULONG refcount = InterlockedIncrement(&props->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", props, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI output_props_Release(IWMOutputMediaProps *iface)
+{
+    struct output_props *props = impl_from_IWMOutputMediaProps(iface);
+    ULONG refcount = InterlockedDecrement(&props->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", props, refcount);
+
+    if (!refcount)
+        free(props);
+
+    return refcount;
+}
+
+static HRESULT WINAPI output_props_GetType(IWMOutputMediaProps *iface, GUID *major_type)
+{
+    FIXME("iface %p, major_type %p, stub!\n", iface, major_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI output_props_GetMediaType(IWMOutputMediaProps *iface, WM_MEDIA_TYPE *mt, DWORD *size)
+{
+    FIXME("iface %p, mt %p, size %p, stub!\n", iface, mt, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI output_props_SetMediaType(IWMOutputMediaProps *iface, WM_MEDIA_TYPE *mt)
+{
+    FIXME("iface %p, mt %p, stub!\n", iface, mt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI output_props_GetStreamGroupName(IWMOutputMediaProps *iface, WCHAR *name, WORD *len)
+{
+    FIXME("iface %p, name %p, len %p, stub!\n", iface, name, len);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI output_props_GetConnectionName(IWMOutputMediaProps *iface, WCHAR *name, WORD *len)
+{
+    FIXME("iface %p, name %p, len %p, stub!\n", iface, name, len);
+    return E_NOTIMPL;
+}
+
+static const struct IWMOutputMediaPropsVtbl output_props_vtbl =
+{
+    output_props_QueryInterface,
+    output_props_AddRef,
+    output_props_Release,
+    output_props_GetType,
+    output_props_GetMediaType,
+    output_props_SetMediaType,
+    output_props_GetStreamGroupName,
+    output_props_GetConnectionName,
+};
+
+static IWMOutputMediaProps *output_props_create(void)
+{
+    struct output_props *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return NULL;
+    object->IWMOutputMediaProps_iface.lpVtbl = &output_props_vtbl;
+    object->refcount = 1;
+
+    TRACE("Created output properties %p.\n", object);
+    return &object->IWMOutputMediaProps_iface;
+}
+
 struct stream_config
 {
     IWMStreamConfig IWMStreamConfig_iface;
@@ -1114,6 +1230,23 @@ HRESULT wm_reader_close(struct wm_reader *reader)
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
+}
+
+HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output, IWMOutputMediaProps **props)
+{
+    struct wm_stream *stream;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    *props = output_props_create();
+    LeaveCriticalSection(&reader->cs);
+    return *props ? S_OK : E_OUTOFMEMORY;
 }
 
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)

@@ -724,30 +724,28 @@ static void test_sync_reader_types(void)
         ok(stream_number2 == stream_number, "Expected stream number %u, got %u.\n", stream_number, stream_number2);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        if (hr != S_OK)
-        {
-            winetest_pop_context();
-            continue;
-        }
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         ref = IWMOutputMediaProps_Release(output_props);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+        if (hr == S_OK)
         {
-            got_audio = true;
-            check_audio_type(mt);
-        }
-        else
-        {
-            ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
-            got_video = true;
-            check_video_type(mt);
+            if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+            {
+                got_audio = true;
+                check_audio_type(mt);
+            }
+            else
+            {
+                ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+                got_video = true;
+                check_video_type(mt);
+            }
         }
 
         count = 0;
@@ -832,19 +830,16 @@ static void test_sync_reader_types(void)
         todo_wine ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
 
         hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        if (hr == S_OK)
-        {
-            hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(output_props2 != output_props, "Expected different objects.\n");
+        hr = IWMSyncReader_GetOutputProps(reader, output_number, &output_props2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(output_props2 != output_props, "Expected different objects.\n");
 
-            ref = IWMOutputMediaProps_Release(output_props2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
-            ref = IWMOutputMediaProps_Release(output_props);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
-        }
+        ref = IWMOutputMediaProps_Release(output_props2);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ref = IWMOutputMediaProps_Release(output_props);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
 
         winetest_pop_context();
     }
@@ -859,7 +854,7 @@ static void test_sync_reader_types(void)
 
     output_props = (void *)0xdeadbeef;
     hr = IWMSyncReader_GetOutputProps(reader, 2, &output_props);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     output_props = (void *)0xdeadbeef;
