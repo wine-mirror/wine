@@ -61,7 +61,7 @@ static int create_leading_static(HDC hdc, const WCHAR *text,
     len += sizeof(DLGITEMTEMPLATE);
     len += 4*sizeof(WORD);
 
-    tpl = HeapAlloc(GetProcessHeap(),0,len);
+    tpl = malloc(len);
     tpl->style=WS_VISIBLE;
     tpl->dwExtendedStyle = 0;
     tpl->x = 4;
@@ -100,7 +100,7 @@ static int create_trailing_edit(HDC hdc, LPDLGITEMTEMPLATEW* template_out, int i
     len += sizeof(DLGITEMTEMPLATE);
     len += 4*sizeof(WORD);
 
-    tpl = HeapAlloc(GetProcessHeap(),0,len);
+    tpl = malloc(len);
     tpl->style=WS_VISIBLE|ES_READONLY|WS_BORDER;
     tpl->dwExtendedStyle = 0;
     tpl->x = 1;
@@ -189,12 +189,12 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     }
     case TYPE_FIXED:
     {
-        int *i = HeapAlloc(GetProcessHeap(),0,opt->size*sizeof(int));
+        int *i = calloc( opt->size, sizeof(int) );
 
         sane_option_get_value( id - ID_BASE, i );
 
         swprintf(buffer, ARRAY_SIZE(buffer), L"%f", *i / 65536.0);
-        HeapFree(GetProcessHeap(),0,i);
+        free( i );
 
         switch (opt->constraint_type)
         {
@@ -251,15 +251,9 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     if (title) local_len += lstrlenW(title) * sizeof(WCHAR);
     local_len += 4*sizeof(WORD);
 
-    if (lead_static)
-    {
-        padding = leading_len % sizeof(DWORD);
-        rc = HeapReAlloc(GetProcessHeap(),0,lead_static,leading_len+local_len + padding);
-        tpl = (LPDLGITEMTEMPLATEW)((LPBYTE)rc + leading_len + padding);
-    }   
-    else
-        rc = tpl = HeapAlloc(GetProcessHeap(),0,local_len);
-
+    padding = leading_len % sizeof(DWORD);
+    rc = realloc(lead_static, leading_len + local_len + padding);
+    tpl = (LPDLGITEMTEMPLATEW)((LPBYTE)rc + leading_len + padding);
     tpl->style=styles;
     tpl->dwExtendedStyle = 0;
     if (lead_static)
@@ -307,8 +301,7 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
 
         padding2 = (leading_len + local_len + padding)% sizeof(DWORD);
 
-        rc = HeapReAlloc(GetProcessHeap(),0,rc,leading_len+local_len + padding
-                +padding2+trail_len);
+        rc = realloc( rc, leading_len + local_len + padding +padding2 + trail_len);
 
         memcpy(((LPBYTE)rc) + leading_len + local_len + padding + padding2,
                 trail_edit,trail_len);
@@ -389,13 +382,10 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
 
         if (all_controls)
         {
-            LPBYTE newone;
-            newone = HeapReAlloc(GetProcessHeap(),0,all_controls,
-                    control_len + len + padding);
-            all_controls = newone;
+            all_controls = realloc(all_controls, control_len + len + padding);
             memcpy(all_controls+control_len,item_tpl,len);
             memset(all_controls+control_len+len,0xca,padding);
-            HeapFree(GetProcessHeap(),0,item_tpl);
+            free(item_tpl);
         }
         else
         {
@@ -405,10 +395,10 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
             }
             else
             {
-                all_controls = HeapAlloc(GetProcessHeap(),0,len + padding);
+                all_controls = malloc(len + padding);
                 memcpy(all_controls,item_tpl,len);
                 memset(all_controls+len,0xcb,padding);
-                HeapFree(GetProcessHeap(),0,item_tpl);
+                free(item_tpl);
             }
         }
 
@@ -450,8 +440,7 @@ static LPDLGTEMPLATEW create_options_page(HDC hdc, int *from_index,
     *from_index = i-1;
 exit:
 
-    tpl = HeapAlloc(GetProcessHeap(),0,sizeof(DLGTEMPLATE) + 3*sizeof(WORD) + 
-            control_len);
+    tpl = malloc(sizeof(DLGTEMPLATE) + 3*sizeof(WORD) + control_len);
 
     tpl->style = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
     tpl->dwExtendedStyle = 0;
@@ -469,7 +458,7 @@ exit:
     ptr+=sizeof(WORD);
     memcpy(ptr,all_controls,control_len);
 
-    HeapFree(GetProcessHeap(),0,all_controls);
+    free(all_controls);
 
     return tpl;
 }
@@ -508,9 +497,7 @@ BOOL DoScannerUI(void)
 
         if (opt.type == TYPE_GROUP)
         {
-            LPWSTR title = HeapAlloc(GetProcessHeap(),0,(lstrlenW(opt.title) + 1) * sizeof(WCHAR));
-            lstrcpyW( title, opt.title );
-            psp[page_count].pszTitle = title;
+            psp[page_count].pszTitle = wcsdup( opt.title );
         }
 
         if (psp[page_count].u.pResource)
@@ -528,7 +515,7 @@ BOOL DoScannerUI(void)
  
     len = lstrlenA(activeDS.identity.Manufacturer)
          + lstrlenA(activeDS.identity.ProductName) + 2;
-    szCaption = HeapAlloc(GetProcessHeap(),0,len *sizeof(WCHAR));
+    szCaption = malloc(len *sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP,0,activeDS.identity.Manufacturer,-1,
             szCaption,len);
     szCaption[lstrlenA(activeDS.identity.Manufacturer)] = ' ';
@@ -549,10 +536,10 @@ BOOL DoScannerUI(void)
 
     for(index = 0; index < page_count; index ++)
     {
-        HeapFree(GetProcessHeap(),0,(LPBYTE)psp[index].u.pResource);
-        HeapFree(GetProcessHeap(),0,(LPBYTE)psp[index].pszTitle);
+        free((LPBYTE)psp[index].u.pResource);
+        free((LPBYTE)psp[index].pszTitle);
     }
-    HeapFree(GetProcessHeap(),0,szCaption);
+    free(szCaption);
     
     if (psrc == IDOK)
         return TRUE;
@@ -739,7 +726,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
                 SendMessageA(control,SBM_SETRANGE,min,max);
 
 
-                sf = HeapAlloc(GetProcessHeap(),0,opt.size*sizeof(int));
+                sf = calloc( opt.size, sizeof(int) );
                 sane_option_get_value( i, sf );
 
                 /* Note that conversion of float -> SANE_Fixed is lossy;
@@ -751,7 +738,7 @@ static INT_PTR InitializeDialog(HWND hwnd)
                 else
                     pos = MulDiv( *sf, 100, 65536 );
 
-                HeapFree(GetProcessHeap(),0,sf);
+                free(sf);
                 SendMessageW(control, SBM_SETPOS, pos, TRUE);
                 UpdateRelevantEdit(hwnd, &opt, pos);
             }
@@ -851,7 +838,7 @@ static void ComboChanged(HWND hwnd, INT id, HWND control)
     len = SendMessageW(control,CB_GETLBTEXTLEN,selection,0);
 
     len++;
-    value = HeapAlloc(GetProcessHeap(),0,len);
+    value = malloc(len);
     SendMessageA(control,CB_GETLBTEXT,selection,(LPARAM)value);
 
     if (opt.type == TYPE_STRING)
@@ -864,6 +851,7 @@ static void ComboChanged(HWND hwnd, INT id, HWND control)
         sane_option_set_value( opt.optno, &val, &changed );
     }
     if (changed) InitializeDialog(hwnd);
+    free( value );
 }
 
 
