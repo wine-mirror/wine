@@ -162,15 +162,9 @@ send_file_direct (const char * url, const char *name)
         report (R_WARNING, "Can't open file '%s': %u", name, GetLastError());
         goto abort1;
     }
-    filesize = GetFileSize( file, NULL );
-    if (filesize > 1.5*1024*1024) {
-        report (R_WARNING,
-                "File too big (%.1f MB > 1.5 MB); submitting partial report.",
-                filesize/1024.0/1024);
-        filesize = (DWORD) 1.5*1024*1024;
-    }
 
     report (R_STATUS, "Sending header");
+    filesize = GetFileSize( file, NULL );
     str = strmake (&total, body1, name);
     ret = send_str (s, head, filesize + total + sizeof body2 - 1) ||
         send_buf (s, str, total);
@@ -339,14 +333,6 @@ send_file_wininet (const char *url, const char *name)
         goto done;
     }
 
-    filesize = GetFileSize( file, NULL );
-    if (filesize > 1.5*1024*1024) {
-        report (R_WARNING,
-                "File too big (%.1f MB > 1.5 MB); submitting partial report.",
-                filesize/1024.0/1024);
-        filesize = 1.5*1024*1024;
-    }
-
     report (R_STATUS, "Opening %s connection to %s:%d",
             (uc.nScheme == INTERNET_SCHEME_HTTP ? "http" : "https"),
             uc.lpszHostName, uc.nPort);
@@ -369,6 +355,7 @@ send_file_wininet (const char *url, const char *name)
     }
 
     report (R_STATUS, "Sending request");
+    filesize = GetFileSize( file, NULL );
     str = strmake (&total, body1, name);
     memset(&buffers_in, 0, sizeof(INTERNET_BUFFERSA));
     buffers_in.dwStructSize = sizeof(INTERNET_BUFFERSA);
