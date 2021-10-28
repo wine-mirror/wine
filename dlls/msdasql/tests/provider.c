@@ -159,6 +159,7 @@ static void test_sessions(void)
     IUnknown *session = NULL;
     IOpenRowset *openrowset = NULL;
     IDBCreateCommand *create_command = NULL;
+    IGetDataSource *datasource = NULL;
     IUnknown *cmd = NULL;
     HRESULT hr;
     BSTR connect_str;
@@ -202,6 +203,10 @@ static void test_sessions(void)
 
     hr = IDBCreateSession_CreateSession( dbsession, NULL, &IID_IUnknown, &session );
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(session, &IID_IGetDataSource, (void**)&datasource);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IGetDataSource_Release(datasource);
 
     hr = IUnknown_QueryInterface(session, &IID_IOpenRowset, (void**)&openrowset);
     ok(hr == S_OK, "got 0x%08x\n", hr);

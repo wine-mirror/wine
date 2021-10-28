@@ -37,12 +37,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(msdasql);
 struct msdasql_session
 {
     IUnknown session_iface;
+    IGetDataSource IGetDataSource_iface;
     LONG refs;
 };
 
 static inline struct msdasql_session *impl_from_IUnknown( IUnknown *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_session, session_iface );
+}
+
+static inline struct msdasql_session *impl_from_IGetDataSource( IGetDataSource *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_session, IGetDataSource_iface );
 }
 
 static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -56,6 +62,11 @@ static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void 
     {
         TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
         *ppv = &session->session_iface;
+    }
+    else if(IsEqualGUID(&IID_IGetDataSource, riid))
+    {
+        TRACE("(%p)->(IID_IGetDataSource %p)\n", iface, ppv);
+        *ppv = &session->IGetDataSource_iface;
     }
 
     if(*ppv)
@@ -96,6 +107,41 @@ static const IUnknownVtbl unkfactoryVtbl =
     session_Release,
 };
 
+
+HRESULT WINAPI datasource_QueryInterface(IGetDataSource *iface, REFIID riid, void **out)
+{
+    struct msdasql_session *session = impl_from_IGetDataSource( iface );
+    return IUnknown_QueryInterface(&session->session_iface, riid, out);
+}
+
+ULONG WINAPI datasource_AddRef(IGetDataSource *iface)
+{
+    struct msdasql_session *session = impl_from_IGetDataSource( iface );
+    return IUnknown_AddRef(&session->session_iface);
+}
+
+ULONG WINAPI datasource_Release(IGetDataSource *iface)
+{
+    struct msdasql_session *session = impl_from_IGetDataSource( iface );
+    return IUnknown_Release(&session->session_iface);
+}
+
+HRESULT WINAPI datasource_GetDataSource(IGetDataSource *iface, REFIID riid, IUnknown **datasource)
+{
+    struct msdasql_session *session = impl_from_IGetDataSource( iface );
+    FIXME("%p, %s, %p stub\n", session, debugstr_guid(riid), datasource);
+
+    return E_NOTIMPL;
+}
+
+static const IGetDataSourceVtbl datasourceVtbl =
+{
+    datasource_QueryInterface,
+    datasource_AddRef,
+    datasource_Release,
+    datasource_GetDataSource
+};
+
 HRESULT create_db_session(REFIID riid, void **unk)
 {
     struct msdasql_session *session;
@@ -106,6 +152,7 @@ HRESULT create_db_session(REFIID riid, void **unk)
         return E_OUTOFMEMORY;
 
     session->session_iface.lpVtbl = &unkfactoryVtbl;
+    session->IGetDataSource_iface.lpVtbl = &datasourceVtbl;
     session->refs = 1;
 
     hr = IUnknown_QueryInterface(&session->session_iface, riid, unk);
