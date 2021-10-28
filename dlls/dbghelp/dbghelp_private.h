@@ -805,6 +805,13 @@ extern struct symt_function*
                                       const char* name,
                                       ULONG_PTR addr, ULONG_PTR size,
                                       struct symt* type) DECLSPEC_HIDDEN;
+extern struct symt_inlinesite*
+                    symt_new_inlinesite(struct module* module,
+                                        struct symt_function* func,
+                                        struct symt* parent,
+                                        const char* name,
+                                        ULONG_PTR addr,
+                                        struct symt* type) DECLSPEC_HIDDEN;
 extern void         symt_add_func_line(struct module* module,
                                        struct symt_function* func, 
                                        unsigned source_idx, int line_num, 
@@ -894,6 +901,15 @@ extern struct symt_pointer*
 extern struct symt_typedef*
                     symt_new_typedef(struct module* module, struct symt* ref, 
                                      const char* name) DECLSPEC_HIDDEN;
+extern struct symt*
+                    symt_get_upper_inlined(struct symt_inlinesite* inlined) DECLSPEC_HIDDEN;
+static inline struct symt_function*
+                    symt_get_function_from_inlined(struct symt_inlinesite* inlined)
+{
+    while (!symt_check_tag(&inlined->func.symt, SymTagFunction))
+        inlined = (struct symt_inlinesite*)symt_get_upper_inlined(inlined);
+    return &inlined->func;
+}
 
 /* Inline context encoding (different from what native does):
  * bits 31:30: 3 ignore (includes INLINE_FRAME_CONTEXT_IGNORE=0xFFFFFFFF)

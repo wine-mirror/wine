@@ -1811,7 +1811,8 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_debug_info_t* di)
 typedef struct dwarf2_subprogram_s
 {
     dwarf2_parse_context_t*     ctx;
-    struct symt_function*       func;
+    struct symt_function*       top_func;
+    struct symt_function*       current_func; /* either symt_function* or symt_inlinesite* */
     struct symt_block*          current_block;
     BOOL                        non_computed_variable;
     struct location             frame;
@@ -1870,8 +1871,8 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             /* either a pmt/variable relative to frame pointer or
              * pmt/variable in a register
              */
-            if (subpgm->func)
-                symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->func,
+            if (subpgm->current_func)
+                symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
                                     is_pmt ? DataIsParam : DataIsLocal,
                                     &loc, subpgm->current_block, param_type, name.u.string);
             break;
@@ -1935,11 +1936,12 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                   debugstr_a(name.u.string), value.form);
             V_VT(&v) = VT_EMPTY;
         }
-        if (subpgm->func)
+        if (subpgm->current_func)
         {
-            if (is_pmt) FIXME("Unsupported constant (parameter) %s in function '%s'\n", debugstr_a(name.u.string), subpgm->func->hash_elt.name);
+            if (is_pmt) WARN("Constant parameter %s reported as local variable in function '%s'\n",
+                             debugstr_a(name.u.string), subpgm->current_func->hash_elt.name);
             di->symt = &symt_add_func_constant(subpgm->ctx->module_ctx->module,
-                                               subpgm->func, subpgm->current_block,
+                                               subpgm->current_func, subpgm->current_block,
                                                param_type, name.u.string, &v)->symt;
         }
         else
@@ -1948,12 +1950,12 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     }
     else
     {
-        if (subpgm->func)
+        if (subpgm->current_func)
         {
             /* local variable has been optimized away... report anyway */
             loc.kind = loc_error;
             loc.reg = loc_err_no_location;
-            symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->func,
+            symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
                                 is_pmt ? DataIsParam : DataIsLocal,
                                 &loc, subpgm->current_block, param_type, name.u.string);
         }
@@ -1966,9 +1968,9 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                 WARN("dropping global variable %s which has been optimized away\n", debugstr_a(name.u.string));
         }
     }
-    if (is_pmt && subpgm->func && symt_check_tag(subpgm->func->type, SymTagFunctionType))
+    if (is_pmt && subpgm->current_func && symt_check_tag(subpgm->current_func->type, SymTagFunctionType))
         symt_add_function_signature_parameter(subpgm->ctx->module_ctx->module,
-                                              (struct symt_function_signature*)subpgm->func->type,
+                                              (struct symt_function_signature*)subpgm->current_func->type,
                                               param_type);
 
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1988,8 +1990,8 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
         name.u.string = NULL;
 
     loc.kind = loc_absolute;
-    loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->func->address;
-    symt_add_function_point(subpgm->ctx->module_ctx->module, subpgm->func, SymTagLabel,
+    loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->top_func->address;
+    symt_add_function_point(subpgm->ctx->module_ctx->module, subpgm->top_func, SymTagLabel,
                             &loc, name.u.string);
 }
 
@@ -2001,7 +2003,11 @@ static struct symt* dwarf2_parse_subroutine_type(dwarf2_debug_info_t* di);
 static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             dwarf2_debug_info_t* di)
 {
+    struct attribute    name;
     ULONG_PTR           low_pc, high_pc;
+    struct symt*        ret_type;
+    struct symt_function_signature* sig_type;
+    struct symt_inlinesite* inlined;
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
@@ -2013,10 +2019,24 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
         WARN("cannot read range\n");
         return;
     }
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name))
+    {
+        FIXME("No name for function... dropping function\n");
+        return;
+    }
+    ret_type = dwarf2_lookup_type(di);
 
-    subpgm->current_block = symt_open_func_block(subpgm->ctx->module_ctx->module, subpgm->func, subpgm->current_block,
-                                                 subpgm->ctx->module_ctx->load_offset + low_pc - subpgm->func->address,
-                                                 high_pc - low_pc);
+    /* FIXME: assuming C source code */
+    sig_type = symt_new_function_signature(subpgm->ctx->module_ctx->module, ret_type, CV_CALL_FAR_C);
+
+    inlined = symt_new_inlinesite(subpgm->ctx->module_ctx->module,
+                                  subpgm->top_func,
+                                  subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
+                                  dwarf2_get_cpp_name(di, name.u.string),
+                                  subpgm->ctx->module_ctx->load_offset + low_pc,
+                                  &sig_type->symt);
+    subpgm->current_func = (struct symt_function*)inlined;
+    subpgm->current_block = NULL;
 
     children = dwarf2_get_di_children(di);
     if (children) for (i = 0; i < vector_length(children); i++)
@@ -2046,9 +2066,9 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                   child->abbrev->tag, dwarf2_debug_di(di));
         }
     }
-    symt_close_func_block(subpgm->ctx->module_ctx->module, subpgm->func, subpgm->current_block, 0);
-    subpgm->current_block = symt_check_tag(subpgm->current_block->container, SymTagBlock) ?
-        (struct symt_block*)subpgm->current_block->container : NULL;
+    subpgm->current_block = symt_check_tag(subpgm->current_func->container, SymTagBlock) ?
+        (struct symt_block*)subpgm->current_func->container : NULL;
+    subpgm->current_func = (struct symt_function*)symt_get_upper_inlined((struct symt_inlinesite*)subpgm->current_func);
 }
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
@@ -2067,8 +2087,8 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
         return;
     }
 
-    subpgm->current_block = symt_open_func_block(subpgm->ctx->module_ctx->module, subpgm->func, subpgm->current_block,
-                                                 subpgm->ctx->module_ctx->load_offset + low_pc - subpgm->func->address,
+    subpgm->current_block = symt_open_func_block(subpgm->ctx->module_ctx->module, subpgm->current_func, subpgm->current_block,
+                                                 subpgm->ctx->module_ctx->load_offset + low_pc - subpgm->current_func->address,
                                                  high_pc - low_pc);
 
     children = dwarf2_get_di_children(di);
@@ -2128,7 +2148,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
         }
     }
 
-    symt_close_func_block(subpgm->ctx->module_ctx->module, subpgm->func, subpgm->current_block, 0);
+    symt_close_func_block(subpgm->ctx->module_ctx->module, subpgm->current_func, subpgm->current_block, 0);
     subpgm->current_block = symt_check_tag(subpgm->current_block->container, SymTagBlock) ?
         (struct symt_block*)subpgm->current_block->container : NULL;
 }
@@ -2187,11 +2207,12 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
 
     /* FIXME: assuming C source code */
     sig_type = symt_new_function_signature(di->unit_ctx->module_ctx->module, ret_type, CV_CALL_FAR_C);
-    subpgm.func = symt_new_function(di->unit_ctx->module_ctx->module, di->unit_ctx->compiland,
-                                    dwarf2_get_cpp_name(di, name.u.string),
-                                    di->unit_ctx->module_ctx->load_offset + low_pc, high_pc - low_pc,
-                                    &sig_type->symt);
-    di->symt = &subpgm.func->symt;
+    subpgm.top_func = symt_new_function(di->unit_ctx->module_ctx->module, di->unit_ctx->compiland,
+                                        dwarf2_get_cpp_name(di, name.u.string),
+                                        di->unit_ctx->module_ctx->load_offset + low_pc, high_pc - low_pc,
+                                        &sig_type->symt);
+    subpgm.current_func = subpgm.top_func;
+    di->symt = &subpgm.top_func->symt;
     subpgm.ctx = di->unit_ctx;
     if (!dwarf2_compute_location_attr(di->unit_ctx, di, DW_AT_frame_base,
                                       &subpgm.frame, NULL))
@@ -2258,7 +2279,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
 
     if (subpgm.non_computed_variable || subpgm.frame.kind >= loc_user)
     {
-        symt_add_function_point(di->unit_ctx->module_ctx->module, subpgm.func, SymTagCustom,
+        symt_add_function_point(di->unit_ctx->module_ctx->module, subpgm.top_func, SymTagCustom,
                                 &subpgm.frame, NULL);
     }
 
@@ -2395,7 +2416,7 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
             dwarf2_subprogram_t subpgm;
 
             subpgm.ctx = di->unit_ctx;
-            subpgm.func = NULL;
+            subpgm.top_func = subpgm.current_func = NULL;
             subpgm.current_block = NULL;
             subpgm.frame.kind = loc_absolute;
             subpgm.frame.offset = 0;
@@ -2827,7 +2848,9 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const dwar
 
 static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* func)
 {
-    if (func && symt_check_tag(func->container, SymTagCompiland))
+    if (symt_check_tag(&func->symt, SymTagInlineSite))
+        func = symt_get_function_from_inlined((struct symt_inlinesite*)func);
+    if (symt_check_tag(&func->symt, SymTagFunction) && symt_check_tag(func->container, SymTagCompiland))
     {
         struct symt_compiland* c = (struct symt_compiland*)func->container;
         return (const dwarf2_cuhead_t*)c->user;

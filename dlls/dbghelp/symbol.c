@@ -318,35 +318,74 @@ struct symt_data* symt_new_global_variable(struct module* module,
     return sym;
 }
 
-struct symt_function* symt_new_function(struct module* module, 
-                                        struct symt_compiland* compiland, 
+static void init_function_or_inlinesite(struct symt_function* sym,
+                                        struct module* module,
+                                        DWORD tag,
+                                        struct symt* container,
                                         const char* name,
                                         ULONG_PTR addr, ULONG_PTR size,
                                         struct symt* sig_type)
 {
-    struct symt_function*       sym;
-    struct symt**               p;
+    assert(!sig_type || sig_type->tag == SymTagFunctionType);
+    sym->symt.tag  = tag;
+    sym->hash_elt.name = pool_strdup(&module->pool, name);
+    sym->container = container;
+    sym->address   = addr;
+    sym->type      = sig_type;
+    sym->size      = size;
+    vector_init(&sym->vlines,  sizeof(struct line_info), 64);
+    vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+}
+
+struct symt_function* symt_new_function(struct module* module,
+                                        struct symt_compiland* compiland,
+                                        const char* name,
+                                        ULONG_PTR addr, ULONG_PTR size,
+                                        struct symt* sig_type)
+{
+    struct symt_function* sym;
 
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%lx-%lx\n",
                          debugstr_w(module->modulename), name, addr, addr + size - 1);
-
-    assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
-        sym->symt.tag  = SymTagFunction;
-        sym->hash_elt.name = pool_strdup(&module->pool, name);
-        sym->container = &compiland->symt;
-        sym->address   = addr;
-        sym->type      = sig_type;
-        sym->size      = size;
-        vector_init(&sym->vlines,  sizeof(struct line_info), 64);
-        vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        struct symt** p;
+        init_function_or_inlinesite(sym, module, SymTagFunction, &compiland->symt, name, addr, size, sig_type);
+        sym->next_inlinesite = NULL; /* first of list */
         symt_add_module_ht(module, (struct symt_ht*)sym);
-        if (compiland)
+        p = vector_add(&compiland->vchildren, &module->pool);
+        *p = &sym->symt;
+    }
+    return sym;
+}
+
+struct symt_inlinesite* symt_new_inlinesite(struct module* module,
+                                            struct symt_function* func,
+                                            struct symt* container,
+                                            const char* name,
+                                            ULONG_PTR addr,
+                                            struct symt* sig_type)
+{
+    struct symt_inlinesite* sym;
+
+    TRACE_(dbghelp_symt)("Adding inline site %s @%lx\n", name, addr);
+    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    {
+        struct symt** p;
+        assert(container);
+        init_function_or_inlinesite(&sym->func, module, SymTagInlineSite, container, name, addr, 0, sig_type);
+        vector_init(&sym->vranges, sizeof(struct addr_range), 2); /* FIXME: number of elts => to be set on input */
+        /* chain inline sites */
+        sym->func.next_inlinesite = func->next_inlinesite;
+        func->next_inlinesite = sym;
+        if (container->tag == SymTagFunction || container->tag == SymTagInlineSite)
+            p = vector_add(&((struct symt_function*)container)->vchildren, &module->pool);
+        else
         {
-            p = vector_add(&compiland->vchildren, &module->pool);
-            *p = &sym->symt;
+            assert(container->tag == SymTagBlock);
+            p = vector_add(&((struct symt_block*)container)->vchildren, &module->pool);
         }
+        *p = &sym->func.symt;
     }
     return sym;
 }
@@ -1136,6 +1175,23 @@ void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
     siw->NameLen = si->NameLen;
     siw->MaxNameLen = si->MaxNameLen;
     MultiByteToWideChar(CP_ACP, 0, si->Name, -1, siw->Name, siw->MaxNameLen);
+}
+
+/* from an inline function, get either the enclosing inlined function, or the top function when no inlined */
+struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
+{
+    struct symt* symt = &inlined->func.symt;
+
+    do
+    {
+        assert(symt);
+        if (symt->tag == SymTagBlock)
+            symt = ((struct symt_block*)symt)->container;
+        else
+            symt = ((struct symt_function*)symt)->container;
+    } while (symt->tag == SymTagBlock);
+    assert(symt->tag == SymTagFunction || symt->tag == SymTagInlineSite);
+    return symt;
 }
 
 /******************************************************************
