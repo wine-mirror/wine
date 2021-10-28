@@ -40,6 +40,7 @@ struct msdasql_session
     IGetDataSource IGetDataSource_iface;
     IOpenRowset    IOpenRowset_iface;
     ISessionProperties ISessionProperties_iface;
+    IDBCreateCommand IDBCreateCommand_iface;
     LONG refs;
 };
 
@@ -61,6 +62,11 @@ static inline struct msdasql_session *impl_from_IOpenRowset( IOpenRowset *iface 
 static inline struct msdasql_session *impl_from_ISessionProperties( ISessionProperties *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_session, ISessionProperties_iface );
+}
+
+static inline struct msdasql_session *impl_from_IDBCreateCommand( IDBCreateCommand *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_session, IDBCreateCommand_iface );
 }
 
 static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -89,6 +95,11 @@ static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void 
     {
         TRACE("(%p)->(IID_ISessionProperties %p)\n", iface, ppv);
         *ppv = &session->ISessionProperties_iface;
+    }
+    else if(IsEqualGUID(&IID_IDBCreateCommand, riid))
+    {
+        TRACE("(%p)->(IDBCreateCommand_iface %p)\n", iface, ppv);
+        *ppv = &session->IDBCreateCommand_iface;
     }
 
     if(*ppv)
@@ -246,6 +257,41 @@ static const ISessionPropertiesVtbl propertiesVtbl =
     properties_SetProperties
 };
 
+static HRESULT WINAPI createcommand_QueryInterface(IDBCreateCommand *iface, REFIID riid, void **out)
+{
+    struct msdasql_session *session = impl_from_IDBCreateCommand( iface );
+    return IUnknown_QueryInterface(&session->session_iface, riid, out);
+}
+
+static ULONG WINAPI createcommand_AddRef(IDBCreateCommand *iface)
+{
+    struct msdasql_session *session = impl_from_IDBCreateCommand( iface );
+    return IUnknown_AddRef(&session->session_iface);
+}
+
+static ULONG WINAPI createcommand_Release(IDBCreateCommand *iface)
+{
+    struct msdasql_session *session = impl_from_IDBCreateCommand( iface );
+    return IUnknown_Release(&session->session_iface);
+}
+
+static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnknown *outer, REFIID riid,
+                                            IUnknown **out)
+{
+    struct msdasql_session *session = impl_from_IDBCreateCommand( iface );
+    FIXME("%p, %p, %s, %p\n", session, outer, debugstr_guid(riid), out);
+
+    return E_NOTIMPL;
+}
+
+static const IDBCreateCommandVtbl createcommandVtbl =
+{
+    createcommand_QueryInterface,
+    createcommand_AddRef,
+    createcommand_Release,
+    createcommand_CreateCommand
+};
+
 HRESULT create_db_session(REFIID riid, void **unk)
 {
     struct msdasql_session *session;
@@ -259,6 +305,7 @@ HRESULT create_db_session(REFIID riid, void **unk)
     session->IGetDataSource_iface.lpVtbl = &datasourceVtbl;
     session->IOpenRowset_iface.lpVtbl = &openrowsetVtbl;
     session->ISessionProperties_iface.lpVtbl = &propertiesVtbl;
+    session->IDBCreateCommand_iface.lpVtbl = &createcommandVtbl;
     session->refs = 1;
 
     hr = IUnknown_QueryInterface(&session->session_iface, riid, unk);
