@@ -2080,7 +2080,8 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
     {
         hr = session_get_video_render_service(session, service, riid, obj);
     }
-    else if (IsEqualGUID(service, &MR_POLICY_VOLUME_SERVICE))
+    else if (IsEqualGUID(service, &MR_POLICY_VOLUME_SERVICE) ||
+            IsEqualGUID(service, &MR_STREAM_VOLUME_SERVICE))
     {
         hr = session_get_audio_render_service(session, service, riid, obj);
     }
