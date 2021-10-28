@@ -904,6 +904,12 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     dump_buffer_desc(pInput);
     dump_buffer_desc(pOutput);
 
+    if (ptsExpiry)
+    {
+        ptsExpiry->LowPart = 0;
+        ptsExpiry->HighPart = 0;
+    }
+
     if (!phContext)
     {
         ULONG_PTR handle;
