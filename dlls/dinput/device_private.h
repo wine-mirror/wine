@@ -30,11 +30,6 @@
 
 typedef struct
 {
-    LPDIDATAFORMAT              wine_df;     /* wine internal data format */
-} DataFormat;
-
-typedef struct
-{
     unsigned int offset;
     UINT_PTR uAppData;
 } ActionMap;
@@ -88,7 +83,7 @@ struct dinput_device
     BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
     DWORD                       buffersize;  /* size of the queue - set in 'SetProperty'    */
 
-    DataFormat                  data_format; /* user data format and wine to user format converter */
+    DIDATAFORMAT *device_format;
     DIDATAFORMAT *user_format;
 
     /* Action mapping */
