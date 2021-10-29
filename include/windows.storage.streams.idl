@@ -1,0 +1,70 @@
+/*
+ * Copyright 2021 Jactry Zeng for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "eventtoken.idl";
+import "windows.foundation.idl";
+
+namespace Windows
+{
+    namespace Foundation
+    {
+        interface IClosable;
+    }
+}
+
+namespace Windows
+{
+    namespace Storage
+    {
+        namespace Streams
+        {
+            interface IContentTypeProvider;
+            interface IInputStream;
+            interface IOutputStream;
+            interface IRandomAccessStream;
+            interface IRandomAccessStreamWithContentType;
+        }
+    }
+}
+
+namespace Windows
+{
+    namespace Storage
+    {
+        namespace Streams
+        {
+            [
+                uuid(cc254827-4b3d-438f-9232-10c76bc7e038),
+            ]
+            interface IRandomAccessStreamWithContentType : IInspectable
+                requires
+                    Windows.Storage.Streams.IRandomAccessStream,
+                    Windows.Foundation.IClosable,
+                    Windows.Storage.Streams.IInputStream,
+                    Windows.Storage.Streams.IOutputStream,
+                    Windows.Storage.Streams.IContentTypeProvider
+            {
+            }
+        }
+    }
+}

@@ -776,6 +776,7 @@ SOURCES = \
 	windows.h \
 	windows.media.devices.idl \
 	windows.media.speechsynthesis.idl \
+	windows.storage.streams.idl \
 	windows.system.idl \
 	windows.system.userprofile.idl \
 	windowscontracts.idl \
