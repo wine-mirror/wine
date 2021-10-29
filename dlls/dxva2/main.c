@@ -381,8 +381,7 @@ static BOOL dxva_is_supported_stream_format(const DXVA2_VideoDesc *video_desc)
 {
     return video_desc->Format == D3DFMT_A8R8G8B8 ||
             video_desc->Format == D3DFMT_X8R8G8B8 ||
-            video_desc->Format == D3DFMT_YUY2 ||
-            video_desc->Format == MAKEFOURCC('A','Y','U','V');
+            video_desc->Format == D3DFMT_YUY2;
 }
 
 static HRESULT WINAPI device_manager_processor_service_GetVideoProcessorDeviceGuids(
