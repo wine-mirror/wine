@@ -1673,6 +1673,22 @@ static void _test_anchor_hostname(unsigned line, IUnknown *unk, const WCHAR *hos
     SysFreeString(str);
 }
 
+#define test_anchor_port(a,p) _test_anchor_port(__LINE__,a,p)
+static void _test_anchor_port(unsigned line, IUnknown *unk, const WCHAR *port)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_port(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_port failed: %08x\n", hres);
+    if(port)
+        ok_(__FILE__,line)(!lstrcmpW(str, port), "port = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(port));
+    else
+        ok_(__FILE__,line)(str == NULL, "port = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
 #define test_anchor_search(a,h,n) _test_anchor_search(__LINE__,a,h,n)
 static void _test_anchor_search(unsigned line, IUnknown *elem, const WCHAR *search, BOOL allowbroken)
 {
@@ -9203,11 +9219,13 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_elem_by_id(doc, L"a", TRUE);
     if(elem) {
         test_anchor_href((IUnknown*)elem, L"http://test/");
+        test_anchor_port((IUnknown*)elem, L"80");
 
         /* Change the href */
-        test_anchor_put_href((IUnknown*)elem, L"http://test1/");
-        test_anchor_href((IUnknown*)elem, L"http://test1/");
+        test_anchor_put_href((IUnknown*)elem, L"http://test1:8080/");
+        test_anchor_href((IUnknown*)elem, L"http://test1:8080/");
         test_anchor_hostname((IUnknown*)elem, L"test1");
+        test_anchor_port((IUnknown*)elem, L"8080");
 
         /* Restore the href */
         test_anchor_put_href((IUnknown*)elem, L"http://test/");
