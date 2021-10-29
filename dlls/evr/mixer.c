@@ -1245,17 +1245,29 @@ static void video_mixer_scale_rect(RECT *rect, unsigned int width, unsigned int 
     }
 }
 
+static void video_mixer_normalize_rect(const RECT *full, const RECT *part, MFVideoNormalizedRect *ret)
+{
+    float width = full->right - full->left;
+    float height = full->bottom - full->top;
+
+    ret->left = (part->left - full->left) / width;
+    ret->right = (part->right - full->left) / width;
+    ret->bottom = (part->bottom - full->top) / height;
+    ret->top = (part->top - full->top) / height;
+}
+
 static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 {
     DXVA2_VideoSample samples[MAX_MIXER_INPUT_STREAMS] = {{ 0 }};
     DXVA2_VideoProcessBltParams params = { 0 };
-    MFVideoNormalizedRect zoom_rect;
+    MFVideoNormalizedRect zoom_rect, norm;
+    unsigned int i, sample_count = 0;
+    D3DSURFACE_DESC desc, rt_desc;
     struct input_stream *stream;
-    D3DSURFACE_DESC desc;
     HRESULT hr = S_OK;
-    unsigned int i;
+    RECT dst;
 
-    IDirect3DSurface9_GetDesc(rt, &desc);
+    IDirect3DSurface9_GetDesc(rt, &rt_desc);
 
     if (FAILED(IMFAttributes_GetBlob(mixer->attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&zoom_rect,
             sizeof(zoom_rect), NULL)))
@@ -1264,10 +1276,13 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
         zoom_rect.right = zoom_rect.bottom = 1.0f;
     }
 
-    video_mixer_scale_rect(&params.TargetRect, desc.Width, desc.Height, &zoom_rect);
+    SetRect(&params.TargetRect, 0, 0, rt_desc.Width, rt_desc.Height);
+    video_mixer_scale_rect(&dst, rt_desc.Width, rt_desc.Height, &zoom_rect);
 
     for (i = 0; i < mixer->input_count; ++i)
     {
+        RECT stream_dst, stream_vis;
+
         IDirect3DSurface9 *surface;
 
         stream = mixer->zorder[i];
@@ -1280,22 +1295,47 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
         IDirect3DSurface9_GetDesc(surface, &desc);
 
-        samples[i].SampleFormat.SampleFormat = stream->id == 0 ? DXVA2_SampleProgressiveFrame : DXVA2_SampleSubStream;
-        samples[i].SrcSurface = surface;
-        SetRect(&samples[i].SrcRect, 0, 0, desc.Width, desc.Height);
-        video_mixer_scale_rect(&samples[i].DstRect, desc.Width, desc.Height, &stream->rect);
+        /* In order to compute source/destination rectangles for each stream:
+
+           * per-stream rectangle is used to get destination rectangle in target coordinates;
+           * destination per-stream rectangle is clipped with zoom rectangle, applied to target coordinates;
+           * visible rectangle is scaled back to get source area of the stream that would be visible;
+           * visible rectangle is scaled back to get destination area in target coordinates for given steam.
+
+        */
+
+        video_mixer_scale_rect(&stream_dst, rt_desc.Width, rt_desc.Height, &stream->rect);
+
+        /* Part of the stream that's visible after zooming. */
+        if (!IntersectRect(&stream_vis, &stream_dst, &dst))
+        {
+            IDirect3DSurface9_Release(surface);
+            continue;
+        }
+
+        samples[sample_count].SampleFormat.SampleFormat = stream->id == 0 ?
+                DXVA2_SampleProgressiveFrame : DXVA2_SampleSubStream;
+        samples[sample_count].SrcSurface = surface;
+
+        video_mixer_normalize_rect(&stream_dst, &stream_vis, &norm);
+        video_mixer_scale_rect(&samples[sample_count].SrcRect, desc.Width, desc.Height, &norm);
+
+        video_mixer_normalize_rect(&dst, &stream_vis, &norm);
+        video_mixer_scale_rect(&samples[sample_count].DstRect, rt_desc.Width, rt_desc.Height, &norm);
+
+        sample_count++;
     }
 
     if (SUCCEEDED(hr))
     {
         if (FAILED(hr = IDirectXVideoProcessor_VideoProcessBlt(mixer->processor, rt, &params, samples,
-                mixer->input_count, NULL)))
+                sample_count, NULL)))
         {
             WARN("Failed to process samples, hr %#x.\n", hr);
         }
     }
 
-    for (i = 0; i < mixer->input_count; ++i)
+    for (i = 0; i < sample_count; ++i)
     {
         if (samples[i].SrcSurface)
             IDirect3DSurface9_Release(samples[i].SrcSurface);
