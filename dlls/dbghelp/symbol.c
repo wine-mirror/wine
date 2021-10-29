@@ -1853,7 +1853,7 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
                                PDWORD pdwDisplacement, struct internal_line_t* intl)
 {
     struct line_info*           dli = NULL;
-    BOOL                        found = FALSE;
+    struct line_info*           found_dli = NULL;
     int                         i;
     struct module_pair          pair;
     struct symt_ht*             symt;
@@ -1870,14 +1870,14 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
         dli = vector_at(&func->vlines, i);
         if (!dli->is_source_file)
         {
-            if (found || dli->u.address > addr) continue;
+            if (found_dli || dli->u.address > addr) continue;
             intl->line_number = dli->line_number;
             intl->address     = dli->u.address;
             intl->key         = dli;
-            found = TRUE;
+            found_dli = dli;
             continue;
         }
-        if (found)
+        if (found_dli)
         {
             BOOL ret;
             if (dbghelp_opt_native)
@@ -1891,7 +1891,7 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
                 ret = internal_line_set_nameW(pair.pcs, intl, dospath, TRUE);
                 HeapFree( GetProcessHeap(), 0, dospath );
             }
-            if (ret) *pdwDisplacement = intl->address - func->address;
+            if (ret) *pdwDisplacement = addr - found_dli->u.address;
             return ret;
         }
     }
