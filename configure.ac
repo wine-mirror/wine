@@ -1611,11 +1611,12 @@ then
     [AC_CHECK_HEADERS([capi20.h linux/capi.h],,,[#define __user])
     if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
     then
-        WINE_CHECK_SONAME(capi20,capi20_register,,,[$CAPI20_LIBS])
+        AC_CHECK_LIB(capi20,capi20_register,[:],[CAPI20_LIBS=""],[$CAPI20_LIBS])
     fi])
 fi
-WINE_NOTICE_WITH(capi,[test "x$ac_cv_lib_soname_capi20" = "x"],
-                 [libcapi20 ${notice_platform}development files not found, ISDN won't be supported.])
+WINE_NOTICE_WITH(capi,[test "x$ac_cv_lib_capi20_capi20_register" = "x"],
+                 [libcapi20 ${notice_platform}development files not found, ISDN won't be supported.],
+                 [enable_capi2032])
 
 dnl **** Check for cups ****
 if test "x$with_cups" != "xno"
