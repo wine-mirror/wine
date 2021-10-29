@@ -275,13 +275,132 @@ static ULONG WINAPI createcommand_Release(IDBCreateCommand *iface)
     return IUnknown_Release(&session->session_iface);
 }
 
+struct command
+{
+    ICommandText ICommandText_iface;
+    LONG refs;
+};
+
+static inline struct command *impl_from_ICommandText( ICommandText *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, ICommandText_iface );
+}
+
+static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, void **ppv)
+{
+    struct command *command = impl_from_ICommandText( iface );
+
+    TRACE( "%p, %s, %p\n", command, debugstr_guid(riid), ppv );
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) ||
+       IsEqualGUID(&IID_ICommand, riid) ||
+       IsEqualGUID(&IID_ICommandText, riid))
+    {
+        *ppv = &command->ICommandText_iface;
+    }
+
+    if(*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI command_AddRef(ICommandText *iface)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    LONG refs = InterlockedIncrement( &command->refs );
+    TRACE( "%p new refcount %d\n", command, refs );
+    return refs;
+}
+
+static ULONG WINAPI command_Release(ICommandText *iface)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    LONG refs = InterlockedDecrement( &command->refs );
+    TRACE( "%p new refcount %d\n", command, refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", command );
+        heap_free( command );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI command_Cancel(ICommandText *iface)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    FIXME("%p\n", command);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFIID riid,
+        DBPARAMS *params, DBROWCOUNT *affected, IUnknown **rowset)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    FIXME("%p, %p, %s, %p %p %p\n", command, outer, debugstr_guid(riid), params, affected, rowset);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI command_GetDBSession(ICommandText *iface, REFIID riid, IUnknown **session)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    FIXME("%p, %s, %p\n", command, debugstr_guid(riid), session);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI command_GetCommandText(ICommandText *iface, GUID *dialect, LPOLESTR *commandstr)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    FIXME("%p, %p, %p\n", command, dialect, commandstr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI command_SetCommandText(ICommandText *iface, REFGUID dialect, LPCOLESTR commandstr)
+{
+    struct command *command = impl_from_ICommandText( iface );
+    FIXME("%p, %s, %s\n", command, debugstr_guid(dialect), debugstr_w(commandstr));
+    return S_OK;
+}
+
+static const ICommandTextVtbl commandVtbl =
+{
+    command_QueryInterface,
+    command_AddRef,
+    command_Release,
+    command_Cancel,
+    command_Execute,
+    command_GetDBSession,
+    command_GetCommandText,
+    command_SetCommandText
+};
+
 static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnknown *outer, REFIID riid,
                                             IUnknown **out)
 {
     struct msdasql_session *session = impl_from_IDBCreateCommand( iface );
-    FIXME("%p, %p, %s, %p\n", session, outer, debugstr_guid(riid), out);
+    struct command *command;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %s, %p\n", session, outer, debugstr_guid(riid), out);
+
+    if (outer)
+        FIXME("Outer not currently supported\n");
+
+    command = heap_alloc(sizeof(*command));
+    if (!command)
+        return E_OUTOFMEMORY;
+
+    command->ICommandText_iface.lpVtbl = &commandVtbl;
+    command->refs = 1;
+
+    hr = ICommandText_QueryInterface(&command->ICommandText_iface, riid, (void**)out);
+    ICommandText_Release(&command->ICommandText_iface);
+    return hr;
 }
 
 static const IDBCreateCommandVtbl createcommandVtbl =
