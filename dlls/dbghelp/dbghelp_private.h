@@ -519,7 +519,7 @@ struct line_info
                                 line_number;
     union
     {
-        ULONG_PTR                   pc_offset;   /* if is_source_file isn't set */
+        ULONG_PTR                   address;     /* absolute, if is_source_file isn't set */
         unsigned                    source_file; /* if is_source_file is set */
     } u;
 };

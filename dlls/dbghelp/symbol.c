@@ -435,7 +435,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     dli->is_first       = 0; /* only a source file can be first */
     dli->is_last        = 1;
     dli->line_number    = line_num;
-    dli->u.pc_offset    = func->address + offset;
+    dli->u.address      = func->address + offset;
 }
 
 /******************************************************************
@@ -1870,9 +1870,9 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
         dli = vector_at(&func->vlines, i);
         if (!dli->is_source_file)
         {
-            if (found || dli->u.pc_offset > addr) continue;
+            if (found || dli->u.address > addr) continue;
             intl->line_number = dli->line_number;
-            intl->address     = dli->u.pc_offset;
+            intl->address     = dli->u.address;
             intl->key         = dli;
             found = TRUE;
             continue;
@@ -2013,7 +2013,7 @@ static BOOL symt_get_func_line_prev(HANDLE hProcess, struct internal_line_t* int
         if (!li->is_source_file)
         {
             intl->line_number = li->line_number;
-            intl->address     = li->u.pc_offset;
+            intl->address     = li->u.address;
             intl->key         = li;
             /* search source file */
             for (srcli = li; !srcli->is_source_file; srcli--);
@@ -2092,7 +2092,7 @@ static BOOL symt_get_func_line_next(HANDLE hProcess, struct internal_line_t* int
         if (!li->is_source_file)
         {
             intl->line_number = li->line_number;
-            intl->address     = li->u.pc_offset;
+            intl->address     = li->u.address;
             intl->key         = li;
             return internal_line_set_nameA(pair.pcs, intl, (char*)source_get(pair.effective, srcli->u.source_file), FALSE);
         }
@@ -2559,7 +2559,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
                 sci.Key = dli;
                 sci.Obj[0] = '\0'; /* FIXME */
                 sci.LineNumber = dli->line_number;
-                sci.Address = dli->u.pc_offset;
+                sci.Address = dli->u.address;
                 if (!cb(&sci, user)) break;
             }
         }
