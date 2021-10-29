@@ -1844,28 +1844,14 @@ static BOOL internal_line_set_nameW(struct process* pcs, struct internal_line_t*
     return TRUE;
 }
 
-/******************************************************************
- *		get_line_from_addr
- *
- * fills source file information from an address
- */
-static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
-                               PDWORD pdwDisplacement, struct internal_line_t* intl)
+static BOOL get_line_from_function(struct module_pair* pair, struct symt_function* func, DWORD64 addr,
+                                   PDWORD pdwDisplacement, struct internal_line_t* intl)
 {
     struct line_info*           dli = NULL;
     struct line_info*           found_dli = NULL;
     int                         i;
-    struct module_pair          pair;
-    struct symt_ht*             symt;
-    struct symt_function*       func;
 
-    if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    if ((symt = symt_find_nearest(pair.effective, addr)) == NULL) return FALSE;
-
-    if (symt->symt.tag != SymTagFunction) return FALSE;
-    func = (struct symt_function*)symt;
-
-    for (i=vector_length(&func->vlines)-1; i>=0; i--)
+    for (i = vector_length(&func->vlines) - 1; i >= 0; i--)
     {
         dli = vector_at(&func->vlines, i);
         if (!dli->is_source_file)
@@ -1883,12 +1869,12 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
             if (dbghelp_opt_native)
             {
                 /* Return native file paths when using winedbg */
-                ret = internal_line_set_nameA(pair.pcs, intl, (char*)source_get(pair.effective, dli->u.source_file), FALSE);
+                ret = internal_line_set_nameA(pair->pcs, intl, (char*)source_get(pair->effective, dli->u.source_file), FALSE);
             }
             else
             {
-                WCHAR *dospath = wine_get_dos_file_name(source_get(pair.effective, dli->u.source_file));
-                ret = internal_line_set_nameW(pair.pcs, intl, dospath, TRUE);
+                WCHAR *dospath = wine_get_dos_file_name(source_get(pair->effective, dli->u.source_file));
+                ret = internal_line_set_nameW(pair->pcs, intl, dospath, TRUE);
                 HeapFree( GetProcessHeap(), 0, dospath );
             }
             if (ret) *pdwDisplacement = addr - found_dli->u.address;
@@ -1896,6 +1882,24 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
         }
     }
     return FALSE;
+}
+
+/******************************************************************
+ *		get_line_from_addr
+ *
+ * fills source file information from an address
+ */
+static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
+                               PDWORD pdwDisplacement, struct internal_line_t* intl)
+{
+    struct module_pair          pair;
+    struct symt_ht*             symt;
+
+    if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
+    if ((symt = symt_find_nearest(pair.effective, addr)) == NULL) return FALSE;
+
+    if (symt->symt.tag != SymTagFunction && symt->symt.tag != SymTagInlineSite) return FALSE;
+    return get_line_from_function(&pair, (struct symt_function*)symt, addr, pdwDisplacement, intl);
 }
 
 /***********************************************************************
@@ -2699,9 +2703,17 @@ BOOL WINAPI SymFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG inline_ct
 static BOOL get_line_from_inline_context(HANDLE hProcess, DWORD64 addr, ULONG inline_ctx, DWORD64 mod_addr, PDWORD disp,
                                          struct internal_line_t* intl)
 {
+    struct module_pair pair;
+    struct symt_inlinesite* inlined;
+
+    if (!module_init_pair(&pair, hProcess, mod_addr ? mod_addr : addr)) return FALSE;
     switch (IFC_MODE(inline_ctx))
     {
     case IFC_MODE_INLINE:
+        inlined = symt_find_inlined_site(pair.effective, addr, inline_ctx);
+        if (inlined && get_line_from_function(&pair, &inlined->func, addr, disp, intl))
+            return TRUE;
+        /* fall through: check if we can find line info at top function level */
     case IFC_MODE_IGNORE:
     case IFC_MODE_REGULAR:
         return get_line_from_addr(hProcess, addr, disp, intl);
