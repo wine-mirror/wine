@@ -37,18 +37,15 @@ struct tagActiveDS activeDS;
 
 DSMENTRYPROC GPHOTO2_dsmentry;
 
-#ifdef HAVE_GPHOTO2
 static char* GPHOTO2_StrDup(const char* str)
 {
     char* dst = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
     strcpy(dst, str);
     return dst;
 }
-#endif
 
 static void
 load_filesystem(const char *folder) {
-#ifdef HAVE_GPHOTO2
     int		i, count, ret;
     CameraList	*list;
 
@@ -110,7 +107,6 @@ load_filesystem(const char *folder) {
 	load_filesystem (newfolder); /* recurse ... happily */
     }
     gp_list_free (list);
-#endif
 }
 
 /* DG_CONTROL/DAT_CAPABILITY/MSG_GET */
@@ -577,16 +573,14 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
 	    GPHOTO2_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
-#ifdef HAVE_GPHOTO2
 	    activeDS.context = gp_context_new ();
-#endif
             break;
     }
 
     return TRUE;
 }
 
-#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
+#ifdef HAVE_GPHOTO2_PORT
 static TW_UINT16 GPHOTO2_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
 static TW_UINT16 GPHOTO2_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
 #endif
@@ -605,7 +599,7 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
+#ifdef HAVE_GPHOTO2_PORT
 		     if (activeDS.camera) {
 			gp_camera_free (activeDS.camera);
 			activeDS.camera = NULL;
@@ -613,14 +607,14 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
 #endif
 		     break;
 		case MSG_GET:
-#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
+#ifdef HAVE_GPHOTO2_PORT
 		     twRC = GPHOTO2_GetIdentity(pOrigin,(pTW_IDENTITY)pData);
 #else
 		     twRC = TWRC_FAILURE;
 #endif
 		     break;
 		case MSG_OPENDS:
-#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
+#ifdef HAVE_GPHOTO2_PORT
 		     twRC = GPHOTO2_OpenDS(pOrigin,(pTW_IDENTITY)pData);
 #else
 		     twRC = TWRC_FAILURE;
@@ -1039,7 +1033,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
     return twRC;
 }
 
-#if defined(HAVE_GPHOTO2) && defined(HAVE_GPHOTO2_PORT)
+#ifdef HAVE_GPHOTO2_PORT
 static GPPortInfoList *port_list;
 static int curcamera;
 static CameraList *detected_cameras;

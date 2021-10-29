@@ -31,7 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-#ifdef HAVE_GPHOTO2
 static void *libjpeg_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(jpeg_std_error);
@@ -85,7 +84,6 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
     return FALSE;
 }
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
-#endif
 
 /* DG_IMAGE/DAT_CIECOLOR/MSG_GET */
 TW_UINT16 GPHOTO2_CIEColorGet (pTW_IDENTITY pOrigin, 
@@ -132,7 +130,6 @@ TW_UINT16 GPHOTO2_ImageFileXferGet (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
-#ifdef HAVE_GPHOTO2
 static TW_UINT16 _get_image_and_startup_jpeg(void) {
     const char *folder = NULL, *filename = NULL;
     struct gphoto2_file *file;
@@ -204,13 +201,11 @@ static TW_UINT16 _get_image_and_startup_jpeg(void) {
     }
     return TWRC_SUCCESS;
 }
-#endif
 
 /* DG_IMAGE/DAT_IMAGEINFO/MSG_GET */
 TW_UINT16 GPHOTO2_ImageInfoGet (pTW_IDENTITY pOrigin, 
                               TW_MEMREF pData)
 {
-#ifdef HAVE_GPHOTO2
     pTW_IMAGEINFO pImageInfo = (pTW_IMAGEINFO) pData;
 
     TRACE("DG_IMAGE/DAT_IMAGEINFO/MSG_GET\n");
@@ -246,9 +241,6 @@ TW_UINT16 GPHOTO2_ImageInfoGet (pTW_IDENTITY pOrigin,
     pImageInfo->ImageLength 	= activeDS.jd.output_height;
     pImageInfo->BitsPerPixel	= 24;
     return TWRC_SUCCESS;
-#else
-    return TWRC_FAILURE;
-#endif
 }
 
 /* DG_IMAGE/DAT_IMAGELAYOUT/MSG_GET */
@@ -291,7 +283,6 @@ TW_UINT16 GPHOTO2_ImageLayoutSet (pTW_IDENTITY pOrigin,
 TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin, 
                                  TW_MEMREF pData)
 {
-#ifdef HAVE_GPHOTO2
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEMEMXFER pImageMemXfer = (pTW_IMAGEMEMXFER) pData;
     LPBYTE buffer;
@@ -367,16 +358,12 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
     if (pImageMemXfer->Memory.Flags & TWMF_HANDLE)
         LocalUnlock(pImageMemXfer->Memory.TheMem);
     return twRC;
-#else
-    return TWRC_FAILURE;
-#endif
 }
 
 /* DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET */
 TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin, 
                                     TW_MEMREF pData)
 {
-#ifdef HAVE_GPHOTO2
     pTW_UINT32 pHandle = (pTW_UINT32) pData;
     HBITMAP hDIB;
     BITMAPINFO bmpInfo;
@@ -456,9 +443,6 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     activeDS.twCC = TWCC_SUCCESS;
     activeDS.currentState = 7;
     return TWRC_XFERDONE;
-#else
-    return TWRC_FAILURE;
-#endif
 }
 
 /* DG_IMAGE/DAT_JPEGCOMPRESSION/MSG_GET */
@@ -552,7 +536,6 @@ TW_UINT16 GPHOTO2_RGBResponseSet (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
-#ifdef HAVE_GPHOTO2
 TW_UINT16
 _get_gphoto2_file_as_DIB(
     const char *folder, const char *filename, CameraFileType type,
@@ -660,4 +643,3 @@ _get_gphoto2_file_as_DIB(
     gp_file_unref (file);
     return TWRC_SUCCESS;
 }
-#endif

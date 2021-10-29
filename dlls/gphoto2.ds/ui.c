@@ -122,12 +122,8 @@ static void PopulateImageList(HIMAGELIST *iList, HWND list)
 			HBITMAP 	bitmap;
 			BITMAP		bmpInfo;
 
-#ifdef HAVE_GPHOTO2
 			_get_gphoto2_file_as_DIB(file->folder, file->filename,
 					GP_FILE_TYPE_PREVIEW, 0, &bitmap); 
-#else
-			bitmap = 0;
-#endif
 			GetObjectA(bitmap,sizeof(BITMAP),&bmpInfo);
 
 			if (*iList == 0)

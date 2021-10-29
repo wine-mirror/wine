@@ -13576,15 +13576,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gphoto2_gp_camera_new" >&5
 $as_echo "$ac_cv_lib_gphoto2_gp_camera_new" >&6; }
 if test "x$ac_cv_lib_gphoto2_gp_camera_new" = xyes; then :
-
-$as_echo "#define HAVE_GPHOTO2 1" >>confdefs.h
-
-else
-  GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""
+  :
 fi
 
-else
-  GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""
 fi
 
 
@@ -13668,7 +13662,7 @@ if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
   *)   as_fn_error $? "libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported.
 This is an error since --with-gphoto was requested." "$LINENO" 5 ;;
 esac
-
+enable_gphoto2_ds=${enable_gphoto2_ds:-no}
 fi
 if test "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" != "yes"; then :
   case "x$with_gphoto" in
@@ -15218,12 +15212,12 @@ CPPFLAGS=$ac_save_CPPFLAGS
 fi
 if test "x$ac_cv_lib_soname_jpeg" = "x"; then :
   case "x$with_jpeg" in
-  x)   as_fn_append wine_warnings "|libjpeg ${notice_platform}development files not found, JPEG won't be supported." ;;
+  x)   as_fn_append wine_warnings "|libjpeg ${notice_platform}development files not found, gphoto2 won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "libjpeg ${notice_platform}development files not found, JPEG won't be supported.
+  *)   as_fn_error $? "libjpeg ${notice_platform}development files not found, gphoto2 won't be supported.
 This is an error since --with-jpeg was requested." "$LINENO" 5 ;;
 esac
-
+enable_gphoto2_ds=${enable_gphoto2_ds:-no}
 fi
 
 if test "$ac_cv_header_AL_al_h" = "yes"

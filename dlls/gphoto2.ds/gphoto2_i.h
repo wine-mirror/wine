@@ -24,17 +24,10 @@
 # error You must include config.h first
 #endif
 
-#if defined(HAVE_GPHOTO2) && !defined(SONAME_LIBJPEG)
-# warning "gphoto2 support in twain needs jpeg development headers"
-# undef HAVE_GPHOTO2
-#endif
-
-#ifdef HAVE_GPHOTO2
 /* Hack for gphoto2, which changes behaviour when WIN32 is set. */
 #undef WIN32
 #include <gphoto2/gphoto2-camera.h>
 #define WIN32
-#endif
 
 #include <stdio.h>
 
@@ -79,10 +72,8 @@ struct tagActiveDS
     TW_UINT16		twCC;			/* condition code */
     HWND		progressWnd;		/* window handle of the scanning window */
 
-#ifdef HAVE_GPHOTO2
     Camera		*camera;
     GPContext		*context;
-#endif
 
     /* Capabilities */
     TW_UINT32		capXferMech;		/* ICAP_XFERMECH */
@@ -92,9 +83,7 @@ struct tagActiveDS
     struct list 	files;
 
     /* Download and decode JPEG STATE */
-#ifdef HAVE_GPHOTO2
     CameraFile				*file;
-#endif
 #ifdef SONAME_LIBJPEG
     struct jpeg_source_mgr		xjsm;
     struct jpeg_decompress_struct	jd;
@@ -158,12 +147,11 @@ TW_UINT16 GPHOTO2_RGBResponseSet
 BOOL DoCameraUI(void) DECLSPEC_HIDDEN;
 HWND TransferringDialogBox(HWND dialog, LONG progress) DECLSPEC_HIDDEN;
 
-#ifdef HAVE_GPHOTO2
 /* Helper function for GUI */
 TW_UINT16
 _get_gphoto2_file_as_DIB(
         const char *folder, const char *filename, CameraFileType type,
         HWND hwnd, HBITMAP *hDIB
 ) DECLSPEC_HIDDEN;
-#endif
+
 #endif
