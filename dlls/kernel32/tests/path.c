@@ -2659,7 +2659,6 @@ static void test_LdrGetDllPath(void)
     ret = pLdrGetDllPath( fooW, LOAD_WITH_ALTERED_SEARCH_PATH, &path, &unknown_ptr );
     ok( !ret, "LdrGetDllPath failed %x\n", ret );
     ok( !unknown_ptr, "unknown ptr %p\n", unknown_ptr );
-    todo_wine
     build_search_path( buffer, ARRAY_SIZE(buffer), NULL, NULL, TRUE );
     ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
     pRtlReleasePath( path );
@@ -2667,7 +2666,6 @@ static void test_LdrGetDllPath(void)
     ret = pLdrGetDllPath( L"temp/foo", LOAD_WITH_ALTERED_SEARCH_PATH, &path, &unknown_ptr );
     ok( !ret, "LdrGetDllPath failed %x\n", ret );
     ok( !unknown_ptr, "unknown ptr %p\n", unknown_ptr );
-    todo_wine
     build_search_path( buffer, ARRAY_SIZE(buffer), NULL, NULL, TRUE );
     ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
     pRtlReleasePath( path );
