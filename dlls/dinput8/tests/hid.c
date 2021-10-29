@@ -4475,26 +4475,21 @@ static void test_simple_joystick(void)
     objdataformat[3].dwType = 0xff|DIDFT_ANYINSTANCE;
     objdataformat[3].dwFlags = 0;
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 12 );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 0xff );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS|DIDFT_MAKEINSTANCE( 1 );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
     ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].pguid = &GUID_RzAxis;
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].pguid = &GUID_Unknown;
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].pguid = &GUID_YAxis;
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
