@@ -40,7 +40,7 @@ static HWND DSM_parent;
 static UINT event_message;
 
 struct all_devices {
-	char 		*modname;
+	WCHAR 		*modname;
 	TW_IDENTITY	identity;
 };
 
@@ -48,21 +48,23 @@ static int nrdevices = 0;
 static struct all_devices *devices = NULL;
 
 static void
-twain_add_onedriver(const char *dsname) {
+twain_add_onedriver(const WCHAR *dsname) {
 	HMODULE 	hmod;
 	DSENTRYPROC	dsEntry;
 	TW_IDENTITY	fakeOrigin;
 	TW_IDENTITY	sourceId;
 	TW_UINT16	ret;
+        WCHAR path[MAX_PATH];
 
-	hmod = LoadLibraryA(dsname);
+        swprintf( path, MAX_PATH, L"c:\\windows\\twain_%u\\%s", sizeof(void *) * 8, dsname );
+	hmod = LoadLibraryW(path);
 	if (!hmod) {
-		ERR("Failed to load TWAIN Source %s\n", debugstr_a(dsname));
+		ERR("Failed to load TWAIN Source %s\n", debugstr_w(path));
 		return;
 	}
 	dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
 	if (!dsEntry) {
-		ERR("Failed to find DS_Entry() in TWAIN DS %s\n", debugstr_a(dsname));
+		ERR("Failed to find DS_Entry() in TWAIN DS %s\n", debugstr_w(path));
 		return;
 	}
 	/* Loop to do multiple detects, mostly for sane.ds and gphoto2.ds */
@@ -87,12 +89,8 @@ twain_add_onedriver(const char *dsname) {
 		}
 		if (i < nrdevices)
 			break;
-		if (nrdevices)
-			devices = HeapReAlloc(GetProcessHeap(), 0, devices, sizeof(devices[0])*(nrdevices+1));
-		else
-			devices = HeapAlloc(GetProcessHeap(), 0, sizeof(devices[0]));
-		if ((devices[nrdevices].modname = HeapAlloc(GetProcessHeap(), 0, strlen(dsname) + 1)))
-			lstrcpyA(devices[nrdevices].modname, dsname);
+                devices = realloc( devices, sizeof(devices[0])*(nrdevices+1) );
+		devices[nrdevices].modname = wcsdup( path );
 		devices[nrdevices].identity = sourceId;
 		nrdevices++;
 		DSM_sourceId++;
@@ -107,12 +105,12 @@ twain_autodetect(void) {
 	if (detectionrun) return;
         detectionrun = TRUE;
 
-	twain_add_onedriver("sane.ds");
-	twain_add_onedriver("gphoto2.ds");
+	twain_add_onedriver(L"sane.ds");
+	twain_add_onedriver(L"gphoto2.ds");
 #if 0
-	twain_add_onedriver("c:\\windows\\Twain_32\\Largan\\sp503a.ds");
-	twain_add_onedriver("c:\\windows\\Twain_32\\vivicam10\\vivicam10.ds");
-	twain_add_onedriver("c:\\windows\\Twain_32\\ws30slim\\sp500a.ds");
+	twain_add_onedriver(L"Largan\\sp503a.ds");
+	twain_add_onedriver(L"vivicam10\\vivicam10.ds");
+	twain_add_onedriver(L"ws30slim\\sp500a.ds");
 #endif
 }
 
@@ -282,7 +280,6 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	TW_UINT16 i = 0;
 	pTW_IDENTITY pIdentity = (pTW_IDENTITY) pData;
 	activeDS *newSource;
-	const char *modname = NULL;
 	HMODULE hmod;
 
 	TRACE("DG_CONTROL/DAT_IDENTITY/MSG_OPENDS\n");
@@ -315,9 +312,9 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 		FIXME("Out of memory.\n");
 		return TWRC_FAILURE;
 	}
-	hmod = LoadLibraryA(devices[i].modname);
+	hmod = LoadLibraryW(devices[i].modname);
 	if (!hmod) {
-		ERR("Failed to load TWAIN Source %s\n", debugstr_a(modname));
+		ERR("Failed to load TWAIN Source %s\n", debugstr_w(devices[i].modname));
 		DSM_twCC = TWCC_OPERATIONERROR;
                 HeapFree(GetProcessHeap(), 0, newSource);
 		return TWRC_FAILURE;
