@@ -279,6 +279,7 @@ struct command
 {
     ICommandText ICommandText_iface;
     ICommandProperties ICommandProperties_iface;
+    IColumnsInfo IColumnsInfo_iface;
     LONG refs;
 };
 
@@ -290,6 +291,11 @@ static inline struct command *impl_from_ICommandText( ICommandText *iface )
 static inline struct command *impl_from_ICommandProperties( ICommandProperties *iface )
 {
     return CONTAINING_RECORD( iface, struct command, ICommandProperties_iface );
+}
+
+static inline struct command *impl_from_IColumnsInfo( IColumnsInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, IColumnsInfo_iface );
 }
 
 static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, void **ppv)
@@ -308,6 +314,10 @@ static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, v
     else if(IsEqualGUID(&IID_ICommandProperties, riid))
     {
          *ppv = &command->ICommandProperties_iface;
+    }
+    else if(IsEqualGUID(&IID_IColumnsInfo, riid))
+    {
+         *ppv = &command->IColumnsInfo_iface;
     }
 
     if(*ppv)
@@ -457,6 +467,49 @@ static const ICommandPropertiesVtbl commonpropsVtbl =
     command_prop_SetProperties
 };
 
+static HRESULT WINAPI colsinfo_QueryInterface(IColumnsInfo *iface, REFIID riid, void **out)
+{
+    struct command *command = impl_from_IColumnsInfo( iface );
+    return ICommandText_QueryInterface(&command->ICommandText_iface, riid, out);
+}
+
+static ULONG WINAPI colsinfo_AddRef(IColumnsInfo *iface)
+{
+    struct command *command = impl_from_IColumnsInfo( iface );
+    return ICommandText_AddRef(&command->ICommandText_iface);
+}
+
+static ULONG  WINAPI colsinfo_Release(IColumnsInfo *iface)
+{
+    struct command *command = impl_from_IColumnsInfo( iface );
+    return ICommandText_Release(&command->ICommandText_iface);
+}
+
+static HRESULT WINAPI colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDINAL *columns,
+        DBCOLUMNINFO **colinfo, OLECHAR **stringsbuffer)
+{
+    struct command *command = impl_from_IColumnsInfo( iface );
+    FIXME("%p, %p, %p, %p\n", command, columns, colinfo, stringsbuffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI colsinfo_MapColumnIDs(IColumnsInfo *iface, DBORDINAL column_ids,
+        const DBID *dbids, DBORDINAL *columns)
+{
+    struct command *command = impl_from_IColumnsInfo( iface );
+    FIXME("%p, %lu, %p, %p\n", command, column_ids, dbids, columns);
+    return E_NOTIMPL;
+}
+
+static struct IColumnsInfoVtbl columninfoVtbl =
+{
+    colsinfo_QueryInterface,
+    colsinfo_AddRef,
+    colsinfo_Release,
+    colsinfo_GetColumnInfo,
+    colsinfo_MapColumnIDs
+};
+
 static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnknown *outer, REFIID riid,
                                             IUnknown **out)
 {
@@ -475,6 +528,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
 
     command->ICommandText_iface.lpVtbl = &commandVtbl;
     command->ICommandProperties_iface.lpVtbl = &commonpropsVtbl;
+    command->IColumnsInfo_iface.lpVtbl = &columninfoVtbl;
     command->refs = 1;
 
     hr = ICommandText_QueryInterface(&command->ICommandText_iface, riid, (void**)out);

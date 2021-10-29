@@ -140,9 +140,8 @@ static void test_command_interfaces(IUnknown *cmd)
         ICommandPrepare_Release(commandprepare);
 
     hr = IUnknown_QueryInterface(cmd, &IID_IColumnsInfo, (void**)&colinfo);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr == S_OK)
-        IColumnsInfo_Release(colinfo);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IColumnsInfo_Release(colinfo);
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandStream, (void**)&commandstream);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
