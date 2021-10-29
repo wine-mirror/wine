@@ -991,10 +991,26 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         X(DWORD) = symt_ptr2index(module, ((const struct symt_array*)type)->index_type);
         break;
 
-    case TI_GET_CLASSPARENTID:
-        /* FIXME: we don't support properly C++ for now, pretend this symbol doesn't
-         * belong to a parent class
+    case TI_GET_SYMINDEX:
+        /* not very useful as it is...
+         * native sometimes (eg for UDT) return id of another instance
+         * of the same UDT definition... maybe forward declaration?
          */
+        X(DWORD) = symt_ptr2index(module, type);
+        break;
+
+        /* FIXME: we don't support properly C++ for now */
+    case TI_GET_VIRTUALBASECLASS:
+    case TI_GET_VIRTUALTABLESHAPEID:
+    case TI_GET_VIRTUALBASEPOINTEROFFSET:
+    case TI_GET_CLASSPARENTID:
+    case TI_GET_THISADJUST:
+    case TI_GET_VIRTUALBASEOFFSET:
+    case TI_GET_VIRTUALBASEDISPINDEX:
+    case TI_GET_IS_REFERENCE:
+    case TI_GET_INDIRECTVIRTUALBASECLASS:
+    case TI_GET_VIRTUALBASETABLETYPE:
+    case TI_GET_OBJECTPOINTERTYPE:
         return FALSE;
 
 #undef X
