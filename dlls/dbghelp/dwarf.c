@@ -2515,6 +2515,7 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
                                    const struct vector* v, unsigned file, unsigned line)
 {
     struct symt_function*       func;
+    struct symt_inlinesite*     inlined;
     struct symt_ht*             symt;
     unsigned*                   psrc;
 
@@ -2526,6 +2527,19 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
     if (symt_check_tag(&symt->symt, SymTagFunction))
     {
         func = (struct symt_function*)symt;
+        for (inlined = func->next_inlinesite; inlined; inlined = inlined->func.next_inlinesite)
+        {
+            int i;
+            for (i = 0; i < inlined->vranges.num_elts; ++i)
+            {
+                struct addr_range* ar = (struct addr_range*)vector_at(&inlined->vranges, i);
+                if (ar->low <= address && address < ar->high)
+                {
+                    symt_add_func_line(module, &inlined->func, *psrc, line, address);
+                    return; /* only add to lowest matching inline site */
+                }
+            }
+        }
         symt_add_func_line(module, func, *psrc, line, address);
     }
 }
