@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-10-27 11:45+0800\n"
+"PO-Revision-Date: 2021-10-29 21:40+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -430,7 +430,7 @@ msgstr "關閉(&C)"
 
 #: dlls/comctl32/comctl32.rc:101
 msgid "R&eset"
-msgstr "重置(&E)"
+msgstr "重設(&E)"
 
 #: dlls/comctl32/comctl32.rc:102 dlls/comdlg32/comdlg32.rc:173
 #: dlls/comdlg32/comdlg32.rc:195 dlls/comdlg32/comdlg32.rc:266
@@ -4193,7 +4193,7 @@ msgstr "要求未被接受。\n"
 
 #: dlls/kernel32/winerror.mc:328
 msgid "Redirector paused.\n"
-msgstr "已暫停重新導向。\n"
+msgstr "重新導向器已暫停。\n"
 
 #: dlls/kernel32/winerror.mc:333
 msgid "File exists.\n"
@@ -5361,7 +5361,7 @@ msgstr "協定無法連線。\n"
 
 #: dlls/kernel32/winerror.mc:1803
 msgid "Port unreachable.\n"
-msgstr "通訊埠無法連線。\n"
+msgstr "連接埠無法連線。\n"
 
 #: dlls/kernel32/winerror.mc:1808
 msgid "Request aborted.\n"
@@ -6617,7 +6617,7 @@ msgstr "帳號已過期。\n"
 
 #: dlls/kernel32/winerror.mc:3383
 msgid "Redirector has open handles.\n"
-msgstr "重導器已開啟控制代碼。\n"
+msgstr "重新導向器有開啟的控制代碼。\n"
 
 #: dlls/kernel32/winerror.mc:3388
 msgid "Printer driver already installed.\n"
@@ -6625,7 +6625,7 @@ msgstr "印表機驅動程式已安裝。\n"
 
 #: dlls/kernel32/winerror.mc:3393
 msgid "Unknown port.\n"
-msgstr "不明通訊埠。\n"
+msgstr "不明的連接埠。\n"
 
 #: dlls/kernel32/winerror.mc:3398
 msgid "Unknown printer driver.\n"
@@ -6941,557 +6941,468 @@ msgid "Normal"
 msgstr "標準"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "代號"
+msgstr "Letter"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "代號"
+msgstr "Letter Small"
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "表格(&T)"
+msgstr "Tabloid"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Ledger"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "Legal"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "狀態"
+msgstr "Statement"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "執行(&E)..."
+msgstr "Executive"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "A"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "A"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "小"
+msgstr "A4 Small"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "A"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "Folio"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "Quarto"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "記事本"
+msgstr "Note"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "Envelope #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Envelope #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Envelope #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Envelope #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Envelope #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "C 尺寸紙張"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "D 尺寸紙張"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "E 尺寸紙張"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Envelope DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "Envelope C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "Envelope C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "Envelope C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "Envelope C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "Envelope C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "Envelope B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "Envelope B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "Envelope B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "PKCS 7 封套"
+msgstr "Envelope"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Envelope Monarch"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "PKCS 7 封套"
+msgstr "6 3/4 Envelope"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "美國標準 Fanfold"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "德國標準 Fanfold"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "德國法定 Fanfold"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "日語"
+msgstr "日本明信片"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Envelope Invite"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "代號"
+msgstr "Letter Extra"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Legal Extra"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Tabloid Extra"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "其他(&X)"
+msgstr "A4 Extra"
 
 #: dlls/localspl/localspl.rc:88
 msgid "Letter Transverse"
-msgstr ""
+msgstr "Letter Transverse"
 
 #: dlls/localspl/localspl.rc:89
 msgid "A4 Transverse"
-msgstr ""
+msgstr "A4 Transverse"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Letter Extra Transverse"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Super A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Super B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "代號"
+msgstr "Letter Plus"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "A4 Plus"
 
 #: dlls/localspl/localspl.rc:95
 msgid "A5 Transverse"
-msgstr ""
+msgstr "A5 Transverse"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) Transverse"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "其他(&X)"
+msgstr "A3 Extra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "其他(&X)"
+msgstr "A5 Extra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "B5 (ISO) Extra"
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "A"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
 msgid "A3 Transverse"
-msgstr ""
+msgstr "A3 Transverse"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 Extra Transverse"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "日本雙面明信片"
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "A"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "日本角形信封 #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "日本角形信封 #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "日本長形信封 #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "日本長形信封 #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "Letter 旋轉"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 旋轉"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 旋轉"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 旋轉"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) 旋轉"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) 旋轉"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "日本明信片 旋轉"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "日本雙面明信片 旋轉"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 旋轉"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "日本角形信封 #2 旋轉"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "日本角形信封 #3 旋轉"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "日本長形信封 #3 旋轉"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "日本長形信封 #4 旋轉"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) 旋轉"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "日本洋形信封 #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "日本洋形信封 #4 旋轉"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "中國 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "中國 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "中國 32K (大)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "中國 16K 旋轉"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "中國 32K 旋轉"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "中國 32K (大) 旋轉"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #1 旋轉"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #2 旋轉"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #3 旋轉"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #4 旋轉"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #5 旋轉"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #6 旋轉"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #7 旋轉"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #8 旋轉"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #9 旋轉"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "PKCS 7 封套"
+msgstr "中國信封 #10 旋轉"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7516,7 +7427,7 @@ msgstr "設定並列埠"
 
 #: dlls/localui/localui.rc:54
 msgid "Timeout (seconds)"
-msgstr "超時(秒)"
+msgstr "超時 (秒)"
 
 #: dlls/localui/localui.rc:55
 msgid "&Transmission Retry:"
@@ -7524,7 +7435,7 @@ msgstr "重試傳送(&T):"
 
 #: dlls/localui/localui.rc:32
 msgid "'%s' is not a valid port name"
-msgstr "%s 不是有效的連接埠名稱"
+msgstr "'%s' 不是有效的連接埠名稱"
 
 #: dlls/localui/localui.rc:33
 msgid "Port %s already exists"
@@ -7544,553 +7455,395 @@ msgstr "傳送郵件"
 
 #: dlls/mferror/mferror.mc:249 dlls/mferror/mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "已建立開始要求。\n"
 
 #: dlls/mferror/mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "找不到物件 UUID。\n"
+msgstr "接收器尚未結束。\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock was stopped\n"
-msgstr "類別已存在。\n"
+msgstr "時鐘已停止\n"
 
 #: dlls/mferror/mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "不受支援的安裝平臺。\n"
+msgstr "Media Foundation 平臺尚未初始化。\n"
 
 #: dlls/mferror/mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "位元組數量太小。\n"
+msgstr "緩衝區太小。\n"
 
 #: dlls/mferror/mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "無效的查詢語法。\n"
+msgstr "無效的要求。\n"
 
 #: dlls/mferror/mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "無效的資料段編號。\n"
+msgstr "無效的資料流號碼。\n"
 
 #: dlls/mferror/mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "無效的資料類型。\n"
+msgstr "無效的媒體類型。\n"
 
 #: dlls/mferror/mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "已無更多條目。\n"
+msgstr "不接受更多輸入。\n"
 
 #: dlls/mferror/mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "找不到物件 UUID。\n"
+msgstr "物件未初始化。\n"
 
 #: dlls/mferror/mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "操作不受支援。\n"
+msgstr "不支援重展示。\n"
 
 #: dlls/mferror/mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "建議媒體類型清單中沒有其他類型。\n"
 
 #: dlls/mferror/mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的服務。\n"
 
 #: dlls/mferror/mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "未預期的網路錯誤。\n"
+msgstr "未預期的錯誤。\n"
 
 #: dlls/mferror/mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "無效的時間。\n"
+msgstr "無效的類型。\n"
 
 #: dlls/mferror/mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "無效的像素格式。\n"
+msgstr "無效的檔案格式。\n"
 
 #: dlls/mferror/mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "無效的時間。\n"
+msgstr "無效的時間戳記。\n"
 
 #: dlls/mferror/mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的配置。\n"
 
 #: dlls/mferror/mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的位元組流類型。\n"
 
 #: dlls/mferror/mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的時間格式。\n"
 
 #: dlls/mferror/mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "樣本尚未設定時間戳記。\n"
 
 #: dlls/mferror/mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "樣本尚未設定持續時間。\n"
 
 #: dlls/mferror/mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "無效的資料。\n"
+msgstr "無效的資料流資料。\n"
 
 #: dlls/mferror/mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "沒有可用的說明資訊。"
+msgstr "無法使用即時支援。\n"
 
 #: dlls/mferror/mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的速率。\n"
 
 #: dlls/mferror/mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的薄切。\n"
 
 #: dlls/mferror/mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "要求不受支援。\n"
+msgstr "不支援反向。\n"
 
 #: dlls/mferror/mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "不受支援的授權等級。\n"
+msgstr "不支援的速率轉換。\n"
 
 #: dlls/mferror/mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "速率變更被佔用。\n"
 
 #: dlls/mferror/mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "找不到物件 UUID。\n"
+msgstr "找不到物件或值。\n"
 
 #: dlls/mferror/mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "沒有可用的說明資訊。"
+msgstr "值不可用。\n"
 
 #: dlls/mferror/mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "沒有可用的說明資訊。"
+msgstr "時鐘不可用。\n"
 
 #: dlls/mferror/mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "不支援進階屬性。\n"
+msgstr "不支援多訂閱者。\n"
 
 #: dlls/mferror/mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "驅動程式未被啟用。"
+msgstr "計時器被孤立。\n"
 
 #: dlls/mferror/mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "開啟字元翻譯表格時失敗。\n"
+msgstr "狀態轉換擱置中。\n"
 
 #: dlls/mferror/mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "不受支援的授權等級。\n"
+msgstr "不支援的狀態轉換。\n"
 
 #: dlls/mferror/mferror.mc:291
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "Unrecoverable error occurred.\n"
-msgstr "印表機發生錯誤。"
+msgstr "發生致命錯誤。\n"
 
 #: dlls/mferror/mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "樣本包含太多緩衝區。\n"
 
 #: dlls/mferror/mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "無法寫入暫存資料夾。\n"
+msgstr "無法寫入樣本。\n"
 
 #: dlls/mferror/mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "路徑無效。\n"
+msgstr "無效的鍵值。\n"
 
 #: dlls/mferror/mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "錯誤的殘餘版本。\n"
+msgstr "錯誤的啟動版本。\n"
 
 #: dlls/mferror/mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的標題。\n"
 
 #: dlls/mferror/mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "無效的工作站。\n"
+msgstr "無效的位置。\n"
 
 #: dlls/mferror/mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "找不到檔案。\n"
+msgstr "找不到屬性。\n"
 
 #: dlls/mferror/mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "不允許攔截型態。\n"
+msgstr "不允許使用屬性類型。\n"
 
 #: dlls/mferror/mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "操作不受支援。\n"
+msgstr "不支援屬性類型。\n"
 
 #: dlls/mferror/mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "目錄不是空的。\n"
+msgstr "屬性為空。\n"
 
 #: dlls/mferror/mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "目錄不是空的。\n"
+msgstr "屬性非空。\n"
 
 #: dlls/mferror/mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "不允許攔截型態。\n"
+msgstr "不允許使用向量屬性。\n"
 
 #: dlls/mferror/mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "需要使用向量屬性。\n"
 
 #: dlls/mferror/mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "作業被使用者取消。\n"
+msgstr "操作已取消。\n"
 
 #: dlls/mferror/mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "伺服器未停用。\n"
+msgstr "找不到位元組流。\n"
 
 #: dlls/mferror/mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "平臺已在安全模式下停用。\n"
 
 #: dlls/mferror/mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "無法建立服務執行緒。\n"
+msgstr "無法解析位元組流。\n"
 
 #: dlls/mferror/mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "互斥的旗標被傳送到來源解析器。\n"
 
 #: dlls/mferror/mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "未知的介面。\n"
+msgstr "不明位元組流長度。\n"
 
 #: dlls/mferror/mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "無效的索引。\n"
+msgstr "無效的工作佇列索引。\n"
 
 #: dlls/mferror/mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "沒有可用的登錄伺服器。\n"
+msgstr "沒有可用的事件。\n"
 
 #: dlls/mferror/mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "不受支援的授權等級。\n"
+msgstr "無效的媒體來源狀態轉換。\n"
 
 #: dlls/mferror/mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "註冊表已復原。\n"
+msgstr "到達了媒體流的結尾。\n"
 
 #: dlls/mferror/mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown() 函式已被呼叫。\n"
 
 #: dlls/mferror/mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "註冊表已復原。\n"
+msgstr "沒有設定媒體流持續時間。\n"
 
 #: dlls/mferror/mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "媒體格式已被識別，但格式無效。\n"
 
 #: dlls/mferror/mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "找不到屬性集。\n"
+msgstr "找不到屬性。\n"
 
 #: dlls/mferror/mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "目錄不是空的。\n"
+msgstr "屬性為唯讀。\n"
 
 #: dlls/mferror/mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "不允許攔截型態。\n"
+msgstr "不允許使用屬性。\n"
 
 #: dlls/mferror/mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "資源使用中。\n"
+msgstr "媒體來源尚未啟動。\n"
 
 #: dlls/mferror/mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的媒體格式。\n"
 
 #: dlls/mferror/mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "資源使用中。\n"
+msgstr "媒體來源狀態錯誤。\n"
 
 #: dlls/mferror/mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "偵測不到資料。\n"
+msgstr "未選取媒體流。\n"
 
 #: dlls/mferror/mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "不受支援的型態。\n"
+msgstr "不支援的媒體來源特性。\n"
 
 #: dlls/mferror/mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "資料流接收器已被移除。\n"
 
 #: dlls/mferror/mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "資料流接收器不同步。\n"
 
 #: dlls/mferror/mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "註冊表已復原。\n"
+msgstr "媒體接收器的資料流集已固定。\n"
 
 #: dlls/mferror/mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "網域已經存在。\n"
+msgstr "資料流接收器已存在。\n"
 
 #: dlls/mferror/mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "作業被使用者取消。\n"
+msgstr "樣本分配已取消。\n"
 
 #: dlls/mferror/mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "目錄不是空的。\n"
+msgstr "樣本分配器為空。\n"
 
 #: dlls/mferror/mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "類別已存在。\n"
+msgstr "接收器已經停止。\n"
 
 #: dlls/mferror/mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "ASF 檔案接收器所接收的位元速率不明。\n"
 
 #: dlls/mferror/mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "偵測不到資料。\n"
+msgstr "沒有為接收器選取任何資料流。\n"
 
 #: dlls/mferror/mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "檔案名稱過長。\n"
+msgstr "元資料過長。\n"
 
 #: dlls/mferror/mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "接收器未處理任何樣本。\n"
 
 #: dlls/mferror/mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "沒有提供必要的標頭給接收器。\n"
 
 #: dlls/mferror/mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "連線無效。\n"
+msgstr "無效的選用節點。\n"
 
 #: dlls/mferror/mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "找不到印表機。"
+msgstr "無法找到解碼器。\n"
 
 #: dlls/mferror/mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "找不到模組。\n"
+msgstr "無法找到編解碼器。\n"
 
 #: dlls/mferror/mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "無法提取呼叫控柄。\n"
+msgstr "無法連線至拓撲節點。\n"
 
 #: dlls/mferror/mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "要求不受支援。\n"
+msgstr "不支援拓撲要求。\n"
 
 #: dlls/mferror/mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "無效的群組屬性。\n"
+msgstr "無效的拓撲時間屬性。\n"
 
 #: dlls/mferror/mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "在拓撲中找到迴圈。\n"
 
 #: dlls/mferror/mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "本功能的安裝來源不存在。\n"
+msgstr "找不到呈現方式描述項。\n"
 
 #: dlls/mferror/mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "索引遺失。\n"
+msgstr "找不到資料流描述項。\n"
 
 #: dlls/mferror/mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "裝置未連接。\n"
+msgstr "未選取串流描述項。\n"
 
 #: dlls/mferror/mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "索引遺失。\n"
+msgstr "找不到來源。\n"
 
 #: dlls/mferror/mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "拓撲載入程式不支援接收啟用。\n"
 
 #: dlls/mferror/mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "時鐘尚未設定時間來源。\n"
 
 #: dlls/mferror/mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "類別已存在。\n"
+msgstr "已經設定時鐘狀態。\n"
 
 #: dlls/mferror/mferror.mc:725
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not simple\n"
-msgstr "沒有可用的說明資訊。"
+msgstr "時鐘並不簡單\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -8126,7 +7879,7 @@ msgstr "聲音選擇"
 
 #: dlls/msacm32/msacm32.rc:39 programs/winedbg/winedbg.rc:77
 msgid "&Save As..."
-msgstr "另存為(&S)..."
+msgstr "另存新檔(&S)..."
 
 #: dlls/msacm32/msacm32.rc:42
 msgid "&Format:"
@@ -8146,7 +7899,7 @@ msgstr "超連結資訊"
 
 #: dlls/mshtml/mshtml.rc:43 programs/winecfg/winecfg.rc:243
 msgid "&Type:"
-msgstr "類型(&T)："
+msgstr "類型(&T):"
 
 #: dlls/mshtml/mshtml.rc:45
 msgid "&URL:"
@@ -8154,7 +7907,7 @@ msgstr "網址(&U):"
 
 #: dlls/mshtml/mshtml.rc:34
 msgid "HTML Document"
-msgstr "HTML 檔案"
+msgstr "HTML 文件"
 
 #: dlls/mshtml/mshtml.rc:29
 msgid "Downloading from %s..."
@@ -8168,7 +7921,7 @@ msgstr "已完成"
 msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
-msgstr "無法開啟指定的安裝套件。 請檢查檔案路徑後再試。"
+msgstr "無法開啟指定的安裝套件。請檢查檔案路徑後再試。"
 
 #: dlls/msi/msi.rc:32
 msgid "path %s not found"
@@ -8212,37 +7965,37 @@ msgid ""
 msgstr ""
 "Windows 安裝程式 %s\n"
 "\n"
-"用法：\n"
+"用法:\n"
 "msiexec 命令 {必要參數} [可選參數]\n"
 "\n"
-"安裝產品：\n"
+"安裝產品:\n"
 "\t/i {套件|產品編號} [內容]\n"
 "\t/package {套件|產品編號} [內容]\n"
 "\t/a 套件 [內容]\n"
-"修復安裝：\n"
+"修復安裝:\n"
 "\t/f[p|o|e|d|c|a|u|m|s|v] {套件|產品編號}\n"
-"解除安裝產品：\n"
+"解除安裝產品:\n"
 "\t/uninstall {套件|產品編號} [內容]\n"
 "\t/x {套件|產品編號} [內容]\n"
-"通告產品：\n"
+"通告產品:\n"
 "\t/j[u|m] 套件 [/t 變換] [/g 語言識別號]\n"
-"套用修補程式：\n"
+"套用修補程式:\n"
 "\t/p 修補套件 [內容]\n"
 "\t/p 修補套件/a 套件 [內容]\n"
 "用於以上命令的記錄檔和 UI 修飾鍵：\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] 日誌檔案\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"註冊 MSI 服務：\n"
+"註冊 MSI 服務:\n"
 "\t/y\n"
 "移除註冊 MSI 服務：\n"
 "\t/z\n"
-"顯示這份說明：\n"
+"顯示這份說明:\n"
 "\t/help\n"
 "\t/?\n"
 
 #: dlls/msi/msi.rc:61
 msgid "enter which folder contains %s"
-msgstr "輸入包含 %s 的檔案夾"
+msgstr "輸入包含 %s 的資料夾"
 
 #: dlls/msi/msi.rc:62
 msgid "install source for feature missing"
@@ -8254,335 +8007,271 @@ msgstr "本功能的網路儲存裝置不存在"
 
 #: dlls/msi/msi.rc:64
 msgid "feature from:"
-msgstr "功能來自："
+msgstr "功能來自:"
 
 #: dlls/msi/msi.rc:65
 msgid "choose which folder contains %s"
-msgstr "選擇包含 %s 的檔案夾"
+msgstr "選擇包含 %s 的資料夾"
 
 #: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:236
 msgid "New Folder"
 msgstr "新資料夾"
 
 #: dlls/msi/msi.rc:91
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "沒有註冊表記錄檔空間。\n"
+msgstr "正在分配註冊表空間"
 
 #: dlls/msi/msi.rc:92
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "單一實體應用程式。\n"
+msgstr "正在搜尋已安裝的應用程式"
 
 #: dlls/msi/msi.rc:93
 msgid "Binding executables"
-msgstr ""
+msgstr "正在繫結可執行檔"
 
 #: dlls/msi/msi.rc:94 dlls/msi/msi.rc:137
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "搜尋 %s"
+msgstr "正在搜尋可用的產品"
 
 #: dlls/msi/msi.rc:95 dlls/msi/msi.rc:96 dlls/msi/msi.rc:101
 msgid "Computing space requirements"
-msgstr ""
+msgstr "正在計算所需空間"
 
 #: dlls/msi/msi.rc:97
-#, fuzzy
-#| msgid "New Folder"
 msgid "Creating folders"
-msgstr "新資料夾"
+msgstr "正在建立資料夾"
 
 #: dlls/msi/msi.rc:98
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "建立捷徑(&T)"
+msgstr "正在建立捷徑"
 
 #: dlls/msi/msi.rc:99
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "服務發生異常。\n"
+msgstr "正在刪除服務"
 
 #: dlls/msi/msi.rc:100
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "建立日期"
+msgstr "正在建立重複的檔案"
 
 #: dlls/msi/msi.rc:102
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "無關聯的應用程式。\n"
+msgstr "正在搜尋關聯的應用程式"
 
 #: dlls/msi/msi.rc:103
 msgid "Copying network install files"
-msgstr ""
+msgstr "正在複製網路安裝檔案"
 
 #: dlls/msi/msi.rc:104
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "複製檔案..."
+msgstr "正在複製新檔案"
 
 #: dlls/msi/msi.rc:105
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "無法安裝組成：%08x"
+msgstr "正在安裝 ODBC 元件"
 
 #: dlls/msi/msi.rc:106
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "安裝服務失敗。\n"
+msgstr "正在安裝新服務"
 
 #: dlls/msi/msi.rc:107
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "安裝/移除"
+msgstr "正在安裝系統目錄"
 
 #: dlls/msi/msi.rc:108
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Wine 應用程式移除程式"
+msgstr "正在驗證安裝"
 
 #: dlls/msi/msi.rc:109
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "正在檢驗啟動條件"
 
 #: dlls/msi/msi.rc:110
 msgid "Migrating feature states from related applications"
-msgstr ""
+msgstr "正在從相關應用程式移轉功能狀態"
 
 #: dlls/msi/msi.rc:111
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "圖示檔案"
+msgstr "正在移動檔案"
 
 #: dlls/msi/msi.rc:112
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "版本資訊"
+msgstr "正在發佈組合資訊"
 
 #: dlls/msi/msi.rc:113
 msgid "Unpublishing assembly information"
-msgstr ""
+msgstr "正在解除發佈組合資訊"
 
 #: dlls/msi/msi.rc:114
-#, fuzzy
-#| msgid "Icon files"
 msgid "Patching files"
-msgstr "圖示檔案"
+msgstr "正在修補檔案"
 
 #: dlls/msi/msi.rc:115
 msgid "Updating component registration"
-msgstr ""
+msgstr "正在更新元件登錄"
 
 #: dlls/msi/msi.rc:116
 msgid "Publishing Qualified Components"
-msgstr ""
+msgstr "正在發佈合格的元件"
 
 #: dlls/msi/msi.rc:117
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "正在發佈產品功能"
 
 #: dlls/msi/msi.rc:118
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "客戶端資訊"
+msgstr "正在發佈產品資訊"
 
 #: dlls/msi/msi.rc:119
 msgid "Registering Class servers"
-msgstr ""
+msgstr "正在登錄類別伺服器"
 
 #: dlls/msi/msi.rc:120
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "正在登錄 COM+ 應用程式和元件"
 
 #: dlls/msi/msi.rc:121
 msgid "Registering extension servers"
-msgstr ""
+msgstr "正在登錄延伸伺服器"
 
 #: dlls/msi/msi.rc:122
 msgid "Registering fonts"
-msgstr ""
+msgstr "正在登錄字型"
 
 #: dlls/msi/msi.rc:123
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "註冊表編輯器"
+msgstr "正在登錄 MIME 資訊"
 
 #: dlls/msi/msi.rc:124
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "註冊表損毀。\n"
+msgstr "正在登錄產品"
 
 #: dlls/msi/msi.rc:125
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "正在登錄程式識別碼"
 
 #: dlls/msi/msi.rc:126
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "類型函式庫"
+msgstr "正在登錄型別程式庫"
 
 #: dlls/msi/msi.rc:127
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "資源使用中。\n"
+msgstr "正在登錄使用者"
 
 #: dlls/msi/msi.rc:128
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "Removing duplicated files"
-msgstr "刪除連續相同的指令(&R)"
+msgstr "正在移除重複的檔案"
 
 #: dlls/msi/msi.rc:129 dlls/msi/msi.rc:153
-#, fuzzy
-#| msgid "Applying font settings"
 msgid "Updating environment strings"
-msgstr "字型設定套用中"
+msgstr "正在更新環境字串"
 
 #: dlls/msi/msi.rc:130
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "移除程式設定(&R)"
+msgstr "正在移除程式"
 
 #: dlls/msi/msi.rc:131
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "圖示檔案"
+msgstr "正在移除檔案"
 
 #: dlls/msi/msi.rc:132
 msgid "Removing folders"
-msgstr ""
+msgstr "正在移除資料夾"
 
 #: dlls/msi/msi.rc:133
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "正在移除 INI 檔案項目"
 
 #: dlls/msi/msi.rc:134
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "區域部分"
+msgstr "正在移除 ODBC 元件"
 
 #: dlls/msi/msi.rc:135
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Removing system registry values"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "正在移除系統登錄值"
 
 #: dlls/msi/msi.rc:136
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "正在移除捷徑"
 
 #: dlls/msi/msi.rc:138
 msgid "Registering modules"
-msgstr ""
+msgstr "正在登錄模組"
 
 #: dlls/msi/msi.rc:139
 msgid "Unregistering modules"
-msgstr ""
+msgstr "正在解除登錄模組"
 
 #: dlls/msi/msi.rc:140
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "正在初始化；"
+msgstr "正在初始化 ODBC 目錄"
 
 #: dlls/msi/msi.rc:141
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "啟動 Wordpad 時失敗"
+msgstr "正在啟動服務"
 
 #: dlls/msi/msi.rc:142
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "正在停止附屬服務：%1\n"
+msgstr "正在停止服務"
 
 #: dlls/msi/msi.rc:143
 msgid "Unpublishing Qualified Components"
-msgstr ""
+msgstr "正在解除發佈合格的元件"
 
 #: dlls/msi/msi.rc:144
 msgid "Unpublishing Product Features"
-msgstr ""
+msgstr "正在解除發佈產品功能"
 
 #: dlls/msi/msi.rc:145
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "客戶端資訊"
+msgstr "正在解除發佈產品資訊"
 
 #: dlls/msi/msi.rc:146
 msgid "Unregister Class servers"
-msgstr ""
+msgstr "解除登錄類別伺服器"
 
 #: dlls/msi/msi.rc:147
 msgid "Unregistering COM+ Applications and Components"
-msgstr ""
+msgstr "正在解除登錄 COM+ 應用程式和元件"
 
 #: dlls/msi/msi.rc:148
 msgid "Unregistering extension servers"
-msgstr ""
+msgstr "正在解除登錄延伸伺服器"
 
 #: dlls/msi/msi.rc:149
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "正在解除登錄字型"
 
 #: dlls/msi/msi.rc:150
 msgid "Unregistering MIME info"
-msgstr ""
+msgstr "正在解除登錄 MIME 資訊"
 
 #: dlls/msi/msi.rc:151
 msgid "Unregistering program identifiers"
-msgstr ""
+msgstr "正在解除登錄程式識別碼"
 
 #: dlls/msi/msi.rc:152
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "正在解除登錄型別程式庫"
 
 #: dlls/msi/msi.rc:154
 msgid "Writing INI files values"
-msgstr ""
+msgstr "正在寫入 INI 檔案項目"
 
 #: dlls/msi/msi.rc:155
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "警告：系統函式庫"
+msgstr "正在寫入系統登錄值"
 
 #: dlls/msi/msi.rc:161
 msgid "Free space: [1]"
-msgstr ""
+msgstr "可用空間: [1]"
 
 #: dlls/msi/msi.rc:162
 msgid "Property: [1], Signature: [2]"
-msgstr ""
+msgstr "屬性: [1]，簽章: [2]"
 
 #: dlls/msi/msi.rc:163
 msgid "File: [1]"
-msgstr "檔案： [1]"
+msgstr "檔案: [1]"
 
 #: dlls/msi/msi.rc:164 dlls/msi/msi.rc:191
 msgid "Folder: [1]"
@@ -8590,137 +8279,127 @@ msgstr "資料夾: [1]"
 
 #: dlls/msi/msi.rc:165 dlls/msi/msi.rc:194
 msgid "Shortcut: [1]"
-msgstr ""
+msgstr "捷徑: [1]"
 
 #: dlls/msi/msi.rc:166 dlls/msi/msi.rc:197 dlls/msi/msi.rc:198
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "裝置(&V)："
+msgstr "服務: [1]"
 
 #: dlls/msi/msi.rc:167 dlls/msi/msi.rc:170 dlls/msi/msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
+msgstr "檔案: [1]， 目錄: [9]， 大小: [6]"
 
 #: dlls/msi/msi.rc:168
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "應用程式"
+msgstr "找到的應用程式: [1]"
 
 #: dlls/msi/msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "檔案: [1]，目錄: [9]，大小: [6]"
 
 #: dlls/msi/msi.rc:171
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "裝置(&V)："
+msgstr "服務: [2]"
 
 #: dlls/msi/msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "檔案: [1]， 相依性: [2]"
 
 #: dlls/msi/msi.rc:173
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "應用程式"
+msgstr "應用程式: [1]"
 
 #: dlls/msi/msi.rc:175 dlls/msi/msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr ""
+msgstr "應用程式內容: [1]，組件名稱: [2]"
 
 #: dlls/msi/msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "檔案: [1]， 目錄: [2]， 大小: [3]"
 
 #: dlls/msi/msi.rc:178 dlls/msi/msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
-msgstr ""
+msgstr "元件識別碼: [1]，辨識符號: [2]"
 
 #: dlls/msi/msi.rc:179 dlls/msi/msi.rc:200
 msgid "Feature: [1]"
-msgstr ""
+msgstr "功能: [1]"
 
 #: dlls/msi/msi.rc:180 dlls/msi/msi.rc:201
 msgid "Class Id: [1]"
-msgstr ""
+msgstr "類別識別碼: [1]"
 
 #: dlls/msi/msi.rc:181
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr ""
+msgstr "應用程式識別碼: [1]{{，應用程式類型: [2]，使用者: [3]，RSN: [4]}}"
 
 #: dlls/msi/msi.rc:182 dlls/msi/msi.rc:203
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "只有進階屬性"
+msgstr "延伸: [1]"
 
 #: dlls/msi/msi.rc:183 dlls/msi/msi.rc:204
 msgid "Font: [1]"
-msgstr "字型： [1]"
+msgstr "字型: [1]"
 
 #: dlls/msi/msi.rc:184 dlls/msi/msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
-msgstr ""
+msgstr "MIME 內容類型: [1]，延伸: [2]"
 
 #: dlls/msi/msi.rc:185 dlls/msi/msi.rc:206
 msgid "ProgId: [1]"
-msgstr ""
+msgstr "ProgId: [1]"
 
 #: dlls/msi/msi.rc:186 dlls/msi/msi.rc:207
 msgid "LibID: [1]"
-msgstr ""
+msgstr "LibID: [1]"
 
 #: dlls/msi/msi.rc:187 dlls/msi/msi.rc:190
 msgid "File: [1], Directory: [9]"
-msgstr ""
+msgstr "檔案: [1]，目錄: [9]"
 
 #: dlls/msi/msi.rc:188 dlls/msi/msi.rc:208
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
+msgstr "名稱: [1]，值: [2]，動作 [3]"
 
 #: dlls/msi/msi.rc:189
 msgid "Application: [1], Command line: [2]"
-msgstr ""
+msgstr "應用程式: [1]，命令列: [2]"
 
 #: dlls/msi/msi.rc:192 dlls/msi/msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
+msgstr "檔案: [1]， 區段︰[2]， 機碼: [3]，值: [4]"
 
 #: dlls/msi/msi.rc:193
 msgid "Key: [1], Name: [2]"
-msgstr ""
+msgstr "機碼: [1]，名稱: [2]"
 
 #: dlls/msi/msi.rc:195 dlls/msi/msi.rc:196
 msgid "File: [1], Folder: [2]"
-msgstr ""
+msgstr "檔案: [1]，資料夾: [2]"
 
 #: dlls/msi/msi.rc:202
 msgid "AppId: [1]{{, AppType: [2]}}"
-msgstr ""
+msgstr "AppId: [1]{{，AppType: [2]}}"
 
 #: dlls/msi/msi.rc:210
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr ""
+msgstr "機碼: [1]，名稱: [2]，值: [3]"
 
 #: dlls/msi/msi.rc:72
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{嚴重錯誤: }}"
 
 #: dlls/msi/msi.rc:73
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{錯誤 [1]。}}"
 
 #: dlls/msi/msi.rc:74
 msgid "Warning [1]."
-msgstr ""
+msgstr "警告 [1]。"
 
 #: dlls/msi/msi.rc:75
 msgid "Info [1]."
-msgstr ""
+msgstr "資訊 [1]。"
 
 #: dlls/msi/msi.rc:76
 msgid ""
@@ -8728,6 +8407,8 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"安裝程式在安裝這個封裝時發生意外的錯誤。這表示這個封裝可能有問題。錯誤碼: "
+"[1]。{{引數: [2], [3], [4]}}"
 
 #: dlls/msi/msi.rc:77
 msgid "{{Disk full: }}"
@@ -8735,33 +8416,35 @@ msgstr "{{磁碟已滿： }}"
 
 #: dlls/msi/msi.rc:78
 msgid "Action [Time]: [1]. [2]"
-msgstr ""
+msgstr "動作 [Time]: [1]。[2]"
 
 #: dlls/msi/msi.rc:79
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
+msgstr "訊息類型: [1]，引數: [2]{，[3]}"
 
 #: dlls/msi/msi.rc:82
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr ""
+msgstr "=== 開啟記錄時間: [Date]  [Time] ==="
 
 #: dlls/msi/msi.rc:80
 msgid "Action start [Time]: [1]."
-msgstr ""
+msgstr "動作開始 [Time]: [1]。"
 
 #: dlls/msi/msi.rc:81
 msgid "Action ended [Time]: [1]. Return value [2]."
-msgstr ""
+msgstr "動作結束 [Time]: [1]。傳回的值 [2]。"
 
 #: dlls/msi/msi.rc:84
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "請插入磁片: [2]"
 
 #: dlls/msi/msi.rc:85
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
+"找不到來源檔案{{(cabinet)}}: [2]。請確認檔案是否存在，以及您是否有存取它的權"
+"限。"
 
 #: dlls/msrle32/msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -8781,11 +8464,11 @@ msgstr "視訊壓縮"
 
 #: dlls/msvfw32/msvfw32.rc:39
 msgid "&Compressor:"
-msgstr "壓縮器(&C)："
+msgstr "壓縮器(&C):"
 
 #: dlls/msvfw32/msvfw32.rc:42
 msgid "Con&figure..."
-msgstr "組態(&F)..."
+msgstr "設定(&F)..."
 
 #: dlls/msvfw32/msvfw32.rc:43
 msgid "&About"
@@ -8793,11 +8476,11 @@ msgstr "關於(&A)"
 
 #: dlls/msvfw32/msvfw32.rc:47
 msgid "Compression &Quality:"
-msgstr "壓縮品質(&Q)："
+msgstr "壓縮品質(&Q):"
 
 #: dlls/msvfw32/msvfw32.rc:49
 msgid "&Key Frame Every"
-msgstr "關鍵影格/每(&K)"
+msgstr "畫面間隔(&K)"
 
 #: dlls/msvfw32/msvfw32.rc:53
 msgid "&Data Rate"
@@ -8809,7 +8492,7 @@ msgstr "kB/s"
 
 #: dlls/msvfw32/msvfw32.rc:28
 msgid "Full Frames (Uncompressed)"
-msgstr "完整影格(未壓縮)"
+msgstr "完整影格 (未壓縮)"
 
 #: dlls/msvidc32/msvidc32.rc:29
 msgid "Wine Video 1 video codec"
@@ -8833,7 +8516,7 @@ msgstr "捲軸"
 
 #: dlls/oleacc/oleacc.rc:35
 msgid "grip"
-msgstr "握把"
+msgstr "底框"
 
 #: dlls/oleacc/oleacc.rc:36
 msgid "sound"
@@ -8845,7 +8528,7 @@ msgstr "游標"
 
 #: dlls/oleacc/oleacc.rc:38
 msgid "caret"
-msgstr "插字符號"
+msgstr "插入點"
 
 #: dlls/oleacc/oleacc.rc:39
 msgid "alert"
@@ -8857,11 +8540,11 @@ msgstr "視窗"
 
 #: dlls/oleacc/oleacc.rc:41
 msgid "client"
-msgstr "客戶端"
+msgstr "用戶端"
 
 #: dlls/oleacc/oleacc.rc:42
 msgid "popup menu"
-msgstr "彈出式選單"
+msgstr "快顯功能表"
 
 #: dlls/oleacc/oleacc.rc:43
 msgid "menu item"
@@ -8893,15 +8576,15 @@ msgstr "對話框"
 
 #: dlls/oleacc/oleacc.rc:50
 msgid "border"
-msgstr "邊框"
+msgstr "邊界"
 
 #: dlls/oleacc/oleacc.rc:51
 msgid "grouping"
-msgstr "分組"
+msgstr "群組"
 
 #: dlls/oleacc/oleacc.rc:52
 msgid "separator"
-msgstr "分隔線"
+msgstr "分隔字元"
 
 #: dlls/oleacc/oleacc.rc:53
 msgid "tool bar"
@@ -8917,15 +8600,15 @@ msgstr "表格"
 
 #: dlls/oleacc/oleacc.rc:56
 msgid "column header"
-msgstr "行首"
+msgstr "欄標題"
 
 #: dlls/oleacc/oleacc.rc:57
 msgid "row header"
-msgstr "列首"
+msgstr "列標題"
 
 #: dlls/oleacc/oleacc.rc:58
 msgid "column"
-msgstr "行"
+msgstr "欄"
 
 #: dlls/oleacc/oleacc.rc:59
 msgid "row"
@@ -8937,11 +8620,11 @@ msgstr "儲存格"
 
 #: dlls/oleacc/oleacc.rc:61
 msgid "link"
-msgstr "鏈結"
+msgstr "連結"
 
 #: dlls/oleacc/oleacc.rc:62
 msgid "help balloon"
-msgstr "說明泡泡"
+msgstr "說明提示氣球"
 
 #: dlls/oleacc/oleacc.rc:63
 msgid "character"
@@ -8957,15 +8640,15 @@ msgstr "清單項目"
 
 #: dlls/oleacc/oleacc.rc:66
 msgid "outline"
-msgstr "描邊"
+msgstr "邊框"
 
 #: dlls/oleacc/oleacc.rc:67
 msgid "outline item"
-msgstr "描邊項目"
+msgstr "邊框項目"
 
 #: dlls/oleacc/oleacc.rc:68
 msgid "page tab"
-msgstr "頁面頁標"
+msgstr "索引標籤"
 
 #: dlls/oleacc/oleacc.rc:69
 msgid "property page"
@@ -8993,23 +8676,23 @@ msgstr "按鈕"
 
 #: dlls/oleacc/oleacc.rc:75
 msgid "check button"
-msgstr "檢查按鈕"
+msgstr "核取按鈕"
 
 #: dlls/oleacc/oleacc.rc:76
 msgid "radio button"
-msgstr "單選按鈕"
+msgstr "選項按鈕"
 
 #: dlls/oleacc/oleacc.rc:77
 msgid "combo box"
-msgstr "複合方塊"
+msgstr "下拉式方塊"
 
 #: dlls/oleacc/oleacc.rc:78
 msgid "drop down"
-msgstr "下拉選單"
+msgstr "下拉"
 
 #: dlls/oleacc/oleacc.rc:79
 msgid "progress bar"
-msgstr "進度條"
+msgstr "進度列"
 
 #: dlls/oleacc/oleacc.rc:80
 msgid "dial"
@@ -9021,11 +8704,11 @@ msgstr "快速鍵欄位"
 
 #: dlls/oleacc/oleacc.rc:82
 msgid "slider"
-msgstr "滑動軸"
+msgstr "滑桿"
 
 #: dlls/oleacc/oleacc.rc:83
 msgid "spin box"
-msgstr "數值調整框"
+msgstr "調整方塊"
 
 #: dlls/oleacc/oleacc.rc:84
 msgid "diagram"
@@ -9053,11 +8736,11 @@ msgstr "格線下拉按鈕"
 
 #: dlls/oleacc/oleacc.rc:90
 msgid "white space"
-msgstr "空白"
+msgstr "白色空格"
 
 #: dlls/oleacc/oleacc.rc:91
 msgid "page tab list"
-msgstr "頁面頁標清單"
+msgstr "索引標籤清單"
 
 #: dlls/oleacc/oleacc.rc:92
 msgid "clock"
@@ -9073,72 +8756,54 @@ msgstr "IP 位址"
 
 #: dlls/oleacc/oleacc.rc:95
 msgid "outline button"
-msgstr "描邊按鈕"
+msgstr "外框按鈕"
 
 #: dlls/oleacc/oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "中"
+msgstr "一般"
 
 #: dlls/oleacc/oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "不得使用"
+msgstr "無法使用"
 
 #: dlls/oleacc/oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "選擇"
+msgstr "已選取"
 
 #: dlls/oleacc/oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "已暫停"
+msgstr "已設定焦點"
 
 #: dlls/oleacc/oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "壓縮(&C)"
+msgstr "已按下"
 
 #: dlls/oleacc/oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "已核取"
 
 #: dlls/oleacc/oleacc.rc:103
-#, fuzzy
-#| msgid "Mixed"
 msgctxt "object state"
 msgid "mixed"
-msgstr "混雜"
+msgstr "已混和"
 
 #: dlls/oleacc/oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "唯讀(&R)"
+msgstr "唯讀"
 
 #: dlls/oleacc/oleacc.rc:105
-#, fuzzy
-#| msgid "Hot Tracked Item"
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "熱門軌段的項目"
+msgstr "熱點追蹤"
 
 #: dlls/oleacc/oleacc.rc:106
-#, fuzzy
-#| msgid "Defaults"
 msgctxt "object state"
 msgid "default"
 msgstr "預設"
@@ -9146,31 +8811,29 @@ msgstr "預設"
 #: dlls/oleacc/oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "已展開"
 
 #: dlls/oleacc/oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "已摺疊"
 
 #: dlls/oleacc/oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "忙碌"
 
 #: dlls/oleacc/oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "飄浮"
 
 #: dlls/oleacc/oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr ""
+msgstr "跑馬燈"
 
 #: dlls/oleacc/oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
 msgstr "動畫"
@@ -9178,104 +8841,82 @@ msgstr "動畫"
 #: dlls/oleacc/oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "隱藏"
 
 #: dlls/oleacc/oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "螢幕不可見"
 
 #: dlls/oleacc/oleacc.rc:115
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "sizeable"
-msgstr "啟用(&E)"
+msgstr "可調大小"
 
 #: dlls/oleacc/oleacc.rc:116
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "moveable"
-msgstr "啟用(&E)"
+msgstr "可移動"
 
 #: dlls/oleacc/oleacc.rc:117
 msgctxt "object state"
 msgid "self voicing"
-msgstr ""
+msgstr "自動發聲"
 
 #: dlls/oleacc/oleacc.rc:118
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focusable"
-msgstr "已暫停"
+msgstr "可設定焦點"
 
 #: dlls/oleacc/oleacc.rc:119
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "selectable"
-msgstr "表格"
+msgstr "可選取"
 
 #: dlls/oleacc/oleacc.rc:120
-#, fuzzy
-#| msgid "link"
 msgctxt "object state"
 msgid "linked"
-msgstr "鏈結"
+msgstr "已連結"
 
 #: dlls/oleacc/oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "可測定"
 
 #: dlls/oleacc/oleacc.rc:122
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "表格"
+msgstr "可多重選取"
 
 #: dlls/oleacc/oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "請選取檔案。"
+msgstr "可擴充選取"
 
 #: dlls/oleacc/oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "警示"
+msgstr "低度警示"
 
 #: dlls/oleacc/oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "警示"
+msgstr "中度警示"
 
 #: dlls/oleacc/oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "警示"
+msgstr "高度警示"
 
 #: dlls/oleacc/oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "防止寫入的。\n"
+msgstr "保護"
 
 #: dlls/oleacc/oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "有快顯"
 
 #: dlls/oleaut32/oleaut32.rc:30 programs/oleview/oleview.rc:146
 msgid "True"
@@ -9294,206 +8935,157 @@ msgid "Off"
 msgstr "關"
 
 #: dlls/oledb32/version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "視訊"
+msgstr "提供者"
 
 #: dlls/oledb32/version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "請選擇您要使用的格式："
+msgstr "選擇您要連線的資料:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connection"
-msgstr "區域網路連線"
+msgstr "連線"
 
 #: dlls/oledb32/version.rc:69
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "請選擇您要使用的格式："
+msgstr "指定下列項目以連接至 ODBC 資料:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. 指定資料來源:"
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "請輸入您的姓名"
+msgstr "使用資料來源名稱(&D)"
 
 #: dlls/oledb32/version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "重置的連線"
+msgstr "使用連線字串(&O)"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "&Connection string:"
-msgstr "區域網路連線"
+msgstr "連線字串(&C):"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "加入(&D)..."
+msgstr "建立(&U)..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. 輸入資訊以登入至伺服器"
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "使用者名稱(&U)："
+msgstr "使用者名稱(&N):"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "空白頁面(&B)"
+msgstr "空白密碼(&B)"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "密碼錯誤。\n"
+msgstr "允許儲存密碼(&S)"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. 輸入要使用的初始目錄(&I):"
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "重置的連線"
+msgstr "測試連線(&T)"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
 msgstr "進階"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "網路分享"
+msgstr "網路設定"
 
 #: dlls/oledb32/version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "不當的假冒等級。\n"
+msgstr "模擬等級(&I):"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "保護等級(&R):"
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "已連線"
+msgstr "連線:"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds."
-msgstr "秒(&S)"
+msgstr "秒。"
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "成功"
+msgstr "存取(&C):"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "全部(&A)"
+msgstr "全部"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"這些是此類型資料的初始化內容。要編輯值，請選擇內容，然後選擇下方的 [編輯值]。"
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "編輯(&E)..."
+msgstr "編輯值(&E)..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "屬性"
+msgstr "資料連結錯誤"
 
 #: dlls/oledb32/version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "請選取檔案。"
+msgstr "請選取提供者。"
 
 #: dlls/oledb32/version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
-msgstr ""
+msgstr "無法再使用提供者。請確保提供者已正確安裝。"
 
 #: dlls/oledb32/version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "屬性"
+msgstr "資料連結內容"
 
 #: dlls/oledb32/version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE 資料庫提供者"
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "待命"
+msgstr "讀取"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "產品說明："
+msgstr "讀取與寫入"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "共享，不拒絕"
 
 #: dlls/oledb32/version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "共享，拒絕讀取"
 
 #: dlls/oledb32/version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "共享，拒絕寫入"
 
 #: dlls/oledb32/version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "共享，排除"
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O 寫入次數"
+msgstr "寫入"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
@@ -9501,7 +9093,7 @@ msgstr "插入物件"
 
 #: dlls/oledlg/oledlg.rc:61
 msgid "Object Type:"
-msgstr "物件類型："
+msgstr "物件類型:"
 
 #: dlls/oledlg/oledlg.rc:64 dlls/oledlg/oledlg.rc:102
 msgid "Result"
@@ -9509,7 +9101,7 @@ msgstr "結果"
 
 #: dlls/oledlg/oledlg.rc:65
 msgid "Create New"
-msgstr "新增"
+msgstr "新建"
 
 #: dlls/oledlg/oledlg.rc:67
 msgid "Create Control"
@@ -9517,7 +9109,7 @@ msgstr "建立控制項"
 
 #: dlls/oledlg/oledlg.rc:69
 msgid "Create From File"
-msgstr "建立於檔案"
+msgstr "從檔案建立"
 
 #: dlls/oledlg/oledlg.rc:72
 msgid "&Add Control..."
@@ -9533,7 +9125,7 @@ msgstr "瀏覽..."
 
 #: dlls/oledlg/oledlg.rc:76
 msgid "File:"
-msgstr "檔案："
+msgstr "檔案:"
 
 #: dlls/oledlg/oledlg.rc:82
 msgid "Paste Special"
@@ -9541,7 +9133,7 @@ msgstr "特殊貼上"
 
 #: dlls/oledlg/oledlg.rc:85 dlls/setupapi/setupapi.rc:43
 msgid "Source:"
-msgstr "原始檔案："
+msgstr "原始檔案:"
 
 #: dlls/oledlg/oledlg.rc:86 dlls/shdoclc/shdoclc.rc:50
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
@@ -9557,7 +9149,7 @@ msgstr "貼上連結(&L)"
 
 #: dlls/oledlg/oledlg.rc:90
 msgid "&As:"
-msgstr "為(&A)："
+msgstr "為(&A):"
 
 #: dlls/oledlg/oledlg.rc:97
 msgid "&Display As Icon"
@@ -9575,7 +9167,9 @@ msgstr "在您的文件中插入一個新的 %s 物件"
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
-msgstr "將檔案的內容以物件的方式插入到您的文件以便您可以用程式來啟動它。"
+msgstr ""
+"將這個檔案的內容以物件的方式插入到您的文件中，以便您使用建立該檔案的程式來啟"
+"動它。"
 
 #: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:195
 msgid "Browse"
@@ -9585,29 +9179,23 @@ msgstr "瀏覽"
 msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
-msgstr "該檔案不像是一個有效的 OLE 模組。 無法註冊 OLE 元件。"
+msgstr "該檔案不像是一個有效的 OLE 模組。無法註冊 OLE 元件。"
 
 #: dlls/oledlg/oledlg.rc:32
 msgid "Add Control"
-msgstr "加入控制項"
+msgstr "新增控制項"
 
 #: dlls/oledlg/oledlg.rc:35
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "字型(&F)..."
+msgstr "轉換(&C)..."
 
 #: dlls/oledlg/oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "物件(&O)"
+msgstr "%1 %2 物件(&O)"
 
 #: dlls/oledlg/oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "物件(&O)"
+msgstr "%1 物件(&O)"
 
 #: dlls/oledlg/oledlg.rc:33 programs/oleview/oleview.rc:40
 msgid "&Object"
@@ -9621,13 +9209,14 @@ msgstr "將剪貼簿的內容以 %s 插入至您的檔案。"
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
-msgstr "將剪貼簿的內容插入到您的檔案以便您可以使用 %s。"
+msgstr "將剪貼簿的內容插入至您的檔案，以便您可以使用 %s 啟動它。"
 
 #: dlls/oledlg/oledlg.rc:43
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
-msgstr "將剪貼簿的內容插入到您的文件以便您可以用 %s 啟動它, 一般顯示為圖示。"
+msgstr ""
+"將剪貼簿的內容插入至您的檔案，以便您可以使用 %s 啟動它。它將顯示為圖示。"
 
 #: dlls/oledlg/oledlg.rc:44
 msgid ""
@@ -9635,8 +9224,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"將剪貼簿的內容以 %s 插入到您的文件。 資料是連結到來源檔案的, 對來源檔案的任何"
-"變更都會影響到您的文件。"
+"將剪貼簿的內容以 %s 插入至您的檔案。資料會連結到來源檔案，以便將所做的變更反"
+"應到您的文件。"
 
 #: dlls/oledlg/oledlg.rc:45
 msgid ""
@@ -9644,8 +9233,8 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"將剪貼簿的圖片插入到您的文件。 圖片是連結到來源檔案的, 對來源檔案的任何變更都"
-"會影響到您的文件。"
+"將剪貼簿的圖片插入到您的文件。圖片會連結到來源檔案，以便將所做的變更反應到您"
+"的文件。"
 
 #: dlls/oledlg/oledlg.rc:46
 msgid ""
@@ -9653,8 +9242,8 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"將剪貼簿的捷徑插入到您的檔案。 捷徑是連結到來源檔案的, 對來源檔案的任何變更都"
-"會影響到您的檔案。"
+"將指向剪貼簿內容所在位置的捷徑插入到您的檔案。捷徑會連結到來源檔案，以便將所"
+"做的變更反應到您的文件。"
 
 #: dlls/oledlg/oledlg.rc:47
 msgid "Inserts the contents of the clipboard into your document."
@@ -9670,7 +9259,7 @@ msgstr "不明來源"
 
 #: dlls/oledlg/oledlg.rc:50
 msgid "the program which created it"
-msgstr "不明應用程式"
+msgstr "建立該檔案的程式"
 
 #: dlls/sane.ds/sane.rc:41
 msgid "Scanning"
@@ -9683,28 +9272,28 @@ msgstr "正在掃描... 請稍候"
 #: dlls/sane.ds/sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr "像素"
+msgstr "px"
 
 #: dlls/sane.ds/sane.rc:32
 msgctxt "unit: bits"
 msgid "b"
-msgstr "位元"
+msgstr "b"
 
 #: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:49
 #: programs/winecfg/winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
-msgstr "點/英吋"
+msgstr "dpi"
 
 #: dlls/sane.ds/sane.rc:35
 msgctxt "unit: percent"
 msgid "%"
-msgstr "百分比"
+msgstr "%"
 
 #: dlls/sane.ds/sane.rc:36
 msgctxt "unit: microseconds"
 msgid "us"
-msgstr "微秒"
+msgstr "µs"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9712,7 +9301,7 @@ msgstr "%s 的設定值"
 
 #: dlls/serialui/serialui.rc:31
 msgid "Baud Rate"
-msgstr "鮑率"
+msgstr "傳輸速率"
 
 #: dlls/serialui/serialui.rc:33
 msgid "Parity"
@@ -9732,11 +9321,11 @@ msgstr "停止位元"
 
 #: dlls/setupapi/setupapi.rc:39
 msgid "Copying Files..."
-msgstr "複製檔案..."
+msgstr "正在複製檔案..."
 
 #: dlls/setupapi/setupapi.rc:45
 msgid "Destination:"
-msgstr "目標檔案："
+msgstr "目標檔案:"
 
 #: dlls/setupapi/setupapi.rc:52
 msgid "Files Needed"
@@ -9747,36 +9336,36 @@ msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
-"插入原廠安裝光碟\n"
-"並確認選擇了正確的磁碟"
+"請插入製造廠商的安裝磁片\n"
+"並確認從下方選取了正確的磁碟"
 
 #: dlls/setupapi/setupapi.rc:57
 msgid "Copy manufacturer's files from:"
-msgstr "複製原廠檔案："
+msgstr "製造廠商的檔案複製來源:"
 
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
-msgstr "需要檔案 %1 存於 %2"
+msgstr "需要 %2 的檔案 '%1'"
 
 #: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
 msgid "Unknown"
-msgstr "未知"
+msgstr "不明"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
-msgstr "從複製檔案："
+msgstr "檔案複製來源:"
 
 #: dlls/setupapi/setupapi.rc:34
 msgid "Type the path where the file is located, and then click OK."
-msgstr "輸入檔案位置，並選擇確認。"
+msgstr "輸入檔案所在的路徑，然後按 [確定]。"
 
 #: dlls/shdoclc/shdoclc.rc:42
 msgid "F&orward"
-msgstr "向前(&O)"
+msgstr "下一頁(&O)"
 
 #: dlls/shdoclc/shdoclc.rc:44
 msgid "&Save Background As..."
-msgstr "將背景存為(&S)..."
+msgstr "另存背景為(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:45
 msgid "Set As Back&ground"
@@ -9788,7 +9377,7 @@ msgstr "複製背景(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:47
 msgid "Set as &Desktop Item"
-msgstr "設定到桌面(&D)"
+msgstr "設定為桌面項目(&D)"
 
 #: dlls/shdoclc/shdoclc.rc:52
 msgid "Create Shor&tcut"
@@ -9867,7 +9456,7 @@ msgstr "複製捷徑(&T)"
 #: dlls/shdoclc/shdoclc.rc:86 dlls/shdoclc/shdoclc.rc:139
 #: dlls/shdoclc/shdoclc.rc:168 dlls/shdoclc/shdoclc.rc:194
 msgid "P&roperties"
-msgstr "屬性(&R)"
+msgstr "內容(&R)"
 
 #: dlls/shdoclc/shdoclc.rc:91 dlls/user32/user32.rc:58
 msgid "&Undo"
@@ -9884,7 +9473,7 @@ msgstr "選擇(&S)"
 
 #: dlls/shdoclc/shdoclc.rc:105
 msgid "&Cell"
-msgstr "格(&C)"
+msgstr "儲存格(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:106
 msgid "&Row"
@@ -9900,11 +9489,11 @@ msgstr "表格(&T)"
 
 #: dlls/shdoclc/shdoclc.rc:111
 msgid "&Cell Properties"
-msgstr "格屬性(&C)"
+msgstr "儲存格內容(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:112
 msgid "&Table Properties"
-msgstr "表格屬性(&T)"
+msgstr "表格內容(&T)"
 
 #: dlls/shdoclc/shdoclc.rc:128
 msgid "Open in &New Window"
@@ -9916,7 +9505,7 @@ msgstr "剪下"
 
 #: dlls/shdoclc/shdoclc.rc:155
 msgid "&Save Video As..."
-msgstr "將視訊另存為(&S)..."
+msgstr "另存視訊為(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:166 dlls/shdoclc/shdoclc.rc:190
 msgid "Play"
@@ -9988,7 +9577,7 @@ msgstr "編輯檢視(&E)"
 
 #: dlls/shdoclc/shdoclc.rc:219 dlls/shdoclc/shdoclc.rc:233
 msgid "Scroll Here"
-msgstr "滾動這裡"
+msgstr "捲動到這裡"
 
 #: dlls/shdoclc/shdoclc.rc:221
 msgid "Top"
@@ -10070,7 +9659,7 @@ msgstr "清單(&L)"
 #: programs/taskmgr/taskmgr.rc:67 programs/taskmgr/taskmgr.rc:112
 #: programs/taskmgr/taskmgr.rc:254
 msgid "&Details"
-msgstr "詳細清單(&D)"
+msgstr "詳細資料(&D)"
 
 #: dlls/shell32/shell32.rc:51 programs/winefile/winefile.rc:78
 msgid "Arrange &Icons"
@@ -10119,7 +9708,7 @@ msgstr "新增連結(&L)"
 
 #: dlls/shell32/shell32.rc:74
 msgid "Properties"
-msgstr "屬性"
+msgstr "內容"
 
 #: dlls/shell32/shell32.rc:85
 msgctxt "recycle bin"
@@ -10132,7 +9721,7 @@ msgstr "清除(&E)"
 
 #: dlls/shell32/shell32.rc:98
 msgid "E&xplore"
-msgstr "檔案管理員(&X)"
+msgstr "瀏覽(&X)"
 
 #: dlls/shell32/shell32.rc:101
 msgid "C&ut"
@@ -10184,7 +9773,7 @@ msgstr "關於 %s"
 
 #: dlls/shell32/shell32.rc:321
 msgid "Wine &license"
-msgstr "使用許可(&L)"
+msgstr "Wine 使用許可(&L)"
 
 #: dlls/shell32/shell32.rc:326
 msgid "Running on %s"
@@ -10195,16 +9784,14 @@ msgid "Wine was brought to you by:"
 msgstr "Wine 開發人員:"
 
 #: dlls/shell32/shell32.rc:332
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "執行(&R)..."
+msgstr "執行"
 
 #: dlls/shell32/shell32.rc:336
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
-msgstr "輸入程式，目錄，檔案或者 Internet 資源名，Wine 將為您開啟它。"
+msgstr "輸入程式、資料夾、文件或網際網路資源名稱。Wine 將為您開啟它。"
 
 #: dlls/shell32/shell32.rc:337
 msgid "&Open:"
@@ -10217,32 +9804,26 @@ msgid "&Browse..."
 msgstr "瀏覽(&B)..."
 
 #: dlls/shell32/shell32.rc:353 dlls/shell32/shell32.rc:382
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "檔案類型"
+msgstr "檔案類型:"
 
 #: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
-msgstr "位址："
+msgstr "位置:"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
-msgstr "大小："
+msgstr "大小:"
 
 #: dlls/shell32/shell32.rc:363 dlls/shell32/shell32.rc:396
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "建立日期"
+msgstr "建立日期:"
 
 #: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "屬性(&A):"
+msgstr "屬性:"
 
 #: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
 #: programs/winefile/winefile.rc:173
@@ -10252,31 +9833,23 @@ msgstr "隱藏(&I)"
 #: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
-msgstr "保存(&A)"
+msgstr "封存(&A)"
 
 #: dlls/shell32/shell32.rc:384
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "開啟："
+msgstr "開啟檔案:"
 
 #: dlls/shell32/shell32.rc:387
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "變更圖示(&I)..."
+msgstr "變更(&C)..."
 
 #: dlls/shell32/shell32.rc:398
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "已修改"
+msgstr "上次修改日期:"
 
 #: dlls/shell32/shell32.rc:400
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "最後修改："
+msgstr "上次存取日期:"
 
 #: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
 #: programs/winefile/winefile.rc:107
@@ -10324,7 +9897,7 @@ msgstr "我的電腦"
 
 #: dlls/shell32/shell32.rc:157
 msgid "Control Panel"
-msgstr "Wine 控制臺"
+msgstr "控制臺"
 
 #: dlls/shell32/shell32.rc:164
 msgid "Select"
@@ -10336,7 +9909,7 @@ msgstr "重新啟動"
 
 #: dlls/shell32/shell32.rc:188
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "您要模擬視窗重新開機？"
+msgstr "您確定要模擬 Windows 的重新開機程序嗎?"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Shutdown"
@@ -10344,7 +9917,7 @@ msgstr "關機"
 
 #: dlls/shell32/shell32.rc:190
 msgid "Do you want to shutdown your Wine session?"
-msgstr "您確定要關閉您的 Wine 工作階段嗎？"
+msgstr "您確定要關閉您的 Wine 工作階段嗎?"
 
 #: dlls/shell32/shell32.rc:201 programs/progman/progman.rc:83
 msgid "Programs"
@@ -10382,23 +9955,23 @@ msgstr "桌面"
 
 #: dlls/shell32/shell32.rc:209
 msgid "NetHood"
-msgstr "網路上的芳鄰"
+msgstr "NetHood"
 
 #: dlls/shell32/shell32.rc:210
 msgid "Templates"
-msgstr "樣板"
+msgstr "範本"
 
 #: dlls/shell32/shell32.rc:211
 msgid "PrintHood"
-msgstr "印表套頁"
+msgstr "PrintHood"
 
 #: dlls/shell32/shell32.rc:212 programs/winhlp32/winhlp32.rc:49
 msgid "History"
-msgstr "歷程"
+msgstr "歷程記錄"
 
 #: dlls/shell32/shell32.rc:213
 msgid "Program Files"
-msgstr "程式檔案"
+msgstr "Program Files"
 
 #: dlls/shell32/shell32.rc:215 dlls/shell32/shell32.rc:220
 msgid "Pictures"
@@ -10406,7 +9979,7 @@ msgstr "圖片"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Common Files"
-msgstr "共同檔案"
+msgstr "Common Files"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Administrative Tools"
@@ -10414,7 +9987,7 @@ msgstr "系統管理工具"
 
 #: dlls/shell32/shell32.rc:214
 msgid "Program Files (x86)"
-msgstr "程式檔案 (x86)"
+msgstr "Program Files (x86)"
 
 #: dlls/shell32/shell32.rc:222
 msgid "Contacts"
@@ -10438,7 +10011,7 @@ msgstr "狀態"
 
 #: dlls/shell32/shell32.rc:151
 msgid "Model"
-msgstr "式樣"
+msgstr "型號"
 
 #: dlls/shell32/shell32.rc:226
 msgid "Sample Music"
@@ -10474,31 +10047,31 @@ msgstr "下載"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Unable to create new Folder: Permission denied."
-msgstr "無法建立新的資料夾：權限被拒絕。"
+msgstr "無法建立新的資料夾: 權限被拒絕。"
 
 #: dlls/shell32/shell32.rc:168
 msgid "Error during creation of a new folder"
-msgstr "在建立新資料夾的期間發生錯誤"
+msgstr "在建立新資料夾時發生錯誤"
 
 #: dlls/shell32/shell32.rc:169
 msgid "Confirm file deletion"
-msgstr "確認檔案的刪除"
+msgstr "確認刪除檔案"
 
 #: dlls/shell32/shell32.rc:170
 msgid "Confirm folder deletion"
-msgstr "確認資料夾的刪除"
+msgstr "確認刪除資料夾"
 
 #: dlls/shell32/shell32.rc:171
 msgid "Are you sure you want to delete '%1'?"
-msgstr "確定要刪除 %1？"
+msgstr "您確定要刪除 '%1' 嗎?"
 
 #: dlls/shell32/shell32.rc:172
 msgid "Are you sure you want to delete these %1 items?"
-msgstr "確定要刪除這 %1 個項目？"
+msgstr "您確定要刪除 %1 個項目嗎?"
 
 #: dlls/shell32/shell32.rc:179
 msgid "Confirm file overwrite"
-msgstr "確認檔案的覆寫"
+msgstr "確認覆寫檔案"
 
 #: dlls/shell32/shell32.rc:178
 msgid ""
@@ -10506,30 +10079,30 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"這個資料夾已經含有名為 %1 的檔案。\n"
+"這個資料夾已經含有名為 '%1' 的檔案。\n"
 "\n"
-"您要置換它嗎？"
+"您要取代它嗎?"
 
 #: dlls/shell32/shell32.rc:173
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "確定要刪除已選項目？"
+msgstr "您確定要刪除已選取的項目嗎?"
 
 #: dlls/shell32/shell32.rc:175
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
-msgstr "您確定要將 %1 和它的所有內容送到回收筒？"
+msgstr "您確定要將 '%1' 和它的所有內容送到回收筒嗎?"
 
 #: dlls/shell32/shell32.rc:174
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "您確定要將 %1 送到回收筒？"
+msgstr "您確定要將 '%1' 送到回收筒嗎?"
 
 #: dlls/shell32/shell32.rc:176
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "您確定要將這 %1 個項目送到回收筒？"
+msgstr "您確定要將 %1 個項目送到回收筒嗎?"
 
 #: dlls/shell32/shell32.rc:177
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr "項目 %1 未送到回收筒。您要代之以刪除它嗎？"
+msgstr "無法將項目 '%1' 送到回收筒。您要改為刪除它嗎?"
 
 #: dlls/shell32/shell32.rc:184
 msgid ""
@@ -10539,25 +10112,23 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"這個資料夾已經含有名為 %1 的資料夾。\n"
+"這個資料夾已經含有名為 '%1' 的資料夾。\n"
 "\n"
 "如果在目的資料夾中的檔案，和在已選資料夾中\n"
-"的檔案同名，那麼它們將被置換。您仍然要移動或複製\n"
-"資料夾嗎？"
+"的檔案同名，那麼它們將被取代。您仍然要移動或複製\n"
+"資料夾嗎?"
 
 #: dlls/shell32/shell32.rc:238
 msgid "Wine Control Panel"
 msgstr "Wine 控制臺"
 
 #: dlls/shell32/shell32.rc:193
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "無法顯示「執行檔案」對話方塊 (內部錯誤)"
+msgstr "無法顯示 [執行] 對話方塊 (內部錯誤)"
 
 #: dlls/shell32/shell32.rc:194
 msgid "Unable to display Browse dialog box (internal error)"
-msgstr "無法顯示「瀏覽」對話方塊 (內部錯誤)"
+msgstr "無法顯示 [瀏覽] 對話方塊 (內部錯誤)"
 
 #: dlls/shell32/shell32.rc:196
 msgid "Executable files (*.exe)"
@@ -10565,15 +10136,15 @@ msgstr "可執行檔 (*.exe)"
 
 #: dlls/shell32/shell32.rc:242
 msgid "There is no Windows program configured to open this type of file."
-msgstr "沒有任何 Windows 程式被組配以開啟這種型態的檔案。"
+msgstr "沒有設定開啟這種類型的檔案的 Windows 程式。"
 
 #: dlls/shell32/shell32.rc:244
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "您確定希望永久刪除 %1？"
+msgstr "您確定要永久刪除 '%1' 嗎?"
 
 #: dlls/shell32/shell32.rc:245
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "您確定希望永久刪除這 %1 個項目？"
+msgstr "您確定要永久刪除 %1 個項目嗎?"
 
 #: dlls/shell32/shell32.rc:246
 msgid "Confirm deletion"
@@ -10587,7 +10158,7 @@ msgid ""
 msgstr ""
 "檔案已經存在於路徑 %1。\n"
 "\n"
-"您要置換它嗎？"
+"您要取代它嗎?"
 
 #: dlls/shell32/shell32.rc:248
 msgid ""
@@ -10597,7 +10168,7 @@ msgid ""
 msgstr ""
 "資料夾已經存在於路徑 %1。\n"
 "\n"
-"您要置換它嗎？"
+"您要取代它嗎?"
 
 #: dlls/shell32/shell32.rc:249
 msgid "Confirm overwrite"
@@ -10619,16 +10190,16 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine 是自由軟體；您可以遵循由自由軟體基金會發布的 GNU 較寬鬆通用公共授權，再"
-"次散布它和/或修改它；您可以採用版本 2.1 的授權，或 (您自行選擇的) 任何後續的"
+"Wine 是自由軟體; 您可以遵循由自由軟體基金會發布的 GNU 較寬鬆通用公共授權，再"
+"次散布它和/或修改它; 您可以採用版本 2.1 的授權，或 (您自行選擇的) 任何後續的"
 "版本。\n"
 "\n"
-"Wine 的發行是希望它能夠有用，但是沒有任何擔保；亦無對於某一特定目的之適售性與"
+"Wine 的發行是希望它能夠有用，但是沒有任何擔保; 亦無對於某一特定目的之適售性與"
 "適用性的暗示性擔保。參看 GNU 較寬鬆通用公共授權以獲得更多細節。\n"
 "\n"
-"您應該已收到隨附於 Wine 的 GNU 較寬鬆通用公共授權複本；若無則請寫信到 Free "
+"您應該已收到隨附於 Wine 的 GNU 較寬鬆通用公共授權複本; 若無則請寫信到 Free "
 "Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA "
-"02110-1301, USA."
+"02110-1301, USA。"
 
 #: dlls/shell32/shell32.rc:254
 msgid "Wine License"
@@ -10646,7 +10217,7 @@ msgstr "錯誤"
 
 #: dlls/shlwapi/shlwapi.rc:43
 msgid "Don't show me th&is message again"
-msgstr "不要再顯示這個訊息"
+msgstr "不要再顯示這個訊息(&I)"
 
 #: dlls/shlwapi/shlwapi.rc:30
 msgid "%d bytes"
@@ -10668,10 +10239,8 @@ msgid " sec"
 msgstr " 秒"
 
 #: dlls/twain_32/twain.rc:29
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Source"
-msgstr "新資料夾"
+msgstr "選擇來源"
 
 #: dlls/tzres/tzres.rc:126
 msgid "China Standard Time"
