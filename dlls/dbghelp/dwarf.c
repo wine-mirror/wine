@@ -2526,7 +2526,7 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
     if (symt_check_tag(&symt->symt, SymTagFunction))
     {
         func = (struct symt_function*)symt;
-        symt_add_func_line(module, func, *psrc, line, address - func->address);
+        symt_add_func_line(module, func, *psrc, line, address);
     }
 }
 

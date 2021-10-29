@@ -421,16 +421,11 @@ DECLSPEC_HIDDEN BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
                         {
                             if (coff_files.files[j].entries[l+1]->tag == SymTagFunction)
                             {
-                                /*
-                                 * Add the line number.  This is always relative to the
-                                 * start of the function, so we need to subtract that offset
-                                 * first.
-                                 */
                                 symt_add_func_line(msc_dbg->module,
                                                    (struct symt_function*)coff_files.files[j].entries[l+1],
                                                    coff_files.files[j].compiland->source,
                                                    linepnt->Linenumber,
-                                                   msc_dbg->module->module.BaseOfImage + linepnt->Type.VirtualAddress - addr);
+                                                   msc_dbg->module->module.BaseOfImage + linepnt->Type.VirtualAddress);
                             }
                             break;
                         }

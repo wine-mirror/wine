@@ -391,7 +391,7 @@ struct symt_inlinesite* symt_new_inlinesite(struct module* module,
 }
 
 void symt_add_func_line(struct module* module, struct symt_function* func,
-                        unsigned source_idx, int line_num, ULONG_PTR offset)
+                        unsigned source_idx, int line_num, ULONG_PTR addr)
 {
     struct line_info*   dli;
     unsigned            vlen;
@@ -401,8 +401,8 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 
     if (func == NULL || !(dbghelp_options & SYMOPT_LOAD_LINES)) return;
 
-    TRACE_(dbghelp_symt)("(%p)%s:%lx %s:%u\n", 
-                         func, func->hash_elt.name, offset, 
+    TRACE_(dbghelp_symt)("(%p)%s:%Ix %s:%u\n",
+                         func, func->hash_elt.name, addr,
                          source_get(module, source_idx), line_num);
 
     assert(func->symt.tag == SymTagFunction || func->symt.tag == SymTagInlineSite);
@@ -435,7 +435,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     dli->is_first       = 0; /* only a source file can be first */
     dli->is_last        = 1;
     dli->line_number    = line_num;
-    dli->u.address      = func->address + offset;
+    dli->u.address      = addr;
 }
 
 /******************************************************************

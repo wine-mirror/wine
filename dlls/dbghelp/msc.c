@@ -1454,8 +1454,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                         break;
                     }
                 }
-                symt_add_func_line(msc_dbg->module, func, source,
-                                   linenos[k], addr - func->address);
+                symt_add_func_line(msc_dbg->module, func, source, linenos[k], addr);
             }
 	}
     }
@@ -1519,7 +1518,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
             {
                 symt_add_func_line(msc_dbg->module, func, source,
                                    lines_blk->l[i].lineno ^ 0x80000000,
-                                   lines_blk->l[i].offset);
+                                   func->address + lines_blk->l[i].offset);
             }
             break;
         case LT2_FILES_BLOCK: /* skip */

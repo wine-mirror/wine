@@ -1168,7 +1168,7 @@ static void pending_flush(struct pending_list* pending, struct module* module,
             if (module->type == DMT_MACHO)
                 pending->objs[i].u.line.offset -= func->address - pending->objs[i].u.line.load_offset;
             symt_add_func_line(module, func, pending->objs[i].u.line.source_idx,
-                               pending->objs[i].u.line.line_num, pending->objs[i].u.line.offset);
+                               pending->objs[i].u.line.line_num, func->address + pending->objs[i].u.line.offset);
             break;
         default:
             ERR("Unknown pending object tag %u\n", (unsigned)pending->objs[i].tag);
@@ -1492,7 +1492,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 if (module->type == DMT_MACHO)
                     offset -= curr_func->address - load_offset;
                 symt_add_func_line(module, curr_func, source_idx, 
-                                   stab_ptr->n_desc, offset);
+                                   stab_ptr->n_desc, curr_func->address + offset);
             }
             else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
                                   n_value, load_offset);
