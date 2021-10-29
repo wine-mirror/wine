@@ -278,12 +278,18 @@ static ULONG WINAPI createcommand_Release(IDBCreateCommand *iface)
 struct command
 {
     ICommandText ICommandText_iface;
+    ICommandProperties ICommandProperties_iface;
     LONG refs;
 };
 
 static inline struct command *impl_from_ICommandText( ICommandText *iface )
 {
     return CONTAINING_RECORD( iface, struct command, ICommandText_iface );
+}
+
+static inline struct command *impl_from_ICommandProperties( ICommandProperties *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, ICommandProperties_iface );
 }
 
 static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, void **ppv)
@@ -298,6 +304,10 @@ static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, v
        IsEqualGUID(&IID_ICommandText, riid))
     {
         *ppv = &command->ICommandText_iface;
+    }
+    else if(IsEqualGUID(&IID_ICommandProperties, riid))
+    {
+         *ppv = &command->ICommandProperties_iface;
     }
 
     if(*ppv)
@@ -379,6 +389,49 @@ static const ICommandTextVtbl commandVtbl =
     command_SetCommandText
 };
 
+static HRESULT WINAPI command_prop_QueryInterface(ICommandProperties *iface, REFIID riid, void **out)
+{
+    struct command *command = impl_from_ICommandProperties( iface );
+    return ICommandText_QueryInterface(&command->ICommandText_iface, riid, out);
+}
+
+static ULONG WINAPI command_prop_AddRef(ICommandProperties *iface)
+{
+    struct command *command = impl_from_ICommandProperties( iface );
+    return ICommandText_AddRef(&command->ICommandText_iface);
+}
+
+static ULONG WINAPI command_prop_Release(ICommandProperties *iface)
+{
+    struct command *command = impl_from_ICommandProperties( iface );
+    return ICommandText_Release(&command->ICommandText_iface);
+}
+
+static HRESULT WINAPI command_prop_GetProperties(ICommandProperties *iface, ULONG count,
+        const DBPROPIDSET propertyidsets[], ULONG *sets_cnt, DBPROPSET **propertyset)
+{
+    struct command *command = impl_from_ICommandProperties( iface );
+    FIXME("%p %d %p %p %p\n", command, count, propertyidsets, sets_cnt, propertyset);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI command_prop_SetProperties(ICommandProperties *iface, ULONG count,
+        DBPROPSET propertyset[])
+{
+    struct command *command = impl_from_ICommandProperties( iface );
+    FIXME("%p %p\n", command, propertyset);
+    return S_OK;
+}
+
+static const ICommandPropertiesVtbl commonpropsVtbl =
+{
+    command_prop_QueryInterface,
+    command_prop_AddRef,
+    command_prop_Release,
+    command_prop_GetProperties,
+    command_prop_SetProperties
+};
+
 static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnknown *outer, REFIID riid,
                                             IUnknown **out)
 {
@@ -396,6 +449,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
         return E_OUTOFMEMORY;
 
     command->ICommandText_iface.lpVtbl = &commandVtbl;
+    command->ICommandProperties_iface.lpVtbl = &commonpropsVtbl;
     command->refs = 1;
 
     hr = ICommandText_QueryInterface(&command->ICommandText_iface, riid, (void**)out);
