@@ -2009,16 +2009,21 @@ static BOOL get_parameters_object_id( struct hid_joystick *impl, struct hid_valu
 static BOOL get_parameters_object_ofs( struct hid_joystick *impl, struct hid_value_caps *caps,
                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    DIDATAFORMAT *format = impl->base.data_format.wine_df;
-    int *offsets = impl->base.data_format.offsets;
-    ULONG i;
+    DIDATAFORMAT *device_format = impl->base.data_format.wine_df, *user_format = impl->base.user_format;
+    DIOBJECTDATAFORMAT *device_obj, *user_obj;
 
-    if (!offsets) return DIENUM_CONTINUE;
-    for (i = 0; i < format->dwNumObjs; ++i)
-        if (format->rgodf[i].dwOfs == instance->dwOfs) break;
-    if (i == format->dwNumObjs) return DIENUM_CONTINUE;
-    *(DWORD *)data = offsets[i];
+    if (!user_format) return DIENUM_CONTINUE;
 
+    user_obj = user_format->rgodf + device_format->dwNumObjs;
+    device_obj = device_format->rgodf + device_format->dwNumObjs;
+    while (user_obj-- > user_format->rgodf && device_obj-- > device_format->rgodf)
+    {
+        if (!user_obj->dwType) continue;
+        if (device_obj->dwType == instance->dwType) break;
+    }
+    if (user_obj < user_format->rgodf) return DIENUM_CONTINUE;
+
+    *(DWORD *)data = user_obj->dwOfs;
     return DIENUM_STOP;
 }
 

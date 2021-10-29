@@ -4539,7 +4539,6 @@ static void test_simple_joystick(void)
 
     hr = IDirectInputDevice8_GetDeviceState( device, dataformat.dwDataSize, buffer );
     ok( hr == DI_OK, "GetDeviceState returned: %#x\n", hr );
-    todo_wine
     ok( ((ULONG *)buffer)[0] == 0x512b, "got %#x, expected %#x\n", ((ULONG *)buffer)[0], 0x512b );
     ok( ((ULONG *)buffer)[1] == 0, "got %#x, expected %#x\n", ((ULONG *)buffer)[1], 0 );
     ok( ((ULONG *)buffer)[2] == 0x7fff, "got %#x, expected %#x\n", ((ULONG *)buffer)[2], 0x7fff );

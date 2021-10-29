@@ -38,10 +38,6 @@ typedef struct
 
 typedef struct
 {
-    int                         size;
-    DataTransform              *dt;
-
-    int                        *offsets;     /* object offsets */
     LPDIDATAFORMAT              wine_df;     /* wine internal data format */
 } DataFormat;
 

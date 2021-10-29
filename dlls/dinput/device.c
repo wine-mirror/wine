@@ -334,73 +334,9 @@ BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override )
     return disable;
 }
 
-/* Conversion between internal data buffer and external data buffer */
-static void fill_DataFormat( void *out, DWORD size, const void *in, const DataFormat *df )
-{
-    int i;
-    const char *in_c = in;
-    char *out_c = out;
-
-    memset(out, 0, size);
-	for (i = 0; i < df->size; i++) {
-	    if (df->dt[i].offset_in >= 0) {
-		switch (df->dt[i].size) {
-		    case 1:
-		        TRACE("Copying (c) to %d from %d (value %d)\n",
-                              df->dt[i].offset_out, df->dt[i].offset_in, *(in_c + df->dt[i].offset_in));
-			*(out_c + df->dt[i].offset_out) = *(in_c + df->dt[i].offset_in);
-			break;
-
-		    case 2:
-			TRACE("Copying (s) to %d from %d (value %d)\n",
-			      df->dt[i].offset_out, df->dt[i].offset_in, *((const short *)(in_c + df->dt[i].offset_in)));
-			*((short *)(out_c + df->dt[i].offset_out)) = *((const short *)(in_c + df->dt[i].offset_in));
-			break;
-
-		    case 4:
-			TRACE("Copying (i) to %d from %d (value %d)\n",
-                              df->dt[i].offset_out, df->dt[i].offset_in, *((const int *)(in_c + df->dt[i].offset_in)));
-                        *((int *)(out_c + df->dt[i].offset_out)) = *((const int *)(in_c + df->dt[i].offset_in));
-			break;
-
-		    default:
-			memcpy((out_c + df->dt[i].offset_out), (in_c + df->dt[i].offset_in), df->dt[i].size);
-			break;
-		}
-	    } else {
-		switch (df->dt[i].size) {
-		    case 1:
-		        TRACE("Copying (c) to %d default value %d\n",
-			      df->dt[i].offset_out, df->dt[i].value);
-			*(out_c + df->dt[i].offset_out) = (char) df->dt[i].value;
-			break;
-			
-		    case 2:
-			TRACE("Copying (s) to %d default value %d\n",
-			      df->dt[i].offset_out, df->dt[i].value);
-			*((short *) (out_c + df->dt[i].offset_out)) = (short) df->dt[i].value;
-			break;
-			
-		    case 4:
-			TRACE("Copying (i) to %d default value %d\n",
-			      df->dt[i].offset_out, df->dt[i].value);
-			*((int *) (out_c + df->dt[i].offset_out)) = df->dt[i].value;
-			break;
-			
-		    default:
-			memset((out_c + df->dt[i].offset_out), 0, df->dt[i].size);
-			break;
-		}
-	    }
-    }
-}
-
 static void dinput_device_release_user_format( struct dinput_device *impl )
 {
-    free( impl->data_format.dt );
-    impl->data_format.dt = NULL;
-    free( impl->data_format.offsets );
-    impl->data_format.offsets = NULL;
+    if (impl->user_format) free( impl->user_format->rgodf );
     free( impl->user_format );
     impl->user_format = NULL;
 }
@@ -436,33 +372,35 @@ LPDIOBJECTDATAFORMAT dataformat_to_odf_by_type(LPCDIDATAFORMAT df, int n, DWORD 
 
 static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const DIDATAFORMAT *asked_format )
 {
+    DIOBJECTDATAFORMAT *device_obj, *user_obj;
     DataFormat *format = &impl->data_format;
-    DataTransform *dt;
+    DIDATAFORMAT *user_format = NULL;
     unsigned int i, j;
     int *done;
-    int index = 0;
-    DWORD next = 0;
 
     if (!format->wine_df) return DIERR_INVALIDPARAM;
     done = calloc( asked_format->dwNumObjs, sizeof(int) );
-    dt = malloc( asked_format->dwNumObjs * sizeof(DataTransform) );
-    if (!dt || !done) goto failed;
+    if (!done) goto failed;
 
-    if (!(format->offsets = malloc( format->wine_df->dwNumObjs * sizeof(int) ))) goto failed;
-    if (!(impl->user_format = malloc( asked_format->dwSize ))) goto failed;
-    memcpy( impl->user_format, asked_format, asked_format->dwSize );
+    if (!(user_format = malloc( sizeof(DIDATAFORMAT) ))) goto failed;
+    *user_format = *format->wine_df;
+    user_format->dwFlags = asked_format->dwFlags;
+    user_format->dwDataSize = asked_format->dwDataSize;
+    user_format->dwNumObjs += asked_format->dwNumObjs;
+    if (!(user_format->rgodf = calloc( user_format->dwNumObjs, sizeof(DIOBJECTDATAFORMAT) ))) goto failed;
 
     TRACE("Creating DataTransform :\n");
     
     for (i = 0; i < format->wine_df->dwNumObjs; i++)
     {
-        format->offsets[i] = -1;
+        device_obj = format->wine_df->rgodf + i;
+        user_obj = user_format->rgodf + i;
 
-	for (j = 0; j < asked_format->dwNumObjs; j++) {
-	    if (done[j] == 1)
-		continue;
-	    
-	    if (/* Check if the application either requests any GUID and if not, it if matches
+        for (j = 0; j < asked_format->dwNumObjs; j++)
+        {
+            if (done[j] == 1) continue;
+
+            if (/* Check if the application either requests any GUID and if not, it if matches
 		 * the GUID of the Wine object.
 		 */
 		((asked_format->rgodf[j].pguid == NULL) ||
@@ -501,26 +439,19 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
                 TRACE("         "); _dump_EnumObjects_flags(format->wine_df->rgodf[i].dwType); TRACE("\n");
                 TRACE("       * dwFlags: 0x%08x\n", format->wine_df->rgodf[i].dwFlags);
                 TRACE("         "); _dump_ObjectDataFormat_flags(format->wine_df->rgodf[i].dwFlags); TRACE("\n");
-		
-                if (format->wine_df->rgodf[i].dwType & DIDFT_BUTTON)
-		    dt[index].size = sizeof(BYTE);
-		else
-		    dt[index].size = sizeof(DWORD);
-                dt[index].offset_in = format->wine_df->rgodf[i].dwOfs;
-                dt[index].offset_out = asked_format->rgodf[j].dwOfs;
-                format->offsets[i]   = asked_format->rgodf[j].dwOfs;
-		dt[index].value = 0;
-                next = next + dt[index].size;
 
-                index++;
-		break;
-	    }
-	}
+                *user_obj = *device_obj;
+                user_obj->dwOfs = asked_format->rgodf[j].dwOfs;
+                break;
+            }
+        }
     }
 
     TRACE("Setting to default value :\n");
     for (j = 0; j < asked_format->dwNumObjs; j++) {
-	if (done[j] == 0) {
+        user_obj = user_format->rgodf + format->wine_df->dwNumObjs + j;
+
+        if (done[j] == 0) {
 	    TRACE("   - Asked (%d) :\n", j);
 	    TRACE("       * GUID: %s ('%s')\n",
 		  debugstr_guid(asked_format->rgodf[j].pguid),
@@ -534,53 +465,38 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
             if (!(asked_format->rgodf[j].dwType & DIDFT_POV))
                 continue; /* fill_DataFormat memsets the buffer to 0 */
 
-	    if (asked_format->rgodf[j].dwType & DIDFT_BUTTON)
-		dt[index].size = sizeof(BYTE);
-	    else
-		dt[index].size = sizeof(DWORD);
-	    dt[index].offset_in  = -1;
-	    dt[index].offset_out = asked_format->rgodf[j].dwOfs;
-            dt[index].value      = -1;
-	    index++;
-	}
+            *user_obj = asked_format->rgodf[j];
+        }
     }
     
-    format->size = index;
-    format->dt = dt;
-
     free( done );
 
+    impl->user_format = user_format;
     return DI_OK;
 
 failed:
     free( done );
-    free( dt );
-    format->dt = NULL;
-    free( format->offsets );
-    format->offsets = NULL;
-    free( impl->user_format );
-    impl->user_format = NULL;
+    if (user_format) free( user_format->rgodf );
+    free( user_format );
 
     return DIERR_OUTOFMEMORY;
 }
 
-static int id_to_object( LPCDIDATAFORMAT df, int id )
+static int id_to_offset( struct dinput_device *impl, int id )
 {
-    int i;
+    DIDATAFORMAT *device_format = impl->data_format.wine_df, *user_format = impl->user_format;
+    DIOBJECTDATAFORMAT *user_obj;
 
-    id &= 0x00ffffff;
-    for (i = 0; i < df->dwNumObjs; i++)
-        if ((dataformat_to_odf(df, i)->dwType & 0x00ffffff) == id)
-            return i;
+    if (!user_format) return -1;
+
+    user_obj = user_format->rgodf + device_format->dwNumObjs;
+    while (user_obj-- > user_format->rgodf)
+    {
+        if (!user_obj->dwType) continue;
+        if ((user_obj->dwType & 0x00ffffff) == (id & 0x00ffffff)) return user_obj->dwOfs;
+    }
 
     return -1;
-}
-
-static int id_to_offset(const DataFormat *df, int id)
-{
-    int obj = id_to_object(df->wine_df, id);
-
-    return obj >= 0 && df->offsets ? df->offsets[obj] : -1;
 }
 
 static DWORD semantic_to_obj_id( struct dinput_device *This, DWORD dwSemantic )
@@ -769,7 +685,7 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
 {
     static ULONGLONG notify_ms = 0;
     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
-    int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
+    int next_pos, ofs = id_to_offset( This, inst_id );
     ULONGLONG time_ms = GetTickCount64();
 
     if (time_ms - notify_ms > 1000)
@@ -1138,19 +1054,25 @@ static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface,
 
 static HRESULT enum_object_filter_init( struct dinput_device *impl, DIPROPHEADER *filter )
 {
-    DIDATAFORMAT *format = impl->data_format.wine_df;
-    int i, *offsets = impl->data_format.offsets;
+    DIDATAFORMAT *device_format = impl->data_format.wine_df, *user_format = impl->user_format;
+    DIOBJECTDATAFORMAT *device_obj, *user_obj;
 
     if (filter->dwHow > DIPH_BYUSAGE) return DIERR_INVALIDPARAM;
     if (filter->dwHow == DIPH_BYUSAGE && !(impl->instance.dwDevType & DIDEVTYPE_HID)) return DIERR_UNSUPPORTED;
     if (filter->dwHow != DIPH_BYOFFSET) return DI_OK;
 
-    if (!offsets) return DIERR_NOTFOUND;
+    if (!impl->user_format) return DIERR_NOTFOUND;
 
-    for (i = 0; i < format->dwNumObjs; ++i) if (offsets[i] == filter->dwObj) break;
-    if (i == format->dwNumObjs) return DIERR_NOTFOUND;
+    user_obj = user_format->rgodf + device_format->dwNumObjs;
+    device_obj = device_format->rgodf + device_format->dwNumObjs;
+    while (user_obj-- > user_format->rgodf && device_obj-- > device_format->rgodf)
+    {
+        if (!user_obj->dwType) continue;
+        if (user_obj->dwOfs == filter->dwObj) break;
+    }
+    if (user_obj < user_format->rgodf) return DIERR_NOTFOUND;
 
-    filter->dwObj = format->rgodf[i].dwOfs;
+    filter->dwObj = device_obj->dwOfs;
     return DI_OK;
 }
 
@@ -1397,7 +1319,7 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_OBJECTNOTFOUND;
-        if ((user_offset = id_to_offset( &impl->data_format, instance.dwType )) < 0) return DIERR_OBJECTNOTFOUND;
+        if ((user_offset = id_to_offset( impl, instance.dwType )) < 0) return DIERR_OBJECTNOTFOUND;
         if (!set_app_data( impl, user_offset, value->uData )) return DIERR_OUTOFMEMORY;
         return DI_OK;
     }
@@ -1469,15 +1391,12 @@ static HRESULT WINAPI dinput_device_GetObjectInfo( IDirectInputDevice8W *iface,
     return DI_OK;
 }
 
-static BOOL CALLBACK reset_axis_data( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    *(ULONG *)((char *)data + instance->dwOfs) = 0;
-    return DIENUM_CONTINUE;
-}
-
 static HRESULT WINAPI dinput_device_GetDeviceState( IDirectInputDevice8W *iface, DWORD size, void *data )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    DIDATAFORMAT *device_format = impl->data_format.wine_df, *user_format;
+    DIOBJECTDATAFORMAT *device_obj, *user_obj;
+    BYTE *user_state = data;
     DIPROPHEADER filter =
     {
         .dwSize = sizeof(filter),
@@ -1496,13 +1415,37 @@ static HRESULT WINAPI dinput_device_GetDeviceState( IDirectInputDevice8W *iface,
     EnterCriticalSection( &impl->crit );
     if (!impl->acquired)
         hr = DIERR_NOTACQUIRED;
-    else if (size != impl->user_format->dwDataSize)
+    else if (!(user_format = impl->user_format))
+        hr = DIERR_INVALIDPARAM;
+    else if (size != user_format->dwDataSize)
         hr = DIERR_INVALIDPARAM;
     else
     {
-        fill_DataFormat( data, size, impl->device_state, &impl->data_format );
-        if (!(impl->user_format->dwFlags & DIDF_ABSAXIS))
-            impl->vtbl->enum_objects( iface, &filter, DIDFT_RELAXIS, reset_axis_data, impl->device_state );
+        memset( user_state, 0, size );
+
+        user_obj = user_format->rgodf + device_format->dwNumObjs;
+        device_obj = device_format->rgodf + device_format->dwNumObjs;
+        while (user_obj-- > user_format->rgodf && device_obj-- > device_format->rgodf)
+        {
+            if (user_obj->dwType & DIDFT_BUTTON)
+                user_state[user_obj->dwOfs] = impl->device_state[device_obj->dwOfs];
+        }
+
+        /* reset optional POVs to their default */
+        user_obj = user_format->rgodf + user_format->dwNumObjs;
+        while (user_obj-- > user_format->rgodf + device_format->dwNumObjs)
+            if (user_obj->dwType & DIDFT_POV) *(ULONG *)(user_state + user_obj->dwOfs) = 0xffffffff;
+
+        user_obj = user_format->rgodf + device_format->dwNumObjs;
+        device_obj = device_format->rgodf + device_format->dwNumObjs;
+        while (user_obj-- > user_format->rgodf && device_obj-- > device_format->rgodf)
+        {
+            if (user_obj->dwType & (DIDFT_POV | DIDFT_AXIS))
+                *(ULONG *)(user_state + user_obj->dwOfs) = *(ULONG *)(impl->device_state + device_obj->dwOfs);
+            if (!(user_format->dwFlags & DIDF_ABSAXIS) && (device_obj->dwType & DIDFT_RELAXIS))
+                *(ULONG *)(impl->device_state + device_obj->dwOfs) = 0;
+        }
+
         hr = DI_OK;
     }
     LeaveCriticalSection( &impl->crit );
