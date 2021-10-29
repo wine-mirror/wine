@@ -24,13 +24,57 @@ import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
+import "windows.storage.streams.idl";
 import "windows.foundation.idl";
 
 namespace Windows {
     namespace Devices {
         namespace Enumeration {
+            typedef enum Panel Panel;
+
+            interface IDeviceInformation;
             interface IDeviceInformationStatics;
             interface IDeviceInformationStatics2;
+            interface IDeviceInformationUpdate;
+            interface IEnclosureLocation;
+
+            runtimeclass DeviceInformation;
+            runtimeclass DeviceInformationUpdate;
+            runtimeclass DeviceThumbnail;
+            runtimeclass EnclosureLocation;
+        }
+    }
+}
+
+namespace Windows
+{
+    namespace Devices
+    {
+        namespace Enumeration
+        {
+            declare
+            {
+                interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.DeviceInformation *>;
+                interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.DeviceThumbnail *>;
+                interface Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *>;
+                interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformation *>;
+                interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceThumbnail *>;
+            }
+        }
+    }
+}
+
+namespace Windows
+{
+    namespace Storage
+    {
+        namespace Streams
+        {
+            interface IContentTypeProvider;
+            interface IInputStream;
+            interface IOutputStream;
+            interface IRandomAccessStream;
+            interface IRandomAccessStreamWithContentType;
         }
     }
 }
@@ -38,6 +82,55 @@ namespace Windows {
 namespace Windows {
     namespace Devices {
         namespace Enumeration {
+            enum Panel
+            {
+                Unknown = 0,
+                Front   = 1,
+                Back    = 2,
+                Top     = 3,
+                Bottom  = 4,
+                Left    = 5,
+                Right   = 6
+            };
+
+            [
+                exclusiveto(Windows.Devices.Enumeration.DeviceInformation),
+                uuid(aba0fb95-4398-489d-8e44-e6130927011f)
+            ]
+            interface IDeviceInformation : IInspectable
+            {
+                [propget] HRESULT Id([out, retval] HSTRING *value);
+                [propget] HRESULT Name([out, retval] HSTRING *value);
+                [propget] HRESULT IsEnabled([out, retval] boolean *value);
+                [propget] HRESULT IsDefault([out, retval] boolean *value);
+                [propget] HRESULT EnclosureLocation([out, retval] Windows.Devices.Enumeration.EnclosureLocation **value);
+                [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *> **value);
+                HRESULT Update([in] Windows.Devices.Enumeration.DeviceInformationUpdate *info);
+                HRESULT GetThumbnailAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceThumbnail *> **operation);
+                HRESULT GetGlyphThumbnailAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceThumbnail *> **operation);
+            }
+
+            [
+                exclusiveto(Windows.Devices.Enumeration.DeviceInformationUpdate),
+                uuid(8f315305-d972-44b7-a37e-9e822c78213b)
+            ]
+            interface IDeviceInformationUpdate : IInspectable
+            {
+                [propget] HRESULT Id([out, retval] HSTRING *value);
+                [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *> **value);
+            }
+
+            [
+                exclusiveto(Windows.Devices.Enumeration.EnclosureLocation),
+                uuid(42340a27-5810-459c-aabb-c65e1f813ecf)
+            ]
+            interface IEnclosureLocation : IInspectable
+            {
+                [propget] HRESULT InDock([out, retval] boolean *value);
+                [propget] HRESULT InLid([out, retval] boolean *value);
+                [propget] HRESULT Panel([out, retval] Windows.Devices.Enumeration.Panel *value);
+            }
+
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile),
@@ -49,6 +142,36 @@ namespace Windows {
             {
                 [default] interface Windows.Devices.Enumeration.IDeviceInformation;
                 [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Enumeration.IDeviceInformation2;
+            }
+
+            [
+                marshaling_behavior(agile),
+            ]
+            runtimeclass DeviceInformationUpdate
+            {
+                [default] interface Windows.Devices.Enumeration.IDeviceInformationUpdate;
+                interface Windows.Devices.Enumeration.IDeviceInformationUpdate2;
+            }
+
+            [
+                marshaling_behavior(agile),
+            ]
+            runtimeclass DeviceThumbnail
+            {
+                [default] interface Windows.Storage.Streams.IRandomAccessStreamWithContentType;
+                interface Windows.Storage.Streams.IContentTypeProvider;
+                interface Windows.Storage.Streams.IRandomAccessStream;
+                interface Windows.Storage.Streams.IOutputStream;
+                interface Windows.Foundation.IClosable;
+                interface Windows.Storage.Streams.IInputStream;
+            }
+
+            [
+                marshaling_behavior(agile)
+            ]
+            runtimeclass EnclosureLocation
+            {
+                [default] interface Windows.Devices.Enumeration.IEnclosureLocation;
             }
         }
     }
