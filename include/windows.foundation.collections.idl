@@ -76,6 +76,18 @@ cpp_quote("#endif")
         {
             [
                 contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(e480ce40-a338-4ada-adcf-272272e48cb9)
+            ]
+            interface IMapView<K, V> : IInspectable
+            {
+                HRESULT Lookup([in] K key, [out] V *value);
+                [propget] HRESULT Size([out] unsigned int *size);
+                HRESULT HasKey([in] K key, [out] boolean *found);
+                HRESULT Split([out] IMapView<K, V> **first, [out] IMapView<K, V> **second);
+            }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
                 uuid(6a79e863-4300-459a-9966-cbb660963ee1)
             ]
             interface IIterator<T> : IInspectable
