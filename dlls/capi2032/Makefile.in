@@ -3,6 +3,6 @@ IMPORTLIB = capi2032
 EXTRALIBS = $(CAPI20_LIBS)
 EXTRAINCL = $(CAPI20_CFLAGS)
 
-EXTRADLLFLAGS = -mcygwin
-
-C_SRCS = cap20wxx.c
+C_SRCS = \
+	cap20wxx.c \
+	unixlib.c
