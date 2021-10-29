@@ -280,6 +280,7 @@ struct command
     ICommandText ICommandText_iface;
     ICommandProperties ICommandProperties_iface;
     IColumnsInfo IColumnsInfo_iface;
+    IConvertType IConvertType_iface;
     LONG refs;
 };
 
@@ -296,6 +297,11 @@ static inline struct command *impl_from_ICommandProperties( ICommandProperties *
 static inline struct command *impl_from_IColumnsInfo( IColumnsInfo *iface )
 {
     return CONTAINING_RECORD( iface, struct command, IColumnsInfo_iface );
+}
+
+static inline struct command *impl_from_IConvertType( IConvertType *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, IConvertType_iface );
 }
 
 static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, void **ppv)
@@ -318,6 +324,10 @@ static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, v
     else if(IsEqualGUID(&IID_IColumnsInfo, riid))
     {
          *ppv = &command->IColumnsInfo_iface;
+    }
+    else if(IsEqualGUID(&IID_IConvertType, riid))
+    {
+         *ppv = &command->IConvertType_iface;
     }
 
     if(*ppv)
@@ -510,6 +520,39 @@ static struct IColumnsInfoVtbl columninfoVtbl =
     colsinfo_MapColumnIDs
 };
 
+static HRESULT WINAPI converttype_QueryInterface(IConvertType *iface, REFIID riid, void **out)
+{
+    struct command *command = impl_from_IConvertType( iface );
+    return ICommandText_QueryInterface(&command->ICommandText_iface, riid, out);
+}
+
+static ULONG WINAPI converttype_AddRef(IConvertType *iface)
+{
+    struct command *command = impl_from_IConvertType( iface );
+    return ICommandText_AddRef(&command->ICommandText_iface);
+}
+
+static ULONG WINAPI converttype_Release(IConvertType *iface)
+{
+    struct command *command = impl_from_IConvertType( iface );
+    return ICommandText_Release(&command->ICommandText_iface);
+}
+
+static HRESULT WINAPI converttype_CanConvert(IConvertType *iface, DBTYPE from, DBTYPE to, DBCONVERTFLAGS flags)
+{
+    struct command *command = impl_from_IConvertType( iface );
+    FIXME("%p, %u, %d, 0x%08x\n", command, from, to, flags);
+    return E_NOTIMPL;
+}
+
+static struct IConvertTypeVtbl converttypeVtbl =
+{
+    converttype_QueryInterface,
+    converttype_AddRef,
+    converttype_Release,
+    converttype_CanConvert
+};
+
 static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnknown *outer, REFIID riid,
                                             IUnknown **out)
 {
@@ -529,6 +572,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->ICommandText_iface.lpVtbl = &commandVtbl;
     command->ICommandProperties_iface.lpVtbl = &commonpropsVtbl;
     command->IColumnsInfo_iface.lpVtbl = &columninfoVtbl;
+    command->IConvertType_iface.lpVtbl = &converttypeVtbl;
     command->refs = 1;
 
     hr = ICommandText_QueryInterface(&command->ICommandText_iface, riid, (void**)out);
