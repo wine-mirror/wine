@@ -152,9 +152,6 @@
 /* Define to 1 if you have the `isnan' function. */
 #undef HAVE_ISNAN
 
-/* Define to 1 if you have the <jpeglib.h> header file. */
-#undef HAVE_JPEGLIB_H
-
 /* Define to 1 if you have the `kqueue' function. */
 #undef HAVE_KQUEUE
 
@@ -912,9 +909,6 @@
 
 /* Define to the soname of the libhal library. */
 #undef SONAME_LIBHAL
-
-/* Define to the soname of the libjpeg library. */
-#undef SONAME_LIBJPEG
 
 /* Define to the soname of the libkrb5 library. */
 #undef SONAME_LIBKRB5

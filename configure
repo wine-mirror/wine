@@ -637,8 +637,6 @@ VKD3D_CFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
 PROCSTAT_LIBS
-JPEG_LIBS
-JPEG_CFLAGS
 GSSAPI_LIBS
 GSSAPI_CFLAGS
 KRB5_LIBS
@@ -867,7 +865,6 @@ with_gssapi
 with_gstreamer
 with_hal
 with_inotify
-with_jpeg
 with_krb5
 with_ldap
 with_mingw
@@ -1990,8 +1987,6 @@ KRB5_CFLAGS
 KRB5_LIBS
 GSSAPI_CFLAGS
 GSSAPI_LIBS
-JPEG_CFLAGS
-JPEG_LIBS
 NETAPI_CFLAGS
 NETAPI_LIBS
 VKD3D_CFLAGS
@@ -2658,7 +2653,6 @@ Optional Packages:
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
   --without-inotify       do not use inotify (filesystem change notifications)
-  --without-jpeg          do not use JPEG
   --without-krb5          do not use krb5 (Kerberos)
   --without-ldap          do not use LDAP
   --without-mingw         do not use the MinGW cross-compiler
@@ -2814,8 +2808,6 @@ Some influential environment variables:
   GSSAPI_CFLAGS
               C compiler flags for krb5-gssapi, overriding pkg-config
   GSSAPI_LIBS Linker flags for krb5-gssapi, overriding pkg-config
-  JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
-  JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   NETAPI_CFLAGS
               C compiler flags for netapi, overriding pkg-config
   NETAPI_LIBS Linker flags for netapi, overriding pkg-config
@@ -4095,12 +4087,6 @@ fi
 # Check whether --with-inotify was given.
 if test "${with_inotify+set}" = set; then :
   withval=$with_inotify;
-fi
-
-
-# Check whether --with-jpeg was given.
-if test "${with_jpeg+set}" = set; then :
-  withval=$with_jpeg;
 fi
 
 
@@ -15116,110 +15102,6 @@ esac
 
 fi
 
-if test "x$with_jpeg" != "xno"
-then
-    if ${JPEG_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  JPEG_CFLAGS=`$PKG_CONFIG --cflags libjpeg 2>/dev/null`
-fi
-fi
-
-if ${JPEG_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  JPEG_LIBS=`$PKG_CONFIG --libs libjpeg 2>/dev/null`
-fi
-fi
-
-
-$as_echo "$as_me:${as_lineno-$LINENO}: libjpeg cflags: $JPEG_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libjpeg libs: $JPEG_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $JPEG_CFLAGS"
-for ac_header in jpeglib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "jpeglib.h" "ac_cv_header_jpeglib_h" "$ac_includes_default"
-if test "x$ac_cv_header_jpeglib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_JPEGLIB_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_jpeglib_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ljpeg" >&5
-$as_echo_n "checking for -ljpeg... " >&6; }
-if ${ac_cv_lib_soname_jpeg+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-ljpeg $JPEG_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char jpeg_start_decompress ();
-int
-main ()
-{
-return jpeg_start_decompress ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_jpeg=`$ac_cv_path_LDD conftest.exe | grep "jpeg" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_jpeg=`$OTOOL -L conftest$ac_exeext | grep "libjpeg\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libjpeg\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_jpeg=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libjpeg\\.$LIBEXT" | sed -e "s/^.*\\[\\(libjpeg\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_jpeg:+false} :; then :
-  ac_cv_lib_soname_jpeg=`$LDD conftest$ac_exeext | grep "libjpeg\\.$LIBEXT" | sed -e "s/^.*\(libjpeg\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_jpeg=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_jpeg:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-       JPEG_CFLAGS=""
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_jpeg" >&5
-$as_echo "$ac_cv_lib_soname_jpeg" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBJPEG "$ac_cv_lib_soname_jpeg"
-_ACEOF
-
-
-fi
-        else
-            JPEG_CFLAGS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_soname_jpeg" = "x"; then :
-  case "x$with_jpeg" in
-  x)   as_fn_append wine_warnings "|libjpeg ${notice_platform}development files not found, gphoto2 won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libjpeg ${notice_platform}development files not found, gphoto2 won't be supported.
-This is an error since --with-jpeg was requested." "$LINENO" 5 ;;
-esac
-enable_gphoto2_ds=${enable_gphoto2_ds:-no}
-fi
-
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lopenal" >&5
@@ -18604,8 +18486,6 @@ KRB5_CFLAGS = $KRB5_CFLAGS
 KRB5_LIBS = $KRB5_LIBS
 GSSAPI_CFLAGS = $GSSAPI_CFLAGS
 GSSAPI_LIBS = $GSSAPI_LIBS
-JPEG_CFLAGS = $JPEG_CFLAGS
-JPEG_LIBS = $JPEG_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS

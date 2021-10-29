@@ -18,11 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "gphoto2_i.h"
 #include "wingdi.h"
@@ -31,40 +29,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
-
-static void *libjpeg_handle;
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(jpeg_std_error);
-MAKE_FUNCPTR(jpeg_CreateDecompress);
-MAKE_FUNCPTR(jpeg_read_header);
-MAKE_FUNCPTR(jpeg_start_decompress);
-MAKE_FUNCPTR(jpeg_read_scanlines);
-MAKE_FUNCPTR(jpeg_finish_decompress);
-MAKE_FUNCPTR(jpeg_destroy_decompress);
-#undef MAKE_FUNCPTR
-
-static void *load_libjpeg(void)
-{
-    if((libjpeg_handle = dlopen(SONAME_LIBJPEG, RTLD_NOW)) != NULL) {
-
-#define LOAD_FUNCPTR(f) \
-    if((p##f = dlsym(libjpeg_handle, #f)) == NULL) { \
-        libjpeg_handle = NULL; \
-        return NULL; \
-    }
-
-        LOAD_FUNCPTR(jpeg_std_error);
-        LOAD_FUNCPTR(jpeg_CreateDecompress);
-        LOAD_FUNCPTR(jpeg_read_header);
-        LOAD_FUNCPTR(jpeg_start_decompress);
-        LOAD_FUNCPTR(jpeg_read_scanlines);
-        LOAD_FUNCPTR(jpeg_finish_decompress);
-        LOAD_FUNCPTR(jpeg_destroy_decompress);
-#undef LOAD_FUNCPTR
-    }
-    return libjpeg_handle;
-}
-
 
 /* for the jpeg decompressor source manager. */
 static void _jpeg_init_source(j_decompress_ptr cinfo) { }
@@ -145,7 +109,6 @@ TW_UINT16 GPHOTO2_ImageFileXferGet (pTW_IDENTITY pOrigin,
 }
 
 static TW_UINT16 _get_image_and_startup_jpeg(void) {
-#ifdef SONAME_LIBJPEG
     unsigned int i;
     int ret;
     struct open_file_params open_params;
@@ -153,13 +116,6 @@ static TW_UINT16 _get_image_and_startup_jpeg(void) {
 
     if (activeDS.file_handle) /* Already loaded. */
 	return TWRC_SUCCESS;
-
-    if(!libjpeg_handle) {
-	if(!load_libjpeg()) {
-	    FIXME("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
-	    return TWRC_FAILURE;
-	}
-    }
 
     for (i = 0; i < activeDS.file_count; i++)
     {
@@ -206,14 +162,14 @@ static TW_UINT16 _get_image_and_startup_jpeg(void) {
     activeDS.xjsm.resync_to_restart	= _jpeg_resync_to_restart;
     activeDS.xjsm.term_source	= _jpeg_term_source;
 
-    activeDS.jd.err = pjpeg_std_error(&activeDS.jerr);
+    activeDS.jd.err = jpeg_std_error(&activeDS.jerr);
     /* jpeg_create_decompress is a macro that expands to jpeg_CreateDecompress - see jpeglib.h
      * jpeg_create_decompress(&jd); */
-    pjpeg_CreateDecompress(&activeDS.jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
+    jpeg_CreateDecompress(&activeDS.jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
     activeDS.jd.src = &activeDS.xjsm;
-    ret=pjpeg_read_header(&activeDS.jd,TRUE);
+    ret=jpeg_read_header(&activeDS.jd,TRUE);
     activeDS.jd.out_color_space = JCS_RGB;
-    pjpeg_start_decompress(&activeDS.jd);
+    jpeg_start_decompress(&activeDS.jd);
     if (ret != JPEG_HEADER_OK) {
 	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
         close_current_file();
@@ -348,7 +304,7 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
 	   ((pImageMemXfer->Memory.Length - curoff) > activeDS.jd.output_width*activeDS.jd.output_components)
     ) {
 	JSAMPROW row = buffer+curoff;
-	int x = pjpeg_read_scanlines(&activeDS.jd,&row,1);
+	int x = jpeg_read_scanlines(&activeDS.jd,&row,1);
 	if (x != 1) {
 		FIXME("failed to read current scanline?\n");
 		break;
@@ -365,8 +321,8 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
     TransferringDialogBox(activeDS.progressWnd,0);
 
     if (activeDS.jd.output_scanline == activeDS.jd.output_height) {
-        pjpeg_finish_decompress(&activeDS.jd);
-        pjpeg_destroy_decompress(&activeDS.jd);
+        jpeg_finish_decompress(&activeDS.jd);
+        jpeg_destroy_decompress(&activeDS.jd);
         close_current_file();
 	TRACE("xfer is done!\n");
 
@@ -440,7 +396,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     oldsamprow = samprow;
     while ( activeDS.jd.output_scanline<activeDS.jd.output_height ) {
         unsigned int i;
-        int x = pjpeg_read_scanlines(&activeDS.jd,&samprow,1);
+        int x = jpeg_read_scanlines(&activeDS.jd,&samprow,1);
 	if (x != 1) {
 		FIXME("failed to read current scanline?\n");
 		break;
@@ -556,7 +512,6 @@ TW_UINT16 GPHOTO2_RGBResponseSet (pTW_IDENTITY pOrigin,
 TW_UINT16
 _get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hDIB )
 {
-#ifdef SONAME_LIBJPEG
     unsigned char *filedata;
     int ret;
     struct jpeg_source_mgr		xjsm;
@@ -569,13 +524,6 @@ _get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hD
     struct get_file_data_params get_data_params;
     void *file_handle;
     unsigned int filesize;
-
-    if(!libjpeg_handle) {
-	if(!load_libjpeg()) {
-	    FIXME("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
-	    return TWRC_FAILURE;
-	}
-    }
 
     open_params.idx     = idx;
     open_params.preview = preview;
@@ -613,14 +561,14 @@ _get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hD
     xjsm.resync_to_restart	= _jpeg_resync_to_restart;
     xjsm.term_source	= _jpeg_term_source;
 
-    jd.err = pjpeg_std_error(&jerr);
+    jd.err = jpeg_std_error(&jerr);
     /* jpeg_create_decompress is a macro that expands to jpeg_CreateDecompress - see jpeglib.h
      * jpeg_create_decompress(&jd); */
-    pjpeg_CreateDecompress(&jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
+    jpeg_CreateDecompress(&jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
     jd.src = &xjsm;
-    ret=pjpeg_read_header(&jd,TRUE);
+    ret=jpeg_read_header(&jd,TRUE);
     jd.out_color_space = JCS_RGB;
-    pjpeg_start_decompress(&jd);
+    jpeg_start_decompress(&jd);
     if (ret != JPEG_HEADER_OK) {
 	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
         close_file( file_handle );
@@ -651,7 +599,7 @@ _get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hD
     oldsamprow = samprow;
     while ( jd.output_scanline<jd.output_height ) {
         unsigned int i;
-        int x = pjpeg_read_scanlines(&jd,&samprow,1);
+        int x = jpeg_read_scanlines(&jd,&samprow,1);
 	if (x != 1) {
 	    FIXME("failed to read current scanline?\n");
 	    break;

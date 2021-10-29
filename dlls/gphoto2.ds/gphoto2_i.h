@@ -20,27 +20,13 @@
 #ifndef _TWAIN32_H
 #define _TWAIN32_H
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h first
-#endif
-
 #include <stdio.h>
-
-#ifdef SONAME_LIBJPEG
-/* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
-# define XMD_H
-# define UINT8 JPEG_UINT8
-# define UINT16 JPEG_UINT16
-# undef FAR
-# undef HAVE_STDLIB_H
-#  include <jpeglib.h>
-# undef HAVE_STDLIB_H
-# define HAVE_STDLIB_H 1
-# undef UINT8
-# undef UINT16
-#endif
-
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <setjmp.h>
+#include <basetsd.h>
+#include <jpeglib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -72,11 +58,9 @@ struct tagActiveDS
     void               *file_handle;
     unsigned char      *file_data;
     unsigned int        file_size;
-#ifdef SONAME_LIBJPEG
     struct jpeg_source_mgr		xjsm;
     struct jpeg_decompress_struct	jd;
     struct jpeg_error_mgr		jerr;
-#endif
 };
 
 extern struct tagActiveDS activeDS DECLSPEC_HIDDEN;
