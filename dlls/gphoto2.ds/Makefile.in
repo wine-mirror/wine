@@ -1,4 +1,5 @@
 MODULE    = gphoto2.ds
+UNIXLIB   = gphoto2.so
 IMPORTS   = comctl32 user32 gdi32 advapi32
 EXTRALIBS = $(GPHOTO2_LIBS) $(GPHOTO2_PORT_LIBS)
 EXTRAINCL = $(GPHOTO2_CFLAGS) $(GPHOTO2_PORT_CFLAGS) $(JPEG_CFLAGS)
@@ -9,6 +10,7 @@ C_SRCS = \
 	capability.c \
 	ds_image.c \
 	gphoto2_main.c \
-	ui.c
+	ui.c \
+	unixlib.c
 
 RC_SRCS = gphoto2.rc

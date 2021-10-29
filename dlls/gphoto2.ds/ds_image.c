@@ -27,6 +27,7 @@
 #include "gphoto2_i.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
@@ -85,6 +86,19 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
 }
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
 
+static void close_file( void *handle )
+{
+    struct close_file_params params = { handle };
+    GPHOTO2_CALL( close_file, &params );
+}
+
+static void close_current_file(void)
+{
+    close_file( activeDS.file_handle );
+    activeDS.file_handle = NULL;
+    free( activeDS.file_data );
+}
+
 /* DG_IMAGE/DAT_CIECOLOR/MSG_GET */
 TW_UINT16 GPHOTO2_CIEColorGet (pTW_IDENTITY pOrigin, 
                              TW_MEMREF pData)
@@ -131,45 +145,52 @@ TW_UINT16 GPHOTO2_ImageFileXferGet (pTW_IDENTITY pOrigin,
 }
 
 static TW_UINT16 _get_image_and_startup_jpeg(void) {
-    const char *folder = NULL, *filename = NULL;
-    struct gphoto2_file *file;
-    const unsigned char *filedata;
-    unsigned long filesize;
+#ifdef SONAME_LIBJPEG
+    unsigned int i;
     int ret;
+    struct open_file_params open_params;
+    struct get_file_data_params get_data_params;
 
-    if (activeDS.file) /* Already loaded. */
+    if (activeDS.file_handle) /* Already loaded. */
 	return TWRC_SUCCESS;
 
     if(!libjpeg_handle) {
 	if(!load_libjpeg()) {
 	    FIXME("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
-	    filedata = NULL;
 	    return TWRC_FAILURE;
 	}
     }
 
-    LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry ) {
-	if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg")) {
-	    filename = file->filename;
-	    folder = file->folder;
-	    TRACE("downloading %s/%s\n", folder, filename);
-	    if (file->download) {
-		file->download = FALSE; /* mark as done */
-		break;
-	    }
+    for (i = 0; i < activeDS.file_count; i++)
+    {
+        if (activeDS.download_flags[i])
+        {
+            activeDS.download_flags[i] = FALSE; /* mark as done */
+            break;
 	}
     }
-    gp_file_new (&activeDS.file);
-    ret = gp_camera_file_get(activeDS.camera, folder, filename, GP_FILE_TYPE_NORMAL,
-			     activeDS.file, activeDS.context);
-    if (ret < GP_OK) {
-	FIXME("Failed to get file?\n");
+    if (i == activeDS.file_count)
+    {
 	activeDS.twCC = TWCC_SEQERROR;
 	return TWRC_FAILURE;
     }
-    ret = gp_file_get_data_and_size (activeDS.file, (const char**)&filedata, &filesize);
-    if (ret < GP_OK) {
-	FIXME("Failed to get file data?\n");
+
+    open_params.idx     = i;
+    open_params.preview = FALSE;
+    open_params.handle  = &activeDS.file_handle;
+    open_params.size    = &activeDS.file_size;
+    if (GPHOTO2_CALL( open_file, &open_params ))
+    {
+	activeDS.twCC = TWCC_SEQERROR;
+	return TWRC_FAILURE;
+    }
+
+    activeDS.file_data = malloc( activeDS.file_size );
+    get_data_params.handle = activeDS.file_handle;
+    get_data_params.data   = activeDS.file_data;
+    get_data_params.size   = activeDS.file_size;
+    if (GPHOTO2_CALL( get_file_data, &get_data_params ))
+    {
 	activeDS.twCC = TWCC_SEQERROR;
 	return TWRC_FAILURE;
     }
@@ -177,8 +198,8 @@ static TW_UINT16 _get_image_and_startup_jpeg(void) {
     /* This is basically so we can use in-memory data for jpeg decompression.
      * We need to have all the functions.
      */
-    activeDS.xjsm.next_input_byte	= filedata;
-    activeDS.xjsm.bytes_in_buffer	= filesize;
+    activeDS.xjsm.next_input_byte	= activeDS.file_data;
+    activeDS.xjsm.bytes_in_buffer	= activeDS.file_size;
     activeDS.xjsm.init_source	= _jpeg_init_source;
     activeDS.xjsm.fill_input_buffer	= _jpeg_fill_input_buffer;
     activeDS.xjsm.skip_input_data	= _jpeg_skip_input_data;
@@ -195,8 +216,7 @@ static TW_UINT16 _get_image_and_startup_jpeg(void) {
     pjpeg_start_decompress(&activeDS.jd);
     if (ret != JPEG_HEADER_OK) {
 	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
-	gp_file_unref (activeDS.file);
-	activeDS.file = NULL;
+        close_current_file();
 	return TWRC_FAILURE;
     }
     return TWRC_SUCCESS;
@@ -308,7 +328,7 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
 
         activeDS.currentState = 7;
     } else {
-	if (!activeDS.file) {
+	if (!activeDS.file_handle) {
     	    activeDS.twCC = TWRC_SUCCESS;
 	    return TWRC_XFERDONE;
 	}
@@ -347,8 +367,7 @@ TW_UINT16 GPHOTO2_ImageMemXferGet (pTW_IDENTITY pOrigin,
     if (activeDS.jd.output_scanline == activeDS.jd.output_height) {
         pjpeg_finish_decompress(&activeDS.jd);
         pjpeg_destroy_decompress(&activeDS.jd);
-	gp_file_unref (activeDS.file);
-	activeDS.file = NULL;
+        close_current_file();
 	TRACE("xfer is done!\n");
 
 	/*TransferringDialogBox(activeDS.progressWnd, -1);*/
@@ -413,8 +432,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     hDIB = CreateDIBSection (0, &bmpInfo, DIB_RGB_COLORS, (LPVOID)&bits, 0, 0);
     if (!hDIB) {
 	FIXME("Failed creating DIB.\n");
-	gp_file_unref (activeDS.file);
-	activeDS.file = NULL;
+        close_current_file();
 	activeDS.twCC = TWCC_LOWMEMORY;
 	return TWRC_FAILURE;
     }
@@ -437,8 +455,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 	samprow = oldsamprow;
     }
     HeapFree (GetProcessHeap(), 0, samprow);
-    gp_file_unref (activeDS.file);
-    activeDS.file = NULL;
+    close_current_file();
     *pHandle = (UINT_PTR)hDIB;
     activeDS.twCC = TWCC_SUCCESS;
     activeDS.currentState = 7;
@@ -537,45 +554,52 @@ TW_UINT16 GPHOTO2_RGBResponseSet (pTW_IDENTITY pOrigin,
 }
 
 TW_UINT16
-_get_gphoto2_file_as_DIB(
-    const char *folder, const char *filename, CameraFileType type,
-    HWND hwnd, HBITMAP *hDIB
-) {
-    const unsigned char *filedata;
-    unsigned long	filesize;
-    int			ret;
-    CameraFile		*file;
+_get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hDIB )
+{
+#ifdef SONAME_LIBJPEG
+    unsigned char *filedata;
+    int ret;
     struct jpeg_source_mgr		xjsm;
     struct jpeg_decompress_struct	jd;
     struct jpeg_error_mgr		jerr;
     BITMAPINFO 		bmpInfo;
     LPBYTE		bits;
     JSAMPROW		samprow, oldsamprow;
+    struct open_file_params open_params;
+    struct get_file_data_params get_data_params;
+    void *file_handle;
+    unsigned int filesize;
 
     if(!libjpeg_handle) {
 	if(!load_libjpeg()) {
 	    FIXME("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
-	    filedata = NULL;
 	    return TWRC_FAILURE;
 	}
     }
 
-    gp_file_new (&file);
-    ret = gp_camera_file_get(activeDS.camera, folder, filename, type, file, activeDS.context);
-    if (ret < GP_OK) {
-	FIXME("Failed to get file?\n");
-	gp_file_unref (file);
+    open_params.idx     = idx;
+    open_params.preview = preview;
+    open_params.handle  = &file_handle;
+    open_params.size    = &filesize;
+    if (GPHOTO2_CALL( open_file, &open_params ))
+    {
+	FIXME( "Failed to get file %u\n", idx);
 	return TWRC_FAILURE;
     }
-    ret = gp_file_get_data_and_size (file, (const char**)&filedata, &filesize);
-    if (ret < GP_OK) {
-	FIXME("Failed to get file data?\n");
+    filedata = malloc( filesize );
+    get_data_params.handle = file_handle;
+    get_data_params.data   = filedata;
+    get_data_params.size   = filesize;
+    if (GPHOTO2_CALL( get_file_data, &get_data_params ))
+    {
+        close_file( file_handle );
+        free( filedata );
 	return TWRC_FAILURE;
     }
 
     /* FIXME: Actually we might get other types than JPEG ... But only handle JPEG for now */
     if (filedata[0] != 0xff) {
-	ERR("File %s/%s might not be JPEG, cannot decode!\n", folder, filename);
+	ERR("File %u might not be JPEG, cannot decode!\n", idx);
     }
 
     /* This is basically so we can use in-memory data for jpeg decompression.
@@ -599,7 +623,8 @@ _get_gphoto2_file_as_DIB(
     pjpeg_start_decompress(&jd);
     if (ret != JPEG_HEADER_OK) {
 	ERR("Jpeg image in stream has bad format, read header returned %d.\n",ret);
-	gp_file_unref (file);
+        close_file( file_handle );
+        free( filedata );
 	return TWRC_FAILURE;
     }
 
@@ -618,7 +643,8 @@ _get_gphoto2_file_as_DIB(
     *hDIB = CreateDIBSection(0, &bmpInfo, DIB_RGB_COLORS, (LPVOID)&bits, 0, 0);
     if (!*hDIB) {
 	FIXME("Failed creating DIB.\n");
-	gp_file_unref (file);
+        close_file( file_handle );
+        free( filedata );
 	return TWRC_FAILURE;
     }
     samprow = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,jd.output_width*jd.output_components);
@@ -640,6 +666,7 @@ _get_gphoto2_file_as_DIB(
 	samprow = oldsamprow;
     }
     HeapFree (GetProcessHeap(), 0, samprow);
-    gp_file_unref (file);
+    close_file( file_handle );
+    free( filedata );
     return TWRC_SUCCESS;
 }

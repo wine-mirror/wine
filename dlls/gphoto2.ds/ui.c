@@ -31,6 +31,7 @@
 #include "winreg.h"
 #include "commctrl.h"
 #include "prsht.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 #include "resource.h"
 
@@ -69,82 +70,66 @@ static void UI_EndDialog(HWND hwnd, INT_PTR rc)
 
 static BOOL GetAllImages(void)
 {
-    struct gphoto2_file *file;
-    BOOL has_images = FALSE;
+    unsigned int i;
 
-    LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry)
-    {
-        if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg"))
-        {
-            file->download = TRUE;
-            has_images = TRUE;
-        }
-    }
-    return has_images;
+    for (i = 0; i < activeDS.file_count; i++) activeDS.download_flags[i] = TRUE;
+    activeDS.download_count = activeDS.file_count;
+    return activeDS.download_count > 0;
 }
 
 static void PopulateListView(HWND List)
 {
-	struct gphoto2_file *file;
 	LVITEMA item;
-	int index = 0;
+        char buffer[1024];
+	struct get_file_name_params params = { 0, sizeof(buffer), buffer };
 
-	LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry)
+        for (params.idx = 0; params.idx < activeDS.file_count; params.idx++)
 	{
-		if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg")) 
-		{
-			item.mask = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE ;
-			item.iItem = index;
-			item.iSubItem = 0;
-			item.pszText = file->filename;
-			item.iImage = index;
-			item.lParam= (LPARAM)file;
-
-			SendMessageA(List, LVM_INSERTITEMA,0,(LPARAM)&item);
-			index ++;
-		}
+            GPHOTO2_CALL( get_file_name, &params );
+            item.mask = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE;
+            item.iItem = params.idx;
+            item.iSubItem = 0;
+            item.pszText = buffer;
+            item.iImage = params.idx;
+            item.lParam = 0;
+            SendMessageA(List, LVM_INSERTITEMA,0,(LPARAM)&item);
 	}
 }
 
 static void PopulateImageList(HIMAGELIST *iList, HWND list)
 {
-	struct gphoto2_file *file;
+	unsigned int i;
 	HWND 	progress_dialog;
 
 	progress_dialog =
 		CreateDialogW(GPHOTO2_instance,(LPWSTR)MAKEINTRESOURCE(IDD_CONNECTING),
 				NULL, ConnectingProc);
-	
-	LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry)
+
+        for (i = 0; i < activeDS.file_count; i++)
 	{
-		if (strstr(file->filename,".JPG") || strstr(file->filename,".jpg")) 
-		{
-			HBITMAP 	bitmap;
-			BITMAP		bmpInfo;
+            HBITMAP bitmap;
+            BITMAP bmpInfo;
 
-			_get_gphoto2_file_as_DIB(file->folder, file->filename,
-					GP_FILE_TYPE_PREVIEW, 0, &bitmap); 
-			GetObjectA(bitmap,sizeof(BITMAP),&bmpInfo);
+            _get_gphoto2_file_as_DIB( i, TRUE, 0, &bitmap );
+            GetObjectA(bitmap,sizeof(BITMAP),&bmpInfo);
 
-			if (*iList == 0)
-			{
-				*iList = ImageList_Create(bmpInfo.bmWidth,
-						bmpInfo.bmHeight,ILC_COLOR24, 10,10);
+            if (*iList == 0)
+            {
+                *iList = ImageList_Create(bmpInfo.bmWidth,
+                                          bmpInfo.bmHeight,ILC_COLOR24, 10,10);
 
-				SendMessageW(list, LVM_SETICONSPACING, 0,
-						MAKELONG(bmpInfo.bmWidth+6, bmpInfo.bmHeight+15) ); }
+                SendMessageW(list, LVM_SETICONSPACING, 0,
+                             MAKELONG(bmpInfo.bmWidth+6, bmpInfo.bmHeight+15) ); }
 
-			ImageList_Add(*iList, bitmap, 0);
+            ImageList_Add(*iList, bitmap, 0);
 
-			DeleteObject(static_bitmap);
-			static_bitmap = bitmap;
-			SendMessageW(GetDlgItem(progress_dialog,IDC_BITMAP),STM_SETIMAGE,
-					IMAGE_BITMAP, (LPARAM)static_bitmap);
-			RedrawWindow(progress_dialog,NULL,NULL,RDW_INTERNALPAINT|RDW_UPDATENOW|RDW_ALLCHILDREN);
-		}
-	}
-	EndDialog(progress_dialog,0);
-	
+            DeleteObject(static_bitmap);
+            static_bitmap = bitmap;
+            SendMessageW(GetDlgItem(progress_dialog,IDC_BITMAP),STM_SETIMAGE,
+                         IMAGE_BITMAP, (LPARAM)static_bitmap);
+            RedrawWindow(progress_dialog,NULL,NULL,RDW_INTERNALPAINT|RDW_UPDATENOW|RDW_ALLCHILDREN);
+        }
+        EndDialog(progress_dialog,0);
 }
 
 static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -180,38 +165,21 @@ static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				case IDC_IMPORT:
 					{
 						HWND list = GetDlgItem(hwnd,IDC_LIST1);
-						int count = SendMessageA(list,LVM_GETSELECTEDCOUNT,0,0);
-						int i;
+						unsigned int i;
 
-						if (count ==0)
+						if (activeDS.file_count == 0)
 						{
 							UI_EndDialog(hwnd,0);
 							return FALSE;
 						}
 
-						count = SendMessageA(list,LVM_GETITEMCOUNT,0,0);
-						for ( i = 0; i < count; i++)
+						for (i = 0; i < activeDS.file_count; i++)
 						{
-							INT state = 0x00000000;
-
-							state = SendMessageA(list,LVM_GETITEMSTATE,i,
-									LVIS_SELECTED);
-
-							if (state)
-							{
-								LVITEMA item;
-								struct gphoto2_file *file;
-
-
-								item.mask = LVIF_PARAM;
-								item.iItem = i;
-
-								item.iSubItem = 0;
-								SendMessageA(list,LVM_GETITEMA,0,(LPARAM)&item);
-
-								file = (struct gphoto2_file*)item.lParam;
-								file->download = TRUE;
-							}
+                                                    if (SendMessageA(list,LVM_GETITEMSTATE,i, LVIS_SELECTED))
+                                                    {
+                                                        if (!activeDS.download_flags[i]) activeDS.download_count++;
+                                                        activeDS.download_flags[i] = TRUE;
+                                                    }
 						}
 
 						UI_EndDialog(hwnd,1);

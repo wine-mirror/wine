@@ -29,85 +29,14 @@
 #include <stdlib.h>
 
 #include "gphoto2_i.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 struct tagActiveDS activeDS;
 
-DSMENTRYPROC GPHOTO2_dsmentry;
-
-static char* GPHOTO2_StrDup(const char* str)
-{
-    char* dst = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
-    strcpy(dst, str);
-    return dst;
-}
-
-static void
-load_filesystem(const char *folder) {
-    int		i, count, ret;
-    CameraList	*list;
-
-    ret = gp_list_new (&list);
-    if (ret < GP_OK)
-	return;
-    ret = gp_camera_folder_list_files (activeDS.camera, folder, list, activeDS.context);
-    if (ret < GP_OK) {
-	gp_list_free (list);
-	return;
-    }
-    count = gp_list_count (list);
-    if (count < GP_OK) {
-	gp_list_free (list);
-	return;
-    }
-    for (i = 0; i < count; i++) {
-	const char *name;
-	struct gphoto2_file *gpfile;
-
-	ret = gp_list_get_name (list, i, &name);
-	if (ret < GP_OK)
-	    continue;
-	gpfile = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gphoto2_file)); /* FIXME: Leaked */
-	if (!gpfile)
-	    continue;
-	TRACE("adding %s/%s\n", folder, name);
-	gpfile->folder = GPHOTO2_StrDup(folder);
-	gpfile->filename = GPHOTO2_StrDup(name);
-	gpfile->download = FALSE;
-	list_add_tail( &activeDS.files, &gpfile->entry );
-    }
-    gp_list_reset (list);
-
-    ret = gp_camera_folder_list_folders (activeDS.camera, folder, list, activeDS.context);
-    if (ret < GP_OK) {
-	FIXME("list_folders failed\n");
-	gp_list_free (list);
-	return;
-    }
-    count = gp_list_count (list);
-    if (count < GP_OK) {
-	FIXME("list_folders failed\n");
-	gp_list_free (list);
-	return;
-    }
-    for (i = 0; i < count; i++) {
-	const char *name;
-	char *newfolder;
-	ret = gp_list_get_name (list, i, &name);
-	if (ret < GP_OK)
-	    continue;
-	TRACE("recursing into %s\n", name);
-	newfolder = HeapAlloc(GetProcessHeap(), 0, strlen(folder)+1+strlen(name)+1);
-	if (!strcmp(folder,"/"))
-	    sprintf (newfolder, "/%s", name);
-	else
-	    sprintf (newfolder, "%s/%s", folder, name);
-	load_filesystem (newfolder); /* recurse ... happily */
-    }
-    gp_list_free (list);
-}
+static DSMENTRYPROC GPHOTO2_dsmentry;
 
 /* DG_CONTROL/DAT_CAPABILITY/MSG_GET */
 static TW_UINT16 GPHOTO2_CapabilityGet (pTW_IDENTITY pOrigin, TW_MEMREF pData)
@@ -340,9 +269,7 @@ static TW_UINT16 GPHOTO2_PassThrough (pTW_IDENTITY pOrigin,
 static TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
                                      TW_MEMREF pData)
 {
-    TW_UINT32 count;
     pTW_PENDINGXFERS pPendingXfers = (pTW_PENDINGXFERS) pData;
-    struct gphoto2_file *file;
 
     TRACE("DG_CONTROL/DAT_PENDINGXFERS/MSG_ENDXFER\n");
 
@@ -350,13 +277,8 @@ static TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
         activeDS.twCC = TWCC_SEQERROR;
         return TWRC_FAILURE;
     }
-    count = 0;
-    LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry ) {
-	if (file->download)
-	    count++;
-    }
-    TRACE("count = %d\n", count);
-    pPendingXfers->Count = count;
+    TRACE("count = %d\n", activeDS.download_count);
+    pPendingXfers->Count = activeDS.download_count;
     if (pPendingXfers->Count != 0) {
         activeDS.currentState = 6;
     } else {
@@ -375,9 +297,7 @@ static TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
 static TW_UINT16 GPHOTO2_PendingXfersGet (pTW_IDENTITY pOrigin,
                                  TW_MEMREF pData)
 {
-    TW_UINT32 count;
     pTW_PENDINGXFERS pPendingXfers = (pTW_PENDINGXFERS) pData;
-    struct gphoto2_file *file;
 
     TRACE("DG_CONTROL/DAT_PENDINGXFERS/MSG_GET\n");
 
@@ -386,13 +306,8 @@ static TW_UINT16 GPHOTO2_PendingXfersGet (pTW_IDENTITY pOrigin,
         return TWRC_FAILURE;
     }
 
-    count = 0;
-    LIST_FOR_EACH_ENTRY( file, &activeDS.files, struct gphoto2_file, entry ) {
-	if (file->download)
-	    count++;
-    }
-    TRACE("count = %d\n", count);
-    pPendingXfers->Count = count;
+    TRACE("count = %d\n", activeDS.download_count);
+    pPendingXfers->Count = activeDS.download_count;
     activeDS.twCC = TWCC_SUCCESS;
     return TWRC_SUCCESS;
 }
@@ -499,8 +414,12 @@ static TW_UINT16 GPHOTO2_EnableDSUserInterface (pTW_IDENTITY pOrigin,
                                        TW_MEMREF pData)
 {
     pTW_USERINTERFACE pUserInterface = (pTW_USERINTERFACE) pData;
+    static const char *extensions[] = { ".jpg", ".JPG", NULL };
+    struct load_file_list_params params = { "/", extensions, &activeDS.file_count };
 
-    load_filesystem("/");
+    GPHOTO2_CALL( load_file_list, &params );
+    activeDS.download_flags = calloc( activeDS.file_count, sizeof(*activeDS.download_flags) );
+    activeDS.download_count = 0;
 
     TRACE ("DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS\n");
     if (activeDS.currentState != 4) {
@@ -562,7 +481,8 @@ static TW_UINT16 GPHOTO2_XferGroupSet (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
-HINSTANCE GPHOTO2_instance;
+HINSTANCE GPHOTO2_instance = 0;
+unixlib_handle_t gphoto2_handle = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -573,17 +493,48 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
 	    GPHOTO2_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
-	    activeDS.context = gp_context_new ();
+            NtQueryVirtualMemory( GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
+                                  &gphoto2_handle, sizeof(gphoto2_handle), NULL );
             break;
     }
 
     return TRUE;
 }
 
-#ifdef HAVE_GPHOTO2_PORT
-static TW_UINT16 GPHOTO2_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
-static TW_UINT16 GPHOTO2_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
-#endif
+static TW_UINT16 GPHOTO2_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self )
+{
+    struct open_ds_params params = { self };
+
+    if (GPHOTO2_dsmentry == NULL)
+    {
+        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
+        HMODULE moddsm = GetModuleHandleW(twain32W);
+
+        if (moddsm)
+            GPHOTO2_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
+
+        if (!GPHOTO2_dsmentry)
+        {
+            ERR("can't find DSM entry point\n");
+            return TWRC_FAILURE;
+        }
+    }
+
+    if (GPHOTO2_CALL( open_ds, &params )) return TWRC_FAILURE;
+
+    activeDS.file_count = 0;
+    activeDS.file_handle = NULL;
+    activeDS.download_count = 0;
+    activeDS.currentState = 4;
+    activeDS.twCC 		= TWRC_SUCCESS;
+    activeDS.pixelflavor	= TWPF_CHOCOLATE;
+    activeDS.pixeltype		= TWPT_RGB;
+    activeDS.capXferMech	= TWSX_MEMORY;
+    activeDS.identity.Id = self->Id;
+    activeDS.appIdentity = *pOrigin;
+    TRACE("OK!\n");
+    return TWRC_SUCCESS;
+}
 
 static TW_UINT16 GPHOTO2_SourceControlHandler (
    pTW_IDENTITY pOrigin,
@@ -599,26 +550,16 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-#ifdef HAVE_GPHOTO2_PORT
-		     if (activeDS.camera) {
-			gp_camera_free (activeDS.camera);
-			activeDS.camera = NULL;
-		     }
-#endif
-		     break;
+                    GPHOTO2_CALL( close_ds, NULL );
+                    break;
 		case MSG_GET:
-#ifdef HAVE_GPHOTO2_PORT
-		     twRC = GPHOTO2_GetIdentity(pOrigin,(pTW_IDENTITY)pData);
-#else
-		     twRC = TWRC_FAILURE;
-#endif
-		     break;
+                {
+                    struct get_identity_params params = { pData };
+                    if (GPHOTO2_CALL( get_identity, &params )) twRC = TWRC_FAILURE;
+                    break;
+                }
 		case MSG_OPENDS:
-#ifdef HAVE_GPHOTO2_PORT
 		     twRC = GPHOTO2_OpenDS(pOrigin,(pTW_IDENTITY)pData);
-#else
-		     twRC = TWRC_FAILURE;
-#endif
 		     break;
 	    }
 	    break;
@@ -1032,194 +973,3 @@ DS_Entry ( pTW_IDENTITY pOrigin,
 
     return twRC;
 }
-
-#ifdef HAVE_GPHOTO2_PORT
-static GPPortInfoList *port_list;
-static int curcamera;
-static CameraList *detected_cameras;
-static CameraAbilitiesList *abilities_list;
-
-static TW_UINT16
-gphoto2_auto_detect(void) {
-    int result, count;
-
-    if (detected_cameras && (gp_list_count (detected_cameras) == 0)) {
-	/* Reload if previously no cameras, we might detect new ones. */
-	TRACE("Reloading portlist trying to detect cameras.\n");
-	if (port_list) {
-	    gp_port_info_list_free (port_list);
-	    port_list = NULL;
-	}
-    }
-    if (!port_list) {
-	TRACE("Auto detecting gphoto cameras.\n");
-	TRACE("Loading ports...\n");
-	if (gp_port_info_list_new (&port_list) < GP_OK)
-	    return TWRC_FAILURE;
-	result = gp_port_info_list_load (port_list);
-	if (result < 0) {
-	    gp_port_info_list_free (port_list);
-	    return TWRC_FAILURE;
-	}
-	count = gp_port_info_list_count (port_list);
-	if (count <= 0)
-	    return TWRC_FAILURE;
-	if (gp_list_new (&detected_cameras) < GP_OK)
-	    return TWRC_FAILURE;
-	if (!abilities_list) { /* Load only once per program start */
-	    gp_abilities_list_new (&abilities_list);
-	    TRACE("Loading cameras...\n");
-	    gp_abilities_list_load (abilities_list, NULL);
-	}
-	TRACE("Detecting cameras...\n");
-	gp_abilities_list_detect (abilities_list, port_list, detected_cameras, NULL);
-        curcamera = 0;
-        TRACE("%d cameras detected\n", gp_list_count(detected_cameras));
-    }
-    return TWRC_SUCCESS;
-}
-
-static TW_UINT16
-GPHOTO2_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
-    int count;
-    const char *cname, *pname;
-
-    if (TWRC_SUCCESS != gphoto2_auto_detect())
-	return TWRC_FAILURE;
-
-    count = gp_list_count (detected_cameras);
-    if (count < GP_OK) {
-	gp_list_free (detected_cameras);
-	return TWRC_FAILURE;
-    }
-    TRACE("%d cameras detected.\n", count);
-    self->ProtocolMajor = TWON_PROTOCOLMAJOR;
-    self->ProtocolMinor = TWON_PROTOCOLMINOR;
-    self->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
-    lstrcpynA (self->Manufacturer, "The Wine Team", sizeof(self->Manufacturer) - 1);
-    lstrcpynA (self->ProductFamily, "GPhoto2 Camera", sizeof(self->ProductFamily) - 1);
-
-    if (!count) { /* No camera detected. But we need to return an IDENTITY anyway. */
-	lstrcpynA (self->ProductName, "GPhoto2 Camera", sizeof(self->ProductName) - 1);
-	return TWRC_SUCCESS;
-    }
-    gp_list_get_name  (detected_cameras, curcamera, &cname);
-    gp_list_get_value (detected_cameras, curcamera, &pname);
-    if (count == 1) /* Normal case, only one camera. */
-	snprintf (self->ProductName, sizeof(self->ProductName), "%s", cname);
-    else
-	snprintf (self->ProductName, sizeof(self->ProductName), "%s@%s", cname, pname);
-    curcamera = (curcamera+1) % count;
-    return TWRC_SUCCESS;
-}
-
-static TW_UINT16
-GPHOTO2_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
-    int ret, m, p, count, i;
-    CameraAbilities a;
-    GPPortInfo info;
-    const char	*model, *port;
-
-    if (GPHOTO2_dsmentry == NULL)
-    {
-        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
-        HMODULE moddsm = GetModuleHandleW(twain32W);
-
-        if (moddsm)
-            GPHOTO2_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
-
-        if (!GPHOTO2_dsmentry)
-        {
-            ERR("can't find DSM entry point\n");
-            return TWRC_FAILURE;
-        }
-    }
-
-    if (TWRC_SUCCESS != gphoto2_auto_detect())
-	return TWRC_FAILURE;
-
-    if (lstrcmpA(self->ProductFamily,"GPhoto2 Camera")) {
-	FIXME("identity passed is not a gphoto camera, but %s!?!\n", self->ProductFamily);
-	return TWRC_FAILURE;
-    }
-    count = gp_list_count (detected_cameras);
-    if (!count) {
-	ERR("No camera found by autodetection. Returning failure.\n");
-	return TWRC_FAILURE;
-    }
-
-    if (!lstrcmpA (self->ProductName, "GPhoto2 Camera")) {
-	TRACE("Potential undetected camera. Just using the first autodetected one.\n");
-	i = 0;
-    } else {
-	for (i=0;i<count;i++) {
-	    const char *cname, *pname;
-	    TW_STR32	name;
-
-	    gp_list_get_name  (detected_cameras, i, &cname);
-	    gp_list_get_value (detected_cameras, i, &pname);
-	    if (!lstrcmpA(self->ProductName,cname))
-		break;
-	    snprintf(name, sizeof(name), "%s", cname);
-	    if (!lstrcmpA(self->ProductName,name))
-		break;
-	    snprintf(name, sizeof(name), "%s@%s", cname, pname);
-	    if (!lstrcmpA(self->ProductName,name))
-		break;
-        }
-        if (i == count) {
-	    TRACE("Camera %s not found in autodetected list. Using first entry.\n", self->ProductName);
-	    i=0;
-        }
-    }
-    gp_list_get_name  (detected_cameras, i, &model);
-    gp_list_get_value  (detected_cameras, i, &port);
-    TRACE("model %s, port %s\n", model, port);
-    ret = gp_camera_new (&activeDS.camera);
-    if (ret < GP_OK) {
-	ERR("gp_camera_new: %d\n", ret);
-	return TWRC_FAILURE;
-    }
-    m = gp_abilities_list_lookup_model (abilities_list, model);
-    if (m < GP_OK) {
-	FIXME("Model %s not found, %d!\n", model, m);
-	return TWRC_FAILURE;
-    }
-    ret = gp_abilities_list_get_abilities (abilities_list, m, &a);
-    if (ret < GP_OK) {
-	FIXME("gp_camera_list_get_abilities failed? %d\n", ret);
-	return TWRC_FAILURE;
-    }
-    ret = gp_camera_set_abilities (activeDS.camera, a);
-    if (ret < GP_OK) {
-	FIXME("gp_camera_set_abilities failed? %d\n", ret);
-	return TWRC_FAILURE;
-    }
-
-    p = gp_port_info_list_lookup_path (port_list, port);
-    if (p < GP_OK) {
-	FIXME("port %s not in portlist?\n", port);
-	return TWRC_FAILURE;
-    }
-    ret = gp_port_info_list_get_info (port_list, p, &info);
-    if (ret < GP_OK) {
-	FIXME("could not get portinfo for port %s?\n", port);
-	return TWRC_FAILURE;
-    }
-    ret = gp_camera_set_port_info (activeDS.camera, info);
-    if (ret < GP_OK) {
-	FIXME("could not set portinfo for port %s to camera?\n", port);
-	return TWRC_FAILURE;
-    }
-    list_init( &(activeDS.files) );
-    activeDS.currentState = 4;
-    activeDS.twCC 		= TWRC_SUCCESS;
-    activeDS.pixelflavor	= TWPF_CHOCOLATE;
-    activeDS.pixeltype		= TWPT_RGB;
-    activeDS.capXferMech	= TWSX_MEMORY;
-    activeDS.identity.Id = self->Id;
-    activeDS.appIdentity = *pOrigin;
-    TRACE("OK!\n");
-    return TWRC_SUCCESS;
-}
-#endif

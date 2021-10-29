@@ -24,11 +24,6 @@
 # error You must include config.h first
 #endif
 
-/* Hack for gphoto2, which changes behaviour when WIN32 is set. */
-#undef WIN32
-#include <gphoto2/gphoto2-camera.h>
-#define WIN32
-
 #include <stdio.h>
 
 #ifdef SONAME_LIBJPEG
@@ -55,14 +50,6 @@
 
 extern HINSTANCE GPHOTO2_instance DECLSPEC_HIDDEN;
 
-struct gphoto2_file  {
-    struct list entry;
-
-    char	*folder;
-    char	*filename;
-    BOOL	download;	/* flag for downloading, set by GUI or so */
-};
-
 /* internal information about an active data source */
 struct tagActiveDS
 {
@@ -72,18 +59,19 @@ struct tagActiveDS
     TW_UINT16		twCC;			/* condition code */
     HWND		progressWnd;		/* window handle of the scanning window */
 
-    Camera		*camera;
-    GPContext		*context;
-
     /* Capabilities */
     TW_UINT32		capXferMech;		/* ICAP_XFERMECH */
     TW_UINT16		pixeltype;		/* ICAP_PIXELTYPE */
     TW_UINT16		pixelflavor;		/* ICAP_PIXELFLAVOR */
 
-    struct list 	files;
+    unsigned int        file_count;
+    unsigned int        download_count;
+    BOOL               *download_flags;
 
     /* Download and decode JPEG STATE */
-    CameraFile				*file;
+    void               *file_handle;
+    unsigned char      *file_data;
+    unsigned int        file_size;
 #ifdef SONAME_LIBJPEG
     struct jpeg_source_mgr		xjsm;
     struct jpeg_decompress_struct	jd;
@@ -149,9 +137,6 @@ HWND TransferringDialogBox(HWND dialog, LONG progress) DECLSPEC_HIDDEN;
 
 /* Helper function for GUI */
 TW_UINT16
-_get_gphoto2_file_as_DIB(
-        const char *folder, const char *filename, CameraFileType type,
-        HWND hwnd, HBITMAP *hDIB
-) DECLSPEC_HIDDEN;
+_get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hDIB ) DECLSPEC_HIDDEN;
 
 #endif
