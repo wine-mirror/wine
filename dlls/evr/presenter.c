@@ -267,8 +267,11 @@ static void video_presenter_reset_media_type(struct video_presenter *presenter)
         IMFMediaType_Release(presenter->media_type);
     presenter->media_type = NULL;
 
-    IMFVideoSampleAllocator_UninitializeSampleAllocator(presenter->allocator);
-    video_presenter_set_allocator_callback(presenter, NULL);
+    if (presenter->allocator)
+    {
+        IMFVideoSampleAllocator_UninitializeSampleAllocator(presenter->allocator);
+        video_presenter_set_allocator_callback(presenter, NULL);
+    }
 }
 
 static HRESULT video_presenter_set_media_type(struct video_presenter *presenter, IMFMediaType *media_type)
@@ -2083,7 +2086,10 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
         goto failed;
 
     if (FAILED(hr = video_presenter_init_d3d(object)))
+    {
+        WARN("Failed to initialize d3d device, hr %#x.\n", hr);
         goto failed;
+    }
 
     *out = &object->IUnknown_inner;
 
