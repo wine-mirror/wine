@@ -30,6 +30,7 @@ import "windows.foundation.idl";
 namespace Windows {
     namespace Devices {
         namespace Enumeration {
+            typedef enum DeviceWatcherStatus DeviceWatcherStatus;
             typedef enum Panel Panel;
 
             interface IDeviceInformation;
@@ -41,6 +42,7 @@ namespace Windows {
             runtimeclass DeviceInformation;
             runtimeclass DeviceInformationUpdate;
             runtimeclass DeviceThumbnail;
+            runtimeclass DeviceWatcher;
             runtimeclass EnclosureLocation;
         }
     }
@@ -59,6 +61,9 @@ namespace Windows
                 interface Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *>;
                 interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceInformation *>;
                 interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.DeviceThumbnail *>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, IInspectable *>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, Windows.Devices.Enumeration.DeviceInformation *>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *, Windows.Devices.Enumeration.DeviceInformationUpdate *>;
             }
         }
     }
@@ -82,6 +87,16 @@ namespace Windows
 namespace Windows {
     namespace Devices {
         namespace Enumeration {
+            enum DeviceWatcherStatus
+            {
+                Created              = 0,
+                Started              = 1,
+                EnumerationCompleted = 2,
+                Stopping             = 3,
+                Stopped              = 4,
+                Aborted              = 5
+            };
+
             enum Panel
             {
                 Unknown = 0,
@@ -118,6 +133,32 @@ namespace Windows {
             {
                 [propget] HRESULT Id([out, retval] HSTRING *value);
                 [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *> **value);
+            }
+
+            [
+                exclusiveto(Windows.Devices.Enumeration.DeviceWatcher),
+                uuid(c9eab97d-8f6b-4f96-a9f4-abc814e22271),
+            ]
+            interface IDeviceWatcher : IInspectable
+            {
+                [eventadd] HRESULT Added([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher*,
+                        Windows.Devices.Enumeration.DeviceInformation *> *handler, [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT Added([in] EventRegistrationToken token);
+                [eventadd] HRESULT Updated([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *,
+                        Windows.Devices.Enumeration.DeviceInformationUpdate *> *handler, [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT Updated([in] EventRegistrationToken token);
+                [eventadd] HRESULT Removed([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *,
+                        Windows.Devices.Enumeration.DeviceInformationUpdate *> *handler, [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT Removed([in] EventRegistrationToken token);
+                [eventadd] HRESULT EnumerationCompleted([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *,
+                        IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT EnumerationCompleted([in] EventRegistrationToken token);
+                [eventadd] HRESULT Stopped([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Enumeration.DeviceWatcher *,
+                        IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT Stopped([in] EventRegistrationToken token);
+                [propget] HRESULT Status([out, retval] Windows.Devices.Enumeration.DeviceWatcherStatus *status);
+                HRESULT Start();
+                HRESULT Stop();
             }
 
             [
@@ -164,6 +205,15 @@ namespace Windows {
                 interface Windows.Storage.Streams.IOutputStream;
                 interface Windows.Foundation.IClosable;
                 interface Windows.Storage.Streams.IInputStream;
+            }
+
+            [
+                marshaling_behavior(agile),
+            ]
+            runtimeclass DeviceWatcher
+            {
+                [default] interface Windows.Devices.Enumeration.IDeviceWatcher;
+                interface Windows.Devices.Enumeration.IDeviceWatcher2;
             }
 
             [
