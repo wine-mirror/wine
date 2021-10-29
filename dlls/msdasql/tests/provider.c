@@ -119,6 +119,7 @@ static void test_command_interfaces(IUnknown *cmd)
     ICommandStream *commandstream;
     IColumnsInfo *colinfo;
     IMultipleResults *multiple;
+    IUnknown *unk;
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandProperties, (void**)&commandProp);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -147,6 +148,15 @@ static void test_command_interfaces(IUnknown *cmd)
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
     hr = IUnknown_QueryInterface(cmd, &IID_IMultipleResults, (void**)&multiple);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(cmd, &IID_IRowsetChange, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(cmd, &IID_IRowsetUpdate, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(cmd, &IID_IRowsetLocate, (void**)&unk);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 }
 

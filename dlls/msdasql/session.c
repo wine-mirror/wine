@@ -315,6 +315,31 @@ static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, v
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
+    else if (IsEqualGUID(&IID_IMultipleResults, riid))
+    {
+        TRACE("IID_IMultipleResults not supported\n");
+        return E_NOINTERFACE;
+    }
+    else if(IsEqualGUID(&IID_ICommandStream, riid))
+    {
+        TRACE("ICommandStream not support\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(&IID_IRowsetChange, riid))
+    {
+        TRACE("IID_IRowsetChange not supported\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(&IID_IRowsetUpdate, riid))
+    {
+        TRACE("IID_IRowsetUpdate not supported\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(&IID_IRowsetLocate, riid))
+    {
+        TRACE("IID_IRowsetLocate not supported\n");
+        return E_NOINTERFACE;
+    }
 
     FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
