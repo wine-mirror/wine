@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-10-29 21:40+0800\n"
+"PO-Revision-Date: 2021-10-30 18:53+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -1353,7 +1353,8 @@ msgid ""
 msgstr ""
 "開啟大寫鎖定可能導致您輸入錯誤的密碼。\n"
 "\n"
-"您可以按下 Caps Lock 鍵以解除大寫鎖定，然後再輸入密碼。"
+"您可以按下 Caps Lock 鍵以解除大寫鎖定，\n"
+"然後再輸入密碼。"
 
 #: dlls/credui/credui.rc:34
 msgid "Caps Lock is On"
@@ -9633,7 +9634,7 @@ msgstr "Wine Internet Explorer"
 
 #: dlls/shdoclc/shdoclc.rc:33
 msgid "&w&bPage &p"
-msgstr "&w&b頁 &p"
+msgstr "&w&b第 &p 頁"
 
 #: dlls/shell32/shell32.rc:30 dlls/shell32/shell32.rc:45
 #: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:160
@@ -10244,1769 +10245,1627 @@ msgstr "選擇來源"
 
 #: dlls/tzres/tzres.rc:126
 msgid "China Standard Time"
-msgstr ""
+msgstr "中國標準時間"
 
 #: dlls/tzres/tzres.rc:127
 msgid "China Daylight Time"
-msgstr ""
+msgstr "中國夏令時間"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
-msgstr ""
+msgstr "(UTC+08:00) 北京，重慶，香港，烏魯木齊"
 
 #: dlls/tzres/tzres.rc:267
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "北亞標準時間"
 
 #: dlls/tzres/tzres.rc:268
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "北亞夏令時間"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+07:00) Krasnoyarsk"
-msgstr ""
+msgstr "(UTC+07:00) 克拉斯諾雅斯克"
 
 #: dlls/tzres/tzres.rc:168
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "喬治亞標準時間"
 
 #: dlls/tzres/tzres.rc:169
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "喬治亞夏令時間"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
-msgstr ""
+msgstr "(UTC+04:00) 提比里斯"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:392
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr ""
+msgstr "(UTC+12:00) 世界協調時間+12"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "尼泊爾標準時間"
 
 #: dlls/tzres/tzres.rc:253
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "尼泊爾夏令時間"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+05:45) Kathmandu"
-msgstr ""
+msgstr "(UTC+05:45) 加德滿都"
 
 #: dlls/tzres/tzres.rc:90
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "維德角標準時間"
 
 #: dlls/tzres/tzres.rc:91
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "維德角夏令時間"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) 維德角群島"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Date and time"
 msgid "Haiti Standard Time"
-msgstr "日期和時間"
+msgstr "海地標準時間"
 
 #: dlls/tzres/tzres.rc:184
-#, fuzzy
-#| msgid "Date and time"
 msgid "Haiti Daylight Time"
-msgstr "日期和時間"
+msgstr "海地夏令時間"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) 海地"
 
 #: dlls/tzres/tzres.rc:111
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "中歐語言"
+msgstr "歐洲中部標準時間"
 
 #: dlls/tzres/tzres.rc:112
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "中歐語言"
+msgstr "歐洲中部夏令時間"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
-msgstr ""
+msgstr "(UTC+01:00) 賽拉耶佛，斯高彼亞，華沙，札格雷布"
 
 #: dlls/tzres/tzres.rc:234
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "摩洛哥標準時間"
 
 #: dlls/tzres/tzres.rc:235
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "摩洛哥夏令時間"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+01:00) Casablanca"
-msgstr ""
+msgstr "(UTC+01:00) 卡薩布蘭卡"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:401
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr ""
+msgstr "(UTC-08:00) 世界協調時間-08"
 
 #: dlls/tzres/tzres.rc:39
-#, fuzzy
-#| msgid "Date and time"
 msgid "Altai Standard Time"
-msgstr "日期和時間"
+msgstr "阿爾泰標準時間"
 
 #: dlls/tzres/tzres.rc:40
-#, fuzzy
-#| msgid "Date and time"
 msgid "Altai Daylight Time"
-msgstr "日期和時間"
+msgstr "阿爾泰夏令時間"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
-msgstr ""
+msgstr "(UTC+07:00) 巴爾瑙爾，戈爾諾-阿爾泰斯克"
 
 #: dlls/tzres/tzres.rc:108
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "中歐語言"
+msgstr "中歐標準時間"
 
 #: dlls/tzres/tzres.rc:109
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "中歐語言"
+msgstr "中歐夏令時間"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
-msgstr ""
+msgstr "(UTC+01:00) 貝爾格勒，布拉迪斯拉瓦，布達佩斯，盧布亞那，布拉格"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "伊朗標準時間"
 
 #: dlls/tzres/tzres.rc:193
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "伊朗夏令時間"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) 德黑蘭"
 
 #: dlls/tzres/tzres.rc:318
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saint Pierre Standard Time"
-msgstr "日期和時間"
+msgstr "聖皮埃標準時間"
 
 #: dlls/tzres/tzres.rc:319
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saint Pierre Daylight Time"
-msgstr "日期和時間"
+msgstr "聖皮埃夏令時間"
 
 #: dlls/tzres/tzres.rc:320
-#, fuzzy
-#| msgid "Date and time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "日期和時間"
+msgstr "(UTC-03:00) 聖皮埃與密克隆群島"
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Sao Tome Standard Time"
-msgstr "標準列(&S)"
+msgstr "聖多美標準時間"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sao Tome Daylight Time"
-msgstr "日期和時間"
+msgstr "聖多美夏令時間"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) 聖多美"
 
 #: dlls/tzres/tzres.rc:249
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "納米比亞標準時間"
 
 #: dlls/tzres/tzres.rc:250
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "納米比亞夏令時間"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+02:00) Windhoek"
-msgstr ""
+msgstr "(UTC+02:00) 溫荷克"
 
 #: dlls/tzres/tzres.rc:366
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "東加標準時間"
 
 #: dlls/tzres/tzres.rc:367
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "東加夏令時間"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC+13:00) Nuku'alofa"
-msgstr ""
+msgstr "(UTC+13:00) 努瓜婁發"
 
 #: dlls/tzres/tzres.rc:240
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "山區標準時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:241
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "山區夏令時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
-msgstr ""
+msgstr "(UTC-07:00) 契瓦瓦，拉帕茲，馬薩特蘭"
 
 #: dlls/tzres/tzres.rc:171
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "標準列(&S)"
+msgstr "GMT 標準時間"
 
 #: dlls/tzres/tzres.rc:172
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "GMT 夏令時間"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
-msgstr ""
+msgstr "(UTC+00:00) 都柏林，愛丁堡，里斯本，倫敦"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "中亞標準時間"
 
 #: dlls/tzres/tzres.rc:103
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "中亞夏令時間"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC+06:00) Astana"
-msgstr ""
+msgstr "(UTC+06:00) 努爾蘇丹"
 
 #: dlls/tzres/tzres.rc:213
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Lord Howe Standard Time"
-msgstr "標準列(&S)"
+msgstr "豪勳爵島標準時間"
 
 #: dlls/tzres/tzres.rc:214
-#, fuzzy
-#| msgid "Date and time"
 msgid "Lord Howe Daylight Time"
-msgstr "日期和時間"
+msgstr "豪勳爵島夏令時間"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr ""
+msgstr "(UTC+10:30) 豪勳爵島"
 
 #: dlls/tzres/tzres.rc:48
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "伊拉克標準時間"
 
 #: dlls/tzres/tzres.rc:49
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "伊拉克夏令時間"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
-msgstr ""
+msgstr "(UTC+03:00) 巴格達"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:395
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr ""
+msgstr "(UTC+13:00) 世界協調時間+13"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "馬加丹標準時間"
 
 #: dlls/tzres/tzres.rc:217
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "馬加丹夏令時間"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
-msgstr ""
+msgstr "(UTC+11:00) 馬加丹"
 
 #: dlls/tzres/tzres.rc:258
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "紐芬蘭標準時間"
 
 #: dlls/tzres/tzres.rc:259
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "紐芬蘭夏令時間"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) 紐芬蘭"
 
 #: dlls/tzres/tzres.rc:345
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sudan Standard Time"
-msgstr "日期和時間"
+msgstr "蘇丹標準時間"
 
 #: dlls/tzres/tzres.rc:346
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sudan Daylight Time"
-msgstr "日期和時間"
+msgstr "蘇丹夏令時間"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+02:00) Khartoum"
-msgstr ""
+msgstr "(UTC+02:00) 喀土穆"
 
 #: dlls/tzres/tzres.rc:435
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "西太平洋標準時間"
 
 #: dlls/tzres/tzres.rc:436
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "西太平洋夏令時間"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+10:00) Guam, Port Moresby"
-msgstr ""
+msgstr "(UTC+10:00) 關島，莫爾斯貝港"
 
 #: dlls/tzres/tzres.rc:279
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "太平洋標準時間"
 
 #: dlls/tzres/tzres.rc:280
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "太平洋夏令時間"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-08:00) 太平洋時間 (美國和加拿大)"
 
 #: dlls/tzres/tzres.rc:69
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "亞塞拜然標準時間"
 
 #: dlls/tzres/tzres.rc:70
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "亞塞拜然夏令時間"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC+04:00) Baku"
-msgstr ""
+msgstr "(UTC+04:00) 巴庫"
 
 #: dlls/tzres/tzres.rc:219
-#, fuzzy
-#| msgid "Date and time"
 msgid "Magallanes Standard Time"
-msgstr "日期和時間"
+msgstr "麥哲倫標準時間"
 
 #: dlls/tzres/tzres.rc:220
-#, fuzzy
-#| msgid "Date and time"
 msgid "Magallanes Daylight Time"
-msgstr "日期和時間"
+msgstr "麥哲倫夏令時間"
 
 #: dlls/tzres/tzres.rc:221
 msgid "(UTC-03:00) Punta Arenas"
-msgstr ""
+msgstr "(UTC-03:00) 旁塔阿雷納斯"
 
 #: dlls/tzres/tzres.rc:324
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "薩摩亞標準時間"
 
 #: dlls/tzres/tzres.rc:325
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "薩摩亞夏令時間"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+13:00) Samoa"
-msgstr ""
+msgstr "(UTC+13:00) 薩摩亞"
 
 #: dlls/tzres/tzres.rc:201
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "加里寧格勒標準時間"
 
 #: dlls/tzres/tzres.rc:202
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "加里寧格勒夏令時間"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC+02:00) Kaliningrad"
-msgstr ""
+msgstr "(UTC+02:00) 加里寧格勒"
 
 #: dlls/tzres/tzres.rc:282
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "太平洋標準時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:283
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "太平洋夏令時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
-msgstr ""
+msgstr "(UTC-08:00) 下加利福尼亞"
 
 #: dlls/tzres/tzres.rc:228
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "中東標準時間"
 
 #: dlls/tzres/tzres.rc:229
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "中東夏令時間"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
-msgstr ""
+msgstr "(UTC+02:00) 貝魯特"
 
 #: dlls/tzres/tzres.rc:360
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "東京標準時間"
 
 #: dlls/tzres/tzres.rc:361
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "東京夏令時間"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
-msgstr ""
+msgstr "(UTC+09:00) 大阪，札幌，東京"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "萊恩群島標準時間"
 
 #: dlls/tzres/tzres.rc:211
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "萊恩群島夏令時間"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
-msgstr ""
+msgstr "(UTC+14:00) 聖誕島"
 
 #: dlls/tzres/tzres.rc:129
-#, fuzzy
-#| msgid "Date and time"
 msgid "Cuba Standard Time"
-msgstr "日期和時間"
+msgstr "古巴標準時間"
 
 #: dlls/tzres/tzres.rc:130
-#, fuzzy
-#| msgid "Date and time"
 msgid "Cuba Daylight Time"
-msgstr "日期和時間"
+msgstr "古巴夏令時間"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-05:00) Havana"
-msgstr ""
+msgstr "(UTC-05:00) 哈瓦那"
 
 #: dlls/tzres/tzres.rc:198
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "約旦標準時間"
 
 #: dlls/tzres/tzres.rc:199
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "約旦夏令時間"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
-msgstr ""
+msgstr "(UTC+02:00) 安曼"
 
 #: dlls/tzres/tzres.rc:117
 msgid "Central Standard Time"
-msgstr ""
+msgstr "中部標準時間"
 
 #: dlls/tzres/tzres.rc:118
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "中部夏令時間"
 
 #: dlls/tzres/tzres.rc:119
 msgid "(UTC-06:00) Central Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-06:00) 中部時間 (美國和加拿大)"
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
 msgid "Russia Time Zone 3"
-msgstr ""
+msgstr "俄羅斯時區 3"
 
 #: dlls/tzres/tzres.rc:305
 msgid "(UTC+04:00) Izhevsk, Samara"
-msgstr ""
+msgstr "(UTC+04:00) 伊熱夫斯克，薩馬拉"
 
 #: dlls/tzres/tzres.rc:414
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Volgograd Standard Time"
-msgstr "標準列(&S)"
+msgstr "伏爾加格勒標準時間"
 
 #: dlls/tzres/tzres.rc:415
-#, fuzzy
-#| msgid "Date and time"
 msgid "Volgograd Daylight Time"
-msgstr "日期和時間"
+msgstr "伏爾加格勒夏令時間"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+04:00) Volgograd"
-msgstr ""
+msgstr "(UTC+04:00) 伏爾加格勒"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "亞述標準時間"
 
 #: dlls/tzres/tzres.rc:73
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "亞述夏令時間"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
-msgstr ""
+msgstr "(UTC-01:00) 亞述群島"
 
 #: dlls/tzres/tzres.rc:264
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "北亞東部標準時間"
 
 #: dlls/tzres/tzres.rc:265
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "北亞東部夏令時間"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
-msgstr ""
+msgstr "(UTC+08:00) 伊爾庫次克"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:407
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr ""
+msgstr "(UTC-11:00) 世界協調時間-11"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "阿根廷標準時間"
 
 #: dlls/tzres/tzres.rc:52
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "阿根廷夏令時間"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC-03:00) City of Buenos Aires"
-msgstr ""
+msgstr "(UTC-03:00) 布宜諾斯艾利斯"
 
 #: dlls/tzres/tzres.rc:375
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Turks And Caicos Standard Time"
-msgstr "標準列(&S)"
+msgstr "土克凱可標準時間"
 
 #: dlls/tzres/tzres.rc:376
-#, fuzzy
-#| msgid "Date and time"
 msgid "Turks And Caicos Daylight Time"
-msgstr "日期和時間"
+msgstr "土克凱可夏令時間"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) 土克凱可"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Marquesas Standard Time"
-msgstr "標準列(&S)"
+msgstr "馬克薩斯標準時間"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Date and time"
 msgid "Marquesas Daylight Time"
-msgstr "日期和時間"
+msgstr "馬克薩斯夏令時間"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr ""
+msgstr "(UTC-09:30) 馬克薩斯群島"
 
 #: dlls/tzres/tzres.rc:243
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "緬甸標準時間"
 
 #: dlls/tzres/tzres.rc:244
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "緬甸夏令時間"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+06:30) Yangon (Rangoon)"
-msgstr ""
+msgstr "(UTC+06:30) 仰光"
 
 #: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "世界協調時間"
 
 #: dlls/tzres/tzres.rc:389
 msgid "(UTC) Coordinated Universal Time"
-msgstr ""
+msgstr "(UTC) 世界協調時間"
 
 #: dlls/tzres/tzres.rc:189
 msgid "India Standard Time"
-msgstr ""
+msgstr "印度標準時間"
 
 #: dlls/tzres/tzres.rc:190
 msgid "India Daylight Time"
-msgstr ""
+msgstr "印度夏令時間"
 
 #: dlls/tzres/tzres.rc:191
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
-msgstr ""
+msgstr "(UTC+05:30) 清奈，加爾各答，孟買，新德里"
 
 #: dlls/tzres/tzres.rc:180
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "標準列(&S)"
+msgstr "GTB 標準時間"
 
 #: dlls/tzres/tzres.rc:181
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "GTB 夏令時間"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Athens, Bucharest"
-msgstr ""
+msgstr "(UTC+02:00) 雅典，布加勒斯特"
 
 #: dlls/tzres/tzres.rc:372
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "土耳其標準時間"
 
 #: dlls/tzres/tzres.rc:373
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "土耳其夏令時間"
 
 #: dlls/tzres/tzres.rc:374
 msgid "(UTC+03:00) Istanbul"
-msgstr ""
+msgstr "(UTC+03:00) 伊斯坦堡"
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgid "Date and time"
 msgid "Astrakhan Standard Time"
-msgstr "日期和時間"
+msgstr "阿斯特拉罕標準時間"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgid "Date and time"
 msgid "Astrakhan Daylight Time"
-msgstr "日期和時間"
+msgstr "阿斯特拉罕夏令時間"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
-msgstr ""
+msgstr "(UTC+04:00) 阿斯特拉罕，烏里揚諾夫斯克"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "斐濟標準時間"
 
 #: dlls/tzres/tzres.rc:163
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "斐濟夏令時間"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+12:00) Fiji"
-msgstr ""
+msgstr "(UTC+12:00) 斐濟"
 
 #: dlls/tzres/tzres.rc:87
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "加拿大中部標準時間"
 
 #: dlls/tzres/tzres.rc:88
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "加拿大中部夏令時間"
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-06:00) Saskatchewan"
-msgstr ""
+msgstr "(UTC-06:00) 薩克其萬"
 
 #: dlls/tzres/tzres.rc:441
-#, fuzzy
-#| msgid "Date and time"
 msgid "Yukon Standard Time"
-msgstr "日期和時間"
+msgstr "育空標準時間"
 
 #: dlls/tzres/tzres.rc:442
-#, fuzzy
-#| msgid "Date and time"
 msgid "Yukon Daylight Time"
-msgstr "日期和時間"
+msgstr "育空夏令時間"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC-07:00) Yukon"
-msgstr ""
+msgstr "(UTC-07:00) 育空"
 
 #: dlls/tzres/tzres.rc:351
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "臺北標準時間"
 
 #: dlls/tzres/tzres.rc:352
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "臺北夏令時間"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+08:00) Taipei"
-msgstr ""
+msgstr "(UTC+08:00) 臺北"
 
 #: dlls/tzres/tzres.rc:423
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "西歐標準時間"
 
 #: dlls/tzres/tzres.rc:424
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "西歐夏令時間"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
-msgstr ""
+msgstr "(UTC+01:00) 阿姆斯特丹，柏林，伯恩，羅馬，斯德哥爾摩，維也納"
 
 #: dlls/tzres/tzres.rc:231
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "蒙特維多標準時間"
 
 #: dlls/tzres/tzres.rc:232
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "蒙特維多夏令時間"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC-03:00) Montevideo"
-msgstr ""
+msgstr "(UTC-03:00) 蒙特維多"
 
 #: dlls/tzres/tzres.rc:285
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "巴基斯坦標準時間"
 
 #: dlls/tzres/tzres.rc:286
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "巴基斯坦夏令時間"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+05:00) Islamabad, Karachi"
-msgstr ""
+msgstr "(UTC+05:00) 伊斯蘭瑪巴德，卡拉奇"
 
 #: dlls/tzres/tzres.rc:363
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Tomsk Standard Time"
-msgstr "標準列(&S)"
+msgstr "托木斯克標準時間"
 
 #: dlls/tzres/tzres.rc:364
-#, fuzzy
-#| msgid "Date and time"
 msgid "Tomsk Daylight Time"
-msgstr "日期和時間"
+msgstr "托木斯克夏令時間"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+07:00) Tomsk"
-msgstr ""
+msgstr "(UTC+07:00) 托木斯克"
 
 #: dlls/tzres/tzres.rc:93
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "高加索標準時間"
 
 #: dlls/tzres/tzres.rc:94
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "高加索夏令時間"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
-msgstr ""
+msgstr "(UTC+04:00) 葉里溫"
 
 #: dlls/tzres/tzres.rc:66
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "澳洲東部標準時間"
 
 #: dlls/tzres/tzres.rc:67
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "澳洲東部夏令時間"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
-msgstr ""
+msgstr "(UTC+10:00) 坎培拉，墨爾本，雪梨"
 
 #: dlls/tzres/tzres.rc:246
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "中亞北部標準時間"
 
 #: dlls/tzres/tzres.rc:247
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "中亞北部夏令時間"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
-msgstr ""
+msgstr "(UTC+07:00) 新西伯利亞"
 
 #: dlls/tzres/tzres.rc:150
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "東部標準時間"
 
 #: dlls/tzres/tzres.rc:151
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "東部夏令時間"
 
 #: dlls/tzres/tzres.rc:152
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-05:00) 東部時間 (美國和加拿大)"
 
 #: dlls/tzres/tzres.rc:369
-#, fuzzy
-#| msgid "Date and time"
 msgid "Transbaikal Standard Time"
-msgstr "日期和時間"
+msgstr "外貝加爾標準時間"
 
 #: dlls/tzres/tzres.rc:370
-#, fuzzy
-#| msgid "Date and time"
 msgid "Transbaikal Daylight Time"
-msgstr "日期和時間"
+msgstr "外貝加爾夏令時間"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+09:00) Chita"
-msgstr ""
+msgstr "(UTC+09:00) 赤塔"
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "Central European"
 msgid "E. Europe Standard Time"
-msgstr "中歐語言"
+msgstr "東歐標準時間"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "Central European"
 msgid "E. Europe Daylight Time"
-msgstr "中歐語言"
+msgstr "東歐夏令時間"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
-msgstr ""
+msgstr "(UTC+02:00) 基希涅夫"
 
 #: dlls/tzres/tzres.rc:120
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "中部標準時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:121
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "中部夏令時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
-msgstr ""
+msgstr "(UTC-06:00) 瓜達拉哈拉，墨西哥城，蒙特雷"
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saratov Standard Time"
-msgstr "日期和時間"
+msgstr "薩拉托夫標準時間"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saratov Daylight Time"
-msgstr "日期和時間"
+msgstr "薩拉托夫夏令時間"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
-msgstr ""
+msgstr "(UTC+04:00) 薩拉托夫"
 
 #: dlls/tzres/tzres.rc:57
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "大西洋標準時間"
 
 #: dlls/tzres/tzres.rc:58
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "大西洋夏令時間"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
-msgstr ""
+msgstr "(UTC-04:00) 大西洋時間 (加拿大)"
 
 #: dlls/tzres/tzres.rc:237
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "山區標準時間"
 
 #: dlls/tzres/tzres.rc:238
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "山區夏令時間"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-07:00) 山區時間 (美國和加拿大)"
 
 #: dlls/tzres/tzres.rc:381
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "美國東部標準時間"
 
 #: dlls/tzres/tzres.rc:382
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "美國東部夏令時間"
 
 #: dlls/tzres/tzres.rc:383
 msgid "(UTC-05:00) Indiana (East)"
-msgstr ""
+msgstr "(UTC-05:00) 印第安納 (東部)"
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sakhalin Standard Time"
-msgstr "日期和時間"
+msgstr "庫頁島標準時間"
 
 #: dlls/tzres/tzres.rc:322
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sakhalin Daylight Time"
-msgstr "日期和時間"
+msgstr "庫頁島夏令時間"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
-msgstr ""
+msgstr "(UTC+11:00) 庫頁島"
 
 #: dlls/tzres/tzres.rc:270
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "North Korea Standard Time"
-msgstr "標準列(&S)"
+msgstr "北韓標準時間"
 
 #: dlls/tzres/tzres.rc:271
-#, fuzzy
-#| msgid "Date and time"
 msgid "North Korea Daylight Time"
-msgstr "日期和時間"
+msgstr "北韓夏令時間"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC+09:00) Pyongyang"
-msgstr ""
+msgstr "(UTC+09:00) 平壤"
 
 #: dlls/tzres/tzres.rc:354
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "塔斯馬尼亞標準時間"
 
 #: dlls/tzres/tzres.rc:355
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "塔斯馬尼亞夏令時間"
 
 #: dlls/tzres/tzres.rc:356
 msgid "(UTC+10:00) Hobart"
-msgstr ""
+msgstr "(UTC+10:00) 荷巴特"
 
 #: dlls/tzres/tzres.rc:99
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "中美洲標準時間"
 
 #: dlls/tzres/tzres.rc:100
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "中美洲夏令時間"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central America"
-msgstr ""
+msgstr "(UTC-06:00) 中美洲"
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:398
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr ""
+msgstr "(UTC-02:00) 世界協調時間-02"
 
 #: dlls/tzres/tzres.rc:384
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "美國山區標準時間"
 
 #: dlls/tzres/tzres.rc:385
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "美國山區夏令時間"
 
 #: dlls/tzres/tzres.rc:386
 msgid "(UTC-07:00) Arizona"
-msgstr ""
+msgstr "(UTC-07:00) 亞利桑那"
 
 #: dlls/tzres/tzres.rc:339
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "南非標準時間"
 
 #: dlls/tzres/tzres.rc:340
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "南非夏令時間"
 
 #: dlls/tzres/tzres.rc:341
 msgid "(UTC+02:00) Harare, Pretoria"
-msgstr ""
+msgstr "(UTC+02:00) 哈拉雷，普利托利亞"
 
 #: dlls/tzres/tzres.rc:96
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "澳洲中部標準時間"
 
 #: dlls/tzres/tzres.rc:97
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "澳洲中部夏令時間"
 
 #: dlls/tzres/tzres.rc:98
 msgid "(UTC+09:30) Adelaide"
-msgstr ""
+msgstr "(UTC+09:30) 阿得雷德"
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:404
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr ""
+msgstr "(UTC-09:00) 世界協調時間-09"
 
 #: dlls/tzres/tzres.rc:342
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "斯里蘭卡標準時間"
 
 #: dlls/tzres/tzres.rc:343
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "斯里蘭卡夏令時間"
 
 #: dlls/tzres/tzres.rc:344
 msgid "(UTC+05:30) Sri Jayawardenepura"
-msgstr ""
+msgstr "(UTC+05:30) 斯里賈亞瓦德納普拉科特"
 
 #: dlls/tzres/tzres.rc:30
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "阿富汗標準時間"
 
 #: dlls/tzres/tzres.rc:31
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "阿富汗夏令時間"
 
 #: dlls/tzres/tzres.rc:32
 msgid "(UTC+04:30) Kabul"
-msgstr ""
+msgstr "(UTC+04:30) 喀布爾"
 
 #: dlls/tzres/tzres.rc:438
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "雅庫次克標準時間"
 
 #: dlls/tzres/tzres.rc:439
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "雅庫次克夏令時間"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+09:00) Yakutsk"
-msgstr ""
+msgstr "(UTC+09:00) 雅庫次克"
 
 #: dlls/tzres/tzres.rc:309
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "南美洲東部標準時間"
 
 #: dlls/tzres/tzres.rc:310
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "南美洲東部夏令時間"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
-msgstr ""
+msgstr "(UTC-03:00) 開雲，福塔萊薩"
 
 #: dlls/tzres/tzres.rc:42
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "沙烏地阿拉伯標準時間"
 
 #: dlls/tzres/tzres.rc:43
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "沙烏地阿拉伯夏令時間"
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+03:00) Kuwait, Riyadh"
-msgstr ""
+msgstr "(UTC+03:00) 科威特，利雅德"
 
 #: dlls/tzres/tzres.rc:45
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "阿拉伯標準時間"
 
 #: dlls/tzres/tzres.rc:46
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "阿拉伯夏令時間"
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
-msgstr ""
+msgstr "(UTC+04:00) 阿布達比，馬斯開特"
 
 #: dlls/tzres/tzres.rc:357
-#, fuzzy
-#| msgid "Date and time"
 msgid "Tocantins Standard Time"
-msgstr "日期和時間"
+msgstr "托坎廷斯標準時間"
 
 #: dlls/tzres/tzres.rc:358
-#, fuzzy
-#| msgid "Date and time"
 msgid "Tocantins Daylight Time"
-msgstr "日期和時間"
+msgstr "托坎廷斯夏令時間"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC-03:00) Araguaina"
-msgstr ""
+msgstr "(UTC-03:00) 阿拉瓜伊納"
 
 #: dlls/tzres/tzres.rc:306
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "俄羅斯標準時間"
 
 #: dlls/tzres/tzres.rc:307
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "俄羅斯夏令時間"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+03:00) Moscow, St. Petersburg"
-msgstr ""
+msgstr "(UTC+03:00) 莫斯科，聖彼得堡"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Central European"
 msgid "Aus Central W. Standard Time"
-msgstr "中歐語言"
+msgstr "澳洲中西部標準時間"
 
 #: dlls/tzres/tzres.rc:64
-#, fuzzy
-#| msgid "Central European"
 msgid "Aus Central W. Daylight Time"
-msgstr "中歐語言"
+msgstr "澳洲中西部夏令時間"
 
 #: dlls/tzres/tzres.rc:65
 msgid "(UTC+08:45) Eucla"
-msgstr ""
+msgstr "(UTC+08:45) 尤克拉"
 
 #: dlls/tzres/tzres.rc:294
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "羅曼語區標準時間"
 
 #: dlls/tzres/tzres.rc:295
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "羅曼語區夏令時間"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
-msgstr ""
+msgstr "(UTC+01:00) 布魯塞爾，哥本哈根，馬德里，巴黎"
 
 #: dlls/tzres/tzres.rc:159
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "葉卡捷琳堡標準時間"
 
 #: dlls/tzres/tzres.rc:160
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "葉卡捷琳堡夏令時間"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+05:00) Ekaterinburg"
-msgstr ""
+msgstr "(UTC+05:00) 葉卡捷琳堡"
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
 msgid "Russia Time Zone 11"
-msgstr ""
+msgstr "俄羅斯時區 11"
 
 #: dlls/tzres/tzres.rc:302
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
-msgstr ""
+msgstr "(UTC+12:00) 阿納德爾，堪察加彼得巴甫洛夫斯克"
 
 #: dlls/tzres/tzres.rc:432
-#, fuzzy
-#| msgid "Date and time"
 msgid "West Bank Standard Time"
-msgstr "日期和時間"
+msgstr "西岸標準時間"
 
 #: dlls/tzres/tzres.rc:433
-#, fuzzy
-#| msgid "Date and time"
 msgid "West Bank Daylight Time"
-msgstr "日期和時間"
+msgstr "西岸夏令時間"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+02:00) Gaza, Hebron"
-msgstr ""
+msgstr "(UTC+02:00) 加薩，希伯侖"
 
 #: dlls/tzres/tzres.rc:348
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "敘利亞標準時間"
 
 #: dlls/tzres/tzres.rc:349
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "敘利亞夏令時間"
 
 #: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Damascus"
-msgstr ""
+msgstr "(UTC+02:00) 大馬士革"
 
 #: dlls/tzres/tzres.rc:60
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "澳洲中部標準時間"
 
 #: dlls/tzres/tzres.rc:61
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "澳洲中部夏令時間"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+09:30) Darwin"
-msgstr ""
+msgstr "(UTC+09:30) 達爾文"
 
 #: dlls/tzres/tzres.rc:177
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "格林威治標準時間"
 
 #: dlls/tzres/tzres.rc:178
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "格林威治夏令時間"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+00:00) Monrovia, Reykjavik"
-msgstr ""
+msgstr "(UTC+00:00) 蒙羅維亞，雷克雅維克"
 
 #: dlls/tzres/tzres.rc:378
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "烏蘭巴托標準時間"
 
 #: dlls/tzres/tzres.rc:379
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "烏蘭巴托夏令時間"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC+08:00) Ulaanbaatar"
-msgstr ""
+msgstr "(UTC+08:00) 烏蘭巴托"
 
 #: dlls/tzres/tzres.rc:261
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Norfolk Standard Time"
-msgstr "標準列(&S)"
+msgstr "諾福克標準時間"
 
 #: dlls/tzres/tzres.rc:262
-#, fuzzy
-#| msgid "Date and time"
 msgid "Norfolk Daylight Time"
-msgstr "日期和時間"
+msgstr "諾福克夏令時間"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC+11:00) Norfolk Island"
-msgstr ""
+msgstr "(UTC+11:00) 諾福克島"
 
 #: dlls/tzres/tzres.rc:195
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "以色列標準時間"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "以色列夏令時間"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
-msgstr ""
+msgstr "(UTC+02:00) 耶路撒冷"
 
 #: dlls/tzres/tzres.rc:78
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "孟加拉標準時間"
 
 #: dlls/tzres/tzres.rc:79
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "孟加拉夏令時間"
 
 #: dlls/tzres/tzres.rc:80
 msgid "(UTC+06:00) Dhaka"
-msgstr ""
+msgstr "(UTC+06:00) 達卡"
 
 #: dlls/tzres/tzres.rc:312
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "南美洲太平洋標準時間"
 
 #: dlls/tzres/tzres.rc:313
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "南美洲太平洋夏令時間"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
-msgstr ""
+msgstr "(UTC-05:00) 波哥大，利馬，基多，里約布蘭科"
 
 #: dlls/tzres/tzres.rc:429
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "西亞標準時間"
 
 #: dlls/tzres/tzres.rc:430
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "西亞夏令時間"
 
 #: dlls/tzres/tzres.rc:431
 msgid "(UTC+05:00) Ashgabat, Tashkent"
-msgstr ""
+msgstr "(UTC+05:00) 阿什哈巴特，塔什干"
 
 #: dlls/tzres/tzres.rc:33
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "阿拉斯加標準時間"
 
 #: dlls/tzres/tzres.rc:34
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "阿拉斯加夏令時間"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-09:00) Alaska"
-msgstr ""
+msgstr "(UTC-09:00) 阿拉斯加"
 
 #: dlls/tzres/tzres.rc:288
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "巴拉圭標準時間"
 
 #: dlls/tzres/tzres.rc:289
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "巴拉圭夏令時間"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC-04:00) Asuncion"
-msgstr ""
+msgstr "(UTC-04:00) 亞松森"
 
 #: dlls/tzres/tzres.rc:132
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "日期和時間"
+msgstr "換日線標準時間"
 
 #: dlls/tzres/tzres.rc:133
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "換日線夏令時間"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
-msgstr ""
+msgstr "(UTC-12:00) 國際換日線以西"
 
 #: dlls/tzres/tzres.rc:207
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "利比亞標準時間"
 
 #: dlls/tzres/tzres.rc:208
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "利比亞夏令時間"
 
 #: dlls/tzres/tzres.rc:209
 msgid "(UTC+02:00) Tripoli"
-msgstr ""
+msgstr "(UTC+02:00) 的黎波里"
 
 #: dlls/tzres/tzres.rc:75
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "巴伊亞標準時間"
 
 #: dlls/tzres/tzres.rc:76
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "巴伊亞夏令時間"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC-03:00) Salvador"
-msgstr ""
+msgstr "(UTC-03:00) 薩爾瓦多"
 
 #: dlls/tzres/tzres.rc:408
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "委內瑞拉標準時間"
 
 #: dlls/tzres/tzres.rc:409
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "委內瑞拉夏令時間"
 
 #: dlls/tzres/tzres.rc:410
 msgid "(UTC-04:00) Caracas"
-msgstr ""
+msgstr "(UTC-04:00) 卡拉卡斯"
 
 #: dlls/tzres/tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Bougainville Standard Time"
-msgstr "日期和時間"
+msgstr "布干維爾標準時間"
 
 #: dlls/tzres/tzres.rc:85
-#, fuzzy
-#| msgid "Date and time"
 msgid "Bougainville Daylight Time"
-msgstr "日期和時間"
+msgstr "布干維爾夏令時間"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+11:00) Bougainville Island"
-msgstr ""
+msgstr "(UTC+11:00) 布干維爾島"
 
 #: dlls/tzres/tzres.rc:186
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "夏威夷標準時間"
 
 #: dlls/tzres/tzres.rc:187
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "夏威夷夏令時間"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC-10:00) Hawaii"
-msgstr ""
+msgstr "(UTC-10:00) 夏威夷"
 
 #: dlls/tzres/tzres.rc:333
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "東南亞標準時間"
 
 #: dlls/tzres/tzres.rc:334
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "東南亞夏令時間"
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
-msgstr ""
+msgstr "(UTC+07:00) 曼谷，河內，雅加達"
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Qyzylorda Standard Time"
-msgstr "標準列(&S)"
+msgstr "克孜勒奧爾達標準時間"
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "Date and time"
 msgid "Qyzylorda Daylight Time"
-msgstr "日期和時間"
+msgstr "克孜勒奧爾達夏令時間"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
-msgstr ""
+msgstr "(UTC+05:00) 克孜勒奧爾達"
 
 #: dlls/tzres/tzres.rc:426
-#, fuzzy
-#| msgid "Date and time"
 msgid "W. Mongolia Standard Time"
-msgstr "日期和時間"
+msgstr "蒙古西部標準時間"
 
 #: dlls/tzres/tzres.rc:427
-#, fuzzy
-#| msgid "Date and time"
 msgid "W. Mongolia Daylight Time"
-msgstr "日期和時間"
+msgstr "蒙古西部夏令時間"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+07:00) Hovd"
-msgstr ""
+msgstr "(UTC+07:00) 科布多城"
 
 #: dlls/tzres/tzres.rc:255
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "紐西蘭標準時間"
 
 #: dlls/tzres/tzres.rc:256
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "紐西蘭夏令時間"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+12:00) Auckland, Wellington"
-msgstr ""
+msgstr "(UTC+12:00) 奧克蘭，威靈頓"
 
 #: dlls/tzres/tzres.rc:36
-#, fuzzy
-#| msgid "Date and time"
 msgid "Aleutian Standard Time"
-msgstr "日期和時間"
+msgstr "阿留申標準時間"
 
 #: dlls/tzres/tzres.rc:37
-#, fuzzy
-#| msgid "Date and time"
 msgid "Aleutian Daylight Time"
-msgstr "日期和時間"
+msgstr "阿留申夏令時間"
 
 #: dlls/tzres/tzres.rc:38
 msgid "(UTC-10:00) Aleutian Islands"
-msgstr ""
+msgstr "(UTC-10:00) 阿留申群島"
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Omsk Standard Time"
-msgstr "標準列(&S)"
+msgstr "鄂木斯克標準時間"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Date and time"
 msgid "Omsk Daylight Time"
-msgstr "日期和時間"
+msgstr "鄂木斯克夏令時間"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
-msgstr ""
+msgstr "(UTC+06:00) 鄂木斯克"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "巴西中部標準時間"
 
 #: dlls/tzres/tzres.rc:106
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "巴西中部夏令時間"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
-msgstr ""
+msgstr "(UTC-04:00) 庫亞巴"
 
 #: dlls/tzres/tzres.rc:81
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "白俄羅斯標準時間"
 
 #: dlls/tzres/tzres.rc:82
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "白俄羅斯夏令時間"
 
 #: dlls/tzres/tzres.rc:83
 msgid "(UTC+03:00) Minsk"
-msgstr ""
+msgstr "(UTC+03:00) 明斯克"
 
 #: dlls/tzres/tzres.rc:315
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "南美洲西部標準時間"
 
 #: dlls/tzres/tzres.rc:316
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "南美洲西部夏令時間"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
-msgstr ""
+msgstr "(UTC-04:00) 喬治敦，拉巴斯，瑪瑙斯，聖胡安"
 
 #: dlls/tzres/tzres.rc:174
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "格陵蘭標準時間"
 
 #: dlls/tzres/tzres.rc:175
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "格陵蘭夏令時間"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC-03:00) Greenland"
-msgstr ""
+msgstr "(UTC-03:00) 格陵蘭"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "日期和時間"
+msgstr "復活節島標準時間"
 
 #: dlls/tzres/tzres.rc:148
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "日期和時間"
+msgstr "復活節島夏令時間"
 
 #: dlls/tzres/tzres.rc:149
 msgid "(UTC-06:00) Easter Island"
-msgstr ""
+msgstr "(UTC-06:00) 復活節島"
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
 msgid "Russia Time Zone 10"
-msgstr ""
+msgstr "俄羅斯時區 10"
 
 #: dlls/tzres/tzres.rc:299
 msgid "(UTC+11:00) Chokurdakh"
-msgstr ""
+msgstr "(UTC+11:00) 喬庫爾達赫"
 
 #: dlls/tzres/tzres.rc:156
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "埃及標準時間"
 
 #: dlls/tzres/tzres.rc:157
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "埃及夏令時間"
 
 #: dlls/tzres/tzres.rc:158
 msgid "(UTC+02:00) Cairo"
-msgstr ""
+msgstr "(UTC+02:00) 開羅"
 
 #: dlls/tzres/tzres.rc:153
-#, fuzzy
-#| msgid "Date and time"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "日期和時間"
+msgstr "東部標準時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:154
-#, fuzzy
-#| msgid "Date and time"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "日期和時間"
+msgstr "東部夏令時間 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:155
 msgid "(UTC-05:00) Chetumal"
-msgstr ""
+msgstr "(UTC-05:00) 切圖馬爾"
 
 #: dlls/tzres/tzres.rc:225
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "模里西斯標準時間"
 
 #: dlls/tzres/tzres.rc:226
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "模里西斯夏令時間"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+04:00) Port Louis"
-msgstr ""
+msgstr "(UTC+04:00) 路易士港"
 
 #: dlls/tzres/tzres.rc:411
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "海參崴標準時間"
 
 #: dlls/tzres/tzres.rc:412
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "海參崴夏令時間"
 
 #: dlls/tzres/tzres.rc:413
 msgid "(UTC+10:00) Vladivostok"
-msgstr ""
+msgstr "(UTC+10:00) 海參崴"
 
 #: dlls/tzres/tzres.rc:336
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "新加坡標準時間"
 
 #: dlls/tzres/tzres.rc:337
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "新加坡夏令時間"
 
 #: dlls/tzres/tzres.rc:338
 msgid "(UTC+08:00) Kuala Lumpur, Singapore"
-msgstr ""
+msgstr "(UTC+08:00) 吉隆坡，新加坡"
 
 #: dlls/tzres/tzres.rc:204
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "韓國標準時間"
 
 #: dlls/tzres/tzres.rc:205
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "韓國夏令時間"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC+09:00) Seoul"
-msgstr ""
+msgstr "(UTC+09:00) 首爾"
 
 #: dlls/tzres/tzres.rc:123
-#, fuzzy
-#| msgid "Date and time"
 msgid "Chatham Islands Standard Time"
-msgstr "日期和時間"
+msgstr "查塔姆群島標準時間"
 
 #: dlls/tzres/tzres.rc:124
-#, fuzzy
-#| msgid "Date and time"
 msgid "Chatham Islands Daylight Time"
-msgstr "日期和時間"
+msgstr "查塔姆群島夏令時間"
 
 #: dlls/tzres/tzres.rc:125
 msgid "(UTC+12:45) Chatham Islands"
-msgstr ""
+msgstr "(UTC+12:45) 查塔姆群島"
 
 #: dlls/tzres/tzres.rc:135
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "東非標準時間"
 
 #: dlls/tzres/tzres.rc:136
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "東非夏令時間"
 
 #: dlls/tzres/tzres.rc:137
 msgid "(UTC+03:00) Nairobi"
-msgstr ""
+msgstr "(UTC+03:00) 奈洛比"
 
 #: dlls/tzres/tzres.rc:165
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "標準列(&S)"
+msgstr "FLE 標準時間"
 
 #: dlls/tzres/tzres.rc:166
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "FLE 夏令時間"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
-msgstr ""
+msgstr "(UTC+02:00) 赫爾辛基，基輔，里加，索菲亞，塔林，維爾紐斯"
 
 #: dlls/tzres/tzres.rc:144
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "東南美洲標準時間"
 
 #: dlls/tzres/tzres.rc:145
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "東南美洲夏令時間"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
-msgstr ""
+msgstr "(UTC-03:00) 巴西利亞"
 
 #: dlls/tzres/tzres.rc:114
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "太平洋中部標準時間"
 
 #: dlls/tzres/tzres.rc:115
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "太平洋中部夏令時間"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
-msgstr ""
+msgstr "(UTC+11:00) 索羅門群島，新喀里多尼亞群島"
 
 #: dlls/tzres/tzres.rc:420
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "中西非標準時間"
 
 #: dlls/tzres/tzres.rc:421
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "中西非夏令時間"
 
 #: dlls/tzres/tzres.rc:422
 msgid "(UTC+01:00) West Central Africa"
-msgstr ""
+msgstr "(UTC+01:00) 中西非"
 
 #: dlls/tzres/tzres.rc:276
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "太平洋 (南美) 標準時間"
 
 #: dlls/tzres/tzres.rc:277
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "太平洋 (南美) 夏令時間"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
-msgstr ""
+msgstr "(UTC-04:00) 聖地牙哥"
 
 #: dlls/tzres/tzres.rc:138
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "澳洲東部標準時間"
 
 #: dlls/tzres/tzres.rc:139
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "澳洲東部夏令時間"
 
 #: dlls/tzres/tzres.rc:140
 msgid "(UTC+10:00) Brisbane"
-msgstr ""
+msgstr "(UTC+10:00) 布里斯本"
 
 #: dlls/tzres/tzres.rc:417
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "澳洲西部標準時間"
 
 #: dlls/tzres/tzres.rc:418
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "澳洲西部夏令時間"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+08:00) Perth"
-msgstr ""
+msgstr "(UTC+08:00) 伯斯"
 
 #: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
-msgstr "安全警告"
+msgstr "安全性警告"
 
 #: dlls/urlmon/urlmon.rc:35
 msgid "Do you want to install this software?"
-msgstr "您要安裝這個軟體？"
+msgstr "您要安裝這個軟體?"
 
 #: dlls/urlmon/urlmon.rc:39
 msgid "Don't install"
@@ -12017,12 +11876,12 @@ msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"ActiveX 組成在安裝之後就能任意存取您的電腦。除非您絕對信賴以上的來源，否則不"
+"在安裝之後，ActiveX 元件能完整存取您的電腦。除非您非常信任以上的來源，否則不"
 "要按下安裝。"
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
-msgstr "無法安裝組成：%08x"
+msgstr "無法安裝元件: %08x"
 
 #: dlls/urlmon/urlmon.rc:52
 msgid "Install (%d)"
@@ -12079,11 +11938,11 @@ msgstr "中止(&A)"
 
 #: dlls/user32/user32.rc:85
 msgid "&Ignore"
-msgstr "忽略(&I)"
+msgstr "略過(&I)"
 
 #: dlls/user32/user32.rc:86
 msgid "&Try Again"
-msgstr "再試(&T)"
+msgstr "再試一次(&T)"
 
 #: dlls/user32/user32.rc:87
 msgid "&Continue"
@@ -12099,217 +11958,167 @@ msgstr "更多視窗(&M)..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "溢位"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "記憶體不足。"
+msgstr "記憶體不足"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "此陣列的長度是固定的或暫時被鎖住"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "資料類型不匹配。\n"
+msgstr "類型不相符"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "I/O 裝置錯誤。\n"
+msgstr "I/O 裝置錯誤"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "檔案已經存在。\n"
+msgstr "檔案已經存在"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "磁碟已滿。\n"
+msgstr "磁碟已滿"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "開啟過多檔案。\n"
+msgstr "過多檔案"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "存取被拒。\n"
+msgstr "存取被拒"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "路徑/檔案存取錯誤"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "找不到路徑。\n"
+msgstr "找不到路徑"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(沒有設值)"
+msgstr "沒有設定物件變數"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "無效的使用者緩衝區。\n"
+msgstr "Null 的使用不正確"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "無法建立必須的暫存檔案"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "自動作業伺服器無法建立物件"
+msgstr "ActiveX 元件無法建立物件"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "物件不支援此動作"
+msgstr "物件類別不支援自動化"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "在自動化運作過程中找不到檔案名稱或物件類別名稱"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "物件不支援此動作"
+msgstr "物件不支援指名的引數"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "物件不支援此動作"
+msgstr "物件不支援目前的地區設定"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "找不到元件。\n"
+msgstr "找不到指名的引數"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "引數的個數錯誤或指派的屬性無效"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "物件類別違規"
+msgstr "物件並非集合物件"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "在訊息中找不到指定的控制"
+msgstr "找不到指定的 DLL 函數"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "變數使用了 VBScript 不支援的自動化類型"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "遠端伺服器不存在或無法使用"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "無效或不合格的引用"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
-msgstr ""
+msgstr "Microsoft VBScript 編譯錯誤"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
-msgstr ""
+msgstr "Microsoft VBScript 執行期錯誤"
 
 #: dlls/winemac.drv/winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "隱藏"
+msgstr "隱藏 %@"
 
 #: dlls/winemac.drv/winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "其他"
+msgstr "隱藏其他"
 
 #: dlls/winemac.drv/winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "顯示"
+msgstr "顯示全部"
 
 #: dlls/winemac.drv/winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "結束 %@"
 
 #: dlls/winemac.drv/winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "結束"
 
 #: dlls/winemac.drv/winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "視窗(&W)"
+msgstr "視窗"
 
 #: dlls/winemac.drv/winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "最小化(&M)"
+msgstr "最小化"
 
 #: dlls/winemac.drv/winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "放大"
+msgstr "縮放"
 
 #: dlls/winemac.drv/winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "進入全螢幕"
 
 #: dlls/winemac.drv/winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "移到最前面(&B)"
+msgstr "將全部移到最前面"
 
 #: dlls/wineps.drv/wineps.rc:31
 msgid "Paper Si&ze:"
-msgstr "紙張大小(&Z)："
+msgstr "紙張大小(&Z):"
 
 #: dlls/wineps.drv/wineps.rc:39
 msgid "Duplex:"
-msgstr "雙面："
+msgstr "雙面:"
 
 #: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "設定(&S)"
+msgstr "設定"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -12329,7 +12138,7 @@ msgstr "這個站臺的憑證有問題。"
 
 #: dlls/wininet/wininet.rc:93
 msgid "Do you want to continue anyway?"
-msgstr "您無論如何都要繼續？"
+msgstr "您無論如何都要繼續?"
 
 #: dlls/wininet/wininet.rc:28
 msgid "LAN Connection"
@@ -12345,112 +12154,92 @@ msgstr "憑證上的日期無效。"
 
 #: dlls/wininet/wininet.rc:31
 msgid "The name on the certificate does not match the site."
-msgstr "憑證上的名稱不匹配站臺。"
+msgstr "憑證上的名稱與站臺不相符。"
 
 #: dlls/wininet/wininet.rc:32
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr "有至少一個未指定的安全問題與這個憑證相關。"
+msgstr "這個憑證有至少一個未指定的安全問題。"
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "生效日期"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "安全性"
+msgstr "安全性通訊協定"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "簽名"
+msgstr "簽章類型"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "加密檔案系統"
+msgstr "加密類型"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "隱私層次"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "位元"
 
 #: dlls/wininet/winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "服務要求逾時。\n"
+msgstr "要求已逾時。\n"
 
 #: dlls/wininet/winineterror.mc:31
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "An internal error has occurred.\n"
-msgstr "印表機發生錯誤。"
+msgstr "發生內部錯誤。\n"
 
 #: dlls/wininet/winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "路徑無效。\n"
+msgstr "這個 URL 無效。\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "無法辨識或不支援的 URL 配置。\n"
 
 #: dlls/wininet/winineterror.mc:46
-#, fuzzy
-#| msgid "The username could not be found.\n"
 msgid "The server name could not be resolved.\n"
-msgstr "無法找到使用者名稱。\n"
+msgstr "無法解析伺服器名稱。\n"
 
 #: dlls/wininet/winineterror.mc:51
-#, fuzzy
-#| msgid "The user profile is invalid.\n"
 msgid "The requested operation is invalid.\n"
-msgstr "使用者側寫檔無效。\n"
+msgstr "要求的操作不正確。\n"
 
 #: dlls/wininet/winineterror.mc:56
 msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
-msgstr ""
+msgstr "這項操作已取消，這一般是因為要求控制代碼在操作完成前被關閉。\n"
 
 #: dlls/wininet/winineterror.mc:61
-#, fuzzy
-#| msgid "The profile could not be added.\n"
 msgid "The requested item could not be located.\n"
-msgstr "無法加入側寫檔。\n"
+msgstr "找不到要求的項目。\n"
 
 #: dlls/wininet/winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "無法連線到 LDAP 伺服器"
+msgstr "嘗試連線到伺服器失敗。\n"
 
 #: dlls/wininet/winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "與伺服器的連線已終止。\n"
 
 #: dlls/wininet/winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
-msgstr ""
+msgstr "從伺服器接收到的 SSL 憑證日期是錯誤的。該憑證已經過期。\n"
 
 #: dlls/wininet/winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "SSL 憑證一般名稱 (主機名稱欄位) 無效。\n"
 
 #: dlls/winmm/winmm.rc:32
 msgid "The specified command was carried out."
-msgstr "指定的命令被帶出。"
+msgstr "指定的命令已經執行。"
 
 #: dlls/winmm/winmm.rc:33
 msgid "Undefined external error."
@@ -12458,121 +12247,116 @@ msgstr "未定義的外部錯誤。"
 
 #: dlls/winmm/winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
-msgstr "裝置識別號已被用於超出您的系統範圍。"
+msgstr "使用的裝置識別碼已超出您的系統範圍。"
 
 #: dlls/winmm/winmm.rc:35
 msgid "The driver was not enabled."
-msgstr "驅動程式未被啟用。"
+msgstr "驅動程式未啟用。"
 
 #: dlls/winmm/winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
-msgstr "指定的裝置已在使用中。等到它可用時，然後再試一次。"
+msgstr "指定的裝置已在使用中。請等候該裝置不再使用，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:37
 msgid "The specified device handle is invalid."
-msgstr "指定的裝置控柄無效。"
+msgstr "指定的裝置控制代碼無效。"
 
 #: dlls/winmm/winmm.rc:38
 msgid "There is no driver installed on your system!"
-msgstr "沒有任何驅動程式已安裝於您的系統！"
+msgstr "您的系統上沒有安裝任何驅動程式!"
 
 #: dlls/winmm/winmm.rc:39 dlls/winmm/winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"可用於這個任務的記憶體不足。離開一或多個應用程式以增加可用記憶體，然後再試一"
-"次。"
+"可用於這個任務的記憶體不足。結束一個或多個應用程式以增加可用記憶體，然後再試"
+"一次。"
 
 #: dlls/winmm/winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
-msgstr "這個函式未被支援。使用功能函式以決定驅動程式支援何項函式和訊息。"
+msgstr "不支援這項功能。請使用 [能力] 功能來決定驅動程式所支援的功能和訊息。"
 
 #: dlls/winmm/winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
-msgstr "被指定的錯誤代號未被定義於系統中。"
+msgstr "指定的號碼錯誤: 號碼未在系統中定義。"
 
 #: dlls/winmm/winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "無效的旗標被傳遞到系統函式。"
+msgstr "無效的旗標被傳送給系統功能。"
 
 #: dlls/winmm/winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
-msgstr "無效的參數被傳遞到系統函式。"
+msgstr "無效的參數被傳送給系統功能。"
 
 #: dlls/winmm/winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
-msgstr "指定的格式未被支援或無法翻譯。使用功能函式以決定支援的格式。"
+msgstr "指定的格式未支援或無法翻譯。請使用 [能力] 功能來決定支援的格式。"
 
 #: dlls/winmm/winmm.rc:47 dlls/winmm/winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"當媒體資料仍在播放中將無法進行這個作業。請重置裝置，或是等到資料已完成播放。"
+"當媒體資料仍在播放時，無法進行這個操作。請重設裝置，或等待資料播放完畢。"
 
 #: dlls/winmm/winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
-msgstr "wave 標頭尚未就緒。使用「準備功能」以準備標頭，然後再試一次。"
+msgstr "wave 標頭尚未就緒。請使用 [準備] 功能以準備標頭，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"無法在不使用 WAVE_ALLOWSYNC 旗標的狀態下開啟裝置。使用旗標，然後再試一次。"
+"無法在不使用 WAVE_ALLOWSYNC 旗標的狀態下開啟裝置。請使用旗標，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
-msgstr "MIDI 標頭尚未就緒。使用「準備功能」以準備標頭，然後再試一次。"
+msgstr "MIDI 標頭尚未就緒。請使用 [準備] 功能以準備標頭，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"找不到 MIDI 對映。也許是驅動程式的問題，或者 MIDIMAP.CFG 檔案已損壞或缺少。"
+"找不到 MIDI 對應。這可能是驅動程式的問題，或是 MIDIMAP.CFG 檔案已損壞或遺失。"
 
 #: dlls/winmm/winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
-msgstr "通訊埠正在傳送資料給裝置。等到資料傳輸完成，然後再試一次。"
+msgstr "連接埠正在傳送資料給裝置。請等待資料傳輸完成，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:56 dlls/winmm/winmm.rc:129
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
-msgstr ""
-"目前的 MIDI 對映表設定，參照了未被安裝於系統上的 MIDI 裝置。使用 MIDI 對映表"
-"以編輯設定。"
+msgstr "目前的 MIDI Mapper 安裝程式參照了未安裝到系統上的 MIDI 裝置。"
 
 #: dlls/winmm/winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"目前的 MIDI 設定已受損。複製原來的 MIDIMAP.CFG 檔案到 Windows 系統目錄，然後"
-"再試一次。"
+"目前的 MIDI Mapper 安裝程式已損壞。請複製原始的 MIDIMAP.CFG 檔案到 Windows "
+"SYSTEM 目錄，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"無效的多媒體控制介面裝置識別號。開啟多媒體控制介面裝置時使用回傳的識別號。"
+"無效的多媒體控制介面裝置識別碼。請在開啟多媒體控制介面裝置時使用傳回的識別"
+"碼。"
 
 #: dlls/winmm/winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
@@ -12586,11 +12370,11 @@ msgstr "驅動程式無法識別指定的命令。"
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
-msgstr "您的媒體裝置有問題。請確定它作用正確或與裝置製造商聯絡。"
+msgstr "您的媒體裝置有問題。請確定它正常運作或與裝置製造商聯絡。"
 
 #: dlls/winmm/winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr "指定的裝置未開啟或未被多媒體控制介面辨識出來。"
+msgstr "指定的裝置未開啟或未被多媒體控制介面識別出來。"
 
 #: dlls/winmm/winmm.rc:66
 msgid ""
@@ -12605,19 +12389,19 @@ msgstr "載入指定的裝置驅動程式時發生無法偵測的問題。"
 
 #: dlls/winmm/winmm.rc:68
 msgid "No command was specified."
-msgstr "沒有任何命令被指定。"
+msgstr "未指定任何命令。"
 
 #: dlls/winmm/winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
-msgstr "輸出字串太大而不適合回傳緩衝區。請增加緩衝區的大小。"
+msgstr "輸出字串太大，超出了傳回的緩衝區容量。請增加緩衝區的大小。"
 
 #: dlls/winmm/winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
-msgstr "指定的命令需要字串參數。請提供一個。"
+msgstr "指定的命令需要一個字串參數。請提供一個。"
 
 #: dlls/winmm/winmm.rc:71
 msgid "The specified integer is invalid for this command."
@@ -12627,17 +12411,17 @@ msgstr "指定的整數對於這個命令無效。"
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
-msgstr "裝置驅動程式回傳無效的類型。請詢問裝置製造商以得到新的驅動程式。"
+msgstr "裝置驅動程式傳回了無效的回傳類型。請詢問裝置製造商以取得新的驅動程式。"
 
 #: dlls/winmm/winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
-msgstr "裝置驅動程式有問題。請詢問裝置製造商以得到新的驅動程式。"
+msgstr "裝置驅動程式有問題。請詢問裝置製造商以取得新的驅動程式。"
 
 #: dlls/winmm/winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "指定的命令需要參數。請提供一個。"
+msgstr "指定的命令需要一個參數。請提供一個。"
 
 #: dlls/winmm/winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
@@ -12664,14 +12448,15 @@ msgstr "裝置驅動程式有問題。驅動程式已關閉。發生無法存取
 
 #: dlls/winmm/winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "無法使用 all 做為指定命令的裝置名稱。"
+msgstr "無法使用 'all' 做為指定命令的裝置名稱。"
 
 #: dlls/winmm/winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"在一個以上的裝置中發生錯誤。每個命令分別指定裝置以決定何項裝置造成了錯誤。"
+"在一個以上的裝置中發生錯誤。請分別指定每一個命令和裝置，以判定造成錯誤的裝"
+"置。"
 
 #: dlls/winmm/winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
@@ -12692,14 +12477,10 @@ msgid ""
 msgstr "無法儲存指定的檔案。請確定您有足夠的磁碟空間，或是仍然連線到網路。"
 
 #: dlls/winmm/winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
-msgstr "找不到指定的裝置。請確定它已安裝，或是該裝置名稱的拼寫正確。"
+msgstr "找不到指定的裝置。請確定它已安裝，以及該裝置名稱的拼寫正確。"
 
 #: dlls/winmm/winmm.rc:87
 msgid ""
@@ -12722,7 +12503,7 @@ msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"裝置驅動程式已在使用中。要分享它，請使用 shareable 參數於每個 open 命令。"
+"裝置驅動程式已在使用中。要分享它，請在每個 'open' 命令使用 'shareable' 參數。"
 
 #: dlls/winmm/winmm.rc:91
 msgid ""
@@ -12734,7 +12515,8 @@ msgstr "指定的命令需要一個別名、檔案、驅動程式或裝置名稱
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
-msgstr "指定的值用於時間格式無效。參考多媒體控制介面文件用於有效格式。"
+msgstr ""
+"指定的值對時間格式而言是無效的。關於有效的格式，請參考多媒體控制介面文件。"
 
 #: dlls/winmm/winmm.rc:93
 msgid ""
@@ -12744,53 +12526,54 @@ msgstr "參數值缺少一個右側的雙引號。請提供一個。"
 
 #: dlls/winmm/winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr "參數或值被指定了兩次。只要指定它一次。"
+msgstr "參數或值被指定了兩次。請只指定它一次。"
 
 #: dlls/winmm/winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"指定的檔案無法在指定的多媒體控制介面裝置上播放。檔案也許已經損壞，或者並非正"
+"指定的檔案無法在指定的多媒體控制介面裝置上播放。檔案可能已經損壞，或者並非正"
 "確格式。"
 
 #: dlls/winmm/winmm.rc:96
 msgid "A null parameter block was passed to MCI."
-msgstr "空的參數區塊被傳遞到多媒體控制介面。"
+msgstr "空的參數區塊被傳送到多媒體控制介面。"
 
 #: dlls/winmm/winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr "無法儲存未命名的檔案。請提供一個檔名。"
+msgstr "無法儲存未命名的檔案。請提供一個檔案名稱。"
 
 #: dlls/winmm/winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "使用 new 參數時，您必須指定別名。"
+msgstr "使用 'new' 參數時，您必須指定別名。"
 
 #: dlls/winmm/winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "無法於自動開啟的裝置使用 notify 旗標。"
+msgstr "無法於自動開啟的裝置使用 'notify' 旗標。"
 
 #: dlls/winmm/winmm.rc:100
 msgid "Cannot use a filename with the specified device."
-msgstr "無法於指定裝置使用檔名。"
+msgstr "無法於指定裝置使用檔案名稱。"
 
 #: dlls/winmm/winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
-msgstr "無法以指定的順多帶出命令。請修正命令序列，然後再試一次。"
+msgstr "無法以指定的順序執行命令。請修正命令序列，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
-msgstr "無法於自動開啟的裝置帶出指定的命令。請等到裝置關閉，然後再試一次。"
+msgstr "無法於自動開啟的裝置執行指定的命令。請等待裝置關閉，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
-msgstr "檔名無效。請確定檔名長度不超過 8 個字元，然後接著句點和延伸檔名。"
+msgstr ""
+"無效的檔案名稱。請確定檔案名稱長度不超過 8 個字元，然後接著句點和副檔名。"
 
 #: dlls/winmm/winmm.rc:104
 msgid ""
@@ -12801,7 +12584,7 @@ msgstr "夾於引號的字串之後無法指定額外字元。"
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
-msgstr "指定的裝置未被安裝在系統上。請使用控制面板中的驅動程式選項以安裝裝置。"
+msgstr "指定的裝置未被安裝在系統上。請使用控制臺中的驅動程式選項以安裝裝置。"
 
 #: dlls/winmm/winmm.rc:106
 msgid ""
@@ -12840,15 +12623,15 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"所有可以用目前格式播放檔案的 wave 裝置都在使用中。請等到 wave 裝置有空時，然"
-"後再試一次。"
+"所有可以用目前格式播放檔案的 wave 裝置都在使用中。請等待其中一個 wave 裝置不"
+"再使用，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"無法設定目前的 wave 裝置去播放，因為它正在使用中。請等到裝置有空時，然後再試"
+"目前的 wave 裝置正在使用中，所以無法設定它來播放。請等待該裝置不再使用，再試"
 "一次。"
 
 #: dlls/winmm/winmm.rc:114
@@ -12856,16 +12639,16 @@ msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"所有可以用目前格式記錄檔案的 wave 裝置都在使用中。請等到 wave 裝置有空時，然"
-"後再試一次。"
+"所有可以用目前格式記錄檔案的 wave 裝置都在使用中。請等待其中一個 wave 裝置不"
+"再使用，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"無法設定目前的 wave 裝置去記錄，因為它正在使用中。請等到裝置有空時，然後再試"
-"一次。"
+"無法設定目前的 wave 裝置去記錄，因為它正在使用中。請等待該裝置不再使用，然後"
+"再試一次。"
 
 #: dlls/winmm/winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
@@ -12880,8 +12663,8 @@ msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"沒有任何可以用目前格式播放檔案的 wave 裝置已被安裝。請使用驅動程式選項以安裝 "
-"wave 裝置。"
+"沒有任何可以用目前格式播放檔案的 wave 裝置已被安裝。請使用「驅動程式」選項以"
+"安裝 wave 裝置。"
 
 #: dlls/winmm/winmm.rc:119
 msgid ""
@@ -12910,50 +12693,42 @@ msgid ""
 msgstr "「歌曲指標」的時間格式和 SMPTE 彼此互斥。您無法一起使用它們。"
 
 #: dlls/winmm/winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
-msgstr "指定的 MIDI 通訊埠已在使用中。等到它可用時；然後再試一次。"
+msgstr "指定的 MIDI 連接埠已在使用中。請等待它不再使用，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"指定的 MIDI 裝置未被安裝在系統上。使用「控制面板」中的「驅動程式」選項以安裝 "
-"MIDI 裝置。"
+"指定的 MIDI 裝置未安裝到系統上。請使用控制臺中的「驅動程式」選項以安裝 MIDI "
+"裝置。"
 
 #: dlls/winmm/winmm.rc:130
 msgid "An error occurred with the specified port."
-msgstr "指定的通訊埠發生了錯誤。"
+msgstr "指定的連接埠發生了錯誤。"
 
 #: dlls/winmm/winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
 msgstr ""
-"所有多媒體計時器正被其他應用程式使用中。離開其中某一個應用程式；然後再試一"
+"所有多媒體計時器正被其他應用程式使用中。請結束其中某一個應用程式，然後再試一"
 "次。"
 
 #: dlls/winmm/winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
-msgstr "系統尚未指定當前的 MIDI 通訊埠。"
+msgstr "系統尚未指定目前的 MIDI 連接埠。"
 
 #: dlls/winmm/winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"系統沒有任何已安裝的 MIDI 裝置。使用「控制面板」中的「驅動程式」選項以安裝 "
-"MIDI 驅動程式。"
+"系統沒有任何已安裝的 MIDI 裝置。請使用控制臺中的「驅動程式」選項以安裝 MIDI "
+"驅動程式。"
 
 #: dlls/winmm/winmm.rc:122
 msgid "There is no display window."
@@ -12976,24 +12751,20 @@ msgid ""
 msgstr "無法寫入指定的檔案。確定您有足夠的磁碟空間或是仍然連線到網路。"
 
 #: dlls/winmm/winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Wine Mono 安裝程式"
+msgstr "Wine Sound Mapper"
 
 #: dlls/winmm/winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "行"
+msgstr "音量"
 
 #: dlls/winmm/winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "主音量"
 
 #: dlls/winmm/winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "靜音"
 
 #: dlls/winspool.drv/winspool.rc:37
 msgid "Print to File"
@@ -13001,11 +12772,11 @@ msgstr "列印至檔案"
 
 #: dlls/winspool.drv/winspool.rc:40
 msgid "&Output File Name:"
-msgstr "輸出檔案名稱(&O)："
+msgstr "輸出檔案名稱(&O):"
 
 #: dlls/winspool.drv/winspool.rc:31
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "輸出檔案已存在，按「確定」以覆寫。"
+msgstr "輸出檔案已存在，按 [確定] 以覆寫。"
 
 #: dlls/winspool.drv/winspool.rc:32
 msgid "Unable to create the output file."
@@ -13041,7 +12812,7 @@ msgstr "比較為真"
 
 #: dlls/wldap32/wldap32.rc:39
 msgid "Authentication Method Not Supported"
-msgstr "認證方法不受支援"
+msgstr "不支援的認證方法"
 
 #: dlls/wldap32/wldap32.rc:40
 msgid "Strong Authentication Required"
@@ -13061,17 +12832,15 @@ msgstr "超出了管理限制"
 
 #: dlls/wldap32/wldap32.rc:44
 msgid "Unavailable Critical Extension"
-msgstr "不得使用關鍵副檔名"
+msgstr "無法使用關鍵延伸"
 
 #: dlls/wldap32/wldap32.rc:45
 msgid "Confidentiality Required"
 msgstr "要求機密性"
 
 #: dlls/wldap32/wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "關機正在進行。\n"
+msgstr "SASL 繫結正在進行中"
 
 #: dlls/wldap32/wldap32.rc:48
 msgid "No Such Attribute"
@@ -13087,7 +12856,7 @@ msgstr "不適當的匹配"
 
 #: dlls/wldap32/wldap32.rc:51
 msgid "Constraint Violation"
-msgstr "限制違規"
+msgstr "約束違規"
 
 #: dlls/wldap32/wldap32.rc:52
 msgid "Attribute Or Value Exists"
@@ -13111,11 +12880,11 @@ msgstr "無效的 DN 語法"
 
 #: dlls/wldap32/wldap32.rc:67
 msgid "Is Leaf"
-msgstr "是枝葉"
+msgstr "是分葉"
 
 #: dlls/wldap32/wldap32.rc:68
 msgid "Alias Dereference Problem"
-msgstr "別名去除參考的問題"
+msgstr "別名解除參照問題"
 
 #: dlls/wldap32/wldap32.rc:80
 msgid "Inappropriate Authentication"
@@ -13123,11 +12892,11 @@ msgstr "不適當的認證"
 
 #: dlls/wldap32/wldap32.rc:81
 msgid "Invalid Credentials"
-msgstr "無效的憑據"
+msgstr "無效的憑證"
 
 #: dlls/wldap32/wldap32.rc:82
 msgid "Insufficient Rights"
-msgstr "不足的權限"
+msgstr "權限不足"
 
 #: dlls/wldap32/wldap32.rc:83
 msgid "Busy"
@@ -13135,11 +12904,11 @@ msgstr "忙碌"
 
 #: dlls/wldap32/wldap32.rc:84
 msgid "Unavailable"
-msgstr "不得使用"
+msgstr "無法使用"
 
 #: dlls/wldap32/wldap32.rc:85
 msgid "Unwilling To Perform"
-msgstr "無進行意願"
+msgstr "不願意執行"
 
 #: dlls/wldap32/wldap32.rc:86
 msgid "Loop Detected"
@@ -13163,7 +12932,7 @@ msgstr "物件類別違規"
 
 #: dlls/wldap32/wldap32.rc:98
 msgid "Not allowed on Non-leaf"
-msgstr "於非尾節點不允許"
+msgstr "於非分葉結構不允許"
 
 #: dlls/wldap32/wldap32.rc:99
 msgid "Not allowed on RDN"
@@ -13175,7 +12944,7 @@ msgstr "已經存在"
 
 #: dlls/wldap32/wldap32.rc:101
 msgid "No Object Class Mods"
-msgstr "沒有物件類別方法"
+msgstr "沒有物件類別 Mods"
 
 #: dlls/wldap32/wldap32.rc:102
 msgid "Results Too Large"
@@ -13183,7 +12952,7 @@ msgstr "結果太大"
 
 #: dlls/wldap32/wldap32.rc:103
 msgid "Affects Multiple DSAs"
-msgstr "影響多重 DSAs"
+msgstr "影響多重 DSA"
 
 #: dlls/wldap32/wldap32.rc:113
 msgid "Server Down"
@@ -13207,7 +12976,7 @@ msgstr "逾時"
 
 #: dlls/wldap32/wldap32.rc:118
 msgid "Auth Unknown"
-msgstr "認證不明的"
+msgstr "不明的認證"
 
 #: dlls/wldap32/wldap32.rc:119
 msgid "Filter Error"
@@ -13231,7 +13000,7 @@ msgstr "無法連線到 LDAP 伺服器"
 
 #: dlls/wldap32/wldap32.rc:124
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "動作不受這個版本的 LDAP 協定所支援"
+msgstr "這個 LDAP 協定版本不支援這個操作"
 
 #: dlls/wldap32/wldap32.rc:125
 msgid "Specified control was not found in message"
@@ -13243,7 +13012,7 @@ msgstr "在訊息中沒有結果呈現"
 
 #: dlls/wldap32/wldap32.rc:127
 msgid "More results returned"
-msgstr "回傳了更多結果"
+msgstr "傳回了更多結果"
 
 #: dlls/wldap32/wldap32.rc:128
 msgid "Loop while handling referrals"
@@ -13251,7 +13020,7 @@ msgstr "處理參照時產生迴圈"
 
 #: dlls/wldap32/wldap32.rc:129
 msgid "Referral hop limit exceeded"
-msgstr "超出了參照躍點限制"
+msgstr "轉介的躍點超出了限制"
 
 #: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:373
 msgid ""
