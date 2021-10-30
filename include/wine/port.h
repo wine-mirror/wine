@@ -29,7 +29,6 @@
 # error You must include port.h before all other headers
 #endif
 
-#include <fcntl.h>
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>

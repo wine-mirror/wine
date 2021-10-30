@@ -30,6 +30,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
