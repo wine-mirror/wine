@@ -1348,7 +1348,7 @@ then
         [AC_CHECK_HEADER(sane/sane.h,
             [AC_CHECK_LIB(sane,sane_init,[:],,[$SANE_LIBS])])])
 fi
-WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
+WINE_NOTICE_WITH(sane,[test "$ac_cv_lib_sane_sane_init" != "yes"],
                  [libsane ${notice_platform}development files not found, scanners won't be supported.],
                  [enable_sane_ds])
 

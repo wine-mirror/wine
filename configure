@@ -13345,7 +13345,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$ac_cv_lib_soname_sane" = "x"; then :
+if test "$ac_cv_lib_sane_sane_init" != "yes"; then :
   case "x$with_sane" in
   x)   as_fn_append wine_notices "|libsane ${notice_platform}development files not found, scanners won't be supported." ;;
   xno) ;;
