@@ -1852,6 +1852,7 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 
     memset( info, 0, sizeof(*info) );
 
+#if defined(linux)
     if ((fp = fopen("/proc/uptime", "r")))
     {
         double uptime, idle_time;
@@ -1860,12 +1861,28 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
         fclose(fp);
         info->IdleTime.QuadPart = 10000000 * idle_time;
     }
-    else
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    {
+        static int clockrate_name[] = { CTL_KERN, KERN_CLOCKRATE };
+        size_t size = 0;
+        struct clockinfo clockrate;
+        long ptimes[CPUSTATES];
+
+        size = sizeof(clockrate);
+        if (!sysctl(clockrate_name, 2, &clockrate, &size, NULL, 0))
+        {
+            size = sizeof(ptimes);
+            if (!sysctlbyname("kern.cp_time", ptimes, &size, NULL, 0))
+                info->IdleTime.QuadPart = (ULONGLONG)ptimes[CP_IDLE] * 10000000 / clockrate.stathz;
+        }
+    }
+#else
     {
         static ULONGLONG idle;
         /* many programs expect IdleTime to change so fake change */
         info->IdleTime.QuadPart = ++idle;
     }
+#endif
 
 #ifdef linux
     if ((fp = fopen("/proc/meminfo", "r")))
