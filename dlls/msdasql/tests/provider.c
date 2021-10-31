@@ -27,11 +27,14 @@
 #include "initguid.h"
 
 #include "msdasql.h"
+#include "oledberr.h"
 
 #include "wine/test.h"
 
 DEFINE_GUID(DBPROPSET_DBINITALL, 0xc8b522ca, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+
+DEFINE_GUID(DBGUID_DEFAULT,      0xc8b521fb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 static BOOL db_created;
 static char mdbpath[MAX_PATH];
@@ -157,6 +160,52 @@ static void test_command_interfaces(IUnknown *cmd)
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 }
 
+static void test_command_text(IUnknown *cmd)
+{
+    ICommandText *comand_text;
+    HRESULT hr;
+    OLECHAR *str;
+    GUID dialect;
+
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    ok(hr == DB_E_NOCOMMAND, "got 0x%08x\n", hr);
+
+if (0)
+{
+    /* Crashes under windows */
+    hr = ICommandText_SetCommandText(comand_text, NULL, L"select * from testing");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
+    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    ok(hr == DB_E_NOCOMMAND, "got 0x%08x\n", hr);
+
+    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"select * from testing");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* dialect empty value */
+    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    ok(hr == DB_S_DIALECTIGNORED, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&DBGUID_DEFAULT, &dialect), "got %s\n", debugstr_guid(&dialect));
+    ok (!lstrcmpW(L"select * from testing", str), "got %s\n", debugstr_w(str));
+    HeapFree(GetProcessHeap(), 0, str);
+
+    dialect = DBGUID_DEFAULT;
+    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&DBGUID_DEFAULT, &dialect), "got %s\n", debugstr_guid(&dialect));
+    ok (!lstrcmpW(L"select * from testing", str), "got %s\n", debugstr_w(str));
+    HeapFree(GetProcessHeap(), 0, str);
+
+    ICommandText_Release(comand_text);
+}
+
 static void test_sessions(void)
 {
     IDBProperties *props;
@@ -231,6 +280,7 @@ static void test_sessions(void)
     if (hr == S_OK)
     {
         test_command_interfaces(cmd);
+        test_command_text(cmd);
         IUnknown_Release(cmd);
     }
 

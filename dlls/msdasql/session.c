@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "msdasql.h"
+#include "oledberr.h"
 
 #include "msdasql_private.h"
 
@@ -283,6 +284,7 @@ struct command
     IConvertType IConvertType_iface;
     ICommandPrepare ICommandPrepare_iface;
     LONG refs;
+    WCHAR *query;
 };
 
 static inline struct command *impl_from_ICommandText( ICommandText *iface )
@@ -391,6 +393,7 @@ static ULONG WINAPI command_Release(ICommandText *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", command );
+        heap_free( command->query );
         heap_free( command );
     }
     return refs;
@@ -421,14 +424,40 @@ static HRESULT WINAPI command_GetDBSession(ICommandText *iface, REFIID riid, IUn
 static HRESULT WINAPI command_GetCommandText(ICommandText *iface, GUID *dialect, LPOLESTR *commandstr)
 {
     struct command *command = impl_from_ICommandText( iface );
-    FIXME("%p, %p, %p\n", command, dialect, commandstr);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    TRACE("%p, %p, %p\n", command, dialect, commandstr);
+
+    if (!command->query)
+        return DB_E_NOCOMMAND;
+
+    if (IsEqualGUID(&DBGUID_DEFAULT, dialect))
+        hr = DB_S_DIALECTIGNORED;
+
+    *commandstr = heap_alloc((lstrlenW(command->query)+1)*sizeof(WCHAR));
+    wcscpy(*commandstr, command->query);
+    return hr;
 }
 
 static HRESULT WINAPI command_SetCommandText(ICommandText *iface, REFGUID dialect, LPCOLESTR commandstr)
 {
     struct command *command = impl_from_ICommandText( iface );
-    FIXME("%p, %s, %s\n", command, debugstr_guid(dialect), debugstr_w(commandstr));
+    TRACE("%p, %s, %s\n", command, debugstr_guid(dialect), debugstr_w(commandstr));
+
+    if (IsEqualGUID(&DBGUID_DEFAULT, dialect))
+        FIXME("Currently non Default Dialect isn't supported\n");
+
+    heap_free(command->query);
+
+    if (commandstr)
+    {
+        command->query = heap_alloc((lstrlenW(commandstr)+1)*sizeof(WCHAR));
+        if (!command->query)
+            return E_OUTOFMEMORY;
+
+        wcscpy(command->query, commandstr);
+    }
+    else
+        command->query = NULL;
     return S_OK;
 }
 
