@@ -134,9 +134,8 @@ static void test_command_interfaces(IUnknown *cmd)
     IConvertType_Release(convertype);
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandPrepare, (void**)&commandprepare);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr == S_OK)
-        ICommandPrepare_Release(commandprepare);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ICommandPrepare_Release(commandprepare);
 
     hr = IUnknown_QueryInterface(cmd, &IID_IColumnsInfo, (void**)&colinfo);
     ok(hr == S_OK, "got 0x%08x\n", hr);

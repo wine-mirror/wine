@@ -281,6 +281,7 @@ struct command
     ICommandProperties ICommandProperties_iface;
     IColumnsInfo IColumnsInfo_iface;
     IConvertType IConvertType_iface;
+    ICommandPrepare ICommandPrepare_iface;
     LONG refs;
 };
 
@@ -302,6 +303,11 @@ static inline struct command *impl_from_IColumnsInfo( IColumnsInfo *iface )
 static inline struct command *impl_from_IConvertType( IConvertType *iface )
 {
     return CONTAINING_RECORD( iface, struct command, IConvertType_iface );
+}
+
+static inline struct command *impl_from_ICommandPrepare( ICommandPrepare *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, ICommandPrepare_iface );
 }
 
 static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, void **ppv)
@@ -328,6 +334,10 @@ static HRESULT WINAPI command_QueryInterface(ICommandText *iface, REFIID riid, v
     else if(IsEqualGUID(&IID_IConvertType, riid))
     {
          *ppv = &command->IConvertType_iface;
+    }
+    else if(IsEqualGUID(&IID_ICommandPrepare, riid))
+    {
+         *ppv = &command->ICommandPrepare_iface;
     }
 
     if(*ppv)
@@ -553,6 +563,47 @@ static struct IConvertTypeVtbl converttypeVtbl =
     converttype_CanConvert
 };
 
+static HRESULT WINAPI commandprepare_QueryInterface(ICommandPrepare *iface, REFIID riid, void **out)
+{
+    struct command *command = impl_from_ICommandPrepare( iface );
+    return ICommandText_QueryInterface(&command->ICommandText_iface, riid, out);
+}
+
+static ULONG WINAPI commandprepare_AddRef(ICommandPrepare *iface)
+{
+    struct command *command = impl_from_ICommandPrepare( iface );
+    return ICommandText_AddRef(&command->ICommandText_iface);
+}
+
+static ULONG WINAPI commandprepare_Release(ICommandPrepare *iface)
+{
+    struct command *command = impl_from_ICommandPrepare( iface );
+    return ICommandText_Release(&command->ICommandText_iface);
+}
+
+static HRESULT WINAPI commandprepare_Prepare(ICommandPrepare *iface, ULONG runs)
+{
+    struct command *command = impl_from_ICommandPrepare( iface );
+    FIXME("%p, %u\n", command, runs);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI commandprepare_Unprepare(ICommandPrepare *iface)
+{
+    struct command *command = impl_from_ICommandPrepare( iface );
+    FIXME("%p\n", command);
+    return E_NOTIMPL;
+}
+
+struct ICommandPrepareVtbl commandprepareVtbl =
+{
+    commandprepare_QueryInterface,
+    commandprepare_AddRef,
+    commandprepare_Release,
+    commandprepare_Prepare,
+    commandprepare_Unprepare
+};
+
 static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnknown *outer, REFIID riid,
                                             IUnknown **out)
 {
@@ -573,6 +624,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->ICommandProperties_iface.lpVtbl = &commonpropsVtbl;
     command->IColumnsInfo_iface.lpVtbl = &columninfoVtbl;
     command->IConvertType_iface.lpVtbl = &converttypeVtbl;
+    command->ICommandPrepare_iface.lpVtbl = &commandprepareVtbl;
     command->refs = 1;
 
     hr = ICommandText_QueryInterface(&command->ICommandText_iface, riid, (void**)out);
