@@ -21,15 +21,14 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_STAT_H
+#include <dlfcn.h>
 #include <sys/stat.h>
-#endif
 #ifdef HAVE_SECURITY_SECURITY_H
 #include <Security/Security.h>
 #endif
@@ -43,11 +42,8 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wincrypt.h"
-#include "snmp.h"
 #include "crypt32_private.h"
-
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -84,7 +80,7 @@ static void gnutls_log( int level, const char *msg )
     TRACE( "<%d> %s", level, msg );
 }
 
-static BOOL gnutls_initialize(void)
+static NTSTATUS process_attach( void *args )
 {
     const char *env_str;
     int ret;
@@ -102,7 +98,7 @@ static BOOL gnutls_initialize(void)
     if (!(libgnutls_handle = dlopen( SONAME_LIBGNUTLS, RTLD_NOW )))
     {
         ERR_(winediag)( "failed to load libgnutls, no support for pfx import/export\n" );
-        return FALSE;
+        return STATUS_DLL_NOT_FOUND;
     }
 
 #define LOAD_FUNCPTR(f) \
@@ -143,14 +139,15 @@ static BOOL gnutls_initialize(void)
 fail:
     dlclose( libgnutls_handle );
     libgnutls_handle = NULL;
-    return FALSE;
+    return STATUS_DLL_INIT_FAILED;
 }
 
-static void gnutls_uninitialize(void)
+static NTSTATUS process_detach( void *args )
 {
     pgnutls_global_deinit();
     dlclose( libgnutls_handle );
     libgnutls_handle = NULL;
+    return STATUS_SUCCESS;
 }
 #define RSA_MAGIC_KEY  ('R' | ('S' << 8) | ('A' << 16) | ('2' << 24))
 #define RSA_PUBEXP     65537
@@ -164,8 +161,10 @@ struct cert_store_data
     unsigned int chain_len;
 };
 
-static NTSTATUS WINAPI import_store_key( struct cert_store_data *data, void *buf, DWORD *buf_size )
+static NTSTATUS import_store_key( void *args )
 {
+    struct import_store_key_params *params = args;
+    struct cert_store_data *data = params->data;
     int i, ret;
     unsigned int bitlen = data->key_bitlen;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
@@ -175,9 +174,9 @@ static NTSTATUS WINAPI import_store_key( struct cert_store_data *data, void *buf
     DWORD size;
 
     size = sizeof(*hdr) + sizeof(*rsakey) + (bitlen * 9 / 16);
-    if (!buf || *buf_size < size)
+    if (!params->buf || *params->buf_size < size)
     {
-        *buf_size = size;
+        *params->buf_size = size;
         return STATUS_BUFFER_TOO_SMALL;
     }
 
@@ -187,7 +186,7 @@ static NTSTATUS WINAPI import_store_key( struct cert_store_data *data, void *buf
         return STATUS_INVALID_PARAMETER;
     }
 
-    hdr = (BLOBHEADER *)buf;
+    hdr = params->buf;
     hdr->bType    = PRIVATEKEYBLOB;
     hdr->bVersion = CUR_BLOB_VERSION;
     hdr->reserved = 0;
@@ -261,9 +260,9 @@ static char *password_to_ascii( const WCHAR *str )
     return ret;
 }
 
-static BOOL WINAPI open_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
-                                    struct cert_store_data **data_ret )
+static NTSTATUS open_cert_store( void *args )
 {
+    struct open_cert_store_params *params = args;
     gnutls_pkcs12_t p12;
     gnutls_datum_t pfx_data;
     gnutls_x509_privkey_t key;
@@ -274,12 +273,13 @@ static BOOL WINAPI open_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
     int ret;
     struct cert_store_data *store_data;
 
-    if (password && !(pwd = password_to_ascii( password ))) return FALSE;
+    if (!libgnutls_handle) return STATUS_DLL_NOT_FOUND;
+    if (params->password && !(pwd = password_to_ascii( params->password ))) return STATUS_NO_MEMORY;
 
     if ((ret = pgnutls_pkcs12_init( &p12 )) < 0) goto error;
 
-    pfx_data.data = pfx->pbData;
-    pfx_data.size = pfx->cbData;
+    pfx_data.data = params->pfx->pbData;
+    pfx_data.size = params->pfx->cbData;
     if ((ret = pgnutls_pkcs12_import( p12, &pfx_data, GNUTLS_X509_FMT_DER, 0 )) < 0) goto error;
 
     if ((ret = pgnutls_pkcs12_simple_parse( p12, pwd ? pwd : "", &key, &chain, &chain_len, NULL, NULL, NULL, 0 )) < 0)
@@ -294,7 +294,7 @@ static BOOL WINAPI open_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
     {
         FIXME( "key algorithm %u not supported\n", ret );
         pgnutls_pkcs12_deinit( p12 );
-        return FALSE;
+        return STATUS_INVALID_PARAMETER;
     }
 
     store_data = malloc( sizeof(*store_data) );
@@ -303,43 +303,59 @@ static BOOL WINAPI open_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
     store_data->chain = chain;
     store_data->key_bitlen = bitlen;
     store_data->chain_len = chain_len;
-    *data_ret = store_data;
-    return TRUE;
+    *params->data_ret = store_data;
+    return STATUS_SUCCESS;
 
 error:
     pgnutls_perror( ret );
     pgnutls_pkcs12_deinit( p12 );
     free( pwd );
-    return FALSE;
+    return STATUS_INVALID_PARAMETER;
 }
 
-static NTSTATUS WINAPI import_store_cert( struct cert_store_data *data, unsigned int index,
-                                          void *buf, DWORD *buf_size )
+static NTSTATUS import_store_cert( void *args )
 {
+    struct import_store_cert_params *params = args;
+    struct cert_store_data *data = params->data;
     size_t size = 0;
     int ret;
 
-    if (index >= data->chain_len) return STATUS_NO_MORE_ENTRIES;
+    if (params->index >= data->chain_len) return STATUS_NO_MORE_ENTRIES;
 
-    if ((ret = pgnutls_x509_crt_export( data->chain[index], GNUTLS_X509_FMT_DER, NULL, &size )) != GNUTLS_E_SHORT_MEMORY_BUFFER)
+    if ((ret = pgnutls_x509_crt_export( data->chain[params->index], GNUTLS_X509_FMT_DER, NULL, &size )) != GNUTLS_E_SHORT_MEMORY_BUFFER)
         return STATUS_INVALID_PARAMETER;
 
-    if (!buf || *buf_size < size)
+    if (!params->buf || *params->buf_size < size)
     {
-        *buf_size = size;
+        *params->buf_size = size;
         return STATUS_BUFFER_TOO_SMALL;
     }
-    if ((ret = pgnutls_x509_crt_export( data->chain[index], GNUTLS_X509_FMT_DER, buf, &size )) < 0)
+    if ((ret = pgnutls_x509_crt_export( data->chain[params->index], GNUTLS_X509_FMT_DER, params->buf, &size )) < 0)
         return STATUS_INVALID_PARAMETER;
 
     return STATUS_SUCCESS;
 }
 
-static void WINAPI close_cert_store( struct cert_store_data *data )
+static NTSTATUS close_cert_store( void *args )
 {
-    pgnutls_pkcs12_deinit( data->p12 );
-    free( data );
+    struct close_cert_store_params *params = args;
+
+    if (params->data)
+    {
+        pgnutls_pkcs12_deinit( params->data->p12 );
+        free( params->data );
+    }
+    return STATUS_SUCCESS;
 }
+
+#else /* SONAME_LIBGNUTLS */
+
+static NTSTATUS process_attach( void *args ) { return STATUS_SUCCESS; }
+static NTSTATUS process_detach( void *args ) { return STATUS_SUCCESS; }
+static NTSTATUS open_cert_store( void *args ) { return STATUS_DLL_NOT_FOUND; }
+static NTSTATUS import_store_key( void *args ) { return STATUS_DLL_NOT_FOUND; }
+static NTSTATUS import_store_cert( void *args ) { return STATUS_DLL_NOT_FOUND; }
+static NTSTATUS close_cert_store( void *args ) { return STATUS_DLL_NOT_FOUND; }
 
 #endif /* SONAME_LIBGNUTLS */
 
@@ -640,8 +656,9 @@ static void load_root_certs(void)
         import_certs_from_path( CRYPT_knownLocations[i], TRUE );
 }
 
-static BOOL WINAPI enum_root_certs( void *buffer, SIZE_T size, SIZE_T *needed )
+static NTSTATUS enum_root_certs( void *args )
 {
+    struct enum_root_certs_params *params = args;
     static BOOL loaded;
     struct list *ptr;
     struct root_cert *cert;
@@ -649,45 +666,25 @@ static BOOL WINAPI enum_root_certs( void *buffer, SIZE_T size, SIZE_T *needed )
     if (!loaded) load_root_certs();
     loaded = TRUE;
 
-    if (!(ptr = list_head( &root_cert_list ))) return FALSE;
+    if (!(ptr = list_head( &root_cert_list ))) return STATUS_NO_MORE_ENTRIES;
     cert = LIST_ENTRY( ptr, struct root_cert, entry );
-    *needed = cert->size;
-    if (cert->size <= size)
+    *params->needed = cert->size;
+    if (cert->size <= params->size)
     {
-        memcpy( buffer, cert->data, cert->size );
+        memcpy( params->buffer, cert->data, cert->size );
         list_remove( &cert->entry );
         free( cert );
     }
-    return TRUE;
-}
-
-static struct unix_funcs funcs =
-{
-    enum_root_certs,
-    NULL
-};
-
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-#ifdef SONAME_LIBGNUTLS
-        if (gnutls_initialize())
-        {
-            funcs.open_cert_store = open_cert_store;
-            funcs.import_store_key = import_store_key;
-            funcs.import_store_cert = import_store_cert;
-            funcs.close_cert_store = close_cert_store;
-        }
-#endif
-        *(const struct unix_funcs **)ptr_out = &funcs;
-        break;
-    case DLL_PROCESS_DETACH:
-#ifdef SONAME_LIBGNUTLS
-        if (libgnutls_handle) gnutls_uninitialize();
-#endif
-        break;
-    }
     return STATUS_SUCCESS;
 }
+
+unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    process_attach,
+    process_detach,
+    open_cert_store,
+    import_store_key,
+    import_store_cert,
+    close_cert_store,
+    enum_root_certs,
+};

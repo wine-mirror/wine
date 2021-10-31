@@ -38,8 +38,9 @@ static HCRYPTPROV import_key( struct cert_store_data *data, DWORD flags )
     HCRYPTKEY cryptkey;
     DWORD size, acquire_flags;
     void *key;
+    struct import_store_key_params params = { data, NULL, &size };
 
-    if (unix_funcs->import_store_key( data, NULL, &size ) != STATUS_BUFFER_TOO_SMALL) return 0;
+    if (CRYPT32_CALL( import_store_key, &params ) != STATUS_BUFFER_TOO_SMALL) return 0;
 
     acquire_flags = (flags & CRYPT_MACHINE_KEYSET) | CRYPT_NEWKEYSET;
     if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
@@ -54,8 +55,8 @@ static HCRYPTPROV import_key( struct cert_store_data *data, DWORD flags )
         }
     }
 
-    key = malloc( size );
-    if (unix_funcs->import_store_key( data, key, &size ) ||
+    params.buf = key = malloc( size );
+    if (CRYPT32_CALL( import_store_key, &params ) ||
         !CryptImportKey( prov, key, size, 0, flags & CRYPT_EXPORTABLE, &cryptkey ))
     {
         WARN( "CryptImportKey failed %08x\n", GetLastError() );
@@ -145,6 +146,8 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     HCERTSTORE store = NULL;
     HCRYPTPROV prov = 0;
     struct cert_store_data *data = NULL;
+    struct open_cert_store_params open_params = { pfx, password, &data };
+    struct close_cert_store_params close_params;
 
     if (!pfx)
     {
@@ -156,12 +159,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         FIXME( "flags %08x not supported\n", flags );
         return NULL;
     }
-    if (!unix_funcs->open_cert_store)
-    {
-        FIXME( "(%p, %p, %08x)\n", pfx, password, flags );
-        return NULL;
-    }
-    if (!unix_funcs->open_cert_store( pfx, password, &data )) return NULL;
+    if (CRYPT32_CALL( open_cert_store, &open_params )) return NULL;
 
     prov = import_key( data, flags );
     if (!prov) goto error;
@@ -176,10 +174,11 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     {
         const void *ctx = NULL;
         void *cert;
+        struct import_store_cert_params import_params = { data, i, NULL, &size };
 
-        if (unix_funcs->import_store_cert( data, i, NULL, &size ) != STATUS_BUFFER_TOO_SMALL) break;
-        cert = malloc( size );
-        if (!unix_funcs->import_store_cert( data, i++, cert, &size ))
+        if (CRYPT32_CALL( import_store_cert, &import_params ) != STATUS_BUFFER_TOO_SMALL) break;
+        import_params.buf = cert = malloc( size );
+        if (!CRYPT32_CALL( import_store_cert, &import_params ))
             ctx = CertCreateContext( CERT_STORE_CERTIFICATE_CONTEXT, X509_ASN_ENCODING, cert, size, 0, NULL );
         free( cert );
         if (!ctx)
@@ -209,14 +208,17 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
             goto error;
         }
         CertFreeCertificateContext( ctx );
+        i++;
     }
-    unix_funcs->close_cert_store( data );
+    close_params.data = data;
+    CRYPT32_CALL( close_cert_store, &close_params );
     return store;
 
 error:
     CryptReleaseContext( prov, 0 );
     CertCloseStore( store, 0 );
-    if (data) unix_funcs->close_cert_store( data );
+    close_params.data = data;
+    CRYPT32_CALL( close_cert_store, &close_params );
     return NULL;
 }
 

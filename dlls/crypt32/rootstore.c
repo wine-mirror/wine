@@ -18,6 +18,8 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -615,24 +617,24 @@ static void read_trusted_roots_from_known_locations(HCERTSTORE store)
 {
     HCERTSTORE from = CertOpenStore(CERT_STORE_PROV_MEMORY,
      X509_ASN_ENCODING, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
-    SIZE_T needed, size = 2048;
-    void *buffer;
+    DWORD needed;
+    struct enum_root_certs_params params = { NULL, 2048, &needed };
 
     if (from)
     {
-        buffer = HeapAlloc( GetProcessHeap(), 0, size );
-        while (unix_funcs->enum_root_certs( buffer, size, &needed ))
+        params.buffer = malloc( params.size );
+        while (!CRYPT32_CALL( enum_root_certs, &params ))
         {
-            if (needed > size)
+            if (needed > params.size)
             {
-                HeapFree( GetProcessHeap(), 0, buffer );
-                buffer = HeapAlloc( GetProcessHeap(), 0, needed );
-                size = needed;
+                free( params.buffer );
+                params.buffer = malloc( needed );
+                params.size = needed;
             }
-            else CertAddEncodedCertificateToStore( from, X509_ASN_ENCODING, buffer, needed,
+            else CertAddEncodedCertificateToStore( from, X509_ASN_ENCODING, params.buffer, needed,
                                                    CERT_STORE_ADD_NEW, NULL );
         }
-        HeapFree( GetProcessHeap(), 0, buffer );
+        free( params.buffer );
         check_and_store_certs(from, store);
     }
     CertCloseStore(from, 0);

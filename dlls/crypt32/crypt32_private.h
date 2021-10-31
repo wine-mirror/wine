@@ -20,6 +20,7 @@
 #define __CRYPT32_PRIVATE_H__
 
 #include "wine/list.h"
+#include "wine/unixlib.h"
 
 BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key) DECLSPEC_HIDDEN;
 
@@ -462,17 +463,53 @@ void init_empty_store(void) DECLSPEC_HIDDEN;
 
 struct cert_store_data;
 
-struct unix_funcs
+struct open_cert_store_params
 {
-    BOOL (WINAPI *enum_root_certs)( void *buffer, SIZE_T size, SIZE_T *needed );
-    BOOL (WINAPI *open_cert_store)( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
-                                    struct cert_store_data **data_ret );
-    NTSTATUS (WINAPI *import_store_key)( struct cert_store_data *data, void *buf, DWORD *buf_size );
-    NTSTATUS (WINAPI *import_store_cert)( struct cert_store_data *data, unsigned int index,
-                                          void *buf, DWORD *buf_size );
-    void (WINAPI *close_cert_store)( struct cert_store_data *data );
+    CRYPT_DATA_BLOB *pfx;
+    const WCHAR *password;
+    struct cert_store_data **data_ret;
 };
 
-extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
+struct import_store_key_params
+{
+    struct cert_store_data *data;
+    void *buf;
+    DWORD *buf_size;
+};
+
+struct import_store_cert_params
+{
+    struct cert_store_data *data;
+    unsigned int index;
+    void *buf;
+    DWORD *buf_size;
+};
+
+struct close_cert_store_params
+{
+    struct cert_store_data *data;
+};
+
+struct enum_root_certs_params
+{
+    void  *buffer;
+    DWORD  size;
+    DWORD *needed;
+};
+
+enum unix_funcs
+{
+    unix_process_attach,
+    unix_process_detach,
+    unix_open_cert_store,
+    unix_import_store_key,
+    unix_import_store_cert,
+    unix_close_cert_store,
+    unix_enum_root_certs,
+};
+
+extern unixlib_handle_t crypt32_handle;
+
+#define CRYPT32_CALL( func, params ) __wine_unix_call( crypt32_handle, unix_ ## func, params )
 
 #endif
