@@ -52,6 +52,9 @@
 #ifdef HAVE_SYS_RANDOM_H
 # include <sys/random.h>
 #endif
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
 #ifdef HAVE_IOKIT_IOKITLIB_H
 # include <CoreFoundation/CoreFoundation.h>
 # include <IOKit/IOKitLib.h>
@@ -2611,7 +2614,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
             }
         }
-#else
+#elif defined(linux)
         {
             FILE *cpuinfo = fopen("/proc/stat", "r");
             if (cpuinfo)
@@ -2642,6 +2645,33 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                     sppi[id-1].UserTime.QuadPart   = (ULONGLONG)usr * 10000000 / clk_tck;
                 }
                 fclose(cpuinfo);
+            }
+        }
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
+        {
+            static int clockrate_name[] = { CTL_KERN, KERN_CLOCKRATE };
+            size_t size = 0;
+            struct clockinfo clockrate;
+            int have_clockrate;
+            long *ptimes;
+
+            size = sizeof(clockrate);
+            have_clockrate = !sysctl(clockrate_name, 2, &clockrate, &size, NULL, 0);
+            size = out_cpus * CPUSTATES * sizeof(long);
+            ptimes = malloc(size + 1);
+            if (ptimes)
+            {
+                if (have_clockrate && (!sysctlbyname("kern.cp_times", ptimes, &size, NULL, 0) || errno == ENOMEM))
+                {
+                    for (cpus = 0; cpus < out_cpus; cpus++)
+                    {
+                        if (cpus * CPUSTATES * sizeof(long) >= size) break;
+                        sppi[cpus].IdleTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_IDLE] * 10000000 / clockrate.stathz;
+                        sppi[cpus].KernelTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_SYS] * 10000000 / clockrate.stathz;
+                        sppi[cpus].UserTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_USER] * 10000000 / clockrate.stathz;
+                    }
+                }
+                free(ptimes);
             }
         }
 #endif
