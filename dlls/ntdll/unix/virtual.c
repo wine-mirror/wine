@@ -43,6 +43,21 @@
 #ifdef HAVE_SYS_SYSINFO_H
 # include <sys/sysinfo.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+# include <sys/queue.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
+#ifdef HAVE_LIBPROCSTAT_H
+# include <libprocstat.h>
+#endif
 #include <unistd.h>
 #include <dlfcn.h>
 #ifdef HAVE_VALGRIND_VALGRIND_H
@@ -4242,7 +4257,7 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
                                     MEMORY_WORKING_SET_EX_INFORMATION *info,
                                     SIZE_T len, SIZE_T *res_len )
 {
-    FILE *f;
+    FILE *f = NULL;
     MEMORY_WORKING_SET_EX_INFORMATION *p;
     sigset_t sigset;
 
@@ -4252,6 +4267,58 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
         return STATUS_INVALID_INFO_CLASS;
     }
 
+#if defined(HAVE_LIBPROCSTAT)
+    {
+        struct procstat *pstat;
+        unsigned int proc_count;
+        struct kinfo_proc *kip = NULL;
+        unsigned int vmentry_count = 0;
+        struct kinfo_vmentry *vmentries = NULL;
+
+        pstat = procstat_open_sysctl();
+        if (pstat)
+            kip = procstat_getprocs( pstat, KERN_PROC_PID, getpid(), &proc_count );
+        if (kip)
+            vmentries = procstat_getvmmap( pstat, kip, &vmentry_count );
+        if (vmentries == NULL)
+            WARN( "couldn't get process vmmap, errno %d\n", errno );
+
+        server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+        for (p = info; (UINT_PTR)(p + 1) <= (UINT_PTR)info + len; p++)
+        {
+             int i;
+             struct kinfo_vmentry *entry = NULL;
+             BYTE vprot;
+             struct file_view *view;
+
+             for (i = 0; i < vmentry_count && entry == NULL; i++)
+             {
+                 if (vmentries[i].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= vmentries[i].kve_end)
+                     entry = &vmentries[i];
+             }
+             memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
+             if ((view = find_view( p->VirtualAddress, 0 )) &&
+                 get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED ) &&
+                 (vprot & VPROT_COMMITTED))
+             {
+                 p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && entry && entry->kve_type != KVME_TYPE_SWAP;
+                 p->VirtualAttributes.Shared = !is_view_valloc( view );
+                 if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
+                     p->VirtualAttributes.ShareCount = 1; /* FIXME */
+                 if (p->VirtualAttributes.Valid)
+                     p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+             }
+        }
+        server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+
+        if (vmentries)
+            procstat_freevmmap( pstat, vmentries );
+        if (kip)
+            procstat_freeprocs( pstat, kip );
+        if (pstat)
+            procstat_close( pstat );
+    }
+#else
     f = fopen( "/proc/self/pagemap", "rb" );
     if (!f)
     {
@@ -4288,6 +4355,7 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
         }
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+#endif
 
     if (f)
         fclose( f );
