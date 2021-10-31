@@ -30,7 +30,17 @@
 #define DB_E_BADCHAPTER                     0x80040e06
 #define DB_E_CANTCONVERTVALUE               0x80040e07
 #define DB_E_BADBINDINFO                    0x80040e08
-
+#define DB_SEC_E_PERMISSIONDENIED           0x80040e09
+#define DB_E_NOTAREFERENCECOLUMN            0x80040e0a
+#define DB_E_LIMITREJECTED                  0x80040e0b
+#define DB_E_NOCOMMAND                      0x80040e0c
+#define DB_E_COSTLIMIT                      0x80040e0d
+#define DB_E_BADBOOKMARK                    0x80040e0e
+#define DB_E_BADLOCKMODE                    0x80040e0f
+#define DB_E_PARAMNOTOPTIONAL               0x80040e10
+#define DB_E_BADCOLUMNID                    0x80040e11
+#define DB_E_BADRATIO                       0x80040e12
+#define DB_E_BADVALUES                      0x80040e13
 #define DB_E_ERRORSINCOMMAND                0x80040e14
 #define DB_E_CANTCANCEL                     0x80040e15
 #define DB_E_DIALECTNOTSUPPORTED            0x80040e16
@@ -86,6 +96,7 @@
 #define DB_S_BOOKMARKSKIPPED                0x00040ec3
 #define DB_S_NONEXTROWSET                   0x00040ec5
 #define DB_S_ENDOFROWSET                    0x00040ec6
+#define DB_S_DIALECTIGNORED                 0x00040ecd
 #define DB_S_ERRORSOCCURRED                 0x00040eda
 
 #endif /* __WINE_OLEDBERR_H */
