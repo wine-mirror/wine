@@ -155,38 +155,37 @@ static void gnutls_uninitialize(void)
 #define RSA_MAGIC_KEY  ('R' | ('S' << 8) | ('A' << 16) | ('2' << 24))
 #define RSA_PUBEXP     65537
 
-static DWORD import_key( gnutls_x509_privkey_t key, DWORD flags, void **data_ret )
+struct cert_store_data
+{
+    gnutls_pkcs12_t p12;
+    gnutls_x509_privkey_t key;
+    gnutls_x509_crt_t *chain;
+    unsigned int key_bitlen;
+    unsigned int chain_len;
+};
+
+static NTSTATUS WINAPI import_store_key( struct cert_store_data *data, void *buf, DWORD *buf_size )
 {
     int i, ret;
-    unsigned int bitlen;
+    unsigned int bitlen = data->key_bitlen;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
     BLOBHEADER *hdr;
     RSAPUBKEY *rsakey;
-    BYTE *buf, *src, *dst;
+    BYTE *src, *dst;
     DWORD size;
 
-    *data_ret = NULL;
-
-    if ((ret = pgnutls_x509_privkey_get_pk_algorithm2( key, &bitlen )) < 0)
-    {
-        pgnutls_perror( ret );
-        return 0;
-    }
-
-    if (ret != GNUTLS_PK_RSA)
-    {
-        FIXME( "key algorithm %u not supported\n", ret );
-        return 0;
-    }
-
-    if ((ret = pgnutls_x509_privkey_export_rsa_raw2( key, &m, &e, &d, &p, &q, &u, &e1, &e2 )) < 0)
-    {
-        pgnutls_perror( ret );
-        return 0;
-    }
-
     size = sizeof(*hdr) + sizeof(*rsakey) + (bitlen * 9 / 16);
-    if (!(buf = RtlAllocateHeap( GetProcessHeap(), 0, size ))) goto done;
+    if (!buf || *buf_size < size)
+    {
+        *buf_size = size;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if ((ret = pgnutls_x509_privkey_export_rsa_raw2( data->key, &m, &e, &d, &p, &q, &u, &e1, &e2 )) < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INVALID_PARAMETER;
+    }
 
     hdr = (BLOBHEADER *)buf;
     hdr->bType    = PRIVATEKEYBLOB;
@@ -235,8 +234,6 @@ static DWORD import_key( gnutls_x509_privkey_t key, DWORD flags, void **data_ret
     else src = d.data;
     for (i = bitlen / 8 - 1; i >= 0; i--) *dst++ = src[i];
 
-    *data_ret = buf;
-
 done:
     free( m.data );
     free( e.data );
@@ -246,8 +243,7 @@ done:
     free( u.data );
     free( e1.data );
     free( e2.data );
-    if (!*data_ret) RtlFreeHeap( GetProcessHeap(), 0, buf );
-    return size;
+    return STATUS_SUCCESS;
 }
 
 static char *password_to_ascii( const WCHAR *str )
@@ -265,16 +261,18 @@ static char *password_to_ascii( const WCHAR *str )
     return ret;
 }
 
-static BOOL WINAPI import_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags,
-                                      void **key_ret, void ***chain_ret, DWORD *count_ret )
+static BOOL WINAPI open_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
+                                    struct cert_store_data **data_ret )
 {
     gnutls_pkcs12_t p12;
     gnutls_datum_t pfx_data;
     gnutls_x509_privkey_t key;
     gnutls_x509_crt_t *chain;
-    unsigned int chain_len, i;
+    unsigned int chain_len;
+    unsigned int bitlen;
     char *pwd = NULL;
     int ret;
+    struct cert_store_data *store_data;
 
     if (password && !(pwd = password_to_ascii( password ))) return FALSE;
 
@@ -287,27 +285,25 @@ static BOOL WINAPI import_cert_store( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     if ((ret = pgnutls_pkcs12_simple_parse( p12, pwd ? pwd : "", &key, &chain, &chain_len, NULL, NULL, NULL, 0 )) < 0)
         goto error;
 
-    if (!import_key( key, flags, key_ret )) goto error;
+    if ((ret = pgnutls_x509_privkey_get_pk_algorithm2( key, &bitlen )) < 0)
+        goto error;
 
-    *chain_ret = RtlAllocateHeap( GetProcessHeap(), 0, chain_len * sizeof(*chain_ret) );
-    *count_ret = chain_len;
-    for (i = 0; i < chain_len; i++)
+    free( pwd );
+
+    if (ret != GNUTLS_PK_RSA)
     {
-        size_t size = 0;
-
-        if ((ret = pgnutls_x509_crt_export( chain[i], GNUTLS_X509_FMT_DER, NULL, &size )) != GNUTLS_E_SHORT_MEMORY_BUFFER)
-            goto error;
-
-        (*chain_ret)[i] = RtlAllocateHeap( GetProcessHeap(), 0, size );
-        if ((ret = pgnutls_x509_crt_export( chain[i], GNUTLS_X509_FMT_DER, (*chain_ret)[i], &size )) < 0)
-        {
-            i++;
-            while (i) RtlFreeHeap( GetProcessHeap(), 0, (*chain_ret)[--i] );
-            RtlFreeHeap( GetProcessHeap(), 0, *chain_ret );
-            goto error;
-        }
+        FIXME( "key algorithm %u not supported\n", ret );
+        pgnutls_pkcs12_deinit( p12 );
+        return FALSE;
     }
-    pgnutls_pkcs12_deinit( p12 );
+
+    store_data = malloc( sizeof(*store_data) );
+    store_data->p12 = p12;
+    store_data->key = key;
+    store_data->chain = chain;
+    store_data->key_bitlen = bitlen;
+    store_data->chain_len = chain_len;
+    *data_ret = store_data;
     return TRUE;
 
 error:
@@ -315,6 +311,34 @@ error:
     pgnutls_pkcs12_deinit( p12 );
     free( pwd );
     return FALSE;
+}
+
+static NTSTATUS WINAPI import_store_cert( struct cert_store_data *data, unsigned int index,
+                                          void *buf, DWORD *buf_size )
+{
+    size_t size = 0;
+    int ret;
+
+    if (index >= data->chain_len) return STATUS_NO_MORE_ENTRIES;
+
+    if ((ret = pgnutls_x509_crt_export( data->chain[index], GNUTLS_X509_FMT_DER, NULL, &size )) != GNUTLS_E_SHORT_MEMORY_BUFFER)
+        return STATUS_INVALID_PARAMETER;
+
+    if (!buf || *buf_size < size)
+    {
+        *buf_size = size;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    if ((ret = pgnutls_x509_crt_export( data->chain[index], GNUTLS_X509_FMT_DER, buf, &size )) < 0)
+        return STATUS_INVALID_PARAMETER;
+
+    return STATUS_SUCCESS;
+}
+
+static void WINAPI close_cert_store( struct cert_store_data *data )
+{
+    pgnutls_pkcs12_deinit( data->p12 );
+    free( data );
 }
 
 #endif /* SONAME_LIBGNUTLS */
@@ -649,7 +673,13 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     {
     case DLL_PROCESS_ATTACH:
 #ifdef SONAME_LIBGNUTLS
-        if (gnutls_initialize()) funcs.import_cert_store = import_cert_store;
+        if (gnutls_initialize())
+        {
+            funcs.open_cert_store = open_cert_store;
+            funcs.import_store_key = import_store_key;
+            funcs.import_store_cert = import_store_cert;
+            funcs.close_cert_store = close_cert_store;
+        }
 #endif
         *(const struct unix_funcs **)ptr_out = &funcs;
         break;

@@ -17,7 +17,10 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
@@ -29,13 +32,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-static HCRYPTPROV import_key( void *key, DWORD flags )
+static HCRYPTPROV import_key( struct cert_store_data *data, DWORD flags )
 {
     HCRYPTPROV prov = 0;
     HCRYPTKEY cryptkey;
     DWORD size, acquire_flags;
+    void *key;
 
-    size = HeapSize( GetProcessHeap(), 0, key );
+    if (unix_funcs->import_store_key( data, NULL, &size ) != STATUS_BUFFER_TOO_SMALL) return 0;
+
     acquire_flags = (flags & CRYPT_MACHINE_KEYSET) | CRYPT_NEWKEYSET;
     if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
     {
@@ -49,13 +54,17 @@ static HCRYPTPROV import_key( void *key, DWORD flags )
         }
     }
 
-    if (!CryptImportKey( prov, key, size, 0, flags & CRYPT_EXPORTABLE, &cryptkey ))
+    key = malloc( size );
+    if (unix_funcs->import_store_key( data, key, &size ) ||
+        !CryptImportKey( prov, key, size, 0, flags & CRYPT_EXPORTABLE, &cryptkey ))
     {
         WARN( "CryptImportKey failed %08x\n", GetLastError() );
         CryptReleaseContext( prov, 0 );
+        free( key );
         return 0;
     }
     CryptDestroyKey( cryptkey );
+    free( key );
     return prov;
 }
 
@@ -132,10 +141,10 @@ static BOOL set_key_prov_info( const void *ctx, HCRYPTPROV prov )
 
 HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags )
 {
-    void *key, **chain;
-    DWORD i, chain_len = 0;
+    DWORD i = 0, size;
     HCERTSTORE store = NULL;
     HCRYPTPROV prov = 0;
+    struct cert_store_data *data = NULL;
 
     if (!pfx)
     {
@@ -147,15 +156,14 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         FIXME( "flags %08x not supported\n", flags );
         return NULL;
     }
-    if (!unix_funcs->import_cert_store)
+    if (!unix_funcs->open_cert_store)
     {
         FIXME( "(%p, %p, %08x)\n", pfx, password, flags );
         return NULL;
     }
-    if (!unix_funcs->import_cert_store( pfx, password, flags, &key, &chain, &chain_len )) return NULL;
+    if (!unix_funcs->open_cert_store( pfx, password, &data )) return NULL;
 
-    prov = import_key( key, flags );
-    heap_free( key );
+    prov = import_key( data, flags );
     if (!prov) goto error;
 
     if (!(store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL )))
@@ -164,14 +172,17 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         goto error;
     }
 
-    if (chain_len > 1) FIXME( "handle certificate chain\n" );
-    for (i = 0; i < chain_len; i++)
+    for (;;)
     {
-        const void *ctx;
-        size_t size = HeapSize( GetProcessHeap(), 0, chain[i] );
+        const void *ctx = NULL;
+        void *cert;
 
-        if (!(ctx = CertCreateContext( CERT_STORE_CERTIFICATE_CONTEXT, X509_ASN_ENCODING,
-                                       chain[i], size, 0, NULL )))
+        if (unix_funcs->import_store_cert( data, i, NULL, &size ) != STATUS_BUFFER_TOO_SMALL) break;
+        cert = malloc( size );
+        if (!unix_funcs->import_store_cert( data, i++, cert, &size ))
+            ctx = CertCreateContext( CERT_STORE_CERTIFICATE_CONTEXT, X509_ASN_ENCODING, cert, size, 0, NULL );
+        free( cert );
+        if (!ctx)
         {
             WARN( "CertCreateContext failed %08x\n", GetLastError() );
             goto error;
@@ -199,15 +210,13 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         }
         CertFreeCertificateContext( ctx );
     }
-    while (chain_len) heap_free( chain[--chain_len] );
-    heap_free( chain );
+    unix_funcs->close_cert_store( data );
     return store;
 
 error:
     CryptReleaseContext( prov, 0 );
     CertCloseStore( store, 0 );
-    while (chain_len) heap_free( chain[--chain_len] );
-    heap_free( chain );
+    if (data) unix_funcs->close_cert_store( data );
     return NULL;
 }
 

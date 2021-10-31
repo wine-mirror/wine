@@ -460,11 +460,17 @@ void init_empty_store(void) DECLSPEC_HIDDEN;
 
 /* Unix interface */
 
+struct cert_store_data;
+
 struct unix_funcs
 {
     BOOL (WINAPI *enum_root_certs)( void *buffer, SIZE_T size, SIZE_T *needed );
-    BOOL (WINAPI *import_cert_store)( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags,
-                                      void **key_ret, void ***chain_ret, DWORD *count_ret );
+    BOOL (WINAPI *open_cert_store)( CRYPT_DATA_BLOB *pfx, const WCHAR *password,
+                                    struct cert_store_data **data_ret );
+    NTSTATUS (WINAPI *import_store_key)( struct cert_store_data *data, void *buf, DWORD *buf_size );
+    NTSTATUS (WINAPI *import_store_cert)( struct cert_store_data *data, unsigned int index,
+                                          void *buf, DWORD *buf_size );
+    void (WINAPI *close_cert_store)( struct cert_store_data *data );
 };
 
 extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
