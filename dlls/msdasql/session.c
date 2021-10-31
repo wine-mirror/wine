@@ -285,6 +285,7 @@ struct command
     ICommandPrepare ICommandPrepare_iface;
     LONG refs;
     WCHAR *query;
+    IUnknown *session;
 };
 
 static inline struct command *impl_from_ICommandText( ICommandText *iface )
@@ -393,6 +394,8 @@ static ULONG WINAPI command_Release(ICommandText *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", command );
+        if (command->session)
+            IUnknown_Release(command->session);
         heap_free( command->query );
         heap_free( command );
     }
@@ -417,8 +420,18 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
 static HRESULT WINAPI command_GetDBSession(ICommandText *iface, REFIID riid, IUnknown **session)
 {
     struct command *command = impl_from_ICommandText( iface );
-    FIXME("%p, %s, %p\n", command, debugstr_guid(riid), session);
-    return E_NOTIMPL;
+
+    TRACE("%p, %s, %p\n", command, debugstr_guid(riid), session);
+
+    if (!session)
+        return E_INVALIDARG;
+
+    *session = NULL;
+
+    if (!command->session)
+        return S_FALSE;
+
+    return IUnknown_QueryInterface(command->session, riid, (void**)session);
 }
 
 static HRESULT WINAPI command_GetCommandText(ICommandText *iface, GUID *dialect, LPOLESTR *commandstr)
@@ -655,6 +668,8 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->IConvertType_iface.lpVtbl = &converttypeVtbl;
     command->ICommandPrepare_iface.lpVtbl = &commandprepareVtbl;
     command->refs = 1;
+
+    IUnknown_QueryInterface(&session->session_iface, &IID_IUnknown, (void**)&command->session);
 
     hr = ICommandText_QueryInterface(&command->ICommandText_iface, riid, (void**)out);
     ICommandText_Release(&command->ICommandText_iface);

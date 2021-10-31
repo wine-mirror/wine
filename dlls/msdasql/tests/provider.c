@@ -206,6 +206,22 @@ if (0)
     ICommandText_Release(comand_text);
 }
 
+static void test_command_dbsession(IUnknown *cmd, IUnknown *session)
+{
+    ICommandText *comand_text;
+    HRESULT hr;
+    IUnknown *sess;
+
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandText_GetDBSession(comand_text, &IID_IUnknown, &sess);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(session == sess, "different session pointers\n");
+
+    ICommandText_Release(comand_text);
+}
+
 static void test_sessions(void)
 {
     IDBProperties *props;
@@ -281,6 +297,7 @@ static void test_sessions(void)
     {
         test_command_interfaces(cmd);
         test_command_text(cmd);
+        test_command_dbsession(cmd, session);
         IUnknown_Release(cmd);
     }
 
