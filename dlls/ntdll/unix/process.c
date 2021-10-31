@@ -46,6 +46,21 @@
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+# include <sys/queue.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
+#ifdef HAVE_LIBPROCSTAT_H
+# include <libprocstat.h>
+#endif
 #include <unistd.h>
 #ifdef HAVE_MACH_MACH_H
 # include <mach/mach.h>
@@ -1000,6 +1015,30 @@ void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
     pvmi->PeakPagefileUsage = pvmi->PagefileUsage;
 
     fclose(f);
+}
+
+#elif defined(HAVE_LIBPROCSTAT)
+
+void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
+{
+    struct procstat *pstat;
+    struct kinfo_proc *kip;
+    unsigned int proc_count;
+
+    pstat = procstat_open_sysctl();
+    if (pstat)
+    {
+        kip = procstat_getprocs( pstat, KERN_PROC_PID, unix_pid == -1 ? getpid() : unix_pid, &proc_count );
+        if (kip)
+        {
+            pvmi->VirtualSize = kip->ki_size;
+            pvmi->PeakVirtualSize = kip->ki_size;
+            pvmi->WorkingSetSize = kip->ki_rssize << PAGE_SHIFT;
+            pvmi->PeakWorkingSetSize = kip->ki_rusage.ru_maxrss * 1024;
+            procstat_freeprocs( pstat, kip );
+        }
+        procstat_close( pstat );
+    }
 }
 
 #else
