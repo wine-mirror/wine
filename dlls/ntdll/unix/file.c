@@ -944,7 +944,7 @@ static char *get_device_mount_point( dev_t dev )
         fclose( f );
     }
     mutex_unlock( &mnt_mutex );
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     struct statfs *entry;
     struct stat st;
     int i, size;
