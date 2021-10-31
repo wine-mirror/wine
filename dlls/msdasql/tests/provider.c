@@ -222,6 +222,46 @@ static void test_command_dbsession(IUnknown *cmd, IUnknown *session)
     ICommandText_Release(comand_text);
 }
 
+static void test_command_rowset(IUnknown *cmd)
+{
+    ICommandText *comand_text;
+    HRESULT hr;
+    IUnknown *unk = NULL;
+    IRowset *rowset;
+    DBROWCOUNT affected;
+
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"CREATE TABLE testing (col1 INT, col2 SHORT)");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    affected = 9999;
+    hr = ICommandText_Execute(comand_text, NULL, &IID_IRowset, NULL, &affected, &unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(unk == NULL, "Unexepcted value\n");
+    todo_wine ok(affected == -1, "got %ld\n", affected);
+    if (unk)
+        IUnknown_Release(unk);
+
+    affected = 9999;
+    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"select * from testing");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK && unk)
+    {
+        ok(affected == 0, "wrong affected value\n");
+
+        hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IRowset_Release(rowset);
+        IUnknown_Release(unk);
+    }
+
+    ICommandText_Release(comand_text);
+}
+
+
 static void test_sessions(void)
 {
     IDBProperties *props;
@@ -298,6 +338,7 @@ static void test_sessions(void)
         test_command_interfaces(cmd);
         test_command_text(cmd);
         test_command_dbsession(cmd, session);
+        test_command_rowset(cmd);
         IUnknown_Release(cmd);
     }
 

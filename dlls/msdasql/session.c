@@ -409,12 +409,135 @@ static HRESULT WINAPI command_Cancel(ICommandText *iface)
     return E_NOTIMPL;
 }
 
+struct msdasql_rowset
+{
+    IRowset IRowset_iface;
+    LONG refs;
+};
+
+static inline struct msdasql_rowset *impl_from_IRowset( IRowset *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_rowset, IRowset_iface );
+}
+
+static HRESULT WINAPI msdasql_rowset_QueryInterface(IRowset *iface, REFIID riid,  void **ppv)
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+
+    TRACE( "%p, %s, %p\n", rowset, debugstr_guid(riid), ppv );
+
+    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid) ||
+       IsEqualGUID(&IID_IRowset, riid))
+    {
+        *ppv = &rowset->IRowset_iface;
+    }
+
+    if(*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI msdasql_rowset_AddRef(IRowset *iface)
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+    LONG refs = InterlockedIncrement( &rowset->refs );
+    TRACE( "%p new refcount %d\n", rowset, refs );
+    return refs;
+}
+
+static ULONG WINAPI msdasql_rowset_Release(IRowset *iface)
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+    LONG refs = InterlockedDecrement( &rowset->refs );
+    TRACE( "%p new refcount %d\n", rowset, refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", rowset );
+        heap_free( rowset );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI msdasql_rowset_AddRefRows(IRowset *iface, DBCOUNTITEM count,
+        const HROW rows[], DBREFCOUNT ref_counts[], DBROWSTATUS status[])
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+    FIXME("%p, %ld, %p, %p, %p\n", rowset, count, rows, ref_counts, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msdasql_rowset_GetData(IRowset *iface, HROW row, HACCESSOR accessor, void *data)
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+    FIXME("%p, %ld, %ld, %p\n", rowset, row, accessor, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msdasql_rowset_GetNextRows(IRowset *iface, HCHAPTER reserved, DBROWOFFSET offset,
+        DBROWCOUNT count, DBCOUNTITEM *obtained, HROW **rows)
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+    FIXME("%p, %ld, %ld, %ld, %p, %p\n", rowset, reserved, offset, count, obtained, rows);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msdasql_rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM count,
+        const HROW rows[], DBROWOPTIONS options[], DBREFCOUNT ref_counts[], DBROWSTATUS status[])
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+
+    FIXME("%p, %ld, %p, %p, %p, %p\n", rowset, count, rows, options, ref_counts, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msdasql_rowset_RestartPosition(IRowset *iface, HCHAPTER reserved)
+{
+    struct msdasql_rowset *rowset = impl_from_IRowset( iface );
+    FIXME("%p, %ld\n", rowset, reserved);
+    return E_NOTIMPL;
+}
+
+static const struct IRowsetVtbl msdasql_rowset_vtbl =
+{
+    msdasql_rowset_QueryInterface,
+    msdasql_rowset_AddRef,
+    msdasql_rowset_Release,
+    msdasql_rowset_AddRefRows,
+    msdasql_rowset_GetData,
+    msdasql_rowset_GetNextRows,
+    msdasql_rowset_ReleaseRows,
+    msdasql_rowset_RestartPosition
+};
+
 static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFIID riid,
         DBPARAMS *params, DBROWCOUNT *affected, IUnknown **rowset)
 {
     struct command *command = impl_from_ICommandText( iface );
-    FIXME("%p, %p, %s, %p %p %p\n", command, outer, debugstr_guid(riid), params, affected, rowset);
-    return E_NOTIMPL;
+    struct msdasql_rowset *msrowset;
+    HRESULT hr;
+
+    FIXME("%p, %p, %s, %p %p %p Semi Stub\n", command, outer, debugstr_guid(riid), params, affected, rowset);
+
+    msrowset = heap_alloc(sizeof(*msrowset));
+    if (!msrowset)
+        return E_OUTOFMEMORY;
+
+    msrowset->IRowset_iface.lpVtbl = &msdasql_rowset_vtbl;
+    msrowset->refs = 1;
+
+    if (affected)
+        *affected = 0; /* FIXME */
+
+    hr = IRowset_QueryInterface(&msrowset->IRowset_iface, riid, (void**)rowset);
+    IRowset_Release(&msrowset->IRowset_iface);
+
+    return hr;
 }
 
 static HRESULT WINAPI command_GetDBSession(ICommandText *iface, REFIID riid, IUnknown **session)
