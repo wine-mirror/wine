@@ -186,11 +186,13 @@ static HRESULT WINAPI WMSyncReader_OpenStream(IWMSyncReader2 *iface, IStream *st
     return wm_reader_open_stream(&reader->reader, stream);
 }
 
-static HRESULT WINAPI WMSyncReader_SetOutputProps(IWMSyncReader2 *iface, DWORD output_num, IWMOutputMediaProps *output)
+static HRESULT WINAPI WMSyncReader_SetOutputProps(IWMSyncReader2 *iface, DWORD output, IWMOutputMediaProps *props)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%u %p): stub!\n", This, output_num, output);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, output %u, props %p.\n", reader, output, props);
+
+    return wm_reader_set_output_props(&reader->reader, output, props);
 }
 
 static HRESULT WINAPI WMSyncReader_SetOutputSetting(IWMSyncReader2 *iface, DWORD output_num, const WCHAR *name,

@@ -140,6 +140,14 @@ static const struct IWMOutputMediaPropsVtbl output_props_vtbl =
     output_props_GetConnectionName,
 };
 
+static struct output_props *unsafe_impl_from_IWMOutputMediaProps(IWMOutputMediaProps *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &output_props_vtbl);
+    return impl_from_IWMOutputMediaProps(iface);
+}
+
 static IWMOutputMediaProps *output_props_create(const struct wg_format *format)
 {
     struct output_props *object;
@@ -1380,6 +1388,45 @@ HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
 
     *props = output_props_create(&format);
     return *props ? S_OK : E_OUTOFMEMORY;
+}
+
+HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
+        IWMOutputMediaProps *props_iface)
+{
+    struct output_props *props = unsafe_impl_from_IWMOutputMediaProps(props_iface);
+    struct wg_format format, pref_format;
+    struct wm_stream *stream;
+
+    strmbase_dump_media_type(&props->mt);
+
+    if (!amt_to_wg_format(&props->mt, &format))
+    {
+        ERR("Failed to convert media type to winegstreamer format.\n");
+        return E_FAIL;
+    }
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &pref_format);
+    if (pref_format.major_type != format.major_type)
+    {
+        /* R.U.S.E sets the type of the wrong stream, apparently by accident. */
+        LeaveCriticalSection(&reader->cs);
+        WARN("Major types don't match; returning NS_E_INCOMPATIBLE_FORMAT.\n");
+        return NS_E_INCOMPATIBLE_FORMAT;
+    }
+
+    stream->format = format;
+    wg_parser_stream_enable(stream->wg_stream, &format);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)

@@ -789,14 +789,7 @@ static void test_sync_reader_types(void)
                 check_video_type(mt);
 
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
-            todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-            if (hr != S_OK)
-            {
-                ref = IWMOutputMediaProps_Release(output_props);
-                ok(!ref, "Got outstanding refcount %d.\n", ref);
-                winetest_pop_context();
-                continue;
-            }
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
             hr = IWMSyncReader_SetOutputProps(reader, 1 - output_number, output_props);
             if (!i)
                 todo_wine ok(hr == ASF_E_BADMEDIATYPE, "Got hr %#x.\n", hr);

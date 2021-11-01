@@ -540,7 +540,7 @@ static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     return false;
 }
 
-static bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     memset(format, 0, sizeof(*format));
 
