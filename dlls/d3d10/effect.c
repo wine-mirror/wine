@@ -386,6 +386,85 @@ static const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t
 
 #undef WINE_D3D10_TO_STR
 
+static BOOL read_float_value(uint32_t value, D3D_SHADER_VARIABLE_TYPE in_type,
+        float *out_data, unsigned int out_idx)
+{
+    switch (in_type)
+    {
+        case D3D10_SVT_FLOAT:
+            out_data[out_idx] = *(float *)&value;
+            return TRUE;
+
+        case D3D10_SVT_INT:
+            out_data[out_idx] = (INT)value;
+            return TRUE;
+
+        case D3D10_SVT_UINT:
+            out_data[out_idx] = value;
+            return TRUE;
+
+        default:
+            FIXME("Unhandled in_type %#x.\n", in_type);
+            return FALSE;
+    }
+}
+
+static BOOL read_int32_value(uint32_t value, D3D_SHADER_VARIABLE_TYPE in_type,
+        int *out_data, unsigned int out_idx)
+{
+    switch (in_type)
+    {
+        case D3D10_SVT_FLOAT:
+            out_data[out_idx] = *(float *)&value;
+            return TRUE;
+
+        case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
+        case D3D10_SVT_BOOL:
+            out_data[out_idx] = value;
+            return TRUE;
+
+        default:
+            FIXME("Unhandled in_type %#x.\n", in_type);
+            return FALSE;
+    }
+}
+
+static BOOL read_int8_value(uint32_t value, D3D_SHADER_VARIABLE_TYPE in_type,
+        INT8 *out_data, unsigned int out_idx)
+{
+    switch (in_type)
+    {
+        case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
+            out_data[out_idx] = value;
+            return TRUE;
+
+        default:
+            FIXME("Unhandled in_type %#x.\n", in_type);
+            return FALSE;
+    }
+}
+
+static BOOL d3d10_effect_read_numeric_value(uint32_t value, D3D_SHADER_VARIABLE_TYPE in_type,
+        D3D_SHADER_VARIABLE_TYPE out_type, void *out_data, unsigned int out_idx)
+{
+    switch (out_type)
+    {
+        case D3D10_SVT_FLOAT:
+            return read_float_value(value, in_type, out_data, out_idx);
+        case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
+        case D3D10_SVT_BOOL:
+            return read_int32_value(value, in_type, out_data, out_idx);
+        case D3D10_SVT_UINT8:
+            return read_int8_value(value, in_type, out_data, out_idx);
+        default:
+            FIXME("Unsupported property type %u.\n", out_type);
+            return FALSE;
+    }
+}
+
 static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
 {
     SIZE_T max_capacity, new_capacity;
@@ -917,7 +996,8 @@ static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c, BOOL is_column_
     }
 }
 
-static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object, DWORD *flags)
+static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object,
+        unsigned int *flags)
 {
     *flags = 0;
 
@@ -1567,70 +1647,14 @@ static const struct d3d10_effect_state_storage_info *get_storage_info(D3D_SHADER
     return NULL;
 }
 
-static BOOL read_float_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, float *out_data, UINT idx)
-{
-    switch (in_type)
-    {
-        case D3D10_SVT_FLOAT:
-            out_data[idx] = *(float *)&value;
-            return TRUE;
-
-        case D3D10_SVT_INT:
-            out_data[idx] = (INT)value;
-            return TRUE;
-
-        case D3D10_SVT_UINT:
-            out_data[idx] = value;
-            return TRUE;
-
-        default:
-            FIXME("Unhandled in_type %#x.\n", in_type);
-            return FALSE;
-    }
-}
-
-static BOOL read_int32_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT *out_data, UINT idx)
-{
-    switch (in_type)
-    {
-        case D3D10_SVT_FLOAT:
-            out_data[idx] = *(float *)&value;
-            return TRUE;
-
-        case D3D10_SVT_INT:
-        case D3D10_SVT_UINT:
-        case D3D10_SVT_BOOL:
-            out_data[idx] = value;
-            return TRUE;
-
-        default:
-            FIXME("Unhandled in_type %#x.\n", in_type);
-            return FALSE;
-    }
-}
-
-static BOOL read_int8_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT8 *out_data, UINT idx)
-{
-    switch (in_type)
-    {
-        case D3D10_SVT_INT:
-        case D3D10_SVT_UINT:
-            out_data[idx] = value;
-            return TRUE;
-
-        default:
-            FIXME("Unhandled in_type %#x.\n", in_type);
-            return FALSE;
-    }
-}
-
-static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
-        D3D_SHADER_VARIABLE_TYPE out_type, UINT out_base, UINT out_size, void *out_data)
+static BOOL read_value_list(const char *data, size_t data_size, uint32_t offset,
+        D3D_SHADER_VARIABLE_TYPE out_type, unsigned int out_base, unsigned int out_size,
+        void *out_data)
 {
     D3D_SHADER_VARIABLE_TYPE in_type;
-    DWORD t, value, type_flags;
+    unsigned int i, type_flags;
+    uint32_t t, value, count;
     const char *ptr;
-    DWORD count, i;
 
     if (offset >= data_size || !require_space(offset, 1, sizeof(count), data_size))
     {
@@ -1652,7 +1676,7 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
     TRACE("%u values:\n", count);
     for (i = 0; i < count; ++i)
     {
-        UINT out_idx = out_base * out_size + i;
+        unsigned int out_idx = out_base * out_size + i;
 
         read_dword(&ptr, &t);
         read_dword(&ptr, &value);
@@ -1663,20 +1687,12 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
         switch (out_type)
         {
             case D3D10_SVT_FLOAT:
-                if (!read_float_value(value, in_type, out_data, out_idx))
-                    return FALSE;
-                break;
-
             case D3D10_SVT_INT:
             case D3D10_SVT_UINT:
-            case D3D10_SVT_BOOL:
-                if (!read_int32_value(value, in_type, out_data, out_idx))
-                    return FALSE;
-                break;
-
             case D3D10_SVT_UINT8:
-                if (!read_int8_value(value, in_type, out_data, out_idx))
-                    return FALSE;
+            case D3D10_SVT_BOOL:
+                if (!d3d10_effect_read_numeric_value(value, in_type, out_type, out_data, out_idx))
+                     return FALSE;
                 break;
 
             case D3D10_SVT_VERTEXSHADER:
@@ -1757,17 +1773,14 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
         const char **ptr, enum d3d10_effect_container_type container_type,
         struct d3d10_effect *effect, void *container)
 {
+    uint32_t id, idx, variable_idx, operation, value_offset, sodecl_offset;
     const struct d3d10_effect_state_property_info *property_info;
-    UINT value_offset, sodecl_offset, operation;
     struct d3d10_effect_variable *variable;
-    unsigned int variable_idx, *dst_index;
-    const char *data_ptr;
-    const char *name;
+    const char *data_ptr, *name;
+    unsigned int *dst_index;
     size_t name_len;
     HRESULT hr;
     void *dst;
-    UINT idx;
-    UINT id;
 
     read_dword(ptr, &id);
     read_dword(ptr, &idx);
