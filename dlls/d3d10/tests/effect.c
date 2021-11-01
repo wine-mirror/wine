@@ -7653,6 +7653,154 @@ static void test_effect_raw_value(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#if 0
+uint i1;
+uint i1_a[2];
+float4 fv1 = {0.5f, 0.6f, 0.7f, 0.8f};
+float4 fv1_a[2] = { { 1.0f, 1.1f, 1.2f, 1.3f }, {0.1f, 0.2f, 0.3f, 0.4f} };
+int i2 = 0x123;
+int i2_a[2] = { 0x1, 0x2 };
+float f1 = 0.3f;
+
+technique10 tech
+{
+    pass P0
+    {
+        SetBlendState(NULL, fv1, i2);
+        SetDepthStencilState(NULL, i1);
+    }
+    pass P1
+    {
+        SetBlendState(NULL, fv1_a[1], i2_a[1]);
+        SetDepthStencilState(NULL, i1_a[1]);
+    }
+}
+#endif
+static DWORD fx_test_effect_dynamic_numeric_field[] =
+{
+    0x43425844, 0xc53c7634, 0x9d90c190, 0x5a0b43ea, 0x77aab553, 0x00000001, 0x000003af, 0x00000001,
+    0x00000024, 0x30315846, 0x00000383, 0xfeff1001, 0x00000001, 0x00000007, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000197, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6f6c4724,
+    0x736c6162, 0x6e697500, 0x000d0074, 0x00010000, 0x00000000, 0x00040000, 0x00100000, 0x00040000,
+    0x09190000, 0x31690000, 0x00000d00, 0x00000100, 0x00000200, 0x00001400, 0x00001000, 0x00000800,
+    0x00091900, 0x5f316900, 0x6c660061, 0x3474616f, 0x00005200, 0x00000100, 0x00000000, 0x00001000,
+    0x00001000, 0x00001000, 0x00210a00, 0x31766600, 0x00000000, 0x19999a3f, 0x3333333f, 0x4ccccd3f,
+    0x0000523f, 0x00000100, 0x00000200, 0x00002000, 0x00001000, 0x00002000, 0x00210a00, 0x31766600,
+    0x0000615f, 0xcd3f8000, 0x9a3f8ccc, 0x663f9999, 0xcd3fa666, 0xcd3dcccc, 0x9a3e4ccc, 0xcd3e9999,
+    0x693ecccc, 0xcb00746e, 0x01000000, 0x00000000, 0x04000000, 0x10000000, 0x04000000, 0x11000000,
+    0x69000009, 0x01230032, 0x00cb0000, 0x00010000, 0x00020000, 0x00140000, 0x00100000, 0x00080000,
+    0x09110000, 0x32690000, 0x0100615f, 0x02000000, 0x66000000, 0x74616f6c, 0x00011b00, 0x00000100,
+    0x00000000, 0x00000400, 0x00001000, 0x00000400, 0x00090900, 0x00316600, 0x3e99999a, 0x68636574,
+    0x00305000, 0x00000001, 0x00000002, 0x00000000, 0x00000001, 0x00000002, 0x00000000, 0xa5003150,
+    0x04000000, 0x0e000000, 0x04000001, 0x01000000, 0x02000000, 0x00000000, 0x4d000000, 0x04000000,
+    0x01000000, 0x02000000, 0x00000000, 0x04000000, 0x90000000, 0x00000000, 0x07000000, 0xff000000,
+    0x00ffffff, 0x2e000000, 0x12000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x4d000000, 0x31000000, 0x00000000, 0x10000000, 0x00000000, 0x00000000, 0x00000000, 0x75000000,
+    0x59000000, 0x00000000, 0x30000000, 0x79000000, 0x00000000, 0x00000000, 0xa5000000, 0x89000000,
+    0x00000000, 0x40000000, 0xab000000, 0x00000000, 0x00000000, 0xeb000000, 0xcf000000, 0x00000000,
+    0x60000000, 0xee000000, 0x00000000, 0x00000000, 0x0e000000, 0xf2000001, 0x00000000, 0x70000000,
+    0x13000000, 0x00000001, 0x00000000, 0x3d000000, 0x21000001, 0x00000001, 0x84000000, 0x40000000,
+    0x00000001, 0x00000000, 0x44000000, 0x02000001, 0x00000000, 0x49000000, 0x05000001, 0x00000000,
+    0x0a000000, 0x00000000, 0x02000000, 0x75000000, 0x0b000000, 0x00000000, 0x02000000, 0xeb000000,
+    0x02000000, 0x00000000, 0x01000000, 0x4c000000, 0x09000001, 0x00000000, 0x02000000, 0x2e000000,
+    0x01000000, 0x00000000, 0x01000000, 0x58000000, 0x64000001, 0x05000001, 0x00000000, 0x0a000000,
+    0x00000000, 0x03000000, 0x67000000, 0x0b000001, 0x00000000, 0x03000000, 0x6f000000, 0x02000001,
+    0x00000000, 0x01000000, 0x77000000, 0x09000001, 0x00000000, 0x03000000, 0x83000000, 0x01000001,
+    0x00000000, 0x01000000, 0x8b000000, 0x00000001,
+};
+
+static void test_effect_dynamic_numeric_field(void)
+{
+    ID3D10EffectScalarVariable *scalar;
+    ID3D10DepthStencilState *ds_state;
+    ID3D10BlendState *blend_state;
+    UINT stencil_ref, sample_mask;
+    ID3D10EffectTechnique *tech;
+    D3D10_PASS_DESC pass_desc;
+    ID3D10EffectVariable *v;
+    ID3D10EffectPass *pass;
+    float blend_factor[4];
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_effect_dynamic_numeric_field, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect, hr %#x.\n", hr);
+
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    ok(tech->lpVtbl->IsValid(tech), "Expected valid technique.\n");
+
+    /* Pass fields */
+    pass = tech->lpVtbl->GetPassByName(tech, "P0");
+
+    ID3D10Device_OMSetDepthStencilState(device, NULL, 0x1);
+    memset(blend_factor, 0, sizeof(blend_factor));
+    ID3D10Device_OMSetBlendState(device, NULL, blend_factor, 0);
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
+    ok(!stencil_ref, "Unexpected stencil ref value %#x.\n", stencil_ref);
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ok(blend_factor[0] == 0.5f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == 0.6f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == 0.7f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == 0.8f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    ok(sample_mask == 0x123, "Unexpected sample mask %#x.\n", sample_mask);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "i1");
+    scalar = v->lpVtbl->AsScalar(v);
+    hr = scalar->lpVtbl->SetInt(scalar, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
+    ok(stencil_ref == 0x2, "Unexpected stencil ref value %#x.\n", stencil_ref);
+
+    hr = scalar->lpVtbl->SetInt(scalar, 3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(pass_desc.StencilRef == 0x3, "Unexpected stencil ref value %#x.\n", stencil_ref);
+    ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
+    ok(stencil_ref == 0x2, "Unexpected stencil ref value %#x.\n", stencil_ref);
+
+    pass = tech->lpVtbl->GetPassByName(tech, "P1");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "i1_a");
+    v = v->lpVtbl->GetElement(v, 1);
+    scalar = v->lpVtbl->AsScalar(v);
+    hr = scalar->lpVtbl->SetInt(scalar, 4);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ID3D10Device_OMSetDepthStencilState(device, NULL, 0x1);
+    memset(blend_factor, 0, sizeof(blend_factor));
+    ID3D10Device_OMSetBlendState(device, NULL, blend_factor, 0);
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
+    ok(stencil_ref == 0x4, "Unexpected stencil ref value %#x.\n", stencil_ref);
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ok(blend_factor[0] == 0.1f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == 0.2f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == 0.3f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == 0.4f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    ok(sample_mask == 0x2, "Unexpected sample mask %#x.\n", sample_mask);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -7676,4 +7824,5 @@ START_TEST(effect)
     test_effect_pool();
     test_effect_default_variable_value();
     test_effect_raw_value();
+    test_effect_dynamic_numeric_field();
 }

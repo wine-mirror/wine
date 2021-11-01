@@ -96,6 +96,13 @@ struct d3d10_effect_shader_variable
     unsigned int isinline : 1;
 };
 
+struct d3d10_effect_prop_dependencies
+{
+    struct d3d10_effect_prop_dependency *entries;
+    SIZE_T count;
+    SIZE_T capacity;
+};
+
 struct d3d10_effect_sampler_desc
 {
     D3D10_SAMPLER_DESC desc;
@@ -119,6 +126,7 @@ struct d3d10_effect_state_object_variable
         ID3D10SamplerState *sampler;
         IUnknown *object;
     } object;
+    struct d3d10_effect_prop_dependencies dependencies;
 };
 
 struct d3d10_effect_resource_variable
@@ -218,6 +226,7 @@ struct d3d10_effect_pass
     char *name;
     struct d3d10_effect_annotations annotations;
 
+    struct d3d10_effect_prop_dependencies dependencies;
     struct d3d10_effect_pass_shader_desc vs;
     struct d3d10_effect_pass_shader_desc ps;
     struct d3d10_effect_pass_shader_desc gs;

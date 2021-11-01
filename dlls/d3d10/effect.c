@@ -180,6 +180,27 @@ static enum d3d10_effect_container_type get_var_container_type(const struct d3d1
     }
 }
 
+struct d3d10_effect_prop_dependency
+{
+    unsigned int id;
+    unsigned int idx;
+    unsigned int operation;
+    union
+    {
+        struct
+        {
+            struct d3d10_effect_variable *v;
+            unsigned int offset;
+        } var;
+    } u;
+};
+
+static void d3d10_effect_clear_prop_dependencies(struct d3d10_effect_prop_dependencies *d)
+{
+    heap_free(d->entries);
+    memset(d, 0, sizeof(*d));
+}
+
 struct d3d10_effect_state_property_info
 {
     UINT id;
@@ -487,6 +508,47 @@ static BOOL d3d10_effect_read_numeric_value(uint32_t value, D3D_SHADER_VARIABLE_
         default:
             FIXME("Unsupported property type %u.\n", out_type);
             return FALSE;
+    }
+}
+
+static void d3d10_effect_update_dependent_props(struct d3d10_effect_prop_dependencies *deps,
+        void *container)
+{
+    const struct d3d10_effect_state_property_info *property_info;
+    struct d3d10_effect_prop_dependency *d;
+    struct d3d10_effect_variable *v;
+    unsigned int i, j, count;
+    uint32_t value;
+    void *dst;
+
+    for (i = 0; i < deps->count; ++i)
+    {
+        d = &deps->entries[i];
+
+        property_info = &property_infos[d->id];
+
+        dst = (char *)container + property_info->offset;
+
+        switch (d->operation)
+        {
+            case D3D10_EOO_VAR:
+            case D3D10_EOO_CONST_INDEX:
+
+                v = d->u.var.v;
+
+                count = v->type->type_class == D3D10_SVC_VECTOR ? 4 : 1;
+
+                for (j = 0; j < count; ++j)
+                {
+                    d3d10_effect_variable_get_raw_value(v, &value, d->u.var.offset + j * sizeof(value), sizeof(value));
+                    d3d10_effect_read_numeric_value(value, v->type->basetype, property_info->type, dst, j);
+                }
+
+                break;
+
+            default:
+                FIXME("Unsupported property update for %u.\n", d->operation);
+        }
     }
 }
 
@@ -1794,12 +1856,24 @@ static BOOL is_object_property_type_matching(const struct d3d10_effect_state_pro
     }
 }
 
+static HRESULT d3d10_effect_add_prop_dependency(struct d3d10_effect_prop_dependencies *d,
+        const struct d3d10_effect_prop_dependency *dep)
+{
+    if (!d3d_array_reserve((void **)&d->entries, &d->capacity, d->count + 1, sizeof(*d->entries)))
+        return E_OUTOFMEMORY;
+
+    d->entries[d->count++] = *dep;
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size,
         const char **ptr, enum d3d10_effect_container_type container_type,
-        struct d3d10_effect *effect, void *container)
+        struct d3d10_effect *effect, void *container, struct d3d10_effect_prop_dependencies *d)
 {
     uint32_t id, idx, variable_idx, operation, value_offset, sodecl_offset;
     const struct d3d10_effect_state_property_info *property_info;
+    struct d3d10_effect_prop_dependency dep;
     struct d3d10_effect_variable *variable;
     const char *data_ptr, *name;
     unsigned int *dst_index;
@@ -1890,8 +1964,20 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
             }
             else
             {
-                FIXME("Assigning variables to numeric fields is not supported.\n");
-                return E_FAIL;
+                if (property_info->size * sizeof(float) > variable->type->size_unpacked)
+                {
+                    WARN("Mismatching variable size %u, property size %u.\n",
+                            variable->type->size_unpacked, property_info->size);
+                    return E_FAIL;
+                }
+
+                dep.id = id;
+                dep.idx = idx;
+                dep.operation = operation;
+                dep.u.var.v = variable;
+                dep.u.var.offset = 0;
+
+                return d3d10_effect_add_prop_dependency(d, &dep);
             }
 
             break;
@@ -1914,7 +2000,8 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
                 return E_FAIL;
             }
 
-            TRACE("Variable name %s[%u].\n", debugstr_a(name), variable_idx);
+            TRACE("Variable name %s[%s%u].\n", debugstr_a(name), is_object_property(property_info) ?
+                    "" : "offset ", variable_idx);
 
             if (!(variable = d3d10_effect_get_variable_by_name(effect, name)))
             {
@@ -1922,15 +2009,14 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
                 return E_FAIL;
             }
 
-            /* Has to be an array */
-            if (!variable->type->element_count || variable_idx >= variable->type->element_count)
-            {
-                WARN("Invalid array size %u.\n", variable->type->element_count);
-                return E_FAIL;
-            }
-
             if (is_object_property(property_info))
             {
+                if (!variable->type->element_count || variable_idx >= variable->type->element_count)
+                {
+                    WARN("Invalid array size %u.\n", variable->type->element_count);
+                    return E_FAIL;
+                }
+
                 if (!is_object_property_type_matching(property_info, variable))
                 {
                     WARN("Object type mismatch. Variable type %#x, property type %#x.\n",
@@ -1953,8 +2039,22 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
             }
             else
             {
-                FIXME("Assigning indexed variables to numeric fields is not supported.\n");
-                return E_FAIL;
+                unsigned int offset = variable_idx * sizeof(float);
+
+                if (offset >= variable->type->size_unpacked ||
+                        variable->type->size_unpacked - offset < property_info->size * sizeof(float))
+                {
+                    WARN("Invalid numeric variable data offset %u.\n", variable_idx);
+                    return E_FAIL;
+                }
+
+                dep.id = id;
+                dep.idx = idx;
+                dep.operation = operation;
+                dep.u.var.v = variable;
+                dep.u.var.offset = offset;
+
+                return d3d10_effect_add_prop_dependency(d, &dep);
             }
 
             break;
@@ -2062,7 +2162,7 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
     for (i = 0; i < object_count; ++i)
     {
         if (FAILED(hr = parse_fx10_property_assignment(data, data_size, ptr,
-                D3D10_C_PASS, p->technique->effect, p)))
+                D3D10_C_PASS, p->technique->effect, p, &p->dependencies)))
         {
             WARN("Failed to parse pass assignment %u, hr %#x.\n", i, hr);
             return hr;
@@ -2431,7 +2531,8 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
                     for (j = 0; j < prop_count; ++j)
                     {
                         if (FAILED(hr = parse_fx10_property_assignment(data, data_size, ptr,
-                                get_var_container_type(var), var->effect, &var->u.state.desc)))
+                                get_var_container_type(var), var->effect, &var->u.state.desc,
+                                &var->u.state.dependencies)))
                         {
                             ERR("Failed to read property list.\n");
                             return hr;
@@ -3101,6 +3202,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
             case D3D10_SVT_SAMPLER:
                 if (v->u.state.object.object)
                     IUnknown_Release(v->u.state.object.object);
+                d3d10_effect_clear_prop_dependencies(&v->u.state.dependencies);
                 break;
 
             case D3D10_SVT_TEXTURE1D:
@@ -3144,6 +3246,7 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 
     heap_free(p->name);
     d3d10_effect_annotations_destroy(&p->annotations);
+    d3d10_effect_clear_prop_dependencies(&p->dependencies);
 }
 
 static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
@@ -3858,6 +3961,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         return E_INVALIDARG;
     }
 
+    d3d10_effect_update_dependent_props(&pass->dependencies, pass);
+
     vs = d3d10_array_get_element(pass->vs.shader, pass->vs.index);
     input_signature = vs->u.shader.input_signature;
 
@@ -4142,6 +4247,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
     TRACE("iface %p, flags %#x\n", iface, flags);
 
     if (flags) FIXME("Ignoring flags (%#x)\n", flags);
+
+    d3d10_effect_update_dependent_props(&pass->dependencies, pass);
 
     if (pass->vs.shader != &null_shader_variable)
         d3d10_effect_pass_set_shader(pass, &pass->vs);
