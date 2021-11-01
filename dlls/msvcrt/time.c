@@ -44,8 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #undef _time32
 #undef _wctime32
 
-BOOL WINAPI GetDaylightFlag(void);
-
 static LONGLONG init_time;
 
 void msvcrt_init_clock(void)
@@ -691,6 +689,7 @@ double CDECL _difftime32(__time32_t time1, __time32_t time2)
  */
 void CDECL _ftime64(struct __timeb64 *buf)
 {
+  TIME_ZONE_INFORMATION tzinfo;
   FILETIME ft;
   ULONGLONG time;
 
@@ -703,7 +702,7 @@ void CDECL _ftime64(struct __timeb64 *buf)
   buf->time = time / TICKSPERSEC - SECS_1601_TO_1970;
   buf->millitm = (time % TICKSPERSEC) / TICKSPERMSEC;
   buf->timezone = MSVCRT___timezone / 60;
-  buf->dstflag = GetDaylightFlag();
+  buf->dstflag = GetTimeZoneInformation( &tzinfo) == TIME_ZONE_ID_DAYLIGHT;
 }
 
 /*********************************************************************
