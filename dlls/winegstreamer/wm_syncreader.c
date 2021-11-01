@@ -25,6 +25,8 @@ struct sync_reader
     struct wm_reader reader;
 
     IWMSyncReader2 IWMSyncReader2_iface;
+
+    WORD last_read_stream;
 };
 
 static struct sync_reader *impl_from_IWMSyncReader2(IWMSyncReader2 *iface)
@@ -83,6 +85,7 @@ static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface,
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
     struct wm_stream *stream;
     HRESULT hr;
+    WORD i;
 
     TRACE("reader %p, stream_number %u, sample %p, pts %p, duration %p,"
             " flags %p, output_number %p, ret_stream_number %p.\n",
@@ -92,8 +95,30 @@ static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface,
 
     if (!stream_number)
     {
-        FIXME("Reading from all streams is not implemented yet.\n");
-        hr = E_NOTIMPL;
+        if (!output_number && !ret_stream_number)
+        {
+            LeaveCriticalSection(&reader->reader.cs);
+            return E_INVALIDARG;
+        }
+
+        for (i = 0; i < reader->reader.stream_count; ++i)
+        {
+            WORD index = (i + reader->last_read_stream + 1) % reader->reader.stream_count;
+
+            hr = wm_reader_get_stream_sample(&reader->reader.streams[index], sample, pts, duration, flags);
+            if (hr == S_OK)
+            {
+                if (output_number)
+                    *output_number = index;
+                if (ret_stream_number)
+                    *ret_stream_number = index + 1;
+            }
+            if (hr != NS_E_NO_MORE_SAMPLES)
+            {
+                reader->last_read_stream = index;
+                break;
+            }
+        }
     }
     else
     {
