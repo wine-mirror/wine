@@ -1637,6 +1637,21 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
     }
 }
 
+void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration)
+{
+    WORD i;
+
+    EnterCriticalSection(&reader->cs);
+
+    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, start, start + duration,
+            AM_SEEKING_AbsolutePositioning, duration ? AM_SEEKING_AbsolutePositioning : AM_SEEKING_NoPositioning);
+
+    for (i = 0; i < reader->stream_count; ++i)
+        reader->streams[i].eos = false;
+
+    LeaveCriticalSection(&reader->cs);
+}
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;

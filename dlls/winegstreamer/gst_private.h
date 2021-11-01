@@ -166,6 +166,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
         INSSBuffer **sample, QWORD *pts, QWORD *duration, DWORD *flags);
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
+void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration);
 HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps *props);
 

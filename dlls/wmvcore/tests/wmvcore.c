@@ -542,25 +542,22 @@ static void test_sync_reader_streaming(void)
     ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[0], &sample, &pts, &duration, &flags, NULL, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-        INSSBuffer_Release(sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    INSSBuffer_Release(sample);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, NULL);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, &output_number, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-        INSSBuffer_Release(sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    INSSBuffer_Release(sample);
 
     hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, &stream_number);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-        INSSBuffer_Release(sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    INSSBuffer_Release(sample);
 
     for (;;)
     {
