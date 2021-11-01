@@ -4865,6 +4865,7 @@ static BOOL get_value_as_bool(void *src_data, D3D10_SHADER_VARIABLE_TYPE src_typ
     {
         case D3D10_SVT_FLOAT:
         case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
         case D3D10_SVT_BOOL:
             if (*(DWORD *)src_data)
                 return -1;
@@ -4885,6 +4886,7 @@ static int get_value_as_int(void *src_data, D3D10_SHADER_VARIABLE_TYPE src_type)
             return (int)(*(float *)src_data);
 
         case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
             return *(int *)src_data;
 
         case D3D10_SVT_BOOL:
@@ -4903,6 +4905,7 @@ static float get_value_as_float(void *src_data, D3D10_SHADER_VARIABLE_TYPE src_t
             return *(float *)src_data;
 
         case D3D10_SVT_INT:
+        case D3D10_SVT_UINT:
             return (float)(*(int *)src_data);
 
         case D3D10_SVT_BOOL:
@@ -4933,6 +4936,7 @@ static void get_vector_as_type(BYTE *dst_data, D3D_SHADER_VARIABLE_TYPE dst_type
                     break;
 
                 case D3D10_SVT_INT:
+                case D3D10_SVT_UINT:
                     *(int *)dst_data_dword = get_value_as_int(src_data_dword, src_type);
                     break;
 
