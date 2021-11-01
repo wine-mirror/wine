@@ -4839,6 +4839,18 @@ struct wined3d_cs
     LONG pending_presents;
 };
 
+static inline void wined3d_device_context_lock(struct wined3d_device_context *context)
+{
+    if (context == &context->device->cs->c)
+        wined3d_mutex_lock();
+}
+
+static inline void wined3d_device_context_unlock(struct wined3d_device_context *context)
+{
+    if (context == &context->device->cs->c)
+        wined3d_mutex_unlock();
+}
+
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
         const enum wined3d_feature_level *levels, unsigned int level_count) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;

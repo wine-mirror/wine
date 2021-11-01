@@ -1019,7 +1019,7 @@ void CDECL wined3d_device_context_dispatch(struct wined3d_device_context *contex
 {
     struct wined3d_cs_dispatch *op;
 
-    wined3d_mutex_lock();
+    wined3d_device_context_lock(context);
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DISPATCH;
     op->parameters.indirect = FALSE;
@@ -1030,7 +1030,7 @@ void CDECL wined3d_device_context_dispatch(struct wined3d_device_context *contex
     acquire_compute_pipeline_resources(context);
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-    wined3d_mutex_unlock();
+    wined3d_device_context_unlock(context);
 }
 
 void CDECL wined3d_device_context_dispatch_indirect(struct wined3d_device_context *context,
@@ -1038,7 +1038,7 @@ void CDECL wined3d_device_context_dispatch_indirect(struct wined3d_device_contex
 {
     struct wined3d_cs_dispatch *op;
 
-    wined3d_mutex_lock();
+    wined3d_device_context_lock(context);
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DISPATCH;
     op->parameters.indirect = TRUE;
@@ -1049,7 +1049,7 @@ void CDECL wined3d_device_context_dispatch_indirect(struct wined3d_device_contex
     wined3d_device_context_acquire_resource(context, &buffer->resource);
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-    wined3d_mutex_unlock();
+    wined3d_device_context_unlock(context);
 }
 
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
@@ -1206,7 +1206,7 @@ void CDECL wined3d_device_context_draw_indirect(struct wined3d_device_context *c
     const struct wined3d_state *state = context->state;
     struct wined3d_cs_draw *op;
 
-    wined3d_mutex_lock();
+    wined3d_device_context_lock(context);
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DRAW;
     op->primitive_type = state->primitive_type;
@@ -1220,7 +1220,7 @@ void CDECL wined3d_device_context_draw_indirect(struct wined3d_device_context *c
     wined3d_device_context_acquire_resource(context, &buffer->resource);
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-    wined3d_mutex_unlock();
+    wined3d_device_context_unlock(context);
 }
 
 static void wined3d_cs_exec_flush(struct wined3d_cs *cs, const void *data)
@@ -3824,7 +3824,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 
     TRACE("context %p, list %p.\n", context, list);
 
-    wined3d_mutex_lock();
+    wined3d_device_context_lock(context);
     memory = heap_alloc(sizeof(*object) + deferred->resource_count * sizeof(*object->resources)
             + deferred->upload_count * sizeof(*object->uploads)
             + deferred->command_list_count * sizeof(*object->command_lists)
@@ -3833,7 +3833,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 
     if (!memory)
     {
-        wined3d_mutex_unlock();
+        wined3d_device_context_unlock(context);
         return E_OUTOFMEMORY;
     }
 
@@ -3886,7 +3886,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 
     TRACE("Created command list %p.\n", object);
     *list = object;
-    wined3d_mutex_unlock();
+    wined3d_device_context_unlock(context);
 
     return S_OK;
 }
