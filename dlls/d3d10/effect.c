@@ -1695,6 +1695,10 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
                 *(void **)out_data = &null_shader_resource_variable;
                 break;
 
+            case D3D10_SVT_DEPTHSTENCIL:
+                *(void **)out_data = &null_depth_stencil_variable;
+                break;
+
             default:
                 FIXME("Unhandled out_type %#x.\n", out_type);
                 return FALSE;
