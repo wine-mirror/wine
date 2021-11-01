@@ -12608,6 +12608,20 @@ static void test_clear_state(void)
     ID3D11DeviceContext_OMGetDepthStencilState(context, &tmp_ds_state, NULL);
     ok(tmp_ds_state == ds_state, "Got unexpected depth stencil state %p, expected %p.\n", tmp_ds_state, ds_state);
     ID3D11DepthStencilState_Release(tmp_ds_state);
+    /* OMGetBlendState() arguments are optional */
+    ID3D11DeviceContext_OMGetBlendState(context, NULL, NULL, NULL);
+    ID3D11DeviceContext_OMGetBlendState(context, &tmp_blend_state, NULL, NULL);
+    ok(tmp_blend_state == blend_state, "Got unexpected blend state %p, expected %p.\n", tmp_blend_state, blend_state);
+    ID3D11BlendState_Release(tmp_blend_state);
+    sample_mask = 0;
+    ID3D11DeviceContext_OMGetBlendState(context, NULL, NULL, &sample_mask);
+    ok(sample_mask == 0xff00ff00, "Got unexpected sample mask %#x.\n", sample_mask);
+    memset(blend_factor, 0, sizeof(blend_factor));
+    ID3D11DeviceContext_OMGetBlendState(context, NULL, blend_factor, NULL);
+    ok(blend_factor[0] == 0.1f && blend_factor[1] == 0.2f
+            && blend_factor[2] == 0.3f && blend_factor[3] == 0.4f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
 
     ID3D11DeviceContext_OMGetRenderTargets(context, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv);
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - 1; ++i)

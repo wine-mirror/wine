@@ -5533,6 +5533,20 @@ float4 main(float4 color : COLOR) : SV_TARGET
     blend_factor[2] = 0.3f;
     blend_factor[3] = 0.4f;
     ID3D10Device_OMSetBlendState(device, blend_state, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    /* OMGetBlendState() arguments are optional */
+    ID3D10Device_OMGetBlendState(device, NULL, NULL, NULL);
+    ID3D10Device_OMGetBlendState(device, &tmp_blend_state, NULL, NULL);
+    ID3D10BlendState_Release(tmp_blend_state);
+    sample_mask = 0;
+    ID3D10Device_OMGetBlendState(device, NULL, NULL, &sample_mask);
+    ok(sample_mask == D3D10_DEFAULT_SAMPLE_MASK, "Unexpected sample mask %#x.\n", sample_mask);
+    memset(tmp_blend_factor, 0, sizeof(tmp_blend_factor));
+    ID3D10Device_OMGetBlendState(device, NULL, tmp_blend_factor, NULL);
+    ok(tmp_blend_factor[0] == 0.1f && tmp_blend_factor[1] == 0.2f
+            && tmp_blend_factor[2] == 0.3f && tmp_blend_factor[3] == 0.4f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_blend_factor[0], tmp_blend_factor[1], tmp_blend_factor[2], tmp_blend_factor[3]);
+
     ID3D10Device_OMGetBlendState(device, &tmp_blend_state, tmp_blend_factor, &sample_mask);
     ok(tmp_blend_factor[0] == 0.1f && tmp_blend_factor[1] == 0.2f
             && tmp_blend_factor[2] == 0.3f && tmp_blend_factor[3] == 0.4f,
