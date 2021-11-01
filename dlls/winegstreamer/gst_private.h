@@ -121,6 +121,7 @@ struct wm_stream
     struct wm_reader *reader;
     struct wg_parser_stream *wg_stream;
     WORD index;
+    bool eos;
     struct wg_format format;
 };
 
@@ -159,6 +160,10 @@ HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
 HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output, DWORD *count);
 HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps **props);
+struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader,
+        WORD stream_number);
+HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
+        INSSBuffer **sample, QWORD *pts, QWORD *duration, DWORD *flags);
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,

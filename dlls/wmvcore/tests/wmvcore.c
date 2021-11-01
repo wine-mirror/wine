@@ -500,7 +500,7 @@ static void test_sync_reader_streaming(void)
             hr = IWMSyncReader_GetNextSample(reader, stream_numbers[j], &sample,
                     &pts, &duration, &flags, &output_number, &stream_number);
             if (first)
-                todo_wine ok(hr == S_OK, "Expected at least one valid sample; got hr %#x.\n", hr);
+                ok(hr == S_OK, "Expected at least one valid sample; got hr %#x.\n", hr);
             else if (eos[j])
                 ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
             else
@@ -527,7 +527,7 @@ static void test_sync_reader_streaming(void)
                 eos[j] = true;
             }
 
-            todo_wine ok(stream_number == stream_numbers[j], "Expected stream number %u, got %u.\n",
+            ok(stream_number == stream_numbers[j], "Expected stream number %u, got %u.\n",
                     stream_numbers[j], stream_number);
         }
         first = false;
@@ -535,11 +535,11 @@ static void test_sync_reader_streaming(void)
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[0], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[1], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_SetRange(reader, 0, 0);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -593,11 +593,11 @@ static void test_sync_reader_streaming(void)
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[0], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[1], &sample,
             &pts, &duration, &flags, NULL, NULL);
-    todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
 
     hr = IWMSyncReader_Close(reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

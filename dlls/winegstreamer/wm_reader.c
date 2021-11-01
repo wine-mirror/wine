@@ -167,6 +167,101 @@ static IWMOutputMediaProps *output_props_create(const struct wg_format *format)
     return &object->IWMOutputMediaProps_iface;
 }
 
+struct buffer
+{
+    INSSBuffer INSSBuffer_iface;
+    LONG refcount;
+};
+
+static struct buffer *impl_from_INSSBuffer(INSSBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct buffer, INSSBuffer_iface);
+}
+
+static HRESULT WINAPI buffer_QueryInterface(INSSBuffer *iface, REFIID iid, void **out)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    TRACE("buffer %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_INSSBuffer))
+        *out = &buffer->INSSBuffer_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI buffer_AddRef(INSSBuffer *iface)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+    ULONG refcount = InterlockedIncrement(&buffer->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", buffer, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI buffer_Release(INSSBuffer *iface)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+    ULONG refcount = InterlockedDecrement(&buffer->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
+
+    if (!refcount)
+        free(buffer);
+
+    return refcount;
+}
+
+static HRESULT WINAPI buffer_GetLength(INSSBuffer *iface, DWORD *size)
+{
+    FIXME("iface %p, size %p, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_SetLength(INSSBuffer *iface, DWORD size)
+{
+    FIXME("iface %p, size %u, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
+{
+    FIXME("iface %p, size %p, stub!\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
+{
+    FIXME("iface %p, data %p, stub!\n", iface, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, DWORD *size)
+{
+    FIXME("iface %p, data %p, size %p, stub!\n", iface, data, size);
+    return E_NOTIMPL;
+}
+
+static const INSSBufferVtbl buffer_vtbl =
+{
+    buffer_QueryInterface,
+    buffer_AddRef,
+    buffer_Release,
+    buffer_GetLength,
+    buffer_SetLength,
+    buffer_GetMaxLength,
+    buffer_GetBuffer,
+    buffer_GetBufferAndLength,
+};
+
 struct stream_config
 {
     IWMStreamConfig IWMStreamConfig_iface;
@@ -1231,7 +1326,14 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
             if (stream->format.u.video.format == WG_VIDEO_FORMAT_I420)
                 stream->format.u.video.format = WG_VIDEO_FORMAT_YV12;
         }
+        wg_parser_stream_enable(stream->wg_stream, &stream->format);
     }
+
+    wg_parser_end_flush(reader->wg_parser);
+    /* We probably discarded events because streams weren't enabled yet.
+     * Now that they're all enabled seek back to the start again. */
+    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, 0, 0,
+            AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
@@ -1279,6 +1381,14 @@ HRESULT wm_reader_close(struct wm_reader *reader)
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
+}
+
+struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
+{
+    if (stream_number && stream_number <= reader->stream_count)
+        return &reader->streams[stream_number - 1];
+    WARN("Invalid stream number %u.\n", stream_number);
+    return NULL;
 }
 
 HRESULT wm_reader_get_output_props(struct wm_reader *reader, DWORD output, IWMOutputMediaProps **props)
@@ -1427,6 +1537,88 @@ HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
+}
+
+static const char *get_major_type_string(enum wg_major_type type)
+{
+    switch (type)
+    {
+        case WG_MAJOR_TYPE_AUDIO:
+            return "audio";
+        case WG_MAJOR_TYPE_VIDEO:
+            return "video";
+        case WG_MAJOR_TYPE_UNKNOWN:
+            return "unknown";
+    }
+    assert(0);
+    return NULL;
+}
+
+HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
+        INSSBuffer **ret_sample, QWORD *pts, QWORD *duration, DWORD *flags)
+{
+    struct wg_parser_stream *wg_stream = stream->wg_stream;
+    struct wg_parser_event event;
+    struct buffer *object;
+
+    if (stream->eos)
+        return NS_E_NO_MORE_SAMPLES;
+
+    for (;;)
+    {
+        if (!wg_parser_stream_get_event(wg_stream, &event))
+        {
+            FIXME("Stream is flushing.\n");
+            return E_NOTIMPL;
+        }
+
+        TRACE("Got event of type %#x for %s stream %p.\n", event.type,
+                get_major_type_string(stream->format.major_type), stream);
+
+        switch (event.type)
+        {
+            case WG_PARSER_EVENT_BUFFER:
+                /* FIXME: Should these be pooled? */
+                if (!(object = calloc(1, sizeof(*object))))
+                {
+                    wg_parser_stream_release_buffer(wg_stream);
+                    return E_OUTOFMEMORY;
+                }
+
+                object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+                object->refcount = 1;
+
+                wg_parser_stream_release_buffer(wg_stream);
+
+                if (!event.u.buffer.has_pts)
+                    FIXME("Missing PTS.\n");
+                if (!event.u.buffer.has_duration)
+                    FIXME("Missing duration.\n");
+
+                *pts = event.u.buffer.pts;
+                *duration = event.u.buffer.duration;
+                *flags = 0;
+                if (event.u.buffer.discontinuity)
+                    *flags |= WM_SF_DISCONTINUITY;
+                if (!event.u.buffer.delta)
+                    *flags |= WM_SF_CLEANPOINT;
+
+                TRACE("Created buffer %p.\n", object);
+                *ret_sample = &object->INSSBuffer_iface;
+                return S_OK;
+
+            case WG_PARSER_EVENT_EOS:
+                stream->eos = true;
+                TRACE("End of stream.\n");
+                return NS_E_NO_MORE_SAMPLES;
+
+            case WG_PARSER_EVENT_SEGMENT:
+                break;
+
+            case WG_PARSER_EVENT_NONE:
+                assert(0);
+        }
+    }
 }
 
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)

@@ -76,13 +76,42 @@ static HRESULT WINAPI WMSyncReader_GetMaxStreamSampleSize(IWMSyncReader2 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface, WORD stream, INSSBuffer **sample,
-        QWORD *sample_time, QWORD *sample_duration, DWORD *flags, DWORD *output_num, WORD *stream_num)
+static HRESULT WINAPI WMSyncReader_GetNextSample(IWMSyncReader2 *iface,
+        WORD stream_number, INSSBuffer **sample, QWORD *pts, QWORD *duration,
+        DWORD *flags, DWORD *output_number, WORD *ret_stream_number)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p %p %p %p %p %p): stub!\n", This, stream, sample, sample_time,
-          sample_duration, flags, output_num, stream_num);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+    HRESULT hr;
+
+    TRACE("reader %p, stream_number %u, sample %p, pts %p, duration %p,"
+            " flags %p, output_number %p, ret_stream_number %p.\n",
+            reader, stream_number, sample, pts, duration, flags, output_number, ret_stream_number);
+
+    EnterCriticalSection(&reader->reader.cs);
+
+    if (!stream_number)
+    {
+        FIXME("Reading from all streams is not implemented yet.\n");
+        hr = E_NOTIMPL;
+    }
+    else
+    {
+        if (!(stream = wm_reader_get_stream_by_stream_number(&reader->reader, stream_number)))
+        {
+            LeaveCriticalSection(&reader->reader.cs);
+            return E_INVALIDARG;
+        }
+
+        hr = wm_reader_get_stream_sample(stream, sample, pts, duration, flags);
+        if (hr == S_OK && output_number)
+            *output_number = stream->index;
+        if (ret_stream_number)
+            *ret_stream_number = stream->index + 1;
+    }
+
+    LeaveCriticalSection(&reader->reader.cs);
+    return hr;
 }
 
 static HRESULT WINAPI WMSyncReader_GetOutputCount(IWMSyncReader2 *iface, DWORD *count)
