@@ -4170,6 +4170,72 @@ static void test_mixing_prefs(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_unconnected_eos(void)
+{
+    IFilterGraph2 *graph = create_graph();
+    IBaseFilter *filter = create_vmr9(0);
+    IMediaControl *control;
+    IMediaEvent *eventsrc;
+    unsigned int ret;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IFilterGraph2_AddFilter(graph, filter, L"renderer");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    IMediaControl_Release(control);
+    IMediaEvent_Release(eventsrc);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -4205,6 +4271,7 @@ START_TEST(vmr9)
     test_basic_video();
     test_windowless_size();
     test_mixing_prefs();
+    test_unconnected_eos();
 
     CoUninitialize();
 }

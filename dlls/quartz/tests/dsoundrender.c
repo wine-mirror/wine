@@ -40,6 +40,15 @@ static IBaseFilter *create_dsound_render(void)
     return filter;
 }
 
+static IFilterGraph2 *create_graph(void)
+{
+    IFilterGraph2 *ret;
+    HRESULT hr;
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&ret);
+    ok(hr == S_OK, "Failed to create FilterGraph: %#x\n", hr);
+    return ret;
+}
+
 static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
 {
     return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
@@ -1314,6 +1323,72 @@ static void test_media_types(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_unconnected_eos(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    IFilterGraph2 *graph = create_graph();
+    IMediaControl *control;
+    IMediaEvent *eventsrc;
+    unsigned int ret;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IFilterGraph2_AddFilter(graph, filter, L"renderer");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    IMediaControl_Release(control);
+    IMediaEvent_Release(eventsrc);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(dsoundrender)
 {
     IBaseFilter *filter;
@@ -1343,6 +1418,7 @@ START_TEST(dsoundrender)
     test_unconnected_filter_state();
     test_media_types();
     test_connect_pin();
+    test_unconnected_eos();
 
     CoUninitialize();
 }
