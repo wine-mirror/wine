@@ -616,11 +616,31 @@ DWORD netconn_set_timeout( struct netconn *netconn, BOOL send, int value )
 
 BOOL netconn_is_alive( struct netconn *netconn )
 {
+    SIZE_T size;
     int len;
     char b;
     DWORD err;
+    BOOL eof;
 
     set_blocking( netconn, FALSE );
+    if (netconn->secure)
+    {
+        while (!netconn->peek_msg && !(err = read_ssl_chunk( netconn, NULL, 0, &size, &eof )) && !eof)
+            ;
+
+        TRACE("Checking secure connection, err %d.\n", err);
+
+        if (netconn->peek_msg || err == WSAEWOULDBLOCK)
+        {
+            set_blocking( netconn, TRUE );
+            return TRUE;
+        }
+        if (err != SEC_E_OK && err != SEC_E_INCOMPLETE_MESSAGE)
+        {
+            set_blocking( netconn, TRUE );
+            return FALSE;
+        }
+    }
     len = sock_recv( netconn->socket, &b, 1, MSG_PEEK );
     err = WSAGetLastError();
     set_blocking( netconn, TRUE );
