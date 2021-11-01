@@ -608,7 +608,7 @@ static HRESULT dsound_render_start_stream(struct strmbase_filter *iface, REFEREN
     if (filter->sink.pin.peer)
         IDirectSoundBuffer_Play(filter->dsbuffer, 0, 0, DSBPLAY_LOOPING);
 
-    if (filter->eos && graph
+    if ((filter->eos || !filter->sink.pin.peer) && graph
             && SUCCEEDED(IFilterGraph_QueryInterface(graph,
             &IID_IMediaEventSink, (void **)&event_sink)))
     {
