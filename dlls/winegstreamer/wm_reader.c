@@ -171,6 +171,9 @@ struct buffer
 {
     INSSBuffer INSSBuffer_iface;
     LONG refcount;
+
+    DWORD size;
+    BYTE data[1];
 };
 
 static struct buffer *impl_from_INSSBuffer(INSSBuffer *iface)
@@ -246,8 +249,13 @@ static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
 
 static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, DWORD *size)
 {
-    FIXME("iface %p, data %p, size %p, stub!\n", iface, data, size);
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    TRACE("buffer %p, data %p, size %p.\n", buffer, data, size);
+
+    *size = buffer->size;
+    *data = buffer->data;
+    return S_OK;
 }
 
 static const INSSBufferVtbl buffer_vtbl =
@@ -1579,7 +1587,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
         {
             case WG_PARSER_EVENT_BUFFER:
                 /* FIXME: Should these be pooled? */
-                if (!(object = calloc(1, sizeof(*object))))
+                if (!(object = calloc(1, offsetof(struct buffer, data[event.u.buffer.size]))))
                 {
                     wg_parser_stream_release_buffer(wg_stream);
                     return E_OUTOFMEMORY;
@@ -1587,6 +1595,14 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
 
                 object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
                 object->refcount = 1;
+                object->size = event.u.buffer.size;
+
+                if (!wg_parser_stream_copy_buffer(wg_stream, object->data, 0, object->size))
+                {
+                    /* The GStreamer pin has been flushed. */
+                    free(object);
+                    break;
+                }
 
                 wg_parser_stream_release_buffer(wg_stream);
 

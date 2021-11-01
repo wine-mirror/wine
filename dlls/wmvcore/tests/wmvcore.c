@@ -509,7 +509,7 @@ static void test_sync_reader_streaming(void)
             if (hr == S_OK)
             {
                 hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
-                todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
                 ref = INSSBuffer_Release(sample);
                 ok(!ref, "Got outstanding refcount %d.\n", ref);
 
