@@ -84,6 +84,16 @@ static IBaseFilter *create_evr(void)
     return filter;
 }
 
+static IFilterGraph2 *create_graph(void)
+{
+    IFilterGraph2 *ret;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&ret);
+    ok(hr == S_OK, "Failed to create FilterGraph: %#x\n", hr);
+    return ret;
+}
+
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
@@ -434,6 +444,100 @@ static void test_pin_info(void)
     ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static unsigned int check_event_code(IMediaEvent *eventsrc, DWORD timeout, LONG expected_code, LONG_PTR expected1, LONG_PTR expected2)
+{
+    LONG_PTR param1, param2;
+    unsigned int ret = 0;
+    HRESULT hr;
+    LONG code;
+
+    while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, timeout)) == S_OK)
+    {
+        if (code == expected_code)
+        {
+            ok(param1 == expected1, "Got param1 %#lx.\n", param1);
+            ok(param2 == expected2, "Got param2 %#lx.\n", param2);
+            ret++;
+        }
+        IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+        timeout = 0;
+    }
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    return ret;
+}
+
+static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
+{
+    return check_event_code(eventsrc, timeout, EC_COMPLETE, S_OK, 0);
+}
+
+static void test_unconnected_eos(void)
+{
+    IBaseFilter *filter = create_evr();
+    IFilterGraph2 *graph = create_graph();
+    IMediaControl *control;
+    IMediaEvent *eventsrc;
+    unsigned int ret;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IFilterGraph2_AddFilter(graph, filter, L"renderer");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+
+    IMediaControl_Release(control);
+    IMediaEvent_Release(eventsrc);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
@@ -2952,6 +3056,8 @@ START_TEST(evr)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_unconnected_eos();
+
     test_default_mixer();
     test_default_mixer_type_negotiation();
     test_surface_sample();
