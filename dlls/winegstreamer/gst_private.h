@@ -136,6 +136,8 @@ struct wm_reader
     LONG refcount;
     CRITICAL_SECTION cs;
 
+    QWORD start_time;
+
     IStream *source_stream;
     HANDLE read_thread;
     bool read_thread_shutdown;
