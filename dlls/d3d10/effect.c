@@ -386,6 +386,31 @@ static const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t
 
 #undef WINE_D3D10_TO_STR
 
+static HRESULT d3d10_effect_variable_get_raw_value(struct d3d10_effect_variable *v,
+        void *data, unsigned int offset, unsigned int count)
+{
+    BOOL is_buffer;
+
+    is_buffer = v->type->basetype == D3D10_SVT_CBUFFER || v->type->basetype == D3D10_SVT_TBUFFER;
+
+    if (v->type->type_class == D3D10_SVC_OBJECT && !is_buffer)
+    {
+        WARN("Not supported on object variables of type %s.\n",
+                debug_d3d10_shader_variable_type(v->type->basetype));
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (!is_buffer)
+    {
+        offset += v->buffer_offset;
+        v = v->buffer;
+    }
+
+    memcpy(data, v->u.buffer.local_buffer + offset, count);
+
+    return S_OK;
+}
+
 static BOOL read_float_value(uint32_t value, D3D_SHADER_VARIABLE_TYPE in_type,
         float *out_data, unsigned int out_idx)
 {
@@ -4563,7 +4588,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetRawValue(ID3D10EffectV
         void *data, UINT offset, UINT count)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable(iface);
-    BOOL is_buffer;
 
     TRACE("iface %p, data %p, offset %u, count %u.\n", iface, data, offset, count);
 
@@ -4573,24 +4597,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetRawValue(ID3D10EffectV
         return E_FAIL;
     }
 
-    is_buffer = v->type->basetype == D3D10_SVT_CBUFFER || v->type->basetype == D3D10_SVT_TBUFFER;
-
-    if (v->type->type_class == D3D10_SVC_OBJECT && !is_buffer)
-    {
-        WARN("Not supported on object variables of type %s.\n",
-                debug_d3d10_shader_variable_type(v->type->basetype));
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (!is_buffer)
-    {
-        offset += v->buffer_offset;
-        v = v->buffer;
-    }
-
-    memcpy(data, v->u.buffer.local_buffer + offset, count);
-
-    return S_OK;
+    return d3d10_effect_variable_get_raw_value(v, data, offset, count);
 }
 
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl =
