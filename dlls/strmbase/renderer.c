@@ -252,7 +252,7 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
     if (filter->sink.pin.peer && filter->ops->renderer_start_stream)
         filter->ops->renderer_start_stream(filter);
 
-    if (filter->eos && graph
+    if ((filter->eos || !filter->sink.pin.peer) && graph
             && SUCCEEDED(IFilterGraph_QueryInterface(graph,
             &IID_IMediaEventSink, (void **)&event_sink)))
     {

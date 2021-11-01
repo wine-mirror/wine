@@ -969,7 +969,7 @@ static void test_unconnected_eos(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
-    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+    ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -981,7 +981,7 @@ static void test_unconnected_eos(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
-    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+    ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -993,7 +993,7 @@ static void test_unconnected_eos(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
-    todo_wine ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
+    ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
 
     IMediaControl_Release(control);
     IMediaEvent_Release(eventsrc);
