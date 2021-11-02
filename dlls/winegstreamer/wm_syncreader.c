@@ -249,12 +249,24 @@ static HRESULT WINAPI WMSyncReader_SetOutputProps(IWMSyncReader2 *iface, DWORD o
     return wm_reader_set_output_props(&reader->reader, output, props);
 }
 
-static HRESULT WINAPI WMSyncReader_SetOutputSetting(IWMSyncReader2 *iface, DWORD output_num, const WCHAR *name,
-        WMT_ATTR_DATATYPE type, const BYTE *value, WORD length)
+static HRESULT WINAPI WMSyncReader_SetOutputSetting(IWMSyncReader2 *iface, DWORD output,
+        const WCHAR *name, WMT_ATTR_DATATYPE type, const BYTE *value, WORD size)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %s %d %p %d): stub!\n", This, output_num, debugstr_w(name), type, value, length);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, output %u, name %s, type %#x, value %p, size %u.\n",
+            reader, output, debugstr_w(name), type, value, size);
+
+    if (!wcscmp(name, L"VideoSampleDurations"))
+    {
+        FIXME("Ignoring VideoSampleDurations setting.\n");
+        return S_OK;
+    }
+    else
+    {
+        FIXME("Unknown setting %s; returning E_NOTIMPL.\n", debugstr_w(name));
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT WINAPI WMSyncReader_SetRange(IWMSyncReader2 *iface, QWORD start, LONGLONG duration)
