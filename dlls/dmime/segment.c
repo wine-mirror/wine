@@ -727,7 +727,8 @@ static inline void dump_segment_header(DMUS_IO_SEGMENT_HEADER *h, DWORD size)
     if (dx == 9) {
         TRACE("\trtLoopStart: %s\n", wine_dbgstr_longlong(h->rtLoopStart));
         TRACE("\trtLoopEnd: %s\n", wine_dbgstr_longlong(h->rtLoopEnd));
-        TRACE("\trtPlayStart: %s\n", wine_dbgstr_longlong(h->rtPlayStart));
+        if (size > offsetof(DMUS_IO_SEGMENT_HEADER, rtPlayStart))
+            TRACE("\trtPlayStart: %s\n", wine_dbgstr_longlong(h->rtPlayStart));
     }
 }
 
@@ -742,8 +743,11 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, IStream *strea
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
         switch (chunk.id) {
             case DMUS_FOURCC_SEGMENT_CHUNK:
+                /* DX9 without rtPlayStart field */
+                if (chunk.size == offsetof(DMUS_IO_SEGMENT_HEADER, rtPlayStart))
+                    WARN("Missing rtPlayStart field in %s\n", debugstr_chunk(&chunk));
                 /* DX7, DX8 and DX9 structure sizes */
-                if (chunk.size != offsetof(DMUS_IO_SEGMENT_HEADER, rtLength) &&
+                else if (chunk.size != offsetof(DMUS_IO_SEGMENT_HEADER, rtLength) &&
                         chunk.size != offsetof(DMUS_IO_SEGMENT_HEADER, rtLoopStart) &&
                         chunk.size != sizeof(DMUS_IO_SEGMENT_HEADER)) {
                     WARN("Invalid size of %s\n", debugstr_chunk(&chunk));
