@@ -789,6 +789,16 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             ptr += 2 + 2 + 4 + 4;
             break;
 
+        case LF_INDEX_V1:
+            printf("\t\tIndex V1: index:%x\n", fieldtype->index_v1.ref);
+            ptr += 2 + 2;
+            break;
+
+        case LF_INDEX_V2:
+            printf("\t\tIndex V2: index:%x\n", fieldtype->index_v2.ref);
+            ptr += 2 + 2 + 4;
+            break;
+
         default:
             printf(">>> Unsupported field-id %x\n", fieldtype->generic.id);
             dump_data((const void*)fieldtype, 0x30, "\t");
