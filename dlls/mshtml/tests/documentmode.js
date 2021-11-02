@@ -1025,3 +1025,58 @@ sync_test("elem_attr", function() {
     r = elem.getAttribute("className");
     ok(r === "cls3", "className attr = " + r);
 });
+
+sync_test("__proto__", function() {
+    var v = document.documentMode;
+    var r, x = 42;
+
+    if(v < 11) {
+        ok(x.__proto__ === undefined, "x.__proto__ = " + x.__proto__);
+        ok(!("__proto__" in Object), "Object.__proto__ = " + Object.__proto__);
+        return;
+    }
+
+    ok(x.__proto__ === Number.prototype, "x.__proto__ = " + x.__proto__);
+    ok(Object.__proto__ === Function.prototype, "Object.__proto__ = " + Object.__proto__);
+    ok(Object.prototype.__proto__ === null, "Object.prototype.__proto__ = " + Object.prototype.__proto__);
+    ok(Object.prototype.hasOwnProperty("__proto__"), "__proto__ is not a property of Object.prototype");
+    ok(!Object.prototype.hasOwnProperty.call(x, "__proto__"), "__proto__ is a property of x");
+
+    x.__proto__ = Object.prototype;
+    ok(x.__proto__ === Number.prototype, "x.__proto__ set to Object.prototype = " + x.__proto__);
+    ok(!Object.prototype.hasOwnProperty.call(x, "__proto__"), "__proto__ is a property of x after set to Object.prototype");
+    x = {};
+    x.__proto__ = null;
+    r = Object.getPrototypeOf(x);
+    ok(x.__proto__ === undefined, "x.__proto__ after set to null = " + x.__proto__);
+    ok(r === null, "getPrototypeOf(x) after set to null = " + r);
+
+    function check(expect, msg) {
+        var r = Object.getPrototypeOf(x);
+        ok(x.__proto__ === expect, "x.__proto__ " + msg + " = " + x.__proto__);
+        ok(r === expect, "getPrototypeOf(x) " + msg + " = " + r);
+        ok(!Object.prototype.hasOwnProperty.call(x, "__proto__"), "__proto__ is a property of x " + msg);
+    }
+
+    x = {};
+    check(Object.prototype, "after x set to {}");
+    x.__proto__ = Number.prototype;
+    check(Number.prototype, "after set to Number.prototype");
+    x.__proto__ = Object.prototype;
+    check(Object.prototype, "after re-set to Object.prototype");
+
+    function ctor() { }
+    var obj = new ctor();
+    x.__proto__ = obj;
+    check(obj, "after set to obj");
+    x.__proto__ = ctor.prototype;
+    check(obj.__proto__, "after set to ctor.prototype");
+    ok(obj.__proto__ === ctor.prototype, "obj.__proto__ !== ctor.prototype");
+
+    r = (delete x.__proto__);
+    todo_wine.
+    ok(r, "delete x.__proto__ returned " + r);
+    ok(Object.prototype.hasOwnProperty("__proto__"), "__proto__ is not a property of Object.prototype after delete");
+    r = Object.getPrototypeOf(x);
+    ok(r === ctor.prototype, "x.__proto__ after delete = " + r);
+});
