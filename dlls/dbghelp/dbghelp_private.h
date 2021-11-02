@@ -663,6 +663,21 @@ struct cpu
 
 extern struct cpu*      dbghelp_current_cpu DECLSPEC_HIDDEN;
 
+/* PDB and Codeview */
+
+struct msc_debug_info
+{
+    struct module*              module;
+    int                         nsect;
+    const IMAGE_SECTION_HEADER* sectp;
+    int                         nomap;
+    const OMAP*                 omapp;
+    const BYTE*                 root;
+};
+
+/* coff.c */
+extern BOOL coff_process_info(const struct msc_debug_info* msc_dbg) DECLSPEC_HIDDEN;
+
 /* dbghelp.c */
 extern struct process* process_find_by_handle(HANDLE hProcess) DECLSPEC_HIDDEN;
 extern BOOL         validate_addr64(DWORD64 addr) DECLSPEC_HIDDEN;

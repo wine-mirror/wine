@@ -1551,15 +1551,15 @@ static unsigned int codeview_map_offset(const struct msc_debug_info* msc_dbg,
                                         unsigned int offset)
 {
     int                 nomap = msc_dbg->nomap;
-    const OMAP_DATA*    omapp = msc_dbg->omapp;
+    const OMAP*         omapp = msc_dbg->omapp;
     int                 i;
 
     if (!nomap || !omapp) return offset;
 
     /* FIXME: use binary search */
     for (i = 0; i < nomap - 1; i++)
-        if (omapp[i].from <= offset && omapp[i+1].from > offset)
-            return !omapp[i].to ? 0 : omapp[i].to + (offset - omapp[i].from);
+        if (omapp[i].rva <= offset && omapp[i+1].rva > offset)
+            return !omapp[i].rvaTo ? 0 : omapp[i].rvaTo + (offset - omapp[i].rva);
 
     return 0;
 }
@@ -3414,8 +3414,8 @@ BOOL pe_load_debug_directory(const struct process* pcs, struct module* module,
         {
             if (dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC)
             {
-                msc_dbg.nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
-                msc_dbg.omapp = (const OMAP_DATA*)(mapping + dbg[i].PointerToRawData);
+                msc_dbg.nomap = dbg[i].SizeOfData / sizeof(OMAP);
+                msc_dbg.omapp = (const OMAP*)(mapping + dbg[i].PointerToRawData);
                 break;
             }
         }

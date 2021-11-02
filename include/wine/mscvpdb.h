@@ -2520,29 +2520,6 @@ typedef struct _PDB_FPO_DATA
 
 #include "poppack.h"
 
-/* ----------------------------------------------
- * Information used for parsing
- * ---------------------------------------------- */
-
-typedef struct
-{
-    DWORD  from;
-    DWORD  to;
-} OMAP_DATA;
-
-struct msc_debug_info
-{
-    struct module*              module;
-    int			        nsect;
-    const IMAGE_SECTION_HEADER* sectp;
-    int			        nomap;
-    const OMAP_DATA*            omapp;
-    const BYTE*                 root;
-};
-
-/* coff.c */
-extern BOOL coff_process_info(const struct msc_debug_info* msc_dbg);
-
 /* ===================================================
  * The old CodeView stuff (for NB09 and NB11)
  * =================================================== */
