@@ -1122,7 +1122,7 @@ static void BUTTON_PositionRect(LONG style, const RECT *outerRect, RECT *innerRe
     INT width = innerRect->right - innerRect->left;
     INT height = innerRect->bottom - innerRect->top;
 
-    if ((style & WS_EX_RIGHT) && !(style & BS_CENTER)) style |= BS_CENTER;
+    if ((style & BS_PUSHLIKE) && !(style & BS_CENTER)) style |= BS_CENTER;
 
     if (!(style & BS_CENTER))
     {
