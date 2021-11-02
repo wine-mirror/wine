@@ -35,7 +35,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
-#define MAX_MIXER_INPUT_STREAMS 16
+#define MAX_MIXER_INPUT_SUBSTREAMS (15)
+#define MAX_MIXER_INPUT_STREAMS (MAX_MIXER_INPUT_SUBSTREAMS + 1)
 
 struct input_stream
 {
@@ -932,7 +933,7 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
             rt_format = subtype.Data1;
 
             if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &mixer->output.rt_formats[i].device,
-                    &video_desc, rt_format, MAX_MIXER_INPUT_STREAMS, &mixer->processor)))
+                    &video_desc, rt_format, MAX_MIXER_INPUT_SUBSTREAMS, &mixer->processor)))
             {
                 if (mixer->output.media_type)
                     IMFMediaType_Release(mixer->output.media_type);
