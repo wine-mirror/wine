@@ -1329,74 +1329,64 @@ static void test_GetThemeTransitionDuration(void)
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(NULL, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_HANDLE, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
     ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
 
+    /* Crash on Wine. HTHEME is not a pointer that can be directly referenced. */
+    if (strcmp(winetest_platform, "wine"))
+    {
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration((HTHEME)0xdeadbeef, BP_PUSHBUTTON, PBS_NORMAL,
                                      PBS_DEFAULTED_ANIMATING, TMT_TRANSITIONDURATIONS, &duration);
     todo_wine
     ok(hr == E_HANDLE, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
     ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
+    }
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, 0xdeadbeef, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    todo_wine
     ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL - 1, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
     ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_DEFAULTED_ANIMATING + 1,
                                      PBS_DEFAULTED_ANIMATING, TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    todo_wine
     ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_NORMAL - 1,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
     ok(duration == 0xdeadbeef, "Expected duration %#x, got %#x.\n", 0xdeadbeef, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING + 1,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    todo_wine
     ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_BACKGROUND, &duration);
-    todo_wine
     ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    todo_wine
     ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
 
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      0xdeadbeef, &duration);
-    todo_wine
     ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    todo_wine
     ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
 
     hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, PBS_NORMAL, PBS_DEFAULTED_ANIMATING,
                                      TMT_TRANSITIONDURATIONS, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
 
     /* Parts that don't have TMT_TRANSITIONDURATIONS */
@@ -1406,9 +1396,7 @@ static void test_GetThemeTransitionDuration(void)
     duration = 0xdeadbeef;
     hr = pGetThemeTransitionDuration(theme, BP_GROUPBOX, GBS_NORMAL, GBS_DISABLED,
                                      TMT_TRANSITIONDURATIONS, &duration);
-    todo_wine
     ok(hr == E_PROP_ID_UNSUPPORTED, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
-    todo_wine
     ok(duration == 0, "Expected duration %#x, got %#x.\n", 0, duration);
 
     /* Test parsing TMT_TRANSITIONDURATIONS property. TMT_TRANSITIONDURATIONS is a vista+ property */
@@ -1436,10 +1424,8 @@ static void test_GetThemeTransitionDuration(void)
                 duration = 0xdeadbeef;
                 hr = pGetThemeTransitionDuration(theme, BP_PUSHBUTTON, from_state, to_state,
                                                  TMT_TRANSITIONDURATIONS, &duration);
-                todo_wine
                 ok(hr == S_OK, "GetThemeTransitionDuration failed, hr %#x.\n", hr);
                 expected = intlist.iValues[1 + intlist.iValues[0] * (from_state - 1) + (to_state - 1)];
-                todo_wine
                 ok(duration == expected, "Expected duration %d, got %d.\n", expected, duration);
 
                 winetest_pop_context();
