@@ -1128,6 +1128,14 @@ BOOL WINAPI SymAddSymbolW(HANDLE, ULONG64, PCWSTR, DWORD64, DWORD, DWORD);
 BOOL WINAPI SymDeleteSymbol(HANDLE, ULONG64, PCSTR, DWORD64, DWORD);
 BOOL WINAPI SymDeleteSymbolW(HANDLE, ULONG64, PCWSTR, DWORD64, DWORD);
 
+typedef struct _OMAP
+{
+    ULONG  rva;
+    ULONG  rvaTo;
+} OMAP, *POMAP;
+
+BOOL WINAPI SymGetOmaps(HANDLE, DWORD64, POMAP*, PDWORD64, POMAP*, PDWORD64);
+
 /*************************
  *      Source Files     *
  *************************/
