@@ -1293,7 +1293,6 @@ static void test_GetThemeIntList(void)
     if (LOBYTE(LOWORD(GetVersion())) < 6)
         ok(hr == E_PROP_ID_UNSUPPORTED, "Expected %#x, got %#x.\n", E_PROP_ID_UNSUPPORTED, hr);
     else
-        todo_wine
         ok(hr == S_OK, "GetThemeIntList failed, hr %#x.\n", hr);
 
     CloseThemeData(theme);
