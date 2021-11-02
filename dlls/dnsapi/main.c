@@ -151,32 +151,6 @@ VOID WINAPI DnsReleaseContextHandle( HANDLE context )
 }
 
 /******************************************************************************
- * DnsExtractRecordsFromMessage_UTF8       [DNSAPI.@]
- *
- */
-DNS_STATUS WINAPI DnsExtractRecordsFromMessage_UTF8( PDNS_MESSAGE_BUFFER buffer,
-                                                     WORD len, PDNS_RECORDA *record )
-{
-    FIXME( "(%p,%d,%p) stub\n", buffer, len, record );
-
-    *record = NULL;
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
- * DnsExtractRecordsFromMessage_W          [DNSAPI.@]
- *
- */
-DNS_STATUS WINAPI DnsExtractRecordsFromMessage_W( PDNS_MESSAGE_BUFFER buffer,
-                                                  WORD len, PDNS_RECORDW *record )
-{
-    FIXME( "(%p,%d,%p) stub\n", buffer, len, record );
-
-    *record = NULL;
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
  * DnsModifyRecordsInSet_A                 [DNSAPI.@]
  *
  */
