@@ -472,6 +472,21 @@ static HRESULT WINAPI msdasql_rowset_QueryInterface(IRowset *iface, REFIID riid,
     {
          *ppv = &rowset->IColumnsRowset_iface;
     }
+    else if (IsEqualGUID(&IID_IRowsetChange, riid))
+    {
+        TRACE("IID_IRowsetChange not supported\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(&IID_IRowsetUpdate, riid))
+    {
+        TRACE("IID_IRowsetUpdate not supported\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(&IID_IRowsetLocate, riid))
+    {
+        TRACE("IID_IRowsetLocate not supported\n");
+        return E_NOINTERFACE;
+    }
 
     if(*ppv)
     {
