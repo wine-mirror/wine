@@ -222,6 +222,16 @@ static void test_command_dbsession(IUnknown *cmd, IUnknown *session)
     ICommandText_Release(comand_text);
 }
 
+static void test_rowset_interfaces(IRowset *rowset)
+{
+    IRowsetInfo *info;
+    HRESULT hr;
+
+    hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void**)&info);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IRowsetInfo_Release(info);
+}
+
 static void test_command_rowset(IUnknown *cmd)
 {
     ICommandText *comand_text;
@@ -257,6 +267,8 @@ static void test_command_rowset(IUnknown *cmd)
 
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        test_rowset_interfaces(rowset);
 
         IRowset_Release(rowset);
         IUnknown_Release(unk);
