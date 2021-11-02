@@ -585,6 +585,16 @@ static WINE_MODREF *find_fileid_module( const struct file_id *id )
     return NULL;
 }
 
+/***********************************************************************
+ *           is_import_dll_system
+ */
+static BOOL is_import_dll_system( LDR_DATA_TABLE_ENTRY *mod, const IMAGE_IMPORT_DESCRIPTOR *import )
+{
+    const char *name = get_rva( mod->DllBase, import->Name );
+
+    return !strcmp( name, "ntdll.dll" ) || !strcmp( name, "kernel32.dll" );
+}
+
 /**********************************************************************
  *	    insert_single_list_tail
  */
@@ -1066,7 +1076,6 @@ static BOOL is_dll_native_subsystem( LDR_DATA_TABLE_ENTRY *mod, const IMAGE_NT_H
 {
     const IMAGE_IMPORT_DESCRIPTOR *imports;
     DWORD i, size;
-    WCHAR buffer[16];
 
     if (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_NATIVE) return FALSE;
     if (nt->OptionalHeader.SectionAlignment < page_size) return TRUE;
@@ -1076,17 +1085,11 @@ static BOOL is_dll_native_subsystem( LDR_DATA_TABLE_ENTRY *mod, const IMAGE_NT_H
                                                  IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
     {
         for (i = 0; imports[i].Name; i++)
-        {
-            const char *name = get_rva( mod->DllBase, imports[i].Name );
-            DWORD len = strlen(name);
-            if (len * sizeof(WCHAR) >= sizeof(buffer)) continue;
-            ascii_to_unicode( buffer, name, len + 1 );
-            if (!wcsicmp( buffer, L"ntdll.dll" ) || !wcsicmp( buffer, L"kernel32.dll" ))
+            if (is_import_dll_system( mod, &imports[i] ))
             {
-                TRACE( "%s imports %s, assuming not native\n", debugstr_w(filename), debugstr_w(buffer) );
+                TRACE( "%s imports system dll, assuming not native\n", debugstr_w(filename) );
                 return FALSE;
             }
-        }
     }
     return TRUE;
 }
