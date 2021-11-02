@@ -18,18 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
-#include "wine/heap.h"
 #include "wine/unixlib.h"
 
 static inline char *strdup_a( const char *src )
 {
     char *dst;
     if (!src) return NULL;
-    dst = heap_alloc( (lstrlenA( src ) + 1) * sizeof(char) );
+    dst = malloc( (lstrlenA( src ) + 1) * sizeof(char) );
     if (dst) lstrcpyA( dst, src );
     return dst;
 }
@@ -38,7 +38,7 @@ static inline char *strdup_u( const char *src )
 {
     char *dst;
     if (!src) return NULL;
-    dst = heap_alloc( (strlen( src ) + 1) * sizeof(char) );
+    dst = malloc( (strlen( src ) + 1) * sizeof(char) );
     if (dst) strcpy( dst, src );
     return dst;
 }
@@ -47,7 +47,7 @@ static inline WCHAR *strdup_w( const WCHAR *src )
 {
     WCHAR *dst;
     if (!src) return NULL;
-    dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
+    dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
     if (dst) lstrcpyW( dst, src );
     return dst;
 }
@@ -58,7 +58,7 @@ static inline WCHAR *strdup_aw( const char *str )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
+        if ((ret = malloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
@@ -70,7 +70,7 @@ static inline WCHAR *strdup_uw( const char *str )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_UTF8, 0, str, -1, NULL, 0 );
-        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
+        if ((ret = malloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_UTF8, 0, str, -1, ret, len );
     }
     return ret;
@@ -82,7 +82,7 @@ static inline char *strdup_wa( const WCHAR *str )
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-        if ((ret = heap_alloc( len )))
+        if ((ret = malloc( len )))
             WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
@@ -94,7 +94,7 @@ static inline char *strdup_wu( const WCHAR *str )
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
-        if ((ret = heap_alloc( len )))
+        if ((ret = malloc( len )))
             WideCharToMultiByte( CP_UTF8, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
@@ -107,7 +107,7 @@ static inline char *strdup_au( const char *src )
     if (ret)
     {
         dst = strdup_wu( ret );
-        heap_free( ret );
+        free( ret );
     }
     return dst;
 }
@@ -119,7 +119,7 @@ static inline char *strdup_ua( const char *src )
     if (ret)
     {
         dst = strdup_wa( ret );
-        heap_free( ret );
+        free( ret );
     }
     return dst;
 }

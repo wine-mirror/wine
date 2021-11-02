@@ -447,7 +447,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     return TRUE;
 }
 
-static LPVOID strcpyX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
+static LPVOID strdupX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
 {
     switch (in)
     {
@@ -505,7 +505,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     TRACE( "(%p,%d,%d)\n", src, in, out );
 
     size = FIELD_OFFSET(DNS_RECORD, Data) + src->wDataLength;
-    dst = heap_alloc_zero( size );
+    dst = malloc( size );
     if (!dst) return NULL;
 
     memcpy( dst, src, size );
@@ -515,7 +515,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
         src->Flags.S.CharSet == DnsCharSetUnicode) in = src->Flags.S.CharSet;
 
     dst->Flags.S.CharSet = out;
-    dst->pName = strcpyX( src->pName, in, out );
+    dst->pName = strdupX( src->pName, in, out );
     if (!dst->pName) goto error;
 
     switch (src->wType)
@@ -527,10 +527,10 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     {
         for (i = 0; i < src->Data.TXT.dwStringCount; i++)
         {
-            dst->Data.TXT.pStringArray[i] = strcpyX( src->Data.TXT.pStringArray[i], in, out );
+            dst->Data.TXT.pStringArray[i] = strdupX( src->Data.TXT.pStringArray[i], in, out );
             if (!dst->Data.TXT.pStringArray[i])
             {
-                while (i > 0) heap_free( dst->Data.TXT.pStringArray[--i] );
+                while (i > 0) free( dst->Data.TXT.pStringArray[--i] );
                 goto error;
             }
         }
@@ -539,13 +539,13 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     case DNS_TYPE_MINFO:
     case DNS_TYPE_RP:
     {
-        dst->Data.MINFO.pNameMailbox = strcpyX( src->Data.MINFO.pNameMailbox, in, out );
+        dst->Data.MINFO.pNameMailbox = strdupX( src->Data.MINFO.pNameMailbox, in, out );
         if (!dst->Data.MINFO.pNameMailbox) goto error;
 
-        dst->Data.MINFO.pNameErrorsMailbox = strcpyX( src->Data.MINFO.pNameErrorsMailbox, in, out );
+        dst->Data.MINFO.pNameErrorsMailbox = strdupX( src->Data.MINFO.pNameErrorsMailbox, in, out );
         if (!dst->Data.MINFO.pNameErrorsMailbox)
         {
-            heap_free( dst->Data.MINFO.pNameMailbox );
+            free( dst->Data.MINFO.pNameMailbox );
             goto error;
         }
 
@@ -559,7 +559,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     case DNS_TYPE_RT:
     case DNS_TYPE_MX:
     {
-        dst->Data.MX.pNameExchange = strcpyX( src->Data.MX.pNameExchange, in, out );
+        dst->Data.MX.pNameExchange = strdupX( src->Data.MX.pNameExchange, in, out );
         if (!dst->Data.MX.pNameExchange) goto error;
 
         dst->wDataLength = sizeof(dst->Data.MX);
@@ -569,7 +569,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     }
     case DNS_TYPE_NXT:
     {
-        dst->Data.NXT.pNameNext = strcpyX( src->Data.NXT.pNameNext, in, out );
+        dst->Data.NXT.pNameNext = strdupX( src->Data.NXT.pNameNext, in, out );
         if (!dst->Data.NXT.pNameNext) goto error;
 
         dst->wDataLength = sizeof(dst->Data.NXT);
@@ -586,7 +586,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     case DNS_TYPE_NS:
     case DNS_TYPE_PTR:
     {
-        dst->Data.PTR.pNameHost = strcpyX( src->Data.PTR.pNameHost, in, out );
+        dst->Data.PTR.pNameHost = strdupX( src->Data.PTR.pNameHost, in, out );
         if (!dst->Data.PTR.pNameHost) goto error;
 
         dst->wDataLength = sizeof(dst->Data.PTR);
@@ -596,7 +596,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     }
     case DNS_TYPE_SIG:
     {
-        dst->Data.SIG.pNameSigner = strcpyX( src->Data.SIG.pNameSigner, in, out );
+        dst->Data.SIG.pNameSigner = strdupX( src->Data.SIG.pNameSigner, in, out );
         if (!dst->Data.SIG.pNameSigner) goto error;
 
         dst->wDataLength = sizeof(dst->Data.SIG);
@@ -606,13 +606,13 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     }
     case DNS_TYPE_SOA:
     {
-        dst->Data.SOA.pNamePrimaryServer = strcpyX( src->Data.SOA.pNamePrimaryServer, in, out );
+        dst->Data.SOA.pNamePrimaryServer = strdupX( src->Data.SOA.pNamePrimaryServer, in, out );
         if (!dst->Data.SOA.pNamePrimaryServer) goto error;
 
-        dst->Data.SOA.pNameAdministrator = strcpyX( src->Data.SOA.pNameAdministrator, in, out );
+        dst->Data.SOA.pNameAdministrator = strdupX( src->Data.SOA.pNameAdministrator, in, out );
         if (!dst->Data.SOA.pNameAdministrator)
         {
-            heap_free( dst->Data.SOA.pNamePrimaryServer );
+            free( dst->Data.SOA.pNamePrimaryServer );
             goto error;
         }
 
@@ -624,7 +624,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     }
     case DNS_TYPE_SRV:
     {
-        dst->Data.SRV.pNameTarget = strcpyX( src->Data.SRV.pNameTarget, in, out );
+        dst->Data.SRV.pNameTarget = strdupX( src->Data.SRV.pNameTarget, in, out );
         if (!dst->Data.SRV.pNameTarget) goto error;
 
         dst->wDataLength = sizeof(dst->Data.SRV);
@@ -638,8 +638,8 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
     return dst;
 
 error:
-    heap_free( dst->pName );
-    heap_free( dst );
+    free( dst->pName );
+    free( dst );
     return NULL;
 }
 
@@ -662,7 +662,7 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
     {
         for (r = list; (list = r); r = next)
         {
-            heap_free( r->pName );
+            free( r->pName );
 
             switch (r->wType)
             {
@@ -670,31 +670,27 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
             case DNS_TYPE_ISDN:
             case DNS_TYPE_TEXT:
             case DNS_TYPE_X25:
-            {
                 for (i = 0; i < r->Data.TXT.dwStringCount; i++)
-                    heap_free( r->Data.TXT.pStringArray[i] );
+                    free( r->Data.TXT.pStringArray[i] );
 
                 break;
-            }
+
             case DNS_TYPE_MINFO:
             case DNS_TYPE_RP:
-            {
-                heap_free( r->Data.MINFO.pNameMailbox );
-                heap_free( r->Data.MINFO.pNameErrorsMailbox );
+                free( r->Data.MINFO.pNameMailbox );
+                free( r->Data.MINFO.pNameErrorsMailbox );
                 break;
-            }
+
             case DNS_TYPE_AFSDB:
             case DNS_TYPE_RT:
             case DNS_TYPE_MX:
-            {
-                heap_free( r->Data.MX.pNameExchange );
+                free( r->Data.MX.pNameExchange );
                 break;
-            }
+
             case DNS_TYPE_NXT:
-            {
-                heap_free( r->Data.NXT.pNameNext );
+                free( r->Data.NXT.pNameNext );
                 break;
-            }
+
             case DNS_TYPE_CNAME:
             case DNS_TYPE_MB:
             case DNS_TYPE_MD:
@@ -703,32 +699,25 @@ VOID WINAPI DnsRecordListFree( PDNS_RECORD list, DNS_FREE_TYPE type )
             case DNS_TYPE_MR:
             case DNS_TYPE_NS:
             case DNS_TYPE_PTR:
-            {
-                heap_free( r->Data.PTR.pNameHost );
+                free( r->Data.PTR.pNameHost );
                 break;
-            }
+
             case DNS_TYPE_SIG:
-            {
-                heap_free( r->Data.SIG.pNameSigner );
+                free( r->Data.SIG.pNameSigner );
                 break;
-            }
+
             case DNS_TYPE_SOA:
-            {
-                heap_free( r->Data.SOA.pNamePrimaryServer );
-                heap_free( r->Data.SOA.pNameAdministrator );
+                free( r->Data.SOA.pNamePrimaryServer );
+                free( r->Data.SOA.pNameAdministrator );
                 break;
-            }
+
             case DNS_TYPE_SRV:
-            {
-                heap_free( r->Data.SRV.pNameTarget );
-                break;
-            }
-            default:
+                free( r->Data.SRV.pNameTarget );
                 break;
             }
 
             next = r->pNext;
-            heap_free( r );
+            free( r );
         }
         break;
     }
@@ -969,11 +958,11 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
     case DNS_TYPE_RP:
     case DNS_TYPE_MINFO:
         if (!(pos = get_name( base, end, pos, name ))) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.MINFO.pNameMailbox = strcpyX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(r->Data.MINFO.pNameMailbox = strdupX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
         if (!get_name( base, end, pos, name )) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.MINFO.pNameErrorsMailbox = strcpyX( name, in, out )))
+        if (!(r->Data.MINFO.pNameErrorsMailbox = strdupX( name, in, out )))
         {
-            heap_free( r->Data.MINFO.pNameMailbox );
+            free( r->Data.MINFO.pNameMailbox );
             return ERROR_NOT_ENOUGH_MEMORY;
         }
         r->wDataLength = sizeof(DNS_MINFO_DATAA);
@@ -985,7 +974,7 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
         if (pos + sizeof(WORD) > rrend) return DNS_ERROR_BAD_PACKET;
         r->Data.MX.wPreference = get_word( &pos );
         if (!get_name( base, end, pos, name )) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.MX.pNameExchange = strcpyX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(r->Data.MX.pNameExchange = strdupX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
         r->wDataLength = sizeof(DNS_MX_DATAA) + sizeof(DWORD);
         break;
 
@@ -1011,7 +1000,7 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
     case DNS_TYPE_MR:
     case DNS_TYPE_PTR:
         if (!get_name( base, end, pos, name )) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.PTR.pNameHost = strcpyX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(r->Data.PTR.pNameHost = strdupX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
         r->wDataLength = sizeof(DNS_PTR_DATAA) + sizeof(DWORD);
         break;
 
@@ -1025,7 +1014,7 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
         r->Data.SIG.dwTimeSigned  = get_dword( &pos );
         r->Data.SIG.wKeyTag       = get_word( &pos );
         if (!(pos = get_name( base, end, pos, name ))) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.SIG.pNameSigner = strcpyX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(r->Data.SIG.pNameSigner = strdupX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
         r->Data.SIG.wSignatureLength = rrend - pos;
         memcpy( r->Data.SIG.Signature, pos, r->Data.SIG.wSignatureLength );
         r->wDataLength = offsetof( DNS_SIG_DATAA, Signature[r->Data.SIG.wSignatureLength] );
@@ -1033,11 +1022,11 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
 
     case DNS_TYPE_SOA:
         if (!(pos = get_name( base, end, pos, name ))) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.SOA.pNamePrimaryServer = strcpyX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(r->Data.SOA.pNamePrimaryServer = strdupX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
         if (!(pos = get_name( base, end, pos, name ))) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.SOA.pNameAdministrator = strcpyX( name, in, out )))
+        if (!(r->Data.SOA.pNameAdministrator = strdupX( name, in, out )))
         {
-            heap_free( r->Data.SOA.pNamePrimaryServer );
+            free( r->Data.SOA.pNamePrimaryServer );
             return ERROR_NOT_ENOUGH_MEMORY;
         }
         if (pos + 5 * sizeof(DWORD) > rrend) return DNS_ERROR_BAD_PACKET;
@@ -1055,7 +1044,7 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
         r->Data.SRV.wWeight   = get_word( &pos );
         r->Data.SRV.wPort     = get_word( &pos );
         if (!get_name( base, end, pos, name )) return DNS_ERROR_BAD_PACKET;
-        if (!(r->Data.SRV.pNameTarget = strcpyX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(r->Data.SRV.pNameTarget = strdupX( name, in, out ))) return ERROR_NOT_ENOUGH_MEMORY;
         r->wDataLength = sizeof(DNS_SRV_DATAA);
         break;
 
@@ -1069,9 +1058,9 @@ static DNS_STATUS extract_rdata( const BYTE *base, const BYTE *end, const BYTE *
             if (pos + len + 1 > rrend) return DNS_ERROR_BAD_PACKET;
             memcpy( name, pos + 1, len );
             name[len] = 0;
-            if (!(r->Data.TXT.pStringArray[i] = strcpyX( name, in, out )))
+            if (!(r->Data.TXT.pStringArray[i] = strdupX( name, in, out )))
             {
-                while (i > 0) heap_free( r->Data.TXT.pStringArray[--i] );
+                while (i > 0) free( r->Data.TXT.pStringArray[--i] );
                 return ERROR_NOT_ENOUGH_MEMORY;
             }
             pos += len + 1;
@@ -1117,22 +1106,22 @@ static DNS_STATUS extract_record( const DNS_MESSAGE_BUFFER *hdr, const BYTE *end
     if (ptr + rdlen > end) return DNS_ERROR_BAD_PACKET;
     *pos = ptr + rdlen;
 
-    if (!(record = heap_alloc_zero( get_record_size( type, ptr, rdlen ) ))) return ERROR_NOT_ENOUGH_MEMORY;
+    if (!(record = calloc( 1, get_record_size( type, ptr, rdlen ) ))) return ERROR_NOT_ENOUGH_MEMORY;
 
     record->wType = type;
     record->Flags.S.Section = section;
     record->Flags.S.CharSet = charset;
     record->dwTtl = ttl;
 
-    if (!(record->pName = strcpyX( name, DnsCharSetUtf8, charset )))
+    if (!(record->pName = strdupX( name, DnsCharSetUtf8, charset )))
     {
-        heap_free( record );
+        free( record );
         return ERROR_NOT_ENOUGH_MEMORY;
     }
     if ((ret = extract_rdata( base, end, ptr, rdlen, type, record )))
     {
-        heap_free( record->pName );
-        heap_free( record );
+        free( record->pName );
+        free( record );
         return ret;
     }
     *recp = record;

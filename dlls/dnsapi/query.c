@@ -65,7 +65,7 @@ static DNS_STATUS do_query_netbios( PCSTR name, DNS_RECORDA **recp )
 
     for (i = 0; i < header->node_count; i++)
     {
-        record = heap_alloc_zero( sizeof(DNS_RECORDA) );
+        record = calloc( 1, sizeof(DNS_RECORDA) );
         if (!record)
         {
             status = ERROR_NOT_ENOUGH_MEMORY;
@@ -156,7 +156,7 @@ DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PVOID server
         DnsRecordListFree( (DNS_RECORD *)resultW, DnsFreeRecordList );
     }
 
-    heap_free( nameW );
+    free( nameW );
     return status;
 }
 
@@ -246,7 +246,7 @@ DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PVOID serve
         DnsRecordListFree( (DNS_RECORD *)resultA, DnsFreeRecordList );
     }
 
-    heap_free( nameU );
+    free( nameU );
     return status;
 }
 
@@ -306,8 +306,8 @@ static DNS_STATUS get_dns_server_list( IP4_ARRAY *out, DWORD *len )
         }
         if (!ret) break;
 
-        if ((char *)servers != buf) heap_free( servers );
-        servers = heap_alloc( array_len );
+        if ((char *)servers != buf) free( servers );
+        servers = malloc( array_len );
         if (!servers)
         {
             ret = ERROR_NOT_ENOUGH_MEMORY;
@@ -322,7 +322,7 @@ static DNS_STATUS get_dns_server_list( IP4_ARRAY *out, DWORD *len )
     ret = ERROR_SUCCESS;
 
 err:
-    if ((char *)servers != buf) heap_free( servers );
+    if ((char *)servers != buf) free( servers );
     return ret;
 }
 
