@@ -468,18 +468,21 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     {
         int file_nr, symbol_size, lineno_size, lineno2_size;
         const char* file_name;
-            
+        const char* lib_name;
+
         if (symbols->version < 19970000)
         {
             const PDB_SYMBOL_FILE*      sym_file = (const PDB_SYMBOL_FILE*) file;
             file_nr     = sym_file->file;
             file_name   = sym_file->filename;
+            lib_name    = file_name + strlen(file_name) + 1;
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
             lineno2_size = sym_file->lineno2_size;
-            printf("\t--------symbol file----------- %s\n", file_name);
-            printf("\tgot symbol_file\n"
-                   "\t\tunknown1:   %08x\n"
+            printf("\t--------symbol file-----------\n");
+            printf("\tName: %s\n", file_name);
+            if (strcmp(file_name, lib_name)) printf("\tLibrary: %s\n", lib_name);
+            printf("\t\tunknown1:   %08x\n"
                    "\t\trange\n"
                    "\t\t\tsegment:         %04x\n"
                    "\t\t\tpad1:            %04x\n"
@@ -514,12 +517,16 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         else
         {
             const PDB_SYMBOL_FILE_EX*   sym_file = (const PDB_SYMBOL_FILE_EX*) file;
+
             file_nr     = sym_file->file;
             file_name   = sym_file->filename;
+            lib_name    = file_name + strlen(file_name) + 1;
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
             lineno2_size = sym_file->lineno2_size;
-            printf("\t--------symbol file----------- %s\n", file_name);
+            printf("\t--------symbol file-----------\n");
+            printf("\tName: %s\n", file_name);
+            if (strcmp(file_name, lib_name)) printf("\tLibrary: %s\n", lib_name);
             printf("\t\tunknown1:   %08x\n"
                    "\t\trange\n"
                    "\t\t\tsegment:         %04x\n"
@@ -581,8 +588,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             free(modimage);
         }
 
-        file_name += strlen(file_name) + 1;
-        file = (char*)((DWORD_PTR)(file_name + strlen(file_name) + 1 + 3) & ~3);
+        file = (char*)((DWORD_PTR)(lib_name + strlen(lib_name) + 1 + 3) & ~3);
     }
     dump_global_symbol(reader, symbols->global_file);
     dump_public_symbol(reader, symbols->public_file);
