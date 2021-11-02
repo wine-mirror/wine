@@ -1465,70 +1465,81 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
 {
     unsigned    i;
     DWORD_PTR       addr;
-    const struct codeview_linetab2*     lt2;
-    const struct codeview_linetab2*     lt2_files = NULL;
-    const struct codeview_lt2blk_lines* lines_blk;
-    const struct codeview_linetab2_file*fd;
+    const struct CV_DebugSSubsectionHeader_t*     hdr;
+    const struct CV_DebugSSubsectionHeader_t*     hdr_next;
+    const struct CV_DebugSSubsectionHeader_t*     hdr_files = NULL;
+    const struct CV_DebugSLinesHeader_t*          lines_hdr;
+    const struct CV_DebugSLinesFileBlockHeader_t* files_hdr;
+    const struct CV_Line_t*                       lines;
+    const struct CV_Checksum_t*                   chksms;
     unsigned    source;
     struct symt_function* func;
 
-    /* locate LT2_FILES_BLOCK (if any) */
-    lt2 = (const struct codeview_linetab2*)linetab;
-    while ((const BYTE*)(lt2 + 1) < linetab + size)
+    /* locate DEBUG_S_FILECHKSMS (if any) */
+    hdr = (const struct CV_DebugSSubsectionHeader_t*)linetab;
+    while (CV_IS_INSIDE(hdr, linetab + size))
     {
-        if (lt2->header == LT2_FILES_BLOCK)
+        if (hdr->type == DEBUG_S_FILECHKSMS)
         {
-            lt2_files = lt2;
+            hdr_files = hdr;
             break;
         }
-        lt2 = codeview_linetab2_next_block(lt2);
+        hdr = CV_RECORD_GAP(hdr, hdr->cbLen);
     }
-    if (!lt2_files)
+    if (!hdr_files)
     {
-        TRACE("No LT2_FILES_BLOCK found\n");
+        TRACE("No DEBUG_S_FILECHKSMS found\n");
         return;
     }
 
-    lt2 = (const struct codeview_linetab2*)linetab;
-    while ((const BYTE*)(lt2 + 1) < linetab + size)
+    hdr = (const struct CV_DebugSSubsectionHeader_t*)linetab;
+    while (CV_IS_INSIDE(hdr, linetab + size))
     {
-        /* FIXME: should also check that whole lines_blk fits in linetab + size */
-        switch (lt2->header)
+        hdr_next = CV_RECORD_GAP(hdr, hdr->cbLen);
+        if (!(hdr->type & DEBUG_S_IGNORE))
         {
-        case LT2_LINES_BLOCK:
-            /* Skip blocks that are too small - Intel C Compiler generates these. */
-            if (lt2->size_of_block < sizeof (struct codeview_lt2blk_lines)) break;
-            lines_blk = (const struct codeview_lt2blk_lines*)lt2;
-            /* FIXME: should check that file_offset is within the LT2_FILES_BLOCK we've seen */
-            addr = codeview_get_address(msc_dbg, lines_blk->seg, lines_blk->start);
-            TRACE("block from %04x:%08x #%x (%x lines)\n",
-                  lines_blk->seg, lines_blk->start, lines_blk->size, lines_blk->nlines);
-            fd = (const struct codeview_linetab2_file*)((const char*)lt2_files + 8 + lines_blk->file_offset);
-            /* FIXME: should check that string is within strimage + strsize */
-            source = source_new(msc_dbg->module, NULL, strimage + fd->offset);
-            func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
-            /* FIXME: at least labels support line numbers */
-            if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
+            /* FIXME: should also check that whole lines_blk fits in linetab + size */
+            switch (hdr->type)
             {
-                WARN("--not a func at %04x:%08x %lx tag=%d\n",
-                     lines_blk->seg, lines_blk->start, addr, func ? func->symt.tag : -1);
+            case DEBUG_S_LINES:
+                lines_hdr = CV_RECORD_AFTER(hdr);
+                files_hdr = CV_RECORD_AFTER(lines_hdr);
+                /* Skip blocks that are too small - Intel C Compiler generates these. */
+                if (!CV_IS_INSIDE(files_hdr, hdr_next)) break;
+                addr = codeview_get_address(msc_dbg, lines_hdr->segCon, lines_hdr->offCon);
+                TRACE("block from %04x:%08x #%x\n",
+                      lines_hdr->segCon, lines_hdr->offCon, lines_hdr->cbCon);
+                chksms = CV_RECORD_GAP(hdr_files, files_hdr->offFile);
+                if (!CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen)))
+                {
+                    WARN("Corrupt PDB file: offset in CHKSMS subsection is invalid\n");
+                    break;
+                }
+                source = source_new(msc_dbg->module, NULL,
+                                    (chksms->strOffset < strsize) ? strimage + chksms->strOffset : "<<stroutofbounds>>");
+                func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
+                /* FIXME: at least labels support line numbers */
+                if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
+                {
+                    WARN("--not a func at %04x:%08x %Ix tag=%d\n",
+                         lines_hdr->segCon, lines_hdr->offCon, addr, func ? func->symt.tag : -1);
+                    break;
+                }
+                lines = CV_RECORD_AFTER(files_hdr);
+                for (i = 0; i < files_hdr->nLines; i++)
+                {
+                    symt_add_func_line(msc_dbg->module, func, source,
+                                       lines[i].linenumStart,
+                                       func->address + lines[i].offset);
+                }
+                break;
+            case DEBUG_S_FILECHKSMS: /* skip */
+                break;
+            default:
                 break;
             }
-            for (i = 0; i < lines_blk->nlines; i++)
-            {
-                symt_add_func_line(msc_dbg->module, func, source,
-                                   lines_blk->l[i].lineno ^ 0x80000000,
-                                   func->address + lines_blk->l[i].offset);
-            }
-            break;
-        case LT2_FILES_BLOCK: /* skip */
-            break;
-        default:
-            TRACE("Block end %x\n", lt2->header);
-            lt2 = (const struct codeview_linetab2*)((const char*)linetab + size);
-            continue;
         }
-        lt2 = codeview_linetab2_next_block(lt2);
+        hdr = hdr_next;
     }
 }
 

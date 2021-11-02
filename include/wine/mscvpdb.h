@@ -2279,57 +2279,6 @@ struct startend
     unsigned int	        end;
 };
 
-#define LT2_LINES_BLOCK 0x000000f2
-#define LT2_FILES_BLOCK 0x000000f4
-
-/* there's a new line tab structure from MS Studio 2005 and after
- * it's made of a list of codeview_linetab2 blocks.
- * We've only seen (so far) list with a single LT2_FILES_BLOCK and several
- * LT2_LINES_BLOCK. The LT2_FILES block has been encountered either as first
- * or last block of the list.
- * A LT2_FILES contains one or several codeview_linetab2_file:s
- */
-
-struct codeview_linetab2
-{
-    DWORD       header;
-    DWORD       size_of_block;
-};
-
-static inline const struct codeview_linetab2* codeview_linetab2_next_block(const struct codeview_linetab2* lt2)
-{
-    return (const struct codeview_linetab2*)((const char*)(lt2 + 1) + lt2->size_of_block);
-}
-
-struct codeview_linetab2_file
-{
-    DWORD       offset;         /* offset in string table for filename */
-    WORD        unk;            /* always 0x0110... type of following information ??? */
-    BYTE        md5[16];        /* MD5 signature of file (signature on file's content or name ???) */
-    WORD        pad0;           /* always 0 */
-};
-
-struct codeview_lt2blk_files
-{
-    struct codeview_linetab2            lt2;    /* LT2_FILES */
-    struct codeview_linetab2_file       file[1];
-};
-
-struct codeview_lt2blk_lines
-{
-    struct codeview_linetab2    lt2;            /* LT2_LINE_BLOCK */
-    DWORD                       start;          /* start address of function with line numbers */
-    DWORD                       seg;            /* segment of function with line numbers */
-    DWORD                       size;           /* size of function with line numbers */
-    DWORD                       file_offset;    /* offset for accessing corresponding codeview_linetab2_file */
-    DWORD                       nlines;         /* number of lines in this block */
-    DWORD                       size_lines;     /* number of bytes following for line number information */
-    struct {
-        DWORD   offset;         /* offset (from <seg>:<start>) for line number */
-        DWORD   lineno;         /* the line number (OR:ed with 0x80000000 why ???) */
-    } l[1];                     /* actually array of <nlines> */
-};
-
 /* ======================================== *
  *            PDB file information
  * ======================================== */
