@@ -420,17 +420,18 @@ done:
 static void test_video_processor(void)
 {
     IDirectXVideoProcessorService *service, *service2;
-    IDirect3DDevice9 *device;
+    IDirectXVideoProcessor *processor, *processor2;
     IDirect3DDeviceManager9 *manager;
+    DXVA2_VideoProcessorCaps caps;
+    DXVA2_VideoDesc video_desc;
+    IDirect3DDevice9 *device;
     HANDLE handle, handle1;
+    D3DFORMAT format;
     IDirect3D9 *d3d;
     HWND window;
     UINT token;
     HRESULT hr;
-    IDirectXVideoProcessor *processor, *processor2;
-    DXVA2_VideoDesc video_desc;
     GUID guid;
-    D3DFORMAT format;
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -466,9 +467,45 @@ static void test_video_processor(void)
     video_desc.SampleHeight = 64;
     video_desc.Format = D3DFMT_A8R8G8B8;
 
+    /* Number of substreams does not include reference stream. */
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 16, &processor);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IDirectXVideoProcessor_Release(processor);
+
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 15, &processor);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IDirectXVideoProcessor_Release(processor);
+
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 0, &processor);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IDirectXVideoProcessor_Release(processor);
+
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 1, &processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoProcessor_GetVideoProcessorCaps(processor, &caps);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(caps.DeviceCaps == DXVA2_VPDev_SoftwareDevice, "Unexpected device type %#x.\n", caps.DeviceCaps);
+    ok(caps.InputPool == D3DPOOL_SYSTEMMEM, "Unexpected input pool %#x.\n", caps.InputPool);
+    ok(!caps.NumForwardRefSamples, "Unexpected sample count.\n");
+    ok(!caps.NumBackwardRefSamples, "Unexpected sample count.\n");
+    ok(!caps.Reserved, "Unexpected field.\n");
+    ok(caps.DeinterlaceTechnology == DXVA2_DeinterlaceTech_Unknown, "Unexpected deinterlace technology %#x.\n",
+            caps.DeinterlaceTechnology);
+    ok(!caps.ProcAmpControlCaps, "Unexpected proc amp mask %#x.\n", caps.ProcAmpControlCaps);
+    ok(caps.VideoProcessorOperations == (DXVA2_VideoProcess_PlanarAlpha | DXVA2_VideoProcess_YUV2RGB |
+            DXVA2_VideoProcess_StretchX | DXVA2_VideoProcess_StretchY | DXVA2_VideoProcess_SubRects |
+            DXVA2_VideoProcess_SubStreams | DXVA2_VideoProcess_SubStreamsExtended | DXVA2_VideoProcess_YUV2RGBExtended),
+            "Unexpected processor operations %#x.\n", caps.VideoProcessorOperations);
+    ok(caps.NoiseFilterTechnology == DXVA2_NoiseFilterTech_Unsupported, "Unexpected noise filter technology %#x.\n",
+            caps.NoiseFilterTechnology);
+    ok(caps.DetailFilterTechnology == DXVA2_DetailFilterTech_Unsupported, "Unexpected detail filter technology %#x.\n",
+            caps.DetailFilterTechnology);
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 1, &processor2);

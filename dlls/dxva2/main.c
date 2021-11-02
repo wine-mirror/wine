@@ -204,9 +204,26 @@ static HRESULT WINAPI video_processor_GetCreationParameters(IDirectXVideoProcess
 static HRESULT WINAPI video_processor_GetVideoProcessorCaps(IDirectXVideoProcessor *iface,
         DXVA2_VideoProcessorCaps *caps)
 {
-    FIXME("%p, %p.\n", iface, caps);
+    struct video_processor *processor = impl_from_IDirectXVideoProcessor(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, caps);
+
+    if (IsEqualGUID(&processor->device, &DXVA2_VideoProcSoftwareDevice))
+    {
+        memset(caps, 0, sizeof(*caps));
+        caps->DeviceCaps = DXVA2_VPDev_SoftwareDevice;
+        caps->InputPool = D3DPOOL_SYSTEMMEM;
+        caps->VideoProcessorOperations = DXVA2_VideoProcess_PlanarAlpha | DXVA2_VideoProcess_YUV2RGB |
+                DXVA2_VideoProcess_StretchX | DXVA2_VideoProcess_StretchY | DXVA2_VideoProcess_SubRects |
+                DXVA2_VideoProcess_SubStreams | DXVA2_VideoProcess_SubStreamsExtended | DXVA2_VideoProcess_YUV2RGBExtended;
+    }
+    else
+    {
+        FIXME("Unsupported device %s.\n", debugstr_guid(&processor->device));
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_processor_GetProcAmpRange(IDirectXVideoProcessor *iface, UINT cap, DXVA2_ValueRange *range)
