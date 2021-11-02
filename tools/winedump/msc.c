@@ -1927,61 +1927,119 @@ void codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx
 void codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimage, DWORD strsize, const char* pfx)
 {
     unsigned    i;
-    const struct codeview_linetab2*     lt2;
-    const struct codeview_linetab2*     lt2_files = NULL;
-    const struct codeview_lt2blk_lines* lines_blk;
-    const struct codeview_linetab2_file*fd;
+    const struct CV_DebugSSubsectionHeader_t*     hdr;
+    const struct CV_DebugSSubsectionHeader_t*     next_hdr;
+    const struct CV_DebugSLinesHeader_t*          lines_hdr;
+    const struct CV_DebugSLinesFileBlockHeader_t* files_hdr;
+    const struct CV_Column_t*                     cols;
+    const struct CV_Checksum_t*                   chksms;
+    const struct CV_InlineeSourceLine_t*          inlsrc;
+    const struct CV_InlineeSourceLineEx_t*        inlsrcex;
 
-    /* locate LT2_FILES_BLOCK (if any) */
-    lt2 = (const struct codeview_linetab2*)linetab;
-    while ((const char*)(lt2 + 1) < linetab + size)
+    static const char* subsect_types[] = /* starting at 0xf1 */
     {
-        if (lt2->header == LT2_FILES_BLOCK)
+        "SYMBOLS",         "LINES",            "STRINGTABLE",       "FILECHKSMS",
+        "FRAMEDATA",       "INLINEELINES",     "CROSSSCOPEIMPORTS", "CROSSSCOPEEXPORTS",
+        "IL_LINES",        "FUNC_MDTOKEN_MAP", "TYPE_MDTOKEN_MAP",  "MERGED_ASSEMBLYINPUT",
+        "COFF_SYMBOL_RVA"
+        };
+    hdr = (const struct CV_DebugSSubsectionHeader_t*)linetab;
+    while (CV_IS_INSIDE(hdr, linetab + size))
+    {
+        next_hdr = CV_RECORD_GAP(hdr, hdr->cbLen);
+        if (hdr->type & DEBUG_S_IGNORE)
         {
-            lt2_files = lt2;
-            break;
-        }
-        lt2 = codeview_linetab2_next_block(lt2);
-    }
-    if (!lt2_files)
-    {
-        printf("%sNo LT2_FILES_BLOCK found\n", pfx);
-        return;
-    }
-
-    lt2 = (const struct codeview_linetab2*)linetab;
-    while ((const char*)(lt2 + 1) < linetab + size)
-    {
-        /* FIXME: should also check that whole lbh fits in linetab + size */
-        switch (lt2->header)
-        {
-        case LT2_LINES_BLOCK:
-            lines_blk = (const struct codeview_lt2blk_lines*)lt2;
-            printf("%sblock from %04x:%08x #%x (%x lines) fo=%x\n",
-                   pfx, lines_blk->seg, lines_blk->start, lines_blk->size,
-                   lines_blk->nlines, lines_blk->file_offset);
-            /* FIXME: should check that file_offset is within the LT2_FILES_BLOCK we've seen */
-            fd = (const struct codeview_linetab2_file*)((const char*)lt2_files + 8 + lines_blk->file_offset);
-            printf("%s  md5=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-                   pfx, fd->md5[ 0], fd->md5[ 1], fd->md5[ 2], fd->md5[ 3],
-                   fd->md5[ 4], fd->md5[ 5], fd->md5[ 6], fd->md5[ 7],
-                   fd->md5[ 8], fd->md5[ 9], fd->md5[10], fd->md5[11],
-                   fd->md5[12], fd->md5[13], fd->md5[14], fd->md5[15]);
-            /* FIXME: should check that string is within strimage + strsize */
-            printf("%s  file=%s\n", pfx, strimage ? strimage + fd->offset : "--none--");
-            for (i = 0; i < lines_blk->nlines; i++)
-            {
-                printf("%s  offset=%08x line=%d\n",
-                       pfx, lines_blk->l[i].offset, lines_blk->l[i].lineno ^ 0x80000000);
-            }
-            break;
-        case LT2_FILES_BLOCK: /* skip */
-            break;
-        default:
-            printf("%sblock end %x\n", pfx, lt2->header);
-            lt2 = (const struct codeview_linetab2*)(linetab + size);
+            printf("%s------ debug subsection <ignored>\n", pfx);
+            hdr = next_hdr;
             continue;
         }
-        lt2 = codeview_linetab2_next_block(lt2);
+
+        printf("%s------ debug subsection %s\n", pfx,
+               (hdr->type >= 0xf1 && hdr->type - 0xf1 < ARRAY_SIZE(subsect_types)) ?
+               subsect_types[hdr->type - 0xf1] : "<<unknown>>");
+        switch (hdr->type)
+        {
+        case DEBUG_S_LINES:
+            lines_hdr = CV_RECORD_AFTER(hdr);
+            printf("%s  block from %04x:%08x flags:%x size=%u\n",
+                   pfx, lines_hdr->segCon, lines_hdr->offCon, lines_hdr->flags, lines_hdr->cbCon);
+            files_hdr = CV_RECORD_AFTER(lines_hdr);
+            /* FIXME: as of today partial coverage:
+             * - only one files_hdr has been seen in PDB files
+             *   OTOH, MS github presents two different structures
+             *   llvm ? one or two
+             * - next files_hdr (depending on previous question, can be a void question)
+             *   is code correct ; what do MS and llvm do?
+             */
+            while (CV_IS_INSIDE(files_hdr, next_hdr))
+            {
+                const struct CV_Line_t* lines;
+                printf("%s    file=%u lines=%d size=%x\n", pfx, files_hdr->offFile,
+                       files_hdr->nLines, files_hdr->cbBlock);
+                lines = CV_RECORD_AFTER(files_hdr);
+                cols = (const struct CV_Column_t*)&lines[files_hdr->nLines];
+                for (i = 0; i < files_hdr->nLines; i++)
+                {
+                    printf("%s      offset=%8x line=%d deltaLineEnd=%u %s",
+                           pfx, lines[i].offset, lines[i].linenumStart, lines[i].deltaLineEnd,
+                           lines[i].fStatement ? "statement" : "expression");
+                    if (lines_hdr->flags & CV_LINES_HAVE_COLUMNS)
+                        printf(" cols[start=%u end=%u]",
+                               cols[i].offColumnStart, cols[i].offColumnEnd);
+                    printf("\n");
+                }
+                if (lines_hdr->flags & CV_LINES_HAVE_COLUMNS)
+                    files_hdr = (const struct CV_DebugSLinesFileBlockHeader_t*)&cols[files_hdr->nLines];
+                else
+                    files_hdr = (const struct CV_DebugSLinesFileBlockHeader_t*)&lines[files_hdr->nLines];
+            }
+            break;
+        case DEBUG_S_FILECHKSMS:
+            chksms = CV_RECORD_AFTER(hdr);
+            while (CV_IS_INSIDE(chksms, next_hdr))
+            {
+                const char* meth[] = {"None", "MD5", "SHA1", "SHA256"};
+                printf("%s  %d] name=%s size=%u method=%s checksum=[",
+                       pfx, (unsigned)((const char*)chksms - (const char*)(hdr + 1)),
+                       strimage ? strimage + chksms->strOffset : "--none--",
+                       chksms->size, chksms->method < ARRAY_SIZE(meth) ? meth[chksms->method] : "<<unknown>>");
+                for (i = 0; i < chksms->size; ++i) printf("%02x", chksms->checksum[i]);
+                printf("]\n");
+                chksms = CV_ALIGN(CV_RECORD_GAP(chksms, chksms->size), 4);
+            }
+            break;
+        case DEBUG_S_INLINEELINES:
+            /* subsection starts with a DWORD signature */
+            switch (*(DWORD*)CV_RECORD_AFTER(hdr))
+            {
+            case CV_INLINEE_SOURCE_LINE_SIGNATURE:
+                inlsrc = CV_RECORD_GAP(hdr, sizeof(DWORD));
+                while (CV_IS_INSIDE(inlsrc, next_hdr))
+                {
+                    printf("%s  inlinee=%x fileref=%d srcstart=%d\n",
+                           pfx, inlsrc->inlinee, inlsrc->fileId, inlsrc->sourceLineNum);
+                    ++inlsrc;
+                }
+                break;
+            case CV_INLINEE_SOURCE_LINE_SIGNATURE_EX:
+                inlsrcex = CV_RECORD_GAP(hdr, sizeof(DWORD));
+                while (CV_IS_INSIDE(inlsrcex, next_hdr))
+                {
+                    printf("%s  inlinee=%x fileref=%d srcstart=%d numExtraFiles=%d\n",
+                           pfx, inlsrcex->inlinee, inlsrcex->fileId, inlsrcex->sourceLineNum,
+                           inlsrcex->countOfExtraFiles);
+                    inlsrcex = CV_RECORD_GAP(inlsrcex, inlsrcex->countOfExtraFiles * sizeof(inlsrcex->extraFileId[0]));
+                }
+                break;
+            default:
+                printf("%sUnknown signature %x in INLINEELINES subsection\n", pfx, *(DWORD*)CV_RECORD_AFTER(hdr));
+                break;
+            }
+            break;
+        default:
+            dump_data(CV_RECORD_AFTER(hdr), hdr->cbLen, pfx);
+            break;
+        }
+        hdr = next_hdr;
     }
 }

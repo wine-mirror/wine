@@ -2162,6 +2162,109 @@ enum BinaryAnnotationOpcode
  *          Line number information
  * ======================================== */
 
+enum DEBUG_S_SUBSECTION_TYPE
+{
+    DEBUG_S_IGNORE = 0x80000000,    /* bit flag: when set, ignore whole subsection content */
+
+    DEBUG_S_SYMBOLS = 0xf1,
+    DEBUG_S_LINES,
+    DEBUG_S_STRINGTABLE,
+    DEBUG_S_FILECHKSMS,
+    DEBUG_S_FRAMEDATA,
+    DEBUG_S_INLINEELINES,
+    DEBUG_S_CROSSSCOPEIMPORTS,
+    DEBUG_S_CROSSSCOPEEXPORTS,
+
+    DEBUG_S_IL_LINES,
+    DEBUG_S_FUNC_MDTOKEN_MAP,
+    DEBUG_S_TYPE_MDTOKEN_MAP,
+    DEBUG_S_MERGED_ASSEMBLYINPUT,
+
+    DEBUG_S_COFF_SYMBOL_RVA,
+};
+
+struct CV_DebugSSubsectionHeader_t
+{
+    enum DEBUG_S_SUBSECTION_TYPE type;
+    unsigned                     cbLen;
+};
+
+struct CV_DebugSLinesHeader_t
+{
+    unsigned       offCon;
+    unsigned short segCon;
+    unsigned short flags;
+    unsigned       cbCon;
+};
+
+struct CV_DebugSLinesFileBlockHeader_t
+{
+    unsigned       offFile;
+    unsigned       nLines;
+    unsigned       cbBlock;
+    /* followed by two variable length arrays
+     * CV_Line_t      lines[nLines];
+     * ^ columns present when CV_DebugSLinesHeader_t.flags has CV_LINES_HAVE_COLUMNS set
+     * CV_Column_t    columns[nLines];
+     */
+};
+
+#define CV_LINES_HAVE_COLUMNS 0x0001
+
+struct CV_Line_t
+{
+    unsigned   offset;
+    unsigned   linenumStart:24;
+    unsigned   deltaLineEnd:7;
+    unsigned   fStatement:1;
+};
+
+struct CV_Column_t
+{
+    unsigned short offColumnStart;
+    unsigned short offColumnEnd;
+};
+
+struct CV_Checksum_t /* this one is not defined in microsoft pdb information */
+{
+    unsigned            strOffset;      /* offset in string table for filename */
+    unsigned char       size;           /* size of checksum */
+    unsigned char       method;         /* method used to compute check sum */
+    unsigned char       checksum[0];    /* (size) bytes */
+    /* result is padded on 4-byte boundary */
+};
+
+#define CV_INLINEE_SOURCE_LINE_SIGNATURE     0x0
+#define CV_INLINEE_SOURCE_LINE_SIGNATURE_EX  0x1
+
+typedef struct CV_InlineeSourceLine_t
+{
+    cv_itemid_t    inlinee;       /* function id */
+    unsigned       fileId;        /* offset in DEBUG_S_FILECHKSMS */
+    unsigned       sourceLineNum; /* first line number */
+} InlineeSourceLine;
+
+typedef struct CV_InlineeSourceLineEx_t
+{
+    cv_itemid_t    inlinee;       /* function id */
+    unsigned       fileId;        /* offset in DEBUG_S_FILECHKSMS */
+    unsigned       sourceLineNum; /* first line number */
+    unsigned int   countOfExtraFiles;
+    unsigned       extraFileId[0];
+} InlineeSourceLineEx;
+
+#ifdef __WINESRC__
+/* those are Wine only helpers */
+/* align ptr on sz boundary; sz must be a power of 2 */
+#define CV_ALIGN(ptr, sz)            ((const void*)(((DWORD_PTR)(ptr) + ((sz) - 1)) & ~((sz) - 1)))
+/* move after (ptr) record */
+#define CV_RECORD_AFTER(ptr)         ((const void*)((ptr) + 1))
+/* move after (ptr) record and a gap of sz bytes */
+#define CV_RECORD_GAP(ptr, sz)       ((const void*)((const char*)((ptr) + 1) + (sz)))
+/* test whether ptr record is within limit boundary */
+#define CV_IS_INSIDE(ptr, limit)     (CV_RECORD_AFTER(ptr) <= (const void*)(limit))
+#endif /* __WINESRC__ */
+
 struct codeview_linetab_block
 {
     unsigned short              seg;
