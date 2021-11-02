@@ -168,6 +168,8 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
                                  PDNS_RECORDA *result, PVOID *reserved )
 {
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
+    unsigned char answer[4096];
+    DWORD len = sizeof(answer);
 
     TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
@@ -177,7 +179,29 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
 
     if ((ret = resolv_funcs->set_serverlist( servers ))) return ret;
 
-    ret = resolv_funcs->query( name, type, options, result );
+    ret = resolv_funcs->query( name, type, options, answer, &len );
+    if (!ret)
+    {
+        DNS_MESSAGE_BUFFER *buffer = (DNS_MESSAGE_BUFFER *)answer;
+
+        if (len < sizeof(buffer->MessageHead)) return DNS_ERROR_BAD_PACKET;
+        DNS_BYTE_FLIP_HEADER_COUNTS( &buffer->MessageHead );
+        switch (buffer->MessageHead.ResponseCode)
+        {
+        case DNS_RCODE_NOERROR:  ret = DnsExtractRecordsFromMessage_UTF8( buffer, len, result ); break;
+        case DNS_RCODE_FORMERR:  ret = DNS_ERROR_RCODE_FORMAT_ERROR; break;
+        case DNS_RCODE_SERVFAIL: ret = DNS_ERROR_RCODE_SERVER_FAILURE; break;
+        case DNS_RCODE_NXDOMAIN: ret = DNS_ERROR_RCODE_NAME_ERROR; break;
+        case DNS_RCODE_NOTIMPL:  ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED; break;
+        case DNS_RCODE_REFUSED:  ret = DNS_ERROR_RCODE_REFUSED; break;
+        case DNS_RCODE_YXDOMAIN: ret = DNS_ERROR_RCODE_YXDOMAIN; break;
+        case DNS_RCODE_YXRRSET:  ret = DNS_ERROR_RCODE_YXRRSET; break;
+        case DNS_RCODE_NXRRSET:  ret = DNS_ERROR_RCODE_NXRRSET; break;
+        case DNS_RCODE_NOTAUTH:  ret = DNS_ERROR_RCODE_NOTAUTH; break;
+        case DNS_RCODE_NOTZONE:  ret = DNS_ERROR_RCODE_NOTZONE; break;
+        default:                 ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED; break;
+        }
+    }
 
     if (ret == DNS_ERROR_RCODE_NAME_ERROR && type == DNS_TYPE_A &&
         !(options & DNS_QUERY_NO_NETBT))

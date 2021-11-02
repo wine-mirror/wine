@@ -125,7 +125,7 @@ struct resolv_funcs
 {
     DNS_STATUS (CDECL *get_searchlist)( DNS_TXT_DATAW *list, DWORD *len );
     DNS_STATUS (CDECL *get_serverlist)( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len );
-    DNS_STATUS (CDECL *query)( const char *name, WORD type, DWORD options, DNS_RECORDA **result );
+    DNS_STATUS (CDECL *query)( const char *name, WORD type, DWORD options, void *buf, DWORD *len );
     DNS_STATUS (CDECL *set_serverlist)( const IP4_ARRAY *addrs );
 };
 
