@@ -417,6 +417,7 @@ static int stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
 {
     variant_val_t val;
     HRESULT hres;
+    VARIANT_BOOL vb;
 
     hres = stack_pop_val(ctx, &val);
     if(FAILED(hres))
@@ -436,6 +437,12 @@ static int stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
         break;
     case VT_I4:
         *b = V_I4(val.v);
+        break;
+    case VT_BSTR:
+        hres = VarBoolFromStr(V_BSTR(val.v), ctx->script->lcid, 0, &vb);
+        if(FAILED(hres))
+            return hres;
+        *b=vb;
         break;
     default:
         FIXME("unsupported for %s\n", debugstr_variant(val.v));
