@@ -685,13 +685,12 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             ptr += 2 + 2 + 4 + (1 + fieldtype->stmember_v2.p_name.namelen);
             break;
 
-#if 0
         case LF_FRIENDFCN_V3:
             printf("\t\tFriend function V3: '%s' type:%x\n",
                    fieldtype->friendfcn_v3.name,
                    fieldtype->friendfcn_v3.type);
+            ptr += 2 + 2 + 4 + (strlen(fieldtype->stmember_v3.name) + 1);
             break;
-#endif
 
         case LF_BCLASS_V1:
             leaf_len = numeric_leaf(&value, &fieldtype->bclass_v1.offset);

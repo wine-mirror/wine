@@ -569,6 +569,14 @@ union codeview_fieldtype
     struct
     {
         unsigned short int      id;
+        short int               _pad0;
+        cv_typ_t                type;
+        char                    name[1];
+    } friendfcn_v3;
+
+    struct
+    {
+        unsigned short int      id;
         cv_typ16_t		type;
         short int		attribute;
         unsigned short int	offset;    /* numeric leaf */
@@ -1266,6 +1274,7 @@ union codeview_fieldtype
 #define LF_STRUCTURE_V3         0x1505
 #define LF_UNION_V3             0x1506
 #define LF_ENUM_V3              0x1507
+#define LF_FRIENDFCN_V3         0x150c
 #define LF_MEMBER_V3            0x150d
 #define LF_STMEMBER_V3          0x150e
 #define LF_METHOD_V3            0x150f
