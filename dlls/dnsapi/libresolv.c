@@ -49,65 +49,15 @@
 #include "windef.h"
 #include "winternl.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "windns.h"
 #define USE_WS_PREFIX
 #include "ws2def.h"
 #include "ws2ipdef.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "dnsapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
-
-static CPTABLEINFO unix_cptable;
-static ULONG unix_cp = CP_UTF8;
-
-static DWORD WINAPI get_unix_codepage_once( RTL_RUN_ONCE *once, void *param, void **context )
-{
-    static const WCHAR wineunixcpW[] = { 'W','I','N','E','U','N','I','X','C','P',0 };
-    UNICODE_STRING name, value;
-    WCHAR value_buffer[13];
-    SIZE_T size;
-    void *ptr;
-
-    RtlInitUnicodeString( &name, wineunixcpW );
-    value.Buffer = value_buffer;
-    value.MaximumLength = sizeof(value_buffer);
-    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
-        RtlUnicodeStringToInteger( &value, 10, &unix_cp );
-    if (unix_cp != CP_UTF8 && !NtGetNlsSectionPtr( 11, unix_cp, NULL, &ptr, &size ))
-        RtlInitCodePageTable( ptr, &unix_cptable );
-    return TRUE;
-}
-
-static BOOL get_unix_codepage( void )
-{
-    static RTL_RUN_ONCE once = RTL_RUN_ONCE_INIT;
-
-    return !RtlRunOnceExecuteOnce( &once, get_unix_codepage_once, NULL, NULL );
-}
-
-static DWORD dnsapi_umbstowcs( const char *src, WCHAR *dst, DWORD dstlen )
-{
-    DWORD srclen = strlen( src ) + 1;
-    DWORD len;
-
-    get_unix_codepage();
-
-    if (unix_cp == CP_UTF8)
-    {
-        RtlUTF8ToUnicodeN( dst, dstlen, &len, src, srclen );
-        return len;
-    }
-    else
-    {
-        len = srclen * sizeof(WCHAR);
-        if (dst) RtlCustomCPToUnicodeN( &unix_cptable, dst, dstlen, &len, src, srclen );
-        return len;
-    }
-}
 
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
 /* call once per thread on systems that have per-thread _res */
@@ -172,25 +122,27 @@ static DNS_STATUS map_h_errno( int error )
     }
 }
 
-static DNS_STATUS CDECL resolv_get_searchlist( DNS_TXT_DATAW *list, DWORD *len )
+static NTSTATUS resolv_get_searchlist( void *args )
 {
+    struct get_searchlist_params *params = args;
+    DNS_TXT_DATAW *list = params->list;
     DWORD i, needed, str_needed = 0;
     char *ptr, *end;
 
     init_resolver();
 
     for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
-        str_needed += dnsapi_umbstowcs( _res.dnsrch[i], NULL, 0 );
+        str_needed += (strlen(_res.dnsrch[i]) + 1) * sizeof(WCHAR);
 
     needed = FIELD_OFFSET(DNS_TXT_DATAW, pStringArray[i]) + str_needed;
 
-    if (!list || *len < needed)
+    if (!list || *params->len < needed)
     {
-        *len = needed;
+        *params->len = needed;
         return !list ? ERROR_SUCCESS : ERROR_MORE_DATA;
     }
 
-    *len = needed;
+    *params->len = needed;
     list->dwStringCount = i;
 
     ptr = (char *)(list->pStringArray + i);
@@ -198,7 +150,8 @@ static DNS_STATUS CDECL resolv_get_searchlist( DNS_TXT_DATAW *list, DWORD *len )
     for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
     {
         list->pStringArray[i] = (WCHAR *)ptr;
-        ptr += dnsapi_umbstowcs( _res.dnsrch[i], list->pStringArray[i], end - ptr );
+        ptr += ntdll_umbstowcs( _res.dnsrch[i], strlen(_res.dnsrch[i]) + 1,
+                                list->pStringArray[i], end - ptr );
     }
     return ERROR_SUCCESS;
 }
@@ -215,8 +168,10 @@ static inline int filter( unsigned short sin_family, USHORT family )
 
 #ifdef HAVE_RES_GETSERVERS
 
-static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
+static NTSTATUS resolv_get_serverlist( void *args )
 {
+    struct get_serverlist_params *params = args;
+    DNS_ADDR_ARRAY *addrs = params->addrs;
     struct __res_state *state = &_res;
     DWORD i, found, total, needed;
     union res_sockaddr_union *buf;
@@ -226,9 +181,9 @@ static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *ad
     total = res_getservers( state, NULL, 0 );
     if (!total) return DNS_ERROR_NO_DNS_SERVERS;
 
-    if (!addrs && family != WS_AF_INET && family != WS_AF_INET6)
+    if (!addrs && params->family != WS_AF_INET && params->family != WS_AF_INET6)
     {
-        *len = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[total]);
+        *params->len = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[total]);
         return ERROR_SUCCESS;
     }
 
@@ -239,24 +194,24 @@ static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *ad
 
     for (i = 0, found = 0; i < total; i++)
     {
-        if (filter( buf[i].sin.sin_family, family )) continue;
+        if (filter( buf[i].sin.sin_family, params->family )) continue;
         found++;
     }
     if (!found) return DNS_ERROR_NO_DNS_SERVERS;
 
     needed = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[found]);
-    if (!addrs || *len < needed)
+    if (!addrs || *params->len < needed)
     {
-        *len = needed;
+        *params->len = needed;
         return !addrs ? ERROR_SUCCESS : ERROR_MORE_DATA;
     }
-    *len = needed;
+    *params->len = needed;
     memset( addrs, 0, needed );
     addrs->AddrCount = addrs->MaxCount = found;
 
     for (i = 0, found = 0; i < total; i++)
     {
-        if (filter( buf[i].sin.sin_family, family )) continue;
+        if (filter( buf[i].sin.sin_family, params->family )) continue;
 
         if (buf[i].sin6.sin6_family == AF_INET6)
         {
@@ -281,16 +236,18 @@ static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *ad
 
 #else
 
-static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
+static NTSTATUS resolv_get_serverlist( void *args )
 {
+    struct get_serverlist_params *params = args;
+    DNS_ADDR_ARRAY *addrs = params->addrs;
     DWORD needed, found, i;
 
     init_resolver();
 
     if (!_res.nscount) return DNS_ERROR_NO_DNS_SERVERS;
-    if (!addrs && family != WS_AF_INET && family != WS_AF_INET6)
+    if (!addrs && params->family != WS_AF_INET && params->family != WS_AF_INET6)
     {
-        *len = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[_res.nscount]);
+        *params->len = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[_res.nscount]);
         return ERROR_SUCCESS;
     }
 
@@ -300,18 +257,18 @@ static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *ad
 #ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
         if (_res._u._ext.nsaddrs[i]) sin_family = _res._u._ext.nsaddrs[i]->sin6_family;
 #endif
-        if (filter( sin_family, family )) continue;
+        if (filter( sin_family, params->family )) continue;
         found++;
     }
     if (!found) return DNS_ERROR_NO_DNS_SERVERS;
 
     needed = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[found]);
-    if (!addrs || *len < needed)
+    if (!addrs || *params->len < needed)
     {
-        *len = needed;
+        *params->len = needed;
         return !addrs ? ERROR_SUCCESS : ERROR_MORE_DATA;
     }
-    *len = needed;
+    *params->len = needed;
     memset( addrs, 0, needed );
     addrs->AddrCount = addrs->MaxCount = found;
 
@@ -321,7 +278,7 @@ static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *ad
 #ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
         if (_res._u._ext.nsaddrs[i]) sin_family = _res._u._ext.nsaddrs[i]->sin6_family;
 #endif
-        if (filter( sin_family, family )) continue;
+        if (filter( sin_family, params->family )) continue;
 
 #ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
         if (sin_family == AF_INET6)
@@ -346,8 +303,10 @@ static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *ad
 }
 #endif
 
-static DNS_STATUS CDECL resolv_set_serverlist( const IP4_ARRAY *addrs )
+static NTSTATUS resolv_set_serverlist( void *args )
 {
+    struct set_serverlist_params *params = args;
+    const IP4_ARRAY *addrs = params->addrs;
     int i;
 
     init_resolver();
@@ -367,34 +326,28 @@ static DNS_STATUS CDECL resolv_set_serverlist( const IP4_ARRAY *addrs )
     return ERROR_SUCCESS;
 }
 
-static DNS_STATUS CDECL resolv_query( const char *name, WORD type, DWORD options, void *answer, DWORD *retlen )
+static NTSTATUS resolv_query( void *args )
 {
+    struct query_params *params = args;
     DNS_STATUS ret = ERROR_SUCCESS;
     int len;
 
     init_resolver();
-    _res.options |= map_options( options );
+    _res.options |= map_options( params->options );
 
-    if ((len = res_query( name, ns_c_in, type, answer, *retlen )) < 0)
+    if ((len = res_query( params->name, ns_c_in, params->type, params->buf, *params->len )) < 0)
         ret = map_h_errno( h_errno );
     else
-        *retlen = len;
+        *params->len = len;
     return ret;
 }
 
-static const struct resolv_funcs funcs =
+unixlib_entry_t __wine_unix_call_funcs[] =
 {
     resolv_get_searchlist,
     resolv_get_serverlist,
+    resolv_set_serverlist,
     resolv_query,
-    resolv_set_serverlist
 };
-
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-    *(const struct resolv_funcs **)ptr_out = &funcs;
-    return STATUS_SUCCESS;
-}
 
 #endif /* HAVE_RESOLV */

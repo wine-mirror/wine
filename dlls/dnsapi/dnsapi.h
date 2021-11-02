@@ -18,7 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+#include "winternl.h"
 #include "wine/heap.h"
+#include "wine/unixlib.h"
 
 static inline char *strdup_a( const char *src )
 {
@@ -121,12 +126,41 @@ static inline char *strdup_ua( const char *src )
 
 extern const char *debugstr_type( unsigned short ) DECLSPEC_HIDDEN;
 
-struct resolv_funcs
+struct get_searchlist_params
 {
-    DNS_STATUS (CDECL *get_searchlist)( DNS_TXT_DATAW *list, DWORD *len );
-    DNS_STATUS (CDECL *get_serverlist)( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len );
-    DNS_STATUS (CDECL *query)( const char *name, WORD type, DWORD options, void *buf, DWORD *len );
-    DNS_STATUS (CDECL *set_serverlist)( const IP4_ARRAY *addrs );
+    DNS_TXT_DATAW   *list;
+    DWORD           *len;
 };
 
-extern const struct resolv_funcs *resolv_funcs;
+struct get_serverlist_params
+{
+    USHORT           family;
+    DNS_ADDR_ARRAY  *addrs;
+    DWORD           *len;
+};
+
+struct set_serverlist_params
+{
+    const IP4_ARRAY *addrs;
+};
+
+struct query_params
+{
+    const char      *name;
+    WORD             type;
+    DWORD            options;
+    void            *buf;
+    DWORD           *len;
+};
+
+enum unix_funcs
+{
+    unix_get_searchlist,
+    unix_get_serverlist,
+    unix_set_serverlist,
+    unix_query,
+};
+
+extern unixlib_handle_t resolv_handle;
+
+#define RESOLV_CALL( func, params ) __wine_unix_call( resolv_handle, unix_ ## func, params )

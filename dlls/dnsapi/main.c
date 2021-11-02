@@ -26,12 +26,13 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "windns.h"
+#include "dnsapi.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-const struct resolv_funcs *resolv_funcs = NULL;
+unixlib_handle_t resolv_handle = 0;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -41,7 +42,8 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (__wine_init_unix_lib( hinst, reason, NULL, &resolv_funcs ))
+        if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
+                                  &resolv_handle, sizeof(resolv_handle), NULL ))
             ERR( "No libresolv support, expect problems\n" );
         break;
     case DLL_PROCESS_DETACH:

@@ -170,6 +170,8 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
     unsigned char answer[4096];
     DWORD len = sizeof(answer);
+    struct set_serverlist_params servlist_params = { servers };
+    struct query_params query_params = { name, type, options, answer, &len };
 
     TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
@@ -177,9 +179,9 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
     if (!name || !result)
         return ERROR_INVALID_PARAMETER;
 
-    if ((ret = resolv_funcs->set_serverlist( servers ))) return ret;
+    if ((ret = RESOLV_CALL( set_serverlist, &servlist_params ))) return ret;
 
-    ret = resolv_funcs->query( name, type, options, answer, &len );
+    ret = RESOLV_CALL( query, &query_params );
     if (!ret)
     {
         DNS_MESSAGE_BUFFER *buffer = (DNS_MESSAGE_BUFFER *)answer;
@@ -289,10 +291,10 @@ static DNS_STATUS get_dns_server_list( IP4_ARRAY *out, DWORD *len )
     char buf[FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[3])];
     DNS_ADDR_ARRAY *servers = (DNS_ADDR_ARRAY *)buf;
     DWORD ret, needed, i, num, array_len = sizeof(buf);
-
+    struct get_serverlist_params params = { AF_INET, servers, &array_len };
     for (;;)
     {
-        ret = resolv_funcs->get_serverlist( AF_INET, servers, &array_len );
+        ret = RESOLV_CALL( get_serverlist, &params );
         if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) goto err;
         num = (array_len - FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[0])) / sizeof(DNS_ADDR);
         needed = FIELD_OFFSET(IP4_ARRAY, AddrArray[num]);
@@ -375,15 +377,25 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
         break;
 
     case DnsConfigDnsServersUnspec:
-        return resolv_funcs->get_serverlist( AF_UNSPEC, buffer, len );
+    {
+        struct get_serverlist_params params = { AF_UNSPEC, buffer, len };
+        return RESOLV_CALL( get_serverlist, &params );
+    }
     case DnsConfigDnsServersIpv4:
-        return resolv_funcs->get_serverlist( AF_INET, buffer, len );
+    {
+        struct get_serverlist_params params = { AF_INET, buffer, len };
+        return RESOLV_CALL( get_serverlist, &params );
+    }
     case DnsConfigDnsServersIpv6:
-        return resolv_funcs->get_serverlist( AF_INET6, buffer, len );
-
+    {
+        struct get_serverlist_params params = { AF_INET6, buffer, len };
+        return RESOLV_CALL( get_serverlist, &params );
+    }
     case DnsConfigSearchList:
-        return resolv_funcs->get_searchlist( buffer, len );
-
+    {
+        struct get_searchlist_params params = { buffer, len };
+        return RESOLV_CALL( get_searchlist, &params );
+    }
     default:
         WARN( "unknown config type: %d\n", config );
         break;
