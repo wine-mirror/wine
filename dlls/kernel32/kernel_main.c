@@ -65,7 +65,7 @@ static void set_entry_point( HMODULE module, const char *name, DWORD rva )
                 TRACE( "setting %s at %p to %08x\n", name, &functions[ordinal], rva );
                 VirtualProtect( functions + ordinal, sizeof(*functions), PAGE_READWRITE, &oldprot );
                 functions[ordinal] = rva;
-                VirtualProtect( functions + ordinal, sizeof(*functions), oldprot, NULL );
+                VirtualProtect( functions + ordinal, sizeof(*functions), oldprot, &oldprot );
                 return;
             }
             if (res > 0) max = pos - 1;
