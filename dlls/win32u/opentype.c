@@ -344,8 +344,8 @@ static UINT get_name_record_codepage( enum OPENTYPE_PLATFORM_ID platform, USHORT
         case TT_NAME_MAC_ENCODING_THAI:
             return 10021;
         default:
-            FIXME( "encoding %u not handled, platform %d.\n", encoding, platform );
-            break;
+            WARN( "default ascii encoding used for encoding %d, platform %d\n", encoding, platform );
+            return 20127;
         }
         break;
     case OPENTYPE_PLATFORM_WIN:
@@ -366,8 +366,8 @@ static UINT get_name_record_codepage( enum OPENTYPE_PLATFORM_ID platform, USHORT
         case TT_NAME_WIN_ENCODING_JOHAB:
             return 1361;
         default:
-            FIXME( "encoding %u not handled, platform %d.\n", encoding, platform );
-            break;
+            WARN( "default ascii encoding used for encoding %d, platform %d\n", encoding, platform );
+            return 20127;
         }
         break;
     default:
