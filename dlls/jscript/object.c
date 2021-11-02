@@ -196,8 +196,24 @@ static HRESULT Object_propertyIsEnumerable(script_ctx_t *ctx, vdisp_t *jsthis, W
 static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsdisp_t *jsdisp;
+    BOOL ret = FALSE;
+
+    if(!r)
+        return S_OK;
+
+    if(argc && is_jsdisp(jsthis) && is_object_instance(argv[0]) && (jsdisp = to_jsdisp(get_object(argv[0])))) {
+        while(jsdisp->prototype) {
+            if(jsdisp->prototype == jsthis->u.jsdisp) {
+                ret = TRUE;
+                break;
+            }
+            jsdisp = jsdisp->prototype;
+        }
+    }
+
+    *r = jsval_bool(ret);
+    return S_OK;
 }
 
 static HRESULT Object_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
