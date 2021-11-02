@@ -1012,6 +1012,45 @@ static void test_sync_reader_types(void)
     ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 }
 
+static void test_sync_reader_file(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IWMSyncReader *reader;
+    IWMProfile *profile;
+    DWORD count;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    hr = WMCreateSyncReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IWMSyncReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
+
+    hr = IWMSyncReader_Open(reader, filename);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IWMSyncReader_GetOutputCount(reader, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+
+    hr = IWMSyncReader_Close(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_Close(reader);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_Open(reader, filename);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IWMProfile_Release(profile);
+    ref = IWMSyncReader_Release(reader);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -1030,6 +1069,7 @@ START_TEST(wmvcore)
     test_iscontentprotected();
     test_sync_reader_streaming();
     test_sync_reader_types();
+    test_sync_reader_file();
 
     CoUninitialize();
 }

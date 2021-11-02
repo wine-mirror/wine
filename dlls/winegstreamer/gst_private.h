@@ -139,6 +139,7 @@ struct wm_reader
     QWORD start_time;
 
     IStream *source_stream;
+    HANDLE file;
     HANDLE read_thread;
     bool read_thread_shutdown;
     struct wg_parser *wg_parser;
@@ -167,6 +168,7 @@ struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader
 HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
         INSSBuffer **sample, QWORD *pts, QWORD *duration, DWORD *flags);
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
+HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration);
 HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
