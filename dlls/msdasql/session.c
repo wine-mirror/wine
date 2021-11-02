@@ -413,6 +413,7 @@ struct msdasql_rowset
 {
     IRowset IRowset_iface;
     IRowsetInfo IRowsetInfo_iface;
+    IColumnsInfo IColumnsInfo_iface;
     LONG refs;
 };
 
@@ -424,6 +425,11 @@ static inline struct msdasql_rowset *impl_from_IRowset( IRowset *iface )
 static inline struct msdasql_rowset *impl_from_IRowsetInfo( IRowsetInfo *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_rowset, IRowsetInfo_iface );
+}
+
+static inline struct msdasql_rowset *rowset_impl_from_IColumnsInfo( IColumnsInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_rowset, IColumnsInfo_iface );
 }
 
 static HRESULT WINAPI msdasql_rowset_QueryInterface(IRowset *iface, REFIID riid,  void **ppv)
@@ -441,6 +447,10 @@ static HRESULT WINAPI msdasql_rowset_QueryInterface(IRowset *iface, REFIID riid,
     else if (IsEqualGUID(&IID_IRowsetInfo, riid))
     {
         *ppv = &rowset->IRowsetInfo_iface;
+    }
+    else if (IsEqualGUID(&IID_IColumnsInfo, riid))
+    {
+        *ppv = &rowset->IColumnsInfo_iface;
     }
 
     if(*ppv)
@@ -547,7 +557,7 @@ static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG 
         const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets)
 {
     struct msdasql_rowset *rowset = impl_from_IRowsetInfo( iface );
-    FIXME("%p, %ld, %p, %p, %p\n", rowset, count, propertyidsets, out_count, propertysets);
+    FIXME("%p, %d, %p, %p, %p\n", rowset, count, propertyidsets, out_count, propertysets);
     return E_NOTIMPL;
 }
 
@@ -577,6 +587,49 @@ struct IRowsetInfoVtbl rowset_info_vtbl =
     rowset_info_GetSpecification
 };
 
+static HRESULT WINAPI rowset_colsinfo_QueryInterface(IColumnsInfo *iface, REFIID riid, void **out)
+{
+    struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
+    return IRowset_QueryInterface(&rowset->IRowset_iface, riid, out);
+}
+
+static ULONG WINAPI rowset_colsinfo_AddRef(IColumnsInfo *iface)
+{
+    struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
+    return IRowset_AddRef(&rowset->IRowset_iface);
+}
+
+static ULONG  WINAPI rowset_colsinfo_Release(IColumnsInfo *iface)
+{
+    struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
+    return IRowset_Release(&rowset->IRowset_iface);
+}
+
+static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDINAL *columns,
+        DBCOLUMNINFO **colinfo, OLECHAR **stringsbuffer)
+{
+    struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
+    FIXME("%p, %p, %p, %p\n", rowset, columns, colinfo, stringsbuffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_colsinfo_MapColumnIDs(IColumnsInfo *iface, DBORDINAL column_ids,
+        const DBID *dbids, DBORDINAL *columns)
+{
+    struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
+    FIXME("%p, %lu, %p, %p\n", rowset, column_ids, dbids, columns);
+    return E_NOTIMPL;
+}
+
+static struct IColumnsInfoVtbl rowset_columninfo_vtbll =
+{
+    rowset_colsinfo_QueryInterface,
+    rowset_colsinfo_AddRef,
+    rowset_colsinfo_Release,
+    rowset_colsinfo_GetColumnInfo,
+    rowset_colsinfo_MapColumnIDs
+};
+
 static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFIID riid,
         DBPARAMS *params, DBROWCOUNT *affected, IUnknown **rowset)
 {
@@ -592,6 +645,7 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
 
     msrowset->IRowset_iface.lpVtbl = &msdasql_rowset_vtbl;
     msrowset->IRowsetInfo_iface.lpVtbl = &rowset_info_vtbl;
+    msrowset->IColumnsInfo_iface.lpVtbl = &rowset_columninfo_vtbll;
     msrowset->refs = 1;
 
     if (affected)
