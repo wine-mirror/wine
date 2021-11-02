@@ -1422,7 +1422,7 @@ static int queue_hotkey_message( struct desktop *desktop, struct message *msg )
     struct hotkey *hotkey;
     unsigned int modifiers = 0;
 
-    if (msg->msg != WM_KEYDOWN) return 0;
+    if (msg->msg != WM_KEYDOWN && msg->msg != WM_SYSKEYDOWN) return 0;
 
     if (desktop->keystate[VK_MENU] & 0x80) modifiers |= MOD_ALT;
     if (desktop->keystate[VK_CONTROL] & 0x80) modifiers |= MOD_CONTROL;

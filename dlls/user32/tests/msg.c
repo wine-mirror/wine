@@ -17699,7 +17699,7 @@ static void test_hotkey(void)
         }
         DispatchMessageA(&msg);
     }
-    ok_sequence(WmHotkeyPressWithALT, "window hotkey press with ALT", TRUE);
+    ok_sequence(WmHotkeyPressWithALT, "window hotkey press with ALT", FALSE);
 
     keybd_event(hotkey_letter, 0, KEYEVENTF_KEYUP, 0);
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
