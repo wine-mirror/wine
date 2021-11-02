@@ -466,7 +466,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     file = (const char*)symbols + sizeof(PDB_SYMBOLS);
     while (file - (const char*)symbols < sizeof(PDB_SYMBOLS) + symbols->module_size)
     {
-        int file_nr, symbol_size, lineno_size;
+        int file_nr, symbol_size, lineno_size, lineno2_size;
         const char* file_name;
             
         if (symbols->version < 19970000)
@@ -476,6 +476,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             file_name   = sym_file->filename;
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
+            lineno2_size = sym_file->lineno2_size;
             printf("\t--------symbol file----------- %s\n", file_name);
             printf("\tgot symbol_file\n"
                    "\t\tunknown1:   %08x\n"
@@ -491,7 +492,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\tfile:       %04x\n"
                    "\t\tsymb size:  %08x\n"
                    "\t\tline size:  %08x\n"
-                   "\t\tunknown2:   %08x\n"
+                   "\t\tline2 size:  %08x\n"
                    "\t\tnSrcFiles:  %08x\n"
                    "\t\tattribute:  %08x\n",
                    sym_file->unknown1,
@@ -506,7 +507,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    sym_file->file,
                    sym_file->symbol_size,
                    sym_file->lineno_size,
-                   sym_file->unknown2,
+                   sym_file->lineno2_size,
                    sym_file->nSrcFiles,
                    sym_file->attribute);
         }
@@ -517,6 +518,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             file_name   = sym_file->filename;
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
+            lineno2_size = sym_file->lineno2_size;
             printf("\t--------symbol file----------- %s\n", file_name);
             printf("\t\tunknown1:   %08x\n"
                    "\t\trange\n"
@@ -533,7 +535,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\tfile:       %04x\n"
                    "\t\tsymb size:  %08x\n"
                    "\t\tline size:  %08x\n"
-                   "\t\tunknown2:   %08x\n"
+                   "\t\tline2 size: %08x\n"
                    "\t\tnSrcFiles:  %08x\n"
                    "\t\tattribute:  %08x\n"
                    "\t\treserved/0: %08x\n"
@@ -552,7 +554,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    sym_file->file,
                    sym_file->symbol_size,
                    sym_file->lineno_size,
-                   sym_file->unknown2,
+                   sym_file->lineno2_size,
                    sym_file->nSrcFiles,
                    sym_file->attribute,
                    sym_file->reserved[0],
@@ -569,15 +571,13 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             /* line number info */
             if (lineno_size)
                 codeview_dump_linetab((const char*)modimage + symbol_size, TRUE, "        ");
-            /* anyway, lineno_size doesn't see to really be the size of the line number information, and
-             * it's not clear yet when to call for linetab2...
-             */
-            codeview_dump_linetab2((const char*)modimage + symbol_size + lineno_size,
-                                   total_size - (symbol_size + lineno_size),
-                                   filesimage ? filesimage + 12 : NULL, filessize, "        ");
+            else if (lineno2_size) /* actually, only one of the 2 lineno should be present */
+                codeview_dump_linetab2((const char*)modimage + symbol_size, lineno2_size,
+                                       filesimage ? filesimage + 12 : NULL, filessize, "        ");
             /* what's that part ??? */
             if (0)
-                dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "    ");
+                dump_data(modimage + symbol_size + lineno_size + lineno2_size,
+                          total_size - (symbol_size + lineno_size + lineno2_size), "    ");
             free(modimage);
         }
 

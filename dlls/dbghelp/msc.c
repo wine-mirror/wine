@@ -2424,6 +2424,7 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
         sfile->range.index = sym_file->range.index;
         sfile->symbol_size = sym_file->symbol_size;
         sfile->lineno_size = sym_file->lineno_size;
+        sfile->lineno2_size = sym_file->lineno2_size;
         *size = sizeof(PDB_SYMBOL_FILE) - 1;
     }
     else
@@ -2818,14 +2819,14 @@ static BOOL pdb_process_internal(const struct process* pcs,
                     codeview_snarf(msc_dbg, modimage, sizeof(DWORD),
                                    sfile.symbol_size, TRUE);
 
+                if (sfile.lineno_size && sfile.lineno2_size) FIXME("Both line info present... only supporting first\n");
                 if (sfile.lineno_size)
                     codeview_snarf_linetab(msc_dbg,
                                            modimage + sfile.symbol_size,
                                            sfile.lineno_size,
                                            pdb_file->kind == PDB_JG);
-                if (files_image)
-                    codeview_snarf_linetab2(msc_dbg, modimage + sfile.symbol_size + sfile.lineno_size,
-                                   pdb_get_file_size(pdb_file, sfile.file) - sfile.symbol_size - sfile.lineno_size,
+                else if (sfile.lineno2_size && files_image)
+                    codeview_snarf_linetab2(msc_dbg, modimage + sfile.symbol_size, sfile.lineno2_size,
                                    files_image + 12, files_size);
 
                 pdb_free(modimage);

@@ -2343,7 +2343,7 @@ typedef struct _PDB_SYMBOL_FILE
     WORD        file;
     DWORD       symbol_size;
     DWORD       lineno_size;
-    DWORD       unknown2;
+    DWORD       lineno2_size;
     DWORD       nSrcFiles;
     DWORD       attribute;
     CHAR        filename[1];
@@ -2357,7 +2357,7 @@ typedef struct _PDB_SYMBOL_FILE_EX
     WORD        file;
     DWORD       symbol_size;
     DWORD       lineno_size;
-    DWORD       unknown2;
+    DWORD       lineno2_size;
     DWORD       nSrcFiles;
     DWORD       attribute;
     DWORD       reserved[2];
