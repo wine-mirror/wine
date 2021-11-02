@@ -468,6 +468,17 @@ static void test_reader_attributes(IWMProfile *profile)
         ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
                 stream_number, ret_stream_number);
 
+        size = sizeof(DWORD);
+        type = 0xdeadbeef;
+        dword = 0xdeadbeef;
+        hr = IWMHeaderInfo_GetAttributeByName(header_info, &ret_stream_number,
+                L"Seekable", &type, (BYTE *)&dword, &size);
+        ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+        ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+        ok(size == sizeof(DWORD), "Got size %u.\n", size);
+        ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
+                stream_number, ret_stream_number);
+
         IWMStreamConfig_Release(config);
     }
 
@@ -544,6 +555,17 @@ static void test_reader_attributes(IWMProfile *profile)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
     ok(size == sizeof(QWORD), "Got size %u.\n", size);
+    ok(stream_number == 0, "Got stream number %u.\n", stream_number);
+
+    size = sizeof(DWORD);
+    type = 0xdeadbeef;
+    dword = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
+            L"Seekable", &type, (BYTE *)&dword, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(type == WMT_TYPE_BOOL, "Got type %#x.\n", type);
+    ok(size == sizeof(DWORD), "Got size %u.\n", size);
+    ok(dword == TRUE, "Got duration %I64u.\n", duration);
     ok(stream_number == 0, "Got stream number %u.\n", stream_number);
 
     IWMHeaderInfo_Release(header_info);

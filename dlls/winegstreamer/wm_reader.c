@@ -910,6 +910,27 @@ static HRESULT WINAPI header_info_GetAttributeByName(IWMHeaderInfo3 *iface, WORD
         memcpy(value, &duration, sizeof(QWORD));
         return S_OK;
     }
+    else if (!wcscmp(name, L"Seekable"))
+    {
+        if (*stream_number)
+        {
+            WARN("Requesting duration for stream %u, returning ASF_E_NOTFOUND.\n", *stream_number);
+            return ASF_E_NOTFOUND;
+        }
+
+        *size = sizeof(BOOL);
+        if (!value)
+        {
+            *type = WMT_TYPE_BOOL;
+            return S_OK;
+        }
+        if (req_size < *size)
+            return ASF_E_BUFFERTOOSMALL;
+
+        *type = WMT_TYPE_BOOL;
+        *(BOOL *)value = TRUE;
+        return S_OK;
+    }
     else
     {
         FIXME("Unknown attribute %s.\n", debugstr_w(name));
