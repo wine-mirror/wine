@@ -182,6 +182,8 @@ static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
 static WINE_MODREF *last_failed_modref;
 
+static LDR_DDAG_NODE *node_ntdll, *node_kernel32;
+
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WCHAR *default_ext,
                           DWORD flags, WINE_MODREF** pwm );
 static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved );
@@ -1280,7 +1282,10 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
             imp = NULL;
             status = STATUS_DLL_NOT_FOUND;
         }
-        else add_module_dependency_after( wm->ldr.DdagNode, imp->ldr.DdagNode, dep_after );
+        else if (!is_import_dll_system( &wm->ldr, &imports[i] ))
+        {
+            add_module_dependency_after( wm->ldr.DdagNode, imp->ldr.DdagNode, dep_after );
+        }
     }
     current_modref = prev;
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
@@ -2076,6 +2081,7 @@ static void build_ntdll_module(void)
     wm = alloc_module( meminfo.AllocationBase, &nt_name, TRUE );
     assert( wm );
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
+    node_ntdll = wm->ldr.DdagNode;
     if (TRACE_ON(relay)) RELAY_SetupDLL( meminfo.AllocationBase );
 }
 
@@ -4004,6 +4010,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         kernel32_handle = kernel32->ldr.DllBase;
+        node_kernel32 = kernel32->ldr.DdagNode;
         RtlInitAnsiString( &func_name, "BaseThreadInitThunk" );
         if ((status = LdrGetProcedureAddress( kernel32_handle, &func_name,
                                               0, (void **)&pBaseThreadInitThunk )) != STATUS_SUCCESS)
@@ -4052,6 +4059,14 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         wm->ldr.Flags |= LDR_PROCESS_ATTACHED;  /* don't try to attach again */
         if (wm->ldr.ActivationContext)
             RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
+
+        if ((status = process_attach( node_ntdll, context ))
+             || (status = process_attach( node_kernel32, context )))
+        {
+            ERR( "Initializing system dll for %s failed, status %x\n",
+                 debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
 
         if ((status = walk_node_dependencies( wm->ldr.DdagNode, context, process_attach )))
         {

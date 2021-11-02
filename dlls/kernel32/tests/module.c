@@ -1409,7 +1409,7 @@ static void test_ddag_node(void)
         }
 
         mod2 = CONTAINING_RECORD(dep_node->Modules.Flink, LDR_DATA_TABLE_ENTRY, NodeModuleLink);
-        todo_wine ok( !lstrcmpW( mod2->BaseDllName.Buffer, expected_exe_dependencies[i].dllname ),
+        ok( !lstrcmpW( mod2->BaseDllName.Buffer, expected_exe_dependencies[i].dllname ),
                 "Got unexpected module %s.\n", debugstr_w(mod2->BaseDllName.Buffer));
 
         se2 = dep_node->IncomingDependencies.Tail;
@@ -1428,7 +1428,7 @@ static void test_ddag_node(void)
         winetest_pop_context();
         prev_node = dep_node;
     }
-    todo_wine ok( se == node->Dependencies.Tail, "Expected end of the list.\n" );
+    ok( se == node->Dependencies.Tail, "Expected end of the list.\n" );
 }
 
 START_TEST(module)
