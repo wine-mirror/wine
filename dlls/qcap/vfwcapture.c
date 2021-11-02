@@ -23,7 +23,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const struct video_capture_funcs *capture_funcs;
+static unixlib_handle_t v4l_handle;
+
+#define V4L_CALL( func, params ) __wine_unix_call( v4l_handle, unix_ ## func, params )
 
 struct vfw_capture
 {
@@ -95,7 +97,10 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
     if (filter->init)
-        capture_funcs->destroy(filter->device);
+    {
+        struct destroy_params params = { filter->device };
+        V4L_CALL( destroy, &params );
+    }
 
     if (filter->source.pin.peer)
     {
@@ -139,6 +144,7 @@ static DWORD WINAPI stream_thread(void *arg)
 {
     struct vfw_capture *filter = arg;
     const unsigned int image_size = get_image_size(filter);
+    struct read_frame_params params;
 
     for (;;)
     {
@@ -168,7 +174,9 @@ static DWORD WINAPI stream_thread(void *arg)
         IMediaSample_SetActualDataLength(sample, image_size);
         IMediaSample_GetPointer(sample, &data);
 
-        if (!capture_funcs->read_frame(filter->device, data))
+        params.device = filter->device;
+        params.data = data;
+        if (!V4L_CALL( read_frame, &params ))
         {
             IMediaSample_Release(sample);
             break;
@@ -284,6 +292,7 @@ static HRESULT WINAPI
 AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 {
     struct vfw_capture *This = impl_from_IAMStreamConfig(iface);
+    struct set_format_params params;
     HRESULT hr;
 
     TRACE("filter %p, mt %p.\n", This, pmt);
@@ -312,7 +321,9 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
             return VFW_E_INVALIDMEDIATYPE;
     }
 
-    hr = capture_funcs->set_format(This->device, pmt);
+    params.device = This->device;
+    params.mt = pmt;
+    hr = V4L_CALL( set_format, &params );
     if (SUCCEEDED(hr) && This->filter.graph && This->source.pin.peer)
     {
         hr = IFilterGraph_Reconnect(This->filter.graph, &This->source.pin.IPin_iface);
@@ -344,7 +355,8 @@ static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_
     {
         if ((format = CoTaskMemAlloc(sizeof(VIDEOINFOHEADER))))
         {
-            capture_funcs->get_format(filter->device, *mt, format);
+            struct get_format_params params = { filter->device, *mt, format };
+            V4L_CALL( get_format, &params );
             (*mt)->cbFormat = sizeof(VIDEOINFOHEADER);
             (*mt)->pbFormat = (BYTE *)format;
             hr = S_OK;
@@ -368,13 +380,14 @@ static HRESULT WINAPI AMStreamConfig_GetNumberOfCapabilities(IAMStreamConfig *if
         int *count, int *size)
 {
     struct vfw_capture *filter = impl_from_IAMStreamConfig(iface);
+    struct get_caps_count_params params = { filter->device, count };
 
     TRACE("filter %p, count %p, size %p.\n", filter, count, size);
 
     if (!count || !size)
         return E_POINTER;
 
-    *count = capture_funcs->get_caps_count(filter->device);
+    V4L_CALL( get_caps_count, &params );
     *size = sizeof(VIDEO_STREAM_CONFIG_CAPS);
 
     return S_OK;
@@ -386,10 +399,14 @@ static HRESULT WINAPI AMStreamConfig_GetStreamCaps(IAMStreamConfig *iface,
     struct vfw_capture *filter = impl_from_IAMStreamConfig(iface);
     VIDEOINFOHEADER *format;
     AM_MEDIA_TYPE *mt;
+    int count;
+    struct get_caps_count_params count_params = { filter->device, &count };
+    struct get_caps_params caps_params;
 
     TRACE("filter %p, index %d, pmt %p, vscc %p.\n", filter, index, pmt, vscc);
 
-    if (index > capture_funcs->get_caps_count(filter->device))
+    V4L_CALL( get_caps_count, &count_params );
+    if (index > count)
         return S_FALSE;
 
     if (!(mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
@@ -401,7 +418,12 @@ static HRESULT WINAPI AMStreamConfig_GetStreamCaps(IAMStreamConfig *iface,
         return E_OUTOFMEMORY;
     }
 
-    capture_funcs->get_caps(filter->device, index, mt, format, (VIDEO_STREAM_CONFIG_CAPS *)vscc);
+    caps_params.device = filter->device;
+    caps_params.index  = index;
+    caps_params.mt     = mt;
+    caps_params.format = format;
+    caps_params.caps   = (VIDEO_STREAM_CONFIG_CAPS *)vscc;
+    V4L_CALL( get_caps, &caps_params );
     mt->cbFormat = sizeof(VIDEOINFOHEADER);
     mt->pbFormat = (BYTE *)format;
     *pmt = mt;
@@ -441,32 +463,34 @@ static HRESULT WINAPI AMVideoProcAmp_GetRange(IAMVideoProcAmp *iface, LONG prope
         LONG *min, LONG *max, LONG *step, LONG *default_value, LONG *flags)
 {
     struct vfw_capture *filter = impl_from_IAMVideoProcAmp(iface);
+    struct get_prop_range_params params = { filter->device, property, min, max, step, default_value, flags };
 
     TRACE("filter %p, property %#x, min %p, max %p, step %p, default_value %p, flags %p.\n",
             filter, property, min, max, step, default_value, flags);
 
-    return capture_funcs->get_prop_range(filter->device, property, min,
-            max, step, default_value, flags);
+    return V4L_CALL( get_prop_range, &params );
 }
 
 static HRESULT WINAPI AMVideoProcAmp_Set(IAMVideoProcAmp *iface, LONG property,
         LONG value, LONG flags)
 {
     struct vfw_capture *filter = impl_from_IAMVideoProcAmp(iface);
+    struct set_prop_params params = { filter->device, property, value, flags };
 
     TRACE("filter %p, property %#x, value %d, flags %#x.\n", filter, property, value, flags);
 
-    return capture_funcs->set_prop(filter->device, property, value, flags);
+    return V4L_CALL( set_prop, &params );
 }
 
 static HRESULT WINAPI AMVideoProcAmp_Get(IAMVideoProcAmp *iface, LONG property,
         LONG *value, LONG *flags)
 {
     struct vfw_capture *filter = impl_from_IAMVideoProcAmp(iface);
+    struct get_prop_params params = { filter->device, property, value, flags };
 
     TRACE("filter %p, property %#x, value %p, flags %p.\n", filter, property, value, flags);
 
-    return capture_funcs->get_prop(filter->device, property, value, flags);
+    return V4L_CALL( get_prop, &params );
 }
 
 static const IAMVideoProcAmpVtbl IAMVideoProcAmp_VTable =
@@ -519,6 +543,7 @@ static HRESULT WINAPI PPB_InitNew(IPersistPropertyBag * iface)
 static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *bag, IErrorLog *error_log)
 {
     struct vfw_capture *filter = impl_from_IPersistPropertyBag(iface);
+    struct create_params params;
     HRESULT hr;
     VARIANT var;
 
@@ -528,11 +553,12 @@ static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *bag, IE
     if (FAILED(hr = IPropertyBag_Read(bag, L"VFWIndex", &var, error_log)))
         return hr;
 
-    if (!(filter->device = capture_funcs->create(V_I4(&var))))
-        return E_FAIL;
+    params.index = V_I4(&var);
+    params.device = &filter->device;
+    hr = V4L_CALL( create, &params );
 
-    filter->init = TRUE;
-    return S_OK;
+    if (SUCCEEDED(hr)) filter->init = TRUE;
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -639,20 +665,26 @@ static inline struct vfw_capture *impl_from_strmbase_pin(struct strmbase_pin *pi
 static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
     struct vfw_capture *filter = impl_from_strmbase_pin(pin);
-    return capture_funcs->check_format(filter->device, mt);
+    struct check_format_params params = { filter->device, mt };
+    return V4L_CALL( check_format, &params );
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct vfw_capture *filter = impl_from_strmbase_pin(pin);
+    struct get_media_type_params params;
     VIDEOINFOHEADER *format;
     HRESULT hr;
 
     if (!(format = CoTaskMemAlloc(sizeof(*format))))
         return E_OUTOFMEMORY;
 
-    if ((hr = capture_funcs->get_media_type(filter->device, index, mt, format)) != S_OK)
+    params.device = filter->device;
+    params.index  = index;
+    params.mt     = mt;
+    params.format = format;
+    if ((hr = V4L_CALL( get_media_type, &params )) != S_OK)
     {
         CoTaskMemFree(format);
         return hr;
@@ -826,7 +858,8 @@ static const IAMVideoControlVtbl IAMVideoControl_VTable =
 
 static BOOL WINAPI load_capture_funcs(INIT_ONCE *once, void *param, void **context)
 {
-    __wine_init_unix_lib(qcap_instance, DLL_PROCESS_ATTACH, NULL, &capture_funcs);
+    NtQueryVirtualMemory( GetCurrentProcess(), qcap_instance, MemoryWineUnixFuncs,
+                          &v4l_handle, sizeof(v4l_handle), NULL );
     return TRUE;
 }
 
@@ -836,7 +869,7 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 {
     struct vfw_capture *object;
 
-    if (!InitOnceExecuteOnce(&init_once, load_capture_funcs, NULL, NULL) || !capture_funcs)
+    if (!InitOnceExecuteOnce(&init_once, load_capture_funcs, NULL, NULL) || !v4l_handle)
         return E_FAIL;
 
     if (!(object = calloc(1, sizeof(*object))))

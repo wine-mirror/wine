@@ -25,6 +25,8 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "dshow.h"
+#include "winternl.h"
+#include "wine/unixlib.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
@@ -38,25 +40,108 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
-struct video_capture_funcs
+struct video_capture_device;
+
+struct create_params
 {
-    struct video_capture_device *(CDECL *create)(USHORT index);
-    void (CDECL *destroy)(struct video_capture_device *device);
-    HRESULT (CDECL *check_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
-    HRESULT (CDECL *set_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
-    void (CDECL *get_format)(struct video_capture_device *device, AM_MEDIA_TYPE *mt, VIDEOINFOHEADER *format);
-    HRESULT (CDECL *get_media_type)(struct video_capture_device *device,
-            unsigned int index, AM_MEDIA_TYPE *mt, VIDEOINFOHEADER *format);
-    void (CDECL *get_caps)(struct video_capture_device *device, LONG index, AM_MEDIA_TYPE *mt,
-            VIDEOINFOHEADER *format, VIDEO_STREAM_CONFIG_CAPS *caps);
-    LONG (CDECL *get_caps_count)(struct video_capture_device *device);
-    HRESULT (CDECL *get_prop_range)(struct video_capture_device *device, VideoProcAmpProperty property,
-            LONG *min, LONG *max, LONG *step, LONG *default_value, LONG *flags);
-    HRESULT (CDECL *get_prop)(struct video_capture_device *device,
-            VideoProcAmpProperty property, LONG *value, LONG *flags);
-    HRESULT (CDECL *set_prop)(struct video_capture_device *device,
-            VideoProcAmpProperty property, LONG value, LONG flags);
-    BOOL (CDECL *read_frame)(struct video_capture_device *device, BYTE *data);
+    unsigned int                  index;
+    struct video_capture_device **device;
+};
+
+struct destroy_params
+{
+    struct video_capture_device *device;
+};
+
+struct check_format_params
+{
+    struct video_capture_device *device;
+    const AM_MEDIA_TYPE         *mt;
+};
+
+struct set_format_params
+{
+    struct video_capture_device *device;
+    const AM_MEDIA_TYPE         *mt;
+};
+
+struct get_format_params
+{
+    struct video_capture_device *device;
+    AM_MEDIA_TYPE               *mt;
+    VIDEOINFOHEADER             *format;
+};
+
+struct get_media_type_params
+{
+    struct video_capture_device *device;
+    unsigned int                 index;
+    AM_MEDIA_TYPE               *mt;
+    VIDEOINFOHEADER             *format;
+};
+
+struct get_caps_params
+{
+    struct video_capture_device *device;
+    unsigned int                 index;
+    AM_MEDIA_TYPE               *mt;
+    VIDEOINFOHEADER             *format;
+    VIDEO_STREAM_CONFIG_CAPS    *caps;
+};
+
+struct get_caps_count_params
+{
+    struct video_capture_device *device;
+    int                         *count;
+};
+
+struct get_prop_range_params
+{
+    struct video_capture_device *device;
+    VideoProcAmpProperty         property;
+    LONG                        *min;
+    LONG                        *max;
+    LONG                        *step;
+    LONG                        *default_value;
+    LONG                        *flags;
+};
+
+struct get_prop_params
+{
+    struct video_capture_device *device;
+    VideoProcAmpProperty         property;
+    LONG                        *value;
+    LONG                        *flags;
+};
+
+struct set_prop_params
+{
+    struct video_capture_device *device;
+    VideoProcAmpProperty         property;
+    LONG                         value;
+    LONG                         flags;
+};
+
+struct read_frame_params
+{
+    struct video_capture_device *device;
+    void                        *data;
+};
+
+enum unix_funcs
+{
+    unix_create,
+    unix_destroy,
+    unix_check_format,
+    unix_set_format,
+    unix_get_format,
+    unix_get_media_type,
+    unix_get_caps,
+    unix_get_caps_count,
+    unix_get_prop_range,
+    unix_get_prop,
+    unix_set_prop,
+    unix_read_frame,
 };
 
 #endif
