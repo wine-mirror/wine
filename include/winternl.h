@@ -3274,9 +3274,9 @@ typedef struct _LDRP_CSLIST
 
 typedef struct _LDR_DEPENDENCY
 {
-    LDRP_CSLIST dependency_to_entry;
+    SINGLE_LIST_ENTRY dependency_to_entry;
     struct _LDR_DDAG_NODE *dependency_to;
-    LDRP_CSLIST dependency_from_entry;
+    SINGLE_LIST_ENTRY dependency_from_entry;
     struct _LDR_DDAG_NODE *dependency_from;
 } LDR_DEPENDENCY, *PLDR_DEPENDENCY;
 

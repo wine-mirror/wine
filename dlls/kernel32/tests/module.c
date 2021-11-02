@@ -1376,14 +1376,14 @@ static void test_ddag_node(void)
     ok( !node->IncomingDependencies.Tail, "Expected empty incoming dependencies list.\n" );
 
     /* node->Dependencies.Tail is NULL on Windows 10 1507-1607 32 bit test, maybe due to broken structure layout. */
-    todo_wine ok( !!node->Dependencies.Tail || broken( sizeof(void *) == 4 && !node->Dependencies.Tail ),
+    ok( !!node->Dependencies.Tail || broken( sizeof(void *) == 4 && !node->Dependencies.Tail ),
             "Expected nonempty dependencies list.\n" );
     if (!node->Dependencies.Tail)
     {
-        skip( "Empty dependencies list.\n" );
+        win_skip( "Empty dependencies list.\n" );
         return;
     }
-    ok( node->LoadCount == -1, "Got unexpected LoadCount %d.\n", node->LoadCount );
+    todo_wine ok( node->LoadCount == -1, "Got unexpected LoadCount %d.\n", node->LoadCount );
 
     prev_node = NULL;
     se = node->Dependencies.Tail;
@@ -1409,7 +1409,7 @@ static void test_ddag_node(void)
         }
 
         mod2 = CONTAINING_RECORD(dep_node->Modules.Flink, LDR_DATA_TABLE_ENTRY, NodeModuleLink);
-        ok( !lstrcmpW( mod2->BaseDllName.Buffer, expected_exe_dependencies[i].dllname ),
+        todo_wine ok( !lstrcmpW( mod2->BaseDllName.Buffer, expected_exe_dependencies[i].dllname ),
                 "Got unexpected module %s.\n", debugstr_w(mod2->BaseDllName.Buffer));
 
         se2 = dep_node->IncomingDependencies.Tail;
@@ -1422,13 +1422,13 @@ static void test_ddag_node(void)
         while (dep2 != dep && se2 != dep_node->IncomingDependencies.Tail);
         ok( dep2 == dep, "Dependency not found in incoming deps list.\n" );
 
-        ok( dep_node->LoadCount > 0 || broken(!dep_node->LoadCount) /* Win8 */,
+        todo_wine ok( dep_node->LoadCount > 0 || broken(!dep_node->LoadCount) /* Win8 */,
                 "Got unexpected LoadCount %d.\n", dep_node->LoadCount );
 
         winetest_pop_context();
         prev_node = dep_node;
     }
-    ok( se == node->Dependencies.Tail, "Expected end of the list.\n" );
+    todo_wine ok( se == node->Dependencies.Tail, "Expected end of the list.\n" );
 }
 
 START_TEST(module)
