@@ -2453,7 +2453,9 @@ uint32_t FAudioSourceVoice_SubmitSourceBuffer(
 
 	FAudio_assert(voice->type == FAUDIO_VOICE_SOURCE);
 #ifdef HAVE_WMADEC
-	FAudio_assert(	(voice->src.wmadec != NULL && (pBufferWMA != NULL || voice->src.format->wFormatTag == FAUDIO_FORMAT_XMAUDIO2)) ||
+	FAudio_assert(	(voice->src.wmadec != NULL && (pBufferWMA != NULL ||
+					(voice->src.format->wFormatTag == FAUDIO_FORMAT_XMAUDIO2 ||
+					 voice->src.format->wFormatTag == FAUDIO_FORMAT_EXTENSIBLE))) ||
 			(voice->src.wmadec == NULL && (pBufferWMA == NULL && voice->src.format->wFormatTag != FAUDIO_FORMAT_XMAUDIO2))	);
 #endif /* HAVE_WMADEC */
 

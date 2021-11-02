@@ -507,7 +507,8 @@ static FAudio_ChannelPositionFlags FAudio_GetChannelPositionFlags(int32_t total_
 				case 3:
 					return Position_Right | Position_Rear;
 			}
-
+			FAudio_assert(0 && "Unsupported channel count");
+			break;
 		case 5:
 			switch (channel)
 			{
@@ -522,7 +523,8 @@ static FAudio_ChannelPositionFlags FAudio_GetChannelPositionFlags(int32_t total_
 				case 4:
 					return Position_Right | Position_Rear;
 			}
-
+			FAudio_assert(0 && "Unsupported channel count");
+			break;
 		default:
 			FAudio_assert(0 && "Unsupported channel count");
 			break;

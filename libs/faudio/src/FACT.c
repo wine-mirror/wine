@@ -2415,20 +2415,7 @@ uint32_t FACTCue_Destroy(FACTCue *pCue)
 	FAudio_assert(cue != NULL && "Could not find Cue reference!");
 
 	pCue->parentBank->parentEngine->pFree(pCue->variableValues);
-	if (pCue->notifyOnDestroy || pCue->parentBank->parentEngine->notifications & NOTIFY_CUEDESTROY)
-	{
-		note.type = FACTNOTIFICATIONTYPE_CUEDESTROYED;
-		note.cue.pCue = pCue;
-		if (pCue->parentBank->parentEngine->notifications & NOTIFY_CUEDESTROY)
-		{
-			note.pvContext = pCue->parentBank->parentEngine->cue_context;
-		}
-		else
-		{
-			note.pvContext = pCue->usercontext;
-		}
-		pCue->parentBank->parentEngine->notificationCallback(&note);
-	}
+	FACT_INTERNAL_SendCueNotification(pCue, NOTIFY_CUEDESTROY, FACTNOTIFICATIONTYPE_CUEDESTROYED);
 
 	mutex = pCue->parentBank->parentEngine->apiLock;
 	pCue->parentBank->parentEngine->pFree(pCue);
@@ -2678,6 +2665,8 @@ uint32_t FACTCue_Stop(FACTCue *pCue, uint32_t dwFlags)
 			pCue->state |= FACT_STATE_STOPPING;
 		}
 	}
+
+	FACT_INTERNAL_SendCueNotification(pCue, NOTIFY_CUESTOP, FACTNOTIFICATIONTYPE_CUESTOP);
 
 	FAudio_PlatformUnlockMutex(pCue->parentBank->parentEngine->apiLock);
 	return 0;

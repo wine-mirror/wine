@@ -228,8 +228,8 @@ void FAudio_PlatformInit(
 	FAudio_assert(!FAILED(hr) && "Failed to create audio client!");
 	IMMDevice_Release(device);
 
-	if (flags & FAUDIO_1024_QUANTUM) duration = 21330;
-	else duration = 30000;
+	if (flags & FAUDIO_1024_QUANTUM) duration = 213333;
+	else duration = 100000;
 
 	hr = IAudioClient_IsFormatSupported(
 		data->client,
@@ -250,7 +250,7 @@ void FAudio_PlatformInit(
 		data->client,
 		AUDCLNT_SHAREMODE_SHARED,
 		AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-		duration,
+		duration * 3,
 		0,
 		&args->format.Format,
 		&GUID_NULL
@@ -287,7 +287,8 @@ void FAudio_PlatformInit(
 	args->events[0] = audioEvent;
 	args->events[1] = data->stopEvent;
 	args->audio = audio;
-	args->updateSize = args->format.Format.nSamplesPerSec / 100;
+	if (flags & FAUDIO_1024_QUANTUM) args->updateSize = args->format.Format.nSamplesPerSec / (1000.0 / (64.0 / 3.0));
+	else args->updateSize = args->format.Format.nSamplesPerSec / 100;
 
 	data->audioThread = CreateThread(NULL, 0, &FAudio_AudioClientThread, args, 0, NULL);
 	FAudio_assert(!!data->audioThread && "Failed to create audio client thread!");
@@ -622,6 +623,7 @@ static int FAUDIOCALL FAudio_mem_close(void *data)
 {
 	if (!data) return 0;
 	FAudio_free(data);
+	return 0;
 }
 
 FAudioIOStream* FAudio_memopen(void *mem, int len)
