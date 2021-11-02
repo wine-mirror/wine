@@ -675,12 +675,14 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             printf("\t\tFriend function V1: '%s' type:%x\n",
                    p_string(&fieldtype->friendfcn_v1.p_name),
                    fieldtype->friendfcn_v1.type);
+            ptr += 2 + 2 + (1 + fieldtype->stmember_v2.p_name.namelen);
             break;
 
         case LF_FRIENDFCN_V2:
             printf("\t\tFriend function V2: '%s' type:%x\n",
                    p_string(&fieldtype->friendfcn_v2.p_name),
                    fieldtype->friendfcn_v2.type);
+            ptr += 2 + 2 + 4 + (1 + fieldtype->stmember_v2.p_name.namelen);
             break;
 
 #if 0
@@ -735,10 +737,12 @@ static void do_field(const unsigned char* start, const unsigned char* end)
 
         case LF_FRIENDCLS_V1:
             printf("\t\tFriend class V1: type:%x\n", fieldtype->friendcls_v1.type);
+            ptr += 2 + 2;
             break;
 
         case LF_FRIENDCLS_V2:
             printf("\t\tFriend class V2: type:%x\n", fieldtype->friendcls_v2.type);
+            ptr += 2 + 2 + 4;
             break;
 
         case LF_NESTTYPE_V1:
@@ -777,11 +781,13 @@ static void do_field(const unsigned char* start, const unsigned char* end)
         case LF_VFUNCOFF_V1:
             printf("\t\tVirtual function table offset V1: type:%x offset:%x\n",
                    fieldtype->vfuncoff_v1.type, fieldtype->vfuncoff_v1.offset);
+            ptr += 2 + 2 + 4;
             break;
 
         case LF_VFUNCOFF_V2:
             printf("\t\tVirtual function table offset V2: type:%x offset:%x\n",
                    fieldtype->vfuncoff_v2.type, fieldtype->vfuncoff_v2.offset);
+            ptr += 2 + 2 + 4 + 4;
             break;
 
         default:
