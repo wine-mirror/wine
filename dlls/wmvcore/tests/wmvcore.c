@@ -626,7 +626,7 @@ static void check_video_type(const WM_MEDIA_TYPE *mt)
 
     ok(IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo), "Got format %s.\n", debugstr_guid(&mt->formattype));
     ok(mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", mt->bFixedSizeSamples);
-    todo_wine ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
+    ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
     ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
 
     ok(EqualRect(&video_info->rcSource, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&rect));

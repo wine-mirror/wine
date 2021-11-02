@@ -316,7 +316,8 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
     mt->subtype = *format_table[format->u.video.format].subtype;
     if (wm)
         mt->bFixedSizeSamples = TRUE;
-    mt->bTemporalCompression = TRUE;
+    else
+        mt->bTemporalCompression = TRUE;
     mt->lSampleSize = 1;
     mt->formattype = FORMAT_VideoInfo;
     mt->cbFormat = sizeof(VIDEOINFOHEADER);
