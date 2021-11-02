@@ -581,6 +581,7 @@ static DNS_STATUS copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, WORD 
         r->Data.KEY.chAlgorithm = *pos++;
 
         size = rr->rdata + rr->rdlength - pos;
+        r->Data.KEY.wKeyLength = size;
 
         for (i = 0; i < size; i++)
             r->Data.KEY.Key[i] = *pos++;
@@ -668,6 +669,7 @@ static DNS_STATUS copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, WORD 
         r->Data.SIG.wKeyTag       = *(const WORD *)pos;
 
         size = rr->rdata + rr->rdlength - pos;
+        r->Data.SIG.wSignatureLength = size;
 
         for (i = 0; i < size; i++)
             r->Data.SIG.Signature[i] = *pos++;

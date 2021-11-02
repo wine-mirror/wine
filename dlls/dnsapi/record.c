@@ -221,10 +221,10 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     {
         if (r1->Data.KEY.wFlags      != r2->Data.KEY.wFlags      ||
             r1->Data.KEY.chProtocol  != r2->Data.KEY.chProtocol  ||
-            r1->Data.KEY.chAlgorithm != r2->Data.KEY.chAlgorithm)
+            r1->Data.KEY.chAlgorithm != r2->Data.KEY.chAlgorithm ||
+            r1->Data.KEY.wKeyLength  != r2->Data.KEY.wKeyLength)
             return FALSE;
-        if (memcmp( r1->Data.KEY.Key, r2->Data.KEY.Key,
-                    r1->wDataLength - sizeof(DNS_KEY_DATA) + 1 ))
+        if (memcmp( r1->Data.KEY.Key, r2->Data.KEY.Key, r1->Data.KEY.wKeyLength ))
             return FALSE;
         break;
     }
@@ -238,10 +238,10 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
             r1->Data.SIG.dwOriginalTtl != r2->Data.SIG.dwOriginalTtl ||
             r1->Data.SIG.dwExpiration  != r2->Data.SIG.dwExpiration  ||
             r1->Data.SIG.dwTimeSigned  != r2->Data.SIG.dwTimeSigned  ||
-            r1->Data.SIG.wKeyTag       != r2->Data.SIG.wKeyTag)
+            r1->Data.SIG.wKeyTag       != r2->Data.SIG.wKeyTag       ||
+            r1->Data.SIG.wSignatureLength != r2->Data.SIG.wSignatureLength)
             return FALSE;
-        if (memcmp( r1->Data.SIG.Signature, r2->Data.SIG.Signature,
-                    r1->wDataLength - sizeof(DNS_SIG_DATAA) + 1 ))
+        if (memcmp( r1->Data.SIG.Signature, r2->Data.SIG.Signature, r1->Data.SIG.wSignatureLength ))
             return FALSE;
         break;
     }

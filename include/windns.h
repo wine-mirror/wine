@@ -339,6 +339,8 @@ typedef struct
     WORD wFlags;
     BYTE chProtocol;
     BYTE chAlgorithm;
+    WORD wKeyLength;
+    WORD wPad;
     BYTE Key[1];
 } DNS_KEY_DATA, *PDNS_KEY_DATA;
 
@@ -355,7 +357,6 @@ typedef struct
 
 typedef struct
 {
-    PSTR pNameSigner;
     WORD wTypeCovered;
     BYTE chAlgorithm;
     BYTE chLabelCount;
@@ -363,13 +364,13 @@ typedef struct
     DWORD dwExpiration;
     DWORD dwTimeSigned;
     WORD wKeyTag;
-    WORD Pad;
+    WORD wSignatureLength;
+    PSTR pNameSigner;
     BYTE Signature[1];
 } DNS_SIG_DATAA, *PDNS_SIG_DATAA;
 
 typedef struct
 {
-    PWSTR pNameSigner;
     WORD wTypeCovered;
     BYTE chAlgorithm;
     BYTE chLabelCount;
@@ -377,7 +378,8 @@ typedef struct
     DWORD dwExpiration;
     DWORD dwTimeSigned;
     WORD wKeyTag;
-    WORD Pad;
+    WORD wSignatureLength;
+    PWSTR pNameSigner;
     BYTE Signature[1];
 } DNS_SIG_DATAW, *PDNS_SIG_DATAW;
 
