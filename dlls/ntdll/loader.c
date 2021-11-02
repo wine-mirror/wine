@@ -187,7 +187,7 @@ static WINE_MODREF *last_failed_modref;
 
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WCHAR *default_ext,
                           DWORD flags, WINE_MODREF** pwm );
-static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved );
+static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved );
 static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                     DWORD exp_size, DWORD ordinal, LPCWSTR load_path );
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
@@ -648,7 +648,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
                 WINE_MODREF **deps = grow_module_deps( current_modref, 1 );
                 if (deps) deps[current_modref->nDeps++] = wm;
             }
-            else if (process_attach( wm, NULL ) != STATUS_SUCCESS)
+            else if (process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
             {
                 LdrUnloadDll( wm->ldr.DllBase );
                 wm = NULL;
@@ -1438,13 +1438,18 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
  *
  * The loader_section must be locked while calling this function.
  */
-static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
+static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    LDR_DATA_TABLE_ENTRY *mod;
     ULONG_PTR cookie;
+    WINE_MODREF *wm;
     int i;
 
     if (process_detaching) return status;
+
+    mod = CONTAINING_RECORD( node->Modules.Flink, LDR_DATA_TABLE_ENTRY, NodeModuleLink );
+    wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
 
     /* prevent infinite recursion in case of cyclical dependencies */
     if (    ( wm->ldr.Flags & LDR_LOAD_IN_PROGRESS )
@@ -1462,7 +1467,7 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
     for ( i = 0; i < wm->nDeps; i++ )
     {
         if (!wm->deps[i]) continue;
-        if ((status = process_attach( wm->deps[i], lpReserved )) != STATUS_SUCCESS) break;
+        if ((status = process_attach( wm->deps[i]->ldr.DdagNode, lpReserved )) != STATUS_SUCCESS) break;
     }
 
     if (!wm->ldr.InInitializationOrderLinks.Flink)
@@ -2994,7 +2999,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD flags,
 
     if (nts == STATUS_SUCCESS && !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
     {
-        nts = process_attach( wm, NULL );
+        nts = process_attach( wm->ldr.DdagNode, NULL );
         if (nts != STATUS_SUCCESS)
         {
             LdrUnloadDll(wm->ldr.DllBase);
@@ -3957,7 +3962,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         for (i = 0; i < wm->nDeps; i++)
         {
             if (!wm->deps[i]) continue;
-            if ((status = process_attach( wm->deps[i], context )) != STATUS_SUCCESS)
+            if ((status = process_attach( wm->deps[i]->ldr.DdagNode, context )) != STATUS_SUCCESS)
             {
                 if (last_failed_modref)
                     ERR( "%s failed to initialize, aborting\n",
