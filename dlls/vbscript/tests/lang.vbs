@@ -358,6 +358,22 @@ while empty
 wend
 
 x = 0
+if "0" then
+   ok false, "if ""0"" executed"
+else
+   x = 1
+end if
+Call ok(x = 1, "if ""0"" else not executed")
+
+x = 0
+if "-1" then
+   x = 1
+else
+   ok false, "if ""-1"" else executed"
+end if
+Call ok(x = 1, "if ""-1"" not executed")
+
+x = 0
 WHILE x < 3 : x = x + 1 : Wend
 Call ok(x = 3, "x not equal to 3")
 
