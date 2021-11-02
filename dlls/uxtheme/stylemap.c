@@ -23,9 +23,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "tmschema.h"
+#include "vssym32.h"
 
 #define TMT_ENUM 200
+#define TMT_STOCKIMAGEFILE 3007
 
 typedef struct _MSSTYLES_PROPERTY_MAP {
     WORD dwPrimitiveType;
@@ -332,24 +333,6 @@ static const MSSTYLES_ENUM_MAP mapEnum[] = {
  * Defined as PartID,StateID,TextName
  * If StateID == 0 then its a part being defined
  */
-
-/* These are globals to all classes, but its treated as a separate class */
-static const MSSTYLES_CLASS_MAP classGlobals[] = {
-    {GP_BORDER, 0, L"BORDER"},
-    {GP_BORDER, BSS_FLAT, L"FLAT"},
-    {GP_BORDER, BSS_RAISED, L"RAISED"},
-    {GP_BORDER, BSS_SUNKEN, L"SUNKEN"},
-    {GP_LINEHORZ, 0, L"LINEHORZ"},
-    {GP_LINEHORZ, LHS_FLAT, L"FLAT"},
-    {GP_LINEHORZ, LHS_RAISED, L"RAISED"},
-    {GP_LINEHORZ, LHS_SUNKEN, L"SUNKEN"},
-    {GP_LINEVERT, 0, L"LINEVERT"},
-    {GP_LINEVERT, LVS_FLAT, L"FLAT"},
-    {GP_LINEVERT, LVS_RAISED, L"RAISED"},
-    {GP_LINEVERT, LVS_SUNKEN, L"SUNKEN"},
-    {0, 0, L""}
-};
-
 static const MSSTYLES_CLASS_MAP classButton[] = {
     {BP_PUSHBUTTON, 0, L"PUSHBUTTON"},
     {BP_PUSHBUTTON, PBS_NORMAL, L"NORMAL"},
@@ -488,43 +471,16 @@ static const MSSTYLES_CLASS_MAP classHeader[] = {
 
 static const MSSTYLES_CLASS_MAP classListview[] = {
     {LVP_LISTITEM, 0, L"LISTITEM"},
-    {LVP_LISTITEM, LIS_NORMAL, L"NORMAL"},
-    {LVP_LISTITEM, LIS_HOT, L"HOT"},
-    {LVP_LISTITEM, LIS_SELECTED, L"SELECTED"},
-    {LVP_LISTITEM, LIS_DISABLED, L"DISABLED"},
-    {LVP_LISTITEM, LIS_SELECTEDNOTFOCUS, L"SELECTEDNOTFOCUS"},
+    {LVP_LISTITEM, LISS_NORMAL, L"NORMAL"},
+    {LVP_LISTITEM, LISS_HOT, L"HOT"},
+    {LVP_LISTITEM, LISS_SELECTED, L"SELECTED"},
+    {LVP_LISTITEM, LISS_DISABLED, L"DISABLED"},
+    {LVP_LISTITEM, LISS_SELECTEDNOTFOCUS, L"SELECTEDNOTFOCUS"},
+    {LVP_LISTITEM, LISS_HOTSELECTED, L"HOTSELECTED"},
     {LVP_LISTGROUP, 0, L"LISTGROUP"},
     {LVP_LISTDETAIL, 0, L"LISTDETAIL"},
     {LVP_LISTSORTEDDETAIL, 0, L"LISTSORTEDDETAIL"},
     {LVP_EMPTYTEXT, 0, L"EMPTYTEXT"},
-    {0, 0, L""}
-};
-
-static const MSSTYLES_CLASS_MAP classMenu[] = {
-    {MP_MENUITEM, 0, L"MENUITEM"},
-    {MP_MENUITEM, MS_NORMAL, L"NORMAL"},
-    {MP_MENUITEM, MS_SELECTED, L"SELECTED"},
-    {MP_MENUITEM, MS_DEMOTED, L"DEMOTED"},
-    {MP_MENUDROPDOWN, 0, L"MENUDROPDOWN"},
-    {MP_MENUDROPDOWN, MS_NORMAL, L"NORMAL"},
-    {MP_MENUDROPDOWN, MS_SELECTED, L"SELECTED"},
-    {MP_MENUDROPDOWN, MS_DEMOTED, L"DEMOTED"},
-    {MP_MENUBARITEM, 0, L"MENUBARITEM"},
-    {MP_MENUBARITEM, MS_NORMAL, L"NORMAL"},
-    {MP_MENUBARITEM, MS_SELECTED, L"SELECTED"},
-    {MP_MENUBARITEM, MS_DEMOTED, L"DEMOTED"},
-    {MP_MENUBARDROPDOWN, 0, L"MENUBARDROPDOWN"},
-    {MP_MENUBARDROPDOWN, MS_NORMAL, L"NORMAL"},
-    {MP_MENUBARDROPDOWN, MS_SELECTED, L"SELECTED"},
-    {MP_MENUBARDROPDOWN, MS_DEMOTED, L"DEMOTED"},
-    {MP_CHEVRON, 0, L"CHEVRON"},
-    {MP_CHEVRON, MS_NORMAL, L"NORMAL"},
-    {MP_CHEVRON, MS_SELECTED, L"SELECTED"},
-    {MP_CHEVRON, MS_DEMOTED, L"DEMOTED"},
-    {MP_SEPARATOR, 0, L"SEPARATOR"},
-    {MP_SEPARATOR, MS_NORMAL, L"NORMAL"},
-    {MP_SEPARATOR, MS_SELECTED, L"SELECTED"},
-    {MP_SEPARATOR, MS_DEMOTED, L"DEMOTED"},
     {0, 0, L""}
 };
 
@@ -1036,7 +992,6 @@ static const MSSTYLES_CLASS_MAP classWindow[] = {
 
 /* Map class names to part/state maps */
 static const MSSTYLES_CLASS_NAME mapClass[] = {
-    {classGlobals, L"GLOBALS"},
     {classButton, L"BUTTON"},
     {classClock, L"CLOCK"},
     {classCombobox, L"COMBOBOX"},
@@ -1044,7 +999,6 @@ static const MSSTYLES_CLASS_NAME mapClass[] = {
     {classExplorerbar, L"EXPLORERBAR"},
     {classHeader, L"HEADER"},
     {classListview, L"LISTVIEW"},
-    {classMenu, L"MENU"},
     {classMenuband, L"MENUBAND"},
     {classPage, L"PAGE"},
     {classProgress, L"PROGRESS"},

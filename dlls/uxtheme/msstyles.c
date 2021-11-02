@@ -28,7 +28,7 @@
 #include "winnls.h"
 #include "vfwmsgs.h"
 #include "uxtheme.h"
-#include "tmschema.h"
+#include "vssym32.h"
 
 #include "msstyles.h"
 

@@ -28,7 +28,7 @@
 #include "winreg.h"
 #include "vfwmsgs.h"
 #include "uxtheme.h"
-#include "tmschema.h"
+#include "vssym32.h"
 
 #include "uxthemedll.h"
 #include "msstyles.h"
