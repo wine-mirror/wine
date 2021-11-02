@@ -244,12 +244,16 @@ static void test_command_rowset(IUnknown *cmd)
     if (unk)
         IUnknown_Release(unk);
 
-    affected = 9999;
     hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"select * from testing");
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr == S_OK && unk)
+
+    affected = 9999;
+    hr = ICommandText_Execute(comand_text, NULL, &IID_IRowset, NULL, &affected, &unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(unk != NULL, "Unexepcted value\n");
+    if (hr == S_OK)
     {
-        ok(affected == 0, "wrong affected value\n");
+        ok(affected == -1, "wrong affected value\n");
 
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08x\n", hr);
