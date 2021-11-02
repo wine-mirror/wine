@@ -414,6 +414,7 @@ struct msdasql_rowset
     IRowset IRowset_iface;
     IRowsetInfo IRowsetInfo_iface;
     IColumnsInfo IColumnsInfo_iface;
+    IAccessor IAccessor_iface;
     LONG refs;
 };
 
@@ -430,6 +431,11 @@ static inline struct msdasql_rowset *impl_from_IRowsetInfo( IRowsetInfo *iface )
 static inline struct msdasql_rowset *rowset_impl_from_IColumnsInfo( IColumnsInfo *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_rowset, IColumnsInfo_iface );
+}
+
+static inline struct msdasql_rowset *impl_from_IAccessor ( IAccessor *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_rowset, IAccessor_iface );
 }
 
 static HRESULT WINAPI msdasql_rowset_QueryInterface(IRowset *iface, REFIID riid,  void **ppv)
@@ -451,6 +457,10 @@ static HRESULT WINAPI msdasql_rowset_QueryInterface(IRowset *iface, REFIID riid,
     else if (IsEqualGUID(&IID_IColumnsInfo, riid))
     {
         *ppv = &rowset->IColumnsInfo_iface;
+    }
+    else if(IsEqualGUID(&IID_IAccessor, riid))
+    {
+         *ppv = &rowset->IAccessor_iface;
     }
 
     if(*ppv)
@@ -630,6 +640,66 @@ static struct IColumnsInfoVtbl rowset_columninfo_vtbll =
     rowset_colsinfo_MapColumnIDs
 };
 
+static HRESULT WINAPI rowset_accessor_QueryInterface(IAccessor *iface, REFIID riid, void **out)
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    return IRowset_QueryInterface(&rowset->IRowset_iface, riid, out);
+}
+
+static ULONG WINAPI rowset_accessor_AddRef(IAccessor *iface)
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    return IRowset_AddRef(&rowset->IRowset_iface);
+}
+
+static ULONG  WINAPI rowset_accessor_Release(IAccessor *iface)
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    return IRowset_Release(&rowset->IRowset_iface);
+}
+
+static HRESULT WINAPI rowset_accessor_AddRefAccessor(IAccessor *iface, HACCESSOR accessor, DBREFCOUNT *count)
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    FIXME("%p, %lu, %p\n", rowset, accessor, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS flags,
+        DBCOUNTITEM count, const DBBINDING bindings[], DBLENGTH row_size, HACCESSOR *accessor,
+        DBBINDSTATUS status[])
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    FIXME("%p 0x%08x, %lu, %p, %lu, %p, %p\n", rowset, flags, count, bindings, row_size, accessor, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_accessor_GetBindings(IAccessor *iface, HACCESSOR accessor,
+        DBACCESSORFLAGS *flags, DBCOUNTITEM *count, DBBINDING **bindings)
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    FIXME("%p %lu, %p, %p, %p\n", rowset, accessor, flags, count, bindings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_accessor_ReleaseAccessor(IAccessor *iface, HACCESSOR accessor, DBREFCOUNT *count)
+{
+    struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
+    FIXME("%p, %lu, %p\n", rowset, accessor, count);
+    return E_NOTIMPL;
+}
+
+struct IAccessorVtbl accessor_vtbl =
+{
+    rowset_accessor_QueryInterface,
+    rowset_accessor_AddRef,
+    rowset_accessor_Release,
+    rowset_accessor_AddRefAccessor,
+    rowset_accessor_CreateAccessor,
+    rowset_accessor_GetBindings,
+    rowset_accessor_ReleaseAccessor
+};
+
 static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFIID riid,
         DBPARAMS *params, DBROWCOUNT *affected, IUnknown **rowset)
 {
@@ -646,6 +716,7 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
     msrowset->IRowset_iface.lpVtbl = &msdasql_rowset_vtbl;
     msrowset->IRowsetInfo_iface.lpVtbl = &rowset_info_vtbl;
     msrowset->IColumnsInfo_iface.lpVtbl = &rowset_columninfo_vtbll;
+    msrowset->IAccessor_iface.lpVtbl = &accessor_vtbl;
     msrowset->refs = 1;
 
     if (affected)

@@ -226,6 +226,7 @@ static void test_rowset_interfaces(IRowset *rowset)
 {
     IRowsetInfo *info;
     IColumnsInfo *col_info;
+    IAccessor *accessor;
     HRESULT hr;
 
     hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void**)&info);
@@ -235,6 +236,10 @@ static void test_rowset_interfaces(IRowset *rowset)
     hr = IRowset_QueryInterface(rowset, &IID_IColumnsInfo, (void**)&col_info);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IColumnsInfo_Release(col_info);
+
+    hr = IRowset_QueryInterface(rowset, &IID_IAccessor, (void**)&accessor);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IAccessor_Release(accessor);
 }
 
 static void test_command_rowset(IUnknown *cmd)
