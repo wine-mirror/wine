@@ -629,8 +629,8 @@ static void check_video_type(const WM_MEDIA_TYPE *mt)
     todo_wine ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
     ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
 
-    todo_wine ok(EqualRect(&video_info->rcSource, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&rect));
-    todo_wine ok(EqualRect(&video_info->rcTarget, &rect), "Got target rect %s.\n", wine_dbgstr_rect(&rect));
+    ok(EqualRect(&video_info->rcSource, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&rect));
+    ok(EqualRect(&video_info->rcTarget, &rect), "Got target rect %s.\n", wine_dbgstr_rect(&rect));
     ok(!video_info->dwBitRate, "Got bit rate %u.\n", video_info->dwBitRate);
     ok(!video_info->dwBitErrorRate, "Got bit error rate %u.\n", video_info->dwBitErrorRate);
     ok(video_info->bmiHeader.biSize == sizeof(video_info->bmiHeader),

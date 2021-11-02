@@ -275,7 +275,7 @@ static unsigned int get_image_size(const struct wg_format *format)
     return 0;
 }
 
-static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *format)
+static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm)
 {
     static const struct
     {
@@ -322,6 +322,11 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
 
     memset(video_format, 0, sizeof(*video_format));
 
+    if (wm)
+    {
+        SetRect(&video_format->rcSource, 0, 0, format->u.video.width, format->u.video.height);
+        video_format->rcTarget = video_format->rcSource;
+    }
     if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
         video_format->AvgTimePerFrame = frame_time;
     video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -343,7 +348,7 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
     return true;
 }
 
-bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format)
+bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm)
 {
     memset(mt, 0, sizeof(*mt));
 
@@ -356,7 +361,7 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format)
         return amt_from_wg_format_audio(mt, format);
 
     case WG_MAJOR_TYPE_VIDEO:
-        return amt_from_wg_format_video(mt, format);
+        return amt_from_wg_format_video(mt, format, wm);
     }
 
     assert(0);
@@ -1076,7 +1081,7 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
 
     memset(mt, 0, sizeof(AM_MEDIA_TYPE));
 
-    if (amt_from_wg_format(mt, &format))
+    if (amt_from_wg_format(mt, &format, false))
     {
         if (!index--)
             return S_OK;
@@ -1086,14 +1091,14 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
     if (format.major_type == WG_MAJOR_TYPE_VIDEO && index < ARRAY_SIZE(video_formats))
     {
         format.u.video.format = video_formats[index];
-        if (!amt_from_wg_format(mt, &format))
+        if (!amt_from_wg_format(mt, &format, false))
             return E_OUTOFMEMORY;
         return S_OK;
     }
     else if (format.major_type == WG_MAJOR_TYPE_AUDIO && !index)
     {
         format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
-        if (!amt_from_wg_format(mt, &format))
+        if (!amt_from_wg_format(mt, &format, false))
             return E_OUTOFMEMORY;
         return S_OK;
     }
@@ -1613,7 +1618,7 @@ static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const 
     HRESULT hr;
 
     wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
-    if (!amt_from_wg_format(&pad_mt, &format))
+    if (!amt_from_wg_format(&pad_mt, &format, false))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -1628,7 +1633,7 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
     wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
-    if (!amt_from_wg_format(mt, &format))
+    if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -1699,7 +1704,7 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
     HRESULT hr;
 
     wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
-    if (!amt_from_wg_format(&pad_mt, &format))
+    if (!amt_from_wg_format(&pad_mt, &format, false))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -1714,7 +1719,7 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
     wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
-    if (!amt_from_wg_format(mt, &format))
+    if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -1783,7 +1788,7 @@ static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, cons
     HRESULT hr;
 
     wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
-    if (!amt_from_wg_format(&pad_mt, &format))
+    if (!amt_from_wg_format(&pad_mt, &format, false))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -1798,7 +1803,7 @@ static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
     wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
-    if (!amt_from_wg_format(mt, &format))
+    if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;
 }

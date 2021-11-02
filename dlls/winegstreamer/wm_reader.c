@@ -157,7 +157,7 @@ static IWMOutputMediaProps *output_props_create(const struct wg_format *format)
     object->IWMOutputMediaProps_iface.lpVtbl = &output_props_vtbl;
     object->refcount = 1;
 
-    if (!amt_from_wg_format(&object->mt, format))
+    if (!amt_from_wg_format(&object->mt, format, true))
     {
         free(object);
         return NULL;
@@ -338,7 +338,7 @@ static HRESULT WINAPI stream_config_GetStreamType(IWMStreamConfig *iface, GUID *
 
     EnterCriticalSection(&reader->cs);
 
-    if (!amt_from_wg_format(&mt, &config->stream->format))
+    if (!amt_from_wg_format(&mt, &config->stream->format, true))
     {
         LeaveCriticalSection(&reader->cs);
         return E_OUTOFMEMORY;
