@@ -1232,6 +1232,16 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
         RtlFreeHeap( GetProcessHeap(), 0, wm );
         return NULL;
     }
+
+    if (!(wm->ldr.DdagNode = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wm->ldr.DdagNode) )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        RtlFreeHeap( GetProcessHeap(), 0, wm );
+        return NULL;
+    }
+    InitializeListHead(&wm->ldr.DdagNode->Modules);
+    InsertTailList(&wm->ldr.DdagNode->Modules, &wm->ldr.NodeModuleLink);
+
     memcpy( buffer, nt_name->Buffer + 4 /* \??\ prefix */, nt_name->Length - 4 * sizeof(WCHAR) );
     buffer[nt_name->Length/sizeof(WCHAR) - 4] = 0;
     if ((p = wcsrchr( buffer, '\\' ))) p++;
@@ -3517,6 +3527,10 @@ static void free_modref( WINE_MODREF *wm )
     RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
     if (wm->ldr.InInitializationOrderLinks.Flink)
         RemoveEntryList(&wm->ldr.InInitializationOrderLinks);
+
+    RemoveEntryList(&wm->ldr.NodeModuleLink);
+    if (IsListEmpty(&wm->ldr.DdagNode->Modules))
+        RtlFreeHeap( GetProcessHeap(), 0, wm->ldr.DdagNode );
 
     TRACE(" unloading %s\n", debugstr_w(wm->ldr.FullDllName.Buffer));
     if (!TRACE_ON(module))
