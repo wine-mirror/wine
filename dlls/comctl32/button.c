@@ -2113,10 +2113,6 @@ static void GB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
         labelRect.right++;
         labelRect.bottom++;
         FillRect(hDC, &labelRect, hbr);
-        labelRect.left++;
-        labelRect.right--;
-        labelRect.bottom--;
-
         BUTTON_DrawLabel(infoPtr, hDC, dtFlags, &imageRect, &textRect);
     }
     SelectClipRgn( hDC, hrgn );
