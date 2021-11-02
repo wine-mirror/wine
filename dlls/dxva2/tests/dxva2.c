@@ -470,9 +470,7 @@ static void test_video_processor(void)
     /* Number of substreams does not include reference stream. */
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 16, &processor);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr)) IDirectXVideoProcessor_Release(processor);
 
     hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
             D3DFMT_A8R8G8B8, 15, &processor);

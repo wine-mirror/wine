@@ -496,6 +496,12 @@ static HRESULT WINAPI device_manager_processor_service_CreateVideoProcessor(IDir
 
     /* FIXME: validate render target format */
 
+    if (max_substreams >= 16)
+    {
+        WARN("Invalid substreams count %u.\n", max_substreams);
+        return E_INVALIDARG;
+    }
+
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
