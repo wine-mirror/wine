@@ -28,7 +28,7 @@
 #include "ddk/d3dkmthk.h"
 #include "vfwmsgs.h"
 #include "uxtheme.h"
-#include "vsstyle.h"
+#include "vssym32.h"
 
 #include "msg.h"
 #include "wine/test.h"
@@ -42,6 +42,7 @@ static HRESULT (WINAPI *pGetBufferedPaintBits)(HPAINTBUFFER, RGBQUAD **, int *);
 static HDC (WINAPI *pGetBufferedPaintDC)(HPAINTBUFFER);
 static HDC (WINAPI *pGetBufferedPaintTargetDC)(HPAINTBUFFER);
 static HRESULT (WINAPI *pGetBufferedPaintTargetRect)(HPAINTBUFFER, RECT *);
+static HRESULT (WINAPI *pGetThemeIntList)(HTHEME, int, int, int, INTLIST *);
 
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
@@ -79,6 +80,7 @@ static void init_funcs(void)
     GET_PROC(uxtheme, GetBufferedPaintDC)
     GET_PROC(uxtheme, GetBufferedPaintTargetDC)
     GET_PROC(uxtheme, GetBufferedPaintTargetRect)
+    GET_PROC(uxtheme, GetThemeIntList)
     GET_PROC(uxtheme, OpenThemeDataEx)
     GET_PROC(uxtheme, OpenThemeDataForDpi)
 
@@ -1263,6 +1265,41 @@ static void test_EnableTheming(void)
     }
 }
 
+static void test_GetThemeIntList(void)
+{
+    INTLIST intlist;
+    HTHEME theme;
+    HRESULT hr;
+    HWND hwnd;
+
+    if (!pGetThemeIntList)
+    {
+        win_skip("GetThemeIntList is unavailable.\n");
+        return;
+    }
+
+    hwnd = CreateWindowA("static", "", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, NULL);
+    theme = OpenThemeData(hwnd, L"Button");
+    if (!theme)
+    {
+        skip("Theming is not active.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    /* Check properties */
+    /* TMT_TRANSITIONDURATIONS is a vista+ property */
+    hr = pGetThemeIntList(theme, BP_PUSHBUTTON, PBS_NORMAL, TMT_TRANSITIONDURATIONS, &intlist);
+    if (LOBYTE(LOWORD(GetVersion())) < 6)
+        ok(hr == E_PROP_ID_UNSUPPORTED, "Expected %#x, got %#x.\n", E_PROP_ID_UNSUPPORTED, hr);
+    else
+        todo_wine
+        ok(hr == S_OK, "GetThemeIntList failed, hr %#x.\n", hr);
+
+    CloseThemeData(theme);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(system)
 {
     init_funcs();
@@ -1282,6 +1319,7 @@ START_TEST(system)
     test_GetThemePartSize();
     test_CloseThemeData();
     test_buffered_paint();
+    test_GetThemeIntList();
 
     /* Test EnableTheming() in the end because it may disable theming */
     test_EnableTheming();
