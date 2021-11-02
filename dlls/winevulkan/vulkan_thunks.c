@@ -286,6 +286,69 @@ static inline void convert_VkRenderPassBeginInfo_win_to_host(const VkRenderPassB
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline VkRenderingAttachmentInfoKHR_host *convert_VkRenderingAttachmentInfoKHR_array_win_to_host(const VkRenderingAttachmentInfoKHR *in, uint32_t count)
+{
+    VkRenderingAttachmentInfoKHR_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].imageView = in[i].imageView;
+        out[i].imageLayout = in[i].imageLayout;
+        out[i].resolveMode = in[i].resolveMode;
+        out[i].resolveImageView = in[i].resolveImageView;
+        out[i].resolveImageLayout = in[i].resolveImageLayout;
+        out[i].loadOp = in[i].loadOp;
+        out[i].storeOp = in[i].storeOp;
+        out[i].clearValue = in[i].clearValue;
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void free_VkRenderingAttachmentInfoKHR_array(VkRenderingAttachmentInfoKHR_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    free(in);
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRenderingInfoKHR_win_to_host(const VkRenderingInfoKHR *in, VkRenderingInfoKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->renderArea = in->renderArea;
+    out->layerCount = in->layerCount;
+    out->viewMask = in->viewMask;
+    out->colorAttachmentCount = in->colorAttachmentCount;
+    out->pColorAttachments = convert_VkRenderingAttachmentInfoKHR_array_win_to_host(in->pColorAttachments, in->colorAttachmentCount);
+    out->pDepthAttachment = convert_VkRenderingAttachmentInfoKHR_array_win_to_host(in->pDepthAttachment, 1);
+    out->pStencilAttachment = convert_VkRenderingAttachmentInfoKHR_array_win_to_host(in->pStencilAttachment, 1);
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void free_VkRenderingInfoKHR(VkRenderingInfoKHR_host *in)
+{
+    free_VkRenderingAttachmentInfoKHR_array((VkRenderingAttachmentInfoKHR_host *)in->pColorAttachments, in->colorAttachmentCount);
+    free_VkRenderingAttachmentInfoKHR_array((VkRenderingAttachmentInfoKHR_host *)in->pDepthAttachment, 1);
+    free_VkRenderingAttachmentInfoKHR_array((VkRenderingAttachmentInfoKHR_host *)in->pStencilAttachment, 1);
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkBlitImageInfo2KHR_win_to_host(const VkBlitImageInfo2KHR *in, VkBlitImageInfo2KHR_host *out)
 {
     if (!in) return;
@@ -4554,6 +4617,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceDynamicRenderingFeaturesKHR *in = (const VkPhysicalDeviceDynamicRenderingFeaturesKHR *)in_header;
+            VkPhysicalDeviceDynamicRenderingFeaturesKHR *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->dynamicRendering = in->dynamicRendering;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         default:
             FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
         }
@@ -5005,6 +5084,22 @@ static void WINAPI wine_vkCmdBeginRenderPass2KHR(VkCommandBuffer commandBuffer, 
 #else
     TRACE("%p, %p, %p\n", commandBuffer, pRenderPassBegin, pSubpassBeginInfo);
     commandBuffer->device->funcs.p_vkCmdBeginRenderPass2KHR(commandBuffer->command_buffer, pRenderPassBegin, pSubpassBeginInfo);
+#endif
+}
+
+static void WINAPI wine_vkCmdBeginRenderingKHR(VkCommandBuffer commandBuffer, const VkRenderingInfoKHR *pRenderingInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkRenderingInfoKHR_host pRenderingInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pRenderingInfo);
+
+    convert_VkRenderingInfoKHR_win_to_host(pRenderingInfo, &pRenderingInfo_host);
+    commandBuffer->device->funcs.p_vkCmdBeginRenderingKHR(commandBuffer->command_buffer, &pRenderingInfo_host);
+
+    free_VkRenderingInfoKHR(&pRenderingInfo_host);
+#else
+    TRACE("%p, %p\n", commandBuffer, pRenderingInfo);
+    commandBuffer->device->funcs.p_vkCmdBeginRenderingKHR(commandBuffer->command_buffer, pRenderingInfo);
 #endif
 }
 
@@ -5522,6 +5617,12 @@ static void WINAPI wine_vkCmdEndRenderPass2KHR(VkCommandBuffer commandBuffer, co
 {
     TRACE("%p, %p\n", commandBuffer, pSubpassEndInfo);
     commandBuffer->device->funcs.p_vkCmdEndRenderPass2KHR(commandBuffer->command_buffer, pSubpassEndInfo);
+}
+
+static void WINAPI wine_vkCmdEndRenderingKHR(VkCommandBuffer commandBuffer)
+{
+    TRACE("%p\n", commandBuffer);
+    commandBuffer->device->funcs.p_vkCmdEndRenderingKHR(commandBuffer->command_buffer);
 }
 
 static void WINAPI wine_vkCmdEndTransformFeedbackEXT(VkCommandBuffer commandBuffer, uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer *pCounterBuffers, const VkDeviceSize *pCounterBufferOffsets)
@@ -8350,6 +8451,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_device_group",
     "VK_KHR_draw_indirect_count",
     "VK_KHR_driver_properties",
+    "VK_KHR_dynamic_rendering",
     "VK_KHR_external_fence",
     "VK_KHR_external_memory",
     "VK_KHR_external_semaphore",
@@ -8541,6 +8643,7 @@ const struct unix_funcs loader_funcs =
     &wine_vkCmdBeginRenderPass,
     &wine_vkCmdBeginRenderPass2,
     &wine_vkCmdBeginRenderPass2KHR,
+    &wine_vkCmdBeginRenderingKHR,
     &wine_vkCmdBeginTransformFeedbackEXT,
     &wine_vkCmdBindDescriptorSets,
     &wine_vkCmdBindIndexBuffer,
@@ -8603,6 +8706,7 @@ const struct unix_funcs loader_funcs =
     &wine_vkCmdEndRenderPass,
     &wine_vkCmdEndRenderPass2,
     &wine_vkCmdEndRenderPass2KHR,
+    &wine_vkCmdEndRenderingKHR,
     &wine_vkCmdEndTransformFeedbackEXT,
     &wine_vkCmdExecuteCommands,
     &wine_vkCmdExecuteGeneratedCommandsNV,

@@ -244,6 +244,42 @@ typedef VkRenderPassBeginInfo VkRenderPassBeginInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkRenderingAttachmentInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImageView imageView;
+    VkImageLayout imageLayout;
+    VkResolveModeFlagBits resolveMode;
+    VkImageView resolveImageView;
+    VkImageLayout resolveImageLayout;
+    VkAttachmentLoadOp loadOp;
+    VkAttachmentStoreOp storeOp;
+    VkClearValue clearValue;
+} VkRenderingAttachmentInfoKHR_host;
+#else
+typedef VkRenderingAttachmentInfoKHR VkRenderingAttachmentInfoKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkRenderingInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkRenderingFlagsKHR flags;
+    VkRect2D renderArea;
+    uint32_t layerCount;
+    uint32_t viewMask;
+    uint32_t colorAttachmentCount;
+    const VkRenderingAttachmentInfoKHR_host *pColorAttachments;
+    const VkRenderingAttachmentInfoKHR_host *pDepthAttachment;
+    const VkRenderingAttachmentInfoKHR_host *pStencilAttachment;
+} VkRenderingInfoKHR_host;
+#else
+typedef VkRenderingInfoKHR VkRenderingInfoKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBlitImageInfo2KHR_host
 {
     VkStructureType sType;
@@ -1756,6 +1792,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdBeginRenderPass)(VkCommandBuffer, const VkRenderPassBeginInfo_host *, VkSubpassContents);
     void (*p_vkCmdBeginRenderPass2)(VkCommandBuffer, const VkRenderPassBeginInfo_host *, const VkSubpassBeginInfo *);
     void (*p_vkCmdBeginRenderPass2KHR)(VkCommandBuffer, const VkRenderPassBeginInfo_host *, const VkSubpassBeginInfo *);
+    void (*p_vkCmdBeginRenderingKHR)(VkCommandBuffer, const VkRenderingInfoKHR_host *);
     void (*p_vkCmdBeginTransformFeedbackEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *);
     void (*p_vkCmdBindDescriptorSets)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkDescriptorSet *, uint32_t, const uint32_t *);
     void (*p_vkCmdBindIndexBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkIndexType);
@@ -1818,6 +1855,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdEndRenderPass)(VkCommandBuffer);
     void (*p_vkCmdEndRenderPass2)(VkCommandBuffer, const VkSubpassEndInfo *);
     void (*p_vkCmdEndRenderPass2KHR)(VkCommandBuffer, const VkSubpassEndInfo *);
+    void (*p_vkCmdEndRenderingKHR)(VkCommandBuffer);
     void (*p_vkCmdEndTransformFeedbackEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *);
     void (*p_vkCmdExecuteCommands)(VkCommandBuffer, uint32_t, const VkCommandBuffer *);
     void (*p_vkCmdExecuteGeneratedCommandsNV)(VkCommandBuffer, VkBool32, const VkGeneratedCommandsInfoNV_host *);
@@ -2165,6 +2203,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdBeginRenderPass) \
     USE_VK_FUNC(vkCmdBeginRenderPass2) \
     USE_VK_FUNC(vkCmdBeginRenderPass2KHR) \
+    USE_VK_FUNC(vkCmdBeginRenderingKHR) \
     USE_VK_FUNC(vkCmdBeginTransformFeedbackEXT) \
     USE_VK_FUNC(vkCmdBindDescriptorSets) \
     USE_VK_FUNC(vkCmdBindIndexBuffer) \
@@ -2227,6 +2266,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdEndRenderPass) \
     USE_VK_FUNC(vkCmdEndRenderPass2) \
     USE_VK_FUNC(vkCmdEndRenderPass2KHR) \
+    USE_VK_FUNC(vkCmdEndRenderingKHR) \
     USE_VK_FUNC(vkCmdEndTransformFeedbackEXT) \
     USE_VK_FUNC(vkCmdExecuteCommands) \
     USE_VK_FUNC(vkCmdExecuteGeneratedCommandsNV) \

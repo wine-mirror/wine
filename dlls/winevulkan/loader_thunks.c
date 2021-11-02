@@ -128,6 +128,11 @@ void WINAPI vkCmdBeginRenderPass2KHR(VkCommandBuffer commandBuffer, const VkRend
     unix_funcs->p_vkCmdBeginRenderPass2KHR(commandBuffer, pRenderPassBegin, pSubpassBeginInfo);
 }
 
+void WINAPI vkCmdBeginRenderingKHR(VkCommandBuffer commandBuffer, const VkRenderingInfoKHR *pRenderingInfo)
+{
+    unix_funcs->p_vkCmdBeginRenderingKHR(commandBuffer, pRenderingInfo);
+}
+
 void WINAPI vkCmdBeginTransformFeedbackEXT(VkCommandBuffer commandBuffer, uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer *pCounterBuffers, const VkDeviceSize *pCounterBufferOffsets)
 {
     unix_funcs->p_vkCmdBeginTransformFeedbackEXT(commandBuffer, firstCounterBuffer, counterBufferCount, pCounterBuffers, pCounterBufferOffsets);
@@ -436,6 +441,11 @@ void WINAPI vkCmdEndRenderPass2(VkCommandBuffer commandBuffer, const VkSubpassEn
 void WINAPI vkCmdEndRenderPass2KHR(VkCommandBuffer commandBuffer, const VkSubpassEndInfo *pSubpassEndInfo)
 {
     unix_funcs->p_vkCmdEndRenderPass2KHR(commandBuffer, pSubpassEndInfo);
+}
+
+void WINAPI vkCmdEndRenderingKHR(VkCommandBuffer commandBuffer)
+{
+    unix_funcs->p_vkCmdEndRenderingKHR(commandBuffer);
 }
 
 void WINAPI vkCmdEndTransformFeedbackEXT(VkCommandBuffer commandBuffer, uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer *pCounterBuffers, const VkDeviceSize *pCounterBufferOffsets)
@@ -2058,6 +2068,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdBeginRenderPass", &vkCmdBeginRenderPass},
     {"vkCmdBeginRenderPass2", &vkCmdBeginRenderPass2},
     {"vkCmdBeginRenderPass2KHR", &vkCmdBeginRenderPass2KHR},
+    {"vkCmdBeginRenderingKHR", &vkCmdBeginRenderingKHR},
     {"vkCmdBeginTransformFeedbackEXT", &vkCmdBeginTransformFeedbackEXT},
     {"vkCmdBindDescriptorSets", &vkCmdBindDescriptorSets},
     {"vkCmdBindIndexBuffer", &vkCmdBindIndexBuffer},
@@ -2120,6 +2131,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdEndRenderPass", &vkCmdEndRenderPass},
     {"vkCmdEndRenderPass2", &vkCmdEndRenderPass2},
     {"vkCmdEndRenderPass2KHR", &vkCmdEndRenderPass2KHR},
+    {"vkCmdEndRenderingKHR", &vkCmdEndRenderingKHR},
     {"vkCmdEndTransformFeedbackEXT", &vkCmdEndTransformFeedbackEXT},
     {"vkCmdExecuteCommands", &vkCmdExecuteCommands},
     {"vkCmdExecuteGeneratedCommandsNV", &vkCmdExecuteGeneratedCommandsNV},

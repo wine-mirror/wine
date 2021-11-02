@@ -37,6 +37,7 @@ struct unix_funcs
     void (WINAPI *p_vkCmdBeginRenderPass)(VkCommandBuffer, const VkRenderPassBeginInfo *, VkSubpassContents);
     void (WINAPI *p_vkCmdBeginRenderPass2)(VkCommandBuffer, const VkRenderPassBeginInfo *, const VkSubpassBeginInfo *);
     void (WINAPI *p_vkCmdBeginRenderPass2KHR)(VkCommandBuffer, const VkRenderPassBeginInfo *, const VkSubpassBeginInfo *);
+    void (WINAPI *p_vkCmdBeginRenderingKHR)(VkCommandBuffer, const VkRenderingInfoKHR *);
     void (WINAPI *p_vkCmdBeginTransformFeedbackEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *);
     void (WINAPI *p_vkCmdBindDescriptorSets)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkDescriptorSet *, uint32_t, const uint32_t *);
     void (WINAPI *p_vkCmdBindIndexBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkIndexType);
@@ -99,6 +100,7 @@ struct unix_funcs
     void (WINAPI *p_vkCmdEndRenderPass)(VkCommandBuffer);
     void (WINAPI *p_vkCmdEndRenderPass2)(VkCommandBuffer, const VkSubpassEndInfo *);
     void (WINAPI *p_vkCmdEndRenderPass2KHR)(VkCommandBuffer, const VkSubpassEndInfo *);
+    void (WINAPI *p_vkCmdEndRenderingKHR)(VkCommandBuffer);
     void (WINAPI *p_vkCmdEndTransformFeedbackEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *);
     void (WINAPI *p_vkCmdExecuteCommands)(VkCommandBuffer, uint32_t, const VkCommandBuffer *);
     void (WINAPI *p_vkCmdExecuteGeneratedCommandsNV)(VkCommandBuffer, VkBool32, const VkGeneratedCommandsInfoNV *);
