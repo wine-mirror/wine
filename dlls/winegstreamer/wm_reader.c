@@ -874,9 +874,47 @@ static HRESULT WINAPI header_info_GetAttributeByIndex(IWMHeaderInfo3 *iface, WOR
 static HRESULT WINAPI header_info_GetAttributeByName(IWMHeaderInfo3 *iface, WORD *stream_number,
         const WCHAR *name, WMT_ATTR_DATATYPE *type, BYTE *value, WORD *size)
 {
-    FIXME("iface %p, stream_number %p, name %s, type %p, value %p, size %p, stub!\n",
-            iface, stream_number, debugstr_w(name), type, value, size);
-    return E_NOTIMPL;
+    struct wm_reader *reader = impl_from_IWMHeaderInfo3(iface);
+    const WORD req_size = *size;
+
+    TRACE("reader %p, stream_number %p, name %s, type %p, value %p, size %u.\n",
+            reader, stream_number, debugstr_w(name), type, value, *size);
+
+    if (!stream_number)
+        return E_INVALIDARG;
+
+    if (!wcscmp(name, L"Duration"))
+    {
+        QWORD duration;
+
+        if (*stream_number)
+        {
+            WARN("Requesting duration for stream %u, returning ASF_E_NOTFOUND.\n", *stream_number);
+            return ASF_E_NOTFOUND;
+        }
+
+        *size = sizeof(QWORD);
+        if (!value)
+        {
+            *type = WMT_TYPE_QWORD;
+            return S_OK;
+        }
+        if (req_size < *size)
+            return ASF_E_BUFFERTOOSMALL;
+
+        *type = WMT_TYPE_QWORD;
+        EnterCriticalSection(&reader->cs);
+        duration = wg_parser_stream_get_duration(wg_parser_get_stream(reader->wg_parser, 0));
+        LeaveCriticalSection(&reader->cs);
+        TRACE("Returning duration %s.\n", debugstr_time(duration));
+        memcpy(value, &duration, sizeof(QWORD));
+        return S_OK;
+    }
+    else
+    {
+        FIXME("Unknown attribute %s.\n", debugstr_w(name));
+        return ASF_E_NOTFOUND;
+    }
 }
 
 static HRESULT WINAPI header_info_SetAttribute(IWMHeaderInfo3 *iface, WORD stream_number,

@@ -420,6 +420,135 @@ static const IStreamVtbl stream_vtbl =
     stream_Clone,
 };
 
+static void test_reader_attributes(IWMProfile *profile)
+{
+    WORD size, stream_number, ret_stream_number;
+    IWMHeaderInfo *header_info;
+    IWMStreamConfig *config;
+    WMT_ATTR_DATATYPE type;
+    ULONG count, i;
+    QWORD duration;
+    DWORD dword;
+    HRESULT hr;
+
+    IWMProfile_QueryInterface(profile, &IID_IWMHeaderInfo, (void **)&header_info);
+
+    hr = IWMProfile_GetStreamCount(profile, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        hr = IWMProfile_GetStream(profile, i, &config);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IWMStreamConfig_GetStreamNumber(config, &stream_number);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ret_stream_number = stream_number;
+
+        size = sizeof(DWORD);
+        type = 0xdeadbeef;
+        dword = 0xdeadbeef;
+        hr = IWMHeaderInfo_GetAttributeByName(header_info, &ret_stream_number,
+                L"WM/VideoFrameRate", &type, (BYTE *)&dword, &size);
+        ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+        ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+        ok(size == sizeof(DWORD), "Got size %u.\n", size);
+        ok(dword == 0xdeadbeef, "Got frame rate %u.\n", dword);
+        ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
+                stream_number, ret_stream_number);
+
+        size = sizeof(QWORD);
+        type = 0xdeadbeef;
+        duration = 0xdeadbeef;
+        hr = IWMHeaderInfo_GetAttributeByName(header_info, &ret_stream_number,
+                L"Duration", &type, (BYTE *)&duration, &size);
+        ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+        ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+        ok(size == sizeof(QWORD), "Got size %u.\n", size);
+        ok(ret_stream_number == stream_number, "Expected stream number %u, got %u.\n",
+                stream_number, ret_stream_number);
+
+        IWMStreamConfig_Release(config);
+    }
+
+    /* WM/VideoFrameRate with a NULL stream number. */
+
+    size = sizeof(DWORD);
+    type = 0xdeadbeef;
+    dword = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, NULL,
+            L"WM/VideoFrameRate", &type, (BYTE *)&dword, &size);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+    ok(size == sizeof(DWORD), "Got size %u.\n", size);
+    ok(dword == 0xdeadbeef, "Got frame rate %u.\n", dword);
+
+    /* And with a zero stream number. */
+
+    stream_number = 0;
+    size = sizeof(DWORD);
+    type = 0xdeadbeef;
+    dword = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
+            L"WM/VideoFrameRate", &type, (BYTE *)&dword, &size);
+    ok(hr == ASF_E_NOTFOUND, "Got hr %#x.\n", hr);
+    ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+    ok(size == sizeof(DWORD), "Got size %u.\n", size);
+    ok(dword == 0xdeadbeef, "Got frame rate %u.\n", dword);
+    ok(stream_number == 0, "Got stream number %u.\n", stream_number);
+
+    /* Duration with a NULL stream number. */
+
+    size = sizeof(QWORD);
+    type = 0xdeadbeef;
+    duration = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, NULL,
+            L"Duration", &type, (BYTE *)&duration, &size);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+    ok(size == sizeof(QWORD), "Got size %u.\n", size);
+    ok(duration == 0xdeadbeef, "Got duration %I64u.\n", duration);
+
+    /* And with a zero stream number. */
+
+    size = sizeof(QWORD);
+    type = 0xdeadbeef;
+    duration = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
+            L"Duration", &type, (BYTE *)&duration, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
+    ok(size == sizeof(QWORD), "Got size %u.\n", size);
+    ok(duration == 20460000, "Got duration %I64u.\n", duration);
+    ok(stream_number == 0, "Got stream number %u.\n", stream_number);
+
+    /* Pass a too-small size. */
+
+    size = sizeof(QWORD) - 1;
+    type = 0xdeadbeef;
+    duration = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
+            L"Duration", &type, (BYTE *)&duration, &size);
+    ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
+    ok(type == 0xdeadbeef, "Got type %#x.\n", type);
+    ok(size == sizeof(QWORD), "Got size %u.\n", size);
+    ok(duration == 0xdeadbeef, "Got duration %I64u.\n", duration);
+    ok(stream_number == 0, "Got stream number %u.\n", stream_number);
+
+    /* Pass a NULL buffer. */
+
+    size = 0xdead;
+    type = 0xdeadbeef;
+    hr = IWMHeaderInfo_GetAttributeByName(header_info, &stream_number,
+            L"Duration", &type, NULL, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
+    ok(size == sizeof(QWORD), "Got size %u.\n", size);
+    ok(stream_number == 0, "Got stream number %u.\n", stream_number);
+
+    IWMHeaderInfo_Release(header_info);
+}
+
 static void test_sync_reader_streaming(void)
 {
     DWORD size, flags, output_number, expect_output_number;
@@ -595,6 +724,8 @@ static void test_sync_reader_streaming(void)
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[1], &sample,
             &pts, &duration, &flags, NULL, NULL);
     ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+
+    test_reader_attributes(profile);
 
     hr = IWMSyncReader_Close(reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
