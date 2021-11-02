@@ -175,6 +175,10 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         ID3D11DeviceContext1_OMSetBlendState(context, render_target->bs, NULL, D3D11_DEFAULT_SAMPLE_MASK);
         d2d_brush_bind_resources(brush, render_target, 0);
     }
+    else
+    {
+        ID3D11DeviceContext1_OMSetBlendState(context, NULL, NULL, D3D11_DEFAULT_SAMPLE_MASK);
+    }
     if (opacity_brush)
         d2d_brush_bind_resources(opacity_brush, render_target, 1);
 
