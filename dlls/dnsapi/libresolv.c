@@ -109,7 +109,7 @@ static DWORD dnsapi_umbstowcs( const char *src, WCHAR *dst, DWORD dstlen )
     }
 }
 
-static const char *debugstr_type( unsigned short type )
+const char *debugstr_type( unsigned short type )
 {
     const char *str;
 

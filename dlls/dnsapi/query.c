@@ -110,7 +110,7 @@ static const char *debugstr_query_request(const DNS_QUERY_REQUEST *req)
         return "(null)";
 
     return wine_dbg_sprintf("{%d %s %s %x%08x %p %d %p %p}", req->Version,
-            debugstr_w(req->QueryName), type_to_str(req->QueryType),
+            debugstr_w(req->QueryName), debugstr_type(req->QueryType),
             (UINT32)(req->QueryOptions>>32u), (UINT32)req->QueryOptions, req->pDnsServerList,
             req->InterfaceIndex, req->pQueryCompletionCallback, req->pQueryContext);
 }
@@ -136,7 +136,7 @@ DNS_STATUS WINAPI DnsQuery_A( PCSTR name, WORD type, DWORD options, PVOID server
     DNS_RECORDW *resultW;
     DNS_STATUS status;
 
-    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), type_to_str( type ),
+    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -169,7 +169,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
 {
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
 
-    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), type_to_str( type ),
+    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
            options, servers, result, reserved );
 
     if (!name || !result)
@@ -200,7 +200,7 @@ DNS_STATUS WINAPI DnsQuery_W( PCWSTR name, WORD type, DWORD options, PVOID serve
     DNS_RECORDA *resultA;
     DNS_STATUS status;
 
-    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_w(name), type_to_str( type ),
+    TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_w(name), debugstr_type( type ),
            options, servers, result, reserved );
 
     if (!name || !result)

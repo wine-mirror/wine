@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-const char *type_to_str( unsigned short type )
+const char *debugstr_type( unsigned short type )
 {
     switch (type)
     {
@@ -91,7 +91,7 @@ const char *type_to_str( unsigned short type )
     X(DNS_TYPE_WINS)
     X(DNS_TYPE_WINSR)
 #undef X
-    default: { static char tmp[7]; sprintf( tmp, "0x%04x", type ); return tmp; }
+    default: return wine_dbg_sprintf( "0x%04x", type );
     }
 }
 
@@ -339,7 +339,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
         break;
     }
     default:
-        FIXME( "unknown type: %s\n", type_to_str( r1->wType ) );
+        FIXME( "unknown type: %s\n", debugstr_type( r1->wType ) );
         return FALSE;
     }
     return TRUE;

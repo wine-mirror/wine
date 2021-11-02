@@ -119,7 +119,7 @@ static inline char *strdup_ua( const char *src )
     return dst;
 }
 
-extern const char *type_to_str( unsigned short ) DECLSPEC_HIDDEN;
+extern const char *debugstr_type( unsigned short ) DECLSPEC_HIDDEN;
 
 struct resolv_funcs
 {
