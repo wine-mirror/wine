@@ -83,22 +83,15 @@ typedef struct timevalU
     LONG_PTR tv_usec;
 } LDAP_TIMEVALU;
 
-#ifndef SASL_CB_LIST_END
-#define SASL_CB_LIST_END    0
-#define SASL_CB_USER        0x4001
-#define SASL_CB_PASS        0x4004
-#define SASL_CB_GETREALM    0x4008
-#endif
-
-typedef struct sasl_interactU
+struct sasl_interactive_bind_id
 {
-    ULONG_PTR     id;
-    const char   *challenge;
-    const char   *prompt;
-    const char   *defresult;
-    const void   *result;
-    unsigned int  len;
-} sasl_interact_tU;
+    unsigned char* user;
+    ULONG          user_len;
+    unsigned char* domain;
+    ULONG          domain_len;
+    unsigned char* password;
+    ULONG          password_len;
+};
 
 struct ldap_funcs
 {
@@ -177,13 +170,6 @@ struct ldap_funcs
     int (CDECL *fn_ldap_unbind_ext)(void *, LDAPControlU **, LDAPControlU **);
     int (CDECL *fn_ldap_unbind_ext_s)(void *, LDAPControlU **, LDAPControlU **);
     void (CDECL *fn_ldap_value_free_len)(struct bervalU **);
-};
-
-extern int CDECL sasl_interact_cb(void *, unsigned int, void *, void *) DECLSPEC_HIDDEN;
-
-struct ldap_callbacks
-{
-    int (CDECL *sasl_interact)(void *, unsigned int, void *, void *);
 };
 
 extern const struct ldap_funcs *ldap_funcs;

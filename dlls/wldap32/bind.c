@@ -138,38 +138,6 @@ exit:
     return ret;
 }
 
-int CDECL sasl_interact_cb( void *ld, unsigned flags, void *defaults, void *interact )
-{
-    SEC_WINNT_AUTH_IDENTITY_A *id = defaults;
-    struct sasl_interactU *sasl = interact;
-
-    TRACE( "(%p, 0x%08x, %p, %p)\n", ld, flags, defaults, interact );
-
-    while (sasl->id != SASL_CB_LIST_END)
-    {
-        TRACE( "sasl->id = %04lx\n", sasl->id );
-
-        if (sasl->id == SASL_CB_GETREALM)
-        {
-            sasl->result = id->Domain;
-            sasl->len = id->DomainLength;
-        }
-        else if (sasl->id == SASL_CB_USER)
-        {
-            sasl->result = id->User;
-            sasl->len = id->UserLength;
-        }
-        else if (sasl->id == SASL_CB_PASS)
-        {
-            sasl->result = id->Password;
-            sasl->len = id->PasswordLength;
-        }
-        sasl++;
-    }
-
-    return LDAP_SUCCESS;
-}
-
 /***********************************************************************
  *      ldap_bind_sW     (WLDAP32.@)
  *

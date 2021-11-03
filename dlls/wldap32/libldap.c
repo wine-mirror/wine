@@ -59,8 +59,6 @@ C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
 
 static LDAPMod *nullmods[] = { NULL };
 
-static const struct ldap_callbacks *callbacks;
-
 static void * CDECL wrap_ber_alloc_t( int options )
 {
     return ber_alloc_t( options );
@@ -553,8 +551,34 @@ static int CDECL wrap_ldap_sasl_bind_s( void *ld, const char *dn, const char *me
 static int wrap_sasl_interact( LDAP *ld, unsigned int flags, void *defaults, void *interact )
 {
 #ifdef HAVE_SASL_SASL_H
-    C_ASSERT( sizeof(struct sasl_interactU) == sizeof(struct sasl_interact) );
-    return callbacks->sasl_interact( ld, flags, defaults, interact );
+    struct sasl_interactive_bind_id *id = defaults;
+    struct sasl_interact *sasl = interact;
+
+    TRACE( "(%p, 0x%08x, %p, %p)\n", ld, flags, defaults, interact );
+
+    while (sasl->id != SASL_CB_LIST_END)
+    {
+        TRACE( "sasl->id = %04lx\n", sasl->id );
+
+        if (sasl->id == SASL_CB_GETREALM)
+        {
+            sasl->result = id->domain;
+            sasl->len = id->domain_len;
+        }
+        else if (sasl->id == SASL_CB_USER)
+        {
+            sasl->result = id->user;
+            sasl->len = id->user_len;
+        }
+        else if (sasl->id == SASL_CB_PASS)
+        {
+            sasl->result = id->password;
+            sasl->len = id->password_len;
+        }
+        sasl++;
+    }
+
+    return LDAP_SUCCESS;
 #endif
     return -1;
 }
@@ -678,7 +702,6 @@ static const struct ldap_funcs funcs =
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
     if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-    callbacks = ptr_in;
     *(const struct ldap_funcs **)ptr_out = &funcs;
     return STATUS_SUCCESS;
 }
