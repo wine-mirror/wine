@@ -991,6 +991,7 @@ static void quirk_broken_arb_fog(struct wined3d_gl_info *gl_info)
 
 static void quirk_broken_viewport_subpixel_bits(struct wined3d_gl_info *gl_info)
 {
+    gl_info->limits.viewport_subpixel_bits = 0;
     if (gl_info->supported[ARB_CLIP_CONTROL])
     {
         TRACE("Disabling ARB_clip_control.\n");
@@ -3655,6 +3656,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
             TRACE("Disabling ARB_clip_control because viewport subpixel bits < 8.\n");
             gl_info->supported[ARB_CLIP_CONTROL] = FALSE;
         }
+        gl_info->limits.viewport_subpixel_bits = subpixel_bits;
     }
     if (gl_info->supported[ARB_CLIP_CONTROL] && !gl_info->supported[ARB_VIEWPORT_ARRAY])
     {
@@ -5141,6 +5143,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->full_ffp_varyings = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_FULL_FFP_VARYINGS);
     d3d_info->scaled_resolve = !!gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE_BLIT_SCALED];
     d3d_info->pbo = !!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT];
+    d3d_info->subpixel_viewport = gl_info->limits.viewport_subpixel_bits >= 8;
     d3d_info->feature_level = feature_level_from_caps(gl_info, &shader_caps, &fragment_caps);
     d3d_info->filling_convention_offset = gl_info->filling_convention_offset;
 

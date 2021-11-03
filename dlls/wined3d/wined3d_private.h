@@ -240,6 +240,7 @@ struct wined3d_d3d_info
     uint32_t full_ffp_varyings : 1;
     uint32_t scaled_resolve : 1;
     uint32_t pbo : 1;
+    uint32_t subpixel_viewport : 1;
     enum wined3d_feature_level feature_level;
 
     DWORD multisample_draw_location;
@@ -3237,6 +3238,7 @@ struct wined3d_gl_limits
 
     unsigned int framebuffer_width;
     unsigned int framebuffer_height;
+    unsigned int viewport_subpixel_bits;
 
     UINT glsl_varyings;
     UINT glsl_vs_float_constants;
@@ -5771,7 +5773,7 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 static inline void shader_get_position_fixup(const struct wined3d_context *context,
         const struct wined3d_state *state, unsigned int fixup_count, float *position_fixup)
 {
-    float center_offset;
+    float center_offset, x = 0.0f, y = 0.0f;
     unsigned int i;
 
     /* See get_projection_matrix() in utils.c for a discussion of the position fixup.
@@ -5788,8 +5790,14 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
     {
         position_fixup[4 * i    ] = 1.0f;
         position_fixup[4 * i + 1] = 1.0f;
-        position_fixup[4 * i + 2] = center_offset / state->viewports[i].width;
-        position_fixup[4 * i + 3] = -center_offset / state->viewports[i].height;
+        if (!context->d3d_info->subpixel_viewport)
+        {
+            double dummy;
+            x = modf(state->viewports[i].x, &dummy) * 2.0f;
+            y = modf(state->viewports[i].y, &dummy) * 2.0f;
+        }
+        position_fixup[4 * i + 2] = (center_offset + x) / state->viewports[i].width;
+        position_fixup[4 * i + 3] = -(center_offset + y) / state->viewports[i].height;
 
         if (context->render_offscreen)
         {

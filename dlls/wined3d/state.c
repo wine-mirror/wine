@@ -4208,6 +4208,22 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
             viewports[i * 4 + 1] = vp[i].y;
             viewports[i * 4 + 2] = vp[i].width;
             viewports[i * 4 + 3] = vp[i].height;
+
+            /* Don't pass fractionals to GL if we earlier decided not to use
+             * this functionality for two reasons: First, GL might offer us
+             * fewer than 8 bits, and still make use of the fractional, in
+             * addition to the emulation we apply in shader_get_position_fixup.
+             * Second, even if GL tells us it has no subpixel precision (Mac OS!)
+             * it might still do something with the fractional amount, e.g.
+             * round it upwards. I can't find any info on rounding in
+             * GL_ARB_viewport_array. */
+            if (!context->d3d_info->subpixel_viewport)
+            {
+                viewports[i * 4]     = floor(viewports[i * 4]);
+                viewports[i * 4 + 1] = floor(viewports[i * 4 + 1]);
+                viewports[i * 4 + 2] = floor(viewports[i * 4 + 2]);
+                viewports[i * 4 + 3] = floor(viewports[i * 4 + 3]);
+            }
         }
 
         if (context->viewport_count > state->viewport_count)
