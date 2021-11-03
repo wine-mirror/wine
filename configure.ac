@@ -1018,11 +1018,21 @@ then
             esac
           done
         fi
-        case $CROSSDEBUG in
-          *dwarf)  WINE_TRY_CROSSCFLAGS([-gdwarf-2])
-                   WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
-          pdb)     WINE_TRY_CROSSCFLAGS([-gcodeview]) ;;
-        esac
+
+        ac_debug_format_seen=""
+        for ac_flag in $CROSSCFLAGS; do
+          case $ac_flag in
+           -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
+          esac
+        done
+        if test "x$ac_debug_format_seen" = x
+        then
+          case $CROSSDEBUG in
+            *dwarf)  WINE_TRY_CROSSCFLAGS([-gdwarf-2])
+                     WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
+            pdb)     WINE_TRY_CROSSCFLAGS([-gcodeview]) ;;
+          esac
+        fi
 
         WINE_TRY_CROSSCFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
 
@@ -1822,13 +1832,19 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
       *) EXTRACFLAGS="$EXTRACFLAGS $wine_cv_64bit_compare_swap" ;;
   esac
 
-  dnl Default to dwarf-2 debug info
+  dnl Determine debug info format
+  ac_debug_format_seen=""
   for ac_flag in $CFLAGS; do
     case $ac_flag in
-      -g) WINE_TRY_CFLAGS([-gdwarf-2])
-          WINE_TRY_CFLAGS([-gstrict-dwarf]) ;;
+      -gdwarf*)    ac_debug_format_seen=yes ;;
+      -g)          ac_debug_format_seen=${ac_debug_format_seen:-default} ;;
     esac
   done
+  if test "x$ac_debug_format_seen" = xdefault
+  then
+    WINE_TRY_CFLAGS([-gdwarf-2])
+    WINE_TRY_CFLAGS([-gstrict-dwarf])
+  fi
 
   dnl Disable gcc builtins except for Mingw
   AC_SUBST(MSVCRTFLAGS,"")

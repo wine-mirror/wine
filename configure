@@ -10395,8 +10395,17 @@ fi ;;
             esac
           done
         fi
-        case $CROSSDEBUG in
-          *dwarf)  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-2" >&5
+
+        ac_debug_format_seen=""
+        for ac_flag in $CROSSCFLAGS; do
+          case $ac_flag in
+           -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
+          esac
+        done
+        if test "x$ac_debug_format_seen" = x
+        then
+          case $CROSSDEBUG in
+            *dwarf)  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gdwarf-2" >&5
 $as_echo_n "checking whether the cross-compiler supports -gdwarf-2... " >&6; }
 if ${ac_cv_crosscflags__gdwarf_2+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10427,7 +10436,7 @@ $as_echo "$ac_cv_crosscflags__gdwarf_2" >&6; }
 if test "x$ac_cv_crosscflags__gdwarf_2" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gdwarf-2"
 fi
-                   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gstrict-dwarf" >&5
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gstrict-dwarf" >&5
 $as_echo_n "checking whether the cross-compiler supports -gstrict-dwarf... " >&6; }
 if ${ac_cv_crosscflags__gstrict_dwarf+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10458,7 +10467,7 @@ $as_echo "$ac_cv_crosscflags__gstrict_dwarf" >&6; }
 if test "x$ac_cv_crosscflags__gstrict_dwarf" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gstrict-dwarf"
 fi ;;
-          pdb)     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gcodeview" >&5
+            pdb)     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -gcodeview" >&5
 $as_echo_n "checking whether the cross-compiler supports -gcodeview... " >&6; }
 if ${ac_cv_crosscflags__gcodeview+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -10489,7 +10498,8 @@ $as_echo "$ac_cv_crosscflags__gcodeview" >&6; }
 if test "x$ac_cv_crosscflags__gcodeview" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gcodeview"
 fi ;;
-        esac
+          esac
+        fi
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fexcess-precision=standard" >&5
 $as_echo_n "checking whether the cross-compiler supports -fexcess-precision=standard... " >&6; }
@@ -16301,9 +16311,16 @@ $as_echo "$wine_cv_64bit_compare_swap" >&6; }
       *) EXTRACFLAGS="$EXTRACFLAGS $wine_cv_64bit_compare_swap" ;;
   esac
 
-    for ac_flag in $CFLAGS; do
+    ac_debug_format_seen=""
+  for ac_flag in $CFLAGS; do
     case $ac_flag in
-      -g) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-2" >&5
+      -gdwarf*)    ac_debug_format_seen=yes ;;
+      -g)          ac_debug_format_seen=${ac_debug_format_seen:-default} ;;
+    esac
+  done
+  if test "x$ac_debug_format_seen" = xdefault
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-2" >&5
 $as_echo_n "checking whether the compiler supports -gdwarf-2... " >&6; }
 if ${ac_cv_cflags__gdwarf_2+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16328,7 +16345,7 @@ $as_echo "$ac_cv_cflags__gdwarf_2" >&6; }
 if test "x$ac_cv_cflags__gdwarf_2" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -gdwarf-2"
 fi
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gstrict-dwarf" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gstrict-dwarf" >&5
 $as_echo_n "checking whether the compiler supports -gstrict-dwarf... " >&6; }
 if ${ac_cv_cflags__gstrict_dwarf+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16352,9 +16369,8 @@ fi
 $as_echo "$ac_cv_cflags__gstrict_dwarf" >&6; }
 if test "x$ac_cv_cflags__gstrict_dwarf" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -gstrict-dwarf"
-fi ;;
-    esac
-  done
+fi
+  fi
 
     MSVCRTFLAGS=""
 
