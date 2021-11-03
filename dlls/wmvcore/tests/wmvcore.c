@@ -1264,7 +1264,7 @@ static void test_async_reader_streaming(void)
     count = 0xdeadbeef;
     hr = IWMReader_GetOutputCount(reader, &count);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(count == 2, "Got count %u.\n", count);
+    ok(count == 2, "Got count %u.\n", count);
 
     for (i = 0; i < 2; ++i)
     {

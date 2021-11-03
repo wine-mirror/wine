@@ -102,15 +102,15 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
     return hr;
 }
 
-static HRESULT WINAPI WMReader_GetOutputCount(IWMReader *iface, DWORD *outputs)
+static HRESULT WINAPI WMReader_GetOutputCount(IWMReader *iface, DWORD *count)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
-    FIXME("(%p)->(%p)\n", This, outputs);
+    struct async_reader *reader = impl_from_IWMReader(iface);
 
-    if(!outputs)
-        return E_INVALIDARG;
+    TRACE("reader %p, count %p.\n", reader, count);
 
-    *outputs = 0;
+    EnterCriticalSection(&reader->reader.cs);
+    *count = reader->reader.stream_count;
+    LeaveCriticalSection(&reader->reader.cs);
     return S_OK;
 }
 
