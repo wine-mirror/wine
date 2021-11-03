@@ -1080,7 +1080,7 @@ static void test_odbc_enumerator(void)
         IRowsetInfo *info;
 
         hr = IRowset_QueryInterface(rowset, &IID_IAccessor, (void **)&accessor);
-        todo_wine ok(hr == S_OK, "got %08x\n", hr);
+        ok(hr == S_OK, "got %08x\n", hr);
         if (hr == S_OK)
             IAccessor_Release(accessor);
 
