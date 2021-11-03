@@ -34,7 +34,17 @@ HRESULT WINAPI WMCreateWriterPriv(IWMWriter **writer);
 
 static BOOL compare_media_types(const WM_MEDIA_TYPE *a, const WM_MEDIA_TYPE *b)
 {
-    return !memcmp(a, b, offsetof(WM_MEDIA_TYPE, pbFormat))
+    /* We can't use memcmp(), because WM_MEDIA_TYPE has a hole, which sometimes
+     * contains junk. */
+
+    return IsEqualGUID(&a->majortype, &b->majortype)
+            && IsEqualGUID(&a->subtype, &b->subtype)
+            && a->bFixedSizeSamples == b->bFixedSizeSamples
+            && a->bTemporalCompression == b->bTemporalCompression
+            && a->lSampleSize == b->lSampleSize
+            && IsEqualGUID(&a->formattype, &b->formattype)
+            && a->pUnk == b->pUnk
+            && a->cbFormat == b->cbFormat
             && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
 }
 
@@ -1325,6 +1335,247 @@ out:
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_async_reader_types(void)
+{
+    char mt_buffer[2000], mt2_buffer[2000];
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IWMOutputMediaProps *output_props, *output_props2;
+    WM_MEDIA_TYPE *mt2 = (WM_MEDIA_TYPE *)mt2_buffer;
+    WM_MEDIA_TYPE *mt = (WM_MEDIA_TYPE *)mt_buffer;
+    bool got_video = false, got_audio = false;
+    DWORD size, ret_size, output_number;
+    IWMReaderAdvanced2 *advanced;
+    struct teststream stream;
+    struct callback callback;
+    IWMStreamConfig *config;
+    ULONG count, ref, i, j;
+    IWMProfile *profile;
+    IWMReader *reader;
+    GUID majortype;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+
+    teststream_init(&stream, file);
+    callback_init(&callback);
+
+    hr = WMCreateReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
+    IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
+
+    hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK)
+        goto out;
+    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
+    ret = WaitForSingleObject(callback.got_opened, 1000);
+    ok(!ret, "Wait timed out.\n");
+
+    for (i = 0; i < 2; ++i)
+    {
+        winetest_push_context("Stream %u", i);
+
+        hr = IWMProfile_GetStream(profile, i, &config);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IWMStreamConfig_GetStreamType(config, &majortype);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (!i)
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+        else
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
+
+        ref = IWMStreamConfig_Release(config);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < 2; ++i)
+    {
+        winetest_push_context("Output %u", i);
+        output_number = i;
+
+        hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ret_size = sizeof(mt_buffer);
+        hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ref = IWMOutputMediaProps_Release(output_props);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        majortype = mt->majortype;
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+        {
+            got_audio = true;
+            check_audio_type(mt);
+
+            /* R.U.S.E. enumerates all audio formats, picks the first one it
+             * likes, and then sets the wrong stream to that format.
+             * Accordingly we need the first audio format to be the default
+             * format, and we need it to be a format that the game is happy
+             * with. In particular it has to be PCM. */
+
+            hr = IWMReader_GetOutputFormat(reader, output_number, 0, &output_props);
+            todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+            if (hr == S_OK)
+            {
+                ret_size = sizeof(mt2_buffer);
+                hr = IWMOutputMediaProps_GetMediaType(output_props, mt2, &ret_size);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+                ref = IWMOutputMediaProps_Release(output_props);
+                ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+                /* The sample size might differ. */
+                mt2->lSampleSize = mt->lSampleSize;
+                ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+            }
+        }
+        else
+        {
+            ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+            got_video = true;
+            check_video_type(mt);
+        }
+
+        count = 0;
+        hr = IWMReader_GetOutputFormatCount(reader, output_number, &count);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(count > 0, "Got count %u.\n", count);
+
+        for (j = 0; j < count; ++j)
+        {
+            winetest_push_context("Format %u", j);
+
+            hr = IWMReader_GetOutputFormat(reader, output_number, j, &output_props);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+            hr = IWMReader_GetOutputFormat(reader, output_number, j, &output_props2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(output_props2 != output_props, "Expected different objects.\n");
+            ref = IWMOutputMediaProps_Release(output_props2);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+            size = 0xdeadbeef;
+            hr = IWMOutputMediaProps_GetMediaType(output_props, NULL, &size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %u.\n", size);
+
+            ret_size = size - 1;
+            hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
+            ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
+            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+
+            ret_size = sizeof(mt_buffer);
+            memset(mt_buffer, 0xcc, sizeof(mt_buffer));
+            hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+            ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %u, got %u.\n",
+                    sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
+
+            ok(IsEqualGUID(&mt->majortype, &majortype), "Got major type %s.\n", debugstr_guid(&mt->majortype));
+
+            if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+                check_audio_type(mt);
+            else
+                check_video_type(mt);
+
+            hr = IWMReader_SetOutputProps(reader, output_number, output_props);
+            todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+            if (hr != S_OK)
+            {
+                ref = IWMOutputMediaProps_Release(output_props);
+                ok(!ref, "Got outstanding refcount %d.\n", ref);
+                winetest_pop_context();
+                continue;
+            }
+            hr = IWMReader_SetOutputProps(reader, 1 - output_number, output_props);
+            if (!i)
+                ok(hr == NS_E_INCOMPATIBLE_FORMAT /* win < 8, win10 1507-1809 */
+                        || hr == ASF_E_BADMEDIATYPE /* win8, win10 1909+ */, "Got hr %#x.\n", hr);
+            else
+                todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+            hr = IWMReader_SetOutputProps(reader, 2, output_props);
+            todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+            hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(output_props2 != output_props, "Expected different objects.\n");
+
+            ret_size = sizeof(mt2_buffer);
+            hr = IWMOutputMediaProps_GetMediaType(output_props2, mt2, &ret_size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
+
+            ref = IWMOutputMediaProps_Release(output_props2);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ref = IWMOutputMediaProps_Release(output_props);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+            winetest_pop_context();
+        }
+
+        hr = IWMReader_GetOutputFormat(reader, output_number, count, &output_props);
+        todo_wine ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
+
+        hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        if (hr == S_OK)
+        {
+            hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(output_props2 != output_props, "Expected different objects.\n");
+
+            ref = IWMOutputMediaProps_Release(output_props2);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ref = IWMOutputMediaProps_Release(output_props);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
+        }
+
+        winetest_pop_context();
+    }
+
+    todo_wine ok(got_audio, "No audio stream was enumerated.\n");
+    todo_wine ok(got_video, "No video stream was enumerated.\n");
+
+    count = 0xdeadbeef;
+    hr = IWMReader_GetOutputFormatCount(reader, 2, &count);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(count == 0xdeadbeef, "Got count %#x.\n", count);
+
+    output_props = (void *)0xdeadbeef;
+    hr = IWMReader_GetOutputProps(reader, 2, &output_props);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
+
+    output_props = (void *)0xdeadbeef;
+    hr = IWMReader_GetOutputFormat(reader, 2, 0, &output_props);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
+
+out:
+    IWMReaderAdvanced2_Release(advanced);
+    IWMProfile_Release(profile);
+    ref = IWMReader_Release(reader);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    CloseHandle(stream.file);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -1345,6 +1596,7 @@ START_TEST(wmvcore)
     test_sync_reader_types();
     test_sync_reader_file();
     test_async_reader_streaming();
+    test_async_reader_types();
 
     CoUninitialize();
 }
