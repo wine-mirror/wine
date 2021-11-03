@@ -248,6 +248,7 @@ static void output_relay_debug( DLLSPEC *spec )
     /* then the relay thunks */
 
     output( "\t.text\n" );
+    if (thumb_mode) output( "\t.thumb_func\n" );
     output( "__wine_spec_relay_entry_points:\n" );
     output( "\tnop\n" );  /* to avoid 0 offset */
 
@@ -303,7 +304,6 @@ static void output_relay_debug( DLLSPEC *spec )
                     has_float = is_float_arg( odp, j );
 
             output( "\t.align %d\n", get_alignment(4) );
-            if (thumb_mode) output( "\t.thumb_func\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             output( "\tpush {r0-r3}\n" );
