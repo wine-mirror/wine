@@ -2673,8 +2673,9 @@ class VkGenerator(object):
         f.write("#pragma makedep unix\n")
         f.write("#endif\n\n")
 
-        f.write("#include \"config.h\"\n")
-        f.write("#include \"wine/port.h\"\n\n")
+        f.write("#include \"config.h\"\n\n")
+
+        f.write("#include <stdlib.h>\n\n")
 
         f.write("#include \"vulkan_private.h\"\n\n")
 

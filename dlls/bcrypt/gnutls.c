@@ -28,6 +28,7 @@
 #ifdef HAVE_GNUTLS_CIPHER_INIT
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>

@@ -29,6 +29,7 @@
 #ifdef SONAME_LIBNETAPI
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #ifdef HAVE_SYS_WAIT_H

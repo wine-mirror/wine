@@ -28,6 +28,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #ifdef SONAME_LIBGNUTLS
 #include <gnutls/gnutls.h>
