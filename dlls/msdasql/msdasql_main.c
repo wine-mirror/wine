@@ -26,6 +26,7 @@
 #include "oledb.h"
 #include "rpcproxy.h"
 #include "wine/debug.h"
+#include "oledberr.h"
 
 #include "initguid.h"
 #include "msdasql.h"
@@ -605,13 +606,145 @@ static ULONG WINAPI msdasql_enum_Release(ISourcesRowset *iface)
     return ref;
 }
 
+struct msdasql_enum_rowset
+{
+    IRowset IRowset_iface;
+    LONG ref;
+};
+
+static inline struct msdasql_enum_rowset *msdasql_rs_from_IRowset(IRowset *iface)
+{
+    return CONTAINING_RECORD(iface, struct msdasql_enum_rowset, IRowset_iface);
+}
+
+static HRESULT WINAPI enum_rowset_QueryInterface(IRowset *iface, REFIID riid,  void **ppv)
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+
+    TRACE( "%p, %s, %p\n", rowset, debugstr_guid(riid), ppv );
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) ||
+       IsEqualGUID(&IID_IRowset, riid))
+    {
+        *ppv = &rowset->IRowset_iface;
+    }
+
+    if(*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_rowset_AddRef(IRowset *iface)
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+    LONG refs = InterlockedIncrement( &rowset->ref );
+    TRACE( "%p new refcount %d\n", rowset, refs );
+    return refs;
+}
+
+static ULONG WINAPI enum_rowset_Release(IRowset *iface)
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+    LONG refs = InterlockedDecrement( &rowset->ref );
+    TRACE( "%p new refcount %d\n", rowset, refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", rowset );
+        free( rowset );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI enum_rowset_AddRefRows(IRowset *iface, DBCOUNTITEM count,
+        const HROW rows[], DBREFCOUNT ref_counts[], DBROWSTATUS status[])
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+
+    FIXME("%p, %ld, %p, %p, %p\n", rowset, count, rows, ref_counts, status);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enum_rowset_GetData(IRowset *iface, HROW row, HACCESSOR accessor, void *data)
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+
+    FIXME("%p, %ld, %ld, %p\n", rowset, row, accessor, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enum_rowset_GetNextRows(IRowset *iface, HCHAPTER reserved, DBROWOFFSET offset,
+        DBROWCOUNT count, DBCOUNTITEM *obtained, HROW **rows)
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+
+    FIXME("%p, %ld, %ld, %ld, %p, %p\n", rowset, reserved, offset, count, obtained, rows);
+
+    if (!obtained || !rows)
+        return E_INVALIDARG;
+
+    *obtained = 0;
+
+    if (!count)
+        return S_OK;
+
+    return DB_S_ENDOFROWSET;
+}
+
+static HRESULT WINAPI enum_rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM count,
+        const HROW rows[], DBROWOPTIONS options[], DBREFCOUNT ref_counts[], DBROWSTATUS status[])
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+
+    FIXME("%p, %ld, %p, %p, %p, %p\n", rowset, count, rows, options, ref_counts, status);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_rowset_RestartPosition(IRowset *iface, HCHAPTER reserved)
+{
+    struct msdasql_enum_rowset *rowset = msdasql_rs_from_IRowset( iface );
+
+    FIXME("%p, %ld\n", rowset, reserved);
+
+    return S_OK;
+}
+
+static const struct IRowsetVtbl enum_rowset_vtbl =
+{
+    enum_rowset_QueryInterface,
+    enum_rowset_AddRef,
+    enum_rowset_Release,
+    enum_rowset_AddRefRows,
+    enum_rowset_GetData,
+    enum_rowset_GetNextRows,
+    enum_rowset_ReleaseRows,
+    enum_rowset_RestartPosition
+};
+
 static HRESULT WINAPI msdasql_enum_GetSourcesRowset(ISourcesRowset *iface, IUnknown *outer, REFIID riid, ULONG sets,
                 DBPROPSET properties[], IUnknown **rowset)
 {
     struct msdasql_enum *enumerator = msdasql_enum_from_ISourcesRowset(iface);
-    FIXME("(%p) %p, %s, %d, %p, %p\n", enumerator, outer, debugstr_guid(riid), sets, properties, rowset);
+    struct msdasql_enum_rowset *enum_rs;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p) %p, %s, %d, %p, %p\n", enumerator, outer, debugstr_guid(riid), sets, properties, rowset);
+
+    enum_rs = malloc(sizeof(*enum_rs));
+    enum_rs->IRowset_iface.lpVtbl = &enum_rowset_vtbl;
+    enum_rs->ref = 1;
+
+    hr = IRowset_QueryInterface(&enum_rs->IRowset_iface, riid, (void**)rowset);
+    IRowset_Release(&enum_rs->IRowset_iface);
+    return hr;
 }
 
 static const ISourcesRowsetVtbl msdsqlenum_vtbl =

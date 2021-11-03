@@ -1073,19 +1073,19 @@ static void test_odbc_enumerator(void)
     }
 
     hr = ISourcesRowset_GetSourcesRowset(source, NULL, &IID_IRowset, 0, 0, (IUnknown**)&rowset);
-    todo_wine ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
     if (hr == S_OK)
     {
         IAccessor *accessor;
         IRowsetInfo *info;
 
         hr = IRowset_QueryInterface(rowset, &IID_IAccessor, (void **)&accessor);
-        ok(hr == S_OK, "got %08x\n", hr);
+        todo_wine ok(hr == S_OK, "got %08x\n", hr);
         if (hr == S_OK)
             IAccessor_Release(accessor);
 
         hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void **)&info);
-        ok(hr == S_OK, "got %08x\n", hr);
+        todo_wine ok(hr == S_OK, "got %08x\n", hr);
         if (hr == S_OK)
             IRowsetInfo_Release(info);
 
