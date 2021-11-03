@@ -31,7 +31,19 @@ struct async_reader
     IWMReaderStreamClock IWMReaderStreamClock_iface;
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     IReferenceClock IReferenceClock_iface;
+
+    IWMReaderCallback *callback;
+    void *context;
 };
+
+static void open_stream(struct async_reader *reader, IWMReaderCallback *callback, void *context)
+{
+    static const DWORD zero;
+
+    IWMReaderCallback_AddRef(reader->callback = callback);
+    reader->context = context;
+    IWMReaderCallback_OnStatus(callback, WMT_OPENED, S_OK, WMT_TYPE_DWORD, (BYTE *)&zero, context);
+}
 
 static struct async_reader *impl_from_IWMReader(IWMReader *iface)
 {
@@ -68,9 +80,26 @@ static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url, IWMReade
 
 static HRESULT WINAPI WMReader_Close(IWMReader *iface)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReader(iface);
+    static const DWORD zero;
+    HRESULT hr;
+
+    TRACE("reader %p.\n", reader);
+
+    EnterCriticalSection(&reader->reader.cs);
+
+    hr = wm_reader_close(&reader->reader);
+    if (reader->callback)
+    {
+        IWMReaderCallback_OnStatus(reader->callback, WMT_CLOSED, S_OK,
+                WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
+        IWMReaderCallback_Release(reader->callback);
+    }
+    reader->callback = NULL;
+
+    LeaveCriticalSection(&reader->reader.cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI WMReader_GetOutputCount(IWMReader *iface, DWORD *outputs)
@@ -427,12 +456,21 @@ static HRESULT WINAPI WMReaderAdvanced2_StopBuffering(IWMReaderAdvanced6 *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface, IStream *stream,
-        IWMReaderCallback *callback, void *context)
+static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
+        IStream *stream, IWMReaderCallback *callback, void *context)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%p %p %p)\n", This, stream, callback, context);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+    HRESULT hr;
+
+    TRACE("reader %p, stream %p, callback %p, context %p.\n", reader, stream, callback, context);
+
+    EnterCriticalSection(&reader->reader.cs);
+
+    if (SUCCEEDED(hr = wm_reader_open_stream(&reader->reader, stream)))
+        open_stream(reader, callback, context);
+
+    LeaveCriticalSection(&reader->reader.cs);
+    return hr;
 }
 
 static HRESULT WINAPI WMReaderAdvanced3_StopNetStreaming(IWMReaderAdvanced6 *iface)
@@ -1256,6 +1294,10 @@ static void async_reader_destroy(struct wm_reader *iface)
     TRACE("reader %p.\n", reader);
 
     wm_reader_close(&reader->reader);
+
+    if (reader->callback)
+        IWMReaderCallback_Release(reader->callback);
+
     wm_reader_cleanup(&reader->reader);
     free(reader);
 }

@@ -1255,9 +1255,7 @@ static void test_async_reader_streaming(void)
     IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
 
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        goto out;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
     ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
     ret = WaitForSingleObject(callback.got_opened, 1000);
@@ -1315,19 +1313,18 @@ static void test_async_reader_streaming(void)
     test_reader_attributes(profile);
 
     hr = IWMReader_Close(reader);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
     ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
     callback_cleanup(&callback);
 
-out:
     ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
     CloseHandle(stream.file);
     ret = DeleteFileW(filename);
     ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 
     hr = IWMReader_Close(reader);
-    todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
 
     IWMReaderAdvanced2_Release(advanced);
     IWMProfile_Release(profile);
@@ -1368,9 +1365,7 @@ static void test_async_reader_types(void)
     IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
 
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        goto out;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
     ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
     ret = WaitForSingleObject(callback.got_opened, 1000);
@@ -1403,6 +1398,11 @@ static void test_async_reader_types(void)
 
         hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr != S_OK)
+        {
+            winetest_pop_context();
+            continue;
+        }
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
@@ -1564,7 +1564,6 @@ static void test_async_reader_types(void)
     todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
-out:
     IWMReaderAdvanced2_Release(advanced);
     IWMProfile_Release(profile);
     ref = IWMReader_Release(reader);
