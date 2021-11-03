@@ -116,6 +116,12 @@ struct video_presenter
     unsigned int ar_mode;
     unsigned int state;
     unsigned int flags;
+
+    struct
+    {
+        int presented;
+    } frame_stats;
+
     CRITICAL_SECTION cs;
 };
 
@@ -532,6 +538,7 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
     }
 
     IDirect3DSwapChain9_Present(presenter->swapchain, &src, &dst, NULL, NULL, 0);
+    presenter->frame_stats.presented++;
 
     IDirect3DDevice9_Release(device);
     IDirect3DSurface9_Release(backbuffer);
@@ -934,6 +941,7 @@ static HRESULT WINAPI video_presenter_OnClockStop(IMFVideoPresenter *iface, MFTI
 
     EnterCriticalSection(&presenter->cs);
     presenter->state = PRESENTER_STATE_STOPPED;
+    presenter->frame_stats.presented = 0;
     LeaveCriticalSection(&presenter->cs);
 
     return S_OK;
@@ -1766,9 +1774,26 @@ static HRESULT WINAPI video_presenter_qualprop_get_FramesDroppedInRenderer(IQual
 
 static HRESULT WINAPI video_presenter_qualprop_get_FramesDrawn(IQualProp *iface, int *frames)
 {
-    FIXME("%p, %p stub.\n", iface, frames);
+    struct video_presenter *presenter = impl_from_IQualProp(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, frames);
+
+    EnterCriticalSection(&presenter->cs);
+
+    switch (presenter->state)
+    {
+        case PRESENTER_STATE_STARTED:
+        case PRESENTER_STATE_PAUSED:
+            if (frames) *frames = presenter->frame_stats.presented;
+            else hr = E_POINTER;
+        default:
+            hr = E_NOTIMPL;
+    }
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_qualprop_get_AvgFrameRate(IQualProp *iface, int *avg_frame_rate)

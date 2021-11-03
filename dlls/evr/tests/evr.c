@@ -2240,6 +2240,8 @@ static void test_presenter_quality_control(void)
     MF_QUALITY_DROP_MODE mode;
     IMFQualityAdvise *advise;
     MF_QUALITY_LEVEL level;
+    IQualProp *qual_prop;
+    int frame_count;
     HRESULT hr;
 
     hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
@@ -2292,6 +2294,17 @@ todo_wine {
 }
 
     IMFQualityAdvise_Release(advise);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IQualProp, (void **)&qual_prop);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IQualProp_get_FramesDrawn(qual_prop, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IQualProp_get_FramesDrawn(qual_prop, &frame_count);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    IQualProp_Release(qual_prop);
 
     IMFVideoPresenter_Release(presenter);
 }
@@ -2432,6 +2445,8 @@ static void test_presenter_shutdown(void)
     IMFVideoPresenter *presenter;
     IMFVideoDeviceID *deviceid;
     HWND window, window2;
+    IQualProp *qual_prop;
+    int frame_count;
     HRESULT hr;
     DWORD mode;
     RECT rect;
@@ -2451,6 +2466,9 @@ static void test_presenter_shutdown(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IQualProp, (void **)&qual_prop);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
@@ -2505,9 +2523,16 @@ static void test_presenter_shutdown(void)
     hr = IMFVideoDisplayControl_RepaintVideo(display_control);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
+    hr = IQualProp_get_FramesDrawn(qual_prop, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IQualProp_get_FramesDrawn(qual_prop, &frame_count);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
     hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    IQualProp_Release(qual_prop);
     IMFVideoDeviceID_Release(deviceid);
     IMFVideoDisplayControl_Release(display_control);
     IMFTopologyServiceLookupClient_Release(lookup_client);
