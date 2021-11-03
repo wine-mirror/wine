@@ -1397,12 +1397,7 @@ static void test_async_reader_types(void)
         output_number = i;
 
         hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        if (hr != S_OK)
-        {
-            winetest_pop_context();
-            continue;
-        }
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
@@ -1529,25 +1524,22 @@ static void test_async_reader_types(void)
         todo_wine ok(hr == NS_E_INVALID_OUTPUT_FORMAT, "Got hr %#x.\n", hr);
 
         hr = IWMReader_GetOutputProps(reader, output_number, &output_props);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        if (hr == S_OK)
-        {
-            hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            ok(output_props2 != output_props, "Expected different objects.\n");
+        hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(output_props2 != output_props, "Expected different objects.\n");
 
-            ref = IWMOutputMediaProps_Release(output_props2);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
-            ref = IWMOutputMediaProps_Release(output_props);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
-        }
+        ref = IWMOutputMediaProps_Release(output_props2);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ref = IWMOutputMediaProps_Release(output_props);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
 
         winetest_pop_context();
     }
 
-    todo_wine ok(got_audio, "No audio stream was enumerated.\n");
-    todo_wine ok(got_video, "No video stream was enumerated.\n");
+    ok(got_audio, "No audio stream was enumerated.\n");
+    ok(got_video, "No video stream was enumerated.\n");
 
     count = 0xdeadbeef;
     hr = IWMReader_GetOutputFormatCount(reader, 2, &count);
@@ -1556,7 +1548,7 @@ static void test_async_reader_types(void)
 
     output_props = (void *)0xdeadbeef;
     hr = IWMReader_GetOutputProps(reader, 2, &output_props);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     output_props = (void *)0xdeadbeef;
