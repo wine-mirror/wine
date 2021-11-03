@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT

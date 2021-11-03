@@ -43,6 +43,7 @@
 #endif
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
 
 #ifdef HAVE_CARBON_CARBON_H
 #define LoadResource __carbon_LoadResource
