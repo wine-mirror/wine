@@ -420,6 +420,14 @@ static const IStreamVtbl stream_vtbl =
     stream_Clone,
 };
 
+static void teststream_init(struct teststream *stream, HANDLE file)
+{
+    memset(stream, 0, sizeof(*stream));
+    stream->IStream_iface.lpVtbl = &stream_vtbl;
+    stream->refcount = 1;
+    stream->file = file;
+}
+
 static void test_reader_attributes(IWMProfile *profile)
 {
     WORD size, stream_number, ret_stream_number;
@@ -578,7 +586,7 @@ static void test_sync_reader_streaming(void)
     WORD stream_numbers[2], stream_number;
     IWMStreamConfig *config, *config2;
     bool eos[2] = {0}, first = true;
-    struct teststream stream = {{0}};
+    struct teststream stream;
     ULONG i, j, count, ref;
     IWMSyncReader *reader;
     IWMProfile *profile;
@@ -592,9 +600,7 @@ static void test_sync_reader_streaming(void)
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
 
-    stream.IStream_iface.lpVtbl = &stream_vtbl;
-    stream.refcount = 1;
-    stream.file = file;
+    teststream_init(&stream, file);
 
     hr = WMCreateSyncReader(NULL, 0, &reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -816,7 +822,7 @@ static void test_sync_reader_types(void)
     bool got_video = false, got_audio = false;
     DWORD size, ret_size, output_number;
     WORD stream_number, stream_number2;
-    struct teststream stream = {{0}};
+    struct teststream stream;
     IWMStreamConfig *config;
     ULONG count, ref, i, j;
     IWMSyncReader *reader;
@@ -829,9 +835,7 @@ static void test_sync_reader_types(void)
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
 
-    stream.IStream_iface.lpVtbl = &stream_vtbl;
-    stream.refcount = 1;
-    stream.file = file;
+    teststream_init(&stream, file);
 
     hr = WMCreateSyncReader(NULL, 0, &reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1051,6 +1055,276 @@ static void test_sync_reader_file(void)
     ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 }
 
+struct callback
+{
+    IWMReaderCallback IWMReaderCallback_iface;
+    LONG refcount;
+    HANDLE got_opened, got_stopped, eof_event;
+    unsigned int got_closed, got_started, got_sample, got_end_of_streaming, got_eof;
+};
+
+static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct callback, IWMReaderCallback_iface);
+}
+
+static HRESULT WINAPI callback_QueryInterface(IWMReaderCallback *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1)
+        trace("%04x: IWMReaderCallback::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
+
+    if (!IsEqualGUID(iid, &IID_IWMReaderCallbackAdvanced) && !IsEqualGUID(iid, &IID_IWMCredentialCallback))
+        ok(0, "Unexpected IID %s.\n", debugstr_guid(iid));
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI callback_AddRef(IWMReaderCallback *iface)
+{
+    struct callback *callback = impl_from_IWMReaderCallback(iface);
+
+    return InterlockedIncrement(&callback->refcount);
+}
+
+static ULONG WINAPI callback_Release(IWMReaderCallback *iface)
+{
+    struct callback *callback = impl_from_IWMReaderCallback(iface);
+
+    return InterlockedDecrement(&callback->refcount);
+}
+
+static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS status,
+        HRESULT hr, WMT_ATTR_DATATYPE type, BYTE *value, void *context)
+{
+    struct callback *callback = impl_from_IWMReaderCallback(iface);
+
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallback::OnStatus(status %u, hr %#x, type %#x, value %p)\n",
+                GetTickCount(), GetCurrentThreadId(), status, hr, type, value);
+
+    switch (status)
+    {
+        case WMT_OPENED:
+            ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
+            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(context == (void *)0xdeadbeef, "Got unexpected context %p.\n", context);
+            SetEvent(callback->got_opened);
+            break;
+
+        case WMT_STARTED:
+            ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
+            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ++callback->got_started;
+            break;
+
+        case WMT_STOPPED:
+            ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
+            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            SetEvent(callback->got_stopped);
+            break;
+
+        case WMT_CLOSED:
+            ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
+            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            todo_wine ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ++callback->got_closed;
+            break;
+
+        case WMT_END_OF_STREAMING:
+            ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
+            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+            ++callback->got_end_of_streaming;
+            break;
+
+        case WMT_EOF:
+            ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
+            ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
+            ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ok(callback->got_sample > 0, "Got no samples.\n");
+            ok(callback->got_end_of_streaming == 1, "Got %u WMT_END_OF_STREAMING callbacks.\n",
+                    callback->got_end_of_streaming);
+            ++callback->got_eof;
+            SetEvent(callback->eof_event);
+            break;
+
+        /* Not sent when not using IWMReaderAdvanced::DeliverTime(). */
+        case WMT_END_OF_SEGMENT:
+            ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
+            ok(*(QWORD *)value == 3000, "Got value %#x.\n", *(DWORD *)value);
+            ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ok(callback->got_sample > 0, "Got no samples.\n");
+            ok(callback->got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+            break;
+
+        default:
+            ok(0, "Unexpected status %#x.\n", status);
+    }
+
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return S_OK;
+}
+
+static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
+        QWORD time, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
+{
+    struct callback *callback = impl_from_IWMReaderCallback(iface);
+    HRESULT hr;
+    DWORD size;
+    BYTE *data;
+
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallback::OnSample(output %u, time %I64u, duration %I64u, flags %#x)\n",
+                GetTickCount(), GetCurrentThreadId(), output, time, duration, flags);
+
+    ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+
+    hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
+    ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+    ++callback->got_sample;
+
+    return S_OK;
+}
+
+static const IWMReaderCallbackVtbl callback_vtbl =
+{
+    callback_QueryInterface,
+    callback_AddRef,
+    callback_Release,
+    callback_OnStatus,
+    callback_OnSample,
+};
+
+static void callback_init(struct callback *callback)
+{
+    memset(callback, 0, sizeof(*callback));
+    callback->IWMReaderCallback_iface.lpVtbl = &callback_vtbl;
+    callback->refcount = 1;
+    callback->got_opened = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->got_stopped = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->eof_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+}
+
+static void callback_cleanup(struct callback *callback)
+{
+    CloseHandle(callback->got_opened);
+    CloseHandle(callback->got_stopped);
+    CloseHandle(callback->eof_event);
+}
+
+static void test_async_reader_streaming(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IWMReaderAdvanced2 *advanced;
+    struct teststream stream;
+    struct callback callback;
+    IWMStreamConfig *config;
+    WORD stream_numbers[2];
+    IWMProfile *profile;
+    ULONG i, count, ref;
+    IWMReader *reader;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n", debugstr_w(file), GetLastError());
+
+    teststream_init(&stream, file);
+    callback_init(&callback);
+
+    hr = WMCreateReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
+    IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
+
+    hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK)
+        goto out;
+    ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
+    ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
+    ret = WaitForSingleObject(callback.got_opened, 1000);
+    ok(!ret, "Wait timed out.\n");
+
+    count = 0xdeadbeef;
+    hr = IWMReader_GetOutputCount(reader, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+
+    for (i = 0; i < 2; ++i)
+    {
+        hr = IWMProfile_GetStream(profile, i, &config);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        stream_numbers[i] = 0xdead;
+        hr = IWMStreamConfig_GetStreamNumber(config, &stream_numbers[i]);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_numbers[i] == i + 1, "Got stream number %u.\n", stream_numbers[i]);
+
+        ref = IWMStreamConfig_Release(config);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+    }
+
+    hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (hr == S_OK)
+    {
+        /* By default the reader will time itself, and attempt to deliver samples
+         * according to their presentation time. Call DeliverTime with the file
+         * duration in order to request all samples as fast as possible. */
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+        ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+        hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ret = WaitForSingleObject(callback.eof_event, 1000);
+        ok(!ret, "Wait timed out.\n");
+        ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
+
+        hr = IWMReader_Stop(reader);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ret = WaitForSingleObject(callback.got_stopped, 1000);
+        ok(!ret, "Wait timed out.\n");
+
+        hr = IWMReader_Stop(reader);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ret = WaitForSingleObject(callback.got_stopped, 1000);
+        ok(!ret, "Wait timed out.\n");
+    }
+
+    test_reader_attributes(profile);
+
+    hr = IWMReader_Close(reader);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
+    callback_cleanup(&callback);
+
+out:
+    ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
+    CloseHandle(stream.file);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+
+    hr = IWMReader_Close(reader);
+    todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    IWMReaderAdvanced2_Release(advanced);
+    IWMProfile_Release(profile);
+    ref = IWMReader_Release(reader);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -1070,6 +1344,7 @@ START_TEST(wmvcore)
     test_sync_reader_streaming();
     test_sync_reader_types();
     test_sync_reader_file();
+    test_async_reader_streaming();
 
     CoUninitialize();
 }
