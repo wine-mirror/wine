@@ -26,10 +26,13 @@
 #endif
 
 #include "config.h"
+
 #if defined(SONAME_LIBKRB5) && defined(SONAME_LIBGSSAPI_KRB5)
-#include "wine/port.h"
 
 #include <stdarg.h>
+#include <sys/types.h>
+#include <dlfcn.h>
+
 #ifdef HAVE_KRB5_KRB5_H
 # include <krb5/krb5.h>
 #endif

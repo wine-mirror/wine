@@ -23,14 +23,14 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
+#include <sys/types.h>
+#include <dlfcn.h>
 #ifdef HAVE_SDL_H
 # include <SDL.h>
 #endif

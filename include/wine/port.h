@@ -29,6 +29,10 @@
 # error You must include port.h before all other headers
 #endif
 
+#ifdef WINE_UNIX_LIB
+# error port.h should not be used in Unix libraries
+#endif
+
 #include <sys/types.h>
 
 

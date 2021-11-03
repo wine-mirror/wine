@@ -29,10 +29,11 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <dlfcn.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

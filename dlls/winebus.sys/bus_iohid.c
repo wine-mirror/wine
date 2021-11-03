@@ -22,9 +22,9 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
+#include <sys/types.h>
 
 #if defined(HAVE_IOKIT_HID_IOHIDLIB_H)
 #define DWORD UInt32

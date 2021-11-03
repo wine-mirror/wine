@@ -23,7 +23,9 @@
 #endif
 
 #include "config.h"
-#include "wine/port.h"
+
+#include <sys/types.h>
+#include <dlfcn.h>
 
 #ifdef HAVE_FT2BUILD_H
 #include <ft2build.h>
