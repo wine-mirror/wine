@@ -299,7 +299,7 @@ WCHAR * CDECL ldap_first_attributeW( LDAP *ld, LDAPMessage *entry, BerElement **
 
     if (!ld || !entry) return NULL;
 
-    retU = ldap_funcs->fn_ldap_first_attribute( CTX(ld), MSG(entry), &berU );
+    ldap_funcs->fn_ldap_first_attribute( CTX(ld), MSG(entry), &berU, &retU );
     if (retU && (ber = malloc( sizeof(*ber) )))
     {
         BER(ber) = (char *)berU;
@@ -335,8 +335,7 @@ LDAPMessage * CDECL ldap_first_entry( LDAP *ld, LDAPMessage *res )
 
     if (!ld || !res) return NULL;
 
-    msgU = ldap_funcs->fn_ldap_first_entry( CTX(ld), MSG(res) );
-    if (msgU)
+    if (!ldap_funcs->fn_ldap_first_entry( CTX(ld), MSG(res), &msgU ))
     {
         assert( msgU == MSG(res) );
         return res;
@@ -366,8 +365,7 @@ LDAPMessage * CDECL ldap_first_reference( LDAP *ld, LDAPMessage *res )
 
     if (!ld) return NULL;
 
-    msgU = ldap_funcs->fn_ldap_first_reference( CTX(ld), MSG(res) );
-    if (msgU)
+    if (!ldap_funcs->fn_ldap_first_reference( CTX(ld), MSG(res), &msgU ))
     {
         assert( msgU == MSG(res) );
         return res;
@@ -479,8 +477,7 @@ WCHAR * CDECL ldap_next_attributeW( LDAP *ld, LDAPMessage *entry, BerElement *pt
 
     if (!ld || !entry || !ptr) return NULL;
 
-    retU = ldap_funcs->fn_ldap_next_attribute( CTX(ld), MSG(entry), BER(ptr) );
-    if (retU)
+    if (!ldap_funcs->fn_ldap_next_attribute( CTX(ld), MSG(entry), BER(ptr), &retU ))
     {
         ret = strUtoW( retU );
         ldap_funcs->fn_ldap_memfree( retU );
@@ -516,7 +513,7 @@ LDAPMessage * CDECL ldap_next_entry( LDAP *ld, LDAPMessage *entry )
 
     if (entry->lm_next) return entry->lm_next;
 
-    msgU = ldap_funcs->fn_ldap_next_entry( CTX(ld), MSG(entry) );
+    ldap_funcs->fn_ldap_next_entry( CTX(ld), MSG(entry), &msgU );
     if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         MSG(msg) = msgU;
@@ -553,7 +550,7 @@ LDAPMessage * CDECL ldap_next_reference( LDAP *ld, LDAPMessage *entry )
 
     if (entry->lm_next) return entry->lm_next;
 
-    msgU = ldap_funcs->fn_ldap_next_reference( CTX(ld), MSG(entry) );
+    ldap_funcs->fn_ldap_next_reference( CTX(ld), MSG(entry), &msgU );
     if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         MSG(msg) = msgU;

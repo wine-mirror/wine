@@ -51,7 +51,7 @@ BerElement * CDECL ber_alloc_t( int options )
     BerElement *ret;
 
     if (!(ret = malloc( sizeof(*ret) ))) return NULL;
-    if (!(BER(ret) = ldap_funcs->fn_ber_alloc_t( options )))
+    if (ldap_funcs->fn_ber_alloc_t( options, (void **)&BER(ret) ))
     {
         free( ret );
         return NULL;
@@ -226,7 +226,7 @@ BerElement * CDECL ber_init( BERVAL *berval )
         free( ret );
         return NULL;
     }
-    if (!(BER(ret) = ldap_funcs->fn_ber_init( bervalU )))
+    if (ldap_funcs->fn_ber_init( bervalU, (void **)&BER(ret) ))
     {
         free( ret );
         ret = NULL;

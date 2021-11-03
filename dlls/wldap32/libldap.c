@@ -59,9 +59,10 @@ C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
 
 static LDAPMod *nullmods[] = { NULL };
 
-static void * CDECL wrap_ber_alloc_t( int options )
+static int CDECL wrap_ber_alloc_t( int options, void **ret )
 {
-    return ber_alloc_t( options );
+    *ret = ber_alloc_t( options );
+    return *ret ? LDAP_SUCCESS : WLDAP32_LBER_ERROR;
 }
 
 static void CDECL wrap_ber_bvecfree( struct bervalU **berval )
@@ -105,9 +106,10 @@ static void CDECL wrap_ber_free( void *ber, int freebuf )
     ber_free( ber, freebuf );
 }
 
-static void * CDECL wrap_ber_init( struct bervalU *berval )
+static int CDECL wrap_ber_init( struct bervalU *berval, void **ret )
 {
-    return ber_init( (struct berval *)berval );
+    *ret = ber_init( (struct berval *)berval );
+    return *ret ? LDAP_SUCCESS : WLDAP32_LBER_ERROR;
 }
 
 static unsigned int CDECL wrap_ber_next_element( void *ber, unsigned int *ret_len, char *last )
@@ -260,14 +262,16 @@ static int CDECL wrap_ldap_delete_ext_s( void *ld, const char *dn, LDAPControlU 
     return ldap_delete_ext_s( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
 }
 
-static char * CDECL wrap_ldap_dn2ufn( const char *dn )
+static int CDECL wrap_ldap_dn2ufn( const char *dn, char **ret )
 {
-    return ldap_dn2ufn( dn );
+    *ret = ldap_dn2ufn( dn );
+    return *ret ? 0 : -1;
 }
 
-static char ** CDECL wrap_ldap_explode_dn( const char *dn, int notypes )
+static int CDECL wrap_ldap_explode_dn( const char *dn, int notypes, char ***ret )
 {
-    return ldap_explode_dn( dn, notypes );
+    *ret = ldap_explode_dn( dn, notypes );
+    return *ret ? 0 : -1;
 }
 
 static int CDECL wrap_ldap_extended_operation( void *ld, const char *oid, struct bervalU *data, LDAPControlU **serverctrls,
@@ -285,24 +289,28 @@ static int CDECL wrap_ldap_extended_operation_s( void *ld, const char *oid, stru
                                       (LDAPControl **)clientctrls, retoid, (struct berval **)retdata );
 }
 
-static char * CDECL wrap_ldap_get_dn( void *ld, void *entry )
+static int CDECL wrap_ldap_get_dn( void *ld, void *entry, char **ret )
 {
-    return ldap_get_dn( ld, entry );
+    *ret = ldap_get_dn( ld, entry );
+    return *ret ? 0 : -1;
 }
 
-static char * CDECL wrap_ldap_first_attribute( void *ld, void *entry, void **ber )
+static int CDECL wrap_ldap_first_attribute( void *ld, void *entry, void **ber, char **ret )
 {
-    return ldap_first_attribute( ld, entry, (BerElement **)ber );
+    *ret = ldap_first_attribute( ld, entry, (BerElement **)ber );
+    return *ret ? 0 : -1;
 }
 
-static void * CDECL wrap_ldap_first_entry( void *ld, void *chain )
+static int CDECL wrap_ldap_first_entry( void *ld, void *chain, void **ret )
 {
-    return ldap_first_entry( ld, chain );
+    *ret = ldap_first_entry( ld, chain );
+    return *ret ? 0 : -1;
 }
 
-static void * CDECL wrap_ldap_first_reference( void *ld, void *chain )
+static int CDECL wrap_ldap_first_reference( void *ld, void *chain, void **ret )
 {
-    return ldap_first_reference( ld, chain );
+    *ret = ldap_first_reference( ld, chain );
+    return *ret ? 0 : -1;
 }
 
 static int CDECL wrap_ldap_get_option( void *ld, int option, void *value )
@@ -310,9 +318,10 @@ static int CDECL wrap_ldap_get_option( void *ld, int option, void *value )
     return ldap_get_option( ld, option, value );
 }
 
-static struct bervalU ** CDECL wrap_ldap_get_values_len( void *ld, void *entry, const char *attr )
+static int CDECL wrap_ldap_get_values_len( void *ld, void *entry, const char *attr, struct bervalU ***ret )
 {
-    return (struct bervalU **)ldap_get_values_len( ld, entry, attr );
+    *ret = (struct bervalU **)ldap_get_values_len( ld, entry, attr );
+    return *ret ? 0 : -1;
 }
 
 static int CDECL wrap_ldap_initialize( void **ld, const char *url )
@@ -350,19 +359,22 @@ static int CDECL wrap_ldap_msgfree( void *msg )
     return ldap_msgfree( msg );
 }
 
-static char * CDECL wrap_ldap_next_attribute( void *ld, void *entry, void *ber )
+static int CDECL wrap_ldap_next_attribute( void *ld, void *entry, void *ber, char **ret )
 {
-    return ldap_next_attribute( ld, entry, ber );
+    *ret = ldap_next_attribute( ld, entry, ber );
+    return *ret ? 0 : -1;
 }
 
-static void * CDECL wrap_ldap_next_entry( void *ld, void *entry )
+static int CDECL wrap_ldap_next_entry( void *ld, void *entry, void **ret )
 {
-    return ldap_next_entry( ld, entry );
+    *ret = ldap_next_entry( ld, entry );
+    return *ret ? 0 : -1;
 }
 
-static void * CDECL wrap_ldap_next_reference( void *ld, void *entry )
+static int CDECL wrap_ldap_next_reference( void *ld, void *entry, void **ret )
 {
-    return ldap_next_reference( ld, entry );
+    *ret = ldap_next_reference( ld, entry );
+    return *ret ? 0 : -1;
 }
 
 static int CDECL wrap_ldap_parse_extended_result( void *ld, void *result, char **retoid, struct bervalU **retdata, int free )

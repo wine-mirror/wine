@@ -75,7 +75,7 @@ WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
 
     if (!(dnU = strWtoU( dn ))) return NULL;
 
-    retU = ldap_funcs->fn_ldap_dn2ufn( dnU );
+    ldap_funcs->fn_ldap_dn2ufn( dnU, &retU );
     ret = strUtoW( retU );
 
     free( dnU );
@@ -131,7 +131,7 @@ WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
 
     if (!(dnU = strWtoU( dn ))) return NULL;
 
-    retU = ldap_funcs->fn_ldap_explode_dn( dnU, notypes );
+    ldap_funcs->fn_ldap_explode_dn( dnU, notypes, &retU );
     ret = strarrayUtoW( retU );
 
     free( dnU );
@@ -185,7 +185,7 @@ WCHAR * CDECL ldap_get_dnW( LDAP *ld, LDAPMessage *entry )
 
     if (!ld || !entry) return NULL;
 
-    retU = ldap_funcs->fn_ldap_get_dn( CTX(ld), MSG(entry) );
+    ldap_funcs->fn_ldap_get_dn( CTX(ld), MSG(entry), &retU );
 
     ret = strUtoW( retU );
     ldap_funcs->fn_ldap_memfree( retU );

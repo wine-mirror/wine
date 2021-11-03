@@ -377,11 +377,10 @@ static BOOL query_supported_server_ctrls( LDAP *ld )
                                                        attrs, FALSE, NULL, NULL, NULL, 0, &res ) );
     if (ret != LDAP_SUCCESS) return FALSE;
 
-    entry = ldap_funcs->fn_ldap_first_entry( CTX(ld), res );
-    if (entry)
+    if (!ldap_funcs->fn_ldap_first_entry( CTX(ld), res, &entry ))
     {
         ULONG count, i;
-        ctrls = ldap_funcs->fn_ldap_get_values_len( CTX(ld), entry, attrs[0] );
+        ldap_funcs->fn_ldap_get_values_len( CTX(ld), entry, attrs[0], &ctrls );
         count = ldap_funcs->fn_ldap_count_values_len( ctrls );
         for (i = 0; i < count; i++) TRACE("%u: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ));
         *(struct bervalU ***)&SERVER_CTRLS(ld) = ctrls;

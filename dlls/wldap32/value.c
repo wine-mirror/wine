@@ -197,7 +197,7 @@ WCHAR ** CDECL ldap_get_valuesW( LDAP *ld, LDAPMessage *entry, WCHAR *attr )
 
     if (!ld || !entry || !attr || !(attrU = strWtoU( attr ))) return NULL;
 
-    if ((bv = ldap_funcs->fn_ldap_get_values_len( CTX(ld), MSG(entry), attrU )))
+    if (!ldap_funcs->fn_ldap_get_values_len( CTX(ld), MSG(entry), attrU, &bv ))
     {
         retU = bv2str_array( bv );
         ret = strarrayUtoW( retU );
@@ -259,7 +259,7 @@ struct berval ** CDECL ldap_get_values_lenW( LDAP *ld, LDAPMessage *message, WCH
 
     if (!ld || !message || !attr || !(attrU = strWtoU( attr ))) return NULL;
 
-    if ((retU = ldap_funcs->fn_ldap_get_values_len( CTX(ld), MSG(message), attrU )))
+    if (!ldap_funcs->fn_ldap_get_values_len( CTX(ld), MSG(message), attrU, &retU ))
     {
         ret = bvarrayUtoW( retU );
         bvarrayfreeU( retU );
