@@ -1543,6 +1543,7 @@ enable_xinput1_2
 enable_xinput1_3
 enable_xinput1_4
 enable_xinput9_1_0
+enable_xinputuap
 enable_xmllite
 enable_xolehlp
 enable_xpsprint
@@ -22020,6 +22021,7 @@ wine_fn_config_makefile dlls/xinput1_3 enable_xinput1_3
 wine_fn_config_makefile dlls/xinput1_3/tests enable_tests
 wine_fn_config_makefile dlls/xinput1_4 enable_xinput1_4
 wine_fn_config_makefile dlls/xinput9_1_0 enable_xinput9_1_0
+wine_fn_config_makefile dlls/xinputuap enable_xinputuap
 wine_fn_config_makefile dlls/xmllite enable_xmllite
 wine_fn_config_makefile dlls/xmllite/tests enable_tests
 wine_fn_config_makefile dlls/xolehlp enable_xolehlp
