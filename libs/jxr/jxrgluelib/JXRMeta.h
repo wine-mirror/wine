@@ -107,8 +107,8 @@
 
 
 #ifdef WIN32
-#define __in_win    __in
-#define __out_win   __out
+#define __in_win
+#define __out_win
 #endif
 
 

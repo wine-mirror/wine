@@ -344,7 +344,7 @@
 #define __ecount(size)
 #define __ecount_opt(size)
 
-#define __in
+/* #define __in */ /* conflicts with system headers */
 #define __in_bcount(size)
 #define __in_bcount_nz(size)
 #define __in_bcount_nz_opt(size)
@@ -390,7 +390,7 @@
 #define __inout_z
 #define __inout_z_opt
 
-#define __out
+/* #define __out */ /* conflicts with system headers */
 #define __out_bcount(size)
 #define __out_bcount_full(size)
 #define __out_bcount_full_opt(size)
