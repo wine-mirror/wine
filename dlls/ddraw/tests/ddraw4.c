@@ -16118,8 +16118,10 @@ static void test_depth_readback(void)
                 /* The ddraw4 version of this test behaves similarly to the ddraw7 version on Nvidia GPUs,
                  * except that Geforce 7 also returns garbage data in D24S8, whereas the ddraw7 version
                  * returns 0 for that format. Give up on pre-filtering formats, accept Nvidia as generally
-                 * broken here, but still expect at least one format (D16 or D24X8 in practise) to pass. */
-                todo_wine_if(tests[i].todo)
+                 * broken here, but still expect at least one format (D16 or D24X8 in practise) to pass.
+                 *
+                 * Some of the tested places pass on some GPUs on Wine by accident. */
+                todo_wine_if(tests[i].todo && !compare_uint(expected_depth, depth, max_diff))
                     ok(compare_uint(expected_depth, depth, max_diff) || ddraw_is_nvidia(ddraw),
                              "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                              i, depth, expected_depth - depth, expected_depth, max_diff, x, y);

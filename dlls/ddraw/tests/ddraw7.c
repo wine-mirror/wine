@@ -15597,8 +15597,10 @@ static void test_depth_readback(void)
                  * Geforce GTX 650 has working D16 and D24, but D24S8 returns 0.
                  *
                  * Arx Fatalis is broken on the Geforce 9 in the same way it was broken in Wine (bug 43654).
-                 * The !tests[i].s_depth is supposed to rule out D16 on GF9 and D24X8 on GF7. */
-                todo_wine_if(tests[i].todo)
+                 * The !tests[i].s_depth is supposed to rule out D16 on GF9 and D24X8 on GF7.
+                 *
+                 * Some of the tested places pass on some GPUs on Wine by accident. */
+                todo_wine_if(tests[i].todo && !compare_uint(expected_depth, depth, max_diff))
                     ok(compare_uint(expected_depth, depth, max_diff)
                             || (ddraw_is_nvidia(ddraw) && (all_zero || all_one || !tests[i].s_depth)),
                             "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",

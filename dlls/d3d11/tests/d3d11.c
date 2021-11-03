@@ -28185,7 +28185,6 @@ static void test_fractional_viewports(void)
                 ok(compare_float(v->x, expected.x, 0) && compare_float(v->y, expected.y, 0),
                         "Got fragcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
                         v->x, v->y, expected.x, expected.y, x, y, viewport_offsets[i]);
-                todo_wine
                 ok(compare_float(v->z, expected.z, 2) && compare_float(v->w, expected.w, 2),
                         "Got texcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
                         v->z, v->w, expected.z, expected.w, x, y, viewport_offsets[i]);

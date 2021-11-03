@@ -243,6 +243,8 @@ struct wined3d_d3d_info
     enum wined3d_feature_level feature_level;
 
     DWORD multisample_draw_location;
+
+    float filling_convention_offset;
 };
 
 static const struct color_fixup_desc COLOR_FIXUP_IDENTITY =
@@ -3265,6 +3267,7 @@ struct wined3d_gl_info
     DWORD quirks;
     BOOL supported[WINED3D_GL_EXT_COUNT];
     GLint wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP + 1];
+    float filling_convention_offset;
 
     HGLRC (WINAPI *p_wglCreateContextAttribsARB)(HDC dc, HGLRC share, const GLint *attribs);
     struct opengl_funcs gl_ops;
@@ -3525,6 +3528,7 @@ BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
 
 BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
+bool wined3d_caps_gl_ctx_test_filling_convention(struct wined3d_caps_gl_ctx *ctx, float offset) DECLSPEC_HIDDEN;
 
 void install_gl_compat_wrapper(struct wined3d_gl_info *gl_info, enum wined3d_gl_extension ext) DECLSPEC_HIDDEN;
 
@@ -5770,10 +5774,15 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
     float center_offset;
     unsigned int i;
 
+    /* See get_projection_matrix() in utils.c for a discussion of the position fixup.
+     * This function here also applies to d3d10+ which does not need adjustment for
+     * integer pixel centers, but it may need the filling convention offset. */
     if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
-        center_offset = 63.0f / 64.0f;
+        center_offset = 1.0f;
     else
-        center_offset = -1.0f / 64.0f;
+        center_offset = 0.0f;
+
+    center_offset += context->d3d_info->filling_convention_offset;
 
     for (i = 0; i < fixup_count; ++i)
     {

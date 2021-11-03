@@ -3914,6 +3914,100 @@ BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx 
     return TRUE;
 }
 
+bool wined3d_caps_gl_ctx_test_filling_convention(struct wined3d_caps_gl_ctx *ctx, float offset)
+{
+    static const struct wined3d_color red = {1.0f, 0.0f, 0.0f, 1.0f};
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
+    unsigned int x, y, clear = 0, draw = 0;
+    GLuint texture, fbo;
+    DWORD readback[8][8];
+
+    /* This is a very simple test to find out how GL handles polygon edges:
+     * Draw a 1x1 quad exactly through 4 adjacent pixel centers in an 8x8
+     * viewport and see which pixel it ends up in. So far we've seen top left
+     * and bottom left conventions. This test may produce unexpected results
+     * if the driver forces multisampling on us.
+     *
+     * If we find a bottom-left filling behavior we also move the x-axis
+     * by the same amount. This is necessary to keep diagonals that go
+     * through the pixel center intact.
+     *
+     * Note that we are ignoring some settings that might influence the
+     * driver: How we switch GL to an upper-left coordinate system,
+     * shaders vs fixed function GL. Testing these isn't possible with
+     * the current draw_test_quad() infrastructure. Also the test is
+     * skipped if we are not using FBOs. Drawing into the onscreen
+     * frame buffer may also yield different driver behavior.
+     *
+     * The minimum offset also depends on the viewport size, although
+     * the relation between those two is GPU dependent and not exactly
+     * sensible. E.g. a 8192x8192 viewport on a GeForce 9 needs at
+     * least an offset of 1/240.9, whereas a 8x8 one needs 1/255.982;
+     * 32x32 needs 1/255.935. 4x4 and lower are happy with something
+     * below 1/256. The 8x8 size below has been arbitrarily chosen to
+     * get a useful result out of that card and avoid allocating a
+     * gigantic texture during library init.
+     *
+     * Newer cards usually do the right thing anyway. In cases where
+     * they do not (e.g. Radeon GPUs in a macbookpro14,3 running MacOS)
+     * an offset of 1/2^20 is enough. */
+    const struct wined3d_vec3 edge_geometry[] =
+    {
+        {(-1.0f + offset) / 8.0f, (-1.0f + offset) / 8.0f, 0.0f},
+        {( 1.0f + offset) / 8.0f, (-1.0f + offset) / 8.0f, 0.0f},
+        {(-1.0f + offset) / 8.0f, ( 1.0f + offset) / 8.0f, 0.0f},
+        {( 1.0f + offset) / 8.0f, ( 1.0f + offset) / 8.0f, 0.0f},
+    };
+
+    gl_info->gl_ops.gl.p_glGenTextures(1, &texture);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, texture);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 8, 8, 0,
+            GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+            GL_TEXTURE_2D, texture, 0);
+    checkGLcall("create resources");
+
+    gl_info->gl_ops.gl.p_glViewport(0, 0, 8, 8);
+    gl_info->gl_ops.gl.p_glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT);
+
+    draw_test_quad(ctx, edge_geometry, &red);
+    checkGLcall("draw");
+
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, texture);
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0,
+            GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+    checkGLcall("readback");
+
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &texture);
+    gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    checkGLcall("delete resources");
+
+    /* We expect that exactly one fragment is generated. */
+    for (y = 0; y < ARRAY_SIZE(readback); ++y)
+    {
+        for (x = 0; x < ARRAY_SIZE(readback[0]); ++x)
+        {
+            if (readback[y][x] == 0xff0000ff)
+                clear++;
+            else if (readback[y][x] == 0xffff0000)
+                draw++;
+        }
+    }
+
+    if (clear != 63 || draw != 1)
+    {
+        FIXME("Unexpected filling convention test result.\n");
+        return FALSE;
+    }
+
+    /* One pixel was drawn, check if it is the expected one */
+    return readback[3][3] == 0xffff0000;
+}
 static float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLenum format)
 {
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
@@ -5542,15 +5636,19 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      *   - We need to flip along the y-axis in case of offscreen rendering.
      *   - OpenGL Z range is {-Wc,...,Wc} while D3D Z range is {0,...,Wc}.
      *   - <= D3D9 coordinates refer to pixel centers while GL coordinates
-     *     refer to pixel corners.
-     *   - D3D has a top-left filling convention. We need to maintain this
-     *     even after the y-flip mentioned above.
-     * In order to handle the last two points, we translate by
-     * (63.0 / 128.0) / VPw and (63.0 / 128.0) / VPh. This is equivalent to
-     * translating slightly less than half a pixel. We want the difference to
-     * be large enough that it doesn't get lost due to rounding inside the
-     * driver, but small enough to prevent it from interfering with any
-     * anti-aliasing. */
+     *     refer to pixel corners. D3D10 fixed this particular oddity.
+     *   - D3D has a top-left filling convention while GL does not specify
+     *     a particular behavior, other than that that the GL implementation
+     *     needs to be consistent.
+     *
+     * In order to handle the pixel center, we translate by 0.5 / VPw and
+     * 0.5 / VPh. We test the filling convention during adapter init and
+     * add a small offset to correct it if necessary. See
+     * wined3d_caps_gl_ctx_test_filling_convention() for more details on how
+     * we test GL and considerations regarding the added offset value.
+     *
+     * If we have GL_ARB_clip_control we take care of all this through
+     * viewport properties and don't have to translate geometry. */
 
     /* Projection matrices are <= d3d9, which all have integer pixel centers. */
     if (!(d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER))
@@ -5559,7 +5657,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
     clip_control = d3d_info->clip_control;
     flip = !clip_control && context->render_offscreen;
     if (!clip_control)
-        center_offset = 63.0f / 64.0f;
+        center_offset = 1.0f + d3d_info->filling_convention_offset;
     else
         center_offset = 0.0f;
 

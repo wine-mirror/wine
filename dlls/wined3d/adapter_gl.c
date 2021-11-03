@@ -5142,11 +5142,59 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->scaled_resolve = !!gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE_BLIT_SCALED];
     d3d_info->pbo = !!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT];
     d3d_info->feature_level = feature_level_from_caps(gl_info, &shader_caps, &fragment_caps);
+    d3d_info->filling_convention_offset = gl_info->filling_convention_offset;
 
     if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
         d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;
     else
         d3d_info->multisample_draw_location = WINED3D_LOCATION_RB_MULTISAMPLE;
+}
+
+static float wined3d_adapter_find_fill_offset(struct wined3d_caps_gl_ctx *ctx)
+{
+    static const float test_array[] =
+    {
+        0.0f,
+        -1.0f / 1024.0f,
+        -1.0f / 512.0f,
+        -1.0f / 256.0f,
+        -1.0f / 128.0f,
+        -1.0f / 64.0f
+    };
+    unsigned int upper = ARRAY_SIZE(test_array), lower = 0, test;
+    float value;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        goto end;
+
+    while (upper != lower)
+    {
+        test = (upper + lower) / 2;
+        value = test_array[test];
+        TRACE("Good %u lower %u, test %u.\n", upper, lower, test);
+        if (wined3d_caps_gl_ctx_test_filling_convention(ctx, value))
+            upper = test;
+        else
+            lower = test + 1;
+    }
+
+    if (upper < ARRAY_SIZE(test_array))
+    {
+        value = test_array[upper];
+        if (value)
+            WARN("Using a filling convention fixup offset of -1/%f.\n", -1.0f / value);
+        else
+            TRACE("No need for a filling convention offset.\n");
+
+        return value;
+    }
+
+    FIXME("Did not find a way to get the filling convention we want.\n");
+
+end:
+    /* This value was used unconditionally before the dynamic test function was
+     * introduced. */
+    return -1.0f / 64.0f;
 }
 
 static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
@@ -5233,6 +5281,8 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
         return FALSE;
     }
+
+    gl_info->filling_convention_offset = wined3d_adapter_find_fill_offset(&caps_gl_ctx);
 
     wined3d_adapter_gl_init_d3d_info(adapter_gl, wined3d_creation_flags);
 

@@ -2258,6 +2258,14 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->pbo = true;
     d3d_info->feature_level = feature_level_from_caps(&shader_caps);
 
+    /* Like GL, Vulkan doesn't explicitly specify a filling convention and only mandates that a
+     * shared edge of two adjacent triangles generate a fragment for exactly one of the triangles.
+     *
+     * However, every Vulkan implementation we have seen so far uses a top-left rule. Hardware
+     * that differs either predates Vulkan (d3d9 class HW, GeForce 9xxx) or behaves the way we
+     * want in Vulkan (MacOS Radeon driver through MoltenVK). */
+    d3d_info->filling_convention_offset = 0.0f;
+
     d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;
 }
 
