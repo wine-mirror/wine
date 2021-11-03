@@ -72,6 +72,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 }
 
 static HRESULT create_msdasql_provider(REFIID riid, void **ppv);
+static HRESULT create_msdasql_enumerator(REFIID riid, void **ppv);
 
 HRESULT WINAPI msdasql_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
@@ -94,7 +95,24 @@ static const IClassFactoryVtbl cfmsdasqlVtbl = {
     ClassFactory_LockServer
 };
 
+HRESULT WINAPI enumerationcf_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+
+    return create_msdasql_enumerator(riid, ppv);
+}
+
+static const IClassFactoryVtbl enumfactoryVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    enumerationcf_CreateInstance,
+    ClassFactory_LockServer
+};
+
 static IClassFactory cfmsdasql = { &cfmsdasqlVtbl };
+static IClassFactory enumfactory = { &enumfactoryVtbl };
 
 HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 {
@@ -102,6 +120,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 
     if (IsEqualGUID(&CLSID_MSDASQL, rclsid))
         return IClassFactory_QueryInterface(&cfmsdasql, riid, ppv);
+    else if (IsEqualGUID(&CLSID_MSDASQL_ENUMERATOR, rclsid))
+        return IClassFactory_QueryInterface(&enumfactory, riid, ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;
 }
@@ -524,5 +544,97 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
     IUnknown_Release(&provider->MSDASQL_iface);
+    return hr;
+}
+
+struct msdasql_enum
+{
+    ISourcesRowset ISourcesRowset_iface;
+    LONG ref;
+};
+
+static inline struct msdasql_enum *msdasql_enum_from_ISourcesRowset(ISourcesRowset *iface)
+{
+    return CONTAINING_RECORD(iface, struct msdasql_enum, ISourcesRowset_iface);
+}
+
+static HRESULT WINAPI msdasql_enum_QueryInterface(ISourcesRowset *iface, REFIID riid, void **out)
+{
+    struct msdasql_enum *enumerator = msdasql_enum_from_ISourcesRowset(iface);
+
+    TRACE("(%p)->(%s %p)\n", enumerator, debugstr_guid(riid), out);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_ISourcesRowset ) )
+    {
+        *out = &enumerator->ISourcesRowset_iface;
+    }
+    else
+    {
+        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI msdasql_enum_AddRef(ISourcesRowset *iface)
+{
+    struct msdasql_enum *enumerator = msdasql_enum_from_ISourcesRowset(iface);
+    ULONG ref = InterlockedIncrement(&enumerator->ref);
+
+    TRACE("(%p) ref=%u\n", enumerator, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI msdasql_enum_Release(ISourcesRowset *iface)
+{
+    struct msdasql_enum *enumerator = msdasql_enum_from_ISourcesRowset(iface);
+    ULONG ref = InterlockedDecrement(&enumerator->ref);
+
+    TRACE("(%p) ref=%u\n", enumerator, ref);
+
+    if (!ref)
+    {
+        free(enumerator);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI msdasql_enum_GetSourcesRowset(ISourcesRowset *iface, IUnknown *outer, REFIID riid, ULONG sets,
+                DBPROPSET properties[], IUnknown **rowset)
+{
+    struct msdasql_enum *enumerator = msdasql_enum_from_ISourcesRowset(iface);
+    FIXME("(%p) %p, %s, %d, %p, %p\n", enumerator, outer, debugstr_guid(riid), sets, properties, rowset);
+
+    return E_NOTIMPL;
+}
+
+static const ISourcesRowsetVtbl msdsqlenum_vtbl =
+{
+    msdasql_enum_QueryInterface,
+    msdasql_enum_AddRef,
+    msdasql_enum_Release,
+    msdasql_enum_GetSourcesRowset
+};
+
+static HRESULT create_msdasql_enumerator(REFIID riid, void **ppv)
+{
+    struct msdasql_enum *enumerator;
+    HRESULT hr;
+
+    enumerator = malloc(sizeof(*enumerator));
+    if (!enumerator)
+        return E_OUTOFMEMORY;
+
+    enumerator->ISourcesRowset_iface.lpVtbl = &msdsqlenum_vtbl;
+    enumerator->ref = 1;
+
+    hr = IUnknown_QueryInterface(&enumerator->ISourcesRowset_iface, riid, ppv);
+    IUnknown_Release(&enumerator->ISourcesRowset_iface);
     return hr;
 }

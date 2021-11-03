@@ -1066,7 +1066,7 @@ static void test_odbc_enumerator(void)
     IRowset *rowset;
 
     hr = CoCreateInstance( &CLSID_MSDASQL_ENUMERATOR, NULL, CLSCTX_ALL, &IID_ISourcesRowset, (void **)&source);
-    todo_wine ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
     if (FAILED(hr))
     {
         return;
