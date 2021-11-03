@@ -105,8 +105,8 @@ struct ldap_funcs
     unsigned int (CDECL *fn_ber_next_element)(void *, unsigned int *, char *);
     unsigned int (CDECL *fn_ber_peek_tag)(void *, unsigned int *);
     unsigned int (CDECL *fn_ber_skip_tag)(void *, unsigned int *);
-    int (WINAPIV *fn_ber_printf)(void *, char *, ...);
-    int (WINAPIV *fn_ber_scanf)(void *, char *, ...);
+    int (CDECL *fn_ber_printf)(void *, char *, ULONG_PTR arg1, ULONG_PTR arg2 );
+    int (CDECL *fn_ber_scanf)(void *, char *, void *arg1, void *arg2 );
 
     int (CDECL *fn_ldap_abandon_ext)(void *, int, LDAPControlU **, LDAPControlU **);
     int (CDECL *fn_ldap_add_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);

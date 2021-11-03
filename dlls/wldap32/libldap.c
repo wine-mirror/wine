@@ -163,140 +163,18 @@ static unsigned int CDECL wrap_ber_skip_tag( void *ber, unsigned int *ret_len )
     return ret;
 }
 
-static int WINAPIV wrap_ber_printf( void *ber, char *fmt, ... )
+static int CDECL wrap_ber_printf( void *ber, char *fmt, ULONG_PTR arg1, ULONG_PTR arg2 )
 {
-    int ret;
-    __ms_va_list args;
-
     assert( strlen(fmt) == 1 );
 
-    __ms_va_start( args, fmt );
-    switch (fmt[0])
-    {
-    case 'b':
-    case 'e':
-    case 'i':
-    {
-        int i = va_arg( args, int );
-        ret = ber_printf( ber, fmt, i );
-        break;
-    }
-    case 'o':
-    case 's':
-    {
-        char *str = va_arg( args, char * );
-        ret = ber_printf( ber, fmt, str );
-        break;
-    }
-    case 't':
-    {
-        unsigned int tag = va_arg( args, unsigned int );
-        ret = ber_printf( ber, fmt, tag );
-        break;
-    }
-    case 'v':
-    {
-        char **array = va_arg( args, char ** );
-        ret = ber_printf( ber, fmt, array );
-        break;
-    }
-    case 'V':
-    {
-        struct berval **array = va_arg( args, struct berval ** );
-        ret = ber_printf( ber, fmt, array );
-        break;
-    }
-    case 'B':
-    {
-        char *str = va_arg( args, char * );
-        int len = va_arg( args, int );
-        ret = ber_printf( ber, fmt, str, len );
-        break;
-    }
-    case 'n':
-    case '{':
-    case '}':
-    case '[':
-    case ']':
-        ret = ber_printf( ber, fmt );
-        break;
-
-    default:
-        assert( 0 );
-    }
-    __ms_va_end( args );
-    return ret;
+    return ber_printf( ber, fmt, arg1, arg2 );
 }
 
-static int WINAPIV wrap_ber_scanf( void *ber, char *fmt, ... )
+static int CDECL wrap_ber_scanf( void *ber, char *fmt, void *arg1, void *arg2 )
 {
-    int ret;
-    __ms_va_list args;
-
     assert( strlen(fmt) == 1 );
 
-    __ms_va_start( args, fmt );
-    switch (fmt[0])
-    {
-    case 'a':
-    {
-        char **str = va_arg( args, char ** );
-        ret = ber_scanf( ber, fmt, str );
-        break;
-    }
-    case 'b':
-    case 'e':
-    case 'i':
-    {
-        int *i = va_arg( args, int * );
-        ret = ber_scanf( ber, fmt, i );
-        break;
-    }
-    case 't':
-    {
-        unsigned int *tag = va_arg( args, unsigned int * );
-        ret = ber_scanf( ber, fmt, tag );
-        break;
-    }
-    case 'v':
-    {
-        char ***array = va_arg( args, char *** );
-        ret = ber_scanf( ber, fmt, array );
-        break;
-    }
-    case 'B':
-    {
-        char **str = va_arg( args, char ** );
-        int *len = va_arg( args, int * );
-        ret = ber_scanf( ber, fmt, str, len );
-        break;
-    }
-    case 'O':
-    {
-        struct berval **berval = va_arg( args, struct berval ** );
-        ret = ber_scanf( ber, fmt, berval );
-        break;
-    }
-    case 'V':
-    {
-        struct berval ***array = va_arg( args, struct berval *** );
-        ret = ber_scanf( ber, fmt, array );
-        break;
-    }
-    case 'n':
-    case 'x':
-    case '{':
-    case '}':
-    case '[':
-    case ']':
-        ret = ber_scanf( ber, fmt );
-        break;
-
-    default:
-        assert( 0 );
-    }
-    __ms_va_end( args );
-    return ret;
+    return ber_scanf( ber, fmt, arg1, arg2 );
 }
 
 static int CDECL wrap_ldap_abandon_ext( void *ld, int msgid, LDAPControlU **serverctrls, LDAPControlU **clientctrls )

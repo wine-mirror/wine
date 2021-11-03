@@ -334,26 +334,26 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
         case 'i':
         {
             int i = va_arg( list, int );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, i );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, i, 0 );
             break;
         }
         case 'o':
         case 's':
         {
             char *str = va_arg( list, char * );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, str );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)str, 0 );
             break;
         }
         case 't':
         {
             unsigned int tag = va_arg( list, unsigned int );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, tag );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, tag, 0 );
             break;
         }
         case 'v':
         {
             char **array = va_arg( list, char ** );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, array );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)array, 0 );
             break;
         }
         case 'V':
@@ -365,7 +365,7 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
                 ret = -1;
                 break;
             }
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, arrayU );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)arrayU, 0 );
             bvarrayfreeU( arrayU );
             break;
         }
@@ -374,7 +374,7 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
             char *str = va_arg( list, char * );
             int len = va_arg( list, int );
             new_fmt[0] = 'B';  /* 'X' is deprecated */
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, str, len );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)str, len );
             break;
         }
         case 'n':
@@ -382,7 +382,7 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
         case '}':
         case '[':
         case ']':
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt );
+            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, 0, 0 );
             break;
 
         default:
@@ -431,7 +431,7 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         case 'a':
         {
             char *str, **ptr = va_arg( list, char ** );
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &str )) == -1) break;
+            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &str, NULL )) == -1) break;
             *ptr = strdupU( str );
             ldap_funcs->fn_ldap_memfree( str );
             break;
@@ -441,19 +441,19 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         case 'i':
         {
             int *i = va_arg( list, int * );
-            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, i );
+            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, i, NULL );
             break;
         }
         case 't':
         {
             unsigned int *tag = va_arg( list, unsigned int * );
-            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, tag );
+            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, tag, NULL );
             break;
         }
         case 'v':
         {
             char *str, **arrayU, **ptr, ***array = va_arg( list, char *** );
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &arrayU )) == -1) break;
+            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &arrayU, NULL )) == -1) break;
             *array = strarrayUtoU( arrayU );
             ptr = arrayU;
             while ((str = *ptr))
@@ -478,7 +478,7 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         {
             struct berval **berval = va_arg( list, struct berval ** );
             struct bervalU *bervalU;
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &bervalU )) == -1) break;
+            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &bervalU, NULL )) == -1) break;
             *berval = bervalUtoW( bervalU );
             ldap_funcs->fn_ber_bvfree( bervalU );
             break;
@@ -487,7 +487,7 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         {
             struct berval ***array = va_arg( list, struct berval *** );
             struct bervalU **arrayU;
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &arrayU )) == -1) break;
+            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &arrayU, NULL )) == -1) break;
             *array = bvarrayUtoW( arrayU );
             ldap_funcs->fn_ber_bvecfree( arrayU );
             break;
@@ -498,7 +498,7 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         case '}':
         case '[':
         case ']':
-            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt );
+            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, NULL, NULL );
             break;
 
         default:
