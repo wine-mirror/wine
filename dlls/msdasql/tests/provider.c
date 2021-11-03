@@ -461,6 +461,93 @@ static void cleanup_database(void)
     DeleteFileA(mdbpath);
 }
 
+static void test_enumeration(void)
+{
+    ISourcesRowset *source;
+    IRowset *rowset, *rowset2;
+    IColumnsInfo *columninfo;
+    IAccessor *accessor;
+    DBBINDING bindings = { 1, 0, 0, 512, NULL, NULL, NULL, DBPART_VALUE | DBPART_STATUS, DBMEMOWNER_CLIENTOWNED, DBPARAMIO_NOTPARAM, 514, 0, DBTYPE_WSTR, 0, 0 };
+    HACCESSOR hacc;
+    HRESULT hr;
+
+    DBCOLUMNINFO colinfo_data[] =
+    {
+        { NULL,                           NULL, 0, DBCOLUMNFLAGS_ISFIXEDLENGTH | DBCOLUMNFLAGS_ISBOOKMARK, 4,  DBTYPE_UI4,  10, 255 },
+        { (WCHAR*)L"SOURCES_NAME",        NULL, 1, DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITEUNKNOWN, 128, DBTYPE_WSTR, 255, 255 },
+        { (WCHAR*)L"SOURCES_PARSENAME",   NULL, 2, DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITEUNKNOWN, 128, DBTYPE_WSTR, 255, 255 },
+        { (WCHAR*)L"SOURCES_DESCRIPTION", NULL, 3, DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITEUNKNOWN, 128, DBTYPE_WSTR, 255, 255 },
+        { (WCHAR*)L"SOURCES_TYPE",        NULL, 4, DBCOLUMNFLAGS_ISFIXEDLENGTH | DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITEUNKNOWN, 2, DBTYPE_UI2, 5, 255 },
+        { (WCHAR*)L"SOURCES_ISPARENT",    NULL, 5, DBCOLUMNFLAGS_ISFIXEDLENGTH | DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITEUNKNOWN, 2, DBTYPE_BOOL, 255, 255 }
+    };
+
+    hr = CoCreateInstance( &CLSID_MSDASQL_ENUMERATOR, NULL, CLSCTX_INPROC_SERVER, &IID_ISourcesRowset,
+                                (void **)&source );
+    if ( FAILED(hr))
+    {
+        skip("Failed create Enumerator object\n");
+        return;
+    }
+
+    hr = ISourcesRowset_GetSourcesRowset(source, NULL, &IID_IRowset, 0, NULL, (IUnknown**)&rowset);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ISourcesRowset_GetSourcesRowset(source, NULL, &IID_IRowset, 0, NULL, (IUnknown**)&rowset2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(rowset != rowset2, "same pointer\n");
+    IRowset_Release(rowset2);
+
+    hr = IRowset_QueryInterface(rowset, &IID_IColumnsInfo, (void**)&columninfo);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        DBORDINAL columns;
+        DBCOLUMNINFO *dbcolumninfo;
+        OLECHAR *buffer;
+        int i;
+
+        hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &dbcolumninfo, &buffer);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(columns == 6, "got %lu\n", columns);
+
+        for( i = 0; i < columns; i++ )
+        {
+            if (!dbcolumninfo[i].pwszName || !colinfo_data[i].pwszName)
+                ok (dbcolumninfo[i].pwszName == colinfo_data[i].pwszName, "got %p/%p", dbcolumninfo[i].pwszName, colinfo_data[i].pwszName);
+            else
+                ok ( !wcscmp(dbcolumninfo[i].pwszName, colinfo_data[i].pwszName), "got %p/%p",
+                     debugstr_w(dbcolumninfo[i].pwszName), debugstr_w(colinfo_data[i].pwszName));
+
+            ok (dbcolumninfo[i].pTypeInfo == colinfo_data[i].pTypeInfo, "got %p/%p", dbcolumninfo[i].pTypeInfo, colinfo_data[i].pTypeInfo);
+            ok (dbcolumninfo[i].iOrdinal == colinfo_data[i].iOrdinal, "got %ld/%ld", dbcolumninfo[i].iOrdinal, colinfo_data[i].iOrdinal);
+            ok (dbcolumninfo[i].dwFlags == colinfo_data[i].dwFlags, "got 0x%08x/0x%0x8", dbcolumninfo[i].dwFlags, colinfo_data[i].dwFlags);
+            ok (dbcolumninfo[i].ulColumnSize == colinfo_data[i].ulColumnSize, "got %lu/%lu", dbcolumninfo[i].ulColumnSize, colinfo_data[i].ulColumnSize);
+            ok (dbcolumninfo[i].wType == colinfo_data[i].wType, "got %d/%d", dbcolumninfo[i].wType, colinfo_data[i].wType);
+            ok (dbcolumninfo[i].bPrecision == colinfo_data[i].bPrecision, "got %d/%d", dbcolumninfo[i].bPrecision, colinfo_data[i].bPrecision);
+            ok (dbcolumninfo[i].bScale == colinfo_data[i].bScale, "got %d/%d", dbcolumninfo[i].bScale, colinfo_data[i].bScale);
+        }
+
+        CoTaskMemFree(buffer);
+        IColumnsInfo_Release(columninfo);
+    }
+
+    hr = IRowset_QueryInterface(rowset, &IID_IAccessor, (void**)&accessor);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* Request only SOURCES_NAME column */
+    hr = IAccessor_CreateAccessor(accessor, DBACCESSOR_ROWDATA, 1, &bindings, 0, &hacc, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hacc != 0, "got %Ix\n", hacc);
+
+    hr = IAccessor_ReleaseAccessor(accessor, hacc, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IAccessor_Release(accessor);
+
+    IRowset_Release(rowset);
+    ISourcesRowset_Release(source);
+}
+
 START_TEST(provider)
 {
     CoInitialize(0);
@@ -470,6 +557,8 @@ START_TEST(provider)
     test_msdasql();
     test_Properties();
     test_sessions();
+
+    test_enumeration();
 
     cleanup_database();
 
