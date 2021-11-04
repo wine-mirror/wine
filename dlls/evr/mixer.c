@@ -95,7 +95,11 @@ struct video_mixer
     IMFAttributes *internal_attributes;
     unsigned int mixing_flags;
     unsigned int is_streaming;
-    COLORREF bkgnd_color;
+    struct
+    {
+        COLORREF rgba;
+        DXVA2_AYUVSample16 ayuv;
+    } bkgnd_color;
     LONGLONG lower_bound;
     LONGLONG upper_bound;
     CRITICAL_SECTION cs;
@@ -1277,7 +1281,6 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
         zoom_rect.right = zoom_rect.bottom = 1.0f;
     }
 
-    SetRect(&params.TargetRect, 0, 0, rt_desc.Width, rt_desc.Height);
     video_mixer_scale_rect(&dst, rt_desc.Width, rt_desc.Height, &zoom_rect);
 
     for (i = 0; i < mixer->input_count; ++i)
@@ -1329,6 +1332,9 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
     if (SUCCEEDED(hr))
     {
+        SetRect(&params.TargetRect, 0, 0, rt_desc.Width, rt_desc.Height);
+        params.BackgroundColor = mixer->bkgnd_color.ayuv;
+
         if (FAILED(hr = IDirectXVideoProcessor_VideoProcessBlt(mixer->processor, rt, &params, samples,
                 sample_count, NULL)))
         {
@@ -1983,10 +1989,26 @@ static HRESULT WINAPI video_mixer_processor_GetBackgroundColor(IMFVideoProcessor
         return E_POINTER;
 
     EnterCriticalSection(&mixer->cs);
-    *color = mixer->bkgnd_color;
+    *color = mixer->bkgnd_color.rgba;
     LeaveCriticalSection(&mixer->cs);
 
     return S_OK;
+}
+
+static void video_mixer_rgb_to_ycbcr(COLORREF rgb, DXVA2_AYUVSample16 *ayuv)
+{
+    int y, cb, cr, r, g, b;
+
+    r = GetRValue(rgb); g = GetGValue(rgb); b = GetBValue(rgb);
+    /* Coefficients according to SDTV ITU-R BT.601 */
+    y  = (77 * r + 150 * g +  29 * b + 128) / 256 + 16;
+    cb = (-44 * r - 87 * g + 131 * b + 128) / 256 + 128;
+    cr = (131 * r - 110 * g - 21 * b + 128) / 256 + 128;
+
+    ayuv->Y  = y * 0x100;
+    ayuv->Cb = cb * 0x100;
+    ayuv->Cr = cr * 0x100;
+    ayuv->Alpha = 0xffff;
 }
 
 static HRESULT WINAPI video_mixer_processor_SetBackgroundColor(IMFVideoProcessor *iface, COLORREF color)
@@ -1996,7 +2018,11 @@ static HRESULT WINAPI video_mixer_processor_SetBackgroundColor(IMFVideoProcessor
     TRACE("%p, %#x.\n", iface, color);
 
     EnterCriticalSection(&mixer->cs);
-    mixer->bkgnd_color = color;
+    if (mixer->bkgnd_color.rgba != color)
+    {
+        video_mixer_rgb_to_ycbcr(color, &mixer->bkgnd_color.ayuv);
+        mixer->bkgnd_color.rgba = color;
+    }
     LeaveCriticalSection(&mixer->cs);
 
     return S_OK;
@@ -2528,6 +2554,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->upper_bound = MFT_OUTPUT_BOUND_UPPER_UNBOUNDED;
     video_mixer_init_input(&object->inputs[0]);
     video_mixer_update_zorder_map(object);
+    video_mixer_rgb_to_ycbcr(object->bkgnd_color.rgba, &object->bkgnd_color.ayuv);
     InitializeCriticalSection(&object->cs);
     if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
     {
