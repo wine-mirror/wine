@@ -3372,7 +3372,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	if (ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) {
 	    SelectObject(hdc, psInfo->hFont);
 	    SetRect(&r, 40, 25, rzone.right - 69, rzone.bottom);
-            if (!IS_INTRESOURCE(ppshpage->pszHeaderTitle))
+            if (!IS_INTRESOURCE(ppshpage->pszHeaderSubTitle))
                 DrawTextW(hdc, ppshpage->pszHeaderSubTitle, -1, &r, DT_LEFT | DT_WORDBREAK);
 	    else
 	    {
