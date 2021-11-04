@@ -137,24 +137,39 @@ async_test("iframe_location", function() {
 });
 
 sync_test("anchor", function() {
-    var iframe = document.body.firstChild;
-    var anchor = document.createElement("a");
-
     var anchor_tests = [
-        { href: "http://www.winehq.org:123/about", protocol: "http:", host: "www.winehq.org:123" },
-        { href: "https://www.winehq.org:123/about", protocol: "https:", host: "www.winehq.org:123" },
-        { href: "about:blank", protocol: "about:", host: "" },
-        { href: "file:///c:/dir/file.html", protocol: "file:", host: "" },
-        { href: "http://www.winehq.org/about", protocol: "http:", host: "www.winehq.org:80", todo_host: true },
-        { href: "https://www.winehq.org/about", protocol: "https:", host: "www.winehq.org:443", todo_host: true },
+        { href: "http://www.winehq.org:123/about",
+          protocol: "http:", host: "www.winehq.org:123", path: "/about" },
+        { href: "https://www.winehq.org:123/about",
+          protocol: "https:", host: "www.winehq.org:123", path: "/about" },
+        { href: "about:blank",
+          protocol: "about:", host: "", path: "/blank", todo_pathname: 1 },
+        { href: "unknown:path",
+          protocol: "unknown:", host: "", path: "path" },
+        { href: "ftp:path",
+          protocol: "ftp:", host: "", path: "path" },
+        { href: "mailto:path",
+          protocol: "mailto:", host: "", path: "path" },
+        { href: "ws:path",
+          protocol: "ws:", host: "", path: "path" },
+        { href: "file:path",
+          protocol: "file:", host: "", path: "/path", todo_pathname: 1 },
+        { href: "file:///c:/dir/file.html",
+          protocol: "file:", host: "", path: "/c:/dir/file.html" },
+        { href: "http://www.winehq.org/about",
+          protocol: "http:", host: "www.winehq.org", path: "/about" },
+        { href: "https://www.winehq.org/about",
+          protocol: "https:", host: "www.winehq.org", path: "/about" },
     ];
 
     for(var i in anchor_tests) {
         var t = anchor_tests[i];
-        anchor.href = t.href;
+        document.body.innerHTML = '<a href="' + t.href + '">';
+        var anchor = document.body.firstChild;
         ok(anchor.protocol === t.protocol, "anchor(" + t.href + ").protocol = " + anchor.protocol);
-        todo_wine_if("todo_host" in t).
         ok(anchor.host === t.host, "anchor(" + t.href + ").host = " + anchor.host);
+        todo_wine_if("todo_pathname" in t).
+        ok(anchor.pathname === t.path, "anchor(" + t.href + ").pathname = " + anchor.pathname);
     }
 });
 

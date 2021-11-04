@@ -476,8 +476,15 @@ static HRESULT WINAPI HTMLAnchorElement_put_pathname(IHTMLAnchorElement *iface, 
 static HRESULT WINAPI HTMLAnchorElement_get_pathname(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString pathname_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* FIXME: IE prepends a slash for some protocols */
+    nsAString_Init(&pathname_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetPathname(This->nsanchor, &pathname_str);
+    return return_nsstr(nsres, &pathname_str, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_port(IHTMLAnchorElement *iface, BSTR v)
