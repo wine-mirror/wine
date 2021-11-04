@@ -1881,11 +1881,65 @@ static void PB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
  *       Check Box & Radio Button Functions
  */
 
+/* Get adjusted check box or radio box rectangle */
+static RECT get_box_rect(LONG style, LONG ex_style, const RECT *content_rect,
+                         const RECT *label_rect, BOOL has_label, SIZE box_size)
+{
+    RECT rect;
+    int delta;
+
+    rect = *content_rect;
+
+    if (style & BS_LEFTTEXT || ex_style & WS_EX_RIGHT)
+        rect.left = rect.right - box_size.cx;
+    else
+        rect.right = rect.left + box_size.cx;
+
+    /* Adjust box when label is valid */
+    if (has_label)
+    {
+        rect.top = label_rect->top;
+        rect.bottom = label_rect->bottom;
+    }
+
+    /* Box must have the correct height */
+    delta = rect.bottom - rect.top - box_size.cy;
+    if ((style & BS_VCENTER) == BS_TOP)
+    {
+        if (delta <= 0)
+            rect.top -= -delta / 2 + 1;
+
+        rect.bottom = rect.top + box_size.cy;
+    }
+    else if ((style & BS_VCENTER) == BS_BOTTOM)
+    {
+        if (delta <= 0)
+            rect.bottom += -delta / 2 + 1;
+
+        rect.top = rect.bottom - box_size.cy;
+    }
+    else
+    {
+        if (delta > 0)
+        {
+            rect.bottom -= delta / 2 + 1;
+            rect.top = rect.bottom - box_size.cy;
+        }
+        else if (delta < 0)
+        {
+            rect.top -= -delta / 2 + 1;
+            rect.bottom = rect.top + box_size.cy;
+        }
+    }
+
+    return rect;
+}
+
 static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
 {
-    RECT rbox, labelRect, imageRect, textRect, client;
+    RECT rbox, labelRect, oldLabelRect, imageRect, textRect, client;
     HBRUSH hBrush;
-    int delta, text_offset, checkBoxWidth, checkBoxHeight;
+    int text_offset;
     UINT dtFlags;
     LRESULT cdrf;
     HFONT hFont;
@@ -1893,6 +1947,7 @@ static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     LONG state = infoPtr->state;
     LONG style = GetWindowLongW( infoPtr->hwnd, GWL_STYLE );
     LONG ex_style = GetWindowLongW( infoPtr->hwnd, GWL_EXSTYLE );
+    SIZE box_size;
     HWND parent;
     HRGN hrgn;
 
@@ -1903,10 +1958,10 @@ static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     }
 
     GetClientRect(infoPtr->hwnd, &client);
-    rbox = labelRect = client;
+    labelRect = client;
 
-    checkBoxWidth  = 12 * GetDpiForWindow( infoPtr->hwnd ) / 96 + 1;
-    checkBoxHeight = 12 * GetDpiForWindow( infoPtr->hwnd ) / 96 + 1;
+    box_size.cx = 12 * GetDpiForWindow(infoPtr->hwnd) / 96 + 1;
+    box_size.cy = box_size.cx;
 
     if ((hFont = infoPtr->font)) SelectObject( hDC, hFont );
     GetCharWidthW( hDC, '0', '0', &text_offset );
@@ -1920,15 +1975,13 @@ static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     hrgn = set_control_clipping( hDC, &client );
 
     if (style & BS_LEFTTEXT || ex_style & WS_EX_RIGHT)
-    {
-        labelRect.right -= checkBoxWidth + text_offset;
-        rbox.left = rbox.right - checkBoxWidth;
-    }
+        labelRect.right -= box_size.cx + text_offset;
     else
-    {
-        labelRect.left += checkBoxWidth + text_offset;
-        rbox.right = checkBoxWidth;
-    }
+        labelRect.left += box_size.cx + text_offset;
+
+    oldLabelRect = labelRect;
+    dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &labelRect, &imageRect, &textRect);
+    rbox = get_box_rect(style, ex_style, &client, &labelRect, dtFlags != (UINT)-1L, box_size);
 
     init_custom_draw(&nmcd, infoPtr, hDC, &client);
 
@@ -1946,16 +1999,6 @@ static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     }
 
     /* Draw label */
-    client = labelRect;
-    dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &labelRect, &imageRect, &textRect);
-
-    /* Only adjust rbox when rtext is valid */
-    if (dtFlags != (UINT)-1L)
-    {
-        rbox.top = labelRect.top;
-        rbox.bottom = labelRect.bottom;
-    }
-
     /* Send paint notifications */
     nmcd.dwDrawStage = CDDS_PREPAINT;
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
@@ -1977,45 +2020,6 @@ static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
             if (state & BST_PUSHED)  flags |= DFCS_PUSHED;
             if (style & WS_DISABLED) flags |= DFCS_INACTIVE;
 
-            /* rbox must have the correct height */
-            delta = rbox.bottom - rbox.top - checkBoxHeight;
-
-            if ((style & BS_VCENTER) == BS_TOP)
-            {
-                if (delta > 0)
-                    rbox.bottom = rbox.top + checkBoxHeight;
-                else
-                {
-                    rbox.top -= -delta / 2 + 1;
-                    rbox.bottom = rbox.top + checkBoxHeight;
-                }
-            }
-            else if ((style & BS_VCENTER) == BS_BOTTOM)
-            {
-                if (delta > 0)
-                    rbox.top = rbox.bottom - checkBoxHeight;
-                else
-                {
-                    rbox.bottom += -delta / 2 + 1;
-                    rbox.top = rbox.bottom - checkBoxHeight;
-                }
-            }
-            else  /* Default */
-            {
-                if (delta > 0)
-                {
-                    int ofs = delta / 2;
-                    rbox.bottom -= ofs + 1;
-                    rbox.top = rbox.bottom - checkBoxHeight;
-                }
-                else if (delta < 0)
-                {
-                    int ofs = -delta / 2;
-                    rbox.top -= ofs + 1;
-                    rbox.bottom = rbox.top + checkBoxHeight;
-                }
-            }
-
             DrawFrameControl(hDC, &rbox, DFC_BUTTON, flags);
         }
 
@@ -2035,7 +2039,7 @@ static void CB_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
     {
         labelRect.left--;
         labelRect.right++;
-        IntersectRect(&labelRect, &labelRect, &client);
+        IntersectRect(&labelRect, &labelRect, &oldLabelRect);
         DrawFocusRect(hDC, &labelRect);
     }
 
