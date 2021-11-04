@@ -151,15 +151,21 @@ static NTSTATUS krb5_error_to_status( krb5_error_code err )
     }
 }
 
-static WCHAR *utf8_to_wstr( const char *src )
+struct ticket_list
+{
+    ULONG count;
+    ULONG allocated;
+    KERB_TICKET_CACHE_INFO *tickets;
+};
+
+static void utf8_to_wstr( UNICODE_STRING *strW, const char *src )
 {
     ULONG dstlen, srclen = strlen( src ) + 1;
-    WCHAR *dst;
 
-    RtlUTF8ToUnicodeN( NULL, 0, &dstlen, src, srclen );
-    if ((dst = RtlAllocateHeap( GetProcessHeap(), 0, dstlen )))
-        RtlUTF8ToUnicodeN( dst, dstlen, &dstlen, src, srclen );
-    return dst;
+    strW->Buffer = malloc( srclen * sizeof(WCHAR) );
+    RtlUTF8ToUnicodeN( strW->Buffer, srclen * sizeof(WCHAR), &dstlen, src, srclen );
+    strW->MaximumLength = dstlen;
+    strW->Length = dstlen - sizeof(WCHAR);
 }
 
 static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, struct ticket_list *list )
@@ -170,7 +176,6 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
     krb5_creds creds;
     krb5_ticket *ticket;
     char *name_with_realm, *name_without_realm, *realm_name;
-    WCHAR *realm_nameW, *name_without_realmW;
 
     if ((err = p_krb5_cc_start_seq_get( ctx, cache, &cursor ))) return krb5_error_to_status( err );
     for (;;)
@@ -192,19 +197,8 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
 
         if (list->count == list->allocated)
         {
-            KERB_TICKET_CACHE_INFO *new_tickets;
-            ULONG new_allocated;
-
-            if (list->allocated)
-            {
-                new_allocated = list->allocated * 2;
-                new_tickets = RtlReAllocateHeap( GetProcessHeap(), 0, list->tickets, sizeof(*new_tickets) * new_allocated );
-            }
-            else
-            {
-                new_allocated = 16;
-                new_tickets = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*new_tickets) * new_allocated );
-            }
+            ULONG new_allocated = max( 16, list->allocated * 2 );
+            KERB_TICKET_CACHE_INFO *new_tickets = realloc( list->tickets, sizeof(*new_tickets) * new_allocated );
             if (!new_tickets)
             {
                 p_krb5_free_cred_contents( ctx, &creds );
@@ -233,8 +227,7 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
         }
         TRACE( "name_without_realm: %s\n", debugstr_a(name_without_realm) );
 
-        name_without_realmW = utf8_to_wstr( name_without_realm );
-        RtlInitUnicodeString( &list->tickets[list->count].ServerName, name_without_realmW );
+        utf8_to_wstr( &list->tickets[list->count].ServerName, name_without_realm );
 
         if (!(realm_name = strchr( name_with_realm, '@' )))
         {
@@ -244,17 +237,17 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
         else realm_name++;
 
         /* realm_name - now contains only realm! */
-        realm_nameW = utf8_to_wstr( realm_name );
-        RtlInitUnicodeString( &list->tickets[list->count].RealmName, realm_nameW );
+        utf8_to_wstr( &list->tickets[list->count].RealmName, realm_name );
 
         if (!creds.times.starttime) creds.times.starttime = creds.times.authtime;
 
         /* TODO: if krb5_is_config_principal = true */
-        RtlSecondsSince1970ToTime( creds.times.starttime, &list->tickets[list->count].StartTime );
-        RtlSecondsSince1970ToTime( creds.times.endtime, &list->tickets[list->count].EndTime );
-        RtlSecondsSince1970ToTime( creds.times.renew_till, &list->tickets[list->count].RenewTime );
 
-        list->tickets[list->count].TicketFlags = creds.ticket_flags;
+        /* note: store times as seconds, they will be converted to NT timestamps on the PE side */
+        list->tickets[list->count].StartTime.QuadPart = creds.times.starttime;
+        list->tickets[list->count].EndTime.QuadPart   = creds.times.endtime;
+        list->tickets[list->count].RenewTime.QuadPart = creds.times.renew_till;
+        list->tickets[list->count].TicketFlags        = creds.ticket_flags;
 
         err = p_krb5_decode_ticket( &creds.ticket, &ticket );
         p_krb5_free_unparsed_name( ctx, name_with_realm );
@@ -275,17 +268,50 @@ static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, st
     return status;
 }
 
-static NTSTATUS CDECL query_ticket_cache( struct ticket_list *list )
+static NTSTATUS copy_tickets_to_client( struct ticket_list *list, KERB_QUERY_TKT_CACHE_RESPONSE *resp,
+                                        ULONG *out_size )
+{
+    char *client_str;
+    ULONG i, size = offsetof( KERB_QUERY_TKT_CACHE_RESPONSE, Tickets[list->count] );
+
+    for (i = 0; i < list->count; i++)
+    {
+        size += list->tickets[i].RealmName.MaximumLength;
+        size += list->tickets[i].ServerName.MaximumLength;
+    }
+    if (!resp || size > *out_size)
+    {
+        *out_size = size;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    *out_size = size;
+
+    resp->MessageType = KerbQueryTicketCacheMessage;
+    resp->CountOfTickets = list->count;
+    memcpy( resp->Tickets, list->tickets, list->count * sizeof(list->tickets[0]) );
+    client_str = (char *)&resp->Tickets[list->count];
+
+    for (i = 0; i < list->count; i++)
+    {
+        resp->Tickets[i].RealmName.Buffer = (WCHAR *)client_str;
+        memcpy( client_str, list->tickets[i].RealmName.Buffer, list->tickets[i].RealmName.MaximumLength );
+        client_str += list->tickets[i].RealmName.MaximumLength;
+        resp->Tickets[i].ServerName.Buffer = (WCHAR *)client_str;
+        memcpy( client_str, list->tickets[i].ServerName.Buffer, list->tickets[i].ServerName.MaximumLength );
+        client_str += list->tickets[i].ServerName.MaximumLength;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS CDECL query_ticket_cache( KERB_QUERY_TKT_CACHE_RESPONSE *resp, ULONG *out_size )
 {
     NTSTATUS status;
     krb5_error_code err;
     krb5_context ctx;
     krb5_cccol_cursor cursor = NULL;
     krb5_ccache cache;
-
-    list->count     = 0;
-    list->allocated = 0;
-    list->tickets   = NULL;
+    ULONG i;
+    struct ticket_list list = { 0 };
 
     if ((err = p_krb5_init_context( &ctx ))) return krb5_error_to_status( err );
     if ((err = p_krb5_cccol_cursor_new( ctx, &cursor )))
@@ -303,7 +329,7 @@ static NTSTATUS CDECL query_ticket_cache( struct ticket_list *list )
         }
         if (!cache) break;
 
-        status = copy_tickets_from_cache( ctx, cache, list );
+        status = copy_tickets_from_cache( ctx, cache, &list );
         p_krb5_cc_close( ctx, cache );
         if (status != STATUS_SUCCESS) goto done;
     }
@@ -311,6 +337,14 @@ static NTSTATUS CDECL query_ticket_cache( struct ticket_list *list )
 done:
     if (cursor) p_krb5_cccol_cursor_free( ctx, &cursor );
     if (ctx) p_krb5_free_context( ctx );
+
+    if (status == STATUS_SUCCESS) status = copy_tickets_to_client( &list, resp, out_size );
+
+    for (i = 0; i < list.count; i++)
+    {
+        free( list.tickets[i].RealmName.Buffer );
+        free( list.tickets[i].ServerName.Buffer );
+    }
     return status;
 }
 
@@ -949,12 +983,12 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, 
     len_token = msg->pBuffers[token_idx].cbBuffer;
 
     input.length = len_data + len_token;
-    if (!(input.value = RtlAllocateHeap( GetProcessHeap(), 0, input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if (!(input.value = malloc( input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
     memcpy( input.value, msg->pBuffers[data_idx].pvBuffer, len_data );
     memcpy( (char *)input.value + len_data, msg->pBuffers[token_idx].pvBuffer, len_token );
 
     ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
-    RtlFreeHeap( GetProcessHeap(), 0, input.value );
+    free( input.value );
     TRACE( "gss_unwrap returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)

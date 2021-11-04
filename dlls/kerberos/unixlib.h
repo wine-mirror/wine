@@ -21,13 +21,6 @@
 
 #define KERBEROS_MAX_BUF 12000
 
-struct ticket_list
-{
-    ULONG count;
-    ULONG allocated;
-    KERB_TICKET_CACHE_INFO *tickets;
-};
-
 struct krb5_funcs
 {
     NTSTATUS (CDECL *accept_context)(LSA_SEC_HANDLE, LSA_SEC_HANDLE, SecBufferDesc *, LSA_SEC_HANDLE *,
@@ -40,7 +33,7 @@ struct krb5_funcs
                                          LSA_SEC_HANDLE *, SecBufferDesc *, ULONG *, TimeStamp *);
     NTSTATUS (CDECL *make_signature)(LSA_SEC_HANDLE, SecBufferDesc *);
     NTSTATUS (CDECL *query_context_attributes)(LSA_SEC_HANDLE, ULONG, void *);
-    NTSTATUS (CDECL *query_ticket_cache)(struct ticket_list *);
+    NTSTATUS (CDECL *query_ticket_cache)( KERB_QUERY_TKT_CACHE_RESPONSE *resp, ULONG *out_size );
     NTSTATUS (CDECL *seal_message)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG);
     NTSTATUS (CDECL *unseal_message)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG *);
     NTSTATUS (CDECL *verify_signature)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG *);

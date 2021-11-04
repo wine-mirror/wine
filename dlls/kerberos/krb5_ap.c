@@ -111,91 +111,47 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
     return STATUS_SUCCESS;
 }
 
-static void free_ticket_list( struct ticket_list *list )
-{
-    ULONG i;
-    for (i = 0; i < list->count; i++)
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, list->tickets[i].RealmName.Buffer );
-        RtlFreeHeap( GetProcessHeap(), 0, list->tickets[i].ServerName.Buffer );
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, list->tickets );
-}
-
-static inline void init_client_us(UNICODE_STRING *dst, void *client_ws, const UNICODE_STRING *src)
-{
-    dst->Buffer = client_ws;
-    dst->Length = src->Length;
-    dst->MaximumLength = src->MaximumLength;
-}
-
-static NTSTATUS copy_to_client(PLSA_CLIENT_REQUEST lsa_req, struct ticket_list *list, void **out, ULONG *out_size)
+static NTSTATUS copy_to_client( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_CACHE_RESPONSE *resp,
+                                void **out, ULONG size )
 {
     NTSTATUS status;
     ULONG i;
-    SIZE_T size, client_str_off;
-    char *client_resp, *client_ticket, *client_str;
-    KERB_QUERY_TKT_CACHE_RESPONSE resp;
+    char *client_str;
+    KERB_QUERY_TKT_CACHE_RESPONSE *client_resp;
 
-    size = sizeof(resp);
-    if (list->count) size += (list->count - 1) * sizeof(KERB_TICKET_CACHE_INFO);
-    client_str_off = size;
-
-    for (i = 0; i < list->count; i++)
-    {
-        size += list->tickets[i].RealmName.MaximumLength;
-        size += list->tickets[i].ServerName.MaximumLength;
-    }
-
-    status = lsa_dispatch.AllocateClientBuffer(lsa_req, size, (void **)&client_resp);
+    status = lsa_dispatch.AllocateClientBuffer(lsa_req, size, out );
     if (status != STATUS_SUCCESS) return status;
 
-    resp.MessageType = KerbQueryTicketCacheMessage;
-    resp.CountOfTickets = list->count;
-    size = FIELD_OFFSET(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets);
-    status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_resp, &resp);
+    client_resp = *out;
+    status = lsa_dispatch.CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets),
+                                             client_resp, resp);
     if (status != STATUS_SUCCESS) goto fail;
 
-    if (!list->count)
+    client_str = (char *)&client_resp->Tickets[resp->CountOfTickets];
+
+    for (i = 0; i < resp->CountOfTickets; i++)
     {
-        *out = client_resp;
-        *out_size = sizeof(resp);
-        return STATUS_SUCCESS;
+        KERB_TICKET_CACHE_INFO ticket = resp->Tickets[i];
+
+        RtlSecondsSince1970ToTime( resp->Tickets[i].StartTime.QuadPart, &ticket.StartTime );
+        RtlSecondsSince1970ToTime( resp->Tickets[i].EndTime.QuadPart, &ticket.EndTime );
+        RtlSecondsSince1970ToTime( resp->Tickets[i].RenewTime.QuadPart, &ticket.RenewTime );
+
+        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.RealmName.MaximumLength,
+                                                 client_str, ticket.RealmName.Buffer);
+        if (status != STATUS_SUCCESS) goto fail;
+        ticket.RealmName.Buffer = (WCHAR *)client_str;
+        client_str += ticket.RealmName.MaximumLength;
+
+        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
+                                                 client_str, ticket.ServerName.Buffer);
+        if (status != STATUS_SUCCESS) goto fail;
+        ticket.ServerName.Buffer = (WCHAR *)client_str;
+        client_str += ticket.ServerName.MaximumLength;
+
+        status = lsa_dispatch.CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
+        if (status != STATUS_SUCCESS) goto fail;
     }
-
-    *out_size = size;
-
-    client_ticket = client_resp + size;
-    client_str = client_resp + client_str_off;
-
-    for (i = 0; i < list->count; i++)
-    {
-        KERB_TICKET_CACHE_INFO ticket = list->tickets[i];
-
-        init_client_us(&ticket.RealmName, client_str, &list->tickets[i].RealmName);
-
-        size = ticket.RealmName.MaximumLength;
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_str, list->tickets[i].RealmName.Buffer);
-        if (status != STATUS_SUCCESS) goto fail;
-        client_str += size;
-        *out_size += size;
-
-        init_client_us(&ticket.ServerName, client_str, &list->tickets[i].ServerName);
-
-        size = ticket.ServerName.MaximumLength;
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_str, list->tickets[i].ServerName.Buffer);
-        if (status != STATUS_SUCCESS) goto fail;
-        client_str += size;
-        *out_size += size;
-
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, sizeof(ticket), client_ticket, &ticket);
-        if (status != STATUS_SUCCESS) goto fail;
-
-        client_ticket += sizeof(ticket);
-        *out_size += sizeof(ticket);
-    }
-
-    *out = client_resp;
     return STATUS_SUCCESS;
 
 fail:
@@ -218,17 +174,19 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
     case KerbQueryTicketCacheMessage:
     {
         KERB_QUERY_TKT_CACHE_REQUEST *query = (KERB_QUERY_TKT_CACHE_REQUEST *)in_buf;
-        struct ticket_list list;
         NTSTATUS status;
 
         if (!in_buf || in_buf_len != sizeof(*query) || !out_buf || !out_buf_len) return STATUS_INVALID_PARAMETER;
         if (query->LogonId.HighPart || query->LogonId.LowPart) return STATUS_ACCESS_DENIED;
 
-        status = krb5_funcs->query_ticket_cache(&list);
-        if (!status)
+        *out_buf_len = 1024;
+        for (;;)
         {
-            status = copy_to_client(req, &list, out_buf, out_buf_len);
-            free_ticket_list(&list);
+            KERB_QUERY_TKT_CACHE_RESPONSE *resp = malloc( *out_buf_len );
+            status = krb5_funcs->query_ticket_cache( resp, out_buf_len );
+            if (status == STATUS_SUCCESS) status = copy_to_client( req, resp, out_buf, *out_buf_len );
+            free( resp );
+            if (status != STATUS_BUFFER_TOO_SMALL) break;
         }
         *ret_status = status;
         break;
