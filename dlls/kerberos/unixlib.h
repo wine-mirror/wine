@@ -24,13 +24,13 @@
 struct krb5_funcs
 {
     NTSTATUS (CDECL *accept_context)(LSA_SEC_HANDLE, LSA_SEC_HANDLE, SecBufferDesc *, LSA_SEC_HANDLE *,
-                                     SecBufferDesc *, ULONG *, TimeStamp *);
+                                     SecBufferDesc *, ULONG *, ULONG *);
     NTSTATUS (CDECL *acquire_credentials_handle)(const char *, ULONG, const char *, const char *, LSA_SEC_HANDLE *,
-                                                 TimeStamp *);
+                                                 ULONG *);
     NTSTATUS (CDECL *delete_context)(LSA_SEC_HANDLE);
     NTSTATUS (CDECL *free_credentials_handle)(LSA_SEC_HANDLE);
     NTSTATUS (CDECL *initialize_context)(LSA_SEC_HANDLE, LSA_SEC_HANDLE, const char *, ULONG, SecBufferDesc *,
-                                         LSA_SEC_HANDLE *, SecBufferDesc *, ULONG *, TimeStamp *);
+                                         LSA_SEC_HANDLE *, SecBufferDesc *, ULONG *, ULONG *);
     NTSTATUS (CDECL *make_signature)(LSA_SEC_HANDLE, SecBufferDesc *);
     NTSTATUS (CDECL *query_context_attributes)(LSA_SEC_HANDLE, ULONG, void *);
     NTSTATUS (CDECL *query_ticket_cache)( KERB_QUERY_TKT_CACHE_RESPONSE *resp, ULONG *out_size );

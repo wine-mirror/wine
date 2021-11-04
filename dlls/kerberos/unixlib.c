@@ -505,16 +505,6 @@ static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, LSA_SEC_HANDLE 
     *cred = (LSA_SEC_HANDLE)handle;
 }
 
-static void expirytime_gss_to_sspi( OM_uint32 expirytime, TimeStamp *timestamp )
-{
-    LARGE_INTEGER time;
-
-    NtQuerySystemTime( &time );
-    RtlSystemTimeToLocalTime( &time, &time );
-    timestamp->LowPart  = time.QuadPart;
-    timestamp->HighPart = time.QuadPart >> 32;
-}
-
 static ULONG flags_gss_to_asc_ret( ULONG flags )
 {
     ULONG ret = 0;
@@ -532,7 +522,7 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
 
 static NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, SecBufferDesc *input,
                                LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr,
-                               TimeStamp *expiry )
+                               ULONG *expiry )
 {
     OM_uint32 ret, minor_status, ret_flags = 0, expiry_time;
     gss_cred_id_t cred_handle = credhandle_sspi_to_gss( credential );
@@ -571,7 +561,7 @@ static NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE 
 
         ctxhandle_gss_to_sspi( ctx_handle, new_context );
         if (context_attr) *context_attr = flags_gss_to_asc_ret( ret_flags );
-        expirytime_gss_to_sspi( expiry_time, expiry );
+        *expiry = expiry_time;
     }
 
     return status_gss_to_sspi( ret );
@@ -621,7 +611,7 @@ static NTSTATUS import_name( const char *src, gss_name_t *dst )
 }
 
 static NTSTATUS CDECL acquire_credentials_handle( const char *principal, ULONG credential_use, const char *username,
-                                                  const char *password, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
+                                                  const char *password, LSA_SEC_HANDLE *credential, ULONG *expiry )
 {
     OM_uint32 ret, minor_status, expiry_time;
     gss_name_t name = GSS_C_NO_NAME;
@@ -654,7 +644,7 @@ static NTSTATUS CDECL acquire_credentials_handle( const char *principal, ULONG c
     if (ret == GSS_S_COMPLETE)
     {
         credhandle_gss_to_sspi( cred_handle, credential );
-        expirytime_gss_to_sspi( expiry_time, expiry );
+        *expiry = expiry_time;
     }
 
     if (name != GSS_C_NO_NAME) pgss_release_name( &minor_status, &name );
@@ -715,7 +705,7 @@ static ULONG flags_gss_to_isc_ret( ULONG flags )
 
 static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, const char *target_name,
                                           ULONG context_req, SecBufferDesc *input, LSA_SEC_HANDLE *new_context,
-                                          SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry )
+                                          SecBufferDesc *output, ULONG *context_attr, ULONG *expiry )
 {
     OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
     gss_cred_id_t cred_handle = credhandle_sspi_to_gss( credential );
@@ -758,7 +748,7 @@ static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HAN
 
         ctxhandle_gss_to_sspi( ctx_handle, new_context );
         if (context_attr) *context_attr = flags_gss_to_isc_ret( ret_flags );
-        expirytime_gss_to_sspi( expiry_time, expiry );
+        *expiry = expiry_time;
     }
 
     if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );

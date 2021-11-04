@@ -83,6 +83,17 @@ static const char *debugstr_us( const UNICODE_STRING *us )
     return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
 }
 
+static void expiry_to_timestamp( ULONG expiry, TimeStamp *timestamp )
+{
+    LARGE_INTEGER time;
+
+    NtQuerySystemTime( &time );
+    RtlSystemTimeToLocalTime( &time, &time );
+    time.QuadPart += expiry * (ULONGLONG)10000000;
+    timestamp->LowPart  = time.QuadPart;
+    timestamp->HighPart = time.QuadPart >> 32;
+}
+
 static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DISPATCH_TABLE dispatch,
     PLSA_STRING database, PLSA_STRING confidentiality, PLSA_STRING *package_name)
 {
@@ -267,6 +278,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     char *principal = NULL, *username = NULL,  *password = NULL;
     SEC_WINNT_AUTH_IDENTITY_W *id = auth_data;
     NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    ULONG exptime;
 
     TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
            logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
@@ -285,7 +297,9 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     }
 
     status = krb5_funcs->acquire_credentials_handle( principal, credential_use, username, password, credential,
-                                                     expiry );
+                                                     &exptime );
+    expiry_to_timestamp( exptime, expiry );
+
 done:
     free( principal );
     free( username );
@@ -310,6 +324,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
                                    ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION;
     char *target = NULL;
     NTSTATUS status;
+    ULONG exptime;
 
     TRACE( "(%lx %lx %s 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, debugstr_us(target_name),
            context_req, target_data_rep, input, new_context, output, context_attr, expiry,
@@ -320,8 +335,12 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     if (target_name && !(target = get_str_unixcp( target_name ))) return SEC_E_INSUFFICIENT_MEMORY;
 
     status = krb5_funcs->initialize_context( credential, context, target, context_req, input, new_context, output,
-                                             context_attr, expiry );
-    if (!status) *mapped_context = TRUE;
+                                             context_attr, &exptime );
+    if (!status)
+    {
+        *mapped_context = TRUE;
+        expiry_to_timestamp( exptime, expiry );
+    }
     /* FIXME: initialize context_data */
     free( target );
     return status;
@@ -332,6 +351,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry, BOOLEAN *mapped_context, SecBuffer *context_data )
 {
     NTSTATUS status;
+    ULONG exptime;
 
     TRACE( "(%lx %lx 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, context_req, target_data_rep, input,
            new_context, output, context_attr, expiry, mapped_context, context_data );
@@ -339,8 +359,12 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
     if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
 
-    status = krb5_funcs->accept_context( credential, context, input, new_context, output, context_attr, expiry );
-    if (!status) *mapped_context = TRUE;
+    status = krb5_funcs->accept_context( credential, context, input, new_context, output, context_attr, &exptime );
+    if (!status)
+    {
+        *mapped_context = TRUE;
+        expiry_to_timestamp( exptime, expiry );
+    }
     /* FIXME: initialize context_data */
     return status;
 }
