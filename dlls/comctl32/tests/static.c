@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "commctrl.h"
 #include "resources.h"
+#include "uxtheme.h"
 
 #include "wine/test.h"
 
@@ -377,6 +378,96 @@ static void test_STM_SETIMAGE(void)
     DeleteEnhMetaFile(emf);
 }
 
+static INT_PTR CALLBACK test_WM_CTLCOLORSTATIC_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    static HWND child;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        child = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hwnd,
+                              (HMENU)100, 0, NULL);
+        ok(child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+        return FALSE;
+
+    case WM_CLOSE:
+        DestroyWindow(child);
+        return TRUE;
+
+    default:
+        return FALSE;
+    }
+}
+
+static void test_WM_CTLCOLORSTATIC(void)
+{
+    HTHEME (WINAPI *pGetWindowTheme)(HTHEME) = NULL;
+    HWND parent, dialog, child;
+    COLORREF color, old_color;
+    HDC child_hdc, dialog_hdc;
+    int mode, old_mode;
+    BOOL todo = FALSE;
+    HMODULE uxtheme;
+    HBRUSH brush;
+
+    struct
+    {
+        DLGTEMPLATE tmplate;
+        WORD menu;
+        WORD class;
+        WORD title;
+    } temp = {{0}};
+
+    parent = CreateWindowA(WC_STATICA, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, 0, 0, 0,
+                           NULL);
+    ok(parent != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+
+    temp.tmplate.style = WS_CHILD | WS_VISIBLE;
+    temp.tmplate.cx = 80;
+    temp.tmplate.cy = 80;
+    dialog = CreateDialogIndirectParamA(NULL, &temp.tmplate, parent, test_WM_CTLCOLORSTATIC_proc, 0);
+    ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+    child = GetDlgItem(dialog, 100);
+    ok(child != NULL, "Failed to get child static control, error %d.\n", GetLastError());
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    if (uxtheme)
+    {
+        pGetWindowTheme = (void*)GetProcAddress(uxtheme, "GetWindowTheme");
+        if (pGetWindowTheme)
+            todo = !!pGetWindowTheme(dialog);
+    }
+
+    dialog_hdc = GetDC(dialog);
+    child_hdc = GetDC(child);
+    PatBlt(dialog_hdc, 0, 0, 80, 80, BLACKNESS);
+
+    old_mode = SetBkMode(child_hdc, OPAQUE);
+    ok(old_mode != 0, "SetBkMode failed.\n");
+    old_color = SetBkColor(child_hdc, 0xaa5511);
+    ok(old_color != CLR_INVALID, "SetBkColor failed.\n");
+
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine_if(todo)
+    ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
+       GetSysColorBrush(COLOR_BTNFACE), brush);
+    color = SetBkColor(child_hdc, old_color);
+    ok(color == GetSysColor(COLOR_BTNFACE), "Expected background color %#x, got %#x.\n",
+       GetSysColor(COLOR_BTNFACE), color);
+    mode = SetBkMode(child_hdc, old_mode);
+    todo_wine_if(todo)
+    ok(mode == OPAQUE, "Expected mode %#x, got %#x.\n", OPAQUE, mode);
+    color = GetPixel(dialog_hdc, 40, 40);
+    todo_wine_if(todo)
+    ok(color == 0, "Expected pixel %#x, got %#x.\n", 0, color);
+
+    ReleaseDC(child, child_hdc);
+    ReleaseDC(dialog, dialog_hdc);
+    EndDialog(dialog, 0);
+    DestroyWindow(parent);
+    FreeLibrary(uxtheme);
+}
+
 START_TEST(static)
 {
     static const char classname[] = "testclass";
@@ -417,6 +508,7 @@ START_TEST(static)
     test_set_text();
     test_set_image();
     test_STM_SETIMAGE();
+    test_WM_CTLCOLORSTATIC();
 
     DestroyWindow(hMainWnd);
 
