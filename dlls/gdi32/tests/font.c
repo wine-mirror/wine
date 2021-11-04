@@ -7822,7 +7822,7 @@ static void test_GetOutlineTextMetrics_subst(void)
 
     /* family name */
     family_name = (const char*)otm + (UINT_PTR)otm->otmpFamilyName;
-    todo_wine ok(lstrcmpiA(lf.lfFaceName, family_name), "expected a real family name (e.g. Tahoma), got %s\n", family_name);
+    ok(lstrcmpiA(lf.lfFaceName, family_name), "expected a real family name (e.g. Tahoma), got %s\n", family_name);
 
     HeapFree(GetProcessHeap(), 0, otm);
     SelectObject(hdc, hfont_old);

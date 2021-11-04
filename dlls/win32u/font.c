@@ -1866,7 +1866,7 @@ static struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs
 }
 
 static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO *csi, BOOL can_use_bitmap,
-                                                 const WCHAR **orig_name )
+                                                 BOOL *substituted )
 {
     BOOL want_vertical = (lf->lfFaceName[0] == '@');
     struct gdi_font_face *face;
@@ -1888,13 +1888,13 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
                    debugstr_w(subst), (subst_charset != -1) ? subst_charset : lf->lfCharSet );
 	    if (subst_charset != -1)
                 translate_charset_info( (DWORD *)(INT_PTR)subst_charset, csi, TCI_SRCCHARSET );
-            *orig_name = lf->lfFaceName;
+            *substituted = TRUE;
 	}
 
         if ((face = find_matching_face_by_name( lf->lfFaceName, subst, lf, csi->fs, can_use_bitmap )))
             return face;
     }
-    *orig_name = NULL; /* substitution is no longer relevant */
+    *substituted = FALSE; /* substitution is no longer relevant */
 
     /* If requested charset was DEFAULT_CHARSET then try using charset
        corresponding to the current ansi codepage */
@@ -2055,7 +2055,7 @@ static void free_gdi_font( struct gdi_font *font )
 
 static inline const WCHAR *get_gdi_font_name( struct gdi_font *font )
 {
-    return (WCHAR *)font->otm.otmpFamilyName;
+    return font->use_logfont_name ? font->lf.lfFaceName : (WCHAR *)font->otm.otmpFamilyName;
 }
 
 static struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const WCHAR *family_name,
@@ -2481,10 +2481,7 @@ static void create_child_font_list( struct gdi_font *font )
 {
     struct gdi_font_link *font_link;
     struct gdi_font_link_entry *entry;
-    const WCHAR* font_name;
-
-    if (!(font_name = get_gdi_font_subst( get_gdi_font_name(font), -1, NULL )))
-        font_name = get_gdi_font_name( font );
+    const WCHAR* font_name = (WCHAR *)font->otm.otmpFaceName;
 
     if ((font_link = find_gdi_font_link( font_name )))
     {
@@ -3951,6 +3948,7 @@ static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, 
 static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    const WCHAR *font_name;
     INT len;
 
     if (!physdev->font)
@@ -3958,10 +3956,11 @@ static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
         dev = GET_NEXT_PHYSDEV( dev, pGetTextFace );
         return dev->funcs->pGetTextFace( dev, count, str );
     }
-    len = lstrlenW( get_gdi_font_name(physdev->font) ) + 1;
+    font_name = get_gdi_font_name( physdev->font );
+    len = lstrlenW( font_name ) + 1;
     if (str)
     {
-        lstrcpynW( str, get_gdi_font_name(physdev->font), count );
+        lstrcpynW( str, font_name, count );
         len = min( count, len );
     }
     return len;
@@ -4079,7 +4078,7 @@ static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bit
     struct gdi_font_face *face;
     INT height;
     CHARSETINFO csi;
-    const WCHAR *orig_name = NULL;
+    BOOL substituted = FALSE;
 
     static const WCHAR symbolW[] = {'S','y','m','b','o','l',0};
 
@@ -4095,14 +4094,15 @@ static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bit
         TRACE( "returning cached gdiFont(%p)\n", font );
         return font;
     }
-    if (!(face = find_matching_face( lf, &csi, can_use_bitmap, &orig_name )))
+    if (!(face = find_matching_face( lf, &csi, can_use_bitmap, &substituted )))
     {
         FIXME( "can't find a single appropriate font - bailing\n" );
         return NULL;
     }
     height = lf->lfHeight;
 
-    font = create_gdi_font( face, orig_name, lf );
+    font = create_gdi_font( face, NULL, lf );
+    font->use_logfont_name = substituted;
     font->matrix = dcmat;
     font->can_use_bitmap = can_use_bitmap;
     if (!csi.fs.fsCsb[0]) get_nearest_charset( face->family->family_name, face, &csi );

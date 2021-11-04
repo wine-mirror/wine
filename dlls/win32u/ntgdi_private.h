@@ -275,6 +275,7 @@ struct gdi_font
     BOOL                   fake_italic : 1;
     BOOL                   fake_bold : 1;
     BOOL                   scalable : 1;
+    BOOL                   use_logfont_name : 1;
     struct gdi_font       *base_font;
     void                  *gsub_table;
     void                  *vert_feature;
