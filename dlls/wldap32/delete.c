@@ -142,8 +142,11 @@ ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, L
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_delete_ext( CTX(ld), dnU, serverctrlsU, clientctrlsU, message ) );
+    else
+    {
+        struct ldap_delete_ext_params params = { CTX(ld), dnU, serverctrlsU, clientctrlsU, message };
+        ret = map_error( LDAP_CALL( ldap_delete_ext, &params ));
+    }
 
 exit:
     free( dnU );
@@ -212,8 +215,11 @@ ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls,
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_delete_ext_s( CTX(ld), dnU, serverctrlsU, clientctrlsU ) );
+    else
+    {
+        struct ldap_delete_ext_s_params params = { CTX(ld), dnU, serverctrlsU, clientctrlsU };
+        ret = map_error( LDAP_CALL( ldap_delete_ext_s, &params ));
+    }
 
 exit:
     free( dnU );

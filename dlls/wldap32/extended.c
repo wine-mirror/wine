@@ -124,9 +124,11 @@ ULONG CDECL ldap_extended_operationW( LDAP *ld, WCHAR *oid, struct berval *data,
     if (data && !(dataU = bervalWtoU( data ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_extended_operation( CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU,
-                                                             message ) );
+    else
+    {
+        struct ldap_extended_operation_params params = { CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU, message };
+        ret = map_error( LDAP_CALL( ldap_extended_operation, &params ));
+    }
 
 exit:
     free( oidU );
@@ -212,22 +214,25 @@ ULONG CDECL ldap_extended_operation_sW( LDAP *ld, WCHAR *oid, struct berval *dat
     if (data && !(dataU = bervalWtoU( data ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
+    else
+    {
+        struct ldap_extended_operation_s_params params = { CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU, &retoidU, &retdataU };
+        ret = map_error( LDAP_CALL( ldap_extended_operation_s, &params ));
+    }
 
-    ret = map_error( ldap_funcs->fn_ldap_extended_operation_s( CTX(ld), oidU, dataU, serverctrlsU, clientctrlsU,
-                                                               &retoidU, &retdataU ) );
     if (retoid && retoidU)
     {
         WCHAR *str = strUtoW( retoidU );
         if (str) *retoid = str;
         else ret = LDAP_NO_MEMORY;
-        ldap_funcs->fn_ldap_memfree( retoidU );
+        LDAP_CALL( ldap_memfree, retoidU );
     }
     if (retdata && retdataU)
     {
         struct berval *bv = bervalUtoW( retdataU );
         if (bv) *retdata = bv;
         else ret = LDAP_NO_MEMORY;
-        ldap_funcs->fn_ber_bvfree( retdataU );
+        LDAP_CALL( ber_bvfree, retdataU );
     }
 
 exit:

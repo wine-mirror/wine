@@ -48,7 +48,11 @@ ULONG CDECL ldap_abandon( LDAP *ld, ULONG msgid )
     TRACE( "(%p, 0x%08x)\n", ld, msgid );
 
     if (!ld) return ~0u;
-    return map_error( ldap_funcs->fn_ldap_abandon_ext( CTX(ld), msgid, NULL, NULL ) );
+    else
+    {
+        struct ldap_abandon_ext_params params = { CTX(ld), msgid };
+        return map_error( LDAP_CALL( ldap_abandon_ext, &params ));
+    }
 }
 
 /***********************************************************************
@@ -141,7 +145,11 @@ ULONG CDECL ldap_count_entries( LDAP *ld, LDAPMessage *res )
     TRACE( "(%p, %p)\n", ld, res );
 
     if (!ld) return ~0u;
-    return ldap_funcs->fn_ldap_count_entries( CTX(ld), MSG(res) );
+    else
+    {
+        struct ldap_count_entries_params params = { CTX(ld), MSG(res) };
+        return LDAP_CALL( ldap_count_entries, &params );
+    }
 }
 
 /***********************************************************************
@@ -162,7 +170,11 @@ ULONG CDECL ldap_count_references( LDAP *ld, LDAPMessage *res )
     TRACE( "(%p, %p)\n", ld, res );
 
     if (!ld) return 0;
-    return ldap_funcs->fn_ldap_count_references( CTX(ld), MSG(res) );
+    else
+    {
+        struct ldap_count_references_params params = { CTX(ld), MSG(res) };
+        return LDAP_CALL( ldap_count_references, &params );
+    }
 }
 
 static ULONG get_escape_size( PCHAR src, ULONG srclen )
@@ -297,9 +309,13 @@ WCHAR * CDECL ldap_first_attributeW( LDAP *ld, LDAPMessage *entry, BerElement **
 
     TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
 
-    if (!ld || !entry) return NULL;
+    if (ld && entry)
+    {
+        struct ldap_first_attribute_params params = { CTX(ld), MSG(entry), &berU, &retU };
+        LDAP_CALL( ldap_first_attribute, &params );
+    }
+    else return NULL;
 
-    ldap_funcs->fn_ldap_first_attribute( CTX(ld), MSG(entry), &berU, &retU );
     if (retU && (ber = malloc( sizeof(*ber) )))
     {
         BER(ber) = (char *)berU;
@@ -307,7 +323,7 @@ WCHAR * CDECL ldap_first_attributeW( LDAP *ld, LDAPMessage *entry, BerElement **
         ret = strUtoW( retU );
     }
 
-    ldap_funcs->fn_ldap_memfree( retU );
+    LDAP_CALL( ldap_memfree, retU );
     return ret;
 }
 
@@ -333,14 +349,15 @@ LDAPMessage * CDECL ldap_first_entry( LDAP *ld, LDAPMessage *res )
 
     TRACE( "(%p, %p)\n", ld, res );
 
-    if (!ld || !res) return NULL;
-
-    if (!ldap_funcs->fn_ldap_first_entry( CTX(ld), MSG(res), &msgU ))
+    if (ld && res)
     {
-        assert( msgU == MSG(res) );
-        return res;
+        struct ldap_first_entry_params params = { CTX(ld), MSG(res), &msgU };
+        if (!LDAP_CALL( ldap_first_entry, &params ))
+        {
+            assert( msgU == MSG(res) );
+            return res;
+        }
     }
-
     return NULL;
 }
 
@@ -363,14 +380,15 @@ LDAPMessage * CDECL ldap_first_reference( LDAP *ld, LDAPMessage *res )
 
     TRACE( "(%p, %p)\n", ld, res );
 
-    if (!ld) return NULL;
-
-    if (!ldap_funcs->fn_ldap_first_reference( CTX(ld), MSG(res), &msgU ))
+    if (ld)
     {
-        assert( msgU == MSG(res) );
-        return res;
+        struct ldap_first_reference_params params = { CTX(ld), MSG(res), &msgU };
+        if (!LDAP_CALL( ldap_first_reference, &params ))
+        {
+            assert( msgU == MSG(res) );
+            return res;
+        }
     }
-
     return NULL;
 }
 
@@ -415,7 +433,7 @@ ULONG CDECL ldap_msgfree( LDAPMessage *res )
 
     if (!res) return LDAP_SUCCESS;
 
-    ldap_funcs->fn_ldap_msgfree( MSG(res) );
+    LDAP_CALL( ldap_msgfree, MSG(res) );
     while (list)
     {
         entry = list;
@@ -475,14 +493,15 @@ WCHAR * CDECL ldap_next_attributeW( LDAP *ld, LDAPMessage *entry, BerElement *pt
 
     TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
 
-    if (!ld || !entry || !ptr) return NULL;
-
-    if (!ldap_funcs->fn_ldap_next_attribute( CTX(ld), MSG(entry), BER(ptr), &retU ))
+    if (ld && entry && ptr)
     {
-        ret = strUtoW( retU );
-        ldap_funcs->fn_ldap_memfree( retU );
+        struct ldap_next_attribute_params params = { CTX(ld), MSG(entry), BER(ptr), &retU };
+        if (!LDAP_CALL( ldap_next_attribute, &params ))
+        {
+            ret = strUtoW( retU );
+            LDAP_CALL( ldap_memfree, retU );
+        }
     }
-
     return ret;
 }
 
@@ -512,8 +531,12 @@ LDAPMessage * CDECL ldap_next_entry( LDAP *ld, LDAPMessage *entry )
     if (!ld || !entry) return NULL;
 
     if (entry->lm_next) return entry->lm_next;
+    else
+    {
+        struct ldap_next_entry_params params = { CTX(ld), MSG(entry), &msgU };
+        LDAP_CALL( ldap_next_entry, &params );
+    }
 
-    ldap_funcs->fn_ldap_next_entry( CTX(ld), MSG(entry), &msgU );
     if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         MSG(msg) = msgU;
@@ -549,8 +572,11 @@ LDAPMessage * CDECL ldap_next_reference( LDAP *ld, LDAPMessage *entry )
     if (!ld || !entry) return NULL;
 
     if (entry->lm_next) return entry->lm_next;
-
-    ldap_funcs->fn_ldap_next_reference( CTX(ld), MSG(entry), &msgU );
+    else
+    {
+        struct ldap_next_reference_params params = { CTX(ld), MSG(entry), &msgU };
+        LDAP_CALL( ldap_next_reference, &params );
+    }
     if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         MSG(msg) = msgU;
@@ -601,19 +627,22 @@ ULONG CDECL ldap_result( LDAP *ld, ULONG msgid, ULONG all, struct l_timeval *tim
     LDAPMessage *msg;
     struct timevalU timeval;
     void *msgU = NULL;
-    ULONG ret;
+    ULONG ret = ~0u;
 
     TRACE( "(%p, 0x%08x, 0x%08x, %p, %p)\n", ld, msgid, all, timeout, res );
 
-    if (!ld || !res || msgid == ~0u) return ~0u;
-
-    if (timeout)
+    if (ld && res && msgid != ~0u)
     {
-        timeval.tv_sec = timeout->tv_sec;
-        timeval.tv_usec = timeout->tv_usec;
-    }
+        struct ldap_result_params params = { CTX(ld), msgid, all, timeout ? &timeval : NULL, &msgU };
 
-    ret = ldap_funcs->fn_ldap_result( CTX(ld), msgid, all, timeout ? &timeval : NULL, &msgU );
+        if (timeout)
+        {
+            timeval.tv_sec = timeout->tv_sec;
+            timeval.tv_usec = timeout->tv_usec;
+        }
+
+        ret = LDAP_CALL( ldap_result, &params );
+    }
     if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         MSG(msg) = msgU;

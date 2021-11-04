@@ -104,9 +104,11 @@ ULONG CDECL ldap_rename_extW( LDAP *ld, WCHAR *dn, WCHAR *newrdn, WCHAR *newpare
     if (newparent && !(newparentU = strWtoU( newparent ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_rename( CTX(ld), dnU, newrdnU, newparentU, delete, serverctrlsU, clientctrlsU,
-                                                 message ) );
+    else
+    {
+        struct ldap_rename_params params = { CTX(ld), dnU, newrdnU, newparentU, delete, serverctrlsU, clientctrlsU, message };
+        ret = map_error( LDAP_CALL( ldap_rename, &params ));
+    }
 exit:
     free( dnU );
     free( newrdnU );
@@ -184,9 +186,11 @@ ULONG CDECL ldap_rename_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *newrdn, WCHAR *newpa
     if (newparent && !(newparentU = strWtoU( newparent ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_rename_s( CTX(ld), dnU, newrdnU, newparentU, delete, serverctrlsU,
-                                                   clientctrlsU ) );
+    else
+    {
+        struct ldap_rename_s_params params = { CTX(ld), dnU, newrdnU, newparentU, delete, serverctrlsU, clientctrlsU };
+        ret = map_error( LDAP_CALL( ldap_rename_s, &params ));
+    }
 exit:
     free( dnU );
     free( newrdnU );

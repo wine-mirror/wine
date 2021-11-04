@@ -184,10 +184,13 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
         if (!featureW->ldapaif_name) return LDAP_PARAM_ERROR;
 
         featureU.ldapaif_info_version = featureW->ldapaif_info_version;
-        if (!(featureU.ldapaif_name = strWtoU( featureW->ldapaif_name ))) return LDAP_NO_MEMORY;
-        featureU.ldapaif_version = 0;
-
-        ret = map_error( ldap_funcs->fn_ldap_get_option( CTX(ld), option, &featureU ) );
+        if ((featureU.ldapaif_name = strWtoU( featureW->ldapaif_name )))
+        {
+            struct ldap_get_option_params params = { CTX(ld), option, &featureU };
+            featureU.ldapaif_version = 0;
+            ret = map_error( LDAP_CALL( ldap_get_option, &params ));
+        }
+        else return LDAP_NO_MEMORY;
 
         if (ret == LDAP_SUCCESS) featureW->ldapaif_version = featureU.ldapaif_version;
         free( featureU.ldapaif_name );
@@ -197,11 +200,12 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     {
         LDAPAPIInfoU infoU;
         LDAPAPIInfoW *infoW = value;
+        struct ldap_get_option_params params = { CTX(ld), option, &infoU };
 
         memset( &infoU, 0, sizeof(infoU) );
         infoU.ldapai_info_version = infoW->ldapai_info_version;
 
-        ret = map_error( ldap_funcs->fn_ldap_get_option( CTX(ld), option, &infoU ) );
+        ret = map_error( LDAP_CALL( ldap_get_option, &params ));
         if (ret == LDAP_SUCCESS)
         {
             infoW->ldapai_api_version = infoU.ldapai_api_version;
@@ -211,13 +215,13 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
                 return LDAP_NO_MEMORY;
             if (infoU.ldapai_vendor_name && !(infoW->ldapai_vendor_name = strUtoW( infoU.ldapai_vendor_name )))
             {
-                ldap_funcs->fn_ldap_memvfree( (void **)infoU.ldapai_extensions );
+                LDAP_CALL( ldap_memvfree, infoU.ldapai_extensions );
                 return LDAP_NO_MEMORY;
             }
             infoW->ldapai_vendor_version = infoU.ldapai_vendor_version;
 
-            ldap_funcs->fn_ldap_memvfree( (void **)infoU.ldapai_extensions );
-            ldap_funcs->fn_ldap_memfree( infoU.ldapai_vendor_name );
+            LDAP_CALL( ldap_memvfree, infoU.ldapai_extensions );
+            LDAP_CALL( ldap_memfree, infoU.ldapai_vendor_name );
         }
         return ret;
     }
@@ -229,7 +233,10 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
     case LDAP_OPT_REFERRALS:
     case LDAP_OPT_SIZELIMIT:
     case LDAP_OPT_TIMELIMIT:
-        return map_error( ldap_funcs->fn_ldap_get_option( CTX(ld), option, value ));
+    {
+        struct ldap_get_option_params params = { CTX(ld), option, value };
+        return map_error( LDAP_CALL( ldap_get_option, &params ));
+    }
 
     case LDAP_OPT_CACHE_ENABLE:
     case LDAP_OPT_CACHE_FN_PTRS:
@@ -371,22 +378,30 @@ static BOOL query_supported_server_ctrls( LDAP *ld )
     struct bervalU **ctrls = SERVER_CTRLS(ld);
     ULONG ret;
 
-    if (ctrls) return TRUE;
-
-    ret = map_error( ldap_funcs->fn_ldap_search_ext_s( CTX(ld), (char *)"", LDAP_SCOPE_BASE, (char *)"(objectClass=*)",
-                                                       attrs, FALSE, NULL, NULL, NULL, 0, &res ) );
-    if (ret != LDAP_SUCCESS) return FALSE;
-
-    if (!ldap_funcs->fn_ldap_first_entry( CTX(ld), res, &entry ))
+    if (!ctrls)
     {
-        ULONG count, i;
-        ldap_funcs->fn_ldap_get_values_len( CTX(ld), entry, attrs[0], &ctrls );
-        count = ldap_funcs->fn_ldap_count_values_len( ctrls );
-        for (i = 0; i < count; i++) TRACE("%u: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ));
-        *(struct bervalU ***)&SERVER_CTRLS(ld) = ctrls;
+        struct ldap_search_ext_s_params params = { CTX(ld), (char *)"", LDAP_SCOPE_BASE,
+                (char *)"(objectClass=*)", attrs, FALSE, NULL, NULL, NULL, 0, &res };
+        ret = map_error( LDAP_CALL( ldap_search_ext_s, &params ));
     }
+    else return TRUE;
 
-    ldap_funcs->fn_ldap_msgfree( res );
+    if (ret == LDAP_SUCCESS)
+    {
+        struct ldap_first_entry_params params = { CTX(ld), res, &entry };
+        if (!LDAP_CALL( ldap_first_entry, &params ))
+        {
+            ULONG count, i;
+            struct ldap_get_values_len_params get_params = { CTX(ld), entry, attrs[0], &ctrls };
+            LDAP_CALL( ldap_get_values_len, &get_params );
+            count = LDAP_CALL( ldap_count_values_len, ctrls );
+            for (i = 0; i < count; i++) TRACE("%u: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ));
+            *(struct bervalU ***)&SERVER_CTRLS(ld) = ctrls;
+        }
+    }
+    else return FALSE;
+
+    LDAP_CALL( ldap_msgfree, res );
     return ctrls != NULL;
 }
 
@@ -398,7 +413,7 @@ static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControlU **ctrls )
         return TRUE; /* can't verify, let the server handle it on next query */
 
     user_count = controlarraylenU( ctrls );
-    server_count = ldap_funcs->fn_ldap_count_values_len( SERVER_CTRLS(ld) );
+    server_count = LDAP_CALL( ldap_count_values_len, SERVER_CTRLS(ld) );
 
     for (n = 0; n < user_count; n++)
     {
@@ -454,18 +469,21 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         if (!is_supported_server_ctrls( ld, ctrlsU ))
             ret = LDAP_PARAM_ERROR;
         else
-            ret = map_error( ldap_funcs->fn_ldap_set_option( CTX(ld), option, ctrlsU ) );
+        {
+            struct ldap_set_option_params params = { CTX(ld), option, ctrlsU };
+            ret = map_error( LDAP_CALL( ldap_set_option, &params ));
+        }
         controlarrayfreeU( ctrlsU );
         return ret;
     }
     case LDAP_OPT_REFERRALS:
     {
-        void *openldap_referral = LDAP_OPT_ON;
+        struct ldap_set_option_params params = { CTX(ld), option, LDAP_OPT_ON };
         if (value == LDAP_OPT_OFF)
-            openldap_referral = LDAP_OPT_OFF;
+            params.value = LDAP_OPT_OFF;
         else
             FIXME("upgrading referral value %p to LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", value);
-        return map_error( ldap_funcs->fn_ldap_set_option( CTX(ld), option, openldap_referral ) );
+        return map_error( LDAP_CALL( ldap_set_option, &params ));
     }
     case LDAP_OPT_DEREF:
     case LDAP_OPT_DESC:
@@ -473,7 +491,10 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
     case LDAP_OPT_PROTOCOL_VERSION:
     case LDAP_OPT_SIZELIMIT:
     case LDAP_OPT_TIMELIMIT:
-        return map_error( ldap_funcs->fn_ldap_set_option( CTX(ld), option, value ));
+    {
+        struct ldap_set_option_params params = { CTX(ld), option, value };
+        return map_error( LDAP_CALL( ldap_set_option, &params ));
+    }
 
     case LDAP_OPT_CACHE_ENABLE:
     case LDAP_OPT_CACHE_FN_PTRS:

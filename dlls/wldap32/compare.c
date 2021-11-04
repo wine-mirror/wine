@@ -170,9 +170,12 @@ ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, s
 
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
+    else
+    {
+        struct ldap_compare_ext_params params = { CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU, clientctrlsU, message };
+        ret = map_error( LDAP_CALL( ldap_compare_ext, &params ));
+    }
 
-    ret = map_error( ldap_funcs->fn_ldap_compare_ext( CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU,
-                                                      clientctrlsU, message ) );
 exit:
     free( dnU );
     free( attrU );
@@ -268,9 +271,11 @@ ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value,
 
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_compare_ext_s( CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU,
-                                                        clientctrlsU ) );
+    else
+    {
+        struct ldap_compare_ext_s_params params = { CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU, clientctrlsU };
+        ret = map_error( LDAP_CALL( ldap_compare_ext_s, &params ));
+    }
 exit:
     free( dnU );
     free( attrU );

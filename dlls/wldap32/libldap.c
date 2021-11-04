@@ -59,28 +59,33 @@ C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
 
 static LDAPMod *nullmods[] = { NULL };
 
-static int CDECL wrap_ber_alloc_t( int options, void **ret )
+static NTSTATUS wrap_ber_alloc_t( void *args )
 {
-    *ret = ber_alloc_t( options );
-    return *ret ? LDAP_SUCCESS : WLDAP32_LBER_ERROR;
+    struct ber_alloc_t_params *params = args;
+    *params->ret = ber_alloc_t( params->options );
+    return *params->ret ? LDAP_SUCCESS : WLDAP32_LBER_ERROR;
 }
 
-static void CDECL wrap_ber_bvecfree( struct bervalU **berval )
+static NTSTATUS wrap_ber_bvecfree( void *args )
 {
-    ber_bvecfree( (struct berval **)berval );
+    ber_bvecfree( args );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL wrap_ber_bvfree( struct bervalU *berval )
+static NTSTATUS wrap_ber_bvfree( void *args )
 {
-    ber_bvfree( (struct berval *)berval );
+    ber_bvfree( args );
+    return STATUS_SUCCESS;
 }
 
-static unsigned int CDECL wrap_ber_first_element( void *ber, ULONG *ret_len, char **last )
+static NTSTATUS wrap_ber_first_element( void *args )
 {
+    struct ber_first_element_params *params = args;
     ber_len_t len;
     ber_tag_t ret;
 
-    if ((ret = ber_first_element( ber, &len, last )) == LBER_ERROR) return WLDAP32_LBER_ERROR;
+    if ((ret = ber_first_element( params->ber, &len, params->last )) == LBER_ERROR)
+        return WLDAP32_LBER_ERROR;
     if (ret > ~0u)
     {
         ERR( "ret too large\n" );
@@ -92,32 +97,39 @@ static unsigned int CDECL wrap_ber_first_element( void *ber, ULONG *ret_len, cha
         return WLDAP32_LBER_ERROR;
     }
 
-    *ret_len = len;
+    *params->ret_len = len;
     return ret;
 }
 
-static int CDECL wrap_ber_flatten( void *ber, struct bervalU **berval )
+static NTSTATUS wrap_ber_flatten( void *args )
 {
-    return ber_flatten( ber, (struct berval **)berval );
+    struct ber_flatten_params *params = args;
+    return ber_flatten( params->ber, (struct berval **)params->berval );
 }
 
-static void CDECL wrap_ber_free( void *ber, int freebuf )
+static NTSTATUS wrap_ber_free( void *args )
 {
-    ber_free( ber, freebuf );
+    struct ber_free_params *params = args;
+
+    ber_free( params->ber, params->freebuf );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_ber_init( struct bervalU *berval, void **ret )
+static NTSTATUS wrap_ber_init( void *args )
 {
-    *ret = ber_init( (struct berval *)berval );
-    return *ret ? LDAP_SUCCESS : WLDAP32_LBER_ERROR;
+    struct ber_init_params *params = args;
+    *params->ret = ber_init( (struct berval *)params->berval );
+    return *params->ret ? LDAP_SUCCESS : WLDAP32_LBER_ERROR;
 }
 
-static unsigned int CDECL wrap_ber_next_element( void *ber, unsigned int *ret_len, char *last )
+static NTSTATUS wrap_ber_next_element( void *args )
 {
+    struct ber_next_element_params *params = args;
     ber_len_t len;
     ber_tag_t ret;
 
-    if ((ret = ber_next_element( ber, &len, last )) == LBER_ERROR) return WLDAP32_LBER_ERROR;
+    if ((ret = ber_next_element( params->ber, &len, params->last )) == LBER_ERROR)
+        return WLDAP32_LBER_ERROR;
     if (ret > ~0u)
     {
         ERR( "ret too large\n" );
@@ -129,313 +141,371 @@ static unsigned int CDECL wrap_ber_next_element( void *ber, unsigned int *ret_le
         return WLDAP32_LBER_ERROR;
     }
 
-    *ret_len = len;
+    *params->ret_len = len;
     return ret;
 }
 
-static unsigned int CDECL wrap_ber_peek_tag( void *ber, unsigned int *ret_len )
+static NTSTATUS wrap_ber_peek_tag( void *args )
 {
+    struct ber_peek_tag_params *params = args;
     ber_len_t len;
     ber_tag_t ret;
 
-    if ((ret = ber_peek_tag( ber, &len )) == LBER_ERROR) return WLDAP32_LBER_ERROR;
+    if ((ret = ber_peek_tag( params->ber, &len )) == LBER_ERROR) return WLDAP32_LBER_ERROR;
     if (len > ~0u)
     {
         ERR( "len too large\n" );
         return WLDAP32_LBER_ERROR;
     }
 
-    *ret_len = len;
+    *params->ret_len = len;
     return ret;
 }
 
-static unsigned int CDECL wrap_ber_skip_tag( void *ber, unsigned int *ret_len )
+static NTSTATUS wrap_ber_skip_tag( void *args )
 {
+    struct ber_skip_tag_params *params = args;
     ber_len_t len;
     ber_tag_t ret;
 
-    if ((ret = ber_skip_tag( ber, &len )) == LBER_ERROR) return WLDAP32_LBER_ERROR;
+    if ((ret = ber_skip_tag( params->ber, &len )) == LBER_ERROR) return WLDAP32_LBER_ERROR;
     if (len > ~0u)
     {
         ERR( "len too large\n" );
         return WLDAP32_LBER_ERROR;
     }
 
-    *ret_len = len;
+    *params->ret_len = len;
     return ret;
 }
 
-static int CDECL wrap_ber_printf( void *ber, char *fmt, ULONG_PTR arg1, ULONG_PTR arg2 )
+static NTSTATUS wrap_ber_printf( void *args )
 {
-    assert( strlen(fmt) == 1 );
+    struct ber_printf_params *params = args;
 
-    return ber_printf( ber, fmt, arg1, arg2 );
+    assert( strlen(params->fmt) == 1 );
+
+    return ber_printf( params->ber, params->fmt, params->arg1, params->arg2 );
 }
 
-static int CDECL wrap_ber_scanf( void *ber, char *fmt, void *arg1, void *arg2 )
+static NTSTATUS wrap_ber_scanf( void *args )
 {
-    assert( strlen(fmt) == 1 );
+    struct ber_scanf_params *params = args;
 
-    return ber_scanf( ber, fmt, arg1, arg2 );
+    assert( strlen(params->fmt) == 1 );
+
+    return ber_scanf( params->ber, params->fmt, params->arg1, params->arg2 );
 }
 
-static int CDECL wrap_ldap_abandon_ext( void *ld, int msgid, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_abandon_ext( void *args )
 {
-    return ldap_abandon_ext( ld, msgid, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+    struct ldap_abandon_ext_params *params = args;
+    return ldap_abandon_ext( params->ld, params->msgid, (LDAPControl **)params->serverctrls,
+                             (LDAPControl **)params->clientctrls );
 }
 
-static int CDECL wrap_ldap_add_ext( void *ld, const char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
-                             LDAPControlU **clientctrls, ULONG *msg )
+static NTSTATUS wrap_ldap_add_ext( void *args )
 {
+    struct ldap_add_ext_params *params = args;
     int dummy;
-    return ldap_add_ext( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullmods, (LDAPControl **)serverctrls,
-                         (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+    return ldap_add_ext( params->ld, params->dn ? params->dn : "",
+                         params->attrs ? (LDAPMod **)params->attrs : nullmods,
+                         (LDAPControl **)params->serverctrls, (LDAPControl **)params->clientctrls,
+                         params->msg ? (int *)params->msg : &dummy );
 }
 
-static int CDECL wrap_ldap_add_ext_s( void *ld, const char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
-                               LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_add_ext_s( void *args )
 {
-    return ldap_add_ext_s( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullmods, (LDAPControl **)serverctrls,
-                           (LDAPControl **)clientctrls );
+    struct ldap_add_ext_s_params *params = args;
+    return ldap_add_ext_s( params->ld, params->dn ? params->dn : "",
+                           params->attrs ? (LDAPMod **)params->attrs : nullmods,
+                           (LDAPControl **)params->serverctrls, (LDAPControl **)params->clientctrls );
 }
 
-static int CDECL wrap_ldap_compare_ext( void *ld, const char *dn, const char *attrs, struct bervalU *value,
-                                 LDAPControlU **serverctrls, LDAPControlU **clientctrls, ULONG *msg )
+static NTSTATUS wrap_ldap_compare_ext( void *args )
 {
+    struct ldap_compare_ext_params *params = args;
     int dummy;
-    return ldap_compare_ext( ld, dn ? dn : "", attrs ? attrs : "", (struct berval *)value,
-                             (LDAPControl **)serverctrls, (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+    return ldap_compare_ext( params->ld, params->dn ? params->dn : "", params->attrs ? params->attrs : "",
+                             (struct berval *)params->value, (LDAPControl **)params->serverctrls,
+                             (LDAPControl **)params->clientctrls, params->msg ? (int *)params->msg : &dummy );
 }
 
-static int CDECL wrap_ldap_compare_ext_s( void *ld, const char *dn, const char *attrs, struct bervalU *value,
-                                   LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_compare_ext_s( void *args )
 {
-    return ldap_compare_ext_s( ld, dn ? dn : "", attrs ? attrs : "", (struct berval *)value,
-                               (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+    struct ldap_compare_ext_s_params *params = args;
+    return ldap_compare_ext_s( params->ld, params->dn ? params->dn : "", params->attrs ? params->attrs : "",
+                               (struct berval *)params->value, (LDAPControl **)params->serverctrls,
+                               (LDAPControl **)params->clientctrls );
 }
 
-static void CDECL wrap_ldap_control_free( LDAPControlU *control )
+static NTSTATUS wrap_ldap_control_free( void *args )
 {
-    ldap_control_free( (LDAPControl *)control );
+    ldap_control_free( args );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL wrap_ldap_controls_free( LDAPControlU **control )
+static NTSTATUS wrap_ldap_controls_free( void *args )
 {
-    ldap_controls_free( (LDAPControl **)control );
+    ldap_controls_free( args );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_ldap_count_entries( void *ld, void *chain )
+static NTSTATUS wrap_ldap_count_entries( void *args )
 {
-    return ldap_count_entries( ld, chain );
+    struct ldap_count_entries_params *params = args;
+    return ldap_count_entries( params->ld, params->chain );
 }
 
-static int CDECL wrap_ldap_count_references( void *ld, void *chain )
+static NTSTATUS wrap_ldap_count_references( void *args )
 {
-    return ldap_count_references( ld, chain );
+    struct ldap_count_references_params *params = args;
+    return ldap_count_references( params->ld, params->chain );
 }
 
-static int CDECL wrap_ldap_count_values_len( struct bervalU **values )
+static NTSTATUS wrap_ldap_count_values_len( void *args )
 {
-    return ldap_count_values_len( (struct berval **)values );
+    return ldap_count_values_len( args );
 }
 
-static int CDECL wrap_ldap_create_sort_control( void *ld, LDAPSortKeyU **keylist, int critical, LDAPControlU **control )
+static NTSTATUS wrap_ldap_create_sort_control( void *args )
 {
-    return ldap_create_sort_control( ld, (LDAPSortKey **)keylist, critical, (LDAPControl **)control );
+    struct ldap_create_sort_control_params *params = args;
+    return ldap_create_sort_control( params->ld, (LDAPSortKey **)params->keylist, params->critical,
+                                     (LDAPControl **)params->control );
 }
 
-static int CDECL wrap_ldap_create_vlv_control( void *ld, LDAPVLVInfoU *info, LDAPControlU **control )
+static NTSTATUS wrap_ldap_create_vlv_control( void *args )
 {
-    return ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, (LDAPControl **)control );
+    struct ldap_create_vlv_control_params *params = args;
+    return ldap_create_vlv_control( params->ld, (LDAPVLVInfo *)params->info,
+                                    (LDAPControl **)params->control );
 }
 
-static int CDECL wrap_ldap_delete_ext( void *ld, const char *dn, LDAPControlU **serverctrls, LDAPControlU **clientctrls,
-                                ULONG *msg )
+static NTSTATUS wrap_ldap_delete_ext( void *args )
 {
+    struct ldap_delete_ext_params *params = args;
     int dummy;
-    return ldap_delete_ext( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls,
-                            msg ? (int *)msg : &dummy );
+    return ldap_delete_ext( params->ld, params->dn ? params->dn : "", (LDAPControl **)params->serverctrls,
+                            (LDAPControl **)params->clientctrls, params->msg ? (int *)params->msg : &dummy );
 }
 
-static int CDECL wrap_ldap_delete_ext_s( void *ld, const char *dn, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_delete_ext_s( void *args )
 {
-    return ldap_delete_ext_s( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+    struct ldap_delete_ext_s_params *params = args;
+    return ldap_delete_ext_s( params->ld, params->dn ? params->dn : "", (LDAPControl **)params->serverctrls,
+                              (LDAPControl **)params->clientctrls );
 }
 
-static int CDECL wrap_ldap_dn2ufn( const char *dn, char **ret )
+static NTSTATUS wrap_ldap_dn2ufn( void *args )
 {
-    *ret = ldap_dn2ufn( dn );
-    return *ret ? 0 : -1;
+    struct ldap_dn2ufn_params *params = args;
+    *params->ret = ldap_dn2ufn( params->dn );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_explode_dn( const char *dn, int notypes, char ***ret )
+static NTSTATUS wrap_ldap_explode_dn( void *args )
 {
-    *ret = ldap_explode_dn( dn, notypes );
-    return *ret ? 0 : -1;
+    struct ldap_explode_dn_params *params = args;
+    *params->ret = ldap_explode_dn( params->dn, params->notypes );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_extended_operation( void *ld, const char *oid, struct bervalU *data, LDAPControlU **serverctrls,
-                                        LDAPControlU **clientctrls, ULONG *msg )
+static NTSTATUS wrap_ldap_extended_operation( void *args )
 {
+    struct ldap_extended_operation_params *params = args;
     int dummy;
-    return ldap_extended_operation( ld, oid ? oid : "", (struct berval *)data, (LDAPControl **)serverctrls,
-                                    (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+    return ldap_extended_operation( params->ld, params->oid ? params->oid : "",
+                                    (struct berval *)params->data, (LDAPControl **)params->serverctrls,
+                                    (LDAPControl **)params->clientctrls,
+                                    params->msg ? (int *)params->msg : &dummy );
 }
 
-static int CDECL wrap_ldap_extended_operation_s( void *ld, const char *oid, struct bervalU *data, LDAPControlU **serverctrls,
-                                          LDAPControlU **clientctrls, char **retoid, struct bervalU **retdata )
+static NTSTATUS wrap_ldap_extended_operation_s( void *args )
 {
-    return ldap_extended_operation_s( ld, oid ? oid : "", (struct berval *)data, (LDAPControl **)serverctrls,
-                                      (LDAPControl **)clientctrls, retoid, (struct berval **)retdata );
+    struct ldap_extended_operation_s_params *params = args;
+    return ldap_extended_operation_s( params->ld, params->oid ? params->oid : "",
+                                      (struct berval *)params->data, (LDAPControl **)params->serverctrls,
+                                      (LDAPControl **)params->clientctrls, params->retoid,
+                                      (struct berval **)params->retdata );
 }
 
-static int CDECL wrap_ldap_get_dn( void *ld, void *entry, char **ret )
+static NTSTATUS wrap_ldap_get_dn( void *args )
 {
-    *ret = ldap_get_dn( ld, entry );
-    return *ret ? 0 : -1;
+    struct ldap_get_dn_params *params = args;
+    *params->ret = ldap_get_dn( params->ld, params->entry );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_first_attribute( void *ld, void *entry, void **ber, char **ret )
+static NTSTATUS wrap_ldap_first_attribute( void *args )
 {
-    *ret = ldap_first_attribute( ld, entry, (BerElement **)ber );
-    return *ret ? 0 : -1;
+    struct ldap_first_attribute_params *params = args;
+    *params->ret = ldap_first_attribute( params->ld, params->entry, (BerElement **)params->ber );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_first_entry( void *ld, void *chain, void **ret )
+static NTSTATUS wrap_ldap_first_entry( void *args )
 {
-    *ret = ldap_first_entry( ld, chain );
-    return *ret ? 0 : -1;
+    struct ldap_first_entry_params *params = args;
+    *params->ret = ldap_first_entry( params->ld, params->chain );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_first_reference( void *ld, void *chain, void **ret )
+static NTSTATUS wrap_ldap_first_reference( void *args )
 {
-    *ret = ldap_first_reference( ld, chain );
-    return *ret ? 0 : -1;
+    struct ldap_first_reference_params *params = args;
+    *params->ret = ldap_first_reference( params->ld, params->chain );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_get_option( void *ld, int option, void *value )
+static NTSTATUS wrap_ldap_get_option( void *args )
 {
-    return ldap_get_option( ld, option, value );
+    struct ldap_get_option_params *params = args;
+    return ldap_get_option( params->ld, params->option, params->value );
 }
 
-static int CDECL wrap_ldap_get_values_len( void *ld, void *entry, const char *attr, struct bervalU ***ret )
+static NTSTATUS wrap_ldap_get_values_len( void *args )
 {
-    *ret = (struct bervalU **)ldap_get_values_len( ld, entry, attr );
-    return *ret ? 0 : -1;
+    struct ldap_get_values_len_params *params = args;
+    *params->ret = (struct bervalU **)ldap_get_values_len( params->ld, params->entry, params->attr );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_initialize( void **ld, const char *url )
+static NTSTATUS wrap_ldap_initialize( void *args )
 {
-    return ldap_initialize( (LDAP **)ld, url );
+    struct ldap_initialize_params *params = args;
+    return ldap_initialize( (LDAP **)params->ld, params->url );
 }
 
-static void CDECL wrap_ldap_memfree( void *ptr )
+static NTSTATUS wrap_ldap_memfree( void *args )
 {
-    return ldap_memfree( ptr );
+    ldap_memfree( args );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL wrap_ldap_memvfree( void **ptr )
+static NTSTATUS wrap_ldap_memvfree( void *args )
 {
-    ldap_memvfree( ptr );
+    ldap_memvfree( args );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_ldap_modify_ext( void *ld, const char *dn, LDAPModU **mods, LDAPControlU **serverctrls,
-                                LDAPControlU **clientctrls, ULONG *msg )
+static NTSTATUS wrap_ldap_modify_ext( void *args )
 {
+    struct ldap_modify_ext_params *params = args;
     int dummy;
-    return ldap_modify_ext( ld, dn ? dn : "", mods ? (LDAPMod **)mods : nullmods, (LDAPControl **)serverctrls,
-                            (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+    return ldap_modify_ext( params->ld, params->dn ? params->dn : "",
+                            params->mods ? (LDAPMod **)params->mods : nullmods,
+                            (LDAPControl **)params->serverctrls, (LDAPControl **)params->clientctrls,
+                            params->msg ? (int *)params->msg : &dummy );
 }
 
-static int CDECL wrap_ldap_modify_ext_s( void *ld, const char *dn, LDAPModU **mods, LDAPControlU **serverctrls,
-                                  LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_modify_ext_s( void *args )
 {
-    return ldap_modify_ext_s( ld, dn ? dn : "", mods ? (LDAPMod **)mods : nullmods, (LDAPControl **)serverctrls,
-                              (LDAPControl **)clientctrls );
+    struct ldap_modify_ext_s_params *params = args;
+    return ldap_modify_ext_s( params->ld, params->dn ? params->dn : "",
+                              params->mods ? (LDAPMod **)params->mods : nullmods,
+                              (LDAPControl **)params->serverctrls, (LDAPControl **)params->clientctrls );
 }
 
-static int CDECL wrap_ldap_msgfree( void *msg )
+static NTSTATUS wrap_ldap_msgfree( void *args )
 {
-    return ldap_msgfree( msg );
+    return ldap_msgfree( args );
 }
 
-static int CDECL wrap_ldap_next_attribute( void *ld, void *entry, void *ber, char **ret )
+static NTSTATUS wrap_ldap_next_attribute( void *args )
 {
-    *ret = ldap_next_attribute( ld, entry, ber );
-    return *ret ? 0 : -1;
+    struct ldap_next_attribute_params *params = args;
+    *params->ret = ldap_next_attribute( params->ld, params->entry, params->ber );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_next_entry( void *ld, void *entry, void **ret )
+static NTSTATUS wrap_ldap_next_entry( void *args )
 {
-    *ret = ldap_next_entry( ld, entry );
-    return *ret ? 0 : -1;
+    struct ldap_next_entry_params *params = args;
+    *params->ret = ldap_next_entry( params->ld, params->entry );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_next_reference( void *ld, void *entry, void **ret )
+static NTSTATUS wrap_ldap_next_reference( void *args )
 {
-    *ret = ldap_next_reference( ld, entry );
-    return *ret ? 0 : -1;
+    struct ldap_next_reference_params *params = args;
+    *params->ret = ldap_next_reference( params->ld, params->entry );
+    return *params->ret ? 0 : -1;
 }
 
-static int CDECL wrap_ldap_parse_extended_result( void *ld, void *result, char **retoid, struct bervalU **retdata, int free )
+static NTSTATUS wrap_ldap_parse_extended_result( void *args )
 {
-    return ldap_parse_extended_result( ld, result, retoid, (struct berval **)retdata, free );
+    struct ldap_parse_extended_result_params *params = args;
+    return ldap_parse_extended_result( params->ld, params->result, params->retoid,
+                                       (struct berval **)params->retdata, params->free );
 }
 
-static int CDECL wrap_ldap_parse_reference( void *ld, void *ref, char ***referrals, LDAPControlU ***serverctrls, int free )
+static NTSTATUS wrap_ldap_parse_reference( void *args )
 {
-    return ldap_parse_reference( ld, ref, referrals, (LDAPControl ***)serverctrls, free );
+    struct ldap_parse_reference_params *params = args;
+    return ldap_parse_reference( params->ld, params->ref, params->referrals,
+                                 (LDAPControl ***)params->serverctrls, params->free );
 }
 
-static int CDECL wrap_ldap_parse_result( void *ld, void *res, int *errcode, char **matcheddn, char **errmsg,
-                                  char ***referrals, LDAPControlU ***serverctrls, int free )
+static NTSTATUS wrap_ldap_parse_result( void *args )
 {
-    return ldap_parse_result( ld, res, errcode, matcheddn, errmsg, referrals, (LDAPControl ***)serverctrls, free );
+    struct ldap_parse_result_params *params = args;
+    return ldap_parse_result( params->ld, params->res, params->errcode, params->matcheddn, params->errmsg,
+                              params->referrals, (LDAPControl ***)params->serverctrls, params->free );
 }
 
-static int CDECL wrap_ldap_parse_sortresponse_control( void *ld, LDAPControlU *ctrl, int *result, char **attr )
+static NTSTATUS wrap_ldap_parse_sortresponse_control( void *args )
 {
-    return ldap_parse_sortresponse_control( ld, (LDAPControl *)ctrl, result, attr );
+    struct ldap_parse_sortresponse_control_params *params = args;
+    return ldap_parse_sortresponse_control( params->ld, (LDAPControl *)params->ctrl,
+                                            params->result, params->attr );
 }
 
-static int CDECL wrap_ldap_parse_vlvresponse_control( void *ld, LDAPControlU *ctrls, int *target_pos, int *list_count,
-                                               struct bervalU **ctx, int *errcode )
+static NTSTATUS wrap_ldap_parse_vlvresponse_control( void *args )
 {
-    return ldap_parse_vlvresponse_control( ld, (LDAPControl *)ctrls, target_pos, list_count, (struct berval **)ctx,
-                                           errcode );
+    struct ldap_parse_vlvresponse_control_params *params = args;
+    return ldap_parse_vlvresponse_control( params->ld, (LDAPControl *)params->ctrls, params->target_pos,
+                                           params->list_count, (struct berval **)params->ctx,
+                                           params->errcode );
 }
 
-static int CDECL wrap_ldap_rename( void *ld, const char *dn, const char *newrdn, const char *newparent, int delete,
-                            LDAPControlU **clientctrls, LDAPControlU **serverctrls, ULONG *msg )
+static NTSTATUS wrap_ldap_rename( void *args )
 {
-    return ldap_rename( ld, dn ? dn : "", newrdn, newparent, delete, (LDAPControl **)clientctrls,
-                        (LDAPControl **)serverctrls, (int *)msg );
+    struct ldap_rename_params *params = args;
+    return ldap_rename( params->ld, params->dn ? params->dn : "", params->newrdn, params->newparent,
+                        params->delete, (LDAPControl **)params->clientctrls,
+                        (LDAPControl **)params->serverctrls, (int *)params->msg );
 }
 
-static int CDECL wrap_ldap_rename_s( void *ld, const char *dn, const char *newrdn, const char *newparent, int delete,
-                              LDAPControlU **clientctrls, LDAPControlU **serverctrls )
+static NTSTATUS wrap_ldap_rename_s( void *args )
 {
-    return ldap_rename_s( ld, dn ? dn : "", newrdn, newparent, delete, (LDAPControl **)clientctrls,
-                          (LDAPControl **)serverctrls );
+    struct ldap_rename_s_params *params = args;
+    return ldap_rename_s( params->ld, params->dn ? params->dn : "", params->newrdn, params->newparent,
+                          params->delete, (LDAPControl **)params->clientctrls,
+                          (LDAPControl **)params->serverctrls );
 }
 
-static int CDECL wrap_ldap_result( void *ld, int msgid, int all, struct timevalU *timeout, void **result )
+static NTSTATUS wrap_ldap_result( void *args )
 {
-    return ldap_result( ld, msgid, all, (struct timeval *)timeout, (LDAPMessage **)result );
+    struct ldap_result_params *params = args;
+    return ldap_result( params->ld, params->msgid, params->all,
+                        (struct timeval *)params->timeout, (LDAPMessage **)params->result );
 }
 
-static int CDECL wrap_ldap_sasl_bind( void *ld, const char *dn, const char *mech, struct bervalU *cred,
-                               LDAPControlU **serverctrls, LDAPControlU **clientctrls, int *msgid )
+static NTSTATUS wrap_ldap_sasl_bind( void *args )
 {
-    return ldap_sasl_bind( ld, dn, mech, (struct berval *)cred, (LDAPControl **)serverctrls,
-                           (LDAPControl **)clientctrls, msgid );
+    struct ldap_sasl_bind_params *params = args;
+    return ldap_sasl_bind( params->ld, params->dn, params->mech, (struct berval *)params->cred,
+                           (LDAPControl **)params->serverctrls, (LDAPControl **)params->clientctrls,
+                           params->msgid );
 }
 
-static int CDECL wrap_ldap_sasl_bind_s( void *ld, const char *dn, const char *mech, struct bervalU *cred,
-                                 LDAPControlU **serverctrls, LDAPControlU **clientctrls, struct bervalU **servercred )
+static NTSTATUS wrap_ldap_sasl_bind_s( void *args )
 {
-    return ldap_sasl_bind_s( ld, dn, mech, (struct berval *)cred, (LDAPControl **)serverctrls,
-                             (LDAPControl **)clientctrls, (struct berval **)servercred );
+    struct ldap_sasl_bind_s_params *params = args;
+    return ldap_sasl_bind_s( params->ld, params->dn, params->mech, (struct berval *)params->cred,
+                             (LDAPControl **)params->serverctrls, (LDAPControl **)params->clientctrls,
+                             (struct berval **)params->servercred );
 }
 
 static int wrap_sasl_interact( LDAP *ld, unsigned int flags, void *defaults, void *interact )
@@ -473,56 +543,67 @@ static int wrap_sasl_interact( LDAP *ld, unsigned int flags, void *defaults, voi
     return -1;
 }
 
-static int CDECL wrap_ldap_sasl_interactive_bind_s( void *ld, const char *dn, const char *mech, LDAPControlU **serverctrls,
-                                             LDAPControlU **clientctrls, unsigned int flags, void *defaults )
+static NTSTATUS wrap_ldap_sasl_interactive_bind_s( void *args )
 {
-    return ldap_sasl_interactive_bind_s( ld, dn, mech, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls, flags,
-                                         wrap_sasl_interact, defaults );
+    struct ldap_sasl_interactive_bind_s_params *params = args;
+    return ldap_sasl_interactive_bind_s( params->ld, params->dn, params->mech,
+                                         (LDAPControl **)params->serverctrls,
+                                         (LDAPControl **)params->clientctrls, params->flags,
+                                         wrap_sasl_interact, params->defaults );
 }
 
-static int CDECL wrap_ldap_search_ext( void *ld, const char *base, int scope, const char *filter, char **attrs, int attrsonly,
-                                LDAPControlU **serverctrls, LDAPControlU **clientctrls, struct timevalU *timeout,
-                                int sizelimit, ULONG *msg )
+static NTSTATUS wrap_ldap_search_ext( void *args )
 {
-    return ldap_search_ext( ld, base, scope, filter, attrs, attrsonly, (LDAPControl **)serverctrls,
-                            (LDAPControl **)clientctrls, (struct timeval *)timeout, sizelimit, (int *)msg );
+    struct ldap_search_ext_params *params = args;
+    return ldap_search_ext( params->ld, params->base, params->scope, params->filter, params->attrs,
+                            params->attrsonly, (LDAPControl **)params->serverctrls,
+                            (LDAPControl **)params->clientctrls, (struct timeval *)params->timeout,
+                            params->sizelimit, (int *)params->msg );
 }
 
-static int CDECL wrap_ldap_search_ext_s( void *ld, const char *base, int scope, const char *filter, char **attrs,
-                                  int attrsonly, LDAPControlU **serverctrls, LDAPControlU **clientctrls,
-                                  struct timevalU *timeout, int sizelimit, void **result )
+static NTSTATUS wrap_ldap_search_ext_s( void *args )
 {
-    return ldap_search_ext_s( ld, base, scope, filter, attrs, attrsonly, (LDAPControl **)serverctrls,
-                              (LDAPControl **)clientctrls, (struct timeval *)timeout, sizelimit,
-                              (LDAPMessage **)result );
+    struct ldap_search_ext_s_params *params = args;
+    return ldap_search_ext_s( params->ld, params->base, params->scope, params->filter, params->attrs,
+                              params->attrsonly, (LDAPControl **)params->serverctrls,
+                              (LDAPControl **)params->clientctrls, (struct timeval *)params->timeout,
+                              params->sizelimit, (LDAPMessage **)params->result );
 }
 
-static int CDECL wrap_ldap_set_option( void *ld, int option, const void *value )
+static NTSTATUS wrap_ldap_set_option( void *args )
 {
-    return ldap_set_option( ld, option, value );
+    struct ldap_set_option_params *params = args;
+    return ldap_set_option( params->ld, params->option, params->value );
 }
 
-static int CDECL wrap_ldap_start_tls_s( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_start_tls_s( void *args )
 {
-    return ldap_start_tls_s( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+    struct ldap_start_tls_s_params *params = args;
+    return ldap_start_tls_s( params->ld, (LDAPControl **)params->serverctrls,
+                             (LDAPControl **)params->clientctrls );
 }
 
-static int CDECL wrap_ldap_unbind_ext( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_unbind_ext( void *args )
 {
-    return ldap_unbind_ext( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+    struct ldap_unbind_ext_params *params = args;
+    return ldap_unbind_ext( params->ld, (LDAPControl **)params->serverctrls,
+                            (LDAPControl **)params->clientctrls );
 }
 
-static int CDECL wrap_ldap_unbind_ext_s( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+static NTSTATUS wrap_ldap_unbind_ext_s( void *args )
 {
-    return ldap_unbind_ext_s( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+    struct ldap_unbind_ext_s_params *params = args;
+    return ldap_unbind_ext_s( params->ld, (LDAPControl **)params->serverctrls,
+                              (LDAPControl **)params->clientctrls );
 }
 
-static void CDECL wrap_ldap_value_free_len( struct bervalU **values )
+static NTSTATUS wrap_ldap_value_free_len( void *args )
 {
-    ldap_value_free_len( (struct berval **)values );
+    ldap_value_free_len( args );
+    return STATUS_SUCCESS;
 }
 
-static const struct ldap_funcs funcs =
+unixlib_entry_t __wine_unix_call_funcs[] =
 {
     wrap_ber_alloc_t,
     wrap_ber_bvecfree,
@@ -533,9 +614,9 @@ static const struct ldap_funcs funcs =
     wrap_ber_init,
     wrap_ber_next_element,
     wrap_ber_peek_tag,
-    wrap_ber_skip_tag,
     wrap_ber_printf,
     wrap_ber_scanf,
+    wrap_ber_skip_tag,
     wrap_ldap_abandon_ext,
     wrap_ldap_add_ext,
     wrap_ldap_add_ext_s,
@@ -554,13 +635,13 @@ static const struct ldap_funcs funcs =
     wrap_ldap_explode_dn,
     wrap_ldap_extended_operation,
     wrap_ldap_extended_operation_s,
+    wrap_ldap_first_attribute,
+    wrap_ldap_first_entry,
+    wrap_ldap_first_reference,
     wrap_ldap_get_dn,
     wrap_ldap_get_option,
     wrap_ldap_get_values_len,
     wrap_ldap_initialize,
-    wrap_ldap_first_attribute,
-    wrap_ldap_first_entry,
-    wrap_ldap_first_reference,
     wrap_ldap_memfree,
     wrap_ldap_memvfree,
     wrap_ldap_modify_ext,
@@ -589,10 +670,4 @@ static const struct ldap_funcs funcs =
     wrap_ldap_value_free_len,
 };
 
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-    *(const struct ldap_funcs **)ptr_out = &funcs;
-    return STATUS_SUCCESS;
-}
 #endif /* HAVE_LDAP */

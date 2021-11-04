@@ -176,8 +176,11 @@ ULONG CDECL ldap_search_extW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filter,
     timevalU.tv_sec = timelimit;
     timevalU.tv_usec = 0;
 
-    ret = map_error( ldap_funcs->fn_ldap_search_ext( CTX(ld), baseU, scope, filterU, attrsU, attrsonly, serverctrlsU,
-                                                     clientctrlsU, timelimit ? &timevalU : NULL, sizelimit, message ) );
+    {
+        struct ldap_search_ext_params params = { CTX(ld), baseU, scope, filterU, attrsU, attrsonly,
+                serverctrlsU, clientctrlsU, timelimit ? &timevalU : NULL, sizelimit, message };
+        ret = map_error( LDAP_CALL( ldap_search_ext, &params ));
+    }
 exit:
     free( baseU );
     free( filterU );
@@ -276,8 +279,12 @@ ULONG CDECL ldap_search_ext_sW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filte
         timevalU.tv_usec = timeout->tv_usec;
     }
 
-    ret = map_error( ldap_funcs->fn_ldap_search_ext_s( CTX(ld), baseU, scope, filterU, attrsU, attrsonly, serverctrlsU,
-                                                       clientctrlsU, timeout ? &timevalU : NULL, sizelimit, &msgU ) );
+    {
+        struct ldap_search_ext_s_params params = { CTX(ld), baseU, scope, filterU, attrsU, attrsonly,
+            serverctrlsU, clientctrlsU, timeout ? &timevalU : NULL, sizelimit, &msgU };
+        ret = map_error( LDAP_CALL( ldap_search_ext_s, &params ));
+    }
+
     if (msgU)
     {
         LDAPMessage *msg = calloc( 1, sizeof(*msg) );
@@ -288,7 +295,7 @@ ULONG CDECL ldap_search_ext_sW( LDAP *ld, WCHAR *base, ULONG scope, WCHAR *filte
         }
         else
         {
-            ldap_funcs->fn_ldap_msgfree( msgU );
+            LDAP_CALL( ldap_msgfree, msgU );
             ret = LDAP_NO_MEMORY;
         }
     }

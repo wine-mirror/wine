@@ -134,18 +134,19 @@ ULONG CDECL ldap_modrdn2W( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 
     if (!ld || !newdn) return ~0u;
 
-    if (dn && !(dnU = strWtoU( dn ))) goto exit;
-    if (!(newdnU = strWtoU( newdn ))) goto exit;
+    if (dn && !(dnU = strWtoU( dn ))) return LDAP_NO_MEMORY;
 
-    ret = ldap_funcs->fn_ldap_rename( CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL, &msg );
-    if (ret == LDAP_SUCCESS)
-        ret = msg;
-    else
-        ret = ~0u;
-
-exit:
+    if ((newdnU = strWtoU( newdn )))
+    {
+        struct ldap_rename_params params = { CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL, &msg };
+        ret = LDAP_CALL( ldap_rename, &params );
+        if (ret == LDAP_SUCCESS)
+            ret = msg;
+        else
+            ret = ~0u;
+        free( newdnU );
+    }
     free( dnU );
-    free( newdnU );
     return ret;
 }
 
@@ -198,14 +199,15 @@ ULONG CDECL ldap_modrdn2_sW( LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete )
 
     if (!ld || !newdn) return LDAP_PARAM_ERROR;
 
-    if (dn && !(dnU = strWtoU( dn ))) goto exit;
-    if (!(newdnU = strWtoU( newdn ))) goto exit;
+    if (dn && !(dnU = strWtoU( dn ))) return LDAP_NO_MEMORY;
 
-    ret = map_error( ldap_funcs->fn_ldap_rename_s( CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL ));
-
-exit:
+    if ((newdnU = strWtoU( newdn )))
+    {
+        struct ldap_rename_s_params params = { CTX(ld), dnU, newdnU, NULL, delete, NULL, NULL };
+        ret = map_error( LDAP_CALL( ldap_rename_s, &params ));
+        free( newdnU );
+    }
     free( dnU );
-    free( newdnU );
     return ret;
 }
 

@@ -195,15 +195,19 @@ static LDAP *create_context( const char *url )
 {
     LDAP *ld;
     int version = LDAP_VERSION3;
+    struct ldap_initialize_params params;
 
     if (!(ld = calloc( 1, sizeof( *ld )))) return NULL;
-    if (map_error( ldap_funcs->fn_ldap_initialize( &CTX(ld), url ) ) != LDAP_SUCCESS)
+    params.ld = &CTX(ld);
+    params.url = url;
+    if (map_error( LDAP_CALL( ldap_initialize, &params )) == LDAP_SUCCESS)
     {
-        free( ld );
-        return NULL;
+        struct ldap_set_option_params opt_params = { CTX(ld), LDAP_OPT_PROTOCOL_VERSION, &version };
+        LDAP_CALL( ldap_set_option, &opt_params );
+        return ld;
     }
-    ldap_funcs->fn_ldap_set_option( CTX(ld), LDAP_OPT_PROTOCOL_VERSION, &version );
-    return ld;
+    free( ld );
+    return NULL;
 }
 
 /***********************************************************************
@@ -538,8 +542,11 @@ ULONG CDECL ldap_start_tls_sW( LDAP *ld, ULONG *retval, LDAPMessage **result, LD
 
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_start_tls_s( CTX(ld), serverctrlsU, clientctrlsU ) );
+    else
+    {
+        struct ldap_start_tls_s_params params = { CTX(ld), serverctrlsU, clientctrlsU };
+        ret = map_error( LDAP_CALL( ldap_start_tls_s, &params ));
+    }
 
 exit:
     controlarrayfreeU( serverctrlsU );

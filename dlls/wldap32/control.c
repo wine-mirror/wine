@@ -151,15 +151,19 @@ ULONG CDECL ldap_create_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkey, UCHAR c
 
     if (!ld || !sortkey || !control) return LDAP_PARAM_ERROR;
 
-    if (!(sortkeyU = sortkeyarrayWtoU( sortkey ))) return LDAP_NO_MEMORY;
+    if ((sortkeyU = sortkeyarrayWtoU( sortkey )))
+    {
+        struct ldap_create_sort_control_params params = { CTX(ld), sortkeyU, critical, &controlU };
+        ret = map_error( LDAP_CALL( ldap_create_sort_control, &params ));
+    }
+    else return LDAP_NO_MEMORY;
 
-    ret = map_error( ldap_funcs->fn_ldap_create_sort_control( CTX(ld), sortkeyU, critical, &controlU ) );
     if (ret == LDAP_SUCCESS)
     {
         LDAPControlW *controlW = controlUtoW( controlU );
         if (controlW) *control = controlW;
         else ret = LDAP_NO_MEMORY;
-        ldap_funcs->fn_ldap_control_free( controlU );
+        LDAP_CALL( ldap_control_free, controlU );
     }
 
     sortkeyarrayfreeU( sortkeyU );
@@ -225,14 +229,17 @@ INT CDECL ldap_create_vlv_controlW( LDAP *ld, LDAPVLVInfo *info, UCHAR critical,
     if (!ld || !control) return ~0u;
 
     if (info && !(infoU = vlvinfoWtoU( info ))) return LDAP_NO_MEMORY;
-
-    ret = map_error( ldap_funcs->fn_ldap_create_vlv_control( CTX(ld), infoU, &controlU ) );
+    else
+    {
+        struct ldap_create_vlv_control_params params = { CTX(ld), infoU, &controlU };
+        ret = map_error( LDAP_CALL( ldap_create_vlv_control, &params ));
+    }
     if (ret == LDAP_SUCCESS)
     {
         LDAPControlW *controlW = controlUtoW( controlU );
         if (controlW) *control = controlW;
         else ret = LDAP_NO_MEMORY;
-        ldap_funcs->fn_ldap_control_free( controlU );
+        LDAP_CALL( ldap_control_free, controlU );
     }
 
     vlvinfofreeU( infoU );

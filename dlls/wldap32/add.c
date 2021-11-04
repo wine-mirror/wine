@@ -157,8 +157,11 @@ ULONG CDECL ldap_add_extW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW *
     if (attrs && !(attrsU = modarrayWtoU( attrs ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_add_ext( CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU, message ) );
+    else
+    {
+        struct ldap_add_ext_params params = { CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU, message };
+        ret = map_error( LDAP_CALL( ldap_add_ext, &params ));
+    }
 
 exit:
     free( dnU );
@@ -237,8 +240,11 @@ ULONG CDECL ldap_add_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW
     if (attrs && !(attrsU = modarrayWtoU( attrs ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
-
-    ret = map_error( ldap_funcs->fn_ldap_add_ext_s( CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU ) );
+    else
+    {
+        struct ldap_add_ext_s_params params = { CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU };
+        ret = map_error( LDAP_CALL( ldap_add_ext_s, &params ));
+    }
 
 exit:
     free( dnU );

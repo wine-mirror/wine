@@ -195,18 +195,20 @@ WCHAR ** CDECL ldap_get_valuesW( LDAP *ld, LDAPMessage *entry, WCHAR *attr )
 
     TRACE( "(%p, %p, %s)\n", ld, entry, debugstr_w(attr) );
 
-    if (!ld || !entry || !attr || !(attrU = strWtoU( attr ))) return NULL;
-
-    if (!ldap_funcs->fn_ldap_get_values_len( CTX(ld), MSG(entry), attrU, &bv ))
+    if (ld && entry && attr && (attrU = strWtoU( attr )))
     {
-        retU = bv2str_array( bv );
-        ret = strarrayUtoW( retU );
+        struct ldap_get_values_len_params params = { CTX(ld), MSG(entry), attrU, &bv };
 
-        ldap_funcs->fn_ldap_value_free_len( bv );
-        strarrayfreeU( retU );
+        if (!LDAP_CALL( ldap_get_values_len, &params ))
+        {
+            retU = bv2str_array( bv );
+            ret = strarrayUtoW( retU );
+
+            LDAP_CALL( ldap_value_free_len, bv );
+            strarrayfreeU( retU );
+        }
+        free( attrU );
     }
-
-    free( attrU );
     return ret;
 }
 
@@ -257,15 +259,18 @@ struct berval ** CDECL ldap_get_values_lenW( LDAP *ld, LDAPMessage *message, WCH
 
     TRACE( "(%p, %p, %s)\n", ld, message, debugstr_w(attr) );
 
-    if (!ld || !message || !attr || !(attrU = strWtoU( attr ))) return NULL;
-
-    if (!ldap_funcs->fn_ldap_get_values_len( CTX(ld), MSG(message), attrU, &retU ))
+    if (ld && message && attr && (attrU = strWtoU( attr )))
     {
-        ret = bvarrayUtoW( retU );
-        bvarrayfreeU( retU );
-    }
+        struct ldap_get_values_len_params params = { CTX(ld), MSG(message), attrU, &retU };
 
-    free( attrU );
+        if (!LDAP_CALL( ldap_get_values_len, &params ))
+        {
+            ret = bvarrayUtoW( retU );
+            bvarrayfreeU( retU );
+        }
+
+        free( attrU );
+    }
     return ret;
 }
 

@@ -146,20 +146,16 @@ void CDECL ldap_perror( LDAP *ld, const PCHAR msg )
  */
 ULONG CDECL ldap_result2error( LDAP *ld, LDAPMessage *res, ULONG free )
 {
-    ULONG ret;
     int error;
 
     TRACE( "(%p, %p, 0x%08x)\n", ld, res, free );
 
-    if (!ld || !res) return ~0u;
-
-    ret = map_error( ldap_funcs->fn_ldap_parse_result( CTX(ld), MSG(res), &error, NULL, NULL, NULL, NULL, free ) );
-    if (ret == LDAP_SUCCESS)
-        ret = error;
-    else
-        ret = ~0u;
-
-    return ret;
+    if (ld && res)
+    {
+        struct ldap_parse_result_params params = { CTX(ld), MSG(res), &error, NULL, NULL, NULL, NULL, free };
+        if (!LDAP_CALL( ldap_parse_result, &params )) return error;
+    }
+    return ~0u;
 }
 
 /***********************************************************************

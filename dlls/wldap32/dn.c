@@ -68,18 +68,21 @@ char * CDECL ldap_dn2ufnA( char *dn )
  */
 WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
 {
-    WCHAR *ret;
+    WCHAR *ret = NULL;
     char *dnU, *retU;
 
     TRACE( "(%s)\n", debugstr_w(dn) );
 
-    if (!(dnU = strWtoU( dn ))) return NULL;
+    if ((dnU = strWtoU( dn )))
+    {
+        struct ldap_dn2ufn_params params = { dnU, &retU };
+        LDAP_CALL( ldap_dn2ufn, &params );
 
-    ldap_funcs->fn_ldap_dn2ufn( dnU, &retU );
-    ret = strUtoW( retU );
+        ret = strUtoW( retU );
 
-    free( dnU );
-    ldap_funcs->fn_ldap_memfree( retU );
+        free( dnU );
+        LDAP_CALL( ldap_memfree, retU );
+    }
     return ret;
 }
 
@@ -124,18 +127,20 @@ char ** CDECL ldap_explode_dnA( char *dn, ULONG notypes )
  */
 WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
 {
-    WCHAR **ret;
+    WCHAR **ret = NULL;
     char *dnU, **retU;
 
     TRACE( "(%s, 0x%08x)\n", debugstr_w(dn), notypes );
 
-    if (!(dnU = strWtoU( dn ))) return NULL;
+    if ((dnU = strWtoU( dn )))
+    {
+        struct ldap_explode_dn_params params = { dnU, notypes, &retU };
+        LDAP_CALL( ldap_explode_dn, &params );
+        ret = strarrayUtoW( retU );
 
-    ldap_funcs->fn_ldap_explode_dn( dnU, notypes, &retU );
-    ret = strarrayUtoW( retU );
-
-    free( dnU );
-    ldap_funcs->fn_ldap_memvfree( (void **)retU );
+        free( dnU );
+        LDAP_CALL( ldap_memvfree, retU );
+    }
     return ret;
 }
 
@@ -178,17 +183,19 @@ char * CDECL ldap_get_dnA( LDAP *ld, LDAPMessage *entry )
  */
 WCHAR * CDECL ldap_get_dnW( LDAP *ld, LDAPMessage *entry )
 {
-    WCHAR *ret;
+    WCHAR *ret = NULL;
     char *retU;
 
     TRACE( "(%p, %p)\n", ld, entry );
 
-    if (!ld || !entry) return NULL;
+    if (ld && entry)
+    {
+        struct ldap_get_dn_params params = { CTX(ld), MSG(entry), &retU };
+        LDAP_CALL( ldap_get_dn, &params );
 
-    ldap_funcs->fn_ldap_get_dn( CTX(ld), MSG(entry), &retU );
-
-    ret = strUtoW( retU );
-    ldap_funcs->fn_ldap_memfree( retU );
+        ret = strUtoW( retU );
+        LDAP_CALL( ldap_memfree, retU );
+    }
     return ret;
 }
 

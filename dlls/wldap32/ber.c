@@ -49,9 +49,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 BerElement * CDECL ber_alloc_t( int options )
 {
     BerElement *ret;
+    struct ber_alloc_t_params params;
 
     if (!(ret = malloc( sizeof(*ret) ))) return NULL;
-    if (ldap_funcs->fn_ber_alloc_t( options, (void **)&BER(ret) ))
+    params.options = options;
+    params.ret = (void **)&BER(ret);
+    if (LDAP_CALL( ber_alloc_t, &params ))
     {
         free( ret );
         return NULL;
@@ -142,7 +145,8 @@ void CDECL ber_bvfree( BERVAL *berval )
  */
 ULONG CDECL ber_first_element( BerElement *ber, ULONG *len, char **opaque )
 {
-    return ldap_funcs->fn_ber_first_element( BER(ber), len, opaque );
+    struct ber_first_element_params params = { BER(ber), len, opaque };
+    return LDAP_CALL( ber_first_element, &params );
 }
 
 
@@ -166,11 +170,12 @@ int CDECL ber_flatten( BerElement *ber, BERVAL **berval )
 {
     struct bervalU *bervalU;
     struct berval *bervalW;
+    struct ber_flatten_params params = { BER(ber), &bervalU };
 
-    if (ldap_funcs->fn_ber_flatten( BER(ber), &bervalU )) return LBER_ERROR;
+    if (LDAP_CALL( ber_flatten, &params )) return LBER_ERROR;
 
     if (!(bervalW = bervalUtoW( bervalU ))) return LBER_ERROR;
-    ldap_funcs->fn_ber_bvfree( bervalU );
+    LDAP_CALL( ber_bvfree, bervalU );
     if (!bervalW) return LBER_ERROR;
     *berval = bervalW;
     return 0;
@@ -195,7 +200,8 @@ int CDECL ber_flatten( BerElement *ber, BERVAL **berval )
  */
 void CDECL ber_free( BerElement *ber, int freebuf )
 {
-    ldap_funcs->fn_ber_free( BER(ber), freebuf );
+    struct ber_free_params params = { BER(ber), freebuf };
+    LDAP_CALL( ber_free, &params );
     free( ber );
 }
 
@@ -219,6 +225,7 @@ BerElement * CDECL ber_init( BERVAL *berval )
 {
     struct bervalU *bervalU;
     BerElement *ret;
+    struct ber_init_params params;
 
     if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     if (!(bervalU = bervalWtoU( berval )))
@@ -226,7 +233,9 @@ BerElement * CDECL ber_init( BERVAL *berval )
         free( ret );
         return NULL;
     }
-    if (ldap_funcs->fn_ber_init( bervalU, (void **)&BER(ret) ))
+    params.berval = bervalU;
+    params.ret = (void **)&BER(ret);
+    if (LDAP_CALL( ber_init, &params ))
     {
         free( ret );
         ret = NULL;
@@ -256,7 +265,8 @@ BerElement * CDECL ber_init( BERVAL *berval )
  */
 ULONG CDECL ber_next_element( BerElement *ber, ULONG *len, char *opaque )
 {
-    return ldap_funcs->fn_ber_next_element( BER(ber), len, opaque );
+    struct ber_next_element_params params = { BER(ber), len, opaque };
+    return LDAP_CALL( ber_next_element, &params );
 }
 
 
@@ -275,7 +285,8 @@ ULONG CDECL ber_next_element( BerElement *ber, ULONG *len, char *opaque )
  */
 ULONG CDECL ber_peek_tag( BerElement *ber, ULONG *len )
 {
-    return ldap_funcs->fn_ber_peek_tag( BER(ber), len );
+    struct ber_peek_tag_params params = { BER(ber), len };
+    return LDAP_CALL( ber_peek_tag, &params );
 }
 
 
@@ -294,7 +305,8 @@ ULONG CDECL ber_peek_tag( BerElement *ber, ULONG *len )
  */
 ULONG CDECL ber_skip_tag( BerElement *ber, ULONG *len )
 {
-    return ldap_funcs->fn_ber_skip_tag( BER(ber), len );
+    struct ber_skip_tag_params params = { BER(ber), len };
+    return LDAP_CALL( ber_skip_tag, &params );
 }
 
 
@@ -326,36 +338,29 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
     va_start( list, fmt );
     while (*fmt)
     {
+        struct ber_printf_params params = { BER(ber), new_fmt };
         new_fmt[0] = *fmt++;
         switch (new_fmt[0])
         {
         case 'b':
         case 'e':
         case 'i':
-        {
-            int i = va_arg( list, int );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, i, 0 );
+            params.arg1 = va_arg( list, int );
+            ret = LDAP_CALL( ber_printf, &params );
             break;
-        }
         case 'o':
         case 's':
-        {
-            char *str = va_arg( list, char * );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)str, 0 );
+            params.arg1 = (ULONG_PTR)va_arg( list, char * );
+            ret = LDAP_CALL( ber_printf, &params );
             break;
-        }
         case 't':
-        {
-            unsigned int tag = va_arg( list, unsigned int );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, tag, 0 );
+            params.arg1 = va_arg( list, unsigned int );
+            ret = LDAP_CALL( ber_printf, &params );
             break;
-        }
         case 'v':
-        {
-            char **array = va_arg( list, char ** );
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)array, 0 );
+            params.arg1 = (ULONG_PTR)va_arg( list, char ** );
+            ret = LDAP_CALL( ber_printf, &params );
             break;
-        }
         case 'V':
         {
             struct berval **array = va_arg( list, struct berval ** );
@@ -365,16 +370,17 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
                 ret = -1;
                 break;
             }
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)arrayU, 0 );
+            params.arg1 = (ULONG_PTR)arrayU;
+            ret = LDAP_CALL( ber_printf, &params );
             bvarrayfreeU( arrayU );
             break;
         }
         case 'X':
         {
-            char *str = va_arg( list, char * );
-            int len = va_arg( list, int );
+            params.arg1 = (ULONG_PTR)va_arg( list, char * );
+            params.arg2 = va_arg( list, int );
             new_fmt[0] = 'B';  /* 'X' is deprecated */
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, (ULONG_PTR)str, len );
+            ret = LDAP_CALL( ber_printf, &params );
             break;
         }
         case 'n':
@@ -382,7 +388,7 @@ int WINAPIV ber_printf( BerElement *ber, char *fmt, ... )
         case '}':
         case '[':
         case ']':
-            ret = ldap_funcs->fn_ber_printf( BER(ber), new_fmt, 0, 0 );
+            ret = LDAP_CALL( ber_printf, &params );
             break;
 
         default:
@@ -425,71 +431,74 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
     va_start( list, fmt );
     while (*fmt)
     {
+        struct ber_scanf_params params = { BER(ber), new_fmt };
         new_fmt[0] = *fmt++;
         switch (new_fmt[0])
         {
         case 'a':
         {
             char *str, **ptr = va_arg( list, char ** );
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &str, NULL )) == -1) break;
+            params.arg1 = &str;
+            if ((ret = LDAP_CALL( ber_scanf, &params )) == -1) break;
             *ptr = strdupU( str );
-            ldap_funcs->fn_ldap_memfree( str );
+            LDAP_CALL( ldap_memfree, str );
             break;
         }
         case 'b':
         case 'e':
         case 'i':
-        {
-            int *i = va_arg( list, int * );
-            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, i, NULL );
+            params.arg1 = va_arg( list, int * );
+            ret = LDAP_CALL( ber_scanf, &params );
             break;
-        }
         case 't':
-        {
-            unsigned int *tag = va_arg( list, unsigned int * );
-            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, tag, NULL );
+            params.arg1 = va_arg( list, unsigned int * );
+            ret = LDAP_CALL( ber_scanf, &params );
             break;
-        }
         case 'v':
         {
             char *str, **arrayU, **ptr, ***array = va_arg( list, char *** );
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &arrayU, NULL )) == -1) break;
+            params.arg1 = &arrayU;
+            if ((ret = LDAP_CALL( ber_scanf, &params )) == -1) break;
             *array = strarrayUtoU( arrayU );
             ptr = arrayU;
             while ((str = *ptr))
             {
-                ldap_funcs->fn_ldap_memfree( str );
+                LDAP_CALL( ldap_memfree, str );
                 ptr++;
             }
-            ldap_funcs->fn_ldap_memfree( arrayU );
+            LDAP_CALL( ldap_memfree, arrayU );
             break;
         }
         case 'B':
         {
             char *strU, **str = va_arg( list, char ** );
             int *len = va_arg( list, int * );
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &strU, len )) == -1) break;
+            params.arg1 = &strU;
+            params.arg2 = len;
+            if ((ret = LDAP_CALL( ber_scanf, &params )) == -1) break;
             *str = malloc( *len );
             memcpy( *str, strU, *len );
-            ldap_funcs->fn_ldap_memfree( strU );
+            LDAP_CALL( ldap_memfree, strU );
             break;
         }
         case 'O':
         {
             struct berval **berval = va_arg( list, struct berval ** );
             struct bervalU *bervalU;
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &bervalU, NULL )) == -1) break;
+            params.arg1 = &bervalU;
+            if ((ret = LDAP_CALL( ber_scanf, &params )) == -1) break;
             *berval = bervalUtoW( bervalU );
-            ldap_funcs->fn_ber_bvfree( bervalU );
+            LDAP_CALL( ber_bvfree, bervalU );
             break;
         }
         case 'V':
         {
             struct berval ***array = va_arg( list, struct berval *** );
             struct bervalU **arrayU;
-            if ((ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, &arrayU, NULL )) == -1) break;
+            params.arg1 = &arrayU;
+            if ((ret = LDAP_CALL( ber_scanf, &params )) == -1) break;
             *array = bvarrayUtoW( arrayU );
-            ldap_funcs->fn_ber_bvecfree( arrayU );
+            LDAP_CALL( ber_bvecfree, arrayU );
             break;
         }
         case 'n':
@@ -498,7 +507,7 @@ ULONG WINAPIV ber_scanf( BerElement *ber, char *fmt, ... )
         case '}':
         case '[':
         case ']':
-            ret = ldap_funcs->fn_ber_scanf( BER(ber), new_fmt, NULL, NULL );
+            ret = LDAP_CALL( ber_scanf, &params );
             break;
 
         default:
