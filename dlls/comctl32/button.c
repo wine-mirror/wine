@@ -2861,7 +2861,7 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
 static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    RECT rc, content_rect, push_rect, dropdown_rect;
+    RECT rc, content_rect, push_rect, dropdown_rect, focus_rect;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
@@ -2889,6 +2889,7 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     {
         push_rect = rc;
         DrawThemeBackground(theme, hDC, BP_PUSHBUTTON, state, &rc, NULL);
+        GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &push_rect, &focus_rect);
     }
     else
     {
@@ -2909,6 +2910,7 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
         /* The content rect should be the content area of the push button */
         GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &push_rect, &content_rect);
+        focus_rect = content_rect;
     }
 
     if (cdrf & CDRF_NOTIFYPOSTERASE)
@@ -2951,18 +2953,7 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     }
     if (cdrf & CDRF_SKIPPOSTPAINT) return;
 
-    if (focused)
-    {
-        MARGINS margins;
-
-        GetThemeMargins(theme, hDC, BP_PUSHBUTTON, state, TMT_CONTENTMARGINS, NULL, &margins);
-
-        push_rect.left += margins.cxLeftWidth;
-        push_rect.top += margins.cyTopHeight;
-        push_rect.right -= margins.cxRightWidth;
-        push_rect.bottom -= margins.cyBottomHeight;
-        DrawFocusRect(hDC, &push_rect);
-    }
+    if (focused) DrawFocusRect(hDC, &focus_rect);
 }
 
 static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
