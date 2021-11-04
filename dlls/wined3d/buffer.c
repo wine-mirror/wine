@@ -1399,12 +1399,8 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
     return wined3d_buffer_init(&buffer_gl->b, device, desc, data, parent, parent_ops, &wined3d_buffer_gl_ops);
 }
 
-static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buffer_vk,
-        struct wined3d_context_vk *context_vk)
+static VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags)
 {
-    struct wined3d_resource *resource = &buffer_vk->b.resource;
-    uint32_t bind_flags = resource->bind_flags;
-    VkMemoryPropertyFlags memory_type;
     VkBufferUsageFlags usage;
 
     usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -1424,6 +1420,14 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
         usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
     if (bind_flags & (WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL))
         FIXME("Ignoring some bind flags %#x.\n", bind_flags);
+    return usage;
+}
+
+static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buffer_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_resource *resource = &buffer_vk->b.resource;
+    VkMemoryPropertyFlags memory_type;
 
     memory_type = 0;
     if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_R)
@@ -1433,7 +1437,8 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
     else if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
         memory_type |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
-    if (!(wined3d_context_vk_create_bo(context_vk, resource->size, usage, memory_type, &buffer_vk->bo)))
+    if (!(wined3d_context_vk_create_bo(context_vk, resource->size,
+            vk_buffer_usage_from_bind_flags(resource->bind_flags), memory_type, &buffer_vk->bo)))
     {
         WARN("Failed to create Vulkan buffer.\n");
         return FALSE;
