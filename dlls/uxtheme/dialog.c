@@ -101,15 +101,11 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
                 HDC controlDC = (HDC)wParam;
                 HWND controlWnd = (HWND)lParam;
                 WCHAR controlClass[32];
-                RECT rc;
 
                 GetClassNameW (controlWnd, controlClass, ARRAY_SIZE(controlClass));
                 if (lstrcmpiW (controlClass, WC_STATICW) == 0)
                 {
-                    /* Static control - draw parent background and set text to 
-                     * transparent, so it looks right on tab pages. */
-                    GetClientRect (controlWnd, &rc);
-                    DrawThemeParentBackground (controlWnd, controlDC, &rc);
+                    SetBkColor(controlDC, GetSysColor(COLOR_BTNFACE));
                     SetBkMode (controlDC, TRANSPARENT);
 
                     /* Return NULL brush since we painted the BG already */

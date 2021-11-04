@@ -458,7 +458,6 @@ static void test_WM_CTLCOLORSTATIC(void)
     todo_wine_if(todo)
     ok(mode == OPAQUE, "Expected mode %#x, got %#x.\n", OPAQUE, mode);
     color = GetPixel(dialog_hdc, 40, 40);
-    todo_wine_if(todo)
     ok(color == 0, "Expected pixel %#x, got %#x.\n", 0, color);
 
     ReleaseDC(child, child_hdc);
