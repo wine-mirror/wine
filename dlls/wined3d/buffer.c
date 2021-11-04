@@ -1423,22 +1423,27 @@ static VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags)
     return usage;
 }
 
+static VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage)
+{
+    VkMemoryPropertyFlags memory_type = 0;
+
+    if (access & WINED3D_RESOURCE_ACCESS_MAP_R)
+        memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+    else if (access & WINED3D_RESOURCE_ACCESS_MAP_W)
+        memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    else if (!(usage & WINED3DUSAGE_DYNAMIC))
+        memory_type |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    return memory_type;
+}
+
 static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buffer_vk,
         struct wined3d_context_vk *context_vk)
 {
     struct wined3d_resource *resource = &buffer_vk->b.resource;
-    VkMemoryPropertyFlags memory_type;
-
-    memory_type = 0;
-    if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_R)
-        memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-    else if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_W)
-        memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-    else if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
-        memory_type |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     if (!(wined3d_context_vk_create_bo(context_vk, resource->size,
-            vk_buffer_usage_from_bind_flags(resource->bind_flags), memory_type, &buffer_vk->bo)))
+            vk_buffer_usage_from_bind_flags(resource->bind_flags),
+            vk_memory_type_from_access_flags(resource->access, resource->usage), &buffer_vk->bo)))
     {
         WARN("Failed to create Vulkan buffer.\n");
         return FALSE;
