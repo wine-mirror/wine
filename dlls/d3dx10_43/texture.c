@@ -576,17 +576,51 @@ end:
 HRESULT WINAPI D3DX10CreateTextureFromFileA(ID3D10Device *device, const char *src_file,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
-    FIXME("device %p, src_file %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+    WCHAR *buffer;
+    int str_len;
+    HRESULT hr;
+
+    TRACE("device %p, src_file %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, debugstr_a(src_file), load_info, pump, texture, hresult);
-    return E_NOTIMPL;
+
+    if (!src_file || !texture)
+        return E_FAIL;
+
+    if (!(str_len = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (!(buffer = heap_alloc(str_len * sizeof(*buffer))))
+        return E_OUTOFMEMORY;
+
+    MultiByteToWideChar(CP_ACP, 0, src_file, -1, buffer, str_len);
+    hr = D3DX10CreateTextureFromFileW(device, buffer, load_info, pump, texture, hresult);
+
+    heap_free(buffer);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *src_file,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
-    FIXME("device %p, src_file %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+    void *buffer = NULL;
+    DWORD size = 0;
+    HRESULT hr;
+
+    TRACE("device %p, src_file %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, debugstr_w(src_file), load_info, pump, texture, hresult);
-    return E_NOTIMPL;
+
+    if (!src_file || !texture)
+        return E_FAIL;
+
+    if (FAILED(load_file(src_file, &buffer, &size)))
+        return D3D10_ERROR_FILE_NOT_FOUND;
+
+    hr = D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
+
+    heap_free(buffer);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE module, const char *resource,
