@@ -303,8 +303,9 @@ static NTSTATUS copy_tickets_to_client( struct ticket_list *list, KERB_QUERY_TKT
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS CDECL query_ticket_cache( KERB_QUERY_TKT_CACHE_RESPONSE *resp, ULONG *out_size )
+static NTSTATUS query_ticket_cache( void *args )
 {
+    struct query_ticket_cache_params *params = args;
     NTSTATUS status;
     krb5_error_code err;
     krb5_context ctx;
@@ -338,7 +339,7 @@ done:
     if (cursor) p_krb5_cccol_cursor_free( ctx, &cursor );
     if (ctx) p_krb5_free_context( ctx );
 
-    if (status == STATUS_SUCCESS) status = copy_tickets_to_client( &list, resp, out_size );
+    if (status == STATUS_SUCCESS) status = copy_tickets_to_client( &list, params->resp, params->out_size );
 
     for (i = 0; i < list.count; i++)
     {
@@ -520,25 +521,24 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
     return ret;
 }
 
-static NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, SecBufferDesc *input,
-                               LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr,
-                               ULONG *expiry )
+static NTSTATUS accept_context( void *args )
 {
+    struct accept_context_params *params = args;
     OM_uint32 ret, minor_status, ret_flags = 0, expiry_time;
-    gss_cred_id_t cred_handle = credhandle_sspi_to_gss( credential );
-    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    gss_cred_id_t cred_handle = credhandle_sspi_to_gss( params->credential );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
     gss_buffer_desc input_token, output_token;
     int idx;
 
-    if (!input) input_token.length = 0;
+    if (!params->input) input_token.length = 0;
     else
     {
-        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-        input_token.length = input->pBuffers[idx].cbBuffer;
-        input_token.value  = input->pBuffers[idx].pvBuffer;
+        if ((idx = get_buffer_index( params->input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        input_token.length = params->input->pBuffers[idx].cbBuffer;
+        input_token.value  = params->input->pBuffers[idx].pvBuffer;
     }
 
-    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    if ((idx = get_buffer_index( params->output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
     output_token.length = 0;
     output_token.value  = NULL;
 
@@ -548,20 +548,20 @@ static NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE 
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
-        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        if (output_token.length > params->output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
         {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, params->output->pBuffers[idx].cbBuffer );
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_BUFFER_TOO_SMALL;
         }
-        output->pBuffers[idx].cbBuffer = output_token.length;
-        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        params->output->pBuffers[idx].cbBuffer = output_token.length;
+        memcpy( params->output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
         pgss_release_buffer( &minor_status, &output_token );
 
-        ctxhandle_gss_to_sspi( ctx_handle, new_context );
-        if (context_attr) *context_attr = flags_gss_to_asc_ret( ret_flags );
-        *expiry = expiry_time;
+        ctxhandle_gss_to_sspi( ctx_handle, params->new_context );
+        if (params->context_attr) *params->context_attr = flags_gss_to_asc_ret( ret_flags );
+        *params->expiry = expiry_time;
     }
 
     return status_gss_to_sspi( ret );
@@ -610,23 +610,23 @@ static NTSTATUS import_name( const char *src, gss_name_t *dst )
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS CDECL acquire_credentials_handle( const char *principal, ULONG credential_use, const char *username,
-                                                  const char *password, LSA_SEC_HANDLE *credential, ULONG *expiry )
+static NTSTATUS acquire_credentials_handle( void *args )
 {
+    struct acquire_credentials_handle_params *params = args;
     OM_uint32 ret, minor_status, expiry_time;
     gss_name_t name = GSS_C_NO_NAME;
     gss_cred_usage_t cred_usage;
     gss_cred_id_t cred_handle;
     NTSTATUS status;
 
-    switch (credential_use)
+    switch (params->credential_use)
     {
     case SECPKG_CRED_INBOUND:
         cred_usage = GSS_C_ACCEPT;
         break;
 
     case SECPKG_CRED_OUTBOUND:
-        if ((status = init_creds( username, password )) != STATUS_SUCCESS) return status;
+        if ((status = init_creds( params->username, params->password )) != STATUS_SUCCESS) return status;
         cred_usage = GSS_C_INITIATE;
         break;
 
@@ -635,7 +635,7 @@ static NTSTATUS CDECL acquire_credentials_handle( const char *principal, ULONG c
         return SEC_E_UNKNOWN_CREDENTIALS;
     }
 
-    if (principal && (status = import_name( principal, &name ))) return status;
+    if (params->principal && (status = import_name( params->principal, &name ))) return status;
 
     ret = pgss_acquire_cred( &minor_status, name, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage, &cred_handle,
                              NULL, &expiry_time );
@@ -643,18 +643,18 @@ static NTSTATUS CDECL acquire_credentials_handle( const char *principal, ULONG c
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
-        credhandle_gss_to_sspi( cred_handle, credential );
-        *expiry = expiry_time;
+        credhandle_gss_to_sspi( cred_handle, params->credential );
+        *params->expiry = expiry_time;
     }
 
     if (name != GSS_C_NO_NAME) pgss_release_name( &minor_status, &name );
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS CDECL delete_context( LSA_SEC_HANDLE context )
+static NTSTATUS delete_context( void *args )
 {
     OM_uint32 ret, minor_status;
-    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( (LSA_SEC_HANDLE)args );
 
     ret = pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
     TRACE( "gss_delete_sec_context returned %08x minor status %08x\n", ret, minor_status );
@@ -662,10 +662,10 @@ static NTSTATUS CDECL delete_context( LSA_SEC_HANDLE context )
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS CDECL free_credentials_handle( LSA_SEC_HANDLE handle )
+static NTSTATUS free_credentials_handle( void *args )
 {
     OM_uint32 ret, minor_status;
-    gss_cred_id_t cred = credhandle_sspi_to_gss( handle );
+    gss_cred_id_t cred = credhandle_sspi_to_gss( (LSA_SEC_HANDLE)args );
 
     ret = pgss_release_cred( &minor_status, &cred );
     TRACE( "gss_release_cred returned %08x minor status %08x\n", ret, minor_status );
@@ -703,30 +703,29 @@ static ULONG flags_gss_to_isc_ret( ULONG flags )
     return ret;
 }
 
-static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, const char *target_name,
-                                          ULONG context_req, SecBufferDesc *input, LSA_SEC_HANDLE *new_context,
-                                          SecBufferDesc *output, ULONG *context_attr, ULONG *expiry )
+static NTSTATUS initialize_context( void *args )
 {
-    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
-    gss_cred_id_t cred_handle = credhandle_sspi_to_gss( credential );
-    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    struct initialize_context_params *params = args;
+    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( params->context_req );
+    gss_cred_id_t cred_handle = credhandle_sspi_to_gss( params->credential );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
     gss_buffer_desc input_token, output_token;
     gss_name_t target = GSS_C_NO_NAME;
     NTSTATUS status;
     int idx;
 
-    if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) input_token.length = 0;
+    if ((idx = get_buffer_index( params->input, SECBUFFER_TOKEN )) == -1) input_token.length = 0;
     else
     {
-        input_token.length = input->pBuffers[idx].cbBuffer;
-        input_token.value  = input->pBuffers[idx].pvBuffer;
+        input_token.length = params->input->pBuffers[idx].cbBuffer;
+        input_token.value  = params->input->pBuffers[idx].pvBuffer;
     }
 
-    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    if ((idx = get_buffer_index( params->output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
     output_token.length = 0;
     output_token.value  = NULL;
 
-    if (target_name && (status = import_name( target_name, &target ))) return status;
+    if (params->target_name && (status = import_name( params->target_name, &target ))) return status;
 
     ret = pgss_init_sec_context( &minor_status, cred_handle, &ctx_handle, target, GSS_C_NO_OID, req_flags, 0,
                                  GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
@@ -735,31 +734,33 @@ static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HAN
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
-        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        if (output_token.length > params->output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
         {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, params->output->pBuffers[idx].cbBuffer );
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_INCOMPLETE_MESSAGE;
         }
-        output->pBuffers[idx].cbBuffer = output_token.length;
-        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        params->output->pBuffers[idx].cbBuffer = output_token.length;
+        memcpy( params->output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
         pgss_release_buffer( &minor_status, &output_token );
 
-        ctxhandle_gss_to_sspi( ctx_handle, new_context );
-        if (context_attr) *context_attr = flags_gss_to_isc_ret( ret_flags );
-        *expiry = expiry_time;
+        ctxhandle_gss_to_sspi( ctx_handle, params->new_context );
+        if (params->context_attr) *params->context_attr = flags_gss_to_isc_ret( ret_flags );
+        *params->expiry = expiry_time;
     }
 
     if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS CDECL make_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg )
+static NTSTATUS make_signature( void *args )
 {
+    struct make_signature_params *params = args;
+    SecBufferDesc *msg = params->msg;
     OM_uint32 ret, minor_status;
     gss_buffer_desc data_buffer, token_buffer;
-    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
     int data_idx, token_idx;
 
     /* FIXME: multiple data buffers, read-only buffers */
@@ -789,15 +790,16 @@ static NTSTATUS CDECL make_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg
 #define KERBEROS_MAX_SIGNATURE_DCE    28
 #define KERBEROS_SECURITY_TRAILER_DCE 76
 
-static NTSTATUS CDECL query_context_attributes( LSA_SEC_HANDLE context, ULONG attr, void *buf )
+static NTSTATUS query_context_attributes( void *args )
 {
-    switch (attr)
+    struct query_context_attributes_params *params = args;
+    switch (params->attr)
     {
     case SECPKG_ATTR_SIZES:
     {
-        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buf;
+        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)params->buf;
         ULONG size_max_signature, size_security_trailer;
-        gss_ctx_id_t ctx  = ctxhandle_sspi_to_gss( context );
+        gss_ctx_id_t ctx  = ctxhandle_sspi_to_gss( params->context );
 
         if (is_dce_style_context( ctx ))
         {
@@ -816,7 +818,7 @@ static NTSTATUS CDECL query_context_attributes( LSA_SEC_HANDLE context, ULONG at
         return SEC_E_OK;
     }
     default:
-        FIXME( "unhandled attribute %u\n", attr );
+        FIXME( "unhandled attribute %u\n", params->attr );
         break;
     }
 
@@ -916,12 +918,13 @@ static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, UL
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS CDECL seal_message( LSA_SEC_HANDLE context, SecBufferDesc *msg, ULONG qop )
+static NTSTATUS seal_message( void *args )
 {
-    gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( context );
+    struct seal_message_params *params = args;
+    gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( params->context );
 
-    if (is_dce_style_context( ctx )) return seal_message_vector( ctx, msg, qop );
-    return seal_message_no_vector( ctx, msg, qop );
+    if (is_dce_style_context( ctx )) return seal_message_vector( ctx, params->msg, params->qop );
+    return seal_message_no_vector( ctx, params->msg, params->qop );
 }
 
 static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG *qop )
@@ -991,19 +994,22 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, 
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS CDECL unseal_message( LSA_SEC_HANDLE context, SecBufferDesc *msg, ULONG *qop )
+static NTSTATUS unseal_message( void *args )
 {
-    gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( context );
+    struct unseal_message_params *params = args;
+    gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( params->context );
 
-    if (is_dce_style_context( ctx )) return unseal_message_vector( ctx, msg, qop );
-    return unseal_message_no_vector( ctx, msg, qop );
+    if (is_dce_style_context( ctx )) return unseal_message_vector( ctx, params->msg, params->qop );
+    return unseal_message_no_vector( ctx, params->msg, params->qop );
 }
 
-static NTSTATUS CDECL verify_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg, ULONG *qop )
+static NTSTATUS verify_signature( void *args )
 {
+    struct verify_signature_params *params = args;
+    SecBufferDesc *msg = params->msg;
     OM_uint32 ret, minor_status;
     gss_buffer_desc data_buffer, token_buffer;
-    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
     int data_idx, token_idx;
 
     if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
@@ -1017,13 +1023,21 @@ static NTSTATUS CDECL verify_signature( LSA_SEC_HANDLE context, SecBufferDesc *m
     ret = pgss_verify_mic( &minor_status, ctx_handle, &data_buffer, &token_buffer, NULL );
     TRACE( "gss_verify_mic returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE && qop) *qop = 0;
+    if (ret == GSS_S_COMPLETE && params->qop) *params->qop = 0;
 
     return status_gss_to_sspi( ret );
 }
 
-static const struct krb5_funcs funcs =
+static NTSTATUS process_attach( void *args )
 {
+    if (load_krb5() && load_gssapi_krb5()) return STATUS_SUCCESS;
+    if (libkrb5_handle) unload_krb5();
+    return STATUS_DLL_NOT_FOUND;
+}
+
+unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    process_attach,
     accept_context,
     acquire_credentials_handle,
     delete_context,
@@ -1037,15 +1051,4 @@ static const struct krb5_funcs funcs =
     verify_signature,
 };
 
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-    if (load_krb5() && load_gssapi_krb5())
-    {
-        *(const struct krb5_funcs **)ptr_out = &funcs;
-        return STATUS_SUCCESS;
-    }
-    if (libkrb5_handle) unload_krb5();
-    return STATUS_DLL_NOT_FOUND;
-}
 #endif /* defined(SONAME_LIBKRB5) && defined(SONAME_LIBGSSAPI_KRB5) */

@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
 
 static HINSTANCE instance;
 
-const struct krb5_funcs *krb5_funcs = NULL;
+unixlib_handle_t krb5_handle = 0;
 
 #define KERBEROS_CAPS \
     ( SECPKG_FLAG_INTEGRITY \
@@ -99,8 +99,13 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
 {
     char *kerberos_name;
 
-    if (!krb5_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &krb5_funcs ))
-        ERR( "no Kerberos support, expect problems\n" );
+    if (!krb5_handle)
+    {
+        if (NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                                  &krb5_handle, sizeof(krb5_handle), NULL ) ||
+            KRB5_CALL( process_attach, NULL ))
+            ERR( "no Kerberos support, expect problems\n" );
+    }
 
     kerberos_package_id = package_id;
     lsa_dispatch = *dispatch;
@@ -194,7 +199,8 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
         for (;;)
         {
             KERB_QUERY_TKT_CACHE_RESPONSE *resp = malloc( *out_buf_len );
-            status = krb5_funcs->query_ticket_cache( resp, out_buf_len );
+            struct query_ticket_cache_params params = { resp, out_buf_len };
+            status = KRB5_CALL( query_ticket_cache, &params );
             if (status == STATUS_SUCCESS) status = copy_to_client( req, resp, out_buf, *out_buf_len );
             free( resp );
             if (status != STATUS_BUFFER_TOO_SMALL) break;
@@ -296,9 +302,12 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
         if (!(password = get_password_unixcp( id->Password, id->PasswordLength ))) goto done;
     }
 
-    status = krb5_funcs->acquire_credentials_handle( principal, credential_use, username, password, credential,
-                                                     &exptime );
-    expiry_to_timestamp( exptime, expiry );
+    {
+        struct acquire_credentials_handle_params params = { principal, credential_use, username, password,
+                                                            credential, &exptime };
+        status = KRB5_CALL( acquire_credentials_handle, &params );
+        expiry_to_timestamp( exptime, expiry );
+    }
 
 done:
     free( principal );
@@ -311,7 +320,7 @@ static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credentia
 {
     TRACE( "(%lx)\n", credential );
     if (!credential) return SEC_E_INVALID_HANDLE;
-    return krb5_funcs->free_credentials_handle( credential );
+    return KRB5_CALL( free_credentials_handle, (void *)credential );
 }
 
 static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
@@ -333,13 +342,16 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 
     if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
     if (target_name && !(target = get_str_unixcp( target_name ))) return SEC_E_INSUFFICIENT_MEMORY;
-
-    status = krb5_funcs->initialize_context( credential, context, target, context_req, input, new_context, output,
-                                             context_attr, &exptime );
-    if (!status)
+    else
     {
-        *mapped_context = TRUE;
-        expiry_to_timestamp( exptime, expiry );
+        struct initialize_context_params params = { credential, context, target, context_req, input,
+                                                    new_context, output, context_attr, &exptime };
+        status = KRB5_CALL( initialize_context, &params );
+        if (!status)
+        {
+            *mapped_context = TRUE;
+            expiry_to_timestamp( exptime, expiry );
+        }
     }
     /* FIXME: initialize context_data */
     free( target );
@@ -350,22 +362,24 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     SecBufferDesc *input, ULONG context_req, ULONG target_data_rep, LSA_SEC_HANDLE *new_context,
     SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry, BOOLEAN *mapped_context, SecBuffer *context_data )
 {
-    NTSTATUS status;
+    NTSTATUS status = SEC_E_INVALID_HANDLE;
     ULONG exptime;
 
     TRACE( "(%lx %lx 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, context_req, target_data_rep, input,
            new_context, output, context_attr, expiry, mapped_context, context_data );
     if (context_req) FIXME( "ignoring flags 0x%08x\n", context_req );
 
-    if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
-
-    status = krb5_funcs->accept_context( credential, context, input, new_context, output, context_attr, &exptime );
-    if (!status)
+    if (context || input || credential)
     {
-        *mapped_context = TRUE;
-        expiry_to_timestamp( exptime, expiry );
+        struct accept_context_params params = { credential, context, input, new_context, output, context_attr, &exptime };
+        status = KRB5_CALL( accept_context, &params );
+        if (!status)
+        {
+            *mapped_context = TRUE;
+            expiry_to_timestamp( exptime, expiry );
+        }
+        /* FIXME: initialize context_data */
     }
-    /* FIXME: initialize context_data */
     return status;
 }
 
@@ -373,7 +387,7 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 {
     TRACE( "(%lx)\n", context );
     if (!context) return SEC_E_INVALID_HANDLE;
-    return krb5_funcs->delete_context( context );
+    return KRB5_CALL( delete_context, (void *)context );
 }
 
 static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
@@ -417,7 +431,8 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     X(SECPKG_ATTR_TARGET_INFORMATION);
     case SECPKG_ATTR_SIZES:
     {
-        return krb5_funcs->query_context_attributes( context, attribute, buffer );
+        struct query_context_attributes_params params = { context, attribute, buffer };
+        return KRB5_CALL( query_context_attributes, &params );
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
     {
@@ -440,9 +455,12 @@ static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMET
 {
     TRACE("%lu,%p,%p\n", package_id, params, lsa_function_table);
 
-    if (!krb5_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &krb5_funcs ))
+    if (!krb5_handle)
     {
-        WARN( "no Kerberos support\n" );
+        if (NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                                  &krb5_handle, sizeof(krb5_handle), NULL ) ||
+            KRB5_CALL( process_attach, NULL ))
+            WARN( "no Kerberos support\n" );
         return STATUS_UNSUCCESSFUL;
     }
     return STATUS_SUCCESS;
@@ -518,8 +536,12 @@ static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULON
     if (quality_of_protection) FIXME( "ignoring quality_of_protection 0x%08x\n", quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-    return krb5_funcs->make_signature( context, message );
+    if (context)
+    {
+        struct make_signature_params params = { context, message };
+        return KRB5_CALL( make_signature, &params );
+    }
+    else return SEC_E_INVALID_HANDLE;
 }
 
 static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBufferDesc *message,
@@ -528,8 +550,12 @@ static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBuf
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-    return krb5_funcs->verify_signature( context, message, quality_of_protection );
+    if (context)
+    {
+        struct verify_signature_params params = { context, message, quality_of_protection };
+        return KRB5_CALL( verify_signature, &params );
+    }
+    else return SEC_E_INVALID_HANDLE;
 }
 
 static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
@@ -538,8 +564,12 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
     TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-    return krb5_funcs->seal_message( context, message, quality_of_protection );
+    if (context)
+    {
+        struct seal_message_params params = { context, message, quality_of_protection };
+        return KRB5_CALL( seal_message, &params );
+    }
+    else return SEC_E_INVALID_HANDLE;
 }
 
 static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
@@ -548,8 +578,12 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
-    if (!context) return SEC_E_INVALID_HANDLE;
-    return krb5_funcs->unseal_message( context, message, quality_of_protection );
+    if (context)
+    {
+        struct unseal_message_params params = { context, message, quality_of_protection };
+        return KRB5_CALL( unseal_message, &params );
+    }
+    else return SEC_E_INVALID_HANDLE;
 }
 
 static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
