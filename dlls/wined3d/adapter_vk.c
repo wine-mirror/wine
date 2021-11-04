@@ -845,28 +845,53 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
     VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
 }
 
+static void wined3d_bo_slab_vk_lock(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
+{
+    wined3d_device_vk_allocator_lock(wined3d_device_vk(context_vk->c.device));
+}
+
+static void wined3d_bo_slab_vk_unlock(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
+{
+    wined3d_device_vk_allocator_unlock(wined3d_device_vk(context_vk->c.device));
+}
+
 void *wined3d_bo_slab_vk_map(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
 {
+    void *map_ptr;
+
     TRACE("slab_vk %p, context_vk %p.\n", slab_vk, context_vk);
+
+    wined3d_bo_slab_vk_lock(slab_vk, context_vk);
 
     if (!slab_vk->map_ptr && !(slab_vk->map_ptr = wined3d_bo_vk_map(&slab_vk->bo, context_vk)))
     {
+        wined3d_bo_slab_vk_unlock(slab_vk, context_vk);
         ERR("Failed to map slab.\n");
         return NULL;
     }
 
     ++slab_vk->map_count;
+    map_ptr = slab_vk->map_ptr;
 
-    return slab_vk->map_ptr;
+    wined3d_bo_slab_vk_unlock(slab_vk, context_vk);
+
+    return map_ptr;
 }
 
 void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
 {
+    wined3d_bo_slab_vk_lock(slab_vk, context_vk);
+
     if (--slab_vk->map_count)
+    {
+        wined3d_bo_slab_vk_unlock(slab_vk, context_vk);
         return;
+    }
 
     wined3d_bo_vk_unmap(&slab_vk->bo, context_vk);
     slab_vk->map_ptr = NULL;
+
+    wined3d_bo_slab_vk_unlock(slab_vk, context_vk);
 }
 
 VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
