@@ -86,12 +86,6 @@ typedef struct _DMUS_PRIVATE_TEMPO_ITEM {
   DMUS_IO_TEMPO_ITEM item;
 } DMUS_PRIVATE_TEMPO_ITEM, *LPDMUS_PRIVATE_TEMPO_ITEM;
 
-struct wave_item {
-    struct list entry;
-    DMUS_IO_WAVE_TRACK_HEADER header;
-    IDirectMusicObject *object;
-};
-
 typedef struct _DMUS_PRIVATE_GRAPH_TOOL {
   struct list entry; /* for listing elements */
   DWORD dwIndex;
