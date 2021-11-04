@@ -1288,38 +1288,35 @@ static void test_async_reader_streaming(void)
      * according to their presentation time. Call DeliverTime with the file
      * duration in order to request all samples as fast as possible. */
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-    todo_wine ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+    ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        ret = WaitForSingleObject(callback.eof_event, 1000);
-        ok(!ret, "Wait timed out.\n");
-        ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
+    ret = WaitForSingleObject(callback.eof_event, 1000);
+    ok(!ret, "Wait timed out.\n");
+    ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
 
-        hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        ret = WaitForSingleObject(callback.eof_event, 1000);
-        ok(!ret, "Wait timed out.\n");
-        ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
+    ret = WaitForSingleObject(callback.eof_event, 1000);
+    ok(!ret, "Wait timed out.\n");
+    ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
 
-        hr = IWMReader_Stop(reader);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ret = WaitForSingleObject(callback.got_stopped, 1000);
-        ok(!ret, "Wait timed out.\n");
+    hr = IWMReader_Stop(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = WaitForSingleObject(callback.got_stopped, 1000);
+    ok(!ret, "Wait timed out.\n");
 
-        hr = IWMReader_Stop(reader);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ret = WaitForSingleObject(callback.got_stopped, 1000);
-        ok(!ret, "Wait timed out.\n");
-    }
+    hr = IWMReader_Stop(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = WaitForSingleObject(callback.got_stopped, 1000);
+    ok(!ret, "Wait timed out.\n");
 
     test_reader_attributes(profile);
 

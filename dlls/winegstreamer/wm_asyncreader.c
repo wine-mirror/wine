@@ -41,6 +41,9 @@ struct async_reader
     CONDITION_VARIABLE stream_cv;
 
     bool running;
+
+    bool user_clock;
+    QWORD user_time;
 };
 
 static REFERENCE_TIME get_current_time(const struct async_reader *reader)
@@ -85,20 +88,33 @@ static DWORD WINAPI stream_thread(void *arg)
             hr = wm_reader_get_stream_sample(&reader->reader.streams[i], &sample, &pts, &duration, &flags);
             if (hr == S_OK)
             {
-                for (;;)
+                if (reader->user_clock)
                 {
-                    REFERENCE_TIME current_time = get_current_time(reader);
-
-                    if (pts <= current_time - start_time)
-                        break;
-
-                    SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs,
-                            (pts - (current_time - start_time)) / 10000);
-
+                    while (pts > reader->user_time && reader->running)
+                        SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs, INFINITE);
                     if (!reader->running)
                     {
                         INSSBuffer_Release(sample);
                         goto out;
+                    }
+                }
+                else
+                {
+                    for (;;)
+                    {
+                        REFERENCE_TIME current_time = get_current_time(reader);
+
+                        if (pts <= current_time - start_time)
+                            break;
+
+                        SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs,
+                                (pts - (current_time - start_time)) / 10000);
+
+                        if (!reader->running)
+                        {
+                            INSSBuffer_Release(sample);
+                            goto out;
+                        }
                     }
                 }
 
@@ -276,6 +292,7 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface,
     wm_reader_seek(&reader->reader, start, duration);
 
     reader->running = true;
+    reader->user_time = 0;
 
     if (!(reader->stream_thread = CreateThread(NULL, 0, stream_thread, reader, 0, NULL)))
     {
@@ -360,9 +377,14 @@ static ULONG WINAPI WMReaderAdvanced_Release(IWMReaderAdvanced6 *iface)
 
 static HRESULT WINAPI WMReaderAdvanced_SetUserProvidedClock(IWMReaderAdvanced6 *iface, BOOL user_clock)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%x)\n", This, user_clock);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+
+    TRACE("reader %p, user_clock %d.\n", reader, user_clock);
+
+    EnterCriticalSection(&reader->stream_cs);
+    reader->user_clock = !!user_clock;
+    LeaveCriticalSection(&reader->stream_cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetUserProvidedClock(IWMReaderAdvanced6 *iface, BOOL *user_clock)
@@ -374,9 +396,24 @@ static HRESULT WINAPI WMReaderAdvanced_GetUserProvidedClock(IWMReaderAdvanced6 *
 
 static HRESULT WINAPI WMReaderAdvanced_DeliverTime(IWMReaderAdvanced6 *iface, QWORD time)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_longlong(time));
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+
+    TRACE("reader %p, time %s.\n", reader, debugstr_time(time));
+
+    EnterCriticalSection(&reader->stream_cs);
+
+    if (!reader->user_clock)
+    {
+        LeaveCriticalSection(&reader->stream_cs);
+        WARN("Not using a user-provided clock; returning E_UNEXPECTED.\n");
+        return E_UNEXPECTED;
+    }
+
+    reader->user_time = time;
+
+    LeaveCriticalSection(&reader->stream_cs);
+    WakeConditionVariable(&reader->stream_cv);
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReaderAdvanced_SetManualStreamSelection(IWMReaderAdvanced6 *iface, BOOL selection)
