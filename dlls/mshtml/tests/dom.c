@@ -6015,7 +6015,6 @@ static void test_location(IHTMLDocument2 *doc)
     IHTMLLocation *location, *location2;
     IHTMLWindow2 *window;
     BSTR str;
-    ULONG ref;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_location(doc, &location);
@@ -6051,8 +6050,7 @@ static void test_location(IHTMLDocument2 *doc)
     ok(!lstrcmpW(str, L"about:blank"), "unexpected href %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
-    ref = IHTMLLocation_Release(location);
-    ok(!ref, "location should be destroyed here\n");
+    IHTMLLocation_Release(location);
 }
 
 static void test_plugins_col(IHTMLDocument2 *doc)
