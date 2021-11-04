@@ -4084,6 +4084,7 @@ struct wined3d_device_vk
     struct wined3d_null_resources_vk null_resources_vk;
     struct wined3d_null_views_vk null_views_vk;
 
+    CRITICAL_SECTION allocator_cs;
     struct wined3d_allocator allocator;
 
     struct wined3d_uav_clear_state_vk uav_clear_state;
@@ -4092,6 +4093,16 @@ struct wined3d_device_vk
 static inline struct wined3d_device_vk *wined3d_device_vk(struct wined3d_device *device)
 {
     return CONTAINING_RECORD(device, struct wined3d_device_vk, d);
+}
+
+static inline void wined3d_device_vk_allocator_lock(struct wined3d_device_vk *device_vk)
+{
+    EnterCriticalSection(&device_vk->allocator_cs);
+}
+
+static inline void wined3d_device_vk_allocator_unlock(struct wined3d_device_vk *device_vk)
+{
+    LeaveCriticalSection(&device_vk->allocator_cs);
 }
 
 bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk,
