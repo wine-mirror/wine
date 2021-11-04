@@ -1326,6 +1326,7 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
         video_mixer_normalize_rect(&dst, &stream_vis, &norm);
         video_mixer_scale_rect(&samples[sample_count].DstRect, rt_desc.Width, rt_desc.Height, &norm);
+        samples[sample_count].PlanarAlpha = DXVA2FloatToFixed(1.0f);
 
         sample_count++;
     }
