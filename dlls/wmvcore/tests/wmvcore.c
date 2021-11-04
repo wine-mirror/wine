@@ -1125,6 +1125,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            callback->got_end_of_streaming = callback->got_eof = callback->got_sample = 0;
             ++callback->got_started;
             break;
 
@@ -1138,7 +1139,7 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
         case WMT_CLOSED:
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
-            todo_wine ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+            ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
             ++callback->got_closed;
             break;
 
@@ -1281,17 +1282,27 @@ static void test_async_reader_streaming(void)
     }
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* By default the reader will time itself, and attempt to deliver samples
+     * according to their presentation time. Call DeliverTime with the file
+     * duration in order to request all samples as fast as possible. */
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    todo_wine ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (hr == S_OK)
     {
-        /* By default the reader will time itself, and attempt to deliver samples
-         * according to their presentation time. Call DeliverTime with the file
-         * duration in order to request all samples as fast as possible. */
         hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
-        ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
-        hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ret = WaitForSingleObject(callback.eof_event, 1000);
+        ok(!ret, "Wait timed out.\n");
+        ok(callback.got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback.got_eof);
+
+        hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
         hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
 
