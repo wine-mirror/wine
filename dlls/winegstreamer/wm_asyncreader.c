@@ -137,11 +137,14 @@ static HRESULT WINAPI WMReader_GetOutputFormatCount(IWMReader *iface, DWORD outp
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReader_GetOutputFormat(IWMReader *iface, DWORD output_num, DWORD format_num, IWMOutputMediaProps **props)
+static HRESULT WINAPI WMReader_GetOutputFormat(IWMReader *iface, DWORD output,
+        DWORD index, IWMOutputMediaProps **props)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, output_num, format_num, props);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReader(iface);
+
+    TRACE("reader %p, output %u, index %u, props %p.\n", reader, output, index, props);
+
+    return wm_reader_get_output_format(&reader->reader, output, index, props);
 }
 
 static HRESULT WINAPI WMReader_Start(IWMReader *iface, QWORD start, QWORD duration, float rate, void *context)

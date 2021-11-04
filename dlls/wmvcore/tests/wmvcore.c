@@ -1419,21 +1419,18 @@ static void test_async_reader_types(void)
              * with. In particular it has to be PCM. */
 
             hr = IWMReader_GetOutputFormat(reader, output_number, 0, &output_props);
-            todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-            if (hr == S_OK)
-            {
-                ret_size = sizeof(mt2_buffer);
-                hr = IWMOutputMediaProps_GetMediaType(output_props, mt2, &ret_size);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ret_size = sizeof(mt2_buffer);
+            hr = IWMOutputMediaProps_GetMediaType(output_props, mt2, &ret_size);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-                ref = IWMOutputMediaProps_Release(output_props);
-                ok(!ref, "Got outstanding refcount %d.\n", ref);
+            ref = IWMOutputMediaProps_Release(output_props);
+            ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-                /* The sample size might differ. */
-                mt2->lSampleSize = mt->lSampleSize;
-                ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
-            }
+            /* The sample size might differ. */
+            mt2->lSampleSize = mt->lSampleSize;
+            ok(compare_media_types(mt, mt2), "Media types didn't match.\n");
         }
         else
         {
@@ -1553,7 +1550,7 @@ static void test_async_reader_types(void)
 
     output_props = (void *)0xdeadbeef;
     hr = IWMReader_GetOutputFormat(reader, 2, 0, &output_props);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     ok(output_props == (void *)0xdeadbeef, "Got output props %p.\n", output_props);
 
     IWMReaderAdvanced2_Release(advanced);
