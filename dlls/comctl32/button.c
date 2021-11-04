@@ -2651,7 +2651,7 @@ cleanup:
  */
 static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    RECT bgRect, textRect;
+    RECT bgRect, textRect, focusRect;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
@@ -2661,6 +2661,8 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
     GetClientRect(infoPtr->hwnd, &bgRect);
     GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &bgRect, &textRect);
+    focusRect = textRect;
+
     init_custom_draw(&nmcd, infoPtr, hDC, &bgRect);
 
     parent = GetParent(infoPtr->hwnd);
@@ -2698,20 +2700,7 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     }
     if (cdrf & CDRF_SKIPPOSTPAINT) return;
 
-    if (focused)
-    {
-        MARGINS margins;
-        RECT focusRect = bgRect;
-
-        GetThemeMargins(theme, hDC, BP_PUSHBUTTON, state, TMT_CONTENTMARGINS, NULL, &margins);
-
-        focusRect.left += margins.cxLeftWidth;
-        focusRect.top += margins.cyTopHeight;
-        focusRect.right -= margins.cxRightWidth;
-        focusRect.bottom -= margins.cyBottomHeight;
-
-        DrawFocusRect( hDC, &focusRect );
-    }
+    if (focused) DrawFocusRect(hDC, &focusRect);
 }
 
 static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
