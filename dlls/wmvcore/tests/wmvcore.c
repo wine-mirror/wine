@@ -1483,14 +1483,7 @@ static void test_async_reader_types(void)
                 check_video_type(mt);
 
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
-            todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-            if (hr != S_OK)
-            {
-                ref = IWMOutputMediaProps_Release(output_props);
-                ok(!ref, "Got outstanding refcount %d.\n", ref);
-                winetest_pop_context();
-                continue;
-            }
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
             hr = IWMReader_SetOutputProps(reader, 1 - output_number, output_props);
             if (!i)
                 ok(hr == NS_E_INCOMPATIBLE_FORMAT /* win < 8, win10 1507-1809 */
@@ -1498,7 +1491,7 @@ static void test_async_reader_types(void)
             else
                 todo_wine ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
             hr = IWMReader_SetOutputProps(reader, 2, output_props);
-            todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+            ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
             hr = IWMReader_GetOutputProps(reader, output_number, &output_props2);
             ok(hr == S_OK, "Got hr %#x.\n", hr);
