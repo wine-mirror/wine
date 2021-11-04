@@ -110,7 +110,7 @@ static HRESULT create_uia_object_wrapper(IUnknown *reserved, void **ppv)
 }
 
 /*
- * UiaReservedNotSupportedValue object.
+ * UiaReservedNotSupportedValue/UiaReservedMixedAttributeValue object.
  */
 static HRESULT WINAPI uia_reserved_obj_QueryInterface(IUnknown *iface,
         REFIID riid, void **ppv)
@@ -143,6 +143,7 @@ static const IUnknownVtbl uia_reserved_obj_vtbl = {
 };
 
 static IUnknown uia_reserved_ns_iface = {&uia_reserved_obj_vtbl};
+static IUnknown uia_reserved_ma_iface = {&uia_reserved_obj_vtbl};
 
 /***********************************************************************
  *          UiaClientsAreListening (uiautomationcore.@)
@@ -158,8 +159,13 @@ BOOL WINAPI UiaClientsAreListening(void)
  */
 HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value)
 {
-    FIXME("(%p) stub!\n", value);
-    *value = NULL;
+    TRACE("(%p)\n", value);
+
+    if (!value)
+        return E_INVALIDARG;
+
+    *value = &uia_reserved_ma_iface;
+
     return S_OK;
 }
 
