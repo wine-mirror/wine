@@ -99,7 +99,7 @@ struct drive {
     struct provideclassinfo classinfo;
     IDrive IDrive_iface;
     LONG ref;
-    BSTR root;
+    WCHAR root[4];
 };
 
 struct folder {
@@ -835,10 +835,7 @@ static ULONG WINAPI drive_Release(IDrive *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
-    {
-        SysFreeString(This->root);
         heap_free(This);
-    }
 
     return ref;
 }
@@ -1134,28 +1131,21 @@ static const IDriveVtbl drivevtbl = {
 
 static HRESULT create_drive(WCHAR letter, IDrive **drive)
 {
-    struct drive *This;
+    struct drive *object;
 
     *drive = NULL;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    object = heap_alloc(sizeof(*object));
+    if (!object) return E_OUTOFMEMORY;
 
-    This->IDrive_iface.lpVtbl = &drivevtbl;
-    This->ref = 1;
-    This->root = SysAllocStringLen(NULL, 3);
-    if (!This->root)
-    {
-        heap_free(This);
-        return E_OUTOFMEMORY;
-    }
-    This->root[0] = letter;
-    This->root[1] = ':';
-    This->root[2] = '\\';
-    This->root[3] = 0;
+    object->IDrive_iface.lpVtbl = &drivevtbl;
+    object->ref = 1;
+    wcscpy(object->root, L"A:\\");
+    *object->root = letter;
 
-    init_classinfo(&CLSID_Drive, (IUnknown *)&This->IDrive_iface, &This->classinfo);
-    *drive = &This->IDrive_iface;
+    init_classinfo(&CLSID_Drive, (IUnknown *)&object->IDrive_iface, &object->classinfo);
+    *drive = &object->IDrive_iface;
+
     return S_OK;
 }
 
