@@ -626,17 +626,55 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
 HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE module, const char *resource,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
-    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+    HRSRC res_info;
+    void *buffer;
+    DWORD size;
+    HRESULT hr;
+
+    TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, module, debugstr_a(resource), load_info, pump, texture, hresult);
-    return E_NOTIMPL;
+
+    if (!resource || !texture)
+        return D3DX10_ERR_INVALID_DATA;
+
+    if (!(res_info = FindResourceA(module, resource, (const char *)RT_RCDATA)))
+    {
+        /* Try loading the resource as bitmap data */
+        if (!(res_info = FindResourceA(module, resource, (const char *)RT_BITMAP)))
+            return D3DX10_ERR_INVALID_DATA;
+    }
+
+    if (FAILED(hr = load_resource(module, res_info, &buffer, &size)))
+        return D3DX10_ERR_INVALID_DATA;
+
+    return D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE module, const WCHAR *resource,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
-    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+    HRSRC res_info;
+    void *buffer;
+    DWORD size;
+    HRESULT hr;
+
+    TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, module, debugstr_w(resource), load_info, pump, texture, hresult);
-    return E_NOTIMPL;
+
+    if (!resource || !texture)
+        return D3DX10_ERR_INVALID_DATA;
+
+    if (!(res_info = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
+    {
+        /* Try loading the resource as bitmap data */
+        if (!(res_info = FindResourceW(module, resource, (const WCHAR *)RT_BITMAP)))
+            return D3DX10_ERR_INVALID_DATA;
+    }
+
+    if (FAILED(hr = load_resource(module, res_info, &buffer, &size)))
+        return D3DX10_ERR_INVALID_DATA;
+
+    return D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data, SIZE_T src_data_size,
