@@ -446,10 +446,8 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
                 WARN("Failed to get LoadedBefore: %d\n", GetLastError());
             RegCloseKey(hKey);
         }
-        if (loaded_before)
-            return MSSTYLES_SetActiveTheme(tf, FALSE);
 
-        if (ret)
+        if (!loaded_before && ret)
             UXTHEME_SaveUnthemedSystemMetrics(&metrics);
     }
     else {
