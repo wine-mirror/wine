@@ -1547,17 +1547,15 @@ static BOOL CL_GetIdealSize(BUTTON_INFO *infoPtr, SIZE *size)
  */
 static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *labelRc, RECT *imageRc, RECT *textRc)
 {
-   LONG style = GetWindowLongW( infoPtr->hwnd, GWL_STYLE );
-   LONG ex_style = GetWindowLongW( infoPtr->hwnd, GWL_EXSTYLE );
-   LONG split_style = infoPtr->imagelist.himl ? BUTTON_ILStoBS(infoPtr->imagelist.uAlign) : style;
    WCHAR *text = get_button_text(infoPtr);
    SIZE imageSize = BUTTON_GetImageSize(infoPtr);
-   UINT dtStyle = BUTTON_BStoDT(style, ex_style);
    RECT labelRect, imageRect, imageRectWithMargin, textRect;
    LONG imageMarginWidth, imageMarginHeight;
    const RECT *textMargin = BUTTON_GetTextMargin(infoPtr);
+   LONG style, ex_style, split_style;
    RECT emptyMargin = {0};
    LONG maxTextWidth;
+   UINT dtStyle;
 
    /* Calculate label rectangle according to label type */
    if ((imageSize.cx == 0 && imageSize.cy == 0) && (text == NULL || text[0] == '\0'))
@@ -1568,6 +1566,14 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
        heap_free(text);
        return (UINT)-1;
    }
+
+   style = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
+   ex_style = GetWindowLongW(infoPtr->hwnd, GWL_EXSTYLE);
+   /* Add BS_RIGHT directly. When both WS_EX_RIGHT and BS_LEFT are present, it becomes BS_CENTER */
+   if (ex_style & WS_EX_RIGHT)
+       style |= BS_RIGHT;
+   split_style = infoPtr->imagelist.himl ? BUTTON_ILStoBS(infoPtr->imagelist.uAlign) : style;
+   dtStyle = BUTTON_BStoDT(style, ex_style);
 
    SetRect(&imageRect, 0, 0, imageSize.cx, imageSize.cy);
    imageRectWithMargin = imageRect;
