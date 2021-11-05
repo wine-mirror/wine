@@ -5097,7 +5097,6 @@ struct wined3d_buffer_vk
 {
     struct wined3d_buffer b;
 
-    struct wined3d_bo_vk bo;
     VkDescriptorBufferInfo buffer_info;
     uint32_t bind_mask;
 };

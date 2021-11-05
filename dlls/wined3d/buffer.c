@@ -1440,18 +1440,22 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
         struct wined3d_context_vk *context_vk)
 {
     struct wined3d_resource *resource = &buffer_vk->b.resource;
+    struct wined3d_bo_vk *bo_vk;
+
+    if (!(bo_vk = heap_alloc(sizeof(*bo_vk))))
+        return FALSE;
 
     if (!(wined3d_context_vk_create_bo(context_vk, resource->size,
             vk_buffer_usage_from_bind_flags(resource->bind_flags),
-            vk_memory_type_from_access_flags(resource->access, resource->usage), &buffer_vk->bo)))
+            vk_memory_type_from_access_flags(resource->access, resource->usage), bo_vk)))
     {
         WARN("Failed to create Vulkan buffer.\n");
         return FALSE;
     }
 
     list_init(&buffer_vk->b.bo_user.entry);
-    list_add_head(&buffer_vk->bo.b.users, &buffer_vk->b.bo_user.entry);
-    buffer_vk->b.buffer_object = (uintptr_t)&buffer_vk->bo;
+    list_add_head(&bo_vk->b.users, &buffer_vk->b.bo_user.entry);
+    buffer_vk->b.buffer_object = (uintptr_t)bo_vk;
     buffer_invalidate_bo_range(&buffer_vk->b, 0, 0);
 
     return TRUE;
@@ -1495,20 +1499,19 @@ static BOOL wined3d_buffer_vk_prepare_location(struct wined3d_buffer *buffer,
 static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, unsigned int location)
 {
+    struct wined3d_bo_vk *bo_vk = (struct wined3d_bo_vk *)buffer->buffer_object;
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
-    struct wined3d_buffer_vk *buffer_vk = wined3d_buffer_vk(buffer);
 
     TRACE("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
 
     switch (location)
     {
         case WINED3D_LOCATION_BUFFER:
-            buffer_vk->b.bo_user.valid = false;
-            list_remove(&buffer_vk->b.bo_user.entry);
-            wined3d_context_vk_destroy_bo(context_vk, &buffer_vk->bo);
-            buffer_vk->bo.vk_buffer = VK_NULL_HANDLE;
-            buffer_vk->bo.memory = NULL;
-            buffer_vk->b.buffer_object = 0u;
+            buffer->bo_user.valid = false;
+            list_remove(&buffer->bo_user.entry);
+            wined3d_context_vk_destroy_bo(context_vk, bo_vk);
+            heap_free(bo_vk);
+            buffer->buffer_object = 0u;
             break;
 
         default:
