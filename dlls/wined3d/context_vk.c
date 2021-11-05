@@ -247,15 +247,28 @@ static VkStencilOp vk_stencil_op_from_wined3d(enum wined3d_stencil_op op)
     }
 }
 
+static void wined3d_allocator_chunk_vk_lock(struct wined3d_allocator_chunk_vk *chunk_vk)
+{
+    wined3d_device_vk_allocator_lock(wined3d_device_vk_from_allocator(chunk_vk->c.allocator));
+}
+
+static void wined3d_allocator_chunk_vk_unlock(struct wined3d_allocator_chunk_vk *chunk_vk)
+{
+    wined3d_device_vk_allocator_unlock(wined3d_device_vk_from_allocator(chunk_vk->c.allocator));
+}
+
 void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
         struct wined3d_context_vk *context_vk)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    void *map_ptr;
     VkResult vr;
 
     TRACE("chunk %p, memory 0x%s, map_ptr %p.\n", chunk_vk,
             wine_dbgstr_longlong(chunk_vk->vk_memory), chunk_vk->c.map_ptr);
+
+    wined3d_allocator_chunk_vk_lock(chunk_vk);
 
     if (!chunk_vk->c.map_ptr && (vr = VK_CALL(vkMapMemory(device_vk->vk_device,
             chunk_vk->vk_memory, 0, VK_WHOLE_SIZE, 0, &chunk_vk->c.map_ptr))) < 0)
@@ -265,8 +278,11 @@ void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk
     }
 
     ++chunk_vk->c.map_count;
+    map_ptr = chunk_vk->c.map_ptr;
 
-    return chunk_vk->c.map_ptr;
+    wined3d_allocator_chunk_vk_unlock(chunk_vk);
+
+    return map_ptr;
 }
 
 void wined3d_allocator_chunk_vk_unmap(struct wined3d_allocator_chunk_vk *chunk_vk,
@@ -277,11 +293,18 @@ void wined3d_allocator_chunk_vk_unmap(struct wined3d_allocator_chunk_vk *chunk_v
 
     TRACE("chunk_vk %p, context_vk %p.\n", chunk_vk, context_vk);
 
+    wined3d_allocator_chunk_vk_lock(chunk_vk);
+
     if (--chunk_vk->c.map_count)
+    {
+        wined3d_allocator_chunk_vk_unlock(chunk_vk);
         return;
+    }
 
     VK_CALL(vkUnmapMemory(device_vk->vk_device, chunk_vk->vk_memory));
     chunk_vk->c.map_ptr = NULL;
+
+    wined3d_allocator_chunk_vk_unlock(chunk_vk);
 }
 
 VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,

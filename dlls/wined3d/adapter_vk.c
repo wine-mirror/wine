@@ -380,7 +380,7 @@ static void wined3d_allocator_vk_destroy_chunk(struct wined3d_allocator_chunk *c
 
     TRACE("chunk %p.\n", chunk);
 
-    device_vk = CONTAINING_RECORD(chunk_vk->c.allocator, struct wined3d_device_vk, allocator);
+    device_vk = wined3d_device_vk_from_allocator(chunk_vk->c.allocator);
     vk_info = &device_vk->vk_info;
 
     if (chunk_vk->c.map_ptr)

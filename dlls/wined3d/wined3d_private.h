@@ -4101,6 +4101,11 @@ static inline struct wined3d_device_vk *wined3d_device_vk(struct wined3d_device 
     return CONTAINING_RECORD(device, struct wined3d_device_vk, d);
 }
 
+static inline struct wined3d_device_vk *wined3d_device_vk_from_allocator(struct wined3d_allocator *allocator)
+{
+    return CONTAINING_RECORD(allocator, struct wined3d_device_vk, allocator);
+}
+
 static inline void wined3d_device_vk_allocator_lock(struct wined3d_device_vk *device_vk)
 {
     EnterCriticalSection(&device_vk->allocator_cs);
