@@ -75,6 +75,14 @@ static void test_Properties(void)
     ULONG infocount;
     DBPROPINFOSET *propinfoset;
     WCHAR *desc;
+    DBPROPID properties[14] =
+    {
+        DBPROP_AUTH_PASSWORD, DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROP_AUTH_USERID,
+        DBPROP_INIT_DATASOURCE, DBPROP_INIT_HWND, DBPROP_INIT_LOCATION,
+        DBPROP_INIT_MODE, DBPROP_INIT_PROMPT, DBPROP_INIT_TIMEOUT,
+        DBPROP_INIT_PROVIDERSTRING, DBPROP_INIT_LCID, DBPROP_INIT_CATALOG,
+        DBPROP_INIT_OLEDBSERVICES, DBPROP_INIT_GENERALTIMEOUT
+    };
 
     hr = CoCreateInstance( &CLSID_MSDASQL, NULL, CLSCTX_ALL, &IID_IDBProperties, (void **)&props);
     ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
@@ -88,18 +96,30 @@ static void test_Properties(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
     {
-        ULONG i;
         VARTYPE types[14] = { VT_BSTR, VT_BOOL, VT_BSTR, VT_BSTR, intptr_vartype, VT_BSTR, VT_I4, VT_I2 , VT_I4, VT_BSTR, VT_I4, VT_BSTR, VT_I4, VT_I4 };
+        ULONG i;
+        DBPROPIDSET propidlist;
+        ULONG propcnt;
+        DBPROPSET *propset;
 
         ok(IsEqualGUID(&propinfoset->guidPropertySet, &DBPROPSET_DBINIT), "got %s\n", debugstr_guid(&propinfoset->guidPropertySet));
         ok(propinfoset->cPropertyInfos == 14, "got %d\n", propinfoset->cPropertyInfos);
 
+        propidlist.guidPropertySet = DBPROPSET_DBINIT;
+        propidlist.cPropertyIDs = propinfoset->cPropertyInfos;
+        propidlist.rgPropertyIDs = CoTaskMemAlloc(propinfoset->cPropertyInfos * sizeof(DBPROP));
+
         for (i = 0; i < propinfoset->cPropertyInfos; i++)
         {
-            trace("%d: pwszDescription: %s\n", i, debugstr_w(propinfoset->rgPropertyInfos[i].pwszDescription) );
             ok(propinfoset->rgPropertyInfos[i].vtType == types[i], "got %d\n", propinfoset->rgPropertyInfos[i].vtType);
             ok(propinfoset->rgPropertyInfos[i].dwFlags == (DBPROPFLAGS_DBINIT | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE),
                 "got %d\n", propinfoset->rgPropertyInfos[i].dwFlags);
+            ok(properties[i] == propinfoset->rgPropertyInfos[i].dwPropertyID, "%d, got %d\n", i,
+                    propinfoset->rgPropertyInfos[i].dwPropertyID);
+            ok(propinfoset->rgPropertyInfos[i].vtType != VT_EMPTY, "%d, got %d\n", i,
+                    propinfoset->rgPropertyInfos[i].vtType);
+
+            propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
         }
 
         for (i = 0; i < propinfoset->cPropertyInfos; i++)
@@ -107,6 +127,39 @@ static void test_Properties(void)
 
         CoTaskMemFree(propinfoset->rgPropertyInfos);
         CoTaskMemFree(propinfoset);
+
+        hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(propidlist.cPropertyIDs == 14, "got %d\n", propinfoset->cPropertyInfos);
+        ok(propset->cProperties == 14, "got %d\n", propinfoset->cPropertyInfos);
+
+        for (i = 0; i < propidlist.cPropertyIDs; i++)
+        {
+            VARTYPE vartype = VT_EMPTY;
+
+            ok(properties[i] == propidlist.rgPropertyIDs[i], "%d, got %d\n", i, propidlist.rgPropertyIDs[i]);
+
+            if(properties[i] == DBPROP_INIT_PROMPT)
+            {
+                ok(V_I2(&propset->rgProperties[i].vValue) == 4, "wrong value %s\n", debugstr_variant(&propset->rgProperties[i].vValue));
+                vartype = VT_I2;
+            }
+            else if(properties[i] == DBPROP_INIT_LCID)
+            {
+                ok(V_I4(&propset->rgProperties[i].vValue) == GetUserDefaultLCID(), "wrong value %s\n", debugstr_variant(&propset->rgProperties[i].vValue));
+                vartype = VT_I4;
+            }
+            else if(properties[i] == DBPROP_INIT_OLEDBSERVICES)
+            {
+                ok(V_I4(&propset->rgProperties[i].vValue) == -1, "wrong value %s\n", debugstr_variant(&propset->rgProperties[i].vValue));
+                vartype = VT_I4;
+            }
+
+            ok(V_VT(&propset->rgProperties[i].vValue) == vartype, "%d wrong type %d\n", i, V_VT(&propset->rgProperties[i].vValue));
+        }
+
+        CoTaskMemFree(propidlist.rgPropertyIDs);
+        CoTaskMemFree(propset);
     }
 
     IDBProperties_Release(props);

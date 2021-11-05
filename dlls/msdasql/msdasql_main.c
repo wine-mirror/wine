@@ -193,6 +193,12 @@ static const struct dbproperty dbproperties[] =
     { L"General Timeout",          DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
 };
 
+struct msdasql_prop
+{
+    VARTYPE id;
+    VARIANT value;
+};
+
 struct msdasql
 {
     IUnknown         MSDASQL_iface;
@@ -202,6 +208,7 @@ struct msdasql
     IPersist         IPersist_iface;
 
     LONG     ref;
+    struct msdasql_prop properties[14];
 };
 
 static inline struct msdasql *impl_from_IUnknown(IUnknown *iface)
@@ -324,10 +331,49 @@ static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG cPropert
             const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
 {
     struct msdasql *provider = impl_from_IDBProperties(iface);
+    int i, j, k;
+    DBPROPSET *propset;
 
-    FIXME("(%p)->(%d %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
+    TRACE("(%p)->(%d %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
 
-    return E_NOTIMPL;
+    *pcPropertySets = 1;
+
+    if (cPropertyIDSets != 1)
+    {
+        FIXME("Currently only 1 property set supported.\n");
+        cPropertyIDSets = 1;
+    }
+
+    propset = CoTaskMemAlloc(cPropertyIDSets * sizeof(DBPROPSET));
+    propset->guidPropertySet = DBPROPSET_DBINIT;
+
+    for (i=0; i < cPropertyIDSets; i++)
+    {
+        TRACE("Property id %d (count %d, set %s)\n", i, rgPropertyIDSets[i].cPropertyIDs,
+                debugstr_guid(&rgPropertyIDSets[i].guidPropertySet));
+
+        propset->cProperties = rgPropertyIDSets[i].cPropertyIDs;
+        propset->rgProperties = CoTaskMemAlloc(propset->cProperties * sizeof(DBPROP));
+
+        for (j=0; j < propset->cProperties; j++)
+        {
+            propset->rgProperties[j].dwPropertyID = rgPropertyIDSets[i].rgPropertyIDs[j];
+
+            for(k = 0; k < ARRAY_SIZE(provider->properties); k++)
+            {
+                if (provider->properties[k].id == rgPropertyIDSets[i].rgPropertyIDs[j])
+                {
+                    V_VT(&propset->rgProperties[j].vValue) = VT_EMPTY;
+                    VariantCopy(&propset->rgProperties[j].vValue, &provider->properties[k].value);
+                    break;
+                }
+            }
+        }
+    }
+
+    *prgPropertySets = propset;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG cPropertyIDSets,
@@ -531,6 +577,7 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
 {
     struct msdasql *provider;
     HRESULT hr;
+    int i;
 
     provider = malloc(sizeof(struct msdasql));
     if (!provider)
@@ -542,6 +589,31 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
     provider->IDBCreateSession_iface.lpVtbl = &dbsess_vtbl;
     provider->IPersist_iface.lpVtbl = &persistVtbl;
     provider->ref = 1;
+
+    for(i=0; i < ARRAY_SIZE(dbproperties); i++)
+    {
+        provider->properties[i].id = dbproperties[i].id;
+        VariantInit(&provider->properties[i].value);
+
+        /* Only the follow are initialized to a value */
+        switch(dbproperties[i].id)
+        {
+            case DBPROP_INIT_PROMPT:
+                V_VT(&provider->properties[i].value) = dbproperties[i].type;
+                V_I2(&provider->properties[i].value) = 4;
+                break;
+            case DBPROP_INIT_LCID:
+                V_VT(&provider->properties[i].value) = dbproperties[i].type;
+                V_I4(&provider->properties[i].value) = GetUserDefaultLCID();
+                break;
+            case DBPROP_INIT_OLEDBSERVICES:
+                V_VT(&provider->properties[i].value) = dbproperties[i].type;
+                V_I4(&provider->properties[i].value) = -1;
+                break;
+            default:
+                V_VT(&provider->properties[i].value) = VT_EMPTY;
+        }
+    }
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
     IUnknown_Release(&provider->MSDASQL_iface);

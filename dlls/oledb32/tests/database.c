@@ -1039,8 +1039,7 @@ static void test_odbc_provider(void)
         CoTaskMemFree(propinfoset);
 
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-        if (hr == S_OK) { /* Remove if, once _GetProperties is implemented */
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(propidlist.cPropertyIDs == 14, "got %d\n", propinfoset->cPropertyInfos);
 
         for (i = 0; i < propidlist.cPropertyIDs; i++)
@@ -1049,7 +1048,6 @@ static void test_odbc_provider(void)
                     propidlist.rgPropertyIDs[i]);
 
             propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
-        }
         }
 
         CoTaskMemFree(propidlist.rgPropertyIDs);
