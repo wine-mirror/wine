@@ -2748,18 +2748,20 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
 static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    SIZE sz;
-    RECT bgRect, textRect;
+    RECT client_rect, content_rect, old_label_rect, label_rect, box_rect, image_rect, text_rect;
     HFONT font, hPrevFont = NULL;
     DWORD dwStyle = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
+    LONG ex_style = GetWindowLongW(infoPtr->hwnd, GWL_EXSTYLE);
     UINT btn_type = get_button_type( dwStyle );
     int part = (btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON) ? BP_RADIOBUTTON : BP_CHECKBOX;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     LOGFONTW lf;
     HWND parent;
-    WCHAR *text;
     BOOL created_font = FALSE;
+    int text_offset;
+    SIZE box_size;
+    HRGN region;
 
     HRESULT hr = GetThemeFont(theme, hDC, part, state, TMT_FONT, &lf);
     if (SUCCEEDED(hr)) {
@@ -2775,20 +2777,31 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         if (infoPtr->font) SelectObject(hDC, infoPtr->font);
     }
 
-    if (FAILED(GetThemePartSize(theme, hDC, part, state, NULL, TS_DRAW, &sz)))
-        sz.cx = sz.cy = 13;
+    GetClientRect(infoPtr->hwnd, &client_rect);
+    GetThemeBackgroundContentRect(theme, hDC, part, state, &client_rect, &content_rect);
+    region = set_control_clipping(hDC, &client_rect);
 
-    GetClientRect(infoPtr->hwnd, &bgRect);
-    GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
-    init_custom_draw(&nmcd, infoPtr, hDC, &bgRect);
+    if (FAILED(GetThemePartSize(theme, hDC, part, state, NULL, TS_DRAW, &box_size)))
+    {
+        box_size.cx = 12 * GetDpiForWindow(infoPtr->hwnd) / 96 + 1;
+        box_size.cy = box_size.cx;
+    }
 
-    if (dtFlags & DT_SINGLELINE) /* Center the checkbox / radio button to the text. */
-        bgRect.top = bgRect.top + (textRect.bottom - textRect.top - sz.cy) / 2;
+    GetCharWidthW(hDC, '0', '0', &text_offset);
+    text_offset /= 2;
 
-    /* adjust for the check/radio marker */
-    bgRect.bottom = bgRect.top + sz.cy;
-    bgRect.right = bgRect.left + sz.cx;
-    textRect.left = bgRect.right + 6;
+    label_rect = content_rect;
+    if (dwStyle & BS_LEFTTEXT || ex_style & WS_EX_RIGHT)
+        label_rect.right -= box_size.cx + text_offset;
+    else
+        label_rect.left += box_size.cx + text_offset;
+
+    old_label_rect = label_rect;
+    dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &label_rect, &image_rect, &text_rect);
+    box_rect = get_box_rect(dwStyle, ex_style, &content_rect, &label_rect, dtFlags != (UINT)-1L,
+                            box_size);
+
+    init_custom_draw(&nmcd, infoPtr, hDC, &client_rect);
 
     parent = GetParent(infoPtr->hwnd);
     if (!parent) parent = infoPtr->hwnd;
@@ -2798,7 +2811,6 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
 
     DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
-    DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
 
     if (cdrf & CDRF_NOTIFYPOSTERASE)
     {
@@ -2811,36 +2823,32 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
 
-    text = get_button_text(infoPtr);
-    if (!(cdrf & CDRF_DOERASE) && text)
-        DrawThemeText(theme, hDC, part, state, text, lstrlenW(text), dtFlags, 0, &textRect);
+    /* Draw label */
+    if (!(cdrf & CDRF_DOERASE))
+    {
+        DrawThemeBackground(theme, hDC, part, state, &box_rect, NULL);
+        if (dtFlags != (UINT)-1L)
+            BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &image_rect, &text_rect, theme, part, state);
+    }
 
     if (cdrf & CDRF_NOTIFYPOSTPAINT)
     {
         nmcd.dwDrawStage = CDDS_POSTPAINT;
         SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     }
+    if ((cdrf & CDRF_SKIPPOSTPAINT) || dtFlags == (UINT)-1L) goto cleanup;
 
-    if (text)
+    if (focused)
     {
-        if (!(cdrf & CDRF_SKIPPOSTPAINT) && focused)
-        {
-            RECT focusRect;
-
-            focusRect = textRect;
-
-            DrawTextW(hDC, text, lstrlenW(text), &focusRect, dtFlags | DT_CALCRECT);
-
-            if (focusRect.right < textRect.right) focusRect.right++;
-            focusRect.bottom = textRect.bottom;
-
-            DrawFocusRect( hDC, &focusRect );
-        }
-
-        heap_free(text);
+        label_rect.left--;
+        label_rect.right++;
+        IntersectRect(&label_rect, &label_rect, &old_label_rect);
+        DrawFocusRect(hDC, &label_rect);
     }
 
 cleanup:
+    SelectClipRgn(hDC, region);
+    if (region) DeleteObject(region);
     if (created_font) DeleteObject(font);
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
