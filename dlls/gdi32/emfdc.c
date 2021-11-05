@@ -185,6 +185,153 @@ err:
     return 0;
 }
 
+/*******************************************************************************************
+ * Verify that the DIB parameters are valid.
+ */
+static BOOL is_valid_dib_format( const BITMAPINFOHEADER *info, BOOL allow_compression )
+{
+    if (info->biWidth <= 0) return FALSE;
+    if (info->biHeight == 0) return FALSE;
+
+    if (allow_compression && (info->biCompression == BI_RLE4 || info->biCompression == BI_RLE8))
+    {
+        if (info->biHeight < 0) return FALSE;
+        if (!info->biSizeImage) return FALSE;
+        return info->biBitCount == (info->biCompression == BI_RLE4 ? 4 : 8);
+    }
+
+    if (!info->biPlanes) return FALSE;
+
+    /* check for size overflow */
+    if (!info->biBitCount) return FALSE;
+    if (UINT_MAX / info->biBitCount < info->biWidth) return FALSE;
+    if (UINT_MAX / get_dib_stride( info->biWidth, info->biBitCount ) < abs( info->biHeight )) return FALSE;
+
+    switch (info->biBitCount)
+    {
+    case 1:
+    case 4:
+    case 8:
+    case 24:
+        return (info->biCompression == BI_RGB);
+    case 16:
+    case 32:
+        return (info->biCompression == BI_BITFIELDS || info->biCompression == BI_RGB);
+    default:
+        return FALSE;
+    }
+}
+
+static BOOL emf_parse_user_bitmapinfo( BITMAPINFOHEADER *dst, const BITMAPINFOHEADER *info,
+                                       UINT coloruse, BOOL allow_compression,
+                                       UINT *bmi_size, UINT *img_size )
+{
+    UINT colour_table_size;
+
+    if (coloruse > DIB_PAL_COLORS + 1) return FALSE;  /* FIXME: handle DIB_PAL_COLORS+1 format */
+    if (!info) return FALSE;
+
+    memset(dst, 0, sizeof(*dst));
+
+    if (info->biSize == sizeof(BITMAPCOREHEADER))
+    {
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
+        dst->biWidth         = core->bcWidth;
+        dst->biHeight        = core->bcHeight;
+        dst->biPlanes        = core->bcPlanes;
+        dst->biBitCount      = core->bcBitCount;
+        dst->biCompression   = BI_RGB;
+        dst->biXPelsPerMeter = 0;
+        dst->biYPelsPerMeter = 0;
+        dst->biClrUsed       = 0;
+        dst->biClrImportant  = 0;
+    }
+    else if (info->biSize >= sizeof(BITMAPINFOHEADER)) /* assume BITMAPINFOHEADER */
+    {
+        *dst = *info;
+    }
+    else
+    {
+        WARN( "(%u): unknown/wrong size for header\n", info->biSize );
+        return FALSE;
+    }
+
+    dst->biSize = sizeof(*dst);
+
+    if (!is_valid_dib_format( dst, allow_compression )) return FALSE;
+
+    colour_table_size = 0;
+    if (dst->biCompression == BI_BITFIELDS)
+    {
+        colour_table_size = 3 * sizeof(DWORD);
+    }
+    else if (dst->biBitCount <= 8)
+    {
+        UINT elm_size = coloruse == DIB_PAL_COLORS ? sizeof(WORD) : sizeof(DWORD);
+        UINT colours = dst->biClrUsed;
+
+        /* Windows never truncates colour tables, even if they are
+         * unnecessarily big (> 1<<bpp).  We emulate this behaviour. */
+
+        if (colours > UINT_MAX / elm_size)
+        {
+            WARN( "too many colours in palette (%u > %u)\n",
+                  colours, UINT_MAX / elm_size );
+            return FALSE;
+        }
+
+        colour_table_size = colours * elm_size;
+    }
+
+    *bmi_size = sizeof(BITMAPINFOHEADER) + colour_table_size;
+    if (*bmi_size < sizeof(BITMAPINFOHEADER))
+        return FALSE;
+
+    if (dst->biCompression == BI_RGB || dst->biCompression == BI_BITFIELDS)
+        *img_size = get_dib_stride( dst->biWidth, dst->biBitCount ) * abs( dst->biHeight );
+    else
+        *img_size = dst->biSizeImage;
+
+    return TRUE;
+}
+
+static void emf_copy_colours_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *info, UINT coloruse )
+{
+    if (dst->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        /* bitfields are always at bmiColors even in larger structures */
+        memcpy( dst->bmiColors, info->bmiColors, 3 * sizeof(DWORD) );
+    }
+    else if (dst->bmiHeader.biBitCount <= 8)
+    {
+        void *src_colors = (char *)info + info->bmiHeader.biSize;
+        unsigned int colors = dst->bmiHeader.biClrUsed;
+
+        if (!colors) colors = 1 << dst->bmiHeader.biBitCount;
+
+        if (coloruse == DIB_PAL_COLORS)
+        {
+            memcpy( dst->bmiColors, src_colors, colors * sizeof(WORD) );
+        }
+        else if (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
+        {
+            memcpy( dst->bmiColors, src_colors, colors * sizeof(RGBQUAD) );
+        }
+        else
+        {
+            unsigned int i;
+            RGBTRIPLE *triple = (RGBTRIPLE *)src_colors;
+            for (i = 0; i < colors; i++)
+            {
+                dst->bmiColors[i].rgbRed      = triple[i].rgbtRed;
+                dst->bmiColors[i].rgbGreen    = triple[i].rgbtGreen;
+                dst->bmiColors[i].rgbBlue     = triple[i].rgbtBlue;
+                dst->bmiColors[i].rgbReserved = 0;
+            }
+        }
+    }
+}
+
 static UINT emfdc_add_handle( struct emf *emf, HGDIOBJ obj )
 {
     UINT index;
@@ -1602,19 +1749,31 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
 {
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
-    UINT bmi_size, emr_size;
+    UINT bmi_size, img_size, payload_size, emr_size;
+    BITMAPINFOHEADER bih;
+    BITMAPINFO *bi;
 
-    /* calculate the size of the colour table */
-    bmi_size = get_dib_info_size( info, usage );
+    /* calculate the size of the colour table and the image */
+    if (!emf_parse_user_bitmapinfo( &bih, &info->bmiHeader, usage, TRUE,
+                                    &bmi_size, &img_size )) return 0;
 
-    emr_size = sizeof (EMRSTRETCHDIBITS) + bmi_size + info->bmiHeader.biSizeImage;
+    /* check for overflows */
+    payload_size = bmi_size + img_size;
+    if (payload_size < bmi_size) return 0;
+
+    emr_size = sizeof (EMRSTRETCHDIBITS) + payload_size;
+    if (emr_size < sizeof (EMRSTRETCHDIBITS)) return 0;
+
+    /* allocate record */
     if (!(emr = HeapAlloc(GetProcessHeap(), 0, emr_size ))) return 0;
 
     /* write a bitmap info header (with colours) to the record */
-    memcpy( &emr[1], info, bmi_size);
+    bi = (BITMAPINFO *)&emr[1];
+    bi->bmiHeader = bih;
+    emf_copy_colours_from_user_bitmapinfo( bi, info, usage );
 
     /* write bitmap bits to the record */
-    memcpy ( (BYTE *)&emr[1] + bmi_size, bits, info->bmiHeader.biSizeImage );
+    memcpy ( (BYTE *)&emr[1] + bmi_size, bits, img_size );
 
     /* fill in the EMR header at the front of our piece of memory */
     emr->emr.iType = EMR_STRETCHDIBITS;
@@ -1632,7 +1791,7 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
     emr->offBmiSrc    = sizeof (EMRSTRETCHDIBITS);
     emr->cbBmiSrc     = bmi_size;
     emr->offBitsSrc   = emr->offBmiSrc + bmi_size;
-    emr->cbBitsSrc    = info->bmiHeader.biSizeImage;
+    emr->cbBitsSrc    = img_size;
 
     emr->cxSrc = width_src;
     emr->cySrc = height_src;
@@ -1654,14 +1813,35 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
                               const void *bits, const BITMAPINFO *info, UINT usage )
 {
     EMRSETDIBITSTODEVICE *emr;
-    DWORD bmiSize = get_dib_info_size( info, usage );
-    DWORD size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + info->bmiHeader.biSizeImage;
     BOOL ret;
+    UINT bmi_size, img_size, payload_size, emr_size;
+    BITMAPINFOHEADER bih;
+    BITMAPINFO *bi;
 
-    if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+    /* calculate the size of the colour table and the image */
+    if (!emf_parse_user_bitmapinfo( &bih, &info->bmiHeader, usage, TRUE,
+                                    &bmi_size, &img_size )) return 0;
+
+    /* check for overflows */
+    payload_size = bmi_size + img_size;
+    if (payload_size < bmi_size) return 0;
+
+    emr_size = sizeof (EMRSETDIBITSTODEVICE) + payload_size;
+    if (emr_size < sizeof (EMRSETDIBITSTODEVICE)) return 0;
+
+    /* allocate record */
+    if (!(emr = HeapAlloc( GetProcessHeap(), 0, emr_size ))) return FALSE;
+
+    /* write a bitmap info header (with colours) to the record */
+    bi = (BITMAPINFO *)&emr[1];
+    bi->bmiHeader = bih;
+    emf_copy_colours_from_user_bitmapinfo( bi, info, usage );
+
+    /* write bitmap bits to the record */
+    memcpy ( (BYTE *)&emr[1] + bmi_size, bits, img_size );
 
     emr->emr.iType = EMR_SETDIBITSTODEVICE;
-    emr->emr.nSize = size;
+    emr->emr.nSize = emr_size;
     emr->rclBounds.left = x_dst;
     emr->rclBounds.top = y_dst;
     emr->rclBounds.right = x_dst + width - 1;
@@ -1673,14 +1853,12 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
     emr->cxSrc = width;
     emr->cySrc = height;
     emr->offBmiSrc = sizeof(EMRSETDIBITSTODEVICE);
-    emr->cbBmiSrc = bmiSize;
-    emr->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + bmiSize;
-    emr->cbBitsSrc = info->bmiHeader.biSizeImage;
+    emr->cbBmiSrc = bmi_size;
+    emr->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + bmi_size;
+    emr->cbBitsSrc = img_size;
     emr->iUsageSrc = usage;
     emr->iStartScan = startscan;
     emr->cScans = lines;
-    memcpy( (BYTE*)emr + emr->offBmiSrc, info, bmiSize );
-    memcpy( (BYTE*)emr + emr->offBitsSrc, bits, info->bmiHeader.biSizeImage );
 
     if ((ret = emfdc_record( dc_attr->emf, (EMR*)emr )))
         emfdc_update_bounds( dc_attr->emf, &emr->rclBounds );

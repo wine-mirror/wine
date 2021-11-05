@@ -6382,13 +6382,6 @@ static void test_emf_StretchDIBits(void)
     {
         winetest_push_context("Test %d", test_idx);
 
-        if (tests[test_idx].infomode != 1 && !strcmp(winetest_platform, "wine"))
-        {
-            skip("biSizeImage == 0 not supported under Wine\n");
-            winetest_pop_context();
-            continue;
-        }
-
         memset(&bmi, 0, sizeof(bmi));
         if (tests[test_idx].infomode < 2)
         {
@@ -7770,13 +7763,6 @@ static void test_emf_SetDIBitsToDevice(void)
     for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
     {
         winetest_push_context("Test %d", test_idx);
-
-        if (tests[test_idx].infomode != 1 && !strcmp(winetest_platform, "wine"))
-        {
-            skip("biSizeImage == 0 not supported under Wine\n");
-            winetest_pop_context();
-            continue;
-        }
 
         if (tests[test_idx].height != bitmap_height && !strcmp(winetest_platform, "wine"))
         {
