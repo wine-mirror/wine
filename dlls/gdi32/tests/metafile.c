@@ -7764,13 +7764,6 @@ static void test_emf_SetDIBitsToDevice(void)
     {
         winetest_push_context("Test %d", test_idx);
 
-        if (tests[test_idx].height != bitmap_height && !strcmp(winetest_platform, "wine"))
-        {
-            skip("Wine does not adjust cLines appropriately\n");
-            winetest_pop_context();
-            continue;
-        }
-
         memset(&bmi, 0, sizeof(bmi));
         if (tests[test_idx].infomode < 2)
         {

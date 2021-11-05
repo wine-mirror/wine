@@ -1815,12 +1815,32 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
     EMRSETDIBITSTODEVICE *emr;
     BOOL ret;
     UINT bmi_size, img_size, payload_size, emr_size;
+    UINT src_height, stride;
     BITMAPINFOHEADER bih;
     BITMAPINFO *bi;
 
     /* calculate the size of the colour table and the image */
     if (!emf_parse_user_bitmapinfo( &bih, &info->bmiHeader, usage, TRUE,
                                     &bmi_size, &img_size )) return 0;
+
+    if (bih.biHeight >= 0)
+    {
+        src_height = (UINT)bih.biHeight;
+        if (src_height > y_src + height) src_height = y_src + height;
+
+        if (src_height < startscan) lines = 0;
+        else if (lines > src_height - startscan) lines = src_height - startscan;
+
+        if (!lines) return 0;
+
+        if (bih.biCompression == BI_RGB || bih.biCompression == BI_BITFIELDS)
+        {
+            /* truncate image and check for overflows */
+            stride = get_dib_stride( bih.biWidth, bih.biBitCount );
+            img_size = lines * stride;
+            if (img_size / stride != lines) return 0;
+        }
+    }
 
     /* check for overflows */
     payload_size = bmi_size + img_size;
