@@ -2242,6 +2242,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
      * a concrete object that we'll handle
      */
     if (dwarf2_find_attribute(di, DW_AT_inline, &inline_flags) &&
+        inline_flags.gotten_from == attr_direct &&
         inline_flags.u.uvalue != DW_INL_not_inlined)
     {
         TRACE("Function %s declared as inlined (%ld)... skipping\n",
