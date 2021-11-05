@@ -258,6 +258,26 @@ static BOOL intersect_rect(RECT *dest, const RECT *src1, const RECT *src2)
     return TRUE;
 }
 
+static D3DCOLOR video_processor_get_background_color(const DXVA2_AYUVSample16 *ayuv)
+{
+    float y, cb, cr;
+    BYTE r, g, b;
+
+    y = (ayuv->Y >> 8) - 16;
+    cb = (ayuv->Cb >> 8) - 128;
+    cr = (ayuv->Cr >> 8) - 128;
+
+    y = 255.0f * y / 219.0f;
+    cb = 255.0f * cb / 224.0f;
+    cr = 255.0f * cr / 224.0f;
+
+    r = y + 1.402 * cr;
+    g = y - 0.344 * cb - 0.714 * cr;
+    b = y + 1.772 * cb;
+
+    return D3DCOLOR_XRGB(r, g, b);
+}
+
 static HRESULT WINAPI video_processor_VideoProcessBlt(IDirectXVideoProcessor *iface, IDirect3DSurface9 *rt,
         const DXVA2_VideoProcessBltParams *params, const DXVA2_VideoSample *samples, UINT sample_count,
         HANDLE *complete_handle)
@@ -269,14 +289,19 @@ static HRESULT WINAPI video_processor_VideoProcessBlt(IDirectXVideoProcessor *if
 
     TRACE("%p, %p, %p, %p, %u, %p.\n", iface, rt, params, samples, sample_count, complete_handle);
 
+    if (params->BackgroundColor.Alpha != 0xffff)
+    {
+        WARN("Unexpected background alpha %#x.\n", params->BackgroundColor.Alpha);
+        return E_INVALIDARG;
+    }
+
     if (FAILED(hr = IDirect3DSurface9_GetDevice(rt, &device)))
     {
         WARN("Failed to get surface device, hr %#x.\n", hr);
         return hr;
     }
 
-    /* FIXME: use specified color */
-    IDirect3DDevice9_ColorFill(device, rt, NULL, 0);
+    IDirect3DDevice9_ColorFill(device, rt, &params->TargetRect, video_processor_get_background_color(&params->BackgroundColor));
 
     for (i = 0; i < sample_count; ++i)
     {
