@@ -2855,11 +2855,12 @@ cleanup:
 
 static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    RECT bgRect, textRect, contentRect;
-    WCHAR *text = get_button_text(infoPtr);
+    RECT clientRect, contentRect, imageRect, textRect, bgRect;
+    HRGN region, textRegion = NULL;
     LOGFONTW lf;
     HFONT font, hPrevFont = NULL;
     BOOL created_font = FALSE;
+    TEXTMETRICW textMetric;
 
     HRESULT hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
     if (SUCCEEDED(hr)) {
@@ -2875,37 +2876,41 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             SelectObject(hDC, infoPtr->font);
     }
 
-    GetClientRect(infoPtr->hwnd, &bgRect);
-    textRect = bgRect;
+    GetClientRect(infoPtr->hwnd, &clientRect);
+    GetThemeBackgroundContentRect(theme, hDC, BP_GROUPBOX, state, &clientRect, &contentRect);
+    region = set_control_clipping(hDC, &clientRect);
 
-    if (text)
+    bgRect = contentRect;
+    GetTextMetricsW(hDC, &textMetric);
+    bgRect.top += (textMetric.tmHeight / 2) - 1;
+
+    InflateRect(&contentRect, -7, 1);
+    dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &contentRect, &imageRect, &textRect);
+    if (dtFlags != (UINT)-1 && !show_image_only(infoPtr))
     {
-        SIZE textExtent;
-        GetTextExtentPoint32W(hDC, text, lstrlenW(text), &textExtent);
-        bgRect.top += (textExtent.cy / 2);
-        textRect.left += 10;
-        textRect.bottom = textRect.top + textExtent.cy;
-        textRect.right = textRect.left + textExtent.cx + 4;
-
-        ExcludeClipRect(hDC, textRect.left, textRect.top, textRect.right, textRect.bottom);
+        textRegion = CreateRectRgnIndirect(&textRect);
+        ExtSelectClipRgn(hDC, textRegion, RGN_DIFF);
     }
-
-    GetThemeBackgroundContentRect(theme, hDC, BP_GROUPBOX, state, &bgRect, &contentRect);
-    ExcludeClipRect(hDC, contentRect.left, contentRect.top, contentRect.right, contentRect.bottom);
 
     if (IsThemeBackgroundPartiallyTransparent(theme, BP_GROUPBOX, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
     DrawThemeBackground(theme, hDC, BP_GROUPBOX, state, &bgRect, NULL);
 
-    SelectClipRgn(hDC, NULL);
-
-    if (text)
+    if (dtFlags != (UINT)-1)
     {
-        InflateRect(&textRect, -2, 0);
-        DrawThemeText(theme, hDC, BP_GROUPBOX, state, text, lstrlenW(text), 0, 0, &textRect);
-        heap_free(text);
+        contentRect.left--;
+        contentRect.right++;
+        contentRect.bottom++;
+        if (textRegion)
+        {
+            SelectClipRgn(hDC, textRegion);
+            DeleteObject(textRegion);
+        }
+        BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &imageRect, &textRect, theme, BP_GROUPBOX, state);
     }
 
+    SelectClipRgn(hDC, region);
+    if (region) DeleteObject(region);
     if (created_font) DeleteObject(font);
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
