@@ -6376,12 +6376,6 @@ static void test_emf_StretchDIBits(void)
         {32, 4, 4, BI_BITFIELDS, 1, EMF_STRETCHDIBITS_32BIT_4X4_SIZED, sizeof(EMF_STRETCHDIBITS_32BIT_4X4_SIZED), 0, 3, {{0x00, 0x00, 0xff}, {0xe0, 0xff, 0x00}, {0xff, 0x00, 0x00}}},
     };
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Wine sets EMRSTRETCHDIBITS::rclBounds incorrectly\n");
-        return;
-    }
-
     hdc = GetDC(0);
 
     for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)

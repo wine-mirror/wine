@@ -1639,8 +1639,8 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
 
     emr->rclBounds.left   = x_dst;
     emr->rclBounds.top    = y_dst;
-    emr->rclBounds.right  = x_dst + width_dst;
-    emr->rclBounds.bottom = y_dst + height_dst;
+    emr->rclBounds.right  = x_dst + width_dst - 1;
+    emr->rclBounds.bottom = y_dst + height_dst - 1;
 
     /* save the record we just created */
     ret = emfdc_record( dc_attr->emf, &emr->emr );
