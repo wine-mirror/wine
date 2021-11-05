@@ -672,17 +672,19 @@ static VkBufferView wined3d_view_vk_create_vk_buffer_view(struct wined3d_context
     struct wined3d_device_vk *device_vk;
     VkBufferView vk_buffer_view;
     unsigned int offset, size;
+    struct wined3d_bo_vk *bo;
     VkResult vr;
 
     get_buffer_view_range(&buffer_vk->b, desc, &view_format_vk->f, &offset, &size);
     wined3d_buffer_prepare_location(&buffer_vk->b, &context_vk->c, WINED3D_LOCATION_BUFFER);
+    bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
 
     create_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
     create_info.pNext = NULL;
     create_info.flags = 0;
-    create_info.buffer = buffer_vk->bo.vk_buffer;
+    create_info.buffer = bo->vk_buffer;
     create_info.format = view_format_vk->vk_format;
-    create_info.offset = buffer_vk->bo.buffer_offset + offset;
+    create_info.offset = bo->buffer_offset + offset;
     create_info.range = size;
 
     device_vk = wined3d_device_vk(buffer_vk->b.resource.device);
@@ -1082,6 +1084,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
     VkBufferView vk_buffer_view;
     uint32_t default_flags = 0;
     VkImageView vk_image_view;
+    struct wined3d_bo_vk *bo;
 
     TRACE("srv_vk %p.\n", srv_vk);
 
@@ -1099,12 +1102,13 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
         if (!vk_buffer_view)
             return;
+        bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
 
         TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
 
         srv_vk->view_vk.u.vk_buffer_view = vk_buffer_view;
         srv_vk->view_vk.bo_user.valid = true;
-        list_add_head(&buffer_vk->bo.b.users, &srv_vk->view_vk.bo_user.entry);
+        list_add_head(&bo->b.users, &srv_vk->view_vk.bo_user.entry);
 
         return;
     }
@@ -2204,11 +2208,13 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
 
         if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, format_vk)))
         {
+            struct wined3d_bo_vk *bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
+
             TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
 
             uav_vk->view_vk.u.vk_buffer_view = vk_buffer_view;
             uav_vk->view_vk.bo_user.valid = true;
-            list_add_head(&buffer_vk->bo.b.users, &view_vk->bo_user.entry);
+            list_add_head(&bo->b.users, &view_vk->bo_user.entry);
         }
 
         if (desc->flags & (WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_BUFFER_APPEND))

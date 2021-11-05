@@ -2496,7 +2496,7 @@ static void wined3d_context_vk_bind_vertex_buffers(struct wined3d_context_vk *co
         {
             buffer_vk = wined3d_buffer_vk(buffer);
             buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
-            wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+            wined3d_context_vk_reference_bo(context_vk, (struct wined3d_bo_vk *)buffer->buffer_object);
             buffers[count] = buffer_info->buffer;
             offsets[count] = buffer_info->offset + stream->offset;
             ++count;
@@ -2535,7 +2535,7 @@ static void wined3d_context_vk_bind_stream_output_buffers(struct wined3d_context
         {
             buffer_vk = wined3d_buffer_vk(buffer);
             buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
-            wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+            wined3d_context_vk_reference_bo(context_vk, (struct wined3d_bo_vk *)buffer->buffer_object);
             buffers[count] = buffer_info->buffer;
             if ((offsets[count] = stream->offset) == ~0u)
             {
@@ -2737,7 +2737,7 @@ static bool wined3d_shader_descriptor_writes_vk_add_cbv_write(struct wined3d_sha
     if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
             binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer_info, NULL, NULL))
         return false;
-    wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+    wined3d_context_vk_reference_bo(context_vk, (struct wined3d_bo_vk *)buffer->buffer_object);
     return true;
 }
 
@@ -3385,7 +3385,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             idx_type = VK_INDEX_TYPE_UINT32;
         buffer_vk = wined3d_buffer_vk(state->index_buffer);
         buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
-        wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+        wined3d_context_vk_reference_bo(context_vk, (struct wined3d_bo_vk *)buffer_vk->b.buffer_object);
         VK_CALL(vkCmdBindIndexBuffer(vk_command_buffer, buffer_info->buffer,
                 buffer_info->offset + state->index_offset, idx_type));
     }

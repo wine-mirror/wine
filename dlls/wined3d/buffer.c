@@ -1459,11 +1459,13 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
 
 const VkDescriptorBufferInfo *wined3d_buffer_vk_get_buffer_info(struct wined3d_buffer_vk *buffer_vk)
 {
+    struct wined3d_bo_vk *bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
+
     if (buffer_vk->b.bo_user.valid)
         return &buffer_vk->buffer_info;
 
-    buffer_vk->buffer_info.buffer = buffer_vk->bo.vk_buffer;
-    buffer_vk->buffer_info.offset = buffer_vk->bo.buffer_offset;
+    buffer_vk->buffer_info.buffer = bo->vk_buffer;
+    buffer_vk->buffer_info.offset = bo->buffer_offset;
     buffer_vk->buffer_info.range = buffer_vk->b.resource.size;
     buffer_vk->b.bo_user.valid = true;
 
@@ -1537,7 +1539,7 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
     if (!ranges->offset && ranges->size == resource->size)
         flags |= WINED3D_MAP_DISCARD;
 
-    dst_bo = &wined3d_buffer_vk(buffer)->bo;
+    dst_bo = (struct wined3d_bo_vk *)buffer->buffer_object;
     if (!(dst_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) || (!(flags & WINED3D_MAP_DISCARD)
             && dst_bo->command_buffer_id > context_vk->completed_command_buffer_id))
     {
@@ -1629,6 +1631,7 @@ void wined3d_buffer_vk_barrier(struct wined3d_buffer_vk *buffer_vk,
 
     if (src_bind_mask)
     {
+        const struct wined3d_bo_vk *bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
         const struct wined3d_vk_info *vk_info = context_vk->vk_info;
         VkBufferMemoryBarrier vk_barrier;
 
@@ -1643,8 +1646,8 @@ void wined3d_buffer_vk_barrier(struct wined3d_buffer_vk *buffer_vk,
         vk_barrier.dstAccessMask = vk_access_mask_from_bind_flags(bind_mask);
         vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        vk_barrier.buffer = buffer_vk->bo.vk_buffer;
-        vk_barrier.offset = buffer_vk->bo.buffer_offset;
+        vk_barrier.buffer = bo->vk_buffer;
+        vk_barrier.offset = bo->buffer_offset;
         vk_barrier.size = buffer_vk->b.resource.size;
         VK_CALL(vkCmdPipelineBarrier(wined3d_context_vk_get_command_buffer(context_vk),
                 vk_pipeline_stage_mask_from_bind_flags(src_bind_mask),

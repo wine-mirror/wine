@@ -6315,7 +6315,7 @@ static inline void wined3d_context_vk_reference_resource(const struct wined3d_co
         struct wined3d_resource *resource)
 {
     if (resource->type == WINED3D_RTYPE_BUFFER)
-        wined3d_context_vk_reference_bo(context_vk, &wined3d_buffer_vk(buffer_from_resource(resource))->bo);
+        wined3d_context_vk_reference_bo(context_vk, (struct wined3d_bo_vk *)buffer_from_resource(resource)->buffer_object);
     else
         wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
 }
