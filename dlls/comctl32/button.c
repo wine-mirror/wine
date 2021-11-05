@@ -1761,6 +1761,38 @@ static void BUTTON_DrawLabel(const BUTTON_INFO *infoPtr, HDC hdc, UINT dtFlags, 
    heap_free(text);
 }
 
+static void BUTTON_DrawThemedLabel(const BUTTON_INFO *info, HDC hdc, UINT text_flags,
+                                   const RECT *image_rect, const RECT *text_rect, HTHEME theme,
+                                   int part, int state)
+{
+    HBRUSH brush = NULL;
+    UINT image_flags;
+    WCHAR *text;
+
+    if (show_image(info))
+    {
+        image_flags = IsWindowEnabled(info->hwnd) ? DSS_NORMAL : DSS_DISABLED;
+
+        if ((GetWindowLongW(info->hwnd, GWL_STYLE) & BS_PUSHLIKE)
+            && (info->state & BST_INDETERMINATE))
+        {
+            brush = GetSysColorBrush(COLOR_GRAYTEXT);
+            image_flags |= DSS_MONO;
+        }
+
+        BUTTON_DrawImage(info, hdc, brush, image_flags, image_rect);
+    }
+
+   if (show_image_only(info))
+       return;
+
+   if (!(text = get_button_text(info)))
+       return;
+
+   DrawThemeText(theme, hdc, part, state, text, lstrlenW(text), text_flags, 0, text_rect);
+   heap_free(text);
+}
+
 /**********************************************************************
  *       Push Button Functions
  */
@@ -2661,17 +2693,16 @@ cleanup:
  */
 static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    RECT bgRect, textRect, focusRect;
+    RECT bgRect, labelRect, imageRect, textRect, focusRect;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
-    WCHAR *text;
 
     if (infoPtr->font) SelectObject(hDC, infoPtr->font);
 
     GetClientRect(infoPtr->hwnd, &bgRect);
-    GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &bgRect, &textRect);
-    focusRect = textRect;
+    GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &bgRect, &labelRect);
+    focusRect = labelRect;
 
     init_custom_draw(&nmcd, infoPtr, hDC, &bgRect);
 
@@ -2697,10 +2728,12 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     if (cdrf & CDRF_SKIPDEFAULT) return;
 
-    if (!(cdrf & CDRF_DOERASE) && (text = get_button_text(infoPtr)))
+    if (!(cdrf & CDRF_DOERASE))
     {
-        DrawThemeText(theme, hDC, BP_PUSHBUTTON, state, text, lstrlenW(text), dtFlags, 0, &textRect);
-        heap_free(text);
+        dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &labelRect, &imageRect, &textRect);
+        if (dtFlags != (UINT)-1L)
+            BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &imageRect, &textRect, theme,
+                                   BP_PUSHBUTTON, state);
     }
 
     if (cdrf & CDRF_NOTIFYPOSTPAINT)
