@@ -1063,7 +1063,7 @@ static HRESULT WINAPI header_info_GetAttributeByIndexEx(IWMHeaderInfo3 *iface,
 {
     FIXME("iface %p, stream_number %u, index %u, name %p, name_len %p,"
             " type %p, lang_index %p, value %p, size %p, stub!\n",
-            iface, stream_number, index, debugstr_w(name), name_len, type, lang_index, value, size);
+            iface, stream_number, index, name, name_len, type, lang_index, value, size);
     return E_NOTIMPL;
 }
 
