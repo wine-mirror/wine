@@ -402,24 +402,6 @@ static BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD r
     return TRUE;
 }
 
-static INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT width_dst,
-                                       INT height_dst, INT x_src, INT y_src, INT width_src,
-                                       INT height_src, const void *bits, BITMAPINFO *info,
-                                       UINT wUsage, DWORD dwRop )
-{
-    /* FIXME: Update bound rect */
-    return height_src;
-}
-
-static INT CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width,
-                                           DWORD height, INT x_src, INT y_src, UINT startscan,
-                                           UINT lines, const void *bits, BITMAPINFO *info,
-                                           UINT usage )
-{
-    /* FIXME: Update bound rect */
-    return lines;
-}
-
 static HBITMAP CDECL EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     return 0;
@@ -528,7 +510,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSetBoundsRect */
     NULL,                            /* pSetDCBrushColor*/
     NULL,                            /* pSetDCPenColor*/
-    EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
+    NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetPixel,                 /* pSetPixel */
@@ -536,7 +518,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
-    EMFDRV_StretchDIBits,            /* pStretchDIBits */
+    NULL,                            /* pStretchDIBits */
     EMFDRV_StrokeAndFillPath,        /* pStrokeAndFillPath */
     EMFDRV_StrokePath,               /* pStrokePath */
     NULL,                            /* pUnrealizePalette */
