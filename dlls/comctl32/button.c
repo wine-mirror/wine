@@ -2917,7 +2917,7 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
 static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    RECT rc, content_rect, push_rect, dropdown_rect, focus_rect;
+    RECT rc, content_rect, push_rect, dropdown_rect, focus_rect, label_rect, image_rect, text_rect;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
@@ -2984,13 +2984,12 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     {
         COLORREF old_color, color;
         INT old_bk_mode;
-        WCHAR *text;
 
-        if ((text = get_button_text(infoPtr)))
-        {
-            DrawThemeText(theme, hDC, BP_PUSHBUTTON, state, text, lstrlenW(text), dtFlags, 0, &content_rect);
-            heap_free(text);
-        }
+        label_rect = content_rect;
+        dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &label_rect, &image_rect, &text_rect);
+        if (dtFlags != (UINT)-1L)
+            BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &image_rect, &text_rect, theme,
+                                   BP_PUSHBUTTON, state);
 
         GetThemeColor(theme, BP_PUSHBUTTON, state, TMT_TEXTCOLOR, &color);
         old_bk_mode = SetBkMode(hDC, TRANSPARENT);
