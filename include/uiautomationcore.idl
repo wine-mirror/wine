@@ -26,7 +26,10 @@ enum ProviderOptions {
     ProviderOptions_NonClientAreaProvider = 0x0004,
     ProviderOptions_OverrideProvider      = 0x0008,
     ProviderOptions_ProviderOwnsSetFocus  = 0x0010,
-    ProviderOptions_UseComThreading       = 0x0020
+    ProviderOptions_UseComThreading       = 0x0020,
+    ProviderOptions_RefuseNonClientSupport = 0x0040,
+    ProviderOptions_HasNativeIAccessible   = 0x0080,
+    ProviderOptions_UseClientCoordinates   = 0x0100,
 };
 
 typedef int PROPERTYID;
@@ -48,7 +51,8 @@ library UIA
     [
         object,
         uuid(d6dd68d1-86fd-4332-8666-9abedea2d24c),
-        pointer_default(unique)
+        pointer_default(unique),
+        oleautomation
     ]
     interface IRawElementProviderSimple : IUnknown
     {
