@@ -20,6 +20,14 @@
 import "oaidl.idl";
 import "oleacc.idl";
 
+enum NavigateDirection {
+    NavigateDirection_Parent          = 0x0000,
+    NavigateDirection_NextSibling     = 0x0001,
+    NavigateDirection_PreviousSibling = 0x0002,
+    NavigateDirection_FirstChild      = 0x0003,
+    NavigateDirection_LastChild       = 0x0004,
+};
+
 enum ProviderOptions {
     ProviderOptions_ClientSideProvider    = 0x0001,
     ProviderOptions_ServerSideProvider    = 0x0002,
@@ -37,6 +45,13 @@ typedef int PATTERNID;
 typedef int EVENTID;
 typedef int TEXTATTRIBUTEID;
 typedef int CONTROLTYPEID;
+
+struct UiaRect {
+    double left;
+    double top;
+    double width;
+    double height;
+};
 
 [
     version(1.0),
@@ -91,5 +106,49 @@ library UIA
         HRESULT ConvertReturnedElement(
                 [in] IRawElementProviderSimple *pIn,
                 [out] IAccessibleEx **ppRetValOut);
+    }
+
+    interface IRawElementProviderFragmentRoot;
+
+    [
+        object,
+        uuid(f7063da8-8359-439c-9297-bbc5299a7d87),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderFragment : IUnknown
+    {
+        HRESULT Navigate(
+                [in] enum NavigateDirection direction,
+                [out, retval] IRawElementProviderFragment **pRetVal);
+
+        HRESULT GetRuntimeId([out, retval] SAFEARRAY(int) *pRetVal);
+        HRESULT get_BoundingRectangle([out, retval] struct UiaRect *pRetVal);
+        /*
+         * FIXME: Current versions of Windows SDK use
+         * SAFEARRAY(IRawElementProviderFragmentRoot *) instead of
+         * SAFEARRAY(VARIANT). The new type is currently unsupported
+         * in widl, we should switch to it when it is.
+         */
+        HRESULT GetEmbeddedFragmentRoots([out, retval] SAFEARRAY(VARIANT) *pRetVal);
+        HRESULT SetFocus();
+
+        [propget] HRESULT FragmentRoot([out, retval] IRawElementProviderFragmentRoot **pRetVal);
+    }
+
+    [
+        object,
+        uuid(620ce2a5-ab8f-40a9-86cb-de3c75599b58),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IRawElementProviderFragmentRoot : IUnknown
+    {
+        HRESULT ElementProviderFromPoint(
+                [in] double x,
+                [in] double y,
+                [out, retval] IRawElementProviderFragment **pRetVal);
+
+        HRESULT GetFocus([out, retval] IRawElementProviderFragment **pRetVal);
     }
 }
