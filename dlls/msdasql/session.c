@@ -36,6 +36,99 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msdasql);
 
+struct msdasql_prop
+{
+    DBPROPID    property_id;
+    DBPROPFLAGS flags;
+    VARTYPE     vartype;
+
+    LONG value;
+};
+
+static struct msdasql_prop msdasql_init_props[] =
+{
+    { DBPROP_ABORTPRESERVE,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_DATASOURCEINFO, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_BLOCKINGSTORAGEOBJECTS,          DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_BOOKMARKS,                       DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_BOOKMARKSKIPPED,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_BOOKMARKTYPE,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4, 1 },
+    { DBPROP_CANFETCHBACKWARDS,               DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_CANHOLDROWS,                     DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_CANSCROLLBACKWARDS,              DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_COLUMNRESTRICT,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_COMMITPRESERVE,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_DELAYSTORAGEOBJECTS,             DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IMMOBILEROWS,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_LITERALBOOKMARKS,                DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_LITERALIDENTITY,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_MAXOPENROWS,                     DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4, 0 },
+    { DBPROP_MAXPENDINGROWS,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4,  0 },
+    { DBPROP_MAXROWS,                         DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4, 0 },
+    { DBPROP_NOTIFICATIONPHASES,              DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4, 31 },
+    { DBPROP_OTHERUPDATEDELETE,               DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_OWNINSERT,                       DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_OWNUPDATEDELETE,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_QUICKRESTART ,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_REENTRANTEVENTS,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_REMOVEDELETED,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_REPORTMULTIPLECHANGES,           DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_ROWRESTRICT,                     DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_ROWTHREADMODEL,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4, 2 },
+    { DBPROP_TRANSACTEDOBJECT,                DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_UPDATABILITY,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4, 0 },
+    { DBPROP_STRONGIDENTITY,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IAccessor,                       DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_IColumnsInfo,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_IColumnsRowset,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_IConnectionPointContainer,       DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowset,                         DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_IRowsetChange,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowsetIdentity,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowsetInfo,                     DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_IRowsetLocate,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowsetResynch,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowsetUpdate,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_ISupportErrorInfo,               DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_ISequentialStream,               DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_NOTIFYCOLUMNSET,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWDELETE,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWFIRSTCHANGE,            DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWINSERT,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWRESYNCH,                DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWSETRELEASE,             DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWSETFETCHPOSITIONCHANGE, DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWUNDOCHANGE,             DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWUNDODELETE,             DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWUNDOINSERT,             DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_NOTIFYROWUPDATE,                 DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4,  3 },
+    { DBPROP_CHANGEINSERTEDROWS,              DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_RETURNPENDINGINSERTS,            DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IConvertType,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_NOTIFICATIONGRANULARITY,         DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4, 1 },
+    { DBPROP_IMultipleResults,                DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_ACCESSORDER,                     DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4, 1 },
+    { DBPROP_BOOKMARKINFO,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4, 0 },
+    { DBPROP_UNIQUEROWS,                      DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowsetFind,                     DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_IRowsetScroll,                   DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_IRowsetRefresh,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_FINDCOMPAREOPS,                  DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ, VT_I4, 27 },
+    { DBPROP_ORDEREDBOOKMARKS,                DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_CLIENTCURSOR,                    DBPROPFLAGS_ROWSET | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_TRUE },
+    { DBPROP_ABORTPRESERVE,                   DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_ACTIVESESSIONS,                  DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_ASYNCTXNCOMMIT,                  DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_AUTH_CACHE_AUTHINFO,             DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_AUTH_ENCRYPT_PASSWORD,           DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4, 0 },
+    { DBPROP_AUTH_INTEGRATED,                 DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_I4, 14 },
+    { DBPROP_AUTH_MASK_PASSWORD,              DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_AUTH_PASSWORD,                   DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_AUTH_PERSIST_ENCRYPTED,          DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_AUTH_USERID,                     DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+    { DBPROP_BLOCKINGSTORAGEOBJECTS,          DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
+};
+
 struct msdasql_session
 {
     IUnknown session_iface;
@@ -332,6 +425,9 @@ struct command
     IUnknown *session;
     HDBC hdbc;
     SQLHSTMT hstmt;
+
+    struct msdasql_prop *properties;
+    LONG prop_count;
 };
 
 static inline struct command *impl_from_ICommandText( ICommandText *iface )
@@ -449,6 +545,8 @@ static ULONG WINAPI command_Release(ICommandText *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", command );
+        if (command->properties)
+            heap_free(command->properties);
         if (command->session)
             IUnknown_Release(command->session);
 
@@ -989,12 +1087,146 @@ static ULONG WINAPI command_prop_Release(ICommandProperties *iface)
     return ICommandText_Release(&command->ICommandText_iface);
 }
 
+static ULONG get_property_count(DWORD flag, struct msdasql_prop *properties, int prop_count)
+{
+    int i, count = 0;
+
+    for(i=0; i < prop_count; i++)
+    {
+        if (properties[i].flags & flag)
+            count++;
+    }
+
+    return count;
+}
+
 static HRESULT WINAPI command_prop_GetProperties(ICommandProperties *iface, ULONG count,
         const DBPROPIDSET propertyidsets[], ULONG *sets_cnt, DBPROPSET **propertyset)
 {
     struct command *command = impl_from_ICommandProperties( iface );
-    FIXME("%p %lu %p %p %p\n", command, count, propertyidsets, sets_cnt, propertyset);
-    return E_NOTIMPL;
+    DBPROPSET *propset = NULL;
+    int i, j, k;
+
+    TRACE("%p %ld %p %p %p\n", command, count, propertyidsets, sets_cnt, propertyset);
+
+    /* All Properties */
+    if (count == 0)
+    {
+        int idx;
+        propset = CoTaskMemAlloc(2 * sizeof(DBPROPSET));
+        if (!propset)
+            return E_OUTOFMEMORY;
+
+        propset[0].guidPropertySet = DBPROPSET_ROWSET;
+        propset[0].cProperties = get_property_count(DBPROPFLAGS_ROWSET, command->properties, command->prop_count);
+        propset[0].rgProperties = CoTaskMemAlloc(propset[0].cProperties * sizeof(DBPROP));
+        if (!propset[0].rgProperties)
+        {
+            CoTaskMemFree(propset);
+            return E_OUTOFMEMORY;
+        }
+
+        idx = 0;
+        for (j=0; j < command->prop_count; j++)
+        {
+            if (!(command->properties[j].flags & DBPROPFLAGS_ROWSET))
+                continue;
+            propset[0].rgProperties[idx].dwPropertyID = command->properties[j].property_id;
+
+            V_VT(&propset[0].rgProperties[idx].vValue) = command->properties[j].vartype;
+            if (command->properties[j].vartype == VT_BOOL)
+            {
+                V_BOOL(&propset[0].rgProperties[idx].vValue) = command->properties[j].value;
+            }
+            else if (command->properties[j].vartype == VT_I4)
+            {
+                V_I4(&propset[0].rgProperties[idx].vValue) = command->properties[j].value;
+            }
+            else
+                ERR("Unknown variant type %d\n", command->properties[j].vartype);
+
+            idx++;
+        }
+
+        propset[1].guidPropertySet = DBPROPSET_PROVIDERROWSET;
+        propset[1].cProperties = get_property_count(DBPROPFLAGS_DATASOURCEINFO, command->properties, command->prop_count);
+        propset[1].rgProperties = CoTaskMemAlloc(propset[1].cProperties * sizeof(DBPROP));
+        if (!propset[1].rgProperties)
+        {
+            CoTaskMemFree(propset[0].rgProperties);
+            CoTaskMemFree(propset);
+            return E_OUTOFMEMORY;
+        }
+
+        idx = 0;
+        for (j=0; j < command->prop_count; j++)
+        {
+            if (!(command->properties[j].flags & DBPROPFLAGS_DATASOURCEINFO))
+                continue;
+            propset[1].rgProperties[idx].dwPropertyID = command->properties[j].property_id;
+
+            V_VT(&propset[1].rgProperties[idx].vValue) = command->properties[j].vartype;
+            if (command->properties[j].vartype == VT_BOOL)
+            {
+                V_BOOL(&propset[1].rgProperties[idx].vValue) = command->properties[j].value;
+            }
+            else if (command->properties[j].vartype == VT_I4)
+            {
+                V_I4(&propset[1].rgProperties[idx].vValue) = command->properties[j].value;
+            }
+            else
+                ERR("Unknown variant type %d\n", command->properties[j].vartype);
+
+            idx++;
+        }
+
+        *sets_cnt = 2;
+    }
+    else
+    {
+        propset = CoTaskMemAlloc(count * sizeof(DBPROPSET));
+        if (!propset)
+            return E_OUTOFMEMORY;
+
+        for (i=0; i < count; i++)
+        {
+            TRACE("Property id %d (count %ld, set %s)\n", i, propertyidsets[i].cPropertyIDs,
+                    debugstr_guid(&propertyidsets[i].guidPropertySet));
+
+            propset[i].cProperties = propertyidsets[i].cPropertyIDs;
+            propset[i].rgProperties = CoTaskMemAlloc(propset[i].cProperties * sizeof(DBPROP));
+
+            for (j=0; j < propset[i].cProperties; j++)
+            {
+                propset[i].rgProperties[j].dwPropertyID = propertyidsets[i].rgPropertyIDs[j];
+
+                for(k = 0; k < command->prop_count; k++)
+                {
+                    if (command->properties[k].property_id == propertyidsets[i].rgPropertyIDs[j])
+                    {
+                        V_VT(&propset[i].rgProperties[i].vValue) = command->properties[j].vartype;
+                        if (command->properties[j].vartype == VT_BOOL)
+                        {
+                            V_BOOL(&propset[i].rgProperties[i].vValue) = command->properties[j].value;
+                        }
+                        else if (command->properties[j].vartype == VT_I4)
+                        {
+                            V_I4(&propset[i].rgProperties[i].vValue) = command->properties[j].value;
+                        }
+                        else
+                            ERR("Unknown variant type %d\n", command->properties[j].vartype);
+                        break;
+                    }
+                }
+            }
+        }
+
+        *sets_cnt = count;
+    }
+
+    *propertyset = propset;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI command_prop_SetProperties(ICommandProperties *iface, ULONG count,
@@ -1226,6 +1458,10 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->query = NULL;
     command->hdbc = session->hdbc;
     command->hstmt = NULL;
+
+    command->prop_count = ARRAY_SIZE(msdasql_init_props);
+    command->properties = heap_alloc(sizeof(msdasql_init_props));
+    memcpy(command->properties, msdasql_init_props, sizeof(msdasql_init_props));
 
     IUnknown_QueryInterface(&session->session_iface, &IID_IUnknown, (void**)&command->session);
 

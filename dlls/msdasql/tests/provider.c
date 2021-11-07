@@ -34,6 +34,7 @@
 DEFINE_GUID(DBPROPSET_DATASOURCEINFO, 0xc8b522bb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 DEFINE_GUID(DBPROPSET_DBINITALL, 0xc8b522ca, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+DEFINE_GUID(DBPROPSET_ROWSET,    0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 DEFINE_GUID(DBGUID_DEFAULT,      0xc8b521fb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
@@ -183,6 +184,149 @@ static void test_Properties(void)
     IDBProperties_Release(props);
 }
 
+static void test_command_properties(ICommandProperties *props)
+{
+    HRESULT hr;
+    ULONG count;
+    DBPROPSET *propset;
+    int i;
+
+    DWORD row_props[68] = {
+            DBPROP_ABORTPRESERVE, DBPROP_BLOCKINGSTORAGEOBJECTS, DBPROP_BOOKMARKS, DBPROP_BOOKMARKSKIPPED,
+            DBPROP_BOOKMARKTYPE, DBPROP_CANFETCHBACKWARDS, DBPROP_CANHOLDROWS, DBPROP_CANSCROLLBACKWARDS,
+            DBPROP_COLUMNRESTRICT, DBPROP_COMMITPRESERVE, DBPROP_DELAYSTORAGEOBJECTS, DBPROP_IMMOBILEROWS,
+            DBPROP_LITERALBOOKMARKS, DBPROP_LITERALIDENTITY, DBPROP_MAXOPENROWS, DBPROP_MAXPENDINGROWS,
+            DBPROP_MAXROWS, DBPROP_NOTIFICATIONPHASES, DBPROP_OTHERUPDATEDELETE, DBPROP_OWNINSERT,
+            DBPROP_OWNUPDATEDELETE, DBPROP_QUICKRESTART, DBPROP_REENTRANTEVENTS, DBPROP_REMOVEDELETED,
+            DBPROP_REPORTMULTIPLECHANGES, DBPROP_ROWRESTRICT, DBPROP_ROWTHREADMODEL, DBPROP_TRANSACTEDOBJECT,
+            DBPROP_UPDATABILITY, DBPROP_STRONGIDENTITY, DBPROP_IAccessor, DBPROP_IColumnsInfo,
+            DBPROP_IColumnsRowset, DBPROP_IConnectionPointContainer, DBPROP_IRowset, DBPROP_IRowsetChange,
+            DBPROP_IRowsetIdentity, DBPROP_IRowsetInfo, DBPROP_IRowsetLocate, DBPROP_IRowsetResynch,
+            DBPROP_IRowsetUpdate, DBPROP_ISupportErrorInfo, DBPROP_ISequentialStream, DBPROP_NOTIFYCOLUMNSET,
+            DBPROP_NOTIFYROWDELETE, DBPROP_NOTIFYROWFIRSTCHANGE, DBPROP_NOTIFYROWINSERT, DBPROP_NOTIFYROWRESYNCH,
+            DBPROP_NOTIFYROWSETRELEASE, DBPROP_NOTIFYROWSETFETCHPOSITIONCHANGE, DBPROP_NOTIFYROWUNDOCHANGE, DBPROP_NOTIFYROWUNDODELETE,
+            DBPROP_NOTIFYROWUNDOINSERT, DBPROP_NOTIFYROWUPDATE, DBPROP_CHANGEINSERTEDROWS, DBPROP_RETURNPENDINGINSERTS,
+            DBPROP_IConvertType, DBPROP_NOTIFICATIONGRANULARITY, DBPROP_IMultipleResults, DBPROP_ACCESSORDER,
+            DBPROP_BOOKMARKINFO, DBPROP_UNIQUEROWS, DBPROP_IRowsetFind, DBPROP_IRowsetScroll,
+            DBPROP_IRowsetRefresh, DBPROP_FINDCOMPAREOPS, DBPROP_ORDEREDBOOKMARKS, DBPROP_CLIENTCURSOR
+    };
+
+    DWORD prov_props[12] = {
+            DBPROP_ABORTPRESERVE, DBPROP_ACTIVESESSIONS, DBPROP_ASYNCTXNCOMMIT, DBPROP_AUTH_CACHE_AUTHINFO,
+            DBPROP_AUTH_ENCRYPT_PASSWORD, DBPROP_AUTH_INTEGRATED, DBPROP_AUTH_MASK_PASSWORD, DBPROP_AUTH_PASSWORD,
+            DBPROP_AUTH_PERSIST_ENCRYPTED, DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROP_AUTH_USERID, DBPROP_BLOCKINGSTORAGEOBJECTS
+    };
+
+    hr = ICommandProperties_GetProperties(props, 0, NULL, &count, &propset);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(count == 2, "got %ld\n", count);
+    ok(propset[0].cProperties == 68, "got %ld\n", propset[0].cProperties);
+    ok(propset[1].cProperties == 12, "got %ld\n", propset[1].cProperties);
+
+    ok(IsEqualGUID(&DBPROPSET_ROWSET, &propset[0].guidPropertySet), "got %s\n",
+        debugstr_guid(&propset[0].guidPropertySet));
+    for (i = 0; i < propset[0].cProperties; i++)
+    {
+        ok(propset[0].rgProperties[i].dwPropertyID == row_props[i], "%d: got 0x%08lx\n", i, propset[0].rgProperties[i].dwPropertyID);
+
+        switch(propset[0].rgProperties[i].dwPropertyID )
+        {
+            case DBPROP_BOOKMARKTYPE:
+            case DBPROP_NOTIFICATIONGRANULARITY:
+            case DBPROP_ACCESSORDER:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_I4(&propset[0].rgProperties[i].vValue) == 1, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            case DBPROP_MAXOPENROWS:
+            case DBPROP_MAXPENDINGROWS:
+            case DBPROP_MAXROWS:
+            case DBPROP_UPDATABILITY:
+            case DBPROP_BOOKMARKINFO:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_I4(&propset[0].rgProperties[i].vValue) == 0, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            case DBPROP_FINDCOMPAREOPS:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_I4(&propset[0].rgProperties[i].vValue) == 27, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            case DBPROP_NOTIFICATIONPHASES:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_I4(&propset[0].rgProperties[i].vValue) == 31, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            case DBPROP_ROWTHREADMODEL:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_I4(&propset[0].rgProperties[i].vValue) == 2, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            case DBPROP_NOTIFYCOLUMNSET:
+            case DBPROP_NOTIFYROWDELETE:
+            case DBPROP_NOTIFYROWFIRSTCHANGE:
+            case DBPROP_NOTIFYROWINSERT:
+            case DBPROP_NOTIFYROWRESYNCH:
+            case DBPROP_NOTIFYROWSETRELEASE:
+            case DBPROP_NOTIFYROWSETFETCHPOSITIONCHANGE:
+            case DBPROP_NOTIFYROWUNDOCHANGE:
+            case DBPROP_NOTIFYROWUNDODELETE:
+            case DBPROP_NOTIFYROWUNDOINSERT:
+            case DBPROP_NOTIFYROWUPDATE:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_I4(&propset[0].rgProperties[i].vValue) == 3, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            case DBPROP_BLOCKINGSTORAGEOBJECTS:
+            case DBPROP_IMMOBILEROWS:
+            case DBPROP_LITERALIDENTITY:
+            case DBPROP_REENTRANTEVENTS:
+            case DBPROP_IAccessor:
+            case DBPROP_IColumnsInfo:
+            case DBPROP_IColumnsRowset:
+            case DBPROP_IRowset:
+            case DBPROP_IRowsetInfo:
+            case DBPROP_ISupportErrorInfo:
+            case DBPROP_CHANGEINSERTEDROWS:
+            case DBPROP_IConvertType:
+            case DBPROP_IRowsetScroll:
+            case DBPROP_IRowsetRefresh:
+            case DBPROP_ORDEREDBOOKMARKS:
+            case DBPROP_CLIENTCURSOR:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_BOOL, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_BOOL(&propset[0].rgProperties[i].vValue) == VARIANT_TRUE, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+            default:
+                ok(V_VT(&propset[0].rgProperties[i].vValue) == VT_BOOL, "%d: got %d\n", i, V_VT(&propset[0].rgProperties[i].vValue));
+                ok(V_BOOL(&propset[0].rgProperties[i].vValue) == VARIANT_FALSE, "%d: got %ld\n", i, V_I4(&propset[0].rgProperties[i].vValue));
+                break;
+        }
+    }
+
+    ok(IsEqualGUID(&DBPROPSET_PROVIDERROWSET, &propset[1].guidPropertySet), "got %s\n",
+        debugstr_guid(&propset[1].guidPropertySet));
+    for (i = 0; i < propset[1].cProperties; i++)
+    {
+        ok(propset[1].rgProperties[i].dwPropertyID == prov_props[i], "%d: got 0x%08lx\n", i, propset[1].rgProperties[i].dwPropertyID);
+
+        switch(propset[1].rgProperties[i].dwPropertyID )
+        {
+            case DBPROP_AUTH_ENCRYPT_PASSWORD:
+                ok(V_VT(&propset[1].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[1].rgProperties[i].vValue));
+                ok(V_I4(&propset[1].rgProperties[i].vValue) == 0, "%d: got %ld\n", i, V_I4(&propset[1].rgProperties[i].vValue));
+                break;
+            case DBPROP_AUTH_INTEGRATED:
+                ok(V_VT(&propset[1].rgProperties[i].vValue) == VT_I4, "%d: got %d\n", i, V_VT(&propset[1].rgProperties[i].vValue));
+                ok(V_I4(&propset[1].rgProperties[i].vValue) == 14, "%d: got %ld\n", i, V_I4(&propset[1].rgProperties[i].vValue));
+                break;
+            case DBPROP_BLOCKINGSTORAGEOBJECTS:
+                ok(V_VT(&propset[1].rgProperties[i].vValue) == VT_BOOL, "%d: got %d\n", i, V_VT(&propset[1].rgProperties[i].vValue));
+                ok(V_BOOL(&propset[1].rgProperties[i].vValue) == VARIANT_FALSE, "%d: got %ld\n", i, V_I4(&propset[1].rgProperties[i].vValue));
+                break;
+            default:
+                ok(V_VT(&propset[1].rgProperties[i].vValue) == VT_BOOL, "%d: got %d\n", i, V_VT(&propset[1].rgProperties[i].vValue));
+                ok(V_BOOL(&propset[1].rgProperties[i].vValue) == VARIANT_FALSE, "%d: got %ld\n", i, V_I4(&propset[1].rgProperties[i].vValue));
+                break;
+        }
+    }
+
+    CoTaskMemFree(propset);
+}
+
 static void test_command_interfaces(IUnknown *cmd)
 {
     HRESULT hr;
@@ -198,6 +342,7 @@ static void test_command_interfaces(IUnknown *cmd)
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandProperties, (void**)&commandProp);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
+    test_command_properties(commandProp);
     ICommandProperties_Release(commandProp);
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandWithParameters, (void**)&cmdwithparams);
