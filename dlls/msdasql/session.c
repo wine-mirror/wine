@@ -1233,7 +1233,41 @@ static HRESULT WINAPI command_prop_SetProperties(ICommandProperties *iface, ULON
         DBPROPSET propertyset[])
 {
     struct command *command = impl_from_ICommandProperties( iface );
-    FIXME("%p, %lu, %p\n", command, count, propertyset);
+    int i, j, k;
+
+    TRACE("%p %lu, %p\n", command, count, propertyset);
+
+    for(i=0; i < count; i++)
+    {
+        TRACE("set %s, count %ld\n", debugstr_guid(&propertyset[i].guidPropertySet), propertyset[i].cProperties);
+        for(j=0; j < propertyset[i].cProperties; j++)
+        {
+            for(k=0; k < command->prop_count; k++)
+            {
+                if (command->properties[k].property_id == propertyset[i].rgProperties[j].dwPropertyID)
+                {
+                    TRACE("Found property 0x%08lx\n", command->properties[k].property_id);
+                    if (command->properties[k].flags & DBPROPFLAGS_WRITE)
+                    {
+                        if (command->properties[k].vartype == VT_BOOL)
+                        {
+                            command->properties[k].value = V_BOOL(&propertyset[i].rgProperties[j].vValue);
+                        }
+                        else if (command->properties[k].vartype == VT_I4)
+                        {
+                            command->properties[k].value = V_I4(&propertyset[i].rgProperties[j].vValue);
+                        }
+                        else
+                            ERR("Unknown variant type %d\n", command->properties[j].vartype);
+                    }
+                    else
+                        WARN("Attempting to set Readonly property\n");
+
+                    break;
+                }
+            }
+        }
+    }
     return S_OK;
 }
 
