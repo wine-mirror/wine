@@ -1357,7 +1357,7 @@ static HRESULT WINAPI dinput_device_CreateEffect( IDirectInputDevice8W *iface, c
                                                   IUnknown *outer )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-    DWORD flags = DIEP_ALLPARAMS;
+    DWORD flags;
     HRESULT hr;
 
     TRACE( "iface %p, guid %s, params %p, out %p, outer %p\n", iface, debugstr_guid( guid ),
@@ -1372,8 +1372,9 @@ static HRESULT WINAPI dinput_device_CreateEffect( IDirectInputDevice8W *iface, c
 
     hr = IDirectInputEffect_Initialize( *out, DINPUT_instance, impl->dinput->dwVersion, guid );
     if (FAILED(hr)) goto failed;
-
     if (!params) return DI_OK;
+
+    flags = params->dwSize == sizeof(DIEFFECT_DX6) ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
     if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) flags |= DIEP_NODOWNLOAD;
     hr = IDirectInputEffect_SetParameters( *out, params, flags );
     if (FAILED(hr)) goto failed;

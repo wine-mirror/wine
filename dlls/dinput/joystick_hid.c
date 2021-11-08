@@ -2149,7 +2149,11 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
     if (flags & DIEP_DURATION) params->dwDuration = impl->params.dwDuration;
     if (flags & DIEP_GAIN) params->dwGain = impl->params.dwGain;
     if (flags & DIEP_SAMPLEPERIOD) params->dwSamplePeriod = impl->params.dwSamplePeriod;
-    if (flags & DIEP_STARTDELAY) params->dwStartDelay = impl->params.dwStartDelay;
+    if (flags & DIEP_STARTDELAY)
+    {
+        if (params->dwSize != sizeof(DIEFFECT_DX6)) return DIERR_INVALIDPARAM;
+        params->dwStartDelay = impl->params.dwStartDelay;
+    }
     if (flags & DIEP_TRIGGERREPEATINTERVAL) params->dwTriggerRepeatInterval = impl->params.dwTriggerRepeatInterval;
 
     if (flags & DIEP_TRIGGERBUTTON)
@@ -2336,6 +2340,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
     }
     if (flags & DIEP_STARTDELAY)
     {
+        if (params->dwSize != sizeof(DIEFFECT_DX6)) return DIERR_INVALIDPARAM;
         if (impl->params.dwStartDelay != params->dwStartDelay) impl->modified = TRUE;
         impl->params.dwStartDelay = params->dwStartDelay;
     }
