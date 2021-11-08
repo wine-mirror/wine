@@ -1221,6 +1221,11 @@ static unsigned binannot_uncompress(const unsigned char** pptr)
     return res;
 }
 
+static inline int binannot_getsigned(unsigned i)
+{
+    return (i & 1) ? -(int)(i >> 1) : (i >> 1);
+}
+
 static void dump_binannot(const unsigned char* ba, const char* last, const char* pfx)
 {
     while (ba < (const unsigned char*)last)
@@ -1248,7 +1253,7 @@ static void dump_binannot(const unsigned char* ba, const char* last, const char*
             printf("%sChangeFile %u\n", pfx, binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeLineOffset:
-            printf("%sChangeLineOffset %d\n", pfx, binannot_uncompress(&ba));
+            printf("%sChangeLineOffset %d\n", pfx, binannot_getsigned(binannot_uncompress(&ba)));
             break;
         case BA_OP_ChangeLineEndDelta:
             printf("%sChangeLineEndDelta %u\n", pfx, binannot_uncompress(&ba));
@@ -1265,7 +1270,7 @@ static void dump_binannot(const unsigned char* ba, const char* last, const char*
         case BA_OP_ChangeCodeOffsetAndLineOffset:
             {
                 unsigned p1 = binannot_uncompress(&ba);
-                printf("%sChangeCodeOffsetAndLineOffset %u %u (0x%x)\n", pfx, p1 & 0xf, p1 >> 4, p1);
+                printf("%sChangeCodeOffsetAndLineOffset %u %u (0x%x)\n", pfx, p1 & 0xf, binannot_getsigned(p1 >> 4), p1);
             }
             break;
         case BA_OP_ChangeCodeLengthAndCodeOffset:
