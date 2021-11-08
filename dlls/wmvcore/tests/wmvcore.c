@@ -861,12 +861,12 @@ static void test_sync_reader_types(void)
     bool got_video = false, got_audio = false;
     DWORD size, ret_size, output_number;
     WORD stream_number, stream_number2;
+    GUID majortype, majortype2;
     struct teststream stream;
     IWMStreamConfig *config;
     ULONG count, ref, i, j;
     IWMSyncReader *reader;
     IWMProfile *profile;
-    GUID majortype;
     HANDLE file;
     HRESULT hr;
     BOOL ret;
@@ -922,6 +922,12 @@ static void test_sync_reader_types(void)
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        memset(&majortype2, 0xcc, sizeof(majortype2));
+        hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
+                debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
         ref = IWMOutputMediaProps_Release(output_props);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -980,6 +986,12 @@ static void test_sync_reader_types(void)
                 check_audio_type(mt);
             else
                 check_video_type(mt);
+
+            memset(&majortype2, 0xcc, sizeof(majortype2));
+            hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
+                    debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
             hr = IWMSyncReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1398,13 +1410,13 @@ static void test_async_reader_types(void)
     bool got_video = false, got_audio = false;
     DWORD size, ret_size, output_number;
     IWMReaderAdvanced2 *advanced;
+    GUID majortype, majortype2;
     struct teststream stream;
     struct callback callback;
     IWMStreamConfig *config;
     ULONG count, ref, i, j;
     IWMProfile *profile;
     IWMReader *reader;
-    GUID majortype;
     HANDLE file;
     HRESULT hr;
     BOOL ret;
@@ -1458,11 +1470,17 @@ static void test_async_reader_types(void)
         ret_size = sizeof(mt_buffer);
         hr = IWMOutputMediaProps_GetMediaType(output_props, mt, &ret_size);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
+        majortype = mt->majortype;
+
+        memset(&majortype2, 0xcc, sizeof(majortype2));
+        hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
+                debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
         ref = IWMOutputMediaProps_Release(output_props);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-        majortype = mt->majortype;
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
         {
             got_audio = true;
@@ -1537,6 +1555,12 @@ static void test_async_reader_types(void)
                 check_audio_type(mt);
             else
                 check_video_type(mt);
+
+            memset(&majortype2, 0xcc, sizeof(majortype2));
+            hr = IWMOutputMediaProps_GetType(output_props, &majortype2);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(IsEqualGUID(&majortype2, &majortype), "Expected major type %s, got %s.\n",
+                    debugstr_guid(&majortype), debugstr_guid(&majortype2));
 
             hr = IWMReader_SetOutputProps(reader, output_number, output_props);
             ok(hr == S_OK, "Got hr %#x.\n", hr);

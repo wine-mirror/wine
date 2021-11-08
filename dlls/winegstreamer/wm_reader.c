@@ -85,8 +85,12 @@ static ULONG WINAPI output_props_Release(IWMOutputMediaProps *iface)
 
 static HRESULT WINAPI output_props_GetType(IWMOutputMediaProps *iface, GUID *major_type)
 {
-    FIXME("iface %p, major_type %p, stub!\n", iface, major_type);
-    return E_NOTIMPL;
+    const struct output_props *props = impl_from_IWMOutputMediaProps(iface);
+
+    TRACE("iface %p, major_type %p.\n", iface, major_type);
+
+    *major_type = props->mt.majortype;
+    return S_OK;
 }
 
 static HRESULT WINAPI output_props_GetMediaType(IWMOutputMediaProps *iface, WM_MEDIA_TYPE *mt, DWORD *size)
