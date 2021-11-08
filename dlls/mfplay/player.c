@@ -1024,6 +1024,15 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
     IUnknown *object;
     HRESULT hr;
 
+    if (sync && !ret)
+        return E_POINTER;
+
+    if (!sync && !player->callback)
+    {
+        WARN("Asynchronous item creation is not supported without user callback.\n");
+        return MF_E_INVALIDREQUEST;
+    }
+
     if (FAILED(hr = create_media_item(&player->IMFPMediaPlayer_iface, user_data, &item)))
         return hr;
 
@@ -1035,9 +1044,6 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
 
     if (sync)
     {
-        if (!ret)
-            return E_POINTER;
-
         *ret = NULL;
 
         if (SUCCEEDED(hr = IMFSourceResolver_CreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE,
@@ -1054,17 +1060,9 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
         }
 
         IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
-
-        return hr;
     }
     else
     {
-        if (!player->callback)
-        {
-            WARN("Asynchronous item creation is not supported without user callback.\n");
-            return MF_E_INVALIDREQUEST;
-        }
-
         if (ret) *ret = NULL;
 
         hr = IMFSourceResolver_BeginCreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE,
