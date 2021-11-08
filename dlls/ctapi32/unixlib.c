@@ -40,9 +40,9 @@ static void *ctapi_handle;
 
 static NTSTATUS attach( void *args )
 {
-    struct attach_params *params = args;
+    const char *libname = args;
 
-    if (!(ctapi_handle = dlopen( params->libname, RTLD_NOW ))) return STATUS_DLL_NOT_FOUND;
+    if (!(ctapi_handle = dlopen( libname, RTLD_NOW ))) return STATUS_DLL_NOT_FOUND;
 
 #define LOAD_FUNCPTR(f) if((p##f = dlsym(ctapi_handle, #f)) == NULL) return STATUS_ENTRYPOINT_NOT_FOUND
     LOAD_FUNCPTR(CT_init);
@@ -60,14 +60,14 @@ static NTSTATUS detach( void *args )
 
 static NTSTATUS ct_init( void *args )
 {
-    struct ct_init_params *params = args;
+    const struct ct_init_params *params = args;
 
     return pCT_init(params->ctn, params->pn);
 }
 
 static NTSTATUS ct_data( void *args )
 {
-    struct ct_data_params *params = args;
+    const struct ct_data_params *params = args;
 
     return pCT_data(params->ctn, params->dad, params->sad, params->lenc,
                     params->command, params->lenr, params->response);
@@ -75,12 +75,12 @@ static NTSTATUS ct_data( void *args )
 
 static NTSTATUS ct_close( void *args )
 {
-    struct ct_close_params *params = args;
+    const struct ct_close_params *params = args;
 
     return pCT_close(params->ctn);
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     attach,
     detach,
@@ -88,3 +88,45 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     ct_data,
     ct_close,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_ct_data( void *args )
+{
+    struct
+    {
+        IU16  ctn;
+        PTR32 dad;
+        PTR32 sad;
+        IU16  lenc;
+        PTR32 command;
+        PTR32 lenr;
+        PTR32 response;
+    } const *params32 = args;
+
+    struct ct_data_params params =
+    {
+        params32->ctn,
+        ULongToPtr(params32->dad),
+        ULongToPtr(params32->sad),
+        params32->lenc,
+        ULongToPtr(params32->command),
+        ULongToPtr(params32->lenr),
+        ULongToPtr(params32->response)
+    };
+
+    return ct_data( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    attach,
+    detach,
+    ct_init,
+    wow64_ct_data,
+    ct_close,
+};
+
+#endif  /* _WIN64 */

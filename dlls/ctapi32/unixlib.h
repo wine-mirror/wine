@@ -31,11 +31,6 @@ typedef unsigned short IU16;
 typedef signed char IS8;
 typedef signed short IS16;
 
-struct attach_params
-{
-    const char *libname;
-};
-
 struct ct_init_params
 {
     IU16 ctn;

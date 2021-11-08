@@ -38,7 +38,6 @@ static unixlib_handle_t ctapi_handle;
 
 
 static BOOL load_functions(void) {
-	struct attach_params params;
 	char soname[MAX_PATH] = FALLBACK_LIBCTAPI;
 	LONG result;
 	HKEY key_handle;
@@ -61,8 +60,7 @@ static BOOL load_functions(void) {
 	}
 
 	TRACE("Loading library '%s'\n", soname);
-        params.libname = soname;
-        if (!CTAPI_CALL( attach, &params )) return TRUE;
+        if (!CTAPI_CALL( attach, soname )) return TRUE;
 
 	MESSAGE("Wine cannot find any usable hardware library, ctapi32.dll not working.\n");
 	MESSAGE("Please create the key \"HKEY_CURRENT_USER\\Software\\Wine\\ctapi32\" in your registry\n");
