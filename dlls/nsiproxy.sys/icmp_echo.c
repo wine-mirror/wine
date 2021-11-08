@@ -210,6 +210,14 @@ static unsigned short null_chksum( BYTE *data, unsigned int count )
 }
 #endif
 
+static int ipv4_set_reply_ip_status( IP_STATUS ip_status, void *out )
+{
+    struct nsiproxy_icmp_echo_reply *reply = out;
+    memset( reply, 0, sizeof(*reply) );
+    reply->status = ip_status;
+    return sizeof(*reply);
+}
+
 static void ipv4_set_socket_opts( struct icmp_data *data, struct icmp_send_echo_params *params )
 {
     int val;
@@ -393,6 +401,7 @@ struct family_ops
     int icmp_protocol;
     void (*init_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp_hdr );
     unsigned short (*chksum)( BYTE *data, unsigned int count );
+    int (*set_reply_ip_status)( IP_STATUS ip_status, void *out );
     void (*set_socket_opts)( struct icmp_data *data, struct icmp_send_echo_params *params );
     int (*reply_buffer_len)( int reply_len );
     BOOL (*parse_ip_hdr)( struct msghdr *msg, int recvd,
@@ -407,6 +416,7 @@ static const struct family_ops ipv4 =
     IPPROTO_ICMP,
     ipv4_init_icmp_hdr,
     chksum,
+    ipv4_set_reply_ip_status,
     ipv4_set_socket_opts,
     ipv4_reply_buffer_len,
     ipv4_parse_ip_hdr,
@@ -421,6 +431,7 @@ static const struct family_ops ipv4_linux_ping =
     IPPROTO_ICMP,
     ipv4_init_icmp_hdr,
     null_chksum,
+    ipv4_set_reply_ip_status,
     ipv4_linux_ping_set_socket_opts,
     ipv4_linux_ping_reply_buffer_len,
     ipv4_linux_ping_parse_ip_hdr,
@@ -584,16 +595,6 @@ NTSTATUS icmp_send_echo( void *args )
     return params->handle ? STATUS_PENDING : STATUS_NO_MEMORY;
 }
 
-static NTSTATUS set_reply_ip_status( struct icmp_listen_params *params, IP_STATUS ip_status )
-{
-    struct nsiproxy_icmp_echo_reply *reply = params->reply;
-
-    memset( reply, 0, sizeof(*reply) );
-    reply->status = ip_status;
-    params->reply_len = sizeof(*reply);
-    return STATUS_SUCCESS;
-}
-
 static int get_timeout( LARGE_INTEGER start, DWORD timeout )
 {
     LARGE_INTEGER now, end;
@@ -647,7 +648,8 @@ static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *par
     if (reply->data_size && msg.msg_flags & MSG_TRUNC)
     {
         free( reply_buf );
-        return set_reply_ip_status( params, IP_GENERAL_FAILURE );
+        params->reply_len = data->ops->set_reply_ip_status( IP_GENERAL_FAILURE, params->reply );
+        return STATUS_SUCCESS;
     }
 
     sockaddr_to_SOCKADDR_INET( (struct sockaddr *)&addr, &reply->addr );
@@ -703,10 +705,12 @@ NTSTATUS icmp_listen( void *args )
     if (!ret) /* timeout */
     {
         TRACE( "timeout\n" );
-        return set_reply_ip_status( params, IP_REQ_TIMED_OUT );
+        params->reply_len = data->ops->set_reply_ip_status( IP_REQ_TIMED_OUT, params->reply );
+        return STATUS_SUCCESS;
     }
     /* ret < 0 */
-    return set_reply_ip_status( params, errno_to_ip_status( errno ) );
+    params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->reply );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS icmp_cancel_listen( void *args )
