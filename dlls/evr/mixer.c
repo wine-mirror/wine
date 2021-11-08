@@ -1237,7 +1237,7 @@ static HRESULT video_mixer_get_d3d_device(struct video_mixer *mixer, IDirect3DDe
 static void video_mixer_scale_rect(RECT *rect, unsigned int width, unsigned int height,
         const MFVideoNormalizedRect *scale)
 {
-    if (rect->left == 0.0f && rect->top == 0.0f && rect->right == 1.0f && rect->bottom == 1.0f)
+    if (scale->left == 0.0f && scale->top == 0.0f && scale->right == 1.0f && scale->bottom == 1.0f)
     {
         SetRect(rect, 0, 0, width, height);
     }
