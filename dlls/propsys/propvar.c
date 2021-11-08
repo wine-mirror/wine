@@ -865,7 +865,7 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
         CMP_NUM_VALUE(lVal);
         break;
     case VT_UI4:
-        CMP_NUM_VALUE(uiVal);
+        CMP_NUM_VALUE(ulVal);
         break;
     case VT_I8:
         CMP_NUM_VALUE(hVal.QuadPart);
