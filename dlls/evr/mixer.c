@@ -45,6 +45,7 @@ struct input_stream
     IMFMediaType *media_type;
     MFVideoNormalizedRect rect;
     unsigned int zorder;
+    SIZE frame_size;
     IMFSample *sample;
     unsigned int sample_requested : 1;
 };
@@ -100,6 +101,7 @@ struct video_mixer
         COLORREF rgba;
         DXVA2_AYUVSample16 ayuv;
     } bkgnd_color;
+    MFVideoArea aperture;
     LONGLONG lower_bound;
     LONGLONG upper_bound;
     CRITICAL_SECTION cs;
@@ -864,6 +866,8 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                             if (mixer->inputs[0].media_type)
                                 IMFMediaType_Release(mixer->inputs[0].media_type);
                             mixer->inputs[0].media_type = media_type;
+                            mixer->inputs[0].frame_size.cx = video_desc.SampleWidth;
+                            mixer->inputs[0].frame_size.cy = video_desc.SampleHeight;
                             IMFMediaType_AddRef(mixer->inputs[0].media_type);
                         }
                         CoTaskMemFree(guids);
@@ -939,6 +943,11 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
             if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &mixer->output.rt_formats[i].device,
                     &video_desc, rt_format, MAX_MIXER_INPUT_SUBSTREAMS, &mixer->processor)))
             {
+                if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&mixer->aperture,
+                        sizeof(mixer->aperture), NULL)))
+                {
+                    memset(&mixer->aperture, 0, sizeof(mixer->aperture));
+                }
                 if (mixer->output.media_type)
                     IMFMediaType_Release(mixer->output.media_type);
                 mixer->output.media_type = type;
@@ -1234,45 +1243,59 @@ static HRESULT video_mixer_get_d3d_device(struct video_mixer *mixer, IDirect3DDe
     return hr;
 }
 
+static BOOL video_mixer_rect_needs_scaling(const MFVideoNormalizedRect *scale)
+{
+    return scale->left != 0.0f || scale->top != 0.0f || scale->right != 1.0f || scale->bottom != 1.0f;
+}
+
 static void video_mixer_scale_rect(RECT *rect, unsigned int width, unsigned int height,
         const MFVideoNormalizedRect *scale)
 {
-    if (scale->left == 0.0f && scale->top == 0.0f && scale->right == 1.0f && scale->bottom == 1.0f)
-    {
-        SetRect(rect, 0, 0, width, height);
-    }
-    else
+    if (video_mixer_rect_needs_scaling(scale))
     {
         rect->left = width * scale->left;
         rect->right = width * scale->right;
         rect->top = height * scale->top;
         rect->bottom = height * scale->bottom;
     }
+    else
+        SetRect(rect, 0, 0, width, height);
 }
 
-static void video_mixer_normalize_rect(const RECT *full, const RECT *part, MFVideoNormalizedRect *ret)
+static void video_mixer_correct_aspect_ratio(const RECT *src, RECT *dst)
 {
-    float width = full->right - full->left;
-    float height = full->bottom - full->top;
+   unsigned int src_width = src->right - src->left, src_height = src->bottom - src->top;
+   unsigned int dst_width = dst->right - dst->left, dst_height = dst->bottom - dst->top;
 
-    ret->left = (part->left - full->left) / width;
-    ret->right = (part->right - full->left) / width;
-    ret->bottom = (part->bottom - full->top) / height;
-    ret->top = (part->top - full->top) / height;
+   if (src_width * dst_height > dst_width * src_height)
+   {
+       /* src is "wider" than dst. */
+       unsigned int dst_center = (dst->top + dst->bottom) / 2;
+       unsigned int scaled_height = src_height * dst_width / src_width;
+
+       dst->top = dst_center - scaled_height / 2;
+       dst->bottom = dst->top + scaled_height;
+   }
+   else if (src_width * dst_height < dst_width * src_height)
+   {
+       /* src is "taller" than dst. */
+       unsigned int dst_center = (dst->left + dst->right) / 2;
+       unsigned int scaled_width = src_width * dst_height / src_height;
+
+       dst->left = dst_center - scaled_width / 2;
+       dst->right = dst->left + scaled_width;
+   }
 }
 
 static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 {
     DXVA2_VideoSample samples[MAX_MIXER_INPUT_STREAMS] = {{ 0 }};
     DXVA2_VideoProcessBltParams params = { 0 };
-    MFVideoNormalizedRect zoom_rect, norm;
-    unsigned int i, sample_count = 0;
-    D3DSURFACE_DESC desc, rt_desc;
+    MFVideoNormalizedRect zoom_rect;
     struct input_stream *stream;
     HRESULT hr = S_OK;
+    unsigned int i;
     RECT dst;
-
-    IDirect3DSurface9_GetDesc(rt, &rt_desc);
 
     if (FAILED(IMFAttributes_GetBlob(mixer->attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&zoom_rect,
             sizeof(zoom_rect), NULL)))
@@ -1281,12 +1304,12 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
         zoom_rect.right = zoom_rect.bottom = 1.0f;
     }
 
-    video_mixer_scale_rect(&dst, rt_desc.Width, rt_desc.Height, &zoom_rect);
+    SetRect(&dst, 0, 0, mixer->aperture.Area.cx, mixer->aperture.Area.cy);
+    OffsetRect(&dst, mixer->aperture.OffsetX.value, mixer->aperture.OffsetY.value);
 
     for (i = 0; i < mixer->input_count; ++i)
     {
-        RECT stream_dst, stream_vis;
-
+        DXVA2_VideoSample *sample = &samples[i];
         IDirect3DSurface9 *surface;
 
         stream = mixer->zorder[i];
@@ -1297,54 +1320,36 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
             break;
         }
 
-        IDirect3DSurface9_GetDesc(surface, &desc);
+        /* Full input frame corrected to full destination rectangle. */
 
-        /* In order to compute source/destination rectangles for each stream:
+        video_mixer_scale_rect(&sample->SrcRect, stream->frame_size.cx, stream->frame_size.cy, &zoom_rect);
+        CopyRect(&sample->DstRect, &dst);
+        video_mixer_correct_aspect_ratio(&sample->SrcRect, &sample->DstRect);
 
-           * per-stream rectangle is used to get destination rectangle in target coordinates;
-           * destination per-stream rectangle is clipped with zoom rectangle, applied to target coordinates;
-           * visible rectangle is scaled back to get source area of the stream that would be visible;
-           * visible rectangle is scaled back to get destination area in target coordinates for given steam.
+        if (video_mixer_rect_needs_scaling(&stream->rect))
+            WARN("Ignoring stream %u rectangle %s.\n", stream->id, debugstr_normalized_rect(&stream->rect));
 
-        */
-
-        video_mixer_scale_rect(&stream_dst, rt_desc.Width, rt_desc.Height, &stream->rect);
-
-        /* Part of the stream that's visible after zooming. */
-        if (!IntersectRect(&stream_vis, &stream_dst, &dst))
-        {
-            IDirect3DSurface9_Release(surface);
-            continue;
-        }
-
-        samples[sample_count].SampleFormat.SampleFormat = stream->id == 0 ?
-                DXVA2_SampleProgressiveFrame : DXVA2_SampleSubStream;
-        samples[sample_count].SrcSurface = surface;
-
-        video_mixer_normalize_rect(&stream_dst, &stream_vis, &norm);
-        video_mixer_scale_rect(&samples[sample_count].SrcRect, desc.Width, desc.Height, &norm);
-
-        video_mixer_normalize_rect(&dst, &stream_vis, &norm);
-        video_mixer_scale_rect(&samples[sample_count].DstRect, rt_desc.Width, rt_desc.Height, &norm);
-        samples[sample_count].PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
-
-        sample_count++;
+        sample->SampleFormat.SampleFormat = stream->id == 0 ? DXVA2_SampleProgressiveFrame : DXVA2_SampleSubStream;
+        sample->SrcSurface = surface;
+        sample->PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
     }
 
     if (SUCCEEDED(hr))
     {
-        SetRect(&params.TargetRect, 0, 0, rt_desc.Width, rt_desc.Height);
+        SetRect(&params.TargetRect, 0, 0, mixer->aperture.Area.cx, mixer->aperture.Area.cy);
+        OffsetRect(&params.TargetRect, mixer->aperture.OffsetX.value, mixer->aperture.OffsetY.value);
+
         params.BackgroundColor = mixer->bkgnd_color.ayuv;
         params.Alpha = DXVA2_Fixed32OpaqueAlpha();
 
         if (FAILED(hr = IDirectXVideoProcessor_VideoProcessBlt(mixer->processor, rt, &params, samples,
-                sample_count, NULL)))
+                mixer->input_count, NULL)))
         {
             WARN("Failed to process samples, hr %#x.\n", hr);
         }
     }
 
-    for (i = 0; i < sample_count; ++i)
+    for (i = 0; i < mixer->input_count; ++i)
     {
         if (samples[i].SrcSurface)
             IDirect3DSurface9_Release(samples[i].SrcSurface);
