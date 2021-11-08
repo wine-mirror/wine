@@ -1396,7 +1396,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                     continue;
                 }
                 loc.kind = loc_regrel;
-                loc.reg = dbghelp_current_cpu->frame_regno;
+                loc.reg = module->cpu->frame_regno;
                 loc.offset = n_value;
                 symt_add_func_local(module, curr_func,
                                     (int)n_value >= 0 ? DataIsParam : DataIsLocal,
@@ -1476,7 +1476,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
         case N_LSYM:
             /* These are local variables */
             loc.kind = loc_regrel;
-            loc.reg = dbghelp_current_cpu->frame_regno;
+            loc.reg = module->cpu->frame_regno;
             loc.offset = n_value;
             if (curr_func != NULL) pending_add_var(&pending_block, ptr, DataIsLocal, &loc);
             break;
