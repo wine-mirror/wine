@@ -139,11 +139,6 @@ struct get_serverlist_params
     DWORD           *len;
 };
 
-struct set_serverlist_params
-{
-    const IP4_ARRAY *addrs;
-};
-
 struct query_params
 {
     const char      *name;

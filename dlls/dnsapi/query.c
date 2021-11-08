@@ -170,7 +170,6 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
     unsigned char answer[4096];
     DWORD len = sizeof(answer);
-    struct set_serverlist_params servlist_params = { servers };
     struct query_params query_params = { name, type, options, answer, &len };
 
     TRACE( "(%s,%s,0x%08x,%p,%p,%p)\n", debugstr_a(name), debugstr_type( type ),
@@ -179,7 +178,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
     if (!name || !result)
         return ERROR_INVALID_PARAMETER;
 
-    if ((ret = RESOLV_CALL( set_serverlist, &servlist_params ))) return ret;
+    if ((ret = RESOLV_CALL( set_serverlist, servers ))) return ret;
 
     ret = RESOLV_CALL( query, &query_params );
     if (!ret)

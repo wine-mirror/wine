@@ -124,7 +124,7 @@ static DNS_STATUS map_h_errno( int error )
 
 static NTSTATUS resolv_get_searchlist( void *args )
 {
-    struct get_searchlist_params *params = args;
+    const struct get_searchlist_params *params = args;
     DNS_TXT_DATAW *list = params->list;
     DWORD i, needed, str_needed = 0;
     char *ptr, *end;
@@ -170,7 +170,7 @@ static inline int filter( unsigned short sin_family, USHORT family )
 
 static NTSTATUS resolv_get_serverlist( void *args )
 {
-    struct get_serverlist_params *params = args;
+    const struct get_serverlist_params *params = args;
     DNS_ADDR_ARRAY *addrs = params->addrs;
     struct __res_state *state = &_res;
     DWORD i, found, total, needed;
@@ -238,7 +238,7 @@ static NTSTATUS resolv_get_serverlist( void *args )
 
 static NTSTATUS resolv_get_serverlist( void *args )
 {
-    struct get_serverlist_params *params = args;
+    const struct get_serverlist_params *params = args;
     DNS_ADDR_ARRAY *addrs = params->addrs;
     DWORD needed, found, i;
 
@@ -305,8 +305,7 @@ static NTSTATUS resolv_get_serverlist( void *args )
 
 static NTSTATUS resolv_set_serverlist( void *args )
 {
-    struct set_serverlist_params *params = args;
-    const IP4_ARRAY *addrs = params->addrs;
+    const IP4_ARRAY *addrs = args;
     int i;
 
     init_resolver();
@@ -328,7 +327,7 @@ static NTSTATUS resolv_set_serverlist( void *args )
 
 static NTSTATUS resolv_query( void *args )
 {
-    struct query_params *params = args;
+    const struct query_params *params = args;
     DNS_STATUS ret = ERROR_SUCCESS;
     int len;
 
@@ -342,12 +341,85 @@ static NTSTATUS resolv_query( void *args )
     return ret;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     resolv_get_searchlist,
     resolv_get_serverlist,
     resolv_set_serverlist,
     resolv_query,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_resolv_get_searchlist( void *args )
+{
+    struct
+    {
+        PTR32  list;
+        PTR32  len;
+    } const *params32 = args;
+
+    struct get_searchlist_params params =
+    {
+        ULongToPtr(params32->list),
+        ULongToPtr(params32->len)
+    };
+
+    return resolv_get_searchlist( &params );
+}
+
+static NTSTATUS wow64_resolv_get_serverlist( void *args )
+{
+    struct
+    {
+        USHORT family;
+        PTR32  addrs;
+        PTR32  len;
+    } const *params32 = args;
+
+    struct get_serverlist_params params =
+    {
+        params32->family,
+        ULongToPtr(params32->addrs),
+        ULongToPtr(params32->len)
+    };
+
+    return resolv_get_serverlist( &params );
+}
+
+static NTSTATUS wow64_resolv_query( void *args )
+{
+    struct
+    {
+        PTR32  name;
+        WORD   type;
+        DWORD  options;
+        PTR32  buf;
+        PTR32  len;
+    } const *params32 = args;
+
+    struct query_params params =
+    {
+        ULongToPtr(params32->name),
+        params32->type,
+        params32->options,
+        ULongToPtr(params32->buf),
+        ULongToPtr(params32->len)
+    };
+
+    return resolv_query( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_resolv_get_searchlist,
+    wow64_resolv_get_serverlist,
+    resolv_set_serverlist,
+    wow64_resolv_query,
+};
+
+#endif  /* _WIN64 */
 
 #endif /* HAVE_RESOLV */
