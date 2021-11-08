@@ -483,8 +483,6 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
 {
     IDirect3DSurface9 *surface, *backbuffer;
     IDirect3DDevice9 *device;
-    D3DSURFACE_DESC desc;
-    RECT dst, src;
     HRESULT hr;
 
     if (!presenter->swapchain)
@@ -506,38 +504,7 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
     IDirect3DSwapChain9_GetDevice(presenter->swapchain, &device);
     IDirect3DDevice9_StretchRect(device, surface, NULL, backbuffer, NULL, D3DTEXF_POINT);
 
-    IDirect3DSurface9_GetDesc(surface, &desc);
-    SetRect(&src, 0, 0, desc.Width, desc.Height);
-
-    IDirect3DSurface9_GetDesc(backbuffer, &desc);
-    SetRect(&dst, 0, 0, desc.Width, desc.Height);
-
-    if (presenter->ar_mode & MFVideoARMode_PreservePicture)
-    {
-        unsigned int src_width = src.right - src.left, src_height = src.bottom - src.top;
-        unsigned int dst_width = dst.right - dst.left, dst_height = dst.bottom - dst.top;
-
-        if (src_width * dst_height > dst_width * src_height)
-        {
-            /* src is "wider" than dst. */
-            unsigned int dst_center = (dst.top + dst.bottom) / 2;
-            unsigned int scaled_height = src_height * dst_width / src_width;
-
-            dst.top = dst_center - scaled_height / 2;
-            dst.bottom = dst.top + scaled_height;
-        }
-        else if (src_width * dst_height < dst_width * src_height)
-        {
-            /* src is "taller" than dst. */
-            unsigned int dst_center = (dst.left + dst.right) / 2;
-            unsigned int scaled_width = src_width * dst_height / src_height;
-
-            dst.left = dst_center - scaled_width / 2;
-            dst.right = dst.left + scaled_width;
-        }
-    }
-
-    IDirect3DSwapChain9_Present(presenter->swapchain, &src, &dst, NULL, NULL, 0);
+    IDirect3DSwapChain9_Present(presenter->swapchain, NULL, NULL, NULL, NULL, 0);
     presenter->frame_stats.presented++;
 
     IDirect3DDevice9_Release(device);
