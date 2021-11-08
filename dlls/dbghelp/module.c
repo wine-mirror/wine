@@ -230,6 +230,9 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->addr_sorttab      = NULL;
     module->num_sorttab       = 0;
     module->num_symbols       = 0;
+    module->cpu               = cpu_find(machine);
+    if (!module->cpu)
+        module->cpu = dbghelp_current_cpu;
 
     vector_init(&module->vsymt, sizeof(struct symt*), 128);
     vector_init(&module->vcustom_symt, sizeof(struct symt*), 16);

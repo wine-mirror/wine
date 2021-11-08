@@ -430,6 +430,8 @@ struct module_format
     } u;
 };
 
+struct cpu;
+
 struct module
 {
     struct process*             process;
@@ -438,6 +440,7 @@ struct module
     struct module*              next;
     enum module_type		type : 16;
     unsigned short              is_virtual : 1;
+    struct cpu*                 cpu;
     DWORD64                     reloc_delta;
     WCHAR*                      real_path;
 
