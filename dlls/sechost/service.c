@@ -1992,9 +1992,11 @@ static DWORD WINAPI device_notify_proc( void *arg )
     RPC_WSTR binding_str;
     DWORD err = ERROR_SUCCESS;
     struct device_notify_registration *registration;
+    struct device_notification_details *details_copy;
+    unsigned int details_copy_nelems, details_copy_size;
     plugplay_rpc_handle handle = NULL;
     DWORD code = 0;
-    unsigned int size;
+    unsigned int i, size;
     BYTE *buf;
 
     if ((err = RpcStringBindingComposeW( NULL, protseq, NULL, endpoint, NULL, &binding_str )))
@@ -2026,6 +2028,9 @@ static DWORD WINAPI device_notify_proc( void *arg )
         return 1;
     }
 
+    details_copy_size = 8;
+    details_copy = heap_alloc( details_copy_size * sizeof(*details_copy) );
+
     for (;;)
     {
         buf = NULL;
@@ -2046,14 +2051,30 @@ static DWORD WINAPI device_notify_proc( void *arg )
             break;
         }
 
+        /* Make a copy to avoid a hang if a callback tries to register or unregister for notifications. */
+        i = 0;
+        details_copy_nelems = 0;
         EnterCriticalSection( &service_cs );
         LIST_FOR_EACH_ENTRY(registration, &device_notify_list, struct device_notify_registration, entry)
         {
-            registration->details.cb( registration->details.handle, code, (DEV_BROADCAST_HDR *)buf );
+            details_copy[i++] = registration->details;
+            details_copy_nelems++;
+            if (i == details_copy_size)
+            {
+                details_copy_size *= 2;
+                details_copy = heap_realloc( details_copy, details_copy_size * sizeof(*details_copy) );
+            }
         }
         LeaveCriticalSection(&service_cs);
+
+        for (i = 0; i < details_copy_nelems; i++)
+        {
+            details_copy[i].cb( details_copy[i].handle, code, (DEV_BROADCAST_HDR *)buf );
+        }
         MIDL_user_free(buf);
     }
+
+    heap_free( details_copy );
 
     __TRY
     {
