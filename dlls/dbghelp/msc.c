@@ -1762,11 +1762,180 @@ static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg
     return len;
 }
 
+static unsigned codeview_binannot_uncompress(const unsigned char** pptr)
+{
+    unsigned res = (unsigned)(-1);
+    const unsigned char* ptr = *pptr;
+
+    if ((*ptr & 0x80) == 0x00)
+        res = (unsigned)(*ptr++);
+    else if ((*ptr & 0xC0) == 0x80)
+    {
+        res = (unsigned)((*ptr++ & 0x3f) << 8);
+        res |= *ptr++;
+    }
+    else if ((*ptr & 0xE0) == 0xC0)
+    {
+        res = (*ptr++ & 0x1f) << 24;
+        res |= *ptr++ << 16;
+        res |= *ptr++ << 8;
+        res |= *ptr++;
+    }
+    else res = (unsigned)(-1);
+    *pptr = ptr;
+    return res;
+}
+
+struct cv_binannot
+{
+    const unsigned char* annot; /* current pointer */
+    const unsigned char* last_annot; /* end of binary annotation stream (first byte after) */
+    unsigned opcode; /* last decoded opcode */
+    unsigned arg1, arg2;
+};
+
+static BOOL codeview_advance_binannot(struct cv_binannot* cvba)
+{
+    if (cvba->annot >= cvba->last_annot) return FALSE;
+    cvba->opcode = codeview_binannot_uncompress(&cvba->annot);
+    if (cvba->opcode <= BA_OP_Invalid || cvba->opcode > BA_OP_ChangeColumnEnd) return FALSE;
+    if (cvba->annot >= cvba->last_annot) return FALSE;
+    cvba->arg1 = codeview_binannot_uncompress(&cvba->annot);
+    if (cvba->opcode == BA_OP_ChangeCodeOffsetAndLineOffset)
+    {
+        cvba->arg2 = cvba->arg1 >> 4;
+        cvba->arg1 &= 0x0F;
+    }
+    else if (cvba->opcode == BA_OP_ChangeCodeLengthAndCodeOffset)
+    {
+        if (cvba->annot >= cvba->last_annot) return FALSE;
+        cvba->arg2 = codeview_binannot_uncompress(&cvba->annot);
+    }
+    else cvba->arg2 = 0;
+    return TRUE;
+}
+
+static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debug_info* msc_dbg,
+                                                           const struct cv_module_snarf* cvmod,
+                                                           struct symt_function* top_func,
+                                                           struct symt* container,
+                                                           cv_itemid_t inlinee,
+                                                           const unsigned char* annot,
+                                                           const unsigned char* last_annot)
+{
+    const struct CV_DebugSSubsectionHeader_t* hdr_files = NULL;
+    const union codeview_type* cvt;
+    DWORD64 addr;
+    struct symt_inlinesite* inlined;
+    struct cv_binannot cvba;
+    BOOL found = FALSE;
+    unsigned first, offset, length;
+
+    if (!cvmod->ipi_ctp || !(cvt = codeview_jump_to_type(cvmod->ipi_ctp, inlinee)))
+    {
+        FIXME("Couldn't find type %x in IPI stream\n", inlinee);
+        return NULL;
+    }
+
+    addr = top_func->address;
+    /* grasp first code offset in binary annotation to compute inline site start address */
+    cvba.annot = annot;
+    cvba.last_annot = last_annot;
+    while (codeview_advance_binannot(&cvba))
+        if (cvba.opcode == BA_OP_CodeOffset ||
+            cvba.opcode == BA_OP_ChangeCodeOffset ||
+            cvba.opcode == BA_OP_ChangeCodeOffsetAndLineOffset)
+        {
+            addr += first = cvba.arg1;
+            length = 0;
+            found = TRUE;
+            break;
+        }
+        else if (cvba.opcode == BA_OP_ChangeCodeLengthAndCodeOffset)
+        {
+            addr += first = cvba.arg2;
+            length = cvba.arg1;
+            found = TRUE;
+            break;
+        }
+    offset = first;
+
+    if (!found)
+    {
+        FIXME("Couldn't find start address of inlined\n");
+        return NULL;
+    }
+
+    switch (cvt->generic.id)
+    {
+    case LF_FUNC_ID:
+        inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
+                                      cvt->func_id_v3.name, addr,
+                                      codeview_get_type(cvt->func_id_v3.type, FALSE));
+        break;
+    case LF_MFUNC_ID:
+        /* FIXME we just declare a function, not a method */
+        inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
+                                      cvt->mfunc_id_v3.name, addr,
+                                      codeview_get_type(cvt->mfunc_id_v3.type, FALSE));
+        break;
+    default:
+        FIXME("unsupported inlinee kind %x\n", cvt->generic.id);
+        return NULL;
+    }
+
+    for (hdr_files = cvmod->dbgsubsect;
+         CV_IS_INSIDE(hdr_files, cvmod->dbgsubsect + cvmod->dbgsubsect_size);
+         hdr_files = CV_RECORD_GAP(hdr_files, hdr_files->cbLen))
+    {
+        if (hdr_files->type == DEBUG_S_FILECHKSMS)
+            break;
+    }
+    if (!hdr_files) return FALSE;
+
+    for (;;)
+    {
+        if (!codeview_advance_binannot(&cvba)) break;
+        switch (cvba.opcode)
+        {
+        case BA_OP_CodeOffset:
+            first = offset = cvba.arg1;
+            length = 1;
+            break;
+        case BA_OP_ChangeCodeOffset:
+            offset += cvba.arg1;
+            length = 1;
+            break;
+        case BA_OP_ChangeCodeLength:
+            length = cvba.arg1;
+            break;
+        case BA_OP_ChangeFile:
+            break;
+        case BA_OP_ChangeLineOffset:
+            break;
+        case BA_OP_ChangeCodeOffsetAndLineOffset:
+            offset += cvba.arg1;
+            length = 1;
+            break;
+        case BA_OP_ChangeCodeLengthAndCodeOffset:
+            offset += cvba.arg2;
+            length = cvba.arg1;
+            break;
+        default:
+            WARN("Unsupported op %d\n", cvba.opcode);
+            break;
+        }
+    }
+    symt_add_inlinesite_range(msc_dbg->module, inlined, top_func->address + first, top_func->address + offset + length);
+    return inlined;
+}
+
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                            const BYTE* root, unsigned offset, unsigned size,
                            const struct cv_module_snarf* cvmod,
                            BOOL do_globals)
 {
+    struct symt_function*               top_func = NULL;
     struct symt_function*               curr_func = NULL;
     int                                 i, length;
     struct symt_block*                  block = NULL;
@@ -1869,12 +2038,13 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
          */
 	case S_GPROC32_16t:
 	case S_LPROC32_16t:
-            if (curr_func) FIXME("nested function\n");
-            curr_func = symt_new_function(msc_dbg->module, compiland,
-                                          terminate_string(&sym->proc_v1.p_name),
-                                          codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
-                                          sym->proc_v1.proc_len,
-                                          codeview_get_type(sym->proc_v1.proctype, FALSE));
+            if (top_func) FIXME("nested function\n");
+            top_func = symt_new_function(msc_dbg->module, compiland,
+                                         terminate_string(&sym->proc_v1.p_name),
+                                         codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
+                                         sym->proc_v1.proc_len,
+                                         codeview_get_type(sym->proc_v1.proctype, FALSE));
+            curr_func = top_func;
             loc.kind = loc_absolute;
             loc.offset = sym->proc_v1.debug_start;
             symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
@@ -1883,12 +2053,13 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	    break;
 	case S_GPROC32_ST:
 	case S_LPROC32_ST:
-            if (curr_func) FIXME("nested function\n");
-            curr_func = symt_new_function(msc_dbg->module, compiland,
-                                          terminate_string(&sym->proc_v2.p_name),
-                                          codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
-                                          sym->proc_v2.proc_len,
-                                          codeview_get_type(sym->proc_v2.proctype, FALSE));
+            if (top_func) FIXME("nested function\n");
+            top_func = symt_new_function(msc_dbg->module, compiland,
+                                         terminate_string(&sym->proc_v2.p_name),
+                                         codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
+                                         sym->proc_v2.proc_len,
+                                         codeview_get_type(sym->proc_v2.proctype, FALSE));
+            curr_func = top_func;
             loc.kind = loc_absolute;
             loc.offset = sym->proc_v2.debug_start;
             symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
@@ -1897,12 +2068,13 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	    break;
 	case S_GPROC32:
 	case S_LPROC32:
-            if (curr_func) FIXME("nested function\n");
-            curr_func = symt_new_function(msc_dbg->module, compiland,
-                                          sym->proc_v3.name,
-                                          codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
-                                          sym->proc_v3.proc_len,
-                                          codeview_get_type(sym->proc_v3.proctype, FALSE));
+            if (top_func) FIXME("nested function\n");
+            top_func = symt_new_function(msc_dbg->module, compiland,
+                                         sym->proc_v3.name,
+                                         codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
+                                         sym->proc_v3.proc_len,
+                                         codeview_get_type(sym->proc_v3.proctype, FALSE));
+            curr_func = top_func;
             loc.kind = loc_absolute;
             loc.offset = sym->proc_v3.debug_start;
             symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
@@ -2007,9 +2179,10 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             {
                 block = symt_close_func_block(msc_dbg->module, curr_func, block, 0);
             }
-            else if (curr_func)
+            else if (top_func)
             {
-                curr_func = NULL;
+                if (curr_func != top_func) FIXME("shouldn't close a top function with an opened inlined function\n");
+                top_func = curr_func = NULL;
             }
             break;
 
@@ -2164,6 +2337,54 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                                 codeview_get_type(sym->local_v3.symtype, FALSE),
                                 sym->local_v3.name);
             break;
+        case S_INLINESITE:
+            {
+                struct symt_inlinesite* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
+                                                                              block ? &block->symt : &curr_func->symt,
+                                                                              sym->inline_site_v3.inlinee,
+                                                                              sym->inline_site_v3.binaryAnnotations,
+                                                                              (const unsigned char*)sym + length);
+                if (inlined)
+                {
+                    curr_func = (struct symt_function*)inlined;
+                    block = NULL;
+                }
+                else
+                {
+                    /* skip all records until paired S_INLINESITE_END */
+                    sym = (const union codeview_symbol*)(root + sym->inline_site_v3.pEnd);
+                    if (sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
+                    length = sym->inline_site_v3.pEnd - i + sym->generic.len;
+                }
+            }
+            break;
+        case S_INLINESITE2:
+            {
+                struct symt_inlinesite* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
+                                                                              block ? &block->symt : &curr_func->symt,
+                                                                              sym->inline_site2_v3.inlinee,
+                                                                              sym->inline_site2_v3.binaryAnnotations,
+                                                                              (const unsigned char*)sym + length);
+                if (inlined)
+                {
+                    curr_func = (struct symt_function*)inlined;
+                    block = NULL;
+                }
+                else
+                {
+                    /* skip all records until paired S_INLINESITE_END */
+                    sym = (const union codeview_symbol*)(root + sym->inline_site2_v3.pEnd);
+                    if (sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
+                    length = sym->inline_site_v3.pEnd - i + sym->generic.len;
+                }
+            }
+            break;
+
+        case S_INLINESITE_END:
+            block = symt_check_tag(curr_func->container, SymTagBlock) ?
+                (struct symt_block*)curr_func->container : NULL;
+            curr_func = (struct symt_function*)symt_get_upper_inlined((struct symt_inlinesite*)curr_func);
+            break;
 
          /*
          * These are special, in that they are always followed by an
@@ -2213,8 +2434,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
         case S_DEFRANGE_REGISTER_REL:
         case S_BUILDINFO:
-        case S_INLINESITE:
-        case S_INLINESITE_END:
         case S_FILESTATIC:
         case S_CALLEES:
         case S_UNAMESPACE:
