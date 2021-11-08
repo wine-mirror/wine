@@ -1082,7 +1082,8 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         EnterCriticalSection( &impl->crit );
         if (impl->acquired) hr = DIERR_ACQUIRED;
         else if (value->dwData > DIPROPAUTOCENTER_ON) hr = DIERR_INVALIDPARAM;
-        else hr = DIERR_UNSUPPORTED;
+        else if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) hr = DIERR_UNSUPPORTED;
+        else hr = DI_OK;
         LeaveCriticalSection( &impl->crit );
         return hr;
     }
