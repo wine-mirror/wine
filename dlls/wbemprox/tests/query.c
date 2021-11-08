@@ -1331,8 +1331,10 @@ static void test_Win32_NetworkAdapterConfiguration( IWbemServices *services )
     BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapterConfiguration" );
     IEnumWbemClassObject *result;
     IWbemClassObject *obj;
+    CIMTYPE type;
     HRESULT hr;
     DWORD count;
+    VARIANT val;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1345,6 +1347,16 @@ static void test_Win32_NetworkAdapterConfiguration( IWbemServices *services )
         check_property( obj, L"Description", VT_BSTR, CIM_STRING );
         check_property( obj, L"Index", VT_I4, CIM_UINT32 );
         check_property( obj, L"IPEnabled", VT_BOOL, CIM_BOOLEAN );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"DNSDomain", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "DNSDomain %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
         IWbemClassObject_Release( obj );
     }
 
