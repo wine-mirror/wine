@@ -114,6 +114,7 @@ static void * const syscalls[] =
     NtUserOpenWindowStation,
     NtUserSetObjectInformation,
     NtUserSetProcessWindowStation,
+    NtUserSetProp,
     NtUserSetThreadDesktop,
 };
 

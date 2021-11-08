@@ -32,6 +32,26 @@ static void test_NtUserCloseWindowStation(void)
         "NtUserCloseWindowStation returned %x %u\n", ret, GetLastError() );
 }
 
+static void test_window_props(void)
+{
+    HANDLE prop;
+    ATOM atom;
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = CreateWindowExA( 0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
+
+    atom = GlobalAddAtomW( L"test" );
+
+    ret = NtUserSetProp( hwnd, UlongToPtr(atom), UlongToHandle(0xdeadbeef) );
+    ok( ret, "NtUserSetProp failed: %u\n", GetLastError() );
+
+    prop = GetPropW( hwnd, L"test" );
+    ok( prop == UlongToHandle(0xdeadbeef), "prop = %p\n", prop );
+
+    GlobalDeleteAtom( atom );
+    DestroyWindow( hwnd );
+}
 
 START_TEST(win32u)
 {
@@ -39,4 +59,5 @@ START_TEST(win32u)
     GetDesktopWindow();
 
     test_NtUserCloseWindowStation();
+    test_window_props();
 }

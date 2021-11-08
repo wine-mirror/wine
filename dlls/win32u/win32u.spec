@@ -1222,7 +1222,7 @@
 @ stub NtUserSetProcessRestrictionExemption
 @ stub NtUserSetProcessUIAccessZorder
 @ stdcall -syscall NtUserSetProcessWindowStation(long)
-@ stub NtUserSetProp
+@ stdcall -syscall NtUserSetProp(long wstr ptr)
 @ stub NtUserSetScrollInfo
 @ stub NtUserSetSensorPresence
 @ stub NtUserSetSharedWindowData

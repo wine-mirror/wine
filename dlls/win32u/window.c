@@ -28,6 +28,28 @@
 
 
 /*****************************************************************************
+ *           NtUserSetProp    (win32u.@)
+ *
+ * NOTE Native allows only ATOMs as the second argument. We allow strings
+ *      to save extra server call in SetPropW.
+ */
+BOOL WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( set_window_property )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        req->data   = (ULONG_PTR)handle;
+        if (IS_INTRESOURCE(str)) req->atom = LOWORD(str);
+        else wine_server_add_data( req, str, lstrlenW(str) * sizeof(WCHAR) );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/*****************************************************************************
  *           NtUserGetLayeredWindowAttributes (win32u.@)
  */
 BOOL WINAPI NtUserGetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, DWORD *flags )
