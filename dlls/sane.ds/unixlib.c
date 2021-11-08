@@ -208,8 +208,7 @@ static NTSTATUS process_detach( void *args )
 
 static NTSTATUS get_identity( void *args )
 {
-    struct get_identity_params *params = args;
-    TW_IDENTITY *id = params->id;
+    TW_IDENTITY *id = args;
     static int cur_dev;
 
     detect_sane_devices();
@@ -232,8 +231,7 @@ static NTSTATUS get_identity( void *args )
 
 static NTSTATUS open_ds( void *args )
 {
-    struct open_ds_params *params = args;
-    TW_IDENTITY *id = params->id;
+    TW_IDENTITY *id = args;
     SANE_Status status;
     int i;
 
@@ -303,7 +301,7 @@ static NTSTATUS cancel_device( void *args )
 
 static NTSTATUS read_data( void *args )
 {
-    struct read_data_params *params = args;
+    const struct read_data_params *params = args;
     unsigned char *buffer = params->buffer;
     int read_len, remaining = params->len;
     SANE_Status status;
@@ -351,14 +349,14 @@ static NTSTATUS get_params( void *args )
 
 static NTSTATUS option_get_value( void *args )
 {
-    struct option_get_value_params *params = args;
+    const struct option_get_value_params *params = args;
     return sane_status_to_twcc( sane_control_option( device_handle, params->optno,
                                                     SANE_ACTION_GET_VALUE, params->val, NULL ));
 }
 
 static NTSTATUS option_set_value( void *args )
 {
-    struct option_set_value_params *params = args;
+    const struct option_set_value_params *params = args;
     int status = 0;
     TW_UINT16 rc = sane_status_to_twcc( sane_control_option( device_handle, params->optno,
                                                              SANE_ACTION_SET_VALUE, params->val, &status ));
@@ -379,7 +377,7 @@ static NTSTATUS option_get_descriptor( void *args )
 
 static NTSTATUS option_find_descriptor( void *args )
 {
-    struct option_find_descriptor_params *params = args;
+    const struct option_find_descriptor_params *params = args;
     struct option_descriptor *descr = params->descr;
     const SANE_Option_Descriptor *opt;
     int i;
@@ -395,7 +393,7 @@ static NTSTATUS option_find_descriptor( void *args )
     return STATUS_NO_MORE_ENTRIES;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     process_attach,
     process_detach,
@@ -411,3 +409,101 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     option_get_descriptor,
     option_find_descriptor,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_read_data( void *args )
+{
+    struct
+    {
+        PTR32 buffer;
+        int   len;
+        PTR32 retlen;
+    } const *params32 = args;
+
+    struct read_data_params params =
+    {
+        ULongToPtr(params32->buffer),
+        params32->len,
+        ULongToPtr(params32->retlen)
+    };
+
+    return read_data( &params );
+}
+
+static NTSTATUS wow64_option_get_value( void *args )
+{
+    struct
+    {
+        int   optno;
+        PTR32 val;
+    } const *params32 = args;
+
+    struct option_get_value_params params =
+    {
+        params32->optno,
+        ULongToPtr(params32->val)
+    };
+
+    return option_get_value( &params );
+}
+
+static NTSTATUS wow64_option_set_value( void *args )
+{
+    struct
+    {
+        int   optno;
+        PTR32 val;
+        PTR32 reload;
+    } const *params32 = args;
+
+    struct option_set_value_params params =
+    {
+        params32->optno,
+        ULongToPtr(params32->val),
+        ULongToPtr(params32->reload)
+    };
+
+    return option_set_value( &params );
+}
+
+
+static NTSTATUS wow64_option_find_descriptor( void *args )
+{
+    struct
+    {
+        PTR32 name;
+        int   type;
+        PTR32 descr;
+    } const *params32 = args;
+
+    struct option_find_descriptor_params params =
+    {
+        ULongToPtr(params32->name),
+        params32->type,
+        ULongToPtr(params32->descr)
+    };
+
+    return option_find_descriptor( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    process_attach,
+    process_detach,
+    get_identity,
+    open_ds,
+    close_ds,
+    start_device,
+    cancel_device,
+    wow64_read_data,
+    get_params,
+    wow64_option_get_value,
+    wow64_option_set_value,
+    option_get_descriptor,
+    wow64_option_find_descriptor,
+};
+
+#endif  /* _WIN64 */

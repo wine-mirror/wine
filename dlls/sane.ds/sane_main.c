@@ -57,8 +57,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
 {
-    struct open_ds_params params = { self };
-
     if (SANE_dsmentry == NULL)
     {
         HMODULE moddsm = GetModuleHandleW(L"twain_32");
@@ -73,7 +71,7 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
         }
     }
 
-    if (SANE_CALL( open_ds, &params )) return TWRC_FAILURE;
+    if (SANE_CALL( open_ds, self )) return TWRC_FAILURE;
 
     activeDS.twCC = SANE_SaneSetDefaults();
     if (activeDS.twCC == TWCC_SUCCESS)
@@ -110,8 +108,7 @@ static TW_UINT16 SANE_SourceControlHandler (
 		     break;
 		case MSG_GET:
                 {
-                    struct get_identity_params params = { pData };
-                    if (SANE_CALL( get_identity, &params ))
+                    if (SANE_CALL( get_identity, pData ))
                     {
                         activeDS.twCC = TWCC_CAPUNSUPPORTED;
                         twRC = TWRC_FAILURE;

@@ -53,16 +53,6 @@ struct option_descriptor
     } constraint;
 };
 
-struct get_identity_params
-{
-    TW_IDENTITY *id;
-};
-
-struct open_ds_params
-{
-    TW_IDENTITY *id;
-};
-
 struct read_data_params
 {
     void        *buffer;
