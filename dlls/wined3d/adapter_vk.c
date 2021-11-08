@@ -1745,7 +1745,7 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
 
     if (parameters->indirect)
     {
-        struct wined3d_bo_vk *bo = (struct wined3d_bo_vk *)indirect_vk->b.buffer_object;
+        struct wined3d_bo_vk *bo = wined3d_bo_vk(indirect_vk->b.buffer_object);
         uint32_t stride, size;
 
         wined3d_context_vk_reference_bo(context_vk, bo);
@@ -1817,7 +1817,7 @@ static void adapter_vk_dispatch_compute(struct wined3d_device *device,
 
     if (parameters->indirect)
     {
-        struct wined3d_bo_vk *bo = (struct wined3d_bo_vk *)indirect_vk->b.buffer_object;
+        struct wined3d_bo_vk *bo = wined3d_bo_vk(indirect_vk->b.buffer_object);
 
         wined3d_context_vk_reference_bo(context_vk, bo);
         VK_CALL(vkCmdDispatchIndirect(vk_command_buffer, bo->vk_buffer,

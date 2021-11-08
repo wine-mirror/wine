@@ -677,7 +677,7 @@ static VkBufferView wined3d_view_vk_create_vk_buffer_view(struct wined3d_context
 
     get_buffer_view_range(&buffer_vk->b, desc, &view_format_vk->f, &offset, &size);
     wined3d_buffer_prepare_location(&buffer_vk->b, &context_vk->c, WINED3D_LOCATION_BUFFER);
-    bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
+    bo = wined3d_bo_vk(buffer_vk->b.buffer_object);
 
     create_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
     create_info.pNext = NULL;
@@ -1102,7 +1102,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
         if (!vk_buffer_view)
             return;
-        bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
+        bo = wined3d_bo_vk(buffer_vk->b.buffer_object);
 
         TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
 
@@ -2208,7 +2208,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
 
         if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, format_vk)))
         {
-            struct wined3d_bo_vk *bo = (struct wined3d_bo_vk *)buffer_vk->b.buffer_object;
+            struct wined3d_bo_vk *bo = wined3d_bo_vk(buffer_vk->b.buffer_object);
 
             TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
 
