@@ -1093,6 +1093,15 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
     context_release(context);
 }
 
+void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wined3d_context *context,
+        const struct upload_bo *upload_bo, unsigned int offset, unsigned int size)
+{
+    if (upload_bo->addr.buffer_object && upload_bo->addr.buffer_object == (uintptr_t)buffer->buffer_object)
+        wined3d_context_flush_bo_address(context, &upload_bo->addr, size);
+    else
+        wined3d_buffer_copy_bo_address(buffer, context, offset, &upload_bo->addr, size);
+}
+
 static void wined3d_buffer_init_data(struct wined3d_buffer *buffer,
         struct wined3d_device *device, const struct wined3d_sub_resource_data *data)
 {

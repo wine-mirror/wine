@@ -2742,13 +2742,8 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        struct wined3d_buffer *buffer = buffer_from_resource(resource);
-        size_t size = box->right - box->left;
-
-        if (op->bo.addr.buffer_object && op->bo.addr.buffer_object == (uintptr_t)buffer->buffer_object)
-            wined3d_context_flush_bo_address(context, &op->bo.addr, size);
-        else
-            wined3d_buffer_copy_bo_address(buffer, context, box->left, &op->bo.addr, size);
+        wined3d_buffer_update_sub_resource(buffer_from_resource(resource),
+                context, &op->bo, box->left, box->right - box->left);
         goto done;
     }
 

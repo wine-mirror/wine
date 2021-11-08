@@ -5072,6 +5072,8 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
 BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context) DECLSPEC_HIDDEN;
 BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, unsigned int location) DECLSPEC_HIDDEN;
+void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wined3d_context *context,
+        const struct upload_bo *upload_bo, unsigned int offset, unsigned int size) DECLSPEC_HIDDEN;
 
 HRESULT wined3d_buffer_no3d_init(struct wined3d_buffer *buffer_no3d, struct wined3d_device *device,
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
