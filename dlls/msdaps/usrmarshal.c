@@ -1741,3 +1741,31 @@ HRESULT __RPC_STUB ICommandWithParameters_MapParameterNames_Stub(ICommandWithPar
     FIXME("(%p)->(%ld %p %p %p): stub\n", This, count, names, ordinals, error);
     return E_NOTIMPL;
 }
+
+HRESULT __RPC_STUB ITransactionJoin_GetOptionsObject_Stub(ITransactionJoin* This,
+    ITransactionOptions **options, IErrorInfo **error)
+{
+    FIXME("(%p)->(%p, %p): stub\n", This, options, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ITransactionJoin_GetOptionsObject_Proxy(ITransactionJoin *This,
+        ITransactionOptions **options)
+{
+    FIXME("(%p)->(%p): stub\n", This, options);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ITransactionJoin_JoinTransaction_Stub(ITransactionJoin* This, IUnknown *unk,
+    ISOLEVEL level, ULONG flags, ITransactionOptions *options, IErrorInfo **error)
+{
+    FIXME("(%p)->(%p, %d, 0x%08x, %p, %p): stub\n", This, unk, level, flags, options, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ITransactionJoin_JoinTransaction_Proxy(ITransactionJoin* This, IUnknown *unk,
+    ISOLEVEL level, ULONG flags, ITransactionOptions *options)
+{
+    FIXME("(%p)->(%p, %d, 0x%08x, %p): stub\n", This, unk, level, flags, options);
+    return E_NOTIMPL;
+}
