@@ -6345,7 +6345,7 @@ long      _InterlockedIncrement(long volatile*);
 short     _InterlockedIncrement16(short volatile*);
 long      _InterlockedOr(long volatile *,long);
 
-#ifndef __i386__
+#if !defined(__i386__) || _MSC_VER >= 1600
 
 #pragma intrinsic(_InterlockedCompareExchangePointer)
 #pragma intrinsic(_InterlockedExchangePointer)
