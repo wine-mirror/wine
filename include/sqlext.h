@@ -64,6 +64,7 @@ extern "C" {
 
 #define SQL_OV_ODBC2                    __MSABI_LONG(2U)
 #define SQL_OV_ODBC3                    __MSABI_LONG(3U)
+#define SQL_OV_ODBC3_80                 __MSABI_LONG(380U)
 #endif
 
 #define SQL_ACCESS_MODE                 101
