@@ -38,6 +38,7 @@
 #include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "ws2tcpip.h"
 #include "windns.h"
 #include "iphlpapi.h"
@@ -873,13 +874,35 @@ static void testSetTcpEntry(void)
        "got %u, expected %u\n", ret, ERROR_MR_MID_NOT_FOUND);
 }
 
+static BOOL icmp_send_echo_test_apc_expect;
+static void WINAPI icmp_send_echo_test_apc_xp(void *context)
+{
+    ok(icmp_send_echo_test_apc_expect, "Unexpected APC execution\n");
+    ok(context == (void*)0xdeadc0de, "Wrong context: %p\n", context);
+    icmp_send_echo_test_apc_expect = FALSE;
+}
+
+static void WINAPI icmp_send_echo_test_apc(void *context, IO_STATUS_BLOCK *io_status, ULONG reserved)
+{
+    icmp_send_echo_test_apc_xp(context);
+    ok(io_status->Status == 0, "Got IO Status 0x%08x\n", io_status->Status);
+    ok(io_status->Information == sizeof(ICMP_ECHO_REPLY) + 32 /* sizeof(senddata) */,
+        "Got IO Information %lu\n", io_status->Information);
+}
+
 static void testIcmpSendEcho(void)
 {
+    /* The APC's signature is different pre-Vista */
+    const PIO_APC_ROUTINE apc = broken(LOBYTE(LOWORD(GetVersion())) < 6)
+                                ? (PIO_APC_ROUTINE)icmp_send_echo_test_apc_xp
+                                : icmp_send_echo_test_apc;
     HANDLE icmp;
     char senddata[32], replydata[sizeof(senddata) + sizeof(ICMP_ECHO_REPLY)];
+    char replydata2[sizeof(replydata) + sizeof(IO_STATUS_BLOCK)];
     DWORD ret, error, replysz = sizeof(replydata);
     IPAddr address;
     ICMP_ECHO_REPLY *reply;
+    HANDLE event;
     INT i;
 
     memset(senddata, 0, sizeof(senddata));
@@ -889,6 +912,15 @@ static void testIcmpSendEcho(void)
     ret = IcmpSendEcho(INVALID_HANDLE_VALUE, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
     error = GetLastError();
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+    ok (error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INVALID_HANDLE) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    address = htonl(INADDR_LOOPBACK);
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(INVALID_HANDLE_VALUE, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
     ok (error == ERROR_INVALID_PARAMETER
         || broken(error == ERROR_INVALID_HANDLE) /* <= 2003 */,
         "expected 87, got %d\n", error);
@@ -1035,6 +1067,222 @@ static void testIcmpSendEcho(void)
     ok(reply->Status == IP_SUCCESS, "Expect status:0x%08x, got:0x%08x\n", IP_SUCCESS, reply->Status);
     ok(reply->DataSize == sizeof(senddata), "Got size:%d\n", reply->DataSize);
     ok(!memcmp(senddata, reply->Data, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
+
+
+    /*
+     * IcmpSendEcho2
+    */
+    address = 0;
+    replysz = sizeof(replydata2);
+    memset(senddata, 0, sizeof(senddata));
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_NETNAME
+        || broken(error == IP_BAD_DESTINATION) /* <= 2003 */,
+        "expected 1214, got %d\n", error);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEventW failed unexpectedly with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, event, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
+    ok(error == ERROR_INVALID_NETNAME
+        || broken(error == ERROR_IO_PENDING) /* <= 2003 */,
+        "Got last error: 0x%08x\n", error);
+    if (error == ERROR_IO_PENDING)
+    {
+        ret = WaitForSingleObjectEx(event, 2000, TRUE);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObjectEx failed unexpectedly with %u\n", ret);
+    }
+
+    address = htonl(INADDR_LOOPBACK);
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, NULL, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_NOACCESS) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, event, NULL, NULL, address, senddata, sizeof(senddata), NULL, NULL, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_NOACCESS) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+    ok(WaitForSingleObjectEx(event, 0, TRUE) == WAIT_TIMEOUT, "Event was unexpectedly signalled.\n");
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, 0, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, event, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, 0, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+    ok(WaitForSingleObjectEx(event, 0, TRUE) == WAIT_TIMEOUT, "Event was unexpectedly signalled.\n");
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, NULL, 0, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, event, NULL, NULL, address, senddata, sizeof(senddata), NULL, NULL, 0, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 succeeded unexpectedly\n");
+    ok(error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+    ok(WaitForSingleObjectEx(event, 0, TRUE) == WAIT_TIMEOUT, "Event was unexpectedly signalled.\n");
+
+    /* synchronous tests */
+    SetLastError(0xdeadbeef);
+    address = htonl(INADDR_LOOPBACK);
+    replysz = sizeof(ICMP_ECHO_REPLY) + sizeof(IO_STATUS_BLOCK);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, 0, NULL, replydata2, replysz, 1000);
+    ok(ret, "IcmpSendEcho2 failed unexpectedly with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, NULL, 0, NULL, replydata2, replysz, 1000);
+    ok(ret, "IcmpSendEcho2 failed unexpectedly with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, 0, NULL, replydata2, replysz, 1000);
+    ok(ret, "IcmpSendEcho2 failed unexpectedly with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(ICMP_ECHO_REPLY) + sizeof(IO_STATUS_BLOCK) + ICMP_MINLEN;
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, ICMP_MINLEN, NULL, replydata2, replysz, 1000);
+    ok(ret, "IcmpSendEcho2 failed unexpectedly with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(replydata2);
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    if (!ret)
+    {
+        error = GetLastError();
+        skip("Failed to ping with error %d, is lo interface down?\n", error);
+    }
+    else if (winetest_debug > 1)
+    {
+        reply = (ICMP_ECHO_REPLY*)replydata2;
+        trace("send addr  : %s\n", ntoa(address));
+        trace("reply addr : %s\n", ntoa(reply->Address));
+        trace("reply size : %u\n", replysz);
+        trace("roundtrip  : %u ms\n", reply->RoundTripTime);
+        trace("status     : %u\n", reply->Status);
+        trace("recv size  : %u\n", reply->DataSize);
+        trace("ttl        : %u\n", reply->Options.Ttl);
+        trace("flags      : 0x%x\n", reply->Options.Flags);
+    }
+
+    SetLastError(0xdeadbeef);
+    for (i = 0; i < ARRAY_SIZE(senddata); i++) senddata[i] = i & 0xff;
+    ret = IcmpSendEcho2(icmp, NULL, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    reply = (ICMP_ECHO_REPLY*)replydata2;
+    ok(ret, "IcmpSendEcho2 failed unexpectedly\n");
+    ok(error == NO_ERROR, "Expect last error: 0x%08x, got: 0x%08x\n", NO_ERROR, error);
+    ok(ntohl(reply->Address) == INADDR_LOOPBACK, "Address mismatch, expect: %s, got: %s\n", ntoa(INADDR_LOOPBACK),
+       ntoa(reply->Address));
+    ok(reply->Status == IP_SUCCESS, "Expect status: 0x%08x, got: 0x%08x\n", IP_SUCCESS, reply->Status);
+    ok(reply->DataSize == sizeof(senddata), "Got size: %d\n", reply->DataSize);
+    ok(!memcmp(senddata, reply->Data, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
+
+    /* asynchronous tests with event */
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(replydata2);
+    address = htonl(INADDR_LOOPBACK);
+    memset(senddata, 0, sizeof(senddata));
+    ret = IcmpSendEcho2(icmp, event, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    if (!ret && error != ERROR_IO_PENDING)
+    {
+        skip("Failed to ping with error %d, is lo interface down?\n", error);
+    }
+    else
+    {
+        ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
+        ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08x\n", ERROR_IO_PENDING, error);
+        ret = WaitForSingleObjectEx(event, 2000, TRUE);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObjectEx failed unexpectedly with %u\n", ret);
+        reply = (ICMP_ECHO_REPLY*)replydata2;
+        ok(ntohl(reply->Address) == INADDR_LOOPBACK, "Address mismatch, expect: %s, got: %s\n", ntoa(INADDR_LOOPBACK),
+           ntoa(reply->Address));
+        ok(reply->Status == IP_SUCCESS, "Expect status: 0x%08x, got: 0x%08x\n", IP_SUCCESS, reply->Status);
+        ok(reply->DataSize == sizeof(senddata), "Got size: %d\n", reply->DataSize);
+        if (winetest_debug > 1)
+        {
+            reply = (ICMP_ECHO_REPLY*)replydata2;
+            trace("send addr  : %s\n", ntoa(address));
+            trace("reply addr : %s\n", ntoa(reply->Address));
+            trace("reply size : %u\n", replysz);
+            trace("roundtrip  : %u ms\n", reply->RoundTripTime);
+            trace("status     : %u\n", reply->Status);
+            trace("recv size  : %u\n", reply->DataSize);
+            trace("ttl        : %u\n", reply->Options.Ttl);
+            trace("flags      : 0x%x\n", reply->Options.Flags);
+        }
+    }
+
+    SetLastError(0xdeadbeef);
+    for (i = 0; i < ARRAY_SIZE(senddata); i++) senddata[i] = i & 0xff;
+    ret = IcmpSendEcho2(icmp, event, NULL, NULL, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
+    ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08x\n", ERROR_IO_PENDING, error);
+    ret = WaitForSingleObjectEx(event, 2000, TRUE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObjectEx failed unexpectedly with %u\n", ret);
+    reply = (ICMP_ECHO_REPLY*)replydata2;
+    ok(ntohl(reply->Address) == INADDR_LOOPBACK, "Address mismatch, expect: %s, got: %s\n", ntoa(INADDR_LOOPBACK),
+       ntoa(reply->Address));
+    ok(reply->Status == IP_SUCCESS, "Expect status: 0x%08x, got: 0x%08x\n", IP_SUCCESS, reply->Status);
+    ok(reply->DataSize == sizeof(senddata), "Got size: %d\n", reply->DataSize);
+    /* pre-Vista, reply->Data is an offset; otherwise it's a pointer, so hardcode the offset */
+    ok(!memcmp(senddata, reply + 1, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
+
+    CloseHandle(event);
+
+    /* asynchronous tests with APC */
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(replydata2) + 10;
+    address = htonl(INADDR_LOOPBACK);
+    for (i = 0; i < ARRAY_SIZE(senddata); i++) senddata[i] = ~i & 0xff;
+    icmp_send_echo_test_apc_expect = TRUE;
+    /*
+       NOTE: Supplying both event and apc has varying behavior across Windows versions, so not tested.
+    */
+    ret = IcmpSendEcho2(icmp, NULL, apc, (void*)0xdeadc0de, address, senddata, sizeof(senddata), NULL, replydata2, replysz, 1000);
+    error = GetLastError();
+    ok(!ret, "IcmpSendEcho2 returned success unexpectedly\n");
+    ok(error == ERROR_IO_PENDING, "Expect last error: 0x%08x, got: 0x%08x\n", ERROR_IO_PENDING, error);
+    SleepEx(200, TRUE);
+    SleepEx(0, TRUE);
+    ok(icmp_send_echo_test_apc_expect == FALSE, "APC was not executed!\n");
+    reply = (ICMP_ECHO_REPLY*)replydata2;
+    ok(ntohl(reply->Address) == INADDR_LOOPBACK, "Address mismatch, expect: %s, got: %s\n", ntoa(INADDR_LOOPBACK),
+       ntoa(reply->Address));
+    ok(reply->Status == IP_SUCCESS, "Expect status: 0x%08x, got: 0x%08x\n", IP_SUCCESS, reply->Status);
+    ok(reply->DataSize == sizeof(senddata), "Got size: %d\n", reply->DataSize);
+    /* pre-Vista, reply->Data is an offset; otherwise it's a pointer, so hardcode the offset */
+    ok(!memcmp(senddata, reply + 1, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
 
     IcmpCloseHandle(icmp);
 }

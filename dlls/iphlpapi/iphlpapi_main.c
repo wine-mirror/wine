@@ -4615,12 +4615,6 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
 
-    if (event || apc_routine)
-    {
-        FIXME( "Async requests not yet supported\n" );
-        return 0;
-    }
-
     if (handle == INVALID_HANDLE_VALUE || !reply)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -4655,19 +4649,22 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
     in->timeout = timeout;
     memcpy( in->data + opt_size, request, request_size );
 
-    request_event = CreateEventW( NULL, 0, 0, NULL );
+    request_event = event ? event : (apc_routine ? NULL : CreateEventW( NULL, 0, 0, NULL ));
 
-    status = NtDeviceIoControlFile( data->nsi_device, request_event, NULL, NULL,
+    status = NtDeviceIoControlFile( data->nsi_device, request_event, apc_routine, apc_ctxt,
                                     &iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO, in, in_size,
                                     reply, reply_size );
 
-    if (status == STATUS_PENDING && !WaitForSingleObject( request_event, INFINITE ))
-        status = iosb.Status;
+    if (status == STATUS_PENDING)
+    {
+        if (!event && !apc_routine && !WaitForSingleObject( request_event, INFINITE ))
+            status = iosb.Status;
+    }
 
     if (!status)
         ret = IcmpParseReplies( reply, reply_size );
 
-    CloseHandle( request_event );
+    if (!event && request_event) CloseHandle( request_event );
     heap_free( in );
 
     if (status) SetLastError( RtlNtStatusToDosError( status ) );
