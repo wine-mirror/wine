@@ -2043,7 +2043,7 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
     TRACE( "iface %p, params %p, flags %#x.\n", iface, params, flags );
 
     if (!params) return DI_OK;
-    if (params->dwSize != sizeof(DIEFFECT)) return DIERR_INVALIDPARAM;
+    if (params->dwSize != sizeof(DIEFFECT_DX6) && params->dwSize != sizeof(DIEFFECT_DX5)) return DIERR_INVALIDPARAM;
     capacity = params->cAxes;
     object_flags = params->dwFlags & (DIEFF_OBJECTIDS | DIEFF_OBJECTOFFSETS);
     direction_flags = params->dwFlags & (DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
@@ -2199,7 +2199,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
     TRACE( "iface %p, params %p, flags %#x.\n", iface, params, flags );
 
     if (!params) return E_POINTER;
-    if (params->dwSize != sizeof(DIEFFECT)) return DIERR_INVALIDPARAM;
+    if (params->dwSize != sizeof(DIEFFECT_DX6) && params->dwSize != sizeof(DIEFFECT_DX5)) return DIERR_INVALIDPARAM;
     object_flags = params->dwFlags & (DIEFF_OBJECTIDS | DIEFF_OBJECTOFFSETS);
     direction_flags = params->dwFlags & (DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
 
