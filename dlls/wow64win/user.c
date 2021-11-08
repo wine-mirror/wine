@@ -156,6 +156,14 @@ NTSTATUS WINAPI wow64_NtUserSetObjectInformation( UINT *args )
     return NtUserSetObjectInformation( handle, index, info, len );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetProp( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const WCHAR *str = get_ptr( &args );
+
+    return HandleToUlong( NtUserGetProp( hwnd, str ));
+}
+
 NTSTATUS WINAPI wow64_NtUserSetProp( UINT *args )
 {
     HWND hwnd = get_handle( &args );

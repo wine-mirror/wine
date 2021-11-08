@@ -980,7 +980,7 @@
 @ stub NtUserGetProcessDpiAwarenessContext
 @ stub NtUserGetProcessUIContextInformation
 @ stdcall -syscall NtUserGetProcessWindowStation()
-@ stub NtUserGetProp
+@ stdcall -syscall NtUserGetProp(long wstr)
 @ stub NtUserGetQueueStatus
 @ stub NtUserGetQueueStatusReadonly
 @ stub NtUserGetRawInputBuffer

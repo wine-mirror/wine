@@ -108,6 +108,7 @@ static void * const syscalls[] =
     NtUserGetLayeredWindowAttributes,
     NtUserGetObjectInformation,
     NtUserGetProcessWindowStation,
+    NtUserGetProp,
     NtUserGetThreadDesktop,
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,
