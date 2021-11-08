@@ -2717,53 +2717,62 @@ static HANDLE map_pdb_file(const struct process* pcs,
     return hMap;
 }
 
+static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
+                                struct codeview_type_parse* ctp,
+                                BYTE* image)
+{
+    PDB_TYPES types;
+    DWORD total;
+    const BYTE* ptr;
+    DWORD* offset;
+
+    pdb_convert_types_header(&types, image);
+
+    /* Check for unknown versions */
+    switch (types.version)
+    {
+    case 19950410:      /* VC 4.0 */
+    case 19951122:
+    case 19961031:      /* VC 5.0 / 6.0 */
+    case 19990903:      /* VC 7.0 */
+    case 20040203:      /* VC 8.0 */
+        break;
+    default:
+        ERR("-Unknown type info version %d\n", types.version);
+    }
+
+    ctp->module = msc_dbg->module;
+    /* reconstruct the types offset...
+     * FIXME: maybe it's present in the newest PDB_TYPES structures
+     */
+    total = types.last_index - types.first_index + 1;
+    offset = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * total);
+    if (!offset) return FALSE;
+    ctp->table = ptr = image + types.type_offset;
+    ctp->num = 0;
+    while (ptr < ctp->table + types.type_size && ctp->num < total)
+    {
+        offset[ctp->num++] = ptr - ctp->table;
+        ptr += ((const union codeview_type*)ptr)->generic.len + 2;
+    }
+    ctp->offset = offset;
+    return TRUE;
+}
+
 static void pdb_process_types(const struct msc_debug_info* msc_dbg,
                               const struct pdb_file_info* pdb_file)
 {
-    BYTE*       types_image = NULL;
+    struct codeview_type_parse ctp;
+    BYTE* types_image = pdb_read_file(pdb_file, 2);
 
-    types_image = pdb_read_file(pdb_file, 2);
     if (types_image)
     {
-        PDB_TYPES               types;
-        struct codeview_type_parse      ctp;
-        DWORD                   total;
-        const BYTE*             ptr;
-        DWORD*                  offset;
-
-        pdb_convert_types_header(&types, types_image);
-
-        /* Check for unknown versions */
-        switch (types.version)
+        if (pdb_init_type_parse(msc_dbg, &ctp, types_image))
         {
-        case 19950410:      /* VC 4.0 */
-        case 19951122:
-        case 19961031:      /* VC 5.0 / 6.0 */
-        case 19990903:      /* VC 7.0 */
-        case 20040203:      /* VC 8.0 */
-            break;
-        default:
-            ERR("-Unknown type info version %d\n", types.version);
+            /* Read type table */
+            codeview_parse_type_table(&ctp);
+            HeapFree(GetProcessHeap(), 0, (DWORD*)ctp.offset);
         }
-
-        ctp.module = msc_dbg->module;
-        /* reconstruct the types offset...
-         * FIXME: maybe it's present in the newest PDB_TYPES structures
-         */
-        total = types.last_index - types.first_index + 1;
-        offset = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * total);
-        ctp.table = ptr = types_image + types.type_offset;
-        ctp.num = 0;
-        while (ptr < ctp.table + types.type_size && ctp.num < total)
-        {
-            offset[ctp.num++] = ptr - ctp.table;
-            ptr += ((const union codeview_type*)ptr)->generic.len + 2;
-        }
-        ctp.offset = offset;
-
-        /* Read type table */
-        codeview_parse_type_table(&ctp);
-        HeapFree(GetProcessHeap(), 0, offset);
         pdb_free(types_image);
     }
 }
