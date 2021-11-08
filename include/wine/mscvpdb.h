@@ -945,6 +945,7 @@ union codeview_fieldtype
 #define T_UINT8             0x0077  /* 64-bit unsigned int */
 #define T_CHAR16            0x007a  /* 16-bit unicode char */
 #define T_CHAR32            0x007b  /* 32-bit unicode char */
+#define T_CHAR8             0x007c  /* 8-bit unicode char (C++ 20) */
 
 /* near pointers to basic types */
 #define T_PVOID             0x0103  /* near pointer to void */
@@ -979,6 +980,7 @@ union codeview_fieldtype
 #define T_PUINT8            0x0177  /* Near pointer to 64-bit unsigned int */
 #define T_PCHAR16           0x017a  /* Near pointer to 16-bit unicode char */
 #define T_PCHAR32           0x017b  /* Near pointer to 32-bit unicode char */
+#define T_PCHAR8            0x017c  /* Near pointer to 8-bit unicode char */
 
 /* far pointers to basic types */
 #define T_PFVOID            0x0203  /* Far pointer to void */
@@ -1013,6 +1015,7 @@ union codeview_fieldtype
 #define T_PFUINT8           0x0277  /* Far pointer to 64-bit unsigned int */
 #define T_PFCHAR16          0x027a  /* Far pointer to 16-bit unicode char */
 #define T_PFCHAR32          0x027b  /* Far pointer to 32-bit unicode char */
+#define T_PFCHAR8           0x027c  /* Far pointer to 8-bit unicode char */
 
 /* huge pointers to basic types */
 #define T_PHVOID            0x0303  /* Huge pointer to void */
@@ -1047,6 +1050,7 @@ union codeview_fieldtype
 #define T_PHUINT8           0x0377  /* Huge pointer to 64-bit unsigned int */
 #define T_PHCHAR16          0x037a  /* Huge pointer to 16-bit unicode char */
 #define T_PHCHAR32          0x037b  /* Huge pointer to 32-bit unicode char */
+#define T_PHCHAR8           0x037c  /* Huge pointer to 8-bit unicode char */
 
 /* 32-bit near pointers to basic types */
 #define T_32PVOID           0x0403  /* 32-bit near pointer to void */
@@ -1082,6 +1086,7 @@ union codeview_fieldtype
 #define T_32PUINT8          0x0477  /* 16:32 near pointer to 64-bit unsigned int */
 #define T_32PCHAR16         0x047a  /* 16:32 near pointer to 16-bit unicode char */
 #define T_32PCHAR32         0x047b  /* 16:32 near pointer to 32-bit unicode char */
+#define T_32PCHAR8          0x047c  /* 16:32 near pointer to 8-bit unicode char */
 
 /* 32-bit far pointers to basic types */
 #define T_32PFVOID          0x0503  /* 32-bit far pointer to void */
@@ -1117,6 +1122,7 @@ union codeview_fieldtype
 #define T_32PFUINT8         0x0577  /* 16:32 far pointer to 64-bit unsigned int */
 #define T_32PFCHAR16        0x057a  /* 16:32 far pointer to 16-bit unicode char */
 #define T_32PFCHAR32        0x057b  /* 16:32 far pointer to 32-bit unicode char */
+#define T_32PFCHAR8         0x057c  /* 16:32 far pointer to 8-bit unicode char */
 
 /* 64-bit near pointers to basic types */
 #define T_64PVOID           0x0603  /* 64-bit near pointer to void */
@@ -1152,6 +1158,7 @@ union codeview_fieldtype
 #define T_64PUINT8          0x0677  /* 64 near pointer to 64-bit unsigned int */
 #define T_64PCHAR16         0x067a  /* 64 near pointer to 16-bit unicode char */
 #define T_64PCHAR32         0x067b  /* 64 near pointer to 32-bit unicode char */
+#define T_64PCHAR8          0x067c  /* 64 near pointer to 8-bit unicode char */
 
 /* counts, bit masks, and shift values needed to access various parts of the built-in type numbers */
 #define T_MAXPREDEFINEDTYPE 0x0580  /* maximum type index for all built-in types */

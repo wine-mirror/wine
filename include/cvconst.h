@@ -91,7 +91,8 @@ enum BasicType
     btBSTR = 30,
     btHresult = 31,
     btChar16 = 32,
-    btChar32 = 33
+    btChar32 = 33,
+    btChar8 = 34,
 };
 
 /* kind of UDT */
