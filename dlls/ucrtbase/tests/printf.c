@@ -845,6 +845,24 @@ static void test_printf_fp(void)
     }
 }
 
+static void test_printf_width_specification(void)
+{
+    int r;
+    char buffer[20];
+
+    r = vsprintf_wrapper(0, buffer, sizeof(buffer), "%0*2d", 1, 3);
+    ok(r == 2, "r = %d\n", r);
+    ok(!strcmp(buffer, "03"), "buffer wrong, got=%s\n", buffer);
+
+    r = vsprintf_wrapper(0, buffer, sizeof(buffer), "%*0d", 1, 2);
+    ok(r == 1, "r = %d\n", r);
+    ok(!strcmp(buffer, "2"), "buffer wrong, got=%s\n", buffer);
+
+    r = vsprintf_wrapper(0, buffer, sizeof(buffer), "% *2d", 0, 7);
+    ok(r == 2, "r = %d\n", r);
+    ok(!strcmp(buffer, " 7"), "buffer wrong, got=%s\n", buffer);
+}
+
 START_TEST(printf)
 {
     ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
@@ -862,4 +880,5 @@ START_TEST(printf)
     test_printf_c99();
     test_printf_natural_string();
     test_printf_fp();
+    test_printf_width_specification();
 }

@@ -1050,7 +1050,14 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 flags.LeftAlign = TRUE;
                 flags.FieldLength = -flags.FieldLength;
             }
-        } else while (*p >= '0' && *p <= '9') {
+        }
+
+#if _MSVCR_VER >= 140
+        if (*p >= '0' && *p <= '9')
+            flags.FieldLength = 0;
+#endif
+
+        while (*p >= '0' && *p <= '9') {
             flags.FieldLength *= 10;
             flags.FieldLength += *p++ - '0';
         }

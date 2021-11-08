@@ -396,6 +396,18 @@ static void test_sprintf( void )
     ok(!strcmp(buffer, "string to copy"), "failed: \"%s\"\n", buffer);
 
     setlocale(LC_ALL, "C");
+
+    r = p_sprintf(buffer, "%*1d", 1, 3);
+    ok(r==11, "r = %d\n", r);
+    ok(!strcmp(buffer, "          3"), "failed: \"%s\"\n", buffer);
+
+    r = p_sprintf(buffer, "%0*0d", 1, 2);
+    ok(r==10, "r = %d\n", r);
+    ok(!strcmp(buffer, "0000000002"), "failed: \"%s\"\n", buffer);
+
+    r = p_sprintf(buffer, "% *2d", 0, 7);
+    ok(r==2, "r = %d\n", r);
+    ok(!strcmp(buffer, " 7"), "failed: \"%s\"\n", buffer);
 }
 
 static void test_swprintf( void )
