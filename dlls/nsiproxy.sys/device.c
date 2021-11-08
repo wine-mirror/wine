@@ -353,13 +353,13 @@ static DWORD WINAPI listen_thread_proc( void *arg )
 static void handle_queued_send_echo( IRP *irp )
 {
     struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
-    struct nsiproxy_icmp_echo_reply *reply = (struct nsiproxy_icmp_echo_reply *)irp->AssociatedIrp.SystemBuffer;
     struct icmp_send_echo_params params;
     NTSTATUS status;
 
     TRACE( "\n" );
     params.request = in->data + ((in->opt_size + 3) & ~3);
     params.request_size = in->req_size;
+    params.reply = irp->AssociatedIrp.SystemBuffer;
     params.ttl = in->ttl;
     params.tos = in->tos;
     params.dst = &in->dst;
@@ -371,11 +371,7 @@ static void handle_queued_send_echo( IRP *irp )
     {
         irp->IoStatus.Status = status;
         if (status == STATUS_SUCCESS)
-        {
-            memset( reply, 0, sizeof(*reply) );
-            reply->status = params.ip_status;
-            irp->IoStatus.Information = sizeof(*reply);
-        }
+            irp->IoStatus.Information = params.reply_len;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
     else

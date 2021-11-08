@@ -28,9 +28,8 @@ struct icmp_listen_params
 struct icmp_send_echo_params
 {
     SOCKADDR_INET *dst;
-    void *request;
-    DWORD request_size;
+    void *request, *reply;
+    DWORD request_size, reply_len;
     BYTE ttl, tos;
     HANDLE handle;
-    ULONG ip_status;
 };

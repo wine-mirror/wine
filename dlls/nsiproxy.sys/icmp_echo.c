@@ -586,7 +586,7 @@ NTSTATUS icmp_send_echo( void *args )
     {
         TRACE( "sendto() rets %d errno %d\n", ret, errno );
         icmp_data_free( data );
-        params->ip_status = errno_to_ip_status( errno );
+        params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->reply );
         return STATUS_SUCCESS;
     }
 
