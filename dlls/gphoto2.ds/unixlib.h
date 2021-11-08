@@ -26,20 +26,9 @@
 #include "wine/unixlib.h"
 #include "twain.h"
 
-struct get_identity_params
-{
-    TW_IDENTITY *id;
-};
-
-struct open_ds_params
-{
-    TW_IDENTITY *id;
-};
-
 struct load_file_list_params
 {
     const char   *root;
-    const char  **extensions;
     unsigned int *count;
 };
 
@@ -54,20 +43,20 @@ struct open_file_params
 {
     unsigned int  idx;
     BOOL          preview;
-    void        **handle;
+    UINT64       *handle;
     unsigned int *size;
 };
 
 struct get_file_data_params
 {
-    void        *handle;
+    UINT64       handle;
     void        *data;
     unsigned int size;
 };
 
 struct close_file_params
 {
-    void        *handle;
+    UINT64       handle;
 };
 
 enum gphoto2_funcs

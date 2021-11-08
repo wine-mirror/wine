@@ -410,8 +410,7 @@ static TW_UINT16 GPHOTO2_EnableDSUserInterface (pTW_IDENTITY pOrigin,
                                        TW_MEMREF pData)
 {
     pTW_USERINTERFACE pUserInterface = (pTW_USERINTERFACE) pData;
-    static const char *extensions[] = { ".jpg", ".JPG", NULL };
-    struct load_file_list_params params = { "/", extensions, &activeDS.file_count };
+    struct load_file_list_params params = { "/", &activeDS.file_count };
 
     GPHOTO2_CALL( load_file_list, &params );
     activeDS.download_flags = calloc( activeDS.file_count, sizeof(*activeDS.download_flags) );
@@ -499,8 +498,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static TW_UINT16 GPHOTO2_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self )
 {
-    struct open_ds_params params = { self };
-
     if (GPHOTO2_dsmentry == NULL)
     {
         HMODULE moddsm = GetModuleHandleW(L"twain_32");
@@ -515,10 +512,10 @@ static TW_UINT16 GPHOTO2_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self )
         }
     }
 
-    if (GPHOTO2_CALL( open_ds, &params )) return TWRC_FAILURE;
+    if (GPHOTO2_CALL( open_ds, self )) return TWRC_FAILURE;
 
     activeDS.file_count = 0;
-    activeDS.file_handle = NULL;
+    activeDS.file_handle = 0;
     activeDS.download_count = 0;
     activeDS.currentState = 4;
     activeDS.twCC 		= TWRC_SUCCESS;
@@ -548,11 +545,8 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
                     GPHOTO2_CALL( close_ds, NULL );
                     break;
 		case MSG_GET:
-                {
-                    struct get_identity_params params = { pData };
-                    if (GPHOTO2_CALL( get_identity, &params )) twRC = TWRC_FAILURE;
+                    if (GPHOTO2_CALL( get_identity, pData )) twRC = TWRC_FAILURE;
                     break;
-                }
 		case MSG_OPENDS:
 		     twRC = GPHOTO2_OpenDS(pOrigin,(pTW_IDENTITY)pData);
 		     break;

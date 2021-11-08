@@ -50,7 +50,7 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
 }
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
 
-static void close_file( void *handle )
+static void close_file( UINT64 handle )
 {
     struct close_file_params params = { handle };
     GPHOTO2_CALL( close_file, &params );
@@ -59,7 +59,7 @@ static void close_file( void *handle )
 static void close_current_file(void)
 {
     close_file( activeDS.file_handle );
-    activeDS.file_handle = NULL;
+    activeDS.file_handle = 0;
     free( activeDS.file_data );
 }
 
@@ -522,7 +522,7 @@ _get_gphoto2_file_as_DIB( unsigned int idx, BOOL preview, HWND hwnd, HBITMAP *hD
     JSAMPROW		samprow, oldsamprow;
     struct open_file_params open_params;
     struct get_file_data_params get_data_params;
-    void *file_handle;
+    UINT64 file_handle;
     unsigned int filesize;
 
     open_params.idx     = idx;

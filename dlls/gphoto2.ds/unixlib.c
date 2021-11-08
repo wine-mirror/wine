@@ -48,9 +48,9 @@ static char **files;
 static unsigned int files_count;
 static unsigned int files_size;
 
-static void load_filesystem( const char *folder, const char **extensions )
+static void load_filesystem( const char *folder )
 {
-    const char *name, *ext, **p;
+    const char *name, *ext;
     char *fullname;
     int		i, count, ret;
     CameraList	*list;
@@ -75,8 +75,7 @@ static void load_filesystem( const char *folder, const char **extensions )
 	if (ret < GP_OK)
 	    continue;
         if (!(ext = strrchr( name, '.' ))) continue;
-        for (p = extensions; *p; p++) if (!strcmp( ext, *p )) break;
-        if (!*p) continue;
+        if (strcmp( ext, ".jpg" ) && strcmp( ext, ".JPG" )) continue;
 
         if (files_count == files_size)
         {
@@ -112,7 +111,7 @@ static void load_filesystem( const char *folder, const char **extensions )
 	TRACE("recursing into %s\n", name);
         fullname = malloc( strlen(folder) + 1 + strlen(name) + 1 );
         sprintf( fullname, "%s/%s", folder[1] ? folder : "", name );
-	load_filesystem( fullname, extensions );
+	load_filesystem( fullname );
         free( fullname );
     }
     gp_list_free (list);
@@ -120,10 +119,10 @@ static void load_filesystem( const char *folder, const char **extensions )
 
 static NTSTATUS load_file_list( void *args )
 {
-    struct load_file_list_params *params = args;
+    const struct load_file_list_params *params = args;
 
     if (!context) context = gp_context_new ();
-    load_filesystem( params->root, params->extensions );
+    load_filesystem( params->root );
     *params->count = files_count;
     return STATUS_SUCCESS;
 }
@@ -138,7 +137,7 @@ static void free_file_list(void)
 
 static NTSTATUS get_file_name( void *args )
 {
-    struct get_file_name_params *params = args;
+    const struct get_file_name_params *params = args;
     char *name;
     unsigned int len;
 
@@ -155,7 +154,7 @@ static NTSTATUS get_file_name( void *args )
 
 static NTSTATUS open_file( void *args )
 {
-    struct open_file_params *params = args;
+    const struct open_file_params *params = args;
     CameraFileType type = params->preview ? GP_FILE_TYPE_PREVIEW : GP_FILE_TYPE_NORMAL;
     CameraFile *file;
     char *folder, *filename;
@@ -183,15 +182,15 @@ static NTSTATUS open_file( void *args )
 	gp_file_unref( file );
 	return STATUS_NO_SUCH_FILE;
     }
-    *params->handle = file;
+    *params->handle = (ULONG_PTR)file;
     *params->size = filesize;
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS get_file_data( void *args )
 {
-    struct get_file_data_params *params = args;
-    CameraFile *file = params->handle;
+    const struct get_file_data_params *params = args;
+    CameraFile *file = (CameraFile *)(ULONG_PTR)params->handle;
     const char *filedata;
     unsigned long filesize;
     int ret;
@@ -205,8 +204,8 @@ static NTSTATUS get_file_data( void *args )
 
 static NTSTATUS close_file( void *args )
 {
-    struct close_file_params *params = args;
-    CameraFile *file = params->handle;
+    const struct close_file_params *params = args;
+    CameraFile *file = (CameraFile *)(ULONG_PTR)params->handle;
 
     gp_file_unref( file );
     return STATUS_SUCCESS;
@@ -261,8 +260,7 @@ static BOOL gphoto2_auto_detect(void)
 
 static NTSTATUS get_identity( void *args )
 {
-    struct get_identity_params *params = args;
-    TW_IDENTITY *id = params->id;
+    TW_IDENTITY *id = args;
     int count;
     const char *cname, *pname;
 
@@ -296,8 +294,7 @@ static NTSTATUS get_identity( void *args )
 
 static NTSTATUS open_ds( void *args )
 {
-    struct open_ds_params *params = args;
-    TW_IDENTITY *id = params->id;
+    TW_IDENTITY *id = args;
     int ret, m, p, count, i;
     CameraAbilities a;
     GPPortInfo info;
@@ -408,7 +405,7 @@ static NTSTATUS close_ds( void *args )
 
 #endif  /* HAVE_GPHOTO2_PORT */
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_identity,
     open_ds,
@@ -419,3 +416,109 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_file_data,
     close_file,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_load_file_list( void *args )
+{
+    struct
+    {
+        PTR32 root;
+        PTR32 count;
+    } const *params32 = args;
+
+    struct load_file_list_params params =
+    {
+        ULongToPtr(params32->root),
+        ULongToPtr(params32->count)
+    };
+
+    return load_file_list( &params );
+}
+
+static NTSTATUS wow64_get_file_name( void *args )
+{
+    struct
+    {
+        unsigned int  idx;
+        unsigned int  size;
+        PTR32         buffer;
+    } const *params32 = args;
+
+    struct get_file_name_params params =
+    {
+        params32->idx,
+        params32->size,
+        ULongToPtr(params32->buffer)
+    };
+
+    return get_file_name( &params );
+}
+
+static NTSTATUS wow64_open_file( void *args )
+{
+    struct
+    {
+        unsigned int  idx;
+        BOOL          preview;
+        PTR32         handle;
+        PTR32         size;
+    } const *params32 = args;
+
+    struct open_file_params params =
+    {
+        params32->idx,
+        params32->preview,
+        ULongToPtr(params32->handle),
+        ULongToPtr(params32->size)
+    };
+
+    return open_file( &params );
+}
+
+static NTSTATUS wow64_get_file_data( void *args )
+{
+    struct
+    {
+        UINT64       handle;
+        PTR32        data;
+        unsigned int size;
+    } const *params32 = args;
+
+    struct get_file_data_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->data),
+        params32->size
+    };
+
+    return get_file_data( &params );
+}
+
+static NTSTATUS wow64_close_file( void *args )
+{
+    struct
+    {
+        UINT64       handle;
+    } const *params32 = args;
+
+    struct close_file_params params = { params32->handle };
+
+    return close_file( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    get_identity,
+    open_ds,
+    close_ds,
+    wow64_load_file_list,
+    wow64_get_file_name,
+    wow64_open_file,
+    wow64_get_file_data,
+    wow64_close_file,
+};
+
+#endif  /* _WIN64 */

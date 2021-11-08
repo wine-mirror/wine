@@ -55,7 +55,7 @@ struct tagActiveDS
     BOOL               *download_flags;
 
     /* Download and decode JPEG STATE */
-    void               *file_handle;
+    UINT64              file_handle;
     unsigned char      *file_data;
     unsigned int        file_size;
     struct jpeg_source_mgr		xjsm;
