@@ -1480,7 +1480,6 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
 static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const struct cv_module_snarf* cvmod)
 {
     unsigned    i;
-    DWORD_PTR       addr;
     const void* hdr_last = (const char*)cvmod->dbgsubsect + cvmod->dbgsubsect_size;
     const struct CV_DebugSSubsectionHeader_t*     hdr;
     const struct CV_DebugSSubsectionHeader_t*     hdr_next;
@@ -1512,6 +1511,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
         hdr_next = CV_RECORD_GAP(hdr, hdr->cbLen);
         if (!(hdr->type & DEBUG_S_IGNORE))
         {
+            ULONG_PTR lineblk_base;
             /* FIXME: should also check that whole lines_blk fits in linetab + size */
             switch (hdr->type)
             {
@@ -1520,7 +1520,6 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
                 files_hdr = CV_RECORD_AFTER(lines_hdr);
                 /* Skip blocks that are too small - Intel C Compiler generates these. */
                 if (!CV_IS_INSIDE(files_hdr, hdr_next)) break;
-                addr = codeview_get_address(msc_dbg, lines_hdr->segCon, lines_hdr->offCon);
                 TRACE("block from %04x:%08x #%x\n",
                       lines_hdr->segCon, lines_hdr->offCon, lines_hdr->cbCon);
                 chksms = CV_RECORD_GAP(hdr_files, files_hdr->offFile);
@@ -1531,20 +1530,20 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
                 }
                 source = source_new(msc_dbg->module, NULL,
                                     (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<stroutofbounds>>");
-                func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
-                /* FIXME: at least labels support line numbers */
-                if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
-                {
-                    WARN("--not a func at %04x:%08x %Ix tag=%d\n",
-                         lines_hdr->segCon, lines_hdr->offCon, addr, func ? func->symt.tag : -1);
-                    break;
-                }
+                lineblk_base = codeview_get_address(msc_dbg, lines_hdr->segCon, lines_hdr->offCon);
                 lines = CV_RECORD_AFTER(files_hdr);
                 for (i = 0; i < files_hdr->nLines; i++)
                 {
+                    func = (struct symt_function*)symt_find_nearest(msc_dbg->module, lineblk_base + lines[i].offset);
+                    /* FIXME: at least labels support line numbers */
+                    if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
+                    {
+                        WARN("--not a func at %04x:%08x %Ix tag=%d\n",
+                             lines_hdr->segCon, lines_hdr->offCon + lines[i].offset, lineblk_base + lines[i].offset, func ? func->symt.tag : -1);
+                        continue;
+                    }
                     symt_add_func_line(msc_dbg->module, func, source,
-                                       lines[i].linenumStart,
-                                       func->address + lines[i].offset);
+                                       lines[i].linenumStart, lineblk_base + lines[i].offset);
                 }
                 break;
             case DEBUG_S_FILECHKSMS: /* skip */
