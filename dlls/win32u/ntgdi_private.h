@@ -24,10 +24,6 @@
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
-#include "ntgdi.h"
 #include "win32u_private.h"
 
 /* extra stock object: default 1x1 bitmap for memory DCs */

@@ -155,3 +155,13 @@ NTSTATUS WINAPI wow64_NtUserSetObjectInformation( UINT *args )
 
     return NtUserSetObjectInformation( handle, index, info, len );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetLayeredWindowAttributes( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    COLORREF *key = get_ptr( &args );
+    BYTE *alpha = get_ptr( &args );
+    DWORD *flags = get_ptr( &args );
+
+    return NtUserGetLayeredWindowAttributes( hwnd, key, alpha, flags );
+}

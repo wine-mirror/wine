@@ -37,6 +37,7 @@ C_SRCS = \
 	syscall.c \
 	vertical.c \
 	vulkan.c \
+	window.c \
 	winstation.c \
 	wrappers.c
 

@@ -21,9 +21,14 @@
 #ifndef __WINE_WIN32U_PRIVATE
 #define __WINE_WIN32U_PRIVATE
 
-#include "winuser.h"
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "ntgdi.h"
+#include "ntuser.h"
 #include "wine/gdi_driver.h"
 #include "wine/unixlib.h"
+#include "wine/debug.h"
 
 struct user_callbacks
 {

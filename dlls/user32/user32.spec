@@ -325,7 +325,7 @@
 @ stdcall GetKeyboardType(long)
 @ stdcall GetLastActivePopup(long)
 @ stdcall GetLastInputInfo(ptr)
-@ stdcall GetLayeredWindowAttributes(long ptr ptr ptr)
+@ stdcall GetLayeredWindowAttributes(long ptr ptr ptr) NtUserGetLayeredWindowAttributes
 @ stdcall GetListBoxInfo(long)
 @ stdcall GetMenu(long)
 @ stdcall GetMenuBarInfo(long long long ptr)

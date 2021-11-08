@@ -4065,29 +4065,6 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 
 
 /*****************************************************************************
- *              GetLayeredWindowAttributes (USER32.@)
- */
-BOOL WINAPI GetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, DWORD *flags )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( get_window_layered_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (key) *key = reply->color_key;
-            if (alpha) *alpha = reply->alpha;
-            if (flags) *flags = reply->flags;
-        }
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
-
-/*****************************************************************************
  *              UpdateLayeredWindowIndirect  (USER32.@)
  */
 BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info )
@@ -4100,7 +4077,7 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
         info->cbSize != sizeof(*info) ||
         info->dwFlags & ~(ULW_COLORKEY | ULW_ALPHA | ULW_OPAQUE | ULW_EX_NORESIZE) ||
         !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
-        GetLayeredWindowAttributes( hwnd, NULL, NULL, NULL ))
+        NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;

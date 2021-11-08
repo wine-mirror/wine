@@ -2199,7 +2199,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     /* create or update window surface for top-level windows if the driver doesn't implement WindowPosChanging */
     if (!ret && new_surface && !IsRectEmpty( &visible_rect ) &&
         (!(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
-           GetLayeredWindowAttributes( hwnd, NULL, NULL, NULL )))
+           NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL )))
     {
         window_surface_release( new_surface );
         if ((new_surface = win->surface)) window_surface_add_ref( new_surface );
