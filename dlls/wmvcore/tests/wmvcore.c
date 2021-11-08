@@ -686,6 +686,17 @@ static void test_sync_reader_streaming(void)
                 ok(hr == S_OK, "Got hr %#x.\n", hr);
                 ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
 
+                hr = INSSBuffer_SetLength(sample, capacity + 1);
+                ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+                hr = INSSBuffer_SetLength(sample, capacity - 1);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+                hr = INSSBuffer_GetBufferAndLength(sample, &data2, &size);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(data2 == data, "Data pointers didn't match.\n");
+                ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
+
                 ref = INSSBuffer_Release(sample);
                 ok(!ref, "Got outstanding refcount %d.\n", ref);
 
@@ -1221,6 +1232,17 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
     hr = INSSBuffer_GetMaxLength(sample, &capacity);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
+
+    hr = INSSBuffer_SetLength(sample, capacity + 1);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = INSSBuffer_SetLength(sample, capacity - 1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = INSSBuffer_GetBufferAndLength(sample, &data2, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(data2 == data, "Data pointers didn't match.\n");
+    ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
 
     ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
     ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);

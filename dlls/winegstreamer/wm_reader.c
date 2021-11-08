@@ -172,7 +172,7 @@ struct buffer
     INSSBuffer INSSBuffer_iface;
     LONG refcount;
 
-    DWORD size;
+    DWORD size, capacity;
     BYTE data[1];
 };
 
@@ -231,8 +231,15 @@ static HRESULT WINAPI buffer_GetLength(INSSBuffer *iface, DWORD *size)
 
 static HRESULT WINAPI buffer_SetLength(INSSBuffer *iface, DWORD size)
 {
-    FIXME("iface %p, size %u, stub!\n", iface, size);
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    TRACE("iface %p, size %u.\n", buffer, size);
+
+    if (size > buffer->capacity)
+        return E_INVALIDARG;
+
+    buffer->size = size;
+    return S_OK;
 }
 
 static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
@@ -241,7 +248,7 @@ static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
 
     TRACE("buffer %p, size %p.\n", buffer, size);
 
-    *size = buffer->size;
+    *size = buffer->capacity;
     return S_OK;
 }
 
@@ -1754,7 +1761,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
 
                 object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
                 object->refcount = 1;
-                object->size = event.u.buffer.size;
+                object->capacity = object->size = event.u.buffer.size;
 
                 if (!wg_parser_stream_copy_buffer(wg_stream, object->data, 0, object->size))
                 {
