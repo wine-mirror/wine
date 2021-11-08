@@ -1814,6 +1814,70 @@ static BOOL codeview_advance_binannot(struct cv_binannot* cvba)
     return TRUE;
 }
 
+static inline int binannot_getsigned(unsigned i)
+{
+    return (i & 1) ? -(int)(i >> 1) : (int)(i >> 1);
+}
+
+static BOOL cv_dbgsubsect_find_inlinee(const struct msc_debug_info* msc_dbg,
+                                       unsigned inlineeid,
+                                       const struct cv_module_snarf* cvmod,
+                                       const struct CV_DebugSSubsectionHeader_t* hdr_files,
+                                       unsigned* srcfile, unsigned* srcline)
+{
+    const struct CV_DebugSSubsectionHeader_t*     hdr;
+    const struct CV_DebugSSubsectionHeader_t*     next_hdr;
+    const struct CV_InlineeSourceLine_t*          inlsrc;
+    const struct CV_InlineeSourceLineEx_t*        inlsrcex;
+    const struct CV_Checksum_t*                   chksms;
+
+    for (hdr = cvmod->dbgsubsect; CV_IS_INSIDE(hdr, cvmod->dbgsubsect + cvmod->dbgsubsect_size); hdr = next_hdr)
+    {
+        next_hdr = CV_RECORD_GAP(hdr, hdr->cbLen);
+        if (hdr->type != DEBUG_S_INLINEELINES) continue;
+        /* subsection starts with a DWORD signature */
+        switch (*(DWORD*)CV_RECORD_AFTER(hdr))
+        {
+        case CV_INLINEE_SOURCE_LINE_SIGNATURE:
+            inlsrc = CV_RECORD_GAP(hdr, sizeof(DWORD));
+            while (CV_IS_INSIDE(inlsrc, next_hdr))
+            {
+                if (inlsrc->inlinee == inlineeid)
+                {
+                    chksms = CV_RECORD_GAP(hdr_files, inlsrc->fileId);
+                    if (!CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen))) return FALSE;
+                    *srcfile = source_new(msc_dbg->module, NULL,
+                          (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<str-out-of-bounds>>");
+                    *srcline = inlsrc->sourceLineNum;
+                    return TRUE;
+                }
+                ++inlsrc;
+            }
+            break;
+        case CV_INLINEE_SOURCE_LINE_SIGNATURE_EX:
+            inlsrcex = CV_RECORD_GAP(hdr, sizeof(DWORD));
+            while (CV_IS_INSIDE(inlsrcex, next_hdr))
+            {
+                if (inlsrcex->inlinee == inlineeid)
+                {
+                    chksms = CV_RECORD_GAP(hdr_files, inlsrcex->fileId);
+                    if (!CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen))) return FALSE;
+                    *srcfile = source_new(msc_dbg->module, NULL,
+                          (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<str-out-of-bounds>>");
+                    *srcline = inlsrcex->sourceLineNum;
+                    return TRUE;
+                }
+                inlsrcex = CV_RECORD_GAP(inlsrcex, inlsrcex->countOfExtraFiles * sizeof(inlsrcex->extraFileId[0]));
+            }
+            break;
+        default:
+            FIXME("Unknown signature %x in INLINEELINES subsection\n", *(DWORD*)CV_RECORD_AFTER(hdr));
+            break;
+        }
+    }
+    return FALSE;
+}
+
 static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debug_info* msc_dbg,
                                                            const struct cv_module_snarf* cvmod,
                                                            struct symt_function* top_func,
@@ -1827,8 +1891,9 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
     DWORD64 addr;
     struct symt_inlinesite* inlined;
     struct cv_binannot cvba;
-    BOOL found = FALSE;
-    unsigned first, offset, length;
+    BOOL srcok, found = FALSE;
+    unsigned first, offset, length, line, srcfile;
+    const struct CV_Checksum_t* chksms;
 
     if (!cvmod->ipi_ctp || !(cvt = codeview_jump_to_type(cvmod->ipi_ctp, inlinee)))
     {
@@ -1891,7 +1956,12 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
             break;
     }
     if (!hdr_files) return FALSE;
+    srcok = cv_dbgsubsect_find_inlinee(msc_dbg, inlinee, cvmod, hdr_files, &srcfile, &line);
 
+    if (srcok)
+        symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
+    else
+        srcfile = line = 0;
     for (;;)
     {
         if (!codeview_advance_binannot(&cvba)) break;
@@ -1904,21 +1974,33 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
         case BA_OP_ChangeCodeOffset:
             offset += cvba.arg1;
             length = 1;
+            if (srcok)
+                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
             break;
         case BA_OP_ChangeCodeLength:
             length = cvba.arg1;
             break;
         case BA_OP_ChangeFile:
+            chksms = CV_RECORD_GAP(hdr_files, cvba.arg1);
+            if (CV_IS_INSIDE(chksms, CV_RECORD_GAP(hdr_files, hdr_files->cbLen)))
+                srcfile = source_new(msc_dbg->module, NULL,
+                                     (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<str-out-of-bounds>>");
             break;
         case BA_OP_ChangeLineOffset:
+            line += binannot_getsigned(cvba.arg1);
             break;
         case BA_OP_ChangeCodeOffsetAndLineOffset:
+            if (srcok)
+                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
+            line += binannot_getsigned(cvba.arg2);
             offset += cvba.arg1;
             length = 1;
             break;
         case BA_OP_ChangeCodeLengthAndCodeOffset:
             offset += cvba.arg2;
             length = cvba.arg1;
+            if (srcok)
+                symt_add_func_line(msc_dbg->module, &inlined->func, srcfile, line, top_func->address + offset);
             break;
         default:
             WARN("Unsupported op %d\n", cvba.opcode);
