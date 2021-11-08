@@ -3963,11 +3963,22 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
             device_invalidate_state(device, STATE_STREAMSRC);
         else
             wined3d_buffer_load(&buffer_gl->b, context, state);
-        wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
     }
     /* Loading the buffers above may have invalidated the stream info. */
     if (wined3d_context_is_graphics_state_dirty(context, STATE_STREAMSRC))
         context_update_stream_info(context, state);
+
+    map = context->stream_info.use_map;
+    while (map)
+    {
+        const struct wined3d_stream_info_element *e;
+        struct wined3d_buffer_gl *buffer_gl;
+
+        e = &context->stream_info.elements[wined3d_bit_scan(&map)];
+        buffer_gl = wined3d_buffer_gl(state->streams[e->stream_idx].buffer);
+
+        wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+    }
 
     if (indexed && state->index_buffer)
     {
