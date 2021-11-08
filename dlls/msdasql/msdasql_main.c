@@ -424,10 +424,27 @@ static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG cPropert
             DBPROPSET rgPropertySets[])
 {
     struct msdasql *provider = impl_from_IDBProperties(iface);
+    int i, j, k;
 
-    FIXME("(%p)->(%d %p)\n", provider, cPropertySets, rgPropertySets);
+    TRACE("(%p)->(%d %p)\n", provider, cPropertySets, rgPropertySets);
 
-    return E_NOTIMPL;
+    for (i=0; i < cPropertySets; i++)
+    {
+        for (j=0; j < rgPropertySets[i].cProperties; j++)
+        {
+            for(k=0; k < ARRAY_SIZE(provider->properties); k++)
+            {
+                if (provider->properties[k].id == rgPropertySets[i].rgProperties[j].dwPropertyID)
+                {
+                    TRACE("Found property %d\n", provider->properties[k].id);
+                    VariantCopy(&provider->properties[k].value, &rgPropertySets[i].rgProperties[j].vValue);
+                    break;
+                }
+            }
+        }
+    }
+
+    return S_OK;
 }
 
 static const struct IDBPropertiesVtbl dbprops_vtbl =
