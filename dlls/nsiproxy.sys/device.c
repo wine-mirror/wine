@@ -211,6 +211,13 @@ static void WINAPI icmp_echo_cancel( DEVICE_OBJECT *device, IRP *irp )
     LeaveCriticalSection( &nsiproxy_cs );
 }
 
+static int icmp_echo_reply_struct_len( ULONG family, ULONG bits )
+{
+    if (family == AF_INET)
+        return (bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
+    return 0;
+}
+
 static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -222,7 +229,7 @@ static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
 
     if (in_len < offsetof(struct nsiproxy_icmp_echo, data[0]) ||
         in_len < offsetof(struct nsiproxy_icmp_echo, data[((in->opt_size + 3) & ~3) + in->req_size]) ||
-        out_len < sizeof(struct nsiproxy_icmp_echo_reply))
+        out_len < icmp_echo_reply_struct_len( in->dst.si_family, in->bits ))
         return STATUS_INVALID_PARAMETER;
 
     switch (in->dst.si_family)
@@ -326,8 +333,10 @@ static DWORD WINAPI listen_thread_proc( void *arg )
 
     TRACE( "\n" );
 
+    params.user_reply_ptr = in->user_reply_ptr;
     params.handle = irp_get_icmp_handle( irp );
     params.timeout = in->timeout;
+    params.bits = in->bits;
     params.reply = irp->AssociatedIrp.SystemBuffer;
     params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
 
@@ -360,6 +369,7 @@ static void handle_queued_send_echo( IRP *irp )
     params.request = in->data + ((in->opt_size + 3) & ~3);
     params.request_size = in->req_size;
     params.reply = irp->AssociatedIrp.SystemBuffer;
+    params.bits = in->bits;
     params.ttl = in->ttl;
     params.tos = in->tos;
     params.dst = &in->dst;

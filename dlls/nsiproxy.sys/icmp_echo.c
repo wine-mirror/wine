@@ -224,12 +224,22 @@ static unsigned short null_chksum( BYTE *data, unsigned int count )
 }
 #endif
 
-static int ipv4_set_reply_ip_status( IP_STATUS ip_status, void *out )
+static int ipv4_set_reply_ip_status( IP_STATUS ip_status, unsigned int bits, void *out )
 {
-    struct nsiproxy_icmp_echo_reply *reply = out;
-    memset( reply, 0, sizeof(*reply) );
-    reply->status = ip_status;
-    return sizeof(*reply);
+    if (bits == 32)
+    {
+        struct icmp_echo_reply_32 *reply = out;
+        memset( reply, 0, sizeof(*reply) );
+        reply->status = ip_status;
+        return sizeof(*reply);
+    }
+    else
+    {
+        struct icmp_echo_reply_64 *reply = out;
+        memset( reply, 0, sizeof(*reply) );
+        reply->status = ip_status;
+        return sizeof(*reply);
+    }
 }
 
 static void ipv4_set_socket_opts( struct icmp_data *data, struct icmp_send_echo_params *params )
@@ -254,15 +264,17 @@ static void ipv4_linux_ping_set_socket_opts( struct icmp_data *data, struct icmp
 }
 #endif
 
-static int ipv4_reply_buffer_len( int reply_len )
+static int ipv4_reply_buffer_len( struct icmp_listen_params *params )
 {
-    return sizeof(struct ip_hdr) + sizeof(struct icmp_hdr) + reply_len - sizeof(struct nsiproxy_icmp_echo_reply);
+    int struct_len = (params->bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
+    return sizeof(struct ip_hdr) + sizeof(struct icmp_hdr) + params->reply_len - struct_len;
 }
 
 #ifdef __linux__
-static int ipv4_linux_ping_reply_buffer_len( int reply_len )
+static int ipv4_linux_ping_reply_buffer_len( struct icmp_listen_params *params )
 {
-    return sizeof(struct icmp_hdr) + reply_len - sizeof(struct nsiproxy_icmp_echo_reply);
+    int struct_len = (params->bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
+    return sizeof(struct icmp_hdr) + params->reply_len - struct_len;
 }
 #endif
 
@@ -411,23 +423,42 @@ static int ipv4_linux_ping_parse_icmp_hdr( struct icmp_data *data, struct icmp_h
 
 static void ipv4_fill_reply( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx)
 {
-    struct nsiproxy_icmp_echo_reply *reply = params->reply;
     void *options_data;
     ULONG data_offset;
-
-    data_offset = sizeof(*reply) + ((ctx->options_size + 3) & ~3);
-    reply->addr = ctx->addr;
-    reply->status = ctx->status;
-    reply->round_trip_time = ctx->round_trip_time;
-    reply->data_size = ctx->data_size;
-    reply->num_of_pkts = 1;
-    reply->data_offset = data_offset;
-    reply->opts.ttl = ctx->ttl;
-    reply->opts.tos = ctx->tos;
-    reply->opts.flags = ctx->flags;
-    reply->opts.options_size = ctx->options_size;
-    reply->opts.options_offset = sizeof(*reply);
-    options_data = reply + 1;
+    if (params->bits == 32)
+    {
+        struct icmp_echo_reply_32 *reply = params->reply;
+        data_offset = sizeof(*reply) + ((ctx->options_size + 3) & ~3);
+        reply->addr = ctx->addr.Ipv4.sin_addr.WS_s_addr;
+        reply->status = ctx->status;
+        reply->round_trip_time = ctx->round_trip_time;
+        reply->data_size = ctx->data_size;
+        reply->num_of_pkts = 1;
+        reply->data_ptr = params->user_reply_ptr + data_offset;
+        reply->opts.ttl = ctx->ttl;
+        reply->opts.tos = ctx->tos;
+        reply->opts.flags = ctx->flags;
+        reply->opts.options_size = ctx->options_size;
+        reply->opts.options_ptr = params->user_reply_ptr + sizeof(*reply);
+        options_data = reply + 1;
+    }
+    else
+    {
+        struct icmp_echo_reply_64 *reply = params->reply;
+        data_offset = sizeof(*reply) + ((ctx->options_size + 3) & ~3);
+        reply->addr = ctx->addr.Ipv4.sin_addr.WS_s_addr;
+        reply->status = ctx->status;
+        reply->round_trip_time = ctx->round_trip_time;
+        reply->data_size = ctx->data_size;
+        reply->num_of_pkts = 1;
+        reply->data_ptr = params->user_reply_ptr + data_offset;
+        reply->opts.ttl = ctx->ttl;
+        reply->opts.tos = ctx->tos;
+        reply->opts.flags = ctx->flags;
+        reply->opts.options_size = ctx->options_size;
+        reply->opts.options_ptr = params->user_reply_ptr + sizeof(*reply);
+        options_data = reply + 1;
+    }
 
     memcpy( options_data, ctx->options_data, ctx->options_size );
     if (ctx->options_size & 3)
@@ -443,9 +474,9 @@ struct family_ops
     int icmp_protocol;
     void (*init_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp_hdr );
     unsigned short (*chksum)( BYTE *data, unsigned int count );
-    int (*set_reply_ip_status)( IP_STATUS ip_status, void *out );
+    int (*set_reply_ip_status)( IP_STATUS ip_status, unsigned int bits, void *out );
     void (*set_socket_opts)( struct icmp_data *data, struct icmp_send_echo_params *params );
-    int (*reply_buffer_len)( int reply_len );
+    int (*reply_buffer_len)( struct icmp_listen_params *params );
     BOOL (*parse_ip_hdr)( struct msghdr *msg, int recvd, int *ip_hdr_len, struct icmp_reply_ctx *ctx );
     int (*parse_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_len, struct icmp_reply_ctx *ctx );
     void (*fill_reply)( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx );
@@ -629,7 +660,7 @@ NTSTATUS icmp_send_echo( void *args )
     {
         TRACE( "sendto() rets %d errno %d\n", ret, errno );
         icmp_data_free( data );
-        params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->reply );
+        params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->bits, params->reply );
         return STATUS_SUCCESS;
     }
 
@@ -670,7 +701,7 @@ static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *par
     char *reply_buf;
     struct icmp_hdr *icmp_hdr;
 
-    reply_buf_len = data->ops->reply_buffer_len( params->reply_len );
+    reply_buf_len = data->ops->reply_buffer_len( params );
     reply_buf = malloc( reply_buf_len );
     if (!reply_buf) return STATUS_NO_MEMORY;
 
@@ -689,7 +720,7 @@ static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *par
     if (ctx.data_size && msg.msg_flags & MSG_TRUNC)
     {
         free( reply_buf );
-        params->reply_len = data->ops->set_reply_ip_status( IP_GENERAL_FAILURE, params->reply );
+        params->reply_len = data->ops->set_reply_ip_status( IP_GENERAL_FAILURE, params->bits, params->reply );
         return STATUS_SUCCESS;
     }
 
@@ -739,11 +770,11 @@ NTSTATUS icmp_listen( void *args )
     if (!ret) /* timeout */
     {
         TRACE( "timeout\n" );
-        params->reply_len = data->ops->set_reply_ip_status( IP_REQ_TIMED_OUT, params->reply );
+        params->reply_len = data->ops->set_reply_ip_status( IP_REQ_TIMED_OUT, params->bits, params->reply );
         return STATUS_SUCCESS;
     }
     /* ret < 0 */
-    params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->reply );
+    params->reply_len = data->ops->set_reply_ip_status( errno_to_ip_status( errno ), params->bits, params->reply );
     return STATUS_SUCCESS;
 }
 

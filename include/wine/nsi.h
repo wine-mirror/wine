@@ -426,6 +426,8 @@ struct nsiproxy_icmp_echo
 {
     SOCKADDR_INET src;
     SOCKADDR_INET dst;
+    ULONGLONG user_reply_ptr;
+    BYTE bits;
     BYTE ttl;
     BYTE tos;
     BYTE flags;
@@ -433,25 +435,6 @@ struct nsiproxy_icmp_echo
     DWORD req_size;
     DWORD timeout;
     BYTE data[1]; /* ((opt_size + 3) & ~3) + req_size */
-};
-
-/* output for IOCTL_NSIPROXY_WINE_ICMP_ECHO - cf. ICMP_ECHO_REPLY */
-struct nsiproxy_icmp_echo_reply
-{
-    SOCKADDR_INET addr;
-    ULONG status;
-    ULONG round_trip_time;
-    USHORT data_size;
-    USHORT num_of_pkts;
-    DWORD data_offset;
-    struct
-    {
-        BYTE ttl;
-        BYTE tos;
-        BYTE flags;
-        BYTE options_size;
-        DWORD options_offset;
-    } opts;
 };
 
 /* Undocumented Nsi api */

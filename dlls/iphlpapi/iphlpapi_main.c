@@ -4579,33 +4579,6 @@ DWORD WINAPI IcmpParseReplies( void *reply, DWORD reply_size )
     return num_pkts;
 }
 
-/*************************************************************************
- *    icmpv4_echo_reply_fixup
- *
- * Convert struct nsiproxy_icmpv4_echo_reply into ICMP_ECHO_REPLY.
- *
- * This is necessary due to the different sizes of ICMP_ECHO_REPLY on
- * 32 and 64-bits.  Despite mention of ICMP_ECHO_REPLY32, 64-bit Windows
- * actually does return a full 64-bit version.
- */
-static void icmpv4_echo_reply_fixup( ICMP_ECHO_REPLY *dst, struct nsiproxy_icmp_echo_reply *reply )
-{
-    dst->Address = reply->addr.Ipv4.sin_addr.s_addr;
-    dst->Status = reply->status;
-    dst->RoundTripTime = reply->round_trip_time;
-    dst->DataSize = reply->data_size;
-    dst->Reserved = reply->num_of_pkts;
-    dst->Data = (BYTE *)(dst + 1) + ((reply->opts.options_size + 3) & ~3);
-    dst->Options.Ttl = reply->opts.ttl;
-    dst->Options.Tos = reply->opts.tos;
-    dst->Options.Flags = reply->opts.flags;
-    dst->Options.OptionsSize = reply->opts.options_size;
-    dst->Options.OptionsData = (BYTE *)(reply + 1);
-
-    memcpy( dst->Options.OptionsData, (BYTE *)reply + reply->opts.options_offset, reply->opts.options_size );
-    memcpy( dst->Data, (BYTE *)reply + reply->data_offset, reply->data_size );
-}
-
 /***********************************************************************
  *    IcmpSendEcho (IPHLPAPI.@)
  */
@@ -4636,9 +4609,8 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
                               void *reply, DWORD reply_size, DWORD timeout )
 {
     struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
-    DWORD opt_size, in_size, ret = 0, out_size;
+    DWORD opt_size, in_size, ret = 0;
     struct nsiproxy_icmp_echo *in;
-    struct nsiproxy_icmp_echo_reply *out;
     HANDLE request_event;
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
@@ -4658,17 +4630,15 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
     opt_size = opts ? (opts->OptionsSize + 3) & ~3 : 0;
     in_size = FIELD_OFFSET(struct nsiproxy_icmp_echo, data[opt_size + request_size]);
     in = heap_alloc_zero( in_size );
-    out_size = reply_size - sizeof(ICMP_ECHO_REPLY) + sizeof(*out);
-    out = heap_alloc( out_size );
 
-    if (!in || !out)
+    if (!in)
     {
-        heap_free( out );
-        heap_free( in );
         SetLastError( IP_NO_RESOURCES );
         return 0;
     }
 
+    in->user_reply_ptr = (ULONG_PTR)reply;
+    in->bits = sizeof(void*) * 8;
     in->src.Ipv4.sin_family = AF_INET;
     in->src.Ipv4.sin_addr.s_addr = src;
     in->dst.Ipv4.sin_family = AF_INET;
@@ -4689,19 +4659,15 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
 
     status = NtDeviceIoControlFile( data->nsi_device, request_event, NULL, NULL,
                                     &iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO, in, in_size,
-                                    out, out_size );
+                                    reply, reply_size );
 
     if (status == STATUS_PENDING && !WaitForSingleObject( request_event, INFINITE ))
         status = iosb.Status;
 
     if (!status)
-    {
-        icmpv4_echo_reply_fixup( reply, out );
         ret = IcmpParseReplies( reply, reply_size );
-    }
 
     CloseHandle( request_event );
-    heap_free( out );
     heap_free( in );
 
     if (status) SetLastError( RtlNtStatusToDosError( status ) );
