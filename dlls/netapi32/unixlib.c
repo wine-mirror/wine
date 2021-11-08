@@ -146,7 +146,7 @@ static NET_API_STATUS server_info_from_samba( DWORD level, const unsigned char *
 
 static NTSTATUS server_getinfo( void *args )
 {
-    struct server_getinfo_params *params = args;
+    const struct server_getinfo_params *params = args;
     NET_API_STATUS status;
     char *samba_server = NULL;
     unsigned char *samba_buffer = NULL;
@@ -707,7 +707,7 @@ static NET_API_STATUS share_info_to_samba( DWORD level, const BYTE *buf, unsigne
 
 static NTSTATUS share_add( void *args )
 {
-    struct share_add_params *params = args;
+    const struct share_add_params *params = args;
     char *samba_server = NULL;
     unsigned char *samba_info;
     NET_API_STATUS status;
@@ -730,7 +730,7 @@ static NTSTATUS share_add( void *args )
 
 static NTSTATUS share_del( void *args )
 {
-    struct share_del_params *params = args;
+    const struct share_del_params *params = args;
     char *samba_server = NULL, *samba_share;
     NET_API_STATUS status;
 
@@ -807,7 +807,7 @@ static NET_API_STATUS wksta_info_from_samba( DWORD level, const unsigned char *b
 
 static NTSTATUS wksta_getinfo( void *args )
 {
-    struct wksta_getinfo_params *params = args;
+    const struct wksta_getinfo_params *params = args;
     unsigned char *samba_buffer = NULL;
     char *samba_server = NULL;
     NET_API_STATUS status;
@@ -888,7 +888,7 @@ static NTSTATUS netapi_init( void *args )
 
 static NTSTATUS change_password( void *args )
 {
-    struct change_password_params *params = args;
+    const struct change_password_params *params = args;
     NET_API_STATUS ret = NERR_Success;
     static char option_silent[] = "-s";
     static char option_user[] = "-U";
@@ -985,5 +985,124 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wksta_getinfo,
     change_password,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_server_getinfo( void *args )
+{
+    struct
+    {
+        PTR32 server;
+        DWORD level;
+        PTR32 buffer;
+        PTR32 size;
+    } const *params32 = args;
+
+    struct server_getinfo_params params =
+    {
+        ULongToPtr(params32->server),
+        params32->level,
+        ULongToPtr(params32->buffer),
+        ULongToPtr(params32->size)
+    };
+
+    return server_getinfo( &params );
+}
+
+static NTSTATUS wow64_share_add( void *args )
+{
+    struct
+    {
+        PTR32 server;
+        DWORD level;
+        PTR32 info;
+        PTR32 err;
+    } const *params32 = args;
+
+    struct share_add_params params =
+    {
+        ULongToPtr(params32->server),
+        params32->level,
+        ULongToPtr(params32->info),
+        ULongToPtr(params32->err)
+    };
+
+    return share_add( &params );
+}
+
+static NTSTATUS wow64_share_del( void *args )
+{
+    struct
+    {
+        PTR32 server;
+        PTR32 share;
+        DWORD reserved;
+    } const *params32 = args;
+
+    struct share_del_params params =
+    {
+        ULongToPtr(params32->server),
+        ULongToPtr(params32->share),
+        params32->reserved
+    };
+
+    return share_del( &params );
+}
+
+static NTSTATUS wow64_wksta_getinfo( void *args )
+{
+    struct
+    {
+        PTR32 server;
+        DWORD level;
+        PTR32 buffer;
+        PTR32 size;
+    } const *params32 = args;
+
+    struct wksta_getinfo_params params =
+    {
+        ULongToPtr(params32->server),
+        params32->level,
+        ULongToPtr(params32->buffer),
+        ULongToPtr(params32->size)
+    };
+
+    return wksta_getinfo( &params );
+}
+
+static NTSTATUS wow64_change_password( void *args )
+{
+    struct
+    {
+        PTR32 domain;
+        PTR32 user;
+        PTR32 old;
+        PTR32 new;
+    } const *params32 = args;
+
+    struct change_password_params params =
+    {
+        ULongToPtr(params32->domain),
+        ULongToPtr(params32->user),
+        ULongToPtr(params32->old),
+        ULongToPtr(params32->new)
+    };
+
+    return change_password( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    netapi_init,
+    wow64_server_getinfo,
+    wow64_share_add,
+    wow64_share_del,
+    wow64_wksta_getinfo,
+    wow64_change_password,
+};
+
+#endif  /* _WIN64 */
 
 #endif /* SONAME_LIBNETAPI */
