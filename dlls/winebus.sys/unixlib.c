@@ -355,93 +355,100 @@ void bus_event_cleanup(struct bus_event *event)
     unix_device_decref(event->device);
 }
 
+struct bus_event_entry
+{
+    struct list entry;
+    struct bus_event event;
+};
+
 void bus_event_queue_destroy(struct list *queue)
 {
-    struct bus_event *event, *next;
+    struct bus_event_entry *entry, *next;
 
-    LIST_FOR_EACH_ENTRY_SAFE(event, next, queue, struct bus_event, entry)
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, queue, struct bus_event_entry, entry)
     {
-        bus_event_cleanup(event);
-        free(event);
+        bus_event_cleanup(&entry->event);
+        list_remove(&entry->entry);
+        free(entry);
     }
 }
 
 BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *device)
 {
-    ULONG size = sizeof(struct bus_event);
-    struct bus_event *event = malloc(size);
-    if (!event) return FALSE;
+    ULONG size = sizeof(struct bus_event_entry);
+    struct bus_event_entry *entry = malloc(size);
+    if (!entry) return FALSE;
 
     if (unix_device_incref(device) == 1) /* being destroyed */
     {
-        free(event);
+        free(entry);
         return FALSE;
     }
 
-    event->type = BUS_EVENT_TYPE_DEVICE_REMOVED;
-    event->device = device;
-    list_add_tail(queue, &event->entry);
+    entry->event.type = BUS_EVENT_TYPE_DEVICE_REMOVED;
+    entry->event.device = device;
+    list_add_tail(queue, &entry->entry);
 
     return TRUE;
 }
 
 BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *device, struct device_desc *desc)
 {
-    ULONG size = sizeof(struct bus_event);
-    struct bus_event *event = malloc(size);
-    if (!event) return FALSE;
+    ULONG size = sizeof(struct bus_event_entry);
+    struct bus_event_entry *entry = malloc(size);
+    if (!entry) return FALSE;
 
     if (unix_device_incref(device) == 1) /* being destroyed */
     {
-        free(event);
+        free(entry);
         return FALSE;
     }
 
-    event->type = BUS_EVENT_TYPE_DEVICE_CREATED;
-    event->device = device;
-    event->device_created.desc = *desc;
-    list_add_tail(queue, &event->entry);
+    entry->event.type = BUS_EVENT_TYPE_DEVICE_CREATED;
+    entry->event.device = device;
+    entry->event.device_created.desc = *desc;
+    list_add_tail(queue, &entry->entry);
 
     return TRUE;
 }
 
 BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device, BYTE *report, USHORT length)
 {
-    ULONG size = offsetof(struct bus_event, input_report.buffer[length]);
-    struct bus_event *event = malloc(size);
-    if (!event) return FALSE;
+    ULONG size = offsetof(struct bus_event_entry, event.input_report.buffer[length]);
+    struct bus_event_entry *entry = malloc(size);
+    if (!entry) return FALSE;
 
     if (unix_device_incref(device) == 1) /* being destroyed */
     {
-        free(event);
+        free(entry);
         return FALSE;
     }
 
-    event->type = BUS_EVENT_TYPE_INPUT_REPORT;
-    event->device = device;
-    event->input_report.length = length;
-    memcpy(event->input_report.buffer, report, length);
-    list_add_tail(queue, &event->entry);
+    entry->event.type = BUS_EVENT_TYPE_INPUT_REPORT;
+    entry->event.device = device;
+    entry->event.input_report.length = length;
+    memcpy(entry->event.input_report.buffer, report, length);
+    list_add_tail(queue, &entry->entry);
 
     return TRUE;
 }
 
 BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
 {
-    struct list *entry = list_head(queue);
-    struct bus_event *tmp;
+    struct list *head = list_head(queue);
+    struct bus_event_entry *entry;
     ULONG size;
 
-    if (!entry) return FALSE;
+    if (!head) return FALSE;
 
-    tmp = LIST_ENTRY(entry, struct bus_event, entry);
-    list_remove(entry);
+    entry = LIST_ENTRY(head, struct bus_event_entry, entry);
+    list_remove(&entry->entry);
 
-    if (tmp->type != BUS_EVENT_TYPE_INPUT_REPORT) size = sizeof(*tmp);
-    else size = offsetof(struct bus_event, input_report.buffer[tmp->input_report.length]);
+    if (entry->event.type != BUS_EVENT_TYPE_INPUT_REPORT) size = sizeof(entry->event);
+    else size = offsetof(struct bus_event, input_report.buffer[entry->event.input_report.length]);
 
-    memcpy(event, tmp, size);
-    free(tmp);
+    memcpy(event, &entry->event, size);
+    free(entry);
 
     return TRUE;
 }

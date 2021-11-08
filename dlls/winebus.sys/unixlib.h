@@ -77,8 +77,6 @@ enum bus_event_type
 struct bus_event
 {
     enum bus_event_type type;
-    struct list entry;
-
     struct unix_device *device;
     union
     {
