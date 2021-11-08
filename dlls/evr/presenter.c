@@ -1754,6 +1754,7 @@ static HRESULT WINAPI video_presenter_qualprop_get_FramesDrawn(IQualProp *iface,
         case PRESENTER_STATE_PAUSED:
             if (frames) *frames = presenter->frame_stats.presented;
             else hr = E_POINTER;
+            break;
         default:
             hr = E_NOTIMPL;
     }
