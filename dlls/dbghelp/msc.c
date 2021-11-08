@@ -1699,7 +1699,11 @@ static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg
             switch (symrange->generic.id)
             {
             case S_DEFRANGE:
+                codeview_xform_range(msc_dbg, locinfo, &symrange->defrange_v3.range);
+                /* FIXME: transformation unsupported; let loc_compute bark if actually needed */
+                break;
             case S_DEFRANGE_SUBFIELD:
+                codeview_xform_range(msc_dbg, locinfo, &symrange->defrange_subfield_v3.range);
                 /* FIXME: transformation unsupported; let loc_compute bark if actually needed */
                 break;
             case S_DEFRANGE_REGISTER:
@@ -1734,7 +1738,7 @@ static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg
                 unsigned gaplen = (const char*)get_next_sym(symrange) - (const char*)gap;
                 locinfo->ngaps = gaplen / sizeof(*gap);
                 memcpy(locinfo->gaps, gap, gaplen);
-                locinfo = (struct cv_local_info*)((unsigned char*)(locinfo + 1) + gaplen);
+                locinfo = (struct cv_local_info*)((char*)(locinfo + 1) + gaplen);
             }
             else
             {
@@ -2220,13 +2224,66 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
     return TRUE;
 }
 
+static BOOL codeview_is_inside(const struct cv_local_info* locinfo, const struct symt_function* func, DWORD_PTR ip)
+{
+    unsigned i;
+    /* ip must be in local_info range, but not in any of its gaps */
+    if (ip < locinfo->start || ip >= locinfo->start + locinfo->rangelen) return FALSE;
+    for (i = 0; i < locinfo->ngaps; ++i)
+        if (func->address + locinfo->gaps[i].gapStartOffset <= ip &&
+            ip < func->address + locinfo->gaps[i].gapStartOffset + locinfo->gaps[i].cbRange)
+            return FALSE;
+    return TRUE;
+}
+
 static void pdb_location_compute(struct process* pcs,
                                  const struct module_format* modfmt,
                                  const struct symt_function* func,
                                  struct location* loc)
-
 {
-    loc->kind = loc_register;
+    const struct cv_local_info* locinfo;
+
+    switch (loc->kind)
+    {
+    case loc_cv_local_range:
+        for (locinfo = (const struct cv_local_info*)loc->offset;
+             locinfo->kind != 0;
+             locinfo = (const struct cv_local_info*)((const char*)(locinfo + 1) + locinfo->ngaps * sizeof(locinfo->gaps[0])))
+        {
+            if (!codeview_is_inside(locinfo, func, pcs->localscope_pc)) continue;
+            switch (locinfo->kind)
+            {
+            case S_DEFRANGE:
+            case S_DEFRANGE_SUBFIELD:
+            default:
+                FIXME("Unsupported defrange %d\n", locinfo->kind);
+                loc->kind = loc_error;
+                loc->reg = loc_err_internal;
+                return;
+            case S_DEFRANGE_SUBFIELD_REGISTER:
+                FIXME("sub-field part not handled\n");
+                /* fall through */
+            case S_DEFRANGE_REGISTER:
+                loc->kind = loc_register;
+                loc->reg = locinfo->reg;
+                return;
+            case S_DEFRANGE_REGISTER_REL:
+                loc->kind = loc_regrel;
+                loc->reg = locinfo->reg;
+                loc->offset = locinfo->offset;
+                return;
+            case S_DEFRANGE_FRAMEPOINTER_REL:
+            case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+                loc->kind = loc_regrel;
+                loc->reg = dbghelp_current_cpu->frame_regno;
+                loc->offset = locinfo->offset;
+                return;
+            }
+        }
+        break;
+    default: break;
+    }
+    loc->kind = loc_error;
     loc->reg = loc_err_internal;
 }
 
