@@ -122,7 +122,11 @@ enum media_source_flags
 struct media_source
 {
     struct list entry;
-    IMFMediaSource *source;
+    union
+    {
+        IMFMediaSource *source;
+        IUnknown *object;
+    };
     IMFPresentationDescriptor *pd;
     enum object_state state;
     unsigned int flags;
@@ -131,7 +135,11 @@ struct media_source
 struct media_sink
 {
     struct list entry;
-    IMFMediaSink *sink;
+    union
+    {
+        IMFMediaSink *sink;
+        IUnknown *object;
+    };
     IMFMediaSinkPreroll *preroll;
     IMFMediaEventGenerator *event_generator;
     BOOL finalized;
@@ -861,7 +869,7 @@ static void session_start(struct media_session *session, const GUID *time_format
                 if (!(session->presentation.flags & SESSION_FLAG_SOURCES_SUBSCRIBED))
                 {
                     if (FAILED(hr = IMFMediaSource_BeginGetEvent(source->source, &session->events_callback,
-                            (IUnknown *)source->source)))
+                            source->object)))
                     {
                         WARN("Failed to subscribe to source events, hr %#x.\n", hr);
                     }
@@ -1534,7 +1542,7 @@ static HRESULT session_set_current_topology(struct media_session *session, IMFTo
 
         /* Mask unsupported rate caps. */
 
-        caps &= session_get_object_rate_caps((IUnknown *)source->source)
+        caps &= session_get_object_rate_caps(source->object)
                 | ~(MFSESSIONCAP_RATE_FORWARD | MFSESSIONCAP_RATE_REVERSE);
     }
 
@@ -1547,7 +1555,7 @@ static HRESULT session_set_current_topology(struct media_session *session, IMFTo
         if (SUCCEEDED(IMFMediaSink_GetCharacteristics(sink->sink, &object_flags)))
         {
             if (!(object_flags & MEDIASINK_RATELESS))
-                caps &= session_get_object_rate_caps((IUnknown *)sink->sink)
+                caps &= session_get_object_rate_caps(sink->object)
                         | ~(MFSESSIONCAP_RATE_FORWARD | MFSESSIONCAP_RATE_REVERSE);
         }
     }
@@ -2382,7 +2390,7 @@ static void session_set_presentation_clock(struct media_session *session)
         /* Set clock for all topology nodes. */
         LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
         {
-            session_set_consumed_clock((IUnknown *)source->source, session->clock);
+            session_set_consumed_clock(source->object, session->clock);
         }
 
         LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
@@ -2484,7 +2492,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
 
             LIST_FOR_EACH_ENTRY(src, &session->presentation.sources, struct media_source, entry)
             {
-                if (object == (IUnknown *)src->source)
+                if (object == src->object)
                 {
                     changed = src->state != state;
                     src->state = state;
@@ -3403,7 +3411,7 @@ static HRESULT WINAPI session_sink_finalizer_callback_Invoke(IMFAsyncCallback *i
 
     LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
     {
-        if (state == (IUnknown *)sink->sink)
+        if (state == sink->object)
         {
             if (FAILED(hr = IMFMediaSink_QueryInterface(sink->sink, &IID_IMFFinalizableMediaSink, (void **)&fin_sink)))
                 WARN("Unexpected, missing IMFFinalizableMediaSink, hr %#x.\n", hr);
@@ -3515,7 +3523,7 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
     {
         LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
         {
-            if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)source->source, direction, thin, fastest, &rate)))
+            if (FAILED(hr = session_presentation_object_get_rate(source->object, direction, thin, fastest, &rate)))
                 break;
         }
 
@@ -3523,7 +3531,7 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
         {
             LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
             {
-                if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)sink->sink, direction, thin, fastest, &rate)))
+                if (FAILED(hr = session_presentation_object_get_rate(sink->object, direction, thin, fastest, &rate)))
                     break;
             }
         }
@@ -3561,7 +3569,7 @@ static HRESULT session_is_presentation_rate_supported(struct media_session *sess
     {
         LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
         {
-            if (FAILED(hr = MFGetService((IUnknown *)source->source, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
+            if (FAILED(hr = MFGetService(source->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
                     (void **)&rate_support)))
             {
                 value = 1.0f;
@@ -3589,7 +3597,7 @@ static HRESULT session_is_presentation_rate_supported(struct media_session *sess
                 if (flags & MEDIASINK_RATELESS)
                     continue;
 
-                if (FAILED(MFGetService((IUnknown *)sink->sink, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
+                if (FAILED(MFGetService(sink->object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
                         (void **)&rate_support)))
                     continue;
 
