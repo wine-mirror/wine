@@ -1,5 +1,5 @@
 MODULE    = xolehlp.dll
-IMPORTS   = adsiid uuid
+IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
