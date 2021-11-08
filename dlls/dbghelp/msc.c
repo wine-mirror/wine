@@ -90,6 +90,15 @@ struct pdb_module_info
 
 #define loc_cv_local_range (loc_user + 0) /* loc.offset contain the copy of all defrange* Codeview records following S_LOCAL */
 
+struct cv_module_snarf
+{
+    const struct codeview_type_parse*           ipi_ctp;
+    const struct CV_DebugSSubsectionHeader_t*   dbgsubsect;
+    unsigned                                    dbgsubsect_size;
+    const char*                                 strimage;
+    unsigned                                    strsize;
+};
+
 /*========================================================================
  * Debug file access helper routines
  */
@@ -1468,11 +1477,11 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
     }
 }
 
-static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const BYTE* linetab, DWORD size,
-                                    const char* strimage, DWORD strsize)
+static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const struct cv_module_snarf* cvmod)
 {
     unsigned    i;
     DWORD_PTR       addr;
+    const void* hdr_last = (const char*)cvmod->dbgsubsect + cvmod->dbgsubsect_size;
     const struct CV_DebugSSubsectionHeader_t*     hdr;
     const struct CV_DebugSSubsectionHeader_t*     hdr_next;
     const struct CV_DebugSSubsectionHeader_t*     hdr_files = NULL;
@@ -1484,15 +1493,13 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
     struct symt_function* func;
 
     /* locate DEBUG_S_FILECHKSMS (if any) */
-    hdr = (const struct CV_DebugSSubsectionHeader_t*)linetab;
-    while (CV_IS_INSIDE(hdr, linetab + size))
+    for (hdr = cvmod->dbgsubsect; CV_IS_INSIDE(hdr, hdr_last); hdr = CV_RECORD_GAP(hdr, hdr->cbLen))
     {
         if (hdr->type == DEBUG_S_FILECHKSMS)
         {
             hdr_files = hdr;
             break;
         }
-        hdr = CV_RECORD_GAP(hdr, hdr->cbLen);
     }
     if (!hdr_files)
     {
@@ -1500,8 +1507,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
         return;
     }
 
-    hdr = (const struct CV_DebugSSubsectionHeader_t*)linetab;
-    while (CV_IS_INSIDE(hdr, linetab + size))
+    for (hdr = cvmod->dbgsubsect; CV_IS_INSIDE(hdr, hdr_last); hdr = hdr_next)
     {
         hdr_next = CV_RECORD_GAP(hdr, hdr->cbLen);
         if (!(hdr->type & DEBUG_S_IGNORE))
@@ -1524,7 +1530,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
                     break;
                 }
                 source = source_new(msc_dbg->module, NULL,
-                                    (chksms->strOffset < strsize) ? strimage + chksms->strOffset : "<<stroutofbounds>>");
+                                    (chksms->strOffset < cvmod->strsize) ? cvmod->strimage + chksms->strOffset : "<<stroutofbounds>>");
                 func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
                 /* FIXME: at least labels support line numbers */
                 if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
@@ -1756,8 +1762,10 @@ static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg
     return len;
 }
 
-static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root,
-                           int offset, int size, BOOL do_globals)
+static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
+                           const BYTE* root, unsigned offset, unsigned size,
+                           const struct cv_module_snarf* cvmod,
+                           BOOL do_globals)
 {
     struct symt_function*               curr_func = NULL;
     int                                 i, length;
@@ -2220,7 +2228,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
             break;
         }
     }
-
+    if (cvmod) codeview_snarf_linetab2(msc_dbg, cvmod);
     return TRUE;
 }
 
@@ -3011,6 +3019,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
         PDB_SYMBOLS symbols;
         BYTE*       globalimage;
         BYTE*       modimage;
+        BYTE*       ipi_image;
+        struct codeview_type_parse ipi_ctp;
         BYTE*       file;
         int         header_size = 0;
         PDB_STREAM_INDEXES* psi;
@@ -3052,12 +3062,15 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                    pdb_lookup, pdb_module_info, module_index);
         pdb_process_types(msc_dbg, pdb_file);
 
+        ipi_image = pdb_read_file(pdb_file, 4);
+        pdb_init_type_parse(msc_dbg, &ipi_ctp, ipi_image);
+
         /* Read global symbol table */
         globalimage = pdb_read_file(pdb_file, symbols.gsym_file);
         if (globalimage)
         {
-            codeview_snarf(msc_dbg, globalimage, 0,
-                           pdb_get_file_size(pdb_file, symbols.gsym_file), FALSE);
+            codeview_snarf(msc_dbg, globalimage, 0, pdb_get_file_size(pdb_file, symbols.gsym_file),
+                           NULL, FALSE);
         }
 
         /* Read per-module symbols' tables */
@@ -3074,19 +3087,18 @@ static BOOL pdb_process_internal(const struct process* pcs,
             modimage = pdb_read_file(pdb_file, sfile.file);
             if (modimage)
             {
-                if (sfile.symbol_size)
-                    codeview_snarf(msc_dbg, modimage, sizeof(DWORD),
-                                   sfile.symbol_size, TRUE);
+                struct cv_module_snarf cvmod = {&ipi_ctp, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
+                    files_image + 12, files_size};
+                codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size,
+                               &cvmod, TRUE);
 
-                if (sfile.lineno_size && sfile.lineno2_size) FIXME("Both line info present... only supporting first\n");
-                if (sfile.lineno_size)
+                if (sfile.lineno_size && sfile.lineno2_size)
+                    FIXME("Both line info present... only supporting second\n");
+                else if (sfile.lineno_size)
                     codeview_snarf_linetab(msc_dbg,
                                            modimage + sfile.symbol_size,
                                            sfile.lineno_size,
                                            pdb_file->kind == PDB_JG);
-                else if (sfile.lineno2_size && files_image)
-                    codeview_snarf_linetab2(msc_dbg, modimage + sfile.symbol_size, sfile.lineno2_size,
-                                   files_image + 12, files_size);
 
                 pdb_free(modimage);
             }
@@ -3101,6 +3113,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                   pdb_get_file_size(pdb_file, symbols.gsym_file));
             pdb_free(globalimage);
         }
+        HeapFree(GetProcessHeap(), 0, (DWORD*)ipi_ctp.offset);
+        pdb_free(ipi_image);
     }
     else
         pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image,
@@ -3565,8 +3579,8 @@ static BOOL codeview_process_info(const struct process* pcs,
 
             if (ent->SubSection == sstAlignSym)
             {
-                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD),
-                               ent->cb, TRUE);
+                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb,
+                               NULL, TRUE);
 
                 /*
                  * Check the next and previous entry.  If either is a
