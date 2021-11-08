@@ -3537,6 +3537,80 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
     return hr;
 }
 
+static HRESULT session_is_presentation_rate_supported(struct media_session *session, BOOL thin, float rate,
+        float *nearest_rate)
+{
+    IMFRateSupport *rate_support;
+    struct media_source *source;
+    struct media_sink *sink;
+    float value = 0.0f, tmp;
+    unsigned int flags;
+    HRESULT hr = S_OK;
+
+    if (!nearest_rate) nearest_rate = &tmp;
+
+    if (rate == 0.0f)
+    {
+        *nearest_rate = 1.0f;
+        return S_OK;
+    }
+
+    EnterCriticalSection(&session->cs);
+
+    if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
+    {
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            if (FAILED(hr = MFGetService((IUnknown *)source->source, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
+                    (void **)&rate_support)))
+            {
+                value = 1.0f;
+                break;
+            }
+
+            value = rate;
+            if (FAILED(hr = IMFRateSupport_IsRateSupported(rate_support, thin, rate, &value)))
+                WARN("Source does not support rate %f, hr %#x.\n", rate, hr);
+            IMFRateSupport_Release(rate_support);
+
+            /* Only "first" source is considered. */
+            break;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            /* For sinks only check if rate is supported, ignoring nearest values. */
+            LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+            {
+                flags = 0;
+                if (FAILED(hr = IMFMediaSink_GetCharacteristics(sink->sink, &flags)))
+                    break;
+
+                if (flags & MEDIASINK_RATELESS)
+                    continue;
+
+                if (FAILED(MFGetService((IUnknown *)sink->sink, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport,
+                        (void **)&rate_support)))
+                    continue;
+
+                hr = IMFRateSupport_IsRateSupported(rate_support, thin, rate, NULL);
+                IMFRateSupport_Release(rate_support);
+                if (FAILED(hr))
+                {
+                    WARN("Sink %p does not support rate %f, hr %#x.\n", sink->sink, rate, hr);
+                    break;
+                }
+            }
+        }
+    }
+
+    LeaveCriticalSection(&session->cs);
+
+    *nearest_rate = value;
+
+    return hr;
+}
+
 static HRESULT WINAPI session_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
@@ -3560,9 +3634,11 @@ static HRESULT WINAPI session_rate_support_GetFastestRate(IMFRateSupport *iface,
 static HRESULT WINAPI session_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
         float *nearest_supported_rate)
 {
-    FIXME("%p, %d, %f, %p.\n", iface, thin, rate, nearest_supported_rate);
+    struct media_session *session = impl_session_from_IMFRateSupport(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %f, %p.\n", iface, thin, rate, nearest_supported_rate);
+
+    return session_is_presentation_rate_supported(session, thin, rate, nearest_supported_rate);
 }
 
 static const IMFRateSupportVtbl session_rate_support_vtbl =
