@@ -1430,6 +1430,8 @@ void check_dinput_events(void)
      *   (for example Culpa Innata)
      * - some games only poll the device, and neither keyboard nor mouse
      *   (for example Civilization: Call to Power 2)
+     * - some games do not explicitly poll for keyboard events
+     *   (for example Morrowind in its key binding page)
      */
     MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
 }
