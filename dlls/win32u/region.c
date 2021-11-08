@@ -451,7 +451,7 @@ static WINEREGION *alloc_region( INT n )
 
     if (rgn && !init_region( rgn, n ))
     {
-        free_region( rgn );
+        free( rgn );
         rgn = NULL;
     }
     return rgn;
