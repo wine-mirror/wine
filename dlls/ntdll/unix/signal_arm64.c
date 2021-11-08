@@ -478,6 +478,21 @@ NTSTATUS unwind_builtin_dll( void *args )
 
 
 /***********************************************************************
+ *           syscall_frame_fixup_for_fastpath
+ *
+ * Fixes up the given syscall frame such that the syscall dispatcher
+ * can return via the fast path if CONTEXT_INTEGER is set in
+ * restore_flags.
+ *
+ * Clobbers the frame's X16 and X17 register values.
+ */
+static void syscall_frame_fixup_for_fastpath( struct syscall_frame *frame )
+{
+    frame->x[16] = frame->pc;
+    frame->x[17] = frame->sp;
+}
+
+/***********************************************************************
  *           save_fpu
  *
  * Set the FPU context from a sigcontext.
@@ -1054,6 +1069,7 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
     frame->x[3] = arg3;
     frame->x[4] = (ULONG64)func;
     frame->restore_flags |= CONTEXT_CONTROL | CONTEXT_INTEGER;
+    syscall_frame_fixup_for_fastpath( frame );
     return status;
 }
 
@@ -1086,6 +1102,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     frame->lr   = lr;
     frame->sp   = sp;
     frame->restore_flags |= CONTEXT_INTEGER | CONTEXT_CONTROL;
+    syscall_frame_fixup_for_fastpath( frame );
     return status;
 }
 
@@ -1579,6 +1596,14 @@ void signal_init_process(void)
 
 
 /***********************************************************************
+ *           syscall_dispatcher_return_slowpath
+ */
+void DECLSPEC_HIDDEN syscall_dispatcher_return_slowpath(void)
+{
+    raise( SIGUSR2 );
+}
+
+/***********************************************************************
  *           call_init_thunk
  */
 void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
@@ -1638,6 +1663,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->x[18] = (ULONG64)teb;
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
+    syscall_frame_fixup_for_fastpath( frame );
     frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
@@ -1734,13 +1760,28 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "blr x16\n\t"
                    "mov sp, x22\n"
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
-                   "ldp x18, x19, [sp, #0x90]\n\t"
+                   "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
+                   "tbz x16, #1, 2f\n\t"        /* CONTEXT_INTEGER */
+                   "ldp x12, x13, [sp, #0x80]\n\t" /* frame->x[16..17] */
+                   "ldp x14, x15, [sp, #0xf8]\n\t" /* frame->sp, frame->pc */
+                   "cmp x12, x15\n\t"              /* frame->x16 == frame->pc? */
+                   "ccmp x13, x14, #0, eq\n\t"     /* frame->x17 == frame->sp? */
+                   "beq 1f\n\t"                    /* take slowpath if unequal */
+                   "bl " __ASM_NAME("syscall_dispatcher_return_slowpath") "\n"
+                   "1:\tldp x0, x1, [sp, #0x00]\n\t"
+                   "ldp x2, x3, [sp, #0x10]\n\t"
+                   "ldp x4, x5, [sp, #0x20]\n\t"
+                   "ldp x6, x7, [sp, #0x30]\n\t"
+                   "ldp x8, x9, [sp, #0x40]\n\t"
+                   "ldp x10, x11, [sp, #0x50]\n\t"
+                   "ldp x12, x13, [sp, #0x60]\n\t"
+                   "ldp x14, x15, [sp, #0x70]\n"
+                   "2:\tldp x18, x19, [sp, #0x90]\n\t"
                    "ldp x20, x21, [sp, #0xa0]\n\t"
                    "ldp x22, x23, [sp, #0xb0]\n\t"
                    "ldp x24, x25, [sp, #0xc0]\n\t"
                    "ldp x26, x27, [sp, #0xd0]\n\t"
                    "ldp x28, x29, [sp, #0xe0]\n\t"
-                   "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
                    "tbz x16, #2, 1f\n\t"        /* CONTEXT_FLOATING_POINT */
                    "ldp q0,  q1,  [sp, #0x130]\n\t"
                    "ldp q2,  q3,  [sp, #0x150]\n\t"
@@ -1758,19 +1799,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldp q26, q27, [sp, #0x2d0]\n\t"
                    "ldp q28, q29, [sp, #0x2f0]\n\t"
                    "ldp q30, q31, [sp, #0x310]\n\t"
-                   "ldr w9, [sp, #0x128]\n\t"
-                   "msr FPCR, x9\n\t"
-                   "ldr w9, [sp, #0x12c]\n\t"
-                   "msr FPSR, x9\n"
-                   "1:\ttbz x16, #1, 1f\n\t"    /* CONTEXT_INTEGER */
-                   "ldp x0, x1, [sp, #0x00]\n\t"
-                   "ldp x2, x3, [sp, #0x10]\n\t"
-                   "ldp x4, x5, [sp, #0x20]\n\t"
-                   "ldp x6, x7, [sp, #0x30]\n\t"
-                   "ldp x8, x9, [sp, #0x40]\n\t"
-                   "ldp x10, x11, [sp, #0x50]\n\t"
-                   "ldp x12, x13, [sp, #0x60]\n\t"
-                   "ldp x14, x15, [sp, #0x70]\n"
+                   "ldr w17, [sp, #0x128]\n\t"
+                   "msr FPCR, x17\n\t"
+                   "ldr w17, [sp, #0x12c]\n\t"
+                   "msr FPSR, x17\n"
                    "1:\tldp x16, x17, [sp, #0x100]\n\t"
                    "msr NZCV, x17\n\t"
                    "ldp x30, x17, [sp, #0xf0]\n\t"
