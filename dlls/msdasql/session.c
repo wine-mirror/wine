@@ -847,7 +847,7 @@ static HRESULT WINAPI command_SetCommandText(ICommandText *iface, REFGUID dialec
     struct command *command = impl_from_ICommandText( iface );
     TRACE("%p, %s, %s\n", command, debugstr_guid(dialect), debugstr_w(commandstr));
 
-    if (IsEqualGUID(&DBGUID_DEFAULT, dialect))
+    if (!IsEqualGUID(&DBGUID_DEFAULT, dialect))
         FIXME("Currently non Default Dialect isn't supported\n");
 
     heap_free(command->query);
