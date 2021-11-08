@@ -1613,6 +1613,54 @@ static void test_async_reader_types(void)
     ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 }
 
+static void test_async_reader_file(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    struct callback callback;
+    IWMReader *reader;
+    DWORD count;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    callback_init(&callback);
+
+    hr = WMCreateReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(callback.refcount > 1, "Got refcount %d.\n", callback.refcount);
+    ret = WaitForSingleObject(callback.got_opened, 1000);
+    ok(!ret, "Wait timed out.\n");
+
+    count = 0xdeadbeef;
+    hr = IWMReader_GetOutputCount(reader, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+
+    hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMReader_Close(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
+    callback_cleanup(&callback);
+
+    hr = IWMReader_Close(reader);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    ref = IWMReader_Release(reader);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
+    ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
+    callback_cleanup(&callback);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -1634,6 +1682,7 @@ START_TEST(wmvcore)
     test_sync_reader_file();
     test_async_reader_streaming();
     test_async_reader_types();
+    test_async_reader_file();
 
     CoUninitialize();
 }

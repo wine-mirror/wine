@@ -188,11 +188,22 @@ static ULONG WINAPI WMReader_Release(IWMReader *iface)
     return IWMProfile3_Release(&reader->reader.IWMProfile3_iface);
 }
 
-static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url, IWMReaderCallback *callback, void *context)
+static HRESULT WINAPI WMReader_Open(IWMReader *iface, const WCHAR *url,
+        IWMReaderCallback *callback, void *context)
 {
-    struct async_reader *This = impl_from_IWMReader(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(url), callback, context);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReader(iface);
+    HRESULT hr;
+
+    TRACE("reader %p, url %s, callback %p, context %p.\n",
+            reader, debugstr_w(url), callback, context);
+
+    EnterCriticalSection(&reader->reader.cs);
+
+    if (SUCCEEDED(hr = wm_reader_open_file(&reader->reader, url)))
+        open_stream(reader, callback, context);
+
+    LeaveCriticalSection(&reader->reader.cs);
+    return hr;
 }
 
 static HRESULT WINAPI WMReader_Close(IWMReader *iface)
