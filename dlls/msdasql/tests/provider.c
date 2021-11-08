@@ -367,6 +367,8 @@ static void test_sessions(void)
     IDBCreateCommand *create_command = NULL;
     IGetDataSource *datasource = NULL;
     ISessionProperties *session_props = NULL;
+    IUnknown *unimplemented = NULL;
+    ITransactionJoin *join = NULL;
     IUnknown *cmd = NULL;
     HRESULT hr;
     BSTR connect_str;
@@ -414,6 +416,17 @@ static void test_sessions(void)
     hr = IUnknown_QueryInterface(session, &IID_IGetDataSource, (void**)&datasource);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IGetDataSource_Release(datasource);
+
+    hr = IUnknown_QueryInterface(session, &IID_ITransactionJoin, (void**)&join);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if(hr == S_OK)
+        ITransactionJoin_Release(join);
+
+    hr = IUnknown_QueryInterface(session, &IID_IBindResource, (void**)&unimplemented);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(session, &IID_ICreateRow, (void**)&unimplemented);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
     hr = IUnknown_QueryInterface(session, &IID_ISessionProperties, (void**)&session_props);
     ok(hr == S_OK, "got 0x%08x\n", hr);

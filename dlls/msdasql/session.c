@@ -102,6 +102,16 @@ static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void 
         TRACE("(%p)->(IDBCreateCommand_iface %p)\n", iface, ppv);
         *ppv = &session->IDBCreateCommand_iface;
     }
+    else if(IsEqualGUID(&IID_IBindResource, riid))
+    {
+        TRACE("(%p)->(IID_IBindResource not support)\n", iface);
+        return E_NOINTERFACE;
+    }
+    else if(IsEqualGUID(&IID_ICreateRow, riid))
+    {
+        TRACE("(%p)->(IID_ICreateRow not support)\n", iface);
+        return E_NOINTERFACE;
+    }
 
     if(*ppv)
     {
