@@ -804,7 +804,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
 	case '*':
         case '&':
 	    PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &ref_dt) == -1);
-	    new_dt = &symt_new_pointer(ptd->module, ref_dt, sizeof(void*))->symt;
+	    new_dt = &symt_new_pointer(ptd->module, ref_dt, ptd->module->cpu->word_size)->symt;
            break;
         case 'k': /* 'const' modifier */
         case 'B': /* 'volatile' modifier */

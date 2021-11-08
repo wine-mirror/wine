@@ -1488,7 +1488,7 @@ static struct symt* dwarf2_parse_pointer_type(dwarf2_debug_info_t* di)
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = sizeof(void *);
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = di->unit_ctx->module_ctx->module->cpu->word_size;
     ref_type = dwarf2_lookup_type(di);
     di->symt = &symt_new_pointer(di->unit_ctx->module_ctx->module, ref_type, size.u.uvalue)->symt;
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1645,7 +1645,7 @@ static struct symt* dwarf2_parse_unspecified_type(dwarf2_debug_info_t* di)
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = "void";
-    size.u.uvalue = sizeof(void *);
+    size.u.uvalue = di->unit_ctx->module_ctx->module->cpu->word_size;
 
     basic = symt_new_basic(di->unit_ctx->module_ctx->module, btVoid, name.u.string, size.u.uvalue);
     di->symt = &basic->symt;
@@ -1664,7 +1664,8 @@ static struct symt* dwarf2_parse_reference_type(dwarf2_debug_info_t* di)
 
     ref_type = dwarf2_lookup_type(di);
     /* FIXME: for now, we hard-wire C++ references to pointers */
-    di->symt = &symt_new_pointer(di->unit_ctx->module_ctx->module, ref_type, sizeof(void *))->symt;
+    di->symt = &symt_new_pointer(di->unit_ctx->module_ctx->module, ref_type,
+                                 di->unit_ctx->module_ctx->module->cpu->word_size)->symt;
 
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
 
