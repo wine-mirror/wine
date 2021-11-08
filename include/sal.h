@@ -202,6 +202,7 @@
 #define _Pre_z_
 #define _Prepost_z_
 
+#define _Printf_format_string_
 #define _Printf_format_string_params_(count)
 
 #define _Reserved_
@@ -224,6 +225,7 @@
 
 #define _Scanf_format_string_
 #define _Scanf_format_string_params_(count)
+#define _Scanf_s_format_string_
 #define _Scanf_s_format_string_params_(count)
 
 #define _Success_(exp)
