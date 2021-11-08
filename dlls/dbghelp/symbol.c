@@ -418,6 +418,11 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     }
     vlen = vector_length(&func->vlines);
     prev = vlen ? vector_at(&func->vlines, vlen - 1) : NULL;
+    if (last_matches && prev && addr == prev->u.address)
+    {
+        WARN("Duplicate addition of line number in %s\n", func->hash_elt.name);
+        return;
+    }
     if (!last_matches)
     {
         /* we shouldn't have line changes on first line of function */
