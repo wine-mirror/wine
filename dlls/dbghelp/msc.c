@@ -88,6 +88,8 @@ struct pdb_module_info
     struct pdb_file_info        pdb_files[CV_MAX_MODULES];
 };
 
+#define loc_cv_local_range (loc_user + 0) /* loc.offset contain the copy of all defrange* Codeview records following S_LOCAL */
+
 /*========================================================================
  * Debug file access helper routines
  */
@@ -1581,6 +1583,24 @@ static ULONG_PTR codeview_get_address(const struct msc_debug_info* msc_dbg,
         codeview_map_offset(msc_dbg, sectp[seg-1].VirtualAddress + offset);
 }
 
+static BOOL func_has_local(struct symt_function* func, const char* name)
+{
+    int i;
+
+    for (i = 0; i < func->vchildren.num_elts; ++i)
+    {
+        struct symt* p = *(struct symt**)vector_at(&func->vchildren, i);
+        if (symt_check_tag(p, SymTagData) && !strcmp(((struct symt_data*)p)->hash_elt.name, name))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static const union codeview_symbol* get_next_sym(const union codeview_symbol* sym)
+{
+    return (const union codeview_symbol*)((const char*)sym + sym->generic.len + 2);
+}
+
 static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                                          struct symt_compiland* compiland,
                                          const char* name,
@@ -1601,6 +1621,135 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                                      codeview_get_type(symtype, FALSE));
         }
     }
+}
+
+struct cv_local_info
+{
+    unsigned short      kind; /* the S_DEFRANGE* */
+    unsigned short      ngaps; /* number of gaps */
+    unsigned short      reg;
+    unsigned short      rangelen; /* after start */
+    short               offset;
+    DWORD_PTR           start;
+    struct cv_addr_gap  gaps[0];
+};
+
+static const struct cv_addr_gap* codeview_get_gaps(const union codeview_symbol* symrange)
+{
+    const struct cv_addr_gap* gap;
+    switch (symrange->generic.id)
+    {
+    case S_DEFRANGE: gap = symrange->defrange_v3.gaps; break;
+    case S_DEFRANGE_SUBFIELD: gap = symrange->defrange_subfield_v3.gaps; break;
+    case S_DEFRANGE_REGISTER: gap = symrange->defrange_register_v3.gaps; break;
+    case S_DEFRANGE_FRAMEPOINTER_REL: gap = symrange->defrange_frameptrrel_v3.gaps; break;
+    case S_DEFRANGE_SUBFIELD_REGISTER: gap = symrange->defrange_subfield_register_v3.gaps; break;
+    case S_DEFRANGE_REGISTER_REL: gap = symrange->defrange_registerrel_v3.gaps; break;
+        /* no gaps for that one */
+    case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+    default: return NULL;
+    }
+    return gap != (const struct cv_addr_gap*)get_next_sym(symrange) ? gap : NULL;
+}
+
+static void codeview_xform_range(const struct msc_debug_info* msc_dbg,
+                                 struct cv_local_info* locinfo,
+                                 const struct cv_addr_range* adrange)
+{
+    locinfo->start = codeview_get_address(msc_dbg, adrange->isectStart, adrange->offStart);
+    locinfo->rangelen = adrange->cbRange;
+}
+
+static unsigned codeview_transform_defrange(const struct msc_debug_info* msc_dbg,
+                                            struct symt_function* curr_func,
+                                            const union codeview_symbol* sym,
+                                            struct location* loc)
+{
+    const union codeview_symbol* first_symrange = get_next_sym(sym);
+    const union codeview_symbol* symrange;
+    const struct cv_addr_gap* gap;
+    unsigned len, alloc = sizeof(DWORD); /* for terminating kind = 0 */
+    unsigned char* ptr;
+
+    /* we need to transform the cv_addr_range into cv_local_info */
+    for (symrange = first_symrange;
+         symrange->generic.id >= S_DEFRANGE && symrange->generic.id <= S_DEFRANGE_REGISTER_REL;
+         symrange = get_next_sym(symrange))
+    {
+        gap = codeview_get_gaps(symrange);
+        alloc += sizeof(struct cv_local_info) +
+            (gap ? (const char*)get_next_sym(symrange) - (const char*)gap : 0);
+    }
+    /* total length of all S_DEFRANGE* records (in bytes) following S_LOCAL */
+    len = (const char*)symrange - (const char*)first_symrange;
+
+    ptr = pool_alloc(&msc_dbg->module->pool, alloc);
+    if (ptr)
+    {
+        struct cv_local_info* locinfo = (struct cv_local_info*)ptr;
+
+        loc->kind = loc_cv_local_range;
+        loc->offset = (DWORD_PTR)ptr;
+        /* transform the cv_addr_range into cv_local_info */
+        for (symrange = first_symrange;
+             symrange->generic.id >= S_DEFRANGE && symrange->generic.id <= S_DEFRANGE_REGISTER_REL;
+             symrange = get_next_sym(symrange))
+        {
+            locinfo->kind = symrange->generic.id;
+            switch (symrange->generic.id)
+            {
+            case S_DEFRANGE:
+            case S_DEFRANGE_SUBFIELD:
+                /* FIXME: transformation unsupported; let loc_compute bark if actually needed */
+                break;
+            case S_DEFRANGE_REGISTER:
+                locinfo->reg = symrange->defrange_register_v3.reg;
+                codeview_xform_range(msc_dbg, locinfo, &symrange->defrange_register_v3.range);
+                break;
+            case S_DEFRANGE_FRAMEPOINTER_REL:
+                locinfo->offset = symrange->defrange_frameptrrel_v3.offFramePointer;
+                codeview_xform_range(msc_dbg, locinfo, &symrange->defrange_frameptrrel_v3.range);
+                break;
+            case S_DEFRANGE_SUBFIELD_REGISTER:
+                locinfo->reg = symrange->defrange_subfield_register_v3.reg;
+                locinfo->offset = symrange->defrange_subfield_register_v3.offParent;
+                codeview_xform_range(msc_dbg, locinfo, &symrange->defrange_subfield_register_v3.range);
+                break;
+            case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+                locinfo->offset = symrange->defrange_frameptr_relfullscope_v3.offFramePointer;
+                locinfo->start = curr_func->address;
+                locinfo->rangelen = curr_func->size;
+                break;
+            case S_DEFRANGE_REGISTER_REL:
+                locinfo->reg = symrange->defrange_registerrel_v3.baseReg;
+                locinfo->offset = symrange->defrange_registerrel_v3.offBasePointer;
+                codeview_xform_range(msc_dbg, locinfo, &symrange->defrange_registerrel_v3.range);
+                break;
+            default:
+                assert(0);
+            }
+            gap = codeview_get_gaps(symrange);
+            if (gap)
+            {
+                unsigned gaplen = (const char*)get_next_sym(symrange) - (const char*)gap;
+                locinfo->ngaps = gaplen / sizeof(*gap);
+                memcpy(locinfo->gaps, gap, gaplen);
+                locinfo = (struct cv_local_info*)((unsigned char*)(locinfo + 1) + gaplen);
+            }
+            else
+            {
+                locinfo->ngaps = 0;
+                locinfo++;
+            }
+        }
+        *(DWORD*)locinfo = 0; /* store terminating kind == 0 */
+    }
+    else
+    {
+        loc->kind = loc_error;
+        loc->reg = loc_err_internal;
+    }
+    return len;
 }
 
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root,
@@ -1774,6 +1923,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
                                 terminate_string(&sym->stack_v2.p_name));
             break;
 	case S_BPREL32:
+            /* S_BPREL32 can be present after S_LOCAL; prefer S_LOCAL when present */
+            if (func_has_local(curr_func, sym->stack_v3.name)) break;
             loc.kind = loc_regrel;
             /* Yes, it's i386 dependent, but that's the symbol purpose. S_REGREL is used on other CPUs */
             loc.reg = CV_REG_EBP;
@@ -1785,6 +1936,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
                                 sym->stack_v3.name);
             break;
 	case S_REGREL32:
+            /* S_REGREL32 can be present after S_LOCAL; prefer S_LOCAL when present */
+            if (func_has_local(curr_func, sym->regrel_v3.name)) break;
             loc.kind = loc_regrel;
             loc.reg = sym->regrel_v3.reg;
             loc.offset = sym->regrel_v3.offset;
@@ -1815,6 +1968,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
                                 terminate_string(&sym->register_v2.p_name));
             break;
         case S_REGISTER:
+            /* S_REGISTER can be present after S_LOCAL; prefer S_LOCAL when present */
+            if (func_has_local(curr_func, sym->register_v3.name)) break;
             loc.kind = loc_register;
             loc.reg = sym->register_v3.reg;
             loc.offset = 0;
@@ -1989,6 +2144,14 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
                           sym->udt_v3.name, sym->udt_v3.type);
             }
             break;
+        case S_LOCAL:
+            length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
+            symt_add_func_local(msc_dbg->module, curr_func,
+                                sym->local_v3.varflags & 0x0001 ? DataIsParam : DataIsLocal,
+                                &loc, block,
+                                codeview_get_type(sym->local_v3.symtype, FALSE),
+                                sym->local_v3.name);
+            break;
 
          /*
          * These are special, in that they are always followed by an
@@ -2027,8 +2190,11 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
         case S_SECTION:
         case S_COFFGROUP:
         case S_EXPORT:
-        case S_LOCAL:
         case S_CALLSITEINFO:
+            /* even if S_LOCAL groks all the S_DEFRANGE* records following itself,
+             * those kinds of records can also be present after a S_FILESTATIC record
+             * so silence them until (at least) S_FILESTATIC is supported
+             */
         case S_DEFRANGE_REGISTER:
         case S_DEFRANGE_FRAMEPOINTER_REL:
         case S_DEFRANGE_SUBFIELD_REGISTER:
@@ -2052,6 +2218,16 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
     }
 
     return TRUE;
+}
+
+static void pdb_location_compute(struct process* pcs,
+                                 const struct module_format* modfmt,
+                                 const struct symt_function* func,
+                                 struct location* loc)
+
+{
+    loc->kind = loc_register;
+    loc->reg = loc_err_internal;
 }
 
 static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYTE* root,
@@ -2886,7 +3062,7 @@ static BOOL pdb_process_file(const struct process* pcs,
     msc_dbg->module->format_info[DFI_PDB] = modfmt;
     modfmt->module      = msc_dbg->module;
     modfmt->remove      = pdb_module_remove;
-    modfmt->loc_compute = NULL;
+    modfmt->loc_compute = pdb_location_compute;
     modfmt->u.pdb_info  = pdb_module_info;
 
     memset(cv_zmodules, 0, sizeof(cv_zmodules));

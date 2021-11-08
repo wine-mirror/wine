@@ -1879,7 +1879,7 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
-        unsigned int            offFramePointer;
+        int                     offFramePointer;
         struct cv_addr_range    range;
         struct cv_addr_gap      gaps[0];
     } defrange_frameptrrel_v3;
@@ -1888,7 +1888,7 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
-        unsigned int            offFramePointer;
+        int                     offFramePointer;
     } defrange_frameptr_relfullscope_v3;
 
     struct
@@ -1911,7 +1911,7 @@ union codeview_symbol
         unsigned short          spilledUdtMember : 1;
         unsigned short          padding          : 3;
         unsigned short          offsetParent     : 12;
-        unsigned int            offBasePointer;
+        int                     offBasePointer;
         struct cv_addr_range    range;
         struct cv_addr_gap      gaps[0];
     } defrange_registerrel_v3;
