@@ -130,8 +130,8 @@ static void test_Properties(void)
 
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(propidlist.cPropertyIDs == 14, "got %d\n", propinfoset->cPropertyInfos);
-        ok(propset->cProperties == 14, "got %d\n", propinfoset->cPropertyInfos);
+        ok(propidlist.cPropertyIDs == 14, "got %d\n", propidlist.cPropertyIDs);
+        ok(propset->cProperties == 14, "got %d\n", propset->cProperties);
 
         for (i = 0; i < propidlist.cPropertyIDs; i++)
         {
