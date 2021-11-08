@@ -243,8 +243,12 @@ static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
 
 static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
 {
-    FIXME("iface %p, data %p, stub!\n", iface, data);
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    TRACE("buffer %p, data %p.\n", buffer, data);
+
+    *data = buffer->data;
+    return S_OK;
 }
 
 static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, DWORD *size)
