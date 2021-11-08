@@ -52,6 +52,12 @@ static void test_window_props(void)
     prop = NtUserGetProp( hwnd, UlongToPtr(atom) );
     ok( prop == UlongToHandle(0xdeadbeef), "prop = %p\n", prop );
 
+    prop = NtUserRemoveProp( hwnd, UlongToPtr(atom) );
+    ok( prop == UlongToHandle(0xdeadbeef), "prop = %p\n", prop );
+
+    prop = GetPropW(hwnd, L"test");
+    ok(!prop, "prop = %p\n", prop);
+
     GlobalDeleteAtom( atom );
     DestroyWindow( hwnd );
 }

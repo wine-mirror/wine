@@ -1148,7 +1148,7 @@
 @ stub NtUserRemoveClipboardFormatListener
 @ stub NtUserRemoveInjectionDevice
 @ stub NtUserRemoveMenu
-@ stub NtUserRemoveProp
+@ stdcall -syscall NtUserRemoveProp(long wstr)
 @ stub NtUserRemoveVisualIdentifier
 @ stub NtUserReportInertia
 @ stub NtUserRequestMoveSizeOperation

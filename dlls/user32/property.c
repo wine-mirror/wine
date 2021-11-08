@@ -170,18 +170,7 @@ HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
  */
 HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
 {
-    ULONG_PTR ret = 0;
-
-    SERVER_START_REQ( remove_window_property )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        if (IS_INTRESOURCE(str)) req->atom = LOWORD(str);
-        else wine_server_add_data( req, str, lstrlenW(str) * sizeof(WCHAR) );
-        if (!wine_server_call_err( req )) ret = reply->data;
-    }
-    SERVER_END_REQ;
-
-    return (HANDLE)ret;
+    return NtUserRemoveProp( hwnd, str );
 }
 
 

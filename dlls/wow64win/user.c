@@ -173,6 +173,14 @@ NTSTATUS WINAPI wow64_NtUserSetProp( UINT *args )
     return NtUserSetProp( hwnd, str, handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const WCHAR *str = get_ptr( &args );
+
+    return HandleToUlong( NtUserRemoveProp( hwnd, str ));
+}
+
 NTSTATUS WINAPI wow64_NtUserGetLayeredWindowAttributes( UINT *args )
 {
     HWND hwnd = get_handle( &args );
