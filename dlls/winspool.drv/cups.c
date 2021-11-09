@@ -337,14 +337,14 @@ static int get_cups_default_options( const char *printer, int num_options, cups_
 
 static NTSTATUS enum_printers( void *args )
 {
-    struct enum_printers_params *params = args;
+    const struct enum_printers_params *params = args;
 #ifdef SONAME_LIBCUPS
     unsigned int num, i, name_len, comment_len, location_len, needed;
     WCHAR *comment, *location, *ptr;
     struct printer_info *info;
     cups_dest_t *dests;
 
-    params->num = 0;
+    *params->num = 0;
     if (!pcupsGetDests) return STATUS_NOT_SUPPORTED;
 
     num = pcupsGetDests( &dests );
@@ -357,12 +357,12 @@ static NTSTATUS enum_printers( void *args )
             continue;
         }
         TRACE( "Printer %d: %s\n", i, debugstr_a( dests[i].name ) );
-        params->num++;
+        (*params->num)++;
     }
 
-    needed = sizeof( *info ) * params->num;
+    needed = sizeof( *info ) * *params->num;
     info = params->printers;
-    ptr = (WCHAR *)(info + params->num);
+    ptr = (WCHAR *)(info + *params->num);
 
     for (i = 0; i < num; i++)
     {
@@ -376,7 +376,7 @@ static NTSTATUS enum_printers( void *args )
         location_len = location ? strlenW( location ) + 1 : 0;
         needed += (name_len + comment_len + location_len) * sizeof(WCHAR);
 
-        if (needed <= params->size)
+        if (needed <= *params->size)
         {
             info->name = ptr;
             ntdll_umbstowcs( dests[i].name, name_len, info->name, name_len );
@@ -393,21 +393,21 @@ static NTSTATUS enum_printers( void *args )
     }
     pcupsFreeDests( num, dests );
 
-    if (needed > params->size)
+    if (needed > *params->size)
     {
-        params->size = needed;
+        *params->size = needed;
         return STATUS_BUFFER_OVERFLOW;
     }
     return STATUS_SUCCESS;
 #else
-    params->num = 0;
+    *params->num = 0;
     return STATUS_NOT_SUPPORTED;
 #endif /* SONAME_LIBCUPS */
 }
 
 static NTSTATUS get_ppd( void *args )
 {
-    struct get_ppd_params *params = args;
+    const struct get_ppd_params *params = args;
     char *unix_ppd = get_unix_file_name( params->ppd );
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -449,7 +449,7 @@ static NTSTATUS get_ppd( void *args )
 static NTSTATUS get_default_page_size( void *args )
 {
 #ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
-    struct get_default_page_size_params *params = args;
+    const struct get_default_page_size_params *params = args;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PMPrintSession session = NULL;
     PMPageFormat format = NULL;
@@ -468,7 +468,7 @@ static NTSTATUS get_default_page_size( void *args )
     range.length = CFStringGetLength( paper_name );
     size = (range.length + 1) * sizeof(WCHAR);
 
-    if (params->name_size >= size)
+    if (*params->name_size >= size)
     {
         CFStringGetCharacters( paper_name, range, (UniChar*)params->name );
         params->name[range.length] = 0;
@@ -476,7 +476,7 @@ static NTSTATUS get_default_page_size( void *args )
     }
     else
         status = STATUS_BUFFER_OVERFLOW;
-    params->name_size = size;
+    *params->name_size = size;
 
 end:
     if (format) PMRelease( format );
@@ -663,7 +663,7 @@ static BOOL schedule_cups( const WCHAR *printer_name, const WCHAR *filename, con
 
 static NTSTATUS schedule_job( void *args )
 {
-    struct schedule_job_params *params = args;
+    const struct schedule_job_params *params = args;
 
     if (params->wine_port[0] == '|')
         return schedule_pipe( params->wine_port + 1, params->filename );
@@ -680,7 +680,7 @@ static NTSTATUS schedule_job( void *args )
     return FALSE;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     process_attach,
     enum_printers,
@@ -688,3 +688,117 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_ppd,
     schedule_job,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+struct printer_info32
+{
+    PTR32 name;
+    PTR32 comment;
+    PTR32 location;
+    BOOL  is_default;
+};
+
+static NTSTATUS wow64_enum_printers( void *args )
+{
+    struct
+    {
+        PTR32 printers;
+        PTR32 size;
+        PTR32 num;
+    } const *params32 = args;
+
+    NTSTATUS status;
+    unsigned int i;
+    struct enum_printers_params params =
+    {
+        ULongToPtr( params32->printers ),
+        ULongToPtr( params32->size ),
+        ULongToPtr( params32->num )
+    };
+
+    if (!(status = enum_printers( &params )))
+    {
+        /* convert structures in place */
+        struct printer_info *info = ULongToPtr( params32->printers );
+        struct printer_info32 *info32 = (struct printer_info32 *)info;
+        unsigned int num = *(unsigned int *)ULongToPtr( params32->num );
+
+        for (i = 0; i < num; i++)
+        {
+            info32[i].name = PtrToUlong(info[i].name);
+            info32[i].comment = PtrToUlong(info[i].comment);
+            info32[i].location = PtrToUlong(info[i].location);
+            info32[i].is_default = info[i].is_default;
+        }
+    }
+    return status;
+}
+
+static NTSTATUS wow64_get_default_page_size( void *args )
+{
+    struct
+    {
+        PTR32 name;
+        PTR32 name_size;
+    } const *params32 = args;
+
+    struct get_default_page_size_params params =
+    {
+        ULongToPtr( params32->name ),
+        ULongToPtr( params32->name_size )
+    };
+
+    return get_default_page_size( &params );
+}
+
+static NTSTATUS wow64_get_ppd( void *args )
+{
+    struct
+    {
+        PTR32 printer;
+        PTR32 ppd;
+    } const *params32 = args;
+
+    struct get_ppd_params params =
+    {
+        ULongToPtr( params32->printer ),
+        ULongToPtr( params32->ppd )
+    };
+
+    return get_ppd( &params );
+}
+
+static NTSTATUS wow64_schedule_job( void *args )
+{
+    struct
+    {
+        PTR32 filename;
+        PTR32 port;
+        PTR32 document_title;
+        PTR32 wine_port;
+    } const *params32 = args;
+
+    struct schedule_job_params params =
+    {
+        ULongToPtr( params32->filename ),
+        ULongToPtr( params32->port ),
+        ULongToPtr( params32->document_title ),
+        ULongToPtr( params32->wine_port )
+    };
+
+    return schedule_job( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    process_attach,
+    wow64_enum_printers,
+    wow64_get_default_page_size,
+    wow64_get_ppd,
+    wow64_schedule_job,
+};
+
+#endif  /* _WIN64 */

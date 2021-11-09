@@ -728,7 +728,8 @@ static WCHAR *get_ppd_dir( void )
 static BOOL init_unix_printers( void )
 {
     WCHAR *port, *ppd_dir = NULL, *default_printer = NULL;
-    struct enum_printers_params enum_params;
+    unsigned int size, num;
+    struct enum_printers_params enum_params = { NULL, &size, &num };
     HKEY printer_key, printers_key;
     HANDLE added_printer;
     PRINTER_INFO_2W pi2;
@@ -742,19 +743,18 @@ static BOOL init_unix_printers( void )
         return FALSE;
     }
 
-    enum_params.size = 10000;
-    enum_params.printers = NULL;
+    size = 10000;
     do
     {
-        enum_params.size *= 2;
+        size *= 2;
         heap_free( enum_params.printers );
-        enum_params.printers = heap_alloc( enum_params.size );
+        enum_params.printers = heap_alloc( size );
         status = UNIX_CALL( enum_printers, &enum_params );
     } while (status == STATUS_BUFFER_OVERFLOW);
     if (status) goto end;
 
-    TRACE( "Found %d CUPS %s:\n", enum_params.num, (enum_params.num == 1) ? "printer" : "printers" );
-    for (i = 0; i < enum_params.num; i++)
+    TRACE( "Found %d CUPS %s:\n", num, (num == 1) ? "printer" : "printers" );
+    for (i = 0; i < num; i++)
     {
         struct printer_info *printer = enum_params.printers + i;
 
@@ -817,7 +817,8 @@ end:
 static void set_ppd_overrides( HANDLE printer )
 {
     WCHAR buffer[256];
-    struct get_default_page_size_params params = { .name = buffer, .name_size = sizeof(buffer) };
+    unsigned int name_size = sizeof(buffer);
+    struct get_default_page_size_params params = { .name = buffer, .name_size = &name_size };
     NTSTATUS status;
 
     while (1)
@@ -825,10 +826,10 @@ static void set_ppd_overrides( HANDLE printer )
         status = UNIX_CALL( get_default_page_size, &params );
         if (status != STATUS_BUFFER_OVERFLOW) break;
         if (params.name != buffer) heap_free( params.name );
-        params.name = heap_alloc( params.name_size );
+        params.name = heap_alloc( name_size );
         if (!params.name) break;
     }
-    if (!status) SetPrinterDataExW( printer, L"PPD Overrides", L"DefaultPageSize", REG_SZ, (BYTE*)params.name, params.name_size );
+    if (!status) SetPrinterDataExW( printer, L"PPD Overrides", L"DefaultPageSize", REG_SZ, (BYTE*)params.name, name_size );
     if (params.name != buffer) heap_free( params.name );
 }
 

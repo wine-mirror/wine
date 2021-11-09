@@ -48,14 +48,14 @@ struct printer_info
 struct enum_printers_params
 {
     struct printer_info *printers;
-    unsigned int size;
-    unsigned int num;
+    unsigned int *size;
+    unsigned int *num;
 };
 
 struct get_default_page_size_params
 {
     WCHAR *name;
-    unsigned int name_size;
+    unsigned int *name_size;
 };
 
 struct get_ppd_params
