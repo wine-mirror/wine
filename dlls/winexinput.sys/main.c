@@ -37,7 +37,7 @@
 #include "wine/asm.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winexinput);
+WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
 #ifdef __ASM_USE_FASTCALL_WRAPPER
 extern void *WINAPI wrap_fastcall_func1(void *func, const void *a);
