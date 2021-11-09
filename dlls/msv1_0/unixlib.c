@@ -54,7 +54,7 @@ struct com_buf
 static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
 {
     char *newline;
-    struct com_buf *com_buf = ctx->com_buf;
+    struct com_buf *com_buf = (struct com_buf *)(ULONG_PTR)ctx->com_buf;
 
     if (!com_buf)
     {
@@ -66,7 +66,7 @@ static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
         }
         com_buf->size = INITIAL_BUFFER_SIZE;
         com_buf->offset = 0;
-        ctx->com_buf = com_buf;
+        ctx->com_buf = (ULONG_PTR)com_buf;
     }
 
     do
@@ -97,7 +97,7 @@ static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
 
 static NTSTATUS ntlm_chat( void *args )
 {
-    struct chat_params *params = args;
+    const struct chat_params *params = args;
     struct ntlm_ctx *ctx = params->ctx;
     struct com_buf *com_buf;
     SECURITY_STATUS status = SEC_E_OK;
@@ -107,7 +107,7 @@ static NTSTATUS ntlm_chat( void *args )
     write( ctx->pipe_out, "\n", 1 );
 
     if ((status = read_line( ctx, &offset )) != SEC_E_OK) return status;
-    com_buf = ctx->com_buf;
+    com_buf = (struct com_buf *)(ULONG_PTR)ctx->com_buf;
     *params->retlen = strlen( com_buf->buffer );
 
     if (*params->retlen > params->buflen) return SEC_E_BUFFER_TOO_SMALL;
@@ -128,9 +128,8 @@ static NTSTATUS ntlm_chat( void *args )
 
 static NTSTATUS ntlm_cleanup( void *args )
 {
-    struct cleanup_params *params = args;
-    struct ntlm_ctx *ctx = params->ctx;
-    struct com_buf *com_buf = ctx->com_buf;
+    struct ntlm_ctx *ctx = args;
+    struct com_buf *com_buf = (struct com_buf *)(ULONG_PTR)ctx->com_buf;
 
     if (!ctx || (ctx->mode != MODE_CLIENT && ctx->mode != MODE_SERVER)) return STATUS_INVALID_HANDLE;
     ctx->mode = MODE_INVALID;
@@ -154,7 +153,7 @@ static NTSTATUS ntlm_cleanup( void *args )
 
 static NTSTATUS ntlm_fork( void *args )
 {
-    struct fork_params *params = args;
+    const struct fork_params *params = args;
     struct ntlm_ctx *ctx = params->ctx;
     int pipe_in[2], pipe_out[2];
 
@@ -216,7 +215,6 @@ static NTSTATUS ntlm_check_version( void *args )
     char *argv[3], buf[80];
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     struct fork_params params = { &ctx, argv };
-    struct cleanup_params cleanup_params = { &ctx };
     int len;
 
     argv[0] = (char *)"ntlm_auth";
@@ -249,7 +247,7 @@ static NTSTATUS ntlm_check_version( void *args )
                               "Make sure that ntlm_auth >= %d.%d.%d is in your path. "
                               "Usually, you can find it in the winbind package of your distribution.\n",
                               NTLM_AUTH_MAJOR_VERSION, NTLM_AUTH_MINOR_VERSION, NTLM_AUTH_MICRO_VERSION );
-    ntlm_cleanup( &cleanup_params );
+    ntlm_cleanup( &ctx );
     return status;
 }
 
@@ -260,3 +258,63 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ntlm_fork,
     ntlm_check_version,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_ntlm_chat( void *args )
+{
+    struct
+    {
+        PTR32 ctx;
+        PTR32 buf;
+        UINT  buflen;
+        PTR32 retlen;
+    } const *params32 = args;
+
+    struct chat_params params =
+    {
+        ULongToPtr(params32->ctx),
+        ULongToPtr(params32->buf),
+        params32->buflen,
+        ULongToPtr(params32->retlen)
+    };
+
+    return ntlm_chat( &params );
+}
+
+static NTSTATUS wow64_ntlm_fork( void *args )
+{
+    struct
+    {
+        PTR32 ctx;
+        PTR32 argv;
+    } const *params32 = args;
+
+    struct fork_params params;
+    PTR32 *argv32 = ULongToPtr(params32->argv);
+    char **argv;
+    NTSTATUS ret;
+    int i, argc = 0;
+
+    while (argv32[argc]) argc++;
+    argv = malloc( (argc + 1) * sizeof(*argv) );
+    for (i = 0; i <= argc; i++) argv[i] = ULongToPtr( argv32[i] );
+
+    params.ctx = ULongToPtr(params32->ctx);
+    params.argv = argv;
+    ret = ntlm_fork( &params );
+    free( argv );
+    return ret;
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_ntlm_chat,
+    ntlm_cleanup,
+    wow64_ntlm_fork,
+    ntlm_check_version,
+};
+
+#endif  /* _WIN64 */

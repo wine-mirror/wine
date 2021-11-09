@@ -51,9 +51,7 @@ static NTSTATUS ntlm_check_version(void)
 
 static void ntlm_cleanup( struct ntlm_ctx *ctx )
 {
-    struct cleanup_params params = { ctx };
-
-    __wine_unix_call( ntlm_handle, unix_cleanup, &params );
+    __wine_unix_call( ntlm_handle, unix_cleanup, ctx );
 }
 
 static NTSTATUS ntlm_chat( struct ntlm_ctx *ctx, char *buf, unsigned int buflen, unsigned int *retlen )
