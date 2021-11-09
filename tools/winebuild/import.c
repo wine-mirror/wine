@@ -1492,7 +1492,6 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tmovw ip, #%u\n", id );
             output( "\tmov r3, lr\n" );
             output( "\tbl %s\n", asm_name("__wine_syscall") );
-            output( "\tadd sp, #16\n" );
             output( "\tbx lr\n" );
             break;
         case CPU_ARM64:

@@ -1041,7 +1041,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr r1, [r1, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
                    "add r0, r1, #0x10\n\t"
                    "stm r0, {r4-r12,lr}\n\t"
-                   "str sp, [r1, #0x38]\n\t"
+                   "add r2, sp, #0x10\n\t"
+                   "str r2, [r1, #0x38]\n\t"
                    "str r3, [r1, #0x3c]\n\t"
                    "mrs r0, CPSR\n\t"
                    "bfi r0, lr, #5, #1\n\t"         /* set thumb bit */
@@ -1099,6 +1100,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldm r8, {r4-r12,pc}\n"
                    "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "movt r0, #0xc000\n\t"
+                   "add sp, sp, #0x10\n\t"
                    "b 4b\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "mov r8, r0\n\t"
