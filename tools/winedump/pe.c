@@ -1171,11 +1171,18 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
                 excode = (code << 24) | (excodes[0] << 16) | (excodes[1] << 8) | excodes[2];
                 printf( "%s sp, sp, #%u\n", inepilogue ? "add" : "sub", (excode & 0xffffff) * 4 );
             }
-            else if (code <= 0xfc)
+            else if (code <= 0xfb)
                 printf( "nop\n" );
-            else if (code <= 0xfe)
+            else if (code <= 0xfc)
+                printf( "nop.w\n" );
+            else if (code <= 0xfd)
             {
                 printf( "(end) nop\n" );
+                inepilogue = TRUE;
+            }
+            else if (code <= 0xfe)
+            {
+                printf( "(end) nop.w\n" );
                 inepilogue = TRUE;
             }
             else
