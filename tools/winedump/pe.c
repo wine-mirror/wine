@@ -1113,7 +1113,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
                     if (inepilogue)
                         printf( "ldr lr, [sp], #%u\n", (excode & 0x0f) * 4 );
                     else
-                        printf( "unknown 32\n" );
+                        printf( "str lr, [sp, #-%u]!\n", (excode & 0x0f) * 4 );
                 }
                 else
                     printf( "unknown 32\n" );
