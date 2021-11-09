@@ -182,4 +182,157 @@ library UIA
         HRESULT GetSelection([out, retval] SAFEARRAY(VARIANT) *pvarSelectedChildren);
         [propget] HRESULT DefaultAction([out, retval] BSTR *pszDefaultAction);
     }
+
+    enum UIAutomationType {
+        UIAutomationType_Int     = 0x01,
+        UIAutomationType_Bool    = 0x02,
+        UIAutomationType_String  = 0x03,
+        UIAutomationType_Double  = 0x04,
+        UIAutomationType_Point   = 0x05,
+        UIAutomationType_Rect    = 0x06,
+        UIAutomationType_Element = 0x07,
+
+        UIAutomationType_Array = 0x00010000,
+        UIAutomationType_Out   = 0x00020000,
+
+        UIAutomationType_IntArray    = ( UIAutomationType_Int    | UIAutomationType_Array ),
+        UIAutomationType_BoolArray   = ( UIAutomationType_Bool   | UIAutomationType_Array ),
+        UIAutomationType_StringArray = ( UIAutomationType_String | UIAutomationType_Array ),
+        UIAutomationType_DoubleArray = ( UIAutomationType_Double | UIAutomationType_Array ),
+        UIAutomationType_PointArray  = ( UIAutomationType_Point  | UIAutomationType_Array ),
+        UIAutomationType_RectArray   = ( UIAutomationType_Rect   | UIAutomationType_Array ),
+        UIAutomationType_ElementArray = ( UIAutomationType_Element | UIAutomationType_Array ),
+
+        UIAutomationType_OutInt    = ( UIAutomationType_Int    | UIAutomationType_Out ),
+        UIAutomationType_OutBool   = ( UIAutomationType_Bool   | UIAutomationType_Out ),
+        UIAutomationType_OutString = ( UIAutomationType_String | UIAutomationType_Out ),
+        UIAutomationType_OutDouble = ( UIAutomationType_Double | UIAutomationType_Out ),
+        UIAutomationType_OutPoint  = ( UIAutomationType_Point  | UIAutomationType_Out ),
+        UIAutomationType_OutRect   = ( UIAutomationType_Rect   | UIAutomationType_Out ),
+        UIAutomationType_OutElement = ( UIAutomationType_Element | UIAutomationType_Out ),
+
+        UIAutomationType_OutIntArray    = ( UIAutomationType_Int    | UIAutomationType_Array | UIAutomationType_Out ),
+        UIAutomationType_OutBoolArray   = ( UIAutomationType_Bool   | UIAutomationType_Array | UIAutomationType_Out ),
+        UIAutomationType_OutStringArray = ( UIAutomationType_String | UIAutomationType_Array | UIAutomationType_Out ),
+        UIAutomationType_OutDoubleArray = ( UIAutomationType_Double | UIAutomationType_Array | UIAutomationType_Out ),
+        UIAutomationType_OutPointArray  = ( UIAutomationType_Point  | UIAutomationType_Array | UIAutomationType_Out ),
+        UIAutomationType_OutRectArray   = ( UIAutomationType_Rect   | UIAutomationType_Array | UIAutomationType_Out ),
+        UIAutomationType_OutElementArray = ( UIAutomationType_Element | UIAutomationType_Array | UIAutomationType_Out ),
+    };
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(UIAutomationType)")
+
+    struct UIAutomationParameter {
+        enum UIAutomationType type;
+        void *pData;
+    };
+
+    struct UIAutomationPropertyInfo {
+        GUID guid;
+        LPCWSTR pProgrammaticName;
+        enum UIAutomationType type;
+    };
+
+    struct UIAutomationEventInfo {
+        GUID guid;
+        LPCWSTR pProgrammaticName;
+    };
+
+    struct UIAutomationMethodInfo {
+        LPCWSTR pProgrammaticName;
+        BOOL doSetFocus;
+        UINT cInParameters;
+        UINT cOutParameters;
+        [size_is(cInParameters + cOutParameters)]enum UIAutomationType *pParameterTypes;
+        [size_is(cInParameters + cOutParameters)]LPCWSTR *pParameterNames;
+    };
+
+    [
+        object,
+        uuid(c03a7fe4-9431-409f-bed8-ae7c2299bc8d),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationPatternInstance : IUnknown
+    {
+        [local] HRESULT GetProperty(
+                        [in] UINT index,
+                        [in] BOOL cached,
+                        [in] enum UIAutomationType type,
+                        [out] void *pPtr);
+
+        [local] HRESULT CallMethod(
+                        [in] UINT index,
+                        [in] const struct UIAutomationParameter *pParams,
+                        [in] UINT cParams);
+    }
+
+    [
+        object,
+        uuid(d97022f3-a947-465e-8b2a-ac4315fa54e8),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationPatternHandler : IUnknown
+    {
+        HRESULT CreateClientWrapper(
+                [in] IUIAutomationPatternInstance *pPatternInstance,
+                [out] IUnknown **pClientWrapper);
+
+        [local] HRESULT Dispatch(
+                        [in] IUnknown *pTarget,
+                        [in] UINT index,
+                        [in] const struct UIAutomationParameter *pParams,
+                        [in] UINT cParams);
+    }
+
+    struct UIAutomationPatternInfo {
+        GUID guid;
+        LPCWSTR pProgrammaticName;
+        GUID providerInterfaceId;
+        GUID clientInterfaceId;
+        UINT cProperties;
+        [size_is(cProperties)]struct UIAutomationPropertyInfo *pProperties;
+        UINT cMethods;
+        [size_is(cMethods)]struct UIAutomationMethodInfo *pMethods;
+        UINT cEvents;
+        [size_is(cEvents)]struct UIAutomationEventInfo *pEvents;
+        IUIAutomationPatternHandler *pPatternHandler;
+    };
+
+    [
+        object,
+        uuid(8609c4ec-4a1a-4d88-a357-5a66e060e1cf),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface IUIAutomationRegistrar : IUnknown
+    {
+        HRESULT RegisterProperty(
+                [in] const struct UIAutomationPropertyInfo *property,
+                [out] PROPERTYID *propertyId);
+
+        HRESULT RegisterEvent(
+                [in] const struct UIAutomationEventInfo *event,
+                [out] EVENTID *eventId);
+
+        HRESULT RegisterPattern(
+                [in] const struct UIAutomationPatternInfo *pattern,
+                [out] PATTERNID *pPatternId,
+                [out] PROPERTYID *pPatternAvailablePropertyId,
+                [in] UINT propertyIdCount,
+                [out, size_is(propertyIdCount)] PROPERTYID *pPropertyIds,
+                [in] UINT eventIdCount,
+                [out, size_is(eventIdCount)] EVENTID *pEventIds);
+    };
+
+    [
+        uuid(6e29fabf-9977-42d1-8d0e-ca7e61ad87e6),
+        version(1.0),
+        threading(both)
+    ]
+    coclass CUIAutomationRegistrar
+    {
+        [default] interface IUIAutomationRegistrar;
+    }
 }
