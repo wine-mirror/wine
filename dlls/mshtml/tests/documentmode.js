@@ -488,6 +488,69 @@ sync_test("style_props", function() {
     }
 });
 
+sync_test("createElement_inline_attr", function() {
+    var v = document.documentMode, e, s;
+
+    if(v < 9) {
+        s = document.createElement("<div>").tagName;
+        ok(s === "DIV", "<div>.tagName returned " + s);
+        s = document.createElement("<div >").tagName;
+        ok(s === "DIV", "<div >.tagName returned " + s);
+        s = document.createElement("<div/>").tagName;
+        ok(s === "DIV", "<div/>.tagName returned " + s);
+        e = 0;
+        try {
+            document.createElement("<div");
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === 0x4005 - 0x80000000, "<div e = " + e);
+        e = 0;
+        try {
+            document.createElement("<div test=1");
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === 0x4005 - 0x80000000, "<div test=1 e = " + e);
+
+        var tags = [ "div", "head", "body", "title", "html" ];
+
+        for(var i = 0; i < tags.length; i++) {
+            e = document.createElement("<" + tags[i] + " test='a\"' abcd=\"&quot;b&#34;\">");
+            ok(e.tagName === tags[i].toUpperCase(), "<" + tags[i] + " test=\"a\" abcd=\"b\">.tagName returned " + e.tagName);
+            todo_wine_if(v == 8).
+            ok(e.test === "a\"", "<" + tags[i] + " test='a\"' abcd=\"&quot;b&#34;\">.test returned " + e.test);
+            todo_wine_if(v == 8).
+            ok(e.abcd === "\"b\"", "<" + tags[i] + " test='a\"' abcd=\"&quot;b&#34;\">.abcd returned " + e.abcd);
+        }
+    }else {
+        s = "";
+        e = 0;
+        try {
+            document.createElement("<div>");
+        }catch(ex) {
+            s = ex.toString();
+            e = ex.number;
+        }
+        todo_wine.
+        ok(e === undefined, "<div> e = " + e);
+        todo_wine.
+        ok(s === "InvalidCharacterError", "<div> s = " + s);
+        s = "";
+        e = 0;
+        try {
+            document.createElement("<div test=\"a\">");
+        }catch(ex) {
+            s = ex.toString();
+            e = ex.number;
+        }
+        todo_wine.
+        ok(e === undefined, "<div test=\"a\"> e = " + e);
+        todo_wine.
+        ok(s === "InvalidCharacterError", "<div test=\"a\"> s = " + s);
+    }
+});
+
 sync_test("JS objs", function() {
     var g = window;
 

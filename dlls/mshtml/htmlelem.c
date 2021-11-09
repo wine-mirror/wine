@@ -355,6 +355,134 @@ static inline HTMLElement *impl_from_IHTMLElement(IHTMLElement *iface)
     return CONTAINING_RECORD(iface, HTMLElement, IHTMLElement_iface);
 }
 
+static HRESULT copy_nselem_attrs(nsIDOMElement *nselem_with_attrs, nsIDOMElement *nselem)
+{
+    nsIDOMMozNamedAttrMap *attrs;
+    nsAString name_str, val_str;
+    nsresult nsres, nsres2;
+    nsIDOMAttr *attr;
+    UINT32 i, length;
+
+    nsres = nsIDOMElement_GetAttributes(nselem_with_attrs, &attrs);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    nsres = nsIDOMMozNamedAttrMap_GetLength(attrs, &length);
+    if(NS_FAILED(nsres)) {
+        nsIDOMMozNamedAttrMap_Release(attrs);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&name_str, NULL);
+    nsAString_Init(&val_str, NULL);
+    for(i = 0; i < length; i++) {
+        nsres = nsIDOMMozNamedAttrMap_Item(attrs, i, &attr);
+        if(NS_FAILED(nsres))
+            continue;
+
+        nsres  = nsIDOMAttr_GetNodeName(attr, &name_str);
+        nsres2 = nsIDOMAttr_GetNodeValue(attr, &val_str);
+        nsIDOMAttr_Release(attr);
+        if(NS_FAILED(nsres) || NS_FAILED(nsres2))
+            continue;
+
+        nsIDOMElement_SetAttribute(nselem, &name_str, &val_str);
+    }
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&val_str);
+
+    nsIDOMMozNamedAttrMap_Release(attrs);
+    return S_OK;
+}
+
+static HRESULT create_nselem_parse(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMElement **ret)
+{
+    static const WCHAR prefix[4] = L"<FOO";
+    nsIDOMDocumentFragment *nsfragment;
+    WCHAR *p = wcschr(tag + 1, '>');
+    UINT32 i, name_len, size;
+    nsIDOMElement *nselem;
+    nsIDOMRange *nsrange;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+    nsAString str;
+    HRESULT hres;
+
+    if(!p || p[1] || wcschr(tag + 1, '<'))
+        return E_FAIL;
+    if(!doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    /* Ignore the starting token and > or /> end token */
+    name_len = p - tag - 1 - (p[-1] == '/');
+
+    /* Get the tag name using HTML whitespace rules */
+    for(i = 1; i <= name_len; i++) {
+        if((tag[i] >= 0x09 && tag[i] <= 0x0d) || tag[i] == ' ') {
+            name_len = i - 1;
+            break;
+        }
+    }
+    if(!name_len)
+        return E_FAIL;
+    size = (p + 2 - (tag + 1 + name_len)) * sizeof(WCHAR);
+
+    /* Parse the input via a contextual fragment, using a dummy unknown tag */
+    nsres = nsIDOMHTMLDocument_CreateRange(doc->nsdoc, &nsrange);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    if(!(p = heap_alloc(sizeof(prefix) + size))) {
+        nsIDOMRange_Release(nsrange);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(p, prefix, sizeof(prefix));
+    memcpy(p + ARRAY_SIZE(prefix), tag + 1 + name_len, size);
+
+    nsAString_InitDepend(&str, p);
+    nsIDOMRange_CreateContextualFragment(nsrange, &str, &nsfragment);
+    nsIDOMRange_Release(nsrange);
+    nsAString_Finish(&str);
+    heap_free(p);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    /* Grab the parsed element and copy its attributes into the proper element */
+    nsres = nsIDOMDocumentFragment_GetFirstChild(nsfragment, &nsnode);
+    nsIDOMDocumentFragment_Release(nsfragment);
+    if(NS_FAILED(nsres) || !nsnode)
+        return E_FAIL;
+
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
+    nsIDOMNode_Release(nsnode);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    if(!(p = heap_alloc((name_len + 1) * sizeof(WCHAR))))
+        hres = E_OUTOFMEMORY;
+    else {
+        memcpy(p, tag + 1, name_len * sizeof(WCHAR));
+        p[name_len] = '\0';
+
+        nsAString_InitDepend(&str, p);
+        nsres = nsIDOMHTMLDocument_CreateElement(doc->nsdoc, &str, ret);
+        nsAString_Finish(&str);
+        heap_free(p);
+
+        if(NS_FAILED(nsres))
+            hres = map_nsresult(nsres);
+        else {
+            hres = copy_nselem_attrs(nselem, *ret);
+            if(FAILED(hres))
+                nsIDOMElement_Release(*ret);
+        }
+    }
+    nsIDOMElement_Release(nselem);
+    return hres;
+}
+
 HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMElement **ret)
 {
     nsAString tag_str;
@@ -385,7 +513,11 @@ HRESULT create_element(HTMLDocumentNode *doc, const WCHAR *tag, HTMLElement **re
     if(!doc->nsdoc)
         doc = doc->node.doc;
 
-    hres = create_nselem(doc, tag, &nselem);
+    /* IE8 and below allow creating elements with attributes, such as <div class="a"> */
+    if(tag[0] == '<' && dispex_compat_mode(&doc->node.event_target.dispex) <= COMPAT_MODE_IE8)
+        hres = create_nselem_parse(doc, tag, &nselem);
+    else
+        hres = create_nselem(doc, tag, &nselem);
     if(FAILED(hres))
         return hres;
 
