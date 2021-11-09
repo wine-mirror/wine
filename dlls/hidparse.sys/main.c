@@ -35,7 +35,7 @@
 #include "wine/list.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(hidp);
+WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 /* Flags that are defined in the document
    "Device Class Definition for Human Interface Devices" */
@@ -122,7 +122,7 @@ static void debug_print_preparsed( struct hid_preparsed_data *data )
 {
     unsigned int i, end;
 
-    if (TRACE_ON( hidp ))
+    if (TRACE_ON(hid))
     {
         TRACE( "usage %02x:%02x input %u-(%u)-%u, report len %u output %u-(%u)-%u, report len %u "
                "feature %u-(%u)-%u, report len %u collections %u\n", data->usage_page, data->usage,
@@ -498,7 +498,7 @@ struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int leng
     BYTE *ptr, *end;
     int i;
 
-    if (TRACE_ON( hidp ))
+    if (TRACE_ON(hid))
     {
         TRACE( "descriptor %p, length %u:\n", descriptor, length );
         for (i = 0; i < length;)
