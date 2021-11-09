@@ -44,38 +44,51 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define INITIAL_BUFFER_SIZE 200
 
+struct com_buf
+{
+    char        *buffer;
+    unsigned int size;
+    unsigned int offset;
+};
+
 static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
 {
     char *newline;
+    struct com_buf *com_buf = ctx->com_buf;
 
-    if (!ctx->com_buf)
+    if (!com_buf)
     {
-        if (!(ctx->com_buf = malloc( INITIAL_BUFFER_SIZE )))
+        if (!(com_buf = malloc( sizeof(*com_buf) ))) return SEC_E_INSUFFICIENT_MEMORY;
+        if (!(com_buf->buffer = malloc( INITIAL_BUFFER_SIZE )))
+        {
+            free( com_buf );
             return SEC_E_INSUFFICIENT_MEMORY;
-        ctx->com_buf_size = INITIAL_BUFFER_SIZE;
-        ctx->com_buf_offset = 0;
+        }
+        com_buf->size = INITIAL_BUFFER_SIZE;
+        com_buf->offset = 0;
+        ctx->com_buf = com_buf;
     }
 
     do
     {
         ssize_t size;
-        if (ctx->com_buf_offset + INITIAL_BUFFER_SIZE > ctx->com_buf_size)
+        if (com_buf->offset + INITIAL_BUFFER_SIZE > com_buf->size)
         {
-            char *buf = realloc( ctx->com_buf, ctx->com_buf_size + INITIAL_BUFFER_SIZE );
+            char *buf = realloc( com_buf->buffer, com_buf->size + INITIAL_BUFFER_SIZE );
             if (!buf) return SEC_E_INSUFFICIENT_MEMORY;
-            ctx->com_buf_size += INITIAL_BUFFER_SIZE;
-            ctx->com_buf = buf;
+            com_buf->size += INITIAL_BUFFER_SIZE;
+            com_buf->buffer = buf;
         }
-        size = read( ctx->pipe_in,  ctx->com_buf +  ctx->com_buf_offset,  ctx->com_buf_size -  ctx->com_buf_offset );
+        size = read( ctx->pipe_in, com_buf->buffer + com_buf->offset, com_buf->size - com_buf->offset );
         if (size <= 0) return SEC_E_INTERNAL_ERROR;
 
-        ctx->com_buf_offset += size;
-        newline = memchr( ctx->com_buf, '\n',  ctx->com_buf_offset );
+        com_buf->offset += size;
+        newline = memchr( com_buf->buffer, '\n',  com_buf->offset );
     } while (!newline);
 
     /* if there's a newline character, and we read more than that newline, we have to store the offset so we can
        preserve the additional data */
-    if (newline != ctx->com_buf + ctx->com_buf_offset) *offset = (ctx->com_buf + ctx->com_buf_offset) - (newline + 1);
+    if (newline != com_buf->buffer + com_buf->offset) *offset = (com_buf->buffer + com_buf->offset) - (newline + 1);
     else *offset = 0;
 
     *newline = 0;
@@ -86,6 +99,7 @@ static NTSTATUS ntlm_chat( void *args )
 {
     struct chat_params *params = args;
     struct ntlm_ctx *ctx = params->ctx;
+    struct com_buf *com_buf;
     SECURITY_STATUS status = SEC_E_OK;
     unsigned int offset;
 
@@ -93,19 +107,20 @@ static NTSTATUS ntlm_chat( void *args )
     write( ctx->pipe_out, "\n", 1 );
 
     if ((status = read_line( ctx, &offset )) != SEC_E_OK) return status;
-    *params->retlen = strlen( ctx->com_buf );
+    com_buf = ctx->com_buf;
+    *params->retlen = strlen( com_buf->buffer );
 
     if (*params->retlen > params->buflen) return SEC_E_BUFFER_TOO_SMALL;
     if (*params->retlen < 2) return SEC_E_ILLEGAL_MESSAGE;
-    if (!strncmp( ctx->com_buf, "ERR", 3 )) return SEC_E_INVALID_TOKEN;
+    if (!strncmp( com_buf->buffer, "ERR", 3 )) return SEC_E_INVALID_TOKEN;
 
-    memcpy( params->buf, ctx->com_buf, *params->retlen + 1 );
+    memcpy( params->buf, com_buf->buffer, *params->retlen + 1 );
 
-    if (!offset) ctx->com_buf_offset = 0;
+    if (!offset) com_buf->offset = 0;
     else
     {
-        memmove( ctx->com_buf, ctx->com_buf + ctx->com_buf_offset, offset );
-        ctx->com_buf_offset = offset;
+        memmove( com_buf->buffer, com_buf->buffer + com_buf->offset, offset );
+        com_buf->offset = offset;
     }
 
     return SEC_E_OK;
@@ -115,6 +130,7 @@ static NTSTATUS ntlm_cleanup( void *args )
 {
     struct cleanup_params *params = args;
     struct ntlm_ctx *ctx = params->ctx;
+    struct com_buf *com_buf = ctx->com_buf;
 
     if (!ctx || (ctx->mode != MODE_CLIENT && ctx->mode != MODE_SERVER)) return STATUS_INVALID_HANDLE;
     ctx->mode = MODE_INVALID;
@@ -131,7 +147,8 @@ static NTSTATUS ntlm_cleanup( void *args )
         } while (ret < 0 && errno == EINTR);
     }
 
-    free( ctx->com_buf );
+    if (com_buf) free( com_buf->buffer );
+    free( com_buf );
     return STATUS_SUCCESS;
 }
 
