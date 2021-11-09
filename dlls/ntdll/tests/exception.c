@@ -5320,8 +5320,6 @@ static const char * const reg_names[48] =
 
 #define ORIG_LR 0xCCCCCCCC
 
-#define UWOP(code,info) (UWOP_##code | ((info) << 4))
-
 static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 {
     static const int code_offset = 1024;
