@@ -224,7 +224,6 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
         dispatch->LanguageHandler = NULL;
         dispatch->EstablisherFrame = context->Sp;
         context->Pc = context->u.s.Lr;
-        context->Sp = context->Sp + sizeof(ULONG64);
         context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
         return STATUS_SUCCESS;
     }
