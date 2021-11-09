@@ -4918,6 +4918,1352 @@ static void test_unwind_from_apc(void)
 }
 #elif defined(__arm__)
 
+#define UNW_FLAG_NHANDLER  0
+#define UNW_FLAG_EHANDLER  1
+#define UNW_FLAG_UHANDLER  2
+
+#define UWOP_TWOBYTES(x)   (((x) >> 8) & 0xff), ((x) & 0xff)
+#define UWOP_THREEBYTES(x) (((x) >> 16) & 0xff), (((x) >> 8) & 0xff), ((x) & 0xff)
+#define UWOP_FOURBYTES(x)  (((x) >> 24) & 0xff), (((x) >> 16) & 0xff), (((x) >> 8) & 0xff), ((x) & 0xff)
+
+#define UWOP_ALLOC_SMALL(size)         (0x00 | (size/4)) /* Max 0x7f * 4 */
+#define UWOP_SAVE_REGSW(regmask)       UWOP_TWOBYTES((0x80 << 8) | (regmask))
+#define UWOP_SET_FP(reg)               (0xC0 | reg)
+#define UWOP_SAVE_RANGE_4_7_LR(reg,lr) (0xD0 | (reg - 4) | ((lr) ? 0x04 : 0))
+#define UWOP_SAVE_RANGE_4_11_LR(reg,lr)(0xD8 | (reg - 8) | ((lr) ? 0x04 : 0))
+#define UWOP_SAVE_D8_RANGE(reg)        (0xE0 | (reg - 8))
+#define UWOP_ALLOC_MEDIUMW(size)       UWOP_TWOBYTES((0xE8 << 8) | (size/4)) /* Max 0x3ff * 4 */
+#define UWOP_SAVE_REGS(regmask)        UWOP_TWOBYTES((0xEC << 8) | ((regmask) & 0xFF) | (((regmask) & (1<<lr)) ? 0x100 : 0))
+#define UWOP_SAVE_LR(offset)           UWOP_TWOBYTES((0xEF << 8) | (offset/4))
+#define UWOP_SAVE_D0_RANGE(first,last) UWOP_TWOBYTES((0xF5 << 8) | (first << 4) | (last))
+#define UWOP_SAVE_D16_RANGE(first,last)UWOP_TWOBYTES((0xF6 << 8) | ((first - 16) << 4) | (last - 16))
+#define UWOP_ALLOC_LARGE(size)         UWOP_THREEBYTES((0xF7 << 16) | (size/4))
+#define UWOP_ALLOC_HUGE(size)          UWOP_FOURBYTES((0xF8 << 24) | (size/4))
+#define UWOP_ALLOC_LARGEW(size)        UWOP_THREEBYTES((0xF9 << 16) | (size/4))
+#define UWOP_ALLOC_HUGEW(size)         UWOP_FOURBYTES((0xFA << 24) | (size/4))
+#define UWOP_NOP16                     0xFB
+#define UWOP_NOP32                     0xFC
+#define UWOP_END_NOP16                 0xFD
+#define UWOP_END_NOP32                 0xFE
+#define UWOP_END                       0xFF
+
+struct results
+{
+    int pc_offset;      /* pc offset from code start */
+    int fp_offset;      /* fp offset from stack pointer */
+    int handler;        /* expect handler to be set? */
+    ULONG_PTR pc;       /* expected final pc value */
+    int frame;          /* expected frame return value */
+    int frame_offset;   /* whether the frame return value is an offset or an absolute value */
+    LONGLONG regs[47][2];/* expected values for registers */
+};
+
+struct unwind_test
+{
+    const BYTE *function;
+    size_t function_size;
+    const BYTE *unwind_info;
+    size_t unwind_size;
+    const struct results *results;
+    unsigned int nb_results;
+};
+
+enum regs
+{
+    /* Note, lr and sp are swapped to allow using 'lr' in register bitmasks. */
+    r0,  r1,  r2,  r3,  r4,  r5,  r6,  r7,
+    r8,  r9,  r10, r11, r12, lr,  sp,
+    d0,  d1,  d2,  d3,  d4,  d5,  d6,  d7,
+    d8,  d9,  d10, d11, d12, d13, d14, d15,
+    d16, d17, d18, d19, d20, d21, d22, d23,
+    d24, d25, d26, d27, d28, d29, d30, d31,
+};
+
+static const char * const reg_names[47] =
+{
+    "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+    "r8",  "r9",  "r10", "r11", "r12", "lr",  "sp",
+    "d0",  "d1",  "d2",  "d3",  "d4",  "d5",  "d6",  "d7",
+    "d8",  "d9",  "d10", "d11", "d12", "d13", "d14", "d15",
+    "d16", "d17", "d18", "d19", "d20", "d21", "d22", "d23",
+    "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31",
+};
+
+#define ORIG_LR 0xCCCCCCCC
+
+static void call_virtual_unwind( int testnum, const struct unwind_test *test )
+{
+    static const int code_offset = 1024;
+    static const int unwind_offset = 2048;
+    void *handler, *data;
+    CONTEXT context;
+    RUNTIME_FUNCTION runtime_func;
+    KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
+    UINT i, j, k;
+    ULONG fake_stack[256];
+    ULONG_PTR frame, orig_pc, orig_fp, unset_reg, sp_offset = 0;
+    ULONGLONG unset_reg64;
+    static const UINT nb_regs = ARRAY_SIZE(test->results[i].regs);
+
+    memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
+    memcpy( (char *)code_mem + unwind_offset, test->unwind_info, test->unwind_size );
+
+    runtime_func.BeginAddress = code_offset;
+    if (test->unwind_size)
+        runtime_func.UnwindData = unwind_offset;
+    else
+        memcpy(&runtime_func.UnwindData, test->unwind_info, 4);
+
+    trace( "code: %p stack: %p\n", code_mem, fake_stack );
+
+    for (i = 0; i < test->nb_results; i++)
+    {
+        memset( &ctx_ptr, 0, sizeof(ctx_ptr) );
+        memset( &context, 0x55, sizeof(context) );
+        memset( &unset_reg, 0x55, sizeof(unset_reg) );
+        memset( &unset_reg64, 0x55, sizeof(unset_reg64) );
+        for (j = 0; j < 256; j++) fake_stack[j] = j * 4;
+
+        context.Sp = (ULONG_PTR)fake_stack;
+        context.Lr = (ULONG_PTR)ORIG_LR;
+        context.R11 = (ULONG_PTR)fake_stack + test->results[i].fp_offset;
+        orig_fp = context.R11;
+        orig_pc = (ULONG64)code_mem + code_offset + test->results[i].pc_offset;
+
+        trace( "%u/%u: pc=%p (%02x) fp=%p sp=%p\n", testnum, i,
+               (void *)orig_pc, *(DWORD *)orig_pc, (void *)orig_fp, (void *)context.Sp );
+
+        data = (void *)0xdeadbeef;
+        handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG)code_mem, orig_pc,
+                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
+        if (test->results[i].handler > 0)
+        {
+            /* Yet untested */
+            ok( (char *)handler == (char *)code_mem + 0x200,
+                "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
+            if (handler) ok( *(DWORD *)data == 0x08070605,
+                             "%u/%u: wrong handler data %p\n", testnum, i, data );
+        }
+        else
+        {
+            ok( handler == NULL, "%u/%u: handler %p instead of NULL\n", testnum, i, handler );
+            ok( data == (test->results[i].handler < 0 ?
+                        (void *)0xdeadbeef : NULL),
+                "%u/%u: handler data set to %p/%p\n", testnum, i, data,
+                (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL) );
+        }
+
+        ok( context.Pc == test->results[i].pc, "%u/%u: wrong pc %p/%p\n",
+            testnum, i, (void *)context.Pc, (void*)test->results[i].pc );
+        ok( frame == (test->results[i].frame_offset ? (ULONG)fake_stack : 0) + test->results[i].frame, "%u/%u: wrong frame %x/%x\n",
+            testnum, i, (int)((char *)frame - (char *)(test->results[i].frame_offset ? fake_stack : NULL)), test->results[i].frame );
+
+        sp_offset = 0;
+        for (k = 0; k < nb_regs; k++)
+        {
+            if (test->results[i].regs[k][0] == -1)
+                break;
+            if (test->results[i].regs[k][0] == sp) {
+                /* If sp is part of the registers list, treat it as an offset
+                 * between the returned frame pointer and the sp register. */
+                sp_offset = test->results[i].regs[k][1];
+                break;
+            }
+        }
+        ok( frame - sp_offset == context.Sp, "%u/%u: wrong sp %p/%p\n",
+            testnum, i, (void *)(frame - sp_offset), (void *)context.Sp);
+
+        for (j = 0; j < 47; j++)
+        {
+            if (j == sp) continue; /* Handling sp separately above */
+
+            for (k = 0; k < nb_regs; k++)
+            {
+                if (test->results[i].regs[k][0] == -1)
+                {
+                    k = nb_regs;
+                    break;
+                }
+                if (test->results[i].regs[k][0] == j) break;
+            }
+
+            if (j >= 4 && j <= 11 && (&ctx_ptr.R4)[j - 4])
+            {
+                ok( k < nb_regs, "%u/%u: register %s should not be set to %x\n",
+                    testnum, i, reg_names[j], (&context.R0)[j] );
+                if (k < nb_regs)
+                    ok( (&context.R0)[j] == test->results[i].regs[k][1],
+                        "%u/%u: register %s wrong %p/%x\n",
+                        testnum, i, reg_names[j], (void *)(&context.R0)[j], (int)test->results[i].regs[k][1] );
+            }
+            else if (j == lr && ctx_ptr.Lr)
+            {
+                ok( k < nb_regs, "%u/%u: register %s should not be set to %x\n",
+                    testnum, i, reg_names[j], context.Lr );
+                if (k < nb_regs)
+                    ok( context.Lr == test->results[i].regs[k][1],
+                        "%u/%u: register %s wrong %p/%x\n",
+                        testnum, i, reg_names[j], (void *)context.Lr, (int)test->results[i].regs[k][1] );
+            }
+            else if (j >= d8 && j <= d15 && (&ctx_ptr.D8)[j - d8])
+            {
+                ok( k < nb_regs, "%u/%u: register %s should not be set to %llx\n",
+                    testnum, i, reg_names[j], context.D[j - d0] );
+                if (k < nb_regs)
+                    ok( context.D[j - d0] == test->results[i].regs[k][1],
+                        "%u/%u: register %s wrong %llx/%llx\n",
+                        testnum, i, reg_names[j], context.D[j - d0], test->results[i].regs[k][1] );
+            }
+            else if (k < nb_regs)
+            {
+                if (j <= r12)
+                  ok( (&context.R0)[j] == test->results[i].regs[k][1],
+                      "%u/%u: register %s wrong %p/%x\n",
+                      testnum, i, reg_names[j], (void *)(&context.R0)[j], (int)test->results[i].regs[k][1] );
+                else if (j == lr)
+                  ok( context.Lr == test->results[i].regs[k][1],
+                      "%u/%u: register %s wrong %p/%x\n",
+                      testnum, i, reg_names[j], (void *)context.Lr, (int)test->results[i].regs[k][1] );
+                else
+                  ok( context.D[j - d0] == test->results[i].regs[k][1],
+                      "%u/%u: register %s wrong %llx/%llx\n",
+                      testnum, i, reg_names[j], context.D[j - d0], test->results[i].regs[k][1] );
+            }
+            else
+            {
+                ok( k == nb_regs, "%u/%u: register %s should be set\n", testnum, i, reg_names[j] );
+                if (j == lr)
+                    ok( context.Lr == ORIG_LR, "%u/%u: register lr wrong %p/unset\n",
+                        testnum, i, (void *)context.Lr );
+                else if (j == r11)
+                    ok( context.R11 == orig_fp, "%u/%u: register fp wrong %p/unset\n",
+                        testnum, i, (void *)context.R11 );
+                else if (j < d0)
+                    ok( (&context.R0)[j] == unset_reg,
+                        "%u/%u: register %s wrong %p/unset\n",
+                        testnum, i, reg_names[j], (void *)(&context.R0)[j]);
+                else
+                    ok( context.D[j - d0] == unset_reg64,
+                        "%u/%u: register %s wrong %llx/unset\n",
+                        testnum, i, reg_names[j], context.D[j - d0]);
+            }
+        }
+    }
+}
+
+#define DW(dword) ((dword >> 0) & 0xff), ((dword >> 8) & 0xff), ((dword >> 16) & 0xff), ((dword >> 24) & 0xff)
+
+static void test_virtual_unwind(void)
+{
+
+    static const BYTE function_0[] =
+    {
+        0x70, 0xb5,               /* 00: push   {r4-r6, lr} */
+        0x88, 0xb0,               /* 02: sub    sp,  sp,  #32 */
+        0x2d, 0xed, 0x06, 0x8b,   /* 04: vpush  {d8-d10} */
+        0x00, 0xbf,               /* 08: nop */
+        0x2d, 0xed, 0x06, 0x3b,   /* 0a: vpush  {d3-d5} */
+        0xaf, 0x3f, 0x00, 0x80,   /* 0e: nop.w */
+        0x6d, 0xed, 0x06, 0x1b,   /* 12: vpush  {d17-d19} */
+        0x2d, 0xe9, 0x00, 0x15,   /* 16: push.w {r8, r10, r12} */
+        0xeb, 0x46,               /* 1a: mov    r11, sp */
+        0x00, 0xbf,               /* 1c: nop */
+        0xbd, 0xec, 0x06, 0x8b,   /* 1e: vpop   {d8-d10} */
+        0xdd, 0x46,               /* 22: mov    sp,  r11 */
+        0x08, 0xb0,               /* 24: add    sp,  sp,  #32 */
+        0x70, 0xbd,               /* 26: pop    {r4-r6, pc} */
+    };
+
+    static const DWORD unwind_info_0_header =
+        (sizeof(function_0)/2) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* F */
+        (1 << 23) | /* epilog */
+        (5 << 28);  /* codes, (sizeof(unwind_info_0)-headers+3)/4 */
+    static const DWORD unwind_info_0_epilog0 =
+        (15  <<  0) | /* offset = 0x1e / 2 = 15 */
+        (0xE << 20) | /* condition, 0xE = always */
+        (13  << 24);  /* index, byte offset to epilog opcodes */
+
+    static const BYTE unwind_info_0[] =
+    {
+        DW(unwind_info_0_header),
+        DW(unwind_info_0_epilog0),
+
+        UWOP_SET_FP(11),              /* mov    r11, sp */
+        UWOP_SAVE_REGSW((1<<r8)|(1<<r10)|(1<<r12)), /* push.w {r8, r10, r12} */
+        UWOP_SAVE_D16_RANGE(17,19),   /* vpush  {d17-d19} */
+        UWOP_NOP32,                   /* nop.w */
+        UWOP_SAVE_D0_RANGE(3,5),      /* vpush  {d3-d5} */
+        UWOP_NOP16,                   /* nop */
+        UWOP_SAVE_D8_RANGE(10),       /* vpush  {d8-d10} */
+        UWOP_ALLOC_SMALL(32),         /* sub    sp,  sp,  #32 */
+        UWOP_SAVE_RANGE_4_7_LR(6, 1), /* push   {r4-r6,lr} */
+        UWOP_END,
+
+        UWOP_SAVE_D8_RANGE(10),       /* vpop {d8-d10} */
+        UWOP_SET_FP(11),              /* mov sp,  r11 */
+        UWOP_ALLOC_SMALL(32),         /* add sp,  sp,  #32 */
+        UWOP_SAVE_RANGE_4_7_LR(6, 1), /* pop {r4-r6,pc} */
+        UWOP_END,
+    };
+
+    static const struct results results_0[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     0x0c,    0x010, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {lr,0x0c}, {-1,-1} }},
+        { 0x04,  0x10,  0,     0x2c,    0x030, TRUE, { {r4,0x20}, {r5,0x24}, {r6,0x28}, {lr,0x2c}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x44,    0x048, TRUE, { {r4,0x38}, {r5,0x3c}, {r6,0x40}, {lr,0x44}, {d8, 0x400000000}, {d9, 0xc00000008}, {d10, 0x1400000010}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x44,    0x048, TRUE, { {r4,0x38}, {r5,0x3c}, {r6,0x40}, {lr,0x44}, {d8, 0x400000000}, {d9, 0xc00000008}, {d10, 0x1400000010}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     0x5c,    0x060, TRUE, { {r4,0x50}, {r5,0x54}, {r6,0x58}, {lr,0x5c}, {d8, 0x1c00000018}, {d9, 0x2400000020}, {d10, 0x2c00000028}, {d3, 0x400000000}, {d4, 0xc00000008}, {d5, 0x1400000010}, {-1,-1} }},
+        { 0x12,  0x10,  0,     0x5c,    0x060, TRUE, { {r4,0x50}, {r5,0x54}, {r6,0x58}, {lr,0x5c}, {d8, 0x1c00000018}, {d9, 0x2400000020}, {d10, 0x2c00000028}, {d3, 0x400000000}, {d4, 0xc00000008}, {d5, 0x1400000010}, {-1,-1} }},
+        { 0x16,  0x10,  0,     0x74,    0x078, TRUE, { {r4,0x68}, {r5,0x6c}, {r6,0x70}, {lr,0x74}, {d8, 0x3400000030}, {d9, 0x3c00000038}, {d10, 0x4400000040}, {d3, 0x1c00000018}, {d4, 0x2400000020}, {d5, 0x2c00000028}, {d17, 0x400000000}, {d18, 0xc00000008}, {d19, 0x1400000010}, {-1,-1} }},
+        { 0x1a,  0x10,  0,     0x80,    0x084, TRUE, { {r4,0x74}, {r5,0x78}, {r6,0x7c}, {lr,0x80}, {d8, 0x400000003c}, {d9, 0x4800000044}, {d10, 0x500000004c}, {d3, 0x2800000024}, {d4, 0x300000002c}, {d5, 0x3800000034}, {d17, 0x100000000c}, {d18, 0x1800000014}, {d19, 0x200000001c}, {r8,0x00}, {r10,0x04}, {r12,0x08}, {-1,-1} }},
+        { 0x1c,  0x10,  0,     0x90,    0x094, TRUE, { {r4,0x84}, {r5,0x88}, {r6,0x8c}, {lr,0x90}, {d8, 0x500000004c}, {d9, 0x5800000054}, {d10, 0x600000005c}, {d3, 0x3800000034}, {d4, 0x400000003c}, {d5, 0x4800000044}, {d17, 0x200000001c}, {d18, 0x2800000024}, {d19, 0x300000002c}, {r8,0x10}, {r10,0x14}, {r12,0x18}, {-1,-1} }},
+        { 0x1e,  0x10,  0,     0x3c,    0x040, TRUE, { {r4,0x30}, {r5,0x34}, {r6,0x38}, {lr,0x3c}, {d8, 0x400000000}, {d9, 0xc00000008}, {d10, 0x1400000010}, {-1,-1} }},
+        { 0x22,  0x10,  0,     0x3c,    0x040, TRUE, { {r4,0x30}, {r5,0x34}, {r6,0x38}, {lr,0x3c}, {-1,-1} }},
+        { 0x24,  0x10,  0,     0x2c,    0x030, TRUE, { {r4,0x20}, {r5,0x24}, {r6,0x28}, {lr,0x2c}, {-1,-1} }},
+        { 0x26,  0x10,  0,     0x0c,    0x010, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {lr,0x0c}, {-1,-1} }},
+    };
+
+    static const BYTE function_1[] =
+    {
+        0x30, 0xb4,               /* 00: push   {r4-r5} */
+        0x4d, 0xf8, 0x20, 0xed,   /* 02: str    lr, [sp, #-32]! */
+        0x00, 0xbf,               /* 06: nop */
+        0x5d, 0xf8, 0x20, 0xeb,   /* 08: ldr    lr, [sp], #32 */
+        0x30, 0xbc,               /* 0c: pop    {r4-r5} */
+        0x70, 0x47,               /* 0e: bx     lr */
+    };
+
+    static const DWORD unwind_info_1_header =
+        (sizeof(function_1)/2) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* F */
+        (0 << 23) | /* epilog */
+        (0 << 28);  /* codes */
+    static const DWORD unwind_info_1_header2 =
+        (1 <<  0) | /* epilog */
+        (2 << 16);  /* codes, (sizeof(unwind_info_1)-headers+3)/4 */
+    static const DWORD unwind_info_1_epilog0 =
+        (4   <<  0) | /* offset = 0x08 / 2 = 4 */
+        (0xE << 20) | /* condition, 0xE = always */
+        (4   << 24);  /* index, byte offset to epilog opcodes */
+
+    static const BYTE unwind_info_1[] = {
+        DW(unwind_info_1_header),
+        DW(unwind_info_1_header2),
+        DW(unwind_info_1_epilog0),
+
+        UWOP_SAVE_LR(32),             /* str    lr, [sp, #-32]! */
+        UWOP_SAVE_RANGE_4_7_LR(5, 0), /* push   {r4-r5} */
+        UWOP_END_NOP16,
+
+        UWOP_SAVE_LR(32),             /* ldr    lr, [sp], #32 */
+        UWOP_SAVE_RANGE_4_7_LR(5, 0), /* pop    {r4-r5} */
+        UWOP_END_NOP16,               /* bx     lr */
+    };
+
+    static const struct results results_1[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x00,  0,     ORIG_LR, 0x008, TRUE, { {r4,0x00}, {r5,0x04}, {-1,-1} }},
+        { 0x06,  0x00,  0,     0x00,    0x028, TRUE, { {r4,0x20}, {r5,0x24}, {lr,0x00}, {-1,-1} }},
+        { 0x08,  0x00,  0,     0x00,    0x028, TRUE, { {r4,0x20}, {r5,0x24}, {lr,0x00}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x008, TRUE, { {r4,0x00}, {r5,0x04}, {-1,-1} }},
+        { 0x0e,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_2[] =
+    {
+        0x6f, 0x46,               /* 00: mov    r7,  sp */
+        0x80, 0xb4,               /* 02: push   {r7} */
+        0x84, 0xb0,               /* 04: sub    sp,  sp,  #16 */
+        0x00, 0xbf,               /* 06: nop */
+        0x04, 0xb0,               /* 08: add    sp,  sp,  #16 */
+        0x80, 0xbc,               /* 0a: push   {r7} */
+        0xbd, 0x46,               /* 0c: mov    sp,  r7 */
+        0x00, 0xf0, 0x00, 0xb8,   /* 0e: b      tailcall */
+    };
+
+    static const DWORD unwind_info_2_header =
+        (sizeof(function_2)/2) | /* function length */
+        (0 << 20) | /* X */
+        (1 << 21) | /* E */
+        (0 << 22) | /* F */
+        (0 << 23) | /* epilog */
+        (2 << 28);  /* codes, (sizeof(unwind_info_2)-headers+3)/4 */
+
+    static const BYTE unwind_info_2[] =
+    {
+        DW(unwind_info_2_header),
+
+        UWOP_ALLOC_SMALL(16),         /* sub    sp,  sp,  #16 */
+        UWOP_SAVE_REGS((1<<r7)),      /* push   {r7} */
+        UWOP_SET_FP(7),               /* mov    r7,  sp */
+        UWOP_END_NOP32,               /* b      tailcall */
+    };
+
+    static const struct results results_2[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE,  { {-1,-1} }},
+        { 0x02,  0x00,  0,     ORIG_LR, 0x55555555, FALSE,  { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x000, FALSE,  { {r7,0x00}, {-1,-1} }},
+        { 0x06,  0x00,  0,     ORIG_LR, 0x010, FALSE,  { {r7,0x10}, {-1,-1} }},
+        { 0x08,  0x00,  0,     ORIG_LR, 0x010, FALSE,  { {r7,0x10}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     ORIG_LR, 0x000, FALSE,  { {r7,0x00}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x55555555, FALSE,  { {-1,-1} }},
+        { 0x0e,  0x00,  0,     ORIG_LR, 0x000, TRUE,  { {-1,-1} }},
+    };
+
+    static const BYTE function_3[] =
+    {
+        0xaf, 0x3f, 0x00, 0x80,   /* 00: nop.w */
+        0x00, 0xbf,               /* 04: nop */
+        0x00, 0xbf,               /* 06: nop */
+        0x04, 0xb0,               /* 08: add    sp,  sp,  #16 */
+        0xbd, 0xe8, 0xf0, 0x8f,   /* 0a: pop.w  {r4-r11,pc} */
+    };
+
+    /* Testing F=1, no prologue */
+    static const DWORD unwind_info_3_header =
+        (sizeof(function_3)/2) | /* function length */
+        (0 << 20) | /* X */
+        (1 << 21) | /* E */
+        (1 << 22) | /* F */
+        (0 << 23) | /* epilog */
+        (1 << 28);  /* codes, (sizeof(unwind_info_3)-headers+3)/4 */
+
+    static const BYTE unwind_info_3[] =
+    {
+        DW(unwind_info_3_header),
+
+        UWOP_ALLOC_SMALL(16),         /* sub    sp,  sp,  #16 */
+        UWOP_SAVE_RANGE_4_11_LR(11, 1), /* pop.w {r4-r11,pc} */
+        UWOP_END,
+    };
+
+    static const struct results results_3[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     0x30, 0x034, TRUE,  { {r4,0x10}, {r5,0x14}, {r6,0x18}, {r7,0x1c}, {r8,0x20}, {r9,0x24}, {r10,0x28}, {r11,0x2c}, {lr,0x30}, {-1,-1} }},
+        { 0x04,  0x00,  0,     0x30, 0x034, TRUE,  { {r4,0x10}, {r5,0x14}, {r6,0x18}, {r7,0x1c}, {r8,0x20}, {r9,0x24}, {r10,0x28}, {r11,0x2c}, {lr,0x30}, {-1,-1} }},
+        { 0x06,  0x00,  0,     0x30, 0x034, TRUE,  { {r4,0x10}, {r5,0x14}, {r6,0x18}, {r7,0x1c}, {r8,0x20}, {r9,0x24}, {r10,0x28}, {r11,0x2c}, {lr,0x30}, {-1,-1} }},
+        { 0x08,  0x00,  0,     0x30, 0x034, TRUE,  { {r4,0x10}, {r5,0x14}, {r6,0x18}, {r7,0x1c}, {r8,0x20}, {r9,0x24}, {r10,0x28}, {r11,0x2c}, {lr,0x30}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     0x20, 0x024, TRUE,  { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r8,0x10}, {r9,0x14}, {r10,0x18}, {r11,0x1c}, {lr,0x20}, {-1,-1} }},
+    };
+
+    static const BYTE function_4[] =
+    {
+        0x2d, 0xe9, 0x00, 0x55,   /* 00: push.w {r8, r10, r12, lr} */
+        0x50, 0xb4,               /* 04: push   {r4, r6} */
+        0x00, 0xbf,               /* 06: nop */
+        0x50, 0xbc,               /* 08: pop    {r4, r6} */
+        0xbd, 0xe8, 0x00, 0x95,   /* 0a: pop.w  {r8, r10, r12, pc} */
+    };
+
+    static const DWORD unwind_info_4_header =
+        (sizeof(function_4)/2) | /* function length */
+        (0 << 20) | /* X */
+        (1 << 21) | /* E */
+        (0 << 22) | /* F */
+        (0 << 23) | /* epilog */
+        (2 << 28);  /* codes, (sizeof(unwind_info_4)-headers+3)/4 */
+
+    static const BYTE unwind_info_4[] =
+    {
+        DW(unwind_info_4_header),
+
+        UWOP_SAVE_REGS((1<<r4)|(1<<r6)), /* push {r4, r6} */
+        UWOP_SAVE_REGSW((1<<r8)|(1<<r10)|(1<<r12)|(1<<lr)), /* push.w {r8, r10, r12, lr} */
+        UWOP_END,
+    };
+
+    static const struct results results_4[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x0c,    0x00010, TRUE, { {r8,0x00}, {r10,0x04}, {r12,0x08}, {lr,0x0c}, {-1,-1} }},
+        { 0x06,  0x10,  0,     0x14,    0x00018, TRUE, { {r8,0x08}, {r10,0x0c}, {r12,0x10}, {lr,0x14}, {r4,0x00}, {r6,0x04}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x14,    0x00018, TRUE, { {r8,0x08}, {r10,0x0c}, {r12,0x10}, {lr,0x14}, {r4,0x00}, {r6,0x04}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x0c,    0x00010, TRUE, { {r8,0x00}, {r10,0x04}, {r12,0x08}, {lr,0x0c}, {-1,-1} }},
+    };
+
+    static const BYTE function_5[] =
+    {
+        0x50, 0xb5,               /* 00: push   {r4, r6, lr} */
+        0xad, 0xf2, 0x08, 0x0d,   /* 02: subw   sp,  sp,  #8 */
+        0x84, 0xb0,               /* 06: sub    sp,  sp,  #16 */
+        0x88, 0xb0,               /* 08: sub    sp,  sp,  #32 */
+        0xad, 0xf2, 0x40, 0x0d,   /* 0a: subw   sp,  sp,  #64 */
+        0xad, 0xf2, 0x80, 0x0d,   /* 0e: subw   sp,  sp,  #128 */
+        0x00, 0xbf,               /* 12: nop */
+        0x50, 0xbd,               /* 14: pop    {r4, r6, pc} */
+    };
+
+    static const DWORD unwind_info_5_header =
+        (sizeof(function_5)/2) | /* function length */
+        (0  << 20) | /* X */
+        (1  << 21) | /* E */
+        (0  << 22) | /* F */
+        (16 << 23) | /* epilog */
+        (5  << 28);  /* codes, (sizeof(unwind_info_4)-headers+3)/4 */
+
+    static const BYTE unwind_info_5[] =
+    {
+        DW(unwind_info_5_header),
+
+        UWOP_ALLOC_HUGEW(128),        /* subw   sp,  sp,  #128 */
+        UWOP_ALLOC_LARGEW(64),        /* subw   sp,  sp,  #64 */
+        UWOP_ALLOC_HUGE(32),          /* sub    sp,  sp,  #32 */
+        UWOP_ALLOC_LARGE(16),         /* sub    sp,  sp,  #16 */
+        UWOP_ALLOC_MEDIUMW(8),        /* subw   sp,  sp,  #8 */
+        UWOP_SAVE_REGS((1<<r4)|(1<<r6)|(1<<lr)), /* push {r4, r6, lr} */
+        UWOP_END,
+    };
+
+    static const struct results results_5[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
+        { 0x02,  0x00,  0,     0x008,   0x0000c, TRUE, { {r4,0x00}, {r6,0x04}, {lr,0x08}, {-1,-1} }},
+        { 0x06,  0x00,  0,     0x010,   0x00014, TRUE, { {r4,0x08}, {r6,0x0c}, {lr,0x10}, {-1,-1} }},
+        { 0x08,  0x00,  0,     0x020,   0x00024, TRUE, { {r4,0x18}, {r6,0x1c}, {lr,0x20}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     0x040,   0x00044, TRUE, { {r4,0x38}, {r6,0x3c}, {lr,0x40}, {-1,-1} }},
+        { 0x0e,  0x00,  0,     0x080,   0x00084, TRUE, { {r4,0x78}, {r6,0x7c}, {lr,0x80}, {-1,-1} }},
+        { 0x12,  0x00,  0,     0x100,   0x00104, TRUE, { {r4,0xf8}, {r6,0xfc}, {lr,0x100}, {-1,-1} }},
+        { 0x14,  0x00,  0,     0x008,   0x0000c, TRUE, { {r4,0x00}, {r6,0x04}, {lr,0x08}, {-1,-1} }},
+    };
+
+    static const BYTE function_6[] =
+    {
+        0x00, 0xbf,               /* 00: nop */
+        0x00, 0xbf,               /* 02: nop */
+        0x00, 0xbf,               /* 04: nop */
+        0x70, 0x47,               /* 06: bx     lr */
+    };
+
+    static const DWORD unwind_info_6_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_6)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (7 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_6[] = { DW(unwind_info_6_packed) };
+
+    static const struct results results_6[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x06,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_7[] =
+    {
+        0x10, 0xb4,               /* 00: push   {r4} */
+        0x00, 0xbf,               /* 02: nop */
+        0x10, 0xbc,               /* 04: pop    {r4} */
+        0x70, 0x47,               /* 06: bx     lr */
+    };
+
+    static const DWORD unwind_info_7_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_7)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_7[] = { DW(unwind_info_7_packed) };
+
+    static const struct results results_7[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x00,  0,     ORIG_LR, 0x004, TRUE, { {r4,0x00}, {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x004, TRUE, { {r4,0x00}, {-1,-1} }},
+        { 0x06,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_8[] =
+    {
+        0x10, 0xb5,               /* 00: push   {r4, lr} */
+        0x00, 0xbf,               /* 02: nop */
+        0xbd, 0xe8, 0x10, 0x40,   /* 04: pop    {r4, lr} */
+        0x70, 0x47,               /* 08: bx     lr */
+    };
+
+    static const DWORD unwind_info_8_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_8)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_8[] = { DW(unwind_info_8_packed) };
+
+    static const struct results results_8[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x00,  0,     0x004,   0x008, TRUE, { {r4,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x04,  0x00,  0,     0x004,   0x008, TRUE, { {r4,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x06,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }}, /* Note, there's no instruction at 0x06, but the pop is surprisingly a 4 byte instruction. */
+        { 0x08,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_9[] =
+    {
+        0x00, 0xb5,               /* 00: push   {lr} */
+        0x2d, 0xed, 0x02, 0x8b,   /* 02: vpush  {d8} */
+        0x88, 0xb0,               /* 06: sub    sp,  sp,  #32 */
+        0x00, 0xbf,               /* 08: nop */
+        0x08, 0xb0,               /* 0a: add    sp,  sp,  #32 */
+        0xbd, 0xec, 0x02, 0x8b,   /* 0c: vpop   {d8} */
+        0x5d, 0xf8, 0x04, 0xeb,   /* 10: ldr    lr, [sp], #4 */
+        0x00, 0xf0, 0x00, 0xb8,   /* 14: b      tailcall */
+    };
+
+    static const DWORD unwind_info_9_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_9)/2 << 2) | /* FunctionLength */
+        (2 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (8 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_9[] = { DW(unwind_info_9_packed) };
+
+    static const struct results results_9[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x00,  0,     0x00,    0x004, TRUE, { {lr,0x00}, {-1,-1} }},
+        { 0x06,  0x00,  0,     0x08,    0x00c, TRUE, { {lr,0x08}, {d8,0x400000000}, {-1,-1} }},
+        { 0x08,  0x00,  0,     0x28,    0x02c, TRUE, { {lr,0x28}, {d8,0x2400000020}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     0x28,    0x02c, TRUE, { {lr,0x28}, {d8,0x2400000020}, {-1,-1} }},
+#if 0
+        /* L=1, R=1, Ret>0 seems to get incorrect handling of the epilogue */
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x008, TRUE, { {d8,0x400000000}, {-1,-1} }},
+        { 0x10,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+#endif
+        { 0x14,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_10[] =
+    {
+        0x2d, 0xe9, 0x00, 0x48,   /* 00: push.w {r11, lr} */
+        0xeb, 0x46,               /* 04: mov    r11, sp */
+        0x2d, 0xed, 0x04, 0x8b,   /* 06: vpush  {d8-d9} */
+        0x84, 0xb0,               /* 0a: sub    sp,  sp,  #16 */
+        0x00, 0xbf,               /* 0c: nop */
+        0x04, 0xb0,               /* 0e: add    sp,  sp,  #16 */
+        0xbd, 0xec, 0x04, 0x8b,   /* 10: vpop   {d8-d9} */
+        0xbd, 0xe8, 0x00, 0x48,   /* 14: pop.w  {r11, lr} */
+        0x70, 0x47,               /* 18: bx     lr */
+    };
+
+    static const DWORD unwind_info_10_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_10)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (1 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (4 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_10[] = { DW(unwind_info_10_packed) };
+
+    static const struct results results_10[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     0x04,    0x008, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x06,  0x00,  0,     0x04,    0x008, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     0x14,    0x018, TRUE, { {r11,0x10}, {lr,0x14}, {d8,0x400000000}, {d9,0xc00000008}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     0x24,    0x028, TRUE, { {r11,0x20}, {lr,0x24}, {d8,0x1400000010}, {d9,0x1c00000018}, {-1,-1} }},
+        { 0x0e,  0x00,  0,     0x24,    0x028, TRUE, { {r11,0x20}, {lr,0x24}, {d8,0x1400000010}, {d9,0x1c00000018}, {-1,-1} }},
+#if 0
+        /* L=1, R=1, Ret>0 seems to get incorrect handling of the epilogue */
+        { 0x10,  0x00,  0,     0x14,    0x018, TRUE, { {r11,0x10}, {lr,0x14}, {d8,0x400000000}, {d9,0xc00000008}, {-1,-1} }},
+        { 0x14,  0x00,  0,     0x04,    0x008, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+#endif
+        { 0x18,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_11[] =
+    {
+        0x2d, 0xe9, 0x00, 0x48,   /* 00: push.w {r11, lr} */
+        0xeb, 0x46,               /* 04: mov    r11, sp */
+        0x2d, 0xed, 0x04, 0x8b,   /* 06: vpush  {d8-d9} */
+        0x84, 0xb0,               /* 0a: sub    sp,  sp,  #16 */
+        0x00, 0xbf,               /* 0c: nop */
+        0x04, 0xb0,               /* 0e: add    sp,  sp,  #16 */
+        0xbd, 0xec, 0x04, 0x8b,   /* 10: vpop   {d8-d9} */
+        0xbd, 0xe8, 0x00, 0x88,   /* 14: pop.w  {r11, pc} */
+    };
+
+    static const DWORD unwind_info_11_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_11)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (1 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (4 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_11[] = { DW(unwind_info_11_packed) };
+
+    static const struct results results_11[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     0x04,    0x008, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x06,  0x00,  0,     0x04,    0x008, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     0x14,    0x018, TRUE, { {r11,0x10}, {lr,0x14}, {d8,0x400000000}, {d9,0xc00000008}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     0x24,    0x028, TRUE, { {r11,0x20}, {lr,0x24}, {d8,0x1400000010}, {d9,0x1c00000018}, {-1,-1} }},
+        { 0x0e,  0x00,  0,     0x24,    0x028, TRUE, { {r11,0x20}, {lr,0x24}, {d8,0x1400000010}, {d9,0x1c00000018}, {-1,-1} }},
+        { 0x10,  0x00,  0,     0x14,    0x018, TRUE, { {r11,0x10}, {lr,0x14}, {d8,0x400000000}, {d9,0xc00000008}, {-1,-1} }},
+        { 0x14,  0x00,  0,     0x04,    0x008, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+    };
+
+    static const BYTE function_12[] =
+    {
+        0x2d, 0xed, 0x0e, 0x8b,   /* 00: vpush  {d8-d14} */
+        0x84, 0xb0,               /* 04: sub    sp,  sp,  #16 */
+        0x00, 0xbf,               /* 06: nop */
+        0x04, 0xb0,               /* 08: add    sp,  sp,  #16 */
+        0xbd, 0xec, 0x0e, 0x8b,   /* 0a: vpop   {d8-d14} */
+        0x00, 0xf0, 0x00, 0xb8,   /* 0e: b      tailcall */
+    };
+
+    static const DWORD unwind_info_12_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_12)/2 << 2) | /* FunctionLength */
+        (2 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (6 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (4 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_12[] = { DW(unwind_info_12_packed) };
+
+    static const struct results results_12[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x038, TRUE, { {d8,0x400000000}, {d9,0xc00000008}, {d10,0x1400000010}, {d11,0x1c00000018}, {d12,0x2400000020}, {d13,0x2c00000028}, {d14,0x3400000030}, {-1,-1} }},
+        { 0x06,  0x00,  0,     ORIG_LR, 0x048, TRUE, { {d8,0x1400000010}, {d9,0x1c00000018}, {d10,0x2400000020}, {d11,0x2c00000028}, {d12,0x3400000030}, {d13,0x3c00000038}, {d14,0x4400000040}, {-1,-1} }},
+        { 0x08,  0x00,  0,     ORIG_LR, 0x048, TRUE, { {d8,0x1400000010}, {d9,0x1c00000018}, {d10,0x2400000020}, {d11,0x2c00000028}, {d12,0x3400000030}, {d13,0x3c00000038}, {d14,0x4400000040}, {-1,-1} }},
+        { 0x0a,  0x00,  0,     ORIG_LR, 0x038, TRUE, { {d8,0x400000000}, {d9,0xc00000008}, {d10,0x1400000010}, {d11,0x1c00000018}, {d12,0x2400000020}, {d13,0x2c00000028}, {d14,0x3400000030}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_13[] =
+    {
+        0x2d, 0xe9, 0xf0, 0x4f,   /* 00: push.w {r4-r11, lr} */
+        0x0d, 0xf1, 0x1c, 0x0b,   /* 04: add.w  r11, sp,  #28 */
+        0x85, 0xb0,               /* 08: sub    sp,  sp,  #20 */
+        0x00, 0xbf,               /* 0a: nop */
+        0x05, 0xb0,               /* 0c: add    sp,  sp,  #20 */
+        0x2d, 0xe8, 0xf0, 0x8f,   /* 0e: pop.w  {r4-r11, lr} */
+    };
+
+    static const DWORD unwind_info_13_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_13)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (6 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (5 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_13[] = { DW(unwind_info_13_packed) };
+
+    static const struct results results_13[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x20,    0x024, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r8,0x10}, {r9,0x14}, {r10,0x18}, {r11,0x1c}, {lr,0x20}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x20,    0x024, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r8,0x10}, {r9,0x14}, {r10,0x18}, {r11,0x1c}, {lr,0x20}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x34,    0x038, TRUE, { {r4,0x14}, {r5,0x18}, {r6,0x1c}, {r7,0x20}, {r8,0x24}, {r9,0x28}, {r10,0x2c}, {r11,0x30}, {lr,0x34}, {-1,-1} }},
+        { 0x0c,  0x10,  0,     0x34,    0x038, TRUE, { {r4,0x14}, {r5,0x18}, {r6,0x1c}, {r7,0x20}, {r8,0x24}, {r9,0x28}, {r10,0x2c}, {r11,0x30}, {lr,0x34}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     0x20,    0x024, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r8,0x10}, {r9,0x14}, {r10,0x18}, {r11,0x1c}, {lr,0x20}, {-1,-1} }},
+    };
+
+    static const BYTE function_14[] =
+    {
+        0x2d, 0xe9, 0xf0, 0x4f,   /* 00: push.w {r4-r11, lr} */
+        0x85, 0xb0,               /* 04: sub    sp,  sp,  #20 */
+        0x00, 0xbf,               /* 06: nop */
+        0x05, 0xb0,               /* 08: add    sp,  sp,  #20 */
+        0x2d, 0xe8, 0xf0, 0x8f,   /* 0a: pop.w  {r4-r11, lr} */
+    };
+
+    static const DWORD unwind_info_14_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_14)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (7 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (5 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_14[] = { DW(unwind_info_14_packed) };
+
+    static const struct results results_14[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x20,    0x024, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r8,0x10}, {r9,0x14}, {r10,0x18}, {r11,0x1c}, {lr,0x20}, {-1,-1} }},
+        { 0x06,  0x10,  0,     0x34,    0x038, TRUE, { {r4,0x14}, {r5,0x18}, {r6,0x1c}, {r7,0x20}, {r8,0x24}, {r9,0x28}, {r10,0x2c}, {r11,0x30}, {lr,0x34}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x34,    0x038, TRUE, { {r4,0x14}, {r5,0x18}, {r6,0x1c}, {r7,0x20}, {r8,0x24}, {r9,0x28}, {r10,0x2c}, {r11,0x30}, {lr,0x34}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x20,    0x024, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r8,0x10}, {r9,0x14}, {r10,0x18}, {r11,0x1c}, {lr,0x20}, {-1,-1} }},
+    };
+
+    static const BYTE function_15[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x10, 0xb5,               /* 02: push   {r4,lr} */
+        0xad, 0xf5, 0x00, 0x7d,   /* 04: sub    sp,  sp,  #512 */
+        0x00, 0xbf,               /* 08: nop */
+        0x0d, 0xf5, 0x00, 0x7d,   /* 0a: add    sp,  sp,  #512 */
+        0x10, 0xb5,               /* 0e: pop    {r4} */
+        0x5d, 0xf8, 0x14, 0xfb,   /* 10: ldr    pc, [sp], #20 */
+    };
+
+    static const DWORD unwind_info_15_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_15)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (128 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_15[] = { DW(unwind_info_15_packed) };
+
+    static const struct results results_15[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x04,    0x018, TRUE, { {r4,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     0x04,    0x018, TRUE, { {r4,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x10,  0x10,  0,     0x00,    0x014, TRUE, { {lr,0x00}, {-1,-1} }},
+    };
+
+    static const BYTE function_16[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x2d, 0xe9, 0x00, 0x48,   /* 02: push.w {r11,lr} */
+        0xeb, 0x46,               /* 06: mov    r11, sp */
+        0x00, 0xbf,               /* 08: nop */
+        0xbd, 0xe8, 0x10, 0x40,   /* 0a: pop.w  {r11,lr} */
+        0x04, 0xb0,               /* 0e: add    sp,  sp,  #16 */
+        0x00, 0xf0, 0x00, 0xb8,   /* 10: b      tailcall */
+    };
+
+    static const DWORD unwind_info_16_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_16)/2 << 2) | /* FunctionLength */
+        (2 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (7 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (0 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_16[] = { DW(unwind_info_16_packed) };
+
+    static const struct results results_16[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x06,  0x10,  0,     0x04,    0x018, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x04,    0x018, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x04,    0x018, TRUE, { {r11,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x10,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_17[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x10, 0xb4,               /* 02: push   {r4} */
+        0xad, 0xf5, 0x00, 0x7d,   /* 04: sub    sp,  sp,  #512 */
+        0x00, 0xbf,               /* 08: nop */
+        0x0d, 0xf5, 0x00, 0x7d,   /* 0a: add    sp,  sp,  #512 */
+        0x10, 0xbc,               /* 0e: pop    {r4} */
+        0x04, 0xb0,               /* 10: add    sp,  sp,  #16 */
+        0x70, 0x47,               /* 12: bx     lr */
+    };
+
+    static const DWORD unwind_info_17_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_17)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (128 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_17[] = { DW(unwind_info_17_packed) };
+
+    static const struct results results_17[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x014, TRUE, { {r4,0x00}, {-1,-1} }},
+        { 0x08,  0x10,  0,     ORIG_LR, 0x214, TRUE, { {r4,0x200}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     ORIG_LR, 0x214, TRUE, { {r4,0x200}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     ORIG_LR, 0x014, TRUE, { {r4,0x00}, {-1,-1} }},
+        { 0x10,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x12,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_18[] =
+    {
+        0x08, 0xb5,               /* 00: push   {r3,lr} */
+        0x00, 0xbf,               /* 02: nop */
+        0x08, 0xbd,               /* 04: pop    {r3,pc} */
+    };
+
+    static const DWORD unwind_info_18_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_18)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (7 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0x3fc << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_18[] = { DW(unwind_info_18_packed) };
+
+    static const struct results results_18[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     0x04,    0x008, TRUE, { {lr,0x04}, {-1,-1} }},
+        { 0x04,  0x10,  0,     0x04,    0x008, TRUE, { {lr,0x04}, {-1,-1} }},
+    };
+
+    static const BYTE function_19[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x14, 0xb4,               /* 02: push   {r0-r4} */
+        0x00, 0xbf,               /* 04: nop */
+        0x1f, 0xbc,               /* 06: pop    {r0-r4} */
+        0x04, 0xb0,               /* 08: add    sp,  sp,  #16 */
+        0x70, 0x47,               /* 0a: bx     lr */
+    };
+
+    static const DWORD unwind_info_19_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_19)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0x3ff << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_19[] = { DW(unwind_info_19_packed) };
+
+    static const struct results results_19[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x024, TRUE, { {r4,0x10}, {-1,-1} }},
+        { 0x06,  0x10,  0,     ORIG_LR, 0x024, TRUE, { {r4,0x10}, {-1,-1} }},
+        { 0x08,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x0a,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_20[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x14, 0xb4,               /* 02: push   {r0-r4} */
+        0x00, 0xbf,               /* 04: nop */
+        0x04, 0xb0,               /* 06: add    sp,  sp,  #16 */
+        0x10, 0xbc,               /* 08: pop    {r4} */
+        0x04, 0xb0,               /* 0a: add    sp,  sp,  #16 */
+        0x70, 0x47,               /* 0c: bx     lr */
+    };
+
+    static const DWORD unwind_info_20_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_20)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0x3f7 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_20[] = { DW(unwind_info_20_packed) };
+
+    static const struct results results_20[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x024, TRUE, { {r4,0x10}, {-1,-1} }},
+        { 0x06,  0x10,  0,     ORIG_LR, 0x024, TRUE, { {r4,0x10}, {-1,-1} }},
+        { 0x08,  0x10,  0,     ORIG_LR, 0x014, TRUE, { {r4,0x00}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x0c,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_21[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x10, 0xb4,               /* 02: push   {r4} */
+        0x84, 0xb0,               /* 04: sub    sp,  sp,  #16 */
+        0x00, 0xbf,               /* 06: nop */
+        0x1f, 0xbc,               /* 08: pop    {r0-r4} */
+        0x04, 0xb0,               /* 0a: add    sp,  sp,  #16 */
+        0x70, 0x47,               /* 0c: bx     lr */
+    };
+
+    static const DWORD unwind_info_21_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_21)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0x3fb << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_21[] = { DW(unwind_info_21_packed) };
+
+    static const struct results results_21[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x014, TRUE, { {r4,0x00}, {-1,-1} }},
+        { 0x06,  0x10,  0,     ORIG_LR, 0x024, TRUE, { {r4,0x10}, {-1,-1} }},
+        { 0x08,  0x10,  0,     ORIG_LR, 0x024, TRUE, { {r4,0x10}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x0c,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_22[] =
+    {
+        0x00, 0xbf,               /* 00: nop */
+        0x00, 0xbf,               /* 02: nop */
+        0x0d, 0xf5, 0x00, 0x7d,   /* 04: add    sp,  sp,  #512 */
+        0x10, 0xb5,               /* 08: pop    {r4} */
+        0x5d, 0xf8, 0x14, 0xfb,   /* 0a: ldr    pc, [sp], #20 */
+    };
+
+    static const DWORD unwind_info_22_packed =
+        (2 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_22)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (128 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_22[] = { DW(unwind_info_22_packed) };
+
+    static const struct results results_22[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+        { 0x02,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+        { 0x04,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x04,    0x018, TRUE, { {r4,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x00,    0x014, TRUE, { {lr,0x00}, {-1,-1} }},
+    };
+
+    static const BYTE function_23[] =
+    {
+        0x0f, 0xb4,               /* 00: push   {r0-r3} */
+        0x10, 0xb5,               /* 02: push   {r4,lr} */
+        0xad, 0xf5, 0x00, 0x7d,   /* 04: sub    sp,  sp,  #512 */
+        0x00, 0xbf,               /* 08: nop */
+        0x00, 0xbf,               /* 0a: nop */
+    };
+
+    static const DWORD unwind_info_23_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_23)/2 << 2) | /* FunctionLength */
+        (3 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (1 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (128 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_23[] = { DW(unwind_info_23_packed) };
+
+    static const struct results results_23[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x010, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x04,    0x018, TRUE, { {r4,0x00}, {lr,0x04}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
+    };
+
+    static const BYTE function_24[] =
+    {
+        0x2d, 0xe9, 0xfc, 0x48,   /* 00: push.w {r2-r7,r11,lr} */
+        0x0d, 0xf1, 0x18, 0x0b,   /* 04: add    r11, sp,  #24 */
+        0x00, 0xbf,               /* 08: nop */
+        0x02, 0xb0,               /* 0a: add    sp,  sp,  #8 */
+        0xbd, 0xe8, 0x10, 0x48,   /* 0c: pop.w  {r4-r7,r11,pc} */
+    };
+
+    static const DWORD unwind_info_24_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_24)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (3 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (0x3f5 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_24[] = { DW(unwind_info_24_packed) };
+
+    static const struct results results_24[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x1c,    0x020, TRUE, { {r4,0x08}, {r5,0x0c}, {r6,0x10}, {r7,0x14}, {r11,0x18}, {lr,0x1c}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x1c,    0x020, TRUE, { {r4,0x08}, {r5,0x0c}, {r6,0x10}, {r7,0x14}, {r11,0x18}, {lr,0x1c}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x1c,    0x020, TRUE, { {r4,0x08}, {r5,0x0c}, {r6,0x10}, {r7,0x14}, {r11,0x18}, {lr,0x1c}, {-1,-1} }},
+        { 0x0c,  0x10,  0,     0x14,    0x018, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r11,0x10}, {lr,0x14}, {-1,-1} }},
+    };
+
+    static const BYTE function_25[] =
+    {
+        0x2d, 0xe9, 0xf0, 0x48,   /* 00: push.w {r4-r7,r11,lr} */
+        0x0d, 0xf1, 0x10, 0x0b,   /* 04: add    r11, sp,  #16 */
+        0x82, 0xb0,               /* 08: sub    sp,  sp,  #8 */
+        0x00, 0xbf,               /* 0a: nop */
+        0xbd, 0xe8, 0xfc, 0x48,   /* 0c: pop.w  {r2-r7,r11,pc} */
+    };
+
+    static const DWORD unwind_info_25_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_25)/2 << 2) | /* FunctionLength */
+        (0 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (3 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (1 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (0x3f9 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_25[] = { DW(unwind_info_25_packed) };
+
+    static const struct results results_25[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     0x14,    0x018, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r11,0x10}, {lr,0x14}, {-1,-1} }},
+        { 0x08,  0x10,  0,     0x14,    0x018, TRUE, { {r4,0x00}, {r5,0x04}, {r6,0x08}, {r7,0x0c}, {r11,0x10}, {lr,0x14}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     0x1c,    0x020, TRUE, { {r4,0x08}, {r5,0x0c}, {r6,0x10}, {r7,0x14}, {r11,0x18}, {lr,0x1c}, {-1,-1} }},
+        { 0x0c,  0x10,  0,     0x1c,    0x020, TRUE, { {r4,0x08}, {r5,0x0c}, {r6,0x10}, {r7,0x14}, {r11,0x18}, {lr,0x1c}, {-1,-1} }},
+    };
+
+    static const BYTE function_26[] =
+    {
+        0x2d, 0xe9, 0x10, 0x08,   /* 00: push.w {r4, r11} */
+        0x0d, 0xf1, 0x1c, 0x0b,   /* 04: add.w  r11, sp,  #28 */
+        0x84, 0xb0,               /* 08: sub    sp,  sp,  #16 */
+        0x00, 0xbf,               /* 0a: nop */
+        0x04, 0xb0,               /* 0c: add    sp,  sp,  #16 */
+        0xbd, 0xe8, 0x10, 0x08,   /* 0e: pop.w  {r4, r11} */
+        0x70, 0x47,               /* 12: bx     lr */
+    };
+
+    /* C=1, L=0 is disallowed by doc */
+    static const DWORD unwind_info_26_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_26)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (0 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (1 << 21) | /* C - hook up r11 */
+        (4 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_26[] = { DW(unwind_info_26_packed) };
+
+    static const struct results results_26[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x008, TRUE, { {r4,0x00}, {r11,0x04}, {-1,-1} }},
+        { 0x08,  0x10,  0,     ORIG_LR, 0x008, TRUE, { {r4,0x00}, {r11,0x04}, {-1,-1} }},
+        { 0x0a,  0x10,  0,     ORIG_LR, 0x018, TRUE, { {r4,0x10}, {r11,0x14}, {-1,-1} }},
+        { 0x0c,  0x10,  0,     ORIG_LR, 0x018, TRUE, { {r4,0x10}, {r11,0x14}, {-1,-1} }},
+        { 0x0e,  0x10,  0,     ORIG_LR, 0x008, TRUE, { {r4,0x00}, {r11,0x04}, {-1,-1} }},
+        { 0x12,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_27[] =
+    {
+        0x0e, 0xb4,               /* 00: push   {r1-r3} */
+        0x00, 0xbf,               /* 02: nop */
+        0x03, 0xb0,               /* 04: add    sp,  sp,  #12 */
+        0x70, 0x47,               /* 06: bx     lr */
+    };
+
+    static const DWORD unwind_info_27_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_27)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (7 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0x3f6 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_27[] = { DW(unwind_info_27_packed) };
+
+    static const struct results results_27[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x00c, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x00c, TRUE, { {-1,-1} }},
+        { 0x06,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const BYTE function_28[] =
+    {
+        0x0e, 0xb4,               /* 00: push   {r1-r3} */
+        0x00, 0xbf,               /* 02: nop */
+        0x03, 0xb0,               /* 04: add    sp,  sp,  #12 */
+        0x70, 0x47,               /* 06: bx     lr */
+    };
+
+    static const DWORD unwind_info_28_packed =
+        (1 << 0)  | /* Flag, 01 has prologue, 10 (2) fragment (no prologue) */
+        (sizeof(function_28)/2 << 2) | /* FunctionLength */
+        (1 << 13) | /* Ret (00 pop, 01 16 bit branch, 10 32 bit branch, 11 no epilogue) */
+        (0 << 15) | /* H (homing, 16 bytes push of r0-r3 at start) */
+        (7 << 16) | /* Reg r4 - r(4+N), or d8 - d(8+N) */
+        (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
+        (0 << 20) | /* L, push LR */
+        (0 << 21) | /* C - hook up r11 */
+        (0x3fa << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+
+    static const BYTE unwind_info_28[] = { DW(unwind_info_28_packed) };
+
+    static const struct results results_28[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x02,  0x10,  0,     ORIG_LR, 0x00c, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x00c, TRUE, { {-1,-1} }},
+        { 0x06,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
+    static const struct unwind_test tests[] =
+    {
+#define TEST(func, unwind, unwind_packed, results) \
+        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results) }
+        TEST(function_0, unwind_info_0, 0, results_0),
+        TEST(function_1, unwind_info_1, 0, results_1),
+        TEST(function_2, unwind_info_2, 0, results_2),
+        TEST(function_3, unwind_info_3, 0, results_3),
+        TEST(function_4, unwind_info_4, 0, results_4),
+        TEST(function_5, unwind_info_5, 0, results_5),
+        TEST(function_6, unwind_info_6, 1, results_6),
+        TEST(function_7, unwind_info_7, 1, results_7),
+        TEST(function_8, unwind_info_8, 1, results_8),
+        TEST(function_9, unwind_info_9, 1, results_9),
+        TEST(function_10, unwind_info_10, 1, results_10),
+        TEST(function_11, unwind_info_11, 1, results_11),
+        TEST(function_12, unwind_info_12, 1, results_12),
+        TEST(function_13, unwind_info_13, 1, results_13),
+        TEST(function_14, unwind_info_14, 1, results_14),
+        TEST(function_15, unwind_info_15, 1, results_15),
+        TEST(function_16, unwind_info_16, 1, results_16),
+        TEST(function_17, unwind_info_17, 1, results_17),
+        TEST(function_18, unwind_info_18, 1, results_18),
+        TEST(function_19, unwind_info_19, 1, results_19),
+        TEST(function_20, unwind_info_20, 1, results_20),
+        TEST(function_21, unwind_info_21, 1, results_21),
+        TEST(function_22, unwind_info_22, 1, results_22),
+        TEST(function_23, unwind_info_23, 1, results_23),
+        TEST(function_24, unwind_info_24, 1, results_24),
+        TEST(function_25, unwind_info_25, 1, results_25),
+        TEST(function_26, unwind_info_26, 1, results_26),
+        TEST(function_27, unwind_info_27, 1, results_27),
+        TEST(function_28, unwind_info_28, 1, results_28),
+#undef TEST
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+        call_virtual_unwind( i, &tests[i] );
+}
+
+
 static void test_thread_context(void)
 {
     CONTEXT context;
@@ -9313,6 +10659,10 @@ START_TEST(exception)
     test_unwind_from_apc();
 
 #elif defined(__aarch64__)
+
+    test_virtual_unwind();
+
+#elif defined(__arm__)
 
     test_virtual_unwind();
 
