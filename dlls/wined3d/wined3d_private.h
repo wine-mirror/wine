@@ -331,6 +331,8 @@ VkPipelineStageFlags vk_pipeline_stage_mask_from_bind_flags(uint32_t bind_flags)
 VkShaderStageFlagBits vk_shader_stage_from_wined3d(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;
 VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPEC_HIDDEN;
 VkPipelineStageFlags vk_pipeline_stage_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPEC_HIDDEN;
+VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
+VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage) DECLSPEC_HIDDEN;
 
 static inline enum wined3d_cmp_func wined3d_sanitize_cmp_func(enum wined3d_cmp_func func)
 {
@@ -3353,6 +3355,7 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         UINT64 vram_bytes, UINT64 sysmem_bytes) DECLSPEC_HIDDEN;
 
 #define UPLOAD_BO_UPLOAD_ON_UNMAP   0x1
+#define UPLOAD_BO_RENAME_ON_UNMAP   0x2
 
 struct upload_bo
 {
@@ -3385,6 +3388,9 @@ struct wined3d_adapter_ops
             const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size);
     void (*adapter_flush_bo_address)(struct wined3d_context *context,
             const struct wined3d_const_bo_address *data, size_t size);
+    bool (*adapter_alloc_bo)(struct wined3d_device *device, struct wined3d_resource *resource,
+            unsigned int sub_resource_idx, struct wined3d_bo_address *addr);
+    void (*adapter_destroy_bo)(struct wined3d_context *context, struct wined3d_bo *bo);
     HRESULT (*adapter_create_swapchain)(struct wined3d_device *device,
             struct wined3d_swapchain_desc *desc,
             struct wined3d_swapchain_state_parent *state_parent, void *parent,
@@ -6305,6 +6311,11 @@ static inline void wined3d_context_flush_bo_address(struct wined3d_context *cont
         const struct wined3d_const_bo_address *data, size_t size)
 {
     context->device->adapter->adapter_ops->adapter_flush_bo_address(context, data, size);
+}
+
+static inline void wined3d_context_destroy_bo(struct wined3d_context *context, struct wined3d_bo *bo)
+{
+    context->device->adapter->adapter_ops->adapter_destroy_bo(context, bo);
 }
 
 static inline void wined3d_context_vk_reference_bo(const struct wined3d_context_vk *context_vk,

@@ -1069,6 +1069,32 @@ static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resou
     return WINED3D_OK;
 }
 
+static void wined3d_buffer_set_bo(struct wined3d_buffer *buffer, struct wined3d_context *context, struct wined3d_bo *bo)
+{
+    struct wined3d_bo *prev_bo = buffer->buffer_object;
+
+    TRACE("buffer %p, context %p, bo %p.\n", buffer, context, bo);
+
+    if (prev_bo)
+    {
+        struct wined3d_bo_user *bo_user;
+
+        LIST_FOR_EACH_ENTRY(bo_user, &prev_bo->users, struct wined3d_bo_user, entry)
+            bo_user->valid = false;
+        assert(list_empty(&bo->users));
+        list_move_head(&bo->users, &prev_bo->users);
+
+        wined3d_context_destroy_bo(context, prev_bo);
+        heap_free(prev_bo);
+    }
+    else
+    {
+        list_add_head(&bo->users, &buffer->bo_user.entry);
+    }
+
+    buffer->buffer_object = bo;
+}
+
 void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wined3d_context *context,
         unsigned int dst_offset, const struct wined3d_const_bo_address *src_addr, unsigned int size)
 {
@@ -1104,6 +1130,13 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
 void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct upload_bo *upload_bo, unsigned int offset, unsigned int size)
 {
+    if (upload_bo->flags & UPLOAD_BO_RENAME_ON_UNMAP)
+    {
+        wined3d_buffer_set_bo(buffer, context, (struct wined3d_bo *)upload_bo->addr.buffer_object);
+        wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+        wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
+    }
+
     if (upload_bo->addr.buffer_object && upload_bo->addr.buffer_object == (uintptr_t)buffer->buffer_object)
         wined3d_context_flush_bo_address(context, &upload_bo->addr, size);
     else
@@ -1418,7 +1451,7 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
     return wined3d_buffer_init(&buffer_gl->b, device, desc, data, parent, parent_ops, &wined3d_buffer_gl_ops);
 }
 
-static VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags)
+VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags)
 {
     VkBufferUsageFlags usage;
 
@@ -1442,7 +1475,7 @@ static VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags)
     return usage;
 }
 
-static VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage)
+VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage)
 {
     VkMemoryPropertyFlags memory_type = 0;
 

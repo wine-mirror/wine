@@ -2805,6 +2805,16 @@ static void adapter_no3d_flush_bo_address(struct wined3d_context *context,
 {
 }
 
+static bool adapter_no3d_alloc_bo(struct wined3d_device *device, struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, struct wined3d_bo_address *addr)
+{
+    return false;
+}
+
+static void adapter_no3d_destroy_bo(struct wined3d_context *context, struct wined3d_bo *bo)
+{
+}
+
 static HRESULT adapter_no3d_create_swapchain(struct wined3d_device *device,
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain)
@@ -3075,6 +3085,8 @@ static const struct wined3d_adapter_ops wined3d_adapter_no3d_ops =
     .adapter_unmap_bo_address = adapter_no3d_unmap_bo_address,
     .adapter_copy_bo_address = adapter_no3d_copy_bo_address,
     .adapter_flush_bo_address = adapter_no3d_flush_bo_address,
+    .adapter_alloc_bo = adapter_no3d_alloc_bo,
+    .adapter_destroy_bo = adapter_no3d_destroy_bo,
     .adapter_create_swapchain = adapter_no3d_create_swapchain,
     .adapter_destroy_swapchain = adapter_no3d_destroy_swapchain,
     .adapter_create_buffer = adapter_no3d_create_buffer,
