@@ -3388,11 +3388,8 @@ static BOOL CALLBACK check_effects( const DIEFFECTINFOW *effect, void *args )
 
     check_member( *effect, *exp, "%u", dwSize );
     check_member_guid( *effect, *exp, guid );
-    todo_wine
     check_member( *effect, *exp, "%#x", dwEffType );
-    todo_wine
     check_member( *effect, *exp, "%#x", dwStaticParams );
-    todo_wine
     check_member( *effect, *exp, "%#x", dwDynamicParams );
     check_member_wstr( *effect, *exp, tszName );
 
@@ -7289,7 +7286,6 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
     ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
     check_member( caps, expect_caps, "%d", dwSize );
-    todo_wine
     check_member( caps, expect_caps, "%#x", dwFlags );
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
@@ -7332,11 +7328,8 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
     ok( hr == DI_OK, "GetEffectInfo returned %#x\n", hr );
     check_member_guid( effectinfo, expect_effects[1], guid );
-    todo_wine
     check_member( effectinfo, expect_effects[1], "%#x", dwEffType );
-    todo_wine
     check_member( effectinfo, expect_effects[1], "%#x", dwStaticParams );
-    todo_wine
     check_member( effectinfo, expect_effects[1], "%#x", dwDynamicParams );
     check_member_wstr( effectinfo, expect_effects[1], tszName );
 

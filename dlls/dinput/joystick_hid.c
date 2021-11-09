@@ -859,8 +859,6 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
         type |= DIEFT_STARTDELAY;
         info->dwDynamicParams |= DIEP_STARTDELAY;
     }
-    if (effect_update->trigger_button_caps) info->dwDynamicParams |= DIEP_TRIGGERBUTTON;
-    if (effect_update->trigger_repeat_interval_caps) info->dwDynamicParams |= DIEP_TRIGGERREPEATINTERVAL;
     if (effect_update->direction_coll) info->dwDynamicParams |= DIEP_DIRECTION;
     if (effect_update->axes_coll) info->dwDynamicParams |= DIEP_AXES;
 
@@ -882,7 +880,7 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
         }
     }
 
-    if ((type == DIEFT_PERIODIC) && (collection = set_periodic->collection))
+    if ((type & DIEFT_PERIODIC) && (collection = set_periodic->collection))
     {
         if (set_periodic->magnitude_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
         if (set_periodic->offset_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
@@ -890,39 +888,27 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
         if (set_periodic->phase_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
     }
 
-    if ((type == DIEFT_PERIODIC || type == DIEFT_RAMPFORCE || type == DIEFT_CONSTANTFORCE) &&
-        (collection = set_envelope->collection))
+    if ((type & (DIEFT_PERIODIC | DIEFT_RAMPFORCE | DIEFT_CONSTANTFORCE)) && (collection = set_envelope->collection))
     {
         info->dwDynamicParams |= DIEP_ENVELOPE;
         if (set_envelope->attack_level_caps) type |= DIEFT_FFATTACK;
         if (set_envelope->attack_time_caps) type |= DIEFT_FFATTACK;
         if (set_envelope->fade_level_caps) type |= DIEFT_FFFADE;
         if (set_envelope->fade_time_caps) type |= DIEFT_FFFADE;
+        if (effect_update->trigger_button_caps) info->dwDynamicParams |= DIEP_TRIGGERBUTTON;
+        if (effect_update->trigger_repeat_interval_caps) info->dwDynamicParams |= DIEP_TRIGGERREPEATINTERVAL;
     }
 
-    if ((collection = set_condition->collection) && (type == DIEFT_CONDITION))
+    if ((type & DIEFT_CONDITION) && (collection = set_condition->collection))
     {
         if (set_condition->center_point_offset_caps)
             info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
-        if (set_condition->positive_coefficient_caps)
+        if (set_condition->positive_coefficient_caps || set_condition->negative_coefficient_caps)
+            info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
+        if (set_condition->positive_saturation_caps || set_condition->negative_saturation_caps)
         {
             info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
-            type |= DIEFT_POSNEGCOEFFICIENTS;
-        }
-        if (set_condition->negative_coefficient_caps)
-        {
-            info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
-            type |= DIEFT_POSNEGCOEFFICIENTS;
-        }
-        if (set_condition->positive_saturation_caps)
-        {
-            info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
-            type |= DIEFT_SATURATION | DIEFT_POSNEGSATURATION;
-        }
-        if (set_condition->negative_saturation_caps)
-        {
-            info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
-            type |= DIEFT_SATURATION | DIEFT_POSNEGSATURATION;
+            type |= DIEFT_SATURATION;
         }
         if (set_condition->dead_band_caps)
         {
@@ -1841,12 +1827,9 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
         if (impl->pid_set_envelope.fade_level_caps ||
             impl->pid_set_envelope.fade_time_caps)
             impl->base.caps.dwFlags |= DIDC_FFFADE;
-        if (impl->pid_set_condition.positive_coefficient_caps ||
-            impl->pid_set_condition.negative_coefficient_caps)
-            impl->base.caps.dwFlags |= DIDC_POSNEGCOEFFICIENTS;
         if (impl->pid_set_condition.positive_saturation_caps ||
             impl->pid_set_condition.negative_saturation_caps)
-            impl->base.caps.dwFlags |= DIDC_SATURATION|DIDC_POSNEGSATURATION;
+            impl->base.caps.dwFlags |= DIDC_SATURATION;
         if (impl->pid_set_condition.dead_band_caps)
             impl->base.caps.dwFlags |= DIDC_DEADBAND;
         impl->base.caps.dwFFSamplePeriod = 1000000;
