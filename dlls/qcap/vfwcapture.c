@@ -40,7 +40,7 @@ struct vfw_capture
     struct strmbase_source source;
     IKsPropertySet IKsPropertySet_iface;
 
-    struct video_capture_device *device;
+    video_capture_device_t device;
 
     /* FIXME: It would be nice to avoid duplicating this variable with strmbase.
      * However, synchronization is tricky; we need access to be protected by a
@@ -666,6 +666,8 @@ static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE
 {
     struct vfw_capture *filter = impl_from_strmbase_pin(pin);
     struct check_format_params params = { filter->device, mt };
+
+    if (!mt) return E_POINTER;
     return V4L_CALL( check_format, &params );
 }
 

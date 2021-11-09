@@ -119,6 +119,11 @@ static int xioctl(int fd, int request, void * arg)
     return r;
 }
 
+static struct video_capture_device *get_device( video_capture_device_t dev )
+{
+    return (struct video_capture_device *)(ULONG_PTR)dev;
+}
+
 static void device_destroy(struct video_capture_device *device)
 {
     if (device->fd != -1)
@@ -151,13 +156,10 @@ static const struct caps *find_caps(struct video_capture_device *device, const A
 
 static NTSTATUS v4l_device_check_format( void *args )
 {
-    struct check_format_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct check_format_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
 
     TRACE("device %p, mt %p.\n", device, params->mt);
-
-    if (!params->mt)
-        return E_POINTER;
 
     if (!IsEqualGUID(&params->mt->majortype, &MEDIATYPE_Video))
         return E_FAIL;
@@ -208,8 +210,8 @@ static HRESULT set_caps(struct video_capture_device *device, const struct caps *
 
 static NTSTATUS v4l_device_set_format( void *args )
 {
-    struct set_format_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct set_format_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
     const struct caps *caps;
 
     caps = find_caps(device, params->mt);
@@ -224,8 +226,8 @@ static NTSTATUS v4l_device_set_format( void *args )
 
 static NTSTATUS v4l_device_get_format( void *args )
 {
-    struct get_format_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct get_format_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
 
     *params->mt = device->current_caps->media_type;
     *params->format = device->current_caps->video_info;
@@ -234,8 +236,8 @@ static NTSTATUS v4l_device_get_format( void *args )
 
 static NTSTATUS v4l_device_get_media_type( void *args )
 {
-    struct get_media_type_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct get_media_type_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
     unsigned int caps_count = (device->current_caps) ? 1 : device->caps_count;
 
     if (params->index >= caps_count)
@@ -274,8 +276,8 @@ static __u32 v4l2_cid_from_qcap_property(VideoProcAmpProperty property)
 
 static NTSTATUS v4l_device_get_prop_range( void *args )
 {
-    struct get_prop_range_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct get_prop_range_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
     struct v4l2_queryctrl ctrl;
 
     ctrl.id = v4l2_cid_from_qcap_property(params->property);
@@ -296,8 +298,8 @@ static NTSTATUS v4l_device_get_prop_range( void *args )
 
 static NTSTATUS v4l_device_get_prop( void *args )
 {
-    struct get_prop_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct get_prop_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
     struct v4l2_control ctrl;
 
     ctrl.id = v4l2_cid_from_qcap_property(params->property);
@@ -316,8 +318,8 @@ static NTSTATUS v4l_device_get_prop( void *args )
 
 static NTSTATUS v4l_device_set_prop( void *args )
 {
-    struct set_prop_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct set_prop_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
     struct v4l2_control ctrl;
 
     ctrl.id = v4l2_cid_from_qcap_property(params->property);
@@ -353,8 +355,8 @@ static void reverse_image(struct video_capture_device *device, LPBYTE output, co
 
 static NTSTATUS v4l_device_read_frame( void *args )
 {
-    struct read_frame_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct read_frame_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
 
     while (video_read(device->fd, device->image_data, device->image_size) < 0)
     {
@@ -407,8 +409,8 @@ static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
 
 static NTSTATUS v4l_device_get_caps( void *args )
 {
-    struct get_caps_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct get_caps_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
 
     *params->caps   = device->caps[params->index].config;
     *params->mt     = device->caps[params->index].media_type;
@@ -418,8 +420,8 @@ static NTSTATUS v4l_device_get_caps( void *args )
 
 static NTSTATUS v4l_device_get_caps_count( void *args )
 {
-    struct get_caps_count_params *params = args;
-    struct video_capture_device *device = params->device;
+    const struct get_caps_count_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
 
     *params->count = device->caps_count;
     return S_OK;
@@ -427,7 +429,7 @@ static NTSTATUS v4l_device_get_caps_count( void *args )
 
 static NTSTATUS v4l_device_create( void *args )
 {
-    struct create_params *params = args;
+    const struct create_params *params = args;
     struct v4l2_frmsizeenum frmsize = {0};
     struct video_capture_device *device;
     struct v4l2_capability caps = {{0}};
@@ -567,7 +569,7 @@ static NTSTATUS v4l_device_create( void *args )
             device->current_caps->video_info.bmiHeader.biWidth,
             device->current_caps->video_info.bmiHeader.biHeight);
 
-    *params->device = device;
+    *params->device = (ULONG_PTR)device;
     return S_OK;
 
 error:
@@ -577,13 +579,13 @@ error:
 
 static NTSTATUS v4l_device_destroy( void *args )
 {
-    struct destroy_params *params = args;
+    const struct destroy_params *params = args;
 
-    device_destroy( params->device );
+    device_destroy( get_device(params->device) );
     return S_OK;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     v4l_device_create,
     v4l_device_destroy,
@@ -598,5 +600,271 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     v4l_device_set_prop,
     v4l_device_read_frame,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+struct am_media_type32
+{
+    GUID       majortype;
+    GUID       subtype;
+    BOOL       bFixedSizeSamples;
+    BOOL       bTemporalCompression;
+    ULONG      lSampleSize;
+    GUID       formattype;
+    PTR32      pUnk;
+    ULONG      cbFormat;
+    PTR32      pbFormat;
+};
+
+static AM_MEDIA_TYPE *get_media_type( const struct am_media_type32 *mt32, AM_MEDIA_TYPE *mt )
+{
+    mt->majortype            = mt32->majortype;
+    mt->subtype              = mt32->subtype;
+    mt->bFixedSizeSamples    = mt32->bFixedSizeSamples;
+    mt->bTemporalCompression = mt32->bTemporalCompression;
+    mt->lSampleSize          = mt32->lSampleSize;
+    mt->formattype           = mt32->formattype;
+    mt->pUnk                 = NULL;
+    mt->cbFormat             = mt32->cbFormat;
+    mt->pbFormat             = ULongToPtr(mt32->pbFormat);
+    return mt;
+}
+
+static void put_media_type( const AM_MEDIA_TYPE *mt, struct am_media_type32 *mt32 )
+{
+    mt32->majortype            = mt->majortype;
+    mt32->subtype              = mt->subtype;
+    mt32->bFixedSizeSamples    = mt->bFixedSizeSamples;
+    mt32->bTemporalCompression = mt->bTemporalCompression;
+    mt32->lSampleSize          = mt->lSampleSize;
+    mt32->formattype           = mt->formattype;
+}
+
+static NTSTATUS wow64_v4l_device_create( void *args )
+{
+    struct
+    {
+        unsigned int index;
+        PTR32 device;
+    } const *params32 = args;
+
+    struct create_params params =
+    {
+        params32->index,
+        ULongToPtr(params32->device)
+    };
+
+    return v4l_device_create( &params );
+}
+
+static NTSTATUS wow64_v4l_device_check_format( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        PTR32                  mt;
+    } const *params32 = args;
+
+    AM_MEDIA_TYPE mt;
+    struct check_format_params params =
+    {
+        params32->device,
+        get_media_type( ULongToPtr(params32->mt), &mt )
+    };
+
+    return v4l_device_check_format( &params );
+}
+
+static NTSTATUS wow64_v4l_device_set_format( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        PTR32                  mt;
+    } const *params32 = args;
+
+    AM_MEDIA_TYPE mt;
+    struct set_format_params params =
+    {
+        params32->device,
+        get_media_type( ULongToPtr(params32->mt), &mt )
+    };
+
+    return v4l_device_set_format( &params );
+}
+
+static NTSTATUS wow64_v4l_device_get_format( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        PTR32                  mt;
+        PTR32                  format;
+    } const *params32 = args;
+
+    AM_MEDIA_TYPE mt;
+    struct get_format_params params =
+    {
+        params32->device,
+        &mt,
+        ULongToPtr(params32->format)
+    };
+
+    NTSTATUS status = v4l_device_get_format( &params );
+    if (!status) put_media_type( &mt, ULongToPtr(params32->mt) );
+    return status;
+}
+
+static NTSTATUS wow64_v4l_device_get_media_type( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        unsigned int           index;
+        PTR32                  mt;
+        PTR32                  format;
+    } const *params32 = args;
+
+    AM_MEDIA_TYPE mt;
+    struct get_media_type_params params =
+    {
+        params32->device,
+        params32->index,
+        &mt,
+        ULongToPtr(params32->format)
+    };
+
+    NTSTATUS status = v4l_device_get_media_type( &params );
+    if (!status) put_media_type( &mt, ULongToPtr(params32->mt) );
+    return status;
+}
+
+static NTSTATUS wow64_v4l_device_get_caps( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        unsigned int           index;
+        PTR32                  mt;
+        PTR32                  format;
+        PTR32                  caps;
+    } const *params32 = args;
+
+    AM_MEDIA_TYPE mt;
+    struct get_caps_params params =
+    {
+        params32->device,
+        params32->index,
+        &mt,
+        ULongToPtr(params32->format),
+        ULongToPtr(params32->caps)
+    };
+
+    NTSTATUS status = v4l_device_get_caps( &params );
+    if (!status) put_media_type( &mt, ULongToPtr(params32->mt) );
+    return status;
+}
+
+static NTSTATUS wow64_v4l_device_get_caps_count( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        PTR32                  count;
+    } const *params32 = args;
+
+    struct get_caps_count_params params =
+    {
+        params32->device,
+        ULongToPtr(params32->count)
+    };
+
+    return v4l_device_get_caps_count( &params );
+}
+
+static NTSTATUS wow64_v4l_device_get_prop_range( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        VideoProcAmpProperty   property;
+        PTR32                  min;
+        PTR32                  max;
+        PTR32                  step;
+        PTR32                  default_value;
+        PTR32                  flags;
+    } const *params32 = args;
+
+    struct get_prop_range_params params =
+    {
+        params32->device,
+        params32->property,
+        ULongToPtr(params32->min),
+        ULongToPtr(params32->max),
+        ULongToPtr(params32->step),
+        ULongToPtr(params32->default_value),
+        ULongToPtr(params32->flags)
+    };
+
+    return v4l_device_get_prop_range( &params );
+}
+
+static NTSTATUS wow64_v4l_device_get_prop( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        VideoProcAmpProperty   property;
+        PTR32                  value;
+        PTR32                  flags;
+    } const *params32 = args;
+
+    struct get_prop_params params =
+    {
+        params32->device,
+        params32->property,
+        ULongToPtr(params32->value),
+        ULongToPtr(params32->flags)
+    };
+
+    return v4l_device_get_prop( &params );
+}
+
+static NTSTATUS wow64_v4l_device_read_frame( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        PTR32                  data;
+    } const *params32 = args;
+
+    struct read_frame_params params =
+    {
+        params32->device,
+        ULongToPtr(params32->data)
+    };
+
+    return v4l_device_read_frame( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_v4l_device_create,
+    v4l_device_destroy,
+    wow64_v4l_device_check_format,
+    wow64_v4l_device_set_format,
+    wow64_v4l_device_get_format,
+    wow64_v4l_device_get_media_type,
+    wow64_v4l_device_get_caps,
+    wow64_v4l_device_get_caps_count,
+    wow64_v4l_device_get_prop_range,
+    wow64_v4l_device_get_prop,
+    v4l_device_set_prop,
+    wow64_v4l_device_read_frame,
+};
+
+#endif /* _WIN64 */
 
 #endif /* HAVE_LINUX_VIDEODEV2_H */

@@ -40,41 +40,41 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
-struct video_capture_device;
+typedef UINT64 video_capture_device_t;
 
 struct create_params
 {
     unsigned int                  index;
-    struct video_capture_device **device;
+    video_capture_device_t       *device;
 };
 
 struct destroy_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
 };
 
 struct check_format_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     const AM_MEDIA_TYPE         *mt;
 };
 
 struct set_format_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     const AM_MEDIA_TYPE         *mt;
 };
 
 struct get_format_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     AM_MEDIA_TYPE               *mt;
     VIDEOINFOHEADER             *format;
 };
 
 struct get_media_type_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     unsigned int                 index;
     AM_MEDIA_TYPE               *mt;
     VIDEOINFOHEADER             *format;
@@ -82,7 +82,7 @@ struct get_media_type_params
 
 struct get_caps_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     unsigned int                 index;
     AM_MEDIA_TYPE               *mt;
     VIDEOINFOHEADER             *format;
@@ -91,13 +91,13 @@ struct get_caps_params
 
 struct get_caps_count_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     int                         *count;
 };
 
 struct get_prop_range_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     VideoProcAmpProperty         property;
     LONG                        *min;
     LONG                        *max;
@@ -108,7 +108,7 @@ struct get_prop_range_params
 
 struct get_prop_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     VideoProcAmpProperty         property;
     LONG                        *value;
     LONG                        *flags;
@@ -116,7 +116,7 @@ struct get_prop_params
 
 struct set_prop_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     VideoProcAmpProperty         property;
     LONG                         value;
     LONG                         flags;
@@ -124,7 +124,7 @@ struct set_prop_params
 
 struct read_frame_params
 {
-    struct video_capture_device *device;
+    video_capture_device_t       device;
     void                        *data;
 };
 
