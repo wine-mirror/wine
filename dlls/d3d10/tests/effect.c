@@ -7801,6 +7801,152 @@ static void test_effect_dynamic_numeric_field(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#if 0
+float4 g_var;
+float4 g_var2;
+PixelShader ps_array[2];
+VertexShader vs_array[2];
+GeometryShader gs_array[2];
+technique10 tech
+{
+    pass p0
+    {
+        SetPixelShader( ps_array[g_var.z] );
+        SetVertexShader( vs_array[g_var.x + 0.1f] );
+        SetGeometryShader( gs_array[g_var2.y] );
+    }
+}
+#endif
+static DWORD fx_test_index_expression[] =
+{
+    0x43425844, 0xef7cea81, 0x5103f059, 0x9011e9d4, 0xa8ed3607, 0x00000001, 0x00000564, 0x00000001,
+    0x00000024, 0x30315846, 0x00000538, 0xfeff1001, 0x00000001, 0x00000002, 0x00000003, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000, 0x6f6c4724,
+    0x736c6162, 0x6f6c6600, 0x00347461, 0x0000000d, 0x00000001, 0x00000000, 0x00000010, 0x00000010,
+    0x00000010, 0x0000210a, 0x61765f67, 0x5f670072, 0x32726176, 0x78695000, 0x68536c65, 0x72656461,
+    0x00003d00, 0x00000200, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000500, 0x5f737000,
+    0x61727261, 0x65560079, 0x78657472, 0x64616853, 0x6e007265, 0x02000000, 0x02000000, 0x00000000,
+    0x00000000, 0x00000000, 0x06000000, 0x76000000, 0x72615f73, 0x00796172, 0x6d6f6547, 0x79727465,
+    0x64616853, 0xa0007265, 0x02000000, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x07000000,
+    0x67000000, 0x72615f73, 0x00796172, 0x68636574, 0x00307000, 0x000000ec, 0x43425844, 0xe6990a97,
+    0x7ed17834, 0x9f40de47, 0x01f476a7, 0x00000001, 0x000000ec, 0x00000003, 0x0000002c, 0x000000a8,
+    0x000000b4, 0x42415443, 0x00000074, 0x0000001c, 0x0000004b, 0x46580400, 0x00000001, 0x0000001c,
+    0x00000100, 0x00000048, 0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000000, 0x61765f67,
+    0xabab0072, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73,
+    0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e,
+    0x34494c43, 0x00000004, 0x00000000, 0x434c5846, 0x00000030, 0x00000001, 0x13300001, 0x00000001,
+    0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f,
+    0x0000ffff, 0x00000065, 0x000000dc, 0x00000128, 0x43425844, 0x7a78de2e, 0xcd31414e, 0xb6f69158,
+    0x92416c97, 0x00000001, 0x00000128, 0x00000003, 0x0000002c, 0x000000a8, 0x000000c4, 0x42415443,
+    0x00000074, 0x0000001c, 0x0000004b, 0x46580400, 0x00000001, 0x0000001c, 0x00000100, 0x00000048,
+    0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000000, 0x61765f67, 0xabab0072, 0x00030001,
+    0x00040001, 0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,
+    0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x34494c43, 0x00000014,
+    0x00000004, 0x3dcccccd, 0x00000000, 0x00000000, 0x00000000, 0x434c5846, 0x0000005c, 0x00000002,
+    0x20400001, 0x00000002, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+    0x00000000, 0x00000007, 0x00000000, 0x13300001, 0x00000001, 0x00000000, 0x00000007, 0x00000000,
+    0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000097, 0x000001d4,
+    0x000000ec, 0x43425844, 0x90e93368, 0x6c8d5166, 0x276e99ab, 0x25ccef44, 0x00000001, 0x000000ec,
+    0x00000003, 0x0000002c, 0x000000a8, 0x000000b4, 0x42415443, 0x00000074, 0x0000001c, 0x0000004b,
+    0x46580400, 0x00000001, 0x0000001c, 0x00000100, 0x00000048, 0x00000030, 0x00000002, 0x00000001,
+    0x00000038, 0x00000000, 0x61765f67, 0xab003272, 0x00030001, 0x00040001, 0x00000001, 0x00000000,
+    0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320,
+    0x656c6970, 0x30312072, 0xab00312e, 0x34494c43, 0x00000004, 0x00000000, 0x434c5846, 0x00000030,
+    0x00000001, 0x13300001, 0x00000001, 0x00000000, 0x00000002, 0x00000001, 0x00000000, 0x00000004,
+    0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x000000cb, 0x00000308, 0x00000004, 0x00000020,
+    0x00000000, 0x00000002, 0xffffffff, 0x00000000, 0x00000030, 0x00000014, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000036, 0x00000014, 0x00000000, 0x00000010, 0x00000000,
+    0x00000000, 0x00000000, 0x00000065, 0x00000049, 0x00000000, 0xffffffff, 0x00000000, 0x00000000,
+    0x00000000, 0x00000097, 0x0000007b, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000,
+    0x000000cb, 0x000000af, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000, 0x000000d4,
+    0x00000001, 0x00000000, 0x000000d9, 0x00000003, 0x00000000, 0x00000007, 0x00000000, 0x00000005,
+    0x000001cc, 0x00000006, 0x00000000, 0x00000005, 0x00000300, 0x00000008, 0x00000000, 0x00000005,
+    0x000003f8,
+};
+
+static void test_effect_index_expression(void)
+{
+    D3D10_PASS_SHADER_DESC shader_desc;
+    ID3D10EffectVectorVariable *vector;
+    ID3D10EffectTechnique *tech;
+    ID3D10EffectVariable *v;
+    ID3D10EffectPass *pass;
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
+    float val[4];
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_index_expression, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect, hr %#x.\n", hr);
+
+    /* Initial index */
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    pass = tech->lpVtbl->GetPassByIndex(tech, 0);
+    hr = pass->lpVtbl->GetPixelShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index.\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "g_var");
+    vector = v->lpVtbl->AsVector(v);
+
+    val[0] = 0.0f;
+    val[1] = 0.0f;
+    val[2] = 1.0f;
+    val[3] = 0.0f;
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetPixelShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(shader_desc.ShaderIndex == 1, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    hr = pass->lpVtbl->GetVertexShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    val[0] = 0.9f;
+    val[1] = 0.0f;
+    val[2] = 1.0f;
+    val[3] = 0.0f;
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetVertexShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(shader_desc.ShaderIndex == 1, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "g_var2");
+    vector = v->lpVtbl->AsVector(v);
+
+    hr = pass->lpVtbl->GetGeometryShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    val[0] = 0.0f;
+    val[1] = 1.0f;
+    val[2] = 0.0f;
+    val[3] = 0.0f;
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetGeometryShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(shader_desc.ShaderIndex == 1, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -7825,4 +7971,5 @@ START_TEST(effect)
     test_effect_default_variable_value();
     test_effect_raw_value();
     test_effect_dynamic_numeric_field();
+    test_effect_index_expression();
 }
