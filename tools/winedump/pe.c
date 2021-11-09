@@ -764,6 +764,18 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
                 (ULONG)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
 }
 
+static const BYTE armnt_code_lengths[256] =
+{
+/* 00 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 20 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 40 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 60 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 80 */ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+/* a0 */ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+/* c0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* e0 */ 1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,4,3,4,1,1,1,1,1
+};
+
 static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
 {
     const struct unwind_info_armnt *info;
@@ -990,6 +1002,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
         for (b = 0; b < words * sizeof(*codes); b++)
         {
             BYTE code = bytes[b];
+            BYTE len = armnt_code_lengths[code];
 
             if (info->e && b == count)
             {
@@ -1007,7 +1020,10 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
                     }
             }
 
-            printf( "    Unwind Code %x\t", code );
+            printf( "    Unwind Code");
+            for (i = 0; i < len; i++)
+                printf( " %02x", bytes[b+i] );
+            printf( "\t" );
 
             if (code == 0x00)
                 printf( "\n" );
