@@ -184,7 +184,7 @@ struct key
 {
     struct object hdr;
     enum alg_id   alg_id;
-    void         *private[2];  /* private data for backend */
+    UINT64        private[2];  /* private data for backend */
     union
     {
         struct key_symmetric s;
