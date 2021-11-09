@@ -171,9 +171,11 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
         struct wined3d_context_gl *context_gl)
 {
     struct wined3d_resource *resource = &buffer_gl->b.resource;
+    struct wined3d_bo_gl *bo_gl;
 
     if (!buffer_gl->b.buffer_object)
         return;
+    bo_gl = wined3d_bo_gl(buffer_gl->b.buffer_object);
 
     if (context_gl->c.transform_feedback_active && (resource->bind_flags & WINED3D_BIND_STREAM_OUTPUT)
             && wined3d_context_is_graphics_state_dirty(&context_gl->c, STATE_STREAM_OUTPUT))
@@ -191,7 +193,8 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
 
     buffer_gl->b.bo_user.valid = false;
     list_remove(&buffer_gl->b.bo_user.entry);
-    wined3d_context_gl_destroy_bo(context_gl, &buffer_gl->bo);
+    wined3d_context_gl_destroy_bo(context_gl, bo_gl);
+    heap_free(bo_gl);
     buffer_gl->b.buffer_object = NULL;
 }
 
@@ -210,6 +213,9 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
     TRACE("Creating an OpenGL buffer object for wined3d buffer %p with usage %s.\n",
             buffer_gl, debug_d3dusage(buffer_gl->b.resource.usage));
 
+    if (!(bo = heap_alloc(sizeof(*bo))))
+        return FALSE;
+
     size = buffer_gl->b.resource.size;
     binding = wined3d_buffer_gl_binding_from_bind_flags(gl_info, buffer_gl->b.resource.bind_flags);
     if (buffer_gl->b.resource.usage & WINED3DUSAGE_DYNAMIC)
@@ -218,12 +224,12 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         coherent = false;
     }
     gl_storage_flags = wined3d_resource_gl_storage_flags(&buffer_gl->b.resource);
-    bo = &buffer_gl->bo;
     if (!wined3d_context_gl_create_bo(context_gl, size, binding, usage, coherent, gl_storage_flags, bo))
     {
         ERR("Failed to create OpenGL buffer object.\n");
         buffer_gl->b.flags &= ~WINED3D_BUFFER_USE_BO;
         buffer_clear_dirty_areas(&buffer_gl->b);
+        heap_free(bo);
         return FALSE;
     }
 

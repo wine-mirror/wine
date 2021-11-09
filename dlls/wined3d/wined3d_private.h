@@ -5087,8 +5087,6 @@ HRESULT wined3d_buffer_no3d_init(struct wined3d_buffer *buffer_no3d, struct wine
 struct wined3d_buffer_gl
 {
     struct wined3d_buffer b;
-
-    struct wined3d_bo_gl bo;
 };
 
 static inline struct wined3d_buffer_gl *wined3d_buffer_gl(struct wined3d_buffer *buffer)
