@@ -62,6 +62,10 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle,
            SQLINTEGER Attribute, SQLPOINTER Value,
            SQLINTEGER StringLength);
 
+SQLRETURN WINAPI SQLGetDiagFieldW(SQLSMALLINT type, SQLHANDLE handle,
+           SQLSMALLINT record, SQLSMALLINT field, SQLPOINTER info,
+           SQLSMALLINT info_len, SQLSMALLINT *ret_len);
+
 #ifdef __cplusplus
 }
 #endif
