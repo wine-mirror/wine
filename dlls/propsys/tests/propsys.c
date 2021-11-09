@@ -670,6 +670,7 @@ static void test_PropVariantCompareEx(void)
 {
     PROPVARIANT empty, null, emptyarray, i2_0, i2_2, i4_large, i4_largeneg, i4_2, str_2, str_02, str_b;
     PROPVARIANT clsid_null, clsid, clsid2, r4_0, r4_2, r8_0, r8_2;
+    PROPVARIANT ui4, ui4_large;
     PROPVARIANT var1, var2;
     INT res;
     static const WCHAR str_2W[] = {'2', 0};
@@ -711,6 +712,10 @@ static void test_PropVariantCompareEx(void)
     i4_largeneg.lVal = -65536;
     i4_2.vt = VT_I4;
     i4_2.lVal = 2;
+    ui4.vt = VT_UI4;
+    ui4.ulVal = 2;
+    ui4_large.vt = VT_UI4;
+    ui4_large.ulVal = 65536;
     str_2.vt = VT_BSTR;
     str_2.bstrVal = SysAllocString(str_2W);
     str_02.vt = VT_BSTR;
@@ -758,6 +763,12 @@ static void test_PropVariantCompareEx(void)
 
     res = PropVariantCompareEx(&i2_0, &i2_2, 0, 0);
     ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&ui4, &ui4_large, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&ui4_large, &ui4, 0, 0);
+    ok(res == 1, "res=%i\n", res);
 
     /* Always return -1 if second value cannot be converted to first type */
     res = PropVariantCompareEx(&i2_0, &i4_large, 0, 0);
