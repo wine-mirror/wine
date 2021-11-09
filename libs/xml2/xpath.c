@@ -497,14 +497,12 @@ double xmlXPathNINF;
  *
  * Initialize the XPath environment
  */
-ATTRIBUTE_NO_SANITIZE("float-divide-by-zero")
 void
 xmlXPathInit(void) {
-    /* MSVC doesn't allow division by zero in constant expressions. */
-    double zero = 0.0;
-    xmlXPathNAN = 0.0 / zero;
-    xmlXPathPINF = 1.0 / zero;
-    xmlXPathNINF = -xmlXPathPINF;
+    /* Use MSVC definitions */
+    xmlXPathNAN = NAN;
+    xmlXPathPINF = INFINITY;
+    xmlXPathNINF = -INFINITY;
 }
 
 /**
