@@ -40,7 +40,7 @@
 
 #include "unixlib.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
+WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static DRIVER_OBJECT *driver_obj;
 
@@ -411,7 +411,7 @@ static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
     irp->IoStatus.Information = report->length;
     irp->IoStatus.Status = STATUS_SUCCESS;
 
-    if (TRACE_ON(plugplay))
+    if (TRACE_ON(hid))
     {
         TRACE("read input report length %u:\n", report->length);
         for (i = 0; i < report->length;)
@@ -1038,7 +1038,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             memcpy(packet->reportBuffer, ext->last_reports[packet->reportId], packet->reportBufferLen);
             irp->IoStatus.Information = packet->reportBufferLen;
             irp->IoStatus.Status = STATUS_SUCCESS;
-            if (TRACE_ON(plugplay))
+            if (TRACE_ON(hid))
             {
                 TRACE("read input report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
                 for (i = 0; i < packet->reportBufferLen;)
@@ -1068,7 +1068,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_WRITE_REPORT:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
-            if (TRACE_ON(plugplay))
+            if (TRACE_ON(hid))
             {
                 TRACE("write output report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
                 for (i = 0; i < packet->reportBufferLen;)
@@ -1087,7 +1087,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
             unix_device_get_feature_report(device, packet, &irp->IoStatus);
-            if (!irp->IoStatus.Status && TRACE_ON(plugplay))
+            if (!irp->IoStatus.Status && TRACE_ON(hid))
             {
                 TRACE("read feature report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
                 for (i = 0; i < packet->reportBufferLen;)
@@ -1104,7 +1104,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_SET_FEATURE:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
-            if (TRACE_ON(plugplay))
+            if (TRACE_ON(hid))
             {
                 TRACE("write feature report id %u length %u:\n", packet->reportId, packet->reportBufferLen);
                 for (i = 0; i < packet->reportBufferLen;)
