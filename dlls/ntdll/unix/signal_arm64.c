@@ -319,6 +319,7 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
           context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
     return STATUS_SUCCESS;
 #else
+    ERR("libunwind not available, unable to unwind\n");
     return STATUS_INVALID_DISPOSITION;
 #endif
 }
