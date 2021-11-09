@@ -834,8 +834,11 @@ static HRESULT WINAPI command_GetCommandText(ICommandText *iface, GUID *dialect,
     if (!command->query)
         return DB_E_NOCOMMAND;
 
-    if (IsEqualGUID(&DBGUID_DEFAULT, dialect))
+    if (!IsEqualGUID(&DBGUID_DEFAULT, dialect))
+    {
+        *dialect = DBGUID_DEFAULT;
         hr = DB_S_DIALECTIGNORED;
+    }
 
     *commandstr = heap_alloc((lstrlenW(command->query)+1)*sizeof(WCHAR));
     wcscpy(*commandstr, command->query);
