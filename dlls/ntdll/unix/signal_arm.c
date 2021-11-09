@@ -563,12 +563,16 @@ void call_raise_user_exception_dispatcher(void)
 NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
+    DWORD lr = frame->lr;
+    DWORD sp = frame->sp;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (status) return status;
     frame->r0 = (DWORD)rec;
     frame->r1 = (DWORD)context;
     frame->pc = (DWORD)pKiUserExceptionDispatcher;
+    frame->lr = lr;
+    frame->sp = sp;
     frame->restore_flags |= CONTEXT_INTEGER | CONTEXT_CONTROL;
     return status;
 }
