@@ -787,7 +787,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
     if (fnc->u.s.Flag)
     {
         char intregs[32] = {0}, intregspop[32] = {0}, vfpregs[32] = {0};
-        WORD pf = 0, ef = 0, sc = 0;
+        WORD pf = 0, ef = 0, fpoffset = 0, stack = fnc->u.s.StackAdjust;
 
         printf( "\nFunction %08x-%08x:\n", fnc->BeginAddress & ~1,
                 (fnc->BeginAddress & ~1) + fnc->u.s.FunctionLength * 2 );
@@ -805,86 +805,60 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
         {
             pf = fnc->u.s.StackAdjust & 0x04;
             ef = fnc->u.s.StackAdjust & 0x08;
+            stack = (fnc->u.s.StackAdjust & 3) + 1;
         }
 
-        if (!fnc->u.s.R && !pf)
+        if (!fnc->u.s.R || pf)
         {
-            if (fnc->u.s.Reg)
+            int first = 4, last = fnc->u.s.Reg + 4;
+            if (pf)
             {
-                sprintf(intregs, "r4-r%u", fnc->u.s.Reg + 4);
-                sprintf(intregspop, "r4-r%u", fnc->u.s.Reg + 4);
+                first = (~fnc->u.s.StackAdjust) & 3;
+                if (fnc->u.s.R)
+                    last = 3;
             }
+            if (first == last)
+                sprintf(intregs, "r%u", first);
             else
-            {
-                strcpy(intregs, "r4");
-                strcpy(intregspop, "r4");
-            }
-            sc = fnc->u.s.Reg + 1;
-            if (fnc->u.s.C || fnc->u.s.L)
-            {
-                strcat(intregs, ", ");
-                if (fnc->u.s.C || (fnc->u.s.L && !fnc->u.s.H))
-                    strcat(intregspop, ", ");
-            }
-        }
-        else if (fnc->u.s.R && pf)
-        {
-            if (((~fnc->u.s.StackAdjust) & 3) != 3)
-            {
-                sprintf(intregs, "r%u-r3", (~fnc->u.s.StackAdjust) & 3);
-                sprintf(intregspop, "r%u-r3", (~fnc->u.s.StackAdjust) & 3);
-            }
-            else
-            {
-                sprintf(intregs, "r3");
-                sprintf(intregspop, "r3");
-            }
-            sc = 4 - ((~fnc->u.s.StackAdjust) & 3);
-            if (fnc->u.s.C || fnc->u.s.L)
-            {
-                strcat(intregs, ", ");
-                if (fnc->u.s.C || (fnc->u.s.L && !fnc->u.s.H))
-                    strcat(intregspop, ", ");
-            }
-        }
-        else if (!fnc->u.s.R && pf)
-        {
-            sprintf(intregs, "r%u-r%u", (~fnc->u.s.StackAdjust) & 3, fnc->u.s.Reg + 4);
-            sprintf(intregspop, "r%u-r%u", (~fnc->u.s.StackAdjust) & 3, fnc->u.s.Reg + 4);
-            sc = fnc->u.s.Reg + 5 - ((~fnc->u.s.StackAdjust) & 3);
-            if (fnc->u.s.C || fnc->u.s.L)
-            {
-                strcat(intregs, ", ");
-                if (fnc->u.s.C || (fnc->u.s.L && !fnc->u.s.H))
-                    strcat(intregspop, ", ");
-            }
-        }
-        else if (fnc->u.s.R && !pf)
-        {
-            if (!fnc->u.s.C && !fnc->u.s.L)
-            {
-                strcpy(intregs, "none");
-                strcpy(intregspop, "none");
-            }
+                sprintf(intregs, "r%u-r%u", first, last);
+            fpoffset = last + 1 - first;
         }
 
-        if (fnc->u.s.C && !fnc->u.s.L)
+        if (!fnc->u.s.R || ef)
         {
+            int first = 4, last = fnc->u.s.Reg + 4;
+            if (ef)
+            {
+                first = (~fnc->u.s.StackAdjust) & 3;
+                if (fnc->u.s.R)
+                    last = 3;
+            }
+            if (first == last)
+                sprintf(intregspop, "r%u", first);
+            else
+                sprintf(intregspop, "r%u-r%u", first, last);
+        }
+
+        if (fnc->u.s.C)
+        {
+            if (intregs[0])
+                strcat(intregs, ", ");
+            if (intregspop[0])
+                strcat(intregspop, ", ");
             strcat(intregs, "r11");
             strcat(intregspop, "r11");
         }
-        else if (fnc->u.s.C && fnc->u.s.L)
+        if (fnc->u.s.L)
         {
-            strcat(intregs, "r11, lr");
-            if (fnc->u.s.H)
-                strcat(intregspop, "r11");
-            else
-                strcat(intregspop, "r11, pc");
-        }
-        else if (!fnc->u.s.C && fnc->u.s.L)
-        {
+            if (intregs[0])
+                strcat(intregs, ", ");
             strcat(intregs, "lr");
-            if (!fnc->u.s.H)
+
+            if (intregspop[0] && (fnc->u.s.Ret != 0 || !fnc->u.s.H))
+                strcat(intregspop, ", ");
+            if (fnc->u.s.Ret != 0)
+                strcat(intregspop, "lr");
+            else if (!fnc->u.s.H)
                 strcat(intregspop, "pc");
         }
 
@@ -895,46 +869,42 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
             else
                 strcpy(vfpregs, "d8");
         }
-        else
-            strcpy(vfpregs, "none");
 
-        if (fnc->u.s.H)
-            printf( "    Unwind Code\tpush {r0-r3}\n" );
+        if (fnc->u.s.Flag == 1) {
+            if (fnc->u.s.H)
+                printf( "    Unwind Code\tpush {r0-r3}\n" );
 
-        if (fnc->u.s.R || fnc->u.s.L || fnc->u.s.C || pf)
-            printf( "    Unwind Code\tpush {%s}\n", intregs );
+            if (intregs[0])
+                printf( "    Unwind Code\tpush {%s}\n", intregs );
 
-        if (fnc->u.s.C && fnc->u.s.R && !fnc->u.s.L && !pf)
-            printf( "    Unwind Code\tmov r11, sp\n" );
-        else if (fnc->u.s.C && (!fnc->u.s.R || fnc->u.s.L || pf))
-        {
-            if (fnc->u.s.StackAdjust >= 0x03f4 && !sc)
-                printf( "    Unwind Code\tadd r11, sp, #<unknown>\n");
-            else if (fnc->u.s.StackAdjust >= 0x03f4)
-                printf( "    Unwind Code\tadd r11, sp, #%d\n", sc * 4 );
-            else
-                printf( "    Unwind Code\tadd r11, sp, #%d\n", fnc->u.s.StackAdjust * 4 );
+            if (fnc->u.s.C && fpoffset == 0)
+                printf( "    Unwind Code\tmov r11, sp\n" );
+            else if (fnc->u.s.C)
+                printf( "    Unwind Code\tadd r11, sp, #%d\n", fpoffset * 4 );
+
+            if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
+                printf( "    Unwind Code\tvpush {%s}\n", vfpregs );
+
+            if (stack && !pf)
+                printf( "    Unwind Code\tsub sp, sp, #%d\n", stack * 4 );
         }
 
-        if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
-            printf( "    Unwind Code\tvpush {%s}\n", vfpregs );
+        if (fnc->u.s.Ret == 3)
+            return;
+        printf( "Epilogue:\n" );
 
-        if (fnc->u.s.StackAdjust < 0x03f4 && !pf)
-            printf( "    Unwind Code\tsub sp, sp, #%d\n", fnc->u.s.StackAdjust * 4 );
-
-
-        if (fnc->u.s.StackAdjust < 0x03f4 && !ef)
-            printf( "    Unwind Code\tadd sp, sp, #%d\n", fnc->u.s.StackAdjust * 4 );
+        if (stack && !ef)
+            printf( "    Unwind Code\tadd sp, sp, #%d\n", stack * 4 );
 
         if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
             printf( "    Unwind Code\tvpop {%s}\n", vfpregs );
 
-        if (fnc->u.s.C || !fnc->u.s.R || ef || (fnc->u.s.L && !fnc->u.s.H))
+        if (intregspop[0])
             printf( "    Unwind Code\tpop {%s}\n", intregspop );
 
-        if (fnc->u.s.H && !fnc->u.s.L)
+        if (fnc->u.s.H && !(fnc->u.s.L && fnc->u.s.Ret == 0))
             printf( "    Unwind Code\tadd sp, sp, #16\n" );
-        else if (fnc->u.s.H && fnc->u.s.L)
+        else if (fnc->u.s.H && (fnc->u.s.L && fnc->u.s.Ret == 0))
             printf( "    Unwind Code\tldr pc, [sp], #20\n" );
 
         if (fnc->u.s.Ret == 1)
