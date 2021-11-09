@@ -1062,6 +1062,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->IConvertType_iface.lpVtbl = &converttypeVtbl;
     command->ICommandPrepare_iface.lpVtbl = &commandprepareVtbl;
     command->refs = 1;
+    command->query = NULL;
 
     IUnknown_QueryInterface(&session->session_iface, &IID_IUnknown, (void**)&command->session);
 
