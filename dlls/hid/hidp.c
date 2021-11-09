@@ -34,7 +34,7 @@
 #include "wine/hid.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(hidp);
+WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static NTSTATUS get_value_caps_range( struct hid_preparsed_data *preparsed, HIDP_REPORT_TYPE report_type, ULONG report_len,
                                       const struct hid_value_caps **caps, const struct hid_value_caps **caps_end )
