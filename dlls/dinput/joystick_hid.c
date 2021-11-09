@@ -400,11 +400,15 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     struct hid_value_caps *caps, *caps_end, *nary, *nary_end, *effect_caps;
     struct hid_collection_node *node, *node_end;
+    WORD version = impl->base.dinput->dwVersion;
     BOOL ret, seen_axis[6] = {0};
 
     button_ofs += impl->caps.NumberInputValueCaps * sizeof(LONG);
-    button_ofs += impl->caps.NumberOutputValueCaps * sizeof(LONG);
-    button_ofs += impl->caps.NumberFeatureValueCaps * sizeof(LONG);
+    if (version >= 0x800)
+    {
+        button_ofs += impl->caps.NumberOutputValueCaps * sizeof(LONG);
+        button_ofs += impl->caps.NumberFeatureValueCaps * sizeof(LONG);
+    }
 
     for (caps = HID_INPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->input_caps_count;
          caps != caps_end; ++caps)
@@ -545,7 +549,9 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
 
             for (nary = caps; nary != nary_end; nary--)
             {
-                instance.dwOfs = button_ofs;
+                if (version < 0x800) instance.dwOfs = 0;
+                else instance.dwOfs = button_ofs;
+
                 instance.dwType = DIDFT_NODATA | DIDFT_MAKEINSTANCE( object++ ) | DIDFT_OUTPUT;
                 instance.dwFlags = 0x80008000;
                 instance.wUsagePage = nary->usage_page;
@@ -562,7 +568,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
         }
         else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
-            if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) instance.dwOfs = button_ofs;
+            if (version < 0x800) instance.dwOfs = 0;
+            else if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) instance.dwOfs = button_ofs;
             else instance.dwOfs = value_ofs;
 
             instance.dwType = DIDFT_NODATA | DIDFT_MAKEINSTANCE( object++ ) | DIDFT_OUTPUT;
