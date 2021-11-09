@@ -1163,8 +1163,6 @@ static void test_session_events(IMFMediaSession *session)
 
 static void test_media_session(void)
 {
-    IMFRateControl *rate_control, *rate_control2;
-    MFCLOCK_PROPERTIES clock_props;
     IMFRateSupport *rate_support;
     IMFAttributes *attributes;
     IMFMediaSession *session;
@@ -1174,10 +1172,7 @@ static void test_media_session(void)
     DWORD status, caps;
     IMFGetService *gs;
     IMFClock *clock;
-    IUnknown *unk;
     HRESULT hr;
-    float rate;
-    BOOL thin;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
@@ -1186,81 +1181,15 @@ static void test_media_session(void)
     ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
 
     check_interface(session, &IID_IMFGetService, TRUE);
+    todo_wine check_interface(session, &IID_IMFRateSupport, TRUE);
+    todo_wine check_interface(session, &IID_IMFRateControl, TRUE);
     check_interface(session, &IID_IMFAttributes, FALSE);
     check_interface(session, &IID_IMFTopologyNodeAttributeEditor, FALSE);
-
-    hr = MFGetService((IUnknown *)session, &MF_TOPONODE_ATTRIBUTE_EDITOR_SERVICE, &IID_IMFTopologyNodeAttributeEditor,
-            (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    check_interface(unk, &IID_IMFMediaSession, FALSE);
-
-    IUnknown_Release(unk);
-
-    hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
-    ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);
-
-    hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control);
-    ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
-
-    hr = MFGetService((IUnknown *)session, &MF_LOCAL_MFT_REGISTRATION_SERVICE, &IID_IMFLocalMFTRegistration, (void **)&unk);
-    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Vista */, "Failed to get registration service, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
-
-    hr = IMFRateSupport_QueryInterface(rate_support, &IID_IMFMediaSession, (void **)&unk);
-    ok(hr == S_OK, "Failed to get session interface, hr %#x.\n", hr);
-    ok(unk == (IUnknown *)session, "Unexpected pointer.\n");
-    IUnknown_Release(unk);
-
-    hr = IMFRateControl_GetRate(rate_control, NULL, NULL);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
-
-    rate = 0.0f;
-    hr = IMFRateControl_GetRate(rate_control, NULL, &rate);
-    ok(hr == S_OK, "Failed to get playback rate, hr %#x.\n", hr);
-    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
-
-    hr = IMFRateControl_GetRate(rate_control, &thin, NULL);
-    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
-
-    thin = TRUE;
-    rate = 0.0f;
-    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
-    ok(hr == S_OK, "Failed to get playback rate, hr %#x.\n", hr);
-    ok(!thin, "Unexpected thinning.\n");
-    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
-
-    hr = IMFMediaSession_GetClock(session, &clock);
-    ok(hr == S_OK, "Failed to get clock, hr %#x.\n", hr);
-
-    check_interface(clock, &IID_IMFPresentationClock, TRUE);
-
-    hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control2);
-    ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
-
-    rate = 0.0f;
-    hr = IMFRateControl_GetRate(rate_control2, NULL, &rate);
-    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
-    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
-
-    hr = IMFRateControl_SetRate(rate_control, FALSE, 1.5f);
-todo_wine
-    ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
-
-    IMFRateControl_Release(rate_control2);
-
-    hr = IMFClock_GetProperties(clock, &clock_props);
-    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
-    IMFClock_Release(clock);
-
-    IMFRateControl_Release(rate_control);
-    IMFRateSupport_Release(rate_support);
-
-    IMFMediaSession_Release(session);
-
-    hr = MFCreateMediaSession(NULL, &session);
-    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+    check_interface(session, &IID_IMFLocalMFTRegistration, FALSE);
+    check_service_interface(session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, TRUE);
+    check_service_interface(session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, TRUE);
+    check_service_interface(session, &MF_TOPONODE_ATTRIBUTE_EDITOR_SERVICE, &IID_IMFTopologyNodeAttributeEditor, TRUE);
+    check_service_interface(session, &MF_LOCAL_MFT_REGISTRATION_SERVICE, &IID_IMFLocalMFTRegistration, TRUE);
 
     hr = IMFMediaSession_GetClock(session, &clock);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1352,6 +1281,103 @@ todo_wine
     ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
 
     test_session_events(session);
+
+    IMFMediaSession_Release(session);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
+}
+
+static void test_media_session_rate_control(void)
+{
+    IMFRateControl *rate_control, *clock_rate_control;
+    IMFPresentationClock *presentation_clock;
+    IMFPresentationTimeSource *time_source;
+    MFCLOCK_PROPERTIES clock_props;
+    IMFRateSupport *rate_support;
+    IMFMediaSession *session;
+    IMFClock *clock;
+    HRESULT hr;
+    float rate;
+    BOOL thin;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+
+    hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
+    ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);
+
+    hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control);
+    ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
+
+    hr = IMFRateControl_GetRate(rate_control, NULL, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(rate_control, NULL, &rate);
+    ok(hr == S_OK, "Failed to get playback rate, hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateControl_GetRate(rate_control, &thin, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    thin = TRUE;
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
+    ok(hr == S_OK, "Failed to get playback rate, hr %#x.\n", hr);
+    ok(!thin, "Unexpected thinning.\n");
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFMediaSession_GetClock(session, &clock);
+    ok(hr == S_OK, "Failed to get clock, hr %#x.\n", hr);
+
+    hr = IMFClock_QueryInterface(clock, &IID_IMFPresentationClock, (void **)&presentation_clock);
+    ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
+
+    hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&clock_rate_control);
+    ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
+
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(clock_rate_control, NULL, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateControl_SetRate(clock_rate_control, FALSE, 1.5f);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 1.5f);
+todo_wine
+    ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
+
+    hr = IMFClock_GetProperties(clock, &clock_props);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSystemTimeSource(&time_source);
+    ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_SetTimeSource(presentation_clock, time_source);
+    ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
+
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 1.5f);
+todo_wine
+    ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
+
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(clock_rate_control, NULL, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    IMFPresentationTimeSource_Release(time_source);
+
+    IMFRateControl_Release(clock_rate_control);
+    IMFPresentationClock_Release(presentation_clock);
+    IMFClock_Release(clock);
+
+    IMFRateControl_Release(rate_control);
+    IMFRateSupport_Release(rate_support);
 
     IMFMediaSession_Release(session);
 
@@ -2563,6 +2589,19 @@ static void test_presentation_clock(void)
     ok(hr == S_OK, "Failed to get clock properties, hr %#x.\n", hr);
     ok(!memcmp(&props, &props2, sizeof(props)), "Unexpected clock properties.\n");
 
+    /* Changing rate at initial state. */
+    hr = IMFPresentationClock_GetState(clock, 0, &state);
+    ok(hr == S_OK, "Failed to get clock state, hr %#x.\n", hr);
+    ok(state == MFCLOCK_STATE_INVALID, "Unexpected state %d.\n", state);
+
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 0.0f);
+    ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
+    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate.\n");
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 1.0f);
+    ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
+
     /* State changes. */
     for (i = 0; i < ARRAY_SIZE(clock_state_change); ++i)
     {
@@ -2641,6 +2680,10 @@ static void test_presentation_clock(void)
     hr = IMFRateControl_SetRate(rate_control, FALSE, 0.5f);
     ok(hr == S_OK, "Failed to set clock rate, hr %#x.\n", hr);
     hr = IMFRateControl_SetRate(rate_control, TRUE, -1.0f);
+    ok(hr == MF_E_THINNING_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+    hr = IMFRateControl_SetRate(rate_control, TRUE, 0.0f);
+    ok(hr == MF_E_THINNING_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
+    hr = IMFRateControl_SetRate(rate_control, TRUE, 1.0f);
     ok(hr == MF_E_THINNING_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPresentationClock_GetState(clock, 0, &state);
@@ -5355,6 +5398,7 @@ START_TEST(mf)
     test_MFGetService();
     test_sequencer_source();
     test_media_session();
+    test_media_session_rate_control();
     test_MFShutdownObject();
     test_presentation_clock();
     test_sample_grabber();
