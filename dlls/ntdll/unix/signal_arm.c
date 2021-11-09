@@ -51,6 +51,10 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
+#ifdef HAVE_LIBUNWIND
+# define UNW_LOCAL_ONLY
+# include <libunwind.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -217,13 +221,96 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
             (char *)SP_sig(sigcontext) <= (char *)arm_thread_data()->syscall_frame);
 }
 
+extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher );
 
 /***********************************************************************
  *           unwind_builtin_dll
  */
 NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
-    return STATUS_UNSUCCESSFUL;
+#ifdef HAVE_LIBUNWIND
+    DWORD ip = context->Pc;
+    unw_context_t unw_context;
+    unw_cursor_t cursor;
+    unw_proc_info_t info;
+    int rc, i;
+
+    for (i = 0; i <= 12; i++)
+        unw_context.regs[i] = (&context->R0)[i];
+    unw_context.regs[13] = context->Sp;
+    unw_context.regs[14] = context->Lr;
+    unw_context.regs[15] = context->Pc;
+    rc = unw_init_local( &cursor, &unw_context );
+
+    if (rc != UNW_ESUCCESS)
+    {
+        WARN( "setup failed: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    rc = unw_get_proc_info( &cursor, &info );
+    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
+    {
+        WARN( "failed to get info: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
+    {
+        TRACE( "no info found for %x ip %x-%x, assuming leaf function\n",
+               ip, info.start_ip, info.end_ip );
+        dispatch->LanguageHandler = NULL;
+        dispatch->EstablisherFrame = context->Sp;
+        context->Pc = context->Lr;
+        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+        return STATUS_SUCCESS;
+    }
+
+    TRACE( "ip %#x function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
+           ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
+           (unsigned long)info.lsda, (unsigned long)info.unwind_info );
+
+    rc = unw_step( &cursor );
+    if (rc < 0)
+    {
+        WARN( "failed to unwind: %d %d\n", rc, UNW_ENOINFO );
+        return STATUS_INVALID_DISPOSITION;
+    }
+
+    dispatch->LanguageHandler  = (void *)info.handler;
+    dispatch->HandlerData      = (void *)info.lsda;
+    dispatch->EstablisherFrame = context->Sp;
+
+    for (i = 0; i <= 12; i++)
+        unw_get_reg( &cursor, UNW_ARM_R0 + i, (unw_word_t *)&(&context->R0)[i] );
+    unw_get_reg( &cursor, UNW_ARM_R13, (unw_word_t *)&context->Sp );
+    unw_get_reg( &cursor, UNW_ARM_R14, (unw_word_t *)&context->Lr );
+    unw_get_reg( &cursor, UNW_REG_IP,  (unw_word_t *)&context->Pc );
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+
+    if ((info.start_ip & ~(unw_word_t)1) ==
+        ((unw_word_t)raise_func_trampoline & ~(unw_word_t)1)) {
+        /* raise_func_trampoline stores the original Lr at the bottom of the
+         * stack. The unwinder normally can't restore both Pc and Lr to
+         * individual values, thus do that manually here.
+         * (The function we unwind to might be a leaf function that hasn't
+         * backed up its own original Lr value on the stack.) */
+        const DWORD *orig_lr = (const DWORD *) dispatch->EstablisherFrame;
+        context->Lr = *orig_lr;
+    }
+
+    TRACE( "next function pc=%08x%s\n", context->Pc, rc ? "" : " (last frame)" );
+    TRACE("  r0=%08x  r1=%08x  r2=%08x  r3=%08x\n",
+          context->R0, context->R1, context->R2, context->R3 );
+    TRACE("  r4=%08x  r5=%08x  r6=%08x  r7=%08x\n",
+          context->R4, context->R5, context->R6, context->R7 );
+    TRACE("  r8=%08x  r9=%08x r10=%08x r11=%08x\n",
+          context->R8, context->R9, context->R10, context->R11 );
+    TRACE(" r12=%08x  sp=%08x  lr=%08x  pc=%08x\n",
+          context->R12, context->Sp, context->Lr, context->Pc );
+    return STATUS_SUCCESS;
+#else
+    ERR("libunwind not available, unable to unwind\n");
+    return STATUS_INVALID_DISPOSITION;
+#endif
 }
 
 
@@ -467,6 +554,20 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 }
 
 
+__ASM_GLOBAL_FUNC( raise_func_trampoline,
+                   "push {r12,lr}\n\t" /* (Padding +) Pc in the original frame */
+                   "ldr r3, [r1, #0x38]\n\t" /* context->Sp */
+                   "push {r3}\n\t" /* Original Sp */
+                   __ASM_CFI(".cfi_escape 0x0f,0x03,0x7D,0x04,0x06\n\t") /* CFA, DW_OP_breg13 + 0x04, DW_OP_deref */
+                   __ASM_CFI(".cfi_escape 0x10,0x0e,0x02,0x7D,0x0c\n\t") /* LR, DW_OP_breg13 + 0x0c */
+                   /* We can't express restoring both Pc and Lr with CFI
+                    * directives, but we manually load Lr from the stack
+                    * in unwind_builtin_dll above. */
+                   "ldr r3, [r1, #0x3c]\n\t" /* context->Lr */
+                   "push {r3}\n\t" /* Original Lr */
+                   "blx r2\n\t"
+                   "udf #0")
+
 /***********************************************************************
  *           setup_exception
  *
@@ -500,11 +601,13 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
     /* now modify the sigcontext to return to the raise function */
     SP_sig(sigcontext) = (DWORD)stack;
-    PC_sig(sigcontext) = (DWORD)pKiUserExceptionDispatcher;
+    LR_sig(sigcontext) = context.Pc;
+    PC_sig(sigcontext) = (DWORD)raise_func_trampoline;
     if (PC_sig(sigcontext) & 1) CPSR_sig(sigcontext) |= 0x20;
     else CPSR_sig(sigcontext) &= ~0x20;
     REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for KiUserExceptionDispatcher */
     REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for KiUserExceptionDispatcher */
+    REGn_sig(2, sigcontext) = (DWORD)pKiUserExceptionDispatcher;
 }
 
 
