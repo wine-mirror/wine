@@ -811,6 +811,7 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                     "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
                     "ldr r0, [sp, #0x1a0]\n\t" /* rec */
                     "ldr r1, [sp, #0x1a4]\n\t"
+                    "str r1, [sp, #0x3c]\n\t"  /* context->Lr */
                     "str r1, [sp, #0x40]\n\t"  /* context->Pc */
                     "mrs r2, CPSR\n\t"
                     "bfi r2, r1, #5, #1\n\t"   /* Thumb bit */
