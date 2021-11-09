@@ -2144,13 +2144,13 @@ msgstr "Megfelelőségi feltétel="
 
 #: dlls/crypt32/crypt32.rc:222 dlls/cryptui/cryptui.rc:166
 #: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:94
-#: programs/ipconfig/ipconfig.rc:47
+#: programs/ipconfig/ipconfig.rc:48
 msgid "Yes"
 msgstr "Igen"
 
 #: dlls/crypt32/crypt32.rc:223 dlls/cryptui/cryptui.rc:167
 #: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:95
-#: programs/ipconfig/ipconfig.rc:48
+#: programs/ipconfig/ipconfig.rc:49
 msgid "No"
 msgstr "Nem"
 
@@ -2770,7 +2770,7 @@ msgid "Friendly name"
 msgstr "Keresztnév"
 
 #: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:240
-#: programs/ipconfig/ipconfig.rc:44
+#: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "Leírás"
 
@@ -15157,47 +15157,51 @@ msgstr "IP cím"
 msgid "Hostname"
 msgstr "Kiszolgálónév"
 
-#: programs/ipconfig/ipconfig.rc:38
+#: programs/ipconfig/ipconfig.rc:39
 msgid "Node type"
 msgstr "Csomópont típus"
 
-#: programs/ipconfig/ipconfig.rc:39
+#: programs/ipconfig/ipconfig.rc:40
 msgid "Broadcast"
 msgstr "Üzenetszórt"
 
-#: programs/ipconfig/ipconfig.rc:40
+#: programs/ipconfig/ipconfig.rc:41
 msgid "Peer-to-peer"
 msgstr "Egyenrangú"
 
-#: programs/ipconfig/ipconfig.rc:41
+#: programs/ipconfig/ipconfig.rc:42
 msgid "Mixed"
 msgstr "Kevert"
 
-#: programs/ipconfig/ipconfig.rc:42
+#: programs/ipconfig/ipconfig.rc:43
 msgid "Hybrid"
 msgstr "Hibrid"
 
-#: programs/ipconfig/ipconfig.rc:43
+#: programs/ipconfig/ipconfig.rc:44
 msgid "IP routing enabled"
 msgstr "IP útvonalirányítás engedélyezett"
 
-#: programs/ipconfig/ipconfig.rc:45
+#: programs/ipconfig/ipconfig.rc:46
 msgid "Physical address"
 msgstr "IP cím"
 
-#: programs/ipconfig/ipconfig.rc:46
+#: programs/ipconfig/ipconfig.rc:47
 msgid "DHCP enabled"
 msgstr "DHCP engedélyezett"
 
-#: programs/ipconfig/ipconfig.rc:49
+#: programs/ipconfig/ipconfig.rc:50
 msgid "Default gateway"
 msgstr "Alapértelmezett átjáró"
 
-#: programs/ipconfig/ipconfig.rc:50
+#: programs/ipconfig/ipconfig.rc:51
 #, fuzzy
 #| msgid "IP address"
 msgid "IPv6 address"
 msgstr "IP cím"
+
+#: programs/ipconfig/ipconfig.rc:38
+msgid "Primary DNS suffix"
+msgstr ""
 
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy

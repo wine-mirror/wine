@@ -42,3 +42,4 @@
 #define STRING_NO               119
 #define STRING_DEFAULT_GATEWAY  120
 #define STRING_IP6_ADDRESS      121
+#define STRING_PRIMARY_DNS_SUFFIX 122

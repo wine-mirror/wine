@@ -2109,13 +2109,13 @@ msgstr "Täyttää vaatimukset="
 
 #: dlls/crypt32/crypt32.rc:222 dlls/cryptui/cryptui.rc:166
 #: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:94
-#: programs/ipconfig/ipconfig.rc:47
+#: programs/ipconfig/ipconfig.rc:48
 msgid "Yes"
 msgstr "Kyllä"
 
 #: dlls/crypt32/crypt32.rc:223 dlls/cryptui/cryptui.rc:167
 #: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:95
-#: programs/ipconfig/ipconfig.rc:48
+#: programs/ipconfig/ipconfig.rc:49
 msgid "No"
 msgstr "Ei"
 
@@ -2722,7 +2722,7 @@ msgid "Friendly name"
 msgstr "Näyttönimi"
 
 #: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:240
-#: programs/ipconfig/ipconfig.rc:44
+#: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "Kuvaus"
 
@@ -14309,45 +14309,49 @@ msgstr "IPv4-osoite"
 msgid "Hostname"
 msgstr "Isäntänimi"
 
-#: programs/ipconfig/ipconfig.rc:38
+#: programs/ipconfig/ipconfig.rc:39
 msgid "Node type"
 msgstr "Solmun tyyppi"
 
-#: programs/ipconfig/ipconfig.rc:39
+#: programs/ipconfig/ipconfig.rc:40
 msgid "Broadcast"
 msgstr "Yleislähetys"
 
-#: programs/ipconfig/ipconfig.rc:40
+#: programs/ipconfig/ipconfig.rc:41
 msgid "Peer-to-peer"
 msgstr "Vertaisverkko"
 
-#: programs/ipconfig/ipconfig.rc:41
+#: programs/ipconfig/ipconfig.rc:42
 msgid "Mixed"
 msgstr "Sekamuotoinen"
 
-#: programs/ipconfig/ipconfig.rc:42
+#: programs/ipconfig/ipconfig.rc:43
 msgid "Hybrid"
 msgstr "Hybridi"
 
-#: programs/ipconfig/ipconfig.rc:43
+#: programs/ipconfig/ipconfig.rc:44
 msgid "IP routing enabled"
 msgstr "IP-reititys käytössä"
 
-#: programs/ipconfig/ipconfig.rc:45
+#: programs/ipconfig/ipconfig.rc:46
 msgid "Physical address"
 msgstr "Fyysinen osoite"
 
-#: programs/ipconfig/ipconfig.rc:46
+#: programs/ipconfig/ipconfig.rc:47
 msgid "DHCP enabled"
 msgstr "DHCP käytössä"
 
-#: programs/ipconfig/ipconfig.rc:49
+#: programs/ipconfig/ipconfig.rc:50
 msgid "Default gateway"
 msgstr "Oletusyhdyskäytävä"
 
-#: programs/ipconfig/ipconfig.rc:50
+#: programs/ipconfig/ipconfig.rc:51
 msgid "IPv6 address"
 msgstr "IPv6-osoite"
+
+#: programs/ipconfig/ipconfig.rc:38
+msgid "Primary DNS suffix"
+msgstr ""
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

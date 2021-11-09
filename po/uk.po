@@ -2120,13 +2120,13 @@ msgstr "Відповідає критеріям="
 
 #: dlls/crypt32/crypt32.rc:222 dlls/cryptui/cryptui.rc:166
 #: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:94
-#: programs/ipconfig/ipconfig.rc:47
+#: programs/ipconfig/ipconfig.rc:48
 msgid "Yes"
 msgstr "Так"
 
 #: dlls/crypt32/crypt32.rc:223 dlls/cryptui/cryptui.rc:167
 #: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:95
-#: programs/ipconfig/ipconfig.rc:48
+#: programs/ipconfig/ipconfig.rc:49
 msgid "No"
 msgstr "Ні"
 
@@ -2738,7 +2738,7 @@ msgid "Friendly name"
 msgstr "Дружня назва"
 
 #: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:240
-#: programs/ipconfig/ipconfig.rc:44
+#: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "Опис"
 
@@ -14603,45 +14603,49 @@ msgstr "IPv4-адреса"
 msgid "Hostname"
 msgstr "Ім'я хосту"
 
-#: programs/ipconfig/ipconfig.rc:38
+#: programs/ipconfig/ipconfig.rc:39
 msgid "Node type"
 msgstr "Тип вузла"
 
-#: programs/ipconfig/ipconfig.rc:39
+#: programs/ipconfig/ipconfig.rc:40
 msgid "Broadcast"
 msgstr "Передача"
 
-#: programs/ipconfig/ipconfig.rc:40
+#: programs/ipconfig/ipconfig.rc:41
 msgid "Peer-to-peer"
 msgstr ""
 
-#: programs/ipconfig/ipconfig.rc:41
+#: programs/ipconfig/ipconfig.rc:42
 msgid "Mixed"
 msgstr "Змішаний"
 
-#: programs/ipconfig/ipconfig.rc:42
+#: programs/ipconfig/ipconfig.rc:43
 msgid "Hybrid"
 msgstr "Гібрид"
 
-#: programs/ipconfig/ipconfig.rc:43
+#: programs/ipconfig/ipconfig.rc:44
 msgid "IP routing enabled"
 msgstr "IP-маршрутизація включена"
 
-#: programs/ipconfig/ipconfig.rc:45
+#: programs/ipconfig/ipconfig.rc:46
 msgid "Physical address"
 msgstr "Фізична адреса"
 
-#: programs/ipconfig/ipconfig.rc:46
+#: programs/ipconfig/ipconfig.rc:47
 msgid "DHCP enabled"
 msgstr "DHCP ввімкнено"
 
-#: programs/ipconfig/ipconfig.rc:49
+#: programs/ipconfig/ipconfig.rc:50
 msgid "Default gateway"
 msgstr "Шлюз за замовчуванням"
 
-#: programs/ipconfig/ipconfig.rc:50
+#: programs/ipconfig/ipconfig.rc:51
 msgid "IPv6 address"
 msgstr "IPv6-адреса"
+
+#: programs/ipconfig/ipconfig.rc:38
+msgid "Primary DNS suffix"
+msgstr ""
 
 #: programs/msinfo32/msinfo32.rc:28
 #, fuzzy

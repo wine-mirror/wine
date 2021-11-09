@@ -2117,13 +2117,13 @@ msgstr "Atitinka kriterijus="
 
 #: dlls/crypt32/crypt32.rc:222 dlls/cryptui/cryptui.rc:166
 #: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:94
-#: programs/ipconfig/ipconfig.rc:47
+#: programs/ipconfig/ipconfig.rc:48
 msgid "Yes"
 msgstr "Taip"
 
 #: dlls/crypt32/crypt32.rc:223 dlls/cryptui/cryptui.rc:167
 #: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:95
-#: programs/ipconfig/ipconfig.rc:48
+#: programs/ipconfig/ipconfig.rc:49
 msgid "No"
 msgstr "Ne"
 
@@ -2733,7 +2733,7 @@ msgid "Friendly name"
 msgstr "Draugiškas vardas"
 
 #: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:240
-#: programs/ipconfig/ipconfig.rc:44
+#: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "Aprašas"
 
@@ -14341,45 +14341,49 @@ msgstr "IPv4 adresas"
 msgid "Hostname"
 msgstr "Kompiuterio vardas"
 
-#: programs/ipconfig/ipconfig.rc:38
+#: programs/ipconfig/ipconfig.rc:39
 msgid "Node type"
 msgstr "Mazgo tipas"
 
-#: programs/ipconfig/ipconfig.rc:39
+#: programs/ipconfig/ipconfig.rc:40
 msgid "Broadcast"
 msgstr "Transliavimas"
 
-#: programs/ipconfig/ipconfig.rc:40
+#: programs/ipconfig/ipconfig.rc:41
 msgid "Peer-to-peer"
 msgstr "Lygiarangis"
 
-#: programs/ipconfig/ipconfig.rc:41
+#: programs/ipconfig/ipconfig.rc:42
 msgid "Mixed"
 msgstr "Maišytas"
 
-#: programs/ipconfig/ipconfig.rc:42
+#: programs/ipconfig/ipconfig.rc:43
 msgid "Hybrid"
 msgstr "Mišrusis"
 
-#: programs/ipconfig/ipconfig.rc:43
+#: programs/ipconfig/ipconfig.rc:44
 msgid "IP routing enabled"
 msgstr "IP maršruto parinkimas įjungtas"
 
-#: programs/ipconfig/ipconfig.rc:45
+#: programs/ipconfig/ipconfig.rc:46
 msgid "Physical address"
 msgstr "Fizinis adresas"
 
-#: programs/ipconfig/ipconfig.rc:46
+#: programs/ipconfig/ipconfig.rc:47
 msgid "DHCP enabled"
 msgstr "DHCP įjungta"
 
-#: programs/ipconfig/ipconfig.rc:49
+#: programs/ipconfig/ipconfig.rc:50
 msgid "Default gateway"
 msgstr "Numatytasis šliuzas"
 
-#: programs/ipconfig/ipconfig.rc:50
+#: programs/ipconfig/ipconfig.rc:51
 msgid "IPv6 address"
 msgstr "IPv6 adresas"
+
+#: programs/ipconfig/ipconfig.rc:38
+msgid "Primary DNS suffix"
+msgstr ""
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"

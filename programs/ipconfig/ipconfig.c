@@ -277,11 +277,13 @@ static void print_full_information(void)
         if (GetNetworkParams(info, &out) == ERROR_SUCCESS)
         {
             WCHAR hostnameW[MAX_HOSTNAME_LEN + 4];
+            WCHAR dnssuffixW[MAX_DOMAIN_NAME_LEN + 4];
 
             MultiByteToWideChar(CP_ACP, 0, info->HostName, -1, hostnameW, ARRAY_SIZE(hostnameW));
             print_field(STRING_HOSTNAME, hostnameW);
 
-            /* FIXME: Output primary DNS suffix. */
+            MultiByteToWideChar(CP_ACP, 0, info->DomainName, -1, dnssuffixW, ARRAY_SIZE(dnssuffixW));
+            print_field(STRING_PRIMARY_DNS_SUFFIX, dnssuffixW);
 
             print_field(STRING_NODE_TYPE, nodetype_to_string(info->NodeType));
             print_field(STRING_IP_ROUTING, boolean_to_string(info->EnableRouting));

@@ -34,6 +34,7 @@ STRINGTABLE
     STRING_CONN_DNS_SUFFIX, "Connection-specific DNS suffix"
     STRING_IP_ADDRESS, "IPv4 address"
     STRING_HOSTNAME, "Hostname"
+    STRING_PRIMARY_DNS_SUFFIX, "Primary DNS suffix"
     STRING_NODE_TYPE, "Node type"
     STRING_BROADCAST, "Broadcast"
     STRING_PEER_TO_PEER, "Peer-to-peer"
