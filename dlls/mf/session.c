@@ -1637,23 +1637,34 @@ static HRESULT WINAPI mfsession_QueryInterface(IMFMediaSession *iface, REFIID ri
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
+    *out = NULL;
+
     if (IsEqualIID(riid, &IID_IMFMediaSession) ||
             IsEqualIID(riid, &IID_IMFMediaEventGenerator) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *out = &session->IMFMediaSession_iface;
-        IMFMediaSession_AddRef(iface);
-        return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IMFGetService))
     {
         *out = &session->IMFGetService_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFRateSupport))
+    {
+        *out = &session->IMFRateSupport_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFRateControl))
+    {
+        *out = &session->IMFRateControl_iface;
+    }
+
+    if (*out)
+    {
         IMFMediaSession_AddRef(iface);
         return S_OK;
     }
 
-    WARN("Unsupported %s.\n", debugstr_guid(riid));
-    *out = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 

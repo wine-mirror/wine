@@ -1181,8 +1181,8 @@ static void test_media_session(void)
     ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
 
     check_interface(session, &IID_IMFGetService, TRUE);
-    todo_wine check_interface(session, &IID_IMFRateSupport, TRUE);
-    todo_wine check_interface(session, &IID_IMFRateControl, TRUE);
+    check_interface(session, &IID_IMFRateSupport, TRUE);
+    check_interface(session, &IID_IMFRateControl, TRUE);
     check_interface(session, &IID_IMFAttributes, FALSE);
     check_interface(session, &IID_IMFTopologyNodeAttributeEditor, FALSE);
     check_interface(session, &IID_IMFLocalMFTRegistration, FALSE);
