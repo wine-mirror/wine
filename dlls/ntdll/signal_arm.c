@@ -75,6 +75,10 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "str r1, [r0, #0x3c]\n\t"  /* context->Lr */
                     "add r0, #0x0c\n\t"
                     "stm r0, {r2-r12}\n\t"     /* context->R2..R12 */
+#ifndef __SOFTFP__
+                    "add r0, #0x44\n\t"        /* 0x50 - 0x0c */
+                    "vstm r0, {d0-d15}\n\t"    /* context->D0-D15 */
+#endif
                     "bx lr" )
 
 
