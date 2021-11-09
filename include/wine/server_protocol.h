@@ -470,8 +470,7 @@ enum apc_type
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
     APC_CREATE_THREAD,
-    APC_DUP_HANDLE,
-    APC_BREAK_PROCESS
+    APC_DUP_HANDLE
 };
 
 typedef struct
@@ -6263,7 +6262,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 735
+#define SERVER_PROTOCOL_VERSION 736
 
 /* ### protocol_version end ### */
 

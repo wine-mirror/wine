@@ -552,5 +552,12 @@ void WINAPI DbgUiRemoteBreakin( void *arg )
  */
 NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
 {
-    return unix_funcs->DbgUiIssueRemoteBreakin( process );
+    HANDLE handle;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+
+    status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, &attr, process,
+                               DbgUiRemoteBreakin, NULL, 0, 0, 0, 0, NULL );
+    if (!status) NtClose( handle );
+    return status;
 }

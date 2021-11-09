@@ -237,9 +237,6 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
                  call->dup_handle.src_handle, call->dup_handle.dst_process, call->dup_handle.access,
                  call->dup_handle.attributes, call->dup_handle.options );
         break;
-    case APC_BREAK_PROCESS:
-        fprintf( stderr, "APC_BREAK_PROCESS" );
-        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -323,9 +320,6 @@ static void dump_apc_result( const char *prefix, const apc_result_t *result )
     case APC_DUP_HANDLE:
         fprintf( stderr, "APC_DUP_HANDLE,status=%s,handle=%04x",
                  get_status_name( result->dup_handle.status ), result->dup_handle.handle );
-        break;
-    case APC_BREAK_PROCESS:
-        fprintf( stderr, "APC_BREAK_PROCESS,status=%s", get_status_name( result->break_process.status ) );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );

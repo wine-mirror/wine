@@ -1734,7 +1734,6 @@ DECL_HANDLER(queue_apc)
         }
         break;
     case APC_CREATE_THREAD:
-    case APC_BREAK_PROCESS:
         process = get_process_from_handle( req->handle, PROCESS_CREATE_THREAD );
         break;
     case APC_DUP_HANDLE:

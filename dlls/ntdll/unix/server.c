@@ -574,17 +574,6 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         if (!self) NtClose( wine_server_ptr_handle(call->dup_handle.dst_process) );
         break;
     }
-    case APC_BREAK_PROCESS:
-    {
-        HANDLE handle;
-
-        result->type = APC_BREAK_PROCESS;
-        result->break_process.status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL,
-                                                         NtCurrentProcess(), pDbgUiRemoteBreakin, NULL,
-                                                         0, 0, 0, 0, NULL );
-        if (!result->break_process.status) NtClose( handle );
-        break;
-    }
     default:
         server_protocol_error( "get_apc_request: bad type %d\n", call->type );
         break;
@@ -1636,23 +1625,6 @@ void server_init_thread( void *entry_point, BOOL *suspend )
     }
     SERVER_END_REQ;
     close( reply_pipe );
-}
-
-
-/***********************************************************************
- *           DbgUiIssueRemoteBreakin
- */
-NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
-{
-    apc_call_t call;
-    apc_result_t result;
-    NTSTATUS status;
-
-    memset( &call, 0, sizeof(call) );
-    call.type = APC_BREAK_PROCESS;
-    status = server_queue_process_apc( process, &call, &result );
-    if (status) return status;
-    return result.break_process.status;
 }
 
 

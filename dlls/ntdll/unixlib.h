@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 127
+#define NTDLL_UNIXLIB_VERSION 128
 
 struct unix_funcs
 {
@@ -36,7 +36,6 @@ struct unix_funcs
 #endif
 
     /* other Win32 API functions */
-    NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );
     LONGLONG      (WINAPI *RtlGetSystemTimePrecise)(void);
     NTSTATUS      (WINAPI *RtlWaitOnAddress)( const void *addr, const void *cmp, SIZE_T size,
                                               const LARGE_INTEGER *timeout );

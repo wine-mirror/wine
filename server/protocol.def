@@ -486,8 +486,7 @@ enum apc_type
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
     APC_CREATE_THREAD,
-    APC_DUP_HANDLE,
-    APC_BREAK_PROCESS
+    APC_DUP_HANDLE
 };
 
 typedef struct
