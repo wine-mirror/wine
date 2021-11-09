@@ -2107,6 +2107,7 @@ struct wined3d_shader_signature_element
     enum wined3d_component_type component_type;
     unsigned int register_idx;
     DWORD mask;
+    unsigned int min_precision;
 };
 
 struct wined3d_shader_signature
