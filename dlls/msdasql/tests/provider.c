@@ -31,6 +31,7 @@
 
 #include "wine/test.h"
 
+DEFINE_GUID(DBPROPSET_DATASOURCEINFO, 0xc8b522bb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 DEFINE_GUID(DBPROPSET_DBINITALL, 0xc8b522ca, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
@@ -72,9 +73,14 @@ static void test_Properties(void)
     HRESULT hr;
     IDBProperties *props;
     DBPROPIDSET propidset;
+    DBPROPID propid;
     ULONG infocount;
     DBPROPINFOSET *propinfoset;
+    DBPROPIDSET propidlist;
+    DBPROPSET *propset;
     WCHAR *desc;
+    ULONG propcnt;
+    ULONG i;
     DBPROPID properties[14] =
     {
         DBPROP_AUTH_PASSWORD, DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROP_AUTH_USERID,
@@ -97,10 +103,6 @@ static void test_Properties(void)
     if (hr == S_OK)
     {
         VARTYPE types[14] = { VT_BSTR, VT_BOOL, VT_BSTR, VT_BSTR, intptr_vartype, VT_BSTR, VT_I4, VT_I2 , VT_I4, VT_BSTR, VT_I4, VT_BSTR, VT_I4, VT_I4 };
-        ULONG i;
-        DBPROPIDSET propidlist;
-        ULONG propcnt;
-        DBPROPSET *propset;
 
         ok(IsEqualGUID(&propinfoset->guidPropertySet, &DBPROPSET_DBINIT), "got %s\n", debugstr_guid(&propinfoset->guidPropertySet));
         ok(propinfoset->cPropertyInfos == 14, "got %d\n", propinfoset->cPropertyInfos);
@@ -161,6 +163,22 @@ static void test_Properties(void)
         CoTaskMemFree(propidlist.rgPropertyIDs);
         CoTaskMemFree(propset);
     }
+
+    propid = DBPROP_MULTIPLERESULTS;
+    propidlist.rgPropertyIDs = &propid;
+    propidlist.cPropertyIDs = 1;
+    propidlist.guidPropertySet = DBPROPSET_DATASOURCEINFO;
+
+    propcnt = 0;
+    propset = NULL;
+    hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
+    ok(hr == DB_E_ERRORSOCCURRED, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&propset->guidPropertySet, &DBPROPSET_DATASOURCEINFO), "got %s\n", debugstr_guid(&propset->guidPropertySet));
+    ok(propset->cProperties == 1, "got %d\n", propset->cProperties);
+    ok(propset->rgProperties[0].dwPropertyID == DBPROP_MULTIPLERESULTS, "got %d\n", propset->rgProperties[0].dwPropertyID);
+    ok(propset->rgProperties[0].dwStatus == DBPROPSTATUS_NOTSUPPORTED, "got %d\n", propset->rgProperties[0].dwStatus);
+
+    CoTaskMemFree(propset);
 
     IDBProperties_Release(props);
 }
