@@ -3047,6 +3047,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
         break;
     default:
         ERR("-Unknown type info version %d\n", types.version);
+        return FALSE;
     }
 
     ctp->module = msc_dbg->module;
@@ -3324,6 +3325,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         BYTE*       file;
         int         header_size = 0;
         PDB_STREAM_INDEXES* psi;
+        BOOL        ipi_ok;
 
         pdb_convert_symbols_header(&symbols, &header_size, symbols_image);
         switch (symbols.version)
@@ -3363,7 +3365,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         pdb_process_types(msc_dbg, pdb_file);
 
         ipi_image = pdb_read_file(pdb_file, 4);
-        pdb_init_type_parse(msc_dbg, &ipi_ctp, ipi_image);
+        ipi_ok = pdb_init_type_parse(msc_dbg, &ipi_ctp, ipi_image);
 
         /* Read global symbol table */
         globalimage = pdb_read_file(pdb_file, symbols.gsym_file);
@@ -3387,7 +3389,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             modimage = pdb_read_file(pdb_file, sfile.file);
             if (modimage)
             {
-                struct cv_module_snarf cvmod = {&ipi_ctp, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
+                struct cv_module_snarf cvmod = {ipi_ok ? &ipi_ctp : NULL, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
                     files_image + 12, files_size};
                 codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size,
                                &cvmod, TRUE);
