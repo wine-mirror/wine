@@ -2239,7 +2239,8 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
 static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
 {
     struct attribute name;
-    ULONG_PTR low_pc, high_pc;
+    struct addr_range* addr_ranges;
+    unsigned num_addr_ranges;
     struct attribute is_decl;
     struct attribute inline_flags;
     struct symt* ret_type;
@@ -2276,7 +2277,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
         /* it's a real declaration, skip it */
         return NULL;
     }
-    if (!dwarf2_read_range(di->unit_ctx, di, &low_pc, &high_pc))
+    if ((addr_ranges = dwarf2_get_ranges(di, &num_addr_ranges)) == NULL)
     {
         WARN("cannot get range for %s\n", debugstr_a(name.u.string));
         return NULL;
@@ -2285,7 +2286,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
      * (not the case for stabs), we just drop Wine's thunks here...
      * Actual thunks will be created in elf_module from the symbol table
      */
-    if (elf_is_in_thunk_area(di->unit_ctx->module_ctx->load_offset + low_pc, di->unit_ctx->module_ctx->thunks) >= 0)
+    if (elf_is_in_thunk_area(di->unit_ctx->module_ctx->load_offset + addr_ranges[0].low, di->unit_ctx->module_ctx->thunks) >= 0)
         return NULL;
     ret_type = dwarf2_lookup_type(di);
 
@@ -2293,8 +2294,11 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
     sig_type = symt_new_function_signature(di->unit_ctx->module_ctx->module, ret_type, CV_CALL_FAR_C);
     subpgm.top_func = symt_new_function(di->unit_ctx->module_ctx->module, di->unit_ctx->compiland,
                                         dwarf2_get_cpp_name(di, name.u.string),
-                                        di->unit_ctx->module_ctx->load_offset + low_pc, high_pc - low_pc,
-                                        &sig_type->symt);
+                                        addr_ranges[0].low, addr_ranges[0].high - addr_ranges[0].low, &sig_type->symt);
+    if (num_addr_ranges > 1)
+        WARN("Function %s has multiple address ranges, only using the first one\n", name.u.string);
+    free(addr_ranges);
+
     subpgm.current_func = subpgm.top_func;
     di->symt = &subpgm.top_func->symt;
     subpgm.ctx = di->unit_ctx;
