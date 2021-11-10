@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-25 10:47+0300\n"
+"PO-Revision-Date: 2021-11-10 08:49+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14383,7 +14383,7 @@ msgstr "IPv6 adresas"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Pirminis DNS sufiksas"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
