@@ -95,7 +95,8 @@ struct video_mixer
     IMFAttributes *attributes;
     IMFAttributes *internal_attributes;
     unsigned int mixing_flags;
-    unsigned int is_streaming;
+    unsigned int is_streaming : 1;
+    unsigned int output_rendered : 1;
     struct
     {
         COLORREF rgba;
@@ -207,6 +208,20 @@ static void video_mixer_update_zorder_map(struct video_mixer *mixer)
     qsort(mixer->zorder, mixer->input_count, sizeof(*mixer->zorder), video_mixer_zorder_sort_compare);
 }
 
+static void video_mixer_flush_input(struct video_mixer *mixer)
+{
+    unsigned int i;
+
+    for (i = 0; i < mixer->input_count; ++i)
+    {
+        if (mixer->inputs[i].sample)
+            IMFSample_Release(mixer->inputs[i].sample);
+        mixer->inputs[i].sample = NULL;
+        mixer->inputs[i].sample_requested = 0;
+    }
+    mixer->output_rendered = 0;
+}
+
 static void video_mixer_clear_types(struct video_mixer *mixer)
 {
     unsigned int i;
@@ -216,10 +231,8 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
         if (mixer->inputs[i].media_type)
             IMFMediaType_Release(mixer->inputs[i].media_type);
         mixer->inputs[i].media_type = NULL;
-        if (mixer->inputs[i].sample)
-            IMFSample_Release(mixer->inputs[i].sample);
-        mixer->inputs[i].sample = NULL;
     }
+    video_mixer_flush_input(mixer);
     for (i = 0; i < mixer->output.rt_formats_count; ++i)
     {
         IMFMediaType_Release(mixer->output.rt_formats[i].media_type);
@@ -1129,17 +1142,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
         case MFT_MESSAGE_COMMAND_FLUSH:
 
             EnterCriticalSection(&mixer->cs);
-
-            for (i = 0; i < mixer->input_count; ++i)
-            {
-                if (mixer->inputs[i].sample)
-                {
-                    IMFSample_Release(mixer->inputs[i].sample);
-                    mixer->inputs[i].sample = NULL;
-                    mixer->inputs[i].sample_requested = 0;
-                }
-            }
-
+            video_mixer_flush_input(mixer);
             LeaveCriticalSection(&mixer->cs);
 
             break;
@@ -1189,10 +1192,12 @@ static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DW
     {
         if (!input->media_type || !mixer->output.media_type)
             hr = MF_E_TRANSFORM_TYPE_NOT_SET;
-        else if (input->sample)
+        else if (input->sample && !mixer->output_rendered)
             hr = MF_E_NOTACCEPTING;
         else
         {
+            if (input->sample && mixer->output_rendered)
+                video_mixer_flush_input(mixer);
             mixer->is_streaming = 1;
             input->sample_requested = 0;
             input->sample = sample;
@@ -1361,6 +1366,7 @@ static HRESULT video_mixer_get_sample_desired_time(IMFSample *sample, LONGLONG *
     IMFDesiredSample *desired;
     HRESULT hr;
 
+    *timestamp = *duration = 0;
     if (SUCCEEDED(hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&desired)))
     {
         hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired, timestamp, duration);
@@ -1370,6 +1376,18 @@ static HRESULT video_mixer_get_sample_desired_time(IMFSample *sample, LONGLONG *
     return hr;
 }
 
+static BOOL video_mixer_has_input(const struct video_mixer *mixer)
+{
+    unsigned int i;
+
+    for (i = 0; i < mixer->input_count; ++i)
+    {
+        if (!mixer->inputs[i].sample) return FALSE;
+    }
+
+    return TRUE;
+}
+
 static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
@@ -1377,6 +1395,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
     LONGLONG timestamp, duration;
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
+    BOOL repaint = FALSE;
     unsigned int i;
     HRESULT hr;
 
@@ -1396,14 +1415,19 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
     {
         if (mixer->is_streaming)
         {
-            for (i = 0; i < mixer->input_count; ++i)
+            /* Desired timestamp is ignored, duration is required to be non-zero but is not used either. */
+            if (SUCCEEDED(video_mixer_get_sample_desired_time(buffers->pSample, &timestamp, &duration)))
             {
-                if (!mixer->inputs[i].sample)
+                if (!(repaint = !!duration))
                 {
-                    hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
-                    break;
+                    WARN("Unexpected sample duration.\n");
+                    hr = E_INVALIDARG;
                 }
             }
+
+            /* Not enough input, or no new input. */
+            if (SUCCEEDED(hr) && (!video_mixer_has_input(mixer) || (!repaint && mixer->output_rendered)))
+                hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
 
             if (SUCCEEDED(hr))
             {
@@ -1412,22 +1436,17 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
                 timestamp = duration = 0;
                 if (SUCCEEDED(IMFSample_GetSampleTime(mixer->inputs[0].sample, &timestamp)))
                 {
-                    IMFSample_SetSampleTime(buffers->pSample, timestamp);
-
                     IMFSample_GetSampleDuration(mixer->inputs[0].sample, &duration);
+                    IMFSample_SetSampleTime(buffers->pSample, timestamp);
                     IMFSample_SetSampleDuration(buffers->pSample, duration);
                 }
+                mixer->output_rendered = 1;
             }
 
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr) && !repaint)
             {
                 for (i = 0; i < mixer->input_count; ++i)
-                {
-                    if (mixer->inputs[i].sample)
-                        IMFSample_Release(mixer->inputs[i].sample);
-                    mixer->inputs[i].sample = NULL;
                     video_mixer_request_sample(mixer, i);
-                }
             }
         }
         else
