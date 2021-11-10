@@ -6138,11 +6138,7 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         desc.dwFlags = DIEFF_POLAR;
         desc.cAxes = 1;
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-        if (i != 2)
-        {
-            todo_wine_if( i == 3 )
-            ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
-        }
+        if (i != 2) ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
         else ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
         desc.cAxes = 3;
         memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );

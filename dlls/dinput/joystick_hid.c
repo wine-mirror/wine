@@ -2063,14 +2063,14 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
         if (!direction_flags) return DIERR_INVALIDPARAM;
 
         count = params->cAxes = impl->params.cAxes;
-        if (capacity < params->cAxes) return DIERR_MOREDATA;
         if (!count) params->dwFlags &= ~(DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
+        if ((direction_flags & DIEFF_POLAR) && count != 2) return DIERR_INVALIDPARAM;
+        if (capacity < params->cAxes) return DIERR_MOREDATA;
 
         if (direction_flags & DIEFF_SPHERICAL)
             memcpy( directions, impl->params.rglDirection, count * sizeof(LONG) );
         else if (direction_flags & DIEFF_POLAR)
         {
-            if (count != 2) return DIERR_INVALIDPARAM;
             directions[0] = (impl->params.rglDirection[0] + 9000) % 36000;
             if (directions[0] < 0) directions[0] += 36000;
         }
