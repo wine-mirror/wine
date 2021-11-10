@@ -1307,7 +1307,6 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
 {
     unsigned int i;
     int          length;
-    char*        curr_func = NULL;
     int          nest_block = 0;
     /*
      * Loop over the different types of records and whenever we
@@ -1385,7 +1384,6 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    p_string(&sym->thunk_v1.p_name),
                    sym->thunk_v1.segment, sym->thunk_v1.offset,
                    sym->thunk_v1.thunk_len, sym->thunk_v1.thtype);
-            curr_func = xstrdup(p_string(&sym->thunk_v1.p_name));
 	    break;
 
 	case S_THUNK32:
@@ -1393,7 +1391,6 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->thunk_v3.name,
                    sym->thunk_v3.segment, sym->thunk_v3.offset,
                    sym->thunk_v3.thunk_len, sym->thunk_v3.thtype);
-            curr_func = xstrdup(sym->thunk_v3.name);
 	    break;
 
         /* Global and static functions */
@@ -1409,10 +1406,9 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v1.debug_start, sym->proc_v1.debug_end);
             if (nest_block)
             {
-                printf(">>> prev func '%s' still has nest_block %u count\n", curr_func, nest_block);
+                printf(">>> prev func still has nest_block %u count\n", nest_block);
                 nest_block = 0;
             }
-            curr_func = xstrdup(p_string(&sym->proc_v1.p_name));
 /* EPP 	unsigned int	pparent; */
 /* EPP 	unsigned int	pend; */
 /* EPP 	unsigned int	next; */
@@ -1430,10 +1426,9 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v2.debug_start, sym->proc_v2.debug_end);
             if (nest_block)
             {
-                printf(">>> prev func '%s' still has nest_block %u count\n", curr_func, nest_block);
+                printf(">>> prev func still has nest_block %u count\n", nest_block);
                 nest_block = 0;
             }
-            curr_func = xstrdup(p_string(&sym->proc_v2.p_name));
 /* EPP 	unsigned int	pparent; */
 /* EPP 	unsigned int	pend; */
 /* EPP 	unsigned int	next; */
@@ -1451,10 +1446,9 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v3.debug_start, sym->proc_v3.debug_end);
             if (nest_block)
             {
-                printf(">>> prev func '%s' still has nest_block %u count\n", curr_func, nest_block);
+                printf(">>> prev func still has nest_block %u count\n", nest_block);
                 nest_block = 0;
             }
-            curr_func = xstrdup(sym->proc_v3.name);
 /* EPP 	unsigned int	pparent; */
 /* EPP 	unsigned int	pend; */
 /* EPP 	unsigned int	next; */
@@ -1462,59 +1456,57 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
 
         /* Function parameters and stack variables */
 	case S_BPREL32_16t:
-            printf("BP-relative V1: '%s' @%d type:%x (%s)\n",
+            printf("BP-relative V1: '%s' @%d type:%x\n",
                    p_string(&sym->stack_v1.p_name),
-                   sym->stack_v1.offset, sym->stack_v1.symtype, curr_func);
+                   sym->stack_v1.offset, sym->stack_v1.symtype);
             break;
 
 	case S_BPREL32_ST:
-            printf("BP-relative V2: '%s' @%d type:%x (%s)\n",
+            printf("BP-relative V2: '%s' @%d type:%x\n",
                    p_string(&sym->stack_v2.p_name),
-                   sym->stack_v2.offset, sym->stack_v2.symtype, curr_func);
+                   sym->stack_v2.offset, sym->stack_v2.symtype);
             break;
 
         case S_BPREL32:
-            printf("BP-relative V3: '%s' @%d type:%x (in %s)\n",
+            printf("BP-relative V3: '%s' @%d type:%x\n",
                    sym->stack_v3.name, sym->stack_v3.offset,
-                   sym->stack_v3.symtype, curr_func);
+                   sym->stack_v3.symtype);
             break;
 
         case S_REGREL32:
-            printf("Reg-relative V3: '%s' @%d type:%x reg:%x (in %s)\n",
+            printf("Reg-relative V3: '%s' @%d type:%x reg:%x\n",
                    sym->regrel_v3.name, sym->regrel_v3.offset,
-                   sym->regrel_v3.symtype, sym->regrel_v3.reg, curr_func);
+                   sym->regrel_v3.symtype, sym->regrel_v3.reg);
             break;
 
         case S_REGISTER_16t:
-            printf("Register V1 '%s' in %s type:%x register:%x\n",
+            printf("Register V1 '%s' type:%x register:%x\n",
                    p_string(&sym->register_v1.p_name),
-                   curr_func, sym->register_v1.reg, sym->register_v1.type);
+                   sym->register_v1.reg, sym->register_v1.type);
             break;
 
         case S_REGISTER_ST:
-            printf("Register V2 '%s' in %s type:%x register:%x\n",
+            printf("Register V2 '%s' type:%x register:%x\n",
                    p_string(&sym->register_v2.p_name),
-                   curr_func, sym->register_v2.reg, sym->register_v2.type);
+                   sym->register_v2.reg, sym->register_v2.type);
             break;
 
         case S_REGISTER:
-            printf("Register V3 '%s' in %s type:%x register:%x\n",
-                   sym->register_v3.name,
-                   curr_func, sym->register_v3.reg, sym->register_v3.type);
+            printf("Register V3 '%s' type:%x register:%x\n",
+                   sym->register_v3.name, sym->register_v3.reg, sym->register_v3.type);
             break;
 
         case S_BLOCK32_ST:
-            printf("Block V1 '%s' in '%s' (%04x:%08x#%08x)\n",
+            printf("Block V1 '%s' (%04x:%08x#%08x)\n",
                    p_string(&sym->block_v1.p_name),
-                   curr_func,
                    sym->block_v1.segment, sym->block_v1.offset,
                    sym->block_v1.length);
             nest_block++;
             break;
 
         case S_BLOCK32:
-            printf("Block V3 '%s' in '%s' (%04x:%08x#%08x) parent:%u end:%x\n",
-                   sym->block_v3.name, curr_func,
+            printf("Block V3 '%s' (%04x:%08x#%08x) parent:%u end:%x\n",
+                   sym->block_v3.name,
                    sym->block_v3.segment, sym->block_v3.offset, sym->block_v3.length,
                    sym->block_v3.parent, sym->block_v3.end);
             nest_block++;
@@ -1544,11 +1536,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 printf("End-Of block (%u)\n", nest_block);
             }
             else
-            {
-                printf("End-Of %s\n", curr_func);
-                free(curr_func);
-                curr_func = NULL;
-            }
+                printf("End-Of function\n");
             break;
 
         case S_COMPILE:
@@ -1642,14 +1630,14 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
             break;
 
         case S_LABEL32_ST:
-            printf("Label V1 '%s' in '%s' (%04x:%08x)\n",
+            printf("Label V1 '%s' (%04x:%08x)\n",
                    p_string(&sym->label_v1.p_name),
-                   curr_func, sym->label_v1.segment, sym->label_v1.offset);
+                   sym->label_v1.segment, sym->label_v1.offset);
             break;
 
         case S_LABEL32:
-            printf("Label V3 '%s' in '%s' (%04x:%08x) flag:%x\n",
-                   sym->label_v3.name, curr_func, sym->label_v3.segment,
+            printf("Label V3 '%s' (%04x:%08x) flag:%x\n",
+                   sym->label_v3.name, sym->label_v3.segment,
                    sym->label_v3.offset, sym->label_v3.flags);
             break;
 
