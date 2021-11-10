@@ -21,74 +21,7 @@
 
 prefix          = @prefix@
 exec_prefix     = @exec_prefix@
-bindir          = @bindir@
-libdir          = @libdir@
-datarootdir     = @datarootdir@
-datadir         = @datadir@
-mandir          = @mandir@
-includedir      = @includedir@
-fontdir         = ${datadir}/wine/fonts
-nlsdir          = ${datadir}/wine/nls
-dlldir          = ${libdir}/wine
-srcdir          = @srcdir@
-host_cpu        = @host_cpu@
-SHELL           = /bin/sh
-CC              = @CC@
-CXX             = @CXX@
-CPPBIN          = @CPPBIN@
-CROSSCC         = @CROSSCC@
-CFLAGS          = @CFLAGS@
-CPPFLAGS        = @CPPFLAGS@
-CROSSCFLAGS     = @CROSSCFLAGS@
-CROSSLDFLAGS    = @CROSSLDFLAGS@
-EXTRACFLAGS     = @EXTRACFLAGS@
-EXTRACROSSCFLAGS= @EXTRACROSSCFLAGS@
-MSVCRTFLAGS     = @MSVCRTFLAGS@
-TARGETFLAGS     = @TARGETFLAGS@
-LDDLLFLAGS      = @LDDLLFLAGS@
-LDEXECFLAGS     = @LDEXECFLAGS@
-UNIXDLLFLAGS    = @UNIXDLLFLAGS@
-UNIXLDFLAGS     = @UNIXLDFLAGS@
-LIBS            = @LIBS@
-BISON           = @BISON@
-FLEX            = @FLEX@
-EXEEXT          = @EXEEXT@
-TOOLSEXT        = @TOOLSEXT@
-DLLTOOL         = @DLLTOOL@
-AR              = @AR@
-RANLIB          = @RANLIB@
-STRIP           = @STRIP@
-LN_S            = @LN_S@
-TOOLSDIR        = @TOOLSDIR@
-LD              = @LD@
-LDFLAGS         = @LDFLAGS@
-DLLFLAGS        = @DLLFLAGS@
-PRELINK         = @PRELINK@
-FONTFORGE       = @FONTFORGE@
-RSVG            = @RSVG@
-CONVERT         = @CONVERT@
-ICOTOOL         = @ICOTOOL@
-MSGFMT          = @MSGFMT@
-CROSSTARGET     = @CROSSTARGET@
-CROSSDEBUG      = @CROSSDEBUG@
-SUBDIRS         = @SUBDIRS@
-RUNTESTFLAGS    = -q -P wine
-MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
-DELAYLOADFLAG   = @DELAYLOADFLAG@
-PACKAGE_VERSION = @PACKAGE_VERSION@
-SED_CMD         = LC_ALL=C sed -e 's,@bindir\@,${bindir},g' -e 's,@dlldir\@,${dlldir},g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g'
-api_manext      = 3w
-WINELOADER_PROGRAMS = @WINELOADER_PROGRAMS@
-WINELOADER_DEPENDS  = @WINELOADER_DEPENDS@
-WINELOADER_LDFLAGS  = @WINELOADER_LDFLAGS@
-WINEPRELOADER_LDFLAGS = @WINEPRELOADER_LDFLAGS@
-LIBWINE_SHAREDLIB   = @LIBWINE_SHAREDLIB@
-LIBWINE_LDFLAGS     = @LIBWINE_LDFLAGS@
-LIBWINE_DEPENDS     = @LIBWINE_DEPENDS@
-DISABLED_SUBDIRS    = @DISABLED_SUBDIRS@
-CONFIGURE_TARGETS   = @CONFIGURE_TARGETS@
-TOP_INSTALL_LIB     = @TOP_INSTALL_LIB@
-TOP_INSTALL_DEV     = @TOP_INSTALL_DEV@
+
 @ALL_VARS_RULES@
 @SET_MAKE@
 

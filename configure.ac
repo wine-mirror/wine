@@ -21,10 +21,6 @@ m4_ifdef([AS_VAR_IF],,[AC_DEFUN([AS_VAR_IF],
   [AS_IF([test "x$$1" = x""$2], [$3], [$4])],
   [eval as_val=\$$1
    AS_IF([test "x$as_val" = x""$2], [$3], [$4])])])])dnl
-dnl autoconf versions before 2.64 don't have AC_PACKAGE_URL
-m4_ifdef([AC_PACKAGE_URL],,
-  [AC_DEFINE([PACKAGE_URL], ["https://www.winehq.org"], [Define to the home page for this package.])
-   AC_SUBST([PACKAGE_URL], ["https://www.winehq.org"])])dnl
 
 dnl **** Command-line arguments ****
 
@@ -107,6 +103,11 @@ AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools fr
 AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
 
 AC_CANONICAL_HOST
+
+AC_SUBST(dlldir,[\${libdir}/wine])
+AC_SUBST(fontdir,[\${datadir}/wine/fonts])
+AC_SUBST(nlsdir,[\${datadir}/wine/nls])
+AC_SUBST(srcdir)
 
 dnl **** Check for some programs ****
 
@@ -231,6 +232,11 @@ then
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
 fi
 
+case $build_os in
+  cygwin*|mingw32*) AC_SUBST(toolsext,".exe") ;;
+  *) AC_SUBST(toolsext,"") ;;
+esac
+
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
   [wine_cv_toolsdir="$with_wine_tools"
    if test -z "$with_wine_tools"; then
@@ -241,16 +247,17 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
      fi
    fi])
 if test -z "$wine_cv_toolsdir"; then
-    wine_makedep=tools/makedep
-    AC_SUBST(TOOLSDIR,".")
+    wine_makedep=tools/makedep$toolsext
 elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
-    wine_makedep=$wine_cv_toolsdir/tools/makedep
-    AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
+    wine_makedep=$wine_cv_toolsdir/tools/makedep$toolsext
     enable_tools=${enable_tools:-no}
     test -f "$wine_makedep" || AC_MSG_ERROR([the Wine tools have not yet been built in $wine_cv_toolsdir])
 else
     AC_MSG_ERROR([could not find Wine tools in $wine_cv_toolsdir])
 fi
+AC_SUBST(toolsdir,[$wine_cv_toolsdir])
+AC_SUBST(MAKEDEP,[$wine_makedep])
+
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
     TARGETFLAGS="-b $host_alias $TARGETFLAGS"
@@ -1914,10 +1921,6 @@ fi
 
 dnl **** Platform-specific checks ****
 
-case $build_os in
-  cygwin*|mingw32*) AC_SUBST(TOOLSEXT,".exe") ;;
-esac
-
 case $host_os in
   linux*)
     case $host_cpu in
@@ -2395,10 +2398,6 @@ AH_BOTTOM([#endif /* __WINE_CONFIG_H */])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 AS_ECHO_N("creating Makefile rules...") >&AS_MESSAGE_FD
-
-AC_SUBST([ALL_VARS_RULES],
-"m4_set_foreach([_AC_SUBST_VARS],[var],[m4_if(m4_bregexp(m4_defn([var]),[\(_CFLAGS\|_LIBS\)$]),-1,,[var = $var
-])])")
 
 makedep_flags=""
 test "x$enable_silent_rules" = xyes && makedep_flags="$makedep_flags -S"
@@ -3815,7 +3814,7 @@ Makefile: tools/makedep$ac_exeext])
 else
     WINE_APPEND_RULE(
 [\$(MAKEDEP):
-	@echo \"You need to run make in $TOOLSDIR first\" && false])
+	@echo \"You need to run make in $toolsdir first\" && false])
 fi
 
 if test -n "$with_wine64"
@@ -3861,6 +3860,17 @@ server/wineserver"
       *) TOP_INSTALL_LIB="$TOP_INSTALL_LIB loader/wine.desktop" ;;
     esac
 fi
+
+dnl Makefile variables
+
+AC_SUBST(SHELL,[/bin/sh])
+AC_SUBST(RUNTESTFLAGS,["-q -P wine"])
+AC_SUBST(SED_CMD,["LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@dlldir@,\${dlldir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"])
+AC_SUBST(api_manext,[3w])
+
+AC_SUBST([ALL_VARS_RULES],
+"m4_set_foreach([_AC_SUBST_VARS],[var],[m4_if(m4_bregexp(m4_defn([var]),[\(^SET_MAKE$\|prefix$\)]),-1,[var = $var
+])])")
 
 AS_ECHO(" done") >&AS_MESSAGE_FD
 AC_OUTPUT

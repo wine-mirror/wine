@@ -4313,8 +4313,8 @@ int main( int argc, char *argv[] )
 
     delay_load_flag    = get_expanded_make_variable( top_makefile, "DELAYLOADFLAG" );
     root_src_dir       = get_expanded_make_variable( top_makefile, "srcdir" );
-    tools_dir          = get_expanded_make_variable( top_makefile, "TOOLSDIR" );
-    tools_ext          = get_expanded_make_variable( top_makefile, "TOOLSEXT" );
+    tools_dir          = get_expanded_make_variable( top_makefile, "toolsdir" );
+    tools_ext          = get_expanded_make_variable( top_makefile, "toolsext" );
     exe_ext            = get_expanded_make_variable( top_makefile, "EXEEXT" );
     man_ext            = get_expanded_make_variable( top_makefile, "api_manext" );
     dll_ext            = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
