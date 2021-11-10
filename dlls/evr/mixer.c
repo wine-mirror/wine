@@ -1125,42 +1125,33 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
 
     TRACE("%p, %#x, %#lx.\n", iface, message, param);
 
+    EnterCriticalSection(&mixer->cs);
+
     switch (message)
     {
         case MFT_MESSAGE_SET_D3D_MANAGER:
-
-            EnterCriticalSection(&mixer->cs);
-
             video_mixer_release_device_manager(mixer);
             if (param)
                 hr = IUnknown_QueryInterface((IUnknown *)param, &IID_IDirect3DDeviceManager9, (void **)&mixer->device_manager);
 
-            LeaveCriticalSection(&mixer->cs);
-
             break;
 
         case MFT_MESSAGE_COMMAND_FLUSH:
-
-            EnterCriticalSection(&mixer->cs);
             video_mixer_flush_input(mixer);
-            LeaveCriticalSection(&mixer->cs);
 
             break;
 
         case MFT_MESSAGE_NOTIFY_BEGIN_STREAMING:
         case MFT_MESSAGE_NOTIFY_END_STREAMING:
-
-            EnterCriticalSection(&mixer->cs);
-
-            if (!mixer->is_streaming)
+            if (mixer->is_streaming)
+                video_mixer_flush_input(mixer);
+            else
             {
                 for (i = 0; i < mixer->input_count; ++i)
                     video_mixer_request_sample(mixer, i);
             }
 
             mixer->is_streaming = message == MFT_MESSAGE_NOTIFY_BEGIN_STREAMING;
-
-            LeaveCriticalSection(&mixer->cs);
 
             break;
 
@@ -1171,6 +1162,8 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
             WARN("Message not handled %d.\n", message);
             hr = E_NOTIMPL;
     }
+
+    LeaveCriticalSection(&mixer->cs);
 
     return hr;
 }
