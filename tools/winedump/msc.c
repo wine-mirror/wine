@@ -1303,7 +1303,7 @@ static void dump_binannot(const unsigned char* ba, const char* last, const char*
     }
 }
 
-BOOL codeview_dump_symbols(const void* root, unsigned long size)
+BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long size)
 {
     unsigned int i;
     int          length;
@@ -1313,12 +1313,12 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
      * Loop over the different types of records and whenever we
      * find something we are interested in, record it and move on.
      */
-    for (i = 0; i < size; i += length)
+    for (i = start; i < size; i += length)
     {
         const union codeview_symbol* sym = (const union codeview_symbol*)((const char*)root + i);
         length = sym->generic.len + 2;
         if (!sym->generic.id || length < 4) break;
-        printf("\t%04x => ", i + 4); /* ref is made after id and len */
+        printf("\t%04x => ", i);
 
         switch (sym->generic.id)
         {

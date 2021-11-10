@@ -473,7 +473,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     if (modimage)
     {
         printf("\t------------globals-------------\n"); 
-        codeview_dump_symbols(modimage, pdb_get_file_size(reader, symbols->gsym_file));
+        codeview_dump_symbols(modimage, 0, pdb_get_file_size(reader, symbols->gsym_file));
         free(modimage);
     }
 
@@ -588,7 +588,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             int total_size = pdb_get_file_size(reader, file_nr);
 
             if (symbol_size)
-                codeview_dump_symbols((const char*)modimage + sizeof(DWORD), symbol_size);
+                codeview_dump_symbols((const char*)modimage, sizeof(DWORD), symbol_size);
 
             /* line number info */
             if (lineno_size)

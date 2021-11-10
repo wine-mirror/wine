@@ -135,7 +135,7 @@ static BOOL dump_cv_sst_global_pub(const OMFDirEntry* omfde)
     symbols = PRD(fileoffset + sizeof(OMFSymHash), header->cbSymbol);
     if (!symbols) {printf("Can't OMF-SymHash details, aborting\n"); return FALSE;}
 
-    codeview_dump_symbols(symbols, header->cbSymbol);
+    codeview_dump_symbols(symbols, 0, header->cbSymbol);
 
     return TRUE;
 }
@@ -320,7 +320,7 @@ static BOOL dump_cv_sst_align_sym(const OMFDirEntry* omfde)
 
     if (!rawdata) {printf("Can't get srcAlignSym subsection details, aborting\n");return FALSE;}
     if (omfde->cb < sizeof(DWORD)) return TRUE;
-    codeview_dump_symbols(rawdata + sizeof(DWORD), omfde->cb - sizeof(DWORD));
+    codeview_dump_symbols(rawdata, sizeof(DWORD), omfde->cb);
 
     return TRUE;
 }
