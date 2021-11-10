@@ -1272,32 +1272,40 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
     }
 }
 
-static BOOL dwarf2_feed_inlined_ranges(dwarf2_parse_context_t* ctx, const dwarf2_debug_info_t* di,
-                                       struct symt_inlinesite* inlined)
+static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsigned* num_ranges)
 {
     struct attribute            range;
+    struct addr_range*          ranges;
 
     if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
     {
         dwarf2_traverse_context_t   traverse;
+        unsigned alloc = 16;
+        ranges = malloc(sizeof(struct addr_range) * alloc);
+        if (!ranges) return NULL;
+        *num_ranges = 0;
 
-        traverse.data = ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
-        traverse.end_data = ctx->module_ctx->sections[section_ranges].address +
-            ctx->module_ctx->sections[section_ranges].size;
+        traverse.data = di->unit_ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
+        traverse.end_data = di->unit_ctx->module_ctx->sections[section_ranges].address +
+            di->unit_ctx->module_ctx->sections[section_ranges].size;
 
-        while (traverse.data + 2 * ctx->head.word_size < traverse.end_data)
+        while (traverse.data + 2 * di->unit_ctx->head.word_size < traverse.end_data)
         {
-            ULONG_PTR low = dwarf2_parse_addr_head(&traverse, &ctx->head);
-            ULONG_PTR high = dwarf2_parse_addr_head(&traverse, &ctx->head);
+            ULONG_PTR low = dwarf2_parse_addr_head(&traverse, &di->unit_ctx->head);
+            ULONG_PTR high = dwarf2_parse_addr_head(&traverse, &di->unit_ctx->head);
             if (low == 0 && high == 0) break;
-            if (low == (ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
+            if (low == (di->unit_ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
                 FIXME("unsupported yet (base address selection)\n");
-            /* range values are relative to start of compilation unit */
-            symt_add_inlinesite_range(ctx->module_ctx->module, inlined,
-                                      ctx->compiland->address + low, ctx->compiland->address + high);
+            if (*num_ranges >= alloc)
+            {
+                alloc *= 2;
+                ranges = realloc(ranges, sizeof(struct addr_range) * alloc);
+                if (!ranges) return NULL;
+            }
+            ranges[*num_ranges].low = di->unit_ctx->compiland->address + low;
+            ranges[*num_ranges].high = di->unit_ctx->compiland->address + high;
+            (*num_ranges)++;
         }
-
-        return TRUE;
     }
     else
     {
@@ -1306,8 +1314,8 @@ static BOOL dwarf2_feed_inlined_ranges(dwarf2_parse_context_t* ctx, const dwarf2
 
         if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) ||
             !dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc))
-            return FALSE;
-        if (ctx->head.version >= 4)
+            return NULL;
+        if (di->unit_ctx->head.version >= 4)
             switch (high_pc.form)
             {
             case DW_FORM_addr:
@@ -1325,11 +1333,13 @@ static BOOL dwarf2_feed_inlined_ranges(dwarf2_parse_context_t* ctx, const dwarf2
                 FIXME("Unsupported class for high_pc\n");
                 break;
             }
-        symt_add_inlinesite_range(ctx->module_ctx->module, inlined,
-                                  ctx->module_ctx->load_offset + low_pc.u.uvalue,
-                                  ctx->module_ctx->load_offset + high_pc.u.uvalue);
-        return TRUE;
+        ranges = malloc(sizeof(struct addr_range));
+        if (!ranges) return NULL;
+        ranges[0].low = di->unit_ctx->module_ctx->load_offset + low_pc.u.uvalue;
+        ranges[0].high = di->unit_ctx->module_ctx->load_offset + high_pc.u.uvalue;
+        *num_ranges = 1;
     }
+    return ranges;
 }
 
 /******************************************************************
@@ -2072,6 +2082,8 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
+    struct addr_range*  adranges;
+    unsigned            num_adranges;
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
@@ -2099,7 +2111,14 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
     subpgm->current_func = (struct symt_function*)inlined;
     subpgm->current_block = NULL;
 
-    if (!dwarf2_feed_inlined_ranges(subpgm->ctx, di, inlined))
+    if ((adranges = dwarf2_get_ranges(di, &num_adranges)) != NULL)
+    {
+        for (i = 0; i < num_adranges; ++i)
+            symt_add_inlinesite_range(subpgm->ctx->module_ctx->module, inlined,
+                                      adranges[i].low, adranges[i].high);
+        free(adranges);
+    }
+    else
         WARN("cannot read ranges\n");
 
     children = dwarf2_get_di_children(di);
