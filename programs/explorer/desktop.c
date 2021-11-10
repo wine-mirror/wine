@@ -836,6 +836,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
         if (!wcscmp( name, L"null" ))
         {
             TRACE( "display %s using null driver\n", debugstr_guid(guid) );
+            wcscpy( libname, L"null" );
             null_driver = TRUE;
             break;
         }
