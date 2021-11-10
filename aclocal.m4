@@ -257,8 +257,7 @@ dnl
 dnl Usage: AC_REQUIRE([WINE_CONFIG_HELPERS])
 dnl
 AC_DEFUN([WINE_CONFIG_HELPERS],
-[wine_rules_file=conf$$rules.make
-rm -f $wine_rules_file
+[AS_VAR_SET([wine_rules],["all:"])
 AC_SUBST(SUBDIRS,"")
 AC_SUBST(DISABLED_SUBDIRS,"")
 AC_SUBST(CONFIGURE_TARGETS,"")
@@ -270,7 +269,7 @@ wine_fn_append_file ()
 
 wine_fn_append_rule ()
 {
-    AS_ECHO("$[1]") >>$wine_rules_file
+    AS_VAR_APPEND(wine_rules,"$as_nl$[1]")
 }
 
 wine_fn_config_makefile ()
