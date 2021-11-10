@@ -85,7 +85,12 @@ static DWORD WINAPI stream_thread(void *arg)
 
         for (i = 0; i < stream_count; ++i)
         {
-            hr = wm_reader_get_stream_sample(&reader->reader.streams[i], &sample, &pts, &duration, &flags);
+            struct wm_stream *stream = &reader->reader.streams[i];
+
+            if (stream->selection == WMT_OFF)
+                continue;
+
+            hr = wm_reader_get_stream_sample(stream, &sample, &pts, &duration, &flags);
             if (hr == S_OK)
             {
                 if (reader->user_clock)
@@ -441,12 +446,15 @@ static HRESULT WINAPI WMReaderAdvanced_GetManualStreamSelection(IWMReaderAdvance
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReaderAdvanced_SetStreamsSelected(IWMReaderAdvanced6 *iface, WORD stream_count,
-        WORD *stream_numbers, WMT_STREAM_SELECTION *selections)
+static HRESULT WINAPI WMReaderAdvanced_SetStreamsSelected(IWMReaderAdvanced6 *iface,
+        WORD count, WORD *stream_numbers, WMT_STREAM_SELECTION *selections)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%d %p %p)\n", This, stream_count, stream_numbers, selections);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+
+    TRACE("reader %p, count %u, stream_numbers %p, selections %p.\n",
+            reader, count, stream_numbers, selections);
+
+    return wm_reader_set_streams_selected(&reader->reader, count, stream_numbers, selections);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetStreamSelected(IWMReaderAdvanced6 *iface, WORD stream_num,
