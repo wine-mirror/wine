@@ -1196,13 +1196,13 @@ BOOL codeview_dump_types_from_block(const void* table, unsigned long len)
     return TRUE;
 }
 
-static void dump_defrange(const struct cv_addr_range* range, const void* last, const char* pfx)
+static void dump_defrange(const struct cv_addr_range* range, const void* last, unsigned indent)
 {
     const struct cv_addr_gap* gap;
 
-    printf("%s%04x:%08x range:#%x\n", pfx, range->isectStart, range->offStart, range->cbRange);
+    printf("%*s\\- %04x:%08x range:#%x\n", indent, "", range->isectStart, range->offStart, range->cbRange);
     for (gap = (const struct cv_addr_gap*)(range + 1); (const void*)(gap + 1) <= last; ++gap)
-        printf("%s\toffset:%x range:#%x\n", pfx, gap->gapStartOffset, gap->cbRange);
+        printf("%*s  | offset:%x range:#%x\n", indent, "", gap->gapStartOffset, gap->cbRange);
 }
 
 /* return address of first byte after the symbol */
@@ -1240,7 +1240,7 @@ static inline int binannot_getsigned(unsigned i)
     return (i & 1) ? -(int)(i >> 1) : (i >> 1);
 }
 
-static void dump_binannot(const unsigned char* ba, const char* last, const char* pfx)
+static void dump_binannot(const unsigned char* ba, const char* last, unsigned indent)
 {
     while (ba < (const unsigned char*)last)
     {
@@ -1249,56 +1249,56 @@ static void dump_binannot(const unsigned char* ba, const char* last, const char*
         {
         case BA_OP_Invalid:
             /* not clear if param? */
-            printf("%sInvalid\n", pfx);
+            printf("%*s  | Invalid\n", indent, "");
             break;
         case BA_OP_CodeOffset:
-            printf("%sCodeOffset %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | CodeOffset %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeCodeOffsetBase:
-            printf("%sChangeCodeOffsetBase %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeCodeOffsetBase %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeCodeOffset:
-            printf("%sChangeCodeOffset %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeCodeOffset %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeCodeLength:
-            printf("%sChangeCodeLength %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeCodeLength %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeFile:
-            printf("%sChangeFile %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeFile %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeLineOffset:
-            printf("%sChangeLineOffset %d\n", pfx, binannot_getsigned(binannot_uncompress(&ba)));
+            printf("%*s  | ChangeLineOffset %d\n", indent, "", binannot_getsigned(binannot_uncompress(&ba)));
             break;
         case BA_OP_ChangeLineEndDelta:
-            printf("%sChangeLineEndDelta %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeLineEndDelta %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeRangeKind:
-            printf("%sChangeRangeKind %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeRangeKind %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeColumnStart:
-            printf("%sChangeColumnStart %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeColumnStart %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeColumnEndDelta:
-            printf("%sChangeColumnEndDelta %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeColumnEndDelta %u\n", indent, "", binannot_uncompress(&ba));
             break;
         case BA_OP_ChangeCodeOffsetAndLineOffset:
             {
                 unsigned p1 = binannot_uncompress(&ba);
-                printf("%sChangeCodeOffsetAndLineOffset %u %u (0x%x)\n", pfx, p1 & 0xf, binannot_getsigned(p1 >> 4), p1);
+                printf("%*s  | ChangeCodeOffsetAndLineOffset %u %u (0x%x)\n", indent, "", p1 & 0xf, binannot_getsigned(p1 >> 4), p1);
             }
             break;
         case BA_OP_ChangeCodeLengthAndCodeOffset:
             {
                 unsigned p1 = binannot_uncompress(&ba);
                 unsigned p2 = binannot_uncompress(&ba);
-                printf("%sChangeCodeLengthAndCodeOffset %u %u\n", pfx, p1, p2);
+                printf("%*s  | ChangeCodeLengthAndCodeOffset %u %u\n", indent, "", p1, p2);
             }
             break;
         case BA_OP_ChangeColumnEnd:
-            printf("%sChangeColumnEnd %u\n", pfx, binannot_uncompress(&ba));
+            printf("%*s  | ChangeColumnEnd %u\n", indent, "", binannot_uncompress(&ba));
             break;
 
-        default: printf("%sUnsupported op %d %x\n", pfx, opcode, opcode); /* may cause issues because of param */
+        default: printf(">>> Unsupported op %d %x\n", opcode, opcode); /* may cause issues because of param */
         }
     }
 }
@@ -1315,9 +1315,11 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
     for (i = start; i < size; i += length)
     {
         const union codeview_symbol* sym = (const union codeview_symbol*)((const char*)root + i);
+        unsigned indent;
+
         length = sym->generic.len + 2;
         if (!sym->generic.id || length < 4) break;
-        printf("\t%04x => ", i);
+        indent = printf("        %04x => ", i);
 
         switch (sym->generic.id)
         {
@@ -1402,8 +1404,8 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v1.segment, sym->proc_v1.offset,
                    sym->proc_v1.proc_len, sym->proc_v1.proctype,
                    sym->proc_v1.flags);
-            printf("\t\tDebug: start=%08x end=%08x\n",
-                   sym->proc_v1.debug_start, sym->proc_v1.debug_end);
+            printf("%*s\\- Debug: start=%08x end=%08x\n",
+                   indent, "", sym->proc_v1.debug_start, sym->proc_v1.debug_end);
             if (nest_block)
             {
                 printf(">>> prev func still has nest_block %u count\n", nest_block);
@@ -1422,8 +1424,8 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v2.segment, sym->proc_v2.offset,
                    sym->proc_v2.proc_len, sym->proc_v2.proctype,
                    sym->proc_v2.flags);
-            printf("\t\tDebug: start=%08x end=%08x\n",
-                   sym->proc_v2.debug_start, sym->proc_v2.debug_end);
+            printf("%*s\\- Debug: start=%08x end=%08x\n",
+                   indent, "", sym->proc_v2.debug_start, sym->proc_v2.debug_end);
             if (nest_block)
             {
                 printf(">>> prev func still has nest_block %u count\n", nest_block);
@@ -1442,8 +1444,8 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v3.segment, sym->proc_v3.offset,
                    sym->proc_v3.proc_len, sym->proc_v3.proctype,
                    sym->proc_v3.flags);
-            printf("\t\tDebug: start=%08x end=%08x\n",
-                   sym->proc_v3.debug_start, sym->proc_v3.debug_end);
+            printf("%*s\\- Debug: start=%08x end=%08x\n",
+                   indent, "", sym->proc_v3.debug_start, sym->proc_v3.debug_end);
             if (nest_block)
             {
                 printf(">>> prev func still has nest_block %u count\n", nest_block);
@@ -1559,7 +1561,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 const char* ptr = sym->compile2_v2.p_name.name + sym->compile2_v2.p_name.namelen;
                 while (*ptr)
                 {
-                    printf("\t\t%s => ", ptr); ptr += strlen(ptr) + 1;
+                    printf("%*s| %s => ", indent, "", ptr); ptr += strlen(ptr) + 1;
                     printf("%s\n", ptr); ptr += strlen(ptr) + 1;
                 }
             }
@@ -1577,7 +1579,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 const char* ptr = sym->compile2_v3.name + strlen(sym->compile2_v3.name) + 1;
                 while (*ptr)
                 {
-                    printf("\t\t%s => ", ptr); ptr += strlen(ptr) + 1;
+                    printf("%*s| %s => ", indent, "", ptr); ptr += strlen(ptr) + 1;
                     printf("%s\n", ptr); ptr += strlen(ptr) + 1;
                 }
             }
@@ -1598,12 +1600,12 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 const char*             x1 = (const char*)sym + 4 + 1;
                 const char*             x2;
 
-                printf("\tTool conf V3\n");
+                printf("Tool conf V3\n");
                 while (*x1)
                 {
                     x2 = x1 + strlen(x1) + 1;
                     if (!*x2) break;
-                    printf("\t\t%s: %s\n", x1, x2);
+                    printf("%*s| %s: %s\n", indent, "", x1, x2);
                     x1 = x2 + strlen(x2) + 1;
                 }
             }
@@ -1696,7 +1698,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
 
                 pname = PSTRING(sym, length);
                 length += (pname->namelen + 1 + 3) & ~3;
-                printf("\t%08x %08x %08x '%s'\n",
+                printf("%08x %08x %08x '%s'\n",
                        *(((const DWORD*)sym) + 1), *(((const DWORD*)sym) + 2), *(((const DWORD*)sym) + 3),
                        p_string(pname));
             }
@@ -1766,22 +1768,22 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
 
         case S_DEFRANGE:
             printf("DefRange dia:%x\n", sym->defrange_v3.program);
-            dump_defrange(&sym->defrange_v3.range, get_last(sym), "\t\t");
+            dump_defrange(&sym->defrange_v3.range, get_last(sym), indent);
             break;
         case S_DEFRANGE_SUBFIELD:
             printf("DefRange-subfield V3 dia:%x off-parent:%x\n",
                    sym->defrange_subfield_v3.program, sym->defrange_subfield_v3.offParent);
-            dump_defrange(&sym->defrange_subfield_v3.range, get_last(sym), "\t\t");
+            dump_defrange(&sym->defrange_subfield_v3.range, get_last(sym), indent);
             break;
         case S_DEFRANGE_REGISTER:
             printf("DefRange-register V3 reg:%x attr-unk:%x\n",
                    sym->defrange_register_v3.reg, sym->defrange_register_v3.attr);
-            dump_defrange(&sym->defrange_register_v3.range, get_last(sym), "\t\t");
+            dump_defrange(&sym->defrange_register_v3.range, get_last(sym), indent);
             break;
         case S_DEFRANGE_FRAMEPOINTER_REL:
             printf("DefRange-framepointer-rel V3 offFP:%x\n",
                    sym->defrange_frameptrrel_v3.offFramePointer);
-            dump_defrange(&sym->defrange_frameptrrel_v3.range, get_last(sym), "\t\t");
+            dump_defrange(&sym->defrange_frameptrrel_v3.range, get_last(sym), indent);
             break;
         case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
             printf("DefRange-framepointer-rel-fullscope V3 offFP:%x\n",
@@ -1792,13 +1794,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->defrange_subfield_register_v3.reg,
                    sym->defrange_subfield_register_v3.attr,
                    sym->defrange_subfield_register_v3.offParent);
-            dump_defrange(&sym->defrange_subfield_register_v3.range, get_last(sym), "\t\t");
+            dump_defrange(&sym->defrange_subfield_register_v3.range, get_last(sym), indent);
             break;
         case S_DEFRANGE_REGISTER_REL:
             printf("DefRange-register-rel V3 reg:%x off-parent:%x off-BP:%x\n",
                    sym->defrange_registerrel_v3.baseReg, sym->defrange_registerrel_v3.offsetParent,
                    sym->defrange_registerrel_v3.offBasePointer);
-            dump_defrange(&sym->defrange_registerrel_v3.range, get_last(sym), "\t\t");
+            dump_defrange(&sym->defrange_registerrel_v3.range, get_last(sym), indent);
             break;
 
         case S_CALLSITEINFO:
@@ -1813,13 +1815,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
         case S_INLINESITE:
             printf("Inline-site V3 parent:%x end:%x inlinee:%x\n",
                    sym->inline_site_v3.pParent, sym->inline_site_v3.pEnd, sym->inline_site_v3.inlinee);
-            dump_binannot(sym->inline_site_v3.binaryAnnotations, get_last(sym), "\t\t");
+            dump_binannot(sym->inline_site_v3.binaryAnnotations, get_last(sym), indent);
             break;
         case S_INLINESITE2:
             printf("Inline-site2 V3 parent:%x end:%x inlinee:%x #inv:%u\n",
                    sym->inline_site2_v3.pParent, sym->inline_site2_v3.pEnd, sym->inline_site2_v3.inlinee,
                    sym->inline_site2_v3.invocations);
-            dump_binannot(sym->inline_site2_v3.binaryAnnotations, get_last(sym), "\t\t");
+            dump_binannot(sym->inline_site2_v3.binaryAnnotations, get_last(sym), indent);
             break;
         case S_INLINESITE_END:
             printf("Inline-site-end\n");
@@ -1841,7 +1843,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 ninvoc = (const unsigned*)get_last(sym) - invoc;
 
                 for (i = 0; i < sym->function_list_v3.count; ++i)
-                    printf("\t\tfunc:%x invoc:%u\n", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
+                    printf("%*s| func:%x invoc:%u\n", indent, "", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
             }
             break;
 
@@ -1883,7 +1885,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 const char* ptr = sym->annotation_v3.rgsz;
                 const char* last = ptr + sym->annotation_v3.csz;
                 for (; ptr < last; ptr += strlen(ptr) + 1)
-                    printf("\t%s\n", ptr);
+                    printf("%*s| %s\n", indent, "", ptr);
             }
             break;
 
