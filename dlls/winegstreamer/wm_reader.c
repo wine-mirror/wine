@@ -1413,6 +1413,7 @@ static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
         stream->wg_stream = wg_parser_get_stream(reader->wg_parser, i);
         stream->reader = reader;
         stream->index = i;
+        stream->selection = WMT_ON;
         wg_parser_stream_get_preferred_format(stream->wg_stream, &stream->format);
         if (stream->format.major_type == WG_MAJOR_TYPE_AUDIO)
         {
@@ -1739,6 +1740,9 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
     struct wg_parser_event event;
     struct buffer *object;
 
+    if (stream->selection == WMT_OFF)
+        return NS_E_INVALID_REQUEST;
+
     if (stream->eos)
         return NS_E_NO_MORE_SAMPLES;
 
@@ -1822,6 +1826,50 @@ void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration)
         reader->streams[i].eos = false;
 
     LeaveCriticalSection(&reader->cs);
+}
+
+HRESULT wm_reader_set_streams_selected(struct wm_reader *reader, WORD count,
+        const WORD *stream_numbers, const WMT_STREAM_SELECTION *selections)
+{
+    struct wm_stream *stream;
+    WORD i;
+
+    if (!count)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&reader->cs);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_numbers[i])))
+        {
+            LeaveCriticalSection(&reader->cs);
+            WARN("Invalid stream number %u; returning NS_E_INVALID_REQUEST.\n", stream_numbers[i]);
+            return NS_E_INVALID_REQUEST;
+        }
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        stream = wm_reader_get_stream_by_stream_number(reader, stream_numbers[i]);
+        stream->selection = selections[i];
+        if (selections[i] == WMT_OFF)
+        {
+            TRACE("Disabling stream %u.\n", stream_numbers[i]);
+            wg_parser_stream_disable(stream->wg_stream);
+        }
+        else if (selections[i] == WMT_ON)
+        {
+            if (selections[i] != WMT_ON)
+                FIXME("Ignoring selection %#x for stream %u; treating as enabled.\n",
+                        selections[i], stream_numbers[i]);
+            TRACE("Enabling stream %u.\n", stream_numbers[i]);
+            wg_parser_stream_enable(stream->wg_stream, &stream->format);
+        }
+    }
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
