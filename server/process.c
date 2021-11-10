@@ -595,10 +595,20 @@ static void process_died( struct process *process )
 static void process_sigkill( void *private )
 {
     struct process *process = private;
+    int signal = 0;
 
-    process->sigkill_timeout = NULL;
-    kill( process->unix_pid, SIGKILL );
-    process_died( process );
+    process->sigkill_delay *= 2;
+    if (process->sigkill_delay >= TICKS_PER_SEC / 2)
+        signal = SIGKILL;
+
+    if (!kill( process->unix_pid, signal ) && !signal)
+        process->sigkill_timeout = add_timeout_user( -process->sigkill_delay, process_sigkill, process );
+    else
+    {
+        process->sigkill_delay = TICKS_PER_SEC / 64;
+        process->sigkill_timeout = NULL;
+        process_died( process );
+    }
 }
 
 /* start the sigkill timer for a process upon exit */
@@ -606,7 +616,7 @@ static void start_sigkill_timer( struct process *process )
 {
     grab_object( process );
     if (process->unix_pid != -1)
-        process->sigkill_timeout = add_timeout_user( -TICKS_PER_SEC, process_sigkill, process );
+        process->sigkill_timeout = add_timeout_user( -process->sigkill_delay, process_sigkill, process );
     else
         process_died( process );
 }
@@ -630,6 +640,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->handles         = NULL;
     process->msg_fd          = NULL;
     process->sigkill_timeout = NULL;
+    process->sigkill_delay   = TICKS_PER_SEC / 64;
     process->unix_pid        = -1;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
