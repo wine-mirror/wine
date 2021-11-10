@@ -603,7 +603,7 @@ union codeview_fieldtype
         cv_typ_t                type;
         unsigned short int      offset; /* numeric leaf */
 #if 0
-        unsigned char           name[1];
+        char                    name[1];
 #endif
     }
     member_v3;
@@ -1986,7 +1986,7 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
-        unsigned char           name[1];
+        char                    name[1];
     } unamespace_v3;
 };
 
