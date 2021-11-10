@@ -2246,12 +2246,12 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 
         case S_BLOCK32_ST:
             block = symt_open_func_block(msc_dbg->module, curr_func, block,
-                                         codeview_get_address(msc_dbg, sym->block_v1.segment, sym->block_v1.offset),
+                                         codeview_get_address(msc_dbg, sym->block_v1.segment, sym->block_v1.offset) - curr_func->address,
                                          sym->block_v1.length);
             break;
         case S_BLOCK32:
             block = symt_open_func_block(msc_dbg->module, curr_func, block,
-                                         codeview_get_address(msc_dbg, sym->block_v3.segment, sym->block_v3.offset),
+                                         codeview_get_address(msc_dbg, sym->block_v3.segment, sym->block_v3.offset) - curr_func->address,
                                          sym->block_v3.length);
             break;
 
