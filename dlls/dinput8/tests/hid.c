@@ -5476,7 +5476,7 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     LONG directions[4] = {0};
     DIEFFECT desc = {0};
     DWORD axes[4] = {0};
-    ULONG ref, flags;
+    ULONG i, ref, flags;
     HRESULT hr;
     GUID guid;
 
@@ -6037,6 +6037,135 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
 
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
+
+    for (i = 1; i < 4; i++)
+    {
+        winetest_push_context( "%u axes", i );
+        hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+        ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+
+        desc.dwFlags = DIEFF_OBJECTIDS;
+        desc.cAxes = i;
+        desc.rgdwAxes[0] = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 ) | DIDFT_FFACTUATOR;
+        desc.rgdwAxes[1] = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFACTUATOR;
+        desc.rgdwAxes[2] = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 1 ) | DIDFT_FFACTUATOR;
+        desc.rglDirection[0] = 0;
+        desc.rglDirection[1] = 0;
+        desc.rglDirection[2] = 0;
+        hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_NODOWNLOAD );
+        ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+
+        desc.dwFlags = DIEFF_CARTESIAN;
+        desc.cAxes = i == 3 ? 2 : 3;
+        desc.rglDirection[0] = 1000;
+        desc.rglDirection[1] = 2000;
+        desc.rglDirection[2] = 3000;
+        hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
+        todo_wine_if( i == 2 )
+        ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
+        desc.cAxes = i;
+        hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
+        todo_wine_if( i == 1 )
+        ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+
+        desc.dwFlags = DIEFF_SPHERICAL;
+        desc.cAxes = i;
+        hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
+        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+        desc.cAxes = 3;
+        memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );
+        hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
+        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+        ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
+        if (i == 1)
+        {
+            ok( desc.rglDirection[0] == 0, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 0 );
+            ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %d expected %d\n",
+                desc.rglDirection[1], 0xcdcdcdcd );
+            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+                desc.rglDirection[2], 0xcdcdcdcd );
+        }
+        else
+        {
+            todo_wine
+            ok( desc.rglDirection[0] == 6343, "got rglDirection[0] %d expected %d\n",
+                desc.rglDirection[0], 6343 );
+            if (i == 2)
+            {
+                ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n",
+                    desc.rglDirection[1], 0 );
+                ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+                    desc.rglDirection[2], 0xcdcdcdcd );
+            }
+            else
+            {
+                todo_wine
+                ok( desc.rglDirection[1] == 5330, "got rglDirection[1] %d expected %d\n",
+                    desc.rglDirection[1], 5330 );
+                ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n",
+                    desc.rglDirection[2], 0 );
+            }
+        }
+
+        desc.dwFlags = DIEFF_CARTESIAN;
+        desc.cAxes = i;
+        hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
+        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+        desc.cAxes = 3;
+        memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );
+        hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
+        ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+        ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
+        todo_wine
+        ok( desc.rglDirection[0] == 1000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 1000 );
+        if (i == 1)
+            ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %d expected %d\n",
+                desc.rglDirection[1], 0xcdcdcdcd );
+        else
+        {
+            todo_wine
+            ok( desc.rglDirection[1] == 2000, "got rglDirection[1] %d expected %d\n",
+                desc.rglDirection[1], 2000 );
+        }
+        if (i <= 2)
+            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+                desc.rglDirection[2], 0xcdcdcdcd );
+        else
+        {
+            todo_wine
+            ok( desc.rglDirection[2] == 3000, "got rglDirection[2] %d expected %d\n",
+                desc.rglDirection[2], 3000 );
+        }
+
+        desc.dwFlags = DIEFF_POLAR;
+        desc.cAxes = 1;
+        hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
+        if (i != 2)
+        {
+            todo_wine_if( i == 3 )
+            ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+        }
+        else ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
+        desc.cAxes = 3;
+        memset( desc.rglDirection, 0xcd, 3 * sizeof(LONG) );
+        hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
+        if (i != 2) ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
+        else
+        {
+            ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
+            ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
+            todo_wine
+            ok( desc.rglDirection[0] == 15343, "got rglDirection[0] %d expected %d\n",
+                desc.rglDirection[0], 15343 );
+            ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );
+            ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
+                desc.rglDirection[2], 0xcdcdcdcd );
+        }
+
+        ref = IDirectInputEffect_Release( effect );
+        ok( ref == 0, "Release returned %d\n", ref );
+        winetest_pop_context();
+    }
 }
 
 static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DWORD version )
