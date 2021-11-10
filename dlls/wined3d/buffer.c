@@ -133,7 +133,9 @@ void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD loc
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct wined3d_context_gl *context_gl)
 {
-    wined3d_context_gl_bind_bo(context_gl, buffer_gl->bo.binding, buffer_gl->bo.id);
+    const struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(buffer_gl->b.buffer_object);
+
+    wined3d_context_gl_bind_bo(context_gl, bo_gl->binding, bo_gl->id);
 }
 
 static GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info, uint32_t bind_flags)
@@ -225,7 +227,7 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         return FALSE;
     }
 
-    list_add_head(&buffer_gl->bo.b.users, &buffer_gl->b.bo_user.entry);
+    list_add_head(&bo->b.users, &buffer_gl->b.bo_user.entry);
     buffer_gl->b.buffer_object = &bo->b;
     buffer_invalidate_bo_range(&buffer_gl->b, 0, 0);
 
@@ -1333,6 +1335,7 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
         const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(buffer->buffer_object);
     struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(buffer);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_range *range;
@@ -1345,10 +1348,10 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
     while (range_count--)
     {
         range = &ranges[range_count];
-        GL_EXTCALL(glBufferSubData(buffer_gl->bo.binding,
+        GL_EXTCALL(glBufferSubData(bo_gl->binding,
                 range->offset, range->size, (BYTE *)data + range->offset - data_offset));
     }
-    wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+    wined3d_context_gl_reference_bo(context_gl, bo_gl);
     checkGLcall("buffer upload");
 }
 
@@ -1357,6 +1360,7 @@ static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, str
         void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(buffer->buffer_object);
     struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(buffer);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_range *range;
@@ -1369,7 +1373,7 @@ static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, str
     while (range_count--)
     {
         range = &ranges[range_count];
-        GL_EXTCALL(glGetBufferSubData(buffer_gl->bo.binding,
+        GL_EXTCALL(glGetBufferSubData(bo_gl->binding,
                 range->offset, range->size, (BYTE *)data + range->offset - data_offset));
     }
     checkGLcall("buffer download");

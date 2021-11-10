@@ -4335,12 +4335,12 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
     if (parameters->indirect)
     {
         const struct wined3d_indirect_dispatch_parameters *indirect = &parameters->u.indirect;
-        struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(indirect->buffer);
+        struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(indirect->buffer->buffer_object);
 
-        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer_gl->bo.id));
+        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, bo_gl->id));
         GL_EXTCALL(glDispatchComputeIndirect((GLintptr)indirect->offset));
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
-        wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+        wined3d_context_gl_reference_bo(context_gl, bo_gl);
     }
     else
     {
@@ -4721,8 +4721,8 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
 static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_gl, const struct wined3d_state *state,
         const struct wined3d_indirect_draw_parameters *parameters, unsigned int idx_size)
 {
+    struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(parameters->buffer->buffer_object);
     GLenum gl_primitive_type = gl_primitive_type_from_d3d(state->primitive_type);
-    struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(parameters->buffer);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const void *offset;
 
@@ -4732,7 +4732,7 @@ static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_
         return;
     }
 
-    GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer_gl->bo.id));
+    GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bo_gl->id));
 
     offset = (void *)(GLintptr)parameters->offset;
     if (idx_size)
@@ -4748,7 +4748,7 @@ static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_
     }
 
     GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0));
-    wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+    wined3d_context_gl_reference_bo(context_gl, bo_gl);
 
     checkGLcall("draw indirect");
 }
