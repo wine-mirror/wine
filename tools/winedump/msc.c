@@ -1303,11 +1303,61 @@ static void dump_binannot(const unsigned char* ba, const char* last, unsigned in
     }
 }
 
+struct symbol_dumper
+{
+    unsigned depth;
+    unsigned alloc;
+    struct
+    {
+        unsigned end;
+        const union codeview_symbol* sym;
+    }* stack;
+};
+
+static void init_symbol_dumper(struct symbol_dumper* sd)
+{
+    sd->depth = 0;
+    sd->alloc = 16;
+    sd->stack = malloc(sd->alloc * sizeof(sd->stack[0]));
+}
+
+static void push_symbol_dumper(struct symbol_dumper* sd, const union codeview_symbol* sym, unsigned end)
+{
+    if (!sd->stack) return;
+    if (sd->depth >= sd->alloc &&
+        !(sd->stack = realloc(sd->stack, (sd->alloc *= 2) * sizeof(sd->stack[0]))))
+        return;
+    sd->stack[sd->depth].end = end;
+    sd->stack[sd->depth].sym = sym;
+    sd->depth++;
+}
+
+static unsigned short pop_symbol_dumper(struct symbol_dumper* sd, unsigned end)
+{
+    if (!sd->stack) return 0;
+    if (!sd->depth)
+    {
+        printf(">>> Error in stack\n");
+        return 0;
+    }
+    sd->depth--;
+    if (sd->stack[sd->depth].end != end)
+        printf(">>> Wrong end reference\n");
+    return sd->stack[sd->depth].sym->generic.id;
+}
+
+static void dispose_symbol_dumper(struct symbol_dumper* sd)
+{
+    free(sd->stack);
+}
+
 BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long size)
 {
     unsigned int i;
     int          length;
-    int          nest_block = 0;
+    struct symbol_dumper sd;
+
+    init_symbol_dumper(&sd);
     /*
      * Loop over the different types of records and whenever we
      * find something we are interested in, record it and move on.
@@ -1315,11 +1365,22 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
     for (i = start; i < size; i += length)
     {
         const union codeview_symbol* sym = (const union codeview_symbol*)((const char*)root + i);
-        unsigned indent;
+        unsigned indent, ref;
 
         length = sym->generic.len + 2;
         if (!sym->generic.id || length < 4) break;
         indent = printf("        %04x => ", i);
+
+        switch (sym->generic.id)
+        {
+        case S_END:
+        case S_INLINESITE_END:
+            indent += printf("%*s", 2 * sd.depth - 2, "");
+            break;
+        default:
+            indent += printf("%*s", 2 * sd.depth, "");
+            break;
+        }
 
         switch (sym->generic.id)
         {
@@ -1386,6 +1447,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    p_string(&sym->thunk_v1.p_name),
                    sym->thunk_v1.segment, sym->thunk_v1.offset,
                    sym->thunk_v1.thunk_len, sym->thunk_v1.thtype);
+	    push_symbol_dumper(&sd, sym, sym->thunk_v1.pend);
 	    break;
 
 	case S_THUNK32:
@@ -1393,47 +1455,38 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->thunk_v3.name,
                    sym->thunk_v3.segment, sym->thunk_v3.offset,
                    sym->thunk_v3.thunk_len, sym->thunk_v3.thtype);
+	    push_symbol_dumper(&sd, sym, sym->thunk_v3.pend);
 	    break;
 
         /* Global and static functions */
 	case S_GPROC32_16t:
 	case S_LPROC32_16t:
             printf("%s-Proc V1: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
-                   sym->generic.id == S_GPROC32_16t ? "Global" : "-Local",
+                   sym->generic.id == S_GPROC32_16t ? "Global" : "Local",
                    p_string(&sym->proc_v1.p_name),
                    sym->proc_v1.segment, sym->proc_v1.offset,
                    sym->proc_v1.proc_len, sym->proc_v1.proctype,
                    sym->proc_v1.flags);
             printf("%*s\\- Debug: start=%08x end=%08x\n",
                    indent, "", sym->proc_v1.debug_start, sym->proc_v1.debug_end);
-            if (nest_block)
-            {
-                printf(">>> prev func still has nest_block %u count\n", nest_block);
-                nest_block = 0;
-            }
-/* EPP 	unsigned int	pparent; */
-/* EPP 	unsigned int	pend; */
-/* EPP 	unsigned int	next; */
+	    printf("%*s\\- parent:<%x> end:<%x> next<%x>\n",
+                   indent, "", sym->proc_v1.pparent, sym->proc_v1.pend, sym->proc_v1.next);
+	    push_symbol_dumper(&sd, sym, sym->proc_v1.pend);
 	    break;
 
 	case S_GPROC32_ST:
 	case S_LPROC32_ST:
             printf("%s-Proc V2: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
-                   sym->generic.id == S_GPROC32_ST ? "Global" : "-Local",
+                   sym->generic.id == S_GPROC32_ST ? "Global" : "Local",
                    p_string(&sym->proc_v2.p_name),
                    sym->proc_v2.segment, sym->proc_v2.offset,
                    sym->proc_v2.proc_len, sym->proc_v2.proctype,
                    sym->proc_v2.flags);
             printf("%*s\\- Debug: start=%08x end=%08x\n",
                    indent, "", sym->proc_v2.debug_start, sym->proc_v2.debug_end);
-            if (nest_block)
-            {
-                printf(">>> prev func still has nest_block %u count\n", nest_block);
-                nest_block = 0;
-            }
-/* EPP 	unsigned int	pparent; */
-/* EPP 	unsigned int	pend; */
-/* EPP 	unsigned int	next; */
+            printf("%*s\\- parent:<%x> end:<%x> next<%x>\n",
+                   indent, "", sym->proc_v2.pparent, sym->proc_v2.pend, sym->proc_v2.next);
+	    push_symbol_dumper(&sd, sym, sym->proc_v2.pend);
 	    break;
 
         case S_LPROC32:
@@ -1446,14 +1499,9 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->proc_v3.flags);
             printf("%*s\\- Debug: start=%08x end=%08x\n",
                    indent, "", sym->proc_v3.debug_start, sym->proc_v3.debug_end);
-            if (nest_block)
-            {
-                printf(">>> prev func still has nest_block %u count\n", nest_block);
-                nest_block = 0;
-            }
-/* EPP 	unsigned int	pparent; */
-/* EPP 	unsigned int	pend; */
-/* EPP 	unsigned int	next; */
+            printf("%*s\\- parent:<%x> end:<%x> next<%x>\n",
+                   indent, "", sym->proc_v3.pparent, sym->proc_v3.pend, sym->proc_v3.next);
+            push_symbol_dumper(&sd, sym, sym->proc_v3.pend);
             break;
 
         /* Function parameters and stack variables */
@@ -1503,15 +1551,15 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    p_string(&sym->block_v1.p_name),
                    sym->block_v1.segment, sym->block_v1.offset,
                    sym->block_v1.length);
-            nest_block++;
+            push_symbol_dumper(&sd, sym, sym->block_v1.end);
             break;
 
         case S_BLOCK32:
-            printf("Block V3 '%s' (%04x:%08x#%08x) parent:%u end:%x\n",
+            printf("Block V3 '%s' (%04x:%08x#%08x) parent:<%u> end:<%x>\n",
                    sym->block_v3.name,
                    sym->block_v3.segment, sym->block_v3.offset, sym->block_v3.length,
                    sym->block_v3.parent, sym->block_v3.end);
-            nest_block++;
+            push_symbol_dumper(&sd, sym, sym->block_v3.end);
             break;
 
         /* Additional function information */
@@ -1532,13 +1580,17 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
             break;
 
         case S_END:
-            if (nest_block)
+            ref = sd.depth ? (const char*)sd.stack[sd.depth - 1].sym - (const char*)root : 0;
+            switch (pop_symbol_dumper(&sd, i))
             {
-                nest_block--;
-                printf("End-Of block (%u)\n", nest_block);
+            case S_BLOCK32_ST:
+            case S_BLOCK32:
+                printf("End-Of block <%x>\n", ref);
+                break;
+            default:
+                printf("End-Of <%x>\n", ref);
+                break;
             }
-            else
-                printf("End-Of function\n");
             break;
 
         case S_COMPILE:
@@ -1813,18 +1865,24 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
             break;
 
         case S_INLINESITE:
-            printf("Inline-site V3 parent:%x end:%x inlinee:%x\n",
+            printf("Inline-site V3 parent:<%x> end:<%x> inlinee:%x\n",
                    sym->inline_site_v3.pParent, sym->inline_site_v3.pEnd, sym->inline_site_v3.inlinee);
             dump_binannot(sym->inline_site_v3.binaryAnnotations, get_last(sym), indent);
+            push_symbol_dumper(&sd, sym, sym->inline_site_v3.pEnd);
             break;
+
         case S_INLINESITE2:
-            printf("Inline-site2 V3 parent:%x end:%x inlinee:%x #inv:%u\n",
+            printf("Inline-site2 V3 parent:<%x> end:<%x> inlinee:%x #inv:%u\n",
                    sym->inline_site2_v3.pParent, sym->inline_site2_v3.pEnd, sym->inline_site2_v3.inlinee,
                    sym->inline_site2_v3.invocations);
             dump_binannot(sym->inline_site2_v3.binaryAnnotations, get_last(sym), indent);
+            push_symbol_dumper(&sd, sym, sym->inline_site2_v3.pEnd);
             break;
+
         case S_INLINESITE_END:
-            printf("Inline-site-end\n");
+            ref = sd.depth ? (const char*)sd.stack[sd.depth - 1].sym - (const char*)root : 0;
+            pop_symbol_dumper(&sd, i);
+            printf("Inline-site-end <%x>\n", ref);
             break;
 
         case S_CALLEES:
@@ -1843,7 +1901,8 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 ninvoc = (const unsigned*)get_last(sym) - invoc;
 
                 for (i = 0; i < sym->function_list_v3.count; ++i)
-                    printf("%*s| func:%x invoc:%u\n", indent, "", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
+                    printf("%*s| func:%x invoc:%u\n",
+                           indent, "", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
             }
             break;
 
@@ -1872,7 +1931,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
             break;
 
         case S_SEPCODE:
-            printf("SepCode V3 pParent:%x pEnd:%x separated:%04x:%08x (#%u) from %04x:%08x\n",
+            printf("SepCode V3 parent:<%x> end:<%x> separated:%04x:%08x (#%u) from %04x:%08x\n",
                    sym->sepcode_v3.pParent, sym->sepcode_v3.pEnd,
                    sym->sepcode_v3.sect, sym->sepcode_v3.off, sym->sepcode_v3.length,
                    sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
@@ -1894,6 +1953,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
         }
     }
+    dispose_symbol_dumper(&sd);
     return TRUE;
 }
 
