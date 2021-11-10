@@ -273,9 +273,9 @@ struct strarray find_tool( const char *name, const char * const *names )
         names++;
     }
 
-    if (!file && names == alt_names + 1)
+    if (!file && strcmp( name, "as" )) /* llvm-as is not a gas replacement */
     {
-        if (cc_command.count) file = find_clang_tool( cc_command, "lld-link" );
+        if (cc_command.count) file = find_clang_tool( cc_command, name );
         if (!file && !(file = find_binary( "llvm", name )))
         {
             struct strarray clang = empty_strarray;
