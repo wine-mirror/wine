@@ -1102,6 +1102,20 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
         printf("\n");
         break;
 
+    case LF_VFTABLE_V3:
+        printf("\t%x => VFTable V3 base:%x baseVfTable:%x offset%u\n",
+               curr_type, reftype->vftable_v3.type, reftype->vftable_v3.baseVftable, reftype->vftable_v3.offsetInObjectLayout);
+        {
+            const char* str = reftype->vftable_v3.names;
+            const char* last = str + reftype->vftable_v3.cbstr;
+            while (str < last)
+            {
+                printf("\t\t%s\n", str);
+                str += strlen(str) + 1;
+            }
+        }
+        break;
+
     /* types from IPI (aka #4) stream */
     case LF_FUNC_ID:
         printf("\t%x => FuncId %s scopeId:%04x type:%04x\n",
@@ -1865,6 +1879,24 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
         case S_UNAMESPACE:
             printf("UNameSpace V3 '%s'\n", sym->unamespace_v3.name);
+            break;
+
+        case S_SEPCODE:
+            printf("SepCode V3 pParent:%x pEnd:%x separated:%04x:%08x (#%u) from %04x:%08x\n",
+                   sym->sepcode_v3.pParent, sym->sepcode_v3.pEnd,
+                   sym->sepcode_v3.sect, sym->sepcode_v3.off, sym->sepcode_v3.length,
+                   sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
+            break;
+
+        case S_ANNOTATION:
+            printf("Annotation V3 %04x:%08x\n",
+                   sym->annotation_v3.seg, sym->annotation_v3.off);
+            {
+                const char* ptr = sym->annotation_v3.rgsz;
+                const char* last = ptr + sym->annotation_v3.csz;
+                for (; ptr < last; ptr += strlen(ptr) + 1)
+                    printf("\t%s\n", ptr);
+            }
             break;
 
         default:

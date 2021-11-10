@@ -482,6 +482,17 @@ union codeview_reftype
         unsigned                num;
         cv_typ_t                drvdcls[1];
     } derived_v2;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        cv_typ_t                type;
+        cv_typ_t                baseVftable;
+        unsigned                offsetInObjectLayout;
+        unsigned                cbstr;
+        char                    names[1]; /* array of len 0-terminated strings (size of cbstr in char:s) */
+    } vftable_v3;
 };
 
 union codeview_fieldtype
@@ -1287,6 +1298,7 @@ union codeview_fieldtype
 #define LF_METHOD_V3            0x150f
 #define LF_NESTTYPE_V3          0x1510
 #define LF_ONEMETHOD_V3         0x1511
+#define LF_VFTABLE_V3           0x151d
 
 /* leaves found in second type type (aka IPI)
  * for simplicity, stored in the same union as other TPI leaves
@@ -1988,6 +2000,30 @@ union codeview_symbol
         unsigned short int      id;
         char                    name[1];
     } unamespace_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            pParent;
+        unsigned int            pEnd;
+        unsigned int            length;
+        unsigned int            scf; /* CV_SEPCODEFLAGS */
+        unsigned int            off;
+        unsigned int            offParent;
+        unsigned short int      sect;
+        unsigned short int      sectParent;
+    } sepcode_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            off;
+        unsigned short int      seg;
+        unsigned short int      csz; /* number of bytes in following array */
+        char                    rgsz[1]; /* array of null terminated strings (bounded by csz) */
+    } annotation_v3;
 };
 
 enum BinaryAnnotationOpcode
@@ -2061,6 +2097,7 @@ enum BinaryAnnotationOpcode
 #define S_GTHREAD32_ST  0x100f
 #define S_FRAMEPROC     0x1012
 #define S_COMPILE2_ST   0x1013
+#define S_ANNOTATION    0x1019
 #define S_UNAMESPACE_ST 0x1029
 
 #define S_OBJNAME       0x1101
