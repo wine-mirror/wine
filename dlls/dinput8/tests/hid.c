@@ -6061,11 +6061,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         desc.rglDirection[1] = 2000;
         desc.rglDirection[2] = 3000;
         hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-        todo_wine_if( i == 2 )
         ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
         desc.cAxes = i;
         hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-        todo_wine_if( i == 1 )
         ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
         desc.dwFlags = DIEFF_SPHERICAL;

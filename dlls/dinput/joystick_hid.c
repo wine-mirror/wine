@@ -2224,7 +2224,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         count = impl->params.cAxes;
         if (params->cAxes < count) return DIERR_INVALIDPARAM;
         if ((direction_flags & DIEFF_POLAR) && count != 2) return DIERR_INVALIDPARAM;
-        if ((direction_flags & DIEFF_CARTESIAN) && count < 2) return DIERR_INVALIDPARAM;
+        if ((direction_flags & DIEFF_CARTESIAN) && params->cAxes != count) return DIERR_INVALIDPARAM;
 
         if (!count) memset( directions, 0, sizeof(directions) );
         else if (direction_flags & DIEFF_POLAR)
