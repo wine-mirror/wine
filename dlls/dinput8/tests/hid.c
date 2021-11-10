@@ -6114,26 +6114,19 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
         ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
         ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
-        todo_wine
         ok( desc.rglDirection[0] == 1000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 1000 );
         if (i == 1)
             ok( desc.rglDirection[1] == 0xcdcdcdcd, "got rglDirection[1] %d expected %d\n",
                 desc.rglDirection[1], 0xcdcdcdcd );
         else
-        {
-            todo_wine
             ok( desc.rglDirection[1] == 2000, "got rglDirection[1] %d expected %d\n",
                 desc.rglDirection[1], 2000 );
-        }
         if (i <= 2)
             ok( desc.rglDirection[2] == 0xcdcdcdcd, "got rglDirection[2] %d expected %d\n",
                 desc.rglDirection[2], 0xcdcdcdcd );
         else
-        {
-            todo_wine
             ok( desc.rglDirection[2] == 3000, "got rglDirection[2] %d expected %d\n",
                 desc.rglDirection[2], 3000 );
-        }
 
         desc.dwFlags = DIEFF_POLAR;
         desc.cAxes = 1;

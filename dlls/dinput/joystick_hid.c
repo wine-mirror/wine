@@ -2017,6 +2017,127 @@ static BOOL get_parameters_object_ofs( struct hid_joystick *impl, struct hid_val
     return DIENUM_STOP;
 }
 
+static void convert_directions_to_spherical( const DIEFFECT *in, DIEFFECT *out )
+{
+    DWORD i, direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
+
+    switch (in->dwFlags & direction_flags)
+    {
+    case DIEFF_CARTESIAN:
+        for (i = 1; i < in->cAxes; ++i)
+            out->rglDirection[i - 1] = atan2( in->rglDirection[i], in->rglDirection[0] );
+        out->rglDirection[in->cAxes - 1] = 0;
+        out->cAxes = in->cAxes;
+        break;
+    case DIEFF_POLAR:
+        out->rglDirection[0] = (in->rglDirection[0] % 36000) - 9000;
+        if (out->rglDirection[0] < 0) out->rglDirection[0] += 36000;
+        for (i = 1; i < in->cAxes; ++i) out->rglDirection[i] = 0;
+        out->cAxes = in->cAxes;
+        break;
+    case DIEFF_SPHERICAL:
+        for (i = 0; i < in->cAxes; ++i)
+        {
+            out->rglDirection[i] = in->rglDirection[i] % 36000;
+            if (out->rglDirection[i] < 0) out->rglDirection[i] += 36000;
+        }
+        out->cAxes = in->cAxes;
+        break;
+    }
+}
+
+static void convert_directions_from_spherical( const DIEFFECT *in, DIEFFECT *out )
+{
+    DWORD i, j, direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
+    LONG tmp;
+
+    switch (out->dwFlags & direction_flags)
+    {
+    case DIEFF_CARTESIAN:
+        out->rglDirection[0] = 10000;
+        for (i = 1; i <= in->cAxes; ++i)
+        {
+            tmp = cos( in->rglDirection[i - 1] * M_PI / 18000 ) * 10000;
+            for (j = 0; j < i; ++j)
+                out->rglDirection[j] = round( out->rglDirection[j] * tmp / 10000.0 );
+            out->rglDirection[i] = sin( in->rglDirection[i - 1] * M_PI / 18000 ) * 10000;
+        }
+        out->cAxes = in->cAxes;
+        break;
+    case DIEFF_POLAR:
+        out->rglDirection[0] = (in->rglDirection[0] + 9000) % 36000;
+        if (out->rglDirection[0] < 0) out->rglDirection[0] += 36000;
+        out->rglDirection[1] = 0;
+        out->cAxes = 2;
+        break;
+    case DIEFF_SPHERICAL:
+        for (i = 0; i < in->cAxes; ++i)
+        {
+            out->rglDirection[i] = in->rglDirection[i] % 36000;
+            if (out->rglDirection[i] < 0) out->rglDirection[i] += 36000;
+        }
+        out->cAxes = in->cAxes;
+        break;
+    }
+}
+
+static void convert_directions( const DIEFFECT *in, DIEFFECT *out )
+{
+    DWORD direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
+    LONG directions[6] = {0};
+    DIEFFECT spherical = {.rglDirection = directions};
+
+    switch (in->dwFlags & direction_flags)
+    {
+    case DIEFF_CARTESIAN:
+        switch (out->dwFlags & direction_flags)
+        {
+        case DIEFF_CARTESIAN:
+            memcpy( out->rglDirection, in->rglDirection, in->cAxes * sizeof(LONG) );
+            out->cAxes = in->cAxes;
+            break;
+        case DIEFF_POLAR:
+            convert_directions_to_spherical( in, &spherical );
+            convert_directions_from_spherical( &spherical, out );
+            break;
+        case DIEFF_SPHERICAL:
+            convert_directions_to_spherical( in, out );
+            break;
+        }
+        break;
+
+    case DIEFF_POLAR:
+        switch (out->dwFlags & direction_flags)
+        {
+        case DIEFF_POLAR:
+            memcpy( out->rglDirection, in->rglDirection, in->cAxes * sizeof(LONG) );
+            out->cAxes = in->cAxes;
+            break;
+        case DIEFF_CARTESIAN:
+            convert_directions_to_spherical( in, &spherical );
+            convert_directions_from_spherical( &spherical, out );
+            break;
+        case DIEFF_SPHERICAL:
+            convert_directions_to_spherical( in, out );
+            break;
+        }
+        break;
+
+    case DIEFF_SPHERICAL:
+        switch (out->dwFlags & direction_flags)
+        {
+        case DIEFF_POLAR:
+        case DIEFF_CARTESIAN:
+            convert_directions_from_spherical( in, out );
+            break;
+        case DIEFF_SPHERICAL:
+            convert_directions_to_spherical( in, out );
+            break;
+        }
+        break;
+    }
+}
+
 static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *iface, DIEFFECT *params, DWORD flags )
 {
     DIPROPHEADER filter =
@@ -2026,8 +2147,7 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
         .dwHow = DIPH_BYUSAGE,
     };
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
-    ULONG i, j, count, capacity, object_flags, direction_flags;
-    LONG tmp, directions[6] = {0};
+    ULONG i, count, capacity, object_flags, direction_flags;
     BOOL ret;
 
     TRACE( "iface %p, params %p, flags %#x.\n", iface, params, flags );
@@ -2067,27 +2187,9 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
         if ((direction_flags & DIEFF_POLAR) && count != 2) return DIERR_INVALIDPARAM;
         if (capacity < params->cAxes) return DIERR_MOREDATA;
 
-        if (direction_flags & DIEFF_SPHERICAL)
-            memcpy( directions, impl->params.rglDirection, count * sizeof(LONG) );
-        else if (direction_flags & DIEFF_POLAR)
-        {
-            directions[0] = (impl->params.rglDirection[0] + 9000) % 36000;
-            if (directions[0] < 0) directions[0] += 36000;
-        }
-        else if (direction_flags & DIEFF_CARTESIAN)
-        {
-            directions[0] = 10000;
-            for (i = 1; i <= count; ++i)
-            {
-                tmp = cos( impl->params.rglDirection[i - 1] * M_PI / 18000 ) * 10000;
-                for (j = 0; j < i; ++j) directions[j] = round( directions[j] * tmp / 10000.0 );
-                directions[i] = sin( impl->params.rglDirection[i - 1] * M_PI / 18000 ) * 10000;
-            }
-        }
-
         if (!count) params->rglDirection = NULL;
         else if (!params->rglDirection) return DIERR_INVALIDPARAM;
-        else memcpy( params->rglDirection, directions, count * sizeof(LONG) );
+        else convert_directions( &impl->params, params );
     }
 
     if (flags & DIEP_TYPESPECIFICPARAMS)
@@ -2182,7 +2284,6 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
     };
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
     ULONG i, count, old_value, object_flags, direction_flags;
-    LONG directions[6] = {0};
     HRESULT hr;
     BOOL ret;
 
@@ -2226,31 +2327,11 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         if ((direction_flags & DIEFF_POLAR) && count != 2) return DIERR_INVALIDPARAM;
         if ((direction_flags & DIEFF_CARTESIAN) && params->cAxes != count) return DIERR_INVALIDPARAM;
 
-        if (!count) memset( directions, 0, sizeof(directions) );
-        else if (direction_flags & DIEFF_POLAR)
-        {
-            directions[0] = (params->rglDirection[0] % 36000) - 9000;
-            if (directions[0] < 0) directions[0] += 36000;
-            for (i = 1; i < count; ++i) directions[i] = 0;
-        }
-        else if (direction_flags & DIEFF_CARTESIAN)
-        {
-            for (i = 1; i < count; ++i)
-                directions[i - 1] = atan2( params->rglDirection[i], params->rglDirection[0] );
-            directions[count - 1] = 0;
-        }
-        else
-        {
-            for (i = 0; i < count; ++i)
-            {
-                directions[i] = params->rglDirection[i] % 36000;
-                if (directions[i] < 0) directions[i] += 36000;
-            }
-        }
-
-        if (memcmp( impl->params.rglDirection, directions, count * sizeof(LONG) ))
+        impl->params.dwFlags &= ~(DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
+        impl->params.dwFlags |= direction_flags;
+        if (memcmp( impl->params.rglDirection, params->rglDirection, count * sizeof(LONG) ))
             impl->modified = TRUE;
-        memcpy( impl->params.rglDirection, directions, count * sizeof(LONG) );
+        memcpy( impl->params.rglDirection, params->rglDirection, count * sizeof(LONG) );
     }
 
     if (flags & DIEP_TYPESPECIFICPARAMS)
@@ -2514,7 +2595,9 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     ULONG report_len = impl->joystick->caps.OutputReportByteLength;
     HANDLE device = impl->joystick->device;
     struct hid_value_caps *caps;
+    LONG directions[4] = {0};
     DWORD i, tmp, count;
+    DIEFFECT spherical;
     NTSTATUS status;
     USAGE usage;
     HRESULT hr;
@@ -2659,10 +2742,13 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
                                      impl->joystick->preparsed, impl->effect_update_buf, report_len );
             if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsages returned %#x\n", status );
 
+            spherical.rglDirection = directions;
+            convert_directions_to_spherical( &impl->params, &spherical );
+
             if (!effect_update->direction_count) WARN( "no PID effect direction caps found\n" );
-            else for (i = 0; i < impl->params.cAxes - 1; ++i)
+            else for (i = 0; i < spherical.cAxes - 1; ++i)
             {
-                tmp = impl->directions[i] + (i == 0 ? 9000 : 0);
+                tmp = directions[i] + (i == 0 ? 9000 : 0);
                 caps = effect_update->direction_caps[effect_update->direction_count - i - 1];
                 set_parameter_value( impl, impl->effect_update_buf, caps, tmp % 36000 );
             }
