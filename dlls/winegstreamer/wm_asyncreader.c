@@ -457,12 +457,14 @@ static HRESULT WINAPI WMReaderAdvanced_SetStreamsSelected(IWMReaderAdvanced6 *if
     return wm_reader_set_streams_selected(&reader->reader, count, stream_numbers, selections);
 }
 
-static HRESULT WINAPI WMReaderAdvanced_GetStreamSelected(IWMReaderAdvanced6 *iface, WORD stream_num,
-        WMT_STREAM_SELECTION *selection)
+static HRESULT WINAPI WMReaderAdvanced_GetStreamSelected(IWMReaderAdvanced6 *iface,
+        WORD stream_number, WMT_STREAM_SELECTION *selection)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%d %p)\n", This, stream_num, selection);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+
+    TRACE("reader %p, stream_number %u, selection %p.\n", reader, stream_number, selection);
+
+    return wm_reader_get_stream_selection(&reader->reader, stream_number, selection);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_SetReceiveSelectionCallbacks(IWMReaderAdvanced6 *iface, BOOL get_callbacks)
