@@ -589,6 +589,122 @@ static void test_reader_attributes(IWMProfile *profile)
     IWMHeaderInfo_Release(header_info);
 }
 
+static void test_sync_reader_selection(IWMSyncReader *reader)
+{
+    WMT_STREAM_SELECTION selections[2];
+    WORD stream_numbers[2];
+    QWORD pts, duration;
+    INSSBuffer *sample;
+    DWORD flags;
+    HRESULT hr;
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 0, &selections[0]);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 1, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 2, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 3, &selections[0]);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
+
+    hr = IWMSyncReader_SetStreamsSelected(reader, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    stream_numbers[0] = 1;
+    stream_numbers[1] = 0;
+    selections[0] = selections[1] = WMT_OFF;
+    hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 1, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    stream_numbers[0] = stream_numbers[1] = 1;
+    selections[0] = selections[1] = WMT_OFF;
+    hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 1, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_OFF, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMSyncReader_GetStreamSelected(reader, 2, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    hr = IWMSyncReader_GetNextSample(reader, 1, &sample, &pts, &duration, &flags, NULL, NULL);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_GetNextSample(reader, 2, &sample, &pts, &duration, &flags, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    INSSBuffer_Release(sample);
+
+    for (;;)
+    {
+        hr = IWMSyncReader_GetNextSample(reader, 2, &sample, &pts, &duration, &flags, NULL, NULL);
+        if (hr == NS_E_NO_MORE_SAMPLES)
+            break;
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        INSSBuffer_Release(sample);
+    }
+
+    hr = IWMSyncReader_GetNextSample(reader, 1, &sample, &pts, &duration, &flags, NULL, NULL);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_SetRange(reader, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration,
+            &flags, NULL, &stream_numbers[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream_numbers[0] == 2, "Got stream number %u.\n", stream_numbers[0]);
+    INSSBuffer_Release(sample);
+
+    for (;;)
+    {
+        hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration,
+                &flags, NULL, &stream_numbers[0]);
+        if (hr == NS_E_NO_MORE_SAMPLES)
+            break;
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_numbers[0] == 2, "Got stream number %u.\n", stream_numbers[0]);
+        INSSBuffer_Release(sample);
+    }
+
+    stream_numbers[0] = stream_numbers[1] = 2;
+    selections[0] = selections[1] = WMT_OFF;
+    hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_SetRange(reader, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration,
+            &flags, NULL, &stream_numbers[0]);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+
+    stream_numbers[0] = 1;
+    stream_numbers[1] = 2;
+    selections[0] = selections[1] = WMT_ON;
+    hr = IWMSyncReader_SetStreamsSelected(reader, 2, stream_numbers, selections);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 static void test_sync_reader_streaming(void)
 {
     DWORD size, capacity, flags, output_number, expect_output_number;
@@ -791,6 +907,11 @@ static void test_sync_reader_streaming(void)
     hr = IWMSyncReader_GetNextSample(reader, stream_numbers[1], &sample,
             &pts, &duration, &flags, NULL, NULL);
     ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_SetRange(reader, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    test_sync_reader_selection(reader);
 
     test_reader_attributes(profile);
 
@@ -1112,6 +1233,7 @@ struct callback
     LONG refcount;
     HANDLE got_opened, got_stopped, eof_event;
     unsigned int got_closed, got_started, got_sample, got_end_of_streaming, got_eof;
+    bool all_streams_off;
 };
 
 static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
@@ -1196,7 +1318,10 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(type == WMT_TYPE_DWORD, "Got type %#x.\n", type);
             ok(!*(DWORD *)value, "Got value %#x.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
-            ok(callback->got_sample > 0, "Got no samples.\n");
+            if (callback->all_streams_off)
+                ok(callback->got_sample == 0, "Got %u samples.\n", callback->got_sample);
+            else
+                ok(callback->got_sample > 0, "Got no samples.\n");
             ok(callback->got_end_of_streaming == 1, "Got %u WMT_END_OF_STREAMING callbacks.\n",
                     callback->got_end_of_streaming);
             ++callback->got_eof;
@@ -1208,7 +1333,10 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
             ok(type == WMT_TYPE_QWORD, "Got type %#x.\n", type);
             ok(*(QWORD *)value == 3000, "Got value %#x.\n", *(DWORD *)value);
             ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
-            ok(callback->got_sample > 0, "Got no samples.\n");
+            if (callback->all_streams_off)
+                ok(callback->got_sample == 0, "Got %u samples.\n", callback->got_sample);
+            else
+                ok(callback->got_sample > 0, "Got no samples.\n");
             ok(callback->got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
             break;
 
@@ -1287,6 +1415,109 @@ static void callback_cleanup(struct callback *callback)
     CloseHandle(callback->got_opened);
     CloseHandle(callback->got_stopped);
     CloseHandle(callback->eof_event);
+}
+
+static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, struct callback *callback)
+{
+    HRESULT hr;
+    DWORD ret;
+
+    callback->got_closed = 0;
+    callback->got_started = 0;
+    callback->got_sample = 0;
+    callback->got_end_of_streaming = 0;
+    callback->got_eof = 0;
+
+    hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)0xfacade);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = WaitForSingleObject(callback->eof_event, 1000);
+    ok(!ret, "Wait timed out.\n");
+    ok(callback->got_eof == 1, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+
+    hr = IWMReader_Stop(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = WaitForSingleObject(callback->got_stopped, 1000);
+    ok(!ret, "Wait timed out.\n");
+}
+
+static void test_async_reader_selection(IWMReader *reader,
+        IWMReaderAdvanced2 *advanced, struct callback *callback)
+{
+    WMT_STREAM_SELECTION selections[2];
+    WORD stream_numbers[2];
+    HRESULT hr;
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 0, &selections[0]);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 1, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 2, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 3, &selections[0]);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(selections[0] == 0xdeadbeef, "Got selection %#x.\n", selections[0]);
+
+    hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    stream_numbers[0] = 1;
+    stream_numbers[1] = 0;
+    selections[0] = selections[1] = WMT_OFF;
+    hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#x.\n", hr);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 1, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    stream_numbers[0] = stream_numbers[1] = 1;
+    selections[0] = selections[1] = WMT_OFF;
+    hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 1, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_OFF, "Got selection %#x.\n", selections[0]);
+
+    selections[0] = 0xdeadbeef;
+    hr = IWMReaderAdvanced2_GetStreamSelected(advanced, 2, &selections[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(selections[0] == WMT_ON, "Got selection %#x.\n", selections[0]);
+
+    run_async_reader(reader, advanced, callback);
+
+    stream_numbers[0] = stream_numbers[1] = 2;
+    selections[0] = selections[1] = WMT_OFF;
+    hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    callback->all_streams_off = true;
+    run_async_reader(reader, advanced, callback);
+    callback->all_streams_off = false;
+
+    stream_numbers[0] = 1;
+    stream_numbers[1] = 2;
+    selections[0] = selections[1] = WMT_ON;
+    hr = IWMReaderAdvanced2_SetStreamsSelected(advanced, 2, stream_numbers, selections);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static void test_async_reader_streaming(void)
@@ -1379,6 +1610,7 @@ static void test_async_reader_streaming(void)
     ok(!ret, "Wait timed out.\n");
 
     test_reader_attributes(profile);
+    test_async_reader_selection(reader, advanced, &callback);
 
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
