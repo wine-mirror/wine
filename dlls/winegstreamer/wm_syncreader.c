@@ -221,11 +221,14 @@ static HRESULT WINAPI WMSyncReader_GetStreamNumberForOutput(IWMSyncReader2 *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI WMSyncReader_GetStreamSelected(IWMSyncReader2 *iface, WORD stream_num, WMT_STREAM_SELECTION *selection)
+static HRESULT WINAPI WMSyncReader_GetStreamSelected(IWMSyncReader2 *iface,
+        WORD stream_number, WMT_STREAM_SELECTION *selection)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, stream_num, selection);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, stream_number %u, selection %p.\n", reader, stream_number, selection);
+
+    return wm_reader_get_stream_selection(&reader->reader, stream_number, selection);
 }
 
 static HRESULT WINAPI WMSyncReader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
