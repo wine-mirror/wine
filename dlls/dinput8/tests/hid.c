@@ -6085,7 +6085,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         }
         else
         {
-            todo_wine
             ok( desc.rglDirection[0] == 6343, "got rglDirection[0] %d expected %d\n",
                 desc.rglDirection[0], 6343 );
             if (i == 2)
@@ -6097,7 +6096,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             }
             else
             {
-                todo_wine
                 ok( desc.rglDirection[1] == 5330, "got rglDirection[1] %d expected %d\n",
                     desc.rglDirection[1], 5330 );
                 ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n",
@@ -6141,7 +6139,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         {
             ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
             ok( desc.cAxes == i, "got cAxes %u expected 2\n", desc.cAxes );
-            todo_wine
             ok( desc.rglDirection[0] == 15343, "got rglDirection[0] %d expected %d\n",
                 desc.rglDirection[0], 15343 );
             ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );

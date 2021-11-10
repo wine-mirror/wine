@@ -2019,13 +2019,19 @@ static BOOL get_parameters_object_ofs( struct hid_joystick *impl, struct hid_val
 
 static void convert_directions_to_spherical( const DIEFFECT *in, DIEFFECT *out )
 {
-    DWORD i, direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
+    DWORD i, j, direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
+    double tmp;
 
     switch (in->dwFlags & direction_flags)
     {
     case DIEFF_CARTESIAN:
         for (i = 1; i < in->cAxes; ++i)
-            out->rglDirection[i - 1] = atan2( in->rglDirection[i], in->rglDirection[0] );
+        {
+            tmp = in->rglDirection[0];
+            for (j = 1; j < i; ++j) tmp = sqrt( tmp * tmp + in->rglDirection[j] * in->rglDirection[j] );
+            tmp = atan2( in->rglDirection[i], tmp );
+            out->rglDirection[i - 1] = tmp * 18000 / M_PI;
+        }
         out->rglDirection[in->cAxes - 1] = 0;
         out->cAxes = in->cAxes;
         break;
