@@ -417,7 +417,7 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder2 *psf, LPCITEMIDLIST pidl, LPDWO
     } else if (_ILGetDataPointer (pidl)) {
 	DWORD file_attr = _ILGetFileAttributes (pidl, NULL, 0);
 
-        if (!file_attr && has_guid) {
+        if (!file_attr) {
 	    WCHAR path[MAX_PATH];
 	    STRRET strret;
 
