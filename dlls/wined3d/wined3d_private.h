@@ -1612,6 +1612,11 @@ struct wined3d_bo_gl
     uint64_t command_fence_id;
 };
 
+static inline struct wined3d_bo_gl *wined3d_bo_gl(struct wined3d_bo *bo)
+{
+    return CONTAINING_RECORD(bo, struct wined3d_bo_gl, b);
+}
+
 static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
 {
     return bo ? ((struct wined3d_bo_gl *)bo)->id : 0;
@@ -6579,6 +6584,12 @@ static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *co
     struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
 
     bo_gl->command_fence_id = device_gl->current_fence_id;
+}
+
+static inline void wined3d_context_gl_reference_buffer(struct wined3d_context_gl *context_gl,
+        struct wined3d_buffer *buffer)
+{
+    wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(buffer->buffer_object));
 }
 
 static inline bool wined3d_map_persistent(void)
