@@ -4638,17 +4638,20 @@ static void prepare_clip_space_planes(struct d3d_device *device, struct wined3d_
     plane[5].w = m._44 - m._43;
 }
 
-static void compute_sphere_visibility(struct wined3d_vec4 plane[12], DWORD enabled_planes, BOOL equality,
-        D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count, DWORD *return_values)
+static void compute_sphere_visibility(const struct wined3d_vec4 *planes, DWORD enabled_planes, BOOL equality,
+        const D3DVECTOR *centres, const D3DVALUE *radii, unsigned int sphere_count, DWORD *return_values)
 {
-    UINT i, j;
+    unsigned int mask, i, j;
 
+    memset(return_values, 0, sphere_count * sizeof(*return_values));
     for (i = 0; i < sphere_count; ++i)
     {
-        return_values[i] = 0;
-        for (j = 0; j < 12; ++j)
-            if (enabled_planes & 1u << j)
-                return_values[i] |= in_plane(j, plane[j], centers[i], radii[i], equality);
+        mask = enabled_planes;
+        while (mask)
+        {
+            j = wined3d_bit_scan(&mask);
+            return_values[i] |= in_plane(j, planes[j], centres[i], radii[i], equality);
+        }
     }
 }
 
