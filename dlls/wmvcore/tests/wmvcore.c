@@ -356,8 +356,13 @@ static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
 
 static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    if (winetest_debug > 1)
+        trace("%04x: INSSBuffer::GetBuffer()\n", GetCurrentThreadId());
+
+    *data = buffer->data;
+    return S_OK;
 }
 
 static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, DWORD *size)
@@ -1618,8 +1623,32 @@ static HRESULT WINAPI callback_advanced_OnOutputPropsChanged(IWMReaderCallbackAd
 static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvanced *iface,
         WORD stream_number, DWORD size, INSSBuffer **sample, void *context)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    struct buffer *object;
+
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallbackAdvanced::AllocateForStream(output %u, size %u)\n",
+                GetTickCount(), GetCurrentThreadId(), stream_number, size);
+
+    ok(callback->read_compressed, "AllocateForStream() should only be called when reading compressed samples.\n");
+    ok(callback->allocated_samples, "AllocateForStream() should only be called when using a custom allocator.\n");
+
+    if (!(object = malloc(offsetof(struct buffer, data[size]))))
+        return E_OUTOFMEMORY;
+
+    size = max(size, 65536);
+
+    object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+    object->refcount = 1;
+    object->capacity = size;
+    /* Native seems to break if we set the size to zero. */
+    object->size = size;
+    *sample = &object->INSSBuffer_iface;
+
+    InterlockedIncrement(&outstanding_buffers);
+
+    ok(!context, "Got unexpected context %p.\n", context);
+    return S_OK;
 }
 
 static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvanced *iface,
@@ -1632,7 +1661,15 @@ static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvan
         trace("%u: %04x: IWMReaderCallbackAdvanced::AllocateForOutput(output %u, size %u)\n",
                 GetTickCount(), GetCurrentThreadId(), output, size);
 
-    ok(callback->allocated_samples, "AllocateForOutput() should only be called when using a custom allocator.\n");
+    if (!callback->read_compressed)
+    {
+        /* Actually AllocateForOutput() isn't called when reading compressed
+         * samples either, but native seems to have some sort of race that
+         * causes one call to this function to happen in
+         * test_async_reader_allocate_compressed(). */
+        ok(callback->allocated_samples,
+                "AllocateForOutput() should only be called when using a custom allocator.\n");
+    }
 
     if (!(object = malloc(offsetof(struct buffer, data[size]))))
         return E_OUTOFMEMORY;
@@ -1829,13 +1866,13 @@ static void test_async_reader_allocate(IWMReader *reader,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 0, TRUE);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, TRUE);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 3, TRUE);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1858,9 +1895,9 @@ static void test_async_reader_allocate(IWMReader *reader,
     run_async_reader(reader, advanced, callback);
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, FALSE);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, FALSE);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static void test_async_reader_selection(IWMReader *reader,
@@ -1963,6 +2000,54 @@ static void test_async_reader_compressed(IWMReader *reader,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
+static void test_async_reader_allocate_compressed(IWMReader *reader,
+        IWMReaderAdvanced2 *advanced, struct callback *callback)
+{
+    HRESULT hr;
+
+    callback->read_compressed = true;
+
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    callback->allocated_samples = true;
+
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    run_async_reader(reader, advanced, callback);
+
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    callback->allocated_samples = false;
+
+    run_async_reader(reader, advanced, callback);
+
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    callback->read_compressed = false;
+}
+
 static void test_async_reader_streaming(void)
 {
     const WCHAR *filename = load_resource(L"test.wmv");
@@ -2056,6 +2141,7 @@ static void test_async_reader_streaming(void)
     test_async_reader_selection(reader, advanced, &callback);
     test_async_reader_allocate(reader, advanced, &callback);
     test_async_reader_compressed(reader, advanced, &callback);
+    test_async_reader_allocate_compressed(reader, advanced, &callback);
 
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

@@ -125,6 +125,7 @@ struct wm_stream
     WORD index;
     bool eos;
     bool allocate_output;
+    bool allocate_stream;
     /* Note that we only pretend to read compressed samples, and instead output
      * uncompressed samples regardless of whether we are configured to read
      * compressed samples. Rather, the behaviour of the reader objects differs
@@ -183,6 +184,7 @@ HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration);
 HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output, BOOL allocate);
+HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_number, BOOL allocate);
 HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps *props);
 HRESULT wm_reader_set_read_compressed(struct wm_reader *reader,

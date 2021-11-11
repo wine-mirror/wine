@@ -528,11 +528,14 @@ static HRESULT WINAPI WMReaderAdvanced_GetAllocateForOutput(IWMReaderAdvanced6 *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReaderAdvanced_SetAllocateForStream(IWMReaderAdvanced6 *iface, WORD output_num, BOOL allocate)
+static HRESULT WINAPI WMReaderAdvanced_SetAllocateForStream(IWMReaderAdvanced6 *iface,
+        WORD stream_number, BOOL allocate)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%d %x)\n", This, output_num, allocate);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+
+    TRACE("reader %p, stream_number %u, allocate %d.\n", reader, stream_number, allocate);
+
+    return wm_reader_set_allocate_for_stream(&reader->reader, stream_number, allocate);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetAllocateForStream(IWMReaderAdvanced6 *iface, WORD output_num, BOOL *allocate)

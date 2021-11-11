@@ -1770,12 +1770,22 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                 HRESULT hr;
                 BYTE *data;
 
-                if (callback_advanced && !stream->read_compressed && stream->allocate_output)
+                if (callback_advanced && stream->read_compressed && stream->allocate_stream)
+                {
+                    if (FAILED(hr = IWMReaderCallbackAdvanced_AllocateForStream(callback_advanced,
+                            stream->index + 1, event.u.buffer.size, &sample, NULL)))
+                    {
+                        ERR("Failed to allocate stream sample of %u bytes, hr %#x.\n", event.u.buffer.size, hr);
+                        wg_parser_stream_release_buffer(wg_stream);
+                        return hr;
+                    }
+                }
+                else if (callback_advanced && !stream->read_compressed && stream->allocate_output)
                 {
                     if (FAILED(hr = IWMReaderCallbackAdvanced_AllocateForOutput(callback_advanced,
                             stream->index, event.u.buffer.size, &sample, NULL)))
                     {
-                        ERR("Failed to allocate sample of %u bytes, hr %#x.\n", event.u.buffer.size, hr);
+                        ERR("Failed to allocate output sample of %u bytes, hr %#x.\n", event.u.buffer.size, hr);
                         wg_parser_stream_release_buffer(wg_stream);
                         return hr;
                     }
@@ -1943,6 +1953,24 @@ HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output
     }
 
     stream->allocate_output = !!allocate;
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
+}
+
+HRESULT wm_reader_set_allocate_for_stream(struct wm_reader *reader, WORD stream_number, BOOL allocate)
+{
+    struct wm_stream *stream;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    stream->allocate_stream = !!allocate;
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
