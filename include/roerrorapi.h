@@ -24,6 +24,7 @@
 #include <rpc.h>
 
 HRESULT WINAPI GetRestrictedErrorInfo(IRestrictedErrorInfo **info);
+BOOL    WINAPI RoOriginateError(HRESULT error, HSTRING message);
 BOOL    WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown *language_exception);
 
 #endif /* _ROERROR_H */

@@ -291,6 +291,15 @@ BOOL WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknow
 }
 
 /***********************************************************************
+ *      RoOriginateError (combase.@)
+ */
+BOOL WINAPI RoOriginateError(HRESULT error, HSTRING message)
+{
+    FIXME("(%x %s) stub\n", error, debugstr_hstring(message));
+    return FALSE;
+}
+
+/***********************************************************************
  *      CleanupTlsOleState (combase.@)
  */
 void WINAPI CleanupTlsOleState(void *unknown)

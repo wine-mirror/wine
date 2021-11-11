@@ -7,7 +7,7 @@
 @ stub RoGetMatchingRestrictedErrorInfo
 @ stub RoInspectCapturedStackBackTrace
 @ stub RoInspectThreadErrorInfo
-@ stub RoOriginateError
+@ stdcall RoOriginateError(long ptr) combase.RoOriginateError
 @ stub RoOriginateErrorW
 @ stdcall RoOriginateLanguageException(long ptr ptr) combase.RoOriginateLanguageException
 @ stub RoReportFailedDelegate
