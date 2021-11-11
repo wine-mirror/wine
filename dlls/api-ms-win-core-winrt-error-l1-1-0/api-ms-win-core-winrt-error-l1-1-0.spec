@@ -2,7 +2,7 @@
 @ stub RoCaptureErrorContext
 @ stub RoFailFastWithErrorContext
 @ stub RoGetErrorReportingFlags
-@ stub RoOriginateError
+@ stdcall RoOriginateError(long ptr) combase.RoOriginateError
 @ stub RoOriginateErrorW
 @ stub RoResolveRestrictedErrorInfoReference
 @ stub RoSetErrorReportingFlags

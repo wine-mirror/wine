@@ -301,7 +301,7 @@
 @ stdcall RoInitialize(long)
 @ stub RoInspectCapturedStackBackTrace
 @ stub RoInspectThreadErrorInfo
-@ stub RoOriginateError
+@ stdcall RoOriginateError(long ptr)
 @ stub RoOriginateErrorW
 @ stdcall RoOriginateLanguageException(long ptr ptr)
 @ stub RoParameterizedTypeExtraGetTypeSignature
