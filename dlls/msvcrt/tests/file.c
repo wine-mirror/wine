@@ -1565,6 +1565,18 @@ static void test_stdout_handle( STARTUPINFOA *startup, char *cmdline, HANDLE hst
     DeleteFileA( "fdopen.err" );
 }
 
+static unsigned WINAPI read_pipe_thread(void *argument)
+{
+    unsigned char buffer[2];
+    int ret;
+    int *pipefds = argument;
+
+    ret = _read(pipefds[0], buffer, sizeof(buffer));
+    ok(ret == 1, "ret = %d\n", ret);
+    ok(buffer[0] == 'a', "%x\n", buffer[0]);
+    return 0;
+}
+
 static void test_file_inherit( const char* selfname )
 {
     int			fd;
@@ -1574,6 +1586,9 @@ static void test_file_inherit( const char* selfname )
     STARTUPINFOA startup;
     SECURITY_ATTRIBUTES sa;
     HANDLE handles[3];
+    HANDLE thread_handle;
+    int pipefds[2];
+    intptr_t ret;
 
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
@@ -1582,7 +1597,8 @@ static void test_file_inherit( const char* selfname )
     arg_v[2] = "inherit";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
-    _spawnvp(_P_WAIT, selfname, arg_v);
+    ret = _spawnvp(_P_WAIT, selfname, arg_v);
+    ok(ret == 0, "_spawnvp returned %d, errno %d\n", ret, errno);
     ok(tell(fd) == 8, "bad position %lu expecting 8\n", tell(fd));
     lseek(fd, 0, SEEK_SET);
     ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
@@ -1595,11 +1611,36 @@ static void test_file_inherit( const char* selfname )
     arg_v[2] = "inherit_no";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
-    _spawnvp(_P_WAIT, selfname, arg_v);
+    ret = _spawnvp(_P_WAIT, selfname, arg_v);
+    ok(ret == 0, "_spawnvp returned %d, errno %d\n", ret, errno);
     ok(tell(fd) == 0, "bad position %lu expecting 0\n", tell(fd));
     ok(read(fd, buffer, sizeof (buffer)) == 0, "Found unexpected data (%s)\n", buffer);
     close (fd);
     ok(unlink("fdopen.tst") == 0, "Couldn't unlink\n");
+
+    /* Show that spawn works while a read is active */
+    ok(_pipe(pipefds, 1, O_BINARY) == 0, "_pipe() failed\n");
+    thread_handle = (HANDLE)_beginthreadex(NULL, 0, read_pipe_thread, pipefds, 0, NULL);
+    Sleep(100); /* try to make sure the thread is reading */
+    fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
+    ok(fd != -1, "Couldn't create test file\n");
+    arg_v[1] = "tests/file.c";
+    arg_v[2] = "inherit";
+    arg_v[3] = buffer; sprintf(buffer, "%d", fd);
+    arg_v[4] = 0;
+    ret = _spawnvp(_P_WAIT, selfname, arg_v);
+    ok(ret == 0, "_spawnvp returned %Id, errno %d\n", ret, errno);
+    ret = tell(fd);
+    ok(ret == 8, "bad position %Iu expecting 8\n", ret);
+    lseek(fd, 0, SEEK_SET);
+    ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
+    close (fd);
+    ok(unlink("fdopen.tst") == 0, "Couldn't unlink\n");
+    _write(pipefds[1], "a", 1);
+    WaitForSingleObject(thread_handle, INFINITE);
+    CloseHandle(thread_handle);
+    close(pipefds[0]);
+    close(pipefds[1]);
 
     /* make file handle inheritable */
     sa.nLength = sizeof(sa);
