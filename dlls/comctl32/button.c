@@ -427,10 +427,10 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
         return pb_states[state];
     case BS_CHECKBOX:
     case BS_AUTOCHECKBOX:
-        return cb_states[check_state][state];
-    case BS_RADIOBUTTON:
     case BS_3STATE:
     case BS_AUTO3STATE:
+        return cb_states[check_state][state];
+    case BS_RADIOBUTTON:
     case BS_AUTORADIOBUTTON:
         return rb_states[check_state][state];
     case BS_GROUPBOX:
