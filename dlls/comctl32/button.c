@@ -448,7 +448,7 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
         return style & BS_PUSHLIKE ? pushlike_rb_states[check_state][state]
                                    : rb_states[check_state][state];
     case BS_GROUPBOX:
-        return gb_states[state];
+        return style & BS_PUSHLIKE ? pb_states[state] : gb_states[state];
     default:
         WARN("Unsupported button type 0x%08x\n", type);
         return PBS_NORMAL;
@@ -2883,6 +2883,7 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     HFONT font, hPrevFont = NULL;
     BOOL created_font = FALSE;
     TEXTMETRICW textMetric;
+    int part;
 
     HRESULT hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
     if (SUCCEEDED(hr)) {
@@ -2914,9 +2915,10 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         ExtSelectClipRgn(hDC, textRegion, RGN_DIFF);
     }
 
-    if (IsThemeBackgroundPartiallyTransparent(theme, BP_GROUPBOX, state))
+    part = GetWindowLongW(infoPtr->hwnd, GWL_STYLE) & BS_PUSHLIKE ? BP_PUSHBUTTON : BP_GROUPBOX;
+    if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
-    DrawThemeBackground(theme, hDC, BP_GROUPBOX, state, &bgRect, NULL);
+    DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
 
     if (dtFlags != (UINT)-1)
     {
@@ -2928,7 +2930,7 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             SelectClipRgn(hDC, textRegion);
             DeleteObject(textRegion);
         }
-        BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &imageRect, &textRect, theme, BP_GROUPBOX, state);
+        BUTTON_DrawThemedLabel(infoPtr, hDC, dtFlags, &imageRect, &textRect, theme, part, state);
     }
 
     SelectClipRgn(hDC, region);
