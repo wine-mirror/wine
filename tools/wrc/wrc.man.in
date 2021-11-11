@@ -21,11 +21,6 @@ specified with \fB-o\fR, then \fBwrc\fR will write the output to
 no inputfile was given.
 .SH OPTIONS
 .TP
-.BI \-b,\ --target= cpu-manufacturer\fR[\fI\fB-\fIkernel\fR]\fB-\fIos
-Specify the target CPU and platform on which the generated code will
-be built. The target specification is in the standard autoconf format
-as returned by \fBconfig.sub\fR.
-.TP
 .I \fB\-D\fR, \fB\-\-define\fR=\fIid\fR[\fB=\fIval\fR]
 Define preprocessor identifier \fIid\fR to (optionally) value \fIval\fR.
 See also

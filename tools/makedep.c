@@ -2697,7 +2697,6 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     output( "\n" );
     output( "\t%s%s -u -o $@", cmd_prefix( "WRC" ), tools_path( make, "wrc" ) );
     if (make->is_win16) output_filename( "-m16" );
-    else output_filenames( target_flags );
     output_filename( "--nostdinc" );
     if (po_dir) output_filename( strmake( "--po-dir=%s", po_dir ));
     output_filenames( defines );
