@@ -296,11 +296,13 @@ static HRESULT WINAPI WMSyncReader_SetRangeByFrame(IWMSyncReader2 *iface, WORD s
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMSyncReader_SetReadStreamSamples(IWMSyncReader2 *iface, WORD stream_num, BOOL compressed)
+static HRESULT WINAPI WMSyncReader_SetReadStreamSamples(IWMSyncReader2 *iface, WORD stream_number, BOOL compressed)
 {
-    struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%u %x): stub!\n", This, stream_num, compressed);
-    return E_NOTIMPL;
+    struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
+
+    TRACE("reader %p, stream_index %u, compressed %d.\n", reader, stream_number, compressed);
+
+    return wm_reader_set_read_compressed(&reader->reader, stream_number, compressed);
 }
 
 static HRESULT WINAPI WMSyncReader_SetStreamsSelected(IWMSyncReader2 *iface,

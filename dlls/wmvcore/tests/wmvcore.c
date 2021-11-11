@@ -821,6 +821,45 @@ static void test_sync_reader_selection(IWMSyncReader *reader)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
+static void test_sync_reader_compressed(IWMSyncReader *reader)
+{
+    QWORD pts, duration;
+    INSSBuffer *sample;
+    WORD stream_number;
+    DWORD flags;
+    HRESULT hr;
+
+    hr = IWMSyncReader_SetReadStreamSamples(reader, 0, TRUE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IWMSyncReader_SetReadStreamSamples(reader, 1, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMSyncReader_SetReadStreamSamples(reader, 2, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMSyncReader_SetReadStreamSamples(reader, 3, TRUE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_SetRange(reader, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, &stream_number);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    INSSBuffer_Release(sample);
+
+    for (;;)
+    {
+        hr = IWMSyncReader_GetNextSample(reader, 0, &sample, &pts, &duration, &flags, NULL, &stream_number);
+        if (hr == NS_E_NO_MORE_SAMPLES)
+            break;
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        INSSBuffer_Release(sample);
+    }
+
+    hr = IWMSyncReader_SetReadStreamSamples(reader, 1, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMSyncReader_SetReadStreamSamples(reader, 2, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 static void test_sync_reader_streaming(void)
 {
     DWORD size, capacity, flags, output_number, expect_output_number;
@@ -883,9 +922,6 @@ static void test_sync_reader_streaming(void)
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
-
-        hr = IWMSyncReader_SetReadStreamSamples(reader, stream_numbers[i], FALSE);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     }
 
     hr = IWMProfile_GetStream(profile, 2, &config);
@@ -1028,6 +1064,7 @@ static void test_sync_reader_streaming(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     test_sync_reader_selection(reader);
+    test_sync_reader_compressed(reader);
 
     test_reader_attributes(profile);
 
