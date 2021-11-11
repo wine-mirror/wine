@@ -1589,6 +1589,11 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
    split_style = infoPtr->imagelist.himl ? BUTTON_ILStoBS(infoPtr->imagelist.uAlign) : style;
    dtStyle = BUTTON_BStoDT(style, ex_style);
 
+   /* Group boxes are top aligned unless BS_PUSHLIKE is set and it's not themed */
+   if (get_button_type(style) == BS_GROUPBOX
+       && (!(style & BS_PUSHLIKE) || GetWindowTheme(infoPtr->hwnd)))
+       style &= ~BS_VCENTER | BS_TOP;
+
    SetRect(&imageRect, 0, 0, imageSize.cx, imageSize.cy);
    imageRectWithMargin = imageRect;
    if (infoPtr->imagelist.himl)
@@ -1670,11 +1675,7 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
        /* Show text only */
        else
        {
-           if (get_button_type(style) != BS_GROUPBOX)
-               BUTTON_PositionRect(style, labelRc, &textRect, textMargin);
-           else
-               /* GroupBox is always top aligned */
-               BUTTON_PositionRect((style & ~BS_VCENTER) | BS_TOP, labelRc, &textRect, textMargin);
+           BUTTON_PositionRect(style, labelRc, &textRect, textMargin);
            labelRect = textRect;
            SetRectEmpty(&imageRect);
        }
