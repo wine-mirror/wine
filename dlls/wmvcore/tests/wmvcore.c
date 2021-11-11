@@ -273,6 +273,117 @@ static void test_iscontentprotected(void)
     ok(drm == FALSE, "got %0dx\n", drm);
 }
 
+static LONG outstanding_buffers;
+
+struct buffer
+{
+    INSSBuffer INSSBuffer_iface;
+    LONG refcount;
+
+    DWORD capacity, size;
+    BYTE data[1];
+};
+
+static inline struct buffer *impl_from_INSSBuffer(INSSBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct buffer, INSSBuffer_iface);
+}
+
+static HRESULT WINAPI buffer_QueryInterface(INSSBuffer *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1)
+        trace("%04x: INSSBuffer::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
+
+    if (!IsEqualGUID(iid, &IID_INSSBuffer3) && !IsEqualGUID(iid, &IID_IMediaBuffer))
+        ok(0, "Unexpected IID %s.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI buffer_AddRef(INSSBuffer *iface)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    return InterlockedIncrement(&buffer->refcount);
+}
+
+static ULONG WINAPI buffer_Release(INSSBuffer *iface)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+    ULONG refcount = InterlockedDecrement(&buffer->refcount);
+
+    if (!refcount)
+    {
+        InterlockedDecrement(&outstanding_buffers);
+        free(buffer);
+    }
+    return refcount;
+}
+
+static HRESULT WINAPI buffer_GetLength(INSSBuffer *iface, DWORD *size)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    if (winetest_debug > 1)
+        trace("%04x: INSSBuffer::GetLength()\n", GetCurrentThreadId());
+
+    *size = buffer->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI buffer_SetLength(INSSBuffer *iface, DWORD size)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    if (winetest_debug > 1)
+        trace("%04x: INSSBuffer::SetLength(%u)\n", GetCurrentThreadId(), size);
+
+    ok(size <= buffer->capacity, "Got size %u, buffer capacity %u.\n", size, buffer->capacity);
+
+    buffer->size = size;
+    return S_OK;
+}
+
+static HRESULT WINAPI buffer_GetMaxLength(INSSBuffer *iface, DWORD *size)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    if (winetest_debug > 1)
+        trace("%04x: INSSBuffer::GetMaxLength()\n", GetCurrentThreadId());
+
+    *size = buffer->capacity;
+    return S_OK;
+}
+
+static HRESULT WINAPI buffer_GetBuffer(INSSBuffer *iface, BYTE **data)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_GetBufferAndLength(INSSBuffer *iface, BYTE **data, DWORD *size)
+{
+    struct buffer *buffer = impl_from_INSSBuffer(iface);
+
+    if (winetest_debug > 1)
+        trace("%04x: INSSBuffer::GetBufferAndLength()\n", GetCurrentThreadId());
+
+    *size = buffer->size;
+    *data = buffer->data;
+    return S_OK;
+}
+
+static const INSSBufferVtbl buffer_vtbl =
+{
+    buffer_QueryInterface,
+    buffer_AddRef,
+    buffer_Release,
+    buffer_GetLength,
+    buffer_SetLength,
+    buffer_GetMaxLength,
+    buffer_GetBuffer,
+    buffer_GetBufferAndLength,
+};
+
 struct teststream
 {
     IStream IStream_iface;
@@ -1230,10 +1341,13 @@ static void test_sync_reader_file(void)
 struct callback
 {
     IWMReaderCallback IWMReaderCallback_iface;
+    IWMReaderCallbackAdvanced IWMReaderCallbackAdvanced_iface;
+    IWMReaderAllocatorEx IWMReaderAllocatorEx_iface;
     LONG refcount;
     HANDLE got_opened, got_stopped, eof_event;
     unsigned int got_closed, got_started, got_sample, got_end_of_streaming, got_eof;
     bool all_streams_off;
+    bool allocated_samples;
 };
 
 static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
@@ -1243,13 +1357,25 @@ static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
 
 static HRESULT WINAPI callback_QueryInterface(IWMReaderCallback *iface, REFIID iid, void **out)
 {
+    struct callback *callback = impl_from_IWMReaderCallback(iface);
+
     if (winetest_debug > 1)
         trace("%04x: IWMReaderCallback::QueryInterface(%s)\n", GetCurrentThreadId(), debugstr_guid(iid));
 
-    if (!IsEqualGUID(iid, &IID_IWMReaderCallbackAdvanced) && !IsEqualGUID(iid, &IID_IWMCredentialCallback))
-        ok(0, "Unexpected IID %s.\n", debugstr_guid(iid));
+    if (IsEqualGUID(iid, &IID_IWMReaderAllocatorEx))
+        *out = &callback->IWMReaderAllocatorEx_iface;
+    else if (IsEqualGUID(iid, &IID_IWMReaderCallbackAdvanced))
+        *out = &callback->IWMReaderCallbackAdvanced_iface;
+    else
+    {
+        if (!IsEqualGUID(iid, &IID_IWMCredentialCallback))
+            ok(0, "Unexpected IID %s.\n", debugstr_guid(iid));
 
-    return E_NOINTERFACE;
+        return E_NOINTERFACE;
+    }
+
+    IWMReaderCallback_AddRef(iface);
+    return S_OK;
 }
 
 static ULONG WINAPI callback_AddRef(IWMReaderCallback *iface)
@@ -1362,27 +1488,39 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
 
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
 
-    hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (callback->allocated_samples)
+    {
+        struct buffer *buffer = impl_from_INSSBuffer(sample);
 
-    hr = INSSBuffer_GetBuffer(sample, &data2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(data2 == data, "Data pointers didn't match.\n");
+        ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
+        ok(buffer->size > 0 && buffer->size <= buffer->capacity, "Got size %d.\n", buffer->size);
+    }
+    else
+    {
+        ok(sample->lpVtbl != &buffer_vtbl, "Buffer vtbl shouldn't match.\n");
 
-    hr = INSSBuffer_GetMaxLength(sample, &capacity);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
+        hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = INSSBuffer_SetLength(sample, capacity + 1);
-    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+        hr = INSSBuffer_GetBuffer(sample, &data2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(data2 == data, "Data pointers didn't match.\n");
 
-    hr = INSSBuffer_SetLength(sample, capacity - 1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = INSSBuffer_GetMaxLength(sample, &capacity);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(size <= capacity, "Size %u exceeds capacity %u.\n", size, capacity);
 
-    hr = INSSBuffer_GetBufferAndLength(sample, &data2, &size);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(data2 == data, "Data pointers didn't match.\n");
-    ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
+        hr = INSSBuffer_SetLength(sample, capacity + 1);
+        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+        hr = INSSBuffer_SetLength(sample, capacity - 1);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = INSSBuffer_GetBufferAndLength(sample, &data2, &size);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(data2 == data, "Data pointers didn't match.\n");
+        ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
+    }
 
     ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
     ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
@@ -1400,10 +1538,164 @@ static const IWMReaderCallbackVtbl callback_vtbl =
     callback_OnSample,
 };
 
+static struct callback *impl_from_IWMReaderCallbackAdvanced(IWMReaderCallbackAdvanced *iface)
+{
+    return CONTAINING_RECORD(iface, struct callback, IWMReaderCallbackAdvanced_iface);
+}
+
+static HRESULT WINAPI callback_advanced_QueryInterface(IWMReaderCallbackAdvanced *iface, REFIID iid, void **out)
+{
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    return IWMReaderCallback_QueryInterface(&callback->IWMReaderCallback_iface, iid, out);
+}
+
+static ULONG WINAPI callback_advanced_AddRef(IWMReaderCallbackAdvanced *iface)
+{
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    return IWMReaderCallback_AddRef(&callback->IWMReaderCallback_iface);
+}
+
+static ULONG WINAPI callback_advanced_Release(IWMReaderCallbackAdvanced *iface)
+{
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    return IWMReaderCallback_Release(&callback->IWMReaderCallback_iface);
+}
+
+static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced *iface,
+        WORD stream_number, QWORD pts, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface, QWORD time, void *context)
+{
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallbackAdvanced::OnTime(time %I64u)\n",
+                GetTickCount(), GetCurrentThreadId(), time);
+
+    ok(time == 3000 * 10000, "Got time %I64u.\n", time);
+    ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+    return S_OK;
+}
+
+static HRESULT WINAPI callback_advanced_OnStreamSelection(IWMReaderCallbackAdvanced *iface,
+        WORD count, WORD *stream_numbers, WMT_STREAM_SELECTION *selections, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI callback_advanced_OnOutputPropsChanged(IWMReaderCallbackAdvanced *iface,
+        DWORD output, WM_MEDIA_TYPE *mt, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvanced *iface,
+        WORD stream_number, DWORD size, INSSBuffer **sample, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvanced *iface,
+        DWORD output, DWORD size, INSSBuffer **sample, void *context)
+{
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    struct buffer *object;
+
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallbackAdvanced::AllocateForOutput(output %u, size %u)\n",
+                GetTickCount(), GetCurrentThreadId(), output, size);
+
+    ok(callback->allocated_samples, "AllocateForOutput() should only be called when using a custom allocator.\n");
+
+    if (!(object = malloc(offsetof(struct buffer, data[size]))))
+        return E_OUTOFMEMORY;
+
+    size = max(size, 65536);
+
+    object->INSSBuffer_iface.lpVtbl = &buffer_vtbl;
+    object->refcount = 1;
+    object->capacity = size;
+    object->size = 0;
+    *sample = &object->INSSBuffer_iface;
+
+    InterlockedIncrement(&outstanding_buffers);
+
+    ok(!context, "Got unexpected context %p.\n", context);
+    return S_OK;
+}
+
+static const IWMReaderCallbackAdvancedVtbl callback_advanced_vtbl =
+{
+    callback_advanced_QueryInterface,
+    callback_advanced_AddRef,
+    callback_advanced_Release,
+    callback_advanced_OnStreamSample,
+    callback_advanced_OnTime,
+    callback_advanced_OnStreamSelection,
+    callback_advanced_OnOutputPropsChanged,
+    callback_advanced_AllocateForStream,
+    callback_advanced_AllocateForOutput,
+};
+
+static struct callback *impl_from_IWMReaderAllocatorEx(IWMReaderAllocatorEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct callback, IWMReaderAllocatorEx_iface);
+}
+
+static HRESULT WINAPI callback_allocator_QueryInterface(IWMReaderAllocatorEx *iface, REFIID iid, void **out)
+{
+    struct callback *callback = impl_from_IWMReaderAllocatorEx(iface);
+    return IWMReaderCallback_QueryInterface(&callback->IWMReaderCallback_iface, iid, out);
+}
+
+static ULONG WINAPI callback_allocator_AddRef(IWMReaderAllocatorEx *iface)
+{
+    struct callback *callback = impl_from_IWMReaderAllocatorEx(iface);
+    return IWMReaderCallback_AddRef(&callback->IWMReaderCallback_iface);
+}
+
+static ULONG WINAPI callback_allocator_Release(IWMReaderAllocatorEx *iface)
+{
+    struct callback *callback = impl_from_IWMReaderAllocatorEx(iface);
+    return IWMReaderCallback_Release(&callback->IWMReaderCallback_iface);
+}
+
+static HRESULT WINAPI callback_allocator_AllocateForStreamEx(IWMReaderAllocatorEx *iface,
+        WORD stream_number, DWORD size, INSSBuffer **sample, DWORD flags,
+        QWORD pts, QWORD duration, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI callback_allocator_AllocateForOutputEx(IWMReaderAllocatorEx *iface,
+        DWORD output, DWORD size, INSSBuffer **sample, DWORD flags,
+        QWORD pts, QWORD duration, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IWMReaderAllocatorExVtbl callback_allocator_vtbl =
+{
+    callback_allocator_QueryInterface,
+    callback_allocator_AddRef,
+    callback_allocator_Release,
+    callback_allocator_AllocateForStreamEx,
+    callback_allocator_AllocateForOutputEx,
+};
+
 static void callback_init(struct callback *callback)
 {
     memset(callback, 0, sizeof(*callback));
     callback->IWMReaderCallback_iface.lpVtbl = &callback_vtbl;
+    callback->IWMReaderCallbackAdvanced_iface.lpVtbl = &callback_advanced_vtbl;
+    callback->IWMReaderAllocatorEx_iface.lpVtbl = &callback_allocator_vtbl;
     callback->refcount = 1;
     callback->got_opened = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->got_stopped = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -1444,6 +1736,109 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = WaitForSingleObject(callback->got_stopped, 1000);
     ok(!ret, "Wait timed out.\n");
+
+    ok(!outstanding_buffers, "Got %d outstanding buffers.\n", outstanding_buffers);
+}
+
+static void test_async_reader_allocate(IWMReader *reader,
+        IWMReaderAdvanced2 *advanced, struct callback *callback)
+{
+    BOOL allocate;
+    HRESULT hr;
+
+    callback->allocated_samples = true;
+
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 1, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 2, &allocate);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 0, &allocate);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 1, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 2, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 3, &allocate);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 2, TRUE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(allocate == TRUE, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 1, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(allocate == TRUE, "Got allocate %d.\n", allocate);
+
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 1, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 2, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+
+    run_async_reader(reader, advanced, callback);
+
+    callback->allocated_samples = false;
+
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 0, TRUE);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, TRUE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 3, TRUE);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 1, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(!allocate, "Got allocate %d.\n", allocate);
+
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 1, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(allocate == TRUE, "Got allocate %d.\n", allocate);
+    hr = IWMReaderAdvanced2_GetAllocateForStream(advanced, 2, &allocate);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(allocate == TRUE, "Got allocate %d.\n", allocate);
+
+    run_async_reader(reader, advanced, callback);
+
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, FALSE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, FALSE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static void test_async_reader_selection(IWMReader *reader,
@@ -1611,6 +2006,7 @@ static void test_async_reader_streaming(void)
 
     test_reader_attributes(profile);
     test_async_reader_selection(reader, advanced, &callback);
+    test_async_reader_allocate(reader, advanced, &callback);
 
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
