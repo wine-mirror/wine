@@ -42,19 +42,11 @@
 #include "parser.h"
 #include "wpp_private.h"
 
-#ifdef WORDS_BIGENDIAN
-#define ENDIAN	"big"
-#else
-#define ENDIAN	"little"
-#endif
-
 static const char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -D, --define id[=val]      Define preprocessor identifier id=val\n"
 	"   --debug=nn                 Set debug level to 'nn'\n"
 	"   -E                         Preprocess only\n"
-	"   --endianness=e             Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
-	"                              (win32 only; default is " ENDIAN "-endian)\n"
 	"   -F TARGET                  Ignored, for compatibility with windres\n"
 	"   -fo FILE                   Synonym for -o for compatibility with windres\n"
 	"   -h, --help                 Prints this summary\n"
@@ -128,11 +120,6 @@ language_t *currentlanguage = NULL;
 int pedantic = 0;
 
 /*
- * The output byte-order of resources (set with -B)
- */
-int byteorder = WRC_BO_NATIVE;
-
-/*
  * Set when _only_ to run the preprocessor (-E option)
  */
 int preprocess_only = 0;
@@ -181,7 +168,6 @@ enum long_options_values
     LONG_OPT_SYSROOT,
     LONG_OPT_VERSION,
     LONG_OPT_DEBUG,
-    LONG_OPT_ENDIANNESS,
     LONG_OPT_PEDANTIC,
     LONG_OPT_VERIFY_TRANSL
 };
@@ -191,7 +177,6 @@ static const char short_options[] =
 static const struct long_option long_options[] = {
 	{ "debug", 1, LONG_OPT_DEBUG },
 	{ "define", 1, 'D' },
-	{ "endianness", 1, LONG_OPT_ENDIANNESS },
 	{ "help", 0, 'h' },
 	{ "include-dir", 1, 'I' },
 	{ "input", 1, 'i' },
@@ -371,25 +356,6 @@ static void option_callback( int optc, char *optarg )
         break;
     case LONG_OPT_DEBUG:
         debuglevel = strtol(optarg, NULL, 0);
-        break;
-    case LONG_OPT_ENDIANNESS:
-        switch(optarg[0])
-        {
-        case 'n':
-        case 'N':
-            byteorder = WRC_BO_NATIVE;
-            break;
-        case 'l':
-        case 'L':
-            byteorder = WRC_BO_LITTLE;
-            break;
-        case 'b':
-        case 'B':
-            byteorder = WRC_BO_BIG;
-            break;
-        default:
-            error("Byte ordering must be n[ative], l[ittle] or b[ig]\n");
-        }
         break;
     case LONG_OPT_PEDANTIC:
         pedantic = 1;

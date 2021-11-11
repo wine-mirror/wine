@@ -35,7 +35,7 @@ extern int debuglevel;
 
 extern int win32;
 extern int extensions;
-extern int byteorder;
+extern int pedantic;
 extern int preprocess_only;
 extern int no_preprocess;
 extern int utf8_input;

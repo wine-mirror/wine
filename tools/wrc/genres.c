@@ -90,24 +90,8 @@ void put_word(res_t *res, unsigned w)
 {
 	if(res->allocsize - res->size < sizeof(WORD))
 		grow_res(res, RES_BLOCKSIZE);
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		res->data[res->size+0] = HIBYTE(w);
-		res->data[res->size+1] = LOBYTE(w);
-		break;
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		res->data[res->size+1] = HIBYTE(w);
-		res->data[res->size+0] = LOBYTE(w);
-		break;
-	}
+        res->data[res->size+0] = w;
+        res->data[res->size+1] = w >> 8;
 	res->size += sizeof(WORD);
 }
 
@@ -115,28 +99,10 @@ void put_dword(res_t *res, unsigned d)
 {
 	if(res->allocsize - res->size < sizeof(DWORD))
 		grow_res(res, RES_BLOCKSIZE);
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		res->data[res->size+0] = HIBYTE(HIWORD(d));
-		res->data[res->size+1] = LOBYTE(HIWORD(d));
-		res->data[res->size+2] = HIBYTE(LOWORD(d));
-		res->data[res->size+3] = LOBYTE(LOWORD(d));
-		break;
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		res->data[res->size+3] = HIBYTE(HIWORD(d));
-		res->data[res->size+2] = LOBYTE(HIWORD(d));
-		res->data[res->size+1] = HIBYTE(LOWORD(d));
-		res->data[res->size+0] = LOBYTE(LOWORD(d));
-		break;
-	}
+        res->data[res->size+0] = d;
+        res->data[res->size+1] = d >> 8;
+        res->data[res->size+2] = d >> 16;
+        res->data[res->size+3] = d >> 24;
 	res->size += sizeof(DWORD);
 }
 
@@ -164,50 +130,16 @@ static void put_pad(res_t *res)
 */
 static void set_word(res_t *res, int ofs, unsigned w)
 {
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		res->data[ofs+0] = HIBYTE(w);
-		res->data[ofs+1] = LOBYTE(w);
-		break;
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		res->data[ofs+1] = HIBYTE(w);
-		res->data[ofs+0] = LOBYTE(w);
-		break;
-	}
+    res->data[ofs+0] = w;
+    res->data[ofs+1] = w >> 8;
 }
 
 static void set_dword(res_t *res, int ofs, unsigned d)
 {
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		res->data[ofs+0] = HIBYTE(HIWORD(d));
-		res->data[ofs+1] = LOBYTE(HIWORD(d));
-		res->data[ofs+2] = HIBYTE(LOWORD(d));
-		res->data[ofs+3] = LOBYTE(LOWORD(d));
-		break;
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		res->data[ofs+3] = HIBYTE(HIWORD(d));
-		res->data[ofs+2] = LOBYTE(HIWORD(d));
-		res->data[ofs+1] = HIBYTE(LOWORD(d));
-		res->data[ofs+0] = LOBYTE(LOWORD(d));
-		break;
-	}
+    res->data[ofs+0] = d;
+    res->data[ofs+1] = d >> 8;
+    res->data[ofs+2] = d >> 16;
+    res->data[ofs+3] = d >> 24;
 }
 
 /*
@@ -224,26 +156,10 @@ static void set_dword(res_t *res, int ofs, unsigned d)
 */
 static DWORD get_dword(res_t *res, int ofs)
 {
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		return   (res->data[ofs+0] << 24)
-		       | (res->data[ofs+1] << 16)
-		       | (res->data[ofs+2] <<  8)
-		       |  res->data[ofs+3];
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		return   (res->data[ofs+3] << 24)
-		       | (res->data[ofs+2] << 16)
-		       | (res->data[ofs+1] <<  8)
-		       |  res->data[ofs+0];
-	}
+    return (res->data[ofs+3] << 24)
+         | (res->data[ofs+2] << 16)
+         | (res->data[ofs+1] <<  8)
+         |  res->data[ofs+0];
 }
 
 static res_t *end_res(res_t *res, int ofs)

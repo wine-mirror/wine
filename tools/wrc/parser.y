@@ -704,12 +704,6 @@ dlginit	: tDLGINIT loadmemopts file_raw	{ $$ = new_dlginit($3, $2); }
 
 /* ------------------------------ UserType ------------------------------ */
 userres	: usertype loadmemopts file_raw		{
-#ifdef WORDS_BIGENDIAN
-			if(pedantic && byteorder != WRC_BO_LITTLE)
-#else
-			if(pedantic && byteorder == WRC_BO_BIG)
-#endif
-				parser_warning("Byteordering is not little-endian and type cannot be interpreted\n");
 			$$ = new_user($1, $3, $2);
 		}
 	;
@@ -2197,24 +2191,8 @@ static raw_data_t *int2raw_data(int i)
 	rd = new_raw_data();
 	rd->size = sizeof(short);
 	rd->data = xmalloc(rd->size);
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		rd->data[0] = HIBYTE(i);
-		rd->data[1] = LOBYTE(i);
-		break;
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		rd->data[1] = HIBYTE(i);
-		rd->data[0] = LOBYTE(i);
-		break;
-	}
+        rd->data[0] = i;
+        rd->data[1] = i >> 8;
 	return rd;
 }
 
@@ -2224,28 +2202,10 @@ static raw_data_t *long2raw_data(int i)
 	rd = new_raw_data();
 	rd->size = sizeof(int);
 	rd->data = xmalloc(rd->size);
-	switch(byteorder)
-	{
-#ifdef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_BIG:
-		rd->data[0] = HIBYTE(HIWORD(i));
-		rd->data[1] = LOBYTE(HIWORD(i));
-		rd->data[2] = HIBYTE(LOWORD(i));
-		rd->data[3] = LOBYTE(LOWORD(i));
-		break;
-
-#ifndef WORDS_BIGENDIAN
-	default:
-#endif
-	case WRC_BO_LITTLE:
-		rd->data[3] = HIBYTE(HIWORD(i));
-		rd->data[2] = LOBYTE(HIWORD(i));
-		rd->data[1] = HIBYTE(LOWORD(i));
-		rd->data[0] = LOBYTE(LOWORD(i));
-		break;
-	}
+        rd->data[0] = i;
+        rd->data[1] = i >> 8;
+        rd->data[2] = i >> 16;
+        rd->data[3] = i >> 24;
 	return rd;
 }
 
@@ -2263,28 +2223,10 @@ static raw_data_t *str2raw_data(string_t *str)
 	case str_unicode:
             {
 		int i;
-		switch(byteorder)
+		for(i = 0; i < str->size; i++)
 		{
-#ifdef WORDS_BIGENDIAN
-		default:
-#endif
-		case WRC_BO_BIG:
-			for(i = 0; i < str->size; i++)
-			{
-				rd->data[2*i + 0] = HIBYTE((WORD)str->str.wstr[i]);
-				rd->data[2*i + 1] = LOBYTE((WORD)str->str.wstr[i]);
-			}
-			break;
-#ifndef WORDS_BIGENDIAN
-		default:
-#endif
-		case WRC_BO_LITTLE:
-			for(i = 0; i < str->size; i++)
-			{
-				rd->data[2*i + 1] = HIBYTE((WORD)str->str.wstr[i]);
-				rd->data[2*i + 0] = LOBYTE((WORD)str->str.wstr[i]);
-			}
-			break;
+			rd->data[2*i + 0] = str->str.wstr[i];
+			rd->data[2*i + 1] = str->str.wstr[i] >> 8;
 		}
             }
 	}
@@ -2688,8 +2630,6 @@ static resource_t *build_fontdirs(resource_t *tail)
 	for(i = 0; i < nfnd; i++)
 	{
 		int j;
-		WORD cnt;
-		int isswapped = 0;
 
 		if(!fnd[i])
 			continue;
@@ -2703,23 +2643,6 @@ static resource_t *build_fontdirs(resource_t *tail)
 				nlanfnt++;
 				fnt[j] = NULL;
 			}
-		}
-
-		cnt = *(WORD *)fnd[i]->res.fnd->data->data;
-		if(nlanfnt == cnt)
-			isswapped = 0;
-		else if(nlanfnt == BYTESWAP_WORD(cnt))
-			isswapped = 1;
-		else
-			error("FONTDIR for language %d,%d has wrong count (%d, expected %d)\n",
-				fnd[i]->lan->id, fnd[i]->lan->sub, cnt, nlanfnt);
-#ifdef WORDS_BIGENDIAN
-		if((byteorder == WRC_BO_LITTLE && !isswapped) || (byteorder != WRC_BO_LITTLE && isswapped))
-#else
-		if((byteorder == WRC_BO_BIG && !isswapped) || (byteorder != WRC_BO_BIG && isswapped))
-#endif
-		{
-			error("User supplied FONTDIR needs byteswapping\n");
 		}
 	}
 
