@@ -3040,6 +3040,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
+    int part;
     RECT rc;
 
     if (infoPtr->font) SelectObject(hDC, infoPtr->font);
@@ -3054,9 +3055,10 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     if (cdrf & CDRF_SKIPDEFAULT) return;
 
-    if (IsThemeBackgroundPartiallyTransparent(theme, BP_COMMANDLINK, state))
+    part = GetWindowLongW(infoPtr->hwnd, GWL_STYLE) & BS_PUSHLIKE ? BP_PUSHBUTTON : BP_COMMANDLINK;
+    if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
-    DrawThemeBackground(theme, hDC, BP_COMMANDLINK, state, &rc, NULL);
+    DrawThemeBackground(theme, hDC, part, state, &rc, NULL);
 
     if (cdrf & CDRF_NOTIFYPOSTERASE)
     {
@@ -3076,7 +3078,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         SIZE img_size;
         WCHAR *text;
 
-        GetThemeBackgroundContentRect(theme, hDC, BP_COMMANDLINK, state, &rc, &r);
+        GetThemeBackgroundContentRect(theme, hDC, part, state, &rc, &r);
 
         /* The text alignment and styles are fixed and don't depend on button styles */
         dtFlags = DT_TOP | DT_LEFT | DT_WORDBREAK;
@@ -3096,10 +3098,9 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             UINT len = lstrlenW(text);
             RECT text_rect;
 
-            GetThemeTextExtent(theme, hDC, BP_COMMANDLINK, state, text, len,
-                               dtFlags | DT_END_ELLIPSIS, &r, &text_rect);
-            DrawThemeText(theme, hDC, BP_COMMANDLINK, state, text, len,
-                          dtFlags | DT_END_ELLIPSIS, 0, &r);
+            GetThemeTextExtent(theme, hDC, part, state, text, len, dtFlags | DT_END_ELLIPSIS, &r,
+                               &text_rect);
+            DrawThemeText(theme, hDC, part, state, text, len, dtFlags | DT_END_ELLIPSIS, 0, &r);
 
             txt_h = text_rect.bottom - text_rect.top;
             heap_free(text);
@@ -3114,8 +3115,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             opts.dwSize = sizeof(opts);
             opts.dwFlags = DTT_FONTPROP;
             opts.iFontPropId = TMT_BODYFONT;
-            DrawThemeTextEx(theme, hDC, BP_COMMANDLINK, state,
-                            infoPtr->note, infoPtr->note_length,
+            DrawThemeTextEx(theme, hDC, part, state, infoPtr->note, infoPtr->note_length,
                             dtFlags | DT_NOPREFIX, &r, &opts);
         }
 
