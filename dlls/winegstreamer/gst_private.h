@@ -120,10 +120,11 @@ struct wm_stream
 {
     struct wm_reader *reader;
     struct wg_parser_stream *wg_stream;
-    WORD index;
-    bool eos;
     struct wg_format format;
     WMT_STREAM_SELECTION selection;
+    WORD index;
+    bool eos;
+    bool allocate_output;
 };
 
 struct wm_reader
@@ -147,6 +148,8 @@ struct wm_reader
 
     struct wm_stream *streams;
     WORD stream_count;
+
+    IWMReaderCallbackAdvanced *callback_advanced;
 
     const struct wm_reader_ops *ops;
 };
@@ -174,6 +177,7 @@ void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops);
 HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename);
 HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream);
 void wm_reader_seek(struct wm_reader *reader, QWORD start, LONGLONG duration);
+HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output, BOOL allocate);
 HRESULT wm_reader_set_output_props(struct wm_reader *reader, DWORD output,
         IWMOutputMediaProps *props);
 HRESULT wm_reader_set_streams_selected(struct wm_reader *reader, WORD count,
