@@ -867,8 +867,9 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
         if ((GET_SHGDN_FOR(dwFlags) & SHGDN_FORPARSING) &&
             (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER))
         {
-            get_display_name( pszPath, This->sPathTarget, pidl,
-                              IsEqualCLSID( This->pclsid, &CLSID_UnixFolder ));
+            if (This->sPathTarget)
+                get_display_name( pszPath, This->sPathTarget, pidl,
+                                  IsEqualCLSID( This->pclsid, &CLSID_UnixFolder ));
         } else {
             /* pidl has to contain exactly one non null SHITEMID */
             hr = E_INVALIDARG;
