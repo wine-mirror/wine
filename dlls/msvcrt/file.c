@@ -517,7 +517,7 @@ static int msvcrt_init_fp(FILE* file, int fd, unsigned stream_flags)
  *      04      char    file flags (wxflag): repeated for each fd
  *      4+NBFD  HANDLE  file handle: repeated for each fd
  */
-unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
+BOOL msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
 {
   int         fd, last_fd;
   char*       wxflag_ptr;
@@ -543,7 +543,7 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
   for (fd = 0; fd < last_fd; fd++)
   {
     /* to be inherited, we need it to be open, and that DONTINHERIT isn't set */
-    fdinfo = get_ioinfo(fd);
+    fdinfo = get_ioinfo_nolock(fd);
     if ((fdinfo->wxflag & (WX_OPEN | WX_DONTINHERIT)) == WX_OPEN)
     {
       *wxflag_ptr = fdinfo->wxflag;
@@ -554,7 +554,6 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
       *wxflag_ptr = 0;
       *handle_ptr = INVALID_HANDLE_VALUE;
     }
-    release_ioinfo(fdinfo);
     wxflag_ptr++; handle_ptr++;
   } 
   return TRUE;
