@@ -1750,9 +1750,6 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
     if (stream->eos)
         return NS_E_NO_MORE_SAMPLES;
 
-    if (!stream->allocate_output)
-        callback_advanced = NULL;
-
     for (;;)
     {
         if (!wg_parser_stream_get_event(wg_stream, &event))
@@ -1773,7 +1770,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                 HRESULT hr;
                 BYTE *data;
 
-                if (callback_advanced)
+                if (callback_advanced && !stream->read_compressed && stream->allocate_output)
                 {
                     if (FAILED(hr = IWMReaderCallbackAdvanced_AllocateForOutput(callback_advanced,
                             stream->index, event.u.buffer.size, &sample, NULL)))
@@ -1946,6 +1943,24 @@ HRESULT wm_reader_set_allocate_for_output(struct wm_reader *reader, DWORD output
     }
 
     stream->allocate_output = !!allocate;
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
+}
+
+HRESULT wm_reader_set_read_compressed(struct wm_reader *reader, WORD stream_number, BOOL compressed)
+{
+    struct wm_stream *stream;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    stream->read_compressed = compressed;
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;

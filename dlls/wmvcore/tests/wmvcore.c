@@ -1348,6 +1348,7 @@ struct callback
     unsigned int got_closed, got_started, got_sample, got_end_of_streaming, got_eof;
     bool all_streams_off;
     bool allocated_samples;
+    bool read_compressed;
 };
 
 static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
@@ -1474,19 +1475,11 @@ static HRESULT WINAPI callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS sta
     return S_OK;
 }
 
-static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
-        QWORD time, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
+static void check_async_sample(struct callback *callback, INSSBuffer *sample)
 {
-    struct callback *callback = impl_from_IWMReaderCallback(iface);
     DWORD size, capacity;
     BYTE *data, *data2;
     HRESULT hr;
-
-    if (winetest_debug > 1)
-        trace("%u: %04x: IWMReaderCallback::OnSample(output %u, time %I64u, duration %I64u, flags %#x)\n",
-                GetTickCount(), GetCurrentThreadId(), output, time, duration, flags);
-
-    ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
 
     if (callback->allocated_samples)
     {
@@ -1521,7 +1514,22 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
         ok(data2 == data, "Data pointers didn't match.\n");
         ok(size == capacity - 1, "Expected size %u, got %u.\n", capacity - 1, size);
     }
+}
 
+static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
+        QWORD time, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
+{
+    struct callback *callback = impl_from_IWMReaderCallback(iface);
+
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallback::OnSample(output %u, time %I64u, duration %I64u, flags %#x)\n",
+                GetTickCount(), GetCurrentThreadId(), output, time, duration, flags);
+
+    ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+
+    check_async_sample(callback, sample);
+
+    ok(!callback->read_compressed, "OnSample() should not be called when reading compressed samples.\n");
     ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
     ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
     ++callback->got_sample;
@@ -1564,8 +1572,22 @@ static ULONG WINAPI callback_advanced_Release(IWMReaderCallbackAdvanced *iface)
 static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced *iface,
         WORD stream_number, QWORD pts, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+
+    if (winetest_debug > 1)
+        trace("%u: %04x: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#x)\n",
+                GetTickCount(), GetCurrentThreadId(), stream_number, pts, duration, flags);
+
+    ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+
+    check_async_sample(callback, sample);
+
+    ok(callback->read_compressed, "OnStreamSample() should not be called unless reading compressed samples.\n");
+    ok(callback->got_started > 0, "Got %u WMT_STARTED callbacks.\n", callback->got_started);
+    ok(!callback->got_eof, "Got %u WMT_EOF callbacks.\n", callback->got_eof);
+    ++callback->got_sample;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface, QWORD time, void *context)
@@ -1915,6 +1937,32 @@ static void test_async_reader_selection(IWMReader *reader,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
+static void test_async_reader_compressed(IWMReader *reader,
+        IWMReaderAdvanced2 *advanced, struct callback *callback)
+{
+    HRESULT hr;
+
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 0, TRUE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 3, TRUE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    callback->read_compressed = true;
+    run_async_reader(reader, advanced, callback);
+    callback->read_compressed = false;
+
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 static void test_async_reader_streaming(void)
 {
     const WCHAR *filename = load_resource(L"test.wmv");
@@ -2007,6 +2055,7 @@ static void test_async_reader_streaming(void)
     test_reader_attributes(profile);
     test_async_reader_selection(reader, advanced, &callback);
     test_async_reader_allocate(reader, advanced, &callback);
+    test_async_reader_compressed(reader, advanced, &callback);
 
     hr = IWMReader_Close(reader);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

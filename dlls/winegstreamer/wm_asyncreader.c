@@ -129,7 +129,13 @@ static DWORD WINAPI stream_thread(void *arg)
                     }
                 }
 
-                IWMReaderCallback_OnSample(callback, i, pts, duration, flags, sample, reader->context);
+                if (stream->read_compressed)
+                    hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
+                            i + 1, pts, duration, flags, sample, reader->context);
+                else
+                    hr = IWMReaderCallback_OnSample(callback, i, pts, duration,
+                            flags, sample, reader->context);
+                TRACE("Callback returned %#x.\n", hr);
                 INSSBuffer_Release(sample);
                 all_eos = false;
             }
@@ -487,12 +493,14 @@ static HRESULT WINAPI WMReaderAdvanced_GetReceiveSelectionCallbacks(IWMReaderAdv
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReaderAdvanced_SetReceiveStreamSamples(IWMReaderAdvanced6 *iface, WORD stream_num,
-        BOOL receive_stream_samples)
+static HRESULT WINAPI WMReaderAdvanced_SetReceiveStreamSamples(IWMReaderAdvanced6 *iface,
+        WORD stream_number, BOOL compressed)
 {
-    struct async_reader *This = impl_from_IWMReaderAdvanced6(iface);
-    FIXME("(%p)->(%d %x)\n", This, stream_num, receive_stream_samples);
-    return E_NOTIMPL;
+    struct async_reader *reader = impl_from_IWMReaderAdvanced6(iface);
+
+    TRACE("reader %p, stream_number %u, compressed %d.\n", reader, stream_number, compressed);
+
+    return wm_reader_set_read_compressed(&reader->reader, stream_number, compressed);
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetReceiveStreamSamples(IWMReaderAdvanced6 *iface, WORD stream_num,
