@@ -25,15 +25,10 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/server.h"
-#include "win.h"
 #include "user_private.h"
+#include "win.h"
 #include "controls.h"
-#include "wine/gdi_driver.h"
+#include "wine/server.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 

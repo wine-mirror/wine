@@ -45,7 +45,6 @@
 #include "controls.h"
 #include "win.h"
 #include "user_private.h"
-#include "wine/gdi_driver.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 

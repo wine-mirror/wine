@@ -22,8 +22,8 @@
 
 #include "config.h"
 
-#include "macdrv.h"
 #define OEMRESOURCE
+#include "macdrv.h"
 #include "winuser.h"
 #include "winreg.h"
 #include "wine/server.h"

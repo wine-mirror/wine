@@ -19,19 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
 #include <string.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winerror.h"
-#include "wine/server.h"
-#include "controls.h"
 #include "user_private.h"
-#include "wine/gdi_driver.h"
+#include "winerror.h"
+#include "controls.h"
 #include "win.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);

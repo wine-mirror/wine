@@ -19,22 +19,18 @@
  */
 
 #include <assert.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
-#include "windef.h"
-#include "winbase.h"
+#include "user_private.h"
 #include "winnls.h"
 #include "winver.h"
 #include "wine/server.h"
 #include "wine/asm.h"
 #include "win.h"
-#include "user_private.h"
 #include "controls.h"
 #include "winerror.h"
-#include "wine/gdi_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);

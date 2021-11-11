@@ -22,23 +22,17 @@
 #include <stdio.h>
 #include <wchar.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/debug.h"
-#include "wine/gdi_driver.h"
-
 #include "user_private.h"
+#include "winnls.h"
+#include "wine/debug.h"
 #include "controls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(user);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static USER_DRIVER null_driver, lazy_load_driver;
+static struct user_driver_funcs null_driver, lazy_load_driver;
 
-const USER_DRIVER *USER_Driver = &lazy_load_driver;
+const struct user_driver_funcs *USER_Driver = &lazy_load_driver;
 static char driver_load_error[80];
 
 static BOOL CDECL nodrv_CreateWindow( HWND hwnd );
@@ -81,11 +75,11 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
 }
 
 /* load the graphics driver */
-static const USER_DRIVER *load_driver(void)
+static const struct user_driver_funcs *load_driver(void)
 {
     void *ptr;
     HMODULE graphics_driver = NULL;
-    USER_DRIVER *driver, *prev;
+    struct user_driver_funcs *driver, *prev;
 
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     *driver = null_driver;
@@ -169,7 +163,7 @@ static const USER_DRIVER *load_driver(void)
 /* unload the graphics driver on process exit */
 void USER_unload_driver(void)
 {
-    USER_DRIVER *prev;
+    struct user_driver_funcs *prev;
     /* make sure we don't try to call the driver after it has been detached */
     prev = InterlockedExchangePointer( (void **)&USER_Driver, &null_driver );
     if (prev != &lazy_load_driver && prev != &null_driver)
@@ -399,8 +393,9 @@ static void CDECL nulldrv_ThreadDetach( void )
 {
 }
 
-static USER_DRIVER null_driver =
+static struct user_driver_funcs null_driver =
 {
+    { NULL },
     /* keyboard functions */
     nulldrv_ActivateKeyboardLayout,
     nulldrv_Beep,
@@ -590,8 +585,9 @@ static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDW
     return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
 }
 
-static USER_DRIVER lazy_load_driver =
+static struct user_driver_funcs lazy_load_driver =
 {
+    { NULL },
     /* keyboard functions */
     loaderdrv_ActivateKeyboardLayout,
     loaderdrv_Beep,
