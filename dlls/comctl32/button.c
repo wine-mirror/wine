@@ -393,10 +393,21 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
         { CBS_CHECKEDNORMAL, CBS_CHECKEDDISABLED, CBS_CHECKEDHOT, CBS_CHECKEDPRESSED, CBS_CHECKEDNORMAL },
         { CBS_MIXEDNORMAL, CBS_MIXEDDISABLED, CBS_MIXEDHOT, CBS_MIXEDPRESSED, CBS_MIXEDNORMAL }
     };
+    static const int pushlike_cb_states[3][DRAW_STATE_COUNT] =
+    {
+        { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_NORMAL },
+        { PBS_PRESSED, PBS_PRESSED, PBS_HOT, PBS_PRESSED, PBS_PRESSED },
+        { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_NORMAL }
+    };
     static const int rb_states[2][DRAW_STATE_COUNT] =
     {
         { RBS_UNCHECKEDNORMAL, RBS_UNCHECKEDDISABLED, RBS_UNCHECKEDHOT, RBS_UNCHECKEDPRESSED, RBS_UNCHECKEDNORMAL },
         { RBS_CHECKEDNORMAL, RBS_CHECKEDDISABLED, RBS_CHECKEDHOT, RBS_CHECKEDPRESSED, RBS_CHECKEDNORMAL }
+    };
+    static const int pushlike_rb_states[2][DRAW_STATE_COUNT] =
+    {
+        { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_NORMAL },
+        { PBS_PRESSED, PBS_PRESSED, PBS_HOT, PBS_PRESSED, PBS_PRESSED }
     };
     static const int gb_states[DRAW_STATE_COUNT] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
     LONG style = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
@@ -430,10 +441,12 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
     case BS_AUTOCHECKBOX:
     case BS_3STATE:
     case BS_AUTO3STATE:
-        return cb_states[check_state][state];
+        return style & BS_PUSHLIKE ? pushlike_cb_states[check_state][state]
+                                   : cb_states[check_state][state];
     case BS_RADIOBUTTON:
     case BS_AUTORADIOBUTTON:
-        return rb_states[check_state][state];
+        return style & BS_PUSHLIKE ? pushlike_rb_states[check_state][state]
+                                   : rb_states[check_state][state];
     case BS_GROUPBOX:
         return gb_states[state];
     default:
@@ -2763,8 +2776,15 @@ static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     int text_offset;
     SIZE box_size;
     HRGN region;
+    HRESULT hr;
 
-    HRESULT hr = GetThemeFont(theme, hDC, part, state, TMT_FONT, &lf);
+    if (dwStyle & BS_PUSHLIKE)
+    {
+        PB_ThemedPaint(theme, infoPtr, hDC, state, dtFlags, focused);
+        return;
+    }
+
+    hr = GetThemeFont(theme, hDC, part, state, TMT_FONT, &lf);
     if (SUCCEEDED(hr)) {
         font = CreateFontIndirectW(&lf);
         if (!font)
