@@ -905,8 +905,19 @@ static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG 
         const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets)
 {
     struct msdasql_rowset *rowset = impl_from_IRowsetInfo( iface );
-    FIXME("%p, %lu, %p, %p, %p\n", rowset, count, propertyidsets, out_count, propertysets);
-    return E_NOTIMPL;
+    HRESULT hr;
+    ICommandProperties *props;
+
+    TRACE("%p, %lu, %p, %p, %p\n", rowset, count, propertyidsets, out_count, propertysets);
+
+    hr = IUnknown_QueryInterface(rowset->caller, &IID_ICommandProperties, (void**)&props);
+    if (FAILED(hr))
+        return hr;
+
+    hr = ICommandProperties_GetProperties(props, count, propertyidsets, out_count, propertysets);
+    ICommandProperties_Release(props);
+
+    return hr;
 }
 
 static HRESULT WINAPI rowset_info_GetReferencedRowset(IRowsetInfo *iface, DBORDINAL ordinal,

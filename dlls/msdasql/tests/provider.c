@@ -496,6 +496,43 @@ static void test_rowset_interfaces(IRowset *rowset, ICommandText *commandtext)
     ok(hr == E_NOINTERFACE, "got 0x%08lx\n", hr);
 }
 
+static void test_rowset_info(IRowset *rowset)
+{
+    IRowsetInfo *info;
+    HRESULT hr;
+    ULONG propcnt;
+    DBPROPIDSET propidset;
+    DBPROPSET *propset;
+    int i;
+    DWORD row_props[] = {
+            DBPROP_CANSCROLLBACKWARDS, DBPROP_IRowsetUpdate, DBPROP_IRowsetResynch,
+            DBPROP_IConnectionPointContainer, DBPROP_BOOKMARKSKIPPED, DBPROP_REMOVEDELETED,
+            DBPROP_IConvertType, DBPROP_NOTIFICATIONGRANULARITY, DBPROP_IMultipleResults, DBPROP_ACCESSORDER,
+            DBPROP_BOOKMARKINFO, DBPROP_UNIQUEROWS
+    };
+
+    hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void**)&info);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+    propidset.rgPropertyIDs = row_props;
+    propidset.cPropertyIDs = ARRAY_SIZE(row_props);
+    propidset.guidPropertySet = DBPROPSET_ROWSET;
+
+    hr = IRowsetInfo_GetProperties(info, 1, &propidset, &propcnt, &propset);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(propset->cProperties == ARRAY_SIZE(row_props), "got %lu\n", propset->cProperties);
+
+    for(i=0; i < ARRAY_SIZE(row_props); i++)
+    {
+        ok(propset->rgProperties[i].dwPropertyID == row_props[i], "expected 0x%08lx got 0x%08lx\n",
+                propset->rgProperties[i].dwPropertyID, row_props[i]);
+    }
+
+    CoTaskMemFree(propset);
+
+    IRowsetInfo_Release(info);
+}
+
 static void test_command_rowset(IUnknown *cmd)
 {
     ICommandText *command_text;
@@ -586,6 +623,8 @@ static void test_command_rowset(IUnknown *cmd)
         CoTaskMemFree(dbcolinfo);
         CoTaskMemFree(stringsbuffer);
         IColumnsInfo_Release(colinfo);
+
+        test_rowset_info(rowset);
 
         IRowset_Release(rowset);
         IUnknown_Release(unk);
