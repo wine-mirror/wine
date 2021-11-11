@@ -25,8 +25,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
 #include "winnls.h"
 #include "winternl.h"
 #include "x11drv.h"

@@ -289,6 +289,8 @@ struct user_driver_funcs
     void    (CDECL *pThreadDetach)(void);
 };
 
+extern void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
+
 /* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */
 
 #define DCHC_INVALIDVISRGN      0x0001

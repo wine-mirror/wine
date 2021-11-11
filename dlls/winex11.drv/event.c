@@ -37,8 +37,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
 
 #include "x11drv.h"
 

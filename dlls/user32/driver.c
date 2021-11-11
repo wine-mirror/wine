@@ -59,9 +59,17 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
     size = sizeof(path);
     if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size ))
     {
-        if ((ret = !wcscmp( path, L"null" ))) *module = NULL;
-        else ret = (*module = LoadLibraryW( path )) != NULL;
-        if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
+        if (wcscmp( path, L"null" ))
+        {
+            ret = (*module = LoadLibraryW( path )) != NULL;
+            if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
+        }
+        else
+        {
+            __wine_set_user_driver( &null_driver, WINE_GDI_DRIVER_VERSION );
+            *module = NULL;
+            ret = TRUE;
+        }
         TRACE( "%s %p\n", debugstr_w(path), *module );
     }
     else
@@ -77,87 +85,25 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
 /* load the graphics driver */
 static const struct user_driver_funcs *load_driver(void)
 {
-    void *ptr;
-    HMODULE graphics_driver = NULL;
-    struct user_driver_funcs *driver, *prev;
+    struct user_driver_funcs driver;
+    USEROBJECTFLAGS flags;
+    HWINSTA winstation;
+    HMODULE module;
 
-    driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
-    *driver = null_driver;
-
-    if (!load_desktop_driver( GetDesktopWindow(), &graphics_driver ))
+    if (!load_desktop_driver( GetDesktopWindow(), &module ) || USER_Driver == &lazy_load_driver)
     {
-        USEROBJECTFLAGS flags;
-        HWINSTA winstation;
-
+        memset( &driver, 0, sizeof(driver) );
         winstation = NtUserGetProcessWindowStation();
-        if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
+        if (!NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL )
             || (flags.dwFlags & WSF_VISIBLE))
-            driver->pCreateWindow = nodrv_CreateWindow;
-    }
-    else if (graphics_driver)
-    {
-#define GET_USER_FUNC(name) \
-    do { if ((ptr = GetProcAddress( graphics_driver, #name ))) driver->p##name = ptr; } while(0)
+            driver.pCreateWindow = nodrv_CreateWindow;
 
-        GET_USER_FUNC(ActivateKeyboardLayout);
-        GET_USER_FUNC(Beep);
-        GET_USER_FUNC(GetKeyNameText);
-        GET_USER_FUNC(GetKeyboardLayoutList);
-        GET_USER_FUNC(MapVirtualKeyEx);
-        GET_USER_FUNC(RegisterHotKey);
-        GET_USER_FUNC(ToUnicodeEx);
-        GET_USER_FUNC(UnregisterHotKey);
-        GET_USER_FUNC(VkKeyScanEx);
-        GET_USER_FUNC(DestroyCursorIcon);
-        GET_USER_FUNC(SetCursor);
-        GET_USER_FUNC(GetCursorPos);
-        GET_USER_FUNC(SetCursorPos);
-        GET_USER_FUNC(ClipCursor);
-        GET_USER_FUNC(UpdateClipboard);
-        GET_USER_FUNC(ChangeDisplaySettingsEx);
-        GET_USER_FUNC(EnumDisplayMonitors);
-        GET_USER_FUNC(EnumDisplaySettingsEx);
-        GET_USER_FUNC(GetMonitorInfo);
-        GET_USER_FUNC(CreateDesktopWindow);
-        GET_USER_FUNC(CreateWindow);
-        GET_USER_FUNC(DestroyWindow);
-        GET_USER_FUNC(FlashWindowEx);
-        GET_USER_FUNC(GetDC);
-        GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
-        GET_USER_FUNC(ReleaseDC);
-        GET_USER_FUNC(ScrollDC);
-        GET_USER_FUNC(SetCapture);
-        GET_USER_FUNC(SetFocus);
-        GET_USER_FUNC(SetLayeredWindowAttributes);
-        GET_USER_FUNC(SetParent);
-        GET_USER_FUNC(SetWindowRgn);
-        GET_USER_FUNC(SetWindowIcon);
-        GET_USER_FUNC(SetWindowStyle);
-        GET_USER_FUNC(SetWindowText);
-        GET_USER_FUNC(ShowWindow);
-        GET_USER_FUNC(SysCommand);
-        GET_USER_FUNC(UpdateLayeredWindow);
-        GET_USER_FUNC(WindowMessage);
-        GET_USER_FUNC(WindowPosChanging);
-        GET_USER_FUNC(WindowPosChanged);
-        GET_USER_FUNC(SystemParametersInfo);
-        GET_USER_FUNC(ThreadDetach);
-#undef GET_USER_FUNC
+        __wine_set_user_driver( &driver, WINE_GDI_DRIVER_VERSION );
     }
 
-    prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
-    if (prev != &lazy_load_driver)
-    {
-        /* another thread beat us to it */
-        HeapFree( GetProcessHeap(), 0, driver );
-        driver = prev;
-    }
-    else LdrAddRefDll( 0, graphics_driver );
-
-    __wine_set_display_driver( graphics_driver );
+    if (module) __wine_set_display_driver( module );
     register_builtin_classes();
-
-    return driver;
+    return USER_Driver;
 }
 
 /* unload the graphics driver on process exit */
@@ -639,3 +585,72 @@ static struct user_driver_funcs lazy_load_driver =
     /* thread management */
     nulldrv_ThreadDetach
 };
+
+void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version )
+{
+    struct user_driver_funcs *driver, *prev;
+
+    if (version != WINE_GDI_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, driver wants %u but user32 has %u\n", version, WINE_GDI_DRIVER_VERSION );
+        return;
+    }
+
+    driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
+    *driver = *funcs;
+
+#define SET_USER_FUNC(name) \
+    do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
+
+    SET_USER_FUNC(ActivateKeyboardLayout);
+    SET_USER_FUNC(Beep);
+    SET_USER_FUNC(GetKeyNameText);
+    SET_USER_FUNC(GetKeyboardLayoutList);
+    SET_USER_FUNC(MapVirtualKeyEx);
+    SET_USER_FUNC(RegisterHotKey);
+    SET_USER_FUNC(ToUnicodeEx);
+    SET_USER_FUNC(UnregisterHotKey);
+    SET_USER_FUNC(VkKeyScanEx);
+    SET_USER_FUNC(DestroyCursorIcon);
+    SET_USER_FUNC(SetCursor);
+    SET_USER_FUNC(GetCursorPos);
+    SET_USER_FUNC(SetCursorPos);
+    SET_USER_FUNC(ClipCursor);
+    SET_USER_FUNC(UpdateClipboard);
+    SET_USER_FUNC(ChangeDisplaySettingsEx);
+    SET_USER_FUNC(EnumDisplayMonitors);
+    SET_USER_FUNC(EnumDisplaySettingsEx);
+    SET_USER_FUNC(GetMonitorInfo);
+    SET_USER_FUNC(CreateDesktopWindow);
+    SET_USER_FUNC(CreateWindow);
+    SET_USER_FUNC(DestroyWindow);
+    SET_USER_FUNC(FlashWindowEx);
+    SET_USER_FUNC(GetDC);
+    SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
+    SET_USER_FUNC(ReleaseDC);
+    SET_USER_FUNC(ScrollDC);
+    SET_USER_FUNC(SetCapture);
+    SET_USER_FUNC(SetFocus);
+    SET_USER_FUNC(SetLayeredWindowAttributes);
+    SET_USER_FUNC(SetParent);
+    SET_USER_FUNC(SetWindowRgn);
+    SET_USER_FUNC(SetWindowIcon);
+    SET_USER_FUNC(SetWindowStyle);
+    SET_USER_FUNC(SetWindowText);
+    SET_USER_FUNC(ShowWindow);
+    SET_USER_FUNC(SysCommand);
+    SET_USER_FUNC(UpdateLayeredWindow);
+    SET_USER_FUNC(WindowMessage);
+    SET_USER_FUNC(WindowPosChanging);
+    SET_USER_FUNC(WindowPosChanged);
+    SET_USER_FUNC(SystemParametersInfo);
+    SET_USER_FUNC(ThreadDetach);
+#undef SET_USER_FUNC
+
+    prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
+    if (prev != &lazy_load_driver)
+    {
+        /* another thread beat us to it */
+        HeapFree( GetProcessHeap(), 0, driver );
+    }
+}

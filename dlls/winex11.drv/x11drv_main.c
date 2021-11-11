@@ -632,6 +632,7 @@ static BOOL process_attach(void)
     if (use_xim) use_xim = X11DRV_InitXIM( input_style );
 
     X11DRV_DisplayDevices_Init(FALSE);
+    init_user_driver();
     return TRUE;
 }
 

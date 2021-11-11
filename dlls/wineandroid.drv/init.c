@@ -58,7 +58,7 @@ typedef struct
     struct gdi_physdev dev;
 } ANDROID_PDEVICE;
 
-static const struct gdi_dc_funcs android_drv_funcs;
+static const struct user_driver_funcs android_drv_funcs;
 
 
 /******************************************************************************
@@ -158,7 +158,7 @@ static BOOL CDECL ANDROID_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR outpu
 
     if (!physdev) return FALSE;
 
-    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs.dc_funcs );
     return TRUE;
 }
 
@@ -172,7 +172,7 @@ static BOOL CDECL ANDROID_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 
     if (!physdev) return FALSE;
 
-    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs.dc_funcs );
     return TRUE;
 }
 
@@ -281,102 +281,35 @@ static struct opengl_funcs * CDECL ANDROID_wine_get_wgl_driver( PHYSDEV dev, UIN
 }
 
 
-static const struct gdi_dc_funcs android_drv_funcs =
+static const struct user_driver_funcs android_drv_funcs =
 {
-    NULL,                               /* pAbortDoc */
-    NULL,                               /* pAbortPath */
-    NULL,                               /* pAlphaBlend */
-    NULL,                               /* pAngleArc */
-    NULL,                               /* pArc */
-    NULL,                               /* pArcTo */
-    NULL,                               /* pBeginPath */
-    NULL,                               /* pBlendImage */
-    NULL,                               /* pChord */
-    NULL,                               /* pCloseFigure */
-    ANDROID_CreateCompatibleDC,         /* pCreateCompatibleDC */
-    ANDROID_CreateDC,                   /* pCreateDC */
-    ANDROID_DeleteDC,                   /* pDeleteDC */
-    NULL,                               /* pDeleteObject */
-    NULL,                               /* pEllipse */
-    NULL,                               /* pEndDoc */
-    NULL,                               /* pEndPage */
-    NULL,                               /* pEndPath */
-    NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtEscape */
-    NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtTextOut */
-    NULL,                               /* pFillPath */
-    NULL,                               /* pFillRgn */
-    NULL,                               /* pFontIsLinked */
-    NULL,                               /* pFrameRgn */
-    NULL,                               /* pGetBoundsRect */
-    NULL,                               /* pGetCharABCWidths */
-    NULL,                               /* pGetCharABCWidthsI */
-    NULL,                               /* pGetCharWidth */
-    NULL,                               /* pGetCharWidthInfo */
-    NULL,                               /* pGetDeviceCaps */
-    NULL,                               /* pGetDeviceGammaRamp */
-    NULL,                               /* pGetFontData */
-    NULL,                               /* pGetFontRealizationInfo */
-    NULL,                               /* pGetFontUnicodeRanges */
-    NULL,                               /* pGetGlyphIndices */
-    NULL,                               /* pGetGlyphOutline */
-    NULL,                               /* pGetICMProfile */
-    NULL,                               /* pGetImage */
-    NULL,                               /* pGetKerningPairs */
-    NULL,                               /* pGetNearestColor */
-    NULL,                               /* pGetOutlineTextMetrics */
-    NULL,                               /* pGetPixel */
-    NULL,                               /* pGetSystemPaletteEntries */
-    NULL,                               /* pGetTextCharsetInfo */
-    NULL,                               /* pGetTextExtentExPoint */
-    NULL,                               /* pGetTextExtentExPointI */
-    NULL,                               /* pGetTextFace */
-    NULL,                               /* pGetTextMetrics */
-    NULL,                               /* pGradientFill */
-    NULL,                               /* pInvertRgn */
-    NULL,                               /* pLineTo */
-    NULL,                               /* pMoveTo */
-    NULL,                               /* pPaintRgn */
-    NULL,                               /* pPatBlt */
-    NULL,                               /* pPie */
-    NULL,                               /* pPolyBezier */
-    NULL,                               /* pPolyBezierTo */
-    NULL,                               /* pPolyDraw */
-    NULL,                               /* pPolyPolygon */
-    NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolylineTo */
-    NULL,                               /* pPutImage */
-    NULL,                               /* pRealizeDefaultPalette */
-    NULL,                               /* pRealizePalette */
-    NULL,                               /* pRectangle */
-    NULL,                               /* pResetDC */
-    NULL,                               /* pRoundRect */
-    NULL,                               /* pSelectBitmap */
-    NULL,                               /* pSelectBrush */
-    NULL,                               /* pSelectFont */
-    NULL,                               /* pSelectPen */
-    NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBoundsRect */
-    NULL,                               /* pSetDCBrushColor */
-    NULL,                               /* pSetDCPenColor */
-    NULL,                               /* pSetDIBitsToDevice */
-    NULL,                               /* pSetDeviceClipping */
-    NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetPixel */
-    NULL,                               /* pSetTextColor */
-    NULL,                               /* pStartDoc */
-    NULL,                               /* pStartPage */
-    NULL,                               /* pStretchBlt */
-    NULL,                               /* pStretchDIBits */
-    NULL,                               /* pStrokeAndFillPath */
-    NULL,                               /* pStrokePath */
-    NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
-    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
-    ANDROID_wine_get_wgl_driver,        /* wine_get_wgl_driver */
-    NULL,                               /* wine_get_vulkan_driver */
-    GDI_PRIORITY_GRAPHICS_DRV           /* priority */
+    .dc_funcs.pCreateCompatibleDC = ANDROID_CreateCompatibleDC,
+    .dc_funcs.pCreateDC = ANDROID_CreateDC,
+    .dc_funcs.pDeleteDC = ANDROID_DeleteDC,
+    .dc_funcs.wine_get_wgl_driver = ANDROID_wine_get_wgl_driver,
+    .dc_funcs.priority = GDI_PRIORITY_GRAPHICS_DRV,
+
+    .pGetKeyNameText = ANDROID_GetKeyNameText,
+    .pMapVirtualKeyEx = ANDROID_MapVirtualKeyEx,
+    .pVkKeyScanEx = ANDROID_VkKeyScanEx,
+    .pSetCursor = ANDROID_SetCursor,
+    .pChangeDisplaySettingsEx = ANDROID_ChangeDisplaySettingsEx,
+    .pEnumDisplayMonitors = ANDROID_EnumDisplayMonitors,
+    .pEnumDisplaySettingsEx = ANDROID_EnumDisplaySettingsEx,
+    .pGetMonitorInfo = ANDROID_GetMonitorInfo,
+    .pCreateWindow = ANDROID_CreateWindow,
+    .pDestroyWindow = ANDROID_DestroyWindow,
+    .pMsgWaitForMultipleObjectsEx = ANDROID_MsgWaitForMultipleObjectsEx,
+    .pSetCapture = ANDROID_SetCapture,
+    .pSetLayeredWindowAttributes = ANDROID_SetLayeredWindowAttributes,
+    .pSetParent = ANDROID_SetParent,
+    .pSetWindowRgn = ANDROID_SetWindowRgn,
+    .pSetWindowStyle = ANDROID_SetWindowStyle,
+    .pShowWindow = ANDROID_ShowWindow,
+    .pUpdateLayeredWindow = ANDROID_UpdateLayeredWindow,
+    .pWindowMessage = ANDROID_WindowMessage,
+    .pWindowPosChanging = ANDROID_WindowPosChanging,
+    .pWindowPosChanged = ANDROID_WindowPosChanged,
 };
 
 
@@ -390,7 +323,7 @@ const struct gdi_dc_funcs * CDECL ANDROID_get_gdi_driver( unsigned int version )
         ERR( "version mismatch, gdi32 wants %u but wineandroid has %u\n", version, WINE_GDI_DRIVER_VERSION );
         return NULL;
     }
-    return &android_drv_funcs;
+    return &android_drv_funcs.dc_funcs;
 }
 
 
@@ -620,6 +553,7 @@ static BOOL process_attach(void)
         __asm__( "mov %0,%%fs" :: "r" (old_fs) );
 #endif
     }
+    __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
     return TRUE;
 }
 

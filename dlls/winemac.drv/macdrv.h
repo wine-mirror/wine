@@ -124,6 +124,58 @@ static inline struct macdrv_thread_data *macdrv_thread_data(void)
 }
 
 
+extern BOOL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_Beep(void) DECLSPEC_HIDDEN;
+extern LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
+                                                 HWND hwnd, DWORD flags, LPVOID lpvoid) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
+                                               LPDEVMODEW devmode, DWORD flags) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_ClipCursor(LPCRECT clip) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_CreateDesktopWindow(HWND hwnd) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_CreateWindow(HWND hwnd) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetFocus(HWND hwnd) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha,
+                                                    DWORD flags) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetWindowText(HWND hwnd, LPCWSTR text) DECLSPEC_HIDDEN;
+extern UINT CDECL macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp) DECLSPEC_HIDDEN;
+extern LRESULT CDECL macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                             const RECT *window_rect) DECLSPEC_HIDDEN;
+extern LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
+                                           const RECT *window_rect, const RECT *client_rect,
+                                           RECT *visible_rect, struct window_surface **surface) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
+                                          const RECT *window_rect, const RECT *client_rect,
+                                          const RECT *visible_rect, const RECT *valid_rects,
+                                          struct window_surface *surface) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_DestroyCursorIcon(HCURSOR cursor) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_ClipCursor(LPCRECT clip) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_GetCursorPos(LPPOINT pos) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetCursor(HCURSOR cursor) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_SetCursorPos(INT x, INT y) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey) DECLSPEC_HIDDEN;
+extern SHORT CDECL macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl) DECLSPEC_HIDDEN;
+extern UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl) DECLSPEC_HIDDEN;
+extern INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+                                    LPWSTR bufW, int bufW_size, UINT flags, HKL hkl) DECLSPEC_HIDDEN;
+extern UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list) DECLSPEC_HIDDEN;
+extern INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size) DECLSPEC_HIDDEN;
+extern BOOL CDECL macdrv_SystemParametersInfo(UINT action, UINT int_param, void *ptr_param,
+                                              UINT flags) DECLSPEC_HIDDEN;
+extern DWORD CDECL macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
+                                                      DWORD timeout, DWORD mask, DWORD flags) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_ThreadDetach(void) DECLSPEC_HIDDEN;
+
+
 /* macdrv private window data */
 struct macdrv_win_data
 {
@@ -225,6 +277,7 @@ extern void macdrv_status_item_mouse_move(const macdrv_event *event) DECLSPEC_HI
 
 extern void check_retina_status(void) DECLSPEC_HIDDEN;
 extern void macdrv_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
+extern void init_user_driver(void) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * Mac IME driver
