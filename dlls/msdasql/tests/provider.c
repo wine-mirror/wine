@@ -517,7 +517,7 @@ static void test_command_rowset(IUnknown *cmd)
     hr = ICommandPrepare_Prepare(commandprepare, 1);
     ok(hr == DB_E_NOCOMMAND, "got 0x%08lx\n", hr);
 
-    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"CREATE TABLE testing (col1 INT, col2 SHORT)");
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"CREATE TABLE testing (col1 INT, col2 VARCHAR(20) NOT NULL, col3 FLOAT)");
     ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     hr = ICommandPrepare_Prepare(commandprepare, 1);
@@ -532,7 +532,7 @@ static void test_command_rowset(IUnknown *cmd)
     if (unk)
         IUnknown_Release(unk);
 
-    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"insert into testing values(1, 0)");
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"insert into testing values(1, 'red', 1.0)");
     ok(hr == S_OK, "got 0x%08lx\n", hr);
 
     affected = 9999;
@@ -550,12 +550,42 @@ static void test_command_rowset(IUnknown *cmd)
     ok(unk != NULL, "Unexpected value\n");
     if (hr == S_OK)
     {
-        ok(affected == -1, "got %Id\n", affected);
+        const DWORD flag1 = DBCOLUMNFLAGS_ISFIXEDLENGTH | DBCOLUMNFLAGS_ISNULLABLE | DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITE;
+        const DWORD flag2 = DBCOLUMNFLAGS_ISNULLABLE | DBCOLUMNFLAGS_MAYBENULL | DBCOLUMNFLAGS_WRITE;
+        IColumnsInfo *colinfo;
+        DBORDINAL columns;
+        DBCOLUMNINFO *dbcolinfo;
+        OLECHAR *stringsbuffer;
+
+        todo_wine ok(affected == -1, "got %Id\n", affected);
 
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
 
         test_rowset_interfaces(rowset, command_text);
+
+        hr = IRowset_QueryInterface(rowset, &IID_IColumnsInfo, (void**)&colinfo);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+        columns = 0;
+        hr = IColumnsInfo_GetColumnInfo(colinfo, &columns, &dbcolinfo, &stringsbuffer);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(columns == 3, "got %Iu\n", columns);
+
+        ok(dbcolinfo[0].dwFlags == flag1, "got 0x%08lx\n", dbcolinfo[0].dwFlags);
+        ok(dbcolinfo[0].wType == DBTYPE_I4, "got 0x%08x\n", dbcolinfo[0].wType);
+
+        todo_wine ok(dbcolinfo[1].dwFlags == flag2, "got 0x%08lx\n", dbcolinfo[1].dwFlags);
+        ok(dbcolinfo[1].wType == DBTYPE_WSTR /* Unicode MySQL Driver */ ||
+           dbcolinfo[1].wType == DBTYPE_STR  /* ASCII MySQL Driver */, "got 0x%08x\n", dbcolinfo[1].wType);
+
+        ok(dbcolinfo[2].dwFlags == flag1, "got 0x%08lx\n", dbcolinfo[2].dwFlags);
+        ok(dbcolinfo[2].wType == DBTYPE_R4 /* MySQL */ ||
+           dbcolinfo[2].wType == DBTYPE_R8 /* Access */, "got 0x%08x\n", dbcolinfo[2].wType);
+
+        CoTaskMemFree(dbcolinfo);
+        CoTaskMemFree(stringsbuffer);
+        IColumnsInfo_Release(colinfo);
 
         IRowset_Release(rowset);
         IUnknown_Release(unk);

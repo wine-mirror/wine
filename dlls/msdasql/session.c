@@ -129,6 +129,154 @@ static struct msdasql_prop msdasql_init_props[] =
     { DBPROP_BLOCKINGSTORAGEOBJECTS,          DBPROPFLAGS_DATASOURCEINFO | DBPROPFLAGS_READ | DBPROPFLAGS_WRITE, VT_BOOL, VARIANT_FALSE },
 };
 
+#define SQLTYPE_TO_STR(x) case x: return #x
+
+static const char *debugstr_sqltype(SQLSMALLINT type)
+{
+    switch (type)
+    {
+        SQLTYPE_TO_STR(SQL_DECIMAL);
+        SQLTYPE_TO_STR(SQL_CHAR);
+        SQLTYPE_TO_STR(SQL_VARCHAR);
+        SQLTYPE_TO_STR(SQL_LONGVARCHAR);
+        SQLTYPE_TO_STR(SQL_NUMERIC);
+        SQLTYPE_TO_STR(SQL_GUID);
+        SQLTYPE_TO_STR(SQL_TINYINT);
+        SQLTYPE_TO_STR(SQL_SMALLINT);
+        SQLTYPE_TO_STR(SQL_INTEGER);
+        SQLTYPE_TO_STR(SQL_REAL);
+        SQLTYPE_TO_STR(SQL_FLOAT);
+        SQLTYPE_TO_STR(SQL_DOUBLE);
+        SQLTYPE_TO_STR(SQL_BINARY);
+        SQLTYPE_TO_STR(SQL_VARBINARY);
+        SQLTYPE_TO_STR(SQL_LONGVARBINARY);
+        SQLTYPE_TO_STR(SQL_TYPE_DATE);
+        SQLTYPE_TO_STR(SQL_DATE);
+        SQLTYPE_TO_STR(SQL_TIME);
+        SQLTYPE_TO_STR(SQL_TYPE_TIMESTAMP);
+        SQLTYPE_TO_STR(SQL_TIMESTAMP);
+        SQLTYPE_TO_STR(SQL_TYPE_TIME);
+        SQLTYPE_TO_STR(SQL_BIGINT);
+        SQLTYPE_TO_STR(SQL_C_SBIGINT);
+        SQLTYPE_TO_STR(SQL_C_SLONG);
+        SQLTYPE_TO_STR(SQL_C_ULONG);
+        SQLTYPE_TO_STR(SQL_WLONGVARCHAR);
+        SQLTYPE_TO_STR(SQL_WCHAR);
+        SQLTYPE_TO_STR(SQL_WVARCHAR);
+        default:
+             return "Unknown";
+    }
+}
+
+static const char *debugstr_dbtype(DBTYPE type)
+{
+    switch(type)
+    {
+        SQLTYPE_TO_STR(DBTYPE_NUMERIC);
+        SQLTYPE_TO_STR(DBTYPE_STR);
+        SQLTYPE_TO_STR(DBTYPE_GUID);
+        SQLTYPE_TO_STR(DBTYPE_I1);
+        SQLTYPE_TO_STR(DBTYPE_I2);
+        SQLTYPE_TO_STR(DBTYPE_UI2);
+        SQLTYPE_TO_STR(DBTYPE_I4);
+        SQLTYPE_TO_STR(DBTYPE_I8);
+        SQLTYPE_TO_STR(DBTYPE_UI4);
+        SQLTYPE_TO_STR(DBTYPE_R4);
+        SQLTYPE_TO_STR(DBTYPE_R8);
+        SQLTYPE_TO_STR(DBTYPE_BYTES);
+        SQLTYPE_TO_STR(DBTYPE_DBDATE);
+        SQLTYPE_TO_STR(DBTYPE_DBTIME);
+        SQLTYPE_TO_STR(DBTYPE_DATE);
+        SQLTYPE_TO_STR(DBTYPE_DBTIMESTAMP);
+        SQLTYPE_TO_STR(DBTYPE_WSTR);
+        default:
+             return "Unknown";
+    }
+}
+
+static SQLSMALLINT sqltype_to_bindtype(SQLSMALLINT type, BOOL sign)
+{
+    switch (type)
+    {
+        case SQL_DECIMAL:
+            return DBTYPE_NUMERIC;
+        case SQL_CHAR:
+        case SQL_VARCHAR:
+        case SQL_LONGVARCHAR:
+        case SQL_NUMERIC:
+            return DBTYPE_STR;
+        case SQL_GUID:
+            return DBTYPE_GUID;
+        case SQL_TINYINT:
+            return DBTYPE_I1;
+        case SQL_SMALLINT:
+            return sign ? DBTYPE_I2 : DBTYPE_UI2;
+        case SQL_INTEGER:
+            return sign ? DBTYPE_I4 : DBTYPE_UI4;
+        case SQL_REAL:
+            return DBTYPE_R4;
+        case SQL_FLOAT:
+        case SQL_DOUBLE:
+            return DBTYPE_R8;
+        case SQL_BINARY:
+        case SQL_VARBINARY:
+        case SQL_LONGVARBINARY:
+            return DBTYPE_BYTES;
+        case SQL_TYPE_DATE:
+            return DBTYPE_DBDATE;
+        case SQL_DATE:
+            return DBTYPE_DBTIME;
+        case SQL_TIME:
+            return DBTYPE_DATE;
+        case SQL_TYPE_TIMESTAMP:
+        case SQL_TIMESTAMP:
+            return DBTYPE_DBTIMESTAMP;
+        case SQL_TYPE_TIME:
+            return DBTYPE_DBTIME;
+        case SQL_BIGINT:
+        case SQL_C_SBIGINT:
+            return DBTYPE_I8;
+        case SQL_C_SLONG:
+            return DBTYPE_I4;
+        case SQL_C_ULONG:
+            return DBTYPE_UI4;
+        case SQL_WLONGVARCHAR:
+        case SQL_WCHAR:
+        case SQL_WVARCHAR:
+            return DBTYPE_WSTR;
+        default:
+            FIXME("Unsupported type %i\n", type);
+    }
+
+    return DBTYPE_I4;
+}
+
+static BOOL is_variable_length(SQLSMALLINT type)
+{
+    switch(type)
+    {
+        case SQL_LONGVARCHAR:
+        case SQL_WLONGVARCHAR:
+        case SQL_LONGVARBINARY:
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL is_fixed_legnth(SQLSMALLINT type)
+{
+    switch(type)
+    {
+        case SQL_LONGVARCHAR:
+        case SQL_WLONGVARCHAR:
+        case SQL_WVARCHAR:
+        case SQL_LONGVARBINARY:
+        case SQL_VARBINARY:
+            return FALSE;
+    }
+    return TRUE;
+}
+
 struct msdasql_session
 {
     IUnknown session_iface;
@@ -816,9 +964,134 @@ static ULONG  WINAPI rowset_colsinfo_Release(IColumnsInfo *iface)
 static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDINAL *columns,
         DBCOLUMNINFO **colinfo, OLECHAR **stringsbuffer)
 {
+#define MAX_COLUMN_LEN 128
+
     struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
-    FIXME("%p, %p, %p, %p\n", rowset, columns, colinfo, stringsbuffer);
-    return E_NOTIMPL;
+    DBCOLUMNINFO *dbcolumn;
+    RETCODE ret;
+    SQLSMALLINT colcnt;
+    int i;
+    OLECHAR *ptr;
+
+    TRACE("%p, %p, %p, %p\n", rowset, columns, colinfo, stringsbuffer);
+
+    if (!columns || !colinfo || !stringsbuffer)
+        return E_INVALIDARG;
+
+    SQLNumResultCols(rowset->hstmt, &colcnt);
+    TRACE("SQLNumResultCols %d\n", colcnt);
+
+    *columns = colcnt;
+
+    ptr = *stringsbuffer = CoTaskMemAlloc(colcnt * MAX_COLUMN_LEN * sizeof(WCHAR));
+    if (!ptr)
+        return E_OUTOFMEMORY;
+
+    dbcolumn = CoTaskMemAlloc(colcnt * sizeof(DBCOLUMNINFO));
+    if (!dbcolumn)
+    {
+        CoTaskMemFree(ptr);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < colcnt; i++)
+    {
+        SQLWCHAR      columnname[MAX_COLUMN_LEN];
+        SQLSMALLINT   ColumnNameLen;
+        SQLSMALLINT   ColumnDataType;
+        SQLULEN       ColumnDataSize;
+        SQLSMALLINT   ColumnDataDigits;
+        SQLSMALLINT   ColumnDataNullable;
+
+        ret = SQLDescribeColW(rowset->hstmt, i+1, columnname, MAX_COLUMN_LEN, &ColumnNameLen, &ColumnDataType,
+                    &ColumnDataSize, &ColumnDataDigits, &ColumnDataNullable);
+        if (SQL_SUCCEEDED(ret))
+        {
+            SQLLEN  length;
+
+            TRACE("%d: Column Name : %s, Column Name Len : %i, SQL Data Type : %i, Data Size : %i, DecimalDigits : %i, Nullable %i\n",
+                 i, debugstr_w(columnname), (int)ColumnNameLen, (int)ColumnDataType, (int)ColumnDataSize, (int)ColumnDataDigits,
+                 (int)ColumnDataNullable);
+            lstrcpyW(ptr, columnname);
+
+            dbcolumn[i].pwszName = ptr;
+            dbcolumn[i].pTypeInfo = NULL;
+            dbcolumn[i].iOrdinal = i+1;
+
+            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_UNSIGNED, NULL, 0, NULL, &length);
+            if (!SQL_SUCCEEDED(ret))
+            {
+                CoTaskMemFree(ptr);
+                CoTaskMemFree(dbcolumn);
+                ERR("Failed to get column %d attribute\n", i+1);
+                return E_FAIL;
+            }
+
+            dbcolumn[i].wType = sqltype_to_bindtype(ColumnDataType, length == SQL_FALSE);
+            TRACE("SQLType %s -> %s\n", debugstr_sqltype(ColumnDataType), debugstr_dbtype(dbcolumn[i].wType));
+
+            dbcolumn[i].dwFlags = DBCOLUMNFLAGS_WRITE;
+
+            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_LENGTH, NULL, 0, NULL, &length);
+            if (!SQL_SUCCEEDED(ret))
+            {
+                CoTaskMemFree(ptr);
+                CoTaskMemFree(dbcolumn);
+                ERR("Failed to get column %d length (%d)\n", i+1, ret);
+                return E_FAIL;
+            }
+            dbcolumn[i].ulColumnSize = length;
+
+            if (dbcolumn[i].ulColumnSize > 1024 && is_variable_length(ColumnDataType))
+                dbcolumn[i].dwFlags |= DBCOLUMNFLAGS_MAYDEFER | DBCOLUMNFLAGS_ISLONG;
+
+            if (ColumnDataNullable)
+                dbcolumn[i].dwFlags |= DBCOLUMNFLAGS_ISNULLABLE | DBCOLUMNFLAGS_MAYBENULL;
+
+            if (is_fixed_legnth(ColumnDataType))
+                dbcolumn[i].dwFlags |= DBCOLUMNFLAGS_ISFIXEDLENGTH;
+
+            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_SCALE, NULL, 0, NULL, &length);
+            if (!SQL_SUCCEEDED(ret))
+            {
+                CoTaskMemFree(ptr);
+                CoTaskMemFree(dbcolumn);
+                ERR("Failed to get column %d scale (%d)\n", i+1, ret);
+                return E_FAIL;
+            }
+            if (length == 0)
+                length = 255;
+            dbcolumn[i].bScale = length;
+
+            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_PRECISION, NULL, 0, NULL, &length);
+            if (!SQL_SUCCEEDED(ret))
+            {
+                CoTaskMemFree(ptr);
+                CoTaskMemFree(dbcolumn);
+                ERR("Failed to get column %d precision (%d)\n", i+1, ret);
+                return E_FAIL;
+            }
+            if (length == 0)
+                length = 255;
+            dbcolumn[i].bPrecision= length;
+
+            dbcolumn[i].columnid.eKind = DBKIND_NAME;
+            dbcolumn[i].columnid.uName.pwszName = ptr;
+
+            ptr += ColumnNameLen + 1;
+        }
+        else
+        {
+            CoTaskMemFree(ptr);
+            CoTaskMemFree(dbcolumn);
+            ERR("Failed to get column %d description (%d)\n", i+1, ret);
+            return E_FAIL;
+        }
+    }
+
+    *colinfo = dbcolumn;
+#undef MAX_COLUMN_LEN
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_colsinfo_MapColumnIDs(IColumnsInfo *iface, DBORDINAL column_ids,
