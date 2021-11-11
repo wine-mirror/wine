@@ -39,7 +39,6 @@
 
 extern int pedantic;
 extern int leave_case;
-extern int byteorder;
 extern int decimal;
 extern int custombit;
 extern int unicodein;

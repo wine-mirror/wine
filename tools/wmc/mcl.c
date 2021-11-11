@@ -239,7 +239,7 @@ static int fill_inputbuffer(void)
     case INPUT_UNICODE:
         len += fread( inputbuffer + len, sizeof(WCHAR), INPUTBUFFER_SIZE - len, yyin );
         if (!len) break;
-        if (swapped) for (i = 0; i < len; i++) inputbuffer[i] = BYTESWAP_WORD( inputbuffer[i] );
+        if (swapped) for (i = 0; i < len; i++) inputbuffer[i] = (inputbuffer[i] << 8) | (inputbuffer[i] >> 8);
         ninputbuffer = len;
         return 1;
     case INPUT_UNKNOWN:

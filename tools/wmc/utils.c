@@ -439,7 +439,6 @@ WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstl
  * Function for writing to a memory buffer.
  */
 
-int byte_swapped = 0;
 unsigned char *output_buffer;
 size_t output_buffer_pos;
 size_t output_buffer_size;
@@ -470,13 +469,6 @@ void flush_output_buffer( const char *name )
     free( output_buffer );
 }
 
-void put_data( const void *data, size_t size )
-{
-    check_output_buffer_space( size );
-    memcpy( output_buffer + output_buffer_pos, data, size );
-    output_buffer_pos += size;
-}
-
 void put_byte( unsigned char val )
 {
     check_output_buffer_space( 1 );
@@ -485,15 +477,18 @@ void put_byte( unsigned char val )
 
 void put_word( unsigned short val )
 {
-    if (byte_swapped) val = (val << 8) | (val >> 8);
-    put_data( &val, sizeof(val) );
+    check_output_buffer_space( 2 );
+    output_buffer[output_buffer_pos++] = val;
+    output_buffer[output_buffer_pos++] = val >> 8;
 }
 
 void put_dword( unsigned int val )
 {
-    if (byte_swapped)
-        val = ((val << 24) | ((val << 8) & 0x00ff0000) | ((val >> 8) & 0x0000ff00) | (val >> 24));
-    put_data( &val, sizeof(val) );
+    check_output_buffer_space( 4 );
+    output_buffer[output_buffer_pos++] = val;
+    output_buffer[output_buffer_pos++] = val >> 8;
+    output_buffer[output_buffer_pos++] = val >> 16;
+    output_buffer[output_buffer_pos++] = val >> 24;
 }
 
 void align_output( unsigned int align )

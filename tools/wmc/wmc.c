@@ -37,14 +37,6 @@
 
 static const char usage[] =
 	"Usage: wmc [options...] [inputfile.mc]\n"
-	"   -B x                       Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
-	"                              (default is n[ative] which equals "
-#ifdef WORDS_BIGENDIAN
-	"big"
-#else
-	"little"
-#endif
-	"-endian)\n"
 	"   -c                         Set 'custom-bit' in values\n"
 	"   -d                         Use decimal values in output\n"
 	"   -D                         Set debug flag\n"
@@ -69,11 +61,6 @@ static const char version_string[] =
 	"Wine Message Compiler version " PACKAGE_VERSION "\n"
 	"Copyright 2000 Bertho A. Stultiens\n"
 	;
-
-/*
- * The output byte-order of resources (set with -B)
- */
-int byteorder = WMC_BO_NATIVE;
 
 /*
  * Custom bit (bit 29) in output values must be set (-c option)
@@ -136,7 +123,7 @@ enum long_options_values
     LONG_OPT_NLS_DIR = 1,
 };
 
-static const char short_options[] = "B:cdDhH:io:O:P:uUvVW";
+static const char short_options[] = "cdDhH:io:O:P:uUvVW";
 static const struct long_option long_options[] =
 {
 	{ "help", 0, 'h' },
@@ -190,25 +177,6 @@ static void option_callback( int optc, char *optarg )
 {
     switch(optc)
     {
-    case 'B':
-        switch(optarg[0])
-        {
-        case 'n':
-        case 'N':
-            byteorder = WMC_BO_NATIVE;
-            break;
-        case 'l':
-        case 'L':
-            byteorder = WMC_BO_LITTLE;
-            break;
-        case 'b':
-        case 'B':
-            byteorder = WMC_BO_BIG;
-            break;
-        default:
-            error("Byteordering must be n[ative], l[ittle] or b[ig]\n");
-        }
-        break;
     case 'c':
         custombit = 1;
         break;
@@ -346,12 +314,6 @@ int main(int argc,char *argv[])
 		/* Error during parse */
 		exit(1);
 	}
-
-#ifdef WORDS_BIGENDIAN
-	byte_swapped = (byteorder == WMC_BO_LITTLE);
-#else
-	byte_swapped = (byteorder == WMC_BO_BIG);
-#endif
 
         switch (output_format)
         {

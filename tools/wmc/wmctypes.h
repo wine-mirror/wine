@@ -25,18 +25,6 @@
 #include "windef.h"
 #include "winbase.h"
 
-/* Byteordering defines */
-#define WMC_BO_NATIVE	0x00
-#define WMC_BO_LITTLE	0x01
-#define WMC_BO_BIG	0x02
-
-#define WMC_LOBYTE(w)		((WORD)(w) & 0xff)
-#define WMC_HIBYTE(w)		(((WORD)(w) >> 8) & 0xff)
-#define WMC_LOWORD(d)		((DWORD)(d) & 0xffff)
-#define WMC_HIWORD(d)		(((DWORD)(d) >> 16) & 0xffff)
-#define BYTESWAP_WORD(w)	((WORD)(((WORD)WMC_LOBYTE(w) << 8) + (WORD)WMC_HIBYTE(w)))
-#define BYTESWAP_DWORD(d)	((DWORD)(((DWORD)BYTESWAP_WORD(WMC_LOWORD(d)) << 16) + ((DWORD)BYTESWAP_WORD(WMC_HIWORD(d)))))
-
 /*
  * Tokenizer types
  */

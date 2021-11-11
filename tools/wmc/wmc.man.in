@@ -22,9 +22,6 @@ with \fB-o\fR, then \fBwmc\fR will write the output to \fIinputfile.{rc,h}\fR.
 The outputfile is named \fIwmc.tab.{rc,h}\fR if no inputfile was given.
 .SH OPTIONS
 .TP
-.BI \-B\  x
-Set output byte-order x={n[ative], l[ittle], b[ig]}. Default is n[ative].
-.TP
 .B \-c
 Set 'custom-bit' in message-code values.
 .TP
