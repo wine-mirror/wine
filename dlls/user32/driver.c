@@ -106,6 +106,7 @@ static const struct user_driver_funcs *load_driver(void)
 void USER_unload_driver(void)
 {
     struct user_driver_funcs *prev;
+    __wine_set_display_driver( &null_driver, WINE_GDI_DRIVER_VERSION );
     /* make sure we don't try to call the driver after it has been detached */
     prev = InterlockedExchangePointer( (void **)&USER_Driver, &null_driver );
     if (prev != &lazy_load_driver && prev != &null_driver)
@@ -119,91 +120,8 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-static BOOL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
-{
-    return TRUE;
-}
-
-static void CDECL nulldrv_Beep(void)
-{
-}
-
-static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
-{
-    return ~0; /* use default implementation */
-}
-
-static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
-{
-    return -1; /* use default implementation */
-}
-
-static UINT CDECL nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
-{
-    return -1; /* use default implementation */
-}
-
-static BOOL CDECL nulldrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
-{
-    return TRUE;
-}
-
-static INT CDECL nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
-                                      int size, UINT flags, HKL layout )
-{
-    return -2; /* use default implementation */
-}
-
-static void CDECL nulldrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
-{
-}
-
-static SHORT CDECL nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
-{
-    return -256; /* use default implementation */
-}
-
 static void CDECL nulldrv_DestroyCursorIcon( HCURSOR cursor )
 {
-}
-
-static void CDECL nulldrv_SetCursor( HCURSOR cursor )
-{
-}
-
-static BOOL CDECL nulldrv_GetCursorPos( LPPOINT pt )
-{
-    return TRUE;
-}
-
-static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
-{
-    return TRUE;
-}
-
-static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
-{
-    return TRUE;
-}
-
-static void CDECL nulldrv_UpdateClipboard(void)
-{
-}
-
-static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
-                                             DWORD flags, LPVOID lparam )
-{
-    return DISP_CHANGE_FAILED;
-}
-
-static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
-{
-    return FALSE;
-}
-
-static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
-{
-    return TRUE;
 }
 
 static BOOL CDECL nodrv_CreateWindow( HWND hwnd )
@@ -220,21 +138,7 @@ static BOOL CDECL nodrv_CreateWindow( HWND hwnd )
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
-{
-    return TRUE;
-}
-
 static void CDECL nulldrv_DestroyWindow( HWND hwnd )
-{
-}
-
-static void CDECL nulldrv_FlashWindowEx( FLASHWINFO *info )
-{
-}
-
-static void CDECL nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
-                                 const RECT *top_rect, DWORD flags )
 {
 }
 
@@ -267,15 +171,7 @@ static void CDECL nulldrv_SetFocus( HWND hwnd )
 {
 }
 
-static void CDECL nulldrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
-{
-}
-
 static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
-{
-}
-
-static void CDECL nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
 }
 
@@ -299,12 +195,6 @@ static UINT CDECL nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return -1;
-}
-
-static BOOL CDECL nulldrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                               const RECT *window_rect )
-{
-    return TRUE;
 }
 
 static LRESULT CDECL nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -334,61 +224,6 @@ static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, voi
 static void CDECL nulldrv_ThreadDetach( void )
 {
 }
-
-static struct user_driver_funcs null_driver =
-{
-    { NULL },
-    /* keyboard functions */
-    nulldrv_ActivateKeyboardLayout,
-    nulldrv_Beep,
-    nulldrv_GetKeyNameText,
-    nulldrv_GetKeyboardLayoutList,
-    nulldrv_MapVirtualKeyEx,
-    nulldrv_RegisterHotKey,
-    nulldrv_ToUnicodeEx,
-    nulldrv_UnregisterHotKey,
-    nulldrv_VkKeyScanEx,
-    /* cursor/icon functions */
-    nulldrv_DestroyCursorIcon,
-    nulldrv_SetCursor,
-    nulldrv_GetCursorPos,
-    nulldrv_SetCursorPos,
-    nulldrv_ClipCursor,
-    /* clipboard functions */
-    nulldrv_UpdateClipboard,
-    /* display modes */
-    nulldrv_ChangeDisplaySettingsEx,
-    nulldrv_EnumDisplayMonitors,
-    nulldrv_EnumDisplaySettingsEx,
-    nulldrv_GetMonitorInfo,
-    /* windowing functions */
-    nulldrv_CreateDesktopWindow,
-    nulldrv_CreateWindow,
-    nulldrv_DestroyWindow,
-    nulldrv_FlashWindowEx,
-    nulldrv_GetDC,
-    nulldrv_MsgWaitForMultipleObjectsEx,
-    nulldrv_ReleaseDC,
-    nulldrv_ScrollDC,
-    nulldrv_SetCapture,
-    nulldrv_SetFocus,
-    nulldrv_SetLayeredWindowAttributes,
-    nulldrv_SetParent,
-    nulldrv_SetWindowRgn,
-    nulldrv_SetWindowIcon,
-    nulldrv_SetWindowStyle,
-    nulldrv_SetWindowText,
-    nulldrv_ShowWindow,
-    nulldrv_SysCommand,
-    nulldrv_UpdateLayeredWindow,
-    nulldrv_WindowMessage,
-    nulldrv_WindowPosChanging,
-    nulldrv_WindowPosChanged,
-    /* system parameters */
-    nulldrv_SystemParametersInfo,
-    /* thread management */
-    nulldrv_ThreadDetach
-};
 
 
 /**********************************************************************
@@ -598,49 +433,9 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
 #define SET_USER_FUNC(name) \
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
 
-    SET_USER_FUNC(ActivateKeyboardLayout);
-    SET_USER_FUNC(Beep);
-    SET_USER_FUNC(GetKeyNameText);
-    SET_USER_FUNC(GetKeyboardLayoutList);
-    SET_USER_FUNC(MapVirtualKeyEx);
-    SET_USER_FUNC(RegisterHotKey);
-    SET_USER_FUNC(ToUnicodeEx);
-    SET_USER_FUNC(UnregisterHotKey);
-    SET_USER_FUNC(VkKeyScanEx);
-    SET_USER_FUNC(DestroyCursorIcon);
-    SET_USER_FUNC(SetCursor);
-    SET_USER_FUNC(GetCursorPos);
-    SET_USER_FUNC(SetCursorPos);
-    SET_USER_FUNC(ClipCursor);
-    SET_USER_FUNC(UpdateClipboard);
-    SET_USER_FUNC(ChangeDisplaySettingsEx);
     SET_USER_FUNC(EnumDisplayMonitors);
-    SET_USER_FUNC(EnumDisplaySettingsEx);
     SET_USER_FUNC(GetMonitorInfo);
-    SET_USER_FUNC(CreateDesktopWindow);
-    SET_USER_FUNC(CreateWindow);
-    SET_USER_FUNC(DestroyWindow);
-    SET_USER_FUNC(FlashWindowEx);
-    SET_USER_FUNC(GetDC);
-    SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
-    SET_USER_FUNC(ReleaseDC);
-    SET_USER_FUNC(ScrollDC);
-    SET_USER_FUNC(SetCapture);
-    SET_USER_FUNC(SetFocus);
-    SET_USER_FUNC(SetLayeredWindowAttributes);
-    SET_USER_FUNC(SetParent);
-    SET_USER_FUNC(SetWindowRgn);
-    SET_USER_FUNC(SetWindowIcon);
-    SET_USER_FUNC(SetWindowStyle);
-    SET_USER_FUNC(SetWindowText);
-    SET_USER_FUNC(ShowWindow);
-    SET_USER_FUNC(SysCommand);
-    SET_USER_FUNC(UpdateLayeredWindow);
-    SET_USER_FUNC(WindowMessage);
-    SET_USER_FUNC(WindowPosChanging);
-    SET_USER_FUNC(WindowPosChanged);
-    SET_USER_FUNC(SystemParametersInfo);
-    SET_USER_FUNC(ThreadDetach);
+
 #undef SET_USER_FUNC
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );

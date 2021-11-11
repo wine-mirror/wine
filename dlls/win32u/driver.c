@@ -731,10 +731,268 @@ const struct gdi_dc_funcs null_driver =
 };
 
 
+/**********************************************************************
+ * Null user driver
+ *
+ * These are fallbacks for entry points that are not implemented in the real driver.
+ */
+
+static BOOL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
+{
+    return TRUE;
+}
+
+static void CDECL nulldrv_Beep(void)
+{
+}
+
+static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
+{
+    return ~0; /* use default implementation */
+}
+
+static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
+{
+    return -1; /* use default implementation */
+}
+
+static UINT CDECL nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
+{
+    return -1; /* use default implementation */
+}
+
+static BOOL CDECL nulldrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
+{
+    return TRUE;
+}
+
+static INT CDECL nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
+                                      int size, UINT flags, HKL layout )
+{
+    return -2; /* use default implementation */
+}
+
+static void CDECL nulldrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
+{
+}
+
+static SHORT CDECL nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
+{
+    return -256; /* use default implementation */
+}
+
+static void CDECL nulldrv_DestroyCursorIcon( HCURSOR cursor )
+{
+}
+
+static void CDECL nulldrv_SetCursor( HCURSOR cursor )
+{
+}
+
+static BOOL CDECL nulldrv_GetCursorPos( LPPOINT pt )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
+{
+    return TRUE;
+}
+
+static void CDECL nulldrv_UpdateClipboard(void)
+{
+}
+
+static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
+                                             DWORD flags, LPVOID lparam )
+{
+    return DISP_CHANGE_FAILED;
+}
+
+static BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    /* FIXME: move from user32 */
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
+{
+    /* FIXME: move from user32 */
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
+{
+    return TRUE;
+}
+
+static void CDECL nulldrv_DestroyWindow( HWND hwnd )
+{
+}
+
+static void CDECL nulldrv_FlashWindowEx( FLASHWINFO *info )
+{
+}
+
+static void CDECL nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
+                                 const RECT *top_rect, DWORD flags )
+{
+}
+
+/* helper for kernel32->ntdll timeout format conversion */
+static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout )
+{
+    if (timeout == INFINITE) return NULL;
+    time->QuadPart = (ULONGLONG)timeout * -10000;
+    return time;
+}
+
+static HANDLE normalize_std_handle( HANDLE handle )
+{
+    if (handle == (HANDLE)STD_INPUT_HANDLE)
+        return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+    if (handle == (HANDLE)STD_OUTPUT_HANDLE)
+        return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+    if (handle == (HANDLE)STD_ERROR_HANDLE)
+        return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
+
+    return handle;
+}
+
+static DWORD CDECL nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
+                                                        DWORD mask, DWORD flags )
+{
+    NTSTATUS status;
+    HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
+    LARGE_INTEGER time;
+    unsigned int i;
+
+    if (!count && !timeout) return WAIT_TIMEOUT;
+    if (count > MAXIMUM_WAIT_OBJECTS)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return WAIT_FAILED;
+    }
+    for (i = 0; i < count; i++) hloc[i] = normalize_std_handle( handles[i] );
+
+    status = NtWaitForMultipleObjects( count, hloc, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE),
+                                       get_nt_timeout( &time, timeout ) );
+    if (HIWORD(status))  /* is it an error code? */
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
+    }
+    return status;
+}
+
+static void CDECL nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
+{
+}
+
+static BOOL CDECL nulldrv_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
+{
+    RECT rect;
+
+    NtGdiGetAppClipBox( hdc, &rect );
+    return NtGdiBitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                        hdc, rect.left - dx, rect.top - dy, SRCCOPY, 0, 0 );
+}
+
+static void CDECL nulldrv_SetCapture( HWND hwnd, UINT flags )
+{
+}
+
+static void CDECL nulldrv_SetFocus( HWND hwnd )
+{
+}
+
+static void CDECL nulldrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+{
+}
+
+static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
+{
+}
+
+static void CDECL nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+{
+}
+
+static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
+{
+}
+
+static void CDECL nulldrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
+{
+}
+
+static void CDECL nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
+{
+}
+
+static UINT CDECL nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+{
+    return ~0; /* use default implementation */
+}
+
+static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    return -1;
+}
+
+static BOOL CDECL nulldrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                               const RECT *window_rect )
+{
+    return TRUE;
+}
+
+static LRESULT CDECL nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    return 0;
+}
+
+static BOOL CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                             const RECT *window_rect, const RECT *client_rect,
+                                             RECT *visible_rect, struct window_surface **surface )
+{
+    return FALSE;
+}
+
+static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                            const RECT *window_rect, const RECT *client_rect,
+                                            const RECT *visible_rect, const RECT *valid_rects,
+                                            struct window_surface *surface )
+{
+}
+
+static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
+{
+    return FALSE;
+}
+
+static void CDECL nulldrv_ThreadDetach( void )
+{
+}
+
 /******************************************************************************
  *	     __wine_set_display_driver   (win32u.@)
  */
-void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version )
+void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT version )
 {
     if (version != WINE_GDI_DRIVER_VERSION)
     {
@@ -743,7 +1001,55 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT vers
         return;
     }
 
-    InterlockedExchangePointer( (void **)&user_driver, funcs );
+#define SET_USER_FUNC(name) \
+    do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
+
+    SET_USER_FUNC(ActivateKeyboardLayout);
+    SET_USER_FUNC(Beep);
+    SET_USER_FUNC(GetKeyNameText);
+    SET_USER_FUNC(GetKeyboardLayoutList);
+    SET_USER_FUNC(MapVirtualKeyEx);
+    SET_USER_FUNC(RegisterHotKey);
+    SET_USER_FUNC(ToUnicodeEx);
+    SET_USER_FUNC(UnregisterHotKey);
+    SET_USER_FUNC(VkKeyScanEx);
+    SET_USER_FUNC(DestroyCursorIcon);
+    SET_USER_FUNC(SetCursor);
+    SET_USER_FUNC(GetCursorPos);
+    SET_USER_FUNC(SetCursorPos);
+    SET_USER_FUNC(ClipCursor);
+    SET_USER_FUNC(UpdateClipboard);
+    SET_USER_FUNC(ChangeDisplaySettingsEx);
+    SET_USER_FUNC(EnumDisplayMonitors);
+    SET_USER_FUNC(EnumDisplaySettingsEx);
+    SET_USER_FUNC(GetMonitorInfo);
+    SET_USER_FUNC(CreateDesktopWindow);
+    SET_USER_FUNC(CreateWindow);
+    SET_USER_FUNC(DestroyWindow);
+    SET_USER_FUNC(FlashWindowEx);
+    SET_USER_FUNC(GetDC);
+    SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
+    SET_USER_FUNC(ReleaseDC);
+    SET_USER_FUNC(ScrollDC);
+    SET_USER_FUNC(SetCapture);
+    SET_USER_FUNC(SetFocus);
+    SET_USER_FUNC(SetLayeredWindowAttributes);
+    SET_USER_FUNC(SetParent);
+    SET_USER_FUNC(SetWindowRgn);
+    SET_USER_FUNC(SetWindowIcon);
+    SET_USER_FUNC(SetWindowStyle);
+    SET_USER_FUNC(SetWindowText);
+    SET_USER_FUNC(ShowWindow);
+    SET_USER_FUNC(SysCommand);
+    SET_USER_FUNC(UpdateLayeredWindow);
+    SET_USER_FUNC(WindowMessage);
+    SET_USER_FUNC(WindowPosChanging);
+    SET_USER_FUNC(WindowPosChanged);
+    SET_USER_FUNC(SystemParametersInfo);
+    SET_USER_FUNC(ThreadDetach);
+#undef SET_USER_FUNC
+
+    InterlockedExchangePointer( (void **)&user_driver, driver );
 }
 
 /******************************************************************************
