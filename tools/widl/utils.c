@@ -211,7 +211,6 @@ size_t strappend(char **buf, size_t *len, size_t pos, const char* fmt, ...)
  * Function for writing to a memory buffer.
  */
 
-int byte_swapped = 0;
 unsigned char *output_buffer;
 size_t output_buffer_pos;
 size_t output_buffer_size;
@@ -351,29 +350,24 @@ void put_byte( unsigned char val )
 
 void put_word( unsigned short val )
 {
-    if (byte_swapped) val = (val << 8) | (val >> 8);
-    put_data( &val, sizeof(val) );
+    check_output_buffer_space( 2 );
+    output_buffer[output_buffer_pos++] = val;
+    output_buffer[output_buffer_pos++] = val >> 8;
 }
 
 void put_dword( unsigned int val )
 {
-    if (byte_swapped)
-        val = ((val << 24) | ((val << 8) & 0x00ff0000) | ((val >> 8) & 0x0000ff00) | (val >> 24));
-    put_data( &val, sizeof(val) );
+    check_output_buffer_space( 4 );
+    output_buffer[output_buffer_pos++] = val;
+    output_buffer[output_buffer_pos++] = val >> 8;
+    output_buffer[output_buffer_pos++] = val >> 16;
+    output_buffer[output_buffer_pos++] = val >> 24;
 }
 
 void put_qword( unsigned int val )
 {
-    if (byte_swapped)
-    {
-        put_dword( 0 );
-        put_dword( val );
-    }
-    else
-    {
-        put_dword( val );
-        put_dword( 0 );
-    }
+    put_dword( val );
+    put_dword( 0 );
 }
 
 /* pointer-sized word */

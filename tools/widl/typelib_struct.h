@@ -138,13 +138,8 @@ typedef struct tagMSFT_TypeInfoBase {
 /*040*/ INT     helpstringcontext;  /*  */
         INT     helpcontext;    /* */
         INT     oCustData;          /* offset in customer data table */
-#ifdef WORDS_BIGENDIAN
-        INT16   cbSizeVft;      /* virtual table size, including inherits */
-        INT16   cImplTypes;     /* nr of implemented interfaces */
-#else
         INT16   cImplTypes;     /* nr of implemented interfaces */
         INT16   cbSizeVft;      /* virtual table size, including inherits */
-#endif
 /*050*/ INT     size;           /* size in bytes, at least for structures */
         /* FIXME: name of this field */
         INT     datatype1;      /* position in type description table */
@@ -174,13 +169,8 @@ typedef struct {
 /*  INT   recsize;       record size including some extra stuff */
     INT   DataType;     /* data type of the member, eg return of function */
     INT   Flags;        /* something to do with attribute flags (LOWORD) */
-#ifdef WORDS_BIGENDIAN
-    INT16 funcdescsize; /* size of reconstituted FUNCDESC and related structs */
-    INT16 VtableOffset; /* offset in vtable */
-#else
     INT16 VtableOffset; /* offset in vtable */
     INT16 funcdescsize; /* size of reconstituted FUNCDESC and related structs */
-#endif
     INT   FKCCIC;       /* bit string with the following  */
                         /* meaning (bit 0 is the lsb): */
                         /* bits 0 - 2: FUNCKIND */
@@ -191,13 +181,8 @@ typedef struct {
                         /* bit  13: oEntry is numeric */
                         /* bit  14: has retval param */
                         /* bits 16 - 31: index of next function with same id */
-#ifdef WORDS_BIGENDIAN
-    INT16 nroargs;      /* nr of optional arguments */
-    INT16 nrargs;       /* number of arguments (including optional ????) */
-#else
     INT16 nrargs;       /* number of arguments (including optional ????) */
     INT16 nroargs;      /* nr of optional arguments */
-#endif
     /* optional attribute fields, the number of them is variable */
     INT   OptAttr[1];
 /*
@@ -230,13 +215,8 @@ typedef struct {
 /*  INT   recsize;      // record size including some extra stuff */
     INT   DataType;     /* data type of the variable */
     INT   Flags;        /* VarFlags (LOWORD) */
-#ifdef WORDS_BIGENDIAN
-    INT16 vardescsize;  /* size of reconstituted VARDESC and related structs */
-    INT16 VarKind;      /* VarKind */
-#else
     INT16 VarKind;      /* VarKind */
     INT16 vardescsize;  /* size of reconstituted VARDESC and related structs */
-#endif
     INT   OffsValue;    /* value of the variable or the offset  */
                         /* in the data structure */
     /* optional attribute fields, the number of them is variable */

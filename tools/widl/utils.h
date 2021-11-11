@@ -40,7 +40,6 @@ int is_valid_uuid(const char *s);
 
 /* buffer management */
 
-extern int byte_swapped;
 extern unsigned char *output_buffer;
 extern size_t output_buffer_pos;
 extern size_t output_buffer_size;
