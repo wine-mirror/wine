@@ -433,17 +433,3 @@ void init_user_driver(void)
 {
     __wine_set_user_driver( &x11drv_funcs, WINE_GDI_DRIVER_VERSION );
 }
-
-
-/******************************************************************************
- *      X11DRV_get_gdi_driver
- */
-const struct gdi_dc_funcs * CDECL X11DRV_get_gdi_driver( unsigned int version )
-{
-    if (version != WINE_GDI_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, gdi32 wants %u but winex11 has %u\n", version, WINE_GDI_DRIVER_VERSION );
-        return NULL;
-    }
-    return &x11drv_funcs.dc_funcs;
-}

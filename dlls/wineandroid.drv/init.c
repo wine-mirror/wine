@@ -313,20 +313,6 @@ static const struct user_driver_funcs android_drv_funcs =
 };
 
 
-/******************************************************************************
- *           ANDROID_get_gdi_driver
- */
-const struct gdi_dc_funcs * CDECL ANDROID_get_gdi_driver( unsigned int version )
-{
-    if (version != WINE_GDI_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, gdi32 wants %u but wineandroid has %u\n", version, WINE_GDI_DRIVER_VERSION );
-        return NULL;
-    }
-    return &android_drv_funcs.dc_funcs;
-}
-
-
 static const JNINativeMethod methods[] =
 {
     { "wine_desktop_changed", "(II)V", desktop_changed },

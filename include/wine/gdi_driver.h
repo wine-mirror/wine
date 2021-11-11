@@ -167,7 +167,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 69
+#define WINE_GDI_DRIVER_VERSION 70
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -310,7 +310,7 @@ WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
 extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect,
                                              const RECT *device_rect, struct window_surface *surface );
-extern void CDECL __wine_set_display_driver( HMODULE module );
+extern void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version );
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( HDC hdc, UINT version );
 

@@ -315,17 +315,3 @@ void init_user_driver(void)
 {
     __wine_set_user_driver( &macdrv_funcs, WINE_GDI_DRIVER_VERSION );
 }
-
-
-/******************************************************************************
- *              macdrv_get_gdi_driver
- */
-const struct gdi_dc_funcs * CDECL macdrv_get_gdi_driver(unsigned int version)
-{
-    if (version != WINE_GDI_DRIVER_VERSION)
-    {
-        ERR("version mismatch, gdi32 wants %u but winemac has %u\n", version, WINE_GDI_DRIVER_VERSION);
-        return NULL;
-    }
-    return &macdrv_funcs.dc_funcs;
-}

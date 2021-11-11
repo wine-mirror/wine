@@ -213,7 +213,6 @@ extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs path_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs font_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *get_display_driver(void) DECLSPEC_HIDDEN;
-extern void CDECL set_display_driver( void *proc ) DECLSPEC_HIDDEN;
 
 /* font.c */
 

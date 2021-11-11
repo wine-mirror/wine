@@ -37,7 +37,7 @@ static char driver_load_error[80];
 
 static BOOL CDECL nodrv_CreateWindow( HWND hwnd );
 
-static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
+static BOOL load_desktop_driver( HWND hwnd )
 {
     BOOL ret = FALSE;
     HKEY hkey;
@@ -61,21 +61,19 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
     {
         if (wcscmp( path, L"null" ))
         {
-            ret = (*module = LoadLibraryW( path )) != NULL;
+            ret = LoadLibraryW( path ) != NULL;
             if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
         }
         else
         {
             __wine_set_user_driver( &null_driver, WINE_GDI_DRIVER_VERSION );
-            *module = NULL;
             ret = TRUE;
         }
-        TRACE( "%s %p\n", debugstr_w(path), *module );
+        TRACE( "%s\n", debugstr_w(path) );
     }
     else
     {
         size = sizeof(driver_load_error);
-        *module = NULL;
         RegQueryValueExA( hkey, "DriverError", NULL, NULL, (BYTE *)driver_load_error, &size );
     }
     RegCloseKey( hkey );
@@ -88,9 +86,8 @@ static const struct user_driver_funcs *load_driver(void)
     struct user_driver_funcs driver;
     USEROBJECTFLAGS flags;
     HWINSTA winstation;
-    HMODULE module;
 
-    if (!load_desktop_driver( GetDesktopWindow(), &module ) || USER_Driver == &lazy_load_driver)
+    if (!load_desktop_driver( GetDesktopWindow() ) || USER_Driver == &lazy_load_driver)
     {
         memset( &driver, 0, sizeof(driver) );
         winstation = NtUserGetProcessWindowStation();
@@ -101,7 +98,6 @@ static const struct user_driver_funcs *load_driver(void)
         __wine_set_user_driver( &driver, WINE_GDI_DRIVER_VERSION );
     }
 
-    if (module) __wine_set_display_driver( module );
     register_builtin_classes();
     return USER_Driver;
 }
@@ -652,5 +648,8 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     {
         /* another thread beat us to it */
         HeapFree( GetProcessHeap(), 0, driver );
+        driver = prev;
     }
+
+    __wine_set_display_driver( driver, version );
 }

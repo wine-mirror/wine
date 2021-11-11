@@ -24,9 +24,6 @@
 #include "ntgdi.h"
 #include "win32u_private.h"
 #include "wine/unixlib.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 static const struct unix_funcs *unix_funcs;
 
@@ -675,21 +672,9 @@ struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
 /***********************************************************************
  *           __wine_set_display_driver    (win32u.@)
  */
-void CDECL __wine_set_display_driver( HMODULE module )
+void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version )
 {
-    void *wine_get_gdi_driver;
-    ANSI_STRING name_str;
-
-    if (!module) return;
-
-    RtlInitAnsiString( &name_str, "wine_get_gdi_driver" );
-    LdrGetProcedureAddress( module, &name_str, 0, &wine_get_gdi_driver );
-    if (!wine_get_gdi_driver)
-    {
-        ERR( "Could not create graphics driver %p\n", module );
-        return;
-    }
-    unix_funcs->set_display_driver( wine_get_gdi_driver );
+    return unix_funcs->set_display_driver( funcs, version );
 }
 
 static void *get_user_proc( const char *name, BOOL force_load )

@@ -56,7 +56,7 @@ struct d3dkmt_device
     struct list entry;                  /* List entry */
 };
 
-const struct gdi_dc_funcs *driver_funcs;
+static const struct user_driver_funcs *user_driver;
 
 static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
 static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
@@ -70,30 +70,16 @@ static pthread_mutex_t driver_lock = PTHREAD_MUTEX_INITIALIZER;
  */
 const struct gdi_dc_funcs *get_display_driver(void)
 {
-    if (!driver_funcs)
+    if (!user_driver)
     {
-        if (!user_callbacks || !user_callbacks->pGetDesktopWindow() || !driver_funcs)
+        if (!user_callbacks || !user_callbacks->pGetDesktopWindow() || !user_driver)
         {
-            static struct gdi_dc_funcs empty_funcs;
+            static struct user_driver_funcs empty_funcs;
             WARN( "failed to load the display driver, falling back to null driver\n" );
-            driver_funcs = &empty_funcs;
+            __wine_set_display_driver( &empty_funcs, WINE_GDI_DRIVER_VERSION );
         }
     }
-    return driver_funcs;
-}
-
-void CDECL set_display_driver( void *proc )
-{
-    const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int ) = proc;
-    const struct gdi_dc_funcs *funcs = NULL;
-
-    funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
-    if (!funcs)
-    {
-        ERR( "Could not create graphics driver\n" );
-        NtTerminateProcess( GetCurrentThread(), 1 );
-    }
-    InterlockedExchangePointer( (void **)&driver_funcs, (void *)funcs );
+    return &user_driver->dc_funcs;
 }
 
 struct monitor_info
@@ -137,8 +123,8 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 
 static BOOL CDECL nulldrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-    if (!driver_funcs || !driver_funcs->pCreateCompatibleDC) return TRUE;
-    return driver_funcs->pCreateCompatibleDC( NULL, pdev );
+    if (!user_driver || !user_driver->dc_funcs.pCreateCompatibleDC) return TRUE;
+    return user_driver->dc_funcs.pCreateCompatibleDC( NULL, pdev );
 }
 
 static BOOL CDECL nulldrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
@@ -744,6 +730,21 @@ const struct gdi_dc_funcs null_driver =
     GDI_PRIORITY_NULL_DRV               /* priority */
 };
 
+
+/******************************************************************************
+ *	     __wine_set_display_driver   (win32u.@)
+ */
+void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version )
+{
+    if (version != WINE_GDI_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, driver wants %u but win32u has %u\n",
+             version, WINE_GDI_DRIVER_VERSION );
+        return;
+    }
+
+    InterlockedExchangePointer( (void **)&user_driver, funcs );
+}
 
 /******************************************************************************
  *		NtGdiExtEscape   (win32u.@)
