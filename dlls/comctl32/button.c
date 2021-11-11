@@ -410,7 +410,8 @@ static int get_draw_state(const BUTTON_INFO *infoPtr)
         state = STATE_PRESSED;
     else if (infoPtr->state & BST_HOT)
         state = STATE_HOT;
-    else if (infoPtr->state & BST_FOCUS)
+    else if (infoPtr->state & BST_FOCUS || type == BS_DEFPUSHBUTTON || type == BS_DEFSPLITBUTTON
+             || (type == BS_DEFCOMMANDLINK && !(style & BS_PUSHLIKE)))
         state = STATE_DEFAULTED;
     else
         state = STATE_NORMAL;
