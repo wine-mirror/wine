@@ -89,6 +89,20 @@ INT WINAPI MulDiv( INT a, INT b, INT c )
 }
 
 /***********************************************************************
+ *          AppPolicyGetMediaFoundationCodecLoading (KERNELBASE.@)
+ */
+
+LONG WINAPI AppPolicyGetMediaFoundationCodecLoading(HANDLE token, AppPolicyMediaFoundationCodecLoading *policy)
+{
+    FIXME("%p, %p\n", token, policy);
+
+    if(policy)
+        *policy = AppPolicyMediaFoundationCodecLoading_All;
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *          AppPolicyGetProcessTerminationMethod (KERNELBASE.@)
  */
 LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessTerminationMethod *policy)

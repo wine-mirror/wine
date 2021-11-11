@@ -22,6 +22,12 @@
 extern "C" {
 #endif
 
+typedef enum AppPolicyMediaFoundationCodecLoading
+{
+    AppPolicyMediaFoundationCodecLoading_All       = 0,
+    AppPolicyMediaFoundationCodecLoading_InboxOnly = 1,
+} AppPolicyMediaFoundationCodecLoading;
+
 typedef enum AppPolicyProcessTerminationMethod
 {
     AppPolicyProcessTerminationMethod_ExitProcess      = 0,
@@ -78,6 +84,7 @@ typedef struct PACKAGE_ID
 }
 PACKAGE_ID;
 
+LONG WINAPI AppPolicyGetMediaFoundationCodecLoading(HANDLE token, AppPolicyMediaFoundationCodecLoading *policy);
 LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessTerminationMethod *policy);
 LONG WINAPI AppPolicyGetShowDeveloperDiagnostic(HANDLE token, AppPolicyShowDeveloperDiagnostic *policy);
 LONG WINAPI AppPolicyGetThreadInitializationType(HANDLE token, AppPolicyThreadInitializationType *policy);

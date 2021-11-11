@@ -1,7 +1,7 @@
 @ stub AppPolicyGetClrCompat
 @ stub AppPolicyGetCreateFileAccess
 @ stub AppPolicyGetLifecycleManagement
-@ stub AppPolicyGetMediaFoundationCodecLoading
+@ stdcall AppPolicyGetMediaFoundationCodecLoading(ptr ptr) kernelbase.AppPolicyGetMediaFoundationCodecLoading
 @ stdcall AppPolicyGetProcessTerminationMethod(ptr ptr) kernelbase.AppPolicyGetProcessTerminationMethod
 @ stdcall AppPolicyGetShowDeveloperDiagnostic(ptr ptr) kernelbase.AppPolicyGetShowDeveloperDiagnostic
 @ stdcall AppPolicyGetThreadInitializationType(ptr ptr) kernelbase.AppPolicyGetThreadInitializationType
