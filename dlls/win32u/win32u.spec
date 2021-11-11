@@ -803,7 +803,7 @@
 @ stub NtUserConsoleControl
 @ stub NtUserConvertMemHandle
 @ stub NtUserCopyAcceleratorTable
-@ stub NtUserCountClipboardFormats
+@ stdcall NtUserCountClipboardFormats()
 @ stub NtUserCreateAcceleratorTable
 @ stub NtUserCreateActivationGroup
 @ stub NtUserCreateActivationObject

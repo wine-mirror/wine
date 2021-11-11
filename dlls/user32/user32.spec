@@ -83,7 +83,7 @@
 @ stdcall CopyIcon(long)
 @ stdcall CopyImage(long long long long long)
 @ stdcall CopyRect(ptr ptr)
-@ stdcall CountClipboardFormats()
+@ stdcall CountClipboardFormats() NtUserCountClipboardFormats
 @ stdcall CreateAcceleratorTableA(ptr long)
 @ stdcall CreateAcceleratorTableW(ptr long)
 @ stdcall CreateCaret(long long long long)

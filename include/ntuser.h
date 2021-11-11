@@ -25,6 +25,7 @@
 
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
+INT     WINAPI NtUserCountClipboardFormats(void);
 HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *device,
                                       DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
                                       ULONG heap_size );

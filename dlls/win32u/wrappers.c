@@ -596,6 +596,11 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
+INT WINAPI NtUserCountClipboardFormats(void)
+{
+    return unix_funcs->pNtUserCountClipboardFormats();
+}
+
 UINT WINAPI GDIRealizePalette( HDC hdc )
 {
     return unix_funcs->pGDIRealizePalette( hdc );

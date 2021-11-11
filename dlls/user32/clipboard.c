@@ -927,27 +927,6 @@ done:
 
 
 /**************************************************************************
- *		CountClipboardFormats (USER32.@)
- */
-INT WINAPI CountClipboardFormats(void)
-{
-    INT count = 0;
-
-    USER_Driver->pUpdateClipboard();
-
-    SERVER_START_REQ( get_clipboard_formats )
-    {
-        wine_server_call( req );
-        count = reply->count;
-    }
-    SERVER_END_REQ;
-
-    TRACE("returning %d\n", count);
-    return count;
-}
-
-
-/**************************************************************************
  *		EnumClipboardFormats (USER32.@)
  */
 UINT WINAPI EnumClipboardFormats( UINT format )
@@ -1107,7 +1086,7 @@ INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
 
     TRACE( "%p %u\n", list, nCount );
 
-    if(CountClipboardFormats() == 0)
+    if (NtUserCountClipboardFormats() == 0)
         return 0;
 
     for (i = 0; i < nCount; i++)

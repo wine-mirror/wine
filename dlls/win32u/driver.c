@@ -56,7 +56,7 @@ struct d3dkmt_device
     struct list entry;                  /* List entry */
 };
 
-static const struct user_driver_funcs *user_driver;
+static const struct user_driver_funcs lazy_load_driver;
 
 static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
 static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
@@ -70,9 +70,10 @@ static pthread_mutex_t driver_lock = PTHREAD_MUTEX_INITIALIZER;
  */
 const struct gdi_dc_funcs *get_display_driver(void)
 {
-    if (!user_driver)
+    if (user_driver == &lazy_load_driver)
     {
-        if (!user_callbacks || !user_callbacks->pGetDesktopWindow() || !user_driver)
+        if (!user_callbacks || !user_callbacks->pGetDesktopWindow() ||
+            user_driver == &lazy_load_driver)
         {
             static struct user_driver_funcs empty_funcs;
             WARN( "failed to load the display driver, falling back to null driver\n" );
@@ -123,7 +124,7 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 
 static BOOL CDECL nulldrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-    if (!user_driver || !user_driver->dc_funcs.pCreateCompatibleDC) return TRUE;
+    if (!user_driver->dc_funcs.pCreateCompatibleDC) return TRUE;
     return user_driver->dc_funcs.pCreateCompatibleDC( NULL, pdev );
 }
 
@@ -988,6 +989,31 @@ static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, voi
 static void CDECL nulldrv_ThreadDetach( void )
 {
 }
+
+/**********************************************************************
+ * Lazy loading user driver
+ *
+ * Initial driver used before another driver is loaded.
+ * Each entry point simply loads the real driver and chains to it.
+ */
+
+static const struct user_driver_funcs *load_driver(void)
+{
+    get_display_driver();
+    return user_driver;
+}
+
+static void CDECL loaderdrv_UpdateClipboard(void)
+{
+    load_driver()->pUpdateClipboard();
+}
+
+static const struct user_driver_funcs lazy_load_driver =
+{
+    .pUpdateClipboard = loaderdrv_UpdateClipboard,
+};
+
+const struct user_driver_funcs *user_driver = &lazy_load_driver;
 
 /******************************************************************************
  *	     __wine_set_display_driver   (win32u.@)

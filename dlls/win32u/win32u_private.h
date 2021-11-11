@@ -194,6 +194,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
+    INT      (WINAPI *pNtUserCountClipboardFormats)(void);
 
     /* Wine-specific functions */
     UINT (WINAPI *pGDIRealizePalette)( HDC hdc );
@@ -228,6 +229,8 @@ extern HKEY reg_open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
 extern HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
 extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
                                     KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
+
+extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
 
 static inline WCHAR *win32u_wcsrchr( const WCHAR *str, WCHAR ch )
 {
