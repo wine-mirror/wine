@@ -349,20 +349,6 @@ static void read_pe_importlib(importlib_t *importlib, void *data, unsigned int s
     read_msft_importlib( importlib, ptr, resdata->Size );
 }
 
-static int open_typelib(const char *name)
-{
-    char *file_name;
-    int fd;
-
-    file_name = wpp_find_include(name, NULL);
-    if(!file_name)
-        return open(name, O_RDONLY | O_BINARY );
-
-    fd = open(file_name, O_RDONLY | O_BINARY );
-    free(file_name);
-    return fd;
-}
-
 static void read_importlib(importlib_t *importlib)
 {
     int fd, size;

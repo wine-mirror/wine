@@ -55,6 +55,7 @@ static const char usage[] =
 "   -h                 Generate headers\n"
 "   -H file            Name of header file (default is infile.h)\n"
 "   -I directory       Add directory to the include search path (multiple -I allowed)\n"
+"   -L directory       Add directory to the library search path (multiple -L allowed)\n"
 "   --local-stubs=file Write empty stubs for call_as/local methods to file\n"
 "   -m32, -m64         Set the target architecture (Win32 or Win64)\n"
 "   -N                 Do not preprocess input\n"
@@ -151,6 +152,8 @@ char *temp_name;
 const char *prefix_client = "";
 const char *prefix_server = "";
 static const char *includedir;
+static const char *dlldir;
+static struct strarray dlldirs;
 static char *output_name;
 static const char *sysroot = "";
 
@@ -185,7 +188,7 @@ enum {
 };
 
 static const char short_options[] =
-    "b:cC:d:D:EhH:I:m:No:O:pP:rsS:tT:uU:VW";
+    "b:cC:d:D:EhH:I:L:m:No:O:pP:rsS:tT:uU:VW";
 static const struct long_option long_options[] = {
     { "acf", 1, ACF_OPTION },
     { "app_config", 0, APP_CONFIG_OPTION },
@@ -578,6 +581,7 @@ static void init_argv0_dir( const char *argv0 )
 #endif
     if (!dir) return;
     includedir = strmake( "%s/%s", get_dirname( dir ), BIN_TO_INCLUDEDIR );
+    dlldir = strmake( "%s/%s", get_dirname( dir ), BIN_TO_DLLDIR );
 #endif
 }
 
@@ -680,6 +684,9 @@ static void option_callback( int optc, char *optarg )
     case 'I':
       wpp_add_include_path(optarg);
       break;
+    case 'L':
+      strarray_add( &dlldirs, optarg );
+      break;
     case 'm':
       if (!strcmp( optarg, "32" )) pointer_size = 4;
       else if (!strcmp( optarg, "64" )) pointer_size = 8;
@@ -740,6 +747,61 @@ static void option_callback( int optc, char *optarg )
       fprintf(stderr, "widl: %s\n\n%s", optarg, usage);
       exit(1);
     }
+}
+
+static const char *get_pe_dir(void)
+{
+    switch (target_cpu)
+    {
+    case CPU_x86:    return "/i386-windows";
+    case CPU_x86_64: return "/x86_64-windows";
+    case CPU_ARM:    return "/arm-windows";
+    case CPU_ARM64:  return "/aarch64-windows";
+    default:         return "";
+    }
+}
+
+int open_typelib( const char *name )
+{
+    static const char *default_dirs[] = { DLLDIR, "/usr/lib/wine", "/usr/local/lib/wine" };
+    const char *pe_dir = get_pe_dir();
+    int fd;
+    unsigned int i;
+
+#define TRYOPEN(str) do { \
+        char *file = str; \
+        if ((fd = open( file, O_RDONLY | O_BINARY )) != -1) return fd; \
+        free( file ); } while(0)
+
+    for (i = 0; i < dlldirs.count; i++)
+    {
+        if (strendswith( dlldirs.str[i], "/*" ))  /* special case for wine build tree */
+        {
+            int namelen = strlen( name );
+            if (strendswith( name, ".dll" )) namelen -= 4;
+            TRYOPEN( strmake( "%.*s/%.*s/%s", (int)strlen(dlldirs.str[i]) - 2, dlldirs.str[i],
+                              namelen, name, name ));
+            TRYOPEN( strmake( "%.*s/%.*s/%s.fake", (int)strlen(dlldirs.str[i]) - 2, dlldirs.str[i],
+                              namelen, name, name ));
+        }
+        else
+        {
+            TRYOPEN( strmake( "%s%s/%s", dlldirs.str[i], pe_dir, name ));
+            TRYOPEN( strmake( "%s/%s", dlldirs.str[i], name ));
+        }
+    }
+
+    if (stdinc)
+    {
+        if (dlldir) TRYOPEN( strmake( "%s%s/%s", dlldir, pe_dir, name ));
+        for (i = 0; i < ARRAY_SIZE(default_dirs); i++)
+        {
+            if (i && !strcmp( default_dirs[i], default_dirs[0] )) continue;
+            TRYOPEN( strmake( "%s%s/%s", default_dirs[i], pe_dir, name ));
+        }
+    }
+    error( "cannot find %s\n", name );
+#undef TRYOPEN
 }
 
 int main(int argc,char *argv[])

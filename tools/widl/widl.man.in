@@ -58,6 +58,9 @@ Use old naming conventions.
 Generate a type library. The default output filename is
 \fIinfile\fB.tlb\fR.  If the output file name ends in \fB.res\fR, a
 binary resource file containing the type library is generated instead.
+.IP "\fB-L \fIpath\fR"
+Add a directory to the library search path for imported typelibs. The
+option can be specified multiple times.
 .PP
 .B UUID file options:
 .IP "\fB-u\fR"

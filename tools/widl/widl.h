@@ -89,6 +89,7 @@ enum stub_mode
     MODE_Oif  /* new-style fully interpreted stubs */
 };
 extern enum stub_mode get_stub_mode(void);
+extern int open_typelib( const char *name );
 
 extern void write_header(const statement_list_t *stmts);
 extern void write_id_data(const statement_list_t *stmts);

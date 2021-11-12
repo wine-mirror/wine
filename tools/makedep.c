@@ -2787,6 +2787,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     output( "\t%s%s -o $@", cmd_prefix( "WIDL" ), tools_path( make, "widl" ) );
     output_filenames( target_flags );
     output_filename( "--nostdinc" );
+    output_filename( "-Ldlls/\\*" );
     output_filenames( defines );
     output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
     output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));

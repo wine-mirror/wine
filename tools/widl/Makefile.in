@@ -29,6 +29,8 @@ MANPAGES = widl.man.in
 
 widl_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \
-	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\"
+	-DDLLDIR="\"${dlldir}\"" \
+	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\" \
+	-DBIN_TO_DLLDIR=\"`${MAKEDEP} -R ${bindir} ${dlldir}`\"
 
 INSTALL_DEV = $(PROGRAMS)
