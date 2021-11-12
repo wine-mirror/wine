@@ -601,6 +601,11 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
+{
+    return unix_funcs->pNtUserGetUpdatedClipboardFormats( formats, size, out_size );
+}
+
 BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
 {
     return unix_funcs->pNtUserIsClipboardFormatAvailable( format );

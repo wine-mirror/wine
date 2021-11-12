@@ -902,35 +902,6 @@ UINT WINAPI EnumClipboardFormats( UINT format )
 
 
 /**************************************************************************
- *		GetUpdatedClipboardFormats (USER32.@)
- */
-BOOL WINAPI GetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
-{
-    BOOL ret;
-
-    if (!out_size)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-
-    USER_Driver->pUpdateClipboard();
-
-    SERVER_START_REQ( get_clipboard_formats )
-    {
-        if (formats) wine_server_set_reply( req, formats, size * sizeof(*formats) );
-        ret = !wine_server_call_err( req );
-        *out_size = reply->count;
-    }
-    SERVER_END_REQ;
-
-    TRACE( "%p %u returning %u formats, ret %u\n", formats, size, *out_size, ret );
-    if (!ret && !formats && *out_size) SetLastError( ERROR_NOACCESS );
-    return ret;
-}
-
-
-/**************************************************************************
  *		GetClipboardData (USER32.@)
  */
 HANDLE WINAPI GetClipboardData( UINT format )

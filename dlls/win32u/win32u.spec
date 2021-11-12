@@ -1004,7 +1004,7 @@
 @ stub NtUserGetUniformSpaceMapping
 @ stub NtUserGetUpdateRect
 @ stub NtUserGetUpdateRgn
-@ stub NtUserGetUpdatedClipboardFormats
+@ stdcall NtUserGetUpdatedClipboardFormats(ptr long ptr)
 @ stub NtUserGetWOWClass
 @ stub NtUserGetWindowBand
 @ stub NtUserGetWindowCompositionAttribute

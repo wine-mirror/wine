@@ -40,6 +40,7 @@ BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 HANDLE  WINAPI NtUserGetProp( HWND hwnd, const WCHAR *str );
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
+BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
 HWINSTA WINAPI NtUserOpenWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK access );
 BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );

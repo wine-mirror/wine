@@ -117,6 +117,34 @@ BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
 }
 
 /**************************************************************************
+ *	     NtUserGetUpdatedClipboardFormats    (win32u.@)
+ */
+BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
+{
+    BOOL ret;
+
+    if (!out_size)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    user_driver->pUpdateClipboard();
+
+    SERVER_START_REQ( get_clipboard_formats )
+    {
+        if (formats) wine_server_set_reply( req, formats, size * sizeof(*formats) );
+        ret = !wine_server_call_err( req );
+        *out_size = reply->count;
+    }
+    SERVER_END_REQ;
+
+    TRACE( "%p %u returning %u formats, ret %u\n", formats, size, *out_size, ret );
+    if (!ret && !formats && *out_size) SetLastError( ERROR_NOACCESS );
+    return ret;
+}
+
+/**************************************************************************
  *	     NtUserGetClipboardFormatName    (win32u.@)
  */
 INT WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen )
