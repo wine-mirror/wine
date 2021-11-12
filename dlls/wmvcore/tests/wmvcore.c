@@ -1429,6 +1429,9 @@ struct callback
 
     bool read_compressed;
     DWORD max_stream_sample_size[2];
+
+    QWORD expect_ontime;
+    HANDLE ontime_event;
 };
 
 static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
@@ -1672,12 +1675,15 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
 
 static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface, QWORD time, void *context)
 {
+    struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+
     if (winetest_debug > 1)
         trace("%u: %04x: IWMReaderCallbackAdvanced::OnTime(time %I64u)\n",
                 GetTickCount(), GetCurrentThreadId(), time);
 
-    ok(time == 3000 * 10000, "Got time %I64u.\n", time);
+    ok(time == callback->expect_ontime, "Got time %I64u.\n", time);
     ok(context == (void *)0xfacade, "Got unexpected context %p.\n", context);
+    SetEvent(callback->ontime_event);
     return S_OK;
 }
 
@@ -1837,6 +1843,7 @@ static void callback_init(struct callback *callback)
     callback->got_opened = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->got_stopped = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->eof_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->ontime_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
 static void callback_cleanup(struct callback *callback)
@@ -1844,6 +1851,7 @@ static void callback_cleanup(struct callback *callback)
     CloseHandle(callback->got_opened);
     CloseHandle(callback->got_stopped);
     CloseHandle(callback->eof_event);
+    CloseHandle(callback->ontime_event);
 }
 
 static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, struct callback *callback)
@@ -2197,8 +2205,21 @@ static void test_async_reader_streaming(void)
     ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    callback.expect_ontime = 0;
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = WaitForSingleObject(callback.ontime_event, 1000);
+    ok(!ret, "Wait timed out.\n");
+    callback.expect_ontime = 1000 * 10000;
+    hr = IWMReaderAdvanced2_DeliverTime(advanced, 1000 * 10000);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = WaitForSingleObject(callback.ontime_event, 1000);
+    ok(!ret, "Wait timed out.\n");
+    callback.expect_ontime = 3000 * 10000;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, 3000 * 10000);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = WaitForSingleObject(callback.ontime_event, 1000);
+    ok(!ret, "Wait timed out.\n");
 
     ret = WaitForSingleObject(callback.eof_event, 1000);
     ok(!ret, "Wait timed out.\n");

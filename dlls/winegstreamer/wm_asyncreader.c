@@ -101,6 +101,10 @@ static DWORD WINAPI stream_thread(void *arg)
             {
                 if (reader->user_clock)
                 {
+                    QWORD user_time = reader->user_time;
+
+                    if (pts > user_time && reader->reader.callback_advanced)
+                        IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced, user_time, reader->context);
                     while (pts > reader->user_time && reader->running)
                         SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs, INFINITE);
                     if (!reader->running)
@@ -152,6 +156,16 @@ static DWORD WINAPI stream_thread(void *arg)
                     WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
             IWMReaderCallback_OnStatus(callback, WMT_EOF, S_OK,
                     WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
+
+            if (reader->user_clock && reader->reader.callback_advanced)
+            {
+                /* We can only get here if user_time is greater than the PTS
+                 * of all samples, in which case we cannot have sent this
+                 * notification already. */
+                IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced,
+                        reader->user_time, reader->context);
+            }
+
             TRACE("Reached end of stream; exiting.\n");
             LeaveCriticalSection(&reader->stream_cs);
             return 0;
