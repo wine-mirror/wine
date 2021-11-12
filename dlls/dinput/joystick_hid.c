@@ -1679,7 +1679,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         {
             caps->physical_min = -10000;
             caps->physical_max = 10000;
-            set_ramp_force->start_caps = caps;
+            set_ramp_force->end_caps = caps;
         }
     }
 
