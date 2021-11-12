@@ -795,25 +795,6 @@ HWND WINAPI SetClipboardViewer( HWND hwnd )
 
 
 /**************************************************************************
- *              GetClipboardViewer (USER32.@)
- */
-HWND WINAPI GetClipboardViewer(void)
-{
-    HWND hWndViewer = 0;
-
-    SERVER_START_REQ( get_clipboard_info )
-    {
-        if (!wine_server_call_err( req )) hWndViewer = wine_server_ptr_handle( reply->viewer );
-    }
-    SERVER_END_REQ;
-
-    TRACE( "returning %p\n", hWndViewer );
-
-    return hWndViewer;
-}
-
-
-/**************************************************************************
  *              ChangeClipboardChain (USER32.@)
  */
 BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )

@@ -204,3 +204,8 @@ NTSTATUS WINAPI wow64_NtUserGetClipboardOwner( UINT *args )
 {
     return HandleToUlong( NtUserGetClipboardOwner() );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetClipboardViewer( UINT *args )
+{
+    return HandleToUlong( NtUserGetClipboardViewer() );
+}

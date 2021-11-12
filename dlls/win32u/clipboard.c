@@ -157,3 +157,20 @@ HWND WINAPI NtUserGetClipboardOwner(void)
     TRACE( "returning %p\n", owner );
     return owner;
 }
+
+/**************************************************************************
+ *           NtUserGetClipboardViewer    (win32u.@)
+ */
+HWND WINAPI NtUserGetClipboardViewer(void)
+{
+    HWND viewer = 0;
+
+    SERVER_START_REQ( get_clipboard_info )
+    {
+        if (!wine_server_call_err( req )) viewer = wine_server_ptr_handle( reply->viewer );
+    }
+    SERVER_END_REQ;
+
+    TRACE( "returning %p\n", viewer );
+    return viewer;
+}
