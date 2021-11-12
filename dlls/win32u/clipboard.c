@@ -53,3 +53,28 @@ INT WINAPI NtUserCountClipboardFormats(void)
     TRACE( "returning %d\n", count );
     return count;
 }
+
+/**************************************************************************
+ *	     NtUserGetClipboardFormatName    (win32u.@)
+ */
+INT WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen )
+{
+    char buf[sizeof(ATOM_BASIC_INFORMATION) + 255 * sizeof(WCHAR)];
+    ATOM_BASIC_INFORMATION *abi = (ATOM_BASIC_INFORMATION *)buf;
+    UINT length = 0;
+
+    if (format < MAXINTATOM || format > 0xffff) return 0;
+    if (maxlen <= 0)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return 0;
+    }
+    if (!set_ntstatus( NtQueryInformationAtom( format, AtomBasicInformation,
+                                               buf, sizeof(buf), NULL )))
+        return 0;
+
+    length = min( abi->NameLength / sizeof(WCHAR), maxlen - 1 );
+    if (length) memcpy( buffer, abi->Name, length * sizeof(WCHAR) );
+    buffer[length] = 0;
+    return length;
+}

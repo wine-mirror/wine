@@ -903,7 +903,7 @@
 @ stub NtUserGetClipCursor
 @ stub NtUserGetClipboardAccessToken
 @ stub NtUserGetClipboardData
-@ stub NtUserGetClipboardFormatName
+@ stdcall -syscall NtUserGetClipboardFormatName(long ptr long)
 @ stub NtUserGetClipboardOwner
 @ stub NtUserGetClipboardSequenceNumber
 @ stub NtUserGetClipboardViewer

@@ -232,6 +232,12 @@ extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
 
 extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
 
+static inline BOOL set_ntstatus( NTSTATUS status )
+{
+    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    return !status;
+}
+
 static inline WCHAR *win32u_wcsrchr( const WCHAR *str, WCHAR ch )
 {
     WCHAR *ret = NULL;

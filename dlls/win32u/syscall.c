@@ -105,6 +105,7 @@ static void * const syscalls[] =
     NtUserCloseWindowStation,
     NtUserCreateDesktopEx,
     NtUserCreateWindowStation,
+    NtUserGetClipboardFormatName,
     NtUserGetLayeredWindowAttributes,
     NtUserGetObjectInformation,
     NtUserGetProcessWindowStation,

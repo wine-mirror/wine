@@ -82,7 +82,7 @@ static const char *debugstr_format( UINT id )
 {
     WCHAR buffer[256];
     DWORD le = GetLastError();
-    BOOL r = GetClipboardFormatNameW( id, buffer, 256 );
+    BOOL r = NtUserGetClipboardFormatName( id, buffer, 256 );
     SetLastError(le);
 
     if (r)
@@ -655,16 +655,6 @@ UINT WINAPI RegisterClipboardFormatW( LPCWSTR name )
 UINT WINAPI RegisterClipboardFormatA( LPCSTR name )
 {
     return GlobalAddAtomA( name );
-}
-
-
-/**************************************************************************
- *		GetClipboardFormatNameW (USER32.@)
- */
-INT WINAPI GetClipboardFormatNameW( UINT format, LPWSTR buffer, INT maxlen )
-{
-    if (format < MAXINTATOM || format > 0xffff) return 0;
-    return GlobalGetAtomNameW( format, buffer, maxlen );
 }
 
 

@@ -276,7 +276,7 @@
 @ stdcall GetClipCursor(ptr)
 @ stdcall GetClipboardData(long)
 @ stdcall GetClipboardFormatNameA(long ptr long)
-@ stdcall GetClipboardFormatNameW(long ptr long)
+@ stdcall GetClipboardFormatNameW(long ptr long) NtUserGetClipboardFormatName
 @ stdcall GetClipboardOwner()
 @ stdcall GetClipboardSequenceNumber ()
 @ stdcall GetClipboardViewer()

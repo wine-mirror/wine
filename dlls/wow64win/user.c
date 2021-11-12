@@ -190,3 +190,12 @@ NTSTATUS WINAPI wow64_NtUserGetLayeredWindowAttributes( UINT *args )
 
     return NtUserGetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetClipboardFormatName( UINT *args )
+{
+    UINT format = get_ulong( &args );
+    WCHAR *buffer = get_ptr( &args );
+    INT maxlen = get_ulong( &args );
+
+    return NtUserGetClipboardFormatName( format, buffer, maxlen );
+}
