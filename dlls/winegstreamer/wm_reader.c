@@ -487,8 +487,27 @@ static HRESULT WINAPI stream_props_GetType(IWMMediaProps *iface, GUID *major_typ
 
 static HRESULT WINAPI stream_props_GetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *mt, DWORD *size)
 {
-    FIXME("iface %p, mt %p, size %p, stub!\n", iface, mt, size);
-    return E_NOTIMPL;
+    struct stream_config *config = impl_from_IWMMediaProps(iface);
+    const DWORD req_size = *size;
+    AM_MEDIA_TYPE stream_mt;
+
+    TRACE("iface %p, mt %p, size %p.\n", iface, mt, size);
+
+    if (!amt_from_wg_format(&stream_mt, &config->stream->format, true))
+        return E_OUTOFMEMORY;
+
+    *size = sizeof(stream_mt) + stream_mt.cbFormat;
+    if (!mt)
+        return S_OK;
+    if (req_size < *size)
+        return ASF_E_BUFFERTOOSMALL;
+
+    strmbase_dump_media_type(&stream_mt);
+
+    memcpy(mt, &stream_mt, sizeof(*mt));
+    memcpy(mt + 1, stream_mt.pbFormat, stream_mt.cbFormat);
+    mt->pbFormat = (BYTE *)(mt + 1);
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_props_SetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *mt)

@@ -1125,13 +1125,36 @@ static void check_audio_type(const WM_MEDIA_TYPE *mt)
     ok(wave_format->wFormatTag == WAVE_FORMAT_PCM, "Got tag %#x.\n", wave_format->wFormatTag);
 }
 
-static void test_stream_media_props(IWMStreamConfig *config)
+static void test_stream_media_props(IWMStreamConfig *config, const GUID *majortype)
 {
+    char mt_buffer[2000];
+    WM_MEDIA_TYPE *mt = (WM_MEDIA_TYPE *)mt_buffer;
     IWMMediaProps *props;
+    DWORD size, ret_size;
     HRESULT hr;
 
     hr = IWMStreamConfig_QueryInterface(config, &IID_IWMMediaProps, (void **)&props);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    size = 0xdeadbeef;
+    hr = IWMMediaProps_GetMediaType(props, NULL, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(size != 0xdeadbeef && size >= sizeof(WM_MEDIA_TYPE), "Got size %u.\n", size);
+
+    ret_size = size - 1;
+    hr = IWMMediaProps_GetMediaType(props, mt, &ret_size);
+    ok(hr == ASF_E_BUFFERTOOSMALL, "Got hr %#x.\n", hr);
+    ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+
+    ret_size = sizeof(mt_buffer);
+    memset(mt_buffer, 0xcc, sizeof(mt_buffer));
+    hr = IWMMediaProps_GetMediaType(props, mt, &ret_size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_size == size, "Expected size %u, got %u.\n", size, ret_size);
+    ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "Expected size %u, got %u.\n",
+            sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
+    ok(IsEqualGUID(&mt->majortype, majortype), "Expected major type %s, got %s.\n",
+            debugstr_guid(majortype), debugstr_guid(&mt->majortype));
 
     IWMMediaProps_Release(props);
 }
@@ -1188,7 +1211,7 @@ static void test_sync_reader_types(void)
         else
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
-        test_stream_media_props(config);
+        test_stream_media_props(config, &majortype);
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -2280,7 +2303,7 @@ static void test_async_reader_types(void)
         else
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
-        test_stream_media_props(config);
+        test_stream_media_props(config, &majortype);
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %d.\n", ref);
