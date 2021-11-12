@@ -188,7 +188,7 @@ struct hid_joystick_effect
     LONG directions[6];
     DICONSTANTFORCE constant_force;
     DIRAMPFORCE ramp_force;
-    DICONDITION condition[2];
+    DICONDITION condition[6];
     DIENVELOPE envelope;
     DIPERIODIC periodic;
     DIEFFECT params;
@@ -1878,6 +1878,9 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
                                          joystick->preparsed, impl->effect_update_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
 
+    impl->type_specific_buf[0][0] = 0;
+    impl->type_specific_buf[1][0] = 0;
+
     switch (type)
     {
     case PID_USAGE_ET_SQUARE:
@@ -1899,9 +1902,6 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_condition.id, joystick->preparsed,
                                              impl->type_specific_buf[0], report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
-        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_condition.id, joystick->preparsed,
-                                             impl->type_specific_buf[1], report_len );
-        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_CONSTANT_FORCE:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_constant_force.id, joystick->preparsed,
@@ -1921,8 +1921,6 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
         break;
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME( "effect type %#x not implemented!\n", type );
-        impl->type_specific_buf[0][0] = 0;
-        impl->type_specific_buf[1][0] = 0;
         break;
     }
 
@@ -2626,22 +2624,22 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_DAMPER:
         case PID_USAGE_ET_INERTIA:
         case PID_USAGE_ET_FRICTION:
-            for (i = 0; i < min( 2, impl->params.cbTypeSpecificParams / sizeof(DICONDITION) ); ++i)
+            for (i = 0; i < impl->params.cbTypeSpecificParams / sizeof(DICONDITION); ++i)
             {
-                set_parameter_value( impl, impl->type_specific_buf[i], set_condition->center_point_offset_caps,
+                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->center_point_offset_caps,
                                      impl->condition[i].lOffset );
-                set_parameter_value( impl, impl->type_specific_buf[i], set_condition->positive_coefficient_caps,
+                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->positive_coefficient_caps,
                                      impl->condition[i].lPositiveCoefficient );
-                set_parameter_value( impl, impl->type_specific_buf[i], set_condition->negative_coefficient_caps,
+                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->negative_coefficient_caps,
                                      impl->condition[i].lNegativeCoefficient );
-                set_parameter_value( impl, impl->type_specific_buf[i], set_condition->positive_saturation_caps,
+                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->positive_saturation_caps,
                                      impl->condition[i].dwPositiveSaturation );
-                set_parameter_value( impl, impl->type_specific_buf[i], set_condition->negative_saturation_caps,
+                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->negative_saturation_caps,
                                      impl->condition[i].dwNegativeSaturation );
-                set_parameter_value( impl, impl->type_specific_buf[i], set_condition->dead_band_caps,
+                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->dead_band_caps,
                                      impl->condition[i].lDeadBand );
 
-                if (WriteFile( device, impl->type_specific_buf[i], report_len, NULL, NULL )) hr = DI_OK;
+                if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
                 else hr = DIERR_INPUTLOST;
             }
             break;
