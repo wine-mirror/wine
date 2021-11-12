@@ -2698,24 +2698,21 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         set_parameter_value_us( impl, impl->effect_update_buf, effect_update->trigger_repeat_interval_caps,
                                 impl->params.dwTriggerRepeatInterval );
 
-        if (impl->flags & DIEP_DIRECTION)
+        count = 1;
+        usage = PID_USAGE_DIRECTION_ENABLE;
+        status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, 0, &usage, &count,
+                                 impl->joystick->preparsed, impl->effect_update_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsages returned %#x\n", status );
+
+        spherical.rglDirection = directions;
+        convert_directions_to_spherical( &impl->params, &spherical );
+
+        if (!effect_update->direction_count) WARN( "no PID effect direction caps found\n" );
+        else for (i = 0; i < spherical.cAxes - 1; ++i)
         {
-            count = 1;
-            usage = PID_USAGE_DIRECTION_ENABLE;
-            status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, 0, &usage, &count,
-                                     impl->joystick->preparsed, impl->effect_update_buf, report_len );
-            if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsages returned %#x\n", status );
-
-            spherical.rglDirection = directions;
-            convert_directions_to_spherical( &impl->params, &spherical );
-
-            if (!effect_update->direction_count) WARN( "no PID effect direction caps found\n" );
-            else for (i = 0; i < spherical.cAxes - 1; ++i)
-            {
-                tmp = directions[i] + (i == 0 ? 9000 : 0);
-                caps = effect_update->direction_caps[effect_update->direction_count - i - 1];
-                set_parameter_value( impl, impl->effect_update_buf, caps, tmp % 36000 );
-            }
+            tmp = directions[i] + (i == 0 ? 9000 : 0);
+            caps = effect_update->direction_caps[effect_update->direction_count - i - 1];
+            set_parameter_value( impl, impl->effect_update_buf, caps, tmp % 36000 );
         }
 
         status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_TRIGGER_BUTTON,
