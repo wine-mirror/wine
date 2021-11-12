@@ -292,6 +292,7 @@ static const INSSBufferVtbl buffer_vtbl =
 struct stream_config
 {
     IWMStreamConfig IWMStreamConfig_iface;
+    IWMMediaProps IWMMediaProps_iface;
     LONG refcount;
 
     const struct wm_stream *stream;
@@ -310,6 +311,8 @@ static HRESULT WINAPI stream_config_QueryInterface(IWMStreamConfig *iface, REFII
 
     if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IWMStreamConfig))
         *out = &config->IWMStreamConfig_iface;
+    else if (IsEqualGUID(iid, &IID_IWMMediaProps))
+        *out = &config->IWMMediaProps_iface;
     else
     {
         *out = NULL;
@@ -451,6 +454,57 @@ static const IWMStreamConfigVtbl stream_config_vtbl =
     stream_config_SetBitrate,
     stream_config_GetBufferWindow,
     stream_config_SetBufferWindow,
+};
+
+static struct stream_config *impl_from_IWMMediaProps(IWMMediaProps *iface)
+{
+    return CONTAINING_RECORD(iface, struct stream_config, IWMMediaProps_iface);
+}
+
+static HRESULT WINAPI stream_props_QueryInterface(IWMMediaProps *iface, REFIID iid, void **out)
+{
+    struct stream_config *config = impl_from_IWMMediaProps(iface);
+    return IWMStreamConfig_QueryInterface(&config->IWMStreamConfig_iface, iid, out);
+}
+
+static ULONG WINAPI stream_props_AddRef(IWMMediaProps *iface)
+{
+    struct stream_config *config = impl_from_IWMMediaProps(iface);
+    return IWMStreamConfig_AddRef(&config->IWMStreamConfig_iface);
+}
+
+static ULONG WINAPI stream_props_Release(IWMMediaProps *iface)
+{
+    struct stream_config *config = impl_from_IWMMediaProps(iface);
+    return IWMStreamConfig_Release(&config->IWMStreamConfig_iface);
+}
+
+static HRESULT WINAPI stream_props_GetType(IWMMediaProps *iface, GUID *major_type)
+{
+    FIXME("iface %p, major_type %p, stub!\n", iface, major_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_props_GetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *mt, DWORD *size)
+{
+    FIXME("iface %p, mt %p, size %p, stub!\n", iface, mt, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_props_SetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *mt)
+{
+    FIXME("iface %p, mt %p, stub!\n", iface, mt);
+    return E_NOTIMPL;
+}
+
+static const IWMMediaPropsVtbl stream_props_vtbl =
+{
+    stream_props_QueryInterface,
+    stream_props_AddRef,
+    stream_props_Release,
+    stream_props_GetType,
+    stream_props_GetMediaType,
+    stream_props_SetMediaType,
 };
 
 static DWORD CALLBACK read_thread(void *arg)
@@ -687,6 +741,7 @@ static HRESULT WINAPI profile_GetStream(IWMProfile3 *iface, DWORD index, IWMStre
     }
 
     object->IWMStreamConfig_iface.lpVtbl = &stream_config_vtbl;
+    object->IWMMediaProps_iface.lpVtbl = &stream_props_vtbl;
     object->refcount = 1;
     object->stream = &reader->streams[index];
     IWMProfile3_AddRef(&reader->IWMProfile3_iface);
