@@ -741,8 +741,6 @@ void dinput_device_destroy( IDirectInputDevice8W *iface )
     TRACE( "iface %p.\n", iface );
 
     IDirectInputDevice_Unacquire(iface);
-    /* Reset the FF state, free all effects, etc */
-    IDirectInputDevice8_SendForceFeedbackCommand(iface, DISFFC_RESET);
 
     free( This->data_queue );
 
