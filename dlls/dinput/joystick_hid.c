@@ -1239,8 +1239,8 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
     if (caps->UsagePage != HID_USAGE_PAGE_GENERIC) goto failed;
     if (caps->Usage != HID_USAGE_GENERIC_GAMEPAD && caps->Usage != HID_USAGE_GENERIC_JOYSTICK) goto failed;
 
-    if (!HidD_GetProductString( device_file, instance->tszInstanceName, MAX_PATH )) goto failed;
-    if (!HidD_GetProductString( device_file, instance->tszProductName, MAX_PATH )) goto failed;
+    if (!HidD_GetProductString( device_file, instance->tszInstanceName, MAX_PATH * sizeof(WCHAR) )) goto failed;
+    if (!HidD_GetProductString( device_file, instance->tszProductName, MAX_PATH * sizeof(WCHAR) )) goto failed;
 
     instance->guidInstance = hid_joystick_guid;
     instance->guidInstance.Data1 ^= handle;
