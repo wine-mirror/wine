@@ -278,31 +278,19 @@ static inline const GUID *effect_usage_to_guid( USAGE usage )
 
 static const WCHAR *effect_guid_to_string( const GUID *guid )
 {
-    static const WCHAR guid_customforce_w[] = {'G','U','I','D','_','C','u','s','t','o','m','F','o','r','c','e',0};
-    static const WCHAR guid_constantforce_w[] = {'G','U','I','D','_','C','o','n','s','t','a','n','t','F','o','r','c','e',0};
-    static const WCHAR guid_rampforce_w[] = {'G','U','I','D','_','R','a','m','p','F','o','r','c','e',0};
-    static const WCHAR guid_square_w[] = {'G','U','I','D','_','S','q','u','a','r','e',0};
-    static const WCHAR guid_sine_w[] = {'G','U','I','D','_','S','i','n','e',0};
-    static const WCHAR guid_triangle_w[] = {'G','U','I','D','_','T','r','i','a','n','g','l','e',0};
-    static const WCHAR guid_sawtoothup_w[] = {'G','U','I','D','_','S','a','w','t','o','o','t','h','U','p',0};
-    static const WCHAR guid_sawtoothdown_w[] = {'G','U','I','D','_','S','a','w','t','o','o','t','h','D','o','w','n',0};
-    static const WCHAR guid_spring_w[] = {'G','U','I','D','_','S','p','r','i','n','g',0};
-    static const WCHAR guid_damper_w[] = {'G','U','I','D','_','D','a','m','p','e','r',0};
-    static const WCHAR guid_inertia_w[] = {'G','U','I','D','_','I','n','e','r','t','i','a',0};
-    static const WCHAR guid_friction_w[] = {'G','U','I','D','_','F','r','i','c','t','i','o','n',0};
-    if (IsEqualGUID( guid, &GUID_CustomForce )) return guid_customforce_w;
-    if (IsEqualGUID( guid, &GUID_ConstantForce )) return guid_constantforce_w;
-    if (IsEqualGUID( guid, &GUID_RampForce )) return guid_rampforce_w;
-    if (IsEqualGUID( guid, &GUID_Square )) return guid_square_w;
-    if (IsEqualGUID( guid, &GUID_Sine )) return guid_sine_w;
-    if (IsEqualGUID( guid, &GUID_Triangle )) return guid_triangle_w;
-    if (IsEqualGUID( guid, &GUID_SawtoothUp )) return guid_sawtoothup_w;
-    if (IsEqualGUID( guid, &GUID_SawtoothDown )) return guid_sawtoothdown_w;
-    if (IsEqualGUID( guid, &GUID_Spring )) return guid_spring_w;
-    if (IsEqualGUID( guid, &GUID_Damper )) return guid_damper_w;
-    if (IsEqualGUID( guid, &GUID_Inertia )) return guid_inertia_w;
-    if (IsEqualGUID( guid, &GUID_Friction )) return guid_friction_w;
-    return NULL;
+    if (IsEqualGUID( guid, &GUID_CustomForce )) return L"GUID_CustomForce";
+    if (IsEqualGUID( guid, &GUID_ConstantForce )) return L"GUID_ConstantForce";
+    if (IsEqualGUID( guid, &GUID_RampForce )) return L"GUID_RampForce";
+    if (IsEqualGUID( guid, &GUID_Square )) return L"GUID_Square";
+    if (IsEqualGUID( guid, &GUID_Sine )) return L"GUID_Sine";
+    if (IsEqualGUID( guid, &GUID_Triangle )) return L"GUID_Triangle";
+    if (IsEqualGUID( guid, &GUID_SawtoothUp )) return L"GUID_SawtoothUp";
+    if (IsEqualGUID( guid, &GUID_SawtoothDown )) return L"GUID_SawtoothDown";
+    if (IsEqualGUID( guid, &GUID_Spring )) return L"GUID_Spring";
+    if (IsEqualGUID( guid, &GUID_Damper )) return L"GUID_Damper";
+    if (IsEqualGUID( guid, &GUID_Inertia )) return L"GUID_Inertia";
+    if (IsEqualGUID( guid, &GUID_Friction )) return L"GUID_Friction";
+    return L"GUID_Unknown";
 }
 
 static HRESULT find_next_effect_id( struct hid_joystick *impl, ULONG *index )
