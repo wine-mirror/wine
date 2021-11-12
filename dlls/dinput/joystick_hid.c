@@ -52,25 +52,6 @@ DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x4
 DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
 DEFINE_DEVPROPKEY( DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2 );
 
-static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
-{
-    if (!caps) return "(null)";
-    return wine_dbg_sprintf( "RId %d, Usg %02x:%02x-%02x Dat %02x-%02x, Str %d-%d, Des %d-%d, "
-                             "Bits %02x Flags %#x, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
-                             caps->report_id, caps->usage_page, caps->usage_min, caps->usage_max, caps->data_index_min, caps->data_index_max,
-                             caps->string_min, caps->string_max, caps->designator_min, caps->designator_max, caps->bit_field, caps->flags,
-                             caps->link_collection, caps->link_usage_page, caps->link_usage, caps->bit_size, caps->report_count,
-                             caps->units, caps->units_exp, caps->logical_min, caps->logical_max, caps->physical_min, caps->physical_max );
-}
-
-static inline const char *debugstr_hid_collection_node( struct hid_collection_node *node )
-{
-    if (!node) return "(null)";
-    return wine_dbg_sprintf( "Usg %02x:%02x, Parent %u, Next %u, NbChild %u, Child %u, Type %02x",
-                             node->usage_page, node->usage, node->parent, node->next_sibling,
-                             node->number_of_children, node->first_child, node->collection_type );
-}
-
 struct extra_caps
 {
     LONG bit_size;
@@ -418,15 +399,11 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
 
         if (caps->usage_page == HID_USAGE_PAGE_PID)
         {
-            TRACE( "Ignoring input caps %s, PID specific.\n", debugstr_hid_value_caps( caps ) );
             value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
             object += caps->usage_max - caps->usage_min + 1;
         }
         else if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-        {
-            TRACE( "Ignoring input value %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
             value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
-        }
         else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
             instance.dwOfs = value_ofs;
@@ -498,15 +475,11 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
 
         if (caps->usage_page == HID_USAGE_PAGE_PID)
         {
-            TRACE( "Ignoring input caps %s, PID specific.\n", debugstr_hid_value_caps( caps ) );
             button_ofs += caps->usage_max - caps->usage_min + 1;
             object += caps->usage_max - caps->usage_min + 1;
         }
         else if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-        {
-            TRACE( "Ignoring input button %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
             button_ofs += caps->usage_max - caps->usage_min + 1;
-        }
         else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
             instance.dwOfs = button_ofs;
@@ -538,7 +511,6 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
 
         if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
         {
-            TRACE( "Ignoring output caps %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
             if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) button_ofs += caps->usage_max - caps->usage_min + 1;
             else value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
         }
@@ -593,9 +565,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
          node != node_end; ++node)
     {
         if (!node->usage_page) continue;
-        if (node->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-            TRACE( "Ignoring collection %s, vendor specific.\n", debugstr_hid_collection_node( node ) );
-        else
+        if (node->usage_page < HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
         {
             instance.dwOfs = 0;
             instance.dwType = DIDFT_COLLECTION | DIDFT_MAKEINSTANCE( collection++ ) | DIDFT_NODATA;
@@ -877,7 +847,7 @@ static HRESULT hid_joystick_get_effect_info( IDirectInputDevice8W *iface, DIEFFE
                                              usage, &button, &count, preparsed );
         if (status != HIDP_STATUS_SUCCESS)
         {
-            WARN( "HidP_GetSpecificValueCaps %#x returned %#x\n", usage, status );
+            WARN( "HidP_GetSpecificButtonCaps %#x returned %#x\n", usage, status );
             return DIERR_DEVICENOTREG;
         }
         else if (!count)
