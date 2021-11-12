@@ -88,6 +88,7 @@
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
+    SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
@@ -104,6 +105,7 @@
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \
     SYSCALL_ENTRY( NtUserOpenWindowStation ) \
+    SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserRemoveProp ) \
     SYSCALL_ENTRY( NtUserSetObjectInformation ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \

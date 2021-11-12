@@ -23,6 +23,7 @@
 #include <wingdi.h>
 #include <winternl.h>
 
+BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
 INT     WINAPI NtUserCountClipboardFormats(void);
@@ -47,6 +48,7 @@ HWINSTA WINAPI NtUserOpenWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK acc
 BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );
 HDESK   WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MASK access );
 HDESK   WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access );
+BOOL    WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd );
 HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );

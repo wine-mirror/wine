@@ -996,36 +996,3 @@ INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
 
     return -1;
 }
-
-
-/**************************************************************************
- *		AddClipboardFormatListener (USER32.@)
- */
-BOOL WINAPI AddClipboardFormatListener(HWND hwnd)
-{
-    BOOL ret;
-
-    SERVER_START_REQ( add_clipboard_listener )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/**************************************************************************
- *		RemoveClipboardFormatListener (USER32.@)
- */
-BOOL WINAPI RemoveClipboardFormatListener(HWND hwnd)
-{
-    BOOL ret;
-
-    SERVER_START_REQ( remove_clipboard_listener )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}

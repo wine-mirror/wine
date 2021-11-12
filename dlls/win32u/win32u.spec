@@ -750,7 +750,7 @@
 @ stub NtUserAcquireIAMKey
 @ stub NtUserAcquireInteractiveControlBackgroundAccess
 @ stub NtUserActivateKeyboardLayout
-@ stub NtUserAddClipboardFormatListener
+@ stdcall -syscall NtUserAddClipboardFormatListener(long)
 @ stub NtUserAddVisualIdentifier
 @ stub NtUserAlterWindowStyle
 @ stub NtUserAssociateInputContext
@@ -1145,7 +1145,7 @@
 @ stub NtUserRemoteRedrawRectangle
 @ stub NtUserRemoteRedrawScreen
 @ stub NtUserRemoteStopScreenUpdates
-@ stub NtUserRemoveClipboardFormatListener
+@ stdcall -syscall NtUserRemoveClipboardFormatListener(long)
 @ stub NtUserRemoveInjectionDevice
 @ stub NtUserRemoveMenu
 @ stdcall -syscall NtUserRemoveProp(long wstr)

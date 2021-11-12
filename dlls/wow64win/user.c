@@ -214,3 +214,17 @@ NTSTATUS WINAPI wow64_NtUserGetClipboardViewer( UINT *args )
 {
     return HandleToUlong( NtUserGetClipboardViewer() );
 }
+
+NTSTATUS WINAPI wow64_NtUserAddClipboardFormatListener( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserAddClipboardFormatListener( hwnd );
+}
+
+NTSTATUS WINAPI wow64_NtUserRemoveClipboardFormatListener( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserRemoveClipboardFormatListener( hwnd );
+}

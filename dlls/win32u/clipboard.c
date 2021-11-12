@@ -219,3 +219,35 @@ DWORD WINAPI NtUserGetClipboardSequenceNumber(void)
     TRACE( "returning %u\n", seqno );
     return seqno;
 }
+
+/**************************************************************************
+ *	     NtUserAddClipboardFormatListener    (win32u.@)
+ */
+BOOL WINAPI NtUserAddClipboardFormatListener( HWND hwnd )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( add_clipboard_listener )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/**************************************************************************
+ *	     NtUserRemoveClipboardFormatListener    (win32u.@)
+ */
+BOOL WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( remove_clipboard_listener )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
