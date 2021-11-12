@@ -1537,6 +1537,7 @@ static HRESULT WINAPI dinput_device_Poll( IDirectInputDevice8W *iface )
     EnterCriticalSection( &impl->crit );
     if (!impl->acquired) hr = DIERR_NOTACQUIRED;
     LeaveCriticalSection( &impl->crit );
+    if (FAILED(hr)) return hr;
 
     if (impl->vtbl->poll) return impl->vtbl->poll( iface );
     return hr;
