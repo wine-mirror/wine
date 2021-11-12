@@ -1390,7 +1390,9 @@ struct callback
     unsigned int got_closed, got_started, got_sample, got_end_of_streaming, got_eof;
     bool all_streams_off;
     bool allocated_samples;
+
     bool read_compressed;
+    DWORD max_stream_sample_size[2];
 };
 
 static struct callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
@@ -1661,6 +1663,7 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
         WORD stream_number, DWORD size, INSSBuffer **sample, void *context)
 {
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    DWORD max_size = callback->max_stream_sample_size[stream_number - 1];
     struct buffer *object;
 
     if (winetest_debug > 1)
@@ -1669,6 +1672,8 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
 
     ok(callback->read_compressed, "AllocateForStream() should only be called when reading compressed samples.\n");
     ok(callback->allocated_samples, "AllocateForStream() should only be called when using a custom allocator.\n");
+
+    ok(size <= max_size, "Got size %u, max stream sample size %u.\n", size, max_size);
 
     if (!(object = malloc(offsetof(struct buffer, data[size]))))
         return E_OUTOFMEMORY;
@@ -2016,12 +2021,21 @@ static void test_async_reader_compressed(IWMReader *reader,
 {
     HRESULT hr;
 
+    hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 0, &callback->max_stream_sample_size[0]);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 3, &callback->max_stream_sample_size[0]);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 1, &callback->max_stream_sample_size[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(callback->max_stream_sample_size[0] > 0, "Expected nonzero size.\n");
+    hr = IWMReaderAdvanced2_GetMaxStreamSampleSize(advanced, 2, &callback->max_stream_sample_size[1]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(callback->max_stream_sample_size[1] > 0, "Expected nonzero size.\n");
+
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 0, TRUE);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 3, TRUE);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, TRUE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);

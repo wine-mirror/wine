@@ -1994,6 +1994,24 @@ HRESULT wm_reader_set_read_compressed(struct wm_reader *reader, WORD stream_numb
     return S_OK;
 }
 
+HRESULT wm_reader_get_max_stream_size(struct wm_reader *reader, WORD stream_number, DWORD *size)
+{
+    struct wm_stream *stream;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = wm_reader_get_stream_by_stream_number(reader, stream_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    *size = wg_format_get_max_size(&stream->format);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
+}
+
 void wm_reader_init(struct wm_reader *reader, const struct wm_reader_ops *ops)
 {
     reader->IWMHeaderInfo3_iface.lpVtbl = &header_info_vtbl;
