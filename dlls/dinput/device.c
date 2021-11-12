@@ -740,8 +740,6 @@ void dinput_device_destroy( IDirectInputDevice8W *iface )
 
     TRACE( "iface %p.\n", iface );
 
-    IDirectInputDevice_Unacquire(iface);
-
     free( This->data_queue );
 
     /* Free data format */
@@ -768,6 +766,7 @@ static ULONG WINAPI dinput_device_Release( IDirectInputDevice8W *iface )
 
     if (!ref)
     {
+        IDirectInputDevice_Unacquire( iface );
         if (impl->vtbl->release) impl->vtbl->release( iface );
         else dinput_device_destroy( iface );
     }
