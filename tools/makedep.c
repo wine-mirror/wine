@@ -81,6 +81,7 @@ struct incl_file
     unsigned int       files_size;    /* total allocated size */
     struct incl_file **files;
     struct strarray    dependencies;  /* file dependencies */
+    struct strarray    importlibdeps; /* importlib dependencies */
 };
 
 #define FLAG_GENERATED      0x000001  /* generated file */
@@ -1282,6 +1283,24 @@ static struct file *open_src_file( const struct makefile *make, struct incl_file
 
 
 /*******************************************************************
+ *         find_importlib_module
+ */
+static struct makefile *find_importlib_module( const char *name )
+{
+    unsigned int i, len;
+
+    for (i = 0; i < subdirs.count; i++)
+    {
+        if (strncmp( submakes[i]->obj_dir, "dlls/", 5 )) continue;
+        len = strlen(submakes[i]->obj_dir);
+        if (strncmp( submakes[i]->obj_dir + 5, name, len - 5 )) continue;
+        if (!name[len - 5] || !strcmp( name + len - 5, ".dll" )) return submakes[i];
+    }
+    return NULL;
+}
+
+
+/*******************************************************************
  *         open_include_file
  */
 static struct file *open_include_file( const struct makefile *make, struct incl_file *pFile )
@@ -1333,6 +1352,14 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     /* now try in source dir */
     if ((file = open_local_file( make, pFile->name, &pFile->filename ))) return file;
 
+    /* check for global importlib (module dependency) */
+
+    if (pFile->type == INCL_IMPORTLIB && find_importlib_module( pFile->name ))
+    {
+        pFile->filename = pFile->name;
+        return NULL;
+    }
+
     /* check for corresponding idl file in global includes */
 
     if (strendswith( pFile->name, ".h" ) &&
@@ -1357,16 +1384,6 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
 
     if (strendswith( pFile->name, "tmpl.h" ) &&
         (file = open_global_header( make, replace_extension( pFile->name, ".h", ".x" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = strmake( "include/%s", pFile->name );
-        return file;
-    }
-
-    /* check for corresponding .tlb file in global includes */
-
-    if (strendswith( pFile->name, ".tlb" ) &&
-        (file = open_global_header( make, replace_extension( pFile->name, ".tlb", ".idl" ), &filename )))
     {
         pFile->sourcename = filename;
         pFile->filename = strmake( "include/%s", pFile->name );
@@ -1907,11 +1924,14 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
     if (file != source)
     {
         if (file->owner == source) return;  /* already processed */
-        if (file->type == INCL_IMPORTLIB &&
-            !(source->file->flags & (FLAG_IDL_TYPELIB | FLAG_IDL_REGTYPELIB)))
-            return;  /* library is imported only when building a typelib */
+        if (file->type == INCL_IMPORTLIB)
+        {
+            if (!(source->file->flags & (FLAG_IDL_TYPELIB | FLAG_IDL_REGTYPELIB)))
+                return;  /* library is imported only when building a typelib */
+            strarray_add( &source->importlibdeps, file->filename );
+        }
+        else strarray_add( &source->dependencies, file->filename );
         file->owner = source;
-        strarray_add( &source->dependencies, file->filename );
 
         /* sanity checks */
         if (!strcmp( file->filename, "include/config.h" ) &&
@@ -2776,9 +2796,6 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
         if (source->file->flags & FLAG_IDL_HEADER)
             add_install_rule( make, source->name, strmake( "%s.h", obj ),
                               strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
-        if (source->file->flags & FLAG_IDL_TYPELIB)
-            add_install_rule( make, source->name, strmake( "%s.tlb", obj ),
-                              strmake( "d$(includedir)/wine/%s.tlb", get_include_install_path( obj ) ));
     }
     if (!targets.count) return;
 
@@ -2796,6 +2813,13 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     output_filenames_obj_dir( make, targets );
     output( ": %s", source->filename );
     output_filenames( source->dependencies );
+    for (i = 0; i < source->importlibdeps.count; i++)
+    {
+        struct makefile *submake = find_importlib_module( source->importlibdeps.str[i] );
+        const char *module = submake->module;
+        if (*dll_ext && !submake->is_cross) module = strmake( "%s.fake", module );
+        output_filename( obj_dir_path( submake, module ));
+    }
     output( "\n" );
 }
 
