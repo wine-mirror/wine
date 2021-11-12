@@ -24,3 +24,5 @@
 {
     MENUITEM "foo", 1
 }
+
+124 24 wine_test.manifest

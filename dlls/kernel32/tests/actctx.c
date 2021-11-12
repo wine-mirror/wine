@@ -694,7 +694,7 @@ static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo, int
         ok_(__FILE__, line)(detailed_info->lpRootManifestPath != NULL, "detailed_info->lpRootManifestPath == NULL\n");
         if(detailed_info->lpRootManifestPath)
             ok_(__FILE__, line)(!lstrcmpiW(detailed_info->lpRootManifestPath, exinfo->root_manifest_path),
-               "unexpected detailed_info->lpRootManifestPath\n");
+               "unexpected detailed_info->lpRootManifestPath %s\n", wine_dbgstr_w(detailed_info->lpRootManifestPath));
     }else {
         ok_(__FILE__, line)(detailed_info->lpRootManifestPath == NULL, "detailed_info->lpRootManifestPath != NULL\n");
     }
@@ -2683,7 +2683,8 @@ todo_wine
     SetLastError(0xdeadbeef);
     handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-    ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND, "got error %d\n", GetLastError());
+todo_wine
+    ok(GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND, "got error %d\n", GetLastError());
 
     /* load manifest from lpAssemblyDirectory directory */
     write_manifest("testdir.manifest", manifest1);
@@ -3548,6 +3549,32 @@ static void run_child_process_two_dll(int run)
     CloseHandle(pi.hProcess);
 }
 
+static const detailed_info_t detailed_info3 =
+{
+    1, 1, 1, ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE, exe_path,
+    ACTIVATION_CONTEXT_PATH_TYPE_NONE, ACTIVATION_CONTEXT_PATH_TYPE_WIN32_FILE,
+    app_dir,
+};
+
+static void test_manifest_in_module(void)
+{
+    ACTCTXW ctx;
+    HANDLE handle;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.cbSize = sizeof(ctx);
+    ctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    ctx.lpResourceName = (LPWSTR)124;
+    ctx.hModule = GetModuleHandleW(NULL);
+    handle = CreateActCtxW(&ctx);
+    ok(handle != 0, "CreateActCtx error %u\n", GetLastError());
+
+    test_basic_info(handle, __LINE__);
+    test_detailed_info(handle, &detailed_info3, __LINE__);
+
+    ReleaseActCtx(handle);
+}
+
 START_TEST(actctx)
 {
     int argc;
@@ -3574,6 +3601,7 @@ START_TEST(actctx)
         return;
     }
 
+    test_manifest_in_module();
     test_actctx();
     test_create_fail();
     test_CreateActCtx();
