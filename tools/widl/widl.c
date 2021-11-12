@@ -54,7 +54,7 @@ static const char usage[] =
 "   --help             Display this help and exit\n"
 "   -h                 Generate headers\n"
 "   -H file            Name of header file (default is infile.h)\n"
-"   -I path            Set include search dir to path (multiple -I allowed)\n"
+"   -I directory       Add directory to the include search path (multiple -I allowed)\n"
 "   --local-stubs=file Write empty stubs for call_as/local methods to file\n"
 "   -m32, -m64         Set the target architecture (Win32 or Win64)\n"
 "   -N                 Do not preprocess input\n"

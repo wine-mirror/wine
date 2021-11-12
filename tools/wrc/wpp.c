@@ -54,9 +54,9 @@ struct define
 };
 
 static struct list cmdline_defines = LIST_INIT( cmdline_defines );
+static struct strarray includes;
 
-static char *wpp_lookup(const char *name, int type, const char *parent_name,
-                        char **include_path, int include_path_count)
+static char *wpp_lookup(const char *name, int type, const char *parent_name)
 {
     char *cpy;
     char *cptr;
@@ -96,9 +96,9 @@ static char *wpp_lookup(const char *name, int type, const char *parent_name,
         free( path );
     }
     /* Search -I path */
-    for(i = 0; i < include_path_count; i++)
+    for(i = 0; i < includes.count; i++)
     {
-        path = strmake("%s/%s", include_path[i], cpy);
+        path = strmake("%s/%s", includes.str[i], cpy);
         fd = open( path, O_RDONLY );
         if (fd != -1)
         {
@@ -294,51 +294,26 @@ pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, mtext_t *exp)
  * Include management
  *-------------------------------------------------------------------------
  */
-#if defined(_WIN32) || defined(__MSDOS__)
-#define INCLUDESEPARATOR	";"
-#else
-#define INCLUDESEPARATOR	":"
-#endif
-
-static char **includepath;
-static int nincludepath = 0;
-
 void wpp_add_include_path(const char *path)
 {
-	char *tok;
-	char *cpy = xstrdup(path);
+	char *dir = xstrdup(path);
+	char *cptr;
 
-	tok = strtok(cpy, INCLUDESEPARATOR);
-	while(tok)
+	for(cptr = dir; *cptr; cptr++)
 	{
-		if(*tok) {
-			char *dir;
-			char *cptr;
-
-			dir = xstrdup(tok);
-			for(cptr = dir; *cptr; cptr++)
-			{
-				/* Convert to forward slash */
-				if(*cptr == '\\')
-					*cptr = '/';
-			}
-			/* Kill eventual trailing '/' */
-			if(*(cptr = dir + strlen(dir)-1) == '/')
-				*cptr = '\0';
-
-			/* Add to list */
-			includepath = xrealloc(includepath, (nincludepath+1) * sizeof(*includepath));
-			includepath[nincludepath] = dir;
-			nincludepath++;
-		}
-		tok = strtok(NULL, INCLUDESEPARATOR);
+		/* Convert to forward slash */
+		if(*cptr == '\\')
+			*cptr = '/';
 	}
-	free(cpy);
+	/* Kill eventual trailing '/' */
+	if(*(cptr = dir + strlen(dir)-1) == '/') *cptr = '\0';
+
+        strarray_add( &includes, dir );
 }
 
 char *wpp_find_include(const char *name, const char *parent_name)
 {
-    return wpp_lookup(name, !!parent_name, parent_name, includepath, nincludepath);
+    return wpp_lookup(name, !!parent_name, parent_name);
 }
 
 void *pp_open_include(const char *name, int type, const char *parent_name, char **newpath)
@@ -346,7 +321,7 @@ void *pp_open_include(const char *name, int type, const char *parent_name, char 
     char *path;
     void *fp;
 
-    if (!(path = wpp_lookup(name, type, parent_name, includepath, nincludepath))) return NULL;
+    if (!(path = wpp_lookup(name, type, parent_name))) return NULL;
     fp = fopen(path, "rt");
 
     if (fp)

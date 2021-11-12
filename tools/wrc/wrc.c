@@ -51,7 +51,7 @@ static const char usage[] =
 	"   -fo FILE                   Synonym for -o for compatibility with windres\n"
 	"   -h, --help                 Prints this summary\n"
 	"   -i, --input=FILE           The name of the input file\n"
-	"   -I, --include-dir=PATH     Set include search dir to path (multiple -I allowed)\n"
+	"   -I, --include-dir=DIR      Add dir to the include search path (multiple -I allowed)\n"
 	"   -J, --input-format=FORMAT  The input format (either `rc' or `rc16')\n"
 	"   -l, --language=LANG        Set default language to LANG (default is neutral {0, 0})\n"
 	"   -m16                       Build a 16-bit resource file\n"
