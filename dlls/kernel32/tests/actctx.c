@@ -2683,7 +2683,6 @@ todo_wine
     SetLastError(0xdeadbeef);
     handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-todo_wine
     ok(GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND, "got error %d\n", GetLastError());
 
     /* load manifest from lpAssemblyDirectory directory */
