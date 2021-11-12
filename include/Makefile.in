@@ -683,7 +683,6 @@ SOURCES = \
 	srcrst.idl \
 	srrestoreptapi.h \
 	sspi.h \
-	stdole2.idl \
 	stgprop.h \
 	sti.h \
 	storage.h \

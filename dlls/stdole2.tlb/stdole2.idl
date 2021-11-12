@@ -19,8 +19,7 @@
  */
 
 #if 0
-#pragma makedep install
-#pragma makedep typelib
+#pragma makedep regtypelib
 #endif
 
 #include <olectl.h>
