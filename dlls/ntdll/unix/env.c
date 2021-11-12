@@ -1281,6 +1281,35 @@ static void add_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *na
 }
 
 
+static void add_system_dll_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size )
+{
+    WCHAR *path = NULL;
+    size_t path_len = 0;
+    DWORD i;
+
+    for (i = 0; system_dll_paths[i]; ++i)
+    {
+        WCHAR *nt_name = NULL;
+
+        if (!unix_to_nt_file_name( system_dll_paths[i], &nt_name ))
+        {
+            size_t len = wcslen( nt_name );
+            path = realloc( path, (path_len + len + 1) * sizeof(WCHAR) );
+            memcpy( path + path_len, nt_name, len * sizeof(WCHAR) );
+            path[path_len + len] = ';';
+            path_len += len + 1;
+            free( nt_name );
+        }
+    }
+    if (path_len)
+    {
+        path[path_len - 1] = 0;
+        append_envW( env, pos, size, "WINESYSTEMDLLPATH", path );
+        free( path );
+    }
+}
+
+
 /*************************************************************************
  *		add_dynamic_environment
  *
@@ -1303,6 +1332,7 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     }
     sprintf( str, "WINEDLLDIR%u", i );
     append_envW( env, pos, size, str, NULL );
+    add_system_dll_path_var( env, pos, size );
     append_envA( env, pos, size, "WINEUSERNAME", user_name );
     append_envA( env, pos, size, "WINEDLLOVERRIDES", overrides );
     if (unix_cp.data)

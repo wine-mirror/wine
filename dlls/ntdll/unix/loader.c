@@ -388,6 +388,7 @@ const char *data_dir = NULL;
 const char *build_dir = NULL;
 const char *config_dir = NULL;
 const char **dll_paths = NULL;
+const char **system_dll_paths = NULL;
 const char *user_name = NULL;
 SECTION_IMAGE_INFORMATION main_image_info = { NULL };
 static HMODULE ntdll_module;
@@ -546,6 +547,27 @@ static void set_dll_path(void)
 }
 
 
+static void set_system_dll_path(void)
+{
+    const char *p, *path = SYSTEMDLLPATH;
+    int count = 0;
+
+    if (path && *path) for (p = path, count = 1; *p; p++) if (*p == ':') count++;
+
+    system_dll_paths = malloc( (count + 1) * sizeof(*system_dll_paths) );
+    count = 0;
+
+    if (path && *path)
+    {
+        char *path_copy = strdup(path);
+        for (p = strtok( path_copy, ":" ); p; p = strtok( NULL, ":" ))
+            system_dll_paths[count++] = strdup( p );
+        free( path_copy );
+    }
+    system_dll_paths[count] = NULL;
+}
+
+
 static void set_home_dir(void)
 {
     const char *home = getenv( "HOME" );
@@ -620,6 +642,7 @@ static void init_paths( char *argv[] )
     }
 
     set_dll_path();
+    set_system_dll_path();
     set_home_dir();
     set_config_dir();
 }

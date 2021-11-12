@@ -834,6 +834,7 @@ build_os
 build_vendor
 build_cpu
 build
+system_dllpath
 target_alias
 host_alias
 build_alias
@@ -931,6 +932,7 @@ with_xrender
 with_xshape
 with_xshm
 with_xxf86vm
+with_system_dllpath
 with_wine_tools
 with_wine64
 enable_largefile
@@ -2719,6 +2721,9 @@ Optional Packages:
   --without-xshape        do not use the Xshape extension
   --without-xshm          do not use XShm (shared memory extension)
   --without-xxf86vm       do not use XFree video mode extension
+  --with-system-dllpath=PATH
+                          load external PE dependencies from colon-separated
+                          path PATH
   --with-wine-tools=DIR   use Wine tools from directory DIR
   --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
   --with-x                use the X Window System
@@ -4763,6 +4768,14 @@ then :
   withval=$with_xxf86vm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi
 fi
 
+
+
+# Check whether --with-system-dllpath was given.
+if test ${with_system_dllpath+y}
+then :
+  withval=$with_system_dllpath; system_dllpath=$withval
+
+fi
 
 
 # Check whether --with-wine-tools was given.
@@ -23020,6 +23033,7 @@ LIBS = $LIBS
 build_alias = $build_alias
 host_alias = $host_alias
 target_alias = $target_alias
+system_dllpath = $system_dllpath
 build = $build
 build_cpu = $build_cpu
 build_vendor = $build_vendor

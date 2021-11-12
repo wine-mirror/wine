@@ -72,5 +72,6 @@ EXTRA_OBJS = unix/version.o
 
 unix_loader_EXTRADEFS = \
 	-DBINDIR=\"${bindir}\" \
+	-DSYSTEMDLLPATH=\"${system_dllpath}\" \
 	-DDLL_TO_BINDIR=\"`${MAKEDEP} -R ${dlldir} ${bindir}`\" \
 	-DBIN_TO_DATADIR=\"`${MAKEDEP} -R ${bindir} ${datadir}/wine`\"

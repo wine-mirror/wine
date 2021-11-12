@@ -95,6 +95,7 @@ static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
 static ULONG path_safe_mode;  /* path mode set by RtlSetSearchPathMode */
 static ULONG dll_safe_mode = 1;  /* dll search mode */
 static UNICODE_STRING dll_directory;  /* extra path for LdrSetDllDirectory */
+static UNICODE_STRING system_dll_path; /* path to search for system dependency dlls */
 static DWORD default_search_flags;  /* default flags set by LdrSetDefaultDllDirectories */
 static WCHAR *default_load_path;    /* default dll search path */
 
@@ -3992,6 +3993,8 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         init_user_process_params();
         load_global_options();
         version_init();
+
+        get_env_var( L"WINESYSTEMDLLPATH", 0, &system_dll_path );
 
         wm = build_main_module();
         wm->ldr.LoadCount = -1;

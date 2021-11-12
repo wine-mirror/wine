@@ -113,6 +113,7 @@ extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
 extern const char *user_name DECLSPEC_HIDDEN;
 extern const char **dll_paths DECLSPEC_HIDDEN;
+extern const char **system_dll_paths DECLSPEC_HIDDEN;
 extern PEB *peb DECLSPEC_HIDDEN;
 extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;
