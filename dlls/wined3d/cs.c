@@ -64,6 +64,9 @@ struct wined3d_command_list
 
     SIZE_T query_count;
     struct wined3d_deferred_query_issue *queries;
+
+    SIZE_T blend_state_count;
+    struct wined3d_blend_state **blend_states;
 };
 
 static void wined3d_command_list_destroy_object(void *object)
@@ -107,6 +110,8 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
             wined3d_resource_decref(list->uploads[i].resource);
         for (i = 0; i < list->query_count; ++i)
             wined3d_query_decref(list->queries[i].query);
+        for (i = 0; i < list->blend_state_count; ++i)
+            wined3d_blend_state_decref(list->blend_states[i]);
 
         wined3d_mutex_lock();
         wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
@@ -587,6 +592,12 @@ static inline void wined3d_device_context_acquire_resource(struct wined3d_device
         struct wined3d_resource *resource)
 {
     context->ops->acquire_resource(context, resource);
+}
+
+static inline void wined3d_device_context_acquire_blend_state(struct wined3d_device_context *context,
+        struct wined3d_blend_state *blend_state)
+{
+    context->ops->acquire_blend_state(context, blend_state);
 }
 
 static struct wined3d_cs *wined3d_cs_from_context(struct wined3d_device_context *context)
@@ -1831,6 +1842,8 @@ void wined3d_device_context_emit_set_blend_state(struct wined3d_device_context *
     op->factor = *blend_factor;
     op->sample_mask = sample_mask;
 
+    if (state)
+        wined3d_device_context_acquire_blend_state(context, state);
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
@@ -2957,6 +2970,11 @@ static void wined3d_cs_acquire_resource(struct wined3d_device_context *context, 
     wined3d_resource_acquire(resource);
 }
 
+static void wined3d_cs_acquire_blend_state(struct wined3d_device_context *context,
+        struct wined3d_blend_state *blend_state)
+{
+}
+
 static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const void *data);
 
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
@@ -3196,6 +3214,7 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
     wined3d_cs_acquire_command_list,
+    wined3d_cs_acquire_blend_state,
 };
 
 static BOOL wined3d_cs_queue_is_empty(const struct wined3d_cs *cs, const struct wined3d_cs_queue *queue)
@@ -3323,6 +3342,7 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
     wined3d_cs_acquire_command_list,
+    wined3d_cs_acquire_blend_state,
 };
 
 static void poll_queries(struct wined3d_cs *cs)
@@ -3549,6 +3569,9 @@ struct wined3d_deferred_context
 
     SIZE_T query_count, queries_capacity;
     struct wined3d_deferred_query_issue *queries;
+
+    SIZE_T blend_state_count, blend_states_capacity;
+    struct wined3d_blend_state **blend_states;
 };
 
 static struct wined3d_deferred_context *wined3d_deferred_context_from_context(struct wined3d_device_context *context)
@@ -3747,6 +3770,18 @@ static void wined3d_deferred_context_acquire_command_list(struct wined3d_device_
     wined3d_command_list_incref(deferred->command_lists[deferred->command_list_count++] = list);
 }
 
+static void wined3d_deferred_context_acquire_blend_state(struct wined3d_device_context *context,
+        struct wined3d_blend_state *blend_state)
+{
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    if (!wined3d_array_reserve((void **)&deferred->blend_states, &deferred->blend_states_capacity,
+            deferred->blend_state_count + 1, sizeof(*deferred->blend_states)))
+        return;
+
+    deferred->blend_states[deferred->blend_state_count++] = blend_state;
+    wined3d_blend_state_incref(blend_state);
+}
+
 static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
 {
     wined3d_deferred_context_require_space,
@@ -3759,6 +3794,7 @@ static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
     wined3d_deferred_context_flush,
     wined3d_deferred_context_acquire_resource,
     wined3d_deferred_context_acquire_command_list,
+    wined3d_deferred_context_acquire_blend_state,
 };
 
 HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context)
@@ -3816,6 +3852,10 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
         wined3d_query_decref(deferred->queries[i].query);
     heap_free(deferred->queries);
 
+    for (i = 0; i < deferred->blend_state_count; ++i)
+        wined3d_blend_state_decref(deferred->blend_states[i]);
+    heap_free(deferred->blend_states);
+
     wined3d_state_destroy(deferred->c.state);
     heap_free(deferred->data);
     heap_free(deferred);
@@ -3835,6 +3875,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
             + deferred->upload_count * sizeof(*object->uploads)
             + deferred->command_list_count * sizeof(*object->command_lists)
             + deferred->query_count * sizeof(*object->queries)
+            + deferred->blend_state_count * sizeof(*object->blend_states)
             + deferred->data_size);
 
     if (!memory)
@@ -3874,6 +3915,12 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     memcpy(object->queries, deferred->queries, deferred->query_count * sizeof(*object->queries));
     /* Transfer our references to the queries to the command list. */
 
+    object->blend_states = memory;
+    memory = &object->blend_states[deferred->blend_state_count];
+    object->blend_state_count = deferred->blend_state_count;
+    memcpy(object->blend_states, deferred->blend_states, deferred->blend_state_count * sizeof(*object->blend_states));
+    /* Transfer our references to the blend states to the command list. */
+
     object->data = memory;
     object->data_size = deferred->data_size;
     memcpy(object->data, deferred->data, deferred->data_size);
@@ -3883,6 +3930,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     deferred->upload_count = 0;
     deferred->command_list_count = 0;
     deferred->query_count = 0;
+    deferred->blend_state_count = 0;
 
     /* This is in fact recorded into a subsequent command list. */
     if (restore)
