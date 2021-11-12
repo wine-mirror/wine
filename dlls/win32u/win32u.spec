@@ -905,7 +905,7 @@
 @ stub NtUserGetClipboardData
 @ stdcall -syscall NtUserGetClipboardFormatName(long ptr long)
 @ stdcall -syscall NtUserGetClipboardOwner()
-@ stub NtUserGetClipboardSequenceNumber
+@ stdcall -syscall NtUserGetClipboardSequenceNumber()
 @ stdcall -syscall NtUserGetClipboardViewer()
 @ stub NtUserGetComboBoxInfo
 @ stub NtUserGetControlBrush

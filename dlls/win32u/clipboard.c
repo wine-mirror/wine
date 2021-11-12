@@ -202,3 +202,20 @@ HWND WINAPI NtUserGetClipboardViewer(void)
     TRACE( "returning %p\n", viewer );
     return viewer;
 }
+
+/**************************************************************************
+ *	     NtUserGetClipboardSequenceNumber    (win32u.@)
+ */
+DWORD WINAPI NtUserGetClipboardSequenceNumber(void)
+{
+    DWORD seqno = 0;
+
+    SERVER_START_REQ( get_clipboard_info )
+    {
+        if (!wine_server_call_err( req )) seqno = reply->seqno;
+    }
+    SERVER_END_REQ;
+
+    TRACE( "returning %u\n", seqno );
+    return seqno;
+}

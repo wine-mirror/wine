@@ -278,7 +278,7 @@
 @ stdcall GetClipboardFormatNameA(long ptr long)
 @ stdcall GetClipboardFormatNameW(long ptr long) NtUserGetClipboardFormatName
 @ stdcall GetClipboardOwner() NtUserGetClipboardOwner
-@ stdcall GetClipboardSequenceNumber ()
+@ stdcall GetClipboardSequenceNumber() NtUserGetClipboardSequenceNumber
 @ stdcall GetClipboardViewer() NtUserGetClipboardViewer
 @ stdcall GetComboBoxInfo(long ptr)
 @ stdcall GetCurrentInputMessageSource(ptr)

@@ -999,23 +999,6 @@ INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
 
 
 /**************************************************************************
- *		GetClipboardSequenceNumber (USER32.@)
- */
-DWORD WINAPI GetClipboardSequenceNumber(VOID)
-{
-    DWORD seqno = 0;
-
-    SERVER_START_REQ( get_clipboard_info )
-    {
-        if (!wine_server_call_err( req )) seqno = reply->seqno;
-    }
-    SERVER_END_REQ;
-
-    TRACE( "returning %u\n", seqno );
-    return seqno;
-}
-
-/**************************************************************************
  *		AddClipboardFormatListener (USER32.@)
  */
 BOOL WINAPI AddClipboardFormatListener(HWND hwnd)
