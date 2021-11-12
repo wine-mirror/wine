@@ -197,7 +197,8 @@ struct hid_joystick_effect
 
     char *effect_control_buf;
     char *effect_update_buf;
-    char *type_specific_buf[2];
+    char *type_specific_buf;
+    char *set_envelope_buf;
 };
 
 static inline struct hid_joystick_effect *impl_from_IDirectInputEffect( IDirectInputEffect *iface )
@@ -1850,8 +1851,8 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
         hid_joystick_release( &impl->joystick->base.IDirectInputDevice8W_iface );
-        free( impl->type_specific_buf[1] );
-        free( impl->type_specific_buf[0] );
+        free( impl->set_envelope_buf );
+        free( impl->type_specific_buf );
         free( impl->effect_update_buf );
         free( impl->effect_control_buf );
         free( impl );
@@ -1878,8 +1879,8 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
                                          joystick->preparsed, impl->effect_update_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
 
-    impl->type_specific_buf[0][0] = 0;
-    impl->type_specific_buf[1][0] = 0;
+    impl->type_specific_buf[0] = 0;
+    impl->set_envelope_buf[0] = 0;
 
     switch (type)
     {
@@ -1889,10 +1890,7 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
     case PID_USAGE_ET_SAWTOOTH_UP:
     case PID_USAGE_ET_SAWTOOTH_DOWN:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_periodic.id,
-                                             joystick->preparsed, impl->type_specific_buf[0], report_len );
-        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
-        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_envelope.id, joystick->preparsed,
-                                             impl->type_specific_buf[1], report_len );
+                                             joystick->preparsed, impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_SPRING:
@@ -1900,27 +1898,36 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
     case PID_USAGE_ET_INERTIA:
     case PID_USAGE_ET_FRICTION:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_condition.id, joystick->preparsed,
-                                             impl->type_specific_buf[0], report_len );
+                                             impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_CONSTANT_FORCE:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_constant_force.id, joystick->preparsed,
-                                             impl->type_specific_buf[0], report_len );
-        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
-        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_envelope.id, joystick->preparsed,
-                                             impl->type_specific_buf[1], report_len );
+                                             impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_RAMP:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_ramp_force.id, joystick->preparsed,
-                                             impl->type_specific_buf[0], report_len );
-        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
-        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_envelope.id, joystick->preparsed,
-                                             impl->type_specific_buf[1], report_len );
+                                             impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME( "effect type %#x not implemented!\n", type );
+        break;
+    }
+
+    switch (type)
+    {
+    case PID_USAGE_ET_SQUARE:
+    case PID_USAGE_ET_SINE:
+    case PID_USAGE_ET_TRIANGLE:
+    case PID_USAGE_ET_SAWTOOTH_UP:
+    case PID_USAGE_ET_SAWTOOTH_DOWN:
+    case PID_USAGE_ET_CONSTANT_FORCE:
+    case PID_USAGE_ET_RAMP:
+        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_envelope.id, joystick->preparsed,
+                                             impl->set_envelope_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     }
 
@@ -2576,14 +2583,14 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         hr = DIERR_INCOMPLETEEFFECT;
     else if (!impl->index && SUCCEEDED(hr = find_next_effect_id( impl->joystick, &impl->index )))
     {
-        if (!impl->type_specific_buf[0][0]) status = HIDP_STATUS_SUCCESS;
+        if (!impl->type_specific_buf[0]) status = HIDP_STATUS_SUCCESS;
         else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
-                                          impl->index, impl->joystick->preparsed, impl->type_specific_buf[0], report_len );
+                                          impl->index, impl->joystick->preparsed, impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue returned %#x\n", status );
 
-        if (!impl->type_specific_buf[1][0]) status = HIDP_STATUS_SUCCESS;
+        if (!impl->set_envelope_buf[0]) status = HIDP_STATUS_SUCCESS;
         else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
-                                          impl->index, impl->joystick->preparsed, impl->type_specific_buf[1], report_len );
+                                          impl->index, impl->joystick->preparsed, impl->set_envelope_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue returned %#x\n", status );
 
         status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
@@ -2601,28 +2608,16 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_TRIANGLE:
         case PID_USAGE_ET_SAWTOOTH_UP:
         case PID_USAGE_ET_SAWTOOTH_DOWN:
-            set_parameter_value( impl, impl->type_specific_buf[0], set_periodic->magnitude_caps,
+            set_parameter_value( impl, impl->type_specific_buf, set_periodic->magnitude_caps,
                                  impl->periodic.dwMagnitude );
-            set_parameter_value_us( impl, impl->type_specific_buf[0], set_periodic->period_caps,
+            set_parameter_value_us( impl, impl->type_specific_buf, set_periodic->period_caps,
                                     impl->periodic.dwPeriod );
-            set_parameter_value( impl, impl->type_specific_buf[0], set_periodic->phase_caps,
+            set_parameter_value( impl, impl->type_specific_buf, set_periodic->phase_caps,
                                  impl->periodic.dwPhase );
-            set_parameter_value( impl, impl->type_specific_buf[0], set_periodic->offset_caps,
+            set_parameter_value( impl, impl->type_specific_buf, set_periodic->offset_caps,
                                  impl->periodic.lOffset );
 
-            if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
-            else hr = DIERR_INPUTLOST;
-
-            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->attack_level_caps,
-                                 impl->envelope.dwAttackLevel );
-            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->attack_time_caps,
-                                    impl->envelope.dwAttackTime );
-            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->fade_level_caps,
-                                 impl->envelope.dwFadeLevel );
-            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->fade_time_caps,
-                                    impl->envelope.dwFadeTime );
-
-            if (WriteFile( device, impl->type_specific_buf[1], report_len, NULL, NULL )) hr = DI_OK;
+            if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
             else hr = DIERR_INPUTLOST;
             break;
         case PID_USAGE_ET_SPRING:
@@ -2631,61 +2626,60 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_FRICTION:
             for (i = 0; i < impl->params.cbTypeSpecificParams / sizeof(DICONDITION); ++i)
             {
-                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->center_point_offset_caps,
+                set_parameter_value( impl, impl->type_specific_buf, set_condition->center_point_offset_caps,
                                      impl->condition[i].lOffset );
-                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->positive_coefficient_caps,
+                set_parameter_value( impl, impl->type_specific_buf, set_condition->positive_coefficient_caps,
                                      impl->condition[i].lPositiveCoefficient );
-                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->negative_coefficient_caps,
+                set_parameter_value( impl, impl->type_specific_buf, set_condition->negative_coefficient_caps,
                                      impl->condition[i].lNegativeCoefficient );
-                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->positive_saturation_caps,
+                set_parameter_value( impl, impl->type_specific_buf, set_condition->positive_saturation_caps,
                                      impl->condition[i].dwPositiveSaturation );
-                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->negative_saturation_caps,
+                set_parameter_value( impl, impl->type_specific_buf, set_condition->negative_saturation_caps,
                                      impl->condition[i].dwNegativeSaturation );
-                set_parameter_value( impl, impl->type_specific_buf[0], set_condition->dead_band_caps,
+                set_parameter_value( impl, impl->type_specific_buf, set_condition->dead_band_caps,
                                      impl->condition[i].lDeadBand );
 
-                if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
+                if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
                 else hr = DIERR_INPUTLOST;
             }
             break;
         case PID_USAGE_ET_CONSTANT_FORCE:
-            set_parameter_value( impl, impl->type_specific_buf[0], set_constant_force->magnitude_caps,
+            set_parameter_value( impl, impl->type_specific_buf, set_constant_force->magnitude_caps,
                                  impl->constant_force.lMagnitude );
 
-            if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
-            else hr = DIERR_INPUTLOST;
-
-            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->attack_level_caps,
-                                 impl->envelope.dwAttackLevel );
-            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->attack_time_caps,
-                                    impl->envelope.dwAttackTime );
-            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->fade_level_caps,
-                                 impl->envelope.dwFadeLevel );
-            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->fade_time_caps,
-                                    impl->envelope.dwFadeTime );
-
-            if (WriteFile( device, impl->type_specific_buf[1], report_len, NULL, NULL )) hr = DI_OK;
+            if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
             else hr = DIERR_INPUTLOST;
             break;
         case PID_USAGE_ET_RAMP:
-            set_parameter_value( impl, impl->type_specific_buf[0], set_ramp_force->start_caps,
+            set_parameter_value( impl, impl->type_specific_buf, set_ramp_force->start_caps,
                                  impl->ramp_force.lStart );
-            set_parameter_value( impl, impl->type_specific_buf[0], set_ramp_force->end_caps,
+            set_parameter_value( impl, impl->type_specific_buf, set_ramp_force->end_caps,
                                  impl->ramp_force.lEnd );
 
-            if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
+            if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
             else hr = DIERR_INPUTLOST;
+            break;
+        }
 
-            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->attack_level_caps,
+        switch (impl->type)
+        {
+        case PID_USAGE_ET_SQUARE:
+        case PID_USAGE_ET_SINE:
+        case PID_USAGE_ET_TRIANGLE:
+        case PID_USAGE_ET_SAWTOOTH_UP:
+        case PID_USAGE_ET_SAWTOOTH_DOWN:
+        case PID_USAGE_ET_CONSTANT_FORCE:
+        case PID_USAGE_ET_RAMP:
+            set_parameter_value( impl, impl->set_envelope_buf, set_envelope->attack_level_caps,
                                  impl->envelope.dwAttackLevel );
-            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->attack_time_caps,
+            set_parameter_value_us( impl, impl->set_envelope_buf, set_envelope->attack_time_caps,
                                     impl->envelope.dwAttackTime );
-            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->fade_level_caps,
+            set_parameter_value( impl, impl->set_envelope_buf, set_envelope->fade_level_caps,
                                  impl->envelope.dwFadeLevel );
-            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->fade_time_caps,
+            set_parameter_value_us( impl, impl->set_envelope_buf, set_envelope->fade_time_caps,
                                     impl->envelope.dwFadeTime );
 
-            if (WriteFile( device, impl->type_specific_buf[1], report_len, NULL, NULL )) hr = DI_OK;
+            if (WriteFile( device, impl->set_envelope_buf, report_len, NULL, NULL )) hr = DI_OK;
             else hr = DIERR_INPUTLOST;
             break;
         }
@@ -2798,8 +2792,8 @@ static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectI
     report_len = joystick->caps.OutputReportByteLength;
     if (!(impl->effect_control_buf = malloc( report_len ))) goto failed;
     if (!(impl->effect_update_buf = malloc( report_len ))) goto failed;
-    if (!(impl->type_specific_buf[0] = malloc( report_len ))) goto failed;
-    if (!(impl->type_specific_buf[1] = malloc( report_len ))) goto failed;
+    if (!(impl->type_specific_buf = malloc( report_len ))) goto failed;
+    if (!(impl->set_envelope_buf = malloc( report_len ))) goto failed;
 
     impl->envelope.dwSize = sizeof(DIENVELOPE);
     impl->params.dwSize = sizeof(DIEFFECT);
