@@ -1050,7 +1050,7 @@
 @ stub NtUserInvalidateRect
 @ stub NtUserInvalidateRgn
 @ stub NtUserIsChildWindowDpiMessageEnabled
-@ stub NtUserIsClipboardFormatAvailable
+@ stdcall NtUserIsClipboardFormatAvailable(long)
 @ stub NtUserIsMouseInPointerEnabled
 @ stub NtUserIsMouseInputEnabled
 @ stub NtUserIsNonClientDpiScalingEnabled

@@ -460,7 +460,7 @@
 @ stdcall -import IsCharUpperA(long)
 @ stdcall -import IsCharUpperW(long)
 @ stdcall IsChild(long long)
-@ stdcall IsClipboardFormatAvailable(long)
+@ stdcall IsClipboardFormatAvailable(long) NtUserIsClipboardFormatAvailable
 @ stdcall IsDialogMessage(long ptr) IsDialogMessageA
 @ stdcall IsDialogMessageA(long ptr)
 @ stdcall IsDialogMessageW(long ptr)

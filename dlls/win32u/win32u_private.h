@@ -195,6 +195,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
+    BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
 
     /* Wine-specific functions */
     UINT (WINAPI *pGDIRealizePalette)( HDC hdc );

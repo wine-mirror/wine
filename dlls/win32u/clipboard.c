@@ -34,6 +34,47 @@
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 
+/* get a debug string for a format id */
+static const char *debugstr_format( UINT id )
+{
+    WCHAR buffer[256];
+    DWORD le = GetLastError();
+    BOOL r = NtUserGetClipboardFormatName( id, buffer, ARRAYSIZE(buffer) );
+    SetLastError(le);
+
+    if (r)
+        return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
+
+    switch (id)
+    {
+#define BUILTIN(id) case id: return #id;
+    BUILTIN(CF_TEXT)
+    BUILTIN(CF_BITMAP)
+    BUILTIN(CF_METAFILEPICT)
+    BUILTIN(CF_SYLK)
+    BUILTIN(CF_DIF)
+    BUILTIN(CF_TIFF)
+    BUILTIN(CF_OEMTEXT)
+    BUILTIN(CF_DIB)
+    BUILTIN(CF_PALETTE)
+    BUILTIN(CF_PENDATA)
+    BUILTIN(CF_RIFF)
+    BUILTIN(CF_WAVE)
+    BUILTIN(CF_UNICODETEXT)
+    BUILTIN(CF_ENHMETAFILE)
+    BUILTIN(CF_HDROP)
+    BUILTIN(CF_LOCALE)
+    BUILTIN(CF_DIBV5)
+    BUILTIN(CF_OWNERDISPLAY)
+    BUILTIN(CF_DSPTEXT)
+    BUILTIN(CF_DSPBITMAP)
+    BUILTIN(CF_DSPMETAFILEPICT)
+    BUILTIN(CF_DSPENHMETAFILE)
+#undef BUILTIN
+    default: return wine_dbg_sprintf( "%04x", id );
+    }
+}
+
 /**************************************************************************
  *           NtUserCountClipboardFormats    (win32u.@)
  */
@@ -52,6 +93,27 @@ INT WINAPI NtUserCountClipboardFormats(void)
 
     TRACE( "returning %d\n", count );
     return count;
+}
+
+/**************************************************************************
+ *	     NtUserIsClipboardFormatAvailable    (win32u.@)
+ */
+BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
+{
+    BOOL ret = FALSE;
+
+    if (!format) return FALSE;
+
+    user_driver->pUpdateClipboard();
+
+    SERVER_START_REQ( get_clipboard_formats )
+    {
+        req->format = format;
+        if (!wine_server_call_err( req )) ret = (reply->count > 0);
+    }
+    SERVER_END_REQ;
+    TRACE( "%s -> %u\n", debugstr_format( format ), ret );
+    return ret;
 }
 
 /**************************************************************************

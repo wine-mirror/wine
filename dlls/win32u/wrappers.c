@@ -601,6 +601,11 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
+{
+    return unix_funcs->pNtUserIsClipboardFormatAvailable( format );
+}
+
 UINT WINAPI GDIRealizePalette( HDC hdc )
 {
     return unix_funcs->pGDIRealizePalette( hdc );

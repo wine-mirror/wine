@@ -940,28 +940,6 @@ UINT WINAPI EnumClipboardFormats( UINT format )
 
 
 /**************************************************************************
- *		IsClipboardFormatAvailable (USER32.@)
- */
-BOOL WINAPI IsClipboardFormatAvailable( UINT format )
-{
-    BOOL ret = FALSE;
-
-    if (!format) return FALSE;
-
-    USER_Driver->pUpdateClipboard();
-
-    SERVER_START_REQ( get_clipboard_formats )
-    {
-        req->format = format;
-        if (!wine_server_call_err( req )) ret = (reply->count > 0);
-    }
-    SERVER_END_REQ;
-    TRACE( "%s -> %u\n", debugstr_format( format ), ret );
-    return ret;
-}
-
-
-/**************************************************************************
  *		GetUpdatedClipboardFormats (USER32.@)
  */
 BOOL WINAPI GetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
@@ -1080,7 +1058,7 @@ INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
         return 0;
 
     for (i = 0; i < nCount; i++)
-        if (IsClipboardFormatAvailable(list[i]))
+        if (NtUserIsClipboardFormatAvailable(list[i]))
             return list[i];
 
     return -1;
