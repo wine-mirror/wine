@@ -2581,6 +2581,11 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
                                           impl->index, impl->joystick->preparsed, impl->type_specific_buf[0], report_len );
         if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue returned %#x\n", status );
 
+        if (!impl->type_specific_buf[1][0]) status = HIDP_STATUS_SUCCESS;
+        else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                          impl->index, impl->joystick->preparsed, impl->type_specific_buf[1], report_len );
+        if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue returned %#x\n", status );
+
         status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
                                      impl->index, impl->joystick->preparsed, impl->effect_update_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) hr = status;
