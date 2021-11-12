@@ -199,3 +199,8 @@ NTSTATUS WINAPI wow64_NtUserGetClipboardFormatName( UINT *args )
 
     return NtUserGetClipboardFormatName( format, buffer, maxlen );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetClipboardOwner( UINT *args )
+{
+    return HandleToUlong( NtUserGetClipboardOwner() );
+}

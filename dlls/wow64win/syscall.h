@@ -93,6 +93,7 @@
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserGetClipboardFormatName ) \
+    SYSCALL_ENTRY( NtUserGetClipboardOwner ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \

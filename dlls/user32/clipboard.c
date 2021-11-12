@@ -729,7 +729,7 @@ BOOL WINAPI CloseClipboard(void)
 BOOL WINAPI EmptyClipboard(void)
 {
     BOOL ret;
-    HWND owner = GetClipboardOwner();
+    HWND owner = NtUserGetClipboardOwner();
 
     TRACE( "owner %p\n", owner );
 
@@ -747,25 +747,6 @@ BOOL WINAPI EmptyClipboard(void)
 
     LeaveCriticalSection( &clipboard_cs );
     return ret;
-}
-
-
-/**************************************************************************
- *		GetClipboardOwner (USER32.@)
- */
-HWND WINAPI GetClipboardOwner(void)
-{
-    HWND hWndOwner = 0;
-
-    SERVER_START_REQ( get_clipboard_info )
-    {
-        if (!wine_server_call_err( req )) hWndOwner = wine_server_ptr_handle( reply->owner );
-    }
-    SERVER_END_REQ;
-
-    TRACE( "returning %p\n", hWndOwner );
-
-    return hWndOwner;
 }
 
 

@@ -140,3 +140,20 @@ INT WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen 
     buffer[length] = 0;
     return length;
 }
+
+/**************************************************************************
+ *	     NtUserGetClipboardOwner    (win32u.@)
+ */
+HWND WINAPI NtUserGetClipboardOwner(void)
+{
+    HWND owner = 0;
+
+    SERVER_START_REQ( get_clipboard_info )
+    {
+        if (!wine_server_call_err( req )) owner = wine_server_ptr_handle( reply->owner );
+    }
+    SERVER_END_REQ;
+
+    TRACE( "returning %p\n", owner );
+    return owner;
+}

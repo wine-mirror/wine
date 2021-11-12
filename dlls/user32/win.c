@@ -1949,7 +1949,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
         if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );
     }
 
-    if (hwnd == GetClipboardOwner()) CLIPBOARD_ReleaseOwner( hwnd );
+    if (hwnd == NtUserGetClipboardOwner()) CLIPBOARD_ReleaseOwner( hwnd );
 
     /*
      * Send the WM_DESTROY to the window.
