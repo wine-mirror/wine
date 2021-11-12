@@ -976,23 +976,3 @@ HANDLE WINAPI GetClipboardData( UINT format )
         return 0;
     }
 }
-
-
-/**************************************************************************
- *		GetPriorityClipboardFormat (USER32.@)
- */
-INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
-{
-    int i;
-
-    TRACE( "%p %u\n", list, nCount );
-
-    if (NtUserCountClipboardFormats() == 0)
-        return 0;
-
-    for (i = 0; i < nCount; i++)
-        if (NtUserIsClipboardFormatAvailable(list[i]))
-            return list[i];
-
-    return -1;
-}

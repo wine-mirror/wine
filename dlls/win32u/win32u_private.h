@@ -195,6 +195,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
+    INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
 

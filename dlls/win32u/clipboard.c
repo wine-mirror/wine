@@ -145,6 +145,25 @@ BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *ou
 }
 
 /**************************************************************************
+ *	     NtUserGetPriorityClipboardFormat    (win32u.@)
+ */
+INT WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count )
+{
+    int i;
+
+    TRACE( "%p %u\n", list, count );
+
+    if (NtUserCountClipboardFormats() == 0)
+        return 0;
+
+    for (i = 0; i < count; i++)
+        if (NtUserIsClipboardFormatAvailable( list[i] ))
+            return list[i];
+
+    return -1;
+}
+
+/**************************************************************************
  *	     NtUserGetClipboardFormatName    (win32u.@)
  */
 INT WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen )
