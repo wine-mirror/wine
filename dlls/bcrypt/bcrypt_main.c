@@ -1521,9 +1521,10 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
                                             UCHAR *object, ULONG object_len, UCHAR *secret, ULONG secret_len,
                                             ULONG flags )
 {
+    BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     struct algorithm *alg = algorithm;
+    ULONG block_size, size;
     struct key *key;
-    ULONG block_size;
 
     TRACE( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len, secret, secret_len, flags );
 
@@ -1537,6 +1538,25 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     }
 
     if (!(block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
+
+    if (!get_alg_property( alg, BCRYPT_KEY_LENGTHS, (UCHAR*)&key_lengths, sizeof(key_lengths), &size ))
+    {
+        if (secret_len > (size = key_lengths.dwMaxLength / 8))
+        {
+            WARN( "secret_len %u exceeds key max length %u, setting to maximum.\n", secret_len, size );
+            secret_len = size;
+        }
+        else if (secret_len < (size = key_lengths.dwMinLength / 8))
+        {
+            WARN( "secret_len %u is less than minimum key length %u.\n", secret_len, size );
+            return STATUS_INVALID_PARAMETER;
+        }
+        else if (key_lengths.dwIncrement && (secret_len * 8 - key_lengths.dwMinLength) % key_lengths.dwIncrement)
+        {
+            WARN( "secret_len %u is not a valid key length.\n", secret_len );
+            return STATUS_INVALID_PARAMETER;
+        }
+    }
 
     if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
     InitializeCriticalSection( &key->u.s.cs );
