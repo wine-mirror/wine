@@ -21,6 +21,8 @@
 #ifndef __WINE_SERVER_SECURITY_H
 #define __WINE_SERVER_SECURITY_H
 
+#include <sys/types.h>
+
 extern const LUID SeIncreaseQuotaPrivilege;
 extern const LUID SeSecurityPrivilege;
 extern const LUID SeTakeOwnershipPrivilege;
