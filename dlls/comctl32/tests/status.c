@@ -253,7 +253,7 @@ static void test_status_control(void)
     HWND hWndStatus;
     int r;
     int nParts[] = {50, 150, -1};
-    int checkParts[] = {0, 0, 0};
+    int checkParts[] = {0, 0, 0, 0, 0};
     int borders[] = {0, 0, 0};
     RECT rc;
     CHAR charArray[20];
@@ -304,12 +304,20 @@ static void test_status_control(void)
     expect(5,LOWORD(r));
     expect(SBT_NOBORDERS,HIWORD(r));
 
-    /* Get parts and borders */
+    /* Get parts */
     r = SendMessageA(hWndStatus, SB_GETPARTS, 3, (LPARAM)checkParts);
     ok(r == 3, "Expected 3, got %d\n", r);
     expect(50,checkParts[0]);
     expect(150,checkParts[1]);
     expect(-1,checkParts[2]);
+    r = SendMessageA(hWndStatus, SB_GETPARTS, 5, (LPARAM)checkParts);
+    ok(r == 3, "Expected 3, got %d\n", r);
+    expect(50,checkParts[0]);
+    expect(150,checkParts[1]);
+    expect(-1,checkParts[2]);
+    expect(0,checkParts[3]);
+    expect(0,checkParts[4]);
+    /* Get borders */
     r = SendMessageA(hWndStatus, SB_GETBORDERS, 0, (LPARAM)borders);
     ok(r == TRUE, "Expected TRUE, got %d\n", r);
     expect(0,borders[0]);
