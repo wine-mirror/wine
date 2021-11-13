@@ -1578,7 +1578,7 @@ static FILE *open_input_makefile( const struct makefile *make )
     FILE *ret;
 
     if (make->obj_dir)
-        input_file_name = root_src_dir_path( obj_dir_path( make, strmake( "%s.in", output_makefile_name )));
+        input_file_name = root_src_dir_path( obj_dir_path( make, "Makefile.in" ));
     else
         input_file_name = output_makefile_name;  /* always use output name for main Makefile */
 
@@ -3629,7 +3629,7 @@ static void output_subdirs( struct makefile *make )
     strarray_addall( &all_targets, make->all_targets );
     for (i = 0; i < subdirs.count; i++)
     {
-        strarray_add( &makefile_deps, src_dir_path( submakes[i], strmake ( "%s.in", output_makefile_name )));
+        strarray_add( &makefile_deps, src_dir_path( submakes[i], "Makefile.in" ));
         strarray_addall_uniq( &make->phony_targets, submakes[i]->phony_targets );
         strarray_addall_uniq( &make->uninstall_files, submakes[i]->uninstall_files );
         strarray_addall_uniq( &dependencies, submakes[i]->dependencies );
@@ -3998,6 +3998,13 @@ static void output_stub_makefile( struct makefile *make )
     struct strarray targets = empty_strarray;
     const char *make_var = strarray_get_value( &top_makefile->vars, "MAKE" );
 
+    if (make->obj_dir) create_dir( make->obj_dir );
+
+    output_file_name = obj_dir_path( make, "Makefile" );
+    output_file = create_temp_file( output_file_name );
+
+    output( "# Auto-generated stub makefile; all rules forward to the top-level makefile\n\n" );
+
     if (make_var) output( "MAKE = %s\n\n", make_var );
     output( "all:\n" );
 
@@ -4021,6 +4028,10 @@ static void output_stub_makefile( struct makefile *make )
     output( ".PHONY:" );
     output_filenames( targets );
     output( "\n" );
+
+    fclose( output_file );
+    output_file = NULL;
+    rename_temp_file( output_file_name );
 }
 
 
@@ -4059,16 +4070,13 @@ static void output_silent_rules(void)
 
 
 /*******************************************************************
- *         output_dependencies
+ *         output_top_makefile
  */
-static void output_dependencies( struct makefile *make )
+static void output_top_makefile( struct makefile *make )
 {
-    struct strarray ignore_files = empty_strarray;
     char buffer[1024];
     FILE *src_file;
     int i, found = 0;
-
-    if (make->obj_dir) create_dir( make->obj_dir );
 
     output_file_name = obj_dir_path( make, output_makefile_name );
     output_file = create_temp_file( output_file_name );
@@ -4085,20 +4093,29 @@ static void output_dependencies( struct makefile *make )
 
     if (!found) output( "\n%s (everything below this line is auto-generated; DO NOT EDIT!!)\n", separator );
 
-    if (make == top_makefile)
-    {
-        if (silent_rules) output_silent_rules();
-        for (i = 0; i < subdirs.count; i++) output_sources( submakes[i] );
-        output_sources( make );
-    }
-    else output_stub_makefile( make );
-
+    if (silent_rules) output_silent_rules();
+    for (i = 0; i < subdirs.count; i++) output_sources( submakes[i] );
+    output_sources( make );
     /* disable implicit rules */
     output( ".SUFFIXES:\n" );
 
     fclose( output_file );
     output_file = NULL;
     rename_temp_file( output_file_name );
+}
+
+
+/*******************************************************************
+ *         output_dependencies
+ */
+static void output_dependencies( struct makefile *make )
+{
+    struct strarray ignore_files = empty_strarray;
+
+    if (make->obj_dir) create_dir( make->obj_dir );
+
+    if (make == top_makefile) output_top_makefile( make );
+    else output_stub_makefile( make );
 
     strarray_addall( &ignore_files, make->distclean_files );
     strarray_addall( &ignore_files, make->clean_files );
