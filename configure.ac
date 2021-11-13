@@ -4,23 +4,14 @@ dnl For detailed change history, see the git commit logs.
 
 m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
 
-dnl autoconf versions before 2.62 don't handle source dir symlinks correctly
-AC_PREREQ(2.62)
+dnl autoconf versions before 2.63b don't have AS_VAR_APPEND or AS_VAR_IF
+AC_PREREQ(2.63b)
 AC_INIT([Wine],[WINE_VERSION],[wine-devel@winehq.org],[wine],[https://www.winehq.org])
 AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
 libwine_version="1.0"
-
-dnl autoconf versions before 2.63b don't have AS_VAR_APPEND or AS_VAR_IF
-m4_ifdef([AS_VAR_APPEND],,[as_fn_append () { eval $[1]=\$$[1]\$[2]; }
-AC_DEFUN([AS_VAR_APPEND],[as_fn_append $1 $2])])dnl
-m4_ifdef([AS_VAR_IF],,[AC_DEFUN([AS_VAR_IF],
-[AS_LITERAL_IF([$1],
-  [AS_IF([test "x$$1" = x""$2], [$3], [$4])],
-  [eval as_val=\$$1
-   AS_IF([test "x$as_val" = x""$2], [$3], [$4])])])])dnl
 
 dnl **** Command-line arguments ****
 
