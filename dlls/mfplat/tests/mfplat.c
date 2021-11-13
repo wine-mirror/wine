@@ -2077,10 +2077,14 @@ static void test_file_stream(void)
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, pathW, &bytestream);
     ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &bytestream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(DeleteFileW(filename), "failed to delete file\n");
+    IMFByteStream_Release(bytestream);
+
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
-    DeleteFileW(filename);
     DeleteFileW(newfilename);
 }
 

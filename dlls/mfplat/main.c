@@ -4407,7 +4407,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
 {
     DWORD capabilities = MFBYTESTREAM_IS_SEEKABLE | MFBYTESTREAM_DOES_NOT_USE_NETWORK;
     DWORD filecreation_disposition = 0, fileaccessmode = 0, fileattributes = 0;
-    DWORD filesharemode = FILE_SHARE_READ;
+    DWORD filesharemode = FILE_SHARE_READ | FILE_SHARE_DELETE;
     struct bytestream *object;
     FILETIME writetime;
     HANDLE file;
