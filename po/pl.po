@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-05-04 16:13+0200\n"
+"PO-Revision-Date: 2021-11-13 12:53+0100\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 20.12.1\n"
+"X-Generator: Lokalize 22.03.70\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
@@ -427,7 +427,7 @@ msgstr "< &Wstecz"
 
 #: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
 msgid "&Next >"
-msgstr "&Naprzód >"
+msgstr "&Dalej >"
 
 #: dlls/comctl32/comctl32.rc:86
 msgid "Finish"
@@ -556,7 +556,7 @@ msgstr "&Katalogi:"
 
 #: dlls/comdlg32/comdlg32.rc:167 dlls/comdlg32/comdlg32.rc:189
 msgid "List Files of &Type:"
-msgstr "Wyświetl pliki &typu:"
+msgstr "Wyświetl pliki &rodzaju:"
 
 #: dlls/comdlg32/comdlg32.rc:169 dlls/comdlg32/comdlg32.rc:191
 msgid "Dri&ves:"
@@ -938,7 +938,7 @@ msgstr "&Nazwa pliku:"
 
 #: dlls/comdlg32/comdlg32.rc:475 dlls/comdlg32/comdlg32.rc:501
 msgid "Files of &type:"
-msgstr "&Pliki typu:"
+msgstr "&Pliki rodzaju:"
 
 #: dlls/comdlg32/comdlg32.rc:478 dlls/comdlg32/comdlg32.rc:504
 msgid "Open as &read-only"
@@ -956,7 +956,7 @@ msgstr "Nazwa pliku:"
 
 #: dlls/comdlg32/comdlg32.rc:520
 msgid "Files of type:"
-msgstr "Pliki typu:"
+msgstr "Pliki rodzaju:"
 
 #: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:35
 msgid "File not found"
@@ -1452,7 +1452,7 @@ msgstr "Nazwa bez struktury"
 
 #: dlls/crypt32/crypt32.rc:48
 msgid "Content Type"
-msgstr "Typ zawartości"
+msgstr "Rodzaj zawartości"
 
 #: dlls/crypt32/crypt32.rc:49
 msgid "Message Digest"
@@ -1857,19 +1857,19 @@ msgstr "Szyfrowanie systemu plików"
 
 #: dlls/crypt32/crypt32.rc:149 dlls/cryptui/cryptui.rc:133
 msgid "Windows Hardware Driver Verification"
-msgstr "Weryfikacja sprzętowych sterowników systemu Windows"
+msgstr "Sprawdzanie sprzętowych sterowników systemu Windows"
 
 #: dlls/crypt32/crypt32.rc:150 dlls/cryptui/cryptui.rc:134
 msgid "Windows System Component Verification"
-msgstr "Weryfikacja składników systemowych Windows"
+msgstr "Sprawdzanie składników systemowych Windows"
 
 #: dlls/crypt32/crypt32.rc:151 dlls/cryptui/cryptui.rc:135
 msgid "OEM Windows System Component Verification"
-msgstr "Weryfikacja składników systemu Windows OEM"
+msgstr "Sprawdzanie składników systemu Windows OEM"
 
 #: dlls/crypt32/crypt32.rc:152 dlls/cryptui/cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr "Weryfikacja osadzonych składników systemu Windows"
+msgstr "Sprawdzanie osadzonych składników systemu Windows"
 
 #: dlls/crypt32/crypt32.rc:153 dlls/cryptui/cryptui.rc:143
 msgid "Key Pack Licenses"
@@ -1877,7 +1877,7 @@ msgstr "Licencje pakietu kluczy"
 
 #: dlls/crypt32/crypt32.rc:154 dlls/cryptui/cryptui.rc:144
 msgid "License Server Verification"
-msgstr "Weryfikacja serwera licencji"
+msgstr "Sprawdzanie serwera licencji"
 
 #: dlls/crypt32/crypt32.rc:155 dlls/cryptui/cryptui.rc:146
 msgid "Smart Card Logon"
@@ -2005,7 +2005,7 @@ msgstr "Nieznane użycie klucza"
 
 #: dlls/crypt32/crypt32.rc:194
 msgid "Subject Type="
-msgstr "Typ podmiotu="
+msgstr "Rodzaj podmiotu="
 
 #: dlls/crypt32/crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -2339,11 +2339,11 @@ msgstr "&Pokaż fizyczne magazyny"
 #: dlls/cryptui/cryptui.rc:313 dlls/cryptui/cryptui.rc:327
 #: dlls/cryptui/cryptui.rc:71
 msgid "Certificate Import Wizard"
-msgstr "Kreator importu certyfikatów"
+msgstr "Pomocnik importowania certyfikatów"
 
 #: dlls/cryptui/cryptui.rc:288
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Witamy w kreatorze importu certyfikatów"
+msgstr "Witamy w pomocniku importu certyfikatów"
 
 #: dlls/cryptui/cryptui.rc:291
 msgid ""
@@ -2392,7 +2392,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:306
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr "Wymiana informacji osobistych/PKCS #12 (*.pfx; *.p12)"
+msgstr "Wymiana danych osobowych/PKCS #12 (*.pfx; *.p12)"
 
 #: dlls/cryptui/cryptui.rc:308 dlls/cryptui/cryptui.rc:81
 #: dlls/cryptui/cryptui.rc:162
@@ -2417,11 +2417,11 @@ msgstr "&Umieść wszystkie certyfikaty w następującym magazynie:"
 
 #: dlls/cryptui/cryptui.rc:330
 msgid "Completing the Certificate Import Wizard"
-msgstr "Kończenie pracy kreatora importu certyfikatów"
+msgstr "Kończenie pracy pomocnika importu certyfikatów"
 
 #: dlls/cryptui/cryptui.rc:332
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr "Praca kreatora importu certyfikatów została zakończona pomyślnie."
+msgstr "Pomyślnie ukończono pracę pomocnika importowania certyfikatów."
 
 #: dlls/cryptui/cryptui.rc:334 dlls/cryptui/cryptui.rc:448
 msgid "You have specified the following settings:"
@@ -2486,11 +2486,11 @@ msgstr "&Cele certyfikatu:"
 #: dlls/cryptui/cryptui.rc:432 dlls/cryptui/cryptui.rc:441
 #: dlls/cryptui/cryptui.rc:150
 msgid "Certificate Export Wizard"
-msgstr "Kreator eksportu certyfikatów"
+msgstr "Pomocnik eksportowania certyfikatów"
 
 #: dlls/cryptui/cryptui.rc:378
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Witamy w kreatorze eksportu certyfikatów"
+msgstr "Witamy w pomocniku eksportu certyfikatów"
 
 #: dlls/cryptui/cryptui.rc:381
 msgid ""
@@ -2563,7 +2563,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:421
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "Wymiana informacji &osobistych - PKCS #12 (*.pfx)"
+msgstr "Wymiana danych &osobowych - PKCS #12 (*.pfx)"
 
 #: dlls/cryptui/cryptui.rc:423
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2580,11 +2580,11 @@ msgstr "Usuń &klucz prywatny, jeżeli eksport został zakończony pomyślnie"
 
 #: dlls/cryptui/cryptui.rc:444
 msgid "Completing the Certificate Export Wizard"
-msgstr "Kończenie pracy kreatora eksportu certyfikatów"
+msgstr "Kończenie pracy pomocnika eksportu certyfikatów"
 
 #: dlls/cryptui/cryptui.rc:446
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr "Praca kreatora eksportu certyfikatów została zakończona pomyślnie."
+msgstr "Pomyślnie ukończono pracę pomocnika eksportowania certyfikatów."
 
 #: dlls/cryptui/cryptui.rc:456 dlls/cryptui/cryptui.rc:179
 msgid "Select Certificate"
@@ -2684,7 +2684,7 @@ msgstr "Wartość"
 #: dlls/cryptui/cryptui.rc:49 dlls/cryptui/cryptui.rc:102
 #: dlls/cryptui/cryptui.rc:108
 msgid "<All>"
-msgstr "<Wszyscy>"
+msgstr "<Wszystkie>"
 
 #: dlls/cryptui/cryptui.rc:50
 msgid "Version 1 Fields Only"
@@ -2797,7 +2797,7 @@ msgstr "Certyfikat X.509 (*.cer; *.crt)"
 
 #: dlls/cryptui/cryptui.rc:78
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr "Wymiana informacji osobistych (*.pfx; *.p12)"
+msgstr "Wymiana danych osobowych (*.pfx; *.p12)"
 
 #: dlls/cryptui/cryptui.rc:79 dlls/cryptui/cryptui.rc:158
 msgid "Certificate Revocation List (*.crl)"
@@ -2817,7 +2817,7 @@ msgstr "Proszę wybrać plik."
 
 #: dlls/cryptui/cryptui.rc:85
 msgid "The file format is not recognized. Please select another file."
-msgstr "Nie rozpoznano typu pliku. Proszę wybrać inny plik."
+msgstr "Nie rozpoznano rodzaju pliku. Proszę wybrać inny plik."
 
 #: dlls/cryptui/cryptui.rc:86
 msgid "Could not open "
@@ -2857,7 +2857,7 @@ msgstr "Certyfikat CMS/PKCS #7"
 
 #: dlls/cryptui/cryptui.rc:97
 msgid "Personal Information Exchange"
-msgstr "Wymiana informacji osobistych"
+msgstr "Wymiana danych osobowych"
 
 #: dlls/cryptui/cryptui.rc:99
 msgid "The import was successful."
@@ -2873,7 +2873,7 @@ msgstr "Arial"
 
 #: dlls/cryptui/cryptui.rc:103
 msgid "<Advanced Purposes>"
-msgstr "<Cele zaawansowane>"
+msgstr "<Cele rozszerzone>"
 
 #: dlls/cryptui/cryptui.rc:104
 msgid "Issued To"
@@ -3043,7 +3043,7 @@ msgstr "Format pliku eksportowanego"
 
 #: dlls/cryptui/cryptui.rc:152
 msgid "Choose the format in which the content will be saved."
-msgstr "Określ typ pliku, w który zawartość eksportowana zostanie zapisana."
+msgstr "Określ rodzaj pliku, w który zawartość eksportowana zostanie zapisana."
 
 #: dlls/cryptui/cryptui.rc:153
 msgid "Export Filename"
@@ -3071,7 +3071,7 @@ msgstr "Certyfikaty CMS/PKCS #7 (*.p7b)"
 
 #: dlls/cryptui/cryptui.rc:161
 msgid "Personal Information Exchange (*.pfx)"
-msgstr "Wymiana informacji osobistych (*.pfx)"
+msgstr "Wymiana danych osobowych (*.pfx)"
 
 #: dlls/cryptui/cryptui.rc:163
 msgid "File Format"
@@ -3725,30 +3725,24 @@ msgid "&Disable"
 msgstr "Wyłą&cz"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Wyzeruj"
+msgstr "Wyze&ruj"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Włącz"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Zmiana zasady"
+msgstr "&Zastąp"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Włączone"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Urządzenie wejściowe głosu:"
+msgstr "Podłączony (urządzenie xinput)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3764,7 +3758,7 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
-msgstr "Próba Joysticka"
+msgstr "Próbowanie Joysticka"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
@@ -3772,7 +3766,7 @@ msgstr "Przyciski"
 
 #: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
-msgstr "Próba odczucia siły zwrotnej"
+msgstr "Próbowanie odczuć siły zwrotnej"
 
 #: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
@@ -3796,7 +3790,7 @@ msgstr "Próba i ustawienia padów do gier."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
-msgstr "Błąd przy przekształcaniu obiektu do typu podstawowego"
+msgstr "Błąd przy przekształcaniu obiektu do rodzaju podstawowego"
 
 #: dlls/jscript/jscript.rc:29 dlls/vbscript/vbscript.rc:29
 msgid "Invalid procedure call or argument"
@@ -4241,7 +4235,7 @@ msgstr "Dostęp sieciowy zastrzeżony.\n"
 
 #: dlls/kernel32/winerror.mc:298
 msgid "Bad device type.\n"
-msgstr "Zły typ urządzenia.\n"
+msgstr "Zły rodzaj urządzenia.\n"
 
 #: dlls/kernel32/winerror.mc:303
 msgid "Bad network name.\n"
@@ -4681,7 +4675,7 @@ msgstr "Zagnieżdżanie wywołań LoadModule nie dozwolone.\n"
 
 #: dlls/kernel32/winerror.mc:858
 msgid "Machine type mismatch.\n"
-msgstr "Typ maszyny niedopasowany.\n"
+msgstr "Rodzaj maszyny niedopasowany.\n"
 
 #: dlls/kernel32/winerror.mc:863
 msgid "Bad pipe.\n"
@@ -4893,7 +4887,7 @@ msgstr "Klucz rejestru ma podklucze.\n"
 
 #: dlls/kernel32/winerror.mc:1123
 msgid "Subkey must be volatile.\n"
-msgstr "Podklucz musi być typu volatile.\n"
+msgstr "Podklucz musi być rodzaju volatile.\n"
 
 #: dlls/kernel32/winerror.mc:1128
 msgid "Notify change request in progress.\n"
@@ -5709,7 +5703,7 @@ msgstr "Zła klasa walidacji.\n"
 
 #: dlls/kernel32/winerror.mc:2148
 msgid "Bad token type.\n"
-msgstr "Zły typ tokena.\n"
+msgstr "Zły rodzaj tokena.\n"
 
 #: dlls/kernel32/winerror.mc:2153
 msgid "No security on object.\n"
@@ -6137,7 +6131,7 @@ msgstr "Niepoprawny uchwyt klawiatury.\n"
 
 #: dlls/kernel32/winerror.mc:2688
 msgid "Hook type not allowed.\n"
-msgstr "Typ zaczepu niedozwolony.\n"
+msgstr "Rodzaj zaczepu niedozwolony.\n"
 
 #: dlls/kernel32/winerror.mc:2693
 msgid "Interactive window station required.\n"
@@ -6281,11 +6275,11 @@ msgstr "Niepoprawna tabela.\n"
 
 #: dlls/kernel32/winerror.mc:2868
 msgid "Data type mismatch.\n"
-msgstr "Niezgodność typu danych.\n"
+msgstr "Niezgodność rodzaju danych.\n"
 
 #: dlls/kernel32/winerror.mc:2873 dlls/kernel32/winerror.mc:3083
 msgid "Unsupported type.\n"
-msgstr "Niewspierany typ.\n"
+msgstr "Niewspierany rodzaj.\n"
 
 #: dlls/kernel32/winerror.mc:2878
 msgid "Creation failed.\n"
@@ -6637,7 +6631,7 @@ msgstr "Wskaźnik Null.\n"
 
 #: dlls/kernel32/winerror.mc:3318
 msgid "Enumeration value out of range.\n"
-msgstr "Wartość typu wyliczeniowego poza zakresem.\n"
+msgstr "Wartość rodzaju wyliczeniowego poza zakresem.\n"
 
 #: dlls/kernel32/winerror.mc:3323
 msgid "Byte count too small.\n"
@@ -6765,7 +6759,7 @@ msgstr "Nie znaleziono danych zasobów.\n"
 
 #: dlls/kernel32/winerror.mc:3478
 msgid "Resource type not found.\n"
-msgstr "Nie znaleziono typu zasobów.\n"
+msgstr "Nie znaleziono rodzaju zasobów.\n"
 
 #: dlls/kernel32/winerror.mc:3483
 msgid "Resource name not found.\n"
@@ -6941,7 +6935,7 @@ msgstr "Nie można rozbić nazwy pliku.\n"
 
 #: dlls/kernel32/winerror.mc:3698
 msgid "RPC entry type mismatch.\n"
-msgstr "Typ wpisu RPC niezgodny.\n"
+msgstr "Rodzaj wpisu RPC niezgodny.\n"
 
 #: dlls/kernel32/winerror.mc:3703
 msgid "Not all objects could be exported.\n"
@@ -7004,10 +6998,8 @@ msgid "Resource is not currently available.\n"
 msgstr "Zasób jest obecnie niedostępny.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Nazwa klasy:"
+msgstr "Klasyczny niebieski"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
@@ -7015,569 +7007,468 @@ msgid "Normal"
 msgstr "Normalne"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "Litera"
+msgstr "List"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Litera"
+msgstr "List mały"
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "&Tabela"
+msgstr "Tabloid"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Księga rachunkowa"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "Urzędowy"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "Stan"
+msgstr "Wyciąg"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "Urucho&m..."
+msgstr "Biurowy"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "A"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "A"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Małe"
+msgstr "A4 mały"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "A"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "Folio"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "Quarto"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "Notatnik"
+msgstr "Uwaga"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "Koperta #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Koperta #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Koperta #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Koperta #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Koperta #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "Arkusz rozmiar C"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "Arkusz rozmiar D"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "Arkusz rozmiar E"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Koperta DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "Koperta C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "Koperta C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "Koperta C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "Koperta C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "Koperta C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "Koperta B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "Koperta B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "Koperta B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Koperta monarsza"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta 6 3/4"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "USA standard wachlarz"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "Niemiecki standardowy wachlarz"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "Niemiecki urzędowy wachlarz"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "Japoński"
+msgstr "Japońska pocztówka"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Koperta zaproszeniowa"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "Litera"
+msgstr "List ekstra"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Urzędowy ekstra"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Tabloid ekstra"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "&Dodatki"
+msgstr "A4 ekstra"
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "przestawiony"
+msgstr "List w poprzek"
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "przestawiony"
+msgstr "A4 w poprzek"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Urzędowy ekstra w poprzek"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Super A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Super B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "Litera"
+msgstr "List plus"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "A4 Plus"
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "przestawiony"
+msgstr "A5 w poprzek"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) w poprzek"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "&Dodatki"
+msgstr "A3 ekstra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "&Dodatki"
+msgstr "A5 ekstra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "B5 (ISO) ekstra"
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "A"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "przestawiony"
+msgstr "A3 w poprzek"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 ekstra w poprzek"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "Japońska podwójna pocztówka"
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "A"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "Japońska koperta Kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "Japońska koperta Kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "Japońska koperta Chou #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "Japońska koperta Chou #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "List obrócony"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 obrócony"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 obrócony"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 obrócony"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) obrócony"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) obrócony"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "Japońska pocztówka obrócona"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "Podwójna japońska pocztówka obrócona"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 obrócony"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "Japońska koperta Kaku #2 obrócona"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "Japońska koperta Kaku #3 obrócona"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "Japońska koperta Chou # obrócona"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "Japońska koperta Chou #4 obrócona"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) obrócony"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "Japońska koperta You #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "Japońska koperta You #4 obrócona"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "PRC 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "PRC 32K(Duży)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "PRC 16K obrócony"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "PRC 32K obrócony"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "PRC 32K(Big) Obrócony"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #1 obrócona"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #2 obrócona"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #3 obrócona"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #4 obrócona"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #5 obrócona"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #6 obrócona"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #7 obrócona"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #8 obrócona"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #9 obrócona"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "Opakowany certyfikat PKCS 7"
+msgstr "Koperta PRC #10 obrócona"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -8230,7 +8121,7 @@ msgstr "Usuwanie usług"
 
 #: dlls/msi/msi.rc:100
 msgid "Creating duplicate files"
-msgstr "Tworzenie duplikatów plików"
+msgstr "Tworzenie powieleń plików"
 
 #: dlls/msi/msi.rc:102
 msgid "Searching for related applications"
@@ -8330,7 +8221,7 @@ msgstr "Rejestrowanie identyfikatorów programów"
 
 #: dlls/msi/msi.rc:126
 msgid "Registering type libraries"
-msgstr "Rejestrowanie bilbiotek typu"
+msgstr "Rejestrowanie bilbiotek rodzaju"
 
 #: dlls/msi/msi.rc:127
 msgid "Registering user"
@@ -8338,7 +8229,7 @@ msgstr "Rejestrowanie użytkownika"
 
 #: dlls/msi/msi.rc:128
 msgid "Removing duplicated files"
-msgstr "Usuwanie duplikatów plików"
+msgstr "Usuwanie powielenia plików"
 
 #: dlls/msi/msi.rc:129 dlls/msi/msi.rc:153
 msgid "Updating environment strings"
@@ -9442,7 +9333,7 @@ msgstr "Wstawia zawartość schowka do dokumentu."
 
 #: dlls/oledlg/oledlg.rc:48 programs/regedit/regedit.rc:430
 msgid "Unknown Type"
-msgstr "Nieznany typ"
+msgstr "Nieznany rodzaj"
 
 #: dlls/oledlg/oledlg.rc:49
 msgid "Unknown Source"
@@ -9862,7 +9753,7 @@ msgstr "Według &nazw"
 
 #: dlls/shell32/shell32.rc:54
 msgid "By &Type"
-msgstr "Według &typów"
+msgstr "Według &rodzajów"
 
 #: dlls/shell32/shell32.rc:55
 msgid "By &Size"
@@ -9874,7 +9765,7 @@ msgstr "Według &dat"
 
 #: dlls/shell32/shell32.rc:58
 msgid "&Auto Arrange"
-msgstr "&Autorozmieszczanie"
+msgstr "S&am rozmieszczaj"
 
 #: dlls/shell32/shell32.rc:60
 msgid "Line up Icons"
@@ -10050,7 +9941,7 @@ msgstr "Rozmiar"
 
 #: dlls/shell32/shell32.rc:139 programs/regedit/regedit.rc:148
 msgid "Type"
-msgstr "Typ"
+msgstr "Rodzaj"
 
 #: dlls/shell32/shell32.rc:140
 msgid "Modified"
@@ -10333,7 +10224,7 @@ msgstr "Pliki wykonywalne (*.exe)"
 #: dlls/shell32/shell32.rc:242
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
-"Nie ma przypisanego programu Windowsowego do otwierania tego typu plików."
+"Nie ma przypisanego programu Windowsowego do otwierania tego rodzaju plików."
 
 #: dlls/shell32/shell32.rc:244
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -10453,7 +10344,7 @@ msgstr "Czas letni Chin"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
-msgstr ""
+msgstr "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 
 #: dlls/tzres/tzres.rc:267
 msgid "North Asia Standard Time"
@@ -10465,7 +10356,7 @@ msgstr "Czas letni Azji północnej"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+07:00) Krasnoyarsk"
-msgstr ""
+msgstr "(UTC+07:00) Krasnojarsk"
 
 #: dlls/tzres/tzres.rc:168
 msgid "Georgian Standard Time"
@@ -10477,17 +10368,15 @@ msgstr "Czas letni Gruzji"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
-msgstr ""
+msgstr "(UTC+04:00) Tbilisi"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:392
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC+12:00) Uniwersalny Czas Koordynowany+12"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Nepal Standard Time"
@@ -10499,7 +10388,7 @@ msgstr "Czas letni Nepalu"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+05:45) Kathmandu"
-msgstr ""
+msgstr "(UTC+05:45) Katmandu"
 
 #: dlls/tzres/tzres.rc:90
 msgid "Cape Verde Standard Time"
@@ -10511,7 +10400,7 @@ msgstr "Czas letni Zielonego Przylądka"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) Wyspy Zielonego Przylądka"
 
 #: dlls/tzres/tzres.rc:183
 msgid "Haiti Standard Time"
@@ -10523,7 +10412,7 @@ msgstr "Czas letni Haiti"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) Haiti"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Central European Standard Time"
@@ -10535,7 +10424,7 @@ msgstr "Czas letni Europy środkowej"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
-msgstr ""
+msgstr "(UTC+01:00) Sarajewo, Skopia, Warszawa, Zagrzeb"
 
 #: dlls/tzres/tzres.rc:234
 msgid "Morocco Standard Time"
@@ -10547,33 +10436,27 @@ msgstr "Czas letni Maroka"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+01:00) Casablanca"
-msgstr ""
+msgstr "(UTC+01:00) Casablanka"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:401
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC-08:00) Uniwersalny Czas Koordynowany-08"
 
 #: dlls/tzres/tzres.rc:39
-#, fuzzy
-#| msgid "Atlantic Standard Time"
 msgid "Altai Standard Time"
-msgstr "Czas urzędowy atlantycki"
+msgstr "Czas urzędowy Altai"
 
 #: dlls/tzres/tzres.rc:40
-#, fuzzy
-#| msgid "Atlantic Daylight Time"
 msgid "Altai Daylight Time"
-msgstr "Czas letni atlantycki"
+msgstr "Czas letni Altai"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
-msgstr ""
+msgstr "(UTC+07:00) Barnaul, Gorno-Altaysk"
 
 #: dlls/tzres/tzres.rc:108
 msgid "Central Europe Standard Time"
@@ -10585,7 +10468,7 @@ msgstr "Czas letni Europy środkowej"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
-msgstr ""
+msgstr "(UTC+01:00) Belgrad, Bratysława, Budapeszt, Ljubljana, Praga"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Iran Standard Time"
@@ -10597,7 +10480,7 @@ msgstr "Czas letni Iranu"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) Teheran"
 
 #: dlls/tzres/tzres.rc:318
 msgid "Saint Pierre Standard Time"
@@ -10608,26 +10491,20 @@ msgid "Saint Pierre Daylight Time"
 msgstr "Czas letni Saint Pierre"
 
 #: dlls/tzres/tzres.rc:320
-#, fuzzy
-#| msgid "Saint Pierre Standard Time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "Czas urzędowy Saint Pierre"
+msgstr "(UTC-03:00) Saint Pierre i Miquelon"
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Sao Tome Standard Time"
-msgstr "Czas urzędowy Samoa"
+msgstr "Czas urzędowy Sao Tome"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Sao Tome Daylight Time"
-msgstr "Czas letni Samoa"
+msgstr "Czas letni Sao Tome"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) Sao Tome"
 
 #: dlls/tzres/tzres.rc:249
 msgid "Namibia Standard Time"
@@ -10639,7 +10516,7 @@ msgstr "Czas letni Namibii"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+02:00) Windhoek"
-msgstr ""
+msgstr "(UTC+02:00) Windhuk"
 
 #: dlls/tzres/tzres.rc:366
 msgid "Tonga Standard Time"
@@ -10651,7 +10528,7 @@ msgstr "Czas letni Tonga"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC+13:00) Nuku'alofa"
-msgstr ""
+msgstr "(UTC+13:00) Nuku'alofa"
 
 #: dlls/tzres/tzres.rc:240
 msgid "Mountain Standard Time (Mexico)"
@@ -10663,7 +10540,7 @@ msgstr "Czas letni górski (Meksyk)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
-msgstr ""
+msgstr "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
 
 #: dlls/tzres/tzres.rc:171
 msgid "GMT Standard Time"
@@ -10675,7 +10552,7 @@ msgstr "Czas letni GMT"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
-msgstr ""
+msgstr "(UTC+00:00) Dublin, Edynburg, Lizbona, Londyn"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -10687,7 +10564,7 @@ msgstr "Czas letni Azji środkowej"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC+06:00) Astana"
-msgstr ""
+msgstr "(UTC+06:00) Astana"
 
 #: dlls/tzres/tzres.rc:213
 msgid "Lord Howe Standard Time"
@@ -10699,7 +10576,7 @@ msgstr "Czas letni Lord Howe"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr ""
+msgstr "(UTC+10:30) Wyspy Lord Howe"
 
 #: dlls/tzres/tzres.rc:48
 msgid "Arabic Standard Time"
@@ -10711,17 +10588,15 @@ msgstr "Czas letni arabski"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
-msgstr ""
+msgstr "(UTC+03:00) Bagdad"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:395
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC+13:00) Uniwersalny Czas Koordynowany+13"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Magadan Standard Time"
@@ -10733,7 +10608,7 @@ msgstr "Czas letni Magadan"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
-msgstr ""
+msgstr "(UTC+11:00) Magadan"
 
 #: dlls/tzres/tzres.rc:258
 msgid "Newfoundland Standard Time"
@@ -10745,23 +10620,19 @@ msgstr "Czas letni Nowej Fundlandii"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) Nowa Fundlandia"
 
 #: dlls/tzres/tzres.rc:345
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Sudan Standard Time"
-msgstr "Czas urzędowy Jordanu"
+msgstr "Czas urzędowy Sudanu"
 
 #: dlls/tzres/tzres.rc:346
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Sudan Daylight Time"
-msgstr "Czas letni Jordanu"
+msgstr "Czas letni Sudanu"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+02:00) Khartoum"
-msgstr ""
+msgstr "(UTC+02:00) Chartum"
 
 #: dlls/tzres/tzres.rc:435
 msgid "West Pacific Standard Time"
@@ -10773,7 +10644,7 @@ msgstr "Czas letni pacyficzny zachodni"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+10:00) Guam, Port Moresby"
-msgstr ""
+msgstr "(UTC+10:00) Guam, Port Moresby"
 
 #: dlls/tzres/tzres.rc:279
 msgid "Pacific Standard Time"
@@ -10785,7 +10656,7 @@ msgstr "Czas letni pacyficzny"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-08:00) Czas pacyficzny (US & Canada)"
 
 #: dlls/tzres/tzres.rc:69
 msgid "Azerbaijan Standard Time"
@@ -10797,7 +10668,7 @@ msgstr "Czas letni Azerbejdżanu"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC+04:00) Baku"
-msgstr ""
+msgstr "(UTC+04:00) Baku"
 
 #: dlls/tzres/tzres.rc:219
 msgid "Magallanes Standard Time"
@@ -10809,7 +10680,7 @@ msgstr "Czas letni Magallanes"
 
 #: dlls/tzres/tzres.rc:221
 msgid "(UTC-03:00) Punta Arenas"
-msgstr ""
+msgstr "(UTC-03:00) Punta Arenas"
 
 #: dlls/tzres/tzres.rc:324
 msgid "Samoa Standard Time"
@@ -10821,7 +10692,7 @@ msgstr "Czas letni Samoa"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+13:00) Samoa"
-msgstr ""
+msgstr "(UTC+13:00) Samoa"
 
 #: dlls/tzres/tzres.rc:201
 msgid "Kaliningrad Standard Time"
@@ -10833,7 +10704,7 @@ msgstr "Czas letni Kaliningradu"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC+02:00) Kaliningrad"
-msgstr ""
+msgstr "(UTC+02:00) Kaliningrad"
 
 #: dlls/tzres/tzres.rc:282
 msgid "Pacific Standard Time (Mexico)"
@@ -10845,7 +10716,7 @@ msgstr "Czas letni pacyficzny (Meksyk)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
-msgstr ""
+msgstr "(UTC-08:00) Baja Kalifornia"
 
 #: dlls/tzres/tzres.rc:228
 msgid "Middle East Standard Time"
@@ -10857,7 +10728,7 @@ msgstr "Czas letni Bliskiego Wschodu"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
-msgstr ""
+msgstr "(UTC+02:00) Bejrut"
 
 #: dlls/tzres/tzres.rc:360
 msgid "Tokyo Standard Time"
@@ -10869,7 +10740,7 @@ msgstr "Czas letni Tokyo"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
-msgstr ""
+msgstr "(UTC+09:00) Osaka, Sapporo, Tokio"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Line Islands Standard Time"
@@ -10881,7 +10752,7 @@ msgstr "Czas letni Wysp Line"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
-msgstr ""
+msgstr "(UTC+14:00) Wyspy Kiritimati"
 
 #: dlls/tzres/tzres.rc:129
 msgid "Cuba Standard Time"
@@ -10893,7 +10764,7 @@ msgstr "Czas letni Kuby"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-05:00) Havana"
-msgstr ""
+msgstr "(UTC-05:00) Hawana"
 
 #: dlls/tzres/tzres.rc:198
 msgid "Jordan Standard Time"
@@ -10905,7 +10776,7 @@ msgstr "Czas letni Jordanu"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
-msgstr ""
+msgstr "(UTC+02:00) Amman"
 
 #: dlls/tzres/tzres.rc:117
 msgid "Central Standard Time"
@@ -10917,31 +10788,27 @@ msgstr "Czas letni środkowy"
 
 #: dlls/tzres/tzres.rc:119
 msgid "(UTC-06:00) Central Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-06:00) Czas środkowy (US & Canada)"
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
 msgid "Russia Time Zone 3"
-msgstr ""
+msgstr "Rosyjska strefa czasowa 3"
 
 #: dlls/tzres/tzres.rc:305
 msgid "(UTC+04:00) Izhevsk, Samara"
-msgstr ""
+msgstr "(UTC+04:00) Izhevsk, Samara"
 
 #: dlls/tzres/tzres.rc:414
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "Volgograd Standard Time"
-msgstr "Czas urzędowy Tonga"
+msgstr "Czas urzędowy Wołgogradu"
 
 #: dlls/tzres/tzres.rc:415
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "Volgograd Daylight Time"
-msgstr "Czas letni Tonga"
+msgstr "Czas letni Wołgogradu"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+04:00) Volgograd"
-msgstr ""
+msgstr "(UTC+04:00) Wołgograd"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Azores Standard Time"
@@ -10953,7 +10820,7 @@ msgstr "Czas letni Azorów"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
-msgstr ""
+msgstr "(UTC-01:00) Azory"
 
 #: dlls/tzres/tzres.rc:264
 msgid "North Asia East Standard Time"
@@ -10965,17 +10832,15 @@ msgstr "Czas letni Azji północnej wschodni"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
-msgstr ""
+msgstr "(UTC+08:00) Irkuck"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:407
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC-11:00) Uniwersalny Czas Koordynowany-11"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Argentina Standard Time"
@@ -10987,23 +10852,19 @@ msgstr "Czas letni Argentyny"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC-03:00) City of Buenos Aires"
-msgstr ""
+msgstr "(UTC-03:00) Miasto Buenos Aires"
 
 #: dlls/tzres/tzres.rc:375
-#, fuzzy
-#| msgid "Turkey Standard Time"
 msgid "Turks And Caicos Standard Time"
-msgstr "Czas urzędowy Turcji"
+msgstr "Czas urzędowy Turks i Caicos"
 
 #: dlls/tzres/tzres.rc:376
-#, fuzzy
-#| msgid "Turkey Daylight Time"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Czas letni Turcji"
+msgstr "Czas letni Turks i Caicos"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) Turks i Caicos"
 
 #: dlls/tzres/tzres.rc:222
 msgid "Marquesas Standard Time"
@@ -11015,7 +10876,7 @@ msgstr "Czas letni Marquesas"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr ""
+msgstr "(UTC-09:30) Wyspy Marquesas"
 
 #: dlls/tzres/tzres.rc:243
 msgid "Myanmar Standard Time"
@@ -11027,17 +10888,15 @@ msgstr "Czas letni Myanmar"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+06:30) Yangon (Rangoon)"
-msgstr ""
+msgstr "(UTC+06:30) Yangon (Rangoon)"
 
 #: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
 msgid "Coordinated Universal Time"
 msgstr "Uniwersalny Czas Koordynowany"
 
 #: dlls/tzres/tzres.rc:389
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC) Coordinated Universal Time"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC) Uniwersalny Czas Koordynowany"
 
 #: dlls/tzres/tzres.rc:189
 msgid "India Standard Time"
@@ -11049,7 +10908,7 @@ msgstr "Czas letni Indii"
 
 #: dlls/tzres/tzres.rc:191
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
-msgstr ""
+msgstr "(UTC+05:30) Chennai, Kolkata, Mumbai, Nowe Delhi"
 
 #: dlls/tzres/tzres.rc:180
 msgid "GTB Standard Time"
@@ -11061,7 +10920,7 @@ msgstr "Czas letni GTB"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Athens, Bucharest"
-msgstr ""
+msgstr "(UTC+02:00) Ateny, Bukareszt"
 
 #: dlls/tzres/tzres.rc:372
 msgid "Turkey Standard Time"
@@ -11073,23 +10932,19 @@ msgstr "Czas letni Turcji"
 
 #: dlls/tzres/tzres.rc:374
 msgid "(UTC+03:00) Istanbul"
-msgstr ""
+msgstr "(UTC+03:00) Istambuł"
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgid "Arabian Standard Time"
 msgid "Astrakhan Standard Time"
-msgstr "Czas urzędowy arabski"
+msgstr "Czas urzędowy Astrakhan"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgid "Arabian Daylight Time"
 msgid "Astrakhan Daylight Time"
-msgstr "Czas letni arabski"
+msgstr "Czas letni Astrakhanu"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
-msgstr ""
+msgstr "(UTC+04:00) Astrakhan, Ulyanovsk"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Fiji Standard Time"
@@ -11101,7 +10956,7 @@ msgstr "Czas letni Fidżi"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+12:00) Fiji"
-msgstr ""
+msgstr "(UTC+12:00) Fidżi"
 
 #: dlls/tzres/tzres.rc:87
 msgid "Canada Central Standard Time"
@@ -11113,23 +10968,19 @@ msgstr "Czas letni Kanady środkowej "
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-06:00) Saskatchewan"
-msgstr ""
+msgstr "(UTC-06:00) Saskatchewan"
 
 #: dlls/tzres/tzres.rc:441
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Yukon Standard Time"
-msgstr "Czas urzędowy Jakucka"
+msgstr "Czas urzędowy Jukonu"
 
 #: dlls/tzres/tzres.rc:442
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Yukon Daylight Time"
-msgstr "Czas letni Jakucka"
+msgstr "Czas letni Jukonu"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC-07:00) Yukon"
-msgstr ""
+msgstr "(UTC-07:00) Jukon"
 
 #: dlls/tzres/tzres.rc:351
 msgid "Taipei Standard Time"
@@ -11141,7 +10992,7 @@ msgstr "Czas letni Taipei"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+08:00) Taipei"
-msgstr ""
+msgstr "(UTC+08:00) Tajpej"
 
 #: dlls/tzres/tzres.rc:423
 msgid "W. Europe Standard Time"
@@ -11153,7 +11004,7 @@ msgstr "Czas letni Europy zachodniej"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
-msgstr ""
+msgstr "(UTC+01:00) Amsterdam, Berlin, Brno, Rzym, Sztokholm, Wiedeń"
 
 #: dlls/tzres/tzres.rc:231
 msgid "Montevideo Standard Time"
@@ -11165,7 +11016,7 @@ msgstr "Czas letni Montevideo"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC-03:00) Montevideo"
-msgstr ""
+msgstr "(UTC-03:00) Montevideo"
 
 #: dlls/tzres/tzres.rc:285
 msgid "Pakistan Standard Time"
@@ -11177,23 +11028,19 @@ msgstr "Czas letni Pakistanu"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+05:00) Islamabad, Karachi"
-msgstr ""
+msgstr "(UTC+05:00) Islamabad, Karachi"
 
 #: dlls/tzres/tzres.rc:363
-#, fuzzy
-#| msgid "Tokyo Standard Time"
 msgid "Tomsk Standard Time"
-msgstr "Czas urzędowy Tokyo"
+msgstr "Czas urzędowy Tomska"
 
 #: dlls/tzres/tzres.rc:364
-#, fuzzy
-#| msgid "Tokyo Daylight Time"
 msgid "Tomsk Daylight Time"
-msgstr "Czas letni Tokyo"
+msgstr "Czas letni Tomska"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+07:00) Tomsk"
-msgstr ""
+msgstr "(UTC+07:00) Tomsk"
 
 #: dlls/tzres/tzres.rc:93
 msgid "Caucasus Standard Time"
@@ -11205,7 +11052,7 @@ msgstr "Czas letni kaukaski"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
-msgstr ""
+msgstr "(UTC+04:00) Erywań"
 
 #: dlls/tzres/tzres.rc:66
 msgid "AUS Eastern Standard Time"
@@ -11217,7 +11064,7 @@ msgstr "Czas letni Australii wschodniej"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
-msgstr ""
+msgstr "(UTC+10:00) Canberra, Melbourne, Sydney"
 
 #: dlls/tzres/tzres.rc:246
 msgid "N. Central Asia Standard Time"
@@ -11229,7 +11076,7 @@ msgstr "Czas letni Azji północno-środkowej"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
-msgstr ""
+msgstr "(UTC+07:00) Nowosybirsk"
 
 #: dlls/tzres/tzres.rc:150
 msgid "Eastern Standard Time"
@@ -11241,39 +11088,31 @@ msgstr "Czas letni wschodni"
 
 #: dlls/tzres/tzres.rc:152
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-05:00) Czas wschodni (US & Canada)"
 
 #: dlls/tzres/tzres.rc:369
-#, fuzzy
-#| msgid "Tasmania Standard Time"
 msgid "Transbaikal Standard Time"
-msgstr "Czas urzędowy Tasmanii"
+msgstr "Czas urzędowy Transbajkału"
 
 #: dlls/tzres/tzres.rc:370
-#, fuzzy
-#| msgid "Tasmania Daylight Time"
 msgid "Transbaikal Daylight Time"
-msgstr "Czas letni Tasmanii"
+msgstr "Czas letni Transbajkału"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+09:00) Chita"
-msgstr ""
+msgstr "(UTC+09:00) Chita"
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgid "E. Europe Standard Time"
-msgstr "Czas urzędowy Europy zachodniej"
+msgstr "Czas urzędowy Europy wschodniej"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "W. Europe Daylight Time"
 msgid "E. Europe Daylight Time"
-msgstr "Czas letni Europy zachodniej"
+msgstr "Czas letni Europy wschodniej"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
-msgstr ""
+msgstr "(UTC+02:00) Kiszyniów"
 
 #: dlls/tzres/tzres.rc:120
 msgid "Central Standard Time (Mexico)"
@@ -11285,23 +11124,19 @@ msgstr "Czas letni środkowy (Meksyk)"
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
-msgstr ""
+msgstr "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Saratov Standard Time"
-msgstr "Czas urzędowy Samoa"
+msgstr "Czas urzędowy Saratowa"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Saratov Daylight Time"
-msgstr "Czas letni Samoa"
+msgstr "Czas letni Saratowa"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
-msgstr ""
+msgstr "(UTC+04:00) Saratów"
 
 #: dlls/tzres/tzres.rc:57
 msgid "Atlantic Standard Time"
@@ -11313,7 +11148,7 @@ msgstr "Czas letni atlantycki"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
-msgstr ""
+msgstr "(UTC-04:00) Czas atlantycki (Canada)"
 
 #: dlls/tzres/tzres.rc:237
 msgid "Mountain Standard Time"
@@ -11325,7 +11160,7 @@ msgstr "Czas letni górski"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-07:00) Czas górski (US & Canada)"
 
 #: dlls/tzres/tzres.rc:381
 msgid "US Eastern Standard Time"
@@ -11337,23 +11172,19 @@ msgstr "Czas letni Stanów Zjednoczonych wschodnich"
 
 #: dlls/tzres/tzres.rc:383
 msgid "(UTC-05:00) Indiana (East)"
-msgstr ""
+msgstr "(UTC-05:00) Indiana (Wschód)"
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "Alaskan Standard Time"
 msgid "Sakhalin Standard Time"
-msgstr "Czas urzędowy Alaski"
+msgstr "Czas urzędowy Sachalina"
 
 #: dlls/tzres/tzres.rc:322
-#, fuzzy
-#| msgid "Alaskan Daylight Time"
 msgid "Sakhalin Daylight Time"
-msgstr "Czas letni Alaski"
+msgstr "Czas letni Sachalinu"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
-msgstr ""
+msgstr "(UTC+11:00) Sachalin"
 
 #: dlls/tzres/tzres.rc:270
 msgid "North Korea Standard Time"
@@ -11365,7 +11196,7 @@ msgstr "Czas letni Korei Północnej"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC+09:00) Pyongyang"
-msgstr ""
+msgstr "(UTC+09:00) Pjongjang"
 
 #: dlls/tzres/tzres.rc:354
 msgid "Tasmania Standard Time"
@@ -11377,7 +11208,7 @@ msgstr "Czas letni Tasmanii"
 
 #: dlls/tzres/tzres.rc:356
 msgid "(UTC+10:00) Hobart"
-msgstr ""
+msgstr "(UTC+10:00) Hobart"
 
 #: dlls/tzres/tzres.rc:99
 msgid "Central America Standard Time"
@@ -11389,17 +11220,15 @@ msgstr "Czas letni Ameryki środkowej"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central America"
-msgstr ""
+msgstr "(UTC-06:00) Ameryka środkowa"
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:398
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC-02:00) Uniwersalny Czas Koordynowany-02"
 
 #: dlls/tzres/tzres.rc:384
 msgid "US Mountain Standard Time"
@@ -11411,7 +11240,7 @@ msgstr "Czas letni Stanów Zjednoczonych górski"
 
 #: dlls/tzres/tzres.rc:386
 msgid "(UTC-07:00) Arizona"
-msgstr ""
+msgstr "(UTC-07:00) Arizona"
 
 #: dlls/tzres/tzres.rc:339
 msgid "South Africa Standard Time"
@@ -11423,7 +11252,7 @@ msgstr "Czas letni Afryki południowej"
 
 #: dlls/tzres/tzres.rc:341
 msgid "(UTC+02:00) Harare, Pretoria"
-msgstr ""
+msgstr "(UTC+02:00) Harare, Pretoria"
 
 #: dlls/tzres/tzres.rc:96
 msgid "Cen. Australia Standard Time"
@@ -11435,17 +11264,15 @@ msgstr "Czas letni Australii środkowej"
 
 #: dlls/tzres/tzres.rc:98
 msgid "(UTC+09:30) Adelaide"
-msgstr ""
+msgstr "(UTC+09:30) Adelajda"
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:404
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr "Uniwersalny Czas Koordynowany"
+msgstr "(UTC-09:00) Uniwersalny Czas Koordynowany-09"
 
 #: dlls/tzres/tzres.rc:342
 msgid "Sri Lanka Standard Time"
@@ -11457,7 +11284,7 @@ msgstr "Czas letni Sri Lanki"
 
 #: dlls/tzres/tzres.rc:344
 msgid "(UTC+05:30) Sri Jayawardenepura"
-msgstr ""
+msgstr "(UTC+05:30) Sri Jayawardenepura"
 
 #: dlls/tzres/tzres.rc:30
 msgid "Afghanistan Standard Time"
@@ -11469,7 +11296,7 @@ msgstr "Czas letni Afganistanu"
 
 #: dlls/tzres/tzres.rc:32
 msgid "(UTC+04:30) Kabul"
-msgstr ""
+msgstr "(UTC+04:30) Kabul"
 
 #: dlls/tzres/tzres.rc:438
 msgid "Yakutsk Standard Time"
@@ -11481,7 +11308,7 @@ msgstr "Czas letni Jakucka"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+09:00) Yakutsk"
-msgstr ""
+msgstr "(UTC+09:00) Jakuck"
 
 #: dlls/tzres/tzres.rc:309
 msgid "SA Eastern Standard Time"
@@ -11493,7 +11320,7 @@ msgstr "Czas letni Ameryki Południowej wschodniej"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
-msgstr ""
+msgstr "(UTC-03:00) Cayenne, Fortaleza"
 
 #: dlls/tzres/tzres.rc:42
 msgid "Arab Standard Time"
@@ -11505,7 +11332,7 @@ msgstr "Czas letni arabski"
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+03:00) Kuwait, Riyadh"
-msgstr ""
+msgstr "(UTC+03:00) Kuwejt, Rijad"
 
 #: dlls/tzres/tzres.rc:45
 msgid "Arabian Standard Time"
@@ -11517,7 +11344,7 @@ msgstr "Czas letni arabski"
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
-msgstr ""
+msgstr "(UTC+04:00) Abu Dhabi, Muscat"
 
 #: dlls/tzres/tzres.rc:357
 msgid "Tocantins Standard Time"
@@ -11529,7 +11356,7 @@ msgstr "Czas letni Tocantins"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC-03:00) Araguaina"
-msgstr ""
+msgstr "(UTC-03:00) Araguaina"
 
 #: dlls/tzres/tzres.rc:306
 msgid "Russian Standard Time"
@@ -11541,7 +11368,7 @@ msgstr "Czas letni Rosji"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+03:00) Moscow, St. Petersburg"
-msgstr ""
+msgstr "(UTC+03:00) Moskwa, St. Petersburg"
 
 #: dlls/tzres/tzres.rc:63
 msgid "Aus Central W. Standard Time"
@@ -11553,7 +11380,7 @@ msgstr "Czas letni Australii środkowej zachodni"
 
 #: dlls/tzres/tzres.rc:65
 msgid "(UTC+08:45) Eucla"
-msgstr ""
+msgstr "(UTC+08:45) Eucla"
 
 #: dlls/tzres/tzres.rc:294
 msgid "Romance Standard Time"
@@ -11565,7 +11392,7 @@ msgstr "Czas letni romański"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
-msgstr ""
+msgstr "(UTC+01:00) Bruksela, Kopenhaga, Madryt, Paryż"
 
 #: dlls/tzres/tzres.rc:159
 msgid "Ekaterinburg Standard Time"
@@ -11577,31 +11404,27 @@ msgstr "Czas letni Jekaterynburga"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+05:00) Ekaterinburg"
-msgstr ""
+msgstr "(UTC+05:00) Jekaterynburg"
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
 msgid "Russia Time Zone 11"
-msgstr ""
+msgstr "Rosyjska strefa czasowa 11"
 
 #: dlls/tzres/tzres.rc:302
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
-msgstr ""
+msgstr "(UTC+12:00) Anadyr, Pietropawłowsk-Kamczacki"
 
 #: dlls/tzres/tzres.rc:432
-#, fuzzy
-#| msgid "West Asia Standard Time"
 msgid "West Bank Standard Time"
-msgstr "Czas urzędowy Azji zachodniej"
+msgstr "Czas urzędowy zachodniego wybrzeża"
 
 #: dlls/tzres/tzres.rc:433
-#, fuzzy
-#| msgid "West Asia Daylight Time"
 msgid "West Bank Daylight Time"
-msgstr "Czas letni Azji zachodniej"
+msgstr "Czas letni zachodniego wybrzeża"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+02:00) Gaza, Hebron"
-msgstr ""
+msgstr "(UTC+02:00) Gaza, Hebron"
 
 #: dlls/tzres/tzres.rc:348
 msgid "Syria Standard Time"
@@ -11613,7 +11436,7 @@ msgstr "Czas letni Syrii"
 
 #: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Damascus"
-msgstr ""
+msgstr "(UTC+02:00) Damaszek"
 
 #: dlls/tzres/tzres.rc:60
 msgid "AUS Central Standard Time"
@@ -11625,7 +11448,7 @@ msgstr "Czas letni Australii środkowej"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+09:30) Darwin"
-msgstr ""
+msgstr "(UTC+09:30) Darwin"
 
 #: dlls/tzres/tzres.rc:177
 msgid "Greenwich Standard Time"
@@ -11637,7 +11460,7 @@ msgstr "Czas letni Greenwich"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+00:00) Monrovia, Reykjavik"
-msgstr ""
+msgstr "(UTC+00:00) Monrovia, Reykjavik"
 
 #: dlls/tzres/tzres.rc:378
 msgid "Ulaanbaatar Standard Time"
@@ -11649,23 +11472,19 @@ msgstr "Czas letni Ułan Batoru"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC+08:00) Ulaanbaatar"
-msgstr ""
+msgstr "(UTC+08:00) Ułanbator"
 
 #: dlls/tzres/tzres.rc:261
-#, fuzzy
-#| msgid "Morocco Standard Time"
 msgid "Norfolk Standard Time"
-msgstr "Czas urzędowy Maroka"
+msgstr "Czas urzędowy Norfolku"
 
 #: dlls/tzres/tzres.rc:262
-#, fuzzy
-#| msgid "Morocco Daylight Time"
 msgid "Norfolk Daylight Time"
-msgstr "Czas letni Maroka"
+msgstr "Czas letni Norfolku"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC+11:00) Norfolk Island"
-msgstr ""
+msgstr "(UTC+11:00) Wyspy Norfolk"
 
 #: dlls/tzres/tzres.rc:195
 msgid "Israel Standard Time"
@@ -11677,7 +11496,7 @@ msgstr "Czas letni Izraelu"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
-msgstr ""
+msgstr "(UTC+02:00) Jeruzalem"
 
 #: dlls/tzres/tzres.rc:78
 msgid "Bangladesh Standard Time"
@@ -11689,7 +11508,7 @@ msgstr "Czas letni Bangladeszu"
 
 #: dlls/tzres/tzres.rc:80
 msgid "(UTC+06:00) Dhaka"
-msgstr ""
+msgstr "(UTC+06:00) Dhaka"
 
 #: dlls/tzres/tzres.rc:312
 msgid "SA Pacific Standard Time"
@@ -11701,7 +11520,7 @@ msgstr "Czas letni Ameryki Południowej pacyficzny"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
-msgstr ""
+msgstr "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 
 #: dlls/tzres/tzres.rc:429
 msgid "West Asia Standard Time"
@@ -11713,7 +11532,7 @@ msgstr "Czas letni Azji zachodniej"
 
 #: dlls/tzres/tzres.rc:431
 msgid "(UTC+05:00) Ashgabat, Tashkent"
-msgstr ""
+msgstr "(UTC+05:00) Ashgabat, Taszkent"
 
 #: dlls/tzres/tzres.rc:33
 msgid "Alaskan Standard Time"
@@ -11725,7 +11544,7 @@ msgstr "Czas letni Alaski"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-09:00) Alaska"
-msgstr ""
+msgstr "(UTC-09:00) Alaska"
 
 #: dlls/tzres/tzres.rc:288
 msgid "Paraguay Standard Time"
@@ -11737,7 +11556,7 @@ msgstr "Czas letni Paragwaju"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC-04:00) Asuncion"
-msgstr ""
+msgstr "(UTC-04:00) Asuncion"
 
 #: dlls/tzres/tzres.rc:132
 msgid "Dateline Standard Time"
@@ -11749,7 +11568,7 @@ msgstr "Czas letni linii zmiany daty"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
-msgstr ""
+msgstr "(UTC-12:00) Międzynarodowa linia daty zachodnia"
 
 #: dlls/tzres/tzres.rc:207
 msgid "Libya Standard Time"
@@ -11761,7 +11580,7 @@ msgstr "Czas letni Libii"
 
 #: dlls/tzres/tzres.rc:209
 msgid "(UTC+02:00) Tripoli"
-msgstr ""
+msgstr "(UTC+02:00) Tripoli"
 
 #: dlls/tzres/tzres.rc:75
 msgid "Bahia Standard Time"
@@ -11773,7 +11592,7 @@ msgstr "Czas letni Bahia"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC-03:00) Salvador"
-msgstr ""
+msgstr "(UTC-03:00) Salwador"
 
 #: dlls/tzres/tzres.rc:408
 msgid "Venezuela Standard Time"
@@ -11785,7 +11604,7 @@ msgstr "Czas letni Wenezueli"
 
 #: dlls/tzres/tzres.rc:410
 msgid "(UTC-04:00) Caracas"
-msgstr ""
+msgstr "(UTC-04:00) Karakas"
 
 #: dlls/tzres/tzres.rc:84
 msgid "Bougainville Standard Time"
@@ -11797,7 +11616,7 @@ msgstr "Czas letni Bougainville"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+11:00) Bougainville Island"
-msgstr ""
+msgstr "(UTC+11:00) Wyspy Bougainville"
 
 #: dlls/tzres/tzres.rc:186
 msgid "Hawaiian Standard Time"
@@ -11809,7 +11628,7 @@ msgstr "Czas letni Hawajów"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC-10:00) Hawaii"
-msgstr ""
+msgstr "(UTC-10:00) Hawaje"
 
 #: dlls/tzres/tzres.rc:333
 msgid "SE Asia Standard Time"
@@ -11821,39 +11640,31 @@ msgstr "Czas letni Azji południowo-wschodniej"
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
-msgstr ""
+msgstr "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Qyzylorda Standard Time"
-msgstr "Czas urzędowy Jordanu"
+msgstr "Czas urzędowy Qyzylorda"
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Qyzylorda Daylight Time"
-msgstr "Czas letni Jordanu"
+msgstr "Czas letni Qyzylorda"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
-msgstr ""
+msgstr "(UTC+05:00) Qyzylorda"
 
 #: dlls/tzres/tzres.rc:426
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "W. Mongolia Standard Time"
-msgstr "Czas urzędowy Tonga"
+msgstr "Czas urzędowy zachodniej Mongolii"
 
 #: dlls/tzres/tzres.rc:427
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "W. Mongolia Daylight Time"
-msgstr "Czas letni Tonga"
+msgstr "Czas letni zachodniej Mongolii"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+07:00) Hovd"
-msgstr ""
+msgstr "(UTC+07:00) Hovd"
 
 #: dlls/tzres/tzres.rc:255
 msgid "New Zealand Standard Time"
@@ -11865,7 +11676,7 @@ msgstr "Czas letni Nowej Zelandii"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+12:00) Auckland, Wellington"
-msgstr ""
+msgstr "(UTC+12:00) Auckland, Wellington"
 
 #: dlls/tzres/tzres.rc:36
 msgid "Aleutian Standard Time"
@@ -11877,23 +11688,19 @@ msgstr "Czas letni Aleut"
 
 #: dlls/tzres/tzres.rc:38
 msgid "(UTC-10:00) Aleutian Islands"
-msgstr ""
+msgstr "(UTC-10:00) Wyspy Aleutian"
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Omsk Standard Time"
-msgstr "Czas urzędowy Jakucka"
+msgstr "Czas urzędowy Omska"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Omsk Daylight Time"
-msgstr "Czas letni Jakucka"
+msgstr "Czas letni Omska"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
-msgstr ""
+msgstr "(UTC+06:00) Omsk"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Central Brazilian Standard Time"
@@ -11905,7 +11712,7 @@ msgstr "Czas letni Brazylii środkowej"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
-msgstr ""
+msgstr "(UTC-04:00) Cuiaba"
 
 #: dlls/tzres/tzres.rc:81
 msgid "Belarus Standard Time"
@@ -11917,7 +11724,7 @@ msgstr "Czas letni Białorusi"
 
 #: dlls/tzres/tzres.rc:83
 msgid "(UTC+03:00) Minsk"
-msgstr ""
+msgstr "(UTC+03:00) Mińsk"
 
 #: dlls/tzres/tzres.rc:315
 msgid "SA Western Standard Time"
@@ -11929,7 +11736,7 @@ msgstr "Czas letni Ameryki Południowej zachodniej"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
-msgstr ""
+msgstr "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 
 #: dlls/tzres/tzres.rc:174
 msgid "Greenland Standard Time"
@@ -11941,7 +11748,7 @@ msgstr "Czas letni Grenlandii"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC-03:00) Greenland"
-msgstr ""
+msgstr "(UTC-03:00) Grenlandia"
 
 #: dlls/tzres/tzres.rc:147
 msgid "Easter Island Standard Time"
@@ -11953,15 +11760,15 @@ msgstr "Czas letni Wysp Wielkanocnych"
 
 #: dlls/tzres/tzres.rc:149
 msgid "(UTC-06:00) Easter Island"
-msgstr ""
+msgstr "(UTC-06:00) Wyspa Wielkanocna"
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
 msgid "Russia Time Zone 10"
-msgstr ""
+msgstr "Rosyjska strefa czasowa 10"
 
 #: dlls/tzres/tzres.rc:299
 msgid "(UTC+11:00) Chokurdakh"
-msgstr ""
+msgstr "(UTC+11:00) Chokurdakh"
 
 #: dlls/tzres/tzres.rc:156
 msgid "Egypt Standard Time"
@@ -11973,7 +11780,7 @@ msgstr "Czas letni Egiptu"
 
 #: dlls/tzres/tzres.rc:158
 msgid "(UTC+02:00) Cairo"
-msgstr ""
+msgstr "(UTC+02:00) Kair"
 
 #: dlls/tzres/tzres.rc:153
 msgid "Eastern Standard Time (Mexico)"
@@ -11985,7 +11792,7 @@ msgstr "Czas letni wschodni (Meksyk)"
 
 #: dlls/tzres/tzres.rc:155
 msgid "(UTC-05:00) Chetumal"
-msgstr ""
+msgstr "(UTC-05:00) Chetumal"
 
 #: dlls/tzres/tzres.rc:225
 msgid "Mauritius Standard Time"
@@ -11997,7 +11804,7 @@ msgstr "Czas letni Mauritiusa"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+04:00) Port Louis"
-msgstr ""
+msgstr "(UTC+04:00) Port Louis"
 
 #: dlls/tzres/tzres.rc:411
 msgid "Vladivostok Standard Time"
@@ -12009,7 +11816,7 @@ msgstr "Czas letni Władywostoku"
 
 #: dlls/tzres/tzres.rc:413
 msgid "(UTC+10:00) Vladivostok"
-msgstr ""
+msgstr "(UTC+10:00) Władywostok"
 
 #: dlls/tzres/tzres.rc:336
 msgid "Singapore Standard Time"
@@ -12021,7 +11828,7 @@ msgstr "Czas letni Singapuru"
 
 #: dlls/tzres/tzres.rc:338
 msgid "(UTC+08:00) Kuala Lumpur, Singapore"
-msgstr ""
+msgstr "(UTC+08:00) Kuala Lumpur, Singapur"
 
 #: dlls/tzres/tzres.rc:204
 msgid "Korea Standard Time"
@@ -12033,7 +11840,7 @@ msgstr "Czas letni Korei"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC+09:00) Seoul"
-msgstr ""
+msgstr "(UTC+09:00) Seul"
 
 #: dlls/tzres/tzres.rc:123
 msgid "Chatham Islands Standard Time"
@@ -12045,7 +11852,7 @@ msgstr "Czas letni Wysp Chatham"
 
 #: dlls/tzres/tzres.rc:125
 msgid "(UTC+12:45) Chatham Islands"
-msgstr ""
+msgstr "(UTC+12:45) Wyspy Chatham"
 
 #: dlls/tzres/tzres.rc:135
 msgid "E. Africa Standard Time"
@@ -12057,7 +11864,7 @@ msgstr "Czas letni Afryki wschodniej"
 
 #: dlls/tzres/tzres.rc:137
 msgid "(UTC+03:00) Nairobi"
-msgstr ""
+msgstr "(UTC+03:00) Nairobi"
 
 #: dlls/tzres/tzres.rc:165
 msgid "FLE Standard Time"
@@ -12069,7 +11876,7 @@ msgstr "Czas letni FLE"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
-msgstr ""
+msgstr "(UTC+02:00) Helsinki, Kijów, Ryga, Sofia, Tallinn, Vilnius"
 
 #: dlls/tzres/tzres.rc:144
 msgid "E. South America Standard Time"
@@ -12081,7 +11888,7 @@ msgstr "Czas letni Ameryki Południowej wschodni"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
-msgstr ""
+msgstr "(UTC-03:00) Brasilia"
 
 #: dlls/tzres/tzres.rc:114
 msgid "Central Pacific Standard Time"
@@ -12093,7 +11900,7 @@ msgstr "Czas letni pacyficzny środkowy"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
-msgstr ""
+msgstr "(UTC+11:00) Wyspy Salomona, Nowa Kaledonia"
 
 #: dlls/tzres/tzres.rc:420
 msgid "W. Central Africa Standard Time"
@@ -12105,7 +11912,7 @@ msgstr "Czas letni Afryki zachodnio-środkowej"
 
 #: dlls/tzres/tzres.rc:422
 msgid "(UTC+01:00) West Central Africa"
-msgstr ""
+msgstr "(UTC+01:00) Zachodniośrodkowa Afryka"
 
 #: dlls/tzres/tzres.rc:276
 msgid "Pacific SA Standard Time"
@@ -12117,7 +11924,7 @@ msgstr "Czas letni pacyficzny Ameryki Południowej"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
-msgstr ""
+msgstr "(UTC-04:00) Santiago"
 
 #: dlls/tzres/tzres.rc:138
 msgid "E. Australia Standard Time"
@@ -12129,7 +11936,7 @@ msgstr "Czas letni Australii wschodniej"
 
 #: dlls/tzres/tzres.rc:140
 msgid "(UTC+10:00) Brisbane"
-msgstr ""
+msgstr "(UTC+10:00) Brisbane"
 
 #: dlls/tzres/tzres.rc:417
 msgid "W. Australia Standard Time"
@@ -12141,7 +11948,7 @@ msgstr "Czas letni Australii zachodniej"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+08:00) Perth"
-msgstr ""
+msgstr "(UTC+08:00) Perth"
 
 #: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
@@ -12725,7 +12532,7 @@ msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"Sterownik urządzenia zwrócił nieprawidłowy typ zwrotny. Skontaktuj się z "
+"Sterownik urządzenia zwrócił nieprawidłowy rodzaj zwrotny. Skontaktuj się z "
 "producentem urządzenia w celu otrzymania nowego sterownika."
 
 #: dlls/winmm/winmm.rc:73
@@ -12785,7 +12592,8 @@ msgstr ""
 #: dlls/winmm/winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
-"Nie można ustalić typu urządzenia na podstawie podanego rozszerzenia pliku."
+"Nie można ustalić rodzaju urządzenia na podstawie podanego rozszerzenia "
+"pliku."
 
 #: dlls/winmm/winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
@@ -13218,7 +13026,7 @@ msgstr "Nie ma takiego atrybutu"
 
 #: dlls/wldap32/wldap32.rc:49
 msgid "Undefined Type"
-msgstr "Niezdefiniowany typ"
+msgstr "Nieokreślony rodzaj"
 
 #: dlls/wldap32/wldap32.rc:50
 msgid "Inappropriate Matching"
@@ -13495,7 +13303,8 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <nazwa pliku bat> jest używane w pliku typu bat do uruchamiania komend\n"
+"CALL <nazwa pliku bat> jest używane w pliku rodzaju bat do uruchamiania "
+"komend\n"
 "z innego pliku bat. Następnie powraca do pliku, z którego została wywołana\n"
 "(jeżeli istnieje). Komenda CALL może przekazywać parametry do wywoływanej\n"
 "procedury.\n"
@@ -13961,7 +13770,7 @@ msgid ""
 msgstr ""
 "ASSOC pokazuje lub zmienia skojarzenia rozszerzenia pliku\n"
 "\n"
-"Składnia: ASSOC [.ext[=[typPliku]]]\n"
+"Składnia: ASSOC [.ext[=[rodzajPliku]]]\n"
 "\n"
 "ASSOC bez parametrów wyświetla obecne skojarzenia pliku.\n"
 "Jeżeli użyte tylko z jednym rozszerzeniem pliku, to pokazuje obecne\n"
@@ -14005,7 +13814,7 @@ msgid ""
 msgstr ""
 "CHOICE wyświetla tekst i czeka, aż Użytkownik naciśnie dozwolony Przycisk z\n"
 "wybieralnej listy.\n"
-"CHOICE jest używany głównie do budowania menu wyboru w plikach typu bat.\n"
+"CHOICE jest używany głównie do budowania menu wyboru w plikach rodzaju bat.\n"
 
 #: programs/cmd/cmd.rc:324
 msgid ""
@@ -14317,15 +14126,15 @@ msgstr "Rozmiar kursora"
 
 #: programs/conhost/conhost.rc:55
 msgid "&Small"
-msgstr "&Mała"
+msgstr "&Mały"
 
 #: programs/conhost/conhost.rc:56
 msgid "&Medium"
-msgstr "Ś&rednia"
+msgstr "Ś&redni"
 
 #: programs/conhost/conhost.rc:57
 msgid "&Large"
-msgstr "&Duża"
+msgstr "&Duży"
 
 #: programs/conhost/conhost.rc:59
 msgid "Command history"
@@ -14333,15 +14142,15 @@ msgstr "Historia poleceń"
 
 #: programs/conhost/conhost.rc:60
 msgid "&Buffer size:"
-msgstr "Rozmiar &bufora:"
+msgstr "Rozmiar &pamięci:"
 
 #: programs/conhost/conhost.rc:63
 msgid "&Remove duplicates"
-msgstr "&Usuń duplikaty"
+msgstr "&Usuń powielenia"
 
 #: programs/conhost/conhost.rc:65
 msgid "Popup menu"
-msgstr "Menu kontekstowe"
+msgstr "Menu podręczne"
 
 #: programs/conhost/conhost.rc:66
 msgid "&Control"
@@ -14558,7 +14367,7 @@ msgstr "Ethernet"
 
 #: programs/ipconfig/ipconfig.rc:35
 msgid "Connection-specific DNS suffix"
-msgstr "Przedrostek DNS konkretnego połączenia"
+msgstr "Przedrostek DNS danego połączenia"
 
 #: programs/ipconfig/ipconfig.rc:36
 msgid "IPv4 address"
@@ -14570,7 +14379,7 @@ msgstr "Nazwa gospodarza"
 
 #: programs/ipconfig/ipconfig.rc:39
 msgid "Node type"
-msgstr "Typ węzła"
+msgstr "Rodzaj węzła"
 
 #: programs/ipconfig/ipconfig.rc:40
 msgid "Broadcast"
@@ -15134,19 +14943,19 @@ msgstr "Serwer &zdalny"
 
 #: programs/oleview/oleview.rc:50
 msgid "View &Type information"
-msgstr "Wyświetl informacje o &typie"
+msgstr "Wyświetl informacje o &rodzaju"
 
 #: programs/oleview/oleview.rc:52
 msgid "Create &Instance"
-msgstr "Stwórz &instancję"
+msgstr "Stwórz &wystąpienie"
 
 #: programs/oleview/oleview.rc:53
 msgid "Create Instance &On..."
-msgstr "Stwórz instancję &na..."
+msgstr "Stwórz wystąpienie &na..."
 
 #: programs/oleview/oleview.rc:54
 msgid "&Release Instance"
-msgstr "&Zwolnij instancję"
+msgstr "&Zwolnij wystąpienie"
 
 #: programs/oleview/oleview.rc:56
 msgid "Copy C&LSID to clipboard"
@@ -15295,15 +15104,15 @@ msgstr "Zakończ aplikację. Możesz zostać zapytany, czy zapisać zmiany"
 
 #: programs/oleview/oleview.rc:110
 msgid "Create an instance of the selected object"
-msgstr "Stwórz instancję wybranego obiektu"
+msgstr "Stwórz wystąpienie wybranego obiektu"
 
 #: programs/oleview/oleview.rc:111
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "Stwórz instancję wybranego obiektu na określonym komputerze"
+msgstr "Stwórz wystąpienie wybranego obiektu na określonym komputerze"
 
 #: programs/oleview/oleview.rc:112
 msgid "Release the currently selected object instance"
-msgstr "Zwolnij aktualnie wybraną instancję obiektu"
+msgstr "Zwolnij obecnie wybrane wystąpienie obiektu"
 
 #: programs/oleview/oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
@@ -15433,7 +15242,7 @@ msgstr "Zamknij okno"
 
 #: programs/oleview/oleview.rc:128
 msgid "Group typeinfos by kind"
-msgstr "Grupuj informacje o typach według rodzajów"
+msgstr "Grupuj informacje o rodzajach według rodzajów"
 
 #: programs/progman/progman.rc:33
 msgid "&New..."
@@ -15470,7 +15279,7 @@ msgstr "&Ustawienia"
 
 #: programs/progman/progman.rc:45
 msgid "&Arrange automatically"
-msgstr "&Autorozmieszczanie"
+msgstr "S&am rozmieszczaj"
 
 #: programs/progman/progman.rc:46
 msgid "&Minimize on run"
@@ -15686,17 +15495,6 @@ msgid "Type \"REG /?\" for help.\n"
 msgstr "Wprowadź \"REG /?\" aby uzyskać pomoc.\n"
 
 #: programs/reg/reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | EXPORT | IMPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -15712,7 +15510,7 @@ msgstr ""
 "  REG [działanie] [parametry]\n"
 "\n"
 "Obsługiwane działania:\n"
-"  ADD | DELETE | EXPORT | IMPORT | QUERY\n"
+"  ADD | COPY | DELETE | EXPORT | IMPORT | QUERY\n"
 "\n"
 "Aby uzyskać pomoc związaną z określonym działaniem, wprowadź:\n"
 "  REG [działanie] /?\n"
@@ -15818,35 +15616,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:202
-#, fuzzy
-#| msgid ""
-#| "REG EXPORT <key> <file> [/y]\n"
-#| "\n"
-#| "  Exports a specified registry key (including all subkeys and values)\n"
-#| "  to a file.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to export.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  <file>\n"
-#| "     The name and path of the registry file that will be created.\n"
-#| "     This file must have a .reg extension.\n"
-#| "\n"
-#| "  /y\n"
-#| "     Overwrite <file> without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG COPY <key1> <key2> [/s] [/f]\n"
 "\n"
@@ -15880,19 +15649,21 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
-"REG EXPORT <klucz> <plik> [/y]\n"
+"REG COPY <klucz1> <klucz2> [/s] [/f]\n"
 "\n"
-"  Eksportuje dany klucz rejestru (włączając w to wszystkie podklucze i "
-"wartości)\n"
-"  do pliku.\n"
+"  Kopiuje zawartość danego klucza rejestru do innego miejsca.\n"
+"  Domyślnie, działanie to kopiuje tylko wartości rejestru. Dopisz [/s], aby\n"
+"  rekursywnie skopiować wszystkie podklucze i wartości.\n"
 "\n"
-"  <klucz>\n"
-"     Klucz rejestru do wyeksportowania.\n"
+"  <klucz1>, <klucz2>\n"
+"     Klucze rejestru określające miejsce źródłowe (<klucz1>) i docelowe "
+"(<klucz2>)\n"
+"     danych. Jeśli <klucz2> nie istnieje, to zostanie stworzony.\n"
 "\n"
 "     Format: ROOT\\Podklucz\n"
 "\n"
-"     ROOT: Uprzednio określony klucz rejestru. Musi to być jedno z "
-"następujących:\n"
+"     KORZEŃ: Uprzednio określony klucz rejestru. Musi on być jednym z "
+"poniższych:\n"
 "\n"
 "         HKEY_LOCAL_MACHINE  | HKLM\n"
 "         HKEY_CURRENT_USER   | HKCU\n"
@@ -15900,14 +15671,15 @@ msgstr ""
 "         HKEY_USERS          | HKU\n"
 "         HKEY_CURRENT_CONFIG | HKCC\n"
 "\n"
-"     Podklucz: Pełna ścieżka do klucza rejestru pod danym kluczem ROOT.\n"
+"     Podklucz: Pełna ścieżka do klucza rejestru pod danym kluczem KORZEŃ.\n"
 "\n"
-"  <plik>\n"
-"     Nazwa i ścieżka pliku rejestru, który zostanie utworzony.\n"
-"     Plik musi mieć rozszerzenie .reg.\n"
+"  /s\n"
+"     Skopiuj wszystkie podklucze i wartości z <klucz1> to <klucz2>.\n"
 "\n"
-"  /y\n"
-"     Zastąp <plik> bez pytania o potwierdzenie.\n"
+"  /f\n"
+"     Zastąp wszystkie dane rejestru w <klucz2> bez pytania o potwierdzenie.\n"
+"     To ustawienie nie zmienia podkluczy i wartości, które istnieją tylko w  "
+"<klucz2>.\n"
 "\n"
 
 #: programs/reg/reg.rc:92
@@ -16169,10 +15941,8 @@ msgid "reg: Invalid option [%1]. "
 msgstr "reg: Nieprawidłowa opcja [%1]. "
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: Po opcji [/d] musi wystąpić prawidłowa wartość szesnastkowa\n"
+msgstr "reg: Po opcji [/d] musi wystąpić prawidłowa wartość liczbowa\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
@@ -16200,15 +15970,14 @@ msgstr "reg: Nieprawidłowe parametry wiersza poleceń\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: Klucze źródłowy i docelowy nie mogą być takie same\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "Plik '%1' już istnieje. Czy chcesz go zastąpić?"
+msgstr ""
+"Wartość '%1\\%2' już istnieje w kluczu docelowym. Czy chcesz ją zastąpić?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -16223,10 +15992,8 @@ msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Czy na pewno chcesz usunąć kłucz rejestru '%1'?"
 
 #: programs/reg/reg.rc:137
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: Nie udało się usunąć klucza rejestru '%1'.\n"
+msgstr "reg: Nie udało się usunąć wszystkich kluczy rejestru '%1'\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
@@ -16776,7 +16543,7 @@ msgstr "Nie można odnaleźć wartości rejestru '%1'."
 
 #: programs/regedit/regedit.rc:207
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Nie udało się edytować kluczy rejestru tego typu  (%1!u!)."
+msgstr "Nie udało się edytować kluczy rejestru tego rodzaju  (%1!u!)."
 
 #: programs/regedit/regedit.rc:208
 msgid "The value is too big (%1!u!)."
@@ -17081,7 +16848,7 @@ msgstr "&Ukryj kiedy jest zminimalizowany"
 
 #: programs/taskmgr/taskmgr.rc:49 programs/taskmgr/taskmgr.rc:257
 msgid "&Show 16-bit tasks"
-msgstr "&Pokazuj zadania 16-bitowe"
+msgstr "&Pokaż zadania 16-bitowe"
 
 #: programs/taskmgr/taskmgr.rc:54
 msgid "&Refresh Now"
@@ -17215,7 +16982,7 @@ msgstr "&Nowe zadanie..."
 
 #: programs/taskmgr/taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr "&Pokazuj procesy wszystkich użytkowników"
+msgstr "Pokaż proce&sy wszystkich użytkowników"
 
 #: programs/taskmgr/taskmgr.rc:372
 msgid "CPU usage"
@@ -17260,7 +17027,7 @@ msgstr "Razem"
 
 #: programs/taskmgr/taskmgr.rc:388
 msgid "Limit"
-msgstr "Ograniczenie"
+msgstr "Graniczna"
 
 #: programs/taskmgr/taskmgr.rc:389
 msgid "Peak"
@@ -17862,7 +17629,7 @@ msgstr "Nie odpowiada"
 
 #: programs/taskmgr/taskmgr.rc:324
 msgid "Running"
-msgstr "Uruchomiony"
+msgstr "Uruchomione"
 
 #: programs/taskmgr/taskmgr.rc:325
 msgid "Task"
@@ -18013,9 +17780,10 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine może udawać różne wersje Windows dla różnych aplikacji. Wybór w tej "
-"zakładce jest powiązany z zakładkami Biblioteki i Grafika - ustawienia tam "
-"również dotyczą wszystkich aplikacji lub tylko wybranej."
+"Wine może udawać różne wersje Windows dla każdej aplikacji osobno. Ta "
+"zakładka jest powiązana z zakładkami Biblioteki i Grafika, aby umożliwić ci "
+"zmianę ustawień w całym systemie lub tylko dla aplikacji we wspominanych "
+"zakładkach."
 
 #: programs/winecfg/winecfg.rc:158
 msgid "Add appli&cation..."
@@ -18035,7 +17803,7 @@ msgstr "Ustawienia okien"
 
 #: programs/winecfg/winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatycznie przechwyć &mysz w oknach pełnoekranowych"
+msgstr "Przechwytuj &mysz w oknach pełnoekranowych"
 
 #: programs/winecfg/winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
@@ -18047,7 +17815,7 @@ msgstr "Zez&wól systemowi zarządzać oknami"
 
 #: programs/winecfg/winecfg.rc:172
 msgid "&Emulate a virtual desktop"
-msgstr "Emuluj wirtualny &pulpit"
+msgstr "&Emuluj wirtualny pulpit"
 
 #: programs/winecfg/winecfg.rc:174
 msgid "Desktop &size:"
@@ -18193,7 +17961,7 @@ msgstr "Próba dźwięku"
 
 #: programs/winecfg/winecfg.rc:275 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
-msgstr "Rozmieszenie głośników"
+msgstr "Rozmieszczenie głośników"
 
 #: programs/winecfg/winecfg.rc:278
 msgid "Speakers:"
@@ -18926,7 +18694,7 @@ msgstr "&Ustawienia drukarki..."
 
 #: programs/winhlp32/winhlp32.rc:42
 msgid "&Annotate..."
-msgstr "&Adnotuj..."
+msgstr "&Opisz..."
 
 #: programs/winhlp32/winhlp32.rc:44
 msgid "&Bookmark"
@@ -18934,7 +18702,7 @@ msgstr "Z&akładka"
 
 #: programs/winhlp32/winhlp32.rc:45
 msgid "&Define..."
-msgstr "&Definiuj..."
+msgstr "&Określ..."
 
 #: programs/winhlp32/winhlp32.rc:48
 msgid "Always on &top"
@@ -19164,7 +18932,7 @@ msgstr "Dostępne formaty"
 
 #: programs/wordpad/wordpad.rc:224
 msgid "New document type"
-msgstr "Typ nowego dokumentu"
+msgstr "Rodzaj nowego dokumentu"
 
 #: programs/wordpad/wordpad.rc:232
 msgid "Paragraph format"
