@@ -919,8 +919,16 @@ static ULONG WINAPI column_rs_Release(IColumnsRowset *iface)
 static HRESULT WINAPI column_rs_GetAvailableColumns(IColumnsRowset *iface, DBORDINAL *count, DBID **columns)
 {
     struct msdasql_rowset *rowset = impl_from_IColumnsRowset( iface );
-    FIXME("%p, %p, %p\n", rowset, count, columns);
-    return E_NOTIMPL;
+
+    TRACE("%p, %p, %p\n", rowset, count, columns);
+
+    if (!count || !columns)
+        return E_INVALIDARG;
+
+    *count = 0;
+    *columns = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI column_rs_GetColumnsRowset(IColumnsRowset *iface, IUnknown *outer, DBORDINAL count,
