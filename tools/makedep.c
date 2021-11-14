@@ -3053,7 +3053,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
     int need_obj = ((*dll_ext || !(source->file->flags & FLAG_C_UNIX)) &&
                     (!need_cross ||
                      (source->file->flags & FLAG_C_IMPLIB) ||
-                     make->staticlib));
+                     (make->staticlib && !make->extlib)));
 
     if ((source->file->flags & FLAG_GENERATED) &&
         (!make->testdll || !strendswith( source->filename, "testlist.c" )))
@@ -3422,17 +3422,21 @@ static void output_module( struct makefile *make )
  */
 static void output_static_lib( struct makefile *make )
 {
-    strarray_add( &make->clean_files, make->staticlib );
-    output( "%s: %s", obj_dir_path( make, make->staticlib ), tools_path( make, "winebuild" ));
-    output_filenames_obj_dir( make, make->object_files );
-    output_filenames_obj_dir( make, make->unixobj_files );
-    output( "\n" );
-    output( "\t%s%s -w --staticlib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ));
-    output_filenames( target_flags );
-    output_filenames_obj_dir( make, make->object_files );
-    output_filenames_obj_dir( make, make->unixobj_files );
-    output( "\n" );
-    add_install_rule( make, make->staticlib, make->staticlib, strmake( "d%s/%s", so_dir, make->staticlib ));
+    if (!crosstarget || !make->extlib)
+    {
+        strarray_add( &make->clean_files, make->staticlib );
+        output( "%s: %s", obj_dir_path( make, make->staticlib ), tools_path( make, "winebuild" ));
+        output_filenames_obj_dir( make, make->object_files );
+        output_filenames_obj_dir( make, make->unixobj_files );
+        output( "\n" );
+        output( "\t%s%s -w --staticlib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ));
+        output_filenames( target_flags );
+        output_filenames_obj_dir( make, make->object_files );
+        output_filenames_obj_dir( make, make->unixobj_files );
+        output( "\n" );
+        add_install_rule( make, make->staticlib, make->staticlib,
+                          strmake( "d%s/%s", so_dir, make->staticlib ));
+    }
     if (crosstarget)
     {
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
@@ -3445,8 +3449,9 @@ static void output_static_lib( struct makefile *make )
                 tools_path( make, "winebuild" ), crosstarget );
         output_filenames_obj_dir( make, make->crossobj_files );
         output( "\n" );
-        add_install_rule( make, make->staticlib, name,
-                          strmake( "d%s/%s", pe_dir, make->staticlib ));
+        if (!make->extlib)
+            add_install_rule( make, make->staticlib, name,
+                              strmake( "d%s/%s", pe_dir, make->staticlib ));
     }
 }
 
