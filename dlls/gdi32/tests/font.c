@@ -3997,7 +3997,7 @@ static void test_text_metrics(const LOGFONTA *lf, const NEWTEXTMETRICA *ntm)
                 expect_break_W = os2_first_char;
             expect_default_W  = expect_break_W - 1;
             expect_first_A    = expect_default_W - 1;
-            expect_last_A     = min(expect_last_W, 0xff);
+            expect_last_A     = min(os2_last_char, 0xff);
         }
         expect_break_A    = expect_break_W;
         expect_default_A  = expect_default_W;
