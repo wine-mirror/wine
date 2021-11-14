@@ -800,7 +800,7 @@ static BOOL init_unix_printers( void )
         if (printer->is_default) default_printer = printer->name;
     }
 
-    if (!default_printer && enum_params.num) default_printer = enum_params.printers[0].name;
+    if (!default_printer && num) default_printer = enum_params.printers[0].name;
     if (default_printer) SetDefaultPrinterW( default_printer );
 
     if (ppd_dir)
