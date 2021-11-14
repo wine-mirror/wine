@@ -3423,13 +3423,15 @@ static void output_module( struct makefile *make )
 static void output_static_lib( struct makefile *make )
 {
     strarray_add( &make->clean_files, make->staticlib );
-    output( "%s:", obj_dir_path( make, make->staticlib ));
+    output( "%s: %s", obj_dir_path( make, make->staticlib ), tools_path( make, "winebuild" ));
     output_filenames_obj_dir( make, make->object_files );
     output_filenames_obj_dir( make, make->unixobj_files );
-    output( "\n\t%srm -f $@ && %s rc $@", cmd_prefix( "AR" ), ar );
+    output( "\n" );
+    output( "\t%s%s -w --staticlib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ));
+    output_filenames( target_flags );
     output_filenames_obj_dir( make, make->object_files );
     output_filenames_obj_dir( make, make->unixobj_files );
-    output( " && %s $@\n", ranlib );
+    output( "\n" );
     add_install_rule( make, make->staticlib, make->staticlib, strmake( "d%s/%s", so_dir, make->staticlib ));
     if (crosstarget)
     {
@@ -4042,7 +4044,6 @@ static void output_silent_rules(void)
 {
     static const char *cmds[] =
     {
-        "AR",
         "BISON",
         "BUILD",
         "CC",
