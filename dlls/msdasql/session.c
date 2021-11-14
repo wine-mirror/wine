@@ -426,6 +426,7 @@ struct msdasql_rowset
     IColumnsInfo IColumnsInfo_iface;
     IAccessor IAccessor_iface;
     IColumnsRowset IColumnsRowset_iface;
+    IUnknown *caller;
     LONG refs;
 };
 
@@ -524,6 +525,10 @@ static ULONG WINAPI msdasql_rowset_Release(IRowset *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", rowset );
+
+        if (rowset->caller)
+            IUnknown_Release(rowset->caller);
+
         heap_free( rowset );
     }
     return refs;
@@ -618,8 +623,16 @@ static HRESULT WINAPI rowset_info_GetSpecification(IRowsetInfo *iface, REFIID ri
         IUnknown **specification)
 {
     struct msdasql_rowset *rowset = impl_from_IRowsetInfo( iface );
-    FIXME("%p, %s, %p\n", rowset, debugstr_guid(riid), specification);
-    return E_NOTIMPL;
+
+    TRACE("%p, %s, %p\n", rowset, debugstr_guid(riid), specification);
+
+    if (!specification)
+        return E_INVALIDARG;
+
+    if (!rowset->caller)
+        return S_FALSE;
+
+    return IUnknown_QueryInterface(rowset->caller, riid, (void**)specification);
 }
 
 struct IRowsetInfoVtbl rowset_info_vtbl =
@@ -798,6 +811,7 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
     msrowset->IAccessor_iface.lpVtbl = &accessor_vtbl;
     msrowset->IColumnsRowset_iface.lpVtbl = &columnrs_rs_vtbl;
     msrowset->refs = 1;
+    ICommandText_QueryInterface(iface, &IID_IUnknown, (void**)&msrowset->caller);
 
     if (affected)
         *affected = 0; /* FIXME */

@@ -293,17 +293,29 @@ static void test_command_dbsession(IUnknown *cmd, IUnknown *session)
     ICommandText_Release(comand_text);
 }
 
-static void test_rowset_interfaces(IRowset *rowset)
+static void test_rowset_interfaces(IRowset *rowset, ICommandText *commandtext)
 {
     IRowsetInfo *info;
     IColumnsInfo *col_info;
     IColumnsRowset *col_rs;
     IAccessor *accessor;
+    ICommandText *specification = NULL;
     IUnknown *unk;
     HRESULT hr;
 
     hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void**)&info);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IRowsetInfo_GetSpecification(info, &IID_ICommandText, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IRowsetInfo_GetSpecification(info, &IID_ICommandText, (IUnknown**)&specification);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (specification)
+    {
+        ok(commandtext == specification, "got 0x%08x\n", hr);
+        ICommandText_Release(specification);
+    }
     IRowsetInfo_Release(info);
 
     hr = IRowset_QueryInterface(rowset, &IID_IColumnsInfo, (void**)&col_info);
@@ -364,7 +376,7 @@ static void test_command_rowset(IUnknown *cmd)
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        test_rowset_interfaces(rowset);
+        test_rowset_interfaces(rowset, comand_text);
 
         IRowset_Release(rowset);
         IUnknown_Release(unk);
