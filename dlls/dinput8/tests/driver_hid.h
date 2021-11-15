@@ -147,8 +147,15 @@ static inline void kvprintf( const char *format, va_list ap )
 {
     struct tls_data *data = get_tls_data();
     IO_STATUS_BLOCK io;
-    int len = vsnprintf( data->strings, sizeof(data->strings), format, ap );
-    ZwWriteFile( okfile, NULL, NULL, NULL, &io, data->strings, len, NULL, NULL );
+    int len = vsnprintf( data->str_pos, sizeof(data->strings) - (data->str_pos - data->strings), format, ap );
+    data->str_pos += len;
+
+    if (len && data->str_pos[-1] == '\n')
+    {
+        ZwWriteFile( okfile, NULL, NULL, NULL, &io, data->strings,
+                     strlen( data->strings ), NULL, NULL );
+        data->str_pos = data->strings;
+    }
 }
 
 static inline void WINAPIV kprintf( const char *format, ... ) __WINE_PRINTF_ATTR( 1, 2 );

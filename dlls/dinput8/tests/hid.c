@@ -594,22 +594,19 @@ static BOOL pnp_driver_start( const WCHAR *resource )
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
-#define check_member_( file, line, val, exp, fmt, member )                                         \
-    ok_( file, line )((val).member == (exp).member, "got " #member " " fmt ", expected " fmt "\n", \
-                      (val).member, (exp).member)
-#define check_member( val, exp, fmt, member )                                                      \
+#define check_member_( file, line, val, exp, fmt, member ) \
+    ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )
+#define check_member( val, exp, fmt, member ) \
     check_member_( __FILE__, __LINE__, val, exp, fmt, member )
 
-#define check_member_guid_( file, line, val, exp, member )                                              \
-    ok_( file, line )(IsEqualGUID( &(val).member, &(exp).member ), "got " #member " %s, expected %s\n", \
-                      debugstr_guid( &(val).member ), debugstr_guid( &(exp).member ))
-#define check_member_guid( val, exp, member )                                                      \
+#define check_member_guid_( file, line, val, exp, member ) \
+    ok_(file, line)( IsEqualGUID( &(val).member, &(exp).member ), "got " #member " %s\n", debugstr_guid(&(val).member) )
+#define check_member_guid( val, exp, member ) \
     check_member_guid_( __FILE__, __LINE__, val, exp, member )
 
-#define check_member_wstr_( file, line, val, exp, member )                                         \
-    ok_( file, line )(!wcscmp( (val).member, (exp).member ), "got " #member " %s, expected %s\n",  \
-                      debugstr_w((val).member), debugstr_w((exp).member))
-#define check_member_wstr( val, exp, member )                                                      \
+#define check_member_wstr_( file, line, val, exp, member ) \
+    ok_(file, line)( !wcscmp( (val).member, (exp).member ), "got " #member " %s\n", debugstr_w((val).member) )
+#define check_member_wstr( val, exp, member ) \
     check_member_wstr_( __FILE__, __LINE__, val, exp, member )
 
 #define check_hidp_caps( a, b ) check_hidp_caps_( __LINE__, a, b )
