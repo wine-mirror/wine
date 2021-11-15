@@ -1059,18 +1059,31 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
 
     switch (xloc.form)
     {
+    case DW_FORM_data4:
+        if (ctx->head.version < 4)
+        {
+            loc->kind = loc_dwarf2_location_list;
+            loc->reg = Wine_DW_no_register;
+            loc->offset = xloc.u.uvalue;
+            return TRUE;
+        }
+        /* fall through */
     case DW_FORM_data1: case DW_FORM_data2:
     case DW_FORM_udata: case DW_FORM_sdata:
         loc->kind = loc_absolute;
         loc->reg = 0;
         loc->offset = xloc.u.uvalue;
         return TRUE;
-    case DW_FORM_data4:
-        loc->kind = loc_dwarf2_location_list;
-        loc->reg = Wine_DW_no_register;
-        loc->offset = xloc.u.uvalue;
-        return TRUE;
-    case DW_FORM_data8: case DW_FORM_sec_offset:
+    case DW_FORM_data8:
+        if (ctx->head.version >= 4)
+        {
+            loc->kind = loc_absolute;
+            loc->reg = 0;
+            loc->offset = xloc.u.lluvalue;
+            return TRUE;
+        }
+        /* fall through */
+    case DW_FORM_sec_offset:
         loc->kind = loc_dwarf2_location_list;
         loc->reg = Wine_DW_no_register;
         loc->offset = xloc.u.lluvalue;
@@ -1701,8 +1714,9 @@ static void dwarf2_parse_udt_member(dwarf2_debug_info_t* di,
     {
         if (loc.kind != loc_absolute)
         {
-           FIXME("Found register, while not expecting it\n");
-           loc.offset = 0;
+            FIXME("Unexpected offset computation for member %s in %ls!%s\n",
+                  name.u.string, di->unit_ctx->module_ctx->module->modulename, parent->hash_elt.name);
+            loc.offset = 0;
         }
         else
             TRACE("found member_location at %s -> %lu\n",
