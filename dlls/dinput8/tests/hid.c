@@ -6153,7 +6153,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &expect_desc, &effect, NULL );
-    todo_wine
     ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
