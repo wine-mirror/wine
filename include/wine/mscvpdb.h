@@ -2024,6 +2024,16 @@ union codeview_symbol
         unsigned short int      csz; /* number of bytes in following array */
         char                    rgsz[1]; /* array of null terminated strings (bounded by csz) */
     } annotation_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            invocations;
+        __int64                 dynCount;
+        unsigned                numInstrs;
+        unsigned                staInstLive;
+    } pogoinfo_v3;
 };
 
 enum BinaryAnnotationOpcode

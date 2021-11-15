@@ -1949,6 +1949,12 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
             }
             break;
 
+        case S_POGODATA:
+            printf("PogoData V3 inv:%d dynCnt:%lld inst:%d staInst:%d\n",
+                   sym->pogoinfo_v3.invocations, (long long)sym->pogoinfo_v3.dynCount,
+                   sym->pogoinfo_v3.numInstrs, sym->pogoinfo_v3.staInstLive);
+            break;
+
         default:
             printf("\n\t\t>>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
