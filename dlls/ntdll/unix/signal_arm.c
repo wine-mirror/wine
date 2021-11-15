@@ -229,7 +229,7 @@ extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void
 NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
 #ifdef HAVE_LIBUNWIND
-    DWORD ip = context->Pc;
+    DWORD ip = context->Pc - (dispatch->ControlPcIsUnwound ? 2 : 0);
     unw_context_t unw_context;
     unw_cursor_t cursor;
     unw_proc_info_t info;
