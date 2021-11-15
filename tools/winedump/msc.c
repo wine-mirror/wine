@@ -1935,6 +1935,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                    sym->sepcode_v3.pParent, sym->sepcode_v3.pEnd,
                    sym->sepcode_v3.sect, sym->sepcode_v3.off, sym->sepcode_v3.length,
                    sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
+            push_symbol_dumper(&sd, sym, sym->sepcode_v3.pEnd);
             break;
 
         case S_ANNOTATION:
