@@ -2406,9 +2406,10 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
     impl->flags |= flags;
 
     if (flags & DIEP_NODOWNLOAD) return DI_DOWNLOADSKIPPED;
-    if (flags & DIEP_START) return IDirectInputEffect_Start( iface, 1, 0 );
-    if (FAILED(hr = IDirectInputEffect_Download( iface ))) return hr;
-    if (hr == DI_NOEFFECT) return DI_DOWNLOADSKIPPED;
+    if (flags & DIEP_START) hr = IDirectInputEffect_Start( iface, 1, 0 );
+    else hr = IDirectInputEffect_Download( iface );
+    if (hr == DIERR_NOTEXCLUSIVEACQUIRED) return DI_DOWNLOADSKIPPED;
+    if (FAILED(hr)) return hr;
     return DI_OK;
 }
 

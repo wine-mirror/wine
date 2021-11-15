@@ -5697,7 +5697,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Acquire( device );
