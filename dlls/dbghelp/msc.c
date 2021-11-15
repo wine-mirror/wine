@@ -2497,6 +2497,27 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                   sym->heap_alloc_site_v3.inst_len, sym->heap_alloc_site_v3.index);
             break;
 
+        case S_SEPCODE:
+            if (!top_func)
+            {
+                ULONG_PTR parent_addr = codeview_get_address(msc_dbg, sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
+                struct symt_ht* parent = symt_find_nearest(msc_dbg->module, parent_addr);
+                if (symt_check_tag(&parent->symt, SymTagFunction))
+                {
+                    struct symt_function* pfunc = (struct symt_function*)parent;
+                    top_func = symt_new_function(msc_dbg->module, compiland, pfunc->hash_elt.name,
+                                                 codeview_get_address(msc_dbg, sym->sepcode_v3.sect, sym->sepcode_v3.off),
+                                                 sym->sepcode_v3.length, pfunc->type);
+                    curr_func = top_func;
+                }
+                else
+                    WARN("Couldn't find function referenced by S_SEPCODE at %04x:%08x\n",
+                         sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
+            }
+            else
+                FIXME("S_SEPCODE inside top-level function %s\n", top_func->hash_elt.name);
+            break;
+
         /* the symbols we can safely ignore for now */
         case S_TRAMPOLINE:
         case S_FRAMEPROC:
