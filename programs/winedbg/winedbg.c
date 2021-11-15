@@ -676,7 +676,7 @@ int main(int argc, char** argv)
     /* parse options */
     while (argc > 0 && argv[0][0] == '-')
     {
-        if (!strcmp(argv[0], "--command"))
+        if (!strcmp(argv[0], "--command") && argc > 1)
         {
             argc--; argv++;
             hFile = parser_generate_command_file(argv[0], NULL);
@@ -688,7 +688,7 @@ int main(int argc, char** argv)
             argc--; argv++;
             continue;
         }
-        if (!strcmp(argv[0], "--file"))
+        if (!strcmp(argv[0], "--file") && argc > 1)
         {
             argc--; argv++;
             hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
