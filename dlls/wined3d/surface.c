@@ -469,7 +469,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
 
     if (data.buffer_object)
     {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, ((struct wined3d_bo_gl *)data.buffer_object)->id));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, wined3d_bo_gl(data.buffer_object)->id));
         checkGLcall("glBindBuffer");
     }
 
@@ -527,7 +527,7 @@ error:
     if (data.buffer_object)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
-        wined3d_context_gl_reference_bo(context_gl, (struct wined3d_bo_gl *)data.buffer_object);
+        wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(data.buffer_object));
         checkGLcall("glBindBuffer");
     }
 

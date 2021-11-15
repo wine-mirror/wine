@@ -1619,9 +1619,9 @@ static inline struct wined3d_bo_gl *wined3d_bo_gl(struct wined3d_bo *bo)
     return CONTAINING_RECORD(bo, struct wined3d_bo_gl, b);
 }
 
-static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
+static inline GLuint wined3d_bo_gl_id(struct wined3d_bo *bo)
 {
-    return bo ? ((struct wined3d_bo_gl *)bo)->id : 0;
+    return bo ? wined3d_bo_gl(bo)->id : 0;
 }
 
 struct wined3d_bo_user
@@ -1679,7 +1679,7 @@ void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk,
 
 struct wined3d_bo_address
 {
-    UINT_PTR buffer_object;
+    struct wined3d_bo *buffer_object;
     BYTE *addr;
 };
 
@@ -4409,6 +4409,7 @@ struct wined3d_texture
         DWORD locations;
         union
         {
+            struct wined3d_bo b;
             struct wined3d_bo_gl gl;
             struct wined3d_bo_vk vk;
         } bo;

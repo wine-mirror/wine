@@ -3217,7 +3217,7 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
                 return false;
         }
 
-        bo = (const struct wined3d_bo *)client->addr.buffer_object;
+        bo = client->addr.buffer_object;
         map_ptr = bo ? bo->map_ptr : NULL;
         map_ptr += (uintptr_t)client->addr.addr;
 

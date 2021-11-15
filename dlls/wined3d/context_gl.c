@@ -2729,13 +2729,13 @@ map:
 void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *data, size_t size, uint32_t flags)
 {
-    struct wined3d_bo_gl *bo;
+    struct wined3d_bo *bo;
     void *map_ptr;
 
-    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
+    if (!(bo = data->buffer_object))
         return data->addr;
 
-    if (!(map_ptr = wined3d_bo_gl_map(bo, context_gl, (uintptr_t)data->addr, size, flags)))
+    if (!(map_ptr = wined3d_bo_gl_map(wined3d_bo_gl(bo), context_gl, (uintptr_t)data->addr, size, flags)))
         ERR("Failed to map bo.\n");
 
     return map_ptr;
@@ -2782,8 +2782,9 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *bo;
 
-    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
+    if (!data->buffer_object)
         return;
+    bo = wined3d_bo_gl(data->buffer_object);
 
     flush_bo_ranges(context_gl, wined3d_const_bo_address(data), range_count, ranges);
 
@@ -2816,8 +2817,8 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
     BYTE *dst_ptr, *src_ptr;
 
     gl_info = context_gl->gl_info;
-    src_bo = (struct wined3d_bo_gl *)src->buffer_object;
-    dst_bo = (struct wined3d_bo_gl *)dst->buffer_object;
+    src_bo = src->buffer_object ? wined3d_bo_gl(src->buffer_object) : NULL;
+    dst_bo = dst->buffer_object ? wined3d_bo_gl(dst->buffer_object) : NULL;
 
     if (dst_bo && src_bo)
     {

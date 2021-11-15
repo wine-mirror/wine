@@ -960,8 +960,9 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     VkMappedMemoryRange range;
     void *map_ptr;
 
-    if (!(bo = (struct wined3d_bo_vk *)data->buffer_object))
+    if (!data->buffer_object)
         return data->addr;
+    bo = wined3d_bo_vk(data->buffer_object);
 
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context->device);
@@ -1065,8 +1066,9 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
     struct wined3d_bo_vk *bo;
     unsigned int i;
 
-    if (!(bo = (struct wined3d_bo_vk *)data->buffer_object))
+    if (!data->buffer_object)
         return;
+    bo = wined3d_bo_vk(data->buffer_object);
 
     if (!bo->b.coherent)
     {
@@ -1092,8 +1094,8 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
     void *dst_ptr, *src_ptr;
     VkBufferCopy region;
 
-    src_bo = (struct wined3d_bo_vk *)src->buffer_object;
-    dst_bo = (struct wined3d_bo_vk *)dst->buffer_object;
+    src_bo = src->buffer_object ? wined3d_bo_vk(src->buffer_object) : NULL;
+    dst_bo = dst->buffer_object ? wined3d_bo_vk(dst->buffer_object) : NULL;
 
     if (dst_bo && !dst->addr && size == dst_bo->size)
         map_flags |= WINED3D_MAP_DISCARD;
@@ -1164,7 +1166,7 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
             return;
         }
 
-        staging.buffer_object = (uintptr_t)&staging_bo;
+        staging.buffer_object = &staging_bo.b;
         staging.addr = NULL;
         adapter_vk_copy_bo_address(context, &staging, src, size);
         adapter_vk_copy_bo_address(context, dst, &staging, size);
@@ -1184,7 +1186,7 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
             return;
         }
 
-        staging.buffer_object = (uintptr_t)&staging_bo;
+        staging.buffer_object = &staging_bo.b;
         staging.addr = NULL;
         adapter_vk_copy_bo_address(context, &staging, src, size);
         adapter_vk_copy_bo_address(context, dst, &staging, size);
@@ -1251,7 +1253,7 @@ static bool adapter_vk_alloc_bo(struct wined3d_device *device, struct wined3d_re
                 ERR("Failed to map bo.\n");
         }
 
-        addr->buffer_object = (uintptr_t)bo_vk;
+        addr->buffer_object = &bo_vk->b;
         addr->addr = NULL;
         return true;
     }

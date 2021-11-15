@@ -665,7 +665,7 @@ DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_co
     }
     if (locations & WINED3D_LOCATION_BUFFER)
     {
-        data->buffer_object = (uintptr_t)buffer->buffer_object;
+        data->buffer_object = buffer->buffer_object;
         data->addr = NULL;
         return WINED3D_LOCATION_BUFFER;
     }
@@ -977,7 +977,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
             if (count == 1)
             {
-                addr.buffer_object = (uintptr_t)buffer->buffer_object;
+                addr.buffer_object = buffer->buffer_object;
                 addr.addr = 0;
                 buffer->map_ptr = wined3d_context_map_bo_address(context, &addr, resource->size, flags);
                 /* We are accessing buffer->resource.client from the CS thread,
@@ -1057,7 +1057,7 @@ static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resou
 
     context = context_acquire(device, NULL, 0);
 
-    addr.buffer_object = (uintptr_t)buffer->buffer_object;
+    addr.buffer_object = buffer->buffer_object;
     addr.addr = 0;
     wined3d_context_unmap_bo_address(context, &addr, range_count, buffer->maps);
 
@@ -1587,7 +1587,7 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
     if (!range_count)
         return;
 
-    dst.buffer_object = (uintptr_t)buffer->buffer_object;
+    dst.buffer_object = buffer->buffer_object;
     dst.addr = NULL;
 
     flags = WINED3D_MAP_WRITE;

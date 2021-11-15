@@ -2774,7 +2774,7 @@ static void *adapter_no3d_map_bo_address(struct wined3d_context *context,
 {
     if (data->buffer_object)
     {
-        ERR("Unsupported buffer object %#lx.\n", data->buffer_object);
+        ERR("Unsupported buffer object %p.\n", data->buffer_object);
         return NULL;
     }
 
@@ -2785,16 +2785,16 @@ static void adapter_no3d_unmap_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
 {
     if (data->buffer_object)
-        ERR("Unsupported buffer object %#lx.\n", data->buffer_object);
+        ERR("Unsupported buffer object %p.\n", data->buffer_object);
 }
 
 static void adapter_no3d_copy_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     if (dst->buffer_object)
-        ERR("Unsupported dst buffer object %#lx.\n", dst->buffer_object);
+        ERR("Unsupported dst buffer object %p.\n", dst->buffer_object);
     if (src->buffer_object)
-        ERR("Unsupported src buffer object %#lx.\n", src->buffer_object);
+        ERR("Unsupported src buffer object %p.\n", src->buffer_object);
     if (dst->buffer_object || src->buffer_object)
         return;
     memcpy(dst->addr, src->addr, size);
