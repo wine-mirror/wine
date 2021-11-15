@@ -2517,8 +2517,10 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_BUILDINFO:
         case S_FILESTATIC:
         case S_CALLEES:
+        case S_CALLERS:
         case S_UNAMESPACE:
         case S_INLINEES:
+        case S_POGODATA:
             TRACE("Unsupported symbol id %x\n", sym->generic.id);
             break;
 
