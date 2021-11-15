@@ -3437,6 +3437,7 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     BOOL ret;
     HANDLE std_input = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE pipe1, pipe2;
+    COORD c;
 
     hmod = GetModuleHandleA("kernel32.dll");
     pGetCurrentConsoleFontEx = (void *)GetProcAddress(hmod, "GetCurrentConsoleFontEx");
@@ -3520,6 +3521,21 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
 
     ok(cfix.dwFontSize.X == cfi.dwFontSize.X, "expected values to match\n");
     ok(cfix.dwFontSize.Y == cfi.dwFontSize.Y, "expected values to match\n");
+
+    SetLastError(0xdeadbeef);
+    c = GetConsoleFontSize(std_output, cfix.nFont);
+    ok(c.X && c.Y, "GetConsoleFontSize failed; err = %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    todo_wine ok(cfix.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
+       cfix.dwFontSize.X, c.X);
+    todo_wine ok(cfix.dwFontSize.Y == c.Y, "Font height doesn't match; got %u, expected %u\n",
+       cfix.dwFontSize.Y, c.Y);
+
+    todo_wine ok(cfi.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
+       cfi.dwFontSize.X, c.X);
+    todo_wine ok(cfi.dwFontSize.Y == c.Y, "Font height doesn't match; got %u, expected %u\n",
+       cfi.dwFontSize.Y, c.Y);
 
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_output, TRUE, &cfix);
