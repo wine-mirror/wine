@@ -407,8 +407,8 @@ BOOL WINAPI GetCurrentConsoleFontEx(HANDLE hConsole, BOOL maxwindow, CONSOLE_FON
     }
     else
     {
-        fontinfo->dwFontSize.X = data.info.win_right - data.info.win_left + 1;
-        fontinfo->dwFontSize.Y = data.info.win_bottom - data.info.win_top + 1;
+        fontinfo->dwFontSize.X = data.info.font_width;
+        fontinfo->dwFontSize.Y = data.info.font_height;
     }
     size -= sizeof(data.info);
     if (size) memcpy( fontinfo->FaceName, data.face_name, size );

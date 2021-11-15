@@ -3527,14 +3527,14 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     ok(c.X && c.Y, "GetConsoleFontSize failed; err = %u\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
 
-    todo_wine ok(cfix.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
+    ok(cfix.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
        cfix.dwFontSize.X, c.X);
-    todo_wine ok(cfix.dwFontSize.Y == c.Y, "Font height doesn't match; got %u, expected %u\n",
+    ok(cfix.dwFontSize.Y == c.Y, "Font height doesn't match; got %u, expected %u\n",
        cfix.dwFontSize.Y, c.Y);
 
-    todo_wine ok(cfi.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
+    ok(cfi.dwFontSize.X == c.X, "Font width doesn't match; got %u, expected %u\n",
        cfi.dwFontSize.X, c.X);
-    todo_wine ok(cfi.dwFontSize.Y == c.Y, "Font height doesn't match; got %u, expected %u\n",
+    ok(cfi.dwFontSize.Y == c.Y, "Font height doesn't match; got %u, expected %u\n",
        cfi.dwFontSize.Y, c.Y);
 
     SetLastError(0xdeadbeef);
