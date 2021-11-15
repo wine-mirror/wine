@@ -2065,14 +2065,18 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.u.uvalue = 0;
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = NULL;
-
-    loc.kind = loc_absolute;
-    loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->top_func->address;
-    symt_add_function_point(subpgm->ctx->module_ctx->module, subpgm->top_func, SymTagLabel,
-                            &loc, name.u.string);
+    if (dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc))
+    {
+        loc.kind = loc_absolute;
+        loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->top_func->address;
+        symt_add_function_point(subpgm->ctx->module_ctx->module, subpgm->top_func, SymTagLabel,
+                                &loc, name.u.string);
+    }
+    else
+        WARN("Label %s inside function %s doesn't have an address... don't register it\n",
+             name.u.string, subpgm->top_func->hash_elt.name);
 }
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
