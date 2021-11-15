@@ -3452,6 +3452,99 @@ static BOOL CALLBACK check_created_effect_objects( IDirectInputEffect *effect, v
     return DIENUM_CONTINUE;
 }
 
+static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device )
+{
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    IDirectInput8W *di8;
+    IDirectInputW *di;
+    HRESULT hr;
+    ULONG ref;
+
+    if (version >= 0x800)
+    {
+        hr = DirectInput8Create( instance, version, &IID_IDirectInput8W, (void **)&di8, NULL );
+        if (FAILED(hr))
+        {
+            win_skip( "DirectInput8Create returned %#x\n", hr );
+            return hr;
+        }
+
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, find_test_device, devinst, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        if (!IsEqualGUID( &devinst->guidProduct, &expect_guid_product ))
+        {
+            win_skip( "device not found, skipping tests\n" );
+            ref = IDirectInput8_Release( di8 );
+            ok( ref == 0, "Release returned %d\n", ref );
+            return DIERR_DEVICENOTREG;
+        }
+
+        hr = IDirectInput8_CreateDevice( di8, &devinst->guidInstance, NULL, NULL );
+        ok( hr == E_POINTER, "CreateDevice returned %#x\n", hr );
+        hr = IDirectInput8_CreateDevice( di8, NULL, device, NULL );
+        ok( hr == E_POINTER, "CreateDevice returned %#x\n", hr );
+        hr = IDirectInput8_CreateDevice( di8, &GUID_NULL, device, NULL );
+        ok( hr == DIERR_DEVICENOTREG, "CreateDevice returned %#x\n", hr );
+        hr = IDirectInput8_CreateDevice( di8, &devinst->guidInstance, device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+
+        prop_dword.dwData = 0xdeadbeef;
+        hr = IDirectInputDevice8_GetProperty( *device, DIPROP_VIDPID, &prop_dword.diph );
+        ok( hr == DI_OK, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
+        /* Wine may get the wrong device here, because the test driver creates another instance of
+           hidclass.sys, and gets duplicate rawinput handles, which we use in the guidInstance */
+        todo_wine_if( prop_dword.dwData != EXPECT_VIDPID )
+        ok( prop_dword.dwData == EXPECT_VIDPID, "got %#x expected %#x\n", prop_dword.dwData, EXPECT_VIDPID );
+
+        ref = IDirectInputDevice8_Release( *device );
+        ok( ref == 0, "Release returned %d\n", ref );
+
+        hr = IDirectInput8_CreateDevice( di8, &expect_guid_product, device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+
+        ref = IDirectInput8_Release( di8 );
+        todo_wine
+        ok( ref == 0, "Release returned %d\n", ref );
+    }
+    else
+    {
+        hr = DirectInputCreateEx( instance, version, &IID_IDirectInput2W, (void **)&di, NULL );
+        if (FAILED(hr))
+        {
+            win_skip( "DirectInputCreateEx returned %#x\n", hr );
+            return hr;
+        }
+
+        hr = IDirectInput_EnumDevices( di, 0, find_test_device, devinst, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        if (!IsEqualGUID( &devinst->guidProduct, &expect_guid_product ))
+        {
+            win_skip( "device not found, skipping tests\n" );
+
+            ref = IDirectInput_Release( di );
+            ok( ref == 0, "Release returned %d\n", ref );
+            return DIERR_DEVICENOTREG;
+        }
+
+        hr = IDirectInput_CreateDevice( di, &expect_guid_product, (IDirectInputDeviceW **)device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+
+        ref = IDirectInput_Release( di );
+        todo_wine
+        ok( ref == 0, "Release returned %d\n", ref );
+    }
+
+    return DI_OK;
+}
+
 static void test_simple_joystick(void)
 {
 #include "psh_hid_macros.h"
@@ -3793,7 +3886,6 @@ static void test_simple_joystick(void)
     IDirectInputEffect *effect;
     DIEFFESCAPE escape = {0};
     DIDEVCAPS caps = {0};
-    IDirectInput8W *di;
     HANDLE event, file;
     char buffer[1024];
     DIJOYSTATE2 state;
@@ -3809,56 +3901,7 @@ static void test_simple_joystick(void)
 
     cleanup_registry_keys();
     if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps )) goto done;
-
-    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
-    if (FAILED(hr))
-    {
-        win_skip( "DirectInput8Create returned %#x\n", hr );
-        goto done;
-    }
-
-    hr = IDirectInput8_EnumDevices( di, DI8DEVCLASS_ALL, find_test_device, &devinst, DIEDFL_ALLDEVICES );
-    ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-    if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
-    {
-        win_skip( "device not found, skipping tests\n" );
-        IDirectInput8_Release( di );
-        goto done;
-    }
-
-    check_member( devinst, expect_devinst, "%d", dwSize );
-    check_member_guid( devinst, expect_devinst, guidProduct );
-    check_member( devinst, expect_devinst, "%#x", dwDevType );
-    todo_wine
-    check_member_wstr( devinst, expect_devinst, tszInstanceName );
-    todo_wine
-    check_member_wstr( devinst, expect_devinst, tszProductName );
-    check_member_guid( devinst, expect_devinst, guidFFDriver );
-    check_member( devinst, expect_devinst, "%04x", wUsagePage );
-    check_member( devinst, expect_devinst, "%04x", wUsage );
-
-    hr = IDirectInput8_CreateDevice( di, &devinst.guidInstance, NULL, NULL );
-    ok( hr == E_POINTER, "CreateDevice returned %#x\n", hr );
-    hr = IDirectInput8_CreateDevice( di, NULL, &device, NULL );
-    ok( hr == E_POINTER, "CreateDevice returned %#x\n", hr );
-    hr = IDirectInput8_CreateDevice( di, &GUID_NULL, &device, NULL );
-    ok( hr == DIERR_DEVICENOTREG, "CreateDevice returned %#x\n", hr );
-    hr = IDirectInput8_CreateDevice( di, &devinst.guidInstance, &device, NULL );
-    ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
-
-    prop_dword.dwData = 0xdeadbeef;
-    hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
-    /* Wine may get the wrong device here, because the test driver creates another instance of
-       hidclass.sys, and gets duplicate rawinput handles, which we use in the guidInstance */
-    todo_wine_if( prop_dword.dwData != EXPECT_VIDPID )
-    ok( prop_dword.dwData == EXPECT_VIDPID, "got %#x expected %#x\n", prop_dword.dwData, EXPECT_VIDPID );
-
-    ref = IDirectInputDevice8_Release( device );
-    ok( ref == 0, "Release returned %d\n", ref );
-
-    hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
-    ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+    if (FAILED(hr = create_dinput_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_Initialize( device, instance, 0x0700, &GUID_NULL );
     todo_wine
@@ -4978,9 +5021,6 @@ static void test_simple_joystick(void)
     CloseHandle( event );
     CloseHandle( file );
 
-    ref = IDirectInput8_Release( di );
-    ok( ref == 0, "Release returned %d\n", ref );
-
 done:
     pnp_driver_stop();
     cleanup_registry_keys();
@@ -5239,7 +5279,6 @@ static BOOL test_device_types(void)
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     IDirectInputDevice8W *device;
     BOOL success = TRUE;
-    IDirectInput8W *di;
     ULONG i, ref;
     HRESULT hr;
 
@@ -5258,26 +5297,11 @@ static BOOL test_device_types(void)
             goto done;
         }
 
-        hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
-        if (FAILED(hr))
+        if (FAILED(hr = create_dinput_device( DIRECTINPUT_VERSION, &devinst, &device )))
         {
-            win_skip( "DirectInput8Create returned %#x\n", hr );
             success = FALSE;
             goto done;
         }
-
-        hr = IDirectInput8_EnumDevices( di, DI8DEVCLASS_ALL, find_test_device, &devinst, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
-        {
-            win_skip( "device not found, skipping tests\n" );
-            IDirectInput8_Release( di );
-            success = FALSE;
-            goto done;
-        }
-
-        hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
-        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
 
         hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
         ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
@@ -5309,9 +5333,6 @@ static BOOL test_device_types(void)
         check_member( caps, expect_caps[i], "%d", dwFFDriverVersion );
 
         ref = IDirectInputDevice8_Release( device );
-        ok( ref == 0, "Release returned %d\n", ref );
-
-        ref = IDirectInput8_Release( di );
         ok( ref == 0, "Release returned %d\n", ref );
 
     done:
@@ -7474,17 +7495,15 @@ static void test_force_feedback_joystick( DWORD version )
             .dwHow = DIPH_DEVICE,
         },
     };
+    DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEOBJECTDATA objdata = {0};
-    DIDEVICEINSTANCEW devinst = {0};
     DIEFFECTINFOW effectinfo = {0};
     IDirectInputDevice8W *device;
     DIEFFESCAPE escape = {0};
     DIDEVCAPS caps = {0};
-    IDirectInput8W *di8;
-    IDirectInputW *di;
-    ULONG res, ref;
     char buffer[1024];
+    ULONG res, ref;
     HANDLE file;
     HRESULT hr;
     HWND hwnd;
@@ -7497,60 +7516,7 @@ static void test_force_feedback_joystick( DWORD version )
 
     cleanup_registry_keys();
     if (!dinput_driver_start( report_descriptor, sizeof(report_descriptor), &hid_caps )) goto done;
-
-    if (version >= 0x800)
-    {
-        hr = DirectInput8Create( instance, version, &IID_IDirectInput8W, (void **)&di8, NULL );
-        if (FAILED(hr))
-        {
-            win_skip( "DirectInput8Create returned %#x\n", hr );
-            goto done;
-        }
-
-        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, find_test_device, &devinst, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
-        {
-            win_skip( "device not found, skipping tests\n" );
-            ref = IDirectInput8_Release( di8 );
-            ok( ref == 0, "Release returned %d\n", ref );
-            goto done;
-        }
-
-        hr = IDirectInput8_CreateDevice( di8, &expect_guid_product, &device, NULL );
-        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
-
-        ref = IDirectInput8_Release( di8 );
-        todo_wine
-        ok( ref == 0, "Release returned %d\n", ref );
-    }
-    else
-    {
-        hr = DirectInputCreateEx( instance, version, &IID_IDirectInput2W, (void **)&di, NULL );
-        if (FAILED(hr))
-        {
-            win_skip( "DirectInputCreateEx returned %#x\n", hr );
-            goto done;
-        }
-
-        hr = IDirectInput_EnumDevices( di, 0, find_test_device, &devinst, DIEDFL_ALLDEVICES );
-        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
-        {
-            win_skip( "device not found, skipping tests\n" );
-
-            ref = IDirectInput_Release( di );
-            ok( ref == 0, "Release returned %d\n", ref );
-            goto done;
-        }
-
-        hr = IDirectInput_CreateDevice( di, &expect_guid_product, (IDirectInputDeviceW **)&device, NULL );
-        ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
-
-        ref = IDirectInput_Release( di );
-        todo_wine
-        ok( ref == 0, "Release returned %d\n", ref );
-    }
+    if (FAILED(hr = create_dinput_device( version, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
     ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
