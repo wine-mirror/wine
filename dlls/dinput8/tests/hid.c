@@ -5034,7 +5034,7 @@ struct device_desc
     HIDP_CAPS hid_caps;
 };
 
-static BOOL test_device_types(void)
+static BOOL test_device_types( DWORD version )
 {
 #include "psh_hid_macros.h"
     static const unsigned char unknown_desc[] =
@@ -5194,32 +5194,36 @@ static BOOL test_device_types(void)
             },
         },
     };
-    static const DIDEVCAPS expect_caps[] =
+    const DIDEVCAPS expect_caps[] =
     {
         {
             .dwSize = sizeof(DIDEVCAPS),
             .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8)|DI8DEVTYPE_SUPPLEMENTAL,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8)|DI8DEVTYPE_SUPPLEMENTAL
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .dwButtons = 6,
         },
         {
             .dwSize = sizeof(DIDEVCAPS),
             .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_LIMITED << 8)|DI8DEVTYPE_JOYSTICK,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_LIMITED << 8)|DI8DEVTYPE_JOYSTICK
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .dwAxes = 2,
             .dwButtons = 6,
         },
         {
             .dwSize = sizeof(DIDEVCAPS),
             .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEGAMEPAD_STANDARD << 8)|DI8DEVTYPE_GAMEPAD,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEGAMEPAD_STANDARD << 8)|DI8DEVTYPE_GAMEPAD
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_GAMEPAD << 8)|DIDEVTYPE_JOYSTICK,
             .dwAxes = 2,
             .dwButtons = 6,
         },
         {
             .dwSize = sizeof(DIDEVCAPS),
             .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .dwAxes = 3,
             .dwPOVs = 1,
             .dwButtons = 5,
@@ -5232,7 +5236,8 @@ static BOOL test_device_types(void)
             .dwSize = sizeof(DIDEVICEINSTANCEW),
             .guidInstance = expect_guid_product,
             .guidProduct = expect_guid_product,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8)|DI8DEVTYPE_SUPPLEMENTAL,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8)|DI8DEVTYPE_SUPPLEMENTAL
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .tszInstanceName = L"Wine test root driver",
             .tszProductName = L"Wine test root driver",
             .guidFFDriver = GUID_NULL,
@@ -5243,7 +5248,8 @@ static BOOL test_device_types(void)
             .dwSize = sizeof(DIDEVICEINSTANCEW),
             .guidInstance = expect_guid_product,
             .guidProduct = expect_guid_product,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_LIMITED << 8)|DI8DEVTYPE_JOYSTICK,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_LIMITED << 8)|DI8DEVTYPE_JOYSTICK
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .tszInstanceName = L"Wine test root driver",
             .tszProductName = L"Wine test root driver",
             .guidFFDriver = GUID_NULL,
@@ -5254,7 +5260,8 @@ static BOOL test_device_types(void)
             .dwSize = sizeof(DIDEVICEINSTANCEW),
             .guidInstance = expect_guid_product,
             .guidProduct = expect_guid_product,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEGAMEPAD_STANDARD << 8)|DI8DEVTYPE_GAMEPAD,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEGAMEPAD_STANDARD << 8)|DI8DEVTYPE_GAMEPAD
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_GAMEPAD << 8)|DIDEVTYPE_JOYSTICK,
             .tszInstanceName = L"Wine test root driver",
             .tszProductName = L"Wine test root driver",
             .guidFFDriver = GUID_NULL,
@@ -5265,7 +5272,8 @@ static BOOL test_device_types(void)
             .dwSize = sizeof(DIDEVICEINSTANCEW),
             .guidInstance = expect_guid_product,
             .guidProduct = expect_guid_product,
-            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .tszInstanceName = L"Wine test root driver",
             .tszProductName = L"Wine test root driver",
             .guidFFDriver = GUID_NULL,
@@ -5282,6 +5290,8 @@ static BOOL test_device_types(void)
     ULONG i, ref;
     HRESULT hr;
 
+    winetest_push_context( "version %#x", version );
+
     for (i = 0; i < ARRAY_SIZE(device_desc) && success; ++i)
     {
         winetest_push_context( "desc[%d]", i );
@@ -5297,7 +5307,7 @@ static BOOL test_device_types(void)
             goto done;
         }
 
-        if (FAILED(hr = create_dinput_device( DIRECTINPUT_VERSION, &devinst, &device )))
+        if (FAILED(hr = create_dinput_device( version, &devinst, &device )))
         {
             success = FALSE;
             goto done;
@@ -5309,6 +5319,7 @@ static BOOL test_device_types(void)
         todo_wine
         check_member_guid( devinst, expect_devinst[i], guidInstance );
         check_member_guid( devinst, expect_devinst[i], guidProduct );
+        todo_wine_if( version <= 0x700 && i == 3 )
         check_member( devinst, expect_devinst[i], "%#x", dwDevType );
         todo_wine
         check_member_wstr( devinst, expect_devinst[i], tszInstanceName );
@@ -5322,6 +5333,7 @@ static BOOL test_device_types(void)
         ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
         check_member( caps, expect_caps[i], "%d", dwSize );
         check_member( caps, expect_caps[i], "%#x", dwFlags );
+        todo_wine_if( version <= 0x700 && i == 3 )
         check_member( caps, expect_caps[i], "%#x", dwDevType );
         check_member( caps, expect_caps[i], "%d", dwAxes );
         check_member( caps, expect_caps[i], "%d", dwButtons );
@@ -5341,6 +5353,8 @@ static BOOL test_device_types(void)
         SetCurrentDirectoryW( cwd );
         winetest_pop_context();
     }
+
+    winetest_pop_context();
 
     return success;
 }
@@ -7750,8 +7764,11 @@ START_TEST( hid )
     test_hid_driver( 1, TRUE );
 
     CoInitialize( NULL );
-    if (test_device_types())
+    if (test_device_types( 0x800 ))
     {
+        test_device_types( 0x500 );
+        test_device_types( 0x700 );
+
         test_simple_joystick();
         test_force_feedback_joystick( 0x500 );
         test_force_feedback_joystick( 0x700 );
