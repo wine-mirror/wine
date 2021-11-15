@@ -1616,7 +1616,7 @@ void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_v
     src.buffer_object = 0;
     src.addr = (void *)&value;
 
-    dst.buffer_object = (struct wined3d_bo *)view->counter_bo;
+    dst.buffer_object = view->counter_bo;
     dst.addr = NULL;
 
     wined3d_context_copy_bo_address(context, &dst, &src, sizeof(uint32_t));
@@ -1632,7 +1632,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     if (!view->counter_bo)
         return;
 
-    src.buffer_object = (struct wined3d_bo *)view->counter_bo;
+    src.buffer_object = view->counter_bo;
     src.addr = NULL;
 
     wined3d_buffer_copy_bo_address(buffer, context, offset, &src, sizeof(uint32_t));
@@ -1670,7 +1670,7 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
         {
             struct wined3d_bo_gl *bo = &view_gl->counter_bo;
 
-            view_gl->v.counter_bo = (uintptr_t)bo;
+            view_gl->v.counter_bo = &bo->b;
             wined3d_context_gl_create_bo(context_gl, sizeof(uint32_t), GL_ATOMIC_COUNTER_BUFFER,
                     GL_STATIC_DRAW, true, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_CLIENT_STORAGE_BIT, bo);
             wined3d_unordered_access_view_set_counter(&view_gl->v, 0);
@@ -2253,7 +2253,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
             {
                 TRACE("Created counter buffer view 0x%s.\n", wine_dbgstr_longlong(uav_vk->vk_counter_view));
 
-                uav_vk->v.counter_bo = (uintptr_t)&uav_vk->counter_bo;
+                uav_vk->v.counter_bo = &uav_vk->counter_bo.b;
             }
         }
 
