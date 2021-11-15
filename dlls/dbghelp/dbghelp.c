@@ -607,18 +607,14 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
                           PIMAGEHLP_CONTEXT Context)
 {
     struct process* pcs;
-    BOOL same;
+
+    TRACE("(%p %p %p)\n", hProcess, StackFrame, Context);
 
     if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
-    same = pcs->ctx_frame.ReturnOffset == StackFrame->ReturnOffset &&
-           pcs->ctx_frame.FrameOffset  == StackFrame->FrameOffset  &&
-           pcs->ctx_frame.StackOffset  == StackFrame->StackOffset;
-
-    if (!SymSetScopeFromAddr(hProcess, StackFrame->InstructionOffset))
-        return FALSE;
-
-    pcs->ctx_frame = *StackFrame;
-    if (same)
+    if (pcs->ctx_frame.ReturnOffset       == StackFrame->ReturnOffset &&
+        pcs->ctx_frame.FrameOffset        == StackFrame->FrameOffset  &&
+        pcs->ctx_frame.StackOffset        == StackFrame->StackOffset  &&
+        pcs->ctx_frame.InstructionOffset  == StackFrame->InstructionOffset)
     {
         TRACE("Setting same frame {rtn=%I64x frm=%I64x stk=%I64x}\n",
               pcs->ctx_frame.ReturnOffset,
@@ -628,7 +624,11 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
         return FALSE;
     }
 
+    if (!SymSetScopeFromAddr(hProcess, StackFrame->InstructionOffset))
+        return FALSE;
+    pcs->ctx_frame = *StackFrame;
     /* Context is not (no longer?) used */
+
     return TRUE;
 }
 
@@ -643,11 +643,11 @@ BOOL WINAPI SymSetScopeFromAddr(HANDLE hProcess, ULONG64 addr)
     TRACE("(%p %#I64x)\n", hProcess, addr);
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    if ((sym = symt_find_nearest(pair.effective, addr)) == NULL) return FALSE;
-    if (sym->symt.tag != SymTagFunction) return FALSE;
-
     pair.pcs->localscope_pc = addr;
-    pair.pcs->localscope_symt = &sym->symt;
+    if ((sym = symt_find_nearest(pair.effective, addr)) != NULL && sym->symt.tag == SymTagFunction)
+        pair.pcs->localscope_symt = &sym->symt;
+    else
+        pair.pcs->localscope_symt = NULL;
 
     return TRUE;
 }
