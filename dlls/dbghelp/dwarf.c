@@ -1835,8 +1835,9 @@ static void dwarf2_parse_enumerator(dwarf2_debug_info_t* di,
 static struct symt* dwarf2_parse_enumeration_type(dwarf2_debug_info_t* di)
 {
     struct attribute    name;
-    struct attribute    size;
-    struct symt_basic*  basetype;
+    struct attribute    attrtype;
+    dwarf2_debug_info_t*ditype;
+    struct symt*        type;
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
@@ -1846,20 +1847,28 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_debug_info_t* di)
     TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
-    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
-
-    switch (size.u.uvalue) /* FIXME: that's wrong */
+    if (dwarf2_find_attribute(di, DW_AT_type, &attrtype) && (ditype = dwarf2_jump_to_debug_info(&attrtype)) != NULL)
+         type = ditype->symt;
+    else /* no type found for this enumeration, construct it from size */
     {
-    case 1: basetype = symt_new_basic(di->unit_ctx->module_ctx->module, btInt, "char", 1); break;
-    case 2: basetype = symt_new_basic(di->unit_ctx->module_ctx->module, btInt, "short", 2); break;
-    default:
-    case 4: basetype = symt_new_basic(di->unit_ctx->module_ctx->module, btInt, "int", 4); break;
+        struct attribute    size;
+        struct symt_basic*  basetype;
+
+        if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
+
+        switch (size.u.uvalue) /* FIXME: that's wrong */
+        {
+        case 1: basetype = symt_new_basic(di->unit_ctx->module_ctx->module, btInt, "char", 1); break;
+        case 2: basetype = symt_new_basic(di->unit_ctx->module_ctx->module, btInt, "short", 2); break;
+        default:
+        case 4: basetype = symt_new_basic(di->unit_ctx->module_ctx->module, btInt, "int", 4); break;
+        }
+        type = &basetype->symt;
     }
 
-    di->symt = &symt_new_enum(di->unit_ctx->module_ctx->module, name.u.string, &basetype->symt)->symt;
-
+    di->symt = &symt_new_enum(di->unit_ctx->module_ctx->module, name.u.string, type)->symt;
     children = dwarf2_get_di_children(di);
-    /* FIXME: should we use the sibling stuff ?? */
+
     if (children) for (i = 0; i < vector_length(children); i++)
     {
         child = *(dwarf2_debug_info_t**)vector_at(children, i);
