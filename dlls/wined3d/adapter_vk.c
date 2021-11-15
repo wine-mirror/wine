@@ -1211,12 +1211,12 @@ static void adapter_vk_flush_bo_address(struct wined3d_context *context,
         const struct wined3d_const_bo_address *data, size_t size)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
-    struct wined3d_bo_vk *bo;
+    struct wined3d_bo *bo;
 
-    if (!(bo = (struct wined3d_bo_vk *)data->buffer_object))
+    if (!(bo = data->buffer_object))
         return;
 
-    flush_bo_range(context_vk, bo, (uintptr_t)data->addr, size);
+    flush_bo_range(context_vk, wined3d_bo_vk(bo), (uintptr_t)data->addr, size);
 }
 
 static bool adapter_vk_alloc_bo(struct wined3d_device *device, struct wined3d_resource *resource,

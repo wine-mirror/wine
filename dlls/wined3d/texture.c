@@ -2476,7 +2476,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
             return;
     }
 
-    bo.buffer_object = (struct wined3d_bo *)src_bo_addr->buffer_object;
+    bo.buffer_object = src_bo_addr->buffer_object;
     bo.addr = (BYTE *)src_bo_addr->addr + src_box->front * src_slice_pitch;
     if (dst_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
     {
@@ -4720,7 +4720,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     /* We need to be outside of a render pass for vkCmdPipelineBarrier() and vkCmdCopyBufferToImage() calls below. */
     wined3d_context_vk_end_current_render_pass(context_vk);
 
-    if (!(src_bo = (struct wined3d_bo_vk *)src_bo_addr->buffer_object))
+    if (!src_bo_addr->buffer_object)
     {
         if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo))
@@ -4755,6 +4755,8 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     }
     else
     {
+        src_bo = wined3d_bo_vk(src_bo_addr->buffer_object);
+
         vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier.pNext = NULL;
         vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(src_bo->usage) & ~WINED3D_READ_ONLY_ACCESS_FLAGS;
@@ -4917,7 +4919,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     /* We need to be outside of a render pass for vkCmdPipelineBarrier() and vkCmdCopyBufferToImage() calls below. */
     wined3d_context_vk_end_current_render_pass(context_vk);
 
-    if (!(dst_bo = (struct wined3d_bo_vk *)dst_bo_addr->buffer_object))
+    if (!dst_bo_addr->buffer_object)
     {
         if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo))
@@ -4930,6 +4932,8 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     }
     else
     {
+        dst_bo = wined3d_bo_vk(dst_bo_addr->buffer_object);
+
         vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier.pNext = NULL;
         vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(dst_bo->usage);

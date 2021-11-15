@@ -1632,7 +1632,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     if (!view->counter_bo)
         return;
 
-    src.buffer_object = view->counter_bo;
+    src.buffer_object = (struct wined3d_bo *)view->counter_bo;
     src.addr = NULL;
 
     wined3d_buffer_copy_bo_address(buffer, context, offset, &src, sizeof(uint32_t));

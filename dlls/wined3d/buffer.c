@@ -1132,12 +1132,12 @@ void wined3d_buffer_update_sub_resource(struct wined3d_buffer *buffer, struct wi
 {
     if (upload_bo->flags & UPLOAD_BO_RENAME_ON_UNMAP)
     {
-        wined3d_buffer_set_bo(buffer, context, (struct wined3d_bo *)upload_bo->addr.buffer_object);
+        wined3d_buffer_set_bo(buffer, context, upload_bo->addr.buffer_object);
         wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
         wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
     }
 
-    if (upload_bo->addr.buffer_object && upload_bo->addr.buffer_object == (uintptr_t)buffer->buffer_object)
+    if (upload_bo->addr.buffer_object && upload_bo->addr.buffer_object == buffer->buffer_object)
         wined3d_context_flush_bo_address(context, &upload_bo->addr, size);
     else
         wined3d_buffer_copy_bo_address(buffer, context, offset, &upload_bo->addr, size);

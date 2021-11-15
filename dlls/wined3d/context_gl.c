@@ -2748,8 +2748,9 @@ static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct 
     struct wined3d_bo_gl *bo;
     unsigned int i;
 
-    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object) || bo->b.coherent)
+    if (!data->buffer_object || data->buffer_object->coherent)
         return;
+    bo = wined3d_bo_gl(data->buffer_object);
 
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
