@@ -673,7 +673,7 @@
 @ stdcall SetForegroundWindow(long)
 @ stdcall SetGestureConfig(ptr long long ptr long)
 @ stdcall SetInternalWindowPos(long long ptr ptr)
-@ stdcall SetKeyboardState(ptr)
+@ stdcall SetKeyboardState(ptr) NtUserSetKeyboardState
 @ stdcall SetLastErrorEx(long long)
 @ stdcall SetLayeredWindowAttributes(ptr long long long)
 @ stdcall SetLogonNotifyWindow(long long)

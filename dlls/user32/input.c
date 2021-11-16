@@ -594,23 +594,6 @@ BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
 
 
 /**********************************************************************
- *		SetKeyboardState (USER32.@)
- */
-BOOL WINAPI SetKeyboardState( LPBYTE state )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( set_key_state )
-    {
-        wine_server_add_data( req, state, 256 );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/**********************************************************************
  *		VkKeyScanA (USER32.@)
  *
  * VkKeyScan translates an ANSI character to a virtual-key and shift code

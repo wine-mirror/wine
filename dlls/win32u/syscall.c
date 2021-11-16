@@ -123,6 +123,7 @@ static void * const syscalls[] =
     NtUserOpenWindowStation,
     NtUserRemoveClipboardFormatListener,
     NtUserRemoveProp,
+    NtUserSetKeyboardState,
     NtUserSetObjectInformation,
     NtUserSetProcessWindowStation,
     NtUserSetProp,
