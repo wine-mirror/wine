@@ -4267,6 +4267,7 @@ static void test_simple_joystick(void)
 
     hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
                           NULL, NULL, NULL, NULL );
+    SetForegroundWindow( hwnd );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
