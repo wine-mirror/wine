@@ -637,11 +637,21 @@ static HRESULT WINAPI IDirectInput8WImpl_CreateDevice(LPDIRECTINPUT8W iface, REF
     return IDirectInput7_CreateDeviceEx( &This->IDirectInput7W_iface, rguid, &IID_IDirectInputDevice8W, (LPVOID *)pdev, punk );
 }
 
+static BOOL try_enum_device( DWORD type, LPDIENUMDEVICESCALLBACKW callback,
+                             DIDEVICEINSTANCEW *instance, void *context, DWORD flags )
+{
+    if (type && (instance->dwDevType & 0xff) != type) return DIENUM_CONTINUE;
+    if ((flags & DIEDFL_FORCEFEEDBACK) && IsEqualGUID( &instance->guidFFDriver, &GUID_NULL ))
+        return DIENUM_CONTINUE;
+    return enum_callback_wrapper( callback, instance, context );
+}
+
 static HRESULT WINAPI IDirectInput8WImpl_EnumDevices( IDirectInput8W *iface, DWORD type, LPDIENUMDEVICESCALLBACKW callback,
                                                       void *context, DWORD flags )
 {
     DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     IDirectInputImpl *impl = impl_from_IDirectInput8W( iface );
+    DWORD device_class = 0, device_type = 0;
     unsigned int i = 0;
     HRESULT hr;
 
@@ -657,19 +667,32 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevices( IDirectInput8W *iface, DWO
 
     if (!impl->initialized) return DIERR_NOTINITIALIZED;
 
-    hr = mouse_enum_device( type, flags, &instance, impl->dwVersion, 0 );
-    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
-        return DI_OK;
-    hr = keyboard_enum_device( type, flags, &instance, impl->dwVersion, 0 );
-    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
-        return DI_OK;
+    if (type <= DI8DEVCLASS_GAMECTRL) device_class = type;
+    else device_type = type;
 
-    do
+    if (device_class == DI8DEVCLASS_ALL || device_class == DI8DEVCLASS_POINTER)
     {
-        hr = hid_joystick_enum_device( type, flags, &instance, impl->dwVersion, i++ );
-        if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+        hr = mouse_enum_device( type, flags, &instance, impl->dwVersion );
+        if (hr == DI_OK && try_enum_device( device_type, callback, &instance, context, flags ) == DIENUM_STOP)
             return DI_OK;
-    } while (SUCCEEDED(hr));
+    }
+
+    if (device_class == DI8DEVCLASS_ALL || device_class == DI8DEVCLASS_KEYBOARD)
+    {
+        hr = keyboard_enum_device( type, flags, &instance, impl->dwVersion );
+        if (hr == DI_OK && try_enum_device( device_type, callback, &instance, context, flags ) == DIENUM_STOP)
+            return DI_OK;
+    }
+
+    if (device_class == DI8DEVCLASS_ALL || device_class == DI8DEVCLASS_GAMECTRL)
+    {
+        do
+        {
+            hr = hid_joystick_enum_device( type, flags, &instance, impl->dwVersion, i++ );
+            if (hr == DI_OK && try_enum_device( device_type, callback, &instance, context, flags ) == DIENUM_STOP)
+                return DI_OK;
+        } while (SUCCEEDED(hr));
+    }
 
     return DI_OK;
 }

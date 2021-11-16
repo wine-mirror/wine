@@ -72,21 +72,11 @@ static inline struct mouse *impl_from_IDirectInputDevice8W( IDirectInputDevice8W
     return CONTAINING_RECORD( CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface ), struct mouse, base );
 }
 
-HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
+HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version )
 {
     DWORD size;
 
-    TRACE( "type %#x, flags %#x, instance %p, version %#04x, index %d\n", type, flags, instance, version, index );
-
-    if (index != 0) return DIERR_GENERIC;
-    if (flags & DIEDFL_FORCEFEEDBACK) return DI_NOEFFECT;
-    if (version < 0x0800 && type != 0 && type != DIDEVTYPE_MOUSE) return DI_NOEFFECT;
-    if (version >= 0x0800 && type != DI8DEVCLASS_ALL && type != DI8DEVCLASS_POINTER && type != DI8DEVTYPE_MOUSE)
-        return DI_NOEFFECT;
-
-    if (instance->dwSize != sizeof(DIDEVICEINSTANCEW) &&
-        instance->dwSize != sizeof(DIDEVICEINSTANCE_DX3W))
-        return DIERR_INVALIDPARAM;
+    TRACE( "type %#x, flags %#x, instance %p, version %#04x\n", type, flags, instance, version );
 
     size = instance->dwSize;
     memset( instance, 0, size );
@@ -117,7 +107,7 @@ HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirect
         return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": struct mouse*->base.crit");
 
-    mouse_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion, 0 );
+    mouse_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion );
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;

@@ -3531,14 +3531,13 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_ALLDEVICES );
         ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        todo_wine
         ok( count == 1, "got count %u, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_FORCEFEEDBACK );
         ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
         if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %u, expected 0\n", count );
-        else todo_wine ok( count == 1, "got count %u, expected 1\n", count );
+        else ok( count == 1, "got count %u, expected 1\n", count );
 
         count = 0;
         hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff) + 1, enum_device_count, &count, DIEDFL_ALLDEVICES );
@@ -3636,7 +3635,7 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
         count = 0;
         hr = IDirectInput_EnumDevices( di, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_FORCEFEEDBACK );
         ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
-        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) todo_wine ok( count == 0, "got count %u, expected 0\n", count );
+        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %u, expected 0\n", count );
         else ok( count == 1, "got count %u, expected 1\n", count );
 
         hr = IDirectInput_EnumDevices( di, 0x14, enum_device_count, &count, DIEDFL_ALLDEVICES );
