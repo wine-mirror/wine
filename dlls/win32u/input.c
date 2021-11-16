@@ -28,6 +28,9 @@
 
 #include "win32u_private.h"
 #include "wine/server.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
 /**********************************************************************
@@ -46,4 +49,25 @@ BOOL WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach )
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/**********************************************************************
+ *	     NtUserGetKeyState    (win32u.@)
+ *
+ * An application calls the GetKeyState function in response to a
+ * keyboard-input message.  This function retrieves the state of the key
+ * at the time the input message was generated.
+ */
+SHORT WINAPI NtUserGetKeyState( INT vkey )
+{
+    SHORT retval = 0;
+
+    SERVER_START_REQ( get_key_state )
+    {
+        req->key = vkey;
+        if (!wine_server_call( req )) retval = (signed char)(reply->state & 0x81);
+    }
+    SERVER_END_REQ;
+    TRACE("key (0x%x) -> %x\n", vkey, retval);
+    return retval;
 }

@@ -3893,7 +3893,7 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 
     TRACE( "%p,%s\n", hWnd, wine_dbgstr_point( &pt ) );
 
-    if (!(GetKeyState( VK_LBUTTON ) & 0x8000))
+    if (!(NtUserGetKeyState( VK_LBUTTON ) & 0x8000))
         return FALSE;
 
     wDragWidth = GetSystemMetrics(SM_CXDRAG);

@@ -237,3 +237,10 @@ NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
 
     return NtUserAttachThreadInput( from, to, attach );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetKeyState( UINT *args )
+{
+    INT vkey = get_ulong( &args );
+
+    return NtUserGetKeyState( vkey );
+}

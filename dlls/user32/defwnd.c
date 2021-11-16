@@ -507,11 +507,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         }
         else if( wParam == VK_F10 )
         {
-            if (GetKeyState(VK_SHIFT) & 0x8000)
+            if (NtUserGetKeyState(VK_SHIFT) & 0x8000)
                 SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, -1 );
             iF10Key = 1;
         }
-        else if( wParam == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))
+        else if (wParam == VK_ESCAPE && (NtUserGetKeyState(VK_SHIFT) & 0x8000))
             SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
         break;
 

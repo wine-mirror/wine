@@ -2508,7 +2508,7 @@ static LRESULT LISTBOX_HandleKeyDown( LB_DESCR *descr, DWORD key )
     if (caret >= 0)
     {
         if (((descr->style & LBS_EXTENDEDSEL) &&
-            !(GetKeyState( VK_SHIFT ) & 0x8000)) ||
+            !(NtUserGetKeyState( VK_SHIFT ) & 0x8000)) ||
             !IS_MULTISELECT(descr))
             descr->anchor_item = caret;
         LISTBOX_MoveCaret( descr, caret, TRUE );

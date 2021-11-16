@@ -3176,7 +3176,7 @@ static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 {
         BOOL control;
 
-	control = GetKeyState(VK_CONTROL) & 0x8000;
+	control = NtUserGetKeyState(VK_CONTROL) & 0x8000;
 
 	switch (c) {
 	case '\r':
@@ -3436,11 +3436,11 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 	BOOL shift;
 	BOOL control;
 
-	if (GetKeyState(VK_MENU) & 0x8000)
+	if (NtUserGetKeyState(VK_MENU) & 0x8000)
 		return 0;
 
-	shift = GetKeyState(VK_SHIFT) & 0x8000;
-	control = GetKeyState(VK_CONTROL) & 0x8000;
+	shift = NtUserGetKeyState(VK_SHIFT) & 0x8000;
+	control = NtUserGetKeyState(VK_CONTROL) & 0x8000;
 
 	switch (key) {
 	case VK_F4:

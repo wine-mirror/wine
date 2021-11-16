@@ -5505,9 +5505,9 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
 
     if (wParam != key) return FALSE;
 
-    if (GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
-    if (GetKeyState(VK_MENU) & 0x8000) mask |= FALT;
-    if (GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
+    if (NtUserGetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
+    if (NtUserGetKeyState(VK_MENU) & 0x8000) mask |= FALT;
+    if (NtUserGetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
 
     if (message == WM_CHAR || message == WM_SYSCHAR)
     {

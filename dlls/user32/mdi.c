@@ -1649,13 +1649,13 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
 
         /* translate if the Ctrl key is down and Alt not. */
 
-        if( (GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000))
+        if( (NtUserGetKeyState(VK_CONTROL) & 0x8000) && !(NtUserGetKeyState(VK_MENU) & 0x8000))
         {
             switch( msg->wParam )
             {
             case VK_F6:
             case VK_TAB:
-                wParam = ( GetKeyState(VK_SHIFT) & 0x8000 ) ? SC_NEXTWINDOW : SC_PREVWINDOW;
+                wParam = ( NtUserGetKeyState(VK_SHIFT) & 0x8000 ) ? SC_NEXTWINDOW : SC_PREVWINDOW;
                 break;
             case VK_F4:
             case VK_RBUTTON:

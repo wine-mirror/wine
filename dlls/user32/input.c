@@ -594,28 +594,6 @@ BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
 
 
 /**********************************************************************
- *		GetKeyState (USER32.@)
- *
- * An application calls the GetKeyState function in response to a
- * keyboard-input message.  This function retrieves the state of the key
- * at the time the input message was generated.
- */
-SHORT WINAPI DECLSPEC_HOTPATCH GetKeyState(INT vkey)
-{
-    SHORT retval = 0;
-
-    SERVER_START_REQ( get_key_state )
-    {
-        req->key = vkey;
-        if (!wine_server_call( req )) retval = (signed char)(reply->state & 0x81);
-    }
-    SERVER_END_REQ;
-    TRACE("key (0x%x) -> %x\n", vkey, retval);
-    return retval;
-}
-
-
-/**********************************************************************
  *		GetKeyboardState (USER32.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetKeyboardState( LPBYTE state )

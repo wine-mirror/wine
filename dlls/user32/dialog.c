@@ -1198,7 +1198,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                  * do so but I presume someone has)
                  */
                 if (fIsDialog)
-                    SendMessageW( hwndDlg, WM_NEXTDLGCTL, (GetKeyState(VK_SHIFT) & 0x8000), 0 );
+                    SendMessageW( hwndDlg, WM_NEXTDLGCTL, (NtUserGetKeyState(VK_SHIFT) & 0x8000), 0 );
                 else
                 {
                     /* It would appear that GetNextDlgTabItem can handle being
@@ -1208,7 +1208,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                     HWND hwndFocus = GetFocus();
                     HWND hwndNext = GetNextDlgTabItem (hwndDlg,
                             hwndFocus == hwndDlg ? NULL : hwndFocus,
-                            GetKeyState (VK_SHIFT) & 0x8000);
+                            NtUserGetKeyState (VK_SHIFT) & 0x8000);
                     if (hwndNext)
                     {
                         dlgCode = SendMessageW (hwndNext, WM_GETDLGCODE,
