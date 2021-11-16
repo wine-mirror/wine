@@ -974,9 +974,13 @@ static HRESULT WINAPI dinput_device_GetProperty( IDirectInputDevice8W *iface, co
         return impl->vtbl->get_property( iface, LOWORD( guid ), header, &instance );
 
     case (DWORD_PTR)DIPROP_AUTOCENTER:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        return DIERR_UNSUPPORTED;
-
+        if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+        value->dwData = impl->autocenter;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_BUFFERSIZE:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
@@ -1076,11 +1080,17 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
     {
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
         EnterCriticalSection( &impl->crit );
         if (impl->acquired) hr = DIERR_ACQUIRED;
         else if (value->dwData > DIPROPAUTOCENTER_ON) hr = DIERR_INVALIDPARAM;
         else if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) hr = DIERR_UNSUPPORTED;
-        else hr = DI_OK;
+        else
+        {
+            FIXME( "DIPROP_AUTOCENTER stub!\n" );
+            impl->autocenter = value->dwData;
+            hr = DI_OK;
+        }
         LeaveCriticalSection( &impl->crit );
         return hr;
     }

@@ -96,6 +96,8 @@ struct dinput_device
 
     BYTE device_state_report_id;
     BYTE device_state[DEVICE_STATE_MAX_SIZE];
+
+    BOOL autocenter;
 };
 
 extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
