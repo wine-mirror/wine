@@ -315,39 +315,17 @@ __ASM_GLOBAL_FUNC( enum_callback_wrapper,
 static HRESULT WINAPI IDirectInputWImpl_EnumDevices( IDirectInput7W *iface, DWORD type, LPDIENUMDEVICESCALLBACKW callback,
                                                      void *context, DWORD flags )
 {
-    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     IDirectInputImpl *impl = impl_from_IDirectInput7W( iface );
-    unsigned int i = 0;
-    HRESULT hr;
 
     TRACE( "iface %p, type %#x, callback %p, context %p, flags %#x\n", iface, type, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
 
-    if ((type > DI8DEVCLASS_GAMECTRL && type < DI8DEVTYPE_DEVICE) || type > DI8DEVTYPE_SUPPLEMENTAL)
+    if (type > DIDEVTYPE_JOYSTICK) return DIERR_INVALIDPARAM;
+    if (flags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS))
         return DIERR_INVALIDPARAM;
-    if (flags & ~(DIEDFL_ATTACHEDONLY|DIEDFL_FORCEFEEDBACK|DIEDFL_INCLUDEALIASES|DIEDFL_INCLUDEPHANTOMS|DIEDFL_INCLUDEHIDDEN))
-        return DIERR_INVALIDPARAM;
 
-    if (!impl->initialized)
-        return DIERR_NOTINITIALIZED;
-
-    hr = mouse_enum_device( type, flags, &instance, impl->dwVersion, 0 );
-    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
-        return DI_OK;
-    hr = keyboard_enum_device( type, flags, &instance, impl->dwVersion, 0 );
-    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
-        return DI_OK;
-
-    do
-    {
-        hr = hid_joystick_enum_device( type, flags, &instance, impl->dwVersion, i++ );
-        if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
-            return DI_OK;
-    }
-    while (SUCCEEDED(hr));
-
-    return DI_OK;
+    return IDirectInput8_EnumDevices( &impl->IDirectInput8W_iface, type, callback, context, flags );
 }
 
 static ULONG WINAPI IDirectInputWImpl_AddRef( IDirectInput7W *iface )
@@ -659,11 +637,41 @@ static HRESULT WINAPI IDirectInput8WImpl_CreateDevice(LPDIRECTINPUT8W iface, REF
     return IDirectInput7_CreateDeviceEx( &This->IDirectInput7W_iface, rguid, &IID_IDirectInputDevice8W, (LPVOID *)pdev, punk );
 }
 
-static HRESULT WINAPI IDirectInput8WImpl_EnumDevices(LPDIRECTINPUT8W iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback,
-                                                     LPVOID pvRef, DWORD dwFlags)
+static HRESULT WINAPI IDirectInput8WImpl_EnumDevices( IDirectInput8W *iface, DWORD type, LPDIENUMDEVICESCALLBACKW callback,
+                                                      void *context, DWORD flags )
 {
-    IDirectInputImpl *This = impl_from_IDirectInput8W( iface );
-    return IDirectInput_EnumDevices( &This->IDirectInput7W_iface, dwDevType, lpCallback, pvRef, dwFlags );
+    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    IDirectInputImpl *impl = impl_from_IDirectInput8W( iface );
+    unsigned int i = 0;
+    HRESULT hr;
+
+    TRACE( "iface %p, type %#x, callback %p, context %p, flags %#x\n", iface, type, callback, context, flags );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    if ((type > DI8DEVCLASS_GAMECTRL && type < DI8DEVTYPE_DEVICE) || type > DI8DEVTYPE_SUPPLEMENTAL)
+        return DIERR_INVALIDPARAM;
+    if (flags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES |
+                  DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN))
+        return DIERR_INVALIDPARAM;
+
+    if (!impl->initialized) return DIERR_NOTINITIALIZED;
+
+    hr = mouse_enum_device( type, flags, &instance, impl->dwVersion, 0 );
+    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+        return DI_OK;
+    hr = keyboard_enum_device( type, flags, &instance, impl->dwVersion, 0 );
+    if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+        return DI_OK;
+
+    do
+    {
+        hr = hid_joystick_enum_device( type, flags, &instance, impl->dwVersion, i++ );
+        if (hr == DI_OK && enum_callback_wrapper( callback, &instance, context ) == DIENUM_STOP)
+            return DI_OK;
+    } while (SUCCEEDED(hr));
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInput8WImpl_GetDeviceStatus(LPDIRECTINPUT8W iface, REFGUID rguid)

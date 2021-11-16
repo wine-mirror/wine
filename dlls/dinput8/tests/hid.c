@@ -3600,7 +3600,6 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
         hr = IDirectInput_EnumDevices( di, 0xdeadbeef, enum_device_count, &count, DIEDFL_ALLDEVICES );
         ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
         hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, DIEDFL_INCLUDEHIDDEN );
-        todo_wine
         ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
 
         count = 0;
@@ -3641,7 +3640,6 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
         else ok( count == 1, "got count %u, expected 1\n", count );
 
         hr = IDirectInput_EnumDevices( di, 0x14, enum_device_count, &count, DIEDFL_ALLDEVICES );
-        todo_wine
         ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
 
         hr = IDirectInput_CreateDevice( di, &expect_guid_product, (IDirectInputDeviceW **)device, NULL );
