@@ -751,7 +751,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
     /* FIXME shouldn't we check that? if (!module_get_debug(pcs, module)) */
     if (pe_load_export_debug_info(pcs, module) && !ret)
         ret = TRUE;
-
+    if (!ret) module->module.SymType = SymNone;
     return ret;
 }
 
@@ -797,8 +797,6 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
         opened = TRUE;
     }
     else if (name) lstrcpyW(loaded_name, name);
-    else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
-        FIXME("Trouble ahead (no module name passed in deferred mode)\n");
     if (!(modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct pe_module_info))))
         return NULL;
     modfmt->u.pe_info = (struct pe_module_info*)(modfmt + 1);
@@ -824,12 +822,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
             modfmt->module = module;
             modfmt->remove = pe_module_remove;
             modfmt->loc_compute = NULL;
-
             module->format_info[DFI_PE] = modfmt;
-            if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
-                module->module.SymType = SymDeferred;
-            else
-                pe_load_debug_info(pcs, module);
             module->reloc_delta = base - PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
         }
         else

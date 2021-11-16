@@ -1495,10 +1495,6 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
 
         macho_module_info->file_map = fmap;
         reset_file_map(&fmap);
-        if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
-            macho_info->module->module.SymType = SymDeferred;
-        else if (!macho_load_debug_info(pcs, macho_info->module))
-            ret = FALSE;
 
         macho_info->module->format_info[DFI_MACHO]->u.macho_info->in_use = 1;
         macho_info->module->format_info[DFI_MACHO]->u.macho_info->is_loader = 0;

@@ -200,7 +200,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module_set_module(module, name);
     module->module.ImageName[0] = '\0';
     lstrcpynW(module->module.LoadedImageName, name, ARRAY_SIZE(module->module.LoadedImageName));
-    module->module.SymType = SymNone;
+    module->module.SymType = SymDeferred;
     module->module.NumSyms = 0;
     module->module.TimeDateStamp = stamp;
     module->module.CheckSum = checksum;
@@ -350,6 +350,42 @@ struct module* module_get_containee(const struct process* pcs, const struct modu
     return NULL;
 }
 
+BOOL module_load_debug(struct module* module)
+{
+    IMAGEHLP_DEFERRED_SYMBOL_LOADW64    idslW64;
+
+    /* if deferred, force loading */
+    if (module->module.SymType == SymDeferred)
+    {
+        BOOL ret;
+        
+        if (module->is_virtual) ret = FALSE;
+        else if (module->type == DMT_PE)
+        {
+            idslW64.SizeOfStruct = sizeof(idslW64);
+            idslW64.BaseOfImage = module->module.BaseOfImage;
+            idslW64.CheckSum = module->module.CheckSum;
+            idslW64.TimeDateStamp = module->module.TimeDateStamp;
+            memcpy(idslW64.FileName, module->module.ImageName,
+                   sizeof(module->module.ImageName));
+            idslW64.Reparse = FALSE;
+            idslW64.hFile = INVALID_HANDLE_VALUE;
+
+            pcs_callback(module->process, CBA_DEFERRED_SYMBOL_LOAD_START, &idslW64);
+            ret = pe_load_debug_info(module->process, module);
+            pcs_callback(module->process,
+                         ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
+                         &idslW64);
+        }
+        else ret = module->process->loader->load_debug_info(module->process, module);
+
+        if (!ret) module->module.SymType = SymNone;
+        assert(module->module.SymType != SymDeferred);
+        module->module.NumSyms = module->ht_symbols.num_elts;
+    }
+    return module->module.SymType != SymNone;
+}
+
 /******************************************************************
  *		module_get_debug
  *
@@ -362,42 +398,11 @@ struct module* module_get_containee(const struct process* pcs, const struct modu
  */
 BOOL module_get_debug(struct module_pair* pair)
 {
-    IMAGEHLP_DEFERRED_SYMBOL_LOADW64    idslW64;
-
     if (!pair->requested) return FALSE;
     /* for a PE builtin, always get info from container */
     if (!(pair->effective = module_get_container(pair->pcs, pair->requested)))
         pair->effective = pair->requested;
-    /* if deferred, force loading */
-    if (pair->effective->module.SymType == SymDeferred)
-    {
-        BOOL ret;
-        
-        if (pair->effective->is_virtual) ret = FALSE;
-        else if (pair->effective->type == DMT_PE)
-        {
-            idslW64.SizeOfStruct = sizeof(idslW64);
-            idslW64.BaseOfImage = pair->effective->module.BaseOfImage;
-            idslW64.CheckSum = pair->effective->module.CheckSum;
-            idslW64.TimeDateStamp = pair->effective->module.TimeDateStamp;
-            memcpy(idslW64.FileName, pair->effective->module.ImageName,
-                   sizeof(pair->effective->module.ImageName));
-            idslW64.Reparse = FALSE;
-            idslW64.hFile = INVALID_HANDLE_VALUE;
-
-            pcs_callback(pair->pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idslW64);
-            ret = pe_load_debug_info(pair->pcs, pair->effective);
-            pcs_callback(pair->pcs,
-                         ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
-                         &idslW64);
-        }
-        else ret = pair->pcs->loader->load_debug_info(pair->pcs, pair->effective);
-
-        if (!ret) pair->effective->module.SymType = SymNone;
-        assert(pair->effective->module.SymType != SymDeferred);
-        pair->effective->module.NumSyms = pair->effective->ht_symbols.num_elts;
-    }
-    return pair->effective->module.SymType != SymNone;
+    return module_load_debug(pair->effective);
 }
 
 /***********************************************************************
@@ -966,7 +971,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         WARN("Couldn't locate %s\n", debugstr_w(wImageName));
         return 0;
     }
-    module->module.NumSyms = module->ht_symbols.num_elts;
     /* by default module_new fills module.ModuleName from a derivation
      * of LoadedImageName. Overwrite it, if we have better information
      */
@@ -974,7 +978,8 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         module_set_module(module, wModuleName);
     if (wImageName)
         lstrcpynW(module->module.ImageName, wImageName, ARRAY_SIZE(module->module.ImageName));
-
+    if ((dbghelp_options & SYMOPT_DEFERRED_LOADS) == 0)
+        module_load_debug(module);
     return module->module.BaseOfImage;
 }
 
@@ -1494,6 +1499,7 @@ static struct module* native_load_module(struct process* pcs, const WCHAR* name,
 
 static BOOL native_load_debug_info(struct process* process, struct module* module)
 {
+    module->module.SymType = SymNone;
     return FALSE;
 }
 
