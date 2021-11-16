@@ -1302,7 +1302,7 @@
 @ stub NtUserUserHandleGrantAccess
 @ stub NtUserValidateRect
 @ stub NtUserValidateTimerCallback
-@ stub NtUserVkKeyScanEx
+@ stdcall NtUserVkKeyScanEx(long long)
 @ stub NtUserWOWCleanup
 @ stub NtUserWaitAvailableMessageEx
 @ stub NtUserWaitForInputIdle

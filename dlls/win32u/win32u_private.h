@@ -198,6 +198,7 @@ struct unix_funcs
     INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
+    WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
 
     /* Wine-specific functions */
     UINT (WINAPI *pGDIRealizePalette)( HDC hdc );

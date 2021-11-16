@@ -616,6 +616,11 @@ BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
     return unix_funcs->pNtUserIsClipboardFormatAvailable( format );
 }
 
+WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
+{
+    return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
+}
+
 UINT WINAPI GDIRealizePalette( HDC hdc )
 {
     return unix_funcs->pGDIRealizePalette( hdc );

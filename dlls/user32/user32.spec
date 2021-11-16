@@ -805,7 +805,7 @@
 @ stdcall ValidateRgn(long long)
 @ stdcall VkKeyScanA(long)
 @ stdcall VkKeyScanExA(long long)
-@ stdcall VkKeyScanExW(long long)
+@ stdcall VkKeyScanExW(long long) NtUserVkKeyScanEx
 @ stdcall VkKeyScanW(long)
 @ stub WCSToMBEx
 @ stdcall WINNLSEnableIME(long long)

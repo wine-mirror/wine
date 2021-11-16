@@ -274,11 +274,6 @@ static void CDECL loaderdrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk
     load_driver()->pUnregisterHotKey( hwnd, modifiers, vk );
 }
 
-static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
-{
-    return load_driver()->pVkKeyScanEx( ch, layout );
-}
-
 static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
 {
     load_driver()->pSetCursor( cursor );
@@ -374,7 +369,7 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_RegisterHotKey,
     loaderdrv_ToUnicodeEx,
     loaderdrv_UnregisterHotKey,
-    loaderdrv_VkKeyScanEx,
+    NULL,
     /* cursor/icon functions */
     nulldrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
