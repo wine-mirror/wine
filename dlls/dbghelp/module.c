@@ -103,13 +103,13 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
     const WCHAR *ptr, *endptr;
     size_t      len, l;
 
-    ptr = get_filename(in, endptr = in + lstrlenW(in));
+    endptr = in + lstrlenW(in);
+    endptr -= match_ext(in, endptr - in);
+    ptr = get_filename(in, endptr);
     len = min(endptr - ptr, size - 1);
     memcpy(out, ptr, len * sizeof(WCHAR));
     out[len] = '\0';
-    if (len > 4 && (l = match_ext(out, len)))
-        out[len - l] = '\0';
-    else if (is_wine_loader(out))
+    if (is_wine_loader(out))
         lstrcpynW(out, S_WineLoaderW, size);
     else
     {
