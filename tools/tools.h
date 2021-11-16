@@ -80,6 +80,23 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
+struct target
+{
+    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64 } cpu;
+
+    enum
+    {
+        PLATFORM_UNSPECIFIED,
+        PLATFORM_APPLE,
+        PLATFORM_ANDROID,
+        PLATFORM_LINUX,
+        PLATFORM_FREEBSD,
+        PLATFORM_SOLARIS,
+        PLATFORM_WINDOWS,
+        PLATFORM_MINGW,
+        PLATFORM_CYGWIN
+    } platform;
+};
 
 static inline void *xmalloc( size_t size )
 {
@@ -333,6 +350,217 @@ static inline int make_temp_file( const char *prefix, const char *suffix, char *
     }
     fprintf( stderr, "failed to create temp file for %s%s\n", prefix, suffix );
     exit(1);
+}
+
+
+static inline struct target get_default_target(void)
+{
+    struct target target;
+#ifdef __i386__
+    target.cpu = CPU_i386;
+#elif defined(__x86_64__)
+    target.cpu = CPU_x86_64;
+#elif defined(__arm__)
+    target.cpu = CPU_ARM;
+#elif defined(__aarch64__)
+    target.cpu = CPU_ARM64;
+#else
+#error Unsupported CPU
+#endif
+
+#ifdef __APPLE__
+    target.platform = PLATFORM_APPLE;
+#elif defined(__ANDROID__)
+    target.platform = PLATFORM_ANDROID;
+#elif defined(__linux__)
+    target.platform = PLATFORM_LINUX;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    target.platform = PLATFORM_FREEBSD;
+#elif defined(__sun)
+    target.platform = PLATFORM_SOLARIS;
+#elif defined(__CYGWIN__)
+    target.platform = PLATFORM_CYGWIN;
+#elif defined(_WIN32)
+    target.platform = PLATFORM_MINGW;
+#else
+    target.platform = PLATFORM_UNSPECIFIED;
+#endif
+
+    return target;
+}
+
+
+static inline unsigned int get_target_ptr_size( struct target target )
+{
+    static const unsigned int sizes[] =
+    {
+        [CPU_i386]      = 4,
+        [CPU_x86_64]    = 8,
+        [CPU_ARM]       = 4,
+        [CPU_ARM64]     = 8,
+    };
+    return sizes[target.cpu];
+}
+
+
+static inline void set_target_ptr_size( struct target *target, unsigned int size )
+{
+    switch (target->cpu)
+    {
+    case CPU_i386:
+        if (size == 8) target->cpu = CPU_x86_64;
+        break;
+    case CPU_x86_64:
+        if (size == 4) target->cpu = CPU_i386;
+        break;
+    case CPU_ARM:
+        if (size == 8) target->cpu = CPU_ARM64;
+        break;
+    case CPU_ARM64:
+        if (size == 4) target->cpu = CPU_ARM;
+        break;
+    }
+}
+
+
+static inline int get_cpu_from_name( const char *name )
+{
+    static const struct
+    {
+        const char *name;
+        int         cpu;
+    } cpu_names[] =
+    {
+        { "i386",      CPU_i386 },
+        { "i486",      CPU_i386 },
+        { "i586",      CPU_i386 },
+        { "i686",      CPU_i386 },
+        { "i786",      CPU_i386 },
+        { "x86_64",    CPU_x86_64 },
+        { "amd64",     CPU_x86_64 },
+        { "aarch64",   CPU_ARM64 },
+        { "arm64",     CPU_ARM64 },
+        { "arm",       CPU_ARM },
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(cpu_names); i++)
+        if (!strncmp( cpu_names[i].name, name, strlen(cpu_names[i].name) )) return cpu_names[i].cpu;
+    return -1;
+}
+
+
+static inline int get_platform_from_name( const char *name )
+{
+    static const struct
+    {
+        const char *name;
+        int         platform;
+    } platform_names[] =
+    {
+        { "macos",       PLATFORM_APPLE },
+        { "darwin",      PLATFORM_APPLE },
+        { "android",     PLATFORM_ANDROID },
+        { "linux",       PLATFORM_LINUX },
+        { "freebsd",     PLATFORM_FREEBSD },
+        { "solaris",     PLATFORM_SOLARIS },
+        { "mingw32",     PLATFORM_MINGW },
+        { "windows-gnu", PLATFORM_MINGW },
+        { "winnt",       PLATFORM_MINGW },
+        { "windows",     PLATFORM_WINDOWS },
+        { "cygwin",      PLATFORM_CYGWIN },
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(platform_names); i++)
+        if (!strncmp( platform_names[i].name, name, strlen(platform_names[i].name) ))
+            return platform_names[i].platform;
+    return -1;
+};
+
+
+static inline const char *get_arch_dir( struct target target )
+{
+    static const char *cpu_names[] =
+    {
+        [CPU_i386]   = "i386",
+        [CPU_x86_64] = "x86_64",
+        [CPU_ARM]    = "arm",
+        [CPU_ARM64]  = "aarch64"
+    };
+
+    if (!cpu_names[target.cpu]) return "";
+
+    switch (target.platform)
+    {
+    case PLATFORM_WINDOWS:
+    case PLATFORM_CYGWIN:
+    case PLATFORM_MINGW:
+        return strmake( "/%s-windows", cpu_names[target.cpu] );
+    default:
+        return strmake( "/%s-unix", cpu_names[target.cpu] );
+    }
+}
+
+static inline int parse_target( const char *name, struct target *target )
+{
+    int res;
+    char *p, *spec = xstrdup( name );
+
+    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
+
+    /* get the CPU part */
+
+    if ((p = strchr( spec, '-' )))
+    {
+        *p++ = 0;
+        if ((res = get_cpu_from_name( spec )) == -1)
+        {
+            free( spec );
+            return 0;
+        }
+        target->cpu = res;
+    }
+    else if (!strcmp( spec, "mingw32" ))
+    {
+        target->cpu = CPU_i386;
+        p = spec;
+    }
+    else
+    {
+        free( spec );
+        return 0;
+    }
+
+    /* get the OS part */
+
+    target->platform = PLATFORM_UNSPECIFIED;  /* default value */
+    for (;;)
+    {
+        if ((res = get_platform_from_name( p )) != -1)
+        {
+            target->platform = res;
+            break;
+        }
+        if (!(p = strchr( p, '-' ))) break;
+        p++;
+    }
+
+    free( spec );
+    return 1;
+}
+
+
+static inline struct target init_argv0_target( const char *argv0 )
+{
+    char *name = get_basename( argv0 );
+    struct target target;
+
+    if (!strchr( name, '-' ) || !parse_target( name, &target ))
+        target = get_default_target();
+
+    free( name );
+    return target;
 }
 
 

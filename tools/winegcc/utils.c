@@ -115,10 +115,12 @@ static char* try_lib_path(const char* dir, const char* pre,
     return 0; 
 }
 
-static file_type guess_lib_type(enum target_platform platform, const char* dir,
+static file_type guess_lib_type(struct target target, const char* dir,
                                 const char* library, const char *prefix, const char *suffix, char** file)
 {
-    if (platform != PLATFORM_WINDOWS && platform != PLATFORM_MINGW && platform != PLATFORM_CYGWIN)
+    if (target.platform != PLATFORM_WINDOWS &&
+        target.platform != PLATFORM_MINGW &&
+        target.platform != PLATFORM_CYGWIN)
     {
         /* Unix shared object */
         if ((*file = try_lib_path(dir, prefix, library, ".so", file_so)))
@@ -140,7 +142,7 @@ static file_type guess_lib_type(enum target_platform platform, const char* dir,
     return file_na;
 }
 
-file_type get_lib_type(enum target_platform platform, struct strarray path, const char *library,
+file_type get_lib_type(struct target target, struct strarray path, const char *library,
                        const char *prefix, const char *suffix, char** file)
 {
     unsigned int i;
@@ -148,7 +150,7 @@ file_type get_lib_type(enum target_platform platform, struct strarray path, cons
     if (!suffix) suffix = ".a";
     for (i = 0; i < path.count; i++)
     {
-        file_type type = guess_lib_type(platform, path.str[i], library, prefix, suffix, file);
+        file_type type = guess_lib_type(target, path.str[i], library, prefix, suffix, file);
 	if (type != file_na) return type;
     }
     return file_na;

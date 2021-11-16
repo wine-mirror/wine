@@ -47,31 +47,7 @@ int unix_lib = 0;
 int safe_seh = 0;
 int prefer_native = 0;
 
-#ifdef __i386__
-enum target_cpu target_cpu = CPU_x86;
-#elif defined(__x86_64__)
-enum target_cpu target_cpu = CPU_x86_64;
-#elif defined(__arm__)
-enum target_cpu target_cpu = CPU_ARM;
-#elif defined(__aarch64__)
-enum target_cpu target_cpu = CPU_ARM64;
-#else
-#error Unsupported CPU
-#endif
-
-#ifdef __APPLE__
-enum target_platform target_platform = PLATFORM_APPLE;
-#elif defined(__linux__)
-enum target_platform target_platform = PLATFORM_LINUX;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-enum target_platform target_platform = PLATFORM_FREEBSD;
-#elif defined(__sun)
-enum target_platform target_platform = PLATFORM_SOLARIS;
-#elif defined(_WIN32)
-enum target_platform target_platform = PLATFORM_MINGW;
-#else
-enum target_platform target_platform = PLATFORM_UNSPECIFIED;
-#endif
+struct target target = { 0 };
 
 char *target_alias = NULL;
 
@@ -123,22 +99,6 @@ enum exec_mode_values
 
 static enum exec_mode_values exec_mode = MODE_NONE;
 
-static const struct
-{
-    const char *name;
-    enum target_platform platform;
-} platform_names[] =
-{
-    { "macos",       PLATFORM_APPLE },
-    { "darwin",      PLATFORM_APPLE },
-    { "linux",       PLATFORM_LINUX },
-    { "freebsd",     PLATFORM_FREEBSD },
-    { "solaris",     PLATFORM_SOLARIS },
-    { "mingw32",     PLATFORM_MINGW },
-    { "windows-gnu", PLATFORM_MINGW },
-    { "windows",     PLATFORM_WINDOWS },
-    { "winnt",       PLATFORM_MINGW }
-};
 
 /* set the dll file name from the input file name */
 static void set_dll_file_name( const char *name, DLLSPEC *spec )
@@ -208,54 +168,12 @@ static void set_syscall_table( const char *id, DLLSPEC *spec )
 }
 
 /* set the target CPU and platform */
-static void set_target( const char *target )
+static void set_target( const char *name )
 {
-    unsigned int i;
-    char *p, *spec = xstrdup( target );
+    target_alias = xstrdup( name );
 
-    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
-
-    target_alias = xstrdup( target );
-
-    /* get the CPU part */
-
-    if ((p = strchr( spec, '-' )))
-    {
-        int cpu;
-
-        *p++ = 0;
-        cpu = get_cpu_from_name( spec );
-        if (cpu == -1) fatal_error( "Unrecognized CPU '%s'\n", spec );
-        target_cpu = cpu;
-    }
-    else if (!strcmp( spec, "mingw32" ))
-    {
-        target_cpu = CPU_x86;
-        p = spec;
-    }
-    else
-        fatal_error( "Invalid target specification '%s'\n", target );
-
-    /* get the OS part */
-
-    target_platform = PLATFORM_UNSPECIFIED;  /* default value */
-    for (;;)
-    {
-        for (i = 0; i < ARRAY_SIZE(platform_names); i++)
-        {
-            if (!strncmp( platform_names[i].name, p, strlen(platform_names[i].name) ))
-            {
-                target_platform = platform_names[i].platform;
-                break;
-            }
-        }
-        if (target_platform != PLATFORM_UNSPECIFIED || !(p = strchr( p, '-' ))) break;
-        p++;
-    }
-
-    free( spec );
-
-    if (target_cpu == CPU_ARM && is_pe()) thumb_mode = 1;
+    if (!parse_target( name, &target )) fatal_error( "Unrecognized target '%s'\n", name );
+    if (target.cpu == CPU_ARM && is_pe()) thumb_mode = 1;
 }
 
 /* cleanup on program exit */
@@ -689,6 +607,9 @@ int main(int argc, char **argv)
     signal( SIGTERM, exit_on_signal );
     signal( SIGINT, exit_on_signal );
 
+    target = init_argv0_target( argv[0] );
+    if (target.platform == PLATFORM_CYGWIN) target.platform = PLATFORM_MINGW;
+
     files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
 
     atexit( cleanup );  /* make sure we remove the output file on exit */
@@ -698,19 +619,7 @@ int main(int argc, char **argv)
         strcat( spec->file_name, exec_mode == MODE_EXE ? ".exe" : ".dll" );
     init_dll_name( spec );
 
-    switch (target_cpu)
-    {
-    case CPU_x86:
-        if (force_pointer_size == 8) target_cpu = CPU_x86_64;
-        break;
-    case CPU_x86_64:
-        if (force_pointer_size == 4) target_cpu = CPU_x86;
-        break;
-    default:
-        if (force_pointer_size == 8)
-            fatal_error( "Cannot build 64-bit code for this CPU\n" );
-        break;
-    }
+    if (force_pointer_size) set_target_ptr_size( &target, force_pointer_size );
 
     switch(exec_mode)
     {

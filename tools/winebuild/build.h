@@ -135,29 +135,17 @@ typedef struct
     struct resource *resources;          /* array of dll resources (format differs between Win16/Win32) */
 } DLLSPEC;
 
-enum target_cpu
-{
-    CPU_x86, CPU_x86_64, CPU_ARM, CPU_ARM64, CPU_LAST = CPU_ARM64
-};
-
-enum target_platform
-{
-    PLATFORM_UNSPECIFIED,
-    PLATFORM_APPLE,
-    PLATFORM_LINUX,
-    PLATFORM_FREEBSD,
-    PLATFORM_MINGW,
-    PLATFORM_SOLARIS,
-    PLATFORM_WINDOWS
-};
-
 extern char *target_alias;
-extern enum target_cpu target_cpu;
-extern enum target_platform target_platform;
+extern struct target target;
+
+static inline unsigned int get_ptr_size(void)
+{
+    return get_target_ptr_size( target );
+}
 
 static inline int is_pe(void)
 {
-    return target_platform == PLATFORM_MINGW || target_platform == PLATFORM_WINDOWS;
+    return target.platform == PLATFORM_MINGW || target.platform == PLATFORM_WINDOWS;
 }
 
 /* entry point flags */
@@ -178,9 +166,9 @@ static inline int is_pe(void)
 #define FLAG_EXPORT32  0x4000  /* 32-bit export in 16-bit spec file */
 
 #define FLAG_CPU(cpu)  (0x10000 << (cpu))
-#define FLAG_CPU_MASK  (FLAG_CPU(CPU_LAST + 1) - FLAG_CPU(0))
+#define FLAG_CPU_MASK  (FLAG_CPU_WIN32 | FLAG_CPU_WIN64)
 #define FLAG_CPU_WIN64 (FLAG_CPU(CPU_x86_64) | FLAG_CPU(CPU_ARM64))
-#define FLAG_CPU_WIN32 (FLAG_CPU_MASK & ~FLAG_CPU_WIN64)
+#define FLAG_CPU_WIN32 (FLAG_CPU(CPU_i386) | FLAG_CPU(CPU_ARM))
 
 #define MAX_ORDINALS  65535
 
@@ -258,10 +246,8 @@ extern char *make_c_identifier( const char *str );
 extern const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec );
 extern const char *get_link_name( const ORDDEF *odp );
 extern int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *, const void *) );
-extern int get_cpu_from_name( const char *name );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);
-extern unsigned int get_ptr_size(void);
 extern unsigned int get_args_size( const ORDDEF *odp );
 extern const char *asm_name( const char *func );
 extern const char *func_declaration( const char *func );

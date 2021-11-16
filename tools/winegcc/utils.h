@@ -32,22 +32,6 @@
 # endif
 #endif
 
-enum target_cpu
-{
-    CPU_x86, CPU_x86_64, CPU_ARM, CPU_ARM64
-};
-
-enum target_platform
-{
-    PLATFORM_UNSPECIFIED,
-    PLATFORM_APPLE,
-    PLATFORM_ANDROID,
-    PLATFORM_SOLARIS,
-    PLATFORM_WINDOWS,
-    PLATFORM_MINGW,
-    PLATFORM_CYGWIN
-};
-
 void DECLSPEC_NORETURN error(const char* s, ...);
 
 typedef enum { 
@@ -57,7 +41,7 @@ typedef enum {
 
 void create_file(const char* name, int mode, const char* fmt, ...);
 file_type get_file_type(const char* filename);
-file_type get_lib_type(enum target_platform platform, struct strarray path, const char *library,
+file_type get_lib_type(struct target target, struct strarray path, const char *library,
                        const char *prefix, const char *suffix, char** file);
 const char *find_binary( struct strarray prefix, const char *name );
 int spawn(struct strarray prefix, struct strarray arr, int ignore_errors);

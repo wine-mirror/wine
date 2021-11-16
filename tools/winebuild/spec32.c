@@ -254,9 +254,9 @@ static void output_relay_debug( DLLSPEC *spec )
 
         if (!needs_relay( odp )) continue;
 
-        switch (target_cpu)
+        switch (target.cpu)
         {
-        case CPU_x86:
+        case CPU_i386:
             output( "\t.align %d\n", get_alignment(4) );
             output( "\t.long 0x90909090,0x90909090\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
@@ -457,7 +457,7 @@ void output_exports( DLLSPEC *spec )
                 output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
                 fwd_size += strlen(odp->link_name) + 1;
             }
-            else if ((odp->flags & FLAG_IMPORT) && (target_cpu == CPU_x86 || target_cpu == CPU_x86_64))
+            else if ((odp->flags & FLAG_IMPORT) && (target.cpu == CPU_i386 || target.cpu == CPU_x86_64))
             {
                 name = odp->name ? odp->name : odp->export_name;
                 if (name) output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_imp"), name );
@@ -585,9 +585,9 @@ void output_exports( DLLSPEC *spec )
         else output( "%s_%u:\n", asm_name("__wine_spec_imp"), i );
         output_cfi( ".cfi_startproc" );
 
-        switch (target_cpu)
+        switch (target.cpu)
         {
-        case CPU_x86:
+        case CPU_i386:
             output( "\t.byte 0x8b,0xff,0x55,0x8b,0xec,0x5d\n" );  /* hotpatch prolog */
             if (UsePIC)
             {
@@ -623,7 +623,7 @@ void output_module( DLLSPEC *spec )
 
     /* Reserve some space for the PE header */
 
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
@@ -640,9 +640,9 @@ void output_module( DLLSPEC *spec )
         output( "\t.skip %u\n", 65536 + page_size );
         break;
     default:
-        switch(target_cpu)
+        switch (target.cpu)
         {
-        case CPU_x86:
+        case CPU_i386:
         case CPU_x86_64:
             output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tjmp 1f\n" );
@@ -671,9 +671,9 @@ void output_module( DLLSPEC *spec )
     output( ".L__wine_spec_rva_base:\n" );
 
     output( "\t.long 0x4550\n" );         /* Signature */
-    switch(target_cpu)
+    switch (target.cpu)
     {
-    case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
+    case CPU_i386:    machine = IMAGE_FILE_MACHINE_I386; break;
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
     case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
     case CPU_ARM64:   machine = IMAGE_FILE_MACHINE_ARM64; break;
@@ -739,7 +739,7 @@ void output_module( DLLSPEC *spec )
 
     output_data_directories( data_dirs );
 
-    if (target_platform == PLATFORM_APPLE)
+    if (target.platform == PLATFORM_APPLE)
         output( "\t.lcomm %s,4\n", asm_name("_end") );
 }
 
@@ -964,9 +964,9 @@ void output_fake_module( DLLSPEC *spec )
     put_data( fakedll_signature, sizeof(fakedll_signature) );
 
     put_dword( 0x4550 );                             /* Signature */
-    switch(target_cpu)
+    switch (target.cpu)
     {
-    case CPU_x86:     put_word( IMAGE_FILE_MACHINE_I386 ); break;
+    case CPU_i386:    put_word( IMAGE_FILE_MACHINE_I386 ); break;
     case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
     case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
@@ -1105,7 +1105,7 @@ void output_def_file( DLLSPEC *spec, int import_only )
         case TYPE_STDCALL:
         {
             int at_param = get_args_size( odp );
-            if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
+            if (!kill_at && target.cpu == CPU_i386) output( "@%d", at_param );
             if (import_only) break;
             if  (odp->flags & FLAG_FORWARD)
                 output( "=%s", odp->link_name );
@@ -1114,7 +1114,7 @@ void output_def_file( DLLSPEC *spec, int import_only )
             break;
         }
         case TYPE_STUB:
-            if (!kill_at && target_cpu == CPU_x86) output( "@%d", get_args_size( odp ));
+            if (!kill_at && target.cpu == CPU_i386) output( "@%d", get_args_size( odp ));
             is_private = 1;
             break;
         default:

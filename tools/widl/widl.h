@@ -75,13 +75,6 @@ extern time_t now;
 extern int line_number;
 extern int char_number;
 
-enum target_cpu
-{
-    CPU_x86, CPU_x86_64, CPU_ARM, CPU_ARM64, CPU_LAST = CPU_ARM64
-};
-
-extern enum target_cpu target_cpu;
-
 enum stub_mode
 {
     MODE_Os,  /* inline stubs */

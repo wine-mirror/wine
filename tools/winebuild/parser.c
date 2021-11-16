@@ -358,7 +358,7 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
 
-    if (target_cpu != CPU_x86)
+    if (target.cpu != CPU_i386)
         odp->flags &= ~(FLAG_THISCALL | FLAG_FASTCALL);
 
     if (!(token = GetToken(1)))
@@ -511,7 +511,7 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
         }
         else if (!strcmp( token, "i386" ))  /* backwards compatibility */
         {
-            odp->flags |= FLAG_CPU(CPU_x86);
+            odp->flags |= FLAG_CPU(CPU_i386);
         }
         else
         {
@@ -621,7 +621,7 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         assert( 0 );
     }
 
-    if ((odp->flags & FLAG_CPU_MASK) && !(odp->flags & FLAG_CPU(target_cpu)))
+    if ((odp->flags & FLAG_CPU_MASK) && !(odp->flags & FLAG_CPU(target.cpu)))
     {
         /* ignore this entry point */
         spec->nb_entry_points--;

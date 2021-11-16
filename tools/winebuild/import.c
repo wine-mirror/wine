@@ -757,7 +757,7 @@ int is_undefined( const char *name )
 /* output the get_pc thunk if needed */
 void output_get_pc_thunk(void)
 {
-    assert( target_cpu == CPU_x86 );
+    assert( target.cpu == CPU_i386 );
     output( "\n\t.text\n" );
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration("__wine_spec_get_pc_thunk_eax") );
@@ -777,9 +777,9 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     output( "%s\n", asm_globl(name) );
     output_cfi( ".cfi_startproc" );
 
-    switch(target_cpu)
+    switch (target.cpu)
     {
-    case CPU_x86:
+    case CPU_i386:
         if (!UsePIC)
         {
             output( "\tjmp *(%s+%d)\n", table, pos );
@@ -1050,9 +1050,9 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "\t%s\n", func_declaration("__wine_delay_load_asm") );
     output( "%s:\n", asm_name("__wine_delay_load_asm") );
     output_cfi( ".cfi_startproc" );
-    switch(target_cpu)
+    switch (target.cpu)
     {
-    case CPU_x86:
+    case CPU_i386:
         output( "\tpushl %%ecx\n" );
         output_cfi( ".cfi_adjust_cfa_offset 4" );
         output( "\tpushl %%edx\n" );
@@ -1137,9 +1137,9 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             if (thumb_mode) output( "\t.thumb_func\n" );
             output( "__wine_delay_imp_%s_%s:\n", import->c_name, name );
             output_cfi( ".cfi_startproc" );
-            switch(target_cpu)
+            switch (target.cpu)
             {
-            case CPU_x86:
+            case CPU_i386:
             case CPU_x86_64:
                 output( "\tmovl $%d,%%eax\n", (idx << 16) | j );
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
@@ -1244,9 +1244,9 @@ void output_stubs( DLLSPEC *spec )
         output( "%s:\n", asm_name(name) );
         output_cfi( ".cfi_startproc" );
 
-        switch (target_cpu)
+        switch (target.cpu)
         {
-        case CPU_x86:
+        case CPU_i386:
             /* flesh out the stub a bit to make safedisc happy */
             output(" \tnop\n" );
             output(" \tnop\n" );
@@ -1398,9 +1398,9 @@ void output_syscalls( DLLSPEC *spec )
         output( "\t%s\n", func_declaration(name) );
         output( "%s\n", asm_globl(name) );
         output_cfi( ".cfi_startproc" );
-        switch (target_cpu)
+        switch (target.cpu)
         {
-        case CPU_x86:
+        case CPU_i386:
             if (UsePIC)
             {
                 output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
@@ -1463,9 +1463,9 @@ void output_syscalls( DLLSPEC *spec )
         output_function_size( name );
     }
 
-    switch (target_cpu)
+    switch (target.cpu)
     {
-    case CPU_x86:
+    case CPU_i386:
         if (UsePIC) break;
         output( "\t.align %d\n", get_alignment(16) );
         output( "\t%s\n", func_declaration("__wine_syscall") );
@@ -1554,7 +1554,7 @@ static void build_library( const char *output_name, struct strarray files, int c
 {
     struct strarray args;
 
-    if (!create || target_platform != PLATFORM_WINDOWS)
+    if (!create || target.platform != PLATFORM_WINDOWS)
     {
         args = find_tool( "ar", NULL );
         strarray_add( &args, create ? "rc" : "r" );
@@ -1571,7 +1571,7 @@ static void build_library( const char *output_name, struct strarray files, int c
     if (create) unlink( output_name );
     spawn( args );
 
-    if (target_platform != PLATFORM_WINDOWS)
+    if (target.platform != PLATFORM_WINDOWS)
     {
         struct strarray ranlib = find_tool( "ranlib", NULL );
         strarray_add( &ranlib, output_name );
@@ -1596,9 +1596,9 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec )
     strarray_add( &args, "-d" );
     strarray_add( &args, def_file );
 
-    switch (target_cpu)
+    switch (target.cpu)
     {
-        case CPU_x86:
+        case CPU_i386:
             strarray_add( &args, "-m" );
             strarray_add( &args, "i386" );
             strarray_add( &args, "--as-flags=--32" );

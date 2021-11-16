@@ -92,17 +92,7 @@ static const char usage[] =
 static const char version_string[] = "Wine IDL Compiler version " PACKAGE_VERSION "\n"
 			"Copyright 2002 Ove Kaaven\n";
 
-#ifdef __i386__
-enum target_cpu target_cpu = CPU_x86;
-#elif defined(__x86_64__)
-enum target_cpu target_cpu = CPU_x86_64;
-#elif defined(__arm__)
-enum target_cpu target_cpu = CPU_ARM;
-#elif defined(__aarch64__)
-enum target_cpu target_cpu = CPU_ARM64;
-#else
-#error Unsupported CPU
-#endif
+static struct target target;
 
 int debuglevel = DEBUGLEVEL_NONE;
 int parser_debug, yy_flex_debug;
@@ -210,28 +200,6 @@ static const struct long_option long_options[] = {
     { NULL }
 };
 
-static const struct
-{
-    const char     *name;
-    enum target_cpu cpu;
-} cpu_names[] =
-{
-    { "i386",           CPU_x86 },
-    { "i486",           CPU_x86 },
-    { "i586",           CPU_x86 },
-    { "i686",           CPU_x86 },
-    { "i786",           CPU_x86 },
-    { "amd64",          CPU_x86_64 },
-    { "x86_64",         CPU_x86_64 },
-    { "arm",            CPU_ARM },
-    { "armv5",          CPU_ARM },
-    { "armv6",          CPU_ARM },
-    { "armv7",          CPU_ARM },
-    { "armv7a",         CPU_ARM },
-    { "arm64",          CPU_ARM64 },
-    { "aarch64",        CPU_ARM64 },
-};
-
 static void rm_tempfile(void);
 
 enum stub_mode get_stub_mode(void)
@@ -286,50 +254,6 @@ static void add_widl_version_define(void)
 
     sprintf(version_str, "__WIDL__=0x%x", version);
     wpp_add_cmdline_define(version_str);
-}
-
-static void set_cpu( const char *cpu, int error_out )
-{
-    unsigned int i;
-    for (i = 0; i < ARRAY_SIZE( cpu_names ); i++)
-    {
-        if (!strcmp( cpu_names[i].name, cpu ))
-        {
-            target_cpu = cpu_names[i].cpu;
-            return;
-        }
-    }
-    if (error_out)
-        error( "Unrecognized CPU '%s'\n", cpu );
-}
-
-/* Set the target platform based on a potential prefix of the executable name.
- * If not found, or not matching a known CPU name, just proceed silently. */
-static void init_argv0_target( const char *argv0 )
-{
-    char *p, *name = get_basename( argv0 );
-
-    if (!(p = strchr(name, '-')))
-    {
-        free( name );
-        return;
-    }
-    *p = 0;
-    set_cpu( name, 0 );
-    free( name );
-}
-
-/* set the target platform */
-static void set_target( const char *target )
-{
-    char *p, *spec = xstrdup( target );
-
-    /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
-
-    if (!(p = strchr( spec, '-' ))) error( "Invalid target specification '%s'\n", target );
-    *p++ = 0;
-    set_cpu( spec, 1 );
-    free( spec );
 }
 
 /* clean things up when aborting on a signal */
@@ -648,7 +572,8 @@ static void option_callback( int optc, char *optarg )
         /* FIXME: Support robust option */
         break;
     case 'b':
-      set_target( optarg );
+        if (!parse_target( optarg, &target ))
+            error( "Invalid target specification '%s'\n", optarg );
       break;
     case 'c':
       do_everything = 0;
@@ -742,22 +667,11 @@ static void option_callback( int optc, char *optarg )
     }
 }
 
-static const char *get_pe_dir(void)
-{
-    switch (target_cpu)
-    {
-    case CPU_x86:    return "/i386-windows";
-    case CPU_x86_64: return "/x86_64-windows";
-    case CPU_ARM:    return "/arm-windows";
-    case CPU_ARM64:  return "/aarch64-windows";
-    default:         return "";
-    }
-}
-
 int open_typelib( const char *name )
 {
     static const char *default_dirs[] = { DLLDIR, "/usr/lib/wine", "/usr/local/lib/wine" };
-    const char *pe_dir = get_pe_dir();
+    struct target win_target = { target.cpu, PLATFORM_WINDOWS };
+    const char *pe_dir = get_arch_dir( win_target );
     int fd;
     unsigned int i;
 
@@ -809,7 +723,7 @@ int main(int argc,char *argv[])
   signal( SIGHUP, exit_on_signal );
 #endif
   init_argv0_dir( argv[0] );
-  init_argv0_target( argv[0] );
+  target = init_argv0_target( argv[0] );
 
   now = time(NULL);
 
@@ -832,25 +746,10 @@ int main(int argc,char *argv[])
       }
   }
 
-  switch (target_cpu)
-  {
-  case CPU_x86:
-      if (pointer_size == 8) target_cpu = CPU_x86_64;
-      else pointer_size = 4;
-      break;
-  case CPU_x86_64:
-      if (pointer_size == 4) target_cpu = CPU_x86;
-      else pointer_size = 8;
-      break;
-  case CPU_ARM:
-      if (pointer_size == 8) target_cpu = CPU_ARM64;
-      else pointer_size = 4;
-      break;
-  case CPU_ARM64:
-      if (pointer_size == 4) target_cpu = CPU_ARM;
-      else pointer_size = 8;
-      break;
-  }
+  if (pointer_size)
+      set_target_ptr_size( &target, pointer_size );
+  else
+      pointer_size = get_target_ptr_size( target );
 
   /* if nothing specified, try to guess output type from the output file name */
   if (output_name && do_everything && !do_header && !do_typelib && !do_proxies &&

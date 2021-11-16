@@ -32,28 +32,6 @@
 static struct strarray tmp_files;
 static const char *output_file_source_name;
 
-static const struct
-{
-    const char *name;
-    enum target_cpu cpu;
-} cpu_names[] =
-{
-    { "i386",    CPU_x86 },
-    { "i486",    CPU_x86 },
-    { "i586",    CPU_x86 },
-    { "i686",    CPU_x86 },
-    { "i786",    CPU_x86 },
-    { "amd64",   CPU_x86_64 },
-    { "x86_64",  CPU_x86_64 },
-    { "arm",     CPU_ARM },
-    { "armv5",   CPU_ARM },
-    { "armv6",   CPU_ARM },
-    { "armv7",   CPU_ARM },
-    { "armv7a",  CPU_ARM },
-    { "arm64",   CPU_ARM64 },
-    { "aarch64", CPU_ARM64 },
-};
-
 /* atexit handler to clean tmp files */
 void cleanup_tmp_files(void)
 {
@@ -338,7 +316,7 @@ struct strarray get_as_command(void)
 
     if (force_pointer_size)
     {
-        switch (target_platform)
+        switch (target.platform)
         {
         case PLATFORM_APPLE:
             strarray_add( &args, "-arch" );
@@ -369,7 +347,7 @@ struct strarray get_ld_command(void)
 
     if (force_pointer_size)
     {
-        switch (target_platform)
+        switch (target.platform)
         {
         case PLATFORM_APPLE:
             strarray_add( &args, "-arch" );
@@ -391,7 +369,7 @@ struct strarray get_ld_command(void)
         }
     }
 
-    if (target_cpu == CPU_ARM && !is_pe())
+    if (target.cpu == CPU_ARM && !is_pe())
         strarray_add( &args, "--no-wchar-size-warning" );
 
     return args;
@@ -696,7 +674,7 @@ int remove_stdcall_decoration( char *name )
 {
     char *p, *end = strrchr( name, '@' );
     if (!end || !end[1] || end == name) return -1;
-    if (target_cpu != CPU_x86) return -1;
+    if (target.cpu != CPU_i386) return -1;
     /* make sure all the rest is digits */
     for (p = end + 1; *p; p++) if (!isdigit(*p)) return -1;
     *end = 0;
@@ -822,7 +800,7 @@ const char *get_link_name( const ORDDEF *odp )
     static char *buffer;
     char *ret;
 
-    if (target_cpu != CPU_x86) return odp->link_name;
+    if (target.cpu != CPU_i386) return odp->link_name;
 
     switch (odp->type)
     {
@@ -877,16 +855,6 @@ int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *, const
 }
 
 
-/* parse a cpu name and return the corresponding value */
-int get_cpu_from_name( const char *name )
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(cpu_names); i++)
-        if (!strcmp( cpu_names[i].name, name )) return cpu_names[i].cpu;
-    return -1;
-}
-
 /*****************************************************************
  *  Function:    get_alignment
  *
@@ -917,11 +885,11 @@ unsigned int get_alignment(unsigned int align)
 
     assert( !(align & (align - 1)) );
 
-    switch(target_cpu)
+    switch (target.cpu)
     {
-    case CPU_x86:
+    case CPU_i386:
     case CPU_x86_64:
-        if (target_platform != PLATFORM_APPLE) return align;
+        if (target.platform != PLATFORM_APPLE) return align;
         /* fall through */
     case CPU_ARM:
     case CPU_ARM64:
@@ -940,23 +908,6 @@ unsigned int get_page_size(void)
     return 0x1000;  /* same on all platforms */
 }
 
-/* return the size of a pointer on the target CPU */
-unsigned int get_ptr_size(void)
-{
-    switch(target_cpu)
-    {
-    case CPU_x86:
-    case CPU_ARM:
-        return 4;
-    case CPU_x86_64:
-    case CPU_ARM64:
-        return 8;
-    }
-    /* unreached */
-    assert(0);
-    return 0;
-}
-
 /* return the total size in bytes of the arguments on the stack */
 unsigned int get_args_size( const ORDDEF *odp )
 {
@@ -968,12 +919,12 @@ unsigned int get_args_size( const ORDDEF *odp )
         {
         case ARG_INT64:
         case ARG_DOUBLE:
-            if (target_cpu == CPU_ARM) size = (size + 7) & ~7;
+            if (target.cpu == CPU_ARM) size = (size + 7) & ~7;
             size += 8;
             break;
         case ARG_INT128:
             /* int128 is passed as pointer on x86_64 */
-            if (target_cpu != CPU_x86_64)
+            if (target.cpu != CPU_x86_64)
             {
                 size += 16;
                 break;
@@ -992,11 +943,11 @@ const char *asm_name( const char *sym )
 {
     static char *buffer;
 
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-        if (target_cpu != CPU_x86) return sym;
+        if (target.cpu != CPU_i386) return sym;
         if (sym[0] == '@') return sym;  /* fastcall */
         /* fall through */
     case PLATFORM_APPLE:
@@ -1014,7 +965,7 @@ const char *func_declaration( const char *func )
 {
     static char *buffer;
 
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:
         return "";
@@ -1026,7 +977,7 @@ const char *func_declaration( const char *func )
         break;
     default:
         free( buffer );
-        switch(target_cpu)
+        switch (target.cpu)
         {
         case CPU_ARM:
             buffer = strmake( ".type %s,%%function%s", func,
@@ -1047,7 +998,7 @@ const char *func_declaration( const char *func )
 /* output a size declaration for an assembly function */
 void output_function_size( const char *name )
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:
     case PLATFORM_MINGW:
@@ -1078,7 +1029,7 @@ void output_rva( const char *format, ... )
     va_list valist;
 
     va_start( valist, format );
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
@@ -1098,14 +1049,14 @@ void output_rva( const char *format, ... )
 /* output the GNU note for non-exec stack */
 void output_gnu_stack_note(void)
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
     case PLATFORM_APPLE:
         break;
     default:
-        switch(target_cpu)
+        switch (target.cpu)
         {
         case CPU_ARM:
         case CPU_ARM64:
@@ -1125,15 +1076,15 @@ const char *asm_globl( const char *func )
     static char *buffer;
 
     free( buffer );
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:
         buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-        buffer = strmake( "\t.globl %s%s\n%s%s:", target_cpu == CPU_x86 ? "_" : "", func,
-                          target_cpu == CPU_x86 ? "_" : "", func );
+        buffer = strmake( "\t.globl %s%s\n%s%s:", target.cpu == CPU_i386 ? "_" : "", func,
+                          target.cpu == CPU_i386 ? "_" : "", func );
         break;
     default:
         buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
@@ -1155,7 +1106,7 @@ const char *get_asm_ptr_keyword(void)
 
 const char *get_asm_string_keyword(void)
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:
         return ".asciz";
@@ -1166,7 +1117,7 @@ const char *get_asm_string_keyword(void)
 
 const char *get_asm_export_section(void)
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:   return ".data";
     case PLATFORM_MINGW:
@@ -1177,7 +1128,7 @@ const char *get_asm_export_section(void)
 
 const char *get_asm_rodata_section(void)
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE: return ".const";
     default:             return ".section .rodata";
@@ -1186,7 +1137,7 @@ const char *get_asm_rodata_section(void)
 
 const char *get_asm_rsrc_section(void)
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:   return ".data";
     case PLATFORM_MINGW:
@@ -1197,7 +1148,7 @@ const char *get_asm_rsrc_section(void)
 
 const char *get_asm_string_section(void)
 {
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE: return ".cstring";
     default:             return ".section .rodata";
@@ -1208,7 +1159,7 @@ const char *arm64_page( const char *sym )
 {
     static char *buffer;
 
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:
         free( buffer );
@@ -1224,7 +1175,7 @@ const char *arm64_pageoff( const char *sym )
     static char *buffer;
 
     free( buffer );
-    switch (target_platform)
+    switch (target.platform)
     {
     case PLATFORM_APPLE:
         buffer = strmake( "%s@PAGEOFF", sym );
