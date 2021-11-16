@@ -1480,6 +1480,7 @@ enable_mscms
 enable_mscoree
 enable_mscorwks
 enable_msctf
+enable_msctfmonitor
 enable_msctfp
 enable_msdaps
 enable_msdasql
@@ -21551,6 +21552,7 @@ wine_fn_config_makefile dlls/mscoree/tests enable_tests
 wine_fn_config_makefile dlls/mscorwks enable_mscorwks
 wine_fn_config_makefile dlls/msctf enable_msctf
 wine_fn_config_makefile dlls/msctf/tests enable_tests
+wine_fn_config_makefile dlls/msctfmonitor enable_msctfmonitor
 wine_fn_config_makefile dlls/msctfp enable_msctfp
 wine_fn_config_makefile dlls/msdaps enable_msdaps
 wine_fn_config_makefile dlls/msdasql enable_msdasql
