@@ -926,12 +926,24 @@ static HRESULT WINAPI JoyConfig8Impl_DeleteType(IDirectInputJoyConfig8 *iface, L
     return E_NOTIMPL;
 }
 
+struct find_device_from_index_params
+{
+    UINT index;
+    DIDEVICEINSTANCEW instance;
+};
+
+static BOOL CALLBACK find_device_from_index( const DIDEVICEINSTANCEW *instance, void *context )
+{
+    struct find_device_from_index_params *params = context;
+    params->instance = *instance;
+    if (!params->index--) return DIENUM_STOP;
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPDIJOYCONFIG info, DWORD flags)
 {
-    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     IDirectInputImpl *di = impl_from_IDirectInputJoyConfig8(iface);
-    unsigned int i = 0;
-    UINT found = 0;
+    struct find_device_from_index_params params = {.index = id};
     HRESULT hr;
 
     FIXME("(%p)->(%d, %p, 0x%08x): semi-stub!\n", iface, id, info, flags);
@@ -943,16 +955,11 @@ static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UI
     X(DIJC_CALLOUT)
 #undef X
 
-    do
-    {
-        hr = hid_joystick_enum_device( DI8DEVCLASS_GAMECTRL, 0, &instance, di->dwVersion, i++ );
-        if (hr != DI_OK) continue;
-        if (flags & DIJC_GUIDINSTANCE) info->guidInstance = instance.guidInstance;
-        /* Only take into account the chosen id */
-        if (found++ == id) return DI_OK;
-    } while (SUCCEEDED(hr));
-
-    return DIERR_NOMOREITEMS;
+    hr = IDirectInput8_EnumDevices( &di->IDirectInput8W_iface, DI8DEVCLASS_GAMECTRL, find_device_from_index, &params, 0 );
+    if (FAILED(hr)) return hr;
+    if (params.index != ~0) return DIERR_NOMOREITEMS;
+    if (flags & DIJC_GUIDINSTANCE) info->guidInstance = params.instance.guidInstance;
+    return DI_OK;
 }
 
 static HRESULT WINAPI JoyConfig8Impl_SetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPCDIJOYCONFIG info, DWORD flags)
