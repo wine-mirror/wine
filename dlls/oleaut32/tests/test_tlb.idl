@@ -30,10 +30,12 @@ midl_pragma warning ( disable : 2368 )
 #define CUSTDATA_NUM b481b478-a181-4eb6-b6e0-df63069e8c80
 #define CUSTDATA_HEXNUM a09d7c06-cf38-4db3-9450-10641651c35b
 
-[uuid(8b05fe77-4a6c-4133-b9cd-8f81747af784),
-custom(CUSTDATA_STRLIT,"ITypeLib2::GetCustData"),
-custom(CUSTDATA_NUM,42),
-custom(CUSTDATA_HEXNUM,0x1337C0D3),
+[
+    uuid(8b05fe77-4a6c-4133-b9cd-8f81747af784),
+    custom(CUSTDATA_STRLIT,"ITypeLib2::GetCustData"),
+    custom(CUSTDATA_NUM,42),
+    custom(CUSTDATA_HEXNUM,0x1337C0D3),
+    id(2)
 ]
 library Test
 {

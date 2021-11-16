@@ -25,6 +25,7 @@ import "oaidl.idl"; /* needed by widl */
 
 [
     uuid(a2cfdbd3-2bbf-4b1c-a414-5a5904e634c9),
+    id(3),
     version(1.0)
 ]
 library register_test

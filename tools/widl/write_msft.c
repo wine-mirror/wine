@@ -2757,7 +2757,8 @@ static void save_all_changes(msft_typelib_t *typelib)
         if (expr)
             sprintf( typelib_id, "#%d", expr->cval );
         add_output_to_resources( "TYPELIB", typelib_id );
-        output_typelib_regscript( typelib->typelib );
+        if (strendswith( typelib_name, "_t.res" ))  /* add typelib registration */
+            output_typelib_regscript( typelib->typelib );
     }
     else flush_output_buffer( typelib_name );
 }

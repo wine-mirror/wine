@@ -15,7 +15,6 @@ SOURCES = \
 	package.c \
 	patch.c \
 	record.c \
-	rsrc.rc \
 	selfreg.c \
 	selfreg.spec \
 	source.c \

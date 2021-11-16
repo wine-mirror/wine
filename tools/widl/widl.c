@@ -880,6 +880,7 @@ int main(int argc,char *argv[])
       else if (strendswith( output_name, "_i.c" )) do_idfile = 1;
       else if (strendswith( output_name, "_r.res" )) do_regscript = 1;
       else if (strendswith( output_name, "_t.res" )) do_typelib = 1;
+      else if (strendswith( output_name, "_l.res" )) do_typelib = 1;
       else if (strendswith( output_name, "dlldata.c" )) do_dlldata = 1;
       else do_everything = 1;
   }

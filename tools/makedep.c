@@ -91,7 +91,7 @@ struct incl_file
 #define FLAG_IDL_SERVER     0x000400  /* generates a server (_s.c) file */
 #define FLAG_IDL_IDENT      0x000800  /* generates an ident (_i.c) file */
 #define FLAG_IDL_REGISTER   0x001000  /* generates a registration (_r.res) file */
-#define FLAG_IDL_TYPELIB    0x002000  /* generates a typelib (.tlb) file */
+#define FLAG_IDL_TYPELIB    0x002000  /* generates a typelib (_l.res) file */
 #define FLAG_IDL_REGTYPELIB 0x004000  /* generates a registered typelib (_t.res) file */
 #define FLAG_IDL_HEADER     0x008000  /* generates a header (.h) file */
 #define FLAG_RC_PO          0x010000  /* rc file contains translations */
@@ -105,7 +105,7 @@ static const struct
     const char *ext;
 } idl_outputs[] =
 {
-    { FLAG_IDL_TYPELIB,    ".tlb" },
+    { FLAG_IDL_TYPELIB,    "_l.res" },
     { FLAG_IDL_REGTYPELIB, "_t.res" },
     { FLAG_IDL_CLIENT,     "_c.c" },
     { FLAG_IDL_IDENT,      "_i.c" },
@@ -1331,16 +1331,6 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         return file;
     }
 
-    /* check for corresponding tlb file in source dir */
-
-    if (strendswith( pFile->name, ".tlb" ) &&
-        (file = open_local_file( make, replace_extension( pFile->name, ".tlb", ".idl" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = obj_dir_path( make, pFile->name );
-        return file;
-    }
-
     /* check for extra targets */
     if (strarray_exists( &make->extra_targets, pFile->name ))
     {
@@ -1510,8 +1500,6 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
         if (strendswith( source->sourcename, ".idl" ))
         {
             unsigned int i;
-
-            if (strendswith( source->name, ".tlb" )) return;  /* typelibs don't include anything */
 
             /* generated .h file always includes these */
             add_include( make, source, "rpc.h", 0, INCL_NORMAL );
@@ -1776,7 +1764,7 @@ static void add_generated_sources( struct makefile *make )
         }
         if (source->file->flags & FLAG_IDL_TYPELIB)
         {
-            add_generated_source( make, replace_extension( source->name, ".idl", ".tlb" ), NULL );
+            add_generated_source( make, replace_extension( source->name, ".idl", "_l.res" ), NULL );
         }
         if (source->file->flags & FLAG_IDL_REGTYPELIB)
         {
@@ -2825,15 +2813,6 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
 
 
 /*******************************************************************
- *         output_source_tlb
- */
-static void output_source_tlb( struct makefile *make, struct incl_file *source, const char *obj )
-{
-    strarray_add( &make->all_targets, source->name );
-}
-
-
-/*******************************************************************
  *         output_source_x
  */
 static void output_source_x( struct makefile *make, struct incl_file *source, const char *obj )
@@ -3141,7 +3120,6 @@ static const struct
     { "mc", output_source_mc },
     { "res", output_source_res },
     { "idl", output_source_idl },
-    { "tlb", output_source_tlb },
     { "sfd", output_source_sfd },
     { "svg", output_source_svg },
     { "nls", output_source_nls },
