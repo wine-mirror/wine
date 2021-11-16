@@ -37,4 +37,4 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 3 TYPELIB test_reg.tlb
 
 /* @makedep: test_simple.tlb */
-4 TL test_simple.tlb
+4 TYPELIB test_simple.tlb
