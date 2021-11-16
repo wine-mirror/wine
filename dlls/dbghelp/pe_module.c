@@ -791,7 +791,8 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
     {
         assert(name);
 
-        if ((hFile = FindExecutableImageExW(name, pcs->search_path, loaded_name, NULL, NULL)) == NULL)
+        if ((hFile = FindExecutableImageExW(name, pcs->search_path, loaded_name, NULL, NULL)) == NULL &&
+            (hFile = FindExecutableImageExW(name, L".", loaded_name, NULL, NULL)) == NULL)
             return NULL;
         opened = TRUE;
     }
