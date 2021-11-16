@@ -900,7 +900,8 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
                                  PMODLOAD_DATA Data, DWORD Flags)
 {
     struct process*     pcs;
-    struct module*	module = NULL;
+    struct module*      module = NULL;
+    struct module*      altmodule;
 
     TRACE("(%p %p %s %s %s %08x %p %08x)\n",
           hProcess, hFile, debugstr_w(wImageName), debugstr_w(wModuleName),
@@ -912,16 +913,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 
     if (!(pcs = process_find_by_handle(hProcess))) return 0;
 
-    if (Flags & SLMFLAG_VIRTUAL)
-    {
-        if (!wImageName) return 0;
-        module = module_new(pcs, wImageName, DMT_PE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
-        if (!module) return 0;
-        if (wModuleName) module_set_module(module, wModuleName);
-        module->module.SymType = SymVirtual;
-
-        return module->module.BaseOfImage;
-    }
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08x for %s\n", Flags, debugstr_w(wImageName));
 
@@ -930,31 +921,18 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     /* this is a Wine extension to the API just to redo the synchronisation */
     if (!wImageName && !hFile) return 0;
 
-    /* check if the module is already loaded, or if it's a builtin PE module with
-     * an containing ELF module
-     */
-    if (wImageName)
+    if (Flags & SLMFLAG_VIRTUAL)
     {
-        module = module_is_already_loaded(pcs, wImageName);
-        if (module)
-        {
-            if (module->module.BaseOfImage == BaseOfDll)
-                SetLastError(ERROR_SUCCESS);
-            else
-            {
-                /* native allows to load the same module at different addresses
-                 * we don't support this for now
-                 */
-                SetLastError(ERROR_INVALID_PARAMETER);
-                FIXME("Reloading %s at different base address isn't supported\n", debugstr_w(module->modulename));
-            }
-            return 0;
-        }
-        if (!module && module_is_container_loaded(pcs, wImageName, BaseOfDll))
-        {
-            /* force the loading of DLL as builtin */
-            module = pe_load_builtin_module(pcs, wImageName, BaseOfDll, SizeOfDll);
-        }
+        if (!wImageName) return 0;
+        module = module_new(pcs, wImageName, DMT_PE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
+        if (!module) return 0;
+        module->module.SymType = SymVirtual;
+    }
+    /* check if it's a builtin PE module with a containing ELF module */
+    else if (wImageName && module_is_container_loaded(pcs, wImageName, BaseOfDll))
+    {
+        /* force the loading of DLL as builtin */
+        module = pe_load_builtin_module(pcs, wImageName, BaseOfDll, SizeOfDll);
     }
     if (!module)
     {
@@ -978,6 +956,31 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         module_set_module(module, wModuleName);
     if (wImageName)
         lstrcpynW(module->module.ImageName, wImageName, ARRAY_SIZE(module->module.ImageName));
+
+    for (altmodule = pcs->lmodules; altmodule; altmodule = altmodule->next)
+    {
+        if (altmodule != module && altmodule->type == module->type &&
+            module->module.BaseOfImage >= altmodule->module.BaseOfImage &&
+            module->module.BaseOfImage < altmodule->module.BaseOfImage + altmodule->module.ImageSize)
+            break;
+    }
+    if (altmodule)
+    {
+        /* we have a conflict as the new module cannot be found by its base address
+         * we need to get rid of one on the two modules
+         */
+        /* loading same module at same address... don't change anything */
+        if (module->module.BaseOfImage == altmodule->module.BaseOfImage)
+        {
+            module_remove(pcs, module);
+            SetLastError(ERROR_SUCCESS);
+            return 0;
+        }
+        module_remove(pcs, module);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
     if ((dbghelp_options & SYMOPT_DEFERRED_LOADS) == 0)
         module_load_debug(module);
     return module->module.BaseOfImage;
