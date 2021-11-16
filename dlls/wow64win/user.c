@@ -244,3 +244,10 @@ NTSTATUS WINAPI wow64_NtUserGetKeyState( UINT *args )
 
     return NtUserGetKeyState( vkey );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetKeyboardState( UINT *args )
+{
+    BYTE *state = get_ptr( &args );
+
+    return NtUserGetKeyboardState( state );
+}

@@ -3888,7 +3888,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
         return ImmTranslateMessage(msg->hwnd, msg->message, msg->wParam, msg->lParam);
     }
 
-    GetKeyboardState( state );
+    NtUserGetKeyboardState( state );
     len = ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, ARRAY_SIZE(wp), 0);
     if (len == -1)
     {

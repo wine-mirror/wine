@@ -99,6 +99,7 @@
     SYSCALL_ENTRY( NtUserGetClipboardSequenceNumber ) \
     SYSCALL_ENTRY( NtUserGetClipboardViewer ) \
     SYSCALL_ENTRY( NtUserGetKeyState ) \
+    SYSCALL_ENTRY( NtUserGetKeyboardState ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \

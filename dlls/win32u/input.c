@@ -71,3 +71,25 @@ SHORT WINAPI NtUserGetKeyState( INT vkey )
     TRACE("key (0x%x) -> %x\n", vkey, retval);
     return retval;
 }
+
+/**********************************************************************
+ *	     NtUserGetKeyboardState    (win32u.@)
+ */
+BOOL WINAPI NtUserGetKeyboardState( BYTE *state )
+{
+    BOOL ret;
+    UINT i;
+
+    TRACE("(%p)\n", state);
+
+    memset( state, 0, 256 );
+    SERVER_START_REQ( get_key_state )
+    {
+        req->key = -1;
+        wine_server_set_reply( req, state, 256 );
+        ret = !wine_server_call_err( req );
+        for (i = 0; i < 256; i++) state[i] &= 0x81;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
