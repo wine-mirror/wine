@@ -102,6 +102,7 @@ static void * const syscalls[] =
     NtGdiSwapBuffers,
     NtGdiTransformPoints,
     NtUserAddClipboardFormatListener,
+    NtUserAttachThreadInput,
     NtUserCloseDesktop,
     NtUserCloseWindowStation,
     NtUserCreateDesktopEx,

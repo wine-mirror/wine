@@ -26,6 +26,7 @@ C_SRCS = \
 	font.c \
 	freetype.c \
 	gdiobj.c \
+	input.c \
 	main.c \
 	mapping.c \
 	opentype.c \

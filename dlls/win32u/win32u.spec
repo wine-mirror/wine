@@ -754,7 +754,7 @@
 @ stub NtUserAddVisualIdentifier
 @ stub NtUserAlterWindowStyle
 @ stub NtUserAssociateInputContext
-@ stub NtUserAttachThreadInput
+@ stdcall -syscall NtUserAttachThreadInput(long long long)
 @ stub NtUserAutoPromoteMouseInPointer
 @ stub NtUserAutoRotateScreen
 @ stub NtUserBeginLayoutUpdate

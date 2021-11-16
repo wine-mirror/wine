@@ -594,28 +594,6 @@ BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
 
 
 /**********************************************************************
- *		AttachThreadInput (USER32.@)
- *
- * Attaches the input processing mechanism of one thread to that of
- * another thread.
- */
-BOOL WINAPI AttachThreadInput( DWORD from, DWORD to, BOOL attach )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( attach_thread_input )
-    {
-        req->tid_from = from;
-        req->tid_to   = to;
-        req->attach   = attach;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/**********************************************************************
  *		GetKeyState (USER32.@)
  *
  * An application calls the GetKeyState function in response to a

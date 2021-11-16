@@ -228,3 +228,12 @@ NTSTATUS WINAPI wow64_NtUserRemoveClipboardFormatListener( UINT *args )
 
     return NtUserRemoveClipboardFormatListener( hwnd );
 }
+
+NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
+{
+    DWORD from = get_ulong( &args );
+    DWORD to = get_ulong( &args );
+    BOOL attach = get_ulong( &args );
+
+    return NtUserAttachThreadInput( from, to, attach );
+}
