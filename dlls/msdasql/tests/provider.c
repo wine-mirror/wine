@@ -193,11 +193,16 @@ static void test_command_interfaces(IUnknown *cmd)
     ICommandStream *commandstream;
     IColumnsInfo *colinfo;
     IMultipleResults *multiple;
+    ICommandWithParameters *cmdwithparams;
     IUnknown *unk;
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandProperties, (void**)&commandProp);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ICommandProperties_Release(commandProp);
+
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandWithParameters, (void**)&cmdwithparams);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ICommandWithParameters_Release(cmdwithparams);
 
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
     ok(hr == S_OK, "got 0x%08x\n", hr);
