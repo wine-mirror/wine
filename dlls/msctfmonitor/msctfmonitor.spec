@@ -3,5 +3,5 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stub DoMsCtfMonitor
-@ stub InitLocalMsCtfMonitor
+@ stdcall InitLocalMsCtfMonitor(long)
 @ stub UnInitLocalMsCtfMonitor
