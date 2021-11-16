@@ -34,9 +34,12 @@ static LRESULT WINAPI test_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 static void test_UiaHostProviderFromHwnd(void)
 {
     IRawElementProviderSimple *p, *p2;
+    enum ProviderOptions prov_opt;
     WNDCLASSA cls;
     HRESULT hr;
     HWND hwnd;
+    VARIANT v;
+    int i;
 
     cls.style = 0;
     cls.lpfnWndProc = test_wnd_proc;
@@ -61,6 +64,9 @@ static void test_UiaHostProviderFromHwnd(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(p == NULL, "Unexpected instance.\n");
 
+    hr = UiaHostProviderFromHwnd(hwnd, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     p = NULL;
     hr = UiaHostProviderFromHwnd(hwnd, &p);
     ok(hr == S_OK, "Failed to get host provider, hr %#x.\n", hr);
@@ -75,9 +81,54 @@ static void test_UiaHostProviderFromHwnd(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(p2 == NULL, "Unexpected instance.\n");
 
+    hr = IRawElementProviderSimple_GetPropertyValue(p, UIA_NativeWindowHandlePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == HandleToUlong(hwnd), "V_I4(&v) = %#x, expected %#x\n", V_I4(&v), HandleToUlong(hwnd));
+
+    hr = IRawElementProviderSimple_GetPropertyValue(p, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    /* No patterns are implemented on the HWND Host provider. */
+    for (i = UIA_InvokePatternId; i < (UIA_CustomNavigationPatternId + 1); i++)
+    {
+        IUnknown *unk;
+
+        unk = (void *)0xdeadbeef;
+        hr = IRawElementProviderSimple_GetPatternProvider(p, i, &unk);
+        ok(hr == S_OK, "Unexpected hr %#x, %d.\n", hr, i);
+        ok(!unk, "Pattern %d returned %p\n", i, unk);
+    }
+
+    hr = IRawElementProviderSimple_get_ProviderOptions(p, &prov_opt);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok((prov_opt == ProviderOptions_ServerSideProvider) ||
+            broken(prov_opt == ProviderOptions_ClientSideProvider), /* Windows < 10 1507 */
+            "Unexpected provider options %#x\n", prov_opt);
+
+    /* Test behavior post Window destruction. */
+    DestroyWindow(hwnd);
+
+    hr = IRawElementProviderSimple_GetPropertyValue(p, UIA_NativeWindowHandlePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == HandleToUlong(hwnd), "V_I4(&v) = %#x, expected %#x\n", V_I4(&v), HandleToUlong(hwnd));
+
+    hr = IRawElementProviderSimple_GetPropertyValue(p, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    hr = IRawElementProviderSimple_get_ProviderOptions(p, &prov_opt);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok((prov_opt == ProviderOptions_ServerSideProvider) ||
+            broken(prov_opt == ProviderOptions_ClientSideProvider), /* Windows < 10 1507 */
+            "Unexpected provider options %#x\n", prov_opt);
+
     IRawElementProviderSimple_Release(p);
 
-    DestroyWindow(hwnd);
     UnregisterClassA("HostProviderFromHwnd class", NULL);
 }
 
