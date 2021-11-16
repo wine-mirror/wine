@@ -3453,6 +3453,13 @@ static BOOL CALLBACK check_created_effect_objects( IDirectInputEffect *effect, v
     return DIENUM_CONTINUE;
 }
 
+static BOOL CALLBACK enum_device_count( const DIDEVICEINSTANCEW *devinst, void *context )
+{
+    DWORD *count = context;
+    *count = *count + 1;
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device )
 {
     DIPROPDWORD prop_dword =
@@ -3466,8 +3473,8 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
     };
     IDirectInput8W *di8;
     IDirectInputW *di;
+    ULONG ref, count;
     HRESULT hr;
-    ULONG ref;
 
     if (version >= 0x800)
     {
@@ -3487,6 +3494,57 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
             ok( ref == 0, "Release returned %d\n", ref );
             return DIERR_DEVICENOTREG;
         }
+
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, NULL, NULL, DIEDFL_ALLDEVICES );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, enum_device_count, &count, 0xdeadbeef );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        hr = IDirectInput8_EnumDevices( di8, 0xdeadbeef, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_ALL, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 3, "got count %u, expected 0\n", count );
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_DEVICE, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 0, "got count %u, expected 0\n", count );
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_POINTER, enum_device_count, &count,
+                                        DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        todo_wine
+        ok( count == 3, "got count %u, expected 3\n", count );
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_KEYBOARD, enum_device_count, &count,
+                                        DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        todo_wine
+        ok( count == 3, "got count %u, expected 3\n", count );
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, DI8DEVCLASS_GAMECTRL, enum_device_count, &count,
+                                        DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 1, "got count %u, expected 1\n", count );
+
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        todo_wine
+        ok( count == 1, "got count %u, expected 1\n", count );
+
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_FORCEFEEDBACK );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) ok( count == 0, "got count %u, expected 0\n", count );
+        else todo_wine ok( count == 1, "got count %u, expected 1\n", count );
+
+        count = 0;
+        hr = IDirectInput8_EnumDevices( di8, (devinst->dwDevType & 0xff) + 1, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        if ((devinst->dwDevType & 0xff) != DI8DEVTYPE_SUPPLEMENTAL) ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        else ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        ok( count == 0, "got count %u, expected 0\n", count );
 
         hr = IDirectInput8_CreateDevice( di8, &devinst->guidInstance, NULL, NULL );
         ok( hr == E_POINTER, "CreateDevice returned %#x\n", hr );
@@ -3534,6 +3592,57 @@ static HRESULT create_dinput_device( DWORD version, DIDEVICEINSTANCEW *devinst, 
             ok( ref == 0, "Release returned %d\n", ref );
             return DIERR_DEVICENOTREG;
         }
+
+        hr = IDirectInput_EnumDevices( di, 0, NULL, NULL, DIEDFL_ALLDEVICES );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, 0xdeadbeef );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        hr = IDirectInput_EnumDevices( di, 0xdeadbeef, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+        hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, DIEDFL_INCLUDEHIDDEN );
+        todo_wine
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
+
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, 0, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 3, "got count %u, expected 0\n", count );
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, DIDEVTYPE_DEVICE, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 0, "got count %u, expected 0\n", count );
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, DIDEVTYPE_MOUSE, enum_device_count, &count,
+                                       DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        todo_wine
+        ok( count == 3, "got count %u, expected 3\n", count );
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, DIDEVTYPE_KEYBOARD, enum_device_count, &count,
+                                       DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        todo_wine
+        ok( count == 3, "got count %u, expected 3\n", count );
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, DIDEVTYPE_JOYSTICK, enum_device_count, &count,
+                                       DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 1, "got count %u, expected 1\n", count );
+
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        ok( count == 1, "got count %u, expected 1\n", count );
+
+        count = 0;
+        hr = IDirectInput_EnumDevices( di, (devinst->dwDevType & 0xff), enum_device_count, &count, DIEDFL_FORCEFEEDBACK );
+        ok( hr == DI_OK, "EnumDevices returned: %#x\n", hr );
+        if (IsEqualGUID( &devinst->guidFFDriver, &GUID_NULL )) todo_wine ok( count == 0, "got count %u, expected 0\n", count );
+        else ok( count == 1, "got count %u, expected 1\n", count );
+
+        hr = IDirectInput_EnumDevices( di, 0x14, enum_device_count, &count, DIEDFL_ALLDEVICES );
+        todo_wine
+        ok( hr == DIERR_INVALIDPARAM, "EnumDevices returned: %#x\n", hr );
 
         hr = IDirectInput_CreateDevice( di, &expect_guid_product, (IDirectInputDeviceW **)device, NULL );
         ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
