@@ -867,6 +867,22 @@ static void packet_reply_status_xpoints(struct gdb_context* gdbctx, struct dbg_t
     }
 }
 
+static void packet_reply_begin_stop_reply(struct gdb_context* gdbctx, unsigned char signal)
+{
+    packet_reply_add(gdbctx, "T");
+    packet_reply_val(gdbctx, signal, 1);
+
+    /* We should always report the current thread ID for all stop replies.
+     * Otherwise, GDB complains with the following message:
+     *
+     *   Warning: multi-threaded target stopped without sending a thread-id,
+     *   using first non-exited thread
+     */
+    packet_reply_add(gdbctx, "thread:");
+    packet_reply_val(gdbctx, gdbctx->de.dwThreadId, 4);
+    packet_reply_add(gdbctx, ";");
+}
+
 static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 {
     struct dbg_process *process = gdbctx->process;
@@ -885,11 +901,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
             return packet_error;
 
         packet_reply_open(gdbctx);
-        packet_reply_add(gdbctx, "T");
-        packet_reply_val(gdbctx, signal_from_debug_event(&gdbctx->de), 1);
-        packet_reply_add(gdbctx, "thread:");
-        packet_reply_val(gdbctx, gdbctx->de.dwThreadId, 4);
-        packet_reply_add(gdbctx, ";");
+        packet_reply_begin_stop_reply(gdbctx, signal_from_debug_event(&gdbctx->de));
         packet_reply_status_xpoints(gdbctx, thread, &ctx);
 
         for (i = 0; i < backend->gdb_num_regs; i++)
@@ -913,8 +925,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
     case LOAD_DLL_DEBUG_EVENT:
     case UNLOAD_DLL_DEBUG_EVENT:
         packet_reply_open(gdbctx);
-        packet_reply_add(gdbctx, "T");
-        packet_reply_val(gdbctx, HOST_SIGTRAP, 1);
+        packet_reply_begin_stop_reply(gdbctx, HOST_SIGTRAP);
         packet_reply_add(gdbctx, "library:;");
         packet_reply_close(gdbctx);
         return packet_done;
