@@ -2157,6 +2157,7 @@ static BOOL gdb_exec(unsigned port, unsigned flags)
 static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned port)
 {
     SOCKET sock;
+    BOOL reuseaddr = TRUE;
     struct sockaddr_in s_addrs = {0};
     int s_len = sizeof(s_addrs);
     fd_set read_fds;
@@ -2171,6 +2172,8 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
         ERR("Failed to create socket: %u\n", WSAGetLastError());
         return FALSE;
     }
+
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&reuseaddr, sizeof(reuseaddr));
 
     s_addrs.sin_family = AF_INET;
     s_addrs.sin_addr.S_un.S_addr = INADDR_ANY;
