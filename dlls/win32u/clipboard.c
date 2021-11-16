@@ -223,6 +223,23 @@ HWND WINAPI NtUserGetClipboardViewer(void)
 }
 
 /**************************************************************************
+ *	     NtUserGetOpenClipboardWindow    (win32u.@)
+ */
+HWND WINAPI NtUserGetOpenClipboardWindow(void)
+{
+    HWND window = 0;
+
+    SERVER_START_REQ( get_clipboard_info )
+    {
+        if (!wine_server_call_err( req )) window = wine_server_ptr_handle( reply->window );
+    }
+    SERVER_END_REQ;
+
+    TRACE( "returning %p\n", window );
+    return window;
+}
+
+/**************************************************************************
  *	     NtUserGetClipboardSequenceNumber    (win32u.@)
  */
 DWORD WINAPI NtUserGetClipboardSequenceNumber(void)

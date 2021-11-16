@@ -102,6 +102,7 @@
     SYSCALL_ENTRY( NtUserGetKeyboardState ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
+    SYSCALL_ENTRY( NtUserGetOpenClipboardWindow ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProp ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \

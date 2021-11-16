@@ -959,7 +959,7 @@
 @ stub NtUserGetMouseMovePointsEx
 @ stdcall -syscall NtUserGetObjectInformation(long long long long ptr)
 @ stub NtUserGetOemBitmapSize
-@ stub NtUserGetOpenClipboardWindow
+@ stdcall -syscall NtUserGetOpenClipboardWindow()
 @ stub NtUserGetOwnerTransformedMonitorRect
 @ stub NtUserGetPhysicalDeviceRect
 @ stub NtUserGetPointerCursorId

@@ -353,7 +353,7 @@
 @ stdcall GetNextDlgGroupItem(long long long)
 @ stdcall GetNextDlgTabItem(long long long)
 # @ stub GetNextQueueWindow
-@ stdcall GetOpenClipboardWindow()
+@ stdcall GetOpenClipboardWindow() NtUserGetOpenClipboardWindow
 @ stdcall GetParent(long)
 @ stdcall GetPhysicalCursorPos(ptr)
 @ stdcall GetPointerDevices(ptr ptr)

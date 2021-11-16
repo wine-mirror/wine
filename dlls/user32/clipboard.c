@@ -751,25 +751,6 @@ BOOL WINAPI EmptyClipboard(void)
 
 
 /**************************************************************************
- *		GetOpenClipboardWindow (USER32.@)
- */
-HWND WINAPI GetOpenClipboardWindow(void)
-{
-    HWND hWndOpen = 0;
-
-    SERVER_START_REQ( get_clipboard_info )
-    {
-        if (!wine_server_call_err( req )) hWndOpen = wine_server_ptr_handle( reply->window );
-    }
-    SERVER_END_REQ;
-
-    TRACE( "returning %p\n", hWndOpen );
-
-    return hWndOpen;
-}
-
-
-/**************************************************************************
  *		SetClipboardViewer (USER32.@)
  */
 HWND WINAPI SetClipboardViewer( HWND hwnd )
