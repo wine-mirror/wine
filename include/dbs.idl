@@ -569,6 +569,15 @@ cpp_quote("#define DBPROPVAL_OS_CLIENTCURSOR           __MSABI_LONG(0x00000004)"
 cpp_quote("#define DBPROPVAL_OS_ENABLEALL              __MSABI_LONG(0xffffffff)")
 cpp_quote("#define DBPROPVAL_BI_CROSSROWSET            __MSABI_LONG(0x00000001)")
 
+cpp_quote("#define DBPROPVAL_RT_FREETHREAD            __MSABI_LONG(0x00000001)")
+cpp_quote("#define DBPROPVAL_RT_APTMTTHREAD           __MSABI_LONG(0x00000002)")
+cpp_quote("#define DBPROPVAL_RT_SINGLETHREAD          __MSABI_LONG(0x00000004)")
+
+cpp_quote("#define DBPROPVAL_LM_NONE                  __MSABI_LONG(0x00000001)")
+cpp_quote("#define DBPROPVAL_LM_READ                  __MSABI_LONG(0x00000002)")
+cpp_quote("#define DBPROPVAL_LM_INTENT                __MSABI_LONG(0x00000004)")
+cpp_quote("#define DBPROPVAL_LM_RITE                  __MSABI_LONG(0x00000008)")
+
 cpp_quote("#define DB_MODE_READ                        0x01")
 cpp_quote("#define DB_MODE_WRITE                       0x02")
 cpp_quote("#define DB_MODE_READWRITE                   0x03")
