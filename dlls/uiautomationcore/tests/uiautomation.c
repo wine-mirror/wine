@@ -58,17 +58,13 @@ static void test_UiaHostProviderFromHwnd(void)
 
     p = (void *)0xdeadbeef;
     hr = UiaHostProviderFromHwnd(NULL, &p);
-todo_wine {
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(p == NULL, "Unexpected instance.\n");
-}
+
     p = NULL;
     hr = UiaHostProviderFromHwnd(hwnd, &p);
-todo_wine
     ok(hr == S_OK, "Failed to get host provider, hr %#x.\n", hr);
 
-if (hr == S_OK)
-{
     p2 = NULL;
     hr = UiaHostProviderFromHwnd(hwnd, &p2);
     ok(hr == S_OK, "Failed to get host provider, hr %#x.\n", hr);
@@ -80,7 +76,6 @@ if (hr == S_OK)
     ok(p2 == NULL, "Unexpected instance.\n");
 
     IRawElementProviderSimple_Release(p);
-}
 
     DestroyWindow(hwnd);
     UnregisterClassA("HostProviderFromHwnd class", NULL);

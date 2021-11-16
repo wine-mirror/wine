@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 
+#include "initguid.h"
 #include "uiautomation.h"
 
 #include "wine/debug.h"
@@ -145,6 +146,117 @@ static const IUnknownVtbl uia_reserved_obj_vtbl = {
 static IUnknown uia_reserved_ns_iface = {&uia_reserved_obj_vtbl};
 static IUnknown uia_reserved_ma_iface = {&uia_reserved_obj_vtbl};
 
+/*
+ * UiaHostProviderFromHwnd IRawElementProviderSimple interface.
+ */
+struct hwnd_host_provider {
+    IRawElementProviderSimple IRawElementProviderSimple_iface;
+    LONG refcount;
+
+    HWND hwnd;
+};
+
+static inline struct hwnd_host_provider *impl_from_hwnd_host_provider(IRawElementProviderSimple *iface)
+{
+    return CONTAINING_RECORD(iface, struct hwnd_host_provider, IRawElementProviderSimple_iface);
+}
+
+HRESULT WINAPI hwnd_host_provider_QueryInterface(IRawElementProviderSimple *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IRawElementProviderSimple) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IRawElementProviderSimple_AddRef(iface);
+    return S_OK;
+}
+
+ULONG WINAPI hwnd_host_provider_AddRef(IRawElementProviderSimple *iface)
+{
+    struct hwnd_host_provider *host_prov = impl_from_hwnd_host_provider(iface);
+    ULONG refcount = InterlockedIncrement(&host_prov->refcount);
+
+    TRACE("%p, refcount %d\n", iface, refcount);
+
+    return refcount;
+}
+
+ULONG WINAPI hwnd_host_provider_Release(IRawElementProviderSimple *iface)
+{
+    struct hwnd_host_provider *host_prov = impl_from_hwnd_host_provider(iface);
+    ULONG refcount = InterlockedDecrement(&host_prov->refcount);
+
+    TRACE("%p, refcount %d\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(host_prov);
+
+    return refcount;
+}
+
+HRESULT WINAPI hwnd_host_provider_get_ProviderOptions(IRawElementProviderSimple *iface,
+        enum ProviderOptions *ret_val)
+{
+    TRACE("%p, %p\n", iface, ret_val);
+    *ret_val = ProviderOptions_ServerSideProvider;
+    return S_OK;
+}
+
+HRESULT WINAPI hwnd_host_provider_GetPatternProvider(IRawElementProviderSimple *iface,
+        PATTERNID pattern_id, IUnknown **ret_val)
+{
+    TRACE("%p, %d, %p\n", iface, pattern_id, ret_val);
+    *ret_val = NULL;
+    return S_OK;
+}
+
+HRESULT WINAPI hwnd_host_provider_GetPropertyValue(IRawElementProviderSimple *iface,
+        PROPERTYID prop_id, VARIANT *ret_val)
+{
+    struct hwnd_host_provider *host_prov = impl_from_hwnd_host_provider(iface);
+
+    TRACE("%p, %d, %p\n", iface, prop_id, ret_val);
+
+    VariantInit(ret_val);
+    switch (prop_id)
+    {
+    case UIA_NativeWindowHandlePropertyId:
+        V_VT(ret_val) = VT_I4;
+        V_I4(ret_val) = HandleToUlong(host_prov->hwnd);
+        break;
+
+    case UIA_ProviderDescriptionPropertyId:
+        V_VT(ret_val) = VT_BSTR;
+        V_BSTR(ret_val) = SysAllocString(L"Wine: HWND Provider Proxy");
+        break;
+
+    default:
+        break;
+    }
+
+    return S_OK;
+}
+
+HRESULT WINAPI hwnd_host_provider_get_HostRawElementProvider(IRawElementProviderSimple *iface,
+        IRawElementProviderSimple **ret_val)
+{
+    TRACE("%p, %p\n", iface, ret_val);
+    *ret_val = NULL;
+    return S_OK;
+}
+
+IRawElementProviderSimpleVtbl hwnd_host_provider_vtbl = {
+    hwnd_host_provider_QueryInterface,
+    hwnd_host_provider_AddRef,
+    hwnd_host_provider_Release,
+    hwnd_host_provider_get_ProviderOptions,
+    hwnd_host_provider_GetPatternProvider,
+    hwnd_host_provider_GetPropertyValue,
+    hwnd_host_provider_get_HostRawElementProvider,
+};
+
 /***********************************************************************
  *          UiaClientsAreListening (uiautomationcore.@)
  */
@@ -219,8 +331,26 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
 
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **provider)
 {
-    FIXME("(%p, %p): stub\n", hwnd, provider);
-    return E_NOTIMPL;
+    struct hwnd_host_provider *host_prov;
+
+    TRACE("(%p, %p)\n", hwnd, provider);
+
+    if (provider)
+        *provider = NULL;
+
+    if (!IsWindow(hwnd) || !provider)
+        return E_INVALIDARG;
+
+    host_prov = heap_alloc(sizeof(*host_prov));
+    if (!host_prov)
+        return E_OUTOFMEMORY;
+
+    host_prov->IRawElementProviderSimple_iface.lpVtbl = &hwnd_host_provider_vtbl;
+    host_prov->refcount = 1;
+    host_prov->hwnd = hwnd;
+    *provider = &host_prov->IRawElementProviderSimple_iface;
+
+    return S_OK;
 }
 
 HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *provider)
