@@ -606,7 +606,7 @@ LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     if (imm_get_ui_window && is_ime_ui_msg(msg))
     {
-        if ((uiwnd = imm_get_ui_window(GetKeyboardLayout(0))))
+        if ((uiwnd = imm_get_ui_window( NtUserGetKeyboardLayout(0) )))
             return SendMessageA(uiwnd, msg, wParam, lParam);
         return FALSE;
     }
@@ -626,7 +626,7 @@ LRESULT WINAPI ImeWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     if (imm_get_ui_window && is_ime_ui_msg(msg))
     {
-        if ((uiwnd = imm_get_ui_window(GetKeyboardLayout(0))))
+        if ((uiwnd = imm_get_ui_window( NtUserGetKeyboardLayout(0) )))
             return SendMessageW(uiwnd, msg, wParam, lParam);
         return FALSE;
     }

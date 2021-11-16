@@ -946,7 +946,7 @@
 @ stub NtUserGetInternalWindowPos
 @ stub NtUserGetKeyNameText
 @ stdcall -syscall NtUserGetKeyState(long)
-@ stub NtUserGetKeyboardLayout
+@ stdcall -syscall NtUserGetKeyboardLayout(long)
 @ stub NtUserGetKeyboardLayoutList
 @ stub NtUserGetKeyboardLayoutName
 @ stdcall -syscall NtUserGetKeyboardState(ptr)

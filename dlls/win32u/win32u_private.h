@@ -235,6 +235,11 @@ extern HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len ) DECLSPE
 extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
                                     KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
 
+static inline struct user_thread_info *get_user_thread_info(void)
+{
+    return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
+}
+
 extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
 
 static inline BOOL set_ntstatus( NTSTATUS status )

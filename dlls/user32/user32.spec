@@ -317,7 +317,7 @@
 @ stdcall GetKeyNameTextA(long ptr long)
 @ stdcall GetKeyNameTextW(long ptr long)
 @ stdcall -import GetKeyState(long) NtUserGetKeyState
-@ stdcall GetKeyboardLayout(long)
+@ stdcall GetKeyboardLayout(long) NtUserGetKeyboardLayout
 @ stdcall GetKeyboardLayoutList(long ptr)
 @ stdcall GetKeyboardLayoutNameA(ptr)
 @ stdcall GetKeyboardLayoutNameW(ptr)

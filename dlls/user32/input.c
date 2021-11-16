@@ -625,7 +625,7 @@ SHORT WINAPI VkKeyScanA(CHAR cChar)
  */
 SHORT WINAPI VkKeyScanW(WCHAR cChar)
 {
-    return NtUserVkKeyScanEx( cChar, GetKeyboardLayout(0) );
+    return NtUserVkKeyScanEx( cChar, NtUserGetKeyboardLayout(0) );
 }
 
 /**********************************************************************
@@ -668,7 +668,7 @@ DWORD WINAPI OemKeyScan( WORD oem )
 INT WINAPI GetKeyboardType(INT nTypeFlag)
 {
     TRACE_(keyboard)("(%d)\n", nTypeFlag);
-    if (LOWORD(GetKeyboardLayout(0)) == MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN))
+    if (LOWORD(NtUserGetKeyboardLayout(0)) == MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN))
     {
         /* scan code for `_', the key left of r-shift, in Japanese 106 keyboard */
         const UINT JP106_VSC_USCORE = 0x73;
@@ -709,7 +709,7 @@ INT WINAPI GetKeyboardType(INT nTypeFlag)
  */
 UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
 {
-    return MapVirtualKeyExA( code, maptype, GetKeyboardLayout(0) );
+    return MapVirtualKeyExA( code, maptype, NtUserGetKeyboardLayout(0) );
 }
 
 /******************************************************************************
@@ -717,7 +717,7 @@ UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
  */
 UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 {
-    return NtUserMapVirtualKeyEx( code, maptype, GetKeyboardLayout(0) );
+    return NtUserMapVirtualKeyEx( code, maptype, NtUserGetKeyboardLayout(0) );
 }
 
 /******************************************************************************
@@ -840,25 +840,6 @@ UINT WINAPI GetKBCodePage(void)
     return GetOEMCP();
 }
 
-/***********************************************************************
- *		GetKeyboardLayout (USER32.@)
- *
- *        - device handle for keyboard layout defaulted to
- *          the language id. This is the way Windows default works.
- *        - the thread identifier is also ignored.
- */
-HKL WINAPI GetKeyboardLayout(DWORD thread_id)
-{
-    struct user_thread_info *thread = get_user_thread_info();
-    HKL layout = thread->kbd_layout;
-
-    if (thread_id && thread_id != GetCurrentThreadId())
-        FIXME( "couldn't return keyboard layout for thread %04x\n", thread_id );
-
-    if (!layout) return get_locale_kbd_layout();
-    return layout;
-}
-
 /****************************************************************************
  *		GetKeyboardLayoutNameA (USER32.@)
  */
@@ -896,7 +877,7 @@ BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
         return TRUE;
     }
 
-    layout = GetKeyboardLayout( 0 );
+    layout = NtUserGetKeyboardLayout( 0 );
     tmp = HandleToUlong( layout );
     if (HIWORD( tmp ) == LOWORD( tmp )) tmp = LOWORD( tmp );
     swprintf( name, KL_NAMELENGTH, L"%08X", tmp );
@@ -1007,7 +988,8 @@ INT WINAPI GetKeyNameTextW( LONG lparam, LPWSTR buffer, INT size )
 INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 		     LPWSTR lpwStr, int size, UINT flags)
 {
-    return ToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, GetKeyboardLayout(0));
+    return ToUnicodeEx( virtKey, scanCode, lpKeyState, lpwStr, size, flags,
+                        NtUserGetKeyboardLayout(0) );
 }
 
 /****************************************************************************
@@ -1107,7 +1089,8 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
 INT WINAPI ToAscii( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
                     LPWORD lpChar, UINT flags )
 {
-    return ToAsciiEx(virtKey, scanCode, lpKeyState, lpChar, flags, GetKeyboardLayout(0));
+    return ToAsciiEx( virtKey, scanCode, lpKeyState, lpChar, flags,
+                      NtUserGetKeyboardLayout(0) );
 }
 
 /****************************************************************************

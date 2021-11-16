@@ -586,7 +586,7 @@ DWORD get_input_codepage( void )
 {
     DWORD cp;
     int ret;
-    HKL hkl = GetKeyboardLayout( 0 );
+    HKL hkl = NtUserGetKeyboardLayout( 0 );
 
     ret = GetLocaleInfoW( LOWORD(hkl), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                           (WCHAR *)&cp, sizeof(cp) / sizeof(WCHAR) );
@@ -2377,7 +2377,7 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
 
     if ( remove && msg->message == WM_KEYDOWN )
-        if (ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
+        if (ImmProcessKey(msg->hwnd, NtUserGetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
             msg->wParam = VK_PROCESSKEY;
 
     return TRUE;

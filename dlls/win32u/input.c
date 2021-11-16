@@ -52,6 +52,60 @@ BOOL WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach )
     return ret;
 }
 
+/***********************************************************************
+ *           get_locale_kbd_layout
+ */
+static HKL get_locale_kbd_layout(void)
+{
+    LCID layout;
+    LANGID langid;
+
+    /* FIXME:
+     *
+     * layout = main_key_tab[kbd_layout].lcid;
+     *
+     * Winword uses return value of GetKeyboardLayout as a codepage
+     * to translate ANSI keyboard messages to unicode. But we have
+     * a problem with it: for instance Polish keyboard layout is
+     * identical to the US one, and therefore instead of the Polish
+     * locale id we return the US one.
+     */
+
+    NtQueryDefaultLocale( TRUE, &layout );
+
+    /*
+     * Microsoft Office expects this value to be something specific
+     * for Japanese and Korean Windows with an IME the value is 0xe001
+     * We should probably check to see if an IME exists and if so then
+     * set this word properly.
+     */
+    langid = PRIMARYLANGID( LANGIDFROMLCID( layout ) );
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout = MAKELONG( layout, 0xe001 ); /* IME */
+    else
+        layout = MAKELONG( layout, layout );
+
+    return ULongToHandle( layout );
+}
+
+/***********************************************************************
+ *	     NtUserGetKeyboardLayout    (win32u.@)
+ *
+ * Device handle for keyboard layout defaulted to
+ * the language id. This is the way Windows default works.
+ */
+HKL WINAPI NtUserGetKeyboardLayout( DWORD thread_id )
+{
+    struct user_thread_info *thread = get_user_thread_info();
+    HKL layout = thread->kbd_layout;
+
+    if (thread_id && thread_id != GetCurrentThreadId())
+        FIXME( "couldn't return keyboard layout for thread %04x\n", thread_id );
+
+    if (!layout) return get_locale_kbd_layout();
+    return layout;
+}
+
 /**********************************************************************
  *	     NtUserGetKeyState    (win32u.@)
  *

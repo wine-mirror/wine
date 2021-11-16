@@ -2065,7 +2065,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETICONS);		/*     88  WINVER >= 0x400 */
 
     case SPI_GETDEFAULTINPUTLANG: 	/*     89  WINVER >= 0x400 */
-        ret = GetKeyboardLayout(0) != 0;
+        ret = NtUserGetKeyboardLayout(0) != 0;
         break;
 
     WINE_SPI_FIXME(SPI_SETDEFAULTINPUTLANG);	/*     90  WINVER >= 0x400 */
