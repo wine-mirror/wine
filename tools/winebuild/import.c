@@ -212,6 +212,64 @@ static inline ORDDEF *find_export( const char *name, ORDDEF **table, int size )
     return res ? *res : NULL;
 }
 
+static const char valid_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.";
+
+/* encode a dll name into a linker-compatible name */
+static char *encode_dll_name( const char *name )
+{
+    char *p, *ret;
+    int len = strlen(name);
+
+    if (strendswith( name, ".dll" )) len -= 4;
+    if (strspn( name, valid_chars ) >= len) return strmake( "%.*s", len, name );
+
+    ret = p = xmalloc( len * 4 + 1 );
+    for ( ; len > 0; len--, name++)
+    {
+        if (!strchr( valid_chars, *name )) p += sprintf( p, "$x%02x", *name );
+        else *p++ = *name;
+    }
+    *p = 0;
+    return ret;
+}
+
+/* decode a linker-compatible dll name */
+static char *decode_dll_name( const char **name )
+{
+    const char *src = *name;
+    char *p, *ret;
+
+    ret = p = xmalloc( strlen( src ) + 5 );
+    for ( ; *src; src++, p++)
+    {
+        if (*src != '$')
+        {
+            *p = *src;
+        }
+        else if (src[1] == 'x')  /* hex escape */
+        {
+            int val = 0;
+            src += 2;
+            if (*src >= '0' && *src <= '9') val += *src - '0';
+            else if (*src >= 'A' && *src <= 'F') val += *src - 'A' + 10;
+            else if (*src >= 'a' && *src <= 'f') val += *src - 'a' + 10;
+            else return NULL;
+            val *= 16;
+            src++;
+            if (*src >= '0' && *src <= '9') val += *src - '0';
+            else if (*src >= 'A' && *src <= 'F') val += *src - 'A' + 10;
+            else if (*src >= 'a' && *src <= 'f') val += *src - 'a' + 10;
+            else return NULL;
+            *p = val;
+        }
+        else break;  /* end of dll name */
+    }
+    *p = 0;
+    if (!strchr( ret, '.' )) strcpy( p, ".dll" );
+    *name = src;
+    return ret;
+}
+
 /* free an import structure */
 static void free_imports( struct import *imp )
 {
@@ -385,21 +443,20 @@ void add_extra_ld_symbol( const char *name )
 }
 
 /* retrieve an imported dll, adding one if necessary */
-struct import *add_static_import_dll( const char *name )
+static struct import *add_static_import_dll( const char *name )
 {
     struct import *import;
-    char *dll_name = get_dll_name( name, NULL );
 
-    if ((import = find_import_dll( dll_name ))) return import;
+    if ((import = find_import_dll( name ))) return import;
 
     import = xmalloc( sizeof(*import) );
     memset( import, 0, sizeof(*import) );
 
-    import->dll_name = dll_name;
-    import->full_name = xstrdup( dll_name );
-    import->c_name = make_c_identifier( dll_name );
+    import->dll_name = xstrdup( name );
+    import->full_name = xstrdup( name );
+    import->c_name = make_c_identifier( name );
 
-    if (is_delayed_import( dll_name ))
+    if (is_delayed_import( name ))
         list_add_tail( &dll_delayed, &import->entry );
     else
         list_add_tail( &dll_imports, &import->entry );
@@ -426,21 +483,21 @@ static void add_import_func( struct import *imp, const char *name, const char *e
 /* add an import for an undefined function of the form __wine$func$ */
 static void add_undef_import( const char *name, int is_ordinal )
 {
-    char *p, *dll_name = xstrdup( name );
+    char *dll_name = decode_dll_name( &name );
     int ordinal = 0;
     struct import *import;
 
-    if (!(p = strchr( dll_name, '$' ))) return;
-    *p++ = 0;
-    while (*p >= '0' && *p <= '9') ordinal = 10 * ordinal + *p++ - '0';
-    if (*p != '$') return;
-    p++;
+    if (!dll_name) return;
+    if (*name++ != '$') return;
+    while (*name >= '0' && *name <= '9') ordinal = 10 * ordinal + *name++ - '0';
+    if (*name++ != '$') return;
 
     import = add_static_import_dll( dll_name );
     if (is_ordinal)
-        add_import_func( import, NULL, xstrdup( p ), ordinal, 0 );
+        add_import_func( import, NULL, xstrdup( name ), ordinal, 0 );
     else
-        add_import_func( import, xstrdup( p ), NULL, ordinal, 0 );
+        add_import_func( import, xstrdup( name ), NULL, ordinal, 0 );
+    free( dll_name );
 }
 
 /* check if the spec file exports any stubs */
@@ -1670,14 +1727,9 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec )
 /* create a Unix-style import library */
 static void build_unix_import_lib( DLLSPEC *spec )
 {
-    static const char valid_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._@";
     int i, total;
     const char *name, *prefix;
-    char *dll_name = xstrdup( spec->file_name );
-
-    if (strendswith( dll_name, ".dll" )) dll_name[strlen(dll_name) - 4] = 0;
-    if (strspn( dll_name, valid_chars ) < strlen( dll_name ))
-        fatal_error( "%s contains invalid characters\n", spec->file_name );
+    char *dll_name = encode_dll_name( spec->file_name );
 
     /* entry points */
 
