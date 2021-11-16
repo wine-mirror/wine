@@ -910,7 +910,7 @@ static HRESULT WINAPI command_GetCommandText(ICommandText *iface, GUID *dialect,
     if (!command->query)
         return DB_E_NOCOMMAND;
 
-    if (!IsEqualGUID(&DBGUID_DEFAULT, dialect))
+    if (dialect && !IsEqualGUID(&DBGUID_DEFAULT, dialect))
     {
         *dialect = DBGUID_DEFAULT;
         hr = DB_S_DIALECTIGNORED;

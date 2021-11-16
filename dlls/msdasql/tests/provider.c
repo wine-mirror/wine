@@ -265,6 +265,12 @@ if (0)
     hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"select * from testing");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+
+    hr = ICommandText_GetCommandText(comand_text, NULL, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok (!lstrcmpW(L"select * from testing", str), "got %s\n", debugstr_w(str));
+    HeapFree(GetProcessHeap(), 0, str);
+
     /* dialect empty value */
     hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
     ok(hr == DB_S_DIALECTIGNORED, "got 0x%08x\n", hr);
