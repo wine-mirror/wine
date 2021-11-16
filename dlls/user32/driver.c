@@ -253,11 +253,6 @@ static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
     return load_driver()->pGetKeyboardLayoutList( size, layouts );
 }
 
-static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
-{
-    return load_driver()->pMapVirtualKeyEx( code, type, layout );
-}
-
 static BOOL CDECL loaderdrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 {
     return load_driver()->pRegisterHotKey( hwnd, modifiers, vk );
@@ -365,7 +360,7 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_Beep,
     loaderdrv_GetKeyNameText,
     loaderdrv_GetKeyboardLayoutList,
-    loaderdrv_MapVirtualKeyEx,
+    NULL,
     loaderdrv_RegisterHotKey,
     loaderdrv_ToUnicodeEx,
     loaderdrv_UnregisterHotKey,

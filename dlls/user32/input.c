@@ -717,7 +717,7 @@ UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
  */
 UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 {
-    return MapVirtualKeyExW(code, maptype, GetKeyboardLayout(0));
+    return NtUserMapVirtualKeyEx( code, maptype, GetKeyboardLayout(0) );
 }
 
 /******************************************************************************
@@ -727,7 +727,7 @@ UINT WINAPI MapVirtualKeyExA(UINT code, UINT maptype, HKL hkl)
 {
     UINT ret;
 
-    ret = MapVirtualKeyExW( code, maptype, hkl );
+    ret = NtUserMapVirtualKeyEx( code, maptype, hkl );
     if (maptype == MAPVK_VK_TO_CHAR)
     {
         BYTE ch = 0;
@@ -795,26 +795,6 @@ static const UINT kbd_en_vsc2vk[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const UINT kbd_en_vk2char[] =
-{
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x08, 0x09, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1b, 0x00, 0x00, 0x00, 0x00,
-     ' ', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7', '8',  '9', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00,  'A',  'B',  'C',  'D',  'E',  'F',  'G', 'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O',
-     'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W', 'X',  'Y',  'Z', 0x00, 0x00, 0x00, 0x00, 0x00,
-     '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7', '8',  '9',  '*',  '+', 0x00,  '-',  '.',  '/',
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  ';',  '=',  ',',  '-',  '.',  '/',
-     '`', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  '[', '\\',  ']', '\'', 0x00,
-    0x00, 0x00, '\\', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-
 static const WCHAR *kbd_en_vscname[] =
 {
     0, L"Esc", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"Backspace", L"Tab",
@@ -851,88 +831,6 @@ static const WCHAR *kbd_en_vscname[] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
-
-
-/******************************************************************************
- *		MapVirtualKeyExW (USER32.@)
- */
-UINT WINAPI MapVirtualKeyExW( UINT code, UINT type, HKL layout )
-{
-    const UINT *vsc2vk, *vk2char;
-    UINT vsc2vk_size, vk2char_size;
-    UINT ret;
-
-    TRACE_(keyboard)( "code %u, type %u, layout %p.\n", code, type, layout );
-
-    if ((ret = USER_Driver->pMapVirtualKeyEx( code, type, layout )) != -1) return ret;
-
-    /* FIXME: English keyboard layout specific */
-
-    vsc2vk = kbd_en_vsc2vk;
-    vsc2vk_size = ARRAYSIZE(kbd_en_vsc2vk);
-    vk2char = kbd_en_vk2char;
-    vk2char_size = ARRAYSIZE(kbd_en_vk2char);
-
-    switch (type)
-    {
-    case MAPVK_VK_TO_VSC_EX:
-    case MAPVK_VK_TO_VSC:
-        switch (code)
-        {
-        case VK_SHIFT:   code = VK_LSHIFT; break;
-        case VK_CONTROL: code = VK_LCONTROL; break;
-        case VK_MENU:    code = VK_LMENU; break;
-        case VK_NUMPAD0: code = VK_INSERT; break;
-        case VK_NUMPAD1: code = VK_END; break;
-        case VK_NUMPAD2: code = VK_DOWN; break;
-        case VK_NUMPAD3: code = VK_NEXT; break;
-        case VK_NUMPAD4: code = VK_LEFT; break;
-        case VK_NUMPAD5: code = VK_CLEAR; break;
-        case VK_NUMPAD6: code = VK_RIGHT; break;
-        case VK_NUMPAD7: code = VK_HOME; break;
-        case VK_NUMPAD8: code = VK_UP; break;
-        case VK_NUMPAD9: code = VK_PRIOR; break;
-        case VK_DECIMAL: code = VK_DELETE; break;
-        }
-
-        for (ret = 0; ret < vsc2vk_size; ++ret) if (vsc2vk[ret] == code) break;
-        if (ret >= vsc2vk_size) ret = 0;
-
-        if (type == MAPVK_VK_TO_VSC)
-        {
-            if (ret >= 0x200) ret = 0;
-            else ret &= 0xff;
-        }
-        else if (ret >= 0x100) ret += 0xdf00;
-        break;
-    case MAPVK_VSC_TO_VK:
-    case MAPVK_VSC_TO_VK_EX:
-        if (code & 0xe000) code -= 0xdf00;
-        if (code >= vsc2vk_size) ret = 0;
-        else ret = vsc2vk[code];
-
-        if (type == MAPVK_VSC_TO_VK)
-        {
-            switch (ret)
-            {
-            case VK_LSHIFT:   case VK_RSHIFT:   ret = VK_SHIFT; break;
-            case VK_LCONTROL: case VK_RCONTROL: ret = VK_CONTROL; break;
-            case VK_LMENU:    case VK_RMENU:    ret = VK_MENU; break;
-            }
-        }
-        break;
-    case MAPVK_VK_TO_CHAR:
-        if (code >= vk2char_size) ret = 0;
-        else ret = vk2char[code];
-        break;
-    default:
-        FIXME_(keyboard)( "unknown type %d\n", type );
-        return 0;
-    }
-
-    TRACE_(keyboard)( "returning 0x%04x\n", ret );
-    return ret;
-}
 
 /****************************************************************************
  *		GetKBCodePage (USER32.@)

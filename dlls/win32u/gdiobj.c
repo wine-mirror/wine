@@ -1171,6 +1171,7 @@ static struct unix_funcs unix_funcs =
     NtUserGetPriorityClipboardFormat,
     NtUserGetUpdatedClipboardFormats,
     NtUserIsClipboardFormatAvailable,
+    NtUserMapVirtualKeyEx,
     NtUserVkKeyScanEx,
 
     GDIRealizePalette,

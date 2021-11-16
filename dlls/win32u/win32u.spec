@@ -1076,7 +1076,7 @@
 @ stub NtUserMagGetContextInformation
 @ stub NtUserMagSetContextInformation
 @ stub NtUserMapPointsByVisualIdentifier
-@ stub NtUserMapVirtualKeyEx
+@ stdcall NtUserMapVirtualKeyEx(long long long)
 @ stub NtUserMarkWindowForRawMouse
 @ stub NtUserMenuItemFromPoint
 @ stub NtUserMessageCall

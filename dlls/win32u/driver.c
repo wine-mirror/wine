@@ -1003,6 +1003,11 @@ static const struct user_driver_funcs *load_driver(void)
     return user_driver;
 }
 
+static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
+{
+    return load_driver()->pMapVirtualKeyEx( code, type, layout );
+}
+
 static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
     return load_driver()->pVkKeyScanEx( ch, layout );
@@ -1015,6 +1020,7 @@ static void CDECL loaderdrv_UpdateClipboard(void)
 
 static const struct user_driver_funcs lazy_load_driver =
 {
+    .pMapVirtualKeyEx = loaderdrv_MapVirtualKeyEx,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
 };

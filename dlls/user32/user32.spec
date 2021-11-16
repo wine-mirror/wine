@@ -521,7 +521,7 @@
 @ stdcall MapDialogRect(long ptr)
 @ stdcall MapVirtualKeyA(long long)
 @ stdcall MapVirtualKeyExA(long long long)
-@ stdcall MapVirtualKeyExW(long long long)
+@ stdcall MapVirtualKeyExW(long long long) NtUserMapVirtualKeyEx
 @ stdcall MapVirtualKeyW(long long)
 @ stdcall MapWindowPoints(long long ptr long)
 @ stdcall MenuItemFromPoint(long long int64)
