@@ -1202,8 +1202,12 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
-    if(dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8)
-        return element_remove_attribute(This, strAttributeName);
+    if(dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8) {
+        *pfSuccess = element_has_attribute(This, strAttributeName);
+        if(*pfSuccess)
+            return element_remove_attribute(This, strAttributeName);
+        return S_OK;
+    }
 
     hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
