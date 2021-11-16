@@ -3323,6 +3323,7 @@ struct check_objects_todos
     BOOL type;
     BOOL guid;
     BOOL usage;
+    BOOL name;
 };
 
 struct check_objects_params
@@ -3363,7 +3364,7 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
     check_member( *obj, *exp, "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
+    if (!localized) todo_wine_if( todo->name )check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
     check_member( *obj, *exp, "%u", dwFFForceResolution );
     check_member( *obj, *exp, "%u", wCollectionNumber );
@@ -4146,7 +4147,7 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[4], "%#x", dwOfs );
     check_member( objinst, expect_objects[4], "%#x", dwType );
     check_member( objinst, expect_objects[4], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[4], tszName );
+    if (!localized) check_member_wstr( objinst, expect_objects[4], tszName );
     check_member( objinst, expect_objects[4], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[4], "%u", dwFFForceResolution );
     check_member( objinst, expect_objects[4], "%u", wCollectionNumber );
@@ -4173,7 +4174,7 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[8], "%#x", dwOfs );
     check_member( objinst, expect_objects[8], "%#x", dwType );
     check_member( objinst, expect_objects[8], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[8], tszName );
+    if (!localized) check_member_wstr( objinst, expect_objects[8], tszName );
     check_member( objinst, expect_objects[8], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[8], "%u", dwFFForceResolution );
     check_member( objinst, expect_objects[8], "%u", wCollectionNumber );
@@ -4231,7 +4232,7 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[3], "%#x", dwOfs );
     check_member( objinst, expect_objects[3], "%#x", dwType );
     check_member( objinst, expect_objects[3], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[3], tszName );
+    if (!localized) check_member_wstr( objinst, expect_objects[3], tszName );
     check_member( objinst, expect_objects[3], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[3], "%u", dwFFForceResolution );
     check_member( objinst, expect_objects[3], "%u", wCollectionNumber );
@@ -7475,9 +7476,9 @@ static void test_force_feedback_joystick( DWORD version )
 
     struct check_objects_todos todo_objects_5[ARRAY_SIZE(expect_objects_5)] =
     {
-        {.guid = TRUE, .type = TRUE, .usage = TRUE},
+        {.guid = TRUE, .type = TRUE, .usage = TRUE, .name = TRUE},
         {0},
-        {.guid = TRUE, .type = TRUE, .usage = TRUE},
+        {.guid = TRUE, .type = TRUE, .usage = TRUE, .name = TRUE},
     };
     struct check_objects_params check_objects_params =
     {

@@ -294,6 +294,85 @@ static const WCHAR *effect_guid_to_string( const GUID *guid )
     return L"GUID_Unknown";
 }
 
+static const WCHAR *object_usage_to_string( DIDEVICEOBJECTINSTANCEW *instance )
+{
+    switch (MAKELONG(instance->wUsage, instance->wUsagePage))
+    {
+    case MAKELONG(HID_USAGE_DIGITIZER_TIP_PRESSURE, HID_USAGE_PAGE_DIGITIZER): return L"Tip Pressure";
+    case MAKELONG(HID_USAGE_CONSUMER_VOLUME, HID_USAGE_PAGE_CONSUMER): return L"Volume";
+
+    case MAKELONG(HID_USAGE_GENERIC_HATSWITCH, HID_USAGE_PAGE_GENERIC): return L"Hat Switch";
+    case MAKELONG(HID_USAGE_GENERIC_JOYSTICK, HID_USAGE_PAGE_GENERIC): return L"Joystick";
+    case MAKELONG(HID_USAGE_GENERIC_RX, HID_USAGE_PAGE_GENERIC): return L"X Rotation";
+    case MAKELONG(HID_USAGE_GENERIC_RY, HID_USAGE_PAGE_GENERIC): return L"Y Rotation";
+    case MAKELONG(HID_USAGE_GENERIC_RZ, HID_USAGE_PAGE_GENERIC): return L"Z Rotation";
+    case MAKELONG(HID_USAGE_GENERIC_WHEEL, HID_USAGE_PAGE_GENERIC): return L"Wheel";
+    case MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC): return L"X Axis";
+    case MAKELONG(HID_USAGE_GENERIC_Y, HID_USAGE_PAGE_GENERIC): return L"Y Axis";
+    case MAKELONG(HID_USAGE_GENERIC_Z, HID_USAGE_PAGE_GENERIC): return L"Z Axis";
+
+    case MAKELONG(PID_USAGE_ATTACK_LEVEL, HID_USAGE_PAGE_PID): return L"Attack Level";
+    case MAKELONG(PID_USAGE_ATTACK_TIME, HID_USAGE_PAGE_PID): return L"Attack Time";
+    case MAKELONG(PID_USAGE_AXES_ENABLE, HID_USAGE_PAGE_PID): return L"Axes Enable";
+
+    case MAKELONG(PID_USAGE_DC_DEVICE_CONTINUE, HID_USAGE_PAGE_PID): return L"DC Device Continue";
+    case MAKELONG(PID_USAGE_DC_DEVICE_PAUSE, HID_USAGE_PAGE_PID): return L"DC Device Pause";
+    case MAKELONG(PID_USAGE_DC_DEVICE_RESET, HID_USAGE_PAGE_PID): return L"DC Device Reset";
+    case MAKELONG(PID_USAGE_DC_DISABLE_ACTUATORS, HID_USAGE_PAGE_PID): return L"DC Disable Actuators";
+    case MAKELONG(PID_USAGE_DC_ENABLE_ACTUATORS, HID_USAGE_PAGE_PID): return L"DC Enable Actuators";
+    case MAKELONG(PID_USAGE_DC_STOP_ALL_EFFECTS, HID_USAGE_PAGE_PID): return L"DC Stop All Effects";
+
+    case MAKELONG(PID_USAGE_CP_OFFSET, HID_USAGE_PAGE_PID): return L"CP Offset";
+    case MAKELONG(PID_USAGE_DEAD_BAND, HID_USAGE_PAGE_PID): return L"Dead Band";
+    case MAKELONG(PID_USAGE_DEVICE_CONTROL, HID_USAGE_PAGE_PID): return L"PID Device Control";
+    case MAKELONG(PID_USAGE_DEVICE_CONTROL_REPORT, HID_USAGE_PAGE_PID): return L"PID Device Control Report";
+    case MAKELONG(PID_USAGE_DIRECTION, HID_USAGE_PAGE_PID): return L"Direction";
+    case MAKELONG(PID_USAGE_DIRECTION_ENABLE, HID_USAGE_PAGE_PID): return L"Direction Enable";
+    case MAKELONG(PID_USAGE_DURATION, HID_USAGE_PAGE_PID): return L"Duration";
+    case MAKELONG(PID_USAGE_EFFECT_BLOCK_INDEX, HID_USAGE_PAGE_PID): return L"Effect Block Index";
+    case MAKELONG(PID_USAGE_EFFECT_OPERATION, HID_USAGE_PAGE_PID): return L"Effect Operation";
+    case MAKELONG(PID_USAGE_EFFECT_OPERATION_REPORT, HID_USAGE_PAGE_PID): return L"Effect Operation Report";
+    case MAKELONG(PID_USAGE_EFFECT_TYPE, HID_USAGE_PAGE_PID): return L"Effect Type";
+
+    case MAKELONG(PID_USAGE_ET_CONSTANT_FORCE, HID_USAGE_PAGE_PID): return L"ET Constant Force";
+    case MAKELONG(PID_USAGE_ET_CUSTOM_FORCE_DATA, HID_USAGE_PAGE_PID): return L"ET Custom Force Data";
+    case MAKELONG(PID_USAGE_ET_DAMPER, HID_USAGE_PAGE_PID): return L"ET Damper";
+    case MAKELONG(PID_USAGE_ET_FRICTION, HID_USAGE_PAGE_PID): return L"ET Friction";
+    case MAKELONG(PID_USAGE_ET_INERTIA, HID_USAGE_PAGE_PID): return L"ET Inertia";
+    case MAKELONG(PID_USAGE_ET_RAMP, HID_USAGE_PAGE_PID): return L"ET Ramp";
+    case MAKELONG(PID_USAGE_ET_SAWTOOTH_DOWN, HID_USAGE_PAGE_PID): return L"ET Sawtooth Down";
+    case MAKELONG(PID_USAGE_ET_SAWTOOTH_UP, HID_USAGE_PAGE_PID): return L"ET Sawtooth Up";
+    case MAKELONG(PID_USAGE_ET_SINE, HID_USAGE_PAGE_PID): return L"ET Sine";
+    case MAKELONG(PID_USAGE_ET_SPRING, HID_USAGE_PAGE_PID): return L"ET Spring";
+    case MAKELONG(PID_USAGE_ET_SQUARE, HID_USAGE_PAGE_PID): return L"ET Square";
+    case MAKELONG(PID_USAGE_ET_TRIANGLE, HID_USAGE_PAGE_PID): return L"ET Triangle";
+
+    case MAKELONG(PID_USAGE_NEGATIVE_COEFFICIENT, HID_USAGE_PAGE_PID): return L"Negative Coefficient";
+    case MAKELONG(PID_USAGE_NEGATIVE_SATURATION, HID_USAGE_PAGE_PID): return L"Negative Saturation";
+    case MAKELONG(PID_USAGE_POSITIVE_COEFFICIENT, HID_USAGE_PAGE_PID): return L"Positive Coefficient";
+    case MAKELONG(PID_USAGE_POSITIVE_SATURATION, HID_USAGE_PAGE_PID): return L"Positive Saturation";
+    case MAKELONG(PID_USAGE_SET_CONDITION_REPORT, HID_USAGE_PAGE_PID): return L"Set Condition Report";
+    case MAKELONG(PID_USAGE_TYPE_SPECIFIC_BLOCK_OFFSET, HID_USAGE_PAGE_PID): return L"Type Specific Block Offset";
+
+    case MAKELONG(PID_USAGE_FADE_LEVEL, HID_USAGE_PAGE_PID): return L"Fade Level";
+    case MAKELONG(PID_USAGE_FADE_TIME, HID_USAGE_PAGE_PID): return L"Fade Time";
+    case MAKELONG(PID_USAGE_LOOP_COUNT, HID_USAGE_PAGE_PID): return L"Loop Count";
+    case MAKELONG(PID_USAGE_MAGNITUDE, HID_USAGE_PAGE_PID): return L"Magnitude";
+    case MAKELONG(PID_USAGE_OP_EFFECT_START, HID_USAGE_PAGE_PID): return L"Op Effect Start";
+    case MAKELONG(PID_USAGE_OP_EFFECT_START_SOLO, HID_USAGE_PAGE_PID): return L"Op Effect Start Solo";
+    case MAKELONG(PID_USAGE_OP_EFFECT_STOP, HID_USAGE_PAGE_PID): return L"Op Effect Stop";
+    case MAKELONG(PID_USAGE_SET_EFFECT_REPORT, HID_USAGE_PAGE_PID): return L"Set Effect Report";
+    case MAKELONG(PID_USAGE_SET_ENVELOPE_REPORT, HID_USAGE_PAGE_PID): return L"Set Envelope Report";
+    case MAKELONG(PID_USAGE_SET_PERIODIC_REPORT, HID_USAGE_PAGE_PID): return L"Set Periodic Report";
+    case MAKELONG(PID_USAGE_START_DELAY, HID_USAGE_PAGE_PID): return L"Start Delay";
+    case MAKELONG(PID_USAGE_STATE_REPORT, HID_USAGE_PAGE_PID): return L"PID State Report";
+    case MAKELONG(PID_USAGE_TRIGGER_BUTTON, HID_USAGE_PAGE_PID): return L"Trigger Button";
+
+    case MAKELONG(HID_USAGE_SIMULATION_RUDDER, HID_USAGE_PAGE_SIMULATION): return L"Rudder";
+    default: return NULL;
+    }
+}
+
 static HRESULT find_next_effect_id( struct hid_joystick *impl, ULONG *index )
 {
     ULONG i;
@@ -365,13 +444,14 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
 static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
                           enum_object_callback callback, void *data )
 {
-    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, j;
+    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, j, len;
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     struct hid_value_caps *caps, *caps_end, *nary, *nary_end, *effect_caps;
     struct hid_collection_node *node, *node_end;
     WORD version = impl->base.dinput->dwVersion;
     BOOL ret, seen_axis[6] = {0};
+    const WCHAR *tmp;
 
     button_ofs += impl->caps.NumberInputValueCaps * sizeof(LONG);
     if (version >= 0x800)
@@ -446,6 +526,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.wCollectionNumber = caps->link_collection;
             instance.dwDimension = caps->units;
             instance.wExponent = caps->units_exp;
+            if ((tmp = object_usage_to_string( &instance ))) lstrcpynW( instance.tszName, tmp, MAX_PATH );
+            else swprintf( instance.tszName, MAX_PATH, L"Unknown %u", DIDFT_GETINSTANCE( instance.dwType ) );
             check_pid_effect_axis_caps( impl, &instance );
             ret = enum_object( impl, filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
@@ -486,6 +568,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.wCollectionNumber = caps->link_collection;
             instance.dwDimension = caps->units;
             instance.wExponent = caps->units_exp;
+            swprintf( instance.tszName, MAX_PATH, L"Button %u", DIDFT_GETINSTANCE( instance.dwType ) );
             ret = enum_object( impl, filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
             button_ofs++;
@@ -522,6 +605,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
                 instance.wCollectionNumber = nary->link_collection;
                 instance.dwDimension = caps->units;
                 instance.wExponent = caps->units_exp;
+                if ((tmp = object_usage_to_string( &instance ))) lstrcpynW( instance.tszName, tmp, MAX_PATH );
+                else swprintf( instance.tszName, MAX_PATH, L"Unknown %u", DIDFT_GETINSTANCE( instance.dwType ) );
                 ret = enum_object( impl, filter, flags, callback, nary, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 button_ofs++;
@@ -542,6 +627,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.wCollectionNumber = caps->link_collection;
             instance.dwDimension = caps->units;
             instance.wExponent = caps->units_exp;
+            if ((tmp = object_usage_to_string( &instance ))) lstrcpynW( instance.tszName, tmp, MAX_PATH );
+            else swprintf( instance.tszName, MAX_PATH, L"Unknown %u", DIDFT_GETINSTANCE( instance.dwType ) );
             ret = enum_object( impl, filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
 
@@ -566,6 +653,9 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.wCollectionNumber = node->parent;
             instance.dwDimension = 0;
             instance.wExponent = 0;
+            len = swprintf( instance.tszName, MAX_PATH, L"Collection %u - ", DIDFT_GETINSTANCE( instance.dwType ) );
+            if ((tmp = object_usage_to_string( &instance ))) lstrcpynW( instance.tszName + len, tmp, MAX_PATH - len );
+            else swprintf( instance.tszName + len, MAX_PATH - len, L"Unknown %u", DIDFT_GETINSTANCE( instance.dwType ) );
             ret = enum_object( impl, filter, flags, callback, NULL, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
