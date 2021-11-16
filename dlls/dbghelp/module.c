@@ -920,8 +920,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08x for %s\n", Flags, debugstr_w(wImageName));
 
-    if (!validate_addr64(BaseOfDll)) return 0;
-
     pcs->loader->synchronize_module_list(pcs);
 
     /* this is a Wine extension to the API just to redo the synchronisation */
@@ -1408,10 +1406,7 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
  */
 DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
 {
-    DWORD64     ret;
-
-    ret = SymGetModuleBase64(hProcess, dwAddr);
-    return validate_addr64(ret) ? ret : 0;
+    return (DWORD)SymGetModuleBase64(hProcess, dwAddr);
 }
 
 /***********************************************************************
