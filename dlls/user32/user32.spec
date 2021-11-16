@@ -315,7 +315,7 @@
 @ stdcall GetInternalWindowPos(long ptr ptr)
 @ stdcall GetKBCodePage()
 @ stdcall GetKeyNameTextA(long ptr long)
-@ stdcall GetKeyNameTextW(long ptr long)
+@ stdcall GetKeyNameTextW(long ptr long) NtUserGetKeyNameText
 @ stdcall -import GetKeyState(long) NtUserGetKeyState
 @ stdcall GetKeyboardLayout(long) NtUserGetKeyboardLayout
 @ stdcall GetKeyboardLayoutList(long ptr)

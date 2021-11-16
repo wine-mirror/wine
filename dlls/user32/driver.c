@@ -243,11 +243,6 @@ static void CDECL loaderdrv_Beep(void)
     load_driver()->pBeep();
 }
 
-static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
-{
-    return load_driver()->pGetKeyNameText( lparam, buffer, size );
-}
-
 static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
 {
     return load_driver()->pGetKeyboardLayoutList( size, layouts );
@@ -358,7 +353,7 @@ static struct user_driver_funcs lazy_load_driver =
     /* keyboard functions */
     loaderdrv_ActivateKeyboardLayout,
     loaderdrv_Beep,
-    loaderdrv_GetKeyNameText,
+    NULL,
     loaderdrv_GetKeyboardLayoutList,
     NULL,
     loaderdrv_RegisterHotKey,

@@ -1168,6 +1168,7 @@ static struct unix_funcs unix_funcs =
     NtGdiUpdateColors,
     NtGdiWidenPath,
     NtUserCountClipboardFormats,
+    NtUserGetKeyNameText,
     NtUserGetPriorityClipboardFormat,
     NtUserGetUpdatedClipboardFormats,
     NtUserIsClipboardFormatAvailable,

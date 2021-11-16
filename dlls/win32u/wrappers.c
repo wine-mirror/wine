@@ -601,6 +601,11 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
+{
+    return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );
+}
+
 INT WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count )
 {
     return unix_funcs->pNtUserGetPriorityClipboardFormat( list, count );
