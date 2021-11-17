@@ -674,6 +674,29 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
     return DIENUM_CONTINUE;
 }
 
+static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,
+                                 struct hid_value_caps *caps, LONG value )
+{
+    ULONG report_len = impl->joystick->caps.OutputReportByteLength;
+    PHIDP_PREPARSED_DATA preparsed = impl->joystick->preparsed;
+    LONG log_min, log_max, phy_min, phy_max;
+    NTSTATUS status;
+
+    if (!caps) return;
+
+    log_min = caps->logical_min;
+    log_max = caps->logical_max;
+    phy_min = caps->physical_min;
+    phy_max = caps->physical_max;
+
+    if (value > phy_max || value < phy_min) value = -1;
+    else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
+    status = HidP_SetUsageValue( HidP_Output, caps->usage_page, caps->link_collection,
+                                 caps->usage_min, value, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue %04x:%04x returned %#x\n",
+                                             caps->usage_page, caps->usage_min, status );
+}
+
 static void hid_joystick_addref( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -2630,29 +2653,6 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
     if (!status) return E_POINTER;
 
     return DIERR_UNSUPPORTED;
-}
-
-static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,
-                                 struct hid_value_caps *caps, LONG value )
-{
-    ULONG report_len = impl->joystick->caps.OutputReportByteLength;
-    PHIDP_PREPARSED_DATA preparsed = impl->joystick->preparsed;
-    LONG log_min, log_max, phy_min, phy_max;
-    NTSTATUS status;
-
-    if (!caps) return;
-
-    log_min = caps->logical_min;
-    log_max = caps->logical_max;
-    phy_min = caps->physical_min;
-    phy_max = caps->physical_max;
-
-    if (value > phy_max || value < phy_min) value = -1;
-    else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
-    status = HidP_SetUsageValue( HidP_Output, caps->usage_page, caps->link_collection,
-                                 caps->usage_min, value, preparsed, report_buf, report_len );
-    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue %04x:%04x returned %#x\n",
-                                             caps->usage_page, caps->usage_min, status );
 }
 
 static void set_parameter_value_us( struct hid_joystick_effect *impl, char *report_buf,
