@@ -1922,40 +1922,13 @@ static int ltoa_helper(__msvcrt_long value, char *str, size_t size, int radix)
     return 0;
 }
 
-/*********************************************************************
- *  _ltoa_s (MSVCRT.@)
- */
-int CDECL _ltoa_s(__msvcrt_long value, char *str, size_t size, int radix)
-{
-    if (!MSVCRT_CHECK_PMT(str != NULL)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(size > 0)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
-    {
-        str[0] = '\0';
-        return EINVAL;
-    }
-
-    return ltoa_helper(value, str, size, radix);
-}
-
-/*********************************************************************
- *  _ltow_s (MSVCRT.@)
- */
-int CDECL _ltow_s(__msvcrt_long value, wchar_t *str, size_t size, int radix)
+static int ltow_helper(__msvcrt_long value, wchar_t *str, size_t size, int radix)
 {
     __msvcrt_ulong val;
     unsigned int digit;
     BOOL is_negative;
     wchar_t buffer[33], *pos;
     size_t len;
-
-    if (!MSVCRT_CHECK_PMT(str != NULL)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(size > 0)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
-    {
-        str[0] = '\0';
-        return EINVAL;
-    }
 
     if (value < 0 && radix == 10)
     {
@@ -2014,6 +1987,38 @@ int CDECL _ltow_s(__msvcrt_long value, wchar_t *str, size_t size, int radix)
 }
 
 /*********************************************************************
+ *  _ltoa_s (MSVCRT.@)
+ */
+int CDECL _ltoa_s(__msvcrt_long value, char *str, size_t size, int radix)
+{
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
+    {
+        str[0] = '\0';
+        return EINVAL;
+    }
+
+    return ltoa_helper(value, str, size, radix);
+}
+
+/*********************************************************************
+ *  _ltow_s (MSVCRT.@)
+ */
+int CDECL _ltow_s(__msvcrt_long value, wchar_t *str, size_t size, int radix)
+{
+    if (!MSVCRT_CHECK_PMT(str != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(size > 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(radix >= 2 && radix <= 36))
+    {
+        str[0] = '\0';
+        return EINVAL;
+    }
+
+    return ltow_helper(value, str, size, radix);
+}
+
+/*********************************************************************
  *  _itoa_s (MSVCRT.@)
  */
 int CDECL _itoa_s(int value, char *str, size_t size, int radix)
@@ -2030,11 +2035,215 @@ char* CDECL _itoa(int value, char *str, int radix)
 }
 
 /*********************************************************************
+ *  _ltoa (MSVCRT.@)
+ */
+char* CDECL _ltoa(__msvcrt_long value, char *str, int radix)
+{
+    return ltoa_helper(value, str, SIZE_MAX, radix) ? NULL : str;
+}
+
+/*********************************************************************
  *  _itow_s (MSVCRT.@)
  */
 int CDECL _itow_s(int value, wchar_t *str, size_t size, int radix)
 {
     return _ltow_s(value, str, size, radix);
+}
+
+/*********************************************************************
+ *  _itow (MSVCRT.@)
+ */
+wchar_t* CDECL _itow(int value, wchar_t *str, int radix)
+{
+    return ltow_helper(value, str, SIZE_MAX, radix) ? NULL : str;
+}
+
+/*********************************************************************
+ *  _ltow (MSVCRT.@)
+ */
+wchar_t* CDECL _ltow(__msvcrt_long value, wchar_t *str, int radix)
+{
+    return ltow_helper(value, str, SIZE_MAX, radix) ? NULL : str;
+}
+
+/*********************************************************************
+ *  _ultoa (MSVCRT.@)
+ */
+char* CDECL _ultoa(__msvcrt_ulong value, char *str, int radix)
+{
+    char buffer[33], *pos;
+
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	int digit = value % radix;
+	value /= radix;
+
+	if (digit < 10)
+	    *--pos = '0' + digit;
+        else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    memcpy(str, pos, buffer + 33 - pos);
+    return str;
+}
+
+/*********************************************************************
+ *  _ui64toa (MSVCRT.@)
+ */
+char* CDECL _ui64toa(unsigned __int64 value, char *str, int radix)
+{
+    char buffer[65], *pos;
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	int digit = value % radix;
+	value /= radix;
+
+	if (digit < 10)
+	    *--pos = '0' + digit;
+        else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    memcpy(str, pos, buffer + 65 - pos);
+    return str;
+}
+
+/*********************************************************************
+ *  _ultow (MSVCRT.@)
+ */
+wchar_t* CDECL _ultow(__msvcrt_ulong value, wchar_t *str, int radix)
+{
+    wchar_t buffer[33], *pos;
+
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	int digit = value % radix;
+	value /= radix;
+
+	if (digit < 10)
+	    *--pos = '0' + digit;
+        else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    memcpy(str, pos, (buffer + 33 - pos) * sizeof(wchar_t));
+    return str;
+}
+
+/*********************************************************************
+ *  _ui64tow (MSVCRT.@)
+ */
+wchar_t* CDECL _ui64tow(unsigned __int64 value, wchar_t *str, int radix)
+{
+    wchar_t buffer[65], *pos;
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	int digit = value % radix;
+	value /= radix;
+
+	if (digit < 10)
+	    *--pos = '0' + digit;
+        else
+	    *--pos = 'a' + digit - 10;
+    } while (value != 0);
+
+    memcpy(str, pos, (buffer + 65 - pos) * sizeof(wchar_t));
+    return str;
+}
+
+/*********************************************************************
+ *  _i64toa (MSVCRT.@)
+ */
+char* CDECL _i64toa(__int64 value, char *str, int radix)
+{
+    unsigned __int64 val;
+    BOOL is_negative;
+    char buffer[65], *pos;
+
+    if (value < 0 && radix == 10)
+    {
+        is_negative = TRUE;
+        val = -value;
+    }
+    else
+    {
+        is_negative = FALSE;
+        val = value;
+    }
+
+    pos = buffer + 64;
+    *pos = '\0';
+
+    do
+    {
+        int digit = val % radix;
+        val /= radix;
+
+        if (digit < 10)
+            *--pos = '0' + digit;
+        else
+            *--pos = 'a' + digit - 10;
+    }
+    while (val != 0);
+
+    if (is_negative)
+        *--pos = '-';
+
+    memcpy(str, pos, buffer + 65 - pos);
+    return str;
+}
+
+/*********************************************************************
+ *  _i64tow (MSVCRT.@)
+ */
+wchar_t* CDECL _i64tow(__int64 value, wchar_t *str, int radix)
+{
+    unsigned __int64 val;
+    BOOL is_negative;
+    wchar_t buffer[65], *pos;
+
+    if (value < 0 && radix == 10)
+    {
+        is_negative = TRUE;
+        val = -value;
+    }
+    else
+    {
+        is_negative = FALSE;
+        val = value;
+    }
+
+    pos = buffer + 64;
+    *pos = '\0';
+
+    do
+    {
+        int digit = val % radix;
+        val /= radix;
+
+        if (digit < 10)
+            *--pos = '0' + digit;
+        else
+            *--pos = 'a' + digit - 10;
+    }
+    while (val != 0);
+
+    if (is_negative)
+        *--pos = '-';
+
+    memcpy(str, pos, (buffer + 65 - pos) * sizeof(wchar_t));
+    return str;
 }
 
 /*********************************************************************

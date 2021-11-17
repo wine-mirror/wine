@@ -170,7 +170,7 @@
 @ cdecl _ismbstrail(ptr ptr)
 @ cdecl _isnan(double)
 @ cdecl _itoa(long ptr long)
-@ cdecl _itow(long ptr long) ntdll._itow
+@ cdecl _itow(long ptr long)
 @ cdecl _j0(double)
 @ cdecl _j1(double)
 @ cdecl _jn(long double)
@@ -184,8 +184,8 @@
 @ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr)
 @ cdecl _lseek(long long long)
-@ cdecl _ltoa(long ptr long) ntdll._ltoa
-@ cdecl _ltow(long ptr long) ntdll._ltow
+@ cdecl _ltoa(long ptr long)
+@ cdecl _ltow(long ptr long)
 @ cdecl _makepath(ptr str str str str)
 @ cdecl _matherr(ptr)
 @ cdecl _mbbtombc(long)
@@ -315,7 +315,7 @@
 @ cdecl _toupper(long)
 @ extern _tzname MSVCRT__tzname
 @ cdecl _tzset()
-@ cdecl _ultoa(long ptr long) ntdll._ultoa
+@ cdecl _ultoa(long ptr long)
 @ cdecl _umask(long)
 @ cdecl _ungetch(long)
 @ cdecl _unlink(str)
