@@ -238,11 +238,6 @@ static void CDECL loaderdrv_Beep(void)
     load_driver()->pBeep();
 }
 
-static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
-{
-    return load_driver()->pGetKeyboardLayoutList( size, layouts );
-}
-
 static BOOL CDECL loaderdrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 {
     return load_driver()->pRegisterHotKey( hwnd, modifiers, vk );
@@ -343,7 +338,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     loaderdrv_Beep,
     NULL,
-    loaderdrv_GetKeyboardLayoutList,
+    NULL,
     NULL,
     loaderdrv_RegisterHotKey,
     NULL,

@@ -1013,6 +1013,11 @@ static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size 
     return load_driver()->pGetKeyNameText( lparam, buffer, size );
 }
 
+static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
+{
+    return load_driver()->pGetKeyboardLayoutList( size, layouts );
+}
+
 static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     return load_driver()->pMapVirtualKeyEx( code, type, layout );
@@ -1038,6 +1043,7 @@ static const struct user_driver_funcs lazy_load_driver =
 {
     .pActivateKeyboardLayout = loaderdrv_ActivateKeyboardLayout,
     .pGetKeyNameText = loaderdrv_GetKeyNameText,
+    .pGetKeyboardLayoutList = loaderdrv_GetKeyboardLayoutList,
     .pMapVirtualKeyEx = loaderdrv_MapVirtualKeyEx,
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,

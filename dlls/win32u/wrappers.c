@@ -606,6 +606,11 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
+{
+    return unix_funcs->pNtUserGetKeyboardLayoutList( size, layouts );
+}
+
 INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 {
     return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );

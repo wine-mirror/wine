@@ -883,57 +883,6 @@ BOOL WINAPI BlockInput(BOOL fBlockIt)
     return FALSE;
 }
 
-/***********************************************************************
- *		GetKeyboardLayoutList (USER32.@)
- *
- * Return number of values available if either input parm is
- *  0, per MS documentation.
- */
-UINT WINAPI GetKeyboardLayoutList( INT size, HKL *layouts )
-{
-    WCHAR klid[KL_NAMELENGTH], value[5];
-    DWORD value_size, count, tmp, i = 0;
-    HKEY hkey;
-    HKL layout;
-
-    TRACE_(keyboard)( "size %d, layouts %p.\n", size, layouts );
-
-    if ((count = USER_Driver->pGetKeyboardLayoutList( size, layouts )) != ~0) return count;
-
-    layout = get_locale_kbd_layout();
-    count = 0;
-
-    count++;
-    if (size && layouts)
-    {
-        layouts[count - 1] = layout;
-        if (count == size) return count;
-    }
-
-    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Keyboard Layouts", &hkey ))
-    {
-        while (!RegEnumKeyW( hkey, i++, klid, ARRAY_SIZE(klid) ))
-        {
-            tmp = wcstoul( klid, NULL, 16 );
-            value_size = sizeof(value);
-            if (!RegGetValueW( hkey, klid, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size ))
-                tmp = MAKELONG( LOWORD( tmp ), 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff) );
-
-            if (layout == UlongToHandle( tmp )) continue;
-
-            count++;
-            if (size && layouts)
-            {
-                layouts[count - 1] = UlongToHandle( tmp );
-                if (count == size) break;
-            }
-        }
-        RegCloseKey( hkey );
-    }
-
-    return count;
-}
-
 
 /***********************************************************************
  *		RegisterHotKey (USER32.@)
