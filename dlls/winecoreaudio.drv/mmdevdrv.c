@@ -56,8 +56,10 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
+#include "wine/unixlib.h"
 
 #include "ole2.h"
 #include "mmdeviceapi.h"
@@ -69,8 +71,11 @@
 #include "endpointvolume.h"
 #include "audioclient.h"
 #include "audiopolicy.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
+
+unixlib_handle_t coreaudio_handle = 0;
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -245,6 +250,9 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
+                                &coreaudio_handle, sizeof(coreaudio_handle), NULL))
+            return FALSE;
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
@@ -319,7 +327,7 @@ exit:
         RegCloseKey(drv_key);
 }
 
-static void get_device_guid(EDataFlow flow, AudioDeviceID device, GUID *guid)
+static void get_device_guid(EDataFlow flow, DWORD device_id, GUID *guid)
 {
     HKEY key = NULL, dev_key;
     DWORD type, size = sizeof(*guid);
@@ -333,7 +341,7 @@ static void get_device_guid(EDataFlow flow, AudioDeviceID device, GUID *guid)
         key_name[0] = '0';
     key_name[1] = ',';
 
-    sprintfW(key_name + 2, key_fmt, device);
+    sprintfW(key_name + 2, key_fmt, device_id);
 
     if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
         if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
@@ -359,164 +367,61 @@ static void get_device_guid(EDataFlow flow, AudioDeviceID device, GUID *guid)
         RegCloseKey(key);
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
-        GUID **guids, UINT *num, UINT *def_index)
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
+        GUID **guids_out, UINT *num, UINT *def_index)
 {
-    UInt32 devsize, size;
-    AudioDeviceID *devices;
-    AudioDeviceID default_id;
-    AudioObjectPropertyAddress addr;
-    OSStatus sc;
-    int i, ndevices;
+    struct get_endpoint_ids_params params;
+    unsigned int i;
+    GUID *guids;
+    WCHAR **ids;
 
-    TRACE("%d %p %p %p\n", flow, ids, num, def_index);
+    TRACE("%d %p %p %p\n", flow, ids_out, num, def_index);
 
-    addr.mScope = kAudioObjectPropertyScopeGlobal;
-    addr.mElement = kAudioObjectPropertyElementMaster;
-    if(flow == eRender)
-        addr.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-    else if(flow == eCapture)
-        addr.mSelector = kAudioHardwarePropertyDefaultInputDevice;
-    else
-        return E_INVALIDARG;
+    params.flow = flow;
+    params.size = 1000;
+    params.endpoints = NULL;
+    do{
+        heap_free(params.endpoints);
+        params.endpoints = heap_alloc(params.size);
+        UNIX_CALL(get_endpoint_ids, &params);
+    }while(params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 
-    size = sizeof(default_id);
-    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, 0,
-            NULL, &size, &default_id);
-    if(sc != noErr){
-        WARN("Getting _DefaultInputDevice property failed: %x\n", (int)sc);
-        default_id = -1;
+    if(FAILED(params.result)) goto end;
+
+    ids = heap_alloc_zero(params.num * sizeof(*ids));
+    guids = heap_alloc(params.num * sizeof(*guids));
+    if(!ids || !guids){
+        params.result = E_OUTOFMEMORY;
+        goto end;
     }
 
-    addr.mSelector = kAudioHardwarePropertyDevices;
-    sc = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &addr, 0,
-            NULL, &devsize);
-    if(sc != noErr){
-        WARN("Getting _Devices property size failed: %x\n", (int)sc);
-        return osstatus_to_hresult(sc);
+    for(i = 0; i < params.num; i++){
+        int size = (strlenW(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        ids[i] = heap_alloc(size);
+        if(!ids[i]){
+            params.result = E_OUTOFMEMORY;
+            goto end;
+        }
+        memcpy(ids[i], params.endpoints[i].name, size);
+        get_device_guid(flow, params.endpoints[i].id, guids + i);
+    }
+    *def_index = params.default_idx;
+
+end:
+    heap_free(params.endpoints);
+    if(FAILED(params.result)){
+        heap_free(guids);
+        if(ids){
+            for(i = 0; i < params.num; i++) heap_free(ids[i]);
+            heap_free(ids);
+        }
+    }else{
+        *ids_out = ids;
+        *guids_out = guids;
+        *num = params.num;
     }
 
-    devices = HeapAlloc(GetProcessHeap(), 0, devsize);
-    if(!devices)
-        return E_OUTOFMEMORY;
-
-    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, 0, NULL,
-            &devsize, devices);
-    if(sc != noErr){
-        WARN("Getting _Devices property failed: %x\n", (int)sc);
-        HeapFree(GetProcessHeap(), 0, devices);
-        return osstatus_to_hresult(sc);
-    }
-
-    ndevices = devsize / sizeof(AudioDeviceID);
-
-    *ids = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(WCHAR *));
-    if(!*ids){
-        HeapFree(GetProcessHeap(), 0, devices);
-        return E_OUTOFMEMORY;
-    }
-
-    *guids = HeapAlloc(GetProcessHeap(), 0, ndevices * sizeof(GUID));
-    if(!*guids){
-        HeapFree(GetProcessHeap(), 0, *ids);
-        HeapFree(GetProcessHeap(), 0, devices);
-        return E_OUTOFMEMORY;
-    }
-
-    *num = 0;
-    *def_index = (UINT)-1;
-    for(i = 0; i < ndevices; ++i){
-        AudioBufferList *buffers;
-        CFStringRef name;
-        SIZE_T len;
-        int j;
-
-        addr.mSelector = kAudioDevicePropertyStreamConfiguration;
-        if(flow == eRender)
-            addr.mScope = kAudioDevicePropertyScopeOutput;
-        else
-            addr.mScope = kAudioDevicePropertyScopeInput;
-        addr.mElement = 0;
-        sc = AudioObjectGetPropertyDataSize(devices[i], &addr, 0, NULL, &size);
-        if(sc != noErr){
-            WARN("Unable to get _StreamConfiguration property size for "
-                    "device %u: %x\n", (unsigned int)devices[i], (int)sc);
-            continue;
-        }
-
-        buffers = HeapAlloc(GetProcessHeap(), 0, size);
-        if(!buffers){
-            HeapFree(GetProcessHeap(), 0, devices);
-            for(j = 0; j < *num; ++j)
-                HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-            HeapFree(GetProcessHeap(), 0, *guids);
-            HeapFree(GetProcessHeap(), 0, *ids);
-            return E_OUTOFMEMORY;
-        }
-
-        sc = AudioObjectGetPropertyData(devices[i], &addr, 0, NULL,
-                &size, buffers);
-        if(sc != noErr){
-            WARN("Unable to get _StreamConfiguration property for "
-                    "device %u: %x\n", (unsigned int)devices[i], (int)sc);
-            HeapFree(GetProcessHeap(), 0, buffers);
-            continue;
-        }
-
-        /* check that there's at least one channel in this device before
-         * we claim it as usable */
-        for(j = 0; j < buffers->mNumberBuffers; ++j)
-            if(buffers->mBuffers[j].mNumberChannels > 0)
-                break;
-        if(j >= buffers->mNumberBuffers){
-            HeapFree(GetProcessHeap(), 0, buffers);
-            continue;
-        }
-
-        HeapFree(GetProcessHeap(), 0, buffers);
-
-        size = sizeof(name);
-        addr.mSelector = kAudioObjectPropertyName;
-        sc = AudioObjectGetPropertyData(devices[i], &addr, 0, NULL,
-                &size, &name);
-        if(sc != noErr){
-            WARN("Unable to get _Name property for device %u: %x\n",
-                    (unsigned int)devices[i], (int)sc);
-            continue;
-        }
-
-        len = CFStringGetLength(name) + 1;
-        (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if(!(*ids)[*num]){
-            CFRelease(name);
-            HeapFree(GetProcessHeap(), 0, devices);
-            for(j = 0; j < *num; ++j)
-                HeapFree(GetProcessHeap(), 0, (*ids)[j]);
-            HeapFree(GetProcessHeap(), 0, *ids);
-            HeapFree(GetProcessHeap(), 0, *guids);
-            return E_OUTOFMEMORY;
-        }
-        CFStringGetCharacters(name, CFRangeMake(0, len - 1), (UniChar*)(*ids)[*num]);
-        ((*ids)[*num])[len - 1] = 0;
-        CFRelease(name);
-
-        get_device_guid(flow, devices[i], &(*guids)[*num]);
-
-        if(*def_index == (UINT)-1 && devices[i] == default_id)
-            *def_index = *num;
-
-        TRACE("device %u: id %s key %u%s\n", *num, debugstr_w((*ids)[*num]),
-              (unsigned int)devices[i], (*def_index == *num) ? " (default)" : "");
-
-        (*num)++;
-    }
-
-    if(*def_index == (UINT)-1)
-        *def_index = 0;
-
-    HeapFree(GetProcessHeap(), 0, devices);
-
-    return S_OK;
+    return params.result;
 }
 
 static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
