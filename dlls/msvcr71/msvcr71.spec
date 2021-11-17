@@ -468,7 +468,7 @@
 @ cdecl _mbstok(str str)
 @ cdecl _mbstrlen(str)
 @ cdecl _mbsupr(str)
-@ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
+@ cdecl _memccpy(ptr ptr long long)
 @ cdecl _memicmp(str str long)
 @ cdecl _mkdir(str)
 @ cdecl _mktemp(str)
@@ -828,7 +828,7 @@
 @ cdecl strncpy(ptr str long)
 @ cdecl strpbrk(str str)
 @ cdecl strrchr(str long)
-@ cdecl strspn(str str) ntdll.strspn
+@ cdecl strspn(str str)
 @ cdecl strstr(str str)
 @ cdecl strtod(str ptr)
 @ cdecl strtok(str str)
@@ -861,15 +861,15 @@
 @ cdecl wcscmp(wstr wstr)
 @ cdecl wcscoll(wstr wstr)
 @ cdecl wcscpy(ptr wstr)
-@ cdecl wcscspn(wstr wstr) ntdll.wcscspn
+@ cdecl wcscspn(wstr wstr)
 @ cdecl wcsftime(ptr long wstr ptr)
 @ cdecl wcslen(wstr)
-@ cdecl wcsncat(wstr wstr long) ntdll.wcsncat
+@ cdecl wcsncat(wstr wstr long)
 @ cdecl wcsncmp(wstr wstr long)
 @ cdecl wcsncpy(ptr wstr long)
 @ cdecl wcspbrk(wstr wstr)
 @ cdecl wcsrchr(wstr long)
-@ cdecl wcsspn(wstr wstr) ntdll.wcsspn
+@ cdecl wcsspn(wstr wstr)
 @ cdecl wcsstr(wstr wstr)
 @ cdecl wcstod(wstr ptr)
 @ cdecl wcstok(wstr wstr)

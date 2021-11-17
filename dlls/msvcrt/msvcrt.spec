@@ -824,7 +824,7 @@
 @ cdecl _mbsupr_s(str long)
 # stub _mbsupr_s_l(str long ptr)
 @ cdecl _mbtowc_l(ptr str long ptr)
-@ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
+@ cdecl _memccpy(ptr ptr long long)
 @ cdecl _memicmp(str str long)
 @ cdecl _memicmp_l(str str long ptr)
 @ cdecl _mkdir(str)
@@ -1448,7 +1448,7 @@
 @ cdecl strnlen(str long)
 @ cdecl strpbrk(str str)
 @ cdecl strrchr(str long)
-@ cdecl strspn(str str) ntdll.strspn
+@ cdecl strspn(str str)
 @ cdecl strstr(str str)
 @ cdecl strtod(str ptr)
 @ cdecl strtok(str str)
@@ -1500,10 +1500,10 @@
 @ cdecl wcscoll(wstr wstr)
 @ cdecl wcscpy(ptr wstr)
 @ cdecl wcscpy_s(ptr long wstr)
-@ cdecl wcscspn(wstr wstr) ntdll.wcscspn
+@ cdecl wcscspn(wstr wstr)
 @ cdecl wcsftime(ptr long wstr ptr)
 @ cdecl wcslen(wstr)
-@ cdecl wcsncat(wstr wstr long) ntdll.wcsncat
+@ cdecl wcsncat(wstr wstr long)
 @ cdecl wcsncat_s(wstr long wstr long)
 @ cdecl wcsncmp(wstr wstr long)
 @ cdecl wcsncpy(ptr wstr long)
@@ -1513,7 +1513,7 @@
 @ cdecl wcsrchr(wstr long)
 @ cdecl wcsrtombs(ptr ptr long ptr)
 @ cdecl wcsrtombs_s(ptr ptr long ptr long ptr)
-@ cdecl wcsspn(wstr wstr) ntdll.wcsspn
+@ cdecl wcsspn(wstr wstr)
 @ cdecl wcsstr(wstr wstr)
 @ cdecl wcstod(wstr ptr)
 @ cdecl wcstok(wstr wstr)

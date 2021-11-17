@@ -2855,6 +2855,18 @@ void * __cdecl memcpy(void *dst, const void *src, size_t n)
     return memmove(dst, src, n);
 }
 
+/*********************************************************************
+ *                  _memccpy   (MSVCRT.@)
+ */
+void * __cdecl _memccpy(void *dst, const void *src, int c, size_t n)
+{
+    unsigned char *d = dst;
+    const unsigned char *s = src;
+    while (n--) if ((*d++ = *s++) == (unsigned char)c) return d;
+    return NULL;
+}
+
+
 static inline void memset_aligned_32(unsigned char *d, uint64_t v, size_t n)
 {
     unsigned char *end = d + n;
@@ -3140,6 +3152,16 @@ size_t __cdecl strcspn(const char *str, const char *reject)
     p = str;
     while(*p && !rejects[(unsigned char)*p]) p++;
     return p - str;
+}
+
+/*********************************************************************
+ *                  strspn   (MSVCRT.@)
+ */
+size_t __cdecl strspn(const char *str, const char *accept)
+{
+    const char *ptr;
+    for (ptr = str; *ptr; ptr++) if (!strchr( accept, *ptr )) break;
+    return ptr - str;
 }
 
 /*********************************************************************

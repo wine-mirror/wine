@@ -489,6 +489,26 @@ wchar_t* CDECL _wcslwr( wchar_t* str )
 }
 
 /*********************************************************************
+ *           wcscspn    (MSVCRT.@)
+ */
+size_t __cdecl wcscspn(const wchar_t *str, const wchar_t *reject)
+{
+    const wchar_t *ptr;
+    for (ptr = str; *ptr; ptr++) if (wcschr( reject, *ptr )) break;
+    return ptr - str;
+}
+
+/*********************************************************************
+ *           wcsspn    (MSVCRT.@)
+ */
+size_t __cdecl wcsspn(const wchar_t *str, const wchar_t *accept)
+{
+    const wchar_t *ptr;
+    for (ptr = str; *ptr; ptr++) if (!wcschr( accept, *ptr )) break;
+    return ptr - str;
+}
+
+/*********************************************************************
  *           wcsncmp    (MSVCRT.@)
  */
 int CDECL wcsncmp(const wchar_t *str1, const wchar_t *str2, size_t n)
@@ -2479,6 +2499,18 @@ INT CDECL wcsncat_s(wchar_t *dst, size_t elem,
     MSVCRT_INVALID_PMT("dst[elem] is too small", ERANGE);
     dst[0] = '\0';
     return ERANGE;
+}
+
+/*********************************************************************
+ *           wcsncat    (NTDLL.@)
+ */
+wchar_t * __cdecl wcsncat(wchar_t *s1, const wchar_t *s2, size_t n)
+{
+    wchar_t *ret = s1;
+    while (*s1) s1++;
+    while (n-- > 0) if (!(*s1++ = *s2++)) return ret;
+    *s1 = 0;
+    return ret;
 }
 
 /*********************************************************************
