@@ -171,7 +171,6 @@ static const struct
     { "i786",    CPU_x86 },
     { "amd64",   CPU_x86_64 },
     { "x86_64",  CPU_x86_64 },
-    { "powerpc", CPU_POWERPC },
     { "arm",     CPU_ARM },
     { "armv5",   CPU_ARM },
     { "armv6",   CPU_ARM },
@@ -251,8 +250,6 @@ struct options
 static const enum target_cpu build_cpu = CPU_x86;
 #elif defined(__x86_64__)
 static const enum target_cpu build_cpu = CPU_x86_64;
-#elif defined(__powerpc__)
-static const enum target_cpu build_cpu = CPU_POWERPC;
 #elif defined(__arm__)
 static const enum target_cpu build_cpu = CPU_ARM;
 #elif defined(__aarch64__)
@@ -474,11 +471,6 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         strarray_add( &flags, opts->unix_lib ? "-dynamiclib" : "-bundle" );
         strarray_add( &flags, "-multiply_defined" );
         strarray_add( &flags, "suppress" );
-        if (opts->target_cpu == CPU_POWERPC)
-        {
-            strarray_add( &flags, "-read_only_relocs" );
-            strarray_add( &flags, "warning" );
-        }
         if (opts->image_base)
         {
             strarray_add( &flags, "-image_base" );
@@ -618,7 +610,6 @@ static const char *get_multiarch_dir( enum target_cpu cpu )
    case CPU_x86_64:  return "/x86_64-linux-gnu";
    case CPU_ARM:     return "/arm-linux-gnueabi";
    case CPU_ARM64:   return "/aarch64-linux-gnu";
-   case CPU_POWERPC: return "/powerpc-linux-gnu";
    default:
        assert(0);
        return NULL;
@@ -851,11 +842,6 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(&comp_args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
             strarray_add(&comp_args, "-D__cdecl=__stdcall");
             strarray_add(&comp_args, "-D__fastcall=__stdcall");
-            break;
-        case CPU_POWERPC:
-            strarray_add(&comp_args, "-D__stdcall=");
-            strarray_add(&comp_args, "-D__cdecl=");
-            strarray_add(&comp_args, "-D__fastcall=");
             break;
         }
         strarray_add(&comp_args, "-D_stdcall=__stdcall");
