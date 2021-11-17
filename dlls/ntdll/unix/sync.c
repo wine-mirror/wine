@@ -2342,6 +2342,9 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
 union tid_alert_entry
 {
     HANDLE event;
+#ifdef __linux__
+    int futex;
+#endif
 };
 
 #define TID_ALERT_BLOCK_SIZE (65536 / sizeof(union tid_alert_entry))
@@ -2376,6 +2379,11 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 
     entry = &tid_alert_blocks[block_idx][idx % TID_ALERT_BLOCK_SIZE];
 
+#ifdef __linux__
+    if (use_futexes())
+        return entry;
+#endif
+
     if (!entry->event)
     {
         HANDLE event;
@@ -2401,8 +2409,41 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 
     if (!entry) return STATUS_INVALID_CID;
 
+#ifdef __linux__
+    if (use_futexes())
+    {
+        int *futex = &entry->futex;
+        if (!InterlockedExchange( futex, 1 ))
+            futex_wake( futex, 1 );
+        return STATUS_SUCCESS;
+    }
+#endif
+
     return NtSetEvent( entry->event, NULL );
 }
+
+
+#ifdef __linux__
+static LONGLONG get_absolute_timeout( const LARGE_INTEGER *timeout )
+{
+    LARGE_INTEGER now;
+
+    if (timeout->QuadPart >= 0) return timeout->QuadPart;
+    NtQuerySystemTime( &now );
+    return now.QuadPart - timeout->QuadPart;
+}
+
+static LONGLONG update_timeout( ULONGLONG end )
+{
+    LARGE_INTEGER now;
+    LONGLONG timeleft;
+
+    NtQuerySystemTime( &now );
+    timeleft = end - now.QuadPart;
+    if (timeleft < 0) timeleft = 0;
+    return timeleft;
+}
+#endif
 
 
 /***********************************************************************
@@ -2416,6 +2457,41 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
     TRACE( "%p %s\n", address, debugstr_timeout( timeout ) );
 
     if (!entry) return STATUS_INVALID_CID;
+
+#ifdef __linux__
+    if (use_futexes())
+    {
+        int *futex = &entry->futex;
+        ULONGLONG end;
+        int ret;
+
+        if (timeout)
+        {
+            if (timeout->QuadPart == TIMEOUT_INFINITE)
+                timeout = NULL;
+            else
+                end = get_absolute_timeout( timeout );
+        }
+
+        while (!InterlockedExchange( futex, 0 ))
+        {
+            if (timeout)
+            {
+                LONGLONG timeleft = update_timeout( end );
+                struct timespec timespec;
+
+                timespec.tv_sec = timeleft / (ULONGLONG)TICKSPERSEC;
+                timespec.tv_nsec = (timeleft % TICKSPERSEC) * 100;
+                ret = futex_wait( futex, 0, &timespec );
+            }
+            else
+                ret = futex_wait( futex, 0, NULL );
+
+            if (ret == -1 && errno == ETIMEDOUT) return STATUS_TIMEOUT;
+        }
+        return STATUS_ALERTED;
+    }
+#endif
 
     status = NtWaitForSingleObject( entry->event, FALSE, timeout );
     if (!status) return STATUS_ALERTED;
