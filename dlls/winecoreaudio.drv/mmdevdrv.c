@@ -1234,16 +1234,19 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         }
     }
 
-    OSSpinLockLock(&This->stream->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     if(This->initted){
-        OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
+
+    OSSpinLockLock(&This->stream->lock);
 
     This->stream->fmt = clone_format(fmt);
     if(!This->stream->fmt){
         OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return E_OUTOFMEMORY;
     }
 
@@ -1259,6 +1262,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         CoTaskMemFree(This->stream->fmt);
         This->stream->fmt = NULL;
         OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return hr;
     }
 
@@ -1278,6 +1282,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
             CoTaskMemFree(This->stream->fmt);
             This->stream->fmt = NULL;
             OSSpinLockUnlock(&This->stream->lock);
+            LeaveCriticalSection(&g_sessions_lock);
             return osstatus_to_hresult(sc);
         }
     }else{
@@ -1294,6 +1299,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
             CoTaskMemFree(This->stream->fmt);
             This->stream->fmt = NULL;
             OSSpinLockUnlock(&This->stream->lock);
+            LeaveCriticalSection(&g_sessions_lock);
             return osstatus_to_hresult(sc);
         }
     }
@@ -1308,6 +1314,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         CoTaskMemFree(This->stream->fmt);
         This->stream->fmt = NULL;
         OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return osstatus_to_hresult(sc);
     }
 
@@ -1323,6 +1330,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         CoTaskMemFree(This->stream->fmt);
         This->stream->fmt = NULL;
         OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return osstatus_to_hresult(sc);
     }
 
@@ -1339,6 +1347,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         CoTaskMemFree(This->stream->fmt);
         This->stream->fmt = NULL;
         OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return E_OUTOFMEMORY;
     }
 
@@ -1348,29 +1357,26 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     This->stream->share = mode;
     This->flags = flags;
 
-    EnterCriticalSection(&g_sessions_lock);
-
     hr = get_audio_session(sessionguid, This->parent, fmt->nChannels,
             &This->session);
     if(FAILED(hr)){
-        LeaveCriticalSection(&g_sessions_lock);
         CoTaskMemFree(This->stream->fmt);
         This->stream->fmt = NULL;
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
         OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return E_INVALIDARG;
     }
 
     list_add_tail(&This->session->clients, &This->entry);
-
-    LeaveCriticalSection(&g_sessions_lock);
 
     ca_setvol(This, -1);
 
     This->initted = TRUE;
 
     OSSpinLockUnlock(&This->stream->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
@@ -1983,41 +1989,35 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         HANDLE event)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%p)\n", This, event);
 
     if(!event)
         return E_INVALIDARG;
 
-    OSSpinLockLock(&This->stream->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
-    if(!This->initted){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_NOT_INITIALIZED;
-    }
-
-    if(!(This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK)){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
-    }
-
-    if (This->event){
-        OSSpinLockUnlock(&This->stream->lock);
+    if(!This->initted)
+        hr = AUDCLNT_E_NOT_INITIALIZED;
+    else if(!(This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
+        hr = AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
+    else if(This->event){
         FIXME("called twice\n");
-        return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
-    }
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+    }else
+        This->event = event;
 
-    This->event = event;
+    LeaveCriticalSection(&g_sessions_lock);
 
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         void **ppv)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -2025,24 +2025,24 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         return E_POINTER;
     *ppv = NULL;
 
-    OSSpinLockLock(&This->stream->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     if(!This->initted){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_NOT_INITIALIZED;
+        hr = AUDCLNT_E_NOT_INITIALIZED;
+        goto end;
     }
 
     if(IsEqualIID(riid, &IID_IAudioRenderClient)){
         if(This->dataflow != eRender){
-            OSSpinLockUnlock(&This->stream->lock);
-            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            hr = AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            goto end;
         }
         IAudioRenderClient_AddRef(&This->IAudioRenderClient_iface);
         *ppv = &This->IAudioRenderClient_iface;
     }else if(IsEqualIID(riid, &IID_IAudioCaptureClient)){
         if(This->dataflow != eCapture){
-            OSSpinLockUnlock(&This->stream->lock);
-            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            hr = AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+            goto end;
         }
         IAudioCaptureClient_AddRef(&This->IAudioCaptureClient_iface);
         *ppv = &This->IAudioCaptureClient_iface;
@@ -2056,8 +2056,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         if(!This->session_wrapper){
             This->session_wrapper = AudioSessionWrapper_Create(This);
             if(!This->session_wrapper){
-                OSSpinLockUnlock(&This->stream->lock);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto end;
             }
         }else
             IAudioSessionControl2_AddRef(&This->session_wrapper->IAudioSessionControl2_iface);
@@ -2067,8 +2067,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         if(!This->session_wrapper){
             This->session_wrapper = AudioSessionWrapper_Create(This);
             if(!This->session_wrapper){
-                OSSpinLockUnlock(&This->stream->lock);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto end;
             }
         }else
             IChannelAudioVolume_AddRef(&This->session_wrapper->IChannelAudioVolume_iface);
@@ -2078,8 +2078,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         if(!This->session_wrapper){
             This->session_wrapper = AudioSessionWrapper_Create(This);
             if(!This->session_wrapper){
-                OSSpinLockUnlock(&This->stream->lock);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto end;
             }
         }else
             ISimpleAudioVolume_AddRef(&This->session_wrapper->ISimpleAudioVolume_iface);
@@ -2087,15 +2087,15 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         *ppv = &This->session_wrapper->ISimpleAudioVolume_iface;
     }
 
-    if(*ppv){
-        OSSpinLockUnlock(&This->stream->lock);
-        return S_OK;
+    if(*ppv) hr = S_OK;
+    else{
+        return E_NOINTERFACE;
+        FIXME("stub %s\n", debugstr_guid(riid));
     }
 
-    OSSpinLockUnlock(&This->stream->lock);
-
-    FIXME("stub %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+end:
+    LeaveCriticalSection(&g_sessions_lock);
+    return hr;
 }
 
 static HRESULT WINAPI AudioClient_IsOffloadCapable(IAudioClient3 *iface,
@@ -2749,17 +2749,20 @@ static ULONG WINAPI AudioSessionControl_Release(IAudioSessionControl2 *iface)
 {
     AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
     ULONG ref;
+
+    EnterCriticalSection(&g_sessions_lock);
+
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
         if(This->client){
-            OSSpinLockLock(&This->client->stream->lock);
             This->client->session_wrapper = NULL;
-            OSSpinLockUnlock(&This->client->stream->lock);
             AudioClient_Release(&This->client->IAudioClient3_iface);
         }
         HeapFree(GetProcessHeap(), 0, This);
     }
+
+    LeaveCriticalSection(&g_sessions_lock);
     return ref;
 }
 
@@ -3189,14 +3192,14 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if(index >= This->stream->fmt->nChannels)
         return E_INVALIDARG;
 
-    OSSpinLockLock(&This->stream->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     This->vols[index] = level;
 
     WARN("CoreAudio doesn't support per-channel volume control\n");
     ret = ca_setvol(This, index);
 
-    OSSpinLockUnlock(&This->stream->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return ret;
 }
@@ -3223,7 +3226,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
         IAudioStreamVolume *iface, UINT32 count, const float *levels)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    int i;
+    UINT32 i;
     HRESULT ret;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
@@ -3234,14 +3237,14 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if(count != This->stream->fmt->nChannels)
         return E_INVALIDARG;
 
-    OSSpinLockLock(&This->stream->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     for(i = 0; i < count; ++i)
         This->vols[i] = levels[i];
 
     ret = ca_setvol(This, -1);
 
-    OSSpinLockUnlock(&This->stream->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return ret;
 }
@@ -3250,7 +3253,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
         IAudioStreamVolume *iface, UINT32 count, float *levels)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    int i;
+    UINT32 i;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
 
@@ -3260,12 +3263,12 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if(count != This->stream->fmt->nChannels)
         return E_INVALIDARG;
 
-    OSSpinLockLock(&This->stream->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     for(i = 0; i < count; ++i)
         levels[i] = This->vols[i];
 
-    OSSpinLockUnlock(&This->stream->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
