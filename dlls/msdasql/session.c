@@ -43,6 +43,8 @@ struct msdasql_session
     ISessionProperties ISessionProperties_iface;
     IDBCreateCommand IDBCreateCommand_iface;
     LONG refs;
+
+    IUnknown *datasource;
 };
 
 static inline struct msdasql_session *impl_from_IUnknown( IUnknown *iface )
@@ -139,6 +141,8 @@ static ULONG WINAPI session_Release(IUnknown *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", session );
+
+        IUnknown_Release(session->datasource);
         heap_free( session );
     }
     return refs;
@@ -173,9 +177,13 @@ ULONG WINAPI datasource_Release(IGetDataSource *iface)
 HRESULT WINAPI datasource_GetDataSource(IGetDataSource *iface, REFIID riid, IUnknown **datasource)
 {
     struct msdasql_session *session = impl_from_IGetDataSource( iface );
-    FIXME("%p, %s, %p stub\n", session, debugstr_guid(riid), datasource);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p stub\n", session, debugstr_guid(riid), datasource);
+
+    if (!datasource)
+        return E_INVALIDARG;
+
+    return IUnknown_QueryInterface(session->datasource, riid, (void**)datasource);
 }
 
 static const IGetDataSourceVtbl datasourceVtbl =
@@ -1155,7 +1163,7 @@ static const IDBCreateCommandVtbl createcommandVtbl =
     createcommand_CreateCommand
 };
 
-HRESULT create_db_session(REFIID riid, void **unk)
+HRESULT create_db_session(REFIID riid, IUnknown *datasource, void **unk)
 {
     struct msdasql_session *session;
     HRESULT hr;
@@ -1169,6 +1177,7 @@ HRESULT create_db_session(REFIID riid, void **unk)
     session->IOpenRowset_iface.lpVtbl = &openrowsetVtbl;
     session->ISessionProperties_iface.lpVtbl = &propertiesVtbl;
     session->IDBCreateCommand_iface.lpVtbl = &createcommandVtbl;
+    IUnknown_QueryInterface(datasource, &IID_IUnknown, (void**)&session->datasource);
     session->refs = 1;
 
     hr = IUnknown_QueryInterface(&session->session_iface, riid, unk);

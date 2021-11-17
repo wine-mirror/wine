@@ -559,7 +559,7 @@ static HRESULT WINAPI dbsess_CreateSession(IDBCreateSession *iface, IUnknown *ou
     if (outer)
         FIXME("outer currently not supported.\n");
 
-    hr = create_db_session(riid, (void**)session);
+    hr = create_db_session(riid, &provider->MSDASQL_iface, (void**)session);
 
     return hr;
 }

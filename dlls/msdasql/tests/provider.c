@@ -399,7 +399,7 @@ static void test_command_rowset(IUnknown *cmd)
 
 static void test_sessions(void)
 {
-    IDBProperties *props;
+    IDBProperties *props, *dsource = NULL;
     IDBInitialize *dbinit = NULL;
     IDataInitialize *datainit;
     IDBCreateSession *dbsession = NULL;
@@ -456,6 +456,11 @@ static void test_sessions(void)
 
     hr = IUnknown_QueryInterface(session, &IID_IGetDataSource, (void**)&datasource);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IGetDataSource_GetDataSource(datasource, &IID_IDBProperties, (IUnknown**)&dsource);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dsource == props, "different pointers\n");
+    IDBProperties_Release(dsource);
     IGetDataSource_Release(datasource);
 
     hr = IUnknown_QueryInterface(session, &IID_ITransactionJoin, (void**)&join);
