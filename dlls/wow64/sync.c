@@ -1461,6 +1461,18 @@ NTSTATUS WINAPI wow64_NtTraceControl( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtWaitForAlertByThreadId
+ */
+NTSTATUS WINAPI wow64_NtWaitForAlertByThreadId( UINT *args )
+{
+    const void *address = get_ptr( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    return NtWaitForAlertByThreadId( address, timeout );
+}
+
+
+/**********************************************************************
  *           wow64_NtWaitForDebugEvent
  */
 NTSTATUS WINAPI wow64_NtWaitForDebugEvent( UINT *args )

@@ -33,6 +33,9 @@
 #include <limits.h>
 #include <signal.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif
@@ -73,6 +76,12 @@ HANDLE keyed_event = 0;
 static const LARGE_INTEGER zero_timeout;
 
 static pthread_mutex_t addr_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static const char *debugstr_timeout( const LARGE_INTEGER *timeout )
+{
+    if (!timeout) return "(infinite)";
+    return wine_dbgstr_longlong( timeout->QuadPart );
+}
 
 /* return a monotonic time counter, in Win32 ticks */
 static inline ULONGLONG monotonic_counter(void)
@@ -2326,6 +2335,90 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
         status = STATUS_INVALID_INFO_CLASS;
         break;
     }
+    return status;
+}
+
+
+union tid_alert_entry
+{
+    HANDLE event;
+};
+
+#define TID_ALERT_BLOCK_SIZE (65536 / sizeof(union tid_alert_entry))
+static union tid_alert_entry *tid_alert_blocks[4096];
+
+static unsigned int handle_to_index( HANDLE handle, unsigned int *block_idx )
+{
+    unsigned int idx = (wine_server_obj_handle(handle) >> 2) - 1;
+    *block_idx = idx / TID_ALERT_BLOCK_SIZE;
+    return idx % TID_ALERT_BLOCK_SIZE;
+}
+
+static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
+{
+    unsigned int block_idx, idx = handle_to_index( tid, &block_idx );
+    union tid_alert_entry *entry;
+
+    if (block_idx > ARRAY_SIZE(tid_alert_blocks))
+    {
+        FIXME( "tid %p is too high\n", tid );
+        return NULL;
+    }
+
+    if (!tid_alert_blocks[block_idx])
+    {
+        static const size_t size = TID_ALERT_BLOCK_SIZE * sizeof(union tid_alert_entry);
+        void *ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
+        if (ptr == MAP_FAILED) return NULL;
+        if (InterlockedCompareExchangePointer( (void **)&tid_alert_blocks[block_idx], ptr, NULL ))
+            munmap( ptr, size ); /* someone beat us to it */
+    }
+
+    entry = &tid_alert_blocks[block_idx][idx % TID_ALERT_BLOCK_SIZE];
+
+    if (!entry->event)
+    {
+        HANDLE event;
+
+        if (NtCreateEvent( &event, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE ))
+            return NULL;
+        if (InterlockedCompareExchangePointer( &entry->event, event, NULL ))
+            NtClose( event );
+    }
+
+    return entry;
+}
+
+
+/***********************************************************************
+ *             NtAlertThreadByThreadId (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
+{
+    union tid_alert_entry *entry = get_tid_alert_entry( tid );
+
+    TRACE( "%p\n", tid );
+
+    if (!entry) return STATUS_INVALID_CID;
+
+    return NtSetEvent( entry->event, NULL );
+}
+
+
+/***********************************************************************
+ *             NtWaitForAlertByThreadId (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEGER *timeout )
+{
+    union tid_alert_entry *entry = get_tid_alert_entry( NtCurrentTeb()->ClientId.UniqueThread );
+    NTSTATUS status;
+
+    TRACE( "%p %s\n", address, debugstr_timeout( timeout ) );
+
+    if (!entry) return STATUS_INVALID_CID;
+
+    status = NtWaitForSingleObject( entry->event, FALSE, timeout );
+    if (!status) return STATUS_ALERTED;
     return status;
 }
 

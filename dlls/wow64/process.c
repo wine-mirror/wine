@@ -461,6 +461,17 @@ NTSTATUS WINAPI wow64_NtAlertThread( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtAlertThreadByThreadId
+ */
+NTSTATUS WINAPI wow64_NtAlertThreadByThreadId( UINT *args )
+{
+    HANDLE tid = get_handle( &args );
+
+    return NtAlertThreadByThreadId( tid );
+}
+
+
+/**********************************************************************
  *           wow64_NtAssignProcessToJobObject
  */
 NTSTATUS WINAPI wow64_NtAssignProcessToJobObject( UINT *args )
