@@ -136,6 +136,13 @@ struct pid_set_ramp_force
     struct hid_value_caps *end_caps;
 };
 
+struct pid_device_gain
+{
+    BYTE id;
+    ULONG collection;
+    struct hid_value_caps *device_gain_caps;
+};
+
 struct hid_joystick
 {
     struct dinput_device base;
@@ -166,6 +173,7 @@ struct hid_joystick
     struct pid_set_condition pid_set_condition;
     struct pid_set_constant_force pid_set_constant_force;
     struct pid_set_ramp_force pid_set_ramp_force;
+    struct pid_device_gain pid_device_gain;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -1551,6 +1559,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
     struct pid_set_condition *set_condition = &impl->pid_set_condition;
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
     struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
+    struct pid_device_gain *device_gain = &impl->pid_device_gain;
 
 #define SET_COLLECTION( rep )                                          \
     do                                                                 \
@@ -1581,6 +1590,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         case PID_USAGE_SET_CONDITION_REPORT: SET_COLLECTION( set_condition ); break;
         case PID_USAGE_SET_CONSTANT_FORCE_REPORT: SET_COLLECTION( set_constant_force ); break;
         case PID_USAGE_SET_RAMP_FORCE_REPORT: SET_COLLECTION( set_ramp_force ); break;
+        case PID_USAGE_DEVICE_GAIN_REPORT: SET_COLLECTION( device_gain ); break;
 
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
         case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
@@ -1610,6 +1620,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     struct pid_set_condition *set_condition = &impl->pid_set_condition;
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
     struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
+    struct pid_device_gain *device_gain = &impl->pid_device_gain;
 
     if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
@@ -1776,6 +1787,16 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
             set_ramp_force->end_caps = caps;
         }
     }
+    if (instance->wCollectionNumber == device_gain->collection)
+    {
+        SET_REPORT_ID( device_gain );
+        if (instance->wUsage == PID_USAGE_DEVICE_GAIN)
+        {
+            caps->physical_min = 0;
+            caps->physical_max = 10000;
+            device_gain->device_gain_caps = caps;
+        }
+    }
 
 #undef SET_REPORT_ID
 
@@ -1874,6 +1895,7 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
     TRACE( "set constant force id %u, coll %u\n", impl->pid_set_constant_force.id,
            impl->pid_set_constant_force.collection );
     TRACE( "set ramp force id %u, coll %u\n", impl->pid_set_ramp_force.id, impl->pid_set_ramp_force.collection );
+    TRACE( "device gain id %u, coll %u\n", impl->pid_device_gain.id, impl->pid_device_gain.collection );
 
     if (impl->pid_device_control.id)
     {
