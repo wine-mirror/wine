@@ -674,11 +674,11 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
     return DIENUM_CONTINUE;
 }
 
-static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,
-                                 struct hid_value_caps *caps, LONG value )
+static void set_report_value( struct hid_joystick *impl, char *report_buf,
+                              struct hid_value_caps *caps, LONG value )
 {
-    ULONG report_len = impl->joystick->caps.OutputReportByteLength;
-    PHIDP_PREPARSED_DATA preparsed = impl->joystick->preparsed;
+    ULONG report_len = impl->caps.OutputReportByteLength;
+    PHIDP_PREPARSED_DATA preparsed = impl->preparsed;
     LONG log_min, log_max, phy_min, phy_max;
     NTSTATUS status;
 
@@ -819,9 +819,23 @@ static void set_extra_caps_range( struct hid_joystick *impl, const DIDEVICEOBJEC
 
 static HRESULT hid_joystick_send_device_gain( IDirectInputDevice8W *iface, LONG device_gain )
 {
-    FIXME( "iface %p stub!\n", iface );
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    struct pid_device_gain *report = &impl->pid_device_gain;
+    ULONG report_len = impl->caps.OutputReportByteLength;
+    char *report_buf = impl->output_report_buf;
+    NTSTATUS status;
 
-    return DIERR_UNSUPPORTED;
+    TRACE( "iface %p.\n", iface );
+
+    if (!report->id || !report->device_gain_caps) return DI_OK;
+
+    status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) return status;
+
+    set_report_value( impl, report_buf, report->device_gain_caps, device_gain );
+
+    if (!WriteFile( impl->device, report_buf, report_len, NULL, NULL )) return DIERR_INPUTLOST;
+    return DI_OK;
 }
 
 static HRESULT hid_joystick_set_property( IDirectInputDevice8W *iface, DWORD property,
@@ -884,6 +898,8 @@ static HRESULT hid_joystick_acquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
+static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *iface, DWORD command, BOOL unacquire );
+
 static HRESULT hid_joystick_unacquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -895,7 +911,9 @@ static HRESULT hid_joystick_unacquire( IDirectInputDevice8W *iface )
     if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
     else WaitForSingleObject( impl->base.read_event, INFINITE );
 
-    IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
+    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DI_OK;
+    if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE)) return DI_OK;
+    hid_joystick_send_force_feedback_command( iface, DISFFC_RESET, TRUE );
     return DI_OK;
 }
 
@@ -1027,7 +1045,7 @@ static BOOL CALLBACK unload_effect_object( IDirectInputEffect *effect, void *con
     return DIENUM_CONTINUE;
 }
 
-static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *iface, DWORD command )
+static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *iface, DWORD command, BOOL unacquire )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct pid_control_report *report = &impl->pid_device_control;
@@ -1060,6 +1078,8 @@ static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *i
     if (status != HIDP_STATUS_SUCCESS) return status;
 
     if (!WriteFile( impl->device, report_buf, report_len, NULL, NULL )) return DIERR_INPUTLOST;
+    if (!unacquire) hid_joystick_send_device_gain( iface, impl->base.device_gain );
+
     return DI_OK;
 }
 
@@ -2653,6 +2673,12 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
     if (!status) return E_POINTER;
 
     return DIERR_UNSUPPORTED;
+}
+
+static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,
+                                 struct hid_value_caps *caps, LONG value )
+{
+    return set_report_value( impl->joystick, report_buf, caps, value );
 }
 
 static void set_parameter_value_us( struct hid_joystick_effect *impl, char *report_buf,

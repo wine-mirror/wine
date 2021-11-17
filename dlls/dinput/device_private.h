@@ -49,7 +49,7 @@ struct dinput_device_vtbl
                              const DIDEVICEOBJECTINSTANCEW *instance );
     HRESULT (*get_effect_info)( IDirectInputDevice8W *iface, DIEFFECTINFOW *info, const GUID *guid );
     HRESULT (*create_effect)( IDirectInputDevice8W *iface, IDirectInputEffect **out );
-    HRESULT (*send_force_feedback_command)( IDirectInputDevice8W *iface, DWORD command );
+    HRESULT (*send_force_feedback_command)( IDirectInputDevice8W *iface, DWORD command, BOOL unacquire );
     HRESULT (*send_device_gain)( IDirectInputDevice8W *iface, LONG device_gain );
     HRESULT (*enum_created_effect_objects)( IDirectInputDevice8W *iface, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
                                             void *context, DWORD flags );

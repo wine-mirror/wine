@@ -754,15 +754,7 @@ static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, voi
     if (!ret && GetLastError() == ERROR_IO_PENDING)
     {
         ret = GetOverlappedResultEx( file, &ovl, &out_len, timeout, TRUE );
-        todo_wine_if( timeout != INFINITE )
         ok( ret, "GetOverlappedResultEx returned %u\n", GetLastError() );
-        if (!ret)
-        {
-            ret = CancelIoEx( file, &ovl );
-            ok( ret, "CancelIoEx returned %u\n", GetLastError() );
-            ret = WaitForSingleObject( ovl.hEvent, INFINITE );
-            ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
-        }
     }
     CloseHandle( ovl.hEvent );
 
@@ -793,7 +785,6 @@ static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, D
 static void wait_hid_expect_( int line, HANDLE file, DWORD timeout )
 {
     BOOL ret = sync_ioctl( file, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
-    todo_wine
     ok( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %u\n", GetLastError() );
 
     set_hid_expect( file, NULL, 0 );
@@ -5584,7 +5575,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_id = 8,
             .report_len = 2,
             .report_buf = {8, 0x19},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_reset[] =
@@ -6947,7 +6937,6 @@ static void test_force_feedback_joystick( DWORD version )
             .report_id = 8,
             .report_len = 2,
             .report_buf = {8, 0x19},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_reset[] =
@@ -6965,7 +6954,6 @@ static void test_force_feedback_joystick( DWORD version )
         .report_id = 8,
         .report_len = 2,
         .report_buf = {8, 0x19},
-        .todo = TRUE,
     };
     struct hid_expect expect_set_device_gain_2 =
     {
@@ -6973,7 +6961,6 @@ static void test_force_feedback_joystick( DWORD version )
         .report_id = 8,
         .report_len = 2,
         .report_buf = {8, 0x33},
-        .todo = TRUE,
     };
 
     const DIDEVICEINSTANCEW expect_devinst =

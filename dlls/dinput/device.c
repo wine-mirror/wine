@@ -1103,6 +1103,8 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         if (value->dwData > 10000) return DIERR_INVALIDPARAM;
         EnterCriticalSection( &impl->crit );
         impl->device_gain = value->dwData;
+        if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) hr = DI_OK;
+        else hr = impl->vtbl->send_device_gain( iface, impl->device_gain );
         LeaveCriticalSection( &impl->crit );
         return hr;
     }
@@ -1520,7 +1522,7 @@ static HRESULT WINAPI dinput_device_SendForceFeedbackCommand( IDirectInputDevice
 
     EnterCriticalSection( &impl->crit );
     if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) hr = DIERR_NOTEXCLUSIVEACQUIRED;
-    else hr = impl->vtbl->send_force_feedback_command( iface, command );
+    else hr = impl->vtbl->send_force_feedback_command( iface, command, FALSE );
     LeaveCriticalSection( &impl->crit );
 
     return hr;
