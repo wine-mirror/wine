@@ -96,10 +96,6 @@ static const char version_string[] = "Wine IDL Compiler version " PACKAGE_VERSIO
 enum target_cpu target_cpu = CPU_x86;
 #elif defined(__x86_64__)
 enum target_cpu target_cpu = CPU_x86_64;
-#elif defined(__powerpc64__)
-enum target_cpu target_cpu = CPU_POWERPC64;
-#elif defined(__powerpc__)
-enum target_cpu target_cpu = CPU_POWERPC;
 #elif defined(__arm__)
 enum target_cpu target_cpu = CPU_ARM;
 #elif defined(__aarch64__)
@@ -227,9 +223,6 @@ static const struct
     { "i786",           CPU_x86 },
     { "amd64",          CPU_x86_64 },
     { "x86_64",         CPU_x86_64 },
-    { "powerpc",        CPU_POWERPC },
-    { "powerpc64",      CPU_POWERPC64 },
-    { "powerpc64le",    CPU_POWERPC64 },
     { "arm",            CPU_ARM },
     { "armv5",          CPU_ARM },
     { "armv6",          CPU_ARM },
@@ -855,15 +848,7 @@ int main(int argc,char *argv[])
       break;
   case CPU_ARM64:
       if (pointer_size == 4) target_cpu = CPU_ARM;
-      pointer_size = 8;
-      break;
-  case CPU_POWERPC64:
-      if (pointer_size == 4) error( "Cannot build 32-bit code for this CPU\n" );
-      pointer_size = 8;
-      break;
-  default:
-      if (pointer_size == 8) error( "Cannot build 64-bit code for this CPU\n" );
-      pointer_size = 4;
+      else pointer_size = 8;
       break;
   }
 
