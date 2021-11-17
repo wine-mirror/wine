@@ -482,9 +482,13 @@ static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, US
 
 static NTSTATUS sdl_device_physical_device_set_gain(struct unix_device *iface, BYTE value)
 {
-    FIXME("iface %p, value %#x stub!\n", iface, value);
+    struct sdl_device *impl = impl_from_unix_device(iface);
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, value %#x.\n", iface, value);
+
+    pSDL_HapticSetGain(impl->sdl_haptic, value * 100 / 255);
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BYTE index,
