@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-10-30 18:53+0800\n"
+"PO-Revision-Date: 2021-11-06 18:33+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -4558,7 +4558,7 @@ msgstr "自動資料區段超出 64k。\n"
 
 #: dlls/kernel32/winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
-msgstr "環 2 資料段必須可被移動。\n"
+msgstr "環形第 2 資料段必須可被移動。\n"
 
 #: dlls/kernel32/winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -4582,11 +4582,11 @@ msgstr "檔案名稱過長。\n"
 
 #: dlls/kernel32/winerror.mc:823
 msgid "Ring 2 stack in use.\n"
-msgstr "環 2 堆疊使用中。\n"
+msgstr "環形第 2 堆疊現正使用中。\n"
 
 #: dlls/kernel32/winerror.mc:828
 msgid "Error in use of filename wildcards.\n"
-msgstr "使用檔名萬用字元時發生錯誤。\n"
+msgstr "使用檔案名稱萬用字元時發生錯誤。\n"
 
 #: dlls/kernel32/winerror.mc:833
 msgid "Invalid signal number.\n"
@@ -6866,7 +6866,7 @@ msgstr "無法存取檔案。\n"
 
 #: dlls/kernel32/winerror.mc:3693
 msgid "The filename cannot be resolved.\n"
-msgstr "無法解析檔名。\n"
+msgstr "無法解析檔案名稱。\n"
 
 #: dlls/kernel32/winerror.mc:3698
 msgid "RPC entry type mismatch.\n"
@@ -12257,7 +12257,7 @@ msgstr "驅動程式未啟用。"
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
-msgstr "指定的裝置已在使用中。請等候該裝置不再使用，然後再試一次。"
+msgstr "指定的裝置已在使用中。請等待該裝置空出來，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:37
 msgid "The specified device handle is invalid."
@@ -12430,7 +12430,7 @@ msgstr "您正在使用的多媒體控制介面裝置不支援指定的命令。
 #: dlls/winmm/winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
-msgstr "找不到指定的檔案。請確定路徑和檔名正確。"
+msgstr "找不到指定的檔案。請確定路徑和檔案名稱正確。"
 
 #: dlls/winmm/winmm.rc:77
 msgid "The device driver is not ready."
@@ -12623,32 +12623,32 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"所有可以用目前格式播放檔案的 wave 裝置都在使用中。請等待其中一個 wave 裝置不"
-"再使用，然後再試一次。"
+"所有可以用目前格式播放檔案的 wave 裝置都在使用中。請等待其中一個 wave 裝置空"
+"出來，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"目前的 wave 裝置正在使用中，所以無法設定它來播放。請等待該裝置不再使用，再試"
-"一次。"
+"目前的 wave 裝置正在使用中，所以無法設定它來播放。請等待該裝置空出來，然後再"
+"試一次。"
 
 #: dlls/winmm/winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"所有可以用目前格式記錄檔案的 wave 裝置都在使用中。請等待其中一個 wave 裝置不"
-"再使用，然後再試一次。"
+"所有可以用目前格式記錄檔案的 wave 裝置都在使用中。請等待其中一個 wave 裝置空"
+"出來，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"無法設定目前的 wave 裝置去記錄，因為它正在使用中。請等待該裝置不再使用，然後"
-"再試一次。"
+"無法設定目前的 wave 裝置去記錄，因為它正在使用中。請等待該裝置空出來，然後再"
+"試一次。"
 
 #: dlls/winmm/winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
@@ -12696,7 +12696,7 @@ msgstr "「歌曲指標」的時間格式和 SMPTE 彼此互斥。您無法一�
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
-msgstr "指定的 MIDI 連接埠已在使用中。請等待它不再使用，然後再試一次。"
+msgstr "指定的 MIDI 連接埠已在使用中。請等待該連接埠空出來，然後再試一次。"
 
 #: dlls/winmm/winmm.rc:131
 msgid ""
@@ -13057,11 +13057,11 @@ msgid ""
 msgstr ""
 "ATTRIB - 顯示或變更檔案屬性。\n"
 "\n"
-"語法：\n"
-"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [儲存裝置:][路徑][檔名]\n"
+"語法:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [儲存裝置:][路徑][檔案名稱]\n"
 "       [/S [/D]]\n"
 "\n"
-"其中：\n"
+"其中:\n"
 "\n"
 "  +   設定一個屬性。\n"
 "  -   清空一個屬性。\n"
@@ -13069,7 +13069,7 @@ msgstr ""
 "  A   封存檔案屬性。\n"
 "  S   系統檔案屬性。\n"
 "  H   隱藏檔案屬性。\n"
-"  [儲存裝置:][路徑][檔名]\n"
+"  [儲存裝置:][路徑][檔案名稱]\n"
 "      指定 attrib 要處理的一個或多個檔案。\n"
 "  /S  處理在目前資料夾和所有子資料夾中的匹配檔案。\n"
 "  /D  同樣處理資料夾。\n"
@@ -13114,15 +13114,6 @@ msgid "Clock"
 msgstr "時鐘"
 
 #: programs/cmd/cmd.rc:40
-#, fuzzy
-#| msgid ""
-#| "CALL <batchfilename> is used within a batch file to execute commands\n"
-#| "from another batch file. When the batch file exits, control returns to\n"
-#| "the file which called it. The CALL command may supply parameters to the\n"
-#| "called procedure.\n"
-#| "\n"
-#| "Changes to default directory, environment variables etc made within a\n"
-#| "called procedure are inherited by the caller.\n"
 msgid ""
 "CALL <batchfilename> is used within a batch file to execute commands from\n"
 "another batch file. When the batch file exits, control returns to the file\n"
@@ -13132,7 +13123,7 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <批次檔名> 是使用在批次檔之內以執行其他\n"
+"CALL <批次檔名稱> 是使用在批次檔之內以執行其他\n"
 "批次檔中的指令。從其他的批次檔離開時，控制權會\n"
 "回到呼叫它的檔案。CALL 命令可以提供參數給\n"
 "被呼叫的程序。\n"
@@ -13141,10 +13132,6 @@ msgstr ""
 "將會由呼叫者所繼承。\n"
 
 #: programs/cmd/cmd.rc:44
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -13153,8 +13140,6 @@ msgstr ""
 "預設目錄。\n"
 
 #: programs/cmd/cmd.rc:47
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <目錄> 變更目前的預設目錄。\n"
 
@@ -13164,7 +13149,7 @@ msgstr "CLS 清空主控臺螢幕。\n"
 
 #: programs/cmd/cmd.rc:53
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY <檔名> 複製檔案。\n"
+msgstr "COPY <檔案名稱> 複製檔案。\n"
 
 #: programs/cmd/cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
@@ -13176,23 +13161,13 @@ msgstr "DATE 顯示或變更系統日期。\n"
 
 #: programs/cmd/cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <檔名> 刪除檔案或一組檔案。\n"
+msgstr "DEL <檔案名稱> 刪除檔案或一組檔案。\n"
 
 #: programs/cmd/cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR 列出目錄的內容。\n"
 
 #: programs/cmd/cmd.rc:75
-#, fuzzy
-#| msgid ""
-#| "ECHO <string> displays <string> on the current terminal device.\n"
-#| "\n"
-#| "ECHO ON causes all subsequent commands in a batch file to be displayed\n"
-#| "on the terminal device before they are executed.\n"
-#| "\n"
-#| "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
-#| "default). The ECHO OFF command can be prevented from displaying by\n"
-#| "preceding it with an @ sign.\n"
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -13214,14 +13189,9 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE <檔名> 刪除一個檔案或一組檔案。\n"
+msgstr "ERASE <檔案名稱> 刪除一個檔案或一組檔案。\n"
 
 #: programs/cmd/cmd.rc:85
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -13231,21 +13201,11 @@ msgid ""
 msgstr ""
 "FOR 命令用來向檔案集合中的每一個檔案執行命令。\n"
 "\n"
-"語法：FOR %變數 IN (集合) DO 命令\n"
+"語法: FOR %變數 IN (集合) DO 命令\n"
+"\n"
+"當在批次檔裡使用 FOR 的時候，必須使用兩個 % 符號。\n"
 
 #: programs/cmd/cmd.rc:97
-#, fuzzy
-#| msgid ""
-#| "The GOTO command transfers execution to another statement within a\n"
-#| "batch file.\n"
-#| "\n"
-#| "The label which is the target of a GOTO may be up to 255 characters\n"
-#| "long but may not include spaces (this is different from other operating\n"
-#| "systems). If two or more identical labels exist in a batch file the\n"
-#| "first one will always be executed. Attempting to GOTO a nonexistent\n"
-#| "label terminates the batch file execution.\n"
-#| "\n"
-#| "GOTO has no effect when used interactively.\n"
 msgid ""
 "The GOTO command transfers execution to another statement within a batch\n"
 "file.\n"
@@ -13290,7 +13250,7 @@ msgid ""
 msgstr ""
 "IF 用於有條件地執行命令。\n"
 "\n"
-"語法：IF [NOT] EXIST 檔名 命令\n"
+"語法: IF [NOT] EXIST 檔名 命令\n"
 "      IF [NOT] 字串一==字串二 命令\n"
 "      IF [NOT] ERRORLEVEL 數字 命令\n"
 "\n"
@@ -13305,11 +13265,11 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
-"LABEL 用於設定磁碟卷冊標貼。\n"
+"LABEL 用於設定磁碟的磁碟區標籤。\n"
 "\n"
-"語法：LABEL [裝置代號:]\n"
-"命令將向您提示詢問新的卷冊標貼用於給定的儲存裝置。\n"
-"您可以利用 VOL 命令來顯示磁碟卷冊標貼。\n"
+"語法: LABEL [裝置代號:]\n"
+"命令將向您提示詢問要讓給定的儲存裝置使用的磁碟區標籤。\n"
+"您可以利用 VOL 命令來顯示磁碟的磁碟區標籤。\n"
 
 #: programs/cmd/cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
@@ -13320,17 +13280,6 @@ msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <名稱> 建立子目錄。\n"
 
 #: programs/cmd/cmd.rc:131
-#, fuzzy
-#| msgid ""
-#| "MOVE relocates a file or directory to a new point within the file "
-#| "system.\n"
-#| "\n"
-#| "If the item being moved is a directory then all the files and "
-#| "subdirectories\n"
-#| "below the item are moved as well.\n"
-#| "\n"
-#| "MOVE fails if the old and new locations are on different DOS drive "
-#| "letters.\n"
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -13347,17 +13296,6 @@ msgstr ""
 "如果舊的和新的位置在不同的 DOS 儲存裝置代號之上，MOVE 將會失敗。\n"
 
 #: programs/cmd/cmd.rc:142
-#, fuzzy
-#| msgid ""
-#| "PATH displays or changes the cmd search path.\n"
-#| "\n"
-#| "Entering PATH will display the current PATH setting (initially taken\n"
-#| "from the registry). To change the setting follow the\n"
-#| "PATH command with the new value.\n"
-#| "\n"
-#| "It is also possible to modify the PATH by using the PATH environment\n"
-#| "variable, for example:\n"
-#| "PATH %PATH%;c:\\temp\n"
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -13376,16 +13314,10 @@ msgstr ""
 "PATH 命令之後緊接新的值。\n"
 "\n"
 "也可以藉由 PATH 環境變數來修改 PATH，\n"
-"舉例來說：\n"
+"舉例來說:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: programs/cmd/cmd.rc:148
-#, fuzzy
-#| msgid ""
-#| "PAUSE displays a message on the screen asking the user to press a key.\n"
-#| "\n"
-#| "It is mainly useful in batch files to allow the user to read the output\n"
-#| "of a previous command before it scrolls off the screen.\n"
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -13398,30 +13330,6 @@ msgstr ""
 "輸出捲動離開螢幕之前能夠去讀取它。\n"
 
 #: programs/cmd/cmd.rc:169
-#, fuzzy
-#| msgid ""
-#| "PROMPT sets the command-line prompt.\n"
-#| "\n"
-#| "The string following the PROMPT command (and the space immediately "
-#| "after)\n"
-#| "appears at the beginning of the line when cmd is waiting for input.\n"
-#| "\n"
-#| "The following character strings have the special meaning shown:\n"
-#| "\n"
-#| "$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
-#| "$d    Current date        $e    Escape              $g    > sign\n"
-#| "$l    < sign              $n    Current drive       $p    Current path\n"
-#| "$q    Equal sign          $t    Current time        $v    cmd version\n"
-#| "\n"
-#| "Note that entering the PROMPT command without a prompt-string resets the\n"
-#| "prompt to the default, which is the current directory (which includes "
-#| "the\n"
-#| "current drive letter) followed by a greater-than (>) sign.\n"
-#| "(like a command PROMPT $p$g).\n"
-#| "\n"
-#| "The prompt can also be changed by altering the PROMPT environment "
-#| "variable,\n"
-#| "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -13448,7 +13356,7 @@ msgstr ""
 "跟隨著 PROMPT 命令的字串 (以及緊接於後的空格)\n"
 "將會在 cmd 等待輸入時出現於一列的起始部分。\n"
 "\n"
-"下列字元串有特殊平均顯示：\n"
+"下列字元串有特殊平均顯示:\n"
 "\n"
 "$$    錢幣符號            $_    送列鍵              $b    管線符號 (|)\n"
 "$d    目前日期            $e    退出                $g    > 符號\n"
@@ -13463,56 +13371,30 @@ msgstr ""
 "因此命令 SET PROMPT=text 與 PROMPT text 具有相同的效果。\n"
 
 #: programs/cmd/cmd.rc:173
-#, fuzzy
-#| msgid ""
-#| "A command line beginning with REM (followed by a space) performs no\n"
-#| "action, and can therefore be used as a comment in a batch file.\n"
 msgid ""
 "A command line beginning with REM (followed by a space) performs no action,\n"
 "and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"以 REM 起始的命令列 (之後緊接空格) 不會進行任何\n"
-"動作，因而可以做為批次檔中的註釋。\n"
+"以 REM 起始的命令列 (之後緊接空格) 不會進行任何動作，\n"
+"因而可以做為批次檔中的註釋。\n"
 
 #: programs/cmd/cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN <檔名> 是 RENAME 的簡短版本。它會重新命名檔案。\n"
+msgstr "REN <檔案名稱> 是 RENAME 的簡短版本。它會重新命名檔案。\n"
 
 #: programs/cmd/cmd.rc:178
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <檔名> 重新命名檔案。\n"
+msgstr "RENAME <檔案名稱> 重新命名檔案。\n"
 
 #: programs/cmd/cmd.rc:181
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <目錄> 是 RMDIR 的簡短版本。它會刪除子目錄。\n"
+msgstr "RD <目錄> 是 RMDIR 的簡短版本。它會刪除目錄。\n"
 
 #: programs/cmd/cmd.rc:183
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <目錄> 刪除子目錄。\n"
+msgstr "RMDIR <目錄> 刪除目錄。\n"
 
 #: programs/cmd/cmd.rc:229
-#, fuzzy
-#| msgid ""
-#| "SET displays or changes the cmd environment variables.\n"
-#| "\n"
-#| "SET without parameters shows all of the current environment.\n"
-#| "\n"
-#| "To create or modify an environment variable the syntax is:\n"
-#| "\n"
-#| "SET <variable>=<value>\n"
-#| "\n"
-#| "where <variable> and <value> are character strings. There must be no\n"
-#| "space before the equals sign, nor can the variable name\n"
-#| "have embedded spaces.\n"
-#| "\n"
-#| "Under Wine, the environment of the underlying operating system is\n"
-#| "included into the Win32 environment, there will generally therefore be\n"
-#| "many more values than in a native Win32 implementation. Note that it is\n"
-#| "not possible to affect the operating system environment from within cmd.\n"
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -13534,24 +13416,18 @@ msgstr ""
 "\n"
 "不接參數的 SET 將顯示目前的全部環境。\n"
 "\n"
-"要建立或修改環境變數的語法是：\n"
+"要建立或修改環境變數的語法是:\n"
 "\n"
 "SET <變數名稱>=<變數值>\n"
 "\n"
-"其中 <變數名稱> 和 <變數值> 都是字串。在等號之前必須沒有\n"
-"空格，而變數名稱也不可以嵌入空格。\n"
+"其中 <變數名稱> 和 <變數值> 都是字串。在等號之前必須沒有空格，\n"
+"而變數名稱也不可以嵌入空格。\n"
 "\n"
-"在 Wine 之下，下層的作業系統環境也被\n"
-"包含於 Win32 環境之中，因此通常會比在原生的 Win32 實作中\n"
-"還要多出更多變數值。要注意的是，從 cmd 之中是不可能\n"
-"去影響作業系統的環境。\n"
+"在 Wine 之下，下層的作業系統環境也被包含於 Win32 環境之中，\n"
+"因此通常會比在原生的 Win32 實作中還要多出更多變數值。\n"
+"要注意的是，從 cmd 之中是不可能去影響作業系統的環境。\n"
 
 #: programs/cmd/cmd.rc:234
-#, fuzzy
-#| msgid ""
-#| "SHIFT is used in a batch file to remove one parameter from the head of\n"
-#| "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
-#| "if called from the command line.\n"
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of the\n"
 "list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
@@ -13562,35 +13438,6 @@ msgstr ""
 "將不會有任何效果。\n"
 
 #: programs/cmd/cmd.rc:212
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"      Specifies the title of the child windows.\n"
-#| "/d directory Start the program in the specified directory.\n"
-#| "/b           Don't create a new console for the program.\n"
-#| "/i           Start the program with fresh environment variables.\n"
-#| "/min         Start the program minimized.\n"
-#| "/max         Start the program maximized.\n"
-#| "/low         Start the program in the idle priority class.\n"
-#| "/normal      Start the program in the normal priority class.\n"
-#| "/high        Start the program in the high priority class.\n"
-#| "/realtime    Start the program in the realtime priority class.\n"
-#| "/abovenormal Start the program in the abovenormal priority class.\n"
-#| "/belownormal Start the program in the belownormal priority class.\n"
-#| "/node n      Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait        Wait for the started program to finish, then exit with its "
-#| "exit code.\n"
-#| "/unix        Use a Unix filename and start the file like Windows "
-#| "explorer.\n"
-#| "/ProgIDOpen  Open a document using the specified progID.\n"
-#| "/?           Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -13620,30 +13467,30 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"啟始一個程式，或是利用關聯該檔案字尾的程式來開啟文件。\n"
-"用法：\n"
+"啟動程式，或根據檔案的後綴，使用一般用於開啟該後綴的程式來開啟文件。\n"
+"用法:\n"
 "start [選項] 程式檔案名稱 [...]\n"
 "start [選項] 文件檔案名稱\n"
 "\n"
-"選項：\n"
-"「標題」     指定子視窗的標題。\n"
-"/d 目錄      在指定的目錄中啟始程式。\n"
-"/b           無法為程式建立新的主控臺。\n"
-"/i           以新的環境變數啟始程式。\n"
-"/min         啟始程式時縮到最小。\n"
-"/max         啟始程式時放到最大。\n"
-"/low         在閒置優先權類別中啟始程式。\n"
-"/normal      在一般優先權類別中啟始程式。\n"
-"/high        在高優先權類別中啟始程式。\n"
-"/realtime    在即時優先權類別中啟始程式。\n"
-"/abovenormal 在正常之上優先權類別中啟始程式。\n"
-"/belownormal 在正常之下優先權類別中啟始程式。\n"
-"/node n      在指定的 NUMA 節點之上啟始程式。\n"
-"/affinity 遮罩 以指定的近似遮罩啟始程式。\n"
-"/wait        等待啟始的程式直到完成，然後以它的離開代碼離開。\n"
-"/unix        使用 Unix 檔名並如同 Windows 檔案總管來啟始檔案。\n"
-"/ProgIDOpen  使用指定的 progID 開啟文件。\n"
-"/?           顯示這份說明然後離開。\n"
+"選項:\n"
+"\"標題\"          指定子視窗的標題。\n"
+"/d 目錄         於指定的目錄開啟程式。\n"
+"/b             不要為程式建立新的主控臺。\n"
+"/i             使用新的環境變數來啟動程式。\n"
+"/min           啟動程式時將視窗最小化。\n"
+"/max           啟動程式時將視窗最大化。\n"
+"/low           在 Idle 優先類別中啟動程式。\n"
+"/normal        在 Normal 優先類別中啟動程式。\n"
+"/high          在 High 優先類別中啟動程式。\n"
+"/realtime      在 Realtime 優先類別中啟動程式。\n"
+"/abovenormal   在 Abovenormal 優先類別中啟動程式。\n"
+"/belownormal   在 Belownormal 優先類別中啟動程式。\n"
+"/node n        以指定的 NUMA 節點啟動程式。\n"
+"/affinity 遮罩  以指定的親和性遮罩啟動程式。\n"
+"/wait          啟動應用程式並等候它終止，結束時會給予結束代碼。\n"
+"/unix          使用 Unix 檔案名稱，並像 Windows 檔案總管一樣開啟檔案\n"
+"/ProgIDOpen    使用指定的 progID 開啟檔案。\n"
+"/?             顯示這個說明並結束。\n"
 
 #: programs/cmd/cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
@@ -13654,15 +13501,11 @@ msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <字串> 設定 cmd 視窗的視窗標題。\n"
 
 #: programs/cmd/cmd.rc:244
-#, fuzzy
-#| msgid ""
-#| "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
-#| "if redirected). No check is made that the file is readable text.\n"
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
 "redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <檔名> 將 <檔名> 的內容複製到主控臺裝置 (或是其他被\n"
+"TYPE <檔案名稱> 將 <檔案名稱> 的內容複製到主控臺裝置 (或是其他被\n"
 "重新導向的地方)。不會檢查該檔案是否為可讀的文字。\n"
 
 #: programs/cmd/cmd.rc:253
@@ -13675,7 +13518,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY 用來設定、清空或測試驗證旗標。有效的形式包括：\n"
+"VERIFY 用來設定、清空或測試驗證旗標。有效的形式包括:\n"
 "\n"
 "VERIFY ON\t設定旗標。\n"
 "VERIFY OFF\t清空旗標。\n"
@@ -13689,13 +13532,9 @@ msgstr "VER 顯示您正在執行的 cmd 版本。\n"
 
 #: programs/cmd/cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL 顯示磁碟裝置的卷冊標貼。\n"
+msgstr "VOL 顯示磁碟裝置的磁碟區標籤。\n"
 
 #: programs/cmd/cmd.rc:263
-#, fuzzy
-#| msgid ""
-#| "ENDLOCAL ends localization of environment changes in a batch file\n"
-#| "which were introduced by a preceding SETLOCAL.\n"
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
@@ -13716,36 +13555,22 @@ msgstr ""
 "\n"
 "SETLOCAL 之後完成的環境變更對於批次檔而言為本地，\n"
 "並被保留直到遇到下一個 ENDLOCAL (或是檔案\n"
-"的結束，取決於誰先出現)，前一個環境的設定值\n"
+"的結尾，取決於誰先出現)，前一個環境的設定值\n"
 "則於該點被儲存。\n"
 
 #: programs/cmd/cmd.rc:275
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <目錄名> 儲存目前的目錄到\n"
-"堆疊中，然後變更現行目錄到所給定的目錄。\n"
+"PUSHD <目錄> 儲存目前的目錄到堆疊中，\n"
+"然後變更現行目錄到所給定的目錄。\n"
 
 #: programs/cmd/cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD 變更現行目錄到上一個利用 PUSHD 儲存的目錄。\n"
 
 #: programs/cmd/cmd.rc:288
-#, fuzzy
-#| msgid ""
-#| "ASSOC shows or modifies file extension associations.\n"
-#| "\n"
-#| "Syntax: ASSOC [.ext[=[fileType]]]\n"
-#| "\n"
-#| "ASSOC without parameters displays current file associations.\n"
-#| "If used with only a file extension, displays the current association.\n"
-#| "Specifying no file type after the equal sign removes the current "
-#| "association, if any.\n"
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -13758,25 +13583,13 @@ msgid ""
 msgstr ""
 "ASSOC 顯示或修改副檔名的關聯。\n"
 "\n"
-"語法：ASSOC [.ext[=[檔案型態]]]\n"
+"語法: ASSOC [.ext[=[檔案型態]]]\n"
 "\n"
 "ASSOC 不加參數將顯示目前的檔案關聯。\n"
 "如果只使用副檔名，則顯示它目前的關聯。\n"
 "在等號之號如果沒有指定檔案類型就移除目前的任何關聯。\n"
 
 #: programs/cmd/cmd.rc:300
-#, fuzzy
-#| msgid ""
-#| "FTYPE shows or modifies open commands associated with file types.\n"
-#| "\n"
-#| "Syntax: FTYPE [fileType[=[openCommand]]]\n"
-#| "\n"
-#| "Without parameters, shows the file types for which open command strings "
-#| "are currently defined.\n"
-#| "If used with only a file type, displays the associated open command "
-#| "string, if any.\n"
-#| "Specifying no open command after the equal sign removes the command "
-#| "string associated to the specified file type.\n"
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -13791,22 +13604,18 @@ msgid ""
 msgstr ""
 "FTYPE 顯示或修改開啟命令所關聯的檔案類型。\n"
 "\n"
-"語法：FTYPE [檔案型態[=[開啟命令]]]\n"
+"語法: FTYPE [檔案型態[=[開啟命令]]]\n"
 "\n"
 "如果不加參數，則顯示開啟命令目前所定義的檔案型態。\n"
 "如果只使用檔案類型，則顯示關聯的任何開啟命令字串。\n"
-"在等號之號如果沒有指定檔案類型就移除對於給定檔案型態的任何關聯命令字串。\n"
+"在等號之號如果沒有指定檔案類型就移除對於給定檔案型態的\n"
+"任何關聯命令字串。\n"
 
 #: programs/cmd/cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE 以分頁的方式顯示檔案的輸出或管線的輸入。\n"
 
 #: programs/cmd/cmd.rc:308
-#, fuzzy
-#| msgid ""
-#| "CHOICE displays a text and waits, until the User\n"
-#| "presses an allowed Key from a selectable list.\n"
-#| "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgid ""
 "CHOICE displays a text and waits, until the User presses an allowed Key\n"
 "from a selectable list.\n"
@@ -13829,61 +13638,26 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"建立符號連結。\n"
+"\n"
+"語法: MKLINK [選項] 連結名稱 目標\n"
+"\n"
+"選項:\n"
+"/d             建立目錄符號連結。\n"
+"/h             建立永久連結。\n"
+"/j             建立目錄連接。\n"
+"連結名稱 為新的符號連結的名稱。\n"
+"目標 為 連結名稱 指向的路徑。\n"
 
 #: programs/cmd/cmd.rc:312
-#, fuzzy
-#| msgid ""
-#| "EXIT terminates the current command session and returns\n"
-#| "to the operating system or shell from which you invoked cmd.\n"
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT 終止目前的命令作業階段並回到\n"
-"您從其調用 cmd 的作業系統或命令殼。\n"
+"EXIT 終止目前的命令作業階段並回到您從其調用 cmd 的\n"
+"作業系統或命令殼。\n"
 
 #: programs/cmd/cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -13925,10 +13699,10 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
-"CMD 內建命令包括：\n"
+"CMD 內建命令包括:\n"
 "ASSOC\t\t顯示或修改副檔名關聯\n"
 "ATTRIB\t\t顯示或變更 DOS 檔案屬性\n"
-"CALL\t\t從另一個批次檔內部調用\n"
+"CALL\t\t在批次檔中呼叫另一個批次檔\n"
 "CD (CHDIR)\t變更目前的預設目錄\n"
 "CHOICE\t\t從可選清單等待按鍵\n"
 "CLS\t\t清空主控臺螢幕\n"
@@ -13942,13 +13716,14 @@ msgstr ""
 "FTYPE\t\t顯示或修改與檔案類型關聯的開啟命令\n"
 "HELP\t\t顯示主題的簡潔說明\n"
 "MD (MKDIR)\t建立子目錄\n"
+"MKLINK\t建立符號連結\n"
 "MORE\t\t分頁顯示輸出\n"
 "MOVE\t\t移動一個檔案、一組檔案或樹狀目錄\n"
 "PATH\t\t設定或顯示搜尋路徑\n"
 "PAUSE\t\t懸置執行中的批次檔\n"
 "POPD\t\t還原到上一次以 PUSHD 儲存的目錄\n"
 "PROMPT\t\t變更指令提示符號\n"
-"PUSHD\t\t變更為新的目錄並儲存目前的\n"
+"PUSHD\t\t變更為新的目錄並儲存目前的目錄\n"
 "REN (RENAME)\t重新命名檔案\n"
 "RD (RMDIR)\t刪除子目錄\n"
 "SET\t\t設定或顯示環境變數\n"
@@ -13958,15 +13733,15 @@ msgstr ""
 "TITLE\t\t設定用於 CMD 作業階段的視窗標題\n"
 "TYPE\t\t印出文字檔的內容\n"
 "VER\t\t顯示目前的 CMD 版本\n"
-"VOL\t\t顯示磁碟裝置的卷冊標貼\n"
+"VOL\t\t顯示磁碟裝置的磁碟區標籤\n"
 "XCOPY\t\t複製來源檔案或樹狀目錄到目的地\n"
 "EXIT\t\t關閉 CMD\n"
 "\n"
-"輸入 HELP <命令> 以獲得關於以上任何命令的進一步資訊。\n"
+"輸入 HELP <命令> 以取得關於以上任何命令的進一步資訊。\n"
 
 #: programs/cmd/cmd.rc:365
 msgid "Are you sure?"
-msgstr "您確定嗎？"
+msgstr "您確定嗎?"
 
 #: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
@@ -13980,15 +13755,15 @@ msgstr "N"
 
 #: programs/cmd/cmd.rc:368
 msgid "File association missing for extension %1\n"
-msgstr "缺少用於延伸檔名 %1 的檔案關聯\n"
+msgstr "找不到副檔名 %1 的檔案關聯\n"
 
 #: programs/cmd/cmd.rc:369
 msgid "No open command associated with file type '%1'\n"
-msgstr "沒有與檔案類型 %1 相關聯的開啟命令\n"
+msgstr "沒有與檔案類型 '%1' 相關聯的開啟命令\n"
 
 #: programs/cmd/cmd.rc:370
 msgid "Overwrite %1?"
-msgstr "覆寫 %1？"
+msgstr "覆寫 %1?"
 
 #: programs/cmd/cmd.rc:371
 msgid "More..."
@@ -13996,7 +13771,7 @@ msgstr "更多..."
 
 #: programs/cmd/cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "命令列於批次處理時可能會被截斷。使用：\n"
+msgstr "命令列於批次處理時可能會被截斷。使用:\n"
 
 #: programs/cmd/cmd.rc:374
 msgid "Argument missing\n"
@@ -14024,11 +13799,11 @@ msgstr "現在時間是 %1\n"
 
 #: programs/cmd/cmd.rc:381
 msgid "Enter new date: "
-msgstr "輸入新日期："
+msgstr "輸入新日期: "
 
 #: programs/cmd/cmd.rc:382
 msgid "Enter new time: "
-msgstr "輸入新時間："
+msgstr "輸入新時間: "
 
 #: programs/cmd/cmd.rc:383
 msgid "Environment variable %1 not defined\n"
@@ -14040,7 +13815,7 @@ msgstr "開啟 %1 失敗\n"
 
 #: programs/cmd/cmd.rc:385
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "無法呼叫批次命令稿外部的批次標貼\n"
+msgstr "無法呼叫批次命令指令碼外部的批次標貼\n"
 
 #: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
@@ -14049,7 +13824,7 @@ msgstr "A"
 
 #: programs/cmd/cmd.rc:387
 msgid "Delete %1?"
-msgstr "刪除 %1？"
+msgstr "刪除 %1?"
 
 #: programs/cmd/cmd.rc:388
 msgid "Echo is %1\n"
@@ -14072,12 +13847,12 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"卷冊序號是 %1!04x!-%2!04x!\n"
+"磁碟區序號是 %1!04x!-%2!04x!\n"
 "\n"
 
 #: programs/cmd/cmd.rc:393
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "卷冊標貼 (11 個字元，<Enter> 表示沒有)？"
+msgstr "磁碟區標籤 (11 個字元，<Enter> 表示沒有)?"
 
 #: programs/cmd/cmd.rc:394
 msgid "PATH not found\n"
@@ -14085,19 +13860,19 @@ msgstr "找不到 PATH\n"
 
 #: programs/cmd/cmd.rc:395
 msgid "Press any key to continue... "
-msgstr "按下任何鍵繼續... "
+msgstr "按下任意鍵繼續... "
 
 #: programs/cmd/cmd.rc:396
 msgid "Wine Command Prompt"
-msgstr "Wine 命令提示符號"
+msgstr "Wine 命令提示字元"
 
 #: programs/cmd/cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: programs/cmd/cmd.rc:398
 msgid "More? "
-msgstr "更多？"
+msgstr "更多? "
 
 #: programs/cmd/cmd.rc:399
 msgid "The input line is too long.\n"
@@ -14105,26 +13880,24 @@ msgstr "輸入列太長。\n"
 
 #: programs/cmd/cmd.rc:400
 msgid "Volume in drive %1!c! is %2\n"
-msgstr "位於儲存裝置 %1!c! 的卷冊為 %2\n"
+msgstr "位於儲存裝置 %1!c! 的磁碟區為 %2\n"
 
 #: programs/cmd/cmd.rc:401
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標貼。\n"
+msgstr "位於儲存裝置 %1!c! 的磁碟區沒有任何標籤。\n"
 
 #: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
-#, fuzzy
 msgid " (Yes|No)"
-msgstr " (是|否)"
+msgstr " (Yes|No)"
 
 #: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
-#, fuzzy
 msgid " (Yes|No|All)"
-msgstr " (是|否|全部)"
+msgstr " (Yes|No|All)"
 
 #: programs/cmd/cmd.rc:404
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
-msgstr "無法識別 %1 為內部、外部命令或是批次命令稿。\n"
+msgstr "無法識別 %1 為內部、外部命令或是批次命令指令碼。\n"
 
 #: programs/cmd/cmd.rc:405
 msgid "Division by zero error.\n"
@@ -14140,14 +13913,14 @@ msgstr "預期為一個運算子。\n"
 
 #: programs/cmd/cmd.rc:408
 msgid "Mismatch in parentheses.\n"
-msgstr "小括號不匹配。\n"
+msgstr "小括號不相符。\n"
 
 #: programs/cmd/cmd.rc:409
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
-"不當的數字形式 - 必須是十進位 (12)、\n"
+"錯誤的數字形式 - 必須是十進位 (12)、\n"
 " 十六進位 (0x34) 或八進位 (056) 之一。\n"
 
 #: programs/conhost/conhost.rc:54
@@ -14168,23 +13941,19 @@ msgstr "大(&L)"
 
 #: programs/conhost/conhost.rc:59
 msgid "Command history"
-msgstr "指令歷程"
+msgstr "命令歷程記錄"
 
 #: programs/conhost/conhost.rc:60
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "緩衝區域"
+msgstr "緩衝大小(&B):"
 
 #: programs/conhost/conhost.rc:63
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "刪除連續相同的指令(&R)"
+msgstr "移除重複(&R)"
 
 #: programs/conhost/conhost.rc:65
 msgid "Popup menu"
-msgstr "彈出功能表"
+msgstr "快顯功能表"
 
 #: programs/conhost/conhost.rc:66
 msgid "&Control"
@@ -14195,22 +13964,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: programs/conhost/conhost.rc:69
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "關閉虛擬終端(&C)"
+msgstr "主控臺"
 
 #: programs/conhost/conhost.rc:70
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "快速編輯"
+msgstr "快速編輯模式(&Q)"
 
 #: programs/conhost/conhost.rc:71
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "專家模式(&E)"
+msgstr "插入模式(&I)"
 
 #: programs/conhost/conhost.rc:79
 msgid "&Font"
@@ -14222,7 +13985,7 @@ msgstr "顏色(&C)"
 
 #: programs/conhost/conhost.rc:92
 msgid "Configuration"
-msgstr "組態"
+msgstr "設定"
 
 #: programs/conhost/conhost.rc:95
 msgid "Buffer zone"
@@ -14230,11 +13993,11 @@ msgstr "緩衝區域"
 
 #: programs/conhost/conhost.rc:96
 msgid "&Width:"
-msgstr "寬度(&W)："
+msgstr "寬度(&W):"
 
 #: programs/conhost/conhost.rc:99
 msgid "&Height:"
-msgstr "高度(&H)："
+msgstr "高度(&H):"
 
 #: programs/conhost/conhost.rc:103
 msgid "Window size"
@@ -14242,11 +14005,11 @@ msgstr "視窗大小"
 
 #: programs/conhost/conhost.rc:104
 msgid "W&idth:"
-msgstr "寬度(&I)："
+msgstr "寬度(&I):"
 
 #: programs/conhost/conhost.rc:107
 msgid "H&eight:"
-msgstr "高度(&E)："
+msgstr "高度(&E):"
 
 #: programs/conhost/conhost.rc:111
 msgid "End of program"
@@ -14254,19 +14017,19 @@ msgstr "當程式結束後"
 
 #: programs/conhost/conhost.rc:112
 msgid "&Close console"
-msgstr "關閉虛擬終端(&C)"
+msgstr "關閉主控臺(&C)"
 
 #: programs/conhost/conhost.rc:114
 msgid "Edition"
-msgstr "Edition"
+msgstr "版本"
 
 #: programs/conhost/conhost.rc:120
 msgid "Console parameters"
-msgstr "虛擬終端執行參數"
+msgstr "主控臺執行參數"
 
 #: programs/conhost/conhost.rc:123
 msgid "Retain these settings for later sessions"
-msgstr "保留當前配置以便下次使用"
+msgstr "保留目前設定以便下次使用"
 
 #: programs/conhost/conhost.rc:124
 msgid "Modify only current session"
@@ -14311,8 +14074,6 @@ msgid "Configuration error"
 msgstr "組態錯誤"
 
 #: programs/conhost/conhost.rc:46
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
@@ -14332,17 +14093,15 @@ msgstr "DirectX 診斷工具"
 
 #: programs/dxdiag/dxdiag.rc:31
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr "用法：dxdiag [/whql:off | /whql:on] [/t 檔名 | /x 檔名]"
+msgstr "用法: dxdiag [/whql:off | /whql:on] [/t 檔案名稱 | /x 檔案名稱]"
 
 #: programs/explorer/explorer.rc:32
 msgid "Wine Explorer"
 msgstr "Wine 檔案總管"
 
 #: programs/explorer/explorer.rc:34
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "啟動"
+msgstr "開始"
 
 #: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
@@ -14354,6 +14113,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- 支援的命令 -\n"
+"\n"
+"hardlink      永久連結管理\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -14361,38 +14123,39 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - 支援的命令 -\n"
+"\n"
+"create        建立永久連結\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "語法: fsutil hardlink create <new> <existing>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
-msgstr "用法：主機名稱\n"
+msgstr "用法: 主機名稱\n"
 
 #: programs/hostname/hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "錯誤：無效的選項 %c。\n"
+msgstr "錯誤: 無效的選項 '%c'。\n"
 
 #: programs/hostname/hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "錯誤：找不到行程 %1。\n"
+msgstr "錯誤: 無法取得主機名稱: %u。\n"
 
 #: programs/hostname/hostname.rc:33
 msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
-msgstr "錯誤：不能利用主機名稱公用程式來設定系統主機名稱。\n"
+msgstr "錯誤: 無法使用 hostname 工具設定系統的主機名稱。\n"
 
 #: programs/ipconfig/ipconfig.rc:30
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr "用法：ipconfig [ /? | /all ]\n"
+msgstr "用法: ipconfig [ /? | /all ]\n"
 
 #: programs/ipconfig/ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "錯誤：指定了不明或無效的命令列參數\n"
+msgstr "錯誤: 指定了不明或無效的命令列參數\n"
 
 #: programs/ipconfig/ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -14474,7 +14237,7 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"這個命令的語法是：\n"
+"這個命令的語法是:\n"
 "\n"
 "NET command [引數]\n"
 "    或\n"
@@ -14491,12 +14254,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
-"這個命令的語法是：\n"
+"這個命令的語法是:\n"
 "\n"
 "NET START [service]\n"
 "\n"
-"如果 service 被省略，就顯示執行中服務的清單，否則 service 表示要啟動的服務名"
-"稱。\n"
+"如果 'service' 被省略，就顯示執行中服務的清單，否則 'service' 表示要啟動的服"
+"務名稱。\n"
 
 #: programs/net/net.rc:32
 msgid ""
@@ -14506,7 +14269,7 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
-"這個命令的語法是：\n"
+"這個命令的語法是:\n"
 "\n"
 "NET STOP service\n"
 "\n"
@@ -14514,7 +14277,7 @@ msgstr ""
 
 #: programs/net/net.rc:33
 msgid "Stopping dependent service: %1\n"
-msgstr "正在停止附屬服務：%1\n"
+msgstr "正在停止附屬服務: %1\n"
 
 #: programs/net/net.rc:34
 msgid "Could not stop service %1\n"
@@ -14522,27 +14285,27 @@ msgstr "無法停止服務 %1。\n"
 
 #: programs/net/net.rc:35
 msgid "Could not get handle to service control manager.\n"
-msgstr "無法獲得服務控制管理員控柄。\n"
+msgstr "無法取得服務控制管理員的控制代碼。\n"
 
 #: programs/net/net.rc:36
 msgid "Could not get handle to service.\n"
-msgstr "無法獲得服務控柄。\n"
+msgstr "無法取得服務的控制代碼。\n"
 
 #: programs/net/net.rc:37
 msgid "The %1 service is starting.\n"
-msgstr "%1 服務正在開始。\n"
+msgstr "正在啟動 %1 服務。\n"
 
 #: programs/net/net.rc:38
 msgid "The %1 service was started successfully.\n"
-msgstr "%1 服務已成功開始。\n"
+msgstr "%1 服務已成功啟動。\n"
 
 #: programs/net/net.rc:39
 msgid "The %1 service failed to start.\n"
-msgstr "%1 服務無法開始。\n"
+msgstr "無法啟動 %1 服務。\n"
 
 #: programs/net/net.rc:40
 msgid "The %1 service is stopping.\n"
-msgstr "%1 服務正在停止。\n"
+msgstr "正在停止 %1 服務。\n"
 
 #: programs/net/net.rc:41
 msgid "The %1 service was stopped successfully.\n"
@@ -14550,11 +14313,11 @@ msgstr "%1 服務已成功停止。\n"
 
 #: programs/net/net.rc:42
 msgid "The %1 service failed to stop.\n"
-msgstr "%1 服務無法停止。\n"
+msgstr "無法停止 %1 服務。\n"
 
 #: programs/net/net.rc:44
 msgid "There are no entries in the list.\n"
-msgstr "在清單中沒有條目。\n"
+msgstr "在清單中沒有項目。\n"
 
 #: programs/net/net.rc:45
 msgid ""
@@ -14563,12 +14326,12 @@ msgid ""
 "---------------------------------------------------------------\n"
 msgstr ""
 "\n"
-"狀態    本地    遠端\n"
+"狀態    本機    遠端\n"
 "---------------------------------------------------------------\n"
 
 #: programs/net/net.rc:46
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%1      %2      %3      開啟資源：%4!u!\n"
+msgstr "%1      %2      %3      開啟資源: %4!u!\n"
 
 #: programs/net/net.rc:48
 msgid "Paused"
@@ -14584,7 +14347,7 @@ msgstr "網路發生了錯誤"
 
 #: programs/net/net.rc:51
 msgid "Connection is being made"
-msgstr "正在進行連接"
+msgstr "正在連線"
 
 #: programs/net/net.rc:52
 msgid "Reconnecting"
@@ -14592,7 +14355,7 @@ msgstr "正在重新連線"
 
 #: programs/net/net.rc:43
 msgid "The following services are running:\n"
-msgstr "下列服務正在執行：\n"
+msgstr "下列服務正在執行:\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -14729,7 +14492,7 @@ msgstr "版面設定(&T)..."
 
 #: programs/notepad/notepad.rc:37
 msgid "P&rinter Setup..."
-msgstr "列印設定(&R)..."
+msgstr "印表機設定(&R)..."
 
 #: programs/notepad/notepad.rc:42 programs/wordpad/wordpad.rc:44
 msgid "&Undo\tCtrl+Z"
@@ -14759,11 +14522,11 @@ msgstr "全選(&A)\tCtrl+A"
 
 #: programs/notepad/notepad.rc:50
 msgid "&Time/Date\tF5"
-msgstr "插入日期時間(&T)\tF5"
+msgstr "插入日期/時間(&T)\tF5"
 
 #: programs/notepad/notepad.rc:52
 msgid "&Wrap long lines"
-msgstr "自動換列(&W)"
+msgstr "自動換行(&W)"
 
 #: programs/notepad/notepad.rc:56
 msgid "&Search...\tCtrl+F"
@@ -14898,9 +14661,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"檔案 %s 不存在\n"
+"檔案 '%s' 不存在。\n"
 "\n"
-"您想新增一個檔案嗎？"
+"您要建立一個新檔案嗎?"
 
 #: programs/notepad/notepad.rc:82
 msgid ""
@@ -14908,25 +14671,25 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"檔案 %s 正文已更改\n"
+"檔案 '%s' 的內容已更改。\n"
 "\n"
-"是否儲存更改？"
+"您要儲存更改嗎?"
 
 #: programs/notepad/notepad.rc:83
 msgid "'%s' could not be found."
-msgstr "找不到 %s。"
+msgstr "找不到 '%s'。"
 
 #: programs/notepad/notepad.rc:85
 msgid "Unicode (UTF-16)"
-msgstr "萬國碼 (UTF-16)"
+msgstr "Unicode (UTF-16)"
 
 #: programs/notepad/notepad.rc:86
 msgid "Unicode (UTF-16 big-endian)"
-msgstr "萬國碼 (UTF-16 大尾序)"
+msgstr "Unicode (UTF-16 big-endian)"
 
 #: programs/notepad/notepad.rc:87
 msgid "Unicode (UTF-8)"
-msgstr "萬國碼 (UTF-8)"
+msgstr "Unicode (UTF-8)"
 
 #: programs/notepad/notepad.rc:94
 msgid ""
@@ -14938,11 +14701,11 @@ msgid ""
 "Continue?"
 msgstr ""
 "%1\n"
-"這個檔案含有萬國碼字元，如果以 %2 編碼\n"
-"儲存這個檔案，您將會失去它們。\n"
-"要保留這些字元，請按一下取消，然後在編碼\n"
-"的下拉選單中選取一個萬國碼選項。\n"
-"要繼續嗎？"
+"這個檔案含有 Unicode 字元，如果以 %2 編碼儲存這個檔案，\n"
+"這些字符將會丟失。\n"
+"要保留這些字元，請按一下 [取消]，\n"
+"然後在 [編碼] 下拉選單中選取一個 Unicode 選項。\n"
+"您要繼續嗎?"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -14950,7 +14713,7 @@ msgstr "檔案綁定(&B)..."
 
 #: programs/oleview/oleview.rc:33
 msgid "&View TypeLib..."
-msgstr "查看 &TypeLib..."
+msgstr "查看 TypeLib(&V)..."
 
 #: programs/oleview/oleview.rc:35
 msgid "&System Configuration"
@@ -14962,15 +14725,15 @@ msgstr "執行註冊表編輯器(&R)"
 
 #: programs/oleview/oleview.rc:42
 msgid "&CoCreateInstance Flag"
-msgstr "&CoCreateInstance 參數"
+msgstr "CoCreateInstance 旗標(&C)"
 
 #: programs/oleview/oleview.rc:44
 msgid "&In-process server"
-msgstr "同行程伺服器(&I)"
+msgstr "同處理序伺服程式(&I)"
 
 #: programs/oleview/oleview.rc:45
 msgid "In-process &handler"
-msgstr "同行程處理常式(&H)"
+msgstr "同處理序處理常式(&H)"
 
 #: programs/oleview/oleview.rc:46
 msgid "&Local server"
@@ -15035,7 +14798,7 @@ msgstr "關於 OleView(&A)"
 
 #: programs/oleview/oleview.rc:82
 msgid "&Save as..."
-msgstr "另存為(&S)..."
+msgstr "另存新檔(&S)..."
 
 #: programs/oleview/oleview.rc:87
 msgid "&Group by type kind"
@@ -15063,7 +14826,7 @@ msgstr "啟用分散式 COM(&E)"
 
 #: programs/oleview/oleview.rc:172
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr "啟用遠端連線(&R)(限 Win95)"
+msgstr "啟用遠端連線 (限 Win95)(&R)"
 
 #: programs/oleview/oleview.rc:173
 msgid ""
@@ -15123,7 +14886,7 @@ msgstr "TypeLib 檔案 (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: programs/oleview/oleview.rc:105
 msgid "Bind to file via a File Moniker"
-msgstr "通過檔案綽號綁定到檔案"
+msgstr "通過 File Moniker 綁定到檔案"
 
 #: programs/oleview/oleview.rc:106
 msgid "Open a TypeLib file and view the contents"
@@ -15131,7 +14894,7 @@ msgstr "開啟 TypeLib 檔案並查看內容"
 
 #: programs/oleview/oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
-msgstr "修改本機分散式 COM 設定"
+msgstr "變更本機分散式 COM 設定"
 
 #: programs/oleview/oleview.rc:108
 msgid "Run the Wine registry editor"
@@ -15139,7 +14902,7 @@ msgstr "執行 Wine 註冊表編輯器"
 
 #: programs/oleview/oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
-msgstr "結束程式。 提示儲存"
+msgstr "結束程式。提示儲存"
 
 #: programs/oleview/oleview.rc:110
 msgid "Create an instance of the selected object"
@@ -15147,19 +14910,19 @@ msgstr "建立目前選擇的物件實例"
 
 #: programs/oleview/oleview.rc:111
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "建立當前選定物件在指定電腦的實例"
+msgstr "建立目前選定物件在指定電腦的實例"
 
 #: programs/oleview/oleview.rc:112
 msgid "Release the currently selected object instance"
-msgstr "釋放當前選定物件實例"
+msgstr "釋放目前選定物件實例"
 
 #: programs/oleview/oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr "將當前選定項目的 GUID 複製到剪貼簿"
+msgstr "將目前選定項目的 GUID 複製到剪貼簿"
 
 #: programs/oleview/oleview.rc:114
 msgid "Display the viewer for the selected item"
-msgstr "顯示選定項目的查看器"
+msgstr "顯示選定項目的檢視器"
 
 #: programs/oleview/oleview.rc:119
 msgid "Toggle between expert and novice display mode"
@@ -15184,15 +14947,15 @@ msgstr "重新整理所有清單"
 
 #: programs/oleview/oleview.rc:124
 msgid "Display program information, version number and copyright"
-msgstr "顯示程式資訊、版本號及版權"
+msgstr "顯示程式資訊、版本號及著作權"
 
 #: programs/oleview/oleview.rc:115
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 時要求一個同行程伺服器"
+msgstr "呼叫 CoGetClassObject 時要求一個同處理序伺服程式"
 
 #: programs/oleview/oleview.rc:116
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr "呼叫 CoGetClassObject 時要求一個同行程處理常式"
+msgstr "呼叫 CoGetClassObject 時要求一個同處理序處理常式"
 
 #: programs/oleview/oleview.rc:117
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -15224,7 +14987,7 @@ msgstr "所有物件"
 
 #: programs/oleview/oleview.rc:135
 msgid "Application IDs"
-msgstr "應用程式 IDs"
+msgstr "應用程式識別碼"
 
 #: programs/oleview/oleview.rc:136
 msgid "Type Libraries"
@@ -15256,7 +15019,7 @@ msgstr "CoGetClassObject 失敗。"
 
 #: programs/oleview/oleview.rc:145
 msgid "Unknown error"
-msgstr "未知錯誤"
+msgstr "不明錯誤"
 
 #: programs/oleview/oleview.rc:148
 msgid "bytes"
@@ -15272,7 +15035,7 @@ msgstr "繼承介面"
 
 #: programs/oleview/oleview.rc:126
 msgid "Save as an .IDL or .H file"
-msgstr "存為 .IDL 或 .H 檔案"
+msgstr "儲存為 .IDL 或 .H 檔案"
 
 #: programs/oleview/oleview.rc:127
 msgid "Close window"
@@ -15300,7 +15063,7 @@ msgstr "複製(&C)...\tF8"
 
 #: programs/progman/progman.rc:38
 msgid "&Properties\tAlt+Enter"
-msgstr "屬性(&P)\tAlt+Enter"
+msgstr "內容(&P)\tAlt+Enter"
 
 #: programs/progman/progman.rc:40
 msgid "&Execute..."
@@ -15418,11 +15181,11 @@ msgstr "變更圖示"
 
 #: programs/progman/progman.rc:194
 msgid "&Filename:"
-msgstr "檔案名(&F):"
+msgstr "檔案名稱(&F):"
 
 #: programs/progman/progman.rc:196
 msgid "Current &icon:"
-msgstr "當前圖示(&I):"
+msgstr "目前圖示(&I):"
 
 #: programs/progman/progman.rc:210
 msgid "Execute Program"
@@ -15442,11 +15205,11 @@ msgstr "資訊"
 
 #: programs/progman/progman.rc:68
 msgid "Delete group `%s'?"
-msgstr "是否刪除程式群組 %s？"
+msgstr "是否刪除程式群組 `%s'?"
 
 #: programs/progman/progman.rc:69
 msgid "Delete program `%s'?"
-msgstr "是否刪除程式 %s？"
+msgstr "是否刪除程式 `%s'?"
 
 #: programs/progman/progman.rc:70
 msgid "Not implemented"
@@ -15454,19 +15217,19 @@ msgstr "未實作"
 
 #: programs/progman/progman.rc:71
 msgid "Error reading `%s'."
-msgstr "讀取檔案 %s 時發生錯誤。"
+msgstr "讀取檔案 `%s' 時發生錯誤。"
 
 #: programs/progman/progman.rc:72
 msgid "Error writing `%s'."
-msgstr "寫入檔案 %s 時發生錯誤。"
+msgstr "寫入檔案 `%s' 時發生錯誤。"
 
 #: programs/progman/progman.rc:75
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"無法開啟群組檔案 %s。\n"
-"是否繼續嘗試？"
+"無法開啟群組檔案 `%s'。\n"
+"是否繼續嘗試開啟?"
 
 #: programs/progman/progman.rc:77
 msgid "Help not available."
@@ -15474,15 +15237,15 @@ msgstr "沒有可用的說明資訊。"
 
 #: programs/progman/progman.rc:78
 msgid "Unknown feature in %s"
-msgstr "在 %s 中發現未知特性"
+msgstr "在 %s 中發現不明功能"
 
 #: programs/progman/progman.rc:79
 msgid "File `%s' exists. Not overwritten."
-msgstr "檔案 %s 已經存在。不覆蓋已有檔案。"
+msgstr "檔案 `%s' 已經存在。不覆寫已有檔案。"
 
 #: programs/progman/progman.rc:80
 msgid "Save group as `%s' to prevent overwriting original files."
-msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
+msgstr "將程式組儲存為 `%s' 可以避免覆寫已有的檔案。"
 
 #: programs/progman/progman.rc:84
 msgid "Libraries (*.dll)"
@@ -15497,47 +15260,32 @@ msgid "Icons (*.ico)"
 msgstr "圖示 (*.ico)"
 
 #: programs/reg/reg.rc:139
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "錯誤：無效的索引鍵名稱\n"
+msgstr "reg: 無效的語法。 "
 
 #: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "輸入 \"REG %1 /?\" 以取得說明。\n"
 
 #: programs/reg/reg.rc:181
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
+msgstr "reg: 無法存取或建立指定的註冊表鍵\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "作業已成功完成\n"
+msgstr "reg: 操作成功完成\n"
 
 #: programs/reg/reg.rc:131
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "作業被使用者取消。\n"
+msgstr "reg: 註冊表操作已經取消\n"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
+msgstr "reg: 找不到指定的登錄機碼\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
+msgstr "reg: 找不到指定的登錄值\n"
 
 #: programs/reg/reg.rc:132 programs/regedit/regedit.rc:239
 msgid "(Default)"
@@ -15545,7 +15293,7 @@ msgstr "(預設)"
 
 #: programs/reg/reg.rc:141
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "輸入 \"REG /?\" 以取得說明。\n"
 
 #: programs/reg/reg.rc:35
 msgid ""
@@ -15559,6 +15307,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"用法:\n"
+"  REG [操作] [參數]\n"
+"\n"
+"支援的操作:\n"
+"  ADD | COPY | DELETE | EXPORT | IMPORT | QUERY\n"
+"\n"
+"要取得指定操作的說明，請輸入:\n"
+"  REG [操作] /?\n"
+"\n"
 
 #: programs/reg/reg.rc:67
 msgid ""
@@ -15609,6 +15366,52 @@ msgid ""
 "     Modify the registry without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG ADD <機碼> [/v 值名稱 | /ve] [/t 類型] [/s 分隔符號] [/d 資料] [/f]\n"
+"\n"
+"  新增一個機碼到註冊表，或新增值到給定的登錄機碼。\n"
+"\n"
+"  <機碼>\n"
+"     要新增的機碼，如果指定了 [/v] 或 [/ve]，\n"
+"     則會在該機碼新增登錄資料。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 預先定義的登錄機碼。這必須是下列的其中一個:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 在所選取 ROOT 機碼下的登錄機碼的完整路徑。\n"
+"\n"
+"  /v <值名稱>\n"
+"     要新增的登錄值的名稱。\n"
+"\n"
+"  /ve\n"
+"     新增未命名的登錄值。這個選項會修改 (預設) 的\n"
+"     登錄值。\n"
+"\n"
+"  /t <類型>\n"
+"     要新增到註冊表的資料類型。如果指定了 [/t]，\n"
+"     <類型> 必須是下列的其中一個:\n"
+"\n"
+"         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
+"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"\n"
+"     如果未指定 [/t]，資料類型將預設為 REG_SZ。\n"
+"\n"
+"  /s <分隔符號>\n"
+"     指定一個用於分隔 REG_MULTI_SZ 資料字串的字元。\n"
+"     如果未指定 [/s]，分隔符號會預設為 \\0。\n"
+"\n"
+"  /d <資料>\n"
+"     要新增給新的登錄值的資料。\n"
+"\n"
+"  /f\n"
+"     修改登錄項目而不需確認提示。\n"
+"\n"
 
 #: programs/reg/reg.rc:202
 msgid ""
@@ -15644,6 +15447,35 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
+"REG COPY <機碼1> <機碼2> [/s] [/f]\n"
+"\n"
+"  複製指定登錄機碼的內容到另一個位置。\n"
+"  預設情況下，這個操作只會複製登錄值。\n"
+"  使用 [/s] 來遞迴複製所有子機碼和值。\n"
+"\n"
+"  <機碼1>, <機碼2>\n"
+"     指定登錄機碼的來源 (<機碼1>) 和目標 (<機碼2>) 資料。\n"
+"     如果 <機碼2> 不存在，系統將會建立它。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 預先定義的登錄機碼。這必須是下列的其中一個:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 在所選取 ROOT 機碼下的登錄機碼的完整路徑。\n"
+"\n"
+"  /s\n"
+"     從 <機碼1> 複製所有子機碼和值到 <機碼2>。\n"
+"\n"
+"  /f\n"
+"     覆寫 <機碼2> 內所有的登錄資料而不需確認提示。\n"
+"     這個選項不會修改只在 <機碼2> 存在的子機碼和值。\n"
+"\n"
 
 #: programs/reg/reg.rc:92
 msgid ""
@@ -15683,6 +15515,41 @@ msgid ""
 "     prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG DELETE <機碼> [/v 值名稱 | /ve | /va] [/f]\n"
+"\n"
+"  刪除一個登錄機碼 (所有子機碼和值)，\n"
+"  或從給定的登錄機碼刪除一個或多個值。\n"
+"\n"
+"  <機碼>\n"
+"     要刪除的登錄機碼。如果指定了 [/v]、[/ve] 或 [/va]，\n"
+"     則可刪除登錄機碼內的一個或多個值。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 預先定義的登錄機碼。這必須是下列的其中一個:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 在所選取 ROOT 機碼下的登錄機碼的完整路徑。\n"
+"\n"
+"  /v <值名稱>\n"
+"     要刪除的登錄值的名稱。\n"
+"\n"
+"  /ve\n"
+"     刪除未命名的登錄值。這個選項會刪除 (預設) 的\n"
+"     登錄值。\n"
+"\n"
+"  /va\n"
+"     刪除登錄機碼的所有值。\n"
+"\n"
+"  /f\n"
+"     刪除一個登錄機碼 (包括所有子機碼和值)\n"
+"     而不需確認提示。\n"
+"\n"
 
 #: programs/reg/reg.rc:170
 msgid ""
@@ -15714,6 +15581,33 @@ msgid ""
 "     Overwrite <file> without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG EXPORT <機碼> <檔案> [/y]\n"
+"\n"
+"  將指定的登錄機碼 (包括所有子機碼和值)\n"
+"  匯出到一個檔案。\n"
+"\n"
+"  <機碼>\n"
+"     要匯出的登錄機碼。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 預先定義的登錄機碼。這必須是下列的其中一個:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 在所選取 ROOT 機碼下的登錄機碼的完整路徑。\n"
+"\n"
+"  <檔案>\n"
+"     要建立的登錄檔案的名稱和路徑。\n"
+"     檔案必須是 .reg 的副檔名。\n"
+"\n"
+"  /y\n"
+"     覆寫 <檔案> 而不需確認提示。\n"
+"\n"
 
 #: programs/reg/reg.rc:148
 msgid ""
@@ -15725,6 +15619,13 @@ msgid ""
 "     The name and path of the registry file to import.\n"
 "\n"
 msgstr ""
+"REG IMPORT <檔案>\n"
+"\n"
+"  從給定的檔案匯入機碼、值和資料到註冊表。\n"
+"\n"
+"  <檔案>\n"
+"     要匯入的登錄檔案的名稱和路徑。\n"
+"\n"
 
 #: programs/reg/reg.rc:114
 msgid ""
@@ -15760,6 +15661,37 @@ msgid ""
 "     List all registry entries under <key> and its subkeys.\n"
 "\n"
 msgstr ""
+"REG QUERY <機碼> [/v 值名稱 | /ve] [/s]\n"
+"\n"
+"  查詢指定的登錄機碼，並列出該機碼中的所有即時子機碼、值和資料。\n"
+"  使用 [/s] 來遞迴查詢每個子機碼。\n"
+"\n"
+"  <機碼>\n"
+"     要查詢的登錄機碼。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 預先定義的登錄機碼。這必須是下列的其中一個:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 在所選取 ROOT 機碼下的登錄機碼的完整路徑。\n"
+"\n"
+"  /v <值名稱>\n"
+"     要查詢的登錄值的名稱。如果未指定 [/v] 或 [/ve]，\n"
+"     則會列出 <機碼> 下所有的值。\n"
+"\n"
+"  /ve\n"
+"     查詢未命名的登錄值。這個選項會查詢 (預設) 的\n"
+"     登錄值。\n"
+"\n"
+"  /s\n"
+"     列出 <機碼> 及其子機碼的所有登錄項目。\n"
+"\n"
 
 #: programs/reg/reg.rc:180
 msgid ""
@@ -15770,122 +15702,98 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+"  /reg:32\n"
+"     使用 32 位元登錄檢視來存取機碼。\n"
+"\n"
+"  /reg:64\n"
+"     使用 64 位元登錄檢視來存取機碼。\n"
+"\n"
 
 #: programs/reg/reg.rc:117
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid registry key\n"
-msgstr "錯誤：無效的索引鍵名稱\n"
+msgstr "reg: 無效的登錄機碼\n"
 
 #: programs/reg/reg.rc:119
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "reg: 無法存取遠端機器\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid system key\n"
-msgstr "錯誤：無效的索引鍵名稱\n"
+msgstr "reg: 無效的系統金鑰\n"
 
 #: programs/reg/reg.rc:140
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "錯誤：無效的選項 %c。\n"
+msgstr "reg: 無效的選項 [%1]。 "
 
 #: programs/reg/reg.rc:122
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr ""
+msgstr "reg: 選項 [/d] 後必須接著一個有效的數字值\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
+msgstr "reg: 選項 [/d] 後必須接著一個有效的十六進制值\n"
 
 #: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr ""
+msgstr "reg: 選項 [/d] 後必須接著一個有效的字串\n"
 
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: 未處理的登錄資料類型 [/t 0x%1!x!, /d %2]\n"
 
 #: programs/reg/reg.rc:121
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "不受支援的型態。\n"
+msgstr "reg: 不支援的登錄資料類型 [%1]\n"
 
 #: programs/reg/reg.rc:125
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "檔案已經存在。您要取代嗎？"
+msgstr "登錄值 '%1' 已經存在。您要覆寫它嗎?"
 
 #: programs/reg/reg.rc:118
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "錯誤：無效的命令列參數\n"
+msgstr "reg: 無效的命令列參數\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: 來源和目標機碼不可以相同\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "檔案已經存在。您要取代嗎？"
+msgstr "目標機碼內的值 '%1\\%2' 已經存在。您要覆寫它嗎?"
 
 #: programs/reg/reg.rc:133
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "您確認要刪除這些數值嗎？"
+msgstr "您確定要刪除登錄值 '%1' 嗎?"
 
 #: programs/reg/reg.rc:134
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "您確認要刪除這個數值 %s 嗎？"
+msgstr "您確定要刪除 '%1' 下的所有登錄值嗎?"
 
 #: programs/reg/reg.rc:135
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "確定要刪除 %1？"
+msgstr "您確定要刪除登錄機碼 '%1' 嗎?"
 
 #: programs/reg/reg.rc:137
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "reg: 無法刪除所有在 '%1' 下的登錄值\n"
 
 #: programs/reg/reg.rc:173
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "檔案已經存在。您要取代嗎？"
+msgstr "檔案 '%1' 已經存在。您要覆寫它嗎?"
 
 #: programs/reg/reg.rc:151
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "reg: 無法辨識的逸出序列 [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "reg: 無法匯入登錄機碼 '%1'\n"
 
 #: programs/reg/reg.rc:150
-#, fuzzy
-#| msgid "No command was specified."
 msgid "reg: The file '%1' was not found.\n"
-msgstr "沒有任何命令被指定。"
+msgstr "reg: 無法找到檔案 '%1'。\n"
 
 #: programs/reg/reg.rc:143 programs/regedit/regedit.rc:240
 msgid "(value not set)"
@@ -15893,7 +15801,7 @@ msgstr "(沒有設值)"
 
 #: programs/reg/reg.rc:138
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "搜尋完成。相符項目的數目: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
@@ -15901,16 +15809,16 @@ msgstr "註冊表(&R)"
 
 #: programs/regedit/regedit.rc:36
 msgid "&Import Registry File..."
-msgstr "匯入註冊表檔案(&I)..."
+msgstr "匯入登錄檔案(&I)..."
 
 #: programs/regedit/regedit.rc:37
 msgid "&Export Registry File..."
-msgstr "匯出註冊表檔案(&E)..."
+msgstr "匯出登錄檔案(&E)..."
 
 #: programs/regedit/regedit.rc:47 programs/regedit/regedit.rc:99
 #: programs/regedit/regedit.rc:121
 msgid "&Key"
-msgstr "索引鍵(&K)"
+msgstr "機碼(&K)"
 
 #: programs/regedit/regedit.rc:49 programs/regedit/regedit.rc:101
 #: programs/regedit/regedit.rc:123
@@ -15920,12 +15828,12 @@ msgstr "字串值(&S)"
 #: programs/regedit/regedit.rc:50 programs/regedit/regedit.rc:102
 #: programs/regedit/regedit.rc:124
 msgid "&Binary Value"
-msgstr "二進位值(&B)"
+msgstr "二進制值(&B)"
 
 #: programs/regedit/regedit.rc:51 programs/regedit/regedit.rc:103
 #: programs/regedit/regedit.rc:125
 msgid "&DWORD Value"
-msgstr "雙字組值(&D)"
+msgstr "DWORD 值(&D)"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:104
 #: programs/regedit/regedit.rc:126
@@ -15944,7 +15852,7 @@ msgstr "重新命名(&R)\tF2"
 
 #: programs/regedit/regedit.rc:59 programs/regedit/regedit.rc:114
 msgid "&Copy Key Name"
-msgstr "複製索引鍵名稱(&C)"
+msgstr "複製機碼名稱(&C)"
 
 #: programs/regedit/regedit.rc:61 programs/regedit/regedit.rc:107
 #: programs/wordpad/wordpad.rc:53
@@ -15974,13 +15882,11 @@ msgstr "關於註冊表編輯器(&A)"
 #: programs/regedit/regedit.rc:89 programs/regedit/regedit.rc:96
 #: programs/regedit/regedit.rc:230
 msgid "Expand"
-msgstr ""
+msgstr "展開"
 
 #: programs/regedit/regedit.rc:134 programs/regedit/regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "修改二進位資料..."
+msgstr "修改二進位資料(&B)..."
 
 #: programs/regedit/regedit.rc:267
 msgid "Export registry"
@@ -15988,31 +15894,31 @@ msgstr "匯出註冊表"
 
 #: programs/regedit/regedit.rc:269
 msgid "S&elected branch:"
-msgstr "指定分支(&E)："
+msgstr "指定分支(&E):"
 
 #: programs/regedit/regedit.rc:278
 msgid "Find:"
-msgstr "搜尋："
+msgstr "尋找:"
 
 #: programs/regedit/regedit.rc:280
 msgid "Find in:"
-msgstr "在這找："
+msgstr "在這找:"
 
 #: programs/regedit/regedit.rc:281
 msgid "Keys"
-msgstr "索引鍵"
+msgstr "機碼"
 
 #: programs/regedit/regedit.rc:282
 msgid "Value names"
-msgstr "數值名稱"
+msgstr "值名稱"
 
 #: programs/regedit/regedit.rc:283
 msgid "Value content"
-msgstr "數值內容"
+msgstr "值內容"
 
 #: programs/regedit/regedit.rc:284
 msgid "Whole string only"
-msgstr "整詞匹配"
+msgstr "字串須完全相符"
 
 #: programs/regedit/regedit.rc:291
 msgid "Add Favorite"
@@ -16033,20 +15939,20 @@ msgstr "編輯字串"
 #: programs/regedit/regedit.rc:316 programs/regedit/regedit.rc:329
 #: programs/regedit/regedit.rc:345 programs/regedit/regedit.rc:358
 msgid "Value name:"
-msgstr "數值名稱:"
+msgstr "值名稱:"
 
 #: programs/regedit/regedit.rc:318 programs/regedit/regedit.rc:331
 #: programs/regedit/regedit.rc:347 programs/regedit/regedit.rc:360
 msgid "Value data:"
-msgstr "數值資料:"
+msgstr "值資料:"
 
 #: programs/regedit/regedit.rc:326
 msgid "Edit DWORD"
-msgstr "編輯雙字組"
+msgstr "編輯 DWORD"
 
 #: programs/regedit/regedit.rc:333
 msgid "Base"
-msgstr "進位制"
+msgstr "Base"
 
 #: programs/regedit/regedit.rc:334
 msgid "Hexadecimal"
@@ -16058,7 +15964,7 @@ msgstr "十進位"
 
 #: programs/regedit/regedit.rc:342
 msgid "Edit Binary"
-msgstr "編輯二進位資料"
+msgstr "編輯二進位"
 
 #: programs/regedit/regedit.rc:355
 msgid "Edit Multi-String"
@@ -16081,13 +15987,9 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "含有與使用常用索引鍵有關的全部指令"
 
 #: programs/regedit/regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
-msgstr "含有與說明資訊有關的全部指令"
+msgstr "含有顯示登錄編輯程式說明及資訊的命令"
 
 #: programs/regedit/regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -16103,87 +16005,76 @@ msgstr "註冊表編輯器"
 
 #: programs/regedit/regedit.rc:221
 msgid "Import Registry File"
-msgstr "匯入註冊表檔案"
+msgstr "匯入登錄檔案"
 
 #: programs/regedit/regedit.rc:222
 msgid "Export Registry File"
-msgstr "匯出註冊表檔案"
+msgstr "匯出登錄檔案"
 
 #: programs/regedit/regedit.rc:223
 msgid "Registry files (*.reg)"
-msgstr "註冊表檔案 (*.reg)"
+msgstr "登錄檔案 (*.reg)"
 
 #: programs/regedit/regedit.rc:224
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Win9x/NT4 註冊表檔案 (REGEDIT4)"
+msgstr "Win9x/NT4 登錄檔案 (REGEDIT4)"
 
 #: programs/regedit/regedit.rc:241
 msgid "(cannot display value)"
-msgstr "(不能顯示值)"
+msgstr "(無法顯示值)"
 
 #: programs/regedit/regedit.rc:242
 msgid "(unknown %d)"
-msgstr "(未知 %d)"
+msgstr "(不明 %d)"
 
 #: programs/regedit/regedit.rc:247
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to modify the selected registry value."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法編輯選定的登錄值。"
 
 #: programs/regedit/regedit.rc:248
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry key."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法建立新的登錄機碼。"
 
 #: programs/regedit/regedit.rc:249
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry value."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法建立新的登錄值。"
 
 #: programs/regedit/regedit.rc:250
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"無法重新命名機碼 '%1'。\n"
+"指定的機碼名稱已經存在。"
 
 #: programs/regedit/regedit.rc:251
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"無法重新命名值 '%1'。\n"
+"指定的值名稱已經存在。"
 
 #: programs/regedit/regedit.rc:252
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to delete the selected registry key."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法刪除選定的登錄機碼。"
 
 #: programs/regedit/regedit.rc:253
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry key."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法重新命名選定的登錄機碼。"
 
 #: programs/regedit/regedit.rc:254
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry value."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法重新命名選定的登錄值"
 
 #: programs/regedit/regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "%1 所包含的機碼和值已成功新增至註冊表。"
 
 #: programs/regedit/regedit.rc:256
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
-msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
+msgstr "無法匯入 %1。指定的檔案不是有效的登錄檔案。"
 
 #: programs/regedit/regedit.rc:408
 msgid ""
@@ -16215,151 +16106,143 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 msgstr ""
+"用法:\n"
+"  regedit [選項] [檔案名稱] [登錄機碼]\n"
+"\n"
+"選項:\n"
+"  [no option]    啟動本程式的圖形介面。\n"
+"  /L:system.dat  要修改的 system.dat 檔案位置。\n"
+"                 與任何其他切換參數相容。已略過。\n"
+"  /R:user.dat    要修改的 user.dat 檔案位置。\n"
+"                 與任何其他切換參數相容。已略過。\n"
+"  /C             匯入登錄檔案的內容。\n"
+"  /D             刪除指定的登錄機碼。\n"
+"  /E             匯出指定的登錄機碼內容到檔案。\n"
+"                 如果沒有指定機碼，則會匯出整個註冊表。\n"
+"  /S             靜音模式。不會顯示訊息。\n"
+"  /V             以進階模式啟動圖形介面。已略過。\n"
+"  /?             顯示這個資訊並結束。\n"
+"  [檔案名稱]     要匯入的註冊表資訊檔案的位置。\n"
+"                 當與 [/E] 一起使用時，這個選項會指定\n"
+"                 註冊表資訊檔案的匯出位置。\n"
+"  [登錄機碼]     要修改的登錄機碼。\n"
+"\n"
+"使用範例:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 
 #: programs/regedit/regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
+msgstr "regedit: 無效或無法辨識的切換參數 [%1]\n"
 
 #: programs/regedit/regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "輸入 \"regedit /?\" 以取得說明。\n"
 
 #: programs/regedit/regedit.rc:411
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "沒有任何命令被指定。"
+msgstr "regedit: 未指定檔案名稱。\n"
 
 #: programs/regedit/regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: 未指定要移除的登錄機碼。\n"
 
 #: programs/regedit/regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
-msgstr ""
+msgstr "regedit: 找不到檔案 '%1'。\n"
 
 #: programs/regedit/regedit.rc:414
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "regedit: 無法開啟檔案 '%1'。\n"
 
 #: programs/regedit/regedit.rc:415
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "無效的控柄作業。\n"
+msgstr "regedit: 未處理的操作。\n"
 
 #: programs/regedit/regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: 記憶體不足! (%1!S!, line %2!u!)\n"
 
 #: programs/regedit/regedit.rc:417
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "錯誤：無效的索引鍵名稱\n"
+msgstr "regedit: 錯誤的十六進位值。\n"
 
 #: programs/regedit/regedit.rc:418
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
-msgstr ""
+msgstr "regedit: 無法轉換十六進位資料。在 '%1' 遇到錯誤的值。\n"
 
 #: programs/regedit/regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "regedit: 無法辨識的逸出序列 [\\%1!c!]\n"
 
 #: programs/regedit/regedit.rc:420
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "不受支援的型態。\n"
+msgstr "regedit: 不支援的登錄資料類型 [0x%1!x!]\n"
 
 #: programs/regedit/regedit.rc:421
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "regedit: 在 '%1' 發現意外的結尾。\n"
 
 #: programs/regedit/regedit.rc:422
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "沒有任何命令被指定。"
+msgstr "regedit: 無法辨識列 '%1'。\n"
 
 #: programs/regedit/regedit.rc:423
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "regedit: 無法從 '%1' 新增登錄值到 '%2'。\n"
 
 #: programs/regedit/regedit.rc:424
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "regedit: 無法開啟登錄機碼 '%1'。\n"
 
 #: programs/regedit/regedit.rc:425
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "不受支援的型態。\n"
+msgstr "regedit: 在 '%2' 遇到不支援的登錄資料類型 [0x%1!x!]。\n"
 
 #: programs/regedit/regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "regedit: 登錄值 '%1' 將以二進位資料匯出。\n"
 
 #: programs/regedit/regedit.rc:427
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "錯誤：無效的索引鍵名稱\n"
+msgstr "regedit: 錯誤的系統金鑰 [%1]\n"
 
 #: programs/regedit/regedit.rc:428
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
-msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
+msgstr "regedit: 無法匯出 '%1'。找不到指定的登錄機碼。\n"
 
 #: programs/regedit/regedit.rc:429
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "regedit: 無法刪除登錄機碼 '%1'。\n"
 
 #: programs/regedit/regedit.rc:431
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "沒有任何命令被指定。"
+msgstr "regedit: 該列有錯誤的語法。\n"
 
 #: programs/regedit/regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "結束註冊表編輯器"
 
 #: programs/regedit/regedit.rc:188
 msgid "Adds keys to the favorites list"
-msgstr "將索引鍵新增到我的最愛"
+msgstr "將機碼新增到我的最愛"
 
 #: programs/regedit/regedit.rc:189
 msgid "Removes keys from the favorites list"
-msgstr "從我的最愛中刪除索引鍵"
+msgstr "從我的最愛中刪除機碼"
 
 #: programs/regedit/regedit.rc:190
 msgid "Shows or hides the status bar"
 msgstr "顯示或隱藏狀態列"
 
 #: programs/regedit/regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
-msgstr "改變兩個窗格之間的分隔線位置"
+msgstr "變更兩個窗格之間的分隔線位置"
 
 #: programs/regedit/regedit.rc:192
 msgid "Refreshes the window"
@@ -16367,19 +16250,19 @@ msgstr "重新整理視窗"
 
 #: programs/regedit/regedit.rc:193
 msgid "Deletes the selection"
-msgstr "刪除選擇項目"
+msgstr "刪除已選項目"
 
 #: programs/regedit/regedit.rc:194
 msgid "Renames the selection"
-msgstr "重新命名選擇項目"
+msgstr "重新命名已選項目"
 
 #: programs/regedit/regedit.rc:195
 msgid "Copies the name of the selected key to the clipboard"
-msgstr "將索引鍵的名稱複製到剪貼簿"
+msgstr "將機碼的名稱複製到剪貼簿"
 
 #: programs/regedit/regedit.rc:196
 msgid "Finds a text string in a key, value or data"
-msgstr "在索引鍵、值或資料中找字串"
+msgstr "在機碼、值或資料中尋找字串"
 
 #: programs/regedit/regedit.rc:197
 msgid "Finds next occurrence of text specified in previous search"
@@ -16391,7 +16274,7 @@ msgstr "修改值的資料"
 
 #: programs/regedit/regedit.rc:171
 msgid "Adds a new key"
-msgstr "新增一個新的索引鍵"
+msgstr "新增一個新的機碼"
 
 #: programs/regedit/regedit.rc:172
 msgid "Adds a new string value"
@@ -16402,10 +16285,8 @@ msgid "Adds a new binary value"
 msgstr "新增一個新的二進制值"
 
 #: programs/regedit/regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "新增一個新的二進制值"
+msgstr "新增一個新的 32 位元值"
 
 #: programs/regedit/regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -16413,118 +16294,92 @@ msgstr "將純文字檔案匯入註冊表"
 
 #: programs/regedit/regedit.rc:179
 msgid "Exports all or part of the registry to a text file"
-msgstr "將註冊表導出到純文字檔案"
+msgstr "將註冊表匯出到純文字檔案"
 
 #: programs/regedit/regedit.rc:180
 msgid "Prints all or part of the registry"
 msgstr "列印註冊表的全部或部分"
 
 #: programs/regedit/regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "註冊表編輯器"
+msgstr "開啟註冊表編輯器的說明"
 
 #: programs/regedit/regedit.rc:182
 msgid "Displays program information, version number and copyright"
-msgstr "顯示程式資訊、版本號及版權"
+msgstr "顯示程式資訊、版本號及著作權"
 
 #: programs/regedit/regedit.rc:206
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法查詢登錄值 '%1'。"
 
 #: programs/regedit/regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "無法編輯這類型的索引鍵 (%u)"
+msgstr "無法編輯這種類型的登錄機碼 (%1!u!)。"
 
 #: programs/regedit/regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "數值太大 (%u)"
+msgstr "登錄值太大 (%1!u!)。"
 
 #: programs/regedit/regedit.rc:209
 msgid "Confirm Value Delete"
-msgstr "確認刪除數值"
+msgstr "確認刪除登錄值"
 
 #: programs/regedit/regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "您確認要刪除這些數值嗎？"
+msgstr "您確認要刪除已選取的登錄值嗎?"
 
 #: programs/regedit/regedit.rc:216
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "找不到搜尋的字串 %s"
+msgstr "搜尋完成。找不到字串 '%1'。"
 
 #: programs/regedit/regedit.rc:211
 msgid "Are you sure you want to delete these values?"
-msgstr "您確認要刪除這些數值嗎？"
+msgstr "您確認要刪除這些登錄值嗎?"
 
 #: programs/regedit/regedit.rc:214
 msgid "New Key #%d"
-msgstr "索引鍵 #%d"
+msgstr "新機碼 #%d"
 
 #: programs/regedit/regedit.rc:215
 msgid "New Value #%d"
-msgstr "新索引鍵 #%d"
+msgstr "新登錄值 #%d"
 
 #: programs/regedit/regedit.rc:205
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+msgstr "無法查詢登錄機碼 '%1'。"
 
 #: programs/regedit/regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "修改值的資料"
+msgstr "以二進位修改登錄值的資料"
 
 #: programs/regedit/regedit.rc:175
 msgid "Adds a new multi-string value"
-msgstr "新增一個多字串值"
+msgstr "新增一個新的多字串值"
 
 #: programs/regedit/regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
-msgstr "匯出註冊表的所選分支到文字檔"
+msgstr "匯出註冊表中已選取的分支到文字檔案"
 
 #: programs/regedit/regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "新增一個新的字串值"
+msgstr "新增一個新的可擴充字串值"
 
 #: programs/regedit/regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "確認刪除數值"
+msgstr "確認刪除機碼"
 
 #: programs/regedit/regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "確定要刪除 %1？"
+msgstr "您確認要刪除這個登錄機碼及其所有的子機碼嗎?"
 
 #: programs/regedit/regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "展開或摺疊已選取的節點"
 
 #: programs/regedit/regedit.rc:231
-#, fuzzy
-#| msgid "C&ollate"
 msgid "Collapse"
-msgstr "自動分頁(&O)"
+msgstr "摺疊"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
@@ -16533,6 +16388,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Wine DLL 註冊工具\n"
+"\n"
+"提供 DLL 註冊服務。\n"
+"\n"
 
 #: programs/regsvr32/regsvr32.rc:41
 msgid ""
@@ -16547,85 +16406,66 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"用法:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] Dll名稱\n"
+"\n"
+"選項:\n"
+"  [/u]  取消註冊伺服器。\n"
+"  [/s]  靜音模式 (不會顯示訊息)。\n"
+"  [/i]  呼叫 DllInstall，並將選項傳給它 [cmdline]。\n"
+"\t在與 [/u] 一起使用時，會以解除安裝模式呼叫 DllInstall。\n"
+"  [/n]  不要呼叫 DllRegisterServer。這個選項必須與 [/i] 一起使用。\n"
+"\n"
 
 #: programs/regsvr32/regsvr32.rc:42
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regedit: 無效或無法辨識的切換參數 [%1]\n"
+"\n"
 
 #: programs/regsvr32/regsvr32.rc:43
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "開啟 %1 失敗\n"
+msgstr "regsvr32: 無法載入 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: '%1!S!' 尚未於 DLL '%2' 實作\n"
 
 #: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 無法註冊 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 成功註冊 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 無法解除註冊 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 成功解除註冊 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 無法安裝 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 成功安裝 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 無法解除安裝 DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: 成功解除安裝 DLL '%1'\n"
 
 #: programs/start/start.rc:57
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"      Specifies the title of the child windows.\n"
-#| "/d directory Start the program in the specified directory.\n"
-#| "/b           Don't create a new console for the program.\n"
-#| "/i           Start the program with fresh environment variables.\n"
-#| "/min         Start the program minimized.\n"
-#| "/max         Start the program maximized.\n"
-#| "/low         Start the program in the idle priority class.\n"
-#| "/normal      Start the program in the normal priority class.\n"
-#| "/high        Start the program in the high priority class.\n"
-#| "/realtime    Start the program in the realtime priority class.\n"
-#| "/abovenormal Start the program in the abovenormal priority class.\n"
-#| "/belownormal Start the program in the belownormal priority class.\n"
-#| "/node n      Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait        Wait for the started program to finish, then exit with its "
-#| "exit code.\n"
-#| "/unix        Use a Unix filename and start the file like Windows "
-#| "explorer.\n"
-#| "/ProgIDOpen  Open a document using the specified progID.\n"
-#| "/?           Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -16656,30 +16496,31 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"啟始一個程式，或是利用關聯該檔案字尾的程式來開啟文件。\n"
-"用法：\n"
+"啟動程式，或根據檔案的後綴，使用一般用於開啟該後綴的程式來開啟文件。\n"
+"用法:\n"
 "start [選項] 程式檔案名稱 [...]\n"
 "start [選項] 文件檔案名稱\n"
 "\n"
-"選項：\n"
-"「標題」     指定子視窗的標題。\n"
-"/d 目錄      在指定的目錄中啟始程式。\n"
-"/b           無法為程式建立新的主控臺。\n"
-"/i           以新的環境變數啟始程式。\n"
-"/min         啟始程式時縮到最小。\n"
-"/max         啟始程式時放到最大。\n"
-"/low         在閒置優先權類別中啟始程式。\n"
-"/normal      在一般優先權類別中啟始程式。\n"
-"/high        在高優先權類別中啟始程式。\n"
-"/realtime    在即時優先權類別中啟始程式。\n"
-"/abovenormal 在正常之上優先權類別中啟始程式。\n"
-"/belownormal 在正常之下優先權類別中啟始程式。\n"
-"/node n      在指定的 NUMA 節點之上啟始程式。\n"
-"/affinity 遮罩 以指定的近似遮罩啟始程式。\n"
-"/wait        等待啟始的程式直到完成，然後以它的離開代碼離開。\n"
-"/unix        使用 Unix 檔名並如同 Windows 檔案總管來啟始檔案。\n"
-"/ProgIDOpen  使用指定的 progID 開啟文件。\n"
-"/?           顯示這份說明然後離開。\n"
+"選項:\n"
+"\"標題\"         指定子視窗的標題。\n"
+"/d 目錄        於指定的目錄開啟程式。\n"
+"/b             不要為程式建立新的主控臺。\n"
+"/i             使用新的環境變數來啟動程式。\n"
+"/min           啟動程式時將視窗最小化。\n"
+"/max           啟動程式時將視窗最大化。\n"
+"/low           在 Idle 優先類別中啟動程式。\n"
+"/normal        在 Normal 優先類別中啟動程式。\n"
+"/high          在 High 優先類別中啟動程式。\n"
+"/realtime      在 Realtime 優先類別中啟動程式。\n"
+"/abovenormal   在 Abovenormal 優先類別中啟動程式。\n"
+"/belownormal   在 Belownormal 優先類別中啟動程式。\n"
+"/node n        以指定的 NUMA 節點啟動程式。\n"
+"/affinity mask 以指定的親和性遮罩啟動程式。\n"
+"/wait          啟動應用程式並等候它終止，結束時會給予結束代碼。\n"
+"/unix          使用 Unix 檔案名稱，並像 Windows 檔案總管一樣開啟檔案\n"
+"/exec          對指定檔案進行 Exec (在 Wine 內部使用)。\n"
+"/ProgIDOpen    使用指定的 progID 來開啟檔案。\n"
+"/?             顯示這個說明並結束。\n"
 
 #: programs/start/start.rc:59
 msgid ""
@@ -16687,12 +16528,12 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
-"無法啟始應用程式，或是沒有與指定檔案關聯的應用程式。\n"
+"無法啟動應用程式，或是沒有與指定檔案關聯的應用程式。\n"
 "ShellExecuteEx 失敗"
 
 #: programs/start/start.rc:61
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "無法翻譯指定的 Unix 檔名到 DOS 檔名。"
+msgstr "無法翻譯指定的 Unix 檔案名稱到 DOS 檔案名稱。"
 
 #: programs/taskkill/taskkill.rc:30
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
