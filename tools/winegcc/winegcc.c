@@ -1408,18 +1408,28 @@ static void build(struct options* opts)
 		strarray_add(&link_args, name);
 		break;
 	    case 'a':
-                if (is_pe && !opts->use_msvcrt && !opts->lib_suffix && strchr(name, '/'))
+                if (!opts->use_msvcrt && !opts->lib_suffix && strchr(name, '/'))
                 {
                     /* turn the path back into -Ldir -lfoo options
                      * this makes sure that we use the specified libs even
                      * when mingw adds its own import libs to the link */
                     const char *p = get_basename( name );
 
-                    if (!strncmp( p, "lib", 3 ) && strcmp( p, "libmsvcrt.a" ))
+                    if (is_pe)
                     {
-                        strarray_add(&link_args, strmake("-L%s", get_dirname(name) ));
-                        strarray_add(&link_args, strmake("-l%s", get_basename_noext( p + 3 )));
-                        break;
+                        if (!strncmp( p, "lib", 3 ) && strcmp( p, "libmsvcrt.a" ))
+                        {
+                            strarray_add(&link_args, strmake("-L%s", get_dirname(name) ));
+                            strarray_add(&link_args, strmake("-l%s", get_basename_noext( p + 3 )));
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        /* don't link to ntdll or ntoskrnl in non-msvcrt mode
+                         * since they export CRT functions */
+                        if (!strcmp( p, "libntdll.a" )) break;
+                        if (!strcmp( p, "libntoskrnl.a" )) break;
                     }
                 }
 		strarray_add(&link_args, name);
