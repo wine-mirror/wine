@@ -412,6 +412,11 @@ static const USAGE pid_device_control_usages[] =
     PID_USAGE_DC_DEVICE_CONTINUE,
 };
 
+struct pid_device_gain
+{
+    BYTE value;
+};
+
 struct pid_effect_control
 {
     BYTE index;
@@ -741,6 +746,25 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
         END_COLLECTION,
     };
 
+    const BYTE device_gain_report = ++desc->next_report_id[HidP_Output];
+    const BYTE device_gain[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_PID),
+        USAGE(1, PID_USAGE_DEVICE_GAIN_REPORT),
+        COLLECTION(1, Logical),
+            REPORT_ID(1, device_gain_report),
+
+            USAGE(1, PID_USAGE_DEVICE_GAIN),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(2, 0x00ff),
+            PHYSICAL_MINIMUM(1, 0),
+            PHYSICAL_MAXIMUM(2, 0x2710),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+    };
+
     const BYTE effect_control_report = ++desc->next_report_id[HidP_Output];
     const BYTE effect_control_header[] =
     {
@@ -882,6 +906,9 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
     if (!hid_report_descriptor_append(desc, device_control_footer, sizeof(device_control_footer)))
         return FALSE;
 
+    if (!hid_report_descriptor_append(desc, device_gain, sizeof(device_gain)))
+        return FALSE;
+
     if (!hid_report_descriptor_append(desc, effect_control_header, sizeof(effect_control_header)))
         return FALSE;
     for (i = 1; i < ARRAY_SIZE(pid_effect_control_usages); ++i)
@@ -936,6 +963,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
     memcpy(iface->hid_physical.effect_types + 1, usages, count * sizeof(*usages));
 
     iface->hid_physical.device_control_report = device_control_report;
+    iface->hid_physical.device_gain_report = device_gain_report;
     iface->hid_physical.effect_control_report = effect_control_report;
     iface->hid_physical.effect_update_report = effect_update_report;
     return TRUE;
@@ -1012,6 +1040,16 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             io->Status = STATUS_INVALID_PARAMETER;
         else
             io->Status = iface->hid_vtbl->physical_device_control(iface, control);
+    }
+    else if (packet->reportId == physical->device_gain_report)
+    {
+        struct pid_device_gain *report = (struct pid_device_gain *)(packet->reportBuffer + 1);
+
+        io->Information = sizeof(*report) + 1;
+        if (packet->reportBufferLen < io->Information)
+            io->Status = STATUS_BUFFER_TOO_SMALL;
+        else
+            io->Status = iface->hid_vtbl->physical_device_set_gain(iface, report->value);
     }
     else if (packet->reportId == physical->effect_control_report)
     {

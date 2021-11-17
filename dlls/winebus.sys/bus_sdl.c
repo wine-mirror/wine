@@ -480,6 +480,13 @@ static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, US
     return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS sdl_device_physical_device_set_gain(struct unix_device *iface, BYTE value)
+{
+    FIXME("iface %p, value %#x stub!\n", iface, value);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BYTE index,
                                                    USAGE control, BYTE iterations)
 {
@@ -664,6 +671,7 @@ static const struct hid_device_vtbl sdl_device_vtbl =
     sdl_device_stop,
     sdl_device_haptics_start,
     sdl_device_physical_device_control,
+    sdl_device_physical_device_set_gain,
     sdl_device_physical_effect_control,
     sdl_device_physical_effect_update,
 };

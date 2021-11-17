@@ -109,6 +109,7 @@ struct hid_device_vtbl
     NTSTATUS (*haptics_start)(struct unix_device *iface, DWORD duration_ms,
                               USHORT rumble_intensity, USHORT buzz_intensity);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
+    NTSTATUS (*physical_device_set_gain)(struct unix_device *iface, BYTE value);
     NTSTATUS (*physical_effect_control)(struct unix_device *iface, BYTE index, USAGE control, BYTE iterations);
     NTSTATUS (*physical_effect_update)(struct unix_device *iface, BYTE index, struct effect_params *params);
 };
@@ -157,6 +158,7 @@ struct hid_physical
     struct effect_params effect_params[256];
 
     BYTE device_control_report;
+    BYTE device_gain_report;
     BYTE effect_control_report;
     BYTE effect_update_report;
     BYTE set_periodic_report;
