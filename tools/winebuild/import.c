@@ -492,6 +492,8 @@ static void add_undef_import( const char *name, int is_ordinal )
     while (*name >= '0' && *name <= '9') ordinal = 10 * ordinal + *name++ - '0';
     if (*name++ != '$') return;
 
+    if (!use_msvcrt && find_name( name, stdc_functions )) return;
+
     import = add_static_import_dll( dll_name );
     if (is_ordinal)
         add_import_func( import, NULL, xstrdup( name ), ordinal, 0 );
