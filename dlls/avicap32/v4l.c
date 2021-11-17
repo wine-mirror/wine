@@ -143,4 +143,4 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 
 #endif  /* _WIN64 */
 
-#endif /* HAVE_LINUX_VIDEODEV_2 */
+#endif /* HAVE_LINUX_VIDEODEV2_H */
