@@ -263,3 +263,14 @@ NTSTATUS WINAPI wow64_NtUserSetKeyboardState( UINT *args )
 
     return NtUserSetKeyboardState( state );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
+{
+    UINT size = get_ulong( &args );
+    MOUSEMOVEPOINT *ptin = get_ptr( &args );
+    MOUSEMOVEPOINT *ptout = get_ptr( &args );
+    int count = get_ulong( &args );
+    DWORD resolution = get_ulong( &args );
+
+    return NtUserGetMouseMovePointsEx( size, ptin, ptout, count, resolution );
+}

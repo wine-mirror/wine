@@ -956,7 +956,7 @@
 @ stub NtUserGetMenuIndex
 @ stub NtUserGetMenuItemRect
 @ stub NtUserGetMessage
-@ stub NtUserGetMouseMovePointsEx
+@ stdcall -syscall NtUserGetMouseMovePointsEx(long ptr ptr long long)
 @ stdcall -syscall NtUserGetObjectInformation(long long long long ptr)
 @ stub NtUserGetOemBitmapSize
 @ stdcall -syscall NtUserGetOpenClipboardWindow()

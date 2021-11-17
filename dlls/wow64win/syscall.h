@@ -101,6 +101,7 @@
     SYSCALL_ENTRY( NtUserGetKeyState ) \
     SYSCALL_ENTRY( NtUserGetKeyboardState ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
+    SYSCALL_ENTRY( NtUserGetMouseMovePointsEx ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
     SYSCALL_ENTRY( NtUserGetOpenClipboardWindow ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
