@@ -1096,15 +1096,15 @@ static ULONG WINAPI commandprepare_Release(ICommandPrepare *iface)
 static HRESULT WINAPI commandprepare_Prepare(ICommandPrepare *iface, ULONG runs)
 {
     struct command *command = impl_from_ICommandPrepare( iface );
-    FIXME("%p, %u\n", command, runs);
-    return E_NOTIMPL;
+    TRACE("%p, %u\n", command, runs);
+    return S_OK;
 }
 
 static HRESULT WINAPI commandprepare_Unprepare(ICommandPrepare *iface)
 {
     struct command *command = impl_from_ICommandPrepare( iface );
-    FIXME("%p\n", command);
-    return E_NOTIMPL;
+    TRACE("%p\n", command);
+    return S_OK;
 }
 
 struct ICommandPrepareVtbl commandprepareVtbl =
