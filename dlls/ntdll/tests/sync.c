@@ -26,6 +26,7 @@
 #include "winternl.h"
 #include "wine/test.h"
 
+static NTSTATUS (WINAPI *pNtAlertThreadByThreadId)( HANDLE );
 static NTSTATUS (WINAPI *pNtClose)( HANDLE );
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const OBJECT_ATTRIBUTES *, EVENT_TYPE, BOOLEAN);
 static NTSTATUS (WINAPI *pNtCreateKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, ULONG );
@@ -43,6 +44,7 @@ static NTSTATUS (WINAPI *pNtReleaseMutant)( HANDLE, LONG * );
 static NTSTATUS (WINAPI *pNtReleaseSemaphore)( HANDLE, ULONG, ULONG * );
 static NTSTATUS (WINAPI *pNtResetEvent)( HANDLE, LONG * );
 static NTSTATUS (WINAPI *pNtSetEvent)( HANDLE, LONG * );
+static NTSTATUS (WINAPI *pNtWaitForAlertByThreadId)( void *, const LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pNtWaitForKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
 static BOOLEAN  (WINAPI *pRtlAcquireResourceExclusive)( RTL_RWLOCK *, BOOLEAN );
 static BOOLEAN  (WINAPI *pRtlAcquireResourceShared)( RTL_RWLOCK *, BOOLEAN );
@@ -754,10 +756,98 @@ static void test_resource(void)
     pRtlDeleteResource(&resource);
 }
 
+static DWORD WINAPI tid_alert_thread( void *arg )
+{
+    NTSTATUS ret;
+
+    ret = pNtAlertThreadByThreadId( arg );
+    ok(!ret, "got %#x\n", ret);
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, NULL );
+    ok(ret == STATUS_ALERTED, "got %#x\n", ret);
+
+    return 0;
+}
+
+static void test_tid_alert( char **argv )
+{
+    LARGE_INTEGER timeout = {{0}};
+    char cmdline[MAX_PATH];
+    STARTUPINFOA si = {0};
+    PROCESS_INFORMATION pi;
+    HANDLE thread;
+    NTSTATUS ret;
+    DWORD tid;
+
+    if (!pNtWaitForAlertByThreadId)
+    {
+        win_skip("NtWaitForAlertByThreadId is not available\n");
+        return;
+    }
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = pNtAlertThreadByThreadId( 0 );
+    ok(ret == STATUS_INVALID_CID, "got %#x\n", ret);
+
+    ret = pNtAlertThreadByThreadId( (HANDLE)0xdeadbeef );
+    ok(ret == STATUS_INVALID_CID, "got %#x\n", ret);
+
+    ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)GetCurrentThreadId() );
+    ok(!ret, "got %#x\n", ret);
+
+    ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)GetCurrentThreadId() );
+    ok(!ret, "got %#x\n", ret);
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
+    ok(ret == STATUS_ALERTED, "got %#x\n", ret);
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x321, &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    thread = CreateThread( NULL, 0, tid_alert_thread, (HANDLE)(DWORD_PTR)GetCurrentThreadId(), 0, &tid );
+    timeout.QuadPart = -1000 * 10000;
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
+    ok(ret == STATUS_ALERTED, "got %#x\n", ret);
+
+    ret = WaitForSingleObject( thread, 100 );
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tid );
+    ok(!ret, "got %#x\n", ret);
+
+    ret = WaitForSingleObject( thread, 1000 );
+    ok(!ret, "got %d\n", ret);
+
+    ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tid );
+    ok(!ret, "got %#x\n", ret);
+
+    CloseHandle(thread);
+
+    sprintf( cmdline, "%s %s subprocess", argv[0], argv[1] );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+    ok(ret, "failed to create process, error %u\n", GetLastError());
+    ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)pi.dwThreadId );
+    todo_wine ok(ret == STATUS_ACCESS_DENIED, "got %#x\n", ret);
+    ok(!WaitForSingleObject( pi.hProcess, 1000 ), "wait failed\n");
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+}
+
 START_TEST(sync)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
+    char **argv;
+    int argc;
 
+    argc = winetest_get_mainargs( &argv );
+
+    if (argc > 2) return;
+
+    pNtAlertThreadByThreadId        = (void *)GetProcAddress(module, "NtAlertThreadByThreadId");
     pNtClose                        = (void *)GetProcAddress(module, "NtClose");
     pNtCreateEvent                  = (void *)GetProcAddress(module, "NtCreateEvent");
     pNtCreateKeyedEvent             = (void *)GetProcAddress(module, "NtCreateKeyedEvent");
@@ -775,6 +865,7 @@ START_TEST(sync)
     pNtReleaseSemaphore             = (void *)GetProcAddress(module, "NtReleaseSemaphore");
     pNtResetEvent                   = (void *)GetProcAddress(module, "NtResetEvent");
     pNtSetEvent                     = (void *)GetProcAddress(module, "NtSetEvent");
+    pNtWaitForAlertByThreadId       = (void *)GetProcAddress(module, "NtWaitForAlertByThreadId");
     pNtWaitForKeyedEvent            = (void *)GetProcAddress(module, "NtWaitForKeyedEvent");
     pRtlAcquireResourceExclusive    = (void *)GetProcAddress(module, "RtlAcquireResourceExclusive");
     pRtlAcquireResourceShared       = (void *)GetProcAddress(module, "RtlAcquireResourceShared");
@@ -792,4 +883,5 @@ START_TEST(sync)
     test_semaphore();
     test_keyed_events();
     test_resource();
+    test_tid_alert( argv );
 }
