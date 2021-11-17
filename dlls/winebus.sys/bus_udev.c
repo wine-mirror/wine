@@ -926,9 +926,20 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
 
 static NTSTATUS lnxev_device_physical_device_set_gain(struct unix_device *iface, BYTE value)
 {
-    FIXME("iface %p, value %#x stub!\n", iface, value);
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    struct input_event ie =
+    {
+        .type = EV_FF,
+        .code = FF_GAIN,
+        .value = value * 100 / 255,
+    };
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, value %#x.\n", iface, value);
+
+    if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
+        WARN("write failed %d %s\n", errno, strerror(errno));
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS lnxev_device_physical_effect_control(struct unix_device *iface, BYTE index,
@@ -1102,8 +1113,8 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
     lnxev_device_start,
     lnxev_device_stop,
     lnxev_device_haptics_start,
-    lnxev_device_physical_device_set_gain,
     lnxev_device_physical_device_control,
+    lnxev_device_physical_device_set_gain,
     lnxev_device_physical_effect_control,
     lnxev_device_physical_effect_update,
 };
