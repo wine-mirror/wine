@@ -1155,7 +1155,7 @@
 @ stub NtUserResolveDesktopForWOW
 @ stub NtUserRestoreWindowDpiChanges
 @ stub NtUserSBGetParms
-@ stub NtUserScrollDC
+@ stdcall NtUserScrollDC(long long long ptr ptr long ptr)
 @ stub NtUserScrollWindowEx
 @ stub NtUserSelectPalette
 @ stub NtUserSendEventMessage

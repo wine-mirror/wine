@@ -1054,6 +1054,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
+    .pScrollDC = nulldrv_ScrollDC,
 };
 
 const struct user_driver_funcs *user_driver = &lazy_load_driver;

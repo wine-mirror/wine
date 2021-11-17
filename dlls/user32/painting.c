@@ -1506,7 +1506,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
         hDC = GetDCEx( hwnd, 0, dcxflags);
         if (hDC)
         {
-            ScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
+            NtUserScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
 
             ReleaseDC( hwnd, hDC );
 
@@ -1630,119 +1630,6 @@ BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
 {
     return scroll_window( hwnd, dx, dy, rect, clipRect, 0, NULL,
                           SW_INVALIDATE | SW_ERASE | (rect ? 0 : SW_SCROLLCHILDREN), FALSE ) != ERROR;
-}
-
-
-/*************************************************************************
- *		ScrollDC (USER32.@)
- *
- * dx, dy, lprcScroll and lprcClip are all in logical coordinates (msdn is
- * wrong) hrgnUpdate is returned in device coordinates with rcUpdate in
- * logical coordinates.
- */
-BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
-                      HRGN ret_update_rgn, LPRECT update_rect )
-
-{
-    HRGN update_rgn = ret_update_rgn;
-    RECT src_rect, clip_rect, offset;
-    INT dxdev, dydev;
-    HRGN dstrgn, cliprgn, visrgn;
-    BOOL ret;
-
-    TRACE( "dx,dy %d,%d scroll %s clip %s update %p rect %p\n",
-           dx, dy, wine_dbgstr_rect(scroll), wine_dbgstr_rect(clip), ret_update_rgn, update_rect );
-
-    /* get the visible region */
-    visrgn = CreateRectRgn( 0, 0, 0, 0 );
-    GetRandomRgn( hdc, visrgn, SYSRGN );
-    if (!(GetVersion() & 0x80000000))
-    {
-        POINT org;
-        GetDCOrgEx( hdc, &org );
-        OffsetRgn( visrgn, -org.x, -org.y );
-    }
-
-    /* intersect with the clipping region if the DC has one */
-    cliprgn = CreateRectRgn( 0, 0, 0, 0);
-    if (GetClipRgn( hdc, cliprgn ) != 1)
-    {
-        DeleteObject( cliprgn );
-        cliprgn = 0;
-    }
-    else CombineRgn( visrgn, visrgn, cliprgn, RGN_AND );
-
-    /* only those pixels in the scroll rectangle that remain in the clipping
-     * rect are scrolled. */
-    if (clip)
-        clip_rect = *clip;
-    else
-        GetClipBox( hdc, &clip_rect );
-    src_rect = clip_rect;
-    OffsetRect( &clip_rect, -dx, -dy );
-    IntersectRect( &src_rect, &src_rect, &clip_rect );
-
-    /* if an scroll rectangle is specified, only the pixels within that
-     * rectangle are scrolled */
-    if (scroll) IntersectRect( &src_rect, &src_rect, scroll );
-
-    /* now convert to device coordinates */
-    LPtoDP( hdc, (LPPOINT)&src_rect, 2 );
-    TRACE( "source rect: %s\n", wine_dbgstr_rect(&src_rect) );
-    /* also dx and dy */
-    SetRect( &offset, 0, 0, dx, dy );
-    LPtoDP( hdc, (LPPOINT)&offset, 2 );
-    dxdev = offset.right - offset.left;
-    dydev = offset.bottom - offset.top;
-
-    /* now intersect with the visible region to get the pixels that will actually scroll */
-    dstrgn = CreateRectRgnIndirect( &src_rect );
-    CombineRgn( dstrgn, dstrgn, visrgn, RGN_AND );
-    OffsetRgn( dstrgn, dxdev, dydev );
-    ExtSelectClipRgn( hdc, dstrgn, RGN_AND );
-
-    /* compute the update areas.  This is the combined clip rectangle
-     * minus the scrolled region, and intersected with the visible region. */
-    if (ret_update_rgn || update_rect)
-    {
-        /* intersect clip and scroll rectangles, allowing NULL values */
-        if (scroll)
-        {
-            if (clip)
-                IntersectRect( &clip_rect, clip, scroll );
-            else
-                clip_rect = *scroll;
-        }
-        else if (clip)
-            clip_rect = *clip;
-        else
-            GetClipBox( hdc, &clip_rect );
-
-        /* Convert the combined clip rectangle to device coordinates */
-        LPtoDP( hdc, (LPPOINT)&clip_rect, 2 );
-        if (update_rgn)
-            SetRectRgn( update_rgn, clip_rect.left, clip_rect.top, clip_rect.right, clip_rect.bottom );
-        else
-            update_rgn = CreateRectRgnIndirect( &clip_rect );
-
-        CombineRgn( update_rgn, update_rgn, visrgn, RGN_AND );
-        CombineRgn( update_rgn, update_rgn, dstrgn, RGN_DIFF );
-    }
-
-    ret = USER_Driver->pScrollDC( hdc, dx, dy, update_rgn );
-
-    if (ret && update_rect)
-    {
-        GetRgnBox( update_rgn, update_rect );
-        DPtoLP( hdc, (LPPOINT)update_rect, 2 );
-        TRACE( "returning update_rect %s\n", wine_dbgstr_rect(update_rect) );
-    }
-    if (!ret_update_rgn) DeleteObject( update_rgn );
-    SelectClipRgn( hdc, cliprgn );
-    if (cliprgn) DeleteObject( cliprgn );
-    DeleteObject( visrgn );
-    DeleteObject( dstrgn );
-    return ret;
 }
 
 /************************************************************************

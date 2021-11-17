@@ -277,11 +277,6 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
     return pt[1].y - pt[0].y;
 }
 
-static inline BOOL is_win9x(void)
-{
-    return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
-}
-
 static inline WCHAR *strdupW( const WCHAR *p )
 {
     WCHAR *ret;

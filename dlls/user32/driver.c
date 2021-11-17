@@ -154,15 +154,6 @@ static void CDECL nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
 {
 }
 
-static BOOL CDECL nulldrv_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
-{
-    RECT rect;
-
-    GetClipBox( hdc, &rect );
-    return BitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                   hdc, rect.left - dx, rect.top - dy, SRCCOPY );
-}
-
 static void CDECL nulldrv_SetCapture( HWND hwnd, UINT flags )
 {
 }
@@ -365,7 +356,7 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_GetDC,
     nulldrv_MsgWaitForMultipleObjectsEx,
     nulldrv_ReleaseDC,
-    nulldrv_ScrollDC,
+    NULL,
     nulldrv_SetCapture,
     nulldrv_SetFocus,
     loaderdrv_SetLayeredWindowAttributes,

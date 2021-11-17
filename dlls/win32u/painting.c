@@ -905,3 +905,115 @@ BOOL WINAPI NtGdiDrawStream( HDC hdc, ULONG in, void *pvin )
     FIXME("stub: %p, %d, %p\n", hdc, in, pvin);
     return FALSE;
 }
+
+/*************************************************************************
+ *	     NtUserScrollDC    (win32u.@)
+ */
+BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
+                            HRGN ret_update_rgn, RECT *update_rect )
+
+{
+    HRGN update_rgn = ret_update_rgn;
+    RECT src_rect, clip_rect, offset;
+    INT dxdev, dydev;
+    HRGN dstrgn, cliprgn, visrgn;
+    POINT org;
+    DC *dc;
+    BOOL ret;
+
+    TRACE( "dx,dy %d,%d scroll %s clip %s update %p rect %p\n",
+           dx, dy, wine_dbgstr_rect(scroll), wine_dbgstr_rect(clip), ret_update_rgn, update_rect );
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    org.x = dc->attr->vis_rect.left;
+    org.y = dc->attr->vis_rect.top;
+    release_dc_ptr( dc );
+
+    /* get the visible region */
+    visrgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+    NtGdiGetRandomRgn( hdc, visrgn, SYSRGN );
+    if (!is_win9x()) NtGdiOffsetRgn( visrgn, -org.x, -org.y );
+
+    /* intersect with the clipping region if the DC has one */
+    cliprgn = NtGdiCreateRectRgn( 0, 0, 0, 0);
+    if (NtGdiGetRandomRgn( hdc, cliprgn, NTGDI_RGN_MIRROR_RTL | 1 ) != 1)
+    {
+        NtGdiDeleteObjectApp( cliprgn );
+        cliprgn = 0;
+    }
+    else NtGdiCombineRgn( visrgn, visrgn, cliprgn, RGN_AND );
+
+    /* only those pixels in the scroll rectangle that remain in the clipping
+     * rect are scrolled. */
+    if (clip)
+        clip_rect = *clip;
+    else
+        NtGdiGetAppClipBox( hdc, &clip_rect );
+    src_rect = clip_rect;
+    offset_rect( &clip_rect, -dx, -dy );
+    intersect_rect( &src_rect, &src_rect, &clip_rect );
+
+    /* if an scroll rectangle is specified, only the pixels within that
+     * rectangle are scrolled */
+    if (scroll) intersect_rect( &src_rect, &src_rect, scroll );
+
+    /* now convert to device coordinates */
+    NtGdiTransformPoints( hdc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiLPtoDP );
+    TRACE( "source rect: %s\n", wine_dbgstr_rect(&src_rect) );
+    /* also dx and dy */
+    SetRect( &offset, 0, 0, dx, dy );
+    NtGdiTransformPoints( hdc, (POINT *)&offset, (POINT *)&offset, 2, NtGdiLPtoDP );
+    dxdev = offset.right - offset.left;
+    dydev = offset.bottom - offset.top;
+
+    /* now intersect with the visible region to get the pixels that will actually scroll */
+    dstrgn = NtGdiCreateRectRgn( src_rect.left, src_rect.top, src_rect.right, src_rect.bottom );
+    NtGdiCombineRgn( dstrgn, dstrgn, visrgn, RGN_AND );
+    NtGdiOffsetRgn( dstrgn, dxdev, dydev );
+    NtGdiExtSelectClipRgn( hdc, dstrgn, RGN_AND );
+
+    /* compute the update areas.  This is the combined clip rectangle
+     * minus the scrolled region, and intersected with the visible region. */
+    if (ret_update_rgn || update_rect)
+    {
+        /* intersect clip and scroll rectangles, allowing NULL values */
+        if (scroll)
+        {
+            if (clip)
+                intersect_rect( &clip_rect, clip, scroll );
+            else
+                clip_rect = *scroll;
+        }
+        else if (clip)
+            clip_rect = *clip;
+        else
+            NtGdiGetAppClipBox( hdc, &clip_rect );
+
+        /* Convert the combined clip rectangle to device coordinates */
+        NtGdiTransformPoints( hdc, (POINT *)&clip_rect, (POINT *)&clip_rect, 2, NtGdiLPtoDP );
+        if (update_rgn)
+            NtGdiSetRectRgn( update_rgn, clip_rect.left, clip_rect.top,
+                             clip_rect.right, clip_rect.bottom );
+        else
+            update_rgn = NtGdiCreateRectRgn( clip_rect.left, clip_rect.top,
+                                             clip_rect.right, clip_rect.bottom );
+
+        NtGdiCombineRgn( update_rgn, update_rgn, visrgn, RGN_AND );
+        NtGdiCombineRgn( update_rgn, update_rgn, dstrgn, RGN_DIFF );
+    }
+
+    ret = user_driver->pScrollDC( hdc, dx, dy, update_rgn );
+
+    if (ret && update_rect)
+    {
+        NtGdiGetRgnBox( update_rgn, update_rect );
+        NtGdiTransformPoints( hdc, (POINT *)&update_rect, (POINT *)&update_rect, 2, NtGdiDPtoLP );
+        TRACE( "returning update_rect %s\n", wine_dbgstr_rect(update_rect) );
+    }
+    if (!ret_update_rgn) NtGdiDeleteObjectApp( update_rgn );
+    NtGdiExtSelectClipRgn( hdc, cliprgn, RGN_COPY );
+    if (cliprgn) NtGdiDeleteObjectApp( cliprgn );
+    NtGdiDeleteObjectApp( visrgn );
+    NtGdiDeleteObjectApp( dstrgn );
+    return ret;
+}

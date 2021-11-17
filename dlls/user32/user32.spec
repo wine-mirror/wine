@@ -627,7 +627,7 @@
 @ stdcall ReuseDDElParam(long long long long long)
 @ stdcall ScreenToClient(long ptr)
 @ stdcall ScrollChildren(long long long long)
-@ stdcall ScrollDC(long long long ptr ptr long ptr)
+@ stdcall ScrollDC(long long long ptr ptr long ptr) NtUserScrollDC
 @ stdcall ScrollWindow(long long long ptr ptr)
 @ stdcall ScrollWindowEx(long long long ptr ptr long ptr long)
 @ stdcall SendDlgItemMessageA(long long long long long)
