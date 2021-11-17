@@ -4115,7 +4115,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 
     if ((v = d3d10_effect_get_variable_by_index(effect, index)))
     {
-        TRACE("Returning %svariable %s.\n", is_var_shared(v) ? "shared " : NULL, debugstr_a(v->name));
+        TRACE("Returning %svariable %s.\n", is_var_shared(v) ? "shared " : "", debugstr_a(v->name));
         return &v->ID3D10EffectVariable_iface;
     }
 
