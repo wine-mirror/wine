@@ -22,15 +22,6 @@
 
 #include "wine/debug.h"
 
-extern LONG CoreAudio_WaveInit(void);
-extern void CoreAudio_WaveRelease(void);
-
-extern LONG CoreAudio_MIDIInit(void);
-extern LONG CoreAudio_MIDIRelease(void);
-
-extern LONG CoreAudio_MixerInit(void);
-extern void CoreAudio_MixerRelease(void);
-
 /* fourcc is in native order, where MSB is the first character. */
 static inline const char* wine_dbgstr_fourcc(INT32 fourcc)
 {
