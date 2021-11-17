@@ -156,7 +156,7 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     return ret;
 }
 
-static inline BOOL is_quotable_char(char c)
+static inline BOOL is_quotable_char(WCHAR c)
 {
     switch(c)
     {
