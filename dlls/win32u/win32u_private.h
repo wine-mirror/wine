@@ -200,6 +200,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
+    INT      (WINAPI *pNtUserToUnicodeEx)( UINT virt, UINT scan, const BYTE *state,
+                                           WCHAR *str, int size, UINT flags, HKL layout );
     WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
 
     /* Wine-specific functions */

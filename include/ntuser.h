@@ -53,6 +53,7 @@ struct user_thread_info
 
 C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );
 
+HKL     WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags );
 BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
@@ -70,8 +71,11 @@ HWND    WINAPI NtUserGetClipboardViewer(void);
 INT     WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size );
 SHORT   WINAPI NtUserGetKeyState( INT vkey );
 HKL     WINAPI NtUserGetKeyboardLayout( DWORD thread_id );
+UINT    WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts );
 BOOL    WINAPI NtUserGetKeyboardState( BYTE *state );
 BOOL    WINAPI NtUserGetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, DWORD *flags );
+int     WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOVEPOINT *ptout,
+                                           int count, DWORD resolution );
 BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
                                            DWORD len, DWORD *needed );
 HWND    WINAPI NtUserGetOpenClipboardWindow(void);
@@ -92,6 +96,10 @@ BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );
 BOOL    WINAPI NtUserSetThreadDesktop( HDESK handle );
+INT     WINAPI NtUserShowCursor( BOOL show );
+INT     WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
+                                  WCHAR *str, int size, UINT flags, HKL layout );
+BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 
 #endif /* _NTUSER_ */

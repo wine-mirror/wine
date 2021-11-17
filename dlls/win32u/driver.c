@@ -1013,6 +1013,12 @@ static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return load_driver()->pMapVirtualKeyEx( code, type, layout );
 }
 
+static INT CDECL loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
+                                        int size, UINT flags, HKL layout )
+{
+    return load_driver()->pToUnicodeEx( virt, scan, state, str, size, flags, layout );
+}
+
 static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
     return load_driver()->pVkKeyScanEx( ch, layout );
@@ -1027,6 +1033,7 @@ static const struct user_driver_funcs lazy_load_driver =
 {
     .pGetKeyNameText = loaderdrv_GetKeyNameText,
     .pMapVirtualKeyEx = loaderdrv_MapVirtualKeyEx,
+    .pToUnicodeEx = loaderdrv_ToUnicodeEx,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
 };

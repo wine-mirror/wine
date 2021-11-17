@@ -1276,7 +1276,7 @@
 @ stub NtUserTestForInteractiveUser
 @ stub NtUserThunkedMenuInfo
 @ stub NtUserThunkedMenuItemInfo
-@ stub NtUserToUnicodeEx
+@ stdcall NtUserToUnicodeEx(long long ptr ptr long long long)
 @ stub NtUserTrackMouseEvent
 @ stub NtUserTrackPopupMenuEx
 @ stub NtUserTransformPoint

@@ -478,3 +478,95 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(buffer) );
     return len;
 }
+
+/****************************************************************************
+ *	     NtUserToUnicodeEx    (win32u.@)
+ */
+INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
+                              WCHAR *str, int size, UINT flags, HKL layout )
+{
+    BOOL shift, ctrl, alt, numlock;
+    WCHAR buffer[2];
+    INT len;
+
+    TRACE_(keyboard)( "virt %u, scan %u, state %p, str %p, size %d, flags %x, layout %p.\n",
+                      virt, scan, state, str, size, flags, layout );
+
+    if (!state) return 0;
+    if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1)
+        return len;
+
+    alt = state[VK_MENU] & 0x80;
+    shift = state[VK_SHIFT] & 0x80;
+    ctrl = state[VK_CONTROL] & 0x80;
+    numlock = state[VK_NUMLOCK] & 0x01;
+
+    /* FIXME: English keyboard layout specific */
+
+    if (scan & 0x8000) buffer[0] = 0; /* key up */
+    else if (virt == VK_ESCAPE) buffer[0] = VK_ESCAPE;
+    else if (!ctrl)
+    {
+        switch (virt)
+        {
+        case VK_BACK:       buffer[0] = '\b'; break;
+        case VK_OEM_1:      buffer[0] = shift ? ':' : ';'; break;
+        case VK_OEM_2:      buffer[0] = shift ? '?' : '/'; break;
+        case VK_OEM_3:      buffer[0] = shift ? '~' : '`'; break;
+        case VK_OEM_4:      buffer[0] = shift ? '{' : '['; break;
+        case VK_OEM_5:      buffer[0] = shift ? '|' : '\\'; break;
+        case VK_OEM_6:      buffer[0] = shift ? '}' : ']'; break;
+        case VK_OEM_7:      buffer[0] = shift ? '"' : '\''; break;
+        case VK_OEM_COMMA:  buffer[0] = shift ? '<' : ','; break;
+        case VK_OEM_MINUS:  buffer[0] = shift ? '_' : '-'; break;
+        case VK_OEM_PERIOD: buffer[0] = shift ? '>' : '.'; break;
+        case VK_OEM_PLUS:   buffer[0] = shift ? '+' : '='; break;
+        case VK_RETURN:     buffer[0] = '\r'; break;
+        case VK_SPACE:      buffer[0] = ' '; break;
+        case VK_TAB:        buffer[0] = '\t'; break;
+        case VK_MULTIPLY:   buffer[0] = '*'; break;
+        case VK_ADD:        buffer[0] = '+'; break;
+        case VK_SUBTRACT:   buffer[0] = '-'; break;
+        case VK_DIVIDE:     buffer[0] = '/'; break;
+        default:
+            if (virt >= '0' && virt <= '9')
+                buffer[0] = shift ? ")!@#$%^&*("[virt - '0'] : virt;
+            else if (virt >= 'A' && virt <= 'Z')
+                buffer[0] = shift || (state[VK_CAPITAL] & 0x01) ? virt : virt + 'a' - 'A';
+            else if (virt >= VK_NUMPAD0 && virt <= VK_NUMPAD9 && numlock && !shift)
+                buffer[0] = '0' + virt - VK_NUMPAD0;
+            else if (virt == VK_DECIMAL && numlock && !shift)
+                buffer[0] = '.';
+            else
+                buffer[0] = 0;
+            break;
+        }
+    }
+    else if (!alt) /* Control codes */
+    {
+        switch (virt)
+        {
+        case VK_OEM_4:     buffer[0] = 0x1b; break;
+        case VK_OEM_5:     buffer[0] = 0x1c; break;
+        case VK_OEM_6:     buffer[0] = 0x1d; break;
+        case '6':          buffer[0] = shift ? 0x1e : 0; break;
+        case VK_OEM_MINUS: buffer[0] = shift ? 0x1f : 0; break;
+        case VK_BACK:      buffer[0] = 0x7f; break;
+        case VK_RETURN:    buffer[0] = shift ? 0 : '\n'; break;
+        case '2':          buffer[0] = shift ? 0xffff : 0xf000; break;
+        case VK_SPACE:     buffer[0] = ' '; break;
+        default:
+            if (virt >= 'A' && virt <= 'Z') buffer[0] = virt - 'A' + 1;
+            else buffer[0] = 0;
+            break;
+        }
+    }
+    else buffer[0] = 0;
+    buffer[1] = 0;
+    len = lstrlenW( buffer );
+    if (buffer[0] == 0xffff) buffer[0] = 0;
+    lstrcpynW( str, buffer, size );
+
+    TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(str) );
+    return len;
+}

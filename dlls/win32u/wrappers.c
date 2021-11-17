@@ -626,6 +626,12 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return unix_funcs->pNtUserMapVirtualKeyEx( code, type, layout );
 }
 
+INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
+                              WCHAR *str, int size, UINT flags, HKL layout )
+{
+    return unix_funcs->pNtUserToUnicodeEx( virt, scan, state, str, size, flags, layout );
+}
+
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
