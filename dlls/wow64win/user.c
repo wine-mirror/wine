@@ -250,6 +250,13 @@ NTSTATUS WINAPI wow64_NtUserGetKeyState( UINT *args )
     return NtUserGetKeyState( vkey );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetKeyboardLayout( UINT *args )
+{
+    DWORD tid = get_ulong( &args );
+
+    return HandleToUlong( NtUserGetKeyboardLayout( tid ));
+}
+
 NTSTATUS WINAPI wow64_NtUserGetKeyboardState( UINT *args )
 {
     BYTE *state = get_ptr( &args );
