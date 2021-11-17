@@ -457,7 +457,7 @@ BLUE_INI TEXTFILE
 "ProgressSpaceSize = 0\r\n"
 "BgType = BorderFill\r\n"
 "FillType = Solid\r\n"
-"FillColor = 255 255 255\r\n"
+"FillColor = 48 150 250\r\n"
 "BorderSize = 1\r\n"
 "BorderColor = 174 174 174\r\n"
 
