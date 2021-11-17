@@ -749,7 +749,7 @@
 @ stub NtUpdateInputSinkTransforms
 @ stub NtUserAcquireIAMKey
 @ stub NtUserAcquireInteractiveControlBackgroundAccess
-@ stub NtUserActivateKeyboardLayout
+@ stdcall NtUserActivateKeyboardLayout(long long)
 @ stdcall -syscall NtUserAddClipboardFormatListener(long)
 @ stub NtUserAddVisualIdentifier
 @ stub NtUserAlterWindowStyle

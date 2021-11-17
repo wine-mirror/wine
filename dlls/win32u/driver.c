@@ -1003,6 +1003,11 @@ static const struct user_driver_funcs *load_driver(void)
     return user_driver;
 }
 
+static BOOL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
+{
+    return load_driver()->pActivateKeyboardLayout( layout, flags );
+}
+
 static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     return load_driver()->pGetKeyNameText( lparam, buffer, size );
@@ -1031,6 +1036,7 @@ static void CDECL loaderdrv_UpdateClipboard(void)
 
 static const struct user_driver_funcs lazy_load_driver =
 {
+    .pActivateKeyboardLayout = loaderdrv_ActivateKeyboardLayout,
     .pGetKeyNameText = loaderdrv_GetKeyNameText,
     .pMapVirtualKeyEx = loaderdrv_MapVirtualKeyEx,
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,

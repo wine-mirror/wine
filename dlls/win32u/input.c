@@ -570,3 +570,33 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(str) );
     return len;
 }
+
+/**********************************************************************
+ *	     NtUserActivateKeyboardLayout    (win32u.@)
+ */
+HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
+{
+    struct user_thread_info *info = get_user_thread_info();
+    HKL old_layout;
+
+    TRACE_(keyboard)( "layout %p, flags %x\n", layout, flags );
+
+    if (flags) FIXME_(keyboard)( "flags %x not supported\n", flags );
+
+    if (layout == (HKL)HKL_NEXT || layout == (HKL)HKL_PREV)
+    {
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        FIXME_(keyboard)( "HKL_NEXT and HKL_PREV not supported\n" );
+        return 0;
+    }
+
+    if (!user_driver->pActivateKeyboardLayout( layout, flags ))
+        return 0;
+
+    old_layout = info->kbd_layout;
+    info->kbd_layout = layout;
+    if (old_layout != layout) info->kbd_layout_id = 0;
+
+    if (!old_layout) return get_locale_kbd_layout();
+    return old_layout;
+}

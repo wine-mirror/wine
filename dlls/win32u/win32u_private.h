@@ -194,6 +194,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
+    HKL      (WINAPI *pNtUserActivateKeyboardLayout)( HKL layout, UINT flags );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
     INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );

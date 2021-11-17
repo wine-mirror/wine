@@ -233,11 +233,6 @@ static void CDECL nulldrv_ThreadDetach( void )
  * Each entry point simply loads the real driver and chains to it.
  */
 
-static BOOL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
-{
-    return load_driver()->pActivateKeyboardLayout( layout, flags );
-}
-
 static void CDECL loaderdrv_Beep(void)
 {
     load_driver()->pBeep();
@@ -345,7 +340,7 @@ static struct user_driver_funcs lazy_load_driver =
 {
     { NULL },
     /* keyboard functions */
-    loaderdrv_ActivateKeyboardLayout,
+    NULL,
     loaderdrv_Beep,
     NULL,
     loaderdrv_GetKeyboardLayoutList,

@@ -734,7 +734,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         }
 
     case WM_INPUTLANGCHANGEREQUEST:
-        ActivateKeyboardLayout( (HKL)lParam, 0 );
+        NtUserActivateKeyboardLayout( (HKL)lParam, 0 );
         break;
 
     case WM_INPUTLANGCHANGE:

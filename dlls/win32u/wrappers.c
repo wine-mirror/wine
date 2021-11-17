@@ -596,6 +596,11 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
     return unix_funcs->pNtGdiDdDDISetVidPnSourceOwner( desc );
 }
 
+HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
+{
+    return unix_funcs->pNtUserActivateKeyboardLayout( layout, flags );
+}
+
 INT WINAPI NtUserCountClipboardFormats(void)
 {
     return unix_funcs->pNtUserCountClipboardFormats();

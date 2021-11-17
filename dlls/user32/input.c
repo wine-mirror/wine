@@ -873,36 +873,6 @@ INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 }
 
 /**********************************************************************
- *		ActivateKeyboardLayout (USER32.@)
- */
-HKL WINAPI ActivateKeyboardLayout( HKL layout, UINT flags )
-{
-    struct user_thread_info *info = get_user_thread_info();
-    HKL old_layout;
-
-    TRACE_(keyboard)( "layout %p, flags %x\n", layout, flags );
-
-    if (flags) FIXME_(keyboard)( "flags %x not supported\n", flags );
-
-    if (layout == (HKL)HKL_NEXT || layout == (HKL)HKL_PREV)
-    {
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        FIXME_(keyboard)( "HKL_NEXT and HKL_PREV not supported\n" );
-        return 0;
-    }
-
-    if (!USER_Driver->pActivateKeyboardLayout( layout, flags ))
-        return 0;
-
-    old_layout = info->kbd_layout;
-    info->kbd_layout = layout;
-    if (old_layout != layout) info->kbd_layout_id = 0;
-
-    if (!old_layout) return get_locale_kbd_layout();
-    return old_layout;
-}
-
-/**********************************************************************
  *		BlockInput (USER32.@)
  */
 BOOL WINAPI BlockInput(BOOL fBlockIt)
@@ -1056,7 +1026,7 @@ HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
         RegCloseKey( hkey );
     }
 
-    if ((flags & KLF_ACTIVATE) && ActivateKeyboardLayout( layout, 0 )) return layout;
+    if ((flags & KLF_ACTIVATE) && NtUserActivateKeyboardLayout( layout, 0 )) return layout;
 
     /* FIXME: semi-stub: returning default layout */
     return get_locale_kbd_layout();
