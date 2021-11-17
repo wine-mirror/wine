@@ -373,12 +373,12 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
     device->drvcaps.dwPrimaryBuffers = 1;
     device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-    device->drvcaps.dwMaxHwMixingAllBuffers = 16;
+    device->drvcaps.dwMaxHwMixingAllBuffers = 1;
     device->drvcaps.dwMaxHwMixingStaticBuffers = device->drvcaps.dwMaxHwMixingAllBuffers;
     device->drvcaps.dwMaxHwMixingStreamingBuffers = device->drvcaps.dwMaxHwMixingAllBuffers;
-    device->drvcaps.dwFreeHwMixingAllBuffers = device->drvcaps.dwMaxHwMixingAllBuffers;
-    device->drvcaps.dwFreeHwMixingStaticBuffers = device->drvcaps.dwMaxHwMixingStaticBuffers;
-    device->drvcaps.dwFreeHwMixingStreamingBuffers = device->drvcaps.dwMaxHwMixingStreamingBuffers;
+    device->drvcaps.dwFreeHwMixingAllBuffers = 0;
+    device->drvcaps.dwFreeHwMixingStaticBuffers = 0;
+    device->drvcaps.dwFreeHwMixingStreamingBuffers = 0;
 
     ZeroMemory(&device->volpan, sizeof(device->volpan));
 
@@ -435,11 +435,10 @@ static HRESULT DirectSoundDevice_CreateSoundBuffer(
     }
 
     if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) &&
-        dsbd->dwFlags & DSBCAPS_LOCHARDWARE &&
-        device->drvcaps.dwFreeHwMixingAllBuffers == 0)
+        dsbd->dwFlags & DSBCAPS_LOCHARDWARE)
     {
-        WARN("ran out of emulated hardware buffers\n");
-        return DSERR_ALLOCATED;
+        WARN("unable to create hardware buffer\n");
+        return DSERR_UNSUPPORTED;
     }
 
     if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
