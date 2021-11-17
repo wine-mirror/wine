@@ -124,6 +124,7 @@ struct ACImpl {
     IUnknown *pUnkFTMarshal;
 
     EDataFlow dataflow;
+    UINT32 channel_count, period_ms;
     DWORD flags;
     HANDLE event;
     float *vols;
@@ -1179,7 +1180,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     ACImpl *This = impl_from_IAudioClient3(iface);
     HRESULT hr;
     OSStatus sc;
-    int i;
+    UINT32 i;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
           wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
@@ -1342,7 +1343,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         This->stream->cap_buffer = HeapAlloc(GetProcessHeap(), 0, This->stream->cap_bufsize_frames * This->stream->fmt->nBlockAlign);
     }
 
-    This->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
+    This->stream->share = mode;
+    This->flags = flags;
+    This->channel_count = fmt->nChannels;
+    This->period_ms = period / 10000;
+
+    This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
     if(!This->vols){
         CoTaskMemFree(This->stream->fmt);
         This->stream->fmt = NULL;
@@ -1351,11 +1357,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < fmt->nChannels; ++i)
+    for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
-
-    This->stream->share = mode;
-    This->flags = flags;
 
     hr = get_audio_session(sessionguid, This->parent, fmt->nChannels,
             &This->session);
@@ -1906,7 +1909,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 
     if(This->event && !This->timer)
         if(!CreateTimerQueueTimer(&This->timer, g_timer_q, ca_period_cb,
-                This, 0, This->stream->period_ms, WT_EXECUTEINTIMERTHREAD)){
+                This, 0, This->period_ms, WT_EXECUTEINTIMERTHREAD)){
             This->timer = NULL;
             OSSpinLockUnlock(&This->stream->lock);
             WARN("Unable to create timer: %u\n", GetLastError());
@@ -3173,7 +3176,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelCount(
     if(!out)
         return E_POINTER;
 
-    *out = This->stream->fmt->nChannels;
+    *out = This->channel_count;
 
     return S_OK;
 }
@@ -3189,7 +3192,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if(level < 0.f || level > 1.f)
         return E_INVALIDARG;
 
-    if(index >= This->stream->fmt->nChannels)
+    if(index >= This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&g_sessions_lock);
@@ -3214,7 +3217,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
     if(!level)
         return E_POINTER;
 
-    if(index >= This->stream->fmt->nChannels)
+    if(index >= This->channel_count)
         return E_INVALIDARG;
 
     *level = This->vols[index];
@@ -3234,7 +3237,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if(!levels)
         return E_POINTER;
 
-    if(count != This->stream->fmt->nChannels)
+    if(count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&g_sessions_lock);
@@ -3260,7 +3263,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if(!levels)
         return E_POINTER;
 
-    if(count != This->stream->fmt->nChannels)
+    if(count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&g_sessions_lock);
