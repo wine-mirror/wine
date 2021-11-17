@@ -486,6 +486,55 @@ BLUE_INI TEXTFILE
 "SizingMargins = 1, 1, 1, 1\r\n"
 "SizingType = Stretch\r\n"
 
+"[Progress.Fill]\r\n"
+"FillColor = 48 150 250\r\n"
+
+"[Progress.FillVert]\r\n"
+"FillColor = 48 150 250\r\n"
+
+"[Progress.Fill(Error)]\r\n"
+"FillColor = 213 0 0\r\n"
+
+"[Progress.FillVert(Error)]\r\n"
+"FillColor = 213 0 0\r\n"
+
+"[Progress.Fill(Paused)]\r\n"
+"FillColor = 255 238 88\r\n"
+
+"[Progress.FillVert(Paused)]\r\n"
+"FillColor = 255 238 88\r\n"
+
+"[Progress.Fill(Partial)]\r\n"
+"FillColor = 189 189 189\r\n"
+
+"[Progress.FillVert(Partial)]\r\n"
+"FillColor = 189 189 189\r\n"
+
+"[Progress.PulseOverlay]\r\n"
+"BgType = None\r\n"
+
+"[Progress.MoveOverlay]\r\n"
+"BgType = None\r\n"
+
+"[Progress.PulseOverlayVert]\r\n"
+"BgType = None\r\n"
+
+"[Progress.MoveOverlayVert]\r\n"
+"BgType = None\r\n"
+
+"[Progress.TransparentBar]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_progress_track_horizontal.bmp\r\n"
+"MinSize = 10, 10\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Progress.TransparentBarVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_progress_track_vertical.bmp\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+
 "\r\n; Rebar\r\n"
 "[Rebar]\r\n"
 "BgType = ImageFile\r\n"
