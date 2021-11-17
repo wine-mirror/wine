@@ -98,10 +98,6 @@ static int has_relays( DLLSPEC *spec )
 {
     int i;
 
-    if (target_cpu != CPU_x86 && target_cpu != CPU_x86_64 &&
-        target_cpu != CPU_ARM && target_cpu != CPU_ARM64)
-        return 0;
-
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
@@ -656,7 +652,6 @@ void output_module( DLLSPEC *spec )
             output( "\tb 1f\n" );
             break;
         case CPU_ARM64:
-        case CPU_POWERPC:
             output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tb 1f\n" );
             break;
@@ -680,7 +675,6 @@ void output_module( DLLSPEC *spec )
     {
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
-    case CPU_POWERPC: machine = IMAGE_FILE_MACHINE_POWERPC; break;
     case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
     case CPU_ARM64:   machine = IMAGE_FILE_MACHINE_ARM64; break;
     }
@@ -974,7 +968,6 @@ void output_fake_module( DLLSPEC *spec )
     {
     case CPU_x86:     put_word( IMAGE_FILE_MACHINE_I386 ); break;
     case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
-    case CPU_POWERPC: put_word( IMAGE_FILE_MACHINE_POWERPC ); break;
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
     case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
     }

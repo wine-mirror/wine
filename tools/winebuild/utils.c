@@ -45,7 +45,6 @@ static const struct
     { "i786",    CPU_x86 },
     { "amd64",   CPU_x86_64 },
     { "x86_64",  CPU_x86_64 },
-    { "powerpc", CPU_POWERPC },
     { "arm",     CPU_ARM },
     { "armv5",   CPU_ARM },
     { "armv6",   CPU_ARM },
@@ -346,15 +345,7 @@ struct strarray get_as_command(void)
             strarray_add( &args, (force_pointer_size == 8) ? "x86_64" : "i386" );
             break;
         default:
-            switch(target_cpu)
-            {
-            case CPU_POWERPC:
-                strarray_add( &args, (force_pointer_size == 8) ? "-a64" : "-a32" );
-                break;
-            default:
-                strarray_add( &args, (force_pointer_size == 8) ? "--64" : "--32" );
-                break;
-            }
+            strarray_add( &args, (force_pointer_size == 8) ? "--64" : "--32" );
             break;
         }
     }
@@ -394,17 +385,8 @@ struct strarray get_ld_command(void)
             strarray_add( &args, (force_pointer_size == 8) ? "i386pep" : "i386pe" );
             break;
         default:
-            switch(target_cpu)
-            {
-            case CPU_POWERPC:
-                strarray_add( &args, "-m" );
-                strarray_add( &args, (force_pointer_size == 8) ? "elf64ppc" : "elf32ppc" );
-                break;
-            default:
-                strarray_add( &args, "-m" );
-                strarray_add( &args, (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386" );
-                break;
-            }
+            strarray_add( &args, "-m" );
+            strarray_add( &args, (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386" );
             break;
         }
     }
@@ -941,7 +923,6 @@ unsigned int get_alignment(unsigned int align)
     case CPU_x86_64:
         if (target_platform != PLATFORM_APPLE) return align;
         /* fall through */
-    case CPU_POWERPC:
     case CPU_ARM:
     case CPU_ARM64:
         n = 0;
@@ -965,7 +946,6 @@ unsigned int get_ptr_size(void)
     switch(target_cpu)
     {
     case CPU_x86:
-    case CPU_POWERPC:
     case CPU_ARM:
         return 4;
     case CPU_x86_64:

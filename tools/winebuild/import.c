@@ -154,16 +154,6 @@ static struct strarray as_files;
 static const char import_func_prefix[] = "__wine$func$";
 static const char import_ord_prefix[]  = "__wine$ord$";
 
-static inline const char *ppc_reg( int reg )
-{
-    static const char * const ppc_regs[32] = { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-                                               "r8", "r9", "r10","r11","r12","r13","r14","r15",
-                                               "r16","r17","r18","r19","r20","r21","r22","r23",
-                                               "r24","r25","r26","r27","r28","r29","r30","r31" };
-    if (target_platform == PLATFORM_APPLE) return ppc_regs[reg];
-    return ppc_regs[reg] + 1;  /* skip the 'r' */
-}
-
 /* compare function names; helper for resolve_imports */
 static int name_cmp( const char **name, const char **entry )
 {
@@ -826,23 +816,6 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tldr x16, [x16, #%u]\n", pos & 0x7fff );
         output( "\tbr x16\n" );
         break;
-    case CPU_POWERPC:
-        output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
-        if (target_platform == PLATFORM_APPLE)
-        {
-            output( "\tlis %s, ha16(%s+%d+32768)\n", ppc_reg(31), table, pos );
-            output( "\tla  %s, lo16(%s+%d)(%s)\n", ppc_reg(31), table, pos, ppc_reg(31) );
-        }
-        else
-        {
-            output( "\tlis %s, (%s+%d+32768)@h\n", ppc_reg(31), table, pos );
-            output( "\tla  %s, (%s+%d)@l(%s)\n", ppc_reg(31), table, pos, ppc_reg(31) );
-        }
-        output( "\tlwz   %s, 0(%s)\n", ppc_reg(31), ppc_reg(31) );
-        output( "\tmtctr %s\n", ppc_reg(31) );
-        output( "\tmr    %s, %s\n", ppc_reg(31), ppc_reg(0) );
-        output( "\tbctr\n" );
-        break;
     }
     output_cfi( ".cfi_endproc" );
     output_function_size( name );
@@ -1063,7 +1036,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
 /* output the delayed import thunks of a Win32 module */
 static void output_delayed_import_thunks( const DLLSPEC *spec )
 {
-    int idx, j, pos, extra_stack_storage = 0;
+    int idx, j, pos;
     struct import *import;
     static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
     static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
@@ -1148,55 +1121,6 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tldp x29, x30, [sp],#80\n" );
         output( "\tbr x16\n" );
         break;
-    case CPU_POWERPC:
-        if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
-
-        /* Save all callee saved registers into a stackframe. */
-        output( "\tstwu %s, -%d(%s)\n",ppc_reg(1), 48+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
-
-        /* r0 -> r3 (arg1) */
-        output( "\tmr %s, %s\n", ppc_reg(3), ppc_reg(0));
-
-        /* save return address */
-        output( "\tmflr %s\n", ppc_reg(0));
-        output( "\tstw  %s, %d(%s)\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
-
-        /* Call the __wine_delay_load function, arg1 is arg1. */
-        output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
-
-        /* Load return value from call into ctr register */
-        output( "\tmtctr %s\n", ppc_reg(3));
-
-        /* restore all saved registers and drop stackframe. */
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
-        output( "\tlwz  %s, %d(%s)\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
-
-        /* Load return value from call into return register */
-        output( "\tlwz  %s,  %d(%s)\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
-        output( "\tmtlr %s\n", ppc_reg(0));
-        output( "\taddi %s, %s, %d\n", ppc_reg(1), ppc_reg(1),  48+extra_stack_storage);
-
-        /* branch to ctr register. */
-        output( "\tbctr\n");
-        break;
     }
     output_cfi( ".cfi_endproc" );
     output_function_size( "__wine_delay_load_asm" );
@@ -1233,33 +1157,6 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 }
                 else output( "\tmov x16, #0x%x\n", j );
                 output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
-                break;
-            case CPU_POWERPC:
-                switch(target_platform)
-                {
-                case PLATFORM_APPLE:
-                    /* On Darwin we can use r0 and r2 */
-                    /* Upper part in r2 */
-                    output( "\tlis %s, %d\n", ppc_reg(2), idx);
-                    /* Lower part + r2 -> r0, Note we can't use r0 directly */
-                    output( "\taddi %s, %s, %d\n", ppc_reg(0), ppc_reg(2), j);
-                    output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
-                    break;
-                default:
-                    /* On linux we can't use r2 since r2 is not a scratch register (hold the TOC) */
-                    /* Save r13 on the stack */
-                    output( "\taddi %s, %s, -0x4\n", ppc_reg(1), ppc_reg(1));
-                    output( "\tstw  %s, 0(%s)\n",    ppc_reg(13), ppc_reg(1));
-                    /* Upper part in r13 */
-                    output( "\tlis %s, %d\n", ppc_reg(13), idx);
-                    /* Lower part + r13 -> r0, Note we can't use r0 directly */
-                    output( "\taddi %s, %s, %d\n", ppc_reg(0), ppc_reg(13), j);
-                    /* Restore r13 */
-                    output( "\tstw  %s, 0(%s)\n",    ppc_reg(13), ppc_reg(1));
-                    output( "\taddic %s, %s, 0x4\n", ppc_reg(1), ppc_reg(1));
-                    output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
-                    break;
-                }
                 break;
             }
             output_cfi( ".cfi_endproc" );
