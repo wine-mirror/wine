@@ -596,4 +596,5 @@ static const struct dinput_device_vtbl mouse_vtbl =
     NULL,
     NULL,
     NULL,
+    NULL,
 };

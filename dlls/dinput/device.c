@@ -1008,7 +1008,7 @@ static HRESULT WINAPI dinput_device_GetProperty( IDirectInputDevice8W *iface, co
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        value->dwData = 10000;
+        value->dwData = impl->device_gain;
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_CALIBRATION:
@@ -1091,6 +1091,18 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
             impl->autocenter = value->dwData;
             hr = DI_OK;
         }
+        LeaveCriticalSection( &impl->crit );
+        return hr;
+    }
+    case (DWORD_PTR)DIPROP_FFGAIN:
+    {
+        const DIPROPDWORD *value = (const DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (!impl->vtbl->send_device_gain) return DIERR_UNSUPPORTED;
+        if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        if (value->dwData > 10000) return DIERR_INVALIDPARAM;
+        EnterCriticalSection( &impl->crit );
+        impl->device_gain = value->dwData;
         LeaveCriticalSection( &impl->crit );
         return hr;
     }
@@ -1853,6 +1865,7 @@ HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl,
     This->caps.dwSize = sizeof(DIDEVCAPS);
     This->caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     This->device_format = format;
+    This->device_gain = 10000;
     InitializeCriticalSection( &This->crit );
     This->dinput = dinput;
     IDirectInput_AddRef( &dinput->IDirectInput7A_iface );

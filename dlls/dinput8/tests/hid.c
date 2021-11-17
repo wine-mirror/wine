@@ -5015,11 +5015,9 @@ static void test_simple_joystick(void)
     prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
@@ -7847,11 +7845,9 @@ static void test_force_feedback_joystick( DWORD version )
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
@@ -7889,14 +7885,12 @@ static void test_force_feedback_joystick( DWORD version )
     set_hid_expect( file, &expect_set_device_gain_2, sizeof(expect_set_device_gain_2) );
     prop_dword.dwData = 2000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     set_hid_expect( file, &expect_set_device_gain_1, sizeof(expect_set_device_gain_1) );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
     wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 

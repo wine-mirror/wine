@@ -786,6 +786,13 @@ static void set_extra_caps_range( struct hid_joystick *impl, const DIDEVICEOBJEC
     }
 }
 
+static HRESULT hid_joystick_send_device_gain( IDirectInputDevice8W *iface, LONG device_gain )
+{
+    FIXME( "iface %p stub!\n", iface );
+
+    return DIERR_UNSUPPORTED;
+}
+
 static HRESULT hid_joystick_set_property( IDirectInputDevice8W *iface, DWORD property,
                                           const DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
 {
@@ -1268,6 +1275,7 @@ static const struct dinput_device_vtbl hid_joystick_vtbl =
     hid_joystick_get_effect_info,
     hid_joystick_create_effect,
     hid_joystick_send_force_feedback_command,
+    hid_joystick_send_device_gain,
     hid_joystick_enum_created_effect_objects,
 };
 

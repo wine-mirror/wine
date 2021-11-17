@@ -50,6 +50,7 @@ struct dinput_device_vtbl
     HRESULT (*get_effect_info)( IDirectInputDevice8W *iface, DIEFFECTINFOW *info, const GUID *guid );
     HRESULT (*create_effect)( IDirectInputDevice8W *iface, IDirectInputEffect **out );
     HRESULT (*send_force_feedback_command)( IDirectInputDevice8W *iface, DWORD command );
+    HRESULT (*send_device_gain)( IDirectInputDevice8W *iface, LONG device_gain );
     HRESULT (*enum_created_effect_objects)( IDirectInputDevice8W *iface, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
                                             void *context, DWORD flags );
 };
@@ -98,6 +99,7 @@ struct dinput_device
     BYTE device_state[DEVICE_STATE_MAX_SIZE];
 
     BOOL autocenter;
+    LONG device_gain;
 };
 
 extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,

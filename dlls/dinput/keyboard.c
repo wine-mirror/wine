@@ -294,4 +294,5 @@ static const struct dinput_device_vtbl keyboard_vtbl =
     NULL,
     NULL,
     NULL,
+    NULL,
 };
