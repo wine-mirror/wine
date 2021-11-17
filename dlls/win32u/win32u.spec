@@ -1289,7 +1289,7 @@
 @ stub NtUserUnloadKeyboardLayout
 @ stub NtUserUnlockWindowStation
 @ stub NtUserUnregisterClass
-@ stub NtUserUnregisterHotKey
+@ stdcall NtUserUnregisterHotKey(long long)
 @ stub NtUserUnregisterSessionPort
 @ stub NtUserUnregisterUserApiHook
 @ stub NtUserUpdateDefaultDesktopThumbnail

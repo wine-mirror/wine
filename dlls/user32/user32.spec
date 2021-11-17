@@ -780,7 +780,7 @@
 @ stdcall UnregisterClassA(str long)
 @ stdcall UnregisterClassW(wstr long)
 @ stdcall UnregisterDeviceNotification(long)
-@ stdcall UnregisterHotKey(long long)
+@ stdcall UnregisterHotKey(long long) NtUserUnregisterHotKey
 # @ stub UnregisterMessagePumpHook
 @ stdcall UnregisterPowerSettingNotification(ptr)
 @ stdcall UnregisterTouchWindow(long)

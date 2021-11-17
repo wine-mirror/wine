@@ -670,3 +670,31 @@ UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
 
     return count;
 }
+
+/***********************************************************************
+ *	     NtUserUnregisterHotKey    (win32u.@)
+ */
+BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )
+{
+    BOOL ret;
+    UINT modifiers, vk;
+
+    TRACE_(keyboard)("(%p,%d)\n",hwnd,id);
+
+    SERVER_START_REQ( unregister_hotkey )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        req->id = id;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            modifiers = reply->flags;
+            vk = reply->vkey;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+        user_driver->pUnregisterHotKey(hwnd, modifiers, vk);
+
+    return ret;
+}

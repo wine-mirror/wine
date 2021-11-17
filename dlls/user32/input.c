@@ -920,34 +920,6 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
 }
 
 /***********************************************************************
- *		UnregisterHotKey (USER32.@)
- */
-BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
-{
-    BOOL ret;
-    UINT modifiers, vk;
-
-    TRACE_(keyboard)("(%p,%d)\n",hwnd,id);
-
-    SERVER_START_REQ( unregister_hotkey )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        req->id = id;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            modifiers = reply->flags;
-            vk = reply->vkey;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (ret)
-        USER_Driver->pUnregisterHotKey(hwnd, modifiers, vk);
-
-    return ret;
-}
-
-/***********************************************************************
  *		LoadKeyboardLayoutW (USER32.@)
  */
 HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )

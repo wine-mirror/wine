@@ -642,6 +642,11 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     return unix_funcs->pNtUserToUnicodeEx( virt, scan, state, str, size, flags, layout );
 }
 
+BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )
+{
+    return unix_funcs->pNtUserUnregisterHotKey( hwnd, id );
+}
+
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
