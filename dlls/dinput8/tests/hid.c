@@ -743,7 +743,7 @@ static inline void check_hidp_value_caps_( int line, HIDP_VALUE_CAPS *caps, cons
     }
 }
 
-static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, void *out_buf, DWORD *ret_len )
+static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, void *out_buf, DWORD *ret_len, DWORD timeout )
 {
     OVERLAPPED ovl = {0};
     DWORD out_len = ret_len ? *ret_len : 0;
@@ -752,7 +752,18 @@ static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, voi
     ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
     ret = DeviceIoControl( file, code, in_buf, in_len, out_buf, out_len, &out_len, &ovl );
     if (!ret && GetLastError() == ERROR_IO_PENDING)
-        ret = GetOverlappedResult( file, &ovl, &out_len, TRUE );
+    {
+        ret = GetOverlappedResultEx( file, &ovl, &out_len, timeout, TRUE );
+        todo_wine_if( timeout != INFINITE )
+        ok( ret, "GetOverlappedResultEx returned %u\n", GetLastError() );
+        if (!ret)
+        {
+            ret = CancelIoEx( file, &ovl );
+            ok( ret, "CancelIoEx returned %u\n", GetLastError() );
+            ret = WaitForSingleObject( ovl.hEvent, INFINITE );
+            ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+        }
+    }
     CloseHandle( ovl.hEvent );
 
     if (ret_len) *ret_len = out_len;
@@ -774,8 +785,18 @@ static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, D
     for (i = 0; i < expect_size / sizeof(struct hid_expect); ++i)
         snprintf( expect[i].context, ARRAY_SIZE(expect[i].context), "%s:%d", source_file, line );
 
-    ret = sync_ioctl( file, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0 );
+    ret = sync_ioctl( file, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
     ok( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
+}
+
+#define wait_hid_expect( a, b ) wait_hid_expect_( __LINE__, a, b )
+static void wait_hid_expect_( int line, HANDLE file, DWORD timeout )
+{
+    BOOL ret = sync_ioctl( file, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
+    todo_wine
+    ok( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %u\n", GetLastError() );
+
+    set_hid_expect( file, NULL, 0 );
 }
 
 #define send_hid_input( a, b, c ) send_hid_input_( __LINE__, a, b, c )
@@ -793,7 +814,7 @@ static void send_hid_input_( int line, HANDLE file, struct hid_expect *expect, D
     for (i = 0; i < expect_size / sizeof(struct hid_expect); ++i)
         snprintf( expect[i].context, ARRAY_SIZE(expect[i].context), "%s:%d", source_file, line );
 
-    ret = sync_ioctl( file, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0 );
+    ret = sync_ioctl( file, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0, INFINITE );
     ok( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %u\n", GetLastError() );
 }
 
@@ -883,7 +904,7 @@ static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, P
 
     SetLastError( 0xdeadbeef );
     length = report_len * 2;
-    ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &length );
+    ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &length, INFINITE );
     ok( ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %u\n", GetLastError() );
     ok( length == 3, "got length %u, expected 3\n", length );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
@@ -977,7 +998,7 @@ static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len,
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &length );
+    ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &length, INFINITE );
     ok( ret, "IOCTL_HID_GET_FEATURE failed, last error %u\n", GetLastError() );
     ok( length == 3, "got length %u, expected 3\n", length );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
@@ -1073,13 +1094,13 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, NULL, 0, report, &length );
+    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, NULL, 0, report, &length, INFINITE );
     ok( !ret, "IOCTL_HID_SET_FEATURE succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_FEATURE returned error %u\n",
         GetLastError() );
     length = 0;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, report, report_len * 2, NULL, &length );
+    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, report, report_len * 2, NULL, &length, INFINITE );
     ok( ret, "IOCTL_HID_SET_FEATURE failed, last error %u\n", GetLastError() );
     ok( length == 3, "got length %u, expected 3\n", length );
 
@@ -1168,13 +1189,13 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &length );
+    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &length, INFINITE );
     ok( !ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_USER_BUFFER,
         "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError() );
     length = 0;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, report_len * 2, NULL, &length );
+    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, report_len * 2, NULL, &length, INFINITE );
     ok( ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %u\n", GetLastError() );
     ok( length == 3, "got length %u, expected 3\n", length );
 
@@ -2173,7 +2194,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
         value = 10;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &value, sizeof(ULONG), NULL, NULL );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &value, sizeof(ULONG), NULL, NULL, INFINITE );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
 
         Sleep( 600 );
@@ -2392,7 +2413,7 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
     {
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len );
+        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len );
         todo_wine
@@ -2401,27 +2422,27 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
         out_len = 0;
         poll_freq = 500;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
 
         out_len = 0;
         poll_freq = 10001;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
 
         out_len = 0;
         poll_freq = 0;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
 
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len );
+        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len );
         ok( poll_freq == 10000, "got poll_freq %u, expected 10000\n", poll_freq );
@@ -2429,13 +2450,13 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
         out_len = 0;
         poll_freq = 500;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == 0, "got out_len %u, expected 0\n", out_len );
 
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( async_file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len );
+        ret = sync_ioctl( async_file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
         ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
         ok( out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len );
         ok( poll_freq == 500, "got poll_freq %u, expected 500\n", poll_freq );
@@ -4358,7 +4379,8 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "SetEventNotification returned: %#x\n", hr );
 
     file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, 0 );
@@ -5551,12 +5573,30 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_buf = {1,0x01},
         },
     };
-    struct hid_expect expect_dc_reset =
+    struct hid_expect expect_acquire[] =
     {
-        .code = IOCTL_HID_WRITE_REPORT,
-        .report_id = 1,
-        .report_len = 2,
-        .report_buf = {1, 0x01},
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x01},
+        },
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 8,
+            .report_len = 2,
+            .report_buf = {8, 0x19},
+            .todo = TRUE,
+        },
+    };
+    struct hid_expect expect_reset[] =
+    {
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x01},
+        },
     };
     static const DWORD expect_axes_init[2] = {0};
     const DIEFFECT expect_desc_init =
@@ -5689,16 +5729,16 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     hr = IDirectInputEffect_GetParameters( effect, &desc, 0 );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DURATION );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     desc.dwDuration = 0xdeadbeef;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DURATION );
@@ -5810,16 +5850,16 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     if (version >= 0x700) check_member( desc, expect_desc_init, "%u", dwStartDelay );
     else ok( desc.dwStartDelay == 0xcdcdcdcd, "got dwStartDelay %#x\n", desc.dwStartDelay );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_Download( effect );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Download returned %#x\n", hr );
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputEffect_Download( effect );
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
@@ -5835,16 +5875,16 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD );
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION );
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION | DIEP_NODOWNLOAD );
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
@@ -6111,10 +6151,10 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     hr = IDirectInputEffect_Stop( effect );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Stop returned %#x\n", hr );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputEffect_Unload( effect );
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
@@ -6291,7 +6331,7 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         winetest_pop_context();
     }
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
@@ -6299,10 +6339,10 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 }
 
 static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DWORD version )
@@ -6858,6 +6898,21 @@ static void test_force_feedback_joystick( DWORD version )
                 REPORT_COUNT(1, 1),
                 OUTPUT(1, Data|Var|Abs),
             END_COLLECTION,
+
+
+            USAGE(1, PID_USAGE_DEVICE_GAIN_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 8),
+
+                USAGE(1, PID_USAGE_DEVICE_GAIN),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
         END_COLLECTION,
     };
 #undef REPORT_ID_OR_USAGE_PAGE
@@ -6881,12 +6936,46 @@ static void test_force_feedback_joystick( DWORD version )
         .dwHardwareRevision = 1,
         .dwFFDriverVersion = 1,
     };
-    struct hid_expect expect_dc_reset =
+    struct hid_expect expect_acquire[] =
+    {
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x01},
+        },
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 8,
+            .report_len = 2,
+            .report_buf = {8, 0x19},
+            .todo = TRUE,
+        },
+    };
+    struct hid_expect expect_reset[] =
+    {
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x01},
+        },
+    };
+    struct hid_expect expect_set_device_gain_1 =
     {
         .code = IOCTL_HID_WRITE_REPORT,
-        .report_id = 1,
+        .report_id = 8,
         .report_len = 2,
-        .report_buf = {1, 0x01},
+        .report_buf = {8, 0x19},
+        .todo = TRUE,
+    };
+    struct hid_expect expect_set_device_gain_2 =
+    {
+        .code = IOCTL_HID_WRITE_REPORT,
+        .report_id = 8,
+        .report_len = 2,
+        .report_buf = {8, 0x33},
+        .todo = TRUE,
     };
 
     const DIDEVICEINSTANCEW expect_devinst =
@@ -7004,7 +7093,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = version >= 0x800 ? 0x64 : 0x10,
+            .dwOfs = version >= 0x800 ? 0x68 : 0x10,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0)|DIDFT_FFEFFECTTRIGGER,
             .dwFlags = DIDOI_FFEFFECTTRIGGER,
             .tszName = L"Button 0",
@@ -7016,7 +7105,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = version >= 0x800 ? 0x65 : 0x11,
+            .dwOfs = version >= 0x800 ? 0x69 : 0x11,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1)|DIDFT_FFEFFECTTRIGGER,
             .dwFlags = DIDOI_FFEFFECTTRIGGER,
             .tszName = L"Button 1",
@@ -7028,7 +7117,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x6c : 0,
+            .dwOfs = version >= 0x800 ? 0x70 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(12)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"DC Device Reset",
@@ -7052,7 +7141,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x6d : 0,
+            .dwOfs = version >= 0x800 ? 0x71 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(14)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Op Effect Start",
@@ -7064,7 +7153,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x6e : 0,
+            .dwOfs = version >= 0x800 ? 0x72 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(15)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Op Effect Start Solo",
@@ -7076,7 +7165,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x6f : 0,
+            .dwOfs = version >= 0x800 ? 0x73 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(16)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Op Effect Stop",
@@ -7112,7 +7201,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x70 : 0,
+            .dwOfs = version >= 0x800 ? 0x74 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(19)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"ET Square",
@@ -7124,7 +7213,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x71 : 0,
+            .dwOfs = version >= 0x800 ? 0x75 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(20)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"ET Sine",
@@ -7136,7 +7225,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x72 : 0,
+            .dwOfs = version >= 0x800 ? 0x76 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(21)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"ET Spring",
@@ -7148,7 +7237,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x73 : 0,
+            .dwOfs = version >= 0x800 ? 0x77 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(22)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Z Axis",
@@ -7160,7 +7249,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x74 : 0,
+            .dwOfs = version >= 0x800 ? 0x78 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(23)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Y Axis",
@@ -7172,7 +7261,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x75 : 0,
+            .dwOfs = version >= 0x800 ? 0x79 : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(24)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"X Axis",
@@ -7184,7 +7273,7 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = version >= 0x800 ? 0x76 : 0,
+            .dwOfs = version >= 0x800 ? 0x7a : 0,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(25)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Direction Enable",
@@ -7422,6 +7511,18 @@ static void test_force_feedback_joystick( DWORD version )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
+            .dwOfs = version >= 0x800 ? 0x64 : 0,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(44)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Device Gain",
+            .wCollectionNumber = 15,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_DEVICE_GAIN,
+            .wReportId = 8,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
             .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(0),
             .tszName = L"Collection 0 - Joystick",
             .wUsagePage = HID_USAGE_PAGE_GENERIC,
@@ -7544,6 +7645,14 @@ static void test_force_feedback_joystick( DWORD version )
             .wCollectionNumber = 13,
             .wUsagePage = HID_USAGE_PAGE_PID,
             .wUsage = PID_USAGE_TYPE_SPECIFIC_BLOCK_OFFSET,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(15),
+            .tszName = L"Collection 15 - Device Gain Report",
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_DEVICE_GAIN_REPORT,
         },
     };
     const DIEFFECTINFOW expect_effects[] =
@@ -7713,7 +7822,8 @@ static void test_force_feedback_joystick( DWORD version )
     ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
 
     file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
 
     hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
@@ -7771,10 +7881,24 @@ static void test_force_feedback_joystick( DWORD version )
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
+
+    set_hid_expect( file, &expect_set_device_gain_2, sizeof(expect_set_device_gain_2) );
+    prop_dword.dwData = 2000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
+
+    set_hid_expect( file, &expect_set_device_gain_1, sizeof(expect_set_device_gain_1) );
+    prop_dword.dwData = 1000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputDevice8_Escape( device, &escape );
     todo_wine
@@ -7792,10 +7916,10 @@ static void test_force_feedback_joystick( DWORD version )
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, 0xdeadbeef );
     ok( hr == DIERR_INVALIDPARAM, "SendForceFeedbackCommand returned %#x\n", hr );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
     ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
-    set_hid_expect( file, NULL, 0 );
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_STOPALL );
     ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "SendForceFeedbackCommand returned %#x\n", hr );
@@ -7818,7 +7942,7 @@ static void test_force_feedback_joystick( DWORD version )
     test_periodic_effect( device, file, version );
     test_condition_effect( device, file, version );
 
-    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );

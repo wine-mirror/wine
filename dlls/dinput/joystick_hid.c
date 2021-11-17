@@ -322,6 +322,8 @@ static const WCHAR *object_usage_to_string( DIDEVICEOBJECTINSTANCEW *instance )
     case MAKELONG(PID_USAGE_DC_ENABLE_ACTUATORS, HID_USAGE_PAGE_PID): return L"DC Enable Actuators";
     case MAKELONG(PID_USAGE_DC_STOP_ALL_EFFECTS, HID_USAGE_PAGE_PID): return L"DC Stop All Effects";
 
+    case MAKELONG(PID_USAGE_DEVICE_GAIN, HID_USAGE_PAGE_PID): return L"Device Gain";
+    case MAKELONG(PID_USAGE_DEVICE_GAIN_REPORT, HID_USAGE_PAGE_PID): return L"Device Gain Report";
     case MAKELONG(PID_USAGE_CP_OFFSET, HID_USAGE_PAGE_PID): return L"CP Offset";
     case MAKELONG(PID_USAGE_DEAD_BAND, HID_USAGE_PAGE_PID): return L"Dead Band";
     case MAKELONG(PID_USAGE_DEVICE_CONTROL, HID_USAGE_PAGE_PID): return L"PID Device Control";

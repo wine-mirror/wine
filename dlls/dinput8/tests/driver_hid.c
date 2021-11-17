@@ -55,6 +55,7 @@ struct expect_queue
     struct hid_expect *end;
     struct hid_expect spurious;
     struct hid_expect *buffer;
+    IRP *pending_wait;
 };
 
 static void expect_queue_init( struct expect_queue *queue )
@@ -68,6 +69,24 @@ static void expect_queue_init( struct expect_queue *queue )
 
 static void expect_queue_cleanup( struct expect_queue *queue )
 {
+    KIRQL irql;
+    IRP *irp;
+
+    KeAcquireSpinLock( &queue->lock, &irql );
+    if ((irp = queue->pending_wait))
+    {
+        queue->pending_wait = NULL;
+        if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
+    }
+    KeReleaseSpinLock( &queue->lock, irql );
+
+    if (irp)
+    {
+        irp->IoStatus.Information = 0;
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+
     ExFreePool( queue->buffer );
 }
 
@@ -112,6 +131,54 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
     ExFreePool( missing );
 }
 
+static void WINAPI wait_cancel_routine( DEVICE_OBJECT *device, IRP *irp )
+{
+    struct expect_queue *queue = irp->Tail.Overlay.DriverContext[0];
+    KIRQL irql;
+
+    IoReleaseCancelSpinLock( irp->CancelIrql );
+
+    KeAcquireSpinLock( &queue->lock, &irql );
+    queue->pending_wait = NULL;
+    KeReleaseSpinLock( &queue->lock, irql );
+
+    irp->IoStatus.Information = 0;
+    irp->IoStatus.Status = STATUS_CANCELLED;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+}
+
+static NTSTATUS expect_queue_wait( struct expect_queue *queue, IRP *irp )
+{
+    NTSTATUS status;
+    KIRQL irql;
+
+    KeAcquireSpinLock( &queue->lock, &irql );
+    if (queue->pos == queue->end)
+        status = STATUS_SUCCESS;
+    else
+    {
+        IoSetCancelRoutine( irp, wait_cancel_routine );
+        if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+            status = STATUS_CANCELLED;
+        else
+        {
+            irp->Tail.Overlay.DriverContext[0] = queue;
+            IoMarkIrpPending( irp );
+            queue->pending_wait = irp;
+            status = STATUS_PENDING;
+        }
+    }
+    KeReleaseSpinLock( &queue->lock, irql );
+
+    if (status == STATUS_SUCCESS)
+    {
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+
+    return status;
+}
+
 static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_PACKET *packet,
                                LONG *index, struct hid_expect *expect, BOOL compare_buf )
 {
@@ -119,6 +186,7 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     ULONG len = packet->reportBufferLen;
     BYTE *buf = packet->reportBuffer;
     BYTE id = packet->reportId;
+    IRP *irp = NULL;
     KIRQL irql;
 
     missing = ExAllocatePool( PagedPool, EXPECT_QUEUE_BUFFER_SIZE );
@@ -140,7 +208,20 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     if (tmp < queue->end) queue->pos = tmp + 1;
     else tmp = &queue->spurious;
     *expect = *tmp;
+
+    if (queue->pos == queue->end && (irp = queue->pending_wait))
+    {
+        queue->pending_wait = NULL;
+        if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
+    }
     KeReleaseSpinLock( &queue->lock, irql );
+
+    if (irp)
+    {
+        irp->IoStatus.Information = 0;
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
 
     ok( tmp != &queue->spurious, "got spurious packet\n" );
 
@@ -624,6 +705,8 @@ static NTSTATUS WINAPI driver_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
         return STATUS_SUCCESS;
+    case IOCTL_WINETEST_HID_WAIT_EXPECT:
+        return expect_queue_wait( &expect_queue, irp );
     case IOCTL_WINETEST_HID_SEND_INPUT:
         input_queue_reset( &input_queue, irp->AssociatedIrp.SystemBuffer, in_size );
         irp->IoStatus.Status = STATUS_SUCCESS;
