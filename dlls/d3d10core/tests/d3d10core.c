@@ -13645,6 +13645,10 @@ static void test_format_support(void)
         {DXGI_FORMAT_R32_UINT},
         {DXGI_FORMAT_R16_UINT},
     };
+    static const struct format_support vertex_buffers[] =
+    {
+        {DXGI_FORMAT_R8G8_UINT},
+    };
 
     if (!(device = create_device()))
     {
@@ -13684,6 +13688,9 @@ static void test_format_support(void)
 
     check_format_support(format_support, index_buffers, ARRAY_SIZE(index_buffers),
             D3D10_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
+
+    check_format_support(format_support, vertex_buffers, ARRAY_SIZE(vertex_buffers),
+            D3D10_FORMAT_SUPPORT_IA_VERTEX_BUFFER, "vertex buffer");
 
     check_format_support(format_support, display_format_support, ARRAY_SIZE(display_format_support),
             D3D10_FORMAT_SUPPORT_DISPLAY, "display");
