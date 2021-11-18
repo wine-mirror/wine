@@ -1282,7 +1282,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
             imp = NULL;
             status = STATUS_DLL_NOT_FOUND;
         }
-        else if (!is_import_dll_system( &wm->ldr, &imports[i] ))
+        else if (imp && !is_import_dll_system( &wm->ldr, &imports[i] ))
         {
             add_module_dependency_after( wm->ldr.DdagNode, imp->ldr.DdagNode, dep_after );
         }
