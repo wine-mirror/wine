@@ -172,19 +172,26 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
 
 static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
 {
-    NTSTATUS ret;
+    LARGE_INTEGER time = {.QuadPart = timeout * (LONGLONG)-10000000};
 
     /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ) ||
-        ((ret = unix_funcs->fast_RtlpWaitForCriticalSection( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
+    if (!crit_section_has_debuginfo( crit ))
     {
         HANDLE sem = get_semaphore( crit );
-        LARGE_INTEGER time;
-
-        time.QuadPart = timeout * (LONGLONG)-10000000;
-        ret = NtWaitForSingleObject( sem, FALSE, &time );
+        return NtWaitForSingleObject( sem, FALSE, &time );
     }
-    return ret;
+    else
+    {
+        int *lock = (int *)&crit->LockSemaphore;
+        while (!InterlockedCompareExchange( lock, 0, 1 ))
+        {
+            static const int zero;
+            /* this may wait longer than specified in case of multiple wake-ups */
+            if (RtlWaitOnAddress( lock, &zero, sizeof(int), &time ) == STATUS_TIMEOUT)
+                return STATUS_TIMEOUT;
+        }
+        return STATUS_WAIT_0;
+    }
 }
 
 /******************************************************************************
@@ -274,8 +281,6 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
             RtlFreeHeap( GetProcessHeap(), 0, crit->DebugInfo );
             crit->DebugInfo = NULL;
         }
-        if (unix_funcs->fast_RtlDeleteCriticalSection( crit ) == STATUS_NOT_IMPLEMENTED)
-            NtClose( crit->LockSemaphore );
     }
     else NtClose( crit->LockSemaphore );
     crit->LockSemaphore = 0;
@@ -351,11 +356,17 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
     NTSTATUS ret;
 
     /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ) ||
-        ((ret = unix_funcs->fast_RtlpUnWaitCriticalSection( crit )) == STATUS_NOT_IMPLEMENTED))
+    if (!crit_section_has_debuginfo( crit ))
     {
         HANDLE sem = get_semaphore( crit );
         ret = NtReleaseSemaphore( sem, 1, NULL );
+    }
+    else
+    {
+        int *lock = (int *)&crit->LockSemaphore;
+        InterlockedExchange( lock, 1 );
+        RtlWakeAddressSingle( lock );
+        ret = STATUS_SUCCESS;
     }
     if (ret) RtlRaiseStatus( ret );
     return ret;
