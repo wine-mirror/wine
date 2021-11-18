@@ -3219,12 +3219,9 @@ static void output_module( struct makefile *make )
             strarray_add( &all_libs, strmake( "-Wl,-delayload,%s%s", make->delayimports.str[i],
                                               strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
         strarray_add( &make->all_targets, strmake( "%s%s", make->module, dll_ext ));
-        strarray_add( &make->all_targets, strmake( "%s.fake", make->module ));
         add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
                           strmake( "p%s/%s%s", so_dir, make->module, dll_ext ));
-        add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
-                          strmake( "d%s/%s", pe_dir, make->module ));
-        output( "%s%s %s.fake:", module_path, dll_ext, module_path );
+        output( "%s%s:", module_path, dll_ext );
     }
     else
     {
@@ -3258,56 +3255,55 @@ static void output_module( struct makefile *make )
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
 
-    if (make->unixlib)
+    if (spec_file)
+        output_man_pages( make );
+    else if (*dll_ext && !make->is_win16 && strendswith( make->module, ".exe" ))
     {
-        struct strarray unix_libs = empty_strarray;
-        struct strarray unix_deps = empty_strarray;
-
-        if (!make->native_unix_lib)
-        {
-            struct strarray unix_imports = empty_strarray;
-
-            strarray_add( &unix_imports, "ntdll" );
-            strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
-            strarray_add( &unix_imports, "winecrt0" );
-            if (spec_file) strarray_add( &unix_deps, spec_file );
-
-            strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 0 ));
-        }
-
-        strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
-
-        strarray_add( &make->all_targets, make->unixlib );
-        add_install_rule( make, make->module, make->unixlib, strmake( "p%s/%s", so_dir, make->unixlib ));
-        output( "%s:", obj_dir_path( make, make->unixlib ));
-        output_filenames_obj_dir( make, make->unixobj_files );
-        output_filenames( unix_deps );
-
-        if (make->native_unix_lib)
-        {
-            output( "\n" );
-            output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
-            output_filenames( get_expanded_make_var_array( make, "UNIXLDFLAGS" ));
-        }
-        else
-        {
-            output_filename( tools_path( make, "winebuild" ));
-            output_filename( tools_path( make, "winegcc" ));
-            output( "\n" );
-            output_winegcc_command( make, 0 );
-            output_filename( "-munix" );
-            output_filename( "-shared" );
-            if (spec_file) output_filename( spec_file );
-        }
-        output_filenames_obj_dir( make, make->unixobj_files );
-        output_filenames( unix_libs );
-        output_filename( "$(LDFLAGS)" );
-        output( "\n" );
+        char *binary = replace_extension( make->module, ".exe", "" );
+        add_install_rule( make, binary, "wineapploader", strmake( "t$(bindir)/%s", binary ));
     }
+}
 
-    if (spec_file && make->importlib)
+
+/*******************************************************************
+ *         output_fake_module
+ */
+static void output_fake_module( struct makefile *make )
+{
+    char *spec_file = NULL;
+
+    if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+
+    strarray_add( &make->all_targets, strmake( "%s.fake", make->module ));
+    add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
+                      strmake( "d%s/%s", pe_dir, make->module ));
+
+    output( "%s.fake:", obj_dir_path( make, make->module ));
+    if (spec_file) output_filename( spec_file );
+    output_filenames_obj_dir( make, make->res_files );
+    output_filename( tools_path( make, "winebuild" ));
+    output_filename( tools_path( make, "winegcc" ));
+    output( "\n" );
+    output_winegcc_command( make, make->is_cross );
+    output_filename( "-Wb,--fake-module" );
+    if (spec_file)
     {
-        char *importlib_path = obj_dir_path( make, strmake( "lib%s", make->importlib ));
+        output_filename( "-shared" );
+        output_filename( spec_file );
+    }
+    output_filenames( make->extradllflags );
+    output_filenames_obj_dir( make, make->res_files );
+    output( "\n" );
+}
+
+
+/*******************************************************************
+ *         output_import_lib
+ */
+static void output_import_lib( struct makefile *make )
+{
+    char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+    char *importlib_path = obj_dir_path( make, strmake( "lib%s", make->importlib ));
 
         strarray_add( &make->clean_files, strmake( "lib%s.a", make->importlib ));
         if (!*dll_ext && needs_delay_lib( make ))
@@ -3357,14 +3353,55 @@ static void output_module( struct makefile *make )
         if (needs_implib_symlink( make ))
             strarray_addall( &top_makefile->clean_files, output_importlib_symlinks( make ));
     }
+/*******************************************************************
+ *         output_unix_lib
+ */
+static void output_unix_lib( struct makefile *make )
+{
+    struct strarray unix_libs = empty_strarray;
+    struct strarray unix_deps = empty_strarray;
+    char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
 
-    if (spec_file)
-        output_man_pages( make );
-    else if (*dll_ext && !make->is_win16 && strendswith( make->module, ".exe" ))
+    if (!make->native_unix_lib)
     {
-        char *binary = replace_extension( make->module, ".exe", "" );
-        add_install_rule( make, binary, "wineapploader", strmake( "t$(bindir)/%s", binary ));
+        struct strarray unix_imports = empty_strarray;
+
+        strarray_add( &unix_imports, "ntdll" );
+        strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
+        strarray_add( &unix_imports, "winecrt0" );
+        if (spec_file) strarray_add( &unix_deps, spec_file );
+
+        strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 0 ));
     }
+
+    strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
+
+    strarray_add( &make->all_targets, make->unixlib );
+    add_install_rule( make, make->module, make->unixlib, strmake( "p%s/%s", so_dir, make->unixlib ));
+    output( "%s:", obj_dir_path( make, make->unixlib ));
+    output_filenames_obj_dir( make, make->unixobj_files );
+    output_filenames( unix_deps );
+
+    if (make->native_unix_lib)
+    {
+        output( "\n" );
+        output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
+        output_filenames( get_expanded_make_var_array( make, "UNIXLDFLAGS" ));
+    }
+    else
+    {
+        output_filename( tools_path( make, "winebuild" ));
+        output_filename( tools_path( make, "winegcc" ));
+        output( "\n" );
+        output_winegcc_command( make, 0 );
+        output_filename( "-munix" );
+        output_filename( "-shared" );
+        if (spec_file) output_filename( spec_file );
+    }
+    output_filenames_obj_dir( make, make->unixobj_files );
+    output_filenames( unix_libs );
+    output_filename( "$(LDFLAGS)" );
+    output( "\n" );
 }
 
 
@@ -3724,7 +3761,13 @@ static void output_sources( struct makefile *make )
     }
 
     if (make->staticlib) output_static_lib( make );
-    else if (make->module) output_module( make );
+    else if (make->module)
+    {
+        output_module( make );
+        if (*dll_ext && !make->is_cross) output_fake_module( make );
+        if (make->unixlib) output_unix_lib( make );
+        if (make->importlib) output_import_lib( make );
+    }
     else if (make->testdll) output_test_module( make );
     else if (make->sharedlib) output_shared_lib( make );
     else if (make->programs.count) output_programs( make );
