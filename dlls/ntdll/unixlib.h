@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 128
+#define NTDLL_UNIXLIB_VERSION 129
 
 struct unix_funcs
 {
@@ -37,10 +37,6 @@ struct unix_funcs
 
     /* other Win32 API functions */
     LONGLONG      (WINAPI *RtlGetSystemTimePrecise)(void);
-    NTSTATUS      (WINAPI *RtlWaitOnAddress)( const void *addr, const void *cmp, SIZE_T size,
-                                              const LARGE_INTEGER *timeout );
-    void          (WINAPI *RtlWakeAddressAll)( const void *addr );
-    void          (WINAPI *RtlWakeAddressSingle)( const void *addr );
 
     /* fast locks */
     NTSTATUS      (CDECL *fast_RtlpWaitForCriticalSection)( RTL_CRITICAL_SECTION *crit, int timeout );

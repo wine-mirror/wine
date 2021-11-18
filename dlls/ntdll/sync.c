@@ -34,10 +34,17 @@
 #include "windef.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+
+static const char *debugstr_timeout( const LARGE_INTEGER *timeout )
+{
+    if (!timeout) return "(infinite)";
+    return wine_dbgstr_longlong( timeout->QuadPart );
+}
 
 /******************************************************************
  *              RtlRunOnceInitialize (NTDLL.@)
@@ -863,13 +870,113 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     return status;
 }
 
+/* RtlWaitOnAddress() and RtlWakeAddress*(), hereafter referred to as "Win32
+ * futexes", offer futex-like semantics with a variable set of address sizes,
+ * but are limited to a single process. They are also fair—the documentation
+ * specifies this, and tests bear it out.
+ *
+ * On Windows they are implemented using NtAlertThreadByThreadId and
+ * NtWaitForAlertByThreadId, which manipulate a single flag (similar to an
+ * auto-reset event) per thread. This can be tested by attempting to wake a
+ * thread waiting in RtlWaitOnAddress() via NtAlertThreadByThreadId.
+ */
+
+struct futex_entry
+{
+    struct list entry;
+    const void *addr;
+    DWORD tid;
+};
+
+struct futex_queue
+{
+    struct list queue;
+    LONG lock;
+};
+
+static struct futex_queue futex_queues[256];
+
+static struct futex_queue *get_futex_queue( const void *addr )
+{
+    ULONG_PTR val = (ULONG_PTR)addr;
+
+    return &futex_queues[(val >> 4) % ARRAY_SIZE(futex_queues)];
+}
+
+static void spin_lock( LONG *lock )
+{
+    while (InterlockedCompareExchange( lock, -1, 0 ))
+        YieldProcessor();
+}
+
+static void spin_unlock( LONG *lock )
+{
+    InterlockedExchange( lock, 0 );
+}
+
+static BOOL compare_addr( const void *addr, const void *cmp, SIZE_T size )
+{
+    switch (size)
+    {
+        case 1:
+            return (*(const UCHAR *)addr == *(const UCHAR *)cmp);
+        case 2:
+            return (*(const USHORT *)addr == *(const USHORT *)cmp);
+        case 4:
+            return (*(const ULONG *)addr == *(const ULONG *)cmp);
+        case 8:
+            return (*(const ULONG64 *)addr == *(const ULONG64 *)cmp);
+    }
+
+    return FALSE;
+}
+
 /***********************************************************************
  *           RtlWaitOnAddress   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size,
                                   const LARGE_INTEGER *timeout )
 {
-    return unix_funcs->RtlWaitOnAddress( addr, cmp, size, timeout );
+    struct futex_queue *queue = get_futex_queue( addr );
+    struct futex_entry entry;
+    NTSTATUS ret;
+
+    TRACE("addr %p cmp %p size %#Ix timeout %s\n", addr, cmp, size, debugstr_timeout( timeout ));
+
+    if (size != 1 && size != 2 && size != 4 && size != 8)
+        return STATUS_INVALID_PARAMETER;
+
+    entry.addr = addr;
+    entry.tid = GetCurrentThreadId();
+
+    spin_lock( &queue->lock );
+
+    /* Do the comparison inside of the spinlock, to reduce spurious wakeups. */
+
+    if (!compare_addr( addr, cmp, size ))
+    {
+        spin_unlock( &queue->lock );
+        return STATUS_SUCCESS;
+    }
+
+    if (!queue->queue.next)
+        list_init( &queue->queue );
+    list_add_tail( &queue->queue, &entry.entry );
+
+    spin_unlock( &queue->lock );
+
+    ret = NtWaitForAlertByThreadId( NULL, timeout );
+
+    spin_lock( &queue->lock );
+    /* We may have already been removed by a call to RtlWakeAddressSingle(). */
+    if (entry.addr)
+        list_remove( &entry.entry );
+    spin_unlock( &queue->lock );
+
+    TRACE("returning %#x\n", ret);
+
+    if (ret == STATUS_ALERTED) ret = STATUS_SUCCESS;
+    return ret;
 }
 
 /***********************************************************************
@@ -877,7 +984,37 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
  */
 void WINAPI RtlWakeAddressAll( const void *addr )
 {
-    return unix_funcs->RtlWakeAddressAll( addr );
+    struct futex_queue *queue = get_futex_queue( addr );
+    unsigned int count = 0, i;
+    struct futex_entry *entry;
+    DWORD tids[256];
+
+    TRACE("%p\n", addr);
+
+    if (!addr) return;
+
+    spin_lock( &queue->lock );
+
+    if (!queue->queue.next)
+        list_init(&queue->queue);
+
+    LIST_FOR_EACH_ENTRY( entry, &queue->queue, struct futex_entry, entry )
+    {
+        if (entry->addr == addr)
+        {
+            /* Try to buffer wakes, so that we don't make a system call while
+             * holding a spinlock. */
+            if (count < ARRAY_SIZE(tids))
+                tids[count++] = entry->tid;
+            else
+                NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)entry->tid );
+        }
+    }
+
+    spin_unlock( &queue->lock );
+
+    for (i = 0; i < count; ++i)
+        NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tids[i] );
 }
 
 /***********************************************************************
@@ -885,5 +1022,37 @@ void WINAPI RtlWakeAddressAll( const void *addr )
  */
 void WINAPI RtlWakeAddressSingle( const void *addr )
 {
-    return unix_funcs->RtlWakeAddressSingle( addr );
+    struct futex_queue *queue = get_futex_queue( addr );
+    struct futex_entry *entry;
+    DWORD tid = 0;
+
+    TRACE("%p\n", addr);
+
+    if (!addr) return;
+
+    spin_lock( &queue->lock );
+
+    if (!queue->queue.next)
+        list_init(&queue->queue);
+
+    LIST_FOR_EACH_ENTRY( entry, &queue->queue, struct futex_entry, entry )
+    {
+        if (entry->addr == addr)
+        {
+            /* Try to buffer wakes, so that we don't make a system call while
+             * holding a spinlock. */
+            tid = entry->tid;
+
+            /* Remove this entry from the queue, so that a simultaneous call to
+             * RtlWakeAddressSingle() will not also wake it—two simultaneous
+             * calls must wake at least two waiters if they exist. */
+            entry->addr = NULL;
+            list_remove( &entry->entry );
+            break;
+        }
+    }
+
+    spin_unlock( &queue->lock );
+
+    if (tid) NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tid );
 }
