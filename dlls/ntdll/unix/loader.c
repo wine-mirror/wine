@@ -2151,8 +2151,6 @@ static struct unix_funcs unix_funcs =
     fast_RtlAcquireSRWLockShared,
     fast_RtlReleaseSRWLockExclusive,
     fast_RtlReleaseSRWLockShared,
-    fast_RtlWakeConditionVariable,
-    fast_wait_cv,
     load_so_dll,
     init_builtin_dll,
     init_unix_lib,

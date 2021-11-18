@@ -162,23 +162,6 @@ static int *get_futex(void **ptr)
         return NULL;
 }
 
-static void timespec_from_timeout( struct timespec *timespec, const LARGE_INTEGER *timeout )
-{
-    LARGE_INTEGER now;
-    timeout_t diff;
-
-    if (timeout->QuadPart > 0)
-    {
-        NtQuerySystemTime( &now );
-        diff = timeout->QuadPart - now.QuadPart;
-    }
-    else
-        diff = -timeout->QuadPart;
-
-    timespec->tv_sec  = diff / TICKSPERSEC;
-    timespec->tv_nsec = (diff % TICKSPERSEC) * 100;
-}
-
 #endif
 
 
@@ -2802,50 +2785,6 @@ NTSTATUS CDECL fast_RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS CDECL fast_wait_cv( RTL_CONDITION_VARIABLE *variable, const void *value, const LARGE_INTEGER *timeout )
-{
-    const char *value_ptr;
-    int aligned_value, *futex;
-    struct timespec timespec;
-    int ret;
-
-    if (!use_futexes())
-        return STATUS_NOT_IMPLEMENTED;
-
-    if (!(futex = get_futex( &variable->Ptr )))
-        return STATUS_NOT_IMPLEMENTED;
-
-    value_ptr = (const char *)&value;
-    value_ptr += ((ULONG_PTR)futex) - ((ULONG_PTR)&variable->Ptr);
-    aligned_value = *(int *)value_ptr;
-
-    if (timeout && timeout->QuadPart != TIMEOUT_INFINITE)
-    {
-        timespec_from_timeout( &timespec, timeout );
-        ret = futex_wait( futex, aligned_value, &timespec );
-    }
-    else
-        ret = futex_wait( futex, aligned_value, NULL );
-
-    if (ret == -1 && errno == ETIMEDOUT)
-        return STATUS_TIMEOUT;
-    return STATUS_WAIT_0;
-}
-
-NTSTATUS CDECL fast_RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable, int count )
-{
-    int *futex;
-
-    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
-
-    if (!(futex = get_futex( &variable->Ptr )))
-        return STATUS_NOT_IMPLEMENTED;
-
-    InterlockedIncrement( futex );
-    futex_wake( futex, count );
-    return STATUS_SUCCESS;
-}
-
 #else
 
 NTSTATUS CDECL fast_RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
@@ -2874,16 +2813,6 @@ NTSTATUS CDECL fast_RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
 }
 
 NTSTATUS CDECL fast_RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-NTSTATUS CDECL fast_RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable, int count )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-NTSTATUS CDECL fast_wait_cv( RTL_CONDITION_VARIABLE *variable, const void *value, const LARGE_INTEGER *timeout )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
