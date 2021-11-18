@@ -4223,9 +4223,7 @@ static void test_simple_joystick(void)
     prop_string.diph.dwHow = DIPH_BYUSAGE;
     prop_string.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
-    todo_wine
     ok( !wcscmp( prop_string.wsz, expect_objects[4].tszName ), "got DIPROP_KEYNAME %s\n",
         debugstr_w( prop_string.wsz ) );
     prop_string.diph.dwObj = MAKELONG( 0x1, HID_USAGE_PAGE_BUTTON );

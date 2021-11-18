@@ -260,7 +260,7 @@ static HRESULT keyboard_enum_objects( IDirectInputDevice8W *iface, const DIPROPH
 }
 
 static HRESULT keyboard_get_property( IDirectInputDevice8W *iface, DWORD property,
-                                      DIPROPHEADER *header, DIDEVICEOBJECTINSTANCEW *instance )
+                                      DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
 {
     switch (property)
     {

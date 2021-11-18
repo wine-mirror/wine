@@ -710,40 +710,12 @@ static void hid_joystick_release( IDirectInputDevice8W *iface )
 }
 
 static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD property,
-                                          DIPROPHEADER *header, DIDEVICEOBJECTINSTANCEW *instance )
+                                          DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    struct object_properties *properties = NULL;
-
-    if (instance) properties = impl->base.object_properties + instance->dwOfs / sizeof(LONG);
 
     switch (property)
     {
-    case (DWORD_PTR)DIPROP_RANGE:
-    {
-        DIPROPRANGE *value = (DIPROPRANGE *)header;
-        value->lMin = properties->range_min;
-        value->lMax = properties->range_max;
-        return DI_OK;
-    }
-    case (DWORD_PTR)DIPROP_DEADZONE:
-    {
-        DIPROPDWORD *value = (DIPROPDWORD *)header;
-        value->dwData = properties->deadzone;
-        return DI_OK;
-    }
-    case (DWORD_PTR)DIPROP_SATURATION:
-    {
-        DIPROPDWORD *value = (DIPROPDWORD *)header;
-        value->dwData = properties->saturation;
-        return DI_OK;
-    }
-    case (DWORD_PTR)DIPROP_GRANULARITY:
-    {
-        DIPROPDWORD *value = (DIPROPDWORD *)header;
-        value->dwData = 1;
-        return DI_OK;
-    }
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;

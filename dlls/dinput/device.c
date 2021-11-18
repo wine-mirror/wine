@@ -1022,6 +1022,34 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         }
         }
     }
+    else
+    {
+        switch (LOWORD( guid ))
+        {
+        case (DWORD_PTR)DIPROP_RANGE:
+        case (DWORD_PTR)DIPROP_GRANULARITY:
+            if (!impl->caps.dwAxes) return DIERR_UNSUPPORTED;
+            break;
+
+        case (DWORD_PTR)DIPROP_KEYNAME:
+            /* not supported on the mouse */
+            if (impl->caps.dwAxes && !(impl->caps.dwDevType & DIDEVTYPE_HID)) return DIERR_UNSUPPORTED;
+            break;
+
+        case (DWORD_PTR)DIPROP_DEADZONE:
+        case (DWORD_PTR)DIPROP_SATURATION:
+            if (!impl->object_properties) return DIERR_UNSUPPORTED;
+            break;
+
+        case (DWORD_PTR)DIPROP_PRODUCTNAME:
+        case (DWORD_PTR)DIPROP_INSTANCENAME:
+        case (DWORD_PTR)DIPROP_VIDPID:
+        case (DWORD_PTR)DIPROP_JOYSTICKID:
+        case (DWORD_PTR)DIPROP_GUIDANDPATH:
+            if (!impl->vtbl->get_property) return DIERR_UNSUPPORTED;
+            break;
+        }
+    }
 
     return DI_OK;
 }
@@ -1032,11 +1060,70 @@ static BOOL CALLBACK find_object( const DIDEVICEOBJECTINSTANCEW *instance, void 
     return DIENUM_STOP;
 }
 
+struct get_object_property_params
+{
+    IDirectInputDevice8W *iface;
+    DIPROPHEADER *header;
+    DWORD property;
+};
+
+static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
+{
+    static const struct object_properties default_properties =
+    {
+        .range_min = DIPROPRANGE_NOMIN,
+        .range_max = DIPROPRANGE_NOMAX,
+    };
+    struct get_object_property_params *params = context;
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
+    const struct object_properties *properties = NULL;
+
+    if (!impl->object_properties) properties = &default_properties;
+    else properties = impl->object_properties + instance->dwOfs / sizeof(LONG);
+
+    switch (params->property)
+    {
+    case (DWORD_PTR)DIPROP_RANGE:
+    {
+        DIPROPRANGE *value = (DIPROPRANGE *)params->header;
+        value->lMin = properties->range_min;
+        value->lMax = properties->range_max;
+        return DIENUM_STOP;
+    }
+    case (DWORD_PTR)DIPROP_DEADZONE:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)params->header;
+        value->dwData = properties->deadzone;
+        return DIENUM_STOP;
+    }
+    case (DWORD_PTR)DIPROP_SATURATION:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)params->header;
+        value->dwData = properties->saturation;
+        return DIENUM_STOP;
+    }
+    case (DWORD_PTR)DIPROP_GRANULARITY:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)params->header;
+        value->dwData = 1;
+        return DIENUM_STOP;
+    }
+    case (DWORD_PTR)DIPROP_KEYNAME:
+    {
+        DIPROPSTRING *value = (DIPROPSTRING *)params->header;
+        lstrcpynW( value->wsz, instance->tszName, ARRAY_SIZE(value->wsz) );
+        return DIENUM_STOP;
+    }
+    }
+
+    return DIENUM_STOP;
+}
+
 static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GUID *guid, DIPROPHEADER *header )
 {
+    struct get_object_property_params params = {.iface = iface, .header = header, .property = LOWORD( guid )};
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DWORD object_mask = DIDFT_AXIS | DIDFT_BUTTON | DIDFT_POV;
-    DIDEVICEOBJECTINSTANCEW instance;
     DIPROPHEADER filter;
     HRESULT hr;
 
@@ -1057,18 +1144,11 @@ static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GU
     case (DWORD_PTR)DIPROP_DEADZONE:
     case (DWORD_PTR)DIPROP_SATURATION:
     case (DWORD_PTR)DIPROP_GRANULARITY:
-        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
-        if (FAILED(hr)) return hr;
-        if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
-        if (!(instance.dwType & DIDFT_AXIS)) return DIERR_UNSUPPORTED;
-        return impl->vtbl->get_property( iface, LOWORD( guid ), header, &instance );
-
     case (DWORD_PTR)DIPROP_KEYNAME:
-        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, find_object, &instance );
+        hr = impl->vtbl->enum_objects( iface, &filter, object_mask, get_object_property, &params );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
-        if (!(instance.dwType & DIDFT_BUTTON)) return DIERR_UNSUPPORTED;
-        return impl->vtbl->get_property( iface, LOWORD( guid ), header, &instance );
+        return DI_OK;
 
     case (DWORD_PTR)DIPROP_AUTOCENTER:
     {

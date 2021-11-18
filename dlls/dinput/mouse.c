@@ -553,29 +553,6 @@ static HRESULT mouse_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEAD
     return DIENUM_CONTINUE;
 }
 
-static HRESULT mouse_get_property( IDirectInputDevice8W *iface, DWORD property,
-                                   DIPROPHEADER *header, DIDEVICEOBJECTINSTANCEW *instance )
-{
-    switch (property)
-    {
-    case (DWORD_PTR)DIPROP_RANGE:
-    {
-        DIPROPRANGE *range = (DIPROPRANGE *)header;
-        range->lMin = DIPROPRANGE_NOMIN;
-        range->lMax = DIPROPRANGE_NOMAX;
-        return DI_OK;
-    }
-    case (DWORD_PTR)DIPROP_GRANULARITY:
-    {
-        DIPROPDWORD *value = (DIPROPDWORD *)header;
-        if (instance->dwType == DIMOFS_Z) value->dwData = WHEEL_DELTA;
-        else value->dwData = 1;
-        return DI_OK;
-    }
-    }
-    return DIERR_UNSUPPORTED;
-}
-
 static const struct dinput_device_vtbl mouse_vtbl =
 {
     NULL,
@@ -584,7 +561,7 @@ static const struct dinput_device_vtbl mouse_vtbl =
     mouse_acquire,
     mouse_unacquire,
     mouse_enum_objects,
-    mouse_get_property,
+    NULL,
     NULL,
     NULL,
     NULL,

@@ -44,7 +44,7 @@ struct dinput_device_vtbl
     HRESULT (*enum_objects)( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
                              LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context );
     HRESULT (*get_property)( IDirectInputDevice8W *iface, DWORD property, DIPROPHEADER *header,
-                             DIDEVICEOBJECTINSTANCEW *instance );
+                             const DIDEVICEOBJECTINSTANCEW *instance );
     HRESULT (*get_effect_info)( IDirectInputDevice8W *iface, DIEFFECTINFOW *info, const GUID *guid );
     HRESULT (*create_effect)( IDirectInputDevice8W *iface, IDirectInputEffect **out );
     HRESULT (*send_force_feedback_command)( IDirectInputDevice8W *iface, DWORD command, BOOL unacquire );
@@ -64,6 +64,7 @@ struct object_properties
     LONG range_max;
     LONG deadzone;
     LONG saturation;
+    DWORD calibration_mode;
 };
 
 /* Device implementation */
