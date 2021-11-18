@@ -789,17 +789,10 @@ static void set_extra_caps_range( struct hid_joystick *impl, const DIDEVICEOBJEC
     properties->range_min = min;
     properties->range_max = max;
 
-    if (instance->dwType & DIDFT_AXIS)
-    {
-        if (!properties->range_min) tmp = properties->range_max / 2;
-        else tmp = round( (properties->range_min + properties->range_max) / 2.0 );
-        *(LONG *)(impl->base.device_state + instance->dwOfs) = tmp;
-    }
-    else if (instance->dwType & DIDFT_POV)
+    if (instance->dwType & DIDFT_POV)
     {
         tmp = properties->logical_max - properties->logical_min;
         if (tmp > 0) properties->range_max -= max / (tmp + 1);
-        *(LONG *)(impl->base.device_state + instance->dwOfs) = -1;
     }
 }
 

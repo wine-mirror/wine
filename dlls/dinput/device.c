@@ -27,6 +27,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1037,6 +1038,39 @@ static BOOL CALLBACK set_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
     return DIENUM_CONTINUE;
 }
 
+static BOOL CALLBACK reset_object_value( const DIDEVICEOBJECTINSTANCEW *instance, void *context )
+{
+    struct dinput_device *impl = context;
+    struct object_properties *properties;
+    LONG tmp = -1;
+
+    if (!impl->object_properties) return DIENUM_STOP;
+    properties = impl->object_properties + instance->dwOfs / sizeof(LONG);
+
+    if (instance->dwType & DIDFT_AXIS)
+    {
+        if (!properties->range_min) tmp = properties->range_max / 2;
+        else tmp = round( (properties->range_min + properties->range_max) / 2.0 );
+    }
+
+    *(LONG *)(impl->device_state + instance->dwOfs) = tmp;
+    return DIENUM_CONTINUE;
+}
+
+static void reset_device_state( IDirectInputDevice8W *iface )
+{
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    DIPROPHEADER filter =
+    {
+        .dwHeaderSize = sizeof(DIPROPHEADER),
+        .dwSize = sizeof(DIPROPHEADER),
+        .dwHow = DIPH_DEVICE,
+        .dwObj = 0,
+    };
+
+    impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS | DIDFT_POV, reset_object_value, impl );
+}
+
 static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, const GUID *guid,
                                                  const DIPROPHEADER *header )
 {
@@ -1065,6 +1099,7 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         if (value->lMin > value->lMax) return DIERR_INVALIDPARAM;
         hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, set_object_property, &params );
         if (FAILED(hr)) return hr;
+        reset_device_state( iface );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_DEADZONE:
@@ -1075,6 +1110,7 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         if (value->dwData > 10000) return DIERR_INVALIDPARAM;
         hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, set_object_property, &params );
         if (FAILED(hr)) return hr;
+        reset_device_state( iface );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_AUTOCENTER:
@@ -1921,6 +1957,9 @@ static BOOL CALLBACK enum_objects_init( const DIDEVICEOBJECTINSTANCEW *instance,
         obj_format->dwType = instance->dwType;
         obj_format->dwFlags = instance->dwFlags;
     }
+
+    if (impl->object_properties && (instance->dwType & (DIDFT_AXIS | DIDFT_POV)))
+        reset_object_value( instance, impl );
 
     format->dwNumObjs++;
     return DIENUM_CONTINUE;
