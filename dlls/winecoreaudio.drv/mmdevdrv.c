@@ -178,7 +178,7 @@ static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0,
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
-static HRESULT ca_setvol(ACImpl *This, UINT32 index);
+static HRESULT ca_setvol(ACImpl *This, struct coreaudio_stream *stream, UINT32 index);
 
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
@@ -1382,7 +1382,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     list_add_tail(&This->session->clients, &This->entry);
 
-    ca_setvol(This, -1);
+    ca_setvol(This, This->stream, -1);
 
     This->initted = TRUE;
 
@@ -2978,7 +2978,7 @@ static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
 };
 
 /* index == -1 means set all channels, otherwise sets only the given channel */
-static HRESULT ca_setvol(ACImpl *This, UINT32 index)
+static HRESULT ca_setvol(ACImpl *This, struct coreaudio_stream *stream, UINT32 index)
 {
     Float32 level;
     OSStatus sc;
@@ -2989,7 +2989,7 @@ static HRESULT ca_setvol(ACImpl *This, UINT32 index)
         if(index == (UINT32)-1){
             UINT32 i;
             level = 1.;
-            for(i = 0; i < This->stream->fmt->nChannels; ++i){
+            for(i = 0; i < stream->fmt->nChannels; ++i){
                 Float32 tmp;
                 tmp = This->session->master_vol *
                     This->session->channel_vols[i] * This->vols[i];
@@ -3000,7 +3000,7 @@ static HRESULT ca_setvol(ACImpl *This, UINT32 index)
                 This->session->channel_vols[index] * This->vols[index];
     }
 
-    sc = AudioUnitSetParameter(This->stream->unit, kHALOutputParam_Volume,
+    sc = AudioUnitSetParameter(stream->unit, kHALOutputParam_Volume,
             kAudioUnitScope_Global, 0, level, 0);
     if(sc != noErr)
         WARN("Couldn't set volume: %x\n", (int)sc);
@@ -3015,7 +3015,7 @@ static HRESULT ca_session_setvol(AudioSession *session, UINT32 index)
 
     LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry){
         HRESULT hr;
-        hr = ca_setvol(client, index);
+        hr = ca_setvol(client, client->stream, index);
         if(FAILED(hr))
             ret = hr;
     }
@@ -3214,7 +3214,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     This->vols[index] = level;
 
     WARN("CoreAudio doesn't support per-channel volume control\n");
-    ret = ca_setvol(This, index);
+    ret = ca_setvol(This, This->stream, index);
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -3259,7 +3259,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     for(i = 0; i < count; ++i)
         This->vols[i] = levels[i];
 
-    ret = ca_setvol(This, -1);
+    ret = ca_setvol(This, This->stream, -1);
 
     LeaveCriticalSection(&g_sessions_lock);
 
