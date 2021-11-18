@@ -1248,7 +1248,6 @@ static BOOL init_gl_info(void)
         kCGLPFADisplayMask, displayMask,
         0
     };
-#if defined(MAC_OS_X_VERSION_10_7) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
     CGLPixelFormatAttribute core_attribs[] =
     {
         kCGLPFADisplayMask, displayMask,
@@ -1256,7 +1255,6 @@ static BOOL init_gl_info(void)
         kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)kCGLOGLPVersion_3_2_Core,
         0
     };
-#endif
     CGLPixelFormatObj pix;
     GLint virtualScreens;
     CGLError err;
@@ -1308,7 +1306,6 @@ static BOOL init_gl_info(void)
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
 
-#if defined(MAC_OS_X_VERSION_10_7) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
     err = CGLChoosePixelFormat(core_attribs, &pix, &virtualScreens);
     if (err != kCGLNoError || !pix)
     {
@@ -1340,7 +1337,6 @@ static BOOL init_gl_info(void)
     sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
-#endif
 
     return TRUE;
 }
@@ -1396,14 +1392,6 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     GLint virtualScreens;
     CGLError err;
     BOOL core = major >= 3;
-
-#if !defined(MAC_OS_X_VERSION_10_7) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-    if (core)
-    {
-        WARN("OS X version >= 10.7 is required to be able to create core contexts\n");
-        return FALSE;
-    }
-#endif
 
     pf = get_pixel_format(context->format, TRUE /* non-displayable */);
     if (!pf)
@@ -1480,7 +1468,6 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     if (pf->backing_store)
         attribs[n++] = kCGLPFABackingStore;
 
-#if defined(MAC_OS_X_VERSION_10_7) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
     if (core)
     {
         attribs[n++] = kCGLPFAOpenGLProfile;
@@ -1493,7 +1480,6 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
         attribs[n++] = (int)kCGLOGLPVersion_3_2_Core;
 #endif
     }
-#endif
 
     attribs[n] = 0;
 
@@ -1856,12 +1842,8 @@ static CGLPixelFormatObj create_pixel_format_for_renderer(CGLRendererInfoObj ren
 
     if (core)
     {
-#if defined(MAC_OS_X_VERSION_10_7) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
         attrs[3] = kCGLPFAOpenGLProfile;
         attrs[4] = (CGLPixelFormatAttribute)kCGLOGLPVersion_3_2_Core;
-#else
-        return NULL;
-#endif
     }
 
     if (!get_renderer_property(renderer_info, renderer, kCGLRPRendererID, &renderer_id))
@@ -2157,12 +2139,10 @@ static BOOL query_renderer_integer(CGLRendererInfoObj renderer_info, GLint rende
         }
 
         case WGL_RENDERER_VIDEO_MEMORY_WINE:
-#if defined(MAC_OS_X_VERSION_10_7) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
             err = CGLDescribeRenderer(renderer_info, renderer, kCGLRPVideoMemoryMegabytes, (GLint*)value);
             if (err != kCGLNoError && err != kCGLBadProperty)
                 WARN("CGLDescribeRenderer(kCGLRPVideoMemoryMegabytes) failed: %d %s\n", err, CGLErrorString(err));
             if (err != kCGLNoError)
-#endif
             {
                 if (get_renderer_property(renderer_info, renderer, kCGLRPVideoMemory, (GLint*)value))
                     *value /= 1024 * 1024;

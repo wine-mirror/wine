@@ -299,15 +299,12 @@ static NSString* WineLocalizedString(unsigned int stringID)
             [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_ZOOM)
                                action:@selector(performZoom:)
                         keyEquivalent:@""];
-            if ([NSWindow instancesRespondToSelector:@selector(toggleFullScreen:)])
-            {
-                item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_ENTER_FULL_SCREEN)
-                                          action:@selector(toggleFullScreen:)
-                                   keyEquivalent:@"f"];
-                [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand |
-                                                   NSEventModifierFlagOption |
-                                                   NSEventModifierFlagControl];
-            }
+            item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_ENTER_FULL_SCREEN)
+                                      action:@selector(toggleFullScreen:)
+                               keyEquivalent:@"f"];
+            [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand |
+                                               NSEventModifierFlagOption |
+                                               NSEventModifierFlagControl];
             [submenu addItem:[NSMenuItem separatorItem]];
             [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_BRING_ALL_TO_FRONT)
                                action:@selector(arrangeInFront:)
