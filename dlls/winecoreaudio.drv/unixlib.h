@@ -75,11 +75,20 @@ struct release_stream_params
     HRESULT result;
 };
 
+struct get_mix_format_params
+{
+    EDataFlow flow;
+    DWORD dev_id;
+    WAVEFORMATEXTENSIBLE *fmt;
+    HRESULT result;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
     unix_create_stream,
     unix_release_stream,
+    unix_get_mix_format,
 };
 
 extern unixlib_handle_t coreaudio_handle;
