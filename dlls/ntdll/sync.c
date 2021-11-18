@@ -503,127 +503,24 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
     return RtlRunOnceComplete( once, 0, context ? *context : NULL );
 }
 
-
-/* SRW locks implementation
- *
- * The memory layout used by the lock is:
- *
- * 32 31            16               0
- *  ________________ ________________
- * | X| #exclusive  |    #shared     |
- *  ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
- * Since there is no space left for a separate counter of shared access
- * threads inside the locked section the #shared field is used for multiple
- * purposes. The following table lists all possible states the lock can be
- * in, notation: [X, #exclusive, #shared]:
- *
- * [0,   0,   N] -> locked by N shared access threads, if N=0 it's unlocked
- * [0, >=1, >=1] -> threads are requesting exclusive locks, but there are
- * still shared access threads inside. #shared should not be incremented
- * anymore!
- * [1, >=1, >=0] -> lock is owned by an exclusive thread and the #shared
- * counter can be used again to count the number of threads waiting in the
- * queue for shared access.
- *
- * the following states are invalid and will never occur:
- * [0, >=1,   0], [1,   0, >=0]
- *
- * The main problem arising from the fact that we have no separate counter
- * of shared access threads inside the locked section is that in the state
- * [0, >=1, >=1] above we cannot add additional waiting threads to the
- * shared access queue - it wouldn't be possible to distinguish waiting
- * threads and those that are still inside. To solve this problem the lock
- * uses the following approach: a thread that isn't able to allocate a
- * shared lock just uses the exclusive queue instead. As soon as the thread
- * is woken up it is in the state [1, >=1, >=0]. In this state it's again
- * possible to use the shared access queue. The thread atomically moves
- * itself to the shared access queue and releases the exclusive lock, so
- * that the "real" exclusive access threads have a chance. As soon as they
- * are all ready the shared access threads are processed.
- */
-
-#define SRWLOCK_MASK_IN_EXCLUSIVE     0x80000000
-#define SRWLOCK_MASK_EXCLUSIVE_QUEUE  0x7fff0000
-#define SRWLOCK_MASK_SHARED_QUEUE     0x0000ffff
-#define SRWLOCK_RES_EXCLUSIVE         0x00010000
-#define SRWLOCK_RES_SHARED            0x00000001
-
-#ifdef WORDS_BIGENDIAN
-#define srwlock_key_exclusive(lock)   ((void *)(((ULONG_PTR)&lock->Ptr + 1) & ~1))
-#define srwlock_key_shared(lock)      ((void *)(((ULONG_PTR)&lock->Ptr + 3) & ~1))
-#else
-#define srwlock_key_exclusive(lock)   ((void *)(((ULONG_PTR)&lock->Ptr + 3) & ~1))
-#define srwlock_key_shared(lock)      ((void *)(((ULONG_PTR)&lock->Ptr + 1) & ~1))
-#endif
-
-static inline void srwlock_check_invalid( unsigned int val )
+struct srw_lock
 {
-    /* Throw exception if it's impossible to acquire/release this lock. */
-    if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) == SRWLOCK_MASK_EXCLUSIVE_QUEUE ||
-            (val & SRWLOCK_MASK_SHARED_QUEUE) == SRWLOCK_MASK_SHARED_QUEUE)
-        RtlRaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-}
+    short exclusive_waiters;
 
-static inline unsigned int srwlock_lock_exclusive( unsigned int *dest, int incr )
-{
-    unsigned int val, tmp;
-    /* Atomically modifies the value of *dest by adding incr. If the shared
-     * queue is empty and there are threads waiting for exclusive access, then
-     * sets the mark SRWLOCK_MASK_IN_EXCLUSIVE to signal other threads that
-     * they are allowed again to use the shared queue counter. */
-    for (val = *dest;; val = tmp)
-    {
-        tmp = val + incr;
-        srwlock_check_invalid( tmp );
-        if ((tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(tmp & SRWLOCK_MASK_SHARED_QUEUE))
-            tmp |= SRWLOCK_MASK_IN_EXCLUSIVE;
-        if ((tmp = InterlockedCompareExchange( (int *)dest, tmp, val )) == val)
-            break;
-    }
-    return val;
-}
-
-static inline unsigned int srwlock_unlock_exclusive( unsigned int *dest, int incr )
-{
-    unsigned int val, tmp;
-    /* Atomically modifies the value of *dest by adding incr. If the queue of
-     * threads waiting for exclusive access is empty, then remove the
-     * SRWLOCK_MASK_IN_EXCLUSIVE flag (only the shared queue counter will
-     * remain). */
-    for (val = *dest;; val = tmp)
-    {
-        tmp = val + incr;
-        srwlock_check_invalid( tmp );
-        if (!(tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE))
-            tmp &= SRWLOCK_MASK_SHARED_QUEUE;
-        if ((tmp = InterlockedCompareExchange( (int *)dest, tmp, val )) == val)
-            break;
-    }
-    return val;
-}
-
-static inline void srwlock_leave_exclusive( RTL_SRWLOCK *lock, unsigned int val )
-{
-    /* Used when a thread leaves an exclusive section. If there are other
-     * exclusive access threads they are processed first, followed by
-     * the shared waiters. */
-    if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
-        NtReleaseKeyedEvent( 0, srwlock_key_exclusive(lock), FALSE, NULL );
-    else
-    {
-        val &= SRWLOCK_MASK_SHARED_QUEUE; /* remove SRWLOCK_MASK_IN_EXCLUSIVE */
-        while (val--)
-            NtReleaseKeyedEvent( 0, srwlock_key_shared(lock), FALSE, NULL );
-    }
-}
-
-static inline void srwlock_leave_shared( RTL_SRWLOCK *lock, unsigned int val )
-{
-    /* Wake up one exclusive thread as soon as the last shared access thread
-     * has left. */
-    if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(val & SRWLOCK_MASK_SHARED_QUEUE))
-        NtReleaseKeyedEvent( 0, srwlock_key_exclusive(lock), FALSE, NULL );
-}
+    /* Number of shared owners, or -1 if owned exclusive.
+     *
+     * Sadly Windows has no equivalent to FUTEX_WAIT_BITSET, so in order to wake
+     * up *only* exclusive or *only* shared waiters (and thus avoid spurious
+     * wakeups), we need to wait on two different addresses.
+     * RtlAcquireSRWLockShared() needs to know the values of "exclusive_waiters"
+     * and "owners", but RtlAcquireSRWLockExclusive() only needs to know the
+     * value of "owners", so the former can wait on the entire structure, and
+     * the latter waits only on the "owners" member. Note then that "owners"
+     * must not be the first element in the structure.
+     */
+    short owners;
+};
+C_ASSERT( sizeof(struct srw_lock) == 4 );
 
 /***********************************************************************
  *              RtlInitializeSRWLock (NTDLL.@)
@@ -650,11 +547,36 @@ void WINAPI RtlInitializeSRWLock( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 {
-    if (unix_funcs->fast_RtlAcquireSRWLockExclusive( lock ) != STATUS_NOT_IMPLEMENTED)
-        return;
+    union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
 
-    if (srwlock_lock_exclusive( (unsigned int *)&lock->Ptr, SRWLOCK_RES_EXCLUSIVE ))
-        NtWaitForKeyedEvent( 0, srwlock_key_exclusive(lock), FALSE, NULL );
+    InterlockedIncrement16( &u.s->exclusive_waiters );
+
+    for (;;)
+    {
+        union { struct srw_lock s; LONG l; } old, new;
+        BOOL wait;
+
+        do
+        {
+            old.s = *u.s;
+            new.s = old.s;
+
+            if (!old.s.owners)
+            {
+                /* Not locked exclusive or shared. We can try to grab it. */
+                new.s.owners = -1;
+                --new.s.exclusive_waiters;
+                wait = FALSE;
+            }
+            else
+            {
+                wait = TRUE;
+            }
+        } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
+
+        if (!wait) return;
+        RtlWaitOnAddress( &u.s->owners, &new.s.owners, sizeof(short), NULL );
+    }
 }
 
 /***********************************************************************
@@ -666,34 +588,34 @@ void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
 {
-    unsigned int val, tmp;
+    union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
 
-    if (unix_funcs->fast_RtlAcquireSRWLockShared( lock ) != STATUS_NOT_IMPLEMENTED)
-        return;
-
-    /* Acquires a shared lock. If it's currently not possible to add elements to
-     * the shared queue, then request exclusive access instead. */
-    for (val = *(unsigned int *)&lock->Ptr;; val = tmp)
+    for (;;)
     {
-        if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(val & SRWLOCK_MASK_IN_EXCLUSIVE))
-            tmp = val + SRWLOCK_RES_EXCLUSIVE;
-        else
-            tmp = val + SRWLOCK_RES_SHARED;
-        if ((tmp = InterlockedCompareExchange( (int *)&lock->Ptr, tmp, val )) == val)
-            break;
-    }
+        union { struct srw_lock s; LONG l; } old, new;
+        BOOL wait;
 
-    /* Drop exclusive access again and instead requeue for shared access. */
-    if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(val & SRWLOCK_MASK_IN_EXCLUSIVE))
-    {
-        NtWaitForKeyedEvent( 0, srwlock_key_exclusive(lock), FALSE, NULL );
-        val = srwlock_unlock_exclusive( (unsigned int *)&lock->Ptr, (SRWLOCK_RES_SHARED
-                                        - SRWLOCK_RES_EXCLUSIVE) ) - SRWLOCK_RES_EXCLUSIVE;
-        srwlock_leave_exclusive( lock, val );
-    }
+        do
+        {
+            old.s = *u.s;
+            new = old;
 
-    if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
-        NtWaitForKeyedEvent( 0, srwlock_key_shared(lock), FALSE, NULL );
+            if (old.s.owners != -1 && !old.s.exclusive_waiters)
+            {
+                /* Not locked exclusive, and no exclusive waiters.
+                 * We can try to grab it. */
+                ++new.s.owners;
+                wait = FALSE;
+            }
+            else
+            {
+                wait = TRUE;
+            }
+        } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
+
+        if (!wait) return;
+        RtlWaitOnAddress( u.s, &new.s, sizeof(struct srw_lock), NULL );
+    }
 }
 
 /***********************************************************************
@@ -701,11 +623,23 @@ void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
 {
-    if (unix_funcs->fast_RtlReleaseSRWLockExclusive( lock ) != STATUS_NOT_IMPLEMENTED)
-        return;
+    union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
+    union { struct srw_lock s; LONG l; } old, new;
 
-    srwlock_leave_exclusive( lock, srwlock_unlock_exclusive( (unsigned int *)&lock->Ptr,
-                             - SRWLOCK_RES_EXCLUSIVE ) - SRWLOCK_RES_EXCLUSIVE );
+    do
+    {
+        old.s = *u.s;
+        new = old;
+
+        if (old.s.owners != -1) ERR("Lock %p is not owned exclusive!\n", lock);
+
+        new.s.owners = 0;
+    } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
+
+    if (new.s.exclusive_waiters)
+        RtlWakeAddressSingle( &u.s->owners );
+    else
+        RtlWakeAddressAll( u.s );
 }
 
 /***********************************************************************
@@ -713,11 +647,22 @@ void WINAPI RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
 {
-    if (unix_funcs->fast_RtlReleaseSRWLockShared( lock ) != STATUS_NOT_IMPLEMENTED)
-        return;
+    union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
+    union { struct srw_lock s; LONG l; } old, new;
 
-    srwlock_leave_shared( lock, srwlock_lock_exclusive( (unsigned int *)&lock->Ptr,
-                          - SRWLOCK_RES_SHARED ) - SRWLOCK_RES_SHARED );
+    do
+    {
+        old.s = *u.s;
+        new = old;
+
+        if (old.s.owners == -1) ERR("Lock %p is owned exclusive!\n", lock);
+        else if (!old.s.owners) ERR("Lock %p is not owned shared!\n", lock);
+
+        --new.s.owners;
+    } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
+
+    if (!new.s.owners)
+        RtlWakeAddressSingle( &u.s->owners );
 }
 
 /***********************************************************************
@@ -729,13 +674,28 @@ void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
  */
 BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 {
-    NTSTATUS ret;
+    union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
+    union { struct srw_lock s; LONG l; } old, new;
+    BOOLEAN ret;
 
-    if ((ret = unix_funcs->fast_RtlTryAcquireSRWLockExclusive( lock )) != STATUS_NOT_IMPLEMENTED)
-        return (ret == STATUS_SUCCESS);
+    do
+    {
+        old.s = *u.s;
+        new.s = old.s;
 
-    return InterlockedCompareExchange( (int *)&lock->Ptr, SRWLOCK_MASK_IN_EXCLUSIVE |
-                                       SRWLOCK_RES_EXCLUSIVE, 0 ) == 0;
+        if (!old.s.owners)
+        {
+            /* Not locked exclusive or shared. We can try to grab it. */
+            new.s.owners = -1;
+            ret = TRUE;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+    } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
+
+    return ret;
 }
 
 /***********************************************************************
@@ -743,20 +703,29 @@ BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
  */
 BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock )
 {
-    unsigned int val, tmp;
-    NTSTATUS ret;
+    union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
+    union { struct srw_lock s; LONG l; } old, new;
+    BOOLEAN ret;
 
-    if ((ret = unix_funcs->fast_RtlTryAcquireSRWLockShared( lock )) != STATUS_NOT_IMPLEMENTED)
-        return (ret == STATUS_SUCCESS);
-
-    for (val = *(unsigned int *)&lock->Ptr;; val = tmp)
+    do
     {
-        if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
-            return FALSE;
-        if ((tmp = InterlockedCompareExchange( (int *)&lock->Ptr, val + SRWLOCK_RES_SHARED, val )) == val)
-            break;
-    }
-    return TRUE;
+        old.s = *u.s;
+        new.s = old.s;
+
+        if (old.s.owners != -1 && !old.s.exclusive_waiters)
+        {
+            /* Not locked exclusive, and no exclusive waiters.
+             * We can try to grab it. */
+            ++new.s.owners;
+            ret = TRUE;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+    } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
+
+    return ret;
 }
 
 /***********************************************************************

@@ -2145,12 +2145,6 @@ static struct unix_funcs unix_funcs =
     NtCurrentTeb,
 #endif
     RtlGetSystemTimePrecise,
-    fast_RtlTryAcquireSRWLockExclusive,
-    fast_RtlAcquireSRWLockExclusive,
-    fast_RtlTryAcquireSRWLockShared,
-    fast_RtlAcquireSRWLockShared,
-    fast_RtlReleaseSRWLockExclusive,
-    fast_RtlReleaseSRWLockShared,
     load_so_dll,
     init_builtin_dll,
     init_unix_lib,
