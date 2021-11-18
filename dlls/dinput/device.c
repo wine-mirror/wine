@@ -911,19 +911,13 @@ static BOOL CALLBACK find_object( const DIDEVICEOBJECTINSTANCEW *instance, void 
     return DIENUM_STOP;
 }
 
-static HRESULT WINAPI dinput_device_GetProperty( IDirectInputDevice8W *iface, const GUID *guid, DIPROPHEADER *header )
+static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GUID *guid, DIPROPHEADER *header )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DWORD object_mask = DIDFT_AXIS | DIDFT_BUTTON | DIDFT_POV;
     DIDEVICEOBJECTINSTANCEW instance;
     DIPROPHEADER filter;
     HRESULT hr;
-
-    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
-
-    if (!header) return DIERR_INVALIDPARAM;
-    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
-    if (!IS_DIPROP( guid )) return DI_OK;
 
     filter = *header;
     if (FAILED(hr = enum_object_filter_init( impl, &filter ))) return hr;
@@ -1023,6 +1017,24 @@ static HRESULT WINAPI dinput_device_GetProperty( IDirectInputDevice8W *iface, co
     return DI_OK;
 }
 
+static HRESULT WINAPI dinput_device_GetProperty( IDirectInputDevice8W *iface, const GUID *guid, DIPROPHEADER *header )
+{
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
+
+    if (!header) return DIERR_INVALIDPARAM;
+    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
+    if (!IS_DIPROP( guid )) return DI_OK;
+
+    EnterCriticalSection( &impl->crit );
+    hr = dinput_device_get_property( iface, guid, header );
+    LeaveCriticalSection( &impl->crit );
+
+    return hr;
+}
+
 struct set_object_property_params
 {
     IDirectInputDevice8W *iface;
@@ -1071,8 +1083,8 @@ static void reset_device_state( IDirectInputDevice8W *iface )
     impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS | DIDFT_POV, reset_object_value, impl );
 }
 
-static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, const GUID *guid,
-                                                 const DIPROPHEADER *header )
+static HRESULT WINAPI dinput_device_set_property( IDirectInputDevice8W *iface, const GUID *guid,
+                                                  const DIPROPHEADER *header )
 {
     struct set_object_property_params params = {.iface = iface, .header = header, .property = LOWORD( guid )};
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
@@ -1080,12 +1092,6 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
     DIDEVICEOBJECTINSTANCEW instance;
     DIPROPHEADER filter;
     HRESULT hr;
-
-    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
-
-    if (!header) return DIERR_INVALIDPARAM;
-    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
-    if (!IS_DIPROP( guid )) return DI_OK;
 
     filter = *header;
     if (FAILED(hr = enum_object_filter_init( impl, &filter ))) return hr;
@@ -1118,18 +1124,13 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
-        EnterCriticalSection( &impl->crit );
-        if (impl->acquired) hr = DIERR_ACQUIRED;
-        else if (value->dwData > DIPROPAUTOCENTER_ON) hr = DIERR_INVALIDPARAM;
-        else if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) hr = DIERR_UNSUPPORTED;
-        else
-        {
-            FIXME( "DIPROP_AUTOCENTER stub!\n" );
-            impl->autocenter = value->dwData;
-            hr = DI_OK;
-        }
-        LeaveCriticalSection( &impl->crit );
-        return hr;
+        if (impl->acquired) return DIERR_ACQUIRED;
+        if (value->dwData > DIPROPAUTOCENTER_ON) return DIERR_INVALIDPARAM;
+        if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+
+        FIXME( "DIPROP_AUTOCENTER stub!\n" );
+        impl->autocenter = value->dwData;
+        return DI_OK;
     }
     case (DWORD_PTR)DIPROP_FFGAIN:
     {
@@ -1138,12 +1139,9 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         if (!impl->vtbl->send_device_gain) return DIERR_UNSUPPORTED;
         if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
         if (value->dwData > 10000) return DIERR_INVALIDPARAM;
-        EnterCriticalSection( &impl->crit );
         impl->device_gain = value->dwData;
-        if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) hr = DI_OK;
-        else hr = impl->vtbl->send_device_gain( iface, impl->device_gain );
-        LeaveCriticalSection( &impl->crit );
-        return hr;
+        if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) return DI_OK;
+        return impl->vtbl->send_device_gain( iface, impl->device_gain );
     }
     case (DWORD_PTR)DIPROP_FFLOAD:
     case (DWORD_PTR)DIPROP_GRANULARITY:
@@ -1163,41 +1161,31 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         if (header->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
         if (header->dwHow == DIPH_DEVICE && header->dwObj) return DIERR_INVALIDPARAM;
+        if (impl->acquired) return DIERR_ACQUIRED;
 
         TRACE( "Axis mode: %s\n", value->dwData == DIPROPAXISMODE_ABS ? "absolute" : "relative" );
-        EnterCriticalSection( &impl->crit );
-        if (impl->acquired) hr = DIERR_ACQUIRED;
-        else if (!impl->user_format) hr = DI_OK;
-        else
+        if (impl->user_format)
         {
             impl->user_format->dwFlags &= ~DIDFT_AXIS;
             impl->user_format->dwFlags |= value->dwData == DIPROPAXISMODE_ABS ? DIDF_ABSAXIS : DIDF_RELAXIS;
-            hr = DI_OK;
         }
-        LeaveCriticalSection( &impl->crit );
-        return hr;
+        return DI_OK;
     }
     case (DWORD_PTR)DIPROP_BUFFERSIZE:
     {
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (impl->acquired) return DIERR_ACQUIRED;
 
         TRACE( "buffersize = %d\n", value->dwData );
 
-        EnterCriticalSection( &impl->crit );
-        if (impl->acquired) hr = DIERR_ACQUIRED;
-        else
-        {
-            impl->buffersize = value->dwData;
-            impl->queue_len = min( impl->buffersize, 1024 );
-            free( impl->data_queue );
+        impl->buffersize = value->dwData;
+        impl->queue_len = min( impl->buffersize, 1024 );
+        free( impl->data_queue );
 
-            impl->data_queue = impl->queue_len ? malloc( impl->queue_len * sizeof(DIDEVICEOBJECTDATA) ) : NULL;
-            impl->queue_head = impl->queue_tail = impl->overflow = 0;
-            hr = DI_OK;
-        }
-        LeaveCriticalSection( &impl->crit );
-        return hr;
+        impl->data_queue = impl->queue_len ? malloc( impl->queue_len * sizeof(DIDEVICEOBJECTDATA) ) : NULL;
+        impl->queue_head = impl->queue_tail = impl->overflow = 0;
+        return DI_OK;
     }
     case (DWORD_PTR)DIPROP_APPDATA:
     {
@@ -1218,6 +1206,25 @@ static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, co
     }
 
     return DI_OK;
+}
+
+static HRESULT WINAPI dinput_device_SetProperty( IDirectInputDevice8W *iface, const GUID *guid,
+                                                 const DIPROPHEADER *header )
+{
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
+
+    if (!header) return DIERR_INVALIDPARAM;
+    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
+    if (!IS_DIPROP( guid )) return DI_OK;
+
+    EnterCriticalSection( &impl->crit );
+    hr = dinput_device_set_property( iface, guid, header );
+    LeaveCriticalSection( &impl->crit );
+
+    return hr;
 }
 
 static void dinput_device_set_username( struct dinput_device *impl, const DIPROPSTRING *value )
