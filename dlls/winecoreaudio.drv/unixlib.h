@@ -57,9 +57,29 @@ struct get_endpoint_ids_params
     unsigned int default_idx;
 };
 
+struct create_stream_params
+{
+    DWORD dev_id;
+    EDataFlow flow;
+    AUDCLNT_SHAREMODE share;
+    REFERENCE_TIME duration;
+    REFERENCE_TIME period;
+    const WAVEFORMATEX *fmt;
+    HRESULT result;
+    struct coreaudio_stream *stream;
+};
+
+struct release_stream_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
+    unix_create_stream,
+    unix_release_stream,
 };
 
 extern unixlib_handle_t coreaudio_handle;
