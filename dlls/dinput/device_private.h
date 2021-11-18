@@ -57,6 +57,17 @@ struct dinput_device_vtbl
 
 #define DEVICE_STATE_MAX_SIZE 1024
 
+struct object_properties
+{
+    LONG bit_size;
+    LONG logical_min;
+    LONG logical_max;
+    LONG range_min;
+    LONG range_max;
+    LONG deadzone;
+    LONG saturation;
+};
+
 /* Device implementation */
 struct dinput_device
 {
@@ -100,6 +111,7 @@ struct dinput_device
 
     BOOL autocenter;
     LONG device_gain;
+    struct object_properties *object_properties;
 };
 
 extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,

@@ -740,6 +740,7 @@ void dinput_device_destroy( IDirectInputDevice8W *iface )
 
     TRACE( "iface %p.\n", iface );
 
+    free( This->object_properties );
     free( This->data_queue );
 
     /* Free data format */
@@ -1940,6 +1941,7 @@ HRESULT dinput_device_init( IDirectInputDevice8W *iface )
 
     size = format->dwNumObjs * sizeof(*format->rgodf);
     if (!(format->rgodf = calloc( 1, size ))) return DIERR_OUTOFMEMORY;
+
     format->dwSize = sizeof(*format);
     format->dwObjSize = sizeof(*format->rgodf);
     format->dwFlags = DIDF_ABSAXIS;
