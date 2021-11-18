@@ -877,16 +877,16 @@ static void ca_wrap_buffer(BYTE *dst, UINT32 dst_offs, UINT32 dst_bytes,
         memcpy(dst + dst_offs, src, src_bytes);
 }
 
-static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
+static void silence_buffer(struct coreaudio_stream *stream, BYTE *buffer, UINT32 frames)
 {
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->stream->fmt;
-    if((This->stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (This->stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-            This->stream->fmt->wBitsPerSample == 8)
-        memset(buffer, 128, frames * This->stream->fmt->nBlockAlign);
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
+    if((stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+        (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+         IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+       stream->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * stream->fmt->nBlockAlign);
     else
-        memset(buffer, 0, frames * This->stream->fmt->nBlockAlign);
+        memset(buffer, 0, frames * stream->fmt->nBlockAlign);
 }
 
 /* CA is pulling data from us */
@@ -919,7 +919,7 @@ static OSStatus ca_render_cb(void *user, AudioUnitRenderActionFlags *flags,
         to_copy_bytes = to_copy_frames = 0;
 
     if(nframes > to_copy_frames)
-        silence_buffer(This, ((BYTE *)data->mBuffers[0].mData) + to_copy_bytes, nframes - to_copy_frames);
+        silence_buffer(This->stream, ((BYTE *)data->mBuffers[0].mData) + to_copy_bytes, nframes - to_copy_frames);
 
     OSSpinLockUnlock(&This->stream->lock);
 
@@ -1344,7 +1344,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     This->stream->local_buffer_size = This->stream->bufsize_frames * fmt->nBlockAlign;
     NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&This->stream->local_buffer, 0,
                             &This->stream->local_buffer_size, MEM_COMMIT, PAGE_READWRITE);
-    silence_buffer(This, This->stream->local_buffer, This->stream->bufsize_frames);
+    silence_buffer(This->stream, This->stream->local_buffer, This->stream->bufsize_frames);
 
     if(This->dataflow == eCapture){
         This->stream->cap_bufsize_frames = MulDiv(duration, This->stream->dev_desc.mSampleRate, 10000000);
@@ -2318,7 +2318,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         This->stream->getbuf_last = frames;
     }
 
-    silence_buffer(This, *data, frames);
+    silence_buffer(This->stream, *data, frames);
 
     OSSpinLockUnlock(&This->stream->lock);
 
@@ -2357,7 +2357,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         buffer = This->stream->tmp_buffer;
 
     if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        silence_buffer(This, buffer, frames);
+        silence_buffer(This->stream, buffer, frames);
 
     if(This->stream->getbuf_last < 0)
         ca_wrap_buffer(This->stream->local_buffer,
