@@ -179,6 +179,7 @@ struct options
     int force_pointer_size;
     int large_address_aware;
     int wine_builtin;
+    int fake_module;
     int unwind_tables;
     int strip;
     int pic;
@@ -1002,7 +1003,6 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
     struct strarray spec_args = get_winebuild_args( opts );
     struct strarray tool;
     const char *spec_o_name, *output_name;
-    int fake_module = strendswith(output_file, ".fake");
 
     /* get the filename from the path */
     output_name = get_basename( output_file );
@@ -1020,7 +1020,7 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
         strarray_add(&spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     if (opts->pic && !is_pe) strarray_add(&spec_args, "-fPIC");
     strarray_add(&spec_args, opts->shared ? "--dll" : "--exe");
-    if (fake_module)
+    if (opts->fake_module)
     {
         strarray_add(&spec_args, "--fake-module");
         strarray_add(&spec_args, "-o");
@@ -1101,7 +1101,6 @@ static void build(struct options* opts)
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
     const char *crt_lib = NULL, *entry_point = NULL;
-    int fake_module = 0;
     int is_pe = is_pe_target( opts );
     unsigned int j;
 
@@ -1128,7 +1127,7 @@ static void build(struct options* opts)
     if (opts->shared || is_pe || strendswith(output_file, ".so"))
 	generate_app_loader = 0;
 
-    if (strendswith(output_file, ".fake")) fake_module = 1;
+    if (strendswith(output_file, ".fake")) opts->fake_module = 1;
 
     /* normalize the filename a bit: strip .so, ensure it has proper ext */
     if (!strchr(get_basename( output_file ), '.'))
@@ -1250,7 +1249,7 @@ static void build(struct options* opts)
     if (spec_file || !opts->unix_lib)
         spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
 
-    if (fake_module) return;  /* nothing else to do */
+    if (opts->fake_module) return;  /* nothing else to do */
 
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
@@ -1880,9 +1879,13 @@ int main(int argc, char **argv)
                     }
 		    else if (strncmp("-Wb,", opts.args.str[i], 4) == 0)
 		    {
-                        strarray_addall( &opts.winebuild_args,
-                                         strarray_fromstring( opts.args.str[i] + 4, ",") );
-                        /* don't pass it to the compiler, it generates errors */
+                        unsigned int j;
+                        struct strarray Wb = strarray_fromstring(opts.args.str[i] + 4, ",");
+                        for (j = 0; j < Wb.count; j++)
+                        {
+                            if (!strcmp(Wb.str[j], "--fake-module")) opts.fake_module = 1;
+                            else strarray_add( &opts.winebuild_args, Wb.str[j] );
+                        }
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
                     break;
@@ -1958,7 +1961,7 @@ int main(int argc, char **argv)
 
     if (!opts.wine_objdir && is_pe_target( &opts )) opts.use_msvcrt = 1;
 
-    if (opts.files.count == 0) forward(&opts);
+    if (opts.files.count == 0 && !opts.fake_module) forward(&opts);
     else if (linking) build(&opts);
     else compile(&opts, lang);
 
