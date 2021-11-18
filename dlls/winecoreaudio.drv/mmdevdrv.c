@@ -580,12 +580,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
 
     This->adevid = adevid;
 
-    if(!(This->stream->unit = get_audiounit(This->dataflow, This->adevid))){
-        HeapFree(GetProcessHeap(), 0, This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
-        return AUDCLNT_E_DEVICE_INVALIDATED;
-    }
-
     *out = (IAudioClient *)&This->IAudioClient3_iface;
     IAudioClient3_AddRef(&This->IAudioClient3_iface);
 
@@ -1261,6 +1255,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     This->stream->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
     if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
         This->stream->bufsize_frames -= This->stream->bufsize_frames % This->stream->period_frames;
+
+    if(!(This->stream->unit = get_audiounit(This->dataflow, This->adevid))){
+        CoTaskMemFree(This->stream->fmt);
+        This->stream->fmt = NULL;
+        OSSpinLockUnlock(&This->stream->lock);
+        LeaveCriticalSection(&g_sessions_lock);
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
 
     hr = ca_setup_audiounit(This->dataflow, This->stream->unit, This->stream->fmt, &This->stream->dev_desc, &This->stream->converter);
     if(FAILED(hr)){
