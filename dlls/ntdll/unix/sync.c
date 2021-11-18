@@ -2341,9 +2341,13 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
 
 union tid_alert_entry
 {
+#ifdef __APPLE__
+    semaphore_t sem;
+#else
     HANDLE event;
 #ifdef __linux__
     int futex;
+#endif
 #endif
 };
 
@@ -2379,6 +2383,17 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 
     entry = &tid_alert_blocks[block_idx][idx % TID_ALERT_BLOCK_SIZE];
 
+#ifdef __APPLE__
+    if (!entry->sem)
+    {
+        semaphore_t sem;
+
+        if (semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, 0 ))
+            return NULL;
+        if (InterlockedCompareExchange( (int *)&entry->sem, sem, NULL ))
+            semaphore_destroy( mach_task_self(), sem );
+    }
+#else
 #ifdef __linux__
     if (use_futexes())
         return entry;
@@ -2393,6 +2408,7 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
         if (InterlockedCompareExchangePointer( &entry->event, event, NULL ))
             NtClose( event );
     }
+#endif
 
     return entry;
 }
@@ -2409,6 +2425,10 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 
     if (!entry) return STATUS_INVALID_CID;
 
+#ifdef __APPLE__
+    semaphore_signal( entry->sem );
+    return STATUS_SUCCESS;
+#else
 #ifdef __linux__
     if (use_futexes())
     {
@@ -2420,10 +2440,11 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 #endif
 
     return NtSetEvent( entry->event, NULL );
+#endif
 }
 
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 static LONGLONG get_absolute_timeout( const LARGE_INTEGER *timeout )
 {
     LARGE_INTEGER now;
@@ -2445,6 +2466,57 @@ static LONGLONG update_timeout( ULONGLONG end )
 }
 #endif
 
+
+#ifdef __APPLE__
+
+/***********************************************************************
+ *             NtWaitForAlertByThreadId (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEGER *timeout )
+{
+    union tid_alert_entry *entry = get_tid_alert_entry( NtCurrentTeb()->ClientId.UniqueThread );
+    semaphore_t sem;
+    ULONGLONG end;
+    kern_return_t ret;
+
+    TRACE( "%p %s\n", address, debugstr_timeout( timeout ) );
+
+    if (!entry) return STATUS_INVALID_CID;
+    sem = entry->sem;
+
+    if (timeout)
+    {
+        if (timeout->QuadPart == TIMEOUT_INFINITE)
+            timeout = NULL;
+        else
+            end = get_absolute_timeout( timeout );
+    }
+
+    for (;;)
+    {
+        if (timeout)
+        {
+            LONGLONG timeleft = update_timeout( end );
+            mach_timespec_t timespec;
+
+            timespec.tv_sec = timeleft / (ULONGLONG)TICKSPERSEC;
+            timespec.tv_nsec = (timeleft % TICKSPERSEC) * 100;
+            ret = semaphore_timedwait( sem, timespec );
+        }
+        else
+            ret = semaphore_wait( sem );
+
+        switch (ret)
+        {
+        case KERN_SUCCESS: return STATUS_ALERTED;
+        case KERN_ABORTED: continue;
+        case KERN_OPERATION_TIMED_OUT: return STATUS_TIMEOUT;
+        default: return STATUS_INVALID_HANDLE;
+        }
+    }
+}
+
+#else
 
 /***********************************************************************
  *             NtWaitForAlertByThreadId (NTDLL.@)
@@ -2498,6 +2570,7 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
     return status;
 }
 
+#endif
 
 #ifdef __linux__
 
