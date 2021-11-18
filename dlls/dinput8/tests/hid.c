@@ -4215,9 +4215,7 @@ static void test_simple_joystick(void)
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_CALIBRATIONMODE returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == DIPROPCALIBRATIONMODE_COOKED, "got %u expected %u\n", prop_dword.dwData, DIPROPCALIBRATIONMODE_COOKED );
 
     prop_string.diph.dwHow = DIPH_BYUSAGE;
@@ -4927,7 +4925,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
     ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_SATURATION returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_CALIBRATIONMODE returned %#x\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
@@ -4937,7 +4934,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "SetProperty DIPROP_SATURATION returned %#x\n", hr );
     prop_dword.dwData = DIPROPCALIBRATIONMODE_COOKED;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_CALIBRATIONMODE returned %#x\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
@@ -5025,13 +5021,10 @@ static void test_simple_joystick(void)
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_dword.dwData = DIPROPCALIBRATIONMODE_RAW;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_CALIBRATIONMODE returned %#x\n", hr );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_CALIBRATIONMODE returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == DIPROPCALIBRATIONMODE_RAW, "got %u expected %u\n", prop_dword.dwData, DIPROPCALIBRATIONMODE_RAW );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
@@ -5039,23 +5032,19 @@ static void test_simple_joystick(void)
     winetest_push_context( "state[%d]", i );
     todo_wine
     ok( state.lX == 15, "got lX %d, expected %d\n" , state.lX, 15 );
-    todo_wine
     check_member( state, expect_state_abs[0], "%d", lY );
     check_member( state, expect_state_abs[0], "%d", lZ );
     check_member( state, expect_state_abs[0], "%d", lRx );
-    todo_wine
     check_member( state, expect_state_abs[0], "%d", rgdwPOV[0] );
     check_member( state, expect_state_abs[0], "%d", rgdwPOV[1] );
     winetest_pop_context();
 
     prop_dword.dwData = DIPROPCALIBRATIONMODE_COOKED;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "SetProperty DIPROP_CALIBRATIONMODE returned %#x\n", hr );
 
     send_hid_input( file, &injected_input[ARRAY_SIZE(injected_input) - 1], sizeof(*injected_input) );
     res = WaitForSingleObject( event, 100 );
-    todo_wine
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
 
     hr = IDirectInputDevice8_Unacquire( device );

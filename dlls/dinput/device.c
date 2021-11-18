@@ -920,6 +920,7 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
     case (DWORD_PTR)DIPROP_AUTOCENTER:
     case (DWORD_PTR)DIPROP_AXISMODE:
     case (DWORD_PTR)DIPROP_BUFFERSIZE:
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
     case (DWORD_PTR)DIPROP_DEADZONE:
     case (DWORD_PTR)DIPROP_FFGAIN:
     case (DWORD_PTR)DIPROP_FFLOAD:
@@ -966,6 +967,7 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
     case (DWORD_PTR)DIPROP_DEADZONE:
     case (DWORD_PTR)DIPROP_SATURATION:
     case (DWORD_PTR)DIPROP_GRANULARITY:
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
         if (header->dwHow == DIPH_DEVICE && !set) return DIERR_UNSUPPORTED;
         break;
 
@@ -1015,6 +1017,7 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         }
         case (DWORD_PTR)DIPROP_AUTOCENTER:
         case (DWORD_PTR)DIPROP_AXISMODE:
+        case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
         {
             const DIPROPDWORD *value = (const DIPROPDWORD *)header;
             if (value->dwData > 1) return DIERR_INVALIDPARAM;
@@ -1038,6 +1041,7 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
 
         case (DWORD_PTR)DIPROP_DEADZONE:
         case (DWORD_PTR)DIPROP_SATURATION:
+        case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
             if (!impl->object_properties) return DIERR_UNSUPPORTED;
             break;
 
@@ -1102,6 +1106,12 @@ static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
         value->dwData = properties->saturation;
         return DIENUM_STOP;
     }
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)params->header;
+        value->dwData = properties->calibration_mode;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_GRANULARITY:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)params->header;
@@ -1145,6 +1155,7 @@ static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GU
     case (DWORD_PTR)DIPROP_SATURATION:
     case (DWORD_PTR)DIPROP_GRANULARITY:
     case (DWORD_PTR)DIPROP_KEYNAME:
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
         hr = impl->vtbl->enum_objects( iface, &filter, object_mask, get_object_property, &params );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
@@ -1249,6 +1260,12 @@ static BOOL CALLBACK set_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
         properties->saturation = value->dwData;
         return DIENUM_CONTINUE;
     }
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
+    {
+        const DIPROPDWORD *value = (const DIPROPDWORD *)params->header;
+        properties->calibration_mode = value->dwData;
+        return DIENUM_CONTINUE;
+    }
     }
 
     return DIENUM_STOP;
@@ -1307,6 +1324,15 @@ static HRESULT WINAPI dinput_device_set_property( IDirectInputDevice8W *iface, c
     case (DWORD_PTR)DIPROP_DEADZONE:
     case (DWORD_PTR)DIPROP_SATURATION:
     {
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, set_object_property, &params );
+        if (FAILED(hr)) return hr;
+        reset_device_state( iface );
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
+    {
+        const DIPROPDWORD *value = (const DIPROPDWORD *)header;
+        if (value->dwData > DIPROPCALIBRATIONMODE_RAW) return DIERR_INVALIDPARAM;
         hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, set_object_property, &params );
         if (FAILED(hr)) return hr;
         reset_device_state( iface );
