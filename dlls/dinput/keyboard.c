@@ -274,12 +274,6 @@ static HRESULT keyboard_get_property( IDirectInputDevice8W *iface, DWORD propert
     return DIERR_UNSUPPORTED;
 }
 
-static HRESULT keyboard_set_property( IDirectInputDevice8W *iface, DWORD property,
-                                      const DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
-{
-    return DIERR_UNSUPPORTED;
-}
-
 static const struct dinput_device_vtbl keyboard_vtbl =
 {
     NULL,
@@ -289,7 +283,6 @@ static const struct dinput_device_vtbl keyboard_vtbl =
     keyboard_unacquire,
     keyboard_enum_objects,
     keyboard_get_property,
-    keyboard_set_property,
     NULL,
     NULL,
     NULL,

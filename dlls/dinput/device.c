@@ -1143,8 +1143,35 @@ static BOOL CALLBACK set_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
 {
     struct set_object_property_params *params = context;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
-    impl->vtbl->set_property( params->iface, params->property, params->header, instance );
-    return DIENUM_CONTINUE;
+    struct object_properties *properties = NULL;
+
+    if (!impl->object_properties) return DIENUM_STOP;
+    properties = impl->object_properties + instance->dwOfs / sizeof(LONG);
+
+    switch (params->property)
+    {
+    case (DWORD_PTR)DIPROP_RANGE:
+    {
+        const DIPROPRANGE *value = (const DIPROPRANGE *)params->header;
+        properties->range_min = value->lMin;
+        properties->range_max = value->lMax;
+        return DIENUM_CONTINUE;
+    }
+    case (DWORD_PTR)DIPROP_DEADZONE:
+    {
+        const DIPROPDWORD *value = (const DIPROPDWORD *)params->header;
+        properties->deadzone = value->dwData;
+        return DIENUM_CONTINUE;
+    }
+    case (DWORD_PTR)DIPROP_SATURATION:
+    {
+        const DIPROPDWORD *value = (const DIPROPDWORD *)params->header;
+        properties->saturation = value->dwData;
+        return DIENUM_CONTINUE;
+    }
+    }
+
+    return DIENUM_STOP;
 }
 
 static BOOL CALLBACK reset_object_value( const DIDEVICEOBJECTINSTANCEW *instance, void *context )

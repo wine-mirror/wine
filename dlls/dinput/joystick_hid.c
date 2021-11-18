@@ -780,22 +780,6 @@ static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD pro
     return DIERR_UNSUPPORTED;
 }
 
-static void set_extra_caps_range( struct hid_joystick *impl, const DIDEVICEOBJECTINSTANCEW *instance,
-                                  LONG min, LONG max )
-{
-    struct object_properties *properties = impl->base.object_properties + instance->dwOfs / sizeof(LONG);
-    LONG tmp;
-
-    properties->range_min = min;
-    properties->range_max = max;
-
-    if (instance->dwType & DIDFT_POV)
-    {
-        tmp = properties->logical_max - properties->logical_min;
-        if (tmp > 0) properties->range_max -= max / (tmp + 1);
-    }
-}
-
 static HRESULT hid_joystick_send_device_gain( IDirectInputDevice8W *iface, LONG device_gain )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -815,39 +799,6 @@ static HRESULT hid_joystick_send_device_gain( IDirectInputDevice8W *iface, LONG 
 
     if (!WriteFile( impl->device, report_buf, report_len, NULL, NULL )) return DIERR_INPUTLOST;
     return DI_OK;
-}
-
-static HRESULT hid_joystick_set_property( IDirectInputDevice8W *iface, DWORD property,
-                                          const DIPROPHEADER *header, const DIDEVICEOBJECTINSTANCEW *instance )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    struct object_properties *properties = NULL;
-
-    if (instance) properties = impl->base.object_properties + instance->dwOfs / sizeof(LONG);
-
-    switch (property)
-    {
-    case (DWORD_PTR)DIPROP_RANGE:
-    {
-        const DIPROPRANGE *value = (const DIPROPRANGE *)header;
-        set_extra_caps_range( impl, instance, value->lMin, value->lMax );
-        return DI_OK;
-    }
-    case (DWORD_PTR)DIPROP_DEADZONE:
-    {
-        const DIPROPDWORD *value = (const DIPROPDWORD *)header;
-        properties->deadzone = value->dwData;
-        return DI_OK;
-    }
-    case (DWORD_PTR)DIPROP_SATURATION:
-    {
-        const DIPROPDWORD *value = (const DIPROPDWORD *)header;
-        properties->saturation = value->dwData;
-        return DI_OK;
-    }
-    }
-
-    return DIERR_UNSUPPORTED;
 }
 
 static HRESULT hid_joystick_acquire( IDirectInputDevice8W *iface )
@@ -1301,7 +1252,6 @@ static const struct dinput_device_vtbl hid_joystick_vtbl =
     hid_joystick_unacquire,
     hid_joystick_enum_objects,
     hid_joystick_get_property,
-    hid_joystick_set_property,
     hid_joystick_get_effect_info,
     hid_joystick_create_effect,
     hid_joystick_send_force_feedback_command,
@@ -1561,11 +1511,20 @@ static BOOL init_object_properties( struct hid_joystick *impl, struct hid_value_
                                     DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct object_properties *properties = impl->base.object_properties + instance->dwOfs / sizeof(LONG);
-    LONG range_max = (instance->dwType & DIDFT_AXIS) ? 65535 : 36000;
+    LONG tmp;
+
     properties->bit_size = caps->bit_size;
     properties->logical_min = caps->logical_min;
     properties->logical_max = caps->logical_max;
-    set_extra_caps_range( impl, instance, 0, range_max );
+
+    if (instance->dwType & DIDFT_AXIS) properties->range_max = 65535;
+    else
+    {
+        properties->range_max = 36000;
+        tmp = caps->logical_max - caps->logical_min;
+        if (tmp > 0) properties->range_max -= 36000 / (tmp + 1);
+    }
+
     properties->saturation = 10000;
     return DIENUM_CONTINUE;
 }
