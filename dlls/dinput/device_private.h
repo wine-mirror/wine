@@ -58,6 +58,8 @@ struct dinput_device_vtbl
 struct object_properties
 {
     LONG bit_size;
+    LONG physical_min;
+    LONG physical_max;
     LONG logical_min;
     LONG logical_max;
     LONG range_min;

@@ -1486,6 +1486,8 @@ static BOOL init_object_properties( struct hid_joystick *impl, struct hid_value_
     LONG tmp;
 
     properties->bit_size = caps->bit_size;
+    properties->physical_min = caps->physical_min;
+    properties->physical_max = caps->physical_max;
     properties->logical_min = caps->logical_min;
     properties->logical_max = caps->logical_max;
 

@@ -4253,18 +4253,12 @@ static void test_simple_joystick(void)
     ok( prop_range.lMin == 0, "got %d expected %d\n", prop_range.lMin, 0 );
     ok( prop_range.lMax == 65535, "got %d expected %d\n", prop_range.lMax, 65535 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
-    todo_wine
     ok( prop_range.lMin == -25, "got %d expected %d\n", prop_range.lMin, -25 );
-    todo_wine
     ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
-    todo_wine
     ok( prop_range.lMin == -25, "got %d expected %d\n", prop_range.lMin, -25 );
-    todo_wine
     ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
 
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
@@ -4810,10 +4804,8 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "SetProperty DIPROP_RANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_ACQUIRED, "SetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_ACQUIRED, "SetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
 
     hr = IDirectInputDevice8_Unacquire( device );

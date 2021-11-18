@@ -936,6 +936,8 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         if (header->dwSize != sizeof(DIPROPPOINTER)) return DIERR_INVALIDPARAM;
         break;
 
+    case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+    case (DWORD_PTR)DIPROP_LOGICALRANGE:
     case (DWORD_PTR)DIPROP_RANGE:
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         break;
@@ -963,6 +965,8 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         if (header->dwObj) return DIERR_INVALIDPARAM;
         break;
 
+    case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+    case (DWORD_PTR)DIPROP_LOGICALRANGE:
     case (DWORD_PTR)DIPROP_RANGE:
     case (DWORD_PTR)DIPROP_DEADZONE:
     case (DWORD_PTR)DIPROP_SATURATION:
@@ -988,6 +992,8 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         case (DWORD_PTR)DIPROP_AUTOCENTER:
         case (DWORD_PTR)DIPROP_AXISMODE:
         case (DWORD_PTR)DIPROP_BUFFERSIZE:
+        case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+        case (DWORD_PTR)DIPROP_LOGICALRANGE:
             if (impl->acquired) return DIERR_ACQUIRED;
             break;
         case (DWORD_PTR)DIPROP_FFLOAD:
@@ -1023,6 +1029,9 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
             if (value->dwData > 1) return DIERR_INVALIDPARAM;
             break;
         }
+        case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+        case (DWORD_PTR)DIPROP_LOGICALRANGE:
+            return DIERR_UNSUPPORTED;
         }
     }
     else
@@ -1039,6 +1048,8 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
             if (impl->caps.dwAxes && !(impl->caps.dwDevType & DIDEVTYPE_HID)) return DIERR_UNSUPPORTED;
             break;
 
+        case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+        case (DWORD_PTR)DIPROP_LOGICALRANGE:
         case (DWORD_PTR)DIPROP_DEADZONE:
         case (DWORD_PTR)DIPROP_SATURATION:
         case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
@@ -1087,6 +1098,20 @@ static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
 
     switch (params->property)
     {
+    case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+    {
+        DIPROPRANGE *value = (DIPROPRANGE *)params->header;
+        value->lMin = properties->physical_min;
+        value->lMax = properties->physical_max;
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_LOGICALRANGE:
+    {
+        DIPROPRANGE *value = (DIPROPRANGE *)params->header;
+        value->lMin = properties->logical_min;
+        value->lMax = properties->logical_max;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_RANGE:
     {
         DIPROPRANGE *value = (DIPROPRANGE *)params->header;
@@ -1151,6 +1176,8 @@ static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GU
         return impl->vtbl->get_property( iface, LOWORD( guid ), header, NULL );
 
     case (DWORD_PTR)DIPROP_RANGE:
+    case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+    case (DWORD_PTR)DIPROP_LOGICALRANGE:
     case (DWORD_PTR)DIPROP_DEADZONE:
     case (DWORD_PTR)DIPROP_SATURATION:
     case (DWORD_PTR)DIPROP_GRANULARITY:
