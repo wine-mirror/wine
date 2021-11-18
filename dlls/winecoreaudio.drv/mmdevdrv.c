@@ -653,9 +653,13 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        HeapFree(GetProcessHeap(), 0, This->stream->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, This->stream->cap_buffer);
-        HeapFree(GetProcessHeap(), 0, This->stream->local_buffer);
+        if(This->stream->local_buffer)
+            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&This->stream->local_buffer,
+                                &This->stream->local_buffer_size, MEM_RELEASE);
+        if(This->stream->tmp_buffer)
+            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer,
+                                &This->stream->tmp_buffer_size, MEM_RELEASE);
         free(This->stream->wrap_buffer);
         HeapFree(GetProcessHeap(), 0, This->stream->resamp_buffer);
         CoTaskMemFree(This->stream->fmt);
@@ -1335,7 +1339,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return osstatus_to_hresult(sc);
     }
 
-    This->stream->local_buffer = HeapAlloc(GetProcessHeap(), 0, This->stream->bufsize_frames * fmt->nBlockAlign);
+    This->stream->local_buffer_size = This->stream->bufsize_frames * fmt->nBlockAlign;
+    NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&This->stream->local_buffer, 0,
+                            &This->stream->local_buffer_size, MEM_COMMIT, PAGE_READWRITE);
     silence_buffer(This, This->stream->local_buffer, This->stream->bufsize_frames);
 
     if(This->dataflow == eCapture){
@@ -2292,9 +2298,12 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     if(This->stream->wri_offs_frames + frames > This->stream->bufsize_frames){
         if(This->stream->tmp_buffer_frames < frames){
-            HeapFree(GetProcessHeap(), 0, This->stream->tmp_buffer);
-            This->stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, frames * This->stream->fmt->nBlockAlign);
-            if(!This->stream->tmp_buffer){
+            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer,
+                                &This->stream->tmp_buffer_size, MEM_RELEASE);
+            This->stream->tmp_buffer_size = frames * This->stream->fmt->nBlockAlign;
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer, 0,
+                                       &This->stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE)){
+                This->stream->tmp_buffer_frames = 0;
                 OSSpinLockUnlock(&This->stream->lock);
                 return E_OUTOFMEMORY;
             }
@@ -2449,8 +2458,11 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     chunk_frames = This->stream->bufsize_frames - This->stream->lcl_offs_frames;
     if(chunk_frames < This->stream->period_frames){
         chunk_bytes = chunk_frames * This->stream->fmt->nBlockAlign;
-        if(!This->stream->tmp_buffer)
-            This->stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, This->stream->period_frames * This->stream->fmt->nBlockAlign);
+        if(!This->stream->tmp_buffer){
+            This->stream->tmp_buffer_size = This->stream->period_frames * This->stream->fmt->nBlockAlign;
+            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer, 0,
+                                    &This->stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE);
+        }
         *data = This->stream->tmp_buffer;
         memcpy(*data, This->stream->local_buffer + This->stream->lcl_offs_frames * This->stream->fmt->nBlockAlign, chunk_bytes);
         memcpy((*data) + chunk_bytes, This->stream->local_buffer, This->stream->period_frames * This->stream->fmt->nBlockAlign - chunk_bytes);

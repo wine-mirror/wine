@@ -29,7 +29,6 @@ struct coreaudio_stream /* To be made private */
     AUDCLNT_SHAREMODE share;
 
     BOOL playing;
-    SIZE_T local_buffer_size, tmp_buffer_size;
     UINT32 period_ms, period_frames;
     UINT32 bufsize_frames, resamp_bufsize_frames;
     UINT32 lcl_offs_frames, held_frames, wri_offs_frames, tmp_buffer_frames;
@@ -39,6 +38,7 @@ struct coreaudio_stream /* To be made private */
     INT32 getbuf_last;
     WAVEFORMATEX *fmt;
     BYTE *local_buffer, *cap_buffer, *wrap_buffer, *resamp_buffer, *tmp_buffer;
+    SIZE_T local_buffer_size, tmp_buffer_size;
 };
 
 struct endpoint
