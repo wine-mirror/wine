@@ -790,6 +790,7 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
     DIEFFECT dieffect;
     DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
     int direction[2] = {0, 0};
+    int num_axes = 2;
     struct Joystick *joystick = pvRef;
     DIRAMPFORCE rforce;
     DICONSTANTFORCE cforce;
@@ -811,8 +812,8 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
     dieffect.dwSize = sizeof(dieffect);
     dieffect.dwFlags = DIEFF_CARTESIAN|DIEFF_OBJECTOFFSETS;
     dieffect.dwDuration = FF_PLAY_TIME;
+    dieffect.dwGain = DI_FFNOMINALMAX;
 
-    dieffect.cAxes = 2;
     dieffect.rgdwAxes = axes;
     dieffect.rglDirection = direction;
 
@@ -865,8 +866,14 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
         dieffect.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
 
-    hr = IDirectInputDevice2_CreateEffect(
-        joystick->device, &pdei->guid, &dieffect, &joystick->effects[joystick->cur_effect].effect, NULL);
+    do
+    {
+        dieffect.cAxes = num_axes--;
+        hr = IDirectInputDevice2_CreateEffect(
+            joystick->device, &pdei->guid, &dieffect, &joystick->effects[joystick->cur_effect].effect, NULL);
+    }
+    while (FAILED(hr) && num_axes);
+
     if (FAILED(hr))
     {
         FIXME("Failed to create effect with type %s, hr %#x\n", debugstr_guid(&pdei->guid), hr);
