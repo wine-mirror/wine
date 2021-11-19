@@ -443,6 +443,9 @@
 /* Define to 1 if you have the `sched_setaffinity' function. */
 #undef HAVE_SCHED_SETAFFINITY
 
+/* Define to 1 if you have the `sched_yield' function. */
+#undef HAVE_SCHED_YIELD
+
 /* Define to 1 if `cmd' is a member of `scsireq_t'. */
 #undef HAVE_SCSIREQ_T_CMD
 

@@ -1948,6 +1948,7 @@ AC_CHECK_FUNCS(\
 	posix_fallocate \
 	prctl \
 	proc_pidinfo \
+	sched_yield \
 	setproctitle \
 	setprogname \
 	sigprocmask \
@@ -3133,7 +3134,6 @@ WINE_CONFIG_MAKEFILE(dlls/msvcirt)
 WINE_CONFIG_MAKEFILE(dlls/msvcirt/tests)
 WINE_CONFIG_MAKEFILE(dlls/msvcm80)
 WINE_CONFIG_MAKEFILE(dlls/msvcm90)
-WINE_CONFIG_MAKEFILE(dlls/msvcp_win)
 WINE_CONFIG_MAKEFILE(dlls/msvcp100)
 WINE_CONFIG_MAKEFILE(dlls/msvcp100/tests)
 WINE_CONFIG_MAKEFILE(dlls/msvcp110)
@@ -3152,6 +3152,7 @@ WINE_CONFIG_MAKEFILE(dlls/msvcp71)
 WINE_CONFIG_MAKEFILE(dlls/msvcp80)
 WINE_CONFIG_MAKEFILE(dlls/msvcp90)
 WINE_CONFIG_MAKEFILE(dlls/msvcp90/tests)
+WINE_CONFIG_MAKEFILE(dlls/msvcp_win)
 WINE_CONFIG_MAKEFILE(dlls/msvcr100)
 WINE_CONFIG_MAKEFILE(dlls/msvcr100/tests)
 WINE_CONFIG_MAKEFILE(dlls/msvcr110)

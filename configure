@@ -1512,7 +1512,6 @@ enable_msv1_0
 enable_msvcirt
 enable_msvcm80
 enable_msvcm90
-enable_msvcp_win
 enable_msvcp100
 enable_msvcp110
 enable_msvcp120
@@ -1524,6 +1523,7 @@ enable_msvcp70
 enable_msvcp71
 enable_msvcp80
 enable_msvcp90
+enable_msvcp_win
 enable_msvcr100
 enable_msvcr110
 enable_msvcr120
@@ -19086,6 +19086,12 @@ then :
   printf "%s\n" "#define HAVE_PROC_PIDINFO 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "sched_yield" "ac_cv_func_sched_yield"
+if test "x$ac_cv_func_sched_yield" = xyes
+then :
+  printf "%s\n" "#define HAVE_SCHED_YIELD 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "setproctitle" "ac_cv_func_setproctitle"
 if test "x$ac_cv_func_setproctitle" = xyes
 then :
@@ -21595,7 +21601,6 @@ wine_fn_config_makefile dlls/msvcirt enable_msvcirt
 wine_fn_config_makefile dlls/msvcirt/tests enable_tests
 wine_fn_config_makefile dlls/msvcm80 enable_msvcm80
 wine_fn_config_makefile dlls/msvcm90 enable_msvcm90
-wine_fn_config_makefile dlls/msvcp_win enable_msvcp_win
 wine_fn_config_makefile dlls/msvcp100 enable_msvcp100
 wine_fn_config_makefile dlls/msvcp100/tests enable_tests
 wine_fn_config_makefile dlls/msvcp110 enable_msvcp110
@@ -21614,6 +21619,7 @@ wine_fn_config_makefile dlls/msvcp71 enable_msvcp71
 wine_fn_config_makefile dlls/msvcp80 enable_msvcp80
 wine_fn_config_makefile dlls/msvcp90 enable_msvcp90
 wine_fn_config_makefile dlls/msvcp90/tests enable_tests
+wine_fn_config_makefile dlls/msvcp_win enable_msvcp_win
 wine_fn_config_makefile dlls/msvcr100 enable_msvcr100
 wine_fn_config_makefile dlls/msvcr100/tests enable_tests
 wine_fn_config_makefile dlls/msvcr110 enable_msvcr110
