@@ -4577,6 +4577,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
     enum wined3d_shader_type shader_type;
     struct wined3d_buffer *buffer;
     unsigned int i, base, count;
+    struct wined3d_bo_gl *bo_gl;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
@@ -4597,8 +4598,9 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
         }
 
         buffer = buffer_state->buffer;
+        bo_gl = wined3d_bo_gl(buffer->buffer_object);
         GL_EXTCALL(glBindBufferRange(GL_UNIFORM_BUFFER, base + i,
-                wined3d_bo_gl(buffer->buffer_object)->id, buffer_state->offset, buffer_state->size));
+                bo_gl->id, bo_gl->buffer_offset + buffer_state->offset, buffer_state->size));
         buffer->bo_user.valid = true;
     }
     checkGLcall("bind constant buffers");
