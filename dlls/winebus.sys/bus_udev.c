@@ -924,17 +924,17 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
     return STATUS_NOT_SUPPORTED;
 }
 
-static NTSTATUS lnxev_device_physical_device_set_gain(struct unix_device *iface, BYTE value)
+static NTSTATUS lnxev_device_physical_device_set_gain(struct unix_device *iface, BYTE percent)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     struct input_event ie =
     {
         .type = EV_FF,
         .code = FF_GAIN,
-        .value = value * 100 / 255,
+        .value = percent,
     };
 
-    TRACE("iface %p, value %#x.\n", iface, value);
+    TRACE("iface %p, percent %#x.\n", iface, percent);
 
     if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
         WARN("write failed %d %s\n", errno, strerror(errno));
@@ -1031,7 +1031,7 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     effect.trigger.button = params->trigger_button;
     effect.trigger.interval = params->trigger_repeat_interval;
     /* only supports polar with one direction angle */
-    effect.direction = params->direction[0] * 256;
+    effect.direction = params->direction[0] * 0x800 / 1125;
 
     switch (params->effect_type)
     {
@@ -1041,9 +1041,9 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     case PID_USAGE_ET_SAWTOOTH_UP:
     case PID_USAGE_ET_SAWTOOTH_DOWN:
         effect.u.periodic.period = params->periodic.period;
-        effect.u.periodic.magnitude = params->periodic.magnitude * 128;
+        effect.u.periodic.magnitude = params->periodic.magnitude;
         effect.u.periodic.offset = params->periodic.offset;
-        effect.u.periodic.phase = params->periodic.phase;
+        effect.u.periodic.phase = params->periodic.phase * 0x800 / 1125;
         effect.u.periodic.envelope.attack_length = params->envelope.attack_time;
         effect.u.periodic.envelope.attack_level = params->envelope.attack_level;
         effect.u.periodic.envelope.fade_length = params->envelope.fade_time;

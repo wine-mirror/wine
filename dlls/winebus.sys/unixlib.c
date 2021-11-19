@@ -106,7 +106,7 @@ static NTSTATUS mouse_physical_device_control(struct unix_device *iface, USAGE c
     return STATUS_NOT_SUPPORTED;
 }
 
-static NTSTATUS mouse_physical_device_set_gain(struct unix_device *iface, BYTE value)
+static NTSTATUS mouse_physical_device_set_gain(struct unix_device *iface, BYTE percent)
 {
     return STATUS_NOT_SUPPORTED;
 }
@@ -189,7 +189,7 @@ static NTSTATUS keyboard_physical_device_control(struct unix_device *iface, USAG
     return STATUS_NOT_SUPPORTED;
 }
 
-static NTSTATUS keyboard_physical_device_set_gain(struct unix_device *iface, BYTE value)
+static NTSTATUS keyboard_physical_device_set_gain(struct unix_device *iface, BYTE percent)
 {
     return STATUS_NOT_SUPPORTED;
 }

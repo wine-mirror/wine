@@ -31,39 +31,39 @@
 
 struct effect_periodic
 {
-    BYTE magnitude;
-    BYTE offset;
-    BYTE phase;
+    UINT16 magnitude;
+    INT16 offset;
+    UINT16 phase;
     UINT16 period;
 };
 
 struct effect_envelope
 {
-    BYTE attack_level;
-    BYTE fade_level;
+    UINT16 attack_level;
+    UINT16 fade_level;
     UINT16 attack_time;
     UINT16 fade_time;
 };
 
 struct effect_condition
 {
-    BYTE center_point_offset;
-    BYTE positive_coefficient;
-    BYTE negative_coefficient;
-    BYTE positive_saturation;
-    BYTE negative_saturation;
-    BYTE dead_band;
+    INT16 center_point_offset;
+    INT16 positive_coefficient;
+    INT16 negative_coefficient;
+    UINT16 positive_saturation;
+    UINT16 negative_saturation;
+    UINT16 dead_band;
 };
 
 struct effect_constant_force
 {
-    UINT16 magnitude;
+    INT16 magnitude;
 };
 
 struct effect_ramp_force
 {
-    BYTE ramp_start;
-    BYTE ramp_end;
+    INT16 ramp_start;
+    INT16 ramp_end;
 };
 
 struct effect_params
@@ -76,7 +76,7 @@ struct effect_params
     BYTE trigger_button;
     BOOL axis_enabled[2];
     BOOL direction_enabled;
-    BYTE direction[2];
+    UINT16 direction[2];
     BYTE condition_count;
     /* only for periodic, constant or ramp forces */
     struct effect_envelope envelope;
@@ -108,7 +108,7 @@ struct hid_device_vtbl
     NTSTATUS (*haptics_start)(struct unix_device *iface, DWORD duration_ms,
                               USHORT rumble_intensity, USHORT buzz_intensity);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
-    NTSTATUS (*physical_device_set_gain)(struct unix_device *iface, BYTE value);
+    NTSTATUS (*physical_device_set_gain)(struct unix_device *iface, BYTE percent);
     NTSTATUS (*physical_effect_control)(struct unix_device *iface, BYTE index, USAGE control, BYTE iterations);
     NTSTATUS (*physical_effect_update)(struct unix_device *iface, BYTE index, struct effect_params *params);
 };
