@@ -2900,7 +2900,7 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     }
 
     GetClientRect(infoPtr->hwnd, &clientRect);
-    GetThemeBackgroundContentRect(theme, hDC, BP_GROUPBOX, state, &clientRect, &contentRect);
+    contentRect = clientRect;
     region = set_control_clipping(hDC, &clientRect);
 
     bgRect = contentRect;
