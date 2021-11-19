@@ -2576,22 +2576,24 @@ static struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *m
 static void release_gdi_font( struct gdi_font *font )
 {
     if (!font) return;
-    if (--font->refcount) return;
 
     TRACE( "font %p\n", font );
 
     /* add it to the unused list */
     pthread_mutex_lock( &font_lock );
-    list_add_head( &unused_gdi_font_list, &font->unused_entry );
-    if (unused_font_count > UNUSED_CACHE_SIZE)
+    if (!--font->refcount)
     {
-        font = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct gdi_font, unused_entry );
-        TRACE( "freeing %p\n", font );
-        list_remove( &font->entry );
-        list_remove( &font->unused_entry );
-        free_gdi_font( font );
+        list_add_head( &unused_gdi_font_list, &font->unused_entry );
+        if (unused_font_count > UNUSED_CACHE_SIZE)
+        {
+            font = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct gdi_font, unused_entry );
+            TRACE( "freeing %p\n", font );
+            list_remove( &font->entry );
+            list_remove( &font->unused_entry );
+            free_gdi_font( font );
+        }
+        else unused_font_count++;
     }
-    else unused_font_count++;
     pthread_mutex_unlock( &font_lock );
 }
 
