@@ -219,6 +219,49 @@ static void test_NtAllocateVirtualMemory(void)
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
     ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed\n");
 
+    /* NtFreeVirtualMemory tests */
+
+    size = 0x10000;
+    addr1 = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size,
+                                     MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    ok(status == STATUS_SUCCESS, "NtAllocateVirtualMemory returned %08x\n", status);
+
+    size = 2;
+    addr2 = (char *)addr1 + 0x1fff;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_DECOMMIT);
+    ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed %x\n", status);
+    ok( size == 0x2000, "wrong size %lx\n", size );
+    ok( addr2 == (char *)addr1 + 0x1000, "wrong addr %p\n", addr2 );
+
+    size = 0;
+    addr2 = (char *)addr1 + 0x1001;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_DECOMMIT);
+    ok(status == STATUS_FREE_VM_NOT_AT_BASE, "NtFreeVirtualMemory failed %x\n", status);
+    ok( size == 0, "wrong size %lx\n", size );
+    ok( addr2 == (char *)addr1 + 0x1001, "wrong addr %p\n", addr2 );
+
+    size = 0;
+    addr2 = (char *)addr1 + 0xffe;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_DECOMMIT);
+    ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed %x\n", status);
+    ok( size == 0, "wrong size %lx\n", size );
+    ok( addr2 == addr1, "wrong addr %p\n", addr2 );
+
+    size = 0;
+    addr2 = (char *)addr1 + 0x1001;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_RELEASE);
+    ok(status == STATUS_FREE_VM_NOT_AT_BASE, "NtFreeVirtualMemory failed %x\n", status);
+    ok( size == 0, "wrong size %lx\n", size );
+    ok( addr2 == (char *)addr1 + 0x1001, "wrong addr %p\n", addr2 );
+
+    size = 0;
+    addr2 = (char *)addr1 + 0xfff;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed %x\n", status);
+    ok( size == 0x10000, "wrong size %lx\n", size );
+    ok( addr2 == addr1, "wrong addr %p\n", addr2 );
+
     if (!pNtAllocateVirtualMemoryEx)
     {
         win_skip("NtAllocateVirtualMemoryEx() is missing\n");

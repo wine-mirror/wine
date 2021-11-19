@@ -2121,13 +2121,14 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
 
 
 /***********************************************************************
- *           decommit_view
+ *           decommit_pages
  *
  * Decommit some pages of a given view.
  * virtual_mutex must be held by caller.
  */
 static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t size )
 {
+    if (!size) size = view->size;
     if (anon_mmap_fixed( (char *)view->base + start, size, PROT_NONE, 0 ) != MAP_FAILED)
     {
         set_page_vprot_bits( (char *)view->base + start, size, 0, VPROT_COMMITTED );
@@ -3966,7 +3967,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 
     /* Fix the parameters */
 
-    size = ROUND_SIZE( addr, size );
+    if (size) size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
@@ -3975,7 +3976,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     if (!base)
     {
         /* address 1 is magic to mean release reserved space */
-        if (addr == (void *)1 && !*size_ptr && type == MEM_RELEASE) virtual_release_address_space();
+        if (addr == (void *)1 && !size && type == MEM_RELEASE) virtual_release_address_space();
         else status = STATUS_INVALID_PARAMETER;
     }
     else if (!(view = find_view( base, size )) || !is_view_valloc( view ))
@@ -3986,17 +3987,19 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     {
         /* Free the pages */
 
-        if (size || (base != view->base)) status = STATUS_INVALID_PARAMETER;
+        if (size) status = STATUS_INVALID_PARAMETER;
+        else if (base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
         else
         {
-            delete_view( view );
             *addr_ptr = base;
-            *size_ptr = size;
+            *size_ptr = view->size;
+            delete_view( view );
         }
     }
     else if (type == MEM_DECOMMIT)
     {
-        status = decommit_pages( view, base - (char *)view->base, size );
+        if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
+        else status = decommit_pages( view, base - (char *)view->base, size );
         if (status == STATUS_SUCCESS)
         {
             *addr_ptr = base;
