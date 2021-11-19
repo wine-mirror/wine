@@ -98,7 +98,6 @@ static const struct user_driver_funcs *load_driver(void)
         __wine_set_user_driver( &driver, WINE_GDI_DRIVER_VERSION );
     }
 
-    register_builtin_classes();
     return USER_Driver;
 }
 

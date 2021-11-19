@@ -252,6 +252,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
             else assert( full_parent == thread_info->top_window );
             if (full_parent && !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
                 ERR( "failed to create desktop window\n" );
+            register_builtin_classes();
         }
         else  /* HWND_MESSAGE parent */
         {
@@ -2282,6 +2283,7 @@ HWND WINAPI GetDesktopWindow(void)
     if (!thread_info->top_window || !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
         ERR( "failed to create desktop window\n" );
 
+    register_builtin_classes();
     return thread_info->top_window;
 }
 
