@@ -73,6 +73,10 @@ my @dll_groups =
   "msvcp120_app",
  ],
  [
+  "msvcp140",
+  "msvcp_win",
+ ],
+ [
   "d3d10",
   "d3d10_1",
  ],
