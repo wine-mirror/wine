@@ -529,11 +529,18 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
 static void register_builtin( const struct builtin_class_descr *descr )
 {
     CLASS *classPtr;
+    HCURSOR cursor = 0;
+
+    if (descr->cursor) cursor = LoadCursorA( 0, (LPSTR)descr->cursor );
 
     if (!(classPtr = CLASS_RegisterClass( descr->name, 0, user32_module, FALSE,
-                                          descr->style, 0, descr->extra ))) return;
+                                          descr->style, 0, descr->extra )))
+    {
+        if (cursor) DestroyCursor( cursor );
+        return;
+    }
 
-    if (descr->cursor) classPtr->hCursor = LoadCursorA( 0, (LPSTR)descr->cursor );
+    classPtr->hCursor       = cursor;
     classPtr->hbrBackground = descr->brush;
     classPtr->winproc       = BUILTIN_WINPROC( descr->proc );
     release_class_ptr( classPtr );
