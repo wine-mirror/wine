@@ -354,6 +354,7 @@
 @ stub IoConnectInterrupt
 @ stub IoCreateController
 @ stdcall IoCreateDevice(ptr long ptr long long long ptr)
+@ stdcall IoCreateDeviceSecure(ptr long ptr long long long ptr ptr ptr)
 @ stub IoCreateDisk
 @ stdcall IoCreateDriver(ptr ptr)
 @ stdcall IoCreateFile(ptr long ptr ptr ptr long long long long ptr long long ptr long)
