@@ -174,6 +174,7 @@ struct hid_joystick
 
     char *input_report_buf;
     char *output_report_buf;
+    char *feature_report_buf;
     USAGE_AND_PAGE *usages_buf;
     ULONG usages_count;
 
@@ -401,15 +402,54 @@ static const WCHAR *object_usage_to_string( DIDEVICEOBJECTINSTANCEW *instance )
     }
 }
 
-static HRESULT find_next_effect_id( struct hid_joystick *impl, ULONG *index )
+static HRESULT find_next_effect_id( struct hid_joystick *impl, DWORD *index, USAGE type )
 {
-    ULONG i;
+    struct pid_device_pool *device_pool = &impl->pid_device_pool;
+    struct pid_new_effect *new_effect = &impl->pid_new_effect;
+    struct pid_block_load *block_load = &impl->pid_block_load;
+    ULONG i, count, report_len = impl->caps.FeatureReportByteLength;
+    NTSTATUS status;
+    USAGE usage;
 
-    for (i = 0; i < ARRAY_SIZE(impl->effect_inuse); ++i)
-        if (!impl->effect_inuse[i]) break;
-    if (i == ARRAY_SIZE(impl->effect_inuse)) return DIERR_DEVICEFULL;
-    impl->effect_inuse[i] = TRUE;
-    *index = i + 1;
+    if (!device_pool->device_managed_caps)
+    {
+        for (i = 0; i < ARRAY_SIZE(impl->effect_inuse); ++i)
+            if (!impl->effect_inuse[i]) break;
+        if (i == ARRAY_SIZE(impl->effect_inuse)) return DIERR_DEVICEFULL;
+        impl->effect_inuse[i] = TRUE;
+        *index = i + 1;
+    }
+    else
+    {
+        status = HidP_InitializeReportForID( HidP_Feature, new_effect->id, impl->preparsed,
+                                             impl->feature_report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) return status;
+
+        count = 1;
+        status = HidP_SetUsages( HidP_Feature, HID_USAGE_PAGE_PID, new_effect->type_coll,
+                                 &type, &count, impl->preparsed, impl->feature_report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) return status;
+
+        if (!HidD_SetFeature( impl->device, impl->feature_report_buf, report_len )) return DIERR_INPUTLOST;
+
+        status = HidP_InitializeReportForID( HidP_Feature, block_load->id, impl->preparsed,
+                                             impl->feature_report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) return status;
+
+        if (!HidD_GetFeature( impl->device, impl->feature_report_buf, report_len )) return DIERR_INPUTLOST;
+
+        count = 1;
+        status = HidP_GetUsages( HidP_Feature, HID_USAGE_PAGE_PID, block_load->status_coll,
+                                 &usage, &count, impl->preparsed, impl->feature_report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) return status;
+
+        if (count != 1 || usage == PID_USAGE_BLOCK_LOAD_ERROR) return DIERR_INPUTLOST;
+        if (usage == PID_USAGE_BLOCK_LOAD_FULL) return DIERR_DEVICEFULL;
+
+        status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                     index, impl->preparsed, impl->feature_report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) return status;
+    }
 
     return DI_OK;
 }
@@ -736,6 +776,7 @@ static void hid_joystick_release( IDirectInputDevice8W *iface )
     if (!ref)
     {
         free( impl->usages_buf );
+        free( impl->feature_report_buf );
         free( impl->output_report_buf );
         free( impl->input_report_buf );
         HidD_FreePreparsedData( impl->preparsed );
@@ -1897,6 +1938,9 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
     size = impl->caps.OutputReportByteLength;
     if (!(buffer = malloc( size ))) goto failed;
     impl->output_report_buf = buffer;
+    size = impl->caps.FeatureReportByteLength;
+    if (!(buffer = malloc( size ))) goto failed;
+    impl->feature_report_buf = buffer;
     impl->usages_count = HidP_MaxUsageListLength( HidP_Input, 0, impl->preparsed );
     size = impl->usages_count * sizeof(USAGE_AND_PAGE);
     if (!(usages = malloc( size ))) goto failed;
@@ -2720,7 +2764,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if ((impl->flags & complete_mask) != complete_mask)
         hr = DIERR_INCOMPLETEEFFECT;
-    else if (!impl->index && SUCCEEDED(hr = find_next_effect_id( impl->joystick, &impl->index )))
+    else if (!impl->index && SUCCEEDED(hr = find_next_effect_id( impl->joystick, &impl->index, impl->type )))
     {
         if (!impl->type_specific_buf[0]) status = HIDP_STATUS_SUCCESS;
         else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
@@ -2873,7 +2917,11 @@ static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
 {
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
     struct hid_joystick *joystick = impl->joystick;
+    struct pid_device_pool *device_pool = &joystick->pid_device_pool;
+    struct pid_block_free *block_free = &joystick->pid_block_free;
+    ULONG report_len = joystick->caps.OutputReportByteLength;
     HRESULT hr = DI_OK;
+    NTSTATUS status;
 
     TRACE( "iface %p\n", iface );
 
@@ -2882,7 +2930,22 @@ static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
         hr = DI_NOEFFECT;
     else if (SUCCEEDED(hr = IDirectInputEffect_Stop( iface )))
     {
-        impl->joystick->effect_inuse[impl->index - 1] = FALSE;
+        if (!device_pool->device_managed_caps)
+            joystick->effect_inuse[impl->index - 1] = FALSE;
+        else if (block_free->id)
+        {
+            status = HidP_InitializeReportForID( HidP_Output, block_free->id, joystick->preparsed,
+                                                 joystick->output_report_buf, report_len );
+
+            if (status != HIDP_STATUS_SUCCESS) hr = status;
+            else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                              impl->index, joystick->preparsed, joystick->output_report_buf, report_len );
+
+            if (status != HIDP_STATUS_SUCCESS) hr = status;
+            else if (WriteFile( joystick->device, joystick->output_report_buf, report_len, NULL, NULL )) hr = DI_OK;
+            else hr = DIERR_INPUTLOST;
+        }
+
         impl->index = 0;
     }
     LeaveCriticalSection( &joystick->base.crit );

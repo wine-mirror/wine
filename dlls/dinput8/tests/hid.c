@@ -8445,7 +8445,6 @@ static void test_device_managed_effect(void)
             .report_id = 9,
             .report_len = 2,
             .report_buf = {9,0x03},
-            .todo = TRUE,
         },
         /* block load */
         {
@@ -8453,7 +8452,6 @@ static void test_device_managed_effect(void)
             .report_id = 10,
             .report_len = 3,
             .report_buf = {10,0x01,0x01},
-            .todo = TRUE,
         },
         /* set condition */
         {
@@ -8492,7 +8490,6 @@ static void test_device_managed_effect(void)
             .report_id = 11,
             .report_len = 2,
             .report_buf = {11,0x01},
-            .todo = TRUE,
         },
     };
     static const DWORD expect_axes[3] =
