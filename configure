@@ -1512,6 +1512,7 @@ enable_msv1_0
 enable_msvcirt
 enable_msvcm80
 enable_msvcm90
+enable_msvcp_win
 enable_msvcp100
 enable_msvcp110
 enable_msvcp120
@@ -21594,6 +21595,7 @@ wine_fn_config_makefile dlls/msvcirt enable_msvcirt
 wine_fn_config_makefile dlls/msvcirt/tests enable_tests
 wine_fn_config_makefile dlls/msvcm80 enable_msvcm80
 wine_fn_config_makefile dlls/msvcm90 enable_msvcm90
+wine_fn_config_makefile dlls/msvcp_win enable_msvcp_win
 wine_fn_config_makefile dlls/msvcp100 enable_msvcp100
 wine_fn_config_makefile dlls/msvcp100/tests enable_tests
 wine_fn_config_makefile dlls/msvcp110 enable_msvcp110
