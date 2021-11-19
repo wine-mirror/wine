@@ -625,6 +625,13 @@ static BOOL hid_descriptor_add_set_condition(struct unix_device *iface)
             REPORT_COUNT(1, 1),
             OUTPUT(1, Data|Var|Abs),
 
+            USAGE(1, PID_USAGE_PARAMETER_BLOCK_OFFSET),
+            LOGICAL_MINIMUM(1, 0x00),
+            LOGICAL_MAXIMUM(1, 0x01),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
             USAGE(1, PID_USAGE_CP_OFFSET),
             USAGE(1, PID_USAGE_POSITIVE_COEFFICIENT),
             USAGE(1, PID_USAGE_NEGATIVE_COEFFICIENT),
