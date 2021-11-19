@@ -8071,6 +8071,591 @@ done:
     winetest_pop_context();
 }
 
+static void test_device_managed_effect(void)
+{
+#include "psh_hid_macros.h"
+    const unsigned char report_descriptor[] = {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 1),
+
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                USAGE(1, HID_USAGE_GENERIC_Z),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 3),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 2),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+                REPORT_COUNT(1, 6),
+                INPUT(1, Cnst|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_PID),
+            USAGE(1, PID_USAGE_STATE_REPORT),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 2),
+
+                USAGE(1, PID_USAGE_DEVICE_PAUSED),
+                USAGE(1, PID_USAGE_ACTUATORS_ENABLED),
+                USAGE(1, PID_USAGE_SAFETY_SWITCH),
+                USAGE(1, PID_USAGE_ACTUATOR_OVERRIDE_SWITCH),
+                USAGE(1, PID_USAGE_ACTUATOR_POWER),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 5),
+                INPUT(1, Data|Var|Abs),
+                REPORT_COUNT(1, 3),
+                INPUT(1, Cnst|Var|Abs),
+
+                USAGE(1, PID_USAGE_EFFECT_PLAYING),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                LOGICAL_MINIMUM(1, 0x00),
+                REPORT_SIZE(1, 7),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_PID),
+            USAGE(1, PID_USAGE_DEVICE_CONTROL_REPORT),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 1),
+
+                USAGE(1, PID_USAGE_DEVICE_CONTROL),
+                COLLECTION(1, Logical),
+                    USAGE(1, PID_USAGE_DC_DEVICE_RESET),
+                    LOGICAL_MINIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 2),
+                    PHYSICAL_MINIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 2),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 1),
+                    OUTPUT(1, Data|Ary|Abs),
+                END_COLLECTION,
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_EFFECT_OPERATION_REPORT),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 2),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_EFFECT_OPERATION),
+                COLLECTION(1, NamedArray),
+                    USAGE(1, PID_USAGE_OP_EFFECT_START),
+                    USAGE(1, PID_USAGE_OP_EFFECT_START_SOLO),
+                    USAGE(1, PID_USAGE_OP_EFFECT_STOP),
+                    LOGICAL_MINIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MINIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 3),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 1),
+                    OUTPUT(1, Data|Ary|Abs),
+                END_COLLECTION,
+
+                USAGE(1, PID_USAGE_LOOP_COUNT),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_SET_EFFECT_REPORT),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 3),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_EFFECT_TYPE),
+                COLLECTION(1, NamedArray),
+                    USAGE(1, PID_USAGE_ET_SQUARE),
+                    USAGE(1, PID_USAGE_ET_SINE),
+                    USAGE(1, PID_USAGE_ET_SPRING),
+                    LOGICAL_MINIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MINIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 3),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 1),
+                    OUTPUT(1, Data|Ary|Abs),
+                END_COLLECTION,
+
+                USAGE(1, PID_USAGE_AXES_ENABLE),
+                COLLECTION(1, Logical),
+                    USAGE(4, (HID_USAGE_PAGE_GENERIC << 16)|HID_USAGE_GENERIC_X),
+                    USAGE(4, (HID_USAGE_PAGE_GENERIC << 16)|HID_USAGE_GENERIC_Y),
+                    USAGE(4, (HID_USAGE_PAGE_GENERIC << 16)|HID_USAGE_GENERIC_Z),
+                    LOGICAL_MINIMUM(1, 0),
+                    LOGICAL_MAXIMUM(1, 1),
+                    PHYSICAL_MINIMUM(1, 0),
+                    PHYSICAL_MAXIMUM(1, 1),
+                    REPORT_SIZE(1, 1),
+                    REPORT_COUNT(1, 3),
+                    OUTPUT(1, Data|Var|Abs),
+                END_COLLECTION,
+                USAGE(1, PID_USAGE_DIRECTION_ENABLE),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+                REPORT_COUNT(1, 4),
+                OUTPUT(1, Cnst|Var|Abs),
+
+                USAGE(1, PID_USAGE_DURATION),
+                USAGE(1, PID_USAGE_START_DELAY),
+                UNIT(2, 0x1003),      /* Eng Lin:Time */
+                UNIT_EXPONENT(1, -3), /* 10^-3 */
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x7fff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x7fff),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+                UNIT(1, 0),
+                UNIT_EXPONENT(1, 0),
+
+                USAGE(1, PID_USAGE_TRIGGER_BUTTON),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x08),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x08),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_DIRECTION),
+                COLLECTION(1, Logical),
+                    USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16)|1),
+                    USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16)|2),
+                    UNIT(1, 0x14),        /* Eng Rot:Angular Pos */
+                    UNIT_EXPONENT(1, -2), /* 10^-2 */
+                    LOGICAL_MINIMUM(1, 0),
+                    LOGICAL_MAXIMUM(2, 0x00ff),
+                    PHYSICAL_MINIMUM(1, 0),
+                    PHYSICAL_MAXIMUM(4, 0x00008ca0),
+                    UNIT(1, 0),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 2),
+                    OUTPUT(1, Data|Var|Abs),
+                    UNIT_EXPONENT(1, 0),
+                    UNIT(1, 0),
+                END_COLLECTION,
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_SET_CONDITION_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 7),
+
+                USAGE(1, PID_USAGE_TYPE_SPECIFIC_BLOCK_OFFSET),
+                COLLECTION(1, Logical),
+                    USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16)|1),
+                    USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16)|2),
+                    LOGICAL_MINIMUM(1, 0),
+                    LOGICAL_MAXIMUM(1, 1),
+                    PHYSICAL_MINIMUM(1, 0),
+                    PHYSICAL_MAXIMUM(1, 1),
+                    REPORT_SIZE(1, 2),
+                    REPORT_COUNT(1, 2),
+                    OUTPUT(1, Data|Var|Abs),
+                END_COLLECTION,
+                REPORT_SIZE(1, 4),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Cnst|Var|Abs),
+
+                USAGE(1, PID_USAGE_CP_OFFSET),
+                LOGICAL_MINIMUM(1, 0x80),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(2, 0xd8f0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_POSITIVE_COEFFICIENT),
+                USAGE(1, PID_USAGE_NEGATIVE_COEFFICIENT),
+                LOGICAL_MINIMUM(1, 0x80),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(2, 0xd8f0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_POSITIVE_SATURATION),
+                USAGE(1, PID_USAGE_NEGATIVE_SATURATION),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_DEAD_BAND),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_CREATE_NEW_EFFECT_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 9),
+
+                USAGE(1, PID_USAGE_EFFECT_TYPE),
+                COLLECTION(1, NamedArray),
+                    USAGE(1, PID_USAGE_ET_SQUARE),
+                    USAGE(1, PID_USAGE_ET_SINE),
+                    USAGE(1, PID_USAGE_ET_SPRING),
+                    LOGICAL_MINIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MINIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 3),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 1),
+                    FEATURE(1, Data|Ary|Abs),
+                END_COLLECTION,
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_BLOCK_LOAD_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 10),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                FEATURE(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_BLOCK_LOAD_STATUS),
+                COLLECTION(1, NamedArray),
+                    USAGE(1, PID_USAGE_BLOCK_LOAD_SUCCESS),
+                    USAGE(1, PID_USAGE_BLOCK_LOAD_FULL),
+                    USAGE(1, PID_USAGE_BLOCK_LOAD_ERROR),
+                    LOGICAL_MINIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MINIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 3),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 1),
+                    FEATURE(1, Data|Ary|Abs),
+                END_COLLECTION,
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_BLOCK_FREE_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 11),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_POOL_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 12),
+
+                USAGE(1, PID_USAGE_DEVICE_MANAGED_POOL),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                FEATURE(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+#include "pop_hid_macros.h"
+
+    static const HIDP_CAPS hid_caps =
+    {
+        .InputReportByteLength = 5,
+    };
+    struct hid_expect expect_reset[] =
+    {
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x01},
+        },
+    };
+    struct hid_expect expect_create[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 9,
+            .report_len = 2,
+            .report_buf = {9,0x03},
+            .todo = TRUE,
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 10,
+            .report_len = 3,
+            .report_buf = {10,0x01,0x01},
+            .todo = TRUE,
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 7,
+            .report_len = 8,
+            .report_buf = {0x07,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 7,
+            .report_len = 8,
+            .report_buf = {0x07,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x03,0x08,0x01,0x00,0x06,0x00,0x01,0x55,0x00},
+        },
+    };
+    struct hid_expect expect_destroy[] =
+    {
+        /* effect operation */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 2,
+            .report_len = 4,
+            .report_buf = {0x02,0x01,0x03,0x00},
+        },
+        /* block free */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 11,
+            .report_len = 2,
+            .report_buf = {11,0x01},
+            .todo = TRUE,
+        },
+    };
+    static const DWORD expect_axes[3] =
+    {
+        DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFACTUATOR,
+        DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 ) | DIDFT_FFACTUATOR,
+        DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 1 ) | DIDFT_FFACTUATOR,
+    };
+    static const LONG expect_directions[3] = {
+        +3000,
+        0,
+        0,
+    };
+    static const DIENVELOPE expect_envelope =
+    {
+        .dwSize = sizeof(DIENVELOPE),
+        .dwAttackLevel = 1000,
+        .dwAttackTime = 2000,
+        .dwFadeLevel = 3000,
+        .dwFadeTime = 4000,
+    };
+    static const DICONDITION expect_condition[3] =
+    {
+        {
+            .lOffset = -500,
+            .lPositiveCoefficient = 2000,
+            .lNegativeCoefficient = -3000,
+            .dwPositiveSaturation = -4000,
+            .dwNegativeSaturation = -5000,
+            .lDeadBand = 6000,
+        },
+        {
+            .lOffset = 6000,
+            .lPositiveCoefficient = 5000,
+            .lNegativeCoefficient = -4000,
+            .dwPositiveSaturation = 3000,
+            .dwNegativeSaturation = 2000,
+            .lDeadBand = 1000,
+        },
+        {
+            .lOffset = -7000,
+            .lPositiveCoefficient = -8000,
+            .lNegativeCoefficient = 9000,
+            .dwPositiveSaturation = 10000,
+            .dwNegativeSaturation = 11000,
+            .lDeadBand = -12000,
+        },
+    };
+    const DIEFFECT expect_desc =
+    {
+        .dwSize = sizeof(DIEFFECT_DX6),
+        .dwFlags = DIEFF_SPHERICAL | DIEFF_OBJECTIDS,
+        .dwDuration = 1000,
+        .dwSamplePeriod = 2000,
+        .dwGain = 3000,
+        .dwTriggerButton = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFEFFECTTRIGGER,
+        .dwTriggerRepeatInterval = 5000,
+        .cAxes = 2,
+        .rgdwAxes = (void *)expect_axes,
+        .rglDirection = (void *)expect_directions,
+        .lpEnvelope = (void *)&expect_envelope,
+        .cbTypeSpecificParams = 2 * sizeof(DICONDITION),
+        .lpvTypeSpecificParams = (void *)expect_condition,
+        .dwStartDelay = 6000,
+    };
+    DIPROPGUIDANDPATH prop_guid_path =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPGUIDANDPATH),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    IDirectInputDevice8W *device;
+    IDirectInputEffect *effect;
+    HANDLE file;
+    DWORD flags;
+    HRESULT hr;
+    ULONG ref;
+    HWND hwnd;
+
+    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
+    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
+    SetCurrentDirectoryW( tempdir );
+
+    cleanup_registry_keys();
+    if (!dinput_driver_start( report_descriptor, sizeof(report_descriptor), &hid_caps )) goto done;
+    if (FAILED(hr = create_dinput_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+    file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+
+    hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
+                          NULL, NULL, NULL, NULL );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, NULL, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+
+    flags = DIEP_ALLPARAMS;
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, flags | DIEP_NODOWNLOAD );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+
+    set_hid_expect( file, expect_create, sizeof(expect_create) );
+    hr = IDirectInputEffect_Download( effect );
+    ok( hr == DI_OK, "Download returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_destroy, sizeof(expect_destroy) );
+    hr = IDirectInputEffect_Unload( effect );
+    ok( hr == DI_OK, "Unload returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %d\n", ref );
+
+    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "Release returned %d\n", ref );
+
+    DestroyWindow( hwnd );
+    CloseHandle( file );
+
+done:
+    pnp_driver_stop();
+    cleanup_registry_keys();
+    SetCurrentDirectoryW( cwd );
+    winetest_pop_context();
+}
+
 START_TEST( hid )
 {
     HANDLE mapping;
@@ -8120,6 +8705,8 @@ START_TEST( hid )
         test_force_feedback_joystick( 0x500 );
         test_force_feedback_joystick( 0x700 );
         test_force_feedback_joystick( 0x800 );
+
+        test_device_managed_effect();
     }
     CoUninitialize();
 
