@@ -1254,8 +1254,10 @@ static void test__Winerror_message(void)
 
     memset(buf, 'a', sizeof(buf));
     ret = p__Winerror_message(0, buf, sizeof(buf));
-    ok(ret == ret_fm, "ret = %u, expected %u\n", ret, ret_fm);
-    ok(!strcmp(buf, buf_fm), "buf = %s, expected %s\n", buf, buf_fm);
+    ok(ret == ret_fm || (ret_fm > 2 && buf_fm[ret_fm - 1] == '\n' &&
+                buf_fm[ret_fm - 2] == '\r' && ret + 2 == ret_fm),
+            "ret = %u, expected %u\n", ret, ret_fm);
+    ok(!strncmp(buf, buf_fm, ret), "buf = %s, expected %s\n", buf, buf_fm);
 
     memset(buf, 'a', sizeof(buf));
     ret = p__Winerror_message(0, buf, 2);
