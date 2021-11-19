@@ -2596,6 +2596,18 @@ static void set_parameter_value( struct hid_joystick_effect *impl, char *report_
     return set_report_value( impl->joystick, report_buf, caps, value );
 }
 
+static void set_parameter_value_angle( struct hid_joystick_effect *impl, char *report_buf,
+                                       struct hid_value_caps *caps, LONG value )
+{
+    LONG exp;
+    if (!caps) return;
+    exp = caps->units_exp;
+    if (caps->units != 0x14) WARN( "unknown angle unit caps %x\n", caps->units );
+    else if (exp < -2) while (exp++ < -2) value *= 10;
+    else if (exp > -2) while (exp-- > -2) value /= 10;
+    set_parameter_value( impl, report_buf, caps, value );
+}
+
 static void set_parameter_value_us( struct hid_joystick_effect *impl, char *report_buf,
                                     struct hid_value_caps *caps, LONG value )
 {
@@ -2766,7 +2778,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         {
             tmp = directions[i] + (i == 0 ? 9000 : 0);
             caps = effect_update->direction_caps[effect_update->direction_count - i - 1];
-            set_parameter_value( impl, impl->effect_update_buf, caps, tmp % 36000 );
+            set_parameter_value_angle( impl, impl->effect_update_buf, caps, tmp % 36000 );
         }
 
         status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_TRIGGER_BUTTON,
