@@ -2765,6 +2765,10 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_FRICTION:
             for (i = 0; i < impl->params.cbTypeSpecificParams / sizeof(DICONDITION); ++i)
             {
+                status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_PARAMETER_BLOCK_OFFSET,
+                                             i, impl->joystick->preparsed, impl->type_specific_buf, report_len );
+                if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue %04x:%04x returned %#x\n",
+                                                         HID_USAGE_PAGE_PID, PID_USAGE_PARAMETER_BLOCK_OFFSET, status );
                 set_parameter_value( impl, impl->type_specific_buf, set_condition->center_point_offset_caps,
                                      impl->condition[i].lOffset );
                 set_parameter_value( impl, impl->type_specific_buf, set_condition->positive_coefficient_caps,
