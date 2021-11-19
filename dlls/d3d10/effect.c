@@ -191,17 +191,27 @@ struct preshader_instr
     unsigned int scalar     :  1;
 };
 
-typedef float (*pres_op_func)(float **args, unsigned int n);
+typedef void (*pres_op_func)(float **args, unsigned int n, const struct preshader_instr *instr);
 
-static float pres_ftou(float **args, unsigned int n)
+static void pres_ftou(float **args, unsigned int n, const struct preshader_instr *instr)
 {
-    unsigned int u = *args[0];
-    return *(float *)&u;
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int u = args[0][i];
+        retval[i] = *(float *)&u;
+    }
 }
 
-static float pres_add(float **args, unsigned int n)
+static void pres_add(float **args, unsigned int n, const struct preshader_instr *instr)
 {
-    return *args[0] + *args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = args[0][instr->scalar ? 0 : i] + args[1][i];
 }
 
 struct preshader_op_info
@@ -333,10 +343,10 @@ static float * d3d10_effect_preshader_get_reg_ptr(const struct d3d10_effect_pres
 
 static HRESULT d3d10_effect_preshader_eval(struct d3d10_effect_preshader *p)
 {
-    unsigned int i, j, regt, offset, instr_count, input_count;
+    unsigned int i, j, regt, offset, instr_count, arg_count;
     const DWORD *ip = ID3D10Blob_GetBufferPointer(p->code);
-    float *dst, *args[4], *retval;
     struct preshader_instr ins;
+    float *dst, *args[4];
 
     dst = d3d10_effect_preshader_get_reg_ptr(p, D3D10_REG_TABLE_RESULT, 0);
     memset(dst, 0, sizeof(float) * p->reg_tables[D3D10_REG_TABLE_RESULT].count);
@@ -355,16 +365,16 @@ static HRESULT d3d10_effect_preshader_eval(struct d3d10_effect_preshader *p)
     for (i = 0; i < instr_count; ++i)
     {
         *(DWORD *)&ins = *ip++;
-        input_count = *ip++;
+        arg_count = 1 + *ip++;
 
-        if (input_count > ARRAY_SIZE(args))
+        if (arg_count > ARRAY_SIZE(args))
         {
-            FIXME("Unexpected argument count %u.\n", input_count);
+            FIXME("Unexpected argument count %u.\n", arg_count);
             return E_FAIL;
         }
 
-        /* Arguments */
-        for (j = 0; j < input_count; ++j)
+        /* Arguments are followed by the return value. */
+        for (j = 0; j < arg_count; ++j)
         {
             ip++; /* TODO: argument register flags are currently ignored */
             regt = *ip++;
@@ -373,12 +383,7 @@ static HRESULT d3d10_effect_preshader_eval(struct d3d10_effect_preshader *p)
             args[j] = d3d10_effect_preshader_get_reg_ptr(p, regt, offset);
         }
 
-        ip++; /* TODO: result register flags are currently ignored */
-        regt = *ip++;
-        offset = *ip++;
-        retval = d3d10_effect_preshader_get_reg_ptr(p, regt, offset);
-
-        *retval = d3d10_effect_get_op_info(ins.opcode)->func(args, input_count);
+        d3d10_effect_get_op_info(ins.opcode)->func(args, arg_count, &ins);
     }
 
     return S_OK;
@@ -2100,7 +2105,7 @@ static HRESULT parse_fx10_preshader_instr(struct d3d10_preshader_parse_context *
         unsigned int *offset, const char **ptr, unsigned int data_size)
 {
     const struct preshader_op_info *op_info;
-    unsigned int i, param_count;
+    unsigned int i, param_count, size;
     struct preshader_instr ins;
     uint32_t input_count;
 
@@ -2152,7 +2157,8 @@ static HRESULT parse_fx10_preshader_instr(struct d3d10_preshader_parse_context *
             case D3D10_REG_TABLE_CB:
             case D3D10_REG_TABLE_RESULT:
             case D3D10_REG_TABLE_TEMP:
-                context->table_sizes[regt] = max(context->table_sizes[regt], param_offset + 1);
+                size = param_offset + (ins.scalar && i == 0 ? 1 : ins.comp_count);
+                context->table_sizes[regt] = max(context->table_sizes[regt], size);
                 break;
             default:
                 FIXME("Unexpected register table index %u.\n", regt);
