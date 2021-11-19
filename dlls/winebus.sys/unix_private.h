@@ -73,7 +73,6 @@ struct effect_params
     UINT16 trigger_repeat_interval;
     UINT16 sample_period;
     UINT16 start_delay;
-    BYTE gain;
     BYTE trigger_button;
     BOOL axis_enabled[2];
     BOOL direction_enabled;

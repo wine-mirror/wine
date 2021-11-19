@@ -440,7 +440,6 @@ struct pid_effect_update
     UINT16 trigger_repeat_interval;
     UINT16 sample_period;
     UINT16 start_delay;
-    BYTE gain;
     BYTE trigger_button;
     BYTE enable_bits;
     BYTE direction[2];
@@ -851,12 +850,6 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
             UNIT_EXPONENT(1, 0),
             UNIT(1, 0), /* None */
 
-            USAGE(1, PID_USAGE_GAIN),
-            LOGICAL_MAXIMUM(1, 0x7f),
-            REPORT_SIZE(1, 8),
-            REPORT_COUNT(1, 1),
-            OUTPUT(1, Data|Var|Abs),
-
             USAGE(1, PID_USAGE_TRIGGER_BUTTON),
             LOGICAL_MAXIMUM(2, state->button_count),
             REPORT_SIZE(1, 8),
@@ -1093,7 +1086,6 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             params->trigger_repeat_interval = report->trigger_repeat_interval;
             params->sample_period = report->sample_period;
             params->start_delay = report->start_delay;
-            params->gain = report->gain;
             params->trigger_button = report->trigger_button == 0xff ? 0 : report->trigger_button;
             params->axis_enabled[0] = (report->enable_bits & 1) != 0;
             params->axis_enabled[1] = (report->enable_bits & 2) != 0;
