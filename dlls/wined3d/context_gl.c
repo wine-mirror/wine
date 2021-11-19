@@ -2922,6 +2922,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     list_init(&bo->b.users);
     bo->command_fence_id = 0;
     bo->b.memory_offset = 0;
+    bo->buffer_offset = 0;
     bo->b.map_ptr = NULL;
 
     return true;
@@ -5070,7 +5071,11 @@ void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *conte
 static const void *get_vertex_attrib_pointer(const struct wined3d_stream_info_element *element,
         const struct wined3d_state *state)
 {
-    return element->data.addr + state->load_base_vertex_index * element->stride;
+    const uint8_t *offset = element->data.addr + state->load_base_vertex_index * element->stride;
+
+    if (element->data.buffer_object)
+        offset += wined3d_bo_gl(element->data.buffer_object)->buffer_offset;
+    return offset;
 }
 
 void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context_gl,

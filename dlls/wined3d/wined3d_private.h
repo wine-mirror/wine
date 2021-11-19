@@ -1606,6 +1606,7 @@ struct wined3d_bo_gl
     struct wined3d_bo b;
 
     GLuint id;
+    GLsizeiptr buffer_offset;
     GLsizeiptr size;
     GLenum binding;
     GLenum usage;
