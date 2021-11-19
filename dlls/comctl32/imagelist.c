@@ -3058,6 +3058,14 @@ failed:
     return result;
 }
 
+/*************************************************************************
+ * ImageList_WriteEx [COMCTL32.@]
+ */
+BOOL WINAPI ImageList_WriteEx(HIMAGELIST himl, DWORD flags, IStream *pstm)
+{
+    FIXME("%p %08x %p: semi-stub\n", himl, flags, pstm);
+    return ImageList_Write(himl, pstm);
+}
 
 /*************************************************************************
  * ImageList_Write [COMCTL32.@]

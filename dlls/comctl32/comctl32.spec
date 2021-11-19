@@ -188,6 +188,7 @@
 @ stdcall ImageList_SetImageCount(ptr long)
 @ stdcall ImageList_SetOverlayImage(ptr long long)
 @ stdcall ImageList_Write(ptr ptr)
+@ stdcall ImageList_WriteEx(ptr long ptr)
 @ stdcall InitCommonControlsEx(ptr)
 @ stdcall InitMUILanguage(long)
 @ stdcall InitializeFlatSB(long)

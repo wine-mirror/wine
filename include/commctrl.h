@@ -601,7 +601,8 @@ BOOL     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT,INT);
 
 #ifdef __IStream_INTERFACE_DEFINED__
 HIMAGELIST WINAPI ImageList_Read(LPSTREAM);
-BOOL     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM);
+BOOL     WINAPI ImageList_Write(HIMAGELIST,IStream*);
+BOOL     WINAPI ImageList_WriteEx(HIMAGELIST,DWORD,IStream*);
 #endif
 
 #define ImageList_AddIcon(himl,hicon) ImageList_ReplaceIcon(himl,-1,hicon)
