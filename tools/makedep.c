@@ -217,7 +217,8 @@ struct makefile
     struct strarray c2man_files;
     struct strarray debug_files;
     struct strarray dlldata_files;
-    struct strarray implib_objs;
+    struct strarray implib_files;
+    struct strarray crossimplib_files;
     struct strarray all_targets;
     struct strarray phony_targets;
     struct strarray dependencies;
@@ -491,22 +492,6 @@ static char *replace_filename( const char *path, const char *name )
     ret = xmalloc( len + strlen( name ) + 1 );
     memcpy( ret, path, len );
     strcpy( ret + len, name );
-    return ret;
-}
-
-
-/*******************************************************************
- *         strarray_replace_extension
- */
-static struct strarray strarray_replace_extension( const struct strarray *array,
-                                                   const char *old_ext, const char *new_ext )
-{
-    unsigned int i;
-    struct strarray ret;
-
-    ret.count = ret.size = array->count;
-    ret.str = xmalloc( sizeof(ret.str[0]) * ret.size );
-    for (i = 0; i < array->count; i++) ret.str[i] = replace_extension( array->str[i], old_ext, new_ext );
     return ret;
 }
 
@@ -3021,13 +3006,14 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
     if ((source->file->flags & FLAG_GENERATED) &&
         (!make->testdll || !strendswith( source->filename, "testlist.c" )))
         strarray_add( &make->clean_files, source->basename );
-    if (source->file->flags & FLAG_C_IMPLIB) strarray_add( &make->implib_objs, strmake( "%s.o", obj ));
 
     if (need_obj)
     {
         if ((source->file->flags & FLAG_C_UNIX) && *dll_ext)
             strarray_add( &make->unixobj_files, strmake( "%s.o", obj ));
-        else if (!is_dll_src && !(source->file->flags & FLAG_C_IMPLIB))
+        else if (source->file->flags & FLAG_C_IMPLIB)
+            strarray_add( &make->implib_files, strmake( "%s.o", obj ));
+        else if (!is_dll_src)
             strarray_add( &make->object_files, strmake( "%s.o", obj ));
         else
             strarray_add( &make->clean_files, strmake( "%s.o", obj ));
@@ -3052,7 +3038,9 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
     }
     if (need_cross)
     {
-        if (!is_dll_src && !(source->file->flags & FLAG_C_IMPLIB))
+        if (source->file->flags & FLAG_C_IMPLIB)
+            strarray_add( &make->crossimplib_files, strmake( "%s.cross.o", obj ));
+        else if (!is_dll_src)
             strarray_add( &make->crossobj_files, strmake( "%s.cross.o", obj ));
         else
             strarray_add( &make->clean_files, strmake( "%s.cross.o", obj ));
@@ -3305,54 +3293,54 @@ static void output_import_lib( struct makefile *make )
     char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
     char *importlib_path = obj_dir_path( make, strmake( "lib%s", make->importlib ));
 
-        strarray_add( &make->clean_files, strmake( "lib%s.a", make->importlib ));
-        if (!*dll_ext && needs_delay_lib( make ))
+    strarray_add( &make->clean_files, strmake( "lib%s.a", make->importlib ));
+    if (!*dll_ext && needs_delay_lib( make ))
+    {
+        strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
+        output( "%s.delay.a ", importlib_path );
+    }
+    output( "%s.a: %s %s", importlib_path, tools_path( make, "winebuild" ), spec_file );
+    output_filenames_obj_dir( make, make->implib_files );
+    output( "\n" );
+    output( "\t%s%s -w --implib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ) );
+    output_filenames( target_flags );
+    if (make->is_win16) output_filename( "-m16" );
+    output_filename( "--export" );
+    output_filename( spec_file );
+    output_filenames_obj_dir( make, make->implib_files );
+    output( "\n" );
+    add_install_rule( make, make->importlib,
+                      strmake( "lib%s.a", make->importlib ),
+                      strmake( "d%s/lib%s.a", so_dir, make->importlib ));
+
+    if (crosstarget)
+    {
+        strarray_add( &make->clean_files, strmake( "lib%s.cross.a", make->importlib ));
+        output_filename( strmake( "%s.cross.a", importlib_path ));
+        if (needs_delay_lib( make ))
         {
             strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
-            output( "%s.delay.a ", importlib_path );
+            output_filename( strmake( "%s.delay.a", importlib_path ));
         }
-        output( "%s.a: %s %s", importlib_path, tools_path( make, "winebuild" ), spec_file );
-        output_filenames_obj_dir( make, make->implib_objs );
+        output( ": %s %s", tools_path( make, "winebuild" ), spec_file );
+        output_filenames_obj_dir( make, make->crossimplib_files );
         output( "\n" );
-        output( "\t%s%s -w --implib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ) );
-        output_filenames( target_flags );
+        output( "\t%s%s -b %s -w --implib -o $@", cmd_prefix( "BUILD" ),
+                tools_path( make, "winebuild" ), crosstarget );
         if (make->is_win16) output_filename( "-m16" );
         output_filename( "--export" );
         output_filename( spec_file );
-        output_filenames_obj_dir( make, make->implib_objs );
+        output_filenames_obj_dir( make, make->crossimplib_files );
         output( "\n" );
         add_install_rule( make, make->importlib,
-                          strmake( "lib%s.a", make->importlib ),
-                          strmake( "d%s/lib%s.a", so_dir, make->importlib ));
-
-        if (crosstarget)
-        {
-            struct strarray cross_files = strarray_replace_extension( &make->implib_objs, ".o", ".cross.o" );
-
-            strarray_add( &make->clean_files, strmake( "lib%s.cross.a", make->importlib ));
-            output_filename( strmake( "%s.cross.a", importlib_path ));
-            if (needs_delay_lib( make ))
-            {
-                strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
-                output_filename( strmake( "%s.delay.a", importlib_path ));
-            }
-            output( ": %s %s", tools_path( make, "winebuild" ), spec_file );
-            output_filenames_obj_dir( make, cross_files );
-            output( "\n" );
-            output( "\t%s%s -b %s -w --implib -o $@", cmd_prefix( "BUILD" ),
-                    tools_path( make, "winebuild" ), crosstarget );
-            if (make->is_win16) output_filename( "-m16" );
-            output_filename( "--export" );
-            output_filename( spec_file );
-            output_filenames_obj_dir( make, cross_files );
-            output( "\n" );
-            add_install_rule( make, make->importlib,
-                              strmake( "lib%s.cross.a", make->importlib ),
-                              strmake( "d%s/lib%s.a", pe_dir, make->importlib ));
-        }
-        if (needs_implib_symlink( make ))
-            strarray_addall( &top_makefile->clean_files, output_importlib_symlinks( make ));
+                          strmake( "lib%s.cross.a", make->importlib ),
+                          strmake( "d%s/lib%s.a", pe_dir, make->importlib ));
     }
+    if (needs_implib_symlink( make ))
+        strarray_addall( &top_makefile->clean_files, output_importlib_symlinks( make ));
+}
+
+
 /*******************************************************************
  *         output_unix_lib
  */
@@ -3793,6 +3781,8 @@ static void output_sources( struct makefile *make )
 
     strarray_addall( &make->clean_files, make->object_files );
     strarray_addall( &make->clean_files, make->crossobj_files );
+    strarray_addall( &make->clean_files, make->implib_files );
+    strarray_addall( &make->clean_files, make->crossimplib_files );
     strarray_addall( &make->clean_files, make->unixobj_files );
     strarray_addall( &make->clean_files, make->res_files );
     strarray_addall( &make->clean_files, make->pot_files );
