@@ -1631,7 +1631,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     {
         SET_REPORT_ID( effect_update );
         caps->physical_min = 0;
-        caps->physical_max = 36000 - 36000 / (caps->logical_max - caps->logical_min);
+        caps->physical_max = 35900;
         if (effect_update->direction_count >= 6) FIXME( "more than 6 PID directions detected\n" );
         else effect_update->direction_caps[effect_update->direction_count] = caps;
         effect_update->direction_count++;
@@ -1650,7 +1650,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         if (instance->wUsage == PID_USAGE_PHASE)
         {
             caps->physical_min = 0;
-            caps->physical_max = 36000 - 36000 / (caps->logical_max - caps->logical_min);
+            caps->physical_max = 35900;
             set_periodic->phase_caps = caps;
         }
         if (instance->wUsage == PID_USAGE_OFFSET)
@@ -2078,11 +2078,12 @@ static void convert_directions_to_spherical( const DIEFFECT *in, DIEFFECT *out )
         out->cAxes = in->cAxes;
         break;
     case DIEFF_SPHERICAL:
-        for (i = 0; i < in->cAxes; ++i)
+        for (i = 0; i < in->cAxes - 1; ++i)
         {
             out->rglDirection[i] = in->rglDirection[i] % 36000;
             if (out->rglDirection[i] < 0) out->rglDirection[i] += 36000;
         }
+        out->rglDirection[i] = 0;
         out->cAxes = in->cAxes;
         break;
     }
@@ -2773,8 +2774,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         spherical.rglDirection = directions;
         convert_directions_to_spherical( &impl->params, &spherical );
 
-        if (!effect_update->direction_count) WARN( "no PID effect direction caps found\n" );
-        else for (i = 0; i < spherical.cAxes - 1; ++i)
+        for (i = 0; i < min( effect_update->direction_count, spherical.cAxes ); ++i)
         {
             tmp = directions[i] + (i == 0 ? 9000 : 0);
             caps = effect_update->direction_caps[effect_update->direction_count - i - 1];

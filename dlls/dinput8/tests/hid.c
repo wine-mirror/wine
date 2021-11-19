@@ -6461,10 +6461,27 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 11,
-            .report_buf = {0x03,0x01,0x03,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x00,0x00},
+            .report_buf = {0x03,0x01,0x03,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x3f,0x00},
         },
     };
     struct hid_expect expect_create_2[] =
+    {
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 7,
+            .report_len = 8,
+            .report_buf = {0x07,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x03,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xf1},
+        },
+    };
+    struct hid_expect expect_create_3[] =
     {
         /* set condition */
         {
@@ -6488,10 +6505,11 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
         .report_len = 4,
         .report_buf = {0x02, 0x01, 0x03, 0x00},
     };
-    static const DWORD expect_axes[3] = {
+    static const DWORD expect_axes[3] =
+    {
+        DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFACTUATOR,
         DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 ) | DIDFT_FFACTUATOR,
         DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 1 ) | DIDFT_FFACTUATOR,
-        DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFACTUATOR,
     };
     static const LONG expect_directions[3] = {
         +3000,
@@ -6642,9 +6660,33 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
 
     desc = expect_desc;
     desc.cAxes = 3;
+    desc.rglDirection = directions;
+    desc.rglDirection[0] = +3000;
+    desc.rglDirection[1] = -2000;
+    desc.rglDirection[2] = +1000;
     desc.cbTypeSpecificParams = 1 * sizeof(DICONDITION);
     desc.lpvTypeSpecificParams = (void *)&expect_condition[1];
     set_hid_expect( file, expect_create_2, sizeof(expect_create_2) );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_destroy, sizeof(expect_destroy) );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %d\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    desc = expect_desc;
+    desc.cAxes = 2;
+    desc.rgdwAxes = axes;
+    desc.rgdwAxes[0] = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 1 ) | DIDFT_FFACTUATOR;
+    desc.rgdwAxes[1] = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 2 ) | DIDFT_FFACTUATOR;
+    desc.rglDirection = directions;
+    desc.rglDirection[0] = +3000;
+    desc.rglDirection[1] = -2000;
+    desc.cbTypeSpecificParams = 1 * sizeof(DICONDITION);
+    desc.lpvTypeSpecificParams = (void *)&expect_condition[1];
+    set_hid_expect( file, expect_create_3, sizeof(expect_create_3) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
     ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
