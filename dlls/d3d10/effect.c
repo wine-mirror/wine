@@ -289,6 +289,10 @@ struct d3d10_effect_prop_dependency
             struct d3d10_effect_variable *v;
             struct d3d10_effect_preshader index;
         } index_expr;
+        struct
+        {
+            struct d3d10_effect_preshader value;
+        } value_expr;
     };
 };
 
@@ -391,6 +395,9 @@ static void d3d10_effect_clear_prop_dependencies(struct d3d10_effect_prop_depend
         {
             case D3D10_EOO_INDEX_EXPRESSION:
                 d3d10_effect_preshader_clear(&dep->index_expr.index);
+                break;
+            case D3D10_EOO_VALUE_EXPRESSION:
+                d3d10_effect_preshader_clear(&dep->value_expr.value);
                 break;
         }
     }
@@ -2625,6 +2632,34 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
             dep.operation = operation;
             dep.index_expr.v = variable;
             if (FAILED(hr = parse_fx10_preshader(data_ptr, blob_size, effect, &dep.index_expr.index)))
+            {
+                WARN("Failed to parse preshader, hr %#x.\n", hr);
+                return hr;
+            }
+
+            return d3d10_effect_add_prop_dependency(d, &dep);
+
+        case D3D10_EOO_VALUE_EXPRESSION:
+
+            if (value_offset >= data_size || !require_space(value_offset, 1, sizeof(uint32_t), data_size))
+            {
+                WARN("Invalid offset %#x (data size %#lx).\n", value_offset, (long)data_size);
+                return E_FAIL;
+            }
+
+            data_ptr = data + value_offset;
+            read_dword(&data_ptr, &blob_size);
+
+            if (!require_space(value_offset, 1, sizeof(uint32_t) + blob_size, data_size))
+            {
+                WARN("Invalid offset %#x (data size %#lx).\n", value_offset, (long)data_size);
+                return E_FAIL;
+            }
+
+            dep.id = id;
+            dep.idx = idx;
+            dep.operation = operation;
+            if (FAILED(hr = parse_fx10_preshader(data_ptr, blob_size, effect, &dep.value_expr.value)))
             {
                 WARN("Failed to parse preshader, hr %#x.\n", hr);
                 return hr;
