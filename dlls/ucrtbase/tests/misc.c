@@ -799,7 +799,7 @@ static void test_math_errors(void)
         errno = -1;
         exception.type = -1;
         p_func3d(tests3d[i].a, tests3d[i].b, tests3d[i].c);
-        ok(errno == tests3d[i].error,
+        ok(errno == tests3d[i].error || errno == -1, /* native is not setting errno if FMA3 is supported */
            "%s(%f, %f, %f) got errno %d\n", tests3d[i].func, tests3d[i].a, tests3d[i].b, tests3d[i].c, errno);
         ok(exception.type == tests3d[i].exception,
            "%s(%f, %f, %f) got exception type %d\n", tests3d[i].func, tests3d[i].a, tests3d[i].b, tests3d[i].c, exception.type);
