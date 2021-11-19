@@ -3788,7 +3788,8 @@ static void wined3d_context_gl_bind_unordered_access_views(struct wined3d_contex
                 format_gl->internal));
 
         if (view_gl->counter_bo.id)
-            GL_EXTCALL(glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, i, view_gl->counter_bo.id));
+            GL_EXTCALL(glBindBufferRange(GL_ATOMIC_COUNTER_BUFFER, i, view_gl->counter_bo.id,
+                    view_gl->counter_bo.buffer_offset, view_gl->counter_bo.size));
     }
     checkGLcall("Bind unordered access views");
 }
