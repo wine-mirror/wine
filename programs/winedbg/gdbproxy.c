@@ -772,7 +772,7 @@ static void packet_reply_open_xfer(struct gdb_context* gdbctx)
     packet_reply_add(gdbctx, "m");
 }
 
-static void packet_reply_close_xfer(struct gdb_context* gdbctx, int off, int len)
+static void packet_reply_close_xfer(struct gdb_context* gdbctx, unsigned int off, unsigned int len)
 {
     int begin = gdbctx->out_curr_packet + 1;
     int plen;
@@ -789,7 +789,7 @@ static void packet_reply_close_xfer(struct gdb_context* gdbctx, int off, int len
     }
 
     plen = gdbctx->out_len - begin;
-    if (len >= 0 && plen > len) gdbctx->out_len -= (plen - len);
+    if (plen > len) gdbctx->out_len -= (plen - len);
     else gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
 
     packet_reply_close(gdbctx);
@@ -1762,7 +1762,7 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
 
 static enum packet_return packet_query(struct gdb_context* gdbctx)
 {
-    int off, len;
+    unsigned int off, len;
     struct backend_cpu *cpu;
 
     switch (gdbctx->in_packet[0])
