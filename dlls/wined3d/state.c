@@ -4651,6 +4651,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_buffer *buffer;
     unsigned int offset, size, i;
+    struct wined3d_bo_gl *bo_gl;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
@@ -4666,6 +4667,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
 
         buffer = state->stream_output[i].buffer;
         offset = state->stream_output[i].offset;
+        bo_gl = wined3d_bo_gl(buffer->buffer_object);
         if (offset == ~0u)
         {
             FIXME("Appending to stream output buffers not implemented.\n");
@@ -4673,7 +4675,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
         }
         size = buffer->resource.size - offset;
         GL_EXTCALL(glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i,
-                wined3d_bo_gl(buffer->buffer_object)->id, offset, size));
+                bo_gl->id, bo_gl->buffer_offset + offset, size));
         buffer->bo_user.valid = true;
     }
     checkGLcall("bind transform feedback buffers");
