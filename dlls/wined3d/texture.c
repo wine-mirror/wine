@@ -2553,14 +2553,17 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
     }
     else
     {
+        const uint8_t *offset = bo.addr;
+
         if (bo.buffer_object)
         {
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, wined3d_bo_gl(bo.buffer_object)->id));
             checkGLcall("glBindBuffer");
+            offset += bo.buffer_object->buffer_offset;
         }
 
         wined3d_texture_gl_upload_bo(src_format, target, level, src_row_pitch, src_slice_pitch, dst_x,
-                dst_y, dst_z, update_w, update_h, update_d, bo.addr, srgb, dst_texture, gl_info);
+                dst_y, dst_z, update_w, update_h, update_d, offset, srgb, dst_texture, gl_info);
 
         if (bo.buffer_object)
         {
