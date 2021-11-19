@@ -739,18 +739,55 @@ static void packet_reply_val(struct gdb_context* gdbctx, ULONG_PTR val, int len)
     }
 }
 
-static inline void packet_reply_add(struct gdb_context* gdbctx, const char* str)
+static const unsigned char gdb_special_chars_lookup_table[4] = {
+    /* The characters should be indexed by its value modulo table length. */
+
+    0x24, /* $: 001001|00 */
+    0x7D, /* }: 011111|01 */
+    0x2A, /* *: 001010|10 */
+    0x23  /* #: 001000|11 */
+};
+
+static inline BOOL is_gdb_special_char(unsigned char val)
 {
-    int len = strlen(str);
-    packet_reply_grow(gdbctx, len);
-    memcpy(&gdbctx->out_buf[gdbctx->out_len], str, len);
-    gdbctx->out_len += len;
+    /* A note on the GDB special character scanning code:
+     *
+     * We cannot use strcspn() since we plan to transmit binary data in
+     * packet reply, which can contain NULL (0x00) bytes.  We also don't want
+     * to slow down memory dump transfers.  Therefore, we use a tiny lookup
+     * table that contains all the four special characters to speed up scanning.
+     */
+    const size_t length = ARRAY_SIZE(gdb_special_chars_lookup_table);
+    return gdb_special_chars_lookup_table[val % length] == val;
+}
+
+static void packet_reply_add(struct gdb_context* gdbctx, const char* str)
+{
+    const unsigned char *ptr = (unsigned char *)str, *curr;
+
+    while (*ptr)
+    {
+        curr = ptr;
+
+        while (*ptr && !is_gdb_special_char(*ptr))
+            ptr++;
+
+        packet_reply_grow(gdbctx, ptr - curr);
+        memcpy(&gdbctx->out_buf[gdbctx->out_len], curr, ptr - curr);
+        gdbctx->out_len += ptr - curr;
+        if (!*ptr) break;
+
+        packet_reply_grow(gdbctx, 2);
+        gdbctx->out_buf[gdbctx->out_len++] = 0x7D;
+        gdbctx->out_buf[gdbctx->out_len++] = 0x20 ^ *ptr++;
+    }
 }
 
 static void packet_reply_open(struct gdb_context* gdbctx)
 {
     assert(gdbctx->out_curr_packet == -1);
-    packet_reply_add(gdbctx, "$");
+    packet_reply_grow(gdbctx, 1);
+    gdbctx->out_buf[gdbctx->out_len++] = '$';
     gdbctx->out_curr_packet = gdbctx->out_len;
 }
 
@@ -760,7 +797,8 @@ static void packet_reply_close(struct gdb_context* gdbctx)
     int plen;
 
     plen = gdbctx->out_len - gdbctx->out_curr_packet;
-    packet_reply_add(gdbctx, "#");
+    packet_reply_grow(gdbctx, 1);
+    gdbctx->out_buf[gdbctx->out_len++] = '#';
     cksum = checksum(&gdbctx->out_buf[gdbctx->out_curr_packet], plen);
     packet_reply_hex_to(gdbctx, &cksum, 1);
     gdbctx->out_curr_packet = -1;
@@ -798,8 +836,6 @@ static void packet_reply_close_xfer(struct gdb_context* gdbctx, unsigned int off
 static enum packet_return packet_reply(struct gdb_context* gdbctx, const char* packet)
 {
     packet_reply_open(gdbctx);
-
-    assert(strchr(packet, '$') == NULL && strchr(packet, '#') == NULL);
 
     packet_reply_add(gdbctx, packet);
 
