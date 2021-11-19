@@ -2184,6 +2184,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context_gl *c
         if (map & 1) shader_addline(buffer, "void subroutine%u();\n", i);
     }
 
+    if (version->type != WINED3D_SHADER_TYPE_PIXEL && version->type != WINED3D_SHADER_TYPE_COMPUTE)
+    {
+        if (version->type == WINED3D_SHADER_TYPE_HULL)
+            shader_addline(buffer, "out gl_PerVertex { invariant vec4 gl_Position; } gl_out[];\n");
+        else
+            shader_addline(buffer, "invariant gl_Position;\n");
+    }
+
     /* Declare the constants (aka uniforms) */
     if (shader->limits->constant_float > 0)
     {
@@ -7125,6 +7133,8 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
     shader_glsl_add_version_declaration(buffer, gl_info);
 
+    shader_addline(buffer, "invariant gl_Position;\n");
+
     if (per_vertex_point_size)
     {
         shader_addline(buffer, "uniform struct\n{\n");
@@ -8993,6 +9003,8 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
+
+    shader_addline(buffer, "invariant gl_Position;\n");
 
     for (i = 0; i < WINED3D_FFP_ATTRIBS_COUNT; ++i)
     {
