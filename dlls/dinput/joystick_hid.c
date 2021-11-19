@@ -132,6 +132,33 @@ struct pid_device_gain
     struct hid_value_caps *device_gain_caps;
 };
 
+struct pid_device_pool
+{
+    BYTE id;
+    ULONG collection;
+    struct hid_value_caps *device_managed_caps;
+};
+
+struct pid_block_free
+{
+    BYTE id;
+    ULONG collection;
+};
+
+struct pid_block_load
+{
+    BYTE id;
+    ULONG collection;
+    ULONG status_coll;
+};
+
+struct pid_new_effect
+{
+    BYTE id;
+    ULONG collection;
+    ULONG type_coll;
+};
+
 struct hid_joystick
 {
     struct dinput_device base;
@@ -161,6 +188,10 @@ struct hid_joystick
     struct pid_set_constant_force pid_set_constant_force;
     struct pid_set_ramp_force pid_set_ramp_force;
     struct pid_device_gain pid_device_gain;
+    struct pid_device_pool pid_device_pool;
+    struct pid_block_free pid_block_free;
+    struct pid_block_load pid_block_load;
+    struct pid_new_effect pid_new_effect;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -441,7 +472,7 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
 static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
                           enum_object_callback callback, void *data )
 {
-    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, j, len;
+    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, j, count, len;
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     struct hid_value_caps *caps, *caps_end, *nary, *nary_end, *effect_caps;
@@ -573,7 +604,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
         }
     }
 
-    for (caps = HID_OUTPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->output_caps_count;
+    count = preparsed->output_caps_count + preparsed->feature_caps_count;
+    for (caps = HID_OUTPUT_VALUE_CAPS( preparsed ), caps_end = caps + count;
          caps != caps_end; ++caps)
     {
         if (!caps->usage_page) continue;
@@ -1519,6 +1551,10 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
     struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
     struct pid_device_gain *device_gain = &impl->pid_device_gain;
+    struct pid_device_pool *device_pool = &impl->pid_device_pool;
+    struct pid_block_free *block_free = &impl->pid_block_free;
+    struct pid_block_load *block_load = &impl->pid_block_load;
+    struct pid_new_effect *new_effect = &impl->pid_new_effect;
 
 #define SET_COLLECTION( rep )                                          \
     do                                                                 \
@@ -1550,15 +1586,22 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         case PID_USAGE_SET_CONSTANT_FORCE_REPORT: SET_COLLECTION( set_constant_force ); break;
         case PID_USAGE_SET_RAMP_FORCE_REPORT: SET_COLLECTION( set_ramp_force ); break;
         case PID_USAGE_DEVICE_GAIN_REPORT: SET_COLLECTION( device_gain ); break;
+        case PID_USAGE_POOL_REPORT: SET_COLLECTION( device_pool ); break;
+        case PID_USAGE_BLOCK_FREE_REPORT: SET_COLLECTION( block_free ); break;
+        case PID_USAGE_BLOCK_LOAD_REPORT: SET_COLLECTION( block_load ); break;
+        case PID_USAGE_CREATE_NEW_EFFECT_REPORT: SET_COLLECTION( new_effect ); break;
 
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
         case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
         case PID_USAGE_EFFECT_TYPE:
             if (instance->wCollectionNumber == effect_update->collection)
                 SET_SUB_COLLECTION( effect_update, type_coll );
+            else if (instance->wCollectionNumber == new_effect->collection)
+                SET_SUB_COLLECTION( new_effect, type_coll );
             break;
         case PID_USAGE_AXES_ENABLE: SET_SUB_COLLECTION( effect_update, axes_coll ); break;
         case PID_USAGE_DIRECTION: SET_SUB_COLLECTION( effect_update, direction_coll ); break;
+        case PID_USAGE_BLOCK_LOAD_STATUS: SET_SUB_COLLECTION( block_load, status_coll ); break;
         }
     }
 
@@ -1580,6 +1623,10 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
     struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
     struct pid_device_gain *device_gain = &impl->pid_device_gain;
+    struct pid_device_pool *device_pool = &impl->pid_device_pool;
+    struct pid_block_free *block_free = &impl->pid_block_free;
+    struct pid_block_load *block_load = &impl->pid_block_load;
+    struct pid_new_effect *new_effect = &impl->pid_new_effect;
 
     if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
@@ -1756,6 +1803,22 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
             device_gain->device_gain_caps = caps;
         }
     }
+    if (instance->wCollectionNumber == device_pool->collection)
+    {
+        SET_REPORT_ID( device_pool );
+        if (instance->wUsage == PID_USAGE_DEVICE_MANAGED_POOL)
+            device_pool->device_managed_caps = caps;
+    }
+    if (instance->wCollectionNumber == block_free->collection)
+        SET_REPORT_ID( block_free );
+    if (instance->wCollectionNumber == block_load->collection)
+        SET_REPORT_ID( block_load );
+    if (instance->wCollectionNumber == block_load->status_coll)
+        SET_REPORT_ID( block_load );
+    if (instance->wCollectionNumber == new_effect->collection)
+        SET_REPORT_ID( new_effect );
+    if (instance->wCollectionNumber == new_effect->type_coll)
+        SET_REPORT_ID( new_effect );
 
 #undef SET_REPORT_ID
 
@@ -1854,6 +1917,12 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
            impl->pid_set_constant_force.collection );
     TRACE( "set ramp force id %u, coll %u\n", impl->pid_set_ramp_force.id, impl->pid_set_ramp_force.collection );
     TRACE( "device gain id %u, coll %u\n", impl->pid_device_gain.id, impl->pid_device_gain.collection );
+    TRACE( "device pool id %u, coll %u\n", impl->pid_device_pool.id, impl->pid_device_pool.collection );
+    TRACE( "block free id %u, coll %u\n", impl->pid_block_free.id, impl->pid_block_free.collection );
+    TRACE( "block load id %u, coll %u, status_coll %u\n", impl->pid_block_load.id,
+           impl->pid_block_load.collection, impl->pid_block_load.status_coll );
+    TRACE( "create new effect id %u, coll %u, type_coll %u\n", impl->pid_new_effect.id,
+           impl->pid_new_effect.collection, impl->pid_new_effect.type_coll );
 
     if (impl->pid_device_control.id)
     {
