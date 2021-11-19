@@ -23,11 +23,13 @@
 #include <errno.h>
 #include "wine/test.h"
 
-static void (__cdecl *p_aligned_free)(void*) = NULL;
-static void * (__cdecl *p_aligned_malloc)(size_t,size_t) = NULL;
-static void * (__cdecl *p_aligned_offset_malloc)(size_t,size_t,size_t) = NULL;
-static void * (__cdecl *p_aligned_realloc)(void*,size_t,size_t) = NULL;
-static void * (__cdecl *p_aligned_offset_realloc)(void*,size_t,size_t,size_t) = NULL;
+static void (__cdecl *p_aligned_free)(void*);
+static void * (__cdecl *p_aligned_malloc)(size_t,size_t);
+static void * (__cdecl *p_aligned_offset_malloc)(size_t,size_t,size_t);
+static void * (__cdecl *p_aligned_realloc)(void*,size_t,size_t);
+static void * (__cdecl *p_aligned_offset_realloc)(void*,size_t,size_t,size_t);
+static int (__cdecl *p__set_sbh_threshold)(size_t);
+static size_t (__cdecl *p__get_sbh_threshold)(void);
 
 static void test_aligned_malloc(unsigned int size, unsigned int alignment)
 {
@@ -415,28 +417,37 @@ static void test_aligned(void)
 
 static void test_sbheap(void)
 {
+    HMODULE msvcrt = GetModuleHandleA("msvcrt.dll");
     void *mem;
     int threshold;
 
+    p__set_sbh_threshold = (void*)GetProcAddress(msvcrt, "_set_sbh_threshold");
+    p__get_sbh_threshold = (void*)GetProcAddress(msvcrt, "_get_sbh_threshold");
+    if (!p__set_sbh_threshold || !p__get_sbh_threshold)
+    {
+        win_skip("_set_sbh_threshold not available\n");
+        return;
+    }
+
     if(sizeof(void*) == 8) {
-        ok(!_set_sbh_threshold(0), "_set_sbh_threshold succeeded\n");
-        ok(!_set_sbh_threshold(1000), "_set_sbh_threshold succeeded\n");
+        ok(!p__set_sbh_threshold(0), "_set_sbh_threshold succeeded\n");
+        ok(!p__set_sbh_threshold(1000), "_set_sbh_threshold succeeded\n");
         return;
     }
 
     mem = malloc(1);
     ok(mem != NULL, "malloc failed\n");
 
-    ok(_set_sbh_threshold(1), "_set_sbh_threshold failed\n");
-    threshold = _get_sbh_threshold();
+    ok(p__set_sbh_threshold(1), "_set_sbh_threshold failed\n");
+    threshold = p__get_sbh_threshold();
     ok(threshold == 16, "threshold = %d\n", threshold);
 
-    ok(_set_sbh_threshold(8), "_set_sbh_threshold failed\n");
-    threshold = _get_sbh_threshold();
+    ok(p__set_sbh_threshold(8), "_set_sbh_threshold failed\n");
+    threshold = p__get_sbh_threshold();
     ok(threshold == 16, "threshold = %d\n", threshold);
 
-    ok(_set_sbh_threshold(1000), "_set_sbh_threshold failed\n");
-    threshold = _get_sbh_threshold();
+    ok(p__set_sbh_threshold(1000), "_set_sbh_threshold failed\n");
+    threshold = p__get_sbh_threshold();
     ok(threshold == 1008, "threshold = %d\n", threshold);
 
     free(mem);
@@ -449,8 +460,8 @@ static void test_sbheap(void)
     ok(mem != NULL, "realloc failed\n");
     ok(!((UINT_PTR)mem & 0xf), "incorrect alignment (%p)\n", mem);
 
-    ok(_set_sbh_threshold(0), "_set_sbh_threshold failed\n");
-    threshold = _get_sbh_threshold();
+    ok(p__set_sbh_threshold(0), "_set_sbh_threshold failed\n");
+    threshold = p__get_sbh_threshold();
     ok(threshold == 0, "threshold = %d\n", threshold);
 
     free(mem);
