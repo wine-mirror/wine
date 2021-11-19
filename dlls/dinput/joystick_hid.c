@@ -676,8 +676,12 @@ static void set_report_value( struct hid_joystick *impl, char *report_buf,
     phy_min = caps->physical_min;
     phy_max = caps->physical_max;
 
-    if (value > phy_max || value < phy_min) value = -1;
-    else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
+    if (phy_max || phy_min)
+    {
+        if (value > phy_max || value < phy_min) value = -1;
+        else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
+    }
+
     status = HidP_SetUsageValue( HidP_Output, caps->usage_page, caps->link_collection,
                                  caps->usage_min, value, preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue %04x:%04x returned %#x\n",
