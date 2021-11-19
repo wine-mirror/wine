@@ -5067,6 +5067,12 @@ void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *conte
     }
 }
 
+static const void *get_vertex_attrib_pointer(const struct wined3d_stream_info_element *element,
+        const struct wined3d_state *state)
+{
+    return element->data.addr + state->load_base_vertex_index * element->stride;
+}
+
 void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context_gl,
         const struct wined3d_stream_info *si, GLuint *current_bo, const struct wined3d_state *state)
 {
@@ -5110,7 +5116,7 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
             /* The coords to supply depend completely on the fvf/vertex shader. */
             format_gl = wined3d_format_gl(e->format);
             gl_info->gl_ops.gl.p_glTexCoordPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride,
-                    e->data.addr + state->load_base_vertex_index * e->stride);
+                    get_vertex_attrib_pointer(e, state));
             gl_info->gl_ops.gl.p_glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             state->streams[e->stream_idx].buffer->bo_user.valid = true;
         }
@@ -5154,6 +5160,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
     const struct wined3d_stream_info_element *e;
     const struct wined3d_format_gl *format_gl;
     GLuint current_bo, bo;
+    const void *offset;
 
     TRACE("context_gl %p, si %p, state %p.\n", context_gl, si, state);
 
@@ -5184,6 +5191,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
     {
         e = &si->elements[WINED3D_FFP_POSITION];
         format_gl = wined3d_format_gl(e->format);
+        offset = get_vertex_attrib_pointer(e, state);
 
         bo = wined3d_bo_gl_id(e->data.buffer_object);
         if (current_bo != bo)
@@ -5193,11 +5201,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
             current_bo = bo;
         }
 
-        TRACE("glVertexPointer(%#x, %#x, %#x, %p);\n",
-                format_gl->vtx_format, format_gl->vtx_type, e->stride,
-                e->data.addr + state->load_base_vertex_index * e->stride);
-        gl_info->gl_ops.gl.p_glVertexPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride,
-                e->data.addr + state->load_base_vertex_index * e->stride);
+        TRACE("glVertexPointer(%#x, %#x, %#x, %p);\n", format_gl->vtx_format, format_gl->vtx_type, e->stride, offset);
+        gl_info->gl_ops.gl.p_glVertexPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride, offset);
         checkGLcall("glVertexPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_VERTEX_ARRAY);
         checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
@@ -5209,6 +5214,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
     {
         e = &si->elements[WINED3D_FFP_NORMAL];
         format_gl = wined3d_format_gl(e->format);
+        offset = get_vertex_attrib_pointer(e, state);
 
         bo = wined3d_bo_gl_id(e->data.buffer_object);
         if (current_bo != bo)
@@ -5218,10 +5224,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
             current_bo = bo;
         }
 
-        TRACE("glNormalPointer(%#x, %#x, %p);\n", format_gl->vtx_type, e->stride,
-                e->data.addr + state->load_base_vertex_index * e->stride);
-        gl_info->gl_ops.gl.p_glNormalPointer(format_gl->vtx_type, e->stride,
-                e->data.addr + state->load_base_vertex_index * e->stride);
+        TRACE("glNormalPointer(%#x, %#x, %p);\n", format_gl->vtx_type, e->stride, offset);
+        gl_info->gl_ops.gl.p_glNormalPointer(format_gl->vtx_type, e->stride, offset);
         checkGLcall("glNormalPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
@@ -5238,6 +5242,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
     {
         e = &si->elements[WINED3D_FFP_DIFFUSE];
         format_gl = wined3d_format_gl(e->format);
+        offset = get_vertex_attrib_pointer(e, state);
 
         bo = wined3d_bo_gl_id(e->data.buffer_object);
         if (current_bo != bo)
@@ -5248,10 +5253,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         }
 
         TRACE("glColorPointer(%#x, %#x %#x, %p);\n",
-                format_gl->vtx_format, format_gl->vtx_type, e->stride,
-                e->data.addr + state->load_base_vertex_index * e->stride);
-        gl_info->gl_ops.gl.p_glColorPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride,
-                e->data.addr + state->load_base_vertex_index * e->stride);
+                format_gl->vtx_format, format_gl->vtx_type, e->stride, offset);
+        gl_info->gl_ops.gl.p_glColorPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride, offset);
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_COLOR_ARRAY);
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
@@ -5269,6 +5272,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         TRACE("Setting specular colour.\n");
 
         e = &si->elements[WINED3D_FFP_SPECULAR];
+        offset = get_vertex_attrib_pointer(e, state);
 
         if (gl_info->supported[EXT_SECONDARY_COLOR])
         {
@@ -5294,10 +5298,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
                  * vertex pipeline can pass the specular alpha through, and pixel shaders can read it. So it GL accepts
                  * 4 component secondary colors use it
                  */
-                TRACE("glSecondaryColorPointer(%#x, %#x, %#x, %p);\n", format, type, e->stride,
-                        e->data.addr + state->load_base_vertex_index * e->stride);
-                GL_EXTCALL(glSecondaryColorPointerEXT(format, type, e->stride,
-                        e->data.addr + state->load_base_vertex_index * e->stride));
+                TRACE("glSecondaryColorPointer(%#x, %#x, %#x, %p);\n", format, type, e->stride, offset);
+                GL_EXTCALL(glSecondaryColorPointerEXT(format, type, e->stride, offset));
                 checkGLcall("glSecondaryColorPointerEXT(format, type, ...)");
             }
             else
@@ -5305,20 +5307,16 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
                 switch (type)
                 {
                     case GL_UNSIGNED_BYTE:
-                        TRACE("glSecondaryColorPointer(3, GL_UNSIGNED_BYTE, %#x, %p);\n", e->stride,
-                                e->data.addr + state->load_base_vertex_index * e->stride);
-                        GL_EXTCALL(glSecondaryColorPointerEXT(3, GL_UNSIGNED_BYTE, e->stride,
-                                e->data.addr + state->load_base_vertex_index * e->stride));
+                        TRACE("glSecondaryColorPointer(3, GL_UNSIGNED_BYTE, %#x, %p);\n", e->stride, offset);
+                        GL_EXTCALL(glSecondaryColorPointerEXT(3, GL_UNSIGNED_BYTE, e->stride, offset));
                         checkGLcall("glSecondaryColorPointerEXT(3, GL_UNSIGNED_BYTE, ...)");
                         break;
 
                     default:
                         FIXME("Add 4 component specular colour pointers for type %#x.\n", type);
                         /* Make sure that the right colour component is dropped. */
-                        TRACE("glSecondaryColorPointer(3, %#x, %#x, %p);\n", type, e->stride,
-                                e->data.addr + state->load_base_vertex_index * e->stride);
-                        GL_EXTCALL(glSecondaryColorPointerEXT(3, type, e->stride,
-                                e->data.addr + state->load_base_vertex_index * e->stride));
+                        TRACE("glSecondaryColorPointer(3, %#x, %#x, %p);\n", type, e->stride, offset);
+                        GL_EXTCALL(glSecondaryColorPointerEXT(3, type, e->stride, offset));
                         checkGLcall("glSecondaryColorPointerEXT(3, type, ...)");
                 }
             }
@@ -5388,6 +5386,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
     for (i = 0; i < MAX_ATTRIBS; ++i)
     {
         const struct wined3d_stream_info_element *element = &stream_info->elements[i];
+        const void *offset = get_vertex_attrib_pointer(element, state);
         const struct wined3d_stream_state *stream;
         const struct wined3d_format_gl *format_gl;
 
@@ -5460,14 +5459,13 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
              * won't be load converted attributes anyway. */
             if (vs && vs->reg_maps.shader_version.major >= 4 && (format_flags & WINED3DFMT_FLAG_INTEGER))
             {
-                GL_EXTCALL(glVertexAttribIPointer(i, format_gl->vtx_format, format_gl->vtx_type,
-                        element->stride, element->data.addr + state->load_base_vertex_index * element->stride));
+                GL_EXTCALL(glVertexAttribIPointer(i, format_gl->vtx_format,
+                        format_gl->vtx_type, element->stride, offset));
             }
             else
             {
                 GL_EXTCALL(glVertexAttribPointer(i, format_gl->vtx_format, format_gl->vtx_type,
-                        !!(format_flags & WINED3DFMT_FLAG_NORMALISED), element->stride,
-                        element->data.addr + state->load_base_vertex_index * element->stride));
+                        !!(format_flags & WINED3DFMT_FLAG_NORMALISED), element->stride, offset));
             }
 
             if (!(context->numbered_array_mask & (1u << i)))
