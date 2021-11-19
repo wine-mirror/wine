@@ -2922,7 +2922,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     list_init(&bo->b.users);
     bo->command_fence_id = 0;
     bo->b.memory_offset = 0;
-    bo->buffer_offset = 0;
+    bo->b.buffer_offset = 0;
     bo->b.map_ptr = NULL;
 
     return true;
@@ -3789,7 +3789,7 @@ static void wined3d_context_gl_bind_unordered_access_views(struct wined3d_contex
 
         if (view_gl->counter_bo.id)
             GL_EXTCALL(glBindBufferRange(GL_ATOMIC_COUNTER_BUFFER, i, view_gl->counter_bo.id,
-                    view_gl->counter_bo.buffer_offset, view_gl->counter_bo.size));
+                    view_gl->counter_bo.b.buffer_offset, view_gl->counter_bo.size));
     }
     checkGLcall("Bind unordered access views");
 }
@@ -4915,7 +4915,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         if (!bo || !stream_info->all_vbo)
             idx_data = index_buffer->resource.heap_memory;
         else
-            idx_data = (void *)wined3d_bo_gl(bo)->buffer_offset;
+            idx_data = (void *)bo->buffer_offset;
         idx_data = (const BYTE *)idx_data + state->index_offset;
 
         if (state->index_format == WINED3DFMT_R16_UINT)
@@ -5077,7 +5077,7 @@ static const void *get_vertex_attrib_pointer(const struct wined3d_stream_info_el
     const uint8_t *offset = element->data.addr + state->load_base_vertex_index * element->stride;
 
     if (element->data.buffer_object)
-        offset += wined3d_bo_gl(element->data.buffer_object)->buffer_offset;
+        offset += element->data.buffer_object->buffer_offset;
     return offset;
 }
 

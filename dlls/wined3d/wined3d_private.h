@@ -1597,6 +1597,7 @@ struct wined3d_bo
 {
     struct list users;
     void *map_ptr;
+    size_t buffer_offset;
     size_t memory_offset;
     bool coherent;
 };
@@ -1606,7 +1607,6 @@ struct wined3d_bo_gl
     struct wined3d_bo b;
 
     GLuint id;
-    GLsizeiptr buffer_offset;
     GLsizeiptr size;
     GLenum binding;
     GLenum usage;
@@ -1641,7 +1641,6 @@ struct wined3d_bo_vk
 
     VkDeviceMemory vk_memory;
 
-    VkDeviceSize buffer_offset;
     VkDeviceSize size;
     VkBufferUsageFlags usage;
     VkMemoryPropertyFlags memory_type;

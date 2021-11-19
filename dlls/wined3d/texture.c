@@ -4764,7 +4764,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
         vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.buffer = src_bo->vk_buffer;
-        vk_barrier.offset = src_bo->buffer_offset + (size_t)src_bo_addr->addr;
+        vk_barrier.offset = src_bo->b.buffer_offset + (size_t)src_bo_addr->addr;
         vk_barrier.size = sub_resource->size;
 
         src_offset += (size_t)src_bo_addr->addr;
@@ -4788,7 +4788,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
             dst_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             dst_texture_vk->image.vk_image, &vk_range);
 
-    region.bufferOffset = src_bo->buffer_offset + src_offset;
+    region.bufferOffset = src_bo->b.buffer_offset + src_offset;
     region.bufferRowLength = (src_row_pitch / src_format->block_byte_count) * src_format->block_width;
     if (src_row_pitch)
         region.bufferImageHeight = (src_slice_pitch / src_row_pitch) * src_format->block_height;
@@ -4941,7 +4941,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.buffer = dst_bo->vk_buffer;
-        vk_barrier.offset = dst_bo->buffer_offset + (size_t)dst_bo_addr->addr;
+        vk_barrier.offset = dst_bo->b.buffer_offset + (size_t)dst_bo_addr->addr;
         vk_barrier.size = sub_resource->size;
 
         bo_stage_flags = vk_pipeline_stage_mask_from_buffer_usage(dst_bo->usage);
@@ -4964,7 +4964,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             src_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             src_texture_vk->image.vk_image, &vk_range);
 
-    region.bufferOffset = dst_bo->buffer_offset + dst_offset;
+    region.bufferOffset = dst_bo->b.buffer_offset + dst_offset;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
     region.imageSubresource.aspectMask = vk_range.aspectMask;

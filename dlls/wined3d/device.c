@@ -657,9 +657,9 @@ bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk
     memory_type = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (!wined3d_context_vk_create_bo(context_vk, 16, usage, memory_type, &r->bo))
         return false;
-    VK_CALL(vkCmdFillBuffer(vk_command_buffer, r->bo.vk_buffer, r->bo.buffer_offset, r->bo.size, 0x00000000u));
+    VK_CALL(vkCmdFillBuffer(vk_command_buffer, r->bo.vk_buffer, r->bo.b.buffer_offset, r->bo.size, 0x00000000u));
     r->buffer_info.buffer = r->bo.vk_buffer;
-    r->buffer_info.offset = r->bo.buffer_offset;
+    r->buffer_info.offset = r->bo.b.buffer_offset;
     r->buffer_info.range = r->bo.size;
 
     if (!wined3d_null_image_vk_init(&r->image_1d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_1D, 1, 1))
@@ -735,7 +735,7 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     buffer_create_info.flags = 0;
     buffer_create_info.buffer = r->bo.vk_buffer;
     buffer_create_info.format = VK_FORMAT_R32_UINT;
-    buffer_create_info.offset = r->bo.buffer_offset;
+    buffer_create_info.offset = r->bo.b.buffer_offset;
     buffer_create_info.range = r->bo.size;
 
     if ((vr = VK_CALL(vkCreateBufferView(device_vk->vk_device,

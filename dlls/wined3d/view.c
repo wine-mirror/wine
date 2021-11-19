@@ -685,7 +685,7 @@ static VkBufferView wined3d_view_vk_create_vk_buffer_view(struct wined3d_context
     create_info.flags = 0;
     create_info.buffer = bo->vk_buffer;
     create_info.format = view_format_vk->vk_format;
-    create_info.offset = bo->buffer_offset + offset;
+    create_info.offset = bo->b.buffer_offset + offset;
     create_info.range = size;
 
     device_vk = wined3d_device_vk(buffer_vk->b.resource.device);
@@ -2101,7 +2101,7 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
 
     buffer_info.buffer = constants_bo.vk_buffer;
     buffer_info.range = constants_bo.size;
-    buffer_info.offset = constants_bo.buffer_offset;
+    buffer_info.offset = constants_bo.b.buffer_offset;
 
     vk_info = context_vk->vk_info;
 
@@ -2234,7 +2234,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
 
             wined3d_context_vk_end_current_render_pass(context_vk);
             VK_CALL(vkCmdFillBuffer(wined3d_context_vk_get_command_buffer(context_vk),
-                    uav_vk->counter_bo.vk_buffer, uav_vk->counter_bo.buffer_offset, sizeof(uint32_t), 0));
+                    uav_vk->counter_bo.vk_buffer, uav_vk->counter_bo.b.buffer_offset, sizeof(uint32_t), 0));
             wined3d_context_vk_reference_bo(context_vk, &uav_vk->counter_bo);
 
             create_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
@@ -2242,7 +2242,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
             create_info.flags = 0;
             create_info.buffer = uav_vk->counter_bo.vk_buffer;
             create_info.format = VK_FORMAT_R32_UINT;
-            create_info.offset = uav_vk->counter_bo.buffer_offset;
+            create_info.offset = uav_vk->counter_bo.b.buffer_offset;
             create_info.range = sizeof(uint32_t);
             if ((vr = VK_CALL(vkCreateBufferView(device_vk->vk_device,
                     &create_info, NULL, &uav_vk->vk_counter_view))) < 0)

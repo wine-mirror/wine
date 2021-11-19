@@ -1521,7 +1521,7 @@ const VkDescriptorBufferInfo *wined3d_buffer_vk_get_buffer_info(struct wined3d_b
         return &buffer_vk->buffer_info;
 
     buffer_vk->buffer_info.buffer = bo->vk_buffer;
-    buffer_vk->buffer_info.offset = bo->buffer_offset;
+    buffer_vk->buffer_info.offset = bo->b.buffer_offset;
     buffer_vk->buffer_info.range = buffer_vk->b.resource.size;
     buffer_vk->b.bo_user.valid = true;
 
@@ -1702,7 +1702,7 @@ void wined3d_buffer_vk_barrier(struct wined3d_buffer_vk *buffer_vk,
         vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.buffer = bo->vk_buffer;
-        vk_barrier.offset = bo->buffer_offset;
+        vk_barrier.offset = bo->b.buffer_offset;
         vk_barrier.size = buffer_vk->b.resource.size;
         VK_CALL(vkCmdPipelineBarrier(wined3d_context_vk_get_command_buffer(context_vk),
                 vk_pipeline_stage_mask_from_bind_flags(src_bind_mask),
