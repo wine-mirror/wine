@@ -421,7 +421,7 @@ static void UXTHEME_SaveSystemMetrics(struct system_metrics *metrics, BOOL send_
  */
 HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
 {
-    BOOL ret, loaded_before = FALSE;
+    BOOL ret, loaded_before = FALSE, same_theme = FALSE;
     struct system_metrics metrics;
     DWORD size;
     HKEY hKey;
@@ -430,6 +430,9 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
 
     if(tf) {
         bThemeActive = TRUE;
+        same_theme = !lstrcmpW(szCurrentTheme, tf->szThemeFile)
+                     && !lstrcmpW(szCurrentColor, tf->pszSelectedColor)
+                     && !lstrcmpW(szCurrentSize, tf->pszSelectedSize);
         lstrcpynW(szCurrentTheme, tf->szThemeFile, ARRAY_SIZE(szCurrentTheme));
         lstrcpynW(szCurrentColor, tf->pszSelectedColor, ARRAY_SIZE(szCurrentColor));
         lstrcpynW(szCurrentSize, tf->pszSelectedSize, ARRAY_SIZE(szCurrentSize));
@@ -446,6 +449,8 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
                 WARN("Failed to get LoadedBefore: %d\n", GetLastError());
             RegCloseKey(hKey);
         }
+        if (loaded_before && same_theme)
+            return MSSTYLES_SetActiveTheme(tf, FALSE);
 
         if (!loaded_before && ret)
             UXTHEME_SaveUnthemedSystemMetrics(&metrics);
