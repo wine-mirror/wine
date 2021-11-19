@@ -1270,6 +1270,7 @@ static void test__Winerror_map(void)
     static struct {
         int winerr, doserr;
         BOOL broken;
+        int broken_doserr;
     } tests[] = {
         {ERROR_INVALID_FUNCTION, ENOSYS}, {ERROR_FILE_NOT_FOUND, ENOENT},
         {ERROR_PATH_NOT_FOUND, ENOENT}, {ERROR_TOO_MANY_OPEN_FILES, EMFILE},
@@ -1285,7 +1286,7 @@ static void test__Winerror_map(void)
         {ERROR_FILE_EXISTS, EEXIST}, {ERROR_CANNOT_MAKE, EACCES},
         {ERROR_INVALID_PARAMETER, EINVAL, TRUE}, {ERROR_OPEN_FAILED, EIO},
         {ERROR_BUFFER_OVERFLOW, ENAMETOOLONG}, {ERROR_DISK_FULL, ENOSPC},
-        {ERROR_INVALID_NAME, EINVAL}, {ERROR_NEGATIVE_SEEK, EINVAL},
+        {ERROR_INVALID_NAME, ENOENT, TRUE, EINVAL}, {ERROR_NEGATIVE_SEEK, EINVAL},
         {ERROR_BUSY_DRIVE, EBUSY}, {ERROR_DIR_NOT_EMPTY, ENOTEMPTY},
         {ERROR_BUSY, EBUSY}, {ERROR_ALREADY_EXISTS, EEXIST},
         {ERROR_LOCKED, ENOLCK}, {ERROR_DIRECTORY, EINVAL},
@@ -1313,7 +1314,7 @@ static void test__Winerror_map(void)
     for(i=0; i<ARRAY_SIZE(tests); i++)
     {
         ret = p__Winerror_map(tests[i].winerr);
-        ok(ret == tests[i].doserr || broken(tests[i].broken && !ret),
+        ok(ret == tests[i].doserr || broken(tests[i].broken && ret == tests[i].broken_doserr),
                 "_Winerror_map(%d) returned %d, expected %d\n",
                 tests[i].winerr, ret, tests[i].doserr);
     }
