@@ -4909,10 +4909,12 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     if (parameters->indexed)
     {
         struct wined3d_buffer *index_buffer = state->index_buffer;
-        if (!index_buffer->buffer_object || !stream_info->all_vbo)
+        struct wined3d_bo *bo = index_buffer->buffer_object;
+
+        if (!bo || !stream_info->all_vbo)
             idx_data = index_buffer->resource.heap_memory;
         else
-            idx_data = NULL;
+            idx_data = (void *)wined3d_bo_gl(bo)->buffer_offset;
         idx_data = (const BYTE *)idx_data + state->index_offset;
 
         if (state->index_format == WINED3DFMT_R16_UINT)
