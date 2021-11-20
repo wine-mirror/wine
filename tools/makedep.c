@@ -2006,24 +2006,6 @@ static int needs_delay_lib( const struct makefile *make )
 
 
 /*******************************************************************
- *         needs_implib_symlink
- */
-static int needs_implib_symlink( const struct makefile *make )
-{
-    if (!make->module) return 0;
-    if (!make->importlib) return 0;
-    if (make->is_win16 && make->disabled) return 0;
-    if (strncmp( make->obj_dir, "dlls/", 5 )) return 0;
-    if (!strcmp( make->module, make->importlib )) return 0;
-    if (!strchr( make->importlib, '.' ) &&
-        !strncmp( make->module, make->importlib, strlen( make->importlib )) &&
-        !strcmp( make->module + strlen( make->importlib ), ".dll" ))
-        return 0;
-    return 1;
-}
-
-
-/*******************************************************************
  *         add_unix_libraries
  */
 static struct strarray add_unix_libraries( const struct makefile *make, struct strarray *deps )
@@ -2185,8 +2167,6 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
             if (ext) lib = replace_extension( lib, ".a", ext );
             strarray_add_uniq( deps, lib );
             strarray_add( &ret, lib );
-            if (needs_implib_symlink( submakes[j] ))
-                strarray_add_uniq( deps, strmake( "dlls/lib%s%s", name, ext ? ext : ".a" ));
         }
         else strarray_add( &ret, strmake( "-l%s", name ));
     }
@@ -2551,27 +2531,6 @@ static void output_uninstall_rules( struct makefile *make )
     for (j = 0; j < uninstall_dirs.count; j++)
         if (uninstall_dirs.str[j]) output_filename( uninstall_dirs.str[j] );
     output( "\n" );
-}
-
-
-/*******************************************************************
- *         output_importlib_symlinks
- */
-static struct strarray output_importlib_symlinks( const struct makefile *make )
-{
-    struct strarray ret = empty_strarray;
-    const char *lib, *dst, *ext[2] = { "a", "cross.a" };
-    int i, count = 1 + !!crosstarget;
-
-    for (i = 0; i < count; i++)
-    {
-        lib = strmake( "lib%s.%s", make->importlib, ext[i] );
-        dst = strmake( "dlls/%s", lib );
-        output( "%s: %s\n", dst, obj_dir_path( make, lib ));
-        output_symlink_rule( concat_paths( make->obj_dir + strlen("dlls/"), lib ), dst, 0 );
-        strarray_add( &ret, dst );
-    }
-    return ret;
 }
 
 
@@ -3336,8 +3295,6 @@ static void output_import_lib( struct makefile *make )
                           strmake( "lib%s.cross.a", make->importlib ),
                           strmake( "d%s/lib%s.a", pe_dir, make->importlib ));
     }
-    if (needs_implib_symlink( make ))
-        strarray_addall( &top_makefile->clean_files, output_importlib_symlinks( make ));
 }
 
 
