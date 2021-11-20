@@ -5686,10 +5686,12 @@ static void test_D3DKMTCreateDCFromMemory( void )
 {
     D3DKMT_DESTROYDCFROMMEMORY destroy_desc;
     D3DKMT_CREATEDCFROMMEMORY create_desc;
+    MEMORY_BASIC_INFORMATION memory_info;
     unsigned int width_bytes;
     unsigned int i, x, y, z;
     DWORD expected, colour;
     BYTE data[12][48];
+    void *alloc_data;
     NTSTATUS status;
     HGDIOBJ *bitmap;
     DIBSECTION dib;
@@ -5939,6 +5941,39 @@ static void test_D3DKMTCreateDCFromMemory( void )
         DeleteObject( SelectObject( bmp_dc, bmp ) );
         DeleteDC( bmp_dc );
     }
+
+    alloc_data = VirtualAlloc( NULL, 4096, MEM_COMMIT, PAGE_READWRITE );
+    ok(!!alloc_data, "Failed to allocate memory, error %u.\n", GetLastError());
+
+    create_desc.pMemory = alloc_data;
+    create_desc.Format = D3DDDIFMT_A8R8G8B8;
+    create_desc.Width = 16;
+    create_desc.Height = 16;
+    create_desc.Pitch = 16 * 4;
+    create_desc.hDeviceDc = CreateCompatibleDC( NULL );
+    create_desc.pColorTable = NULL;
+
+    status = pD3DKMTCreateDCFromMemory( &create_desc );
+    ok(!status, "Got unexpected status %#x.\n", status);
+
+    size = VirtualQuery( alloc_data, &memory_info, sizeof(memory_info) );
+    ok(size == sizeof(memory_info), "Got unexpected size %u.\n", size);
+    ok(memory_info.State == MEM_COMMIT, "Got state %#x.\n", memory_info.State);
+    ok(memory_info.Protect == PAGE_READWRITE, "Got protection %#x.\n", memory_info.Protect);
+
+    destroy_desc.hDc = create_desc.hDc;
+    destroy_desc.hBitmap = create_desc.hBitmap;
+
+    status = pD3DKMTDestroyDCFromMemory( &destroy_desc );
+    ok(!status, "Got unexpected status %#x.\n", status);
+
+    size = VirtualQuery( alloc_data, &memory_info, sizeof(memory_info) );
+    ok(size == sizeof(memory_info), "Got unexpected size %u.\n", size);
+    todo_wine ok(memory_info.State == MEM_COMMIT, "Got state %#x.\n", memory_info.State);
+    todo_wine ok(memory_info.Protect == PAGE_READWRITE, "Got protection %#x.\n", memory_info.Protect);
+
+    ret = VirtualFree( alloc_data, 0, MEM_RELEASE );
+    todo_wine ok(ret, "Failed to free memory, error %u.\n", GetLastError());
 }
 
 START_TEST(bitmap)
