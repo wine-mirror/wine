@@ -206,6 +206,7 @@ struct makefile
     struct strarray in_files;
     struct strarray ok_files;
     struct strarray pot_files;
+    struct strarray test_files;
     struct strarray clean_files;
     struct strarray distclean_files;
     struct strarray uninstall_files;
@@ -3016,6 +3017,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         strarray_add( &make->c2man_files, source->filename );
         if (make->testdll && !is_dll_src)
         {
+            strarray_add( &make->test_files, obj );
             strarray_add( &make->ok_files, strmake( "%s.ok", obj ));
             output( "%s.ok:\n", obj_dir_path( make, obj ));
             output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s%s %s && touch $@\n",
@@ -3886,11 +3888,7 @@ static void output_linguas( const struct makefile *make )
 static void output_testlist( const struct makefile *make )
 {
     const char *dest = obj_dir_path( make, "testlist.c" );
-    struct strarray files = empty_strarray;
     unsigned int i;
-
-    for (i = 0; i < make->ok_files.count; i++)
-        strarray_add( &files, replace_extension( make->ok_files.str[i], ".ok", "" ));
 
     output_file = create_temp_file( dest );
 
@@ -3900,11 +3898,13 @@ static void output_testlist( const struct makefile *make )
     output( "#define STANDALONE\n" );
     output( "#include \"wine/test.h\"\n\n" );
 
-    for (i = 0; i < files.count; i++) output( "extern void func_%s(void);\n", files.str[i] );
+    for (i = 0; i < make->test_files.count; i++)
+        output( "extern void func_%s(void);\n", make->test_files.str[i] );
     output( "\n" );
     output( "const struct test winetest_testlist[] =\n" );
     output( "{\n" );
-    for (i = 0; i < files.count; i++) output( "    { \"%s\", func_%s },\n", files.str[i], files.str[i] );
+    for (i = 0; i < make->test_files.count; i++)
+        output( "    { \"%s\", func_%s },\n", make->test_files.str[i], make->test_files.str[i] );
     output( "    { 0, 0 }\n" );
     output( "};\n" );
 
@@ -3960,7 +3960,7 @@ static void output_stub_makefile( struct makefile *make )
     if (make->install_rules[INSTALL_LIB].count) strarray_add( &targets, "install-lib" );
     if (make->install_rules[INSTALL_DEV].count) strarray_add( &targets, "install-dev" );
     if (make->clean_files.count) strarray_add( &targets, "clean" );
-    if (make->ok_files.count)
+    if (make->test_files.count)
     {
         strarray_add( &targets, "check" );
         strarray_add( &targets, "test" );
