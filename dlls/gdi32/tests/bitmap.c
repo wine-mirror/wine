@@ -5969,11 +5969,11 @@ static void test_D3DKMTCreateDCFromMemory( void )
 
     size = VirtualQuery( alloc_data, &memory_info, sizeof(memory_info) );
     ok(size == sizeof(memory_info), "Got unexpected size %u.\n", size);
-    todo_wine ok(memory_info.State == MEM_COMMIT, "Got state %#x.\n", memory_info.State);
-    todo_wine ok(memory_info.Protect == PAGE_READWRITE, "Got protection %#x.\n", memory_info.Protect);
+    ok(memory_info.State == MEM_COMMIT, "Got state %#x.\n", memory_info.State);
+    ok(memory_info.Protect == PAGE_READWRITE, "Got protection %#x.\n", memory_info.Protect);
 
     ret = VirtualFree( alloc_data, 0, MEM_RELEASE );
-    todo_wine ok(ret, "Failed to free memory, error %u.\n", GetLastError());
+    ok(ret, "Failed to free memory, error %u.\n", GetLastError());
 }
 
 START_TEST(bitmap)

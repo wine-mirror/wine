@@ -1574,6 +1574,24 @@ error:
 }
 
 
+static BOOL memory_dib_DeleteObject( HGDIOBJ handle )
+{
+    BITMAPOBJ *bmp;
+
+    if (!(bmp = free_gdi_handle( handle ))) return FALSE;
+
+    free( bmp->color_table );
+    free( bmp );
+    return TRUE;
+}
+
+
+static const struct gdi_obj_funcs memory_dib_funcs =
+{
+    .pGetObjectW = DIB_GetObject,
+    .pDeleteObject = memory_dib_DeleteObject,
+};
+
 /***********************************************************************
  *           NtGdiDdDDICreateDCFromMemory    (win32u.@)
  */
@@ -1673,7 +1691,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
         }
     }
 
-    if (!(bitmap = alloc_gdi_handle( &bmp->obj, NTGDI_OBJ_BITMAP, &dib_funcs ))) goto error;
+    if (!(bitmap = alloc_gdi_handle( &bmp->obj, NTGDI_OBJ_BITMAP, &memory_dib_funcs ))) goto error;
 
     desc->hDc = dc;
     desc->hBitmap = bitmap;
