@@ -253,8 +253,7 @@ static int read_file( const WCHAR *name, void **data, SIZE_T *size )
               st.st_size - header_size ) == st.st_size - header_size)
     {
         *data = file_buffer;
-        if ((lstrlenW(name) > 2 && !wcscmp( name + lstrlenW(name) - 2, L"16" )) ||
-            (lstrlenW(name) > 7 && !wcscmp( name + lstrlenW(name) - 7, L"16.fake" )))
+        if (lstrlenW(name) > 2 && !wcscmp( name + lstrlenW(name) - 2, L"16" ))
             extract_16bit_image( nt, data, size );
         ret = 1;
     }
@@ -432,11 +431,11 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
     len = lstrlenW( name );
     if (build_dir) maxlen = lstrlenW(build_dir) + ARRAY_SIZE(L"\\programs") + len + 1;
     while ((path = enum_load_path( i++ ))) maxlen = max( maxlen, lstrlenW(path) );
-    maxlen += ARRAY_SIZE(pe_dir) + len + ARRAY_SIZE(L".fake");
+    maxlen += ARRAY_SIZE(pe_dir) + len + 1;
 
     if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen * sizeof(WCHAR) ))) return NULL;
 
-    pos = maxlen - len - ARRAY_SIZE(L".fake");
+    pos = maxlen - len - 1;
     lstrcpyW( file + pos, name );
     file[--pos] = '\\';
 
@@ -451,8 +450,6 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
         ptr = prepend( ptr, L"\\dlls", 5 );
         ptr = prepend( ptr, build_dir, lstrlenW(build_dir) );
         if ((res = read_file( ptr, &data, size ))) goto done;
-        lstrcpyW( file + pos + len + 1, L".fake" );
-        if ((res = read_file( ptr, &data, size ))) goto done;
 
         /* now as a program */
         ptr = file + pos;
@@ -462,8 +459,6 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, L"\\programs", 9 );
         ptr = prepend( ptr, build_dir, lstrlenW(build_dir) );
-        if ((res = read_file( ptr, &data, size ))) goto done;
-        lstrcpyW( file + pos + len + 1, L".fake" );
         if ((res = read_file( ptr, &data, size ))) goto done;
     }
 
@@ -888,7 +883,7 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size,
 }
 
 /* copy a fake dll file to the dest directory */
-static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL delete, struct list *delay_copy )
+static int install_fake_dll( WCHAR *dest, WCHAR *file, BOOL delete, struct list *delay_copy )
 {
     int ret;
     SIZE_T size;
@@ -899,7 +894,6 @@ static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL de
     WCHAR *end = name + lstrlenW(name);
     SIZE_T len = end - name;
 
-    if (ext) lstrcpyW( end, ext );
     if (!(ret = read_file( file, &data, &size )))
     {
         *end = 0;
@@ -987,16 +981,11 @@ static void install_lib_dir( WCHAR *dest, WCHAR *file, const WCHAR *wildcard,
         {
             lstrcatW( name, L"\\" );
             lstrcatW( name, data.name );
-            if (wcschr( data.name, '.' )) /* module possibly already has an extension */
-            {
-                if (install_fake_dll( dest, file, NULL, delete, &delay_copy )) continue;
-                if (install_fake_dll( dest, file, L".fake", delete, &delay_copy )) continue;
-            }
+            if (wcschr( data.name, '.' ) && install_fake_dll( dest, file, delete, &delay_copy ))
+                continue;
             lstrcatW( name, default_ext );
-            if (install_fake_dll( dest, file, NULL, delete, &delay_copy )) continue;
-            if (install_fake_dll( dest, file, L".fake", delete, &delay_copy )) continue;
         }
-        else install_fake_dll( dest, file, NULL, delete, &delay_copy );
+        install_fake_dll( dest, file, delete, &delay_copy );
     }
     while (!_wfindnext( handle, &data ));
     _findclose( handle );
@@ -1014,7 +1003,7 @@ static BOOL create_wildcard_dlls( const WCHAR *dirname, const WCHAR *wildcard, B
 
     if (build_dir) maxlen = lstrlenW(build_dir) + ARRAY_SIZE(L"\\programs") + 1;
     for (i = 0; (path = enum_load_path(i)); i++) maxlen = max( maxlen, lstrlenW(path) );
-    maxlen += 2 * max_dll_name_len + 2 + ARRAY_SIZE(pe_dir) + 10; /* ".dll.fake" */
+    maxlen += 2 * max_dll_name_len + 2 + ARRAY_SIZE(pe_dir) + 10; /* ".dll" */
     if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen * sizeof(WCHAR) ))) return FALSE;
 
     if (!(dest = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(dirname) + max_dll_name_len) * sizeof(WCHAR) )))

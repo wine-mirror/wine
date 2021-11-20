@@ -2731,9 +2731,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     for (i = 0; i < source->importlibdeps.count; i++)
     {
         struct makefile *submake = find_importlib_module( source->importlibdeps.str[i] );
-        const char *module = submake->module;
-        if (*dll_ext && !submake->is_cross) module = strmake( "%s.fake", module );
-        output_filename( obj_dir_path( submake, module ));
+        output_filename( obj_dir_path( submake, submake->module ));
     }
     output( "\n" );
 }
@@ -3221,11 +3219,10 @@ static void output_fake_module( struct makefile *make )
 
     if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
 
-    strarray_add( &make->all_targets, strmake( "%s.fake", make->module ));
-    add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
-                      strmake( "d%s/%s", pe_dir, make->module ));
+    strarray_add( &make->all_targets, make->module );
+    add_install_rule( make, make->module, make->module, strmake( "d%s/%s", pe_dir, make->module ));
 
-    output( "%s.fake:", obj_dir_path( make, make->module ));
+    output( "%s:", obj_dir_path( make, make->module ));
     if (spec_file) output_filename( spec_file );
     output_filenames_obj_dir( make, make->res_files );
     output_filename( tools_path( make, "winebuild" ));

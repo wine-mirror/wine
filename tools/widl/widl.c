@@ -688,8 +688,6 @@ int open_typelib( const char *name )
             if (strendswith( name, ".dll" )) namelen -= 4;
             TRYOPEN( strmake( "%.*s/%.*s/%s", (int)strlen(dlldirs.str[i]) - 2, dlldirs.str[i],
                               namelen, name, name ));
-            TRYOPEN( strmake( "%.*s/%.*s/%s.fake", (int)strlen(dlldirs.str[i]) - 2, dlldirs.str[i],
-                              namelen, name, name ));
         }
         else
         {

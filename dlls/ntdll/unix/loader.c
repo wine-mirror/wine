@@ -1720,16 +1720,6 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
     SECTION_IMAGE_INFORMATION info;
     enum loadorder loadorder;
 
-    /* remove .fake extension if present */
-    if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
-    {
-        static const WCHAR fakeW[] = {'.','f','a','k','e',0};
-        WCHAR *ext = wcsrchr( filename, '.' );
-
-        TRACE( "%s is a fake Wine dll\n", debugstr_w(filename) );
-        if (ext && !wcsicmp( ext, fakeW )) *ext = 0;
-    }
-
     init_unicode_string( &nt_name, filename );
     loadorder = get_load_order( &nt_name );
 
@@ -1742,6 +1732,7 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
     }
     else if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
     {
+        TRACE( "%s is a fake Wine dll\n", debugstr_w(filename) );
         if (loadorder == LO_NATIVE) return STATUS_DLL_NOT_FOUND;
         loadorder = LO_BUILTIN;  /* builtin with no fallback since mapping a fake dll is not useful */
     }
