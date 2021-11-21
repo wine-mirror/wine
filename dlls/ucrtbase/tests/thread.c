@@ -105,7 +105,8 @@ static void test_thread_library_reference(char *thread_dll,
 
     ok(thread_handle != -1 && thread_handle != 0, "Failed to begin thread: %u\n", errno);
 
-    ok(FreeLibrary(dll), "Failed to free the library: %u\n", GetLastError());
+    ret = FreeLibrary(dll);
+    ok(ret, "Failed to free the library: %u\n", GetLastError());
 
     ret = WaitForSingleObject(args.confirm_running, 200);
     ok(ret == WAIT_OBJECT_0, "Event was not signaled, ret: %u, err: %u\n", ret, GetLastError());
@@ -113,7 +114,8 @@ static void test_thread_library_reference(char *thread_dll,
     ret = WaitForSingleObject(detach_event, 0);
     ok(ret == WAIT_TIMEOUT, "Thread detach happened unexpectedly signaling an event, ret: %d, err: %u\n", ret, GetLastError());
 
-    ok(SetEvent(args.past_free), "Failed to signal event: %d\n", GetLastError());
+    ret = SetEvent(args.past_free);
+    ok(ret, "Failed to signal event: %d\n", GetLastError());
 
     if (beginthread_method == use_beginthreadex)
     {
