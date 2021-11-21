@@ -4498,15 +4498,18 @@ todo_wine {
     hr = IMFMediaSink_AddStreamSink(sink, 1, NULL, &stream_sink2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = MFGetService((IUnknown *)stream_sink2, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IMFVideoSampleAllocator,
-            (void **)&allocator);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IMFVideoSampleAllocator_Release(allocator);
+    if (SUCCEEDED(hr))
+    {
+        hr = MFGetService((IUnknown *)stream_sink2, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IMFVideoSampleAllocator,
+                (void **)&allocator);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        IMFVideoSampleAllocator_Release(allocator);
 
-    hr = IMFMediaSink_RemoveStreamSink(sink, 1);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        hr = IMFMediaSink_RemoveStreamSink(sink, 1);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    IMFStreamSink_Release(stream_sink2);
+        IMFStreamSink_Release(stream_sink2);
+    }
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
