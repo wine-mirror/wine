@@ -305,7 +305,7 @@ static void d3d10_effect_preshader_clear(struct d3d10_effect_preshader *p)
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(p->reg_tables); ++i)
-        heap_free(&p->reg_tables[i].f);
+        heap_free(p->reg_tables[i].f);
     if (p->code)
         ID3D10Blob_Release(p->code);
     heap_free(p->vars);
