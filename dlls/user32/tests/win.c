@@ -7923,17 +7923,36 @@ static void test_gettext(void)
     if (0)
     {
     r = SendMessageA( hwnd, WM_GETTEXT, 0x10, 0x1000);
-    ok( r == 0, "settext should return zero\n");
+    ok( r == 0, "WM_GETTEXT should return zero (%ld)\n", r );
 
     r = SendMessageA( hwnd, WM_GETTEXT, 0x10000, 0);
-    ok( r == 0, "settext should return zero (%ld)\n", r);
+    ok( r == 0, "WM_GETTEXT should return zero (%ld)\n", r );
 
     r = SendMessageA( hwnd, WM_GETTEXT, 0xff000000, 0x1000);
-    ok( r == 0, "settext should return zero (%ld)\n", r);
+    ok( r == 0, "WM_GETTEXT should return zero (%ld)\n", r );
 
     r = SendMessageA( hwnd, WM_GETTEXT, 0x1000, 0xff000000);
-    ok( r == 0, "settext should return zero (%ld)\n", r);
+    ok( r == 0, "WM_GETTEXT should return zero (%ld)\n", r );
     }
+
+    /* GetWindowText doesn't crash */
+    r = GetWindowTextA( hwnd, (LPSTR)0x10, 0x1000 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+    r = GetWindowTextA( hwnd, (LPSTR)0x10000, 0 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+    r = GetWindowTextA( hwnd, (LPSTR)0xff000000, 0x1000 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+    r = GetWindowTextA( hwnd, (LPSTR)0x1000, 0xff000000 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+
+    r = GetWindowTextW( hwnd, (LPWSTR)0x10, 0x1000 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+    r = GetWindowTextW( hwnd, (LPWSTR)0x10000, 0 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+    r = GetWindowTextW( hwnd, (LPWSTR)0xff000000, 0x1000 );
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
+    r = GetWindowTextW( hwnd, (LPWSTR)0x1000, 0xff000000);
+    ok( r == 0, "GetWindowText should return zero (%ld)\n", r );
 
     DestroyWindow(hwnd);
 }

@@ -31,6 +31,7 @@
 #include "win.h"
 #include "controls.h"
 #include "winerror.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -2999,22 +3000,35 @@ LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongW(
 INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
 {
     WCHAR *buffer;
+    int ret = 0;
 
     if (!lpString || nMaxCount <= 0) return 0;
 
-    if (WIN_IsCurrentProcess( hwnd ))
+    __TRY
     {
         lpString[0] = 0;
-        return (INT)SendMessageA( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
-    }
 
-    /* when window belongs to other process, don't send a message */
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, nMaxCount * sizeof(WCHAR) ))) return 0;
-    get_server_window_text( hwnd, buffer, nMaxCount );
-    if (!WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpString, nMaxCount, NULL, NULL ))
-        lpString[nMaxCount-1] = 0;
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return strlen(lpString);
+        if (WIN_IsCurrentProcess( hwnd ))
+        {
+            ret = (INT)SendMessageA( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
+        }
+        else if ((buffer = HeapAlloc( GetProcessHeap(), 0, nMaxCount * sizeof(WCHAR) )))
+        {
+            /* when window belongs to other process, don't send a message */
+            get_server_window_text( hwnd, buffer, nMaxCount );
+            if (!WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpString, nMaxCount, NULL, NULL ))
+                lpString[nMaxCount-1] = 0;
+            HeapFree( GetProcessHeap(), 0, buffer );
+            ret = strlen(lpString);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = 0;
+    }
+    __ENDTRY
+
+    return ret;
 }
 
 
@@ -3047,17 +3061,32 @@ INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
  */
 INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
 {
+    int ret;
+
     if (!lpString || nMaxCount <= 0) return 0;
 
-    if (WIN_IsCurrentProcess( hwnd ))
+    __TRY
     {
         lpString[0] = 0;
-        return (INT)SendMessageW( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
-    }
 
-    /* when window belongs to other process, don't send a message */
-    get_server_window_text( hwnd, lpString, nMaxCount );
-    return lstrlenW(lpString);
+        if (WIN_IsCurrentProcess( hwnd ))
+        {
+            ret = (INT)SendMessageW( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
+        }
+        else
+        {
+            /* when window belongs to other process, don't send a message */
+            get_server_window_text( hwnd, lpString, nMaxCount );
+            ret = lstrlenW(lpString);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = 0;
+    }
+    __ENDTRY
+
+    return ret;
 }
 
 
