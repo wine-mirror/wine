@@ -1246,7 +1246,6 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
     if (!EnumProcessModules(hProcess, hMods, 256 * sizeof(hMods[0]), &sz))
     {
         /* hProcess should also be a valid process handle !! */
-        FIXME("If this happens, bump the number in mod\n");
         HeapFree(GetProcessHeap(), 0, hMods);
         return FALSE;
     }
