@@ -1024,6 +1024,7 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
 
     TRACE("iface %p, index %u, params %p.\n", iface, index, params);
 
+    if (params->effect_type == PID_USAGE_UNDEFINED) return STATUS_SUCCESS;
     if ((status = set_effect_type_from_usage(&effect, params->effect_type))) return status;
 
     effect.replay.length = params->duration;
