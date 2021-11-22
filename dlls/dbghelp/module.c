@@ -1249,6 +1249,12 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
         HeapFree(GetProcessHeap(), 0, hMods);
         return FALSE;
     }
+    if (sz > 256 * sizeof(hMods[0]))
+    {
+        hMods = HeapReAlloc(GetProcessHeap(), 0, hMods, sz);
+        if (!hMods || !EnumProcessModules(hProcess, hMods, sz, &sz))
+            return FALSE;
+    }
     sz /= sizeof(HMODULE);
     for (i = 0; i < sz; i++)
     {
