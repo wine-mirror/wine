@@ -1,5 +1,5 @@
 @ stub GetFeatureEnabledState
 @ stub RecordFeatureError
 @ stub RecordFeatureUsage
-@ stub SubscribeFeatureStateChangeNotification
+@ stdcall SubscribeFeatureStateChangeNotification(ptr ptr ptr) shcore.SubscribeFeatureStateChangeNotification
 @ stub UnsubscribeFeatureStateChangeNotification

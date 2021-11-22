@@ -92,7 +92,7 @@
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SetProcessDpiAwareness(long)
 @ stdcall SetProcessReference(ptr)
-# @ stub SubscribeFeatureStateChangeNotification
+@ stdcall SubscribeFeatureStateChangeNotification(ptr ptr ptr)
 @ stub UnregisterScaleChangeEvent
 # @ stub UnsubscribeFeatureStateChangeNotification
 
