@@ -51,6 +51,10 @@ typedef struct _PROVIDER_CONTEXT {
     LPVOID pMemContext;
 } PERF_PROVIDER_CONTEXT, * PPERF_PROVIDER_CONTEXT;
 
+ULONG WINAPI PerfStartProvider(GUID *, PERFLIBREQUEST, HANDLE *);
+ULONG WINAPI PerfStartProviderEx(GUID *, PERF_PROVIDER_CONTEXT *, HANDLE *);
+ULONG WINAPI PerfStopProvider(HANDLE);
+
 #ifdef __cplusplus
 }       /* extern "C" */
 #endif

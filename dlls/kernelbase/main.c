@@ -154,6 +154,17 @@ LONG WINAPI AppPolicyGetWindowingModel(HANDLE token, AppPolicyWindowingModel *po
     return ERROR_SUCCESS;
 }
 
+struct perf_provider
+{
+    GUID guid;
+    PERFLIBREQUEST callback;
+};
+
+static struct perf_provider *perf_provider_from_handle(HANDLE prov)
+{
+    return (struct perf_provider *)prov;
+}
+
 /***********************************************************************
  *           PerfCreateInstance   (KERNELBASE.@)
  */
@@ -195,19 +206,37 @@ ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PPERF_COUNTERSET_INSTANCE i
 /***********************************************************************
  *           PerfStartProvider   (KERNELBASE.@)
  */
-ULONG WINAPI PerfStartProvider(GUID *guid, PERFLIBREQUEST callback, HANDLE *provider)
+ULONG WINAPI PerfStartProvider( GUID *guid, PERFLIBREQUEST callback, HANDLE *provider )
 {
-    FIXME("%s %p %p: stub\n", debugstr_guid(guid), callback, provider);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    PERF_PROVIDER_CONTEXT ctx;
+
+    FIXME( "guid %s, callback %p, provider %p semi-stub.\n", debugstr_guid(guid), callback, provider );
+
+    memset( &ctx, 0, sizeof(ctx) );
+    ctx.ContextSize = sizeof(ctx);
+    ctx.ControlCallback = callback;
+
+    return PerfStartProviderEx( guid, &ctx, provider );
 }
 
 /***********************************************************************
  *           PerfStartProviderEx   (KERNELBASE.@)
  */
-ULONG WINAPI PerfStartProviderEx(GUID *guid, PPERF_PROVIDER_CONTEXT context, HANDLE *provider)
+ULONG WINAPI PerfStartProviderEx( GUID *guid, PERF_PROVIDER_CONTEXT *context, HANDLE *provider )
 {
-    FIXME("%s %p %p: stub\n", debugstr_guid(guid), context, provider);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct perf_provider *prov;
+
+    FIXME( "guid %s, context %p, provider %p semi-stub.\n", debugstr_guid(guid), context, provider );
+
+    if (!guid || !context || !provider) return ERROR_INVALID_PARAMETER;
+    if (context->ContextSize < sizeof(*context)) return ERROR_INVALID_PARAMETER;
+
+    if (!(prov = heap_alloc_zero( sizeof(*prov) ))) return ERROR_OUTOFMEMORY;
+    memcpy( &prov->guid, guid, sizeof(prov->guid) );
+    prov->callback = context->ControlCallback;
+    *provider = prov;
+
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -215,8 +244,12 @@ ULONG WINAPI PerfStartProviderEx(GUID *guid, PPERF_PROVIDER_CONTEXT context, HAN
  */
 ULONG WINAPI PerfStopProvider(HANDLE handle)
 {
-    FIXME("%p: stub\n", handle);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct perf_provider *prov = perf_provider_from_handle( handle );
+
+    TRACE( "handle %p.\n", handle );
+
+    heap_free( prov );
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************

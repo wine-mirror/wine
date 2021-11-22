@@ -10,6 +10,7 @@ C_SRCS = \
 	crypt_sha.c \
 	eventlog.c \
 	lsa.c \
+	perf.c \
 	registry.c \
 	security.c \
 	service.c
