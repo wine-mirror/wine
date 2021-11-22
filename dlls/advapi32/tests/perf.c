@@ -155,16 +155,16 @@ void test_provider_init(void)
     ok(size == instance->dwSize, "Got unexpected size %u, instance->dwSize %u.\n", size, instance->dwSize);
 
     ret = PerfSetCounterRefValue(prov, instance, 1, &counter1);
-    todo_wine ok(!ret, "Got unexpected ret %u.\n", ret);
+    ok(!ret, "Got unexpected ret %u.\n", ret);
     ret = PerfSetCounterRefValue(prov, instance, 2, &counter2);
-    todo_wine ok(!ret, "Got unexpected ret %u.\n", ret);
+    ok(!ret, "Got unexpected ret %u.\n", ret);
 
     ret = PerfSetCounterRefValue(prov, instance, 0, &counter2);
-    todo_wine ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %u.\n", ret);
+    ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %u.\n", ret);
 
-    todo_wine ok(*(void **)(instance + 1) == &counter1, "Got unexpected counter value %p.\n",
+    ok(*(void **)(instance + 1) == &counter1, "Got unexpected counter value %p.\n",
             *(void **)(instance + 1));
-    todo_wine ok(*(void **)((BYTE *)instance + sizeof(*instance) + sizeof(UINT64)) == &counter2,
+    ok(*(void **)((BYTE *)instance + sizeof(*instance) + sizeof(UINT64)) == &counter2,
             "Got unexpected counter value %p.\n", *(void **)(instance + 1));
 
     ret = PerfDeleteInstance(prov, instance);

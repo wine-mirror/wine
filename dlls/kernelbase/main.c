@@ -312,11 +312,29 @@ ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *templat
 /***********************************************************************
  *           PerfSetCounterRefValue   (KERNELBASE.@)
  */
-ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PPERF_COUNTERSET_INSTANCE instance,
+ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *instance,
                                     ULONG counterid, void *address)
 {
-    FIXME("%p %p %u %p: stub\n", provider, instance, counterid, address);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct perf_provider *prov = perf_provider_from_handle( provider );
+    struct counterset_template *template;
+    struct counterset_instance *inst;
+    unsigned int i;
+
+    FIXME( "provider %p, instance %p, counterid %u, address %p semi-stub.\n",
+           provider, instance, counterid, address );
+
+    if (!prov || !instance || !address) return ERROR_INVALID_PARAMETER;
+
+    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
+    template = inst->template;
+
+    for (i = 0; i < template->counterset.NumCounters; ++i)
+        if (template->counter[i].CounterId == counterid) break;
+
+    if (i == template->counterset.NumCounters) return ERROR_NOT_FOUND;
+    *(void **)((BYTE *)&inst->instance + sizeof(PERF_COUNTERSET_INSTANCE) + template->counter[i].Offset) = address;
+
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
