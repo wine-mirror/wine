@@ -219,7 +219,7 @@ struct hid_joystick_effect
     DIENVELOPE envelope;
     DIPERIODIC periodic;
     DIEFFECT params;
-    BOOL modified;
+    DWORD modified;
     DWORD flags;
 
     char *effect_control_buf;
@@ -2470,7 +2470,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
             if (ret != DIENUM_STOP) impl->params.rgdwAxes[i] = 0;
         }
 
-        impl->modified = TRUE;
+        impl->modified |= DIEP_AXES;
     }
 
     if (flags & DIEP_DIRECTION)
@@ -2486,7 +2486,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         impl->params.dwFlags &= ~(DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
         impl->params.dwFlags |= direction_flags;
         if (memcmp( impl->params.rglDirection, params->rglDirection, count * sizeof(LONG) ))
-            impl->modified = TRUE;
+            impl->modified |= DIEP_DIRECTION;
         memcpy( impl->params.rglDirection, params->rglDirection, count * sizeof(LONG) );
     }
 
@@ -2502,7 +2502,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
             if (memcmp( &impl->periodic, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) ))
-                impl->modified = TRUE;
+                impl->modified |= DIEP_TYPESPECIFICPARAMS;
             memcpy( &impl->periodic, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) );
             impl->params.cbTypeSpecificParams = sizeof(DIPERIODIC);
             break;
@@ -2516,6 +2516,8 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
                 if (params->cbTypeSpecificParams != count * sizeof(DICONDITION) &&
                     params->cbTypeSpecificParams != sizeof(DICONDITION))
                     return DIERR_INVALIDPARAM;
+                if (memcmp( impl->condition, params->lpvTypeSpecificParams, params->cbTypeSpecificParams ))
+                    impl->modified |= DIEP_TYPESPECIFICPARAMS;
                 memcpy( impl->condition, params->lpvTypeSpecificParams, params->cbTypeSpecificParams );
                 impl->params.cbTypeSpecificParams = params->cbTypeSpecificParams;
             }
@@ -2524,7 +2526,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) return DIERR_INVALIDPARAM;
             if (memcmp( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) ))
-                impl->modified = TRUE;
+                impl->modified |= DIEP_TYPESPECIFICPARAMS;
             memcpy( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
             impl->params.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
             break;
@@ -2532,7 +2534,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
             if (memcmp( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
-                impl->modified = TRUE;
+                impl->modified |= DIEP_TYPESPECIFICPARAMS;
             memcpy( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
             impl->params.cbTypeSpecificParams = sizeof(DIRAMPFORCE);
             break;
@@ -2546,35 +2548,35 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
     {
         if (params->lpEnvelope->dwSize != sizeof(DIENVELOPE)) return DIERR_INVALIDPARAM;
         if (memcmp( &impl->envelope, params->lpEnvelope, sizeof(DIENVELOPE) ))
-            impl->modified = TRUE;
+            impl->modified |= DIEP_ENVELOPE;
         memcpy( &impl->envelope, params->lpEnvelope, sizeof(DIENVELOPE) );
     }
 
     if (flags & DIEP_DURATION)
     {
-        if (impl->params.dwDuration != params->dwDuration) impl->modified = TRUE;
+        if (impl->params.dwDuration != params->dwDuration) impl->modified |= DIEP_DURATION;
         impl->params.dwDuration = params->dwDuration;
     }
     if (flags & DIEP_GAIN)
     {
-        if (impl->params.dwGain != params->dwGain) impl->modified = TRUE;
+        if (impl->params.dwGain != params->dwGain) impl->modified |= DIEP_GAIN;
         impl->params.dwGain = params->dwGain;
     }
     if (flags & DIEP_SAMPLEPERIOD)
     {
-        if (impl->params.dwSamplePeriod != params->dwSamplePeriod) impl->modified = TRUE;
+        if (impl->params.dwSamplePeriod != params->dwSamplePeriod) impl->modified |= DIEP_SAMPLEPERIOD;
         impl->params.dwSamplePeriod = params->dwSamplePeriod;
     }
     if (flags & DIEP_STARTDELAY)
     {
         if (params->dwSize != sizeof(DIEFFECT_DX6)) return DIERR_INVALIDPARAM;
-        if (impl->params.dwStartDelay != params->dwStartDelay) impl->modified = TRUE;
+        if (impl->params.dwStartDelay != params->dwStartDelay) impl->modified |= DIEP_STARTDELAY;
         impl->params.dwStartDelay = params->dwStartDelay;
     }
     if (flags & DIEP_TRIGGERREPEATINTERVAL)
     {
         if (impl->params.dwTriggerRepeatInterval != params->dwTriggerRepeatInterval)
-            impl->modified = TRUE;
+            impl->modified |= DIEP_TRIGGERREPEATINTERVAL;
         impl->params.dwTriggerRepeatInterval = params->dwTriggerRepeatInterval;
     }
 
@@ -2587,7 +2589,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         ret = enum_objects( impl->joystick, &filter, DIDFT_BUTTON, set_parameters_object,
                             &impl->params.dwTriggerButton );
         if (ret != DIENUM_STOP) impl->params.dwTriggerButton = -1;
-        if (impl->params.dwTriggerButton != old_value) impl->modified = TRUE;
+        if (impl->params.dwTriggerButton != old_value) impl->modified |= DIEP_TRIGGERBUTTON;
     }
 
     impl->flags |= flags;
@@ -2792,6 +2794,8 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_TRIANGLE:
         case PID_USAGE_ET_SAWTOOTH_UP:
         case PID_USAGE_ET_SAWTOOTH_DOWN:
+            if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
+
             set_parameter_value( impl, impl->type_specific_buf, set_periodic->magnitude_caps,
                                  impl->periodic.dwMagnitude );
             set_parameter_value_us( impl, impl->type_specific_buf, set_periodic->period_caps,
@@ -2801,13 +2805,15 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
             set_parameter_value( impl, impl->type_specific_buf, set_periodic->offset_caps,
                                  impl->periodic.lOffset );
 
-            if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
-            else hr = DIERR_INPUTLOST;
+            if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
+            else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
             break;
         case PID_USAGE_ET_SPRING:
         case PID_USAGE_ET_DAMPER:
         case PID_USAGE_ET_INERTIA:
         case PID_USAGE_ET_FRICTION:
+            if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
+
             for (i = 0; i < impl->params.cbTypeSpecificParams / sizeof(DICONDITION); ++i)
             {
                 status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_PARAMETER_BLOCK_OFFSET,
@@ -2827,28 +2833,35 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
                 set_parameter_value( impl, impl->type_specific_buf, set_condition->dead_band_caps,
                                      impl->condition[i].lDeadBand );
 
-                if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
-                else hr = DIERR_INPUTLOST;
+                if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
+                else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
             }
             break;
         case PID_USAGE_ET_CONSTANT_FORCE:
+            if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
+
             set_parameter_value( impl, impl->type_specific_buf, set_constant_force->magnitude_caps,
                                  impl->constant_force.lMagnitude );
 
-            if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
-            else hr = DIERR_INPUTLOST;
+            if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
+            else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
             break;
         case PID_USAGE_ET_RAMP:
+            if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
+
             set_parameter_value( impl, impl->type_specific_buf, set_ramp_force->start_caps,
                                  impl->ramp_force.lStart );
             set_parameter_value( impl, impl->type_specific_buf, set_ramp_force->end_caps,
                                  impl->ramp_force.lEnd );
 
-            if (WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DI_OK;
-            else hr = DIERR_INPUTLOST;
+            if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
+            else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
             break;
         }
+    }
 
+    if (hr == DI_OK)
+    {
         switch (impl->type)
         {
         case PID_USAGE_ET_SQUARE:
@@ -2858,6 +2871,8 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_SAWTOOTH_DOWN:
         case PID_USAGE_ET_CONSTANT_FORCE:
         case PID_USAGE_ET_RAMP:
+            if (!(impl->modified & DIEP_ENVELOPE)) break;
+
             set_parameter_value( impl, impl->set_envelope_buf, set_envelope->attack_level_caps,
                                  impl->envelope.dwAttackLevel );
             set_parameter_value_us( impl, impl->set_envelope_buf, set_envelope->attack_time_caps,
@@ -2867,11 +2882,14 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
             set_parameter_value_us( impl, impl->set_envelope_buf, set_envelope->fade_time_caps,
                                     impl->envelope.dwFadeTime );
 
-            if (WriteFile( device, impl->set_envelope_buf, report_len, NULL, NULL )) hr = DI_OK;
-            else hr = DIERR_INPUTLOST;
+            if (!WriteFile( device, impl->set_envelope_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
+            else impl->modified &= ~DIEP_ENVELOPE;
             break;
         }
+    }
 
+    if (hr == DI_OK && impl->modified)
+    {
         set_parameter_value_us( impl, impl->effect_update_buf, effect_update->duration_caps,
                                 impl->params.dwDuration );
         set_parameter_value( impl, impl->effect_update_buf, effect_update->gain_caps,
@@ -2904,10 +2922,8 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
                                      impl->effect_update_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue returned %#x\n", status );
 
-        if (WriteFile( device, impl->effect_update_buf, report_len, NULL, NULL )) hr = DI_OK;
-        else hr = DIERR_INPUTLOST;
-
-        impl->modified = FALSE;
+        if (!WriteFile( device, impl->effect_update_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
+        else impl->modified = 0;
     }
     LeaveCriticalSection( &impl->joystick->base.crit );
 
@@ -2947,6 +2963,7 @@ static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
             else hr = DIERR_INPUTLOST;
         }
 
+        impl->modified = impl->flags;
         impl->index = 0;
     }
     LeaveCriticalSection( &joystick->base.crit );

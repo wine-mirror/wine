@@ -5628,22 +5628,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     };
     struct hid_expect expect_update[] =
     {
-        /* set periodic */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 5,
-            .report_len = 2,
-            .report_buf = {0x05,0x19},
-            .wine_only = TRUE, .todo = TRUE,
-        },
-        /* set envelope */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 7,
-            .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
-            .wine_only = TRUE, .todo = TRUE,
-        },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
@@ -5654,28 +5638,12 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     };
     struct hid_expect expect_set_envelope[] =
     {
-        /* set periodic */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 5,
-            .report_len = 2,
-            .report_buf = {0x05,0x19},
-            .wine_only = TRUE, .todo = TRUE,
-        },
         /* set envelope */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 6,
             .report_len = 7,
             .report_buf = {0x06,0x19,0x4c,0x01,0x00,0x04,0x00},
-        },
-        /* update effect */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 11,
-            .report_buf = {0x03,0x01,0x02,0x08,0xff,0xff,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
-            .wine_only = TRUE, .todo = TRUE,
         },
     };
     struct hid_expect expect_start =
