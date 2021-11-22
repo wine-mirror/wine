@@ -26,15 +26,17 @@
 DEFINE_OLEGUID( CLSID_FileMoniker,      0x303, 0, 0 );
 DEFINE_OLEGUID( CLSID_ItemMoniker,      0x304, 0, 0 );
 DEFINE_OLEGUID( CLSID_AntiMoniker,      0x305, 0, 0 );
+DEFINE_OLEGUID( CLSID_PointerMoniker,   0x306, 0, 0 );
 DEFINE_OLEGUID( CLSID_CompositeMoniker, 0x309, 0, 0 );
 DEFINE_OLEGUID( CLSID_ClassMoniker,     0x31a, 0, 0 );
-DEFINE_OLEGUID( CLSID_PointerMoniker,   0x306, 0, 0 );
+DEFINE_OLEGUID( CLSID_ObjrefMoniker,    0x327, 0, 0 );
 
 HRESULT WINAPI FileMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI ItemMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI AntiMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI CompositeMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI ClassMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
+HRESULT WINAPI ObjrefMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI PointerMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI ComCat_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 

@@ -1,5 +1,5 @@
 /*
- * Pointer Moniker Implementation
+ * Pointer and Objref Monikers Implementation
  *
  * Copyright 1999 Noomen Hamza
  * Copyright 2008 Robert Shearman (for CodeWeavers)
@@ -638,6 +638,422 @@ HRESULT WINAPI PointerMoniker_CreateInstance(IClassFactory *iface,
 
     hr = IMoniker_QueryInterface(pMoniker, riid, ppv);
     IMoniker_Release(pMoniker);
+
+    return hr;
+}
+
+/* ObjrefMoniker implementation */
+
+typedef struct
+{
+    IMoniker IMoniker_iface;
+    IMarshal IMarshal_iface;
+
+    LONG refcount;
+
+    IUnknown *pObject;
+} ObjrefMonikerImpl;
+
+static inline ObjrefMonikerImpl *objref_impl_from_IMoniker(IMoniker *iface)
+{
+    return CONTAINING_RECORD(iface, ObjrefMonikerImpl, IMoniker_iface);
+}
+
+static ObjrefMonikerImpl *objref_impl_from_IMarshal(IMarshal *iface)
+{
+    return CONTAINING_RECORD(iface, ObjrefMonikerImpl, IMarshal_iface);
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_QueryInterface(IMoniker *iface, REFIID iid, void **obj)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMoniker(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), obj);
+
+    if (!obj)
+        return E_INVALIDARG;
+
+    *obj = 0;
+
+    if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_IPersist) ||
+        IsEqualIID(iid, &IID_IPersistStream) ||
+        IsEqualIID(iid, &IID_IMoniker) ||
+        IsEqualGUID(iid, &CLSID_ObjrefMoniker) ||
+        IsEqualGUID(iid, &CLSID_PointerMoniker))
+    {
+        *obj = iface;
+    }
+    else if (IsEqualIID(iid, &IID_IMarshal))
+        *obj = &moniker->IMarshal_iface;
+    else
+        return E_NOINTERFACE;
+
+    IMoniker_AddRef(iface);
+
+    return S_OK;
+}
+
+static ULONG WINAPI ObjrefMonikerImpl_AddRef(IMoniker *iface)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedIncrement(&moniker->refcount);
+
+    TRACE("%p, refcount %u\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI ObjrefMonikerImpl_Release(IMoniker *iface)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&moniker->refcount);
+
+    TRACE("%p, refcount %u\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (moniker->pObject) IUnknown_Release(moniker->pObject);
+        heap_free(moniker);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_GetClassID(IMoniker *iface, CLSID *clsid)
+{
+    TRACE("(%p,%p)\n", iface, clsid);
+
+    if (!clsid)
+        return E_POINTER;
+
+    *clsid = CLSID_ObjrefMoniker;
+    return S_OK;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_IsDirty(IMoniker *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return S_FALSE;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_Load(IMoniker *iface, IStream *stream)
+{
+    FIXME("(%p,%p): stub\n", iface, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_Save(IMoniker *iface, IStream *stream, BOOL dirty)
+{
+    FIXME("(%p,%p,%d): stub\n", iface, stream, dirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *size)
+{
+    FIXME("(%p,%p): stub\n", iface, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_BindToObject(IMoniker *iface, IBindCtx *pbc, IMoniker *left,
+        REFIID riid, void **result)
+{
+    FIXME("(%p,%p,%p,%s,%p): stub\n", iface, pbc, left, debugstr_guid(riid), result);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMoniker *left,
+        REFIID riid, void **result)
+{
+    FIXME("(%p,%p,%p,%s,%p): stub\n", iface, pbc, left, debugstr_guid(riid), result);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD howfar,
+        IMoniker **left, IMoniker **reduced)
+{
+    FIXME("(%p,%p,%d,%p,%p): stub\n", iface, pbc, howfar, left, reduced);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_ComposeWith(IMoniker *iface, IMoniker *right,
+        BOOL only_if_not_generic, IMoniker **result)
+{
+    FIXME("(%p,%p,%d,%p): stub\n", iface, right, only_if_not_generic, result);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **enummoniker)
+{
+    TRACE("(%p,%d,%p)\n", iface, forward, enummoniker);
+
+    if (!enummoniker)
+        return E_POINTER;
+
+    *enummoniker = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_IsEqual(IMoniker *iface, IMoniker *other)
+{
+    FIXME("(%p,%p): stub\n", iface, other);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_Hash(IMoniker *iface, DWORD *hash)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMoniker(iface);
+
+    TRACE("(%p,%p)\n", iface, hash);
+
+    if (!hash)
+        return E_POINTER;
+
+    *hash = PtrToUlong(moniker->pObject);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_IsRunning(IMoniker *iface, IBindCtx *pbc, IMoniker *left,
+        IMoniker *running)
+{
+    FIXME("(%p,%p,%p,%p): stub\n", iface, pbc, left, running);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_GetTimeOfLastChange(IMoniker *iface,
+                               IBindCtx *pbc, IMoniker *left, FILETIME *time)
+{
+    FIXME("(%p,%p,%p,%p): stub\n", iface, pbc, left, time);
+    return MK_E_UNAVAILABLE;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_Inverse(IMoniker *iface, IMoniker **moniker)
+{
+    FIXME("(%p,%p): stub\n", iface, moniker);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker *other, IMoniker **prefix)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, other, prefix);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_RelativePathTo(IMoniker *iface, IMoniker *other, IMoniker **result)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, other, result);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_GetDisplayName(IMoniker *iface, IBindCtx *pbc,
+                               IMoniker *left, LPOLESTR *name)
+{
+    FIXME("(%p,%p,%p,%p): stub\n", iface, pbc, left, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *left, LPOLESTR name, ULONG *eaten, IMoniker **out)
+{
+    FIXME("(%p,%p,%p,%p,%p,%p): stub\n", iface, pbc, left, name, eaten, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjrefMonikerImpl_IsSystemMoniker(IMoniker *iface, DWORD *mksys)
+{
+    TRACE("(%p,%p)\n", iface, mksys);
+
+    if (!mksys)
+        return E_POINTER;
+
+    *mksys = MKSYS_OBJREFMONIKER;
+    return S_OK;
+}
+
+static const IMonikerVtbl VT_ObjrefMonikerImpl =
+{
+    ObjrefMonikerImpl_QueryInterface,
+    ObjrefMonikerImpl_AddRef,
+    ObjrefMonikerImpl_Release,
+    ObjrefMonikerImpl_GetClassID,
+    ObjrefMonikerImpl_IsDirty,
+    ObjrefMonikerImpl_Load,
+    ObjrefMonikerImpl_Save,
+    ObjrefMonikerImpl_GetSizeMax,
+    ObjrefMonikerImpl_BindToObject,
+    ObjrefMonikerImpl_BindToStorage,
+    ObjrefMonikerImpl_Reduce,
+    ObjrefMonikerImpl_ComposeWith,
+    ObjrefMonikerImpl_Enum,
+    ObjrefMonikerImpl_IsEqual,
+    ObjrefMonikerImpl_Hash,
+    ObjrefMonikerImpl_IsRunning,
+    ObjrefMonikerImpl_GetTimeOfLastChange,
+    ObjrefMonikerImpl_Inverse,
+    ObjrefMonikerImpl_CommonPrefixWith,
+    ObjrefMonikerImpl_RelativePathTo,
+    ObjrefMonikerImpl_GetDisplayName,
+    ObjrefMonikerImpl_ParseDisplayName,
+    ObjrefMonikerImpl_IsSystemMoniker
+};
+
+static HRESULT WINAPI objref_moniker_marshal_QueryInterface(IMarshal *iface, REFIID riid, LPVOID *ppv)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    return IMoniker_QueryInterface(&moniker->IMoniker_iface, riid, ppv);
+}
+
+static ULONG WINAPI objref_moniker_marshal_AddRef(IMarshal *iface)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IMoniker_AddRef(&moniker->IMoniker_iface);
+}
+
+static ULONG WINAPI objref_moniker_marshal_Release(IMarshal *iface)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return IMoniker_Release(&moniker->IMoniker_iface);
+}
+
+static HRESULT WINAPI objref_moniker_marshal_GetUnmarshalClass(IMarshal *iface, REFIID riid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+
+    TRACE("(%p,%s,%p,%08x,%p,%x,%p)\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+            mshlflags, clsid);
+
+    return IMoniker_GetClassID(&moniker->IMoniker_iface, clsid);
+}
+
+static HRESULT WINAPI objref_moniker_marshal_GetMarshalSizeMax(IMarshal *iface, REFIID riid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, DWORD *size)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+
+    TRACE("(%p,%s,%p,%08x,%p,%08x,%p)\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+            mshlflags, size);
+
+    return CoGetMarshalSizeMax(size, &IID_IUnknown, moniker->pObject, dwDestContext, pvDestContext, mshlflags);
+}
+
+static HRESULT WINAPI objref_moniker_marshal_MarshalInterface(IMarshal *iface, IStream *stream, REFIID riid,
+        void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+
+    TRACE("(%p,%s,%p,%08x,%p,%08x)\n", stream, debugstr_guid(riid), pv, dwDestContext, pvDestContext, mshlflags);
+
+    return CoMarshalInterface(stream, &IID_IUnknown, moniker->pObject, dwDestContext, pvDestContext, mshlflags);
+}
+
+static HRESULT WINAPI objref_moniker_marshal_UnmarshalInterface(IMarshal *iface, IStream *stream,
+        REFIID riid, void **ppv)
+{
+    ObjrefMonikerImpl *moniker = objref_impl_from_IMarshal(iface);
+    IUnknown *object;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%s,%p)\n", iface, stream, debugstr_guid(riid), ppv);
+
+    hr = CoUnmarshalInterface(stream, &IID_IUnknown, (void **)&object);
+    if (FAILED(hr))
+    {
+        ERR("Couldn't unmarshal moniker, hr = %#x.\n", hr);
+        return hr;
+    }
+
+    if (moniker->pObject)
+        IUnknown_Release(moniker->pObject);
+    moniker->pObject = object;
+
+    return IMoniker_QueryInterface(&moniker->IMoniker_iface, riid, ppv);
+}
+
+static HRESULT WINAPI objref_moniker_marshal_ReleaseMarshalData(IMarshal *iface, IStream *stream)
+{
+    TRACE("(%p,%p)\n", iface, stream);
+    return S_OK;
+}
+
+static HRESULT WINAPI objref_moniker_marshal_DisconnectObject(IMarshal *iface, DWORD reserved)
+{
+    TRACE("(%p,%08x)\n", iface, reserved);
+    return S_OK;
+}
+
+static const IMarshalVtbl objref_moniker_marshal_vtbl =
+{
+    objref_moniker_marshal_QueryInterface,
+    objref_moniker_marshal_AddRef,
+    objref_moniker_marshal_Release,
+    objref_moniker_marshal_GetUnmarshalClass,
+    objref_moniker_marshal_GetMarshalSizeMax,
+    objref_moniker_marshal_MarshalInterface,
+    objref_moniker_marshal_UnmarshalInterface,
+    objref_moniker_marshal_ReleaseMarshalData,
+    objref_moniker_marshal_DisconnectObject
+};
+
+/***********************************************************************
+ *           CreateObjrefMoniker (OLE32.@)
+ */
+HRESULT WINAPI CreateObjrefMoniker(IUnknown *obj, IMoniker **ret)
+{
+    ObjrefMonikerImpl *moniker;
+
+    TRACE("(%p,%p)\n", obj, ret);
+
+    if (!ret)
+        return E_INVALIDARG;
+
+    moniker = heap_alloc(sizeof(*moniker));
+    if (!moniker)
+    {
+        *ret = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    moniker->IMoniker_iface.lpVtbl = &VT_ObjrefMonikerImpl;
+    moniker->IMarshal_iface.lpVtbl = &objref_moniker_marshal_vtbl;
+    moniker->refcount = 1;
+    moniker->pObject = obj;
+    if (moniker->pObject)
+        IUnknown_AddRef(moniker->pObject);
+
+    *ret = &moniker->IMoniker_iface;
+
+    return S_OK;
+}
+
+HRESULT WINAPI ObjrefMoniker_CreateInstance(IClassFactory *iface, IUnknown *unk, REFIID iid, void **obj)
+{
+    IMoniker *moniker;
+    HRESULT  hr;
+
+    TRACE("(%p,%s,%p)\n", unk, debugstr_guid(iid), obj);
+
+    *obj = NULL;
+
+    if (unk)
+        return CLASS_E_NOAGGREGATION;
+
+    hr = CreateObjrefMoniker(NULL, &moniker);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IMoniker_QueryInterface(moniker, iid, obj);
+    IMoniker_Release(moniker);
 
     return hr;
 }

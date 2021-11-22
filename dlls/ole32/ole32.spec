@@ -103,7 +103,7 @@
 @ stdcall CreateGenericComposite(ptr ptr ptr)
 @ stdcall CreateILockBytesOnHGlobal(ptr long ptr)
 @ stdcall CreateItemMoniker(wstr wstr ptr)
-@ stub CreateObjrefMoniker
+@ stdcall CreateObjrefMoniker(ptr ptr)
 @ stdcall CreateOleAdviseHolder(ptr)
 @ stdcall CreatePointerMoniker(ptr ptr)
 @ stdcall CreateStreamOnHGlobal(ptr long ptr) combase.CreateStreamOnHGlobal

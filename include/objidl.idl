@@ -330,7 +330,10 @@ interface IMoniker : IPersistStream
     MKSYS_ITEMMONIKER      = 4,
     MKSYS_POINTERMONIKER   = 5,
     /* MKSYS_URLMONIKER       = 6, */ /* defined in urlmon.idl */
-    MKSYS_CLASSMONIKER     = 7
+    MKSYS_CLASSMONIKER     = 7,
+    MKSYS_OBJREFMONIKER    = 8,
+    MKSYS_SESSIONMONIKER   = 9,
+    MKSYS_LUAMONIKER       = 10
   } MKSYS;
 
   typedef [v1_enum] enum tagMKREDUCE {

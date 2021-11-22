@@ -106,6 +106,12 @@ coclass ClassMoniker { interface IMoniker; }
 coclass PSFactoryBuffer { interface IFactoryBuffer; }
 
 [
+    threading(both),
+    uuid(00000327-0000-0000-c000-000000000046)
+]
+coclass ObjrefMoniker { interface IMoniker; }
+
+[
     helpstring("Component Categories Manager"),
     threading(both),
     uuid(0002e005-0000-0000-c000-000000000046)
