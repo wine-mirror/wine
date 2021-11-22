@@ -245,7 +245,7 @@ static void test_NtAllocateVirtualMemory(void)
     addr2 = (char *)addr1 + 0xffe;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_DECOMMIT);
     ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed %x\n", status);
-    ok( size == 0, "wrong size %lx\n", size );
+    ok( size == 0 || broken(size == 0x10000) /* <= win10 1709 */, "wrong size %lx\n", size );
     ok( addr2 == addr1, "wrong addr %p\n", addr2 );
 
     size = 0;
