@@ -408,6 +408,7 @@ SOURCES = \
 	mediaobj.idl \
 	metahost.idl \
 	mfapi.h \
+	mfd3d12.idl \
 	mferror.h \
 	mfidl.idl \
 	mfmediaengine.idl \
