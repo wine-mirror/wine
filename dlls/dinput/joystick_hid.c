@@ -2554,7 +2554,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
 
     if (flags & DIEP_DURATION)
     {
-        if (impl->params.dwDuration != params->dwDuration) impl->modified |= DIEP_DURATION;
+        impl->modified |= DIEP_DURATION;
         impl->params.dwDuration = params->dwDuration;
     }
     if (flags & DIEP_GAIN)
