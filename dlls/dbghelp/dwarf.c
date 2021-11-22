@@ -4131,7 +4131,6 @@ static void dwarf2_unload_dwz(dwarf2_dwz_alternate_t* dwz)
     image_unmap_section(&dwz->sectmap[section_line]);
     image_unmap_section(&dwz->sectmap[section_ranges]);
 
-    image_unmap_file(dwz->fmap);
     HeapFree(GetProcessHeap(), 0, dwz);
 }
 
