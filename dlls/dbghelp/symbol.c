@@ -353,8 +353,11 @@ struct symt_function* symt_new_function(struct module* module,
         init_function_or_inlinesite(sym, module, SymTagFunction, &compiland->symt, name, addr, size, sig_type);
         sym->next_inlinesite = NULL; /* first of list */
         symt_add_module_ht(module, (struct symt_ht*)sym);
-        p = vector_add(&compiland->vchildren, &module->pool);
-        *p = &sym->symt;
+        if (compiland)
+        {
+            p = vector_add(&compiland->vchildren, &module->pool);
+            *p = &sym->symt;
+        }
     }
     return sym;
 }
