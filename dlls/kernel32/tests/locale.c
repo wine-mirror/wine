@@ -3976,10 +3976,8 @@ static void test_GetCPInfo(void)
         ok(ret, "GetCPInfo(CP_UTF7) error %u\n", GetLastError());
         ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
         ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
-        ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
-        ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
-        for (i = 2; i < sizeof(cpinfo.LeadByte); i++)
-            todo_wine ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
+        for (i = 0; i < sizeof(cpinfo.LeadByte); i++)
+            ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
         ok(cpinfo.MaxCharSize == 5, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
     }
 
@@ -3997,10 +3995,8 @@ static void test_GetCPInfo(void)
         ok(ret, "GetCPInfo(CP_UTF8) error %u\n", GetLastError());
         ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
         ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
-        ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
-        ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
-        for (i = 2; i < sizeof(cpinfo.LeadByte); i++)
-            todo_wine ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
+        for (i = 0; i < sizeof(cpinfo.LeadByte); i++)
+            ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
         ok(cpinfo.MaxCharSize == 4 || broken(cpinfo.MaxCharSize == 3) /* win9x */,
            "expected 4, got %u\n", cpinfo.MaxCharSize);
     }

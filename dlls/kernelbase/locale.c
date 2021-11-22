@@ -3905,7 +3905,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCPInfo( UINT codepage, CPINFO *cpinfo )
     case CP_UTF8:
         cpinfo->DefaultChar[0] = 0x3f;
         cpinfo->DefaultChar[1] = 0;
-        cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
+        memset( cpinfo->LeadByte, 0, sizeof(cpinfo->LeadByte) );
         cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
         break;
     default:
