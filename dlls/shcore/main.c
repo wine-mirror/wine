@@ -2515,3 +2515,12 @@ void WINAPI SubscribeFeatureStateChangeNotification(FEATURE_STATE_CHANGE_SUBSCRI
 {
     FIXME("(%p, %p, %p) stub\n", subscription, callback, context);
 }
+
+/*************************************************************************
+ * GetFeatureEnabledState        [SHCORE.@]
+ */
+FEATURE_ENABLED_STATE WINAPI GetFeatureEnabledState(UINT32 feature, FEATURE_CHANGE_TIME change_time)
+{
+    FIXME("(%u, %u) stub\n", feature, change_time);
+    return FEATURE_ENABLED_STATE_DEFAULT;
+}
