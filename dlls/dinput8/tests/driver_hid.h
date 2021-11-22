@@ -50,6 +50,7 @@ struct hid_expect
     DWORD ret_status;
     BYTE todo;   /* missing on wine */
     BYTE broken; /* missing on some win versions */
+    BYTE wine_only;
     BYTE report_id;
     BYTE report_len;
     BYTE report_buf[128];

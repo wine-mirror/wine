@@ -122,7 +122,7 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
         else
         {
             todo_wine_if( tmp->todo )
-            ok( 0, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+            ok( tmp->wine_only, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
         }
         winetest_pop_context();
         tmp++;
@@ -198,7 +198,7 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     while (tmp < queue->end)
     {
         if (running_under_wine && !tmp->todo) break;
-        if (!running_under_wine && !tmp->broken) break;
+        if (!running_under_wine && !tmp->broken && !tmp->wine_only) break;
         if (tmp->code == code && tmp->report_id == id && tmp->report_len == len &&
             (!compare_buf || RtlCompareMemory( tmp->report_buf, buf, len ) == len))
             break;
@@ -209,6 +209,11 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     else tmp = &queue->spurious;
     *expect = *tmp;
 
+    while (queue->pos < queue->end)
+    {
+        if (running_under_wine || !queue->pos->wine_only) break;
+        queue->pos++;
+    }
     if (queue->pos == queue->end && (irp = queue->pending_wait))
     {
         queue->pending_wait = NULL;
@@ -227,7 +232,7 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
 
     winetest_push_context( "%s expect[%d]", tmp->context, tmp - queue->buffer );
     todo_wine_if( tmp->todo )
-    ok( 1, "found code %#x id %u len %u\n", tmp->code, tmp->report_id, tmp->report_len );
+    ok( !tmp->wine_only, "found code %#x id %u len %u\n", tmp->code, tmp->report_id, tmp->report_len );
     winetest_pop_context();
 
     tmp = missing;
@@ -242,7 +247,7 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
         else
         {
             todo_wine_if( tmp->todo )
-            ok( 0, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+            ok( tmp->wine_only, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
         }
         winetest_pop_context();
         tmp++;

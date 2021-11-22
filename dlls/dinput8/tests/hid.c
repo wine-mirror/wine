@@ -743,7 +743,8 @@ static inline void check_hidp_value_caps_( int line, HIDP_VALUE_CAPS *caps, cons
     }
 }
 
-static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, void *out_buf, DWORD *ret_len, DWORD timeout )
+#define sync_ioctl( a, b, c, d, e, f, g ) sync_ioctl_( __LINE__, a, b, c, d, e, f, g )
+static BOOL sync_ioctl_( int line, HANDLE file, DWORD code, void *in_buf, DWORD in_len, void *out_buf, DWORD *ret_len, DWORD timeout )
 {
     DWORD res, out_len = ret_len ? *ret_len : 0;
     OVERLAPPED ovl = {0};
@@ -754,9 +755,9 @@ static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, voi
     if (!ret && GetLastError() == ERROR_IO_PENDING)
     {
         res = WaitForSingleObject( ovl.hEvent, timeout );
-        ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+        ok_(__FILE__, line)( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
         ret = GetOverlappedResult( file, &ovl, &out_len, FALSE );
-        ok( ret, "GetOverlappedResult returned %u\n", GetLastError() );
+        ok_(__FILE__, line)( ret, "GetOverlappedResult returned %u\n", GetLastError() );
     }
     CloseHandle( ovl.hEvent );
 
@@ -779,17 +780,17 @@ static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, D
     for (i = 0; i < expect_size / sizeof(struct hid_expect); ++i)
         snprintf( expect[i].context, ARRAY_SIZE(expect[i].context), "%s:%d", source_file, line );
 
-    ret = sync_ioctl( file, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
-    ok( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
+    ret = sync_ioctl_( line, file, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
+    ok_(__FILE__, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
 }
 
 #define wait_hid_expect( a, b ) wait_hid_expect_( __LINE__, a, b )
 static void wait_hid_expect_( int line, HANDLE file, DWORD timeout )
 {
-    BOOL ret = sync_ioctl( file, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
-    ok( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %u\n", GetLastError() );
+    BOOL ret = sync_ioctl_( line, file, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
+    ok_(__FILE__, line)( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %u\n", GetLastError() );
 
-    set_hid_expect( file, NULL, 0 );
+    set_hid_expect_( line, file, NULL, 0 );
 }
 
 #define send_hid_input( a, b, c ) send_hid_input_( __LINE__, a, b, c )
@@ -5601,6 +5602,91 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_buf = {0x02,0x01,0x01,0x01},
         },
     };
+    struct hid_expect expect_download_2[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x19},
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+        },
+    };
+    struct hid_expect expect_update[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x19},
+            .wine_only = TRUE, .todo = TRUE,
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
+            .wine_only = TRUE, .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0xff,0xff,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+            .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x00,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+            .wine_only = TRUE, .todo = TRUE,
+        },
+    };
+    struct hid_expect expect_set_envelope[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x19},
+            .wine_only = TRUE, .todo = TRUE,
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x19,0x4c,0x01,0x00,0x04,0x00},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x00,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+            .wine_only = TRUE, .todo = TRUE,
+        },
+    };
     struct hid_expect expect_start =
     {
         .code = IOCTL_HID_WRITE_REPORT,
@@ -6408,6 +6494,39 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         ok( ref == 0, "Release returned %d\n", ref );
         winetest_pop_context();
     }
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+
+    set_hid_expect( file, expect_download_2, sizeof(expect_download_2) );
+    flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, flags );
+    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    desc = expect_desc;
+    desc.dwDuration = INFINITE;
+    desc.dwTriggerButton = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFEFFECTTRIGGER,
+    hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD|DIEP_DURATION|DIEP_TRIGGERBUTTON );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    set_hid_expect( file, expect_update, sizeof(expect_update) );
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
+    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
+
+    desc = expect_desc;
+    desc.lpEnvelope = &envelope;
+    desc.lpEnvelope->dwAttackTime = 1000;
+    hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD|DIEP_ENVELOPE );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    set_hid_expect( file, expect_set_envelope, sizeof(expect_set_envelope) );
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
+    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
+
+    set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %d\n", ref );
+    set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
