@@ -2728,7 +2728,8 @@ static void set_parameter_value_us( struct hid_joystick_effect *impl, char *repo
     LONG exp;
     if (!caps) return;
     exp = caps->units_exp;
-    if (caps->units != 0x1003) WARN( "unknown time unit caps %x\n", caps->units );
+    if (value == INFINITE) value = caps->physical_min - 1;
+    else if (caps->units != 0x1003) WARN( "unknown time unit caps %x\n", caps->units );
     else if (exp < -6) while (exp++ < -6) value *= 10;
     else if (exp > -6) while (exp-- > -6) value /= 10;
     set_parameter_value( impl, report_buf, caps, value );

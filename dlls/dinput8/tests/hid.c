@@ -5650,15 +5650,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_id = 3,
             .report_len = 11,
             .report_buf = {0x03,0x01,0x02,0x08,0xff,0xff,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
-            .todo = TRUE,
-        },
-        /* update effect */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 11,
-            .report_buf = {0x03,0x01,0x02,0x08,0x00,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
-            .wine_only = TRUE, .todo = TRUE,
         },
     };
     struct hid_expect expect_set_envelope[] =
@@ -5683,7 +5674,7 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 11,
-            .report_buf = {0x03,0x01,0x02,0x08,0x00,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+            .report_buf = {0x03,0x01,0x02,0x08,0xff,0xff,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
             .wine_only = TRUE, .todo = TRUE,
         },
     };
