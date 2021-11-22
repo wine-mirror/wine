@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "perflib.h"
+#include "winperf.h"
 
 #include "wine/test.h"
 
@@ -35,7 +36,20 @@ static ULONG WINAPI test_provider_callback(ULONG code, void *buffer, ULONG size)
 
 void test_provider_init(void)
 {
+    static GUID test_set_guid = {0xdeadbeef, 0x0002, 0x0003, {0x0f, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00 ,0x0a}};
+    static GUID test_set_guid2 = {0xdeadbeef, 0x0003, 0x0003, {0x0f, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00 ,0x0a}};
     static GUID test_guid = {0xdeadbeef, 0x0001, 0x0002, {0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00 ,0x0a}};
+    static struct
+    {
+        PERF_COUNTERSET_INFO counterset;
+        PERF_COUNTER_INFO counter;
+    }
+    pc_template =
+    {
+        {{0}},
+        {1, PERF_COUNTER_COUNTER, PERF_ATTRIB_BY_REFERENCE, sizeof(PERF_COUNTER_INFO), PERF_DETAIL_NOVICE, 0, 0},
+    };
+
     PERF_PROVIDER_CONTEXT prov_context;
     HANDLE prov, prov2;
     ULONG ret;
@@ -75,6 +89,31 @@ void test_provider_init(void)
     ok(!bret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected bret %d, err %u.\n", bret, GetLastError());
     bret = IsBadWritePtr(prov, 8);
     ok(!bret, "Handle does not point to the data.\n");
+
+    pc_template.counterset.CounterSetGuid = test_set_guid;
+    pc_template.counterset.ProviderGuid = test_guid;
+    pc_template.counterset.NumCounters = 0;
+    pc_template.counterset.InstanceType = PERF_COUNTERSET_SINGLE_INSTANCE;
+    ret = PerfSetCounterSetInfo(prov, &pc_template.counterset, sizeof(pc_template.counterset));
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
+
+    pc_template.counterset.CounterSetGuid = test_set_guid;
+    pc_template.counterset.ProviderGuid = test_guid;
+    pc_template.counterset.NumCounters = 1;
+    pc_template.counterset.InstanceType = PERF_COUNTERSET_SINGLE_INSTANCE;
+    ret = PerfSetCounterSetInfo(prov, &pc_template.counterset, sizeof(pc_template));
+    ok(!ret, "Got unexpected ret %u.\n", ret);
+
+    pc_template.counterset.CounterSetGuid = test_set_guid2;
+    /* Looks like ProviderGuid doesn't need to match provider. */
+    pc_template.counterset.ProviderGuid = test_set_guid;
+    pc_template.counterset.NumCounters = 1;
+    pc_template.counterset.InstanceType = PERF_COUNTERSET_SINGLE_INSTANCE;
+    ret = PerfSetCounterSetInfo(prov, &pc_template.counterset, sizeof(pc_template));
+    ok(!ret, "Got unexpected ret %u.\n", ret);
+
+    ret = PerfSetCounterSetInfo(prov, &pc_template.counterset, sizeof(pc_template));
+    ok(ret == ERROR_ALREADY_EXISTS, "Got unexpected ret %u.\n", ret);
 
     ret = PerfStopProvider(prov);
     ok(!ret, "Got unexpected ret %u.\n", ret);

@@ -154,10 +154,18 @@ LONG WINAPI AppPolicyGetWindowingModel(HANDLE token, AppPolicyWindowingModel *po
     return ERROR_SUCCESS;
 }
 
+struct counterset_template
+{
+    PERF_COUNTERSET_INFO counterset;
+    PERF_COUNTER_INFO counter[1];
+};
+
 struct perf_provider
 {
     GUID guid;
     PERFLIBREQUEST callback;
+    struct counterset_template **countersets;
+    unsigned int counterset_count;
 };
 
 static struct perf_provider *perf_provider_from_handle(HANDLE prov)
@@ -187,10 +195,44 @@ ULONG WINAPI PerfDeleteInstance(HANDLE provider, PPERF_COUNTERSET_INSTANCE block
 /***********************************************************************
  *           PerfSetCounterSetInfo   (KERNELBASE.@)
  */
-ULONG WINAPI PerfSetCounterSetInfo(HANDLE handle, PPERF_COUNTERSET_INFO template, ULONG size)
+ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *template, ULONG size )
 {
-    FIXME("%p %p %u: stub\n", handle, template, size);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct perf_provider *prov = perf_provider_from_handle( handle );
+    struct counterset_template **new_array;
+    struct counterset_template *new;
+    unsigned int i;
+
+    FIXME( "handle %p, template %p, size %u semi-stub.\n", handle, template, size );
+
+    if (!prov || !template) return ERROR_INVALID_PARAMETER;
+    if (!template->NumCounters) return ERROR_INVALID_PARAMETER;
+    if (size < sizeof(*template) || (size - (sizeof(*template))) / sizeof(PERF_COUNTER_INFO) < template->NumCounters)
+        return ERROR_INVALID_PARAMETER;
+
+    for (i = 0; i < prov->counterset_count; ++i)
+    {
+        if (IsEqualGUID( &template->CounterSetGuid, &prov->countersets[i]->counterset.CounterSetGuid ))
+            return ERROR_ALREADY_EXISTS;
+    }
+
+    size = offsetof( struct counterset_template, counter[template->NumCounters] );
+    if (!(new = heap_alloc( size ))) return ERROR_OUTOFMEMORY;
+
+    if (prov->counterset_count)
+        new_array = heap_realloc( prov->countersets, sizeof(*prov->countersets) * (prov->counterset_count + 1) );
+    else
+        new_array = heap_alloc( sizeof(*prov->countersets) );
+
+    if (!new_array)
+    {
+        heap_free( new );
+        return ERROR_OUTOFMEMORY;
+    }
+    memcpy( new, template, size );
+    new_array[prov->counterset_count++] = new;
+    prov->countersets = new_array;
+
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -245,9 +287,13 @@ ULONG WINAPI PerfStartProviderEx( GUID *guid, PERF_PROVIDER_CONTEXT *context, HA
 ULONG WINAPI PerfStopProvider(HANDLE handle)
 {
     struct perf_provider *prov = perf_provider_from_handle( handle );
+    unsigned int i;
 
     TRACE( "handle %p.\n", handle );
 
+    for (i = 0; i < prov->counterset_count; ++i)
+        heap_free( prov->countersets[i] );
+    heap_free( prov->countersets );
     heap_free( prov );
     return STATUS_SUCCESS;
 }
