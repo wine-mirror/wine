@@ -3962,6 +3962,7 @@ static void test_GetCPInfo(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
+    memset(cpinfo.LeadByte, '-', ARRAY_SIZE(cpinfo.LeadByte));
     SetLastError(0xdeadbeef);
     ret = GetCPInfo(CP_UTF7, &cpinfo);
     if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
@@ -3970,14 +3971,19 @@ static void test_GetCPInfo(void)
     }
     else
     {
+        unsigned int i;
+
         ok(ret, "GetCPInfo(CP_UTF7) error %u\n", GetLastError());
         ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
         ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
         ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
         ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
+        for (i = 2; i < sizeof(cpinfo.LeadByte); i++)
+            todo_wine ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
         ok(cpinfo.MaxCharSize == 5, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
     }
 
+    memset(cpinfo.LeadByte, '-', ARRAY_SIZE(cpinfo.LeadByte));
     SetLastError(0xdeadbeef);
     ret = GetCPInfo(CP_UTF8, &cpinfo);
     if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
@@ -3986,11 +3992,15 @@ static void test_GetCPInfo(void)
     }
     else
     {
+        unsigned int i;
+
         ok(ret, "GetCPInfo(CP_UTF8) error %u\n", GetLastError());
         ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
         ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
         ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
         ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
+        for (i = 2; i < sizeof(cpinfo.LeadByte); i++)
+            todo_wine ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
         ok(cpinfo.MaxCharSize == 4 || broken(cpinfo.MaxCharSize == 3) /* win9x */,
            "expected 4, got %u\n", cpinfo.MaxCharSize);
     }
