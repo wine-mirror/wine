@@ -444,8 +444,6 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD re
 
     if (!ext->collection_desc.ReportIDs[0].ReportID) last_report = ext->last_reports[0];
     else last_report = ext->last_reports[report_buf[0]];
-
-    last_report->length = report_len;
     memcpy(last_report->buffer, report_buf, report_len);
 
     if ((irp = pop_pending_read(ext)))
@@ -861,7 +859,13 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
                     {
                         if (!(size = reports[i].InputLength)) continue;
                         size = offsetof( struct hid_report, buffer[size] );
-                        if (!(ext->last_reports[reports[i].ReportID] = RtlAllocateHeap(GetProcessHeap(), 0, size))) status = STATUS_NO_MEMORY;
+                        if (!(report = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, size))) status = STATUS_NO_MEMORY;
+                        else
+                        {
+                            report->length = reports[i].InputLength;
+                            report->buffer[0] = reports[i].ReportID;
+                            ext->last_reports[reports[i].ReportID] = report;
+                        }
                     }
                     if (!status) ext->state = DEVICE_STATE_STARTED;
                 }
