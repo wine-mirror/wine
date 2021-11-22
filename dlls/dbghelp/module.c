@@ -990,7 +990,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         module_remove(pcs, altmodule);
     }
 
-    if ((dbghelp_options & SYMOPT_DEFERRED_LOADS) == 0)
+    if ((dbghelp_options & SYMOPT_DEFERRED_LOADS) == 0 && !module_get_container(pcs, module))
         module_load_debug(module);
     return module->module.BaseOfImage;
 }
