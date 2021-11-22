@@ -30,6 +30,7 @@
 #include "wine/debug.h"
 #include "kernelbase.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
 
@@ -160,12 +161,21 @@ struct counterset_template
     PERF_COUNTER_INFO counter[1];
 };
 
+struct counterset_instance
+{
+    struct list entry;
+    struct counterset_template *template;
+    PERF_COUNTERSET_INSTANCE instance;
+};
+
 struct perf_provider
 {
     GUID guid;
     PERFLIBREQUEST callback;
     struct counterset_template **countersets;
     unsigned int counterset_count;
+
+    struct list instance_list;
 };
 
 static struct perf_provider *perf_provider_from_handle(HANDLE prov)
@@ -176,20 +186,82 @@ static struct perf_provider *perf_provider_from_handle(HANDLE prov)
 /***********************************************************************
  *           PerfCreateInstance   (KERNELBASE.@)
  */
-PPERF_COUNTERSET_INSTANCE WINAPI PerfCreateInstance(HANDLE handle, LPCGUID guid,
-                                                    const WCHAR *name, ULONG id)
+PERF_COUNTERSET_INSTANCE WINAPI *PerfCreateInstance( HANDLE handle, const GUID *guid,
+                                                     const WCHAR *name, ULONG id )
 {
-    FIXME("%p %s %s %u: stub\n", handle, debugstr_guid(guid), debugstr_w(name), id);
-    return NULL;
+    struct perf_provider *prov = perf_provider_from_handle( handle );
+    struct counterset_template *template;
+    struct counterset_instance *inst;
+    unsigned int i;
+    ULONG size;
+
+    FIXME( "handle %p, guid %s, name %s, id %u semi-stub.\n", handle, debugstr_guid(guid), debugstr_w(name), id );
+
+    if (!prov || !guid || !name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    for (i = 0; i < prov->counterset_count; ++i)
+        if (IsEqualGUID(guid, &prov->countersets[i]->counterset.CounterSetGuid)) break;
+
+    if (i == prov->counterset_count)
+    {
+        SetLastError( ERROR_NOT_FOUND );
+        return NULL;
+    }
+
+    template = prov->countersets[i];
+
+    LIST_FOR_EACH_ENTRY(inst, &prov->instance_list, struct counterset_instance, entry)
+    {
+        if (inst->template == template && inst->instance.InstanceId == id)
+        {
+            SetLastError( ERROR_ALREADY_EXISTS );
+            return NULL;
+        }
+    }
+
+    size = (sizeof(PERF_COUNTERSET_INSTANCE) + template->counterset.NumCounters * sizeof(UINT64)
+            + (lstrlenW( name ) + 1) * sizeof(WCHAR) + 7) & ~7;
+    inst = heap_alloc_zero( offsetof(struct counterset_instance, instance) + size );
+    if (!inst)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return NULL;
+    }
+
+    inst->template = template;
+    inst->instance.CounterSetGuid = *guid;
+    inst->instance.dwSize = size;
+    inst->instance.InstanceId = id;
+    inst->instance.InstanceNameOffset = sizeof(PERF_COUNTERSET_INSTANCE)
+                                        + template->counterset.NumCounters * sizeof(UINT64);
+    inst->instance.InstanceNameSize = (lstrlenW( name ) + 1) * sizeof(WCHAR);
+    memcpy( (BYTE *)&inst->instance + inst->instance.InstanceNameOffset, name, inst->instance.InstanceNameSize );
+    list_add_tail( &prov->instance_list, &inst->entry );
+
+    return &inst->instance;
 }
 
 /***********************************************************************
  *           PerfDeleteInstance   (KERNELBASE.@)
  */
-ULONG WINAPI PerfDeleteInstance(HANDLE provider, PPERF_COUNTERSET_INSTANCE block)
+ULONG WINAPI PerfDeleteInstance(HANDLE provider, PERF_COUNTERSET_INSTANCE *block)
 {
-    FIXME("%p %p: stub\n", provider, block);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct perf_provider *prov = perf_provider_from_handle( provider );
+    struct counterset_instance *inst;
+
+    TRACE( "provider %p, block %p.\n", provider, block );
+
+    if (!prov || !block) return ERROR_INVALID_PARAMETER;
+
+    inst = CONTAINING_RECORD(block, struct counterset_instance, instance);
+    list_remove( &inst->entry );
+    heap_free( inst );
+
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -229,6 +301,8 @@ ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *templat
         return ERROR_OUTOFMEMORY;
     }
     memcpy( new, template, size );
+    for (i = 0; i < template->NumCounters; ++i)
+        new->counter[i].Offset = i * sizeof(UINT64);
     new_array[prov->counterset_count++] = new;
     prov->countersets = new_array;
 
@@ -273,7 +347,11 @@ ULONG WINAPI PerfStartProviderEx( GUID *guid, PERF_PROVIDER_CONTEXT *context, HA
     if (!guid || !context || !provider) return ERROR_INVALID_PARAMETER;
     if (context->ContextSize < sizeof(*context)) return ERROR_INVALID_PARAMETER;
 
+    if (context->MemAllocRoutine || context->MemFreeRoutine)
+        FIXME("Memory allocation routine is not supported.\n");
+
     if (!(prov = heap_alloc_zero( sizeof(*prov) ))) return ERROR_OUTOFMEMORY;
+    list_init( &prov->instance_list );
     memcpy( &prov->guid, guid, sizeof(prov->guid) );
     prov->callback = context->ControlCallback;
     *provider = prov;
@@ -287,9 +365,19 @@ ULONG WINAPI PerfStartProviderEx( GUID *guid, PERF_PROVIDER_CONTEXT *context, HA
 ULONG WINAPI PerfStopProvider(HANDLE handle)
 {
     struct perf_provider *prov = perf_provider_from_handle( handle );
+    struct counterset_instance *inst, *next;
     unsigned int i;
 
     TRACE( "handle %p.\n", handle );
+
+    if (!list_empty( &prov->instance_list ))
+        WARN( "Stopping provider with active counter instances.\n" );
+
+    LIST_FOR_EACH_ENTRY_SAFE(inst, next, &prov->instance_list, struct counterset_instance, entry)
+    {
+        list_remove( &inst->entry );
+        heap_free( inst );
+    }
 
     for (i = 0; i < prov->counterset_count; ++i)
         heap_free( prov->countersets[i] );

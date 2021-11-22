@@ -42,17 +42,24 @@ void test_provider_init(void)
     static struct
     {
         PERF_COUNTERSET_INFO counterset;
-        PERF_COUNTER_INFO counter;
+        PERF_COUNTER_INFO counter[2];
     }
     pc_template =
     {
         {{0}},
-        {1, PERF_COUNTER_COUNTER, PERF_ATTRIB_BY_REFERENCE, sizeof(PERF_COUNTER_INFO), PERF_DETAIL_NOVICE, 0, 0},
+        {
+            {1, PERF_COUNTER_COUNTER, PERF_ATTRIB_BY_REFERENCE, sizeof(PERF_COUNTER_INFO),
+                    PERF_DETAIL_NOVICE, 0, 0xdeadbeef},
+            {2, PERF_COUNTER_COUNTER, PERF_ATTRIB_BY_REFERENCE, sizeof(PERF_COUNTER_INFO),
+                    PERF_DETAIL_NOVICE, 0, 0xdeadbeef},
+        },
     };
 
+    PERF_COUNTERSET_INSTANCE *instance;
     PERF_PROVIDER_CONTEXT prov_context;
+    UINT64 counter1, counter2;
     HANDLE prov, prov2;
-    ULONG ret;
+    ULONG ret, size;
     BOOL bret;
 
     prov = (HANDLE)0xdeadbeef;
@@ -99,7 +106,7 @@ void test_provider_init(void)
 
     pc_template.counterset.CounterSetGuid = test_set_guid;
     pc_template.counterset.ProviderGuid = test_guid;
-    pc_template.counterset.NumCounters = 1;
+    pc_template.counterset.NumCounters = 2;
     pc_template.counterset.InstanceType = PERF_COUNTERSET_SINGLE_INSTANCE;
     ret = PerfSetCounterSetInfo(prov, &pc_template.counterset, sizeof(pc_template));
     ok(!ret, "Got unexpected ret %u.\n", ret);
@@ -114,6 +121,54 @@ void test_provider_init(void)
 
     ret = PerfSetCounterSetInfo(prov, &pc_template.counterset, sizeof(pc_template));
     ok(ret == ERROR_ALREADY_EXISTS, "Got unexpected ret %u.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    instance = PerfCreateInstance(prov, NULL, L"1", 1);
+    ok(!instance, "Got unexpected instance %p.\n", instance);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %u.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    instance = PerfCreateInstance(prov, &test_guid, L"1", 1);
+    ok(!instance, "Got unexpected instance %p.\n", instance);
+    ok(GetLastError() == ERROR_NOT_FOUND, "Got unexpected error %u.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    instance = PerfCreateInstance(prov, &test_guid, NULL, 1);
+    ok(!instance, "Got unexpected instance %p.\n", instance);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error %u.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    instance = PerfCreateInstance(prov, &test_set_guid, L"11", 1);
+    ok(!!instance, "Got NULL instance.\n");
+    ok(GetLastError() == 0xdeadbeef, "Got unexpected error %u.\n", GetLastError());
+    ok(instance->InstanceId == 1, "Got unexpected InstanceId %u.\n", instance->InstanceId);
+    ok(instance->InstanceNameSize == 6, "Got unexpected InstanceNameSize %u.\n", instance->InstanceNameSize);
+    ok(IsEqualGUID(&instance->CounterSetGuid, &test_set_guid), "Got unexpected guid %s.\n",
+            debugstr_guid(&instance->CounterSetGuid));
+
+    ok(instance->InstanceNameOffset == sizeof(*instance) + sizeof(UINT64) * 2,
+            "Got unexpected InstanceNameOffset %u.\n", instance->InstanceNameOffset);
+    ok(!lstrcmpW((WCHAR *)((BYTE *)instance + instance->InstanceNameOffset), L"11"),
+            "Got unexpected instance name %s.\n",
+            debugstr_w((WCHAR *)((BYTE *)instance + instance->InstanceNameOffset)));
+    size = ((sizeof(*instance) + sizeof(UINT64) * 2 + instance->InstanceNameSize) + 7) & ~7;
+    ok(size == instance->dwSize, "Got unexpected size %u, instance->dwSize %u.\n", size, instance->dwSize);
+
+    ret = PerfSetCounterRefValue(prov, instance, 1, &counter1);
+    todo_wine ok(!ret, "Got unexpected ret %u.\n", ret);
+    ret = PerfSetCounterRefValue(prov, instance, 2, &counter2);
+    todo_wine ok(!ret, "Got unexpected ret %u.\n", ret);
+
+    ret = PerfSetCounterRefValue(prov, instance, 0, &counter2);
+    todo_wine ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %u.\n", ret);
+
+    todo_wine ok(*(void **)(instance + 1) == &counter1, "Got unexpected counter value %p.\n",
+            *(void **)(instance + 1));
+    todo_wine ok(*(void **)((BYTE *)instance + sizeof(*instance) + sizeof(UINT64)) == &counter2,
+            "Got unexpected counter value %p.\n", *(void **)(instance + 1));
+
+    ret = PerfDeleteInstance(prov, instance);
+    ok(!ret, "Got unexpected ret %u.\n", ret);
 
     ret = PerfStopProvider(prov);
     ok(!ret, "Got unexpected ret %u.\n", ret);
