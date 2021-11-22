@@ -745,16 +745,18 @@ static inline void check_hidp_value_caps_( int line, HIDP_VALUE_CAPS *caps, cons
 
 static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, void *out_buf, DWORD *ret_len, DWORD timeout )
 {
+    DWORD res, out_len = ret_len ? *ret_len : 0;
     OVERLAPPED ovl = {0};
-    DWORD out_len = ret_len ? *ret_len : 0;
     BOOL ret;
 
     ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
     ret = DeviceIoControl( file, code, in_buf, in_len, out_buf, out_len, &out_len, &ovl );
     if (!ret && GetLastError() == ERROR_IO_PENDING)
     {
-        ret = GetOverlappedResultEx( file, &ovl, &out_len, timeout, TRUE );
-        ok( ret, "GetOverlappedResultEx returned %u\n", GetLastError() );
+        res = WaitForSingleObject( ovl.hEvent, timeout );
+        ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+        ret = GetOverlappedResult( file, &ovl, &out_len, FALSE );
+        ok( ret, "GetOverlappedResult returned %u\n", GetLastError() );
     }
     CloseHandle( ovl.hEvent );
 
