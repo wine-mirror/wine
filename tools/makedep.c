@@ -3404,7 +3404,8 @@ static void output_shared_lib( struct makefile *make )
 
     strarray_addall( &dep_libs, get_local_dependencies( make, basename, make->in_files ));
     strarray_addall( &all_libs, get_expanded_file_local_var( make, basename, "LDFLAGS" ));
-    strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
+    strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+    strarray_addall( &all_libs, libs );
 
     output( "%s:", obj_dir_path( make, make->sharedlib ));
     output_filenames_obj_dir( make, make->object_files );
@@ -3518,7 +3519,10 @@ static void output_programs( struct makefile *make )
 
         if (!objs.count) objs = make->object_files;
         if (!strarray_exists( &all_libs, "-nodefaultlibs" ))
-            strarray_addall( &all_libs, add_unix_libraries( make, &deps ));
+        {
+            strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+            strarray_addall( &all_libs, libs );
+        }
 
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
