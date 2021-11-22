@@ -1228,8 +1228,7 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 	    }
 	    break;
         }
-#ifdef MCI_INTEGER64
-	case MCI_INTEGER64:
+	case 13: /* MCI_INTEGER64 */
         {
 	    DWORD_PTR data = *(DWORD_PTR *)(params + 1);
 	    switch (dwRet & 0xFFFF0000ul) {
@@ -1263,7 +1262,6 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 	    }
 	    break;
         }
-#endif
 	case MCI_STRING:
 	    switch (dwRet & 0xFFFF0000ul) {
 	    case 0:
@@ -1484,11 +1482,9 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     case MCI_RECT:
         offset += 4 * sizeof(DWORD);
         break;
-#ifdef MCI_INTEGER64
-    case MCI_INTEGER64:
+    case 13: /* MCI_INTEGER64 */
 	offset += sizeof(DWORD_PTR);
         break;
-#endif
     default:
 	FIXME("Unknown MCI return type %d\n", retType);
 	dwRet = MCIERR_PARSER_INTERNAL;
