@@ -1029,8 +1029,7 @@ then
         if test "x$ac_debug_format_seen" = x
         then
           case $CROSSDEBUG in
-            *dwarf)  WINE_TRY_CROSSCFLAGS([-gdwarf-2])
-                     WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
+            *dwarf)  WINE_TRY_CROSSCFLAGS([-gdwarf-4]) ;;
             pdb)     WINE_TRY_CROSSCFLAGS([-gcodeview]) ;;
           esac
         fi
@@ -1843,8 +1842,7 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
   done
   if test "x$ac_debug_format_seen" = xdefault
   then
-    WINE_TRY_CFLAGS([-gdwarf-2])
-    WINE_TRY_CFLAGS([-gstrict-dwarf])
+    WINE_TRY_CFLAGS([-gdwarf-4])
   fi
 
   dnl Disable gcc builtins except for Mingw
