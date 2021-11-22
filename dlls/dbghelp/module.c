@@ -671,9 +671,9 @@ struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, stru
          */
         sect_len = image_get_map_size(&debugaltlink_sect);
         id = memchr(data, '\0', sect_len);
-        if (id)
+        if (id++)
         {
-            id++;
+            unsigned idlen = (const BYTE*)data + sect_len - id;
             fmap_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*fmap_link));
             if (fmap_link)
             {
@@ -691,7 +691,8 @@ struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, stru
                 {
                     static const WCHAR globalDebugDirW[] =
                         {'/','u','s','r','/','l','i','b','/','d','e','b','u','g','/','.','b','u','i','l','d','-','i','d','/'};
-                    dst = HeapAlloc(GetProcessHeap(), 0, sizeof(globalDebugDirW) + (3 + filename_len) * sizeof(WCHAR));
+                    dst = HeapAlloc(GetProcessHeap(), 0,
+                                    sizeof(globalDebugDirW) + (3 + filename_len + idlen * 2) * sizeof(WCHAR));
                     if (dst)
                     {
                         WCHAR* p;
