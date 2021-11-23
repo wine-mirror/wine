@@ -61,6 +61,9 @@ struct reply_buffer
     size_t alloc;
 };
 
+#define QX_NAME_SIZE 32
+#define QX_ANNEX_SIZE MAX_PATH
+
 struct gdb_context
 {
     /* gdb information */
@@ -87,6 +90,8 @@ struct gdb_context
     /* Unix environment */
     ULONG_PTR                   wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
     BOOL                        no_ack_mode;
+    int                         qxfer_object_idx;
+    char                        qxfer_object_annex[QX_ANNEX_SIZE];
     struct reply_buffer         qxfer_buffer;
 };
 
@@ -813,7 +818,7 @@ static int addr_width(struct gdb_context* gdbctx)
 }
 
 enum packet_return {packet_error = 0x00, packet_ok = 0x01, packet_done = 0x02,
-                    packet_last_f = 0x80};
+                    packet_send_buffer = 0x03, packet_last_f = 0x80};
 
 static void packet_reply_hex_to(struct gdb_context* gdbctx, const void* src, int len)
 {
@@ -1736,10 +1741,15 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
     return TRUE;
 }
 
-static void packet_query_libraries(struct gdb_context* gdbctx)
+static enum packet_return packet_query_libraries(struct gdb_context* gdbctx)
 {
     struct reply_buffer* reply = &gdbctx->qxfer_buffer;
     BOOL opt;
+
+    if (!gdbctx->process) return packet_error;
+
+    if (gdbctx->qxfer_object_annex[0])
+        return packet_reply_error(gdbctx, 0);
 
     /* this will resynchronize builtin dbghelp's internal ELF module list */
     SymLoadModule(gdbctx->process->handle, 0, 0, 0, 0, 0);
@@ -1749,13 +1759,20 @@ static void packet_query_libraries(struct gdb_context* gdbctx)
     SymEnumerateModules64(gdbctx->process->handle, packet_query_libraries_cb, gdbctx);
     SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
     reply_buffer_append_str(reply, "</library-list>");
+
+    return packet_send_buffer;
 }
 
-static void packet_query_threads(struct gdb_context* gdbctx)
+static enum packet_return packet_query_threads(struct gdb_context* gdbctx)
 {
     struct reply_buffer* reply = &gdbctx->qxfer_buffer;
     struct dbg_process* process = gdbctx->process;
     struct dbg_thread* thread;
+
+    if (!process) return packet_error;
+
+    if (gdbctx->qxfer_object_annex[0])
+        return packet_reply_error(gdbctx, 0);
 
     reply_buffer_append_str(reply, "<threads>");
     LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
@@ -1768,11 +1785,12 @@ static void packet_query_threads(struct gdb_context* gdbctx)
         reply_buffer_append_str(reply, "\"/>");
     }
     reply_buffer_append_str(reply, "</threads>");
+
+    return packet_send_buffer;
 }
 
-static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_cpu* cpu)
+static void packet_query_target_xml(struct gdb_context* gdbctx, struct reply_buffer* reply, struct backend_cpu* cpu)
 {
-    struct reply_buffer* reply = &gdbctx->qxfer_buffer;
     const char* feature_prefix = NULL;
     const char* feature = NULL;
     char buffer[256];
@@ -1886,10 +1904,41 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
     reply_buffer_append_str(reply, "</target>");
 }
 
+static enum packet_return packet_query_features(struct gdb_context* gdbctx)
+{
+    struct reply_buffer* reply = &gdbctx->qxfer_buffer;
+    struct dbg_process* process = gdbctx->process;
+
+    if (!process) return packet_error;
+
+    if (strncmp(gdbctx->qxfer_object_annex, "target.xml", QX_ANNEX_SIZE) == 0)
+    {
+        struct backend_cpu *cpu = process->be_cpu;
+        if (!cpu) return packet_error;
+
+        packet_query_target_xml(gdbctx, reply, cpu);
+
+        return packet_send_buffer;
+    }
+
+    return packet_reply_error(gdbctx, 0);
+}
+
+struct qxfer
+{
+    const char*        name;
+    enum packet_return (*handler)(struct gdb_context* gdbctx);
+} qxfer_handlers[] =
+{
+    {"libraries", packet_query_libraries},
+    {"threads"  , packet_query_threads  },
+    {"features" , packet_query_features },
+};
+
 static enum packet_return packet_query(struct gdb_context* gdbctx)
 {
+    char object_name[QX_NAME_SIZE], annex[QX_ANNEX_SIZE];
     unsigned int off, len;
-    struct backend_cpu *cpu;
 
     switch (gdbctx->in_packet[0])
     {
@@ -1976,11 +2025,16 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_ok;
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
+            size_t i;
+
             packet_reply_open(gdbctx);
             packet_reply_add(gdbctx, "QStartNoAckMode+;");
-            packet_reply_add(gdbctx, "qXfer:libraries:read+;");
-            packet_reply_add(gdbctx, "qXfer:threads:read+;");
-            packet_reply_add(gdbctx, "qXfer:features:read+;");
+            for (i = 0; i < ARRAY_SIZE(qxfer_handlers); i++)
+            {
+                packet_reply_add(gdbctx, "qXfer:");
+                packet_reply_add(gdbctx, qxfer_handlers[i].name);
+                packet_reply_add(gdbctx, ":read+;");
+            }
             packet_reply_close(gdbctx);
             return packet_done;
         }
@@ -2011,35 +2065,44 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         }
         break;
     case 'X':
-        if (sscanf(gdbctx->in_packet, "Xfer:libraries:read::%x,%x", &off, &len) == 2)
+        annex[0] = '\0';
+        if (sscanf(gdbctx->in_packet, "Xfer:%31[^:]:read::%x,%x", object_name, &off, &len) == 3 ||
+            sscanf(gdbctx->in_packet, "Xfer:%31[^:]:read:%255[^:]:%x,%x", object_name, annex, &off, &len) == 4)
         {
-            if (!gdbctx->process) return packet_error;
+            enum packet_return result;
+            int i;
 
-            packet_query_libraries(gdbctx);
-            packet_reply_xfer(gdbctx, off, len);
+            for (i = 0; i < ARRAY_SIZE(qxfer_handlers); i++)
+            {
+                if (strcmp(qxfer_handlers[i].name, object_name) == 0)
+                    break;
+            }
+
+            if (i >= ARRAY_SIZE(qxfer_handlers))
+            {
+                ERR("unhandled qXfer %s read %s %u,%u\n", debugstr_a(object_name), debugstr_a(annex), off, len);
+                return packet_error;
+            }
+
+            TRACE("qXfer %s read %s %u,%u\n", debugstr_a(object_name), debugstr_a(annex), off, len);
+
+            gdbctx->qxfer_object_idx = i;
+            strcpy(gdbctx->qxfer_object_annex, annex);
+
+            result = (*qxfer_handlers[i].handler)(gdbctx);
+            TRACE("qXfer read result = %d\n", result);
+
+            if ((result & ~packet_last_f) == packet_send_buffer)
+            {
+                packet_reply_xfer(gdbctx, off, len);
+                result = (result & packet_last_f) | packet_done;
+            }
+
+            gdbctx->qxfer_object_idx = -1;
+            gdbctx->qxfer_object_annex[0] = '\0';
             reply_buffer_clear(&gdbctx->qxfer_buffer);
-            return packet_done;
-        }
 
-        if (sscanf(gdbctx->in_packet, "Xfer:threads:read::%x,%x", &off, &len) == 2)
-        {
-            if (!gdbctx->process) return packet_error;
-
-            packet_query_threads(gdbctx);
-            packet_reply_xfer(gdbctx, off, len);
-            reply_buffer_clear(&gdbctx->qxfer_buffer);
-            return packet_done;
-        }
-
-        if (sscanf(gdbctx->in_packet, "Xfer:features:read:target.xml:%x,%x", &off, &len) == 2)
-        {
-            if (!gdbctx->process) return packet_error;
-            if (!(cpu = gdbctx->process->be_cpu)) return packet_error;
-
-            packet_query_target_xml(gdbctx, cpu);
-            packet_reply_xfer(gdbctx, off, len);
-            reply_buffer_clear(&gdbctx->qxfer_buffer);
-            return packet_done;
+            return result;
         }
         break;
     }
@@ -2356,6 +2419,8 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     for (i = 0; i < ARRAY_SIZE(gdbctx->wine_segs); i++)
         gdbctx->wine_segs[i] = 0;
 
+    gdbctx->qxfer_object_idx = -1;
+    memset(gdbctx->qxfer_object_annex, 0, sizeof(gdbctx->qxfer_object_annex));
     memset(&gdbctx->qxfer_buffer, 0, sizeof(gdbctx->qxfer_buffer));
 
     /* wait for first trap */
