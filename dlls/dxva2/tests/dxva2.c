@@ -546,8 +546,157 @@ done:
     DestroyWindow(window);
 }
 
+static BOOL check_format_list(D3DFORMAT format, const D3DFORMAT *list, unsigned int count)
+{
+    unsigned int i;
+    for (i = 0; i < count; ++i)
+        if (list[i] == format) return TRUE;
+    return FALSE;
+}
+
+static void test_progressive_device(void)
+{
+    static const unsigned int processor_ops = DXVA2_VideoProcess_YUV2RGB |
+            DXVA2_VideoProcess_StretchX | DXVA2_VideoProcess_StretchY;
+    IDirectXVideoProcessorService *service;
+    IDirectXVideoProcessor *processor;
+    IDirect3DDeviceManager9 *manager;
+    D3DFORMAT format, *rt_formats;
+    DXVA2_VideoProcessorCaps caps;
+    DXVA2_VideoDesc video_desc;
+    IDirect3DDevice9 *device;
+    unsigned int count, i, j;
+    GUID guid, *guids;
+    IDirect3D9 *d3d;
+    HANDLE handle;
+    HWND window;
+    UINT token;
+    HRESULT hr;
+
+    static const D3DFORMAT input_formats[] =
+    {
+        D3DFMT_A8R8G8B8,
+        D3DFMT_X8R8G8B8,
+        D3DFMT_YUY2,
+        MAKEFOURCC('N','V','1','2'),
+    };
+
+    static const D3DFORMAT support_rt_formats[] =
+    {
+        D3DFMT_X8R8G8B8,
+        MAKEFOURCC('N','V','1','2'),
+        D3DFMT_YUY2,
+    };
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    handle = NULL;
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
+            (void **)&service);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&video_desc, 0, sizeof(video_desc));
+    video_desc.SampleWidth = 64;
+    video_desc.SampleHeight = 64;
+    video_desc.Format = MAKEFOURCC('N','V','1','2');
+
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcProgressiveDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 0, &processor);
+    if (FAILED(hr))
+    {
+        win_skip("VideoProcProgressiveDevice is not supported.\n");
+        goto unsupported;
+    }
+    IDirectXVideoProcessor_Release(processor);
+
+    for (i = 0; i < ARRAY_SIZE(input_formats); ++i)
+    {
+        init_video_desc(&video_desc, input_formats[i]);
+
+        /* Check that progressive device is returned for given input format. */
+        count = 0;
+        hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc, &count, &guids);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(count > 0, "Unexpected device count.\n");
+        for (j = 0; j < count; ++j)
+        {
+            if (IsEqualGUID(&guids[j], &DXVA2_VideoProcProgressiveDevice)) break;
+        }
+        ok(j < count, "Expected progressive device for format %#x.\n", input_formats[i]);
+        CoTaskMemFree(guids);
+
+        count = 0;
+        hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(service, &DXVA2_VideoProcProgressiveDevice,
+                &video_desc, &count, &rt_formats);
+        ok(hr == S_OK, "Unexpected hr %#x, format %d.\n", hr, input_formats[i]);
+        ok(count > 0, "Unexpected format count %u.\n", count);
+        for (j = 0; j < count; ++j)
+        {
+            ok(check_format_list(rt_formats[j], support_rt_formats, ARRAY_SIZE(support_rt_formats)),
+                    "Unexpected rt format %#x for input format %#x.\n", rt_formats[j], input_formats[i]);
+        }
+        CoTaskMemFree(rt_formats);
+    }
+
+    memset(&video_desc, 0, sizeof(video_desc));
+    video_desc.SampleWidth = 64;
+    video_desc.SampleHeight = 64;
+    video_desc.Format = MAKEFOURCC('N','V','1','2');
+
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcProgressiveDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 0, &processor);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoProcessor_GetVideoProcessorCaps(processor, &caps);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(caps.DeviceCaps == DXVA2_VPDev_HardwareDevice, "Unexpected device type %#x.\n", caps.DeviceCaps);
+    ok(caps.InputPool == D3DPOOL_DEFAULT, "Unexpected input pool %#x.\n", caps.InputPool);
+    ok(!caps.NumForwardRefSamples, "Unexpected sample count.\n");
+    ok(!caps.NumBackwardRefSamples, "Unexpected sample count.\n");
+    ok(!caps.Reserved, "Unexpected field.\n");
+    ok((caps.VideoProcessorOperations & processor_ops) == processor_ops, "Unexpected processor operations %#x.\n",
+            caps.VideoProcessorOperations);
+
+    hr = IDirectXVideoProcessor_GetCreationParameters(processor, &guid, NULL, &format, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &DXVA2_VideoProcProgressiveDevice), "Unexpected device guid.\n");
+    ok(format == D3DFMT_A8R8G8B8, "Unexpected format %u.\n", format);
+
+    IDirectXVideoProcessor_Release(processor);
+
+unsupported:
+    IDirectXVideoProcessorService_Release(service);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3DDeviceManager9_Release(manager);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(dxva2)
 {
     test_device_manager();
     test_video_processor();
+    test_progressive_device();
 }
