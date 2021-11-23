@@ -284,6 +284,55 @@ static inline void reply_buffer_append_uinthex(struct reply_buffer* reply, ULONG
     reply_buffer_append(reply, ptr, len * 2);
 }
 
+static const unsigned char xml_special_chars_lookup_table[16] = {
+    /* The characters should be sorted by its value modulo table length. */
+
+    0x00,       /* NUL */
+    0,
+    0x22,       /* ": 0010|0010 */
+    0, 0, 0,
+    0x26,       /* &: 0010|0110 */
+    0x27,       /* ': 0010|0111 */
+    0, 0, 0, 0,
+    0x3C,       /* <: 0011|1100 */
+    0,
+    0x3E,       /* >: 0011|1110 */
+    0
+};
+
+static inline BOOL is_nul_or_xml_special_char(unsigned char val)
+{
+    const size_t length = ARRAY_SIZE(xml_special_chars_lookup_table);
+    return xml_special_chars_lookup_table[val % length] == val;
+}
+
+static void reply_buffer_append_xmlstr(struct reply_buffer* reply, const char* str)
+{
+    const char *ptr = str, *curr;
+
+    for (;;)
+    {
+        curr = ptr;
+
+        while (!is_nul_or_xml_special_char((unsigned char)*ptr))
+            ptr++;
+
+        reply_buffer_append(reply, curr, ptr - curr);
+
+        switch (*ptr++)
+        {
+        case '"': reply_buffer_append_str(reply, "&quot;"); break;
+        case '&': reply_buffer_append_str(reply, "&amp;"); break;
+        case '\'': reply_buffer_append_str(reply, "&apos;"); break;
+        case '<': reply_buffer_append_str(reply, "&lt;"); break;
+        case '>': reply_buffer_append_str(reply, "&gt;"); break;
+        case '\0':
+        default:
+            return;
+        }
+    }
+}
+
 static unsigned char checksum(const void* data, int len)
 {
     unsigned cksum = 0;
@@ -1621,9 +1670,9 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
 
     reply_buffer_append_str(reply, "<library name=\"");
     if (strcmp(mod.LoadedImageName, "[vdso].so") == 0)
-        reply_buffer_append_str(reply, "linux-vdso.so.1");
+        reply_buffer_append_xmlstr(reply, "linux-vdso.so.1");
     else if (mod.LoadedImageName[0] == '/')
-        reply_buffer_append_str(reply, mod.LoadedImageName);
+        reply_buffer_append_xmlstr(reply, mod.LoadedImageName);
     else
     {
         UNICODE_STRING nt_name;
@@ -1638,10 +1687,10 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
             if (IsWow64Process(gdbctx->process->handle, &is_wow64) &&
                 is_wow64 && (tmp = strstr(unix_path, "system32")))
                 memcpy(tmp, "syswow64", 8);
-            reply_buffer_append_str(reply, unix_path);
+            reply_buffer_append_xmlstr(reply, unix_path);
         }
         else
-            reply_buffer_append_str(reply, mod.LoadedImageName);
+            reply_buffer_append_xmlstr(reply, mod.LoadedImageName);
 
         HeapFree(GetProcessHeap(), 0, unix_path);
         RtlFreeUnicodeString(&nt_name);
@@ -1758,8 +1807,8 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
             feature = cpu->gdb_register_map[i].feature;
 
             reply_buffer_append_str(reply, "<feature name=\"");
-            if (feature_prefix) reply_buffer_append_str(reply, feature_prefix);
-            reply_buffer_append_str(reply, feature);
+            if (feature_prefix) reply_buffer_append_xmlstr(reply, feature_prefix);
+            reply_buffer_append_xmlstr(reply, feature);
             reply_buffer_append_str(reply, "\">");
 
             if (strcmp(feature_prefix, "org.gnu.gdb.i386.") == 0 &&
@@ -1826,7 +1875,7 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
         if (cpu->gdb_register_map[i].type)
         {
             reply_buffer_append_str(reply, " type=\"");
-            reply_buffer_append_str(reply, cpu->gdb_register_map[i].type);
+            reply_buffer_append_xmlstr(reply, cpu->gdb_register_map[i].type);
             reply_buffer_append_str(reply, "\"");
         }
 
