@@ -1359,7 +1359,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         UINT64 *qpcpos)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    UINT32 chunk_bytes, chunk_frames;
+    struct get_capture_buffer_params params;
 
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
@@ -1372,51 +1372,14 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     if(!frames || !flags)
         return E_POINTER;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    if(This->stream->getbuf_last){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    capture_resample(This);
-
-    if(This->stream->held_frames < This->stream->period_frames){
-        *frames = 0;
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_S_BUFFER_EMPTY;
-    }
-
-    *flags = 0;
-
-    chunk_frames = This->stream->bufsize_frames - This->stream->lcl_offs_frames;
-    if(chunk_frames < This->stream->period_frames){
-        chunk_bytes = chunk_frames * This->stream->fmt->nBlockAlign;
-        if(!This->stream->tmp_buffer){
-            This->stream->tmp_buffer_size = This->stream->period_frames * This->stream->fmt->nBlockAlign;
-            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer, 0,
-                                    &This->stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE);
-        }
-        *data = This->stream->tmp_buffer;
-        memcpy(*data, This->stream->local_buffer + This->stream->lcl_offs_frames * This->stream->fmt->nBlockAlign, chunk_bytes);
-        memcpy((*data) + chunk_bytes, This->stream->local_buffer, This->stream->period_frames * This->stream->fmt->nBlockAlign - chunk_bytes);
-    }else
-        *data = This->stream->local_buffer + This->stream->lcl_offs_frames * This->stream->fmt->nBlockAlign;
-
-    This->stream->getbuf_last = *frames = This->stream->period_frames;
-
-    if(devpos)
-        *devpos = This->stream->written_frames;
-    if(qpcpos){ /* fixme: qpc of recording time */
-        LARGE_INTEGER stamp, freq;
-        QueryPerformanceCounter(&stamp);
-        QueryPerformanceFrequency(&freq);
-        *qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
-    }
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    params.data = data;
+    params.frames = frames;
+    params.flags = flags;
+    params.devpos = devpos;
+    params.qpcpos = qpcpos;
+    UNIX_CALL(get_capture_buffer, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(

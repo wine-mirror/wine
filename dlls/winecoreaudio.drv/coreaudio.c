@@ -1402,6 +1402,61 @@ static NTSTATUS release_render_buffer(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_capture_buffer(void *args)
+{
+    struct get_capture_buffer_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+    UINT32 chunk_bytes, chunk_frames;
+    LARGE_INTEGER stamp, freq;
+
+    OSSpinLockLock(&stream->lock);
+
+    if(stream->getbuf_last){
+        params->result = AUDCLNT_E_OUT_OF_ORDER;
+        goto end;
+    }
+
+    capture_resample(stream);
+
+    *params->frames = 0;
+
+    if(stream->held_frames < stream->period_frames){
+        params->result = AUDCLNT_S_BUFFER_EMPTY;
+        goto end;
+    }
+
+    *params->flags = 0;
+    chunk_frames = stream->bufsize_frames - stream->lcl_offs_frames;
+    if(chunk_frames < stream->period_frames){
+        chunk_bytes = chunk_frames * stream->fmt->nBlockAlign;
+        if(!stream->tmp_buffer){
+            stream->tmp_buffer_size = stream->period_frames * stream->fmt->nBlockAlign;
+            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0,
+                                    &stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE);
+        }
+        *params->data = stream->tmp_buffer;
+        memcpy(*params->data, stream->local_buffer + stream->lcl_offs_frames * stream->fmt->nBlockAlign,
+               chunk_bytes);
+        memcpy(*params->data + chunk_bytes, stream->local_buffer,
+               stream->period_frames * stream->fmt->nBlockAlign - chunk_bytes);
+    }else
+        *params->data = stream->local_buffer + stream->lcl_offs_frames * stream->fmt->nBlockAlign;
+
+    stream->getbuf_last = *params->frames = stream->period_frames;
+
+    if(params->devpos)
+        *params->devpos = stream->written_frames;
+    if(params->qpcpos){ /* fixme: qpc of recording time */
+        NtQueryPerformanceCounter(&stamp, &freq);
+        *params->qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
+    params->result = S_OK;
+
+end:
+    OSSpinLockUnlock(&stream->lock);
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1412,6 +1467,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     reset,
     get_render_buffer,
     release_render_buffer,
+    get_capture_buffer,
     get_mix_format,
     is_format_supported,
     get_buffer_size,
