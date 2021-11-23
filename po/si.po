@@ -13362,6 +13362,16 @@ msgstr ""
 "  /S  මේ ෆෝල්ඩරය හා යට ෆෝල්ඩර් වල ඇතුලේ ගැලපෙන ගොනු සකසනවා.\n"
 "  /D  ෆෝල්ඩර් උත් සකසනවා.\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "අවලංගු පණිවිඩය.\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "ප්‍රතිසම (&L)"

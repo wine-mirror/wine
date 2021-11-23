@@ -13074,6 +13074,16 @@ msgstr ""
 "  /S  處理在目前資料夾和所有子資料夾中的匹配檔案。\n"
 "  /D  同樣處理資料夾。\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "無效的訊息。\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "類比時鐘(&L)"

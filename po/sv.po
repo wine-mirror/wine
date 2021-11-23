@@ -13743,6 +13743,16 @@ msgstr ""
 "  /S  Behandlar matchande filer i aktuell mapp och alla undermappar.\n"
 "  /D  Behandlar även mappar.\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "Ogiltigt meddelande.\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "Ana&log"

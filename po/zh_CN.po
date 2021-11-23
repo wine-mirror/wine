@@ -13242,6 +13242,16 @@ msgstr ""
 "  /S  处理当前目录和其所有子目录下的文件。\n"
 "  /D  同时也处理目录的属性。\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "无效消息。\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "模拟时钟(&L)"

@@ -16,12 +16,77 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windows.h>
+#include <stdlib.h>
+#include "resource.h"
+
 #include "wine/debug.h"
 
-#include "wincon.h"
-#include "stdlib.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(chcp);
+
+static void output_writeconsole(const WCHAR *str, DWORD wlen)
+{
+    DWORD count, ret;
+
+    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, wlen, &count, NULL);
+    if (!ret)
+    {
+        DWORD len;
+        char  *msgA;
+
+        /* On Windows WriteConsoleW() fails if the output is redirected. So fall
+         * back to WriteFile(), assuming the console encoding is still the right
+         * one in that case.
+         */
+        len = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, NULL, 0, NULL, NULL);
+        msgA = malloc(len);
+
+        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, msgA, len, NULL, NULL);
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
+        free(msgA);
+    }
+}
+
+static void output_formatstring(const WCHAR *fmt, va_list va_args)
+{
+    WCHAR *str;
+    DWORD len;
+
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         fmt, 0, 0, (WCHAR *)&str, 0, &va_args);
+    if (!len && GetLastError() != ERROR_NO_WORK_DONE)
+    {
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        return;
+    }
+    output_writeconsole(str, len);
+    LocalFree(str);
+}
+
+static void WINAPIV output_message(unsigned int id, ...)
+{
+    WCHAR *fmt = NULL;
+    int len;
+    va_list va_args;
+
+    if (!(len = LoadStringW(GetModuleHandleW(NULL), id, (WCHAR *)&fmt, 0)))
+    {
+        WINE_FIXME("LoadString failed with %d\n", GetLastError());
+        return;
+    }
+
+    len++;
+    fmt = malloc(len * sizeof(WCHAR));
+    if (!fmt) return;
+
+    LoadStringW(GetModuleHandleW(NULL), id, fmt, len);
+
+    va_start(va_args, id);
+    output_formatstring(fmt, va_args);
+    va_end(va_args);
+
+    free(fmt);
+}
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
@@ -29,7 +94,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     if (argc == 1)
     {
-        printf("Active code page: %d\n", GetConsoleCP());
+        output_message(STRING_ACTIVE_CODE_PAGE, GetConsoleCP());
         return 0;
     }
     else if (argc == 2)
@@ -39,7 +104,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
         if (!success)
         {
-            printf("Invalid code page\n");
+            output_message(STRING_INVALID_CODE_PAGE);
         }
         return !success;
     }

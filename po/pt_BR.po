@@ -13270,6 +13270,16 @@ msgstr ""
 "  /S  Processa os arquivos correspondentes na pasta atual e  nas subpastas.\n"
 "  /D  Processa também as pastas.\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "Mensagem inválida.\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "&Analógico"

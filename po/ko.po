@@ -13176,6 +13176,16 @@ msgstr ""
 "  /S  현재 폴더와 모든 하위 폴더에서 일치하는 파일을 처리합니다.\n"
 "  /D  폴더를 처리합니다.\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "잘못된 메시지입니다.\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "아날로그(&L)"

@@ -13898,6 +13898,16 @@ msgstr ""
 "مطابقة السمات لهذا المجلد و مجلداته الفرعية.  /S  \n"
 "تحسين الإجراءات مع المجلدات.  /D  \n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "رسالة غير سليمة.\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "تما&ثلية"

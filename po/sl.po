@@ -14031,6 +14031,16 @@ msgstr ""
 "  /S  Obdela ujemajoče se datoteke v trenutni mapi in vseh podmapah.\n"
 "  /D  Obdela tudi mape.\n"
 
+#: programs/chcp.com/chcp.rc:28
+msgid "Active code page: %1!u!\n"
+msgstr ""
+
+#: programs/chcp.com/chcp.rc:29
+#, fuzzy
+#| msgid "Invalid message.\n"
+msgid "Invalid code page\n"
+msgstr "Neveljavno sporočilo.\n"
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr "Ana&logna ura"
