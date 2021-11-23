@@ -16460,6 +16460,17 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
+if test "x$ac_cv_lib_soname_netapi" != xyes
+then :
+  case "x$with_netapi" in
+  x)   as_fn_append wine_notices "|libnetapi not found, Samba NetAPI won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libnetapi not found, Samba NetAPI won't be supported.
+This is an error since --with-netapi was requested." "$LINENO" 5 ;;
+esac
+enable_netapi=${enable_netapi:-no}
+fi
+
 
 if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$enable_wineoss_drv$enable_wineandroid_drv" = xnonononono -a \
         "x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
