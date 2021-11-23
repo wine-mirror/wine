@@ -1387,8 +1387,8 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
     while (range_count--)
     {
         range = &ranges[range_count];
-        GL_EXTCALL(glBufferSubData(bo_gl->binding,
-                range->offset, range->size, (BYTE *)data + range->offset - data_offset));
+        GL_EXTCALL(glBufferSubData(bo_gl->binding, bo_gl->b.buffer_offset + range->offset,
+                range->size, (BYTE *)data + range->offset - data_offset));
     }
     wined3d_context_gl_reference_bo(context_gl, bo_gl);
     checkGLcall("buffer upload");
