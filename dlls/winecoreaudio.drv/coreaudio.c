@@ -1237,11 +1237,31 @@ static NTSTATUS get_current_padding(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS start(void *args)
+{
+    struct start_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    OSSpinLockLock(&stream->lock);
+
+    if(stream->playing)
+        params->result = AUDCLNT_E_NOT_STOPPED;
+    else{
+        stream->playing = TRUE;
+        params->result = S_OK;
+    }
+
+    OSSpinLockUnlock(&stream->lock);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
     create_stream,
     release_stream,
+    start,
     get_mix_format,
     is_format_supported,
     get_buffer_size,

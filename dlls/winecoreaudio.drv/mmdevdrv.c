@@ -996,38 +996,31 @@ void CALLBACK ca_period_cb(void *user, BOOLEAN timer)
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct start_params params;
 
     TRACE("(%p)\n", This);
 
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    if(This->stream->playing){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_NOT_STOPPED;
-    }
-
-    if((This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !This->event){
-        OSSpinLockUnlock(&This->stream->lock);
+    if((This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !This->event)
         return AUDCLNT_E_EVENTHANDLE_NOT_SET;
-    }
 
-    if(This->event && !This->timer)
-        if(!CreateTimerQueueTimer(&This->timer, g_timer_q, ca_period_cb,
-                This, 0, This->period_ms, WT_EXECUTEINTIMERTHREAD)){
-            This->timer = NULL;
-            OSSpinLockUnlock(&This->stream->lock);
-            WARN("Unable to create timer: %u\n", GetLastError());
-            return E_OUTOFMEMORY;
+    params.stream = This->stream;
+    UNIX_CALL(start, &params);
+
+    if(SUCCEEDED(params.result)){
+        if(This->event && !This->timer){
+            if(!CreateTimerQueueTimer(&This->timer, g_timer_q, ca_period_cb, This, 0,
+                                      This->period_ms, WT_EXECUTEINTIMERTHREAD)){
+                This->timer = NULL;
+                IAudioClient3_Stop(iface);
+                WARN("Unable to create timer: %u\n", GetLastError());
+                return E_OUTOFMEMORY;
+            }
         }
-
-    This->stream->playing = TRUE;
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    }
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
