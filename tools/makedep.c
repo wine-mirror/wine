@@ -2015,9 +2015,8 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
     struct strarray all_libs = empty_strarray;
     unsigned int i, j;
 
-    if (make->native_unix_lib && strcmp( make->unixlib, "ntdll.so" )) strarray_add( &all_libs, "-lntdll" );
+    if (strcmp( make->unixlib, "ntdll.so" )) strarray_add( &all_libs, "-lntdll" );
     strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-    strarray_addall( &all_libs, libs );
 
     for (i = 0; i < all_libs.count; i++)
     {
@@ -2025,21 +2024,12 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
 
         if (!strncmp( all_libs.str[i], "-l", 2 ))
         {
-            const char *name = all_libs.str[i] + 2;
-
             for (j = 0; j < subdirs.count; j++)
             {
                 if (make == submakes[j]) continue;
-                if ((lib = get_static_lib( submakes[j], name ))) break;
+                if ((lib = get_native_unix_lib( submakes[j], all_libs.str[i] + 2 ))) break;
             }
-            if (!lib && make->native_unix_lib)
-                for (j = 0; j < subdirs.count; j++)
-                {
-                    if (make == submakes[j]) continue;
-                    if ((lib = get_native_unix_lib( submakes[j], name ))) break;
-                }
         }
-
         if (lib)
         {
             strarray_add( deps, lib );
@@ -2047,6 +2037,8 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
         }
         else strarray_add( &ret, all_libs.str[i] );
     }
+
+    strarray_addall( &ret, libs );
     return ret;
 }
 
@@ -3145,6 +3137,12 @@ static void output_module( struct makefile *make )
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 1, make->is_cross ));
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, 0, make->is_cross ));
 
+    if (!make->use_msvcrt)
+    {
+        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+        strarray_addall( &all_libs, libs );
+    }
+
     if (make->is_cross)
     {
         if (delay_load_flag)
@@ -3161,7 +3159,6 @@ static void output_module( struct makefile *make )
     }
     else if (*dll_ext)
     {
-        if (!make->use_msvcrt) strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
         for (i = 0; i < make->delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-Wl,-delayload,%s%s", make->delayimports.str[i],
                                               strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
@@ -3172,7 +3169,6 @@ static void output_module( struct makefile *make )
     }
     else
     {
-        strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
         strarray_add( &make->all_targets, make->module );
         add_install_rule( make, make->module, make->module,
                           strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
@@ -3316,9 +3312,10 @@ static void output_unix_lib( struct makefile *make )
         if (spec_file) strarray_add( &unix_deps, spec_file );
 
         strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 0 ));
+        strarray_addall( &unix_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+        strarray_addall( &unix_libs, libs );
     }
-
-    strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
+    else unix_libs = add_unix_libraries( make, &unix_deps );
 
     strarray_add( &make->all_targets, make->unixlib );
     add_install_rule( make, make->module, make->unixlib, strmake( "p%s/%s", so_dir, make->unixlib ));
