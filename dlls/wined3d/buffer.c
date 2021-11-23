@@ -1412,8 +1412,8 @@ static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, str
     while (range_count--)
     {
         range = &ranges[range_count];
-        GL_EXTCALL(glGetBufferSubData(bo_gl->binding,
-                range->offset, range->size, (BYTE *)data + range->offset - data_offset));
+        GL_EXTCALL(glGetBufferSubData(bo_gl->binding, bo_gl->b.buffer_offset + range->offset,
+                range->size, (BYTE *)data + range->offset - data_offset));
     }
     checkGLcall("buffer download");
 }
