@@ -1256,12 +1256,32 @@ static NTSTATUS start(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS stop(void *args)
+{
+    struct stop_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    OSSpinLockLock(&stream->lock);
+
+    if(!stream->playing)
+        params->result = S_FALSE;
+    else{
+        stream->playing = FALSE;
+        params->result = S_OK;
+    }
+
+    OSSpinLockUnlock(&stream->lock);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
     create_stream,
     release_stream,
     start,
+    stop,
     get_mix_format,
     is_format_supported,
     get_buffer_size,

@@ -1026,24 +1026,16 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct stop_params params;
 
     TRACE("(%p)\n", This);
 
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    if(!This->stream->playing){
-        OSSpinLockUnlock(&This->stream->lock);
-        return S_FALSE;
-    }
-
-    This->stream->playing = FALSE;
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    UNIX_CALL(stop, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
