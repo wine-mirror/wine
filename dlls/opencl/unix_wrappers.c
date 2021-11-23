@@ -26,55 +26,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
-struct program_callback
-{
-    void (WINAPI *pfn_notify)(cl_program program, void *user_data);
-    void *user_data;
-};
-
-static void CL_CALLBACK program_callback_wrapper(cl_program program, void *user_data)
-{
-    struct program_callback *callback = user_data;
-    TRACE("(%p, %p)\n", program, user_data);
-    callback->pfn_notify(program, callback->user_data);
-    free(callback);
-}
-
 cl_int WINAPI wrap_clBuildProgram( cl_program program, cl_uint num_devices,
         const cl_device_id *device_list, const char *options,
         void (WINAPI *pfn_notify)(cl_program program, void *user_data),
         void *user_data )
 {
-    if (pfn_notify)
-    {
-        struct program_callback *callback;
-        cl_int ret;
-
-        if (!(callback = malloc(sizeof(*callback))))
-            return CL_OUT_OF_HOST_MEMORY;
-        callback->pfn_notify = pfn_notify;
-        callback->user_data = user_data;
-        if ((ret = clBuildProgram( program, num_devices, device_list, options,
-                program_callback_wrapper, callback )) != CL_SUCCESS)
-            free( callback );
-        return ret;
-    }
-
+    if (pfn_notify) FIXME( "notify callback not supported\n" );
     return clBuildProgram( program, num_devices, device_list, options, NULL, NULL );
-}
-
-struct context_callback
-{
-    void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data);
-    void *user_data;
-};
-
-static void CL_CALLBACK context_callback_wrapper(const char *errinfo,
-        const void *private_info, size_t cb, void *user_data)
-{
-    struct context_callback *callback = user_data;
-    TRACE("(%s, %p, %zu, %p)\n", debugstr_a(errinfo), private_info, cb, user_data);
-    callback->pfn_notify(errinfo, private_info, cb, callback->user_data);
 }
 
 cl_context WINAPI wrap_clCreateContext( const cl_context_properties *properties,
@@ -82,24 +40,7 @@ cl_context WINAPI wrap_clCreateContext( const cl_context_properties *properties,
         void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
         void *user_data, cl_int *errcode_ret )
 {
-    if (pfn_notify)
-    {
-        struct context_callback *callback;
-        cl_context ret;
-
-        /* FIXME: the callback structure is currently leaked */
-        if (!(callback = malloc(sizeof(*callback))))
-        {
-            *errcode_ret = CL_OUT_OF_HOST_MEMORY;
-            return NULL;
-        }
-        callback->pfn_notify = pfn_notify;
-        callback->user_data = user_data;
-        if (!(ret = clCreateContext( properties, num_devices, devices, context_callback_wrapper, callback, errcode_ret )))
-            free( callback );
-        return ret;
-    }
-
+    if (pfn_notify) FIXME( "notify callback not supported\n" );
     return clCreateContext( properties, num_devices, devices, NULL, NULL, errcode_ret );
 }
 
@@ -107,24 +48,7 @@ cl_context WINAPI wrap_clCreateContextFromType( const cl_context_properties *pro
         void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
         void *user_data, cl_int *errcode_ret )
 {
-    if (pfn_notify)
-    {
-        struct context_callback *callback;
-        cl_context ret;
-
-        /* FIXME: the callback structure is currently leaked */
-        if (!(callback = malloc(sizeof(*callback))))
-        {
-            *errcode_ret = CL_OUT_OF_HOST_MEMORY;
-            return NULL;
-        }
-        callback->pfn_notify = pfn_notify;
-        callback->user_data = user_data;
-        if (!(ret = clCreateContextFromType( properties, device_type, context_callback_wrapper, callback, errcode_ret )))
-            free( callback );
-        return ret;
-    }
-
+    if (pfn_notify) FIXME( "notify callback not supported\n" );
     return clCreateContextFromType( properties, device_type, NULL, NULL, errcode_ret );
 }
 
