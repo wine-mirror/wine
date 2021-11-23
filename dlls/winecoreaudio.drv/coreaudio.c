@@ -1275,6 +1275,34 @@ static NTSTATUS stop(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS reset(void *args)
+{
+    struct reset_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    OSSpinLockLock(&stream->lock);
+
+    if(stream->playing)
+        params->result = AUDCLNT_E_NOT_STOPPED;
+    else if(stream->getbuf_last)
+        params->result = AUDCLNT_E_BUFFER_OPERATION_PENDING;
+    else{
+        if(stream->flow == eRender)
+            stream->written_frames = 0;
+        else
+            stream->written_frames += stream->held_frames;
+        stream->held_frames = 0;
+        stream->lcl_offs_frames = 0;
+        stream->wri_offs_frames = 0;
+        stream->cap_offs_frames = 0;
+        stream->cap_held_frames = 0;
+        params->result = S_OK;
+    }
+
+    OSSpinLockUnlock(&stream->lock);
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1282,6 +1310,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     start,
     stop,
+    reset,
     get_mix_format,
     is_format_supported,
     get_buffer_size,

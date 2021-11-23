@@ -1041,39 +1041,16 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct reset_params params;
 
     TRACE("(%p)\n", This);
 
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    if(This->stream->playing){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_NOT_STOPPED;
-    }
-
-    if(This->stream->getbuf_last){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_BUFFER_OPERATION_PENDING;
-    }
-
-    if(This->dataflow == eRender){
-        This->stream->written_frames = 0;
-    }else{
-        This->stream->written_frames += This->stream->held_frames;
-    }
-
-    This->stream->held_frames = 0;
-    This->stream->lcl_offs_frames = 0;
-    This->stream->wri_offs_frames = 0;
-    This->stream->cap_offs_frames = 0;
-    This->stream->cap_held_frames = 0;
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    UNIX_CALL(reset, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,

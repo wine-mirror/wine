@@ -87,6 +87,12 @@ struct stop_params
     HRESULT result;
 };
 
+struct reset_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+};
+
 struct get_mix_format_params
 {
     EDataFlow flow;
@@ -134,6 +140,7 @@ enum unix_funcs
     unix_release_stream,
     unix_start,
     unix_stop,
+    unix_reset,
     unix_get_mix_format,
     unix_is_format_supported,
     unix_get_buffer_size,
