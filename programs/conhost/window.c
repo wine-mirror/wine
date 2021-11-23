@@ -646,7 +646,7 @@ static HFONT select_font_config( struct console_config *config, unsigned int cp,
     lstrcpyW( config->face_name, lf->lfFaceName );
 
     /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
-    if (GetCPInfo( cp, &cpinfo ) && cpinfo.MaxCharSize > 1)
+    if (GetCPInfo( cp, &cpinfo ) && cpinfo.MaxCharSize == 2)
         config->cell_width  = tm.tmMaxCharWidth;
 
     return font;
@@ -713,7 +713,7 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
     memcpy( font_info->face_name, logfont->lfFaceName, font_info->face_len * sizeof(WCHAR) );
 
     /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
-    if (GetCPInfo( console->output_cp, &cpinfo ) && cpinfo.MaxCharSize > 1)
+    if (GetCPInfo( console->output_cp, &cpinfo ) && cpinfo.MaxCharSize == 2)
         font_info->width  = tm.tmMaxCharWidth;
 
     if (console->window->font) DeleteObject( console->window->font );
