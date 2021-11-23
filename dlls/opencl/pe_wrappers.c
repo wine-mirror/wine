@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
-const struct opencl_funcs *opencl_funcs = NULL;
+unixlib_handle_t opencl_handle = 0;
 
 static cl_int filter_extensions( const char *unix_exts, SIZE_T size, char *win_exts, size_t *ret_size )
 {
@@ -91,14 +91,18 @@ cl_int WINAPI clGetPlatformInfo( cl_platform_id platform, cl_platform_info name,
     {
         size_t unix_size;
         char *unix_exts;
+        struct clGetPlatformInfo_params params = { platform, name, 0, NULL, &unix_size };
 
-        ret = opencl_funcs->pclGetPlatformInfo( platform, name, 0, NULL, &unix_size );
+        ret = OPENCL_CALL( clGetPlatformInfo, &params );
         if (ret != CL_SUCCESS)
             return ret;
 
         if (!(unix_exts = malloc( unix_size )))
             return CL_OUT_OF_HOST_MEMORY;
-        ret = opencl_funcs->pclGetPlatformInfo( platform, name, unix_size, unix_exts, NULL );
+        params.param_value_size = unix_size;
+        params.param_value = unix_exts;
+        params.param_value_size_ret = NULL;
+        ret = OPENCL_CALL( clGetPlatformInfo, &params );
         if (ret != CL_SUCCESS)
         {
             free( unix_exts );
@@ -111,7 +115,8 @@ cl_int WINAPI clGetPlatformInfo( cl_platform_id platform, cl_platform_info name,
     }
     else
     {
-        ret = opencl_funcs->pclGetPlatformInfo( platform, name, size, value, ret_size );
+        struct clGetPlatformInfo_params params = { platform, name, size, value, ret_size };
+        ret = OPENCL_CALL( clGetPlatformInfo, &params );
     }
 
     return ret;
@@ -129,14 +134,18 @@ cl_int WINAPI clGetDeviceInfo( cl_device_id device, cl_device_info name,
     {
         size_t unix_size;
         char *unix_exts;
+        struct clGetDeviceInfo_params params = { device, name, 0, NULL, &unix_size };
 
-        ret = opencl_funcs->pclGetDeviceInfo( device, name, 0, NULL, &unix_size );
+        ret = OPENCL_CALL( clGetDeviceInfo, &params );
         if (ret != CL_SUCCESS)
             return ret;
 
         if (!(unix_exts = malloc( unix_size )))
             return CL_OUT_OF_HOST_MEMORY;
-        ret = opencl_funcs->pclGetDeviceInfo( device, name, unix_size, unix_exts, NULL );
+        params.param_value_size = unix_size;
+        params.param_value = unix_exts;
+        params.param_value_size_ret = NULL;
+        ret = OPENCL_CALL( clGetDeviceInfo, &params );
         if (ret != CL_SUCCESS)
         {
             free( unix_exts );
@@ -149,7 +158,8 @@ cl_int WINAPI clGetDeviceInfo( cl_device_id device, cl_device_info name,
     }
     else
     {
-        ret = opencl_funcs->pclGetDeviceInfo( device, name, size, value, ret_size );
+        struct clGetDeviceInfo_params params = { device, name, size, value, ret_size };
+        ret = OPENCL_CALL( clGetDeviceInfo, &params );
     }
 
     /* Filter out the CL_EXEC_NATIVE_KERNEL flag */
@@ -197,7 +207,8 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls( instance );
-        return !__wine_init_unix_lib( instance, reason, NULL, &opencl_funcs );
+        return !NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                                      &opencl_handle, sizeof(opencl_handle), NULL );
     }
     return TRUE;
 }

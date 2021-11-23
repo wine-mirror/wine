@@ -27,7 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-
+#include "wine/unixlib.h"
 #include "wine/debug.h"
 
 #define CL_SILENCE_DEPRECATION
@@ -44,44 +44,13 @@
 
 #include "unixlib.h"
 
-cl_int WINAPI wrap_clBuildProgram( cl_program program, cl_uint num_devices,
-        const cl_device_id *device_list, const char *options,
-        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
-        void *user_data ) DECLSPEC_HIDDEN;
-
-cl_context WINAPI wrap_clCreateContext( const cl_context_properties *properties,
-        cl_uint num_devices, const cl_device_id *devices,
-        void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
-        void *user_data, cl_int *errcode_ret ) DECLSPEC_HIDDEN;
-
-cl_context WINAPI wrap_clCreateContextFromType( const cl_context_properties *properties, cl_device_type device_type,
-        void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
-        void *user_data, cl_int *errcode_ret ) DECLSPEC_HIDDEN;
-
-cl_int WINAPI wrap_clEnqueueNativeKernel( cl_command_queue command_queue,
-        void (WINAPI *user_func)(void *),
-        void *args, size_t cb_args, cl_uint num_mem_objects, const cl_mem *mem_list, const void **args_mem_loc,
-        cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event ) DECLSPEC_HIDDEN;
-
-cl_int WINAPI wrap_clSetEventCallback( cl_event event, cl_int type,
-        void (WINAPI *pfn_notify)(cl_event, cl_int, void *),
-        void *user_data) DECLSPEC_HIDDEN;
-
-cl_int WINAPI wrap_clSetMemObjectDestructorCallback(cl_mem memobj,
-        void (WINAPI *pfn_notify)(cl_mem, void *),
-        void *user_data) DECLSPEC_HIDDEN;
-
-cl_int WINAPI wrap_clCompileProgram( cl_program program, cl_uint num_devices,
-        const cl_device_id *device_list, const char *options, cl_uint num_input_headers,
-        const cl_program *input_headers, const char **header_include_names,
-        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
-        void *user_data ) DECLSPEC_HIDDEN;
-
-cl_program WINAPI wrap_clLinkProgram( cl_context context, cl_uint num_devices, const cl_device_id *device_list,
-        const char *options, cl_uint num_input_programs, const cl_program *input_programs,
-        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
-        void *user_data, cl_int *errcode_ret ) DECLSPEC_HIDDEN;
-
-extern const struct opencl_funcs funcs;
+NTSTATUS wrap_clBuildProgram( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clCreateContext( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clCreateContextFromType( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clEnqueueNativeKernel( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clSetEventCallback( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clSetMemObjectDestructorCallback( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clCompileProgram( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clLinkProgram( void *args ) DECLSPEC_HIDDEN;
 
 #endif

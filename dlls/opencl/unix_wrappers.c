@@ -26,81 +26,65 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
-cl_int WINAPI wrap_clBuildProgram( cl_program program, cl_uint num_devices,
-        const cl_device_id *device_list, const char *options,
-        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
-        void *user_data )
+NTSTATUS wrap_clBuildProgram( void *args )
 {
-    if (pfn_notify) FIXME( "notify callback not supported\n" );
-    return clBuildProgram( program, num_devices, device_list, options, NULL, NULL );
+    struct clBuildProgram_params *params = args;
+
+    if (params->pfn_notify) FIXME( "notify callback not supported\n" );
+    return clBuildProgram( params->program, params->num_devices, params->device_list,
+                           params->options, NULL, NULL );
 }
 
-cl_context WINAPI wrap_clCreateContext( const cl_context_properties *properties,
-        cl_uint num_devices, const cl_device_id *devices,
-        void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
-        void *user_data, cl_int *errcode_ret )
+NTSTATUS wrap_clCreateContext( void *args )
 {
-    if (pfn_notify) FIXME( "notify callback not supported\n" );
-    return clCreateContext( properties, num_devices, devices, NULL, NULL, errcode_ret );
+    struct clCreateContext_params *params = args;
+
+    if (params->pfn_notify) FIXME( "notify callback not supported\n" );
+    *params->__retval = clCreateContext( params->properties, params->num_devices, params->devices,
+                                         NULL, NULL, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-cl_context WINAPI wrap_clCreateContextFromType( const cl_context_properties *properties, cl_device_type device_type,
-        void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
-        void *user_data, cl_int *errcode_ret )
+NTSTATUS wrap_clCreateContextFromType( void *args )
 {
-    if (pfn_notify) FIXME( "notify callback not supported\n" );
-    return clCreateContextFromType( properties, device_type, NULL, NULL, errcode_ret );
+    struct clCreateContextFromType_params *params = args;
+
+    if (params->pfn_notify) FIXME( "notify callback not supported\n" );
+    *params->__retval = clCreateContextFromType( params->properties, params->device_type,
+                                                 NULL, NULL, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-cl_int WINAPI wrap_clEnqueueNativeKernel( cl_command_queue command_queue,
-        void (WINAPI *user_func)(void *),
-        void *args, size_t cb_args, cl_uint num_mem_objects, const cl_mem *mem_list, const void **args_mem_loc,
-        cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event )
+NTSTATUS wrap_clEnqueueNativeKernel( void *args )
 {
     /* we have no clear way to wrap user_func */
     FIXME( "not implemented\n" );
     return CL_INVALID_OPERATION;
 }
 
-cl_int WINAPI wrap_clSetEventCallback( cl_event event, cl_int type,
-        void (WINAPI *pfn_notify)(cl_event, cl_int, void *),
-        void *user_data)
+NTSTATUS wrap_clSetEventCallback( void *args )
 {
     FIXME( "not yet implemented\n" );
     return CL_INVALID_OPERATION;
 }
 
-cl_int WINAPI wrap_clSetMemObjectDestructorCallback(cl_mem memobj,
-        void (WINAPI *pfn_notify)(cl_mem, void *),
-        void *user_data)
+NTSTATUS wrap_clSetMemObjectDestructorCallback( void *args )
 {
     FIXME( "not yet implemented\n" );
     return CL_INVALID_OPERATION;
 }
 
-cl_int WINAPI wrap_clCompileProgram( cl_program program, cl_uint num_devices,
-        const cl_device_id *device_list, const char *options, cl_uint num_input_headers,
-        const cl_program *input_headers, const char **header_include_names,
-        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
-        void *user_data )
+NTSTATUS wrap_clCompileProgram( void *args )
 {
     FIXME( "not yet implemented\n" );
     return CL_INVALID_OPERATION;
 }
 
-cl_program WINAPI wrap_clLinkProgram( cl_context context, cl_uint num_devices, const cl_device_id *device_list,
-        const char *options, cl_uint num_input_programs, const cl_program *input_programs,
-        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
-        void *user_data, cl_int *errcode_ret )
+NTSTATUS wrap_clLinkProgram( void *args )
 {
-    FIXME( "not yet implemented\n" );
-    *errcode_ret = CL_INVALID_OPERATION;
-    return NULL;
-}
+    struct clLinkProgram_params *params = args;
 
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-    *(const struct opencl_funcs **)ptr_out = &funcs;
+    FIXME( "not yet implemented\n" );
+    *params->errcode_ret = CL_INVALID_OPERATION;
     return STATUS_SUCCESS;
 }

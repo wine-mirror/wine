@@ -7,397 +7,565 @@
 #include "config.h"
 #include "unix_private.h"
 
-static cl_mem WINAPI wrap_clCreateBuffer( cl_context context, cl_mem_flags flags, size_t size, void* host_ptr, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateBuffer( void *args )
 {
-    return clCreateBuffer( context, flags, size, host_ptr, errcode_ret );
+    struct clCreateBuffer_params *params = args;
+
+    *params->__retval = clCreateBuffer( params->context, params->flags, params->size, params->host_ptr, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_command_queue WINAPI wrap_clCreateCommandQueue( cl_context context, cl_device_id device, cl_command_queue_properties properties, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateCommandQueue( void *args )
 {
-    return clCreateCommandQueue( context, device, properties, errcode_ret );
+    struct clCreateCommandQueue_params *params = args;
+
+    *params->__retval = clCreateCommandQueue( params->context, params->device, params->properties, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_mem WINAPI wrap_clCreateImage( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, const cl_image_desc* image_desc, void* host_ptr, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateImage( void *args )
 {
-    return clCreateImage( context, flags, image_format, image_desc, host_ptr, errcode_ret );
+    struct clCreateImage_params *params = args;
+
+    *params->__retval = clCreateImage( params->context, params->flags, params->image_format, params->image_desc, params->host_ptr, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_mem WINAPI wrap_clCreateImage2D( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, size_t image_width, size_t image_height, size_t image_row_pitch, void* host_ptr, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateImage2D( void *args )
 {
-    return clCreateImage2D( context, flags, image_format, image_width, image_height, image_row_pitch, host_ptr, errcode_ret );
+    struct clCreateImage2D_params *params = args;
+
+    *params->__retval = clCreateImage2D( params->context, params->flags, params->image_format, params->image_width, params->image_height, params->image_row_pitch, params->host_ptr, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_mem WINAPI wrap_clCreateImage3D( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, size_t image_width, size_t image_height, size_t image_depth, size_t image_row_pitch, size_t image_slice_pitch, void* host_ptr, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateImage3D( void *args )
 {
-    return clCreateImage3D( context, flags, image_format, image_width, image_height, image_depth, image_row_pitch, image_slice_pitch, host_ptr, errcode_ret );
+    struct clCreateImage3D_params *params = args;
+
+    *params->__retval = clCreateImage3D( params->context, params->flags, params->image_format, params->image_width, params->image_height, params->image_depth, params->image_row_pitch, params->image_slice_pitch, params->host_ptr, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_kernel WINAPI wrap_clCreateKernel( cl_program program, const char* kernel_name, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateKernel( void *args )
 {
-    return clCreateKernel( program, kernel_name, errcode_ret );
+    struct clCreateKernel_params *params = args;
+
+    *params->__retval = clCreateKernel( params->program, params->kernel_name, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_int WINAPI wrap_clCreateKernelsInProgram( cl_program program, cl_uint num_kernels, cl_kernel* kernels, cl_uint* num_kernels_ret )
+static NTSTATUS wrap_clCreateKernelsInProgram( void *args )
 {
-    return clCreateKernelsInProgram( program, num_kernels, kernels, num_kernels_ret );
+    struct clCreateKernelsInProgram_params *params = args;
+
+    return clCreateKernelsInProgram( params->program, params->num_kernels, params->kernels, params->num_kernels_ret );
 }
 
-static cl_program WINAPI wrap_clCreateProgramWithBinary( cl_context context, cl_uint num_devices, const cl_device_id* device_list, const size_t* lengths, const unsigned char** binaries, cl_int* binary_status, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateProgramWithBinary( void *args )
 {
-    return clCreateProgramWithBinary( context, num_devices, device_list, lengths, binaries, binary_status, errcode_ret );
+    struct clCreateProgramWithBinary_params *params = args;
+
+    *params->__retval = clCreateProgramWithBinary( params->context, params->num_devices, params->device_list, params->lengths, params->binaries, params->binary_status, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_program WINAPI wrap_clCreateProgramWithBuiltInKernels( cl_context context, cl_uint num_devices, const cl_device_id* device_list, const char* kernel_names, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateProgramWithBuiltInKernels( void *args )
 {
-    return clCreateProgramWithBuiltInKernels( context, num_devices, device_list, kernel_names, errcode_ret );
+    struct clCreateProgramWithBuiltInKernels_params *params = args;
+
+    *params->__retval = clCreateProgramWithBuiltInKernels( params->context, params->num_devices, params->device_list, params->kernel_names, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_program WINAPI wrap_clCreateProgramWithSource( cl_context context, cl_uint count, const char** strings, const size_t* lengths, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateProgramWithSource( void *args )
 {
-    return clCreateProgramWithSource( context, count, strings, lengths, errcode_ret );
+    struct clCreateProgramWithSource_params *params = args;
+
+    *params->__retval = clCreateProgramWithSource( params->context, params->count, params->strings, params->lengths, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_sampler WINAPI wrap_clCreateSampler( cl_context context, cl_bool normalized_coords, cl_addressing_mode addressing_mode, cl_filter_mode filter_mode, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateSampler( void *args )
 {
-    return clCreateSampler( context, normalized_coords, addressing_mode, filter_mode, errcode_ret );
+    struct clCreateSampler_params *params = args;
+
+    *params->__retval = clCreateSampler( params->context, params->normalized_coords, params->addressing_mode, params->filter_mode, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_mem WINAPI wrap_clCreateSubBuffer( cl_mem buffer, cl_mem_flags flags, cl_buffer_create_type buffer_create_type, const void* buffer_create_info, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateSubBuffer( void *args )
 {
-    return clCreateSubBuffer( buffer, flags, buffer_create_type, buffer_create_info, errcode_ret );
+    struct clCreateSubBuffer_params *params = args;
+
+    *params->__retval = clCreateSubBuffer( params->buffer, params->flags, params->buffer_create_type, params->buffer_create_info, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_int WINAPI wrap_clCreateSubDevices( cl_device_id in_device, const cl_device_partition_property* properties, cl_uint num_devices, cl_device_id* out_devices, cl_uint* num_devices_ret )
+static NTSTATUS wrap_clCreateSubDevices( void *args )
 {
-    return clCreateSubDevices( in_device, properties, num_devices, out_devices, num_devices_ret );
+    struct clCreateSubDevices_params *params = args;
+
+    return clCreateSubDevices( params->in_device, params->properties, params->num_devices, params->out_devices, params->num_devices_ret );
 }
 
-static cl_event WINAPI wrap_clCreateUserEvent( cl_context context, cl_int* errcode_ret )
+static NTSTATUS wrap_clCreateUserEvent( void *args )
 {
-    return clCreateUserEvent( context, errcode_ret );
+    struct clCreateUserEvent_params *params = args;
+
+    *params->__retval = clCreateUserEvent( params->context, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_int WINAPI wrap_clEnqueueBarrier( cl_command_queue command_queue )
+static NTSTATUS wrap_clEnqueueBarrier( void *args )
 {
-    return clEnqueueBarrier( command_queue );
+    struct clEnqueueBarrier_params *params = args;
+
+    return clEnqueueBarrier( params->command_queue );
 }
 
-static cl_int WINAPI wrap_clEnqueueBarrierWithWaitList( cl_command_queue command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueBarrierWithWaitList( void *args )
 {
-    return clEnqueueBarrierWithWaitList( command_queue, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueBarrierWithWaitList_params *params = args;
+
+    return clEnqueueBarrierWithWaitList( params->command_queue, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueCopyBuffer( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueCopyBuffer( void *args )
 {
-    return clEnqueueCopyBuffer( command_queue, src_buffer, dst_buffer, src_offset, dst_offset, size, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueCopyBuffer_params *params = args;
+
+    return clEnqueueCopyBuffer( params->command_queue, params->src_buffer, params->dst_buffer, params->src_offset, params->dst_offset, params->size, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueCopyBufferRect( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, const size_t* src_origin, const size_t* dst_origin, const size_t* region, size_t src_row_pitch, size_t src_slice_pitch, size_t dst_row_pitch, size_t dst_slice_pitch, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueCopyBufferRect( void *args )
 {
-    return clEnqueueCopyBufferRect( command_queue, src_buffer, dst_buffer, src_origin, dst_origin, region, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueCopyBufferRect_params *params = args;
+
+    return clEnqueueCopyBufferRect( params->command_queue, params->src_buffer, params->dst_buffer, params->src_origin, params->dst_origin, params->region, params->src_row_pitch, params->src_slice_pitch, params->dst_row_pitch, params->dst_slice_pitch, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueCopyBufferToImage( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_image, size_t src_offset, const size_t* dst_origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueCopyBufferToImage( void *args )
 {
-    return clEnqueueCopyBufferToImage( command_queue, src_buffer, dst_image, src_offset, dst_origin, region, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueCopyBufferToImage_params *params = args;
+
+    return clEnqueueCopyBufferToImage( params->command_queue, params->src_buffer, params->dst_image, params->src_offset, params->dst_origin, params->region, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueCopyImage( cl_command_queue command_queue, cl_mem src_image, cl_mem dst_image, const size_t* src_origin, const size_t* dst_origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueCopyImage( void *args )
 {
-    return clEnqueueCopyImage( command_queue, src_image, dst_image, src_origin, dst_origin, region, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueCopyImage_params *params = args;
+
+    return clEnqueueCopyImage( params->command_queue, params->src_image, params->dst_image, params->src_origin, params->dst_origin, params->region, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueCopyImageToBuffer( cl_command_queue command_queue, cl_mem src_image, cl_mem dst_buffer, const size_t* src_origin, const size_t* region, size_t dst_offset, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueCopyImageToBuffer( void *args )
 {
-    return clEnqueueCopyImageToBuffer( command_queue, src_image, dst_buffer, src_origin, region, dst_offset, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueCopyImageToBuffer_params *params = args;
+
+    return clEnqueueCopyImageToBuffer( params->command_queue, params->src_image, params->dst_buffer, params->src_origin, params->region, params->dst_offset, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueFillBuffer( cl_command_queue command_queue, cl_mem buffer, const void* pattern, size_t pattern_size, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueFillBuffer( void *args )
 {
-    return clEnqueueFillBuffer( command_queue, buffer, pattern, pattern_size, offset, size, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueFillBuffer_params *params = args;
+
+    return clEnqueueFillBuffer( params->command_queue, params->buffer, params->pattern, params->pattern_size, params->offset, params->size, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueFillImage( cl_command_queue command_queue, cl_mem image, const void* fill_color, const size_t* origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueFillImage( void *args )
 {
-    return clEnqueueFillImage( command_queue, image, fill_color, origin, region, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueFillImage_params *params = args;
+
+    return clEnqueueFillImage( params->command_queue, params->image, params->fill_color, params->origin, params->region, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static void* WINAPI wrap_clEnqueueMapBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_map, cl_map_flags map_flags, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event, cl_int* errcode_ret )
+static NTSTATUS wrap_clEnqueueMapBuffer( void *args )
 {
-    return clEnqueueMapBuffer( command_queue, buffer, blocking_map, map_flags, offset, size, num_events_in_wait_list, event_wait_list, event, errcode_ret );
+    struct clEnqueueMapBuffer_params *params = args;
+
+    *params->__retval = clEnqueueMapBuffer( params->command_queue, params->buffer, params->blocking_map, params->map_flags, params->offset, params->size, params->num_events_in_wait_list, params->event_wait_list, params->event, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static void* WINAPI wrap_clEnqueueMapImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_map, cl_map_flags map_flags, const size_t* origin, const size_t* region, size_t* image_row_pitch, size_t* image_slice_pitch, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event, cl_int* errcode_ret )
+static NTSTATUS wrap_clEnqueueMapImage( void *args )
 {
-    return clEnqueueMapImage( command_queue, image, blocking_map, map_flags, origin, region, image_row_pitch, image_slice_pitch, num_events_in_wait_list, event_wait_list, event, errcode_ret );
+    struct clEnqueueMapImage_params *params = args;
+
+    *params->__retval = clEnqueueMapImage( params->command_queue, params->image, params->blocking_map, params->map_flags, params->origin, params->region, params->image_row_pitch, params->image_slice_pitch, params->num_events_in_wait_list, params->event_wait_list, params->event, params->errcode_ret );
+    return STATUS_SUCCESS;
 }
 
-static cl_int WINAPI wrap_clEnqueueMarker( cl_command_queue command_queue, cl_event* event )
+static NTSTATUS wrap_clEnqueueMarker( void *args )
 {
-    return clEnqueueMarker( command_queue, event );
+    struct clEnqueueMarker_params *params = args;
+
+    return clEnqueueMarker( params->command_queue, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueMarkerWithWaitList( cl_command_queue command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueMarkerWithWaitList( void *args )
 {
-    return clEnqueueMarkerWithWaitList( command_queue, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueMarkerWithWaitList_params *params = args;
+
+    return clEnqueueMarkerWithWaitList( params->command_queue, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueMigrateMemObjects( cl_command_queue command_queue, cl_uint num_mem_objects, const cl_mem* mem_objects, cl_mem_migration_flags flags, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueMigrateMemObjects( void *args )
 {
-    return clEnqueueMigrateMemObjects( command_queue, num_mem_objects, mem_objects, flags, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueMigrateMemObjects_params *params = args;
+
+    return clEnqueueMigrateMemObjects( params->command_queue, params->num_mem_objects, params->mem_objects, params->flags, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueNDRangeKernel( cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t* global_work_offset, const size_t* global_work_size, const size_t* local_work_size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueNDRangeKernel( void *args )
 {
-    return clEnqueueNDRangeKernel( command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueNDRangeKernel_params *params = args;
+
+    return clEnqueueNDRangeKernel( params->command_queue, params->kernel, params->work_dim, params->global_work_offset, params->global_work_size, params->local_work_size, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueReadBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_read, size_t offset, size_t size, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueReadBuffer( void *args )
 {
-    return clEnqueueReadBuffer( command_queue, buffer, blocking_read, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueReadBuffer_params *params = args;
+
+    return clEnqueueReadBuffer( params->command_queue, params->buffer, params->blocking_read, params->offset, params->size, params->ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueReadBufferRect( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_read, const size_t* buffer_origin, const size_t* host_origin, const size_t* region, size_t buffer_row_pitch, size_t buffer_slice_pitch, size_t host_row_pitch, size_t host_slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueReadBufferRect( void *args )
 {
-    return clEnqueueReadBufferRect( command_queue, buffer, blocking_read, buffer_origin, host_origin, region, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueReadBufferRect_params *params = args;
+
+    return clEnqueueReadBufferRect( params->command_queue, params->buffer, params->blocking_read, params->buffer_origin, params->host_origin, params->region, params->buffer_row_pitch, params->buffer_slice_pitch, params->host_row_pitch, params->host_slice_pitch, params->ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueReadImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_read, const size_t* origin, const size_t* region, size_t row_pitch, size_t slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueReadImage( void *args )
 {
-    return clEnqueueReadImage( command_queue, image, blocking_read, origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueReadImage_params *params = args;
+
+    return clEnqueueReadImage( params->command_queue, params->image, params->blocking_read, params->origin, params->region, params->row_pitch, params->slice_pitch, params->ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueTask( cl_command_queue command_queue, cl_kernel kernel, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueTask( void *args )
 {
-    return clEnqueueTask( command_queue, kernel, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueTask_params *params = args;
+
+    return clEnqueueTask( params->command_queue, params->kernel, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueUnmapMemObject( cl_command_queue command_queue, cl_mem memobj, void* mapped_ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueUnmapMemObject( void *args )
 {
-    return clEnqueueUnmapMemObject( command_queue, memobj, mapped_ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueUnmapMemObject_params *params = args;
+
+    return clEnqueueUnmapMemObject( params->command_queue, params->memobj, params->mapped_ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueWaitForEvents( cl_command_queue command_queue, cl_uint num_events, const cl_event* event_list )
+static NTSTATUS wrap_clEnqueueWaitForEvents( void *args )
 {
-    return clEnqueueWaitForEvents( command_queue, num_events, event_list );
+    struct clEnqueueWaitForEvents_params *params = args;
+
+    return clEnqueueWaitForEvents( params->command_queue, params->num_events, params->event_list );
 }
 
-static cl_int WINAPI wrap_clEnqueueWriteBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, size_t offset, size_t size, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueWriteBuffer( void *args )
 {
-    return clEnqueueWriteBuffer( command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueWriteBuffer_params *params = args;
+
+    return clEnqueueWriteBuffer( params->command_queue, params->buffer, params->blocking_write, params->offset, params->size, params->ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueWriteBufferRect( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, const size_t* buffer_origin, const size_t* host_origin, const size_t* region, size_t buffer_row_pitch, size_t buffer_slice_pitch, size_t host_row_pitch, size_t host_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueWriteBufferRect( void *args )
 {
-    return clEnqueueWriteBufferRect( command_queue, buffer, blocking_write, buffer_origin, host_origin, region, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueWriteBufferRect_params *params = args;
+
+    return clEnqueueWriteBufferRect( params->command_queue, params->buffer, params->blocking_write, params->buffer_origin, params->host_origin, params->region, params->buffer_row_pitch, params->buffer_slice_pitch, params->host_row_pitch, params->host_slice_pitch, params->ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clEnqueueWriteImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_write, const size_t* origin, const size_t* region, size_t input_row_pitch, size_t input_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+static NTSTATUS wrap_clEnqueueWriteImage( void *args )
 {
-    return clEnqueueWriteImage( command_queue, image, blocking_write, origin, region, input_row_pitch, input_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    struct clEnqueueWriteImage_params *params = args;
+
+    return clEnqueueWriteImage( params->command_queue, params->image, params->blocking_write, params->origin, params->region, params->input_row_pitch, params->input_slice_pitch, params->ptr, params->num_events_in_wait_list, params->event_wait_list, params->event );
 }
 
-static cl_int WINAPI wrap_clFinish( cl_command_queue command_queue )
+static NTSTATUS wrap_clFinish( void *args )
 {
-    return clFinish( command_queue );
+    struct clFinish_params *params = args;
+
+    return clFinish( params->command_queue );
 }
 
-static cl_int WINAPI wrap_clFlush( cl_command_queue command_queue )
+static NTSTATUS wrap_clFlush( void *args )
 {
-    return clFlush( command_queue );
+    struct clFlush_params *params = args;
+
+    return clFlush( params->command_queue );
 }
 
-static cl_int WINAPI wrap_clGetCommandQueueInfo( cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetCommandQueueInfo( void *args )
 {
-    return clGetCommandQueueInfo( command_queue, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetCommandQueueInfo_params *params = args;
+
+    return clGetCommandQueueInfo( params->command_queue, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetContextInfo( cl_context context, cl_context_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetContextInfo( void *args )
 {
-    return clGetContextInfo( context, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetContextInfo_params *params = args;
+
+    return clGetContextInfo( params->context, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetDeviceIDs( cl_platform_id platform, cl_device_type device_type, cl_uint num_entries, cl_device_id* devices, cl_uint* num_devices )
+static NTSTATUS wrap_clGetDeviceIDs( void *args )
 {
-    return clGetDeviceIDs( platform, device_type, num_entries, devices, num_devices );
+    struct clGetDeviceIDs_params *params = args;
+
+    return clGetDeviceIDs( params->platform, params->device_type, params->num_entries, params->devices, params->num_devices );
 }
 
-static cl_int WINAPI wrap_clGetDeviceInfo( cl_device_id device, cl_device_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetDeviceInfo( void *args )
 {
-    return clGetDeviceInfo( device, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetDeviceInfo_params *params = args;
+
+    return clGetDeviceInfo( params->device, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetEventInfo( cl_event event, cl_event_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetEventInfo( void *args )
 {
-    return clGetEventInfo( event, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetEventInfo_params *params = args;
+
+    return clGetEventInfo( params->event, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetEventProfilingInfo( cl_event event, cl_profiling_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetEventProfilingInfo( void *args )
 {
-    return clGetEventProfilingInfo( event, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetEventProfilingInfo_params *params = args;
+
+    return clGetEventProfilingInfo( params->event, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetImageInfo( cl_mem image, cl_image_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetImageInfo( void *args )
 {
-    return clGetImageInfo( image, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetImageInfo_params *params = args;
+
+    return clGetImageInfo( params->image, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetKernelArgInfo( cl_kernel kernel, cl_uint arg_index, cl_kernel_arg_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetKernelArgInfo( void *args )
 {
-    return clGetKernelArgInfo( kernel, arg_index, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetKernelArgInfo_params *params = args;
+
+    return clGetKernelArgInfo( params->kernel, params->arg_index, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetKernelInfo( cl_kernel kernel, cl_kernel_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetKernelInfo( void *args )
 {
-    return clGetKernelInfo( kernel, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetKernelInfo_params *params = args;
+
+    return clGetKernelInfo( params->kernel, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetKernelWorkGroupInfo( cl_kernel kernel, cl_device_id device, cl_kernel_work_group_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetKernelWorkGroupInfo( void *args )
 {
-    return clGetKernelWorkGroupInfo( kernel, device, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetKernelWorkGroupInfo_params *params = args;
+
+    return clGetKernelWorkGroupInfo( params->kernel, params->device, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetMemObjectInfo( cl_mem memobj, cl_mem_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetMemObjectInfo( void *args )
 {
-    return clGetMemObjectInfo( memobj, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetMemObjectInfo_params *params = args;
+
+    return clGetMemObjectInfo( params->memobj, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetPlatformIDs( cl_uint num_entries, cl_platform_id* platforms, cl_uint* num_platforms )
+static NTSTATUS wrap_clGetPlatformIDs( void *args )
 {
-    return clGetPlatformIDs( num_entries, platforms, num_platforms );
+    struct clGetPlatformIDs_params *params = args;
+
+    return clGetPlatformIDs( params->num_entries, params->platforms, params->num_platforms );
 }
 
-static cl_int WINAPI wrap_clGetPlatformInfo( cl_platform_id platform, cl_platform_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetPlatformInfo( void *args )
 {
-    return clGetPlatformInfo( platform, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetPlatformInfo_params *params = args;
+
+    return clGetPlatformInfo( params->platform, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetProgramBuildInfo( cl_program program, cl_device_id device, cl_program_build_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetProgramBuildInfo( void *args )
 {
-    return clGetProgramBuildInfo( program, device, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetProgramBuildInfo_params *params = args;
+
+    return clGetProgramBuildInfo( params->program, params->device, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetProgramInfo( cl_program program, cl_program_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetProgramInfo( void *args )
 {
-    return clGetProgramInfo( program, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetProgramInfo_params *params = args;
+
+    return clGetProgramInfo( params->program, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetSamplerInfo( cl_sampler sampler, cl_sampler_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+static NTSTATUS wrap_clGetSamplerInfo( void *args )
 {
-    return clGetSamplerInfo( sampler, param_name, param_value_size, param_value, param_value_size_ret );
+    struct clGetSamplerInfo_params *params = args;
+
+    return clGetSamplerInfo( params->sampler, params->param_name, params->param_value_size, params->param_value, params->param_value_size_ret );
 }
 
-static cl_int WINAPI wrap_clGetSupportedImageFormats( cl_context context, cl_mem_flags flags, cl_mem_object_type image_type, cl_uint num_entries, cl_image_format* image_formats, cl_uint* num_image_formats )
+static NTSTATUS wrap_clGetSupportedImageFormats( void *args )
 {
-    return clGetSupportedImageFormats( context, flags, image_type, num_entries, image_formats, num_image_formats );
+    struct clGetSupportedImageFormats_params *params = args;
+
+    return clGetSupportedImageFormats( params->context, params->flags, params->image_type, params->num_entries, params->image_formats, params->num_image_formats );
 }
 
-static cl_int WINAPI wrap_clReleaseCommandQueue( cl_command_queue command_queue )
+static NTSTATUS wrap_clReleaseCommandQueue( void *args )
 {
-    return clReleaseCommandQueue( command_queue );
+    struct clReleaseCommandQueue_params *params = args;
+
+    return clReleaseCommandQueue( params->command_queue );
 }
 
-static cl_int WINAPI wrap_clReleaseContext( cl_context context )
+static NTSTATUS wrap_clReleaseContext( void *args )
 {
-    return clReleaseContext( context );
+    struct clReleaseContext_params *params = args;
+
+    return clReleaseContext( params->context );
 }
 
-static cl_int WINAPI wrap_clReleaseDevice( cl_device_id device )
+static NTSTATUS wrap_clReleaseDevice( void *args )
 {
-    return clReleaseDevice( device );
+    struct clReleaseDevice_params *params = args;
+
+    return clReleaseDevice( params->device );
 }
 
-static cl_int WINAPI wrap_clReleaseEvent( cl_event event )
+static NTSTATUS wrap_clReleaseEvent( void *args )
 {
-    return clReleaseEvent( event );
+    struct clReleaseEvent_params *params = args;
+
+    return clReleaseEvent( params->event );
 }
 
-static cl_int WINAPI wrap_clReleaseKernel( cl_kernel kernel )
+static NTSTATUS wrap_clReleaseKernel( void *args )
 {
-    return clReleaseKernel( kernel );
+    struct clReleaseKernel_params *params = args;
+
+    return clReleaseKernel( params->kernel );
 }
 
-static cl_int WINAPI wrap_clReleaseMemObject( cl_mem memobj )
+static NTSTATUS wrap_clReleaseMemObject( void *args )
 {
-    return clReleaseMemObject( memobj );
+    struct clReleaseMemObject_params *params = args;
+
+    return clReleaseMemObject( params->memobj );
 }
 
-static cl_int WINAPI wrap_clReleaseProgram( cl_program program )
+static NTSTATUS wrap_clReleaseProgram( void *args )
 {
-    return clReleaseProgram( program );
+    struct clReleaseProgram_params *params = args;
+
+    return clReleaseProgram( params->program );
 }
 
-static cl_int WINAPI wrap_clReleaseSampler( cl_sampler sampler )
+static NTSTATUS wrap_clReleaseSampler( void *args )
 {
-    return clReleaseSampler( sampler );
+    struct clReleaseSampler_params *params = args;
+
+    return clReleaseSampler( params->sampler );
 }
 
-static cl_int WINAPI wrap_clRetainCommandQueue( cl_command_queue command_queue )
+static NTSTATUS wrap_clRetainCommandQueue( void *args )
 {
-    return clRetainCommandQueue( command_queue );
+    struct clRetainCommandQueue_params *params = args;
+
+    return clRetainCommandQueue( params->command_queue );
 }
 
-static cl_int WINAPI wrap_clRetainContext( cl_context context )
+static NTSTATUS wrap_clRetainContext( void *args )
 {
-    return clRetainContext( context );
+    struct clRetainContext_params *params = args;
+
+    return clRetainContext( params->context );
 }
 
-static cl_int WINAPI wrap_clRetainDevice( cl_device_id device )
+static NTSTATUS wrap_clRetainDevice( void *args )
 {
-    return clRetainDevice( device );
+    struct clRetainDevice_params *params = args;
+
+    return clRetainDevice( params->device );
 }
 
-static cl_int WINAPI wrap_clRetainEvent( cl_event event )
+static NTSTATUS wrap_clRetainEvent( void *args )
 {
-    return clRetainEvent( event );
+    struct clRetainEvent_params *params = args;
+
+    return clRetainEvent( params->event );
 }
 
-static cl_int WINAPI wrap_clRetainKernel( cl_kernel kernel )
+static NTSTATUS wrap_clRetainKernel( void *args )
 {
-    return clRetainKernel( kernel );
+    struct clRetainKernel_params *params = args;
+
+    return clRetainKernel( params->kernel );
 }
 
-static cl_int WINAPI wrap_clRetainMemObject( cl_mem memobj )
+static NTSTATUS wrap_clRetainMemObject( void *args )
 {
-    return clRetainMemObject( memobj );
+    struct clRetainMemObject_params *params = args;
+
+    return clRetainMemObject( params->memobj );
 }
 
-static cl_int WINAPI wrap_clRetainProgram( cl_program program )
+static NTSTATUS wrap_clRetainProgram( void *args )
 {
-    return clRetainProgram( program );
+    struct clRetainProgram_params *params = args;
+
+    return clRetainProgram( params->program );
 }
 
-static cl_int WINAPI wrap_clRetainSampler( cl_sampler sampler )
+static NTSTATUS wrap_clRetainSampler( void *args )
 {
-    return clRetainSampler( sampler );
+    struct clRetainSampler_params *params = args;
+
+    return clRetainSampler( params->sampler );
 }
 
-static cl_int WINAPI wrap_clSetKernelArg( cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void* arg_value )
+static NTSTATUS wrap_clSetKernelArg( void *args )
 {
-    return clSetKernelArg( kernel, arg_index, arg_size, arg_value );
+    struct clSetKernelArg_params *params = args;
+
+    return clSetKernelArg( params->kernel, params->arg_index, params->arg_size, params->arg_value );
 }
 
-static cl_int WINAPI wrap_clSetUserEventStatus( cl_event event, cl_int execution_status )
+static NTSTATUS wrap_clSetUserEventStatus( void *args )
 {
-    return clSetUserEventStatus( event, execution_status );
+    struct clSetUserEventStatus_params *params = args;
+
+    return clSetUserEventStatus( params->event, params->execution_status );
 }
 
-static cl_int WINAPI wrap_clUnloadCompiler( void  )
+static NTSTATUS wrap_clUnloadCompiler( void *args )
 {
     return clUnloadCompiler();
 }
 
-static cl_int WINAPI wrap_clUnloadPlatformCompiler( cl_platform_id platform )
+static NTSTATUS wrap_clUnloadPlatformCompiler( void *args )
 {
-    return clUnloadPlatformCompiler( platform );
+    struct clUnloadPlatformCompiler_params *params = args;
+
+    return clUnloadPlatformCompiler( params->platform );
 }
 
-static cl_int WINAPI wrap_clWaitForEvents( cl_uint num_events, const cl_event* event_list )
+static NTSTATUS wrap_clWaitForEvents( void *args )
 {
-    return clWaitForEvents( num_events, event_list );
+    struct clWaitForEvents_params *params = args;
+
+    return clWaitForEvents( params->num_events, params->event_list );
 }
 
-const struct opencl_funcs funcs =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     wrap_clBuildProgram,
     wrap_clCompileProgram,

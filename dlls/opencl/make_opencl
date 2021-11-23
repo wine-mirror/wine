@@ -83,6 +83,8 @@ sub generate_pe_thunk($$)
     my $trace_arg = "";
 
     my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref );
+    my $proto = $func_ref->[0]->textContent();
+    $proto =~ s/ +$//;
     foreach my $arg (@{$func_ref->[1]})
     {
         my $ptype = get_arg_type( $arg );
@@ -109,10 +111,26 @@ sub generate_pe_thunk($$)
     $call_arg =~ s/,$/ /;
     $trace_arg =~ s/^, //;
     $ret .= "\n{\n";
-    $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
-    $ret .= "    ";
-    $ret .= "return " unless is_void_func( $func_ref );
-    $ret .= "opencl_funcs->p$name($call_arg);\n";
+    if (is_void_func( $func_ref ))
+    {
+        $ret .= "    struct ${name}_params params = {$call_arg};\n";
+        $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "    OPENCL_CALL( $name, &params );\n"
+    }
+    elsif ($proto eq "cl_int")
+    {
+        $ret .= "    struct ${name}_params params = {$call_arg};\n";
+        $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "    return OPENCL_CALL( $name, &params );\n";
+    }
+    else
+    {
+        $ret .= "    $proto __retval;\n";
+        $ret .= "    struct ${name}_params params = { &__retval,$call_arg};\n";
+        $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "    OPENCL_CALL( $name, &params );\n";
+        $ret .= "    return __retval;\n";
+    }
     $ret .= "}\n";
     return $ret;
 }
@@ -122,19 +140,33 @@ sub generate_unix_thunk($$)
     my ($name, $func_ref) = @_;
     my $call_arg = "";
 
-    my $ret = get_func_proto( "static %s WINAPI wrap_%s(%s)", $name, $func_ref );
+    my $ret = "static NTSTATUS wrap_$name( void *args )\n";
+    my $proto = $func_ref->[0]->textContent();
+    $proto =~ s/ +$//;
     foreach my $arg (@{$func_ref->[1]})
     {
         my $ptype = get_arg_type( $arg );
         next unless $arg->findnodes("./name");
         my $pname = get_arg_name( $arg );
         my $param = $arg->textContent();
-        $call_arg .= " " . $pname . ",";
+        $call_arg .= " params->" . $pname . ",";
     }
     $call_arg =~ s/,$/ /;
-    $ret .= "\n{\n    ";
-    $ret .= "return " unless is_void_func( $func_ref );
-    $ret .= "$name($call_arg);\n";
+    $ret .= "{\n";
+    $ret .= "    struct ${name}_params *params = args;\n\n" if $call_arg;
+    if (is_void_func( $func_ref ))
+    {
+        $ret .= "    $name($call_arg);\n";
+    }
+    elsif ($proto eq "cl_int")
+    {
+        $ret .= "    return $name($call_arg);\n";
+    }
+    else
+    {
+        $ret .= "    *params->__retval = $name($call_arg);\n";
+        $ret .= "    return STATUS_SUCCESS;\n";
+    }
     $ret .= "}\n";
     return $ret;
 }
@@ -176,6 +208,24 @@ sub get_func_proto($$$)
     $args =~ s/,$/ /;
     $args ||= "void";
     return sprintf $format, $proto, $name, $args;
+}
+
+sub get_func_params($$)
+{
+    my ($name, $func) = @_;
+    die "unknown func $name" unless defined $func->[0];
+    my $proto = $func->[0]->textContent();
+    $proto =~ s/ +$//;
+    my $params = "struct ${name}_params\n{\n";
+    $params .= "    $proto* __retval;\n" unless $proto eq "cl_int";
+    foreach my $arg (@{$func->[1]})
+    {
+        next unless $arg->findnodes("./name");
+        (my $argtext = $arg->textContent()) =~ s/ +/ /g;
+        $argtext =~ s/CL_CALLBACK/WINAPI/g;
+        $params .= "    $argtext;\n";
+    }
+    return $params . "};\n";
 }
 
 # extract and check the number of arguments
@@ -480,7 +530,7 @@ foreach (sort keys %core_functions)
     print UNIX "\n", generate_unix_thunk( $_, $core_functions{$_} );
 }
 
-print UNIX "\nconst struct opencl_funcs funcs =\n{\n";
+print UNIX "\nconst unixlib_entry_t __wine_unix_call_funcs[] =\n{\n";
 foreach (sort keys %core_functions)
 {
     next unless needs_unix_function( $_ );
@@ -495,15 +545,19 @@ open(UNIXHEADER, ">$unixheader_file") or die "cannot create $unixheader_file";
 
 print UNIXHEADER "/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n";
 
-print UNIXHEADER "struct opencl_funcs\n{\n";
 foreach (sort keys %core_functions)
 {
     next unless needs_unix_function( $_ );
-    print UNIXHEADER get_func_proto( "    %s (WINAPI *p%s)(%s);\n", $_, $core_functions{$_} );
+    print UNIXHEADER get_func_params( $_, $core_functions{$_} ), "\n";
 }
-print UNIXHEADER "};\n\n";
 
-print UNIXHEADER "extern const struct opencl_funcs *opencl_funcs;\n";
+print UNIXHEADER "enum opencl_funcs\n{\n";
+foreach (sort keys %core_functions)
+{
+    next unless needs_unix_function( $_ );
+    print UNIXHEADER "    unix_$_,\n";
+}
+print UNIXHEADER "};\n";
 
 close(UNIXHEADER);
 
