@@ -102,10 +102,11 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         int codepage = _wtoi(argv[1]);
         int success = SetConsoleCP(codepage) && SetConsoleOutputCP(codepage);
 
-        if (!success)
-        {
+        if (success)
+            output_message(STRING_ACTIVE_CODE_PAGE, codepage);
+        else
             output_message(STRING_INVALID_CODE_PAGE);
-        }
+
         return !success;
     }
 
