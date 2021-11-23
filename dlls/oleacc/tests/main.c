@@ -720,7 +720,7 @@ static void test_AccessibleObjectFromEvent(void)
     ok(hr == S_OK, "got %#x\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == 1, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == 1, "got %#x, expected 1\n", V_I4(&cid));
     SET_EXPECT(Accessible_get_accParent);
     SET_EXPECT(Accessible_get_accName);
     V_I4(&cid) = 0;
@@ -736,7 +736,7 @@ static void test_AccessibleObjectFromEvent(void)
     ok(hr == S_OK, "got %#x\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == 2, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == 2, "got %#x, expected 2\n", V_I4(&cid));
     SET_EXPECT(Accessible_get_accParent);
     SET_EXPECT(Accessible_get_accName);
     V_I4(&cid) = 0;
@@ -752,7 +752,7 @@ static void test_AccessibleObjectFromEvent(void)
     ok(hr == S_OK, "got %#x\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible_child), "acc == &Accessible_child\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == 0, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
     SET_EXPECT(Accessible_child_get_accParent);
     SET_EXPECT(Accessible_child_get_accName);
     hr = IAccessible_get_accName(acc, cid, NULL);
@@ -767,7 +767,7 @@ static void test_AccessibleObjectFromEvent(void)
     ok(hr == S_OK, "got %#x\n", hr);
     ok(acc == &Accessible_child, "acc != &Accessible_child\n");
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
-    ok(V_I4(&cid) == 0, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
     SET_EXPECT(Accessible_child_get_accName);
     hr = IAccessible_get_accName(acc, cid, NULL);
     ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
