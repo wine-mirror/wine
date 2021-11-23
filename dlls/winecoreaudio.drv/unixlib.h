@@ -100,6 +100,13 @@ struct get_buffer_size_params
     UINT32 *frames;
 };
 
+struct get_latency_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+    REFERENCE_TIME *latency;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -108,6 +115,7 @@ enum unix_funcs
     unix_get_mix_format,
     unix_is_format_supported,
     unix_get_buffer_size,
+    unix_get_latency,
 
     unix_capture_resample /* temporary */
 };

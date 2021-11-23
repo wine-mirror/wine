@@ -1127,6 +1127,98 @@ static NTSTATUS get_buffer_size(void *args)
     return STATUS_SUCCESS;
 }
 
+static HRESULT ca_get_max_stream_latency(struct coreaudio_stream *stream, UInt32 *max)
+{
+    AudioObjectPropertyAddress addr;
+    AudioStreamID *ids;
+    UInt32 size;
+    OSStatus sc;
+    int nstreams, i;
+
+    addr.mScope = get_scope(stream->flow);
+    addr.mElement = 0;
+    addr.mSelector = kAudioDevicePropertyStreams;
+
+    sc = AudioObjectGetPropertyDataSize(stream->dev_id, &addr, 0, NULL, &size);
+    if(sc != noErr){
+        WARN("Unable to get size for _Streams property: %x\n", (int)sc);
+        return osstatus_to_hresult(sc);
+    }
+
+    ids = malloc(size);
+    if(!ids)
+        return E_OUTOFMEMORY;
+
+    sc = AudioObjectGetPropertyData(stream->dev_id, &addr, 0, NULL, &size, ids);
+    if(sc != noErr){
+        WARN("Unable to get _Streams property: %x\n", (int)sc);
+        free(ids);
+        return osstatus_to_hresult(sc);
+    }
+
+    nstreams = size / sizeof(AudioStreamID);
+    *max = 0;
+
+    addr.mSelector = kAudioStreamPropertyLatency;
+    for(i = 0; i < nstreams; ++i){
+        UInt32 latency;
+
+        size = sizeof(latency);
+        sc = AudioObjectGetPropertyData(ids[i], &addr, 0, NULL, &size, &latency);
+        if(sc != noErr){
+            WARN("Unable to get _Latency property: %x\n", (int)sc);
+            continue;
+        }
+
+        if(latency > *max)
+            *max = latency;
+    }
+
+    free(ids);
+
+    return S_OK;
+}
+
+static NTSTATUS get_latency(void *args)
+{
+    struct get_latency_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+    UInt32 latency, stream_latency, size;
+    AudioObjectPropertyAddress addr;
+    OSStatus sc;
+
+    OSSpinLockLock(&stream->lock);
+
+    addr.mScope = get_scope(stream->flow);
+    addr.mSelector = kAudioDevicePropertyLatency;
+    addr.mElement = 0;
+
+    size = sizeof(latency);
+    sc = AudioObjectGetPropertyData(stream->dev_id, &addr, 0, NULL, &size, &latency);
+    if(sc != noErr){
+        WARN("Couldn't get _Latency property: %x\n", (int)sc);
+        OSSpinLockUnlock(&stream->lock);
+        params->result = osstatus_to_hresult(sc);
+        return STATUS_SUCCESS;
+    }
+
+    params->result = ca_get_max_stream_latency(stream, &stream_latency);
+    if(FAILED(params->result)){
+        OSSpinLockUnlock(&stream->lock);
+        return STATUS_SUCCESS;
+    }
+
+    latency += stream_latency;
+    /* pretend we process audio in Period chunks, so max latency includes
+     * the period time */
+    *params->latency = muldiv(latency, 10000000, stream->fmt->nSamplesPerSec)
+        + stream->period_ms * 10000;
+
+    OSSpinLockUnlock(&stream->lock);
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1135,6 +1227,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_mix_format,
     is_format_supported,
     get_buffer_size,
+    get_latency,
 
     capture_resample /* temporary */
 };

@@ -130,7 +130,6 @@ struct ACImpl {
     float *vols;
 
     AudioDeviceID adevid;
-    AudioObjectPropertyScope scope;
     HANDLE timer;
 
     AudioSession *session;
@@ -261,19 +260,6 @@ enum DriverPriority {
 int WINAPI AUDDRV_GetPriority(void)
 {
     return Priority_Neutral;
-}
-
-static HRESULT osstatus_to_hresult(OSStatus sc)
-{
-    switch(sc){
-    case kAudioFormatUnsupportedDataFormatError:
-    case kAudioFormatUnknownFormatError:
-    case kAudioDeviceUnsupportedFormatError:
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    case kAudioHardwareBadDeviceError:
-        return AUDCLNT_E_DEVICE_INVALIDATED;
-    }
-    return E_FAIL;
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
@@ -481,6 +467,9 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     if(!get_deviceid_by_guid(guid, &adevid, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
+    if(dataflow != eRender && dataflow != eCapture)
+        return E_INVALIDARG;
+
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
         return E_OUTOFMEMORY;
@@ -493,15 +482,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
 
     This->dataflow = dataflow;
-
-    if(dataflow == eRender)
-        This->scope = kAudioDevicePropertyScopeOutput;
-    else if(dataflow == eCapture)
-        This->scope = kAudioDevicePropertyScopeInput;
-    else{
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_INVALIDARG;
-    }
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->pUnkFTMarshal);
     if (FAILED(hr)) {
@@ -871,68 +851,11 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
     return params.result;
 }
 
-static HRESULT ca_get_max_stream_latency(ACImpl *This, UInt32 *max)
-{
-    AudioObjectPropertyAddress addr;
-    AudioStreamID *ids;
-    UInt32 size;
-    OSStatus sc;
-    int nstreams, i;
-
-    addr.mScope = This->scope;
-    addr.mElement = 0;
-    addr.mSelector = kAudioDevicePropertyStreams;
-
-    sc = AudioObjectGetPropertyDataSize(This->adevid, &addr, 0, NULL,
-            &size);
-    if(sc != noErr){
-        WARN("Unable to get size for _Streams property: %x\n", (int)sc);
-        return osstatus_to_hresult(sc);
-    }
-
-    ids = HeapAlloc(GetProcessHeap(), 0, size);
-    if(!ids)
-        return E_OUTOFMEMORY;
-
-    sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL, &size, ids);
-    if(sc != noErr){
-        WARN("Unable to get _Streams property: %x\n", (int)sc);
-        HeapFree(GetProcessHeap(), 0, ids);
-        return osstatus_to_hresult(sc);
-    }
-
-    nstreams = size / sizeof(AudioStreamID);
-    *max = 0;
-
-    addr.mSelector = kAudioStreamPropertyLatency;
-    for(i = 0; i < nstreams; ++i){
-        UInt32 latency;
-
-        size = sizeof(latency);
-        sc = AudioObjectGetPropertyData(ids[i], &addr, 0, NULL,
-                &size, &latency);
-        if(sc != noErr){
-            WARN("Unable to get _Latency property: %x\n", (int)sc);
-            continue;
-        }
-
-        if(latency > *max)
-            *max = latency;
-    }
-
-    HeapFree(GetProcessHeap(), 0, ids);
-
-    return S_OK;
-}
-
 static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
         REFERENCE_TIME *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    UInt32 latency, stream_latency, size;
-    AudioObjectPropertyAddress addr;
-    OSStatus sc;
-    HRESULT hr;
+    struct get_latency_params params;
 
     TRACE("(%p)->(%p)\n", This, out);
 
@@ -942,36 +865,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    addr.mScope = This->scope;
-    addr.mSelector = kAudioDevicePropertyLatency;
-    addr.mElement = 0;
-
-    size = sizeof(latency);
-    sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL,
-            &size, &latency);
-    if(sc != noErr){
-        WARN("Couldn't get _Latency property: %x\n", (int)sc);
-        OSSpinLockUnlock(&This->stream->lock);
-        return osstatus_to_hresult(sc);
-    }
-
-    hr = ca_get_max_stream_latency(This, &stream_latency);
-    if(FAILED(hr)){
-        OSSpinLockUnlock(&This->stream->lock);
-        return hr;
-    }
-
-    latency += stream_latency;
-    /* pretend we process audio in Period chunks, so max latency includes
-     * the period time */
-    *out = MulDiv(latency, 10000000, This->stream->fmt->nSamplesPerSec)
-         + This->stream->period_ms * 10000;
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    params.latency = out;
+    UNIX_CALL(get_latency, &params);
+    return params.result;
 }
 
 static HRESULT AudioClient_GetCurrentPadding_nolock(ACImpl *This,
