@@ -27,85 +27,101 @@
 #include "ws2ipdef.h"
 #include "iphlpapi.h"
 
+#include "wine/unixlib.h"
 #include "wine/debug.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 
-const struct pcap_funcs *pcap_funcs = NULL;
+static unixlib_handle_t pcap_handle;
+
+#define PCAP_CALL( func, params ) __wine_unix_call( pcap_handle, unix_ ## func, params )
 
 int CDECL pcap_activate( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->activate( pcap );
+    return PCAP_CALL( activate, pcap );
 }
 
 void CDECL pcap_breakloop( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    pcap_funcs->breakloop( pcap );
+    PCAP_CALL( breakloop, pcap );
 }
 
 int CDECL pcap_can_set_rfmon( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->can_set_rfmon( pcap );
+    return PCAP_CALL( can_set_rfmon, pcap );
 }
 
 void CDECL pcap_close( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    pcap_funcs->close( pcap );
+    PCAP_CALL( close, pcap );
 }
 
 int CDECL pcap_compile( struct pcap *pcap, void *program, const char *buf, int optimize, unsigned int mask )
 {
+    struct compile_params params = { pcap, program, buf, optimize, mask };
     TRACE( "%p, %p, %s, %d, %u\n", pcap, program, debugstr_a(buf), optimize, mask );
-    return pcap_funcs->compile( pcap, program, buf, optimize, mask );
+    return PCAP_CALL( compile, &params );
 }
 
 struct pcap * CDECL pcap_create( const char *src, char *errbuf )
 {
+    struct pcap *ret;
+    struct create_params params = { src, errbuf, &ret };
     TRACE( "%s, %p\n", src, errbuf );
-    return pcap_funcs->create( src, errbuf );
+    PCAP_CALL( create, &params );
+    return ret;
 }
 
 int CDECL pcap_datalink( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->datalink( pcap );
+    return PCAP_CALL( datalink, pcap );
 }
 
 int CDECL pcap_datalink_name_to_val( const char *name )
 {
+    struct datalink_name_to_val_params params = { name };
     TRACE( "%s\n", debugstr_a(name) );
-    return pcap_funcs->datalink_name_to_val( name );
+    return PCAP_CALL( datalink_name_to_val, &params );
 }
 
 const char * CDECL pcap_datalink_val_to_description( int link )
 {
+    const char *ret;
+    struct datalink_val_to_description_params params = { link, &ret };
     TRACE( "%d\n", link );
-    return pcap_funcs->datalink_val_to_description( link );
+    PCAP_CALL( datalink_val_to_description, &params );
+    return ret;
 }
 
 const char * CDECL pcap_datalink_val_to_name( int link )
 {
+    const char *ret;
+    struct datalink_val_to_name_params params = { link, &ret };
     TRACE( "%d\n", link );
-    return pcap_funcs->datalink_val_to_name( link );
+    PCAP_CALL( datalink_val_to_name, &params );
+    return ret;
 }
 
 int CDECL pcap_dispatch( struct pcap *pcap, int count,
                          void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                          unsigned char *user )
 {
-    TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
-    return pcap_funcs->dispatch( pcap, count, callback, user );
+    /* FIXME: reimplement on top of pcap_next_ex */
+    FIXME( "%p, %d, %p, %p: not implemented\n", pcap, count, callback, user );
+    return -1;
 }
 
 void CDECL pcap_dump( unsigned char *user, const struct pcap_pkthdr_win32 *hdr, const unsigned char *packet )
 {
+    struct dump_params params = { user, hdr, packet };
     TRACE( "%p, %p, %p\n", user, hdr, packet );
-    pcap_funcs->dump( user, hdr, packet );
+    PCAP_CALL( dump, &params );
 }
 
 static inline WCHAR *strdupAW( const char *str )
@@ -124,6 +140,7 @@ void * CDECL pcap_dump_open( struct pcap *pcap, const char *filename )
     void *dumper;
     WCHAR *filenameW;
     char *unix_path;
+    struct dump_open_params params;
 
     TRACE( "%p, %s\n", pcap, debugstr_a(filename) );
 
@@ -134,7 +151,10 @@ void * CDECL pcap_dump_open( struct pcap *pcap, const char *filename )
 
     TRACE( "unix_path %s\n", debugstr_a(unix_path) );
 
-    dumper = pcap_funcs->dump_open( pcap, unix_path );
+    params.pcap = pcap;
+    params.name = unix_path;
+    params.ret = &dumper;
+    PCAP_CALL( dump_open, &params );
     RtlFreeHeap( GetProcessHeap(), 0, unix_path );
     return dumper;
 }
@@ -350,6 +370,7 @@ static int find_all_devices( const char *source, struct pcap_interface **devs, c
 {
     struct pcap_interface *unix_devs, *win32_devs = NULL, *cur, *dev;
     IP_ADAPTER_ADDRESSES *ptr, *adapters = get_adapters();
+    struct findalldevs_params params = { &unix_devs, errbuf };
     int ret;
 
     if (!adapters)
@@ -358,7 +379,7 @@ static int find_all_devices( const char *source, struct pcap_interface **devs, c
         return -1;
     }
 
-    if (!(ret = pcap_funcs->findalldevs( &unix_devs, errbuf )))
+    if (!(ret = PCAP_CALL( findalldevs, &params )))
     {
         cur = unix_devs;
         while (cur)
@@ -370,7 +391,7 @@ static int find_all_devices( const char *source, struct pcap_interface **devs, c
             cur = cur->next;
         }
         *devs = win32_devs;
-        pcap_funcs->freealldevs( unix_devs );
+        PCAP_CALL( freealldevs, unix_devs );
     }
 
     free( adapters );
@@ -392,13 +413,13 @@ int CDECL pcap_findalldevs_ex( char *source, void *auth, struct pcap_interface *
 void CDECL pcap_free_datalinks( int *links )
 {
     TRACE( "%p\n", links );
-    pcap_funcs->free_datalinks( links );
+    PCAP_CALL( free_datalinks, links );
 }
 
 void CDECL pcap_free_tstamp_types( int *types )
 {
     TRACE( "%p\n", types );
-    pcap_funcs->free_tstamp_types( types );
+    PCAP_CALL( free_tstamp_types, types );
 }
 
 void CDECL pcap_freealldevs( struct pcap_interface *devs )
@@ -410,7 +431,7 @@ void CDECL pcap_freealldevs( struct pcap_interface *devs )
 void CDECL pcap_freecode( void *program )
 {
     TRACE( "%p\n", program );
-    pcap_funcs->freecode( program );
+    PCAP_CALL( freecode, program );
 }
 
 void * CDECL pcap_get_airpcap_handle( struct pcap *pcap )
@@ -422,26 +443,30 @@ void * CDECL pcap_get_airpcap_handle( struct pcap *pcap )
 int CDECL pcap_get_tstamp_precision( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->get_tstamp_precision( pcap );
+    return PCAP_CALL( get_tstamp_precision, pcap );
 }
 
 char * CDECL pcap_geterr( struct pcap *pcap )
 {
+    char *ret;
+    struct geterr_params params = { pcap, &ret };
     TRACE( "%p\n", pcap );
-    return pcap_funcs->geterr( pcap );
+    PCAP_CALL( geterr, &params );
+    return ret;
 }
 
 int CDECL pcap_getnonblock( struct pcap *pcap, char *errbuf )
 {
+    struct getnonblock_params params = { pcap, errbuf };
     TRACE( "%p, %p\n", pcap, errbuf );
-    return pcap_funcs->getnonblock( pcap, errbuf );
+    return PCAP_CALL( getnonblock, &params );
 }
 
 static char lib_version[256];
 static BOOL WINAPI init_lib_version( INIT_ONCE *once, void *param, void **ctx )
 {
-    const char *str = pcap_funcs->lib_version();
-    if (strlen( str ) < sizeof(lib_version)) strcpy( lib_version, str );
+    struct lib_version_params params = { lib_version, sizeof(lib_version) };
+    PCAP_CALL( lib_version, &params );
     return TRUE;
 }
 
@@ -455,14 +480,16 @@ const char * CDECL pcap_lib_version( void )
 
 int CDECL pcap_list_datalinks( struct pcap *pcap, int **buf )
 {
+    struct list_datalinks_params params = { pcap, buf };
     TRACE( "%p, %p\n", pcap, buf );
-    return pcap_funcs->list_datalinks( pcap, buf );
+    return PCAP_CALL( list_datalinks, &params );
 }
 
 int CDECL pcap_list_tstamp_types( struct pcap *pcap, int **types )
 {
+    struct list_tstamp_types_params params = { pcap, types };
     TRACE( "%p, %p\n", pcap, types );
-    return pcap_funcs->list_tstamp_types( pcap, types );
+    return PCAP_CALL( list_tstamp_types, &params );
 }
 
 char * CDECL pcap_lookupdev( char *errbuf )
@@ -473,7 +500,7 @@ char * CDECL pcap_lookupdev( char *errbuf )
     TRACE( "%p\n", errbuf );
     if (!ret)
     {
-        if (pcap_findalldevs( &devs, errbuf ) == -1 || devs) return NULL;
+        if (pcap_findalldevs( &devs, errbuf ) == -1 || !devs) return NULL;
         if ((ret = malloc( strlen(devs->name) + 1 ))) strcpy( ret, devs->name );
         pcap_freealldevs( devs );
     }
@@ -482,40 +509,47 @@ char * CDECL pcap_lookupdev( char *errbuf )
 
 int CDECL pcap_lookupnet( const char *device, unsigned int *net, unsigned int *mask, char *errbuf )
 {
+    struct lookupnet_params params = { device, net, mask, errbuf };
     TRACE( "%s, %p, %p, %p\n", debugstr_a(device), net, mask, errbuf );
-    return pcap_funcs->lookupnet( device, net, mask, errbuf );
+    return PCAP_CALL( lookupnet, &params );
 }
 
 int CDECL pcap_loop( struct pcap *pcap, int count,
                      void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                      unsigned char *user)
 {
-    TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
-    return pcap_funcs->loop( pcap, count, callback, user );
+    /* FIXME: reimplement on top of pcap_next_ex */
+    FIXME( "%p, %d, %p, %p: not implemented\n", pcap, count, callback, user );
+    return -1;
 }
 
 int CDECL pcap_major_version( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->major_version( pcap );
+    return PCAP_CALL( major_version, pcap );
 }
 
 int CDECL pcap_minor_version( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->minor_version( pcap );
-}
-
-const unsigned char * CDECL pcap_next( struct pcap *pcap, struct pcap_pkthdr_win32 *hdr )
-{
-    TRACE( "%p, %p\n", pcap, hdr );
-    return pcap_funcs->next( pcap, hdr );
+    return PCAP_CALL( minor_version, pcap );
 }
 
 int CDECL pcap_next_ex( struct pcap *pcap, struct pcap_pkthdr_win32 **hdr, const unsigned char **data )
 {
+    struct next_ex_params params = { pcap, hdr, data };
     TRACE( "%p, %p, %p\n", pcap, hdr, data );
-    return pcap_funcs->next_ex( pcap, hdr, data );
+    return PCAP_CALL( next_ex, &params );
+}
+
+const unsigned char * CDECL pcap_next( struct pcap *pcap, struct pcap_pkthdr_win32 *hdr )
+{
+    struct pcap_pkthdr_win32 *hdr_ptr;
+    const unsigned char *data;
+
+    pcap_next_ex( pcap, &hdr_ptr, &data );
+    *hdr = *hdr_ptr;
+    return data;
 }
 
 static char *strdupWA( const WCHAR *src )
@@ -555,8 +589,11 @@ static struct pcap *open_live( const char *source, int snaplen, int promisc, int
         if (errbuf) sprintf( errbuf, "Unable to open the adapter." );
         return NULL;
     }
-
-    ret = pcap_funcs->open_live( unix_dev, snaplen, promisc, timeout, errbuf );
+    else
+    {
+        struct open_live_params params = { unix_dev, snaplen, promisc, timeout, errbuf, &ret };
+        PCAP_CALL( open_live, &params );
+    }
     free( unix_dev );
     return ret;
 }
@@ -617,56 +654,65 @@ int CDECL pcap_parsesrcstr( const char *source, int *type, char *host, char *por
 
 int CDECL pcap_sendpacket( struct pcap *pcap, const unsigned char *buf, int size )
 {
+    struct sendpacket_params params = { pcap, buf, size };
     TRACE( "%p, %p, %d\n", pcap, buf, size );
-    return pcap_funcs->sendpacket( pcap, buf, size );
+    return PCAP_CALL( sendpacket, &params );
 }
 
 int CDECL pcap_set_buffer_size( struct pcap *pcap, int size )
 {
+    struct set_buffer_size_params params = { pcap, size };
     TRACE( "%p, %d\n", pcap, size );
-    return pcap_funcs->set_buffer_size( pcap, size );
+    return PCAP_CALL( set_buffer_size, &params );
 }
 
 int CDECL pcap_set_datalink( struct pcap *pcap, int link )
 {
+    struct set_datalink_params params = { pcap, link };
     TRACE( "%p, %d\n", pcap, link );
-    return pcap_funcs->set_datalink( pcap, link );
+    return PCAP_CALL( set_datalink, &params );
 }
 
 int CDECL pcap_set_promisc( struct pcap *pcap, int enable )
 {
+    struct set_promisc_params params = { pcap, enable };
     TRACE( "%p, %d\n", pcap, enable );
-    return pcap_funcs->set_promisc( pcap, enable );
+    return PCAP_CALL( set_promisc, &params );
 }
 
 int CDECL pcap_set_rfmon( struct pcap *pcap, int enable )
 {
+    struct set_rfmon_params params = { pcap, enable };
     TRACE( "%p, %d\n", pcap, enable );
-    return pcap_funcs->set_rfmon( pcap, enable );
+    return PCAP_CALL( set_rfmon, &params );
 }
 
 int CDECL pcap_set_snaplen( struct pcap *pcap, int len )
 {
+    struct set_snaplen_params params = { pcap, len };
     TRACE( "%p, %d\n", pcap, len );
-    return pcap_funcs->set_snaplen( pcap, len );
+    return PCAP_CALL( set_snaplen, &params );
 }
 
 int CDECL pcap_set_timeout( struct pcap *pcap, int timeout )
 {
+    struct set_timeout_params params = { pcap, timeout };
     TRACE( "%p, %d\n", pcap, timeout );
-    return pcap_funcs->set_timeout( pcap, timeout );
+    return PCAP_CALL( set_timeout, &params );
 }
 
 int CDECL pcap_set_tstamp_precision( struct pcap *pcap, int precision )
 {
+    struct set_tstamp_precision_params params = { pcap, precision };
     TRACE( "%p, %d\n", pcap, precision );
-    return pcap_funcs->set_tstamp_precision( pcap, precision );
+    return PCAP_CALL( set_tstamp_precision, &params );
 }
 
 int CDECL pcap_set_tstamp_type( struct pcap *pcap, int type )
 {
+    struct set_tstamp_type_params params = { pcap, type };
     TRACE( "%p, %d\n", pcap, type );
-    return pcap_funcs->set_tstamp_type( pcap, type );
+    return PCAP_CALL( set_tstamp_type, &params );
 }
 
 int CDECL pcap_setbuff( struct pcap *pcap, int size )
@@ -677,50 +723,63 @@ int CDECL pcap_setbuff( struct pcap *pcap, int size )
 
 int CDECL pcap_setfilter( struct pcap *pcap, void *program )
 {
+    struct setfilter_params params = { pcap, program };
     TRACE( "%p, %p\n", pcap, program );
-    return pcap_funcs->setfilter( pcap, program );
+    return PCAP_CALL( setfilter, &params );
 }
 
 int CDECL pcap_setnonblock( struct pcap *pcap, int nonblock, char *errbuf )
 {
+    struct setnonblock_params params = { pcap, nonblock, errbuf };
     TRACE( "%p, %d, %p\n", pcap, nonblock, errbuf );
-    return pcap_funcs->setnonblock( pcap, nonblock, errbuf );
+    return PCAP_CALL( setnonblock, &params );
 }
 
 int CDECL pcap_snapshot( struct pcap *pcap )
 {
     TRACE( "%p\n", pcap );
-    return pcap_funcs->snapshot( pcap );
+    return PCAP_CALL( snapshot, pcap );
 }
 
 int CDECL pcap_stats( struct pcap *pcap, void *stats )
 {
+    struct stats_params params = { pcap, stats };
     TRACE( "%p, %p\n", pcap, stats );
-    return pcap_funcs->stats( pcap, stats );
+    return PCAP_CALL( stats, &params );
 }
 
 const char * CDECL pcap_statustostr( int status )
 {
+    const char *ret;
+    struct statustostr_params params = { status, &ret };
     TRACE( "%d\n", status );
-    return pcap_funcs->statustostr( status );
+    PCAP_CALL( statustostr, &params );
+    return ret;
 }
 
 int CDECL pcap_tstamp_type_name_to_val( const char *name )
 {
+    struct tstamp_type_name_to_val_params params = { name };
     TRACE( "%s\n", debugstr_a(name) );
-    return pcap_funcs->tstamp_type_name_to_val( name );
+    return PCAP_CALL( tstamp_type_name_to_val, &params );
 }
 
 const char * CDECL pcap_tstamp_type_val_to_description( int val )
 {
+    const char *ret;
+    struct tstamp_type_val_to_description_params params = { val, &ret };
     TRACE( "%d\n", val );
-    return pcap_funcs->tstamp_type_val_to_description( val );
+    PCAP_CALL( tstamp_type_val_to_description, &params );
+    return ret;
 }
 
 const char * CDECL pcap_tstamp_type_val_to_name( int val )
 {
+    const char *ret;
+    struct tstamp_type_val_to_name_params params = { val, &ret };
     TRACE( "%d\n", val );
-    return pcap_funcs->tstamp_type_val_to_name( val );
+    PCAP_CALL( tstamp_type_val_to_name, &params );
+    return ret;
 }
 
 int CDECL wsockinit( void )
@@ -731,26 +790,14 @@ int CDECL wsockinit( void )
     return 0;
 }
 
-static void CDECL pcap_handler_cb( struct handler_callback *cb, const struct pcap_pkthdr_win32 *hdr,
-                                   const unsigned char *packet )
-{
-    TRACE( "%p, %p, %p\n", cb, hdr, packet );
-    cb->callback( cb->user, hdr, packet );
-    TRACE( "callback completed\n" );
-}
-
-const struct pcap_callbacks pcap_callbacks =
-{
-    pcap_handler_cb
-};
-
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (__wine_init_unix_lib( hinst, reason, &pcap_callbacks, &pcap_funcs ))
+        if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
+                                  &pcap_handle, sizeof(pcap_handle), NULL ))
             ERR( "No pcap support, expect problems\n" );
         break;
     case DLL_PROCESS_DETACH:

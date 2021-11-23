@@ -35,332 +35,342 @@
 #include "winbase.h"
 #include "winternl.h"
 
+#include "wine/unixlib.h"
 #include "wine/debug.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static const struct pcap_callbacks *callbacks;
-
-static int CDECL wrap_activate( struct pcap *pcap )
+static NTSTATUS wrap_activate( void *args )
 {
+    struct pcap *pcap = args;
     return pcap_activate( pcap->handle );
 }
 
-static void CDECL wrap_breakloop( struct pcap *pcap )
+static NTSTATUS wrap_breakloop( void *args )
 {
-    return pcap_breakloop( pcap->handle );
+    struct pcap *pcap = args;
+    pcap_breakloop( pcap->handle );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_can_set_rfmon( struct pcap *pcap )
+static NTSTATUS wrap_can_set_rfmon( void *args )
 {
+    struct pcap *pcap = args;
     return pcap_can_set_rfmon( pcap->handle );
 }
 
-static void CDECL wrap_close( struct pcap *pcap )
+static NTSTATUS wrap_close( void *args )
 {
+    struct pcap *pcap = args;
     pcap_close( pcap->handle );
     free( pcap );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_compile( struct pcap *pcap, void *program, const char *buf, int optimize, unsigned int mask )
+static NTSTATUS wrap_compile( void *args )
 {
-    return pcap_compile( pcap->handle, program, buf, optimize, mask );
+    const struct compile_params *params = args;
+    return pcap_compile( params->pcap->handle, params->program, params->buf, params->optimize, params->mask );
 }
 
-static struct pcap * CDECL wrap_create( const char *src, char *errbuf )
+static NTSTATUS wrap_create( void *args )
 {
+    const struct create_params *params = args;
     struct pcap *ret = malloc( sizeof(*ret) );
-    if (ret && !(ret->handle = pcap_create( src, errbuf )))
+
+    if (ret && !(ret->handle = pcap_create( params->src, params->errbuf )))
     {
         free( ret );
-        return NULL;
+        ret = NULL;
     }
-    return ret;
+    *params->ret = ret;
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_datalink( struct pcap *pcap )
+static NTSTATUS wrap_datalink( void *args )
 {
+    struct pcap *pcap = args;
     return pcap_datalink( pcap->handle );
 }
 
-static int CDECL wrap_datalink_name_to_val( const char *name )
+static NTSTATUS wrap_datalink_name_to_val( void *args )
 {
-    return pcap_datalink_name_to_val( name );
+    const struct datalink_name_to_val_params *params = args;
+    return pcap_datalink_name_to_val( params->name );
 }
 
-static const char * CDECL wrap_datalink_val_to_description( int link )
+static NTSTATUS wrap_datalink_val_to_description( void *args )
 {
-    return pcap_datalink_val_to_description( link );
+    const struct datalink_val_to_description_params *params = args;
+    *params->ret = pcap_datalink_val_to_description( params->link );
+    return STATUS_SUCCESS;
 }
 
-static const char * CDECL wrap_datalink_val_to_name( int link )
+static NTSTATUS wrap_datalink_val_to_name( void *args )
 {
-    return pcap_datalink_val_to_name( link );
+    const struct datalink_val_to_name_params *params = args;
+    *params->ret = pcap_datalink_val_to_name( params->link );
+    return STATUS_SUCCESS;
 }
 
-static void wrap_pcap_handler( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *packet )
+static NTSTATUS wrap_dump( void *args )
 {
-    struct handler_callback *cb = (struct handler_callback *)user;
-    struct pcap_pkthdr_win32 hdr_win32;
-
-    if (hdr->ts.tv_sec > INT_MAX || hdr->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
-    hdr_win32.ts.tv_sec  = hdr->ts.tv_sec;
-    hdr_win32.ts.tv_usec = hdr->ts.tv_usec;
-    hdr_win32.caplen     = hdr->caplen;
-    hdr_win32.len        = hdr->len;
-    callbacks->handler( cb, &hdr_win32, packet );
-}
-
-static int CDECL wrap_dispatch( struct pcap *pcap, int count,
-                                void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *,
-                                                          const unsigned char *), unsigned char *user )
-{
-    if (callback)
-    {
-        struct handler_callback cb;
-        cb.callback = callback;
-        cb.user     = user;
-        return pcap_dispatch( pcap->handle, count, wrap_pcap_handler, (unsigned char *)&cb );
-    }
-    return pcap_dispatch( pcap->handle, count, NULL, user );
-}
-
-static void CDECL wrap_dump( unsigned char *user, const struct pcap_pkthdr_win32 *hdr, const unsigned char *packet )
-{
+    const struct dump_params *params = args;
     struct pcap_pkthdr hdr_unix;
 
-    hdr_unix.ts.tv_sec  = hdr->ts.tv_sec;
-    hdr_unix.ts.tv_usec = hdr->ts.tv_usec;
-    hdr_unix.caplen     = hdr->caplen;
-    hdr_unix.len        = hdr->len;
-    return pcap_dump( user, &hdr_unix, packet );
+    hdr_unix.ts.tv_sec  = params->hdr->ts.tv_sec;
+    hdr_unix.ts.tv_usec = params->hdr->ts.tv_usec;
+    hdr_unix.caplen     = params->hdr->caplen;
+    hdr_unix.len        = params->hdr->len;
+    pcap_dump( params->user, &hdr_unix, params->packet );
+    return STATUS_SUCCESS;
 }
 
-static void * CDECL wrap_dump_open( struct pcap *pcap, const char *name )
+static NTSTATUS wrap_dump_open( void *args )
 {
-    return pcap_dump_open( pcap->handle, name );
+    const struct dump_open_params *params = args;
+    *params->ret = pcap_dump_open( params->pcap->handle, params->name );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_findalldevs( struct pcap_interface **devs, char *errbuf )
+static NTSTATUS wrap_findalldevs( void *args )
 {
+    const struct findalldevs_params *params = args;
     int ret;
-    ret = pcap_findalldevs( (pcap_if_t **)devs, errbuf );
-    if (devs && !*devs)
+    ret = pcap_findalldevs( (pcap_if_t **)params->devs, params->errbuf );
+    if (params->devs && !*params->devs)
         ERR_(winediag)( "Failed to access raw network (pcap), this requires special permissions.\n" );
     return ret;
 }
 
-static void CDECL wrap_free_datalinks( int *links )
+static NTSTATUS wrap_free_datalinks( void *args )
 {
+    int *links = args;
     pcap_free_datalinks( links );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL wrap_free_tstamp_types( int *types )
+static NTSTATUS wrap_free_tstamp_types( void *args )
 {
+    int *types = args;
     pcap_free_tstamp_types( types );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL wrap_freealldevs( struct pcap_interface *devs )
+static NTSTATUS wrap_freealldevs( void *args )
 {
+    struct pcap_interface *devs = args;
     pcap_freealldevs( (pcap_if_t *)devs );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL wrap_freecode( void *program )
+static NTSTATUS wrap_freecode( void *args )
 {
-    return pcap_freecode( program );
+    void *program = args;
+    pcap_freecode( program );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_get_tstamp_precision( struct pcap *pcap )
+static NTSTATUS wrap_get_tstamp_precision( void *args )
 {
+    struct pcap *pcap = args;
     return pcap_get_tstamp_precision( pcap->handle );
 }
 
-static char * CDECL wrap_geterr( struct pcap *pcap )
+static NTSTATUS wrap_geterr( void *args )
 {
-    return pcap_geterr( pcap->handle );
+    const struct geterr_params *params = args;
+    *params->ret = pcap_geterr( params->pcap->handle );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_getnonblock( struct pcap *pcap, char *errbuf )
+static NTSTATUS wrap_getnonblock( void *args )
 {
-    return pcap_getnonblock( pcap->handle, errbuf );
+    const struct getnonblock_params *params = args;
+    return pcap_getnonblock( params->pcap->handle, params->errbuf );
 }
 
-static const char * CDECL wrap_lib_version( void )
+static NTSTATUS wrap_lib_version( void *args )
 {
-    return pcap_lib_version();
+    const struct lib_version_params *params = args;
+    const char *str = pcap_lib_version();
+    unsigned int len = min( strlen(str) + 1, params->size );
+    memcpy( params->version, str, len );
+    params->version[len - 1] = 0;
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_list_datalinks( struct pcap *pcap, int **buf )
+static NTSTATUS wrap_list_datalinks( void *args )
 {
-    return pcap_list_datalinks( pcap->handle, buf );
+    const struct list_datalinks_params *params = args;
+    return pcap_list_datalinks( params->pcap->handle, params->buf );
 }
 
-static int CDECL wrap_list_tstamp_types( struct pcap *pcap, int **types )
+static NTSTATUS wrap_list_tstamp_types( void *args )
 {
-    return pcap_list_tstamp_types( pcap->handle, types );
+    const struct list_tstamp_types_params *params = args;
+    return pcap_list_tstamp_types( params->pcap->handle, params->types );
 }
 
-static int CDECL wrap_lookupnet( const char *device, unsigned int *net, unsigned int *mask, char *errbuf )
+static NTSTATUS wrap_lookupnet( void *args )
 {
-    return pcap_lookupnet( device, net, mask, errbuf );
+    const struct lookupnet_params *params = args;
+    return pcap_lookupnet( params->device, params->net, params->mask, params->errbuf );
 }
 
-static int CDECL wrap_loop( struct pcap *pcap, int count,
-                            void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *,
-                                                      const unsigned char *), unsigned char *user )
+static NTSTATUS wrap_major_version( void *args )
 {
-    if (callback)
-    {
-        struct handler_callback cb;
-        cb.callback = callback;
-        cb.user     = user;
-        return pcap_loop( pcap->handle, count, wrap_pcap_handler, (unsigned char *)&cb );
-    }
-    return pcap_loop( pcap->handle, count, NULL, user );
-}
-
-static int CDECL wrap_major_version( struct pcap *pcap )
-{
+    struct pcap *pcap = args;
     return pcap_major_version( pcap->handle );
 }
 
-static int CDECL wrap_minor_version( struct pcap *pcap )
+static NTSTATUS wrap_minor_version( void *args )
 {
+    struct pcap *pcap = args;
     return pcap_minor_version( pcap->handle );
 }
 
-static const unsigned char * CDECL wrap_next( struct pcap *pcap, struct pcap_pkthdr_win32 *hdr )
+static NTSTATUS wrap_next_ex( void *args )
 {
-    struct pcap_pkthdr hdr_unix;
-    const unsigned char *ret;
-
-    if ((ret = pcap_next( pcap->handle, &hdr_unix )))
-    {
-        if (hdr_unix.ts.tv_sec > INT_MAX || hdr_unix.ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
-        hdr->ts.tv_sec  = hdr_unix.ts.tv_sec;
-        hdr->ts.tv_usec = hdr_unix.ts.tv_usec;
-        hdr->caplen     = hdr_unix.caplen;
-        hdr->len        = hdr_unix.len;
-    }
-    return ret;
-}
-
-static int CDECL wrap_next_ex( struct pcap *pcap, struct pcap_pkthdr_win32 **hdr, const unsigned char **data )
-{
+    const struct next_ex_params *params = args;
+    struct pcap *pcap = params->pcap;
     struct pcap_pkthdr *hdr_unix;
     int ret;
 
-    if ((ret = pcap_next_ex( pcap->handle, &hdr_unix, data )) == 1)
+    if ((ret = pcap_next_ex( pcap->handle, &hdr_unix, params->data )) == 1)
     {
         if (hdr_unix->ts.tv_sec > INT_MAX || hdr_unix->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
         pcap->hdr.ts.tv_sec  = hdr_unix->ts.tv_sec;
         pcap->hdr.ts.tv_usec = hdr_unix->ts.tv_usec;
         pcap->hdr.caplen     = hdr_unix->caplen;
         pcap->hdr.len        = hdr_unix->len;
-        *hdr = &pcap->hdr;
+        *params->hdr = &pcap->hdr;
     }
     return ret;
 }
 
-static struct pcap * CDECL wrap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )
+static NTSTATUS wrap_open_live( void *args )
 {
+    const struct open_live_params *params = args;
     struct pcap *ret = malloc( sizeof(*ret) );
-    if (ret && !(ret->handle = pcap_open_live( source, snaplen, promisc, to_ms, errbuf )))
+    if (ret && !(ret->handle = pcap_open_live( params->source, params->snaplen, params->promisc,
+                                               params->to_ms, params->errbuf )))
     {
         free( ret );
-        return NULL;
+        ret = NULL;
     }
-    return ret;
+    *params->ret = ret;
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_sendpacket( struct pcap *pcap, const unsigned char *buf, int size )
+static NTSTATUS wrap_sendpacket( void *args )
 {
-    return pcap_sendpacket( pcap->handle, buf, size );
+    const struct sendpacket_params *params = args;
+    return pcap_sendpacket( params->pcap->handle, params->buf, params->size );
 }
 
-static int CDECL wrap_set_buffer_size( struct pcap *pcap, int size )
+static NTSTATUS wrap_set_buffer_size( void *args )
 {
-    return pcap_set_buffer_size( pcap->handle, size );
+    const struct set_buffer_size_params *params = args;
+    return pcap_set_buffer_size( params->pcap->handle, params->size );
 }
 
-static int CDECL wrap_set_datalink( struct pcap *pcap, int link )
+static NTSTATUS wrap_set_datalink( void *args )
 {
-    return pcap_set_datalink( pcap->handle, link );
+    const struct set_datalink_params *params = args;
+    return pcap_set_datalink( params->pcap->handle, params->link );
 }
 
-static int CDECL wrap_set_promisc( struct pcap *pcap, int enable )
+static NTSTATUS wrap_set_promisc( void *args )
 {
-    return pcap_set_promisc( pcap->handle, enable );
+    const struct set_promisc_params *params = args;
+    return pcap_set_promisc( params->pcap->handle, params->enable );
 }
 
-static int CDECL wrap_set_rfmon( struct pcap *pcap, int enable )
+static NTSTATUS wrap_set_rfmon( void *args )
 {
-    return pcap_set_rfmon( pcap->handle, enable );
+    const struct set_rfmon_params *params = args;
+    return pcap_set_rfmon( params->pcap->handle, params->enable );
 }
 
-static int CDECL wrap_set_snaplen( struct pcap *pcap, int len )
+static NTSTATUS wrap_set_snaplen( void *args )
 {
-    return pcap_set_snaplen( pcap->handle, len );
+    const struct set_snaplen_params *params = args;
+    return pcap_set_snaplen( params->pcap->handle, params->len );
 }
 
-static int CDECL wrap_set_timeout( struct pcap *pcap, int timeout )
+static NTSTATUS wrap_set_timeout( void *args )
 {
-    return pcap_set_timeout( pcap->handle, timeout );
+    const struct set_timeout_params *params = args;
+    return pcap_set_timeout( params->pcap->handle, params->timeout );
 }
 
-static int CDECL wrap_set_tstamp_precision( struct pcap *pcap, int precision )
+static NTSTATUS wrap_set_tstamp_precision( void *args )
 {
-    return pcap_set_tstamp_precision( pcap->handle, precision );
+    const struct set_tstamp_precision_params *params = args;
+    return pcap_set_tstamp_precision( params->pcap->handle, params->precision );
 }
 
-static int CDECL wrap_set_tstamp_type( struct pcap *pcap, int type )
+static NTSTATUS wrap_set_tstamp_type( void *args )
 {
-    return pcap_set_tstamp_type( pcap->handle, type );
+    const struct set_tstamp_type_params *params = args;
+    return pcap_set_tstamp_type( params->pcap->handle, params->type );
 }
 
-static int CDECL wrap_setfilter( struct pcap *pcap, void *program )
+static NTSTATUS wrap_setfilter( void *args )
 {
-    return pcap_setfilter( pcap->handle, program );
+    const struct setfilter_params *params = args;
+    return pcap_setfilter( params->pcap->handle, params->program );
 }
 
-static int CDECL wrap_setnonblock( struct pcap *pcap, int nonblock, char *errbuf )
+static NTSTATUS wrap_setnonblock( void *args )
 {
-    return pcap_setnonblock( pcap->handle, nonblock, errbuf );
+    const struct setnonblock_params *params = args;
+    return pcap_setnonblock( params->pcap->handle, params->nonblock, params->errbuf );
 }
 
-static int CDECL wrap_snapshot( struct pcap *pcap )
+static NTSTATUS wrap_snapshot( void *args )
 {
+    struct pcap *pcap = args;
     return pcap_snapshot( pcap->handle );
 }
 
-static int CDECL wrap_stats( struct pcap *pcap, void *stats )
+static NTSTATUS wrap_stats( void *args )
 {
-    return pcap_stats( pcap->handle, stats );
+    const struct stats_params *params = args;
+    return pcap_stats( params->pcap->handle, params->stats );
 }
 
-static const char * CDECL wrap_statustostr( int status )
+static NTSTATUS wrap_statustostr( void *args )
 {
-    return pcap_statustostr( status );
+    const struct statustostr_params *params = args;
+    *params->ret = pcap_statustostr( params->status );
+    return STATUS_SUCCESS;
 }
 
-static int CDECL wrap_tstamp_type_name_to_val( const char *name )
+static NTSTATUS wrap_tstamp_type_name_to_val( void *args )
 {
-    return pcap_tstamp_type_name_to_val( name );
+    const struct tstamp_type_name_to_val_params *params = args;
+    return pcap_tstamp_type_name_to_val( params->name );
 }
 
-static const char * CDECL wrap_tstamp_type_val_to_description( int val )
+static NTSTATUS wrap_tstamp_type_val_to_description( void *args )
 {
-    return pcap_tstamp_type_val_to_description( val );
+    const struct tstamp_type_val_to_description_params *params = args;
+    *params->ret = pcap_tstamp_type_val_to_description( params->val );
+    return STATUS_SUCCESS;
 }
 
-static const char * CDECL wrap_tstamp_type_val_to_name( int val )
+static NTSTATUS wrap_tstamp_type_val_to_name( void *args )
 {
-    return pcap_tstamp_type_val_to_name( val );
+    const struct tstamp_type_val_to_name_params *params = args;
+    *params->ret = pcap_tstamp_type_val_to_name( params->val );
+    return STATUS_SUCCESS;
 }
 
-static const struct pcap_funcs funcs =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     wrap_activate,
     wrap_breakloop,
@@ -372,7 +382,7 @@ static const struct pcap_funcs funcs =
     wrap_datalink_name_to_val,
     wrap_datalink_val_to_description,
     wrap_datalink_val_to_name,
-    wrap_dispatch,
+    /* wrap_dispatch, */
     wrap_dump,
     wrap_dump_open,
     wrap_findalldevs,
@@ -387,10 +397,9 @@ static const struct pcap_funcs funcs =
     wrap_list_datalinks,
     wrap_list_tstamp_types,
     wrap_lookupnet,
-    wrap_loop,
+    /* wrap_loop, */
     wrap_major_version,
     wrap_minor_version,
-    wrap_next,
     wrap_next_ex,
     wrap_open_live,
     wrap_sendpacket,
@@ -412,11 +421,4 @@ static const struct pcap_funcs funcs =
     wrap_tstamp_type_val_to_name,
 };
 
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-    callbacks = ptr_in;
-    *(const struct pcap_funcs **)ptr_out = &funcs;
-    return STATUS_SUCCESS;
-}
 #endif /* HAVE_PCAP_PCAP_H */

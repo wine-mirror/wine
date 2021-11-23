@@ -57,69 +57,259 @@ struct pcap
     struct pcap_pkthdr_win32 hdr;
 };
 
-struct handler_callback
+
+struct compile_params
 {
-    void (CALLBACK *callback)( unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char * );
-    void *user;
+    struct pcap *pcap;
+    void *program;
+    const char *buf;
+    int optimize;
+    unsigned int mask;
 };
 
-struct pcap_funcs
+struct create_params
 {
-    int (CDECL *activate)( struct pcap * );
-    void (CDECL *breakloop)( struct pcap * );
-    int (CDECL *can_set_rfmon)( struct pcap * );
-    void (CDECL *close)( struct pcap * );
-    int (CDECL *compile)( struct pcap *, void *, const char *, int, unsigned int );
-    struct pcap * (CDECL *create)( const char *, char * );
-    int (CDECL *datalink)( struct pcap * );
-    int (CDECL *datalink_name_to_val)( const char * );
-    const char * (CDECL *datalink_val_to_description)( int );
-    const char * (CDECL *datalink_val_to_name)( int );
-    int (CDECL *dispatch)( struct pcap *, int,
-                           void (CALLBACK *)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
-                           unsigned char * );
-    void (CDECL *dump)( unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char * );
-    void * (CDECL *dump_open)( struct pcap *, const char * );
-    int (CDECL *findalldevs)( struct pcap_interface **, char * );
-    void (CDECL *free_datalinks)( int * );
-    void (CDECL *free_tstamp_types)( int * );
-    void (CDECL *freealldevs)( struct pcap_interface * );
-    void (CDECL *freecode)( void * );
-    int (CDECL *get_tstamp_precision)( struct pcap * );
-    char * (CDECL *geterr)( struct pcap * );
-    int (CDECL *getnonblock)( struct pcap *, char * );
-    const char * (CDECL *lib_version)( void );
-    int (CDECL *list_datalinks)( struct pcap *, int ** );
-    int (CDECL *list_tstamp_types)( struct pcap *, int ** );
-    int (CDECL *lookupnet)( const char *, unsigned int *, unsigned int *, char * );
-    int (CDECL *loop)( struct pcap *, int,
-                       void (CALLBACK *)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
-                       unsigned char * );
-    int (CDECL *major_version)( struct pcap * );
-    int (CDECL *minor_version)( struct pcap * );
-    const unsigned char * (CDECL *next)( struct pcap *, struct pcap_pkthdr_win32 * );
-    int (CDECL *next_ex)( struct pcap *, struct pcap_pkthdr_win32 **, const unsigned char ** );
-    struct pcap * (CDECL *open_live)( const char *, int, int, int, char * );
-    int (CDECL *sendpacket)( struct pcap *, const unsigned char *, int );
-    int (CDECL *set_buffer_size)( struct pcap *, int );
-    int (CDECL *set_datalink)( struct pcap *, int );
-    int (CDECL *set_promisc)( struct pcap *, int );
-    int (CDECL *set_rfmon)( struct pcap *, int );
-    int (CDECL *set_snaplen)( struct pcap *, int );
-    int (CDECL *set_timeout)( struct pcap *, int );
-    int (CDECL *set_tstamp_precision)( struct pcap *, int );
-    int (CDECL *set_tstamp_type)( struct pcap *, int );
-    int (CDECL *setfilter)( struct pcap *, void * );
-    int (CDECL *setnonblock)( struct pcap *, int, char * );
-    int (CDECL *snapshot)( struct pcap * );
-    int (CDECL *stats)( struct pcap *, void * );
-    const char * (CDECL *statustostr)( int );
-    int (CDECL *tstamp_type_name_to_val)( const char * );
-    const char * (CDECL *tstamp_type_val_to_description)( int );
-    const char * (CDECL *tstamp_type_val_to_name)( int );
+    const char *src;
+    char *errbuf;
+    struct pcap **ret;
 };
 
-struct pcap_callbacks
+struct datalink_name_to_val_params
 {
-    void (CDECL *handler)( struct handler_callback *, const struct pcap_pkthdr_win32 *, const unsigned char * );
+    const char *name;
+};
+
+struct datalink_val_to_description_params
+{
+    int link;
+    const char **ret;
+};
+
+struct datalink_val_to_name_params
+{
+    int link;
+    const char **ret;
+};
+
+struct dump_params
+{
+    unsigned char *user;
+    const struct pcap_pkthdr_win32 *hdr;
+    const unsigned char *packet;
+};
+
+struct dump_open_params
+{
+    struct pcap *pcap;
+    const char *name;
+    void **ret;
+};
+
+struct findalldevs_params
+{
+    struct pcap_interface **devs;
+    char *errbuf;
+};
+
+struct geterr_params
+{
+    struct pcap *pcap;
+    char **ret;
+};
+
+struct getnonblock_params
+{
+    struct pcap *pcap;
+    char *errbuf;
+};
+
+struct lib_version_params
+{
+    char *version;
+    unsigned int size;
+};
+
+struct list_datalinks_params
+{
+    struct pcap *pcap;
+    int **buf;
+};
+
+struct list_tstamp_types_params
+{
+    struct pcap *pcap;
+    int **types;
+};
+
+struct lookupnet_params
+{
+    const char *device;
+    unsigned int *net;
+    unsigned int *mask;
+    char *errbuf;
+};
+
+struct next_ex_params
+{
+    struct pcap *pcap;
+    struct pcap_pkthdr_win32 **hdr;
+    const unsigned char **data;
+};
+
+struct open_live_params
+{
+    const char *source;
+    int snaplen;
+    int promisc;
+    int to_ms;
+    char *errbuf;
+    struct pcap **ret;
+};
+
+struct sendpacket_params
+{
+    struct pcap *pcap;
+    const unsigned char *buf;
+    int size;
+};
+
+struct set_buffer_size_params
+{
+    struct pcap *pcap;
+    int size;
+};
+
+struct set_datalink_params
+{
+    struct pcap *pcap;
+    int link;
+};
+
+struct set_promisc_params
+{
+    struct pcap *pcap;
+    int enable;
+};
+
+struct set_rfmon_params
+{
+    struct pcap *pcap;
+    int enable;
+};
+
+struct set_snaplen_params
+{
+    struct pcap *pcap;
+    int len;
+};
+
+struct set_timeout_params
+{
+    struct pcap *pcap;
+    int timeout;
+};
+
+struct set_tstamp_precision_params
+{
+    struct pcap *pcap;
+    int precision;
+};
+
+struct set_tstamp_type_params
+{
+    struct pcap *pcap;
+    int type;
+};
+
+struct setfilter_params
+{
+    struct pcap *pcap;
+    void *program;
+};
+
+struct setnonblock_params
+{
+    struct pcap *pcap;
+    int nonblock;
+    char *errbuf;
+};
+
+struct stats_params
+{
+    struct pcap *pcap;
+    void *stats;
+};
+
+struct statustostr_params
+{
+    int status;
+    const char **ret;
+};
+
+struct tstamp_type_name_to_val_params
+{
+    const char *name;
+};
+
+struct tstamp_type_val_to_description_params
+{
+    int val;
+    const char **ret;
+};
+
+struct tstamp_type_val_to_name_params
+{
+    int val;
+    const char **ret;
+};
+
+enum pcap_funcs
+{
+    unix_activate,
+    unix_breakloop,
+    unix_can_set_rfmon,
+    unix_close,
+    unix_compile,
+    unix_create,
+    unix_datalink,
+    unix_datalink_name_to_val,
+    unix_datalink_val_to_description,
+    unix_datalink_val_to_name,
+    /* unix_dispatch, */
+    unix_dump,
+    unix_dump_open,
+    unix_findalldevs,
+    unix_free_datalinks,
+    unix_free_tstamp_types,
+    unix_freealldevs,
+    unix_freecode,
+    unix_get_tstamp_precision,
+    unix_geterr,
+    unix_getnonblock,
+    unix_lib_version,
+    unix_list_datalinks,
+    unix_list_tstamp_types,
+    unix_lookupnet,
+    /* unix_loop, */
+    unix_major_version,
+    unix_minor_version,
+    unix_next_ex,
+    unix_open_live,
+    unix_sendpacket,
+    unix_set_buffer_size,
+    unix_set_datalink,
+    unix_set_promisc,
+    unix_set_rfmon,
+    unix_set_snaplen,
+    unix_set_timeout,
+    unix_set_tstamp_precision,
+    unix_set_tstamp_type,
+    unix_setfilter,
+    unix_setnonblock,
+    unix_snapshot,
+    unix_stats,
+    unix_statustostr,
+    unix_tstamp_type_name_to_val,
+    unix_tstamp_type_val_to_description,
+    unix_tstamp_type_val_to_name,
 };
