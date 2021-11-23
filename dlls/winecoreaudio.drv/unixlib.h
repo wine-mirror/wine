@@ -83,12 +83,23 @@ struct get_mix_format_params
     HRESULT result;
 };
 
+struct is_format_supported_params
+{
+    EDataFlow flow;
+    DWORD dev_id;
+    AUDCLNT_SHAREMODE share;
+    const WAVEFORMATEX *fmt_in;
+    WAVEFORMATEXTENSIBLE *fmt_out;
+    HRESULT result;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
     unix_create_stream,
     unix_release_stream,
     unix_get_mix_format,
+    unix_is_format_supported,
 };
 
 extern unixlib_handle_t coreaudio_handle;

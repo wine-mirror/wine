@@ -473,62 +473,6 @@ static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
     return FALSE;
 }
 
-static AudioComponentInstance get_audiounit(EDataFlow dataflow, AudioDeviceID adevid)
-{
-    AudioComponentInstance unit;
-    AudioComponent comp;
-    AudioComponentDescription desc;
-    OSStatus sc;
-
-    memset(&desc, 0, sizeof(desc));
-    desc.componentType = kAudioUnitType_Output;
-    desc.componentSubType = kAudioUnitSubType_HALOutput;
-    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
-
-    if(!(comp = AudioComponentFindNext(NULL, &desc))){
-        WARN("AudioComponentFindNext failed\n");
-        return NULL;
-    }
-
-    sc = AudioComponentInstanceNew(comp, &unit);
-    if(sc != noErr){
-        WARN("AudioComponentInstanceNew failed: %x\n", (int)sc);
-        return NULL;
-    }
-
-    if(dataflow == eCapture){
-        UInt32 enableio;
-
-        enableio = 1;
-        sc = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_EnableIO,
-                kAudioUnitScope_Input, 1, &enableio, sizeof(enableio));
-        if(sc != noErr){
-            WARN("Couldn't enable I/O on input element: %x\n", (int)sc);
-            AudioComponentInstanceDispose(unit);
-            return NULL;
-        }
-
-        enableio = 0;
-        sc = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_EnableIO,
-                kAudioUnitScope_Output, 0, &enableio, sizeof(enableio));
-        if(sc != noErr){
-            WARN("Couldn't disable I/O on output element: %x\n", (int)sc);
-            AudioComponentInstanceDispose(unit);
-            return NULL;
-        }
-    }
-
-    sc = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice,
-            kAudioUnitScope_Global, 0, &adevid, sizeof(adevid));
-    if(sc != noErr){
-        WARN("Couldn't set audio unit device\n");
-        AudioComponentInstanceDispose(unit);
-        return NULL;
-    }
-
-    return unit;
-}
-
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
@@ -687,46 +631,6 @@ static void dump_fmt(const WAVEFORMATEX *fmt)
         TRACE("Samples: %04x\n", fmtex->Samples.wReserved);
         TRACE("SubFormat: %s\n", wine_dbgstr_guid(&fmtex->SubFormat));
     }
-}
-
-static HRESULT ca_get_audiodesc(AudioStreamBasicDescription *desc,
-        const WAVEFORMATEX *fmt)
-{
-    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
-
-    desc->mFormatFlags = 0;
-
-    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
-        desc->mFormatID = kAudioFormatLinearPCM;
-        if(fmt->wBitsPerSample > 8)
-            desc->mFormatFlags = kAudioFormatFlagIsSignedInteger;
-    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-        desc->mFormatID = kAudioFormatLinearPCM;
-        desc->mFormatFlags = kAudioFormatFlagIsFloat;
-    }else if(fmt->wFormatTag == WAVE_FORMAT_MULAW ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_MULAW))){
-        desc->mFormatID = kAudioFormatULaw;
-    }else if(fmt->wFormatTag == WAVE_FORMAT_ALAW ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_ALAW))){
-        desc->mFormatID = kAudioFormatALaw;
-    }else
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    desc->mSampleRate = fmt->nSamplesPerSec;
-    desc->mBytesPerPacket = fmt->nBlockAlign;
-    desc->mFramesPerPacket = 1;
-    desc->mBytesPerFrame = fmt->nBlockAlign;
-    desc->mChannelsPerFrame = fmt->nChannels;
-    desc->mBitsPerChannel = fmt->wBitsPerSample;
-    desc->mReserved = 0;
-
-    return S_OK;
 }
 
 static void session_init_vols(AudioSession *session, UINT channels)
@@ -929,90 +833,6 @@ static void capture_resample(ACImpl *This)
         }else
             This->stream->held_frames += wanted_frames;
     }
-}
-
-static void dump_adesc(const char *aux, AudioStreamBasicDescription *desc)
-{
-    TRACE("%s: mSampleRate: %f\n", aux, desc->mSampleRate);
-    TRACE("%s: mBytesPerPacket: %u\n", aux, (unsigned int)desc->mBytesPerPacket);
-    TRACE("%s: mFramesPerPacket: %u\n", aux, (unsigned int)desc->mFramesPerPacket);
-    TRACE("%s: mBytesPerFrame: %u\n", aux, (unsigned int)desc->mBytesPerFrame);
-    TRACE("%s: mChannelsPerFrame: %u\n", aux, (unsigned int)desc->mChannelsPerFrame);
-    TRACE("%s: mBitsPerChannel: %u\n", aux, (unsigned int)desc->mBitsPerChannel);
-}
-
-static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance unit,
-        const WAVEFORMATEX *fmt, AudioStreamBasicDescription *dev_desc,
-        AudioConverterRef *converter)
-{
-    OSStatus sc;
-    HRESULT hr;
-
-    if(dataflow == eCapture){
-        AudioStreamBasicDescription desc;
-        UInt32 size;
-        Float64 rate;
-        fenv_t fenv;
-        BOOL fenv_stored = TRUE;
-
-        hr = ca_get_audiodesc(&desc, fmt);
-        if(FAILED(hr))
-            return hr;
-        dump_adesc("requested", &desc);
-
-        /* input-only units can't perform sample rate conversion, so we have to
-         * set up our own AudioConverter to support arbitrary sample rates. */
-        size = sizeof(*dev_desc);
-        sc = AudioUnitGetProperty(unit, kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Input, 1, dev_desc, &size);
-        if(sc != noErr){
-            WARN("Couldn't get unit format: %x\n", (int)sc);
-            return osstatus_to_hresult(sc);
-        }
-        dump_adesc("hardware", dev_desc);
-
-        rate = dev_desc->mSampleRate;
-        *dev_desc = desc;
-        dev_desc->mSampleRate = rate;
-
-        dump_adesc("final", dev_desc);
-        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output, 1, dev_desc, sizeof(*dev_desc));
-        if(sc != noErr){
-            WARN("Couldn't set unit format: %x\n", (int)sc);
-            return osstatus_to_hresult(sc);
-        }
-
-        /* AudioConverterNew requires divide-by-zero SSE exceptions to be masked */
-        if(feholdexcept(&fenv)){
-            WARN("Failed to store fenv state\n");
-            fenv_stored = FALSE;
-        }
-
-        sc = AudioConverterNew(dev_desc, &desc, converter);
-
-        if(fenv_stored && fesetenv(&fenv))
-            WARN("Failed to restore fenv state\n");
-
-        if(sc != noErr){
-            WARN("Couldn't create audio converter: %x\n", (int)sc);
-            return osstatus_to_hresult(sc);
-        }
-    }else{
-        hr = ca_get_audiodesc(dev_desc, fmt);
-        if(FAILED(hr))
-            return hr;
-
-        dump_adesc("final", dev_desc);
-        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Input, 0, dev_desc, sizeof(*dev_desc));
-        if(sc != noErr){
-            WARN("Couldn't set format: %x\n", (int)sc);
-            return osstatus_to_hresult(sc);
-        }
-    }
-
-    return S_OK;
 }
 
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
@@ -1298,75 +1118,30 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
         WAVEFORMATEX **outpwfx)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    AudioStreamBasicDescription dev_desc;
-    AudioConverterRef converter;
-    AudioComponentInstance unit;
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)pwfx;
-    HRESULT hr;
+    struct is_format_supported_params params;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, pwfx, outpwfx);
+    if(pwfx) dump_fmt(pwfx);
 
-    if(!pwfx || (mode == AUDCLNT_SHAREMODE_SHARED && !outpwfx))
-        return E_POINTER;
-
-    if(mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return E_INVALIDARG;
-
-    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            pwfx->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-        return E_INVALIDARG;
-
-    dump_fmt(pwfx);
+    params.dev_id = This->adevid;
+    params.flow = This->dataflow;
+    params.share = mode;
+    params.fmt_in = pwfx;
+    params.fmt_out = NULL;
 
     if(outpwfx){
         *outpwfx = NULL;
-        if(mode != AUDCLNT_SHAREMODE_SHARED)
-            outpwfx = NULL;
+        if(mode == AUDCLNT_SHAREMODE_SHARED)
+            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
     }
+    UNIX_CALL(is_format_supported, &params);
 
-    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(pwfx->nAvgBytesPerSec == 0 ||
-                pwfx->nBlockAlign == 0 ||
-                fmtex->Samples.wValidBitsPerSample > pwfx->wBitsPerSample)
-            return E_INVALIDARG;
-        if(fmtex->Samples.wValidBitsPerSample < pwfx->wBitsPerSample)
-            goto unsupported;
-        if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE){
-            if(fmtex->dwChannelMask == 0 ||
-                    fmtex->dwChannelMask & SPEAKER_RESERVED)
-                goto unsupported;
-        }
-    }
+    if(params.result == S_FALSE)
+        *outpwfx = &params.fmt_out->Format;
+    else
+        CoTaskMemFree(params.fmt_out);
 
-    if(pwfx->nBlockAlign != pwfx->nChannels * pwfx->wBitsPerSample / 8 ||
-            pwfx->nAvgBytesPerSec != pwfx->nBlockAlign * pwfx->nSamplesPerSec)
-        goto unsupported;
-
-    if(pwfx->nChannels == 0)
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    unit = get_audiounit(This->dataflow, This->adevid);
-
-    converter = NULL;
-    hr = ca_setup_audiounit(This->dataflow, unit, pwfx, &dev_desc, &converter);
-    AudioComponentInstanceDispose(unit);
-    if(FAILED(hr))
-        goto unsupported;
-
-    if(converter)
-        AudioConverterDispose(converter);
-
-    return S_OK;
-
-unsupported:
-    if(outpwfx){
-        hr = IAudioClient3_GetMixFormat(&This->IAudioClient3_iface, outpwfx);
-        if(FAILED(hr))
-            return hr;
-        return S_FALSE;
-    }
-
-    return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
