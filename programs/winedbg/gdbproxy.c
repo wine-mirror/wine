@@ -54,6 +54,13 @@ struct gdb_xpoint
     unsigned int value;
 };
 
+struct reply_buffer
+{
+    unsigned char* base;
+    size_t len;
+    size_t alloc;
+};
+
 struct gdb_context
 {
     /* gdb information */
@@ -66,9 +73,7 @@ struct gdb_context
     char*                       in_packet;
     int                         in_packet_len;
     /* outgoing buffer */
-    char*                       out_buf;
-    int                         out_buf_alloc;
-    int                         out_len;
+    struct reply_buffer         out_buf;
     int                         out_curr_packet;
     /* generic GDB thread information */
     int                         exec_tid; /* tid used in step & continue */
@@ -224,12 +229,57 @@ static void hex_to(char* dst, const void* src, size_t len)
     }
 }
 
-static unsigned char checksum(const char* ptr, int len)
+static void reply_buffer_clear(struct reply_buffer* reply)
+{
+    reply->len = 0;
+}
+
+static void reply_buffer_grow(struct reply_buffer* reply, size_t size)
+{
+    if (reply->alloc < reply->len + size)
+    {
+        reply->alloc = ((reply->len + size) / 32 + 1) * 32;
+        reply->base = realloc(reply->base, reply->alloc);
+    }
+}
+
+static void reply_buffer_append(struct reply_buffer* reply, const void* data, size_t size)
+{
+    reply_buffer_grow(reply, size);
+    memcpy(reply->base + reply->len, data, size);
+    reply->len += size;
+}
+
+static inline void reply_buffer_append_hex(struct reply_buffer* reply, const void* src, size_t len)
+{
+    reply_buffer_grow(reply, len * 2);
+    hex_to((char *)reply->base + reply->len, src, len);
+    reply->len += len * 2;
+}
+
+static inline void reply_buffer_append_uinthex(struct reply_buffer* reply, ULONG_PTR val, int len)
+{
+    char buf[sizeof(ULONG_PTR) * 2], *ptr;
+
+    assert(len <= sizeof(ULONG_PTR));
+
+    ptr = buf + len * 2;
+    while (ptr != buf)
+    {
+        *--ptr = hex_to0(val & 0x0F);
+        val >>= 4;
+    }
+
+    reply_buffer_append(reply, ptr, len * 2);
+}
+
+static unsigned char checksum(const void* data, int len)
 {
     unsigned cksum = 0;
+    const unsigned char* ptr = data;
 
     while (len-- > 0)
-        cksum += (unsigned char)*ptr++;
+        cksum += *ptr++;
     return cksum;
 }
 
@@ -705,20 +755,9 @@ static int addr_width(struct gdb_context* gdbctx)
 enum packet_return {packet_error = 0x00, packet_ok = 0x01, packet_done = 0x02,
                     packet_last_f = 0x80};
 
-static void packet_reply_grow(struct gdb_context* gdbctx, size_t size)
-{
-    if (gdbctx->out_buf_alloc < gdbctx->out_len + size)
-    {
-        gdbctx->out_buf_alloc = ((gdbctx->out_len + size) / 32 + 1) * 32;
-        gdbctx->out_buf = realloc(gdbctx->out_buf, gdbctx->out_buf_alloc);
-    }
-}
-
 static void packet_reply_hex_to(struct gdb_context* gdbctx, const void* src, int len)
 {
-    packet_reply_grow(gdbctx, len * 2);
-    hex_to(&gdbctx->out_buf[gdbctx->out_len], src, len);
-    gdbctx->out_len += len * 2;
+    reply_buffer_append_hex(&gdbctx->out_buf, src, len);
 }
 
 static inline void packet_reply_hex_to_str(struct gdb_context* gdbctx, const char* src)
@@ -728,15 +767,7 @@ static inline void packet_reply_hex_to_str(struct gdb_context* gdbctx, const cha
 
 static void packet_reply_val(struct gdb_context* gdbctx, ULONG_PTR val, int len)
 {
-    int i, shift;
-
-    shift = (len - 1) * 8;
-    packet_reply_grow(gdbctx, len * 2);
-    for (i = 0; i < len; i++, shift -= 8)
-    {
-        gdbctx->out_buf[gdbctx->out_len++] = hex_to0((val >> (shift + 4)) & 0x0F);
-        gdbctx->out_buf[gdbctx->out_len++] = hex_to0((val >>  shift     ) & 0x0F);
-    }
+    reply_buffer_append_uinthex(&gdbctx->out_buf, val, len);
 }
 
 static const unsigned char gdb_special_chars_lookup_table[4] = {
@@ -764,6 +795,7 @@ static inline BOOL is_gdb_special_char(unsigned char val)
 static void packet_reply_add(struct gdb_context* gdbctx, const char* str)
 {
     const unsigned char *ptr = (unsigned char *)str, *curr;
+    unsigned char esc_seq[2];
 
     while (*ptr)
     {
@@ -772,23 +804,20 @@ static void packet_reply_add(struct gdb_context* gdbctx, const char* str)
         while (*ptr && !is_gdb_special_char(*ptr))
             ptr++;
 
-        packet_reply_grow(gdbctx, ptr - curr);
-        memcpy(&gdbctx->out_buf[gdbctx->out_len], curr, ptr - curr);
-        gdbctx->out_len += ptr - curr;
+        reply_buffer_append(&gdbctx->out_buf, curr, ptr - curr);
         if (!*ptr) break;
 
-        packet_reply_grow(gdbctx, 2);
-        gdbctx->out_buf[gdbctx->out_len++] = 0x7D;
-        gdbctx->out_buf[gdbctx->out_len++] = 0x20 ^ *ptr++;
+        esc_seq[0] = 0x7D;
+        esc_seq[1] = 0x20 ^ *ptr++;
+        reply_buffer_append(&gdbctx->out_buf, esc_seq, 2);
     }
 }
 
 static void packet_reply_open(struct gdb_context* gdbctx)
 {
     assert(gdbctx->out_curr_packet == -1);
-    packet_reply_grow(gdbctx, 1);
-    gdbctx->out_buf[gdbctx->out_len++] = '$';
-    gdbctx->out_curr_packet = gdbctx->out_len;
+    reply_buffer_append(&gdbctx->out_buf, "$", 1);
+    gdbctx->out_curr_packet = gdbctx->out_buf.len;
 }
 
 static void packet_reply_close(struct gdb_context* gdbctx)
@@ -796,10 +825,9 @@ static void packet_reply_close(struct gdb_context* gdbctx)
     unsigned char       cksum;
     int plen;
 
-    plen = gdbctx->out_len - gdbctx->out_curr_packet;
-    packet_reply_grow(gdbctx, 1);
-    gdbctx->out_buf[gdbctx->out_len++] = '#';
-    cksum = checksum(&gdbctx->out_buf[gdbctx->out_curr_packet], plen);
+    plen = gdbctx->out_buf.len - gdbctx->out_curr_packet;
+    reply_buffer_append(&gdbctx->out_buf, "#", 1);
+    cksum = checksum(gdbctx->out_buf.base + gdbctx->out_curr_packet, plen);
     packet_reply_hex_to(gdbctx, &cksum, 1);
     gdbctx->out_curr_packet = -1;
 }
@@ -815,20 +843,20 @@ static void packet_reply_close_xfer(struct gdb_context* gdbctx, unsigned int off
     int begin = gdbctx->out_curr_packet + 1;
     int plen;
 
-    if (begin + off < gdbctx->out_len)
+    if (begin + off < gdbctx->out_buf.len)
     {
-        gdbctx->out_len -= off;
-        memmove(gdbctx->out_buf + begin, gdbctx->out_buf + begin + off, gdbctx->out_len);
+        gdbctx->out_buf.len -= off;
+        memmove(gdbctx->out_buf.base + begin, gdbctx->out_buf.base + begin + off, gdbctx->out_buf.len);
     }
     else
     {
-        gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
-        gdbctx->out_len = gdbctx->out_curr_packet + 1;
+        gdbctx->out_buf.base[gdbctx->out_curr_packet] = 'l';
+        gdbctx->out_buf.len = gdbctx->out_curr_packet + 1;
     }
 
-    plen = gdbctx->out_len - begin;
-    if (plen > len) gdbctx->out_len -= (plen - len);
-    else gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
+    plen = gdbctx->out_buf.len - begin;
+    if (plen > len) gdbctx->out_buf.len -= (plen - len);
+    else gdbctx->out_buf.base[gdbctx->out_curr_packet] = 'l';
 
     packet_reply_close(gdbctx);
 }
@@ -2098,10 +2126,10 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
             case packet_done:   break;
             }
 
-            TRACE("Reply: %s\n", debugstr_an(gdbctx->out_buf, gdbctx->out_len));
-            i = send(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len, 0);
-            assert(i == gdbctx->out_len);
-            gdbctx->out_len = 0;
+            TRACE("Reply: %s\n", debugstr_an((char *)gdbctx->out_buf.base, gdbctx->out_buf.len));
+            i = send(gdbctx->sock, (char *)gdbctx->out_buf.base, gdbctx->out_buf.len, 0);
+            assert(i == gdbctx->out_buf.len);
+            reply_buffer_clear(&gdbctx->out_buf);
         }
         else
             WARN("Ignoring: %s (checksum: %d != %d)\n", debugstr_an(ptr, sum - ptr),
@@ -2255,9 +2283,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->in_buf = NULL;
     gdbctx->in_buf_alloc = 0;
     gdbctx->in_len = 0;
-    gdbctx->out_buf = NULL;
-    gdbctx->out_buf_alloc = 0;
-    gdbctx->out_len = 0;
+    memset(&gdbctx->out_buf, 0, sizeof(gdbctx->out_buf));
     gdbctx->out_curr_packet = -1;
 
     gdbctx->exec_tid = -1;
