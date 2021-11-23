@@ -931,15 +931,17 @@ static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_
     packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, ctx, idx), cpu_register_map[idx].length);
 }
 
-static void packet_reply_xfer(struct gdb_context* gdbctx, size_t off, size_t len)
+static void packet_reply_xfer(struct gdb_context* gdbctx, size_t off, size_t len, BOOL* more_p)
 {
+    BOOL more;
     size_t data_len, trunc_len;
 
     packet_reply_open(gdbctx);
     data_len = gdbctx->qxfer_buffer.len;
 
     /* check if off + len would overflow */
-    if (off < data_len && off + len < data_len)
+    more = off < data_len && off + len < data_len;
+    if (more)
         packet_reply_add(gdbctx, "m");
     else
         packet_reply_add(gdbctx, "l");
@@ -951,6 +953,8 @@ static void packet_reply_xfer(struct gdb_context* gdbctx, size_t off, size_t len
     }
 
     packet_reply_close(gdbctx);
+
+    *more_p = more;
 }
 
 /* =============================================== *
@@ -2071,6 +2075,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         {
             enum packet_return result;
             int i;
+            BOOL more;
 
             for (i = 0; i < ARRAY_SIZE(qxfer_handlers); i++)
             {
@@ -2086,21 +2091,38 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
 
             TRACE("qXfer %s read %s %u,%u\n", debugstr_a(object_name), debugstr_a(annex), off, len);
 
-            gdbctx->qxfer_object_idx = i;
-            strcpy(gdbctx->qxfer_object_annex, annex);
+            if (off > 0 &&
+                gdbctx->qxfer_buffer.len > 0 &&
+                gdbctx->qxfer_object_idx == i &&
+                strcmp(gdbctx->qxfer_object_annex, annex) == 0)
+            {
+                result = packet_send_buffer;
+                TRACE("qXfer read result = %d (cached)\n", result);
+            }
+            else
+            {
+                reply_buffer_clear(&gdbctx->qxfer_buffer);
 
-            result = (*qxfer_handlers[i].handler)(gdbctx);
-            TRACE("qXfer read result = %d\n", result);
+                gdbctx->qxfer_object_idx = i;
+                strcpy(gdbctx->qxfer_object_annex, annex);
 
+                result = (*qxfer_handlers[i].handler)(gdbctx);
+                TRACE("qXfer read result = %d\n", result);
+            }
+
+            more = FALSE;
             if ((result & ~packet_last_f) == packet_send_buffer)
             {
-                packet_reply_xfer(gdbctx, off, len);
+                packet_reply_xfer(gdbctx, off, len, &more);
                 result = (result & packet_last_f) | packet_done;
             }
 
-            gdbctx->qxfer_object_idx = -1;
-            gdbctx->qxfer_object_annex[0] = '\0';
-            reply_buffer_clear(&gdbctx->qxfer_buffer);
+            if (!more)
+            {
+                gdbctx->qxfer_object_idx = -1;
+                gdbctx->qxfer_object_annex[0] = '\0';
+                reply_buffer_clear(&gdbctx->qxfer_buffer);
+            }
 
             return result;
         }
