@@ -693,6 +693,7 @@ static NTSTATUS release_stream( void *args )
     }
 
     if(stream->converter) AudioConverterDispose(stream->converter);
+    free(stream->resamp_buffer);
     free(stream->wrap_buffer);
     free(stream->cap_buffer);
     if(stream->local_buffer)
@@ -1012,6 +1013,108 @@ unsupported:
     return STATUS_SUCCESS;
 }
 
+static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
+{
+    if(left <= right)
+        return right - left;
+    return bufsize - (left - right);
+}
+
+/* place data from cap_buffer into provided AudioBufferList */
+static OSStatus feed_cb(AudioConverterRef converter, UInt32 *nframes, AudioBufferList *data,
+                        AudioStreamPacketDescription **packets, void *user)
+{
+    struct coreaudio_stream *stream = user;
+
+    *nframes = min(*nframes, stream->cap_held_frames);
+    if(!*nframes){
+        data->mBuffers[0].mData = NULL;
+        data->mBuffers[0].mDataByteSize = 0;
+        data->mBuffers[0].mNumberChannels = stream->fmt->nChannels;
+        return noErr;
+    }
+
+    data->mBuffers[0].mDataByteSize = *nframes * stream->fmt->nBlockAlign;
+    data->mBuffers[0].mNumberChannels = stream->fmt->nChannels;
+
+    if(stream->cap_offs_frames + *nframes > stream->cap_bufsize_frames){
+        UINT32 chunk_frames = stream->cap_bufsize_frames - stream->cap_offs_frames;
+
+        if(stream->wrap_bufsize_frames < *nframes){
+            free(stream->wrap_buffer);
+            stream->wrap_buffer = malloc(data->mBuffers[0].mDataByteSize);
+            stream->wrap_bufsize_frames = *nframes;
+        }
+
+        memcpy(stream->wrap_buffer, stream->cap_buffer + stream->cap_offs_frames * stream->fmt->nBlockAlign,
+               chunk_frames * stream->fmt->nBlockAlign);
+        memcpy(stream->wrap_buffer + chunk_frames * stream->fmt->nBlockAlign, stream->cap_buffer,
+               (*nframes - chunk_frames) * stream->fmt->nBlockAlign);
+
+        data->mBuffers[0].mData = stream->wrap_buffer;
+    }else
+        data->mBuffers[0].mData = stream->cap_buffer + stream->cap_offs_frames * stream->fmt->nBlockAlign;
+
+    stream->cap_offs_frames += *nframes;
+    stream->cap_offs_frames %= stream->cap_bufsize_frames;
+    stream->cap_held_frames -= *nframes;
+
+    if(packets)
+        *packets = NULL;
+
+    return noErr;
+}
+
+static NTSTATUS capture_resample(void *args)
+{
+    struct coreaudio_stream *stream = args;
+    UINT32 resamp_period_frames = muldiv(stream->period_frames, stream->dev_desc.mSampleRate,
+                                         stream->fmt->nSamplesPerSec);
+    OSStatus sc;
+
+    /* the resampling process often needs more source frames than we'd
+     * guess from a straight conversion using the sample rate ratio. so
+     * only convert if we have extra source data. */
+    while(stream->cap_held_frames > resamp_period_frames * 2){
+        AudioBufferList converted_list;
+        UInt32 wanted_frames = stream->period_frames;
+
+        converted_list.mNumberBuffers = 1;
+        converted_list.mBuffers[0].mNumberChannels = stream->fmt->nChannels;
+        converted_list.mBuffers[0].mDataByteSize = wanted_frames * stream->fmt->nBlockAlign;
+
+        if(stream->resamp_bufsize_frames < wanted_frames){
+            free(stream->resamp_buffer);
+            stream->resamp_buffer = malloc(converted_list.mBuffers[0].mDataByteSize);
+            stream->resamp_bufsize_frames = wanted_frames;
+        }
+
+        converted_list.mBuffers[0].mData = stream->resamp_buffer;
+
+        sc = AudioConverterFillComplexBuffer(stream->converter, feed_cb,
+                                             stream, &wanted_frames, &converted_list, NULL);
+        if(sc != noErr){
+            WARN("AudioConverterFillComplexBuffer failed: %x\n", (int)sc);
+            break;
+        }
+
+        ca_wrap_buffer(stream->local_buffer,
+                       stream->wri_offs_frames * stream->fmt->nBlockAlign,
+                       stream->bufsize_frames * stream->fmt->nBlockAlign,
+                       stream->resamp_buffer, wanted_frames * stream->fmt->nBlockAlign);
+
+        stream->wri_offs_frames += wanted_frames;
+        stream->wri_offs_frames %= stream->bufsize_frames;
+        if(stream->held_frames + wanted_frames > stream->bufsize_frames){
+            stream->lcl_offs_frames += buf_ptr_diff(stream->lcl_offs_frames, stream->wri_offs_frames,
+                                                    stream->bufsize_frames);
+            stream->held_frames = stream->bufsize_frames;
+        }else
+            stream->held_frames += wanted_frames;
+    }
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1019,4 +1122,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     get_mix_format,
     is_format_supported,
+
+    capture_resample /* temporary */
 };

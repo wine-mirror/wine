@@ -138,10 +138,6 @@ struct ACImpl {
 
     struct coreaudio_stream *stream;
     struct list entry;
-
-    /* Temporary */
-    BYTE *feed_wrap_buffer;
-    UINT32 feed_wrap_bufsize_frames;
 };
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
@@ -581,7 +577,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             if(This->stream->tmp_buffer)
                 NtFreeVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer,
                                     &This->stream->tmp_buffer_size, MEM_RELEASE);
-            HeapFree(GetProcessHeap(), 0, This->stream->resamp_buffer);
             params.stream = This->stream;
             UNIX_CALL(release_stream, &params);
         }
@@ -591,7 +586,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        free(This->feed_wrap_buffer);
         IMMDevice_Release(This->parent);
         IUnknown_Release(This->pUnkFTMarshal);
         HeapFree(GetProcessHeap(), 0, This);
@@ -736,103 +730,9 @@ static void silence_buffer(struct coreaudio_stream *stream, BYTE *buffer, UINT32
         memset(buffer, 0, frames * stream->fmt->nBlockAlign);
 }
 
-static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
-{
-    if(left <= right)
-        return right - left;
-    return bufsize - (left - right);
-}
-
-/* place data from cap_buffer into provided AudioBufferList */
-static OSStatus feed_cb(AudioConverterRef converter, UInt32 *nframes, AudioBufferList *data,
-        AudioStreamPacketDescription **packets, void *user)
-{
-    ACImpl *This = user;
-
-    *nframes = min(*nframes, This->stream->cap_held_frames);
-    if(!*nframes){
-        data->mBuffers[0].mData = NULL;
-        data->mBuffers[0].mDataByteSize = 0;
-        data->mBuffers[0].mNumberChannels = This->stream->fmt->nChannels;
-        return noErr;
-    }
-
-    data->mBuffers[0].mDataByteSize = *nframes * This->stream->fmt->nBlockAlign;
-    data->mBuffers[0].mNumberChannels = This->stream->fmt->nChannels;
-
-    if(This->stream->cap_offs_frames + *nframes > This->stream->cap_bufsize_frames){
-        UINT32 chunk_frames = This->stream->cap_bufsize_frames - This->stream->cap_offs_frames;
-
-        if(This->feed_wrap_bufsize_frames < *nframes){
-            free(This->feed_wrap_buffer);
-            This->feed_wrap_buffer = malloc(data->mBuffers[0].mDataByteSize);
-            This->feed_wrap_bufsize_frames = *nframes;
-        }
-
-        memcpy(This->feed_wrap_buffer, This->stream->cap_buffer + This->stream->cap_offs_frames * This->stream->fmt->nBlockAlign,
-                chunk_frames * This->stream->fmt->nBlockAlign);
-        memcpy(This->feed_wrap_buffer + chunk_frames * This->stream->fmt->nBlockAlign, This->stream->cap_buffer,
-                (*nframes - chunk_frames) * This->stream->fmt->nBlockAlign);
-
-        data->mBuffers[0].mData = This->feed_wrap_buffer;
-    }else
-        data->mBuffers[0].mData = This->stream->cap_buffer + This->stream->cap_offs_frames * This->stream->fmt->nBlockAlign;
-
-    This->stream->cap_offs_frames += *nframes;
-    This->stream->cap_offs_frames %= This->stream->cap_bufsize_frames;
-    This->stream->cap_held_frames -= *nframes;
-
-    if(packets)
-        *packets = NULL;
-
-    return noErr;
-}
-
 static void capture_resample(ACImpl *This)
 {
-    UINT32 resamp_period_frames = MulDiv(This->stream->period_frames, This->stream->dev_desc.mSampleRate, This->stream->fmt->nSamplesPerSec);
-    OSStatus sc;
-
-    /* the resampling process often needs more source frames than we'd
-     * guess from a straight conversion using the sample rate ratio. so
-     * only convert if we have extra source data. */
-    while(This->stream->cap_held_frames > resamp_period_frames * 2){
-        AudioBufferList converted_list;
-        UInt32 wanted_frames = This->stream->period_frames;
-
-        converted_list.mNumberBuffers = 1;
-        converted_list.mBuffers[0].mNumberChannels = This->stream->fmt->nChannels;
-        converted_list.mBuffers[0].mDataByteSize = wanted_frames * This->stream->fmt->nBlockAlign;
-
-        if(This->stream->resamp_bufsize_frames < wanted_frames){
-            HeapFree(GetProcessHeap(), 0, This->stream->resamp_buffer);
-            This->stream->resamp_buffer = HeapAlloc(GetProcessHeap(), 0, converted_list.mBuffers[0].mDataByteSize);
-            This->stream->resamp_bufsize_frames = wanted_frames;
-        }
-
-        converted_list.mBuffers[0].mData = This->stream->resamp_buffer;
-
-        sc = AudioConverterFillComplexBuffer(This->stream->converter, feed_cb,
-                This, &wanted_frames, &converted_list, NULL);
-        if(sc != noErr){
-            WARN("AudioConverterFillComplexBuffer failed: %x\n", (int)sc);
-            break;
-        }
-
-        ca_wrap_buffer(This->stream->local_buffer,
-                This->stream->wri_offs_frames * This->stream->fmt->nBlockAlign,
-                This->stream->bufsize_frames * This->stream->fmt->nBlockAlign,
-                This->stream->resamp_buffer, wanted_frames * This->stream->fmt->nBlockAlign);
-
-        This->stream->wri_offs_frames += wanted_frames;
-        This->stream->wri_offs_frames %= This->stream->bufsize_frames;
-        if(This->stream->held_frames + wanted_frames > This->stream->bufsize_frames){
-            This->stream->lcl_offs_frames += buf_ptr_diff(This->stream->lcl_offs_frames,
-                    This->stream->wri_offs_frames, This->stream->bufsize_frames);
-            This->stream->held_frames = This->stream->bufsize_frames;
-        }else
-            This->stream->held_frames += wanted_frames;
-    }
+    UNIX_CALL(capture_resample, This->stream);
 }
 
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,

@@ -100,6 +100,8 @@ enum unix_funcs
     unix_release_stream,
     unix_get_mix_format,
     unix_is_format_supported,
+
+    unix_capture_resample /* temporary */
 };
 
 extern unixlib_handle_t coreaudio_handle;
