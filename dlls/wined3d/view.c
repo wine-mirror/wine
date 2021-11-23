@@ -257,15 +257,16 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
         return;
     }
 
+    wined3d_buffer_load_location(buffer, &context_gl->c, WINED3D_LOCATION_BUFFER);
+    bo_gl = wined3d_bo_gl(buffer->buffer_object);
+    offset += bo_gl->b.buffer_offset;
+
     if ((offset & (gl_info->limits.texture_buffer_offset_alignment - 1)))
     {
         FIXME("Buffer offset %u is not %u byte aligned.\n",
                 offset, gl_info->limits.texture_buffer_offset_alignment);
         return;
     }
-
-    wined3d_buffer_load_location(buffer, &context_gl->c, WINED3D_LOCATION_BUFFER);
-    bo_gl = wined3d_bo_gl(buffer->buffer_object);
 
     view->target = GL_TEXTURE_BUFFER;
     if (!view->name)
