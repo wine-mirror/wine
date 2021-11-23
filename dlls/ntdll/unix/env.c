@@ -1321,7 +1321,7 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 
 static WCHAR *expand_value( WCHAR *env, SIZE_T size, const WCHAR *src, SIZE_T src_len )
 {
-    SIZE_T len, retlen = src_len, count = 0;
+    SIZE_T len, retlen = src_len + 1, count = 0;
     const WCHAR *var;
     WCHAR *ret;
 
@@ -1364,7 +1364,7 @@ static WCHAR *expand_value( WCHAR *env, SIZE_T size, const WCHAR *src, SIZE_T sr
         }
         if (len >= retlen - count)
         {
-            retlen *= 2;
+            retlen = max( retlen * 2, count + len + 1 );
             ret = realloc( ret, retlen * sizeof(WCHAR) );
         }
         memcpy( ret + count, var, len * sizeof(WCHAR) );
