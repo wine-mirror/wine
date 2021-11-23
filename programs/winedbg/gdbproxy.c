@@ -98,7 +98,10 @@ struct gdb_context
 /* assume standard signal and errno values */
 enum host_error
 {
+    HOST_EPERM  = 1,
+    HOST_ENOENT = 2,
     HOST_ESRCH  = 3,
+    HOST_ENOMEM = 12,
     HOST_EFAULT = 14,
     HOST_EINVAL = 22,
 };
@@ -1928,6 +1931,33 @@ static enum packet_return packet_query_features(struct gdb_context* gdbctx)
     return packet_reply_error(gdbctx, 0);
 }
 
+static enum packet_return packet_query_exec_file(struct gdb_context* gdbctx)
+{
+    struct reply_buffer* reply = &gdbctx->qxfer_buffer;
+    struct dbg_process* process = gdbctx->process;
+    char *unix_path;
+    BOOL is_wow64;
+    char *tmp;
+
+    if (!process) return packet_error;
+
+    if (gdbctx->qxfer_object_annex[0] || !process->imageName)
+        return packet_reply_error(gdbctx, HOST_EPERM);
+
+    if (!(unix_path = wine_get_unix_file_name(process->imageName)))
+        return packet_reply_error(gdbctx, GetLastError() == ERROR_NOT_ENOUGH_MEMORY ? HOST_ENOMEM : HOST_ENOENT);
+
+    if (IsWow64Process(process->handle, &is_wow64) &&
+        is_wow64 && (tmp = strstr(unix_path, "system32")))
+        memcpy(tmp, "syswow64", 8);
+
+    reply_buffer_append_str(reply, unix_path);
+
+    HeapFree(GetProcessHeap(), 0, unix_path);
+
+    return packet_send_buffer;
+}
+
 struct qxfer
 {
     const char*        name;
@@ -1937,6 +1967,7 @@ struct qxfer
     {"libraries", packet_query_libraries},
     {"threads"  , packet_query_threads  },
     {"features" , packet_query_features },
+    {"exec-file", packet_query_exec_file},
 };
 
 static enum packet_return packet_query(struct gdb_context* gdbctx)
