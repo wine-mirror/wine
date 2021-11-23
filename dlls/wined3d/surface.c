@@ -419,8 +419,8 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     unsigned int restore_idx;
     BYTE *row, *top, *bottom;
     BOOL src_is_upside_down;
+    BYTE *mem = NULL;
     unsigned int i;
-    BYTE *mem;
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, dst_location);
 
@@ -504,8 +504,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
             mem = GL_EXTCALL(glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE));
             checkGLcall("glMapBuffer");
         }
-        else
-            mem = data.addr;
+        mem += (uintptr_t)data.addr;
 
         top = mem;
         bottom = mem + row_pitch * (height - 1);
