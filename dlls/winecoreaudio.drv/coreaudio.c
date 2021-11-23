@@ -1115,6 +1115,18 @@ static NTSTATUS capture_resample(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_buffer_size(void *args)
+{
+    struct get_buffer_size_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    OSSpinLockLock(&stream->lock);
+    *params->frames = stream->bufsize_frames;
+    OSSpinLockUnlock(&stream->lock);
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1122,6 +1134,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     get_mix_format,
     is_format_supported,
+    get_buffer_size,
 
     capture_resample /* temporary */
 };

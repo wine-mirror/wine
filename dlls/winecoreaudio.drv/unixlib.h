@@ -93,6 +93,13 @@ struct is_format_supported_params
     HRESULT result;
 };
 
+struct get_buffer_size_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+    UINT32 *frames;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -100,6 +107,7 @@ enum unix_funcs
     unix_release_stream,
     unix_get_mix_format,
     unix_is_format_supported,
+    unix_get_buffer_size,
 
     unix_capture_resample /* temporary */
 };
