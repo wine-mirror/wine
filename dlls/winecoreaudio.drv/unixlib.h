@@ -107,6 +107,14 @@ struct get_latency_params
     REFERENCE_TIME *latency;
 };
 
+struct get_current_padding_params
+{
+    struct coreaudio_stream *stream;
+    BOOL lock; /* temporary */
+    HRESULT result;
+    UINT32 *padding;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -116,6 +124,7 @@ enum unix_funcs
     unix_is_format_supported,
     unix_get_buffer_size,
     unix_get_latency,
+    unix_get_current_padding,
 
     unix_capture_resample /* temporary */
 };

@@ -1219,6 +1219,24 @@ static NTSTATUS get_latency(void *args)
     return STATUS_SUCCESS;
 }
 
+static UINT32 get_current_padding_nolock(struct coreaudio_stream *stream)
+{
+    if(stream->flow == eCapture) capture_resample(stream);
+    return stream->held_frames;
+}
+
+static NTSTATUS get_current_padding(void *args)
+{
+    struct get_current_padding_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    if(params->lock) OSSpinLockLock(&stream->lock);
+    *params->padding = get_current_padding_nolock(stream);
+    if(params->lock) OSSpinLockUnlock(&stream->lock);
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1228,6 +1246,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     is_format_supported,
     get_buffer_size,
     get_latency,
+    get_current_padding,
 
     capture_resample /* temporary */
 };

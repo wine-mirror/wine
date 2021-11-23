@@ -874,22 +874,23 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
 static HRESULT AudioClient_GetCurrentPadding_nolock(ACImpl *This,
         UINT32 *numpad)
 {
+    struct get_current_padding_params params;
+
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    if(This->dataflow == eCapture)
-        capture_resample(This);
-
-    *numpad = This->stream->held_frames;
-
-    return S_OK;
+    params.stream = This->stream;
+    params.padding = numpad;
+    params.lock = FALSE;
+    UNIX_CALL(get_current_padding, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         UINT32 *numpad)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr;
+    struct get_current_padding_params params;
 
     TRACE("(%p)->(%p)\n", This, numpad);
 
@@ -899,13 +900,11 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    hr = AudioClient_GetCurrentPadding_nolock(This, numpad);
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return hr;
+    params.stream = This->stream;
+    params.padding = numpad;
+    params.lock = TRUE;
+    UNIX_CALL(get_current_padding, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
