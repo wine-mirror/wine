@@ -3125,8 +3125,9 @@ static void output_module( struct makefile *make )
     struct strarray all_libs = empty_strarray;
     struct strarray dep_libs = empty_strarray;
     struct strarray imports = make->imports;
-    char *module_path = obj_dir_path( make, make->module );
-    const char *debug_file = NULL;
+    char *module_name = strmake( "%s%s", make->module, make->is_cross ? "" : dll_ext );
+    const char *debug_file;
+    const char *delay_load = delay_load_flag;
     char *spec_file = NULL;
     unsigned int i;
 
@@ -3143,39 +3144,24 @@ static void output_module( struct makefile *make )
         strarray_addall( &all_libs, libs );
     }
 
-    if (make->is_cross)
-    {
-        if (delay_load_flag)
-        {
-            for (i = 0; i < make->delayimports.count; i++)
-                strarray_add( &all_libs, strmake( "%s%s%s", delay_load_flag, make->delayimports.str[i],
-                                                  strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
-        }
-        strarray_add( &make->all_targets, strmake( "%s", make->module ));
-        add_install_rule( make, make->module, strmake( "%s", make->module ),
-                          strmake( "c%s/%s", pe_dir, make->module ));
-        debug_file = get_debug_file( make, make->module );
-        output( "%s:", module_path );
-    }
-    else if (*dll_ext)
+    if (!make->is_cross && *dll_ext) delay_load = "-Wl,-delayload,";
+    if (delay_load)
     {
         for (i = 0; i < make->delayimports.count; i++)
-            strarray_add( &all_libs, strmake( "-Wl,-delayload,%s%s", make->delayimports.str[i],
+            strarray_add( &all_libs, strmake( "%s%s%s", delay_load, make->delayimports.str[i],
                                               strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
-        strarray_add( &make->all_targets, strmake( "%s%s", make->module, dll_ext ));
-        add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
-                          strmake( "p%s/%s%s", so_dir, make->module, dll_ext ));
-        output( "%s%s:", module_path, dll_ext );
     }
-    else
-    {
-        strarray_add( &make->all_targets, make->module );
-        add_install_rule( make, make->module, make->module,
-                          strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
-        debug_file = get_debug_file( make, make->module );
-        output( "%s:", module_path );
-    }
+    strarray_add( &make->all_targets, module_name );
 
+    if (make->is_cross)
+        add_install_rule( make, make->module, module_name, strmake( "c%s/%s", pe_dir, module_name ));
+    else if (*dll_ext)
+        add_install_rule( make, make->module, module_name, strmake( "p%s/%s", so_dir, module_name ));
+    else
+        add_install_rule( make, make->module, module_name,
+                          strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", module_name ));
+
+    output( "%s:", obj_dir_path( make, module_name ));
     if (spec_file) output_filename( spec_file );
     output_filenames_obj_dir( make, make->is_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
@@ -3193,6 +3179,7 @@ static void output_module( struct makefile *make )
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->is_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
+    debug_file = get_debug_file( make, make->module );
     if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
