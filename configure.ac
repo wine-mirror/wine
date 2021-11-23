@@ -1711,6 +1711,10 @@ then
     WINE_PACKAGE_FLAGS(NETAPI,[netapi],,,,
       [WINE_CHECK_SONAME(netapi,libnetapi_init,,[AC_DEFINE_UNQUOTED(SONAME_LIBNETAPI,["libnetapi.$LIBEXT"])],[$NETAPI_LIBS])])
 fi
+WINE_NOTICE_WITH(netapi,[test "x$ac_cv_lib_soname_netapi" != xyes],
+                 [libnetapi not found, Samba NetAPI won't be supported.],
+                 [enable_netapi])
+
 
 dnl **** Check for any sound system ****
 if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$enable_wineoss_drv$enable_wineandroid_drv" = xnonononono -a \
