@@ -699,6 +699,9 @@ static NTSTATUS release_stream( void *args )
     if(stream->local_buffer)
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
                             &stream->local_buffer_size, MEM_RELEASE);
+    if(stream->tmp_buffer)
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
+                            &stream->tmp_buffer_size, MEM_RELEASE);
     free(stream->fmt);
     params->result = S_OK;
     return STATUS_SUCCESS;
@@ -1230,9 +1233,9 @@ static NTSTATUS get_current_padding(void *args)
     struct get_current_padding_params *params = args;
     struct coreaudio_stream *stream = params->stream;
 
-    if(params->lock) OSSpinLockLock(&stream->lock);
+    OSSpinLockLock(&stream->lock);
     *params->padding = get_current_padding_nolock(stream);
-    if(params->lock) OSSpinLockUnlock(&stream->lock);
+    OSSpinLockUnlock(&stream->lock);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
@@ -1303,6 +1306,58 @@ static NTSTATUS reset(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_render_buffer(void *args)
+{
+    struct get_render_buffer_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+    UINT32 pad;
+
+    OSSpinLockLock(&stream->lock);
+
+    pad = get_current_padding_nolock(stream);
+
+    if(stream->getbuf_last){
+        params->result = AUDCLNT_E_OUT_OF_ORDER;
+        goto end;
+    }
+    if(!params->frames){
+        params->result = S_OK;
+        goto end;
+    }
+    if(pad + params->frames > stream->bufsize_frames){
+        params->result = AUDCLNT_E_BUFFER_TOO_LARGE;
+        goto end;
+    }
+
+    if(stream->wri_offs_frames + params->frames > stream->bufsize_frames){
+        if(stream->tmp_buffer_frames < params->frames){
+            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
+                                &stream->tmp_buffer_size, MEM_RELEASE);
+            stream->tmp_buffer_size = params->frames * stream->fmt->nBlockAlign;
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0,
+                                       &stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE)){
+                stream->tmp_buffer_frames = 0;
+                params->result = E_OUTOFMEMORY;
+                goto end;
+            }
+            stream->tmp_buffer_frames = params->frames;
+        }
+        *params->data = stream->tmp_buffer;
+        stream->getbuf_last = -params->frames;
+    }else{
+        *params->data = stream->local_buffer + stream->wri_offs_frames * stream->fmt->nBlockAlign;
+        stream->getbuf_last = params->frames;
+    }
+
+    silence_buffer(stream, *params->data, params->frames);
+    params->result = S_OK;
+
+end:
+    OSSpinLockUnlock(&stream->lock);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1311,6 +1366,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     start,
     stop,
     reset,
+    get_render_buffer,
     get_mix_format,
     is_format_supported,
     get_buffer_size,

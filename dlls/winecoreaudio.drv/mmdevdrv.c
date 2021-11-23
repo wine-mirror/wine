@@ -554,9 +554,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             CloseHandle(event);
         }
         if(This->stream){
-            if(This->stream->tmp_buffer)
-                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer,
-                                    &This->stream->tmp_buffer_size, MEM_RELEASE);
             params.stream = This->stream;
             UNIX_CALL(release_stream, &params);
         }
@@ -871,21 +868,6 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     return params.result;
 }
 
-static HRESULT AudioClient_GetCurrentPadding_nolock(ACImpl *This,
-        UINT32 *numpad)
-{
-    struct get_current_padding_params params;
-
-    if(!This->stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-
-    params.stream = This->stream;
-    params.padding = numpad;
-    params.lock = FALSE;
-    UNIX_CALL(get_current_padding, &params);
-    return params.result;
-}
-
 static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         UINT32 *numpad)
 {
@@ -902,7 +884,6 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
 
     params.stream = This->stream;
     params.padding = numpad;
-    params.lock = TRUE;
     UNIX_CALL(get_current_padding, &params);
     return params.result;
 }
@@ -1322,8 +1303,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    UINT32 pad;
-    HRESULT hr;
+    struct get_render_buffer_params params;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
 
@@ -1331,54 +1311,11 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return E_POINTER;
     *data = NULL;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    if(This->stream->getbuf_last){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    if(!frames){
-        OSSpinLockUnlock(&This->stream->lock);
-        return S_OK;
-    }
-
-    hr = AudioClient_GetCurrentPadding_nolock(This, &pad);
-    if(FAILED(hr)){
-        OSSpinLockUnlock(&This->stream->lock);
-        return hr;
-    }
-
-    if(pad + frames > This->stream->bufsize_frames){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_BUFFER_TOO_LARGE;
-    }
-
-    if(This->stream->wri_offs_frames + frames > This->stream->bufsize_frames){
-        if(This->stream->tmp_buffer_frames < frames){
-            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer,
-                                &This->stream->tmp_buffer_size, MEM_RELEASE);
-            This->stream->tmp_buffer_size = frames * This->stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&This->stream->tmp_buffer, 0,
-                                       &This->stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE)){
-                This->stream->tmp_buffer_frames = 0;
-                OSSpinLockUnlock(&This->stream->lock);
-                return E_OUTOFMEMORY;
-            }
-            This->stream->tmp_buffer_frames = frames;
-        }
-        *data = This->stream->tmp_buffer;
-        This->stream->getbuf_last = -frames;
-    }else{
-        *data = This->stream->local_buffer + This->stream->wri_offs_frames * This->stream->fmt->nBlockAlign;
-        This->stream->getbuf_last = frames;
-    }
-
-    silence_buffer(This->stream, *data, frames);
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    params.frames = frames;
+    params.data = data;
+    UNIX_CALL(get_render_buffer, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(

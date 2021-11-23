@@ -93,6 +93,14 @@ struct reset_params
     HRESULT result;
 };
 
+struct get_render_buffer_params
+{
+    struct coreaudio_stream *stream;
+    UINT32 frames;
+    HRESULT result;
+    BYTE **data;
+};
+
 struct get_mix_format_params
 {
     EDataFlow flow;
@@ -128,7 +136,6 @@ struct get_latency_params
 struct get_current_padding_params
 {
     struct coreaudio_stream *stream;
-    BOOL lock; /* temporary */
     HRESULT result;
     UINT32 *padding;
 };
@@ -141,6 +148,7 @@ enum unix_funcs
     unix_start,
     unix_stop,
     unix_reset,
+    unix_get_render_buffer,
     unix_get_mix_format,
     unix_is_format_supported,
     unix_get_buffer_size,
