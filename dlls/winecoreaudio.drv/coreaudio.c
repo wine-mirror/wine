@@ -1457,6 +1457,34 @@ end:
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS release_capture_buffer(void *args)
+{
+    struct release_capture_buffer_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    OSSpinLockLock(&stream->lock);
+
+    if(!params->done){
+        stream->getbuf_last = 0;
+        params->result = S_OK;
+    }else if(!stream->getbuf_last)
+        params->result = AUDCLNT_E_OUT_OF_ORDER;
+    else if(stream->getbuf_last != params->done)
+        params->result = AUDCLNT_E_INVALID_SIZE;
+    else{
+        stream->written_frames += params->done;
+        stream->held_frames -= params->done;
+        stream->lcl_offs_frames += params->done;
+        stream->lcl_offs_frames %= stream->bufsize_frames;
+        stream->getbuf_last = 0;
+        params->result = S_OK;
+    }
+
+    OSSpinLockUnlock(&stream->lock);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1468,6 +1496,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_render_buffer,
     release_render_buffer,
     get_capture_buffer,
+    release_capture_buffer,
     get_mix_format,
     is_format_supported,
     get_buffer_size,
