@@ -236,9 +236,14 @@ static void reply_buffer_clear(struct reply_buffer* reply)
 
 static void reply_buffer_grow(struct reply_buffer* reply, size_t size)
 {
-    if (reply->alloc < reply->len + size)
+    size_t required_alloc = reply->len + size;
+
+    if (reply->alloc < required_alloc)
     {
-        reply->alloc = ((reply->len + size) / 32 + 1) * 32;
+        reply->alloc = reply->alloc * 3 / 2;
+        if (reply->alloc < required_alloc)
+            reply->alloc = required_alloc;
+
         reply->base = realloc(reply->base, reply->alloc);
     }
 }
