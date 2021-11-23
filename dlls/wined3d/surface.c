@@ -420,9 +420,11 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     BYTE *row, *top, *bottom;
     BOOL src_is_upside_down;
     BYTE *mem = NULL;
+    uint8_t *offset;
     unsigned int i;
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, dst_location);
+    offset = data.addr;
 
     restore_texture = context->current_rt.texture;
     restore_idx = context->current_rt.sub_resource_idx;
@@ -471,6 +473,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, wined3d_bo_gl(data.buffer_object)->id));
         checkGLcall("glBindBuffer");
+        offset += data.buffer_object->buffer_offset;
     }
 
     level = sub_resource_idx % texture->level_count;
@@ -484,7 +487,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     width = wined3d_texture_get_level_width(texture, level);
     height = wined3d_texture_get_level_height(texture, level);
     gl_info->gl_ops.gl.p_glReadPixels(0, 0, width, height,
-            format_gl->format, format_gl->type, data.addr);
+            format_gl->format, format_gl->type, offset);
     checkGLcall("glReadPixels");
 
     /* Reset previous pixel store pack state */
@@ -504,7 +507,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
             mem = GL_EXTCALL(glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE));
             checkGLcall("glMapBuffer");
         }
-        mem += (uintptr_t)data.addr;
+        mem += (uintptr_t)offset;
 
         top = mem;
         bottom = mem + row_pitch * (height - 1);

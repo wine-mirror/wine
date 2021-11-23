@@ -2693,7 +2693,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, bo->id));
         checkGLcall("glBindBuffer");
-        mem = data->addr;
+        mem = (uint8_t *)data->addr + bo->b.buffer_offset;
     }
     else
     {
@@ -2796,7 +2796,8 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
         {
             GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, bo->id));
             checkGLcall("glBindBuffer");
-            GL_EXTCALL(glBufferSubData(GL_PIXEL_PACK_BUFFER, (GLintptr)data->addr, sub_resource->size, src_data));
+            GL_EXTCALL(glBufferSubData(GL_PIXEL_PACK_BUFFER,
+                    (GLintptr)data->addr + bo->b.buffer_offset, sub_resource->size, src_data));
             checkGLcall("glBufferSubData");
         }
         else
@@ -2827,6 +2828,7 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
     unsigned int src_level, src_width, src_height, src_depth;
     unsigned int src_row_pitch, src_slice_pitch;
     const struct wined3d_format_gl *format_gl;
+    uint8_t *offset = dst_bo_addr->addr;
     struct wined3d_bo *dst_bo;
     BOOL srgb = FALSE;
     GLenum target;
@@ -2906,22 +2908,23 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, wined3d_bo_gl(dst_bo)->id));
         checkGLcall("glBindBuffer");
+        offset += dst_bo->buffer_offset;
     }
 
     if (src_texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("Downloading compressed texture %p, %u, level %u, format %#x, type %#x, data %p.\n",
-                src_texture, src_sub_resource_idx, src_level, format_gl->format, format_gl->type, dst_bo_addr->addr);
+                src_texture, src_sub_resource_idx, src_level, format_gl->format, format_gl->type, offset);
 
-        GL_EXTCALL(glGetCompressedTexImage(target, src_level, dst_bo_addr->addr));
+        GL_EXTCALL(glGetCompressedTexImage(target, src_level, offset));
         checkGLcall("glGetCompressedTexImage");
     }
     else
     {
         TRACE("Downloading texture %p, %u, level %u, format %#x, type %#x, data %p.\n",
-                src_texture, src_sub_resource_idx, src_level, format_gl->format, format_gl->type, dst_bo_addr->addr);
+                src_texture, src_sub_resource_idx, src_level, format_gl->format, format_gl->type, offset);
 
-        gl_info->gl_ops.gl.p_glGetTexImage(target, src_level, format_gl->format, format_gl->type, dst_bo_addr->addr);
+        gl_info->gl_ops.gl.p_glGetTexImage(target, src_level, format_gl->format, format_gl->type, offset);
         checkGLcall("glGetTexImage");
     }
 
