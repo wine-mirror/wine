@@ -14119,14 +14119,14 @@ done:
     DestroyWindow(window);
 }
 
-static void check_vtbl_protection_(int line, const void *vtbl, SIZE_T size)
+static void check_vtbl_protection_(int line, const void *vtbl)
 {
     MEMORY_BASIC_INFORMATION info;
-    SIZE_T ret = VirtualQuery(vtbl, &info, size);
+    SIZE_T ret = VirtualQuery(vtbl, &info, sizeof(info));
     ok_(__FILE__, line)(ret == sizeof(info), "Failed to query memory.\n");
     ok_(__FILE__, line)(info.Protect & (PAGE_READWRITE | PAGE_WRITECOPY), "Got protection %#x.\n", info.Protect);
 }
-#define check_vtbl_protection(a) check_vtbl_protection_(__LINE__, a, sizeof(*(a)))
+#define check_vtbl_protection(a) check_vtbl_protection_(__LINE__, a)
 
 static void test_vtbl_protection(void)
 {
