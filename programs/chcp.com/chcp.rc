@@ -26,4 +26,8 @@ STRINGTABLE
 {
     STRING_ACTIVE_CODE_PAGE, "Active code page: %1!u!\n"
     STRING_INVALID_CODE_PAGE, "Invalid code page\n"
+    STRING_USAGE, "CHCP [number]\n\n\
+\  Sets or displays the active console code page.\n\n\
+\  number   The console code page to activate.\n\n\
+\  Type CHCP without a number to display the active console code page.\n\n"
 }

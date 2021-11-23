@@ -22,3 +22,4 @@
 
 #define STRING_ACTIVE_CODE_PAGE   100
 #define STRING_INVALID_CODE_PAGE  101
+#define STRING_USAGE              102

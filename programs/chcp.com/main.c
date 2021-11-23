@@ -99,8 +99,16 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     }
     else if (argc == 2)
     {
-        int codepage = _wtoi(argv[1]);
-        int success = SetConsoleCP(codepage) && SetConsoleOutputCP(codepage);
+        int codepage, success;
+
+        if (!lstrcmpW(argv[1], L"/?"))
+        {
+            output_message(STRING_USAGE);
+            return 0;
+        }
+
+        codepage = _wtoi(argv[1]);
+        success = SetConsoleCP(codepage) && SetConsoleOutputCP(codepage);
 
         if (success)
             output_message(STRING_ACTIVE_CODE_PAGE, codepage);

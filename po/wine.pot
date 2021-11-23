@@ -12869,6 +12869,18 @@ msgstr ""
 msgid "Invalid code page\n"
 msgstr ""
 
+#: programs/chcp.com/chcp.rc:33
+msgid ""
+"CHCP [number]\n"
+"\n"
+"  Sets or displays the active console code page.\n"
+"\n"
+"  number   The console code page to activate.\n"
+"\n"
+"  Type CHCP without a number to display the active console code page.\n"
+"\n"
+msgstr ""
+
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
 msgstr ""
