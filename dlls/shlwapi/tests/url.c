@@ -97,6 +97,11 @@ static const TEST_URL_APPLY TEST_APPLY[] = {
     {"u:\\windows", URL_APPLY_DEFAULT, S_OK, 17, "http://u:\\windows"},
     {"file:///c:/windows", URL_APPLY_GUESSFILE , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
     {"aa:\\windows", URL_APPLY_GUESSFILE , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"\\\\server\\share", URL_APPLY_DEFAULT, S_OK, 21, "http://\\\\server\\share"},
+    {"\\\\server\\share", URL_APPLY_GUESSFILE, S_OK, 19, "file://server/share"},
+    {"\\\\server\\share", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"file://server/share", URL_APPLY_GUESSFILE, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"file://server/share", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
 };
 
 /* ################ */

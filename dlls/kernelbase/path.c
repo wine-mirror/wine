@@ -4020,7 +4020,7 @@ HRESULT WINAPI UrlApplySchemeW(const WCHAR *url, WCHAR *out, DWORD *length, DWOR
 
     if (flags & URL_APPLY_GUESSFILE)
     {
-        if (*length > 1 && ':' == url[1])
+        if ((*length > 1 && ':' == url[1]) || PathIsUNCW(url))
         {
             res1 = *length;
             hr = url_create_from_path(url, out, &res1);
