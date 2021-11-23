@@ -4140,7 +4140,7 @@ static void test_pen_thickness(void)
 
         size = max-min+1;
 
-        ok(size == td[i].cx, "%u: expected %d, got %d\n", i, td[i].cx, size);
+        ok(size == td[i].cx || broken (i == 1 && size == 1), "%u: expected %d, got %d\n", i, td[i].cx, size);
 
         min = -1;
         max = -2;
@@ -4165,7 +4165,7 @@ static void test_pen_thickness(void)
 
         size = max-min+1;
 
-        ok(size == td[i].cy, "%u: expected %d, got %d\n", i, td[i].cy, size);
+        ok(size == td[i].cy || broken (i == 1 && size == 1), "%u: expected %d, got %d\n", i, td[i].cy, size);
 
         status = GdipBitmapUnlockBits(u.bitmap, &bd);
         expect(Ok, status);

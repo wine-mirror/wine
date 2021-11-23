@@ -1447,7 +1447,7 @@ static void test_widen(void)
 
     status = GdipGetPointCount(path, &count);
     expect(Ok, status);
-    expect(0, count);
+    ok(count == 0 || broken(count == 4), "expected 0, got %i\n", count);
 
     /* pen width = 0 pixels, UnitWorld - result is a path 1 unit wide */
     GdipDeletePen(pen);
@@ -1711,6 +1711,21 @@ static void test_widen_cap(void)
 
         status = GdipWidenPath(path, pen, NULL, FlatnessDefault);
         expect(Ok, status);
+
+        if (i == 9)
+        {
+            INT size;
+            status = GdipGetPointCount(path, &size);
+            expect(Ok, status);
+            ok(size == caps[i].expected_size || broken(size == 12), "unexpected path size %i\n", size);
+
+            if (size == 12)
+            {
+                GdipDeletePen(pen);
+                continue;
+            }
+        }
+
         ok_path_fudge(path, caps[i].expected, caps[i].expected_size, caps[i].todo_size, 0.000005);
 
         GdipDeletePen(pen);
