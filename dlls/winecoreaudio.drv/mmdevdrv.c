@@ -683,30 +683,6 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
-static void ca_wrap_buffer(BYTE *dst, UINT32 dst_offs, UINT32 dst_bytes,
-        BYTE *src, UINT32 src_bytes)
-{
-    UINT32 chunk_bytes = dst_bytes - dst_offs;
-
-    if(chunk_bytes < src_bytes){
-        memcpy(dst + dst_offs, src, chunk_bytes);
-        memcpy(dst, src + chunk_bytes, src_bytes - chunk_bytes);
-    }else
-        memcpy(dst + dst_offs, src, src_bytes);
-}
-
-static void silence_buffer(struct coreaudio_stream *stream, BYTE *buffer, UINT32 frames)
-{
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
-    if((stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-        (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-         IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-       stream->fmt->wBitsPerSample == 8)
-        memset(buffer, 128, frames * stream->fmt->nBlockAlign);
-    else
-        memset(buffer, 0, frames * stream->fmt->nBlockAlign);
-}
-
 static void capture_resample(ACImpl *This)
 {
     UNIX_CALL(capture_resample, This->stream);
@@ -1322,52 +1298,15 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 frames, DWORD flags)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    BYTE *buffer;
+    struct release_render_buffer_params params;
 
     TRACE("(%p)->(%u, %x)\n", This, frames, flags);
 
-    OSSpinLockLock(&This->stream->lock);
-
-    if(!frames){
-        This->stream->getbuf_last = 0;
-        OSSpinLockUnlock(&This->stream->lock);
-        return S_OK;
-    }
-
-    if(!This->stream->getbuf_last){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    if(frames > (This->stream->getbuf_last >= 0 ? This->stream->getbuf_last : -This->stream->getbuf_last)){
-        OSSpinLockUnlock(&This->stream->lock);
-        return AUDCLNT_E_INVALID_SIZE;
-    }
-
-    if(This->stream->getbuf_last >= 0)
-        buffer = This->stream->local_buffer + This->stream->wri_offs_frames * This->stream->fmt->nBlockAlign;
-    else
-        buffer = This->stream->tmp_buffer;
-
-    if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        silence_buffer(This->stream, buffer, frames);
-
-    if(This->stream->getbuf_last < 0)
-        ca_wrap_buffer(This->stream->local_buffer,
-                This->stream->wri_offs_frames * This->stream->fmt->nBlockAlign,
-                This->stream->bufsize_frames * This->stream->fmt->nBlockAlign,
-                buffer, frames * This->stream->fmt->nBlockAlign);
-
-
-    This->stream->wri_offs_frames += frames;
-    This->stream->wri_offs_frames %= This->stream->bufsize_frames;
-    This->stream->held_frames += frames;
-    This->stream->written_frames += frames;
-    This->stream->getbuf_last = 0;
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    params.frames = frames;
+    params.flags = flags;
+    UNIX_CALL(release_render_buffer, &params);
+    return params.result;
 }
 
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {

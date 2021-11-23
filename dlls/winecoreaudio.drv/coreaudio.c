@@ -1358,6 +1358,50 @@ end:
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS release_render_buffer(void *args)
+{
+    struct release_render_buffer_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+    BYTE *buffer;
+
+    OSSpinLockLock(&stream->lock);
+
+    if(!params->frames){
+        stream->getbuf_last = 0;
+        params->result = S_OK;
+    }else if(!stream->getbuf_last)
+        params->result = AUDCLNT_E_OUT_OF_ORDER;
+    else if(params->frames > (stream->getbuf_last >= 0 ? stream->getbuf_last : -stream->getbuf_last))
+        params->result = AUDCLNT_E_INVALID_SIZE;
+    else{
+        if(stream->getbuf_last >= 0)
+            buffer = stream->local_buffer + stream->wri_offs_frames * stream->fmt->nBlockAlign;
+        else
+            buffer = stream->tmp_buffer;
+
+        if(params->flags & AUDCLNT_BUFFERFLAGS_SILENT)
+            silence_buffer(stream, buffer, params->frames);
+
+        if(stream->getbuf_last < 0)
+            ca_wrap_buffer(stream->local_buffer,
+                           stream->wri_offs_frames * stream->fmt->nBlockAlign,
+                           stream->bufsize_frames * stream->fmt->nBlockAlign,
+                           buffer, params->frames * stream->fmt->nBlockAlign);
+
+        stream->wri_offs_frames += params->frames;
+        stream->wri_offs_frames %= stream->bufsize_frames;
+        stream->held_frames += params->frames;
+        stream->written_frames += params->frames;
+        stream->getbuf_last = 0;
+
+        params->result = S_OK;
+    }
+
+    OSSpinLockUnlock(&stream->lock);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1367,6 +1411,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     stop,
     reset,
     get_render_buffer,
+    release_render_buffer,
     get_mix_format,
     is_format_supported,
     get_buffer_size,

@@ -101,6 +101,14 @@ struct get_render_buffer_params
     BYTE **data;
 };
 
+struct release_render_buffer_params
+{
+    struct coreaudio_stream *stream;
+    UINT32 frames;
+    DWORD flags;
+    HRESULT result;
+};
+
 struct get_mix_format_params
 {
     EDataFlow flow;
@@ -149,6 +157,7 @@ enum unix_funcs
     unix_stop,
     unix_reset,
     unix_get_render_buffer,
+    unix_release_render_buffer,
     unix_get_mix_format,
     unix_is_format_supported,
     unix_get_buffer_size,
