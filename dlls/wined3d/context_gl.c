@@ -2759,8 +2759,9 @@ static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct 
     {
         for (i = 0; i < range_count; ++i)
         {
-            GL_EXTCALL(glFlushMappedBufferRange(bo->binding,
-                    (UINT_PTR)data->addr + ranges[i].offset, ranges[i].size));
+            /* The offset passed to glFlushMappedBufferRange() is relative to
+             * the mapped range, so don't add data->addr in this case. */
+            GL_EXTCALL(glFlushMappedBufferRange(bo->binding, ranges[i].offset, ranges[i].size));
         }
     }
     else if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
