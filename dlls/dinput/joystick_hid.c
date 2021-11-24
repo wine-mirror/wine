@@ -2707,11 +2707,24 @@ static HRESULT WINAPI hid_joystick_effect_Stop( IDirectInputEffect *iface )
 
 static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *iface, DWORD *status )
 {
-    FIXME( "iface %p, status %p stub!\n", iface, status );
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    HRESULT hr;
+
+    FIXME( "iface %p, status %p semi-stub!\n", iface, status );
 
     if (!status) return E_POINTER;
+    *status = 0;
 
-    return DIERR_UNSUPPORTED;
+    EnterCriticalSection( &impl->joystick->base.crit );
+    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+        hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else if (!impl->index)
+        hr = DIERR_NOTDOWNLOADED;
+    else
+        hr = DI_OK;
+    LeaveCriticalSection( &impl->joystick->base.crit );
+
+    return hr;
 }
 
 static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,

@@ -8873,9 +8873,7 @@ static void test_device_managed_effect(void)
     ok( hr == E_POINTER, "GetEffectStatus returned %#x\n", hr );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#x\n", hr );
-    todo_wine
     ok( res == 0, "got status %#x\n", res );
 
     flags = DIEP_ALLPARAMS;
@@ -8888,7 +8886,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetEffectStatus returned %#x\n", hr );
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
@@ -8898,9 +8895,7 @@ static void test_device_managed_effect(void)
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#x\n", hr );
-    todo_wine
     ok( res == 0, "got status %#x\n", res );
 
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
@@ -8919,9 +8914,7 @@ static void test_device_managed_effect(void)
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    todo_wine
     ok( res == 0, "got status %#x\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
@@ -8946,7 +8939,6 @@ static void test_device_managed_effect(void)
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
     todo_wine
     ok( res == DIEGES_PLAYING, "got status %#x\n", res );
@@ -8956,7 +8948,6 @@ static void test_device_managed_effect(void)
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
     todo_wine
     ok( res == DIEGES_PLAYING, "got status %#x\n", res );
@@ -8974,7 +8965,6 @@ static void test_device_managed_effect(void)
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
     todo_wine
     ok( res == DIEGES_PLAYING, "got status %#x\n", res );
@@ -8994,9 +8984,7 @@ static void test_device_managed_effect(void)
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    todo_wine
     ok( res == 0, "got status %#x\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
@@ -9014,9 +9002,7 @@ static void test_device_managed_effect(void)
 
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
-    todo_wine
     ok( hr == DIERR_NOTDOWNLOADED, "GetEffectStatus returned %#x\n", hr );
-    todo_wine
     ok( res == 0, "got status %#x\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
