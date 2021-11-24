@@ -755,7 +755,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         AMD64_CONTEXT *to = dst;
 
-        to_flags = to->ContextFlags & ~CONTEXT_i386;
+        to_flags = to->ContextFlags & ~CONTEXT_AMD64;
         if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_AMD64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_AMD64_CONTROL;
@@ -830,7 +830,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         AMD64_CONTEXT *to = dst;
 
-        to_flags = to->ContextFlags & ~CONTEXT_i386;
+        to_flags = to->ContextFlags & ~CONTEXT_AMD64;
         if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_AMD64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_AMD64_CONTROL;
