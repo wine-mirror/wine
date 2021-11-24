@@ -1114,7 +1114,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
     if(*ppv) hr = S_OK;
     else{
         FIXME("stub %s\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        hr = E_NOINTERFACE;
     }
 
 end:
