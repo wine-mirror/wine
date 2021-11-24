@@ -2786,6 +2786,14 @@ static NTSTATUS find_builtin_without_file( const WCHAR *name, UNICODE_STRING *ne
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
 
+    if (contains_path( name )) return status;
+
+    if (!is_prefix_bootstrap)
+    {
+        /* 16-bit files can't be loaded from the prefix */
+        if (!name[1] || wcscmp( name + wcslen(name) - 2, L"16" )) return status;
+    }
+
     if (!get_env_var( L"WINEBUILDDIR", 20 + 2 * wcslen(name), new_name ))
     {
         len = new_name->Length;
@@ -2885,10 +2893,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
         paths = ptr;
     }
 
-    if (found_image)
-        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    else if (is_prefix_bootstrap && !contains_path( search ))
-        status = find_builtin_without_file( search, nt_name, pwm, mapping, image_info, id );
+    if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, name );
@@ -2936,13 +2941,13 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     }
 
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
+    {
         status = search_dll_file( load_path, libname, nt_name, pwm, mapping, image_info, id );
+        if (status == STATUS_DLL_NOT_FOUND)
+            status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
+    }
     else if (!(status = RtlDosPathNameToNtPathName_U_WithStatus( libname, nt_name, NULL, NULL )))
         status = open_dll_file( nt_name, pwm, mapping, image_info, id );
-
-    /* 16-bit files can't be loaded from the prefix */
-    if (status && libname[0] && libname[1] && !wcscmp( libname + wcslen(libname) - 2, L"16" ) && !contains_path( libname ))
-        status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
 
     if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) status = STATUS_INVALID_IMAGE_FORMAT;
 
