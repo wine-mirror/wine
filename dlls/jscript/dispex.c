@@ -1572,6 +1572,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         TRACE("invalid id\n");
         return DISP_E_MEMBERNOTFOUND;
     }
+    if(id == DISPID_VALUE && wFlags & (DISPATCH_PROPERTYGET | DISPATCH_PROPERTYPUT))
+        prop = NULL;
 
     enter_script(This->ctx, &ei);
 
@@ -1600,7 +1602,14 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPATCH_PROPERTYGET: {
         jsval_t r;
 
-        hres = prop_get(This, prop, &r);
+        if(prop)
+            hres = prop_get(This, prop, &r);
+        else {
+            hres = to_primitive(This->ctx, jsval_obj(This), &r, NO_HINT);
+            if(hres == JS_E_TO_PRIMITIVE)
+                hres = DISP_E_MEMBERNOTFOUND;
+        }
+
         if(SUCCEEDED(hres)) {
             hres = jsval_to_variant(r, pvarRes);
             jsval_release(r);
@@ -1610,6 +1619,11 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPATCH_PROPERTYPUT: {
         jsval_t val;
         DWORD i;
+
+        if(!prop) {
+            hres = DISP_E_MEMBERNOTFOUND;
+            break;
+        }
 
         for(i=0; i < pdp->cNamedArgs; i++) {
             if(pdp->rgdispidNamedArgs[i] == DISPID_PROPERTYPUT)

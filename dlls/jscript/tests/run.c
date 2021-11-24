@@ -2789,6 +2789,8 @@ static void test_retval(void)
 
 static void test_default_value(void)
 {
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
+    IActiveScript *script;
     DISPPARAMS dp = {0};
     IDispatch *disp;
     VARIANT v;
@@ -2806,9 +2808,99 @@ static void test_default_value(void)
     {
         ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     }
-
     VariantClear(&v);
     IDispatch_Release(disp);
+
+    hres = parse_script_expr(L"var arr = [5]; arr.toString = function() {return \"foo\";}; arr.valueOf = function() {return 42;}; arr", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 42, "V_I4(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    IDispatch_Release(disp);
+    close_script(script);
+
+    hres = parse_script_expr(L"var arr = [5]; arr.toString = function() {return \"foo\";}; arr", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), L"foo"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    IDispatch_Release(disp);
+    close_script(script);
+
+    hres = parse_script_expr(L"var arr = [5]; arr", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), L"5"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    IDispatch_Release(disp);
+    close_script(script);
+
+    hres = parse_script_expr(L"var obj = Object.prototype; delete obj.valueOf; obj", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), L"[object Object]"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    IDispatch_Release(disp);
+    close_script(script);
+
+    hres = parse_script_expr(L"var obj = Object.prototype; delete obj.toString; obj", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08x\n", hres);
+    IDispatch_Release(disp);
+    close_script(script);
+
+    hres = parse_script_expr(L"Object.prototype", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    dp.cArgs = dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &propput_dispid;
+    dp.rgvarg = &v;
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08x\n", hres);
+    IDispatch_Release(disp);
+    close_script(script);
+
+    hres = parse_script_expr(L"var f = function() {return 42;}; f", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08x\n", hres);
+    IDispatch_Release(disp);
+    close_script(script);
 }
 
 static void test_script_exprs(void)
