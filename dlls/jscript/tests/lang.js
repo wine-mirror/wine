@@ -1569,6 +1569,8 @@ ok((delete inobj.test1) === true, "delete inobj.test1 returned false");
 ok(!("test1" in inobj), "test1 is still in inobj after delete");
 ok((delete inobj.test3) === true, "delete inobj.test3 returned false");
 ok("test3" in inobj, "test3 is not in inobj after delete");
+ok((delete forinTestObj.prototype.test3) === true, "delete forinTestObj.prototype.test3 returned false");
+ok(!("test3" in inobj), "test3 is still in inobj after delete on prototype");
 
 tmp = new Object();
 tmp.test = false;

@@ -60,6 +60,24 @@ struct _dispex_prop_t {
     int bucket_next;
 };
 
+static void fix_protref_prop(jsdisp_t *jsdisp, dispex_prop_t *prop)
+{
+    DWORD ref;
+
+    if(prop->type != PROP_PROTREF)
+        return;
+    ref = prop->u.ref;
+
+    while((jsdisp = jsdisp->prototype)) {
+        if(ref >= jsdisp->prop_cnt || jsdisp->props[ref].type == PROP_DELETED)
+            break;
+        if(jsdisp->props[ref].type != PROP_PROTREF)
+            return;
+        ref = jsdisp->props[ref].u.ref;
+    }
+    prop->type = PROP_DELETED;
+}
+
 static inline DISPID prop_to_id(jsdisp_t *This, dispex_prop_t *prop)
 {
     return prop - This->props;
@@ -67,10 +85,11 @@ static inline DISPID prop_to_id(jsdisp_t *This, dispex_prop_t *prop)
 
 static inline dispex_prop_t *get_prop(jsdisp_t *This, DISPID id)
 {
-    if(id < 0 || id >= This->prop_cnt || This->props[id].type == PROP_DELETED)
+    if(id < 0 || id >= This->prop_cnt)
         return NULL;
+    fix_protref_prop(This, &This->props[id]);
 
-    return This->props+id;
+    return This->props[id].type == PROP_DELETED ? NULL : &This->props[id];
 }
 
 static inline BOOL is_function_prop(dispex_prop_t *prop)
@@ -284,6 +303,7 @@ static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *n
     if(prop && prop->type==PROP_DELETED) {
         del = prop;
     } else if(prop) {
+        fix_protref_prop(This, prop);
         *ret = prop;
         return S_OK;
     }
@@ -292,7 +312,7 @@ static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *n
         hres = find_prop_name_prot(This->prototype, hash, name, &prop);
         if(FAILED(hres))
             return hres;
-        if(prop) {
+        if(prop && prop->type != PROP_DELETED) {
             if(del) {
                 del->type = PROP_PROTREF;
                 del->u.ref = prop - This->prototype->props;
