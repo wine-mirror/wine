@@ -110,6 +110,8 @@ static struct object *symlink_lookup_name( struct object *obj, struct unicode_st
     if (!name->len && (attr & OBJ_OPENLINK)) return NULL;
     if (obj == root) return NULL;
 
+    if (!symlink->len) return get_root_directory();
+
     target_str.str = symlink->target;
     target_str.len = symlink->len;
     if ((target = lookup_named_object( NULL, &target_str, attr, &name_left )))
@@ -129,6 +131,17 @@ static void symlink_destroy( struct object *obj )
     struct symlink *symlink = (struct symlink *)obj;
     assert( obj->ops == &symlink_ops );
     free( symlink->target );
+}
+
+struct object *create_root_symlink( struct object *root, const struct unicode_str *name,
+                                    unsigned int attr, const struct security_descriptor *sd )
+{
+    struct symlink *symlink;
+
+    if (!(symlink = create_named_object( root, &symlink_ops, name, attr, sd ))) return NULL;
+    symlink->target = NULL;
+    symlink->len = 0;
+    return &symlink->obj;
 }
 
 struct object *create_symlink( struct object *root, const struct unicode_str *name,

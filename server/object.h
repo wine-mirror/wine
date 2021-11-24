@@ -279,6 +279,8 @@ extern void init_directories( struct fd *intl_fd );
 
 /* symbolic link functions */
 
+extern struct object *create_root_symlink( struct object *root, const struct unicode_str *name,
+                                           unsigned int attr, const struct security_descriptor *sd );
 extern struct object *create_obj_symlink( struct object *root, const struct unicode_str *name,
                                           unsigned int attr, struct object *target,
                                           const struct security_descriptor *sd );
