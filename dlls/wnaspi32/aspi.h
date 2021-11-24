@@ -26,11 +26,6 @@
 #include "winbase.h"
 
 #include "pshpack1.h"
-#ifdef __cplusplus
-extern "C" {
-#endif /* #ifdef __cplusplus */
-
-/*********** OLD ****************/
 
 /* Target status codes */
 #define STATUS_GOOD             0x00
@@ -76,9 +71,6 @@ extern "C" {
 
 #define SENSE_BUFFER(prb) (&prb->CDBByte[prb->SRB_CDBLen])
 
-#ifdef __cplusplus
-}
-#endif /* #ifdef __cplusplus */
 #include "poppack.h"
 
 #endif

@@ -29,14 +29,11 @@
  *   aspi controllers, e-mail me if you need help.
  */
 
-
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -45,7 +42,6 @@
 #include "winescsi.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
@@ -132,5 +128,5 @@ DWORD ASPI_GetHCforController( int controller )
     }
     RegCloseKey(hkeyPort);
 
-    return (atoiW(&wPortName[9]) << 16) + atoiW(&wBusName[9]);
+    return (wcstol(&wPortName[9], NULL, 10) << 16) + wcstol(&wBusName[9], NULL, 10);
 }
