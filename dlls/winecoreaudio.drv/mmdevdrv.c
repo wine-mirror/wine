@@ -129,7 +129,7 @@ struct ACImpl {
     HANDLE event;
     float *vols;
 
-    AudioDeviceID adevid;
+    DWORD dev_id;
     HANDLE timer;
 
     AudioSession *session;
@@ -406,7 +406,7 @@ end:
     return params.result;
 }
 
-static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
+static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
 {
     HKEY devices_key;
     UINT i = 0;
@@ -470,13 +470,13 @@ static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    AudioDeviceID adevid;
+    DWORD dev_id;
     EDataFlow dataflow;
     HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
-    if(!get_deviceid_by_guid(guid, &adevid, &dataflow))
+    if(!get_deviceid_by_guid(guid, &dev_id, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
     if(dataflow != eRender && dataflow != eCapture)
@@ -504,7 +504,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->parent = dev;
     IMMDevice_AddRef(This->parent);
 
-    This->adevid = adevid;
+    This->dev_id = dev_id;
 
     *out = (IAudioClient *)&This->IAudioClient3_iface;
     IAudioClient3_AddRef(&This->IAudioClient3_iface);
@@ -765,7 +765,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    params.dev_id = This->adevid;
+    params.dev_id = This->dev_id;
     params.flow = This->dataflow;
     params.share = mode;
     params.duration = duration;
@@ -882,7 +882,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, pwfx, outpwfx);
     if(pwfx) dump_fmt(pwfx);
 
-    params.dev_id = This->adevid;
+    params.dev_id = This->dev_id;
     params.flow = This->dataflow;
     params.share = mode;
     params.fmt_in = pwfx;
@@ -915,7 +915,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
-    params.dev_id = This->adevid;
+    params.dev_id = This->dev_id;
     params.flow = This->dataflow;
     params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
     if(!params.fmt)
