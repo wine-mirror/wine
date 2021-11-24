@@ -194,6 +194,15 @@ struct is_started_params
     HRESULT result;
 };
 
+struct set_volumes_params
+{
+    struct coreaudio_stream *stream;
+    float master_volume;
+    const float *volumes;
+    const float *session_volumes;
+    int channel;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -215,6 +224,7 @@ enum unix_funcs
     unix_get_position,
     unix_get_frequency,
     unix_is_started,
+    unix_set_volumes,
 };
 
 extern unixlib_handle_t coreaudio_handle;

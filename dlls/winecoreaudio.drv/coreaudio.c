@@ -1554,6 +1554,36 @@ static NTSTATUS is_started(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_volumes(void *args)
+{
+    struct set_volumes_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+    Float32 level = 1.0, tmp;
+    OSStatus sc;
+    UINT32 i;
+
+    if(params->channel >= stream->fmt->nChannels || params->channel < -1){
+        ERR("Incorrect channel %d\n", params->channel);
+        return STATUS_SUCCESS;
+    }
+
+    if(params->channel == -1){
+        for(i = 0; i < stream->fmt->nChannels; ++i){
+            tmp = params->master_volume * params->volumes[i] * params->session_volumes[i];
+            level = tmp < level ? tmp : level;
+        }
+    }else
+        level = params->master_volume * params->volumes[params->channel] *
+            params->session_volumes[params->channel];
+
+    sc = AudioUnitSetParameter(stream->unit, kHALOutputParam_Volume,
+                               kAudioUnitScope_Global, 0, level, 0);
+    if(sc != noErr)
+        WARN("Couldn't set volume: %x\n", (int)sc);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1575,4 +1605,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_position,
     get_frequency,
     is_started,
+    set_volumes,
 };

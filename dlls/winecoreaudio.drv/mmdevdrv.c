@@ -176,7 +176,6 @@ static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0,
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
-static HRESULT ca_setvol(ACImpl *This, struct coreaudio_stream *stream, UINT32 index);
 
 static inline ACImpl *impl_from_IAudioClient3(IAudioClient3 *iface)
 {
@@ -335,6 +334,19 @@ static void get_device_guid(EDataFlow flow, DWORD device_id, GUID *guid)
 
     if(key)
         RegCloseKey(key);
+}
+
+static void set_stream_volumes(ACImpl *This, int channel)
+{
+    struct set_volumes_params params;
+
+    params.stream = This->stream;
+    params.master_volume = This->session->mute ? 0.0f : This->session->master_vol;
+    params.volumes = This->vols;
+    params.session_volumes = This->session->channel_vols;
+    params.channel = channel;
+
+    UNIX_CALL(set_volumes, &params);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
@@ -782,8 +794,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     list_add_tail(&This->session->clients, &This->entry);
 
-    ca_setvol(This, params.stream, -1);
-
 end:
     if(FAILED(params.result)){
         if(params.stream){
@@ -792,8 +802,10 @@ end:
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
-    }else
+    }else{
         This->stream = params.stream;
+        set_stream_volumes(This, -1);
+    }
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -1818,52 +1830,6 @@ static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
     AudioSessionControl_SetDuckingPreference
 };
 
-/* index == -1 means set all channels, otherwise sets only the given channel */
-static HRESULT ca_setvol(ACImpl *This, struct coreaudio_stream *stream, UINT32 index)
-{
-    Float32 level;
-    OSStatus sc;
-
-    if(This->session->mute)
-        level = 0.;
-    else{
-        if(index == (UINT32)-1){
-            UINT32 i;
-            level = 1.;
-            for(i = 0; i < stream->fmt->nChannels; ++i){
-                Float32 tmp;
-                tmp = This->session->master_vol *
-                    This->session->channel_vols[i] * This->vols[i];
-                level = tmp < level ? tmp : level;
-            }
-        }else
-            level = This->session->master_vol *
-                This->session->channel_vols[index] * This->vols[index];
-    }
-
-    sc = AudioUnitSetParameter(stream->unit, kHALOutputParam_Volume,
-            kAudioUnitScope_Global, 0, level, 0);
-    if(sc != noErr)
-        WARN("Couldn't set volume: %x\n", (int)sc);
-
-    return S_OK;
-}
-
-static HRESULT ca_session_setvol(AudioSession *session, UINT32 index)
-{
-    HRESULT ret = S_OK;
-    ACImpl *client;
-
-    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry){
-        HRESULT hr;
-        hr = ca_setvol(client, client->stream, index);
-        if(FAILED(hr))
-            ret = hr;
-    }
-
-    return ret;
-}
-
 static HRESULT WINAPI SimpleAudioVolume_QueryInterface(
         ISimpleAudioVolume *iface, REFIID riid, void **ppv)
 {
@@ -1902,7 +1868,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
-    HRESULT ret;
+    ACImpl *client;
 
     TRACE("(%p)->(%f, %s)\n", session, level, wine_dbgstr_guid(context));
 
@@ -1916,11 +1882,12 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 
     session->master_vol = level;
 
-    ret = ca_session_setvol(session, -1);
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client, -1);
 
     LeaveCriticalSection(&g_sessions_lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI SimpleAudioVolume_GetMasterVolume(
@@ -1944,6 +1911,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
 
@@ -1954,7 +1922,8 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 
     session->mute = mute;
 
-    ca_session_setvol(session, -1);
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client, -1);
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -2040,7 +2009,6 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
         IAudioStreamVolume *iface, UINT32 index, float level)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    HRESULT ret;
 
     TRACE("(%p)->(%d, %f)\n", This, index, level);
 
@@ -2055,11 +2023,11 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     This->vols[index] = level;
 
     WARN("CoreAudio doesn't support per-channel volume control\n");
-    ret = ca_setvol(This, This->stream, index);
+    set_stream_volumes(This, index);
 
     LeaveCriticalSection(&g_sessions_lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
@@ -2085,7 +2053,6 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
     UINT32 i;
-    HRESULT ret;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
 
@@ -2100,11 +2067,11 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     for(i = 0; i < count; ++i)
         This->vols[i] = levels[i];
 
-    ret = ca_setvol(This, This->stream, -1);
+    set_stream_volumes(This, -1);
 
     LeaveCriticalSection(&g_sessions_lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
@@ -2198,7 +2165,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
-    HRESULT ret;
+    ACImpl *client;
 
     TRACE("(%p)->(%d, %f, %s)\n", session, index, level,
             wine_dbgstr_guid(context));
@@ -2217,11 +2184,12 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
     session->channel_vols[index] = level;
 
     WARN("CoreAudio doesn't support per-channel volume control\n");
-    ret = ca_session_setvol(session, index);
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client, index);
 
     LeaveCriticalSection(&g_sessions_lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ChannelAudioVolume_GetChannelVolume(
@@ -2249,8 +2217,8 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
-    int i;
-    HRESULT ret;
+    ACImpl *client;
+    UINT32 i;
 
     TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
             wine_dbgstr_guid(context));
@@ -2269,11 +2237,12 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
 
-    ret = ca_session_setvol(session, -1);
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client, -1);
 
     LeaveCriticalSection(&g_sessions_lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ChannelAudioVolume_GetAllVolumes(
