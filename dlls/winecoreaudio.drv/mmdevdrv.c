@@ -1628,6 +1628,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
         AudioSessionState *state)
 {
     AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
+    struct is_started_params params;
     ACImpl *client;
 
     TRACE("(%p)->(%p)\n", This, state);
@@ -1644,14 +1645,13 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     }
 
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry){
-        OSSpinLockLock(&client->stream->lock);
-        if(client->stream->playing){
+        params.stream = client->stream;
+        UNIX_CALL(is_started, &params);
+        if(params.result == S_OK){
             *state = AudioSessionStateActive;
-            OSSpinLockUnlock(&client->stream->lock);
             LeaveCriticalSection(&g_sessions_lock);
             return S_OK;
         }
-        OSSpinLockUnlock(&client->stream->lock);
     }
 
     LeaveCriticalSection(&g_sessions_lock);

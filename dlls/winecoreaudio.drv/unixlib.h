@@ -188,6 +188,12 @@ struct get_frequency_params
     UINT64 *freq;
 };
 
+struct is_started_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -208,6 +214,7 @@ enum unix_funcs
     unix_get_next_packet_size,
     unix_get_position,
     unix_get_frequency,
+    unix_is_started,
 };
 
 extern unixlib_handle_t coreaudio_handle;

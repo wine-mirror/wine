@@ -1541,6 +1541,19 @@ static NTSTATUS get_frequency(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS is_started(void *args)
+{
+    struct is_started_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    if(stream->playing)
+        params->result = S_OK;
+    else
+        params->result = S_FALSE;
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1561,4 +1574,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_next_packet_size,
     get_position,
     get_frequency,
+    is_started,
 };
