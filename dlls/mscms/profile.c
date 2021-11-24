@@ -1125,7 +1125,6 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
  */
 BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
 {
-    BOOL ret;
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, %p )\n", handle, valid );
@@ -1137,9 +1136,9 @@ BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
         release_profile( profile );
         return FALSE;
     }
-    if (profile->data) ret = *valid = TRUE;
+    *valid = !!profile->data;
     release_profile( profile );
-    return ret;
+    return *valid;
 }
 
 /******************************************************************************
