@@ -109,8 +109,12 @@ static inline BOOL is_function_prop(dispex_prop_t *prop)
 static DWORD get_flags(jsdisp_t *This, dispex_prop_t *prop)
 {
     if(prop->type == PROP_PROTREF) {
-        dispex_prop_t *parent = get_prop(This->prototype, prop->u.ref);
-        if(!parent) {
+        dispex_prop_t *parent = NULL;
+
+        if(prop->u.ref < This->prototype->prop_cnt)
+            parent = &This->prototype->props[prop->u.ref];
+
+        if(!parent || parent->type == PROP_DELETED) {
             prop->type = PROP_DELETED;
             return 0;
         }
