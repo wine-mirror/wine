@@ -198,6 +198,13 @@ static const char animatedgif[] = {
 0x21,0x01,0x0C,'p','l','a','i','n','t','e','x','t',' ','#','2',0x00,0x3B
 };
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 static IStream *create_stream(const char *data, int data_size)
 {
     HRESULT hr;
@@ -3073,6 +3080,9 @@ static void test_metadata_writer(void)
     IWICBitmapFrameEncode *frameencode;
     IWICComponentFactory *factory;
     IWICBitmapEncoder *encoder;
+    IEnumString *enumstring;
+    LPOLESTR olestring;
+    ULONG ref, count;
     IStream *stream;
     unsigned int i;
     HRESULT hr;
@@ -3124,6 +3134,47 @@ static void test_metadata_writer(void)
         IWICComponentFactory_Release(factory);
         if (querywriter)
         {
+            ref = get_refcount(querywriter);
+            ok(ref == 1, "Got unexpected ref %u, i %u.\n", ref, i);
+
+            hr = IWICMetadataQueryWriter_QueryInterface(querywriter, &IID_IEnumString, (void **)&enumstring);
+            ok(hr == E_NOINTERFACE, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            hr = IWICMetadataQueryWriter_GetEnumerator(querywriter, &enumstring);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            ref = get_refcount(querywriter);
+            ok(ref == 1, "Got unexpected ref %u, i %u.\n", ref, i);
+
+            hr = IEnumString_Skip(enumstring, 0);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            count = 0xdeadbeef;
+            hr = IEnumString_Next(enumstring, 0, NULL, &count);
+            ok(hr == E_INVALIDARG, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(count == 0xdeadbeef, "Got unexpected count %u, i %u.\n", count, i);
+
+            hr = IEnumString_Next(enumstring, 0, &olestring, &count);
+            ok(hr == S_OK || hr == WINCODEC_ERR_VALUEOUTOFRANGE, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            count = 0xdeadbeef;
+            hr = IEnumString_Next(enumstring, 1, &olestring, &count);
+            ok(hr == S_OK || hr == S_FALSE, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok((hr && !count) || (!hr && count == 1), "Got unexpected hr %#x, count %u, i %u.\n", hr, count, i);
+            if (count)
+            {
+                CoTaskMemFree(olestring);
+
+                /* IEnumString_Skip() crashes at least on Win7 when
+                 * trying to skip past the string count. */
+                hr = IEnumString_Reset(enumstring);
+                ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+                hr = IEnumString_Skip(enumstring, 1);
+                ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            }
+            IEnumString_Release(enumstring);
+
             IWICMetadataQueryWriter_Release(querywriter);
             IWICMetadataQueryWriter_Release(querywriter2);
             IWICMetadataBlockWriter_Release(blockwriter);
