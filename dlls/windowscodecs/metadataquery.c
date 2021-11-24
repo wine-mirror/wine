@@ -819,9 +819,9 @@ static HRESULT WINAPI mqw_GetContainerFormat(IWICMetadataQueryWriter *iface, GUI
 
 static HRESULT WINAPI mqw_GetEnumerator(IWICMetadataQueryWriter *iface, IEnumString **enum_string)
 {
-    FIXME("iface %p, enum_string %p stub.\n", iface, enum_string);
+    TRACE("iface %p, enum_string %p.\n", iface, enum_string);
 
-    return E_NOTIMPL;
+    return string_enumerator_create(enum_string);
 }
 
 static HRESULT WINAPI mqw_GetLocation(IWICMetadataQueryWriter *iface, UINT max_length, WCHAR *namespace, UINT *actual_length)
