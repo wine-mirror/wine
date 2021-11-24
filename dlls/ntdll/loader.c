@@ -587,6 +587,21 @@ static WINE_MODREF *find_fileid_module( const struct file_id *id )
     return NULL;
 }
 
+
+/**********************************************************************
+ *	    build_import_name
+ */
+static NTSTATUS build_import_name( WCHAR buffer[256], const char *import, int len )
+{
+    while (len && import[len-1] == ' ') len--;  /* remove trailing spaces */
+    if (len + sizeof(".dll") > 256) return STATUS_DLL_NOT_FOUND;
+    ascii_to_unicode( buffer, import, len );
+    buffer[len] = 0;
+    if (!wcschr( buffer, '.' )) wcscpy( buffer + len, L".dll" );
+    return STATUS_SUCCESS;
+}
+
+
 /***********************************************************************
  *           is_import_dll_system
  */
@@ -716,26 +731,17 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
     WINE_MODREF *wm;
-    WCHAR buffer[32], *mod_name = buffer;
+    WCHAR mod_name[256];
     const char *end = strrchr(forward, '.');
     FARPROC proc = NULL;
 
     if (!end) return NULL;
-    if ((end - forward) * sizeof(WCHAR) > sizeof(buffer) - sizeof(L".dll"))
-    {
-        if (!(mod_name = RtlAllocateHeap( GetProcessHeap(), 0,
-                                          (end - forward + sizeof(L".dll")) * sizeof(WCHAR) )))
-            return NULL;
-    }
-    ascii_to_unicode( mod_name, forward, end - forward );
-    mod_name[end - forward] = 0;
-    if (!wcschr( mod_name, '.' ))
-        memcpy( mod_name + (end - forward), L".dll", sizeof(L".dll") );
+    if (build_import_name( mod_name, forward, end - forward )) return NULL;
 
     if (!(wm = find_basename_module( mod_name )))
     {
         TRACE( "delay loading %s for '%s'\n", debugstr_w(mod_name), forward );
-        if (load_dll( load_path, mod_name, L".dll", 0, &wm ) == STATUS_SUCCESS &&
+        if (load_dll( load_path, mod_name, NULL, 0, &wm ) == STATUS_SUCCESS &&
             !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
         {
             if (!imports_fixup_done && current_modref)
@@ -751,7 +757,6 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
 
         if (!wm)
         {
-            if (mod_name != buffer) RtlFreeHeap( GetProcessHeap(), 0, mod_name );
             ERR( "module not found for forward '%s' used by %s\n",
                  forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer) );
             return NULL;
@@ -776,7 +781,6 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
             forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer),
             debugstr_w(get_modref(module)->ldr.BaseDllName.Buffer) );
     }
-    if (mod_name != buffer) RtlFreeHeap( GetProcessHeap(), 0, mod_name );
     return proc;
 }
 
@@ -909,7 +913,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
     DWORD exp_size;
     const IMAGE_THUNK_DATA *import_list;
     IMAGE_THUNK_DATA *thunk_list;
-    WCHAR buffer[32];
+    WCHAR buffer[256];
     const char *name = get_rva( module, descr->Name );
     DWORD len = strlen(name);
     PVOID protect_base;
@@ -929,23 +933,8 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
         return TRUE;
     }
 
-    while (len && name[len-1] == ' ') len--;  /* remove trailing spaces */
-
-    if (len * sizeof(WCHAR) < sizeof(buffer))
-    {
-        ascii_to_unicode( buffer, name, len );
-        buffer[len] = 0;
-        status = load_dll( load_path, buffer, L".dll", 0, &wmImp );
-    }
-    else  /* need to allocate a larger buffer */
-    {
-        WCHAR *ptr = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
-        if (!ptr) return FALSE;
-        ascii_to_unicode( ptr, name, len );
-        ptr[len] = 0;
-        status = load_dll( load_path, ptr, L".dll", 0, &wmImp );
-        RtlFreeHeap( GetProcessHeap(), 0, ptr );
-    }
+    status = build_import_name( buffer, name, len );
+    if (!status) status = load_dll( load_path, buffer, NULL, 0, &wmImp );
 
     if (status)
     {
