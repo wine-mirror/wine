@@ -1589,6 +1589,13 @@ ok((delete tmp["test"]) === true, "delete returned false");
 ok(typeof(tmp.test) === "undefined", "tmp.test type = " + typeof(tmp.test));
 ok(!("test" in tmp), "test is still in tmp after delete?");
 
+arr = [1, 2, 3];
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok((delete arr.length) === false, "delete arr.length returned true");
+ok("reverse" in arr, "reverse not in arr");
+ok((delete Array.prototype.reverse) === true, "delete Array.prototype.reverse returned false");
+ok(!("reverse" in arr), "reverse is still in arr after delete from prototype");
+
 tmp.testWith = true;
 with(tmp)
     ok(testWith === true, "testWith !== true");

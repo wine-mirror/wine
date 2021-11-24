@@ -1651,14 +1651,17 @@ static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
         return S_OK;
     }
 
-    *ret = TRUE; /* FIXME: not exactly right */
+    *ret = TRUE;
 
-    if(prop->type == PROP_JSVAL) {
+    if(prop->type == PROP_JSVAL)
         jsval_release(prop->u.val);
-        prop->type = PROP_DELETED;
+    if(prop->type == PROP_ACCESSOR) {
+        if(prop->u.accessor.getter)
+            jsdisp_release(prop->u.accessor.getter);
+        if(prop->u.accessor.setter)
+            jsdisp_release(prop->u.accessor.setter);
     }
-    if(prop->type == PROP_ACCESSOR)
-        FIXME("not supported on accessor property\n");
+    prop->type = PROP_DELETED;
     return S_OK;
 }
 

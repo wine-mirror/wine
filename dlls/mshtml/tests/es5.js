@@ -342,7 +342,8 @@ sync_test("defineProperty", function() {
         },
         set: function(v) {
             getsetprop_value = v;
-        }
+        },
+        configurable: true
     };
     Object.defineProperty(obj, "getsetprop", desc);
     test_accessor_prop_desc(obj, "getsetprop", desc);
@@ -352,6 +353,9 @@ sync_test("defineProperty", function() {
     ok(getsetprop_value === 2, "getsetprop_value = " + getsetprop_value);
     test_accessor_prop_desc(obj, "getsetprop", desc);
     ok(obj.getsetprop === 2, "getsetprop = " + obj.getsetprop);
+
+    ok((delete obj.getsetprop) === true, "delete getsetprop returned false");
+    ok(!("getsetprop" in obj), "getsetprop still in obj after delete");
 
     Object.defineProperty(obj, "notConf", {writable: true, enumerable: true, configurable: false, value: 1});
     test_own_data_prop_desc(obj, "notConf", true, true, false);
@@ -629,6 +633,15 @@ sync_test("property_definitions", function() {
     ok(obj.prop === 6, "obj.prop = " + obj.prop);
     test_accessor_prop_desc(obj, "0", true, false);
     ok(obj[0] === 7, "obj.prop = " + obj[0]);
+});
+
+sync_test("string_idx", function() {
+    var s = "foobar";
+    ok(s[0] === "f", "s[0] = " + s[0]);
+    ok(s[5] === "r", "s[5] = " + s[5]);
+    ok(s[6] === undefined, "s[6] = " + s[6]);
+    ok((delete s[0]) === false, "delete s[0] returned true");
+    ok((delete s[6]) === true, "delete s[6] returned false");
 });
 
 sync_test("string_trim", function() {
