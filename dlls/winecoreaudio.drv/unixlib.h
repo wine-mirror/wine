@@ -173,6 +173,14 @@ struct get_next_packet_size_params
     UINT32 *frames;
 };
 
+struct get_position_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+    UINT64 *pos;
+    UINT64 *qpctime;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -191,6 +199,7 @@ enum unix_funcs
     unix_get_latency,
     unix_get_current_padding,
     unix_get_next_packet_size,
+    unix_get_position,
 };
 
 extern unixlib_handle_t coreaudio_handle;

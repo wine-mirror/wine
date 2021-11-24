@@ -1469,42 +1469,22 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
     return S_OK;
 }
 
-static HRESULT AudioClock_GetPosition_nolock(ACImpl *This,
-        UINT64 *pos, UINT64 *qpctime)
-{
-    *pos = This->stream->written_frames - This->stream->held_frames;
-
-    if(This->stream->share == AUDCLNT_SHAREMODE_SHARED)
-        *pos *= This->stream->fmt->nBlockAlign;
-
-    if(qpctime){
-        LARGE_INTEGER stamp, freq;
-        QueryPerformanceCounter(&stamp);
-        QueryPerformanceFrequency(&freq);
-        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
-    }
-
-    return S_OK;
-}
-
 static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    HRESULT hr;
+    struct get_position_params params;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
     if(!pos)
         return E_POINTER;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    hr = AudioClock_GetPosition_nolock(This, pos, qpctime);
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return hr;
+    params.stream = This->stream;
+    params.pos = pos;
+    params.qpctime = qpctime;
+    UNIX_CALL(get_position, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClock_GetCharacteristics(IAudioClock *iface,

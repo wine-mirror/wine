@@ -1503,6 +1503,30 @@ static NTSTATUS get_next_packet_size(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_position(void *args)
+{
+    struct get_position_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+    LARGE_INTEGER stamp, freq;
+
+    OSSpinLockLock(&stream->lock);
+
+    *params->pos = stream->written_frames - stream->held_frames;
+
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *params->pos *= stream->fmt->nBlockAlign;
+
+    if(params->qpctime){
+        NtQueryPerformanceCounter(&stamp, &freq);
+        *params->qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
+
+    OSSpinLockUnlock(&stream->lock);
+
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1521,4 +1545,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_latency,
     get_current_padding,
     get_next_packet_size,
+    get_position,
 };
