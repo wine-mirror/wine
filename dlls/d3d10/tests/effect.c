@@ -7807,10 +7807,16 @@ float4 g_var2;
 PixelShader ps_array[2];
 VertexShader vs_array[2];
 GeometryShader gs_array[2];
+BlendState bs_array[2]
+{
+    { BlendEnable[0] = true; SrcBlend = inv_src_color; },
+    { BlendEnable[0] = true; SrcBlend = src_color; }
+};
 technique10 tech
 {
     pass p0
     {
+        SetBlendState( bs_array[g_var.w], float4(0.0f, 0.0f, 0.0f, 0.0f), 0xffff );
         SetPixelShader( ps_array[g_var.z] );
         SetVertexShader( vs_array[g_var.x + 0.1f] );
         SetGeometryShader( gs_array[g_var2.y] );
@@ -7819,9 +7825,9 @@ technique10 tech
 #endif
 static DWORD fx_test_index_expression[] =
 {
-    0x43425844, 0xef7cea81, 0x5103f059, 0x9011e9d4, 0xa8ed3607, 0x00000001, 0x00000564, 0x00000001,
-    0x00000024, 0x30315846, 0x00000538, 0xfeff1001, 0x00000001, 0x00000002, 0x00000003, 0x00000000,
-    0x00000000, 0x00000000, 0x00000001, 0x00000400, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x43425844, 0x85cafff9, 0xf7f791b5, 0xfc973931, 0x1de9cde1, 0x00000001, 0x00000778, 0x00000001,
+    0x00000024, 0x30315846, 0x0000074c, 0xfeff1001, 0x00000001, 0x00000002, 0x00000004, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000588, 0x00000000, 0x00000000, 0x00000000, 0x00000002,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000, 0x6f6c4724,
     0x736c6162, 0x6f6c6600, 0x00347461, 0x0000000d, 0x00000001, 0x00000000, 0x00000010, 0x00000010,
     0x00000010, 0x0000210a, 0x61765f67, 0x5f670072, 0x32726176, 0x78695000, 0x68536c65, 0x72656461,
@@ -7829,49 +7835,75 @@ static DWORD fx_test_index_expression[] =
     0x61727261, 0x65560079, 0x78657472, 0x64616853, 0x6e007265, 0x02000000, 0x02000000, 0x00000000,
     0x00000000, 0x00000000, 0x06000000, 0x76000000, 0x72615f73, 0x00796172, 0x6d6f6547, 0x79727465,
     0x64616853, 0xa0007265, 0x02000000, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x07000000,
-    0x67000000, 0x72615f73, 0x00796172, 0x68636574, 0x00307000, 0x000000ec, 0x43425844, 0xe6990a97,
-    0x7ed17834, 0x9f40de47, 0x01f476a7, 0x00000001, 0x000000ec, 0x00000003, 0x0000002c, 0x000000a8,
-    0x000000b4, 0x42415443, 0x00000074, 0x0000001c, 0x0000004b, 0x46580400, 0x00000001, 0x0000001c,
+    0x67000000, 0x72615f73, 0x00796172, 0x6e656c42, 0x61745364, 0xd4006574, 0x02000000, 0x02000000,
+    0x00000000, 0x00000000, 0x00000000, 0x02000000, 0x62000000, 0x72615f73, 0x00796172, 0x00000001,
+    0x00000004, 0x00000001, 0x00000001, 0x00000002, 0x00000004, 0x00000001, 0x00000004, 0x00000001,
+    0x00000001, 0x00000002, 0x00000003, 0x68636574, 0x00307000, 0x00000004, 0x00000001, 0x00000000,
+    0x00000001, 0x00000000, 0x00000001, 0x00000000, 0x00000001, 0x00000000, 0x00000001, 0x00000003,
+    0x0000ffff, 0x000000ec, 0x43425844, 0xc647666b, 0x92d327e5, 0x82d21ef6, 0xc31dc0cf, 0x00000001,
+    0x000000ec, 0x00000003, 0x0000002c, 0x000000a8, 0x000000b4, 0x42415443, 0x00000074, 0x0000001c,
+    0x0000004b, 0x46580400, 0x00000001, 0x0000001c, 0x00000100, 0x00000048, 0x00000030, 0x00000002,
+    0x00000001, 0x00000038, 0x00000000, 0x61765f67, 0xabab0072, 0x00030001, 0x00040001, 0x00000001,
+    0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461,
+    0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x34494c43, 0x00000004, 0x00000000, 0x434c5846,
+    0x00000030, 0x00000001, 0x13300001, 0x00000001, 0x00000000, 0x00000002, 0x00000003, 0x00000000,
+    0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x000000fb, 0x0000016c, 0x000000ec,
+    0x43425844, 0xe6990a97, 0x7ed17834, 0x9f40de47, 0x01f476a7, 0x00000001, 0x000000ec, 0x00000003,
+    0x0000002c, 0x000000a8, 0x000000b4, 0x42415443, 0x00000074, 0x0000001c, 0x0000004b, 0x46580400,
+    0x00000001, 0x0000001c, 0x00000100, 0x00000048, 0x00000030, 0x00000002, 0x00000001, 0x00000038,
+    0x00000000, 0x61765f67, 0xabab0072, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x4d007874,
+    0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,
+    0x30312072, 0xab00312e, 0x34494c43, 0x00000004, 0x00000000, 0x434c5846, 0x00000030, 0x00000001,
+    0x13300001, 0x00000001, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000004, 0x00000000,
+    0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000065, 0x00000264, 0x00000128, 0x43425844, 0x7a78de2e,
+    0xcd31414e, 0xb6f69158, 0x92416c97, 0x00000001, 0x00000128, 0x00000003, 0x0000002c, 0x000000a8,
+    0x000000c4, 0x42415443, 0x00000074, 0x0000001c, 0x0000004b, 0x46580400, 0x00000001, 0x0000001c,
     0x00000100, 0x00000048, 0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000000, 0x61765f67,
     0xabab0072, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73,
     0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e,
-    0x34494c43, 0x00000004, 0x00000000, 0x434c5846, 0x00000030, 0x00000001, 0x13300001, 0x00000001,
-    0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f,
-    0x0000ffff, 0x00000065, 0x000000dc, 0x00000128, 0x43425844, 0x7a78de2e, 0xcd31414e, 0xb6f69158,
-    0x92416c97, 0x00000001, 0x00000128, 0x00000003, 0x0000002c, 0x000000a8, 0x000000c4, 0x42415443,
-    0x00000074, 0x0000001c, 0x0000004b, 0x46580400, 0x00000001, 0x0000001c, 0x00000100, 0x00000048,
-    0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000000, 0x61765f67, 0xabab0072, 0x00030001,
-    0x00040001, 0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,
-    0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x34494c43, 0x00000014,
-    0x00000004, 0x3dcccccd, 0x00000000, 0x00000000, 0x00000000, 0x434c5846, 0x0000005c, 0x00000002,
-    0x20400001, 0x00000002, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
-    0x00000000, 0x00000007, 0x00000000, 0x13300001, 0x00000001, 0x00000000, 0x00000007, 0x00000000,
-    0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000097, 0x000001d4,
-    0x000000ec, 0x43425844, 0x90e93368, 0x6c8d5166, 0x276e99ab, 0x25ccef44, 0x00000001, 0x000000ec,
-    0x00000003, 0x0000002c, 0x000000a8, 0x000000b4, 0x42415443, 0x00000074, 0x0000001c, 0x0000004b,
-    0x46580400, 0x00000001, 0x0000001c, 0x00000100, 0x00000048, 0x00000030, 0x00000002, 0x00000001,
-    0x00000038, 0x00000000, 0x61765f67, 0xab003272, 0x00030001, 0x00040001, 0x00000001, 0x00000000,
-    0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320,
-    0x656c6970, 0x30312072, 0xab00312e, 0x34494c43, 0x00000004, 0x00000000, 0x434c5846, 0x00000030,
-    0x00000001, 0x13300001, 0x00000001, 0x00000000, 0x00000002, 0x00000001, 0x00000000, 0x00000004,
-    0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x000000cb, 0x00000308, 0x00000004, 0x00000020,
-    0x00000000, 0x00000002, 0xffffffff, 0x00000000, 0x00000030, 0x00000014, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000036, 0x00000014, 0x00000000, 0x00000010, 0x00000000,
-    0x00000000, 0x00000000, 0x00000065, 0x00000049, 0x00000000, 0xffffffff, 0x00000000, 0x00000000,
-    0x00000000, 0x00000097, 0x0000007b, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000,
-    0x000000cb, 0x000000af, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000, 0x000000d4,
-    0x00000001, 0x00000000, 0x000000d9, 0x00000003, 0x00000000, 0x00000007, 0x00000000, 0x00000005,
-    0x000001cc, 0x00000006, 0x00000000, 0x00000005, 0x00000300, 0x00000008, 0x00000000, 0x00000005,
-    0x000003f8,
+    0x34494c43, 0x00000014, 0x00000004, 0x3dcccccd, 0x00000000, 0x00000000, 0x00000000, 0x434c5846,
+    0x0000005c, 0x00000002, 0x20400001, 0x00000002, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+    0x00000001, 0x00000000, 0x00000000, 0x00000007, 0x00000000, 0x13300001, 0x00000001, 0x00000000,
+    0x00000007, 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    0x00000097, 0x0000035c, 0x000000ec, 0x43425844, 0x90e93368, 0x6c8d5166, 0x276e99ab, 0x25ccef44,
+    0x00000001, 0x000000ec, 0x00000003, 0x0000002c, 0x000000a8, 0x000000b4, 0x42415443, 0x00000074,
+    0x0000001c, 0x0000004b, 0x46580400, 0x00000001, 0x0000001c, 0x00000100, 0x00000048, 0x00000030,
+    0x00000002, 0x00000001, 0x00000038, 0x00000000, 0x61765f67, 0xab003272, 0x00030001, 0x00040001,
+    0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+    0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x34494c43, 0x00000004, 0x00000000,
+    0x434c5846, 0x00000030, 0x00000001, 0x13300001, 0x00000001, 0x00000000, 0x00000002, 0x00000001,
+    0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x000000cb, 0x00000490,
+    0x00000004, 0x00000020, 0x00000000, 0x00000002, 0xffffffff, 0x00000000, 0x00000030, 0x00000014,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000036, 0x00000014, 0x00000000,
+    0x00000010, 0x00000000, 0x00000000, 0x00000000, 0x00000065, 0x00000049, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0x00000000, 0x00000097, 0x0000007b, 0x00000000, 0xffffffff, 0x00000000,
+    0x00000000, 0x00000000, 0x000000cb, 0x000000af, 0x00000000, 0xffffffff, 0x00000000, 0x00000000,
+    0x00000000, 0x000000fb, 0x000000df, 0x00000000, 0xffffffff, 0x00000002, 0x00000025, 0x00000000,
+    0x00000001, 0x00000104, 0x00000026, 0x00000000, 0x00000001, 0x00000110, 0x00000002, 0x00000025,
+    0x00000000, 0x00000001, 0x0000011c, 0x00000026, 0x00000000, 0x00000001, 0x00000128, 0x00000000,
+    0x00000134, 0x00000001, 0x00000000, 0x00000139, 0x00000006, 0x00000000, 0x0000000a, 0x00000000,
+    0x00000001, 0x0000013c, 0x0000000b, 0x00000000, 0x00000001, 0x00000160, 0x00000002, 0x00000000,
+    0x00000005, 0x0000025c, 0x00000007, 0x00000000, 0x00000005, 0x00000354, 0x00000006, 0x00000000,
+    0x00000005, 0x00000488, 0x00000008, 0x00000000, 0x00000005, 0x00000580,
 };
+
+static void set_vec4(float *v, float x, float y, float z, float w)
+{
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+    v[3] = w;
+}
 
 static void test_effect_index_expression(void)
 {
     D3D10_PASS_SHADER_DESC shader_desc;
     ID3D10EffectVectorVariable *vector;
     ID3D10EffectTechnique *tech;
+    D3D10_BLEND_DESC bs_desc;
     ID3D10EffectVariable *v;
     ID3D10EffectPass *pass;
+    ID3D10BlendState *bs;
     ID3D10Effect *effect;
     ID3D10Device *device;
     ULONG refcount;
@@ -7897,10 +7929,7 @@ static void test_effect_index_expression(void)
     v = effect->lpVtbl->GetVariableByName(effect, "g_var");
     vector = v->lpVtbl->AsVector(v);
 
-    val[0] = 0.0f;
-    val[1] = 0.0f;
-    val[2] = 1.0f;
-    val[3] = 0.0f;
+    set_vec4(val, 0.0f, 0.0f, 1.0f, 0.0f);
     hr = vector->lpVtbl->SetFloatVector(vector, val);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -7908,14 +7937,90 @@ static void test_effect_index_expression(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(shader_desc.ShaderIndex == 1, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
 
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetBlendState(device, &bs, NULL, NULL);
+    ID3D10BlendState_GetDesc(bs, &bs_desc);
+    ok(bs_desc.SrcBlend == D3D10_BLEND_INV_SRC_COLOR, "Unexpected blend state parameter %u.\n", bs_desc.SrcBlend);
+    ID3D10BlendState_Release(bs);
+
+    set_vec4(val, 0.0f, 0.0f, 1.0f, 1.0f);
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetBlendState(device, &bs, NULL, NULL);
+    ID3D10BlendState_GetDesc(bs, &bs_desc);
+    ok(bs_desc.SrcBlend == D3D10_BLEND_SRC_COLOR, "Unexpected blend state parameter %u.\n", bs_desc.SrcBlend);
+    ID3D10BlendState_Release(bs);
+
+    /* Out of bounds index */
+    set_vec4(val, 0.0f, 0.0f, 2.0f, 2.0f);
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetPixelShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetBlendState(device, &bs, NULL, NULL);
+    ID3D10BlendState_GetDesc(bs, &bs_desc);
+    ok(bs_desc.SrcBlend == D3D10_BLEND_INV_SRC_COLOR, "Unexpected blend state parameter %u.\n", bs_desc.SrcBlend);
+    ID3D10BlendState_Release(bs);
+
+    set_vec4(val, 0.0f, 0.0f, 3.0f, 3.0f);
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetPixelShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetBlendState(device, &bs, NULL, NULL);
+    ID3D10BlendState_GetDesc(bs, &bs_desc);
+    ok(bs_desc.SrcBlend == D3D10_BLEND_INV_SRC_COLOR, "Unexpected blend state parameter %u.\n", bs_desc.SrcBlend);
+    ID3D10BlendState_Release(bs);
+
+    set_vec4(val, 0.0f, 0.0f, -1.0f, -1.0f);
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetPixelShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetBlendState(device, &bs, NULL, NULL);
+    ID3D10BlendState_GetDesc(bs, &bs_desc);
+    ok(bs_desc.SrcBlend == D3D10_BLEND_INV_SRC_COLOR, "Unexpected blend state parameter %u.\n", bs_desc.SrcBlend);
+    ID3D10BlendState_Release(bs);
+
+    set_vec4(val, 0.0f, 0.0f, -11.0f, 0.0f);
+    hr = vector->lpVtbl->SetFloatVector(vector, val);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->GetPixelShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_OMGetBlendState(device, &bs, NULL, NULL);
+    ID3D10BlendState_GetDesc(bs, &bs_desc);
+    ok(bs_desc.SrcBlend == D3D10_BLEND_INV_SRC_COLOR, "Unexpected blend state parameter %u.\n", bs_desc.SrcBlend);
+    ID3D10BlendState_Release(bs);
+
     hr = pass->lpVtbl->GetVertexShaderDesc(pass, &shader_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
 
-    val[0] = 0.9f;
-    val[1] = 0.0f;
-    val[2] = 1.0f;
-    val[3] = 0.0f;
+    set_vec4(val, 0.9f, 0.0f, 1.0f, 0.0f);
     hr = vector->lpVtbl->SetFloatVector(vector, val);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -7930,10 +8035,7 @@ static void test_effect_index_expression(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!shader_desc.ShaderIndex, "Unexpected shader index %#x.\n", shader_desc.ShaderIndex);
 
-    val[0] = 0.0f;
-    val[1] = 1.0f;
-    val[2] = 0.0f;
-    val[3] = 0.0f;
+    set_vec4(val, 0.0f, 1.0f, 0.0f, 0.0f);
     hr = vector->lpVtbl->SetFloatVector(vector, val);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
