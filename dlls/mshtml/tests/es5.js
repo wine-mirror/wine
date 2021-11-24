@@ -999,6 +999,12 @@ sync_test("preventExtensions", function() {
     ok(o.prop === 1, "o.prop = " + o.prop);
     r = Object.isExtensible(o);
     ok(r === false, "isExtensible(o) returned " + r);
+    try {
+        Object.defineProperty(o, "prop", { value: true });
+        ok(false, "expected exception");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
 
     r = Object.isExtensible({});
     ok(r === true, "isExtensible(o) returned " + r);
