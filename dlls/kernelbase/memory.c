@@ -344,6 +344,17 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocFromApp( void *addr, SIZE_T size,
 
 
 /***********************************************************************
+ *             PrefetchVirtualMemory   (kernelbase.@)
+ */
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ PrefetchVirtualMemory( HANDLE process, ULONG_PTR count,
+                                                           WIN32_MEMORY_RANGE_ENTRY *addresses, ULONG flags )
+{
+    FIXME( "process %p, count %p, addresses %p, flags %#x stub.\n", process, (void *)count, addresses, flags );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *             VirtualFree   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH VirtualFree( void *addr, SIZE_T size, DWORD type )

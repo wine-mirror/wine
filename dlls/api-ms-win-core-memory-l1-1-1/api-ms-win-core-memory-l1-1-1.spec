@@ -11,7 +11,7 @@
 @ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
 @ stub MapViewOfFileFromApp
 @ stdcall OpenFileMappingW(long long wstr) kernel32.OpenFileMappingW
-@ stub PrefetchVirtualMemory
+@ stdcall PrefetchVirtualMemory(ptr ptr ptr long) kernel32.PrefetchVirtualMemory
 @ stdcall QueryMemoryResourceNotification(ptr ptr) kernel32.QueryMemoryResourceNotification
 @ stdcall ReadProcessMemory(long ptr ptr long ptr) kernel32.ReadProcessMemory
 @ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch

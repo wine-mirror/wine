@@ -1164,7 +1164,7 @@
 @ stdcall PerfStopProvider(long)
 # @ stub PoolPerAppKeyStateInternal
 @ stdcall PostQueuedCompletionStatus(long long ptr ptr)
-# @ stub PrefetchVirtualMemory
+@ stdcall PrefetchVirtualMemory(ptr ptr ptr long)
 @ stub PrivCopyFileExW
 @ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)

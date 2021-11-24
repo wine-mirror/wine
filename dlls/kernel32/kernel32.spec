@@ -1157,6 +1157,7 @@
 @ stdcall PowerClearRequest(long long)
 @ stdcall PowerCreateRequest(ptr)
 @ stdcall PowerSetRequest(long long)
+@ stdcall -import PrefetchVirtualMemory(ptr ptr ptr long)
 @ stdcall PrepareTape(ptr long long)
 @ stub PrivCopyFileExW
 @ stub PrivMoveFileIdentityW
