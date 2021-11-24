@@ -181,8 +181,8 @@ static inline HRESULT resize_props(jsdisp_t *This)
     This->props = props;
 
     for(i=0; i<This->buf_size; i++) {
-        This->props[i].bucket_head = 0;
-        This->props[i].bucket_next = 0;
+        This->props[i].bucket_head = ~0;
+        This->props[i].bucket_next = ~0;
     }
 
     for(i=1; i<This->prop_cnt; i++) {
@@ -233,14 +233,14 @@ static dispex_prop_t *alloc_protref(jsdisp_t *This, const WCHAR *name, DWORD ref
 static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, dispex_prop_t **ret)
 {
     const builtin_prop_t *builtin;
-    unsigned bucket, pos, prev = 0;
+    unsigned bucket, pos, prev = ~0;
     dispex_prop_t *prop;
 
     bucket = get_props_idx(This, hash);
     pos = This->props[bucket].bucket_head;
-    while(pos != 0) {
+    while(pos != ~0) {
         if(!wcscmp(name, This->props[pos].name)) {
-            if(prev != 0) {
+            if(prev != ~0) {
                 This->props[prev].bucket_next = This->props[pos].bucket_next;
                 This->props[pos].bucket_next = This->props[bucket].bucket_head;
                 This->props[bucket].bucket_head = pos;
@@ -1423,7 +1423,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
 
         /* If two identifiers differ only by case, the TypeInfo fails */
         pos = This->props[get_props_idx(This, prop->hash)].bucket_head;
-        while (pos)
+        while (pos != ~0)
         {
             cur = This->props + pos;
 
@@ -1795,6 +1795,8 @@ jsdisp_t *to_jsdisp(IDispatch *disp)
 
 HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *prototype)
 {
+    unsigned i;
+
     TRACE("%p (%p)\n", dispex, prototype);
 
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
@@ -1805,6 +1807,11 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
     dispex->props = heap_alloc_zero(sizeof(dispex_prop_t)*(dispex->buf_size=4));
     if(!dispex->props)
         return E_OUTOFMEMORY;
+
+    for(i = 0; i < dispex->buf_size; i++) {
+        dispex->props[i].bucket_head = ~0;
+        dispex->props[i].bucket_next = ~0;
+    }
 
     dispex->prototype = prototype;
     if(prototype)
