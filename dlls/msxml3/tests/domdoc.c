@@ -6636,7 +6636,7 @@ static void test_save(void)
     {
        ReadFile(hfile, buffer, sizeof(buffer), &read, NULL);
        ok(read != 0, "could not read file\n");
-       todo_wine ok(!memcmp(buffer, cheA, sizeof(cheA)-1), "got: %s\n", buffer);
+       ok(!memcmp(buffer, cheA, sizeof(cheA)-1), "got: %s\n", buffer);
 
        CloseHandle(hfile);
        DeleteFileA("test.xml");

@@ -2603,6 +2603,9 @@ static char *xmldoc_encoding(IXMLDOMDocument3 *doc)
         IXMLDOMNode_Release(node);
     }
 
+    if (!encoding && (encoding = heap_alloc(sizeof("UTF-8"))))
+        strcpy(encoding, "UTF-8");
+
     return encoding;
 }
 
