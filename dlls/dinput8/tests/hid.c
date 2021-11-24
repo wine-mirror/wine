@@ -8062,7 +8062,6 @@ static void test_force_feedback_joystick( DWORD version )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetForceFeedbackState returned %#x\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#x\n", hr );
@@ -8819,7 +8818,6 @@ static void test_device_managed_effect(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetForceFeedbackState returned %#x\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#x\n", hr );
@@ -8839,7 +8837,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_STOPPED|DIGFFS_EMPTY;
     todo_wine
@@ -8863,7 +8860,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_PAUSED|DIGFFS_EMPTY|DIGFFS_ACTUATORSON|DIGFFS_POWERON|DIGFFS_SAFETYSWITCHON|DIGFFS_USERFFSWITCHON;
     todo_wine
@@ -8910,7 +8906,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_STOPPED|DIGFFS_EMPTY;
     todo_wine
@@ -8931,7 +8926,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_STOPPED;
     todo_wine
@@ -8969,7 +8963,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_ACTUATORSOFF|DIGFFS_POWEROFF|DIGFFS_SAFETYSWITCHOFF|DIGFFS_USERFFSWITCHOFF;
     todo_wine
@@ -8988,7 +8981,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_PAUSED|DIGFFS_ACTUATORSON|DIGFFS_POWEROFF|DIGFFS_SAFETYSWITCHOFF|DIGFFS_USERFFSWITCHOFF;
     todo_wine
@@ -9009,7 +9001,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_PAUSED|DIGFFS_ACTUATORSON|DIGFFS_POWEROFF|DIGFFS_SAFETYSWITCHOFF|DIGFFS_USERFFSWITCHOFF;
     todo_wine
@@ -9030,7 +9021,6 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
     flags = DIGFFS_EMPTY|DIGFFS_PAUSED|DIGFFS_ACTUATORSON|DIGFFS_POWEROFF|DIGFFS_SAFETYSWITCHOFF|DIGFFS_USERFFSWITCHOFF;
     todo_wine

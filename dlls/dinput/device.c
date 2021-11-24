@@ -1762,9 +1762,17 @@ static HRESULT WINAPI dinput_device_GetEffectInfo( IDirectInputDevice8W *iface, 
 
 static HRESULT WINAPI dinput_device_GetForceFeedbackState( IDirectInputDevice8W *iface, DWORD *out )
 {
-    FIXME( "iface %p, out %p stub!\n", iface, out );
+    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+
+    FIXME( "iface %p, out %p semi-stub!\n", iface, out );
+
     if (!out) return E_POINTER;
-    return DIERR_UNSUPPORTED;
+    *out = 0;
+
+    if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) return DIERR_NOTEXCLUSIVEACQUIRED;
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI dinput_device_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
