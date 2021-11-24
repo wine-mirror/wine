@@ -596,12 +596,124 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
     return hr;
 }
 
-static HRESULT WINAPI mqr_GetEnumerator(IWICMetadataQueryReader *iface,
-        IEnumString **ppIEnumString)
+struct string_enumerator
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
-    FIXME("(%p,%p)\n", This, ppIEnumString);
+    IEnumString IEnumString_iface;
+    LONG ref;
+};
+
+static struct string_enumerator *impl_from_IEnumString(IEnumString *iface)
+{
+    return CONTAINING_RECORD(iface, struct string_enumerator, IEnumString_iface);
+}
+
+static HRESULT WINAPI string_enumerator_QueryInterface(IEnumString *iface, REFIID riid, void **ppv)
+{
+    struct string_enumerator *this = impl_from_IEnumString(iface);
+
+    TRACE("iface %p, riid %s, ppv %p.\n", iface, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(riid, &IID_IEnumString) || IsEqualGUID(riid, &IID_IUnknown))
+        *ppv = &this->IEnumString_iface;
+    else
+    {
+        WARN("Unknown riid %s.\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef(&this->IEnumString_iface);
+    return S_OK;
+}
+
+static ULONG WINAPI string_enumerator_AddRef(IEnumString *iface)
+{
+    struct string_enumerator *this = impl_from_IEnumString(iface);
+    ULONG ref = InterlockedIncrement(&this->ref);
+
+    TRACE("iface %p, ref %u.\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI string_enumerator_Release(IEnumString *iface)
+{
+    struct string_enumerator *this = impl_from_IEnumString(iface);
+    ULONG ref = InterlockedDecrement(&this->ref);
+
+    TRACE("iface %p, ref %u.\n", iface, ref);
+
+    if (!ref)
+        free(this);
+
+    return ref;
+}
+
+static HRESULT WINAPI string_enumerator_Next(IEnumString *iface, ULONG count, LPOLESTR *strings, ULONG *ret)
+{
+    FIXME("iface %p, count %u, strings %p, ret %p stub.\n", iface, count, strings, ret);
+
+    if (!strings || !ret)
+        return E_INVALIDARG;
+
+    *ret = 0;
+    return count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI string_enumerator_Reset(IEnumString *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI string_enumerator_Skip(IEnumString *iface, ULONG count)
+{
+    FIXME("iface %p, count %u stub.\n", iface, count);
+
+    return count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI string_enumerator_Clone(IEnumString *iface, IEnumString **out)
+{
+    FIXME("iface %p, out %p stub.\n", iface, out);
+
+    *out = NULL;
     return E_NOTIMPL;
+}
+
+static const IEnumStringVtbl string_enumerator_vtbl =
+{
+    string_enumerator_QueryInterface,
+    string_enumerator_AddRef,
+    string_enumerator_Release,
+    string_enumerator_Next,
+    string_enumerator_Skip,
+    string_enumerator_Reset,
+    string_enumerator_Clone
+};
+
+static HRESULT string_enumerator_create(IEnumString **enum_string)
+{
+    struct string_enumerator *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumString_iface.lpVtbl = &string_enumerator_vtbl;
+    object->ref = 1;
+
+    *enum_string = &object->IEnumString_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI mqr_GetEnumerator(IWICMetadataQueryReader *iface,
+        IEnumString **enum_string)
+{
+    TRACE("iface %p, enum_string %p.\n", iface, enum_string);
+
+    return string_enumerator_create(enum_string);
 }
 
 static IWICMetadataQueryReaderVtbl mqr_vtbl = {
