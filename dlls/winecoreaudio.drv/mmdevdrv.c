@@ -1458,15 +1458,14 @@ static ULONG WINAPI AudioClock_Release(IAudioClock *iface)
 static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
+    struct get_frequency_params params;
 
     TRACE("(%p)->(%p)\n", This, freq);
 
-    if(This->stream->share == AUDCLNT_SHAREMODE_SHARED)
-        *freq = (UINT64)This->stream->fmt->nSamplesPerSec * This->stream->fmt->nBlockAlign;
-    else
-        *freq = This->stream->fmt->nSamplesPerSec;
-
-    return S_OK;
+    params.stream = This->stream;
+    params.freq = freq;
+    UNIX_CALL(get_frequency, &params);
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,

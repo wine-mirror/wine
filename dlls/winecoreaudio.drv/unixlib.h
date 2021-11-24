@@ -181,6 +181,13 @@ struct get_position_params
     UINT64 *qpctime;
 };
 
+struct get_frequency_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+    UINT64 *freq;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -200,6 +207,7 @@ enum unix_funcs
     unix_get_current_padding,
     unix_get_next_packet_size,
     unix_get_position,
+    unix_get_frequency,
 };
 
 extern unixlib_handle_t coreaudio_handle;

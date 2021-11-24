@@ -1527,6 +1527,20 @@ static NTSTATUS get_position(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_frequency(void *args)
+{
+    struct get_frequency_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *params->freq = (UINT64)stream->fmt->nSamplesPerSec * stream->fmt->nBlockAlign;
+    else
+        *params->freq = stream->fmt->nSamplesPerSec;
+
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1546,4 +1560,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_current_padding,
     get_next_packet_size,
     get_position,
+    get_frequency,
 };
