@@ -6473,7 +6473,9 @@ static void test_put_dataType( void )
 
 static void test_save(void)
 {
+    static const char cheA[] = "<Testing che=\"\xd0\xa7\"/>";
     IXMLDOMDocument *doc, *doc2;
+    IXMLDOMAttribute *attr;
     IXMLDOMElement *root;
     BSTR sOrig, sNew, filename;
     char buffer[100];
@@ -6481,7 +6483,7 @@ static void test_save(void)
     HGLOBAL global;
     VARIANT_BOOL b;
     DWORD read = 0;
-    VARIANT dest;
+    VARIANT v, dest;
     HANDLE hfile;
     HRESULT hr;
     char *ptr;
@@ -6600,6 +6602,50 @@ static void test_save(void)
     IStream_Release(stream);
 
     IXMLDOMDocument_Release(doc);
+
+    /* test default encoding with non-english characters */
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &root);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)root, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("che"), &attr);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"\x0427");
+    hr = IXMLDOMAttribute_put_value(attr, v);
+    EXPECT_HR(hr, S_OK);
+    VariantClear(&v);
+
+    hr = IXMLDOMElement_setAttributeNode(root, attr, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_BSTR;
+    V_BSTR(&dest) = _bstr_("test.xml");
+
+    hr = IXMLDOMDocument_save(doc, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hfile = CreateFileA("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "Could not open file: %u\n", GetLastError());
+    if (hfile != INVALID_HANDLE_VALUE)
+    {
+       ReadFile(hfile, buffer, sizeof(buffer), &read, NULL);
+       ok(read != 0, "could not read file\n");
+       todo_wine ok(!memcmp(buffer, cheA, sizeof(cheA)-1), "got: %s\n", buffer);
+
+       CloseHandle(hfile);
+       DeleteFileA("test.xml");
+    }
+
+    IXMLDOMAttribute_Release(attr);
+    IXMLDOMElement_Release(root);
+    IXMLDOMDocument_Release(doc);
+
     free_bstrs();
 }
 
