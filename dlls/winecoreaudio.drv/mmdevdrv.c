@@ -764,6 +764,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
+    params.stream = NULL;
 
     UNIX_CALL(create_stream, &params);
     if(FAILED(params.result)) goto end;
@@ -791,7 +792,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 end:
     if(FAILED(params.result)){
         if(params.stream){
-            release_params.stream = This->stream;
+            release_params.stream = params.stream;
             UNIX_CALL(release_stream, &release_params);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
