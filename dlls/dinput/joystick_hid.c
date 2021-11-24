@@ -824,6 +824,14 @@ static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD pro
         lstrcpynW( value->wszPath, impl->device_path, MAX_PATH );
         return DI_OK;
     }
+    case (DWORD_PTR)DIPROP_FFLOAD:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+        if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE)) return DIERR_NOTEXCLUSIVEACQUIRED;
+        value->dwData = 0;
+        return DI_OK;
+    }
     }
 
     return DIERR_UNSUPPORTED;

@@ -7990,7 +7990,6 @@ static void test_force_feedback_joystick( DWORD version )
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
 
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
@@ -8061,7 +8060,6 @@ static void test_force_feedback_joystick( DWORD version )
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     ok( hr == DIERR_READONLY, "SetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
     todo_wine
@@ -8819,7 +8817,6 @@ static void test_device_managed_effect(void)
     ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
     todo_wine
@@ -8835,9 +8832,7 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#x\n", prop_dword.dwData );
     set_hid_expect( file, NULL, 0 );
 
@@ -8854,9 +8849,7 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#x\n", prop_dword.dwData );
     set_hid_expect( file, NULL, 0 );
 
@@ -8948,9 +8941,7 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 0, "got DIPROP_FFLOAD %#x\n", prop_dword.dwData );
     set_hid_expect( file, NULL, 0 );
 

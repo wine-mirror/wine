@@ -1056,6 +1056,10 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
             if (!impl->object_properties) return DIERR_UNSUPPORTED;
             break;
 
+        case (DWORD_PTR)DIPROP_FFLOAD:
+            if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+            if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) return DIERR_NOTEXCLUSIVEACQUIRED;
+            /* fallthrough */
         case (DWORD_PTR)DIPROP_PRODUCTNAME:
         case (DWORD_PTR)DIPROP_INSTANCENAME:
         case (DWORD_PTR)DIPROP_VIDPID:
@@ -1173,6 +1177,7 @@ static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GU
     case (DWORD_PTR)DIPROP_VIDPID:
     case (DWORD_PTR)DIPROP_JOYSTICKID:
     case (DWORD_PTR)DIPROP_GUIDANDPATH:
+    case (DWORD_PTR)DIPROP_FFLOAD:
         return impl->vtbl->get_property( iface, LOWORD( guid ), header, NULL );
 
     case (DWORD_PTR)DIPROP_RANGE:
