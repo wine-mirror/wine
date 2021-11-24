@@ -538,13 +538,6 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 		return DMUS_E_LOADER_FAILEDOPEN;
         }
 
-	/* *sigh*... some ms objects have lousy implementation of ParseDescriptor that clears input descriptor :( */
-#ifdef NOW_WE_ARE_FREE
-	/* parse descriptor: we actually use input descriptor; fields that aren't available from stream remain,
-	   otherwise real info is set */
-	 IDirectMusicObject_ParseDescriptor (pObject, pStream, pDesc);
-#endif
-	/* hmph... due to some trouble I had with certain tests, we store current position and then set it back */
 	DM_STRUCT_INIT(&Desc);
 	if (FAILED(IDirectMusicObject_ParseDescriptor (pObject, pStream, &Desc))) {
 		IStream_Release(pStream);
