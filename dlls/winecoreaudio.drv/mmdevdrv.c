@@ -683,11 +683,6 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
-static void capture_resample(ACImpl *This)
-{
-    UNIX_CALL(capture_resample, This->stream);
-}
-
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
@@ -1401,24 +1396,17 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
         IAudioCaptureClient *iface, UINT32 *frames)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    struct get_next_packet_size_params params;
 
     TRACE("(%p)->(%p)\n", This, frames);
 
     if(!frames)
         return E_POINTER;
 
-    OSSpinLockLock(&This->stream->lock);
-
-    capture_resample(This);
-
-    if(This->stream->held_frames >= This->stream->period_frames)
-        *frames = This->stream->period_frames;
-    else
-        *frames = 0;
-
-    OSSpinLockUnlock(&This->stream->lock);
-
-    return S_OK;
+    params.stream = This->stream;
+    params.frames = frames;
+    UNIX_CALL(get_next_packet_size, &params);
+    return params.result;
 }
 
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =

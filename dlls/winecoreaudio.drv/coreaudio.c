@@ -1068,9 +1068,8 @@ static OSStatus feed_cb(AudioConverterRef converter, UInt32 *nframes, AudioBuffe
     return noErr;
 }
 
-static NTSTATUS capture_resample(void *args)
+static void capture_resample(struct coreaudio_stream *stream)
 {
-    struct coreaudio_stream *stream = args;
     UINT32 resamp_period_frames = muldiv(stream->period_frames, stream->dev_desc.mSampleRate,
                                          stream->fmt->nSamplesPerSec);
     OSStatus sc;
@@ -1115,7 +1114,6 @@ static NTSTATUS capture_resample(void *args)
         }else
             stream->held_frames += wanted_frames;
     }
-    return STATUS_SUCCESS;
 }
 
 static NTSTATUS get_buffer_size(void *args)
@@ -1485,6 +1483,26 @@ static NTSTATUS release_capture_buffer(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_next_packet_size(void *args)
+{
+    struct get_next_packet_size_params *params = args;
+    struct coreaudio_stream *stream = params->stream;
+
+    OSSpinLockLock(&stream->lock);
+
+    capture_resample(stream);
+
+    if(stream->held_frames >= stream->period_frames)
+        *params->frames = stream->period_frames;
+    else
+        *params->frames = 0;
+
+    OSSpinLockUnlock(&stream->lock);
+
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     get_endpoint_ids,
@@ -1502,6 +1520,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_buffer_size,
     get_latency,
     get_current_padding,
-
-    capture_resample /* temporary */
+    get_next_packet_size,
 };

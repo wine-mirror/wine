@@ -166,6 +166,13 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
+struct get_next_packet_size_params
+{
+    struct coreaudio_stream *stream;
+    HRESULT result;
+    UINT32 *frames;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -183,8 +190,7 @@ enum unix_funcs
     unix_get_buffer_size,
     unix_get_latency,
     unix_get_current_padding,
-
-    unix_capture_resample /* temporary */
+    unix_get_next_packet_size,
 };
 
 extern unixlib_handle_t coreaudio_handle;
