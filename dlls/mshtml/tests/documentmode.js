@@ -1192,7 +1192,6 @@ sync_test("__proto__", function() {
     ok(obj.__proto__ === ctor.prototype, "obj.__proto__ !== ctor.prototype");
 
     r = (delete x.__proto__);
-    todo_wine.
     ok(r, "delete x.__proto__ returned " + r);
     ok(Object.prototype.hasOwnProperty("__proto__"), "__proto__ is not a property of Object.prototype after delete");
     r = Object.getPrototypeOf(x);

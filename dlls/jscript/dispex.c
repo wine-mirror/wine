@@ -1621,6 +1621,11 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
 static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
 {
+    if(prop->type == PROP_PROTREF) {
+        *ret = TRUE;
+        return S_OK;
+    }
+
     if(!(prop->flags & PROPF_CONFIGURABLE)) {
         *ret = FALSE;
         return S_OK;
