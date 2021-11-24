@@ -15,41 +15,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
-#define NONAMELESSUNION
 #define COBJMACROS
-#include "config.h"
-
-#define LoadResource __carbon_LoadResource
-#define CompareString __carbon_CompareString
-#define GetCurrentThread __carbon_GetCurrentThread
-#define GetCurrentProcess __carbon_GetCurrentProcess
 
 #include <stdarg.h>
-
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <fenv.h>
-#include <unistd.h>
-
-#include <libkern/OSAtomic.h>
-#include <CoreAudio/CoreAudio.h>
-#include <AudioToolbox/AudioFormat.h>
-#include <AudioToolbox/AudioConverter.h>
-#include <AudioUnit/AudioUnit.h>
-
-#undef LoadResource
-#undef CompareString
-#undef GetCurrentThread
-#undef GetCurrentProcess
-#undef _CDECL
 
 #include "windef.h"
 #include "winbase.h"
