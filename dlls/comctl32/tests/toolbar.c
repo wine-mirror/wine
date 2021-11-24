@@ -1023,7 +1023,7 @@ static int system_font_height(void) {
 
     hDC = CreateCompatibleDC(NULL);
     GetTextMetricsA(hDC, &tm);
-    DeleteDC(NULL);
+    DeleteDC(hDC);
 
     return tm.tmHeight;
 }

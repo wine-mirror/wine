@@ -70,7 +70,7 @@ static void init_system_font_height(void) {
 
     hDC = CreateCompatibleDC(NULL);
     GetTextMetricsA(hDC, &tm);
-    DeleteDC(NULL);
+    DeleteDC(hDC);
 
     system_font_height = tm.tmHeight;
 }
