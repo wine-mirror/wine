@@ -67,15 +67,3 @@ void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefC
         packet = MIDIPacketNext(packet);
     }
 }
-
-void MIDIOut_Send(MIDIPortRef port, MIDIEndpointRef dest, UInt8 *buffer, unsigned length)
-{
-    Byte packetBuff[512];
-    MIDIPacketList *packetList = (MIDIPacketList *)packetBuff;
-
-    MIDIPacket *packet = MIDIPacketListInit(packetList);
-
-    packet = MIDIPacketListAdd(packetList, sizeof(packetBuff), packet, mach_absolute_time(), length, buffer);
-    if (packet)
-        MIDISend(port, dest, packetList);
-}

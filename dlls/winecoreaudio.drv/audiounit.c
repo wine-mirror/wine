@@ -22,6 +22,7 @@
 
 #define ULONG CoreFoundation_ULONG
 #define HRESULT CoreFoundation_HRESULT
+#include <mach/mach_time.h>
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
 #undef ULONG
@@ -194,4 +195,16 @@ int SynthUnit_Close(AUGraph graph)
     }
 
     return 1;
+}
+
+void MIDIOut_Send(MIDIPortRef port, MIDIEndpointRef dest, UInt8 *buffer, unsigned length)
+{
+    Byte packetBuff[512];
+    MIDIPacketList *packetList = (MIDIPacketList *)packetBuff;
+
+    MIDIPacket *packet = MIDIPacketListInit(packetList);
+
+    packet = MIDIPacketListAdd(packetList, sizeof(packetBuff), packet, mach_absolute_time(), length, buffer);
+    if (packet)
+        MIDISend(port, dest, packetList);
 }
