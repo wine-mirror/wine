@@ -1304,6 +1304,72 @@ static void test_default_client_accessible_object(void)
     IAccessible_Release(acc);
 }
 
+static void test_AccessibleObjectFromPoint(void)
+{
+    HWND hwnd, child;
+    IAccessible *acc;
+    VARIANT cid, var;
+    POINT point;
+    HRESULT hr;
+
+    hwnd = CreateWindowA("oleacc_test", "test", WS_POPUP | WS_VISIBLE,
+            0, 0, 400, 300, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+    ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)&DefWindowProcA),
+            "SetWindowLongPtr failed\n");
+
+    point.x = point.y = 0;
+    ok(ClientToScreen(hwnd, &point), "ClientToScreen failed\n");
+
+    if (WindowFromPoint(point) != hwnd)
+    {
+        win_skip("test window not returned from WindowFromPoint\n");
+        return;
+    }
+
+    hr = AccessibleObjectFromPoint(point, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %x\n", hr);
+
+    hr = AccessibleObjectFromPoint(point, &acc, NULL);
+    ok(hr == E_INVALIDARG, "got %x\n", hr);
+
+    V_VT(&cid) = VT_DISPATCH;
+    V_DISPATCH(&cid) = (IDispatch*)0xdeadbeef;
+    hr = AccessibleObjectFromPoint(point, NULL, &cid);
+    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(V_VT(&cid) == VT_DISPATCH, "got %#x, expected %#x\n", V_VT(&cid), VT_DISPATCH);
+
+    hr = AccessibleObjectFromPoint(point, &acc, &cid);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    check_acc_hwnd((IUnknown*)acc, hwnd);
+    hr = IAccessible_get_accRole(acc, cid, &var);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&var) == VT_I4, "got %#x, expected %#x\n", V_VT(&var), VT_I4);
+    ok(V_I4(&var) == ROLE_SYSTEM_CLIENT, "got %#x, expected %#x\n",
+            V_I4(&var), ROLE_SYSTEM_CLIENT);
+    IAccessible_Release(acc);
+
+    child = CreateWindowA("edit", "edit", WS_CHILD | WS_VISIBLE,
+            0, 0, 100, 100, hwnd, NULL, NULL, NULL);
+    ok(child != NULL, "CreateWindow failed\n");
+
+    hr = AccessibleObjectFromPoint(point, &acc, &cid);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    ok(V_I4(&cid) == CHILDID_SELF, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    check_acc_hwnd((IUnknown*)acc, child);
+    hr = IAccessible_get_accRole(acc, cid, &var);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&var) == VT_I4, "got %#x, expected %#x\n", V_VT(&var), VT_I4);
+    ok(V_I4(&var) == ROLE_SYSTEM_TEXT, "got %#x, expected %#x\n",
+            V_I4(&var), ROLE_SYSTEM_TEXT);
+    IAccessible_Release(acc);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_CAccPropServices(void)
 {
     IAccPropServices *acc_prop_services;
@@ -1749,6 +1815,7 @@ START_TEST(main)
     test_default_client_accessible_object();
     test_AccessibleChildren(&Accessible);
     test_AccessibleObjectFromEvent();
+    test_AccessibleObjectFromPoint();
     test_CreateStdAccessibleObject_classes();
     test_default_edit_accessible_object();
 
