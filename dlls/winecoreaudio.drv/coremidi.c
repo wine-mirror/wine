@@ -92,6 +92,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
+struct midi_dest
+{
+    /* graph and synth are only used for MIDI Synth */
+    AUGraph graph;
+    AudioUnit synth;
+
+    MIDIEndpointRef dest;
+
+    MIDIOUTCAPSW caps;
+    MIDIOPENDESC midiDesc;
+    WORD wFlags;
+};
+
 static MIDIClientRef midi_client;
 static MIDIPortRef midi_out_port, midi_in_port;
 static UINT num_dests, num_srcs;
@@ -234,11 +247,8 @@ NTSTATUS midi_init(void *args)
         dests[i].caps.wNotes = 0;
     }
 
-    params->num_dests = num_dests;
     params->num_srcs = num_srcs;
-    params->dests = dests;
     params->srcs = srcs;
-    params->midi_out_port = (void *)midi_out_port;
     params->midi_in_port = (void *)midi_in_port;
 
     *params->err = DRV_SUCCESS;
@@ -674,6 +684,33 @@ static DWORD midi_out_set_volume(WORD dev_id, DWORD volume)
     return MMSYSERR_NOTSUPPORTED;
 }
 
+static DWORD midi_out_reset(WORD dev_id)
+{
+    unsigned chn;
+
+    TRACE("%d\n", dev_id);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    if (dests[dev_id].caps.wTechnology == MOD_SYNTH)
+    {
+        for (chn = 0; chn < 16; chn++)
+        {
+            /* turn off every note */
+            MusicDeviceMIDIEvent(dests[dev_id].synth, 0xB0 | chn, 0x7B, 0, 0);
+            /* remove sustain on channel */
+            MusicDeviceMIDIEvent(dests[dev_id].synth, 0xB0 | chn, 0x40, 0, 0);
+        }
+    }
+    else FIXME("MOD_MIDIPORT\n");
+
+    /* FIXME: the LongData buffers must also be returned to the app */
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -717,6 +754,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_SETVOLUME:
         *params->err = midi_out_set_volume(params->dev_id, params->param_1);
+        break;
+    case MODM_RESET:
+        *params->err = midi_out_reset(params->dev_id);
         break;
     default:
         TRACE("Unsupported message\n");

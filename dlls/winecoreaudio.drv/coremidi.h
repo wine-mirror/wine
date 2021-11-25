@@ -64,19 +64,6 @@ extern OSStatus MusicDeviceSysEx(AudioUnit au, const UInt8 *inData, UInt32 inLen
 #endif
 
 /* midi.c */
-typedef struct midi_dest
-{
-    /* graph and synth are only used for MIDI Synth */
-    AUGraph graph;
-    AudioUnit synth;
-
-    MIDIEndpointRef dest;
-
-    MIDIOUTCAPSW caps;
-    MIDIOPENDESC midiDesc;
-    WORD wFlags;
-} MIDIDestination;
-
 typedef struct midi_src
 {
     MIDIEndpointRef source;

@@ -50,7 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 #define WINE_DEFINITIONS
 #include "coremidi.h"
 
-static DWORD MIDIOut_NumDevs = 0;
 static DWORD MIDIIn_NumDevs = 0;
 
 static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
@@ -59,9 +58,7 @@ static CFStringRef MIDIInThreadPortName;
 static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
 
 static MIDIPortRef MIDIInPort = NULL;
-static MIDIPortRef MIDIOutPort = NULL;
 
-MIDIDestination *destinations;
 MIDISource *sources;
 
 static void notify_client(struct notify_context *notify)
@@ -86,11 +83,8 @@ static LONG CoreAudio_MIDIInit(void)
         return err;
     }
 
-    MIDIOut_NumDevs = params.num_dests;
     MIDIIn_NumDevs = params.num_srcs;
-    destinations = params.dests;
     sources = params.srcs;
-    MIDIOutPort = params.midi_out_port;
     MIDIInPort = params.midi_in_port;
 
     if (MIDIIn_NumDevs > 0)
@@ -110,7 +104,6 @@ static LONG CoreAudio_MIDIRelease(void)
 
     UNIX_CALL(midi_release, NULL);
     sources = NULL;
-    destinations = NULL;
 
     if (MIDIIn_NumDevs > 0)
     {
@@ -153,31 +146,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     }
 
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
-}
-
-static DWORD MIDIOut_Reset(WORD wDevID)
-{
-    unsigned chn;
-
-    TRACE("%d\n", wDevID);
-
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
-    {
-        for (chn = 0; chn < 16; chn++) {
-            /* turn off every note */
-            MusicDeviceMIDIEvent(destinations[wDevID].synth, 0xB0 | chn, 0x7B, 0, 0);
-            /* remove sustain on channel */
-            MusicDeviceMIDIEvent(destinations[wDevID].synth, 0xB0 | chn, 0x40, 0, 0);
-        }
-    }
-    else FIXME("MOD_MIDIPORT\n");
-
-    /* FIXME: the LongData buffers must also be returned to the app */
-    return MMSYSERR_NOERROR;
 }
 
 static DWORD MIDIIn_Open(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
@@ -531,11 +499,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     DWORD err;
 
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-
-    switch (wMsg) {
-        case MODM_RESET:
-            return MIDIOut_Reset(wDevID);
-    }
 
     params.dev_id = wDevID;
     params.msg = wMsg;

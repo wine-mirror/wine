@@ -186,9 +186,9 @@ struct set_volumes_params
 struct midi_init_params
 {
     DWORD *err;
-    UINT num_dests, num_srcs;
-    void *dests, *srcs;
-    void *midi_out_port, *midi_in_port;
+    UINT num_srcs;
+    void *srcs;
+    void *midi_in_port;
 };
 
 struct notify_context
