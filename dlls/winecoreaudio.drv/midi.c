@@ -155,42 +155,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-/**************************************************************************
- * 			MIDIOut_Prepare				[internal]
- */
-static DWORD MIDIOut_Prepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
-	return MMSYSERR_INVALPARAM;
-    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
-	return MMSYSERR_NOERROR;
-
-    lpMidiHdr->lpNext = 0;
-    lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				MIDIOut_Unprepare			[internal]
- */
-static DWORD MIDIOut_Unprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
-	return MMSYSERR_INVALPARAM;
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
-	return MMSYSERR_NOERROR;
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
-	return MIDIERR_STILLPLAYING;
-
-    lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
-    return MMSYSERR_NOERROR;
-}
-
 static DWORD MIDIOut_GetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("wDevID=%d lpCaps=%p dwSize=%d\n", wDevID, lpCaps, dwSize);
@@ -642,10 +606,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-        case MODM_PREPARE:
-            return MIDIOut_Prepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-        case MODM_UNPREPARE:
-            return MIDIOut_Unprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MODM_GETDEVCAPS:
             return MIDIOut_GetDevCaps(wDevID, (LPMIDIOUTCAPSW) dwParam1, dwParam2);
         case MODM_GETNUMDEVS:

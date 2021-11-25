@@ -565,6 +565,36 @@ static DWORD midi_out_long_data(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size, struc
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_out_prepare(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size)
+{
+    TRACE("dev_id = %d midi_hdr = %p hdr_size = %d\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(MIDIHDR, dwOffset) || !hdr || !hdr->lpData)
+	return MMSYSERR_INVALPARAM;
+    if (hdr->dwFlags & MHDR_PREPARED)
+	return MMSYSERR_NOERROR;
+
+    hdr->lpNext = 0;
+    hdr->dwFlags |= MHDR_PREPARED;
+    hdr->dwFlags &= ~(MHDR_DONE | MHDR_INQUEUE);
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD midi_out_unprepare(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size)
+{
+    TRACE("dev_id = %d midi_hdr = %p hdr_size = %d\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(MIDIHDR, dwOffset) || !hdr || !hdr->lpData)
+	return MMSYSERR_INVALPARAM;
+    if (!(hdr->dwFlags & MHDR_PREPARED))
+	return MMSYSERR_NOERROR;
+    if (hdr->dwFlags & MHDR_INQUEUE)
+	return MIDIERR_STILLPLAYING;
+
+    hdr->dwFlags &= ~MHDR_PREPARED;
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -590,6 +620,12 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_LONGDATA:
         *params->err = midi_out_long_data(params->dev_id, (MIDIHDR *)params->param_1, params->param_2, params->notify);
+        break;
+    case MODM_PREPARE:
+        *params->err = midi_out_prepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
+        break;
+    case MODM_UNPREPARE:
+        *params->err = midi_out_unprepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
         break;
     default:
         TRACE("Unsupported message\n");
