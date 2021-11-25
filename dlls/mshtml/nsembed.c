@@ -1013,7 +1013,8 @@ HRESULT variant_to_nsstr(VARIANT *v, BOOL hex_int, nsAString *nsstr)
         nsAString_Init(nsstr, buf);
         break;
 
-    case VT_R8: {
+    case VT_R8:
+    case VT_DISPATCH: {
         VARIANT strv;
         HRESULT hres;
 
