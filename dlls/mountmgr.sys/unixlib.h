@@ -30,3 +30,9 @@ extern NTSTATUS detect_serial_ports( char *names, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS detect_parallel_ports( char *names, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_shell_folder( const char *folder, const char *backup, const char *link ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_shell_folder( const char *folder, char *buffer, ULONG size ) DECLSPEC_HIDDEN;
+
+extern NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS read_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS write_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS delete_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS enumerate_credentials( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
