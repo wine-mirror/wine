@@ -41,6 +41,9 @@ static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, 
                                                      MEM_EXTENDED_PARAMETER *, ULONG);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE, HANDLE, PVOID *, const LARGE_INTEGER *, SIZE_T *,
         ULONG, ULONG, MEM_EXTENDED_PARAMETER *, ULONG);
+static NTSTATUS (WINAPI *pNtSetInformationVirtualMemory)(HANDLE, VIRTUAL_MEMORY_INFORMATION_CLASS,
+                                                         ULONG_PTR, PMEMORY_RANGE_ENTRY,
+                                                         PVOID, ULONG);
 
 static const BOOL is_win64 = sizeof(void*) != sizeof(int);
 static BOOL is_wow64;
@@ -1434,6 +1437,129 @@ static void test_NtFreeVirtualMemory(void)
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 }
 
+static void test_prefetch(void)
+{
+    NTSTATUS status;
+    MEMORY_RANGE_ENTRY entries[2] = {{ 0 }};
+    ULONG reservedarg = 0;
+    char stackmem[] = "Test stack mem";
+    static char testmem[] = "Test memory range data";
+
+    if (!pNtSetInformationVirtualMemory)
+    {
+        skip("no NtSetInformationVirtualMemory in ntdll\n");
+        return;
+    }
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), -1, 1, entries, NULL, 32);
+    ok( status == STATUS_INVALID_PARAMETER_2,
+        "NtSetInformationVirtualMemory unexpected status on invalid info class (1): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), -1, 0, NULL, NULL, 0);
+    ok( status == STATUS_INVALID_PARAMETER_2 || (is_wow64 && status == STATUS_INVALID_PARAMETER_3),
+        "NtSetInformationVirtualMemory unexpected status on invalid info class (2): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), -1, 1, NULL, NULL, 32);
+    ok( status == STATUS_INVALID_PARAMETER_2 || (is_wow64 && status == STATUS_ACCESS_VIOLATION),
+        "NtSetInformationVirtualMemory unexpected status on invalid info class (3): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, NULL, 0 );
+    ok( status == STATUS_INVALID_PARAMETER_5 ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on NULL info data (1): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, NULL, NULL, 0 );
+    ok( status == STATUS_INVALID_PARAMETER_5 || (is_wow64 && status == STATUS_ACCESS_VIOLATION),
+        "NtSetInformationVirtualMemory unexpected status on NULL info data (2): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             0, NULL, NULL, 0 );
+    ok( status == STATUS_INVALID_PARAMETER_5 || (is_wow64 && status == STATUS_INVALID_PARAMETER_3),
+        "NtSetInformationVirtualMemory unexpected status on NULL info data (3): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) * 2 );
+    ok( status == STATUS_INVALID_PARAMETER_6,
+        "NtSetInformationVirtualMemory unexpected status on extended info data (1): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             0, NULL, &reservedarg, sizeof(reservedarg) * 2 );
+    ok( status == STATUS_INVALID_PARAMETER_6 || (is_wow64 && status == STATUS_INVALID_PARAMETER_3),
+        "NtSetInformationVirtualMemory unexpected status on extended info data (2): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) / 2 );
+    ok( status == STATUS_INVALID_PARAMETER_6,
+        "NtSetInformationVirtualMemory unexpected status on shrunk info data (1): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             0, NULL, &reservedarg, sizeof(reservedarg) / 2 );
+    ok( status == STATUS_INVALID_PARAMETER_6 || (is_wow64 && status == STATUS_INVALID_PARAMETER_3),
+        "NtSetInformationVirtualMemory unexpected status on shrunk info data (2): %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             0, NULL, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_INVALID_PARAMETER_3,
+        "NtSetInformationVirtualMemory unexpected status on 0 entries: %08lx\n", status);
+
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, NULL, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_ACCESS_VIOLATION,
+        "NtSetInformationVirtualMemory unexpected status on NULL entries: %08lx\n", status);
+
+    entries[0].VirtualAddress = NULL;
+    entries[0].NumberOfBytes = 0;
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_INVALID_PARAMETER_4 ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on 1 empty entry: %08lx\n", status);
+
+    entries[0].VirtualAddress = NULL;
+    entries[0].NumberOfBytes = page_size;
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_SUCCESS ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on 1 NULL address entry: %08lx\n", status);
+
+    entries[0].VirtualAddress = (void *)((ULONG_PTR)testmem & -(ULONG_PTR)page_size);
+    entries[0].NumberOfBytes = page_size;
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_SUCCESS ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on 1 page-aligned entry: %08lx\n", status);
+
+    entries[0].VirtualAddress = testmem;
+    entries[0].NumberOfBytes = sizeof(testmem);
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_SUCCESS ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on 1 entry: %08lx\n", status);
+
+    entries[0].VirtualAddress = NULL;
+    entries[0].NumberOfBytes = page_size;
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             1, entries, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_SUCCESS ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on 1 unmapped entry: %08lx\n", status);
+
+    entries[0].VirtualAddress = (void *)((ULONG_PTR)testmem & -(ULONG_PTR)page_size);
+    entries[0].NumberOfBytes = page_size;
+    entries[1].VirtualAddress = (void *)((ULONG_PTR)stackmem & -(ULONG_PTR)page_size);
+    entries[1].NumberOfBytes = page_size;
+    status = pNtSetInformationVirtualMemory( NtCurrentProcess(), VmPrefetchInformation,
+                                             2, entries, &reservedarg, sizeof(reservedarg) );
+    ok( status == STATUS_SUCCESS ||
+        broken( is_wow64 && status == STATUS_INVALID_PARAMETER_6 ) /* win10 1507 */,
+        "NtSetInformationVirtualMemory unexpected status on 2 page-aligned entries: %08lx\n", status);
+}
+
 START_TEST(virtual)
 {
     HMODULE mod;
@@ -1463,6 +1589,7 @@ START_TEST(virtual)
     pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
     pNtAllocateVirtualMemoryEx = (void *)GetProcAddress(mod, "NtAllocateVirtualMemoryEx");
     pNtMapViewOfSectionEx = (void *)GetProcAddress(mod, "NtMapViewOfSectionEx");
+    pNtSetInformationVirtualMemory = (void *)GetProcAddress(mod, "NtSetInformationVirtualMemory");
 
     NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     trace("system page size %#lx\n", sbi.PageSize);
@@ -1475,6 +1602,7 @@ START_TEST(virtual)
     test_RtlCreateUserStack();
     test_NtMapViewOfSection();
     test_NtMapViewOfSectionEx();
+    test_prefetch();
     test_user_shared_data();
     test_syscalls();
 }
