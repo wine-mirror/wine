@@ -263,16 +263,75 @@ LRESULT WINAPI LresultFromObject( REFIID riid, WPARAM wParam, LPUNKNOWN pAcc )
     return atom;
 }
 
-HRESULT WINAPI AccessibleObjectFromPoint( POINT ptScreen, IAccessible** ppacc, VARIANT* pvarChild )
-{
-    FIXME("{%d,%d} %p %p: stub\n", ptScreen.x, ptScreen.y, ppacc, pvarChild );
-    return E_NOTIMPL;
-}
-
 static void variant_init_i4( VARIANT *v, int val )
 {
     V_VT(v) = VT_I4;
     V_I4(v) = val;
+}
+
+HRESULT WINAPI AccessibleObjectFromPoint( POINT point, IAccessible** acc, VARIANT* child_id )
+{
+    IAccessible *cur;
+    HRESULT hr;
+    VARIANT v;
+    HWND hwnd;
+
+    TRACE("{%d,%d} %p %p\n", point.x, point.y, acc, child_id);
+
+    if (!acc || !child_id)
+        return E_INVALIDARG;
+
+    *acc = NULL;
+    V_VT(child_id) = VT_EMPTY;
+
+    hwnd = WindowFromPoint(point);
+    if (!hwnd)
+        return E_FAIL;
+    hwnd = GetAncestor(hwnd, GA_ROOT);
+
+    hr = AccessibleObjectFromWindow(hwnd, OBJID_WINDOW, &IID_IAccessible, (void **)&cur);
+    if (FAILED(hr))
+        return hr;
+    if (!cur)
+        return E_FAIL;
+
+    V_VT(&v) = VT_EMPTY;
+    while (1)
+    {
+        hr = IAccessible_accHitTest(cur, point.x, point.y, &v);
+        if (FAILED(hr))
+        {
+            IAccessible_Release(cur);
+            return hr;
+        }
+
+        if (V_VT(&v) == VT_I4)
+        {
+            *acc = cur;
+            variant_init_i4(child_id, V_I4(&v));
+            return S_OK;
+        }
+        else if (V_VT(&v) == VT_DISPATCH)
+        {
+            IAccessible_Release(cur);
+
+            hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&cur);
+            VariantClear(&v);
+            if (FAILED(hr))
+                return hr;
+            if (!cur)
+                return E_FAIL;
+        }
+        else
+        {
+            VariantClear(&v);
+            IAccessible_Release(cur);
+            FIXME("unhandled variant type: %d\n", V_VT(&v));
+            return E_NOTIMPL;
+        }
+    }
+
+    return S_OK;
 }
 
 HRESULT WINAPI AccessibleObjectFromEvent( HWND hwnd, DWORD object_id, DWORD child_id,
