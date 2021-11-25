@@ -1,4 +1,5 @@
 MODULE    = mountmgr.sys
+UNIXLIB   = mountmgr.so
 IMPORTS   = uuid advapi32 ntoskrnl
 DELAYIMPORTS = user32
 EXTRAINCL = $(DBUS_CFLAGS) $(HAL_CFLAGS)

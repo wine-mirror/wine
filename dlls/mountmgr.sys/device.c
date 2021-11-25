@@ -186,10 +186,11 @@ static void get_filesystem_label( struct volume *volume )
 {
     char buffer[256], *p;
     ULONG size = sizeof(buffer);
+    struct read_volume_file_params params = { volume->device->unix_mount, ".windows-label", buffer, &size };
 
     volume->label[0] = 0;
     if (!volume->device->unix_mount) return;
-    if (read_volume_file( volume->device->unix_mount, ".windows-label", buffer, &size )) return;
+    if (MOUNTMGR_CALL( read_volume_file, &params )) return;
 
     p = buffer + size;
     while (p > buffer && (p[-1] == ' ' || p[-1] == '\r' || p[-1] == '\n')) p--;
@@ -203,10 +204,11 @@ static void get_filesystem_serial( struct volume *volume )
 {
     char buffer[32];
     ULONG size = sizeof(buffer);
+    struct read_volume_file_params params = { volume->device->unix_mount, ".windows-serial", buffer, &size };
 
     volume->serial = 0;
     if (!volume->device->unix_mount) return;
-    if (read_volume_file( volume->device->unix_mount, ".windows-serial", buffer, &size )) return;
+    if (MOUNTMGR_CALL( read_volume_file, &params )) return;
 
     buffer[size] = 0;
     volume->serial = strtoul( buffer, NULL, 16 );
@@ -974,8 +976,9 @@ static void set_dos_devices_disk_serial( struct disk_device *device )
 {
     unsigned int devices;
     struct dos_drive *drive;
+    struct get_volume_dos_devices_params params = { device->unix_mount, &devices };
 
-    if (!device->serial || !device->unix_mount || get_volume_dos_devices( device->unix_mount, &devices ))
+    if (!device->serial || !device->unix_mount || MOUNTMGR_CALL( get_volume_dos_devices, &params ))
         return;
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
@@ -1108,12 +1111,15 @@ static void create_drive_devices(void)
     {
         char link[4096], unix_dev[4096];
         char *device = NULL;
+        struct get_dosdev_symlink_params params = { dosdev, link, sizeof(link) };
 
         dosdev[0] = 'a' + i;
         dosdev[2] = 0;
-        if (get_dosdev_symlink( dosdev, link, sizeof(link) )) continue;
+        if (MOUNTMGR_CALL( get_dosdev_symlink, &params )) continue;
         dosdev[2] = ':';
-        if (!get_dosdev_symlink( dosdev, unix_dev, sizeof(unix_dev) )) device = unix_dev;
+        params.dest = unix_dev;
+        params.size = sizeof(unix_dev);
+        if (!MOUNTMGR_CALL( get_dosdev_symlink, &params )) device = unix_dev;
 
         drive_type = i < 2 ? DEVICE_FLOPPY : DEVICE_HARDDISK_VOL;
         if (drives_key)
@@ -1310,7 +1316,8 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
 
     if (letter == -1)  /* auto-assign a letter */
     {
-        if ((status = add_drive( device, type, &letter ))) goto done;
+        struct add_drive_params params = { device, type, &letter };
+        if ((status = MOUNTMGR_CALL( add_drive, &params ))) goto done;
 
         LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
         {
@@ -1320,16 +1327,21 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     }
     else  /* simply reset the device symlink */
     {
+        struct set_dosdev_symlink_params params = { dosdev, device };
+
         LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
             if (drive->drive == letter) break;
 
         dosdev[0] = 'a' + letter;
-        if (&drive->entry == &drives_list) set_dosdev_symlink( dosdev, device );
+        if (&drive->entry == &drives_list)
+        {
+            MOUNTMGR_CALL( set_dosdev_symlink, &params );
+        }
         else
         {
             if (!device || !drive->volume->device->unix_device ||
                 strcmp( device, drive->volume->device->unix_device ))
-                set_dosdev_symlink( dosdev, device  );
+                MOUNTMGR_CALL( set_dosdev_symlink, &params );
             delete_dos_device( drive );
         }
     }
@@ -1343,7 +1355,10 @@ found:
     dosdev[0] = 'a' + drive->drive;
     dosdev[2] = 0;
     if (!mount_point || !volume->device->unix_mount || strcmp( mount_point, volume->device->unix_mount ))
-        set_dosdev_symlink( dosdev, mount_point );
+    {
+        struct set_dosdev_symlink_params params = { dosdev, mount_point };
+        MOUNTMGR_CALL( set_dosdev_symlink, &params );
+    }
     set_volume_info( volume, drive, device, mount_point, type, guid, NULL );
 
     TRACE( "added device %c: udi %s for %s on %s type %u\n",
@@ -1388,6 +1403,8 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
     EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
+        struct set_dosdev_symlink_params params = { dosdev, NULL };
+
         if (udi)
         {
             if (!drive->volume->udi) continue;
@@ -1397,7 +1414,7 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
         else if (drive->drive != letter) continue;
 
         dosdev[0] = 'a' + drive->drive;
-        set_dosdev_symlink( dosdev, NULL );
+        MOUNTMGR_CALL( set_dosdev_symlink, &params );
 
         /* clear the registry key too */
         if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
@@ -1455,7 +1472,8 @@ static struct volume *find_volume_by_unixdev( ULONGLONG unix_dev )
 
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
     {
-        if (!volume->device->unix_device || !match_unixdev( volume->device->unix_device, unix_dev ))
+        struct match_unixdev_params params = { volume->device->unix_device, unix_dev };
+        if (!volume->device->unix_device || !MOUNTMGR_CALL( match_unixdev, &params ))
             continue;
 
         TRACE( "found matching volume %s\n", debugstr_guid(&volume->guid) );
@@ -1875,6 +1893,10 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     UNICODE_STRING nt_name, symlink_name, default_name;
     DEVICE_OBJECT *dev_obj;
     NTSTATUS status;
+    struct set_dosdev_symlink_params params = { dosdevices_path, unix_path };
+
+    /* create DOS device */
+    if (MOUNTMGR_CALL( set_dosdev_symlink, &params )) return FALSE;
 
     if (driver == serial_driver)
     {
@@ -1894,9 +1916,6 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     }
 
     sprintfW( dos_name, dos_name_format, n );
-
-    /* create DOS device */
-    if (set_dosdev_symlink( dosdevices_path, unix_path )) return FALSE;
 
     /* create NT device */
     sprintfW( nt_buffer, nt_name_format, n - 1 );
@@ -2012,11 +2031,12 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
 NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     char devices[4096];
+    struct detect_ports_params params = { devices, sizeof(devices) };
 
     serial_driver = driver;
     /* TODO: fill in driver->MajorFunction */
 
-    detect_serial_ports( devices, sizeof(devices) );
+    MOUNTMGR_CALL( detect_serial_ports, &params );
     create_port_devices( driver, devices );
 
     return STATUS_SUCCESS;
@@ -2026,11 +2046,12 @@ NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path
 NTSTATUS WINAPI parallel_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     char devices[4096];
+    struct detect_ports_params params = { devices, sizeof(devices) };
 
     parallel_driver = driver;
     /* TODO: fill in driver->MajorFunction */
 
-    detect_parallel_ports( devices, sizeof(devices) );
+    MOUNTMGR_CALL( detect_parallel_ports, &params );
     create_port_devices( driver, devices );
 
     return STATUS_SUCCESS;

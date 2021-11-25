@@ -19,17 +19,85 @@
  */
 
 #include "mountmgr.h"
+#include "wine/unixlib.h"
 
-extern NTSTATUS add_drive( const char *device, enum device_type type, int *letter ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_dosdev_symlink( const char *dev, char *dest, ULONG size ) DECLSPEC_HIDDEN;
-extern NTSTATUS set_dosdev_symlink( const char *dev, const char *dest ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_volume_dos_devices( const char *mount_point, unsigned int *dosdev ) DECLSPEC_HIDDEN;
-extern NTSTATUS read_volume_file( const char *volume, const char *file, void *buffer, ULONG *size ) DECLSPEC_HIDDEN;
-extern BOOL match_unixdev( const char *device, ULONGLONG unix_dev ) DECLSPEC_HIDDEN;
-extern NTSTATUS detect_serial_ports( char *names, ULONG size ) DECLSPEC_HIDDEN;
-extern NTSTATUS detect_parallel_ports( char *names, ULONG size ) DECLSPEC_HIDDEN;
-extern NTSTATUS set_shell_folder( const char *folder, const char *backup, const char *link ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_shell_folder( const char *folder, char *buffer, ULONG size ) DECLSPEC_HIDDEN;
+struct add_drive_params
+{
+    const char *device;
+    enum device_type type;
+    int *letter;
+};
+
+struct get_dosdev_symlink_params
+{
+    const char *dev;
+    char *dest;
+    ULONG size;
+};
+
+struct set_dosdev_symlink_params
+{
+    const char *dev;
+    const char *dest;
+};
+
+struct get_volume_dos_devices_params
+{
+    const char *mount_point;
+    unsigned int *dosdev;
+};
+
+struct read_volume_file_params
+{
+    const char *volume;
+    const char *file;
+    void *buffer;
+    ULONG *size;
+};
+
+struct match_unixdev_params
+{
+    const char *device;
+    ULONGLONG unix_dev;
+};
+
+struct detect_ports_params
+{
+    char *names;
+    ULONG size;
+};
+
+struct set_shell_folder_params
+{
+    const char *folder;
+    const char *backup;
+    const char *link;
+};
+
+struct get_shell_folder_params
+{
+    const char *folder;
+    char *buffer;
+    ULONG size;
+};
+
+enum mountmgr_funcs
+{
+    unix_add_drive,
+    unix_get_dosdev_symlink,
+    unix_set_dosdev_symlink,
+    unix_get_volume_dos_devices,
+    unix_read_volume_file,
+    unix_match_unixdev,
+    unix_detect_serial_ports,
+    unix_detect_parallel_ports,
+    unix_set_shell_folder,
+    unix_get_shell_folder,
+};
+
+extern unixlib_handle_t mountmgr_handle;
+
+#define MOUNTMGR_CALL( func, params ) __wine_unix_call( mountmgr_handle, unix_ ## func, params )
 
 extern NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
 extern NTSTATUS read_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;

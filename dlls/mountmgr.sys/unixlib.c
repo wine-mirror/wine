@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <errno.h>
@@ -84,21 +88,22 @@ static void detect_devices( const char **paths, char *names, ULONG size )
 }
 
 /* find or create a DOS drive for the corresponding Unix device */
-NTSTATUS add_drive( const char *device, enum device_type type, int *letter )
+static NTSTATUS add_drive( void *args )
 {
+    const struct add_drive_params *params = args;
     char *path, *p;
     char in_use[26];
     struct stat dev_st, drive_st;
     int drive, first, last, avail = 0;
 
-    if (stat( device, &dev_st ) == -1 || !is_valid_device( &dev_st )) return STATUS_NO_SUCH_DEVICE;
+    if (stat( params->device, &dev_st ) == -1 || !is_valid_device( &dev_st )) return STATUS_NO_SUCH_DEVICE;
 
     if (!(path = get_dosdevices_path( "a::" ))) return STATUS_NO_MEMORY;
     p = path + strlen(path) - 3;
 
     memset( in_use, 0, sizeof(in_use) );
 
-    switch (type)
+    switch (params->type)
     {
     case DEVICE_FLOPPY:
         first = 0;
@@ -148,7 +153,7 @@ NTSTATUS add_drive( const char *device, enum device_type type, int *letter )
             /* try to use the one we found */
             drive = avail;
             *p = 'a' + drive;
-            if (symlink( device, path ) != -1) goto done;
+            if (symlink( params->device, path ) != -1) goto done;
             /* failed, retry the search */
         }
     }
@@ -157,36 +162,38 @@ NTSTATUS add_drive( const char *device, enum device_type type, int *letter )
 
 done:
     free( path );
-    *letter = drive;
+    *params->letter = drive;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS get_dosdev_symlink( const char *dev, char *buffer, ULONG size )
+static NTSTATUS get_dosdev_symlink( void *args )
 {
+    const struct get_dosdev_symlink_params *params = args;
     char *path;
     int ret;
 
-    if (!(path = get_dosdevices_path( dev ))) return STATUS_NO_MEMORY;
+    if (!(path = get_dosdevices_path( params->dev ))) return STATUS_NO_MEMORY;
 
-    ret = readlink( path, buffer, size );
+    ret = readlink( path, params->dest, params->size );
     free( path );
     if (ret == -1) return STATUS_NO_SUCH_DEVICE;
-    if (ret == size) return STATUS_BUFFER_TOO_SMALL;
-    buffer[ret] = 0;
+    if (ret == params->size) return STATUS_BUFFER_TOO_SMALL;
+    params->dest[ret] = 0;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS set_dosdev_symlink( const char *dev, const char *dest )
+static NTSTATUS set_dosdev_symlink( void *args )
 {
+    const struct set_dosdev_symlink_params *params = args;
     char *path;
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (!(path = get_dosdevices_path( dev ))) return STATUS_NO_MEMORY;
+    if (!(path = get_dosdevices_path( params->dev ))) return STATUS_NO_MEMORY;
 
-    if (dest && dest[0])
+    if (params->dest && params->dest[0])
     {
         unlink( path );
-        if (symlink( dest, path ) == -1) status = STATUS_ACCESS_DENIED;
+        if (symlink( params->dest, path ) == -1) status = STATUS_ACCESS_DENIED;
     }
     else unlink( path );
 
@@ -194,31 +201,33 @@ NTSTATUS set_dosdev_symlink( const char *dev, const char *dest )
     return status;
 }
 
-NTSTATUS get_volume_dos_devices( const char *mount_point, unsigned int *dosdev )
+static NTSTATUS get_volume_dos_devices( void *args )
 {
+    const struct get_volume_dos_devices_params *params = args;
     struct stat dev_st, drive_st;
     char *path;
     int i;
 
-    if (stat( mount_point, &dev_st ) == -1) return STATUS_NO_SUCH_DEVICE;
+    if (stat( params->mount_point, &dev_st ) == -1) return STATUS_NO_SUCH_DEVICE;
     if (!(path = get_dosdevices_path( "a:" ))) return STATUS_NO_MEMORY;
 
-    *dosdev = 0;
+    *params->dosdev = 0;
     for (i = 0; i < 26; i++)
     {
         path[strlen(path) - 2] = 'a' + i;
-        if (stat( path, &drive_st ) != -1 && drive_st.st_rdev == dev_st.st_rdev) *dosdev |= 1 << i;
+        if (stat( path, &drive_st ) != -1 && drive_st.st_rdev == dev_st.st_rdev) *params->dosdev |= 1 << i;
     }
     free( path );
     return STATUS_SUCCESS;
 }
 
-NTSTATUS read_volume_file( const char *volume, const char *file, void *buffer, ULONG *size )
+static NTSTATUS read_volume_file( void *args )
 {
+    const struct read_volume_file_params *params = args;
     int ret, fd = -1;
-    char *name = malloc( strlen(volume) + strlen(file) + 2 );
+    char *name = malloc( strlen(params->volume) + strlen(params->file) + 2 );
 
-    sprintf( name, "%s/%s", volume, file );
+    sprintf( name, "%s/%s", params->volume, params->file );
 
     if (name[0] != '/')
     {
@@ -230,22 +239,24 @@ NTSTATUS read_volume_file( const char *volume, const char *file, void *buffer, U
 
     free( name );
     if (fd == -1) return STATUS_NO_SUCH_FILE;
-    ret = read( fd, buffer, *size );
+    ret = read( fd, params->buffer, *params->size );
     close( fd );
     if (ret == -1) return STATUS_NO_SUCH_FILE;
-    *size = ret;
+    *params->size = ret;
     return STATUS_SUCCESS;
 }
 
-BOOL match_unixdev( const char *device, ULONGLONG unix_dev )
+static NTSTATUS match_unixdev( void *args )
 {
+    const struct match_unixdev_params *params = args;
     struct stat st;
 
-    return !stat( device, &st ) && st.st_rdev == unix_dev;
+    return !stat( params->device, &st ) && st.st_rdev == params->unix_dev;
 }
 
-NTSTATUS detect_serial_ports( char *names, ULONG size )
+static NTSTATUS detect_serial_ports( void *args )
 {
+    const struct detect_ports_params *params = args;
     static const char *paths[] =
     {
 #ifdef linux
@@ -260,12 +271,13 @@ NTSTATUS detect_serial_ports( char *names, ULONG size )
         NULL
     };
 
-    detect_devices( paths, names, size );
+    detect_devices( paths, params->names, params->size );
     return STATUS_SUCCESS;
 }
 
-NTSTATUS detect_parallel_ports( char *names, ULONG size )
+static NTSTATUS detect_parallel_ports( void *args )
 {
+    const struct detect_ports_params *params = args;
     static const char *paths[] =
     {
 #ifdef linux
@@ -274,12 +286,16 @@ NTSTATUS detect_parallel_ports( char *names, ULONG size )
         NULL
     };
 
-    detect_devices( paths, names, size );
+    detect_devices( paths, params->names, params->size );
     return STATUS_SUCCESS;
 }
 
-NTSTATUS set_shell_folder( const char *folder, const char *backup, const char *link )
+static NTSTATUS set_shell_folder( void *args )
 {
+    const struct set_shell_folder_params *params = args;
+    const char *folder = params->folder;
+    const char *backup = params->backup;
+    const char *link = params->link;
     struct stat st;
     const char *home;
     char *homelink = NULL;
@@ -333,11 +349,26 @@ done:
     return status;
 }
 
-NTSTATUS get_shell_folder( const char *folder, char *buffer, ULONG size )
+static NTSTATUS get_shell_folder( void *args )
 {
-    int ret = readlink( folder, buffer, size - 1 );
+    const struct get_shell_folder_params *params = args;
+    int ret = readlink( params->folder, params->buffer, params->size - 1 );
 
     if (ret < 0) return STATUS_OBJECT_NAME_NOT_FOUND;
-    buffer[ret] = 0;
+    params->buffer[ret] = 0;
     return STATUS_SUCCESS;
 }
+
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    add_drive,
+    get_dosdev_symlink,
+    set_dosdev_symlink,
+    get_volume_dos_devices,
+    read_volume_file,
+    match_unixdev,
+    detect_serial_ports,
+    detect_parallel_ports,
+    set_shell_folder,
+    get_shell_folder,
+};

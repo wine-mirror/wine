@@ -50,6 +50,8 @@ struct mount_point
 static struct list mount_points_list = LIST_INIT(mount_points_list);
 static HKEY mount_key;
 
+unixlib_handle_t mountmgr_handle = 0;
+
 void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len )
 {
     RtlFreeHeap( GetProcessHeap(), 0, mount->id );
@@ -286,6 +288,7 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
     NTSTATUS status;
     ULONG size = 256;
     char *buffer = NULL, *backup = NULL;
+    struct set_shell_folder_params params;
 
     if (input->folder_offset >= insize || input->folder_size > insize - input->folder_offset ||
         input->symlink_offset >= insize)
@@ -328,7 +331,10 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
         strcat( backup, ".backup" );
     }
 
-    status = set_shell_folder( buffer, backup, link );
+    params.folder = buffer;
+    params.backup = backup;
+    params.link = link;
+    status = MOUNTMGR_CALL( set_shell_folder, &params );
 
 done:
     HeapFree( GetProcessHeap(), 0, buffer );
@@ -354,13 +360,16 @@ static NTSTATUS query_shell_folder( void *buff, SIZE_T insize, SIZE_T outsize, I
     {
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) return STATUS_NO_MEMORY;
         status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN );
-        if (!status) break;
+        if (!status)
+        {
+            struct get_shell_folder_params params = { buffer, output, outsize };
+            status = MOUNTMGR_CALL( get_shell_folder, &params );
+            if (!status) iosb->Information = strlen(output) + 1;
+            break;
+        }
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
         HeapFree( GetProcessHeap(), 0, buffer );
-        if (status != STATUS_BUFFER_TOO_SMALL) return status;
     }
-
-    status = get_shell_folder( buffer, output, outsize );
-    if (!status) iosb->Information = strlen(output) + 1;
 
     HeapFree( GetProcessHeap(), 0, buffer );
     return status;
@@ -593,12 +602,18 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     HKEY wow64_ports_key = NULL;
 #endif
 
+    void *instance;
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
     HKEY devicemap_key;
     NTSTATUS status;
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
+
+    RtlPcToFileHeader( DriverEntry, &instance );
+    status = NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                                   &mountmgr_handle, sizeof(mountmgr_handle), NULL );
+    if (status) return status;
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = mountmgr_ioctl;
 
