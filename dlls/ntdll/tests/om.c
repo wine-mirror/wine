@@ -1881,6 +1881,15 @@ static void test_query_object(void)
 
     pNtClose( handle );
 
+    handle = CreateFileA( "\\\\.\\pipe\\", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%lu)\n", GetLastError() );
+
+    test_object_name( handle, L"\\Device\\NamedPipe\\", TRUE );
+    test_object_type( handle, L"File" );
+    test_file_info( handle );
+
+    pNtClose( handle );
+
     RtlInitUnicodeString( &path, L"\\REGISTRY\\Machine" );
     status = pNtCreateKey( &handle, KEY_READ, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed status %lx\n", status );

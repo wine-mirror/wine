@@ -51,6 +51,13 @@ typedef struct {
   ULONG NamedPipeEnd;
 } FILE_PIPE_LOCAL_INFORMATION;
 
+typedef struct _FILE_PIPE_WAIT_FOR_BUFFER {
+    LARGE_INTEGER   Timeout;
+    ULONG           NameLength;
+    BOOLEAN         TimeoutSpecified;
+    WCHAR           Name[1];
+} FILE_PIPE_WAIT_FOR_BUFFER, *PFILE_PIPE_WAIT_FOR_BUFFER;
+
 #ifndef FILE_SYNCHRONOUS_IO_ALERT
 #define FILE_SYNCHRONOUS_IO_ALERT 0x10
 #endif
@@ -61,6 +68,10 @@ typedef struct {
 
 #ifndef FSCTL_PIPE_LISTEN
 #define FSCTL_PIPE_LISTEN CTL_CODE(FILE_DEVICE_NAMED_PIPE, 2, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#endif
+
+#ifndef FSCTL_PIPE_WAIT
+#define FSCTL_PIPE_WAIT CTL_CODE(FILE_DEVICE_NAMED_PIPE, 6, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #endif
 #endif
 
@@ -175,6 +186,48 @@ static NTSTATUS listen_pipe(HANDLE hPipe, HANDLE hEvent, PIO_STATUS_BLOCK iosb, 
     ioapc_called = FALSE;
 
     return pNtFsControlFile(hPipe, hEvent, use_apc ? &ioapc: NULL, use_apc ? &dummy: NULL, iosb, FSCTL_PIPE_LISTEN, 0, 0, 0, 0);
+}
+
+static NTSTATUS wait_pipe(HANDLE handle, PUNICODE_STRING name, const LARGE_INTEGER* timeout)
+{
+    HANDLE event;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    FILE_PIPE_WAIT_FOR_BUFFER *pipe_wait;
+    ULONG pipe_wait_size;
+
+    pipe_wait_size = offsetof(FILE_PIPE_WAIT_FOR_BUFFER, Name[0]) + name->Length;
+    pipe_wait = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pipe_wait_size);
+    if (!pipe_wait) return STATUS_NO_MEMORY;
+
+    pipe_wait->TimeoutSpecified = !!timeout;
+    pipe_wait->NameLength = name->Length;
+    if (timeout) pipe_wait->Timeout = *timeout;
+    memcpy(pipe_wait->Name, name->Buffer, name->Length);
+
+    InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
+    status = NtCreateEvent(&event, GENERIC_ALL, &attr, NotificationEvent, FALSE);
+    if (status != STATUS_SUCCESS)
+    {
+        ok(0, "NtCreateEvent failure: %#lx\n", status);
+        HeapFree(GetProcessHeap(), 0, pipe_wait);
+        return status;
+    }
+
+    memset(&iosb, 0, sizeof(iosb));
+    iosb.Status = STATUS_PENDING;
+    status = pNtFsControlFile(handle, event, NULL, NULL, &iosb, FSCTL_PIPE_WAIT,
+                              pipe_wait, pipe_wait_size, NULL, 0);
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject(event, INFINITE);
+        status = iosb.Status;
+    }
+
+    NtClose(event);
+    HeapFree(GetProcessHeap(), 0, pipe_wait);
+    return status;
 }
 
 static void test_create_invalid(void)
@@ -2420,6 +2473,7 @@ static void test_security_info(void)
 
 static void test_empty_name(void)
 {
+    static const LARGE_INTEGER zero_timeout = {{ 0 }};
     HANDLE hdirectory, hpipe, hpipe2, hwrite, hwrite2, handle;
     OBJECT_TYPE_INFORMATION *type_info;
     OBJECT_NAME_INFORMATION *name_info;
@@ -2450,6 +2504,10 @@ static void test_empty_name(void)
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
     ok(!status, "Got unexpected status %#lx.\n", status);
 
+    pRtlInitUnicodeString(&name, L"nonexistent_pipe");
+    status = wait_pipe(hdirectory, &name, &zero_timeout);
+    todo_wine ok(status == STATUS_ILLEGAL_FUNCTION, "unexpected status for FSCTL_PIPE_WAIT on \\Device\\NamedPipe: %#lx\n", status);
+
     name.Buffer = NULL;
     name.Length = 0;
     name.MaximumLength = 0;
@@ -2462,6 +2520,17 @@ static void test_empty_name(void)
     todo_wine ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#lx.\n", status);
     if (!status)
         CloseHandle(hpipe);
+
+    pRtlInitUnicodeString(&name, L"test3\\pipe");
+    attr.RootDirectory            = hdirectory;
+    attr.ObjectName               = &name;
+    timeout.QuadPart = -(LONG64)10000000;
+    status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ|GENERIC_WRITE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                    FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout);
+    ok(status == STATUS_OBJECT_NAME_INVALID, "unexpected status from NtCreateNamedPipeFile: %#lx\n", status);
+    if (!status)
+        CloseHandle(hpipe);
+
     CloseHandle(hdirectory);
 
     pRtlInitUnicodeString(&name, L"\\Device\\NamedPipe\\");
@@ -2474,6 +2543,10 @@ static void test_empty_name(void)
     status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
     ok(!status, "Got unexpected status %#lx.\n", status);
+
+    pRtlInitUnicodeString(&name, L"nonexistent_pipe");
+    status = wait_pipe(hdirectory, &name, &zero_timeout);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "unexpected status for FSCTL_PIPE_WAIT on \\Device\\NamedPipe\\: %#lx\n", status);
 
     name.Buffer = NULL;
     name.Length = 0;
@@ -2565,9 +2638,24 @@ static void test_empty_name(void)
 
     CloseHandle(hwrite);
     CloseHandle(hpipe);
-    CloseHandle(hdirectory);
     CloseHandle(hpipe2);
     CloseHandle(hwrite2);
+
+    pRtlInitUnicodeString(&name, L"test3\\pipe");
+    attr.RootDirectory            = hdirectory;
+    attr.ObjectName               = &name;
+    timeout.QuadPart = -(LONG64)10000000;
+    status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ|GENERIC_WRITE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                    FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout);
+    todo_wine ok(!status, "unexpected failure from NtCreateNamedPipeFile: %#lx\n", status);
+
+    handle = CreateFileA("\\\\.\\pipe\\test3\\pipe", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                         OPEN_EXISTING, 0, 0 );
+    todo_wine ok(handle != INVALID_HANDLE_VALUE, "Failed to open NamedPipe (%lu)\n", GetLastError());
+
+    CloseHandle(handle);
+    CloseHandle(hpipe);
+    CloseHandle(hdirectory);
 }
 
 START_TEST(pipe)
