@@ -37,6 +37,8 @@ typedef DWORD_PTR TRANSID;
 ]
 library COMSVCSLib
 {
+    importlib("stdole2.tlb");
+
     [
         object,
         hidden,
@@ -96,4 +98,65 @@ library COMSVCSLib
     {
         [default] interface IDispenserManager;
     };
+
+    [
+        object,
+        hidden,
+        local,
+        uuid(2a005c01-a5de-11cf-9e66-00aa00a3f464),
+        pointer_default(unique)
+    ]
+    interface ISharedProperty : IDispatch
+    {
+        [id(DISPID_VALUE), propget] HRESULT Value([out, retval] VARIANT *value);
+        [id(DISPID_VALUE), propput] HRESULT Value([in] VARIANT value);
+    }
+
+    [
+        object,
+        hidden,
+        local,
+        uuid(2a005c07-a5de-11cf-9e66-00aa00a3f464),
+        pointer_default(unique)
+    ]
+    interface ISharedPropertyGroup : IDispatch
+    {
+        [id(0x00000001)]
+        HRESULT CreatePropertyByPosition([in] int index, [out] VARIANT_BOOL *exists, [out, retval] ISharedProperty **property);
+        [id(0x00000002), propget]
+        HRESULT PropertyByPosition([in] int index, [out, retval] ISharedProperty **property);
+        [id(0x00000003)]
+        HRESULT CreateProperty([in] BSTR name, [out] VARIANT_BOOL *exists, [out, retval] ISharedProperty **property);
+        [id(0x00000004), propget]
+        HRESULT Property([in] BSTR name, [out, retval] ISharedProperty **property);
+    }
+
+    [
+        object,
+        hidden,
+        local,
+        uuid(2a005c0d-a5de-11cf-9e66-00aa00a3f464),
+        pointer_default(unique)
+    ]
+    interface ISharedPropertyGroupManager : IDispatch
+    {
+        [id(0x00000001)]
+        HRESULT CreatePropertyGroup([in] BSTR name, [in, out] LONG *isolation, [in, out] LONG *release,
+                [out] VARIANT_BOOL *exists, [out, retval] ISharedPropertyGroup **group);
+        [id(0x00000002), propget]
+        HRESULT Group([in] BSTR name, [out, retval] ISharedPropertyGroup **group);
+        [id(DISPID_NEWENUM), propget]
+        HRESULT _NewEnum([out, retval] IUnknown **retval);
+    }
+
+    [
+        uuid(2a005c11-a5de-11cf-9e66-00aa00a3f464),
+        progid("MTxSpm.SharedPropertyGroupManager.1"),
+        vi_progid("MTxSpm.SharedPropertyGroupManager"),
+        threading(both)
+    ]
+    coclass SharedPropertyGroupManager
+    {
+        [default] interface ISharedPropertyGroupManager;
+    }
 }
