@@ -182,6 +182,14 @@ struct set_volumes_params
     int channel;
 };
 
+struct midi_init_params
+{
+    DWORD *err;
+    UINT num_dests, num_srcs;
+    void *dests, *srcs;
+    void *midi_out_port, *midi_in_port;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -204,7 +212,12 @@ enum unix_funcs
     unix_get_frequency,
     unix_is_started,
     unix_set_volumes,
+    unix_midi_init,
+    unix_midi_release,
 };
+
+NTSTATUS midi_init( void * ) DECLSPEC_HIDDEN;
+NTSTATUS midi_release( void * ) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t coreaudio_handle;
 

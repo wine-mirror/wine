@@ -35,9 +35,13 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "mmddk.h"
+#include "mmdeviceapi.h"
+#include "audioclient.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/unixlib.h"
 #include "coreaudio.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
@@ -46,44 +50,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 #define WINE_DEFINITIONS
 #include "coremidi.h"
 
-static MIDIClientRef wineMIDIClient = NULL;
-
 static DWORD MIDIOut_NumDevs = 0;
 static DWORD MIDIIn_NumDevs = 0;
 
-typedef struct tagMIDIDestination {
-    /* graph and synth are only used for MIDI Synth */
-    AUGraph graph;
-    AudioUnit synth;
-
-    MIDIEndpointRef dest;
-
-    MIDIOUTCAPSW caps;
-    MIDIOPENDESC midiDesc;
-    WORD wFlags;
-} MIDIDestination;
-
-typedef struct tagMIDISource {
-    MIDIEndpointRef source;
-
-    WORD wDevID;
-    int state; /* 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
-    MIDIINCAPSW caps;
-    MIDIOPENDESC midiDesc;
-    LPMIDIHDR lpQueueHdr;
-    WORD wFlags;
-    DWORD startTime;
-} MIDISource;
-
 static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
-CFStringRef MIDIInThreadPortName = NULL;
+static CFStringRef MIDIInThreadPortName;
 
 static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
 
 static MIDIPortRef MIDIInPort = NULL;
 static MIDIPortRef MIDIOutPort = NULL;
-
-#define MAX_MIDI_SYNTHS 1
 
 MIDIDestination *destinations;
 MIDISource *sources;
@@ -92,127 +68,52 @@ extern int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth);
 extern int SynthUnit_Initialize(AudioUnit synth, AUGraph graph);
 extern int SynthUnit_Close(AUGraph graph);
 
-
-LONG CoreAudio_MIDIInit(void)
+static LONG CoreAudio_MIDIInit(void)
 {
-    int i;
-    CHAR szPname[MAXPNAMELEN] = {0};
+    struct midi_init_params params;
+    DWORD err;
 
-    int numDest = MIDIGetNumberOfDestinations();
-    CFStringRef name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("wineMIDIClient.%d"), getpid());
+    params.err = &err;
 
-    wineMIDIClient = CoreMIDI_CreateClient( name );
-    if (wineMIDIClient == NULL)
+    UNIX_CALL(midi_init, &params);
+    if (err != DRV_SUCCESS)
     {
-        CFRelease(name);
-        ERR("can't create wineMIDIClient\n");
-        return DRV_FAILURE;
+        ERR("can't create midi client\n");
+        return err;
     }
-    CFRelease(name);
 
-    MIDIOut_NumDevs = MAX_MIDI_SYNTHS;
-    MIDIOut_NumDevs += numDest;
-
-    MIDIIn_NumDevs = MIDIGetNumberOfSources();
-
-    TRACE("MIDIOut_NumDevs %d MIDIIn_NumDevs %d\n", MIDIOut_NumDevs, MIDIIn_NumDevs);
-
-    destinations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MIDIOut_NumDevs * sizeof(MIDIDestination));
-    sources = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MIDIIn_NumDevs * sizeof(MIDISource));
+    MIDIOut_NumDevs = params.num_dests;
+    MIDIIn_NumDevs = params.num_srcs;
+    destinations = params.dests;
+    sources = params.srcs;
+    MIDIOutPort = params.midi_out_port;
+    MIDIInPort = params.midi_in_port;
 
     if (MIDIIn_NumDevs > 0)
     {
         InitializeCriticalSection(&midiInLock);
         midiInLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": midiInLock");
+
         MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
         CloseHandle( CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL));
-
-        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineInputPort.%u"), getpid());
-        MIDIInputPortCreate(wineMIDIClient, name, MIDIIn_ReadProc, NULL, &MIDIInPort);
-        CFRelease(name);
     }
-    if (numDest > 0)
-    {
-        name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineOutputPort.%u"), getpid());
-        MIDIOutputPortCreate(wineMIDIClient, name, &MIDIOutPort);
-        CFRelease(name);
-    }
-
-    /* initialize sources */
-    for (i = 0; i < MIDIIn_NumDevs; i++)
-    {
-        sources[i].wDevID = i;
-        sources[i].source = MIDIGetSource(i);
-
-        CoreMIDI_GetObjectName(sources[i].source, szPname, sizeof(szPname));
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, sources[i].caps.szPname, ARRAY_SIZE(sources[i].caps.szPname));
-
-        MIDIPortConnectSource(MIDIInPort, sources[i].source, &sources[i].wDevID);
-
-        sources[i].state = 0;
-        /* FIXME */
-        sources[i].caps.wMid = 0x00FF; 	/* Manufac ID */
-        sources[i].caps.wPid = 0x0001; 	/* Product ID */
-        sources[i].caps.vDriverVersion = 0x0001;
-        sources[i].caps.dwSupport = 0;
-    }
-
-    /* initialise MIDI synths */
-    for (i = 0; i < MAX_MIDI_SYNTHS; i++)
-    {
-        snprintf(szPname, sizeof(szPname), "CoreAudio MIDI Synth %d", i);
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, ARRAY_SIZE(destinations[i].caps.szPname));
-
-        destinations[i].caps.wTechnology = MOD_SYNTH;
-        destinations[i].caps.wChannelMask = 0xFFFF;
-
-        destinations[i].caps.wMid = 0x00FF; 	/* Manufac ID */
-        destinations[i].caps.wPid = 0x0001; 	/* Product ID */
-        destinations[i].caps.vDriverVersion = 0x0001;
-        destinations[i].caps.dwSupport = MIDICAPS_VOLUME;
-        destinations[i].caps.wVoices = 16;
-        destinations[i].caps.wNotes = 16;
-    }
-    /* initialise available destinations */
-    for (i = MAX_MIDI_SYNTHS; i < numDest + MAX_MIDI_SYNTHS; i++)
-    {
-        destinations[i].dest = MIDIGetDestination(i - MAX_MIDI_SYNTHS);
-
-        CoreMIDI_GetObjectName(destinations[i].dest, szPname, sizeof(szPname));
-        MultiByteToWideChar(CP_ACP, 0, szPname, -1, destinations[i].caps.szPname, ARRAY_SIZE(destinations[i].caps.szPname));
-
-        destinations[i].caps.wTechnology = MOD_MIDIPORT;
-        destinations[i].caps.wChannelMask = 0xFFFF;
-
-        destinations[i].caps.wMid = 0x00FF; 	/* Manufac ID */
-        destinations[i].caps.wPid = 0x0001;
-        destinations[i].caps.vDriverVersion = 0x0001;
-        destinations[i].caps.dwSupport = 0;
-        destinations[i].caps.wVoices = 0;
-        destinations[i].caps.wNotes = 0;
-    }
-    return DRV_SUCCESS;
+    return err;
 }
 
-LONG CoreAudio_MIDIRelease(void)
+static LONG CoreAudio_MIDIRelease(void)
 {
     TRACE("\n");
+
+    UNIX_CALL(midi_release, NULL);
+    sources = NULL;
+    destinations = NULL;
+
     if (MIDIIn_NumDevs > 0)
     {
-        CFMessagePortRef messagePort;
-        /* Stop CFRunLoop in MIDIIn_MessageThread */
-        messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MIDIInThreadPortName);
-        CFMessagePortSendRequest(messagePort, 1, NULL, 0.0, 0.0, NULL, NULL);
-        CFRelease(messagePort);
-
         midiInLock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&midiInLock);
     }
 
-    if (wineMIDIClient) MIDIClientDispose(wineMIDIClient); /* MIDIClientDispose will close all ports */
-
-    HeapFree(GetProcessHeap(), 0, sources);
-    HeapFree(GetProcessHeap(), 0, destinations);
     return DRV_SUCCESS;
 }
 
