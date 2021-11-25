@@ -155,12 +155,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-static DWORD MIDIOut_GetNumDevs(void)
-{
-    TRACE("\n");
-    return MIDIOut_NumDevs;
-}
-
 static DWORD MIDIOut_GetVolume(WORD wDevID, DWORD *lpdwVolume)
 {
     TRACE("%d\n", wDevID);
@@ -589,8 +583,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-        case MODM_GETNUMDEVS:
-            return MIDIOut_GetNumDevs();
         case MODM_GETVOLUME:
             return MIDIOut_GetVolume(wDevID, (DWORD*)dwParam1);
         case MODM_SETVOLUME:
