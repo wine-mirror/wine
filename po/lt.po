@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-11-10 08:49+0200\n"
+"PO-Revision-Date: 2021-11-25 20:31+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -13223,13 +13223,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Aktyvi kodų lentelė: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Neteisingas pranešimas.\n"
+msgstr "Neteisinga kodų lentelė\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13242,6 +13240,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [skaičius]\n"
+"\n"
+"  Nustato ar parodo aktyvią pulto kodų lentelę.\n"
+"\n"
+"  skaičius   Pulto kodų lentelė aktyvavimui.\n"
+"\n"
+"  Įveskite CHCP be skaičiaus aktyviai pulto kodų lentelei parodyti.\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
