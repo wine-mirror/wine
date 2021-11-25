@@ -155,23 +155,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-static DWORD MIDIOut_GetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
-{
-    TRACE("wDevID=%d lpCaps=%p dwSize=%d\n", wDevID, lpCaps, dwSize);
-
-    if (lpCaps == NULL) {
-	WARN("Invalid Parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    memcpy(lpCaps, &destinations[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
-    return MMSYSERR_NOERROR;
-}
-
 static DWORD MIDIOut_GetNumDevs(void)
 {
     TRACE("\n");
@@ -606,8 +589,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-        case MODM_GETDEVCAPS:
-            return MIDIOut_GetDevCaps(wDevID, (LPMIDIOUTCAPSW) dwParam1, dwParam2);
         case MODM_GETNUMDEVS:
             return MIDIOut_GetNumDevs();
         case MODM_GETVOLUME:
