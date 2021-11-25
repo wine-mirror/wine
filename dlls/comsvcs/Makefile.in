@@ -5,7 +5,8 @@ IMPORTS   = ole32 uuid
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
-	main.c
+	main.c \
+	property.c
 
 IDL_SRCS = \
 	comsvcs_classes.idl \

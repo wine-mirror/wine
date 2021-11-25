@@ -18,15 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "ole2.h"
-#include "rpcproxy.h"
-#include "comsvcs.h"
+#include "comsvcs_private.h"
 #include "wine/heap.h"
 #include "wine/debug.h"
 #include "initguid.h"
@@ -995,8 +987,18 @@ static const IClassFactoryVtbl newmoniker_cf_vtbl =
     comsvcscf_LockServer
 };
 
+static const IClassFactoryVtbl group_manager_cf_vtbl =
+{
+    comsvcscf_QueryInterface,
+    comsvcscf_AddRef,
+    comsvcscf_Release,
+    group_manager_create,
+    comsvcscf_LockServer
+};
+
 static IClassFactory DispenserManageFactory = { &comsvcscf_vtbl };
 static IClassFactory NewMonikerFactory = { &newmoniker_cf_vtbl };
+static IClassFactory GroupManagerFactory = { &group_manager_cf_vtbl };
 
 /******************************************************************
  * DllGetClassObject
@@ -1012,6 +1014,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     {
         TRACE("(CLSID_NewMoniker %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&NewMonikerFactory, riid, ppv);
+    }
+    else if (IsEqualGUID(&CLSID_SharedPropertyGroupManager, rclsid))
+    {
+        TRACE("(CLSID_SharedPropertyGroupManager %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&GroupManagerFactory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
