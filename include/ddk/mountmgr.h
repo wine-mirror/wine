@@ -131,7 +131,7 @@ struct mountmgr_dhcp_request_params
 {
     ULONG size;
     ULONG count;
-    NET_LUID adapter;
+    char  unix_name[16];
     struct mountmgr_dhcp_request_param params[1];
 };
 

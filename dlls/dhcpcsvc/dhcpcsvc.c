@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "dhcpcsdk.h"
 #include "winioctl.h"
 #include "winternl.h"
@@ -62,6 +63,20 @@ static DWORD get_adapter_luid( const WCHAR *adapter, NET_LUID *luid )
     return ConvertInterfaceNameToLuidW( adapter, luid );
 }
 
+#define IF_NAMESIZE 16
+static DWORD get_adapter_name( const WCHAR *adapter, char *unix_name, DWORD len )
+{
+    WCHAR unix_nameW[IF_NAMESIZE];
+    NET_LUID luid;
+    DWORD ret;
+
+    if ((ret = get_adapter_luid( adapter, &luid ))) return ret;
+    if ((ret = ConvertInterfaceLuidToAlias( &luid, unix_nameW, ARRAY_SIZE(unix_nameW) ))) return ret;
+    if (!WideCharToMultiByte( CP_UNIXCP, 0, unix_nameW, -1, unix_name, len, NULL, NULL ))
+        return ERROR_INVALID_PARAMETER;
+    return ERROR_SUCCESS;
+}
+
 DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adapter, DHCPCAPI_CLASSID *class_id,
                                 DHCPCAPI_PARAMS_ARRAY send_params, DHCPCAPI_PARAMS_ARRAY recv_params, BYTE *buf,
                                 DWORD *buflen, WCHAR *request_id )
@@ -69,15 +84,15 @@ DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adapter, DHC
     struct mountmgr_dhcp_request_params *query;
     DWORD i, size, err;
     BYTE *src, *dst;
-    NET_LUID luid;
     HANDLE mgr;
+    char unix_name[IF_NAMESIZE];
 
     TRACE( "(%08x, %p, %s, %p, %u, %u, %p, %p, %s)\n", flags, reserved, debugstr_w(adapter), class_id,
            send_params.nParams, recv_params.nParams, buf, buflen, debugstr_w(request_id) );
 
     if (!adapter || !buflen) return ERROR_INVALID_PARAMETER;
     if (flags != DHCPCAPI_REQUEST_SYNCHRONOUS) FIXME( "unsupported flags %08x\n", flags );
-    if ((err = get_adapter_luid( adapter, &luid ))) return err;
+    if ((err = get_adapter_name( adapter, unix_name, sizeof(unix_name) ))) return err;
 
     for (i = 0; i < send_params.nParams; i++)
         FIXME( "send option %u not supported\n", send_params.Params->OptionId );
@@ -94,7 +109,7 @@ DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adapter, DHC
     }
     for (i = 0; i < recv_params.nParams; i++) query->params[i].id = recv_params.Params[i].OptionId;
     query->count = recv_params.nParams;
-    query->adapter = luid;
+    strcpy( query->unix_name, unix_name );
 
     if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS, query, size, query, size, NULL, NULL ))
     {

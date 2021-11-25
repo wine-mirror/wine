@@ -246,7 +246,6 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
 {
     const struct mountmgr_unix_drive *input = in_buff;
     const char *mount_point = NULL, *device = NULL;
-    unsigned int i;
     WCHAR letter = tolowerW( input->letter );
 
     if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
@@ -258,16 +257,12 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
     if (input->mount_point_offset)
     {
         mount_point = (const char *)in_buff + input->mount_point_offset;
-        for (i = input->mount_point_offset; i < insize; i++)
-            if (!*((const char *)in_buff + i)) break;
-        if (i >= insize) return STATUS_INVALID_PARAMETER;
+        if (!memchr( mount_point, 0, insize - input->mount_point_offset )) return STATUS_INVALID_PARAMETER;
     }
     if (input->device_offset)
     {
         device = (const char *)in_buff + input->device_offset;
-        for (i = input->device_offset; i < insize; i++)
-            if (!*((const char *)in_buff + i)) break;
-        if (i >= insize) return STATUS_INVALID_PARAMETER;
+        if (!memchr( device, 0, insize - input->device_offset )) return STATUS_INVALID_PARAMETER;
     }
 
     if (input->type != DRIVE_NO_ROOT_DIR)
@@ -305,7 +300,6 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
     const char *home;
     char *buffer = NULL, *backup = NULL, *homelink = NULL;
     struct stat st;
-    unsigned int i;
 
     if (input->folder_offset >= insize || input->folder_size > insize - input->folder_offset ||
         input->symlink_offset >= insize)
@@ -315,9 +309,7 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
     if (input->symlink_offset)
     {
         link = (const char *)in_buff + input->symlink_offset;
-        for (i = input->symlink_offset; i < insize; i++)
-            if (!*((const char *)in_buff + i)) break;
-        if (i >= insize) return STATUS_INVALID_PARAMETER;
+        if (!memchr( link, 0, insize - input->symlink_offset )) return STATUS_INVALID_PARAMETER;
         if (!link[0]) link = NULL;
     }
 
@@ -459,11 +451,16 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
             goto err;
         }
 
+    if (!memchr( query->unix_name, 0, sizeof(query->unix_name) ))
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        goto err;
+    }
 
     offset = FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]);
     for (i = 0; i < query->count; i++)
     {
-        offset += get_dhcp_request_param( &query->adapter, &query->params[i], (char *)query, offset, outsize - offset );
+        offset += get_dhcp_request_param( query->unix_name, &query->params[i], (char *)query, offset, outsize - offset );
         if (offset > outsize)
         {
             if (offset >= sizeof(query->size)) query->size = offset;

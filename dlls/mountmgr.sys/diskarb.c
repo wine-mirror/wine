@@ -42,8 +42,6 @@
 #define USE_WS_PREFIX
 #include "winsock2.h"
 #include "ws2ipdef.h"
-#include "nldef.h"
-#include "netioapi.h"
 #include "dhcpcsdk.h"
 #include "wine/debug.h"
 
@@ -258,22 +256,14 @@ static UInt8 map_option( ULONG option )
     }
 }
 
-#define IF_NAMESIZE 16
-static BOOL map_adapter_name( const NET_LUID *luid, WCHAR *unix_name, DWORD len )
-{
-    return !ConvertInterfaceLuidToAlias( luid, unix_name, len );
-}
-
-static CFStringRef find_service_id( const NET_LUID *adapter )
+static CFStringRef find_service_id( const char *unix_name )
 {
     SCPreferencesRef prefs;
     SCNetworkSetRef set = NULL;
     CFArrayRef services = NULL;
     CFStringRef id, ret = NULL;
-    WCHAR unix_name[IF_NAMESIZE];
     CFIndex i;
 
-    if (!map_adapter_name( adapter, unix_name, ARRAY_SIZE(unix_name) )) return NULL;
     if (!(prefs = SCPreferencesCreate( NULL, CFSTR("mountmgr.sys"), NULL ))) return NULL;
     if (!(set = SCNetworkSetCopyCurrent( prefs ))) goto done;
     if (!(services = SCNetworkSetCopyServices( set ))) goto done;
@@ -281,15 +271,14 @@ static CFStringRef find_service_id( const NET_LUID *adapter )
     for (i = 0; i < CFArrayGetCount( services ); i++)
     {
         SCNetworkServiceRef service;
-        UniChar buf[IF_NAMESIZE] = {0};
+        char buf[16];
         CFStringRef name;
 
         service = CFArrayGetValueAtIndex( services, i );
         name = SCNetworkInterfaceGetBSDName( SCNetworkServiceGetInterface(service) );
-        if (name && CFStringGetLength( name ) < ARRAY_SIZE( buf ))
+        if (name && CFStringGetCString( name, buf, sizeof(buf), kCFStringEncodingUTF8 ))
         {
-            CFStringGetCharacters( name, CFRangeMake(0, CFStringGetLength(name)), buf );
-            if (!lstrcmpW( buf, unix_name ) && (id = SCNetworkServiceGetServiceID( service )))
+            if (!strcmp( buf, unix_name ) && (id = SCNetworkServiceGetServiceID( service )))
             {
                 ret = CFStringCreateCopy( NULL, id );
                 break;
@@ -304,10 +293,10 @@ done:
     return ret;
 }
 
-ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
                               ULONG size )
 {
-    CFStringRef service_id = find_service_id( adapter );
+    CFStringRef service_id = find_service_id( unix_name );
     CFDictionaryRef dict;
     CFDataRef value;
     DWORD ret = 0;
@@ -373,7 +362,7 @@ ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_requ
 
 #elif !defined(SONAME_LIBDBUS_1)
 
-ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
                               ULONG size )
 {
     FIXME( "support not compiled in\n" );

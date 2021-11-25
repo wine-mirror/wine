@@ -38,9 +38,6 @@
 #define USE_WS_PREFIX
 #include "winsock2.h"
 #include "ws2ipdef.h"
-#include "nldef.h"
-#include "netioapi.h"
-#include "inaddr.h"
 #include "ip2string.h"
 #include "dhcpcsdk.h"
 
@@ -998,26 +995,15 @@ static DBusMessage *device_by_iface_request( const char *iface )
     return reply;
 }
 
-#define IF_NAMESIZE 16
-static BOOL map_adapter_name( const NET_LUID *luid, char *unix_name, DWORD len )
-{
-    WCHAR unix_nameW[IF_NAMESIZE];
-
-    if (ConvertInterfaceLuidToAlias( luid, unix_nameW, ARRAY_SIZE(unix_nameW) )) return FALSE;
-    return WideCharToMultiByte( CP_UNIXCP, 0, unix_nameW, -1, unix_name, len, NULL, NULL ) != 0;
-}
-
-static DBusMessage *dhcp4_config_request( const NET_LUID *adapter )
+static DBusMessage *dhcp4_config_request( const char *iface )
 {
     static const char *device = "org.freedesktop.NetworkManager.Device";
     static const char *dhcp4_config = "Dhcp4Config";
-    char iface[IF_NAMESIZE];
     DBusMessage *request, *reply;
     DBusMessageIter iter;
     DBusError error;
     const char *path = NULL;
 
-    if (!map_adapter_name( adapter, iface, sizeof(iface) )) return NULL;
     if (!(reply = device_by_iface_request( iface ))) return NULL;
 
     p_dbus_message_iter_init( reply, &iter );
@@ -1047,7 +1033,7 @@ static DBusMessage *dhcp4_config_request( const NET_LUID *adapter )
     return reply;
 }
 
-static DBusMessage *dhcp4_config_options_request( const NET_LUID *adapter )
+static DBusMessage *dhcp4_config_options_request( const char *unix_name )
 {
     static const char *dhcp4_config = "org.freedesktop.NetworkManager.DHCP4Config";
     static const char *options = "Options";
@@ -1056,7 +1042,7 @@ static DBusMessage *dhcp4_config_options_request( const NET_LUID *adapter )
     DBusError error;
     const char *path = NULL;
 
-    if (!(reply = dhcp4_config_request( adapter ))) return NULL;
+    if (!(reply = dhcp4_config_request( unix_name ))) return NULL;
 
     p_dbus_message_iter_init( reply, &iter );
     if (p_dbus_message_iter_get_arg_type( &iter ) == DBUS_TYPE_VARIANT)
@@ -1106,13 +1092,13 @@ static const char *dhcp4_config_option_next_dict_entry( DBusMessageIter *iter, D
     return name;
 }
 
-static DBusMessage *dhcp4_config_option_request( const NET_LUID *adapter, const char *option, const char **value )
+static DBusMessage *dhcp4_config_option_request( const char *unix_name, const char *option, const char **value )
 {
     DBusMessage *reply;
     DBusMessageIter iter, variant;
     const char *name;
 
-    if (!(reply = dhcp4_config_options_request( adapter ))) return NULL;
+    if (!(reply = dhcp4_config_options_request( unix_name ))) return NULL;
 
     *value = NULL;
     p_dbus_message_iter_init( reply, &iter );
@@ -1152,7 +1138,7 @@ static const char *map_option( ULONG option )
     }
 }
 
-ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
                               ULONG size )
 {
     DBusMessage *reply;
@@ -1161,7 +1147,7 @@ ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_requ
 
     param->offset = param->size = 0;
 
-    if (!(reply = dhcp4_config_option_request( adapter, map_option(param->id), &value ))) return 0;
+    if (!(reply = dhcp4_config_option_request( unix_name, map_option(param->id), &value ))) return 0;
 
     switch (param->id)
     {
