@@ -585,7 +585,8 @@ enum x11drv_window_messages
     WM_X11DRV_SET_CURSOR,
     WM_X11DRV_CLIP_CURSOR_NOTIFY,
     WM_X11DRV_CLIP_CURSOR_REQUEST,
-    WM_X11DRV_DELETE_TAB
+    WM_X11DRV_DELETE_TAB,
+    WM_X11DRV_ADD_TAB
 };
 
 /* _NET_WM_STATE properties that we keep track of */
@@ -621,6 +622,7 @@ struct x11drv_win_data
     BOOL        layered : 1;    /* is window layered and with valid attributes? */
     BOOL        use_alpha : 1;  /* does window use an alpha channel? */
     BOOL        skip_taskbar : 1; /* does window should be deleted from taskbar */
+    BOOL        add_taskbar : 1; /* does window should be added to taskbar regardless of style */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */

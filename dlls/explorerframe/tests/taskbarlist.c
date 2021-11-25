@@ -43,7 +43,6 @@ static void test_ITaskbarList(void)
 
     /* Test calling methods before calling ITaskbarList::HrInit() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_SetActiveAlt(taskbarlist, hwnd);
@@ -69,21 +68,17 @@ static void test_ITaskbarList(void)
     /* Test ITaskbarList::AddTab() */
     /* Check invalid parameters */
     hr = ITaskbarList_AddTab(taskbarlist, NULL);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_AddTab(taskbarlist, (HWND)0xdeadbeef);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Normal ITaskbarList::AddTab() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Repeat ITaskbarList::AddTab() with the same hwnd */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
@@ -101,7 +96,6 @@ static void test_ITaskbarList(void)
 
     /* Normal ITaskbarList::SetActiveAlt() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_SetActiveAlt(taskbarlist, hwnd);
@@ -128,7 +122,6 @@ static void test_ITaskbarList(void)
 
     /* Normal ITaskbarList::ActivateTab() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_ActivateTab(taskbarlist, hwnd);
@@ -156,7 +149,6 @@ static void test_ITaskbarList(void)
 
     /* Normal ITaskbarList::DeleteTab() */
     hr = ITaskbarList_AddTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);

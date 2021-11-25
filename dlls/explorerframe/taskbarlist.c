@@ -26,6 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(explorerframe);
 
 #define WM_WINE_DELETE_TAB      (WM_USER + 1)
+#define WM_WINE_ADD_TAB         (WM_USER + 2)
 
 struct taskbar_list
 {
@@ -98,9 +99,10 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_HrInit(ITaskbarList4 *iface)
 
 static HRESULT STDMETHODCALLTYPE taskbar_list_AddTab(ITaskbarList4 *iface, HWND hwnd)
 {
-    FIXME("iface %p, hwnd %p stub!\n", iface, hwnd);
+    TRACE("iface %p, hwnd %p\n", iface, hwnd);
 
-    return E_NOTIMPL;
+    SendMessageW(GetDesktopWindow(), WM_WINE_ADD_TAB, (WPARAM)hwnd, 0);
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE taskbar_list_DeleteTab(ITaskbarList4 *iface, HWND hwnd)
