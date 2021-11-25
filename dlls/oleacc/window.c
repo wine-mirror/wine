@@ -247,11 +247,38 @@ static HRESULT WINAPI Window_accNavigate(IAccessible *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Window_accHitTest(IAccessible *iface,
-        LONG xLeft, LONG yTop, VARIANT *pvarID)
+static HRESULT WINAPI Window_accHitTest(IAccessible *iface, LONG x, LONG y, VARIANT *v)
 {
     Window *This = impl_from_Window(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, xLeft, yTop, pvarID);
+    IDispatch *disp;
+    POINT pt;
+    HRESULT hr;
+    RECT rect;
+
+    TRACE("(%p)->(%d %d %p)\n", This, x, y, v);
+
+    V_VT(v) = VT_EMPTY;
+    if (!GetClientRect(This->hwnd, &rect))
+        return E_FAIL;
+    if (!ClientToScreen(This->hwnd, (POINT*)&rect) ||
+            !ClientToScreen(This->hwnd, &((POINT*)&rect)[1]))
+        return E_FAIL;
+    pt.x = x;
+    pt.y = y;
+    if (PtInRect(&rect, pt))
+    {
+        hr = AccessibleObjectFromWindow(This->hwnd, OBJID_CLIENT, &IID_IDispatch, (void**)&disp);
+        if (FAILED(hr))
+            return hr;
+        if (!disp)
+            return E_FAIL;
+
+        V_VT(v) = VT_DISPATCH;
+        V_DISPATCH(v) = disp;
+        return S_OK;
+    }
+
+    FIXME("non-client area not handled yet\n");
     return E_NOTIMPL;
 }
 
