@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -29,10 +28,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/stat.h>
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
+#include <sys/types.h>
 
 #define NONAMELESSUNION
 
@@ -40,6 +36,7 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "dbt.h"
+#include "unixlib.h"
 
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -133,27 +130,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION device_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static char *get_dosdevices_path( char **device )
-{
-    const char *home = getenv( "HOME" );
-    const char *prefix = getenv( "WINEPREFIX" );
-    size_t len = (prefix ? strlen(prefix) : strlen(home) + strlen("/.wine")) + sizeof("/dosdevices/com256");
-    char *path = HeapAlloc( GetProcessHeap(), 0, len );
-
-    if (path)
-    {
-        if (prefix) strcpy( path, prefix );
-        else
-        {
-            strcpy( path, home );
-            strcat( path, "/.wine" );
-        }
-        strcat( path, "/dosdevices/a::" );
-        *device = path + len - sizeof("com256");
-    }
-    return path;
-}
-
 static char *strdupA( const char *str )
 {
     char *ret;
@@ -178,49 +154,6 @@ static const GUID *get_default_uuid( int letter )
 
     guid.Data4[7] = 'A' + letter;
     return &guid;
-}
-
-/* read a Unix symlink; returned buffer must be freed by caller */
-static char *read_symlink( const char *path )
-{
-    char *buffer;
-    int ret, size = 128;
-
-    for (;;)
-    {
-        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, size )))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return 0;
-        }
-        ret = readlink( path, buffer, size );
-        if (ret == -1)
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, buffer );
-            return 0;
-        }
-        if (ret != size)
-        {
-            buffer[ret] = 0;
-            return buffer;
-        }
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
-        size *= 2;
-    }
-}
-
-/* update a symlink if it changed; return TRUE if updated */
-static void update_symlink( const char *path, const char *dest, const char *orig_dest )
-{
-    if (dest && dest[0])
-    {
-        if (!orig_dest || strcmp( orig_dest, dest ))
-        {
-            unlink( path );
-            symlink( dest, path );
-        }
-    }
-    else unlink( path );
 }
 
 /* send notification about a change to a given drive */
@@ -248,61 +181,15 @@ static void send_notify( int drive, int code )
 #define GETWORD(buf,off)  MAKEWORD(buf[(off)],buf[(off+1)])
 #define GETLONG(buf,off)  MAKELONG(GETWORD(buf,off),GETWORD(buf,off+2))
 
-static int open_volume_file( const struct volume *volume, const char *file )
-{
-    const char *unix_mount = volume->device->unix_mount;
-    char *path;
-    int fd;
-
-    if (!unix_mount) return -1;
-
-    if (unix_mount[0] == '/')
-    {
-        if (!(path = HeapAlloc( GetProcessHeap(), 0, strlen( unix_mount ) + 1 + strlen( file ) + 1 )))
-            return -1;
-
-        strcpy( path, unix_mount );
-    }
-    else
-    {
-        const char *home = getenv( "HOME" );
-        const char *prefix = getenv( "WINEPREFIX" );
-        size_t len = prefix ? strlen(prefix) : strlen(home) + strlen("/.wine");
-
-        if (!(path = HeapAlloc( GetProcessHeap(), 0, len + strlen("/dosdevices/") +
-                                strlen(unix_mount) + 1 + strlen( file ) + 1 )))
-            return -1;
-
-        if (prefix) strcpy( path, prefix );
-        else
-        {
-            strcpy( path, home );
-            strcat( path, "/.wine" );
-        }
-        strcat( path, "/dosdevices/" );
-        strcat( path, unix_mount );
-    }
-    strcat( path, "/" );
-    strcat( path, file );
-
-    fd = open( path, O_RDONLY );
-    HeapFree( GetProcessHeap(), 0, path );
-    return fd;
-}
-
 /* get the label by reading it from a file at the root of the filesystem */
 static void get_filesystem_label( struct volume *volume )
 {
-    int fd;
-    ssize_t size;
     char buffer[256], *p;
+    ULONG size = sizeof(buffer);
 
     volume->label[0] = 0;
-
-    if ((fd = open_volume_file( volume, ".windows-label" )) == -1)
-        return;
-    size = read( fd, buffer, sizeof(buffer) );
-    close( fd );
+    if (!volume->device->unix_mount) return;
+    if (read_volume_file( volume->device->unix_mount, ".windows-label", buffer, &size )) return;
 
     p = buffer + size;
     while (p > buffer && (p[-1] == ' ' || p[-1] == '\r' || p[-1] == '\n')) p--;
@@ -314,18 +201,13 @@ static void get_filesystem_label( struct volume *volume )
 /* get the serial number by reading it from a file at the root of the filesystem */
 static void get_filesystem_serial( struct volume *volume )
 {
-    int fd;
-    ssize_t size;
     char buffer[32];
+    ULONG size = sizeof(buffer);
 
     volume->serial = 0;
+    if (!volume->device->unix_mount) return;
+    if (read_volume_file( volume->device->unix_mount, ".windows-serial", buffer, &size )) return;
 
-    if ((fd = open_volume_file( volume, ".windows-serial" )) == -1)
-        return;
-    size = read( fd, buffer, sizeof(buffer) );
-    close( fd );
-
-    if (size < 0) return;
     buffer[size] = 0;
     volume->serial = strtoul( buffer, NULL, 16 );
 }
@@ -1090,31 +972,23 @@ static BOOL get_volume_device_info( struct volume *volume )
 /* set disk serial for dos devices that reside on a given Unix device */
 static void set_dos_devices_disk_serial( struct disk_device *device )
 {
+    unsigned int devices;
     struct dos_drive *drive;
-    struct stat dev_st, drive_st;
-    char *path, *p;
 
-    if (!device->serial || !device->unix_mount || stat( device->unix_mount, &dev_st ) == -1) return;
-
-    if (!(path = get_dosdevices_path( &p ))) return;
-    p[2] = 0;
+    if (!device->serial || !device->unix_mount || get_volume_dos_devices( device->unix_mount, &devices ))
+        return;
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
         /* drives mapped to Unix devices already have serial set, if available */
         if (drive->volume->device->unix_device) continue;
-
-        p[0] = 'a' + drive->drive;
-
         /* copy serial if drive resides on this Unix device */
-        if (stat( path, &drive_st ) != -1 && drive_st.st_rdev == dev_st.st_rdev)
+        if (devices & (1 << drive->drive))
         {
             HeapFree( GetProcessHeap(), 0, drive->volume->device->serial );
             drive->volume->device->serial = strdupA( device->serial );
         }
     }
-
-    HeapFree( GetProcessHeap(), 0, path );
 }
 
 /* change the information for an existing volume */
@@ -1217,95 +1091,10 @@ static void set_drive_info( struct dos_drive *drive, int letter, struct volume *
     }
 }
 
-static inline BOOL is_valid_device( struct stat *st )
-{
-#if defined(linux) || defined(__sun__)
-    return S_ISBLK( st->st_mode );
-#else
-    /* disks are char devices on *BSD */
-    return S_ISCHR( st->st_mode );
-#endif
-}
-
-/* find or create a DOS drive for the corresponding device */
-static int add_drive( const char *device, enum device_type type )
-{
-    char *path, *p;
-    char in_use[26];
-    struct stat dev_st, drive_st;
-    int drive, first, last, avail = 0;
-
-    if (stat( device, &dev_st ) == -1 || !is_valid_device( &dev_st )) return -1;
-
-    if (!(path = get_dosdevices_path( &p ))) return -1;
-
-    memset( in_use, 0, sizeof(in_use) );
-
-    switch (type)
-    {
-    case DEVICE_FLOPPY:
-        first = 0;
-        last = 2;
-        break;
-    case DEVICE_CDROM:
-    case DEVICE_DVD:
-        first = 3;
-        last = 26;
-        break;
-    default:
-        first = 2;
-        last = 26;
-        break;
-    }
-
-    while (avail != -1)
-    {
-        avail = -1;
-        for (drive = first; drive < last; drive++)
-        {
-            if (in_use[drive]) continue;  /* already checked */
-            *p = 'a' + drive;
-            if (stat( path, &drive_st ) == -1)
-            {
-                if (lstat( path, &drive_st ) == -1 && errno == ENOENT)  /* this is a candidate */
-                {
-                    if (avail == -1)
-                    {
-                        p[2] = 0;
-                        /* if mount point symlink doesn't exist either, it's available */
-                        if (lstat( path, &drive_st ) == -1 && errno == ENOENT) avail = drive;
-                        p[2] = ':';
-                    }
-                }
-                else in_use[drive] = 1;
-            }
-            else
-            {
-                in_use[drive] = 1;
-                if (!is_valid_device( &drive_st )) continue;
-                if (dev_st.st_rdev == drive_st.st_rdev) goto done;
-            }
-        }
-        if (avail != -1)
-        {
-            /* try to use the one we found */
-            drive = avail;
-            *p = 'a' + drive;
-            if (symlink( device, path ) != -1) goto done;
-            /* failed, retry the search */
-        }
-    }
-    drive = -1;
-
-done:
-    HeapFree( GetProcessHeap(), 0, path );
-    return drive;
-}
-
 /* create devices for mapped drives */
 static void create_drive_devices(void)
 {
-    char *path, *p, *link, *device;
+    char dosdev[] = "a::";
     struct dos_drive *drive;
     struct volume *volume;
     unsigned int i;
@@ -1313,16 +1102,18 @@ static void create_drive_devices(void)
     enum device_type drive_type;
     WCHAR driveW[] = {'a',':',0};
 
-    if (!(path = get_dosdevices_path( &p ))) return;
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &drives_key )) drives_key = 0;
 
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
-        p[0] = 'a' + i;
-        p[2] = 0;
-        if (!(link = read_symlink( path ))) continue;
-        p[2] = ':';
-        device = read_symlink( path );
+        char link[4096], unix_dev[4096];
+        char *device = NULL;
+
+        dosdev[0] = 'a' + i;
+        dosdev[2] = 0;
+        if (get_dosdev_symlink( dosdev, link, sizeof(link) )) continue;
+        dosdev[2] = ':';
+        if (!get_dosdev_symlink( dosdev, unix_dev, sizeof(unix_dev) )) device = unix_dev;
 
         drive_type = i < 2 ? DEVICE_FLOPPY : DEVICE_HARDDISK_VOL;
         if (drives_key)
@@ -1351,15 +1142,9 @@ static void create_drive_devices(void)
             const GUID *guid = volume ? NULL : get_default_uuid(i);
             set_volume_info( drive->volume, drive, device, link, drive_type, guid, NULL );
         }
-        else
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, link );
-            RtlFreeHeap( GetProcessHeap(), 0, device );
-        }
         if (volume) release_volume( volume );
     }
     RegCloseKey( drives_key );
-    RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
 /* fill in the "Logical Unit" key for a given SCSI address */
@@ -1513,26 +1298,19 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                          const char *mount_point, enum device_type type, const GUID *guid,
                          const struct scsi_info *scsi_info )
 {
-    char *path, *p;
     HKEY hkey;
     NTSTATUS status = STATUS_SUCCESS;
     struct dos_drive *drive, *next;
     struct volume *volume;
     int notify = -1;
-
-    if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
+    char dosdev[] = "a::";
 
     EnterCriticalSection( &device_section );
     volume = find_matching_volume( udi, device, mount_point, type );
 
     if (letter == -1)  /* auto-assign a letter */
     {
-        letter = add_drive( device, type );
-        if (letter == -1)
-        {
-            status = STATUS_OBJECT_NAME_COLLISION;
-            goto done;
-        }
+        if ((status = add_drive( device, type, &letter ))) goto done;
 
         LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
         {
@@ -1545,11 +1323,13 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
         LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
             if (drive->drive == letter) break;
 
-        *p = 'a' + letter;
-        if (&drive->entry == &drives_list) update_symlink( path, device, NULL );
+        dosdev[0] = 'a' + letter;
+        if (&drive->entry == &drives_list) set_dosdev_symlink( dosdev, device );
         else
         {
-            update_symlink( path, device, drive->volume->device->unix_device );
+            if (!device || !drive->volume->device->unix_device ||
+                strcmp( device, drive->volume->device->unix_device ))
+                set_dosdev_symlink( dosdev, device  );
             delete_dos_device( drive );
         }
     }
@@ -1560,9 +1340,10 @@ found:
     if (!guid && !volume) guid = get_default_uuid( letter );
     if (!volume) volume = grab_volume( drive->volume );
     set_drive_info( drive, letter, volume );
-    p[0] = 'a' + drive->drive;
-    p[2] = 0;
-    update_symlink( path, mount_point, volume->device->unix_mount );
+    dosdev[0] = 'a' + drive->drive;
+    dosdev[2] = 0;
+    if (!mount_point || !volume->device->unix_mount || strcmp( mount_point, volume->device->unix_mount ))
+        set_dosdev_symlink( dosdev, mount_point );
     set_volume_info( volume, drive, device, mount_point, type, guid, NULL );
 
     TRACE( "added device %c: udi %s for %s on %s type %u\n",
@@ -1591,7 +1372,6 @@ found:
 done:
     if (volume) release_volume( volume );
     LeaveCriticalSection( &device_section );
-    RtlFreeHeap( GetProcessHeap(), 0, path );
     if (notify != -1) send_notify( notify, DBT_DEVICEARRIVAL );
     return status;
 }
@@ -1602,7 +1382,7 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
     NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     HKEY hkey;
     struct dos_drive *drive;
-    char *path, *p;
+    char dosdev[] = "a:";
     int notify = -1;
 
     EnterCriticalSection( &device_section );
@@ -1616,13 +1396,8 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
         }
         else if (drive->drive != letter) continue;
 
-        if ((path = get_dosdevices_path( &p )))
-        {
-            p[0] = 'a' + drive->drive;
-            p[2] = 0;
-            unlink( path );
-            RtlFreeHeap( GetProcessHeap(), 0, path );
-        }
+        dosdev[0] = 'a' + drive->drive;
+        set_dosdev_symlink( dosdev, NULL );
 
         /* clear the registry key too */
         if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
@@ -1677,12 +1452,10 @@ static struct volume *find_volume_by_letter( int letter )
 static struct volume *find_volume_by_unixdev( ULONGLONG unix_dev )
 {
     struct volume *volume;
-    struct stat st;
 
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
     {
-        if (!volume->device->unix_device || stat( volume->device->unix_device, &st ) < 0
-            || st.st_rdev != unix_dev)
+        if (!volume->device->unix_device || !match_unixdev( volume->device->unix_device, unix_dev ))
             continue;
 
         TRACE( "found matching volume %s\n", debugstr_guid(&volume->guid) );
@@ -2123,9 +1896,7 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     sprintfW( dos_name, dos_name_format, n );
 
     /* create DOS device */
-    unlink( dosdevices_path );
-    if (symlink( unix_path, dosdevices_path ) != 0)
-        return FALSE;
+    if (set_dosdev_symlink( dosdevices_path, unix_path )) return FALSE;
 
     /* create NT device */
     sprintfW( nt_buffer, nt_name_format, n - 1 );
@@ -2156,26 +1927,8 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
 }
 
 /* find and create serial or parallel ports */
-static void create_port_devices( DRIVER_OBJECT *driver )
+static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
 {
-    static const char *serial_search_paths[] = {
-#ifdef linux
-        "/dev/ttyS%u",
-        "/dev/ttyUSB%u",
-        "/dev/ttyACM%u",
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-        "/dev/cuau%u",
-#elif defined(__DragonFly__)
-        "/dev/cuaa%u",
-#endif
-        NULL
-    };
-    static const char *parallel_search_paths[] = {
-#ifdef linux
-        "/dev/lp%u",
-#endif
-        NULL
-    };
     static const WCHAR serialcomm_keyW[] = {'H','A','R','D','W','A','R','E','\\',
                                             'D','E','V','I','C','E','M','A','P','\\',
                                             'S','E','R','I','A','L','C','O','M','M',0};
@@ -2184,9 +1937,9 @@ static void create_port_devices( DRIVER_OBJECT *driver )
                                                 'P','A','R','A','L','L','E','L',' ','P','O','R','T','S',0};
     static const WCHAR comW[] = {'C','O','M'};
     static const WCHAR lptW[] = {'L','P','T'};
-    const char **search_paths;
     const WCHAR *windows_ports_key_name;
-    char *dosdevices_path, *p;
+    const char *dosdev_fmt;
+    char dosdev[8];
     HKEY wine_ports_key = NULL, windows_ports_key = NULL;
     char unix_path[256];
     const WCHAR *port_prefix;
@@ -2194,30 +1947,20 @@ static void create_port_devices( DRIVER_OBJECT *driver )
     BOOL used[MAX_PORTS];
     WCHAR port[7];
     DWORD port_len, type, size;
-    int i, j, n;
-
-    if (!(dosdevices_path = get_dosdevices_path( &p )))
-        return;
+    int i, n;
 
     if (driver == serial_driver)
     {
-        p[0] = 'c';
-        p[1] = 'o';
-        p[2] = 'm';
-        search_paths = serial_search_paths;
+        dosdev_fmt = "com%u";
         windows_ports_key_name = serialcomm_keyW;
         port_prefix = comW;
     }
     else
     {
-        p[0] = 'l';
-        p[1] = 'p';
-        p[2] = 't';
-        search_paths = parallel_search_paths;
+        dosdev_fmt = "lpt%u";
         windows_ports_key_name = parallel_ports_keyW;
         port_prefix = lptW;
     }
-    p += 3;
 
     /* @@ Wine registry key: HKLM\Software\Wine\Ports */
 
@@ -2247,40 +1990,34 @@ static void create_port_devices( DRIVER_OBJECT *driver )
             continue;
 
         used[n - 1] = TRUE;
-        sprintf( p, "%u", n );
-        create_port_device( driver, n, unix_path, dosdevices_path, windows_ports_key );
+        sprintf( dosdev, dosdev_fmt, n );
+        create_port_device( driver, n, unix_path, dosdev, windows_ports_key );
     }
 
     /* look for ports in the usual places */
-    n = 1;
-    while (n <= MAX_PORTS && used[n - 1]) n++;
-    for (i = 0; search_paths[i]; i++)
-    {
-        for (j = 0; n <= MAX_PORTS; j++)
-        {
-            sprintf( unix_path, search_paths[i], j );
-            if (access( unix_path, F_OK ) != 0)
-                break;
 
-            sprintf( p, "%u", n );
-            create_port_device( driver, n, unix_path, dosdevices_path, windows_ports_key );
-            n++;
-            while (n <= MAX_PORTS && used[n - 1]) n++;
-        }
+    for (n = 1; *devices; n++, devices += strlen(devices) + 1)
+    {
+        while (n <= MAX_PORTS && used[n - 1]) n++;
+        if (n > MAX_PORTS) break;
+        sprintf( dosdev, dosdev_fmt, n );
+        create_port_device( driver, n, devices, dosdev, windows_ports_key );
     }
 
     RegCloseKey( wine_ports_key );
     RegCloseKey( windows_ports_key );
-    HeapFree( GetProcessHeap(), 0, dosdevices_path );
 }
 
 /* driver entry point for the serial port driver */
 NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    char devices[4096];
+
     serial_driver = driver;
     /* TODO: fill in driver->MajorFunction */
 
-    create_port_devices( driver );
+    detect_serial_ports( devices, sizeof(devices) );
+    create_port_devices( driver, devices );
 
     return STATUS_SUCCESS;
 }
@@ -2288,10 +2025,13 @@ NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path
 /* driver entry point for the parallel port driver */
 NTSTATUS WINAPI parallel_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    char devices[4096];
+
     parallel_driver = driver;
     /* TODO: fill in driver->MajorFunction */
 
-    create_port_devices( driver );
+    detect_parallel_ports( devices, sizeof(devices) );
+    create_port_devices( driver, devices );
 
     return STATUS_SUCCESS;
 }

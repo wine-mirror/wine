@@ -10,4 +10,5 @@ C_SRCS = \
 	dbus.c \
 	device.c \
 	diskarb.c \
-	mountmgr.c
+	mountmgr.c \
+	unixlib.c
