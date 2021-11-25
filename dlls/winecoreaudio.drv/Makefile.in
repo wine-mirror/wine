@@ -7,7 +7,6 @@ EXTRALIBS = $(COREAUDIO_LIBS)
 EXTRADLLFLAGS = -mcygwin
 
 C_SRCS = \
-	audiounit.c \
 	coreaudio.c \
 	coremidi.c \
 	midi.c \

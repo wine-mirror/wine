@@ -620,6 +620,60 @@ static DWORD midi_out_get_num_devs(void)
     return num_dests;
 }
 
+static DWORD midi_out_get_volume(WORD dev_id, DWORD *volume)
+{
+    TRACE("%d\n", dev_id);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    if (!volume)
+    {
+        WARN("Invalid Parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (dests[dev_id].caps.wTechnology == MOD_SYNTH)
+    {
+        static int once;
+        float left;
+
+        if (!once++) FIXME("independent left/right volume not implemented\n");
+        AudioUnitGetParameter(dests[dev_id].synth, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, &left);
+        *volume = (WORD)(left * 0xffff) + ((WORD)(left * 0xffff) << 16);
+        return MMSYSERR_NOERROR;
+    }
+
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+static DWORD midi_out_set_volume(WORD dev_id, DWORD volume)
+{
+    TRACE("dev_id = %d vol = %08x\n", dev_id, volume);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    if (dests[dev_id].caps.wTechnology == MOD_SYNTH)
+    {
+        float left, right;
+        static int once;
+
+        if (!once++) FIXME("independent left/right volume not implemented\n");
+        left  = LOWORD(volume) / 65535.0f;
+        right = HIWORD(volume) / 65535.0f;
+
+        AudioUnitSetParameter(dests[dev_id].synth, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, left, 0);
+        return MMSYSERR_NOERROR;
+    }
+
+    return MMSYSERR_NOTSUPPORTED;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -657,6 +711,12 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_GETNUMDEVS:
         *params->err = midi_out_get_num_devs();
+        break;
+    case MODM_GETVOLUME:
+        *params->err = midi_out_get_volume(params->dev_id, (DWORD *)params->param_1);
+        break;
+    case MODM_SETVOLUME:
+        *params->err = midi_out_set_volume(params->dev_id, params->param_1);
         break;
     default:
         TRACE("Unsupported message\n");
