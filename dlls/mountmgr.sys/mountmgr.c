@@ -33,14 +33,12 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #define NONAMELESSUNION
 
 #include "mountmgr.h"
 #include "winreg.h"
+#include "unixlib.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -297,9 +295,7 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
     UNICODE_STRING name;
     NTSTATUS status;
     ULONG size = 256;
-    const char *home;
-    char *buffer = NULL, *backup = NULL, *homelink = NULL;
-    struct stat st;
+    char *buffer = NULL, *backup = NULL;
 
     if (input->folder_offset >= insize || input->folder_size > insize - input->folder_offset ||
         input->symlink_offset >= insize)
@@ -311,22 +307,6 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
         link = (const char *)in_buff + input->symlink_offset;
         if (!memchr( link, 0, insize - input->symlink_offset )) return STATUS_INVALID_PARAMETER;
         if (!link[0]) link = NULL;
-    }
-
-    if (link && (!strcmp( link, "$HOME" ) || !strncmp( link, "$HOME/", 6 )) && (home = getenv( "HOME" )))
-    {
-        link += 5;
-        homelink = HeapAlloc( GetProcessHeap(), 0, strlen(home) + strlen(link) + 1 );
-        strcpy( homelink, home );
-        strcat( homelink, link );
-        link = homelink;
-    }
-
-    /* ignore nonexistent link targets */
-    if (link && (stat( link, &st ) || !S_ISDIR( st.st_mode )))
-    {
-        status = STATUS_OBJECT_NAME_NOT_FOUND;
-        goto done;
     }
 
     name.Buffer = (WCHAR *)((char *)in_buff + input->folder_offset);
@@ -358,37 +338,11 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
         strcat( backup, ".backup" );
     }
 
-    if (!lstat( buffer, &st )) /* move old folder/link out of the way */
-    {
-        if (S_ISLNK( st.st_mode ))
-        {
-            unlink( buffer );
-        }
-        else if (link && S_ISDIR( st.st_mode ))
-        {
-            if (rmdir( buffer ))  /* non-empty dir, try to make a backup */
-            {
-                if (!backup || rename( buffer, backup ))
-                {
-                    status = STATUS_OBJECT_NAME_COLLISION;
-                    goto done;
-                }
-            }
-        }
-        else goto done; /* nothing to do, folder already exists */
-    }
-
-    if (link) symlink( link, buffer );
-    else
-    {
-        if (backup && !lstat( backup, &st ) && S_ISDIR( st.st_mode )) rename( backup, buffer );
-        else mkdir( buffer, 0777 );
-    }
+    status = set_shell_folder( buffer, backup, link );
 
 done:
     HeapFree( GetProcessHeap(), 0, buffer );
     HeapFree( GetProcessHeap(), 0, backup );
-    HeapFree( GetProcessHeap(), 0, homelink );
     return status;
 }
 
@@ -401,7 +355,6 @@ static NTSTATUS query_shell_folder( void *buff, SIZE_T insize, SIZE_T outsize, I
     NTSTATUS status;
     ULONG size = 256;
     char *buffer;
-    int ret;
 
     name.Buffer = buff;
     name.Length = insize;
@@ -415,13 +368,9 @@ static NTSTATUS query_shell_folder( void *buff, SIZE_T insize, SIZE_T outsize, I
         HeapFree( GetProcessHeap(), 0, buffer );
         if (status != STATUS_BUFFER_TOO_SMALL) return status;
     }
-    ret = readlink( buffer, output, outsize - 1 );
-    if (ret >= 0)
-    {
-        output[ret] = 0;
-        iosb->Information = ret + 1;
-    }
-    else status = STATUS_OBJECT_NAME_NOT_FOUND;
+
+    status = get_shell_folder( buffer, output, outsize );
+    if (!status) iosb->Information = strlen(output) + 1;
 
     HeapFree( GetProcessHeap(), 0, buffer );
     return status;

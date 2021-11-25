@@ -277,3 +277,67 @@ NTSTATUS detect_parallel_ports( char *names, ULONG size )
     detect_devices( paths, names, size );
     return STATUS_SUCCESS;
 }
+
+NTSTATUS set_shell_folder( const char *folder, const char *backup, const char *link )
+{
+    struct stat st;
+    const char *home;
+    char *homelink = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (link && (!strcmp( link, "$HOME" ) || !strncmp( link, "$HOME/", 6 )) && (home = getenv( "HOME" )))
+    {
+        link += 5;
+        homelink = malloc( strlen(home) + strlen(link) + 1 );
+        strcpy( homelink, home );
+        strcat( homelink, link );
+        link = homelink;
+    }
+
+    /* ignore nonexistent link targets */
+    if (link && (stat( link, &st ) || !S_ISDIR( st.st_mode )))
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
+        goto done;
+    }
+
+    if (!lstat( folder, &st )) /* move old folder/link out of the way */
+    {
+        if (S_ISLNK( st.st_mode ))
+        {
+            unlink( folder );
+        }
+        else if (link && S_ISDIR( st.st_mode ))
+        {
+            if (rmdir( folder ))  /* non-empty dir, try to make a backup */
+            {
+                if (!backup || rename( folder, backup ))
+                {
+                    status = STATUS_OBJECT_NAME_COLLISION;
+                    goto done;
+                }
+            }
+        }
+        else goto done; /* nothing to do, folder already exists */
+    }
+
+    if (link) symlink( link, folder );
+    else
+    {
+        if (backup && !lstat( backup, &st ) && S_ISDIR( st.st_mode )) rename( backup, folder );
+        else mkdir( folder, 0777 );
+    }
+
+done:
+    free( homelink );
+    return status;
+}
+
+NTSTATUS get_shell_folder( const char *folder, char *buffer, ULONG size )
+{
+    int ret = readlink( folder, buffer, size - 1 );
+
+    if (ret < 0) return STATUS_OBJECT_NAME_NOT_FOUND;
+    buffer[ret] = 0;
+    return STATUS_SUCCESS;
+}

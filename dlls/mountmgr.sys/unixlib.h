@@ -28,3 +28,5 @@ extern NTSTATUS read_volume_file( const char *volume, const char *file, void *bu
 extern BOOL match_unixdev( const char *device, ULONGLONG unix_dev ) DECLSPEC_HIDDEN;
 extern NTSTATUS detect_serial_ports( char *names, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS detect_parallel_ports( char *names, ULONG size ) DECLSPEC_HIDDEN;
+extern NTSTATUS set_shell_folder( const char *folder, const char *backup, const char *link ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_shell_folder( const char *folder, char *buffer, ULONG size ) DECLSPEC_HIDDEN;
