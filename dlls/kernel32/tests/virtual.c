@@ -37,6 +37,7 @@
 
 static HINSTANCE hkernel32, hkernelbase, hntdll;
 static SYSTEM_INFO si;
+static BOOL is_wow64;
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
@@ -50,6 +51,7 @@ static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG *);
+static BOOL  (WINAPI *pPrefetchVirtualMemory)(HANDLE, ULONG_PTR, PWIN32_MEMORY_RANGE_ENTRY, ULONG);
 
 /* ############################### */
 
@@ -4216,6 +4218,50 @@ static void test_shared_memory_ro(BOOL is_child, DWORD child_access)
     CloseHandle(mapping);
 }
 
+static void test_PrefetchVirtualMemory(void)
+{
+    WIN32_MEMORY_RANGE_ENTRY entries[2];
+    char stackmem[] = "Test stack mem";
+    static char testmem[] = "Test memory range data";
+    unsigned int page_size = si.dwPageSize;
+
+    if (!pPrefetchVirtualMemory)
+    {
+        skip("no PrefetchVirtualMemory in kernelbase\n");
+        return;
+    }
+
+    todo_wine
+    ok( !pPrefetchVirtualMemory( GetCurrentProcess(), 0, NULL, 0 ),
+        "PrefetchVirtualMemory unexpected success on 0 entries\n" );
+
+    entries[0].VirtualAddress = ULongToPtr(PtrToUlong(testmem) & -(ULONG_PTR)page_size);
+    entries[0].NumberOfBytes = page_size;
+    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 ) ||
+        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+        "PrefetchVirtualMemory unexpected status on 1 page-aligned entry: %ld\n", GetLastError() );
+
+    entries[0].VirtualAddress = testmem;
+    entries[0].NumberOfBytes = sizeof(testmem);
+    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 ) ||
+        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+        "PrefetchVirtualMemory unexpected status on 1 entry: %ld\n", GetLastError() );
+
+    entries[0].VirtualAddress = NULL;
+    entries[0].NumberOfBytes = page_size;
+    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 ) ||
+        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+        "PrefetchVirtualMemory unexpected status on 1 unmapped entry: %ld\n", GetLastError() );
+
+    entries[0].VirtualAddress = ULongToPtr(PtrToUlong(testmem) & -(ULONG_PTR)page_size);
+    entries[0].NumberOfBytes = page_size;
+    entries[1].VirtualAddress = ULongToPtr(PtrToUlong(stackmem) & -(ULONG_PTR)page_size);
+    entries[1].NumberOfBytes = page_size;
+    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 2, entries, 0 ) ||
+        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+        "PrefetchVirtualMemory unexpected status on 2 page-aligned entries: %ld\n", GetLastError() );
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -4270,9 +4316,12 @@ START_TEST(virtual)
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
+    pPrefetchVirtualMemory = (void *)GetProcAddress( hkernelbase, "PrefetchVirtualMemory" );
 
     GetSystemInfo(&si);
     trace("system page size %#lx\n", si.dwPageSize);
+
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
     test_shared_memory(FALSE);
     test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
@@ -4291,6 +4340,7 @@ START_TEST(virtual)
     test_IsBadWritePtr();
     test_IsBadCodePtr();
     test_write_watch();
+    test_PrefetchVirtualMemory();
 #if defined(__i386__) || defined(__x86_64__)
     test_stack_commit();
 #endif
