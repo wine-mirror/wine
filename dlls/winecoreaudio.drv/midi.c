@@ -1,14 +1,11 @@
 /*
- * Sample MIDI Wine Driver for Mac OS X (based on OSS midi driver)
+ * MIDI driver for macOS (PE-side)
  *
- * Copyright 1994 	Martin Ayotte
- * Copyright 1998 	Luiz Otavio L. Zorzella (init procedures)
- * Copyright 1998/1999	Eric POUECH :
- * 		98/7 	changes for making this MIDI driver work on OSS
- * 			current support is limited to MIDI ports of OSS systems
- * 		98/9	rewriting MCI code for MIDI
- * 		98/11 	split in midi.c and mcimidi.c
+ * Copyright 1994       Martin Ayotte
+ * Copyright 1998       Luiz Otavio L. Zorzella
+ * Copyright 1998, 1999 Eric POUECH
  * Copyright 2005, 2006 Emmanuel Maillard
+ * Copyright 2021       Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -78,14 +75,8 @@ typedef struct tagMIDISource {
     DWORD startTime;
 } MIDISource;
 
-typedef struct {
-    UInt16 devID;
-    UInt16 length;
-    Byte data[];
-} MIDIMessage;
-
 static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
-static CFStringRef MIDIInThreadPortName = NULL;
+CFStringRef MIDIInThreadPortName = NULL;
 
 static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
 
@@ -798,33 +789,6 @@ static DWORD MIDIIn_Reset(WORD wDevID)
 /*
  * MIDI In Mach message handling
  */
-
-/*
- *  Call from CoreMIDI IO threaded callback,
- *  we can't call Wine debug channels, critical section or anything using NtCurrentTeb here.
- */
-void MIDIIn_SendMessage(UInt16 devID, const void *buffer, UInt16 length)
-{
-    MIDIMessage msg;
-    CFMutableDataRef data;
-
-    CFMessagePortRef messagePort;
-    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MIDIInThreadPortName);
-
-    msg.devID = devID;
-    msg.length = length;
-
-    data = CFDataCreateMutable(kCFAllocatorDefault, sizeof(msg) + length);
-    if (data)
-    {
-        CFDataAppendBytes(data, (UInt8 *) &msg, sizeof(msg));
-        CFDataAppendBytes(data, buffer, length);
-        CFMessagePortSendRequest(messagePort, 0, data, 0.0, 0.0, NULL, NULL);
-        CFRelease(data);
-    }
-    CFRelease(messagePort);
-}
-
 static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
 {
     MIDIMessage *msg = NULL;

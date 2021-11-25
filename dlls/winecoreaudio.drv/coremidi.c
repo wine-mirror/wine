@@ -1,7 +1,11 @@
 /*
- * Wine Midi driver for Mac OS X
+ * MIDI driver for macOS (unixlib)
  *
- * Copyright 2006 Emmanuel Maillard
+ * Copyright 1994       Martin Ayotte
+ * Copyright 1998       Luiz Otavio L. Zorzella
+ * Copyright 1998, 1999 Eric POUECH
+ * Copyright 2005, 2006 Emmanuel Maillard
+ * Copyright 2021       Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,14 +60,25 @@ void CoreMIDI_GetObjectName(MIDIObjectRef obj, char *name, int size)
  */
 void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
+    CFMessagePortRef msg_port = CFMessagePortCreateRemote(kCFAllocatorDefault, MIDIInThreadPortName);
+    MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
+    CFMutableDataRef data;
+    MIDIMessage msg;
     unsigned int i;
 
-    MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
-    for (i = 0; i < pktlist->numPackets; ++i) {
-        UInt16 devID = *((UInt16 *)connRefCon);
-
-        MIDIIn_SendMessage(devID, packet->data, packet->length);
-
+    for (i = 0; i < pktlist->numPackets; ++i)
+    {
+        msg.devID = *(UInt16 *)connRefCon;
+        msg.length = packet->length;
+        data = CFDataCreateMutable(kCFAllocatorDefault, sizeof(msg) + packet->length);
+        if (data)
+        {
+            CFDataAppendBytes(data, (UInt8 *)&msg, sizeof(msg));
+            CFDataAppendBytes(data, packet->data, packet->length);
+            CFMessagePortSendRequest(msg_port, 0, data, 0.0, 0.0, NULL, NULL);
+            CFRelease(data);
+        }
         packet = MIDIPacketNext(packet);
     }
+    CFRelease(msg_port);
 }

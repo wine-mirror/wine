@@ -73,6 +73,12 @@ extern void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *c
 extern void MIDIOut_Send(MIDIPortRef port, MIDIEndpointRef dest, UInt8 *buffer, unsigned length);
 
 /* midi.c */
-void MIDIIn_SendMessage(UInt16 devID, const void *buffer, UInt16 length);
+extern CFStringRef MIDIInThreadPortName;
+
+typedef struct {
+    UInt16 devID;
+    UInt16 length;
+    Byte data[];
+} MIDIMessage;
 
 #endif
