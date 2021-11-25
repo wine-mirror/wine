@@ -83,15 +83,3 @@ int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
     *right = *left;
     return 1;
 }
-
-void MIDIOut_Send(MIDIPortRef port, MIDIEndpointRef dest, UInt8 *buffer, unsigned length)
-{
-    Byte packetBuff[512];
-    MIDIPacketList *packetList = (MIDIPacketList *)packetBuff;
-
-    MIDIPacket *packet = MIDIPacketListInit(packetList);
-
-    packet = MIDIPacketListAdd(packetList, sizeof(packetBuff), packet, mach_absolute_time(), length, buffer);
-    if (packet)
-        MIDISend(port, dest, packetList);
-}

@@ -509,6 +509,62 @@ static DWORD midi_out_data(WORD dev_id, DWORD data)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_out_long_data(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+    OSStatus sc;
+
+    TRACE("dev_id = %d midi_hdr = %p hdr_size = %d\n", dev_id, hdr, hdr_size);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    if (!hdr)
+    {
+        WARN("Invalid Parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (!hdr->lpData || !(hdr->dwFlags & MHDR_PREPARED))
+        return MIDIERR_UNPREPARED;
+
+    if (hdr->dwFlags & MHDR_INQUEUE)
+        return MIDIERR_STILLPLAYING;
+
+    hdr->dwFlags &= ~MHDR_DONE;
+    hdr->dwFlags |= MHDR_INQUEUE;
+
+    if ((UInt8)hdr->lpData[0] != 0xf0)
+        /* System Exclusive */
+        ERR("Add missing 0xf0 marker at the beginning of system exclusive byte stream\n");
+
+    if ((UInt8)hdr->lpData[hdr->dwBufferLength - 1] != 0xF7)
+        /* Send end of System Exclusive */
+        ERR("Add missing 0xf7 marker at the end of system exclusive byte stream\n");
+
+    dest = dests + dev_id;
+
+    if (dest->caps.wTechnology == MOD_SYNTH) /* FIXME */
+    {
+        sc = MusicDeviceSysEx(dest->synth, (const UInt8 *)hdr->lpData, hdr->dwBufferLength);
+        if (sc != noErr)
+        {
+            ERR("MusicDeviceSysEx returns %s\n", wine_dbgstr_fourcc(sc));
+            return MMSYSERR_ERROR;
+        }
+    }
+    else if (dest->caps.wTechnology == MOD_MIDIPORT)
+        midi_send(midi_out_port, dest->dest, (UInt8 *)hdr->lpData, hdr->dwBufferLength);
+
+    hdr->dwFlags &= ~MHDR_INQUEUE;
+    hdr->dwFlags |= MHDR_DONE;
+
+    set_out_notify(notify, dest, dev_id, MOM_DONE, (DWORD_PTR)hdr, 0);
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -531,6 +587,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_DATA:
         *params->err = midi_out_data(params->dev_id, params->param_1);
+        break;
+    case MODM_LONGDATA:
+        *params->err = midi_out_long_data(params->dev_id, (MIDIHDR *)params->param_1, params->param_2, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");
