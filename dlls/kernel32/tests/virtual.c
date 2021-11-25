@@ -4231,7 +4231,6 @@ static void test_PrefetchVirtualMemory(void)
         return;
     }
 
-    todo_wine
     ok( !pPrefetchVirtualMemory( GetCurrentProcess(), 0, NULL, 0 ),
         "PrefetchVirtualMemory unexpected success on 0 entries\n" );
 

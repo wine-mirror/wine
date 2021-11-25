@@ -415,11 +415,12 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocFromApp( void *addr, SIZE_T size,
 /***********************************************************************
  *             PrefetchVirtualMemory   (kernelbase.@)
  */
-BOOL WINAPI /* DECLSPEC_HOTPATCH */ PrefetchVirtualMemory( HANDLE process, ULONG_PTR count,
-                                                           WIN32_MEMORY_RANGE_ENTRY *addresses, ULONG flags )
+BOOL WINAPI DECLSPEC_HOTPATCH PrefetchVirtualMemory( HANDLE process, ULONG_PTR count,
+                                                     WIN32_MEMORY_RANGE_ENTRY *addresses, ULONG flags )
 {
-    FIXME( "process %p, count %p, addresses %p, flags %#lx stub.\n", process, (void *)count, addresses, flags );
-    return TRUE;
+    return set_ntstatus( NtSetInformationVirtualMemory( process, VmPrefetchInformation,
+                                                        count, (PMEMORY_RANGE_ENTRY)addresses,
+                                                        &flags, sizeof(flags) ));
 }
 
 
