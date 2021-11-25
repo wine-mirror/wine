@@ -112,7 +112,7 @@ HRESULT create_named_item_script_obj(script_ctx_t *ctx, named_item_t *item)
 {
     static const builtin_info_t disp_info = {
         JSCLASS_GLOBAL,
-        {NULL, NULL, 0},
+        NULL,
         0, NULL,
         NULL,
         NULL

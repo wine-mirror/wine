@@ -563,7 +563,7 @@ static const builtin_prop_t RegExp_props[] = {
 
 static const builtin_info_t RegExp_info = {
     JSCLASS_REGEXP,
-    {NULL, RegExp_value, 0},
+    RegExp_value,
     ARRAY_SIZE(RegExp_props),
     RegExp_props,
     RegExp_destructor,
@@ -580,7 +580,7 @@ static const builtin_prop_t RegExpInst_props[] = {
 
 static const builtin_info_t RegExpInst_info = {
     JSCLASS_REGEXP,
-    {NULL, RegExp_value, 0},
+    RegExp_value,
     ARRAY_SIZE(RegExpInst_props),
     RegExpInst_props,
     RegExp_destructor,
@@ -952,7 +952,7 @@ static const builtin_prop_t RegExpConstr_props[] = {
 
 static const builtin_info_t RegExpConstr_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(RegExpConstr_props),
     RegExpConstr_props,
     NULL,

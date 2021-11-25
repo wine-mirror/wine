@@ -172,7 +172,7 @@ static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
 
 static const builtin_info_t Arguments_info = {
     JSCLASS_ARGUMENTS,
-    {NULL, Arguments_value, 0},
+    Arguments_value,
     0, NULL,
     Arguments_destructor,
     NULL,
@@ -545,7 +545,7 @@ static const builtin_prop_t Function_props[] = {
 
 static const builtin_info_t Function_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(Function_props),
     Function_props,
     Function_destructor,
@@ -559,7 +559,7 @@ static const builtin_prop_t FunctionInst_props[] = {
 
 static const builtin_info_t FunctionInst_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(FunctionInst_props),
     FunctionInst_props,
     Function_destructor,

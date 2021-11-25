@@ -1846,13 +1846,6 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT Date_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
-{
-    TRACE("\n");
-
-    return dateobj_to_string(date_from_jsdisp(jsthis), r);
-}
-
 static const builtin_prop_t Date_props[] = {
     {L"getDate",             Date_getDate,               PROPF_METHOD},
     {L"getDay",              Date_getDay,                PROPF_METHOD},
@@ -1903,7 +1896,7 @@ static const builtin_prop_t Date_props[] = {
 
 static const builtin_info_t Date_info = {
     JSCLASS_DATE,
-    {NULL, NULL,0, Date_get_value},
+    NULL,
     ARRAY_SIZE(Date_props),
     Date_props,
     NULL,
@@ -1912,7 +1905,7 @@ static const builtin_info_t Date_info = {
 
 static const builtin_info_t DateInst_info = {
     JSCLASS_DATE,
-    {NULL, NULL,0, Date_get_value},
+    NULL,
     0, NULL,
     NULL,
     NULL
@@ -2440,7 +2433,7 @@ static const builtin_prop_t DateConstr_props[] = {
 
 static const builtin_info_t DateConstr_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(DateConstr_props),
     DateConstr_props,
     NULL,

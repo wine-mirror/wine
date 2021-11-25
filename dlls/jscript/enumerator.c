@@ -180,7 +180,7 @@ static const builtin_prop_t Enumerator_props[] = {
 
 static const builtin_info_t Enumerator_info = {
     JSCLASS_ENUMERATOR,
-    {NULL, NULL, 0},
+    NULL,
     ARRAY_SIZE(Enumerator_props),
     Enumerator_props,
     NULL,
@@ -189,7 +189,7 @@ static const builtin_info_t Enumerator_info = {
 
 static const builtin_info_t EnumeratorInst_info = {
     JSCLASS_ENUMERATOR,
-    {NULL, NULL, 0, NULL},
+    NULL,
     0,
     NULL,
     Enumerator_destructor,
@@ -317,7 +317,7 @@ static HRESULT EnumeratorConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD fl
 
 static const builtin_info_t EnumeratorConstr_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     0,
     NULL,
     NULL,

@@ -494,16 +494,6 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     return S_OK;
 }
 
-static HRESULT Number_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
-{
-    NumberInstance *number = number_from_jsdisp(jsthis);
-
-    TRACE("(%p)\n", number);
-
-    *r = jsval_number(number->value);
-    return S_OK;
-}
-
 static const builtin_prop_t Number_props[] = {
     {L"toExponential",       Number_toExponential,         PROPF_METHOD|1},
     {L"toFixed",             Number_toFixed,               PROPF_METHOD},
@@ -515,7 +505,7 @@ static const builtin_prop_t Number_props[] = {
 
 static const builtin_info_t Number_info = {
     JSCLASS_NUMBER,
-    {NULL, NULL,0, Number_get_value},
+    NULL,
     ARRAY_SIZE(Number_props),
     Number_props,
     NULL,
@@ -524,7 +514,7 @@ static const builtin_info_t Number_info = {
 
 static const builtin_info_t NumberInst_info = {
     JSCLASS_NUMBER,
-    {NULL, NULL,0, Number_get_value},
+    NULL,
     0, NULL,
     NULL,
     NULL

@@ -1830,7 +1830,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
 
 static const builtin_info_t dispex_info = {
     JSCLASS_NONE,
-    {NULL, NULL, 0},
+    NULL,
     0, NULL,
     NULL,
     NULL
@@ -1981,14 +1981,14 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
     }else {
         vdisp_t vdisp;
 
-        if(!jsfunc->builtin_info->value_prop.invoke) {
+        if(!jsfunc->builtin_info->call) {
             WARN("Not a function\n");
             return JS_E_FUNCTION_EXPECTED;
         }
 
         set_disp(&vdisp, jsthis);
         flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
-        hres = jsfunc->builtin_info->value_prop.invoke(jsfunc->ctx, &vdisp, flags, argc, argv, r);
+        hres = jsfunc->builtin_info->call(jsfunc->ctx, &vdisp, flags, argc, argv, r);
         vdisp_release(&vdisp);
     }
     return hres;

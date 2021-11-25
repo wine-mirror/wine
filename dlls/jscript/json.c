@@ -839,7 +839,7 @@ static const builtin_prop_t JSON_props[] = {
 
 static const builtin_info_t JSON_info = {
     JSCLASS_JSON,
-    {NULL, NULL, 0},
+    NULL,
     ARRAY_SIZE(JSON_props),
     JSON_props,
     NULL,

@@ -114,7 +114,7 @@ static const builtin_prop_t Bool_props[] = {
 
 static const builtin_info_t Bool_info = {
     JSCLASS_BOOLEAN,
-    {NULL, Bool_value, 0},
+    Bool_value,
     ARRAY_SIZE(Bool_props),
     Bool_props,
     NULL,
@@ -123,7 +123,7 @@ static const builtin_info_t Bool_info = {
 
 static const builtin_info_t BoolInst_info = {
     JSCLASS_BOOLEAN,
-    {NULL, Bool_value, 0},
+    Bool_value,
     0, NULL,
     NULL,
     NULL

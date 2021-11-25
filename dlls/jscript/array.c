@@ -1222,15 +1222,6 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT Array_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
-{
-    ArrayInstance *array = array_from_jsdisp(jsthis);
-
-    TRACE("\n");
-
-    return array_join(ctx, &array->dispex, array->length, L",", 1, r);
-}
-
 static void Array_destructor(jsdisp_t *dispex)
 {
     heap_free(dispex);
@@ -1279,7 +1270,7 @@ static const builtin_prop_t Array_props[] = {
 
 static const builtin_info_t Array_info = {
     JSCLASS_ARRAY,
-    {NULL, NULL,0, Array_get_value},
+    NULL,
     ARRAY_SIZE(Array_props),
     Array_props,
     Array_destructor,
@@ -1292,7 +1283,7 @@ static const builtin_prop_t ArrayInst_props[] = {
 
 static const builtin_info_t ArrayInst_info = {
     JSCLASS_ARRAY,
-    {NULL, NULL,0, Array_get_value},
+    NULL,
     ARRAY_SIZE(ArrayInst_props),
     ArrayInst_props,
     Array_destructor,
@@ -1397,7 +1388,7 @@ static const builtin_prop_t ArrayConstr_props[] = {
 
 static const builtin_info_t ArrayConstr_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(ArrayConstr_props),
     ArrayConstr_props,
     NULL,

@@ -1493,16 +1493,6 @@ static HRESULT String_localeCompare(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     return E_NOTIMPL;
 }
 
-static HRESULT String_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
-{
-    StringInstance *This = string_from_jsdisp(jsthis);
-
-    TRACE("\n");
-
-    *r = jsval_string(jsstr_addref(This->str));
-    return S_OK;
-}
-
 static void String_destructor(jsdisp_t *dispex)
 {
     StringInstance *This = string_from_jsdisp(dispex);
@@ -1579,7 +1569,7 @@ static const builtin_prop_t String_props[] = {
 
 static const builtin_info_t String_info = {
     JSCLASS_STRING,
-    {NULL, NULL,0, String_get_value},
+    NULL,
     ARRAY_SIZE(String_props),
     String_props,
     String_destructor,
@@ -1592,7 +1582,7 @@ static const builtin_prop_t StringInst_props[] = {
 
 static const builtin_info_t StringInst_info = {
     JSCLASS_STRING,
-    {NULL, NULL,0, String_get_value},
+    NULL,
     ARRAY_SIZE(StringInst_props),
     StringInst_props,
     String_destructor,
@@ -1710,7 +1700,7 @@ static const builtin_prop_t StringConstr_props[] = {
 
 static const builtin_info_t StringConstr_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(StringConstr_props),
     StringConstr_props,
     NULL,

@@ -136,7 +136,7 @@ static const builtin_prop_t Error_props[] = {
 
 static const builtin_info_t Error_info = {
     JSCLASS_ERROR,
-    {NULL, Error_value, 0},
+    Error_value,
     ARRAY_SIZE(Error_props),
     Error_props,
     NULL,
@@ -145,7 +145,7 @@ static const builtin_info_t Error_info = {
 
 static const builtin_info_t ErrorInst_info = {
     JSCLASS_ERROR,
-    {NULL, Error_value, 0},
+    Error_value,
     0,
     NULL,
     NULL,

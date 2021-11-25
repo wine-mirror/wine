@@ -243,20 +243,6 @@ static HRESULT Object_set_proto_(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t va
     return jsdisp_change_prototype(jsthis, proto);
 }
 
-static HRESULT Object_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
-{
-    jsstr_t *ret;
-
-    TRACE("\n");
-
-    ret = jsstr_alloc(L"[object Object]");
-    if(!ret)
-        return E_OUTOFMEMORY;
-
-    *r = jsval_string(ret);
-    return S_OK;
-}
-
 static void Object_destructor(jsdisp_t *dispex)
 {
     heap_free(dispex);
@@ -274,7 +260,7 @@ static const builtin_prop_t Object_props[] = {
 
 static const builtin_info_t Object_info = {
     JSCLASS_OBJECT,
-    {NULL, NULL,0, Object_get_value},
+    NULL,
     ARRAY_SIZE(Object_props),
     Object_props,
     Object_destructor,
@@ -283,7 +269,7 @@ static const builtin_info_t Object_info = {
 
 static const builtin_info_t ObjectInst_info = {
     JSCLASS_OBJECT,
-    {NULL, NULL,0, Object_get_value},
+    NULL,
     0, NULL,
     Object_destructor,
     NULL
@@ -889,7 +875,7 @@ static const builtin_prop_t ObjectConstr_props[] = {
 
 static const builtin_info_t ObjectConstr_info = {
     JSCLASS_FUNCTION,
-    DEFAULT_FUNCTION_VALUE,
+    Function_value,
     ARRAY_SIZE(ObjectConstr_props),
     ObjectConstr_props,
     NULL,

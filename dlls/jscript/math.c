@@ -492,7 +492,7 @@ static const builtin_prop_t Math_props[] = {
 
 static const builtin_info_t Math_info = {
     JSCLASS_MATH,
-    {NULL, NULL, 0},
+    NULL,
     ARRAY_SIZE(Math_props),
     Math_props,
     NULL,

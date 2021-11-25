@@ -89,7 +89,7 @@ static const builtin_prop_t Set_props[] = {
 
 static const builtin_info_t Set_prototype_info = {
     JSCLASS_SET,
-    {NULL, Set_value, 0},
+    Set_value,
     ARRAY_SIZE(Set_props),
     Set_props,
     NULL,
@@ -98,7 +98,7 @@ static const builtin_info_t Set_prototype_info = {
 
 static const builtin_info_t Set_info = {
     JSCLASS_SET,
-    {NULL, Set_value, 0},
+    Set_value,
     0, NULL,
     NULL,
     NULL
@@ -414,7 +414,7 @@ static const builtin_prop_t Map_props[] = {
 
 static const builtin_info_t Map_prototype_info = {
     JSCLASS_OBJECT,
-    {NULL, Map_value, 0},
+    Map_value,
     ARRAY_SIZE(Map_prototype_props),
     Map_prototype_props,
     NULL,
@@ -423,7 +423,7 @@ static const builtin_info_t Map_prototype_info = {
 
 static const builtin_info_t Map_info = {
     JSCLASS_MAP,
-    {NULL, Map_value, 0},
+    Map_value,
     ARRAY_SIZE(Map_props),
     Map_props,
     Map_destructor,

@@ -904,7 +904,7 @@ static const builtin_prop_t JSGlobal_props[] = {
 
 static const builtin_info_t JSGlobal_info = {
     JSCLASS_GLOBAL,
-    {NULL, NULL, 0},
+    NULL,
     ARRAY_SIZE(JSGlobal_props),
     JSGlobal_props,
     NULL,
