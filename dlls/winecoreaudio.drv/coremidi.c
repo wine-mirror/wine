@@ -463,6 +463,52 @@ static DWORD midi_out_close(WORD dev_id, struct notify_context *notify)
     return MMSYSERR_NOERROR;
 }
 
+static void midi_send(MIDIPortRef port, MIDIEndpointRef dest, UInt8 *buffer, unsigned len)
+{
+    Byte packet_buf[512];
+    MIDIPacketList *packet_list = (MIDIPacketList *)packet_buf;
+    MIDIPacket *packet = MIDIPacketListInit(packet_list);
+
+    packet = MIDIPacketListAdd(packet_list, sizeof(packet_buf), packet, mach_absolute_time(), len, buffer);
+    if (packet) MIDISend(port, dest, packet_list);
+}
+
+static DWORD midi_out_data(WORD dev_id, DWORD data)
+{
+    struct midi_dest *dest;
+    UInt8 bytes[3];
+    OSStatus sc;
+
+    TRACE("dev_id = %d data = %08x\n", dev_id, data);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    bytes[0] = data & 0xff;
+    bytes[1] = (data >> 8) & 0xff;
+    bytes[2] = (data >> 16) & 0xff;
+
+    dest = dests + dev_id;
+    if (dest->caps.wTechnology == MOD_SYNTH)
+    {
+        sc = MusicDeviceMIDIEvent(dest->synth, bytes[0], bytes[1], bytes[2], 0);
+        if (sc != noErr)
+        {
+            ERR("MusicDeviceMIDIEvent returns %s\n", wine_dbgstr_fourcc(sc));
+            return MMSYSERR_ERROR;
+        }
+    }
+    else
+    {
+        midi_send(midi_out_port, dest->dest, bytes, sizeof(bytes));
+    }
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -482,6 +528,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_CLOSE:
         *params->err = midi_out_close(params->dev_id, params->notify);
+        break;
+    case MODM_DATA:
+        *params->err = midi_out_data(params->dev_id, params->param_1);
         break;
     default:
         TRACE("Unsupported message\n");

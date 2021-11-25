@@ -163,44 +163,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
-{
-    WORD evt = LOBYTE(LOWORD(dwParam));
-    UInt8 chn = (evt & 0x0F);
-
-    TRACE("wDevID=%d dwParam=%08X\n", wDevID, dwParam);
-
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
-    {
-        WORD d1  = HIBYTE(LOWORD(dwParam));
-        WORD d2  = LOBYTE(HIWORD(dwParam));
-        OSStatus err = noErr;
-
-        err = MusicDeviceMIDIEvent(destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0);
-        if (err != noErr)
-        {
-            ERR("MusicDeviceMIDIEvent(%p, %04x, %04x, %04x, %d) return %s\n", destinations[wDevID].synth, (evt & 0xF0) | chn, d1, d2, 0, wine_dbgstr_fourcc(err));
-            return MMSYSERR_ERROR;
-        }
-    }
-    else
-    {
-        UInt8 buffer[3];
-        buffer[0] = (evt & 0xF0) | chn;
-        buffer[1] = HIBYTE(LOWORD(dwParam));
-        buffer[2] = LOBYTE(HIWORD(dwParam));
-
-        MIDIOut_Send(MIDIOutPort, destinations[wDevID].dest, buffer, 3);
-    }
-
-    return MMSYSERR_NOERROR;
-}
-
 static DWORD MIDIOut_LongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     LPBYTE lpData;
@@ -763,8 +725,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-        case MODM_DATA:
-            return MIDIOut_Data(wDevID, dwParam1);
         case MODM_LONGDATA:
             return MIDIOut_LongData(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MODM_PREPARE:
