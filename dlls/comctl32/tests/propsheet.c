@@ -648,6 +648,7 @@ static const struct message property_sheet_seq[] = {
     { DM_REPOSITION, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_WINDOWPOSCHANGED, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     /*{ WM_NCACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
