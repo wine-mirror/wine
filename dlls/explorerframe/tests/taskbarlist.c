@@ -55,7 +55,6 @@ static void test_ITaskbarList(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Call ITaskbarList::HrInit() */
@@ -88,7 +87,6 @@ static void test_ITaskbarList(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test ITaskbarList::SetActiveAlt() */
@@ -116,7 +114,6 @@ static void test_ITaskbarList(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test ITaskbarList::ActivateTab() */
@@ -144,21 +141,17 @@ static void test_ITaskbarList(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test ITaskbarList::DeleteTab() */
     /* Check invalid parameters */
     hr = ITaskbarList_DeleteTab(taskbarlist, NULL);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, (HWND)0xdeadbeef);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Normal ITaskbarList::DeleteTab() */
@@ -167,7 +160,6 @@ static void test_ITaskbarList(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ITaskbarList_DeleteTab(taskbarlist, hwnd);
-    todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref_count = ITaskbarList_Release(taskbarlist);
