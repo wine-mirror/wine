@@ -86,6 +86,7 @@
 #include "wine/unicode.h"
 #include "wine/unixlib.h"
 
+#include "coreaudio.h"
 #include "coremidi.h"
 #include "unixlib.h"
 
@@ -260,6 +261,182 @@ NTSTATUS midi_release(void *args)
 
     free(srcs);
     free(dests);
+
+    return STATUS_SUCCESS;
+}
+
+/*
+ *  MIDI Synth Unit
+ */
+static BOOL synth_unit_create_default(AUGraph *graph, AudioUnit *synth)
+{
+    AudioComponentDescription desc;
+    AUNode synth_node;
+    AUNode out_node;
+    OSStatus sc;
+
+    sc = NewAUGraph(graph);
+    if (sc != noErr)
+    {
+        ERR("NewAUGraph return %s\n", wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    desc.componentFlags = 0;
+    desc.componentFlagsMask = 0;
+
+    /* create synth node */
+    desc.componentType = kAudioUnitType_MusicDevice;
+    desc.componentSubType = kAudioUnitSubType_DLSSynth;
+
+    sc = AUGraphAddNode(*graph, &desc, &synth_node);
+    if (sc != noErr)
+    {
+        ERR("AUGraphAddNode cannot create synthNode : %s\n", wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    /* create out node */
+    desc.componentType = kAudioUnitType_Output;
+    desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+
+    sc = AUGraphAddNode(*graph, &desc, &out_node);
+    if (sc != noErr)
+    {
+        ERR("AUGraphAddNode cannot create outNode %s\n", wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    sc = AUGraphOpen(*graph);
+    if (sc != noErr)
+    {
+        ERR("AUGraphOpen returns %s\n", wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    /* connecting the nodes */
+    sc = AUGraphConnectNodeInput(*graph, synth_node, 0, out_node, 0);
+    if (sc != noErr)
+    {
+        ERR("AUGraphConnectNodeInput cannot connect synthNode to outNode : %s\n",
+            wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    /* Get the synth unit */
+    sc = AUGraphNodeInfo(*graph, synth_node, 0, synth);
+    if (sc != noErr)
+    {
+        ERR("AUGraphNodeInfo return %s\n", wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL synth_unit_init(AudioUnit synth, AUGraph graph)
+{
+    OSStatus sc;
+
+    sc = AUGraphInitialize(graph);
+    if (sc != noErr)
+    {
+        ERR("AUGraphInitialize(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    sc = AUGraphStart(graph);
+    if (sc != noErr)
+    {
+        ERR("AUGraphStart(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void set_out_notify(struct notify_context *notify, struct midi_dest *dest, WORD dev_id, WORD msg,
+                           DWORD_PTR param_1, DWORD_PTR param_2)
+{
+    notify->send_notify = TRUE;
+    notify->dev_id = dev_id;
+    notify->msg = msg;
+    notify->param_1 = param_1;
+    notify->param_2 = param_2;
+    notify->callback = dest->midiDesc.dwCallback;
+    notify->flags = dest->wFlags;
+    notify->device = dest->midiDesc.hMidi;
+    notify->instance = dest->midiDesc.dwInstance;
+}
+
+static DWORD midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, DWORD flags, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+
+    TRACE("dev_id = %d desc = %p flags = %08x\n", dev_id, midi_desc, flags);
+
+    if (!midi_desc) return MMSYSERR_INVALPARAM;
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    if (dests[dev_id].midiDesc.hMidi != 0)
+    {
+        WARN("device already open!\n");
+        return MMSYSERR_ALLOCATED;
+    }
+    if ((flags & ~CALLBACK_TYPEMASK) != 0)
+    {
+        WARN("bad flags\n");
+        return MMSYSERR_INVALFLAG;
+    }
+
+    dest = dests + dev_id;
+    if (dest->caps.wTechnology == MOD_SYNTH)
+    {
+        if (!synth_unit_create_default(&dest->graph, &dest->synth))
+        {
+            ERR("SynthUnit_CreateDefaultSynthUnit dest=%p failed\n", dest);
+            return MMSYSERR_ERROR;
+        }
+        if (!synth_unit_init(dest->synth, dest->graph))
+        {
+            ERR("SynthUnit_Initialise dest=%p failed\n", dest);
+            return MMSYSERR_ERROR;
+        }
+    }
+    dest->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
+    dest->midiDesc = *midi_desc;
+
+    set_out_notify(notify, dest, dev_id, MOM_OPEN, 0, 0);
+
+    return MMSYSERR_NOERROR;
+}
+
+NTSTATUS midi_out_message(void *args)
+{
+    struct midi_out_message_params *params = args;
+
+    params->notify->send_notify = FALSE;
+
+    switch (params->msg)
+    {
+    case DRVM_INIT:
+    case DRVM_EXIT:
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+        *params->err = MMSYSERR_NOERROR;
+        break;
+    case MODM_OPEN:
+        *params->err = midi_out_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    default:
+        TRACE("Unsupported message\n");
+        *params->err = MMSYSERR_NOTSUPPORTED;
+    }
 
     return STATUS_SUCCESS;
 }

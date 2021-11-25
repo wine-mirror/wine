@@ -64,9 +64,15 @@ static MIDIPortRef MIDIOutPort = NULL;
 MIDIDestination *destinations;
 MIDISource *sources;
 
-extern int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth);
-extern int SynthUnit_Initialize(AudioUnit synth, AUGraph graph);
 extern int SynthUnit_Close(AUGraph graph);
+
+static void notify_client(struct notify_context *notify)
+{
+    TRACE("dev_id=%d msg=%d param1=%04lX param2=%04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+
+    DriverCallback(notify->callback, notify->flags, notify->device, notify->msg,
+                   notify->instance, notify->param_1, notify->param_2);
+}
 
 static LONG CoreAudio_MIDIInit(void)
 {
@@ -131,7 +137,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     TRACE("wDevID=%d wMsg=%d dwParm1=%04lX dwParam2=%04lX\n", wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MOM_OPEN:
     case MOM_CLOSE:
     case MOM_DONE:
     case MOM_POSITIONCB:
@@ -159,54 +164,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     }
 
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
-}
-
-static DWORD MIDIOut_Open(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
-{
-    MIDIDestination *dest;
-
-    TRACE("wDevID=%d lpDesc=%p dwFlags=%08x\n", wDevID, lpDesc, dwFlags);
-
-    if (lpDesc == NULL) {
-	WARN("Invalid Parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (destinations[wDevID].midiDesc.hMidi != 0) {
-	WARN("device already open !\n");
-	return MMSYSERR_ALLOCATED;
-    }
-
-    if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
-	WARN("bad dwFlags\n");
-	return MMSYSERR_INVALFLAG;
-    }
-    dest = &destinations[wDevID];
-
-    if (dest->caps.wTechnology == MOD_SYNTH)
-    {
-        if (!SynthUnit_CreateDefaultSynthUnit(&dest->graph, &dest->synth))
-        {
-            ERR("SynthUnit_CreateDefaultSynthUnit dest=%p failed\n", dest);
-            return MMSYSERR_ERROR;
-        }
-
-        if (!SynthUnit_Initialize(dest->synth, dest->graph))
-        {
-            ERR("SynthUnit_Initialise dest=%p failed\n", dest);
-            return MMSYSERR_ERROR;
-        }
-    }
-    dest->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    dest->midiDesc = *lpDesc;
-
-    MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
-    return MMSYSERR_NOERROR;
 }
 
 static DWORD MIDIOut_Close(WORD wDevID)
@@ -825,16 +782,13 @@ static DWORD WINAPI MIDIIn_MessageThread(LPVOID p)
 */
 DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    struct midi_out_message_params params;
+    struct notify_context notify;
+    DWORD err;
+
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-        case DRVM_INIT:
-        case DRVM_EXIT:
-        case DRVM_ENABLE:
-        case DRVM_DISABLE:
-            return 0;
-        case MODM_OPEN:
-            return MIDIOut_Open(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
         case MODM_CLOSE:
             return MIDIOut_Close(wDevID);
         case MODM_DATA:
@@ -855,10 +809,21 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
             return MIDIOut_SetVolume(wDevID, dwParam1);
         case MODM_RESET:
             return MIDIOut_Reset(wDevID);
-        default:
-            TRACE("Unsupported message (08%x)\n", wMsg);
     }
-    return MMSYSERR_NOTSUPPORTED;
+
+    params.dev_id = wDevID;
+    params.msg = wMsg;
+    params.user = dwUser;
+    params.param_1 = dwParam1;
+    params.param_2 = dwParam2;
+    params.err = &err;
+    params.notify = &notify;
+
+    UNIX_CALL(midi_out_message, &params);
+
+    if (!err && notify.send_notify) notify_client(&notify);
+
+    return err;
 }
 
 /**************************************************************************

@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#include "mmddk.h"
 
 struct coreaudio_stream;
 
@@ -190,6 +191,30 @@ struct midi_init_params
     void *midi_out_port, *midi_in_port;
 };
 
+struct notify_context
+{
+    BOOL send_notify;
+    WORD dev_id;
+    WORD msg;
+    DWORD_PTR param_1;
+    DWORD_PTR param_2;
+    DWORD_PTR callback;
+    DWORD flags;
+    HANDLE device;
+    DWORD_PTR instance;
+};
+
+struct midi_out_message_params
+{
+    UINT dev_id;
+    UINT msg;
+    DWORD_PTR user;
+    DWORD_PTR param_1;
+    DWORD_PTR param_2;
+    DWORD *err;
+    struct notify_context *notify;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -214,10 +239,12 @@ enum unix_funcs
     unix_set_volumes,
     unix_midi_init,
     unix_midi_release,
+    unix_midi_out_message,
 };
 
 NTSTATUS midi_init( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_release( void * ) DECLSPEC_HIDDEN;
+NTSTATUS midi_out_message( void * ) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t coreaudio_handle;
 
