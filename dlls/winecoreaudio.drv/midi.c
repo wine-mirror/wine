@@ -64,8 +64,6 @@ static MIDIPortRef MIDIOutPort = NULL;
 MIDIDestination *destinations;
 MIDISource *sources;
 
-extern int SynthUnit_Close(AUGraph graph);
-
 static void notify_client(struct notify_context *notify)
 {
     TRACE("dev_id=%d msg=%d param1=%04lX param2=%04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
@@ -137,7 +135,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     TRACE("wDevID=%d wMsg=%d dwParm1=%04lX dwParam2=%04lX\n", wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MOM_CLOSE:
     case MOM_DONE:
     case MOM_POSITIONCB:
 	dwCallBack = destinations[wDevID].midiDesc.dwCallback;
@@ -164,29 +161,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     }
 
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
-}
-
-static DWORD MIDIOut_Close(WORD wDevID)
-{
-    DWORD ret = MMSYSERR_NOERROR;
-
-    TRACE("wDevID=%d\n", wDevID);
-
-    if (wDevID >= MIDIOut_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (destinations[wDevID].caps.wTechnology == MOD_SYNTH)
-        SynthUnit_Close(destinations[wDevID].graph);
-
-    destinations[wDevID].graph = 0;
-    destinations[wDevID].synth = 0;
-
-    MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L);
-    destinations[wDevID].midiDesc.hMidi = 0;
-
-    return ret;
 }
 
 static DWORD MIDIOut_Data(WORD wDevID, DWORD dwParam)
@@ -789,8 +763,6 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-        case MODM_CLOSE:
-            return MIDIOut_Close(wDevID);
         case MODM_DATA:
             return MIDIOut_Data(wDevID, dwParam1);
         case MODM_LONGDATA:

@@ -356,6 +356,27 @@ static BOOL synth_unit_init(AudioUnit synth, AUGraph graph)
     return TRUE;
 }
 
+static BOOL synth_unit_close(AUGraph graph)
+{
+    OSStatus sc;
+
+    sc = AUGraphStop(graph);
+    if (sc != noErr)
+    {
+        ERR("AUGraphStop(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    sc = DisposeAUGraph(graph);
+    if (sc != noErr)
+    {
+        ERR("DisposeAUGraph(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void set_out_notify(struct notify_context *notify, struct midi_dest *dest, WORD dev_id, WORD msg,
                            DWORD_PTR param_1, DWORD_PTR param_2)
 {
@@ -416,6 +437,32 @@ static DWORD midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, DWORD flags, st
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_out_close(WORD dev_id, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+
+    TRACE("dev_id = %d\n", dev_id);
+
+    if (dev_id >= num_dests)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    dest = dests + dev_id;
+
+    if (dest->caps.wTechnology == MOD_SYNTH)
+        synth_unit_close(dest->graph);
+    dest->graph = 0;
+    dest->synth = 0;
+
+    set_out_notify(notify, dest, dev_id, MOM_CLOSE, 0, 0);
+
+    dest->midiDesc.hMidi = 0;
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -432,6 +479,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_OPEN:
         *params->err = midi_out_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    case MODM_CLOSE:
+        *params->err = midi_out_close(params->dev_id, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");

@@ -49,7 +49,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
-WINE_DECLARE_DEBUG_CHANNEL(midi);
 
 int AudioUnit_SetVolume(AudioUnit au, float left, float right)
 {
@@ -82,28 +81,6 @@ int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
         return 0;
     }
     *right = *left;
-    return 1;
-}
-
-
-int SynthUnit_Close(AUGraph graph)
-{
-    OSStatus err = noErr;
-
-    err = AUGraphStop(graph);
-    if (err != noErr)
-    {
-        ERR_(midi)("AUGraphStop(%p) return %s\n", graph, wine_dbgstr_fourcc(err));
-        return 0;
-    }
-
-    err = DisposeAUGraph(graph);
-    if (err != noErr)
-    {
-        ERR_(midi)("DisposeAUGraph(%p) return %s\n", graph, wine_dbgstr_fourcc(err));
-        return 0;
-    }
-
     return 1;
 }
 
