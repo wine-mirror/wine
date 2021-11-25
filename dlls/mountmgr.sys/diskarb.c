@@ -65,13 +65,11 @@ static void appeared_callback( DADiskRef disk, void *context )
     const void *ref;
     char device[64];
     char mount_point[PATH_MAX];
-    char model[64];
     size_t model_len = 0;
     GUID guid, *guid_ptr = NULL;
     enum device_type type = DEVICE_UNKNOWN;
-    UINT pdtype = 0;
-    SCSI_ADDRESS scsi_addr;
-    UNICODE_STRING devname;
+    struct scsi_info scsi_info = { 0 };
+    BOOL removable = FALSE;
     int fd;
 
     if (!dict) return;
@@ -98,13 +96,13 @@ static void appeared_callback( DADiskRef disk, void *context )
         if (!CFStringCompare( ref, CFSTR("IOCDMedia"), 0 ))
         {
             type = DEVICE_CDROM;
-            pdtype = 5;
+            scsi_info.type = 5;
         }
         if (!CFStringCompare( ref, CFSTR("IODVDMedia"), 0 ) ||
             !CFStringCompare( ref, CFSTR("IOBDMedia"), 0 ))
         {
             type = DEVICE_DVD;
-            pdtype = 5;
+            scsi_info.type = 5;
         }
         if (!CFStringCompare( ref, CFSTR("IOMedia"), 0 ))
             type = DEVICE_HARDDISK;
@@ -114,41 +112,38 @@ static void appeared_callback( DADiskRef disk, void *context )
     {
         CFIndex i;
 
-        CFStringGetCString( ref, model, sizeof(model), kCFStringEncodingASCII );
+        CFStringGetCString( ref, scsi_info.model, sizeof(scsi_info.model), kCFStringEncodingASCII );
         model_len += CFStringGetLength( ref );
         /* Pad to 8 characters */
         for (i = 0; i < (CFIndex)8 - CFStringGetLength( ref ); ++i)
-            model[model_len++] = ' ';
+            scsi_info.model[model_len++] = ' ';
     }
     if ((ref = CFDictionaryGetValue( dict, CFSTR("DADeviceModel") )))
     {
         CFIndex i;
 
-        CFStringGetCString( ref, model+model_len, sizeof(model)-model_len, kCFStringEncodingASCII );
+        CFStringGetCString( ref, scsi_info.model+model_len, sizeof(scsi_info.model)-model_len, kCFStringEncodingASCII );
         model_len += CFStringGetLength( ref );
         /* Pad to 16 characters */
         for (i = 0; i < (CFIndex)16 - CFStringGetLength( ref ); ++i)
-            model[model_len++] = ' ';
+            scsi_info.model[model_len++] = ' ';
     }
     if ((ref = CFDictionaryGetValue( dict, CFSTR("DADeviceRevision") )))
     {
         CFIndex i;
 
-        CFStringGetCString( ref, model+model_len, sizeof(model)-model_len, kCFStringEncodingASCII );
+        CFStringGetCString( ref, scsi_info.model+model_len, sizeof(scsi_info.model)-model_len, kCFStringEncodingASCII );
         model_len += CFStringGetLength( ref );
         /* Pad to 4 characters */
         for (i = 0; i < (CFIndex)4 - CFStringGetLength( ref ); ++i)
-            model[model_len++] = ' ';
+            scsi_info.model[model_len++] = ' ';
     }
 
     TRACE( "got mount notification for '%s' on '%s' uuid %s\n",
            device, mount_point, wine_dbgstr_guid(guid_ptr) );
 
-    devname.Buffer = NULL;
-    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) && CFBooleanGetValue( ref ))
-        add_dos_device( -1, device, device, mount_point, type, guid_ptr, &devname );
-    else
-        if (guid_ptr) add_volume( device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL );
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )))
+        removable = CFBooleanGetValue( ref );
 
     if (!access( device, R_OK ) &&
         (fd = open( device, O_RDONLY )) >= 0)
@@ -157,17 +152,20 @@ static void appeared_callback( DADiskRef disk, void *context )
 
         if (ioctl( fd, DKIOCSCSIIDENTIFY, &dsi ) >= 0)
         {
-            scsi_addr.PortNumber = dsi.bus;
-            scsi_addr.PathId = dsi.port;
-            scsi_addr.TargetId = dsi.target;
-            scsi_addr.Lun = dsi.lun;
-
-            /* FIXME: get real controller Id for SCSI */
-            /* FIXME: get real driver name */
-            create_scsi_entry( &scsi_addr, 255, "WINE SCSI", pdtype, model, &devname );
+            scsi_info.addr.PortNumber = dsi.bus;
+            scsi_info.addr.PathId = dsi.port;
+            scsi_info.addr.TargetId = dsi.target;
+            scsi_info.addr.Lun = dsi.lun;
+            scsi_info.init_id = 255; /* FIXME */
+            strcpy( scsi_info.driver, "WINE SCSI" ); /* FIXME */
         }
         close( fd );
     }
+
+    if (removable)
+        add_dos_device( -1, device, device, mount_point, type, guid_ptr, &scsi_info );
+    else
+        if (guid_ptr) add_volume( device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, &scsi_info );
 
 done:
     CFRelease( dict );

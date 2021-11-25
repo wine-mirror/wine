@@ -1362,35 +1362,8 @@ static void create_drive_devices(void)
     RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
-/* open the "Logical Unit" key for a given SCSI address */
-static HKEY get_scsi_device_lun_key( SCSI_ADDRESS *scsi_addr )
-{
-    WCHAR dataW[50];
-    HKEY scsi_key, port_key, bus_key, target_key, lun_key;
-
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return NULL;
-
-    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, scsi_addr->PortNumber );
-    if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return NULL;
-    RegCloseKey( scsi_key );
-
-    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, scsi_addr->PathId );
-    if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return NULL;
-    RegCloseKey( port_key );
-
-    snprintfW( dataW, ARRAY_SIZE( dataW ), target_id_keyW, scsi_addr->TargetId );
-    if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return NULL;
-    RegCloseKey( bus_key );
-
-    snprintfW( dataW, ARRAY_SIZE( dataW ), lun_keyW, scsi_addr->Lun );
-    if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return NULL;
-    RegCloseKey( target_key );
-
-    return lun_key;
-}
-
 /* fill in the "Logical Unit" key for a given SCSI address */
-void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *driver, UINT type, const char *model, const UNICODE_STRING *dev )
+static void create_scsi_entry( struct volume *volume, const struct scsi_info *info )
 {
     static UCHAR tape_no = 0;
     static const WCHAR tapeW[] = {'T','a','p','e','%','d',0};
@@ -1412,34 +1385,34 @@ void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *drive
 
     if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return;
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, scsi_addr->PortNumber );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, info->addr.PortNumber );
     if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return;
     RegCloseKey( scsi_key );
 
-    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, driver, strlen(driver)+1);
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, info->driver, strlen(info->driver)+1);
     RegSetValueExW( port_key, driverW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
     value = 10;
     RegSetValueExW( port_key, bus_time_scanW, 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
 
     value = 0;
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, scsi_addr->PathId );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, info->addr.PathId );
     if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return;
     RegCloseKey( port_key );
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), init_id_keyW, init_id );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), init_id_keyW, info->init_id );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( target_key );
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), target_id_keyW, scsi_addr->TargetId );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), target_id_keyW, info->addr.TargetId );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( bus_key );
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), lun_keyW, scsi_addr->Lun );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), lun_keyW, info->addr.Lun );
     if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return;
     RegCloseKey( target_key );
 
-    switch (type)
+    switch (info->type)
     {
     case SCSI_DISK_PERIPHERAL:              data = "DiskPeripheral"; break;
     case SCSI_TAPE_PERIPHERAL:              data = "TapePeripheral"; break;
@@ -1466,16 +1439,17 @@ void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *drive
     RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, data, strlen(data)+1);
     RegSetValueExW( lun_key, typeW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
 
-    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, model, strlen(model)+1);
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, info->model, strlen(info->model)+1);
     RegSetValueExW( lun_key, identW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
 
-    if (dev)
+    if (volume)
     {
+        UNICODE_STRING *dev = &volume->device->name;
         WCHAR *buffer = memchrW( dev->Buffer+1, '\\', dev->Length )+1;
         ULONG length = dev->Length - (buffer - dev->Buffer)*sizeof(WCHAR);
         RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)buffer, length );
     }
-    else if (type == SCSI_TAPE_PERIPHERAL)
+    else if (info->type == SCSI_TAPE_PERIPHERAL)
     {
         snprintfW( dataW, ARRAY_SIZE( dataW ), tapeW, tape_no++ );
         RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)dataW, strlenW( dataW ) );
@@ -1484,25 +1458,10 @@ void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *drive
     RegCloseKey( lun_key );
 }
 
-/* set the "DeviceName" for a given SCSI address */
-void set_scsi_device_name( SCSI_ADDRESS *scsi_addr, const UNICODE_STRING *dev )
-{
-    HKEY lun_key;
-    WCHAR *buffer;
-    ULONG length;
-
-    lun_key = get_scsi_device_lun_key( scsi_addr );
-    buffer = memchrW( dev->Buffer+1, '\\', dev->Length )+1;
-    length = dev->Length - (buffer - dev->Buffer)*sizeof(WCHAR);
-    RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)buffer, length );
-
-    RegCloseKey( lun_key );
-}
-
-
 /* create a new disk volume */
 NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
-                     enum device_type type, const GUID *guid, const char *disk_serial )
+                     enum device_type type, const GUID *guid, const char *disk_serial,
+                     const struct scsi_info *scsi_info )
 {
     struct volume *volume;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1524,6 +1483,7 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
 
 found:
     if (!status) status = set_volume_info( volume, NULL, device, mount_point, type, guid, disk_serial );
+    if (!status && scsi_info) create_scsi_entry( volume, scsi_info );
     if (volume) release_volume( volume );
     LeaveCriticalSection( &device_section );
     return status;
@@ -1551,7 +1511,7 @@ NTSTATUS remove_volume( const char *udi )
 /* create a new dos drive */
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                          const char *mount_point, enum device_type type, const GUID *guid,
-                         UNICODE_STRING *devname )
+                         const struct scsi_info *scsi_info )
 {
     char *path, *p;
     HKEY hkey;
@@ -1626,8 +1586,7 @@ found:
     }
 
     if (udi) notify = drive->drive;
-
-    if (devname) *devname = volume->device->name;
+    if (scsi_info) create_scsi_entry( volume, scsi_info );
 
 done:
     if (volume) release_volume( volume );

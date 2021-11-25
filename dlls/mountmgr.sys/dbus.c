@@ -258,7 +258,7 @@ static void udisks_new_device( const char *udi )
     if (device)
     {
         if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
-        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL );
+        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, NULL );
     }
 
     p_dbus_message_unref( reply );
@@ -427,7 +427,7 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
     if (device)
     {
         if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
-        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, id );
+        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, id, NULL );
     }
 }
 
