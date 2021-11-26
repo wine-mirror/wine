@@ -670,6 +670,8 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
     case FilePipeLocalInformation:
         {
             FILE_PIPE_LOCAL_INFORMATION *pipe_info;
+            struct pipe_message *message;
+            data_size_t avail = 0;
 
             if (!(get_handle_access( current->process, handle) & FILE_READ_ATTRIBUTES))
             {
@@ -706,7 +708,11 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
             pipe_info->MaximumInstances    = pipe->maxinstances;
             pipe_info->CurrentInstances    = pipe->instances;
             pipe_info->InboundQuota        = pipe->insize;
-            pipe_info->ReadDataAvailable   = 0; /* FIXME */
+
+            LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
+                avail += message->iosb->in_size - message->read_pos;
+            pipe_info->ReadDataAvailable   = avail;
+
             pipe_info->OutboundQuota       = pipe->outsize;
             pipe_info->WriteQuotaAvailable = 0; /* FIXME */
             pipe_info->NamedPipeState      = pipe_end->state;

@@ -1888,8 +1888,16 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
             "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
             is_server ? "server" : "client", state, status);
     if (!status)
+    {
         ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
             is_server ? "server" : "client", local_info.NamedPipeState, state);
+        if (state != FILE_PIPE_DISCONNECTED_STATE && state != FILE_PIPE_LISTENING_STATE)
+            ok(local_info.ReadDataAvailable != 0, "ReadDataAvailable, expected non-zero, in %s state %u\n",
+                is_server ? "server" : "client", state);
+        else
+            ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable, expected zero, in %s state %u\n",
+                is_server ? "server" : "client", state);
+    }
 
     status = pNtQueryInformationFile(pipe, &io, &pipe_info, sizeof(pipe_info), FilePipeInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
