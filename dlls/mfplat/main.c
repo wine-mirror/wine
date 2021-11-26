@@ -8570,7 +8570,7 @@ struct dxgi_device_manager
     IMFDXGIDeviceManager IMFDXGIDeviceManager_iface;
     LONG refcount;
     UINT token;
-    IDXGIDevice *device;
+    IUnknown *device;
 
     unsigned int *handles;
     size_t count;
@@ -8633,7 +8633,7 @@ static ULONG WINAPI dxgi_device_manager_Release(IMFDXGIDeviceManager *iface)
     if (!refcount)
     {
         if (manager->device)
-            IDXGIDevice_Release(manager->device);
+            IUnknown_Release(manager->device);
         DeleteCriticalSection(&manager->cs);
         free(manager->handles);
         free(manager);
@@ -8709,7 +8709,7 @@ static HRESULT WINAPI dxgi_device_manager_GetVideoService(IMFDXGIDeviceManager *
         if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_INVALID)
             hr = MF_E_DXGI_NEW_VIDEO_DEVICE;
         else if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_OPEN)
-            hr = IDXGIDevice_QueryInterface(manager->device, riid, service);
+            hr = IUnknown_QueryInterface(manager->device, riid, service);
         else
             hr = E_HANDLE;
     }
@@ -8738,7 +8738,7 @@ static HRESULT WINAPI dxgi_device_manager_LockDevice(IMFDXGIDeviceManager *iface
         }
         else if (manager->locking_tid == GetCurrentThreadId())
         {
-            if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(manager->device, riid, obj)))
+            if (SUCCEEDED(hr = IUnknown_QueryInterface(manager->device, riid, obj)))
                 dxgi_device_manager_lock_handle(manager, idx);
         }
         else if (manager->locking_tid && !block)
@@ -8756,7 +8756,7 @@ static HRESULT WINAPI dxgi_device_manager_LockDevice(IMFDXGIDeviceManager *iface
             {
                 if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_INVALID)
                     hr = MF_E_DXGI_NEW_VIDEO_DEVICE;
-                else if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(manager->device, riid, obj)))
+                else if (SUCCEEDED(hr = IUnknown_QueryInterface(manager->device, riid, obj)))
                 {
                     manager->locking_tid = GetCurrentThreadId();
                     dxgi_device_manager_lock_handle(manager, idx);
@@ -8814,7 +8814,7 @@ static HRESULT WINAPI dxgi_device_manager_OpenDeviceHandle(IMFDXGIDeviceManager 
 static HRESULT WINAPI dxgi_device_manager_ResetDevice(IMFDXGIDeviceManager *iface, IUnknown *device, UINT token)
 {
     struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
-    IDXGIDevice *dxgi_device;
+    IUnknown *d3d_device;
     size_t i;
 
     TRACE("%p, %p, %u.\n", iface, device, token);
@@ -8822,8 +8822,14 @@ static HRESULT WINAPI dxgi_device_manager_ResetDevice(IMFDXGIDeviceManager *ifac
     if (!device || token != manager->token)
         return E_INVALIDARG;
 
-    if (FAILED(IUnknown_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device)))
-        return E_INVALIDARG;
+    if (FAILED(IUnknown_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d_device)))
+    {
+        if (FAILED(IUnknown_QueryInterface(device, &IID_ID3D12Device, (void **)&d3d_device)))
+        {
+            WARN("Unsupported device interface.\n");
+            return E_INVALIDARG;
+        }
+    }
 
     EnterCriticalSection(&manager->cs);
 
@@ -8836,9 +8842,9 @@ static HRESULT WINAPI dxgi_device_manager_ResetDevice(IMFDXGIDeviceManager *ifac
         }
         manager->locking_tid = 0;
         manager->locks = 0;
-        IDXGIDevice_Release(manager->device);
+        IUnknown_Release(manager->device);
     }
-    manager->device = dxgi_device;
+    manager->device = d3d_device;
 
     LeaveCriticalSection(&manager->cs);
 
