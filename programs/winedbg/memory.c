@@ -583,28 +583,42 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
 {
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
-    void*               lin = memory_to_linear_addr(addr);
+    DWORD_PTR           lin = (DWORD_PTR)memory_to_linear_addr(addr);
     DWORD64             disp64;
     DWORD               disp;
+    IMAGEHLP_MODULE     im;
 
     print_bare_address(addr);
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (!SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp64, si)) return;
-    dbg_printf(" %s", si->Name);
-    if (disp64) dbg_printf("+0x%I64x", disp64);
+    im.SizeOfStruct  = 0;
+    if (SymFromAddr(dbg_curr_process->handle, lin, &disp64, si) && disp64 < si->Size)
+    {
+        dbg_printf(" %s", si->Name);
+        if (disp64) dbg_printf("+0x%I64x", disp64);
+    }
+    else
+    {
+        im.SizeOfStruct = sizeof(im);
+        if (!SymGetModuleInfo(dbg_curr_process->handle, lin, &im)) return;
+        dbg_printf(" %s", im.ModuleName);
+        if (lin > im.BaseOfImage)
+            dbg_printf("+0x%Ix", lin - im.BaseOfImage);
+    }
     if (with_line)
     {
         IMAGEHLP_LINE64             il;
-        IMAGEHLP_MODULE             im;
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr64(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
+        if (SymGetLineFromAddr64(dbg_curr_process->handle, lin, &disp, &il))
             dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
-        im.SizeOfStruct = sizeof(im);
-        if (SymGetModuleInfo(dbg_curr_process->handle, (DWORD_PTR)lin, &im))
-            dbg_printf(" in %s", im.ModuleName);
+        if (im.SizeOfStruct == 0) /* don't display again module if address is in module+disp form */
+        {
+            im.SizeOfStruct = sizeof(im);
+            if (SymGetModuleInfo(dbg_curr_process->handle, lin, &im))
+                dbg_printf(" in %s", im.ModuleName);
+        }
     }
 }
 
