@@ -1859,6 +1859,7 @@ static BOOL be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, d
     /* FIXME: this assumes that debuggee and debugger use the same
      * representation for reals
      */
+    if (size > sizeof(tmp)) return FALSE;
     if (!memory_read_value(lvalue, size, tmp)) return FALSE;
 
     if (size == sizeof(float)) *ret = *(float*)tmp;
