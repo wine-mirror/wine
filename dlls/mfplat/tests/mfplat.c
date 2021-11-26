@@ -276,7 +276,7 @@ static HWND create_window(void)
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
 }
 
-static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window)
+static IDirect3DDevice9 *create_d3d9_device(IDirect3D9 *d3d9, HWND focus_window)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice9 *device = NULL;
@@ -6080,7 +6080,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
-    if (!(device = create_device(d3d, window)))
+    if (!(device = create_d3d9_device(d3d, window)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
@@ -6768,50 +6768,23 @@ static void test_dxgi_surface_buffer(void)
     ID3D11Device_Release(device);
 }
 
-static void test_sample_allocator(void)
+static void test_sample_allocator_sysmem(void)
 {
     IMFVideoSampleAllocatorNotify test_notify = { &test_notify_callback_vtbl };
     IMFMediaType *media_type, *video_type, *video_type2;
     IMFVideoSampleAllocatorCallback *allocator_cb;
     IMFVideoSampleAllocatorEx *allocatorex;
-    IDirect3DDeviceManager9 *d3d9_manager;
     IMFVideoSampleAllocator *allocator;
-    unsigned int i, buffer_count, token;
-    IDirect3DDevice9 *d3d9_device;
-    IMFDXGIDeviceManager *manager;
+    unsigned int buffer_count;
     IMFSample *sample, *sample2;
-    IMFDXGIBuffer *dxgi_buffer;
     IMFAttributes *attributes;
-    D3D11_TEXTURE2D_DESC desc;
-    ID3D11Texture2D *texture;
     IMFMediaBuffer *buffer;
-    ID3D11Device *device;
     LONG refcount, count;
-    IDirect3D9 *d3d9;
     IUnknown *unk;
     HRESULT hr;
-    BYTE *data;
-    HWND window;
-    static const unsigned int usage[] =
-    {
-        D3D11_USAGE_DEFAULT,
-        D3D11_USAGE_IMMUTABLE,
-        D3D11_USAGE_DYNAMIC,
-        D3D11_USAGE_STAGING,
-        D3D11_USAGE_STAGING + 1,
-    };
-    static const unsigned int sharing[] =
-    {
-        D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
-        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
-        D3D11_RESOURCE_MISC_SHARED,
-    };
 
     if (!pMFCreateVideoSampleAllocatorEx)
-    {
-        win_skip("MFCreateVideoSampleAllocatorEx() is not available.\n");
         return;
-    }
 
     hr = pMFCreateVideoSampleAllocatorEx(&IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -7022,8 +6995,113 @@ todo_wine
     IMFVideoSampleAllocatorCallback_Release(allocator_cb);
     IMFVideoSampleAllocatorEx_Release(allocatorex);
     IMFAttributes_Release(attributes);
+}
 
-    /* Using device manager */
+static void test_sample_allocator_d3d9(void)
+{
+    IDirect3DDeviceManager9 *d3d9_manager;
+    IMFVideoSampleAllocator *allocator;
+    IDirect3DDevice9 *d3d9_device;
+    IMFMediaType *video_type;
+    IMFMediaBuffer *buffer;
+    unsigned int token;
+    IMFSample *sample;
+    IDirect3D9 *d3d9;
+    HWND window;
+    HRESULT hr;
+
+    if (!pMFCreateVideoSampleAllocatorEx)
+        return;
+
+    window = create_window();
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a D3D9 object.\n");
+    if (!(d3d9_device = create_d3d9_device(d3d9, window)))
+    {
+        skip("Failed to create a D3D9 device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &d3d9_manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(d3d9_manager, d3d9_device, token);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocator, (void **)&allocator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_SetDirectXManager(allocator, (IUnknown *)d3d9_manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+
+    /* Frame size is required. */
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(sample, &IID_IMFTrackedSample, TRUE);
+    check_interface(sample, &IID_IMFDesiredSample, FALSE);
+
+    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
+    check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
+    check_interface(buffer, &IID_IMFGetService, TRUE);
+    check_interface(buffer, &IID_IMFDXGIBuffer, FALSE);
+
+    IMFSample_Release(sample);
+    IMFMediaBuffer_Release(buffer);
+
+    IMFVideoSampleAllocator_Release(allocator);
+    IMFMediaType_Release(video_type);
+
+done:
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
+static void test_sample_allocator_d3d11(void)
+{
+    IMFMediaType *video_type;
+    IMFVideoSampleAllocatorEx *allocatorex;
+    IMFVideoSampleAllocator *allocator;
+    unsigned int i, token;
+    IMFDXGIDeviceManager *manager;
+    IMFSample *sample;
+    IMFDXGIBuffer *dxgi_buffer;
+    IMFAttributes *attributes;
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Texture2D *texture;
+    IMFMediaBuffer *buffer;
+    ID3D11Device *device;
+    HRESULT hr;
+    BYTE *data;
+    static const unsigned int usage[] =
+    {
+        D3D11_USAGE_DEFAULT,
+        D3D11_USAGE_IMMUTABLE,
+        D3D11_USAGE_DYNAMIC,
+        D3D11_USAGE_STAGING,
+        D3D11_USAGE_STAGING + 1,
+    };
+    static const unsigned int sharing[] =
+    {
+        D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+        D3D11_RESOURCE_MISC_SHARED,
+    };
+
+    if (!pMFCreateVideoSampleAllocatorEx)
+        return;
+
     if (!(device = create_d3d11_device()))
     {
         skip("Failed to create a D3D11 device, skipping tests.\n");
@@ -7044,8 +7122,9 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     EXPECT_REF(manager, 2);
 
-    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, video_type);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -7068,18 +7147,18 @@ todo_wine
     ok(hr == S_OK, "Failed to get resource, hr %#x.\n", hr);
 
     ID3D11Texture2D_GetDesc(texture, &desc);
-    ok(desc.Width == 320, "Unexpected width %u.\n", desc.Width);
-    ok(desc.Height == 240, "Unexpected height %u.\n", desc.Height);
+    ok(desc.Width == 64, "Unexpected width %u.\n", desc.Width);
+    ok(desc.Height == 64, "Unexpected height %u.\n", desc.Height);
     ok(desc.MipLevels == 1, "Unexpected miplevels %u.\n", desc.MipLevels);
     ok(desc.ArraySize == 1, "Unexpected array size %u.\n", desc.ArraySize);
     ok(desc.Format == DXGI_FORMAT_B8G8R8X8_UNORM, "Unexpected format %u.\n", desc.Format);
     ok(desc.SampleDesc.Count == 1, "Unexpected sample count %u.\n", desc.SampleDesc.Count);
-    ok(desc.SampleDesc.Quality == 0, "Unexpected sample quality %u.\n", desc.SampleDesc.Quality);
+    ok(!desc.SampleDesc.Quality, "Unexpected sample quality %u.\n", desc.SampleDesc.Quality);
     ok(desc.Usage == D3D11_USAGE_DEFAULT, "Unexpected usage %u.\n", desc.Usage);
     ok(desc.BindFlags == (D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET), "Unexpected bind flags %#x.\n",
             desc.BindFlags);
-    ok(desc.CPUAccessFlags == 0, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
-    ok(desc.MiscFlags == 0, "Unexpected misc flags %#x.\n", desc.MiscFlags);
+    ok(!desc.CPUAccessFlags, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
+    ok(!desc.MiscFlags, "Unexpected misc flags %#x.\n", desc.MiscFlags);
 
     ID3D11Texture2D_Release(texture);
     IMFDXGIBuffer_Release(dxgi_buffer);
@@ -7139,7 +7218,7 @@ todo_wine
         {
             ok(desc.BindFlags == (D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET), "Unexpected bind flags %#x.\n",
                 desc.BindFlags);
-            ok(desc.CPUAccessFlags == 0, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
+            ok(!desc.CPUAccessFlags, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
         }
         else if (usage[i] == D3D11_USAGE_DYNAMIC)
         {
@@ -7148,11 +7227,11 @@ todo_wine
         }
         else if (usage[i] == D3D11_USAGE_STAGING)
         {
-            ok(desc.BindFlags == 0, "Unexpected bind flags %#x.\n", desc.BindFlags);
+            ok(!desc.BindFlags, "Unexpected bind flags %#x.\n", desc.BindFlags);
             ok(desc.CPUAccessFlags == (D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ), "Unexpected CPU access flags %#x.\n",
                     desc.CPUAccessFlags);
         }
-        ok(desc.MiscFlags == 0, "Unexpected misc flags %#x.\n", desc.MiscFlags);
+        ok(!desc.MiscFlags, "Unexpected misc flags %#x.\n", desc.MiscFlags);
 
         ID3D11Texture2D_Release(texture);
         IMFDXGIBuffer_Release(dxgi_buffer);
@@ -7228,55 +7307,6 @@ todo_wine
 
     IMFDXGIDeviceManager_Release(manager);
     ID3D11Device_Release(device);
-
-    /* Use D3D9 device manager. */
-    window = create_window();
-    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d9, "Failed to create a D3D9 object.\n");
-    if (!(d3d9_device = create_device(d3d9, window)))
-    {
-        skip("Failed to create a D3D9 device, skipping tests.\n");
-        goto done;
-    }
-
-    hr = DXVA2CreateDirect3DDeviceManager9(&token, &d3d9_manager);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDeviceManager9_ResetDevice(d3d9_manager, d3d9_device, token);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocator, (void **)&allocator);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFVideoSampleAllocator_SetDirectXManager(allocator, (IUnknown *)d3d9_manager);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    check_interface(sample, &IID_IMFTrackedSample, TRUE);
-    check_interface(sample, &IID_IMFDesiredSample, FALSE);
-
-    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
-    check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
-    check_interface(buffer, &IID_IMFGetService, TRUE);
-    check_interface(buffer, &IID_IMFDXGIBuffer, FALSE);
-
-    IMFSample_Release(sample);
-    IMFMediaBuffer_Release(buffer);
-
-    IMFVideoSampleAllocator_Release(allocator);
-    IMFMediaType_Release(media_type);
-
-done:
-    IDirect3D9_Release(d3d9);
-    DestroyWindow(window);
 }
 
 static void test_MFLockSharedWorkQueue(void)
@@ -7510,6 +7540,9 @@ START_TEST(mfplat)
         return;
     }
 
+    if (!pMFCreateVideoSampleAllocatorEx)
+        win_skip("MFCreateVideoSampleAllocatorEx() is not available. Some tests will be skipped.\n");
+
     CoInitialize(NULL);
 
     test_startup();
@@ -7558,7 +7591,9 @@ START_TEST(mfplat)
     test_MFFrameRateToAverageTimePerFrame();
     test_MFMapDXGIFormatToDX9Format();
     test_dxgi_surface_buffer();
-    test_sample_allocator();
+    test_sample_allocator_sysmem();
+    test_sample_allocator_d3d9();
+    test_sample_allocator_d3d11();
     test_MFMapDX9FormatToDXGIFormat();
     test_MFllMulDiv();
     test_shared_dxgi_device_manager();
