@@ -105,7 +105,8 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         if (issigned) *issigned = s;
         break;
     case SymTagPointerType:
-        if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, sizeof(void*), s = FALSE, &rtn))
+        if (!types_get_info(&type, TI_GET_LENGTH, &size) ||
+            !dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagArrayType:

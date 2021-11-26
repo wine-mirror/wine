@@ -44,7 +44,6 @@
  * - type management:
  *      + some bits of internal types are missing (like type casts and the address
  *        operator)
- *      + most of the code implies that sizeof(void*) = sizeof(int)
  *      + all computations should be made on long long
  *              o expr computations are in int:s
  *              o bitfield size is on a 4-bytes
