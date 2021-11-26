@@ -650,6 +650,12 @@ typedef struct
     ULONG                       Reserved4;
 } SYSTEM_EXTENDED_THREAD_INFORMATION32;
 
+typedef struct
+{
+    ULONG VirtualAddress;
+    ULONG NumberOfBytes;
+} MEMORY_RANGE_ENTRY32;
+
 struct __server_iovec32
 {
     ULONG        ptr;

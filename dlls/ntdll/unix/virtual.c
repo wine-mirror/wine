@@ -4931,6 +4931,65 @@ NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
 }
 
 
+static NTSTATUS prefetch_memory( HANDLE process, ULONG_PTR count,
+                                 PMEMORY_RANGE_ENTRY addresses, ULONG flags )
+{
+    ULONG_PTR i;
+    PVOID base;
+    SIZE_T size;
+    static unsigned int once;
+
+    if (!once++)
+    {
+        FIXME( "(process=%p,flags=%u) NtSetInformationVirtualMemory(VmPrefetchInformation) partial stub\n",
+                process, flags );
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        if (!addresses[i].NumberOfBytes) return STATUS_INVALID_PARAMETER_4;
+    }
+
+    if (process != NtCurrentProcess()) return STATUS_SUCCESS;
+
+    for (i = 0; i < count; i++)
+    {
+        base = ROUND_ADDR( addresses[i].VirtualAddress, page_mask );
+        size = ROUND_SIZE( addresses[i].VirtualAddress, addresses[i].NumberOfBytes );
+        madvise( base, size, MADV_WILLNEED );
+    }
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           NtSetInformationVirtualMemory   (NTDLL.@)
+ *           ZwSetInformationVirtualMemory   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetInformationVirtualMemory( HANDLE process,
+                                               VIRTUAL_MEMORY_INFORMATION_CLASS info_class,
+                                               ULONG_PTR count, PMEMORY_RANGE_ENTRY addresses,
+                                               PVOID ptr, ULONG size )
+{
+    TRACE("(%p, info_class=%d, %lu, %p, %p, %u)\n",
+          process, info_class, count, addresses, ptr, size);
+
+    switch (info_class)
+    {
+    case VmPrefetchInformation:
+        if (!ptr) return STATUS_INVALID_PARAMETER_5;
+        if (size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER_6;
+        if (!count) return STATUS_INVALID_PARAMETER_3;
+        return prefetch_memory( process, count, addresses, *(ULONG *)ptr );
+
+    default:
+        FIXME("(%p,info_class=%d,%lu,%p,%p,%u) Unknown information class\n",
+              process, info_class, count, addresses, ptr, size);
+        return STATUS_INVALID_PARAMETER_2;
+    }
+}
+
+
 /**********************************************************************
  *           NtFlushInstructionCache  (NTDLL.@)
  */

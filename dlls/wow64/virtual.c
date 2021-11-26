@@ -33,6 +33,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
+static MEMORY_RANGE_ENTRY *memory_range_entry_array_32to64( const MEMORY_RANGE_ENTRY32 *addresses32,
+                                                            ULONG count )
+{
+    MEMORY_RANGE_ENTRY *addresses = Wow64AllocateTemp( sizeof(MEMORY_RANGE_ENTRY) * count );
+    ULONG i;
+
+    for (i = 0; i < count; i++)
+    {
+        addresses[i].VirtualAddress = ULongToPtr( addresses32[i].VirtualAddress );
+        addresses[i].NumberOfBytes = addresses32[i].NumberOfBytes;
+    }
+
+    return addresses;
+}
+
 /**********************************************************************
  *           wow64_NtAllocateVirtualMemory
  */
@@ -467,6 +482,37 @@ NTSTATUS WINAPI wow64_NtResetWriteWatch( UINT *args )
     SIZE_T size = get_ulong( &args );
 
     return NtResetWriteWatch( process, base, size );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetInformationVirtualMemory
+ */
+NTSTATUS WINAPI wow64_NtSetInformationVirtualMemory( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    VIRTUAL_MEMORY_INFORMATION_CLASS info_class = get_ulong( &args );
+    ULONG count = get_ulong( &args );
+    MEMORY_RANGE_ENTRY32 *addresses32 = get_ptr( &args );
+    PVOID ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    MEMORY_RANGE_ENTRY *addresses;
+
+    if (!count) return STATUS_INVALID_PARAMETER_3;
+    addresses = memory_range_entry_array_32to64( addresses32, count );
+
+    switch (info_class)
+    {
+    case VmPrefetchInformation:
+        break;
+    default:
+        FIXME( "(%p,info_class=%u,%lu,%p,%p,%lu): not implemented\n",
+               process, info_class, count, addresses32, ptr, len );
+        return STATUS_INVALID_PARAMETER_2;
+    }
+
+    return NtSetInformationVirtualMemory( process, info_class, count, addresses, ptr, len );
 }
 
 

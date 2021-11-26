@@ -211,6 +211,7 @@
     SYSCALL_ENTRY( NtSetInformationProcess ) \
     SYSCALL_ENTRY( NtSetInformationThread ) \
     SYSCALL_ENTRY( NtSetInformationToken ) \
+    SYSCALL_ENTRY( NtSetInformationVirtualMemory ) \
     SYSCALL_ENTRY( NtSetIntervalProfile ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetLdtEntries ) \

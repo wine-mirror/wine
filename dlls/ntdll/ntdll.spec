@@ -388,6 +388,7 @@
 @ stdcall -syscall NtSetInformationProcess(long long ptr long)
 @ stdcall -syscall NtSetInformationThread(long long ptr long)
 @ stdcall -syscall NtSetInformationToken(long long ptr long)
+@ stdcall -syscall NtSetInformationVirtualMemory(long long ptr ptr ptr long)
 @ stdcall -syscall NtSetIntervalProfile(long long)
 @ stdcall -syscall NtSetIoCompletion(ptr long long long long)
 @ stdcall -syscall NtSetLdtEntries(long int64 long int64)
@@ -1416,6 +1417,7 @@
 @ stdcall -private -syscall ZwSetInformationProcess(long long ptr long) NtSetInformationProcess
 @ stdcall -private -syscall ZwSetInformationThread(long long ptr long) NtSetInformationThread
 @ stdcall -private -syscall ZwSetInformationToken(long long ptr long) NtSetInformationToken
+@ stdcall -private -syscall ZwSetInformationVirtualMemory(long long ptr ptr ptr long) NtSetInformationVirtualMemory
 @ stdcall -private -syscall ZwSetIntervalProfile(long long) NtSetIntervalProfile
 @ stdcall -private -syscall ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
 @ stdcall -private -syscall ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
