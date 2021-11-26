@@ -44,7 +44,6 @@
  * - type management:
  *      + some bits of internal types are missing (like type casts and the address
  *        operator)
- *      + the type for an enum's value is always inferred as int (winedbg & dbghelp)
  *      + most of the code implies that sizeof(void*) = sizeof(int)
  *      + all computations should be made on long long
  *              o expr computations are in int:s

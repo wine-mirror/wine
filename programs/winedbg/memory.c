@@ -439,11 +439,8 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
             BOOL        ok = FALSE;
 
-            /* FIXME: it depends on underlying type for enums 
-             * (not supported yet in dbghelp)
-             * Assuming 4 as for an int
-             */
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, 4, TRUE, &val_int)) return;
+            if (!types_get_info(&type, TI_GET_LENGTH, &size64) ||
+                !dbg_curr_process->be_cpu->fetch_integer(lvalue, size64, TRUE, &val_int)) return;
 
             if (types_get_info(&type, TI_GET_CHILDRENCOUNT, &count))
             {
@@ -468,7 +465,10 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                                 continue;
                             switch (V_VT(&variant))
                             {
+                            case VT_I1: ok = (val_int == V_I1(&variant)); break;
+                            case VT_I2: ok = (val_int == V_I2(&variant)); break;
                             case VT_I4: ok = (val_int == V_I4(&variant)); break;
+                            case VT_I8: ok = (val_int == V_I8(&variant)); break;
                             default: WINE_FIXME("Unsupported variant type (%u)\n", V_VT(&variant));
                             }
                             if (ok)
