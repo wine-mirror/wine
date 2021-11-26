@@ -319,7 +319,7 @@ void break_add_break_from_lineno(const char *filename, int lineno, BOOL swbp)
         il.SizeOfStruct = sizeof(il);
         if (!SymGetLineFromAddr64(dbg_curr_process->handle, linear, &disp, &il))
         {
-            dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
+            dbg_printf("Unable to add breakpoint (unknown address %Ix)\n", linear);
             return;
         }
         filename = il.FileName;

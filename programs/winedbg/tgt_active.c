@@ -536,12 +536,12 @@ static void dbg_resume_debuggee(DWORD cont)
         if (dbg_curr_thread)
         {
             if (!dbg_curr_process->be_cpu->set_context(dbg_curr_thread->handle, &dbg_context))
-                dbg_printf("Cannot set ctx on %04lx\n", dbg_curr_tid);
+                dbg_printf("Cannot set ctx on %04Ix\n", dbg_curr_tid);
         }
     }
     dbg_interactiveP = FALSE;
     if (!ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, cont))
-        dbg_printf("Cannot continue on %04lx (%08x)\n", dbg_curr_tid, cont);
+        dbg_printf("Cannot continue on %04Ix (%08x)\n", dbg_curr_tid, cont);
 }
 
 static void wait_exception(void)

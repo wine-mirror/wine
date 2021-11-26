@@ -392,7 +392,7 @@ static void info_window(HWND hWnd, int indent)
         if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
             strcpy(wndName, "-- Empty --");
 
-        dbg_printf("%*s%08lx%*s %-17.17s %08x %0*lx %08x %.14s\n",
+        dbg_printf("%*s%08Ix%*s %-17.17s %08x %0*Ix %08x %.14s\n",
                    indent, "", (DWORD_PTR)hWnd, 12 - indent, "",
                    clsName, GetWindowLongW(hWnd, GWL_STYLE),
                    ADDRWIDTH, (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
@@ -434,7 +434,7 @@ void info_win32_window(HWND hWnd, BOOL detailed)
 
     /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
     dbg_printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
-               "inst=%p  active=%p  idmenu=%08lx\n"
+               "inst=%p  active=%p  idmenu=%08Ix\n"
                "style=0x%08x  exstyle=0x%08x  wndproc=%p  text='%s'\n"
                "client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%p\n",
                GetWindow(hWnd, GW_HWNDNEXT),
@@ -791,7 +791,7 @@ void info_win32_virtual(DWORD pid)
             type = "";
             prot[0] = '\0';
         }
-        dbg_printf("%0*lx %0*lx %s %s %s\n",
+        dbg_printf("%0*Ix %0*Ix %s %s %s\n",
                    ADDRWIDTH, (DWORD_PTR)addr, ADDRWIDTH, (DWORD_PTR)addr + mbi.RegionSize - 1, state, type, prot);
         if (addr + mbi.RegionSize < addr) /* wrap around ? */
             break;
@@ -893,7 +893,7 @@ void info_win32_exception(void)
         break;
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
-            dbg_printf("page fault on %s access to 0x%0*lx",
+            dbg_printf("page fault on %s access to 0x%0*Ix",
                        rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
                        rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
                        ADDRWIDTH, rec->ExceptionInformation[1]);
@@ -931,7 +931,7 @@ void info_win32_exception(void)
                                   (void*)rec->ExceptionInformation[1], TRUE, FALSE,
                                   name, sizeof(name));
             else
-                sprintf( name, "%ld", rec->ExceptionInformation[1] );
+                sprintf( name, "%Id", rec->ExceptionInformation[1] );
             dbg_printf("unimplemented function %s.%s called", dll, name);
         }
         break;
@@ -961,14 +961,14 @@ void info_win32_exception(void)
         break;
     case EXCEPTION_WINE_CXX_EXCEPTION:
         if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == EXCEPTION_WINE_CXX_FRAME_MAGIC)
-            dbg_printf("C++ exception(object = 0x%0*lx, type = 0x%0*lx)",
+            dbg_printf("C++ exception(object = 0x%0*Ix, type = 0x%0*Ix)",
                        ADDRWIDTH, rec->ExceptionInformation[1], ADDRWIDTH, rec->ExceptionInformation[2]);
         else if(rec->NumberParameters == 4 && rec->ExceptionInformation[0] == EXCEPTION_WINE_CXX_FRAME_MAGIC)
             dbg_printf("C++ exception(object = %p, type = %p, base = %p)",
                        (void*)rec->ExceptionInformation[1], (void*)rec->ExceptionInformation[2],
                        (void*)rec->ExceptionInformation[3]);
         else
-            dbg_printf("C++ exception with strange parameter count %d or magic 0x%0*lx",
+            dbg_printf("C++ exception with strange parameter count %d or magic 0x%0*Ix",
                        rec->NumberParameters, ADDRWIDTH, rec->ExceptionInformation[0]);
         break;
     default:

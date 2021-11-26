@@ -219,11 +219,11 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     case 'a':
         if (sizeof(DWORD_PTR) == 4)
         {
-            DO_DUMP(DWORD_PTR, 4, " %8.8lx");
+            DO_DUMP(DWORD_PTR, 4, " %8.8Ix");
         }
         else
         {
-            DO_DUMP(DWORD_PTR, 2, " %16.16lx");
+            DO_DUMP(DWORD_PTR, 2, " %16.16Ix");
         }
         break;
     case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v); break;

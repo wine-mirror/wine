@@ -1486,7 +1486,7 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
        packet_reply_open(gdbctx);
        packet_reply_add(gdbctx, "O");
        snprintf(buffer, sizeof(buffer),
-                "%*s%04lx%*s%-17.17s %08x %0*lx %.14s\n",
+                "%*s%04Ix%*s%-17.17s %08x %0*Ix %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
                 clsName, GetWindowLongW(hWnd, GWL_STYLE),
                 addr_width(gdbctx), (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
@@ -1613,7 +1613,7 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
             prot[0] = '\0';
         }
         packet_reply_open(gdbctx);
-        snprintf(buffer, sizeof(buffer), "%0*lx %0*lx %s %s %s\n",
+        snprintf(buffer, sizeof(buffer), "%0*Ix %0*Ix %s %s %s\n",
                  addr_width(gdbctx), (DWORD_PTR)addr,
                  addr_width(gdbctx), mbi.RegionSize, state, type, prot);
         packet_reply_add(gdbctx, "O");
@@ -2042,7 +2042,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             char    buf[64];
 
             snprintf(buf, sizeof(buf),
-                     "Text=%08lx;Data=%08lx;Bss=%08lx",
+                     "Text=%08Ix;Data=%08Ix;Bss=%08Ix",
                      gdbctx->wine_segs[0], gdbctx->wine_segs[1],
                      gdbctx->wine_segs[2]);
             return packet_reply(gdbctx, buf);
@@ -2439,7 +2439,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
         if (gdbctx->sock != INVALID_SOCKET)
         {
             ret = TRUE;
-            TRACE("connected on %lu\n", gdbctx->sock);
+            TRACE("connected on %Iu\n", gdbctx->sock);
             /* don't keep our small packets too long: send them ASAP back to GDB
              * without this, GDB really crawls
              */

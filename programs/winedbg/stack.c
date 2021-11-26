@@ -409,7 +409,7 @@ static void backtrace_all(void)
                 dbg_active_wait_for_first_exception();
             }
 
-            dbg_printf("\nBacktracing for thread %04x in process %04lx (%s):\n",
+            dbg_printf("\nBacktracing for thread %04x in process %04Ix (%s):\n",
                        entry.th32ThreadID, dbg_curr_pid,
                        dbg_W2A(dbg_curr_process->imageName, -1));
             backtrace_tid(dbg_curr_process, entry.th32ThreadID);

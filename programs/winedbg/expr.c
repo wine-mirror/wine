@@ -687,10 +687,10 @@ BOOL expr_print(const struct expr* exp)
         dbg_printf("$%s", exp->un.intvar.name);
         break;
     case EXPR_TYPE_U_CONST:
-        dbg_printf("%lu", exp->un.u_const.value);
+        dbg_printf("%Iu", exp->un.u_const.value);
         break;
     case EXPR_TYPE_S_CONST:
-        dbg_printf("%ld", exp->un.s_const.value);
+        dbg_printf("%Id", exp->un.s_const.value);
         break;
     case EXPR_TYPE_STRING:
         dbg_printf("\"%s\"", exp->un.string.str);

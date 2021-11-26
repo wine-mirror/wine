@@ -87,10 +87,10 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         buffer += l;
         lvalue->cookie = DLV_TARGET;
         lvalue->addr.Offset = (ULONG64)*pval + sym->Address;
-        if ((LONG_PTR)sym->Address >= 0)
-            snprintf(buffer, sz, "+%ld]", (ULONG_PTR)sym->Address);
+        if ((LONG64)sym->Address >= 0)
+            snprintf(buffer, sz, "+%I64d]", sym->Address);
         else
-            snprintf(buffer, sz, "-%ld]", -(LONG_PTR)sym->Address);
+            snprintf(buffer, sz, "-%I64d]", -(LONG64)sym->Address);
     }
     else if (sym->Flags & SYMFLAG_VALUEPRESENT)
     {
@@ -779,7 +779,7 @@ static BOOL CALLBACK symbols_info_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
             mi.ModuleName[len - 5] = '\0';
     }
 
-    dbg_printf("%0*lx: %s!%s", ADDRWIDTH, (ULONG_PTR)sym->Address, mi.ModuleName, sym->Name);
+    dbg_printf("%0*I64x: %s!%s", ADDRWIDTH, sym->Address, mi.ModuleName, sym->Name);
     type.id = sym->TypeIndex;
     type.module = sym->ModBase;
 

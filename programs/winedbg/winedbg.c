@@ -571,7 +571,7 @@ void dbg_start_interactive(HANDLE hFile)
 
     if (dbg_curr_process)
     {
-        dbg_printf("WineDbg starting on pid %04lx\n", dbg_curr_pid);
+        dbg_printf("WineDbg starting on pid %04Ix\n", dbg_curr_pid);
         if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
     }
 
