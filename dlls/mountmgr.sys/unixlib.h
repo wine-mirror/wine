@@ -152,6 +152,7 @@ extern void queue_device_op( enum device_op op, const char *udi, const char *dev
                              const char *mount_point, enum device_type type, const GUID *guid,
                              const char *disk_serial, const struct scsi_info *info ) DECLSPEC_HIDDEN;
 extern void run_dbus_loop(void) DECLSPEC_HIDDEN;
+extern void run_diskarbitration_loop(void) DECLSPEC_HIDDEN;
 
 extern NTSTATUS dhcp_request( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;

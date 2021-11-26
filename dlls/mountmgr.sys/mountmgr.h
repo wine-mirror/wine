@@ -36,8 +36,6 @@
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 
-extern void initialize_diskarbitration(void) DECLSPEC_HIDDEN;
-
 extern WCHAR *strdupW( const WCHAR * ) DECLSPEC_HIDDEN;
 
 /* device functions */
@@ -114,8 +112,4 @@ extern struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICOD
 extern void delete_mount_point( struct mount_point *mount ) DECLSPEC_HIDDEN;
 extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len ) DECLSPEC_HIDDEN;
 
-#ifdef __APPLE__
-extern ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param,
-                                     char *buf, ULONG offset, ULONG size ) DECLSPEC_HIDDEN;
-#endif
 #endif /* __WINE_MOUNTMGR_H */

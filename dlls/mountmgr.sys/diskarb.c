@@ -18,8 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -43,6 +46,8 @@
 #include "winsock2.h"
 #include "ws2ipdef.h"
 #include "dhcpcsdk.h"
+#include "unixlib.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
@@ -163,9 +168,9 @@ static void appeared_callback( DADiskRef disk, void *context )
     }
 
     if (removable)
-        add_dos_device( -1, device, device, mount_point, type, guid_ptr, &scsi_info );
+        queue_device_op( ADD_DOS_DEVICE, device, device, mount_point, type, guid_ptr, NULL, &scsi_info );
     else
-        if (guid_ptr) add_volume( device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, &scsi_info );
+        if (guid_ptr) queue_device_op( ADD_VOLUME, device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, &scsi_info );
 
 done:
     CFRelease( dict );
@@ -191,20 +196,17 @@ static void disappeared_callback( DADiskRef disk, void *context )
 
     TRACE( "got unmount notification for '%s'\n", device );
 
-    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) && CFBooleanGetValue( ref ))
-        remove_dos_device( -1, device );
-    else
-        remove_volume( device );
+    queue_device_op( REMOVE_DEVICE, device, NULL, NULL, 0, NULL, NULL, NULL );
 
 done:
     CFRelease( dict );
 }
 
-static DWORD WINAPI runloop_thread( void *arg )
+void run_diskarbitration_loop(void)
 {
     DASessionRef session = DASessionCreate( NULL );
 
-    if (!session) return 1;
+    if (!session) return;
 
     DASessionScheduleWithRunLoop( session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode );
     DARegisterDiskAppearedCallback( session, kDADiskDescriptionMatchVolumeMountable,
@@ -216,20 +218,11 @@ static DWORD WINAPI runloop_thread( void *arg )
     CFRunLoopRun();
     DASessionUnscheduleFromRunLoop( session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode );
     CFRelease( session );
-    return 0;
-}
-
-void initialize_diskarbitration(void)
-{
-    HANDLE handle;
-
-    if (!(handle = CreateThread( NULL, 0, runloop_thread, NULL, 0, NULL ))) return;
-    CloseHandle( handle );
 }
 
 #else  /*  HAVE_DISKARBITRATION_DISKARBITRATION_H */
 
-void initialize_diskarbitration(void)
+void run_diskarbitration_loop(void)
 {
     TRACE( "Skipping, Disk Arbitration support not compiled in\n" );
 }
@@ -291,17 +284,17 @@ done:
     return ret;
 }
 
-ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
-                              ULONG size )
+NTSTATUS dhcp_request( void *args )
 {
-    CFStringRef service_id = find_service_id( unix_name );
+    const struct dhcp_request_params *params = args;
+    CFStringRef service_id = find_service_id( params->unix_name );
     CFDictionaryRef dict;
     CFDataRef value;
     DWORD ret = 0;
     CFIndex len;
 
-    param->offset = 0;
-    param->size   = 0;
+    params->req->offset = 0;
+    params->req->size   = 0;
 
     if (!service_id) return 0;
     if (!(dict = SCDynamicStoreCopyDHCPInfo( NULL, service_id )))
@@ -310,25 +303,25 @@ ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_reques
         return 0;
     }
     CFRelease( service_id );
-    if (!(value = DHCPInfoGetOptionData( dict, map_option(param->id) )))
+    if (!(value = DHCPInfoGetOptionData( dict, map_option(params->req->id) )))
     {
         CFRelease( dict );
         return 0;
     }
     len = CFDataGetLength( value );
 
-    switch (param->id)
+    switch (params->req->id)
     {
     case OPTION_SUBNET_MASK:
     case OPTION_ROUTER_ADDRESS:
     case OPTION_BROADCAST_ADDRESS:
     {
-        DWORD *ptr = (DWORD *)(buf + offset);
-        if (len == sizeof(*ptr) && size >= sizeof(*ptr))
+        DWORD *ptr = (DWORD *)(params->buffer + params->offset);
+        if (len == sizeof(*ptr) && params->size >= sizeof(*ptr))
         {
             CFDataGetBytes( value, CFRangeMake(0, len), (UInt8 *)ptr );
-            param->offset = offset;
-            param->size   = sizeof(*ptr);
+            params->req->offset = params->offset;
+            params->req->size   = sizeof(*ptr);
             TRACE( "returning %08x\n", *ptr );
         }
         ret = sizeof(*ptr);
@@ -338,33 +331,32 @@ ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_reques
     case OPTION_DOMAIN_NAME:
     case OPTION_MSFT_IE_PROXY:
     {
-        char *ptr = buf + offset;
-        if (size >= len)
+        char *ptr = params->buffer + params->offset;
+        if (params->size >= len)
         {
             CFDataGetBytes( value, CFRangeMake(0, len), (UInt8 *)ptr );
-            param->offset = offset;
-            param->size   = len;
+            params->req->offset = params->offset;
+            params->req->size   = len;
             TRACE( "returning %s\n", debugstr_an(ptr, len) );
         }
         ret = len;
         break;
     }
     default:
-        FIXME( "option %u not supported\n", param->id );
+        FIXME( "option %u not supported\n", params->req->id );
         break;
     }
 
     CFRelease( dict );
-    return ret;
+    *params->ret_size = ret;
+    return STATUS_SUCCESS;
 }
 
 #elif !defined(SONAME_LIBDBUS_1)
 
-ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
-                              ULONG size )
+NTSTATUS dhcp_request( void *args )
 {
-    FIXME( "support not compiled in\n" );
-    return 0;
+    return STATUS_NOT_SUPPORTED;
 }
 
 #endif

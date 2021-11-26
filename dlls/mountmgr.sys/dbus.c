@@ -827,9 +827,4 @@ void run_dbus_loop(void)
     TRACE( "Skipping, DBUS support not compiled in\n" );
 }
 
-NTSTATUS dhcp_request( void *args )
-{
-    return STATUS_NOT_SUPPORTED;
-}
-
 #endif  /* SONAME_LIBDBUS_1 */

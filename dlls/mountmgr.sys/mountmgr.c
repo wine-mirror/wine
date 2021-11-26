@@ -408,15 +408,11 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
     offset = FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]);
     for (i = 0; i < query->count; i++)
     {
-#ifdef __APPLE__
-        offset += get_dhcp_request_param( query->unix_name, &query->params[i], (char *)query, offset, outsize - offset );
-#else
         ULONG ret_size;
         struct dhcp_request_params params = { query->unix_name, &query->params[i],
                                               (char *)query, offset, outsize - offset, &ret_size };
         MOUNTMGR_CALL( dhcp_request, &params );
         offset += ret_size;
-#endif
         if (offset > outsize)
         {
             if (offset >= sizeof(query->size)) query->size = offset;
@@ -684,8 +680,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     params.op_thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
     params.op_apc = device_op;
     CloseHandle( CreateThread( NULL, 0, run_loop_thread, &params, 0, NULL ));
-
-    initialize_diskarbitration();
 
 #ifdef _WIN64
     /* create a symlink so that the Wine port overrides key can be edited with 32-bit reg or regedit */

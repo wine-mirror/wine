@@ -128,6 +128,7 @@ static NTSTATUS run_loop( void *args )
     const struct run_loop_params *params = args;
 
     run_loop_params = *params;
+    run_diskarbitration_loop();
     run_dbus_loop();
     return STATUS_SUCCESS;
 }
