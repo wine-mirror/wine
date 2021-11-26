@@ -83,7 +83,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         }
         if (size > sizeof(rtn))
         {
-            WINE_ERR("Size too large (%s)\n", wine_dbgstr_longlong(size));
+            WINE_ERR("Size too large (%I64x)\n", size);
             RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
             return rtn;
         }

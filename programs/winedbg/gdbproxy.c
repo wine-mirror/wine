@@ -1420,7 +1420,7 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
         return packet_error;
     }
 
-    TRACE("%Iu => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, &ctx, reg)));
+    TRACE("%Iu => %I64x\n", reg, cpu_register(gdbctx, &ctx, reg));
 
     packet_reply_open(gdbctx);
     packet_reply_register_hex_to(gdbctx, &ctx, reg);

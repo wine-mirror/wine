@@ -168,9 +168,9 @@ struct info_modules
 
 static void module_print_info(const struct info_module *module, BOOL is_embedded)
 {
-    dbg_printf("%*.*s-%*.*s\t%-16s%s\n",
-               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(module->mi.BaseOfImage),
-               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(module->mi.BaseOfImage + module->mi.ImageSize),
+    dbg_printf("%*.*I64x-%*.*I64x\t%-16s%s\n",
+               ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage,
+               ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
                is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
 }
 
