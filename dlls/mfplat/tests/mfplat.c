@@ -48,6 +48,10 @@
 #include "ks.h"
 #include "ksmedia.h"
 #include "dxva2api.h"
+#include "d3d12.h"
+#undef EXTERN_GUID
+#define EXTERN_GUID DEFINE_GUID
+#include "mfd3d12.h"
 
 DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19);
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
@@ -220,6 +224,8 @@ static DWORD get_d3d11_texture_color(ID3D11Texture2D *texture, unsigned int x, u
 static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
+static HRESULT (WINAPI *pD3D12CreateDevice)(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_feature_level,
+        REFIID iid, void **device);
 
 static HRESULT (WINAPI *pCoGetApartmentType)(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
 
@@ -1023,6 +1029,11 @@ static void init_functions(void)
     if ((mod = LoadLibraryA("d3d11.dll")))
     {
         X(D3D11CreateDevice);
+    }
+
+    if ((mod = LoadLibraryA("d3d12.dll")))
+    {
+        X(D3D12CreateDevice);
     }
 
     mod = GetModuleHandleA("ole32.dll");
@@ -6542,6 +6553,18 @@ static void update_d3d11_texture(ID3D11Texture2D *texture, unsigned int sub_reso
     ID3D11Device_Release(device);
 }
 
+static ID3D12Device *create_d3d12_device(void)
+{
+    ID3D12Device *device;
+    HRESULT hr;
+
+    hr = pD3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
+    if (FAILED(hr))
+        return NULL;
+
+    return device;
+}
+
 static void test_dxgi_surface_buffer(void)
 {
     DWORD max_length, cur_length, length, color;
@@ -7309,6 +7332,96 @@ static void test_sample_allocator_d3d11(void)
     ID3D11Device_Release(device);
 }
 
+static void test_sample_allocator_d3d12(void)
+{
+    IMFVideoSampleAllocator *allocator;
+    IMFDXGIDeviceManager *manager;
+    IMFDXGIBuffer *dxgi_buffer;
+    IMFMediaType *video_type;
+    ID3D12Resource *resource;
+    D3D12_RESOURCE_DESC desc;
+    IMFMediaBuffer *buffer;
+    ID3D12Device *device;
+    unsigned int token;
+    IMFSample *sample;
+    HRESULT hr;
+
+    if (!pD3D12CreateDevice)
+    {
+        skip("Missing d3d12 support, some tests will be skipped.\n");
+        return;
+    }
+
+    if (!(device = create_d3d12_device()))
+    {
+        skip("Failed to create a D3D12 device, skipping tests.\n");
+        return;
+    }
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "Failed to create device manager, hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)device, token);
+    ok(hr == S_OK, "Failed to set a device, hr %#x.\n", hr);
+
+    hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocator, (void **)&allocator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    EXPECT_REF(manager, 1);
+    hr = IMFVideoSampleAllocator_SetDirectXManager(allocator, (IUnknown *)manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(manager, 2);
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_D3D_RESOURCE_VERSION, MF_D3D12_RESOURCE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
+todo_wine
+    ok(hr == S_OK || broken(hr == MF_E_UNEXPECTED) /* Some Win10 versions fail. */, "Unexpected hr %#x.\n", hr);
+    if (FAILED(hr)) goto done;
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
+    check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
+    check_interface(buffer, &IID_IMFDXGIBuffer, TRUE);
+    check_interface(buffer, &IID_IMFGetService, FALSE);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D12Resource, (void **)&resource);
+    ok(hr == S_OK, "Failed to get resource, hr %#x.\n", hr);
+
+    resource->lpVtbl->GetDesc(resource, &desc);
+    ok(desc.Width == 64, "Unexpected width.\n");
+    ok(desc.Height == 64, "Unexpected height.\n");
+    ok(desc.DepthOrArraySize == 1, "Unexpected array size %u.\n", desc.DepthOrArraySize);
+    ok(desc.MipLevels == 1, "Unexpected miplevels %u.\n", desc.MipLevels);
+    ok(desc.Format == DXGI_FORMAT_B8G8R8X8_UNORM, "Unexpected format %u.\n", desc.Format);
+    ok(desc.SampleDesc.Count == 1, "Unexpected sample count %u.\n", desc.SampleDesc.Count);
+    ok(!desc.SampleDesc.Quality, "Unexpected sample quality %u.\n", desc.SampleDesc.Quality);
+    ok(!desc.Layout, "Unexpected layout %u.\n", desc.Layout);
+    ok(!desc.Flags, "Unexpected flags %#x.\n", desc.Flags);
+
+    ID3D12Resource_Release(resource);
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMFSample_Release(sample);
+
+    IMFVideoSampleAllocator_Release(allocator);
+
+done:
+    IMFDXGIDeviceManager_Release(manager);
+    ID3D12Device_Release(device);
+}
+
 static void test_MFLockSharedWorkQueue(void)
 {
     DWORD taskid, queue, queue2;
@@ -7594,6 +7707,7 @@ START_TEST(mfplat)
     test_sample_allocator_sysmem();
     test_sample_allocator_d3d9();
     test_sample_allocator_d3d11();
+    test_sample_allocator_d3d12();
     test_MFMapDX9FormatToDXGIFormat();
     test_MFllMulDiv();
     test_shared_dxgi_device_manager();
