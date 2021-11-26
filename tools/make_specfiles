@@ -205,6 +205,7 @@ my @dll_groups =
   "kernel32",
 #  "kernelbase",
   "api-ms-win-appmodel-identity-l1-1-0",
+  "api-ms-win-appmodel-runtime-l1-1-0",
   "api-ms-win-appmodel-runtime-l1-1-1",
   "api-ms-win-downlevel-normaliz-l1-1-0",
   "api-ms-win-core-appcompat-l1-1-1",

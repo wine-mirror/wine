@@ -946,6 +946,7 @@ enable_advpack
 enable_amsi
 enable_amstream
 enable_api_ms_win_appmodel_identity_l1_1_0
+enable_api_ms_win_appmodel_runtime_l1_1_0
 enable_api_ms_win_appmodel_runtime_l1_1_1
 enable_api_ms_win_appmodel_runtime_l1_1_2
 enable_api_ms_win_core_apiquery_l1_1_0
@@ -20724,6 +20725,7 @@ wine_fn_config_makefile dlls/amsi enable_amsi
 wine_fn_config_makefile dlls/amstream enable_amstream
 wine_fn_config_makefile dlls/amstream/tests enable_tests
 wine_fn_config_makefile dlls/api-ms-win-appmodel-identity-l1-1-0 enable_api_ms_win_appmodel_identity_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-appmodel-runtime-l1-1-0 enable_api_ms_win_appmodel_runtime_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-appmodel-runtime-l1-1-1 enable_api_ms_win_appmodel_runtime_l1_1_1
 wine_fn_config_makefile dlls/api-ms-win-appmodel-runtime-l1-1-2 enable_api_ms_win_appmodel_runtime_l1_1_2
 wine_fn_config_makefile dlls/api-ms-win-core-apiquery-l1-1-0 enable_api_ms_win_core_apiquery_l1_1_0
