@@ -18,27 +18,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
+#if 0
+#pragma makedep unix
+#endif
 
-#include <assert.h>
+#include "config.h"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <dlfcn.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #ifdef SONAME_LIBDBUS_1
 # include <dbus/dbus.h>
 #endif
 
 #include "mountmgr.h"
-#include "winnls.h"
-#include "excpt.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
-#include "ws2ipdef.h"
-#include "ip2string.h"
 #include "dhcpcsdk.h"
+#include "unixlib.h"
 
-#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
@@ -82,13 +84,6 @@ DBUS_FUNCS;
 static int udisks_timeout = -1;
 static DBusConnection *connection;
 
-static LONG WINAPI assert_fault(EXCEPTION_POINTERS *eptr)
-{
-    if (eptr->ExceptionRecord->ExceptionCode == EXCEPTION_WINE_ASSERTION)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
 static inline int starts_with( const char *str, const char *prefix )
 {
     return !strncmp( str, prefix, strlen(prefix) );
@@ -97,19 +92,32 @@ static inline int starts_with( const char *str, const char *prefix )
 static GUID *parse_uuid( GUID *guid, const char *str )
 {
     /* standard uuid format */
-    if (strlen(str) == 36)
+    if (strlen(str) == 36 && str[8] == '-' && str[13] == '-' && str[18] == '-' && str[23] == '-')
     {
-        UNICODE_STRING strW;
-        WCHAR buffer[39];
+        int i;
+        unsigned char *out = guid->Data4;
 
-        if (MultiByteToWideChar( CP_UNIXCP, 0, str, 36, buffer + 1, 36 ))
+        if (sscanf( str, "%x-%hx-%hx-", &guid->Data1, &guid->Data2, &guid->Data3 ) != 3) return NULL;
+        for (i = 19; i < 36; i++)
         {
-            buffer[0] = '{';
-            buffer[37] = '}';
-            buffer[38] = 0;
-            RtlInitUnicodeString( &strW, buffer );
-            if (!RtlGUIDFromString( &strW, guid )) return guid;
+            unsigned char val;
+
+            if (i == 23) continue;
+
+            if      (str[i] >= '0' && str[i] <= '9') val = str[i] - '0';
+            else if (str[i] >= 'a' && str[i] <= 'f') val = str[i] - 'a' + 10;
+            else if (str[i] >= 'A' && str[i] <= 'F') val = str[i] - 'A' + 10;
+            else return NULL;
+            val <<= 4;
+            i++;
+
+            if      (str[i] >= '0' && str[i] <= '9') val += str[i] - '0';
+            else if (str[i] >= 'a' && str[i] <= 'f') val += str[i] - 'a' + 10;
+            else if (str[i] >= 'A' && str[i] <= 'F') val += str[i] - 'A' + 10;
+            else return NULL;
+            *out++ = val;
         }
+        return guid;
     }
 
     /* check for xxxx-xxxx format (FAT serial number) */
@@ -257,8 +265,8 @@ static void udisks_new_device( const char *udi )
 
     if (device)
     {
-        if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
-        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, NULL );
+        if (removable) queue_device_op( ADD_DOS_DEVICE, udi, device, mount_point, drive_type, guid_ptr, NULL, NULL );
+        else if (guid_ptr) queue_device_op( ADD_VOLUME, udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, NULL );
     }
 
     p_dbus_message_unref( reply );
@@ -268,8 +276,7 @@ static void udisks_new_device( const char *udi )
 static void udisks_removed_device( const char *udi )
 {
     TRACE( "removed %s\n", wine_dbgstr_a(udi) );
-
-    if (!remove_dos_device( -1, udi )) remove_volume( udi );
+    queue_device_op( REMOVE_DEVICE, udi, NULL, NULL, 0, NULL, NULL, NULL );
 }
 
 /* UDisks callback for changed device */
@@ -426,8 +433,8 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
     }
     if (device)
     {
-        if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
-        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, id, NULL );
+        if (removable) queue_device_op( ADD_DOS_DEVICE, udi, device, mount_point, drive_type, guid_ptr, id, NULL );
+        else if (guid_ptr) queue_device_op( ADD_VOLUME, udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, id, NULL );
     }
 }
 
@@ -522,7 +529,7 @@ static DBusHandlerResult udisks_filter( DBusConnection *ctx, DBusMessage *msg, v
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-static DWORD WINAPI dbus_thread( void *arg )
+void run_dbus_loop(void)
 {
     static const char udisks_match[] = "type='signal',"
                                        "interface='org.freedesktop.UDisks',"
@@ -536,12 +543,14 @@ static DWORD WINAPI dbus_thread( void *arg )
 
     DBusError error;
 
+    if (!load_dbus_functions()) return;
+
     p_dbus_error_init( &error );
     if (!(connection = p_dbus_bus_get( DBUS_BUS_SYSTEM, &error )))
     {
         WARN( "failed to get system dbus connection: %s\n", error.message );
         p_dbus_error_free( &error );
-        return 1;
+        return;
     }
 
     /* first try UDisks2 */
@@ -561,27 +570,7 @@ static DWORD WINAPI dbus_thread( void *arg )
     p_dbus_connection_remove_filter( connection, udisks_filter, NULL );
 
 found:
-    __TRY
-    {
-        while (p_dbus_connection_read_write_dispatch( connection, -1 )) /* nothing */ ;
-    }
-    __EXCEPT( assert_fault )
-    {
-        WARN( "dbus assertion failure, disabling support\n" );
-        return 1;
-    }
-    __ENDTRY;
-
-    return 0;
-}
-
-void initialize_dbus(void)
-{
-    HANDLE handle;
-
-    if (!load_dbus_functions()) return;
-    if (!(handle = CreateThread( NULL, 0, dbus_thread, NULL, 0, NULL ))) return;
-    CloseHandle( handle );
+    while (p_dbus_connection_read_write_dispatch( connection, -1 )) /* nothing */ ;
 }
 
 #if !defined(HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H) || !defined(HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H)
@@ -776,28 +765,29 @@ static const char *map_option( ULONG option )
     }
 }
 
-ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
-                              ULONG size )
+NTSTATUS dhcp_request( void *args )
 {
+    const struct dhcp_request_params *params = args;
     DBusMessage *reply;
     const char *value;
     ULONG ret = 0;
 
-    param->offset = param->size = 0;
+    params->req->offset = params->req->size = 0;
 
-    if (!(reply = dhcp4_config_option_request( unix_name, map_option(param->id), &value ))) return 0;
+    if (!(reply = dhcp4_config_option_request( params->unix_name, map_option(params->req->id), &value ))) return 0;
 
-    switch (param->id)
+    switch (params->req->id)
     {
     case OPTION_SUBNET_MASK:
     case OPTION_ROUTER_ADDRESS:
     case OPTION_BROADCAST_ADDRESS:
     {
-        IN_ADDR *ptr = (IN_ADDR *)(buf + offset);
-        if (value && size >= sizeof(IN_ADDR) && !RtlIpv4StringToAddressA( value, TRUE, NULL, ptr ))
+        IN_ADDR *ptr = (IN_ADDR *)(params->buffer + params->offset);
+        if (value && params->size >= sizeof(IN_ADDR))
         {
-            param->offset = offset;
-            param->size   = sizeof(*ptr);
+            ptr->S_un.S_addr = inet_addr( value );
+            params->req->offset = params->offset;
+            params->req->size   = sizeof(*ptr);
             TRACE( "returning %08x\n", *(DWORD *)ptr );
         }
         ret = sizeof(*ptr);
@@ -807,33 +797,39 @@ ULONG get_dhcp_request_param( const char *unix_name, struct mountmgr_dhcp_reques
     case OPTION_DOMAIN_NAME:
     case OPTION_MSFT_IE_PROXY:
     {
-        char *ptr = buf + offset;
+        char *ptr = params->buffer + params->offset;
         int len = value ? strlen( value ) : 0;
-        if (len && size >= len)
+        if (len && params->size >= len)
         {
             memcpy( ptr, value, len );
-            param->offset = offset;
-            param->size   = len;
+            params->req->offset = params->offset;
+            params->req->size   = len;
             TRACE( "returning %s\n", debugstr_an(ptr, len) );
         }
         ret = len;
         break;
     }
     default:
-        FIXME( "option %u not supported\n", param->id );
+        FIXME( "option %u not supported\n", params->req->id );
         break;
     }
 
     p_dbus_message_unref( reply );
-    return ret;
+    *params->ret_size = ret;
+    return STATUS_SUCCESS;
 }
 #endif
 
 #else  /* SONAME_LIBDBUS_1 */
 
-void initialize_dbus(void)
+void run_dbus_loop(void)
 {
     TRACE( "Skipping, DBUS support not compiled in\n" );
+}
+
+NTSTATUS dhcp_request( void *args )
+{
+    return STATUS_NOT_SUPPORTED;
 }
 
 #endif  /* SONAME_LIBDBUS_1 */

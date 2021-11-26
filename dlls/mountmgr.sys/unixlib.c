@@ -34,6 +34,7 @@
 
 #include "unixlib.h"
 
+static struct run_loop_params run_loop_params;
 
 static char *get_dosdevices_path( const char *dev )
 {
@@ -85,6 +86,69 @@ static void detect_devices( const char **paths, char *names, ULONG size )
         paths++;
     }
     *names = 0;
+}
+
+void queue_device_op( enum device_op op, const char *udi, const char *device,
+                      const char *mount_point, enum device_type type, const GUID *guid,
+                      const char *serial, const struct scsi_info *scsi_info )
+{
+    struct device_info *info;
+    char *str, *end;
+
+    info = calloc( 1, sizeof(*info) );
+    str = info->str_buffer;
+    end = info->str_buffer + sizeof(info->str_buffer);
+    info->op = op;
+    info->type = type;
+#define ADD_STR(s) if (s && str + strlen(s) + 1 <= end) \
+    { \
+        info->s = strcpy( str, s ); \
+        str += strlen(str) + 1; \
+    }
+    ADD_STR(udi);
+    ADD_STR(device);
+    ADD_STR(mount_point);
+    ADD_STR(serial);
+#undef ADD_STR
+    if (guid)
+    {
+        info->guid_buffer = *guid;
+        info->guid = &info->guid_buffer;
+    }
+    if (scsi_info)
+    {
+        info->scsi_buffer = *scsi_info;
+        info->scsi_info = &info->scsi_buffer;
+    }
+    NtQueueApcThread( run_loop_params.op_thread, run_loop_params.op_apc, (ULONG_PTR)info, 0, 0 );
+}
+
+static NTSTATUS run_loop( void *args )
+{
+    const struct run_loop_params *params = args;
+
+    run_loop_params = *params;
+    run_dbus_loop();
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS dequeue_device_op( void *args )
+{
+    const struct dequeue_device_op_params *params = args;
+    struct device_info *src = (struct device_info *)params->arg;
+    struct device_info *dst = params->info;
+
+    /* copy info to client address space and fix up pointers */
+    *dst = *src;
+    if (dst->udi) dst->udi = (char *)dst + (src->udi - (char *)src);
+    if (dst->device) dst->device = (char *)dst + (src->device - (char *)src);
+    if (dst->mount_point) dst->mount_point = (char *)dst + (src->mount_point - (char *)src);
+    if (dst->serial) dst->serial = (char *)dst + (src->serial - (char *)src);
+    if (dst->guid) dst->guid = &dst->guid_buffer;
+    if (dst->scsi_info) dst->scsi_info = &dst->scsi_buffer;
+
+    free( src );
+    return STATUS_SUCCESS;
 }
 
 /* find or create a DOS drive for the corresponding Unix device */
@@ -361,6 +425,8 @@ static NTSTATUS get_shell_folder( void *args )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    run_loop,
+    dequeue_device_op,
     add_drive,
     get_dosdev_symlink,
     set_dosdev_symlink,
@@ -371,4 +437,5 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     detect_parallel_ports,
     set_shell_folder,
     get_shell_folder,
+    dhcp_request,
 };
