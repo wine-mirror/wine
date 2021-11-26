@@ -512,8 +512,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_NO_MEMORY;
         break;
     case IOCTL_MOUNTMGR_QUERY_SYMBOL_FILE:
-        if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(GUID)
-            || irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(MOUNTMGR_TARGET_NAME))
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(GUID))
         {
             status = STATUS_INVALID_PARAMETER;
             break;

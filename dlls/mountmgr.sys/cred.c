@@ -46,29 +46,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 /* implementation of Wine extension to use host APIs to find symbol file by GUID */
 NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info )
 {
-    MOUNTMGR_TARGET_NAME *result;
+    char *result = buff;
     CFStringRef query_cfstring;
-    WCHAR *filename, *unix_buf = NULL;
-    ANSI_STRING unix_path;
-    UNICODE_STRING path;
     MDQueryRef mdquery;
-    const GUID *id;
-    size_t size;
+    const GUID *id = buff;
     NTSTATUS status = STATUS_NO_MEMORY;
 
-    static const WCHAR formatW[] = { 'c','o','m','_','a','p','p','l','e','_','x','c','o','d','e',
-                                     '_','d','s','y','m','_','u','u','i','d','s',' ','=','=',' ',
-                                     '"','%','0','8','X','-','%','0','4','X','-',
-                                     '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
-                                     '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
-                                     '%','0','2','X','%','0','2','X','"',0 };
-    WCHAR query_string[ARRAY_SIZE(formatW)];
-
-    id = buff;
-    sprintfW( query_string, formatW, id->Data1, id->Data2, id->Data3,
-              id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-              id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-    if (!(query_cfstring = CFStringCreateWithCharacters(NULL, query_string, lstrlenW(query_string))))
+    if (!(query_cfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL,
+                                                    CFSTR("com_apple_xcode_dsym_uuids == \"%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X\""),
+                                                    id->Data1, id->Data2, id->Data3, id->Data4[0],
+                                                    id->Data4[1], id->Data4[2], id->Data4[3], id->Data4[4],
+                                                    id->Data4[5], id->Data4[6], id->Data4[7] )))
         return STATUS_NO_MEMORY;
 
     mdquery = MDQueryCreate(NULL, query_cfstring, NULL, NULL);
@@ -76,7 +64,6 @@ NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info
     if (!mdquery) return STATUS_NO_MEMORY;
 
     MDQuerySetMaxCount(mdquery, 1);
-    TRACE("Executing %s\n", debugstr_w(query_string));
     if (MDQueryExecute(mdquery, kMDQuerySynchronous))
     {
         if (MDQueryGetResultCount(mdquery) >= 1)
@@ -86,44 +73,19 @@ NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info
 
             if (item_path)
             {
-                CFIndex item_path_len = CFStringGetLength(item_path);
-                if ((unix_buf = HeapAlloc(GetProcessHeap(), 0, (item_path_len + 1) * sizeof(WCHAR))))
+                if (CFStringGetCString( item_path, result, outsize, kCFStringEncodingUTF8 ))
                 {
-                    CFStringGetCharacters(item_path, CFRangeMake(0, item_path_len), unix_buf);
-                    unix_buf[item_path_len] = 0;
-                    TRACE("found %s\n", debugstr_w(unix_buf));
+                    *info = strlen( result ) + 1;
+                    status = STATUS_SUCCESS;
+                    TRACE("found %s\n", debugstr_a(result));
                 }
+                else status = STATUS_BUFFER_OVERFLOW;
                 CFRelease(item_path);
             }
         }
         else status = STATUS_NO_MORE_ENTRIES;
     }
     CFRelease(mdquery);
-    if (!unix_buf) return status;
-
-    RtlInitUnicodeString( &path, unix_buf );
-    status = RtlUnicodeStringToAnsiString( &unix_path, &path, TRUE );
-    HeapFree( GetProcessHeap(), 0, unix_buf );
-    if (status) return status;
-
-    filename = wine_get_dos_file_name( unix_path.Buffer );
-    RtlFreeAnsiString( &unix_path );
-    if (!filename) return STATUS_NO_SUCH_FILE;
-    result = buff;
-    result->DeviceNameLength = lstrlenW(filename) * sizeof(WCHAR);
-    size = FIELD_OFFSET(MOUNTMGR_TARGET_NAME, DeviceName[lstrlenW(filename)]);
-    if (size <= outsize)
-    {
-        memcpy( result->DeviceName, filename, lstrlenW(filename) * sizeof(WCHAR) );
-        *info = size;
-        status = STATUS_SUCCESS;
-    }
-    else
-    {
-        *info = sizeof(*result);
-        status = STATUS_BUFFER_OVERFLOW;
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, filename );
     return status;
 }
 
