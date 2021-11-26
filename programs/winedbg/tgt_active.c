@@ -294,8 +294,6 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
 
 void fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz)
 {
-    static const WCHAR dlladdr[] = {'D','L','L','_','%','0','8','l','x',0};
-
     memory_get_string_indirect(dbg_curr_process, name_addr, TRUE, buffer, bufsz);
     if (!buffer[0] && !GetModuleFileNameExW(dbg_curr_process->handle, mod_addr, buffer, bufsz))
     {
@@ -308,7 +306,7 @@ void fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bu
                 memmove( buffer, buffer + 4, (lstrlenW(buffer + 4) + 1) * sizeof(WCHAR) );
         }
         else
-            swprintf(buffer, bufsz, dlladdr, (ULONG_PTR)mod_addr);
+            swprintf(buffer, bufsz, L"DLL_%08lx", (ULONG_PTR)mod_addr);
     }
 }
 
@@ -371,8 +369,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         size = ARRAY_SIZE(u.buffer);
         if (!QueryFullProcessImageNameW( dbg_curr_process->handle, 0, u.buffer, &size ))
         {
-            static const WCHAR pcspid[] = {'P','r','o','c','e','s','s','_','%','0','8','x',0};
-            swprintf( u.buffer, ARRAY_SIZE(u.buffer), pcspid, dbg_curr_pid);
+            swprintf( u.buffer, ARRAY_SIZE(u.buffer), L"Process_%08x", dbg_curr_pid);
         }
 
         WINE_TRACE("%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
@@ -669,10 +666,9 @@ static BOOL str2int(const char* str, DWORD_PTR* val)
 
 static HANDLE create_temp_file(void)
 {
-    static const WCHAR prefixW[] = {'w','d','b',0};
     WCHAR path[MAX_PATH], name[MAX_PATH];
 
-    if (!GetTempPathW( MAX_PATH, path ) || !GetTempFileNameW( path, prefixW, 0, name ))
+    if (!GetTempPathW( MAX_PATH, path ) || !GetTempFileNameW( path, L"wdb", 0, name ))
         return INVALID_HANDLE_VALUE;
     return CreateFileW( name, GENERIC_READ|GENERIC_WRITE|DELETE, FILE_SHARE_DELETE,
                         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0 );

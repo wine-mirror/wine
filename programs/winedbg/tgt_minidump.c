@@ -204,7 +204,6 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     WCHAR                       exec_name[1024];
     WCHAR                       nameW[1024];
     unsigned                    len;
-    static const WCHAR          default_exec_name[] = {'<','m','i','n','i','d','u','m','p','-','e','x','e','c','>',0};
 
     /* fetch PID */
     if (MiniDumpReadDumpStream(data->mapping, MiscInfoStream, NULL, &stream, NULL))
@@ -215,7 +214,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     }
 
     /* fetch executable name (it's normally the first one in module list) */
-    lstrcpyW(exec_name, default_exec_name);
+    lstrcpyW(exec_name, L"<minidump-exec>");
+
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, NULL, &stream, NULL))
     {
         mml = stream;

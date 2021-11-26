@@ -755,30 +755,20 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
             tag == SymTagBaseType &&
             SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt))
         {
-            static const WCHAR voidW[] = {'v','o','i','d','\0'};
-            static const WCHAR charW[] = {'c','h','a','r','\0'};
-            static const WCHAR wcharW[] = {'W','C','H','A','R','\0'};
-            static const WCHAR intW[] = {'i','n','t','\0'};
-            static const WCHAR uintW[] = {'u','n','s','i','g','n','e','d',' ','i','n','t','\0'};
-            static const WCHAR floatW[] = {'f','l','o','a','t','\0'};
-            static const WCHAR boolW[] = {'b','o','o','l','\0'};
-            static const WCHAR longW[] = {'l','o','n','g',' ','i','n','t','\0'};
-            static const WCHAR ulongW[] = {'u','n','s','i','g','n','e','d',' ','l','o','n','g',' ','i','n','t','\0'};
-            static const WCHAR complexW[] = {'c','o','m','p','l','e','x','\0'};
             const WCHAR* name = NULL;
 
             switch (bt)
             {
-            case btVoid:        name = voidW; break;
-            case btChar:        name = charW; break;
-            case btWChar:       name = wcharW; break;
-            case btInt:         name = intW; break;
-            case btUInt:        name = uintW; break;
-            case btFloat:       name = floatW; break;
-            case btBool:        name = boolW; break;
-            case btLong:        name = longW; break;
-            case btULong:       name = ulongW; break;
-            case btComplex:     name = complexW; break;
+            case btVoid:        name = L"void"; break;
+            case btChar:        name = L"char"; break;
+            case btWChar:       name = L"WCHAR"; break;
+            case btInt:         name = L"int"; break;
+            case btUInt:        name = L"unsigned int"; break;
+            case btFloat:       name = L"float"; break;
+            case btBool:        name = L"bool"; break;
+            case btLong:        name = L"long int"; break;
+            case btULong:       name = L"unsigned long int"; break;
+            case btComplex:     name = L"complex"; break;
             default:            WINE_FIXME("Unsupported basic type %u\n", bt); return FALSE;
             }
             X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
