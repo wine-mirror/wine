@@ -117,8 +117,6 @@ BOOL set_map_mode( DC *dc, int mode )
     if (mode == dc->attr->map_mode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC))
         return TRUE;
 
-    virtual_size = get_dc_virtual_size( dc );
-    virtual_res = get_dc_virtual_res( dc );
     switch (mode)
     {
     case MM_TEXT:
@@ -129,30 +127,40 @@ BOOL set_map_mode( DC *dc, int mode )
         break;
     case MM_LOMETRIC:
     case MM_ISOTROPIC:
+        virtual_size           = get_dc_virtual_size( dc );
+        virtual_res            = get_dc_virtual_res( dc );
         dc->attr->wnd_ext.cx   = virtual_size.cx * 10;
         dc->attr->wnd_ext.cy   = virtual_size.cy * 10;
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_HIMETRIC:
+        virtual_size           = get_dc_virtual_size( dc );
+        virtual_res            = get_dc_virtual_res( dc );
         dc->attr->wnd_ext.cx   = virtual_size.cx * 100;
         dc->attr->wnd_ext.cy   = virtual_size.cy * 100;
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_LOENGLISH:
+        virtual_size           = get_dc_virtual_size( dc );
+        virtual_res            = get_dc_virtual_res( dc );
         dc->attr->wnd_ext.cx   = muldiv(1000, virtual_size.cx, 254);
         dc->attr->wnd_ext.cy   = muldiv(1000, virtual_size.cy, 254);
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_HIENGLISH:
+        virtual_size           = get_dc_virtual_size( dc );
+        virtual_res            = get_dc_virtual_res( dc );
         dc->attr->wnd_ext.cx   = muldiv(10000, virtual_size.cx, 254);
         dc->attr->wnd_ext.cy   = muldiv(10000, virtual_size.cy, 254);
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_TWIPS:
+        virtual_size           = get_dc_virtual_size( dc );
+        virtual_res            = get_dc_virtual_res( dc );
         dc->attr->wnd_ext.cx   = muldiv(14400, virtual_size.cx, 254);
         dc->attr->wnd_ext.cy   = muldiv(14400, virtual_size.cy, 254);
         dc->attr->vport_ext.cx = virtual_res.cx;
