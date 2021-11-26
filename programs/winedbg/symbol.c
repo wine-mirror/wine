@@ -105,7 +105,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
             if (buffer) snprintf(buffer, sz, "Couldn't get full value information for %s", sym->Name);
             return FALSE;
         }
-        else if (v.n1.n2.vt & VT_BYREF)
+        else if (V_ISBYREF(&v))
         {
             /* FIXME: this won't work for pointers or arrays, as we don't always
              * know, if the value to be dereferenced lies in debuggee or

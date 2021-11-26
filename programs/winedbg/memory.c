@@ -466,10 +466,10 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                             sub_type.id = fcp->ChildId[i];
                             if (!types_get_info(&sub_type, TI_GET_VALUE, &variant)) 
                                 continue;
-                            switch (variant.n1.n2.vt)
+                            switch (V_VT(&variant))
                             {
-                            case VT_I4: ok = (val_int == variant.n1.n2.n3.lVal); break;
-                            default: WINE_FIXME("Unsupported variant type (%u)\n", variant.n1.n2.vt);
+                            case VT_I4: ok = (val_int == V_I4(&variant)); break;
+                            default: WINE_FIXME("Unsupported variant type (%u)\n", V_VT(&variant));
                             }
                             if (ok)
                             {
