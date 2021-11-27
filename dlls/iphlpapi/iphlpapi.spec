@@ -12,7 +12,7 @@
 @ stdcall CancelMibChangeNotify2( ptr )
 @ stdcall ConvertGuidToStringA( ptr ptr long )
 @ stdcall ConvertGuidToStringW( ptr ptr long )
-@ stdcall ConvertInterfaceAliasToLuid( ptr ptr )
+@ stdcall ConvertInterfaceAliasToLuid( wstr ptr )
 @ stdcall ConvertInterfaceGuidToLuid( ptr ptr )
 @ stdcall ConvertInterfaceIndexToLuid( long ptr )
 @ stdcall ConvertInterfaceLuidToAlias( ptr ptr long )
@@ -32,7 +32,7 @@
 #@ stub ConvertRemoteInterfaceLuidToGuid
 #@ stub ConvertRemoteInterfaceLuidToIndex
 #@ stub ConvertStringToGuidA
-@ stdcall ConvertStringToGuidW( ptr ptr )
+@ stdcall ConvertStringToGuidW( wstr ptr )
 #@ stub ConvertStringToInterfacePhysicalAddress
 #@ stub CPNatfwtCreateProviderInstance
 #@ stub CPNatfwtDeregisterProviderInstance
