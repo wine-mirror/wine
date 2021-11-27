@@ -21,7 +21,7 @@
 @ stub CapabilityCheckForSingleSessionSku
 @ stdcall ChangeServiceConfig2A(long long ptr)
 @ stdcall ChangeServiceConfig2W(long long ptr)
-@ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
+@ stdcall ChangeServiceConfigA(long long long long str str ptr str str str str)
 @ stdcall ChangeServiceConfigW(long long long long wstr wstr ptr wstr wstr wstr wstr)
 @ stdcall CloseServiceHandle(long)
 @ stdcall CloseTrace(int64)
@@ -37,7 +37,7 @@
 @ stub ConvertStringSDToSDDomainW
 @ stub ConvertStringSDToSDRootDomainW
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
-@ stdcall ConvertStringSidToSidW(ptr ptr)
+@ stdcall ConvertStringSidToSidW(wstr ptr)
 @ stdcall CreateServiceA(long str str long long long long str str ptr str str str)
 @ stub CreateServiceEx
 @ stdcall CreateServiceW(long wstr wstr long long long long wstr wstr ptr wstr wstr wstr)
