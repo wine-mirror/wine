@@ -1121,6 +1121,13 @@ typedef struct
 @END
 
 
+/* Test if two handles refer to the same object */
+@REQ(compare_objects)
+    obj_handle_t first;         /* first object handle */
+    obj_handle_t second;        /* second object handle */
+@END
+
+
 /* Make an object temporary */
 @REQ(make_temporary)
     obj_handle_t handle;       /* handle to the object */

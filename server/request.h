@@ -143,6 +143,7 @@ DECL_HANDLER(get_apc_result);
 DECL_HANDLER(close_handle);
 DECL_HANDLER(set_handle_info);
 DECL_HANDLER(dup_handle);
+DECL_HANDLER(compare_objects);
 DECL_HANDLER(make_temporary);
 DECL_HANDLER(open_process);
 DECL_HANDLER(open_thread);
@@ -423,6 +424,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_close_handle,
     (req_handler)req_set_handle_info,
     (req_handler)req_dup_handle,
+    (req_handler)req_compare_objects,
     (req_handler)req_make_temporary,
     (req_handler)req_open_process,
     (req_handler)req_open_thread,
@@ -874,6 +876,9 @@ C_ASSERT( FIELD_OFFSET(struct dup_handle_request, options) == 32 );
 C_ASSERT( sizeof(struct dup_handle_request) == 40 );
 C_ASSERT( FIELD_OFFSET(struct dup_handle_reply, handle) == 8 );
 C_ASSERT( sizeof(struct dup_handle_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct compare_objects_request, first) == 12 );
+C_ASSERT( FIELD_OFFSET(struct compare_objects_request, second) == 16 );
+C_ASSERT( sizeof(struct compare_objects_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct make_temporary_request, handle) == 12 );
 C_ASSERT( sizeof(struct make_temporary_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_process_request, pid) == 12 );

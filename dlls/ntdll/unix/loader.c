@@ -145,6 +145,7 @@ static void * const syscalls[] =
     NtCancelTimer,
     NtClearEvent,
     NtClose,
+    NtCompareObjects,
     NtCompleteConnectPort,
     NtConnectPort,
     NtContinue,

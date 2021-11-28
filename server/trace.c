@@ -1749,6 +1749,12 @@ static void dump_dup_handle_reply( const struct dup_handle_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_compare_objects_request( const struct compare_objects_request *req )
+{
+    fprintf( stderr, " first=%04x", req->first );
+    fprintf( stderr, ", second=%04x", req->second );
+}
+
 static void dump_make_temporary_request( const struct make_temporary_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4581,6 +4587,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
+    (dump_func)dump_compare_objects_request,
     (dump_func)dump_make_temporary_request,
     (dump_func)dump_open_process_request,
     (dump_func)dump_open_thread_request,
@@ -4859,6 +4866,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
     NULL,
+    NULL,
     (dump_func)dump_open_process_reply,
     (dump_func)dump_open_thread_reply,
     (dump_func)dump_select_reply,
@@ -5135,6 +5143,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_handle",
     "set_handle_info",
     "dup_handle",
+    "compare_objects",
     "make_temporary",
     "open_process",
     "open_thread",
@@ -5474,6 +5483,7 @@ static const struct
     { "NOT_MAPPED_VIEW",             STATUS_NOT_MAPPED_VIEW },
     { "NOT_REGISTRY_FILE",           STATUS_NOT_REGISTRY_FILE },
     { "NOT_SAME_DEVICE",             STATUS_NOT_SAME_DEVICE },
+    { "NOT_SAME_OBJECT",             STATUS_NOT_SAME_OBJECT },
     { "NOT_SUPPORTED",               STATUS_NOT_SUPPORTED },
     { "NO_DATA_DETECTED",            STATUS_NO_DATA_DETECTED },
     { "NO_IMPERSONATION_TOKEN",      STATUS_NO_IMPERSONATION_TOKEN },

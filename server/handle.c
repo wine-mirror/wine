@@ -879,3 +879,20 @@ DECL_HANDLER(make_temporary)
     }
     release_object( obj );
 }
+
+DECL_HANDLER(compare_objects)
+{
+    struct object *obj1, *obj2;
+
+    if (!(obj1 = get_handle_obj( current->process, req->first, 0, NULL ))) return;
+    if (!(obj2 = get_handle_obj( current->process, req->second, 0, NULL )))
+    {
+        release_object( obj1 );
+        return;
+    }
+
+    if (obj1 != obj2) set_error( STATUS_NOT_SAME_OBJECT );
+
+    release_object( obj2 );
+    release_object( obj1 );
+}

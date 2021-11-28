@@ -157,6 +157,7 @@
 @ stdcall -syscall NtClose(long)
 # @ stub NtCloseObjectAuditAlarm
 # @ stub NtCompactKeys
+@ stdcall -syscall NtCompareObjects(ptr ptr)
 # @ stub NtCompareTokens
 @ stdcall -syscall NtCompleteConnectPort(ptr)
 # @ stub NtCompressKey
@@ -1180,6 +1181,7 @@
 @ stdcall -private -syscall ZwClose(long) NtClose
 # @ stub ZwCloseObjectAuditAlarm
 # @ stub ZwCompactKeys
+@ stdcall -private -syscall ZwCompareObjects(ptr ptr) NtCompareObjects
 # @ stub ZwCompareTokens
 @ stdcall -private -syscall ZwCompleteConnectPort(ptr) NtCompleteConnectPort
 # @ stub ZwCompressKey

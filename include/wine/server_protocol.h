@@ -1252,6 +1252,20 @@ struct dup_handle_reply
 
 
 
+struct compare_objects_request
+{
+    struct request_header __header;
+    obj_handle_t first;
+    obj_handle_t second;
+    char __pad_20[4];
+};
+struct compare_objects_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct make_temporary_request
 {
     struct request_header __header;
@@ -5448,6 +5462,7 @@ enum request
     REQ_close_handle,
     REQ_set_handle_info,
     REQ_dup_handle,
+    REQ_compare_objects,
     REQ_make_temporary,
     REQ_open_process,
     REQ_open_thread,
@@ -5729,6 +5744,7 @@ union generic_request
     struct close_handle_request close_handle_request;
     struct set_handle_info_request set_handle_info_request;
     struct dup_handle_request dup_handle_request;
+    struct compare_objects_request compare_objects_request;
     struct make_temporary_request make_temporary_request;
     struct open_process_request open_process_request;
     struct open_thread_request open_thread_request;
@@ -6008,6 +6024,7 @@ union generic_reply
     struct close_handle_reply close_handle_reply;
     struct set_handle_info_reply set_handle_info_reply;
     struct dup_handle_reply dup_handle_reply;
+    struct compare_objects_reply compare_objects_reply;
     struct make_temporary_reply make_temporary_reply;
     struct open_process_reply open_process_reply;
     struct open_thread_reply open_thread_reply;
@@ -6262,7 +6279,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 736
+#define SERVER_PROTOCOL_VERSION 737
 
 /* ### protocol_version end ### */
 

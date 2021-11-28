@@ -170,6 +170,18 @@ NTSTATUS WINAPI wow64_NtClearEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCompareObjects
+ */
+NTSTATUS WINAPI wow64_NtCompareObjects( UINT *args )
+{
+    HANDLE first = get_handle( &args );
+    HANDLE second = get_handle( &args );
+
+    return NtCompareObjects( first, second );
+}
+
+
+/**********************************************************************
  *           wow64_NtCompleteConnectPort
  */
 NTSTATUS WINAPI wow64_NtCompleteConnectPort( UINT *args )

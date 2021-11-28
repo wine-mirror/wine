@@ -1691,6 +1691,25 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
 
 
 /**************************************************************************
+ *           NtCompareObjects   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCompareObjects( HANDLE first, HANDLE second )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( compare_objects )
+    {
+        req->first = wine_server_obj_handle( first );
+        req->second = wine_server_obj_handle( second );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return status;
+}
+
+
+/**************************************************************************
  *           NtClose
  */
 NTSTATUS WINAPI NtClose( HANDLE handle )
