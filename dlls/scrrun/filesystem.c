@@ -223,6 +223,59 @@ static BSTR get_full_path(BSTR path, const WIN32_FIND_DATAW *data)
     return SysAllocString(buffW);
 }
 
+static HRESULT build_path( BSTR Path, BSTR Name, BSTR *Result)
+{
+    BSTR ret;
+
+    if (Path && Name)
+    {
+        int path_len = SysStringLen(Path), name_len = SysStringLen(Name);
+
+        /* if both parts have backslashes strip one from Path */
+        if (Path[path_len-1] == '\\' && Name[0] == '\\')
+        {
+            path_len -= 1;
+
+            ret = SysAllocStringLen(NULL, path_len + name_len);
+            if (ret)
+            {
+                lstrcpyW(ret, Path);
+                ret[path_len] = 0;
+                lstrcatW(ret, Name);
+            }
+        }
+        else if (Path[path_len-1] != '\\' && Name[0] != '\\')
+        {
+            ret = SysAllocStringLen(NULL, path_len + name_len + 1);
+            if (ret)
+            {
+                lstrcpyW(ret, Path);
+                if (Path[path_len-1] != ':')
+                    wcscat(ret, L"\\");
+                lstrcatW(ret, Name);
+            }
+        }
+        else
+        {
+            ret = SysAllocStringLen(NULL, path_len + name_len);
+            if (ret)
+            {
+                lstrcpyW(ret, Path);
+                lstrcatW(ret, Name);
+            }
+        }
+    }
+    else if (Path || Name)
+        ret = SysAllocString(Path ? Path : Name);
+    else
+        ret = SysAllocStringLen(NULL, 0);
+
+    if (!ret) return E_OUTOFMEMORY;
+    *Result = ret;
+
+    return S_OK;
+}
+
 static BOOL textstream_check_iomode(struct textstream *This, enum iotype type)
 {
     if (type == IORead)
@@ -3034,59 +3087,11 @@ static HRESULT WINAPI filesys_get_Drives(IFileSystem3 *iface, IDriveCollection *
 static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
                                             BSTR Name, BSTR *Result)
 {
-    BSTR ret;
-
     TRACE("%p %s %s %p\n", iface, debugstr_w(Path), debugstr_w(Name), Result);
 
     if (!Result) return E_POINTER;
 
-    if (Path && Name)
-    {
-        int path_len = SysStringLen(Path), name_len = SysStringLen(Name);
-
-        /* if both parts have backslashes strip one from Path */
-        if (Path[path_len-1] == '\\' && Name[0] == '\\')
-        {
-            path_len -= 1;
-
-            ret = SysAllocStringLen(NULL, path_len + name_len);
-            if (ret)
-            {
-                lstrcpyW(ret, Path);
-                ret[path_len] = 0;
-                lstrcatW(ret, Name);
-            }
-        }
-        else if (Path[path_len-1] != '\\' && Name[0] != '\\')
-        {
-            ret = SysAllocStringLen(NULL, path_len + name_len + 1);
-            if (ret)
-            {
-                lstrcpyW(ret, Path);
-                if (Path[path_len-1] != ':')
-                    wcscat(ret, L"\\");
-                lstrcatW(ret, Name);
-            }
-        }
-        else
-        {
-            ret = SysAllocStringLen(NULL, path_len + name_len);
-            if (ret)
-            {
-                lstrcpyW(ret, Path);
-                lstrcatW(ret, Name);
-            }
-        }
-    }
-    else if (Path || Name)
-        ret = SysAllocString(Path ? Path : Name);
-    else
-        ret = SysAllocStringLen(NULL, 0);
-
-    if (!ret) return E_OUTOFMEMORY;
-    *Result = ret;
-
-    return S_OK;
+    return build_path(Path, Name, Result);
 }
 
 static HRESULT WINAPI filesys_GetDriveName(IFileSystem3 *iface, BSTR path, BSTR *drive)
