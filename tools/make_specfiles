@@ -578,7 +578,24 @@ sub read_spec_file($)
         next unless %descr;
 
         my $func = $descr{name};
-        next if defined $funcs{$func};
+        if (defined $funcs{$func})
+        {
+            my %update = %{$funcs{$func}};
+            next if $update{ordinal} ne $descr{ordinal} or $update{callconv} ne $descr{callconv} or $update{args} ne $descr{args};
+
+            my $arch = $1 if $update{flags} =~ /-arch=(\S+)/;
+            my $new_arch = $1 if $descr{flags} =~ /-arch=(\S+)/;
+            next if !defined $arch or !defined $new_arch;
+
+            if (($arch eq "win32" and $new_arch eq "win64") or ($arch eq "win64" and $new_arch eq "win32"))
+            {
+                $funcs{$func}{flags} =~ s/-arch=\S+\s+//;
+                next;
+            }
+
+            $funcs{$func}{flags} =~ s/-arch=$arch/-arch=$arch,$new_arch/;
+            next;
+        }
         next if $func eq "@";
         $funcs{$func} = \%descr;
     }
