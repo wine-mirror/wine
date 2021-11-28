@@ -1771,3 +1771,12 @@ void WINAPI DECLSPEC_HOTPATCH DeleteProcThreadAttributeList( struct _PROC_THREAD
 {
     return;
 }
+
+
+/***********************************************************************
+ *              CompareObjectHandles   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CompareObjectHandles( HANDLE first, HANDLE second )
+{
+    return set_ntstatus( NtCompareObjects( first, second ));
+}

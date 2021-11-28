@@ -153,7 +153,7 @@
 @ stdcall CloseThreadpoolWork(ptr) ntdll.TpReleaseWork
 # @ stub CommitStateAtom
 @ stdcall CompareFileTime(ptr ptr)
-# @ stub CompareObjectHandles
+@ stdcall CompareObjectHandles(ptr ptr)
 @ stdcall CompareStringA(long long str long str long)
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long)
 @ stdcall CompareStringOrdinal(wstr long wstr long long)
