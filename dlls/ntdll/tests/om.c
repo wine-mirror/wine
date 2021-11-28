@@ -71,6 +71,7 @@ static NTSTATUS (WINAPI *pNtOpenProcessToken)(HANDLE,DWORD,HANDLE*);
 static NTSTATUS (WINAPI *pNtOpenThreadToken)(HANDLE,DWORD,BOOLEAN,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateToken)(HANDLE,ACCESS_MASK,OBJECT_ATTRIBUTES*,SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateObject)(HANDLE,HANDLE,HANDLE,HANDLE*,ACCESS_MASK,ULONG,ULONG);
+static NTSTATUS (WINAPI *pNtCompareObjects)(HANDLE,HANDLE);
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -2446,6 +2447,59 @@ static void test_globalroot(void)
     pNtClose(h);
 }
 
+static void test_object_identity(void)
+{
+    NTSTATUS status;
+    HANDLE h1, h2;
+
+    if (!pNtCompareObjects)
+    {
+        skip("NtCompareObjects is not available.\n");
+        return;
+    }
+
+    status = pNtCompareObjects( GetCurrentProcess(), GetCurrentProcess() );
+    ok( status == STATUS_SUCCESS, "comparing GetCurrentProcess() to self failed with %08x\n", status );
+
+    status = pNtCompareObjects( GetCurrentThread(), GetCurrentThread() );
+    ok( status == STATUS_SUCCESS, "comparing GetCurrentThread() to self failed with %08x\n", status );
+
+    status = pNtCompareObjects( GetCurrentProcess(), GetCurrentThread() );
+    ok( status == STATUS_NOT_SAME_OBJECT, "comparing GetCurrentProcess() to GetCurrentThread() returned %08x\n", status );
+
+    h1 = NULL;
+    status = pNtDuplicateObject( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                                 &h1, 0, 0, DUPLICATE_SAME_ACCESS );
+    ok( status == STATUS_SUCCESS, "failed to duplicate current process handle: %08x\n", status);
+
+    status = pNtCompareObjects( GetCurrentProcess(), h1 );
+    ok( status == STATUS_SUCCESS, "comparing GetCurrentProcess() with %p failed with %08x\n", h1, status );
+
+    pNtClose( h1 );
+
+    h1 = CreateFileA( "\\\\.\\NUL", GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( h1 != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+
+    h2 = NULL;
+    status = pNtDuplicateObject( GetCurrentProcess(), h1, GetCurrentProcess(),
+                                  &h2, 0, 0, DUPLICATE_SAME_ACCESS );
+    ok( status == STATUS_SUCCESS, "failed to duplicate handle %p: %08x\n", h1, status);
+
+    status = pNtCompareObjects( h1, h2 );
+    ok( status == STATUS_SUCCESS, "comparing %p with %p failed with %08x\n", h1, h2, status );
+
+    pNtClose( h2 );
+
+    h2 = CreateFileA( "\\\\.\\NUL", GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( h2 != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+
+    status = pNtCompareObjects( h1, h2 );
+    ok( status == STATUS_NOT_SAME_OBJECT, "comparing %p with %p returned %08x\n", h1, h2, status );
+
+    pNtClose( h2 );
+    pNtClose( h1 );
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -2489,6 +2543,7 @@ START_TEST(om)
     pNtOpenThreadToken      =  (void *)GetProcAddress(hntdll, "NtOpenThreadToken");
     pNtDuplicateToken       =  (void *)GetProcAddress(hntdll, "NtDuplicateToken");
     pNtDuplicateObject      =  (void *)GetProcAddress(hntdll, "NtDuplicateObject");
+    pNtCompareObjects       =  (void *)GetProcAddress(hntdll, "NtCompareObjects");
 
     test_case_sensitive();
     test_namespace_pipe();
@@ -2505,4 +2560,5 @@ START_TEST(om)
     test_object_types();
     test_get_next_thread();
     test_globalroot();
+    test_object_identity();
 }
