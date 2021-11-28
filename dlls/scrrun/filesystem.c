@@ -2518,9 +2518,21 @@ static HRESULT WINAPI folder_get_Files(IFolder *iface, IFileCollection **files)
 static HRESULT WINAPI folder_CreateTextFile(IFolder *iface, BSTR filename, VARIANT_BOOL overwrite,
     VARIANT_BOOL unicode, ITextStream **stream)
 {
+    DWORD disposition;
+    BSTR path;
+    HRESULT hres;
+
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%s %x %x %p): stub\n", This, debugstr_w(filename), overwrite, unicode, stream);
-    return E_NOTIMPL;
+
+    TRACE("%p %s %d %d %p\n", iface, debugstr_w(filename), overwrite, unicode, stream);
+
+    hres = build_path(This->path, filename, &path);
+    if (FAILED(hres)) return hres;
+
+    disposition = overwrite == VARIANT_TRUE ? CREATE_ALWAYS : CREATE_NEW;
+    hres = create_textstream(path, disposition, ForWriting, unicode ? TristateTrue : TristateFalse, stream);
+    SysFreeString(path);
+    return hres;
 }
 
 static const IFolderVtbl foldervtbl = {

@@ -1535,6 +1535,86 @@ static void test_CreateTextFile(void)
     SysFreeString(nameW);
 }
 
+static void test_FolderCreateTextFile(void)
+{
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[10], buff2W[10];
+    ITextStream *stream;
+    BSTR nameW, str;
+    HANDLE file;
+    IFolder *folder;
+    HRESULT hr;
+    BOOL ret;
+    DWORD r;
+
+    get_temp_filepath(testfileW, pathW, dirW);
+    nameW = SysAllocString(L"foo.txt");
+    lstrcpyW(pathW, dirW);
+    lstrcatW(pathW, nameW);
+
+    ret = CreateDirectoryW(dirW, NULL);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
+
+    str = SysAllocString(dirW);
+    hr = IFileSystem3_GetFolder(fs3, str, &folder);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
+    SysFreeString(str);
+
+    hr = IFolder_CreateTextFile(folder, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    test_provideclassinfo(stream, &CLSID_TextStream);
+
+    hr = ITextStream_Read(stream, 1, &str);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Close(stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Read(stream, 1, &str);
+    ok(hr == CTL_E_BADFILEMODE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Close(stream);
+    ok(hr == S_FALSE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+
+    ITextStream_Release(stream);
+
+    /* check it's created */
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+    CloseHandle(file);
+
+    /* try to create again with no-overwrite mode */
+    hr = IFolder_CreateTextFile(folder, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
+
+    /* now overwrite */
+    hr = IFolder_CreateTextFile(folder, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
+    /* overwrite in Unicode mode, check for BOM */
+    hr = IFolder_CreateTextFile(folder, nameW, VARIANT_TRUE, VARIANT_TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
+    /* check contents */
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+    r = 0;
+    ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
+    ok(ret && r==2, "read %d, got %d, %d\n", r, ret, GetLastError());
+    buffW[r/sizeof(WCHAR)] = 0;
+
+    buff2W[0] = 0xfeff;
+    buff2W[1] = 0;
+    ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
+    CloseHandle(file);
+
+    DeleteFileW(pathW);
+    RemoveDirectoryW(dirW);
+    SysFreeString(nameW);
+}
+
 static void test_WriteLine(void)
 {
     WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
@@ -2516,6 +2596,7 @@ START_TEST(filesystem)
     test_FileCollection();
     test_DriveCollection();
     test_CreateTextFile();
+    test_FolderCreateTextFile();
     test_WriteLine();
     test_ReadAll();
     test_Read();
