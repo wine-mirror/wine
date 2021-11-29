@@ -2532,6 +2532,9 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
 
         src_mem = wined3d_context_gl_map_bo_address(context_gl, &bo, src_slice_pitch * update_d, WINED3D_MAP_READ);
 
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
+
         for (z = 0; z < update_d; ++z, src_mem += src_slice_pitch)
         {
             if (decompress)
@@ -2560,6 +2563,11 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, wined3d_bo_gl(bo.buffer_object)->id));
             checkGLcall("glBindBuffer");
             offset += bo.buffer_object->buffer_offset;
+        }
+        else
+        {
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+            checkGLcall("glBindBuffer");
         }
 
         wined3d_texture_gl_upload_bo(src_format, target, level, src_row_pitch, src_slice_pitch, dst_x,
