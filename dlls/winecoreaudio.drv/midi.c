@@ -159,7 +159,7 @@ static DWORD MIDIIn_Reset(WORD wDevID)
 	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	lpMidiHdr->dwFlags |= MHDR_DONE;
 	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
-	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
+	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime - sources[wDevID].startTime);
     }
     midi_lock( FALSE );
 
