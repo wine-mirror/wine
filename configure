@@ -1649,7 +1649,6 @@ enable_sspicli
 enable_stdole2_tlb
 enable_stdole32_tlb
 enable_sti
-enable_strmbase
 enable_strmdll
 enable_svrapi
 enable_sxs
@@ -1820,6 +1819,7 @@ enable_lcms2
 enable_mfuuid
 enable_mpg123
 enable_png
+enable_strmbase
 enable_strmiids
 enable_tiff
 enable_uuid
@@ -21604,7 +21604,6 @@ wine_fn_config_makefile dlls/sti enable_sti
 wine_fn_config_makefile dlls/sti/tests enable_tests
 wine_fn_config_makefile dlls/storage.dll16 enable_win16
 wine_fn_config_makefile dlls/stress.dll16 enable_win16
-wine_fn_config_makefile dlls/strmbase enable_strmbase
 wine_fn_config_makefile dlls/strmdll enable_strmdll
 wine_fn_config_makefile dlls/svrapi enable_svrapi
 wine_fn_config_makefile dlls/sxs enable_sxs
@@ -21852,6 +21851,7 @@ wine_fn_config_makefile libs/lcms2 enable_lcms2
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/mpg123 enable_mpg123
 wine_fn_config_makefile libs/png enable_png
+wine_fn_config_makefile libs/strmbase enable_strmbase
 wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/tiff enable_tiff
 wine_fn_config_makefile libs/uuid enable_uuid
