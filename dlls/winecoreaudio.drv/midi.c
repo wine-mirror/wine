@@ -128,7 +128,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     TRACE("wDevID=%d wMsg=%d dwParm1=%04lX dwParam2=%04lX\n", wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MIM_OPEN:
     case MIM_CLOSE:
     case MIM_DATA:
     case MIM_LONGDATA:
@@ -146,41 +145,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     }
 
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
-}
-
-static DWORD MIDIIn_Open(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
-{
-    TRACE("wDevID=%d lpDesc=%p dwFlags=%08x\n", wDevID, lpDesc, dwFlags);
-
-    if (lpDesc == NULL) {
-	WARN("Invalid Parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (sources[wDevID].midiDesc.hMidi != 0) {
-	WARN("device already open !\n");
-	return MMSYSERR_ALLOCATED;
-    }
-    if ((dwFlags & MIDI_IO_STATUS) != 0) {
-	WARN("No support for MIDI_IO_STATUS in dwFlags yet, ignoring it\n");
-	dwFlags &= ~MIDI_IO_STATUS;
-    }
-    if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
-	FIXME("Bad dwFlags\n");
-	return MMSYSERR_INVALFLAG;
-    }
-
-    sources[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    sources[wDevID].lpQueueHdr = NULL;
-    sources[wDevID].midiDesc = *lpDesc;
-    sources[wDevID].startTime = 0;
-    sources[wDevID].state = 0;
-
-    MIDI_NotifyClient(wDevID, MIM_OPEN, 0L, 0L);
-    return MMSYSERR_NOERROR;
 }
 
 static DWORD MIDIIn_Close(WORD wDevID)
@@ -520,15 +484,12 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
 */
 DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    struct midi_in_message_params params;
+    struct notify_context notify;
+    DWORD err;
+
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
-        case DRVM_INIT:
-        case DRVM_EXIT:
-        case DRVM_ENABLE:
-        case DRVM_DISABLE:
-            return 0;
-        case MIDM_OPEN:
-            return MIDIIn_Open(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
         case MIDM_CLOSE:
             return MIDIIn_Close(wDevID);
         case MIDM_ADDBUFFER:
@@ -547,10 +508,21 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
             return MIDIIn_Stop(wDevID);
         case MIDM_RESET:
             return MIDIIn_Reset(wDevID);
-        default:
-            TRACE("Unsupported message\n");
     }
-    return MMSYSERR_NOTSUPPORTED;
+
+    params.dev_id = wDevID;
+    params.msg = wMsg;
+    params.user = dwUser;
+    params.param_1 = dwParam1;
+    params.param_2 = dwParam2;
+    params.err = &err;
+    params.notify = &notify;
+
+    UNIX_CALL(midi_in_message, &params);
+
+    if (!err && notify.send_notify) notify_client(&notify);
+
+    return err;
 }
 
 /**************************************************************************

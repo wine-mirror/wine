@@ -112,6 +112,20 @@ static struct midi_dest *dests;
 static struct midi_src *srcs;
 static CFStringRef midi_in_thread_port_name;
 
+static void set_in_notify(struct notify_context *notify, struct midi_src *src, WORD dev_id, WORD msg,
+                          DWORD_PTR param_1, DWORD_PTR param_2)
+{
+    notify->send_notify = TRUE;
+    notify->dev_id = dev_id;
+    notify->msg = msg;
+    notify->param_1 = param_1;
+    notify->param_2 = param_2;
+    notify->callback = src->midiDesc.dwCallback;
+    notify->flags = src->wFlags;
+    notify->device = src->midiDesc.hMidi;
+    notify->instance = src->midiDesc.dwInstance;
+}
+
 /*
  *  CoreMIDI IO threaded callback,
  *  we can't call Wine debug channels, critical section or anything using NtCurrentTeb here.
@@ -711,6 +725,51 @@ static DWORD midi_out_reset(WORD dev_id)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_open(WORD dev_id, MIDIOPENDESC *midi_desc, DWORD flags, struct notify_context *notify)
+{
+    struct midi_src *src;
+
+    TRACE("dev_id = %d desc = %p flags = %08x\n", dev_id, midi_desc, flags);
+
+    if (!midi_desc)
+    {
+        WARN("Invalid Parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    src = srcs + dev_id;
+
+    if (src->midiDesc.hMidi)
+    {
+        WARN("device already open !\n");
+        return MMSYSERR_ALLOCATED;
+    }
+    if (flags & MIDI_IO_STATUS)
+    {
+        FIXME("No support for MIDI_IO_STATUS in flags yet, ignoring it\n");
+        flags &= ~MIDI_IO_STATUS;
+    }
+    if (flags & ~CALLBACK_TYPEMASK)
+    {
+        FIXME("Bad flags\n");
+        return MMSYSERR_INVALFLAG;
+    }
+
+    src->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
+    src->lpQueueHdr = NULL;
+    src->midiDesc = *midi_desc;
+    src->startTime = 0;
+    src->state = 0;
+
+    set_in_notify(notify, src, dev_id, MIM_OPEN, 0, 0);
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -757,6 +816,31 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_RESET:
         *params->err = midi_out_reset(params->dev_id);
+        break;
+    default:
+        TRACE("Unsupported message\n");
+        *params->err = MMSYSERR_NOTSUPPORTED;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS midi_in_message(void *args)
+{
+    struct midi_in_message_params *params = args;
+
+    params->notify->send_notify = FALSE;
+
+    switch (params->msg)
+    {
+    case DRVM_INIT:
+    case DRVM_EXIT:
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+        *params->err = MMSYSERR_NOERROR;
+        break;
+    case MIDM_OPEN:
+        *params->err = midi_in_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");

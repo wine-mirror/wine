@@ -215,6 +215,17 @@ struct midi_out_message_params
     struct notify_context *notify;
 };
 
+struct midi_in_message_params
+{
+    UINT dev_id;
+    UINT msg;
+    DWORD_PTR user;
+    DWORD_PTR param_1;
+    DWORD_PTR param_2;
+    DWORD *err;
+    struct notify_context *notify;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -240,11 +251,13 @@ enum unix_funcs
     unix_midi_init,
     unix_midi_release,
     unix_midi_out_message,
+    unix_midi_in_message,
 };
 
 NTSTATUS midi_init( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_release( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message( void * ) DECLSPEC_HIDDEN;
+NTSTATUS midi_in_message( void * ) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t coreaudio_handle;
 

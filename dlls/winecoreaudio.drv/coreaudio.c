@@ -1632,4 +1632,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     midi_init,
     midi_release,
     midi_out_message,
+    midi_in_message,
 };
