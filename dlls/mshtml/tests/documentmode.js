@@ -1136,7 +1136,6 @@ sync_test("elem_attr", function() {
     ok(r === (v < 8 ? arr : (v < 9 ? "arrval" : null)), "testattr with custom valueOf = " + r);
     elem.setAttribute("testattr", arr);
     r = elem.getAttribute("testattr");
-    todo_wine_if(v >= 10).
     ok(r === (v < 8 ? arr : (v < 10 ? "arrval" : "42")), "testattr after setAttribute with custom valueOf = " + r);
     ok(elem.testattr === arr, "elem.testattr after setAttribute with custom valueOf = " + elem.testattr);
     r = elem.removeAttribute("testattr");

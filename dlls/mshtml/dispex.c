@@ -1043,7 +1043,7 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     return DISP_E_UNKNOWNNAME;
 }
 
-static HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *caller)
+HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *caller)
 {
     V_VT(dst) = VT_EMPTY;
 

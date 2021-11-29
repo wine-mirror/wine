@@ -384,6 +384,7 @@ extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTr
 void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*) DECLSPEC_HIDDEN;
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**) DECLSPEC_HIDDEN;
 HRESULT get_dispids(tid_t,DWORD*,DISPID**) DECLSPEC_HIDDEN;
 HRESULT remove_attribute(DispatchEx*,DISPID,VARIANT_BOOL*) DECLSPEC_HIDDEN;
