@@ -194,12 +194,6 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     return MMSYSERR_NOERROR;
 }
 
-static DWORD MIDIIn_GetNumDevs(void)
-{
-    TRACE("\n");
-    return MIDIIn_NumDevs;
-}
-
 static DWORD MIDIIn_Start(WORD wDevID)
 {
     TRACE("%d\n", wDevID);
@@ -420,8 +414,6 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     switch (wMsg) {
         case MIDM_ADDBUFFER:
             return MIDIIn_AddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-        case MIDM_GETNUMDEVS:
-            return MIDIIn_GetNumDevs();
         case MIDM_START:
             return MIDIIn_Start(wDevID);
         case MIDM_STOP:

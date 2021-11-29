@@ -845,6 +845,12 @@ static DWORD midi_in_get_devcaps(WORD dev_id, MIDIINCAPSW *caps, DWORD size)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_get_num_devs(void)
+{
+    TRACE("\n");
+    return num_srcs;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -928,6 +934,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_GETDEVCAPS:
         *params->err = midi_in_get_devcaps(params->dev_id, (MIDIINCAPSW *)params->param_1, params->param_2);
+        break;
+    case MIDM_GETNUMDEVS:
+        *params->err = midi_in_get_num_devs();
         break;
     default:
         TRACE("Unsupported message\n");
