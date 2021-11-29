@@ -2764,15 +2764,13 @@ Some influential environment variables:
   TIFF_PE_LIBS
               Linker flags for the PE tiff, overriding the bundled version
   XML2_PE_CFLAGS
-              C compiler flags for the PE libxml2, overriding the bundled
-              version
+              C compiler flags for the PE xml2, overriding the bundled version
   XML2_PE_LIBS
-              Linker flags for the PE libxml2, overriding the bundled version
+              Linker flags for the PE xml2, overriding the bundled version
   XSLT_PE_CFLAGS
-              C compiler flags for the PE libxslt, overriding the bundled
-              version
+              C compiler flags for the PE xslt, overriding the bundled version
   XSLT_PE_LIBS
-              Linker flags for the PE libxslt, overriding the bundled version
+              Linker flags for the PE xslt, overriding the bundled version
   ZLIB_PE_CFLAGS
               C compiler flags for the PE zlib, overriding the bundled version
   ZLIB_PE_LIBS
@@ -12422,31 +12420,31 @@ if ${XML2_PE_CFLAGS:+false} :
 then :
   XML2_PE_CFLAGS="-I\$(top_srcdir)/libs/xml2/include -DLIBXML_STATIC"
 else $as_nop
-  enable_libxml2=no
+  enable_xml2=no
 fi
 if ${XML2_PE_LIBS:+false} :
 then :
   XML2_PE_LIBS=xml2
 else $as_nop
-  enable_libxml2=no
+  enable_xml2=no
 fi
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libxml2 cflags: $XML2_PE_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libxml2 libs: $XML2_PE_LIBS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xml2 cflags: $XML2_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xml2 libs: $XML2_PE_LIBS" >&5
 
 if ${XSLT_PE_CFLAGS:+false} :
 then :
   XSLT_PE_CFLAGS="-I\$(top_srcdir)/libs/xslt -DLIBXSLT_STATIC"
 else $as_nop
-  enable_libxslt=no
+  enable_xslt=no
 fi
 if ${XSLT_PE_LIBS:+false} :
 then :
   XSLT_PE_LIBS=xslt
 else $as_nop
-  enable_libxslt=no
+  enable_xslt=no
 fi
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libxslt cflags: $XSLT_PE_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libxslt libs: $XSLT_PE_LIBS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xslt cflags: $XSLT_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xslt libs: $XSLT_PE_LIBS" >&5
 
 if ${ZLIB_PE_CFLAGS:+false} :
 then :
