@@ -826,6 +826,25 @@ static DWORD midi_in_unprepare(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_get_devcaps(WORD dev_id, MIDIINCAPSW *caps, DWORD size)
+{
+    TRACE("dev_id = %d caps = %p size = %d\n", dev_id, caps, size);
+
+    if (!caps)
+    {
+        WARN("Invalid Parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    memcpy(caps, &srcs[dev_id].caps, min(size, sizeof(*caps)));
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -906,6 +925,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_UNPREPARE:
         *params->err = midi_in_unprepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
+        break;
+    case MIDM_GETDEVCAPS:
+        *params->err = midi_in_get_devcaps(params->dev_id, (MIDIINCAPSW *)params->param_1, params->param_2);
         break;
     default:
         TRACE("Unsupported message\n");
