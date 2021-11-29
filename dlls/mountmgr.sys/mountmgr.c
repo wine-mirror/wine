@@ -18,11 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #define NONAMELESSUNION
 
@@ -30,7 +27,6 @@
 #include "winreg.h"
 #include "unixlib.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
@@ -69,14 +65,14 @@ static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
 {
     struct mount_point *mount;
     WCHAR *str;
-    UINT len = (strlenW(link) + 1) * sizeof(WCHAR) + device_name->Length + sizeof(WCHAR);
+    UINT len = (lstrlenW(link) + 1) * sizeof(WCHAR) + device_name->Length + sizeof(WCHAR);
 
     if (!(mount = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*mount) + len ))) return NULL;
 
     str = (WCHAR *)(mount + 1);
-    strcpyW( str, link );
+    lstrcpyW( str, link );
     RtlInitUnicodeString( &mount->link, str );
-    str += strlenW(str) + 1;
+    str += lstrlenW(str) + 1;
     memcpy( str, device_name->Buffer, device_name->Length );
     str[device_name->Length / sizeof(WCHAR)] = 0;
     mount->name.Buffer = str;
@@ -99,7 +95,7 @@ struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
     static const WCHAR driveW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','%','c',':',0};
     WCHAR link[sizeof(driveW)];
 
-    sprintfW( link, driveW, 'A' + drive );
+    swprintf( link, ARRAY_SIZE(link), driveW, 'A' + drive );
     return add_mount_point( device, device_name, link );
 }
 
@@ -113,7 +109,7 @@ struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
                                     '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0};
     WCHAR link[sizeof(volumeW)];
 
-    sprintfW( link, volumeW, guid->Data1, guid->Data2, guid->Data3,
+    swprintf( link, ARRAY_SIZE(link), volumeW, guid->Data1, guid->Data2, guid->Data3,
               guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
               guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
     return add_mount_point( device, device_name, link );
@@ -137,14 +133,14 @@ static BOOL matching_mount_point( const struct mount_point *mount, const MOUNTMG
     {
         const WCHAR *name = (const WCHAR *)((const char *)spec + spec->SymbolicLinkNameOffset);
         if (spec->SymbolicLinkNameLength != mount->link.Length) return FALSE;
-        if (strncmpiW( name, mount->link.Buffer, mount->link.Length/sizeof(WCHAR)))
+        if (wcsnicmp( name, mount->link.Buffer, mount->link.Length/sizeof(WCHAR)))
             return FALSE;
     }
     if (spec->DeviceNameOffset)
     {
         const WCHAR *name = (const WCHAR *)((const char *)spec + spec->DeviceNameOffset);
         if (spec->DeviceNameLength != mount->name.Length) return FALSE;
-        if (strncmpiW( name, mount->name.Buffer, mount->name.Length/sizeof(WCHAR)))
+        if (wcsnicmp( name, mount->name.Buffer, mount->name.Length/sizeof(WCHAR)))
             return FALSE;
     }
     if (spec->UniqueIdOffset)
@@ -236,7 +232,7 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
 {
     const struct mountmgr_unix_drive *input = in_buff;
     const char *mount_point = NULL, *device = NULL;
-    WCHAR letter = tolowerW( input->letter );
+    WCHAR letter = towlower( input->letter );
 
     if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
     if (input->type > DRIVE_RAMDISK) return STATUS_INVALID_PARAMETER;

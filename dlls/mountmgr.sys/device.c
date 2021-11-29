@@ -18,28 +18,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 #define NONAMELESSUNION
 
 #include "mountmgr.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "dbt.h"
 #include "unixlib.h"
 
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
@@ -144,7 +138,7 @@ static WCHAR *strdupW( const WCHAR *str )
     WCHAR *ret;
 
     if (!str) return NULL;
-    if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR) ))) strcpyW( ret, str );
+    if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, (lstrlenW(str) + 1) * sizeof(WCHAR) ))) lstrcpyW( ret, str );
     return ret;
 }
 
@@ -677,12 +671,12 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
         break;
     }
 
-    name.MaximumLength = (strlenW(format) + 10) * sizeof(WCHAR);
+    name.MaximumLength = (lstrlenW(format) + 10) * sizeof(WCHAR);
     name.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, name.MaximumLength );
     for (i = first; i < 32; i++)
     {
-        sprintfW( name.Buffer, format, i );
-        name.Length = strlenW(name.Buffer) * sizeof(WCHAR);
+        swprintf( name.Buffer, name.MaximumLength / sizeof(WCHAR), format, i );
+        name.Length = lstrlenW(name.Buffer) * sizeof(WCHAR);
         status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, 0, 0, FALSE, &dev_obj );
         if (status != STATUS_OBJECT_NAME_COLLISION) break;
     }
@@ -701,11 +695,11 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
         {
             UNICODE_STRING symlink;
 
-            symlink.MaximumLength = (strlenW(link_format) + 10) * sizeof(WCHAR);
+            symlink.MaximumLength = (lstrlenW(link_format) + 10) * sizeof(WCHAR);
             if ((symlink.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, symlink.MaximumLength)))
             {
-                sprintfW( symlink.Buffer, link_format, i );
-                symlink.Length = strlenW(symlink.Buffer) * sizeof(WCHAR);
+                swprintf( symlink.Buffer, symlink.MaximumLength / sizeof(WCHAR), link_format, i );
+                symlink.Length = lstrlenW(symlink.Buffer) * sizeof(WCHAR);
                 if (!IoCreateSymbolicLink( &symlink, &name )) device->symlink = symlink;
             }
         }
@@ -1126,7 +1120,7 @@ static void create_drive_devices(void)
                 type == REG_SZ)
             {
                 for (j = 0; j < ARRAY_SIZE(drive_types); j++)
-                    if (drive_types[j][0] && !strcmpiW( buffer, drive_types[j] ))
+                    if (drive_types[j][0] && !wcsicmp( buffer, drive_types[j] ))
                     {
                         drive_type = j;
                         break;
@@ -1170,7 +1164,7 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
 
     if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return;
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, info->addr.PortNumber );
+    swprintf( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, info->addr.PortNumber );
     if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return;
     RegCloseKey( scsi_key );
 
@@ -1181,19 +1175,19 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
 
     value = 0;
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, info->addr.PathId );
+    swprintf( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, info->addr.PathId );
     if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return;
     RegCloseKey( port_key );
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), init_id_keyW, info->init_id );
+    swprintf( dataW, ARRAY_SIZE( dataW ), init_id_keyW, info->init_id );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( target_key );
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), target_id_keyW, info->addr.TargetId );
+    swprintf( dataW, ARRAY_SIZE( dataW ), target_id_keyW, info->addr.TargetId );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( bus_key );
 
-    snprintfW( dataW, ARRAY_SIZE( dataW ), lun_keyW, info->addr.Lun );
+    swprintf( dataW, ARRAY_SIZE( dataW ), lun_keyW, info->addr.Lun );
     if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return;
     RegCloseKey( target_key );
 
@@ -1230,14 +1224,14 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
     if (volume)
     {
         UNICODE_STRING *dev = &volume->device->name;
-        WCHAR *buffer = memchrW( dev->Buffer+1, '\\', dev->Length )+1;
+        WCHAR *buffer = wcschr( dev->Buffer+1, '\\' ) + 1;
         ULONG length = dev->Length - (buffer - dev->Buffer)*sizeof(WCHAR);
         RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)buffer, length );
     }
     else if (info->type == SCSI_TAPE_PERIPHERAL)
     {
-        snprintfW( dataW, ARRAY_SIZE( dataW ), tapeW, tape_no++ );
-        RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)dataW, strlenW( dataW ) );
+        swprintf( dataW, ARRAY_SIZE( dataW ), tapeW, tape_no++ );
+        RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)dataW, lstrlenW( dataW ) );
     }
 
     RegCloseKey( lun_key );
@@ -1369,7 +1363,7 @@ found:
         if (!type_name[0] && type == DEVICE_HARDDISK) type_name = drive_types[DEVICE_FLOPPY];
         if (type_name[0])
             RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)type_name,
-                            (strlenW(type_name) + 1) * sizeof(WCHAR) );
+                            (lstrlenW(type_name) + 1) * sizeof(WCHAR) );
         else
             RegDeleteValueW( hkey, name );
         RegCloseKey( hkey );
@@ -1482,7 +1476,7 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
     const struct mountmgr_unix_drive *input = buff;
     struct mountmgr_unix_drive *output = NULL;
     char *device, *mount_point;
-    int letter = tolowerW( input->letter );
+    int letter = towlower( input->letter );
     DWORD size, type = DEVICE_UNKNOWN, serial;
     NTSTATUS status = STATUS_SUCCESS;
     enum mountmgr_fs_type fs_type;
@@ -1526,7 +1520,7 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
     }
 
     size = sizeof(*output);
-    if (label) size += (strlenW(label) + 1) * sizeof(WCHAR);
+    if (label) size += (lstrlenW(label) + 1) * sizeof(WCHAR);
     if (device) size += strlen(device) + 1;
     if (mount_point) size += strlen(mount_point) + 1;
 
@@ -1543,11 +1537,11 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
 
     ptr = (char *)(output + 1);
 
-    if (label && ptr + (strlenW(label) + 1) * sizeof(WCHAR) - (char *)output <= outsize)
+    if (label && ptr + (lstrlenW(label) + 1) * sizeof(WCHAR) - (char *)output <= outsize)
     {
         output->label_offset = ptr - (char *)output;
-        strcpyW( (WCHAR *)ptr, label );
-        ptr += (strlenW(label) + 1) * sizeof(WCHAR);
+        lstrcpyW( (WCHAR *)ptr, label );
+        ptr += (lstrlenW(label) + 1) * sizeof(WCHAR);
     }
     if (mount_point && ptr + strlen(mount_point) + 1 - (char *)output <= outsize)
     {
@@ -1683,7 +1677,7 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
 
         info->VolumeCreationTime.QuadPart = 0; /* FIXME */
         info->VolumeSerialNumber = volume->serial;
-        info->VolumeLabelLength = min( strlenW(volume->label) * sizeof(WCHAR),
+        info->VolumeLabelLength = min( lstrlenW(volume->label) * sizeof(WCHAR),
                                        length - offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) );
         info->SupportsObjects = (get_mountmgr_fs_type(volume->fs_type) == MOUNTMGR_FS_TYPE_NTFS);
         memcpy( info->VolumeLabel, volume->label, info->VolumeLabelLength );
@@ -1909,10 +1903,10 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
         default_device = dosdevices_prnW;
     }
 
-    sprintfW( dos_name, dos_name_format, n );
+    swprintf( dos_name, ARRAY_SIZE(dos_name), dos_name_format, n );
 
     /* create NT device */
-    sprintfW( nt_buffer, nt_name_format, n - 1 );
+    swprintf( nt_buffer, ARRAY_SIZE(nt_buffer), nt_name_format, n - 1 );
     RtlInitUnicodeString( &nt_name, nt_buffer );
     status = IoCreateDevice( driver, 0, &nt_name, 0, 0, FALSE, &dev_obj );
     if (status != STATUS_SUCCESS)
@@ -1920,7 +1914,7 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
         FIXME( "IoCreateDevice %s got %x\n", debugstr_w(nt_name.Buffer), status );
         return FALSE;
     }
-    sprintfW( symlink_buffer, symlink_format, n );
+    swprintf( symlink_buffer, ARRAY_SIZE(symlink_buffer), symlink_format, n );
     RtlInitUnicodeString( &symlink_name, symlink_buffer );
     IoCreateSymbolicLink( &symlink_name, &nt_name );
     if (n == 1)
@@ -1932,9 +1926,9 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     /* TODO: store information about the Unix device in the NT device */
 
     /* create registry entry */
-    sprintfW( reg_value, reg_value_format, n );
+    swprintf( reg_value, ARRAY_SIZE(reg_value), reg_value_format, n );
     RegSetValueExW( windows_ports_key, nt_name.Buffer, 0, REG_SZ,
-                    (BYTE *)reg_value, (strlenW( reg_value ) + 1) * sizeof(WCHAR) );
+                    (BYTE *)reg_value, (lstrlenW( reg_value ) + 1) * sizeof(WCHAR) );
 
     return TRUE;
 }
@@ -1991,10 +1985,10 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
         if (RegEnumValueW( wine_ports_key, i, port, &port_len, NULL,
                     &type, (BYTE*)reg_value, &size ) != ERROR_SUCCESS)
             break;
-        if (type != REG_SZ || strncmpiW( port, port_prefix, 3 ))
+        if (type != REG_SZ || wcsnicmp( port, port_prefix, 3 ))
             continue;
 
-        n = atoiW( port  + 3 );
+        n = wcstol( port + 3, NULL, 10 );
         if (n < 1 || n >= MAX_PORTS)
             continue;
 
