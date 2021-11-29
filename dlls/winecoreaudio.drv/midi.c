@@ -128,7 +128,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     TRACE("wDevID=%d wMsg=%d dwParm1=%04lX dwParam2=%04lX\n", wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MIM_CLOSE:
     case MIM_DATA:
     case MIM_LONGDATA:
     case MIM_ERROR:
@@ -145,30 +144,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     }
 
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
-}
-
-static DWORD MIDIIn_Close(WORD wDevID)
-{
-    DWORD ret = MMSYSERR_NOERROR;
-
-    TRACE("wDevID=%d\n", wDevID);
-
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (sources[wDevID].midiDesc.hMidi == 0) {
-	WARN("device not opened !\n");
-	return MMSYSERR_ERROR;
-    }
-    if (sources[wDevID].lpQueueHdr != 0) {
-	return MIDIERR_STILLPLAYING;
-    }
-
-    MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L);
-    sources[wDevID].midiDesc.hMidi = 0;
-    return ret;
 }
 
 static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
@@ -490,8 +465,6 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
 
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
-        case MIDM_CLOSE:
-            return MIDIIn_Close(wDevID);
         case MIDM_ADDBUFFER:
             return MIDIIn_AddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MIDM_PREPARE:

@@ -770,6 +770,32 @@ static DWORD midi_in_open(WORD dev_id, MIDIOPENDESC *midi_desc, DWORD flags, str
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_close(WORD dev_id, struct notify_context *notify)
+{
+    struct midi_src *src;
+
+    TRACE("dev_id = %d\n", dev_id);
+
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    src = srcs + dev_id;
+
+    if (!src->midiDesc.hMidi)
+    {
+        WARN("device not opened !\n");
+        return MMSYSERR_ERROR;
+    }
+    if (src->lpQueueHdr) return MIDIERR_STILLPLAYING;
+
+    set_in_notify(notify, src, dev_id, MIM_CLOSE, 0, 0);
+    src->midiDesc.hMidi = 0;
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -841,6 +867,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_OPEN:
         *params->err = midi_in_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    case MIDM_CLOSE:
+        *params->err = midi_in_close(params->dev_id, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");
