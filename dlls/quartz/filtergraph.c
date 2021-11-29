@@ -2213,9 +2213,6 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface, const GUI
 
     TRACE("(%p/%p)->(%s)\n", This, iface, debugstr_guid(pFormat));
 
-    if (This->state != State_Stopped)
-        return VFW_E_WRONG_STATE;
-
     if (!IsEqualGUID(&TIME_FORMAT_MEDIA_TIME, pFormat))
     {
         FIXME("Unhandled time format %s\n", debugstr_guid(pFormat));
