@@ -5102,9 +5102,44 @@ static void test_PARGB_conversion(void)
 
 static void test_CloneBitmapArea(void)
 {
+    /* 3x3 pixeldata in various formats: red, green, blue, yellow, turquoise, pink, black, gray, white */
+    static BYTE bmp_3x3_data_32bpp_argb[] = {
+    0xff,0x00,0x00,0xff, 0x00,0xff,0x00,0xff, 0x00,0x00,0xff,0xff,
+    0xff,0xff,0x00,0xff, 0x00,0xff,0xff,0xff, 0xff,0x00,0xff,0xff,
+    0xff,0xff,0xff,0xff, 0x80,0x80,0x80,0xff, 0x00,0x00,0x00,0xff
+    };
+    static BYTE bmp_3x3_data_32bpp_rgb[] = {
+    0xff,0x00,0x00,0x00, 0x00,0xff,0x00,0x00, 0x00,0x00,0xff,0x00,
+    0xff,0xff,0x00,0x00, 0x00,0xff,0xff,0x00, 0xff,0x00,0xff,0x00,
+    0xff,0xff,0xff,0x00, 0x80,0x80,0x80,0x00, 0x00,0x00,0x00,0x00
+    };
+    static BYTE bmp_3x3_data_24bpp_rgb[] = {
+    0xff,0x00,0x00, 0x00,0xff,0x00, 0x00,0x00,0xff,
+    0xff,0xff,0x00, 0x00,0xff,0xff, 0xff,0x00,0xff,
+    0xff,0xff,0xff, 0x80,0x80,0x80, 0x00,0x00,0x00
+    };
+
+    static const struct test_data {
+        BYTE *src_pixeldata;
+        PixelFormat src_format;
+        PixelFormat dst_format;
+    } td[] =
+    {
+        { bmp_3x3_data_32bpp_argb, PixelFormat32bppARGB, PixelFormat8bppIndexed },
+        { bmp_3x3_data_32bpp_argb, PixelFormat32bppARGB, PixelFormat4bppIndexed },
+        { bmp_3x3_data_32bpp_argb, PixelFormat32bppARGB, PixelFormat1bppIndexed },
+        { bmp_3x3_data_32bpp_rgb, PixelFormat32bppRGB, PixelFormat8bppIndexed },
+        { bmp_3x3_data_32bpp_rgb, PixelFormat32bppRGB, PixelFormat4bppIndexed },
+        { bmp_3x3_data_32bpp_rgb, PixelFormat32bppRGB, PixelFormat1bppIndexed },
+        { bmp_3x3_data_24bpp_rgb, PixelFormat24bppRGB, PixelFormat8bppIndexed },
+        { bmp_3x3_data_24bpp_rgb, PixelFormat24bppRGB, PixelFormat4bppIndexed },
+        { bmp_3x3_data_24bpp_rgb, PixelFormat24bppRGB, PixelFormat1bppIndexed },
+    };
+
     GpStatus status;
     GpBitmap *bitmap, *copy;
     BitmapData data, data2;
+    INT x, y, i;
 
     status = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat24bppRGB, NULL, &bitmap);
     expect(Ok, status);
@@ -5123,6 +5158,40 @@ static void test_CloneBitmapArea(void)
 
     GdipDisposeImage((GpImage *)copy);
     GdipDisposeImage((GpImage *)bitmap);
+
+    for(i=0; i<ARRAY_SIZE(td); i++)
+    {
+        status = GdipCreateBitmapFromScan0(3, 3, 4*3, td[i].src_format, td[i].src_pixeldata, &bitmap);
+        expect(Ok, status);
+
+        status = GdipCloneBitmapAreaI(0, 0, 3, 3, td[i].dst_format, bitmap, &copy);
+        expect(Ok, status);
+
+        for (y=0; y<3; y++)
+            for (x=0; x<3; x++)
+            {
+                BOOL match;
+                ARGB color_orig;
+                ARGB color_copy;
+
+                status = GdipBitmapGetPixel(bitmap, x, y, &color_orig);
+                expect(Ok, status);
+
+                status = GdipBitmapGetPixel(copy, x, y, &color_copy);
+                expect(Ok, status);
+
+                if(td[i].dst_format == PixelFormat1bppIndexed)
+                    color_orig = (color_orig >> 16 & 0xff) + (color_orig >> 8 & 0xff) + (color_orig & 0xff)
+                      > 0x17d ? 0xffffffff : 0xff000000;
+
+                match = color_match(color_orig, color_copy, 0x00);
+                ok(match == TRUE, "Colors 0x%08x and 0x%08x do not match! (Conversion from %x to %x)\n",
+                  color_orig, color_copy, td[i].src_format, td[i].dst_format);
+            }
+
+        GdipDisposeImage((GpImage *)copy);
+        GdipDisposeImage((GpImage *)bitmap);
+    }
 }
 
 static void test_supported_encoders(void)
