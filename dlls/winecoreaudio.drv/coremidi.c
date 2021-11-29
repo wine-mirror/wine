@@ -934,6 +934,39 @@ static DWORD midi_in_stop(WORD dev_id)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_reset(WORD dev_id, struct notify_context *notify)
+{
+    DWORD cur_time = NtGetTickCount();
+    DWORD err = MMSYSERR_NOERROR;
+    struct midi_src *src;
+    MIDIHDR *hdr;
+
+    TRACE("%d\n", dev_id);
+
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    src = srcs + dev_id;
+
+    midi_in_lock((void *)TRUE);
+
+    if (src->lpQueueHdr)
+    {
+        hdr = src->lpQueueHdr;
+        src->lpQueueHdr = hdr->lpNext;
+        hdr->dwFlags &= ~MHDR_INQUEUE;
+        hdr->dwFlags |= MHDR_DONE;
+        set_in_notify(notify, src, dev_id, MIM_LONGDATA, (DWORD_PTR)hdr, cur_time - src->startTime);
+        if (src->lpQueueHdr) err = ERROR_RETRY; /* ask the client to call again */
+    }
+
+    midi_in_lock((void *)FALSE);
+
+    return err;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -1029,6 +1062,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_STOP:
         *params->err = midi_in_stop(params->dev_id);
+        break;
+    case MIDM_RESET:
+        *params->err = midi_in_reset(params->dev_id, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");

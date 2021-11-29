@@ -142,30 +142,6 @@ static void midi_lock( BOOL lock )
     UNIX_CALL(midi_in_lock, (void *)lock);
 }
 
-static DWORD MIDIIn_Reset(WORD wDevID)
-{
-    DWORD dwTime = GetTickCount();
-
-    TRACE("%d\n", wDevID);
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    midi_lock( TRUE );
-    while (sources[wDevID].lpQueueHdr) {
-	LPMIDIHDR lpMidiHdr = sources[wDevID].lpQueueHdr;
-	sources[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
-	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-	lpMidiHdr->dwFlags |= MHDR_DONE;
-	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
-	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime - sources[wDevID].startTime);
-    }
-    midi_lock( FALSE );
-
-    return MMSYSERR_NOERROR;
-}
-
 /*
  * MIDI In Mach message handling
  */
@@ -335,10 +311,6 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     DWORD err;
 
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    switch (wMsg) {
-        case MIDM_RESET:
-            return MIDIIn_Reset(wDevID);
-    }
 
     params.dev_id = wDevID;
     params.msg = wMsg;
@@ -348,9 +320,11 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     params.err = &err;
     params.notify = &notify;
 
-    UNIX_CALL(midi_in_message, &params);
-
-    if (!err && notify.send_notify) notify_client(&notify);
+    do
+    {
+        UNIX_CALL(midi_in_message, &params);
+        if ((!err || err == ERROR_RETRY) && notify.send_notify) notify_client(&notify);
+    } while (err == ERROR_RETRY);
 
     return err;
 }
