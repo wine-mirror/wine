@@ -57,7 +57,6 @@ AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Ca
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
-AC_ARG_WITH(quicktime, AS_HELP_STRING([--without-quicktime],[do not use QuickTime support]))
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
 AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
@@ -427,7 +426,6 @@ AC_CHECK_HEADERS(\
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
 	OpenCL/opencl.h \
-	QuickTime/ImageCompression.h \
 	Security/Security.h \
 	SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h \
 	SystemConfiguration/SCNetworkConfiguration.h \
@@ -787,27 +785,6 @@ case $host_os in
         LIBS="$ac_save_LIBS"
     fi
 
-    dnl *** Check for QuickTime ***
-    if test "x$with_quicktime" != "xno"
-    then
-        if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
-        then
-            dnl Make sure we can actually use the QuickTime framework
-            ac_save_LIBS="$LIBS"
-            LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
-            AC_MSG_CHECKING([for the QuickTime framework])
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QuickTime/ImageCompression.h>]],[[CodecManagerVersion(NULL);]])],
-                           [AC_MSG_RESULT([yes])
-                            AC_SUBST(QUICKTIME_LIBS,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
-                            enable_wineqtdecoder=${enable_wineqtdecoder:-yes}],
-                           [AC_MSG_RESULT([no])
-                            ac_cv_header_QuickTime_ImageCompression_h=no])
-            LIBS="$ac_save_LIBS"
-        fi
-    fi
-    WINE_NOTICE_WITH(quicktime,[test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"],
-                     [QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
-
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         AC_SUBST(CARBON_LIBS,"-framework Carbon")
@@ -920,7 +897,6 @@ case $host_os in
 esac
 
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
@@ -1503,12 +1479,9 @@ then
                  ac_glib2_broken=yes
                  WINE_NOTICE([glib-2.0 pkgconfig configuration is for the wrong architecture, winegstreamer won't be built.])])])])
 fi
-if test "x$with_gstreamer" = xyes -o "x$with_quicktime" = xno -o "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes
-then
-    WINE_NOTICE_WITH(gstreamer,[test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes],
-                     [gstreamer-1.0 base plugins ${notice_platform}development files not found, GStreamer won't be supported.])
-fi
-test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
+WINE_NOTICE_WITH(gstreamer,[test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes],
+                 [gstreamer-1.0 base plugins ${notice_platform}development files not found, GStreamer won't be supported.],
+                 [enable_winegstreamer])
 
 dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSA_LIBS,"")
@@ -3473,7 +3446,6 @@ WINE_CONFIG_MAKEFILE(dlls/wineoss.drv)
 WINE_CONFIG_MAKEFILE(dlls/wineps.drv)
 WINE_CONFIG_MAKEFILE(dlls/wineps16.drv16,enable_win16)
 WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
-WINE_CONFIG_MAKEFILE(dlls/wineqtdecoder)
 WINE_CONFIG_MAKEFILE(dlls/wineusb.sys)
 WINE_CONFIG_MAKEFILE(dlls/winevulkan)
 WINE_CONFIG_MAKEFILE(dlls/winex11.drv)

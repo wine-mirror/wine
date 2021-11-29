@@ -749,7 +749,6 @@ LIBWINE_LDFLAGS
 LIBWINE_SHAREDLIB
 METAL_LIBS
 CARBON_LIBS
-QUICKTIME_LIBS
 OPENCL_LIBS
 OPENAL_LIBS
 COREAUDIO_LIBS
@@ -909,7 +908,6 @@ with_oss
 with_pcap
 with_pthread
 with_pulse
-with_quicktime
 with_sane
 with_sdl
 with_udev
@@ -1725,7 +1723,6 @@ enable_winemapi
 enable_wineoss_drv
 enable_wineps_drv
 enable_winepulse_drv
-enable_wineqtdecoder
 enable_wineusb_sys
 enable_winevulkan
 enable_winex11_drv
@@ -2695,7 +2692,6 @@ Optional Packages:
   --without-pcap          do not use the Packet Capture library
   --without-pthread       do not use the pthread library
   --without-pulse         do not use PulseAudio sound support
-  --without-quicktime     do not use QuickTime support
   --without-sane          do not use SANE (scanner support)
   --without-sdl           do not use SDL
   --without-udev          do not use udev (plug and play support)
@@ -4612,13 +4608,6 @@ fi
 if test ${with_pulse+y}
 then :
   withval=$with_pulse;
-fi
-
-
-# Check whether --with-quicktime was given.
-if test ${with_quicktime+y}
-then :
-  withval=$with_quicktime;
 fi
 
 
@@ -8216,12 +8205,6 @@ then :
   printf "%s\n" "#define HAVE_OPENCL_OPENCL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "QuickTime/ImageCompression.h" "ac_cv_header_QuickTime_ImageCompression_h" "$ac_includes_default"
-if test "x$ac_cv_header_QuickTime_ImageCompression_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_QUICKTIME_IMAGECOMPRESSION_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "Security/Security.h" "ac_cv_header_Security_Security_h" "$ac_includes_default"
 if test "x$ac_cv_header_Security_Security_h" = xyes
 then :
@@ -10547,53 +10530,6 @@ fi
         LIBS="$ac_save_LIBS"
     fi
 
-        if test "x$with_quicktime" != "xno"
-    then
-        if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
-        then
-                        ac_save_LIBS="$LIBS"
-            LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for the QuickTime framework" >&5
-printf %s "checking for the QuickTime framework... " >&6; }
-            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <QuickTime/ImageCompression.h>
-int
-main (void)
-{
-CodecManagerVersion(NULL);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-printf "%s\n" "yes" >&6; }
-                            QUICKTIME_LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
-
-                            enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-                            ac_cv_header_QuickTime_ImageCompression_h=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-            LIBS="$ac_save_LIBS"
-        fi
-    fi
-    if test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"
-then :
-  case "x$with_quicktime" in
-  x)   as_fn_append wine_notices "|QuickTime ${notice_platform}development files not found, video decoding won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "QuickTime ${notice_platform}development files not found, video decoding won't be supported.
-This is an error since --with-quicktime was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         CARBON_LIBS="-framework Carbon"
@@ -11141,7 +11077,6 @@ fi
 esac
 
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
@@ -16176,9 +16111,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$with_gstreamer" = xyes -o "x$with_quicktime" = xno -o "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes
-then
-    if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes
+if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes
 then :
   case "x$with_gstreamer" in
   x)   as_fn_append wine_notices "|gstreamer-1.0 base plugins ${notice_platform}development files not found, GStreamer won't be supported." ;;
@@ -16186,10 +16119,8 @@ then :
   *)   as_fn_error $? "gstreamer-1.0 base plugins ${notice_platform}development files not found, GStreamer won't be supported.
 This is an error since --with-gstreamer was requested." "$LINENO" 5 ;;
 esac
-
+enable_winegstreamer=${enable_winegstreamer:-no}
 fi
-fi
-test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
 ALSA_LIBS=""
 
@@ -21798,7 +21729,6 @@ wine_fn_config_makefile dlls/wineoss.drv enable_wineoss_drv
 wine_fn_config_makefile dlls/wineps.drv enable_wineps_drv
 wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
 wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
-wine_fn_config_makefile dlls/wineqtdecoder enable_wineqtdecoder
 wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
 wine_fn_config_makefile dlls/winevulkan enable_winevulkan
 wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
@@ -23015,7 +22945,6 @@ SECURITY_LIBS = $SECURITY_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
 OPENAL_LIBS = $OPENAL_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
-QUICKTIME_LIBS = $QUICKTIME_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
 LIBWINE_SHAREDLIB = $LIBWINE_SHAREDLIB
