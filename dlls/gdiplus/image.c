@@ -591,8 +591,9 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
 
 GpStatus convert_pixels(INT width, INT height,
     INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
+    ColorPalette *dst_palette,
     INT src_stride, const BYTE *src_bits, PixelFormat src_format,
-    ColorPalette *palette)
+    ColorPalette *src_palette)
 {
     INT x, y;
 
@@ -612,7 +613,7 @@ GpStatus convert_pixels(INT width, INT height,
             ARGB argb; \
             BYTE *color = (BYTE *)&argb; \
             getpixel_function(&index, src_bits+src_stride*y, x); \
-            argb = (palette && index < palette->Count) ? palette->Entries[index] : 0; \
+            argb = (src_palette && index < src_palette->Count) ? src_palette->Entries[index] : 0; \
             setpixel_function(color[2], color[1], color[0], color[3], dst_bits+dst_stride*y, x); \
         } \
     return Ok; \
@@ -633,7 +634,7 @@ GpStatus convert_pixels(INT width, INT height,
         for (x=0; x<width; x++) { \
             BYTE r, g, b, a; \
             getpixel_function(&r, &g, &b, &a, src_bits+src_stride*y, x); \
-            setpixel_function(r, g, b, a, dst_bits+dst_stride*y, x, palette); \
+            setpixel_function(r, g, b, a, dst_bits+dst_stride*y, x, dst_palette); \
         } \
     return Ok; \
 } while (0);
@@ -1137,7 +1138,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     /* Make sure we can convert to the requested format. */
     if (flags & ImageLockModeRead)
     {
-        stat = convert_pixels(0, 0, 0, NULL, format, 0, NULL, bitmap->format, NULL);
+        stat = convert_pixels(0, 0, 0, NULL, format, NULL, 0, NULL, bitmap->format, NULL);
         if (stat == NotImplemented)
         {
             FIXME("cannot read bitmap from %x to %x\n", bitmap->format, format);
@@ -1150,7 +1151,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
      * the original format. */
     if (flags & ImageLockModeWrite)
     {
-        stat = convert_pixels(0, 0, 0, NULL, bitmap->format, 0, NULL, format, NULL);
+        stat = convert_pixels(0, 0, 0, NULL, bitmap->format, NULL, 0, NULL, format, NULL);
         if (stat == NotImplemented)
         {
             FIXME("cannot write bitmap from %x to %x\n", format, bitmap->format);
@@ -1190,7 +1191,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         }
 
         stat = convert_pixels(act_rect.Width, act_rect.Height,
-            lockeddata->Stride, lockeddata->Scan0, format,
+            lockeddata->Stride, lockeddata->Scan0, format, bitmap->image.palette,
             bitmap->stride,
             bitmap->bits + bitmap->stride * act_rect.Y + PIXELFORMATBPP(bitmap->format) * act_rect.X / 8,
             bitmap->format, bitmap->image.palette);
@@ -1267,10 +1268,11 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         fixme = TRUE;
     }
 
+    /* FIXME: Pass src_palette generated from lockeddata->PixelFormat. */
     stat = convert_pixels(lockeddata->Width, lockeddata->Height,
         bitmap->stride,
         bitmap->bits + bitmap->stride * bitmap->locky + PIXELFORMATBPP(bitmap->format) * bitmap->lockx / 8,
-        bitmap->format,
+        bitmap->format, bitmap->image.palette,
         lockeddata->Stride, lockeddata->Scan0, lockeddata->PixelFormat, NULL);
 
     if (stat != Ok)
@@ -1314,7 +1316,7 @@ GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
     if (stat == Ok)
     {
         stat = convert_pixels(area.Width, area.Height, (*dstBitmap)->stride, (*dstBitmap)->bits, (*dstBitmap)->format,
-                              srcBitmap->stride,
+                              (*dstBitmap)->image.palette, srcBitmap->stride,
                               srcBitmap->bits + srcBitmap->stride * area.Y + PIXELFORMATBPP(srcBitmap->format) * area.X / 8,
                               srcBitmap->format, srcBitmap->image.palette);
 
@@ -1545,7 +1547,7 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     }
 
     stat = convert_pixels(width, height, -width*4,
-            bits + (width * 4 * (height - 1)), PixelFormat32bppPARGB,
+            bits + (width * 4 * (height - 1)), PixelFormat32bppPARGB, bitmap->image.palette,
             bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette);
     if (stat != Ok)
     {

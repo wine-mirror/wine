@@ -207,8 +207,8 @@ extern void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
     BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride) DECLSPEC_HIDDEN;
 
 extern GpStatus convert_pixels(INT width, INT height,
-    INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
-    INT src_stride, const BYTE *src_bits, PixelFormat src_format, ColorPalette *palette) DECLSPEC_HIDDEN;
+    INT dst_stride, BYTE *dst_bits, PixelFormat dst_format, ColorPalette *dst_palette,
+    INT src_stride, const BYTE *src_bits, PixelFormat src_format, ColorPalette *src_palette) DECLSPEC_HIDDEN;
 
 extern PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE data,
     UINT width, UINT height, INT stride, ColorAdjustType type, PixelFormat fmt) DECLSPEC_HIDDEN;
