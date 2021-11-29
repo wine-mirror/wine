@@ -809,6 +809,49 @@ static DWORD midi_in_close(WORD dev_id, struct notify_context *notify)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_add_buffer(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size)
+{
+    MIDIHDR **next;
+
+    TRACE("dev_id = %d hdr = %p hdr_size = %d\n", dev_id, hdr, hdr_size);
+
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    if (!hdr || hdr_size < offsetof(MIDIHDR, dwOffset) || !hdr->dwBufferLength)
+    {
+        WARN("Invalid Parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (hdr->dwFlags & MHDR_INQUEUE)
+    {
+        WARN("Still playing\n");
+        return MIDIERR_STILLPLAYING;
+    }
+    if (!(hdr->dwFlags & MHDR_PREPARED))
+    {
+        WARN("Unprepared\n");
+        return MIDIERR_UNPREPARED;
+    }
+
+    hdr->dwFlags &= ~WHDR_DONE;
+    hdr->dwFlags |= MHDR_INQUEUE;
+    hdr->dwBytesRecorded = 0;
+    hdr->lpNext = NULL;
+
+    midi_in_lock((void *)TRUE);
+
+    next = &srcs[dev_id].lpQueueHdr;
+    while (*next) next = &(*next)->lpNext;
+    *next = hdr;
+
+    midi_in_lock((void *)FALSE);
+
+    return MMSYSERR_NOERROR;
+}
+
 static DWORD midi_in_prepare(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size)
 {
     TRACE("dev_id = %d hdr = %p hdr_size = %d\n", dev_id, hdr, hdr_size);
@@ -965,6 +1008,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_CLOSE:
         *params->err = midi_in_close(params->dev_id, params->notify);
+        break;
+    case MIDM_ADDBUFFER:
+        *params->err = midi_in_add_buffer(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
         break;
     case MIDM_PREPARE:
         *params->err = midi_in_prepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);

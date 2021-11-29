@@ -142,54 +142,6 @@ static void midi_lock( BOOL lock )
     UNIX_CALL(midi_in_lock, (void *)lock);
 }
 
-static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
-
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (lpMidiHdr == NULL) {
-	WARN("Invalid Parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-    if (dwSize < offsetof(MIDIHDR,dwOffset)) {
-	WARN("Invalid Parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-    if (lpMidiHdr->dwBufferLength == 0) {
-	WARN("Invalid Parameter\n");
-	return MMSYSERR_INVALPARAM;
-    }
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE) {
-	WARN("Still playing\n");
-	return MIDIERR_STILLPLAYING;
-    }
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) {
-	WARN("Unprepared\n");
-	return MIDIERR_UNPREPARED;
-    }
-
-    midi_lock( TRUE );
-    lpMidiHdr->dwFlags &= ~WHDR_DONE;
-    lpMidiHdr->dwFlags |= MHDR_INQUEUE;
-    lpMidiHdr->dwBytesRecorded = 0;
-    lpMidiHdr->lpNext = 0;
-    if (sources[wDevID].lpQueueHdr == 0) {
-	sources[wDevID].lpQueueHdr = lpMidiHdr;
-    } else {
-	LPMIDIHDR ptr;
-	for (ptr = sources[wDevID].lpQueueHdr;
-	     ptr->lpNext != 0;
-	     ptr = ptr->lpNext);
-	ptr->lpNext = lpMidiHdr;
-    }
-    midi_lock( FALSE );
-
-    return MMSYSERR_NOERROR;
-}
-
 static DWORD MIDIIn_Reset(WORD wDevID)
 {
     DWORD dwTime = GetTickCount();
@@ -384,8 +336,6 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
 
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
-        case MIDM_ADDBUFFER:
-            return MIDIIn_AddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
         case MIDM_RESET:
             return MIDIIn_Reset(wDevID);
     }
