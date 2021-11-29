@@ -133,8 +133,10 @@ AC_DEFUN([WINE_EXTLIB_FLAGS],
 AS_VAR_PUSHDEF([ac_libs],[[$1]_PE_LIBS])dnl
 AC_ARG_VAR(ac_cflags, [C compiler flags for the PE $2, overriding the bundled version])dnl
 AC_ARG_VAR(ac_libs, [Linker flags for the PE $2, overriding the bundled version])dnl
-AS_VAR_IF([ac_cflags],[],[ac_cflags=$4],[enable_$2=no])
-AS_VAR_IF([ac_libs],[],[ac_libs=$3],[enable_$2=no])
+AS_VAR_IF([ac_libs],[],
+  [ac_libs=$3
+   AS_VAR_IF([ac_cflags],[],[ac_cflags=$4],[enable_$2=no])],
+  [enable_$2=no])
 AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 cflags: $ac_cflags"]) >&AS_MESSAGE_LOG_FD
 AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 libs: $ac_libs"]) >&AS_MESSAGE_LOG_FD
 AS_VAR_POPDEF([ac_libs])dnl

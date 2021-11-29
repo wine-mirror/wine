@@ -12296,165 +12296,165 @@ esac
 fi
 
 
-if ${FAUDIO_PE_CFLAGS:+false} :
+if ${FAUDIO_PE_LIBS:+false} :
+then :
+  FAUDIO_PE_LIBS="faudio mfplat mfreadwrite mfuuid propsys"
+   if ${FAUDIO_PE_CFLAGS:+false} :
 then :
   FAUDIO_PE_CFLAGS="-I\$(top_srcdir)/libs/faudio/include"
 else $as_nop
   enable_faudio=no
 fi
-if ${FAUDIO_PE_LIBS:+false} :
-then :
-  FAUDIO_PE_LIBS="faudio mfplat mfreadwrite mfuuid propsys"
 else $as_nop
   enable_faudio=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: faudio cflags: $FAUDIO_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: faudio libs: $FAUDIO_PE_LIBS" >&5
 
-if ${GSM_PE_CFLAGS:+false} :
+if ${GSM_PE_LIBS:+false} :
+then :
+  GSM_PE_LIBS=gsm
+   if ${GSM_PE_CFLAGS:+false} :
 then :
   GSM_PE_CFLAGS="-I\$(top_srcdir)/libs/gsm/inc"
 else $as_nop
   enable_gsm=no
 fi
-if ${GSM_PE_LIBS:+false} :
-then :
-  GSM_PE_LIBS=gsm
 else $as_nop
   enable_gsm=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: gsm cflags: $GSM_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: gsm libs: $GSM_PE_LIBS" >&5
 
-if ${JPEG_PE_CFLAGS:+false} :
+if ${JPEG_PE_LIBS:+false} :
+then :
+  JPEG_PE_LIBS=jpeg
+   if ${JPEG_PE_CFLAGS:+false} :
 then :
   JPEG_PE_CFLAGS="-I\$(top_srcdir)/libs/jpeg"
 else $as_nop
   enable_jpeg=no
 fi
-if ${JPEG_PE_LIBS:+false} :
-then :
-  JPEG_PE_LIBS=jpeg
 else $as_nop
   enable_jpeg=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: jpeg cflags: $JPEG_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: jpeg libs: $JPEG_PE_LIBS" >&5
 
-if ${JXR_PE_CFLAGS:+false} :
+if ${JXR_PE_LIBS:+false} :
+then :
+  JXR_PE_LIBS=jxr
+   if ${JXR_PE_CFLAGS:+false} :
 then :
   JXR_PE_CFLAGS="-I\$(top_srcdir)/libs/jxr/jxrgluelib -I\$(top_srcdir)/libs/jxr/image/sys"
 else $as_nop
   enable_jxr=no
 fi
-if ${JXR_PE_LIBS:+false} :
-then :
-  JXR_PE_LIBS=jxr
 else $as_nop
   enable_jxr=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: jxr cflags: $JXR_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: jxr libs: $JXR_PE_LIBS" >&5
 
-if ${LCMS2_PE_CFLAGS:+false} :
+if ${LCMS2_PE_LIBS:+false} :
+then :
+  LCMS2_PE_LIBS=lcms2
+   if ${LCMS2_PE_CFLAGS:+false} :
 then :
   LCMS2_PE_CFLAGS="-I\$(top_srcdir)/libs/lcms2/include"
 else $as_nop
   enable_lcms2=no
 fi
-if ${LCMS2_PE_LIBS:+false} :
-then :
-  LCMS2_PE_LIBS=lcms2
 else $as_nop
   enable_lcms2=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: lcms2 cflags: $LCMS2_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: lcms2 libs: $LCMS2_PE_LIBS" >&5
 
-if ${MPG123_PE_CFLAGS:+false} :
+if ${MPG123_PE_LIBS:+false} :
+then :
+  MPG123_PE_LIBS=mpg123
+   if ${MPG123_PE_CFLAGS:+false} :
 then :
   MPG123_PE_CFLAGS="-I\$(top_srcdir)/libs/mpg123/src/libmpg123"
 else $as_nop
   enable_mpg123=no
 fi
-if ${MPG123_PE_LIBS:+false} :
-then :
-  MPG123_PE_LIBS=mpg123
 else $as_nop
   enable_mpg123=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: mpg123 cflags: $MPG123_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: mpg123 libs: $MPG123_PE_LIBS" >&5
 
-if ${PNG_PE_CFLAGS:+false} :
+if ${PNG_PE_LIBS:+false} :
+then :
+  PNG_PE_LIBS="png \$(ZLIB_PE_LIBS)"
+   if ${PNG_PE_CFLAGS:+false} :
 then :
   PNG_PE_CFLAGS="-I\$(top_srcdir)/libs/png"
 else $as_nop
   enable_png=no
 fi
-if ${PNG_PE_LIBS:+false} :
-then :
-  PNG_PE_LIBS="png \$(ZLIB_PE_LIBS)"
 else $as_nop
   enable_png=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: png cflags: $PNG_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: png libs: $PNG_PE_LIBS" >&5
 
-if ${TIFF_PE_CFLAGS:+false} :
+if ${TIFF_PE_LIBS:+false} :
+then :
+  TIFF_PE_LIBS=tiff
+   if ${TIFF_PE_CFLAGS:+false} :
 then :
   TIFF_PE_CFLAGS="-I\$(top_srcdir)/libs/tiff/libtiff"
 else $as_nop
   enable_tiff=no
 fi
-if ${TIFF_PE_LIBS:+false} :
-then :
-  TIFF_PE_LIBS=tiff
 else $as_nop
   enable_tiff=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tiff cflags: $TIFF_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tiff libs: $TIFF_PE_LIBS" >&5
 
-if ${XML2_PE_CFLAGS:+false} :
+if ${XML2_PE_LIBS:+false} :
+then :
+  XML2_PE_LIBS=xml2
+   if ${XML2_PE_CFLAGS:+false} :
 then :
   XML2_PE_CFLAGS="-I\$(top_srcdir)/libs/xml2/include -DLIBXML_STATIC"
 else $as_nop
   enable_xml2=no
 fi
-if ${XML2_PE_LIBS:+false} :
-then :
-  XML2_PE_LIBS=xml2
 else $as_nop
   enable_xml2=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: xml2 cflags: $XML2_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: xml2 libs: $XML2_PE_LIBS" >&5
 
-if ${XSLT_PE_CFLAGS:+false} :
+if ${XSLT_PE_LIBS:+false} :
+then :
+  XSLT_PE_LIBS=xslt
+   if ${XSLT_PE_CFLAGS:+false} :
 then :
   XSLT_PE_CFLAGS="-I\$(top_srcdir)/libs/xslt -DLIBXSLT_STATIC"
 else $as_nop
   enable_xslt=no
 fi
-if ${XSLT_PE_LIBS:+false} :
-then :
-  XSLT_PE_LIBS=xslt
 else $as_nop
   enable_xslt=no
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: xslt cflags: $XSLT_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: xslt libs: $XSLT_PE_LIBS" >&5
 
-if ${ZLIB_PE_CFLAGS:+false} :
+if ${ZLIB_PE_LIBS:+false} :
+then :
+  ZLIB_PE_LIBS=z
+   if ${ZLIB_PE_CFLAGS:+false} :
 then :
   ZLIB_PE_CFLAGS="-I\$(top_srcdir)/libs/zlib -DFAR= -DZ_SOLO"
 else $as_nop
   enable_zlib=no
 fi
-if ${ZLIB_PE_LIBS:+false} :
-then :
-  ZLIB_PE_LIBS=z
 else $as_nop
   enable_zlib=no
 fi
