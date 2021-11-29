@@ -461,12 +461,11 @@ static struct display_mode_descriptor* create_original_display_mode_descriptor(C
     size = 0;
     if (RegQueryValueExW(hkey, pixelencodingW, 0, &type, NULL, &size) || type != REG_SZ)
         goto done;
-    pixel_encoding = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    size += sizeof(WCHAR);
+    pixel_encoding = HeapAlloc(GetProcessHeap(), 0, size);
     if (RegQueryValueExW(hkey, pixelencodingW, 0, &type, (BYTE*)pixel_encoding, &size) || type != REG_SZ)
         goto done;
-    if ((end = memchrW(pixel_encoding, 0, size)))
-        size = end - pixel_encoding;
-    desc->pixel_encoding = CFStringCreateWithCharacters(NULL, (const UniChar*)pixel_encoding, size);
+    desc->pixel_encoding = CFStringCreateWithCharacters(NULL, (const UniChar*)pixel_encoding, strlenW(pixel_encoding));
 
     ret = desc;
 
