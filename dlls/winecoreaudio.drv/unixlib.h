@@ -252,12 +252,15 @@ enum unix_funcs
     unix_midi_release,
     unix_midi_out_message,
     unix_midi_in_message,
+
+    unix_midi_in_lock, /* temporary */
 };
 
 NTSTATUS midi_init( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_release( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message( void * ) DECLSPEC_HIDDEN;
+NTSTATUS midi_in_lock( void * ) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t coreaudio_handle;
 

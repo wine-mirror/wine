@@ -52,7 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static DWORD MIDIIn_NumDevs = 0;
 
-static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
+
 static CFStringRef MIDIInThreadPortName;
 
 static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
@@ -89,9 +89,6 @@ static LONG CoreAudio_MIDIInit(void)
 
     if (MIDIIn_NumDevs > 0)
     {
-        InitializeCriticalSection(&midiInLock);
-        midiInLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": midiInLock");
-
         MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
         CloseHandle( CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL));
     }
@@ -104,12 +101,6 @@ static LONG CoreAudio_MIDIRelease(void)
 
     UNIX_CALL(midi_release, NULL);
     sources = NULL;
-
-    if (MIDIIn_NumDevs > 0)
-    {
-        midiInLock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&midiInLock);
-    }
 
     return DRV_SUCCESS;
 }
@@ -146,6 +137,11 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
+static void midi_lock( BOOL lock )
+{
+    UNIX_CALL(midi_in_lock, (void *)lock);
+}
+
 static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("wDevID=%d lpMidiHdr=%p dwSize=%d\n", wDevID, lpMidiHdr, dwSize);
@@ -175,7 +171,7 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MIDIERR_UNPREPARED;
     }
 
-    EnterCriticalSection(&midiInLock);
+    midi_lock( TRUE );
     lpMidiHdr->dwFlags &= ~WHDR_DONE;
     lpMidiHdr->dwFlags |= MHDR_INQUEUE;
     lpMidiHdr->dwBytesRecorded = 0;
@@ -189,7 +185,7 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	     ptr = ptr->lpNext);
 	ptr->lpNext = lpMidiHdr;
     }
-    LeaveCriticalSection(&midiInLock);
+    midi_lock( FALSE );
 
     return MMSYSERR_NOERROR;
 }
@@ -204,7 +200,7 @@ static DWORD MIDIIn_Reset(WORD wDevID)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    EnterCriticalSection(&midiInLock);
+    midi_lock( TRUE );
     while (sources[wDevID].lpQueueHdr) {
 	LPMIDIHDR lpMidiHdr = sources[wDevID].lpQueueHdr;
 	sources[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
@@ -213,7 +209,7 @@ static DWORD MIDIIn_Reset(WORD wDevID)
 	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
 	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
     }
-    LeaveCriticalSection(&midiInLock);
+    midi_lock( FALSE );
 
     return MMSYSERR_NOERROR;
 }
@@ -258,7 +254,7 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
                     src->state |= 2;
                 }
 
-                EnterCriticalSection(&midiInLock);
+                midi_lock( TRUE );
                 currentTime = GetTickCount() - src->startTime;
 
                 while (len) {
@@ -289,11 +285,11 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
                     }
                 }
 
-                LeaveCriticalSection(&midiInLock);
+                midi_lock( FALSE );
                 return NULL;
             }
 
-            EnterCriticalSection(&midiInLock);
+            midi_lock( TRUE );
             currentTime = GetTickCount() - src->startTime;
 
             while (pos < msg->length)
@@ -320,7 +316,7 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
                 }
                 MIDI_NotifyClient(msg->devID, MIM_DATA, sendData, currentTime);
             }
-            LeaveCriticalSection(&midiInLock);
+            midi_lock( FALSE );
             break;
         default:
             CFRunLoopStop(CFRunLoopGetCurrent());

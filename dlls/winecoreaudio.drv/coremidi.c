@@ -72,6 +72,8 @@
 #undef HRESULT
 #undef STDMETHODCALLTYPE
 
+#include <pthread.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -111,6 +113,17 @@ static UINT num_dests, num_srcs;
 static struct midi_dest *dests;
 static struct midi_src *srcs;
 static CFStringRef midi_in_thread_port_name;
+
+static pthread_mutex_t midi_in_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+NTSTATUS midi_in_lock(void *args)
+{
+    BOOL lock = !!args;
+
+    if (lock) pthread_mutex_lock(&midi_in_mutex);
+    else pthread_mutex_unlock(&midi_in_mutex);
+    return STATUS_SUCCESS;
+}
 
 static void set_in_notify(struct notify_context *notify, struct midi_src *src, WORD dev_id, WORD msg,
                           DWORD_PTR param_1, DWORD_PTR param_2)
