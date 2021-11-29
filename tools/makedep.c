@@ -1287,6 +1287,22 @@ static struct makefile *find_importlib_module( const char *name )
 
 
 /*******************************************************************
+ *         has_external_import
+ */
+static int has_external_import( const struct makefile *make )
+{
+    unsigned int i;
+
+    for (i = 0; i < make->imports.count; i++)
+    {
+        if (!strncmp( make->imports.str[i], "-l", 2 ))
+            return 1;
+    }
+    return 0;
+}
+
+
+/*******************************************************************
  *         open_include_file
  */
 static struct file *open_include_file( const struct makefile *make, struct incl_file *pFile )
@@ -1404,7 +1420,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     {
         if (!strcmp( pFile->name, "stdarg.h" )) return NULL;
         if (!strcmp( pFile->name, "x86intrin.h" )) return NULL;
-        if (make->include_paths.count) return NULL;
+        if (has_external_import( make )) return NULL;
         fprintf( stderr, "%s:%d: error: system header %s cannot be used with msvcrt\n",
                  pFile->included_by->file->name, pFile->included_line, pFile->name );
         exit(1);
