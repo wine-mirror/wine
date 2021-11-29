@@ -135,6 +135,7 @@ extern "C" {
 #endif
 
 _ACRTIMP unsigned int __cdecl _clearfp(void);
+_ACRTIMP void __cdecl _fpreset(void);
 _ACRTIMP unsigned int __cdecl _statusfp(void);
 _ACRTIMP int __cdecl __fpe_flt_rounds(void);
 _ACRTIMP unsigned int __cdecl _control87(unsigned int, unsigned int);
