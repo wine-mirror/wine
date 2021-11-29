@@ -6466,6 +6466,9 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     if(!This->dom_element)
         return S_FALSE;
 
+    if(dispex_compat_mode(dispex) >= COMPAT_MODE_IE9)
+        return S_OK;
+
     nsres = nsIDOMElement_GetAttributes(This->dom_element, &attrs);
     if(NS_FAILED(nsres))
         return E_FAIL;
