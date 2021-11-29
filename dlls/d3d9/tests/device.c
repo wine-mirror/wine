@@ -14572,10 +14572,10 @@ static void test_window_position(void)
 {
     unsigned int adapter_idx, adapter_count;
     struct device_desc device_desc;
+    RECT window_rect, new_rect;
     IDirect3DDevice9 *device;
     MONITORINFO monitor_info;
     HMONITOR monitor;
-    RECT window_rect;
     IDirect3D9 *d3d;
     HWND window;
     HRESULT hr;
@@ -14609,6 +14609,42 @@ static void test_window_position(void)
         ret = GetWindowRect(window, &window_rect);
         ok(ret, "Adapter %u: GetWindowRect failed, error %#x.\n", adapter_idx, GetLastError());
         ok(EqualRect(&window_rect, &monitor_info.rcMonitor),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+
+        new_rect = window_rect;
+        --new_rect.right;
+        --new_rect.bottom;
+
+        ret = MoveWindow(window, new_rect.left, new_rect.top, new_rect.right - new_rect.left,
+                new_rect.bottom - new_rect.top, TRUE);
+        ok(ret, "Got unexpected ret %#x, error %#x, Adapter %u.\n", ret, GetLastError(), adapter_idx);
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Got unexpected ret %#x, error %#x, Adapter %u.\n", ret, GetLastError(), adapter_idx);
+        ok(EqualRect(&window_rect, &new_rect),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+        /* After processing window events window rectangle gets restored. But only once, the size set
+         * on the second resize remains. */
+        flush_events();
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Got unexpected ret %#x, error %#x, Adapter %u.\n", ret, GetLastError(), adapter_idx);
+        todo_wine ok(EqualRect(&window_rect, &monitor_info.rcMonitor),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+
+        ret = MoveWindow(window, new_rect.left, new_rect.top, new_rect.right - new_rect.left,
+                new_rect.bottom - new_rect.top, TRUE);
+        ok(ret, "Got unexpected ret %#x, error %#x, Adapter %u.\n", ret, GetLastError(), adapter_idx);
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Got unexpected ret %#x, error %#x, Adapter %u.\n", ret, GetLastError(), adapter_idx);
+        ok(EqualRect(&window_rect, &new_rect),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+        flush_events();
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Got unexpected ret %#x, error %#x, Adapter %u.\n", ret, GetLastError(), adapter_idx);
+        ok(EqualRect(&window_rect, &new_rect),
                 "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
                 wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
 
