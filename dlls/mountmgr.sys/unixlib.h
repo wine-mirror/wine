@@ -127,6 +127,14 @@ struct dhcp_request_params
     ULONG *ret_size;
 };
 
+struct ioctl_params
+{
+    void  *buff;
+    ULONG  insize;
+    ULONG  outsize;
+    ULONG *info;
+};
+
 enum mountmgr_funcs
 {
     unix_run_loop,
@@ -142,6 +150,11 @@ enum mountmgr_funcs
     unix_set_shell_folder,
     unix_get_shell_folder,
     unix_dhcp_request,
+    unix_query_symbol_file,
+    unix_read_credential,
+    unix_write_credential,
+    unix_delete_credential,
+    unix_enumerate_credentials,
 };
 
 extern unixlib_handle_t mountmgr_handle;
@@ -155,8 +168,8 @@ extern void run_dbus_loop(void) DECLSPEC_HIDDEN;
 extern void run_diskarbitration_loop(void) DECLSPEC_HIDDEN;
 
 extern NTSTATUS dhcp_request( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS query_symbol_file( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS read_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS write_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS delete_credential( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS enumerate_credentials( void *buff, ULONG insize, ULONG outsize, ULONG *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS query_symbol_file( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS read_credential( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS write_credential( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS delete_credential( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS enumerate_credentials( void *args ) DECLSPEC_HIDDEN;

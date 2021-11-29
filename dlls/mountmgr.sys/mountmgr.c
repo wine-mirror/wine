@@ -433,10 +433,12 @@ static void WINAPI query_symbol_file_callback( TP_CALLBACK_INSTANCE *instance, v
     IRP *irp = context;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     ULONG info = 0;
-    NTSTATUS status = query_symbol_file( irp->AssociatedIrp.SystemBuffer,
-                                         irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                         irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                         &info );
+    struct ioctl_params params = { irp->AssociatedIrp.SystemBuffer,
+                                   irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                   irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                   &info };
+    NTSTATUS status = MOUNTMGR_CALL( query_symbol_file, &params );
+
     irp->IoStatus.Information = info;
     irp->IoStatus.u.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
@@ -550,52 +552,52 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_NO_MEMORY;
         break;
     case IOCTL_MOUNTMGR_READ_CREDENTIAL:
-        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential))
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(struct mountmgr_credential))
         {
-            status = STATUS_INVALID_PARAMETER;
-            break;
+            struct ioctl_params params = { irp->AssociatedIrp.SystemBuffer,
+                                           irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                           irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                           &info };
+            status = MOUNTMGR_CALL( read_credential, &params );
+            irp->IoStatus.Information = info;
         }
-        status = read_credential( irp->AssociatedIrp.SystemBuffer,
-                                  irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                  irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                  &info );
-        irp->IoStatus.Information = info;
+        else status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_MOUNTMGR_WRITE_CREDENTIAL:
-        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential))
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(struct mountmgr_credential))
         {
-            status = STATUS_INVALID_PARAMETER;
-            break;
+            struct ioctl_params params = { irp->AssociatedIrp.SystemBuffer,
+                                           irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                           irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                           &info };
+            status = MOUNTMGR_CALL( write_credential, &params );
+            irp->IoStatus.Information = info;
         }
-        status = write_credential( irp->AssociatedIrp.SystemBuffer,
-                                   irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                   irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                   &info );
-        irp->IoStatus.Information = info;
+        else status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_MOUNTMGR_DELETE_CREDENTIAL:
-        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential))
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(struct mountmgr_credential))
         {
-            status = STATUS_INVALID_PARAMETER;
-            break;
+            struct ioctl_params params = { irp->AssociatedIrp.SystemBuffer,
+                                           irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                           irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                           &info };
+            status = MOUNTMGR_CALL( delete_credential, &params );
+            irp->IoStatus.Information = info;
         }
-        status = delete_credential( irp->AssociatedIrp.SystemBuffer,
-                                    irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                    &info );
-        irp->IoStatus.Information = info;
+        else status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_MOUNTMGR_ENUMERATE_CREDENTIALS:
-        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential_list))
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(struct mountmgr_credential))
         {
-            status = STATUS_INVALID_PARAMETER;
-            break;
+            struct ioctl_params params = { irp->AssociatedIrp.SystemBuffer,
+                                           irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                           irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                           &info };
+            status = MOUNTMGR_CALL( enumerate_credentials, &params );
+            irp->IoStatus.Information = info;
         }
-        status = enumerate_credentials( irp->AssociatedIrp.SystemBuffer,
-                                        irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                        irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                        &info );
-        irp->IoStatus.Information = info;
+        else status = STATUS_INVALID_PARAMETER;
         break;
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );

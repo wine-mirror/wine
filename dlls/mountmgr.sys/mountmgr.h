@@ -36,8 +36,6 @@
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 
-extern WCHAR *strdupW( const WCHAR * ) DECLSPEC_HIDDEN;
-
 /* device functions */
 
 enum device_type

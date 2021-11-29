@@ -139,7 +139,7 @@ static char *strdupA( const char *str )
     return ret;
 }
 
-WCHAR *strdupW( const WCHAR *str )
+static WCHAR *strdupW( const WCHAR *str )
 {
     WCHAR *ret;
 

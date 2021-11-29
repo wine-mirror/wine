@@ -439,4 +439,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     set_shell_folder,
     get_shell_folder,
     dhcp_request,
+    query_symbol_file,
+    read_credential,
+    write_credential,
+    delete_credential,
+    enumerate_credentials,
 };
