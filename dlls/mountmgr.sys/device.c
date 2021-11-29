@@ -43,26 +43,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 static const WCHAR drive_types[][8] =
 {
-    { 0 },                           /* DEVICE_UNKNOWN */
-    { 0 },                           /* DEVICE_HARDDISK */
-    {'h','d',0},                     /* DEVICE_HARDDISK_VOL */
-    {'f','l','o','p','p','y',0},     /* DEVICE_FLOPPY */
-    {'c','d','r','o','m',0},         /* DEVICE_CDROM */
-    {'c','d','r','o','m',0},         /* DEVICE_DVD */
-    {'n','e','t','w','o','r','k',0}, /* DEVICE_NETWORK */
-    {'r','a','m','d','i','s','k',0}  /* DEVICE_RAMDISK */
+    L"",        /* DEVICE_UNKNOWN */
+    L"",        /* DEVICE_HARDDISK */
+    L"hd",      /* DEVICE_HARDDISK_VOL */
+    L"floppy",  /* DEVICE_FLOPPY */
+    L"cdrom",   /* DEVICE_CDROM */
+    L"cdrom",   /* DEVICE_DVD */
+    L"network", /* DEVICE_NETWORK */
+    L"ramdisk"  /* DEVICE_RAMDISK */
 };
-
-static const WCHAR drives_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                    'W','i','n','e','\\','D','r','i','v','e','s',0};
-static const WCHAR ports_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                   'W','i','n','e','\\','P','o','r','t','s',0};
-static const WCHAR scsi_keyW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
-static const WCHAR scsi_port_keyW[] = {'S','c','s','i',' ','P','o','r','t',' ','%','d',0};
-static const WCHAR scsi_bus_keyW[] = {'S','c','s','i',' ','B','u','s',' ','%','d',0};
-static const WCHAR target_id_keyW[] = {'T','a','r','g','e','t',' ','I','d',' ','%','d',0};
-static const WCHAR lun_keyW[] = {'L','o','g','i','c','a','l',' ','U','n','i','t',' ','I','d',' ','%','d',0};
-static const WCHAR devnameW[] = {'D','e','v','i','c','e','N','a','m','e',0};
 
 enum fs_type
 {
@@ -629,15 +618,6 @@ static DWORD VOLUME_GetAudioCDSerial( const CDROM_TOC *toc )
 /* create the disk device for a given volume */
 static NTSTATUS create_disk_device( enum device_type type, struct disk_device **device_ret, struct volume *volume )
 {
-    static const WCHAR harddiskvolW[] = {'\\','D','e','v','i','c','e',
-                                         '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
-    static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','%','u',0};
-    static const WCHAR cdromW[] = {'\\','D','e','v','i','c','e','\\','C','d','R','o','m','%','u',0};
-    static const WCHAR floppyW[] = {'\\','D','e','v','i','c','e','\\','F','l','o','p','p','y','%','u',0};
-    static const WCHAR ramdiskW[] = {'\\','D','e','v','i','c','e','\\','R','a','m','d','i','s','k','%','u',0};
-    static const WCHAR cdromlinkW[] = {'\\','?','?','\\','C','d','R','o','m','%','u',0};
-    static const WCHAR physdriveW[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','%','u',0};
-
     UINT i, first = 0;
     NTSTATUS status = 0;
     const WCHAR *format = NULL;
@@ -651,23 +631,23 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     case DEVICE_UNKNOWN:
     case DEVICE_HARDDISK:
     case DEVICE_NETWORK:  /* FIXME */
-        format = harddiskW;
-        link_format = physdriveW;
+        format = L"\\Device\\Harddisk%u";
+        link_format = L"\\??\\PhysicalDrive%u";
         break;
     case DEVICE_HARDDISK_VOL:
-        format = harddiskvolW;
+        format = L"\\Device\\HarddiskVolume%u";
         first = 1;  /* harddisk volumes start counting from 1 */
         break;
     case DEVICE_FLOPPY:
-        format = floppyW;
+        format = L"\\Device\\Floppy%u";
         break;
     case DEVICE_CDROM:
     case DEVICE_DVD:
-        format = cdromW;
-        link_format = cdromlinkW;
+        format = L"\\Device\\CdRom%u";
+        link_format = L"\\??\\CdRom%u";
         break;
     case DEVICE_RAMDISK:
-        format = ramdiskW;
+        format = L"\\Device\\Ramdisk%u";
         break;
     }
 
@@ -929,9 +909,8 @@ static BOOL get_volume_device_info( struct volume *volume )
     {
         if (!(toc.TrackData[0].Control & 0x04))  /* audio track */
         {
-            static const WCHAR audiocdW[] = {'A','u','d','i','o',' ','C','D',0};
             TRACE( "%s: found audio CD\n", debugstr_a(unix_device) );
-            lstrcpynW( volume->label, audiocdW, ARRAY_SIZE(volume->label) );
+            wcscpy( volume->label, L"Audio CD" );
             volume->serial = VOLUME_GetAudioCDSerial( &toc );
             volume->fs_type = FS_ISO9660;
             CloseHandle( handle );
@@ -1091,9 +1070,9 @@ static void create_drive_devices(void)
     unsigned int i;
     HKEY drives_key;
     enum device_type drive_type;
-    WCHAR driveW[] = {'a',':',0};
+    WCHAR driveW[] = L"a:";
 
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &drives_key )) drives_key = 0;
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\Drives", &drives_key )) drives_key = 0;
 
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
@@ -1145,12 +1124,6 @@ static void create_drive_devices(void)
 static void create_scsi_entry( struct volume *volume, const struct scsi_info *info )
 {
     static UCHAR tape_no = 0;
-    static const WCHAR tapeW[] = {'T','a','p','e','%','d',0};
-    static const WCHAR init_id_keyW[] = {'I','n','i','t','i','a','t','o','r',' ','I','d',' ','%','d',0};
-    static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
-    static const WCHAR bus_time_scanW[] = {'F','i','r','s','t','B','u','s','T','i','m','e','S','c','a','n','I','n','M','s',0};
-    static const WCHAR typeW[] = {'T','y','p','e',0};
-    static const WCHAR identW[] = {'I','d','e','n','t','i','f','i','e','r',0};
 
     WCHAR dataW[50];
     DWORD sizeW;
@@ -1162,32 +1135,32 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
     HKEY target_key;
     HKEY lun_key;
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return;
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"HARDWARE\\DEVICEMAP\\Scsi", 0, KEY_READ|KEY_WRITE, &scsi_key )) return;
 
-    swprintf( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, info->addr.PortNumber );
+    swprintf( dataW, ARRAY_SIZE( dataW ), L"Scsi Port %d", info->addr.PortNumber );
     if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return;
     RegCloseKey( scsi_key );
 
     RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, info->driver, strlen(info->driver)+1);
-    RegSetValueExW( port_key, driverW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
+    RegSetValueExW( port_key, L"Driver", 0, REG_SZ, (const BYTE *)dataW, sizeW );
     value = 10;
-    RegSetValueExW( port_key, bus_time_scanW, 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
+    RegSetValueExW( port_key, L"FirstBusTimeScanInMs", 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
 
     value = 0;
 
-    swprintf( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, info->addr.PathId );
+    swprintf( dataW, ARRAY_SIZE( dataW ), L"Scsi Bus %d", info->addr.PathId );
     if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return;
     RegCloseKey( port_key );
 
-    swprintf( dataW, ARRAY_SIZE( dataW ), init_id_keyW, info->init_id );
+    swprintf( dataW, ARRAY_SIZE( dataW ), L"Initiator Id %d", info->init_id );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( target_key );
 
-    swprintf( dataW, ARRAY_SIZE( dataW ), target_id_keyW, info->addr.TargetId );
+    swprintf( dataW, ARRAY_SIZE( dataW ), L"Target Id %d", info->addr.TargetId );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( bus_key );
 
-    swprintf( dataW, ARRAY_SIZE( dataW ), lun_keyW, info->addr.Lun );
+    swprintf( dataW, ARRAY_SIZE( dataW ), L"Logical Unit Id %d", info->addr.Lun );
     if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return;
     RegCloseKey( target_key );
 
@@ -1216,22 +1189,22 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
     default:                                data = "OtherPeripheral"; break;
     }
     RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, data, strlen(data)+1);
-    RegSetValueExW( lun_key, typeW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
+    RegSetValueExW( lun_key, L"Type", 0, REG_SZ, (const BYTE *)dataW, sizeW );
 
     RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, info->model, strlen(info->model)+1);
-    RegSetValueExW( lun_key, identW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
+    RegSetValueExW( lun_key, L"Identifier", 0, REG_SZ, (const BYTE *)dataW, sizeW );
 
     if (volume)
     {
         UNICODE_STRING *dev = &volume->device->name;
         WCHAR *buffer = wcschr( dev->Buffer+1, '\\' ) + 1;
         ULONG length = dev->Length - (buffer - dev->Buffer)*sizeof(WCHAR);
-        RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)buffer, length );
+        RegSetValueExW( lun_key, L"DeviceName", 0, REG_SZ, (const BYTE *)buffer, length );
     }
     else if (info->type == SCSI_TAPE_PERIPHERAL)
     {
-        swprintf( dataW, ARRAY_SIZE( dataW ), tapeW, tape_no++ );
-        RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)dataW, lstrlenW( dataW ) );
+        swprintf( dataW, ARRAY_SIZE( dataW ), L"Tape%d", tape_no++ );
+        RegSetValueExW( lun_key, L"DeviceName", 0, REG_SZ, (const BYTE *)dataW, lstrlenW( dataW ) );
     }
 
     RegCloseKey( lun_key );
@@ -1354,10 +1327,10 @@ found:
            wine_dbgstr_a(mount_point), type );
 
     /* hack: force the drive type in the registry */
-    if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
+    if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\Drives", &hkey ))
     {
         const WCHAR *type_name = drive_types[type];
-        WCHAR name[] = {'a',':',0};
+        WCHAR name[] = L"a:";
 
         name[0] += drive->drive;
         if (!type_name[0] && type == DEVICE_HARDDISK) type_name = drive_types[DEVICE_FLOPPY];
@@ -1405,9 +1378,9 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
         MOUNTMGR_CALL( set_dosdev_symlink, &params );
 
         /* clear the registry key too */
-        if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
+        if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\Drives", &hkey ))
         {
-            WCHAR name[] = {'a',':',0};
+            WCHAR name[] = L"a:";
             name[0] += drive->drive;
             RegDeleteValueW( hkey, name );
             RegCloseKey( hkey );
@@ -1688,14 +1661,9 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
     }
     case FileFsAttributeInformation:
     {
-        static const WCHAR fatW[] = {'F','A','T'};
-        static const WCHAR fat32W[] = {'F','A','T','3','2'};
-        static const WCHAR ntfsW[] = {'N','T','F','S'};
-        static const WCHAR cdfsW[] = {'C','D','F','S'};
-        static const WCHAR udfW[] = {'U','D','F'};
-
         FILE_FS_ATTRIBUTE_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
         enum mountmgr_fs_type fs_type = get_mountmgr_fs_type(volume->fs_type);
+        const WCHAR *fsname;
 
         if (length < sizeof(FILE_FS_ATTRIBUTE_INFORMATION))
         {
@@ -1706,37 +1674,33 @@ static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
         switch (fs_type)
         {
         case MOUNTMGR_FS_TYPE_ISO9660:
+            fsname = L"CDFS";
             info->FileSystemAttributes = FILE_READ_ONLY_VOLUME;
             info->MaximumComponentNameLength = 221;
-            info->FileSystemNameLength = min( sizeof(cdfsW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
-            memcpy(info->FileSystemName, cdfsW, info->FileSystemNameLength);
             break;
         case MOUNTMGR_FS_TYPE_UDF:
+            fsname = L"UDF";
             info->FileSystemAttributes = FILE_READ_ONLY_VOLUME | FILE_UNICODE_ON_DISK | FILE_CASE_SENSITIVE_SEARCH;
             info->MaximumComponentNameLength = 255;
-            info->FileSystemNameLength = min( sizeof(udfW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
-            memcpy(info->FileSystemName, udfW, info->FileSystemNameLength);
             break;
         case MOUNTMGR_FS_TYPE_FAT:
+            fsname = L"FAT";
             info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES; /* FIXME */
             info->MaximumComponentNameLength = 255;
-            info->FileSystemNameLength = min( sizeof(fatW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
-            memcpy(info->FileSystemName, fatW, info->FileSystemNameLength);
             break;
         case MOUNTMGR_FS_TYPE_FAT32:
+            fsname = L"FAT32";
             info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES; /* FIXME */
             info->MaximumComponentNameLength = 255;
-            info->FileSystemNameLength = min( sizeof(fat32W), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
-            memcpy(info->FileSystemName, fat32W, info->FileSystemNameLength);
             break;
         default:
+            fsname = L"NTFS";
             info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES | FILE_PERSISTENT_ACLS;
             info->MaximumComponentNameLength = 255;
-            info->FileSystemNameLength = min( sizeof(ntfsW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
-            memcpy(info->FileSystemName, ntfsW, info->FileSystemNameLength);
             break;
         }
-
+        info->FileSystemNameLength = min( wcslen(fsname) * sizeof(WCHAR), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+        memcpy(info->FileSystemName, fsname, info->FileSystemNameLength);
         io->Information = offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) + info->FileSystemNameLength;
         status = STATUS_SUCCESS;
         break;
@@ -1868,14 +1832,6 @@ NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *pa
 static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_path,
                                 const char *dosdevices_path, HKEY windows_ports_key )
 {
-    static const WCHAR comW[] = {'C','O','M','%','u',0};
-    static const WCHAR lptW[] = {'L','P','T','%','u',0};
-    static const WCHAR device_serialW[] = {'\\','D','e','v','i','c','e','\\','S','e','r','i','a','l','%','u',0};
-    static const WCHAR device_parallelW[] = {'\\','D','e','v','i','c','e','\\','P','a','r','a','l','l','e','l','%','u',0};
-    static const WCHAR dosdevices_comW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','%','u',0};
-    static const WCHAR dosdevices_auxW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','A','U','X',0};
-    static const WCHAR dosdevices_lptW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','%','u',0};
-    static const WCHAR dosdevices_prnW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','P','R','N',0};
     const WCHAR *dos_name_format, *nt_name_format, *reg_value_format, *symlink_format, *default_device;
     WCHAR dos_name[7], reg_value[256], nt_buffer[32], symlink_buffer[32];
     UNICODE_STRING nt_name, symlink_name, default_name;
@@ -1888,19 +1844,19 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
 
     if (driver == serial_driver)
     {
-        dos_name_format = comW;
-        nt_name_format = device_serialW;
-        reg_value_format = comW;
-        symlink_format = dosdevices_comW;
-        default_device = dosdevices_auxW;
+        dos_name_format = L"COM%u";
+        nt_name_format = L"\\Device\\Serial%u";
+        reg_value_format = L"COM%u";
+        symlink_format = L"\\DosDevices\\COM%u";
+        default_device = L"\\DosDevices\\AUX";
     }
     else
     {
-        dos_name_format = lptW;
-        nt_name_format = device_parallelW;
-        reg_value_format = dosdevices_lptW;
-        symlink_format = dosdevices_lptW;
-        default_device = dosdevices_prnW;
+        dos_name_format = L"LPT%u";
+        nt_name_format = L"\\Device\\Parallel%u";
+        reg_value_format = L"\\DosDevices\\LPT%u";
+        symlink_format = L"\\DosDevices\\LPT%u";
+        default_device = L"\\DosDevices\\PRN";
     }
 
     swprintf( dos_name, ARRAY_SIZE(dos_name), dos_name_format, n );
@@ -1936,14 +1892,6 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
 /* find and create serial or parallel ports */
 static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
 {
-    static const WCHAR serialcomm_keyW[] = {'H','A','R','D','W','A','R','E','\\',
-                                            'D','E','V','I','C','E','M','A','P','\\',
-                                            'S','E','R','I','A','L','C','O','M','M',0};
-    static const WCHAR parallel_ports_keyW[] = {'H','A','R','D','W','A','R','E','\\',
-                                                'D','E','V','I','C','E','M','A','P','\\',
-                                                'P','A','R','A','L','L','E','L',' ','P','O','R','T','S',0};
-    static const WCHAR comW[] = {'C','O','M'};
-    static const WCHAR lptW[] = {'L','P','T'};
     const WCHAR *windows_ports_key_name;
     const char *dosdev_fmt;
     char dosdev[8];
@@ -1959,19 +1907,19 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
     if (driver == serial_driver)
     {
         dosdev_fmt = "com%u";
-        windows_ports_key_name = serialcomm_keyW;
-        port_prefix = comW;
+        windows_ports_key_name = L"HARDWARE\\DEVICEMAP\\SERIALCOMM";
+        port_prefix = L"COM";
     }
     else
     {
         dosdev_fmt = "lpt%u";
-        windows_ports_key_name = parallel_ports_keyW;
-        port_prefix = lptW;
+        windows_ports_key_name = L"HARDWARE\\DEVICEMAP\\PARALLEL PORTS";
+        port_prefix = L"LPT";
     }
 
     /* @@ Wine registry key: HKLM\Software\Wine\Ports */
 
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, ports_keyW, 0, NULL, 0,
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\Ports", 0, NULL, 0,
                      KEY_QUERY_VALUE, NULL, &wine_ports_key, NULL );
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, windows_ports_key_name, 0, NULL, REG_OPTION_VOLATILE,
                      KEY_ALL_ACCESS, NULL, &windows_ports_key, NULL );

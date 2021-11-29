@@ -92,10 +92,9 @@ static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
 /* create the DosDevices mount point symlink for a new device */
 struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name, int drive )
 {
-    static const WCHAR driveW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','%','c',':',0};
-    WCHAR link[sizeof(driveW)];
+    WCHAR link[] = L"\\DosDevices\\A:";
 
-    swprintf( link, ARRAY_SIZE(link), driveW, 'A' + drive );
+    link[12] = 'A' + drive;
     return add_mount_point( device, device_name, link );
 }
 
@@ -103,13 +102,10 @@ struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
 struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
                                             const GUID *guid )
 {
-    static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{',
-                                    '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
-                                    '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x',
-                                    '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0};
-    WCHAR link[sizeof(volumeW)];
+    WCHAR link[64];
 
-    swprintf( link, ARRAY_SIZE(link), volumeW, guid->Data1, guid->Data2, guid->Data3,
+    swprintf( link, ARRAY_SIZE(link), L"\\??\\Volume{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+              guid->Data1, guid->Data2, guid->Data3,
               guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
               guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
     return add_mount_point( device, device_name, link );
@@ -620,25 +616,9 @@ static DWORD WINAPI run_loop_thread( void *arg )
 /* main entry point for the mount point manager driver */
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
-    static const WCHAR mounted_devicesW[] = {'S','y','s','t','e','m','\\','M','o','u','n','t','e','d','D','e','v','i','c','e','s',0};
-    static const WCHAR device_mountmgrW[] = {'\\','D','e','v','i','c','e','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0};
-    static const WCHAR link_mountmgrW[] = {'\\','?','?','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0};
-    static const WCHAR harddiskW[] = {'\\','D','r','i','v','e','r','\\','H','a','r','d','d','i','s','k',0};
-    static const WCHAR driver_serialW[] = {'\\','D','r','i','v','e','r','\\','S','e','r','i','a','l',0};
-    static const WCHAR driver_parallelW[] = {'\\','D','r','i','v','e','r','\\','P','a','r','a','l','l','e','l',0};
-    static const WCHAR devicemapW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
-
 #ifdef _WIN64
-    static const WCHAR qualified_ports_keyW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
-                                                 'M','A','C','H','I','N','E','\\','S','o','f','t','w','a','r','e','\\',
-                                                 'W','i','n','e','\\','P','o','r','t','s'}; /* no null terminator */
-    static const WCHAR wow64_ports_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                             'W','o','w','6','4','3','2','N','o','d','e','\\','W','i','n','e','\\',
-                                             'P','o','r','t','s',0};
-    static const WCHAR symbolic_link_valueW[] = {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
     HKEY wow64_ports_key = NULL;
 #endif
-
     void *instance;
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
@@ -655,8 +635,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = mountmgr_ioctl;
 
-    RtlInitUnicodeString( &nameW, device_mountmgrW );
-    RtlInitUnicodeString( &linkW, link_mountmgrW );
+    RtlInitUnicodeString( &nameW, L"\\Device\\MountPointManager" );
+    RtlInitUnicodeString( &linkW, L"\\??\\MountPointManager" );
     if (!(status = IoCreateDevice( driver, 0, &nameW, 0, 0, FALSE, &device )))
         status = IoCreateSymbolicLink( &linkW, &nameW );
     if (status)
@@ -665,14 +645,14 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
         return status;
     }
 
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, mounted_devicesW, 0, NULL,
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\MountedDevices", 0, NULL,
                      REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &mount_key, NULL );
 
-    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, devicemapW, 0, NULL, REG_OPTION_VOLATILE,
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"HARDWARE\\DEVICEMAP\\Scsi", 0, NULL, REG_OPTION_VOLATILE,
                           KEY_ALL_ACCESS, NULL, &devicemap_key, NULL ))
         RegCloseKey( devicemap_key );
 
-    RtlInitUnicodeString( &nameW, harddiskW );
+    RtlInitUnicodeString( &nameW, L"\\Driver\\Harddisk" );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );
 
     params.op_thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
@@ -681,17 +661,18 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
 #ifdef _WIN64
     /* create a symlink so that the Wine port overrides key can be edited with 32-bit reg or regedit */
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, wow64_ports_keyW, 0, NULL, REG_OPTION_CREATE_LINK,
-                     KEY_SET_VALUE, NULL, &wow64_ports_key, NULL );
-    RegSetValueExW( wow64_ports_key, symbolic_link_valueW, 0, REG_LINK,
-                    (BYTE *)qualified_ports_keyW, sizeof(qualified_ports_keyW) );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node\\Wine\\Ports", 0, NULL,
+                     REG_OPTION_CREATE_LINK, KEY_SET_VALUE, NULL, &wow64_ports_key, NULL );
+    RegSetValueExW( wow64_ports_key, L"SymbolicLinkValue", 0, REG_LINK,
+                    (BYTE *)L"\\REGISTRY\\MACHINE\\Software\\Wine\\Ports",
+                    sizeof(L"\\REGISTRY\\MACHINE\\Software\\Wine\\Ports") - sizeof(WCHAR) );
     RegCloseKey( wow64_ports_key );
 #endif
 
-    RtlInitUnicodeString( &nameW, driver_serialW );
+    RtlInitUnicodeString( &nameW, L"\\Driver\\Serial" );
     IoCreateDriver( &nameW, serial_driver_entry );
 
-    RtlInitUnicodeString( &nameW, driver_parallelW );
+    RtlInitUnicodeString( &nameW, L"\\Driver\\Parallel" );
     IoCreateDriver( &nameW, parallel_driver_entry );
 
     return status;
