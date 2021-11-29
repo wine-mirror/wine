@@ -194,30 +194,6 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     return MMSYSERR_NOERROR;
 }
 
-static DWORD MIDIIn_Start(WORD wDevID)
-{
-    TRACE("%d\n", wDevID);
-
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    sources[wDevID].state = 1;
-    sources[wDevID].startTime = GetTickCount();
-    return MMSYSERR_NOERROR;
-}
-
-static DWORD MIDIIn_Stop(WORD wDevID)
-{
-    TRACE("%d\n", wDevID);
-    if (wDevID >= MIDIIn_NumDevs) {
-        WARN("bad device ID : %d\n", wDevID);
-	return MMSYSERR_BADDEVICEID;
-    }
-    sources[wDevID].state = 0;
-    return MMSYSERR_NOERROR;
-}
-
 static DWORD MIDIIn_Reset(WORD wDevID)
 {
     DWORD dwTime = GetTickCount();
@@ -414,10 +390,6 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     switch (wMsg) {
         case MIDM_ADDBUFFER:
             return MIDIIn_AddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-        case MIDM_START:
-            return MIDIIn_Start(wDevID);
-        case MIDM_STOP:
-            return MIDIIn_Stop(wDevID);
         case MIDM_RESET:
             return MIDIIn_Reset(wDevID);
     }

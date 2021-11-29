@@ -851,6 +851,33 @@ static DWORD midi_in_get_num_devs(void)
     return num_srcs;
 }
 
+static DWORD midi_in_start(WORD dev_id)
+{
+    TRACE("%d\n", dev_id);
+
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    srcs[dev_id].state = 1;
+    srcs[dev_id].startTime = NtGetTickCount();
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD midi_in_stop(WORD dev_id)
+{
+    TRACE("%d\n", dev_id);
+
+    if (dev_id >= num_srcs)
+    {
+        WARN("bad device ID : %d\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    srcs[dev_id].state = 0;
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -937,6 +964,12 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_GETNUMDEVS:
         *params->err = midi_in_get_num_devs();
+        break;
+    case MIDM_START:
+        *params->err = midi_in_start(params->dev_id);
+        break;
+    case MIDM_STOP:
+        *params->err = midi_in_stop(params->dev_id);
         break;
     default:
         TRACE("Unsupported message\n");
