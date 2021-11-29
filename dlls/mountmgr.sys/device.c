@@ -915,13 +915,7 @@ static BOOL get_volume_device_info( struct volume *volume )
     if (!unix_device)
         return FALSE;
 
-#ifdef __APPLE__
-    if (access( unix_device, R_OK ))
-    {
-        WARN("Unable to open %s, not accessible\n", debugstr_a(unix_device));
-        return FALSE;
-    }
-#endif
+    if (MOUNTMGR_CALL( check_device_access, volume->device->unix_device )) return FALSE;
 
     if (!(name = wine_get_dos_file_name( unix_device )))
     {

@@ -319,6 +319,15 @@ static NTSTATUS match_unixdev( void *args )
     return !stat( params->device, &st ) && st.st_rdev == params->unix_dev;
 }
 
+static NTSTATUS check_device_access( void *args )
+{
+#ifdef __APPLE__
+    const char *unix_device = args;
+    if (access( unix_device, R_OK )) return STATUS_ACCESS_DENIED;
+#endif
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS detect_serial_ports( void *args )
 {
     const struct detect_ports_params *params = args;
@@ -434,6 +443,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     get_volume_dos_devices,
     read_volume_file,
     match_unixdev,
+    check_device_access,
     detect_serial_ports,
     detect_parallel_ports,
     set_shell_folder,

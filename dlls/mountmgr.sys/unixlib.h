@@ -145,6 +145,7 @@ enum mountmgr_funcs
     unix_get_volume_dos_devices,
     unix_read_volume_file,
     unix_match_unixdev,
+    unix_check_device_access,
     unix_detect_serial_ports,
     unix_detect_parallel_ports,
     unix_set_shell_folder,
