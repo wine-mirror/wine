@@ -575,7 +575,6 @@ static void test_progressive_device(void)
 
     static const D3DFORMAT input_formats[] =
     {
-        D3DFMT_A8R8G8B8,
         D3DFMT_X8R8G8B8,
         D3DFMT_YUY2,
         MAKEFOURCC('N','V','1','2'),
@@ -666,7 +665,6 @@ static void test_progressive_device(void)
     hr = IDirectXVideoProcessor_GetVideoProcessorCaps(processor, &caps);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(caps.DeviceCaps == DXVA2_VPDev_HardwareDevice, "Unexpected device type %#x.\n", caps.DeviceCaps);
-    ok(caps.InputPool == D3DPOOL_DEFAULT, "Unexpected input pool %#x.\n", caps.InputPool);
     ok(!caps.NumForwardRefSamples, "Unexpected sample count.\n");
     ok(!caps.NumBackwardRefSamples, "Unexpected sample count.\n");
     ok(!caps.Reserved, "Unexpected field.\n");
