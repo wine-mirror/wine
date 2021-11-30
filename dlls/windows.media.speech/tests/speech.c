@@ -34,19 +34,26 @@
 
 #include "wine/test.h"
 
+HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
+
 static void test_SpeechSynthesizer(void)
 {
     static const WCHAR *speech_synthesizer_name = L"Windows.Media.SpeechSynthesis.SpeechSynthesizer";
-
+    static const WCHAR *speech_synthesizer_name2 = L"windows.media.speechsynthesis.speechsynthesizer";
+    static const WCHAR *unknown_class_name = L"Unknown.Class";
+    IActivationFactory *factory = NULL, *factory2 = NULL;
     IVectorView_VoiceInformation *voices = NULL;
     IInstalledVoicesStatic *voices_static = NULL;
-    IActivationFactory *factory = NULL;
     IVoiceInformation *voice;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
-    HSTRING str;
+    ISpeechSynthesizer *synthesizer;
+    IClosable *closable;
+    HMODULE hdll;
+    HSTRING str, str2;
     HRESULT hr;
     UINT32 size;
+    ULONG ref;
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
@@ -54,8 +61,45 @@ static void test_SpeechSynthesizer(void)
     hr = WindowsCreateString(speech_synthesizer_name, wcslen(speech_synthesizer_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
+    hdll = LoadLibraryW(L"windows.media.speech.dll");
+    if (hdll)
+    {
+        pDllGetActivationFactory = (void *)GetProcAddress(hdll, "DllGetActivationFactory");
+        ok(!!pDllGetActivationFactory, "DllGetActivationFactory not found.\n");
+
+        hr = WindowsCreateString(unknown_class_name, wcslen(unknown_class_name), &str2);
+        ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
+
+        hr = pDllGetActivationFactory(str2, &factory);
+        ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+
+        WindowsDeleteString(str2);
+
+        hr = WindowsCreateString(speech_synthesizer_name2, wcslen(speech_synthesizer_name2), &str2);
+        ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
+
+        hr = pDllGetActivationFactory(str2, &factory2);
+        ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+
+        WindowsDeleteString(str2);
+
+        hr = pDllGetActivationFactory(str, &factory2);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    else
+    {
+        win_skip("Failed to load library, err %u.\n", GetLastError());
+    }
+
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x\n", hr);
+
+    if (hdll)
+    {
+        ok(factory == factory2, "Got unexpected factory %p, factory2 %p.\n", factory, factory2);
+        IActivationFactory_Release(factory2);
+        FreeLibrary(hdll);
+    }
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
     ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
@@ -107,8 +151,29 @@ static void test_SpeechSynthesizer(void)
 
     IAgileObject_Release(agile_object);
     IInspectable_Release(inspectable);
-    IActivationFactory_Release(factory);
 
+    hr = IActivationFactory_QueryInterface(factory, &IID_ISpeechSynthesizer, (void **)&synthesizer);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    hr = RoActivateInstance(str, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechSynthesizer, (void **)&synthesizer);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_IClosable, (void **)&closable);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ref = IClosable_Release(closable);
+    ok(ref == 2, "Got unexpected ref %u.\n", ref);
+
+    ref = ISpeechSynthesizer_Release(synthesizer);
+    ok(ref == 1, "Got unexpected ref %u.\n", ref);
+
+    ref = IInspectable_Release(inspectable);
+    ok(!ref, "Got unexpected ref %u.\n", ref);
+
+    IActivationFactory_Release(factory);
     WindowsDeleteString(str);
 
     RoUninitialize();
