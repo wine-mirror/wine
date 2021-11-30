@@ -7045,12 +7045,6 @@ static void test_EnumCalendarInfoA(void)
 {
     INT i;
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("EnumCalendarInfo broken on Wine (test would hang with an infinite loop)\n");
-        return;
-    }
-
     ok( EnumCalendarInfoA( calinfo_procA,
                            LOCALE_USER_DEFAULT,
                            ENUM_ALL_CALENDARS,
@@ -7078,12 +7072,6 @@ static BOOL CALLBACK calinfo_procW(LPWSTR calinfo)
 static void test_EnumCalendarInfoW(void)
 {
     INT i;
-
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("EnumCalendarInfo broken on Wine (test would hang with an infinite loop)\n");
-        return;
-    }
 
     ok( EnumCalendarInfoW( calinfo_procW,
                            LOCALE_USER_DEFAULT,
@@ -7114,12 +7102,6 @@ static void test_EnumCalendarInfoExA(void)
 {
     INT i;
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("EnumCalendarInfo broken on Wine (test would hang with an infinite loop)\n");
-        return;
-    }
-
     ok( EnumCalendarInfoExA( calinfoex_procA,
                              LOCALE_USER_DEFAULT,
                              ENUM_ALL_CALENDARS,
@@ -7148,12 +7130,6 @@ static BOOL CALLBACK calinfoex_procW(LPWSTR calinfo, LCID calid)
 static void test_EnumCalendarInfoExW(void)
 {
     INT i;
-
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("EnumCalendarInfo broken on Wine (test would hang with an infinite loop)\n");
-        return;
-    }
 
     ok( EnumCalendarInfoExW( calinfoex_procW,
                              LOCALE_USER_DEFAULT,

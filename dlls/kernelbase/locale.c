@@ -2727,8 +2727,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
                                                          BOOL exex, LPARAM lparam )
 {
     WCHAR buffer[256];
-    DWORD optional = 0;
-    INT ret;
+    CALID calendars[2] = { id };
+    INT ret, i;
 
     if (!proc)
     {
@@ -2739,13 +2739,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
     if (id == ENUM_ALL_CALENDARS)
     {
         if (!GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE | LOCALE_RETURN_NUMBER,
-                             (WCHAR *)&id, sizeof(id) / sizeof(WCHAR) )) return FALSE;
+                             (WCHAR *)&calendars[0], sizeof(calendars[0]) / sizeof(WCHAR) )) return FALSE;
         if (!GetLocaleInfoW( lcid, LOCALE_IOPTIONALCALENDAR | LOCALE_RETURN_NUMBER,
-                             (WCHAR *)&optional, sizeof(optional) / sizeof(WCHAR) )) optional = 0;
+                             (WCHAR *)&calendars[1], sizeof(calendars[1]) / sizeof(WCHAR) )) calendars[1] = 0;
     }
 
-    for (;;)
+    for (i = 0; i < ARRAY_SIZE(calendars) && calendars[i]; i++)
     {
+        id = calendars[i];
         if (type & CAL_RETURN_NUMBER)
             ret = GetCalendarInfoW( lcid, id, type, NULL, 0, (LPDWORD)buffer );
         else if (unicode)
@@ -2764,8 +2765,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
             else ret = proc( buffer );
         }
         if (!ret) break;
-        if (!optional) break;
-        id = optional;
     }
     return TRUE;
 }
