@@ -143,6 +143,14 @@ static void set_in_notify(struct notify_context *notify, struct midi_src *src, W
  *  CoreMIDI IO threaded callback,
  *  we can't call Wine debug channels, critical section or anything using NtCurrentTeb here.
  */
+static uint64_t get_time_ms(void)
+{
+    static mach_timebase_info_data_t timebase;
+
+    if (!timebase.denom) mach_timebase_info(&timebase);
+    return mach_absolute_time() / 1000000 * timebase.numer / timebase.denom;
+}
+
 static void midi_in_read_proc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
     CFMessagePortRef msg_port = CFMessagePortCreateRemote(kCFAllocatorDefault, midi_in_thread_port_name);
@@ -917,7 +925,7 @@ static DWORD midi_in_start(WORD dev_id)
         return MMSYSERR_BADDEVICEID;
     }
     srcs[dev_id].state = 1;
-    srcs[dev_id].startTime = NtGetTickCount();
+    srcs[dev_id].startTime = get_time_ms();
     return MMSYSERR_NOERROR;
 }
 
@@ -936,7 +944,7 @@ static DWORD midi_in_stop(WORD dev_id)
 
 static DWORD midi_in_reset(WORD dev_id, struct notify_context *notify)
 {
-    DWORD cur_time = NtGetTickCount();
+    DWORD cur_time = get_time_ms();
     DWORD err = MMSYSERR_NOERROR;
     struct midi_src *src;
     MIDIHDR *hdr;

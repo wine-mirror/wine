@@ -45,6 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
+#include <mach/mach_time.h>
 #include <CoreAudio/CoreAudio.h>
 
 #define WINE_DEFINITIONS
@@ -60,6 +61,14 @@ static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
 static MIDIPortRef MIDIInPort = NULL;
 
 MIDISource *sources;
+
+static uint64_t get_time_ms(void)
+{
+    static mach_timebase_info_data_t timebase;
+
+    if (!timebase.denom) mach_timebase_info(&timebase);
+    return mach_absolute_time() / 1000000 * timebase.numer / timebase.denom;
+}
 
 static void notify_client(struct notify_context *notify)
 {
@@ -183,7 +192,7 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
                 }
 
                 midi_lock( TRUE );
-                currentTime = GetTickCount() - src->startTime;
+                currentTime = get_time_ms() - src->startTime;
 
                 while (len) {
                     LPMIDIHDR lpMidiHdr = src->lpQueueHdr;
@@ -218,7 +227,7 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
             }
 
             midi_lock( TRUE );
-            currentTime = GetTickCount() - src->startTime;
+            currentTime = get_time_ms() - src->startTime;
 
             while (pos < msg->length)
             {
