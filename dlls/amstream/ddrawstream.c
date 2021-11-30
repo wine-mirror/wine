@@ -22,6 +22,7 @@
 #define COBJMACROS
 #include "amstream_private.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "wine/strmbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);

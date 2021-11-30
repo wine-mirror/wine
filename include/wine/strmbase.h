@@ -20,7 +20,6 @@
  */
 
 #include "dshow.h"
-#include "wine/list.h"
 
 HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc);
 void WINAPI FreeMediaType(AM_MEDIA_TYPE * pMediaType);
