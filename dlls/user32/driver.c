@@ -347,6 +347,7 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_EnumDisplayMonitors,
     loaderdrv_EnumDisplaySettingsEx,
     loaderdrv_GetMonitorInfo,
+    NULL,
     /* windowing functions */
     loaderdrv_CreateDesktopWindow,
     loaderdrv_CreateWindow,

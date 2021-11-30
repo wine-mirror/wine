@@ -832,6 +832,11 @@ static BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
     return FALSE;
 }
 
+static void CDECL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager,
+                                                BOOL force, void *param )
+{
+}
+
 static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
 {
     return TRUE;
@@ -1044,6 +1049,12 @@ static void CDECL loaderdrv_UpdateClipboard(void)
     load_driver()->pUpdateClipboard();
 }
 
+static void CDECL loaderdrv_UpdateDisplayDevices( const struct gdi_device_manager *manager,
+                                                  BOOL force, void *param )
+{
+    load_driver()->pUpdateDisplayDevices( manager, force, param );
+}
+
 static const struct user_driver_funcs lazy_load_driver =
 {
     .pActivateKeyboardLayout = loaderdrv_ActivateKeyboardLayout,
@@ -1053,6 +1064,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
+    .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
     .pScrollDC = nulldrv_ScrollDC,
 };
@@ -1093,6 +1105,7 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT ver
     SET_USER_FUNC(EnumDisplayMonitors);
     SET_USER_FUNC(EnumDisplaySettingsEx);
     SET_USER_FUNC(GetMonitorInfo);
+    SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktopWindow);
     SET_USER_FUNC(CreateWindow);
     SET_USER_FUNC(DestroyWindow);

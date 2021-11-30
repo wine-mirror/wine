@@ -336,7 +336,40 @@ static BOOL read_monitor_settings( struct adapter *adapter, DWORD index, struct 
     return TRUE;
 }
 
-static BOOL update_display_cache(void)
+struct device_manager_ctx
+{
+    unsigned int gpu_count;
+};
+
+static void add_gpu( const struct gdi_gpu *gpu, void *param )
+{
+    struct device_manager_ctx *ctx = param;
+    FIXME( "\n" );
+    ctx->gpu_count++;
+}
+
+static void add_adapter( const struct gdi_adapter *adapter, void *param )
+{
+    FIXME( "\n" );
+}
+
+static void add_monitor( const struct gdi_monitor *monitor, void *param )
+{
+    FIXME( "\n" );
+}
+
+static const struct gdi_device_manager device_manager =
+{
+    add_gpu,
+    add_adapter,
+    add_monitor,
+};
+
+static void release_display_manager_ctx( struct device_manager_ctx *ctx )
+{
+}
+
+static BOOL update_display_cache_from_registry(void)
 {
     DWORD adapter_id, monitor_id, size;
     KEY_FULL_INFORMATION key;
@@ -407,6 +440,46 @@ static BOOL update_display_cache(void)
     pthread_mutex_unlock( &display_lock );
     release_display_device_init_mutex( mutex );
     return ret;
+}
+
+static BOOL update_display_cache(void)
+{
+    struct device_manager_ctx ctx = { 0 };
+
+    user_driver->pUpdateDisplayDevices( &device_manager, FALSE, &ctx );
+    release_display_manager_ctx( &ctx );
+
+    if (update_display_cache_from_registry()) return TRUE;
+    if (ctx.gpu_count)
+    {
+        ERR( "driver reported devices, but we failed to read them\n" );
+        return FALSE;
+    }
+
+    user_driver->pUpdateDisplayDevices( &device_manager, TRUE, &ctx );
+    if (!ctx.gpu_count)
+    {
+        static const struct gdi_monitor default_monitor =
+        {
+            .rc_work.right = 1024,
+            .rc_work.bottom = 768,
+            .rc_monitor.right = 1024,
+            .rc_monitor.bottom = 768,
+            .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
+        };
+
+        TRACE( "adding default fake monitor\n ");
+        add_monitor( &default_monitor, &ctx );
+    }
+    release_display_manager_ctx( &ctx );
+
+    if (!update_display_cache_from_registry())
+    {
+        ERR( "failed to read display config\n" );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static BOOL lock_display_devices(void)
