@@ -417,19 +417,14 @@ NTSTATUS midi_init(void *args)
         dests[i].caps.wNotes = 0;
     }
 
-    params->num_srcs = num_srcs;
-
     *params->err = DRV_SUCCESS;
     return STATUS_SUCCESS;
 }
 
 NTSTATUS midi_release(void *args)
 {
-    if (num_srcs)
-    {
-        /* stop the notify_wait thread */
-        notify_post(NULL);
-    }
+    /* stop the notify_wait thread */
+    notify_post(NULL);
 
     if (midi_client) MIDIClientDispose(midi_client); /* MIDIClientDispose will close all ports */
 

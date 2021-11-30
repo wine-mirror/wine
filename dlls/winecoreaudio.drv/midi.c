@@ -45,8 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-static DWORD MIDIIn_NumDevs = 0;
-
 static void notify_client(struct notify_context *notify)
 {
     TRACE("dev_id=%d msg=%d param1=%04lX param2=%04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
@@ -87,10 +85,7 @@ static LONG CoreAudio_MIDIInit(void)
         return err;
     }
 
-    MIDIIn_NumDevs = params.num_srcs;
-
-    if (MIDIIn_NumDevs > 0)
-        CloseHandle(CreateThread(NULL, 0, notify_thread, NULL, 0, NULL));
+    CloseHandle(CreateThread(NULL, 0, notify_thread, NULL, 0, NULL));
 
     return err;
 }
