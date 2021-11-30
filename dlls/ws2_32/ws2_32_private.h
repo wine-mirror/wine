@@ -48,6 +48,7 @@
 #define USE_WC_PREFIX   /* For CMSG_DATA */
 #include "iphlpapi.h"
 #include "ip2string.h"
+#include "windns.h"
 #include "wine/afd.h"
 #include "wine/debug.h"
 #include "wine/unixlib.h"

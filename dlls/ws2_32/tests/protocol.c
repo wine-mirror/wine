@@ -2328,6 +2328,26 @@ static void test_getaddrinfo(void)
     memset(&hint, 0, sizeof(hint));
     ret = getaddrinfo(NULL, "nonexistentservice", &hint, &result);
     ok(ret == WSATYPE_NOT_FOUND, "got %d\n", ret);
+
+    result = NULL;
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_flags    = AI_ALL | AI_DNS_ONLY;
+    hint.ai_family   = AF_UNSPEC;
+    hint.ai_socktype = SOCK_STREAM;
+    hint.ai_protocol = IPPROTO_TCP;
+    ret = getaddrinfo("winehq.org", NULL, &hint, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    ok(!result->ai_flags, "ai_flags == %08x\n", result->ai_flags);
+    ok(result->ai_family == AF_INET, "ai_family == %d\n", result->ai_family);
+    ok(result->ai_socktype == SOCK_STREAM, "ai_socktype == %d\n", result->ai_socktype);
+    ok(result->ai_protocol == IPPROTO_TCP, "ai_protocol == %d\n", result->ai_protocol);
+    ok(!result->ai_canonname, "ai_canonname == %s\n", result->ai_canonname);
+    ok(result->ai_addrlen == sizeof(struct sockaddr_in), "ai_addrlen == %d\n", (int)result->ai_addrlen);
+    ok(result->ai_addr != NULL, "ai_addr == NULL\n");
+    sockaddr = (SOCKADDR_IN *)result->ai_addr;
+    ok(sockaddr->sin_family == AF_INET, "ai_addr->sin_family == %d\n", sockaddr->sin_family);
+    ok(sockaddr->sin_port == 0, "ai_addr->sin_port == %d\n", sockaddr->sin_port);
+    freeaddrinfo(result);
 }
 
 static void test_dns(void)

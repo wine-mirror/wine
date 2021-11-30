@@ -69,6 +69,84 @@ static int do_getaddrinfo( const char *node, const char *service,
     }
 }
 
+static int dns_only_query( const char *node, const struct addrinfo *hints, struct addrinfo **result )
+{
+    DNS_STATUS status;
+    DNS_RECORDA *rec = NULL, *rec6 = NULL, *ptr;
+    struct addrinfo *info, *next;
+    struct sockaddr_in *addr;
+    struct sockaddr_in6 *addr6;
+    ULONG count = 0;
+
+    if (hints->ai_family != AF_INET && hints->ai_family != AF_INET6 && hints->ai_family != AF_UNSPEC)
+    {
+        FIXME( "unsupported family %u\n", hints->ai_family );
+        return EAI_FAMILY;
+    }
+    if (hints->ai_family == AF_INET || hints->ai_family == AF_UNSPEC)
+    {
+        status = DnsQuery_A( node, DNS_TYPE_A, DNS_QUERY_NO_NETBT | DNS_QUERY_NO_MULTICAST, NULL, &rec, NULL );
+        if (status != ERROR_SUCCESS && status != DNS_ERROR_RCODE_NAME_ERROR) return EAI_FAIL;
+    }
+    if (hints->ai_family == AF_INET6 || hints->ai_family == AF_UNSPEC)
+    {
+        status = DnsQuery_A( node, DNS_TYPE_AAAA, DNS_QUERY_NO_NETBT | DNS_QUERY_NO_MULTICAST, NULL, &rec6, NULL );
+        if (status != ERROR_SUCCESS && status != DNS_ERROR_RCODE_NAME_ERROR)
+        {
+            DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+            return EAI_FAIL;
+        }
+    }
+
+    for (ptr = rec; ptr; ptr = ptr->pNext) count++;
+    for (ptr = rec6; ptr; ptr = ptr->pNext) count++;
+    if (!count)
+    {
+        DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+        DnsRecordListFree( (DNS_RECORD *)rec6, DnsFreeRecordList );
+        return WSAHOST_NOT_FOUND;
+    }
+    if (!(info = calloc( count, sizeof(*info) + sizeof(SOCKADDR_STORAGE) )))
+    {
+        DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+        DnsRecordListFree( (DNS_RECORD *)rec6, DnsFreeRecordList );
+        return WSA_NOT_ENOUGH_MEMORY;
+    }
+    *result = info;
+
+    for (ptr = rec; ptr; ptr = ptr->pNext)
+    {
+        info->ai_family   = AF_INET;
+        info->ai_socktype = hints->ai_socktype;
+        info->ai_protocol = hints->ai_protocol;
+        info->ai_addrlen  = sizeof(struct sockaddr_in);
+        info->ai_addr     = (struct sockaddr *)(info + 1);
+        addr = (struct sockaddr_in *)info->ai_addr;
+        addr->sin_family = info->ai_family;
+        addr->sin_addr.S_un.S_addr = ptr->Data.A.IpAddress;
+        next = (struct addrinfo *)((char *)info + sizeof(*info) + sizeof(SOCKADDR_STORAGE));
+        if (--count) info->ai_next = next;
+        info = next;
+    }
+    for (ptr = rec6; ptr; ptr = ptr->pNext)
+    {
+        info->ai_family   = AF_INET6;
+        info->ai_socktype = hints->ai_socktype;
+        info->ai_protocol = hints->ai_protocol;
+        info->ai_addrlen  = sizeof(struct sockaddr_in6);
+        info->ai_addr     = (struct sockaddr *)(info + 1);
+        addr6 = (struct sockaddr_in6 *)info->ai_addr;
+        addr6->sin6_family = info->ai_family;
+        memcpy( &addr6->sin6_addr, &ptr->Data.AAAA.Ip6Address, sizeof(addr6->sin6_addr) );
+        next = (struct addrinfo *)((char *)info + sizeof(*info) + sizeof(SOCKADDR_STORAGE));
+        if (--count) info->ai_next = next;
+        info = next;
+    }
+
+    DnsRecordListFree( (DNS_RECORD *)rec, DnsFreeRecordList );
+    DnsRecordListFree( (DNS_RECORD *)rec6, DnsFreeRecordList );
+    return 0;
+}
 
 /***********************************************************************
  *      getaddrinfo   (ws2_32.@)
@@ -95,6 +173,11 @@ int WINAPI getaddrinfo( const char *node, const char *service,
         {
             if (!(fqdn = get_fqdn())) return WSA_NOT_ENOUGH_MEMORY;
             node = fqdn;
+        }
+        else if (!service && hints && (hints->ai_flags == AI_DNS_ONLY || hints->ai_flags == (AI_ALL | AI_DNS_ONLY)))
+        {
+            ret = dns_only_query( node, hints, info );
+            goto done;
         }
         else if (!hints || hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET6)
         {
@@ -139,6 +222,7 @@ int WINAPI getaddrinfo( const char *node, const char *service,
     free( fqdn );
     free( nodev6 );
 
+done:
     if (!ret && TRACE_ON(winsock))
     {
         struct addrinfo *ai;
