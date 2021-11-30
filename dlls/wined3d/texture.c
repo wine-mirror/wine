@@ -930,6 +930,9 @@ static void wined3d_texture_gl_allocate_mutable_storage(struct wined3d_texture_g
     else
         layer_count = texture_gl->t.layer_count;
 
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+    checkGLcall("glBindBuffer");
+
     for (layer = 0; layer < layer_count; ++layer)
     {
         target = wined3d_texture_gl_get_sub_resource_target(texture_gl, layer * level_count);
