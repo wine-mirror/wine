@@ -2695,6 +2695,8 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
 
     if (temporary_mem)
     {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
         mem = temporary_mem;
     }
     else if (bo)
@@ -2705,6 +2707,8 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
     }
     else
     {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
         mem = data->addr;
     }
 
@@ -2917,6 +2921,11 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, wined3d_bo_gl(dst_bo)->id));
         checkGLcall("glBindBuffer");
         offset += dst_bo->buffer_offset;
+    }
+    else
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
     }
 
     if (src_texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
