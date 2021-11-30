@@ -585,8 +585,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
  *              server_select
  */
 unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                            timeout_t abs_timeout, context_t *context, pthread_mutex_t *mutex,
-                            user_apc_t *user_apc )
+                            timeout_t abs_timeout, context_t *context, user_apc_t *user_apc )
 {
     unsigned int ret;
     int cookie;
@@ -635,11 +634,6 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 size = offsetof( select_op_t, signal_and_wait.signal );
         }
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
-        if (mutex)
-        {
-            mutex_unlock( mutex );
-            mutex = NULL;
-        }
         if (signaled) break;
 
         ret = wait_select_reply( &cookie );
@@ -669,7 +663,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
         abs_timeout -= now.QuadPart;
     }
 
-    ret = server_select( select_op, size, flags, abs_timeout, NULL, NULL, &apc );
+    ret = server_select( select_op, size, flags, abs_timeout, NULL, &apc );
     if (ret == STATUS_USER_APC) return invoke_user_apc( NULL, &apc, ret );
 
     /* A test on Windows 2000 shows that Windows always yields during
@@ -690,7 +684,7 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
 
     if (alertable)
     {
-        status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
+        status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, &apc );
         if (status == STATUS_USER_APC) return invoke_user_apc( context, &apc, status );
     }
     return signal_set_full_context( context );
@@ -705,7 +699,7 @@ NTSTATUS WINAPI NtTestAlert(void)
     user_apc_t apc;
     NTSTATUS status;
 
-    status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
+    status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, &apc );
     if (status == STATUS_USER_APC) invoke_user_apc( NULL, &apc, STATUS_SUCCESS );
     return STATUS_SUCCESS;
 }
