@@ -612,7 +612,7 @@ static unsigned int decode_utf8_char( unsigned char ch, const char **str, const 
 
 
 /******************************************************************
- *      ntdll_umbstowcs
+ *      ntdll_umbstowcs  (ntdll.so)
  */
 DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 {
@@ -657,7 +657,7 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 
 
 /******************************************************************
- *      ntdll_wcstoumbs
+ *      ntdll_wcstoumbs  (ntdll.so)
  */
 int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
 {
@@ -758,8 +758,35 @@ int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BO
 }
 
 
+/**********************************************************************
+ *      ntdll_wcsicmp  (ntdll.so)
+ */
+int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 )
+{
+    int ret;
+    for (;;)
+    {
+        if ((ret = ntdll_towupper( *str1 ) - ntdll_towupper( *str2 )) || !*str1) return ret;
+        str1++;
+        str2++;
+    }
+}
+
+
+/**********************************************************************
+ *      ntdll_wcsnicmp  (ntdll.so)
+ */
+int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n )
+{
+    int ret;
+    for (ret = 0; n > 0; n--, str1++, str2++)
+        if ((ret = ntdll_towupper(*str1) - ntdll_towupper(*str2)) || !*str1) break;
+    return ret;
+}
+
+
 /***********************************************************************
- *           ntdll_get_build_dir
+ *           ntdll_get_build_dir  (ntdll.so)
  */
 const char *ntdll_get_build_dir(void)
 {
@@ -768,7 +795,7 @@ const char *ntdll_get_build_dir(void)
 
 
 /***********************************************************************
- *           ntdll_get_data_dir
+ *           ntdll_get_data_dir  (ntdll.so)
  */
 const char *ntdll_get_data_dir(void)
 {

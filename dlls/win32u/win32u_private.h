@@ -256,39 +256,9 @@ static inline BOOL set_ntstatus( NTSTATUS status )
     return !status;
 }
 
-static inline WCHAR *win32u_wcsrchr( const WCHAR *str, WCHAR ch )
-{
-    WCHAR *ret = NULL;
-    do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
-    return ret;
-}
-
 static inline WCHAR win32u_towupper( WCHAR ch )
 {
     return RtlUpcaseUnicodeChar( ch );
-}
-
-static inline WCHAR *win32u_wcschr( const WCHAR *str, WCHAR ch )
-{
-    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
-    return NULL;
-}
-
-static inline int win32u_wcsicmp( const WCHAR *str1, const WCHAR *str2 )
-{
-    int ret;
-    for (;;)
-    {
-        if ((ret = win32u_towupper( *str1 ) - win32u_towupper( *str2 )) || !*str1) return ret;
-        str1++;
-        str2++;
-    }
-}
-
-static inline int win32u_wcscmp( const WCHAR *str1, const WCHAR *str2 )
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
 }
 
 static inline LONG win32u_wcstol( LPCWSTR s, LPWSTR *end, INT base )
@@ -385,10 +355,6 @@ static inline ULONG win32u_wcstoul( const WCHAR *s, WCHAR **end, int base )
 }
 
 #define towupper(c)     win32u_towupper(c)
-#define wcschr(s,c)     win32u_wcschr(s,c)
-#define wcscmp(s1,s2)   win32u_wcscmp(s1,s2)
-#define wcsicmp(s1,s2)  win32u_wcsicmp(s1,s2)
-#define wcsrchr(s,c)    win32u_wcsrchr(s,c)
 #define wcstol(s,e,b)   win32u_wcstol(s,e,b)
 #define wcstoul(s,e,b)  win32u_wcstoul(s,e,b)
 
