@@ -247,9 +247,9 @@ RECT get_primary_monitor_rect(void)
 RECT get_host_primary_monitor_rect(void)
 {
     INT gpu_count, adapter_count, monitor_count;
-    struct x11drv_gpu *gpus = NULL;
-    struct x11drv_adapter *adapters = NULL;
-    struct x11drv_monitor *monitors = NULL;
+    struct gdi_gpu *gpus = NULL;
+    struct gdi_adapter *adapters = NULL;
+    struct gdi_monitor *monitors = NULL;
     RECT rect = {0};
 
     /* The first monitor is always primary */
@@ -264,9 +264,9 @@ RECT get_host_primary_monitor_rect(void)
     return rect;
 }
 
-BOOL get_host_primary_gpu(struct x11drv_gpu *gpu)
+BOOL get_host_primary_gpu(struct gdi_gpu *gpu)
 {
-    struct x11drv_gpu *gpus;
+    struct gdi_gpu *gpus;
     INT gpu_count;
 
     if (host_handler.get_gpus(&gpus, &gpu_count) && gpu_count)
@@ -459,7 +459,7 @@ static BOOL link_device(const WCHAR *instance, const GUID *guid)
 
 /* Initialize a GPU instance.
  * Return its GUID string in guid_string, driver value in driver parameter and LUID in gpu_luid */
-static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT gpu_index, WCHAR *guid_string,
+static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct gdi_gpu *gpu, INT gpu_index, WCHAR *guid_string,
                            WCHAR *driver, LUID *gpu_luid)
 {
     static const WCHAR adapter_stringW[] = {'H','a','r','d','w','a','r','e','I','n','f','o','r','m','a','t','i','o','n','.','A','d','a','p','t','e','r','S','t','r','i','n','g',0};
@@ -598,8 +598,8 @@ done:
 }
 
 static BOOL X11DRV_InitAdapter(HKEY video_hkey, INT video_index, INT gpu_index, INT adapter_index, INT monitor_count,
-                               const struct x11drv_gpu *gpu, const WCHAR *guid_string,
-                               const WCHAR *gpu_driver, const struct x11drv_adapter *adapter)
+                               const struct gdi_gpu *gpu, const WCHAR *guid_string,
+                               const WCHAR *gpu_driver, const struct gdi_adapter *adapter)
 {
     WCHAR adapter_keyW[MAX_PATH];
     WCHAR key_nameW[MAX_PATH];
@@ -664,7 +664,7 @@ done:
     return ret;
 }
 
-static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *monitor, int monitor_index,
+static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct gdi_monitor *monitor, int monitor_index,
                                int video_index, const LUID *gpu_luid, UINT output_id)
 {
     SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
@@ -798,9 +798,9 @@ void X11DRV_DisplayDevices_Init(BOOL force)
 {
     HANDLE mutex;
     struct x11drv_display_device_handler *handler = is_virtual_desktop() ? &desktop_handler : &host_handler;
-    struct x11drv_gpu *gpus = NULL;
-    struct x11drv_adapter *adapters = NULL;
-    struct x11drv_monitor *monitors = NULL;
+    struct gdi_gpu *gpus = NULL;
+    struct gdi_adapter *adapters = NULL;
+    struct gdi_monitor *monitors = NULL;
     INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
     HDEVINFO gpu_devinfo = NULL, monitor_devinfo = NULL;

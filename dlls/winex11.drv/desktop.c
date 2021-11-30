@@ -204,10 +204,10 @@ static void query_desktop_work_area( RECT *rc_work )
     TRACE( "found tray %p %s work area %s\n", hwnd, wine_dbgstr_rect( &rect ), wine_dbgstr_rect( rc_work ) );
 }
 
-static BOOL X11DRV_desktop_get_gpus( struct x11drv_gpu **new_gpus, int *count )
+static BOOL X11DRV_desktop_get_gpus( struct gdi_gpu **new_gpus, int *count )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
-    struct x11drv_gpu *gpu;
+    struct gdi_gpu *gpu;
 
     gpu = heap_calloc( 1, sizeof(*gpu) );
     if (!gpu) return FALSE;
@@ -223,15 +223,15 @@ static BOOL X11DRV_desktop_get_gpus( struct x11drv_gpu **new_gpus, int *count )
     return TRUE;
 }
 
-static void X11DRV_desktop_free_gpus( struct x11drv_gpu *gpus )
+static void X11DRV_desktop_free_gpus( struct gdi_gpu *gpus )
 {
     heap_free( gpus );
 }
 
 /* TODO: Support multi-head virtual desktop */
-static BOOL X11DRV_desktop_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new_adapters, int *count )
+static BOOL X11DRV_desktop_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_adapters, int *count )
 {
-    struct x11drv_adapter *adapter;
+    struct gdi_adapter *adapter;
 
     adapter = heap_calloc( 1, sizeof(*adapter) );
     if (!adapter) return FALSE;
@@ -245,17 +245,17 @@ static BOOL X11DRV_desktop_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter
     return TRUE;
 }
 
-static void X11DRV_desktop_free_adapters( struct x11drv_adapter *adapters )
+static void X11DRV_desktop_free_adapters( struct gdi_adapter *adapters )
 {
     heap_free( adapters );
 }
 
-static BOOL X11DRV_desktop_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor **new_monitors, int *count )
+static BOOL X11DRV_desktop_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **new_monitors, int *count )
 {
     static const WCHAR generic_nonpnp_monitorW[] = {
         'G','e','n','e','r','i','c',' ',
         'N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
-    struct x11drv_monitor *monitor;
+    struct gdi_monitor *monitor;
 
     monitor = heap_calloc( 1, sizeof(*monitor) );
     if (!monitor) return FALSE;
@@ -275,7 +275,7 @@ static BOOL X11DRV_desktop_get_monitors( ULONG_PTR adapter_id, struct x11drv_mon
     return TRUE;
 }
 
-static void X11DRV_desktop_free_monitors( struct x11drv_monitor *monitors, int count )
+static void X11DRV_desktop_free_monitors( struct gdi_monitor *monitors, int count )
 {
     heap_free( monitors );
 }

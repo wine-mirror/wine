@@ -770,47 +770,6 @@ void init_user_driver(void) DECLSPEC_HIDDEN;
 
 /* X11 display device handler. Used to initialize display device registry data */
 
-/* Represent a physical GPU in the PCI slots */
-struct x11drv_gpu
-{
-    /* ID to uniquely identify a GPU in handler */
-    ULONG_PTR id;
-    /* Name */
-    WCHAR name[128];
-    /* PCI ID */
-    UINT vendor_id;
-    UINT device_id;
-    UINT subsys_id;
-    UINT revision_id;
-    /* Vulkan device UUID */
-    GUID vulkan_uuid;
-};
-
-/* Represent an adapter in EnumDisplayDevices context */
-struct x11drv_adapter
-{
-    /* ID to uniquely identify an adapter in handler */
-    ULONG_PTR id;
-    /* as StateFlags in DISPLAY_DEVICE struct */
-    DWORD state_flags;
-};
-
-/* Represent a monitor in EnumDisplayDevices context */
-struct x11drv_monitor
-{
-    /* Name */
-    WCHAR name[128];
-    /* RcMonitor in MONITORINFO struct */
-    RECT rc_monitor;
-    /* RcWork in MONITORINFO struct */
-    RECT rc_work;
-    /* StateFlags in DISPLAY_DEVICE struct */
-    DWORD state_flags;
-    /* Extended Device Identification Data */
-    unsigned long edid_len;
-    unsigned char *edid;
-};
-
 /* Required functions for display device registry initialization */
 struct x11drv_display_device_handler
 {
@@ -823,28 +782,28 @@ struct x11drv_display_device_handler
     /* get_gpus will be called to get a list of GPUs. First GPU has to be where the primary adapter is.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*get_gpus)(struct x11drv_gpu **gpus, int *count);
+    BOOL (*get_gpus)(struct gdi_gpu **gpus, int *count);
 
     /* get_adapters will be called to get a list of adapters in EnumDisplayDevices context under a GPU.
      * The first adapter has to be primary if GPU is primary.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*get_adapters)(ULONG_PTR gpu_id, struct x11drv_adapter **adapters, int *count);
+    BOOL (*get_adapters)(ULONG_PTR gpu_id, struct gdi_adapter **adapters, int *count);
 
     /* get_monitors will be called to get a list of monitors in EnumDisplayDevices context under an adapter.
      * The first monitor has to be primary if adapter is primary.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*get_monitors)(ULONG_PTR adapter_id, struct x11drv_monitor **monitors, int *count);
+    BOOL (*get_monitors)(ULONG_PTR adapter_id, struct gdi_monitor **monitors, int *count);
 
     /* free_gpus will be called to free a GPU list from get_gpus */
-    void (*free_gpus)(struct x11drv_gpu *gpus);
+    void (*free_gpus)(struct gdi_gpu *gpus);
 
     /* free_adapters will be called to free an adapter list from get_adapters */
-    void (*free_adapters)(struct x11drv_adapter *adapters);
+    void (*free_adapters)(struct gdi_adapter *adapters);
 
     /* free_monitors will be called to free a monitor list from get_monitors */
-    void (*free_monitors)(struct x11drv_monitor *monitors, int count);
+    void (*free_monitors)(struct gdi_monitor *monitors, int count);
 
     /* register_event_handlers will be called to register event handlers.
      * This function pointer is optional and can be NULL when driver doesn't support it */
@@ -852,7 +811,7 @@ struct x11drv_display_device_handler
 };
 
 extern HANDLE get_display_device_init_mutex(void) DECLSPEC_HIDDEN;
-extern BOOL get_host_primary_gpu(struct x11drv_gpu *gpu) DECLSPEC_HIDDEN;
+extern BOOL get_host_primary_gpu(struct gdi_gpu *gpu) DECLSPEC_HIDDEN;
 extern void release_display_device_init_mutex(HANDLE) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
