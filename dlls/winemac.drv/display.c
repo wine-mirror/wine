@@ -429,7 +429,7 @@ static struct display_mode_descriptor* create_original_display_mode_descriptor(C
     HKEY hkey;
     DWORD type, size;
     DWORD refresh100;
-    WCHAR* pixel_encoding = NULL, *end;
+    WCHAR* pixel_encoding = NULL;
 
     init_original_display_mode();
 
