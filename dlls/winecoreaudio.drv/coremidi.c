@@ -136,13 +136,10 @@ static struct notify_context *notify_read, *notify_write;
 
 #define MAX_MIDI_SYNTHS 1
 
-NTSTATUS midi_in_lock(void *args)
+static void midi_in_lock(BOOL lock)
 {
-    BOOL lock = !!args;
-
     if (lock) pthread_mutex_lock(&midi_in_mutex);
     else pthread_mutex_unlock(&midi_in_mutex);
-    return STATUS_SUCCESS;
 }
 
 static void set_in_notify(struct notify_context *notify, struct midi_src *src, WORD dev_id, WORD msg,
@@ -228,7 +225,7 @@ static void process_sysex_packet(struct midi_src *src, MIDIPacket *packet)
 
     src->state |= 2;
 
-    midi_in_lock((void *)TRUE);
+    midi_in_lock(TRUE);
 
     while (len)
     {
@@ -253,7 +250,7 @@ static void process_sysex_packet(struct midi_src *src, MIDIPacket *packet)
         }
     }
 
-    midi_in_lock((void *)FALSE);
+    midi_in_lock(FALSE);
 }
 
 static void process_small_packet(struct midi_src *src, MIDIPacket *packet)
@@ -981,13 +978,13 @@ static DWORD midi_in_add_buffer(WORD dev_id, MIDIHDR *hdr, DWORD hdr_size)
     hdr->dwBytesRecorded = 0;
     hdr->lpNext = NULL;
 
-    midi_in_lock((void *)TRUE);
+    midi_in_lock(TRUE);
 
     next = &srcs[dev_id].lpQueueHdr;
     while (*next) next = &(*next)->lpNext;
     *next = hdr;
 
-    midi_in_lock((void *)FALSE);
+    midi_in_lock(FALSE);
 
     return MMSYSERR_NOERROR;
 }
@@ -1090,7 +1087,7 @@ static DWORD midi_in_reset(WORD dev_id, struct notify_context *notify)
     }
     src = srcs + dev_id;
 
-    midi_in_lock((void *)TRUE);
+    midi_in_lock(TRUE);
 
     if (src->lpQueueHdr)
     {
@@ -1102,7 +1099,7 @@ static DWORD midi_in_reset(WORD dev_id, struct notify_context *notify)
         if (src->lpQueueHdr) err = ERROR_RETRY; /* ask the client to call again */
     }
 
-    midi_in_lock((void *)FALSE);
+    midi_in_lock(FALSE);
 
     return err;
 }
