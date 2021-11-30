@@ -42,7 +42,6 @@
 #include "winternl.h"
 #include "lm.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "unixlib.h"
 
@@ -67,8 +66,8 @@ static NET_API_STATUS (*pNetWkstaGetInfo)( const char *, unsigned int, unsigned 
 
 static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
 {
-    if (!dst) return 3 * strlenW( src ) + 1;
-    return ntdll_wcstoumbs( src, strlenW( src ) + 1, dst, dstlen, FALSE );
+    if (!dst) return 3 * wcslen( src ) + 1;
+    return ntdll_wcstoumbs( src, wcslen( src ) + 1, dst, dstlen, FALSE );
 }
 
 static DWORD netapi_umbstowcs( const char *src, WCHAR *dst, DWORD dstlen )
