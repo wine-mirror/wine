@@ -554,8 +554,8 @@ HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
 }
 
 /* wrapper for NtCreateKey that creates the key recursively if necessary */
-static HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
-                            DWORD options, DWORD *disposition )
+HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
+                     DWORD options, DWORD *disposition )
 {
     UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
     OBJECT_ATTRIBUTES attr;
@@ -606,14 +606,14 @@ HKEY reg_open_hkcu_key( const char *name )
     return reg_open_key( hkcu_key, nameW, asciiz_to_unicode( nameW, name ) - sizeof(WCHAR) );
 }
 
-static void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value, DWORD count )
+void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value, DWORD count )
 {
     unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
     NtSetValueKey( hkey, &nameW, 0, type, value, count );
 }
 
-static void set_reg_ascii_value( HKEY hkey, const char *name, const char *value )
+void set_reg_ascii_value( HKEY hkey, const char *name, const char *value )
 {
     WCHAR nameW[64], valueW[128];
     asciiz_to_unicode( nameW, name );
@@ -666,7 +666,7 @@ static void reg_delete_value( HKEY hkey, const WCHAR *name )
     NtDeleteValueKey( hkey, &nameW );
 }
 
-static BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len )
+BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len )
 {
     char buffer[4096];
     KEY_NODE_INFORMATION *key_info = (KEY_NODE_INFORMATION *)buffer;

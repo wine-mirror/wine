@@ -240,12 +240,18 @@ extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;
 extern NTSTATUS callbacks_init( void *args ) DECLSPEC_HIDDEN;
 extern void winstation_init(void) DECLSPEC_HIDDEN;
 
+extern HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
+                            DWORD options, DWORD *disposition ) DECLSPEC_HIDDEN;
 extern HKEY reg_open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
 extern HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
 extern ULONG query_reg_value( HKEY hkey, const WCHAR *name,
                               KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
 extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
                                     KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
+extern void set_reg_ascii_value( HKEY hkey, const char *name, const char *value ) DECLSPEC_HIDDEN;
+extern void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value,
+                           DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
 
 static inline struct user_thread_info *get_user_thread_info(void)
 {
