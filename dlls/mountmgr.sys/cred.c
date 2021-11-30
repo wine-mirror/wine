@@ -40,7 +40,6 @@
 
 #include "mountmgr.h"
 #include "unixlib.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
@@ -167,7 +166,7 @@ static SecKeychainItemRef find_credential( const WCHAR *name )
             CFRelease( search );
             return NULL;
         }
-        if (strcmpiW( itemname, name ))
+        if (wcsicmp( itemname, name ))
         {
             CFRelease( item );
             free( itemname );
@@ -466,9 +465,9 @@ static BOOL match_credential( void *data, UInt32 data_len, const WCHAR *filter )
 
     TRACE( "comparing filter %s to target name %s\n", debugstr_w(filter), debugstr_w(targetname) );
 
-    p = strchrW( filter, '*' );
-    if (*p && !p[1]) ret = !strncmpiW( filter, targetname, p - filter );
-    else ret = !strcmpiW( filter, targetname );
+    p = wcschr( filter, '*' );
+    if (*p && !p[1]) ret = !wcsnicmp( filter, targetname, p - filter );
+    else ret = !wcsicmp( filter, targetname );
     free( targetname );
     return ret;
 }
