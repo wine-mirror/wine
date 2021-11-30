@@ -2431,7 +2431,7 @@ static WCHAR *detect_proxy_autoconfig_url_dns(void)
     while ((p = strchr( p, '.' )) && is_domain_suffix( p + 1, domain ))
     {
         char *name;
-        struct addrinfo *ai;
+        struct addrinfo *ai, hints;
         int res;
 
         if (!(name = heap_alloc( sizeof("wpad") + strlen(p) )))
@@ -2442,7 +2442,10 @@ static WCHAR *detect_proxy_autoconfig_url_dns(void)
         }
         strcpy( name, "wpad" );
         strcat( name, p );
-        res = getaddrinfo( name, NULL, NULL, &ai );
+        memset( &hints, 0, sizeof(hints) );
+        hints.ai_flags  = AI_ALL | AI_DNS_ONLY;
+        hints.ai_family = AF_UNSPEC;
+        res = getaddrinfo( name, NULL, &hints, &ai );
         if (!res)
         {
             ret = build_wpad_url( name, ai );
