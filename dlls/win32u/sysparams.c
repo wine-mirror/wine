@@ -97,6 +97,22 @@ static const WCHAR devpropkey_device_ispresentW[] =
     '\\','0','0','0','5'
 };
 
+static const WCHAR devpropkey_monitor_gpu_luidW[] =
+{
+    'P','r','o','p','e','r','t','i','e','s',
+    '\\','{','C','A','0','8','5','8','5','3','-','1','6','C','E','-','4','8','A','A',
+    '-','B','1','1','4','-','D','E','9','C','7','2','3','3','4','2','2','3','}',
+    '\\','0','0','0','1'
+};
+
+static const WCHAR devpropkey_monitor_output_idW[] =
+{
+    'P','r','o','p','e','r','t','i','e','s',
+    '\\','{','C','A','0','8','5','8','5','3','-','1','6','C','E','-','4','8','A','A',
+    '-','B','1','1','4','-','D','E','9','C','7','2','3','3','4','2','2','3','}',
+    '\\','0','0','0','2'
+};
+
 static const WCHAR wine_devpropkey_monitor_stateflagsW[] =
 {
     'P','r','o','p','e','r','t','i','e','s','\\',
@@ -119,6 +135,14 @@ static const WCHAR wine_devpropkey_monitor_rcworkW[] =
     '{','2','3','3','a','9','e','f','3','-','a','f','c','4','-','4','a','b','d',
     '-','b','5','6','4','-','c','3','2','f','2','1','f','1','5','3','5','b','}',
     '\\','0','0','0','4'
+};
+
+static const WCHAR wine_devpropkey_monitor_adapternameW[] =
+{
+    'P','r','o','p','e','r','t','i','e','s','\\',
+    '{','2','3','3','a','9','e','f','3','-','a','f','c','4','-','4','a','b','d',
+    '-','b','5','6','4','-','c','3','2','f','2','1','f','1','5','3','5','b','}',
+    '\\','0','0','0','5'
 };
 
 static const WCHAR device_instanceW[] = {'D','e','v','i','c','e','I','n','s','t','a','n','c','e',0};
@@ -146,6 +170,9 @@ static const WCHAR guid_devclass_displayW[] =
      'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}',0};
 
 static const char  guid_devclass_monitorA[] = "{4D36E96E-E325-11CE-BFC1-08002BE10318}";
+static const WCHAR guid_devclass_monitorW[] =
+    {'{','4','D','3','6','E','9','6','E','-','E','3','2','5','-','1','1','C','E','-'
+        ,'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}'};
 
 static const WCHAR guid_devinterface_display_adapterW[] =
     {'{','5','B','4','5','2','0','1','D','-','F','2','F','2','-','4','F','3','B','-',
@@ -876,7 +903,121 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
 
 static void add_monitor( const struct gdi_monitor *monitor, void *param )
 {
-    FIXME( "\n" );
+    struct device_manager_ctx *ctx = param;
+    char buffer[MAX_PATH], instance[64];
+    unsigned int monitor_index, output_index;
+    WCHAR bufferW[MAX_PATH];
+    HKEY hkey, subkey;
+
+    static const WCHAR default_monitorW[] =
+        {'M','O','N','I','T','O','R','\\','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
+
+    TRACE( "%s %s %s\n", debugstr_w(monitor->name), wine_dbgstr_rect(&monitor->rc_monitor),
+           wine_dbgstr_rect(&monitor->rc_work) );
+
+    if (!ctx->adapter_count)
+    {
+        static const struct gdi_adapter default_adapter =
+        {
+            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE |
+                           DISPLAY_DEVICE_VGA_COMPATIBLE,
+        };
+        TRACE( "adding default fake adapter\n" );
+        add_adapter( &default_adapter, ctx );
+    }
+
+    monitor_index = ctx->monitor_count++;
+    output_index = ctx->output_count++;
+
+    sprintf( buffer, "MonitorID%u", monitor_index );
+    sprintf( instance, "DISPLAY\\Default_Monitor\\%04X&%04X", ctx->video_count - 1, monitor_index );
+    set_reg_ascii_value( ctx->adapter_key, buffer, instance );
+
+    hkey = reg_create_key( enum_key, bufferW, asciiz_to_unicode( bufferW, instance ) - sizeof(WCHAR),
+                          0, NULL );
+    if (!hkey) return;
+
+    link_device( bufferW, guid_devinterface_monitorW );
+
+    lstrcpyW( bufferW, monitor->name );
+    if (!bufferW[0]) asciiz_to_unicode( bufferW, "Generic Non-PnP Monitor" );
+    set_reg_value( hkey, device_descW, REG_SZ, bufferW, (lstrlenW( bufferW ) + 1) * sizeof(WCHAR) );
+
+    set_reg_value( hkey, classW, REG_SZ, monitorW, sizeof(monitorW) );
+    sprintf( buffer, "%s\\%04X", guid_devclass_monitorA, output_index );
+    set_reg_ascii_value( hkey, "Driver", buffer );
+    set_reg_value( hkey, class_guidW, REG_SZ, guid_devclass_monitorW, sizeof(guid_devclass_monitorW) );
+    set_reg_value( hkey, hardware_idW, REG_MULTI_SZ, default_monitorW, sizeof(default_monitorW) );
+
+    if ((subkey = reg_create_key( hkey, device_parametersW, sizeof(device_parametersW), 0, NULL )))
+    {
+        static const WCHAR edidW[] = {'E','D','I','D',0};
+        set_reg_value( subkey, edidW, REG_BINARY, monitor->edid, monitor->edid_len );
+        NtClose( subkey );
+    }
+
+    /* StateFlags */
+    if ((subkey = reg_create_key( hkey, wine_devpropkey_monitor_stateflagsW,
+                                  sizeof(wine_devpropkey_monitor_stateflagsW), 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT32, &monitor->state_flags,
+                       sizeof(monitor->state_flags) );
+        NtClose( subkey );
+    }
+
+    /* WINE_DEVPROPKEY_MONITOR_RCMONITOR */
+    if ((subkey = reg_create_key( hkey, wine_devpropkey_monitor_rcmonitorW,
+                                  sizeof(wine_devpropkey_monitor_rcmonitorW), 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_BINARY, &monitor->rc_monitor,
+                       sizeof(monitor->rc_monitor) );
+        NtClose( subkey );
+    }
+
+    /* WINE_DEVPROPKEY_MONITOR_RCWORK */
+    if ((subkey = reg_create_key( hkey, wine_devpropkey_monitor_rcworkW,
+                                  sizeof(wine_devpropkey_monitor_rcworkW), 0, NULL )))
+    {
+        TRACE( "rc_work %s\n", wine_dbgstr_rect(&monitor->rc_work) );
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_BINARY, &monitor->rc_work,
+                       sizeof(monitor->rc_work) );
+        NtClose( subkey );
+    }
+
+    /* WINE_DEVPROPKEY_MONITOR_ADAPTERNAME */
+    if ((subkey = reg_create_key( hkey, wine_devpropkey_monitor_adapternameW,
+                                  sizeof(wine_devpropkey_monitor_adapternameW), 0, NULL )))
+    {
+        sprintf( buffer, "\\\\.\\DISPLAY%u", ctx->video_count );
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
+                       asciiz_to_unicode( bufferW, buffer ));
+        NtClose( subkey );
+    }
+
+    /* DEVPROPKEY_MONITOR_GPU_LUID */
+    if ((subkey = reg_create_key( hkey, devpropkey_monitor_gpu_luidW,
+                                  sizeof(devpropkey_monitor_gpu_luidW), 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_INT64,
+                       &ctx->gpu_luid, sizeof(ctx->gpu_luid) );
+        NtClose( subkey );
+    }
+
+    /* DEVPROPKEY_MONITOR_OUTPUT_ID */
+    if ((subkey = reg_create_key( hkey, devpropkey_monitor_output_idW,
+                                  sizeof(devpropkey_monitor_output_idW), 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT32,
+                       &output_index, sizeof(output_index) );
+        NtClose( subkey );
+    }
+
+    NtClose( hkey );
+
+    sprintf( buffer, "Class\\%s\\%04X", guid_devclass_monitorA, output_index );
+    hkey = reg_create_key( control_key, bufferW,
+                           asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR), 0, NULL );
+    if (hkey) NtClose( hkey );
 }
 
 static const struct gdi_device_manager device_manager =
