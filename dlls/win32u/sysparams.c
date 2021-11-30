@@ -126,6 +126,8 @@ static const WCHAR controlW[] = {'C','o','n','t','r','o','l'};
 static const WCHAR device_parametersW[] =
     {'D','e','v','i','c','e',' ','P','a','r','a','m','e','t','e','r','s'};
 static const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
+static const WCHAR symbolic_link_valueW[] =
+    {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
 static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
 static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
 static const WCHAR hardware_idW[] = {'H','a','r','d','w','a','r','e','I','D',0};
@@ -806,7 +808,70 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
 static void add_adapter( const struct gdi_adapter *adapter, void *param )
 {
-    FIXME( "\n" );
+    struct device_manager_ctx *ctx = param;
+    unsigned int adapter_index, video_index, len;
+    char name[64], buffer[MAX_PATH];
+    WCHAR nameW[64], bufferW[MAX_PATH];
+    HKEY hkey;
+
+    TRACE( "\n" );
+
+    if (!ctx->gpu_count)
+    {
+        static const struct gdi_gpu default_gpu;
+        TRACE( "adding default fake GPU\n" );
+        add_gpu( &default_gpu, ctx );
+    }
+
+    if (ctx->adapter_key)
+    {
+        NtClose( ctx->adapter_key );
+        ctx->adapter_key = NULL;
+    }
+
+    adapter_index = ctx->adapter_count++;
+    video_index = ctx->video_count++;
+    ctx->monitor_count = 0;
+
+    len = asciiz_to_unicode( bufferW, "\\Registry\\Machine\\System\\CurrentControlSet\\"
+                             "Control\\Video\\" ) / sizeof(WCHAR) - 1;
+    lstrcpyW( bufferW + len, ctx->gpu_guid );
+    len += lstrlenW( bufferW + len );
+    sprintf( buffer, "\\%04x", adapter_index );
+    len += asciiz_to_unicode( bufferW + len, buffer ) / sizeof(WCHAR) - 1;
+    hkey = reg_create_key( NULL, bufferW, len * sizeof(WCHAR),
+                          REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
+    if (!hkey) hkey = reg_create_key( NULL, bufferW, len * sizeof(WCHAR),
+                                     REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
+
+    sprintf( name, "\\Device\\Video%u", video_index );
+    asciiz_to_unicode( nameW, name );
+    set_reg_value( video_key, nameW, REG_SZ, bufferW, (lstrlenW( bufferW ) + 1) * sizeof(WCHAR) );
+
+    if (hkey)
+    {
+        sprintf( buffer, "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class\\"
+                 "%s\\%04X", guid_devclass_displayA, ctx->gpu_count - 1 );
+        len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
+        set_reg_value( hkey, symbolic_link_valueW, REG_LINK, bufferW, len );
+        NtClose( hkey );
+    }
+    else ERR( "failed to create link key\n" );
+
+    /* Following information is Wine specific, it doesn't really exist on Windows. */
+    len = asciiz_to_unicode( bufferW, "System\\CurrentControlSet\\Control\\Video\\" )
+        / sizeof(WCHAR) - 1;
+    lstrcpyW( bufferW + len, ctx->gpu_guid );
+    len += lstrlenW( bufferW + len );
+    sprintf( buffer, "\\%04x", adapter_index );
+    len += asciiz_to_unicode( bufferW + len, buffer ) / sizeof(WCHAR) - 1;
+    ctx->adapter_key = reg_create_key( config_key, bufferW, len * sizeof(WCHAR),
+                                       REG_OPTION_VOLATILE, NULL );
+
+    set_reg_value( ctx->adapter_key, gpu_idW, REG_SZ, ctx->gpuid,
+                   (lstrlenW( ctx->gpuid ) + 1) * sizeof(WCHAR) );
+    set_reg_value( ctx->adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
+                   sizeof(adapter->state_flags) );
 }
 
 static void add_monitor( const struct gdi_monitor *monitor, void *param )

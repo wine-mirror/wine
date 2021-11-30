@@ -584,9 +584,11 @@ HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
         if (i == len) return 0;
         for (;;)
         {
+            unsigned int subkey_options = options;
+            if (i < len) subkey_options &= ~(REG_OPTION_CREATE_LINK | REG_OPTION_OPEN_LINK);
             nameW.Buffer = (WCHAR *)name + pos;
             nameW.Length = (i - pos) * sizeof(WCHAR);
-            status = NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition );
+            status = NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, subkey_options, disposition );
 
             if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
             if (!NT_SUCCESS(status)) return 0;
