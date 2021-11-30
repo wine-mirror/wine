@@ -21,11 +21,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
@@ -126,10 +126,7 @@ typedef struct _SessionMgr {
     IMMDevice *device;
 } SessionMgr;
 
-static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
-    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-    'w','i','n','e','c','o','r','e','a','u','d','i','o','.','d','r','v','\\','d','e','v','i','c','e','s',0};
-static const WCHAR guidW[] = {'g','u','i','d',0};
+static const WCHAR *drv_key_devicesW = L"Software\\Wine\\Drivers\\winecoreaudio.drv\\devices";
 
 static HANDLE g_timer_q;
 
@@ -253,7 +250,7 @@ static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
         goto exit;
     }
 
-    lr = RegSetValueExW(key, guidW, 0, REG_BINARY, (BYTE*)guid,
+    lr = RegSetValueExW(key, L"guid", 0, REG_BINARY, (BYTE*)guid,
                 sizeof(GUID));
     if(lr != ERROR_SUCCESS)
         ERR("RegSetValueEx(%s\\guid) failed: %u\n", wine_dbgstr_w(key_name), lr);
@@ -270,19 +267,17 @@ static void get_device_guid(EDataFlow flow, DWORD device_id, GUID *guid)
     DWORD type, size = sizeof(*guid);
     WCHAR key_name[256];
 
-    static const WCHAR key_fmt[] = {'%','u',0};
-
     if(flow == eCapture)
         key_name[0] = '1';
     else
         key_name[0] = '0';
     key_name[1] = ',';
 
-    sprintfW(key_name + 2, key_fmt, device_id);
+    swprintf(key_name + 2, ARRAY_SIZE(key_name), L"%u", device_id);
 
     if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
         if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
-            if(RegQueryValueExW(dev_key, guidW, 0, &type,
+            if(RegQueryValueExW(dev_key, L"guid", 0, &type,
                         (BYTE*)guid, &size) == ERROR_SUCCESS){
                 if(type == REG_BINARY){
                     RegCloseKey(dev_key);
@@ -322,8 +317,8 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
 {
     struct get_endpoint_ids_params params;
     unsigned int i;
-    GUID *guids;
-    WCHAR **ids;
+    GUID *guids = NULL;
+    WCHAR **ids = NULL;
 
     TRACE("%d %p %p %p\n", flow, ids_out, num, def_index);
 
@@ -346,7 +341,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
     }
 
     for(i = 0; i < params.num; i++){
-        int size = (strlenW(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        int size = (wcslen(params.endpoints[i].name) + 1) * sizeof(WCHAR);
         ids[i] = heap_alloc(size);
         if(!ids[i]){
             params.result = E_OUTOFMEMORY;
@@ -402,7 +397,7 @@ static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
         }
 
         size = sizeof(reg_guid);
-        if(RegQueryValueExW(key, guidW, 0, &type,
+        if(RegQueryValueExW(key, L"guid", 0, &type,
                     (BYTE*)&reg_guid, &size) == ERROR_SUCCESS){
             if(IsEqualGUID(&reg_guid, guid)){
                 RegCloseKey(key);
@@ -419,7 +414,7 @@ static BOOL get_deviceid_by_guid(GUID *guid, DWORD *id, EDataFlow *flow)
                     return FALSE;
                 }
 
-                *id = strtoulW(key_name + 2, NULL, 10);
+                *id = wcstoul(key_name + 2, NULL, 10);
 
                 return TRUE;
             }
