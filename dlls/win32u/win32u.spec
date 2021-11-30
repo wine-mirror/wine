@@ -875,7 +875,7 @@
 @ stub NtUserEndDeferWindowPosEx
 @ stub NtUserEndMenu
 @ stub NtUserEndPaint
-@ stub NtUserEnumDisplayDevices
+@ stdcall NtUserEnumDisplayDevices(ptr long ptr long)
 @ stub NtUserEnumDisplayMonitors
 @ stub NtUserEnumDisplaySettings
 @ stub NtUserEvent

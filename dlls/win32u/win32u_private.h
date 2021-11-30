@@ -44,6 +44,8 @@ struct user_callbacks
     HWND (WINAPI *pWindowFromDC)( HDC );
 };
 
+extern const struct user_callbacks *user_callbacks DECLSPEC_HIDDEN;
+
 struct unix_funcs
 {
     /* win32u functions */
@@ -196,6 +198,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
     HKL      (WINAPI *pNtUserActivateKeyboardLayout)( HKL layout, UINT flags );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
+    BOOL     (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,
+                                                  DISPLAY_DEVICEW *info, DWORD flags );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
                                                            UINT32 *num_mode_info );
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
@@ -388,6 +392,12 @@ DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *sr
 static inline BOOL is_win9x(void)
 {
     return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
+}
+
+static inline const char *debugstr_us( const UNICODE_STRING *us )
+{
+    if (!us) return "<null>";
+    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
 }
 
 #endif /* __WINE_WIN32U_PRIVATE */

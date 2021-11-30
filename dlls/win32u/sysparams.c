@@ -1211,3 +1211,74 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
     TRACE( "returning %u paths %u modes\n", *num_path_info, *num_mode_info );
     return ERROR_SUCCESS;
 }
+
+static struct adapter *find_adapter( UNICODE_STRING *name )
+{
+    struct adapter *adapter;
+
+    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+    {
+        if (!name || !name->Length) return adapter; /* use primary adapter */
+        if (!wcsnicmp( name->Buffer, adapter->dev.device_name, name->Length / sizeof(WCHAR) ) &&
+            !adapter->dev.device_name[name->Length / sizeof(WCHAR)])
+            return adapter;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *	     NtUserEnumDisplayDevices    (win32u.@)
+ */
+BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
+                                      DISPLAY_DEVICEW *info, DWORD flags )
+{
+    struct display_device *found = NULL;
+    struct adapter *adapter;
+    struct monitor *monitor;
+
+    TRACE( "%s %u %p %#x\n", debugstr_us( device ), index, info, flags );
+
+    if (!lock_display_devices()) return FALSE;
+
+    if (!device || !device->Length)
+    {
+        /* Enumerate adapters */
+        LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+        {
+            if (index == adapter->id)
+            {
+                found = &adapter->dev;
+                break;
+            }
+        }
+    }
+    else if ((adapter = find_adapter( device )))
+    {
+        /* Enumerate monitors */
+        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+        {
+            if (monitor->adapter == adapter && index == monitor->id)
+            {
+                found = &monitor->dev;
+                break;
+            }
+        }
+    }
+
+    if (found)
+    {
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceName) + sizeof(info->DeviceName))
+            lstrcpyW( info->DeviceName, found->device_name );
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceString) + sizeof(info->DeviceString))
+            lstrcpyW( info->DeviceString, found->device_string );
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, StateFlags) + sizeof(info->StateFlags))
+            info->StateFlags = found->state_flags;
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
+            lstrcpyW( info->DeviceID, (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+                      ? found->interface_name : found->device_id );
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(info->DeviceKey))
+            lstrcpyW( info->DeviceKey, found->device_key );
+    }
+    unlock_display_devices();
+    return !!found;
+}

@@ -606,6 +606,12 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
+                                      DISPLAY_DEVICEW *info, DWORD flags )
+{
+    return unix_funcs->pNtUserEnumDisplayDevices( device, index, info, flags );
+}
+
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                UINT32 *num_mode_info )
 {
@@ -847,7 +853,7 @@ static HWND WINAPI call_WindowFromDC( HDC hdc )
     return pWindowFromDC ? pWindowFromDC( hdc ) : NULL;
 }
 
-static const struct user_callbacks user_callbacks =
+static const struct user_callbacks user_funcs =
 {
     call_GetDesktopWindow,
     call_GetDpiForSystem,
@@ -863,6 +869,6 @@ static const struct user_callbacks user_callbacks =
 
 extern void wrappers_init( unixlib_handle_t handle )
 {
-    const void *args = &user_callbacks;
+    const void *args = &user_funcs;
     if (!__wine_unix_call( handle, 1, &args )) unix_funcs = args;
 }

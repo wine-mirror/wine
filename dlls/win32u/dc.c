@@ -53,12 +53,6 @@ struct dc_attr_bucket
 
 static struct list dc_attr_buckets = LIST_INIT( dc_attr_buckets );
 
-static inline const char *debugstr_us( const UNICODE_STRING *us )
-{
-    if (!us) return "<null>";
-    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
-}
-
 static BOOL DC_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs dc_funcs =
