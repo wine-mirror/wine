@@ -2712,7 +2712,8 @@ map:
 
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
-        map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, offset, size, wined3d_resource_gl_map_flags(bo, flags)));
+        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, wined3d_resource_gl_map_flags(bo, flags)))))
+            map_ptr += offset;
     }
     else
     {
@@ -2757,11 +2758,12 @@ static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct 
 
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
+        /* The offset passed to glFlushMappedBufferRange() is relative to the
+         * mapped range, but we map the whole buffer anyway. */
         for (i = 0; i < range_count; ++i)
         {
-            /* The offset passed to glFlushMappedBufferRange() is relative to
-             * the mapped range, so don't add data->addr in this case. */
-            GL_EXTCALL(glFlushMappedBufferRange(bo->binding, ranges[i].offset, ranges[i].size));
+            GL_EXTCALL(glFlushMappedBufferRange(bo->binding,
+                    bo->b.buffer_offset + (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
         }
     }
     else if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
