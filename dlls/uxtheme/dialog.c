@@ -38,8 +38,9 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     static const WCHAR themeClass[] = L"Window";
     BOOL themingActive = IsThemeDialogTextureEnabled (hWnd);
     BOOL doTheming = themingActive && (theme != NULL);
+    HRESULT hr = E_FAIL;
     LRESULT result;
-      
+
     switch (msg)
     {
     case WM_CREATE:
@@ -78,13 +79,11 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
                         NULL);
 #endif
                     return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-                else 
-                /* We might have gotten a TAB theme class, so check if we can 
-                 * draw as a tab page. */
-                if (IsThemePartDefined (theme, TABP_BODY, 0))
-                    DrawThemeBackground (theme, (HDC)wParam, TABP_BODY, 0, &rc, 
-                        NULL);
-                else
+                /* We might have gotten a TAB theme class, so check if we can draw as a tab page */
+                else if (IsThemePartDefined(theme, TABP_BODY, 0))
+                    hr = DrawThemeBackground(theme, (HDC)wParam, TABP_BODY, 0, &rc, NULL);
+
+                if (FAILED(hr))
                     return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
             }
             return 1;
