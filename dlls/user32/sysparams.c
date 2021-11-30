@@ -3804,14 +3804,14 @@ static BOOL update_monitor_cache(void)
     BOOL ret = FALSE;
     BOOL is_replica;
     DWORD i = 0, j;
-    DWORD type;
+    DWORD type, error = GetLastError();
 
     /* Update monitor cache from SetupAPI if it's outdated */
     if (!video_key && RegOpenKeyW( HKEY_LOCAL_MACHINE, L"HARDWARE\\DEVICEMAP\\VIDEO", &video_key ))
         return FALSE;
     if (RegQueryInfoKeyW( video_key, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &filetime ))
         return FALSE;
-    if (CompareFileTime( &filetime, &last_query_monitors_time ) < 1)
+    if (CompareFileTime( &filetime, &last_query_monitors_time ) < 0)
         return TRUE;
 
     mutex = get_display_device_init_mutex();
@@ -3879,6 +3879,7 @@ fail:
     SetupDiDestroyDeviceInfoList( devinfo );
     LeaveCriticalSection( &monitors_section );
     release_display_device_init_mutex( mutex );
+    SetLastError( error );
     return ret;
 }
 
