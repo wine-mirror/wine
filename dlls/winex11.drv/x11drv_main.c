@@ -631,8 +631,8 @@ static BOOL process_attach(void)
     X11DRV_InitKeyboard( gdi_display );
     if (use_xim) use_xim = X11DRV_InitXIM( input_style );
 
-    X11DRV_DisplayDevices_Init(FALSE);
     init_user_driver();
+    X11DRV_DisplayDevices_Init(FALSE);
     return TRUE;
 }
 

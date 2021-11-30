@@ -209,6 +209,8 @@ extern LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW de
                                                   HWND hwnd, DWORD flags, LPVOID lpvoid ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode,
                                                 DWORD flags ) DECLSPEC_HIDDEN;
+extern void CDECL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+                                               BOOL force, void *param ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL CDECL X11DRV_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void CDECL X11DRV_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
