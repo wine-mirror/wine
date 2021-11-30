@@ -475,6 +475,11 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
         checkGLcall("glBindBuffer");
         offset += data.buffer_object->buffer_offset;
     }
+    else
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
+    }
 
     level = sub_resource_idx % texture->level_count;
     wined3d_texture_get_pitch(texture, level, &row_pitch, &slice_pitch);
