@@ -4,7 +4,6 @@ C_SRCS = \
 	dispatch.c \
 	filter.c \
 	mediatype.c \
-	outputqueue.c \
 	pin.c \
 	pospass.c \
 	renderer.c \
