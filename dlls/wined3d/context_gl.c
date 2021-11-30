@@ -2739,7 +2739,7 @@ void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         return NULL;
     }
 
-    return (uint8_t *)map_ptr + (uintptr_t)data->addr;
+    return (uint8_t *)map_ptr + bo->buffer_offset + (uintptr_t)data->addr;
 }
 
 static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct wined3d_const_bo_address *data,
@@ -2771,7 +2771,7 @@ static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct 
         for (i = 0; i < range_count; ++i)
         {
             GL_EXTCALL(glFlushMappedBufferRangeAPPLE(bo->binding,
-                    (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
+                    bo->b.buffer_offset + (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
             checkGLcall("glFlushMappedBufferRangeAPPLE");
         }
     }
