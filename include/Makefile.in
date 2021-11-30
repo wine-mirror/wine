@@ -777,6 +777,7 @@ SOURCES = \
 	windows.globalization.idl \
 	windows.h \
 	windows.media.devices.idl \
+	windows.media.idl \
 	windows.media.speechsynthesis.idl \
 	windows.storage.streams.idl \
 	windows.system.idl \

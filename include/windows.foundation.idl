@@ -119,6 +119,15 @@ namespace Windows {
         {
             HRESULT ToString([out, retval] HSTRING *value);
         }
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(30d5a829-7fa4-4026-83bb-d75bae4ea99e)
+        ]
+        interface IClosable : IInspectable
+        {
+            HRESULT Close();
+        }
     }
 }
 
