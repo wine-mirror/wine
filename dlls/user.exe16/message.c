@@ -905,6 +905,9 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
     case WM_SIZECLIPBOARD:
         FIXME_(msg)( "message %04x needs translation\n", msg );
         break;
+    case WM_ERASEBKGND:
+        ret = callback( hwnd32, msg, (WPARAM)HDC_32(wParam), lParam, result, arg );
+        break;
     default:
         ret = callback( hwnd32, msg, wParam, lParam, result, arg );
         break;
