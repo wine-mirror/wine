@@ -78,6 +78,12 @@ static LRESULT defdlg_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
     return *result;
 }
 
+static LRESULT defwnd_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                     LRESULT *result, void *arg )
+{
+    return *result = DefWindowProcA( hwnd, msg, wp, lp );
+}
+
 static LRESULT call_window_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                           LRESULT *result, void *arg )
 {
@@ -1601,78 +1607,8 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
 LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
 {
     LRESULT result;
-    HWND hwnd = WIN_Handle32( hwnd16 );
-
-    switch(msg)
-    {
-    case WM_NCCREATE:
-        {
-            CREATESTRUCT16 *cs16 = MapSL(lParam);
-            CREATESTRUCTA cs32;
-
-            cs32.lpCreateParams = ULongToPtr(cs16->lpCreateParams);
-            cs32.hInstance      = HINSTANCE_32(cs16->hInstance);
-            cs32.hMenu          = HMENU_32(cs16->hMenu);
-            cs32.hwndParent     = WIN_Handle32(cs16->hwndParent);
-            cs32.cy             = cs16->cy;
-            cs32.cx             = cs16->cx;
-            cs32.y              = cs16->y;
-            cs32.x              = cs16->x;
-            cs32.style          = cs16->style;
-            cs32.dwExStyle      = cs16->dwExStyle;
-            cs32.lpszName       = MapSL(cs16->lpszName);
-            cs32.lpszClass      = MapSL(cs16->lpszClass);
-            return DefWindowProcA( hwnd, msg, wParam, (LPARAM)&cs32 );
-        }
-    case WM_NCCALCSIZE:
-        {
-            RECT16 *rect16 = MapSL(lParam);
-            RECT rect32;
-
-            rect32.left    = rect16->left;
-            rect32.top     = rect16->top;
-            rect32.right   = rect16->right;
-            rect32.bottom  = rect16->bottom;
-
-            result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)&rect32 );
-
-            rect16->left   = rect32.left;
-            rect16->top    = rect32.top;
-            rect16->right  = rect32.right;
-            rect16->bottom = rect32.bottom;
-            return result;
-        }
-    case WM_WINDOWPOSCHANGING:
-    case WM_WINDOWPOSCHANGED:
-        {
-            WINDOWPOS16 *pos16 = MapSL(lParam);
-            WINDOWPOS pos32;
-
-            pos32.hwnd             = WIN_Handle32(pos16->hwnd);
-            pos32.hwndInsertAfter  = WIN_Handle32(pos16->hwndInsertAfter);
-            pos32.x                = pos16->x;
-            pos32.y                = pos16->y;
-            pos32.cx               = pos16->cx;
-            pos32.cy               = pos16->cy;
-            pos32.flags            = pos16->flags;
-
-            result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)&pos32 );
-
-            pos16->hwnd            = HWND_16(pos32.hwnd);
-            pos16->hwndInsertAfter = HWND_16(pos32.hwndInsertAfter);
-            pos16->x               = pos32.x;
-            pos16->y               = pos32.y;
-            pos16->cx              = pos32.cx;
-            pos16->cy              = pos32.cy;
-            pos16->flags           = pos32.flags;
-            return result;
-        }
-    case WM_GETTEXT:
-    case WM_SETTEXT:
-        return DefWindowProcA( hwnd, msg, wParam, (LPARAM)MapSL(lParam) );
-    default:
-        return DefWindowProcA( hwnd, msg, wParam, lParam );
-    }
+    WINPROC_CallProc16To32A( defwnd_proc_callback, hwnd16, msg, wParam, lParam, &result, 0 );
+    return result;
 }
 
 
