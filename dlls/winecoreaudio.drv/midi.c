@@ -78,6 +78,21 @@ static void notify_client(struct notify_context *notify)
                    notify->instance, notify->param_1, notify->param_2);
 }
 
+static DWORD WINAPI notify_thread(void *p)
+{
+    struct midi_notify_wait_params params;
+    BOOL quit;
+
+    params.quit = &quit;
+
+    while (1)
+    {
+        UNIX_CALL(midi_notify_wait, &params);
+        if (quit) break;
+    }
+    return 0;
+}
+
 static LONG CoreAudio_MIDIInit(void)
 {
     struct midi_init_params params;
@@ -100,6 +115,7 @@ static LONG CoreAudio_MIDIInit(void)
     {
         MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
         CloseHandle( CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL));
+        CloseHandle(CreateThread(NULL, 0, notify_thread, NULL, 0, NULL));
     }
     return err;
 }

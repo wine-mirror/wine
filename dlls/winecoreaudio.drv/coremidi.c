@@ -116,6 +116,13 @@ static CFStringRef midi_in_thread_port_name;
 
 static pthread_mutex_t midi_in_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+#define NOTIFY_BUFFER_SIZE 64 + 1 /* + 1 for the sentinel */
+static pthread_mutex_t notify_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t notify_cond = PTHREAD_COND_INITIALIZER;
+static BOOL notify_quit;
+static struct notify_context notify_buffer[NOTIFY_BUFFER_SIZE];
+static struct notify_context *notify_read, *notify_write;
+
 NTSTATUS midi_in_lock(void *args)
 {
     BOOL lock = !!args;
@@ -137,6 +144,17 @@ static void set_in_notify(struct notify_context *notify, struct midi_src *src, W
     notify->flags = src->wFlags;
     notify->device = src->midiDesc.hMidi;
     notify->instance = src->midiDesc.dwInstance;
+}
+
+static void notify_post(struct notify_context *notify)
+{
+    pthread_mutex_lock(&notify_mutex);
+
+    if (notify) FIXME("Not yet handled\n");
+    else notify_quit = TRUE;
+    pthread_cond_signal(&notify_cond);
+
+    pthread_mutex_unlock(&notify_mutex);
 }
 
 /*
@@ -182,6 +200,11 @@ NTSTATUS midi_init(void *args)
     struct midi_init_params *params = args;
     OSStatus sc;
     UINT i;
+
+    pthread_mutex_lock(&notify_mutex);
+    notify_quit = FALSE;
+    notify_read = notify_write = notify_buffer;
+    pthread_mutex_unlock(&notify_mutex);
 
     sc = MIDIClientCreate(name, NULL /* FIXME use notify proc */, NULL, &midi_client);
     CFRelease(name);
@@ -300,6 +323,9 @@ NTSTATUS midi_release(void *args)
         msg_port = CFMessagePortCreateRemote(kCFAllocatorDefault, midi_in_thread_port_name);
         CFMessagePortSendRequest(msg_port, 1, NULL, 0.0, 0.0, NULL, NULL);
         CFRelease(msg_port);
+
+        /* stop the notify_wait thread */
+        notify_post(NULL);
     }
 
     if (midi_client) MIDIClientDispose(midi_client); /* MIDIClientDispose will close all ports */
@@ -1078,6 +1104,22 @@ NTSTATUS midi_in_message(void *args)
         TRACE("Unsupported message\n");
         *params->err = MMSYSERR_NOTSUPPORTED;
     }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS midi_notify_wait(void *args)
+{
+    struct midi_notify_wait_params *params = args;
+
+    pthread_mutex_lock(&notify_mutex);
+
+    while (!notify_quit)
+        pthread_cond_wait(&notify_cond, &notify_mutex);
+
+    *params->quit = notify_quit;
+
+    pthread_mutex_unlock(&notify_mutex);
 
     return STATUS_SUCCESS;
 }

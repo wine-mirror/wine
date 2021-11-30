@@ -226,6 +226,11 @@ struct midi_in_message_params
     struct notify_context *notify;
 };
 
+struct midi_notify_wait_params
+{
+    BOOL *quit;
+};
+
 enum unix_funcs
 {
     unix_get_endpoint_ids,
@@ -252,6 +257,7 @@ enum unix_funcs
     unix_midi_release,
     unix_midi_out_message,
     unix_midi_in_message,
+    unix_midi_notify_wait,
 
     unix_midi_in_lock, /* temporary */
 };
@@ -260,6 +266,7 @@ NTSTATUS midi_init( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_release( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message( void * ) DECLSPEC_HIDDEN;
+NTSTATUS midi_notify_wait( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_lock( void * ) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t coreaudio_handle;
