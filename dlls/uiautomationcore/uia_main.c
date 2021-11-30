@@ -324,6 +324,15 @@ HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *provider, EVEN
     return S_OK;
 }
 
+/***********************************************************************
+ *          UiaRaiseAutomationPropertyChangedEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRaiseAutomationPropertyChangedEvent(IRawElementProviderSimple *provider, PROPERTYID id, VARIANT old, VARIANT new)
+{
+    FIXME("(%p, %d, %s, %s): stub\n", provider, id, debugstr_variant(&old), debugstr_variant(&new));
+    return S_OK;
+}
+
 void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
 {
     FIXME("(%p): stub\n", callback);

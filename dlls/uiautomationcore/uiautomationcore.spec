@@ -86,7 +86,7 @@
 #@ stub UiaProviderFromIAccessible
 @ stub UiaRaiseAsyncContentLoadedEvent
 @ stdcall UiaRaiseAutomationEvent(ptr long)
-@ stub UiaRaiseAutomationPropertyChangedEvent
+@ stdcall UiaRaiseAutomationPropertyChangedEvent(ptr long int128 int128)
 #@ stub UiaRaiseChangesEvent
 #@ stub UiaRaiseNotificationEvent
 @ stub UiaRaiseStructureChangedEvent
