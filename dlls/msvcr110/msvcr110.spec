@@ -71,9 +71,9 @@
 @ stub -arch=arm ??0_TaskCollection@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0_TaskCollection@details@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0_Timer@details@Concurrency@@IAA@I_N@Z
-@ stub -arch=i386 ??0_Timer@details@Concurrency@@IAE@I_N@Z
-@ stub -arch=win64 ??0_Timer@details@Concurrency@@IEAA@I_N@Z
+@ cdecl -arch=arm ??0_Timer@details@Concurrency@@IAA@I_N@Z(ptr long long) _Timer_ctor
+@ thiscall -arch=i386 ??0_Timer@details@Concurrency@@IAE@I_N@Z(ptr long long) _Timer_ctor
+@ cdecl -arch=win64 ??0_Timer@details@Concurrency@@IEAA@I_N@Z(ptr long long) _Timer_ctor
 @ cdecl -arch=arm ??0__non_rtti_object@std@@QAA@ABV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@std@@QAE@ABV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ cdecl -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
@@ -299,9 +299,9 @@
 @ stub -arch=arm ??1_TaskCollection@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_TaskCollection@details@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??1_Timer@details@Concurrency@@MAA@XZ
-@ stub -arch=i386 ??1_Timer@details@Concurrency@@MAE@XZ
-@ stub -arch=win64 ??1_Timer@details@Concurrency@@MEAA@XZ
+@ cdecl -arch=arm ??1_Timer@details@Concurrency@@MAA@XZ(ptr) _Timer_dtor
+@ thiscall -arch=i386 ??1_Timer@details@Concurrency@@MAE@XZ(ptr) _Timer_dtor
+@ cdecl -arch=win64 ??1_Timer@details@Concurrency@@MEAA@XZ(ptr) _Timer_dtor
 @ cdecl -arch=arm ??1__non_rtti_object@std@@UAA@XZ(ptr) __non_rtti_object_dtor
 @ thiscall -arch=i386 ??1__non_rtti_object@std@@UAE@XZ(ptr) __non_rtti_object_dtor
 @ cdecl -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ(ptr) __non_rtti_object_dtor
@@ -648,12 +648,12 @@
 @ thiscall -arch=i386 ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QAE_NXZ(ptr) SpinWait__SpinOnce
 @ cdecl -arch=win64 ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QEAA_NXZ(ptr) SpinWait__SpinOnce
 @ cdecl ?_SpinYield@Context@Concurrency@@SAXXZ() Context__SpinYield
-@ stub -arch=arm ?_Start@_Timer@details@Concurrency@@IAAXXZ
-@ stub -arch=i386 ?_Start@_Timer@details@Concurrency@@IAEXXZ
-@ stub -arch=win64 ?_Start@_Timer@details@Concurrency@@IEAAXXZ
-@ stub -arch=arm ?_Stop@_Timer@details@Concurrency@@IAAXXZ
-@ stub -arch=i386 ?_Stop@_Timer@details@Concurrency@@IAEXXZ
-@ stub -arch=win64 ?_Stop@_Timer@details@Concurrency@@IEAAXXZ
+@ cdecl -arch=arm ?_Start@_Timer@details@Concurrency@@IAAXXZ(ptr) _Timer__Start
+@ thiscall -arch=i386 ?_Start@_Timer@details@Concurrency@@IAEXXZ(ptr) _Timer__Start
+@ cdecl -arch=win64 ?_Start@_Timer@details@Concurrency@@IEAAXXZ(ptr) _Timer__Start
+@ cdecl -arch=arm ?_Stop@_Timer@details@Concurrency@@IAAXXZ(ptr) _Timer__Stop
+@ thiscall -arch=i386 ?_Stop@_Timer@details@Concurrency@@IAEXXZ(ptr) _Timer__Stop
+@ cdecl -arch=win64 ?_Stop@_Timer@details@Concurrency@@IEAAXXZ(ptr) _Timer__Stop
 @ stub -arch=arm ?_Tidy@exception@std@@AAAXXZ
 @ stub -arch=i386 ?_Tidy@exception@std@@AAEXXZ
 @ stub -arch=win64 ?_Tidy@exception@std@@AEAAXXZ

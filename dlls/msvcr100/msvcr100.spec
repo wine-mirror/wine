@@ -30,8 +30,8 @@
 @ stub -arch=win64 ??0_SpinLock@details@Concurrency@@QEAA@AECJ@Z
 @ stub -arch=win32 ??0_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0_TaskCollection@details@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??0_Timer@details@Concurrency@@IAE@I_N@Z
-@ stub -arch=win64 ??0_Timer@details@Concurrency@@IEAA@I_N@Z
+@ thiscall -arch=win32 ??0_Timer@details@Concurrency@@IAE@I_N@Z(ptr long long) _Timer_ctor
+@ cdecl -arch=win64 ??0_Timer@details@Concurrency@@IEAA@I_N@Z(ptr long long) _Timer_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@std@@QAE@ABV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ cdecl -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@std@@QAE@PBD@Z(ptr ptr) __non_rtti_object_ctor
@@ -172,8 +172,8 @@
 @ stub -arch=win64 ??1_SpinLock@details@Concurrency@@QEAA@XZ
 @ stub -arch=win32 ??1_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_TaskCollection@details@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??1_Timer@details@Concurrency@@IAE@XZ
-@ stub -arch=win64 ??1_Timer@details@Concurrency@@IEAA@XZ
+@ thiscall -arch=win32 ??1_Timer@details@Concurrency@@IAE@XZ(ptr) _Timer_dtor
+@ cdecl -arch=win64 ??1_Timer@details@Concurrency@@IEAA@XZ(ptr) _Timer_dtor
 @ thiscall -arch=i386 ??1__non_rtti_object@std@@UAE@XZ(ptr) __non_rtti_object_dtor
 @ cdecl -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ(ptr) __non_rtti_object_dtor
 @ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) bad_cast_dtor
@@ -380,10 +380,10 @@
 @ thiscall -arch=win32 ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QAE_NXZ(ptr) SpinWait__SpinOnce
 @ cdecl -arch=win64 ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QEAA_NXZ(ptr) SpinWait__SpinOnce
 @ cdecl ?_SpinYield@Context@Concurrency@@SAXXZ() Context__SpinYield
-@ stub -arch=win32 ?_Start@_Timer@details@Concurrency@@IAEXXZ
-@ stub -arch=win64 ?_Start@_Timer@details@Concurrency@@IEAAXXZ
-@ stub -arch=win32 ?_Stop@_Timer@details@Concurrency@@IAEXXZ
-@ stub -arch=win64 ?_Stop@_Timer@details@Concurrency@@IEAAXXZ
+@ thiscall -arch=win32 ?_Start@_Timer@details@Concurrency@@IAEXXZ(ptr) _Timer__Start
+@ cdecl -arch=win64 ?_Start@_Timer@details@Concurrency@@IEAAXXZ(ptr) _Timer__Start
+@ thiscall -arch=win32 ?_Stop@_Timer@details@Concurrency@@IAEXXZ(ptr) _Timer__Stop
+@ cdecl -arch=win64 ?_Stop@_Timer@details@Concurrency@@IEAAXXZ(ptr) _Timer__Stop
 @ stub -arch=win32 ?_Tidy@exception@std@@AAEXXZ
 @ stub -arch=win64 ?_Tidy@exception@std@@AEAAXXZ
 @ cdecl -arch=win32 ?_Trace_ppl_function@Concurrency@@YAXABU_GUID@@EW4ConcRT_EventType@1@@Z(ptr long long) _Trace_ppl_function

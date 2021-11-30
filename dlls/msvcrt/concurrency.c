@@ -299,6 +299,16 @@ typedef struct {
     CRITICAL_SECTION cs;
 } _ReentrantBlockingLock;
 
+#define TICKSPERMSEC 10000
+typedef struct {
+    const vtable_ptr *vtable;
+    TP_TIMER *timer;
+    unsigned int elapse;
+    bool repeat;
+} _Timer;
+extern const vtable_ptr _Timer_vtable;
+#define call__Timer_callback(this) CALL_VTBL_FUNC(this, 4, void, (_Timer*), (this))
+
 typedef exception improper_lock;
 extern const vtable_ptr improper_lock_vtable;
 
@@ -2730,6 +2740,94 @@ void __cdecl _Trace_ppl_function(const GUID *guid, unsigned char level, enum Con
     FIXME("(%s %u %i) stub\n", debugstr_guid(guid), level, type);
 }
 
+/* ??0_Timer@details@Concurrency@@IAE@I_N@Z */
+/* ??0_Timer@details@Concurrency@@IEAA@I_N@Z */
+DEFINE_THISCALL_WRAPPER(_Timer_ctor, 12)
+_Timer* __thiscall _Timer_ctor(_Timer *this, unsigned int elapse, bool repeat)
+{
+    TRACE("(%p %u %x)\n", this, elapse, repeat);
+
+    this->vtable = &_Timer_vtable;
+    this->timer = NULL;
+    this->elapse = elapse;
+    this->repeat = repeat;
+    return this;
+}
+
+static void WINAPI timer_callback(TP_CALLBACK_INSTANCE *instance, void *ctx, TP_TIMER *timer)
+{
+    _Timer *this = ctx;
+    TRACE("calling _Timer(%p) callback\n", this);
+    call__Timer_callback(this);
+}
+
+/* ?_Start@_Timer@details@Concurrency@@IAEXXZ */
+/* ?_Start@_Timer@details@Concurrency@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Timer__Start, 4)
+void __thiscall _Timer__Start(_Timer *this)
+{
+    LONGLONG ll;
+    FILETIME ft;
+
+    TRACE("(%p)\n", this);
+
+    this->timer = CreateThreadpoolTimer(timer_callback, this, NULL);
+    if (!this->timer)
+    {
+        FIXME("throw exception?\n");
+        return;
+    }
+
+    ll = -(LONGLONG)this->elapse * TICKSPERMSEC;
+    ft.dwLowDateTime = ll & 0xffffffff;
+    ft.dwHighDateTime = ll >> 32;
+    SetThreadpoolTimer(this->timer, &ft, this->repeat ? this->elapse : 0, 0);
+}
+
+/* ?_Stop@_Timer@details@Concurrency@@IAEXXZ */
+/* ?_Stop@_Timer@details@Concurrency@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Timer__Stop, 4)
+void __thiscall _Timer__Stop(_Timer *this)
+{
+    TRACE("(%p)\n", this);
+
+    SetThreadpoolTimer(this->timer, NULL, 0, 0);
+    WaitForThreadpoolTimerCallbacks(this->timer, TRUE);
+    CloseThreadpoolTimer(this->timer);
+    this->timer = NULL;
+}
+
+/* ??1_Timer@details@Concurrency@@MAE@XZ */
+/* ??1_Timer@details@Concurrency@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Timer_dtor, 4)
+void __thiscall _Timer_dtor(_Timer *this)
+{
+    TRACE("(%p)\n", this);
+
+    if (this->timer)
+        _Timer__Stop(this);
+}
+
+DEFINE_THISCALL_WRAPPER(_Timer_vector_dtor, 8)
+_Timer* __thiscall _Timer_vector_dtor(_Timer *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if (flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for (i=*ptr-1; i>=0; i--)
+            _Timer_dtor(this+i);
+        operator_delete(ptr);
+    } else {
+        _Timer_dtor(this);
+        if (flags & 1)
+            operator_delete(this);
+    }
+
+    return this;
+}
+
 #ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define DEFINE_VTBL_WRAPPER(off)            \
@@ -2764,6 +2862,7 @@ DEFINE_RTTI_DATA0(Scheduler, 0, ".?AVScheduler@Concurrency@@")
 DEFINE_RTTI_DATA1(SchedulerBase, 0, &Scheduler_rtti_base_descriptor, ".?AVSchedulerBase@details@Concurrency@@")
 DEFINE_RTTI_DATA2(ThreadScheduler, 0, &SchedulerBase_rtti_base_descriptor,
         &Scheduler_rtti_base_descriptor, ".?AVThreadScheduler@details@Concurrency@@")
+DEFINE_RTTI_DATA0(_Timer, 0, ".?AV_Timer@details@Concurrency@@");
 
 __ASM_BLOCK_BEGIN(concurrency_vtables)
     __ASM_VTABLE(ExternalContextBase,
@@ -2794,6 +2893,8 @@ __ASM_BLOCK_BEGIN(concurrency_vtables)
             VTABLE_ADD_FUNC(ThreadScheduler_IsAvailableLocation)
 #endif
             );
+    __ASM_VTABLE(_Timer,
+            VTABLE_ADD_FUNC(_Timer_vector_dtor));
 __ASM_BLOCK_END
 
 void msvcrt_init_concurrency(void *base)
@@ -2813,6 +2914,7 @@ void msvcrt_init_concurrency(void *base)
     init_Scheduler_rtti(base);
     init_SchedulerBase_rtti(base);
     init_ThreadScheduler_rtti(base);
+    init__Timer_rtti(base);
 
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
