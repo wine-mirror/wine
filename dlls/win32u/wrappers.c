@@ -606,6 +606,12 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
+                                               UINT32 *num_mode_info )
+{
+    return unix_funcs->pNtUserGetDisplayConfigBufferSizes( flags, num_path_info, num_mode_info );
+}
+
 UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
 {
     return unix_funcs->pNtUserGetKeyboardLayoutList( size, layouts );

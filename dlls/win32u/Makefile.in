@@ -37,6 +37,7 @@ C_SRCS = \
 	printdrv.c \
 	region.c \
 	syscall.c \
+	sysparams.c \
 	vertical.c \
 	vulkan.c \
 	window.c \

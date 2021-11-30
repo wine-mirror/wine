@@ -921,7 +921,7 @@
 @ stub NtUserGetDesktopID
 @ stub NtUserGetDisplayAutoRotationPreferences
 @ stub NtUserGetDisplayAutoRotationPreferencesByProcessId
-@ stub NtUserGetDisplayConfigBufferSizes
+@ stdcall NtUserGetDisplayConfigBufferSizes(long ptr ptr)
 @ stub NtUserGetDoubleClickTime
 @ stub NtUserGetDpiForCurrentProcess
 @ stub NtUserGetDpiForMonitor
