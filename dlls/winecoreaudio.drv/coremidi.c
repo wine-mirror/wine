@@ -89,7 +89,6 @@
 #include "wine/unixlib.h"
 
 #include "coreaudio.h"
-#include "coremidi.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
@@ -107,12 +106,24 @@ struct midi_dest
     WORD wFlags;
 };
 
+struct midi_src
+{
+    MIDIEndpointRef source;
+
+    WORD wDevID;
+    int state; /* 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
+    MIDIINCAPSW caps;
+    MIDIOPENDESC midiDesc;
+    LPMIDIHDR lpQueueHdr;
+    WORD wFlags;
+    DWORD startTime;
+};
+
 static MIDIClientRef midi_client;
 static MIDIPortRef midi_out_port, midi_in_port;
 static UINT num_dests, num_srcs;
 static struct midi_dest *dests;
 static struct midi_src *srcs;
-static CFStringRef midi_in_thread_port_name;
 
 static pthread_mutex_t midi_in_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -122,6 +133,8 @@ static pthread_cond_t notify_cond = PTHREAD_COND_INITIALIZER;
 static BOOL notify_quit;
 static struct notify_context notify_buffer[NOTIFY_BUFFER_SIZE];
 static struct notify_context *notify_read, *notify_write;
+
+#define MAX_MIDI_SYNTHS 1
 
 NTSTATUS midi_in_lock(void *args)
 {
@@ -146,11 +159,49 @@ static void set_in_notify(struct notify_context *notify, struct midi_src *src, W
     notify->instance = src->midiDesc.dwInstance;
 }
 
+/*
+ * notify buffer: The notification ring buffer is implemented so that
+ * there is always at least one unused sentinel before the current
+ * read position in order to allow detection of the full vs empty
+ * state.
+ */
+static struct notify_context *notify_buffer_next(struct notify_context *notify)
+{
+    if (++notify >= notify_buffer + ARRAY_SIZE(notify_buffer))
+        notify = notify_buffer;
+
+    return notify;
+}
+
+static void notify_buffer_add(struct notify_context *notify)
+{
+    struct notify_context *next = notify_buffer_next(notify_write);
+
+    if (next == notify_read) /* buffer is full - we can't issue a WARN() in a non-Win32 thread */
+        notify_read = notify_buffer_next(notify_read); /* drop the oldest notification */
+    *notify_write = *notify;
+    notify_write = next;
+}
+
+static BOOL notify_buffer_empty(void)
+{
+    return notify_read == notify_write;
+}
+
+static BOOL notify_buffer_remove(struct notify_context *notify)
+{
+    if (notify_buffer_empty()) return FALSE;
+
+    *notify = *notify_read;
+    notify_read = notify_buffer_next(notify_read);
+    return TRUE;
+}
+
 static void notify_post(struct notify_context *notify)
 {
     pthread_mutex_lock(&notify_mutex);
 
-    if (notify) FIXME("Not yet handled\n");
+    if (notify) notify_buffer_add(notify);
     else notify_quit = TRUE;
     pthread_cond_signal(&notify_cond);
 
@@ -169,29 +220,94 @@ static uint64_t get_time_ms(void)
     return mach_absolute_time() / 1000000 * timebase.numer / timebase.denom;
 }
 
+static void process_sysex_packet(struct midi_src *src, MIDIPacket *packet)
+{
+    unsigned int pos = 0, len = packet->length, copy_len;
+    DWORD current_time = get_time_ms() - src->startTime;
+    struct notify_context notify;
+
+    src->state |= 2;
+
+    midi_in_lock((void *)TRUE);
+
+    while (len)
+    {
+        MIDIHDR *hdr = src->lpQueueHdr;
+        if (!hdr) break;
+
+        copy_len = min(len, hdr->dwBufferLength - hdr->dwBytesRecorded);
+        memcpy(hdr->lpData + hdr->dwBytesRecorded, packet->data + pos, copy_len);
+        hdr->dwBytesRecorded += copy_len;
+        len -= copy_len;
+        pos += copy_len;
+
+        if ((hdr->dwBytesRecorded == hdr->dwBufferLength) ||
+            (*(BYTE*)(hdr->lpData + hdr->dwBytesRecorded - 1) == 0xf7))
+        { /* buffer full or end of sysex message */
+            src->lpQueueHdr = hdr->lpNext;
+            hdr->dwFlags &= ~MHDR_INQUEUE;
+            hdr->dwFlags |= MHDR_DONE;
+            set_in_notify(&notify, src, src->wDevID, MIM_LONGDATA, (DWORD_PTR)hdr, current_time);
+            notify_post(&notify);
+            src->state &= ~2;
+        }
+    }
+
+    midi_in_lock((void *)FALSE);
+}
+
+static void process_small_packet(struct midi_src *src, MIDIPacket *packet)
+{
+    DWORD current_time = get_time_ms() - src->startTime, data;
+    struct notify_context notify;
+    unsigned int pos = 0;
+
+    while (pos < packet->length)
+    {
+        data = 0;
+        switch (packet->data[pos] & 0xf0)
+        {
+        case 0xf0:
+            data = packet->data[pos];
+            pos++;
+            break;
+        case 0xc0:
+        case 0xd0:
+            data = (packet->data[pos + 1] <<  8) | packet->data[pos];
+            pos += 2;
+            break;
+        default:
+            data = (packet->data[pos + 2] << 16) | (packet->data[pos + 1] <<  8) |
+                packet->data[pos];
+            pos += 3;
+            break;
+        }
+        set_in_notify(&notify, src, src->wDevID, MIM_DATA, data, current_time);
+        notify_post(&notify);
+    }
+}
+
 static void midi_in_read_proc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
-    CFMessagePortRef msg_port = CFMessagePortCreateRemote(kCFAllocatorDefault, midi_in_thread_port_name);
     MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
-    CFMutableDataRef data;
-    MIDIMessage msg;
+    WORD dev_id = *(WORD *)connRefCon;
+    struct midi_src *src;
     unsigned int i;
+
+    if (dev_id >= num_srcs) return;
+    src = srcs + dev_id;
+    if (src->state < 1) /* input not started */
+        return;
 
     for (i = 0; i < pktlist->numPackets; ++i)
     {
-        msg.devID = *(UInt16 *)connRefCon;
-        msg.length = packet->length;
-        data = CFDataCreateMutable(kCFAllocatorDefault, sizeof(msg) + packet->length);
-        if (data)
-        {
-            CFDataAppendBytes(data, (UInt8 *)&msg, sizeof(msg));
-            CFDataAppendBytes(data, packet->data, packet->length);
-            CFMessagePortSendRequest(msg_port, 0, data, 0.0, 0.0, NULL, NULL);
-            CFRelease(data);
-        }
+        if (packet->data[0] == 0xf0 || src->state & 2)
+            process_sysex_packet(src, packet);
+        else
+            process_small_packet(src, packet);
+
         packet = MIDIPacketNext(packet);
     }
-    CFRelease(msg_port);
 }
 
 NTSTATUS midi_init(void *args)
@@ -225,7 +341,6 @@ NTSTATUS midi_init(void *args)
 
     if (num_srcs > 0)
     {
-        midi_in_thread_port_name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
         name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineInputPort.%u"), getpid());
         MIDIInputPortCreate(midi_client, name, midi_in_read_proc, NULL, &midi_in_port);
         CFRelease(name);
@@ -306,8 +421,6 @@ NTSTATUS midi_init(void *args)
     }
 
     params->num_srcs = num_srcs;
-    params->srcs = srcs;
-    params->midi_in_port = (void *)midi_in_port;
 
     *params->err = DRV_SUCCESS;
     return STATUS_SUCCESS;
@@ -315,15 +428,8 @@ NTSTATUS midi_init(void *args)
 
 NTSTATUS midi_release(void *args)
 {
-    CFMessagePortRef msg_port;
-
     if (num_srcs)
     {
-        /* Stop CFRunLoop in MIDIIn_MessageThread */
-        msg_port = CFMessagePortCreateRemote(kCFAllocatorDefault, midi_in_thread_port_name);
-        CFMessagePortSendRequest(msg_port, 1, NULL, 0.0, 0.0, NULL, NULL);
-        CFRelease(msg_port);
-
         /* stop the notify_wait thread */
         notify_post(NULL);
     }
@@ -1114,10 +1220,11 @@ NTSTATUS midi_notify_wait(void *args)
 
     pthread_mutex_lock(&notify_mutex);
 
-    while (!notify_quit)
+    while (!notify_quit && notify_buffer_empty())
         pthread_cond_wait(&notify_cond, &notify_mutex);
 
     *params->quit = notify_quit;
+    if (!notify_quit) notify_buffer_remove(params->notify);
 
     pthread_mutex_unlock(&notify_mutex);
 

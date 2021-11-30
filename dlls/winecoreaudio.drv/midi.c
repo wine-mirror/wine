@@ -45,30 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-#include <mach/mach_time.h>
-#include <CoreAudio/CoreAudio.h>
-
-#define WINE_DEFINITIONS
-#include "coremidi.h"
-
 static DWORD MIDIIn_NumDevs = 0;
-
-
-static CFStringRef MIDIInThreadPortName;
-
-static DWORD WINAPI MIDIIn_MessageThread(LPVOID p);
-
-static MIDIPortRef MIDIInPort = NULL;
-
-MIDISource *sources;
-
-static uint64_t get_time_ms(void)
-{
-    static mach_timebase_info_data_t timebase;
-
-    if (!timebase.denom) mach_timebase_info(&timebase);
-    return mach_absolute_time() / 1000000 * timebase.numer / timebase.denom;
-}
 
 static void notify_client(struct notify_context *notify)
 {
@@ -81,14 +58,17 @@ static void notify_client(struct notify_context *notify)
 static DWORD WINAPI notify_thread(void *p)
 {
     struct midi_notify_wait_params params;
+    struct notify_context notify;
     BOOL quit;
 
+    params.notify = &notify;
     params.quit = &quit;
 
     while (1)
     {
         UNIX_CALL(midi_notify_wait, &params);
         if (quit) break;
+        if (notify.send_notify) notify_client(&notify);
     }
     return 0;
 }
@@ -108,15 +88,10 @@ static LONG CoreAudio_MIDIInit(void)
     }
 
     MIDIIn_NumDevs = params.num_srcs;
-    sources = params.srcs;
-    MIDIInPort = params.midi_in_port;
 
     if (MIDIIn_NumDevs > 0)
-    {
-        MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
-        CloseHandle( CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL));
         CloseHandle(CreateThread(NULL, 0, notify_thread, NULL, 0, NULL));
-    }
+
     return err;
 }
 
@@ -125,179 +100,8 @@ static LONG CoreAudio_MIDIRelease(void)
     TRACE("\n");
 
     UNIX_CALL(midi_release, NULL);
-    sources = NULL;
 
     return DRV_SUCCESS;
-}
-
-
-/**************************************************************************
- * 			MIDI_NotifyClient			[internal]
- */
-static void MIDI_NotifyClient(UINT wDevID, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    DWORD_PTR 		dwCallBack;
-    UINT 		uFlags;
-    HANDLE		hDev;
-    DWORD_PTR 		dwInstance;
-
-    TRACE("wDevID=%d wMsg=%d dwParm1=%04lX dwParam2=%04lX\n", wDevID, wMsg, dwParam1, dwParam2);
-
-    switch (wMsg) {
-    case MIM_DATA:
-    case MIM_LONGDATA:
-    case MIM_ERROR:
-    case MIM_LONGERROR:
-    case MIM_MOREDATA:
-        dwCallBack = sources[wDevID].midiDesc.dwCallback;
-	uFlags = sources[wDevID].wFlags;
-	hDev = sources[wDevID].midiDesc.hMidi;
-	dwInstance = sources[wDevID].midiDesc.dwInstance;
-        break;
-    default:
-	ERR("Unsupported MSW-MIDI message %u\n", wMsg);
-	return;
-    }
-
-    DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
-}
-
-static void midi_lock( BOOL lock )
-{
-    UNIX_CALL(midi_in_lock, (void *)lock);
-}
-
-/*
- * MIDI In Mach message handling
- */
-static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
-{
-    MIDIMessage *msg = NULL;
-    int i = 0;
-    MIDISource *src = NULL;
-    DWORD sendData = 0;
-    int pos = 0;
-    DWORD currentTime;
-    BOOL sysexStart;
-
-    switch (msgid)
-    {
-        case 0:
-            msg = (MIDIMessage *) CFDataGetBytePtr(data);
-            TRACE("devID=%d\n", msg->devID);
-             for (i = 0; i < msg->length; ++i) {
-                TRACE("%02X ", msg->data[i]);
-            }
-            TRACE("\n");
-            src = &sources[msg->devID];
-            if (src->state < 1)
-            {
-                TRACE("input not started, thrown away\n");
-                return NULL;
-            }
-
-            sysexStart = (msg->data[0] == 0xF0);
-
-            if (sysexStart || src->state & 2) {
-                int pos = 0;
-                int len = msg->length;
-
-                if (sysexStart) {
-                    TRACE("Receiving sysex message\n");
-                    src->state |= 2;
-                }
-
-                midi_lock( TRUE );
-                currentTime = get_time_ms() - src->startTime;
-
-                while (len) {
-                    LPMIDIHDR lpMidiHdr = src->lpQueueHdr;
-
-                    if (lpMidiHdr != NULL) {
-                        int copylen = min(len, lpMidiHdr->dwBufferLength - lpMidiHdr->dwBytesRecorded);
-                        memcpy(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded, msg->data + pos, copylen);
-                        lpMidiHdr->dwBytesRecorded += copylen;
-                        len -= copylen;
-                        pos += copylen;
-
-                        TRACE("Copied %d bytes of sysex message\n", copylen);
-
-                        if ((lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) ||
-                            (*(BYTE*)(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded - 1) == 0xF7)) {
-                            TRACE("Sysex message complete (or buffer limit reached), dispatching %d bytes\n", lpMidiHdr->dwBytesRecorded);
-                            src->lpQueueHdr = lpMidiHdr->lpNext;
-                            lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-                            lpMidiHdr->dwFlags |= MHDR_DONE;
-                            MIDI_NotifyClient(msg->devID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, currentTime);
-                            src->state &= ~2;
-                        }
-                    }
-                    else {
-                        FIXME("Sysex data received but no buffer to store it!\n");
-                        break;
-                    }
-                }
-
-                midi_lock( FALSE );
-                return NULL;
-            }
-
-            midi_lock( TRUE );
-            currentTime = get_time_ms() - src->startTime;
-
-            while (pos < msg->length)
-            {
-                sendData = 0;
-                switch (msg->data[pos] & 0xF0)
-                {
-                    case 0xF0:
-                        sendData = (msg->data[pos] <<  0);
-                        pos++;
-                        break;
-
-                    case 0xC0:
-                    case 0xD0:
-                        sendData = (msg->data[pos + 1] <<  8) | (msg->data[pos] <<  0);
-                        pos += 2;
-                        break;
-                    default:
-                        sendData = (msg->data[pos + 2] << 16) |
-                                    (msg->data[pos + 1] <<  8) |
-                                    (msg->data[pos] <<  0);
-                        pos += 3;
-                        break;
-                }
-                MIDI_NotifyClient(msg->devID, MIM_DATA, sendData, currentTime);
-            }
-            midi_lock( FALSE );
-            break;
-        default:
-            CFRunLoopStop(CFRunLoopGetCurrent());
-            break;
-    }
-    return NULL;
-}
-
-static DWORD WINAPI MIDIIn_MessageThread(LPVOID p)
-{
-    CFMessagePortRef local;
-    CFRunLoopSourceRef source;
-    Boolean info;
-
-    local = CFMessagePortCreateLocal(kCFAllocatorDefault, MIDIInThreadPortName, &MIDIIn_MessageHandler, NULL, &info);
-
-    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, local, 0);
-    CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
-
-    CFRunLoopRun();
-
-    CFRunLoopSourceInvalidate(source);
-    CFRelease(source);
-    CFRelease(local);
-    CFRelease(MIDIInThreadPortName);
-    MIDIInThreadPortName = NULL;
-
-    return 0;
 }
 
 /**************************************************************************
