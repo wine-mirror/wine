@@ -1848,18 +1848,21 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
 static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 {
     unsigned long long totalram = 0, freeram = 0, totalswap = 0, freeswap = 0;
-    FILE *fp;
 
     memset( info, 0, sizeof(*info) );
 
 #if defined(linux)
-    if ((fp = fopen("/proc/uptime", "r")))
     {
-        double uptime, idle_time;
+        FILE *fp;
 
-        fscanf(fp, "%lf %lf", &uptime, &idle_time);
-        fclose(fp);
-        info->IdleTime.QuadPart = 10000000 * idle_time;
+        if ((fp = fopen("/proc/uptime", "r")))
+        {
+            double uptime, idle_time;
+
+            fscanf(fp, "%lf %lf", &uptime, &idle_time);
+            fclose(fp);
+            info->IdleTime.QuadPart = 10000000 * idle_time;
+        }
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     {
@@ -1885,27 +1888,31 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 #endif
 
 #ifdef linux
-    if ((fp = fopen("/proc/meminfo", "r")))
     {
-        unsigned long long value;
-        char line[64];
+        FILE *fp;
 
-        while (fgets(line, sizeof(line), fp))
+        if ((fp = fopen("/proc/meminfo", "r")))
         {
-            if(sscanf(line, "MemTotal: %llu kB", &value) == 1)
-                totalram += value * 1024;
-            else if(sscanf(line, "MemFree: %llu kB", &value) == 1)
-                freeram += value * 1024;
-            else if(sscanf(line, "SwapTotal: %llu kB", &value) == 1)
-                totalswap += value * 1024;
-            else if(sscanf(line, "SwapFree: %llu kB", &value) == 1)
-                freeswap += value * 1024;
-            else if (sscanf(line, "Buffers: %llu", &value))
-                freeram += value * 1024;
-            else if (sscanf(line, "Cached: %llu", &value))
-                freeram += value * 1024;
+            unsigned long long value;
+            char line[64];
+
+            while (fgets(line, sizeof(line), fp))
+            {
+                if(sscanf(line, "MemTotal: %llu kB", &value) == 1)
+                    totalram += value * 1024;
+                else if(sscanf(line, "MemFree: %llu kB", &value) == 1)
+                    freeram += value * 1024;
+                else if(sscanf(line, "SwapTotal: %llu kB", &value) == 1)
+                    totalswap += value * 1024;
+                else if(sscanf(line, "SwapFree: %llu kB", &value) == 1)
+                    freeswap += value * 1024;
+                else if (sscanf(line, "Buffers: %llu", &value))
+                    freeram += value * 1024;
+                else if (sscanf(line, "Cached: %llu", &value))
+                    freeram += value * 1024;
+            }
+            fclose(fp);
         }
-        fclose(fp);
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || \
     defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
