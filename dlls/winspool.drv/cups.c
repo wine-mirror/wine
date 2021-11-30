@@ -109,7 +109,6 @@
 #include "winspool.h"
 #include "ddk/winsplp.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/unixlib.h"
 
 #include "wspool.h"
@@ -205,7 +204,7 @@ static char *get_unix_file_name( LPCWSTR path )
     char *buffer;
 
     nt_name.Buffer = (WCHAR *)path;
-    nt_name.MaximumLength = nt_name.Length = lstrlenW( path ) * sizeof(WCHAR);
+    nt_name.MaximumLength = nt_name.Length = wcslen( path ) * sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
     for (;;)
     {
@@ -372,8 +371,8 @@ static NTSTATUS enum_printers( void *args )
         location = cups_get_optionW( "printer-location", dests[i].num_options, dests[i].options );
 
         name_len = strlen( dests[i].name ) + 1;
-        comment_len = comment ? strlenW( comment ) + 1 : 0;
-        location_len = location ? strlenW( location ) + 1 : 0;
+        comment_len = comment ? wcslen( comment ) + 1 : 0;
+        location_len = location ? wcslen( location ) + 1 : 0;
         needed += (name_len + comment_len + location_len) * sizeof(WCHAR);
 
         if (needed <= *params->size)
@@ -427,7 +426,7 @@ static NTSTATUS get_ppd( void *args )
         char *printer_name;
         int len;
 
-        len = strlenW( params->printer );
+        len = wcslen( params->printer );
         printer_name = malloc( len * 3 + 1 );
         ntdll_wcstoumbs( params->printer, len + 1, printer_name, len * 3 + 1, FALSE );
 
@@ -502,7 +501,7 @@ static BOOL schedule_pipe( const WCHAR *cmd, const WCHAR *filename )
 
     if (!(unixname = get_unix_file_name( filename ))) return FALSE;
 
-    len = strlenW( cmd );
+    len = wcslen( cmd );
     cmdA = malloc( len * 3 + 1);
     ntdll_wcstoumbs( cmd, len + 1, cmdA, len * 3 + 1, FALSE );
 
@@ -580,7 +579,7 @@ static BOOL schedule_unixfile( const WCHAR *output, const WCHAR *filename )
 
     if (!(unixname = get_unix_file_name( filename ))) return FALSE;
 
-    len = strlenW( output );
+    len = wcslen( output );
     outputA = malloc( len * 3 + 1);
     ntdll_wcstoumbs( output, len + 1, outputA, len * 3 + 1, FALSE );
 
@@ -598,7 +597,7 @@ static BOOL schedule_lpr( const WCHAR *printer_name, const WCHAR *filename )
 {
     static const WCHAR lpr[] = { 'l','p','r',' ','-','P','\'' };
     static const WCHAR quote[] = { '\'',0 };
-    int printer_len = strlenW( printer_name );
+    int printer_len = wcslen( printer_name );
     WCHAR *cmd;
     BOOL ret;
 
@@ -628,11 +627,11 @@ static BOOL schedule_cups( const WCHAR *printer_name, const WCHAR *filename, con
         BOOL ret;
 
         if (!(unixname = get_unix_file_name( filename ))) return FALSE;
-        len = strlenW( printer_name );
+        len = wcslen( printer_name );
         queue = malloc( len * 3 + 1);
         ntdll_wcstoumbs( printer_name, len + 1, queue, len * 3 + 1, FALSE );
 
-        len = strlenW( document_title );
+        len = wcslen( document_title );
         unix_doc_title = malloc( len * 3 + 1 );
         ntdll_wcstoumbs( document_title, len + 1, unix_doc_title, len + 3 + 1, FALSE );
 
@@ -671,10 +670,10 @@ static NTSTATUS schedule_job( void *args )
     if (params->wine_port[0])
         return schedule_unixfile( params->wine_port, params->filename );
 
-    if (!strncmpW( params->port, LPR_Port, ARRAY_SIZE(LPR_Port) - 1 ))
+    if (!wcsncmp( params->port, LPR_Port, ARRAY_SIZE(LPR_Port) - 1 ))
         return schedule_lpr( params->port + ARRAY_SIZE(LPR_Port) - 1, params->filename );
 
-    if (!strncmpW( params->port, CUPS_Port, ARRAY_SIZE(CUPS_Port) - 1 ))
+    if (!wcsncmp( params->port, CUPS_Port, ARRAY_SIZE(CUPS_Port) - 1 ))
         return schedule_cups( params->port + ARRAY_SIZE(CUPS_Port) - 1, params->filename, params->document_title );
 
     return FALSE;
