@@ -779,8 +779,9 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
             bmpSrcResized = CreateBitmap(srcSize.x, srcSize.y, 1, 32, NULL);
             SelectObject(hdcSrc, bmpSrcResized);
 
+            /* Use ALPHABLEND_NONE because the image is getting resized, rather than blended with the target */
             UXTHEME_StretchBlt(hdcSrc, 0, 0, srcSize.x, srcSize.y, hdcOrigSrc, rcSrc.left, rcSrc.top,
-                               rcSrc.right - rcSrc.left, rcSrc.bottom - rcSrc.top, transparent, transparentcolor);
+                               rcSrc.right - rcSrc.left, rcSrc.bottom - rcSrc.top, ALPHABLEND_NONE, 0);
 
             rcSrc.left = 0;
             rcSrc.top = 0;
