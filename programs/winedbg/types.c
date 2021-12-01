@@ -757,6 +757,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         DWORD ret, tag, bt;
         ret = SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
         if (!ret &&
+            ti == TI_GET_SYMNAME &&
             SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_SYMTAG, &tag) &&
             tag == SymTagBaseType &&
             SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt))
