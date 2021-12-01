@@ -2705,10 +2705,22 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_
     wined3d_context_gl_wait_command_fence(context_gl, bo->command_fence_id);
 
 map:
+    if (bo->b.map_ptr)
+        return (uint8_t *)bo->b.map_ptr;
+
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
-    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    if (gl_info->supported[ARB_BUFFER_STORAGE])
+    {
+        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size,
+                GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | wined3d_resource_gl_map_flags(bo, flags)))))
+        {
+            if (wined3d_map_persistent())
+                bo->b.map_ptr = map_ptr;
+        }
+    }
+    else if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
         map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, wined3d_resource_gl_map_flags(bo, flags)));
     }
@@ -2790,6 +2802,9 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
     bo = wined3d_bo_gl(data->buffer_object);
 
     flush_bo_ranges(context_gl, wined3d_const_bo_address(data), range_count, ranges);
+
+    if (bo->b.map_ptr)
+        return;
 
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
@@ -2908,9 +2923,15 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     }
 
     if (gl_info->supported[ARB_BUFFER_STORAGE])
+    {
+        if (flags & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT))
+            flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
         GL_EXTCALL(glBufferStorage(binding, size, NULL, flags | GL_DYNAMIC_STORAGE_BIT));
+    }
     else
+    {
         GL_EXTCALL(glBufferData(binding, size, NULL, usage));
+    }
 
     wined3d_context_gl_bind_bo(context_gl, binding, 0);
     checkGLcall("buffer object creation");
