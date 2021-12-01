@@ -460,8 +460,8 @@ void * WINAPI RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, 
  */
 ULONG WINAPI RtlNumberGenericTableElements(RTL_GENERIC_TABLE *table)
 {
-    FIXME("(%p) stub!\n", table);
-    return 0;
+    TRACE("(%p)\n", table);
+    return table->NumberGenericTableElements;
 }
 
 /******************************************************************************
