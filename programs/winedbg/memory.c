@@ -447,7 +447,6 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 char                    buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
                 TI_FINDCHILDREN_PARAMS* fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
                 WCHAR*                  ptr;
-                char                    tmp[256];
                 VARIANT                 variant;
                 int                     i;
 
@@ -471,14 +470,10 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                             case VT_I8: ok = (val_int == V_I8(&variant)); break;
                             default: WINE_FIXME("Unsupported variant type (%u)\n", V_VT(&variant));
                             }
-                            if (ok)
+                            if (ok && types_get_info(&sub_type, TI_GET_SYMNAME, &ptr) && ptr)
                             {
-                                ptr = NULL;
-                                types_get_info(&sub_type, TI_GET_SYMNAME, &ptr);
-                                if (!ptr) continue;
-                                WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                                dbg_printf("%ls", ptr);
                                 HeapFree(GetProcessHeap(), 0, ptr);
-                                dbg_printf("%s", tmp);
                                 count = 0; /* so that we'll get away from outer loop */
                                 break;
                             }

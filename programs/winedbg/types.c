@@ -261,15 +261,14 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, ULONG *
                 type.module = lvalue->type.module;
                 for (i = 0; i < min(fcp->Count, count); i++)
                 {
-                    ptr = NULL;
                     type.id = fcp->ChildId[i];
-                    types_get_info(&type, TI_GET_SYMNAME, &ptr);
-                    if (!ptr) continue;
-                    WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
-                    HeapFree(GetProcessHeap(), 0, ptr);
-                    if (strcmp(tmp, name)) continue;
-
-                    return types_get_udt_element_lvalue(lvalue, &type, tmpbuf);
+                    if (types_get_info(&type, TI_GET_SYMNAME, &ptr) && ptr)
+                    {
+                        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                        HeapFree(GetProcessHeap(), 0, ptr);
+                        if (!strcmp(tmp, name))
+                            return types_get_udt_element_lvalue(lvalue, &type, tmpbuf);
+                    }
                 }
             }
             count -= min(count, 256);
@@ -477,7 +476,6 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
-            char                        tmp[256];
             ULONG                       tmpbuf;
             struct dbg_type             sub_type;
 
@@ -490,13 +488,10 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
                 {
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
-                        ptr = NULL;
                         sub_type.module = type.module;
                         sub_type.id = fcp->ChildId[i];
-                        types_get_info(&sub_type, TI_GET_SYMNAME, &ptr);
-                        if (!ptr) continue;
-                        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
-                        dbg_printf("%s=", tmp);
+                        if (!types_get_info(&sub_type, TI_GET_SYMNAME, &ptr) || !ptr) continue;
+                        dbg_printf("%ls=", ptr);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         lvalue_field = *lvalue;
                         if (types_get_udt_element_lvalue(&lvalue_field, &sub_type, &tmpbuf))
@@ -602,8 +597,7 @@ BOOL print_types(void)
 BOOL types_print_type(const struct dbg_type* type, BOOL details)
 {
     WCHAR*              ptr;
-    char                tmp[256];
-    const char*         name;
+    const WCHAR*        name;
     DWORD               tag, udt, count;
     struct dbg_type     subtype;
 
@@ -613,18 +607,12 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         return FALSE;
     }
 
-    if (types_get_info(type, TI_GET_SYMNAME, &ptr) && ptr)
-    {
-        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
-        name = tmp;
-        HeapFree(GetProcessHeap(), 0, ptr);
-    }
-    else name = "--none--";
+    name = (types_get_info(type, TI_GET_SYMNAME, &ptr) && ptr) ? ptr : L"--none--";
 
     switch (tag)
     {
     case SymTagBaseType:
-        if (details) dbg_printf("Basic<%s>", name); else dbg_printf("%s", name);
+        if (details) dbg_printf("Basic<%ls>", name); else dbg_printf("%ls", name);
         break;
     case SymTagPointerType:
         types_get_info(type, TI_GET_TYPE, &subtype.id);
@@ -636,10 +624,10 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         types_get_info(type, TI_GET_UDTKIND, &udt);
         switch (udt)
         {
-        case UdtStruct: dbg_printf("struct %s", name); break;
-        case UdtUnion:  dbg_printf("union %s", name); break;
-        case UdtClass:  dbg_printf("class %s", name); break;
-        default:        WINE_ERR("Unsupported UDT type (%d) for %s\n", udt, name); break;
+        case UdtStruct: dbg_printf("struct %ls", name); break;
+        case UdtUnion:  dbg_printf("union %ls", name); break;
+        case UdtClass:  dbg_printf("class %ls", name); break;
+        default:        WINE_ERR("Unsupported UDT type (%d) for %ls\n", udt, name); break;
         }
         if (details &&
             types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
@@ -647,7 +635,6 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
-            char                        tmp[256];
             int                         i;
             struct dbg_type             type_elt;
             dbg_printf(" {");
@@ -660,14 +647,11 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
                 {
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
-                        ptr = NULL;
                         type_elt.module = type->module;
                         type_elt.id = fcp->ChildId[i];
-                        types_get_info(&type_elt, TI_GET_SYMNAME, &ptr);
-                        if (!ptr) continue;
-                        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                        if (!types_get_info(&type_elt, TI_GET_SYMNAME, &ptr) || !ptr) continue;
+                        dbg_printf("%ls", ptr);
                         HeapFree(GetProcessHeap(), 0, ptr);
-                        dbg_printf("%s", tmp);
                         if (types_get_info(&type_elt, TI_GET_TYPE, &type_elt.id))
                         {
                             dbg_printf(":");
@@ -687,12 +671,12 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         subtype.module = type->module;
         types_print_type(&subtype, details);
         if (types_get_info(type, TI_GET_COUNT, &count))
-            dbg_printf(" %s[%d]", name, count);
+            dbg_printf(" %ls[%d]", name, count);
         else
-            dbg_printf(" %s[]", name);
+            dbg_printf(" %ls[]", name);
         break;
     case SymTagEnum:
-        dbg_printf("enum %s", name);
+        dbg_printf("enum %ls", name);
         break;
     case SymTagFunctionType:
         types_get_info(type, TI_GET_TYPE, &subtype.id);
@@ -707,7 +691,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
             subtype.module = 0;
             dbg_printf("<ret_type=self>");
         }
-        dbg_printf(" (*%s)(", name);
+        dbg_printf(" (*%ls)(", name);
         if (types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
         {
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
@@ -736,13 +720,14 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         dbg_printf(")");
         break;
     case SymTagTypedef:
-        dbg_printf("%s", name);
+        dbg_printf("%ls", name);
         break;
     default:
-        WINE_ERR("Unknown type %u for %s\n", tag, name);
+        WINE_ERR("Unknown type %u for %ls\n", tag, name);
         break;
     }
-    
+
+    HeapFree(GetProcessHeap(), 0, ptr);
     return TRUE;
 }
 

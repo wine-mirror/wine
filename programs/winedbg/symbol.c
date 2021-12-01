@@ -756,11 +756,10 @@ BOOL symbol_info_locals(void)
     addr.Mode = AddrModeFlat;
     addr.Offset = frm->linear_pc;
     print_address(&addr, FALSE);
-    dbg_printf(": (%0*lx)\n", ADDRWIDTH, (DWORD_PTR)frm->linear_frame);
+    dbg_printf(": (%0*Ix)\n", ADDRWIDTH, frm->linear_frame);
     SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, (void*)frm->linear_frame);
 
     return TRUE;
-
 }
 
 static BOOL CALLBACK symbols_info_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
