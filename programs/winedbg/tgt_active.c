@@ -636,6 +636,88 @@ static BOOL dbg_start_debuggee(LPSTR cmdLine)
     return TRUE;
 }
 
+/***********************************************************************
+ *           dbg_build_command_line
+ *
+ * (converted from dlls/ntdll/unix/env.c)
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s are followed by the closing '"' must be doubled,
+ *   resulting in an even number of '\' followed by a '"'
+ *   ' \'    -> '" \\"'
+ *   ' \\'    -> '" \\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
+ */
+static char *dbg_build_command_line( char **argv )
+{
+    int len;
+    char **arg, *ret;
+    LPSTR p;
+
+    len = 1;
+    for (arg = argv; *arg; arg++) len += 3 + 2 * strlen( *arg );
+    if (!(ret = malloc( len ))) return NULL;
+
+    p = ret;
+    for (arg = argv; *arg; arg++)
+    {
+        BOOL has_space, has_quote;
+        int i, bcount;
+        char *a;
+
+        /* check for quotes and spaces in this argument (first arg is always quoted) */
+        has_space = (arg == argv) || !**arg || strchr( *arg, ' ' ) || strchr( *arg, '\t' );
+        has_quote = strchr( *arg, '"' ) != NULL;
+
+        /* now transfer it to the command line */
+        if (has_space) *p++ = '"';
+        if (has_quote || has_space)
+        {
+            bcount = 0;
+            for (a = *arg; *a; a++)
+            {
+                if (*a == '\\') bcount++;
+                else
+                {
+                    if (*a == '"') /* double all the '\\' preceding this '"', plus one */
+                        for (i = 0; i <= bcount; i++) *p++ = '\\';
+                    bcount = 0;
+                }
+                *p++ = *a;
+            }
+        }
+        else
+        {
+            strcpy( p, *arg );
+            p += strlen( p );
+        }
+        if (has_space)
+        {
+            /* Double all the '\' preceding the closing quote */
+            for (i = 0; i < bcount; i++) *p++ = '\\';
+            *p++ = '"';
+        }
+        *p++ = ' ';
+    }
+    if (p > ret) p--;  /* remove last space */
+    *p = 0;
+    return ret;
+}
+
+
 void	dbg_run_debuggee(const char* args)
 {
     if (args)
@@ -807,35 +889,17 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
  */
 enum dbg_start    dbg_active_launch(int argc, char* argv[])
 {
-    int         i, len;
     LPSTR	cmd_line;
 
     if (argc == 0) return start_error_parse;
 
-    if (!(cmd_line = HeapAlloc(GetProcessHeap(), 0, len = 1)))
-    {
-    oom_leave:
-        dbg_printf("Out of memory\n");
-        return start_error_init;
-    }
-    cmd_line[0] = '\0';
-
-    for (i = 0; i < argc; i++)
-    {
-        len += strlen(argv[i]) + 1;
-        if (!(cmd_line = HeapReAlloc(GetProcessHeap(), 0, cmd_line, len)))
-            goto oom_leave;
-        strcat(cmd_line, argv[i]);
-        cmd_line[len - 2] = ' ';
-        cmd_line[len - 1] = '\0';
-    }
-
+    cmd_line = dbg_build_command_line(argv);
     if (!dbg_start_debuggee(cmd_line))
     {
-        HeapFree(GetProcessHeap(), 0, cmd_line);
+        free(cmd_line);
         return start_error_init;
     }
-    HeapFree(GetProcessHeap(), 0, dbg_last_cmd_line);
+    free(dbg_last_cmd_line);
     dbg_last_cmd_line = cmd_line;
     return start_ok;
 }
