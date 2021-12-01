@@ -467,6 +467,25 @@ static NTSTATUS WINAPI driver_power( DEVICE_OBJECT *device, IRP *irp )
     return PoCallDriver( ext->NextDeviceObject, irp );
 }
 
+#define check_buffer( a, b ) check_buffer_( __LINE__, a, b )
+static void check_buffer_( int line, HID_XFER_PACKET *packet, struct hid_expect *expect )
+{
+    ULONG match_len, i;
+
+    match_len = RtlCompareMemory( packet->reportBuffer, expect->report_buf, expect->report_len );
+    ok( match_len == expect->report_len, "unexpected data:\n" );
+    if (match_len == expect->report_len) return;
+
+    for (i = 0; i < packet->reportBufferLen;)
+    {
+        char buffer[256], *buf = buffer;
+        buf += sprintf( buf, "%08x ", i );
+        do buf += sprintf( buf, " %02x", packet->reportBuffer[i] );
+        while (++i % 16 && i < packet->reportBufferLen);
+        ok( 0, "  %s\n", buffer );
+    }
+}
+
 static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
@@ -574,8 +593,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
         ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
-        ok( RtlCompareMemory( packet->reportBuffer, expect.report_buf, expect.report_len ) == expect.report_len,
-            "unexpected data\n" );
+        check_buffer( packet, &expect );
         winetest_pop_context();
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
@@ -621,8 +639,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
         ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
-        ok( RtlCompareMemory( packet->reportBuffer, expect.report_buf, expect.report_len ) == expect.report_len,
-            "unexpected data\n" );
+        check_buffer( packet, &expect );
         winetest_pop_context();
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
@@ -668,8 +685,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( code == expect.code, "got %#x, expected %#x\n", code, expect.code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
         ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
-        ok( RtlCompareMemory( packet->reportBuffer, expect.report_buf, expect.report_len ) == expect.report_len,
-            "unexpected data\n" );
+        check_buffer( packet, &expect );
         winetest_pop_context();
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
