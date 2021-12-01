@@ -1763,6 +1763,7 @@ static HRESULT WINAPI dinput_device_GetEffectInfo( IDirectInputDevice8W *iface, 
 static HRESULT WINAPI dinput_device_GetForceFeedbackState( IDirectInputDevice8W *iface, DWORD *out )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr = DI_OK;
 
     FIXME( "iface %p, out %p semi-stub!\n", iface, out );
 
@@ -1770,9 +1771,15 @@ static HRESULT WINAPI dinput_device_GetForceFeedbackState( IDirectInputDevice8W 
     *out = 0;
 
     if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
-    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) return DIERR_NOTEXCLUSIVEACQUIRED;
 
-    return DI_OK;
+    EnterCriticalSection( &impl->crit );
+    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE))
+        hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else
+        *out = impl->force_feedback_state;
+    LeaveCriticalSection( &impl->crit );
+
+    return hr;
 }
 
 static HRESULT WINAPI dinput_device_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
@@ -2146,6 +2153,7 @@ HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl,
     This->caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     This->device_format = format;
     This->device_gain = 10000;
+    This->force_feedback_state = DIGFFS_STOPPED | DIGFFS_EMPTY;
     InitializeCriticalSection( &This->crit );
     This->dinput = dinput;
     IDirectInput_AddRef( &dinput->IDirectInput7A_iface );

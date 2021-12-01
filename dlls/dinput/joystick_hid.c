@@ -221,6 +221,7 @@ struct hid_joystick_effect
     DIEFFECT params;
     DWORD modified;
     DWORD flags;
+    DWORD status;
 
     char *effect_control_buf;
     char *effect_update_buf;
@@ -2653,6 +2654,9 @@ static HRESULT WINAPI hid_joystick_effect_Start( IDirectInputEffect *iface, DWOR
         if (status != HIDP_STATUS_SUCCESS) hr = status;
         else if (WriteFile( device, impl->effect_control_buf, report_len, NULL, NULL )) hr = DI_OK;
         else hr = DIERR_INPUTLOST;
+
+        if (SUCCEEDED(hr)) impl->status |= DIEGES_PLAYING;
+        else impl->status &= ~DIEGES_PLAYING;
     }
     LeaveCriticalSection( &impl->joystick->base.crit );
 
@@ -2699,6 +2703,8 @@ static HRESULT WINAPI hid_joystick_effect_Stop( IDirectInputEffect *iface )
         if (status != HIDP_STATUS_SUCCESS) hr = status;
         else if (WriteFile( device, impl->effect_control_buf, report_len, NULL, NULL )) hr = DI_OK;
         else hr = DIERR_INPUTLOST;
+
+        impl->status &= ~DIEGES_PLAYING;
     }
     LeaveCriticalSection( &impl->joystick->base.crit );
 
@@ -2708,7 +2714,7 @@ static HRESULT WINAPI hid_joystick_effect_Stop( IDirectInputEffect *iface )
 static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *iface, DWORD *status )
 {
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
-    HRESULT hr;
+    HRESULT hr = DI_OK;
 
     FIXME( "iface %p, status %p semi-stub!\n", iface, status );
 
@@ -2721,7 +2727,7 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
     else if (!impl->index)
         hr = DIERR_NOTDOWNLOADED;
     else
-        hr = DI_OK;
+        *status = impl->status;
     LeaveCriticalSection( &impl->joystick->base.crit );
 
     return hr;
@@ -2945,10 +2951,20 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
 
         if (!WriteFile( device, impl->effect_update_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
         else impl->modified = 0;
+
+        if (SUCCEEDED(hr)) impl->joystick->base.force_feedback_state &= ~DIGFFS_EMPTY;
     }
     LeaveCriticalSection( &impl->joystick->base.crit );
 
     return hr;
+}
+
+static void check_empty_force_feedback_state( struct hid_joystick *joystick )
+{
+    struct hid_joystick_effect *effect;
+    LIST_FOR_EACH_ENTRY( effect, &joystick->effect_list, struct hid_joystick_effect, entry )
+        if (effect->index) return;
+    joystick->base.force_feedback_state |= DIGFFS_EMPTY;
 }
 
 static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
@@ -2986,6 +3002,7 @@ static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
 
         impl->modified = impl->flags;
         impl->index = 0;
+        check_empty_force_feedback_state( joystick );
     }
     LeaveCriticalSection( &joystick->base.crit );
 
@@ -3045,6 +3062,7 @@ static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectI
     impl->params.rgdwAxes = impl->axes;
     impl->params.rglDirection = impl->directions;
     impl->params.dwTriggerButton = -1;
+    impl->status = 0;
 
     *out = &impl->IDirectInputEffect_iface;
     return DI_OK;

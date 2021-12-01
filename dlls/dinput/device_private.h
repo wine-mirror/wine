@@ -112,6 +112,7 @@ struct dinput_device
 
     BOOL autocenter;
     LONG device_gain;
+    DWORD force_feedback_state;
     struct object_properties *object_properties;
 };
 
