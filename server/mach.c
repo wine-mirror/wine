@@ -193,22 +193,12 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
         else
 #endif
         {
-/* work around silly renaming of struct members in OS X 10.5 */
-#if __DARWIN_UNIX03 && defined(_STRUCT_X86_DEBUG_STATE32)
             context->debug.i386_regs.dr0 = state.uds.ds32.__dr0;
             context->debug.i386_regs.dr1 = state.uds.ds32.__dr1;
             context->debug.i386_regs.dr2 = state.uds.ds32.__dr2;
             context->debug.i386_regs.dr3 = state.uds.ds32.__dr3;
             context->debug.i386_regs.dr6 = state.uds.ds32.__dr6;
             context->debug.i386_regs.dr7 = state.uds.ds32.__dr7;
-#else
-            context->debug.i386_regs.dr0 = state.uds.ds32.dr0;
-            context->debug.i386_regs.dr1 = state.uds.ds32.dr1;
-            context->debug.i386_regs.dr2 = state.uds.ds32.dr2;
-            context->debug.i386_regs.dr3 = state.uds.ds32.dr3;
-            context->debug.i386_regs.dr6 = state.uds.ds32.dr6;
-            context->debug.i386_regs.dr7 = state.uds.ds32.dr7;
-#endif
         }
         context->flags |= SERVER_CTX_DEBUG_REGISTERS;
     }
@@ -262,7 +252,6 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 
         state.dsh.flavor = x86_DEBUG_STATE32;
         state.dsh.count = sizeof(state.uds.ds32) / sizeof(int);
-#if __DARWIN_UNIX03 && defined(_STRUCT_X86_DEBUG_STATE32)
         state.uds.ds32.__dr0 = context->debug.i386_regs.dr0;
         state.uds.ds32.__dr1 = context->debug.i386_regs.dr1;
         state.uds.ds32.__dr2 = context->debug.i386_regs.dr2;
@@ -271,16 +260,6 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         state.uds.ds32.__dr5 = 0;
         state.uds.ds32.__dr6 = context->debug.i386_regs.dr6;
         state.uds.ds32.__dr7 = dr7;
-#else
-        state.uds.ds32.dr0 = context->debug.i386_regs.dr0;
-        state.uds.ds32.dr1 = context->debug.i386_regs.dr1;
-        state.uds.ds32.dr2 = context->debug.i386_regs.dr2;
-        state.uds.ds32.dr3 = context->debug.i386_regs.dr3;
-        state.uds.ds32.dr4 = 0;
-        state.uds.ds32.dr5 = 0;
-        state.uds.ds32.dr6 = context->debug.i386_regs.dr6;
-        state.uds.ds32.dr7 = dr7;
-#endif
     }
     thread_set_state( port, x86_DEBUG_STATE, (thread_state_t)&state, count );
     mach_port_deallocate( mach_task_self(), port );
