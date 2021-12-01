@@ -462,7 +462,7 @@ struct parser_context
 
 static struct parser_context dbg_parser = {NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, 0};
 
-int      input_fetch_entire_line(const char* pfx, char** line)
+static int input_fetch_entire_line(const char* pfx, char** line)
 {
     char*       buffer;
     char        ch;
@@ -498,6 +498,51 @@ int      input_fetch_entire_line(const char* pfx, char** line)
     buffer[len] = '\0';
 
     *line = buffer;
+    return len;
+}
+
+size_t input_lex_read_buffer(char* buf, int size)
+{
+    int len;
+    static char*  last_line = NULL;
+    static size_t last_line_idx = 0;
+
+    /* try first to fetch the remaining of an existing line */
+    if (last_line_idx == 0)
+    {
+        char* tmp = NULL;
+        /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
+        lexeme_flush();
+        len = input_fetch_entire_line("Wine-dbg>", &tmp);
+        if (len < 0) return 0;  /* eof */
+
+        /* remove carriage return in newline */
+        if (len >= 2 && tmp[len - 2] == '\r')
+        {
+            tmp[len - 2] = '\n';
+            tmp[len - 1] = '\0';
+            len--;
+        }
+
+        /* FIXME: should have a pair of buffers, and switch between the two, instead of
+         * reallocating a new one for each line
+         */
+        if (last_line && (len == 0 || (len == 1 && tmp[0] == '\n')))
+        {
+            HeapFree(GetProcessHeap(), 0, tmp);
+        }
+        else
+        {
+            HeapFree(GetProcessHeap(), 0, last_line);
+            last_line = tmp;
+        }
+    }
+
+    len = min(strlen(last_line + last_line_idx), size - 1);
+    memcpy(buf, last_line + last_line_idx, len);
+    buf[len] = '\0';
+    if ((last_line_idx += len) >= strlen(last_line))
+        last_line_idx = 0;
     return len;
 }
 

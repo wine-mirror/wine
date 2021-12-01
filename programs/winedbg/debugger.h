@@ -311,7 +311,7 @@ extern int              msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UI
   /* dbg.y */
 extern void             parser_handle(const char*, HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
-extern int              input_fetch_entire_line(const char* pfx, char** line);
+extern size_t           input_lex_read_buffer(char* pfx, int size);
 extern HANDLE           WINAPIV parser_generate_command_file(const char*, ...);
 
   /* debug.l */

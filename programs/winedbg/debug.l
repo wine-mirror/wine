@@ -60,53 +60,8 @@ void lexeme_flush(void)
     next_lexeme = 0;
 }
 
-static size_t read_input(const char* pfx, char* buf, int size)
-{
-    int len;
-    static char*  last_line = NULL;
-    static size_t last_line_idx = 0;
-
-    /* try first to fetch the remaining of an existing line */
-    if (last_line_idx == 0)
-    {
-        char* tmp = NULL;
-        /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
-        lexeme_flush();
-        len = input_fetch_entire_line(pfx, &tmp);
-        if (len < 0) return 0;  /* eof */
-
-        /* remove carriage return in newline */
-        if (len >= 2 && tmp[len - 2] == '\r')
-        {
-            tmp[len - 2] = '\n';
-            tmp[len - 1] = '\0';
-            len--;
-        }
-
-        /* FIXME: should have a pair of buffers, and switch between the two, instead of
-         * reallocating a new one for each line
-         */
-        if (last_line && (len == 0 || (len == 1 && tmp[0] == '\n')))
-        {
-            HeapFree(GetProcessHeap(), 0, tmp);
-        }
-        else
-        {
-            HeapFree(GetProcessHeap(), 0, last_line);
-            last_line = tmp;
-        }
-    }
-
-    len = min(strlen(last_line + last_line_idx), size - 1);
-    memcpy(buf, last_line + last_line_idx, len);
-    buf[len] = '\0';
-    if ((last_line_idx += len) >= strlen(last_line))
-        last_line_idx = 0;
-    return len;
-}
-
 #define YY_INPUT(buf,result,max_size) \
-        (result = read_input("Wine-dbg>", buf, max_size))
+        (result = input_lex_read_buffer(buf, max_size))
 
 static int syntax_error;
 %}
