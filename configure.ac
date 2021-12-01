@@ -1064,6 +1064,15 @@ then
         WINE_NOTICE([liblcms2 ${notice_platform}MinGW development files not found; using bundled version.])
     fi
 
+    WINE_MINGW_PACKAGE_FLAGS(MPG123,[libmpg123],[-lmpg123],
+        [WINE_CHECK_MINGW_HEADER(mpg123.h,
+            [WINE_CHECK_MINGW_LIB(mpg123,mpg123_feed,[:],[MPG123_PE_CFLAGS=""; MPG123_PE_LIBS=""],[$MPG123_PE_LIBS])],
+            [MPG123_PE_CFLAGS=""; MPG123_PE_LIBS=""])])
+    if test "x$MPG123_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([libmpg123 ${notice_platform}MinGW development files not found (or too old); using bundled version.])
+    fi
+
     WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
         [WINE_CHECK_MINGW_HEADER(zlib.h,
             [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],
