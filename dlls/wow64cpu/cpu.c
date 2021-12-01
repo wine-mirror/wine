@@ -41,11 +41,61 @@ struct thunk_32to64
 
 static BYTE DECLSPEC_ALIGN(4096) code_buffer[0x1000];
 
+static USHORT cs64_sel;
+static USHORT ds64_sel;
+static USHORT fs32_sel;
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
 {
     if (reason == DLL_PROCESS_ATTACH) LdrDisableThreadCalloutsForDll( inst );
     return TRUE;
+}
+
+/**********************************************************************
+ *           copy_context_64to32
+ *
+ * Copy a 64-bit context corresponding to an exception happening in 32-bit mode
+ * into the corresponding 32-bit context.
+ */
+static void copy_context_64to32( I386_CONTEXT *ctx32, DWORD flags, AMD64_CONTEXT *ctx64 )
+{
+    ctx32->ContextFlags = flags;
+    flags &= ~CONTEXT_i386;
+    if (flags & CONTEXT_I386_INTEGER)
+    {
+        ctx32->Eax = ctx64->Rax;
+        ctx32->Ebx = ctx64->Rbx;
+        ctx32->Ecx = ctx64->Rcx;
+        ctx32->Edx = ctx64->Rdx;
+        ctx32->Esi = ctx64->Rsi;
+        ctx32->Edi = ctx64->Rdi;
+    }
+    if (flags & CONTEXT_I386_CONTROL)
+    {
+        ctx32->Esp    = ctx64->Rsp;
+        ctx32->Ebp    = ctx64->Rbp;
+        ctx32->Eip    = ctx64->Rip;
+        ctx32->EFlags = ctx64->EFlags;
+        ctx32->SegCs  = ctx64->SegCs;
+        ctx32->SegSs  = ds64_sel;
+    }
+    if (flags & CONTEXT_I386_SEGMENTS)
+    {
+        ctx32->SegDs = ds64_sel;
+        ctx32->SegEs = ds64_sel;
+        ctx32->SegFs = fs32_sel;
+        ctx32->SegGs = ds64_sel;
+    }
+    if (flags & CONTEXT_I386_DEBUG_REGISTERS)
+    {
+        ctx32->Dr0 = ctx64->Dr0;
+        ctx32->Dr1 = ctx64->Dr1;
+        ctx32->Dr2 = ctx64->Dr2;
+        ctx32->Dr3 = ctx64->Dr3;
+        ctx32->Dr6 = ctx64->Dr6;
+        ctx32->Dr7 = ctx64->Dr7;
+    }
+    /* FIXME: floating point + xstate */
 }
 
 
@@ -141,9 +191,13 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     }
 
     RtlCaptureContext( &context );
+    cs64_sel = context.SegCs;
+    ds64_sel = context.SegDs;
+    fs32_sel = context.SegFs;
+
     thunk->ljmp = 0xea;
     thunk->addr = PtrToUlong( syscall_32to64 );
-    thunk->cs   = context.SegCs;
+    thunk->cs   = cs64_sel;
     NtProtectVirtualMemory( GetCurrentProcess(), (void **)&thunk, &size, PAGE_EXECUTE_READ, &old_prot );
     return STATUS_SUCCESS;
 }
@@ -173,4 +227,24 @@ NTSTATUS WINAPI BTCpuGetContext( HANDLE thread, HANDLE process, void *unknown, I
 NTSTATUS WINAPI BTCpuSetContext( HANDLE thread, HANDLE process, void *unknown, I386_CONTEXT *ctx )
 {
     return NtSetInformationThread( thread, ThreadWow64Context, ctx, sizeof(*ctx) );
+}
+
+
+/**********************************************************************
+ *           BTCpuResetToConsistentState  (wow64cpu.@)
+ */
+NTSTATUS WINAPI BTCpuResetToConsistentState( EXCEPTION_POINTERS *ptrs )
+{
+    CONTEXT *context = ptrs->ContextRecord;
+    I386_CONTEXT wow_context;
+
+    copy_context_64to32( &wow_context, CONTEXT_I386_ALL, context );
+    wow_context.EFlags &= ~(0x100|0x40000);
+    BTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &wow_context );
+
+    /* fixup context to pretend that we jumped to 64-bit mode */
+    context->Rip = (ULONG64)syscall_32to64;
+    context->SegCs = cs64_sel;
+    context->Rsp = context->R14;
+    return STATUS_SUCCESS;
 }
