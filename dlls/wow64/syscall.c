@@ -79,6 +79,7 @@ static const SYSTEM_SERVICE_TABLE *psdwhwin32;
 static void *   (WINAPI *pBTCpuGetBopCode)(void);
 static void     (WINAPI *pBTCpuProcessInit)(void);
 static void     (WINAPI *pBTCpuSimulate)(void);
+static NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * );
 
 
 void *dummy = RtlUnwind;
@@ -534,6 +535,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     module = load_64bit_module( get_cpu_dll_name() );
     GET_PTR( BTCpuGetBopCode );
     GET_PTR( BTCpuProcessInit );
+    GET_PTR( BTCpuResetToConsistentState );
     GET_PTR( BTCpuSimulate );
 
     module = load_64bit_module( L"wow64win.dll" );
@@ -768,4 +770,15 @@ void WINAPI Wow64LdrpInitialize( CONTEXT *context )
     RtlRunOnceExecuteOnce( &init_done, process_init, NULL, NULL );
     thread_init();
     pBTCpuSimulate();
+}
+
+
+/**********************************************************************
+ *           Wow64PrepareForException  (wow64.@)
+ */
+void WINAPI Wow64PrepareForException( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    EXCEPTION_POINTERS ptrs = { rec, context };
+
+    pBTCpuResetToConsistentState( &ptrs );
 }
