@@ -3226,18 +3226,21 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "testl $0x3,%edx\n\t"           /* CONTEXT_CONTROL | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
                    "movq 0x88(%rcx),%rsp\n\t"
-                   "jmpq *0x70(%rcx)\n"            /* frame->rip */
+                   "movq 0x70(%rcx),%rcx\n\t"      /* frame->rip */
+                   "jmpq *%rcx\n\t"
                    "1:\tleaq 0x70(%rcx),%rsp\n\t"
                    "testl $0x2,%edx\n\t"           /* CONTEXT_INTEGER */
-                   "jz 1f\n\t"
-                   "movq 0x00(%rcx),%rax\n\t"
+                   "jnz 1f\n\t"
+                   "movq (%rsp),%rcx\n\t"          /* frame->rip */
+                   "iretq\n"
+                   "1:\tmovq 0x00(%rcx),%rax\n\t"
                    "movq 0x18(%rcx),%rdx\n\t"
                    "movq 0x30(%rcx),%r8\n\t"
                    "movq 0x38(%rcx),%r9\n\t"
                    "movq 0x40(%rcx),%r10\n\t"
                    "movq 0x48(%rcx),%r11\n\t"
                    "movq 0x10(%rcx),%rcx\n"
-                   "1:\tiretq\n"
+                   "iretq\n"
                    "5:\tmovl $0xc000000d,%edx\n\t" /* STATUS_INVALID_PARAMETER */
                    "movq %rsp,%rcx\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"

@@ -4916,6 +4916,81 @@ static void test_unwind_from_apc(void)
     ok(pass == 4, "Got unexpected pass %d.\n", pass);
     ok(test_unwind_apc_called, "Test user APC was not called.\n");
 }
+
+static void test_syscall_clobbered_regs(void)
+{
+    struct regs
+    {
+        UINT64 rcx;
+    };
+    static const BYTE code[] =
+    {
+        0x48, 0x8d, 0x05, 0x00, 0x10, 0x00, 0x00,
+                                    /* leaq 0x1000(%rip),%rax */
+        0x48, 0x25, 0x00, 0xf0, 0xff, 0xff,
+                                    /* andq $~0xfff,%rax */
+        0x48, 0x83, 0xe8, 0x08,     /* subq $8,%rax */
+        0x48, 0x89, 0x20,           /* movq %rsp,0(%rax) */
+        0x48, 0x89, 0xc4,           /* movq %rax,%rsp */
+        0x41, 0x50,                 /* push %r8 */
+        0x53, 0x55, 0x57, 0x56, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57,
+                                    /* push %rbx, %rbp, %rdi, %rsi, %r12, %r13, %r14, %r15 */
+        0x41, 0xff, 0xd1,           /* callq *r9 */
+        0x41, 0x5f, 0x41, 0x5e, 0x41, 0x5d, 0x41, 0x5c, 0x5e, 0x5f, 0x5d, 0x5b,
+                                    /* pop %r15, %r14, %r13, %r12, %rsi, %rdi, %rbp, %rbx */
+        0x41, 0x58,                 /* pop %r8 */
+        0x49, 0x89, 0x48, 0x00,     /* mov %rcx,(%r8) */
+        0x5c,                       /* pop %rsp */
+        0xc3,                       /* ret */
+    };
+
+    NTSTATUS (WINAPI *func)(void *arg1, void *arg2, struct regs *, void *call_addr);
+    NTSTATUS (WINAPI *pNtCancelTimer)(HANDLE, BOOLEAN *);
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    struct regs regs;
+    CONTEXT context;
+    NTSTATUS status;
+
+    pNtCancelTimer = (void *)GetProcAddress(hntdll, "NtCancelTimer");
+    ok(!!pNtCancelTimer, "NtCancelTimer not found.\n");
+    memcpy(code_mem, code, sizeof(code));
+    func = code_mem;
+    memset(&regs, 0, sizeof(regs));
+    status = func((HANDLE)0xdeadbeef, NULL, &regs, pNtCancelTimer);
+    ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#x.\n", status);
+
+    /* After the syscall instruction rcx contains the address of the instruction next after syscall. */
+    ok((BYTE *)regs.rcx > (BYTE *)pNtCancelTimer && (BYTE *)regs.rcx < (BYTE *)pNtCancelTimer + 0x20,
+            "Got unexpected rcx %s, pNtCancelTimer %p.\n", wine_dbgstr_longlong(regs.rcx), pNtCancelTimer);
+
+    status = func((HANDLE)0xdeadbeef, (BOOLEAN *)0xdeadbeef, &regs, pNtCancelTimer);
+    ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#x.\n", status);
+    ok((BYTE *)regs.rcx > (BYTE *)pNtCancelTimer && (BYTE *)regs.rcx < (BYTE *)pNtCancelTimer + 0x20,
+            "Got unexpected rcx %s, pNtCancelTimer %p.\n", wine_dbgstr_longlong(regs.rcx), pNtCancelTimer);
+
+    context.ContextFlags = CONTEXT_CONTROL;
+    status = func(GetCurrentThread(), &context, &regs, pNtGetContextThread);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
+            "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
+
+    status = func(GetCurrentThread(), &context, &regs, pNtSetContextThread);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
+            "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
+
+    context.ContextFlags = CONTEXT_INTEGER;
+    status = func(GetCurrentThread(), &context, &regs, pNtGetContextThread);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
+            "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
+
+    status = func(GetCurrentThread(), &context, &regs, pNtSetContextThread);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok((BYTE *)regs.rcx > (BYTE *)pNtSetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtSetContextThread + 0x20,
+            "Got unexpected rcx %s, pNtSetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtSetContextThread);
+
+}
 #elif defined(__arm__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -10657,6 +10732,7 @@ START_TEST(exception)
     test_extended_context();
     test_copy_context();
     test_unwind_from_apc();
+    test_syscall_clobbered_regs();
 
 #elif defined(__aarch64__)
 
