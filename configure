@@ -12353,7 +12353,117 @@ fi
 done
 test -n "$MINGW_PKG_CONFIG" || MINGW_PKG_CONFIG="false"
 
-if ${ZLIB_PE_CFLAGS:+false} :
+if ${FAUDIO_PE_CFLAGS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  FAUDIO_PE_CFLAGS=`$MINGW_PKG_CONFIG --cflags FAudio 2>/dev/null`
+fi
+fi
+if ${FAUDIO_PE_LIBS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  FAUDIO_PE_LIBS=`$MINGW_PKG_CONFIG --libs FAudio 2>/dev/null`
+fi
+fi
+FAUDIO_PE_LIBS=${FAUDIO_PE_LIBS:-"-lFAudio"}
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $FAUDIO_PE_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW FAudio.h" >&5
+printf %s "checking for MinGW FAudio.h... " >&6; }
+if test ${ac_cv_mingw_header_FAudio_h+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <FAudio.h>
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_mingw_header_FAudio_h=yes
+else $as_nop
+  ac_cv_mingw_header_FAudio_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_header_FAudio_h" >&5
+printf "%s\n" "$ac_cv_mingw_header_FAudio_h" >&6; }
+if test "x$ac_cv_mingw_header_FAudio_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for FAudio_CommitOperationSet in MinGW -lFAudio" >&5
+printf %s "checking for FAudio_CommitOperationSet in MinGW -lFAudio... " >&6; }
+if test ${ac_cv_mingw_lib_FAudio+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+ac_wine_check_headers_saved_libs=$LIBS
+CC="$CROSSCC"
+ac_exeext=".exe"
+LIBS="-lFAudio $FAUDIO_PE_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char FAudio_CommitOperationSet ();
+int
+main (void)
+{
+return FAudio_CommitOperationSet ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_mingw_lib_FAudio=yes
+else $as_nop
+  ac_cv_mingw_lib_FAudio=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+LIBS=$ac_wine_check_headers_saved_libs
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_FAudio" >&5
+printf "%s\n" "$ac_cv_mingw_lib_FAudio" >&6; }
+if test "x$ac_cv_mingw_lib_FAudio" = xyes
+then :
+  :
+else $as_nop
+  FAUDIO_PE_CFLAGS=""; FAUDIO_PE_LIBS=""
+fi
+else $as_nop
+  FAUDIO_PE_CFLAGS=""; FAUDIO_PE_LIBS=""
+fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+    if test "x$FAUDIO_PE_LIBS" = "x"
+    then
+        as_fn_append wine_notices "|FAudio ${notice_platform}MinGW development files not found (or too old); using bundled version."
+    fi
+
+    if ${ZLIB_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
 then :
