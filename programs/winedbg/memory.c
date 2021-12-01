@@ -337,7 +337,8 @@ static void dbg_print_hex(DWORD size, ULONGLONG sv)
     if (!sv)
         dbg_printf("0");
     else
-        dbg_printf("%#I64x", sv);
+        /* clear unneeded high bits, esp. sign extension */
+        dbg_printf("%#I64x", sv & (~0LLU >> (64 - 8 * size)));
 }
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
