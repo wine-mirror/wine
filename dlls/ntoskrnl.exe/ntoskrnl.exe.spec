@@ -1098,7 +1098,7 @@
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetDefaultCodePage
-@ stub RtlGetElementGenericTable
+@ stdcall RtlGetElementGenericTable(ptr long)
 @ stub RtlGetElementGenericTableAvl
 @ stdcall RtlGetExtendedContextLength(long ptr)
 @ stdcall RtlGetExtendedContextLength2(long ptr int64)
