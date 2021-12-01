@@ -17346,7 +17346,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$ac_cv_lib_soname_netapi" != xyes
+if test "x$ac_cv_lib_soname_netapi" = "x"
 then :
   case "x$with_netapi" in
   x)   as_fn_append wine_notices "|libnetapi not found, Samba NetAPI won't be supported." ;;
