@@ -51,14 +51,13 @@ static void wined3d_blend_state_destroy_object(void *object)
 
 ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
 {
-    ULONG refcount = InterlockedDecrement(&state->refcount);
+    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
     struct wined3d_device *device = state->device;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
-        wined3d_mutex_lock();
         state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_blend_state_destroy_object, state);
         wined3d_mutex_unlock();
@@ -127,14 +126,13 @@ static void wined3d_depth_stencil_state_destroy_object(void *object)
 
 ULONG CDECL wined3d_depth_stencil_state_decref(struct wined3d_depth_stencil_state *state)
 {
-    ULONG refcount = InterlockedDecrement(&state->refcount);
+    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
     struct wined3d_device *device = state->device;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
-        wined3d_mutex_lock();
         state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_depth_stencil_state_destroy_object, state);
         wined3d_mutex_unlock();
@@ -192,14 +190,13 @@ static void wined3d_rasterizer_state_destroy_object(void *object)
 
 ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state)
 {
-    ULONG refcount = InterlockedDecrement(&state->refcount);
+    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
     struct wined3d_device *device = state->device;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
-        wined3d_mutex_lock();
         state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
         wined3d_mutex_unlock();

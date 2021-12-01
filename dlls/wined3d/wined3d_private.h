@@ -4155,6 +4155,26 @@ const char *wined3d_debug_view_desc(const struct wined3d_view_desc *d,
         const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 const char *wined3d_debug_vkresult(VkResult vr) DECLSPEC_HIDDEN;
 
+static inline ULONG wined3d_atomic_decrement_mutex_lock(volatile LONG *refcount)
+{
+    ULONG count, old_count = *refcount;
+    do
+    {
+        if ((count = old_count) == 1)
+        {
+            wined3d_mutex_lock();
+            count = InterlockedDecrement(refcount);
+            if (count) wined3d_mutex_unlock();
+            return count;
+        }
+
+        old_count = InterlockedCompareExchange(refcount, count - 1, count);
+    }
+    while (old_count != count);
+
+    return count - 1;
+}
+
 struct wined3d_client_resource
 {
     /* The resource's persistently mapped address, which we may use to perform
