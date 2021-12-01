@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.2.200"
+VK_XML_VERSION = "1.2.201"
 WINE_VK_VERSION = (1, 2)
 
 # Filenames to create.
@@ -119,9 +119,6 @@ UNSUPPORTED_EXTENSIONS = [
     # Deprecated extensions
     "VK_NV_external_memory_capabilities",
     "VK_NV_external_memory_win32",
-
-    # Broken extensions
-    "VK_ARM_rasterization_order_attachment_access", # https://github.com/KhronosGroup/Vulkan-Docs/issues/1703
 ]
 
 # Either internal extensions which aren't present on the win32 platform which
