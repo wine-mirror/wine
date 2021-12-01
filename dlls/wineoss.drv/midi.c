@@ -40,15 +40,13 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <sys/types.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #ifdef HAVE_SYS_IOCTL_H

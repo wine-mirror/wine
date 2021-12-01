@@ -24,12 +24,11 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <dlfcn.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif

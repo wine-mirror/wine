@@ -19,11 +19,11 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#include <dlfcn.h>
 
 #include "windef.h"
 #include "winbase.h"

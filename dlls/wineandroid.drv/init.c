@@ -21,10 +21,10 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <string.h>
+#include <dlfcn.h>
 #include <link.h>
 
 #include "windef.h"

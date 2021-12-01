@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include "dxgi_private.h"
 
@@ -29,6 +28,7 @@
 #define VKD3D_NO_WIN32_TYPES
 #ifndef USE_WIN32_VULKAN
 #define WINE_VK_HOST
+#include <dlfcn.h>
 #endif
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"

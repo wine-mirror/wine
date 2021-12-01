@@ -23,7 +23,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdio.h>
 #include <string.h>

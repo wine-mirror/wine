@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #define COBJMACROS
 #define VK_NO_PROTOTYPES

@@ -30,7 +30,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <limits.h>
 #include <stdio.h>

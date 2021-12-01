@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <sys/types.h>
 #include <math.h>
 #include <limits.h>
 #include "ntstatus.h"

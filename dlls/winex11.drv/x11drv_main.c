@@ -20,7 +20,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <fcntl.h>
 #include <stdarg.h>
@@ -33,6 +32,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <dlfcn.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
 #ifdef HAVE_XKB

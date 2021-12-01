@@ -25,12 +25,12 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #ifdef HAVE_EGL_EGL_H
 #include <EGL/egl.h>
 #endif

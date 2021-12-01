@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -27,6 +26,7 @@
 #ifdef HAVE_X11_EXTENSIONS_XINERAMA_H
 #include <X11/extensions/Xinerama.h>
 #endif
+#include <dlfcn.h>
 #include "x11drv.h"
 #include "wine/debug.h"
 #include "wine/heap.h"

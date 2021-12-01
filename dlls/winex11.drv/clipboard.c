@@ -64,7 +64,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -74,6 +73,7 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
+#include <dlfcn.h>
 #include <limits.h>
 #include <time.h>
 #include <assert.h>

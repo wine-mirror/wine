@@ -20,7 +20,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H

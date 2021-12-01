@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include "dxgi_private.h"
 

@@ -43,7 +43,6 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 %{
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>

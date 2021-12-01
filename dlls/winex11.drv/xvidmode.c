@@ -20,12 +20,12 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <dlfcn.h>
 
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION

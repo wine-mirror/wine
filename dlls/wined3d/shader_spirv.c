@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include "wined3d_private.h"
 
@@ -26,6 +25,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #ifdef SONAME_LIBVKD3D_SHADER
 
+#include <dlfcn.h>
 #define VKD3D_SHADER_NO_PROTOTYPES
 #include <vkd3d_shader.h>
 
