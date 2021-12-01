@@ -1044,6 +1044,17 @@ then
         WINE_NOTICE([FAudio ${notice_platform}MinGW development files not found (or too old); using bundled version.])
     fi
 
+    WINE_MINGW_PACKAGE_FLAGS(JPEG,[libjpeg],,
+        [WINE_CHECK_MINGW_HEADER(jpeglib.h,
+            [WINE_CHECK_MINGW_LIB(jpeg,jpeg_start_decompress,[:],[JPEG_PE_CFLAGS=""; JPEG_PE_LIBS=""],[$JPEG_PE_LIBS])],
+            [JPEG_PE_CFLAGS=""; JPEG_PE_LIBS=""],
+            [#include <stddef.h>
+             #include <stdio.h>])])
+    if test "x$JPEG_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([libjpeg ${notice_platform}MinGW development files not found; using bundled version.])
+    fi
+
     WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
         [WINE_CHECK_MINGW_HEADER(zlib.h,
             [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],
