@@ -248,3 +248,14 @@ NTSTATUS WINAPI BTCpuResetToConsistentState( EXCEPTION_POINTERS *ptrs )
     context->Rsp = context->R14;
     return STATUS_SUCCESS;
 }
+
+
+/**********************************************************************
+ *           BTCpuTurboThunkControl  (wow64cpu.@)
+ */
+NTSTATUS WINAPI BTCpuTurboThunkControl( ULONG enable )
+{
+    if (enable) return STATUS_NOT_SUPPORTED;
+    /* we don't have turbo thunks yet */
+    return STATUS_SUCCESS;
+}
