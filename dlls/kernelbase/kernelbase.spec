@@ -1393,7 +1393,7 @@
 @ stdcall SearchPathA(str str str long ptr ptr)
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetAclInformation(ptr ptr long long)
-# @ stub SetCachedSigningLevel
+@ stdcall SetCachedSigningLevel(ptr long long long)
 @ stdcall SetCalendarInfoW(long long long wstr)
 # @ stub SetClientDynamicTimeZoneInformation
 # @ stub SetClientTimeZoneInformation

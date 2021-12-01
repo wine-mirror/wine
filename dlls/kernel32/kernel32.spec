@@ -1343,6 +1343,7 @@
 @ stdcall -import SearchPathA(str str str long ptr ptr)
 @ stdcall -import SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetCPGlobal(long)
+@ stdcall -import SetCachedSigningLevel(ptr long long long)
 @ stdcall SetCalendarInfoA(long long long str)
 @ stdcall -import SetCalendarInfoW(long long long wstr)
 # @ stub SetClientTimeZoneInformation

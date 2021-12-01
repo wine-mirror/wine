@@ -1547,3 +1547,12 @@ BOOL WINAPI SetAclInformation( PACL acl, LPVOID info, DWORD len, ACL_INFORMATION
     FIXME( "%p %p 0x%08x 0x%08x - stub\n", acl, info, len, class );
     return TRUE;
 }
+
+/******************************************************************************
+ * SetCachedSigningLevel    (kernelbase.@)
+ */
+BOOL WINAPI SetCachedSigningLevel( PHANDLE source, ULONG count, ULONG flags, HANDLE file )
+{
+    FIXME( "%p %u %u %p - stub\n", source, count, flags, file );
+    return TRUE;
+}

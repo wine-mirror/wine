@@ -87,7 +87,7 @@
 @ stub QuerySecurityAccessMask
 @ stdcall RevertToSelf() advapi32.RevertToSelf
 @ stdcall SetAclInformation(ptr ptr long long) advapi32.SetAclInformation
-@ stub SetCachedSigningLevel
+@ stdcall SetCachedSigningLevel(ptr long long long) kernelbase.SetCachedSigningLevel
 @ stdcall SetFileSecurityW(wstr long ptr) advapi32.SetFileSecurityW
 @ stdcall SetKernelObjectSecurity(long long ptr) advapi32.SetKernelObjectSecurity
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long) advapi32.SetPrivateObjectSecurity
