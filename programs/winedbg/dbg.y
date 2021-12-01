@@ -458,9 +458,11 @@ struct parser_context
     HANDLE input;
     HANDLE output;
     unsigned line_no;
+    char*  last_line;
+    size_t last_line_idx;
 };
 
-static struct parser_context dbg_parser = {NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, 0};
+static struct parser_context dbg_parser = {NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, 0, NULL, 0};
 
 static int input_fetch_entire_line(const char* pfx, char** line)
 {
@@ -504,11 +506,9 @@ static int input_fetch_entire_line(const char* pfx, char** line)
 size_t input_lex_read_buffer(char* buf, int size)
 {
     int len;
-    static char*  last_line = NULL;
-    static size_t last_line_idx = 0;
 
     /* try first to fetch the remaining of an existing line */
-    if (last_line_idx == 0)
+    if (dbg_parser.last_line_idx == 0)
     {
         char* tmp = NULL;
         /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
@@ -527,22 +527,22 @@ size_t input_lex_read_buffer(char* buf, int size)
         /* FIXME: should have a pair of buffers, and switch between the two, instead of
          * reallocating a new one for each line
          */
-        if (last_line && (len == 0 || (len == 1 && tmp[0] == '\n')))
+        if (dbg_parser.last_line && (len == 0 || (len == 1 && tmp[0] == '\n')))
         {
             HeapFree(GetProcessHeap(), 0, tmp);
         }
         else
         {
-            HeapFree(GetProcessHeap(), 0, last_line);
-            last_line = tmp;
+            HeapFree(GetProcessHeap(), 0, dbg_parser.last_line);
+            dbg_parser.last_line = tmp;
         }
     }
 
-    len = min(strlen(last_line + last_line_idx), size - 1);
-    memcpy(buf, last_line + last_line_idx, len);
+    len = min(strlen(dbg_parser.last_line + dbg_parser.last_line_idx), size - 1);
+    memcpy(buf, dbg_parser.last_line + dbg_parser.last_line_idx, len);
     buf[len] = '\0';
-    if ((last_line_idx += len) >= strlen(last_line))
-        last_line_idx = 0;
+    if ((dbg_parser.last_line_idx += len) >= strlen(dbg_parser.last_line))
+        dbg_parser.last_line_idx = 0;
     return len;
 }
 
@@ -585,6 +585,8 @@ void	parser_handle(const char* filename, HANDLE input)
     }
     dbg_parser.line_no = 0;
     dbg_parser.filename = filename;
+    dbg_parser.last_line = NULL;
+    dbg_parser.last_line_idx = 0;
     do
     {
        __TRY
