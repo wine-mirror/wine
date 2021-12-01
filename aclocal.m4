@@ -64,6 +64,15 @@ AC_CHECK_TOOL(READELF,[readelf],true)])
 AC_DEFUN([WINE_PATH_PKG_CONFIG],
 [WINE_CHECK_HOST_TOOL(PKG_CONFIG,[pkg-config])])
 
+AC_DEFUN([WINE_PATH_MINGW_PKG_CONFIG],
+[case "$host_cpu" in
+  i[[3456789]]86*)
+    ac_prefix_list="m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-w64-mingw32-pkg-config ])" ;;
+  *)
+    ac_prefix_list="$host_cpu-w64-mingw32-pkg-config" ;;
+esac
+AC_CHECK_PROGS(MINGW_PKG_CONFIG,[$ac_prefix_list],false)])
+
 dnl **** Extract the soname of a library ****
 dnl
 dnl Usage: WINE_CHECK_SONAME(library, function, [action-if-found, [action-if-not-found, [other_libraries, [pattern]]]])
@@ -120,6 +129,28 @@ AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 libs: $ac_libs"]) >&AS_MESSAGE_LOG_FD
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
 $6
+CPPFLAGS=$ac_save_CPPFLAGS
+AS_VAR_POPDEF([ac_libs])dnl
+AS_VAR_POPDEF([ac_cflags])])dnl
+
+dnl **** Get flags from MinGW pkg-config or alternate xxx-config program ****
+dnl
+dnl Usage: WINE_MINGW_PACKAGE_FLAGS(var,pkg-name,[default-lib,[checks]])
+dnl
+AC_DEFUN([WINE_MINGW_PACKAGE_FLAGS],
+[AC_REQUIRE([WINE_PATH_MINGW_PKG_CONFIG])dnl
+AS_VAR_PUSHDEF([ac_cflags],[[$1]_PE_CFLAGS])dnl
+AS_VAR_PUSHDEF([ac_libs],[[$1]_PE_LIBS])dnl
+AS_VAR_IF([ac_cflags],[],
+      [AS_VAR_SET_IF([MINGW_PKG_CONFIG],
+      [ac_cflags=`$MINGW_PKG_CONFIG --cflags [$2] 2>/dev/null`])])
+AS_VAR_IF([ac_libs],[],
+      [AS_VAR_SET_IF([MINGW_PKG_CONFIG],
+      [ac_libs=`$MINGW_PKG_CONFIG --libs [$2] 2>/dev/null`])])
+m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $ac_cflags"
+$4
 CPPFLAGS=$ac_save_CPPFLAGS
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
@@ -187,6 +218,44 @@ CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
 ac_exeext=$ac_wine_try_cflags_saved_exeext])
 AS_VAR_IF([ac_var],[yes],[m4_default([$2], [EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS $1"])], [$3])dnl
+AS_VAR_POPDEF([ac_var])])
+
+dnl **** Check whether the given MinGW header is available ****
+dnl
+dnl Usage: WINE_CHECK_MINGW_HEADER(header,[action-if-found],[action-if-not-found],[other-includes])
+dnl
+AC_DEFUN([WINE_CHECK_MINGW_HEADER],
+[AS_VAR_PUSHDEF([ac_var],[ac_cv_mingw_header_$1])dnl
+AC_CACHE_CHECK([for MinGW $1], ac_var,
+[ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+CC="$CROSSCC"
+ac_exeext=".exe"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[$4
+#include <$1>]])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])])
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext])
+AS_VAR_IF([ac_var],[yes],[$2],[$3])dnl
+AS_VAR_POPDEF([ac_var])])
+
+dnl **** Check whether the given MinGW library is available ****
+dnl
+dnl Usage: WINE_CHECK_MINGW_LIB(library,function,[action-if-found],[action-if-not-found],[other-libraries])
+dnl
+AC_DEFUN([WINE_CHECK_MINGW_LIB],
+[AS_VAR_PUSHDEF([ac_var],[ac_cv_mingw_lib_$1])dnl
+AC_CACHE_CHECK([for $2 in MinGW -l$1], ac_var,
+[ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+ac_wine_check_headers_saved_libs=$LIBS
+CC="$CROSSCC"
+ac_exeext=".exe"
+LIBS="-l$1 $5 $LIBS"
+AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])])
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+LIBS=$ac_wine_check_headers_saved_libs])
+AS_VAR_IF([ac_var],[yes],[$3],[$4])dnl
 AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check if we can link an empty shared lib (no main) with special CFLAGS ****

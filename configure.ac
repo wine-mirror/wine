@@ -1033,6 +1033,18 @@ WINE_NOTICE_WITH(mingw,[test "x$CROSSTARGET" = "x"],
 
 dnl **** External libraries ****
 
+if test "x$with_system_dllpath" != "x" -a "$CROSSCC" != "false"
+then
+    WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
+        [WINE_CHECK_MINGW_HEADER(zlib.h,
+            [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],
+            [ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""])])
+    if test "x$ZLIB_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([zlib ${notice_platform}MinGW development files not found; using bundled version.])
+    fi
+fi
+
 WINE_EXTLIB_FLAGS(FAUDIO, faudio, "faudio mfplat mfreadwrite mfuuid propsys", "-I\$(top_srcdir)/libs/faudio/include")
 WINE_EXTLIB_FLAGS(GSM, gsm, gsm, "-I\$(top_srcdir)/libs/gsm/inc")
 WINE_EXTLIB_FLAGS(JPEG, jpeg, jpeg, "-I\$(top_srcdir)/libs/jpeg")
