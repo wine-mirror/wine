@@ -850,14 +850,6 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Rbx = from->integer.i386_regs.ebx;
             to->Rsi = from->integer.i386_regs.esi;
             to->Rdi = from->integer.i386_regs.edi;
-            to->R8  = 0;
-            to->R9  = 0;
-            to->R10 = 0;
-            to->R11 = 0;
-            to->R12 = 0;
-            to->R13 = 0;
-            to->R14 = 0;
-            to->R15 = 0;
         }
         if ((from->flags & SERVER_CTX_SEGMENTS) && (to_flags & CONTEXT_AMD64_SEGMENTS))
         {
