@@ -3855,6 +3855,8 @@ static void load_global_options(void)
 
 static void (WINAPI *pWow64LdrpInitialize)( CONTEXT *ctx );
 
+void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context ) = NULL;
+
 static void init_wow64( CONTEXT *context )
 {
     if (!imports_fixup_done)
@@ -3874,6 +3876,7 @@ static void init_wow64( CONTEXT *context )
         if (!(p ## name = RtlFindExportedRoutineByName( wow64, #name ))) ERR( "failed to load %s\n", #name )
 
         GET_PTR( Wow64LdrpInitialize );
+        GET_PTR( Wow64PrepareForException );
 #undef GET_PTR
         imports_fixup_done = TRUE;
     }
