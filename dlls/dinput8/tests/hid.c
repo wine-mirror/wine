@@ -8637,6 +8637,82 @@ static void test_device_managed_effect(void)
             .report_buf = {3,0x01,0x03,0x08,0x01,0x00,0x06,0x00,0x01,0x55,0x00},
         },
     };
+    struct hid_expect expect_create_delay[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 2,
+            .report_len = 2,
+            .report_buf = {2,0x03},
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 3,
+            .report_len = 5,
+            .report_buf = {3,0x01,0x01,0x00,0x00},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 4,
+            .report_len = 8,
+            .report_buf = {4,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 4,
+            .report_len = 8,
+            .report_buf = {4,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {3,0x01,0x03,0x08,0x01,0x00,0xff,0x7f,0x01,0x55,0x00},
+        },
+    };
+    struct hid_expect expect_create_duration[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 2,
+            .report_len = 2,
+            .report_buf = {2,0x03},
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 3,
+            .report_len = 5,
+            .report_buf = {3,0x01,0x01,0x00,0x00},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 4,
+            .report_len = 8,
+            .report_buf = {4,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 4,
+            .report_len = 8,
+            .report_buf = {4,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {3,0x01,0x03,0x08,0x00,0x00,0x00,0x00,0x01,0x55,0x00},
+        },
+    };
     struct hid_expect expect_start =
     {
         /* effect control */
@@ -8827,6 +8903,7 @@ static void test_device_managed_effect(void)
     IDirectInputEffect *effect;
     HANDLE file, event;
     ULONG res, ref;
+    DIEFFECT desc;
     DWORD flags;
     HRESULT hr;
     HWND hwnd;
@@ -9059,6 +9136,58 @@ static void test_device_managed_effect(void)
 
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
+
+    /* start delay has no direct effect on effect status */
+    desc = expect_desc;
+    desc.dwStartDelay = 32767000;
+    set_hid_expect( file, expect_create_delay, sizeof(expect_create_delay) );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    ok( res == 0, "got status %#x\n", res );
+    set_hid_expect( file, &expect_start, sizeof(expect_start) );
+    hr = IDirectInputEffect_Start( effect, 1, 0 );
+    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_destroy, sizeof(expect_destroy) );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %d\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    /* duration has no direct effect on effect status */
+    desc = expect_desc;
+    desc.dwDuration = 100;
+    desc.dwStartDelay = 0;
+    set_hid_expect( file, expect_create_duration, sizeof(expect_create_duration) );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    ok( res == 0, "got status %#x\n", res );
+    set_hid_expect( file, &expect_start, sizeof(expect_start) );
+    hr = IDirectInputEffect_Start( effect, 1, 0 );
+    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    Sleep( 100 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_destroy, sizeof(expect_destroy) );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %d\n", ref );
+    set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_reset, sizeof(struct hid_expect) );
     hr = IDirectInputDevice8_Unacquire( device );
