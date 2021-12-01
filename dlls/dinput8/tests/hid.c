@@ -765,21 +765,25 @@ static BOOL sync_ioctl_( int line, HANDLE file, DWORD code, void *in_buf, DWORD 
     return ret;
 }
 
+#define fill_context( line, a, b ) \
+    do { \
+        const char *source_file; \
+        source_file = strrchr( __FILE__, '/' ); \
+        if (!source_file) source_file = strrchr( __FILE__, '\\' ); \
+        if (!source_file) source_file = __FILE__; \
+        else source_file++; \
+        snprintf( a, b, "%s:%d", source_file, line ); \
+    } while (0)
+
 #define set_hid_expect( a, b, c ) set_hid_expect_( __LINE__, a, b, c )
 static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, DWORD expect_size )
 {
-    const char *source_file;
+    char context[64];
     BOOL ret;
-    int i;
 
-    source_file = strrchr( __FILE__, '/' );
-    if (!source_file) source_file = strrchr( __FILE__, '\\' );
-    if (!source_file) source_file = __FILE__;
-    else source_file++;
-
-    for (i = 0; i < expect_size / sizeof(struct hid_expect); ++i)
-        snprintf( expect[i].context, ARRAY_SIZE(expect[i].context), "%s:%d", source_file, line );
-
+    fill_context( line, context, ARRAY_SIZE(context) );
+    ret = sync_ioctl_( line, file, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
+    ok_(__FILE__, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %u\n", GetLastError() );
     ret = sync_ioctl_( line, file, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
     ok_(__FILE__, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
 }
@@ -796,18 +800,12 @@ static void wait_hid_expect_( int line, HANDLE file, DWORD timeout )
 #define send_hid_input( a, b, c ) send_hid_input_( __LINE__, a, b, c )
 static void send_hid_input_( int line, HANDLE file, struct hid_expect *expect, DWORD expect_size )
 {
-    const char *source_file;
+    char context[64];
     BOOL ret;
-    int i;
 
-    source_file = strrchr( __FILE__, '/' );
-    if (!source_file) source_file = strrchr( __FILE__, '\\' );
-    if (!source_file) source_file = __FILE__;
-    else source_file++;
-
-    for (i = 0; i < expect_size / sizeof(struct hid_expect); ++i)
-        snprintf( expect[i].context, ARRAY_SIZE(expect[i].context), "%s:%d", source_file, line );
-
+    fill_context( line, context, ARRAY_SIZE(context) );
+    ret = sync_ioctl_( line, file, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
+    ok_(__FILE__, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %u\n", GetLastError() );
     ret = sync_ioctl( file, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0, INFINITE );
     ok( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %u\n", GetLastError() );
 }
@@ -2750,6 +2748,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     };
 
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    char context[64];
     LSTATUS status;
     HKEY hkey;
 
@@ -2780,6 +2779,10 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, (void *)&expect_in, polled ? sizeof(expect_in) : 0 );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+
+    fill_context( __LINE__, context, ARRAY_SIZE(context) );
+    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled, &caps );
@@ -3102,6 +3105,7 @@ static void test_hidp_kdr(void)
     PHIDP_PREPARSED_DATA preparsed_data;
     DWORD i, report_id = 0, polled = 0;
     struct hidp_kdr *kdr;
+    char context[64];
     LSTATUS status;
     HDEVINFO set;
     HANDLE file;
@@ -3135,6 +3139,10 @@ static void test_hidp_kdr(void)
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+
+    fill_context( __LINE__, context, ARRAY_SIZE(context) );
+    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     if (!pnp_driver_start( L"driver_hid.dll" )) goto done;
@@ -3291,8 +3299,9 @@ static void cleanup_registry_keys(void)
     RegCloseKey( root_key );
 }
 
-static BOOL dinput_driver_start( const BYTE *desc_buf, ULONG desc_len, const HIDP_CAPS *caps,
-                                 struct hid_expect *expect, ULONG expect_size )
+#define dinput_driver_start( a, b, c, d, e ) dinput_driver_start_( __LINE__, a, b, c, d, e )
+static BOOL dinput_driver_start_( int line, const BYTE *desc_buf, ULONG desc_len, const HIDP_CAPS *caps,
+                                  struct hid_expect *expect, ULONG expect_size )
 {
     static const HID_DEVICE_ATTRIBUTES attributes =
     {
@@ -3303,26 +3312,30 @@ static BOOL dinput_driver_start( const BYTE *desc_buf, ULONG desc_len, const HID
     };
     DWORD report_id = 1;
     DWORD polled = 0;
+    char context[64];
     LSTATUS status;
     HKEY hkey;
 
     status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
                               0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegCreateKeyExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)desc_buf, desc_len );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)caps, sizeof(*caps) );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, (void *)expect, expect_size );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
     status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#x\n", status );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
+    fill_context( line, context, ARRAY_SIZE(context) );
+    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
+    ok_(__FILE__, line)( !status, "RegSetValueExW returned %#x\n", status );
 
     return pnp_driver_start( L"driver_hid.dll" );
 }
