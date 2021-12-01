@@ -1282,3 +1282,36 @@ BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
     unlock_display_devices();
     return !!found;
 }
+
+/***********************************************************************
+ *	     NtUserEnumDisplaySettings    (win32u.@)
+ */
+BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
+                                       DEVMODEW *dev_mode, DWORD flags )
+{
+    WCHAR device_name[CCHDEVICENAME];
+    struct adapter *adapter;
+    BOOL ret;
+
+    TRACE( "%s %#x %p %#x\n", debugstr_us(device), mode, dev_mode, flags );
+
+    if (!lock_display_devices()) return FALSE;
+    if ((adapter = find_adapter( device ))) lstrcpyW( device_name, adapter->dev.device_name );
+    unlock_display_devices();
+    if (!adapter)
+    {
+        WARN( "Invalid device name %s.\n", debugstr_us(device) );
+        return FALSE;
+    }
+
+    ret = user_driver->pEnumDisplaySettingsEx( device_name, mode, dev_mode, flags );
+    if (ret)
+        TRACE( "device:%s mode index:%#x position:(%d,%d) resolution:%ux%u frequency:%uHz "
+               "depth:%ubits orientation:%#x.\n", debugstr_w(device_name), mode,
+               dev_mode->dmPosition.x, dev_mode->dmPosition.y, dev_mode->dmPelsWidth,
+               dev_mode->dmPelsHeight, dev_mode->dmDisplayFrequency, dev_mode->dmBitsPerPel,
+               dev_mode->dmDisplayOrientation );
+    else
+        WARN( "Failed to query %s display settings.\n", wine_dbgstr_w(device_name) );
+    return ret;
+}

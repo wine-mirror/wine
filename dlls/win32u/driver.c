@@ -263,18 +263,18 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     }
     case BITSPIXEL:
     {
+        UNICODE_STRING display;
         DEVMODEW devmode;
-        WCHAR *display;
         DC *dc;
 
-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
             dc = get_nulldrv_dc( dev );
-            display = dc->display[0] ? dc->display : NULL;
             memset( &devmode, 0, sizeof(devmode) );
             devmode.dmSize = sizeof(devmode);
-            if (user_callbacks->pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode )
-                && devmode.dmFields & DM_BITSPERPEL && devmode.dmBitsPerPel)
+            init_unicode_string( &display, dc->display );
+            if (NtUserEnumDisplaySettings( &display, ENUM_CURRENT_SETTINGS, &devmode, 0 ) &&
+                (devmode.dmFields & DM_BITSPERPEL) && devmode.dmBitsPerPel)
                 return devmode.dmBitsPerPel;
         }
         return 32;
@@ -313,24 +313,21 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case SCALINGFACTORY:  return 0;
     case VREFRESH:
     {
+        UNICODE_STRING display;
         DEVMODEW devmode;
-        WCHAR *display;
         DC *dc;
 
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) != DT_RASDISPLAY)
             return 0;
 
-        if (user_callbacks)
-        {
-            dc = get_nulldrv_dc( dev );
+        dc = get_nulldrv_dc( dev );
 
-            memset( &devmode, 0, sizeof(devmode) );
-            devmode.dmSize = sizeof(devmode);
-            display = dc->display[0] ? dc->display : NULL;
-            if (user_callbacks->pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode ))
-                return devmode.dmDisplayFrequency ? devmode.dmDisplayFrequency : 1;
-        }
-
+        memset( &devmode, 0, sizeof(devmode) );
+        devmode.dmSize = sizeof(devmode);
+        init_unicode_string( &display, dc->display );
+        if (NtUserEnumDisplaySettings( &display, ENUM_CURRENT_SETTINGS, &devmode, 0 ) &&
+            devmode.dmDisplayFrequency)
+            return devmode.dmDisplayFrequency;
         return 1;
     }
     case DESKTOPHORZRES:
@@ -1044,6 +1041,11 @@ static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
+static BOOL CDECL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
+{
+    return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
+}
+
 static void CDECL loaderdrv_UpdateClipboard(void)
 {
     load_driver()->pUpdateClipboard();
@@ -1064,6 +1066,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
+    .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
     .pScrollDC = nulldrv_ScrollDC,

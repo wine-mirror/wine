@@ -1170,6 +1170,7 @@ static struct unix_funcs unix_funcs =
     NtUserActivateKeyboardLayout,
     NtUserCountClipboardFormats,
     NtUserEnumDisplayDevices,
+    NtUserEnumDisplaySettings,
     NtUserGetDisplayConfigBufferSizes,
     NtUserGetKeyNameText,
     NtUserGetKeyboardLayoutList,

@@ -38,7 +38,6 @@ struct user_callbacks
     INT (WINAPI *pGetSystemMetrics)(INT);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     BOOL (WINAPI *pEnumDisplayMonitors)( HDC, LPRECT, MONITORENUMPROC, LPARAM );
-    BOOL (WINAPI *pEnumDisplaySettingsW)(LPCWSTR, DWORD, LPDEVMODEW );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)( DPI_AWARENESS_CONTEXT );
     HWND (WINAPI *pWindowFromDC)( HDC );
@@ -200,6 +199,8 @@ struct unix_funcs
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
     BOOL     (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,
                                                   DISPLAY_DEVICEW *info, DWORD flags );
+    BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
+                                                   DEVMODEW *dev_mode, DWORD flags );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
                                                            UINT32 *num_mode_info );
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
@@ -392,6 +393,13 @@ DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *sr
 static inline BOOL is_win9x(void)
 {
     return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
+}
+
+static inline void init_unicode_string( UNICODE_STRING *str, const WCHAR *data )
+{
+    str->Length = lstrlenW(data) * sizeof(WCHAR);
+    str->MaximumLength = str->Length + sizeof(WCHAR);
+    str->Buffer = (WCHAR *)data;
 }
 
 static inline const char *debugstr_us( const UNICODE_STRING *us )

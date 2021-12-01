@@ -66,6 +66,8 @@ HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK m
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
 BOOL    WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                          DISPLAY_DEVICEW *info, DWORD flags );
+BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
+                                          DEVMODEW *dev_mode, DWORD flags );
 INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
 HWND    WINAPI NtUserGetClipboardOwner(void);
 DWORD   WINAPI NtUserGetClipboardSequenceNumber(void);

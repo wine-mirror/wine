@@ -612,6 +612,12 @@ BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
     return unix_funcs->pNtUserEnumDisplayDevices( device, index, info, flags );
 }
 
+BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
+                                       DEVMODEW *dev_mode, DWORD flags )
+{
+    return unix_funcs->pNtUserEnumDisplaySettings( device, mode, dev_mode, flags );
+}
+
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                UINT32 *num_mode_info )
 {
@@ -821,14 +827,6 @@ static BOOL WINAPI call_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPRO
     return pEnumDisplayMonitors && pEnumDisplayMonitors( hdc, rect, proc, lparam );
 }
 
-static BOOL WINAPI call_EnumDisplaySettingsW( const WCHAR *device, DWORD mode, DEVMODEW *devmode )
-{
-    static BOOL (WINAPI *pEnumDisplaySettingsW)(LPCWSTR, DWORD, LPDEVMODEW );
-    if (!pEnumDisplaySettingsW)
-        pEnumDisplaySettingsW = get_user_proc( "EnumDisplaySettingsW", FALSE );
-    return pEnumDisplaySettingsW && pEnumDisplaySettingsW( device, mode, devmode );
-}
-
 static BOOL WINAPI call_RedrawWindow( HWND hwnd, const RECT *rect, HRGN rgn, UINT flags )
 {
     static BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
@@ -861,7 +859,6 @@ static const struct user_callbacks user_funcs =
     call_GetSystemMetrics,
     call_GetWindowRect,
     call_EnumDisplayMonitors,
-    call_EnumDisplaySettingsW,
     call_RedrawWindow,
     call_SetThreadDpiAwarenessContext,
     call_WindowFromDC,

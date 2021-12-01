@@ -274,11 +274,6 @@ static BOOL CDECL loaderdrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITOREN
     return load_driver()->pEnumDisplayMonitors( hdc, rect, proc, lp );
 }
 
-static BOOL CDECL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
-{
-    return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
-}
-
 static BOOL CDECL loaderdrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 {
     return load_driver()->pGetMonitorInfo( handle, info );
@@ -345,7 +340,7 @@ static struct user_driver_funcs lazy_load_driver =
     /* display modes */
     loaderdrv_ChangeDisplaySettingsEx,
     loaderdrv_EnumDisplayMonitors,
-    loaderdrv_EnumDisplaySettingsEx,
+    NULL,
     loaderdrv_GetMonitorInfo,
     NULL,
     /* windowing functions */

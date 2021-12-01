@@ -3296,42 +3296,15 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
 
 
 /***********************************************************************
- *		EnumDisplaySettingsExW (USER32.@)
+ *             EnumDisplaySettingsExW (USER32.@)
  */
-BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
-                                   LPDEVMODEW lpDevMode, DWORD dwFlags)
+BOOL WINAPI EnumDisplaySettingsExW( const WCHAR *device, DWORD mode,
+                                    DEVMODEW *dev_mode, DWORD flags )
 {
-    WCHAR primary_adapter[CCHDEVICENAME];
-    BOOL ret;
-
-    TRACE("%s %#x %p %#x\n", wine_dbgstr_w(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
-
-    if (!lpszDeviceName)
-    {
-        if (!get_primary_adapter(primary_adapter))
-            return FALSE;
-
-        lpszDeviceName = primary_adapter;
-    }
-
-    if (!is_valid_adapter_name(lpszDeviceName))
-    {
-        ERR("Invalid device name %s.\n", wine_dbgstr_w(lpszDeviceName));
-        return FALSE;
-    }
-
-    ret = USER_Driver->pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
-    if (ret)
-        TRACE("device:%s mode index:%#x position:(%d,%d) resolution:%ux%u frequency:%uHz "
-              "depth:%ubits orientation:%#x.\n", wine_dbgstr_w(lpszDeviceName), iModeNum,
-              lpDevMode->u1.s2.dmPosition.x, lpDevMode->u1.s2.dmPosition.y, lpDevMode->dmPelsWidth,
-              lpDevMode->dmPelsHeight, lpDevMode->dmDisplayFrequency, lpDevMode->dmBitsPerPel,
-              lpDevMode->u1.s2.dmDisplayOrientation);
-    else
-        WARN("Failed to query %s display settings.\n", wine_dbgstr_w(lpszDeviceName));
-    return ret;
+    UNICODE_STRING str;
+    RtlInitUnicodeString( &str, device );
+    return NtUserEnumDisplaySettings( &str, mode, dev_mode, flags );
 }
-
 
 /**********************************************************************
  *              get_monitor_dpi

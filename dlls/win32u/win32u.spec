@@ -877,7 +877,7 @@
 @ stub NtUserEndPaint
 @ stdcall NtUserEnumDisplayDevices(ptr long ptr long)
 @ stub NtUserEnumDisplayMonitors
-@ stub NtUserEnumDisplaySettings
+@ stdcall NtUserEnumDisplaySettings(ptr long ptr long)
 @ stub NtUserEvent
 @ stub NtUserExcludeUpdateRgn
 @ stub NtUserFillWindow
