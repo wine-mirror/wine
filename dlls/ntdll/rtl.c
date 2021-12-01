@@ -474,6 +474,15 @@ void * WINAPI RtlGetElementGenericTable(RTL_GENERIC_TABLE *table, ULONG index)
 }
 
 /******************************************************************************
+ *  RtlLookupElementGenericTable           [NTDLL.@]
+ */
+void * WINAPI RtlLookupElementGenericTable(RTL_GENERIC_TABLE *table, void *buffer)
+{
+    FIXME("(%p, %p) stub!\n", table, buffer);
+    return NULL;
+}
+
+/******************************************************************************
  *  RtlMoveMemory   [NTDLL.@]
  *
  * Move a block of memory that may overlap.

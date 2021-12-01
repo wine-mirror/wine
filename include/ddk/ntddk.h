@@ -269,6 +269,7 @@ void *    WINAPI RtlGetElementGenericTable(PRTL_GENERIC_TABLE,ULONG);
 void      WINAPI RtlInitializeGenericTable(PRTL_GENERIC_TABLE,PRTL_GENERIC_COMPARE_ROUTINE,PRTL_GENERIC_ALLOCATE_ROUTINE,PRTL_GENERIC_FREE_ROUTINE,void *);
 void      WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE,PRTL_AVL_COMPARE_ROUTINE,PRTL_AVL_ALLOCATE_ROUTINE, PRTL_AVL_FREE_ROUTINE,void *);
 void      WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE,void *,ULONG,BOOL*);
+void *    WINAPI RtlLookupElementGenericTable(PRTL_GENERIC_TABLE,void *);
 ULONG     WINAPI RtlNumberGenericTableElements(PRTL_GENERIC_TABLE);
 
 #endif
