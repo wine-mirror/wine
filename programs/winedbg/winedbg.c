@@ -562,7 +562,7 @@ static int dbg_winedbg_usage(BOOL advanced)
     return 0;
 }
 
-void dbg_start_interactive(HANDLE hFile)
+void dbg_start_interactive(const char* filename, HANDLE hFile)
 {
     struct dbg_process* p;
     struct dbg_process* p2;
@@ -574,7 +574,7 @@ void dbg_start_interactive(HANDLE hFile)
     }
 
     dbg_interactiveP = TRUE;
-    parser_handle(hFile);
+    parser_handle(filename, hFile);
 
     LIST_FOR_EACH_ENTRY_SAFE(p, p2, &dbg_process_list, struct dbg_process, entry)
         p->process_io->close_process(p, FALSE);
@@ -624,6 +624,7 @@ int main(int argc, char** argv)
     int 	        retv = 0;
     HANDLE              hFile = INVALID_HANDLE_VALUE;
     enum dbg_start      ds;
+    const char*         filename = NULL;
 
     /* Initialize the output */
     dbg_houtput = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -688,6 +689,7 @@ int main(int argc, char** argv)
         if (!strcmp(argv[0], "--file") && argc > 1)
         {
             argc--; argv++;
+            filename = argv[0];
             hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
                                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
             if (hFile == INVALID_HANDLE_VALUE)
@@ -718,7 +720,7 @@ int main(int argc, char** argv)
 
     restart_if_wow64();
 
-    dbg_start_interactive(hFile);
+    dbg_start_interactive(filename, hFile);
 
     return 0;
 }

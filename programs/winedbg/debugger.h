@@ -309,7 +309,7 @@ extern HANDLE           display_crash_details(HANDLE event);
 extern int              msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UINT uType);
 
   /* dbg.y */
-extern void             parser_handle(HANDLE);
+extern void             parser_handle(const char*, HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
 extern int              input_fetch_entire_line(const char* pfx, char** line);
 extern HANDLE           WINAPIV parser_generate_command_file(const char*, ...);
@@ -476,7 +476,7 @@ extern void             dbg_del_thread(struct dbg_thread* t);
 extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
 extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size);
 extern void             dbg_set_option(const char*, const char*);
-extern void             dbg_start_interactive(HANDLE hFile);
+extern void             dbg_start_interactive(const char*, HANDLE hFile);
 extern void             dbg_init_console(void);
 
   /* gdbproxy.c */

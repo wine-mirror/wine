@@ -865,7 +865,7 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     case ID_DEBUG:
         AllocConsole();
         dbg_init_console();
-        dbg_start_interactive(INVALID_HANDLE_VALUE);
+        dbg_start_interactive(NULL, INVALID_HANDLE_VALUE);
         return start_ok;
     case ID_DETAILS:
         event = CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -882,7 +882,7 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
         dbg_active_wait_for_first_exception();
 
     dbg_interactiveP = TRUE;
-    parser_handle(input);
+    parser_handle(NULL, input);
     output_system_info();
 
     if (output != INVALID_HANDLE_VALUE)
@@ -963,7 +963,7 @@ enum dbg_start dbg_active_minidump(int argc, char* argv[])
         dbg_active_wait_for_first_exception();
 
     dbg_interactiveP = TRUE;
-    parser_handle(hFile);
+    parser_handle(NULL, hFile);
 
     return start_ok;
 }

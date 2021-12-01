@@ -452,8 +452,15 @@ static LONG WINAPI wine_dbg_cmd(EXCEPTION_POINTERS *eptr)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-static HANDLE dbg_parser_input;
-static HANDLE dbg_parser_output;
+struct parser_context
+{
+    const char* filename;
+    HANDLE input;
+    HANDLE output;
+    unsigned line_no;
+};
+
+static struct parser_context dbg_parser = {NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, 0};
 
 int      input_fetch_entire_line(const char* pfx, char** line)
 {
@@ -465,15 +472,16 @@ int      input_fetch_entire_line(const char* pfx, char** line)
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * console's
      */
-    WriteFile(dbg_parser_output, pfx, strlen(pfx), &nread, NULL);
+    WriteFile(dbg_parser.output, pfx, strlen(pfx), &nread, NULL);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, alloc = 16);
     assert(buffer != NULL);
 
+    dbg_parser.line_no++;
     len = 0;
     do
     {
-        if (!ReadFile(dbg_parser_input, &ch, 1, &nread, NULL) || nread == 0)
+        if (!ReadFile(dbg_parser.input, &ch, 1, &nread, NULL) || nread == 0)
         {
             HeapFree(GetProcessHeap(), 0, buffer);
             return -1;
@@ -513,25 +521,25 @@ int input_read_line(const char* pfx, char* buf, int size)
  *
  * Debugger command line parser
  */
-void	parser_handle(HANDLE input)
+void	parser_handle(const char* filename, HANDLE input)
 {
-    BOOL 	        ret_ok;
-    HANDLE              in_copy  = dbg_parser_input;
-    HANDLE              out_copy = dbg_parser_output;
+    BOOL ret_ok;
+    struct parser_context prev = dbg_parser;
 
     ret_ok = FALSE;
 
     if (input != INVALID_HANDLE_VALUE)
     {
-        dbg_parser_output = INVALID_HANDLE_VALUE;
-        dbg_parser_input  = input;
+        dbg_parser.output = INVALID_HANDLE_VALUE;
+        dbg_parser.input  = input;
     }
     else
     {
-        dbg_parser_output = GetStdHandle(STD_OUTPUT_HANDLE);
-        dbg_parser_input  = GetStdHandle(STD_INPUT_HANDLE);
+        dbg_parser.output = GetStdHandle(STD_OUTPUT_HANDLE);
+        dbg_parser.input  = GetStdHandle(STD_INPUT_HANDLE);
     }
-
+    dbg_parser.line_no = 0;
+    dbg_parser.filename = filename;
     do
     {
        __TRY
@@ -547,8 +555,7 @@ void	parser_handle(HANDLE input)
        lexeme_flush();
     } while (!ret_ok);
 
-    dbg_parser_input  = in_copy;
-    dbg_parser_output = out_copy;
+    dbg_parser = prev;
 }
 
 static void parser(const char* filename)
@@ -556,13 +563,15 @@ static void parser(const char* filename)
     HANDLE h = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
     if (h != INVALID_HANDLE_VALUE)
     {
-        parser_handle(h);
+        parser_handle(filename, h);
         CloseHandle(h);
     }
 }
 
 static int dbg_error(const char* s)
 {
+    if (dbg_parser.filename)
+        dbg_printf("%s:%d:", dbg_parser.filename, dbg_parser.line_no);
     dbg_printf("%s\n", s);
     return 0;
 }
