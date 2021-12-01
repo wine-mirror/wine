@@ -2832,8 +2832,8 @@ static const struct exception
       0, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 
     /* test iret to invalid selector */
-    { { 0x6a, 0x00, 0x6a, 0x00, 0x6a, 0x00, 0xcf, 0x83, 0xc4, 0x18, 0xc3 },
-      /* 15: pushq $0; pushq $0; pushq $0; iret; addl $24,%esp; ret */
+    { { 0x6a, 0x00, 0x6a, 0x00, 0x6a, 0x00, 0xcf, 0x48, 0x83, 0xc4, 0x18, 0xc3 },
+      /* 15: pushq $0; pushq $0; pushq $0; iret; addq $24,%rsp; ret */
       6, 1, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffffffffffff } },
 /* 15 */
     /* test loading an invalid selector */
