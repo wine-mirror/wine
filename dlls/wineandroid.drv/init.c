@@ -40,18 +40,11 @@ unsigned int screen_width = 0;
 unsigned int screen_height = 0;
 RECT virtual_screen_rect = { 0, 0, 0, 0 };
 
-MONITORINFOEXW default_monitor =
-{
-    sizeof(default_monitor),    /* cbSize */
-    { 0, 0, 0, 0 },             /* rcMonitor */
-    { 0, 0, 0, 0 },             /* rcWork */
-    MONITORINFOF_PRIMARY,       /* dwFlags */
-    { '\\','\\','.','\\','D','I','S','P','L','A','Y','1',0 }   /* szDevice */
-};
-
 static const unsigned int screen_bpp = 32;  /* we don't support other modes */
 
+static RECT monitor_rc_work;
 static int device_init_done;
+static BOOL force_display_devices_refresh;
 
 typedef struct
 {
@@ -72,14 +65,22 @@ void init_monitors( int width, int height )
 
     virtual_screen_rect.right = width;
     virtual_screen_rect.bottom = height;
-    default_monitor.rcMonitor = default_monitor.rcWork = virtual_screen_rect;
+    monitor_rc_work = virtual_screen_rect;
 
     if (!hwnd || !IsWindowVisible( hwnd )) return;
     if (!GetWindowRect( hwnd, &rect )) return;
-    if (rect.top) default_monitor.rcWork.bottom = rect.top;
-    else default_monitor.rcWork.top = rect.bottom;
+    if (rect.top) monitor_rc_work.bottom = rect.top;
+    else monitor_rc_work.top = rect.bottom;
     TRACE( "found tray %p %s work area %s\n", hwnd,
-           wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &default_monitor.rcWork ));
+           wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &monitor_rc_work ));
+
+    if (*p_java_vm) /* if we're notified from Java thread, update registry */
+    {
+        UINT32 num_path, num_mode;
+        force_display_devices_refresh = TRUE;
+        /* trigger refresh in win32u */
+        NtUserGetDisplayConfigBufferSizes( QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode );
+    }
 }
 
 
@@ -199,30 +200,22 @@ LONG CDECL ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 
 
 /***********************************************************************
- *           ANDROID_GetMonitorInfo
+ *           ANDROID_UpdateDisplayDevices
  */
-BOOL CDECL ANDROID_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+void CDECL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+                                         BOOL force, void *param )
 {
-    if (handle != (HMONITOR)1)
+    if (force || force_display_devices_refresh)
     {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
+        struct gdi_monitor gdi_monitor =
+        {
+            .rc_monitor = virtual_screen_rect,
+            .rc_work = monitor_rc_work,
+            .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
+        };
+        device_manager->add_monitor( &gdi_monitor, param );
+        force_display_devices_refresh = FALSE;
     }
-    info->rcMonitor = default_monitor.rcMonitor;
-    info->rcWork = default_monitor.rcWork;
-    info->dwFlags = default_monitor.dwFlags;
-    if (info->cbSize >= sizeof(MONITORINFOEXW))
-        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, default_monitor.szDevice );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           ANDROID_EnumDisplayMonitors
- */
-BOOL CDECL ANDROID_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    return proc( (HMONITOR)1, 0, &default_monitor.rcMonitor, lp );
 }
 
 
@@ -294,9 +287,8 @@ static const struct user_driver_funcs android_drv_funcs =
     .pVkKeyScanEx = ANDROID_VkKeyScanEx,
     .pSetCursor = ANDROID_SetCursor,
     .pChangeDisplaySettingsEx = ANDROID_ChangeDisplaySettingsEx,
-    .pEnumDisplayMonitors = ANDROID_EnumDisplayMonitors,
     .pEnumDisplaySettingsEx = ANDROID_EnumDisplaySettingsEx,
-    .pGetMonitorInfo = ANDROID_GetMonitorInfo,
+    .pUpdateDisplayDevices = ANDROID_UpdateDisplayDevices,
     .pCreateWindow = ANDROID_CreateWindow,
     .pDestroyWindow = ANDROID_DestroyWindow,
     .pMsgWaitForMultipleObjectsEx = ANDROID_MsgWaitForMultipleObjectsEx,
