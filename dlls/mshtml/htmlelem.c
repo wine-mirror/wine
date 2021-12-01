@@ -1158,6 +1158,9 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
                                                LONG lFlags, VARIANT *AttributeValue)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
+    compat_mode_t compat_mode = dispex_compat_mode(&This->node.event_target.dispex);
+    nsAString name_str, value_str;
+    nsresult nsres;
     DISPID dispid;
     HRESULT hres;
 
@@ -1166,33 +1169,28 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     if(lFlags & ~(ATTRFLAG_CASESENSITIVE|ATTRFLAG_ASSTRING))
         FIXME("Unsupported flags %x\n", lFlags);
 
-    if(This->dom_element && dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8) {
-        nsAString name_str, value_str;
-        nsresult nsres;
+    if(compat_mode < COMPAT_MODE_IE8 || !This->dom_element) {
+        hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
+                                     lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
+        if(FAILED(hres)) {
+            V_VT(AttributeValue) = VT_NULL;
+            return (hres == DISP_E_UNKNOWNNAME) ? S_OK : hres;
+        }
 
-        nsAString_InitDepend(&name_str, strAttributeName);
-        nsAString_InitDepend(&value_str, NULL);
-        nsres = nsIDOMElement_GetAttribute(This->dom_element, &name_str, &value_str);
-        nsAString_Finish(&name_str);
-        return return_nsstr_variant(nsres, &value_str, 0, AttributeValue);
-    }
+        hres = get_elem_attr_value_by_dispid(This, dispid, AttributeValue);
+        if(FAILED(hres))
+            return hres;
 
-    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
-            lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
-    if(hres == DISP_E_UNKNOWNNAME) {
-        V_VT(AttributeValue) = VT_NULL;
-        return S_OK;
-    }
-
-    if(FAILED(hres)) {
-        V_VT(AttributeValue) = VT_NULL;
+        if(lFlags & ATTRFLAG_ASSTRING)
+            hres = attr_value_to_string(AttributeValue);
         return hres;
     }
 
-    hres = get_elem_attr_value_by_dispid(This, dispid, AttributeValue);
-    if(SUCCEEDED(hres) && (lFlags & ATTRFLAG_ASSTRING))
-        hres = attr_value_to_string(AttributeValue);
-    return hres;
+    nsAString_InitDepend(&name_str, strAttributeName);
+    nsAString_InitDepend(&value_str, NULL);
+    nsres = nsIDOMElement_GetAttribute(This->dom_element, &name_str, &value_str);
+    nsAString_Finish(&name_str);
+    return return_nsstr_variant(nsres, &value_str, 0, AttributeValue);
 }
 
 static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strAttributeName,
