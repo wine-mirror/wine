@@ -8462,6 +8462,20 @@ static void test_device_managed_effect(void)
                 OUTPUT(1, Data|Var|Abs),
             END_COLLECTION,
 
+            USAGE(1, PID_USAGE_DEVICE_GAIN_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 6),
+
+                USAGE(1, PID_USAGE_DEVICE_GAIN),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
             USAGE(1, PID_USAGE_POOL_REPORT),
             COLLECTION(1, Logical),
                 REPORT_ID(1, 1),
@@ -8557,6 +8571,23 @@ static void test_device_managed_effect(void)
     static const HIDP_CAPS hid_caps =
     {
         .InputReportByteLength = 5,
+    };
+    struct hid_expect expect_acquire[] =
+    {
+        /* device reset */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x01},
+        },
+        /* device gain */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 2,
+            .report_buf = {6, 0xff},
+        },
     };
     struct hid_expect expect_reset[] =
     {
@@ -8835,7 +8866,7 @@ static void test_device_managed_effect(void)
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "SendForceFeedbackCommand returned %#x\n", hr );
 
-    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
     wait_hid_expect( file, 100 );
@@ -8901,7 +8932,7 @@ static void test_device_managed_effect(void)
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "GetEffectStatus returned %#x\n", hr );
 
-    set_hid_expect( file, expect_reset, sizeof(expect_reset) );
+    set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
     wait_hid_expect( file, 100 );
