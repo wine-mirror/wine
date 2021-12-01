@@ -1197,46 +1197,47 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
                                                   LONG lFlags, VARIANT_BOOL *pfSuccess)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
+    compat_mode_t compat_mode = dispex_compat_mode(&This->node.event_target.dispex);
     DISPID id;
     HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
-    if(dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8) {
-        *pfSuccess = element_has_attribute(This, strAttributeName);
-        if(*pfSuccess)
-            return element_remove_attribute(This, strAttributeName);
-        return S_OK;
-    }
-
-    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
-            lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
-    if(hres == DISP_E_UNKNOWNNAME) {
-        *pfSuccess = VARIANT_FALSE;
-        return S_OK;
-    }
-    if(FAILED(hres))
-        return hres;
-
-    if(id == DISPID_IHTMLELEMENT_STYLE) {
-        IHTMLStyle *style;
-
-        TRACE("Special case: style\n");
-
-        hres = IHTMLElement_get_style(&This->IHTMLElement_iface, &style);
+    if(compat_mode < COMPAT_MODE_IE8 || !This->dom_element) {
+        hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
+                                     lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
+        if(hres == DISP_E_UNKNOWNNAME) {
+            *pfSuccess = VARIANT_FALSE;
+            return S_OK;
+        }
         if(FAILED(hres))
             return hres;
 
-        hres = IHTMLStyle_put_cssText(style, NULL);
-        IHTMLStyle_Release(style);
-        if(FAILED(hres))
-            return hres;
+        if(id == DISPID_IHTMLELEMENT_STYLE) {
+            IHTMLStyle *style;
 
-        *pfSuccess = VARIANT_TRUE;
-        return S_OK;
+            TRACE("Special case: style\n");
+
+            hres = IHTMLElement_get_style(&This->IHTMLElement_iface, &style);
+            if(FAILED(hres))
+                return hres;
+
+            hres = IHTMLStyle_put_cssText(style, NULL);
+            IHTMLStyle_Release(style);
+            if(FAILED(hres))
+                return hres;
+
+            *pfSuccess = VARIANT_TRUE;
+            return S_OK;
+        }
+
+        return remove_attribute(&This->node.event_target.dispex, id, pfSuccess);
     }
 
-    return remove_attribute(&This->node.event_target.dispex, id, pfSuccess);
+    *pfSuccess = element_has_attribute(This, strAttributeName);
+    if(*pfSuccess)
+        return element_remove_attribute(This, strAttributeName);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
