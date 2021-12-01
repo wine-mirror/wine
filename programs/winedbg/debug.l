@@ -60,6 +60,34 @@ void lexeme_flush(void)
     next_lexeme = 0;
 }
 
+/* called with quoted string, unescape all elements inside the quotes */
+static char* unescape_string(const char* str)
+{
+    size_t len = strlen(str) - 2;
+    char* ret = lexeme_alloc_size(len + 1);
+    char* dst = ret;
+    const char* ptr;
+    for (ptr = str + 1; ptr < str + 1 + len; ptr++)
+    {
+        if (*ptr == '\\')
+        {
+            switch (*++ptr)
+            {
+            case 't':  *dst++ = '\t'; break;
+            case 'r':  *dst++ = '\r'; break;
+            case 'n':  *dst++ = '\n'; break;
+            case '\\': *dst++ = '\\'; break;
+            case '"':  *dst++ = '"';  break;
+            default: *dst++ = '\\'; *dst++ = *ptr; /* not handled, don't change */
+            }
+        }
+        else
+            *dst++ = *ptr;
+    }
+    *dst = '\0';
+    return ret;
+}
+
 #define YY_INPUT(buf,result,max_size) \
         (result = input_lex_read_buffer(buf, max_size))
 
@@ -72,7 +100,7 @@ HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswxa]
 IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*
 PATHNAME   [\\/_a-zA-Z0-9\.~@][\\/\-_a-zA-Z0-9\.~@]*
-STRING     \"[^\n"]+\"
+STRING     \"(\\[^\n]|[^\\"\n])*\"
 
 %s FORMAT_EXPECTED
 %s INFO_CMD
@@ -125,7 +153,7 @@ STRING     \"[^\n"]+\"
 
 <FORMAT_EXPECTED>"/"{FORMAT}          	{ dbg_lval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-{STRING} 				{ dbg_lval.string = lexeme_alloc(yytext + 1); dbg_lval.string[strlen(dbg_lval.string) - 1] = '\0'; return tSTRING; }
+{STRING} 				{ dbg_lval.string = unescape_string(yytext); return tSTRING;}
 <ASTRING_EXPECTED>[^\n]+                { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
                                           dbg_lval.string = lexeme_alloc(p); return tSTRING; }
 
