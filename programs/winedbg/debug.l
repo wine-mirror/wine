@@ -138,6 +138,7 @@ STRING     \"[^\n"]+\"
                                         if (!dbg_num_processes() && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
 
 <<EOF>>                                 { return tEOF; }
+<*>"#"[^\n]*                            /* Skip comments */
 <*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
                                         /* Indicates end of command. Reset state. */
 
