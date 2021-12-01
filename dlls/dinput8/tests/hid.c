@@ -8628,15 +8628,6 @@ static void test_device_managed_effect(void)
             .report_len = 2,
             .report_buf = {1, 0x04},
         },
-        /* device gain */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 2,
-            .report_buf = {6, 0xff},
-            .todo = TRUE,
-            .wine_only = TRUE,
-        },
     };
     struct hid_expect expect_disable_actuators[] =
     {
@@ -8646,15 +8637,6 @@ static void test_device_managed_effect(void)
             .report_id = 1,
             .report_len = 2,
             .report_buf = {1, 0x05},
-        },
-        /* device gain */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 2,
-            .report_buf = {6, 0xff},
-            .todo = TRUE,
-            .wine_only = TRUE,
         },
     };
     struct hid_expect expect_stop_all[] =
@@ -8666,15 +8648,6 @@ static void test_device_managed_effect(void)
             .report_len = 2,
             .report_buf = {1, 0x06},
         },
-        /* device gain */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 2,
-            .report_buf = {6, 0xff},
-            .todo = TRUE,
-            .wine_only = TRUE,
-        },
     };
     struct hid_expect expect_device_pause[] =
     {
@@ -8685,15 +8658,6 @@ static void test_device_managed_effect(void)
             .report_len = 2,
             .report_buf = {1, 0x02},
         },
-        /* device gain */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 2,
-            .report_buf = {6, 0xff},
-            .todo = TRUE,
-            .wine_only = TRUE,
-        },
     };
     struct hid_expect expect_device_continue[] =
     {
@@ -8703,15 +8667,6 @@ static void test_device_managed_effect(void)
             .report_id = 1,
             .report_len = 2,
             .report_buf = {1, 0x03},
-        },
-        /* device gain */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 2,
-            .report_buf = {6, 0xff},
-            .todo = TRUE,
-            .wine_only = TRUE,
         },
     };
     struct hid_expect expect_create[] =

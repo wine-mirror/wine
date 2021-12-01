@@ -1065,7 +1065,7 @@ static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *i
     if (status != HIDP_STATUS_SUCCESS) return status;
 
     if (!WriteFile( impl->device, report_buf, report_len, NULL, NULL )) return DIERR_INPUTLOST;
-    if (!unacquire) hid_joystick_send_device_gain( iface, impl->base.device_gain );
+    if (!unacquire && command == DISFFC_RESET) hid_joystick_send_device_gain( iface, impl->base.device_gain );
 
     return DI_OK;
 }
