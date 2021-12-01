@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-11-10 00:03+0100\n"
+"PO-Revision-Date: 2021-12-01 16:10+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -13263,13 +13263,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Actieve codetabel: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Ongeldig bericht.\n"
+msgstr "Ongeldige codetabel\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13282,6 +13280,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [nummer]\n"
+"\n"
+"  De actieve codetabel weergeven of instellen.\n"
+"\n"
+"  nummer   Stel het nummer van de codetabel in.\n"
+"\n"
+"  Gebruik CHCP zonder nummer om de huidige codetabel te laten zien.\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
