@@ -8254,10 +8254,15 @@ static void test_device_managed_effect(void)
                 USAGE(1, PID_USAGE_DEVICE_CONTROL),
                 COLLECTION(1, Logical),
                     USAGE(1, PID_USAGE_DC_DEVICE_RESET),
+                    USAGE(1, PID_USAGE_DC_DEVICE_PAUSE),
+                    USAGE(1, PID_USAGE_DC_DEVICE_CONTINUE),
+                    USAGE(1, PID_USAGE_DC_ENABLE_ACTUATORS),
+                    USAGE(1, PID_USAGE_DC_DISABLE_ACTUATORS),
+                    USAGE(1, PID_USAGE_DC_STOP_ALL_EFFECTS),
                     LOGICAL_MINIMUM(1, 1),
-                    LOGICAL_MAXIMUM(1, 2),
+                    LOGICAL_MAXIMUM(1, 6),
                     PHYSICAL_MINIMUM(1, 1),
-                    PHYSICAL_MAXIMUM(1, 2),
+                    PHYSICAL_MAXIMUM(1, 6),
                     REPORT_SIZE(1, 8),
                     REPORT_COUNT(1, 1),
                     OUTPUT(1, Data|Ary|Abs),
@@ -8393,6 +8398,24 @@ static void test_device_managed_effect(void)
             COLLECTION(1, Logical),
                 REPORT_ID(1, 4),
 
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_PARAMETER_BLOCK_OFFSET),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 4),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
                 USAGE(1, PID_USAGE_TYPE_SPECIFIC_BLOCK_OFFSET),
                 COLLECTION(1, Logical),
                     USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16)|1),
@@ -8405,9 +8428,6 @@ static void test_device_managed_effect(void)
                     REPORT_COUNT(1, 2),
                     OUTPUT(1, Data|Var|Abs),
                 END_COLLECTION,
-                REPORT_SIZE(1, 4),
-                REPORT_COUNT(1, 1),
-                OUTPUT(1, Cnst|Var|Abs),
 
                 USAGE(1, PID_USAGE_CP_OFFSET),
                 LOGICAL_MINIMUM(1, 0x80),
@@ -8560,8 +8580,8 @@ static void test_device_managed_effect(void)
                 LOGICAL_MAXIMUM(4, 0xffff),
                 PHYSICAL_MINIMUM(1, 0),
                 PHYSICAL_MAXIMUM(4, 0xffff),
-                REPORT_SIZE(1, 1),
-                REPORT_COUNT(1, 16),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 1),
                 FEATURE(1, Data|Var|Abs),
             END_COLLECTION,
         END_COLLECTION,
@@ -8574,7 +8594,7 @@ static void test_device_managed_effect(void)
     };
     struct hid_expect expect_acquire[] =
     {
-        /* device reset */
+        /* device control */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 1,
@@ -8591,12 +8611,107 @@ static void test_device_managed_effect(void)
     };
     struct hid_expect expect_reset[] =
     {
-        /* device reset */
+        /* device control */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 1,
             .report_len = 2,
             .report_buf = {1, 0x01},
+        },
+    };
+    struct hid_expect expect_enable_actuators[] =
+    {
+        /* device control */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x04},
+        },
+        /* device gain */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 2,
+            .report_buf = {6, 0xff},
+            .todo = TRUE,
+            .wine_only = TRUE,
+        },
+    };
+    struct hid_expect expect_disable_actuators[] =
+    {
+        /* device control */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x05},
+        },
+        /* device gain */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 2,
+            .report_buf = {6, 0xff},
+            .todo = TRUE,
+            .wine_only = TRUE,
+        },
+    };
+    struct hid_expect expect_stop_all[] =
+    {
+        /* device control */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x06},
+        },
+        /* device gain */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 2,
+            .report_buf = {6, 0xff},
+            .todo = TRUE,
+            .wine_only = TRUE,
+        },
+    };
+    struct hid_expect expect_device_pause[] =
+    {
+        /* device control */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x02},
+        },
+        /* device gain */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 2,
+            .report_buf = {6, 0xff},
+            .todo = TRUE,
+            .wine_only = TRUE,
+        },
+    };
+    struct hid_expect expect_device_continue[] =
+    {
+        /* device control */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1, 0x03},
+        },
+        /* device gain */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 2,
+            .report_buf = {6, 0xff},
+            .todo = TRUE,
+            .wine_only = TRUE,
         },
     };
     struct hid_expect expect_create[] =
@@ -8619,15 +8734,15 @@ static void test_device_managed_effect(void)
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 4,
-            .report_len = 8,
-            .report_buf = {4,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+            .report_len = 9,
+            .report_buf = {4,0x01,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
         },
         /* set condition */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 4,
-            .report_len = 8,
-            .report_buf = {4,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+            .report_len = 9,
+            .report_buf = {4,0x01,0x01,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
         },
         /* update effect */
         {
@@ -8635,6 +8750,44 @@ static void test_device_managed_effect(void)
             .report_id = 3,
             .report_len = 11,
             .report_buf = {3,0x01,0x03,0x08,0x01,0x00,0x06,0x00,0x01,0x55,0x00},
+        },
+    };
+    struct hid_expect expect_create_2[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 2,
+            .report_len = 2,
+            .report_buf = {2,0x03},
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 3,
+            .report_len = 5,
+            .report_buf = {3,0x02,0x01,0x00,0x00},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 4,
+            .report_len = 9,
+            .report_buf = {4,0x02,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+        },
+        /* set condition */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 4,
+            .report_len = 9,
+            .report_buf = {4,0x02,0x01,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {3,0x02,0x03,0x08,0x01,0x00,0x06,0x00,0x01,0x55,0x00},
         },
     };
     struct hid_expect expect_create_delay[] =
@@ -8657,15 +8810,15 @@ static void test_device_managed_effect(void)
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 4,
-            .report_len = 8,
-            .report_buf = {4,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+            .report_len = 9,
+            .report_buf = {4,0x01,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
         },
         /* set condition */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 4,
-            .report_len = 8,
-            .report_buf = {4,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+            .report_len = 9,
+            .report_buf = {4,0x01,0x01,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
         },
         /* update effect */
         {
@@ -8695,15 +8848,15 @@ static void test_device_managed_effect(void)
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 4,
-            .report_len = 8,
-            .report_buf = {4,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
+            .report_len = 9,
+            .report_buf = {4,0x01,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
         },
         /* set condition */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 4,
-            .report_len = 8,
-            .report_buf = {4,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
+            .report_len = 9,
+            .report_buf = {4,0x01,0x01,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
         },
         /* update effect */
         {
@@ -8721,6 +8874,14 @@ static void test_device_managed_effect(void)
         .report_len = 4,
         .report_buf = {2,0x01,0x01,0x01},
     };
+    struct hid_expect expect_start_2 =
+    {
+        /* effect control */
+        .code = IOCTL_HID_WRITE_REPORT,
+        .report_id = 2,
+        .report_len = 4,
+        .report_buf = {2,0x02,0x02,0x01},
+    };
     struct hid_expect expect_stop =
     {
         /* effect control */
@@ -8728,6 +8889,14 @@ static void test_device_managed_effect(void)
         .report_id = 2,
         .report_len = 4,
         .report_buf = {2,0x01,0x03,0x00},
+    };
+    struct hid_expect expect_stop_2 =
+    {
+        /* effect control */
+        .code = IOCTL_HID_WRITE_REPORT,
+        .report_id = 2,
+        .report_len = 4,
+        .report_buf = {2,0x02,0x03,0x00},
     };
     struct hid_expect expect_destroy[] =
     {
@@ -8744,6 +8913,23 @@ static void test_device_managed_effect(void)
             .report_id = 5,
             .report_len = 2,
             .report_buf = {5,0x01},
+        },
+    };
+    struct hid_expect expect_destroy_2[] =
+    {
+        /* effect operation */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 2,
+            .report_len = 4,
+            .report_buf = {2,0x02,0x03,0x00},
+        },
+        /* block free */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {5,0x02},
         },
     };
     struct hid_expect device_state_input[] =
@@ -8763,6 +8949,23 @@ static void test_device_managed_effect(void)
             .report_buf = {1,0x12,0x34,0x56,0xff},
         },
     };
+    struct hid_expect device_state_input_0[] =
+    {
+        /* effect state */
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_id = 2,
+            .report_len = 4,
+            .report_buf = {2,0xff,0x00,0xff},
+        },
+        /* device state */
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_id = 1,
+            .report_len = 5,
+            .report_buf = {1,0x56,0x12,0x34,0xff},
+        },
+    };
     struct hid_expect device_state_input_1[] =
     {
         /* effect state */
@@ -8770,7 +8973,7 @@ static void test_device_managed_effect(void)
             .code = IOCTL_HID_READ_REPORT,
             .report_id = 2,
             .report_len = 4,
-            .report_buf = {2,0x00,0x01,0x00},
+            .report_buf = {2,0x00,0x01,0x01},
         },
         /* device state */
         {
@@ -8787,7 +8990,7 @@ static void test_device_managed_effect(void)
             .code = IOCTL_HID_READ_REPORT,
             .report_id = 2,
             .report_len = 4,
-            .report_buf = {2,0x03,0x00,0x00},
+            .report_buf = {2,0x03,0x00,0x01},
         },
         /* device state */
         {
@@ -8804,7 +9007,7 @@ static void test_device_managed_effect(void)
             .code = IOCTL_HID_GET_FEATURE,
             .report_id = 1,
             .report_len = 5,
-            .report_buf = {1,0x10,0x00,0x01,0x03},
+            .report_buf = {1,0x10,0x00,0x04,0x03},
             .todo = TRUE,
         },
         /* device pool */
@@ -8812,7 +9015,7 @@ static void test_device_managed_effect(void)
             .code = IOCTL_HID_GET_FEATURE,
             .report_id = 1,
             .report_len = 5,
-            .report_buf = {1,0x10,0x00,0x01,0x03},
+            .report_buf = {1,0x10,0x00,0x04,0x03},
             .todo = TRUE,
         },
     };
@@ -8900,7 +9103,7 @@ static void test_device_managed_effect(void)
     DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     IDirectInputDevice8W *device;
-    IDirectInputEffect *effect;
+    IDirectInputEffect *effect, *effect2;
     HANDLE file, event;
     ULONG res, ref;
     DIEFFECT desc;
@@ -9058,11 +9261,156 @@ static void test_device_managed_effect(void)
     ok( hr == DI_OK, "Start returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
+    set_hid_expect( file, expect_create_2, sizeof(expect_create_2) );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &expect_desc, &effect2, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    set_hid_expect( file, &expect_start_2, sizeof(expect_start_2) );
+    hr = IDirectInputEffect_Start( effect2, 1, DIES_SOLO );
+    ok( hr == DI_OK, "Start returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect2, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
     todo_wine
     ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, &expect_stop_2, sizeof(expect_stop_2) );
+    hr = IDirectInputEffect_Stop( effect2 );
+    ok( hr == DI_OK, "Stop returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect2, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    ok( res == 0, "got status %#x\n", res );
+    set_hid_expect( file, expect_destroy_2, sizeof(expect_destroy_2) );
+    ref = IDirectInputEffect_Release( effect2 );
+    ok( ref == 0, "Release returned %d\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    /* sending commands has no direct effect on status */
+    set_hid_expect( file, expect_stop_all, sizeof(expect_stop_all) );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_STOPALL );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_STOPPED;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_device_pause, sizeof(expect_device_pause) );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_PAUSE );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_STOPPED;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_device_continue, sizeof(expect_device_continue) );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_CONTINUE );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_STOPPED;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_disable_actuators, sizeof(expect_disable_actuators) );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSOFF );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_STOPPED;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_enable_actuators, sizeof(expect_enable_actuators) );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSON );
+    ok( hr == DI_OK, "SendForceFeedbackCommand returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    todo_wine
+    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_STOPPED;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
+    hr = IDirectInputEffect_Stop( effect );
+    ok( hr == DI_OK, "Stop returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    res = 0xdeadbeef;
+    hr = IDirectInputEffect_GetEffectStatus( effect, &res );
+    ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
+    ok( res == 0, "got status %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_STOPPED;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
+
+    send_hid_input( file, device_state_input_0, sizeof(device_state_input_0) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#x\n", res );
+    set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    ok( hr == DI_OK, "GetForceFeedbackState returned %#x\n", hr );
+    flags = DIGFFS_PAUSED|DIGFFS_ACTUATORSON|DIGFFS_POWERON|DIGFFS_SAFETYSWITCHON|DIGFFS_USERFFSWITCHON;
+    todo_wine
+    ok( res == flags, "got state %#x\n", res );
+    set_hid_expect( file, NULL, 0 );
 
     send_hid_input( file, device_state_input_1, sizeof(device_state_input_1) );
     res = WaitForSingleObject( event, 100 );
@@ -9087,8 +9435,7 @@ static void test_device_managed_effect(void)
     res = 0xdeadbeef;
     hr = IDirectInputEffect_GetEffectStatus( effect, &res );
     ok( hr == DI_OK, "GetEffectStatus returned %#x\n", hr );
-    todo_wine
-    ok( res == DIEGES_PLAYING, "got status %#x\n", res );
+    ok( res == 0, "got status %#x\n", res );
     set_hid_expect( file, expect_pool, sizeof(struct hid_expect) );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
