@@ -524,10 +524,9 @@ size_t input_lex_read_buffer(char* buf, int size)
             len--;
         }
 
-        /* FIXME: should have a pair of buffers, and switch between the two, instead of
-         * reallocating a new one for each line
-         */
-        if (dbg_parser.last_line && (len == 0 || (len == 1 && tmp[0] == '\n')))
+        /* recall last command when empty input buffer and not parsing a file */
+        if (dbg_parser.last_line && (len == 0 || (len == 1 && tmp[0] == '\n')) &&
+            dbg_parser.output != INVALID_HANDLE_VALUE)
         {
             HeapFree(GetProcessHeap(), 0, tmp);
         }
