@@ -1257,7 +1257,6 @@ sync_test("elem_attr", function() {
         r = elem.style;
         ok(r === style, "removed elem.style = " + r);
         r = elem.getAttribute("style");
-        todo_wine_if(v === 8).
         ok(r === (v < 8 ? style : null), "style attr after removal = " + r);
         elem.setAttribute("style", "opacity: 1.0");
         r = elem.getAttribute("style");

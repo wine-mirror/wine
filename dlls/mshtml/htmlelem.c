@@ -1277,6 +1277,9 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
             if(FAILED(hres))
                 return hres;
 
+            if(compat_mode >= COMPAT_MODE_IE8)
+                element_remove_attribute(This, strAttributeName);
+
             *pfSuccess = VARIANT_TRUE;
             return S_OK;
         }
