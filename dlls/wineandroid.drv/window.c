@@ -42,7 +42,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 
 #include "android.h"
 #include "wine/server.h"

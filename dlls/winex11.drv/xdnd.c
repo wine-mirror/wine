@@ -43,7 +43,6 @@
 #include "oleidl.h"
 #include "objidl.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 

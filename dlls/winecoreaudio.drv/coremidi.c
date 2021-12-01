@@ -80,12 +80,12 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "mmsystem.h"
 #include "mmddk.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/unixlib.h"
 
 #include "coreaudio.h"

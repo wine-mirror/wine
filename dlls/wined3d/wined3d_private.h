@@ -50,7 +50,6 @@
 #include "ddk/d3dkmthk.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #ifdef HAVE_FLOAT_H
 # include <float.h>
 #endif

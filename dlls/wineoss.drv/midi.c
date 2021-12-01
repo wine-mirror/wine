@@ -63,7 +63,6 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "mmddk.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);

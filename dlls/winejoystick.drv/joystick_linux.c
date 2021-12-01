@@ -67,8 +67,6 @@
 #include "winnls.h"
 #include "wine/debug.h"
 
-#include "wine/unicode.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 
 #define MAXJOYSTICK (JOYSTICKID2 + 30)

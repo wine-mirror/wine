@@ -41,13 +41,11 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "sspi.h"
-#include "schannel.h"
-#include "winreg.h"
 #include "secur32_priv.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #if defined(SONAME_LIBGNUTLS)
 
