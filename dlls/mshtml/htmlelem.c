@@ -1086,34 +1086,36 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
                                                VARIANT AttributeValue, LONG lFlags)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
+    compat_mode_t compat_mode = dispex_compat_mode(&This->node.event_target.dispex);
+    nsAString name_str, value_str;
+    nsresult nsres;
     DISPID dispid;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
-    if(This->dom_element && dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8) {
-        nsAString name_str, value_str;
-        nsresult nsres;
-
-        hres = variant_to_nsstr(&AttributeValue, FALSE, &value_str);
+    if(compat_mode < COMPAT_MODE_IE8 || !This->dom_element) {
+        hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
+                (lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
         if(FAILED(hres))
             return hres;
 
-        nsAString_InitDepend(&name_str, strAttributeName);
-        nsres = nsIDOMElement_SetAttribute(This->dom_element, &name_str, &value_str);
-        nsAString_Finish(&name_str);
-        nsAString_Finish(&value_str);
-        if(NS_FAILED(nsres))
-            WARN("SetAttribute failed: %08x\n", nsres);
-        return map_nsresult(nsres);
+        return set_elem_attr_value_by_dispid(This, dispid, &AttributeValue);
     }
 
-    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
-            (lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
+    hres = variant_to_nsstr(&AttributeValue, FALSE, &value_str);
     if(FAILED(hres))
         return hres;
 
-    return set_elem_attr_value_by_dispid(This, dispid, &AttributeValue);
+    nsAString_InitDepend(&name_str, strAttributeName);
+    nsres = nsIDOMElement_SetAttribute(This->dom_element, &name_str, &value_str);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&value_str);
+    if(NS_FAILED(nsres))
+        WARN("SetAttribute failed: %08x\n", nsres);
+    hres = map_nsresult(nsres);
+
+    return hres;
 }
 
 HRESULT get_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, VARIANT *ret)
