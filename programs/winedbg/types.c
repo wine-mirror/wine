@@ -519,24 +519,29 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         count = 1; size = 1;
         types_get_info(&type, TI_GET_COUNT, &count);
         types_get_info(&type, TI_GET_LENGTH, &size);
-
-        if (size == count)
-	{
-            unsigned    len;
-            char        buffer[256];
-            /*
-             * Special handling for character arrays.
-             */
-            /* FIXME should check basic type here (should be a char!!!!)... */
-            len = min(count, sizeof(buffer));
-            memory_get_string(dbg_curr_process,
-                              memory_to_linear_addr(&lvalue->addr),
-                              lvalue->cookie == DLV_TARGET, TRUE, buffer, len);
-            dbg_printf("\"%s%s\"", buffer, (len < count) ? "..." : "");
-            break;
-        }
         lvalue_field = *lvalue;
-        types_get_info(&type, TI_GET_TYPE, &lvalue_field.type.id);
+        types_get_info(&lvalue_field.type, TI_GET_TYPE, &lvalue_field.type.id);
+        types_get_real_type(&lvalue_field.type, &tag);
+
+        if (size == count && tag == SymTagBaseType)
+        {
+            DWORD       basetype;
+
+            types_get_info(&lvalue_field.type, TI_GET_BASETYPE, &basetype);
+            if (basetype == btChar)
+            {
+                char        buffer[256];
+                /*
+                 * Special handling for character arrays.
+                 */
+                unsigned len = min(count, sizeof(buffer));
+                memory_get_string(dbg_curr_process,
+                                  memory_to_linear_addr(&lvalue->addr),
+                                  lvalue->cookie == DLV_TARGET, TRUE, buffer, len);
+                dbg_printf("\"%s%s\"", buffer, (len < count) ? "..." : "");
+                break;
+            }
+        }
         dbg_printf("{");
         for (i = 0; i < count; i++)
 	{
