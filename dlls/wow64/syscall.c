@@ -670,6 +670,39 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 }
 
 
+static void cpu_simulate(void);
+
+/**********************************************************************
+ *           simulate_filter
+ */
+static LONG CALLBACK simulate_filter( EXCEPTION_POINTERS *ptrs )
+{
+    Wow64PassExceptionToGuest( ptrs );
+    cpu_simulate();  /* re-enter simulation to run the exception dispatcher */
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
+/**********************************************************************
+ *           cpu_simulate
+ */
+static void cpu_simulate(void)
+{
+    for (;;)
+    {
+        __TRY
+        {
+            pBTCpuSimulate();
+        }
+        __EXCEPT( simulate_filter )
+        {
+            /* restart simulation loop */
+        }
+        __ENDTRY
+    }
+}
+
+
 /**********************************************************************
  *           Wow64AllocateTemp  (wow64.@)
  *
@@ -769,7 +802,7 @@ void WINAPI Wow64LdrpInitialize( CONTEXT *context )
 
     RtlRunOnceExecuteOnce( &init_done, process_init, NULL, NULL );
     thread_init();
-    pBTCpuSimulate();
+    cpu_simulate();
 }
 
 
