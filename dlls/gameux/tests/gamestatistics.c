@@ -158,6 +158,12 @@ static void test_gamestatisticsmgr( void )
     /* this should fail, because statistics don't exist yet */
     gs = (void *)0xdeadbeef;
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
+    if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+    {
+        /* With win10 1803 game explorer functionality was removed and gameux became a stub */
+        win_skip("gameux is partially stubbed, skipping tests\n");
+        return;
+    }
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
     ok(gs == NULL, "Expected output pointer to be NULL, got %s\n",
        (gs == (void *)0xdeadbeef ? "deadbeef" : "neither NULL nor deadbeef"));
