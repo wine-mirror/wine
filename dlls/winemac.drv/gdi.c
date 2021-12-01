@@ -281,6 +281,7 @@ static const struct user_driver_funcs macdrv_funcs =
     .pDestroyCursorIcon = macdrv_DestroyCursorIcon,
     .pDestroyWindow = macdrv_DestroyWindow,
     .pEnumDisplaySettingsEx = macdrv_EnumDisplaySettingsEx,
+    .pUpdateDisplayDevices = macdrv_UpdateDisplayDevices,
     .pGetCursorPos = macdrv_GetCursorPos,
     .pGetKeyboardLayoutList = macdrv_GetKeyboardLayoutList,
     .pGetKeyNameText = macdrv_GetKeyNameText,

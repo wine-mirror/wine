@@ -1,5 +1,5 @@
 MODULE    = winemac.drv
-IMPORTS   = uuid setupapi rpcrt4 user32 gdi32 advapi32
+IMPORTS   = uuid rpcrt4 user32 gdi32 advapi32 win32u
 DELAYIMPORTS = ole32 shell32 imm32
 EXTRALIBS = -framework AppKit -framework Carbon -framework Security -framework OpenGL -framework IOKit -framework CoreVideo $(METAL_LIBS)
 
