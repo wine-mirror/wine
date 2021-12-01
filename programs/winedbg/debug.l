@@ -115,6 +115,7 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 
 %x PATH_EXPECTED
 %x ASTRING_EXPECTED
+%x AWORD_EXPECTED
 %x NOPROCESS
 %%
                                         /* set to special state when no process is loaded. */
@@ -153,10 +154,11 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 
 <FORMAT_EXPECTED>"/"{FORMAT}          	{ dbg_lval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-{STRING} 				{ dbg_lval.string = unescape_string(yytext); return tSTRING;}
+<*>{STRING}	                        { dbg_lval.string = unescape_string(yytext); return tSTRING;}
 <ASTRING_EXPECTED>[^\n]+                { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
                                           dbg_lval.string = lexeme_alloc(p); return tSTRING; }
-
+<AWORD_EXPECTED>[^ \t\n]+               { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
+                                          dbg_lval.string = lexeme_alloc(p); return tSTRING; }
 <INITIAL,NOPROCESS>info|inf|in		{ BEGIN(INFO_CMD); return tINFO; }
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
 <INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
@@ -200,7 +202,7 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 <INITIAL>watch|watc|wat			{ BEGIN(NOCMD); return tWATCH; }
 <INITIAL>rwatch|rwatc|rwat		{ BEGIN(NOCMD); return tRWATCH; }
 <INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
-<INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
+<INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(AWORD_EXPECTED); return tRUN;}
 <INITIAL>detach|detac|deta|det   	{ BEGIN(NOCMD); return tDETACH; }
 <INITIAL>kill|kil|ki|k                  { BEGIN(NOCMD); return tKILL; }
 <INITIAL,NOPROCESS>maintenance|maint    { BEGIN(MAINT_CMD); return tMAINTENANCE; }

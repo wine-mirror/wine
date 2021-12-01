@@ -31,6 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
+static char*            dbg_executable;
 static char*            dbg_last_cmd_line;
 static struct be_process_io be_process_active_io;
 
@@ -632,6 +633,11 @@ static BOOL dbg_start_debuggee(LPSTR cmdLine)
     dbg_curr_pid = info.dwProcessId;
     if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, dbg_curr_pid, 0))) return FALSE;
     dbg_curr_process->active_debuggee = TRUE;
+    if (cmdLine != dbg_last_cmd_line)
+    {
+        free(dbg_last_cmd_line);
+        dbg_last_cmd_line = cmdLine;
+    }
 
     return TRUE;
 }
@@ -718,24 +724,46 @@ static char *dbg_build_command_line( char **argv )
 }
 
 
-void	dbg_run_debuggee(const char* args)
+void	dbg_run_debuggee(struct list_string* ls)
 {
-    if (args)
+    if (dbg_curr_process)
     {
-        WINE_FIXME("Re-running current program with %s as args is broken\n", wine_dbgstr_a(args));
+        dbg_printf("Already attached to a process. Use 'detach' or 'kill' before using 'run'\n");
         return;
     }
-    else 
+    if (!dbg_executable)
     {
-	if (!dbg_last_cmd_line)
-        {
-	    dbg_printf("Cannot find previously used command line.\n");
-	    return;
-	}
-	dbg_start_debuggee(dbg_last_cmd_line);
-        dbg_active_wait_for_first_exception();
-        source_list_from_addr(NULL, 0);
+        dbg_printf("No active target to be restarted\n");
+        return;
     }
+    if (ls)
+    {
+        char* cl;
+        char** argv;
+        unsigned argc = 2, i;
+        struct list_string* cls;
+
+        for (cls = ls; cls; cls = cls->next) argc++;
+        if (!(argv = malloc(argc * sizeof(argv[0])))) return;
+        argv[0] = dbg_executable;
+        for (i = 1, cls = ls; cls; cls = cls->next, i++) argv[i] = cls->string;
+        argv[i] = NULL;
+        cl = dbg_build_command_line(argv);
+        free(argv);
+
+        if (!cl || !dbg_start_debuggee(cl))
+        {
+            free(cl);
+            return;
+        }
+    }
+    else
+    {
+        if (!dbg_last_cmd_line) dbg_last_cmd_line = strdup(dbg_executable);
+        dbg_start_debuggee(dbg_last_cmd_line);
+    }
+    dbg_active_wait_for_first_exception();
+    source_list_from_addr(NULL, 0);
 }
 
 static BOOL str2int(const char* str, DWORD_PTR* val)
@@ -893,14 +921,15 @@ enum dbg_start    dbg_active_launch(int argc, char* argv[])
 
     if (argc == 0) return start_error_parse;
 
+    dbg_executable = strdup(argv[0]);
     cmd_line = dbg_build_command_line(argv);
+
     if (!dbg_start_debuggee(cmd_line))
     {
         free(cmd_line);
         return start_error_init;
     }
-    free(dbg_last_cmd_line);
-    dbg_last_cmd_line = cmd_line;
+
     return start_ok;
 }
 

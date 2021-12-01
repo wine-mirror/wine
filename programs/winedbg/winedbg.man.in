@@ -109,6 +109,8 @@ of variations from \fBgdb\fR commands.
 Aborts the debugger.
 .IP \fBquit\fR
 Exits the debugger.
+.PP
+\fIProcess handling\fR
 .IP \fBattach\ \fIN\fR
 Attach to a Wine process (\fIN\fR is its Windows ID, numeric or hexadecimal).
 IDs can be obtained using the \fBinfo\ process\fR command.  Note the
@@ -119,6 +121,12 @@ Detach from a Wine-process.
 .IP \fBthread\ \fIN\fR
 Change the current thread to \fIN\fR (its Windows TID, numeric or hexadecimal).
 .IP
+.IP \fBrun\fR
+Re-run the same process with the same arguments.
+Note: all breakpoints of precedent process are no longer available.
+.IP \fBrun\ \fIarg1\ arg2...\fR
+Re-run the same process with arguments \fIarg1\ arg2...\fR.
+Note: all breakpoints of precedent process are no longer available.
 .PP
 \fIHelp commands\fR
 .IP \fBhelp\fR

@@ -43,6 +43,7 @@ static void parser(const char*);
     IMAGEHLP_LINE64     listing;
     struct expr*        expression;
     struct type_expr_t  type;
+    struct list_string* strings;
 }
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tALL tINFO tUP tDOWN
@@ -85,6 +86,7 @@ static void parser(const char*);
 %type <string> pathname identifier cpp_identifier
 %type <listing> list_arg
 %type <type> type_expr
+%type <strings> list_of_words
 
 %%
 
@@ -183,8 +185,12 @@ list_arg:
     ;
 
 run_command:
-      tRUN                      { dbg_run_debuggee(NULL); }
-    | tRUN tSTRING              { dbg_run_debuggee($2); }
+      tRUN list_of_words        { dbg_run_debuggee($2); }
+    ;
+
+list_of_words:
+      %empty                    { $$ = NULL; }
+    | tSTRING list_of_words     { $$ = (struct list_string*)lexeme_alloc_size(sizeof(*$$)); $$->next = $2; $$->string = $1; }
     ;
 
 list_command:
