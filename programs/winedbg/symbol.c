@@ -421,7 +421,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
     /* now grab local symbols */
-    if ((frm = stack_get_curr_frame()) && sgv.num < NUMDBGV)
+    if ((frm = stack_get_curr_frame()) && sgv.num < NUMDBGV && !strchr(name, '!'))
     {
         sgv.frame_offset = frm->linear_frame;
         SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
