@@ -835,12 +835,13 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
     D2D1_POINT_2F *origins, baseline_origin = { 0 };
-    struct dwrite_outline outline = {{ 0 }};
+    struct dwrite_outline outline, outline_size;
     D2D1_BEZIER_SEGMENT segment;
     D2D1_POINT_2F point;
     DWRITE_GLYPH_RUN run;
     unsigned int i, j, p;
     HRESULT hr;
+    int ret;
 
     TRACE("%p, %.8e, %p, %p, %p, %u, %d, %d, %p.\n", iface, emSize, glyphs, advances, offsets,
         count, is_sideways, is_rtl, sink);
@@ -871,14 +872,32 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
 
     ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
 
+    memset(&outline_size, 0, sizeof(outline_size));
+    memset(&outline, 0, sizeof(outline));
+
     for (i = 0; i < count; ++i)
     {
         outline.tags.count = outline.points.count = 0;
-        if (font_funcs->get_glyph_outline(iface, emSize, fontface->simulations, glyphs[i], &outline))
+
+        EnterCriticalSection(&fontface->cs);
+        if (!(ret = font_funcs->get_glyph_outline(fontface->get_font_object(fontface), emSize, fontface->simulations,
+                glyphs[i], &outline_size)))
         {
-            WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
-            continue;
+            dwrite_array_reserve((void **)&outline.tags.values, &outline.tags.size, outline_size.tags.count,
+                    sizeof(*outline.tags.values));
+            dwrite_array_reserve((void **)&outline.points.values, &outline.points.size, outline_size.points.count,
+                    sizeof(*outline.points.values));
+
+            if ((ret = font_funcs->get_glyph_outline(fontface->get_font_object(fontface), emSize, fontface->simulations,
+                    glyphs[i], &outline)))
+            {
+                WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
+            }
         }
+        LeaveCriticalSection(&fontface->cs);
+
+        if (ret)
+            continue;
 
         for (j = 0, p = 0; j < outline.tags.count; ++j)
         {

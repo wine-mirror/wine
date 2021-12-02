@@ -742,7 +742,7 @@ struct font_backend_funcs
     font_object_handle (CDECL *create_font_object)(const void *data_ptr, UINT64 data_size, unsigned int index);
     void (CDECL *release_font_object)(font_object_handle object);
     void (CDECL *notify_release)(void *key);
-    int (CDECL *get_glyph_outline)(void *key, float em_size, unsigned int simulations, UINT16 glyph,
+    int (CDECL *get_glyph_outline)(font_object_handle object, float emsize, unsigned int simulations, UINT16 glyph,
             struct dwrite_outline *outline);
     UINT16 (CDECL *get_glyph_count)(font_object_handle object);
     INT32 (CDECL *get_glyph_advance)(void *key, float em_size, UINT16 index, DWRITE_MEASURING_MODE measuring_mode,

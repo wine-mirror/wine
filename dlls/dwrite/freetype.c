@@ -318,11 +318,8 @@ static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F *p)
 
 static int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char tag)
 {
-    if (!dwrite_array_reserve((void **)&outline->tags.values, &outline->tags.size, outline->tags.count + 1,
-            sizeof(*outline->tags.values)))
-    {
+    if (outline->tags.size < outline->tags.count + 1)
         return 1;
-    }
 
     outline->tags.values[outline->tags.count++] = tag;
 
@@ -331,11 +328,8 @@ static int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char
 
 static int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points, unsigned int count)
 {
-    if (!dwrite_array_reserve((void **)&outline->points.values, &outline->points.size, outline->points.count + count,
-            sizeof(*outline->points.values)))
-    {
+    if (outline->points.size < outline->points.count + count)
         return 1;
-    }
 
     memcpy(&outline->points.values[outline->points.count], points, sizeof(*points) * count);
     outline->points.count += count;
@@ -512,30 +506,25 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-static int CDECL freetype_get_glyph_outline(void *key, float emSize, unsigned int simulations,
+static int CDECL freetype_get_glyph_outline(font_object_handle object, float emsize, unsigned int simulations,
         UINT16 glyph, struct dwrite_outline *outline)
 {
-    FTC_ScalerRec scaler;
+    FT_Face face = object;
     FT_Size size;
-    int ret;
+    int ret = 0;
 
-    scaler.face_id = key;
-    scaler.width  = emSize;
-    scaler.height = emSize;
-    scaler.pixel = 1;
-    scaler.x_res = 0;
-    scaler.y_res = 0;
+    if (!(size = freetype_set_face_size(face, emsize)))
+        return 0;
 
-    RtlEnterCriticalSection(&freetype_cs);
-    if (!(ret = pFTC_Manager_LookupSize(cache_manager, &scaler, &size)))
+    if (!pFT_Load_Glyph(face, glyph, FT_LOAD_NO_BITMAP))
     {
-        if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_BITMAP) == 0)
-        {
-            FT_Outline *ft_outline = &size->face->glyph->outline;
-            FT_Matrix m;
+        FT_Outline *ft_outline = &face->glyph->outline;
+        FT_Matrix m;
 
+        if (outline->points.values)
+        {
             if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                embolden_glyph_outline(ft_outline, emSize);
+                embolden_glyph_outline(ft_outline, emsize);
 
             m.xx = 1 << 16;
             m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
@@ -546,8 +535,15 @@ static int CDECL freetype_get_glyph_outline(void *key, float emSize, unsigned in
 
             ret = decompose_outline(ft_outline, outline);
         }
+        else
+        {
+            /* Intentionally overestimate numbers to keep it simple. */
+            outline->points.count = ft_outline->n_points * 3;
+            outline->tags.count = ft_outline->n_points + ft_outline->n_contours * 2;
+        }
     }
-    RtlLeaveCriticalSection(&freetype_cs);
+
+    pFT_Done_Size(size);
 
     return ret;
 }
@@ -856,7 +852,7 @@ static void CDECL null_notify_release(void *key)
 {
 }
 
-static int CDECL null_get_glyph_outline(void *key, float emSize, unsigned int simulations,
+static int CDECL null_get_glyph_outline(font_object_handle object, float emSize, unsigned int simulations,
         UINT16 glyph, struct dwrite_outline *outline)
 {
     return 1;
