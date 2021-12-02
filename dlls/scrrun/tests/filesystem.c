@@ -1684,9 +1684,11 @@ static void test_WriteLine(void)
 
 static void test_ReadAll(void)
 {
+    static const WCHAR firstlineW[] = L"first";
     static const WCHAR secondlineW[] = L"second";
     static const WCHAR aW[] = L"A";
     WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[500];
+    char buffA[MAX_PATH];
     ITextStream *stream;
     BSTR nameW;
     HRESULT hr;
@@ -1703,8 +1705,10 @@ static void test_ReadAll(void)
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = ITextStream_WriteLine(stream, nameW);
+    str = SysAllocString(firstlineW);
+    hr = ITextStream_WriteLine(stream, str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
 
     str = SysAllocString(secondlineW);
     hr = ITextStream_WriteLine(stream, str);
@@ -1732,7 +1736,9 @@ static void test_ReadAll(void)
     hr = ITextStream_ReadAll(stream, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
     buffW[0] = 0;
-    MultiByteToWideChar(CP_ACP, 0, utf16bom, -1, buffW, ARRAY_SIZE(buffW));
+    lstrcpyA(buffA, utf16bom);
+    lstrcatA(buffA, "first");
+    MultiByteToWideChar(CP_ACP, 0, buffA, -1, buffW, ARRAY_SIZE(buffW));
     ok(str[0] == buffW[0] && str[1] == buffW[1], "got %s, %d\n", wine_dbgstr_w(str), SysStringLen(str));
     SysFreeString(str);
     ITextStream_Release(stream);
@@ -1741,7 +1747,7 @@ static void test_ReadAll(void)
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    lstrcpyW(buffW, nameW);
+    lstrcpyW(buffW, firstlineW);
     lstrcatW(buffW, L"\r\n");
     lstrcatW(buffW, secondlineW);
     lstrcatW(buffW, L"\r\n");
@@ -1772,7 +1778,7 @@ static void test_ReadAll(void)
     hr = ITextStream_ReadLine(stream, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(str != NULL, "got %p\n", str);
-    ok(!wcscmp(str, nameW), "got %s\n", wine_dbgstr_w(str));
+    ok(!wcscmp(str, firstlineW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     lstrcpyW(buffW, secondlineW);
