@@ -224,6 +224,17 @@ static struct list monitors = LIST_INIT(monitors);
 static INT64 last_query_display_time;
 static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
 
+static struct monitor virtual_monitor =
+{
+    .handle = NULLDRV_DEFAULT_HMONITOR,
+    .flags = MONITORINFOF_PRIMARY,
+    .rc_monitor.right = 1024,
+    .rc_monitor.bottom = 768,
+    .rc_work.right = 1024,
+    .rc_work.bottom = 768,
+    .dev.state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
+};
+
 static HANDLE get_display_device_init_mutex( void )
 {
     static const WCHAR display_device_initW[] =
@@ -1045,6 +1056,32 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
     if (ctx->gpu_count) cleanup_devices();
 }
 
+static void clear_display_devices(void)
+{
+    struct adapter *adapter;
+    struct monitor *monitor;
+
+    if (list_head( &monitors ) == &virtual_monitor.entry)
+    {
+        list_init( &monitors );
+        return;
+    }
+
+    while (!list_empty( &monitors ))
+    {
+        monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
+        list_remove( &monitor->entry );
+        free( monitor );
+    }
+
+    while (!list_empty( &adapters ))
+    {
+        adapter = LIST_ENTRY( list_head( &adapters ), struct adapter, entry );
+        list_remove( &adapter->entry );
+        free( adapter );
+    }
+}
+
 static BOOL update_display_cache_from_registry(void)
 {
     DWORD adapter_id, monitor_id, monitor_count = 0, size;
@@ -1069,19 +1106,7 @@ static BOOL update_display_cache_from_registry(void)
     mutex = get_display_device_init_mutex();
     pthread_mutex_lock( &display_lock );
 
-    while (!list_empty( &monitors ))
-    {
-        monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
-        list_remove( &monitor->entry );
-        free( monitor );
-    }
-
-    while (!list_empty( &adapters ))
-    {
-        adapter = LIST_ENTRY( list_head( &adapters ), struct adapter, entry );
-        list_remove( &adapter->entry );
-        free( adapter );
-    }
+    clear_display_devices();
 
     for (adapter_id = 0;; adapter_id++)
     {
@@ -1161,8 +1186,27 @@ static BOOL update_display_cache(void)
 
 static BOOL lock_display_devices(void)
 {
-    if (!update_display_cache()) return FALSE;
+    USEROBJECTFLAGS flags;
+    HWINSTA winstation;
+
     pthread_mutex_lock( &display_lock );
+
+    /* Report physical monitor information only if window station has visible display surfaces */
+    winstation = NtUserGetProcessWindowStation();
+    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) &&
+        (flags.dwFlags & WSF_VISIBLE))
+    {
+        pthread_mutex_unlock( &display_lock );
+        if (!update_display_cache()) return FALSE;
+        pthread_mutex_lock( &display_lock );
+    }
+    else
+    {
+        clear_display_devices();
+        list_add_tail( &monitors, &virtual_monitor.entry );
+        last_query_display_time = 0;
+    }
+
     return TRUE;
 }
 
@@ -1334,45 +1378,29 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     struct monitor_enum_info enum_buf[8], *enum_info = enum_buf;
     struct enum_display_monitor_params params;
     struct monitor *monitor;
-    ULONG count = 0, i;
-    USEROBJECTFLAGS flags;
-    HWINSTA winstation;
+    unsigned int count = 0, i;
     BOOL ret = TRUE;
 
-    /* Report physical monitor information only if window station has visible display surfaces */
-    winstation = NtUserGetProcessWindowStation();
-    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) &&
-        (flags.dwFlags & WSF_VISIBLE))
+    if (!lock_display_devices()) return FALSE;
+
+    count = list_count( &monitors );
+    if (!count || (count > ARRAYSIZE(enum_buf) &&
+                   !(enum_info = malloc( count * sizeof(*enum_info) ))))
     {
-        if (!lock_display_devices()) return FALSE;
-
-        count = list_count( &monitors );
-        if (!count || (count > ARRAYSIZE(enum_buf) &&
-                       !(enum_info = malloc( count * sizeof(*enum_info) ))))
-        {
-            unlock_display_devices();
-            return FALSE;
-        }
-
-        count = 0;
-        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
-        {
-            if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
-            enum_info[count].handle = monitor->handle;
-            enum_info[count].rect = monitor->rc_monitor;
-            count++;
-        }
-
         unlock_display_devices();
-        if (!count) return FALSE;
+        return FALSE;
     }
-    else
+
+    count = 0;
+    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
     {
-        if (!(enum_info = malloc( sizeof(*enum_info) ))) return FALSE;
-        enum_info->handle = NULLDRV_DEFAULT_HMONITOR;
-        SetRect( &enum_info->rect, 0, 0, 1024, 768 );
-        count = 1;
+        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+        enum_info[count].handle = monitor->handle;
+        enum_info[count].rect = monitor->rc_monitor;
+        count++;
     }
+
+    unlock_display_devices();
 
     params.proc = proc;
     params.hdc = hdc;
@@ -1397,18 +1425,6 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
 
     if (info->cbSize != sizeof(MONITORINFOEXW) && info->cbSize != sizeof(MONITORINFO)) return FALSE;
 
-    /* Fallback to report one monitor */
-    if (handle == NULLDRV_DEFAULT_HMONITOR)
-    {
-        RECT default_rect = {0, 0, 1024, 768};
-        info->rcMonitor = default_rect;
-        info->rcWork = default_rect;
-        info->dwFlags = MONITORINFOF_PRIMARY;
-        if (info->cbSize >= sizeof(MONITORINFOEXW))
-            asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, "WinDisc" );
-        return TRUE;
-    }
-
     if (!lock_display_devices()) return FALSE;
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
@@ -1421,7 +1437,12 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
         info->rcWork = monitor->rc_work;
         info->dwFlags = monitor->flags;
         if (info->cbSize >= sizeof(MONITORINFOEXW))
-            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitor->adapter->dev.device_name );
+        {
+            if (monitor->adapter)
+                lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitor->adapter->dev.device_name );
+            else
+                asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, "WinDisc" );
+        }
         unlock_display_devices();
         return TRUE;
     }
