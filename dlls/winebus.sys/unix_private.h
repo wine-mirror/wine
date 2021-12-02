@@ -151,6 +151,22 @@ struct hid_haptics
     BYTE waveform_report;
 };
 
+/* must match the order and number of usages in the
+ * PID_USAGE_STATE_REPORT report */
+enum effect_state_flags
+{
+    EFFECT_STATE_DEVICE_PAUSED = 0x01,
+    EFFECT_STATE_ACTUATORS_ENABLED = 0x02,
+    EFFECT_STATE_EFFECT_PLAYING = 0x04,
+};
+
+struct hid_effect_state
+{
+    USHORT report_len;
+    BYTE *report_buf;
+    BYTE id;
+};
+
 struct hid_physical
 {
     USAGE effect_types[32];
@@ -165,6 +181,8 @@ struct hid_physical
     BYTE set_condition_report;
     BYTE set_constant_force_report;
     BYTE set_ramp_force_report;
+
+    struct hid_effect_state effect_state;
 };
 
 struct hid_device_state
