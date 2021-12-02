@@ -417,7 +417,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadContext( HANDLE thread, const CONTEXT *co
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH SetThreadDescription( HANDLE thread, PCWSTR description )
 {
-    THREAD_DESCRIPTION_INFORMATION info;
+    THREAD_NAME_INFORMATION info;
     int length;
 
     TRACE( "(%p, %s)\n", thread, debugstr_w( description ));
@@ -427,8 +427,8 @@ HRESULT WINAPI DECLSPEC_HOTPATCH SetThreadDescription( HANDLE thread, PCWSTR des
     if (length > USHRT_MAX)
         return HRESULT_FROM_NT(STATUS_INVALID_PARAMETER);
 
-    info.Description.Length = info.Description.MaximumLength = length;
-    info.Description.Buffer = (WCHAR *)description;
+    info.ThreadName.Length = info.ThreadName.MaximumLength = length;
+    info.ThreadName.Buffer = (WCHAR *)description;
 
     return HRESULT_FROM_NT(NtSetInformationThread( thread, ThreadNameInformation, &info, sizeof(info) ));
 }
@@ -438,7 +438,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH SetThreadDescription( HANDLE thread, PCWSTR des
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **description )
 {
-    THREAD_DESCRIPTION_INFORMATION *info;
+    THREAD_NAME_INFORMATION *info;
     NTSTATUS status;
     ULONG length;
 
@@ -457,13 +457,13 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
     status = NtQueryInformationThread( thread, ThreadNameInformation, info, length, &length );
     if (!status)
     {
-        if (!(*description = LocalAlloc( 0, info->Description.Length + sizeof(WCHAR))))
+        if (!(*description = LocalAlloc( 0, info->ThreadName.Length + sizeof(WCHAR))))
             status = STATUS_NO_MEMORY;
         else
         {
-            if (info->Description.Length)
-                memcpy(*description, info->Description.Buffer, info->Description.Length);
-            (*description)[info->Description.Length / sizeof(WCHAR)] = 0;
+            if (info->ThreadName.Length)
+                memcpy(*description, info->ThreadName.Buffer, info->ThreadName.Length);
+            (*description)[info->ThreadName.Length / sizeof(WCHAR)] = 0;
         }
     }
 

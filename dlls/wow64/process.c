@@ -934,10 +934,10 @@ NTSTATUS WINAPI wow64_NtQueryInformationThread( UINT *args )
         return status;
     }
 
-    case ThreadNameInformation:  /* THREAD_DESCRIPTION_INFORMATION */
+    case ThreadNameInformation:  /* THREAD_NAME_INFORMATION */
     {
-        THREAD_DESCRIPTION_INFORMATION *info;
-        THREAD_DESCRIPTION_INFORMATION32 *info32 = ptr;
+        THREAD_NAME_INFORMATION *info;
+        THREAD_NAME_INFORMATION32 *info32 = ptr;
         ULONG size, ret_size;
 
         if (len >= sizeof(*info32))
@@ -947,10 +947,10 @@ NTSTATUS WINAPI wow64_NtQueryInformationThread( UINT *args )
             status = NtQueryInformationThread( handle, class, info, size, &ret_size );
             if (!status)
             {
-                info32->Description.Length = info->Description.Length;
-                info32->Description.MaximumLength = info->Description.MaximumLength;
-                info32->Description.Buffer = PtrToUlong( info32 + 1 );
-                memcpy( info32 + 1, info + 1, min( len, info->Description.MaximumLength ));
+                info32->ThreadName.Length = info->ThreadName.Length;
+                info32->ThreadName.MaximumLength = info->ThreadName.MaximumLength;
+                info32->ThreadName.Buffer = PtrToUlong( info32 + 1 );
+                memcpy( info32 + 1, info + 1, min( len, info->ThreadName.MaximumLength ));
             }
         }
         else status = NtQueryInformationThread( handle, class, NULL, 0, &ret_size );
@@ -1190,13 +1190,13 @@ NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
         }
         else return STATUS_INVALID_PARAMETER;
 
-    case ThreadNameInformation:   /* THREAD_DESCRIPTION_INFORMATION */
-        if (len == sizeof(THREAD_DESCRIPTION_INFORMATION32))
+    case ThreadNameInformation:   /* THREAD_NAME_INFORMATION */
+        if (len == sizeof(THREAD_NAME_INFORMATION32))
         {
-            THREAD_DESCRIPTION_INFORMATION32 *info32 = ptr;
-            THREAD_DESCRIPTION_INFORMATION info;
+            THREAD_NAME_INFORMATION32 *info32 = ptr;
+            THREAD_NAME_INFORMATION info;
 
-            if (!unicode_str_32to64( &info.Description, &info32->Description ))
+            if (!unicode_str_32to64( &info.ThreadName, &info32->ThreadName ))
                 return STATUS_ACCESS_VIOLATION;
             return NtSetInformationThread( handle, class, &info, sizeof(info) );
         }

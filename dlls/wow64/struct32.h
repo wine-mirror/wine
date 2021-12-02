@@ -363,8 +363,8 @@ typedef struct
 
 typedef struct
 {
-    UNICODE_STRING32 Description;
-} THREAD_DESCRIPTION_INFORMATION32;
+    UNICODE_STRING32 ThreadName;
+} THREAD_NAME_INFORMATION32;
 
 typedef struct
 {

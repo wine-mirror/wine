@@ -2037,7 +2037,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadNameInformation:
     {
-        THREAD_DESCRIPTION_INFORMATION *info = data;
+        THREAD_NAME_INFORMATION *info = data;
         data_size_t len, desc_len = 0;
         WCHAR *ptr;
 
@@ -2056,8 +2056,8 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (!info) status = STATUS_BUFFER_TOO_SMALL;
         else if (status == STATUS_SUCCESS)
         {
-            info->Description.Length = info->Description.MaximumLength = desc_len;
-            info->Description.Buffer = ptr;
+            info->ThreadName.Length = info->ThreadName.MaximumLength = desc_len;
+            info->ThreadName.Buffer = ptr;
         }
 
         if (ret_len && (status == STATUS_SUCCESS || status == STATUS_BUFFER_TOO_SMALL))
@@ -2230,18 +2230,18 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadNameInformation:
     {
-        const THREAD_DESCRIPTION_INFORMATION *info = data;
+        const THREAD_NAME_INFORMATION *info = data;
 
         if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!info) return STATUS_ACCESS_VIOLATION;
-        if (info->Description.Length != info->Description.MaximumLength) return STATUS_INVALID_PARAMETER;
-        if (info->Description.Length && !info->Description.Buffer) return STATUS_ACCESS_VIOLATION;
+        if (info->ThreadName.Length != info->ThreadName.MaximumLength) return STATUS_INVALID_PARAMETER;
+        if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
 
         SERVER_START_REQ( set_thread_info )
         {
             req->handle = wine_server_obj_handle( handle );
             req->mask   = SET_THREAD_INFO_DESCRIPTION;
-            wine_server_add_data( req, info->Description.Buffer, info->Description.Length );
+            wine_server_add_data( req, info->ThreadName.Buffer, info->ThreadName.Length );
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
