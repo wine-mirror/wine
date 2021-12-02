@@ -1344,10 +1344,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         }
     }
 
+    EnterCriticalSection(&g_sessions_lock);
     EnterCriticalSection(&This->lock);
 
     if(This->initted){
         LeaveCriticalSection(&This->lock);
+        LeaveCriticalSection(&g_sessions_lock);
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
@@ -1537,18 +1539,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     This->share = mode;
     This->flags = flags;
 
-    EnterCriticalSection(&g_sessions_lock);
-
     hr = get_audio_session(sessionguid, This->parent, fmt->nChannels,
             &This->session);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&g_sessions_lock);
+    if(FAILED(hr))
         goto exit;
-    }
 
     list_add_tail(&This->session->clients, &This->entry);
-
-    LeaveCriticalSection(&g_sessions_lock);
 
     This->initted = TRUE;
 
@@ -1569,6 +1565,7 @@ exit:
     }
 
     LeaveCriticalSection(&This->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return hr;
 }
