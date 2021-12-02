@@ -197,6 +197,7 @@ struct lnxev_device
 
     int haptic_effect_id;
     int effect_ids[256];
+    LONG effect_flags;
 };
 
 static inline struct lnxev_device *lnxev_impl_from_unix_device(struct unix_device *iface)
@@ -719,7 +720,10 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
 
 static BOOL set_report_from_event(struct unix_device *iface, struct input_event *ie)
 {
+    struct hid_effect_state *effect_state = &iface->hid_physical.effect_state;
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    ULONG effect_flags = InterlockedOr(&impl->effect_flags, 0);
+    unsigned int i;
 
     switch (ie->type)
     {
@@ -749,6 +753,14 @@ static BOOL set_report_from_event(struct unix_device *iface, struct input_event 
         return FALSE;
     case EV_REL:
         hid_device_set_rel_axis(iface, impl->rel_map[ie->code], ie->value);
+        return FALSE;
+    case EV_FF_STATUS:
+        for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i) if (impl->effect_ids[i] == ie->code) break;
+        if (i == ARRAY_SIZE(impl->effect_ids)) return FALSE;
+
+        if (ie->value == FF_STATUS_PLAYING) effect_flags |= EFFECT_STATE_EFFECT_PLAYING;
+        hid_device_set_effect_state(iface, i, effect_flags);
+        bus_event_queue_input_report(&event_queue, iface, effect_state->report_buf, effect_state->report_len);
         return FALSE;
     default:
         ERR("TODO: Process Report (%i, %i)\n",ie->type, ie->code);
@@ -883,6 +895,8 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
         };
         if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
             WARN("write failed %d %s\n", errno, strerror(errno));
+        else
+            InterlockedOr(&impl->effect_flags, EFFECT_STATE_ACTUATORS_ENABLED);
         return STATUS_SUCCESS;
     }
     case PID_USAGE_DC_DISABLE_ACTUATORS:
@@ -895,6 +909,8 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
         };
         if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
             WARN("write failed %d %s\n", errno, strerror(errno));
+        else
+            InterlockedAnd(&impl->effect_flags, ~EFFECT_STATE_ACTUATORS_ENABLED);
         return STATUS_SUCCESS;
     }
     case PID_USAGE_DC_STOP_ALL_EFFECTS:
@@ -915,9 +931,11 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
         return STATUS_SUCCESS;
     case PID_USAGE_DC_DEVICE_PAUSE:
         WARN("device pause not supported\n");
+        InterlockedOr(&impl->effect_flags, EFFECT_STATE_DEVICE_PAUSED);
         return STATUS_NOT_SUPPORTED;
     case PID_USAGE_DC_DEVICE_CONTINUE:
         WARN("device continue not supported\n");
+        InterlockedAnd(&impl->effect_flags, ~EFFECT_STATE_DEVICE_PAUSED);
         return STATUS_NOT_SUPPORTED;
     }
 
