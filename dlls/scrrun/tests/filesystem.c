@@ -1817,8 +1817,10 @@ static void test_ReadAll(void)
 
 static void test_Read(void)
 {
+    static const WCHAR firstlineW[] = L"first";
     static const WCHAR secondlineW[] = L"second";
     WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[500];
+    char buffA[MAX_PATH];
     ITextStream *stream;
     BSTR nameW;
     HRESULT hr;
@@ -1835,8 +1837,10 @@ static void test_Read(void)
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = ITextStream_WriteLine(stream, nameW);
+    str = SysAllocString(firstlineW);
+    hr = ITextStream_WriteLine(stream, str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
 
     str = SysAllocString(secondlineW);
     hr = ITextStream_WriteLine(stream, str);
@@ -1881,9 +1885,10 @@ static void test_Read(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     buffW[0] = 0;
-    MultiByteToWideChar(CP_ACP, 0, utf16bom, -1, buffW, ARRAY_SIZE(buffW));
-
-    ok(!lstrcmpW(str, buffW), "got %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW));
+    lstrcpyA(buffA, utf16bom);
+    lstrcatA(buffA, "first");
+    MultiByteToWideChar(CP_ACP, 0, buffA, -1, buffW, ARRAY_SIZE(buffW));
+    ok(str[0] == buffW[0] && str[1] == buffW[1], "got %s, expected %s, %d\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW), SysStringLen(str));
     ok(SysStringLen(str) == 2, "got %d\n", SysStringLen(str));
     SysFreeString(str);
     ITextStream_Release(stream);
@@ -1892,7 +1897,7 @@ static void test_Read(void)
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    lstrcpyW(buffW, nameW);
+    lstrcpyW(buffW, firstlineW);
     lstrcatW(buffW, L"\r\n");
     lstrcatW(buffW, secondlineW);
     lstrcatW(buffW, L"\r\n");
@@ -1938,7 +1943,7 @@ static void test_Read(void)
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateUseDefault, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    lstrcpyW(buffW, nameW);
+    lstrcpyW(buffW, firstlineW);
     lstrcatW(buffW, L"\r\n");
     lstrcatW(buffW, secondlineW);
     lstrcatW(buffW, L"\r\n");
