@@ -33,6 +33,7 @@
 #include FT_FREETYPE_H
 #include FT_OUTLINE_H
 #include FT_TRUETYPE_TABLES_H
+#include FT_SIZES_H
 #endif /* HAVE_FT2BUILD_H */
 
 #include "ntstatus.h"
@@ -69,9 +70,11 @@ typedef struct
 static const struct font_callback_funcs *callback_funcs;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
+MAKE_FUNCPTR(FT_Activate_Size);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Done_FreeType);
 MAKE_FUNCPTR(FT_Done_Glyph);
+MAKE_FUNCPTR(FT_Done_Size);
 MAKE_FUNCPTR(FT_Get_First_Char);
 MAKE_FUNCPTR(FT_Get_Kerning);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
@@ -84,6 +87,7 @@ MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
 MAKE_FUNCPTR(FT_MulDiv);
 MAKE_FUNCPTR(FT_New_Memory_Face);
+MAKE_FUNCPTR(FT_New_Size);
 MAKE_FUNCPTR(FT_Outline_Copy);
 MAKE_FUNCPTR(FT_Outline_Decompose);
 MAKE_FUNCPTR(FT_Outline_Done);
@@ -92,6 +96,7 @@ MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_New);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
+MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FTC_ImageCache_Lookup);
 MAKE_FUNCPTR(FTC_ImageCache_New);
 MAKE_FUNCPTR(FTC_Manager_New);
@@ -139,6 +144,28 @@ static FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointe
     return fterror;
 }
 
+static FT_Size freetype_set_face_size(FT_Face face, FT_UInt emsize)
+{
+    FT_Size size;
+
+    if (pFT_New_Size(face, &size)) return NULL;
+
+    pFT_Activate_Size(size);
+
+    if (pFT_Set_Pixel_Sizes(face, emsize, emsize))
+    {
+        pFT_Done_Size(size);
+        return NULL;
+    }
+
+    return size;
+}
+
+static BOOL freetype_glyph_has_contours(FT_Face face)
+{
+    return face->glyph->format == FT_GLYPH_FORMAT_OUTLINE && face->glyph->outline.n_contours;
+}
+
 static BOOL init_freetype(void)
 {
     FT_Version_t FT_Version;
@@ -151,9 +178,11 @@ static BOOL init_freetype(void)
     }
 
 #define LOAD_FUNCPTR(f) if((p##f = dlsym(ft_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+    LOAD_FUNCPTR(FT_Activate_Size)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Done_FreeType)
     LOAD_FUNCPTR(FT_Done_Glyph)
+    LOAD_FUNCPTR(FT_Done_Size)
     LOAD_FUNCPTR(FT_Get_First_Char)
     LOAD_FUNCPTR(FT_Get_Kerning)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
@@ -166,6 +195,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
     LOAD_FUNCPTR(FT_MulDiv)
     LOAD_FUNCPTR(FT_New_Memory_Face)
+    LOAD_FUNCPTR(FT_New_Size)
     LOAD_FUNCPTR(FT_Outline_Copy)
     LOAD_FUNCPTR(FT_Outline_Decompose)
     LOAD_FUNCPTR(FT_Outline_Done)
@@ -174,6 +204,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Outline_New)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
+    LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
     LOAD_FUNCPTR(FTC_ImageCache_Lookup)
     LOAD_FUNCPTR(FTC_ImageCache_New)
     LOAD_FUNCPTR(FTC_Manager_New)
@@ -238,43 +269,37 @@ static void CDECL freetype_notify_release(void *key)
     RtlLeaveCriticalSection(&freetype_cs);
 }
 
-static void CDECL freetype_get_design_glyph_metrics(void *key, UINT16 upem, UINT16 ascent,
+static void CDECL freetype_get_design_glyph_metrics(font_object_handle object, UINT16 upem, UINT16 ascent,
         unsigned int simulations, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
-    FTC_ScalerRec scaler;
+    FT_Face face = object;
     FT_Size size;
 
-    scaler.face_id = key;
-    scaler.width = upem;
-    scaler.height = upem;
-    scaler.pixel = 1;
-    scaler.x_res = 0;
-    scaler.y_res = 0;
+    if (!(size = freetype_set_face_size(face, upem)))
+        return;
 
-    RtlEnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
-         if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_SCALE) == 0) {
-             FT_Glyph_Metrics *metrics = &size->face->glyph->metrics;
+    if (!pFT_Load_Glyph(face, glyph, FT_LOAD_NO_SCALE))
+    {
+        FT_Glyph_Metrics *metrics = &face->glyph->metrics;
 
-             ret->leftSideBearing = metrics->horiBearingX;
-             ret->advanceWidth = metrics->horiAdvance;
-             ret->rightSideBearing = metrics->horiAdvance - metrics->horiBearingX - metrics->width;
+        ret->leftSideBearing = metrics->horiBearingX;
+        ret->advanceWidth = metrics->horiAdvance;
+        ret->rightSideBearing = metrics->horiAdvance - metrics->horiBearingX - metrics->width;
 
-             ret->advanceHeight = metrics->vertAdvance;
-             ret->verticalOriginY = ascent;
-             ret->topSideBearing = ascent - metrics->horiBearingY;
-             ret->bottomSideBearing = metrics->vertAdvance - metrics->height - ret->topSideBearing;
+        ret->advanceHeight = metrics->vertAdvance;
+        ret->verticalOriginY = ascent;
+        ret->topSideBearing = ascent - metrics->horiBearingY;
+        ret->bottomSideBearing = metrics->vertAdvance - metrics->height - ret->topSideBearing;
 
-             /* Adjust in case of bold simulation, glyphs without contours are ignored. */
-             if (simulations & DWRITE_FONT_SIMULATIONS_BOLD &&
-                     size->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE && size->face->glyph->outline.n_contours)
-             {
-                 if (ret->advanceWidth)
-                     ret->advanceWidth += (upem + 49) / 50;
-             }
-         }
+        /* Adjust in case of bold simulation, glyphs without contours are ignored. */
+        if (simulations & DWRITE_FONT_SIMULATIONS_BOLD && freetype_glyph_has_contours(face))
+        {
+            if (ret->advanceWidth)
+                ret->advanceWidth += (upem + 49) / 50;
+        }
     }
-    RtlLeaveCriticalSection(&freetype_cs);
+
+    pFT_Done_Size(size);
 }
 
 struct decompose_context
@@ -859,7 +884,7 @@ static BOOL CDECL null_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return FALSE;
 }
 
-static void CDECL null_get_design_glyph_metrics(void *key, UINT16 upem, UINT16 ascent, unsigned int simulations,
+static void CDECL null_get_design_glyph_metrics(font_object_handle object, UINT16 upem, UINT16 ascent, unsigned int simulations,
         UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
 {
 }

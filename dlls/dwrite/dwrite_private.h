@@ -260,6 +260,7 @@ struct dwrite_fontface
     font_object_handle font_object;
     void *data_context;
     p_dwrite_fontface_get_font_object get_font_object;
+    CRITICAL_SECTION cs;
 
     USHORT simulations;
     DWRITE_FONT_FACE_TYPE type;
@@ -748,7 +749,7 @@ struct font_backend_funcs
             BOOL *has_contours);
     void (CDECL *get_glyph_bbox)(struct dwrite_glyphbitmap *bitmap_desc);
     BOOL (CDECL *get_glyph_bitmap)(struct dwrite_glyphbitmap *bitmap_desc);
-    void (CDECL *get_design_glyph_metrics)(void *key, UINT16 upem, UINT16 ascent, unsigned int simulations,
+    void (CDECL *get_design_glyph_metrics)(font_object_handle object, UINT16 upem, UINT16 ascent, unsigned int simulations,
             UINT16 glyph, DWRITE_GLYPH_METRICS *metrics);
 };
 

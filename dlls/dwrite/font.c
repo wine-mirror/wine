@@ -659,6 +659,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
 
         dwrite_cmap_release(&fontface->cmap);
         IDWriteFactory7_Release(fontface->factory);
+        DeleteCriticalSection(&fontface->cs);
         heap_free(fontface);
     }
 
@@ -745,8 +746,8 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *ifa
     UINT16 const *glyphs, UINT32 glyph_count, DWRITE_GLYPH_METRICS *ret, BOOL is_sideways)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+    HRESULT hr = S_OK;
     unsigned int i;
-    HRESULT hr;
 
     TRACE("%p, %p, %u, %p, %d.\n", iface, glyphs, glyph_count, ret, is_sideways);
 
@@ -756,22 +757,23 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *ifa
     if (is_sideways)
         FIXME("sideways metrics are not supported.\n");
 
-    for (i = 0; i < glyph_count; i++) {
+    EnterCriticalSection(&fontface->cs);
+    for (i = 0; i < glyph_count; ++i)
+    {
         DWRITE_GLYPH_METRICS metrics;
 
-        hr = get_cached_glyph_metrics(fontface, glyphs[i], &metrics);
-        if (hr != S_OK)
+        if (get_cached_glyph_metrics(fontface, glyphs[i], &metrics) != S_OK)
         {
-            font_funcs->get_design_glyph_metrics(iface, fontface->metrics.designUnitsPerEm,
-                    fontface->typo_metrics.ascent, fontface->simulations, glyphs[i], &metrics);
-            hr = set_cached_glyph_metrics(fontface, glyphs[i], &metrics);
-            if (FAILED(hr))
-                return hr;
+            font_funcs->get_design_glyph_metrics(fontface->get_font_object(fontface),
+                    fontface->metrics.designUnitsPerEm, fontface->typo_metrics.ascent,
+                    fontface->simulations, glyphs[i], &metrics);
+            if (FAILED(hr = set_cached_glyph_metrics(fontface, glyphs[i], &metrics))) break;
         }
         ret[i] = metrics;
     }
+    LeaveCriticalSection(&fontface->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace5 *iface, UINT32 const *codepoints,
@@ -5076,6 +5078,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     IDWriteFontFile_AddRef(fontface->file);
     fontface->stream = desc->stream;
     IDWriteFontFileStream_AddRef(fontface->stream);
+    InitializeCriticalSection(&fontface->cs);
 
     stream_desc.stream = fontface->stream;
     stream_desc.face_type = desc->face_type;
