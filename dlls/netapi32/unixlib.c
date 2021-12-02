@@ -72,7 +72,7 @@ static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
 
 static DWORD netapi_umbstowcs( const char *src, WCHAR *dst, DWORD dstlen )
 {
-    if (!dst) return (strlen( src ) + 1) * sizeof(WCHAR);
+    if (!dst) return strlen( src ) + 1;
     return ntdll_umbstowcs( src, strlen( src ) + 1, dst, dstlen );
 }
 
