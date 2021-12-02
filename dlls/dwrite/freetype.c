@@ -527,17 +527,10 @@ static int CDECL freetype_get_glyph_outline(void *key, float emSize, unsigned in
     return ret;
 }
 
-static UINT16 CDECL freetype_get_glyph_count(void *key)
+static UINT16 CDECL freetype_get_glyph_count(font_object_handle object)
 {
-    UINT16 count = 0;
-    FT_Face face;
-
-    RtlEnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, key, &face) == 0)
-        count = face->num_glyphs;
-    RtlLeaveCriticalSection(&freetype_cs);
-
-    return count;
+    FT_Face face = object;
+    return face ? face->num_glyphs : 0;
 }
 
 static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matrix *ft_matrix)
@@ -844,7 +837,7 @@ static int CDECL null_get_glyph_outline(void *key, float emSize, unsigned int si
     return 1;
 }
 
-static UINT16 CDECL null_get_glyph_count(void *key)
+static UINT16 CDECL null_get_glyph_count(font_object_handle object)
 {
     return 0;
 }

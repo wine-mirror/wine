@@ -734,9 +734,11 @@ static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace5 *iface, DWRITE_FON
 
 static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace5 *iface)
 {
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+
     TRACE("%p.\n", iface);
 
-    return font_funcs->get_glyph_count(iface);
+    return font_funcs->get_glyph_count(fontface->get_font_object(fontface));
 }
 
 static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *iface,
