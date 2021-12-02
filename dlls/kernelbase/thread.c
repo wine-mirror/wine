@@ -430,7 +430,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH SetThreadDescription( HANDLE thread, PCWSTR des
     info.Description.Length = info.Description.MaximumLength = length;
     info.Description.Buffer = (WCHAR *)description;
 
-    return HRESULT_FROM_NT(NtSetInformationThread( thread, ThreadDescription, &info, sizeof(info) ));
+    return HRESULT_FROM_NT(NtSetInformationThread( thread, ThreadNameInformation, &info, sizeof(info) ));
 }
 
 /***********************************************************************
@@ -447,14 +447,14 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
     *description = NULL;
 
     length = 0;
-    status = NtQueryInformationThread( thread, ThreadDescription, NULL, 0, &length );
+    status = NtQueryInformationThread( thread, ThreadNameInformation, NULL, 0, &length );
     if (status != STATUS_BUFFER_TOO_SMALL)
         return HRESULT_FROM_NT(status);
 
     if (!(info = heap_alloc( length )))
         return HRESULT_FROM_NT(STATUS_NO_MEMORY);
 
-    status = NtQueryInformationThread( thread, ThreadDescription, info, length, &length );
+    status = NtQueryInformationThread( thread, ThreadNameInformation, info, length, &length );
     if (!status)
     {
         if (!(*description = LocalAlloc( 0, info->Description.Length + sizeof(WCHAR))))

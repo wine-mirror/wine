@@ -1870,7 +1870,7 @@ typedef enum _THREADINFOCLASS {
     ThreadCounterProfiling,
     ThreadIdealProcessorEx,
     ThreadSuspendCount = 35,
-    ThreadDescription = 38,
+    ThreadNameInformation = 38,
     MaxThreadInfoClass
 } THREADINFOCLASS;
 

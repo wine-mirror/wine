@@ -934,7 +934,7 @@ NTSTATUS WINAPI wow64_NtQueryInformationThread( UINT *args )
         return status;
     }
 
-    case ThreadDescription:  /* THREAD_DESCRIPTION_INFORMATION */
+    case ThreadNameInformation:  /* THREAD_DESCRIPTION_INFORMATION */
     {
         THREAD_DESCRIPTION_INFORMATION *info;
         THREAD_DESCRIPTION_INFORMATION32 *info32 = ptr;
@@ -1190,7 +1190,7 @@ NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
         }
         else return STATUS_INVALID_PARAMETER;
 
-    case ThreadDescription:   /* THREAD_DESCRIPTION_INFORMATION */
+    case ThreadNameInformation:   /* THREAD_DESCRIPTION_INFORMATION */
         if (len == sizeof(THREAD_DESCRIPTION_INFORMATION32))
         {
             THREAD_DESCRIPTION_INFORMATION32 *info32 = ptr;

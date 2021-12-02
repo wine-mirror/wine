@@ -2035,7 +2035,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         SERVER_END_REQ;
         return status;
 
-    case ThreadDescription:
+    case ThreadNameInformation:
     {
         THREAD_DESCRIPTION_INFORMATION *info = data;
         data_size_t len, desc_len = 0;
@@ -2228,7 +2228,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
     }
 
-    case ThreadDescription:
+    case ThreadNameInformation:
     {
         const THREAD_DESCRIPTION_INFORMATION *info = data;
 
