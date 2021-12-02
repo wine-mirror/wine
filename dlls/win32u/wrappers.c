@@ -845,14 +845,6 @@ static BOOL WINAPI call_RedrawWindow( HWND hwnd, const RECT *rect, HRGN rgn, UIN
     return pRedrawWindow && pRedrawWindow( hwnd, rect, rgn, flags );
 }
 
-static DPI_AWARENESS_CONTEXT WINAPI call_SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT ctx )
-{
-    static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)( DPI_AWARENESS_CONTEXT );
-    if (!pSetThreadDpiAwarenessContext)
-        pSetThreadDpiAwarenessContext = get_user_proc( "SetThreadDpiAwarenessContext", FALSE );
-    return pSetThreadDpiAwarenessContext ? pSetThreadDpiAwarenessContext( ctx ) : 0;
-}
-
 static HWND WINAPI call_WindowFromDC( HDC hdc )
 {
     static HWND (WINAPI *pWindowFromDC)( HDC );
@@ -870,7 +862,6 @@ static const struct user_callbacks user_funcs =
     call_GetWindowRect,
     call_EnumDisplayMonitors,
     call_RedrawWindow,
-    call_SetThreadDpiAwarenessContext,
     call_WindowFromDC,
 };
 

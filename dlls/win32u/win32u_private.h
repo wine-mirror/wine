@@ -39,7 +39,6 @@ struct user_callbacks
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     BOOL (WINAPI *pEnumDisplayMonitors)( HDC, LPRECT, MONITORENUMPROC, LPARAM );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
-    DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)( DPI_AWARENESS_CONTEXT );
     HWND (WINAPI *pWindowFromDC)( HDC );
 };
 
@@ -241,6 +240,8 @@ struct unix_funcs
 
 UINT WINAPI GDIRealizePalette( HDC hdc );
 HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
+
+extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;

@@ -331,25 +331,17 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
         return 1;
     }
     case DESKTOPHORZRES:
-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            DPI_AWARENESS_CONTEXT context;
-            UINT ret;
-            context = user_callbacks->pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-            ret = user_callbacks->pGetSystemMetrics( SM_CXVIRTUALSCREEN );
-            user_callbacks->pSetThreadDpiAwarenessContext( context );
-            if (ret) return ret;
+            RECT rect = get_virtual_screen_rect();
+            return rect.right - rect.left;
         }
         return NtGdiGetDeviceCaps( dev->hdc, HORZRES );
     case DESKTOPVERTRES:
-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            DPI_AWARENESS_CONTEXT context;
-            UINT ret;
-            context = user_callbacks->pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-            ret = user_callbacks->pGetSystemMetrics( SM_CYVIRTUALSCREEN );
-            user_callbacks->pSetThreadDpiAwarenessContext( context );
-            if (ret) return ret;
+            RECT rect = get_virtual_screen_rect();
+            return rect.bottom - rect.top;
         }
         return NtGdiGetDeviceCaps( dev->hdc, VERTRES );
     case BLTALIGNMENT:    return 0;

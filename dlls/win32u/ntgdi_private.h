@@ -594,6 +594,30 @@ static inline void reset_bounds( RECT *bounds )
     bounds->right = bounds->bottom = INT_MIN;
 }
 
+static inline void union_rect( RECT *dest, const RECT *src1, const RECT *src2 )
+{
+    if (is_rect_empty( src1 ))
+    {
+        if (is_rect_empty( src2 ))
+        {
+            reset_bounds( dest );
+            return;
+        }
+        else *dest = *src2;
+    }
+    else
+    {
+        if (is_rect_empty( src2 )) *dest = *src1;
+        else
+        {
+            dest->left   = min( src1->left, src2->left );
+            dest->right  = max( src1->right, src2->right );
+            dest->top    = min( src1->top, src2->top );
+            dest->bottom = max( src1->bottom, src2->bottom );
+        }
+    }
+}
+
 static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
 {
     if (is_rect_empty( rect )) return;

@@ -1215,6 +1215,22 @@ static void unlock_display_devices(void)
     pthread_mutex_unlock( &display_lock );
 }
 
+RECT get_virtual_screen_rect(void)
+{
+    struct monitor *monitor;
+    RECT rect = {0};
+
+    if (!lock_display_devices()) return rect;
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    {
+        union_rect( &rect, &rect, &monitor->rc_monitor );
+    }
+
+    unlock_display_devices();
+    return rect;
+}
+
 /**********************************************************************
  *           NtUserGetDisplayConfigBufferSizes    (win32u.@)
  */
