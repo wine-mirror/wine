@@ -262,6 +262,8 @@ extern BOOL hid_device_set_hatswitch_y(struct unix_device *iface, ULONG index, L
 extern BOOL hid_device_sync_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 extern void hid_device_drop_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 
+extern void hid_device_set_effect_state(struct unix_device *iface, BYTE index, BYTE flags) DECLSPEC_HIDDEN;
+
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 BOOL is_dualshock4_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 

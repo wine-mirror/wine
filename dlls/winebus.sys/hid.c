@@ -1405,3 +1405,11 @@ void hid_device_drop_report(struct unix_device *iface)
 {
     iface->hid_device_state.dropped = TRUE;
 }
+
+void hid_device_set_effect_state(struct unix_device *iface, BYTE index, BYTE flags)
+{
+    struct hid_effect_state *state = &iface->hid_physical.effect_state;
+    struct pid_effect_state *report = (struct pid_effect_state *)(state->report_buf + 1);
+    report->index = index;
+    report->flags = flags;
+}

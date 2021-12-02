@@ -78,7 +78,7 @@ MAKE_FUNCPTR(SDL_JoystickInstanceID);
 MAKE_FUNCPTR(SDL_JoystickName);
 MAKE_FUNCPTR(SDL_JoystickNumAxes);
 MAKE_FUNCPTR(SDL_JoystickOpen);
-MAKE_FUNCPTR(SDL_WaitEvent);
+MAKE_FUNCPTR(SDL_WaitEventTimeout);
 MAKE_FUNCPTR(SDL_JoystickNumButtons);
 MAKE_FUNCPTR(SDL_JoystickNumBalls);
 MAKE_FUNCPTR(SDL_JoystickNumHats);
@@ -93,6 +93,7 @@ MAKE_FUNCPTR(SDL_GameControllerOpen);
 MAKE_FUNCPTR(SDL_GameControllerEventState);
 MAKE_FUNCPTR(SDL_HapticClose);
 MAKE_FUNCPTR(SDL_HapticDestroyEffect);
+MAKE_FUNCPTR(SDL_HapticGetEffectStatus);
 MAKE_FUNCPTR(SDL_HapticNewEffect);
 MAKE_FUNCPTR(SDL_HapticOpenFromJoystick);
 MAKE_FUNCPTR(SDL_HapticPause);
@@ -110,6 +111,7 @@ MAKE_FUNCPTR(SDL_JoystickIsHaptic);
 MAKE_FUNCPTR(SDL_GameControllerAddMapping);
 MAKE_FUNCPTR(SDL_RegisterEvents);
 MAKE_FUNCPTR(SDL_PushEvent);
+MAKE_FUNCPTR(SDL_GetTicks);
 static int (*pSDL_JoystickRumble)(SDL_Joystick *joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms);
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -136,6 +138,8 @@ struct sdl_device
     SDL_Haptic *sdl_haptic;
     int haptic_effect_id;
     int effect_ids[256];
+    int effect_state[256];
+    LONG effect_flags;
 };
 
 static inline struct sdl_device *impl_from_unix_device(struct unix_device *iface)
@@ -453,9 +457,11 @@ static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, US
     {
     case PID_USAGE_DC_ENABLE_ACTUATORS:
         pSDL_HapticSetGain(impl->sdl_haptic, 100);
+        InterlockedOr(&impl->effect_flags, EFFECT_STATE_ACTUATORS_ENABLED);
         return STATUS_SUCCESS;
     case PID_USAGE_DC_DISABLE_ACTUATORS:
         pSDL_HapticSetGain(impl->sdl_haptic, 0);
+        InterlockedAnd(&impl->effect_flags, ~EFFECT_STATE_ACTUATORS_ENABLED);
         return STATUS_SUCCESS;
     case PID_USAGE_DC_STOP_ALL_EFFECTS:
         pSDL_HapticStopAll(impl->sdl_haptic);
@@ -471,9 +477,11 @@ static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, US
         return STATUS_SUCCESS;
     case PID_USAGE_DC_DEVICE_PAUSE:
         pSDL_HapticPause(impl->sdl_haptic);
+        InterlockedOr(&impl->effect_flags, EFFECT_STATE_DEVICE_PAUSED);
         return STATUS_SUCCESS;
     case PID_USAGE_DC_DEVICE_CONTINUE:
         pSDL_HapticUnpause(impl->sdl_haptic);
+        InterlockedAnd(&impl->effect_flags, ~EFFECT_STATE_DEVICE_PAUSED);
         return STATUS_SUCCESS;
     }
 
@@ -686,6 +694,42 @@ static const struct hid_device_vtbl sdl_device_vtbl =
     sdl_device_physical_effect_update,
 };
 
+static void check_device_effects_state(struct sdl_device *impl)
+{
+    struct unix_device *iface = &impl->unix_device;
+    struct hid_effect_state *effect_state = &iface->hid_physical.effect_state;
+    ULONG effect_flags = InterlockedOr(&impl->effect_flags, 0);
+    unsigned int i, ret;
+
+    if (!impl->sdl_haptic) return;
+    if (!(impl->effect_support & SDL_HAPTIC_STATUS)) return;
+
+    for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i)
+    {
+        if (impl->effect_ids[i] == -1) continue;
+        ret = pSDL_HapticGetEffectStatus(impl->sdl_haptic, impl->effect_ids[i]);
+        if (impl->effect_state[i] == ret) continue;
+        impl->effect_state[i] = ret;
+        hid_device_set_effect_state(iface, i, effect_flags | (ret == 1 ? EFFECT_STATE_EFFECT_PLAYING : 0));
+        bus_event_queue_input_report(&event_queue, iface, effect_state->report_buf, effect_state->report_len);
+    }
+}
+
+static void check_all_devices_effects_state(void)
+{
+    static UINT last_ticks = 0;
+    UINT ticks = pSDL_GetTicks();
+    struct sdl_device *impl;
+
+    if (ticks - last_ticks < 10) return;
+    last_ticks = ticks;
+
+    pthread_mutex_lock(&sdl_cs);
+    LIST_FOR_EACH_ENTRY(impl, &device_list, struct sdl_device, unix_device.entry)
+        check_device_effects_state(impl);
+    pthread_mutex_unlock(&sdl_cs);
+}
+
 static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *event)
 {
     struct unix_device *iface = &impl->unix_device;
@@ -693,7 +737,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
 
     if (impl->sdl_controller) return TRUE; /* use controller events instead */
 
-    switch(event->type)
+    switch (event->type)
     {
         case SDL_JOYBUTTONDOWN:
         case SDL_JOYBUTTONUP:
@@ -732,6 +776,8 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         default:
             ERR("TODO: Process Report (0x%x)\n",event->type);
     }
+
+    check_device_effects_state(impl);
     return FALSE;
 }
 
@@ -740,7 +786,7 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
     struct unix_device *iface = &impl->unix_device;
     struct hid_device_state *state = &iface->hid_device_state;
 
-    switch(event->type)
+    switch (event->type)
     {
         case SDL_CONTROLLERBUTTONDOWN:
         case SDL_CONTROLLERBUTTONUP:
@@ -786,6 +832,8 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
         default:
             ERR("TODO: Process Report (%x)\n",event->type);
     }
+
+    check_device_effects_state(impl);
     return FALSE;
 }
 
@@ -924,7 +972,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_JoystickName);
     LOAD_FUNCPTR(SDL_JoystickNumAxes);
     LOAD_FUNCPTR(SDL_JoystickOpen);
-    LOAD_FUNCPTR(SDL_WaitEvent);
+    LOAD_FUNCPTR(SDL_WaitEventTimeout);
     LOAD_FUNCPTR(SDL_JoystickNumButtons);
     LOAD_FUNCPTR(SDL_JoystickNumBalls);
     LOAD_FUNCPTR(SDL_JoystickNumHats);
@@ -939,6 +987,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_GameControllerEventState);
     LOAD_FUNCPTR(SDL_HapticClose);
     LOAD_FUNCPTR(SDL_HapticDestroyEffect);
+    LOAD_FUNCPTR(SDL_HapticGetEffectStatus);
     LOAD_FUNCPTR(SDL_HapticNewEffect);
     LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
     LOAD_FUNCPTR(SDL_HapticPause);
@@ -956,6 +1005,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_GameControllerAddMapping);
     LOAD_FUNCPTR(SDL_RegisterEvents);
     LOAD_FUNCPTR(SDL_PushEvent);
+    LOAD_FUNCPTR(SDL_GetTicks);
 #undef LOAD_FUNCPTR
     pSDL_JoystickRumble = dlsym(sdl_handle, "SDL_JoystickRumble");
     pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
@@ -1013,8 +1063,8 @@ NTSTATUS sdl_bus_wait(void *args)
     do
     {
         if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
-        if (pSDL_WaitEvent(&event) != 0) process_device_event(&event);
-        else WARN("SDL_WaitEvent failed: %s\n", pSDL_GetError());
+        if (pSDL_WaitEventTimeout(&event, 10) != 0) process_device_event(&event);
+        else check_all_devices_effects_state();
     } while (event.type != quit_event);
 
     TRACE("SDL main loop exiting\n");
