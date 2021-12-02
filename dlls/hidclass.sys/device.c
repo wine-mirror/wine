@@ -322,7 +322,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
     packet = malloc( sizeof(*packet) + desc->InputLength );
     buffer = (BYTE *)(packet + 1);
-    packet->reportBuffer = buffer;
 
     report = find_report_with_type_and_id( ext, HidP_Input, 0, TRUE );
     if (!report) WARN("no input report found.\n");
@@ -331,6 +330,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
     do
     {
         packet->reportId = buffer[0] = report_id;
+        packet->reportBuffer = buffer;
         packet->reportBufferLen = desc->InputLength;
 
         if (!report_id)
@@ -345,13 +345,17 @@ static DWORD CALLBACK hid_device_thread(void *args)
         if (io.Status == STATUS_SUCCESS)
         {
             if (!report_id) io.Information++;
-            packet->reportId = buffer[0];
-            packet->reportBuffer = buffer;
-            packet->reportBufferLen = io.Information;
-
-            report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE );
-            if (polled || (report && report->InputLength == io.Information))
+            if (!(report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE )))
+                WARN( "dropping unknown input id %u\n", buffer[0] );
+            else if (!polled && io.Information < report->InputLength)
+                WARN( "dropping short report, len %u expected %u\n", (ULONG)io.Information, report->InputLength );
+            else
+            {
+                packet->reportId = buffer[0];
+                packet->reportBuffer = buffer;
+                packet->reportBufferLen = io.Information;
                 hid_device_queue_input( device, packet );
+            }
         }
 
         res = WaitForSingleObject(ext->u.pdo.halt_event, polled ? ext->u.pdo.poll_interval : 0);
