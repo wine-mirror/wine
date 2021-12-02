@@ -213,6 +213,10 @@ static PS_ATTRIBUTE_LIST *ps_attributes_32to64( PS_ATTRIBUTE_LIST **attr, const 
                         LongToHandle( ((LONG *)ULongToPtr(attr32->Attributes[i].Value))[j] );
             }
             break;
+        case PS_ATTRIBUTE_PARENT_PROCESS:
+            ret->Attributes[i].Size     = sizeof(HANDLE);
+            ret->Attributes[i].ValuePtr = LongToHandle( attr32->Attributes[i].Value );
+            break;
         case PS_ATTRIBUTE_CLIENT_ID:
             ret->Attributes[i].Size     = sizeof(CLIENT_ID);
             ret->Attributes[i].ValuePtr = Wow64AllocateTemp( ret->Attributes[i].Size );
