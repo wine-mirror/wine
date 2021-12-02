@@ -9,7 +9,7 @@
 @ stub Wow64GetWow64ImageOption
 @ stub Wow64IsControlFlowGuardEnforced
 @ stub Wow64IsStackExtentsCheckEnforced
-@ stub Wow64KiUserCallbackDispatcher
+@ stdcall Wow64KiUserCallbackDispatcher(long ptr long ptr ptr)
 @ stdcall Wow64LdrpInitialize(ptr)
 @ stub Wow64LogPrint
 @ stub Wow64NotifyUnsimulateComplete

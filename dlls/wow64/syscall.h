@@ -37,6 +37,7 @@
     SYSCALL_ENTRY( NtAllocateVirtualMemoryEx ) \
     SYSCALL_ENTRY( NtAreMappedFilesTheSame ) \
     SYSCALL_ENTRY( NtAssignProcessToJobObject ) \
+    SYSCALL_ENTRY( NtCallbackReturn ) \
     SYSCALL_ENTRY( NtCancelIoFile ) \
     SYSCALL_ENTRY( NtCancelIoFileEx ) \
     SYSCALL_ENTRY( NtCancelTimer ) \

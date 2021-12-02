@@ -70,6 +70,18 @@ struct mem_header
     BYTE               data[1];
 };
 
+/* stack frame for user callbacks */
+struct user_callback_frame
+{
+    struct user_callback_frame *prev_frame;
+    struct mem_header          *temp_list;
+    void                      **ret_ptr;
+    ULONG                      *ret_len;
+    NTSTATUS                    status;
+    __wine_jmp_buf              jmpbuf;
+};
+
+
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 /* wow64win syscall table */
@@ -140,6 +152,26 @@ NTSTATUS WINAPI wow64_NtAllocateUuids( UINT *args )
     UCHAR *seed = get_ptr( &args );
 
     return NtAllocateUuids( time, delta, sequence, seed );
+}
+
+
+/***********************************************************************
+ *           wow64_NtCallbackReturn
+ */
+NTSTATUS WINAPI wow64_NtCallbackReturn( UINT *args )
+{
+    void *ret_ptr = get_ptr( &args );
+    ULONG ret_len = get_ulong( &args );
+    NTSTATUS status = get_ulong( &args );
+
+    struct user_callback_frame *frame = NtCurrentTeb()->TlsSlots[WOW64_TLS_USERCALLBACKDATA];
+
+    if (!frame) return STATUS_NO_CALLBACK_ACTIVE;
+
+    *frame->ret_ptr = ret_ptr;
+    *frame->ret_len = ret_len;
+    frame->status = status;
+    __wine_longjmp( &frame->jmpbuf, 1 );
 }
 
 
@@ -790,6 +822,86 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
         }
         break;
     }
+}
+
+
+/**********************************************************************
+ *           Wow64KiUserCallbackDispatcher  (wow64.@)
+ */
+NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
+                                               void **ret_ptr, ULONG *ret_len )
+{
+    struct user_callback_frame frame;
+
+    frame.prev_frame = NtCurrentTeb()->TlsSlots[WOW64_TLS_USERCALLBACKDATA];
+    frame.temp_list  = NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST];
+    frame.ret_ptr    = ret_ptr;
+    frame.ret_len    = ret_len;
+
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_USERCALLBACKDATA] = &frame;
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST] = NULL;
+
+    /* cf. 32-bit KeUserModeCallback */
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        {
+            I386_CONTEXT orig_ctx, ctx = { CONTEXT_I386_FULL };
+            void *args_data;
+            ULONG *stack;
+
+            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+
+            stack = args_data = ULongToPtr( (ctx.Esp - len) & ~15 );
+            memcpy( args_data, args, len );
+            *(--stack) = 0;
+            *(--stack) = len;
+            *(--stack) = PtrToUlong( args_data );
+            *(--stack) = id;
+            *(--stack) = 0xdeadbabe;
+
+            orig_ctx = ctx;
+            ctx.Esp = PtrToUlong( stack );
+            ctx.Eip = pLdrSystemDllInitBlock->pKiUserCallbackDispatcher;
+            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+
+            if (!__wine_setjmpex( &frame.jmpbuf, NULL ))
+                cpu_simulate();
+            else
+                NtSetInformationThread( GetCurrentThread(), ThreadWow64Context,
+                                        &orig_ctx, sizeof(orig_ctx) );
+        }
+        break;
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+        {
+            ARM_CONTEXT orig_ctx, ctx = { CONTEXT_ARM_FULL };
+            void *args_data;
+
+            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+
+            args_data = ULongToPtr( (ctx.Sp - len) & ~15 );
+            memcpy( args_data, args, len );
+
+            ctx.R0 = id;
+            ctx.R1 = PtrToUlong( args );
+            ctx.R2 = len;
+            ctx.Sp = PtrToUlong( args_data );
+            ctx.Pc = pLdrSystemDllInitBlock->pKiUserCallbackDispatcher;
+            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+
+            if (!__wine_setjmpex( &frame.jmpbuf, NULL ))
+                cpu_simulate();
+            else
+                NtSetInformationThread( GetCurrentThread(), ThreadWow64Context,
+                                        &orig_ctx, sizeof(orig_ctx) );
+        }
+        break;
+    }
+
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_USERCALLBACKDATA] = frame.prev_frame;
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST] = frame.temp_list;
+    return frame.status;
 }
 
 
