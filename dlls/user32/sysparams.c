@@ -43,7 +43,6 @@
 #include "devguid.h"
 #include "setupapi.h"
 #include "controls.h"
-#include "win.h"
 #include "user_private.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
@@ -94,31 +93,13 @@ static const WCHAR *parameter_key_names[NB_PARAM_KEYS] =
     L"Control Panel\\Accessibility\\AudioDescription",
 };
 
-DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
 
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
-DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
-DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCWORK, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 4);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 5);
 
-#define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
-
-
-/* Cached monitor information */
-static MONITORINFOEXW *monitors;
-static UINT monitor_count;
-static FILETIME last_query_monitors_time;
-static CRITICAL_SECTION monitors_section;
-static CRITICAL_SECTION_DEBUG monitors_critsect_debug =
-{
-    0, 0, &monitors_section,
-    { &monitors_critsect_debug.ProcessLocksList, &monitors_critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": monitors_section") }
-};
-static CRITICAL_SECTION monitors_section = { &monitors_critsect_debug, -1 , 0, 0, 0, 0 };
 
 static HDC display_dc;
 static CRITICAL_SECTION display_dc_section;
@@ -143,7 +124,6 @@ static DPI_AWARENESS dpi_awareness;
 static DPI_AWARENESS default_awareness = DPI_AWARENESS_UNAWARE;
 
 static HKEY volatile_base_key;
-static HKEY video_key;
 
 union sysparam_all_entry;
 
@@ -3764,98 +3744,6 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
     return MonitorFromRect( &rect, dwFlags );
 }
 
-/* Return FALSE on failure and TRUE on success */
-static BOOL update_monitor_cache(void)
-{
-    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
-    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
-    MONITORINFOEXW *monitor_array;
-    FILETIME filetime = {0};
-    DWORD device_count = 0;
-    HANDLE mutex = NULL;
-    DWORD state_flags;
-    BOOL ret = FALSE;
-    BOOL is_replica;
-    DWORD i = 0, j;
-    DWORD type, error = GetLastError();
-
-    /* Update monitor cache from SetupAPI if it's outdated */
-    if (!video_key && RegOpenKeyW( HKEY_LOCAL_MACHINE, L"HARDWARE\\DEVICEMAP\\VIDEO", &video_key ))
-        return FALSE;
-    if (RegQueryInfoKeyW( video_key, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &filetime ))
-        return FALSE;
-    if (CompareFileTime( &filetime, &last_query_monitors_time ) < 0)
-        return TRUE;
-
-    mutex = get_display_device_init_mutex();
-    EnterCriticalSection( &monitors_section );
-    devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, L"DISPLAY", NULL, DIGCF_PRESENT );
-
-    while (SetupDiEnumDeviceInfo( devinfo, i++, &device_data ))
-    {
-        /* Inactive monitors don't get enumerated */
-        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
-                                        (BYTE *)&state_flags, sizeof(DWORD), NULL, 0 ))
-            goto fail;
-        if (state_flags & DISPLAY_DEVICE_ACTIVE)
-            device_count++;
-    }
-
-    if (device_count && monitor_count < device_count)
-    {
-        monitor_array = heap_alloc( device_count * sizeof(*monitor_array) );
-        if (!monitor_array)
-            goto fail;
-        heap_free( monitors );
-        monitors = monitor_array;
-    }
-
-    for (i = 0, monitor_count = 0; SetupDiEnumDeviceInfo( devinfo, i, &device_data ); i++)
-    {
-        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
-                                        (BYTE *)&state_flags, sizeof(DWORD), NULL, 0 ))
-            goto fail;
-        if (!(state_flags & DISPLAY_DEVICE_ACTIVE))
-            continue;
-        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
-                                        (BYTE *)&monitors[monitor_count].rcMonitor, sizeof(RECT), NULL, 0 ))
-            goto fail;
-
-        /* Replicas in mirroring monitor sets don't get enumerated */
-        is_replica = FALSE;
-        for (j = 0; j < monitor_count; j++)
-        {
-            if (EqualRect(&monitors[j].rcMonitor, &monitors[monitor_count].rcMonitor))
-            {
-                is_replica = TRUE;
-                break;
-            }
-        }
-        if (is_replica)
-            continue;
-
-        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
-                                        (BYTE *)&monitors[monitor_count].rcWork, sizeof(RECT), NULL, 0 ))
-            goto fail;
-        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, &type,
-                                        (BYTE *)monitors[monitor_count].szDevice, CCHDEVICENAME * sizeof(WCHAR), NULL, 0))
-            goto fail;
-        monitors[monitor_count].dwFlags =
-            !wcscmp( L"\\\\.\\DISPLAY1", monitors[monitor_count].szDevice ) ? MONITORINFOF_PRIMARY : 0;
-
-        monitor_count++;
-    }
-
-    last_query_monitors_time = filetime;
-    ret = TRUE;
-fail:
-    SetupDiDestroyDeviceInfoList( devinfo );
-    LeaveCriticalSection( &monitors_section );
-    release_display_device_init_mutex( mutex );
-    SetLastError( error );
-    return ret;
-}
-
 /***********************************************************************
  *		GetMonitorInfoA (USER32.@)
  */
@@ -3905,9 +3793,7 @@ BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
 
 struct enum_mon_data
 {
-    MONITORENUMPROC proc;
     LPARAM lparam;
-    HDC hdc;
     POINT origin;
     RECT limit;
 };
@@ -3917,7 +3803,7 @@ struct enum_mon_data
  * so we need a small assembly wrapper to call it.
  * MJ's Help Diagnostic expects that %ecx contains the address to the rect.
  */
-extern BOOL enum_mon_callback_wrapper( HMONITOR monitor, LPRECT rect, struct enum_mon_data *data );
+extern BOOL enum_mon_callback_wrapper( void *proc, HMONITOR monitor, HDC hdc, RECT *rect, LPARAM lparam );
 __ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
     "pushl %ebp\n\t"
     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -3925,73 +3811,32 @@ __ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
     "movl %esp,%ebp\n\t"
     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
     "subl $8,%esp\n\t"
-    "movl 16(%ebp),%eax\n\t"    /* data */
-    "movl 12(%ebp),%ecx\n\t"    /* rect */
-    "pushl 4(%eax)\n\t"         /* data->lparam */
-    "pushl %ecx\n\t"            /* rect */
-    "pushl 8(%eax)\n\t"         /* data->hdc */
-    "pushl 8(%ebp)\n\t"         /* monitor */
-    "call *(%eax)\n\t"          /* data->proc */
+    "pushl 24(%ebp)\n\t"        /* lparam */
+    "pushl 20(%ebp)\n\t"        /* rect */
+    "pushl 16(%ebp)\n\t"        /* hdc */
+    "pushl 12(%ebp)\n\t"        /* monitor */
+    "movl 8(%ebp),%eax\n"       /* proc */
+    "call *%eax\n\t"
     "leave\n\t"
     __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
     __ASM_CFI(".cfi_same_value %ebp\n\t")
     "ret" )
 #endif /* __i386__ */
 
-static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *params, ULONG size )
 {
-    struct enum_mon_data *data = (struct enum_mon_data *)lp;
-    RECT monrect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), get_thread_dpi() );
+    struct enum_mon_data *data = (struct enum_mon_data *)params->lparam;
+    RECT monrect = map_dpi_rect( params->rect, get_monitor_dpi( params->monitor ), get_thread_dpi() );
 
+    /* FIXME: move DPI conversion and rect filtering to win32u */
     OffsetRect( &monrect, -data->origin.x, -data->origin.y );
     if (!IntersectRect( &monrect, &monrect, &data->limit )) return TRUE;
 #ifdef __i386__
-    return enum_mon_callback_wrapper( monitor, &monrect, data );
+    return enum_mon_callback_wrapper( params->proc, params->monitor, params->hdc,
+                                      &monrect, data->lparam );
 #else
-    return data->proc( monitor, data->hdc, &monrect, data->lparam );
+    return params->proc( params->monitor, params->hdc, &monrect, data->lparam );
 #endif
-}
-
-BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    BOOL is_winstation_visible = FALSE;
-    USEROBJECTFLAGS flags;
-    HWINSTA winstation;
-    RECT monitor_rect;
-    DWORD i = 0;
-
-    TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
-
-    /* Report physical monitor information only if window station has visible display surfaces */
-    winstation = NtUserGetProcessWindowStation();
-    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ))
-        is_winstation_visible = flags.dwFlags & WSF_VISIBLE;
-
-    if (is_winstation_visible && update_monitor_cache())
-    {
-        while (TRUE)
-        {
-            EnterCriticalSection( &monitors_section );
-            if (i >= monitor_count)
-            {
-                LeaveCriticalSection( &monitors_section );
-                return TRUE;
-            }
-            monitor_rect = monitors[i].rcMonitor;
-            LeaveCriticalSection( &monitors_section );
-
-            if (!proc( (HMONITOR)(UINT_PTR)(i + 1), hdc, &monitor_rect, lp ))
-                return FALSE;
-
-            ++i;
-        }
-    }
-
-    /* Fallback to report one monitor if using SetupAPI failed */
-    SetRect( &monitor_rect, 0, 0, 1024, 768 );
-    if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &monitor_rect, lp ))
-        return FALSE;
-    return TRUE;
 }
 
 /***********************************************************************
@@ -4001,9 +3846,7 @@ BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPA
 {
     struct enum_mon_data data;
 
-    data.proc = proc;
     data.lparam = lp;
-    data.hdc = hdc;
 
     if (hdc)
     {
@@ -4017,7 +3860,7 @@ BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPA
         data.limit.right = data.limit.bottom = INT_MAX;
     }
     if (rect && !IntersectRect( &data.limit, &data.limit, rect )) return TRUE;
-    return USER_Driver->pEnumDisplayMonitors( 0, NULL, enum_mon_callback, (LPARAM)&data );
+    return NtUserEnumDisplayMonitors( hdc, rect, proc, (LPARAM)&data );
 }
 
 /***********************************************************************

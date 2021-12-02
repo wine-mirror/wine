@@ -617,6 +617,11 @@ BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
     return unix_funcs->pNtUserEnumDisplayDevices( device, index, info, flags );
 }
 
+BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    return unix_funcs->pNtUserEnumDisplayMonitors( hdc, rect, proc, lp );
+}
+
 BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
                                        DEVMODEW *dev_mode, DWORD flags )
 {

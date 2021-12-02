@@ -66,8 +66,6 @@ extern const struct user_driver_funcs *USER_Driver DECLSPEC_HIDDEN;
 
 extern void USER_unload_driver(void) DECLSPEC_HIDDEN;
 
-extern BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp ) DECLSPEC_HIDDEN;
-
 struct received_message_info;
 
 enum user_obj_type
@@ -218,6 +216,10 @@ extern BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 extern const WCHAR *CLASS_GetVersionedName(const WCHAR *classname, UINT *basename_offset,
         WCHAR *combined, BOOL register_class) DECLSPEC_HIDDEN;
+
+/* kernel callbacks */
+
+BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *params, ULONG size );
 
 /* message spy definitions */
 

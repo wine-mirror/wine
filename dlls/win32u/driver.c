@@ -807,15 +807,9 @@ static void CDECL nulldrv_UpdateClipboard(void)
 }
 
 static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
-                                             DWORD flags, LPVOID lparam )
+                                                   DWORD flags, LPVOID lparam )
 {
     return DISP_CHANGE_FAILED;
-}
-
-static BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    /* FIXME: move from user32 */
-    return FALSE;
 }
 
 static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
@@ -1099,7 +1093,6 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT ver
     SET_USER_FUNC(ClipCursor);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettingsEx);
-    SET_USER_FUNC(EnumDisplayMonitors);
     SET_USER_FUNC(EnumDisplaySettingsEx);
     SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktopWindow);

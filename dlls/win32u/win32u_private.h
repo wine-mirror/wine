@@ -200,6 +200,7 @@ struct unix_funcs
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
     BOOL     (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,
                                                   DISPLAY_DEVICEW *info, DWORD flags );
+    BOOL     (WINAPI *pNtUserEnumDisplayMonitors)( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
     BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
                                                    DEVMODEW *dev_mode, DWORD flags );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
@@ -265,6 +266,13 @@ static inline struct user_thread_info *get_user_thread_info(void)
 }
 
 extern const struct user_driver_funcs *user_driver DECLSPEC_HIDDEN;
+
+static inline NTSTATUS user32_call( ULONG id, void *args, ULONG len )
+{
+    /* FIXME: use KeUserModeCallback instead */
+    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+    return func( args, len );
+}
 
 static inline BOOL set_ntstatus( NTSTATUS status )
 {

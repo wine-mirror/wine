@@ -214,11 +214,19 @@ static void dpiaware_init(void)
 }
 
 
+static const void *kernel_callback_table[] =
+{
+    User32CallEnumDisplayMonitor,
+};
+
+
 /***********************************************************************
  *           USER initialisation routine
  */
 static BOOL process_attach(void)
 {
+    NtCurrentTeb()->Peb->KernelCallbackTable = kernel_callback_table;
+
     dpiaware_init();
     register_desktop_class();
 

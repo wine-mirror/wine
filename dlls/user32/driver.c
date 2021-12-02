@@ -269,11 +269,6 @@ static LONG CDECL loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mo
     return load_driver()->pChangeDisplaySettingsEx( name, mode, hwnd, flags, lparam );
 }
 
-static BOOL CDECL loaderdrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    return load_driver()->pEnumDisplayMonitors( hdc, rect, proc, lp );
-}
-
 static BOOL CDECL loaderdrv_CreateDesktopWindow( HWND hwnd )
 {
     return load_driver()->pCreateDesktopWindow( hwnd );
@@ -334,7 +329,6 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_UpdateClipboard,
     /* display modes */
     loaderdrv_ChangeDisplaySettingsEx,
-    loaderdrv_EnumDisplayMonitors,
     NULL,
     NULL,
     /* windowing functions */
@@ -378,13 +372,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
 
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     *driver = *funcs;
-
-#define SET_USER_FUNC(name) \
-    do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
-
-    SET_USER_FUNC(EnumDisplayMonitors);
-
-#undef SET_USER_FUNC
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
     if (prev != &lazy_load_driver)

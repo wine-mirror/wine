@@ -876,7 +876,7 @@
 @ stub NtUserEndMenu
 @ stub NtUserEndPaint
 @ stdcall NtUserEnumDisplayDevices(ptr long ptr long)
-@ stub NtUserEnumDisplayMonitors
+@ stdcall NtUserEnumDisplayMonitors(long ptr ptr long)
 @ stdcall NtUserEnumDisplaySettings(ptr long ptr long)
 @ stub NtUserEvent
 @ stub NtUserExcludeUpdateRgn
@@ -1330,7 +1330,7 @@
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 
 # Graphics drivers
-@ cdecl __wine_set_display_driver(long)
+@ cdecl __wine_set_display_driver(ptr long)
 
 # OpenGL
 @ cdecl __wine_get_wgl_driver(long long)

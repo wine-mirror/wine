@@ -1320,6 +1320,77 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
     return ret;
 }
 
+struct monitor_enum_info
+{
+    HANDLE handle;
+    RECT rect;
+};
+
+/***********************************************************************
+ *	     NtUserEnumDisplayMonitors    (win32u.@)
+ */
+BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lparam )
+{
+    struct monitor_enum_info enum_buf[8], *enum_info = enum_buf;
+    struct enum_display_monitor_params params;
+    struct monitor *monitor;
+    ULONG count = 0, i;
+    USEROBJECTFLAGS flags;
+    HWINSTA winstation;
+    BOOL ret = TRUE;
+
+    /* Report physical monitor information only if window station has visible display surfaces */
+    winstation = NtUserGetProcessWindowStation();
+    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) &&
+        (flags.dwFlags & WSF_VISIBLE))
+    {
+        if (!lock_display_devices()) return FALSE;
+
+        count = list_count( &monitors );
+        if (!count || (count > ARRAYSIZE(enum_buf) &&
+                       !(enum_info = malloc( count * sizeof(*enum_info) ))))
+        {
+            unlock_display_devices();
+            return FALSE;
+        }
+
+        count = 0;
+        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+        {
+            if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+            enum_info[count].handle = monitor->handle;
+            enum_info[count].rect = monitor->rc_monitor;
+            count++;
+        }
+
+        unlock_display_devices();
+        if (!count) return FALSE;
+    }
+    else
+    {
+        if (!(enum_info = malloc( sizeof(*enum_info) ))) return FALSE;
+        enum_info->handle = NULLDRV_DEFAULT_HMONITOR;
+        SetRect( &enum_info->rect, 0, 0, 1024, 768 );
+        count = 1;
+    }
+
+    params.proc = proc;
+    params.hdc = hdc;
+    params.lparam = lparam;
+    for (i = 0; i < count; i++)
+    {
+        params.monitor = enum_info[i].handle;
+        params.rect = enum_info[i].rect;
+        if (!user32_call( NtUserCallEnumDisplayMonitor, &params, sizeof(params) ))
+        {
+            ret = FALSE;
+            break;
+        }
+    }
+    if (enum_info != enum_buf) free( enum_info );
+    return ret;
+}
+
 static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
 {
     struct monitor *monitor;

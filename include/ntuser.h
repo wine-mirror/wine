@@ -23,6 +23,22 @@
 #include <wingdi.h>
 #include <winternl.h>
 
+/* KernelCallbackTable codes, not compatible with Windows */
+enum
+{
+    NtUserCallEnumDisplayMonitor,
+};
+
+/* NtUserCallEnumDisplayMonitor params */
+struct enum_display_monitor_params
+{
+    MONITORENUMPROC proc;
+    HMONITOR monitor;
+    HDC hdc;
+    RECT rect;
+    LPARAM lparam;
+};
+
 /* NtUserCallTwoParam codes, not compatible with Windows */
 enum
 {
@@ -73,6 +89,7 @@ HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK m
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
 BOOL    WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                          DISPLAY_DEVICEW *info, DWORD flags );
+BOOL    WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
 BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
                                           DEVMODEW *dev_mode, DWORD flags );
 INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
