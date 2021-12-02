@@ -2118,6 +2118,7 @@ static BOOL convert_to_pe64( HMODULE module, const SECTION_IMAGE_INFORMATION *in
     ULONG i, old_prot;
 
     if (nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return TRUE;  /* already 64-bit */
+    if (NtCurrentTeb()->WowTebOffset) return TRUE;  /* no need to convert */
     if (!info->ImageContainsCode) return TRUE;  /* no need to convert */
 
     TRACE( "%p\n", module );
@@ -2207,6 +2208,7 @@ static BOOL is_valid_binary( HANDLE file, const SECTION_IMAGE_INFORMATION *info 
 #else
     if (info->Machine == IMAGE_FILE_MACHINE_ARM64) return TRUE;
 #endif
+    if (NtCurrentTeb()->WowTebOffset) return TRUE;
     if (!info->ImageContainsCode) return TRUE;
     if (!(info->u.s.ComPlusNativeReady))
     {
