@@ -159,6 +159,12 @@ struct pid_new_effect
     ULONG type_coll;
 };
 
+struct pid_effect_state
+{
+    BYTE id;
+    ULONG collection;
+};
+
 struct hid_joystick
 {
     struct dinput_device base;
@@ -193,6 +199,7 @@ struct hid_joystick
     struct pid_block_free pid_block_free;
     struct pid_block_load pid_block_load;
     struct pid_new_effect pid_new_effect;
+    struct pid_effect_state pid_effect_state;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -535,12 +542,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
         if (!caps->usage_page) continue;
         if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) continue;
 
-        if (caps->usage_page == HID_USAGE_PAGE_PID)
-        {
-            value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
-            object += caps->usage_max - caps->usage_min + 1;
-        }
-        else if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
             value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
         else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
@@ -613,12 +615,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
         if (!caps->usage_page) continue;
         if (!(caps->flags & HID_VALUE_CAPS_IS_BUTTON)) continue;
 
-        if (caps->usage_page == HID_USAGE_PAGE_PID)
-        {
-            button_ofs += caps->usage_max - caps->usage_min + 1;
-            object += caps->usage_max - caps->usage_min + 1;
-        }
-        else if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
             button_ofs += caps->usage_max - caps->usage_min + 1;
         else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
@@ -1290,6 +1287,8 @@ static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_value_c
                                    DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct enum_objects_params *params = data;
+    if (instance->wUsagePage == HID_USAGE_PAGE_PID && !(instance->dwType & DIDFT_NODATA))
+        return DIENUM_CONTINUE;
     return params->callback( instance, params->context );
 }
 
@@ -1605,6 +1604,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
     struct pid_block_free *block_free = &impl->pid_block_free;
     struct pid_block_load *block_load = &impl->pid_block_load;
     struct pid_new_effect *new_effect = &impl->pid_new_effect;
+    struct pid_effect_state *effect_state = &impl->pid_effect_state;
 
 #define SET_COLLECTION( rep )                                          \
     do                                                                 \
@@ -1640,6 +1640,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         case PID_USAGE_BLOCK_FREE_REPORT: SET_COLLECTION( block_free ); break;
         case PID_USAGE_BLOCK_LOAD_REPORT: SET_COLLECTION( block_load ); break;
         case PID_USAGE_CREATE_NEW_EFFECT_REPORT: SET_COLLECTION( new_effect ); break;
+        case PID_USAGE_STATE_REPORT: SET_COLLECTION( effect_state ); break;
 
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
         case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
@@ -1677,8 +1678,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     struct pid_block_free *block_free = &impl->pid_block_free;
     struct pid_block_load *block_load = &impl->pid_block_load;
     struct pid_new_effect *new_effect = &impl->pid_new_effect;
-
-    if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
+    struct pid_effect_state *effect_state = &impl->pid_effect_state;
 
 #define SET_REPORT_ID( rep )                                           \
     do                                                                 \
@@ -1688,6 +1688,11 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         else if (rep->id != instance->wReportId)                       \
             FIXME( "multiple " #rep " report ids!\n" );                \
     } while (0)
+
+    if (instance->wCollectionNumber == effect_state->collection)
+        SET_REPORT_ID( effect_state );
+
+    if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
     if (instance->wCollectionNumber == device_control->control_coll)
         SET_REPORT_ID( device_control );
@@ -1956,7 +1961,7 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
     impl->usages_buf = usages;
 
     enum_objects( impl, &filter, DIDFT_COLLECTION, init_pid_reports, NULL );
-    enum_objects( impl, &filter, DIDFT_NODATA, init_pid_caps, NULL );
+    enum_objects( impl, &filter, DIDFT_NODATA | DIDFT_BUTTON | DIDFT_AXIS, init_pid_caps, NULL );
 
     TRACE( "device control id %u, coll %u, control coll %u\n", impl->pid_device_control.id,
            impl->pid_device_control.collection, impl->pid_device_control.control_coll );
@@ -1976,6 +1981,7 @@ HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, 
            impl->pid_block_load.collection, impl->pid_block_load.status_coll );
     TRACE( "create new effect id %u, coll %u, type_coll %u\n", impl->pid_new_effect.id,
            impl->pid_new_effect.collection, impl->pid_new_effect.type_coll );
+    TRACE( "effect state id %u, coll %u\n", impl->pid_effect_state.id, impl->pid_effect_state.collection );
 
     if (impl->pid_device_control.id)
     {
