@@ -1031,8 +1031,15 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     effect.replay.delay = params->start_delay;
     effect.trigger.button = params->trigger_button;
     effect.trigger.interval = params->trigger_repeat_interval;
-    /* only supports polar with one direction angle */
-    effect.direction = params->direction[0] * 0x800 / 1125;
+
+    /* Linux FF only supports polar direction, and uses an inverted convention compared
+     * to SDL or dinput (see SDL src/haptic/linux/SDL_syshaptic.c), where the force pulls
+     * into the specified direction, instead of coming from it.
+     *
+     * The first direction we get from PID is in polar coordinate space, so we need to
+     * add 180° to make it match Linux coordinates. */
+    effect.direction = (params->direction[0] + 18000) % 36000;
+    effect.direction = effect.direction * 0x800 / 1125;
 
     switch (params->effect_type)
     {

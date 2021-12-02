@@ -565,12 +565,17 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
     struct sdl_device *impl = impl_from_unix_device(iface);
     int id = impl->effect_ids[index];
     SDL_HapticEffect effect = {0};
+    UINT16 direction;
     NTSTATUS status;
 
     TRACE("iface %p, index %u, params %p.\n", iface, index, params);
 
     if (params->effect_type == PID_USAGE_UNDEFINED) return STATUS_SUCCESS;
     if ((status = set_effect_type_from_usage(&effect, params->effect_type))) return status;
+
+    /* The first direction we get from PID is in polar coordinate space, so we need to
+     * remove 90° to make it match SDL spherical coordinates. */
+    direction = (params->direction[0] - 9000) % 36000;
 
     switch (params->effect_type)
     {
@@ -584,7 +589,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.periodic.button = params->trigger_button;
         effect.periodic.interval = params->trigger_repeat_interval;
         effect.periodic.direction.type = SDL_HAPTIC_SPHERICAL;
-        effect.periodic.direction.dir[0] = params->direction[0];
+        effect.periodic.direction.dir[0] = direction;
         effect.periodic.direction.dir[1] = params->direction[1];
         effect.periodic.period = params->periodic.period;
         effect.periodic.magnitude = params->periodic.magnitude;
@@ -605,7 +610,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.condition.button = params->trigger_button;
         effect.condition.interval = params->trigger_repeat_interval;
         effect.condition.direction.type = SDL_HAPTIC_SPHERICAL;
-        effect.condition.direction.dir[0] = params->direction[0];
+        effect.condition.direction.dir[0] = direction;
         effect.condition.direction.dir[1] = params->direction[1];
         if (params->condition_count >= 1)
         {
@@ -633,7 +638,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.constant.button = params->trigger_button;
         effect.constant.interval = params->trigger_repeat_interval;
         effect.constant.direction.type = SDL_HAPTIC_SPHERICAL;
-        effect.constant.direction.dir[0] = params->direction[0];
+        effect.constant.direction.dir[0] = direction;
         effect.constant.direction.dir[1] = params->direction[1];
         effect.constant.level = params->constant_force.magnitude;
         effect.constant.attack_length = params->envelope.attack_time;
