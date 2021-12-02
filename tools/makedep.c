@@ -4131,6 +4131,12 @@ static void load_sources( struct makefile *make )
     if (make->extlib) make->staticlib = make->extlib;
     if (make->staticlib) make->module = make->staticlib;
 
+    if (host_cpu)
+    {
+        value = get_expanded_file_local_var( make, host_cpu, "EXTRADLLFLAGS" );
+        if (value.count) make->extradllflags = value;
+    }
+
     make->disabled   = make->obj_dir && strarray_exists( &disabled_dirs, make->obj_dir );
     make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
     make->use_msvcrt = (make->module || make->testdll || make->is_win16) &&
