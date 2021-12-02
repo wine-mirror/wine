@@ -420,10 +420,10 @@ static HRESULT set_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16
 {
     DWRITE_GLYPH_METRICS **block = &fontface->glyphs[glyph >> GLYPH_BLOCK_SHIFT];
 
-    if (!*block) {
+    if (!*block)
+    {
         /* start new block */
-        *block = heap_alloc_zero(sizeof(*metrics) * GLYPH_BLOCK_SIZE);
-        if (!*block)
+        if (!(*block = calloc(GLYPH_BLOCK_SIZE, sizeof(*metrics))))
             return E_OUTOFMEMORY;
     }
 
@@ -511,8 +511,8 @@ static void release_font_data(struct dwrite_font_data *data)
 
     dwrite_cmap_release(&data->cmap);
     IDWriteFontFile_Release(data->file);
-    heap_free(data->facename);
-    heap_free(data);
+    free(data->facename);
+    free(data);
 }
 
 static void release_fontfamily_data(struct dwrite_fontfamily_data *data)
@@ -524,9 +524,9 @@ static void release_fontfamily_data(struct dwrite_fontfamily_data *data)
 
     for (i = 0; i < data->count; ++i)
         release_font_data(data->fonts[i]);
-    heap_free(data->fonts);
+    free(data->fonts);
     IDWriteLocalizedStrings_Release(data->familyname);
-    heap_free(data);
+    free(data);
 }
 
 void fontface_detach_from_cache(IDWriteFontFace5 *iface)
@@ -621,7 +621,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             factory_lock(fontface->factory);
             list_remove(&fontface->cached->entry);
             factory_unlock(fontface->factory);
-            heap_free(fontface->cached);
+            free(fontface->cached);
         }
         release_scriptshaping_cache(fontface->shaping_cache);
         if (fontface->vdmx.context)
@@ -647,7 +647,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
         }
 
         for (i = 0; i < ARRAY_SIZE(fontface->glyphs); i++)
-            heap_free(fontface->glyphs[i]);
+            free(fontface->glyphs[i]);
 
         font_funcs->notify_release(iface);
         font_funcs->release_font_object(fontface->font_object);
@@ -660,7 +660,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
         dwrite_cmap_release(&fontface->cmap);
         IDWriteFactory7_Release(fontface->factory);
         DeleteCriticalSection(&fontface->cs);
-        heap_free(fontface);
+        free(fontface);
     }
 
     return refcount;
@@ -861,12 +861,12 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     run.isSideways = is_sideways;
     run.bidiLevel = is_rtl ? 1 : 0;
 
-    if (!(origins = heap_alloc(sizeof(*origins) * count)))
+    if (!(origins = malloc(sizeof(*origins) * count)))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = compute_glyph_origins(&run, DWRITE_MEASURING_MODE_NATURAL, baseline_origin, NULL, origins)))
     {
-        heap_free(origins);
+        free(origins);
         return hr;
     }
 
@@ -924,9 +924,9 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
         }
     }
 
-    heap_free(outline.tags.values);
-    heap_free(outline.points.values);
-    heap_free(origins);
+    free(outline.tags.values);
+    free(outline.points.values);
+    free(origins);
 
     return S_OK;
 }
@@ -2011,7 +2011,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont3 *iface)
     {
         IDWriteFontFamily2_Release(&font->family->IDWriteFontFamily2_iface);
         release_font_data(font->data);
-        heap_free(font);
+        free(font);
     }
 
     return refcount;
@@ -2321,7 +2321,7 @@ static HRESULT create_font(struct dwrite_fontfamily *family, UINT32 index, IDWri
 
     *font = NULL;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteFont3_iface.lpVtbl = &dwritefontvtbl;
@@ -2377,13 +2377,13 @@ static ULONG WINAPI dwritefontlist_Release(IDWriteFontList2 *iface)
 
     if (!refcount)
     {
-        UINT32 i;
+        unsigned int i;
 
         for (i = 0; i < fontlist->font_count; i++)
             release_font_data(fontlist->fonts[i]);
         IDWriteFontFamily2_Release(&fontlist->family->IDWriteFontFamily2_iface);
-        heap_free(fontlist->fonts);
-        heap_free(fontlist);
+        free(fontlist->fonts);
+        free(fontlist);
     }
 
     return refcount;
@@ -2546,7 +2546,7 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily2 *iface)
     {
         IDWriteFontCollection3_Release(&family->collection->IDWriteFontCollection3_iface);
         release_fontfamily_data(family->data);
-        heap_free(family);
+        free(family);
     }
 
     return refcount;
@@ -2713,14 +2713,13 @@ static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily2 *ifac
 
     *ret = NULL;
 
-    fonts = heap_alloc(sizeof(*fonts));
-    if (!fonts)
+    if (!(fonts = malloc(sizeof(*fonts))))
         return E_OUTOFMEMORY;
 
     /* Allocate as many as family has, not all of them will be necessary used. */
-    fonts->fonts = heap_calloc(family->data->count, sizeof(*fonts->fonts));
-    if (!fonts->fonts) {
-        heap_free(fonts);
+    if (!(fonts->fonts = calloc(family->data->count, sizeof(*fonts->fonts))))
+    {
+        free(fonts);
         return E_OUTOFMEMORY;
     }
 
@@ -2921,8 +2920,7 @@ static HRESULT create_fontfamily(struct dwrite_fontcollection *collection, UINT3
 
     *family = NULL;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteFontFamily2_iface.lpVtbl = &fontfamilyvtbl;
@@ -3016,8 +3014,8 @@ static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection3 *iface)
         factory_detach_fontcollection(collection->factory, iface);
         for (i = 0; i < collection->count; ++i)
             release_fontfamily_data(collection->family_data[i]);
-        heap_free(collection->family_data);
-        heap_free(collection);
+        free(collection->family_data);
+        free(collection);
     }
 
     return refcount;
@@ -3384,8 +3382,10 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
         int len_part1 = wcslen(pattern->part1);
         int len_part2 = pattern->part2 ? wcslen(pattern->part2) : 0;
 
-        LIST_FOR_EACH_ENTRY(token, tokens, struct name_token, entry) {
-            if (len_part2 == 0) {
+        LIST_FOR_EACH_ENTRY(token, tokens, struct name_token, entry)
+        {
+            if (!len_part2)
+            {
                 /* simple case with single part pattern */
                 if (token->len != len_part1)
                     continue;
@@ -3394,11 +3394,12 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                 {
                     if (match) *match = *token;
                     list_remove(&token->entry);
-                    heap_free(token);
+                    free(token);
                     return TRUE;
                 }
             }
-            else {
+            else
+            {
                 struct name_token *next_token;
                 struct list *next_entry;
 
@@ -3418,7 +3419,7 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                     /* combined string match */
                     if (match) *match = *token;
                     list_remove(&token->entry);
-                    heap_free(token);
+                    free(token);
                     return TRUE;
                 }
 
@@ -3445,8 +3446,8 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                     }
                     list_remove(&token->entry);
                     list_remove(&next_token->entry);
-                    heap_free(next_token);
-                    heap_free(token);
+                    free(next_token);
+                    free(token);
                     return TRUE;
                 }
             }
@@ -3839,8 +3840,9 @@ static void fontname_tokenize(struct list *tokens, const WCHAR *nameW)
     list_init(tokens);
     ptr = nameW;
 
-    while (*ptr) {
-        struct name_token *token = heap_alloc(sizeof(*token));
+    while (*ptr)
+    {
+        struct name_token *token = malloc(sizeof(*token));
         token->ptr = ptr;
         token->len = 0;
         token->fulllen = 0;
@@ -3874,7 +3876,7 @@ static void fontname_tokens_to_str(struct list *tokens, WCHAR *nameW)
         memcpy(nameW, token->ptr, len * sizeof(WCHAR));
         nameW += len;
 
-        heap_free(token);
+        free(token);
     }
     *nameW = 0;
 }
@@ -4052,8 +4054,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
 
     *ret = NULL;
 
-    data = heap_alloc_zero(sizeof(*data));
-    if (!data)
+    if (!(data = calloc(1, sizeof(*data))))
         return E_OUTOFMEMORY;
 
     data->refcount = 1;
@@ -4112,8 +4113,7 @@ static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRI
 
     *ret = NULL;
 
-    data = heap_alloc_zero(sizeof(*data));
-    if (!data)
+    if (!(data = calloc(1, sizeof(*data))))
         return E_OUTOFMEMORY;
 
     *data = *src;
@@ -4141,8 +4141,7 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
 {
     struct dwrite_fontfamily_data *data;
 
-    data = heap_alloc_zero(sizeof(*data));
-    if (!data)
+    if (!(data = calloc(1, sizeof(*data))))
         return E_OUTOFMEMORY;
 
     data->refcount = 1;
@@ -4349,8 +4348,8 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
     }
 
     max_namelen++; /* returned value doesn't include room for '\0' */
-    name = heap_alloc(max_namelen * sizeof(WCHAR));
-    data = heap_alloc(max_datalen);
+    name = malloc(max_namelen * sizeof(WCHAR));
+    data = malloc(max_datalen);
 
     datalen = max_datalen;
     namelen = max_namelen;
@@ -4374,8 +4373,8 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
         namelen = max_namelen;
     }
 
-    heap_free(data);
-    heap_free(name);
+    free(data);
+    free(name);
     RegCloseKey(hkey);
 }
 
@@ -4395,12 +4394,13 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
 
     *ret = NULL;
 
-    collection = heap_alloc(sizeof(struct dwrite_fontcollection));
-    if (!collection) return E_OUTOFMEMORY;
+    if (!(collection = calloc(1, sizeof(*collection))))
+        return E_OUTOFMEMORY;
 
     hr = init_font_collection(collection, is_system);
-    if (FAILED(hr)) {
-        heap_free(collection);
+    if (FAILED(hr))
+    {
+        free(collection);
         return hr;
     }
 
@@ -4453,7 +4453,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
         }
 
         /* add to scanned list */
-        fileenum = heap_alloc(sizeof(*fileenum));
+        fileenum = malloc(sizeof(*fileenum));
         fileenum->file = file;
         list_add_tail(&scannedfiles, &fileenum->entry);
 
@@ -4520,10 +4520,11 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
         IDWriteFontFileStream_Release(stream);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(fileenum, fileenum2, &scannedfiles, struct fontfile_enum, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(fileenum, fileenum2, &scannedfiles, struct fontfile_enum, entry)
+    {
         IDWriteFontFile_Release(fileenum->file);
         list_remove(&fileenum->entry);
-        heap_free(fileenum);
+        free(fileenum);
     }
 
     for (i = 0; i < collection->count; ++i)
@@ -4589,8 +4590,8 @@ static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *
     {
         IDWriteFactory7_Release(enumerator->factory);
         RegCloseKey(enumerator->hkey);
-        heap_free(enumerator->filename);
-        heap_free(enumerator);
+        free(enumerator->filename);
+        free(enumerator);
     }
 
     return refcount;
@@ -4650,16 +4651,17 @@ static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerato
                               NULL, &type, (BYTE *)enumerator->filename, &data_size);
             if (r == ERROR_MORE_DATA) {
                 if (name_count >= max_name_count) {
-                    if (name != name_buf) heap_free(name);
+                    if (name != name_buf) free(name);
                     max_name_count *= 2;
-                    name = heap_alloc(max_name_count * sizeof(*name));
+                    name = malloc(max_name_count * sizeof(*name));
                     if (!name) return E_OUTOFMEMORY;
                 }
-                if (data_size > enumerator->filename_size - sizeof(*enumerator->filename)) {
-                    heap_free(enumerator->filename);
+                if (data_size > enumerator->filename_size - sizeof(*enumerator->filename))
+                {
+                    free(enumerator->filename);
                     enumerator->filename_size = max(data_size + sizeof(*enumerator->filename), enumerator->filename_size * 2);
-                    enumerator->filename = heap_alloc(enumerator->filename_size);
-                    if (!enumerator->filename) {
+                    if (!(enumerator->filename = malloc(enumerator->filename_size)))
+                    {
                         hr = E_OUTOFMEMORY;
                         goto err;
                     }
@@ -4681,7 +4683,7 @@ static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerato
     TRACE("index = %d, current = %d\n", enumerator->index, *current);
 
 err:
-    if (name != name_buf) heap_free(name);
+    if (name != name_buf) free(name);
     return hr;
 }
 
@@ -4700,8 +4702,7 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory7 *factory, IDWri
 
     *ret = NULL;
 
-    enumerator = heap_alloc(sizeof(*enumerator));
-    if (!enumerator)
+    if (!(enumerator = calloc(1, sizeof(*enumerator))))
         return E_OUTOFMEMORY;
 
     enumerator->IDWriteFontFileEnumerator_iface.lpVtbl = &systemfontfileenumeratorvtbl;
@@ -4709,9 +4710,10 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory7 *factory, IDWri
     enumerator->factory = factory;
     enumerator->index = -1;
     enumerator->filename_size = MAX_PATH * sizeof(*enumerator->filename);
-    enumerator->filename = heap_alloc(enumerator->filename_size);
-    if (!enumerator->filename) {
-        heap_free(enumerator);
+    enumerator->filename = malloc(enumerator->filename_size);
+    if (!enumerator->filename)
+    {
+        free(enumerator);
         return E_OUTOFMEMORY;
     }
 
@@ -4722,8 +4724,8 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory7 *factory, IDWri
     {
         ERR("failed to open fonts list key\n");
         IDWriteFactory7_Release(factory);
-        heap_free(enumerator->filename);
-        heap_free(enumerator);
+        free(enumerator->filename);
+        free(enumerator);
         return E_FAIL;
     }
 
@@ -4847,12 +4849,13 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
 
     *ret = NULL;
 
-    collection = heap_alloc(sizeof(struct dwrite_fontcollection));
-    if (!collection) return E_OUTOFMEMORY;
+    if (!(collection = calloc(1, sizeof(*collection))))
+        return E_OUTOFMEMORY;
 
     hr = init_font_collection(collection, FALSE);
-    if (FAILED(hr)) {
-        heap_free(collection);
+    if (FAILED(hr))
+    {
+        free(collection);
         return hr;
     }
 
@@ -4943,8 +4946,8 @@ static ULONG WINAPI dwritefontfile_Release(IDWriteFontFile *iface)
         IDWriteFontFileLoader_Release(file->loader);
         if (file->stream)
             IDWriteFontFileStream_Release(file->stream);
-        heap_free(file->reference_key);
-        heap_free(file);
+        free(file->reference_key);
+        free(file);
     }
 
     return refcount;
@@ -5018,11 +5021,12 @@ HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_ke
 
     *ret = NULL;
 
-    file = heap_alloc(sizeof(*file));
-    key = heap_alloc(key_size);
-    if (!file || !key) {
-        heap_free(file);
-        heap_free(key);
+    file = calloc(1, sizeof(*file));
+    key = malloc(key_size);
+    if (!file || !key)
+    {
+        free(file);
+        free(key);
         return E_OUTOFMEMORY;
     }
 
@@ -5076,8 +5080,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
 
     *ret = NULL;
 
-    fontface = heap_alloc_zero(sizeof(struct dwrite_fontface));
-    if (!fontface)
+    if (!(fontface = calloc(1, sizeof(*fontface))))
         return E_OUTOFMEMORY;
 
     fontface->IDWriteFontFace5_iface.lpVtbl = &dwritefontfacevtbl;
@@ -5252,8 +5255,8 @@ static void release_inmemory_stream(struct dwrite_inmemory_stream_data *stream)
         if (stream->owner)
             IUnknown_Release(stream->owner);
         else
-            heap_free(stream->data);
-        heap_free(stream);
+            free(stream->data);
+        free(stream);
     }
 }
 
@@ -5295,8 +5298,8 @@ static ULONG WINAPI localfontfilestream_AddRef(IDWriteFontFileStream *iface)
 static inline void release_cached_stream(struct local_cached_stream *stream)
 {
     list_remove(&stream->entry);
-    heap_free(stream->key);
-    heap_free(stream);
+    free(stream->key);
+    free(stream);
 }
 
 static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
@@ -5314,7 +5317,7 @@ static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
         release_cached_stream(stream->entry);
         LeaveCriticalSection(&local_fontfile_loader.cs);
 
-        heap_free(stream);
+        free(stream);
     }
 
     return refcount;
@@ -5387,7 +5390,7 @@ static HRESULT create_localfontfilestream(const void *file_ptr, UINT64 size, str
 
     *ret = NULL;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteFontFileStream_iface.lpVtbl = &localfontfilestreamvtbl;
@@ -5473,27 +5476,27 @@ static HRESULT create_local_cached_stream(const void *key, UINT32 key_size, stru
         return E_FAIL;
     }
 
-    stream = heap_alloc(sizeof(*stream));
-    if (!stream) {
+    if (!(stream = malloc(sizeof(*stream))))
+    {
         UnmapViewOfFile(file_ptr);
         return E_OUTOFMEMORY;
     }
 
-    stream->key = heap_alloc(key_size);
-    if (!stream->key) {
+    if (!(stream->key = malloc(key_size)))
+    {
         UnmapViewOfFile(file_ptr);
-        heap_free(stream);
+        free(stream);
         return E_OUTOFMEMORY;
     }
 
     stream->key_size = key_size;
     memcpy(stream->key, key, key_size);
 
-    hr = create_localfontfilestream(file_ptr, size.QuadPart, stream, &filestream);
-    if (FAILED(hr)) {
+    if (FAILED(hr = create_localfontfilestream(file_ptr, size.QuadPart, stream, &filestream)))
+    {
         UnmapViewOfFile(file_ptr);
-        heap_free(stream->key);
-        heap_free(stream);
+        free(stream->key);
+        free(stream);
         return hr;
     }
 
@@ -5608,8 +5611,7 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
     *size = FIELD_OFFSET(struct local_refkey, name) + (wcslen(path)+1)*sizeof(WCHAR);
     *key = NULL;
 
-    refkey = heap_alloc(*size);
-    if (!refkey)
+    if (!(refkey = malloc(*size)))
         return E_OUTOFMEMORY;
 
     if (writetime)
@@ -5668,10 +5670,10 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
     {
         if (analysis->run.fontFace)
             IDWriteFontFace_Release(analysis->run.fontFace);
-        heap_free(analysis->glyphs);
-        heap_free(analysis->origins);
-        heap_free(analysis->bitmap);
-        heap_free(analysis);
+        free(analysis->glyphs);
+        free(analysis->origins);
+        free(analysis->bitmap);
+        free(analysis);
     }
 
     return refcount;
@@ -5795,7 +5797,8 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     size = (analysis->bounds.right - analysis->bounds.left)*(analysis->bounds.bottom - analysis->bounds.top);
     if (analysis->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         size *= 3;
-    if (!(analysis->bitmap = heap_alloc_zero(size))) {
+    if (!(analysis->bitmap = calloc(1, size)))
+    {
         WARN("Failed to allocate run bitmap, %s, type %s.\n", wine_dbgstr_rect(&analysis->bounds),
                 analysis->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1 ? "3x1" : "1x1");
         IDWriteFontFace4_Release(fontface);
@@ -5812,7 +5815,8 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     glyph_bitmap.aliased = analysis->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED;
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         glyph_bitmap.m = &analysis->m;
-    if (!(glyph_bitmap.buf = heap_alloc(analysis->max_glyph_bitmap_size))) {
+    if (!(glyph_bitmap.buf = malloc(analysis->max_glyph_bitmap_size)))
+    {
         IDWriteFontFace4_Release(fontface);
         return E_OUTOFMEMORY;
     }
@@ -5882,15 +5886,15 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
             }
         }
     }
-    heap_free(glyph_bitmap.buf);
+    free(glyph_bitmap.buf);
 
     IDWriteFontFace4_Release(fontface);
 
     analysis->flags |= RUNANALYSIS_BITMAP_READY;
 
     /* we don't need this anymore */
-    heap_free(analysis->glyphs);
-    heap_free(analysis->origins);
+    free(analysis->glyphs);
+    free(analysis->origins);
     IDWriteFontFace_Release(analysis->run.fontFace);
 
     analysis->glyphs = NULL;
@@ -6060,8 +6064,7 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     if ((UINT32)desc->measuring_mode > DWRITE_MEASURING_MODE_GDI_NATURAL)
         return E_INVALIDARG;
 
-    analysis = heap_alloc_zero(sizeof(*analysis));
-    if (!analysis)
+    if (!(analysis = calloc(1, sizeof(*analysis))))
         return E_OUTOFMEMORY;
 
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
@@ -6076,12 +6079,13 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
 
     analysis->run = *desc->run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
-    analysis->glyphs = heap_calloc(desc->run->glyphCount, sizeof(*analysis->glyphs));
-    analysis->origins = heap_calloc(desc->run->glyphCount, sizeof(*analysis->origins));
+    analysis->glyphs = calloc(desc->run->glyphCount, sizeof(*analysis->glyphs));
+    analysis->origins = calloc(desc->run->glyphCount, sizeof(*analysis->origins));
 
-    if (!analysis->glyphs || !analysis->origins) {
-        heap_free(analysis->glyphs);
-        heap_free(analysis->origins);
+    if (!analysis->glyphs || !analysis->origins)
+    {
+        free(analysis->glyphs);
+        free(analysis->origins);
 
         analysis->glyphs = NULL;
         analysis->origins = NULL;
@@ -6149,16 +6153,16 @@ static ULONG WINAPI colorglyphenum_Release(IDWriteColorGlyphRunEnumerator1 *ifac
 
     if (!refcount)
     {
-        heap_free(glyphenum->advances);
-        heap_free(glyphenum->color_advances);
-        heap_free(glyphenum->offsets);
-        heap_free(glyphenum->color_offsets);
-        heap_free(glyphenum->glyphindices);
-        heap_free(glyphenum->glyphs);
+        free(glyphenum->advances);
+        free(glyphenum->color_advances);
+        free(glyphenum->offsets);
+        free(glyphenum->color_offsets);
+        free(glyphenum->glyphindices);
+        free(glyphenum->glyphs);
         if (glyphenum->colr.context)
             IDWriteFontFace5_ReleaseFontTable(glyphenum->fontface, glyphenum->colr.context);
         IDWriteFontFace5_Release(glyphenum->fontface);
-        heap_free(glyphenum);
+        free(glyphenum);
     }
 
     return refcount;
@@ -6349,8 +6353,7 @@ HRESULT create_colorglyphenum(float originX, float originY, const DWRITE_GLYPH_R
     if (!colorfont)
         return DWRITE_E_NOCOLOR;
 
-    colorglyphenum = heap_alloc_zero(sizeof(*colorglyphenum));
-    if (!colorglyphenum)
+    if (!(colorglyphenum = calloc(1, sizeof(*colorglyphenum))))
         return E_OUTOFMEMORY;
 
     colorglyphenum->IDWriteColorGlyphRunEnumerator1_iface.lpVtbl = &colorglyphenumvtbl;
@@ -6371,7 +6374,7 @@ HRESULT create_colorglyphenum(float originX, float originY, const DWRITE_GLYPH_R
     colorglyphenum->current_layer = 0;
     colorglyphenum->max_layer_num = 0;
 
-    colorglyphenum->glyphs = heap_alloc_zero(run->glyphCount * sizeof(*colorglyphenum->glyphs));
+    colorglyphenum->glyphs = calloc(run->glyphCount, sizeof(*colorglyphenum->glyphs));
 
     has_colored_glyph = FALSE;
     colorglyphenum->has_regular_glyphs = FALSE;
@@ -6391,12 +6394,12 @@ HRESULT create_colorglyphenum(float originX, float originY, const DWRITE_GLYPH_R
         return DWRITE_E_NOCOLOR;
     }
 
-    colorglyphenum->advances = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->advances));
-    colorglyphenum->color_advances = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->color_advances));
-    colorglyphenum->glyphindices = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->glyphindices));
+    colorglyphenum->advances = calloc(run->glyphCount, sizeof(*colorglyphenum->advances));
+    colorglyphenum->color_advances = calloc(run->glyphCount, sizeof(*colorglyphenum->color_advances));
+    colorglyphenum->glyphindices = calloc(run->glyphCount, sizeof(*colorglyphenum->glyphindices));
     if (run->glyphOffsets) {
-        colorglyphenum->offsets = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->offsets));
-        colorglyphenum->color_offsets = heap_calloc(run->glyphCount, sizeof(*colorglyphenum->color_offsets));
+        colorglyphenum->offsets = calloc(run->glyphCount, sizeof(*colorglyphenum->offsets));
+        colorglyphenum->color_offsets = calloc(run->glyphCount, sizeof(*colorglyphenum->color_offsets));
         memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
     }
 
@@ -6465,8 +6468,8 @@ static ULONG WINAPI fontfacereference_Release(IDWriteFontFaceReference1 *iface)
     {
         IDWriteFontFile_Release(reference->file);
         IDWriteFactory7_Release(reference->factory);
-        heap_free(reference->axis_values);
-        heap_free(reference);
+        free(reference->axis_values);
+        free(reference);
     }
 
     return refcount;
@@ -6707,8 +6710,7 @@ HRESULT create_fontfacereference(IDWriteFactory7 *factory, IDWriteFontFile *file
     if (!is_simulation_valid(simulations))
         return E_INVALIDARG;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteFontFaceReference1_iface.lpVtbl = &fontfacereferencevtbl;
@@ -6722,7 +6724,7 @@ HRESULT create_fontfacereference(IDWriteFactory7 *factory, IDWriteFontFile *file
     object->simulations = simulations;
     if (axis_values_count)
     {
-        if (!(object->axis_values = heap_alloc(axis_values_count * sizeof(*axis_values))))
+        if (!(object->axis_values = malloc(axis_values_count * sizeof(*axis_values))))
         {
             IDWriteFontFaceReference1_Release(&object->IDWriteFontFaceReference1_iface);
             return E_OUTOFMEMORY;
@@ -6772,7 +6774,7 @@ static ULONG WINAPI inmemoryfilestream_Release(IDWriteFontFileStream *iface)
     if (!refcount)
     {
         release_inmemory_stream(stream->data);
-        heap_free(stream);
+        free(stream);
     }
 
     return refcount;
@@ -6875,8 +6877,8 @@ static ULONG WINAPI inmemoryfontfileloader_Release(IDWriteInMemoryFontFileLoader
     {
         for (i = 0; i < loader->count; ++i)
             release_inmemory_stream(loader->streams[i]);
-        heap_free(loader->streams);
-        heap_free(loader);
+        free(loader->streams);
+        free(loader);
     }
 
     return refcount;
@@ -6901,7 +6903,7 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateStreamFromKey(IDWriteInMemory
     if (index >= loader->count)
         return E_INVALIDARG;
 
-    if (!(stream = heap_alloc(sizeof(*stream))))
+    if (!(stream = malloc(sizeof(*stream))))
         return E_OUTOFMEMORY;
 
     stream->IDWriteFontFileStream_iface.lpVtbl = &inmemoryfilestreamvtbl;
@@ -6928,7 +6930,7 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateInMemoryFontFileReference(IDW
     if (!dwrite_array_reserve((void **)&loader->streams, &loader->size, loader->count + 1, sizeof(*loader->streams)))
         return E_OUTOFMEMORY;
 
-    if (!(stream = heap_alloc(sizeof(*stream))))
+    if (!(stream = malloc(sizeof(*stream))))
         return E_OUTOFMEMORY;
 
     stream->refcount = 1;
@@ -6939,8 +6941,9 @@ static HRESULT WINAPI inmemoryfontfileloader_CreateInMemoryFontFileReference(IDW
         stream->data = (void *)data;
     }
     else {
-        if (!(stream->data = heap_alloc(data_size))) {
-            heap_free(stream);
+        if (!(stream->data = malloc(data_size)))
+        {
+            free(stream);
             return E_OUTOFMEMORY;
         }
         memcpy(stream->data, data, data_size);
@@ -6978,8 +6981,7 @@ HRESULT create_inmemory_fileloader(IDWriteInMemoryFontFileLoader **ret)
 
     *ret = NULL;
 
-    loader = heap_alloc_zero(sizeof(*loader));
-    if (!loader)
+    if (!(loader = calloc(1, sizeof(*loader))))
         return E_OUTOFMEMORY;
 
     loader->IDWriteInMemoryFontFileLoader_iface.lpVtbl = &inmemoryfontfileloadervtbl;
@@ -7028,7 +7030,7 @@ static ULONG WINAPI dwritefontresource_Release(IDWriteFontResource *iface)
     {
         IDWriteFactory7_Release(resource->factory);
         IDWriteFontFile_Release(resource->file);
-        heap_free(resource);
+        free(resource);
     }
 
     return refcount;
@@ -7175,8 +7177,7 @@ HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UI
 
     *ret = NULL;
 
-    resource = heap_alloc_zero(sizeof(*resource));
-    if (!resource)
+    if (!(resource = calloc(1, sizeof(*resource))))
         return E_OUTOFMEMORY;
 
     resource->IDWriteFontResource_iface.lpVtbl = &fontresourcevtbl;
@@ -7235,7 +7236,7 @@ static void release_fontset_entry(struct dwrite_fontset_entry *entry)
         if (entry->props[i] && entry->props[i] != MISSING_SET_PROP)
             IDWriteLocalizedStrings_Release(entry->props[i]);
     }
-    heap_free(entry);
+    free(entry);
 }
 
 static struct dwrite_fontset_entry * addref_fontset_entry(struct dwrite_fontset_entry *entry)
@@ -7306,8 +7307,8 @@ static ULONG WINAPI dwritefontset_Release(IDWriteFontSet3 *iface)
         IDWriteFactory7_Release(set->factory);
         for (i = 0; i < set->count; ++i)
             release_fontset_entry(set->entries[i]);
-        heap_free(set->entries);
-        heap_free(set);
+        free(set->entries);
+        free(set);
     }
 
     return refcount;
@@ -7461,12 +7462,12 @@ static HRESULT WINAPI dwritefontset_GetMatchingFonts(IDWriteFontSet3 *iface, DWR
     if (!props && count)
         return E_INVALIDARG;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (!(entries = heap_calloc(set->count, sizeof(*entries))))
+    if (!(entries = calloc(set->count, sizeof(*entries))))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
@@ -7480,7 +7481,7 @@ static HRESULT WINAPI dwritefontset_GetMatchingFonts(IDWriteFontSet3 *iface, DWR
 
     if (!matched_count)
     {
-        heap_free(entries);
+        free(entries);
         entries = NULL;
     }
 
@@ -7667,7 +7668,7 @@ static HRESULT fontset_create_entry(IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE
 {
     struct dwrite_fontset_entry *entry;
 
-    if (!(entry = heap_alloc_zero(sizeof(*entry))))
+    if (!(entry = calloc(1, sizeof(*entry))))
         return E_OUTOFMEMORY;
 
     entry->refcount = 1;
@@ -7700,12 +7701,12 @@ static HRESULT fontset_create_from_font_data(IDWriteFactory7 *factory, struct dw
     struct dwrite_fontset *object;
     unsigned int i;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (count)
     {
-        entries = heap_calloc(count, sizeof(*entries));
+        entries = calloc(count, sizeof(*entries));
 
         /* FIXME: set available properties too */
 
@@ -7729,12 +7730,12 @@ static HRESULT fontset_builder_create_fontset(IDWriteFactory7 *factory, struct d
     struct dwrite_fontset *object;
     unsigned int i;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (count)
     {
-        entries = heap_calloc(count, sizeof(*entries));
+        entries = calloc(count, sizeof(*entries));
 
         for (i = 0; i < count; ++i)
             entries[i] = addref_fontset_entry(src_entries[i]);
@@ -7789,8 +7790,8 @@ static ULONG WINAPI dwritefontsetbuilder_Release(IDWriteFontSetBuilder2 *iface)
         IDWriteFactory7_Release(builder->factory);
         for (i = 0; i < builder->count; ++i)
             release_fontset_entry(builder->entries[i]);
-        heap_free(builder->entries);
-        heap_free(builder);
+        free(builder->entries);
+        free(builder);
     }
 
     return refcount;
@@ -7952,7 +7953,7 @@ HRESULT create_fontset_builder(IDWriteFactory7 *factory, IDWriteFontSetBuilder2 
 
     *ret = NULL;
 
-    if (!(builder = heap_alloc_zero(sizeof(*builder))))
+    if (!(builder = calloc(1, sizeof(*builder))))
         return E_OUTOFMEMORY;
 
     builder->IDWriteFontSetBuilder2_iface.lpVtbl = &fontsetbuildervtbl;
@@ -8005,7 +8006,7 @@ static int CDECL get_font_data_cb(void *key, const void **data_ptr, UINT64 *data
         return 1;
     }
 
-    if (!(context = heap_alloc(sizeof(*context))))
+    if (!(context = malloc(sizeof(*context))))
     {
         IDWriteFontFileStream_Release(stream);
         return 1;
@@ -8025,7 +8026,7 @@ static void CDECL release_font_data_cb(struct font_data_context *context)
     if (!context) return;
     IDWriteFontFileStream_ReleaseFileFragment(context->stream, context->context);
     IDWriteFontFileStream_Release(context->stream);
-    heap_free(context);
+    free(context);
 }
 
 struct font_callback_funcs callback_funcs =

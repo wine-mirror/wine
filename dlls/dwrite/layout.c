@@ -329,9 +329,9 @@ static void release_format_data(struct dwrite_textformat_data *data)
     if (data->collection) IDWriteFontCollection_Release(data->collection);
     if (data->fallback) IDWriteFontFallback_Release(data->fallback);
     if (data->trimmingsign) IDWriteInlineObject_Release(data->trimmingsign);
-    heap_free(data->family_name);
-    heap_free(data->locale);
-    heap_free(data->axis_values);
+    free(data->family_name);
+    free(data->locale);
+    free(data->axis_values);
 }
 
 static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout4(IDWriteTextLayout4 *iface)
@@ -472,13 +472,13 @@ static inline HRESULT format_set_linespacing(struct dwrite_textformat_data *form
 static HRESULT format_set_font_axisvalues(struct dwrite_textformat_data *format,
         DWRITE_FONT_AXIS_VALUE const *axis_values, unsigned int num_values)
 {
-    heap_free(format->axis_values);
+    free(format->axis_values);
     format->axis_values = NULL;
     format->axis_values_count = 0;
 
     if (num_values)
     {
-        if (!(format->axis_values = heap_calloc(num_values, sizeof(*axis_values))))
+        if (!(format->axis_values = calloc(num_values, sizeof(*axis_values))))
             return E_OUTOFMEMORY;
         memcpy(format->axis_values, axis_values, num_values * sizeof(*axis_values));
         format->axis_values_count = num_values;
@@ -552,7 +552,7 @@ static BOOL is_run_rtl(const struct layout_effective_run *run)
 static HRESULT alloc_layout_run(enum layout_run_kind kind, unsigned int start_position,
         struct layout_run **run)
 {
-    if (!(*run = heap_alloc_zero(sizeof(**run))))
+    if (!(*run = calloc(1, sizeof(**run))))
         return E_OUTOFMEMORY;
 
     (*run)->kind = kind;
@@ -564,17 +564,19 @@ static HRESULT alloc_layout_run(enum layout_run_kind kind, unsigned int start_po
 static void free_layout_runs(struct dwrite_textlayout *layout)
 {
     struct layout_run *cur, *cur2;
-    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->runs, struct layout_run, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->runs, struct layout_run, entry)
+    {
         list_remove(&cur->entry);
-        if (cur->kind == LAYOUT_RUN_REGULAR) {
+        if (cur->kind == LAYOUT_RUN_REGULAR)
+        {
             if (cur->u.regular.run.fontFace)
                 IDWriteFontFace_Release(cur->u.regular.run.fontFace);
-            heap_free(cur->u.regular.glyphs);
-            heap_free(cur->u.regular.clustermap);
-            heap_free(cur->u.regular.advances);
-            heap_free(cur->u.regular.offsets);
+            free(cur->u.regular.glyphs);
+            free(cur->u.regular.clustermap);
+            free(cur->u.regular.advances);
+            free(cur->u.regular.offsets);
         }
-        heap_free(cur);
+        free(cur);
     }
 }
 
@@ -585,25 +587,29 @@ static void free_layout_eruns(struct dwrite_textlayout *layout)
     struct layout_strikethrough *s, *s2;
     struct layout_underline *u, *u2;
 
-    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry)
+    {
         list_remove(&cur->entry);
-        heap_free(cur->clustermap);
-        heap_free(cur);
+        free(cur->clustermap);
+        free(cur);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(in, in2, &layout->inlineobjects, struct layout_effective_inline, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(in, in2, &layout->inlineobjects, struct layout_effective_inline, entry)
+    {
         list_remove(&in->entry);
-        heap_free(in);
+        free(in);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(u, u2, &layout->underlines, struct layout_underline, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(u, u2, &layout->underlines, struct layout_underline, entry)
+    {
         list_remove(&u->entry);
-        heap_free(u);
+        free(u);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(s, s2, &layout->strikethrough, struct layout_strikethrough, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(s, s2, &layout->strikethrough, struct layout_strikethrough, entry)
+    {
         list_remove(&s->entry);
-        heap_free(s);
+        free(s);
     }
 }
 
@@ -647,9 +653,9 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
     if (FAILED(hr))
         after = before = DWRITE_BREAK_CONDITION_NEUTRAL;
 
-    if (!layout->actual_breakpoints) {
-        layout->actual_breakpoints = heap_calloc(layout->len, sizeof(*layout->actual_breakpoints));
-        if (!layout->actual_breakpoints)
+    if (!layout->actual_breakpoints)
+    {
+        if (!(layout->actual_breakpoints = calloc(layout->len, sizeof(*layout->actual_breakpoints))))
             return E_OUTOFMEMORY;
         memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
     }
@@ -1020,18 +1026,18 @@ static void layout_shape_clear_user_features_context(struct shaping_context *con
 
     for (i = 0; i < context->user_features.range_count; ++i)
     {
-        heap_free(context->user_features.features[i]->features);
-        heap_free(context->user_features.features[i]);
+        free(context->user_features.features[i]->features);
+        free(context->user_features.features[i]);
     }
-    heap_free(context->user_features.features);
+    free(context->user_features.features);
     memset(&context->user_features, 0, sizeof(context->user_features));
 }
 
 static void layout_shape_clear_context(struct shaping_context *context)
 {
     layout_shape_clear_user_features_context(context);
-    heap_free(context->glyph_props);
-    heap_free(context->text_props);
+    free(context->glyph_props);
+    free(context->text_props);
 }
 
 static HRESULT layout_shape_add_empty_user_features_range(struct shaping_context *context, unsigned int length)
@@ -1039,7 +1045,7 @@ static HRESULT layout_shape_add_empty_user_features_range(struct shaping_context
     DWRITE_TYPOGRAPHIC_FEATURES *features;
     unsigned int r = context->user_features.range_count;
 
-    if (!(context->user_features.features[r] = heap_alloc_zero(sizeof(*features))))
+    if (!(context->user_features.features[r] = calloc(1, sizeof(*features))))
         return E_OUTOFMEMORY;
 
     context->user_features.range_lengths[r] = length;
@@ -1061,9 +1067,9 @@ static HRESULT layout_shape_get_user_features(struct dwrite_textlayout *layout, 
     if (range->h.range.length >= run->descr.stringLength && !range->iface)
         return S_OK;
 
-    if (!(context->user_features.features = heap_calloc(run->descr.stringLength, sizeof(*context->user_features.features))))
+    if (!(context->user_features.features = calloc(run->descr.stringLength, sizeof(*context->user_features.features))))
         goto failed;
-    if (!(context->user_features.range_lengths = heap_calloc(run->descr.stringLength, sizeof(*context->user_features.range_lengths))))
+    if (!(context->user_features.range_lengths = calloc(run->descr.stringLength, sizeof(*context->user_features.range_lengths))))
         goto failed;
 
     for (i = run->descr.textPosition; i < run->descr.textPosition + run->descr.stringLength; ++i)
@@ -1087,13 +1093,13 @@ static HRESULT layout_shape_get_user_features(struct dwrite_textlayout *layout, 
         }
 
         r = context->user_features.range_count;
-        if (!(features = context->user_features.features[r] = heap_alloc(sizeof(*features))))
+        if (!(features = context->user_features.features[r] = malloc(sizeof(*features))))
             goto failed;
 
         context->user_features.range_lengths[r] = length = min(run->descr.textPosition + run->descr.stringLength,
                 range->h.range.startPosition + range->h.range.length) - i;
         features->featureCount = feature_count;
-        if (!(features->features = heap_calloc(feature_count, sizeof(*features->features))))
+        if (!(features->features = calloc(feature_count, sizeof(*features->features))))
             goto failed;
 
         for (f = 0; f < feature_count; ++f)
@@ -1129,17 +1135,17 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
     HRESULT hr;
 
     run->descr.localeName = get_layout_range_by_pos(layout, run->descr.textPosition)->locale;
-    run->clustermap = heap_calloc(run->descr.stringLength, sizeof(*run->clustermap));
+    run->clustermap = calloc(run->descr.stringLength, sizeof(*run->clustermap));
     if (!run->clustermap)
         return E_OUTOFMEMORY;
 
     max_count = 3 * run->descr.stringLength / 2 + 16;
-    run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
+    run->glyphs = calloc(max_count, sizeof(*run->glyphs));
     if (!run->glyphs)
         return E_OUTOFMEMORY;
 
-    context->text_props = heap_calloc(run->descr.stringLength, sizeof(*context->text_props));
-    context->glyph_props = heap_calloc(max_count, sizeof(*context->glyph_props));
+    context->text_props = calloc(run->descr.stringLength, sizeof(*context->text_props));
+    context->glyph_props = calloc(max_count, sizeof(*context->glyph_props));
     if (!context->text_props || !context->glyph_props)
         return E_OUTOFMEMORY;
 
@@ -1155,13 +1161,13 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
                 context->glyph_props, &run->glyphcount);
         if (hr == E_NOT_SUFFICIENT_BUFFER)
         {
-            heap_free(run->glyphs);
-            heap_free(context->glyph_props);
+            free(run->glyphs);
+            free(context->glyph_props);
 
             max_count *= 2;
 
-            run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
-            context->glyph_props = heap_calloc(max_count, sizeof(*context->glyph_props));
+            run->glyphs = calloc(max_count, sizeof(*run->glyphs));
+            context->glyph_props = calloc(max_count, sizeof(*context->glyph_props));
             if (!run->glyphs || !context->glyph_props)
             {
                 hr = E_OUTOFMEMORY;
@@ -1211,7 +1217,8 @@ static HRESULT layout_shape_apply_character_spacing(struct dwrite_textlayout *la
     }
     if (!first) return S_OK;
 
-    if (!(clustermap = heap_calloc(run->descr.stringLength, sizeof(*clustermap)))) return E_OUTOFMEMORY;
+    if (!(clustermap = calloc(run->descr.stringLength, sizeof(*clustermap))))
+        return E_OUTOFMEMORY;
 
     pos = run->descr.textPosition;
 
@@ -1254,7 +1261,7 @@ static HRESULT layout_shape_apply_character_spacing(struct dwrite_textlayout *la
         if (cur == last) break;
     }
 
-    heap_free(clustermap);
+    free(clustermap);
 
     return S_OK;
 }
@@ -1264,8 +1271,8 @@ static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, stru
     struct regular_layout_run *run = context->run;
     HRESULT hr;
 
-    run->advances = heap_calloc(run->glyphcount, sizeof(*run->advances));
-    run->offsets = heap_calloc(run->glyphcount, sizeof(*run->offsets));
+    run->advances = calloc(run->glyphcount, sizeof(*run->advances));
+    run->offsets = calloc(run->glyphcount, sizeof(*run->offsets));
     if (!run->advances || !run->offsets)
         return E_OUTOFMEMORY;
 
@@ -1334,12 +1341,14 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     free_layout_runs(layout);
 
     /* Cluster data arrays are allocated once, assuming one text position per cluster. */
-    if (!layout->clustermetrics && layout->len) {
-        layout->clustermetrics = heap_calloc(layout->len, sizeof(*layout->clustermetrics));
-        layout->clusters = heap_calloc(layout->len, sizeof(*layout->clusters));
-        if (!layout->clustermetrics || !layout->clusters) {
-            heap_free(layout->clustermetrics);
-            heap_free(layout->clusters);
+    if (!layout->clustermetrics && layout->len)
+    {
+        layout->clustermetrics = calloc(layout->len, sizeof(*layout->clustermetrics));
+        layout->clusters = calloc(layout->len, sizeof(*layout->clusters));
+        if (!layout->clustermetrics || !layout->clusters)
+        {
+            free(layout->clustermetrics);
+            free(layout->clusters);
             return E_OUTOFMEMORY;
         }
     }
@@ -1424,8 +1433,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     {
         IDWriteTextAnalyzer2 *analyzer;
 
-        layout->nominal_breakpoints = heap_calloc(layout->len, sizeof(*layout->nominal_breakpoints));
-        if (!layout->nominal_breakpoints)
+        if (!(layout->nominal_breakpoints = calloc(layout->len, sizeof(*layout->nominal_breakpoints))))
             return E_OUTOFMEMORY;
 
         analyzer = get_text_analyzer();
@@ -1436,7 +1444,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
             WARN("Line breakpoints analysis failed, hr %#x.\n", hr);
     }
 
-    heap_free(layout->actual_breakpoints);
+    free(layout->actual_breakpoints);
     layout->actual_breakpoints = NULL;
 
     hr = layout_compute_runs(layout);
@@ -1536,11 +1544,11 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     UINT32 i, start, length, last_cluster;
     struct layout_effective_run *run;
 
-    if (r->kind == LAYOUT_RUN_INLINE) {
+    if (r->kind == LAYOUT_RUN_INLINE)
+    {
         struct layout_effective_inline *inlineobject;
 
-        inlineobject = heap_alloc(sizeof(*inlineobject));
-        if (!inlineobject)
+        if (!(inlineobject = malloc(sizeof(*inlineobject))))
             return E_OUTOFMEMORY;
 
         inlineobject->object = r->u.object.object;
@@ -1565,8 +1573,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         return S_OK;
     }
 
-    run = heap_alloc(sizeof(*run));
-    if (!run)
+    if (!(run = malloc(sizeof(*run))))
         return E_OUTOFMEMORY;
 
     /* No need to iterate for that, use simple fact that:
@@ -1575,9 +1582,9 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     length = layout->clusters[last_cluster].position - layout->clusters[first_cluster].position +
         layout->clustermetrics[last_cluster].length;
 
-    run->clustermap = heap_calloc(length, sizeof(*run->clustermap));
-    if (!run->clustermap) {
-        heap_free(run);
+    if (!(run->clustermap = calloc(length, sizeof(*run->clustermap))))
+    {
+        free(run);
         return E_OUTOFMEMORY;
     }
 
@@ -1618,12 +1625,12 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     /* Strikethrough style is guaranteed to be consistent within effective run,
        its width equals to run width, thickness and offset are derived from
        font metrics, rest of the values are from layout or run itself */
-    if (params->strikethrough) {
+    if (params->strikethrough)
+    {
         struct layout_strikethrough *s;
         DWRITE_FONT_METRICS metrics;
 
-        s = heap_alloc(sizeof(*s));
-        if (!s)
+        if (!(s = malloc(sizeof(*s))))
             return E_OUTOFMEMORY;
 
         layout_get_erun_font_metrics(layout, run, &metrics);
@@ -2021,8 +2028,7 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
             cur = next;
         }
 
-        u = heap_alloc(sizeof(*u));
-        if (!u)
+        if (!(u = malloc(sizeof(*u))))
             return E_OUTOFMEMORY;
 
         w = cur;
@@ -2200,8 +2206,7 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     if (append_trimming_run) {
         struct layout_effective_inline *trimming_sign;
 
-        trimming_sign = heap_alloc(sizeof(*trimming_sign));
-        if (!trimming_sign)
+        if (!(trimming_sign = calloc(1, sizeof(*trimming_sign))))
             return;
 
         trimming_sign->object = layout->format.trimmingsign;
@@ -2506,18 +2511,18 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range *range;
 
-        range = heap_alloc_zero(sizeof(*range));
-        if (!range) return NULL;
+        if (!(range = calloc(1, sizeof(*range))))
+            return NULL;
 
         range->weight = layout->format.weight;
         range->style  = layout->format.style;
         range->stretch = layout->format.stretch;
         range->fontsize = layout->format.fontsize;
 
-        range->fontfamily = heap_strdupW(layout->format.family_name);
+        range->fontfamily = wcsdup(layout->format.family_name);
         if (!range->fontfamily)
         {
-            heap_free(range);
+            free(range);
             return NULL;
         }
 
@@ -2534,8 +2539,8 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range_bool *range;
 
-        range = heap_alloc_zero(sizeof(*range));
-        if (!range) return NULL;
+        if (!(range = calloc(1, sizeof(*range))))
+            return NULL;
 
         h = &range->h;
         break;
@@ -2545,8 +2550,8 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range_iface *range;
 
-        range = heap_alloc_zero(sizeof(*range));
-        if (!range) return NULL;
+        if (!(range = calloc(1, sizeof(*range))))
+            return NULL;
 
         h = &range->h;
         break;
@@ -2555,8 +2560,8 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range_spacing *range;
 
-        range = heap_alloc_zero(sizeof(*range));
-        if (!range) return NULL;
+        if (!(range = calloc(1, sizeof(*range))))
+            return NULL;
 
         h = &range->h;
         break;
@@ -2579,15 +2584,16 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
     {
     case LAYOUT_RANGE_REGULAR:
     {
-        struct layout_range *from = (struct layout_range*)h;
+        struct layout_range *from = (struct layout_range *)h, *range;
 
-        struct layout_range *range = heap_alloc(sizeof(*range));
-        if (!range) return NULL;
+        if (!(range = malloc(sizeof(*range))))
+            return NULL;
 
         *range = *from;
-        range->fontfamily = heap_strdupW(from->fontfamily);
-        if (!range->fontfamily) {
-            heap_free(range);
+        range->fontfamily = wcsdup(from->fontfamily);
+        if (!range->fontfamily)
+        {
+            free(range);
             return NULL;
         }
 
@@ -2602,7 +2608,7 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
     case LAYOUT_RANGE_UNDERLINE:
     case LAYOUT_RANGE_STRIKETHROUGH:
     {
-        struct layout_range_bool *strike = heap_alloc(sizeof(*strike));
+        struct layout_range_bool *strike = malloc(sizeof(*strike));
         if (!strike) return NULL;
 
         *strike = *(struct layout_range_bool*)h;
@@ -2612,7 +2618,7 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
     case LAYOUT_RANGE_EFFECT:
     case LAYOUT_RANGE_TYPOGRAPHY:
     {
-        struct layout_range_iface *effect = heap_alloc(sizeof(*effect));
+        struct layout_range_iface *effect = malloc(sizeof(*effect));
         if (!effect) return NULL;
 
         *effect = *(struct layout_range_iface*)h;
@@ -2623,7 +2629,7 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
     }
     case LAYOUT_RANGE_SPACING:
     {
-        struct layout_range_spacing *spacing = heap_alloc(sizeof(*spacing));
+        struct layout_range_spacing *spacing = malloc(sizeof(*spacing));
         if (!spacing) return NULL;
 
         *spacing = *(struct layout_range_spacing*)h;
@@ -2654,7 +2660,7 @@ static void free_layout_range(struct layout_range_header *h)
             IDWriteInlineObject_Release(range->object);
         if (range->collection)
             IDWriteFontCollection_Release(range->collection);
-        heap_free(range->fontfamily);
+        free(range->fontfamily);
         break;
     }
     case LAYOUT_RANGE_EFFECT:
@@ -2669,7 +2675,7 @@ static void free_layout_range(struct layout_range_header *h)
         ;
     }
 
-    heap_free(h);
+    free(h);
 }
 
 static void free_layout_ranges_list(struct dwrite_textlayout *layout)
@@ -2798,8 +2804,8 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         changed = !!wcscmp(dest->fontfamily, value->u.fontfamily);
         if (changed)
         {
-            heap_free(dest->fontfamily);
-            dest->fontfamily = heap_strdupW(value->u.fontfamily);
+            free(dest->fontfamily);
+            dest->fontfamily = wcsdup(value->u.fontfamily);
         }
         break;
     case LAYOUT_RANGE_ATTR_SPACING:
@@ -3115,13 +3121,13 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout4 *iface)
         free_layout_eruns(layout);
         free_layout_runs(layout);
         release_format_data(&layout->format);
-        heap_free(layout->nominal_breakpoints);
-        heap_free(layout->actual_breakpoints);
-        heap_free(layout->clustermetrics);
-        heap_free(layout->clusters);
-        heap_free(layout->lines);
-        heap_free(layout->str);
-        heap_free(layout);
+        free(layout->nominal_breakpoints);
+        free(layout->actual_breakpoints);
+        free(layout->clustermetrics);
+        free(layout->clusters);
+        free(layout->lines);
+        free(layout->str);
+        free(layout);
     }
 
     return refcount;
@@ -3946,13 +3952,13 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
 
         bbox = &glyph_bitmap.bbox;
 
-        if (!(origins = heap_calloc(glyph_run.glyphCount, sizeof(*origins))))
+        if (!(origins = calloc(glyph_run.glyphCount, sizeof(*origins))))
             return;
 
         if (FAILED(hr = compute_glyph_origins(&glyph_run, layout->measuringmode, baseline_origin, &layout->transform, origins)))
         {
             WARN("Failed to compute glyph origins, hr %#x.\n", hr);
-            heap_free(origins);
+            free(origins);
             return;
         }
 
@@ -3972,7 +3978,7 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
             d2d_rect_union(&run->bbox, &glyph_bbox);
         }
 
-        heap_free(origins);
+        free(origins);
     }
 
     *bbox = run->bbox;
@@ -5335,12 +5341,12 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     if ((textformat = unsafe_impl_from_IDWriteTextFormat(format))) {
         layout->format = textformat->format;
 
-        layout->format.locale = heap_strdupW(textformat->format.locale);
-        layout->format.family_name = heap_strdupW(textformat->format.family_name);
+        layout->format.locale = wcsdup(textformat->format.locale);
+        layout->format.family_name = wcsdup(textformat->format.family_name);
         if (!layout->format.locale || !layout->format.family_name)
         {
-            heap_free(layout->format.locale);
-            heap_free(layout->format.family_name);
+            free(layout->format.locale);
+            free(layout->format.family_name);
             return E_OUTOFMEMORY;
         }
 
@@ -5375,8 +5381,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 
     /* locale name and length */
     len = IDWriteTextFormat_GetLocaleNameLength(format);
-    layout->format.locale = heap_alloc((len+1)*sizeof(WCHAR));
-    if (!layout->format.locale)
+    if (!(layout->format.locale = malloc((len + 1) * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
     hr = IDWriteTextFormat_GetLocaleName(format, layout->format.locale, len+1);
@@ -5386,8 +5391,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 
     /* font family name and length */
     len = IDWriteTextFormat_GetFontFamilyNameLength(format);
-    layout->format.family_name = heap_alloc((len+1)*sizeof(WCHAR));
-    if (!layout->format.family_name)
+    if (!(layout->format.family_name = malloc((len + 1) * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
     hr = IDWriteTextFormat_GetFontFamilyName(format, layout->format.family_name, len+1);
@@ -5509,7 +5513,7 @@ HRESULT create_textlayout(const struct textlayout_desc *desc, IDWriteTextLayout 
     if (!desc->format || !desc->string)
         return E_INVALIDARG;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = init_textlayout(desc, object);
@@ -5555,7 +5559,7 @@ static ULONG WINAPI dwritetrimmingsign_Release(IDWriteInlineObject *iface)
     if (!refcount)
     {
         IDWriteTextLayout_Release(sign->layout);
-        heap_free(sign);
+        free(sign);
     }
 
     return refcount;
@@ -5672,7 +5676,7 @@ HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format,
         (is_reading_direction_vert(reading) && is_flow_direction_vert(flow)))
         return DWRITE_E_FLOWDIRECTIONCONFLICTS;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
@@ -5681,7 +5685,7 @@ HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format,
     hr = IDWriteFactory7_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &object->layout);
     if (FAILED(hr))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -5736,7 +5740,7 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat3 *iface)
     if (!refcount)
     {
         release_format_data(&format->format);
-        heap_free(format);
+        free(format);
     }
 
     return refcount;
@@ -6208,14 +6212,14 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
         ((UINT32)style > DWRITE_FONT_STYLE_ITALIC))
         return E_INVALIDARG;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteTextFormat3_iface.lpVtbl = &dwritetextformatvtbl;
     object->refcount = 1;
-    object->format.family_name = heap_strdupW(family_name);
+    object->format.family_name = wcsdup(family_name);
     object->format.family_len = wcslen(family_name);
-    object->format.locale = heap_strdupW(locale);
+    object->format.locale = wcsdup(locale);
     object->format.locale_len = wcslen(locale);
     /* Force locale name to lower case, layout will inherit this modified value. */
     wcslwr(object->format.locale);
@@ -6269,8 +6273,8 @@ static ULONG WINAPI dwritetypography_Release(IDWriteTypography *iface)
 
     if (!refcount)
     {
-        heap_free(typography->features);
-        heap_free(typography);
+        free(typography->features);
+        free(typography);
     }
 
     return refcount;
@@ -6331,8 +6335,7 @@ HRESULT create_typography(IDWriteTypography **ret)
 
     *ret = NULL;
 
-    typography = heap_alloc_zero(sizeof(*typography));
-    if (!typography)
+    if (!(typography = calloc(1, sizeof(*typography))))
         return E_OUTOFMEMORY;
 
     typography->IDWriteTypography_iface.lpVtbl = &dwritetypographyvtbl;

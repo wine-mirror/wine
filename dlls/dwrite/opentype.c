@@ -2332,7 +2332,7 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
         if (codepage)
         {
             DWORD len = MultiByteToWideChar(codepage, 0, name, length, NULL, 0);
-            name_string = heap_alloc(sizeof(WCHAR) * (len+1));
+            name_string = malloc(sizeof(WCHAR) * (len+1));
             MultiByteToWideChar(codepage, 0, name, length, name_string, len);
             name_string[len] = 0;
         }
@@ -2346,7 +2346,7 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
 
         TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
         add_localizedstring(strings, locale, name_string);
-        heap_free(name_string);
+        free(name_string);
 
         ret = !wcscmp(locale, L"en-US");
     }
@@ -2507,9 +2507,9 @@ static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc
 
                 if ((data = table_read_ensure(&meta, GET_BE_DWORD(maps[i].offset), length)))
                 {
-                    WCHAR *ptrW = heap_alloc((length + 1) * sizeof(WCHAR)), *ctx, *token;
+                    WCHAR *ptrW, *ctx, *token;
 
-                    if (!ptrW)
+                    if (!(ptrW = malloc((length + 1) * sizeof(WCHAR))))
                     {
                         hr = E_OUTOFMEMORY;
                         goto end;
@@ -2528,7 +2528,7 @@ static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc
                         token = meta_get_lng_name(NULL, &ctx);
                     }
 
-                    heap_free(ptrW);
+                    free(ptrW);
                 }
             }
         }
@@ -2644,13 +2644,13 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
             WCHAR *nameW;
 
             IDWriteLocalizedStrings_GetStringLength(lfnames, index, &length);
-            nameW = heap_alloc((length + 1) * sizeof(WCHAR));
+            nameW = malloc((length + 1) * sizeof(WCHAR));
             if (nameW)
             {
                 *nameW = 0;
                 IDWriteLocalizedStrings_GetString(lfnames, index, nameW, length + 1);
                 lstrcpynW(lfname, nameW, LF_FACESIZE);
-                heap_free(nameW);
+                free(nameW);
             }
         }
 
@@ -4880,7 +4880,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
         }
     }
 
-    heap_free(lookups.lookups);
+    free(lookups.lookups);
 
     if (context->has_gpos_attachment)
     {
@@ -4955,11 +4955,11 @@ static BOOL opentype_layout_gsub_ensure_buffer(struct scriptshaping_context *con
 
     new_capacity = context->u.subst.capacity * 2;
 
-    if ((glyphs = heap_realloc(context->u.subst.glyphs, new_capacity * sizeof(*glyphs))))
+    if ((glyphs = realloc(context->u.subst.glyphs, new_capacity * sizeof(*glyphs))))
         context->u.subst.glyphs = glyphs;
-    if ((glyph_props = heap_realloc(context->u.subst.glyph_props, new_capacity * sizeof(*glyph_props))))
+    if ((glyph_props = realloc(context->u.subst.glyph_props, new_capacity * sizeof(*glyph_props))))
         context->u.subst.glyph_props = glyph_props;
-    if ((glyph_infos = heap_realloc(context->glyph_infos, new_capacity * sizeof(*glyph_infos))))
+    if ((glyph_infos = realloc(context->glyph_infos, new_capacity * sizeof(*glyph_infos))))
         context->glyph_infos = glyph_infos;
 
     if ((ret = (glyphs && glyph_props && glyph_infos)))
@@ -6110,7 +6110,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     for (j = context->glyph_infos[start_idx].start_text_idx; j < context->length; ++j)
         context->u.buffer.clustermap[j] = start_idx;
 
-    heap_free(lookups.lookups);
+    free(lookups.lookups);
 }
 
 static BOOL opentype_layout_contextual_lookup_is_glyph_covered(struct scriptshaping_context *context, UINT16 glyph,
@@ -6339,7 +6339,7 @@ BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsign
             break;
     }
 
-    heap_free(lookups.lookups);
+    free(lookups.lookups);
 
     return ret;
 }
@@ -6396,7 +6396,7 @@ BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface)
         }
     }
 
-    heap_free(lookups.lookups);
+    free(lookups.lookups);
 
     if (count)
         fontface->flags |= FONTFACE_VERTICAL_VARIANTS;
@@ -6422,10 +6422,10 @@ HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, u
 
     context.cache = fontface_get_shaping_cache(fontface);
     context.u.subst.glyphs = glyphs;
-    context.u.subst.glyph_props = heap_calloc(glyph_count, sizeof(*context.u.subst.glyph_props));
+    context.u.subst.glyph_props = calloc(glyph_count, sizeof(*context.u.subst.glyph_props));
     context.u.subst.max_glyph_count = glyph_count;
     context.u.subst.capacity = glyph_count;
-    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
+    context.glyph_infos = calloc(glyph_count, sizeof(*context.glyph_infos));
     context.table = &context.cache->gsub;
 
     vert_feature.tag = DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t');
@@ -6456,9 +6456,9 @@ HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, u
         }
     }
 
-    heap_free(context.u.subst.glyph_props);
-    heap_free(context.glyph_infos);
-    heap_free(lookups.lookups);
+    free(context.u.subst.glyph_props);
+    free(context.glyph_infos);
+    free(lookups.lookups);
 
     return S_OK;
 }

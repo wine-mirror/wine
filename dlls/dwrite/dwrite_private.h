@@ -21,7 +21,6 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
@@ -34,29 +33,13 @@ static const DWRITE_MATRIX identity =
     0.0f, 0.0f
 };
 
-static inline LPWSTR heap_strdupW(const WCHAR *str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str) + 1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if(ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
-}
-
 static inline LPWSTR heap_strdupnW(const WCHAR *str, UINT32 len)
 {
     WCHAR *ret = NULL;
 
     if (len)
     {
-        ret = heap_alloc((len+1)*sizeof(WCHAR));
+        ret = malloc((len+1)*sizeof(WCHAR));
         if(ret)
         {
             memcpy(ret, str, len*sizeof(WCHAR));
@@ -97,10 +80,7 @@ static inline BOOL dwrite_array_reserve(void **elements, size_t *capacity, size_
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!*elements)
-        new_elements = RtlAllocateHeap(GetProcessHeap(), 0, new_capacity * size);
-    else
-        new_elements = RtlReAllocateHeap(GetProcessHeap(), 0, *elements, new_capacity * size);
+    new_elements = realloc(*elements, new_capacity * size);
     if (!new_elements)
         return FALSE;
 

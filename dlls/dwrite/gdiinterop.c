@@ -267,7 +267,7 @@ static ULONG WINAPI rendertarget_Release(IDWriteBitmapRenderTarget1 *iface)
     {
         IDWriteFactory7_Release(target->factory);
         DeleteDC(target->hdc);
-        heap_free(target);
+        free(target);
     }
 
     return refcount;
@@ -460,8 +460,8 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         color = colorref_to_pixel_888(color);
         if (texturetype == DWRITE_TEXTURE_CLEARTYPE_3x1)
             size *= 3;
-        bitmap = heap_alloc_zero(size);
-        if (!bitmap) {
+        if (!(bitmap = calloc(1, size)))
+        {
             IDWriteGlyphRunAnalysis_Release(analysis);
             return E_OUTOFMEMORY;
         }
@@ -477,7 +477,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
             if (bbox_ret) *bbox_ret = target_rect;
         }
 
-        heap_free(bitmap);
+        free(bitmap);
     }
 
     IDWriteGlyphRunAnalysis_Release(analysis);
@@ -605,8 +605,8 @@ static HRESULT create_rendertarget(IDWriteFactory7 *factory, HDC hdc, UINT32 wid
 
     *ret = NULL;
 
-    target = heap_alloc(sizeof(struct rendertarget));
-    if (!target) return E_OUTOFMEMORY;
+    if (!(target = malloc(sizeof(*target))))
+        return E_OUTOFMEMORY;
 
     target->IDWriteBitmapRenderTarget1_iface.lpVtbl = &rendertargetvtbl;
     target->ID2D1SimplifiedGeometrySink_iface.lpVtbl = &rendertargetsinkvtbl;
@@ -671,7 +671,7 @@ static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop1 *iface)
     {
         IDWriteFactory7_UnregisterFontFileLoader(interop->factory, &interop->IDWriteFontFileLoader_iface);
         factory_detach_gdiinterop(interop->factory, iface);
-        heap_free(interop);
+        free(interop);
     }
 
     return refcount;
@@ -795,12 +795,12 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
         return E_FAIL;
     }
 
-    fileinfo = heap_alloc(needed);
-    if (!fileinfo)
+    if (!(fileinfo = malloc(needed)))
         return E_OUTOFMEMORY;
 
-    if (!GetFontFileInfo(info.instance_id, 0, fileinfo, needed, &needed)) {
-        heap_free(fileinfo);
+    if (!GetFontFileInfo(info.instance_id, 0, fileinfo, needed, &needed))
+    {
+        free(fileinfo);
         return E_FAIL;
     }
 
@@ -810,7 +810,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
         hr = IDWriteFactory7_CreateCustomFontFileReference(interop->factory, &info.instance_id,
                 sizeof(info.instance_id), &interop->IDWriteFontFileLoader_iface, &file);
 
-    heap_free(fileinfo);
+    free(fileinfo);
     if (FAILED(hr))
         return hr;
 
@@ -962,7 +962,7 @@ static ULONG WINAPI memresourcestream_Release(IDWriteFontFileStream *iface)
     TRACE("%p, refcount %d.\n", iface, refcount);
 
     if (!refcount)
-        heap_free(stream);
+        free(stream);
 
     return refcount;
 }
@@ -986,7 +986,7 @@ static HRESULT WINAPI memresourcestream_ReadFileFragment(IDWriteFontFileStream *
     if ((offset >= fileinfo.size.QuadPart - 1) || (fragment_size > fileinfo.size.QuadPart - offset))
         return E_INVALIDARG;
 
-    if (!(fragment = heap_alloc(fragment_size)))
+    if (!(fragment = malloc(fragment_size)))
         return E_OUTOFMEMORY;
 
     if (!GetFontFileData(stream->key, 0, offset, fragment, fragment_size))
@@ -1000,7 +1000,7 @@ static void WINAPI memresourcestream_ReleaseFileFragment(IDWriteFontFileStream *
 {
     TRACE("%p, %p.\n", iface, fragment_context);
 
-    heap_free(fragment_context);
+    free(fragment_context);
 }
 
 static HRESULT WINAPI memresourcestream_GetFileSize(IDWriteFontFileStream *iface, UINT64 *size)
@@ -1073,7 +1073,7 @@ static HRESULT WINAPI memresourceloader_CreateStreamFromKey(IDWriteFontFileLoade
     if (!key || key_size != sizeof(DWORD))
         return E_INVALIDARG;
 
-    if (!(stream = heap_alloc(sizeof(*stream))))
+    if (!(stream = malloc(sizeof(*stream))))
         return E_OUTOFMEMORY;
 
     stream->IDWriteFontFileStream_iface.lpVtbl = &memresourcestreamvtbl;
@@ -1099,7 +1099,7 @@ HRESULT create_gdiinterop(IDWriteFactory7 *factory, IDWriteGdiInterop1 **ret)
 
     *ret = NULL;
 
-    if (!(interop = heap_alloc(sizeof(*interop))))
+    if (!(interop = malloc(sizeof(*interop))))
         return E_OUTOFMEMORY;
 
     interop->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;

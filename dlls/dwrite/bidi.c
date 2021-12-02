@@ -633,14 +633,16 @@ static BracketPair *bidi_compute_bracket_pairs(IsolatedRun *iso_run)
     int pair_count = 0;
     int i;
 
-    open_stack = heap_alloc(sizeof(WCHAR) * iso_run->length);
-    stack_index = heap_alloc(sizeof(int) * iso_run->length);
+    open_stack = malloc(sizeof(WCHAR) * iso_run->length);
+    stack_index = malloc(sizeof(int) * iso_run->length);
 
     for (i = 0; i < iso_run->length; i++) {
         unsigned short ubv = get_table_entry(bidi_bracket_table, iso_run->item[i].ch);
-        if (ubv) {
-            if (!out) {
-                out = heap_alloc(sizeof(BracketPair));
+        if (ubv)
+        {
+            if (!out)
+            {
+                out = malloc(sizeof(BracketPair));
                 out[0].start = -1;
             }
 
@@ -663,7 +665,7 @@ static BracketPair *bidi_compute_bracket_pairs(IsolatedRun *iso_run)
                         out[pair_count].start = stack_index[j];
                         out[pair_count].end = i;
                         pair_count++;
-                        out = heap_realloc(out, sizeof(BracketPair) * (pair_count+1));
+                        out = realloc(out, sizeof(BracketPair) * (pair_count+1));
                         out[pair_count].start = -1;
                         stack_top = j+1;
                         break;
@@ -672,15 +674,16 @@ static BracketPair *bidi_compute_bracket_pairs(IsolatedRun *iso_run)
             }
         }
     }
-    if (pair_count == 0) {
-        heap_free(out);
+    if (pair_count == 0)
+    {
+        free(out);
         out = NULL;
     }
     else if (pair_count > 1)
         qsort(out, pair_count, sizeof(BracketPair), bracketpair_compr);
 
-    heap_free(open_stack);
-    heap_free(stack_index);
+    free(open_stack);
+    free(stack_index);
     return out;
 }
 
@@ -774,7 +777,7 @@ static void bidi_resolve_neutrals(IsolatedRun *run)
             i++;
             p = &pairs[i];
         }
-        heap_free(pairs);
+        free(pairs);
     }
 
     /* N1 */
@@ -920,8 +923,7 @@ static HRESULT bidi_compute_isolating_runs_set(UINT8 baselevel, UINT8 *classes, 
     HRESULT hr = S_OK;
     Run *runs;
 
-    runs = heap_calloc(count, sizeof(*runs));
-    if (!runs)
+    if (!(runs = calloc(count, sizeof(*runs))))
         return E_OUTOFMEMORY;
 
     list_init(set);
@@ -949,8 +951,8 @@ static HRESULT bidi_compute_isolating_runs_set(UINT8 baselevel, UINT8 *classes, 
             int type_fence, real_end;
             int j;
 
-            current_isolated = heap_alloc(sizeof(IsolatedRun) + sizeof(RunChar)*count);
-            if (!current_isolated) {
+            if (!(current_isolated = malloc(sizeof(IsolatedRun) + sizeof(RunChar)*count)))
+            {
                 hr = E_OUTOFMEMORY;
                 break;
             }
@@ -1040,7 +1042,7 @@ search:
         i++;
     }
 
-    heap_free(runs);
+    free(runs);
     return hr;
 }
 
@@ -1053,8 +1055,7 @@ HRESULT bidi_computelevels(const WCHAR *string, UINT32 count, UINT8 baselevel, U
 
     TRACE("%s, %u\n", debugstr_wn(string, count), count);
 
-    chartype = heap_alloc(count*sizeof(*chartype));
-    if (!chartype)
+    if (!(chartype = malloc(count * sizeof(*chartype))))
         return E_OUTOFMEMORY;
 
     bidi_classify(string, chartype, count);
@@ -1081,7 +1082,7 @@ HRESULT bidi_computelevels(const WCHAR *string, UINT32 count, UINT8 baselevel, U
         if (TRACE_ON(bidi)) iso_dump_types("after neutrals", iso_run);
 
         list_remove(&iso_run->entry);
-        heap_free(iso_run);
+        free(iso_run);
     }
 
     if (TRACE_ON(bidi)) bidi_dump_types("before implicit", chartype, 0, count);
@@ -1091,6 +1092,6 @@ HRESULT bidi_computelevels(const WCHAR *string, UINT32 count, UINT8 baselevel, U
     bidi_resolve_resolved(baselevel, chartype, levels, 0, count-1);
 
 done:
-    heap_free(chartype);
+    free(chartype);
     return hr;
 }

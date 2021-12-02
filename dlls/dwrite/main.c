@@ -113,7 +113,7 @@ static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams3 *iface)
     TRACE("%p, refcount %d.\n", iface, refcount);
 
     if (!refcount)
-        heap_free(params);
+        free(params);
 
     return refcount;
 }
@@ -235,7 +235,7 @@ static HRESULT create_renderingparams(float gamma, float contrast, float graysca
     if ((UINT32)gridfit > DWRITE_GRID_FIT_MODE_ENABLED || (UINT32)geometry > DWRITE_PIXEL_GEOMETRY_BGR)
         return E_INVALIDARG;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = malloc(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteRenderingParams3_iface.lpVtbl = &renderingparamsvtbl;
@@ -312,12 +312,12 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
     {
         for (i = 0; i < strings->count; ++i)
         {
-            heap_free(strings->data[i].locale);
-            heap_free(strings->data[i].string);
+            free(strings->data[i].locale);
+            free(strings->data[i].string);
         }
 
-        heap_free(strings->data);
-        heap_free(strings);
+        free(strings->data);
+        free(strings);
     }
 
     return refcount;
@@ -449,8 +449,7 @@ HRESULT create_localizedstrings(IDWriteLocalizedStrings **strings)
 
     *strings = NULL;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
@@ -477,12 +476,12 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
     if (!dwrite_array_reserve((void **)&strings->data, &strings->size, strings->count + 1, sizeof(*strings->data)))
         return E_OUTOFMEMORY;
 
-    strings->data[count].locale = heap_strdupW(locale);
-    strings->data[count].string = heap_strdupW(string);
+    strings->data[count].locale = wcsdup(locale);
+    strings->data[count].string = wcsdup(string);
     if (!strings->data[count].locale || !strings->data[count].string)
     {
-        heap_free(strings->data[count].locale);
-        heap_free(strings->data[count].string);
+        free(strings->data[count].locale);
+        free(strings->data[count].string);
         return E_OUTOFMEMORY;
     }
     wcslwr(strings->data[count].locale);
@@ -503,14 +502,13 @@ HRESULT clone_localizedstrings(IDWriteLocalizedStrings *iface, IDWriteLocalizedS
         return S_FALSE;
 
     strings = impl_from_IDWriteLocalizedStrings(iface);
-    strings_clone = heap_alloc_zero(sizeof(*strings_clone));
-    if (!strings_clone)
+    if (!(strings_clone = calloc(1, sizeof(*strings_clone))))
         return E_OUTOFMEMORY;
 
     if (!dwrite_array_reserve((void **)&strings_clone->data, &strings_clone->size, strings->count,
             sizeof(*strings_clone->data)))
     {
-        heap_free(strings_clone);
+        free(strings_clone);
         return E_OUTOFMEMORY;
     }
 
@@ -520,8 +518,8 @@ HRESULT clone_localizedstrings(IDWriteLocalizedStrings *iface, IDWriteLocalizedS
 
     for (i = 0; i < strings_clone->count; ++i)
     {
-        strings_clone->data[i].locale = heap_strdupW(strings->data[i].locale);
-        strings_clone->data[i].string = heap_strdupW(strings->data[i].string);
+        strings_clone->data[i].locale = wcsdup(strings->data[i].locale);
+        strings_clone->data[i].string = wcsdup(strings->data[i].string);
     }
 
     *ret = &strings_clone->IDWriteLocalizedStrings_iface;
@@ -538,8 +536,8 @@ void set_en_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *string)
     {
         if (!wcsicmp(strings->data[i].locale, L"en-US"))
         {
-            heap_free(strings->data[i].string);
-            strings->data[i].string = heap_strdupW(string);
+            free(strings->data[i].string);
+            strings->data[i].string = wcsdup(string);
             break;
         }
     }
@@ -622,7 +620,7 @@ static void release_fontface_cache(struct list *fontfaces)
     LIST_FOR_EACH_ENTRY_SAFE(fontface, fontface2, fontfaces, struct fontfacecached, entry) {
         list_remove(&fontface->entry);
         fontface_detach_from_cache(fontface->fontface);
-        heap_free(fontface);
+        free(fontface);
     }
 }
 
@@ -631,7 +629,7 @@ static void release_fileloader(struct fileloader *fileloader)
     list_remove(&fileloader->entry);
     release_fontface_cache(&fileloader->fontfaces);
     IDWriteFontFileLoader_Release(fileloader->loader);
-    heap_free(fileloader);
+    free(fileloader);
 }
 
 static void release_dwritefactory(struct dwritefactory *factory)
@@ -646,7 +644,7 @@ static void release_dwritefactory(struct dwritefactory *factory)
     LIST_FOR_EACH_ENTRY_SAFE(loader, loader2, &factory->collection_loaders, struct collectionloader, entry) {
         list_remove(&loader->entry);
         IDWriteFontCollectionLoader_Release(loader->loader);
-        heap_free(loader);
+        free(loader);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(fileloader, fileloader2, &factory->file_loaders, struct fileloader, entry)
@@ -661,7 +659,7 @@ static void release_dwritefactory(struct dwritefactory *factory)
 
     factory->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&factory->cs);
-    heap_free(factory);
+    free(factory);
 }
 
 static void release_shared_factory(IDWriteFactory7 *iface)
@@ -820,8 +818,7 @@ static HRESULT WINAPI dwritefactory_RegisterFontCollectionLoader(IDWriteFactory7
     if (factory_get_collection_loader(factory, loader))
         return DWRITE_E_ALREADYREGISTERED;
 
-    entry = heap_alloc(sizeof(*entry));
-    if (!entry)
+    if (!(entry = malloc(sizeof(*entry))))
         return E_OUTOFMEMORY;
 
     entry->loader = loader;
@@ -848,7 +845,7 @@ static HRESULT WINAPI dwritefactory_UnregisterFontCollectionLoader(IDWriteFactor
 
     IDWriteFontCollectionLoader_Release(found->loader);
     list_remove(&found->entry);
-    heap_free(found);
+    free(found);
 
     return S_OK;
 }
@@ -871,7 +868,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFileReference(IDWriteFactory7 *ifa
         return hr;
 
     hr = create_font_file(factory->localfontfileloader, key, key_size, font_file);
-    heap_free(key);
+    free(key);
 
     return hr;
 }
@@ -986,8 +983,7 @@ struct fontfacecached *factory_cache_fontface(IDWriteFactory7 *iface, struct lis
     struct fontfacecached *cached;
 
     /* new cache entry */
-    cached = heap_alloc(sizeof(*cached));
-    if (!cached)
+    if (!(cached = malloc(sizeof(*cached))))
         return NULL;
 
     cached->fontface = fontface;
@@ -1128,8 +1124,7 @@ static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory7 *ifac
     if (factory_get_file_loader(factory, loader))
         return DWRITE_E_ALREADYREGISTERED;
 
-    entry = heap_alloc(sizeof(*entry));
-    if (!entry)
+    if (!(entry = malloc(sizeof(*entry))))
         return E_OUTOFMEMORY;
 
     entry->loader = loader;
@@ -1525,17 +1520,17 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
     }
 
     value_size = MAX_PATH * sizeof(*value);
-    value = heap_alloc(value_size);
+    value = malloc(value_size);
 
     max_name_count = MAX_PATH;
-    name = heap_alloc(max_name_count * sizeof(*name));
+    name = malloc(max_name_count * sizeof(*name));
 
     for (;;)
     {
         if (!value)
         {
             value_size = MAX_PATH * sizeof(*value);
-            value = heap_alloc(value_size);
+            value = malloc(value_size);
         }
 
         do
@@ -1549,15 +1544,15 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
                 if (name_count >= max_name_count)
                 {
                     max_name_count *= 2;
-                    heap_free(name);
-                    name = heap_alloc(max_name_count * sizeof(*name));
+                    free(name);
+                    name = malloc(max_name_count * sizeof(*name));
                 }
 
                 if (data_size > value_size - sizeof(*value))
                 {
-                    heap_free(value);
+                    free(value);
                     value_size = max(data_size + sizeof(*value), value_size * 2);
-                    value = heap_alloc(value_size);
+                    value = malloc(value_size);
                 }
             }
         } while (r == ERROR_MORE_DATA);
@@ -1574,12 +1569,12 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
                 {
                     WCHAR *ptrW;
 
-                    ptrW = heap_alloc((MAX_PATH + wcslen(value)) * sizeof(WCHAR));
+                    ptrW = malloc((MAX_PATH + wcslen(value)) * sizeof(WCHAR));
                     GetWindowsDirectoryW(ptrW, MAX_PATH);
                     wcscat(ptrW, L"\\fonts\\");
                     wcscat(ptrW, value);
 
-                    heap_free(value);
+                    free(value);
                     value = ptrW;
                 }
 
@@ -1590,8 +1585,8 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
         index++;
     }
 
-    heap_free(value);
-    heap_free(name);
+    free(value);
+    free(name);
 
     *ret = paths;
     *ret_count = count;
@@ -1636,8 +1631,8 @@ static HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void
         }
 
         for (i = 0; i < count; ++i)
-            heap_free(paths[i]);
-        heap_free(paths);
+            free(paths[i]);
+        free(paths);
     }
 
     if (SUCCEEDED(hr = IDWriteFontSetBuilder2_CreateFontSet(builder, &fontset)))
@@ -2075,8 +2070,8 @@ HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnkno
     if (type == DWRITE_FACTORY_TYPE_SHARED && shared_factory)
         return IDWriteFactory7_QueryInterface(shared_factory, riid, (void**)ret);
 
-    factory = heap_alloc(sizeof(struct dwritefactory));
-    if (!factory) return E_OUTOFMEMORY;
+    if (!(factory = calloc(1, sizeof(*factory))))
+        return E_OUTOFMEMORY;
 
     init_dwritefactory(factory, type);
 
