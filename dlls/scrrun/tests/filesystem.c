@@ -1468,6 +1468,7 @@ static void test_CreateTextFile(void)
     HANDLE file;
     HRESULT hr;
     BOOL ret;
+    DWORD r;
 
     get_temp_filepath(testfileW, pathW, dirW);
 
@@ -1517,18 +1518,15 @@ static void test_CreateTextFile(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ITextStream_Release(stream);
 
-    /* File was created in Unicode mode, it contains 0xfffe BOM. Opening it in non-Unicode mode
-       treats BOM like a valuable data with appropriate CP_ACP -> WCHAR conversion. */
-    buffW[0] = 0;
-    MultiByteToWideChar(CP_ACP, 0, utf16bom, -1, buffW, ARRAY_SIZE(buffW));
+    /* check contents */
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+    r = 0;
+    ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
+    ok(ret && r == 2, "read %d, got %d, %d\n", r, ret, GetLastError());
 
-    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    hr = ITextStream_ReadAll(stream, &str);
-    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, buffW), "got %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW));
-    SysFreeString(str);
-    ITextStream_Release(stream);
+    ok( buffW[0] == 0xfeff, "got %04x\n", buffW[0] );
+    CloseHandle(file);
 
     DeleteFileW(nameW);
     RemoveDirectoryW(dirW);
