@@ -1895,7 +1895,8 @@ class VkStruct(Sequence):
         decoupled_structs = []
 
         while (len(tmp_structs) > 0):
-            for struct in tmp_structs:
+            # Iterate over a copy because we want to modify the list inside the loop.
+            for struct in list(tmp_structs):
                 dependends = False
 
                 if not struct.required:
