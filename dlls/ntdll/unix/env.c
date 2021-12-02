@@ -2128,6 +2128,15 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
     peb->ImageSubSystemMajorVersion = main_image_info.MajorSubsystemVersion;
     peb->ImageSubSystemMinorVersion = main_image_info.MinorSubsystemVersion;
 
+#ifdef _WIN64
+    if (main_image_info.Machine != current_machine)
+    {
+        NtCurrentTeb()->WowTebOffset = teb_offset;
+        NtCurrentTeb()->Tib.ExceptionList = (void *)((char *)NtCurrentTeb() + teb_offset);
+        set_thread_id( NtCurrentTeb(),  GetCurrentProcessId(), GetCurrentThreadId() );
+    }
+#endif
+
     load_global_options( &params->ImagePathName );
 
     if (NtCurrentTeb()->WowTebOffset)
