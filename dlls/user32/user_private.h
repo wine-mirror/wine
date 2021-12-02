@@ -67,7 +67,6 @@ extern const struct user_driver_funcs *USER_Driver DECLSPEC_HIDDEN;
 extern void USER_unload_driver(void) DECLSPEC_HIDDEN;
 
 extern BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info ) DECLSPEC_HIDDEN;
 
 struct received_message_info;
 

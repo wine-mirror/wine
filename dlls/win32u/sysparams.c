@@ -186,6 +186,8 @@ static const WCHAR guid_devinterface_monitorW[] =
     {'{','E','6','F','0','7','B','5','F','-','E','E','9','7','-','4','A','9','0','-',
      'B','0','7','6','-','3','3','F','5','7','B','F','4','E','A','A','7','}',0};
 
+#define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
+
 /* Cached display device information */
 struct display_device
 {
@@ -210,6 +212,7 @@ struct monitor
     struct list entry;
     struct display_device dev;
     struct adapter *adapter;
+    HANDLE handle;
     unsigned int id;
     unsigned int flags;
     RECT rc_monitor;
@@ -1044,7 +1047,7 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 
 static BOOL update_display_cache_from_registry(void)
 {
-    DWORD adapter_id, monitor_id, size;
+    DWORD adapter_id, monitor_id, monitor_count = 0, size;
     KEY_FULL_INFORMATION key;
     struct adapter *adapter;
     struct monitor *monitor;
@@ -1104,6 +1107,7 @@ static BOOL update_display_cache_from_registry(void)
                 break;
             }
 
+            monitor->handle = UlongToHandle( ++monitor_count );
             list_add_tail( &monitors, &monitor->entry );
         }
     }
@@ -1314,4 +1318,57 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
     else
         WARN( "Failed to query %s display settings.\n", wine_dbgstr_w(device_name) );
     return ret;
+}
+
+static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
+{
+    struct monitor *monitor;
+
+    if (info->cbSize != sizeof(MONITORINFOEXW) && info->cbSize != sizeof(MONITORINFO)) return FALSE;
+
+    /* Fallback to report one monitor */
+    if (handle == NULLDRV_DEFAULT_HMONITOR)
+    {
+        RECT default_rect = {0, 0, 1024, 768};
+        info->rcMonitor = default_rect;
+        info->rcWork = default_rect;
+        info->dwFlags = MONITORINFOF_PRIMARY;
+        if (info->cbSize >= sizeof(MONITORINFOEXW))
+            asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, "WinDisc" );
+        return TRUE;
+    }
+
+    if (!lock_display_devices()) return FALSE;
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    {
+        if (monitor->handle != handle) continue;
+        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) break;
+
+        /* FIXME: map dpi */
+        info->rcMonitor = monitor->rc_monitor;
+        info->rcWork = monitor->rc_work;
+        info->dwFlags = monitor->flags;
+        if (info->cbSize >= sizeof(MONITORINFOEXW))
+            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitor->adapter->dev.device_name );
+        unlock_display_devices();
+        return TRUE;
+    }
+
+    unlock_display_devices();
+    WARN( "invalid handle %p\n", handle );
+    SetLastError( ERROR_INVALID_MONITOR_HANDLE );
+    return FALSE;
+}
+
+ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code )
+{
+    switch(code)
+    {
+    case NtUserGetMonitorInfo:
+        return get_monitor_info( UlongToHandle(arg1), (MONITORINFO *)arg2 );
+    default:
+        FIXME( "invalid code %u\n", code );
+        return 0;
+    }
 }

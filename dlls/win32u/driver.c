@@ -823,12 +823,6 @@ static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVM
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
-{
-    /* FIXME: move from user32 */
-    return FALSE;
-}
-
 static void CDECL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager,
                                                 BOOL force, void *param )
 {
@@ -1107,7 +1101,6 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT ver
     SET_USER_FUNC(ChangeDisplaySettingsEx);
     SET_USER_FUNC(EnumDisplayMonitors);
     SET_USER_FUNC(EnumDisplaySettingsEx);
-    SET_USER_FUNC(GetMonitorInfo);
     SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktopWindow);
     SET_USER_FUNC(CreateWindow);

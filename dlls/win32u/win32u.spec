@@ -780,7 +780,7 @@
 @ stub NtUserCallNextHookEx
 @ stub NtUserCallNoParam
 @ stub NtUserCallOneParam
-@ stub NtUserCallTwoParam
+@ stdcall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground
 @ stub NtUserChangeClipboardChain
 @ stub NtUserChangeDisplaySettings

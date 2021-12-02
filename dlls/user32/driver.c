@@ -274,11 +274,6 @@ static BOOL CDECL loaderdrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITOREN
     return load_driver()->pEnumDisplayMonitors( hdc, rect, proc, lp );
 }
 
-static BOOL CDECL loaderdrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
-{
-    return load_driver()->pGetMonitorInfo( handle, info );
-}
-
 static BOOL CDECL loaderdrv_CreateDesktopWindow( HWND hwnd )
 {
     return load_driver()->pCreateDesktopWindow( hwnd );
@@ -341,7 +336,6 @@ static struct user_driver_funcs lazy_load_driver =
     loaderdrv_ChangeDisplaySettingsEx,
     loaderdrv_EnumDisplayMonitors,
     NULL,
-    loaderdrv_GetMonitorInfo,
     NULL,
     /* windowing functions */
     loaderdrv_CreateDesktopWindow,
@@ -389,7 +383,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
 
     SET_USER_FUNC(EnumDisplayMonitors);
-    SET_USER_FUNC(GetMonitorInfo);
 
 #undef SET_USER_FUNC
 
