@@ -6558,6 +6558,8 @@ static ID3D12Device *create_d3d12_device(void)
     ID3D12Device *device;
     HRESULT hr;
 
+    if (!pD3D12CreateDevice) return NULL;
+
     hr = pD3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
     if (FAILED(hr))
         return NULL;
@@ -6565,7 +6567,7 @@ static ID3D12Device *create_d3d12_device(void)
     return device;
 }
 
-static void test_dxgi_surface_buffer(void)
+static void test_d3d11_surface_buffer(void)
 {
     DWORD max_length, cur_length, length, color;
     IMFDXGIBuffer *dxgi_buffer;
@@ -6789,6 +6791,72 @@ static void test_dxgi_surface_buffer(void)
     ID3D11Texture2D_Release(texture);
 
     ID3D11Device_Release(device);
+}
+
+static void test_d3d12_surface_buffer(void)
+{
+    IMFDXGIBuffer *dxgi_buffer;
+    D3D12_HEAP_PROPERTIES heap_props;
+    D3D12_RESOURCE_DESC desc;
+    ID3D12Resource *resource;
+    IMFMediaBuffer *buffer;
+    unsigned int refcount;
+    ID3D12Device *device;
+    IUnknown *obj;
+    HRESULT hr;
+
+    /* d3d12 */
+    if (!(device = create_d3d12_device()))
+    {
+        skip("Failed to create a D3D12 device, skipping tests.\n");
+        return;
+    }
+
+    memset(&heap_props, 0, sizeof(heap_props));
+    heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Alignment = 0;
+    desc.Width = 32;
+    desc.Height = 32;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+    hr = ID3D12Device_CreateCommittedResource(device, &heap_props, D3D12_HEAP_FLAG_NONE,
+            &desc, D3D12_RESOURCE_STATE_RENDER_TARGET, NULL, &IID_ID3D12Resource, (void **)&resource);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
+todo_wine
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+if (SUCCEEDED(hr))
+{
+    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
+    check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
+    check_interface(buffer, &IID_IMFDXGIBuffer, TRUE);
+    check_interface(buffer, &IID_IMFGetService, FALSE);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D12Resource, (void **)&obj);
+    ok(hr == S_OK, "Failed to get resource, hr %#x.\n", hr);
+    ok(obj == (IUnknown *)resource, "Unexpected resource pointer.\n");
+    IUnknown_Release(obj);
+
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMFMediaBuffer_Release(buffer);
+}
+    ID3D12Resource_Release(resource);
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Unexpected device refcount %u.\n", refcount);
 }
 
 static void test_sample_allocator_sysmem(void)
@@ -7335,7 +7403,9 @@ static void test_sample_allocator_d3d11(void)
 static void test_sample_allocator_d3d12(void)
 {
     IMFVideoSampleAllocator *allocator;
+    D3D12_HEAP_PROPERTIES heap_props;
     IMFDXGIDeviceManager *manager;
+    D3D12_HEAP_FLAGS heap_flags;
     IMFDXGIBuffer *dxgi_buffer;
     IMFMediaType *video_type;
     ID3D12Resource *resource;
@@ -7345,12 +7415,6 @@ static void test_sample_allocator_d3d12(void)
     unsigned int token;
     IMFSample *sample;
     HRESULT hr;
-
-    if (!pD3D12CreateDevice)
-    {
-        skip("Missing d3d12 support, some tests will be skipped.\n");
-        return;
-    }
 
     if (!(device = create_d3d12_device()))
     {
@@ -7410,6 +7474,14 @@ todo_wine
     ok(!desc.SampleDesc.Quality, "Unexpected sample quality %u.\n", desc.SampleDesc.Quality);
     ok(!desc.Layout, "Unexpected layout %u.\n", desc.Layout);
     ok(!desc.Flags, "Unexpected flags %#x.\n", desc.Flags);
+
+    hr = ID3D12Resource_GetHeapProperties(resource, &heap_props, &heap_flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(heap_props.Type == D3D12_HEAP_TYPE_DEFAULT, "Unexpected heap type %u.\n", heap_props.Type);
+    ok(heap_props.CPUPageProperty == D3D12_CPU_PAGE_PROPERTY_UNKNOWN, "Unexpected page property %u.\n",
+            heap_props.CPUPageProperty);
+    ok(!heap_props.MemoryPoolPreference, "Unexpected pool preference %u.\n", heap_props.MemoryPoolPreference);
+    ok(heap_flags == D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES, "Unexpected heap flags %#x.\n", heap_flags);
 
     ID3D12Resource_Release(resource);
     IMFDXGIBuffer_Release(dxgi_buffer);
@@ -7656,6 +7728,9 @@ START_TEST(mfplat)
     if (!pMFCreateVideoSampleAllocatorEx)
         win_skip("MFCreateVideoSampleAllocatorEx() is not available. Some tests will be skipped.\n");
 
+    if (!pD3D12CreateDevice)
+        skip("Missing d3d12 support, some tests will be skipped.\n");
+
     CoInitialize(NULL);
 
     test_startup();
@@ -7703,7 +7778,8 @@ START_TEST(mfplat)
     test_MFCreateTrackedSample();
     test_MFFrameRateToAverageTimePerFrame();
     test_MFMapDXGIFormatToDX9Format();
-    test_dxgi_surface_buffer();
+    test_d3d11_surface_buffer();
+    test_d3d12_surface_buffer();
     test_sample_allocator_sysmem();
     test_sample_allocator_d3d9();
     test_sample_allocator_d3d11();
