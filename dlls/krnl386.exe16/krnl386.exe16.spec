@@ -100,7 +100,7 @@
 96  pascal -ret16 FreeLibrary(word) FreeLibrary16
 97  pascal -ret16 GetTempFileName(word str word ptr) GetTempFileName16
 98  pascal -ret16 GetLastDiskChange() KERNEL_nop
-99  stub GetLPErrMode
+99  pascal GetLPErrMode()
 100 pascal -ret16 ValidateCodeSegments() KERNEL_nop
 101 stub NoHookDosCall
 102 pascal -register DOS3Call() DOS3Call
