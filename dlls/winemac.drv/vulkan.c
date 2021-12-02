@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <dlfcn.h>
 
 #include "macdrv.h"
 #include "wine/debug.h"
