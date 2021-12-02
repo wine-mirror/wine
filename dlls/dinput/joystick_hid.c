@@ -1052,7 +1052,11 @@ static HRESULT hid_joystick_send_force_feedback_command( IDirectInputDevice8W *i
     case DISFFC_SETACTUATORSOFF: usage = PID_USAGE_DC_DISABLE_ACTUATORS; break;
     }
 
-    if (command == DISFFC_RESET) IDirectInputDevice8_EnumCreatedEffectObjects( iface, unload_effect_object, NULL, 0 );
+    if (command == DISFFC_RESET)
+    {
+        IDirectInputDevice8_EnumCreatedEffectObjects( iface, unload_effect_object, NULL, 0 );
+        impl->base.force_feedback_state = DIGFFS_STOPPED | DIGFFS_EMPTY;
+    }
 
     count = 1;
     status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
@@ -1201,10 +1205,12 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
         .dwHow = DIPH_DEVICE,
     };
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    ULONG i, count, report_len = impl->caps.InputReportByteLength;
+    ULONG i, index, count, report_len = impl->caps.InputReportByteLength;
     DIDATAFORMAT *format = impl->base.device_format;
     struct parse_device_state_params params = {{0}};
     char *report_buf = impl->input_report_buf;
+    struct hid_joystick_effect *effect;
+    DWORD device_state, effect_state;
     USAGE_AND_PAGE *usages;
     NTSTATUS status;
     HRESULT hr;
@@ -1257,6 +1263,43 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
             enum_objects( impl, &filter, DIDFT_BUTTON, check_device_state_button, &params );
             if (impl->base.hEvent && memcmp( &params.old_state, impl->base.device_state, format->dwDataSize ))
                 SetEvent( impl->base.hEvent );
+        }
+        else if (report_buf[0] == impl->pid_effect_state.id)
+        {
+            status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                         &index, impl->preparsed, report_buf, report_len );
+            if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue EFFECT_BLOCK_INDEX returned %#x\n", status );
+
+            EnterCriticalSection( &impl->base.crit );
+            effect_state = 0;
+            device_state = impl->base.force_feedback_state & DIGFFS_EMPTY;
+            while (count--)
+            {
+                USAGE_AND_PAGE *button = impl->usages_buf + count;
+                if (button->UsagePage != HID_USAGE_PAGE_PID)
+                    FIXME( "unimplemented usage page %#04x.\n", button->UsagePage );
+                else switch (button->Usage)
+                {
+                case PID_USAGE_DEVICE_PAUSED: device_state |= DIGFFS_PAUSED; break;
+                case PID_USAGE_ACTUATORS_ENABLED: device_state |= DIGFFS_ACTUATORSON; break;
+                case PID_USAGE_SAFETY_SWITCH: device_state |= DIGFFS_SAFETYSWITCHON; break;
+                case PID_USAGE_ACTUATOR_OVERRIDE_SWITCH: device_state |= DIGFFS_USERFFSWITCHON; break;
+                case PID_USAGE_ACTUATOR_POWER: device_state |= DIGFFS_POWERON; break;
+                case PID_USAGE_EFFECT_PLAYING: effect_state = DIEGES_PLAYING; break;
+                default: FIXME( "unimplemented usage %#04x\n", button->Usage ); break;
+                }
+            }
+            if (!(device_state & DIGFFS_ACTUATORSON)) device_state |= DIGFFS_ACTUATORSOFF;
+            if (!(device_state & DIGFFS_SAFETYSWITCHON)) device_state |= DIGFFS_SAFETYSWITCHOFF;
+            if (!(device_state & DIGFFS_USERFFSWITCHON)) device_state |= DIGFFS_USERFFSWITCHOFF;
+            if (!(device_state & DIGFFS_POWERON)) device_state |= DIGFFS_POWEROFF;
+
+            TRACE( "effect %u state %#x, device state %#x\n", index, effect_state, device_state );
+
+            LIST_FOR_EACH_ENTRY( effect, &impl->effect_list, struct hid_joystick_effect, entry )
+                if (effect->index == index) effect->status = effect_state;
+            impl->base.force_feedback_state = device_state;
+            LeaveCriticalSection( &impl->base.crit );
         }
 
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
@@ -2722,7 +2765,7 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
     HRESULT hr = DI_OK;
 
-    FIXME( "iface %p, status %p semi-stub!\n", iface, status );
+    TRACE( "iface %p, status %p.\n", iface, status );
 
     if (!status) return E_POINTER;
     *status = 0;

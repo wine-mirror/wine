@@ -1765,7 +1765,7 @@ static HRESULT WINAPI dinput_device_GetForceFeedbackState( IDirectInputDevice8W 
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HRESULT hr = DI_OK;
 
-    FIXME( "iface %p, out %p semi-stub!\n", iface, out );
+    TRACE( "iface %p, out %p.\n", iface, out );
 
     if (!out) return E_POINTER;
     *out = 0;
