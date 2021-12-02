@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-11-24 00:22+0900\n"
+"PO-Revision-Date: 2021-12-02 20:37+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -56,7 +56,7 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
-"다음 소프트웨어는 자동으로 제거됩니다. 프로그램을 제거하거나 설치된 구성요소"
+"다음 소프트웨어는 자동으로 제거됩니다. 프로그램을 제거하거나 설치된 구성 요소"
 "를 수정하려면, 목록에서 선택한 후 [수정] 또는 [제거]를 클릭하세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:67
@@ -1109,8 +1109,8 @@ msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"페이지 범위를 벗어나지 않아야 올바른 값입니다.\n"
-"%1!d! 과 %2!d! 사이의 값을 입력하시오."
+"페이지 범위 안에 있어야 하는 값입니다.\n"
+"%1!d! - %2!d! 사이의 값을 입력하세요."
 
 #: dlls/comdlg32/comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -1121,20 +1121,20 @@ msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"여백이 겹쳐졌거나 용지 크기를 넘었습니다.\n"
-"여백 크기를 다시 입력하세요."
+"여백이 용지 경계와 겹치거나 초과했습니다.\n"
+"여백을 다시 조정하세요."
 
 #: dlls/comdlg32/comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "'복사본 개수' 필드는 비어 있어서는 안됩니다."
+msgstr "'복사본 매수' 필드는 비어 있지 않아야 합니다."
 
 #: dlls/comdlg32/comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"이렇게 많은 복사본 갯수는 프린터에서 지원되지 않습니다.\n"
-"1과 %d 사이의 값을 입력하세요."
+"복사본 매수가 너무 많아서 프린터가 지원하지 않습니다.\n"
+"1 - %d 사이의 값을 입력하세요."
 
 #: dlls/comdlg32/comdlg32.rc:68
 msgid "A printer error occurred."
@@ -1170,7 +1170,7 @@ msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "%1!d!pt - %2!d!pt 사이에서 글꼴 크기를 선택하세요."
+msgstr "글꼴 크기를 %1!d! - %2!d! pt 사이에서 선택하세요."
 
 #: dlls/comdlg32/comdlg32.rc:143 dlls/ieframe/ieframe.rc:35
 msgid "&Save"
@@ -1194,15 +1194,15 @@ msgstr "선택한 폴더"
 
 #: dlls/comdlg32/comdlg32.rc:149
 msgid "Font size has to be a number."
-msgstr "숫자는 글꼴 크기입니다."
+msgstr "글꼴 크기는 숫자여야 합니다."
 
 #: dlls/comdlg32/comdlg32.rc:84 programs/oleview/oleview.rc:98
 msgid "Ready"
-msgstr "준비"
+msgstr "준비됨"
 
 #: dlls/comdlg32/comdlg32.rc:85
 msgid "Paused; "
-msgstr "정지; "
+msgstr "일시 중지됨; "
 
 #: dlls/comdlg32/comdlg32.rc:86
 msgid "Error; "
@@ -1210,23 +1210,23 @@ msgstr "오류; "
 
 #: dlls/comdlg32/comdlg32.rc:87
 msgid "Pending deletion; "
-msgstr "제거 중; "
+msgstr "삭제 보류 중; "
 
 #: dlls/comdlg32/comdlg32.rc:88
 msgid "Paper jam; "
-msgstr "종이 걸림; "
+msgstr "용지 걸림; "
 
 #: dlls/comdlg32/comdlg32.rc:89
 msgid "Out of paper; "
-msgstr "종이 초과; "
+msgstr "용지 부족; "
 
 #: dlls/comdlg32/comdlg32.rc:90
 msgid "Feed paper manual; "
-msgstr "수동 종이 공금; "
+msgstr "용지 수동 곱급; "
 
 #: dlls/comdlg32/comdlg32.rc:91
 msgid "Paper problem; "
-msgstr "종이 문제; "
+msgstr "용지 문제; "
 
 #: dlls/comdlg32/comdlg32.rc:92
 msgid "Printer offline; "
@@ -1234,23 +1234,23 @@ msgstr "프린터 오프라인; "
 
 #: dlls/comdlg32/comdlg32.rc:93
 msgid "I/O Active; "
-msgstr "I/O 활성; "
+msgstr "입출력 활성화 됨; "
 
 #: dlls/comdlg32/comdlg32.rc:94
 msgid "Busy; "
-msgstr "바쁨; "
+msgstr "다른 작업 중; "
 
 #: dlls/comdlg32/comdlg32.rc:95
 msgid "Printing; "
-msgstr "인쇄중; "
+msgstr "인쇄 중; "
 
 #: dlls/comdlg32/comdlg32.rc:96
 msgid "Output tray is full; "
-msgstr "출력 트레이가 꽉 찼습니다; "
+msgstr "출력 트레이가 가득 참; "
 
 #: dlls/comdlg32/comdlg32.rc:97
 msgid "Not available; "
-msgstr "가능하지 않음; "
+msgstr "사용할 수 없음; "
 
 #: dlls/comdlg32/comdlg32.rc:98
 msgid "Waiting; "
@@ -1278,23 +1278,23 @@ msgstr "토너 없음; "
 
 #: dlls/comdlg32/comdlg32.rc:104
 msgid "Page punt; "
-msgstr "페이지 펀트; "
+msgstr "페이지 포기; "
 
 #: dlls/comdlg32/comdlg32.rc:105
 msgid "Interrupted by user; "
-msgstr "사용자에 의한 취소; "
+msgstr "사용자가 중단함; "
 
 #: dlls/comdlg32/comdlg32.rc:106
 msgid "Out of memory; "
-msgstr "메모리 초과; "
+msgstr "메모리 부족; "
 
 #: dlls/comdlg32/comdlg32.rc:107
 msgid "The printer door is open; "
-msgstr "프린터 문이 열려있습니다; "
+msgstr "프린터의 문이 열려 있음; "
 
 #: dlls/comdlg32/comdlg32.rc:108
 msgid "Print server unknown; "
-msgstr "프린트 서버 상태 알 수 없음; "
+msgstr "알 수 없는 프린터 서버; "
 
 #: dlls/comdlg32/comdlg32.rc:109
 msgid "Power save mode; "
@@ -1332,7 +1332,7 @@ msgstr "암호(&P):"
 
 #: dlls/credui/credui.rc:50
 msgid "&Remember my password"
-msgstr "내 암호 기억(&R)"
+msgstr "내 암호 저장(&R)"
 
 #: dlls/credui/credui.rc:30
 msgid "Connect to %s"
@@ -1577,7 +1577,7 @@ msgstr "성"
 
 #: dlls/crypt32/crypt32.rc:81
 msgid "Domain Component"
-msgstr "주소 구성 요소"
+msgstr "도메인 구성 요소"
 
 #: dlls/crypt32/crypt32.rc:82
 msgid "Street Address"
@@ -2633,23 +2633,23 @@ msgstr " 유효기간(끝) "
 
 #: dlls/cryptui/cryptui.rc:42
 msgid "This certificate has an invalid signature."
-msgstr "이 인증서는 잘못된 서명을 가지고 있습니다."
+msgstr "인증서 서명이 잘못되었습니다."
 
 #: dlls/cryptui/cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
-msgstr "이 인증서는 만료되었거나 아직 유효하지 않습니다."
+msgstr "만료되었거나 아직 유효하지 않은 인증서입니다."
 
 #: dlls/cryptui/cryptui.rc:44
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr "이 인증서는 발행자가 정한 유효시간을 초과했습니다."
+msgstr "발행자가 정한 유효 기간을 넘긴 인증서입니다."
 
 #: dlls/cryptui/cryptui.rc:45
 msgid "This certificate was revoked by its issuer."
-msgstr "이 인증서는 발행자에 의하여 취소되었습니다."
+msgstr "발행자가 취소한 인증서입니다."
 
 #: dlls/cryptui/cryptui.rc:46
 msgid "This certificate is OK."
-msgstr "이 인증서는 올바릅니다."
+msgstr "올바른 인증서입니다."
 
 #: dlls/cryptui/cryptui.rc:47
 msgid "Field"
@@ -3251,7 +3251,7 @@ msgstr "이 대화상자 건너뛰기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:38
 msgid "Exit"
-msgstr "끝내기"
+msgstr "나가기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:43
 msgid "Transferring"
@@ -3954,7 +3954,7 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr "속성 '|'을(를) 정의할 수 없습니다. 개체가 확장 가능하지 않습니다."
+msgstr "확장 가능하지 않은 속성 '|'을(를) 정의할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
@@ -4867,7 +4867,7 @@ msgstr "잘못된 서비스 컨트롤.\n"
 
 #: dlls/kernel32/winerror.mc:1143
 msgid "Service request timeout.\n"
-msgstr "서비스 요청 시간초과.\n"
+msgstr "서비스 요청 시간 초과.\n"
 
 #: dlls/kernel32/winerror.mc:1148
 msgid "Cannot create service thread.\n"
@@ -6083,7 +6083,7 @@ msgstr "페이지파일 할당량이 없음.\n"
 
 #: dlls/kernel32/winerror.mc:2673
 msgid "Exceeded commitment limit.\n"
-msgstr "헌신 한도 초과.\n"
+msgstr "약정 한도 초과.\n"
 
 #: dlls/kernel32/winerror.mc:2678
 msgid "Menu item not found.\n"
@@ -8342,7 +8342,7 @@ msgstr "프로그램: [1]"
 
 #: dlls/msi/msi.rc:175 dlls/msi/msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr "프로그램 컨텍스트: [1], 어셈블리 이름 : [2]"
+msgstr "프로그램 컨텍스트:[1], 어셈블리 이름:[2]"
 
 #: dlls/msi/msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
@@ -10394,9 +10394,7 @@ msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:401
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr ""
-"협정 세계시\n"
-"(UTC-08:00) 협정 세계시-08"
+msgstr "(UTC-08:00) 협정 세계시-08"
 
 #: dlls/tzres/tzres.rc:39
 msgid "Altai Standard Time"
@@ -13178,13 +13176,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "활성 코드 페이지: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "잘못된 메시지입니다.\n"
+msgstr "잘못된 코드 페이지입니다\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13197,6 +13193,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [번호]\n"
+"\n"
+"  활성 콘솔 코드 페이지를 설정하거나 표시합니다.\n"
+"\n"
+"  번호   활성화할 콘솔 코드 페이지 번호.\n"
+"\n"
+"  활성화된 콘솔 코드 페이지를 표시하려면 번호 없이 CHCP를 입력합니다.\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -14372,11 +14376,11 @@ msgid ""
 msgstr ""
 "구문:\n"
 "\n"
-"NET 명령어[매개변수]\n"
-"\n"
+"NET 명령어 [매개변수]\n"
+"    또는\n"
 "NET 명령어 /HELP\n"
 "\n"
-"<명령어>는  HELP, START, STOP, USE 중 하나입니다.\n"
+"<명령어>는 HELP, START, STOP, USE 중 하나입니다.\n"
 
 #: programs/net/net.rc:31
 msgid ""
@@ -15445,6 +15449,7 @@ msgstr ""
 "\n"
 "지원하는 작업:\n"
 "  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
+"\n"
 "특정 작업에 대한 도움말을 보려면 다음을 입력하십시오.\n"
 "  REG [작업] /?\n"
 "\n"
@@ -15911,7 +15916,7 @@ msgstr "레지스트리 키 '%1'을 제거하시겠습니까?"
 
 #: programs/reg/reg.rc:137
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "reg: '%1'의 모든 레지스트리 값을 지울 수 없습니다.\n"
+msgstr "reg: '%1'의 모든 레지스트리 값을 지울 수 없습니다\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
@@ -15923,7 +15928,7 @@ msgstr "reg: 인식되지 않는 이스케이프 시퀀스 [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:175
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: 레지스트리 키 '%1'을(를) 가져올 수 없습니다.\n"
+msgstr "reg: 레지스트리 키 '%1'을(를) 가져올 수 없습니다\n"
 
 #: programs/reg/reg.rc:150
 msgid "reg: The file '%1' was not found.\n"
@@ -16736,7 +16741,7 @@ msgstr "오류: 프로세스 자체 종료는 허용되지 않습니다.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr "새 작업 (실행...)(&N)"
+msgstr "새 작업(&N) (실행...)"
 
 #: programs/taskmgr/taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -17568,7 +17573,7 @@ msgid ""
 msgstr ""
 "Wine Application Uninstaller\n"
 "\n"
-"현재 Wine 구성(prefix)에서 프로그램을 제거합니다.\n"
+"현재 Wine PREFIX에서 프로그램을 제거합니다.\n"
 "\n"
 
 #: programs/uninstaller/uninstaller.rc:43
@@ -17589,7 +17594,8 @@ msgstr ""
 "\n"
 "옵션:\n"
 "  --help          지금 보고 있는 정보를 표시합니다.\n"
-"  --list          실행한 Wine에 설치된 모든 프로그램의 목록을 표시합니다.\n"
+"  --list          실행한 Wine PREFIX에 설치된 모든 프로그램의 목록을 표시합니"
+"다.\n"
 "  --remove {GUID} 지정한 프로그램을 제거합니다. '--list' 옵션을\n"
 "                  사용하면 프로그램의 GUID를 알 수 있습니다.\n"
 "  [옵션 없음]     옵션없이 실행하면 uninstaller의 GUI 버전이 시작됩니다.\n"
@@ -17641,7 +17647,7 @@ msgstr ""
 
 #: programs/wineboot/wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "%s의 Wine 구성을 업데이트하고 있습니다. 잠시만 기다려주세요..."
+msgstr "%s의 Wine 설정을 업데이트하고 있습니다. 잠시만 기다려주세요..."
 
 # 라이선스 문구는 번역하지 않습니다.
 #: programs/winecfg/winecfg.rc:140
