@@ -2764,6 +2764,13 @@ static void set_parameter_value_us( struct hid_joystick_effect *impl, char *repo
     set_parameter_value( impl, report_buf, caps, value );
 }
 
+static BOOL is_axis_usage_enabled( struct hid_joystick_effect *impl, USAGE usage )
+{
+    DWORD i = impl->params.cAxes;
+    while (i--) if (LOWORD(impl->params.rgdwAxes[i]) == usage) return TRUE;
+    return FALSE;
+}
+
 static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
 {
     static const DWORD complete_mask = DIEP_AXES | DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS;
@@ -2937,7 +2944,12 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         spherical.rglDirection = directions;
         convert_directions_to_spherical( &impl->params, &spherical );
 
-        for (i = 0; i < min( effect_update->direction_count, spherical.cAxes ); ++i)
+        /* FIXME: as far as the test cases go, directions are only written if
+         * either X or Y axes are enabled, maybe need more tests though */
+        if (!is_axis_usage_enabled( impl, HID_USAGE_GENERIC_X ) &&
+            !is_axis_usage_enabled( impl, HID_USAGE_GENERIC_Y ))
+            WARN( "neither X or Y axes are selected, skipping direction\n" );
+        else for (i = 0; i < min( effect_update->direction_count, spherical.cAxes ); ++i)
         {
             tmp = directions[i] + (i == 0 ? 9000 : 0);
             caps = effect_update->direction_caps[effect_update->direction_count - i - 1];

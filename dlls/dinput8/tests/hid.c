@@ -6357,6 +6357,54 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
 
     for (i = 1; i < 4; i++)
     {
+        struct hid_expect expect_directions[] =
+        {
+            /* set periodic */
+            {
+                .code = IOCTL_HID_WRITE_REPORT,
+                .report_id = 5,
+                .report_len = 2,
+                .report_buf = {0x05,0x19},
+            },
+            /* set envelope */
+            {
+                .code = IOCTL_HID_WRITE_REPORT,
+                .report_id = 6,
+                .report_len = 7,
+                .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
+            },
+            /* update effect */
+            {0},
+            /* effect control */
+            {
+                .code = IOCTL_HID_WRITE_REPORT,
+                .report_id = 2,
+                .report_len = 4,
+                .report_buf = {0x02,0x01,0x03,0x00},
+            },
+        };
+        struct hid_expect expect_spherical =
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,i >= 2 ? 0x55 : 0,i >= 3 ? 0x1c : 0},
+        };
+        struct hid_expect expect_cartesian =
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,i >= 2 ? 0x63 : 0,i >= 3 ? 0x1d : 0},
+        };
+        struct hid_expect expect_polar =
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,i >= 2 ? 0x3f : 0,i >= 3 ? 0x00 : 0},
+        };
+
         winetest_push_context( "%u axes", i );
         hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
         ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
@@ -6465,6 +6513,61 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
 
         ref = IDirectInputEffect_Release( effect );
         ok( ref == 0, "Release returned %d\n", ref );
+
+        desc = expect_desc;
+        desc.dwFlags = DIEFF_SPHERICAL | DIEFF_OBJECTIDS;
+        desc.cAxes = i;
+        desc.rgdwAxes = axes;
+        desc.rglDirection = directions;
+        desc.rglDirection[0] = 3000;
+        desc.rglDirection[1] = 4000;
+        desc.rglDirection[2] = 5000;
+        flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
+        expect_directions[2] = expect_spherical;
+        set_hid_expect( file, expect_directions, sizeof(expect_directions) );
+        hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &desc, &effect, NULL );
+        ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+        ref = IDirectInputEffect_Release( effect );
+        ok( ref == 0, "Release returned %d\n", ref );
+        set_hid_expect( file, NULL, 0 );
+
+        desc = expect_desc;
+        desc.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTIDS;
+        desc.cAxes = i;
+        desc.rgdwAxes = axes;
+        desc.rglDirection = directions;
+        desc.rglDirection[0] = 6000;
+        desc.rglDirection[1] = 7000;
+        desc.rglDirection[2] = 8000;
+        flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
+        expect_directions[2] = expect_cartesian;
+        set_hid_expect( file, expect_directions, sizeof(expect_directions) );
+        hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &desc, &effect, NULL );
+        ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+        ref = IDirectInputEffect_Release( effect );
+        ok( ref == 0, "Release returned %d\n", ref );
+        set_hid_expect( file, NULL, 0 );
+
+        if (i == 2)
+        {
+            desc = expect_desc;
+            desc.dwFlags = DIEFF_POLAR | DIEFF_OBJECTIDS;
+            desc.cAxes = i;
+            desc.rgdwAxes = axes;
+            desc.rglDirection = directions;
+            desc.rglDirection[0] = 9000;
+            desc.rglDirection[1] = 10000;
+            desc.rglDirection[2] = 11000;
+            flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
+            expect_directions[2] = expect_polar;
+            set_hid_expect( file, expect_directions, sizeof(expect_directions) );
+            hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, &desc, &effect, NULL );
+            ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+            ref = IDirectInputEffect_Release( effect );
+            ok( ref == 0, "Release returned %d\n", ref );
+            set_hid_expect( file, NULL, 0 );
+        }
+
         winetest_pop_context();
     }
 
