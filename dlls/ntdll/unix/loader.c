@@ -2156,14 +2156,14 @@ static ULONG_PTR get_image_address(void)
  */
 static struct unix_funcs unix_funcs =
 {
-#ifdef __aarch64__
-    NtCurrentTeb,
-#endif
-    RtlGetSystemTimePrecise,
     load_so_dll,
     init_builtin_dll,
     init_unix_lib,
     unwind_builtin_dll,
+    RtlGetSystemTimePrecise,
+#ifdef __aarch64__
+    NtCurrentTeb,
+#endif
 };
 
 

@@ -76,8 +76,6 @@ static DWORD (WINAPI *pCtrlRoutine)(void *);
 
 SYSTEM_DLL_INIT_BLOCK LdrSystemDllInitBlock = { 0xf0 };
 
-const struct unix_funcs *unix_funcs = NULL;
-
 /* windows directory */
 const WCHAR windows_dir[] = L"C:\\windows";
 /* system directory with trailing backslash */
@@ -4442,6 +4440,44 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+
+static NTSTATUS CDECL load_so_dll_fallback( UNICODE_STRING *nt_name, void **module )
+{
+    return STATUS_INVALID_IMAGE_FORMAT;
+}
+
+static void CDECL init_builtin_dll_fallback( void *module )
+{
+}
+
+static NTSTATUS CDECL init_unix_lib_fallback( void *module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    return STATUS_DLL_NOT_FOUND;
+}
+
+static NTSTATUS CDECL unwind_builtin_dll_fallback( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
+                                                   CONTEXT *context )
+{
+    return STATUS_UNSUCCESSFUL;
+}
+
+static LONGLONG WINAPI RtlGetSystemTimePrecise_fallback(void)
+{
+    LARGE_INTEGER now;
+    NtQuerySystemTime( &now );
+    return now.QuadPart;
+}
+
+static const struct unix_funcs unix_fallbacks =
+{
+    load_so_dll_fallback,
+    init_builtin_dll_fallback,
+    init_unix_lib_fallback,
+    unwind_builtin_dll_fallback,
+    RtlGetSystemTimePrecise_fallback,
+};
+
+const struct unix_funcs *unix_funcs = &unix_fallbacks;
 
 /***********************************************************************
  *           __wine_set_unix_funcs
