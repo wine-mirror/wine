@@ -69,6 +69,7 @@ typedef struct
 static const struct font_callback_funcs *callback_funcs;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
+MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Done_FreeType);
 MAKE_FUNCPTR(FT_Done_Glyph);
 MAKE_FUNCPTR(FT_Get_First_Char);
@@ -143,12 +144,14 @@ static BOOL init_freetype(void)
     FT_Version_t FT_Version;
 
     ft_handle = dlopen(SONAME_LIBFREETYPE, RTLD_NOW);
-    if (!ft_handle) {
+    if (!ft_handle)
+    {
         WINE_MESSAGE("Wine cannot find the FreeType font library.\n");
-	return FALSE;
+        return FALSE;
     }
 
 #define LOAD_FUNCPTR(f) if((p##f = dlsym(ft_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+    LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Done_FreeType)
     LOAD_FUNCPTR(FT_Done_Glyph)
     LOAD_FUNCPTR(FT_Get_First_Char)
@@ -209,6 +212,23 @@ sym_not_found:
     dlclose(ft_handle);
     ft_handle = NULL;
     return FALSE;
+}
+
+static font_object_handle CDECL freetype_create_font_object(const void *data_ptr, UINT64 data_size, unsigned int index)
+{
+    FT_Face face = NULL;
+    FT_Error fterror;
+
+    fterror = pFT_New_Memory_Face(library, data_ptr, data_size, index, &face);
+    if (fterror != FT_Err_Ok)
+        WARN("Failed to create a face object, error %d.\n", fterror);
+
+    return face;
+}
+
+static void CDECL freetype_release_font_object(font_object_handle object)
+{
+    pFT_Done_Face(object);
 }
 
 static void CDECL freetype_notify_release(void *key)
@@ -777,6 +797,8 @@ static INT32 CDECL freetype_get_glyph_advance(void *key, float emSize, UINT16 in
 
 const static struct font_backend_funcs freetype_funcs =
 {
+    freetype_create_font_object,
+    freetype_release_font_object,
     freetype_notify_release,
     freetype_get_glyph_outline,
     freetype_get_glyph_count,
@@ -802,6 +824,15 @@ static NTSTATUS release_freetype_lib(void)
 }
 
 #else /* HAVE_FREETYPE */
+
+static font_object_handle CDECL null_create_font_object(const void *data_ptr, UINT64 data_size, unsigned int index)
+{
+    return NULL;
+}
+
+static void CDECL null_release_font_object(font_object_handle object)
+{
+}
 
 static void CDECL null_notify_release(void *key)
 {
@@ -842,6 +873,8 @@ static void CDECL null_get_design_glyph_metrics(void *key, UINT16 upem, UINT16 a
 
 const static struct font_backend_funcs null_funcs =
 {
+    null_create_font_object,
+    null_release_font_object,
     null_notify_release,
     null_get_glyph_outline,
     null_get_glyph_count,

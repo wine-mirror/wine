@@ -636,8 +636,6 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->kern.context);
         if (fontface->file)
             IDWriteFontFile_Release(fontface->file);
-        if (fontface->stream)
-            IDWriteFontFileStream_Release(fontface->stream);
         if (fontface->names)
             IDWriteLocalizedStrings_Release(fontface->names);
         if (fontface->family_names)
@@ -652,6 +650,12 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             heap_free(fontface->glyphs[i]);
 
         font_funcs->notify_release(iface);
+        font_funcs->release_font_object(fontface->font_object);
+        if (fontface->stream)
+        {
+            IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, fontface->data_context);
+            IDWriteFontFileStream_Release(fontface->stream);
+        }
 
         dwrite_cmap_release(&fontface->cmap);
         IDWriteFactory7_Release(fontface->factory);
@@ -5013,6 +5017,32 @@ HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_ke
     return S_OK;
 }
 
+static font_object_handle dwrite_fontface_get_font_object(struct dwrite_fontface *fontface)
+{
+    font_object_handle font_object;
+    const void *data_ptr;
+    void *data_context;
+    UINT64 size;
+
+    if (!fontface->font_object && SUCCEEDED(IDWriteFontFileStream_GetFileSize(fontface->stream, &size)))
+    {
+        if (SUCCEEDED(IDWriteFontFileStream_ReadFileFragment(fontface->stream, &data_ptr, 0, size, &data_context)))
+        {
+            if (!(font_object = font_funcs->create_font_object(data_ptr, size, fontface->index)))
+            {
+                WARN("Backend failed to create font object.\n");
+                IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, data_context);
+                return NULL;
+            }
+
+            if (InterlockedCompareExchangePointer((void **)&fontface->font_object, font_object, NULL))
+                font_funcs->release_font_object(font_object);
+        }
+    }
+
+    return fontface->font_object;
+}
+
 HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_list, IDWriteFontFace5 **ret)
 {
     struct file_stream_desc stream_desc;
@@ -5102,6 +5132,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     release_font_data(font_data);
 
     fontface->cached = factory_cache_fontface(fontface->factory, cached_list, &fontface->IDWriteFontFace5_iface);
+    fontface->get_font_object = dwrite_fontface_get_font_object;
 
     *ret = &fontface->IDWriteFontFace5_iface;
 

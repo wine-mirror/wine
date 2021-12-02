@@ -241,6 +241,10 @@ extern UINT16 opentype_cmap_get_glyph(const struct dwrite_cmap *cmap, unsigned i
 extern HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_cmap *cmap, unsigned int max_count,
         DWRITE_UNICODE_RANGE *ranges, unsigned int *count) DECLSPEC_HIDDEN;
 
+struct dwrite_fontface;
+typedef void * font_object_handle;
+typedef font_object_handle (*p_dwrite_fontface_get_font_object)(struct dwrite_fontface *fontface);
+
 struct dwrite_fontface
 {
     IDWriteFontFace5 IDWriteFontFace5_iface;
@@ -253,6 +257,9 @@ struct dwrite_fontface
 
     IDWriteFactory7 *factory;
     struct fontfacecached *cached;
+    font_object_handle font_object;
+    void *data_context;
+    p_dwrite_fontface_get_font_object get_font_object;
 
     USHORT simulations;
     DWRITE_FONT_FACE_TYPE type;
@@ -731,6 +738,8 @@ struct font_callback_funcs
 
 struct font_backend_funcs
 {
+    font_object_handle (CDECL *create_font_object)(const void *data_ptr, UINT64 data_size, unsigned int index);
+    void (CDECL *release_font_object)(font_object_handle object);
     void (CDECL *notify_release)(void *key);
     int (CDECL *get_glyph_outline)(void *key, float em_size, unsigned int simulations, UINT16 glyph,
             struct dwrite_outline *outline);
