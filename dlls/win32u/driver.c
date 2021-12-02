@@ -1021,6 +1021,12 @@ static SHORT CDECL loaderdrv_VkKeyScanEx( WCHAR ch, HKL layout )
     return load_driver()->pVkKeyScanEx( ch, layout );
 }
 
+static LONG CDECL loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
+                                                     DWORD flags, LPVOID lparam )
+{
+    return load_driver()->pChangeDisplaySettingsEx( name, mode, hwnd, flags, lparam );
+}
+
 static BOOL CDECL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
@@ -1046,6 +1052,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pToUnicodeEx = loaderdrv_ToUnicodeEx,
     .pUnregisterHotKey = loaderdrv_UnregisterHotKey,
     .pVkKeyScanEx = loaderdrv_VkKeyScanEx,
+    .pChangeDisplaySettingsEx = loaderdrv_ChangeDisplaySettingsEx,
     .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,

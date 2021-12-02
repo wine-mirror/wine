@@ -783,7 +783,7 @@
 @ stdcall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground
 @ stub NtUserChangeClipboardChain
-@ stub NtUserChangeDisplaySettings
+@ stdcall NtUserChangeDisplaySettings(ptr ptr long long ptr)
 @ stub NtUserChangeWindowMessageFilterEx
 @ stub NtUserCheckAccessForIntegrityLevel
 @ stub NtUserCheckMenuItem

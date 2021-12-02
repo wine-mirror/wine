@@ -606,6 +606,12 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     return unix_funcs->pNtUserCallTwoParam( arg1, arg2, code );
 }
 
+LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
+                                         DWORD flags, void *lparam )
+{
+    return unix_funcs->pNtUserChangeDisplaySettings( devname, devmode, hwnd, flags, lparam );
+}
+
 INT WINAPI NtUserCountClipboardFormats(void)
 {
     return unix_funcs->pNtUserCountClipboardFormats();

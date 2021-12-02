@@ -263,12 +263,6 @@ static void CDECL loaderdrv_UpdateClipboard(void)
     load_driver()->pUpdateClipboard();
 }
 
-static LONG CDECL loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND hwnd,
-                                                     DWORD flags, LPVOID lparam )
-{
-    return load_driver()->pChangeDisplaySettingsEx( name, mode, hwnd, flags, lparam );
-}
-
 static BOOL CDECL loaderdrv_CreateDesktopWindow( HWND hwnd )
 {
     return load_driver()->pCreateDesktopWindow( hwnd );
@@ -328,7 +322,7 @@ static struct user_driver_funcs lazy_load_driver =
     /* clipboard functions */
     loaderdrv_UpdateClipboard,
     /* display modes */
-    loaderdrv_ChangeDisplaySettingsEx,
+    NULL,
     NULL,
     NULL,
     /* windowing functions */

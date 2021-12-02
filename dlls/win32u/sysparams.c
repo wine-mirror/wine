@@ -1347,6 +1347,173 @@ BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
     return !!found;
 }
 
+#define _X_FIELD(prefix, bits)                              \
+    if ((fields) & prefix##_##bits)                         \
+    {                                                       \
+        p += sprintf( p, "%s%s", first ? "" : ",", #bits ); \
+        first = FALSE;                                      \
+    }
+
+static const char *_CDS_flags( DWORD fields )
+{
+    BOOL first = TRUE;
+    CHAR buf[128];
+    CHAR *p = buf;
+
+    _X_FIELD(CDS, UPDATEREGISTRY)
+    _X_FIELD(CDS, TEST)
+    _X_FIELD(CDS, FULLSCREEN)
+    _X_FIELD(CDS, GLOBAL)
+    _X_FIELD(CDS, SET_PRIMARY)
+    _X_FIELD(CDS, VIDEOPARAMETERS)
+    _X_FIELD(CDS, ENABLE_UNSAFE_MODES)
+    _X_FIELD(CDS, DISABLE_UNSAFE_MODES)
+    _X_FIELD(CDS, RESET)
+    _X_FIELD(CDS, RESET_EX)
+    _X_FIELD(CDS, NORESET)
+
+    *p = 0;
+    return wine_dbg_sprintf( "%s", buf );
+}
+
+static const char *_DM_fields( DWORD fields )
+{
+    BOOL first = TRUE;
+    CHAR buf[128];
+    CHAR *p = buf;
+
+    _X_FIELD(DM, BITSPERPEL)
+    _X_FIELD(DM, PELSWIDTH)
+    _X_FIELD(DM, PELSHEIGHT)
+    _X_FIELD(DM, DISPLAYFLAGS)
+    _X_FIELD(DM, DISPLAYFREQUENCY)
+    _X_FIELD(DM, POSITION)
+    _X_FIELD(DM, DISPLAYORIENTATION)
+
+    *p = 0;
+    return wine_dbg_sprintf( "%s", buf );
+}
+
+#undef _X_FIELD
+
+static void trace_devmode( const DEVMODEW *devmode )
+{
+    TRACE( "dmFields=%s ", _DM_fields(devmode->dmFields) );
+    if (devmode->dmFields & DM_BITSPERPEL)
+        TRACE( "dmBitsPerPel=%u ", devmode->dmBitsPerPel );
+    if (devmode->dmFields & DM_PELSWIDTH)
+        TRACE( "dmPelsWidth=%u ", devmode->dmPelsWidth );
+    if (devmode->dmFields & DM_PELSHEIGHT)
+        TRACE( "dmPelsHeight=%u ", devmode->dmPelsHeight );
+    if (devmode->dmFields & DM_DISPLAYFREQUENCY)
+        TRACE( "dmDisplayFrequency=%u ", devmode->dmDisplayFrequency );
+    if (devmode->dmFields & DM_POSITION)
+        TRACE( "dmPosition=(%d,%d) ", devmode->dmPosition.x, devmode->dmPosition.y );
+    if (devmode->dmFields & DM_DISPLAYFLAGS)
+        TRACE( "dmDisplayFlags=%#x ", devmode->dmDisplayFlags );
+    if (devmode->dmFields & DM_DISPLAYORIENTATION)
+        TRACE( "dmDisplayOrientation=%u ", devmode->dmDisplayOrientation );
+    TRACE("\n");
+}
+
+static BOOL is_detached_mode( const DEVMODEW *mode )
+{
+    return mode->dmFields & DM_POSITION &&
+           mode->dmFields & DM_PELSWIDTH &&
+           mode->dmFields & DM_PELSHEIGHT &&
+           mode->dmPelsWidth == 0 &&
+           mode->dmPelsHeight == 0;
+}
+
+/***********************************************************************
+ *	     NtUserChangeDisplaySettingsExW    (win32u.@)
+ */
+LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
+                                         DWORD flags, void *lparam )
+{
+    WCHAR device_name[CCHDEVICENAME];
+    struct adapter *adapter;
+    BOOL def_mode = TRUE;
+    DEVMODEW dm;
+    LONG ret;
+
+    TRACE( "%s %p %p %#x %p\n", debugstr_us(devname), devmode, hwnd, flags, lparam );
+    TRACE( "flags=%s\n", _CDS_flags(flags) );
+
+    if ((!devname || !devname->Length) && !devmode)
+    {
+        ret = user_driver->pChangeDisplaySettingsEx( NULL, NULL, hwnd, flags, lparam );
+        if (ret != DISP_CHANGE_SUCCESSFUL)
+            ERR( "Restoring all displays to their registry settings returned %d.\n", ret );
+        return ret;
+    }
+
+    if (!lock_display_devices()) return FALSE;
+    if ((adapter = find_adapter( devname ))) lstrcpyW( device_name, adapter->dev.device_name );
+    unlock_display_devices();
+    if (!adapter)
+    {
+        WARN( "Invalid device name %s.\n", debugstr_us(devname) );
+        return DISP_CHANGE_BADPARAM;
+    }
+
+    if (devmode)
+    {
+        trace_devmode( devmode );
+
+        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmICMMethod))
+            return DISP_CHANGE_BADMODE;
+
+        if (is_detached_mode(devmode) ||
+            ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
+            ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
+            ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
+            ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
+            def_mode = FALSE;
+    }
+
+    if (def_mode)
+    {
+        memset( &dm, 0, sizeof(dm) );
+        dm.dmSize = sizeof(dm);
+        if (!NtUserEnumDisplaySettings( devname, ENUM_REGISTRY_SETTINGS, &dm, 0 ))
+        {
+            ERR( "Default mode not found!\n" );
+            return DISP_CHANGE_BADMODE;
+        }
+
+        TRACE( "Return to original display mode\n" );
+        devmode = &dm;
+    }
+
+    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
+    {
+        WARN( "devmode doesn't specify the resolution: %#x\n", devmode->dmFields );
+        return DISP_CHANGE_BADMODE;
+    }
+
+    if (!is_detached_mode(devmode) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight))
+    {
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        if (!NtUserEnumDisplaySettings( devname, ENUM_CURRENT_SETTINGS, &dm, 0 ))
+        {
+            ERR( "Current mode not found!\n" );
+            return DISP_CHANGE_BADMODE;
+        }
+
+        if (!devmode->dmPelsWidth)
+            devmode->dmPelsWidth = dm.dmPelsWidth;
+        if (!devmode->dmPelsHeight)
+            devmode->dmPelsHeight = dm.dmPelsHeight;
+    }
+
+    ret = user_driver->pChangeDisplaySettingsEx( device_name, devmode, hwnd, flags, lparam );
+    if (ret != DISP_CHANGE_SUCCESSFUL)
+        ERR( "Changing %s display settings returned %d.\n", debugstr_us(devname), ret );
+    return ret;
+}
+
 /***********************************************************************
  *	     NtUserEnumDisplaySettings    (win32u.@)
  */
