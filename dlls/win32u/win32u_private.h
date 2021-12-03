@@ -195,6 +195,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );
     HKL      (WINAPI *pNtUserActivateKeyboardLayout)( HKL layout, UINT flags );
+    ULONG_PTR (WINAPI *pNtUserCallOneParam)( ULONG_PTR arg, ULONG code );
     ULONG_PTR (WINAPI *pNtUserCallTwoParam)( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );
     LONG     (WINAPI *pNtUserChangeDisplaySettings)( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                                      DWORD flags, void *lparam );
@@ -221,7 +222,6 @@ struct unix_funcs
     WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
 
     /* Wine-specific functions */
-    UINT (WINAPI *pGDIRealizePalette)( HDC hdc );
     HPALETTE (WINAPI *pGDISelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
     DWORD_PTR (WINAPI *pGetDCHook)( HDC hdc, DCHOOKPROC *proc );
     BOOL (WINAPI *pMirrorRgn)( HWND hwnd, HRGN hrgn );
@@ -241,7 +241,6 @@ struct unix_funcs
                                       struct window_surface *surface );
 };
 
-UINT WINAPI GDIRealizePalette( HDC hdc );
 HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
 
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;

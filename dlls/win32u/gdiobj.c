@@ -1168,6 +1168,7 @@ static struct unix_funcs unix_funcs =
     NtGdiUpdateColors,
     NtGdiWidenPath,
     NtUserActivateKeyboardLayout,
+    NtUserCallOneParam,
     NtUserCallTwoParam,
     NtUserChangeDisplaySettings,
     NtUserCountClipboardFormats,
@@ -1187,7 +1188,6 @@ static struct unix_funcs unix_funcs =
     NtUserUnregisterHotKey,
     NtUserVkKeyScanEx,
 
-    GDIRealizePalette,
     GDISelectPalette,
     GetDCHook,
     MirrorRgn,

@@ -601,6 +601,11 @@ HKL WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags )
     return unix_funcs->pNtUserActivateKeyboardLayout( layout, flags );
 }
 
+ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
+{
+    return unix_funcs->pNtUserCallOneParam( arg, code );
+}
+
 ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code )
 {
     return unix_funcs->pNtUserCallTwoParam( arg1, arg2, code );
@@ -695,11 +700,6 @@ BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
-}
-
-UINT WINAPI GDIRealizePalette( HDC hdc )
-{
-    return unix_funcs->pGDIRealizePalette( hdc );
 }
 
 HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )

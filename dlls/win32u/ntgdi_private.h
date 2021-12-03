@@ -403,6 +403,7 @@ extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg) DECL
 extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;
 extern UINT get_palette_entries( HPALETTE hpalette, UINT start, UINT count,
                                  PALETTEENTRY *entries ) DECLSPEC_HIDDEN;
+extern UINT realize_palette( HDC hdc ) DECLSPEC_HIDDEN;
 
 /* pen.c */
 extern HPEN create_pen( INT style, INT width, COLORREF color ) DECLSPEC_HIDDEN;

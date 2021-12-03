@@ -779,7 +779,7 @@
 @ stub NtUserCallMsgFilter
 @ stub NtUserCallNextHookEx
 @ stub NtUserCallNoParam
-@ stub NtUserCallOneParam
+@ stdcall NtUserCallOneParam(long long)
 @ stdcall NtUserCallTwoParam(long long long)
 @ stub NtUserCanBrokerForceForeground
 @ stub NtUserChangeClipboardChain
@@ -1325,7 +1325,6 @@
 @ stdcall SetDCHook(long ptr long)
 @ stdcall SetHookFlags(long long)
 @ stdcall GDISelectPalette(long long long)
-@ stdcall GDIRealizePalette(long)
 @ cdecl __wine_make_gdi_object_system(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 

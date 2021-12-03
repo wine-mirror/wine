@@ -1657,6 +1657,24 @@ void sysparams_init(void)
     }
 }
 
+/***********************************************************************
+ *	     NtUserCallOneParam    (win32u.@)
+ */
+ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
+{
+    switch(code)
+    {
+    case NtUserRealizePalette:
+        return realize_palette( UlongToHandle(arg) );
+    default:
+        FIXME( "invalid code %u\n", code );
+        return 0;
+    }
+}
+
+/***********************************************************************
+ *	     NtUserCallTwoParam    (win32u.@)
+ */
 ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code )
 {
     switch(code)

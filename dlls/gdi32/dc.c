@@ -22,7 +22,7 @@
  */
 
 #include "gdi_private.h"
-#include "winternl.h"
+#include "ntuser.h"
 #include "ddrawgdi.h"
 #include "winnls.h"
 
@@ -2090,12 +2090,16 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
     return NtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
 }
 
+static UINT WINAPI realize_palette( HDC hdc )
+{
+    return NtUserCallOneParam( HandleToUlong(hdc), NtUserRealizePalette );
+}
+
 /* Pointers to USER implementation of SelectPalette/RealizePalette */
 /* they will be patched by USER on startup */
 extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
-extern UINT WINAPI GDIRealizePalette( HDC hdc );
 HPALETTE (WINAPI *pfnSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkgnd ) = GDISelectPalette;
-UINT (WINAPI *pfnRealizePalette)( HDC hdc ) = GDIRealizePalette;
+UINT (WINAPI *pfnRealizePalette)( HDC hdc ) = realize_palette;
 
 /***********************************************************************
  *           SelectPalette    (GDI32.@)
