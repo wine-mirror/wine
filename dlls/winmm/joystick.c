@@ -174,6 +174,10 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetDevCapsW( UINT_PTR id, JOYCAPSW *caps, U
     if (!caps) return MMSYSERR_INVALPARAM;
     if (size != sizeof(JOYCAPSW) && size != sizeof(JOYCAPS2W)) return JOYERR_PARMS;
 
+    memset( caps, 0, size );
+    wcscpy( caps->szRegKey, L"DINPUT.DLL" );
+    if (id == ~(UINT_PTR)0) return JOYERR_NOERROR;
+
     if (id >= MAXJOYSTICK) return JOYERR_PARMS;
     if (!JOY_LoadDriver( id )) return MMSYSERR_NODRIVER;
 

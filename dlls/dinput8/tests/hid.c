@@ -9765,61 +9765,33 @@ static void test_winmm_joystick(void)
 
     memset( &caps, 0xcd, sizeof(caps) );
     ret = joyGetDevCapsW( -1, (JOYCAPSW *)&caps, sizeof(caps) );
-    todo_wine
     ok( ret == 0, "joyGetDevCapsW returned %u\n", ret );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wMid );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wPid );
-    todo_wine
     check_member_wstr( caps, expect_regcaps, szPname );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wXmin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wXmax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wYmin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wYmax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wZmin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wZmax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wNumButtons );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wPeriodMin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wPeriodMax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wRmin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wRmax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wUmin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wUmax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wVmin );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wVmax );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wCaps );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wMaxAxes );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wNumAxes );
-    todo_wine
     check_member( caps, expect_regcaps, "%#x", wMaxButtons );
-    todo_wine
     check_member_wstr( caps, expect_regcaps, szRegKey );
-    todo_wine
     check_member_wstr( caps, expect_regcaps, szOEMVxD );
-    todo_wine
     check_member_guid( caps, expect_regcaps, ManufacturerGuid );
-    todo_wine
     check_member_guid( caps, expect_regcaps, ProductGuid );
-    todo_wine
     check_member_guid( caps, expect_regcaps, NameGuid );
 
     if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 )) goto done;
@@ -9849,15 +9821,12 @@ static void test_winmm_joystick(void)
     check_member( caps, expect_caps, "%#x", wPid );
     todo_wine
     check_member_wstr( caps, expect_caps, szPname );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wXmin );
     todo_wine
     check_member( caps, expect_caps, "%#x", wXmax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wYmin );
     todo_wine
     check_member( caps, expect_caps, "%#x", wYmax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wZmin );
     todo_wine
     check_member( caps, expect_caps, "%#x", wZmax );
@@ -9865,15 +9834,12 @@ static void test_winmm_joystick(void)
     check_member( caps, expect_caps, "%#x", wNumButtons );
     check_member( caps, expect_caps, "%#x", wPeriodMin );
     check_member( caps, expect_caps, "%#x", wPeriodMax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wRmin );
     todo_wine
     check_member( caps, expect_caps, "%#x", wRmax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wUmin );
     todo_wine
     check_member( caps, expect_caps, "%#x", wUmax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wVmin );
     todo_wine
     check_member( caps, expect_caps, "%#x", wVmax );
@@ -9885,15 +9851,10 @@ static void test_winmm_joystick(void)
     check_member( caps, expect_caps, "%#x", wNumAxes );
     todo_wine
     check_member( caps, expect_caps, "%#x", wMaxButtons );
-    todo_wine
     check_member_wstr( caps, expect_caps, szRegKey );
-    todo_wine
     check_member_wstr( caps, expect_caps, szOEMVxD );
-    todo_wine
     check_member_guid( caps, expect_caps, ManufacturerGuid );
-    todo_wine
     check_member_guid( caps, expect_caps, ProductGuid );
-    todo_wine
     check_member_guid( caps, expect_caps, NameGuid );
 
     ret = joyGetDevCapsW( 0, (JOYCAPSW *)&caps, sizeof(JOYCAPSW) );
