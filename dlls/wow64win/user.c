@@ -234,6 +234,11 @@ NTSTATUS WINAPI wow64_NtUserRemoveClipboardFormatListener( UINT *args )
     return NtUserRemoveClipboardFormatListener( hwnd );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetCursor( UINT *args )
+{
+    return HandleToUlong( NtUserGetCursor() );
+}
+
 NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
 {
     DWORD from = get_ulong( &args );

@@ -1873,7 +1873,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
     {
         BOOL shared = (obj->rsrc != NULL);
         release_user_handle_ptr( obj );
-        ret = (GetCursor() != hIcon);
+        ret = (NtUserGetCursor() != hIcon);
         if (!shared) free_icon_handle( hIcon );
     }
     return ret;
@@ -1931,23 +1931,6 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
     if (!(obj = get_icon_ptr( hOldCursor ))) return 0;
     release_user_handle_ptr( obj );
     return hOldCursor;
-}
-
-/***********************************************************************
- *		GetCursor (USER32.@)
- */
-HCURSOR WINAPI GetCursor(void)
-{
-    HCURSOR ret;
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = 0;
-        wine_server_call( req );
-        ret = wine_server_ptr_handle( reply->prev_handle );
-    }
-    SERVER_END_REQ;
-    return ret;
 }
 
 

@@ -61,3 +61,21 @@ INT WINAPI NtUserShowCursor( BOOL show )
 
     return count;
 }
+
+
+/***********************************************************************
+ *	     NtUserGetCursor (win32u.@)
+ */
+HCURSOR WINAPI NtUserGetCursor(void)
+{
+    HCURSOR ret;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        wine_server_call( req );
+        ret = wine_server_ptr_handle( reply->prev_handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}

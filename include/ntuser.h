@@ -98,6 +98,7 @@ INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT max
 HWND    WINAPI NtUserGetClipboardOwner(void);
 DWORD   WINAPI NtUserGetClipboardSequenceNumber(void);
 HWND    WINAPI NtUserGetClipboardViewer(void);
+HCURSOR WINAPI NtUserGetCursor(void);
 LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                   UINT32 *num_mode_info );
 INT     WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size );

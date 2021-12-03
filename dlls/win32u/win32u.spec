@@ -912,7 +912,7 @@
 @ stub NtUserGetControlColor
 @ stub NtUserGetCurrentDpiInfoForWindow
 @ stub NtUserGetCurrentInputMessageSource
-@ stub NtUserGetCursor
+@ stdcall -syscall NtUserGetCursor()
 @ stub NtUserGetCursorFrameInfo
 @ stub NtUserGetCursorInfo
 @ stub NtUserGetDC
