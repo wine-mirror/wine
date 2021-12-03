@@ -1,5 +1,5 @@
 TESTDLL   = dinput8.dll
-IMPORTS   = dinput8 dinput ole32 user32 hid advapi32 uuid crypt32 newdev setupapi wintrust
+IMPORTS   = dinput8 dinput ole32 user32 hid advapi32 uuid crypt32 newdev setupapi wintrust winmm
 
 driver_hid_IMPORTS = winecrt0 ntoskrnl hal hidclass
 driver_hid_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
