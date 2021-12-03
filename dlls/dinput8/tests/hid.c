@@ -9688,21 +9688,37 @@ static void test_winmm_joystick(void)
         .wMaxButtons = 32,
         .szRegKey = L"DINPUT.DLL",
     };
-    static const JOYINFOEX expect_infoex =
+    struct hid_expect injected_input[] =
     {
-        .dwSize = sizeof(JOYINFOEX),
-        .dwFlags = 0xff,
-        .dwXpos = 0x7fff,
-        .dwYpos = 0x7fff,
-        .dwZpos = 0x7fff,
-        .dwRpos = 0x7fff,
-        .dwUpos = 0x7fff,
-        .dwVpos = 0x7fff,
-        .dwButtons = 0,
-        .dwButtonNumber = 0,
-        .dwPOV = 0xffff,
-        .dwReserved1 = 0xcdcdcdcd,
-        .dwReserved2 = 0xcdcdcdcd,
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x00,0x00,0x00,0x08,0x00,0x10,0x00,0x18,0x00,0x20,0x00,0x28,0x00,0x30,0x00,0x38,0xf1},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x00,0x38,0x00,0x30,0x00,0x28,0x00,0x20,0x00,0x18,0x00,0x10,0x00,0x08,0x00,0x00,0x63},
+        },
+    };
+    static const JOYINFOEX expect_infoex[] =
+    {
+        {
+            .dwSize = sizeof(JOYINFOEX), .dwFlags = 0xff,
+            .dwXpos = 0x7fff, .dwYpos = 0x7fff, .dwZpos = 0x7fff, .dwRpos = 0x7fff, .dwUpos = 0x7fff, .dwVpos = 0x7fff,
+            .dwButtons = 0, .dwButtonNumber = 0, .dwPOV = 0xffff,
+            .dwReserved1 = 0xcdcdcdcd, .dwReserved2 = 0xcdcdcdcd,
+        },
+        {
+            .dwSize = sizeof(JOYINFOEX), .dwFlags = 0xff,
+            .dwXpos = 0, .dwYpos = 0x07ff, .dwZpos = 0x17ff, .dwRpos = 0x37ff, .dwUpos = 0x1fff, .dwVpos = 0x27ff,
+            .dwButtons = 0xf, .dwButtonNumber = 0x4, .dwPOV = 0,
+            .dwReserved1 = 0xcdcdcdcd, .dwReserved2 = 0xcdcdcdcd,
+        },
+        {
+            .dwSize = sizeof(JOYINFOEX), .dwFlags = 0xff,
+            .dwXpos = 0x37ff, .dwYpos = 0x2fff, .dwZpos = 0x1fff, .dwRpos = 0, .dwUpos = 0x17ff, .dwVpos = 0x0fff,
+            .dwButtons = 0x6, .dwButtonNumber = 0x2, .dwPOV = 0x2328,
+            .dwReserved1 = 0xcdcdcdcd, .dwReserved2 = 0xcdcdcdcd,
+        },
     };
     static const JOYINFO expect_info =
     {
@@ -9712,9 +9728,22 @@ static void test_winmm_joystick(void)
         .wButtons = 0,
     };
     JOYINFOEX infoex = {.dwSize = sizeof(JOYINFOEX)};
+    DIPROPGUIDANDPATH prop_guid_path =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPGUIDANDPATH),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    DIDEVICEINSTANCEW devinst = {0};
+    IDirectInputDevice8W *device;
     JOYCAPS2W caps = {0};
     JOYINFO info = {0};
+    HANDLE event, file;
+    HRESULT hr;
     UINT ret;
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
@@ -9892,28 +9921,28 @@ static void test_winmm_joystick(void)
     ret = joyGetPosEx( 0, &infoex );
     todo_wine
     ok( ret == 0, "joyGetPosEx returned %u\n", ret );
-    check_member( infoex, expect_infoex, "%#x", dwSize );
-    check_member( infoex, expect_infoex, "%#x", dwFlags );
+    check_member( infoex, expect_infoex[0], "%#x", dwSize );
+    check_member( infoex, expect_infoex[0], "%#x", dwFlags );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwXpos );
+    check_member( infoex, expect_infoex[0], "%#x", dwXpos );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwYpos );
+    check_member( infoex, expect_infoex[0], "%#x", dwYpos );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwZpos );
+    check_member( infoex, expect_infoex[0], "%#x", dwZpos );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwRpos );
+    check_member( infoex, expect_infoex[0], "%#x", dwRpos );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwUpos );
+    check_member( infoex, expect_infoex[0], "%#x", dwUpos );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwVpos );
-    check_member( infoex, expect_infoex, "%#x", dwButtons );
-    check_member( infoex, expect_infoex, "%#x", dwButtonNumber );
+    check_member( infoex, expect_infoex[0], "%#x", dwVpos );
+    check_member( infoex, expect_infoex[0], "%#x", dwButtons );
+    check_member( infoex, expect_infoex[0], "%#x", dwButtonNumber );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwPOV );
+    check_member( infoex, expect_infoex[0], "%#x", dwPOV );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwReserved1 );
+    check_member( infoex, expect_infoex[0], "%#x", dwReserved1 );
     todo_wine
-    check_member( infoex, expect_infoex, "%#x", dwReserved2 );
+    check_member( infoex, expect_infoex[0], "%#x", dwReserved2 );
 
     infoex.dwSize = sizeof(JOYINFOEX) - 4;
     ret = joyGetPosEx( 0, &infoex );
@@ -9934,6 +9963,94 @@ static void test_winmm_joystick(void)
     todo_wine
     check_member( info, expect_info, "%#x", wZpos );
     check_member( info, expect_info, "%#x", wButtons );
+
+    if (FAILED(hr = create_dinput_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( event != NULL, "CreateEventW failed, last error %u\n", GetLastError() );
+    hr = IDirectInputDevice8_SetEventNotification( device, event );
+    ok( hr == DI_OK, "SetEventNotification returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+    file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
+    ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+
+    send_hid_input( file, &injected_input[0], sizeof(struct hid_expect) );
+    ret = WaitForSingleObject( event, 100 );
+    ok( ret != WAIT_TIMEOUT, "WaitForSingleObject returned %#x\n", ret );
+    Sleep( 50 ); /* leave some time for winmm to keep up */
+
+    memset( &infoex, 0xcd, sizeof(infoex) );
+    infoex.dwSize = sizeof(JOYINFOEX);
+    infoex.dwFlags = JOY_RETURNALL;
+    ret = joyGetPosEx( 0, &infoex );
+    todo_wine
+    ok( ret == 0, "joyGetPosEx returned %u\n", ret );
+    check_member( infoex, expect_infoex[1], "%#x", dwSize );
+    check_member( infoex, expect_infoex[1], "%#x", dwFlags );
+    check_member( infoex, expect_infoex[1], "%#x", dwXpos );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwYpos );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwZpos );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwRpos );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwUpos );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwVpos );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwButtons );
+    todo_wine
+    check_member( infoex, expect_infoex[1], "%#x", dwButtonNumber );
+    check_member( infoex, expect_infoex[1], "%#x", dwPOV );
+
+    send_hid_input( file, &injected_input[1], sizeof(struct hid_expect) );
+    ret = WaitForSingleObject( event, 100 );
+    ok( ret != WAIT_TIMEOUT, "WaitForSingleObject returned %#x\n", ret );
+    Sleep( 50 ); /* leave some time for winmm to keep up */
+
+    memset( &infoex, 0xcd, sizeof(infoex) );
+    infoex.dwSize = sizeof(JOYINFOEX);
+    infoex.dwFlags = JOY_RETURNALL;
+    ret = joyGetPosEx( 0, &infoex );
+    todo_wine
+    ok( ret == 0, "joyGetPosEx returned %u\n", ret );
+    check_member( infoex, expect_infoex[2], "%#x", dwSize );
+    check_member( infoex, expect_infoex[2], "%#x", dwFlags );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwXpos );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwYpos );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwZpos );
+    check_member( infoex, expect_infoex[2], "%#x", dwRpos );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwUpos );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwVpos );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwButtons );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwButtonNumber );
+    todo_wine
+    check_member( infoex, expect_infoex[2], "%#x", dwPOV );
+
+    ret = IDirectInputDevice8_Release( device );
+    ok( ret == 0, "Release returned %d\n", ret );
+
+    CloseHandle( event );
+    CloseHandle( file );
 
 done:
     pnp_driver_stop();
