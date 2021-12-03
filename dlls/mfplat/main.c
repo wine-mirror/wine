@@ -90,6 +90,12 @@ struct mft_registration
     BOOL local;
 };
 
+static const char *debugstr_reg_typeinfo(const MFT_REGISTER_TYPE_INFO *info)
+{
+    return info ? wine_dbg_sprintf("%p{%s,%s}", info, debugstr_mf_guid(&info->guidMajorType),
+            debugstr_mf_guid(&info->guidSubtype)) : wine_dbg_sprintf("%p", info);
+}
+
 static CRITICAL_SECTION local_mfts_section = { NULL, -1, 0, 0, 0, 0 };
 
 static struct list local_mfts = LIST_INIT(local_mfts);
@@ -1331,8 +1337,8 @@ HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *inpu
     struct list mfts;
     HRESULT hr;
 
-    TRACE("%s, %#x, %p, %p, %p, %p, %p.\n", debugstr_guid(&category), flags, input_type, output_type, attributes,
-            clsids, count);
+    TRACE("%s, %#x, %s, %s, %p, %p, %p.\n", debugstr_mf_guid(&category), flags, debugstr_reg_typeinfo(input_type),
+            debugstr_reg_typeinfo(output_type), attributes, clsids, count);
 
     if (!clsids || !count)
         return E_INVALIDARG;
@@ -1377,7 +1383,8 @@ HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *inpu
 HRESULT WINAPI MFTEnumEx(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
         const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate, UINT32 *count)
 {
-    TRACE("%s, %#x, %p, %p, %p, %p.\n", debugstr_guid(&category), flags, input_type, output_type, activate, count);
+    TRACE("%s, %#x, %s, %s, %p, %p.\n", debugstr_mf_guid(&category), flags, debugstr_reg_typeinfo(input_type),
+            debugstr_reg_typeinfo(output_type), activate, count);
 
     return mft_enum(category, flags, input_type, output_type, NULL, activate, count);
 }
@@ -1388,8 +1395,8 @@ HRESULT WINAPI MFTEnumEx(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_IN
 HRESULT WINAPI MFTEnum2(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
         const MFT_REGISTER_TYPE_INFO *output_type, IMFAttributes *attributes, IMFActivate ***activate, UINT32 *count)
 {
-    TRACE("%s, %#x, %p, %p, %p, %p, %p.\n", debugstr_guid(&category), flags, input_type, output_type, attributes,
-            activate, count);
+    TRACE("%s, %#x, %s, %s, %p, %p, %p.\n", debugstr_mf_guid(&category), flags, debugstr_reg_typeinfo(input_type),
+            debugstr_reg_typeinfo(output_type), attributes, activate, count);
 
     if (attributes)
         FIXME("Ignoring attributes.\n");
@@ -1903,7 +1910,9 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFVideoFormat_RGB565),
         X(MFVideoFormat_RGB555),
         X(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID),
+        X(MFT_CATEGORY_MULTIPLEXER),
         X(MFVideoFormat_A2R10G10B10),
+        X(MFT_CATEGORY_VIDEO_EFFECT),
         X(MFMediaType_Script),
         X(MFMediaType_Image),
         X(MFMediaType_HTML),
@@ -1923,8 +1932,10 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFVideoFormat_H265),
         X(MFVideoFormat_HEVC),
         X(MFVideoFormat_HEVC_ES),
+        X(MFT_CATEGORY_AUDIO_EFFECT),
         X(MFVideoFormat_I420),
         X(MFVideoFormat_IYUV),
+        X(MFT_CATEGORY_VIDEO_DECODER),
         X(MFVideoFormat_M4S2),
         X(MFVideoFormat_MJPG),
         X(MFVideoFormat_MP43),
@@ -1937,8 +1948,8 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFVideoFormat_NV12),
         X(MFVideoFormat_ORAW),
         X(MFAudioFormat_Opus),
-        X(MFVideoFormat_D16),
         X(MFAudioFormat_MPEG),
+        X(MFVideoFormat_D16),
         X(MFVideoFormat_P010),
         X(MFVideoFormat_P016),
         X(MFVideoFormat_P210),
@@ -1953,6 +1964,7 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFVideoFormat_WMV2),
         X(MFVideoFormat_WMV3),
         X(MFVideoFormat_WVC1),
+        X(MFT_CATEGORY_OTHER),
         X(MFVideoFormat_Y210),
         X(MFVideoFormat_Y216),
         X(MFVideoFormat_Y410),
@@ -1986,7 +1998,9 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFVideoFormat_v410),
         X(MFMediaType_Video),
         X(MFAudioFormat_AAC_HDCP),
+        X(MFT_CATEGORY_DEMULTIPLEXER),
         X(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID),
+        X(MFT_CATEGORY_VIDEO_ENCODER),
         X(MFAudioFormat_Dolby_AC3_HDCP),
         X(MFMediaType_Subtitle),
         X(MFMediaType_Stream),
@@ -1997,7 +2011,9 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFAudioFormat_FLAC),
         X(MFAudioFormat_Dolby_DDPlus),
         X(MFMediaType_MultiplexedFrames),
+        X(MFT_CATEGORY_AUDIO_DECODER),
         X(MFAudioFormat_Base_HDCP),
+        X(MFT_CATEGORY_AUDIO_ENCODER),
         X(MFVideoFormat_Base_HDCP),
         X(MFVideoFormat_H264_HDCP),
         X(MFVideoFormat_HEVC_HDCP),
@@ -2005,6 +2021,7 @@ const char *debugstr_mf_guid(const GUID *guid)
         X(MFMediaType_Protected),
         X(MFVideoFormat_H264_ES),
         X(MFMediaType_Perception),
+        X(MFT_CATEGORY_VIDEO_PROCESSOR),
 #undef X
     };
     struct guid_def *ret = NULL;
