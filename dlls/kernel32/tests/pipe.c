@@ -4206,9 +4206,9 @@ START_TEST(pipe)
     {
         if (!strcmp(argv[2], "writepipe"))
         {
-            UINT_PTR handle;
-            sscanf(argv[3], "%lx", &handle);
-            child_process_write_pipe((HANDLE)handle);
+            ULONG handle;
+            sscanf(argv[3], "%x", &handle);
+            child_process_write_pipe(ULongToHandle(handle));
             return;
         }
         if (!strcmp(argv[2], "checkpid"))
