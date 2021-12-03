@@ -590,14 +590,58 @@ static const IHTMLOptionElementFactoryVtbl HTMLOptionElementFactoryVtbl = {
     HTMLOptionElementFactory_create
 };
 
+static inline HTMLOptionElementFactory *HTMLOptionElementFactory_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLOptionElementFactory, dispex);
+}
+
+static HRESULT HTMLOptionElementFactory_value(DispatchEx *dispex, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
+        IServiceProvider *caller)
+{
+    HTMLOptionElementFactory *This = HTMLOptionElementFactory_from_DispatchEx(dispex);
+    unsigned int i, argc = params->cArgs - params->cNamedArgs;
+    IHTMLOptionElement *opt;
+    VARIANT empty, *arg[4];
+    HRESULT hres;
+
+    if(flags != DISPATCH_CONSTRUCT) {
+        FIXME("flags %x not supported\n", flags);
+        return E_NOTIMPL;
+    }
+
+    V_VT(res) = VT_NULL;
+    V_VT(&empty) = VT_EMPTY;
+
+    for(i = 0; i < ARRAY_SIZE(arg); i++)
+        arg[i] = argc > i ? &params->rgvarg[params->cArgs - 1 - i] : &empty;
+
+    hres = IHTMLOptionElementFactory_create(&This->IHTMLOptionElementFactory_iface,
+                                            *arg[0], *arg[1], *arg[2], *arg[3], &opt);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(res) = VT_DISPATCH;
+    V_DISPATCH(res) = (IDispatch*)opt;
+
+    return S_OK;
+}
+
 static const tid_t HTMLOptionElementFactory_iface_tids[] = {
     IHTMLOptionElementFactory_tid,
     0
 };
 
+static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
+    HTMLOptionElementFactory_value,
+    NULL,
+    NULL,
+    NULL
+};
+
 static dispex_static_data_t HTMLOptionElementFactory_dispex = {
     L"Function",
-    NULL,
+    &HTMLOptionElementFactory_dispex_vtbl,
     IHTMLOptionElementFactory_tid,
     HTMLOptionElementFactory_iface_tids,
     HTMLElement_init_dispex_info

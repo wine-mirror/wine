@@ -2190,10 +2190,12 @@ static void _set_object_name(unsigned line, IHTMLElement *elem, const WCHAR *nam
 static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *doc,
         const WCHAR *txt, const WCHAR *val)
 {
+    VARIANT text, value, empty, option_var, args[2];
+    DISPPARAMS dp = { args, NULL, 2, 0 };
     IHTMLOptionElementFactory *factory;
     IHTMLOptionElement *option;
     IHTMLWindow2 *window;
-    VARIANT text, value, empty;
+    IDispatch *disp;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
@@ -2210,6 +2212,24 @@ static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *do
     V_VT(&value) = VT_BSTR;
     V_BSTR(&value) = SysAllocString(val);
     V_VT(&empty) = VT_EMPTY;
+
+    hres = IHTMLOptionElementFactory_QueryInterface(factory, &IID_IDispatch, (void**)&disp);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IDispatch: %08x\n", hres);
+
+    args[1] = text;
+    args[0] = value;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_CONSTRUCT, &dp, &option_var, NULL, NULL);
+    IDispatch_Release(disp);
+    ok_(__FILE__,line)(hres == S_OK, "Invoke(DISPID_VALUE) returned: %08x\n", hres);
+    ok_(__FILE__,line)(V_VT(&option_var) == VT_DISPATCH, "VT(option_var) = %d\n", V_VT(&option_var));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&option_var), &IID_IHTMLOptionElement, (void**)&option);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLOptionElement: %08x\n", hres);
+    VariantClear(&option_var);
+
+    _test_option_text(line, option, txt);
+    _test_option_value(line, option, val);
+    _test_option_selected(line, option, VARIANT_FALSE);
+    IHTMLOptionElement_Release(option);
 
     hres = IHTMLOptionElementFactory_create(factory, text, value, empty, empty, &option);
     ok_(__FILE__,line) (hres == S_OK, "create failed: %08x\n", hres);
