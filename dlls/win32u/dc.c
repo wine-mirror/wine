@@ -481,7 +481,7 @@ static BOOL reset_dc_state( HDC hdc )
     NtGdiSelectFont( hdc, get_stock_object( SYSTEM_FONT ));
     NtGdiSelectPen( hdc, get_stock_object( BLACK_PEN ));
     NtGdiSetVirtualResolution( hdc, 0, 0, 0, 0 );
-    GDISelectPalette( hdc, get_stock_object( DEFAULT_PALETTE ), FALSE );
+    NtUserSelectPalette( hdc, get_stock_object( DEFAULT_PALETTE ), FALSE );
     NtGdiSetBoundsRect( hdc, NULL, DCB_DISABLE );
     NtGdiAbortPath( hdc );
 
@@ -689,7 +689,7 @@ BOOL WINAPI NtGdiRestoreDC( HDC hdc, INT level )
     NtGdiSelectPen( hdc, dcs->hPen );
     set_bk_color( dc, dcs->attr->background_color);
     set_text_color( dc, dcs->attr->text_color);
-    GDISelectPalette( hdc, dcs->hPalette, FALSE );
+    NtUserSelectPalette( hdc, dcs->hPalette, FALSE );
 
     dc->saved_dc  = dcs->saved_dc;
     dcs->saved_dc = 0;

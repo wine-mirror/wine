@@ -1157,7 +1157,7 @@
 @ stub NtUserSBGetParms
 @ stdcall NtUserScrollDC(long long long ptr ptr long ptr)
 @ stub NtUserScrollWindowEx
-@ stub NtUserSelectPalette
+@ stdcall NtUserSelectPalette(long long long)
 @ stub NtUserSendEventMessage
 @ stub NtUserSendInput
 @ stub NtUserSendInteractiveControlHapticsReport
@@ -1324,7 +1324,6 @@
 @ stdcall GetDCHook(long ptr)
 @ stdcall SetDCHook(long ptr long)
 @ stdcall SetHookFlags(long long)
-@ stdcall GDISelectPalette(long long long)
 @ cdecl __wine_make_gdi_object_system(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
 

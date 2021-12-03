@@ -681,6 +681,11 @@ BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const R
     return unix_funcs->pNtUserScrollDC( hdc, dx, dy, scroll, clip, ret_update_rgn, update_rect );
 }
 
+HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
+{
+    return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
+}
+
 INT WINAPI NtUserShowCursor( BOOL show )
 {
     return unix_funcs->pNtUserShowCursor( show );
@@ -700,11 +705,6 @@ BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
-}
-
-HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
-{
-    return unix_funcs->pGDISelectPalette( hdc, hpal, bkg );
 }
 
 DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )

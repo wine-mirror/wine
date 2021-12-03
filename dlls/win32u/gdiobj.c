@@ -1183,12 +1183,12 @@ static struct unix_funcs unix_funcs =
     NtUserIsClipboardFormatAvailable,
     NtUserMapVirtualKeyEx,
     NtUserScrollDC,
+    NtUserSelectPalette,
     NtUserShowCursor,
     NtUserToUnicodeEx,
     NtUserUnregisterHotKey,
     NtUserVkKeyScanEx,
 
-    GDISelectPalette,
     GetDCHook,
     MirrorRgn,
     SetDCHook,
