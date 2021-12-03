@@ -95,8 +95,8 @@ struct schan_buffers
     SIZE_T offset;
     SIZE_T limit;
     const SecBufferDesc *desc;
+    SecBuffer *alloc_buffer;
     int current_buffer_idx;
-    BOOL allow_buffer_resize;
     int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *);
 };
 
@@ -122,7 +122,7 @@ struct schan_funcs
     unsigned int (CDECL *get_session_cipher_block_size)(schan_session);
     SECURITY_STATUS (CDECL *get_session_peer_certificate)(schan_session, CERT_BLOB *, ULONG *, ULONG *);
     SECURITY_STATUS (CDECL *get_unique_channel_binding)(schan_session, void *, ULONG *);
-    SECURITY_STATUS (CDECL *handshake)(schan_session, SecBufferDesc *, SIZE_T, SecBufferDesc *, ULONG );
+    SECURITY_STATUS (CDECL *handshake)(schan_session, SecBufferDesc *, SIZE_T, SecBufferDesc *, SecBuffer * );
     SECURITY_STATUS (CDECL *recv)(schan_session, SecBufferDesc *, SIZE_T, void *, SIZE_T *);
     SECURITY_STATUS (CDECL *send)(schan_session, SecBufferDesc *, const void *, SIZE_T *);
     void (CDECL *set_application_protocols)(schan_session, unsigned char *, unsigned int);

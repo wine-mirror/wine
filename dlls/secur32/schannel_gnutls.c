@@ -204,7 +204,7 @@ static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc des
     s->limit = ~0UL;
     s->desc = desc;
     s->current_buffer_idx = -1;
-    s->allow_buffer_resize = FALSE;
+    s->alloc_buffer = NULL;
     s->get_next_buffer = get_next_buffer;
 }
 
@@ -240,10 +240,9 @@ static int handshake_get_next_buffer_alloc(const struct schan_transport *t, stru
             idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_EMPTY);
             if (idx != -1) s->desc->pBuffers[idx].BufferType = SECBUFFER_TOKEN;
         }
-        if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer)
+        if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer && s->alloc_buffer)
         {
-            s->desc->pBuffers[idx].cbBuffer = 0;
-            s->allow_buffer_resize = TRUE;
+            s->desc->pBuffers[idx] = *s->alloc_buffer;
         }
         return idx;
     }
@@ -302,31 +301,6 @@ static int recv_message_get_next_buffer(const struct schan_transport *t, struct 
     return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
 }
 
-static void resize_current_buffer(const struct schan_buffers *s, SIZE_T min_size)
-{
-    SecBuffer *b = &s->desc->pBuffers[s->current_buffer_idx];
-    SIZE_T new_size = b->cbBuffer ? b->cbBuffer * 2 : 128;
-    void *new_data;
-
-    if (b->cbBuffer >= min_size || !s->allow_buffer_resize || min_size > UINT_MAX / 2) return;
-
-    while (new_size < min_size) new_size *= 2;
-
-    if (b->pvBuffer) /* freed with FreeContextBuffer */
-        new_data = RtlReAllocateHeap(GetProcessHeap(), 0, b->pvBuffer, new_size);
-    else
-        new_data = RtlAllocateHeap(GetProcessHeap(), 0, new_size);
-
-    if (!new_data)
-    {
-        TRACE("Failed to resize %p from %d to %ld\n", b->pvBuffer, b->cbBuffer, new_size);
-        return;
-    }
-
-    b->cbBuffer = new_size;
-    b->pvBuffer = new_data;
-}
-
 static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
 {
     SIZE_T max_count;
@@ -353,7 +327,6 @@ static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s
     buffer = &s->desc->pBuffers[s->current_buffer_idx];
     TRACE("Using buffer %d: cbBuffer %d, BufferType %#x, pvBuffer %p\n", s->current_buffer_idx, buffer->cbBuffer, buffer->BufferType, buffer->pvBuffer);
 
-    resize_current_buffer(s, s->offset + *count);
     max_count = buffer->cbBuffer - s->offset;
     if (s->limit != ~0UL && s->limit < max_count)
         max_count = s->limit;
@@ -362,7 +335,6 @@ static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s
     {
         int buffer_idx;
 
-        s->allow_buffer_resize = FALSE;
         buffer_idx = s->get_next_buffer(t, s);
         if (buffer_idx == -1)
         {
@@ -580,7 +552,8 @@ static void CDECL schan_set_session_target(schan_session session, const char *ta
 }
 
 static SECURITY_STATUS CDECL schan_handshake(schan_session session, SecBufferDesc *input,
-                                             SIZE_T input_size, SecBufferDesc *output, ULONG flags )
+                                             SIZE_T input_size, SecBufferDesc *output,
+                                             SecBuffer *alloc_buffer )
 {
     gnutls_session_t s = (gnutls_session_t)session;
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
@@ -588,8 +561,8 @@ static SECURITY_STATUS CDECL schan_handshake(schan_session session, SecBufferDes
 
     init_schan_buffers(&t->in, input, handshake_get_next_buffer);
     t->in.limit = input_size;
-    init_schan_buffers(&t->out, output, (flags & ISC_REQ_ALLOCATE_MEMORY) ?
-                       handshake_get_next_buffer_alloc : handshake_get_next_buffer );
+    init_schan_buffers(&t->out, output, handshake_get_next_buffer_alloc );
+    t->out.alloc_buffer = alloc_buffer;
 
     while(1) {
         err = pgnutls_handshake(s);

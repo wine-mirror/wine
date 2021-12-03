@@ -689,12 +689,14 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
  PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
+    const ULONG extra_size = 0x10000;
     struct schan_context *ctx;
     struct schan_buffers *out_buffers;
     struct schan_credentials *cred;
     SIZE_T expected_size = ~0UL;
     SECURITY_STATUS ret;
     SecBuffer *buffer;
+    SecBuffer alloc_buffer = { 0 };
     int idx;
 
     TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
@@ -814,19 +816,32 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     ctx->req_ctx_attr = fContextReq;
 
     /* Perform the TLS handshake */
-    ret = schan_funcs->handshake(ctx->transport.session, pInput, expected_size, pOutput, fContextReq);
+    if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
+    {
+        alloc_buffer.cbBuffer = extra_size;
+        alloc_buffer.BufferType = SECBUFFER_TOKEN;
+        alloc_buffer.pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, extra_size );
+    }
+    ret = schan_funcs->handshake(ctx->transport.session, pInput, expected_size, pOutput, &alloc_buffer);
 
     out_buffers = &ctx->transport.out;
     if (out_buffers->current_buffer_idx != -1)
     {
         SecBuffer *buffer = &out_buffers->desc->pBuffers[out_buffers->current_buffer_idx];
         buffer->cbBuffer = out_buffers->offset;
+        if (buffer->pvBuffer == alloc_buffer.pvBuffer)
+        {
+            RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
+                               buffer->pvBuffer, buffer->cbBuffer );
+            alloc_buffer.pvBuffer = NULL;
+        }
     }
     else if (out_buffers->desc && out_buffers->desc->cBuffers > 0)
     {
         SecBuffer *buffer = &out_buffers->desc->pBuffers[0];
         buffer->cbBuffer = 0;
     }
+    RtlFreeHeap( GetProcessHeap(), 0, alloc_buffer.pvBuffer );
 
     if(ctx->transport.in.offset && ctx->transport.in.offset != pInput->pBuffers[0].cbBuffer) {
         if(pInput->cBuffers<2 || pInput->pBuffers[1].BufferType!=SECBUFFER_EMPTY)
