@@ -1636,6 +1636,27 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
     return FALSE;
 }
 
+/**********************************************************************
+ *	     sysparams_init
+ */
+void sysparams_init(void)
+{
+    WCHAR layout[KL_NAMELENGTH];
+    HKEY hkey;
+
+    static const WCHAR oneW[] = {'1',0};
+    static const WCHAR kl_preloadW[] =
+        {'K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','\\','P','r','e','l','o','a','d'};
+
+    if ((hkey = reg_create_key( hkcu_key, kl_preloadW, sizeof(kl_preloadW), 0, NULL )))
+    {
+        if (NtUserGetKeyboardLayoutName( layout ))
+            set_reg_value( hkey, oneW, REG_SZ, (const BYTE *)layout,
+                           (lstrlenW(layout) + 1) * sizeof(WCHAR) );
+        NtClose( hkey );
+    }
+}
+
 ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code )
 {
     switch(code)

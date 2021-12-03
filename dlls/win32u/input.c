@@ -33,6 +33,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
+static const WCHAR keyboard_layouts_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','C','o','n','t','r','o','l',
+    '\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s'
+};
+
 
 /**********************************************************************
  *	     NtUserAttachThreadInput    (win32u.@)
@@ -618,16 +628,6 @@ UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
     HKEY hkey, subkey;
     HKL layout;
 
-    static const WCHAR keyboard_layouts_keyW[] =
-    {
-        '\\','R','e','g','i','s','t','r','y',
-        '\\','M','a','c','h','i','n','e',
-        '\\','S','y','s','t','e','m',
-        '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-        '\\','C','o','n','t','r','o','l',
-        '\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s'
-    };
-
     TRACE_(keyboard)( "size %d, layouts %p.\n", size, layouts );
 
     if ((count = user_driver->pGetKeyboardLayoutList( size, layouts )) != ~0) return count;
@@ -669,6 +669,71 @@ UINT WINAPI NtUserGetKeyboardLayoutList( INT size, HKL *layouts )
     }
 
     return count;
+}
+
+/****************************************************************************
+ *	     NtUserGetKeyboardLayoutName    (win32u.@)
+ */
+BOOL WINAPI NtUserGetKeyboardLayoutName( WCHAR *name )
+{
+    struct user_thread_info *info = get_user_thread_info();
+    char buffer[4096];
+    KEY_NODE_INFORMATION *key = (KEY_NODE_INFORMATION *)buffer;
+    KEY_VALUE_PARTIAL_INFORMATION *value = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    WCHAR klid[KL_NAMELENGTH];
+    DWORD tmp, i = 0;
+    HKEY hkey, subkey;
+    HKL layout;
+
+    TRACE_(keyboard)( "name %p\n", name );
+
+    if (!name)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    if (info->kbd_layout_id)
+    {
+        sprintf( buffer, "%08X", info->kbd_layout_id );
+        asciiz_to_unicode( name, buffer );
+        return TRUE;
+    }
+
+    layout = NtUserGetKeyboardLayout( 0 );
+    tmp = HandleToUlong( layout );
+    if (HIWORD( tmp ) == LOWORD( tmp )) tmp = LOWORD( tmp );
+    sprintf( buffer, "%08X", tmp );
+    asciiz_to_unicode( name, buffer );
+
+    if ((hkey = reg_open_key( NULL, keyboard_layouts_keyW, sizeof(keyboard_layouts_keyW) )))
+    {
+        while (!NtEnumerateKey( hkey, i++, KeyNodeInformation, key,
+                                sizeof(buffer) - sizeof(WCHAR), &tmp ))
+        {
+            if (!(subkey = reg_open_key( hkey, key->Name, key->NameLength ))) continue;
+            memcpy( klid, key->Name, key->NameLength );
+            klid[key->NameLength / sizeof(WCHAR)] = 0;
+            if (query_reg_ascii_value( subkey, "Layout Id", value, sizeof(buffer) ) &&
+                value->Type == REG_SZ)
+                tmp = 0xf000 | (wcstoul( (const WCHAR *)value->Data, NULL, 16 ) & 0xfff);
+            else
+                tmp = wcstoul( klid, NULL, 16 );
+            NtClose( subkey );
+
+            if (HIWORD( layout ) == tmp)
+            {
+                lstrcpynW( name, klid, KL_NAMELENGTH );
+                break;
+            }
+        }
+        NtClose( hkey );
+    }
+
+    info->kbd_layout_id = wcstoul( name, NULL, 16 );
+
+    TRACE_(keyboard)( "ret %s\n", debugstr_w( name ) );
+    return TRUE;
 }
 
 /***********************************************************************

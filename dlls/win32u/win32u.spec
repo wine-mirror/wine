@@ -948,7 +948,7 @@
 @ stdcall -syscall NtUserGetKeyState(long)
 @ stdcall -syscall NtUserGetKeyboardLayout(long)
 @ stdcall NtUserGetKeyboardLayoutList(long ptr)
-@ stub NtUserGetKeyboardLayoutName
+@ stdcall -syscall NtUserGetKeyboardLayoutName(ptr)
 @ stdcall -syscall NtUserGetKeyboardState(ptr)
 @ stdcall -syscall NtUserGetLayeredWindowAttributes(long ptr ptr ptr)
 @ stub NtUserGetListBoxInfo

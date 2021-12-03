@@ -115,25 +115,6 @@ static HKL get_locale_kbd_layout(void)
 
 
 /**********************************************************************
- *		keyboard_init
- */
-void keyboard_init(void)
-{
-    WCHAR layout[KL_NAMELENGTH];
-    HKEY hkey;
-
-    if (RegCreateKeyExW( HKEY_CURRENT_USER, L"Keyboard Layout\\Preload", 0, NULL, 0,
-                         KEY_ALL_ACCESS, NULL, &hkey, NULL ))
-        return;
-
-    if (GetKeyboardLayoutNameW( layout ))
-        RegSetValueExW( hkey, L"1", 0, REG_SZ, (const BYTE *)layout, sizeof(layout) );
-
-    RegCloseKey( hkey );
-}
-
-
-/**********************************************************************
  *		set_capture_window
  */
 BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
@@ -754,64 +735,9 @@ BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
 {
     WCHAR buf[KL_NAMELENGTH];
 
-    if (GetKeyboardLayoutNameW(buf))
+    if (NtUserGetKeyboardLayoutName( buf ))
         return WideCharToMultiByte( CP_ACP, 0, buf, -1, pszKLID, KL_NAMELENGTH, NULL, NULL ) != 0;
     return FALSE;
-}
-
-/****************************************************************************
- *		GetKeyboardLayoutNameW (USER32.@)
- */
-BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
-{
-    struct user_thread_info *info = get_user_thread_info();
-    WCHAR klid[KL_NAMELENGTH], value[5];
-    DWORD value_size, tmp, i = 0;
-    HKEY hkey;
-    HKL layout;
-
-    TRACE_(keyboard)( "name %p\n", name );
-
-    if (!name)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-
-    if (info->kbd_layout_id)
-    {
-        swprintf( name, KL_NAMELENGTH, L"%08X", info->kbd_layout_id );
-        return TRUE;
-    }
-
-    layout = NtUserGetKeyboardLayout( 0 );
-    tmp = HandleToUlong( layout );
-    if (HIWORD( tmp ) == LOWORD( tmp )) tmp = LOWORD( tmp );
-    swprintf( name, KL_NAMELENGTH, L"%08X", tmp );
-
-    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Keyboard Layouts", &hkey ))
-    {
-        while (!RegEnumKeyW( hkey, i++, klid, ARRAY_SIZE(klid) ))
-        {
-            value_size = sizeof(value);
-            if (!RegGetValueW( hkey, klid, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size ))
-                tmp = 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff);
-            else
-                tmp = wcstoul( klid, NULL, 16 );
-
-            if (HIWORD( layout ) == tmp)
-            {
-                lstrcpynW( name, klid, KL_NAMELENGTH );
-                break;
-            }
-        }
-        RegCloseKey( hkey );
-    }
-
-    info->kbd_layout_id = wcstoul( name, NULL, 16 );
-
-    TRACE_(keyboard)( "ret %s\n", debugstr_w( name ) );
-    return TRUE;
 }
 
 /****************************************************************************

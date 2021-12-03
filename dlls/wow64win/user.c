@@ -262,6 +262,13 @@ NTSTATUS WINAPI wow64_NtUserGetKeyboardLayout( UINT *args )
     return HandleToUlong( NtUserGetKeyboardLayout( tid ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetKeyboardLayoutName( UINT *args )
+{
+    WCHAR *name = get_ptr( &args );
+
+    return NtUserGetKeyboardLayoutName( name );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetKeyboardState( UINT *args )
 {
     BYTE *state = get_ptr( &args );

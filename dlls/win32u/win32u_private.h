@@ -250,6 +250,7 @@ extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;
 extern NTSTATUS callbacks_init( void *args ) DECLSPEC_HIDDEN;
 extern void winstation_init(void) DECLSPEC_HIDDEN;
+extern void sysparams_init(void) DECLSPEC_HIDDEN;
 
 extern HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
                             DWORD options, DWORD *disposition ) DECLSPEC_HIDDEN;
@@ -263,6 +264,8 @@ extern void set_reg_ascii_value( HKEY hkey, const char *name, const char *value 
 extern void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value,
                            DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
+
+extern HKEY hkcu_key DECLSPEC_HIDDEN;
 
 static inline struct user_thread_info *get_user_thread_info(void)
 {

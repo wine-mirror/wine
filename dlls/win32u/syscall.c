@@ -114,6 +114,7 @@ static void * const syscalls[] =
     NtUserGetCursor,
     NtUserGetKeyState,
     NtUserGetKeyboardLayout,
+    NtUserGetKeyboardLayoutName,
     NtUserGetKeyboardState,
     NtUserGetLayeredWindowAttributes,
     NtUserGetMouseMovePointsEx,
@@ -150,6 +151,7 @@ static NTSTATUS init( void *dispatcher )
     if ((status = ntdll_init_syscalls( 1, &syscall_table, dispatcher ))) return status;
     if ((status = gdi_init())) return status;
     winstation_init();
+    sysparams_init();
     return STATUS_SUCCESS;
 }
 

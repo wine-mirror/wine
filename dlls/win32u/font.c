@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 static HKEY wine_fonts_key;
 static HKEY wine_fonts_cache_key;
-static HKEY hkcu_key;
+HKEY hkcu_key;
 
 struct font_physdev
 {
