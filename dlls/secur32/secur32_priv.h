@@ -108,12 +108,6 @@ struct schan_transport
     struct schan_buffers out;
 };
 
-struct schan_cert_list
-{
-    unsigned int count;
-    CERT_BLOB   *certs;
-};
-
 struct schan_funcs
 {
     BOOL (CDECL *allocate_certificate_credentials)(schan_credentials *, const CERT_CONTEXT *, const DATA_BLOB *);
@@ -126,7 +120,7 @@ struct schan_funcs
     ALG_ID (CDECL *get_key_signature_algorithm)(schan_session);
     unsigned int (CDECL *get_max_message_size)(schan_session);
     unsigned int (CDECL *get_session_cipher_block_size)(schan_session);
-    SECURITY_STATUS (CDECL *get_session_peer_certificate)(schan_session, struct schan_cert_list *);
+    SECURITY_STATUS (CDECL *get_session_peer_certificate)(schan_session, CERT_BLOB *, ULONG *, ULONG *);
     SECURITY_STATUS (CDECL *get_unique_channel_binding)(schan_session, SecPkgContext_Bindings *);
     SECURITY_STATUS (CDECL *handshake)(schan_session, SecBufferDesc *, SIZE_T, SecBufferDesc *, ULONG );
     SECURITY_STATUS (CDECL *recv)(schan_session, SecBufferDesc *, SIZE_T, void *, SIZE_T *);

@@ -909,28 +909,37 @@ static SECURITY_STATUS ensure_remote_cert(struct schan_context *ctx)
     HCERTSTORE store;
     PCCERT_CONTEXT cert = NULL;
     SECURITY_STATUS status;
-    struct schan_cert_list list;
+    CERT_BLOB *certs;
+    ULONG count, size = 0;
 
     if (ctx->cert) return SEC_E_OK;
     if (!(store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL)))
         return GetLastError();
 
-    if ((status = schan_funcs->get_session_peer_certificate(ctx->transport.session, &list)) == SEC_E_OK)
+    status = schan_funcs->get_session_peer_certificate(ctx->transport.session, NULL, &size, &count);
+    if (status != SEC_E_BUFFER_TOO_SMALL) goto done;
+    if (!(certs = malloc( size )))
+    {
+        status = SEC_E_INSUFFICIENT_MEMORY;
+        goto done;
+    }
+    status = schan_funcs->get_session_peer_certificate(ctx->transport.session, certs, &size, &count);
+    if (status == SEC_E_OK)
     {
         unsigned int i;
-        for (i = 0; i < list.count; i++)
+        for (i = 0; i < count; i++)
         {
-            if (!CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, list.certs[i].pbData,
-                                                  list.certs[i].cbData, CERT_STORE_ADD_REPLACE_EXISTING,
+            if (!CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, certs[i].pbData,
+                                                  certs[i].cbData, CERT_STORE_ADD_REPLACE_EXISTING,
                                                   i ? NULL : &cert))
             {
                 if (i) CertFreeCertificateContext(cert);
                 return GetLastError();
             }
         }
-        RtlFreeHeap(GetProcessHeap(), 0, list.certs);
     }
-
+    free(certs);
+done:
     ctx->cert = cert;
     CertCloseStore(store, 0);
     return status;

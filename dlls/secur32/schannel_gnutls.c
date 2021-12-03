@@ -810,28 +810,36 @@ static ALG_ID CDECL schan_get_key_signature_algorithm(schan_session session)
     }
 }
 
-static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session session, struct schan_cert_list *list)
+static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session session, CERT_BLOB *certs,
+                                                                ULONG *bufsize, ULONG *retcount)
 {
     gnutls_session_t s = (gnutls_session_t)session;
     const gnutls_datum_t *datum;
     unsigned int i, size;
     BYTE *ptr;
+    unsigned int count;
 
-    if (!(datum = pgnutls_certificate_get_peers(s, &list->count))) return SEC_E_INTERNAL_ERROR;
+    if (!(datum = pgnutls_certificate_get_peers(s, &count))) return SEC_E_INTERNAL_ERROR;
 
-    size = list->count * sizeof(list->certs[0]);
-    for (i = 0; i < list->count; i++) size += datum[i].size;
-    if (!(list->certs = RtlAllocateHeap(GetProcessHeap(), 0, size))) return SEC_E_INSUFFICIENT_MEMORY;
+    size = count * sizeof(certs[0]);
+    for (i = 0; i < count; i++) size += datum[i].size;
 
-    ptr = (BYTE *)&list->certs[list->count];
-    for (i = 0; i < list->count; i++)
+    if (!certs || *bufsize < size)
     {
-        list->certs[i].cbData = datum[i].size;
-        list->certs[i].pbData = ptr;
-        memcpy(list->certs[i].pbData, datum[i].data, datum[i].size);
+        *bufsize = size;
+        return SEC_E_BUFFER_TOO_SMALL;
+    }
+    ptr = (BYTE *)&certs[count];
+    for (i = 0; i < count; i++)
+    {
+        certs[i].cbData = datum[i].size;
+        certs[i].pbData = ptr;
+        memcpy(certs[i].pbData, datum[i].data, datum[i].size);
         ptr += datum[i].size;
     }
 
+    *bufsize = size;
+    *retcount = count;
     return SEC_E_OK;
 }
 
