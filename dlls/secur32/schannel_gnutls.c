@@ -52,8 +52,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static const struct schan_callbacks *callbacks;
-
 /* Not present in gnutls version < 2.9.10. */
 static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 
@@ -199,6 +197,89 @@ static void compat_gnutls_dtls_set_mtu(gnutls_session_t session, unsigned int mt
     FIXME("\n");
 }
 
+static void resize_current_buffer(const struct schan_buffers *s, SIZE_T min_size)
+{
+    SecBuffer *b = &s->desc->pBuffers[s->current_buffer_idx];
+    SIZE_T new_size = b->cbBuffer ? b->cbBuffer * 2 : 128;
+    void *new_data;
+
+    if (b->cbBuffer >= min_size || !s->allow_buffer_resize || min_size > UINT_MAX / 2) return;
+
+    while (new_size < min_size) new_size *= 2;
+
+    if (b->pvBuffer) /* freed with FreeContextBuffer */
+        new_data = RtlReAllocateHeap(GetProcessHeap(), 0, b->pvBuffer, new_size);
+    else
+        new_data = RtlAllocateHeap(GetProcessHeap(), 0, new_size);
+
+    if (!new_data)
+    {
+        TRACE("Failed to resize %p from %d to %ld\n", b->pvBuffer, b->cbBuffer, new_size);
+        return;
+    }
+
+    b->cbBuffer = new_size;
+    b->pvBuffer = new_data;
+}
+
+static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
+{
+    SIZE_T max_count;
+    PSecBuffer buffer;
+
+    if (!s->desc)
+    {
+        TRACE("No desc\n");
+        return NULL;
+    }
+
+    if (s->current_buffer_idx == -1)
+    {
+        /* Initial buffer */
+        int buffer_idx = s->get_next_buffer(t, s);
+        if (buffer_idx == -1)
+        {
+            TRACE("No next buffer\n");
+            return NULL;
+        }
+        s->current_buffer_idx = buffer_idx;
+    }
+
+    buffer = &s->desc->pBuffers[s->current_buffer_idx];
+    TRACE("Using buffer %d: cbBuffer %d, BufferType %#x, pvBuffer %p\n", s->current_buffer_idx, buffer->cbBuffer, buffer->BufferType, buffer->pvBuffer);
+
+    resize_current_buffer(s, s->offset + *count);
+    max_count = buffer->cbBuffer - s->offset;
+    if (s->limit != ~0UL && s->limit < max_count)
+        max_count = s->limit;
+
+    while (!max_count)
+    {
+        int buffer_idx;
+
+        s->allow_buffer_resize = FALSE;
+        buffer_idx = s->get_next_buffer(t, s);
+        if (buffer_idx == -1)
+        {
+            TRACE("No next buffer\n");
+            return NULL;
+        }
+        s->current_buffer_idx = buffer_idx;
+        s->offset = 0;
+        buffer = &s->desc->pBuffers[buffer_idx];
+        max_count = buffer->cbBuffer;
+        if (s->limit != ~0UL && s->limit < max_count)
+            max_count = s->limit;
+    }
+
+    if (*count > max_count)
+        *count = max_count;
+    if (s->limit != ~0UL)
+        s->limit -= *count;
+
+    return (char *)buffer->pvBuffer + s->offset;
+}
+
 static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
@@ -208,7 +289,7 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
 
     TRACE("Push %lu bytes\n", len);
 
-    b = callbacks->get_buffer(t, &t->in, &len);
+    b = get_buffer(t, &t->in, &len);
     if (!b)
     {
         pgnutls_transport_set_errno(s, EAGAIN);
@@ -229,7 +310,7 @@ static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, 
 
     TRACE("Push %lu bytes\n", len);
 
-    b = callbacks->get_buffer(t, &t->out, &len);
+    b = get_buffer(t, &t->out, &len);
     if (!b)
     {
         pgnutls_transport_set_errno(s, EAGAIN);
@@ -300,7 +381,7 @@ static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 
     TRACE("\n");
 
-    if (callbacks->get_buffer(t, &t->in, &count)) return 1;
+    if (get_buffer(t, &t->in, &count)) return 1;
     pgnutls_transport_set_errno(s, EAGAIN);
     return -1;
 }
@@ -661,7 +742,7 @@ static SECURITY_STATUS CDECL schan_send(schan_session session, const void *buffe
             struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
             SIZE_T count = 0;
 
-            if (callbacks->get_buffer(t, &t->out, &count)) continue;
+            if (get_buffer(t, &t->out, &count)) continue;
             return SEC_I_CONTINUE_NEEDED;
         }
         else
@@ -687,7 +768,7 @@ again:
         struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
         SIZE_T count = 0;
 
-        if (callbacks->get_buffer(t, &t->in, &count))
+        if (get_buffer(t, &t->in, &count))
             goto again;
 
         return SEC_I_CONTINUE_NEEDED;
@@ -1118,7 +1199,6 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     {
     case DLL_PROCESS_ATTACH:
         if (!gnutls_initialize()) return STATUS_DLL_NOT_FOUND;
-        callbacks = ptr_in;
         *(const struct schan_funcs **)ptr_out = &funcs;
         break;
     case DLL_PROCESS_DETACH:

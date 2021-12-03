@@ -137,11 +137,6 @@ struct schan_funcs
     void (CDECL *set_session_transport)(schan_session, struct schan_transport *);
 };
 
-struct schan_callbacks
-{
-    char * (CDECL *get_buffer)(const struct schan_transport *, struct schan_buffers *, SIZE_T *);
-};
-
 extern const struct schan_funcs *schan_funcs;
 
 #endif /* __SECUR32_PRIV_H__ */

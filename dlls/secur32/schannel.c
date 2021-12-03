@@ -665,85 +665,6 @@ static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int sta
     return -1;
 }
 
-static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T min_size)
-{
-    SecBuffer *b = &s->desc->pBuffers[s->current_buffer_idx];
-    SIZE_T new_size = b->cbBuffer ? b->cbBuffer * 2 : 128;
-    void *new_data;
-
-    if (b->cbBuffer >= min_size || !s->allow_buffer_resize || min_size > UINT_MAX / 2) return;
-
-    while (new_size < min_size) new_size *= 2;
-
-    if (b->pvBuffer) /* freed with FreeContextBuffer */
-        new_data = RtlReAllocateHeap(GetProcessHeap(), 0, b->pvBuffer, new_size);
-    else
-        new_data = RtlAllocateHeap(GetProcessHeap(), 0, new_size);
-
-    if (!new_data)
-    {
-        TRACE("Failed to resize %p from %d to %ld\n", b->pvBuffer, b->cbBuffer, new_size);
-        return;
-    }
-
-    b->cbBuffer = new_size;
-    b->pvBuffer = new_data;
-}
-
-static char * CDECL schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
-{
-    SIZE_T max_count;
-    PSecBuffer buffer;
-
-    if (!s->desc)
-    {
-        TRACE("No desc\n");
-        return NULL;
-    }
-
-    if (s->current_buffer_idx == -1)
-    {
-        /* Initial buffer */
-        int buffer_idx = s->get_next_buffer(t, s);
-        if (buffer_idx == -1)
-        {
-            TRACE("No next buffer\n");
-            return NULL;
-        }
-        s->current_buffer_idx = buffer_idx;
-    }
-
-    buffer = &s->desc->pBuffers[s->current_buffer_idx];
-    TRACE("Using buffer %d: cbBuffer %d, BufferType %#x, pvBuffer %p\n", s->current_buffer_idx, buffer->cbBuffer, buffer->BufferType, buffer->pvBuffer);
-
-    schan_resize_current_buffer(s, s->offset + *count);
-    max_count = buffer->cbBuffer - s->offset;
-    if (s->limit != ~0UL && s->limit < max_count)
-        max_count = s->limit;
-    if (!max_count)
-    {
-        int buffer_idx;
-
-        s->allow_buffer_resize = FALSE;
-        buffer_idx = s->get_next_buffer(t, s);
-        if (buffer_idx == -1)
-        {
-            TRACE("No next buffer\n");
-            return NULL;
-        }
-        s->current_buffer_idx = buffer_idx;
-        s->offset = 0;
-        return schan_get_buffer(t, s, count);
-    }
-
-    if (*count > max_count)
-        *count = max_count;
-    if (s->limit != ~0UL)
-        s->limit -= *count;
-
-    return (char *)buffer->pvBuffer + s->offset;
-}
-
 static int schan_init_sec_ctx_get_next_input_buffer(const struct schan_transport *t, struct schan_buffers *s)
 {
     if (s->current_buffer_idx != -1)
@@ -1566,11 +1487,6 @@ static const SecurityFunctionTableW schanTableW = {
     NULL, /* SetContextAttributesW */
 };
 
-const struct schan_callbacks schan_callbacks =
-{
-    schan_get_buffer,
-};
-
 void SECUR32_initSchannelSP(void)
 {
     /* This is what Windows reports.  This shouldn't break any applications
@@ -1596,7 +1512,7 @@ void SECUR32_initSchannelSP(void)
     };
     SecureProvider *provider;
 
-    if (!schan_funcs && __wine_init_unix_lib(hsecur32, DLL_PROCESS_ATTACH, &schan_callbacks, &schan_funcs))
+    if (!schan_funcs && __wine_init_unix_lib(hsecur32, DLL_PROCESS_ATTACH, NULL, &schan_funcs))
     {
         ERR( "no schannel support, expect problems\n" );
         return;
