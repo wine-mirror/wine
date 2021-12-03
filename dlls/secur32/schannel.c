@@ -639,17 +639,6 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
     return SEC_E_OK;
 }
 
-static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc desc,
-        int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *))
-{
-    s->offset = 0;
-    s->limit = ~0UL;
-    s->desc = desc;
-    s->current_buffer_idx = -1;
-    s->allow_buffer_resize = FALSE;
-    s->get_next_buffer = get_next_buffer;
-}
-
 static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int start_idx, ULONG buffer_type)
 {
     unsigned int i;
@@ -660,37 +649,6 @@ static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int sta
         buffer = &desc->pBuffers[i];
         if ((buffer->BufferType | SECBUFFER_ATTRMASK) == (buffer_type | SECBUFFER_ATTRMASK))
             return i;
-    }
-
-    return -1;
-}
-
-static int schan_init_sec_ctx_get_next_input_buffer(const struct schan_transport *t, struct schan_buffers *s)
-{
-    if (s->current_buffer_idx != -1)
-        return -1;
-    return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-}
-
-static int schan_init_sec_ctx_get_next_output_buffer(const struct schan_transport *t, struct schan_buffers *s)
-{
-    if (s->current_buffer_idx == -1)
-    {
-        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (t->ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY)
-        {
-            if (idx == -1)
-            {
-                idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_EMPTY);
-                if (idx != -1) s->desc->pBuffers[idx].BufferType = SECBUFFER_TOKEN;
-            }
-            if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer)
-            {
-                s->desc->pBuffers[idx].cbBuffer = 0;
-                s->allow_buffer_resize = TRUE;
-            }
-        }
-        return idx;
     }
 
     return -1;
@@ -855,12 +813,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
 
     ctx->req_ctx_attr = fContextReq;
 
-    init_schan_buffers(&ctx->transport.in, pInput, schan_init_sec_ctx_get_next_input_buffer);
-    ctx->transport.in.limit = expected_size;
-    init_schan_buffers(&ctx->transport.out, pOutput, schan_init_sec_ctx_get_next_output_buffer);
-
     /* Perform the TLS handshake */
-    ret = schan_funcs->handshake(ctx->transport.session);
+    ret = schan_funcs->handshake(ctx->transport.session, pInput, expected_size, pOutput, fContextReq);
 
     out_buffers = &ctx->transport.out;
     if (out_buffers->current_buffer_idx != -1)
@@ -1147,56 +1101,10 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
     }
 }
 
-static int schan_encrypt_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
-{
-    SecBuffer *b;
-
-    if (s->current_buffer_idx == -1)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_STREAM_HEADER);
-
-    b = &s->desc->pBuffers[s->current_buffer_idx];
-
-    if (b->BufferType == SECBUFFER_STREAM_HEADER)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
-
-    if (b->BufferType == SECBUFFER_DATA)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_STREAM_TRAILER);
-
-    return -1;
-}
-
-static int schan_encrypt_message_get_next_buffer_token(const struct schan_transport *t, struct schan_buffers *s)
-{
-    SecBuffer *b;
-
-    if (s->current_buffer_idx == -1)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-
-    b = &s->desc->pBuffers[s->current_buffer_idx];
-
-    if (b->BufferType == SECBUFFER_TOKEN)
-    {
-        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (idx != s->current_buffer_idx) return -1;
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
-    }
-
-    if (b->BufferType == SECBUFFER_DATA)
-    {
-        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (idx != -1)
-            idx = schan_find_sec_buffer_idx(s->desc, idx + 1, SECBUFFER_TOKEN);
-        return idx;
-    }
-
-    return -1;
-}
-
 static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle,
         ULONG quality, PSecBufferDesc message, ULONG message_seq_no)
 {
     struct schan_context *ctx;
-    struct schan_buffers *b;
     SECURITY_STATUS status;
     SecBuffer *buffer;
     SIZE_T data_size;
@@ -1224,34 +1132,19 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     data = malloc(data_size);
     memcpy(data, buffer->pvBuffer, data_size);
 
-    if (schan_find_sec_buffer_idx(message, 0, SECBUFFER_STREAM_HEADER) != -1)
-        init_schan_buffers(&ctx->transport.out, message, schan_encrypt_message_get_next_buffer);
-    else
-        init_schan_buffers(&ctx->transport.out, message, schan_encrypt_message_get_next_buffer_token);
-
     length = data_size;
-    status = schan_funcs->send(ctx->transport.session, data, &length);
+    status = schan_funcs->send(ctx->transport.session, message, data, &length);
 
     TRACE("Sent %ld bytes.\n", length);
 
     if (length != data_size)
         status = SEC_E_INTERNAL_ERROR;
 
-    b = &ctx->transport.out;
-    b->desc->pBuffers[b->current_buffer_idx].cbBuffer = b->offset;
     free(data);
 
     TRACE("Returning %#x.\n", status);
 
     return status;
-}
-
-static int schan_decrypt_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
-{
-    if (s->current_buffer_idx == -1)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
-
-    return -1;
 }
 
 static int schan_validate_decrypt_buffer_desc(PSecBufferDesc message)
@@ -1357,11 +1250,8 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     data_size = expected_size - ctx->header_size;
     data = malloc(data_size);
 
-    init_schan_buffers(&ctx->transport.in, message, schan_decrypt_message_get_next_buffer);
-    ctx->transport.in.limit = expected_size;
-
     received = data_size;
-    status = schan_funcs->recv(ctx->transport.session, data, &received);
+    status = schan_funcs->recv(ctx->transport.session, message, expected_size, data, &received);
 
     if (status != SEC_E_OK && status != SEC_I_RENEGOTIATE)
     {

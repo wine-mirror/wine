@@ -197,6 +197,111 @@ static void compat_gnutls_dtls_set_mtu(gnutls_session_t session, unsigned int mt
     FIXME("\n");
 }
 
+static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc desc,
+        int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *))
+{
+    s->offset = 0;
+    s->limit = ~0UL;
+    s->desc = desc;
+    s->current_buffer_idx = -1;
+    s->allow_buffer_resize = FALSE;
+    s->get_next_buffer = get_next_buffer;
+}
+
+static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int start_idx, ULONG buffer_type)
+{
+    unsigned int i;
+    PSecBuffer buffer;
+
+    for (i = start_idx; i < desc->cBuffers; ++i)
+    {
+        buffer = &desc->pBuffers[i];
+        if ((buffer->BufferType | SECBUFFER_ATTRMASK) == (buffer_type | SECBUFFER_ATTRMASK))
+            return i;
+    }
+
+    return -1;
+}
+
+static int handshake_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+{
+    if (s->current_buffer_idx != -1)
+        return -1;
+    return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
+}
+
+static int handshake_get_next_buffer_alloc(const struct schan_transport *t, struct schan_buffers *s)
+{
+    if (s->current_buffer_idx == -1)
+    {
+        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
+        if (idx == -1)
+        {
+            idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_EMPTY);
+            if (idx != -1) s->desc->pBuffers[idx].BufferType = SECBUFFER_TOKEN;
+        }
+        if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer)
+        {
+            s->desc->pBuffers[idx].cbBuffer = 0;
+            s->allow_buffer_resize = TRUE;
+        }
+        return idx;
+    }
+    return -1;
+}
+
+static int send_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+{
+    SecBuffer *b;
+
+    if (s->current_buffer_idx == -1)
+        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_STREAM_HEADER);
+
+    b = &s->desc->pBuffers[s->current_buffer_idx];
+
+    if (b->BufferType == SECBUFFER_STREAM_HEADER)
+        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
+
+    if (b->BufferType == SECBUFFER_DATA)
+        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_STREAM_TRAILER);
+
+    return -1;
+}
+
+static int send_message_get_next_buffer_token(const struct schan_transport *t, struct schan_buffers *s)
+{
+    SecBuffer *b;
+
+    if (s->current_buffer_idx == -1)
+        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
+
+    b = &s->desc->pBuffers[s->current_buffer_idx];
+
+    if (b->BufferType == SECBUFFER_TOKEN)
+    {
+        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
+        if (idx != s->current_buffer_idx) return -1;
+        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
+    }
+
+    if (b->BufferType == SECBUFFER_DATA)
+    {
+        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
+        if (idx != -1)
+            idx = schan_find_sec_buffer_idx(s->desc, idx + 1, SECBUFFER_TOKEN);
+        return idx;
+    }
+
+    return -1;
+}
+
+static int recv_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+{
+    if (s->current_buffer_idx != -1)
+        return -1;
+    return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
+}
+
 static void resize_current_buffer(const struct schan_buffers *s, SIZE_T min_size)
 {
     SecBuffer *b = &s->desc->pBuffers[s->current_buffer_idx];
@@ -474,10 +579,17 @@ static void CDECL schan_set_session_target(schan_session session, const char *ta
     pgnutls_server_name_set( s, GNUTLS_NAME_DNS, target, strlen(target) );
 }
 
-static SECURITY_STATUS CDECL schan_handshake(schan_session session)
+static SECURITY_STATUS CDECL schan_handshake(schan_session session, SecBufferDesc *input,
+                                             SIZE_T input_size, SecBufferDesc *output, ULONG flags )
 {
     gnutls_session_t s = (gnutls_session_t)session;
+    struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     int err;
+
+    init_schan_buffers(&t->in, input, handshake_get_next_buffer);
+    t->in.limit = input_size;
+    init_schan_buffers(&t->out, output, (flags & ISC_REQ_ALLOCATE_MEMORY) ?
+                       handshake_get_next_buffer_alloc : handshake_get_next_buffer );
 
     while(1) {
         err = pgnutls_handshake(s);
@@ -723,10 +835,17 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_send(schan_session session, const void *buffer, SIZE_T *length)
+static SECURITY_STATUS CDECL schan_send(schan_session session, SecBufferDesc *output,
+                                        const void *buffer, SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
+    struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     SSIZE_T ret, total = 0;
+
+    if (schan_find_sec_buffer_idx(output, 0, SECBUFFER_STREAM_HEADER) != -1)
+        init_schan_buffers(&t->out, output, send_message_get_next_buffer);
+    else
+        init_schan_buffers(&t->out, output, send_message_get_next_buffer_token);
 
     for (;;)
     {
@@ -735,11 +854,10 @@ static SECURITY_STATUS CDECL schan_send(schan_session session, const void *buffe
         {
             total += ret;
             TRACE( "sent %ld now %ld/%ld\n", ret, total, *length );
-            if (total == *length) return SEC_E_OK;
+            if (total == *length) break;
         }
         else if (ret == GNUTLS_E_AGAIN)
         {
-            struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
             SIZE_T count = 0;
 
             if (get_buffer(t, &t->out, &count)) continue;
@@ -751,15 +869,23 @@ static SECURITY_STATUS CDECL schan_send(schan_session session, const void *buffe
             return SEC_E_INTERNAL_ERROR;
         }
     }
+
+    t->out.desc->pBuffers[t->out.current_buffer_idx].cbBuffer = t->out.offset;
+    return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_recv(schan_session session, void *buffer, SIZE_T *length)
+static SECURITY_STATUS CDECL schan_recv(schan_session session, SecBufferDesc *input,
+                                        SIZE_T input_size, void *buffer, SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
+    struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     size_t data_size = *length;
     size_t received = 0;
     ssize_t ret;
     SECURITY_STATUS status = SEC_E_OK;
+
+    init_schan_buffers(&t->in, input, recv_message_get_next_buffer);
+    t->in.limit = input_size;
 
     while (received < data_size)
     {
@@ -769,7 +895,6 @@ static SECURITY_STATUS CDECL schan_recv(schan_session session, void *buffer, SIZ
         else if (!ret) break;
         else if (ret == GNUTLS_E_AGAIN)
         {
-            struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
             SIZE_T count = 0;
 
             if (!get_buffer(t, &t->in, &count)) break;

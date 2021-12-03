@@ -128,9 +128,9 @@ struct schan_funcs
     unsigned int (CDECL *get_session_cipher_block_size)(schan_session);
     SECURITY_STATUS (CDECL *get_session_peer_certificate)(schan_session, struct schan_cert_list *);
     SECURITY_STATUS (CDECL *get_unique_channel_binding)(schan_session, SecPkgContext_Bindings *);
-    SECURITY_STATUS (CDECL *handshake)(schan_session session);
-    SECURITY_STATUS (CDECL *recv)(schan_session, void *, SIZE_T *);
-    SECURITY_STATUS (CDECL *send)(schan_session, const void *, SIZE_T *);
+    SECURITY_STATUS (CDECL *handshake)(schan_session, SecBufferDesc *, SIZE_T, SecBufferDesc *, ULONG );
+    SECURITY_STATUS (CDECL *recv)(schan_session, SecBufferDesc *, SIZE_T, void *, SIZE_T *);
+    SECURITY_STATUS (CDECL *send)(schan_session, SecBufferDesc *, const void *, SIZE_T *);
     void (CDECL *set_application_protocols)(schan_session, unsigned char *, unsigned int);
     SECURITY_STATUS (CDECL *set_dtls_mtu)(schan_session, unsigned int);
     void (CDECL *set_session_target)(schan_session, const char *);
