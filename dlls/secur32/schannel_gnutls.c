@@ -203,40 +203,42 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
 {
     struct schan_transport *t = (struct schan_transport*)transport;
     gnutls_session_t s = (gnutls_session_t)callbacks->get_session_for_transport(t);
+    SIZE_T len = buff_len;
+    char *b;
 
-    int ret = callbacks->pull(transport, buff, &buff_len);
-    if (ret == -1)
+    TRACE("Push %lu bytes\n", len);
+
+    b = callbacks->get_buffer(t, &t->in, &len);
+    if (!b)
     {
         pgnutls_transport_set_errno(s, EAGAIN);
         return -1;
     }
-    if (ret < 0)
-    {
-        FIXME("unhandled error from pull callback %d\n", ret);
-        return -1;
-    }
-
-    return buff_len;
+    memcpy(buff, b, len);
+    t->in.offset += len;
+    TRACE("Wrote %lu bytes\n", len);
+    return len;
 }
 
 static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
     gnutls_session_t s = (gnutls_session_t)callbacks->get_session_for_transport(t);
+    SIZE_T len = buff_len;
+    char *b;
 
-    int ret = callbacks->push(transport, buff, &buff_len);
-    if (ret == -1)
+    TRACE("Push %lu bytes\n", len);
+
+    b = callbacks->get_buffer(t, &t->out, &len);
+    if (!b)
     {
         pgnutls_transport_set_errno(s, EAGAIN);
         return -1;
     }
-    if (ret < 0)
-    {
-        FIXME("unhandled error from push callback %d\n", ret);
-        return -1;
-    }
-
-    return buff_len;
+    memcpy(b, buff, len);
+    t->out.offset += len;
+    TRACE("Wrote %lu bytes\n", len);
+    return len;
 }
 
 static const struct {

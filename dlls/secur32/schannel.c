@@ -745,84 +745,6 @@ static char * CDECL schan_get_buffer(const struct schan_transport *t, struct sch
     return (char *)buffer->pvBuffer + s->offset;
 }
 
-/* schan_pull
- *      Read data from the transport input buffer.
- *
- * t - The session transport object.
- * buff - The buffer into which to store the read data.  Must be at least
- *        *buff_len bytes in length.
- * buff_len - On input, *buff_len is the desired length to read.  On successful
- *            return, *buff_len is the number of bytes actually read.
- *
- * Returns:
- *  0 on success, in which case:
- *      *buff_len == 0 indicates end of file.
- *      *buff_len > 0 indicates that some data was read.  May be less than
- *          what was requested, in which case the caller should call again if/
- *          when they want more.
- *  -1 when no data could be read without blocking
- *  another errno-style error value on failure
- */
-static int CDECL schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
-{
-    char *b;
-    SIZE_T local_len = *buff_len;
-
-    TRACE("Pull %lu bytes\n", local_len);
-
-    *buff_len = 0;
-
-    b = schan_get_buffer(t, &t->in, &local_len);
-    if (!b)
-        return -1;
-
-    memcpy(buff, b, local_len);
-    t->in.offset += local_len;
-
-    TRACE("Read %lu bytes\n", local_len);
-
-    *buff_len = local_len;
-    return 0;
-}
-
-/* schan_push
- *      Write data to the transport output buffer.
- *
- * t - The session transport object.
- * buff - The buffer of data to write.  Must be at least *buff_len bytes in length.
- * buff_len - On input, *buff_len is the desired length to write.  On successful
- *            return, *buff_len is the number of bytes actually written.
- *
- * Returns:
- *  0 on success
- *      *buff_len will be > 0 indicating how much data was written.  May be less
- *          than what was requested, in which case the caller should call again
- *          if/when they want to write more.
- * -1 when no data could be written without blocking
- *  another errno-style error value on failure
- */
-static int CDECL schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
-{
-    char *b;
-    SIZE_T local_len = *buff_len;
-
-    TRACE("Push %lu bytes\n", local_len);
-
-    *buff_len = 0;
-
-    b = schan_get_buffer(t, &t->out, &local_len);
-    if (!b)
-        return -1;
-
-    memcpy(b, buff, local_len);
-    t->out.offset += local_len;
-
-    TRACE("Wrote %lu bytes\n", local_len);
-
-    *buff_len = local_len;
-    return 0;
-}
-
 static schan_session CDECL schan_get_session_for_transport(struct schan_transport* t)
 {
     return t->ctx->session;
@@ -1654,8 +1576,6 @@ const struct schan_callbacks schan_callbacks =
 {
     schan_get_buffer,
     schan_get_session_for_transport,
-    schan_pull,
-    schan_push,
 };
 
 void SECUR32_initSchannelSP(void)

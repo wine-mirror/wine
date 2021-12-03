@@ -140,8 +140,6 @@ struct schan_callbacks
 {
     char * (CDECL *get_buffer)(const struct schan_transport *, struct schan_buffers *, SIZE_T *);
     schan_session (CDECL *get_session_for_transport)(struct schan_transport *);
-    int CDECL (CDECL *pull)(struct schan_transport *, void *, size_t *);
-    int CDECL (CDECL *push)(struct schan_transport *, const void *, size_t *);
 };
 
 extern const struct schan_funcs *schan_funcs;
