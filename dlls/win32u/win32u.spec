@@ -1258,7 +1258,7 @@
 @ stub NtUserSetWindowsHookAW
 @ stub NtUserSetWindowsHookEx
 @ stub NtUserShowCaret
-@ stub NtUserShowCursor
+@ stdcall NtUserShowCursor(long)
 @ stub NtUserShowScrollBar
 @ stub NtUserShowSystemCursor
 @ stub NtUserShowWindow

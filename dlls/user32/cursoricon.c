@@ -1934,33 +1934,6 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
 }
 
 /***********************************************************************
- *		ShowCursor (USER32.@)
- */
-INT WINAPI DECLSPEC_HOTPATCH ShowCursor( BOOL bShow )
-{
-    HCURSOR cursor;
-    int increment = bShow ? 1 : -1;
-    int count;
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = SET_CURSOR_COUNT;
-        req->show_count = increment;
-        wine_server_call( req );
-        cursor = wine_server_ptr_handle( reply->prev_handle );
-        count = reply->prev_count + increment;
-    }
-    SERVER_END_REQ;
-
-    TRACE("%d, count=%d\n", bShow, count );
-
-    if (bShow && !count) USER_Driver->pSetCursor( cursor );
-    else if (!bShow && count == -1) USER_Driver->pSetCursor( 0 );
-
-    return count;
-}
-
-/***********************************************************************
  *		GetCursor (USER32.@)
  */
 HCURSOR WINAPI GetCursor(void)

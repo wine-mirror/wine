@@ -1032,6 +1032,11 @@ static BOOL CDECL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDE
     return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
 }
 
+static void CDECL loaderdrv_SetCursor( HCURSOR cursor )
+{
+    load_driver()->pSetCursor( cursor );
+}
+
 static void CDECL loaderdrv_UpdateClipboard(void)
 {
     load_driver()->pUpdateClipboard();
@@ -1055,6 +1060,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pChangeDisplaySettingsEx = loaderdrv_ChangeDisplaySettingsEx,
     .pEnumDisplaySettingsEx = loaderdrv_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
+    .pSetCursor = loaderdrv_SetCursor,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
     .pScrollDC = nulldrv_ScrollDC,
 };
