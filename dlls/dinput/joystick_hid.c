@@ -2437,7 +2437,7 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
         case PID_USAGE_ET_RAMP:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
-            memcpy( params->lpvTypeSpecificParams, &impl->constant_force, sizeof(DIRAMPFORCE) );
+            memcpy( params->lpvTypeSpecificParams, &impl->ramp_force, sizeof(DIRAMPFORCE) );
             break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
             FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
@@ -2591,9 +2591,9 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         case PID_USAGE_ET_RAMP:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
-            if (memcmp( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
+            if (memcmp( &impl->ramp_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
                 impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
+            memcpy( &impl->ramp_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
             impl->params.cbTypeSpecificParams = sizeof(DIRAMPFORCE);
             break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
