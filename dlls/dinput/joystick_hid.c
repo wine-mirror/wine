@@ -2419,28 +2419,34 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
         case PID_USAGE_ET_TRIANGLE:
         case PID_USAGE_ET_SAWTOOTH_UP:
         case PID_USAGE_ET_SAWTOOTH_DOWN:
+            capacity = params->cbTypeSpecificParams;
+            params->cbTypeSpecificParams = sizeof(DIPERIODIC);
+            if (capacity < sizeof(DIPERIODIC)) return DIERR_MOREDATA;
             if (!params->lpvTypeSpecificParams) return E_POINTER;
-            if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
             memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DIPERIODIC) );
             break;
         case PID_USAGE_ET_SPRING:
         case PID_USAGE_ET_DAMPER:
         case PID_USAGE_ET_INERTIA:
         case PID_USAGE_ET_FRICTION:
-            count = impl->params.cbTypeSpecificParams;
             capacity = params->cbTypeSpecificParams;
-            params->cbTypeSpecificParams = count;
-            if (capacity < count) return DIERR_MOREDATA;
+            params->cbTypeSpecificParams = impl->params.cbTypeSpecificParams;
+            if (capacity < impl->params.cbTypeSpecificParams) return DIERR_MOREDATA;
+            if (!params->lpvTypeSpecificParams) return E_POINTER;
             memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, params->cbTypeSpecificParams );
             break;
         case PID_USAGE_ET_CONSTANT_FORCE:
+            capacity = params->cbTypeSpecificParams;
+            params->cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+            if (capacity < sizeof(DICONSTANTFORCE)) return DIERR_MOREDATA;
             if (!params->lpvTypeSpecificParams) return E_POINTER;
-            if (params->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) return DIERR_INVALIDPARAM;
             memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
             break;
         case PID_USAGE_ET_RAMP:
+            capacity = params->cbTypeSpecificParams;
+            params->cbTypeSpecificParams = sizeof(DIRAMPFORCE);
+            if (capacity < sizeof(DIRAMPFORCE)) return DIERR_MOREDATA;
             if (!params->lpvTypeSpecificParams) return E_POINTER;
-            if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
             memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
             break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
