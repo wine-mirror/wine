@@ -1057,8 +1057,27 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         }
         case SECPKG_ATTR_UNIQUE_BINDINGS:
         {
+            static const char prefix[] = "tls-unique:";
             SecPkgContext_Bindings *bindings = buffer;
-            return schan_funcs->get_unique_channel_binding(ctx->transport.session, bindings);
+            ULONG size;
+            char *p;
+
+            if (schan_funcs->get_unique_channel_binding(ctx->transport.session, NULL, &size) != SEC_E_BUFFER_TOO_SMALL)
+                return SEC_E_INTERNAL_ERROR;
+
+            bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix)-1 + size;
+            /* freed with FreeContextBuffer */
+            bindings->Bindings = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
+            if(!bindings->Bindings)
+                return SEC_E_INSUFFICIENT_MEMORY;
+
+            bindings->Bindings->cbApplicationDataLength = sizeof(prefix)-1 + size;
+            bindings->Bindings->dwApplicationDataOffset = sizeof(*bindings->Bindings);
+
+            p = (char*)(bindings->Bindings+1);
+            memcpy(p, prefix, sizeof(prefix)-1);
+            p += sizeof(prefix)-1;
+            return schan_funcs->get_unique_channel_binding(ctx->transport.session, p, &size);
         }
         case SECPKG_ATTR_APPLICATION_PROTOCOL:
         {

@@ -755,13 +755,11 @@ static SECURITY_STATUS CDECL schan_get_connection_info(schan_session session, Se
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session session, SecPkgContext_Bindings *bindings)
+static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session session, void *buffer, ULONG *bufsize)
 {
-    static const char prefix[] = "tls-unique:";
     gnutls_datum_t datum;
     int rc;
     SECURITY_STATUS ret;
-    char *p;
     gnutls_session_t s = (gnutls_session_t)session;
 
     rc = pgnutls_session_channel_binding(s, GNUTLS_CB_TLS_UNIQUE, &datum);
@@ -770,21 +768,14 @@ static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session sess
         pgnutls_perror(rc);
         return SEC_E_INTERNAL_ERROR;
     }
-
-    bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + sizeof(prefix)-1 + datum.size;
-    bindings->Bindings = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
-    if (!bindings->Bindings)
-        ret = SEC_E_INSUFFICIENT_MEMORY;
-    else
+    if (buffer && *bufsize >= datum.size)
     {
-        bindings->Bindings->cbApplicationDataLength = sizeof(prefix)-1 + datum.size;
-        bindings->Bindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
-        p = (char*)(bindings->Bindings+1);
-        memcpy(p, prefix, sizeof(prefix)-1);
-        p += sizeof(prefix)-1;
-        memcpy(p, datum.data, datum.size);
+        memcpy( buffer, datum.data, datum.size );
         ret = SEC_E_OK;
     }
+    else ret = SEC_E_BUFFER_TOO_SMALL;
+
+    *bufsize = datum.size;
     free(datum.data);
     return ret;
 }
