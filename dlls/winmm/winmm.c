@@ -145,11 +145,13 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
         if (!WINMM_CreateIData(hInstDLL))
             return FALSE;
 
+        joystick_load( hInstDLL );
         break;
     case DLL_PROCESS_DETACH:
         if(fImpLoad)
             break;
 
+        joystick_unload();
         MCI_SendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0L);
         MMDRV_Exit();
         DRIVER_UnloadAll();

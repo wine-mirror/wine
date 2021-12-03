@@ -9756,10 +9756,6 @@ static void test_winmm_joystick(void)
     ok( ret == 16, "joyGetNumDevs returned %u\n", ret );
 
     ret = joyGetDevCapsW( 0, (JOYCAPSW *)&caps, sizeof(JOYCAPSW) );
-    /* FIXME: Marvin somehow manages to get a device, ignore it */
-    if (!strcmp( winetest_platform, "wine") && ret == 0 &&
-        !wcscmp( caps.szPname, L"QEMU Virtio Tablet" ))
-        return;
     ok( ret == JOYERR_PARMS, "joyGetDevCapsW returned %u\n", ret );
 
     memset( &caps, 0xcd, sizeof(caps) );
@@ -9803,7 +9799,6 @@ static void test_winmm_joystick(void)
     ret = joyGetPosEx( 0, &infoex );
     /* first call for an index sometimes fail */
     if (ret == JOYERR_PARMS) ret = joyGetPosEx( 0, &infoex );
-    todo_wine
     ok( ret == 0, "joyGetPosEx returned %u\n", ret );
 
     ret = joyGetDevCapsW( 1, (JOYCAPSW *)&caps, sizeof(JOYCAPSW) );
@@ -9811,43 +9806,29 @@ static void test_winmm_joystick(void)
 
     memset( &caps, 0xcd, sizeof(caps) );
     ret = joyGetDevCapsW( 0, (JOYCAPSW *)&caps, sizeof(caps) );
-    todo_wine
     ok( ret == 0, "joyGetDevCapsW returned %u\n", ret );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wMid );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wPid );
     todo_wine
     check_member_wstr( caps, expect_caps, szPname );
     check_member( caps, expect_caps, "%#x", wXmin );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wXmax );
     check_member( caps, expect_caps, "%#x", wYmin );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wYmax );
     check_member( caps, expect_caps, "%#x", wZmin );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wZmax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wNumButtons );
     check_member( caps, expect_caps, "%#x", wPeriodMin );
     check_member( caps, expect_caps, "%#x", wPeriodMax );
     check_member( caps, expect_caps, "%#x", wRmin );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wRmax );
     check_member( caps, expect_caps, "%#x", wUmin );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wUmax );
     check_member( caps, expect_caps, "%#x", wVmin );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wVmax );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wCaps );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wMaxAxes );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wNumAxes );
-    todo_wine
     check_member( caps, expect_caps, "%#x", wMaxButtons );
     check_member_wstr( caps, expect_caps, szRegKey );
     check_member_wstr( caps, expect_caps, szOEMVxD );
@@ -9856,7 +9837,6 @@ static void test_winmm_joystick(void)
     check_member_guid( caps, expect_caps, NameGuid );
 
     ret = joyGetDevCapsW( 0, (JOYCAPSW *)&caps, sizeof(JOYCAPSW) );
-    todo_wine
     ok( ret == 0, "joyGetDevCapsW returned %u\n", ret );
     ret = joyGetDevCapsW( 0, NULL, sizeof(JOYCAPSW) );
     ok( ret == MMSYSERR_INVALPARAM, "joyGetDevCapsW returned %u\n", ret );
@@ -9878,29 +9858,19 @@ static void test_winmm_joystick(void)
     infoex.dwSize = sizeof(JOYINFOEX);
     infoex.dwFlags = JOY_RETURNALL;
     ret = joyGetPosEx( 0, &infoex );
-    todo_wine
     ok( ret == 0, "joyGetPosEx returned %u\n", ret );
     check_member( infoex, expect_infoex[0], "%#x", dwSize );
     check_member( infoex, expect_infoex[0], "%#x", dwFlags );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwXpos );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwYpos );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwZpos );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwRpos );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwUpos );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwVpos );
     check_member( infoex, expect_infoex[0], "%#x", dwButtons );
     check_member( infoex, expect_infoex[0], "%#x", dwButtonNumber );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwPOV );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwReserved1 );
-    todo_wine
     check_member( infoex, expect_infoex[0], "%#x", dwReserved2 );
 
     infoex.dwSize = sizeof(JOYINFOEX) - 4;
@@ -9913,13 +9883,9 @@ static void test_winmm_joystick(void)
     ok( ret == JOYERR_PARMS, "joyGetPos returned %u\n", ret );
     memset( &info, 0xcd, sizeof(info) );
     ret = joyGetPos( 0, &info );
-    todo_wine
     ok( ret == 0, "joyGetPos returned %u\n", ret );
-    todo_wine
     check_member( info, expect_info, "%#x", wXpos );
-    todo_wine
     check_member( info, expect_info, "%#x", wYpos );
-    todo_wine
     check_member( info, expect_info, "%#x", wZpos );
     check_member( info, expect_info, "%#x", wButtons );
 
@@ -9953,24 +9919,16 @@ static void test_winmm_joystick(void)
     infoex.dwSize = sizeof(JOYINFOEX);
     infoex.dwFlags = JOY_RETURNALL;
     ret = joyGetPosEx( 0, &infoex );
-    todo_wine
     ok( ret == 0, "joyGetPosEx returned %u\n", ret );
     check_member( infoex, expect_infoex[1], "%#x", dwSize );
     check_member( infoex, expect_infoex[1], "%#x", dwFlags );
     check_member( infoex, expect_infoex[1], "%#x", dwXpos );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwYpos );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwZpos );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwRpos );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwUpos );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwVpos );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwButtons );
-    todo_wine
     check_member( infoex, expect_infoex[1], "%#x", dwButtonNumber );
     check_member( infoex, expect_infoex[1], "%#x", dwPOV );
 
@@ -9983,26 +9941,17 @@ static void test_winmm_joystick(void)
     infoex.dwSize = sizeof(JOYINFOEX);
     infoex.dwFlags = JOY_RETURNALL;
     ret = joyGetPosEx( 0, &infoex );
-    todo_wine
     ok( ret == 0, "joyGetPosEx returned %u\n", ret );
     check_member( infoex, expect_infoex[2], "%#x", dwSize );
     check_member( infoex, expect_infoex[2], "%#x", dwFlags );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwXpos );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwYpos );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwZpos );
     check_member( infoex, expect_infoex[2], "%#x", dwRpos );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwUpos );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwVpos );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwButtons );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwButtonNumber );
-    todo_wine
     check_member( infoex, expect_infoex[2], "%#x", dwPOV );
 
     ret = IDirectInputDevice8_Release( device );
