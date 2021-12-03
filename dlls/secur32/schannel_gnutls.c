@@ -202,7 +202,7 @@ static void compat_gnutls_dtls_set_mtu(gnutls_session_t session, unsigned int mt
 static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = (gnutls_session_t)callbacks->get_session_for_transport(t);
+    gnutls_session_t s = (gnutls_session_t)t->session;
     SIZE_T len = buff_len;
     char *b;
 
@@ -223,7 +223,7 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
 static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = (gnutls_session_t)callbacks->get_session_for_transport(t);
+    gnutls_session_t s = (gnutls_session_t)t->session;
     SIZE_T len = buff_len;
     char *b;
 
@@ -295,7 +295,7 @@ static DWORD CDECL schan_get_enabled_protocols(void)
 static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = (gnutls_session_t)callbacks->get_session_for_transport(t);
+    gnutls_session_t s = (gnutls_session_t)t->session;
     SIZE_T count = 0;
 
     TRACE("\n");

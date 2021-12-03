@@ -57,7 +57,6 @@ struct schan_handle
 
 struct schan_context
 {
-    schan_session session;
     struct schan_transport transport;
     ULONG req_ctx_attr;
     const CERT_CONTEXT *cert;
@@ -745,11 +744,6 @@ static char * CDECL schan_get_buffer(const struct schan_transport *t, struct sch
     return (char *)buffer->pvBuffer + s->offset;
 }
 
-static schan_session CDECL schan_get_session_for_transport(struct schan_transport* t)
-{
-    return t->ctx->session;
-}
-
 static int schan_init_sec_ctx_get_next_input_buffer(const struct schan_transport *t, struct schan_buffers *s)
 {
     if (s->current_buffer_idx != -1)
@@ -862,7 +856,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INTERNAL_ERROR;
         }
 
-        if (!schan_funcs->create_session(&ctx->session, cred))
+        if (!schan_funcs->create_session(&ctx->transport.session, cred))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             free(ctx);
@@ -875,7 +869,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             ctx->header_size = HEADER_SIZE_TLS;
 
         ctx->transport.ctx = ctx;
-        schan_funcs->set_session_transport(ctx->session, &ctx->transport);
+        schan_funcs->set_session_transport(ctx->transport.session, &ctx->transport);
 
         if (pszTargetName && *pszTargetName)
         {
@@ -885,7 +879,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             if (target)
             {
                 WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, target, len, NULL, NULL );
-                schan_funcs->set_session_target( ctx->session, target );
+                schan_funcs->set_session_target( ctx->transport.session, target );
                 free( target );
             }
         }
@@ -893,13 +887,13 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_APPLICATION_PROTOCOLS)) != -1)
         {
             buffer = &pInput->pBuffers[idx];
-            schan_funcs->set_application_protocols(ctx->session, buffer->pvBuffer, buffer->cbBuffer);
+            schan_funcs->set_application_protocols(ctx->transport.session, buffer->pvBuffer, buffer->cbBuffer);
         }
 
         if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_DTLS_MTU)) != -1)
         {
             buffer = &pInput->pBuffers[idx];
-            if (buffer->cbBuffer >= sizeof(WORD)) schan_funcs->set_dtls_mtu(ctx->session, *(WORD *)buffer->pvBuffer);
+            if (buffer->cbBuffer >= sizeof(WORD)) schan_funcs->set_dtls_mtu(ctx->transport.session, *(WORD *)buffer->pvBuffer);
             else WARN("invalid buffer size %u\n", buffer->cbBuffer);
         }
 
@@ -945,7 +939,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     init_schan_buffers(&ctx->transport.out, pOutput, schan_init_sec_ctx_get_next_output_buffer);
 
     /* Perform the TLS handshake */
-    ret = schan_funcs->handshake(ctx->session);
+    ret = schan_funcs->handshake(ctx->transport.session);
 
     out_buffers = &ctx->transport.out;
     if (out_buffers->current_buffer_idx != -1)
@@ -1046,7 +1040,7 @@ static SECURITY_STATUS ensure_remote_cert(struct schan_context *ctx)
     if (!(store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL)))
         return GetLastError();
 
-    if ((status = schan_funcs->get_session_peer_certificate(ctx->session, &list)) == SEC_E_OK)
+    if ((status = schan_funcs->get_session_peer_certificate(ctx->transport.session, &list)) == SEC_E_OK)
     {
         unsigned int i;
         for (i = 0; i < list.count; i++)
@@ -1084,13 +1078,13 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_STREAM_SIZES:
         {
             SecPkgContext_ConnectionInfo info;
-            status = schan_funcs->get_connection_info(ctx->session, &info);
+            status = schan_funcs->get_connection_info(ctx->transport.session, &info);
             if (status == SEC_E_OK)
             {
                 SecPkgContext_StreamSizes *stream_sizes = buffer;
                 SIZE_T mac_size = info.dwHashStrength;
-                unsigned int block_size = schan_funcs->get_session_cipher_block_size(ctx->session);
-                unsigned int message_size = schan_funcs->get_max_message_size(ctx->session);
+                unsigned int block_size = schan_funcs->get_session_cipher_block_size(ctx->transport.session);
+                unsigned int message_size = schan_funcs->get_max_message_size(ctx->transport.session);
 
                 TRACE("Using header size %lu mac bytes %lu, message size %u, block size %u\n",
                       ctx->header_size, mac_size, message_size, block_size);
@@ -1108,12 +1102,12 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_KEY_INFO:
         {
             SecPkgContext_ConnectionInfo conn_info;
-            status = schan_funcs->get_connection_info(ctx->session, &conn_info);
+            status = schan_funcs->get_connection_info(ctx->transport.session, &conn_info);
             if (status == SEC_E_OK)
             {
                 SecPkgContext_KeyInfoW *info = buffer;
                 info->KeySize = conn_info.dwCipherStrength;
-                info->SignatureAlgorithm = schan_funcs->get_key_signature_algorithm(ctx->session);
+                info->SignatureAlgorithm = schan_funcs->get_key_signature_algorithm(ctx->transport.session);
                 info->EncryptAlgorithm = conn_info.aiCipher;
                 info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, TRUE);
                 info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, TRUE);
@@ -1134,7 +1128,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_CONNECTION_INFO:
         {
             SecPkgContext_ConnectionInfo *info = buffer;
-            return schan_funcs->get_connection_info(ctx->session, info);
+            return schan_funcs->get_connection_info(ctx->transport.session, info);
         }
         case SECPKG_ATTR_ENDPOINT_BINDINGS:
         {
@@ -1180,12 +1174,12 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_UNIQUE_BINDINGS:
         {
             SecPkgContext_Bindings *bindings = buffer;
-            return schan_funcs->get_unique_channel_binding(ctx->session, bindings);
+            return schan_funcs->get_unique_channel_binding(ctx->transport.session, bindings);
         }
         case SECPKG_ATTR_APPLICATION_PROTOCOL:
         {
             SecPkgContext_ApplicationProtocol *protocol = buffer;
-            return schan_funcs->get_application_protocol(ctx->session, protocol);
+            return schan_funcs->get_application_protocol(ctx->transport.session, protocol);
         }
 
         default:
@@ -1315,7 +1309,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
         init_schan_buffers(&ctx->transport.out, message, schan_encrypt_message_get_next_buffer_token);
 
     length = data_size;
-    status = schan_funcs->send(ctx->session, data, &length);
+    status = schan_funcs->send(ctx->transport.session, data, &length);
 
     TRACE("Sent %ld bytes.\n", length);
 
@@ -1448,7 +1442,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     while (received < data_size)
     {
         SIZE_T length = data_size - received;
-        status = schan_funcs->recv(ctx->session, data + received, &length);
+        status = schan_funcs->recv(ctx->transport.session, data + received, &length);
 
         if (status == SEC_I_RENEGOTIATE)
             break;
@@ -1505,7 +1499,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     if (!ctx) return SEC_E_INVALID_HANDLE;
 
     if (ctx->cert) CertFreeCertificateContext(ctx->cert);
-    schan_funcs->dispose_session(ctx->session);
+    schan_funcs->dispose_session(ctx->transport.session);
     free(ctx);
     return SEC_E_OK;
 }
@@ -1575,7 +1569,6 @@ static const SecurityFunctionTableW schanTableW = {
 const struct schan_callbacks schan_callbacks =
 {
     schan_get_buffer,
-    schan_get_session_for_transport,
 };
 
 void SECUR32_initSchannelSP(void)
@@ -1646,7 +1639,7 @@ void SECUR32_deinitSchannelSP(void)
         if (schan_handle_table[i].type == SCHAN_HANDLE_CTX)
         {
             struct schan_context *ctx = schan_free_handle(i, SCHAN_HANDLE_CTX);
-            schan_funcs->dispose_session(ctx->session);
+            schan_funcs->dispose_session(ctx->transport.session);
             free(ctx);
         }
     }

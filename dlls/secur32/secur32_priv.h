@@ -103,6 +103,7 @@ struct schan_buffers
 struct schan_transport
 {
     struct schan_context *ctx;
+    schan_session session;
     struct schan_buffers in;
     struct schan_buffers out;
 };
@@ -139,7 +140,6 @@ struct schan_funcs
 struct schan_callbacks
 {
     char * (CDECL *get_buffer)(const struct schan_transport *, struct schan_buffers *, SIZE_T *);
-    schan_session (CDECL *get_session_for_transport)(struct schan_transport *);
 };
 
 extern const struct schan_funcs *schan_funcs;
