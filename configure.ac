@@ -1082,6 +1082,15 @@ then
         WINE_NOTICE([libpng ${notice_platform}MinGW development files not found; using bundled version.])
     fi
 
+    WINE_MINGW_PACKAGE_FLAGS(TIFF,[libtiff-4],,
+        [WINE_CHECK_MINGW_HEADER(tiffio.h,
+            [WINE_CHECK_MINGW_LIB(tiff,TIFFClientOpen,[:],[TIFF_PE_CFLAGS=""; TIFF_PE_LIBS=""],[$TIFF_PE_LIBS])],
+            [TIFF_PE_CFLAGS=""; TIFF_PE_LIBS=""])])
+    if test "x$TIFF_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([libtiff ${notice_platform}MinGW development files not found; using bundled version.])
+    fi
+
     WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
         [WINE_CHECK_MINGW_HEADER(zlib.h,
             [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],
