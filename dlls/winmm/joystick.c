@@ -40,7 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
-#define MAXJOYSTICK (JOYSTICKID2 + 30)
 #define JOY_PERIOD_MIN	(10)	/* min Capture time period */
 #define JOY_PERIOD_MAX	(1000)	/* max Capture time period */
 
@@ -53,7 +52,7 @@ typedef struct tagWINE_JOYSTICK {
     HDRVR	hDriver;
 } WINE_JOYSTICK;
 
-static	WINE_JOYSTICK	JOY_Sticks[MAXJOYSTICK];
+static WINE_JOYSTICK joysticks[16];
 
 static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
 {
@@ -68,14 +67,12 @@ static	BOOL JOY_LoadDriver(DWORD dwJoyID)
 {
     static BOOL winejoystick_missing = FALSE;
 
-    if (dwJoyID >= MAXJOYSTICK || winejoystick_missing)
-	return FALSE;
-    if (JOY_Sticks[dwJoyID].hDriver)
-	return TRUE;
+    if (dwJoyID >= ARRAY_SIZE(joysticks) || winejoystick_missing) return FALSE;
+    if (joysticks[dwJoyID].hDriver) return TRUE;
 
-    JOY_Sticks[dwJoyID].hDriver = OpenDriverA("winejoystick.drv", 0, dwJoyID);
+    joysticks[dwJoyID].hDriver = OpenDriverA( "winejoystick.drv", 0, dwJoyID );
 
-    if (!JOY_Sticks[dwJoyID].hDriver)
+    if (!joysticks[dwJoyID].hDriver)
     {
         WARN("OpenDriverA(\"winejoystick.drv\") failed\n");
 
@@ -83,7 +80,7 @@ static	BOOL JOY_LoadDriver(DWORD dwJoyID)
         winejoystick_missing = TRUE;
     }
 
-    return (JOY_Sticks[dwJoyID].hDriver != 0);
+    return (joysticks[dwJoyID].hDriver != 0);
 }
 
 /**************************************************************************
@@ -98,10 +95,11 @@ static	void	CALLBACK	JOY_Timer(HWND hWnd, UINT wMsg, UINT_PTR wTimer, DWORD dwTi
     LONG		pos;
     unsigned 		buttonChange;
 
-    for (i = 0; i < MAXJOYSTICK; i++) {
-	joy = &JOY_Sticks[i];
+    for (i = 0; i < ARRAY_SIZE(joysticks); i++)
+    {
+        joy = &joysticks[i];
 
-	if (joy->hCapture != hWnd) continue;
+        if (joy->hCapture != hWnd) continue;
 
 	res = joyGetPos(i, &ji);
 	if (res != JOYERR_NOERROR) {
@@ -153,15 +151,7 @@ MMRESULT WINAPI joyConfigChanged(DWORD flags)
  */
 UINT WINAPI DECLSPEC_HOTPATCH joyGetNumDevs(void)
 {
-    UINT	ret = 0;
-    int		i;
-
-    for (i = 0; i < MAXJOYSTICK; i++) {
-	if (JOY_LoadDriver(i)) {
-            ret += SendDriverMessage(JOY_Sticks[i].hDriver, JDD_GETNUMDEVS, 0, 0);
-	}
-    }
-    return ret;
+    return ARRAY_SIZE(joysticks);
 }
 
 /**************************************************************************
@@ -178,13 +168,13 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetDevCapsW( UINT_PTR id, JOYCAPSW *caps, U
     wcscpy( caps->szRegKey, L"DINPUT.DLL" );
     if (id == ~(UINT_PTR)0) return JOYERR_NOERROR;
 
-    if (id >= MAXJOYSTICK) return JOYERR_PARMS;
+    if (id >= ARRAY_SIZE(joysticks)) return JOYERR_PARMS;
     if (!JOY_LoadDriver( id )) return MMSYSERR_NODRIVER;
 
     caps->wPeriodMin = JOY_PERIOD_MIN; /* FIXME */
     caps->wPeriodMax = JOY_PERIOD_MAX; /* FIXME (same as MS Joystick Driver) */
 
-    return SendDriverMessage( JOY_Sticks[id].hDriver, JDD_GETDEVCAPS, (LPARAM)caps, size );
+    return SendDriverMessage( joysticks[id].hDriver, JDD_GETDEVCAPS, (LPARAM)caps, size );
 }
 
 /**************************************************************************
@@ -252,7 +242,7 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
     TRACE("(%d, %p);\n", wID, lpInfo);
 
     if (!lpInfo) return MMSYSERR_INVALPARAM;
-    if (wID >= MAXJOYSTICK || lpInfo->dwSize < sizeof(JOYINFOEX)) return JOYERR_PARMS;
+    if (wID >= ARRAY_SIZE(joysticks) || lpInfo->dwSize < sizeof(JOYINFOEX)) return JOYERR_PARMS;
     if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
 
     lpInfo->dwXpos = 0;
@@ -267,7 +257,7 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
     lpInfo->dwReserved1 = 0;
     lpInfo->dwReserved2 = 0;
 
-    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOSEX, (LPARAM)lpInfo, 0);
+    return SendDriverMessage( joysticks[wID].hDriver, JDD_GETPOSEX, (LPARAM)lpInfo, 0 );
 }
 
 /**************************************************************************
@@ -278,7 +268,7 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
     TRACE("(%d, %p);\n", wID, lpInfo);
 
     if (!lpInfo) return MMSYSERR_INVALPARAM;
-    if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
+    if (wID >= ARRAY_SIZE(joysticks)) return JOYERR_PARMS;
     if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
 
     lpInfo->wXpos = 0;
@@ -286,7 +276,7 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
     lpInfo->wZpos = 0;
     lpInfo->wButtons = 0;
 
-    return SendDriverMessage(JOY_Sticks[wID].hDriver, JDD_GETPOS, (LPARAM)lpInfo, 0);
+    return SendDriverMessage( joysticks[wID].hDriver, JDD_GETPOS, (LPARAM)lpInfo, 0 );
 }
 
 /**************************************************************************
@@ -296,9 +286,9 @@ MMRESULT WINAPI joyGetThreshold(UINT wID, LPUINT lpThreshold)
 {
     TRACE("(%04X, %p);\n", wID, lpThreshold);
 
-    if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
+    if (wID >= ARRAY_SIZE(joysticks)) return JOYERR_PARMS;
 
-    *lpThreshold = JOY_Sticks[wID].threshold;
+    *lpThreshold = joysticks[wID].threshold;
     return JOYERR_NOERROR;
 }
 
@@ -309,13 +299,13 @@ MMRESULT WINAPI joyReleaseCapture(UINT wID)
 {
     TRACE("(%04X);\n", wID);
 
-    if (wID >= MAXJOYSTICK)		return JOYERR_PARMS;
+    if (wID >= ARRAY_SIZE(joysticks)) return JOYERR_PARMS;
     if (!JOY_LoadDriver(wID))		return MMSYSERR_NODRIVER;
-    if (JOY_Sticks[wID].hCapture)
+    if (joysticks[wID].hCapture)
     {
-        KillTimer(JOY_Sticks[wID].hCapture, JOY_Sticks[wID].wTimer);
-        JOY_Sticks[wID].hCapture = 0;
-        JOY_Sticks[wID].wTimer = 0;
+        KillTimer( joysticks[wID].hCapture, joysticks[wID].wTimer );
+        joysticks[wID].hCapture = 0;
+        joysticks[wID].wTimer = 0;
     }
     else
         TRACE("Joystick is not captured, ignoring request.\n");
@@ -330,22 +320,17 @@ MMRESULT WINAPI joySetCapture(HWND hWnd, UINT wID, UINT wPeriod, BOOL bChanged)
 {
     TRACE("(%p, %04X, %d, %d);\n",  hWnd, wID, wPeriod, bChanged);
 
-    if (wID >= MAXJOYSTICK || hWnd == 0) return JOYERR_PARMS;
+    if (wID >= ARRAY_SIZE(joysticks) || hWnd == 0) return JOYERR_PARMS;
     if (wPeriod<JOY_PERIOD_MIN) wPeriod = JOY_PERIOD_MIN;
     else if(wPeriod>JOY_PERIOD_MAX) wPeriod = JOY_PERIOD_MAX;
     if (!JOY_LoadDriver(wID)) return MMSYSERR_NODRIVER;
 
-    if (JOY_Sticks[wID].hCapture || !IsWindow(hWnd))
-	return JOYERR_NOCANDO; /* FIXME: what should be returned ? */
+    if (joysticks[wID].hCapture || !IsWindow( hWnd )) return JOYERR_NOCANDO; /* FIXME: what should be returned ? */
+    if (joyGetPos( wID, &joysticks[wID].ji ) != JOYERR_NOERROR) return JOYERR_UNPLUGGED;
+    if ((joysticks[wID].wTimer = SetTimer( hWnd, 0, wPeriod, JOY_Timer )) == 0) return JOYERR_NOCANDO;
 
-    if (joyGetPos(wID, &JOY_Sticks[wID].ji) != JOYERR_NOERROR)
-	return JOYERR_UNPLUGGED;
-
-    if ((JOY_Sticks[wID].wTimer = SetTimer(hWnd, 0, wPeriod, JOY_Timer)) == 0)
-	return JOYERR_NOCANDO;
-
-    JOY_Sticks[wID].hCapture = hWnd;
-    JOY_Sticks[wID].bChanged = bChanged;
+    joysticks[wID].hCapture = hWnd;
+    joysticks[wID].bChanged = bChanged;
 
     return JOYERR_NOERROR;
 }
@@ -357,9 +342,9 @@ MMRESULT WINAPI joySetThreshold(UINT wID, UINT wThreshold)
 {
     TRACE("(%04X, %d);\n", wID, wThreshold);
 
-    if (wID >= MAXJOYSTICK || wThreshold > 65535) return MMSYSERR_INVALPARAM;
+    if (wID >= ARRAY_SIZE(joysticks) || wThreshold > 65535) return MMSYSERR_INVALPARAM;
 
-    JOY_Sticks[wID].threshold = wThreshold;
+    joysticks[wID].threshold = wThreshold;
 
     return JOYERR_NOERROR;
 }

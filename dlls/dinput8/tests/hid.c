@@ -9753,7 +9753,6 @@ static void test_winmm_joystick(void)
     cleanup_registry_keys();
 
     ret = joyGetNumDevs();
-    todo_wine
     ok( ret == 16, "joyGetNumDevs returned %u\n", ret );
 
     ret = joyGetDevCapsW( 0, (JOYCAPSW *)&caps, sizeof(JOYCAPSW) );
@@ -9797,7 +9796,6 @@ static void test_winmm_joystick(void)
     if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 )) goto done;
 
     ret = joyGetNumDevs();
-    todo_wine
     ok( ret == 16, "joyGetNumDevs returned %u\n", ret );
 
     ret = joyGetPosEx( 1, &infoex );
