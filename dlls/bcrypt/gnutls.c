@@ -585,32 +585,31 @@ static NTSTATUS key_symmetric_destroy( void *args )
     return STATUS_SUCCESS;
 }
 
-static void export_gnutls_datum( UCHAR *buffer, ULONG length, gnutls_datum_t *d, ULONG *actual_length )
+static ULONG export_gnutls_datum( UCHAR *buffer, ULONG buflen, gnutls_datum_t *d, BOOL zero_pad )
 {
     ULONG size = d->size;
     UCHAR *src = d->data;
-    ULONG offset;
+    ULONG offset = 0;
 
-    assert( size <= length + 1 );
-    if (size == length + 1)
+    assert( size <= buflen + 1 );
+    if (size == buflen + 1)
     {
-        assert(!src[0]);
-        ++src;
-        --size;
+        assert( !src[0] );
+        src++;
+        size--;
     }
-    if (actual_length)
+    if (zero_pad)
     {
-        offset = 0;
-        *actual_length = size;
+        offset = buflen - size;
+        if (buffer) memset( buffer, 0, offset );
+        size = buflen;
     }
-    else
-    {
-        offset = length - size;
-        memset( buffer, 0, offset );
-    }
-    memcpy( buffer + offset, src, size );
+
+    if (buffer) memcpy( buffer + offset, src, size );
+    return size;
 }
 
+#define EXPORT_SIZE(d,f,p) export_gnutls_datum( NULL, bitlen / f, &d, p )
 static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, ULONG *pubkey_len )
 {
     BCRYPT_RSAKEY_BLOB *rsa_blob = pubkey;
@@ -624,19 +623,19 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (*pubkey_len < sizeof(*rsa_blob) + e.size + m.size)
+    if (*pubkey_len < sizeof(*rsa_blob) + EXPORT_SIZE(e,8,0) + EXPORT_SIZE(m,8,1))
     {
-        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, (ULONG)sizeof(*rsa_blob) + e.size + m.size );
+        FIXME( "wrong pubkey len %u\n", *pubkey_len );
         pgnutls_perror( ret );
         free( e.data ); free( m.data );
         return STATUS_BUFFER_TOO_SMALL;
     }
 
     dst = (UCHAR *)(rsa_blob + 1);
-    export_gnutls_datum( dst, bitlen / 8, &e, &rsa_blob->cbPublicExp );
+    rsa_blob->cbPublicExp = export_gnutls_datum( dst, bitlen / 8, &e, 0 );
 
     dst += rsa_blob->cbPublicExp;
-    export_gnutls_datum( dst, bitlen / 8, &m, &rsa_blob->cbModulus );
+    rsa_blob->cbModulus = export_gnutls_datum( dst, bitlen / 8, &m, 1 );
 
     rsa_blob->Magic       = BCRYPT_RSAPUBLIC_MAGIC;
     rsa_blob->BitLength   = bitlen;
@@ -699,10 +698,10 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
     ecc_blob->cbKey   = size;
 
     dst = (UCHAR *)(ecc_blob + 1);
-    export_gnutls_datum( dst, size, &x, NULL );
+    export_gnutls_datum( dst, size, &x, 1 );
 
     dst += size;
-    export_gnutls_datum( dst, size, &y, NULL );
+    export_gnutls_datum( dst, size, &y, 1 );
 
     *pubkey_len = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
 
@@ -738,16 +737,16 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
     }
 
     dst = (UCHAR *)(dsa_blob + 1);
-    export_gnutls_datum( dst, bitlen / 8, &p, NULL );
+    export_gnutls_datum( dst, bitlen / 8, &p, 1 );
 
     dst += bitlen / 8;
-    export_gnutls_datum( dst, bitlen / 8, &g, NULL );
+    export_gnutls_datum( dst, bitlen / 8, &g, 1 );
 
     dst += bitlen / 8;
-    export_gnutls_datum( dst, bitlen / 8, &y, NULL );
+    export_gnutls_datum( dst, bitlen / 8, &y, 1 );
 
     dst = dsa_blob->q;
-    export_gnutls_datum( dst, sizeof(dsa_blob->q), &q, NULL );
+    export_gnutls_datum( dst, sizeof(dsa_blob->q), &q, 1 );
 
     dsa_blob->dwMagic = BCRYPT_DSA_PUBLIC_MAGIC;
     dsa_blob->cbKey   = bitlen / 8;
@@ -813,19 +812,19 @@ static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, cons
     dsskey->bitlen = bitlen;
 
     dst = (UCHAR *)(dsskey + 1);
-    export_gnutls_datum( dst, bitlen / 8, &p, NULL );
+    export_gnutls_datum( dst, bitlen / 8, &p, 1 );
     reverse_bytes( dst, bitlen / 8 );
     dst += bitlen / 8;
 
-    export_gnutls_datum( dst, Q_SIZE, &q, NULL );
+    export_gnutls_datum( dst, Q_SIZE, &q, 1 );
     reverse_bytes( dst, Q_SIZE );
     dst += Q_SIZE;
 
-    export_gnutls_datum( dst, bitlen / 8, &g, NULL );
+    export_gnutls_datum( dst, bitlen / 8, &g, 1 );
     reverse_bytes( dst, bitlen / 8 );
     dst += bitlen / 8;
 
-    export_gnutls_datum( dst, bitlen / 8, &y, NULL );
+    export_gnutls_datum( dst, bitlen / 8, &y, 1 );
     reverse_bytes( dst, bitlen / 8 );
     dst += bitlen / 8;
 
@@ -962,13 +961,13 @@ static NTSTATUS key_export_ecc( void *args )
         ecc_blob->cbKey   = size;
 
         dst = (UCHAR *)(ecc_blob + 1);
-        export_gnutls_datum( dst, size, &x, NULL );
+        export_gnutls_datum( dst, size, &x, 1 );
         dst += size;
 
-        export_gnutls_datum( dst, size, &y, NULL );
+        export_gnutls_datum( dst, size, &y, 1 );
         dst += size;
 
-        export_gnutls_datum( dst, size, &d, NULL );
+        export_gnutls_datum( dst, size, &d, 1 );
     }
 
     free( x.data ); free( y.data ); free( d.data );
@@ -1101,19 +1100,19 @@ static NTSTATUS key_export_dsa_capi( void *args )
         pubkey->bitlen = key->u.a.bitlen;
 
         dst = (UCHAR *)(pubkey + 1);
-        export_gnutls_datum( dst, size, &p, NULL );
+        export_gnutls_datum( dst, size, &p, 1 );
         reverse_bytes( dst, size );
         dst += size;
 
-        export_gnutls_datum( dst, 20, &q, NULL );
+        export_gnutls_datum( dst, 20, &q, 1 );
         reverse_bytes( dst, 20 );
         dst += 20;
 
-        export_gnutls_datum( dst, size, &g, NULL );
+        export_gnutls_datum( dst, size, &g, 1 );
         reverse_bytes( dst, size );
         dst += size;
 
-        export_gnutls_datum( dst, 20, &x, NULL );
+        export_gnutls_datum( dst, 20, &x, 1 );
         reverse_bytes( dst, 20 );
         dst += 20;
 
@@ -1571,8 +1570,8 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
 
         if (output)
         {
-            export_gnutls_datum( output, sig_len / 2, &r, NULL );
-            export_gnutls_datum( output + sig_len / 2, sig_len / 2, &s, NULL );
+            export_gnutls_datum( output, sig_len / 2, &r, 1 );
+            export_gnutls_datum( output + sig_len / 2, sig_len / 2, &s, 1 );
         }
 
         free( r.data ); free( s.data );
