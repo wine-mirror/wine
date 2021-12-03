@@ -405,6 +405,9 @@ sync_test("stylesheets", function() {
     ok(typeof(stylesheet.rules.item(0)) === "object",
        "typeof(stylesheet.rules.item(0)) = " + typeof(stylesheet.rules.item(0)));
 
+    stylesheet = document.styleSheets[0];
+    ok(stylesheet.rules.length === 1, "document.styleSheets[0].rules.length = " + stylesheet.rules.length);
+
     try {
         stylesheet.rules.item(1);
         ok(false, "expected exception");
