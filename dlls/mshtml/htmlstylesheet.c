@@ -375,13 +375,84 @@ static const IHTMLStyleSheetRulesCollectionVtbl HTMLStyleSheetRulesCollectionVtb
     HTMLStyleSheetRulesCollection_item
 };
 
+static inline HTMLStyleSheetRulesCollection *HTMLStyleSheetRulesCollection_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyleSheetRulesCollection, dispex);
+}
+
+static HRESULT HTMLStyleSheetRulesCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLStyleSheetRulesCollection_from_DispatchEx(dispex);
+    UINT32 len = 0;
+    DWORD idx = 0;
+    WCHAR *ptr;
+
+    for(ptr = name; *ptr && is_digit(*ptr); ptr++)
+        idx = idx*10 + (*ptr-'0');
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+
+    nsIDOMCSSRuleList_GetLength(This->nslist, &len);
+    if(idx >= len)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = MSHTML_DISPID_CUSTOM_MIN + idx;
+    TRACE("ret %x\n", *dispid);
+    return S_OK;
+}
+
+static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLStyleSheetRulesCollection_from_DispatchEx(dispex);
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        IHTMLStyleSheetRule *stylesheetrule;
+        nsIDOMCSSRule *nsstylesheetrule;
+        nsresult nsres;
+        HRESULT hres;
+
+        nsres = nsIDOMCSSRuleList_Item(This->nslist, id - MSHTML_DISPID_CUSTOM_MIN, &nsstylesheetrule);
+        if(NS_FAILED(nsres))
+            return DISP_E_MEMBERNOTFOUND;
+        if(!nsstylesheetrule) {
+            V_VT(res) = VT_EMPTY;
+            return S_OK;
+        }
+
+        hres = create_style_sheet_rule(nsstylesheetrule, dispex_compat_mode(&This->dispex), &stylesheetrule);
+        nsIDOMCSSRule_Release(nsstylesheetrule);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = (IDispatch*)stylesheetrule;
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl = {
+    NULL,
+    HTMLStyleSheetRulesCollection_get_dispid,
+    HTMLStyleSheetRulesCollection_invoke
+};
 static const tid_t HTMLStyleSheetRulesCollection_iface_tids[] = {
     IHTMLStyleSheetRulesCollection_tid,
     0
 };
 static dispex_static_data_t HTMLStyleSheetRulesCollection_dispex = {
     L"MSCSSRuleList",
-    NULL,
+    &HTMLStyleSheetRulesCollection_dispex_vtbl,
     DispHTMLStyleSheetRulesCollection_tid,
     HTMLStyleSheetRulesCollection_iface_tids
 };
