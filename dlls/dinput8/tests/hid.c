@@ -5980,7 +5980,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     check_member( desc, expect_desc_init, "%u", rgdwAxes[0] );
     check_member( desc, expect_desc_init, "%u", rgdwAxes[1] );
     check_member( desc, expect_desc_init, "%p", rglDirection );
-    todo_wine
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
     todo_wine
     check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );

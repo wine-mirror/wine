@@ -2136,6 +2136,7 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_periodic.id,
                                              joystick->preparsed, impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        impl->params.lpvTypeSpecificParams = &impl->periodic;
         break;
     case PID_USAGE_ET_SPRING:
     case PID_USAGE_ET_DAMPER:
@@ -2144,16 +2145,19 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_condition.id, joystick->preparsed,
                                              impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        impl->params.lpvTypeSpecificParams = &impl->condition;
         break;
     case PID_USAGE_ET_CONSTANT_FORCE:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_constant_force.id, joystick->preparsed,
                                              impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        impl->params.lpvTypeSpecificParams = &impl->constant_force;
         break;
     case PID_USAGE_ET_RAMP:
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_ramp_force.id, joystick->preparsed,
                                              impl->type_specific_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        impl->params.lpvTypeSpecificParams = &impl->ramp_force;
         break;
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME( "effect type %#x not implemented!\n", type );
@@ -2417,7 +2421,7 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
         case PID_USAGE_ET_SAWTOOTH_DOWN:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
-            memcpy( params->lpvTypeSpecificParams, &impl->periodic, sizeof(DIPERIODIC) );
+            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DIPERIODIC) );
             break;
         case PID_USAGE_ET_SPRING:
         case PID_USAGE_ET_DAMPER:
@@ -2427,17 +2431,17 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
             capacity = params->cbTypeSpecificParams;
             params->cbTypeSpecificParams = count;
             if (capacity < count) return DIERR_MOREDATA;
-            memcpy( params->lpvTypeSpecificParams, impl->condition, params->cbTypeSpecificParams );
+            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, params->cbTypeSpecificParams );
             break;
         case PID_USAGE_ET_CONSTANT_FORCE:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) return DIERR_INVALIDPARAM;
-            memcpy( params->lpvTypeSpecificParams, &impl->constant_force, sizeof(DICONSTANTFORCE) );
+            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
             break;
         case PID_USAGE_ET_RAMP:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
-            memcpy( params->lpvTypeSpecificParams, &impl->ramp_force, sizeof(DIRAMPFORCE) );
+            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
             break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
             FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
@@ -2449,7 +2453,8 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
     {
         if (!params->lpEnvelope) return E_POINTER;
         if (params->lpEnvelope->dwSize != sizeof(DIENVELOPE)) return DIERR_INVALIDPARAM;
-        memcpy( params->lpEnvelope, &impl->envelope, sizeof(DIENVELOPE) );
+        if (!impl->params.lpEnvelope) params->lpEnvelope = NULL;
+        else memcpy( params->lpEnvelope, impl->params.lpEnvelope, sizeof(DIENVELOPE) );
     }
 
     if (flags & DIEP_DURATION) params->dwDuration = impl->params.dwDuration;
@@ -2559,9 +2564,9 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         case PID_USAGE_ET_SAWTOOTH_DOWN:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
-            if (memcmp( &impl->periodic, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) ))
+            if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) ))
                 impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( &impl->periodic, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) );
+            memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) );
             impl->params.cbTypeSpecificParams = sizeof(DIPERIODIC);
             break;
         case PID_USAGE_ET_SPRING:
@@ -2574,26 +2579,26 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
                 if (params->cbTypeSpecificParams != count * sizeof(DICONDITION) &&
                     params->cbTypeSpecificParams != sizeof(DICONDITION))
                     return DIERR_INVALIDPARAM;
-                if (memcmp( impl->condition, params->lpvTypeSpecificParams, params->cbTypeSpecificParams ))
+                if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, params->cbTypeSpecificParams ))
                     impl->modified |= DIEP_TYPESPECIFICPARAMS;
-                memcpy( impl->condition, params->lpvTypeSpecificParams, params->cbTypeSpecificParams );
+                memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, params->cbTypeSpecificParams );
                 impl->params.cbTypeSpecificParams = params->cbTypeSpecificParams;
             }
             break;
         case PID_USAGE_ET_CONSTANT_FORCE:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) return DIERR_INVALIDPARAM;
-            if (memcmp( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) ))
+            if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) ))
                 impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
+            memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
             impl->params.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
             break;
         case PID_USAGE_ET_RAMP:
             if (!params->lpvTypeSpecificParams) return E_POINTER;
             if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
-            if (memcmp( &impl->ramp_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
+            if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
                 impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( &impl->ramp_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
+            memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
             impl->params.cbTypeSpecificParams = sizeof(DIRAMPFORCE);
             break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
@@ -2605,9 +2610,10 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
     if ((flags & DIEP_ENVELOPE) && params->lpEnvelope)
     {
         if (params->lpEnvelope->dwSize != sizeof(DIENVELOPE)) return DIERR_INVALIDPARAM;
-        if (memcmp( &impl->envelope, params->lpEnvelope, sizeof(DIENVELOPE) ))
+        impl->params.lpEnvelope = &impl->envelope;
+        if (memcmp( impl->params.lpEnvelope, params->lpEnvelope, sizeof(DIENVELOPE) ))
             impl->modified |= DIEP_ENVELOPE;
-        memcpy( &impl->envelope, params->lpEnvelope, sizeof(DIENVELOPE) );
+        memcpy( impl->params.lpEnvelope, params->lpEnvelope, sizeof(DIENVELOPE) );
     }
 
     if (flags & DIEP_DURATION)
@@ -3119,7 +3125,6 @@ static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectI
 
     impl->envelope.dwSize = sizeof(DIENVELOPE);
     impl->params.dwSize = sizeof(DIEFFECT);
-    impl->params.lpEnvelope = &impl->envelope;
     impl->params.rgdwAxes = impl->axes;
     impl->params.rglDirection = impl->directions;
     impl->params.dwTriggerButton = -1;
