@@ -5981,7 +5981,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     check_member( desc, expect_desc_init, "%u", rgdwAxes[1] );
     check_member( desc, expect_desc_init, "%p", rglDirection );
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
-    todo_wine
     check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
     if (version >= 0x700) check_member( desc, expect_desc_init, "%u", dwStartDelay );
     else ok( desc.dwStartDelay == 0xcdcdcdcd, "got dwStartDelay %#x\n", desc.dwStartDelay );
@@ -6900,6 +6899,28 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
     set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, NULL, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
+    desc = expect_desc;
+    desc.cAxes = 0;
+    desc.cbTypeSpecificParams = 1 * sizeof(DICONDITION);
+    desc.lpvTypeSpecificParams = (void *)&expect_condition[0];
+    hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    desc.cbTypeSpecificParams = 0 * sizeof(DICONDITION);
+    hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS );
+    ok( hr == DIERR_MOREDATA, "SetParameters returned %#x\n", hr );
+    ok( desc.cbTypeSpecificParams == 1 * sizeof(DICONDITION), "got %u\n", desc.cbTypeSpecificParams );
+    desc.cbTypeSpecificParams = 0 * sizeof(DICONDITION);
+    hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
+    desc.cbTypeSpecificParams = 0 * sizeof(DICONDITION);
+    hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS );
+    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    ok( desc.cbTypeSpecificParams == 0 * sizeof(DICONDITION), "got %u\n", desc.cbTypeSpecificParams );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %d\n", ref );
 }
 
 static void test_force_feedback_joystick( DWORD version )

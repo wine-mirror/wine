@@ -2412,46 +2412,14 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
 
     if (flags & DIEP_TYPESPECIFICPARAMS)
     {
-        switch (impl->type)
+        capacity = params->cbTypeSpecificParams;
+        params->cbTypeSpecificParams = impl->params.cbTypeSpecificParams;
+        if (capacity < impl->params.cbTypeSpecificParams) return DIERR_MOREDATA;
+        if (impl->params.lpvTypeSpecificParams)
         {
-        case PID_USAGE_ET_SQUARE:
-        case PID_USAGE_ET_SINE:
-        case PID_USAGE_ET_TRIANGLE:
-        case PID_USAGE_ET_SAWTOOTH_UP:
-        case PID_USAGE_ET_SAWTOOTH_DOWN:
-            capacity = params->cbTypeSpecificParams;
-            params->cbTypeSpecificParams = sizeof(DIPERIODIC);
-            if (capacity < sizeof(DIPERIODIC)) return DIERR_MOREDATA;
             if (!params->lpvTypeSpecificParams) return E_POINTER;
-            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DIPERIODIC) );
-            break;
-        case PID_USAGE_ET_SPRING:
-        case PID_USAGE_ET_DAMPER:
-        case PID_USAGE_ET_INERTIA:
-        case PID_USAGE_ET_FRICTION:
-            capacity = params->cbTypeSpecificParams;
-            params->cbTypeSpecificParams = impl->params.cbTypeSpecificParams;
-            if (capacity < impl->params.cbTypeSpecificParams) return DIERR_MOREDATA;
-            if (!params->lpvTypeSpecificParams) return E_POINTER;
-            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, params->cbTypeSpecificParams );
-            break;
-        case PID_USAGE_ET_CONSTANT_FORCE:
-            capacity = params->cbTypeSpecificParams;
-            params->cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-            if (capacity < sizeof(DICONSTANTFORCE)) return DIERR_MOREDATA;
-            if (!params->lpvTypeSpecificParams) return E_POINTER;
-            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
-            break;
-        case PID_USAGE_ET_RAMP:
-            capacity = params->cbTypeSpecificParams;
-            params->cbTypeSpecificParams = sizeof(DIRAMPFORCE);
-            if (capacity < sizeof(DIRAMPFORCE)) return DIERR_MOREDATA;
-            if (!params->lpvTypeSpecificParams) return E_POINTER;
-            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
-            break;
-        case PID_USAGE_ET_CUSTOM_FORCE_DATA:
-            FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
-            return DIERR_UNSUPPORTED;
+            memcpy( params->lpvTypeSpecificParams, impl->params.lpvTypeSpecificParams,
+                    impl->params.cbTypeSpecificParams );
         }
     }
 
@@ -2561,6 +2529,7 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
 
     if (flags & DIEP_TYPESPECIFICPARAMS)
     {
+        if (!params->lpvTypeSpecificParams) return E_POINTER;
         switch (impl->type)
         {
         case PID_USAGE_ET_SQUARE:
@@ -2568,49 +2537,36 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         case PID_USAGE_ET_TRIANGLE:
         case PID_USAGE_ET_SAWTOOTH_UP:
         case PID_USAGE_ET_SAWTOOTH_DOWN:
-            if (!params->lpvTypeSpecificParams) return E_POINTER;
-            if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
-            if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) ))
-                impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) );
-            impl->params.cbTypeSpecificParams = sizeof(DIPERIODIC);
+            if (params->cbTypeSpecificParams != sizeof(DIPERIODIC))
+                return DIERR_INVALIDPARAM;
             break;
         case PID_USAGE_ET_SPRING:
         case PID_USAGE_ET_DAMPER:
         case PID_USAGE_ET_INERTIA:
         case PID_USAGE_ET_FRICTION:
-            if ((count = impl->params.cAxes))
-            {
-                if (!params->lpvTypeSpecificParams) return E_POINTER;
-                if (params->cbTypeSpecificParams != count * sizeof(DICONDITION) &&
-                    params->cbTypeSpecificParams != sizeof(DICONDITION))
-                    return DIERR_INVALIDPARAM;
-                if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, params->cbTypeSpecificParams ))
-                    impl->modified |= DIEP_TYPESPECIFICPARAMS;
-                memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, params->cbTypeSpecificParams );
-                impl->params.cbTypeSpecificParams = params->cbTypeSpecificParams;
-            }
+            if (params->cbTypeSpecificParams != sizeof(DICONDITION) && impl->params.cAxes &&
+                params->cbTypeSpecificParams != impl->params.cAxes * sizeof(DICONDITION))
+                return DIERR_INVALIDPARAM;
             break;
         case PID_USAGE_ET_CONSTANT_FORCE:
-            if (!params->lpvTypeSpecificParams) return E_POINTER;
-            if (params->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) return DIERR_INVALIDPARAM;
-            if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) ))
-                impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DICONSTANTFORCE) );
-            impl->params.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+            if (params->cbTypeSpecificParams != sizeof(DICONSTANTFORCE))
+                return DIERR_INVALIDPARAM;
             break;
         case PID_USAGE_ET_RAMP:
-            if (!params->lpvTypeSpecificParams) return E_POINTER;
-            if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
-            if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
-                impl->modified |= DIEP_TYPESPECIFICPARAMS;
-            memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
-            impl->params.cbTypeSpecificParams = sizeof(DIRAMPFORCE);
+            if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE))
+                return DIERR_INVALIDPARAM;
             break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
-            FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
+            FIXME( "custom force data not implemented!\n" );
             return DIERR_UNSUPPORTED;
         }
+
+        if (memcmp( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams,
+                    params->cbTypeSpecificParams ))
+            impl->modified |= DIEP_TYPESPECIFICPARAMS;
+        memcpy( impl->params.lpvTypeSpecificParams, params->lpvTypeSpecificParams,
+                params->cbTypeSpecificParams );
+        impl->params.cbTypeSpecificParams = params->cbTypeSpecificParams;
     }
 
     if ((flags & DIEP_ENVELOPE) && params->lpEnvelope)
