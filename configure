@@ -12794,6 +12794,116 @@ CPPFLAGS=$ac_save_CPPFLAGS
         as_fn_append wine_notices "|libmpg123 ${notice_platform}MinGW development files not found (or too old); using bundled version."
     fi
 
+    if ${PNG_PE_CFLAGS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  PNG_PE_CFLAGS=`$MINGW_PKG_CONFIG --cflags libpng 2>/dev/null`
+fi
+fi
+if ${PNG_PE_LIBS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  PNG_PE_LIBS=`$MINGW_PKG_CONFIG --libs libpng 2>/dev/null`
+fi
+fi
+
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $PNG_PE_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW png.h" >&5
+printf %s "checking for MinGW png.h... " >&6; }
+if test ${ac_cv_mingw_header_png_h+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <png.h>
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_mingw_header_png_h=yes
+else $as_nop
+  ac_cv_mingw_header_png_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_header_png_h" >&5
+printf "%s\n" "$ac_cv_mingw_header_png_h" >&6; }
+if test "x$ac_cv_mingw_header_png_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for png_create_read_struct in MinGW -lpng" >&5
+printf %s "checking for png_create_read_struct in MinGW -lpng... " >&6; }
+if test ${ac_cv_mingw_lib_png+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+ac_wine_check_headers_saved_libs=$LIBS
+CC="$CROSSCC"
+ac_exeext=".exe"
+LIBS="-lpng $PNG_PE_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char png_create_read_struct ();
+int
+main (void)
+{
+return png_create_read_struct ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_mingw_lib_png=yes
+else $as_nop
+  ac_cv_mingw_lib_png=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+LIBS=$ac_wine_check_headers_saved_libs
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_png" >&5
+printf "%s\n" "$ac_cv_mingw_lib_png" >&6; }
+if test "x$ac_cv_mingw_lib_png" = xyes
+then :
+  :
+else $as_nop
+  PNG_PE_CFLAGS=""; PNG_PE_LIBS=""
+fi
+else $as_nop
+  PNG_PE_CFLAGS=""; PNG_PE_LIBS=""
+fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+    if test "x$PNG_PE_LIBS" = "x"
+    then
+        as_fn_append wine_notices "|libpng ${notice_platform}MinGW development files not found; using bundled version."
+    fi
+
     if ${ZLIB_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}

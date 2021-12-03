@@ -1073,6 +1073,15 @@ then
         WINE_NOTICE([libmpg123 ${notice_platform}MinGW development files not found (or too old); using bundled version.])
     fi
 
+    WINE_MINGW_PACKAGE_FLAGS(PNG,[libpng],,
+        [WINE_CHECK_MINGW_HEADER(png.h,
+            [WINE_CHECK_MINGW_LIB(png,png_create_read_struct,[:],[PNG_PE_CFLAGS=""; PNG_PE_LIBS=""],[$PNG_PE_LIBS])],
+            [PNG_PE_CFLAGS=""; PNG_PE_LIBS=""])])
+    if test "x$PNG_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([libpng ${notice_platform}MinGW development files not found; using bundled version.])
+    fi
+
     WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
         [WINE_CHECK_MINGW_HEADER(zlib.h,
             [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],
