@@ -263,20 +263,26 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 /**************************************************************************
  * 				joyGetPos	       	[WINMM.@]
  */
-MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
+MMRESULT WINAPI joyGetPos( UINT id, JOYINFO *info )
 {
-    TRACE("(%d, %p);\n", wID, lpInfo);
+    JOYINFOEX infoex =
+    {
+        .dwSize = sizeof(JOYINFOEX),
+        .dwFlags = JOY_RETURNX | JOY_RETURNY | JOY_RETURNZ | JOY_RETURNBUTTONS,
+    };
+    MMRESULT res;
 
-    if (!lpInfo) return MMSYSERR_INVALPARAM;
-    if (wID >= ARRAY_SIZE(joysticks)) return JOYERR_PARMS;
-    if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
+    TRACE( "id %u, info %p.\n", id, info );
 
-    lpInfo->wXpos = 0;
-    lpInfo->wYpos = 0;
-    lpInfo->wZpos = 0;
-    lpInfo->wButtons = 0;
+    if (!info) return MMSYSERR_INVALPARAM;
+    if ((res = joyGetPosEx( id, &infoex ))) return res;
 
-    return SendDriverMessage( joysticks[wID].hDriver, JDD_GETPOS, (LPARAM)lpInfo, 0 );
+    info->wXpos = infoex.dwXpos;
+    info->wYpos = infoex.dwYpos;
+    info->wZpos = infoex.dwZpos;
+    info->wButtons = infoex.dwButtons;
+
+    return JOYERR_NOERROR;
 }
 
 /**************************************************************************
