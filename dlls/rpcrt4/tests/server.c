@@ -2561,9 +2561,9 @@ START_TEST(server)
     }
     else if(!strcmp(argv[2], "run"))
     {
-      UINT_PTR event;
-      sscanf(argv[3], "%lx", &event);
-      run_server((HANDLE)event);
+      ULONG event;
+      sscanf(argv[3], "%x", &event);
+      run_server(ULongToHandle(event));
     }
   }
   else
