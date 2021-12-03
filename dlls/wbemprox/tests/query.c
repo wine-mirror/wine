@@ -2102,6 +2102,41 @@ static void test_empty_namespace( IWbemLocator *locator )
     IWbemServices_Release( services );
 }
 
+static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
+{
+    BSTR path = SysAllocString( L"ROOT\\WMI" );
+    BSTR bios = SysAllocString( L"MSSMBios_RawSMBiosTables" );
+    IWbemServices *services;
+    IEnumWbemClassObject *iter;
+    IWbemClassObject *obj;
+    VARIANT val;
+    CIMTYPE type;
+    ULONG count;
+    HRESULT hr;
+
+    hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
+    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+
+    hr = IWbemServices_CreateInstanceEnum( services, bios, 0, NULL, &iter );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &obj, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    type = 0;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, L"SMBiosData", 0, &val, &type, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( V_VT( &val ) == (VT_UI1 | VT_ARRAY), "got %08x\n", V_VT(&val) );
+    ok( type == (CIM_UINT8 | CIM_FLAG_ARRAY), "got %08x\n", type );
+
+    IWbemClassObject_Release( obj );
+    IEnumWbemClassObject_Release( iter );
+    IWbemServices_Release( services );
+    SysFreeString( path );
+    SysFreeString( bios );
+}
+
 START_TEST(query)
 {
     BSTR path = SysAllocString( L"ROOT\\CIMV2" );
@@ -2180,6 +2215,7 @@ START_TEST(query)
     test_Win32_WinSAT( services );
     test_SystemRestore( services );
     test_empty_namespace( locator );
+    test_MSSMBios_RawSMBiosTables( locator );
 
     SysFreeString( path );
     IWbemServices_Release( services );
