@@ -922,6 +922,34 @@ todo_wine_if(td[i].todo)
 #undef PNG_COLOR_TYPE_GRAY_ALPHA
 #undef PNG_COLOR_TYPE_RGB_ALPHA
 
+/* 1 bpp 1x1 pixel PNG image with 8 MiB comment */
+static const char png_8M_tEXt_start[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x01,0x00,0x00,0x00,0x00,0x37,0x6e,0xf9,0x24,
+  0x00,0x80,0x00,0x08,'t','E','X','t','C','o','m','m','e','n','t',0x00 /* ,[0x800030]=0x00,0x1e,0x13,0xe2,0xc7 */
+};
+static const char png_8M_tEXt_end[] = {
+  /* 0x00,0x80,0x00,0x08,'t','E','X','t','C','o','m','m','e','n','t',0x00,[0x800030]=0x00, */ 0x1e,0x13,0xe2,0xc7,
+  0x00,0x00,0x00,0x0c,'I','D','A','T',0x78,0x9c,0x63,0x68,0x00,0x00,0x00,0x82,0x00,0x81,0x77,0xcd,0x72,0xb6,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
+static void test_chunk_size(void)
+{
+    static char png_8M_tEXt[sizeof(png_8M_tEXt_start) + 0x800000 + sizeof(png_8M_tEXt_end)] = {0};
+    HRESULT hr;
+    IWICBitmapDecoder *decoder;
+
+    memcpy(png_8M_tEXt, png_8M_tEXt_start, sizeof(png_8M_tEXt_start));
+    memcpy(png_8M_tEXt + sizeof(png_8M_tEXt) - sizeof(png_8M_tEXt_end), png_8M_tEXt_end, sizeof(png_8M_tEXt_end));
+
+    hr = create_decoder(png_8M_tEXt, sizeof(png_8M_tEXt), &decoder);
+    todo_wine ok(hr == S_OK, "Failed to load PNG image data %#x\n", hr);
+    if (hr != S_OK) return;
+
+    IWICBitmapDecoder_Release(decoder);
+}
+
 START_TEST(pngformat)
 {
     HRESULT hr;
@@ -935,6 +963,7 @@ START_TEST(pngformat)
     test_color_contexts();
     test_png_palette();
     test_color_formats();
+    test_chunk_size();
 
     IWICImagingFactory_Release(factory);
     CoUninitialize();
