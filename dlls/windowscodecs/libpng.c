@@ -107,6 +107,7 @@ static HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stre
         goto end;
     }
     png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
+    png_set_chunk_malloc_max(png_ptr, 0);
 
     /* seek to the start of the stream */
     hr = stream_seek(stream, 0, STREAM_SEEK_SET, NULL);

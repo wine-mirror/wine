@@ -944,7 +944,7 @@ static void test_chunk_size(void)
     memcpy(png_8M_tEXt + sizeof(png_8M_tEXt) - sizeof(png_8M_tEXt_end), png_8M_tEXt_end, sizeof(png_8M_tEXt_end));
 
     hr = create_decoder(png_8M_tEXt, sizeof(png_8M_tEXt), &decoder);
-    todo_wine ok(hr == S_OK, "Failed to load PNG image data %#x\n", hr);
+    ok(hr == S_OK, "Failed to load PNG image data %#x\n", hr);
     if (hr != S_OK) return;
 
     IWICBitmapDecoder_Release(decoder);
