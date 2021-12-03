@@ -1,0 +1,113 @@
+/*
+ * Copyright 2021 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+
+[
+    object,
+    uuid(1b8efec4-3019-4c27-964e-367202156906),
+]
+interface IPrintDocumentPackageTarget : IUnknown
+{
+    HRESULT GetPackageTargetTypes(
+        [out] UINT32 *targetCount,
+        [out, size_is(, *targetCount)] GUID **targetTypes
+    );
+
+    HRESULT GetPackageTarget(
+        [in] REFGUID guidTargetType,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppvTarget
+    );
+
+    HRESULT Cancel();
+}
+
+typedef [v1_enum] enum PrintDocumentPackageCompletion
+{
+    PrintDocumentPackageCompletion_InProgress,
+    PrintDocumentPackageCompletion_Completed,
+    PrintDocumentPackageCompletion_Canceled,
+    PrintDocumentPackageCompletion_Failed
+} PrintDocumentPackageCompletion;
+
+typedef struct
+{
+    UINT32 JobId;
+    INT32 CurrentDocument;
+    INT32 CurrentPage;
+    INT32 CurrentPageTotal;
+    PrintDocumentPackageCompletion Completion;
+    HRESULT PackageStatus;
+} PrintDocumentPackageStatus;
+
+[
+    object,
+    dual,
+    nonextensible,
+    uuid(ed90c8ad-5c34-4d05-a1ec-0e8a9b3ad7af),
+]
+interface IPrintDocumentPackageStatusEvent : IDispatch
+{
+    [id(1)]
+    HRESULT PackageStatusUpdated(
+        [in] PrintDocumentPackageStatus *packageStatus
+    );
+}
+
+[
+    object,
+    uuid(d2959bf7-b31b-4a3d-9600-712eb1335ba4),
+]
+interface IPrintDocumentPackageTargetFactory : IUnknown
+{
+    HRESULT CreateDocumentPackageTargetForPrintJob(
+        [in, string] LPCWSTR printerName,
+        [in, string] LPCWSTR jobName,
+        [in] IStream *jobOutputStream,
+        [in] IStream *jobPrintTicketStream,
+        [out] IPrintDocumentPackageTarget **docPackageTarget
+    );
+}
+
+[
+    version(1.0),
+    uuid(410d76f7-8bb5-4a7d-9d37-9c71b1b14d14),
+]
+library PrintDocumentTargetLib
+{
+
+[
+    noncreatable,
+    uuid(4842669e-9947-46ea-8ba2-d8cce432c2ca),
+]
+coclass PrintDocumentPackageTarget
+{
+    [default] interface IPrintDocumentPackageTarget;
+    [source] dispinterface IPrintDocumentPackageStatusEvent;
+}
+
+[
+    uuid(348ef17d-6c81-4982-92b4-ee188a43867a)
+]
+coclass PrintDocumentPackageTargetFactory
+{
+    [default] interface IPrintDocumentPackageTargetFactory;
+}
+
+} /* library */

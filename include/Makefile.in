@@ -245,6 +245,7 @@ SOURCES = \
 	dmusics.h \
 	docobj.idl \
 	docobjectservice.idl \
+	documenttarget.idl \
 	downloadmgr.idl \
 	dpaddr.h \
 	dpfilter.h \
