@@ -870,7 +870,7 @@ struct new_thread_request
     struct request_header __header;
     obj_handle_t process;
     unsigned int access;
-    int          suspend;
+    unsigned int flags;
     int          request_fd;
     /* VARARG(objattr,object_attributes); */
     char __pad_28[4];
@@ -6279,7 +6279,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 737
+#define SERVER_PROTOCOL_VERSION 738
 
 /* ### protocol_version end ### */
 

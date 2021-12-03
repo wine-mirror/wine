@@ -729,7 +729,7 @@ C_ASSERT( FIELD_OFFSET(struct get_new_process_info_reply, exit_code) == 12 );
 C_ASSERT( sizeof(struct get_new_process_info_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct new_thread_request, process) == 12 );
 C_ASSERT( FIELD_OFFSET(struct new_thread_request, access) == 16 );
-C_ASSERT( FIELD_OFFSET(struct new_thread_request, suspend) == 20 );
+C_ASSERT( FIELD_OFFSET(struct new_thread_request, flags) == 20 );
 C_ASSERT( FIELD_OFFSET(struct new_thread_request, request_fd) == 24 );
 C_ASSERT( sizeof(struct new_thread_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct new_thread_reply, tid) == 8 );

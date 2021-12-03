@@ -1243,6 +1243,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
                                   ULONG flags, ULONG_PTR zero_bits, SIZE_T stack_commit,
                                   SIZE_T stack_reserve, PS_ATTRIBUTE_LIST *attr_list )
 {
+    static const ULONG supported_flags = THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER;
     sigset_t sigset;
     pthread_t pthread_id;
     pthread_attr_t pthread_attr;
@@ -1253,6 +1254,9 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     int request_pipe[2];
     TEB *teb;
     NTSTATUS status;
+
+    if (flags & ~supported_flags)
+        FIXME( "Unsupported flags %#x.\n", flags );
 
     if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
 #ifndef _WIN64
@@ -1303,7 +1307,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     {
         req->process    = wine_server_obj_handle( process );
         req->access     = access;
-        req->suspend    = flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED;
+        req->flags      = flags;
         req->request_fd = request_pipe[0];
         wine_server_add_data( req, objattr, len );
         if (!(status = wine_server_call( req )))

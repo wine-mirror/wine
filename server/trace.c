@@ -1472,7 +1472,7 @@ static void dump_new_thread_request( const struct new_thread_request *req )
 {
     fprintf( stderr, " process=%04x", req->process );
     fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", suspend=%d", req->suspend );
+    fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", request_fd=%d", req->request_fd );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }
