@@ -1977,6 +1977,44 @@ static UCHAR rsaSignature[] =
     0xc1, 0x74, 0xe6, 0x7c, 0x18, 0x0f, 0x2b, 0x3b, 0xaa, 0xd1, 0x9d, 0x40, 0x71, 0x1d, 0x19, 0x53
 };
 
+static UCHAR rsaPrivateBlob[] =
+{
+    0x52, 0x53, 0x41, 0x32, 0x00, 0x02, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+    0x20, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0xa6, 0x8b, 0x46, 0x26, 0xb5,
+    0xa9, 0x69, 0x83, 0x94, 0x66, 0xa7, 0xf3, 0x33, 0x95, 0x74, 0xe9, 0xeb, 0xc8, 0xcd, 0xd7, 0x81,
+    0x9e, 0x45, 0x66, 0xb2, 0x48, 0x8b, 0x1f, 0xfe, 0xb3, 0x62, 0xc4, 0x0d, 0xa2, 0xf9, 0xf3, 0xe2,
+    0xa6, 0x86, 0xd1, 0x1e, 0x8a, 0xbb, 0x1d, 0xa5, 0xc5, 0xe8, 0xa7, 0x50, 0x37, 0xfd, 0x69, 0x1f,
+    0x6f, 0x99, 0x99, 0xca, 0x39, 0x13, 0xea, 0x5b, 0x6b, 0xe3, 0x91, 0xc0, 0xd2, 0x2c, 0x0b, 0x21,
+    0xb1, 0xac, 0xa9, 0xe8, 0xa0, 0x6d, 0xa4, 0x1f, 0x1b, 0x34, 0xcb, 0x88, 0x7f, 0x2e, 0xeb, 0x7d,
+    0x91, 0x38, 0x48, 0xce, 0x05, 0x73, 0x05, 0xdd, 0x22, 0x94, 0xc3, 0xdd, 0x1c, 0xfd, 0xc5, 0x41,
+    0x2e, 0x94, 0xf9, 0xed, 0xe5, 0x92, 0x5f, 0x3f, 0x06, 0xf8, 0x49, 0x60, 0xb8, 0x92, 0x52, 0x6a,
+    0x56, 0x6e, 0xd7, 0x04, 0x1a, 0xb5, 0xb5, 0x1c, 0x31, 0xd1, 0x1b,
+};
+
+static UCHAR rsaFullPrivateBlob[] =
+{
+    0x52, 0x53, 0x41, 0x33, 0x00, 0x02, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+    0x20, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0xa6, 0x8b, 0x46, 0x26, 0xb5,
+    0xa9, 0x69, 0x83, 0x94, 0x66, 0xa7, 0xf3, 0x33, 0x95, 0x74, 0xe9, 0xeb, 0xc8, 0xcd, 0xd7, 0x81,
+    0x9e, 0x45, 0x66, 0xb2, 0x48, 0x8b, 0x1f, 0xfe, 0xb3, 0x62, 0xc4, 0x0d, 0xa2, 0xf9, 0xf3, 0xe2,
+    0xa6, 0x86, 0xd1, 0x1e, 0x8a, 0xbb, 0x1d, 0xa5, 0xc5, 0xe8, 0xa7, 0x50, 0x37, 0xfd, 0x69, 0x1f,
+    0x6f, 0x99, 0x99, 0xca, 0x39, 0x13, 0xea, 0x5b, 0x6b, 0xe3, 0x91, 0xc0, 0xd2, 0x2c, 0x0b, 0x21,
+    0xb1, 0xac, 0xa9, 0xe8, 0xa0, 0x6d, 0xa4, 0x1f, 0x1b, 0x34, 0xcb, 0x88, 0x7f, 0x2e, 0xeb, 0x7d,
+    0x91, 0x38, 0x48, 0xce, 0x05, 0x73, 0x05, 0xdd, 0x22, 0x94, 0xc3, 0xdd, 0x1c, 0xfd, 0xc5, 0x41,
+    0x2e, 0x94, 0xf9, 0xed, 0xe5, 0x92, 0x5f, 0x3f, 0x06, 0xf8, 0x49, 0x60, 0xb8, 0x92, 0x52, 0x6a,
+    0x56, 0x6e, 0xd7, 0x04, 0x1a, 0xb5, 0xb5, 0x1c, 0x31, 0xd1, 0x1b, 0xa3, 0xf3, 0xd1, 0x69, 0x61,
+    0xab, 0xfe, 0xc1, 0xb6, 0x40, 0x7b, 0x19, 0xbb, 0x2d, 0x59, 0xf5, 0xda, 0x49, 0x32, 0x6f, 0x20,
+    0x24, 0xd3, 0xb3, 0xec, 0x21, 0xec, 0x0c, 0xc7, 0x5b, 0xf9, 0x1b, 0xba, 0x6e, 0xe9, 0x61, 0xda,
+    0x55, 0xc6, 0x72, 0xfd, 0x2d, 0x66, 0x3f, 0x3c, 0xcb, 0x49, 0xa9, 0xc5, 0x0d, 0x9b, 0x02, 0x36,
+    0x7a, 0xee, 0x36, 0x09, 0x55, 0xe4, 0x03, 0xf2, 0xe3, 0xe6, 0x25, 0x14, 0x89, 0x7f, 0x2b, 0xfb,
+    0x27, 0x0e, 0x8d, 0x37, 0x84, 0xfd, 0xad, 0x10, 0x79, 0x43, 0x4e, 0x38, 0x4a, 0xd4, 0x5e, 0xfa,
+    0xda, 0x9f, 0x88, 0x21, 0x7c, 0xb4, 0x98, 0xb6, 0x6e, 0x1c, 0x24, 0x09, 0xe5, 0xe7, 0x22, 0x6f,
+    0xd3, 0x84, 0xc0, 0xdc, 0x36, 0x09, 0xaf, 0x4b, 0x96, 0x8b, 0x5f, 0x47, 0xb3, 0x24, 0x80, 0xb5,
+    0x64, 0x69, 0xad, 0x83, 0xd5, 0x09, 0xe7, 0xb9, 0xe4, 0x81, 0x6f, 0x1a, 0xe2, 0x6d, 0xf1, 0x5e,
+    0x2b, 0xb3, 0x7a, 0xd0, 0x77, 0xef, 0x82, 0xcd, 0x55, 0x2e, 0xd5, 0xb1, 0xa7, 0x72, 0xec, 0x02,
+    0x9d, 0xe2, 0xcc, 0x5a, 0xf1, 0x68, 0x30, 0xe5, 0xbc, 0x8d, 0xad,
+};
+
 static void test_RSA(void)
 {
     static UCHAR hash[] =
@@ -1986,7 +2024,7 @@ static void test_RSA(void)
     BCRYPT_KEY_HANDLE key;
     BCRYPT_RSAKEY_BLOB *rsablob;
     UCHAR sig[64];
-    ULONG len, size, schemes;
+    ULONG len, size, size2, schemes;
     NTSTATUS ret;
     BYTE *buf;
 
@@ -2043,6 +2081,46 @@ static void test_RSA(void)
     ret = pBCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
     ok(!ret, "got %08x\n", ret);
 
+    /* export private key */
+    size = 0;
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, buf, size, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
+    ok(rsablob->Magic == BCRYPT_RSAPRIVATE_MAGIC, "got %08x\n", rsablob->Magic);
+    ok(rsablob->BitLength == 512, "got %u\n", rsablob->BitLength);
+    ok(rsablob->cbPublicExp == 3, "got %u\n", rsablob->cbPublicExp);
+    ok(rsablob->cbModulus == 64, "got %u\n", rsablob->cbModulus);
+    ok(rsablob->cbPrime1 == 32, "got %u\n", rsablob->cbPrime1);
+    ok(rsablob->cbPrime2 == 32, "got %u\n", rsablob->cbPrime2);
+    size2 = sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus + rsablob->cbPrime1 + rsablob->cbPrime2;
+    ok(size == size2, "got %u expected %u\n", size2, size);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    size = 0;
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAFULLPRIVATE_BLOB, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAFULLPRIVATE_BLOB, buf, size, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
+    ok(rsablob->Magic == BCRYPT_RSAFULLPRIVATE_MAGIC, "got %08x\n", rsablob->Magic);
+    ok(rsablob->BitLength == 512, "got %u\n", rsablob->BitLength);
+    ok(rsablob->cbPublicExp == 3, "got %u\n", rsablob->cbPublicExp);
+    ok(rsablob->cbModulus == 64, "got %u\n", rsablob->cbModulus);
+    ok(rsablob->cbPrime1 == 32, "got %u\n", rsablob->cbPrime1);
+    ok(rsablob->cbPrime2 == 32, "got %u\n", rsablob->cbPrime2);
+    size2 = sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus * 2 + rsablob->cbPrime1 * 3 + rsablob->cbPrime2 * 2;
+    ok(size == size2, "got %u expected %u\n", size2, size);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    /* export public key */
     size = 0;
     ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPUBLIC_BLOB, NULL, 0, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
@@ -2071,6 +2149,32 @@ static void test_RSA(void)
     ret = pBCryptDestroyKey(key);
     ok(!ret, "got %08x\n", ret);
 
+    /* import/export private key */
+    ret = pBCryptImportKeyPair(alg, NULL, BCRYPT_RSAPRIVATE_BLOB, &key, rsaPrivateBlob, sizeof(rsaPrivateBlob), 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    size = 0;
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(rsaPrivateBlob));
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, buf, sizeof(rsaPrivateBlob), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(rsaPrivateBlob), "got %u\n", size);
+    ok(!memcmp(buf, rsaPrivateBlob, size), "wrong data\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+    pBCryptDestroyKey(key);
+
+    /* import/export full private key */
+    ret = pBCryptImportKeyPair(alg, NULL, BCRYPT_RSAFULLPRIVATE_BLOB, &key, rsaFullPrivateBlob, sizeof(rsaFullPrivateBlob), 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    size = 0;
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(rsaFullPrivateBlob));
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAFULLPRIVATE_BLOB, buf, sizeof(rsaFullPrivateBlob), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(rsaFullPrivateBlob), "got %u\n", size);
+    ok(!memcmp(buf, rsaFullPrivateBlob, size), "wrong data\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+    pBCryptDestroyKey(key);
+
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(!ret, "got %08x\n", ret);
 }
@@ -2080,7 +2184,10 @@ static void test_RSA_SIGN(void)
     BCRYPT_PKCS1_PADDING_INFO pad;
     BCRYPT_ALG_HANDLE alg = NULL;
     BCRYPT_KEY_HANDLE key = NULL;
+    BCRYPT_RSAKEY_BLOB *rsablob;
     NTSTATUS ret;
+    ULONG size, size2;
+    BYTE *buf;
 
     ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_SIGN_ALGORITHM, NULL, 0);
     if (ret)
@@ -2116,6 +2223,52 @@ static void test_RSA_SIGN(void)
 
     ret = pBCryptDestroyKey(key);
     ok(!ret, "pBCryptDestroyKey failed: %08x\n", ret);
+
+    /* export private key */
+    ret = pBCryptGenerateKeyPair(alg, &key, 512, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = pBCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    size = 0;
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, buf, size, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
+    ok(rsablob->Magic == BCRYPT_RSAPRIVATE_MAGIC, "got %08x\n", rsablob->Magic);
+    ok(rsablob->BitLength == 512, "got %u\n", rsablob->BitLength);
+    ok(rsablob->cbPublicExp == 3, "got %u\n", rsablob->cbPublicExp);
+    ok(rsablob->cbModulus == 64, "got %u\n", rsablob->cbModulus);
+    ok(rsablob->cbPrime1 == 32, "got %u\n", rsablob->cbPrime1);
+    ok(rsablob->cbPrime2 == 32, "got %u\n", rsablob->cbPrime2);
+    size2 = sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus + rsablob->cbPrime1 + rsablob->cbPrime2;
+    ok(size == size2, "got %u expected %u\n", size2, size);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    size = 0;
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAFULLPRIVATE_BLOB, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAFULLPRIVATE_BLOB, buf, size, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
+    ok(rsablob->Magic == BCRYPT_RSAFULLPRIVATE_MAGIC, "got %08x\n", rsablob->Magic);
+    ok(rsablob->BitLength == 512, "got %u\n", rsablob->BitLength);
+    ok(rsablob->cbPublicExp == 3, "got %u\n", rsablob->cbPublicExp);
+    ok(rsablob->cbModulus == 64, "got %u\n", rsablob->cbModulus);
+    ok(rsablob->cbPrime1 == 32, "got %u\n", rsablob->cbPrime1);
+    ok(rsablob->cbPrime2 == 32, "got %u\n", rsablob->cbPrime2);
+    size2 = sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus * 2 + rsablob->cbPrime1 * 3 + rsablob->cbPrime2 * 2;
+    ok(size == size2, "got %u expected %u\n", size2, size);
+    HeapFree(GetProcessHeap(), 0, buf);
+    pBCryptDestroyKey(key);
 
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(!ret, "pBCryptCloseAlgorithmProvider failed: %08x\n", ret);
@@ -2370,7 +2523,6 @@ static void test_BCryptSignHash(void)
     ULONG len;
 
     /* RSA */
-
     ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (ret)
     {
@@ -2424,7 +2576,6 @@ static void test_BCryptSignHash(void)
     ok(!ret, "got %08x\n", ret);
 
     /* ECDSA */
-
     ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
     if (ret)
     {

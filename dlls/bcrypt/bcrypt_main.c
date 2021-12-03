@@ -1101,6 +1101,15 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         if (output) memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
         return STATUS_SUCCESS;
     }
+    else if (!wcscmp( type, BCRYPT_RSAPRIVATE_BLOB ) || !wcscmp( type, BCRYPT_RSAFULLPRIVATE_BLOB ))
+    {
+        params.key = key;
+        params.buf = output;
+        params.len = output_len;
+        params.ret_len = size;
+        params.full = wcscmp( type, BCRYPT_RSAPRIVATE_BLOB );
+        return UNIX_CALL( key_export_rsa, &params );
+    }
     else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
         params.key = key;
@@ -1404,13 +1413,13 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         return key_asymmetric_create( (struct key **)ret_key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
     }
-    else if (!wcscmp( type, BCRYPT_RSAPRIVATE_BLOB ))
+    else if (!wcscmp( type, BCRYPT_RSAPRIVATE_BLOB ) || !wcscmp( type, BCRYPT_RSAFULLPRIVATE_BLOB ))
     {
         BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)input;
 
         if (input_len < sizeof(*rsa_blob)) return STATUS_INVALID_PARAMETER;
-        if (alg->id != ALG_ID_RSA || rsa_blob->Magic != BCRYPT_RSAPRIVATE_MAGIC)
-            return STATUS_NOT_SUPPORTED;
+        if (alg->id != ALG_ID_RSA || (rsa_blob->Magic != BCRYPT_RSAPRIVATE_MAGIC &&
+            rsa_blob->Magic != BCRYPT_RSAFULLPRIVATE_MAGIC)) return STATUS_NOT_SUPPORTED;
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         if ((status = key_asymmetric_create( &key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))

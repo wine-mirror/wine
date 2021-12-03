@@ -274,6 +274,7 @@ struct key_export_params
     UCHAR       *buf;
     ULONG        len;
     ULONG       *ret_len;
+    BOOL         full;
 };
 
 struct key_import_params
@@ -301,6 +302,7 @@ enum key_funcs
     unix_key_asymmetric_destroy,
     unix_key_export_dsa_capi,
     unix_key_export_ecc,
+    unix_key_export_rsa,
     unix_key_import_dsa_capi,
     unix_key_import_ecc,
     unix_key_import_rsa,
