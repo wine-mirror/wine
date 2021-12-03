@@ -1319,7 +1319,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     SIZE_T data_size;
     char *data;
     unsigned expected_size;
-    SSIZE_T received = 0;
+    SIZE_T received = 0;
     int idx;
     unsigned char *buf_ptr;
 
@@ -1360,31 +1360,14 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     init_schan_buffers(&ctx->transport.in, message, schan_decrypt_message_get_next_buffer);
     ctx->transport.in.limit = expected_size;
 
-    while (received < data_size)
+    received = data_size;
+    status = schan_funcs->recv(ctx->transport.session, data, &received);
+
+    if (status != SEC_E_OK && status != SEC_I_RENEGOTIATE)
     {
-        SIZE_T length = data_size - received;
-        status = schan_funcs->recv(ctx->transport.session, data + received, &length);
-
-        if (status == SEC_I_RENEGOTIATE)
-            break;
-
-        if (status == SEC_I_CONTINUE_NEEDED)
-        {
-            status = SEC_E_OK;
-            break;
-        }
-
-        if (status != SEC_E_OK)
-        {
-            free(data);
-            ERR("Returning %x\n", status);
-            return status;
-        }
-
-        if (!length)
-            break;
-
-        received += length;
+        free(data);
+        ERR("Returning %x\n", status);
+        return status;
     }
 
     TRACE("Received %ld bytes\n", received);

@@ -756,35 +756,39 @@ static SECURITY_STATUS CDECL schan_send(schan_session session, const void *buffe
 static SECURITY_STATUS CDECL schan_recv(schan_session session, void *buffer, SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
+    size_t data_size = *length;
+    size_t received = 0;
     ssize_t ret;
+    SECURITY_STATUS status = SEC_E_OK;
 
-again:
-    ret = pgnutls_record_recv(s, buffer, *length);
-
-    if (ret >= 0)
-        *length = ret;
-    else if (ret == GNUTLS_E_AGAIN)
+    while (received < data_size)
     {
-        struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
-        SIZE_T count = 0;
+        ret = pgnutls_record_recv(s, (char *)buffer + received, data_size - received);
 
-        if (get_buffer(t, &t->in, &count))
-            goto again;
+        if (ret > 0) received += ret;
+        else if (!ret) break;
+        else if (ret == GNUTLS_E_AGAIN)
+        {
+            struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
+            SIZE_T count = 0;
 
-        return SEC_I_CONTINUE_NEEDED;
-    }
-    else if (ret == GNUTLS_E_REHANDSHAKE)
-    {
-        TRACE("Rehandshake requested\n");
-        return SEC_I_RENEGOTIATE;
-    }
-    else
-    {
-        pgnutls_perror(ret);
-        return SEC_E_INTERNAL_ERROR;
+            if (!get_buffer(t, &t->in, &count)) break;
+        }
+        else if (ret == GNUTLS_E_REHANDSHAKE)
+        {
+            TRACE("Rehandshake requested\n");
+            status = SEC_I_RENEGOTIATE;
+            break;
+        }
+        else
+        {
+            pgnutls_perror(ret);
+            return SEC_E_INTERNAL_ERROR;
+        }
     }
 
-    return SEC_E_OK;
+    *length = received;
+    return status;
 }
 
 static unsigned int parse_alpn_protocol_list(unsigned char *buffer, unsigned int buflen, gnutls_datum_t *list)
