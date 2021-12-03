@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -28,10 +29,8 @@
 #include "winternl.h"
 #include "bcrypt.h"
 
-#include "bcrypt_internal.h"
-
 #include "wine/debug.h"
-#include "wine/heap.h"
+#include "bcrypt_internal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
@@ -156,7 +155,7 @@ NTSTATUS WINAPI BCryptEnumAlgorithms( ULONG type, ULONG *ret_count, BCRYPT_ALGOR
         if (match_operation_type( type, builtin_algorithms[i].class )) count++;
     }
 
-    if (!(list = heap_alloc( count * sizeof(*list) ))) return STATUS_NO_MEMORY;
+    if (!(list = malloc( count * sizeof(*list) ))) return STATUS_NO_MEMORY;
 
     for (i = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
     {
@@ -248,7 +247,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(alg = heap_alloc( sizeof(*alg) ))) return STATUS_NO_MEMORY;
+    if (!(alg = malloc( sizeof(*alg) ))) return STATUS_NO_MEMORY;
     alg->hdr.magic = MAGIC_ALG;
     alg->id        = alg_id;
     alg->mode      = MODE_ID_CBC;
@@ -266,7 +265,7 @@ NTSTATUS WINAPI BCryptCloseAlgorithmProvider( BCRYPT_ALG_HANDLE handle, DWORD fl
 
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
     alg->hdr.magic = 0;
-    heap_free( alg );
+    free( alg );
     return STATUS_SUCCESS;
 }
 
@@ -797,16 +796,16 @@ static NTSTATUS hash_create( const struct algorithm *alg, UCHAR *secret, ULONG s
     struct hash *hash;
     NTSTATUS status;
 
-    if (!(hash = heap_alloc_zero( sizeof(*hash) ))) return STATUS_NO_MEMORY;
+    if (!(hash = calloc( 1, sizeof(*hash) ))) return STATUS_NO_MEMORY;
     hash->hdr.magic = MAGIC_HASH;
     hash->alg_id    = alg->id;
     if (alg->flags & BCRYPT_ALG_HANDLE_HMAC_FLAG) hash->flags = HASH_FLAG_HMAC;
     if ((alg->flags & BCRYPT_HASH_REUSABLE_FLAG) || (flags & BCRYPT_HASH_REUSABLE_FLAG))
         hash->flags |= HASH_FLAG_REUSABLE;
 
-    if (secret_len && !(hash->secret = heap_alloc( secret_len )))
+    if (secret_len && !(hash->secret = malloc( secret_len )))
     {
-        heap_free( hash );
+        free( hash );
         return STATUS_NO_MEMORY;
     }
     memcpy( hash->secret, secret, secret_len );
@@ -814,8 +813,8 @@ static NTSTATUS hash_create( const struct algorithm *alg, UCHAR *secret, ULONG s
 
     if ((status = hash_prepare( hash )))
     {
-        heap_free( hash->secret );
-        heap_free( hash );
+        free( hash->secret );
+        free( hash );
         return status;
     }
 
@@ -858,13 +857,12 @@ NTSTATUS WINAPI BCryptDuplicateHash( BCRYPT_HASH_HANDLE handle, BCRYPT_HASH_HAND
     if (!handle_copy) return STATUS_INVALID_PARAMETER;
     if (object) FIXME( "ignoring object buffer\n" );
 
-    if (!(hash_copy = heap_alloc( sizeof(*hash_copy) )))
-        return STATUS_NO_MEMORY;
+    if (!(hash_copy = malloc( sizeof(*hash_copy) ))) return STATUS_NO_MEMORY;
 
     memcpy( hash_copy, hash_orig, sizeof(*hash_orig) );
-    if (hash_orig->secret && !(hash_copy->secret = heap_alloc( hash_orig->secret_len )))
+    if (hash_orig->secret && !(hash_copy->secret = malloc( hash_orig->secret_len )))
     {
-        heap_free( hash_copy );
+        free( hash_copy );
         return STATUS_NO_MEMORY;
     }
     memcpy( hash_copy->secret, hash_orig->secret, hash_orig->secret_len );
@@ -877,8 +875,8 @@ static void hash_destroy( struct hash *hash )
 {
     if (!hash) return;
     hash->hdr.magic = 0;
-    heap_free( hash->secret );
-    heap_free( hash );
+    free( hash->secret );
+    free( hash );
 }
 
 NTSTATUS WINAPI BCryptDestroyHash( BCRYPT_HASH_HANDLE handle )
@@ -971,15 +969,15 @@ static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *a
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+    if (!(key = calloc( 1, sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic  = MAGIC_KEY;
     key->alg_id     = alg->id;
     key->u.a.bitlen = bitlen;
     key->u.a.pubkey_len = pubkey_len;
 
-    if (!(key->u.a.pubkey = heap_alloc( pubkey_len )))
+    if (!(key->u.a.pubkey = malloc( pubkey_len )))
     {
-        heap_free( key );
+        free( key );
         return STATUS_NO_MEMORY;
     }
     if (pubkey) memcpy( key->u.a.pubkey, pubkey, pubkey_len );
@@ -1013,12 +1011,12 @@ static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG 
     BOOL needs_reset = (!is_zero_vector( vector, vector_len ) ||
                         !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len ));
 
-    heap_free( key->u.s.vector );
+    free( key->u.s.vector );
     key->u.s.vector = NULL;
     key->u.s.vector_len = 0;
     if (vector)
     {
-        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
+        if (!(key->u.s.vector = malloc( vector_len ))) return STATUS_NO_MEMORY;
         memcpy( key->u.s.vector, vector, vector_len );
         key->u.s.vector_len = vector_len;
     }
@@ -1208,12 +1206,12 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
 
     if (flags & BCRYPT_BLOCK_PADDING)
     {
-        if (!(buf = heap_alloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
+        if (!(buf = malloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
         memcpy( buf, encrypt_params.input, bytes_left );
         memset( buf + bytes_left, key->u.s.block_size - bytes_left, key->u.s.block_size - bytes_left );
         encrypt_params.input = buf;
         status = UNIX_CALL( key_symmetric_encrypt, &encrypt_params );
-        heap_free( buf );
+        free( buf );
     }
 
     return status;
@@ -1300,7 +1298,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     if (flags & BCRYPT_BLOCK_PADDING)
     {
         UCHAR *buf, *dst = decrypt_params.output;
-        if (!(buf = heap_alloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
+        if (!(buf = malloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
         decrypt_params.output = buf;
         status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params );
         if (!status && buf[ key->u.s.block_size - 1 ] <= key->u.s.block_size)
@@ -1310,7 +1308,7 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
             else memcpy( dst, buf, key->u.s.block_size - buf[ key->u.s.block_size - 1 ] );
         }
         else status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
-        heap_free( buf );
+        free( buf );
     }
 
     return status;
@@ -1567,16 +1565,16 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
         }
     }
 
-    if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+    if (!(key = calloc( 1, sizeof(*key) ))) return STATUS_NO_MEMORY;
     InitializeCriticalSection( &key->u.s.cs );
     key->hdr.magic      = MAGIC_KEY;
     key->alg_id         = alg->id;
     key->u.s.mode       = alg->mode;
     key->u.s.block_size = block_size;
 
-    if (!(key->u.s.secret = heap_alloc( secret_len )))
+    if (!(key->u.s.secret = malloc( secret_len )))
     {
-        heap_free( key );
+        free( key );
         return STATUS_NO_MEMORY;
     }
     memcpy( key->u.s.secret, secret, secret_len );
@@ -1685,7 +1683,7 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
 
     if (key_is_symmetric( key_orig ))
     {
-        if (!(buffer = heap_alloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
+        if (!(buffer = malloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
         memcpy( buffer, key_orig->u.s.secret, key_orig->u.s.secret_len );
 
         key_copy->u.s.mode       = key_orig->u.s.mode;
@@ -1698,7 +1696,7 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
     {
         struct key_asymmetric_duplicate_params params;
 
-        if (!(buffer = heap_alloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
+        if (!(buffer = malloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
         memcpy( buffer, key_orig->u.a.pubkey, key_orig->u.a.pubkey_len );
 
         key_copy->u.a.bitlen     = key_orig->u.a.bitlen;
@@ -1720,17 +1718,17 @@ static void key_destroy( struct key *key )
     if (key_is_symmetric( key ))
     {
         UNIX_CALL( key_symmetric_destroy, key );
-        heap_free( key->u.s.vector );
-        heap_free( key->u.s.secret );
+        free( key->u.s.vector );
+        free( key->u.s.secret );
         DeleteCriticalSection( &key->u.s.cs );
     }
     else
     {
         UNIX_CALL( key_asymmetric_destroy, key );
-        heap_free( key->u.a.pubkey );
+        free( key->u.a.pubkey );
     }
     key->hdr.magic = 0;
-    heap_free( key );
+    free( key );
 }
 
 NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE *handle_copy,
@@ -1745,7 +1743,7 @@ NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE 
 
     if (!key_orig || key_orig->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
     if (!handle_copy) return STATUS_INVALID_PARAMETER;
-    if (!(key_copy = heap_alloc( sizeof(*key_copy) ))) return STATUS_NO_MEMORY;
+    if (!(key_copy = malloc( sizeof(*key_copy) ))) return STATUS_NO_MEMORY;
 
     if ((status = key_duplicate( key_orig, key_copy )))
     {
@@ -1978,7 +1976,7 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
     UCHAR bytes[4], *buf;
     ULONG j, k;
 
-    if (!(buf = heap_alloc( hash_len ))) return STATUS_NO_MEMORY;
+    if (!(buf = malloc( hash_len ))) return STATUS_NO_MEMORY;
 
     for (j = 0; j < iterations; j++)
     {
@@ -1987,7 +1985,7 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
             /* use salt || INT(i) */
             if ((status = hash_update( &hash->inner, hash->alg_id, salt, salt_len )))
             {
-                heap_free( buf );
+                free( buf );
                 return status;
             }
             bytes[0] = (i >> 24) & 0xff;
@@ -2000,13 +1998,13 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
 
         if (status)
         {
-            heap_free( buf );
+            free( buf );
             return status;
         }
 
         if ((status = hash_finalize( hash, buf, hash_len )))
         {
-            heap_free( buf );
+            free( buf );
             return status;
         }
 
@@ -2014,7 +2012,7 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
         else for (k = 0; k < hash_len; k++) dst[k] ^= buf[k];
     }
 
-    heap_free( buf );
+    free( buf );
     return status;
 }
 
@@ -2051,7 +2049,7 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
     }
 
     /* final partial block */
-    if (!(partial = heap_alloc( hash_len )))
+    if (!(partial = malloc( hash_len )))
     {
         hash_destroy( hash );
         return STATUS_NO_MEMORY;
@@ -2060,13 +2058,13 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
     if ((status = pbkdf2( hash, pwd, pwd_len, salt, salt_len, iterations, block_count, partial, hash_len )))
     {
         hash_destroy( hash );
-        heap_free( partial );
+        free( partial );
         return status;
     }
     memcpy( dk + ((block_count - 1) * hash_len), partial, bytes_left );
 
     hash_destroy( hash );
-    heap_free( partial );
+    free( partial );
     return STATUS_SUCCESS;
 }
 
@@ -2082,7 +2080,7 @@ NTSTATUS WINAPI BCryptSecretAgreement(BCRYPT_KEY_HANDLE privatekey, BCRYPT_KEY_H
     if (!pubkey || pubkey->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
     if (!handle) return STATUS_INVALID_PARAMETER;
 
-    if (!(secret = heap_alloc_zero( sizeof(*secret) ))) return STATUS_NO_MEMORY;
+    if (!(secret = calloc( 1, sizeof(*secret) ))) return STATUS_NO_MEMORY;
     secret->hdr.magic = MAGIC_SECRET;
 
     *handle = secret;
@@ -2097,7 +2095,7 @@ NTSTATUS WINAPI BCryptDestroySecret(BCRYPT_SECRET_HANDLE handle)
 
     if (!secret || secret->hdr.magic != MAGIC_SECRET) return STATUS_INVALID_HANDLE;
     secret->hdr.magic = 0;
-    heap_free( secret );
+    free( secret );
     return STATUS_SUCCESS;
 }
 
