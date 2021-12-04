@@ -6589,7 +6589,12 @@ static void test_d3d11_surface_buffer(void)
         return;
     }
 
-    device = create_d3d11_device();
+    /* d3d11 */
+    if (!(device = create_d3d11_device()))
+    {
+        skip("Failed to create a D3D11 device, skipping tests.\n");
+        return;
+    }
 
     memset(&desc, 0, sizeof(desc));
     desc.Width = 64;
