@@ -592,6 +592,7 @@ SOURCES = \
 	poppack.h \
 	powrprof.h \
 	prntvpt.h \
+	processthreadsapi.h \
 	profinfo.h \
 	proofofpossessioncookieinfo.idl \
 	propidl.idl \

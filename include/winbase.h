@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 #include <libloaderapi.h>
+#include <processthreadsapi.h>
 #include <synchapi.h>
 #include <threadpoolapiset.h>
 
