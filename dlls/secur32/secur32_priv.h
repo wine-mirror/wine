@@ -108,29 +108,123 @@ struct schan_transport
     struct schan_buffers out;
 };
 
-struct schan_funcs
+struct session_params
 {
-    BOOL (CDECL *allocate_certificate_credentials)(schan_credentials *, const CERT_CONTEXT *, const DATA_BLOB *);
-    BOOL (CDECL *create_session)(schan_session *, schan_credentials *);
-    void (CDECL *dispose_session)(schan_session);
-    void (CDECL *free_certificate_credentials)(schan_credentials *);
-    SECURITY_STATUS (CDECL *get_application_protocol)(schan_session, SecPkgContext_ApplicationProtocol *);
-    SECURITY_STATUS (CDECL *get_connection_info)(schan_session, SecPkgContext_ConnectionInfo *);
-    DWORD (CDECL *get_enabled_protocols)(void);
-    ALG_ID (CDECL *get_key_signature_algorithm)(schan_session);
-    unsigned int (CDECL *get_max_message_size)(schan_session);
-    unsigned int (CDECL *get_session_cipher_block_size)(schan_session);
-    SECURITY_STATUS (CDECL *get_session_peer_certificate)(schan_session, CERT_BLOB *, ULONG *, ULONG *);
-    SECURITY_STATUS (CDECL *get_unique_channel_binding)(schan_session, void *, ULONG *);
-    SECURITY_STATUS (CDECL *handshake)(schan_session, SecBufferDesc *, SIZE_T, SecBufferDesc *, SecBuffer * );
-    SECURITY_STATUS (CDECL *recv)(schan_session, SecBufferDesc *, SIZE_T, void *, SIZE_T *);
-    SECURITY_STATUS (CDECL *send)(schan_session, SecBufferDesc *, const void *, SIZE_T *);
-    void (CDECL *set_application_protocols)(schan_session, unsigned char *, unsigned int);
-    SECURITY_STATUS (CDECL *set_dtls_mtu)(schan_session, unsigned int);
-    void (CDECL *set_session_target)(schan_session, const char *);
-    void (CDECL *set_session_transport)(schan_session, struct schan_transport *);
+    schan_session session;
 };
 
-extern const struct schan_funcs *schan_funcs;
+struct allocate_certificate_credentials_params
+{
+    schan_credentials *c;
+    const CERT_CONTEXT *ctx;
+    const DATA_BLOB *key_blob;
+};
+
+struct create_session_params
+{
+    struct schan_transport *transport;
+    schan_credentials *cred;
+};
+
+struct free_certificate_credentials_params
+{
+    schan_credentials *c;
+};
+
+struct get_application_protocol_params
+{
+    schan_session session;
+    SecPkgContext_ApplicationProtocol *protocol;
+};
+
+struct get_connection_info_params
+{
+    schan_session session;
+    SecPkgContext_ConnectionInfo *info;
+};
+
+struct get_session_peer_certificate_params
+{
+    schan_session session;
+    CERT_BLOB *certs;
+    ULONG *bufsize;
+    ULONG *retcount;
+};
+
+struct get_unique_channel_binding_params
+{
+    schan_session session;
+    void *buffer;
+    ULONG *bufsize;
+};
+
+struct handshake_params
+{
+    schan_session session;
+    SecBufferDesc *input;
+    SIZE_T input_size;
+    SecBufferDesc *output;
+    SecBuffer *alloc_buffer;
+};
+
+struct recv_params
+{
+    schan_session session;
+    SecBufferDesc *input;
+    SIZE_T input_size;
+    void *buffer;
+    SIZE_T *length;
+};
+
+struct send_params
+{
+    schan_session session;
+    SecBufferDesc *output;
+    const void *buffer;
+    SIZE_T *length;
+};
+
+struct set_application_protocols_params
+{
+    schan_session session;
+    unsigned char *buffer;
+    unsigned int buflen;
+};
+
+struct set_dtls_mtu_params
+{
+    schan_session session;
+    unsigned int mtu;
+};
+
+struct set_session_target_params
+{
+    schan_session session;
+    const char *target;
+};
+
+enum schan_funcs
+{
+    unix_process_attach,
+    unix_process_detach,
+    unix_allocate_certificate_credentials,
+    unix_create_session,
+    unix_dispose_session,
+    unix_free_certificate_credentials,
+    unix_get_application_protocol,
+    unix_get_connection_info,
+    unix_get_enabled_protocols,
+    unix_get_key_signature_algorithm,
+    unix_get_max_message_size,
+    unix_get_session_cipher_block_size,
+    unix_get_session_peer_certificate,
+    unix_get_unique_channel_binding,
+    unix_handshake,
+    unix_recv,
+    unix_send,
+    unix_set_application_protocols,
+    unix_set_dtls_mtu,
+    unix_set_session_target,
+};
 
 #endif /* __SECUR32_PRIV_H__ */

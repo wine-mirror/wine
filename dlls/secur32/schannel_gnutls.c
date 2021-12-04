@@ -45,6 +45,7 @@
 #include "sspi.h"
 #include "secur32_priv.h"
 
+#include "wine/unixlib.h"
 #include "wine/debug.h"
 
 #if defined(SONAME_LIBGNUTLS)
@@ -445,7 +446,7 @@ static void check_supported_protocols(void)
     pgnutls_deinit(session);
 }
 
-static DWORD CDECL schan_get_enabled_protocols(void)
+static NTSTATUS schan_get_enabled_protocols( void *args )
 {
     return supported_protocols;
 }
@@ -463,9 +464,11 @@ static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
     return -1;
 }
 
-static BOOL CDECL schan_create_session(schan_session *session, schan_credentials *cred)
+static NTSTATUS schan_create_session( void *args )
 {
-    gnutls_session_t *s = (gnutls_session_t*)session;
+    const struct create_session_params *params = args;
+    schan_credentials *cred = params->cred;
+    gnutls_session_t *s = (gnutls_session_t*)&params->transport->session;
     char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
     BOOL using_vers_all = FALSE, disabled;
     unsigned int i, flags = (cred->credential_use == SECPKG_CRED_INBOUND) ? GNUTLS_SERVER : GNUTLS_CLIENT;
@@ -480,7 +483,7 @@ static BOOL CDECL schan_create_session(schan_session *session, schan_credentials
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
     p = priority + strlen(priority);
@@ -514,7 +517,7 @@ static BOOL CDECL schan_create_session(schan_session *session, schan_credentials
     {
         pgnutls_perror(err);
         pgnutls_deinit(*s);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
     err = pgnutls_credentials_set(*s, GNUTLS_CRD_CERTIFICATE,
@@ -523,46 +526,44 @@ static BOOL CDECL schan_create_session(schan_session *session, schan_credentials
     {
         pgnutls_perror(err);
         pgnutls_deinit(*s);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
     pgnutls_transport_set_pull_function(*s, pull_adapter);
     if (flags & GNUTLS_DATAGRAM) pgnutls_transport_set_pull_timeout_function(*s, pull_timeout);
     pgnutls_transport_set_push_function(*s, push_adapter);
+    pgnutls_transport_set_ptr(*s, (gnutls_transport_ptr_t)params->transport);
 
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
-static void CDECL schan_dispose_session(schan_session session)
+static NTSTATUS schan_dispose_session( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct session_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     pgnutls_deinit(s);
+    return STATUS_SUCCESS;
 }
 
-static void CDECL schan_set_session_transport(schan_session session, struct schan_transport *t)
+static NTSTATUS schan_set_session_target( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
-    pgnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)t);
+    const struct set_session_target_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
+    pgnutls_server_name_set( s, GNUTLS_NAME_DNS, params->target, strlen(params->target) );
+    return STATUS_SUCCESS;
 }
 
-static void CDECL schan_set_session_target(schan_session session, const char *target)
+static NTSTATUS schan_handshake( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
-    pgnutls_server_name_set( s, GNUTLS_NAME_DNS, target, strlen(target) );
-}
-
-static SECURITY_STATUS CDECL schan_handshake(schan_session session, SecBufferDesc *input,
-                                             SIZE_T input_size, SecBufferDesc *output,
-                                             SecBuffer *alloc_buffer )
-{
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct handshake_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     int err;
 
-    init_schan_buffers(&t->in, input, handshake_get_next_buffer);
-    t->in.limit = input_size;
-    init_schan_buffers(&t->out, output, handshake_get_next_buffer_alloc );
-    t->out.alloc_buffer = alloc_buffer;
+    init_schan_buffers(&t->in, params->input, handshake_get_next_buffer);
+    t->in.limit = params->input_size;
+    init_schan_buffers(&t->out, params->output, handshake_get_next_buffer_alloc );
+    t->out.alloc_buffer = params->alloc_buffer;
 
     while(1) {
         err = pgnutls_handshake(s);
@@ -698,20 +699,24 @@ static ALG_ID get_kx_algid(int kx)
     }
 }
 
-static unsigned int CDECL schan_get_session_cipher_block_size(schan_session session)
+static NTSTATUS schan_get_session_cipher_block_size( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct session_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     return pgnutls_cipher_get_block_size(pgnutls_cipher_get(s));
 }
 
-static unsigned int CDECL schan_get_max_message_size(schan_session session)
+static NTSTATUS schan_get_max_message_size( void *args )
 {
-    return pgnutls_record_get_max_size((gnutls_session_t)session);
+    const struct session_params *params = args;
+    return pgnutls_record_get_max_size((gnutls_session_t)params->session);
 }
 
-static SECURITY_STATUS CDECL schan_get_connection_info(schan_session session, SecPkgContext_ConnectionInfo *info)
+static NTSTATUS schan_get_connection_info( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct get_connection_info_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
+    SecPkgContext_ConnectionInfo *info = params->info;
     gnutls_protocol_t proto = pgnutls_protocol_get_version(s);
     gnutls_cipher_algorithm_t alg = pgnutls_cipher_get(s);
     gnutls_mac_algorithm_t mac = pgnutls_mac_get(s);
@@ -728,12 +733,13 @@ static SECURITY_STATUS CDECL schan_get_connection_info(schan_session session, Se
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session session, void *buffer, ULONG *bufsize)
+static NTSTATUS schan_get_unique_channel_binding( void *args )
 {
+    const struct get_unique_channel_binding_params *params = args;
     gnutls_datum_t datum;
     int rc;
     SECURITY_STATUS ret;
-    gnutls_session_t s = (gnutls_session_t)session;
+    gnutls_session_t s = (gnutls_session_t)params->session;
 
     rc = pgnutls_session_channel_binding(s, GNUTLS_CB_TLS_UNIQUE, &datum);
     if (rc)
@@ -741,24 +747,25 @@ static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session sess
         pgnutls_perror(rc);
         return SEC_E_INTERNAL_ERROR;
     }
-    if (buffer && *bufsize >= datum.size)
+    if (params->buffer && *params->bufsize >= datum.size)
     {
-        memcpy( buffer, datum.data, datum.size );
+        memcpy( params->buffer, datum.data, datum.size );
         ret = SEC_E_OK;
     }
     else ret = SEC_E_BUFFER_TOO_SMALL;
 
-    *bufsize = datum.size;
+    *params->bufsize = datum.size;
     free(datum.data);
     return ret;
 }
 
-static ALG_ID CDECL schan_get_key_signature_algorithm(schan_session session)
+static NTSTATUS schan_get_key_signature_algorithm( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct session_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     gnutls_kx_algorithm_t kx = pgnutls_kx_get(s);
 
-    TRACE("(%p)\n", session);
+    TRACE("(%p)\n", params->session);
 
     switch (kx)
     {
@@ -774,10 +781,11 @@ static ALG_ID CDECL schan_get_key_signature_algorithm(schan_session session)
     }
 }
 
-static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session session, CERT_BLOB *certs,
-                                                                ULONG *bufsize, ULONG *retcount)
+static NTSTATUS schan_get_session_peer_certificate( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct get_session_peer_certificate_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
+    CERT_BLOB *certs = params->certs;
     const gnutls_datum_t *datum;
     unsigned int i, size;
     BYTE *ptr;
@@ -788,9 +796,9 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
     size = count * sizeof(certs[0]);
     for (i = 0; i < count; i++) size += datum[i].size;
 
-    if (!certs || *bufsize < size)
+    if (!certs || *params->bufsize < size)
     {
-        *bufsize = size;
+        *params->bufsize = size;
         return SEC_E_BUFFER_TOO_SMALL;
     }
     ptr = (BYTE *)&certs[count];
@@ -802,31 +810,31 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
         ptr += datum[i].size;
     }
 
-    *bufsize = size;
-    *retcount = count;
+    *params->bufsize = size;
+    *params->retcount = count;
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_send(schan_session session, SecBufferDesc *output,
-                                        const void *buffer, SIZE_T *length)
+static NTSTATUS schan_send( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct send_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     SSIZE_T ret, total = 0;
 
-    if (schan_find_sec_buffer_idx(output, 0, SECBUFFER_STREAM_HEADER) != -1)
-        init_schan_buffers(&t->out, output, send_message_get_next_buffer);
+    if (schan_find_sec_buffer_idx(params->output, 0, SECBUFFER_STREAM_HEADER) != -1)
+        init_schan_buffers(&t->out, params->output, send_message_get_next_buffer);
     else
-        init_schan_buffers(&t->out, output, send_message_get_next_buffer_token);
+        init_schan_buffers(&t->out, params->output, send_message_get_next_buffer_token);
 
     for (;;)
     {
-        ret = pgnutls_record_send(s, (const char *)buffer + total, *length - total);
+        ret = pgnutls_record_send(s, (const char *)params->buffer + total, *params->length - total);
         if (ret >= 0)
         {
             total += ret;
-            TRACE( "sent %ld now %ld/%ld\n", ret, total, *length );
-            if (total == *length) break;
+            TRACE( "sent %ld now %ld/%ld\n", ret, total, *params->length );
+            if (total == *params->length) break;
         }
         else if (ret == GNUTLS_E_AGAIN)
         {
@@ -846,22 +854,22 @@ static SECURITY_STATUS CDECL schan_send(schan_session session, SecBufferDesc *ou
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_recv(schan_session session, SecBufferDesc *input,
-                                        SIZE_T input_size, void *buffer, SIZE_T *length)
+static NTSTATUS schan_recv( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct recv_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
-    size_t data_size = *length;
+    size_t data_size = *params->length;
     size_t received = 0;
     ssize_t ret;
     SECURITY_STATUS status = SEC_E_OK;
 
-    init_schan_buffers(&t->in, input, recv_message_get_next_buffer);
-    t->in.limit = input_size;
+    init_schan_buffers(&t->in, params->input, recv_message_get_next_buffer);
+    t->in.limit = params->input_size;
 
     while (received < data_size)
     {
-        ret = pgnutls_record_recv(s, (char *)buffer + received, data_size - received);
+        ret = pgnutls_record_recv(s, (char *)params->buffer + received, data_size - received);
 
         if (ret > 0) received += ret;
         else if (!ret) break;
@@ -884,7 +892,7 @@ static SECURITY_STATUS CDECL schan_recv(schan_session session, SecBufferDesc *in
         }
     }
 
-    *length = received;
+    *params->length = received;
     return status;
 }
 
@@ -910,48 +918,51 @@ static unsigned int parse_alpn_protocol_list(unsigned char *buffer, unsigned int
     return count;
 }
 
-static void CDECL schan_set_application_protocols(schan_session session, unsigned char *buffer, unsigned int buflen)
+static NTSTATUS schan_set_application_protocols( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct set_application_protocols_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
     unsigned int extension_len, extension, count = 0, offset = 0;
     unsigned short list_len;
     gnutls_datum_t *protocols;
     int ret;
 
-    if (sizeof(extension_len) > buflen) return;
-    extension_len = *(unsigned int *)&buffer[offset];
+    if (sizeof(extension_len) > params->buflen) return STATUS_INVALID_PARAMETER;
+    extension_len = *(unsigned int *)&params->buffer[offset];
     offset += sizeof(extension_len);
 
-    if (offset + sizeof(extension) > buflen) return;
-    extension = *(unsigned int *)&buffer[offset];
+    if (offset + sizeof(extension) > params->buflen) return STATUS_INVALID_PARAMETER;
+    extension = *(unsigned int *)&params->buffer[offset];
     if (extension != SecApplicationProtocolNegotiationExt_ALPN)
     {
         FIXME("extension %u not supported\n", extension);
-        return;
+        return STATUS_NOT_SUPPORTED;
     }
     offset += sizeof(extension);
 
-    if (offset + sizeof(list_len) > buflen) return;
-    list_len = *(unsigned short *)&buffer[offset];
+    if (offset + sizeof(list_len) > params->buflen) return STATUS_INVALID_PARAMETER;
+    list_len = *(unsigned short *)&params->buffer[offset];
     offset += sizeof(list_len);
 
-    if (offset + list_len > buflen) return;
-    count = parse_alpn_protocol_list(&buffer[offset], list_len, NULL);
-    if (!count || !(protocols = RtlAllocateHeap(GetProcessHeap(), 0, count * sizeof(*protocols)))) return;
+    if (offset + list_len > params->buflen) return STATUS_INVALID_PARAMETER;
+    count = parse_alpn_protocol_list(&params->buffer[offset], list_len, NULL);
+    if (!count || !(protocols = malloc(count * sizeof(*protocols)))) return STATUS_NO_MEMORY;
 
-    parse_alpn_protocol_list(&buffer[offset], list_len, protocols);
+    parse_alpn_protocol_list(&params->buffer[offset], list_len, protocols);
     if ((ret = pgnutls_alpn_set_protocols(s, protocols, count, GNUTLS_ALPN_SERVER_PRECEDENCE) < 0))
     {
         pgnutls_perror(ret);
     }
 
-    RtlFreeHeap(GetProcessHeap(), 0, protocols);
+    free(protocols);
+    return STATUS_SUCCESS;
 }
 
-static SECURITY_STATUS CDECL schan_get_application_protocol(schan_session session,
-                                                            SecPkgContext_ApplicationProtocol *protocol)
+static NTSTATUS schan_get_application_protocol( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct get_application_protocol_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
+    SecPkgContext_ApplicationProtocol *protocol = params->protocol;
     gnutls_datum_t selected;
 
     memset(protocol, 0, sizeof(*protocol));
@@ -968,12 +979,13 @@ static SECURITY_STATUS CDECL schan_get_application_protocol(schan_session sessio
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS CDECL schan_set_dtls_mtu(schan_session session, unsigned int mtu)
+static NTSTATUS schan_set_dtls_mtu( void *args )
 {
-    gnutls_session_t s = (gnutls_session_t)session;
+    const struct set_dtls_mtu_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
 
-    pgnutls_dtls_set_mtu(s, mtu);
-    TRACE("MTU set to %u\n", mtu);
+    pgnutls_dtls_set_mtu(s, params->mtu);
+    TRACE("MTU set to %u\n", params->mtu);
     return SEC_E_OK;
 }
 
@@ -1079,9 +1091,9 @@ static gnutls_x509_crt_t get_x509_crt(const CERT_CONTEXT *ctx)
     return crt;
 }
 
-static BOOL CDECL schan_allocate_certificate_credentials(schan_credentials *c, const CERT_CONTEXT *ctx,
-                                                         const DATA_BLOB *key_blob )
+static NTSTATUS schan_allocate_certificate_credentials( void *args )
 {
+    const struct allocate_certificate_credentials_params *params = args;
     gnutls_certificate_credentials_t creds;
     gnutls_x509_crt_t crt;
     gnutls_x509_privkey_t key;
@@ -1091,26 +1103,26 @@ static BOOL CDECL schan_allocate_certificate_credentials(schan_credentials *c, c
     if (ret != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(ret);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
-    if (!ctx)
+    if (!params->ctx)
     {
-        c->credentials = creds;
-        return TRUE;
+        params->c->credentials = creds;
+        return STATUS_SUCCESS;
     }
 
-    if (!(crt = get_x509_crt(ctx)))
+    if (!(crt = get_x509_crt(params->ctx)))
     {
         pgnutls_certificate_free_credentials(creds);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
-    if (!(key = get_x509_key(key_blob)))
+    if (!(key = get_x509_key(params->key_blob)))
     {
         pgnutls_x509_crt_deinit(crt);
         pgnutls_certificate_free_credentials(creds);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
     ret = pgnutls_certificate_set_x509_key(creds, &crt, 1, key);
@@ -1120,16 +1132,18 @@ static BOOL CDECL schan_allocate_certificate_credentials(schan_credentials *c, c
     {
         pgnutls_perror(ret);
         pgnutls_certificate_free_credentials(creds);
-        return FALSE;
+        return STATUS_INTERNAL_ERROR;
     }
 
-    c->credentials = creds;
-    return TRUE;
+    params->c->credentials = creds;
+    return STATUS_SUCCESS;
 }
 
-static void CDECL schan_free_certificate_credentials(schan_credentials *c)
+static NTSTATUS schan_free_certificate_credentials( void *args )
 {
-    pgnutls_certificate_free_credentials(c->credentials);
+    const struct free_certificate_credentials_params *params = args;
+    pgnutls_certificate_free_credentials(params->c->credentials);
+    return STATUS_SUCCESS;
 }
 
 static void gnutls_log(int level, const char *msg)
@@ -1137,7 +1151,7 @@ static void gnutls_log(int level, const char *msg)
     TRACE("<%d> %s", level, msg);
 }
 
-static BOOL gnutls_initialize(void)
+static NTSTATUS process_attach( void *args )
 {
     const char *env_str;
     int ret;
@@ -1156,7 +1170,7 @@ static BOOL gnutls_initialize(void)
     if (!libgnutls_handle)
     {
         ERR_(winediag)("Failed to load libgnutls, secure connections will not be available.\n");
-        return FALSE;
+        return STATUS_DLL_NOT_FOUND;
     }
 
 #define LOAD_FUNCPTR(f) \
@@ -1256,23 +1270,26 @@ static BOOL gnutls_initialize(void)
     }
 
     check_supported_protocols();
-    return TRUE;
+    return STATUS_SUCCESS;
 
 fail:
     dlclose(libgnutls_handle);
     libgnutls_handle = NULL;
-    return FALSE;
+    return STATUS_DLL_NOT_FOUND;
 }
 
-static void gnutls_uninitialize(void)
+static NTSTATUS process_detach( void *args )
 {
     pgnutls_global_deinit();
     dlclose(libgnutls_handle);
     libgnutls_handle = NULL;
+    return STATUS_SUCCESS;
 }
 
-static const struct schan_funcs funcs =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    process_attach,
+    process_detach,
     schan_allocate_certificate_credentials,
     schan_create_session,
     schan_dispose_session,
@@ -1291,22 +1308,6 @@ static const struct schan_funcs funcs =
     schan_set_application_protocols,
     schan_set_dtls_mtu,
     schan_set_session_target,
-    schan_set_session_transport,
 };
-
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        if (!gnutls_initialize()) return STATUS_DLL_NOT_FOUND;
-        *(const struct schan_funcs **)ptr_out = &funcs;
-        break;
-    case DLL_PROCESS_DETACH:
-        if (libgnutls_handle) gnutls_uninitialize();
-        break;
-    }
-    return STATUS_SUCCESS;
-}
 
 #endif /* SONAME_LIBGNUTLS */
