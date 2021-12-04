@@ -3516,6 +3516,51 @@ static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
     return STATUS_SUCCESS;
 }
 
+#elif defined(__FreeBSD__)
+
+#include <dev/acpica/acpiio.h>
+
+static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
+{
+    size_t len;
+    int state = 0;
+    int rate_mW = 0;
+    int time_mins = -1;
+    int life_percent = 0;
+
+    bs->BatteryPresent = TRUE;
+    len = sizeof(state);
+    bs->BatteryPresent &= !sysctlbyname("hw.acpi.battery.state", &state, &len, NULL, 0);
+    len = sizeof(rate_mW);
+    bs->BatteryPresent &= !sysctlbyname("hw.acpi.battery.rate", &rate_mW, &len, NULL, 0);
+    len = sizeof(time_mins);
+    bs->BatteryPresent &= !sysctlbyname("hw.acpi.battery.time", &time_mins, &len, NULL, 0);
+    len = sizeof(life_percent);
+    bs->BatteryPresent &= !sysctlbyname("hw.acpi.battery.life", &life_percent, &len, NULL, 0);
+
+    if (bs->BatteryPresent)
+    {
+        bs->AcOnLine = (time_mins == -1);
+        bs->Charging = state & ACPI_BATT_STAT_CHARGING;
+        bs->Discharging = state & ACPI_BATT_STAT_DISCHARG;
+
+        bs->Rate = (rate_mW >= 0 ? -rate_mW : 0);
+        if (time_mins >= 0 && life_percent > 0)
+        {
+            bs->EstimatedTime = 60 * time_mins;
+            bs->RemainingCapacity = bs->EstimatedTime * rate_mW / 3600;
+            bs->MaxCapacity = bs->RemainingCapacity * 100 / life_percent;
+        }
+        else
+        {
+            bs->EstimatedTime = ~0u;
+            bs->RemainingCapacity = life_percent;
+            bs->MaxCapacity = 100;
+        }
+    }
+    return STATUS_SUCCESS;
+}
+
 #else
 
 static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
