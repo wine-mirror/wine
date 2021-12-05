@@ -2486,6 +2486,14 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
 
     switch (ERROR_sig(sigcontext) >> 3)
     {
+    case 0x29:
+        /* __fastfail: process state is corrupted */
+        rec->ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+        rec->ExceptionFlags = EH_NONCONTINUABLE;
+        rec->NumberParameters = 1;
+        rec->ExceptionInformation[0] = context->Rcx;
+        NtRaiseException( rec, context, FALSE );
+        return TRUE;
     case 0x2c:
         rec->ExceptionCode = STATUS_ASSERTION_FAILURE;
         break;

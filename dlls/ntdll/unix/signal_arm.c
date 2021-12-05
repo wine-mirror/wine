@@ -812,13 +812,28 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     switch (get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
-        if (*(WORD *)PC_sig(context) == 0xdefe)  /* breakpoint */
+        switch (*(WORD *)PC_sig(context))
         {
+        case 0xdefb:  /* __fastfail */
+        {
+            CONTEXT ctx;
+            save_context( &ctx, sigcontext );
+            rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+            rec.ExceptionAddress = (void *)ctx.Pc;
+            rec.ExceptionFlags = EH_NONCONTINUABLE;
+            rec.NumberParameters = 1;
+            rec.ExceptionInformation[0] = ctx.R0;
+            NtRaiseException( &rec, &ctx, FALSE );
+            return;
+        }
+        case 0xdefe:  /* breakpoint */
             rec.ExceptionCode = EXCEPTION_BREAKPOINT;
             rec.NumberParameters = 1;
             break;
+        default:
+            rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+            break;
         }
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case TRAP_ARM_PAGEFLT:  /* Page fault */
         rec.NumberParameters = 2;

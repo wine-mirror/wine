@@ -1676,6 +1676,14 @@ static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, vo
 
     switch(interrupt)
     {
+    case 0x29:
+        /* __fastfail: process state is corrupted */
+        rec->ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+        rec->ExceptionFlags = EH_NONCONTINUABLE;
+        rec->NumberParameters = 1;
+        rec->ExceptionInformation[0] = context->Ecx;
+        NtRaiseException( rec, context, FALSE );
+        return TRUE;
     case 0x2d:
         if (!is_wow64)
         {

@@ -8466,7 +8466,6 @@ static void subtest_fastfail(unsigned int code)
 
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
-    todo_wine
     ok(had_ff || broken(had_se) /* Win7 */, "fast fail did not occur\n");
 
     wait_child_process( pi.hProcess );

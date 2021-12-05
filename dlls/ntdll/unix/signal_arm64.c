@@ -908,6 +908,7 @@ static void bus_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
+    ucontext_t *context = sigcontext;
 
     switch (siginfo->si_code)
     {
@@ -916,6 +917,21 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     case TRAP_BRKPT:
     default:
+        /* debug exceptions do not update ESR on Linux, so we fetch the instruction directly. */
+        if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
+            !(PC_sig( context ) & 3) &&
+            *(ULONG *)PC_sig( context ) == 0xd43e0060UL) /* brk #0xf003 -> __fastfail */
+        {
+            CONTEXT ctx;
+            save_context( &ctx, sigcontext );
+            rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+            rec.ExceptionAddress = (void *)ctx.Pc;
+            rec.ExceptionFlags = EH_NONCONTINUABLE;
+            rec.NumberParameters = 1;
+            rec.ExceptionInformation[0] = ctx.u.X[0];
+            NtRaiseException( &rec, &ctx, FALSE );
+            return;
+        }
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         rec.NumberParameters = 1;
         break;
