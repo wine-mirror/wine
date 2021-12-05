@@ -361,6 +361,35 @@ static inline WORD get_error_code( const ucontext_t *sigcontext )
 
 
 /***********************************************************************
+ *           get_udf_immediate
+ *
+ * Get the immediate operand if the PC is at a UDF instruction.
+ */
+static inline int get_udf_immediate( const ucontext_t *sigcontext )
+{
+    if (CPSR_sig(sigcontext) & 0x20)
+    {
+        WORD thumb_insn = *(WORD *)PC_sig(sigcontext);
+        if ((thumb_insn >> 8) == 0xde) return thumb_insn & 0xff;
+        if ((thumb_insn & 0xfff0) == 0xf7f0)  /* udf.w */
+        {
+            WORD ext = *(WORD *)(PC_sig(sigcontext) + 2);
+            if ((ext & 0xf000) == 0xa000) return ((thumb_insn & 0xf) << 12) | (ext & 0x0fff);
+        }
+    }
+    else
+    {
+        DWORD arm_insn = *(DWORD *)PC_sig(sigcontext);
+        if ((arm_insn & 0xfff000f0) == 0xe7f000f0)
+        {
+            return ((arm_insn >> 4) & 0xfff0) | (arm_insn & 0xf);
+        }
+    }
+    return -1;
+}
+
+
+/***********************************************************************
  *           save_context
  *
  * Set the register values from a sigcontext.
@@ -812,9 +841,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     switch (get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
-        switch (*(WORD *)PC_sig(context))
+        switch (get_udf_immediate( context ))
         {
-        case 0xdefb:  /* __fastfail */
+        case 0xfb:  /* __fastfail */
         {
             CONTEXT ctx;
             save_context( &ctx, sigcontext );
@@ -826,7 +855,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             NtRaiseException( &rec, &ctx, FALSE );
             return;
         }
-        case 0xdefe:  /* breakpoint */
+        case 0xfe:  /* breakpoint */
             rec.ExceptionCode = EXCEPTION_BREAKPOINT;
             rec.NumberParameters = 1;
             break;
