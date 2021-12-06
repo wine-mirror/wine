@@ -25,8 +25,6 @@
 #include <stdarg.h>
 #include <locale.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -381,10 +379,10 @@ static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
         }
     }
 
-    if (physDev->Devmode->dmPublic.u1.s1.dmCopies > 1)
+    if (physDev->Devmode->dmPublic.dmCopies > 1)
     {
         len = snprintf( buf, sizeof(buf), "%%cupsJobTicket: copies=%d\n",
-                        physDev->Devmode->dmPublic.u1.s1.dmCopies );
+                        physDev->Devmode->dmPublic.dmCopies );
         if (len > 0 && len < sizeof(buf))
             write_spool( dev, buf, len );
 
@@ -398,7 +396,7 @@ static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
     }
 
     if (!(physDev->Devmode->dmPublic.dmFields & DM_DEFAULTSOURCE) ||
-        physDev->Devmode->dmPublic.u1.s1.dmDefaultSource == DMBIN_AUTO)
+        physDev->Devmode->dmPublic.dmDefaultSource == DMBIN_AUTO)
         write_spool( dev, cups_ap_d_inputslot, sizeof(cups_ap_d_inputslot) - 1 );
 }
 
@@ -444,7 +442,7 @@ INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
     ury = physDev->ImageableArea.top * 72.0 / physDev->logPixelsY;
     /* FIXME should do something better with BBox */
 
-    dmOrientation = (physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
+    dmOrientation = (physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
     sprintf(buf, psheader, escaped_title, llx, lly, urx, ury, dmOrientation);
 
     HeapFree(GetProcessHeap(), 0, escaped_title);
@@ -526,7 +524,7 @@ INT PSDRV_WriteNewPage( PHYSDEV dev )
         return 0;
     }
 
-    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
+    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
         if(physDev->pi->ppd->LandscapeOrientation == -90) {
 	    xtrans = physDev->ImageableArea.right;
 	    ytrans = physDev->ImageableArea.top;

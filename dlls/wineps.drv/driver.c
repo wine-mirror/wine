@@ -22,9 +22,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -53,7 +50,7 @@ INPUTSLOT *find_slot( PPD *ppd, const PSDRV_DEVMODE *dm )
     INPUTSLOT *slot;
 
     LIST_FOR_EACH_ENTRY( slot, &ppd->InputSlots, INPUTSLOT, entry )
-        if (slot->WinBin == dm->dmPublic.u1.s1.dmDefaultSource)
+        if (slot->WinBin == dm->dmPublic.dmDefaultSource)
             return slot;
 
     return NULL;
@@ -64,7 +61,7 @@ PAGESIZE *find_pagesize( PPD *ppd, const PSDRV_DEVMODE *dm )
     PAGESIZE *page;
 
     LIST_FOR_EACH_ENTRY( page, &ppd->PageSizes, PAGESIZE, entry )
-        if (page->WinPage == dm->dmPublic.u1.s1.dmPaperSize)
+        if (page->WinPage == dm->dmPublic.dmPaperSize)
             return page;
 
     return NULL;
@@ -96,12 +93,12 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
     /* some sanity checks here on dm2 */
 
     if(dm2->dmPublic.dmFields & DM_ORIENTATION) {
-        dm1->dmPublic.u1.s1.dmOrientation = dm2->dmPublic.u1.s1.dmOrientation;
+        dm1->dmPublic.dmOrientation = dm2->dmPublic.dmOrientation;
 	TRACE("Changing orientation to %d (%s)\n",
-	      dm1->dmPublic.u1.s1.dmOrientation,
-	      dm1->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT ?
+	      dm1->dmPublic.dmOrientation,
+	      dm1->dmPublic.dmOrientation == DMORIENT_PORTRAIT ?
 	      "Portrait" :
-	      (dm1->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE ?
+	      (dm1->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ?
 	       "Landscape" : "unknown"));
     }
 
@@ -112,13 +109,13 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
 
         if (page)
         {
-	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
-	    dm1->dmPublic.u1.s1.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
-	    dm1->dmPublic.u1.s1.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
+	    dm1->dmPublic.dmPaperSize = dm2->dmPublic.dmPaperSize;
+	    dm1->dmPublic.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
+	    dm1->dmPublic.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
 	    dm1->dmPublic.dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
-		  dm1->dmPublic.u1.s1.dmPaperWidth,
-		  dm1->dmPublic.u1.s1.dmPaperLength );
+		  dm1->dmPublic.dmPaperWidth,
+		  dm1->dmPublic.dmPaperLength );
 
             if (dm1->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
             {
@@ -127,16 +124,16 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
             }
 	}
         else
-            TRACE("Trying to change to unsupported pagesize %d\n", dm2->dmPublic.u1.s1.dmPaperSize);
+            TRACE("Trying to change to unsupported pagesize %d\n", dm2->dmPublic.dmPaperSize);
     }
 
     else if((dm2->dmPublic.dmFields & DM_PAPERLENGTH) &&
        (dm2->dmPublic.dmFields & DM_PAPERWIDTH)) {
-        dm1->dmPublic.u1.s1.dmPaperLength = dm2->dmPublic.u1.s1.dmPaperLength;
-        dm1->dmPublic.u1.s1.dmPaperWidth = dm2->dmPublic.u1.s1.dmPaperWidth;
+        dm1->dmPublic.dmPaperLength = dm2->dmPublic.dmPaperLength;
+        dm1->dmPublic.dmPaperWidth = dm2->dmPublic.dmPaperWidth;
 	TRACE("Changing PaperLength|Width to %dx%d\n",
-	      dm2->dmPublic.u1.s1.dmPaperLength,
-	      dm2->dmPublic.u1.s1.dmPaperWidth);
+	      dm2->dmPublic.dmPaperLength,
+	      dm2->dmPublic.dmPaperWidth);
 	dm1->dmPublic.dmFields &= ~DM_PAPERSIZE;
 	dm1->dmPublic.dmFields |= (DM_PAPERLENGTH | DM_PAPERWIDTH);
     } else if(dm2->dmPublic.dmFields & (DM_PAPERLENGTH | DM_PAPERWIDTH)) {
@@ -149,13 +146,13 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
     }
 
     if(dm2->dmPublic.dmFields & DM_SCALE) {
-        dm1->dmPublic.u1.s1.dmScale = dm2->dmPublic.u1.s1.dmScale;
-	TRACE("Changing Scale to %d\n", dm2->dmPublic.u1.s1.dmScale);
+        dm1->dmPublic.dmScale = dm2->dmPublic.dmScale;
+        TRACE("Changing Scale to %d\n", dm2->dmPublic.dmScale);
     }
 
     if(dm2->dmPublic.dmFields & DM_COPIES) {
-        dm1->dmPublic.u1.s1.dmCopies = dm2->dmPublic.u1.s1.dmCopies;
-	TRACE("Changing Copies to %d\n", dm2->dmPublic.u1.s1.dmCopies);
+        dm1->dmPublic.dmCopies = dm2->dmPublic.dmCopies;
+        TRACE("Changing Copies to %d\n", dm2->dmPublic.dmCopies);
     }
 
     if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE)
@@ -164,17 +161,17 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
 
         if (slot)
         {
-	    dm1->dmPublic.u1.s1.dmDefaultSource = dm2->dmPublic.u1.s1.dmDefaultSource;
+	    dm1->dmPublic.dmDefaultSource = dm2->dmPublic.dmDefaultSource;
 	    TRACE("Changing bin to '%s'\n", slot->FullName);
 	}
         else
-            TRACE("Trying to change to unsupported bin %d\n", dm2->dmPublic.u1.s1.dmDefaultSource);
+            TRACE("Trying to change to unsupported bin %d\n", dm2->dmPublic.dmDefaultSource);
     }
 
    if (dm2->dmPublic.dmFields & DM_DEFAULTSOURCE )
-       dm1->dmPublic.u1.s1.dmDefaultSource = dm2->dmPublic.u1.s1.dmDefaultSource;
+       dm1->dmPublic.dmDefaultSource = dm2->dmPublic.dmDefaultSource;
    if (dm2->dmPublic.dmFields & DM_PRINTQUALITY )
-       dm1->dmPublic.u1.s1.dmPrintQuality = dm2->dmPublic.u1.s1.dmPrintQuality;
+       dm1->dmPublic.dmPrintQuality = dm2->dmPublic.dmPrintQuality;
    if (dm2->dmPublic.dmFields & DM_COLOR )
        dm1->dmPublic.dmColor = dm2->dmPublic.dmColor;
    if (dm2->dmPublic.dmFields & DM_DUPLEX && pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
@@ -194,11 +191,11 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
    if (dm2->dmPublic.dmFields & DM_PELSHEIGHT )
        dm1->dmPublic.dmPelsHeight = dm2->dmPublic.dmPelsHeight;
    if (dm2->dmPublic.dmFields & DM_DISPLAYFLAGS )
-       dm1->dmPublic.u2.dmDisplayFlags = dm2->dmPublic.u2.dmDisplayFlags;
+       dm1->dmPublic.dmDisplayFlags = dm2->dmPublic.dmDisplayFlags;
    if (dm2->dmPublic.dmFields & DM_DISPLAYFREQUENCY )
        dm1->dmPublic.dmDisplayFrequency = dm2->dmPublic.dmDisplayFrequency;
    if (dm2->dmPublic.dmFields & DM_POSITION )
-       dm1->dmPublic.u1.s2.dmPosition = dm2->dmPublic.u1.s2.dmPosition;
+       dm1->dmPublic.dmPosition = dm2->dmPublic.dmPosition;
    if (dm2->dmPublic.dmFields & DM_LOGPIXELS )
        dm1->dmPublic.dmLogPixels = dm2->dmPublic.dmLogPixels;
    if (dm2->dmPublic.dmFields & DM_ICMMETHOD )
@@ -247,14 +244,14 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     LIST_FOR_EACH_ENTRY(ps, &di->pi->ppd->PageSizes, PAGESIZE, entry) {
       SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i,
 			  (LPARAM)ps->FullName);
-      if(di->pi->Devmode->dmPublic.u1.s1.dmPaperSize == ps->WinPage)
+      if(di->pi->Devmode->dmPublic.dmPaperSize == ps->WinPage)
 	Cursel = i;
       i++;
     }
     SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_SETCURSEL, Cursel, 0);
 
     CheckRadioButton(hwnd, IDD_ORIENT_PORTRAIT, IDD_ORIENT_LANDSCAPE,
-		     di->pi->Devmode->dmPublic.u1.s1.dmOrientation ==
+		     di->pi->Devmode->dmPublic.dmOrientation ==
 		     DMORIENT_PORTRAIT ? IDD_ORIENT_PORTRAIT :
 		     IDD_ORIENT_LANDSCAPE);
 
@@ -298,7 +295,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         resx = resy = di->pi->ppd->DefaultResolution;
 
         if (di->pi->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
-            resx = resy = di->pi->Devmode->dmPublic.u1.s1.dmPrintQuality;
+            resx = resy = di->pi->Devmode->dmPublic.dmPrintQuality;
 
         if (di->pi->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
             resy = di->pi->Devmode->dmPublic.dmYResolution;
@@ -342,11 +339,11 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         }
         TRACE("Setting pagesize to item %d, WinPage %d (%s), PaperSize %.2fx%.2f\n", Cursel,
               ps->WinPage, ps->FullName, ps->PaperDimension->x, ps->PaperDimension->y);
-        di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
+        di->dlgdm->dmPublic.dmPaperSize = ps->WinPage;
         di->dlgdm->dmPublic.dmFields |= DM_PAPERSIZE;
 
-        di->dlgdm->dmPublic.u1.s1.dmPaperWidth  = paper_size_from_points(ps->PaperDimension->x);
-        di->dlgdm->dmPublic.u1.s1.dmPaperLength = paper_size_from_points(ps->PaperDimension->y);
+        di->dlgdm->dmPublic.dmPaperWidth  = paper_size_from_points(ps->PaperDimension->x);
+        di->dlgdm->dmPublic.dmPaperLength = paper_size_from_points(ps->PaperDimension->y);
         di->dlgdm->dmPublic.dmFields |= DM_PAPERLENGTH | DM_PAPERWIDTH;
 
         if (di->dlgdm->dmPublic.dmSize >= FIELD_OFFSET(DEVMODEW, dmFormName) + CCHFORMNAME * sizeof(WCHAR))
@@ -361,7 +358,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     case IDD_ORIENT_LANDSCAPE:
       TRACE("Setting orientation to %s\n", wParam == IDD_ORIENT_PORTRAIT ?
             "portrait" : "landscape");
-      di->dlgdm->dmPublic.u1.s1.dmOrientation = wParam == IDD_ORIENT_PORTRAIT ?
+      di->dlgdm->dmPublic.dmOrientation = wParam == IDD_ORIENT_PORTRAIT ?
         DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
       di->dlgdm->dmPublic.dmFields |= DM_ORIENTATION;
       SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
@@ -395,7 +392,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         resy = HIWORD(data);
         TRACE("Setting resolution to %dx%d\n", resx, resy);
 
-        di->dlgdm->dmPublic.u1.s1.dmPrintQuality = resx;
+        di->dlgdm->dmPublic.dmPrintQuality = resx;
         di->dlgdm->dmPublic.dmFields |= DM_PRINTQUALITY;
 
         di->dlgdm->dmPublic.dmYResolution = resy;
@@ -449,7 +446,7 @@ static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
  *  Returns size of DEVMODE structure if wMode is 0.  Otherwise, IDOK is returned for success
  *  for both dialog and non-dialog operations.  IDCANCEL is returned if the dialog box was cancelled.
  *  A return value less than zero is returned if a non-dialog operation fails.
- *  
+ *
  * BUGS
  *
  * Just returns default devmode at the moment.  No use of initialization file.
@@ -496,8 +493,8 @@ INT WINAPI DrvDocumentProperties(HWND hwnd, const WCHAR *device, DEVMODEW *outpu
     di.dlgdm = &dlgdm;
     psp.dwSize = sizeof(psp);
     psp.hInstance = PSDRV_hInstance;
-    psp.u.pszTemplate = L"PAPER";
-    psp.u2.pszIcon = NULL;
+    psp.pszTemplate = L"PAPER";
+    psp.pszIcon = NULL;
     psp.pfnDlgProc = PSDRV_PaperDlgProc;
     psp.lParam = (LPARAM)&di;
     hpsp[0] = pCreatePropertySheetPage(&psp);
@@ -507,12 +504,12 @@ INT WINAPI DrvDocumentProperties(HWND hwnd, const WCHAR *device, DEVMODEW *outpu
     psh.pszCaption = SetupW;
     psh.nPages = 1;
     psh.hwndParent = hwnd;
-    psh.u3.phpage = hpsp;
+    psh.phpage = hpsp;
 
     pPropertySheet(&psh);
 
   }
-  
+
   /* If DM_UPDATE is set, should write settings to environment and initialization file */
   if (mode & DM_UPDATE)
     FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
@@ -814,7 +811,6 @@ DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capa
    * languages supported by the printer, unless pOutput is NULL.  The return value is
    * number of array entries. (Win2k/XP only)
    */
-   
   case DC_PERSONALITY: /* WINVER >= 0x0500 */
     FIXME("DC_PERSONALITY: stub\n");
     ret = -1;
@@ -840,7 +836,7 @@ DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capa
 
   /* Returns the printer rate unit used for DC_PRINTRATE, which is one of
    * PRINTRATEUNIT_{CPS,IPM,LPM,PPM} (Win2k/XP only)
-   */  
+   */
   case DC_PRINTRATEUNIT: /* WINVER >= 0x0500 */
     FIXME("DC_PRINTRATEUNIT: stub\n");
     ret = -1;

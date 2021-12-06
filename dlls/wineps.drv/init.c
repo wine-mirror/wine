@@ -22,9 +22,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -210,14 +207,14 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
     TRACE("dmFields: 0x%04x\n", dm->dmFields);
     dump_fields(dm->dmFields);
-    TRACE("dmOrientation: %d\n", dm->u1.s1.dmOrientation);
-    TRACE("dmPaperSize: %d\n", dm->u1.s1.dmPaperSize);
-    TRACE("dmPaperLength: %d\n", dm->u1.s1.dmPaperLength);
-    TRACE("dmPaperWidth: %d\n", dm->u1.s1.dmPaperWidth);
-    TRACE("dmScale: %d\n", dm->u1.s1.dmScale);
-    TRACE("dmCopies: %d\n", dm->u1.s1.dmCopies);
-    TRACE("dmDefaultSource: %d\n", dm->u1.s1.dmDefaultSource);
-    TRACE("dmPrintQuality: %d\n", dm->u1.s1.dmPrintQuality);
+    TRACE("dmOrientation: %d\n", dm->dmOrientation);
+    TRACE("dmPaperSize: %d\n", dm->dmPaperSize);
+    TRACE("dmPaperLength: %d\n", dm->dmPaperLength);
+    TRACE("dmPaperWidth: %d\n", dm->dmPaperWidth);
+    TRACE("dmScale: %d\n", dm->dmScale);
+    TRACE("dmCopies: %d\n", dm->dmCopies);
+    TRACE("dmDefaultSource: %d\n", dm->dmDefaultSource);
+    TRACE("dmPrintQuality: %d\n", dm->dmPrintQuality);
     TRACE("dmColor: %d\n", dm->dmColor);
     TRACE("dmDuplex: %d\n", dm->dmDuplex);
     TRACE("dmYResolution: %d\n", dm->dmYResolution);
@@ -241,7 +238,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
     if (physDev->Devmode->dmPublic.dmFields & (DM_PRINTQUALITY | DM_YRESOLUTION | DM_LOGPIXELS))
     {
         if (physDev->Devmode->dmPublic.dmFields & DM_PRINTQUALITY)
-            resx = resy = physDev->Devmode->dmPublic.u1.s1.dmPrintQuality;
+            resx = resy = physDev->Devmode->dmPublic.dmPrintQuality;
 
         if (physDev->Devmode->dmPublic.dmFields & DM_YRESOLUTION)
             resy = physDev->Devmode->dmPublic.dmYResolution;
@@ -275,7 +272,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 
     if(physDev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
         LIST_FOR_EACH_ENTRY(page, &physDev->pi->ppd->PageSizes, PAGESIZE, entry) {
-	    if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
+	    if(page->WinPage == physDev->Devmode->dmPublic.dmPaperSize)
 	        break;
 	}
 
@@ -306,11 +303,9 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
       /* physDev sizes in device units; Devmode sizes in 1/10 mm */
         physDev->ImageableArea.left = physDev->ImageableArea.bottom = 0;
 	physDev->ImageableArea.right = physDev->PageSize.cx =
-	  physDev->Devmode->dmPublic.u1.s1.dmPaperWidth *
-	  physDev->logPixelsX / 254;
+	  physDev->Devmode->dmPublic.dmPaperWidth * physDev->logPixelsX / 254;
 	physDev->ImageableArea.top = physDev->PageSize.cy =
-	  physDev->Devmode->dmPublic.u1.s1.dmPaperLength *
-	  physDev->logPixelsY / 254;
+	  physDev->Devmode->dmPublic.dmPaperLength * physDev->logPixelsY / 254;
     } else {
         FIXME("Odd dmFields %x\n", physDev->Devmode->dmPublic.dmFields);
         SetRectEmpty(&physDev->ImageableArea);
@@ -325,7 +320,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
     width = physDev->ImageableArea.right - physDev->ImageableArea.left;
     height = physDev->ImageableArea.top - physDev->ImageableArea.bottom;
 
-    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
+    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
         physDev->horzRes = width;
         physDev->vertRes = height;
     } else {
@@ -475,11 +470,9 @@ static INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case TECHNOLOGY:
         return DT_RASPRINTER;
     case HORZSIZE:
-        return MulDiv(physDev->horzSize, 100,
-		      physDev->Devmode->dmPublic.u1.s1.dmScale);
+        return MulDiv(physDev->horzSize, 100, physDev->Devmode->dmPublic.dmScale);
     case VERTSIZE:
-        return MulDiv(physDev->vertSize, 100,
-		      physDev->Devmode->dmPublic.u1.s1.dmScale);
+        return MulDiv(physDev->vertSize, 100, physDev->Devmode->dmPublic.dmScale);
     case HORZRES:
         return physDev->horzRes;
     case VERTRES:
@@ -506,23 +499,21 @@ static INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case ASPECTY:
         return physDev->logPixelsY;
     case LOGPIXELSX:
-        return MulDiv(physDev->logPixelsX,
-		      physDev->Devmode->dmPublic.u1.s1.dmScale, 100);
+        return MulDiv(physDev->logPixelsX, physDev->Devmode->dmPublic.dmScale, 100);
     case LOGPIXELSY:
-        return MulDiv(physDev->logPixelsY,
-		      physDev->Devmode->dmPublic.u1.s1.dmScale, 100);
+        return MulDiv(physDev->logPixelsY, physDev->Devmode->dmPublic.dmScale, 100);
     case NUMRESERVED:
         return 0;
     case COLORRES:
         return 0;
     case PHYSICALWIDTH:
-        return (physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) ?
+        return (physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
 	  physDev->PageSize.cy : physDev->PageSize.cx;
     case PHYSICALHEIGHT:
-        return (physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) ?
+        return (physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) ?
 	  physDev->PageSize.cx : physDev->PageSize.cy;
     case PHYSICALOFFSETX:
-      if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
+      if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
           if(physDev->pi->ppd->LandscapeOrientation == -90)
 	      return physDev->PageSize.cy - physDev->ImageableArea.top;
 	  else
@@ -531,7 +522,7 @@ static INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
       return physDev->ImageableArea.left;
 
     case PHYSICALOFFSETY:
-      if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
+      if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
           if(physDev->pi->ppd->LandscapeOrientation == -90)
 	      return physDev->PageSize.cx - physDev->ImageableArea.right;
 	  else
@@ -709,7 +700,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 	    PSDRV_DEVMODE dm;
 	    memset(&dm, 0, sizeof(dm));
 	    dm.dmPublic.dmFields = DM_PAPERSIZE;
-	    dm.dmPublic.u1.s1.dmPaperSize = papersize;
+	    dm.dmPublic.dmPaperSize = papersize;
 	    PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
 	}
     }
@@ -718,7 +709,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
         PSDRV_DEVMODE dm;
         memset(&dm, 0, sizeof(dm));
         dm.dmPublic.dmFields = DM_PAPERSIZE;
-        dm.dmPublic.u1.s1.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
+        dm.dmPublic.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
         PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
     }
 
