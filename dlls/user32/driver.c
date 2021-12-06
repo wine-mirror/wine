@@ -275,11 +275,6 @@ static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT s
 {
 }
 
-static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
-{
-    return FALSE;
-}
-
 static void CDECL nulldrv_ThreadDetach( void )
 {
 }
@@ -418,7 +413,7 @@ static struct user_driver_funcs lazy_load_driver =
     nulldrv_WindowPosChanging,
     nulldrv_WindowPosChanged,
     /* system parameters */
-    nulldrv_SystemParametersInfo,
+    NULL,
     /* thread management */
     nulldrv_ThreadDetach
 };
@@ -469,7 +464,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(WindowMessage);
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(WindowPosChanged);
-    SET_USER_FUNC(SystemParametersInfo);
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC
 

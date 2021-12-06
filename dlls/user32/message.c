@@ -2486,7 +2486,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
            if ((msg->message == clk_msg.message) &&
                (msg->hwnd == clk_msg.hwnd) &&
                (msg->wParam == clk_msg.wParam) &&
-               (msg->time - clk_msg.time < GetDoubleClickTime()) &&
+               (msg->time - clk_msg.time < NtUserGetDoubleClickTime()) &&
                (abs(msg->pt.x - clk_msg.pt.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
            {

@@ -802,10 +802,28 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
+BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSetSysColors( count, colors, values );
+}
+
 INT WINAPI NtUserShowCursor( BOOL show )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserShowCursor( show );
+}
+
+BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, PVOID ptr, UINT winini )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSystemParametersInfo( action, val, ptr, winini );
+}
+
+BOOL WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, UINT winini, UINT dpi )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSystemParametersInfoForDpi( action, val, ptr, winini, dpi );
 }
 
 INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
@@ -981,6 +999,15 @@ static BOOL WINAPI call_RedrawWindow( HWND hwnd, const RECT *rect, HRGN rgn, UIN
     return pRedrawWindow && pRedrawWindow( hwnd, rect, rgn, flags );
 }
 
+static LRESULT WINAPI call_SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                                UINT flags, UINT timeout, PDWORD_PTR res_ptr )
+{
+    static LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
+    if (!pSendMessageTimeoutW) pSendMessageTimeoutW = get_user_proc( "SendMessageTimeoutW", FALSE );
+    if (!pSendMessageTimeoutW) return 0;
+    return pSendMessageTimeoutW( hwnd, msg, wparam, lparam, flags, timeout, res_ptr );
+}
+
 static HWND WINAPI call_WindowFromDC( HDC hdc )
 {
     static HWND (WINAPI *pWindowFromDC)( HDC );
@@ -997,6 +1024,7 @@ static const struct user_callbacks user_funcs =
     call_GetWindowRect,
     call_EnumDisplayMonitors,
     call_RedrawWindow,
+    call_SendMessageTimeoutW,
     call_WindowFromDC,
 };
 

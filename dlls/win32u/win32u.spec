@@ -922,7 +922,7 @@
 @ stub NtUserGetDisplayAutoRotationPreferences
 @ stub NtUserGetDisplayAutoRotationPreferencesByProcessId
 @ stdcall NtUserGetDisplayConfigBufferSizes(long ptr ptr)
-@ stub NtUserGetDoubleClickTime
+@ stdcall -syscall NtUserGetDoubleClickTime()
 @ stub NtUserGetDpiForCurrentProcess
 @ stdcall -syscall NtUserGetDpiForMonitor(long long ptr ptr)
 @ stub NtUserGetExtendedPointerDeviceProperty
@@ -1227,7 +1227,7 @@
 @ stub NtUserSetSensorPresence
 @ stub NtUserSetSharedWindowData
 @ stub NtUserSetShellWindowEx
-@ stub NtUserSetSysColors
+@ stdcall NtUserSetSysColors(long ptr ptr)
 @ stub NtUserSetSystemCursor
 @ stub NtUserSetSystemMenu
 @ stub NtUserSetSystemTimer
@@ -1271,8 +1271,8 @@
 @ stub NtUserSoundSentry
 @ stub NtUserStopAndEndInertia
 @ stub NtUserSwitchDesktop
-@ stub NtUserSystemParametersInfo
-@ stub NtUserSystemParametersInfoForDpi
+@ stdcall NtUserSystemParametersInfo(long long ptr long)
+@ stdcall NtUserSystemParametersInfoForDpi(long long ptr long long)
 @ stub NtUserTestForInteractiveUser
 @ stub NtUserThunkedMenuInfo
 @ stub NtUserThunkedMenuItemInfo

@@ -325,3 +325,8 @@ NTSTATUS WINAPI wow64_NtUserGetDpiForMonitor( UINT *args )
 
     return NtUserGetDpiForMonitor( monitor, type, x, y );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetDoubleClickTime( UINT *args )
+{
+    return NtUserGetDoubleClickTime();
+}

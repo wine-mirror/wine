@@ -38,6 +38,7 @@ struct user_callbacks
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     BOOL (WINAPI *pEnumDisplayMonitors)( HDC, LPRECT, MONITORENUMPROC, LPARAM );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
+    LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     HWND (WINAPI *pWindowFromDC)( HDC );
 };
 
@@ -215,7 +216,11 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
+    BOOL     (WINAPI *pNtUserSetSysColors)( INT count, const INT *colors, const COLORREF *values );
     INT      (WINAPI *pNtUserShowCursor)( BOOL show );
+    BOOL     (WINAPI *pNtUserSystemParametersInfo)( UINT action, UINT val, PVOID ptr, UINT winini );
+    BOOL     (WINAPI *pNtUserSystemParametersInfoForDpi)( UINT action, UINT val, PVOID ptr,
+                                                         UINT winini, UINT dpi );
     INT      (WINAPI *pNtUserToUnicodeEx)( UINT virt, UINT scan, const BYTE *state,
                                            WCHAR *str, int size, UINT flags, HKL layout );
     BOOL     (WINAPI *pNtUserUnregisterHotKey)( HWND hwnd, INT id );
@@ -241,7 +246,7 @@ struct unix_funcs
 };
 
 extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
-extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
+extern RECT get_virtual_screen_rect( UINT dpi ) DECLSPEC_HIDDEN;
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;

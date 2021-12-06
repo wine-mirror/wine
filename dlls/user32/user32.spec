@@ -297,7 +297,7 @@
 @ stdcall GetDlgItemInt(long long ptr long)
 @ stdcall GetDlgItemTextA(long long ptr long)
 @ stdcall GetDlgItemTextW(long long ptr long)
-@ stdcall GetDoubleClickTime()
+@ stdcall GetDoubleClickTime() NtUserGetDoubleClickTime
 @ stdcall GetDpiForMonitorInternal(long long ptr ptr) NtUserGetDpiForMonitor
 @ stdcall GetDpiForSystem()
 @ stdcall GetDpiForWindow(long)
@@ -703,7 +703,7 @@
 @ stdcall SetScrollRange(long long long long long)
 @ stdcall SetShellWindow(long)
 @ stdcall SetShellWindowEx (long long)
-@ stdcall SetSysColors(long ptr ptr)
+@ stdcall SetSysColors(long ptr ptr) NtUserSetSysColors
 @ stdcall SetSysColorsTemp(ptr ptr long)
 @ stdcall SetSystemCursor(long long)
 @ stdcall SetSystemMenu(long long)

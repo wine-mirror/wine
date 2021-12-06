@@ -333,14 +333,14 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case DESKTOPHORZRES:
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            RECT rect = get_virtual_screen_rect();
+            RECT rect = get_virtual_screen_rect( 0 );
             return rect.right - rect.left;
         }
         return NtGdiGetDeviceCaps( dev->hdc, HORZRES );
     case DESKTOPVERTRES:
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            RECT rect = get_virtual_screen_rect();
+            RECT rect = get_virtual_screen_rect( 0 );
             return rect.bottom - rect.top;
         }
         return NtGdiGetDeviceCaps( dev->hdc, VERTRES );
@@ -1063,6 +1063,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pSetCursor = loaderdrv_SetCursor,
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
     .pScrollDC = nulldrv_ScrollDC,
+    .pSystemParametersInfo = nulldrv_SystemParametersInfo,
 };
 
 const struct user_driver_funcs *user_driver = &lazy_load_driver;
