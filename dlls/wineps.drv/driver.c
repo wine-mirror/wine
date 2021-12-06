@@ -25,15 +25,19 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include <string.h>
+#include <stdarg.h>
 
-#include "wine/debug.h"
-#include "psdrv.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "prsht.h"
 #include "ddk/winddiui.h"
 
-#include "winuser.h"
-#include "wine/wingdi16.h"
-#include "prsht.h"
+#include "wine/debug.h"
+
+#include "psdrv.h"
 #include "psdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -561,7 +565,7 @@ DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capa
   case DC_PAPERSIZE:
     {
       PAGESIZE *ps;
-      POINT16 *pt = output;
+      POINT *pt = output;
       int i = 0;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
