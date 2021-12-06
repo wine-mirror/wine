@@ -777,7 +777,6 @@ static void check_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, 
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     WCHAR wszReturnUrl[INTERNET_MAX_URL_LENGTH];
     LPWSTR wszUrl = GetWideString(szUrl);
-    LPWSTR wszExpectUrl = GetWideString(szExpectUrl);
     LPWSTR wszConvertedUrl;
     HRESULT ret;
 
@@ -804,7 +803,6 @@ static void check_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, 
     FreeWideString(wszConvertedUrl);
 
     FreeWideString(wszUrl);
-    FreeWideString(wszExpectUrl);
 }
 
 
