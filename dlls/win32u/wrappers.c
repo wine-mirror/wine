@@ -940,14 +940,6 @@ static HWND WINAPI call_GetDesktopWindow(void)
     return pGetDesktopWindow ? pGetDesktopWindow() : NULL;
 }
 
-static UINT WINAPI call_GetDpiForSystem(void)
-{
-    static UINT (WINAPI *pGetDpiForSystem)(void);
-    if (!pGetDpiForSystem)
-        pGetDpiForSystem = get_user_proc( "GetDpiForSystem", FALSE );
-    return pGetDpiForSystem ? pGetDpiForSystem() : 96;
-}
-
 static BOOL WINAPI call_GetMonitorInfoW( HMONITOR monitor, MONITORINFO *info )
 {
     static BOOL (WINAPI *pGetMonitorInfoW)( HMONITOR, LPMONITORINFO );
@@ -1000,7 +992,6 @@ static HWND WINAPI call_WindowFromDC( HDC hdc )
 static const struct user_callbacks user_funcs =
 {
     call_GetDesktopWindow,
-    call_GetDpiForSystem,
     call_GetMonitorInfoW,
     call_GetSystemMetrics,
     call_GetWindowRect,

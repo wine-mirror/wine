@@ -33,7 +33,6 @@
 struct user_callbacks
 {
     HWND (WINAPI *pGetDesktopWindow)(void);
-    UINT (WINAPI *pGetDpiForSystem)(void);
     BOOL (WINAPI *pGetMonitorInfoW)( HMONITOR, LPMONITORINFO );
     INT (WINAPI *pGetSystemMetrics)(INT);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
@@ -241,6 +240,7 @@ struct unix_funcs
                                       struct window_surface *surface );
 };
 
+extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;

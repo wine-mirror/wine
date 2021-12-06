@@ -1395,6 +1395,13 @@ static UINT get_thread_dpi(void)
     }
 }
 
+/* see GetDpiForSystem */
+UINT get_system_dpi(void)
+{
+    if (get_thread_dpi_awareness() == DPI_AWARENESS_UNAWARE) return USER_DEFAULT_SCREEN_DPI;
+    return system_dpi;
+}
+
 /**********************************************************************
  *              map_dpi_rect
  */
