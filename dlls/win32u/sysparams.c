@@ -34,7 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(system);
 
 
-static HKEY video_key, enum_key, control_key, config_key;
+static HKEY video_key, enum_key, control_key, config_key, volatile_base_key;
 
 static const WCHAR devicemap_video_keyW[] =
 {
@@ -235,6 +235,123 @@ static struct monitor virtual_monitor =
     .dev.state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
 };
 
+/* the various registry keys that are used to store parameters */
+enum parameter_key
+{
+    COLORS_KEY,
+    DESKTOP_KEY,
+    KEYBOARD_KEY,
+    MOUSE_KEY,
+    METRICS_KEY,
+    SOUND_KEY,
+    VERSION_KEY,
+    SHOWSOUNDS_KEY,
+    KEYBOARDPREF_KEY,
+    SCREENREADER_KEY,
+    AUDIODESC_KEY,
+    NB_PARAM_KEYS
+};
+
+static const char *parameter_key_names[NB_PARAM_KEYS] =
+{
+    "Control Panel\\Colors",
+    "Control Panel\\Desktop",
+    "Control Panel\\Keyboard",
+    "Control Panel\\Mouse",
+    "Control Panel\\Desktop\\WindowMetrics",
+    "Control Panel\\Sound",
+    "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+    "Control Panel\\Accessibility\\ShowSounds",
+    "Control Panel\\Accessibility\\Keyboard Preference",
+    "Control Panel\\Accessibility\\Blind Access",
+    "Control Panel\\Accessibility\\AudioDescription",
+};
+
+/* System parameters storage */
+union sysparam_all_entry;
+
+struct sysparam_entry
+{
+    BOOL             (*get)( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT dpi );
+    BOOL             (*set)( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags );
+    BOOL             (*init)( union sysparam_all_entry *entry );
+    enum parameter_key base_key;
+    const char        *regval;
+    enum parameter_key mirror_key;
+    const char        *mirror;
+    BOOL               loaded;
+};
+
+struct sysparam_uint_entry
+{
+    struct sysparam_entry hdr;
+    UINT                  val;
+};
+
+struct sysparam_bool_entry
+{
+    struct sysparam_entry hdr;
+    BOOL                  val;
+};
+
+struct sysparam_dword_entry
+{
+    struct sysparam_entry hdr;
+    DWORD                 val;
+};
+
+struct sysparam_rgb_entry
+{
+    struct sysparam_entry hdr;
+    COLORREF              val;
+    HBRUSH                brush;
+    HPEN                  pen;
+};
+
+struct sysparam_binary_entry
+{
+    struct sysparam_entry hdr;
+    void                 *ptr;
+    size_t                size;
+};
+
+struct sysparam_path_entry
+{
+    struct sysparam_entry hdr;
+    WCHAR                 path[MAX_PATH];
+};
+
+struct sysparam_font_entry
+{
+    struct sysparam_entry hdr;
+    UINT                  weight;
+    LOGFONTW              val;
+    WCHAR                 fullname[LF_FACESIZE];
+};
+
+struct sysparam_pref_entry
+{
+    struct sysparam_entry hdr;
+    struct sysparam_binary_entry *parent;
+    UINT                  offset;
+    UINT                  mask;
+};
+
+union sysparam_all_entry
+{
+    struct sysparam_entry        hdr;
+    struct sysparam_uint_entry   uint;
+    struct sysparam_bool_entry   bool;
+    struct sysparam_dword_entry  dword;
+    struct sysparam_rgb_entry    rgb;
+    struct sysparam_binary_entry bin;
+    struct sysparam_path_entry   path;
+    struct sysparam_font_entry   font;
+    struct sysparam_pref_entry   pref;
+};
+
+static UINT system_dpi;
+
 static HANDLE get_display_device_init_mutex( void )
 {
     static const WCHAR display_device_initW[] =
@@ -266,8 +383,6 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     DWORD size;
 
     if (!enum_key && !(enum_key = reg_open_key( NULL, enum_keyW, sizeof(enum_keyW) )))
-        return FALSE;
-    if (!config_key && !(config_key = reg_open_key( NULL, config_keyW, sizeof(config_keyW) )))
         return FALSE;
 
     /* Find adapter */
@@ -476,7 +591,6 @@ static void prepare_devices(void)
 
     if (!enum_key) enum_key = reg_create_key( NULL, enum_keyW, sizeof(enum_keyW), 0, NULL );
     if (!control_key) control_key = reg_create_key( NULL, control_keyW, sizeof(control_keyW), 0, NULL );
-    if (!config_key) config_key = reg_create_key( NULL, config_keyW, sizeof(config_keyW), 0, NULL );
     if (!video_key) video_key = reg_create_key( NULL, devicemap_video_keyW, sizeof(devicemap_video_keyW),
                                                 REG_OPTION_VOLATILE, NULL );
 
@@ -1636,6 +1750,168 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
     return FALSE;
 }
 
+/***********************************************************************
+ *	     NtUserGetSystemDpiForProcess    (win32u.@)
+ */
+ULONG WINAPI NtUserGetSystemDpiForProcess( HANDLE process )
+{
+    if (process && process != GetCurrentProcess())
+    {
+        FIXME( "not supported on other process %p\n", process );
+        return 0;
+    }
+
+    return system_dpi;
+}
+
+/* retrieve the cached base keys for a given entry */
+static BOOL get_base_keys( enum parameter_key index, HKEY *base_key, HKEY *volatile_key )
+{
+    static HKEY base_keys[NB_PARAM_KEYS];
+    static HKEY volatile_keys[NB_PARAM_KEYS];
+    WCHAR bufferW[128];
+    HKEY key;
+
+    if (!base_keys[index] && base_key)
+    {
+        if (!(key = reg_create_key( hkcu_key, bufferW,
+                asciiz_to_unicode( bufferW, parameter_key_names[index] ) - sizeof(WCHAR),
+                0, NULL )))
+            return FALSE;
+        if (InterlockedCompareExchangePointer( (void **)&base_keys[index], key, 0 ))
+            NtClose( key );
+    }
+    if (!volatile_keys[index] && volatile_key)
+    {
+        if (!(key = reg_create_key( volatile_base_key, bufferW,
+                asciiz_to_unicode( bufferW, parameter_key_names[index] ) - sizeof(WCHAR),
+                REG_OPTION_VOLATILE, NULL )))
+            return FALSE;
+        if (InterlockedCompareExchangePointer( (void **)&volatile_keys[index], key, 0 ))
+            NtClose( key );
+    }
+    if (base_key) *base_key = base_keys[index];
+    if (volatile_key) *volatile_key = volatile_keys[index];
+    return TRUE;
+}
+
+/* load a value to a registry entry */
+static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
+{
+    char buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    DWORD count;
+    HKEY base_key, volatile_key;
+
+    if (!get_base_keys( entry->base_key, &base_key, &volatile_key )) return FALSE;
+
+    if (!(count = query_reg_ascii_value( volatile_key, entry->regval, value, sizeof(buffer) )))
+        count = query_reg_ascii_value( base_key, entry->regval, value, sizeof(buffer) );
+    if (count > size)
+    {
+        count = size;
+        /* make sure strings are null-terminated */
+        if (value->Type == REG_SZ) ((WCHAR *)value->Data)[count / sizeof(WCHAR) - 1] = 0;
+    }
+    if (count) memcpy( data, value->Data, count );
+    entry->loaded = TRUE;
+    return count;
+}
+
+/* save a value to a registry entry */
+static BOOL save_entry( const struct sysparam_entry *entry, const void *data, DWORD size,
+                        DWORD type, UINT flags )
+{
+    HKEY base_key, volatile_key;
+    WCHAR nameW[64];
+
+    asciiz_to_unicode( nameW, entry->regval );
+    if (flags & SPIF_UPDATEINIFILE)
+    {
+        if (!get_base_keys( entry->base_key, &base_key, &volatile_key )) return FALSE;
+        if (!set_reg_value( base_key, nameW, type, data, size )) return FALSE;
+        reg_delete_value( volatile_key, nameW );
+
+        if (entry->mirror && get_base_keys( entry->mirror_key, &base_key, NULL ))
+        {
+            asciiz_to_unicode( nameW, entry->mirror );
+            set_reg_value( base_key, nameW, type, data, size );
+        }
+    }
+    else
+    {
+        if (!get_base_keys( entry->base_key, NULL, &volatile_key )) return FALSE;
+        if (!set_reg_value( volatile_key, nameW, type, data, size )) return FALSE;
+    }
+    return TRUE;
+}
+
+/* initialize an entry in the registry if missing */
+static BOOL init_entry( struct sysparam_entry *entry, const void *data, DWORD size, DWORD type )
+{
+    KEY_VALUE_PARTIAL_INFORMATION value;
+    UNICODE_STRING name;
+    WCHAR nameW[64];
+    HKEY base_key;
+    DWORD count;
+    NTSTATUS status;
+
+    if (!get_base_keys( entry->base_key, &base_key, NULL )) return FALSE;
+
+    name.Buffer = nameW;
+    name.MaximumLength = asciiz_to_unicode( nameW, entry->regval );
+    name.Length = name.MaximumLength - sizeof(WCHAR);
+    status = NtQueryValueKey( base_key, &name, KeyValuePartialInformation,
+                              &value, sizeof(value), &count );
+    if (!status || status == STATUS_BUFFER_OVERFLOW) return TRUE;
+
+    if (!set_reg_value( base_key, nameW, type, data, size )) return FALSE;
+    if (entry->mirror && get_base_keys( entry->mirror_key, &base_key, NULL ))
+    {
+        asciiz_to_unicode( nameW, entry->mirror );
+        set_reg_value( base_key, nameW, type, data, size );
+    }
+    entry->loaded = TRUE;
+    return TRUE;
+}
+
+/* load a dword (binary) parameter from the registry */
+static BOOL get_dword_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT dpi )
+{
+    if (!ptr_param) return FALSE;
+
+    if (!entry->hdr.loaded)
+    {
+        DWORD val;
+        if (load_entry( &entry->hdr, &val, sizeof(val) ) == sizeof(DWORD)) entry->dword.val = val;
+    }
+    *(DWORD *)ptr_param = entry->dword.val;
+    return TRUE;
+}
+
+/* set a dword (binary) parameter in the registry */
+static BOOL set_dword_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
+{
+    DWORD val = PtrToUlong( ptr_param );
+
+    if (!save_entry( &entry->hdr, &val, sizeof(val), REG_DWORD, flags )) return FALSE;
+    entry->dword.val = val;
+    entry->hdr.loaded = TRUE;
+    return TRUE;
+}
+
+/* initialize a dword parameter */
+static BOOL init_dword_entry( union sysparam_all_entry *entry )
+{
+    return init_entry( &entry->hdr, &entry->dword.val, sizeof(entry->dword.val), REG_DWORD );
+}
+
+#define DWORD_ENTRY(name,val,base,reg)                                  \
+    struct sysparam_dword_entry entry_##name = { { get_dword_entry, set_dword_entry, init_dword_entry, \
+                                                   base, reg }, (val) }
+
+static DWORD_ENTRY( LOGPIXELS, 0, DESKTOP_KEY, "LogPixels" );
+
 /**********************************************************************
  *	     sysparams_init
  */
@@ -1644,6 +1920,8 @@ void sysparams_init(void)
     WCHAR layout[KL_NAMELENGTH];
     HKEY hkey;
 
+    static const WCHAR log_pixelsW[] = {'L','o','g','P','i','x','e','l','s',0};
+    static const WCHAR software_fontsW[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s'};
     static const WCHAR oneW[] = {'1',0};
     static const WCHAR kl_preloadW[] =
         {'K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','\\','P','r','e','l','o','a','d'};
@@ -1655,6 +1933,26 @@ void sysparams_init(void)
                            (lstrlenW(layout) + 1) * sizeof(WCHAR) );
         NtClose( hkey );
     }
+
+    volatile_base_key = reg_open_hkcu_key( "Software\\Wine\\Temporary System Parameters" );
+    config_key = reg_create_key( NULL, config_keyW, sizeof(config_keyW), 0, NULL );
+
+    get_dword_entry( (union sysparam_all_entry *)&entry_LOGPIXELS, 0, &system_dpi, 0 );
+    if (!system_dpi)  /* check fallback key */
+    {
+        HKEY hkey;
+
+        if ((hkey = reg_open_key( config_key, software_fontsW, sizeof(software_fontsW) )))
+        {
+            char buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(DWORD)];
+            KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+
+            if (query_reg_value( hkey, log_pixelsW, value, sizeof(buffer) ) && value->Type == REG_DWORD)
+                system_dpi = *(const DWORD *)value->Data;
+            NtClose( hkey );
+        }
+    }
+    if (!system_dpi) system_dpi = USER_DEFAULT_SCREEN_DPI;
 }
 
 static DPI_AWARENESS dpi_awareness;

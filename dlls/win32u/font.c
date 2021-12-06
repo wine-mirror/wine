@@ -608,11 +608,11 @@ HKEY reg_open_hkcu_key( const char *name )
     return reg_open_key( hkcu_key, nameW, asciiz_to_unicode( nameW, name ) - sizeof(WCHAR) );
 }
 
-void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value, DWORD count )
+BOOL set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value, DWORD count )
 {
     unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
-    NtSetValueKey( hkey, &nameW, 0, type, value, count );
+    return !NtSetValueKey( hkey, &nameW, 0, type, value, count );
 }
 
 void set_reg_ascii_value( HKEY hkey, const char *name, const char *value )
@@ -661,7 +661,7 @@ static BOOL reg_enum_value( HKEY hkey, unsigned int index, KEY_VALUE_FULL_INFORM
     return TRUE;
 }
 
-static void reg_delete_value( HKEY hkey, const WCHAR *name )
+void reg_delete_value( HKEY hkey, const WCHAR *name )
 {
     unsigned int name_size = lstrlenW( name ) * sizeof(WCHAR);
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };

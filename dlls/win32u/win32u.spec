@@ -993,7 +993,7 @@
 @ stub NtUserGetResizeDCompositionSynchronizationObject
 @ stub NtUserGetScrollBarInfo
 @ stub NtUserGetSharedWindowData
-@ stub NtUserGetSystemDpiForProcess
+@ stdcall -syscall NtUserGetSystemDpiForProcess(long)
 @ stub NtUserGetSystemMenu
 @ stdcall -syscall NtUserGetThreadDesktop(long)
 @ stub NtUserGetThreadState

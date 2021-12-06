@@ -110,6 +110,7 @@
     SYSCALL_ENTRY( NtUserGetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProp ) \
+    SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \

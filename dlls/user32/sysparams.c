@@ -1197,7 +1197,6 @@ static DWORD_ENTRY( FONTSMOOTHINGORIENTATION, FE_FONTSMOOTHINGORIENTATIONRGB, DE
 static DWORD_ENTRY( FONTSMOOTHINGTYPE, FE_FONTSMOOTHINGSTANDARD, DESKTOP_KEY, L"FontSmoothingType" );
 static DWORD_ENTRY( FOREGROUNDFLASHCOUNT, 3, DESKTOP_KEY, L"ForegroundFlashCount" );
 static DWORD_ENTRY( FOREGROUNDLOCKTIMEOUT, 0, DESKTOP_KEY, L"ForegroundLockTimeout" );
-static DWORD_ENTRY( LOGPIXELS, 0, DESKTOP_KEY, L"LogPixels" );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200, DESKTOP_KEY, L"ClickLockTime" );
 static DWORD_ENTRY( AUDIODESC_LOCALE, 0, AUDIODESC_KEY, L"Locale" );
 
@@ -1356,19 +1355,7 @@ void SYSPARAMS_Init(void)
 
     RegCloseKey( key );
 
-    get_dword_entry( (union sysparam_all_entry *)&entry_LOGPIXELS, 0, &system_dpi, 0 );
-    if (!system_dpi)  /* check fallback key */
-    {
-        if (!RegOpenKeyW( HKEY_CURRENT_CONFIG, L"Software\\Fonts", &key ))
-        {
-            DWORD type, size = sizeof(system_dpi);
-            if (RegQueryValueExW( key, L"LogPixels", NULL, &type, (void *)&system_dpi, &size ) ||
-                type != REG_DWORD)
-                system_dpi = 0;
-            RegCloseKey( key );
-        }
-    }
-    if (!system_dpi) system_dpi = USER_DEFAULT_SCREEN_DPI;
+    system_dpi = NtUserGetSystemDpiForProcess( NULL );
 
     /* FIXME: what do the DpiScalingVer flags mean? */
     get_dword_entry( (union sysparam_all_entry *)&entry_DPISCALINGVER, 0, &dpi_scaling, 0 );

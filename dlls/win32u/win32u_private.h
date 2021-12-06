@@ -258,9 +258,10 @@ extern ULONG query_reg_value( HKEY hkey, const WCHAR *name,
 extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
                                     KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
 extern void set_reg_ascii_value( HKEY hkey, const char *name, const char *value ) DECLSPEC_HIDDEN;
-extern void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value,
+extern BOOL set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value,
                            DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
+extern void reg_delete_value( HKEY hkey, const WCHAR *name ) DECLSPEC_HIDDEN;
 
 extern HKEY hkcu_key DECLSPEC_HIDDEN;
 

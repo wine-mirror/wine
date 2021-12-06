@@ -308,3 +308,10 @@ NTSTATUS WINAPI wow64_NtUserGetProcessDpiAwarenessContext( UINT *args )
 
     return NtUserGetProcessDpiAwarenessContext( process );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetSystemDpiForProcess( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+
+    return NtUserGetSystemDpiForProcess( process );
+}
