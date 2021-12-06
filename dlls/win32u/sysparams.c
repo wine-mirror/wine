@@ -1462,6 +1462,24 @@ RECT get_virtual_screen_rect( UINT dpi )
     return rect;
 }
 
+RECT get_display_rect( const WCHAR *display )
+{
+    struct monitor *monitor;
+    RECT rect = {0};
+
+    if (!lock_display_devices()) return rect;
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    {
+        if (!monitor->adapter || wcsicmp( monitor->adapter->dev.device_name, display )) continue;
+        rect = monitor->rc_monitor;
+        break;
+    }
+
+    unlock_display_devices();
+    return map_dpi_rect( rect, system_dpi, get_thread_dpi() );
+}
+
 static RECT get_primary_monitor_rect(void)
 {
     struct monitor *monitor;
@@ -3907,7 +3925,7 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
 #undef WINE_SPI_WARN
 }
 
-static int get_system_metrics( int index )
+int get_system_metrics( int index )
 {
     NONCLIENTMETRICSW ncm;
     MINIMIZEDMETRICS mm;

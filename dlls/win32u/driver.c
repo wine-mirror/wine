@@ -83,28 +83,6 @@ const struct gdi_dc_funcs *get_display_driver(void)
     return &user_driver->dc_funcs;
 }
 
-struct monitor_info
-{
-    const WCHAR *name;
-    RECT rect;
-};
-
-static BOOL CALLBACK monitor_enum_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lparam )
-{
-    struct monitor_info *info = (struct monitor_info *)lparam;
-    MONITORINFOEXW mi;
-
-    mi.cbSize = sizeof(mi);
-    user_callbacks->pGetMonitorInfoW( monitor, (MONITORINFO *)&mi );
-    if (!wcsicmp( info->name, mi.szDevice ))
-    {
-        info->rect = mi.rcMonitor;
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 static INT CDECL nulldrv_AbortDoc( PHYSDEV dev )
 {
     return 0;
@@ -224,41 +202,31 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case HORZRES:
     {
         DC *dc = get_nulldrv_dc( dev );
-        struct monitor_info info;
+        RECT rect;
         int ret;
-
-        if (!user_callbacks) return 640;
 
         if (dc->display[0])
         {
-            info.name = dc->display;
-            SetRectEmpty( &info.rect );
-            user_callbacks->pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
-            if (!IsRectEmpty( &info.rect ))
-                return info.rect.right - info.rect.left;
+            rect = get_display_rect( dc->display );
+            if (!IsRectEmpty( &rect )) return rect.right - rect.left;
         }
 
-        ret = user_callbacks->pGetSystemMetrics( SM_CXSCREEN );
+        ret = get_system_metrics( SM_CXSCREEN );
         return ret ? ret : 640;
     }
     case VERTRES:
     {
         DC *dc = get_nulldrv_dc( dev );
-        struct monitor_info info;
+        RECT rect;
         int ret;
 
-        if (!user_callbacks) return 480;
-
-        if (dc->display[0] && user_callbacks)
+        if (dc->display[0])
         {
-            info.name = dc->display;
-            SetRectEmpty( &info.rect );
-            user_callbacks->pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
-            if (!IsRectEmpty( &info.rect ))
-                return info.rect.bottom - info.rect.top;
+            rect = get_display_rect( dc->display );
+            if (!IsRectEmpty( &rect )) return rect.bottom - rect.top;
         }
 
-        ret = user_callbacks->pGetSystemMetrics( SM_CYSCREEN );
+        ret = get_system_metrics( SM_CYSCREEN );
         return ret ? ret : 480;
     }
     case BITSPIXEL:

@@ -958,37 +958,12 @@ static HWND WINAPI call_GetDesktopWindow(void)
     return pGetDesktopWindow ? pGetDesktopWindow() : NULL;
 }
 
-static BOOL WINAPI call_GetMonitorInfoW( HMONITOR monitor, MONITORINFO *info )
-{
-    static BOOL (WINAPI *pGetMonitorInfoW)( HMONITOR, LPMONITORINFO );
-    if (!pGetMonitorInfoW)
-        pGetMonitorInfoW = get_user_proc( "GetMonitorInfoW", FALSE );
-    return pGetMonitorInfoW && pGetMonitorInfoW( monitor, info );
-}
-
-static INT WINAPI call_GetSystemMetrics( INT metric )
-{
-    static INT (WINAPI *pGetSystemMetrics)(INT);
-    if (!pGetSystemMetrics)
-        pGetSystemMetrics = get_user_proc( "GetSystemMetrics", FALSE );
-    return pGetSystemMetrics ? pGetSystemMetrics( metric ) : 0;
-}
-
 static BOOL WINAPI call_GetWindowRect( HWND hwnd, LPRECT rect )
 {
     static BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     if (!pGetWindowRect)
         pGetWindowRect = get_user_proc( "GetWindowRect", FALSE );
     return pGetWindowRect && pGetWindowRect( hwnd, rect );
-}
-
-static BOOL WINAPI call_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc,
-                                             LPARAM lparam )
-{
-    static BOOL (WINAPI *pEnumDisplayMonitors)( HDC, LPRECT, MONITORENUMPROC, LPARAM );
-    if (!pEnumDisplayMonitors)
-        pEnumDisplayMonitors = get_user_proc( "EnumDisplayMonitors", FALSE );
-    return pEnumDisplayMonitors && pEnumDisplayMonitors( hdc, rect, proc, lparam );
 }
 
 static BOOL WINAPI call_RedrawWindow( HWND hwnd, const RECT *rect, HRGN rgn, UINT flags )
@@ -1019,10 +994,7 @@ static HWND WINAPI call_WindowFromDC( HDC hdc )
 static const struct user_callbacks user_funcs =
 {
     call_GetDesktopWindow,
-    call_GetMonitorInfoW,
-    call_GetSystemMetrics,
     call_GetWindowRect,
-    call_EnumDisplayMonitors,
     call_RedrawWindow,
     call_SendMessageTimeoutW,
     call_WindowFromDC,

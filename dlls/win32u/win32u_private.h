@@ -33,10 +33,7 @@
 struct user_callbacks
 {
     HWND (WINAPI *pGetDesktopWindow)(void);
-    BOOL (WINAPI *pGetMonitorInfoW)( HMONITOR, LPMONITORINFO );
-    INT (WINAPI *pGetSystemMetrics)(INT);
     BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
-    BOOL (WINAPI *pEnumDisplayMonitors)( HDC, LPRECT, MONITORENUMPROC, LPARAM );
     BOOL (WINAPI *pRedrawWindow)( HWND, const RECT*, HRGN, UINT );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     HWND (WINAPI *pWindowFromDC)( HDC );
@@ -245,7 +242,9 @@ struct unix_funcs
                                       struct window_surface *surface );
 };
 
+extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
 extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
+extern int get_system_metrics( int index ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect( UINT dpi ) DECLSPEC_HIDDEN;
 
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
