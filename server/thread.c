@@ -33,6 +33,8 @@
 #include <time.h>
 #include <poll.h>
 #ifdef HAVE_SCHED_H
+/* FreeBSD needs this for cpu_set_t intead of its cpuset_t */
+#define _WITH_CPU_SET_T
 #include <sched.h>
 #endif
 
