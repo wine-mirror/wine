@@ -290,6 +290,9 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
     UINT committed_samples = 0;
     DWORD channel, i;
 
+    if (!secondarybuffer_is_audible(dsb))
+        return count;
+
     if(dsb->use_committed) {
         committed_samples = (dsb->writelead - dsb->committed_mixpos) / istride;
         committed_samples = committed_samples <= count ? committed_samples : count;
@@ -328,6 +331,11 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *
     DWORD len = required_input * channels;
     len += fir_cachesize;
     len *= sizeof(float);
+
+    *freqAccNum = freqAcc_end % dsb->freqAdjustDen;
+
+    if (!secondarybuffer_is_audible(dsb))
+        return max_ipos;
 
     if (!dsb->device->cp_buffer) {
         dsb->device->cp_buffer = HeapAlloc(GetProcessHeap(), 0, len);
@@ -385,8 +393,6 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *
             dsb->put(dsb, i * ostride, channel, sum * dsb->firgain);
         }
     }
-
-    *freqAccNum = freqAcc_end % dsb->freqAdjustDen;
 
     return max_ipos;
 }
@@ -535,10 +541,12 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
 	DSOUND_MixToTemporary(dsb, frames);
 	ibuf = dsb->device->tmp_buffer;
 
-	/* Apply volume if needed */
-	DSOUND_MixerVol(dsb, frames);
+	if (secondarybuffer_is_audible(dsb)) {
+		/* Apply volume if needed */
+		DSOUND_MixerVol(dsb, frames);
 
-	mixieee32(ibuf, mix_buffer, frames * dsb->device->pwfx->nChannels);
+		mixieee32(ibuf, mix_buffer, frames * dsb->device->pwfx->nChannels);
+	}
 
 	/* check for notification positions */
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&

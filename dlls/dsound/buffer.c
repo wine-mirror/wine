@@ -1197,6 +1197,17 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
     TRACE("(%p) released\n", This);
 }
 
+BOOL secondarybuffer_is_audible(IDirectSoundBufferImpl *This)
+{
+    UINT i;
+    for (i = 0; i < This->device->pwfx->nChannels; i++) {
+        if (This->volpan.dwTotalAmpFactor[i] != 0)
+            return TRUE;
+    }
+
+   return FALSE;
+}
+
 HRESULT IDirectSoundBufferImpl_Duplicate(
     DirectSoundDevice *device,
     IDirectSoundBufferImpl **ppdsb,

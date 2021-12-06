@@ -193,6 +193,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
+BOOL secondarybuffer_is_audible(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
 extern const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
 extern const IDirectSound3DBufferVtbl ds3dbvt DECLSPEC_HIDDEN;
 extern const IKsPropertySetVtbl iksbvt DECLSPEC_HIDDEN;
