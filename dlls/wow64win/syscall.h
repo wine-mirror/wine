@@ -107,6 +107,7 @@
     SYSCALL_ENTRY( NtUserGetMouseMovePointsEx ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
     SYSCALL_ENTRY( NtUserGetOpenClipboardWindow ) \
+    SYSCALL_ENTRY( NtUserGetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProp ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
@@ -117,6 +118,7 @@
     SYSCALL_ENTRY( NtUserRemoveProp ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetObjectInformation ) \
+    SYSCALL_ENTRY( NtUserSetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
     SYSCALL_ENTRY( NtUserSetThreadDesktop )

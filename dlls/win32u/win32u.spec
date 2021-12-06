@@ -977,7 +977,7 @@
 @ stub NtUserGetPointerType
 @ stub NtUserGetPrecisionTouchPadConfiguration
 @ stdcall NtUserGetPriorityClipboardFormat(ptr long)
-@ stub NtUserGetProcessDpiAwarenessContext
+@ stdcall -syscall NtUserGetProcessDpiAwarenessContext(long)
 @ stub NtUserGetProcessUIContextInformation
 @ stdcall -syscall NtUserGetProcessWindowStation()
 @ stdcall -syscall NtUserGetProp(long wstr)
@@ -1216,7 +1216,7 @@
 @ stdcall -syscall NtUserSetObjectInformation(long long ptr long)
 @ stub NtUserSetParent
 @ stub NtUserSetPrecisionTouchPadConfiguration
-@ stub NtUserSetProcessDpiAwarenessContext
+@ stdcall -syscall NtUserSetProcessDpiAwarenessContext(long long)
 @ stub NtUserSetProcessInteractionFlags
 @ stub NtUserSetProcessMousewheelRoutingMode
 @ stub NtUserSetProcessRestrictionExemption

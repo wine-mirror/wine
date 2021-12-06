@@ -120,8 +120,6 @@ static BOOL notify_change = TRUE;
 /* System parameters storage */
 static RECT work_area;
 static UINT system_dpi;
-static DPI_AWARENESS dpi_awareness;
-static DPI_AWARENESS default_awareness = DPI_AWARENESS_UNAWARE;
 
 static HKEY volatile_base_key;
 
@@ -1374,11 +1372,7 @@ void SYSPARAMS_Init(void)
 
     /* FIXME: what do the DpiScalingVer flags mean? */
     get_dword_entry( (union sysparam_all_entry *)&entry_DPISCALINGVER, 0, &dpi_scaling, 0 );
-    if (!dpi_scaling)
-    {
-        default_awareness = DPI_AWARENESS_PER_MONITOR_AWARE;
-        dpi_awareness = 0x10 | default_awareness;
-    }
+    if (!dpi_scaling) NtUserSetProcessDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE, 0 );
 
     if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
     {
@@ -3214,19 +3208,31 @@ RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect )
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    DPI_AWARENESS val = GetAwarenessFromDpiAwarenessContext( context );
+    ULONG awareness;
 
-    if (val == DPI_AWARENESS_INVALID)
+    switch (GetAwarenessFromDpiAwarenessContext( context ))
     {
+    case DPI_AWARENESS_UNAWARE:
+        awareness = NTUSER_DPI_UNAWARE;
+        break;
+    case DPI_AWARENESS_SYSTEM_AWARE:
+        awareness = NTUSER_DPI_SYSTEM_AWARE;
+        break;
+    case DPI_AWARENESS_PER_MONITOR_AWARE:
+        awareness = context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+            ? NTUSER_DPI_PER_MONITOR_AWARE_V2 : NTUSER_DPI_PER_MONITOR_AWARE;
+        break;
+    default:
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    val |= 0x10;  /* avoid 0 value */
-    if (InterlockedCompareExchange( &dpi_awareness, val, 0 ))
+
+    if (!NtUserSetProcessDpiAwarenessContext( awareness, 0 ))
     {
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
+
     TRACE( "set to %p\n", context );
     return TRUE;
 }
@@ -3236,12 +3242,7 @@ BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
  */
 BOOL WINAPI GetProcessDpiAwarenessInternal( HANDLE process, DPI_AWARENESS *awareness )
 {
-    if (process && process != GetCurrentProcess())
-    {
-        WARN( "not supported on other process %p\n", process );
-        *awareness = DPI_AWARENESS_UNAWARE;
-    }
-    else *awareness = dpi_awareness & 3;
+    *awareness = NtUserGetProcessDpiAwarenessContext( process ) & 3;
     return TRUE;
 }
 
@@ -3309,7 +3310,7 @@ BOOL WINAPI IsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 BOOL WINAPI SetProcessDPIAware(void)
 {
     TRACE("\n");
-    InterlockedCompareExchange( &dpi_awareness, 0x11, 0 );
+    NtUserSetProcessDpiAwarenessContext( NTUSER_DPI_SYSTEM_AWARE, 0 );
     return TRUE;
 }
 
@@ -3372,8 +3373,7 @@ DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
     struct user_thread_info *info = get_user_thread_info();
 
     if (info->dpi_awareness) return ULongToHandle( info->dpi_awareness );
-    if (dpi_awareness) return ULongToHandle( dpi_awareness );
-    return ULongToHandle( 0x10 | default_awareness );
+    return UlongToHandle( (NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3 ) | 0x10 );
 }
 
 /**********************************************************************
@@ -3391,9 +3391,8 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
     }
     if (!(prev = info->dpi_awareness))
     {
-        prev = dpi_awareness;
-        if (!prev) prev = 0x10 | DPI_AWARENESS_UNAWARE;
-        prev |= 0x80000000;  /* restore to process default */
+        prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3;
+        prev |= 0x80000010;  /* restore to process default */
     }
     if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
     else info->dpi_awareness = val | 0x10;

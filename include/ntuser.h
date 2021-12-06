@@ -39,6 +39,13 @@ struct enum_display_monitor_params
     LPARAM lparam;
 };
 
+/* process DPI awareness contexts */
+#define NTUSER_DPI_UNAWARE                0x00006010
+#define NTUSER_DPI_SYSTEM_AWARE           0x00006011
+#define NTUSER_DPI_PER_MONITOR_AWARE      0x00000012
+#define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
+#define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
+
 /* NtUserCallOneParam codes, not compatible with Windows */
 enum
 {
@@ -123,6 +130,7 @@ HWND    WINAPI NtUserGetOpenClipboardWindow(void);
 INT     WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count );
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 HANDLE  WINAPI NtUserGetProp( HWND hwnd, const WCHAR *str );
+ULONG   WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process );
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
@@ -137,6 +145,7 @@ BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, cons
                                HRGN ret_update_rgn, RECT *update_rect );
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE palette, WORD force_background );
 BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
+BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );
 BOOL    WINAPI NtUserSetThreadDesktop( HDESK handle );

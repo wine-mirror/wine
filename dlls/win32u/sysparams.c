@@ -1657,6 +1657,44 @@ void sysparams_init(void)
     }
 }
 
+static DPI_AWARENESS dpi_awareness;
+
+/***********************************************************************
+ *	     NtUserSetProcessDpiAwarenessContext    (win32u.@)
+ */
+BOOL WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown )
+{
+    switch (awareness)
+    {
+    case NTUSER_DPI_UNAWARE:
+    case NTUSER_DPI_SYSTEM_AWARE:
+    case NTUSER_DPI_PER_MONITOR_AWARE:
+    case NTUSER_DPI_PER_MONITOR_AWARE_V2:
+    case NTUSER_DPI_PER_UNAWARE_GDISCALED:
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    return !InterlockedCompareExchange( &dpi_awareness, awareness, 0 );
+}
+
+/***********************************************************************
+ *	     NtUserGetProcessDpiAwarenessContext    (win32u.@)
+ */
+ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
+{
+    if (process && process != GetCurrentProcess())
+    {
+        WARN( "not supported on other process %p\n", process );
+        return NTUSER_DPI_UNAWARE;
+    }
+
+    if (!dpi_awareness) return NTUSER_DPI_UNAWARE;
+    return dpi_awareness;
+}
+
 /***********************************************************************
  *	     NtUserCallOneParam    (win32u.@)
  */
