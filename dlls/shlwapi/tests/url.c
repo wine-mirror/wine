@@ -772,37 +772,38 @@ static void test_UrlGetPart(void)
 }
 
 /* ########################### */
-static void check_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, const char *szExpectUrl, BOOL todo)
+static void check_url_canonicalize(const char *url, DWORD flags, const char *expect, BOOL todo)
 {
-    CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
-    WCHAR wszReturnUrl[INTERNET_MAX_URL_LENGTH];
-    LPWSTR wszUrl = GetWideString(szUrl);
-    LPWSTR wszConvertedUrl;
-    HRESULT ret;
+    char output[INTERNET_MAX_URL_LENGTH];
+    WCHAR outputW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *urlW = GetWideString(url);
+    WCHAR *expectW;
+    HRESULT hr;
+    DWORD size;
 
-    DWORD dwSize;
+    winetest_push_context("URL %s, flags %#lx", debugstr_a(url), flags);
 
-    dwSize = INTERNET_MAX_URL_LENGTH;
-    ret = UrlCanonicalizeA(szUrl, NULL, &dwSize, dwFlags);
-    ok(ret == E_INVALIDARG, "Got unexpected hr %#lx for index %d.\n", ret, index);
-    ret = UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags);
-    ok(ret == S_OK || (!szUrl[0] && ret == S_FALSE) /* Vista+ */,
-            "Got unexpected hr %#lx for index %d.\n", ret, index);
+    size = INTERNET_MAX_URL_LENGTH;
+    hr = UrlCanonicalizeA(url, NULL, &size, flags);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = UrlCanonicalizeA(url, output, &size, flags);
+    ok(hr == S_OK || (!url[0] && hr == S_FALSE) /* Vista+ */, "Got unexpected hr %#lx.\n", hr);
     todo_wine_if (todo)
-        ok(strcmp(szReturnUrl,szExpectUrl)==0, "UrlCanonicalizeA dwFlags 0x%08lx url '%s' Expected \"%s\", but got \"%s\", index %d\n", dwFlags, szUrl, szExpectUrl, szReturnUrl, index);
+        ok(!strcmp(output, expect), "Expected %s, got %s.\n", debugstr_a(expect), debugstr_a(output));
 
-    dwSize = INTERNET_MAX_URL_LENGTH;
-    ret = UrlCanonicalizeW(wszUrl, NULL, &dwSize, dwFlags);
-    ok(ret == E_INVALIDARG, "Got unexpected hr %#lx for index %d.\n", ret, index);
-    ret = UrlCanonicalizeW(wszUrl, wszReturnUrl, &dwSize, dwFlags);
-    ok(ret == S_OK, "Got unexpected hr %#lx for index %d.\n", ret, index);
+    size = INTERNET_MAX_URL_LENGTH;
+    hr = UrlCanonicalizeW(urlW, NULL, &size, flags);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = UrlCanonicalizeW(urlW, outputW, &size, flags);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    wszConvertedUrl = GetWideString(szReturnUrl);
-    ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0,
-        "Strings didn't match between ansi and unicode UrlCanonicalize, index %d!\n", index);
-    FreeWideString(wszConvertedUrl);
+    expectW = GetWideString(output);
+    ok(!wcscmp(outputW, expectW), "Expected %s, got %s.\n", debugstr_w(expectW), debugstr_w(outputW));
+    FreeWideString(expectW);
 
-    FreeWideString(wszUrl);
+    FreeWideString(urlW);
+
+    winetest_pop_context();
 }
 
 
@@ -1157,7 +1158,7 @@ static void test_UrlCanonicalizeA(void)
 
     /* test url-modification */
     for (i = 0; i < ARRAY_SIZE(tests); i++)
-        check_url_canonicalize(i, tests[i].url, tests[i].flags, tests[i].expect, tests[i].todo);
+        check_url_canonicalize(tests[i].url, tests[i].flags, tests[i].expect, tests[i].todo);
 }
 
 /* ########################### */
