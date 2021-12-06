@@ -1741,7 +1741,26 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     struct enum_display_monitor_params params;
     struct monitor *monitor;
     unsigned int count = 0, i;
+    POINT origin;
+    RECT limit;
     BOOL ret = TRUE;
+
+    if (hdc)
+    {
+        DC *dc;
+        if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+        origin.x = dc->attr->vis_rect.left;
+        origin.y = dc->attr->vis_rect.top;
+        release_dc_ptr( dc );
+        if (NtGdiGetAppClipBox( hdc, &limit ) == ERROR) return FALSE;
+    }
+    else
+    {
+        origin.x = origin.y = 0;
+        limit.left = limit.top = INT_MIN;
+        limit.right = limit.bottom = INT_MAX;
+    }
+    if (rect && !intersect_rect( &limit, &limit, rect )) return TRUE;
 
     if (!lock_display_devices()) return FALSE;
 
@@ -1756,9 +1775,17 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     count = 0;
     LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
     {
+        RECT monrect;
+
         if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+
+        monrect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
+                                get_thread_dpi() );
+        offset_rect( &monrect, -origin.x, -origin.y );
+        if (!intersect_rect( &monrect, &monrect, &limit )) continue;
+
         enum_info[count].handle = monitor->handle;
-        enum_info[count].rect = monitor->rc_monitor;
+        enum_info[count].rect = monrect;
         count++;
     }
 

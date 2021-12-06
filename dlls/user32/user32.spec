@@ -223,7 +223,7 @@
 @ stub EnumDisplayDeviceModesW
 @ stdcall EnumDisplayDevicesA(str long ptr long)
 @ stdcall EnumDisplayDevicesW(wstr long ptr long)
-@ stdcall EnumDisplayMonitors(long ptr ptr long)
+@ stdcall EnumDisplayMonitors(long ptr ptr long) NtUserEnumDisplayMonitors
 @ stdcall EnumDisplaySettingsA(str long ptr)
 @ stdcall EnumDisplaySettingsExA(str long ptr long)
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long)

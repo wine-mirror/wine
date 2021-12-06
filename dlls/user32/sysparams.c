@@ -327,7 +327,7 @@ RECT get_virtual_screen_rect(void)
 {
     RECT rect = {0};
 
-    EnumDisplayMonitors( 0, NULL, get_virtual_screen_proc, (LPARAM)&rect );
+    NtUserEnumDisplayMonitors( 0, NULL, get_virtual_screen_proc, (LPARAM)&rect );
     return rect;
 }
 
@@ -348,7 +348,7 @@ RECT get_primary_monitor_rect(void)
 {
     RECT rect = {0};
 
-    EnumDisplayMonitors( 0, NULL, get_primary_monitor_proc, (LPARAM)&rect );
+    NtUserEnumDisplayMonitors( 0, NULL, get_primary_monitor_proc, (LPARAM)&rect );
     return rect;
 }
 
@@ -364,7 +364,7 @@ static INT get_monitor_count(void)
 {
     INT count = 0;
 
-    EnumDisplayMonitors( 0, NULL, get_monitor_count_proc, (LPARAM)&count );
+    NtUserEnumDisplayMonitors( 0, NULL, get_monitor_count_proc, (LPARAM)&count );
     return count;
 }
 
@@ -1747,7 +1747,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (!spi_loaded[spi_idx])
         {
             work_area = get_primary_monitor_rect();
-            EnumDisplayMonitors( 0, NULL, enum_monitors, (LPARAM)&work_area );
+            NtUserEnumDisplayMonitors( 0, NULL, enum_monitors, (LPARAM)&work_area );
             spi_loaded[spi_idx] = TRUE;
         }
         *(RECT*)pvParam = work_area;
@@ -3469,7 +3469,7 @@ HMONITOR WINAPI MonitorFromRect( const RECT *rect, DWORD flags )
         info.rect.bottom = info.rect.top + 1;
     }
 
-    if (!EnumDisplayMonitors( 0, NULL, monitor_enum, (LPARAM)&info )) return 0;
+    if (!NtUserEnumDisplayMonitors( 0, NULL, monitor_enum, (LPARAM)&info )) return 0;
     if (!info.ret)
     {
         if (flags & MONITOR_DEFAULTTOPRIMARY) info.ret = info.primary;
@@ -3546,13 +3546,6 @@ BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
     return NtUserCallTwoParam( HandleToUlong(monitor), (ULONG_PTR)info, NtUserGetMonitorInfo );
 }
 
-struct enum_mon_data
-{
-    LPARAM lparam;
-    POINT origin;
-    RECT limit;
-};
-
 #ifdef __i386__
 /* Some apps pass a non-stdcall callback to EnumDisplayMonitors,
  * so we need a small assembly wrapper to call it.
@@ -3580,42 +3573,12 @@ __ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
 
 BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *params, ULONG size )
 {
-    struct enum_mon_data *data = (struct enum_mon_data *)params->lparam;
-    RECT monrect = map_dpi_rect( params->rect, get_monitor_dpi( params->monitor ), get_thread_dpi() );
-
-    /* FIXME: move DPI conversion and rect filtering to win32u */
-    OffsetRect( &monrect, -data->origin.x, -data->origin.y );
-    if (!IntersectRect( &monrect, &monrect, &data->limit )) return TRUE;
 #ifdef __i386__
     return enum_mon_callback_wrapper( params->proc, params->monitor, params->hdc,
-                                      &monrect, data->lparam );
+                                      &params->rect, params->lparam );
 #else
-    return params->proc( params->monitor, params->hdc, &monrect, data->lparam );
+    return params->proc( params->monitor, params->hdc, &params->rect, params->lparam );
 #endif
-}
-
-/***********************************************************************
- *		EnumDisplayMonitors (USER32.@)
- */
-BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    struct enum_mon_data data;
-
-    data.lparam = lp;
-
-    if (hdc)
-    {
-        if (!GetDCOrgEx( hdc, &data.origin )) return FALSE;
-        if (GetClipBox( hdc, &data.limit ) == ERROR) return FALSE;
-    }
-    else
-    {
-        data.origin.x = data.origin.y = 0;
-        data.limit.left = data.limit.top = INT_MIN;
-        data.limit.right = data.limit.bottom = INT_MAX;
-    }
-    if (rect && !IntersectRect( &data.limit, &data.limit, rect )) return TRUE;
-    return NtUserEnumDisplayMonitors( hdc, rect, proc, (LPARAM)&data );
 }
 
 /***********************************************************************
