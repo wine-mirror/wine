@@ -1383,6 +1383,34 @@ static DPI_AWARENESS get_thread_dpi_awareness(void)
 }
 
 /**********************************************************************
+ *              get_thread_dpi
+ */
+static UINT get_thread_dpi(void)
+{
+    switch (get_thread_dpi_awareness())
+    {
+    case DPI_AWARENESS_UNAWARE:      return USER_DEFAULT_SCREEN_DPI;
+    case DPI_AWARENESS_SYSTEM_AWARE: return system_dpi;
+    default:                         return 0;  /* no scaling */
+    }
+}
+
+/**********************************************************************
+ *              map_dpi_rect
+ */
+RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
+{
+    if (dpi_from && dpi_to && dpi_from != dpi_to)
+    {
+        rect.left   = muldiv( rect.left, dpi_to, dpi_from );
+        rect.top    = muldiv( rect.top, dpi_to, dpi_from );
+        rect.right  = muldiv( rect.right, dpi_to, dpi_from );
+        rect.bottom = muldiv( rect.bottom, dpi_to, dpi_from );
+    }
+    return rect;
+}
+
+/**********************************************************************
  *           NtUserGetDisplayConfigBufferSizes    (win32u.@)
  */
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
@@ -1756,6 +1784,7 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
 static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
 {
     struct monitor *monitor;
+    UINT dpi_from, dpi_to;
 
     if (info->cbSize != sizeof(MONITORINFOEXW) && info->cbSize != sizeof(MONITORINFO)) return FALSE;
 
@@ -1778,6 +1807,15 @@ static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
                 asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, "WinDisc" );
         }
         unlock_display_devices();
+
+        if ((dpi_to = get_thread_dpi()))
+        {
+            dpi_from = get_monitor_dpi( handle );
+            info->rcMonitor = map_dpi_rect( info->rcMonitor, dpi_from, dpi_to );
+            info->rcWork = map_dpi_rect( info->rcWork, dpi_from, dpi_to );
+        }
+        TRACE( "flags %04x, monitor %s, work %s\n", info->dwFlags,
+               wine_dbgstr_rect(&info->rcMonitor), wine_dbgstr_rect(&info->rcWork));
         return TRUE;
     }
 

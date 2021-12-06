@@ -3543,22 +3543,7 @@ BOOL WINAPI GetMonitorInfoA( HMONITOR monitor, LPMONITORINFO info )
  */
 BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
 {
-    BOOL ret;
-    UINT dpi_from, dpi_to;
-
-    ret = NtUserCallTwoParam( HandleToUlong(monitor), (ULONG_PTR)info, NtUserGetMonitorInfo );
-    if (ret)
-    {
-        if ((dpi_to = get_thread_dpi()))
-        {
-            dpi_from = get_monitor_dpi( monitor );
-            info->rcMonitor = map_dpi_rect( info->rcMonitor, dpi_from, dpi_to );
-            info->rcWork = map_dpi_rect( info->rcWork, dpi_from, dpi_to );
-        }
-        TRACE( "flags %04x, monitor %s, work %s\n", info->dwFlags,
-               wine_dbgstr_rect(&info->rcMonitor), wine_dbgstr_rect(&info->rcWork));
-    }
-    return ret;
+    return NtUserCallTwoParam( HandleToUlong(monitor), (ULONG_PTR)info, NtUserGetMonitorInfo );
 }
 
 struct enum_mon_data
