@@ -52,6 +52,111 @@ void dwrite_fontface_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     font_funcs->get_glyph_bbox(bitmap);
 }
 
+struct cache_key
+{
+    float size;
+    unsigned short glyph;
+    unsigned short mode;
+};
+
+struct cache_entry
+{
+    struct wine_rb_entry entry;
+    struct list mru;
+    struct cache_key key;
+    float advance;
+    unsigned int has_contours : 1;
+};
+
+static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fontface, const struct cache_key *key)
+{
+    struct cache_entry *entry;
+    struct wine_rb_entry *e;
+
+    if (!(e = wine_rb_get(&fontface->cache.tree, key))) return NULL;
+    entry = WINE_RB_ENTRY_VALUE(e, struct cache_entry, entry);
+    list_remove(&entry->mru);
+    list_add_head(&fontface->cache.mru, &entry->mru);
+    return WINE_RB_ENTRY_VALUE(entry, struct cache_entry, entry);
+}
+
+static size_t fontface_get_cache_entry_size(const struct cache_entry *entry)
+{
+    return sizeof(*entry);
+}
+
+static float fontface_get_glyph_advance(struct dwrite_fontface *fontface, float fontsize, unsigned short glyph,
+        unsigned short mode, BOOL *has_contours)
+{
+    struct cache_key key = { .size = fontsize, .glyph = glyph, .mode = mode };
+    struct cache_entry *entry, *old_entry;
+    size_t size;
+    BOOL value;
+
+    if (!(entry = fontface_get_cache_entry(fontface, &key)))
+    {
+        if (!(entry = calloc(1, sizeof(*entry))))
+            return 0.0f;
+
+        entry->advance = font_funcs->get_glyph_advance(fontface->get_font_object(fontface), fontsize, glyph, mode, &value);
+        entry->has_contours = !!value;
+        entry->key = key;
+
+        size = fontface_get_cache_entry_size(entry);
+        if ((fontface->cache.size + size > fontface->cache.max_size) && !list_empty(&fontface->cache.mru))
+        {
+            old_entry = LIST_ENTRY(list_tail(&fontface->cache.mru), struct cache_entry, mru);
+            fontface->cache.size -= fontface_get_cache_entry_size(old_entry);
+            wine_rb_remove(&fontface->cache.tree, &old_entry->entry);
+            list_remove(&old_entry->mru);
+            free(old_entry);
+        }
+
+        list_add_head(&fontface->cache.mru, &entry->mru);
+
+        if (wine_rb_put(&fontface->cache.tree, &key, &entry->entry) == -1)
+        {
+            WARN("Failed to add cache entry.\n");
+            return 0.0f;
+        }
+
+        fontface->cache.size += size;
+    }
+
+    *has_contours = entry->has_contours;
+    return entry->advance;
+}
+
+static int fontface_cache_compare(const void *k, const struct wine_rb_entry *e)
+{
+    const struct cache_entry *entry = WINE_RB_ENTRY_VALUE(e, const struct cache_entry, entry);
+    const struct cache_key *key = k, *key2 = &entry->key;
+
+    if (key->size != key2->size) return key->size < key2->size ? -1 : 1;
+    if (key->glyph != key2->glyph) return (int)key->glyph - (int)key2->glyph;
+    if (key->mode != key2->mode) return (int)key->mode - (int)key2->mode;
+    return 0;
+}
+
+static void fontface_cache_init(struct dwrite_fontface *fontface)
+{
+    wine_rb_init(&fontface->cache.tree, fontface_cache_compare);
+    list_init(&fontface->cache.mru);
+    fontface->cache.max_size = 0x8000;
+}
+
+static void fontface_cache_clear(struct dwrite_fontface *fontface)
+{
+    struct cache_entry *entry, *entry2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &fontface->cache.mru, struct cache_entry, mru)
+    {
+        list_remove(&entry->mru);
+        free(entry);
+    }
+    memset(&fontface->cache, 0, sizeof(fontface->cache));
+}
+
 struct dwrite_font_propvec {
     FLOAT stretch;
     FLOAT style;
@@ -656,6 +761,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, fontface->data_context);
             IDWriteFontFileStream_Release(fontface->stream);
         }
+        fontface_cache_clear(fontface);
 
         dwrite_cmap_release(&fontface->cmap);
         IDWriteFactory7_Release(fontface->factory);
@@ -1019,7 +1125,7 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
     UINT32 adjustment = fontface_get_horz_metric_adjustment(fontface);
     DWRITE_MEASURING_MODE mode;
     FLOAT scale, size;
-    HRESULT hr;
+    HRESULT hr = S_OK;
     UINT32 i;
 
     TRACE("%p, %.8e, %.8e, %p, %d, %p, %u, %p, %d.\n", iface, emSize, ppdip, m, use_gdi_natural, glyphs,
@@ -1032,16 +1138,18 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
     scale = size / fontface->metrics.designUnitsPerEm;
     mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
 
-    for (i = 0; i < glyph_count; i++) {
+    EnterCriticalSection(&fontface->cs);
+    for (i = 0; i < glyph_count; ++i)
+    {
         DWRITE_GLYPH_METRICS *ret = metrics + i;
         DWRITE_GLYPH_METRICS design;
         BOOL has_contours;
 
         hr = IDWriteFontFace5_GetDesignGlyphMetrics(iface, glyphs + i, 1, &design, is_sideways);
         if (FAILED(hr))
-            return hr;
+            break;
 
-        ret->advanceWidth = font_funcs->get_glyph_advance(iface, size, glyphs[i], mode, &has_contours);
+        ret->advanceWidth = fontface_get_glyph_advance(fontface, size, glyphs[i], mode, &has_contours);
         if (has_contours)
             ret->advanceWidth = round_metric(ret->advanceWidth * fontface->metrics.designUnitsPerEm / size + adjustment);
         else
@@ -1056,6 +1164,7 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
         SCALE_METRIC(verticalOriginY);
 #undef  SCALE_METRIC
     }
+    LeaveCriticalSection(&fontface->cs);
 
     return S_OK;
 }
@@ -1172,8 +1281,8 @@ static int fontface_get_design_advance(struct dwrite_fontface *fontface, DWRITE_
     switch (measuring_mode)
     {
         case DWRITE_MEASURING_MODE_NATURAL:
-            advance = font_funcs->get_glyph_advance(&fontface->IDWriteFontFace5_iface, fontface->metrics.designUnitsPerEm,
-                    glyph, measuring_mode, &has_contours);
+            advance = fontface_get_glyph_advance(fontface, fontface->metrics.designUnitsPerEm, glyph,
+                    measuring_mode, &has_contours);
             if (has_contours)
                 advance += adjustment;
 
@@ -1187,8 +1296,7 @@ static int fontface_get_design_advance(struct dwrite_fontface *fontface, DWRITE_
             if (transform && memcmp(transform, &identity, sizeof(*transform)))
                 FIXME("Transform is not supported.\n");
 
-            advance = font_funcs->get_glyph_advance(&fontface->IDWriteFontFace5_iface, emsize, glyph, measuring_mode,
-                    &has_contours);
+            advance = fontface_get_glyph_advance(fontface, emsize, glyph, measuring_mode, &has_contours);
             if (has_contours)
                 advance = round_metric(advance * fontface->metrics.designUnitsPerEm / emsize + adjustment);
             else
@@ -1212,11 +1320,13 @@ static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace5 *i
     if (is_sideways)
         FIXME("sideways mode not supported\n");
 
+    EnterCriticalSection(&fontface->cs);
     for (i = 0; i < glyph_count; ++i)
     {
         advances[i] = fontface_get_design_advance(fontface, DWRITE_MEASURING_MODE_NATURAL,
                 fontface->metrics.designUnitsPerEm, 1.0f, NULL, glyphs[i], is_sideways);
     }
+    LeaveCriticalSection(&fontface->cs);
 
     return S_OK;
 }
@@ -1243,11 +1353,14 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     }
 
     measuring_mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
+
+    EnterCriticalSection(&fontface->cs);
     for (i = 0; i < glyph_count; ++i)
     {
         advances[i] = fontface_get_design_advance(fontface, measuring_mode, em_size, ppdip, transform,
                 glyphs[i], is_sideways);
     }
+    LeaveCriticalSection(&fontface->cs);
 
     return S_OK;
 }
@@ -5101,6 +5214,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->stream = desc->stream;
     IDWriteFontFileStream_AddRef(fontface->stream);
     InitializeCriticalSection(&fontface->cs);
+    fontface_cache_init(fontface);
 
     stream_desc.stream = fontface->stream;
     stream_desc.face_type = desc->face_type;
@@ -6027,7 +6141,9 @@ float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRIT
     if (is_sideways)
         FIXME("Sideways mode is not supported.\n");
 
+    EnterCriticalSection(&fontface->cs);
     advance = fontface_get_design_advance(fontface, measuring_mode, emsize, ppdip, transform, glyph, is_sideways);
+    LeaveCriticalSection(&fontface->cs);
 
     switch (measuring_mode)
     {

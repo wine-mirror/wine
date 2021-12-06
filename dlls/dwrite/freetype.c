@@ -781,30 +781,25 @@ static BOOL CDECL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return ret;
 }
 
-static INT32 CDECL freetype_get_glyph_advance(void *key, float emSize, UINT16 index,
+static INT32 CDECL freetype_get_glyph_advance(font_object_handle object, float emsize, UINT16 glyph,
         DWRITE_MEASURING_MODE mode, BOOL *has_contours)
 {
-    FTC_ImageTypeRec imagetype;
-    FT_Glyph glyph;
-    INT32 advance;
+    FT_Face face = object;
+    INT32 advance = 0;
+    FT_Size size;
 
-    imagetype.face_id = key;
-    imagetype.width = 0;
-    imagetype.height = emSize;
-    imagetype.flags = FT_LOAD_DEFAULT;
-    if (mode == DWRITE_MEASURING_MODE_NATURAL)
-        imagetype.flags |= FT_LOAD_NO_HINTING;
+    *has_contours = FALSE;
 
-    RtlEnterCriticalSection(&freetype_cs);
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0) {
-        *has_contours = glyph->format == FT_GLYPH_FORMAT_OUTLINE && ((FT_OutlineGlyph)glyph)->outline.n_contours;
-        advance = glyph->advance.x >> 16;
+    if (!(size = freetype_set_face_size(face, emsize)))
+        return 0;
+
+    if (!pFT_Load_Glyph(face, glyph, mode == DWRITE_MEASURING_MODE_NATURAL ? FT_LOAD_NO_HINTING : 0))
+    {
+        advance = face->glyph->advance.x >> 6;
+        *has_contours = freetype_glyph_has_contours(face);
     }
-    else {
-        *has_contours = FALSE;
-        advance = 0;
-    }
-    RtlLeaveCriticalSection(&freetype_cs);
+
+    pFT_Done_Size(size);
 
     return advance;
 }
@@ -863,8 +858,8 @@ static UINT16 CDECL null_get_glyph_count(font_object_handle object)
     return 0;
 }
 
-static INT32 CDECL null_get_glyph_advance(void *key, float emSize, UINT16 index, DWRITE_MEASURING_MODE mode,
-    BOOL *has_contours)
+static INT32 CDECL null_get_glyph_advance(font_object_handle object, float emsize, UINT16 glyph,
+        DWRITE_MEASURING_MODE mode, BOOL *has_contours)
 {
     *has_contours = FALSE;
     return 0;
