@@ -924,7 +924,7 @@
 @ stdcall NtUserGetDisplayConfigBufferSizes(long ptr ptr)
 @ stub NtUserGetDoubleClickTime
 @ stub NtUserGetDpiForCurrentProcess
-@ stub NtUserGetDpiForMonitor
+@ stdcall -syscall NtUserGetDpiForMonitor(long long ptr ptr)
 @ stub NtUserGetExtendedPointerDeviceProperty
 @ stub NtUserGetForegroundWindow
 @ stub NtUserGetGUIThreadInfo

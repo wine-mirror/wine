@@ -1346,6 +1346,43 @@ RECT get_virtual_screen_rect(void)
 }
 
 /**********************************************************************
+ *           get_monitor_dpi
+ */
+static UINT get_monitor_dpi( HMONITOR monitor )
+{
+    /* FIXME: use the monitor DPI instead */
+    return system_dpi;
+}
+
+/**********************************************************************
+ *           get_thread_dpi_awareness
+ */
+static DPI_AWARENESS get_thread_dpi_awareness(void)
+{
+    struct user_thread_info *info = get_user_thread_info();
+    ULONG_PTR context = info->dpi_awareness;
+
+    if (!context) context = NtUserGetProcessDpiAwarenessContext( NULL );
+
+    switch (context)
+    {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x80000010:
+    case 0x80000011:
+    case 0x80000012:
+        return context & 3;
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
+        return ~context;
+    default:
+        return DPI_AWARENESS_INVALID;
+    }
+}
+
+/**********************************************************************
  *           NtUserGetDisplayConfigBufferSizes    (win32u.@)
  */
 LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
@@ -1762,6 +1799,30 @@ ULONG WINAPI NtUserGetSystemDpiForProcess( HANDLE process )
     }
 
     return system_dpi;
+}
+
+/***********************************************************************
+ *           NtUserGetDpiForMonitor   (win32u.@)
+ */
+BOOL WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *y )
+{
+    if (type > 2)
+    {
+        SetLastError( ERROR_BAD_ARGUMENTS );
+        return FALSE;
+    }
+    if (!x || !y)
+    {
+        SetLastError( ERROR_INVALID_ADDRESS );
+        return FALSE;
+    }
+    switch (get_thread_dpi_awareness())
+    {
+    case DPI_AWARENESS_UNAWARE:      *x = *y = USER_DEFAULT_SCREEN_DPI; break;
+    case DPI_AWARENESS_SYSTEM_AWARE: *x = *y = system_dpi; break;
+    default:                         *x = *y = get_monitor_dpi( monitor ); break;
+    }
+    return TRUE;
 }
 
 /* retrieve the cached base keys for a given entry */

@@ -115,6 +115,7 @@ HWND    WINAPI NtUserGetClipboardViewer(void);
 HCURSOR WINAPI NtUserGetCursor(void);
 LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                   UINT32 *num_mode_info );
+BOOL    WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *y );
 INT     WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size );
 SHORT   WINAPI NtUserGetKeyState( INT vkey );
 HKL     WINAPI NtUserGetKeyboardLayout( DWORD thread_id );

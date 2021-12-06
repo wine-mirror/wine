@@ -112,6 +112,7 @@ static void * const syscalls[] =
     NtUserGetClipboardSequenceNumber,
     NtUserGetClipboardViewer,
     NtUserGetCursor,
+    NtUserGetDpiForMonitor,
     NtUserGetKeyState,
     NtUserGetKeyboardLayout,
     NtUserGetKeyboardLayoutName,

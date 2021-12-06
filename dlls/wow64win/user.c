@@ -315,3 +315,13 @@ NTSTATUS WINAPI wow64_NtUserGetSystemDpiForProcess( UINT *args )
 
     return NtUserGetSystemDpiForProcess( process );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetDpiForMonitor( UINT *args )
+{
+    HMONITOR monitor = get_handle( &args );
+    UINT type = get_ulong( &args );
+    UINT *x = get_ptr( &args );
+    UINT *y = get_ptr( &args );
+
+    return NtUserGetDpiForMonitor( monitor, type, x, y );
+}

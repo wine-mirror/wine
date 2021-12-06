@@ -99,6 +99,7 @@
     SYSCALL_ENTRY( NtUserGetClipboardSequenceNumber ) \
     SYSCALL_ENTRY( NtUserGetClipboardViewer ) \
     SYSCALL_ENTRY( NtUserGetCursor ) \
+    SYSCALL_ENTRY( NtUserGetDpiForMonitor ) \
     SYSCALL_ENTRY( NtUserGetKeyState ) \
     SYSCALL_ENTRY( NtUserGetKeyboardLayout ) \
     SYSCALL_ENTRY( NtUserGetKeyboardLayoutName ) \

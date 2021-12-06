@@ -3328,30 +3328,6 @@ UINT WINAPI GetDpiForSystem(void)
     return system_dpi;
 }
 
-/***********************************************************************
- *              GetDpiForMonitorInternal   (USER32.@)
- */
-BOOL WINAPI GetDpiForMonitorInternal( HMONITOR monitor, UINT type, UINT *x, UINT *y )
-{
-    if (type > 2)
-    {
-        SetLastError( ERROR_BAD_ARGUMENTS );
-        return FALSE;
-    }
-    if (!x || !y)
-    {
-        SetLastError( ERROR_INVALID_ADDRESS );
-        return FALSE;
-    }
-    switch (GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() ))
-    {
-    case DPI_AWARENESS_UNAWARE:      *x = *y = USER_DEFAULT_SCREEN_DPI; break;
-    case DPI_AWARENESS_SYSTEM_AWARE: *x = *y = system_dpi; break;
-    default:                         *x = *y = get_monitor_dpi( monitor ); break;
-    }
-    return TRUE;
-}
-
 /**********************************************************************
  *              GetThreadDpiAwarenessContext   (USER32.@)
  */
