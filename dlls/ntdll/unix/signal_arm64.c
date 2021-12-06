@@ -365,7 +365,7 @@ static void restore_fpu( const CONTEXT *context, ucontext_t *sigcontext )
 #elif defined(__APPLE__)
     sigcontext->uc_mcontext->__ns.__fpcr = context->Fpcr;
     sigcontext->uc_mcontext->__ns.__fpsr = context->Fpsr;
-    memcpy( sigcontext->uc_mcontext->__ns.__v, context->V, sizeof(context->v) );
+    memcpy( sigcontext->uc_mcontext->__ns.__v, context->V, sizeof(context->V) );
 #endif
 }
 
@@ -1068,9 +1068,9 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         }
     }
 #elif defined(__APPLE__)
-    sigcontext->uc_mcontext->__ns.__fpcr = frame->fpcr;
-    sigcontext->uc_mcontext->__ns.__fpsr = frame->fpsr;
-    memcpy( sigcontext->uc_mcontext->__ns.__v, frame->v, sizeof(frame->v) );
+    context->uc_mcontext->__ns.__fpcr = frame->fpcr;
+    context->uc_mcontext->__ns.__fpsr = frame->fpsr;
+    memcpy( context->uc_mcontext->__ns.__v, frame->v, sizeof(frame->v) );
 #endif
 }
 
