@@ -751,8 +751,8 @@ DWORD WINAPI GetFileVersionInfoSizeExW( DWORD flags, LPCWSTR filename, LPDWORD r
         if (!(flags & FILE_VER_GET_LOCALISED))
         {
             LANGID english = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-            hRsrc = FindResourceExW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
-                                     (LPWSTR)VS_FILE_INFO, english );
+            hRsrc = FindResourceExW( hModule, (LPWSTR)VS_FILE_INFO,
+                                     MAKEINTRESOURCEW(VS_VERSION_INFO), english );
         }
         if (!hRsrc)
             hRsrc = FindResourceW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
@@ -857,8 +857,8 @@ BOOL WINAPI GetFileVersionInfoExW( DWORD flags, LPCWSTR filename, DWORD ignored,
         if (!(flags & FILE_VER_GET_LOCALISED))
         {
             LANGID english = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-            hRsrc = FindResourceExW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
-                                     (LPWSTR)VS_FILE_INFO, english );
+            hRsrc = FindResourceExW( hModule, (LPWSTR)VS_FILE_INFO,
+                                     MAKEINTRESOURCEW(VS_VERSION_INFO), english );
         }
         if (!hRsrc)
             hRsrc = FindResourceW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
