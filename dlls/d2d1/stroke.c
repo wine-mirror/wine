@@ -20,12 +20,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
-static inline struct d2d_stroke_style *impl_from_ID2D1StrokeStyle(ID2D1StrokeStyle *iface)
+static inline struct d2d_stroke_style *impl_from_ID2D1StrokeStyle1(ID2D1StrokeStyle1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d2d_stroke_style, ID2D1StrokeStyle_iface);
+    return CONTAINING_RECORD(iface, struct d2d_stroke_style, ID2D1StrokeStyle1_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_stroke_style_QueryInterface(ID2D1StrokeStyle *iface, REFIID iid, void **out)
+static HRESULT STDMETHODCALLTYPE d2d_stroke_style_QueryInterface(ID2D1StrokeStyle1 *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
@@ -33,7 +33,7 @@ static HRESULT STDMETHODCALLTYPE d2d_stroke_style_QueryInterface(ID2D1StrokeStyl
             || IsEqualGUID(iid, &IID_ID2D1Resource)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
-        ID2D1StrokeStyle_AddRef(iface);
+        ID2D1StrokeStyle1_AddRef(iface);
         *out = iface;
         return S_OK;
     }
@@ -44,9 +44,9 @@ static HRESULT STDMETHODCALLTYPE d2d_stroke_style_QueryInterface(ID2D1StrokeStyl
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE d2d_stroke_style_AddRef(ID2D1StrokeStyle *iface)
+static ULONG STDMETHODCALLTYPE d2d_stroke_style_AddRef(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
     ULONG refcount = InterlockedIncrement(&style->refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -54,9 +54,9 @@ static ULONG STDMETHODCALLTYPE d2d_stroke_style_AddRef(ID2D1StrokeStyle *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE d2d_stroke_style_Release(ID2D1StrokeStyle *iface)
+static ULONG STDMETHODCALLTYPE d2d_stroke_style_Release(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
     ULONG refcount = InterlockedDecrement(&style->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -72,90 +72,90 @@ static ULONG STDMETHODCALLTYPE d2d_stroke_style_Release(ID2D1StrokeStyle *iface)
     return refcount;
 }
 
-static void STDMETHODCALLTYPE d2d_stroke_style_GetFactory(ID2D1StrokeStyle *iface, ID2D1Factory **factory)
+static void STDMETHODCALLTYPE d2d_stroke_style_GetFactory(ID2D1StrokeStyle1 *iface, ID2D1Factory **factory)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p, factory %p.\n", iface, factory);
 
     ID2D1Factory_AddRef(*factory = style->factory);
 }
 
-static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetStartCap(ID2D1StrokeStyle *iface)
+static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetStartCap(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.startCap;
 }
 
-static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetEndCap(ID2D1StrokeStyle *iface)
+static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetEndCap(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.endCap;
 }
 
-static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetDashCap(ID2D1StrokeStyle *iface)
+static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetDashCap(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.dashCap;
 }
 
-static float STDMETHODCALLTYPE d2d_stroke_style_GetMiterLimit(ID2D1StrokeStyle *iface)
+static float STDMETHODCALLTYPE d2d_stroke_style_GetMiterLimit(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.miterLimit;
 }
 
-static D2D1_LINE_JOIN STDMETHODCALLTYPE d2d_stroke_style_GetLineJoin(ID2D1StrokeStyle *iface)
+static D2D1_LINE_JOIN STDMETHODCALLTYPE d2d_stroke_style_GetLineJoin(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.lineJoin;
 }
 
-static float STDMETHODCALLTYPE d2d_stroke_style_GetDashOffset(ID2D1StrokeStyle *iface)
+static float STDMETHODCALLTYPE d2d_stroke_style_GetDashOffset(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.dashOffset;
 }
 
-static D2D1_DASH_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetDashStyle(ID2D1StrokeStyle *iface)
+static D2D1_DASH_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetDashStyle(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->desc.dashStyle;
 }
 
-static UINT32 STDMETHODCALLTYPE d2d_stroke_style_GetDashesCount(ID2D1StrokeStyle *iface)
+static UINT32 STDMETHODCALLTYPE d2d_stroke_style_GetDashesCount(ID2D1StrokeStyle1 *iface)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return style->dash_count;
 }
 
-static void STDMETHODCALLTYPE d2d_stroke_style_GetDashes(ID2D1StrokeStyle *iface, float *dashes, UINT32 dash_count)
+static void STDMETHODCALLTYPE d2d_stroke_style_GetDashes(ID2D1StrokeStyle1 *iface, float *dashes, UINT32 dash_count)
 {
-    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
 
     TRACE("iface %p, dashes %p, count %u.\n", iface, dashes, dash_count);
 
@@ -164,7 +164,16 @@ static void STDMETHODCALLTYPE d2d_stroke_style_GetDashes(ID2D1StrokeStyle *iface
         memset(dashes + style->dash_count, 0, (dash_count - style->dash_count) * sizeof(*dashes));
 }
 
-static const struct ID2D1StrokeStyleVtbl d2d_stroke_style_vtbl =
+static D2D1_STROKE_TRANSFORM_TYPE STDMETHODCALLTYPE d2d_stroke_style_GetStrokeTransformType(ID2D1StrokeStyle1 *iface)
+{
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return style->desc.transformType;
+}
+
+static const struct ID2D1StrokeStyle1Vtbl d2d_stroke_style_vtbl =
 {
     d2d_stroke_style_QueryInterface,
     d2d_stroke_style_AddRef,
@@ -179,10 +188,11 @@ static const struct ID2D1StrokeStyleVtbl d2d_stroke_style_vtbl =
     d2d_stroke_style_GetDashStyle,
     d2d_stroke_style_GetDashesCount,
     d2d_stroke_style_GetDashes,
+    d2d_stroke_style_GetStrokeTransformType
 };
 
 HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
-        const D2D1_STROKE_STYLE_PROPERTIES *desc, const float *dashes, UINT32 dash_count)
+        const D2D1_STROKE_STYLE_PROPERTIES1 *desc, const float *dashes, UINT32 dash_count)
 {
     static const struct
     {
@@ -201,7 +211,10 @@ HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *fact
     if (desc->dashStyle > D2D1_DASH_STYLE_CUSTOM)
         return E_INVALIDARG;
 
-    style->ID2D1StrokeStyle_iface.lpVtbl = &d2d_stroke_style_vtbl;
+    if (desc->transformType != D2D1_STROKE_TRANSFORM_TYPE_NORMAL)
+        FIXME("transformType %d is not supported\n", desc->transformType);
+
+    style->ID2D1StrokeStyle1_iface.lpVtbl = &d2d_stroke_style_vtbl;
     style->refcount = 1;
 
     if (desc->dashStyle == D2D1_DASH_STYLE_CUSTOM)

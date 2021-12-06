@@ -337,17 +337,17 @@ struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN
 
 struct d2d_stroke_style
 {
-    ID2D1StrokeStyle ID2D1StrokeStyle_iface;
+    ID2D1StrokeStyle1 ID2D1StrokeStyle1_iface;
     LONG refcount;
 
     ID2D1Factory *factory;
-    D2D1_STROKE_STYLE_PROPERTIES desc;
+    D2D1_STROKE_STYLE_PROPERTIES1 desc;
     float *dashes;
     UINT32 dash_count;
 };
 
 HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
-        const D2D1_STROKE_STYLE_PROPERTIES *desc, const float *dashes, UINT32 dash_count) DECLSPEC_HIDDEN;
+        const D2D1_STROKE_STYLE_PROPERTIES1 *desc, const float *dashes, UINT32 dash_count) DECLSPEC_HIDDEN;
 
 struct d2d_layer
 {

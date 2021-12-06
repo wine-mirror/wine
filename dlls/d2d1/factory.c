@@ -283,6 +283,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory2 *if
         ID2D1StrokeStyle **stroke_style)
 {
     struct d2d_stroke_style *object;
+    D2D1_STROKE_STYLE_PROPERTIES1 desc1;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
@@ -291,7 +292,16 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory2 *if
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface, desc, dashes, dash_count)))
+    desc1.startCap = desc->startCap;
+    desc1.endCap = desc->endCap;
+    desc1.dashCap = desc->dashCap;
+    desc1.lineJoin = desc->lineJoin;
+    desc1.miterLimit = desc->miterLimit;
+    desc1.dashStyle = desc->dashStyle;
+    desc1.dashOffset = desc->dashOffset;
+    desc1.transformType = D2D1_STROKE_TRANSFORM_TYPE_NORMAL;
+
+    if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface, &desc1, dashes, dash_count)))
     {
         WARN("Failed to initialize stroke style, hr %#x.\n", hr);
         heap_free(object);
@@ -299,7 +309,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory2 *if
     }
 
     TRACE("Created stroke style %p.\n", object);
-    *stroke_style = &object->ID2D1StrokeStyle_iface;
+    *stroke_style = (ID2D1StrokeStyle *)&object->ID2D1StrokeStyle1_iface;
 
     return S_OK;
 }
@@ -485,10 +495,27 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle1(ID2D1Factory2 *i
         const D2D1_STROKE_STYLE_PROPERTIES1 *desc, const float *dashes, UINT32 dash_count,
         ID2D1StrokeStyle1 **stroke_style)
 {
-    FIXME("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p stub!\n",
+    struct d2d_stroke_style *object;
+    HRESULT hr;
+
+    TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
 
-    return E_NOTIMPL;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface,
+            desc, dashes, dash_count)))
+    {
+        WARN("Failed to initialize stroke style, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
+    }
+
+    TRACE("Created stroke style %p.\n", object);
+    *stroke_style = &object->ID2D1StrokeStyle1_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry1(ID2D1Factory2 *iface, ID2D1PathGeometry1 **geometry)
