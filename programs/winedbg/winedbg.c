@@ -240,7 +240,7 @@ const struct dbg_internal_var* dbg_get_internal_var(const char* name)
             struct dbg_internal_var*    ret = (void*)lexeme_alloc_size(sizeof(*ret));
             /* relocate register's field against current context */
             *ret = *div;
-            ret->pval = (DWORD_PTR*)((char*)&dbg_context + (DWORD_PTR)div->pval);
+            ret->pval = (char*)&dbg_context + (DWORD_PTR)div->pval;
             return ret;
         }
     }

@@ -255,8 +255,8 @@ extern  HANDLE                  dbg_houtput;
 struct dbg_internal_var
 {
     DWORD_PTR		        val;
-    const char*		        name;
-    DWORD_PTR		        *pval;
+    const char*                 name;
+    void*                       pval;
     ULONG                       typeid; /* always internal type */
 };
 
@@ -509,7 +509,7 @@ extern struct dbg_internal_var          dbg_internal_vars[];
 
 #define  DBG_IVARNAME(_var)	dbg_internal_var_##_var
 #define  DBG_IVARSTRUCT(_var)	dbg_internal_vars[DBG_IVARNAME(_var)]
-#define  DBG_IVAR(_var)		(*(DBG_IVARSTRUCT(_var).pval))
+#define  DBG_IVAR(_var)		(DBG_IVARSTRUCT(_var).val)
 #define  INTERNAL_VAR(_var,_val,_ref,itype) DBG_IVARNAME(_var),
 enum debug_int_var
 {
