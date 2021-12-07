@@ -1894,7 +1894,10 @@ typedef enum _THREADINFOCLASS {
     ThreadManageWritesToExecutableMemory,
     ThreadPowerThrottlingState,
     ThreadWorkloadClass,
-    MaxThreadInfoClass
+    MaxThreadInfoClass,
+#ifdef __WINESRC__
+    ThreadWineNativeThreadName = 1000,
+#endif
 } THREADINFOCLASS;
 
 typedef struct _THREAD_BASIC_INFORMATION
