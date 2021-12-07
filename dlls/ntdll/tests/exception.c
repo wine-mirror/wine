@@ -8417,6 +8417,91 @@ static void test_ripevent(DWORD numexc)
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
 
+static void subtest_fastfail(unsigned int code)
+{
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = { 0 };
+    DEBUG_EVENT de;
+    DWORD continuestatus;
+    BOOL ret;
+    BOOL had_ff = FALSE, had_se = FALSE;
+
+    sprintf(cmdline, "%s %s %s %u", my_argv[0], my_argv[1], "fastfail", code);
+    si.cb = sizeof(si);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "could not create child process error: %lu\n", GetLastError());
+    if (!ret)
+        return;
+
+    do
+    {
+        continuestatus = DBG_CONTINUE;
+        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+
+        if (de.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
+        {
+            if (de.u.Exception.ExceptionRecord.ExceptionCode == STATUS_STACK_BUFFER_OVERRUN)
+            {
+                ok(!de.u.Exception.dwFirstChance, "must be a second chance exception\n");
+                ok(de.u.Exception.ExceptionRecord.NumberParameters == 1, "expected exactly one parameter, got %lu\n",
+                   de.u.Exception.ExceptionRecord.NumberParameters);
+                ok(de.u.Exception.ExceptionRecord.ExceptionInformation[0] == code, "expected %u for code, got %Iu\n",
+                   code, de.u.Exception.ExceptionRecord.ExceptionInformation[0]);
+                had_ff = TRUE;
+            }
+
+            if (de.u.Exception.dwFirstChance)
+            {
+                continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+            }
+            else
+            {
+                had_se = TRUE;
+                pNtTerminateProcess(pi.hProcess, 0);
+            }
+        }
+
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, continuestatus);
+
+    } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
+
+    todo_wine
+    ok(had_ff || broken(had_se) /* Win7 */, "fast fail did not occur\n");
+
+    wait_child_process( pi.hProcess );
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "error %lu\n", GetLastError());
+    ret = CloseHandle(pi.hProcess);
+    ok(ret, "error %lu\n", GetLastError());
+
+    return;
+}
+
+static void test_fastfail(void)
+{
+    unsigned int codes[] = {
+        FAST_FAIL_LEGACY_GS_VIOLATION,
+        FAST_FAIL_VTGUARD_CHECK_FAILURE,
+        FAST_FAIL_STACK_COOKIE_CHECK_FAILURE,
+        FAST_FAIL_CORRUPT_LIST_ENTRY,
+        FAST_FAIL_INCORRECT_STACK,
+        FAST_FAIL_INVALID_ARG,
+        FAST_FAIL_GS_COOKIE_INIT,
+        FAST_FAIL_FATAL_APP_EXIT,
+        FAST_FAIL_INVALID_FAST_FAIL_CODE,
+        0xdeadbeefUL,
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(codes); i++)
+    {
+        winetest_push_context("__fastfail(%#x)", codes[i]);
+        subtest_fastfail(codes[i]);
+        winetest_pop_context();
+    }
+}
+
 static DWORD breakpoint_exceptions;
 
 static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -10664,6 +10749,13 @@ START_TEST(exception)
     if (my_argc >= 4)
     {
         void *addr;
+
+        if (strcmp(my_argv[2], "fastfail") == 0)
+        {
+            __fastfail(strtoul(my_argv[3], NULL, 0));
+            return;
+        }
+
         sscanf( my_argv[3], "%p", &addr );
 
         if (addr != &test_stage)
@@ -10811,6 +10903,7 @@ START_TEST(exception)
     test_thread_context();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
+    test_fastfail();
     test_breakpoint(1);
     test_closehandle(0, (HANDLE)0xdeadbeef);
     /* Call of Duty WWII writes to BeingDebugged then closes an invalid handle,
