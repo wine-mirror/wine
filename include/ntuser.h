@@ -63,6 +63,7 @@ enum
 {
     NtUserGetMonitorInfo,
     NtUserGetSystemMetricsForDpi,
+    NtUserMirrorRgn,
 };
 
 /* this is the structure stored in TEB->Win32ClientInfo */

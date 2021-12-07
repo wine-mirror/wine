@@ -24,7 +24,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "gdi_private.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "winreg.h"
 #include "winnls.h"
 #include "initguid.h"
@@ -705,6 +705,14 @@ HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count, INT mode )
 {
     return CreatePolyPolygonRgn( points, &count, 1, mode );
+}
+
+/***********************************************************************
+ *           MirrorRgn    (GDI32.@)
+ */
+BOOL WINAPI MirrorRgn( HWND hwnd, HRGN hrgn )
+{
+    return NtUserCallTwoParam( HandleToUlong(hwnd), HandleToUlong(hrgn), NtUserMirrorRgn );
 }
 
 /***********************************************************************

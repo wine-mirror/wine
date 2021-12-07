@@ -857,12 +857,6 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC proc, DWORD_PTR data )
     return unix_funcs->pSetDCHook( hdc, proc, data );
 }
 
-BOOL WINAPI MirrorRgn( HWND hwnd, HRGN hrgn )
-{
-    if (!unix_funcs) return FALSE;
-    return unix_funcs->pMirrorRgn( hwnd, hrgn );
-}
-
 INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
                       UINT lines, const void *bits, const BITMAPINFO *info,
                       UINT coloruse )

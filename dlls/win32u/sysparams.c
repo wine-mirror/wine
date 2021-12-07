@@ -4422,6 +4422,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return get_monitor_info( UlongToHandle(arg1), (MONITORINFO *)arg2 );
     case NtUserGetSystemMetricsForDpi:
         return get_system_metrics_for_dpi( arg1, arg2 );
+    case NtUserMirrorRgn:
+        return mirror_window_region( UlongToHandle(arg1), UlongToHandle(arg2) );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

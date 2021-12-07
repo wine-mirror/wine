@@ -409,6 +409,7 @@ extern HPEN create_pen( INT style, INT width, COLORREF color ) DECLSPEC_HIDDEN;
 /* region.c */
 extern BOOL add_rect_to_region( HRGN rgn, const RECT *rect ) DECLSPEC_HIDDEN;
 extern INT mirror_region( HRGN dst, HRGN src, INT width ) DECLSPEC_HIDDEN;
+extern BOOL mirror_window_region( HWND hwnd, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN;
 extern HRGN create_polypolygon_region( const POINT *pts, const INT *count, INT nbpolygons,
                                        INT mode, const RECT *clip_rect ) DECLSPEC_HIDDEN;

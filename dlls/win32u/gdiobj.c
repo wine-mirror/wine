@@ -1183,7 +1183,6 @@ static struct unix_funcs unix_funcs =
     NtUserVkKeyScanEx,
 
     GetDCHook,
-    MirrorRgn,
     SetDCHook,
     SetDIBits,
     SetHookFlags,

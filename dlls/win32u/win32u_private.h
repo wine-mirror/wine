@@ -225,7 +225,6 @@ struct unix_funcs
 
     /* Wine-specific functions */
     DWORD_PTR (WINAPI *pGetDCHook)( HDC hdc, DCHOOKPROC *proc );
-    BOOL (WINAPI *pMirrorRgn)( HWND hwnd, HRGN hrgn );
     BOOL (WINAPI *pSetDCHook)( HDC hdc, DCHOOKPROC proc, DWORD_PTR data );
     INT (WINAPI *pSetDIBits)( HDC hdc, HBITMAP hbitmap, UINT startscan,
                               UINT lines, const void *bits, const BITMAPINFO *info,

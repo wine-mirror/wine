@@ -1337,7 +1337,6 @@
 @ cdecl __wine_get_vulkan_driver(long long)
 
 # gdi32
-@ stdcall MirrorRgn(long long)
 @ stdcall SetDIBits(long long long long ptr ptr long)
 @ cdecl __wine_get_brush_bitmap_info(long ptr ptr ptr)
 @ cdecl __wine_get_icm_profile(long long ptr ptr)
