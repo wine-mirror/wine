@@ -1541,7 +1541,7 @@ static void test_LoadImage(void)
 
 static void test_CreateIconFromResource(void)
 {
-    HANDLE handle;
+    HANDLE handle, old_handle;
     BOOL ret;
     DWORD error;
     BITMAPINFOHEADER *icon_header;
@@ -1646,7 +1646,6 @@ static void test_CreateIconFromResource(void)
      * handle = CreateIconFromResource(NULL, ICON_RES_SIZE, TRUE, 0x00030000);
      * ok(handle == NULL, "Invalid pointer accepted (%p)\n", handle);
      */
-    HeapFree(GetProcessHeap(), 0, hotspot);
 
     /* Test creating an animated cursor. */
     empty_anicursor.frames[0].data.icon_info.idType = 2; /* type: cursor */
@@ -1678,6 +1677,35 @@ static void test_CreateIconFromResource(void)
     ok(ret, "DestroyCursor() failed.\n");
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    /* Test creating and destroying a non-shared icon. */
+    handle = CreateIconFromResourceEx((BYTE *)icon_header, ICON_RES_SIZE, TRUE, 0x00030000,
+                                       0, 0, LR_DEFAULTSIZE);
+    ok(handle != NULL, "Create icon failed, error %u.\n", GetLastError());
+    ret = DestroyIcon(handle);
+    ok(ret, "Destroy icon failed, error %u.\n", GetLastError());
+    ret = GetIconInfo(handle, &icon_info);
+    ok(!ret, "Get info succeeded.\n");
+    ok(GetLastError() == ERROR_INVALID_CURSOR_HANDLE, "Got unexpected error %u.\n", error);
+
+    /* Test creating and destroying a shared icon from heap bits. */
+    handle = CreateIconFromResourceEx((BYTE *)icon_header, ICON_RES_SIZE, TRUE, 0x00030000,
+                                       0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    ok(handle != NULL, "Create icon failed, error %u.\n", GetLastError());
+    ret = DestroyIcon(handle);
+    ok(ret, "Destroy icon failed, error %u.\n", GetLastError());
+    ret = GetIconInfo(handle, &icon_info);
+    todo_wine
+    ok(ret, "Get info failed, error %u.\n", GetLastError());
+
+    /* Test creating a shared icon from heap bits that has been created before. */
+    old_handle = handle;
+    handle = CreateIconFromResourceEx((BYTE *)icon_header, ICON_RES_SIZE, TRUE, 0x00030000,
+                                       0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    ok(handle != NULL, "Create icon failed, error %u.\n", GetLastError());
+    ok(handle != old_handle, "Expect a different handle.\n");
+
+    HeapFree(GetProcessHeap(), 0, hotspot);
 }
 
 static int check_cursor_data( HDC hdc, HCURSOR hCursor, void *data, int length)
