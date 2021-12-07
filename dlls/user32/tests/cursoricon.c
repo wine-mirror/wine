@@ -2505,7 +2505,7 @@ static void test_ShowCursor(void)
         memset( &info, 0, sizeof(info) );
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
-        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+        ok( info.flags & (CURSOR_SHOWING | CURSOR_SUPPRESSED), "Got unexpected cursor state\n" );
     }
 
     event_start = CreateEventW( NULL, FALSE, FALSE, NULL );
@@ -2529,7 +2529,7 @@ static void test_ShowCursor(void)
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
         /* global show count is not affected since we don't have a window */
-        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+        ok( info.flags & (CURSOR_SHOWING | CURSOR_SUPPRESSED), "Got unexpected cursor state\n" );
     }
 
     parent_id = 0;
@@ -2582,7 +2582,7 @@ static void test_ShowCursor(void)
     {
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
-        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+        ok( info.flags & (CURSOR_SHOWING | CURSOR_SUPPRESSED), "Got unexpected cursor state\n" );
     }
 
     count = ShowCursor( TRUE );
@@ -2594,7 +2594,7 @@ static void test_ShowCursor(void)
     {
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
-        ok( info.flags & CURSOR_SHOWING, "cursor not shown in info\n" );
+        ok( info.flags & (CURSOR_SHOWING | CURSOR_SUPPRESSED), "Got unexpected cursor state\n" );
     }
 }
 
