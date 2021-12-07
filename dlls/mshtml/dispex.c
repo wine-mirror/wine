@@ -738,11 +738,16 @@ static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS 
 static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
         EXCEPINFO *ei)
 {
-    DISPPARAMS params = {dp->rgvarg+dp->cNamedArgs, NULL, dp->cArgs-dp->cNamedArgs, 0};
+    DISPPARAMS params = {dp->rgvarg, NULL, dp->cArgs, 0};
     ITypeInfo *ti;
     IUnknown *unk;
     UINT argerr=0;
     HRESULT hres;
+
+    if(params.cArgs > func->argc) {
+        params.rgvarg += params.cArgs - func->argc;
+        params.cArgs = func->argc;
+    }
 
     hres = get_typeinfo(func->tid, &ti);
     if(FAILED(hres)) {
@@ -1170,12 +1175,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
     IUnknown *iface;
     HRESULT hres;
 
-    if(dp->cNamedArgs) {
-        FIXME("Named arguments not supported\n");
-        return E_NOTIMPL;
-    }
-
-    if(dp->cArgs > func->argc || dp->cArgs + func->default_value_cnt < func->argc) {
+    if(dp->cArgs + func->default_value_cnt < func->argc) {
         FIXME("Invalid argument count (expected %u, got %u)\n", func->argc, dp->cArgs);
         return E_INVALIDARG;
     }

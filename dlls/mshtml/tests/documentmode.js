@@ -1113,7 +1113,7 @@ sync_test("elem_attr", function() {
     r = elem.getAttribute("htmlFor");
     ok(r === "for3", "htmlFor attr = " + r);
 
-    elem.setAttribute("testattr", "test");
+    elem.setAttribute("testattr", "test", 0, "extra arg", 0xdeadbeef);
     test_exposed("class", v < 8);
     test_exposed("className", true);
     test_exposed("for", v < 9);

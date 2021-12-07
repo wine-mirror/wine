@@ -2170,6 +2170,141 @@ static void test_default_arg_conv(IHTMLWindow2 *window)
     IDispatchEx_Release(dispex);
 }
 
+static void test_named_args(IHTMLWindow2 *window)
+{
+    DISPID named_args[] = { 0, 2, 1, 1337, 0xdeadbeef, DISPID_THIS };
+    IHTMLDocument2 *doc;
+    IDispatchEx *dispex;
+    IHTMLElement *elem;
+    VARIANT args[4];
+    DISPPARAMS dp;
+    HRESULT hres;
+    VARIANT var;
+    DISPID id;
+    BSTR bstr;
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+
+    bstr = SysAllocString(L"div");
+    hres = IHTMLDocument2_createElement(doc, bstr, &elem);
+    IHTMLDocument2_Release(doc);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "createElement failed: %08x\n", hres);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    bstr = SysAllocString(L"setAttribute");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    SysFreeString(bstr);
+
+    dp.cArgs = 2;
+    dp.cNamedArgs = 3;
+    dp.rgvarg = args;
+    dp.rgdispidNamedArgs = named_args;
+    V_VT(&args[0]) = VT_BSTR;
+    V_BSTR(&args[0]) = SysAllocString(L"testattr");
+    V_VT(&args[1]) = VT_I4;
+    V_I4(&args[1]) = 0;
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx returned: %08x\n", hres);
+
+    hres = IHTMLElement_getAttribute(elem, V_BSTR(&args[0]), 0, &var);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_NULL, "V_VT(var)=%d\n", V_VT(&var));
+
+    bstr = SysAllocString(L"0");
+    hres = IHTMLElement_getAttribute(elem, bstr, 0, &var);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"testattr"), "V_BSTR(&var) = %s\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    dp.cArgs = 3;
+    V_VT(&args[2]) = VT_BSTR;
+    V_BSTR(&args[2]) = SysAllocString(L"testval");
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    VariantClear(&args[2]);
+    ok(hres == DISP_E_TYPEMISMATCH, "InvokeEx returned: %08x\n", hres);
+
+    V_VT(&args[2]) = VT_I4;
+    V_I4(&args[2]) = 0;
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_TYPEMISMATCH, "InvokeEx returned: %08x\n", hres);
+
+    args[2] = args[0];
+    V_VT(&args[1]) = VT_BSTR;
+    V_BSTR(&args[1]) = SysAllocString(L"testval");
+    V_VT(&args[0]) = VT_I4;
+    V_I4(&args[0]) = 0;
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    VariantClear(&args[1]);
+
+    hres = IHTMLElement_getAttribute(elem, V_BSTR(&args[2]), 0, &var);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"testval"), "V_BSTR(&var) = %s\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    dp.cArgs = 2;
+    dp.cNamedArgs = 1;
+    args[1] = args[2];
+    V_VT(&args[0]) = VT_BSTR;
+    V_BSTR(&args[0]) = SysAllocString(L"newValue");
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    VariantClear(&args[0]);
+
+    hres = IHTMLElement_getAttribute(elem, V_BSTR(&args[1]), 0, &var);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"newValue"), "V_BSTR(&var) = %s\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    dp.cArgs = 4;
+    dp.cNamedArgs = ARRAY_SIZE(named_args);
+    args[3] = args[1];
+    V_VT(&args[2]) = VT_BSTR;
+    V_BSTR(&args[2]) = SysAllocString(L"foobar");
+    V_VT(&args[1]) = VT_I4;
+    V_I4(&args[1]) = 1;
+    V_VT(&args[0]) = VT_BSTR;
+    V_BSTR(&args[0]) = SysAllocString(L"extra");
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    VariantClear(&args[2]);
+    VariantClear(&args[0]);
+
+    hres = IHTMLElement_getAttribute(elem, V_BSTR(&args[3]), 0, &var);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"foobar"), "V_BSTR(&var) = %s\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    dp.cNamedArgs = 1;
+    named_args[0] = DISPID_THIS;
+    V_VT(&args[0]) = VT_DISPATCH;
+    V_DISPATCH(&args[0]) = (IDispatch*)&funcDisp;
+    V_VT(&args[2]) = VT_BSTR;
+    V_BSTR(&args[2]) = SysAllocString(L"withThis");
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    VariantClear(&args[2]);
+
+    hres = IHTMLElement_getAttribute(elem, V_BSTR(&args[3]), 0, &var);
+    ok(hres == S_OK, "getAttribute failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"withThis"), "V_BSTR(&var) = %s\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&args[3]);
+    VariantClear(&var);
+
+    IHTMLElement_Release(elem);
+    IDispatchEx_Release(dispex);
+}
+
 static void test_ui(void)
 {
     IActiveScriptSiteUIControl *ui_control;
@@ -2381,6 +2516,7 @@ static void test_script_run(void)
 
     test_arg_conv(window);
     test_default_arg_conv(window);
+    test_named_args(window);
     IHTMLWindow2_Release(window);
 
     tmp = SysAllocString(L"test");
