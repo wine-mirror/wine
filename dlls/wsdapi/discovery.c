@@ -470,3 +470,10 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
 
     return S_OK;
 }
+
+HRESULT WINAPI WSDCreateDiscoveryProvider(IWSDXMLContext *context, IWSDiscoveryProvider **provider)
+{
+    FIXME("(%p, %p) stub\n", context, provider);
+
+    return E_NOTIMPL;
+}
