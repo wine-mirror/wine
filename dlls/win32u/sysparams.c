@@ -1528,14 +1528,16 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
     if (flags != QDC_ONLY_ACTIVE_PATHS)
         FIXME( "only returning active paths\n" );
 
-    if (!lock_display_devices()) return FALSE;
-    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    if (lock_display_devices())
     {
-        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE))
-            continue;
-        count++;
+        LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+        {
+            if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE))
+                continue;
+            count++;
+        }
+        unlock_display_devices();
     }
-    unlock_display_devices();
 
     *num_path_info = count;
     *num_mode_info = count * 2;
@@ -1715,7 +1717,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
         return ret;
     }
 
-    if (!lock_display_devices()) return FALSE;
+    if (!lock_display_devices()) return DISP_CHANGE_FAILED;
     if ((adapter = find_adapter( devname ))) lstrcpyW( device_name, adapter->dev.device_name );
     unlock_display_devices();
     if (!adapter)
