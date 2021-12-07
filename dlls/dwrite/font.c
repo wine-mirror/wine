@@ -61,21 +61,26 @@ struct cache_entry
     struct cache_key key;
     float advance;
     RECT bbox;
+    BYTE *bitmap;
+    unsigned int bitmap_size;
+    unsigned int is_1bpp : 1;
     unsigned int has_contours : 1;
     unsigned int has_advance : 1;
     unsigned int has_bbox : 1;
+    unsigned int has_bitmap : 1;
 };
 
-static size_t fontface_get_cache_entry_size(const struct cache_entry *entry)
+static void fontface_release_cache_entry(struct cache_entry *entry)
 {
-    return sizeof(*entry);
+    free(entry->bitmap);
+    free(entry);
 }
 
-static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fontface, const struct cache_key *key)
+static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fontface, size_t size,
+        const struct cache_key *key)
 {
     struct cache_entry *entry, *old_entry;
     struct wine_rb_entry *e;
-    size_t size;
 
     if (!(e = wine_rb_get(&fontface->cache.tree, key)))
     {
@@ -83,14 +88,15 @@ static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fon
         entry->key = *key;
         list_init(&entry->mru);
 
-        size = fontface_get_cache_entry_size(entry);
+        size += sizeof(*entry);
+
         if ((fontface->cache.size + size > fontface->cache.max_size) && !list_empty(&fontface->cache.mru))
         {
             old_entry = LIST_ENTRY(list_tail(&fontface->cache.mru), struct cache_entry, mru);
-            fontface->cache.size -= fontface_get_cache_entry_size(old_entry);
+            fontface->cache.size -= (old_entry->bitmap_size + sizeof(*old_entry));
             wine_rb_remove(&fontface->cache.tree, &old_entry->entry);
             list_remove(&old_entry->mru);
-            free(old_entry);
+            fontface_release_cache_entry(old_entry);
         }
 
         if (wine_rb_put(&fontface->cache.tree, &key, &entry->entry) == -1)
@@ -118,7 +124,7 @@ static float fontface_get_glyph_advance(struct dwrite_fontface *fontface, float 
     struct cache_entry *entry;
     BOOL value;
 
-    if (!(entry = fontface_get_cache_entry(fontface, &key)))
+    if (!(entry = fontface_get_cache_entry(fontface, 0, &key)))
         return 0.0f;
 
     if (!entry->has_advance)
@@ -144,7 +150,7 @@ void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *iface, struct dwrite_glyphb
     {
         font_funcs->get_glyph_bbox(fontface->get_font_object(fontface), bitmap);
     }
-    else if ((entry = fontface_get_cache_entry(fontface, &key)))
+    else if ((entry = fontface_get_cache_entry(fontface, 0, &key)))
     {
         if (entry->has_bbox)
             bitmap->bbox = entry->bbox;
@@ -156,6 +162,52 @@ void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *iface, struct dwrite_glyphb
         }
     }
     LeaveCriticalSection(&fontface->cs);
+}
+
+static unsigned int get_glyph_bitmap_pitch(DWRITE_RENDERING_MODE1 rendering_mode, INT width)
+{
+    return rendering_mode == DWRITE_RENDERING_MODE1_ALIASED ? ((width + 31) >> 5) << 2 : (width + 3) / 4 * 4;
+}
+
+static HRESULT dwrite_fontface_get_glyph_bitmap(struct dwrite_fontface *fontface, DWRITE_RENDERING_MODE rendering_mode,
+        BOOL *is_1bpp, struct dwrite_glyphbitmap *bitmap)
+{
+    struct cache_key key = { .size = bitmap->emsize, .glyph = bitmap->glyph, .mode = DWRITE_MEASURING_MODE_NATURAL };
+    const RECT *bbox = &bitmap->bbox;
+    struct cache_entry *entry;
+    unsigned int bitmap_size;
+    HRESULT hr = S_OK;
+
+    bitmap_size = get_glyph_bitmap_pitch(rendering_mode, bbox->right - bbox->left) *
+            (bbox->bottom - bbox->top);
+
+    EnterCriticalSection(&fontface->cs);
+    /* For now bypass cache for transformed cases. */
+    if (bitmap->m && memcmp(bitmap->m, &identity, sizeof(*bitmap->m)))
+    {
+        *is_1bpp = font_funcs->get_glyph_bitmap(fontface->get_font_object(fontface), bitmap);
+    }
+    else if ((entry = fontface_get_cache_entry(fontface, bitmap_size, &key)))
+    {
+        if (entry->has_bitmap)
+        {
+            memcpy(bitmap->buf, entry->bitmap, entry->bitmap_size);
+        }
+        else
+        {
+            entry->is_1bpp = font_funcs->get_glyph_bitmap(fontface->get_font_object(fontface), bitmap);
+            entry->bitmap_size = bitmap_size;
+            if ((entry->bitmap = malloc(entry->bitmap_size)))
+                memcpy(entry->bitmap, bitmap->buf, entry->bitmap_size);
+            entry->has_bitmap = 1;
+        }
+        *is_1bpp = entry->is_1bpp;
+    }
+    else
+        hr = E_FAIL;
+    LeaveCriticalSection(&fontface->cs);
+
+    return hr;
 }
 
 static int fontface_cache_compare(const void *k, const struct wine_rb_entry *e)
@@ -183,7 +235,7 @@ static void fontface_cache_clear(struct dwrite_fontface *fontface)
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &fontface->cache.mru, struct cache_entry, mru)
     {
         list_remove(&entry->mru);
-        free(entry);
+        fontface_release_cache_entry(entry);
     }
     memset(&fontface->cache, 0, sizeof(fontface->cache));
 }
@@ -5837,11 +5889,6 @@ static BOOL is_natural_rendering_mode(DWRITE_RENDERING_MODE1 mode)
     }
 }
 
-static UINT32 get_glyph_bitmap_pitch(DWRITE_RENDERING_MODE1 rendering_mode, INT width)
-{
-    return rendering_mode == DWRITE_RENDERING_MODE1_ALIASED ? ((width + 31) >> 5) << 2 : (width + 3) / 4 * 4;
-}
-
 static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *analysis, RECT *bounds)
 {
     struct dwrite_glyphbitmap glyph_bitmap;
@@ -5917,18 +5964,11 @@ static inline BYTE *get_pixel_ptr(BYTE *ptr, DWRITE_TEXTURE_TYPE type, const REC
 static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 {
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+    struct dwrite_fontface *fontface = unsafe_impl_from_IDWriteFontFace(analysis->run.fontFace);
     struct dwrite_glyphbitmap glyph_bitmap;
-    IDWriteFontFace4 *fontface;
     D2D_POINT_2F origin;
     UINT32 i, size;
-    HRESULT hr;
     RECT *bbox;
-
-    hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace4, (void **)&fontface);
-    if (FAILED(hr)) {
-        WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
-        return hr;
-    }
 
     size = (analysis->bounds.right - analysis->bounds.left)*(analysis->bounds.bottom - analysis->bounds.top);
     if (analysis->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
@@ -5937,28 +5977,25 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     {
         WARN("Failed to allocate run bitmap, %s, type %s.\n", wine_dbgstr_rect(&analysis->bounds),
                 analysis->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1 ? "3x1" : "1x1");
-        IDWriteFontFace4_Release(fontface);
         return E_OUTOFMEMORY;
     }
 
     origin.x = origin.y = 0.0f;
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-    glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
+    glyph_bitmap.simulations = fontface->simulations;
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     glyph_bitmap.aliased = analysis->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED;
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         glyph_bitmap.m = &analysis->m;
     if (!(glyph_bitmap.buf = malloc(analysis->max_glyph_bitmap_size)))
-    {
-        IDWriteFontFace4_Release(fontface);
         return E_OUTOFMEMORY;
-    }
 
     bbox = &glyph_bitmap.bbox;
 
-    for (i = 0; i < analysis->run.glyphCount; i++) {
+    for (i = 0; i < analysis->run.glyphCount; ++i)
+    {
         BYTE *src = glyph_bitmap.buf, *dst;
         int x, y, width, height;
         BOOL is_1bpp;
@@ -5974,7 +6011,11 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 
         glyph_bitmap.pitch = get_glyph_bitmap_pitch(analysis->rendering_mode, width);
         memset(src, 0, height * glyph_bitmap.pitch);
-        is_1bpp = font_funcs->get_glyph_bitmap(fontface, &glyph_bitmap);
+        if (FAILED(dwrite_fontface_get_glyph_bitmap(fontface, analysis->rendering_mode, &is_1bpp, &glyph_bitmap)))
+        {
+            WARN("Failed to render glyph[%u] = %#x.\n", i, glyph_bitmap.glyph);
+            continue;
+        }
 
         OffsetRect(bbox, analysis->origins[i].x, analysis->origins[i].y);
 
@@ -6022,8 +6063,6 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
         }
     }
     free(glyph_bitmap.buf);
-
-    IDWriteFontFace4_Release(fontface);
 
     analysis->flags |= RUNANALYSIS_BITMAP_READY;
 

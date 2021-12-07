@@ -564,16 +564,6 @@ static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matri
     ft_matrix->yy =  m->m22 * 0x10000;
 }
 
-/* Should be used only while holding 'freetype_cs' */
-static BOOL is_face_scalable(void *key)
-{
-    FT_Face face;
-    if (pFTC_Manager_LookupFace(cache_manager, key, &face) == 0)
-        return FT_IS_SCALABLE(face);
-    else
-        return FALSE;
-}
-
 static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
 {
     FT_Matrix m;
@@ -736,49 +726,42 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
     return ret;
 }
 
-static BOOL CDECL freetype_get_glyph_bitmap(void *key, struct dwrite_glyphbitmap *bitmap)
+static BOOL CDECL freetype_get_glyph_bitmap(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
 {
-    FTC_ImageTypeRec imagetype;
+    FT_Face face = object;
     BOOL needs_transform;
     BOOL ret = FALSE;
     FT_Glyph glyph;
+    FT_Size size;
     FT_Matrix m;
 
-    RtlEnterCriticalSection(&freetype_cs);
+    if (!(size = freetype_set_face_size(face, bitmap->emsize)))
+        return FALSE;
 
-    needs_transform = is_face_scalable(key) && get_glyph_transform(bitmap, &m);
+    needs_transform = FT_IS_SCALABLE(face) && get_glyph_transform(bitmap, &m);
 
-    imagetype.face_id = key;
-    imagetype.width = 0;
-    imagetype.height = bitmap->emsize;
-    imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
+    if (!pFT_Load_Glyph(face, bitmap->glyph, needs_transform ? FT_LOAD_NO_BITMAP : 0))
+    {
+        pFT_Get_Glyph(face->glyph, &glyph);
 
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->glyph, &glyph, NULL) == 0) {
-        FT_Glyph glyph_copy;
+        if (needs_transform)
+        {
+            if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+                embolden_glyph(glyph, bitmap->emsize);
 
-        if (needs_transform) {
-            if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
-                if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                    embolden_glyph(glyph_copy, bitmap->emsize);
-
-                /* Includes oblique and user transform. */
-                pFT_Glyph_Transform(glyph_copy, &m, NULL);
-                glyph = glyph_copy;
-            }
+            /* Includes oblique and user transform. */
+            pFT_Glyph_Transform(glyph, &m, NULL);
         }
-        else
-            glyph_copy = NULL;
 
         if (bitmap->aliased)
             ret = freetype_get_aliased_glyph_bitmap(bitmap, glyph);
         else
             ret = freetype_get_aa_glyph_bitmap(bitmap, glyph);
 
-        if (glyph_copy)
-            pFT_Done_Glyph(glyph_copy);
+        pFT_Done_Glyph(glyph);
     }
 
-    RtlLeaveCriticalSection(&freetype_cs);
+    pFT_Done_Size(size);
 
     return ret;
 }
@@ -872,7 +855,7 @@ static void CDECL null_get_glyph_bbox(font_object_handle object, struct dwrite_g
     SetRectEmpty(&bitmap->bbox);
 }
 
-static BOOL CDECL null_get_glyph_bitmap(void *key, struct dwrite_glyphbitmap *bitmap)
+static BOOL CDECL null_get_glyph_bitmap(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
 {
     return FALSE;
 }
