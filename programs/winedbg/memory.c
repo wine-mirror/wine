@@ -231,6 +231,34 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     }
 }
 
+BOOL memory_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                          BOOL is_signed, dbg_lgint_t* ret)
+{
+    /* size must fit in ret and be a power of two */
+    if (size > sizeof(*ret) || (size & (size - 1))) return FALSE;
+
+    /* we are on little endian CPU */
+    memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
+    if (!memory_read_value(lvalue, size, ret)) return FALSE;
+
+    /* propagate sign information */
+    if (is_signed && size < 8 && (*ret >> (size * 8 - 1)) != 0)
+    {
+        dbg_lguint_t neg = -1;
+        *ret |= neg << (size * 8);
+    }
+    return TRUE;
+}
+
+BOOL memory_store_integer(const struct dbg_lvalue* lvalue, dbg_lgint_t val)
+{
+    DWORD64 size;
+    if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size)) return FALSE;
+    /* this is simple if we're on a little endian CPU */
+    return memory_write_value(lvalue, (unsigned)size, &val);
+}
+
+
 BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
                        BOOL unicode, char* buffer, int size)
 {
@@ -343,7 +371,7 @@ static void dbg_print_hex(DWORD size, ULONGLONG sv)
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
 {
-    LONGLONG            val_int;
+    dbg_lgint_t         val_int;
     void*               val_ptr;
     double              val_real;
     DWORD64             size64;
@@ -369,13 +397,13 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
         case btInt:
         case btLong:
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
             if (size == 1) goto print_char;
             dbg_print_hex(size, val_int);
             break;
         case btUInt:
         case btULong:
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
+            if (!memory_fetch_integer(lvalue, size, FALSE, &val_int)) return;
             dbg_print_hex(size, val_int);
             break;
         case btFloat:
@@ -387,7 +415,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             /* sometimes WCHAR is defined as btChar with size = 2, so discrimate
              * Ansi/Unicode based on size, not on basetype
              */
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
         print_char:
             if ((size == 1 && isprint((char)val_int)) ||
                  (size == 2 && val_int < 127 && isprint((char)val_int)))
@@ -396,7 +424,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 dbg_printf("%d", (int)val_int);
             break;
         case btBool:
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
             dbg_printf("%s", val_int ? "true" : "false");
             break;
         default:
@@ -441,7 +469,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             BOOL        ok = FALSE;
 
             if (!types_get_info(&type, TI_GET_LENGTH, &size64) ||
-                !dbg_curr_process->be_cpu->fetch_integer(lvalue, size64, TRUE, &val_int)) return;
+                !memory_fetch_integer(lvalue, size64, TRUE, &val_int)) return;
 
             if (types_get_info(&type, TI_GET_CHILDRENCOUNT, &count))
             {

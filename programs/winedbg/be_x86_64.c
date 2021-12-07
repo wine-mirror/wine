@@ -699,27 +699,6 @@ static int be_x86_64_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
     return 1;
 }
 
-static BOOL be_x86_64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                    BOOL is_signed, LONGLONG* ret)
-{
-    /* size must fit in ret and be a power of two */
-    if (size > sizeof(*ret) || (size & (size - 1))) return FALSE;
-
-    memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
-    /* FIXME: this assumes that debuggee and debugger use the same
-     * integral representation
-     */
-    if (!memory_read_value(lvalue, size, ret)) return FALSE;
-
-    /* propagate sign information */
-    if (is_signed && size < sizeof(*ret) && (*ret >> (size * 8 - 1)) != 0)
-    {
-        ULONGLONG neg = -1;
-        *ret |= neg << (size * 8);
-    }
-    return TRUE;
-}
-
 static BOOL be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
 {
     char tmp[sizeof(double)];
@@ -735,13 +714,6 @@ static BOOL be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size
     else return FALSE;
 
     return TRUE;
-}
-
-static BOOL be_x86_64_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                    BOOL is_signed, LONGLONG val)
-{
-    /* this is simple as we're on a little endian CPU */
-    return memory_write_value(lvalue, size, &val);
 }
 
 static BOOL be_x86_64_get_context(HANDLE thread, dbg_ctx_t *ctx)
@@ -841,9 +813,7 @@ struct backend_cpu be_x86_64 =
     be_x86_64_is_watchpoint_set,
     be_x86_64_clear_watchpoint,
     be_x86_64_adjust_pc_for_break,
-    be_x86_64_fetch_integer,
     be_x86_64_fetch_float,
-    be_x86_64_store_integer,
     be_x86_64_get_context,
     be_x86_64_set_context,
     be_x86_64_gdb_register_map,

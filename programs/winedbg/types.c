@@ -91,11 +91,11 @@ dbg_lgint_t types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         {
         case btChar:
         case btInt:
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = TRUE, &rtn))
+            if (!memory_fetch_integer(lvalue, (unsigned)size, s = TRUE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btUInt:
-            if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
+            if (!memory_fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btFloat:
@@ -106,17 +106,17 @@ dbg_lgint_t types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         break;
     case SymTagPointerType:
         if (!types_get_info(&type, TI_GET_LENGTH, &size) ||
-            !dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
+            !memory_fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagArrayType:
     case SymTagUDT:
-        if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
+        if (!memory_fetch_integer(lvalue, sizeof(unsigned), s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagEnum:
         if (!types_get_info(&type, TI_GET_LENGTH, &size) ||
-            !dbg_curr_process->be_cpu->fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
+            !memory_fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagFunctionType:
@@ -163,7 +163,6 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
 {
     dbg_lgint_t val;
     DWORD64     size;
-    BOOL        is_signed;
 
     if (!types_get_info(&lvalue_to->type, TI_GET_LENGTH, &size)) return FALSE;
     if (sizeof(val) < size)
@@ -172,8 +171,8 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
         return FALSE;
     }
     /* FIXME: should support floats as well */
-    val = types_extract_as_longlong(lvalue_from, NULL, &is_signed);
-    return dbg_curr_process->be_cpu->store_integer(lvalue_to, size, is_signed, val);
+    val = types_extract_as_integer(lvalue_from);
+    return memory_store_integer(lvalue_to, val);
 }
 
 /******************************************************************

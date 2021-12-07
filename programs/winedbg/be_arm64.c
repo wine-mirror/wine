@@ -228,27 +228,6 @@ static int be_arm64_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
     return 4;
 }
 
-static BOOL be_arm64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                   BOOL is_signed, LONGLONG* ret)
-{
-    /* size must fit in ret and be a power of two */
-    if (size > sizeof(*ret) || (size & (size - 1))) return FALSE;
-
-    memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
-    /* FIXME: this assumes that debuggee and debugger use the same
-     * integral representation
-     */
-    if (!memory_read_value(lvalue, size, ret)) return FALSE;
-
-    /* propagate sign information */
-    if (is_signed && size < 8 && (*ret >> (size * 8 - 1)) != 0)
-    {
-        ULONGLONG neg = -1;
-        *ret |= neg << (size * 8);
-    }
-    return TRUE;
-}
-
 static BOOL be_arm64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
 {
     char tmp[sizeof(double)];
@@ -264,13 +243,6 @@ static BOOL be_arm64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     else return FALSE;
 
     return TRUE;
-}
-
-static BOOL be_arm64_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                   BOOL is_signed, LONGLONG val)
-{
-    /* this is simple if we're on a little endian CPU */
-    return memory_write_value(lvalue, size, &val);
 }
 
 void be_arm64_disasm_one_insn(ADDRESS64 *addr, int display)
@@ -351,9 +323,7 @@ struct backend_cpu be_arm64 =
     be_arm64_is_watchpoint_set,
     be_arm64_clear_watchpoint,
     be_arm64_adjust_pc_for_break,
-    be_arm64_fetch_integer,
     be_arm64_fetch_float,
-    be_arm64_store_integer,
     be_arm64_get_context,
     be_arm64_set_context,
     be_arm64_gdb_register_map,
