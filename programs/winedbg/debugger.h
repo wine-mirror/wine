@@ -245,9 +245,9 @@ struct be_process_io
 };
 
 extern	struct dbg_process*	dbg_curr_process;
-extern	DWORD_PTR	        dbg_curr_pid;
+extern	DWORD	                dbg_curr_pid;
 extern	struct dbg_thread*	dbg_curr_thread;
-extern	DWORD_PTR	        dbg_curr_tid;
+extern	DWORD	                dbg_curr_tid;
 extern  dbg_ctx_t               dbg_context;
 extern  BOOL                    dbg_interactiveP;
 extern  HANDLE                  dbg_houtput;

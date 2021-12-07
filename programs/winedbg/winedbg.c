@@ -77,8 +77,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 struct dbg_process*	dbg_curr_process = NULL;
 struct dbg_thread*	dbg_curr_thread = NULL;
-DWORD_PTR	        dbg_curr_tid = 0;
-DWORD_PTR	        dbg_curr_pid = 0;
+DWORD	                dbg_curr_tid = 0;
+DWORD	                dbg_curr_pid = 0;
 dbg_ctx_t               dbg_context;
 BOOL    	        dbg_interactiveP = FALSE;
 HANDLE                  dbg_houtput = 0;
@@ -569,7 +569,7 @@ void dbg_start_interactive(const char* filename, HANDLE hFile)
 
     if (dbg_curr_process)
     {
-        dbg_printf("WineDbg starting on pid %04Ix\n", dbg_curr_pid);
+        dbg_printf("WineDbg starting on pid %04x\n", dbg_curr_pid);
         if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
     }
 
