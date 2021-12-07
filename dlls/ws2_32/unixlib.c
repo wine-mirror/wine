@@ -783,7 +783,7 @@ static int hostent_from_unix( const struct hostent *unix_host, struct WS_hostent
     unsigned int needed_size = sizeof( struct WS_hostent ), alias_count = 0, addr_count = 0, i;
     char *p;
 
-    needed_size += strlen( unix_host->h_name );
+    needed_size += strlen( unix_host->h_name ) + 1;
 
     for (alias_count = 0; unix_host->h_aliases[alias_count] != NULL; ++alias_count)
         needed_size += sizeof(char *) + strlen( unix_host->h_aliases[alias_count] ) + 1;
