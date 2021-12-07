@@ -5219,7 +5219,7 @@ static void test_GetSystemPreferredUILanguages(void)
 {
     BOOL ret;
     NTSTATUS status;
-    ULONG count, size, size_id, size_name, size_buffer;
+    ULONG i, count, size, size_id, size_name, size_buffer;
     WCHAR *buffer;
 
     if (!pGetSystemPreferredUILanguages)
@@ -5347,6 +5347,10 @@ static void test_GetSystemPreferredUILanguages(void)
         ok(!buffer[size -2] && !buffer[size -1],
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
+    for (i = 0; buffer[i]; i++)
+        ok(('0' <= buffer[i] && buffer[i] <= '9') ||
+           ('A' <= buffer[i] && buffer[i] <= 'F'),
+           "MUI_LANGUAGE_ID [%d] is bad in %s\n", i, wine_dbgstr_w(buffer));
 
     count = 0;
     size = size_buffer;
