@@ -187,7 +187,7 @@ static void test_command_interfaces(IUnknown *cmd)
 {
     HRESULT hr;
     ICommandProperties *commandProp;
-    ICommandText *comand_text;
+    ICommandText *command_text;
     IConvertType *convertype;
     ICommandPrepare *commandprepare;
     ICommandStream *commandstream;
@@ -204,9 +204,9 @@ static void test_command_interfaces(IUnknown *cmd)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ICommandWithParameters_Release(cmdwithparams);
 
-    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&command_text);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ICommandText_Release(comand_text);
+    ICommandText_Release(command_text);
 
     hr = IUnknown_QueryInterface(cmd, &IID_IConvertType, (void**)&convertype);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -238,70 +238,70 @@ static void test_command_interfaces(IUnknown *cmd)
 
 static void test_command_text(IUnknown *cmd)
 {
-    ICommandText *comand_text;
+    ICommandText *command_text;
     HRESULT hr;
     OLECHAR *str;
     GUID dialect;
 
-    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&command_text);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    hr = ICommandText_GetCommandText(command_text, &dialect, &str);
     ok(hr == DB_E_NOCOMMAND, "got 0x%08x\n", hr);
 
 if (0)
 {
     /* Crashes under windows */
-    hr = ICommandText_SetCommandText(comand_text, NULL, L"select * from testing");
+    hr = ICommandText_SetCommandText(command_text, NULL, L"select * from testing");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
-    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, NULL);
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    hr = ICommandText_GetCommandText(command_text, &dialect, &str);
     ok(hr == DB_E_NOCOMMAND, "got 0x%08x\n", hr);
 
-    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"select * from testing");
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"select * from testing");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
 
-    hr = ICommandText_GetCommandText(comand_text, NULL, &str);
+    hr = ICommandText_GetCommandText(command_text, NULL, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok (!lstrcmpW(L"select * from testing", str), "got %s\n", debugstr_w(str));
     HeapFree(GetProcessHeap(), 0, str);
 
     /* dialect empty value */
-    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    hr = ICommandText_GetCommandText(command_text, &dialect, &str);
     ok(hr == DB_S_DIALECTIGNORED, "got 0x%08x\n", hr);
     ok(IsEqualGUID(&DBGUID_DEFAULT, &dialect), "got %s\n", debugstr_guid(&dialect));
     ok (!lstrcmpW(L"select * from testing", str), "got %s\n", debugstr_w(str));
     HeapFree(GetProcessHeap(), 0, str);
 
     dialect = DBGUID_DEFAULT;
-    hr = ICommandText_GetCommandText(comand_text, &dialect, &str);
+    hr = ICommandText_GetCommandText(command_text, &dialect, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(IsEqualGUID(&DBGUID_DEFAULT, &dialect), "got %s\n", debugstr_guid(&dialect));
     ok (!lstrcmpW(L"select * from testing", str), "got %s\n", debugstr_w(str));
     HeapFree(GetProcessHeap(), 0, str);
 
-    ICommandText_Release(comand_text);
+    ICommandText_Release(command_text);
 }
 
 static void test_command_dbsession(IUnknown *cmd, IUnknown *session)
 {
-    ICommandText *comand_text;
+    ICommandText *command_text;
     HRESULT hr;
     IUnknown *sess;
 
-    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&command_text);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = ICommandText_GetDBSession(comand_text, &IID_IUnknown, &sess);
+    hr = ICommandText_GetDBSession(command_text, &IID_IUnknown, &sess);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(session == sess, "different session pointers\n");
 
-    ICommandText_Release(comand_text);
+    ICommandText_Release(command_text);
 }
 
 static void test_rowset_interfaces(IRowset *rowset, ICommandText *commandtext)
@@ -353,33 +353,33 @@ static void test_rowset_interfaces(IRowset *rowset, ICommandText *commandtext)
 
 static void test_command_rowset(IUnknown *cmd)
 {
-    ICommandText *comand_text;
+    ICommandText *command_text;
     HRESULT hr;
     IUnknown *unk = NULL;
     IRowset *rowset;
     DBROWCOUNT affected;
 
-    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&command_text);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"CREATE TABLE testing (col1 INT, col2 SHORT)");
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"CREATE TABLE testing (col1 INT, col2 SHORT)");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     affected = 9999;
-    hr = ICommandText_Execute(comand_text, NULL, &IID_IRowset, NULL, &affected, &unk);
+    hr = ICommandText_Execute(command_text, NULL, &IID_IRowset, NULL, &affected, &unk);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(unk == NULL, "Unexepcted value\n");
+    todo_wine ok(unk == NULL, "Unexpected value\n");
     todo_wine ok(affected == -1, "got %ld\n", affected);
     if (unk)
         IUnknown_Release(unk);
 
-    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, L"select * from testing");
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"select * from testing");
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     affected = 9999;
-    hr = ICommandText_Execute(comand_text, NULL, &IID_IRowset, NULL, &affected, &unk);
+    hr = ICommandText_Execute(command_text, NULL, &IID_IRowset, NULL, &affected, &unk);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(unk != NULL, "Unexepcted value\n");
+    ok(unk != NULL, "Unexpected value\n");
     if (hr == S_OK)
     {
         ok(affected == -1, "wrong affected value\n");
@@ -387,13 +387,13 @@ static void test_command_rowset(IUnknown *cmd)
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        test_rowset_interfaces(rowset, comand_text);
+        test_rowset_interfaces(rowset, command_text);
 
         IRowset_Release(rowset);
         IUnknown_Release(unk);
     }
 
-    ICommandText_Release(comand_text);
+    ICommandText_Release(command_text);
 }
 
 
