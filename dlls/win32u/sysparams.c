@@ -798,7 +798,7 @@ static void link_device( const WCHAR *instance, const WCHAR *class )
     len += class_len;
     hkey = reg_create_key( control_key, buffer, len * sizeof(WCHAR), 0, NULL );
 
-    set_reg_value( hkey, device_instanceW, REG_SZ, instance, instance_len * sizeof(WCHAR) );
+    set_reg_value( hkey, device_instanceW, REG_SZ, instance, (instance_len + 1) * sizeof(WCHAR) );
 
     subkey = reg_create_key( hkey, hashW, sizeof(hashW), REG_OPTION_VOLATILE, NULL );
     NtClose( hkey );
