@@ -734,7 +734,7 @@ struct font_backend_funcs
     UINT16 (CDECL *get_glyph_count)(font_object_handle object);
     INT32 (CDECL *get_glyph_advance)(font_object_handle object, float em_size, UINT16 glyph,
             DWRITE_MEASURING_MODE measuring_mode, BOOL *has_contours);
-    void (CDECL *get_glyph_bbox)(void *key, struct dwrite_glyphbitmap *bitmap_desc);
+    void (CDECL *get_glyph_bbox)(font_object_handle object, struct dwrite_glyphbitmap *bitmap_desc);
     BOOL (CDECL *get_glyph_bitmap)(void *key, struct dwrite_glyphbitmap *bitmap_desc);
     void (CDECL *get_design_glyph_metrics)(font_object_handle object, UINT16 upem, UINT16 ascent, unsigned int simulations,
             UINT16 glyph, DWRITE_GLYPH_METRICS *metrics);

@@ -76,6 +76,7 @@ MAKE_FUNCPTR(FT_Done_FreeType);
 MAKE_FUNCPTR(FT_Done_Glyph);
 MAKE_FUNCPTR(FT_Done_Size);
 MAKE_FUNCPTR(FT_Get_First_Char);
+MAKE_FUNCPTR(FT_Get_Glyph);
 MAKE_FUNCPTR(FT_Get_Kerning);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Glyph_Copy);
@@ -184,6 +185,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Done_Glyph)
     LOAD_FUNCPTR(FT_Done_Size)
     LOAD_FUNCPTR(FT_Get_First_Char)
+    LOAD_FUNCPTR(FT_Get_Glyph)
     LOAD_FUNCPTR(FT_Get_Kerning)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Glyph_Copy)
@@ -572,7 +574,7 @@ static BOOL is_face_scalable(void *key)
         return FALSE;
 }
 
-static BOOL get_glyph_transform(void *key, struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
+static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
 {
     FT_Matrix m;
 
@@ -583,7 +585,7 @@ static BOOL get_glyph_transform(void *key, struct dwrite_glyphbitmap *bitmap, FT
 
     /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
        Disable transform if that's the case. */
-    if (!is_face_scalable(key) || (!bitmap->m && !bitmap->simulations))
+    if (!bitmap->m && !bitmap->simulations)
         return FALSE;
 
     if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
@@ -602,42 +604,42 @@ static BOOL get_glyph_transform(void *key, struct dwrite_glyphbitmap *bitmap, FT
     return TRUE;
 }
 
-static void CDECL freetype_get_glyph_bbox(void *key, struct dwrite_glyphbitmap *bitmap)
+static void CDECL freetype_get_glyph_bbox(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
 {
-    FTC_ImageTypeRec imagetype;
+    FT_Face face = object;
+    FT_Glyph glyph = NULL;
     FT_BBox bbox = { 0 };
     BOOL needs_transform;
-    FT_Glyph glyph;
     FT_Matrix m;
+    FT_Size size;
 
-    RtlEnterCriticalSection(&freetype_cs);
+    SetRectEmpty(&bitmap->bbox);
 
-    needs_transform = get_glyph_transform(key, bitmap, &m);
+    if (!(size = freetype_set_face_size(face, bitmap->emsize)))
+        return;
 
-    imagetype.face_id = key;
-    imagetype.width = 0;
-    imagetype.height = bitmap->emsize;
-    imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
+    needs_transform = FT_IS_SCALABLE(face) && get_glyph_transform(bitmap, &m);
 
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->glyph, &glyph, NULL) == 0) {
-        if (needs_transform) {
-            FT_Glyph glyph_copy;
-
-            if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
-                if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                    embolden_glyph(glyph_copy, bitmap->emsize);
-
-                /* Includes oblique and user transform. */
-                pFT_Glyph_Transform(glyph_copy, &m, NULL);
-                pFT_Glyph_Get_CBox(glyph_copy, FT_GLYPH_BBOX_PIXELS, &bbox);
-                pFT_Done_Glyph(glyph_copy);
-            }
-        }
-        else
-            pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
+    if (pFT_Load_Glyph(face, bitmap->glyph, needs_transform ? FT_LOAD_NO_BITMAP : 0))
+    {
+        WARN("Failed to load glyph %u.\n", bitmap->glyph);
+        pFT_Done_Size(size);
+        return;
     }
 
-    RtlLeaveCriticalSection(&freetype_cs);
+    pFT_Get_Glyph(face->glyph, &glyph);
+    if (needs_transform)
+    {
+        if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+            embolden_glyph(glyph, bitmap->emsize);
+
+        /* Includes oblique and user transform. */
+        pFT_Glyph_Transform(glyph, &m, NULL);
+    }
+
+    pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
+    pFT_Done_Glyph(glyph);
+    pFT_Done_Size(size);
 
     /* flip Y axis */
     SetRect(&bitmap->bbox, bbox.xMin, -bbox.yMax, bbox.xMax, -bbox.yMin);
@@ -744,7 +746,7 @@ static BOOL CDECL freetype_get_glyph_bitmap(void *key, struct dwrite_glyphbitmap
 
     RtlEnterCriticalSection(&freetype_cs);
 
-    needs_transform = get_glyph_transform(key, bitmap, &m);
+    needs_transform = is_face_scalable(key) && get_glyph_transform(bitmap, &m);
 
     imagetype.face_id = key;
     imagetype.width = 0;
@@ -865,7 +867,7 @@ static INT32 CDECL null_get_glyph_advance(font_object_handle object, float emsiz
     return 0;
 }
 
-static void CDECL null_get_glyph_bbox(void *key, struct dwrite_glyphbitmap *bitmap)
+static void CDECL null_get_glyph_bbox(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
 {
     SetRectEmpty(&bitmap->bbox);
 }
