@@ -509,7 +509,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     if (format != 0)
     {
         unsigned size;
-        LONGLONG res = types_extract_as_longlong(lvalue, &size, NULL);
+        dbg_lgint_t res = types_extract_as_longlong(lvalue, &size, NULL);
         WCHAR wch;
 
         switch (format)

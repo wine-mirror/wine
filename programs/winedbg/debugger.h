@@ -78,6 +78,11 @@ enum dbg_internal_types
     dbg_itype_signed_long_int,
     dbg_itype_unsigned_longlong_int,
     dbg_itype_signed_longlong_int,
+
+    /* they represent the dbg_lg(u)int_t types */
+    dbg_itype_lgint,
+    dbg_itype_lguint,
+
     dbg_itype_char,
     dbg_itype_wchar,
     dbg_itype_short_real, /* aka float */
@@ -89,6 +94,14 @@ enum dbg_internal_types
     dbg_itype_m128a,      /* 128-bit (XMM) registers */
     dbg_itype_none              = 0xffffffff
 };
+
+/* Largest integers the debugger's compiler can support.
+ * It's large enough to store a pointer (in debuggee or debugger's address space).
+ * It can be smaller than the largest integer(s) of the debuggee.
+ * (eg. 64 bit on PE build of debugger, vs 128 int in ELF build of a library)
+ */
+typedef LONG64  dbg_lgint_t;
+typedef ULONG64 dbg_lguint_t;
 
 /* type description (in the following order):
  * - if 'id' is dbg_itype_none (whatever 'module' value), the type isn't known
@@ -329,8 +342,8 @@ extern BOOL             display_enable(int displaynum, int enable);
 extern void             expr_free_all(void);
 extern struct expr*     expr_alloc_internal_var(const char* name);
 extern struct expr*     expr_alloc_symbol(const char* name);
-extern struct expr*     expr_alloc_sconstant(INT_PTR val);
-extern struct expr*     expr_alloc_uconstant(UINT_PTR val);
+extern struct expr*     expr_alloc_sconstant(dbg_lgint_t val);
+extern struct expr*     expr_alloc_uconstant(dbg_lguint_t val);
 extern struct expr*     expr_alloc_string(const char* str);
 extern struct expr*     expr_alloc_binary_op(int oper, struct expr*, struct expr*);
 extern struct expr*     expr_alloc_unary_op(int oper, struct expr*);
@@ -448,8 +461,8 @@ extern enum dbg_start   tgt_module_load(const char* name, BOOL keep);
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);
 extern BOOL             types_print_type(const struct dbg_type*, BOOL details);
 extern BOOL             print_types(void);
-extern INT_PTR          types_extract_as_integer(const struct dbg_lvalue*);
-extern LONGLONG         types_extract_as_longlong(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
+extern dbg_lgint_t      types_extract_as_integer(const struct dbg_lvalue*);
+extern dbg_lgint_t      types_extract_as_longlong(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
 extern void             types_extract_as_address(const struct dbg_lvalue*, ADDRESS64*);
 extern BOOL             types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lvalue_from);
 extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name, ULONG *tmpbuf);

@@ -52,10 +52,10 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
-                                   unsigned* psize, BOOL *issigned)
+dbg_lgint_t types_extract_as_longlong(const struct dbg_lvalue* lvalue,
+                                      unsigned* psize, BOOL *issigned)
 {
-    LONGLONG            rtn = 0;
+    dbg_lgint_t         rtn = 0;
     DWORD               tag, bt;
     DWORD64             size;
     struct dbg_type     type = lvalue->type;
@@ -136,7 +136,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-INT_PTR types_extract_as_integer(const struct dbg_lvalue* lvalue)
+dbg_lgint_t types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
     return types_extract_as_longlong(lvalue, NULL, NULL);
 }
@@ -161,7 +161,7 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
 
 BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lvalue_from)
 {
-    LONGLONG    val;
+    dbg_lgint_t val;
     DWORD64     size;
     BOOL        is_signed;
 
@@ -777,6 +777,24 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
 
     switch (type->id)
     {
+    case dbg_itype_lguint:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = sizeof(dbg_lguint_t); break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
+        default: WINE_FIXME("unsupported %u for lguint_t\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_lgint:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = sizeof(dbg_lgint_t); break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
+        default: WINE_FIXME("unsupported %u for lgint_t\n", ti); return FALSE;
+        }
+        break;
     case dbg_itype_unsigned_long_int:
         switch (ti)
         {

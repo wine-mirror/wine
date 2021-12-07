@@ -39,7 +39,7 @@ static void parser(const char*);
 {
     struct dbg_lvalue   lvalue;
     char*               string;
-    INT_PTR             integer;
+    dbg_lgint_t         integer;
     IMAGEHLP_LINE64     listing;
     struct expr*        expression;
     struct type_expr_t  type;
@@ -286,9 +286,9 @@ info_command:
     | tINFO tCLASS              { info_win32_class(NULL, NULL); }
     | tINFO tCLASS tSTRING     	{ info_win32_class(NULL, $3); }
     | tINFO tWND                { info_win32_window(NULL, FALSE); }
-    | tINFO tWND expr_rvalue    { info_win32_window((HWND)$3, FALSE); }
+    | tINFO tWND expr_rvalue    { info_win32_window((HWND)(DWORD_PTR)$3, FALSE); }
     | tINFO '*' tWND            { info_win32_window(NULL, TRUE); }
-    | tINFO '*' tWND expr_rvalue { info_win32_window((HWND)$4, TRUE); }
+    | tINFO '*' tWND expr_rvalue { info_win32_window((HWND)(DWORD_PTR)$4, TRUE); }
     | tINFO tPROCESS            { info_win32_processes(); }
     | tINFO tTHREAD             { info_win32_threads(); }
     | tINFO tFRAME              { info_win32_frame_exceptions(dbg_curr_tid); }
