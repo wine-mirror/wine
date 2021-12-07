@@ -1291,7 +1291,7 @@ static BOOL update_display_cache(void)
             .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
         };
 
-        TRACE( "adding default fake monitor\n ");
+        TRACE( "adding default fake monitor\n");
         add_monitor( &default_monitor, &ctx );
     }
     release_display_manager_ctx( &ctx );
