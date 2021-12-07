@@ -24,6 +24,9 @@ interface IWSDScopeMatchingRule;
 interface IWSDiscoveryPublisherNotify;
 interface IWSDiscoveryPublisher;
 interface IWSDXMLContext;
+interface IWSDiscoveryProvider;
+interface IWSDiscoveryProviderNotify;
+interface IWSDiscoveredService;
 
 [
 uuid(fcafe424-fef5-481a-bd9f-33ce0574256f),
@@ -36,6 +39,62 @@ interface IWSDScopeMatchingRule : IUnknown
 {
   HRESULT GetScopeRule([out] LPCWSTR *ppszScopeMatchingRule);
   HRESULT MatchScopes([in] LPCWSTR pszScope1, [in] LPCWSTR pszScope2, [out] BOOL *pfMatch);
+}
+
+[
+uuid(73ee3ced-b6e6-4329-a546-3e8ad46563d2),
+object,
+local,
+restricted,
+pointer_default(unique)
+]
+interface IWSDiscoveryProviderNotify : IUnknown
+{
+  HRESULT Add([in] IWSDiscoveredService *service);
+  HRESULT Remove([in] IWSDiscoveredService *service);
+  HRESULT SearchFailed([in] HRESULT hr,[in, optional] LPCWSTR tag);
+  HRESULT SearchComplete([in, optional] LPCWSTR tag);
+}
+
+[
+uuid(4bad8a3b-b374-4420-9632-aac945b374aa),
+object,
+local,
+restricted,
+pointer_default(unique)
+]
+interface IWSDiscoveredService : IUnknown
+{
+  HRESULT GetEndpointReference([out] WSD_ENDPOINT_REFERENCE **endpoint_reference);
+  HRESULT GetTypes([out] WSD_NAME_LIST **types_list);
+  HRESULT GetScopes([out] WSD_URI_LIST **scopes_list);
+  HRESULT GetXAddrs([out] WSD_URI_LIST **x_addrs_list);
+  HRESULT GetMetadataVersion([out] ULONGLONG *metadata_version);
+  HRESULT GetExtendedDiscoXML([out] WSDXML_ELEMENT **header_any,[out] WSDXML_ELEMENT **body_any);
+  HRESULT GetProbeResolveTag([out] LPCWSTR *tag);
+  HRESULT GetRemoteTransportAddress([out] LPCWSTR *remote_transport_address);
+  HRESULT GetLocalTransportAddress([out] LPCWSTR *local_transport_address);
+  HRESULT GetLocalInterfaceGUID([out] GUID *guid);
+  HRESULT GetInstanceId([out] ULONGLONG *instance_id);
+}
+
+[
+uuid (8ffc8e55-f0eb-480f-88b7-b435dd281d45),
+object,
+local,
+restricted,
+pointer_default(unique)
+]
+interface IWSDiscoveryProvider : IUnknown
+{
+  HRESULT SetAddressFamily([in] DWORD address_family);
+  HRESULT Attach([in] IWSDiscoveryProviderNotify *sink);
+  HRESULT Detach(void);
+  HRESULT SearchById([in] LPCWSTR id,[in, optional] LPCWSTR tag);
+  HRESULT SearchByAddress([in] LPCWSTR address,[in, optional] LPCWSTR tag);
+  HRESULT SearchByType([in, optional] const WSD_NAME_LIST *types_list, \
+          [in, optional] const WSD_URI_LIST *scopes_list,[in, optional] LPCWSTR match_by,[in, optional] LPCWSTR tag);
+  HRESULT GetXMLContext([out] IWSDXMLContext **context);
 }
 
 [
@@ -104,4 +163,5 @@ interface IWSDiscoveryPublisher : IUnknown
     HRESULT GetXMLContext([out] IWSDXMLContext **ppContext);
 }
 
+cpp_quote("HRESULT WINAPI WSDCreateDiscoveryProvider(IWSDXMLContext *context, IWSDiscoveryProvider **provider);")
 cpp_quote("HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext* pContext, IWSDiscoveryPublisher **ppPublisher);")
