@@ -131,7 +131,7 @@ public class WineActivity extends Activity
         if (cmdline == null)
         {
             if (new File( prefix, "drive_c/winestart.cmd" ).exists()) cmdline = "c:\\winestart.cmd";
-            else cmdline = "wineconsole.exe";
+            else cmdline = "c:\\windows\\system32\\wineconsole.exe";
         }
 
         String winedebug = readFileString( new File( prefix, "winedebug" ));
@@ -164,7 +164,7 @@ public class WineActivity extends Activity
         }
 
         String[] cmd = { environ.get( "WINELOADER" ),
-                         "explorer.exe",
+                         "c:\\windows\\system32\\explorer.exe",
                          "/desktop=shell,,android",
                          cmdline };
 
