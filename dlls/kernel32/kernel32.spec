@@ -267,7 +267,7 @@
 @ stdcall CreateActCtxA(ptr)
 @ stdcall -import CreateActCtxW(ptr)
 # @ stub CreateBoundaryDescriptorA
-# @ stub CreateBoundaryDescriptorW
+@ stdcall -import CreateBoundaryDescriptorW(wstr long)
 @ stdcall -import CreateConsoleScreenBuffer(long long ptr long ptr)
 @ stdcall -import CreateDirectoryA(str ptr)
 @ stdcall CreateDirectoryExA(str str ptr)

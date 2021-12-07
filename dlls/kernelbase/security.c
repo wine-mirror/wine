@@ -923,6 +923,15 @@ BOOL WINAPI ConvertToAutoInheritPrivateObjectSecurity( PSECURITY_DESCRIPTOR pare
 }
 
 /******************************************************************************
+ * CreateBoundaryDescriptorW    (kernelbase.@)
+ */
+HANDLE WINAPI CreateBoundaryDescriptorW( LPCWSTR name, ULONG flags )
+{
+    FIXME("%s %u - stub\n", debugstr_w(name), flags);
+    return NULL;
+}
+
+/******************************************************************************
  * CreatePrivateObjectSecurity    (kernelbase.@)
  */
 BOOL WINAPI CreatePrivateObjectSecurity( PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator,

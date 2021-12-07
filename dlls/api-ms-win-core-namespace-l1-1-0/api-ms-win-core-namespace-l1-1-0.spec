@@ -1,6 +1,6 @@
 @ stub AddSIDToBoundaryDescriptor
 @ stub ClosePrivateNamespace
-@ stub CreateBoundaryDescriptorW
+@ stdcall CreateBoundaryDescriptorW(wstr long) kernel32.CreateBoundaryDescriptorW
 @ stub CreatePrivateNamespaceW
 @ stub DeleteBoundaryDescriptor
 @ stub OpenPrivateNamespaceW
