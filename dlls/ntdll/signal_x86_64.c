@@ -36,6 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(unwind);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 typedef struct _SCOPE_TABLE
 {
@@ -525,8 +526,11 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     }
     else if (rec->ExceptionCode == EXCEPTION_WINE_NAME_THREAD && rec->ExceptionInformation[0] == 0x1000)
     {
-        WARN_(seh)( "Thread %04x renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
-                    debugstr_a((char *)rec->ExceptionInformation[1]) );
+        if ((DWORD)rec->ExceptionInformation[2] == -1)
+            WARN_(threadname)( "Thread renamed to %s\n", debugstr_a((char *)rec->ExceptionInformation[1]) );
+        else
+            WARN_(threadname)( "Thread ID %04x renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
+                               debugstr_a((char *)rec->ExceptionInformation[1]) );
     }
     else if (rec->ExceptionCode == DBG_PRINTEXCEPTION_C)
     {
