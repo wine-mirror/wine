@@ -29,7 +29,7 @@
 
 #ifdef HAVE_FT2BUILD_H
 #include <ft2build.h>
-#include FT_CACHE_H
+#include FT_GLYPH_H
 #include FT_FREETYPE_H
 #include FT_OUTLINE_H
 #include FT_TRUETYPE_TABLES_H
@@ -47,27 +47,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-static RTL_CRITICAL_SECTION freetype_cs;
-static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &freetype_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": freetype_cs") }
-};
-static RTL_CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static void *ft_handle = NULL;
 static FT_Library library = 0;
-static FTC_Manager cache_manager = 0;
-static FTC_ImageCache image_cache = 0;
 typedef struct
 {
     FT_Int major;
     FT_Int minor;
     FT_Int patch;
 } FT_Version_t;
-
-static const struct font_callback_funcs *callback_funcs;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Activate_Size);
@@ -98,52 +85,8 @@ MAKE_FUNCPTR(FT_Outline_New);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
-MAKE_FUNCPTR(FTC_ImageCache_Lookup);
-MAKE_FUNCPTR(FTC_ImageCache_New);
-MAKE_FUNCPTR(FTC_Manager_New);
-MAKE_FUNCPTR(FTC_Manager_Done);
-MAKE_FUNCPTR(FTC_Manager_LookupFace);
-MAKE_FUNCPTR(FTC_Manager_LookupSize);
-MAKE_FUNCPTR(FTC_Manager_RemoveFaceID);
 #undef MAKE_FUNCPTR
 static FT_Error (*pFT_Outline_EmboldenXY)(FT_Outline *, FT_Pos, FT_Pos);
-
-static void face_finalizer(void *object)
-{
-    FT_Face face = object;
-    callback_funcs->release_font_data((struct font_data_context *)face->generic.data);
-}
-
-static FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *face)
-{
-    struct font_data_context *context;
-    const void *data_ptr;
-    FT_Error fterror;
-    UINT64 data_size;
-    UINT32 index;
-
-    *face = NULL;
-
-    if (!face_id)
-    {
-        WARN("NULL fontface requested.\n");
-        return FT_Err_Ok;
-    }
-
-    if (callback_funcs->get_font_data(face_id, &data_ptr, &data_size, &index, &context))
-        return FT_Err_Ok;
-
-    fterror = pFT_New_Memory_Face(library, data_ptr, data_size, index, face);
-    if (fterror == FT_Err_Ok)
-    {
-        (*face)->generic.data = context;
-        (*face)->generic.finalizer = face_finalizer;
-    }
-    else
-        callback_funcs->release_font_data(context);
-
-    return fterror;
-}
 
 static FT_Size freetype_set_face_size(FT_Face face, FT_UInt emsize)
 {
@@ -207,13 +150,6 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
-    LOAD_FUNCPTR(FTC_ImageCache_Lookup)
-    LOAD_FUNCPTR(FTC_ImageCache_New)
-    LOAD_FUNCPTR(FTC_Manager_New)
-    LOAD_FUNCPTR(FTC_Manager_Done)
-    LOAD_FUNCPTR(FTC_Manager_LookupFace)
-    LOAD_FUNCPTR(FTC_Manager_LookupSize)
-    LOAD_FUNCPTR(FTC_Manager_RemoveFaceID)
 #undef LOAD_FUNCPTR
     pFT_Outline_EmboldenXY = dlsym(ft_handle, "FT_Outline_EmboldenXY");
 
@@ -224,18 +160,6 @@ static BOOL init_freetype(void)
 	return FALSE;
     }
     pFT_Library_Version(library, &FT_Version.major, &FT_Version.minor, &FT_Version.patch);
-
-    /* init cache manager */
-    if (pFTC_Manager_New(library, 0, 0, 0, &face_requester, NULL, &cache_manager) != 0 ||
-        pFTC_ImageCache_New(cache_manager, &image_cache) != 0) {
-
-        ERR("Failed to init FreeType cache\n");
-        pFTC_Manager_Done(cache_manager);
-        pFT_Done_FreeType(library);
-        dlclose(ft_handle);
-        ft_handle = NULL;
-        return FALSE;
-    }
 
     TRACE("FreeType version is %d.%d.%d\n", FT_Version.major, FT_Version.minor, FT_Version.patch);
     return TRUE;
@@ -262,13 +186,6 @@ static font_object_handle CDECL freetype_create_font_object(const void *data_ptr
 static void CDECL freetype_release_font_object(font_object_handle object)
 {
     pFT_Done_Face(object);
-}
-
-static void CDECL freetype_notify_release(void *key)
-{
-    RtlEnterCriticalSection(&freetype_cs);
-    pFTC_Manager_RemoveFaceID(cache_manager, key);
-    RtlLeaveCriticalSection(&freetype_cs);
 }
 
 static void CDECL freetype_get_design_glyph_metrics(font_object_handle object, UINT16 upem, UINT16 ascent,
@@ -793,7 +710,6 @@ const static struct font_backend_funcs freetype_funcs =
 {
     freetype_create_font_object,
     freetype_release_font_object,
-    freetype_notify_release,
     freetype_get_glyph_outline,
     freetype_get_glyph_count,
     freetype_get_glyph_advance,
@@ -804,7 +720,6 @@ const static struct font_backend_funcs freetype_funcs =
 
 static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
 {
-    callback_funcs = ptr_in;
     if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
     *(const struct font_backend_funcs **)ptr_out = &freetype_funcs;
     return STATUS_SUCCESS;
@@ -812,7 +727,6 @@ static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_
 
 static NTSTATUS release_freetype_lib(void)
 {
-    pFTC_Manager_Done(cache_manager);
     pFT_Done_FreeType(library);
     return STATUS_SUCCESS;
 }
@@ -825,10 +739,6 @@ static font_object_handle CDECL null_create_font_object(const void *data_ptr, UI
 }
 
 static void CDECL null_release_font_object(font_object_handle object)
-{
-}
-
-static void CDECL null_notify_release(void *key)
 {
 }
 
@@ -869,7 +779,6 @@ const static struct font_backend_funcs null_funcs =
 {
     null_create_font_object,
     null_release_font_object,
-    null_notify_release,
     null_get_glyph_outline,
     null_get_glyph_count,
     null_get_glyph_advance,

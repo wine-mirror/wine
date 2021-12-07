@@ -837,7 +837,6 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
         for (i = 0; i < ARRAY_SIZE(fontface->glyphs); i++)
             free(fontface->glyphs[i]);
 
-        font_funcs->notify_release(iface);
         font_funcs->release_font_object(fontface->font_object);
         if (fontface->stream)
         {
@@ -8142,81 +8141,12 @@ HRESULT create_fontset_builder(IDWriteFactory7 *factory, IDWriteFontSetBuilder2 
     return S_OK;
 }
 
-struct font_data_context
-{
-    IDWriteFontFileStream *stream;
-    void *context;
-};
-
-static int CDECL get_font_data_cb(void *key, const void **data_ptr, UINT64 *data_size,
-        unsigned int *index, struct font_data_context **ret_context)
-{
-    IDWriteFontFace *fontface = key;
-    struct font_data_context *context;
-    IDWriteFontFileStream *stream;
-    IDWriteFontFile *file;
-    unsigned int count;
-    void *data_context;
-    HRESULT hr;
-
-    *ret_context = NULL;
-
-    count = 1;
-    if (FAILED(IDWriteFontFace_GetFiles(fontface, &count, &file))) return 1;
-
-    hr = get_filestream_from_file(file, &stream);
-    IDWriteFontFile_Release(file);
-    if (FAILED(hr)) return 1;
-
-    hr = IDWriteFontFileStream_GetFileSize(stream, data_size);
-    if (FAILED(hr))
-    {
-        IDWriteFontFileStream_Release(stream);
-        return 1;
-    }
-
-    hr = IDWriteFontFileStream_ReadFileFragment(stream, data_ptr, 0, *data_size, &data_context);
-    if (FAILED(hr))
-    {
-        IDWriteFontFileStream_Release(stream);
-        return 1;
-    }
-
-    if (!(context = malloc(sizeof(*context))))
-    {
-        IDWriteFontFileStream_Release(stream);
-        return 1;
-    }
-
-    context->stream = stream;
-    context->context = data_context;
-
-    *ret_context = context;
-    *index = IDWriteFontFace_GetIndex(fontface);
-
-    return 0;
-}
-
-static void CDECL release_font_data_cb(struct font_data_context *context)
-{
-    if (!context) return;
-    IDWriteFontFileStream_ReleaseFileFragment(context->stream, context->context);
-    IDWriteFontFileStream_Release(context->stream);
-    free(context);
-}
-
-struct font_callback_funcs callback_funcs =
-{
-    get_font_data_cb,
-    release_font_data_cb,
-};
-
 void init_font_backend(void)
 {
-    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs);
+    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_ATTACH, NULL, &font_funcs);
 }
 
 void release_font_backend(void)
 {
-    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_DETACH, &callback_funcs, NULL);
+    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_DETACH, NULL, NULL);
 }

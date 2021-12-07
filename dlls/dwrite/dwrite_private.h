@@ -717,18 +717,10 @@ extern HRESULT shape_check_typographic_feature(struct scriptshaping_context *con
 struct font_data_context;
 extern HMODULE dwrite_module DECLSPEC_HIDDEN;
 
-struct font_callback_funcs
-{
-    int (CDECL *get_font_data)(void *key, const void **data_ptr, UINT64 *data_size, unsigned int *index,
-            struct font_data_context **context);
-    void (CDECL *release_font_data)(struct font_data_context *context);
-};
-
 struct font_backend_funcs
 {
     font_object_handle (CDECL *create_font_object)(const void *data_ptr, UINT64 data_size, unsigned int index);
     void (CDECL *release_font_object)(font_object_handle object);
-    void (CDECL *notify_release)(void *key);
     int (CDECL *get_glyph_outline)(font_object_handle object, float emsize, unsigned int simulations, UINT16 glyph,
             struct dwrite_outline *outline);
     UINT16 (CDECL *get_glyph_count)(font_object_handle object);
