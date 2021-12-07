@@ -342,7 +342,6 @@ WINGDIAPI DWORD_PTR WINAPI GetDCHook(HDC,DCHOOKPROC*);
 WINGDIAPI BOOL      WINAPI SetDCHook(HDC,DCHOOKPROC,DWORD_PTR);
 WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
 
-extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect,
                                              const RECT *device_rect, struct window_surface *surface );
 extern void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version );

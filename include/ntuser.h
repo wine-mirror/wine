@@ -66,6 +66,9 @@ enum
     NtUserMirrorRgn,
 };
 
+/* color index used to retrieve system 55aa brush */
+#define COLOR_55AA_BRUSH  0x100
+
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info

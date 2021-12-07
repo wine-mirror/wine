@@ -235,7 +235,6 @@ struct unix_funcs
     BOOL (CDECL *get_icm_profile)( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename );
     const struct vulkan_funcs * (CDECL *get_vulkan_driver)( HDC hdc, UINT version );
     struct opengl_funcs * (CDECL *get_wgl_driver)( HDC hdc, UINT version );
-    void (CDECL *make_gdi_object_system)( HGDIOBJ handle, BOOL set );
     void (CDECL *set_display_driver)( struct user_driver_funcs *funcs, UINT version );
     void (CDECL *set_visible_region)( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
                                       struct window_surface *surface );

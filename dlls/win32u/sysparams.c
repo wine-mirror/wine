@@ -2357,12 +2357,12 @@ static BOOL set_rgb_entry( union sysparam_all_entry *entry, UINT int_param, void
     entry->hdr.loaded = TRUE;
     if ((brush = InterlockedExchangePointer( (void **)&entry->rgb.brush, 0 )))
     {
-        __wine_make_gdi_object_system( brush, FALSE );
+        make_gdi_object_system( brush, FALSE );
         NtGdiDeleteObjectApp( brush );
     }
     if ((pen = InterlockedExchangePointer( (void **)&entry->rgb.pen, 0 )))
     {
-        __wine_make_gdi_object_system( pen, FALSE );
+        make_gdi_object_system( pen, FALSE );
         NtGdiDeleteObjectApp( pen );
     }
     return TRUE;
@@ -4279,17 +4279,38 @@ static COLORREF get_sys_color( int index )
     return ret;
 }
 
+static HBRUSH get_55aa_brush(void)
+{
+    static const WORD pattern[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
+    static HBRUSH brush_55aa;
+
+    if (!brush_55aa)
+    {
+        HBITMAP bitmap = NtGdiCreateBitmap( 8, 8, 1, 1, pattern );
+        HBRUSH brush = NtGdiCreatePatternBrushInternal( bitmap, FALSE, FALSE );
+        NtGdiDeleteObjectApp( bitmap );
+        make_gdi_object_system( brush, TRUE );
+        if (InterlockedCompareExchangePointer( (void **)&brush_55aa, brush, 0 ))
+        {
+            make_gdi_object_system( brush, FALSE );
+            NtGdiDeleteObjectApp( brush );
+        }
+    }
+    return brush_55aa;
+}
+
 static HBRUSH get_sys_color_brush( unsigned int index )
 {
+    if (index == COLOR_55AA_BRUSH) return get_55aa_brush();
     if (index >= ARRAY_SIZE( system_colors )) return 0;
 
     if (!system_colors[index].brush)
     {
         HBRUSH brush = NtGdiCreateSolidBrush( get_sys_color( index ), NULL );
-        __wine_make_gdi_object_system( brush, TRUE );
+        make_gdi_object_system( brush, TRUE );
         if (InterlockedCompareExchangePointer( (void **)&system_colors[index].brush, brush, 0 ))
         {
-            __wine_make_gdi_object_system( brush, FALSE );
+            make_gdi_object_system( brush, FALSE );
             NtGdiDeleteObjectApp( brush );
         }
     }
@@ -4303,10 +4324,10 @@ static HPEN get_sys_color_pen( unsigned int index )
     if (!system_colors[index].pen)
     {
         HPEN pen = NtGdiCreatePen( PS_SOLID, 1, get_sys_color( index ), NULL );
-        __wine_make_gdi_object_system( pen, TRUE );
+        make_gdi_object_system( pen, TRUE );
         if (InterlockedCompareExchangePointer( (void **)&system_colors[index].pen, pen, 0 ))
         {
-            __wine_make_gdi_object_system( pen, FALSE );
+            make_gdi_object_system( pen, FALSE );
             NtGdiDeleteObjectApp( pen );
         }
     }

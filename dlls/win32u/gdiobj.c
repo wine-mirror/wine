@@ -452,15 +452,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
 };
 
-
-/*************************************************************************
- * __wine_make_gdi_object_system    (win32u.@)
- *
- * USER has to tell GDI that its system brushes and pens are non-deletable.
- * For a description of the GDI object magics and their flags,
- * see "Undocumented Windows" (wrong about the OBJECT_NOSYSTEM flag, though).
- */
-void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
+void make_gdi_object_system( HGDIOBJ handle, BOOL set)
 {
     GDI_HANDLE_ENTRY *entry;
 
@@ -1191,7 +1183,6 @@ static struct unix_funcs unix_funcs =
     __wine_get_icm_profile,
     __wine_get_vulkan_driver,
     __wine_get_wgl_driver,
-    __wine_make_gdi_object_system,
     __wine_set_display_driver,
     __wine_set_visible_region,
 };

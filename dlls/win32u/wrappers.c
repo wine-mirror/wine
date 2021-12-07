@@ -877,12 +877,6 @@ BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCH
     return unix_funcs->get_icm_profile( hdc, allow_default, size, filename );
 }
 
-void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set )
-{
-    if (!unix_funcs) return;
-    return unix_funcs->make_gdi_object_system( handle, set );
-}
-
 void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
                                       struct window_surface *surface )
 {
