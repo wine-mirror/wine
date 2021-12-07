@@ -837,6 +837,199 @@ static void test_tid_alert( char **argv )
     CloseHandle( pi.hThread );
 }
 
+struct test_completion_port_scheduling_param
+{
+    HANDLE ready, test_ready;
+    HANDLE port;
+    int index;
+};
+
+static DWORD WINAPI test_completion_port_scheduling_thread(void *param)
+{
+    struct test_completion_port_scheduling_param *p = param;
+    FILE_IO_COMPLETION_INFORMATION info;
+    OVERLAPPED_ENTRY overlapped_entry;
+    OVERLAPPED *overlapped;
+    IO_STATUS_BLOCK iosb;
+    ULONG_PTR key, value;
+    NTSTATUS status;
+    DWORD ret, err;
+    ULONG count;
+    BOOL bret;
+
+    /* both threads are woken when comleption added. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    ret = WaitForSingleObject( p->port, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+
+    /* if a thread is waiting for completion which is added threads which wait on port handle are not woken. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    if (p->index)
+    {
+        bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+        ok( bret, "got error %lu.\n", GetLastError() );
+    }
+    else
+    {
+        ret = WaitForSingleObject( p->port, 100 );
+        ok( ret == WAIT_TIMEOUT || broken( !ret ) /* before Win10 1607 */, "got %#lx.\n", ret );
+    }
+    SetEvent( p->test_ready );
+
+    /* Two threads in GetQueuedCompletionStatus, the second is supposed to start first. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( key == 3 + p->index || broken( p->index && key == 5 ) /* before Win10 */, "got %Iu, expected %u.\n", key, 3 + p->index );
+    SetEvent( p->test_ready );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ret = WaitForSingleObject( p->port, INFINITE );
+    if (ret == WAIT_FAILED)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    status = NtRemoveIoCompletion( p->port, &key, &value, &iosb, NULL );
+    if (status == STATUS_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( status == STATUS_ABANDONED_WAIT_0, "got %#lx.\n", status );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    count = 0xdeadbeef;
+    status = NtRemoveIoCompletionEx( p->port, &info, 1, &count, NULL, FALSE );
+    ok( count <= 1, "Got unexpected count %lu.\n", count );
+    if (status == STATUS_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( status == STATUS_ABANDONED_WAIT_0, "got %#lx.\n", status );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+    err = GetLastError();
+    ok( !bret, "got %d.\n", bret );
+    if (err == ERROR_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( err == ERROR_ABANDONED_WAIT_0, "got error %#lx.\n", err );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    bret = GetQueuedCompletionStatusEx( p->port, &overlapped_entry, 1, &count, INFINITE, TRUE );
+    err = GetLastError();
+    ok( !bret, "got %d.\n", bret );
+    if (err == ERROR_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( err == ERROR_ABANDONED_WAIT_0, "got error %#lx.\n", err );
+
+    return 0;
+}
+
+static void test_completion_port_scheduling(void)
+{
+    struct test_completion_port_scheduling_param p[2];
+    HANDLE threads[2], port;
+    OVERLAPPED *overlapped;
+    unsigned int i, j;
+    DWORD ret, count;
+    NTSTATUS status;
+    ULONG_PTR key;
+    BOOL bret;
+
+    for (i = 0; i < 2; ++i)
+    {
+        p[i].index = 0;
+        p[i].ready = CreateEventA(NULL, FALSE, FALSE, NULL);
+        p[i].test_ready = CreateEventA(NULL, FALSE, FALSE, NULL);
+        threads[i] = CreateThread( NULL, 0, test_completion_port_scheduling_thread, &p[i], 0, NULL );
+        ok( !!threads[i], "got error %lu.\n", GetLastError() );
+    }
+
+    status = NtCreateIoCompletion( &port, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+    ok( !status, "got %#lx.\n", status );
+    /* Waking multiple threads directly waiting on port */
+    for (i = 0; i < 2; ++i)
+    {
+        p[i].index = i;
+        p[i].port = port;
+        SetEvent( p[i].ready );
+    }
+    PostQueuedCompletionStatus( port, 0, 1, NULL );
+    for (i = 0; i < 2; ++i) WaitForSingleObject( p[i].test_ready, INFINITE );
+    bret = GetQueuedCompletionStatus( port, &count, &key, &overlapped, INFINITE );
+    ok( bret, "got error %lu.\n", GetLastError() );
+
+    /* One thread is waiting on port, another in GetQueuedCompletionStatus(). */
+    SetEvent( p[1].ready );
+    Sleep( 40 );
+    SetEvent( p[0].ready );
+    Sleep( 10 );
+    PostQueuedCompletionStatus( port, 0, 2, NULL );
+    for (i = 0; i < 2; ++i) WaitForSingleObject( p[i].test_ready, INFINITE );
+
+    /* Both threads are waiting in GetQueuedCompletionStatus, LIFO wake up order. */
+    SetEvent( p[1].ready );
+    Sleep( 40 );
+    SetEvent( p[0].ready );
+    Sleep( 20 );
+    PostQueuedCompletionStatus( port, 0, 3, NULL );
+    PostQueuedCompletionStatus( port, 0, 4, NULL );
+    PostQueuedCompletionStatus( port, 0, 5, NULL );
+    bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( key == 5 || broken( key == 4 ) /* before Win10 */, "got %Iu, expected 5.\n", key );
+
+    /* Close port handle while threads are waiting on it directly. */
+    for (i = 0; i < 2; ++i) SetEvent( p[i].ready );
+    Sleep( 20 );
+    NtClose( port );
+    for (i = 0; i < 2; ++i) WaitForSingleObject( p[i].test_ready, INFINITE );
+
+    /* Test signaling on port close. */
+    for (i = 0; i < 4; ++i)
+    {
+        status = NtCreateIoCompletion( &port, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+        ok( !status, "got %#lx.\n", status );
+        for (j = 0; j < 2; ++j)
+        {
+            p[j].port = port;
+            ret = SignalObjectAndWait( p[j].ready, p[j].test_ready,
+                                       INFINITE, FALSE );
+            ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+        }
+        Sleep( 20 );
+        status = NtClose( port );
+        ok( !status, "got %#lx.\n", status );
+    }
+
+    WaitForMultipleObjects( 2, threads, TRUE, INFINITE );
+    for (i = 0; i < 2; ++i)
+    {
+        CloseHandle( threads[i] );
+        CloseHandle( p[i].ready );
+        CloseHandle( p[i].test_ready );
+    }
+}
+
 START_TEST(sync)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
@@ -884,4 +1077,5 @@ START_TEST(sync)
     test_keyed_events();
     test_resource();
     test_tid_alert( argv );
+    test_completion_port_scheduling();
 }
