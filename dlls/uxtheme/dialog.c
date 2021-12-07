@@ -89,34 +89,6 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
             return 1;
         }
 
-    case WM_CTLCOLORSTATIC:
-        if (!doTheming) return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-        {
-            WNDPROC dlgp = (WNDPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
-            LRESULT result = CallWindowProcW(dlgp, hWnd, msg, wParam, lParam);
-            if (!result)
-            {
-                /* Override defaults with more suitable values when themed */
-                HDC controlDC = (HDC)wParam;
-                HWND controlWnd = (HWND)lParam;
-                WCHAR controlClass[32];
-
-                GetClassNameW (controlWnd, controlClass, ARRAY_SIZE(controlClass));
-                if (lstrcmpiW (controlClass, WC_STATICW) == 0)
-                {
-                    SetBkColor(controlDC, GetSysColor(COLOR_BTNFACE));
-                    SetBkMode (controlDC, TRANSPARENT);
-
-                    /* Return NULL brush since we painted the BG already */
-                    return (LRESULT)GetStockObject (NULL_BRUSH);
-                }
-                else
-                    return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-
-            }
-            return result;
-        }
-
     default: 
 	/* Call old proc */
         return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);

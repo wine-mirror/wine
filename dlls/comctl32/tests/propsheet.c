@@ -1298,13 +1298,11 @@ static void test_WM_CTLCOLORSTATIC(void)
 
         /* Test that device context is set to transparent after WM_CTLCOLORSTATIC */
         mode = SetBkMode(child_hdc, old_mode);
-        todo_wine_if(pGetWindowTheme(sheethwnd) == NULL)
         ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
 
         /* Test that the brush is a pattern brush created from the tab body bitmap in the theme */
-        todo_wine_if(pGetWindowTheme(sheethwnd) == NULL)
         ok(hbrush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
-        todo_wine_if(pGetWindowTheme(sheethwnd) != NULL)
+        todo_wine_if(is_theme_active)
         ok(hbrush != GetStockObject(NULL_BRUSH), "Expected a different brush.\n");
         hbrush2 = SelectObject(child_hdc, GetSysColorBrush(COLOR_BTNFACE));
         ok(hbrush2 != hbrush, "Expected a different brush.\n");
@@ -1312,7 +1310,6 @@ static void test_WM_CTLCOLORSTATIC(void)
         memset(&log_brush, 0, sizeof(log_brush));
         count = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
         ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
-        todo_wine_if(pGetWindowTheme(sheethwnd) == NULL)
         ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
         todo_wine
         ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
@@ -1360,10 +1357,8 @@ static void test_WM_CTLCOLORSTATIC(void)
         old_mode = SetBkMode(hdc, OPAQUE);
         ok(old_mode != 0, "SetBkMode failed.\n");
         hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd);
-        todo_wine_if(pGetWindowTheme(sheethwnd) != NULL)
         ok(hbrush2 == hbrush, "Expected the same brush.\n");
         mode = SetBkMode(hdc, old_mode);
-        todo_wine
         ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
         ReleaseDC(hwnd, hdc);
         DestroyWindow(hwnd);
@@ -1374,7 +1369,6 @@ static void test_WM_CTLCOLORSTATIC(void)
         hr = pEnableThemeDialogTexture(sheethwnd, ETDT_DISABLE);
         ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
         hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        todo_wine_if(pGetWindowTheme(sheethwnd) == NULL)
         ok(hbrush2 != hbrush, "Expected a different brush.\n");
         ok(hbrush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
            GetSysColorBrush(COLOR_BTNFACE), hbrush2);
@@ -1456,11 +1450,11 @@ static void test_WM_CTLCOLORSTATIC(void)
         ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
         ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
 
-        todo_wine_if(pGetWindowTheme(sheethwnd) != NULL)
+        todo_wine_if(is_theme_active)
         ok(hbrush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
            GetSysColorBrush(COLOR_BTNFACE), hbrush);
         mode = SetBkMode(child_hdc, old_mode);
-        todo_wine_if(pGetWindowTheme(sheethwnd) != NULL)
+        todo_wine_if(is_theme_active)
         ok(mode == OPAQUE, "Expected mode %#x, got %#x.\n", OPAQUE, mode);
     }
     color = SetBkColor(child_hdc, old_color);

@@ -42,7 +42,6 @@ static int g_nReceivedColorStatic;
 
 static HRESULT (WINAPI *pEnableThemeDialogTexture)(HWND, DWORD);
 static HTHEME (WINAPI *pGetWindowTheme)(HWND);
-static BOOL (WINAPI *pIsThemeActive)(void);
 static BOOL (WINAPI *pIsThemeDialogTextureEnabled)(HWND);
 
 /* try to make sure pending X events have been processed before continuing */
@@ -452,14 +451,12 @@ static void test_WM_CTLCOLORSTATIC(void)
     ok(pGetWindowTheme(dialog) == NULL, "Expected NULL theme handle.\n");
 
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine_if(todo)
     ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
        GetSysColorBrush(COLOR_BTNFACE), brush);
     color = SetBkColor(child_hdc, old_color);
     ok(color == GetSysColor(COLOR_BTNFACE), "Expected background color %#x, got %#x.\n",
        GetSysColor(COLOR_BTNFACE), color);
     mode = SetBkMode(child_hdc, old_mode);
-    todo_wine_if(todo)
     ok(mode == OPAQUE, "Expected mode %#x, got %#x.\n", OPAQUE, mode);
     color = GetPixel(dialog_hdc, 40, 40);
     ok(color == 0, "Expected pixel %#x, got %#x.\n", 0, color);
@@ -475,7 +472,6 @@ static void test_WM_CTLCOLORSTATIC(void)
     ok(ret, "Expected theme dialog texture enabled.\n");
 
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine_if(pIsThemeActive())
     ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
        GetSysColorBrush(COLOR_BTNFACE), brush);
 
@@ -497,7 +493,6 @@ static void init_functions(void)
 #define X(f) p##f = (void *)GetProcAddress(uxtheme, #f);
     X(EnableThemeDialogTexture)
     X(GetWindowTheme)
-    X(IsThemeActive)
     X(IsThemeDialogTextureEnabled)
 #undef X
 }

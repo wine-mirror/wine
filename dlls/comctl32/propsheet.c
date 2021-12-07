@@ -1196,6 +1196,36 @@ PROPSHEET_WizardSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
   return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
+/* Subclassing window procedure for theming dialogs in property sheet pages */
+static LRESULT CALLBACK PROPSHEET_ThemedSubclassProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                                     UINT_PTR id, DWORD_PTR ref)
+{
+    WNDPROC dlgproc;
+    LRESULT lr;
+    HDC hdc;
+
+    switch (msg)
+    {
+    case WM_CTLCOLORSTATIC:
+    {
+        if (!IsThemeActive() || !IsThemeDialogTextureEnabled(hwnd))
+            break;
+
+        dlgproc = (WNDPROC)GetWindowLongPtrW(hwnd, DWLP_DLGPROC);
+        lr = CallWindowProcW(dlgproc, hwnd, msg, wp, lp);
+        if (lr)
+            return lr;
+
+        hdc = (HDC)wp;
+        SetBkColor(hdc, GetSysColor(COLOR_BTNFACE));
+        SetBkMode(hdc, TRANSPARENT);
+        return (LRESULT)GetStockObject(NULL_BRUSH);
+    }
+    }
+
+    return DefSubclassProc(hwnd, msg, wp, lp);
+}
+
 /*
  * Get the size of an in-memory Template
  *
@@ -1466,6 +1496,10 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   {
       SetWindowSubclass(hwndPage, PROPSHEET_WizardSubclassProc, 1,
                         (DWORD_PTR)ppshpage);
+  }
+  else
+  {
+      SetWindowSubclass(hwndPage, PROPSHEET_ThemedSubclassProc, 1, (DWORD_PTR)ppshpage);
   }
   if (!(psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD))
       EnableThemeDialogTexture (hwndPage, ETDT_ENABLETAB);
@@ -2408,6 +2442,10 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
      RemoveWindowSubclass(psInfo->proppage[index].hwndPage,
                           PROPSHEET_WizardSubclassProc, 1);
   }
+  else
+  {
+      RemoveWindowSubclass(psInfo->proppage[index].hwndPage, PROPSHEET_ThemedSubclassProc, 1);
+  }
 
   /* Destroy page dialog window */
   DestroyWindow(psInfo->proppage[index].hwndPage);
@@ -2724,6 +2762,10 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
      {
         RemoveWindowSubclass(psInfo->proppage[i].hwndPage,
                              PROPSHEET_WizardSubclassProc, 1);
+     }
+     else
+     {
+         RemoveWindowSubclass(psInfo->proppage[i].hwndPage, PROPSHEET_ThemedSubclassProc, 1);
      }
 
      if(psInfo->proppage[i].hwndPage)
