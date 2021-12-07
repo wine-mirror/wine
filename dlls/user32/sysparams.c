@@ -1158,7 +1158,6 @@ BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
 #ifdef __i386__
 /* Some apps pass a non-stdcall callback to EnumDisplayMonitors,
  * so we need a small assembly wrapper to call it.
- * MJ's Help Diagnostic expects that %ecx contains the address to the rect.
  */
 extern BOOL enum_mon_callback_wrapper( void *proc, HMONITOR monitor, HDC hdc, RECT *rect, LPARAM lparam );
 __ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
@@ -1169,7 +1168,9 @@ __ASM_GLOBAL_FUNC( enum_mon_callback_wrapper,
     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
     "subl $8,%esp\n\t"
     "pushl 24(%ebp)\n\t"        /* lparam */
-    "pushl 20(%ebp)\n\t"        /* rect */
+    /* MJ's Help Diagnostic expects that %ecx contains the address to the rect. */
+    "movl 20(%ebp),%ecx\n\t"    /* rect */
+    "pushl %ecx\n\t"
     "pushl 16(%ebp)\n\t"        /* hdc */
     "pushl 12(%ebp)\n\t"        /* monitor */
     "movl 8(%ebp),%eax\n"       /* proc */
