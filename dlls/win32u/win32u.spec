@@ -1333,7 +1333,7 @@
 @ cdecl __wine_get_wgl_driver(long long)
 
 # Vulkan
-@ cdecl __wine_get_vulkan_driver(long long)
+@ cdecl __wine_get_vulkan_driver(long)
 
 # gdi32
 @ stdcall SetDIBits(long long long long ptr ptr long)

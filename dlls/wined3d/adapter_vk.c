@@ -250,11 +250,8 @@ static BOOL wined3d_load_vulkan(struct wined3d_vk_info *vk_info)
 {
     struct vulkan_ops *vk_ops = &vk_info->vk_ops;
     const struct vulkan_funcs *vk_funcs;
-    HDC dc;
 
-    dc = GetDC(0);
-    vk_funcs = __wine_get_vulkan_driver(dc, WINE_VULKAN_DRIVER_VERSION);
-    ReleaseDC(0, dc);
+    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
 
     if (!vk_funcs)
         return FALSE;

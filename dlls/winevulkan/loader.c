@@ -221,11 +221,8 @@ VkResult WINAPI vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_ver
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
     const struct vulkan_funcs *driver;
-    HDC hdc;
 
-    hdc = GetDC(0);
-    driver = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
-    ReleaseDC(0, hdc);
+    driver = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
     if (!driver)
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
 

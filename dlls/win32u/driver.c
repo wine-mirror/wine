@@ -584,11 +584,6 @@ static struct opengl_funcs * CDECL nulldrv_wine_get_wgl_driver( PHYSDEV dev, UIN
     return (void *)-1;
 }
 
-static const struct vulkan_funcs * CDECL nulldrv_wine_get_vulkan_driver( PHYSDEV dev, UINT version )
-{
-    return NULL;
-}
-
 const struct gdi_dc_funcs null_driver =
 {
     nulldrv_AbortDoc,                   /* pAbortDoc */
@@ -683,7 +678,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_D3DKMTCheckVidPnExclusiveOwnership, /* pD3DKMTCheckVidPnExclusiveOwnership */
     nulldrv_D3DKMTSetVidPnSourceOwner,  /* pD3DKMTSetVidPnSourceOwner */
     nulldrv_wine_get_wgl_driver,        /* wine_get_wgl_driver */
-    nulldrv_wine_get_vulkan_driver,     /* wine_get_vulkan_driver */
 
     GDI_PRIORITY_NULL_DRV               /* priority */
 };
@@ -936,6 +930,11 @@ static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, voi
     return FALSE;
 }
 
+static const struct vulkan_funcs * CDECL nulldrv_wine_get_vulkan_driver( UINT version )
+{
+    return NULL;
+}
+
 static void CDECL nulldrv_ThreadDetach( void )
 {
 }
@@ -1016,6 +1015,11 @@ static void CDECL loaderdrv_UpdateDisplayDevices( const struct gdi_device_manage
     load_driver()->pUpdateDisplayDevices( manager, force, param );
 }
 
+static const struct vulkan_funcs * CDECL loaderdrv_wine_get_vulkan_driver( UINT version )
+{
+    return load_driver()->pwine_get_vulkan_driver( version );
+}
+
 static const struct user_driver_funcs lazy_load_driver =
 {
     .pActivateKeyboardLayout = loaderdrv_ActivateKeyboardLayout,
@@ -1032,6 +1036,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pUpdateClipboard = loaderdrv_UpdateClipboard,
     .pScrollDC = nulldrv_ScrollDC,
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
+    .pwine_get_vulkan_driver = loaderdrv_wine_get_vulkan_driver,
 };
 
 const struct user_driver_funcs *user_driver = &lazy_load_driver;
@@ -1092,6 +1097,7 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT ver
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(WindowPosChanged);
     SET_USER_FUNC(SystemParametersInfo);
+    SET_USER_FUNC(wine_get_vulkan_driver);
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC
 

@@ -327,16 +327,9 @@ static struct opengl_funcs * CDECL X11DRV_wine_get_wgl_driver( PHYSDEV dev, UINT
 /**********************************************************************
  *           X11DRV_wine_get_vulkan_driver
  */
-static const struct vulkan_funcs * CDECL X11DRV_wine_get_vulkan_driver( PHYSDEV dev, UINT version )
+static const struct vulkan_funcs * CDECL X11DRV_wine_get_vulkan_driver( UINT version )
 {
-    const struct vulkan_funcs *ret;
-
-    if (!(ret = get_vulkan_driver( version )))
-    {
-        dev = GET_NEXT_PHYSDEV( dev, wine_get_vulkan_driver );
-        ret = dev->funcs->wine_get_vulkan_driver( dev, version );
-    }
-    return ret;
+    return get_vulkan_driver( version );
 }
 
 
@@ -385,7 +378,6 @@ static const struct user_driver_funcs x11drv_funcs =
     .dc_funcs.pD3DKMTCheckVidPnExclusiveOwnership = X11DRV_D3DKMTCheckVidPnExclusiveOwnership,
     .dc_funcs.pD3DKMTSetVidPnSourceOwner = X11DRV_D3DKMTSetVidPnSourceOwner,
     .dc_funcs.wine_get_wgl_driver = X11DRV_wine_get_wgl_driver,
-    .dc_funcs.wine_get_vulkan_driver = X11DRV_wine_get_vulkan_driver,
     .dc_funcs.priority = GDI_PRIORITY_GRAPHICS_DRV,
 
     .pActivateKeyboardLayout = X11DRV_ActivateKeyboardLayout,
@@ -426,6 +418,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pWindowPosChanging = X11DRV_WindowPosChanging,
     .pWindowPosChanged = X11DRV_WindowPosChanged,
     .pSystemParametersInfo = X11DRV_SystemParametersInfo,
+    .pwine_get_vulkan_driver = X11DRV_wine_get_vulkan_driver,
     .pThreadDetach = X11DRV_ThreadDetach,
 };
 

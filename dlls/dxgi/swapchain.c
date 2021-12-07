@@ -975,14 +975,10 @@ static void close_library(void *handle)
 static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
 {
     const struct vulkan_funcs *vk_funcs;
-    HDC hdc;
 
     *vulkan_handle = NULL;
 
-    hdc = GetDC(0);
-    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
-    ReleaseDC(0, hdc);
-
+    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
     if (vk_funcs)
         return (PFN_vkGetInstanceProcAddr)vk_funcs->p_vkGetInstanceProcAddr;
 

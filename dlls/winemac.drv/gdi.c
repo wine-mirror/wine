@@ -269,7 +269,6 @@ static const struct user_driver_funcs macdrv_funcs =
     .dc_funcs.pGetDeviceGammaRamp = macdrv_GetDeviceGammaRamp,
     .dc_funcs.pSetDeviceGammaRamp = macdrv_SetDeviceGammaRamp,
     .dc_funcs.wine_get_wgl_driver = macdrv_wine_get_wgl_driver,
-    .dc_funcs.wine_get_vulkan_driver = macdrv_wine_get_vulkan_driver,
     .dc_funcs.priority = GDI_PRIORITY_GRAPHICS_DRV,
 
     .pActivateKeyboardLayout = macdrv_ActivateKeyboardLayout,
@@ -309,6 +308,7 @@ static const struct user_driver_funcs macdrv_funcs =
     .pWindowMessage = macdrv_WindowMessage,
     .pWindowPosChanged = macdrv_WindowPosChanged,
     .pWindowPosChanging = macdrv_WindowPosChanging,
+    .pwine_get_vulkan_driver = macdrv_wine_get_vulkan_driver,
 };
 
 

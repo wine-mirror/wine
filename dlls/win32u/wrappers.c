@@ -896,10 +896,10 @@ BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTME
     return unix_funcs->get_file_outline_text_metric( path, otm );
 }
 
-const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(HDC hdc, UINT version)
+const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(UINT version)
 {
     if (!unix_funcs) return NULL;
-    return unix_funcs->get_vulkan_driver( hdc, version );
+    return unix_funcs->get_vulkan_driver( version );
 }
 
 struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )

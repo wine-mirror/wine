@@ -160,14 +160,13 @@ struct gdi_dc_funcs
     NTSTATUS (CDECL *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
     NTSTATUS (CDECL *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
     struct opengl_funcs * (CDECL *wine_get_wgl_driver)(PHYSDEV,UINT);
-    const struct vulkan_funcs * (CDECL *wine_get_vulkan_driver)(PHYSDEV,UINT);
 
     /* priority order for the driver on the stack */
     UINT       priority;
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 73
+#define WINE_GDI_DRIVER_VERSION 74
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -320,6 +319,8 @@ struct user_driver_funcs
                                        const RECT *,struct window_surface*);
     /* system parameters */
     BOOL    (CDECL *pSystemParametersInfo)(UINT,UINT,void*,UINT);
+    /* vulkan support */
+    const struct vulkan_funcs * (CDECL *pwine_get_vulkan_driver)(UINT);
     /* thread management */
     void    (CDECL *pThreadDetach)(void);
 };
@@ -346,6 +347,6 @@ extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis
                                              const RECT *device_rect, struct window_surface *surface );
 extern void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version );
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
-extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( HDC hdc, UINT version );
+extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version );
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */

@@ -414,6 +414,8 @@ static struct user_driver_funcs lazy_load_driver =
     nulldrv_WindowPosChanged,
     /* system parameters */
     NULL,
+    /* vulkan support */
+    NULL,
     /* thread management */
     nulldrv_ThreadDetach
 };

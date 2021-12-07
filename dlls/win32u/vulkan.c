@@ -25,18 +25,9 @@
 #include "ntgdi_private.h"
 
 /***********************************************************************
- *      __wine_get_vulkan_driver  (GDI32.@)
+ *      __wine_get_vulkan_driver  (win32u.@)
  */
-const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(HDC hdc, UINT version)
+const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version )
 {
-    const struct vulkan_funcs *ret = NULL;
-    DC *dc = get_dc_ptr(hdc);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV(dc, wine_get_vulkan_driver);
-        ret = physdev->funcs->wine_get_vulkan_driver(physdev, version);
-        release_dc_ptr(dc);
-    }
-    return ret;
+    return user_driver->pwine_get_vulkan_driver( version );
 }

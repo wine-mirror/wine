@@ -233,7 +233,7 @@ struct unix_funcs
     BOOL (CDECL *get_brush_bitmap_info)( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage );
     BOOL (CDECL *get_file_outline_text_metric)( const WCHAR *path, OUTLINETEXTMETRICW *otm );
     BOOL (CDECL *get_icm_profile)( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename );
-    const struct vulkan_funcs * (CDECL *get_vulkan_driver)( HDC hdc, UINT version );
+    const struct vulkan_funcs * (CDECL *get_vulkan_driver)( UINT version );
     struct opengl_funcs * (CDECL *get_wgl_driver)( HDC hdc, UINT version );
     void (CDECL *set_display_driver)( struct user_driver_funcs *funcs, UINT version );
     void (CDECL *set_visible_region)( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
