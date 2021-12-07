@@ -202,6 +202,16 @@ done:
     return len;
 }
 
+static int gbk_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return to_utf8(936, out, outlen, in, inlen);
+}
+
+static int utf8_to_gbk(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    return from_utf8(936, out, outlen, in, inlen);
+}
+
 static int win1250_to_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
 {
     return to_utf8(1250, out, outlen, in, inlen);
@@ -300,6 +310,7 @@ static void init_char_encoders(void)
         xmlCharEncodingOutputFunc output;
     } encoder[] =
     {
+        { "gbk",          gbk_to_utf8,     utf8_to_gbk     },
         { "windows-1250", win1250_to_utf8, utf8_to_win1250 },
         { "windows-1251", win1251_to_utf8, utf8_to_win1251 },
         { "windows-1252", win1252_to_utf8, utf8_to_win1252 },
