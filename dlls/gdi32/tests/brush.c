@@ -120,9 +120,14 @@ static void test_pattern_brush(void)
 {
     char buffer[sizeof(BITMAPINFOHEADER) + 2 * sizeof(RGBQUAD) + 32 * 32 / 8];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    HBRUSH brush;
-    HBITMAP bitmap;
+    HBITMAP bitmap, bitmap2, old_bitmap;
+    HBRUSH brush, brush2;
+    HDC hdc, hdc_screen;
+    COLORREF color;
+    BOOL result;
     LOGBRUSH br;
+    BITMAP bm;
+    RECT rect;
     INT ret;
     void *bits;
     DIBSECTION dib;
@@ -269,6 +274,64 @@ static void test_pattern_brush(void)
     ok( !brush, "CreatePatternBrush succeeded\n" );
 
     GlobalFree( mem );
+
+    /* Test deleting bitmap after brush creation */
+    /* Create hdc and bitmaps */
+    hdc_screen = GetDC( NULL );
+    hdc = CreateCompatibleDC( hdc_screen );
+    bitmap = CreateCompatibleBitmap( hdc_screen, 16, 16 );
+    bitmap2 = CreateCompatibleBitmap( hdc_screen, 16, 16 );
+
+    /* Fill the first bitmap with 0xff5511 */
+    old_bitmap = SelectObject( hdc, bitmap );
+    SetRect( &rect, 0, 0, 16, 16 );
+    brush = CreateSolidBrush( 0xff5511 );
+    result = FillRect( hdc, &rect, brush );
+    ok( result, "FillRect failed, error %d.\n", GetLastError() );
+    DeleteObject( brush );
+    color = GetPixel( hdc, 10, 10 );
+    ok( color == 0xff5511, "Expected color %#x, got %#x.\n", 0xff5511, color );
+
+    /* Create a pattern brush with the first bitmap filled with 0xff5511 */
+    brush = CreatePatternBrush( bitmap );
+    ok( brush != NULL, "CreatePatternBrush failed, error %u.\n", GetLastError() );
+
+    /* Delete the first bitmap used for pattern brush creation */
+    SelectObject( hdc, bitmap2 );
+    DeleteObject( bitmap );
+
+    memset( &br, 0, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
+    ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+
+    /* The first bitmap is now invalid */
+    memset( &bm, 0, sizeof (bm));
+    ret = GetObjectW( bitmap, sizeof(bm), &bm );
+    ok( !ret, "wrong size %u\n", ret );
+
+    /* Fill hdc with 0xabcdef */
+    brush2 = CreateSolidBrush( 0xabcdef );
+    result = FillRect( hdc, &rect, brush2 );
+    ok( result, "FillRect failed, error %d.\n", GetLastError() );
+    color = GetPixel( hdc, 10, 10 );
+    ok( color == 0xabcdef, "Expected color %#x, got %#x.\n", 0xabcdef, color );
+    DeleteObject( brush2 );
+
+    /* Fill hdc with the brush created with the deleted bitmap */
+    /* FillRect() succeeds and hdc is filled with the deleted bitmap content */
+    result = FillRect( hdc, &rect, brush );
+    ok( result, "FillRect failed, error %d.\n", GetLastError() );
+    color = GetPixel( hdc, 10, 10 );
+    ok( color == 0xff5511, "Expected color %#x, got %#x.\n", 0xff5511, color );
+    DeleteObject( brush );
+
+    SelectObject( hdc, old_bitmap );
+    DeleteObject( bitmap2 );
+    DeleteDC( hdc );
+    ReleaseDC( NULL, hdc_screen );
 }
 
 static void test_palette_brush(void)
