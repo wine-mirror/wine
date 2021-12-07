@@ -983,3 +983,283 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     unix_gethostname,
     unix_getnameinfo,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+struct WS_addrinfo32
+{
+    int   ai_flags;
+    int   ai_family;
+    int   ai_socktype;
+    int   ai_protocol;
+    PTR32 ai_addrlen;
+    PTR32 ai_canonname;
+    PTR32 ai_addr;
+    PTR32 ai_next;
+};
+
+struct WS_hostent32
+{
+    PTR32 h_name;
+    PTR32 h_aliases;
+    short h_addrtype;
+    short h_length;
+    PTR32 h_addr_list;
+};
+
+static NTSTATUS put_addrinfo32( const struct WS_addrinfo *info, struct WS_addrinfo32 *info32,
+                                unsigned int *size )
+{
+    struct WS_addrinfo32 *dst = info32, *prev = NULL;
+    const struct WS_addrinfo *src;
+    unsigned int needed_size = 0;
+
+    for (src = info; src != NULL; src = src->ai_next)
+    {
+        needed_size += sizeof(struct WS_addrinfo32);
+        if (src->ai_canonname) needed_size += strlen( src->ai_canonname ) + 1;
+        needed_size += src->ai_addrlen;
+    }
+
+    if (*size < needed_size)
+    {
+        *size = needed_size;
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    memset( info32, 0, needed_size );
+
+    for (src = info; src != NULL; src = src->ai_next)
+    {
+        char *next = (char *)(dst + 1);
+
+        dst->ai_flags = src->ai_flags;
+        dst->ai_family = src->ai_family;
+        dst->ai_socktype = src->ai_socktype;
+        dst->ai_protocol = src->ai_protocol;
+        if (src->ai_canonname)
+        {
+            dst->ai_canonname = PtrToUlong( next );
+            strcpy( next, src->ai_canonname );
+            next += strlen(next) + 1;
+        }
+        dst->ai_addrlen = src->ai_addrlen;
+        dst->ai_addr = PtrToUlong(next);
+        memcpy( next, src->ai_addr, dst->ai_addrlen );
+        next += dst->ai_addrlen;
+        if (prev) prev->ai_next = PtrToUlong(dst);
+        prev = dst;
+        dst = (struct WS_addrinfo32 *)next;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS put_hostent32( const struct WS_hostent *host, struct WS_hostent32 *host32,
+                               unsigned int *size )
+{
+    unsigned int needed_size = sizeof( struct WS_hostent32 ), alias_count = 0, addr_count = 0, i;
+    char *p;
+    ULONG *aliases, *addr_list;
+
+    needed_size += strlen( host->h_name ) + 1;
+
+    for (alias_count = 0; host->h_aliases[alias_count] != NULL; ++alias_count)
+        needed_size += sizeof(ULONG) + strlen( host->h_aliases[alias_count] ) + 1;
+    needed_size += sizeof(ULONG); /* null terminator */
+
+    for (addr_count = 0; host->h_addr_list[addr_count] != NULL; ++addr_count)
+        needed_size += sizeof(ULONG) + host->h_length;
+    needed_size += sizeof(ULONG); /* null terminator */
+
+    if (*size < needed_size)
+    {
+        *size = needed_size;
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    memset( host32, 0, needed_size );
+
+    /* arrange the memory in the same order as windows >= XP */
+
+    host32->h_addrtype = host->h_addrtype;
+    host32->h_length = host->h_length;
+
+    aliases = (ULONG *)(host32 + 1);
+    addr_list = aliases + alias_count + 1;
+    p = (char *)(addr_list + addr_count + 1);
+
+    host32->h_aliases = PtrToUlong( aliases );
+    host32->h_addr_list = PtrToUlong( addr_list );
+
+    for (i = 0; i < addr_count; ++i)
+    {
+        addr_list[i] = PtrToUlong( p );
+        memcpy( p, host->h_addr_list[i], host->h_length );
+        p += host->h_length;
+    }
+
+    for (i = 0; i < alias_count; ++i)
+    {
+        size_t len = strlen( host->h_aliases[i] ) + 1;
+
+        aliases[i] = PtrToUlong( p );
+        memcpy( p, host->h_aliases[i], len );
+        p += len;
+    }
+
+    host32->h_name = PtrToUlong( p );
+    strcpy( p, host->h_name );
+    return STATUS_SUCCESS;
+}
+
+
+static NTSTATUS wow64_unix_getaddrinfo( void *args )
+{
+    struct
+    {
+        PTR32 node;
+        PTR32 service;
+        PTR32 hints;
+        PTR32 info;
+        PTR32 size;
+    } const *params32 = args;
+
+    NTSTATUS status;
+    struct WS_addrinfo hints;
+    struct getaddrinfo_params params =
+    {
+        ULongToPtr( params32->node ),
+        ULongToPtr( params32->service ),
+        NULL,
+        NULL,
+        ULongToPtr(params32->size)
+    };
+
+    if (params32->hints)
+    {
+        const struct WS_addrinfo32 *hints32 = ULongToPtr(params32->hints);
+        hints.ai_flags    = hints32->ai_flags;
+        hints.ai_family   = hints32->ai_family;
+        hints.ai_socktype = hints32->ai_socktype;
+        hints.ai_protocol = hints32->ai_protocol;
+        params.hints = &hints;
+    }
+
+    if (!(params.info = malloc( *params.size ))) return WSAENOBUFS;
+    status = unix_getaddrinfo( &params );
+    if (!status) put_addrinfo32( params.info, ULongToPtr(params32->info), ULongToPtr(params32->size) );
+    free( params.info );
+    return status;
+}
+
+
+static NTSTATUS wow64_unix_gethostbyaddr( void *args )
+{
+    struct
+    {
+        PTR32 addr;
+        int   len;
+        int   family;
+        PTR32 host;
+        PTR32 size;
+    } const *params32 = args;
+
+    NTSTATUS status;
+    struct gethostbyaddr_params params =
+    {
+        ULongToPtr( params32->addr ),
+        params32->len,
+        params32->family,
+        NULL,
+        ULongToPtr(params32->size)
+    };
+
+    if (!(params.host = malloc( *params.size ))) return WSAENOBUFS;
+    status = unix_gethostbyaddr( &params );
+    if (!status)
+        status = put_hostent32( params.host, ULongToPtr(params32->host), ULongToPtr(params32->size) );
+    free( params.host );
+    return status;
+}
+
+
+static NTSTATUS wow64_unix_gethostbyname( void *args )
+{
+    struct
+    {
+        PTR32 name;
+        PTR32 host;
+        PTR32 size;
+    } const *params32 = args;
+
+    NTSTATUS status;
+    struct gethostbyname_params params =
+    {
+        ULongToPtr( params32->name ),
+        NULL,
+        ULongToPtr(params32->size)
+    };
+
+    if (!(params.host = malloc( *params.size ))) return WSAENOBUFS;
+    status = unix_gethostbyname( &params );
+    if (!status)
+        status = put_hostent32( params.host, ULongToPtr(params32->host), ULongToPtr(params32->size) );
+    free( params.host );
+    return status;
+}
+
+
+static NTSTATUS wow64_unix_gethostname( void *args )
+{
+    struct
+    {
+        PTR32 name;
+        unsigned int size;
+    } const *params32 = args;
+
+    struct gethostname_params params = { ULongToPtr(params32->name), params32->size };
+
+    if (!unix_gethostname( &params )) return 0;
+    return errno_from_unix( errno );
+}
+
+
+static NTSTATUS wow64_unix_getnameinfo( void *args )
+{
+    struct
+    {
+        PTR32 addr;
+        int addr_len;
+        PTR32 host;
+        DWORD host_len;
+        PTR32 serv;
+        DWORD serv_len;
+        unsigned int flags;
+    } const *params32 = args;
+
+    struct getnameinfo_params params =
+    {
+        ULongToPtr( params32->addr ),
+        params32->addr_len,
+        ULongToPtr( params32->host ),
+        params32->host_len,
+        ULongToPtr( params32->serv ),
+        params32->serv_len,
+        params32->flags
+    };
+
+    return unix_getnameinfo( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_unix_getaddrinfo,
+    wow64_unix_gethostbyaddr,
+    wow64_unix_gethostbyname,
+    wow64_unix_gethostname,
+    wow64_unix_getnameinfo,
+};
+
+#endif  /* _WIN64 */
