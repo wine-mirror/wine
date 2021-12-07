@@ -66,6 +66,7 @@ struct cache_entry
     struct cache_key key;
     float advance;
     unsigned int has_contours : 1;
+    unsigned int has_advance : 1;
 };
 
 static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fontface, const struct cache_key *key)
@@ -97,9 +98,6 @@ static float fontface_get_glyph_advance(struct dwrite_fontface *fontface, float 
     {
         if (!(entry = calloc(1, sizeof(*entry))))
             return 0.0f;
-
-        entry->advance = font_funcs->get_glyph_advance(fontface->get_font_object(fontface), fontsize, glyph, mode, &value);
-        entry->has_contours = !!value;
         entry->key = key;
 
         size = fontface_get_cache_entry_size(entry);
@@ -121,6 +119,13 @@ static float fontface_get_glyph_advance(struct dwrite_fontface *fontface, float 
         }
 
         fontface->cache.size += size;
+    }
+
+    if (!entry->has_advance)
+    {
+        entry->advance = font_funcs->get_glyph_advance(fontface->get_font_object(fontface), fontsize, glyph, mode, &value);
+        entry->has_contours = !!value;
+        entry->has_advance = 1;
     }
 
     *has_contours = entry->has_contours;
