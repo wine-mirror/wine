@@ -76,6 +76,7 @@ struct cursoricon_object
     HMODULE                 module;     /* module for icons loaded from resources */
     LPWSTR                  resname;    /* resource name for icons loaded from resources */
     HRSRC                   rsrc;       /* resource for shared icons */
+    BOOL                    is_shared;  /* whether this object is shared */
     BOOL                    is_icon;    /* whether icon or cursor */
     BOOL                    is_ani;     /* whether this object is a static cursor or an animated cursor */
     UINT                    delay;      /* delay between this frame and the next (in jiffies) */
@@ -1224,10 +1225,14 @@ done:
         }
         else info->resname = MAKEINTRESOURCEW( LOWORD(resname) );
 
-        if (module && (cFlag & LR_SHARED))
+        if (cFlag & LR_SHARED)
         {
-            info->rsrc = rsrc;
-            list_add_head( &icon_cache, &info->entry );
+            info->is_shared = TRUE;
+            if (module)
+            {
+                info->rsrc = rsrc;
+                list_add_head( &icon_cache, &info->entry );
+            }
         }
         release_user_handle_ptr( info );
     }
@@ -1871,7 +1876,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
 
     if (obj)
     {
-        BOOL shared = (obj->rsrc != NULL);
+        BOOL shared = obj->is_shared;
         release_user_handle_ptr( obj );
         ret = (NtUserGetCursor() != hIcon);
         if (!shared) free_icon_handle( hIcon );

@@ -1709,7 +1709,6 @@ static void test_CreateIconFromResource(void)
     ret = DestroyIcon(handle);
     ok(ret, "Destroy icon failed, error %u.\n", GetLastError());
     ret = GetIconInfo(handle, &icon_info);
-    todo_wine
     ok(ret, "Get info failed, error %u.\n", GetLastError());
 
     /* Test creating a shared icon from heap bits that has been created before. */
@@ -1747,7 +1746,6 @@ static void test_CreateIconFromResource(void)
     ret = DestroyIcon(handle);
     ok(ret, "Destroy icon failed, error %u.\n", GetLastError());
     ret = GetIconInfo(handle, &icon_info);
-    todo_wine
     ok(ret, "Get info failed, error %u.\n", GetLastError());
 
     /* Test creating a shared icon from resource bits that has been created before. */
