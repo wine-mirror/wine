@@ -444,7 +444,6 @@ extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLS
 
 struct dwrite_glyphbitmap
 {
-    void *key;
     DWORD simulations;
     float emsize;
     BOOL nohint;
@@ -735,8 +734,8 @@ struct font_backend_funcs
     UINT16 (CDECL *get_glyph_count)(font_object_handle object);
     INT32 (CDECL *get_glyph_advance)(font_object_handle object, float em_size, UINT16 glyph,
             DWRITE_MEASURING_MODE measuring_mode, BOOL *has_contours);
-    void (CDECL *get_glyph_bbox)(struct dwrite_glyphbitmap *bitmap_desc);
-    BOOL (CDECL *get_glyph_bitmap)(struct dwrite_glyphbitmap *bitmap_desc);
+    void (CDECL *get_glyph_bbox)(void *key, struct dwrite_glyphbitmap *bitmap_desc);
+    BOOL (CDECL *get_glyph_bitmap)(void *key, struct dwrite_glyphbitmap *bitmap_desc);
     void (CDECL *get_design_glyph_metrics)(font_object_handle object, UINT16 upem, UINT16 ascent, unsigned int simulations,
             UINT16 glyph, DWRITE_GLYPH_METRICS *metrics);
 };
@@ -744,4 +743,4 @@ struct font_backend_funcs
 extern void init_font_backend(void) DECLSPEC_HIDDEN;
 extern void release_font_backend(void) DECLSPEC_HIDDEN;
 
-extern void dwrite_fontface_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap) DECLSPEC_HIDDEN;
+extern void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *fontface, struct dwrite_glyphbitmap *bitmap) DECLSPEC_HIDDEN;

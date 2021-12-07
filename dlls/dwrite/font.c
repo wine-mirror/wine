@@ -47,9 +47,9 @@ static const FLOAT RECOMMENDED_NATURAL_PPEM = 20.0f;
 
 static const struct font_backend_funcs *font_funcs;
 
-void dwrite_fontface_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
+void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *fontface, struct dwrite_glyphbitmap *bitmap)
 {
-    font_funcs->get_glyph_bbox(bitmap);
+    font_funcs->get_glyph_bbox(fontface, bitmap);
 }
 
 struct cache_key
@@ -5836,7 +5836,6 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-    glyph_bitmap.key = fontface;
     glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
@@ -5848,7 +5847,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         UINT32 bitmap_size;
 
         glyph_bitmap.glyph = analysis->run.glyphIndices[i];
-        font_funcs->get_glyph_bbox(&glyph_bitmap);
+        font_funcs->get_glyph_bbox(fontface, &glyph_bitmap);
 
         bitmap_size = get_glyph_bitmap_pitch(analysis->rendering_mode, bbox->right - bbox->left) *
             (bbox->bottom - bbox->top);
@@ -5927,7 +5926,6 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     origin.x = origin.y = 0.0f;
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-    glyph_bitmap.key = fontface;
     glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
@@ -5948,7 +5946,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
         BOOL is_1bpp;
 
         glyph_bitmap.glyph = analysis->run.glyphIndices[i];
-        font_funcs->get_glyph_bbox(&glyph_bitmap);
+        font_funcs->get_glyph_bbox(fontface, &glyph_bitmap);
 
         if (IsRectEmpty(bbox))
             continue;
@@ -5958,7 +5956,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 
         glyph_bitmap.pitch = get_glyph_bitmap_pitch(analysis->rendering_mode, width);
         memset(src, 0, height * glyph_bitmap.pitch);
-        is_1bpp = font_funcs->get_glyph_bitmap(&glyph_bitmap);
+        is_1bpp = font_funcs->get_glyph_bitmap(fontface, &glyph_bitmap);
 
         OffsetRect(bbox, analysis->origins[i].x, analysis->origins[i].y);
 

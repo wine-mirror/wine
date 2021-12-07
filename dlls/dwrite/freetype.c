@@ -572,7 +572,7 @@ static BOOL is_face_scalable(void *key)
         return FALSE;
 }
 
-static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
+static BOOL get_glyph_transform(void *key, struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
 {
     FT_Matrix m;
 
@@ -583,7 +583,7 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
 
     /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
        Disable transform if that's the case. */
-    if (!is_face_scalable(bitmap->key) || (!bitmap->m && bitmap->simulations == 0))
+    if (!is_face_scalable(key) || (!bitmap->m && !bitmap->simulations))
         return FALSE;
 
     if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
@@ -602,7 +602,7 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
     return TRUE;
 }
 
-static void CDECL freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
+static void CDECL freetype_get_glyph_bbox(void *key, struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     FT_BBox bbox = { 0 };
@@ -612,9 +612,9 @@ static void CDECL freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 
     RtlEnterCriticalSection(&freetype_cs);
 
-    needs_transform = get_glyph_transform(bitmap, &m);
+    needs_transform = get_glyph_transform(key, bitmap, &m);
 
-    imagetype.face_id = bitmap->key;
+    imagetype.face_id = key;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
     imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
@@ -734,7 +734,7 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
     return ret;
 }
 
-static BOOL CDECL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+static BOOL CDECL freetype_get_glyph_bitmap(void *key, struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     BOOL needs_transform;
@@ -744,9 +744,9 @@ static BOOL CDECL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 
     RtlEnterCriticalSection(&freetype_cs);
 
-    needs_transform = get_glyph_transform(bitmap, &m);
+    needs_transform = get_glyph_transform(key, bitmap, &m);
 
-    imagetype.face_id = bitmap->key;
+    imagetype.face_id = key;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
     imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
@@ -865,12 +865,12 @@ static INT32 CDECL null_get_glyph_advance(font_object_handle object, float emsiz
     return 0;
 }
 
-static void CDECL null_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
+static void CDECL null_get_glyph_bbox(void *key, struct dwrite_glyphbitmap *bitmap)
 {
     SetRectEmpty(&bitmap->bbox);
 }
 
-static BOOL CDECL null_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+static BOOL CDECL null_get_glyph_bitmap(void *key, struct dwrite_glyphbitmap *bitmap)
 {
     return FALSE;
 }
