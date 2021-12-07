@@ -3748,6 +3748,8 @@ typedef struct _SID {
 } SID,*PISID;
 #endif /* !defined(SID_DEFINED) */
 
+#define CREATE_BOUNDARY_DESCRIPTOR_ADD_APPCONTAINER_SID 0x01
+
 #define	SID_REVISION			(1)	/* Current revision */
 #define	SID_MAX_SUB_AUTHORITIES		(15)	/* current max subauths */
 #define	SID_RECOMMENDED_SUB_AUTHORITIES	(1)	/* recommended subauths */

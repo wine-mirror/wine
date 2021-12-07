@@ -241,6 +241,8 @@ typedef struct _SECURITY_ATTRIBUTES
     BOOL  bInheritHandle;
 } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
+#include <namespaceapi.h>
+
 #ifndef _FILETIME_
 #define _FILETIME_
 /* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */

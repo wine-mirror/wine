@@ -526,6 +526,7 @@ SOURCES = \
 	mtxdm.h \
 	mulres.idl \
 	multimon.h \
+	namespaceapi.h \
 	natupnp.idl \
 	nb30.h \
 	ncrypt.h \
