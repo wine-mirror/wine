@@ -5,7 +5,6 @@ DELAYIMPORTS = msimg32
 
 C_SRCS = \
 	buffer.c \
-	dialog.c \
 	draw.c \
 	main.c \
 	metric.c \

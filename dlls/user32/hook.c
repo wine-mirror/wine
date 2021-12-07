@@ -83,7 +83,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 static struct user_api_hook original_user_api =
 {
-    USER_DefDlgProc,
     USER_ScrollBarDraw,
     USER_ScrollBarProc,
 };

@@ -1320,9 +1320,7 @@ static void test_WM_CTLCOLORSTATIC(void)
         todo_wine
         ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
 
-        todo_wine_if(pGetWindowTheme(hdlg) != NULL)
         ok(pGetWindowTheme(hdlg) == NULL, "Expected NULL theme handle.\n");
-        todo_wine_if(pGetWindowTheme(sheethwnd) != NULL)
         ok(pGetWindowTheme(sheethwnd) == NULL, "Expected NULL theme handle.\n");
 
         memset(&cls, 0, sizeof(cls));
@@ -1336,18 +1334,15 @@ static void test_WM_CTLCOLORSTATIC(void)
         hwnd = CreateWindowA("TestClass", "test", WS_POPUP | WS_VISIBLE, 0, 0, 4, 4, 0, 0, 0, NULL);
         ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
         theme = pOpenThemeData(hwnd, L"Tab");
-        /* Light theme triggers a double free bug in uxtheme */
-        todo_wine_if(!theme)
         ok(theme != NULL, "OpenThemeData failed.\n");
 
         size.cx = 0;
         size.cy = 0;
         hr = pGetThemePartSize(theme, NULL, TABP_BODY, 0, NULL, TS_TRUE, &size);
-        todo_wine_if(!theme)
         ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-        todo_wine_if(theme)
+        todo_wine
         ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
-        todo_wine_if(theme)
+        todo_wine
         ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
 
         pCloseThemeData(theme);

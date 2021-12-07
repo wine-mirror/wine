@@ -106,7 +106,6 @@ extern HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf) DECLSPEC_HIDDEN;
 extern void UXTHEME_UninitSystem(void) DECLSPEC_HIDDEN;
 
 extern struct user_api_hook user_api DECLSPEC_HIDDEN;
-LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode) DECLSPEC_HIDDEN;
 void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTEST hit_test,
                                   const struct SCROLL_TRACKING_INFO *tracking_info,
                                   BOOL draw_arrows, BOOL draw_interior, RECT *rect, INT arrowsize,

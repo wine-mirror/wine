@@ -408,11 +408,11 @@ static void test_WM_CTLCOLORSTATIC(void)
     HWND parent, dialog, child;
     COLORREF color, old_color;
     HDC child_hdc, dialog_hdc;
-    BOOL ret, todo = FALSE;
     int mode, old_mode;
     HBRUSH brush;
     HRESULT hr;
     POINT org;
+    BOOL ret;
 
     struct
     {
@@ -434,8 +434,6 @@ static void test_WM_CTLCOLORSTATIC(void)
     child = GetDlgItem(dialog, 100);
     ok(child != NULL, "Failed to get child static control, error %d.\n", GetLastError());
 
-    todo = !!pGetWindowTheme(dialog);
-
     dialog_hdc = GetDC(dialog);
     child_hdc = GetDC(child);
     PatBlt(dialog_hdc, 0, 0, 80, 80, BLACKNESS);
@@ -447,7 +445,6 @@ static void test_WM_CTLCOLORSTATIC(void)
 
     ret = pIsThemeDialogTextureEnabled(dialog);
     ok(ret, "Expected theme dialog texture supported.\n");
-    todo_wine_if(todo)
     ok(pGetWindowTheme(dialog) == NULL, "Expected NULL theme handle.\n");
 
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
