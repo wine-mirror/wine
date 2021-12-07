@@ -461,25 +461,25 @@ void init_empty_store(void) DECLSPEC_HIDDEN;
 
 /* Unix interface */
 
-struct cert_store_data;
+typedef UINT64 cert_store_data_t;
 
 struct open_cert_store_params
 {
     CRYPT_DATA_BLOB *pfx;
     const WCHAR *password;
-    struct cert_store_data **data_ret;
+    cert_store_data_t *data_ret;
 };
 
 struct import_store_key_params
 {
-    struct cert_store_data *data;
+    cert_store_data_t data;
     void *buf;
     DWORD *buf_size;
 };
 
 struct import_store_cert_params
 {
-    struct cert_store_data *data;
+    cert_store_data_t data;
     unsigned int index;
     void *buf;
     DWORD *buf_size;
@@ -487,7 +487,7 @@ struct import_store_cert_params
 
 struct close_cert_store_params
 {
-    struct cert_store_data *data;
+    cert_store_data_t data;
 };
 
 struct enum_root_certs_params

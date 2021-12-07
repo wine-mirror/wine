@@ -161,10 +161,15 @@ struct cert_store_data
     unsigned int chain_len;
 };
 
+static struct cert_store_data *get_store_data( cert_store_data_t data )
+{
+    return (struct cert_store_data *)(ULONG_PTR)data;
+}
+
 static NTSTATUS import_store_key( void *args )
 {
     struct import_store_key_params *params = args;
-    struct cert_store_data *data = params->data;
+    struct cert_store_data *data = get_store_data( params->data );
     int i, ret;
     unsigned int bitlen = data->key_bitlen;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
@@ -303,7 +308,7 @@ static NTSTATUS open_cert_store( void *args )
     store_data->chain = chain;
     store_data->key_bitlen = bitlen;
     store_data->chain_len = chain_len;
-    *params->data_ret = store_data;
+    *params->data_ret = (ULONG_PTR)store_data;
     return STATUS_SUCCESS;
 
 error:
@@ -316,7 +321,7 @@ error:
 static NTSTATUS import_store_cert( void *args )
 {
     struct import_store_cert_params *params = args;
-    struct cert_store_data *data = params->data;
+    struct cert_store_data *data = get_store_data( params->data );
     size_t size = 0;
     int ret;
 
@@ -339,11 +344,12 @@ static NTSTATUS import_store_cert( void *args )
 static NTSTATUS close_cert_store( void *args )
 {
     struct close_cert_store_params *params = args;
+    struct cert_store_data *data = get_store_data( params->data );
 
     if (params->data)
     {
-        pgnutls_pkcs12_deinit( params->data->p12 );
-        free( params->data );
+        pgnutls_pkcs12_deinit( data->p12 );
+        free( data );
     }
     return STATUS_SUCCESS;
 }
@@ -678,7 +684,7 @@ static NTSTATUS enum_root_certs( void *args )
     return STATUS_SUCCESS;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     process_attach,
     process_detach,
@@ -688,3 +694,106 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     close_cert_store,
     enum_root_certs,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+typedef struct
+{
+    DWORD cbData;
+    PTR32 pbData;
+} CRYPT_DATA_BLOB32;
+
+static NTSTATUS wow64_open_cert_store( void *args )
+{
+    struct
+    {
+        PTR32 pfx;
+        PTR32 password;
+        PTR32 data_ret;
+    } const *params32 = args;
+
+    const CRYPT_DATA_BLOB32 *pfx32 = ULongToPtr( params32->pfx );
+    CRYPT_DATA_BLOB pfx = { pfx32->cbData, ULongToPtr( pfx32->pbData ) };
+    struct open_cert_store_params params =
+    {
+        &pfx,
+        ULongToPtr( params32->password ),
+        ULongToPtr( params32->data_ret )
+    };
+
+    return open_cert_store( &params );
+}
+
+static NTSTATUS wow64_import_store_key( void *args )
+{
+    struct
+    {
+        cert_store_data_t data;
+        PTR32 buf;
+        PTR32 buf_size;
+    } const *params32 = args;
+
+    struct import_store_key_params params =
+    {
+        params32->data,
+        ULongToPtr( params32->buf ),
+        ULongToPtr( params32->buf_size )
+    };
+
+    return import_store_key( &params );
+}
+
+static NTSTATUS wow64_import_store_cert( void *args )
+{
+    struct
+    {
+        cert_store_data_t data;
+        unsigned int index;
+        PTR32 buf;
+        PTR32 buf_size;
+    } const *params32 = args;
+
+    struct import_store_cert_params params =
+    {
+        params32->data,
+        params32->index,
+        ULongToPtr( params32->buf ),
+        ULongToPtr( params32->buf_size )
+    };
+
+    return import_store_cert( &params );
+}
+
+static NTSTATUS wow64_enum_root_certs( void *args )
+{
+    struct
+    {
+        PTR32  buffer;
+        DWORD  size;
+        PTR32  needed;
+    } const *params32 = args;
+
+    struct enum_root_certs_params params =
+    {
+        ULongToPtr( params32->buffer ),
+        params32->size,
+        ULongToPtr( params32->needed )
+    };
+
+    return enum_root_certs( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    process_attach,
+    process_detach,
+    wow64_open_cert_store,
+    wow64_import_store_key,
+    wow64_import_store_cert,
+    close_cert_store,
+    wow64_enum_root_certs,
+};
+
+#endif  /* _WIN64 */

@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-static HCRYPTPROV import_key( struct cert_store_data *data, DWORD flags )
+static HCRYPTPROV import_key( cert_store_data_t data, DWORD flags )
 {
     HCRYPTPROV prov = 0;
     HCRYPTKEY cryptkey;
@@ -145,7 +145,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     DWORD i = 0, size;
     HCERTSTORE store = NULL;
     HCRYPTPROV prov = 0;
-    struct cert_store_data *data = NULL;
+    cert_store_data_t data = 0;
     struct open_cert_store_params open_params = { pfx, password, &data };
     struct close_cert_store_params close_params;
 
