@@ -465,7 +465,7 @@ extern void             print_value(const struct dbg_lvalue* addr, char format, 
 extern BOOL             types_print_type(const struct dbg_type*, BOOL details);
 extern BOOL             print_types(void);
 extern dbg_lgint_t      types_extract_as_integer(const struct dbg_lvalue*);
-extern dbg_lgint_t      types_extract_as_longlong(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
+extern dbg_lgint_t      types_extract_as_lgint(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
 extern void             types_extract_as_address(const struct dbg_lvalue*, ADDRESS64*);
 extern BOOL             types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lvalue_from);
 extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name, ULONG *tmpbuf);

@@ -47,13 +47,13 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
 }
 
 /******************************************************************
- *		types_extract_as_longlong
+ *		types_extract_as_lgint
  *
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-dbg_lgint_t types_extract_as_longlong(const struct dbg_lvalue* lvalue,
-                                      unsigned* psize, BOOL *issigned)
+dbg_lgint_t types_extract_as_lgint(const struct dbg_lvalue* lvalue,
+                                   unsigned* psize, BOOL *issigned)
 {
     dbg_lgint_t         rtn = 0;
     DWORD               tag, bt;
@@ -138,7 +138,7 @@ dbg_lgint_t types_extract_as_longlong(const struct dbg_lvalue* lvalue,
  */
 dbg_lgint_t types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
-    return types_extract_as_longlong(lvalue, NULL, NULL);
+    return types_extract_as_lgint(lvalue, NULL, NULL);
 }
 
 /******************************************************************
@@ -155,7 +155,7 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
     else
     {
         addr->Mode = AddrModeFlat;
-        addr->Offset = types_extract_as_longlong(lvalue, NULL, NULL);
+        addr->Offset = types_extract_as_lgint(lvalue, NULL, NULL);
     }
 }
 

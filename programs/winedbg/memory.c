@@ -537,7 +537,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     if (format != 0)
     {
         unsigned size;
-        dbg_lgint_t res = types_extract_as_longlong(lvalue, &size, NULL);
+        dbg_lgint_t res = types_extract_as_lgint(lvalue, &size, NULL);
         WCHAR wch;
 
         switch (format)
@@ -570,7 +570,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     }
     if (lvalue->type.id == dbg_itype_segptr)
     {
-        dbg_print_longlong(types_extract_as_longlong(lvalue, NULL, NULL), TRUE);
+        dbg_print_longlong(types_extract_as_lgint(lvalue, NULL, NULL), TRUE);
     }
     else print_typed_basic(lvalue);
 }
