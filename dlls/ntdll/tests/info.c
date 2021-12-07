@@ -3518,20 +3518,16 @@ static void test_debuggee_dbgport(int argc, char **argv)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort,
                                          &debug_port, sizeof(debug_port), NULL );
-    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
     ok( !status, "NtQueryInformationProcess ProcessDebugPort failed, status %#x.\n", status );
-    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
     ok( debug_port == ~(DWORD_PTR)0, "Expected port %#lx, got %#lx.\n", ~(DWORD_PTR)0, debug_port );
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessDebugFlags,
                                          &debug_flags, sizeof(debug_flags), NULL );
-    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
     ok( !status, "NtQueryInformationProcess ProcessDebugFlags failed, status %#x.\n", status );
 
     expect_status = access ? STATUS_SUCCESS : STATUS_ACCESS_DENIED;
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessDebugObjectHandle,
                                          &handle, sizeof(handle), NULL );
-    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
     ok( status == expect_status, "NtQueryInformationProcess ProcessDebugObjectHandle expected status %#x, actual %#x.\n", expect_status, status );
     if (SUCCEEDED( status )) NtClose( handle );
 
