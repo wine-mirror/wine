@@ -254,7 +254,7 @@ extern  HANDLE                  dbg_houtput;
 
 struct dbg_internal_var
 {
-    DWORD_PTR		        val;
+    DWORD                       val;
     const char*                 name;
     void*                       pval;
     ULONG                       typeid; /* always internal type */
