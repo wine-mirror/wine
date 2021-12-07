@@ -1309,10 +1309,19 @@ static LRESULT CALLBACK PROPSHEET_ThemedSubclassProc(HWND hwnd, UINT msg, WPARAM
         if (lr)
             return lr;
 
+        brush = get_propsheet_background_brush(hwnd);
+        if (!brush)
+            break;
+
         hdc = (HDC)wp;
         SetBkColor(hdc, GetSysColor(COLOR_BTNFACE));
         SetBkMode(hdc, TRANSPARENT);
-        return (LRESULT)GetStockObject(NULL_BRUSH);
+
+        org.x = 0;
+        org.y = 0;
+        MapWindowPoints((HWND)lp, hwnd, &org, 1);
+        SetBrushOrgEx(hdc, -org.x, -org.y, NULL);
+        return (LRESULT)brush;
     }
     }
 

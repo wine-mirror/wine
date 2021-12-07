@@ -1293,7 +1293,6 @@ static void test_WM_CTLCOLORSTATIC(void)
         /* Test that brush origin is changed after WM_CTLCOLORSTATIC */
         ret = GetBrushOrgEx(child_hdc, &org);
         ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
-        todo_wine
         ok(org.x == -1 && org.y == -2, "Expected (-1,-2), got %s.\n", wine_dbgstr_point(&org));
 
         /* Test that device context is set to transparent after WM_CTLCOLORSTATIC */
@@ -1302,7 +1301,6 @@ static void test_WM_CTLCOLORSTATIC(void)
 
         /* Test that the brush is a pattern brush created from the tab body bitmap in the theme */
         ok(hbrush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
-        todo_wine_if(is_theme_active)
         ok(hbrush != GetStockObject(NULL_BRUSH), "Expected a different brush.\n");
         hbrush2 = SelectObject(child_hdc, GetSysColorBrush(COLOR_BTNFACE));
         ok(hbrush2 != hbrush, "Expected a different brush.\n");
@@ -1311,13 +1309,11 @@ static void test_WM_CTLCOLORSTATIC(void)
         count = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
         ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
         ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
-        todo_wine
         ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
            log_brush.lbStyle);
 
         memset(&bmp, 0, sizeof(bmp));
         count = GetObjectA((HBITMAP)log_brush.lbHatch, sizeof(bmp), &bmp);
-        todo_wine
         ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
 
         ok(pGetWindowTheme(hdlg) == NULL, "Expected NULL theme handle.\n");
@@ -1340,9 +1336,7 @@ static void test_WM_CTLCOLORSTATIC(void)
         size.cy = 0;
         hr = pGetThemePartSize(theme, NULL, TABP_BODY, 0, NULL, TS_TRUE, &size);
         ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-        todo_wine
         ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
-        todo_wine
         ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
 
         pCloseThemeData(theme);
@@ -1415,13 +1409,11 @@ static void test_WM_CTLCOLORSTATIC(void)
         SetLastError(0xdeadbeef);
         ret = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
         error = GetLastError();
-        todo_wine
         ok(!ret, "GetObjectA succeeded.\n");
         todo_wine
         ok(error == ERROR_INVALID_PARAMETER, "Expected error %u, got %u.\n",
            ERROR_INVALID_PARAMETER, error);
         ret = DeleteObject(hbrush);
-        todo_wine
         ok(!ret, "DeleteObject succeeded.\n");
 
         /* Should still report the same brush handle after the brush handle was freed */
@@ -1432,10 +1424,8 @@ static void test_WM_CTLCOLORSTATIC(void)
         hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
         SendMessageW(sheethwnd, WM_THEMECHANGED, 0, 0);
         hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        todo_wine_if(is_theme_active)
         ok(hbrush2 != hbrush, "Expected a different brush.\n");
         ret = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
-        todo_wine
         ok(!ret, "GetObjectA succeeded.\n");
     }
     else
@@ -1443,6 +1433,7 @@ static void test_WM_CTLCOLORSTATIC(void)
         /* Test that brush origin is at (0,0) */
         ret = GetBrushOrgEx(child_hdc, &org);
         ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
+        todo_wine_if(is_theme_active)
         ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
 
         todo_wine_if(is_theme_active)
