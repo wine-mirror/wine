@@ -36,9 +36,6 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 {
     HTHEME theme = GetWindowTheme ( hWnd );
     static const WCHAR themeClass[] = L"Window";
-    BOOL themingActive = IsThemeDialogTextureEnabled (hWnd);
-    BOOL doTheming = themingActive && (theme != NULL);
-    HRESULT hr = E_FAIL;
     LRESULT result;
 
     switch (msg)
@@ -53,41 +50,6 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
         SetWindowTheme( hWnd, NULL, NULL );
         OpenThemeData( hWnd, NULL );
         return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-
-    case WM_THEMECHANGED:
-        CloseThemeData ( theme );
-	OpenThemeData( hWnd, themeClass );
-	InvalidateRect( hWnd, NULL, TRUE );
-	return 0;
-
-    case WM_ERASEBKGND:
-        if (!doTheming) return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-        {
-            RECT rc;
-            WNDPROC dlgp = (WNDPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
-            if (!CallWindowProcW(dlgp, hWnd, msg, wParam, lParam))
-            {
-                /* Draw background*/
-                GetClientRect (hWnd, &rc);
-                if (IsThemePartDefined (theme, WP_DIALOG, 0))
-                    /* Although there is a theme for the WINDOW class/DIALOG part, 
-                     * but I[res] haven't seen Windows using it yet... Even when
-                     * dialog theming is activated, the good ol' BTNFACE 
-                     * background seems to be used. */
-#if 0
-                    DrawThemeBackground (theme, (HDC)wParam, WP_DIALOG, 0, &rc, 
-                        NULL);
-#endif
-                    return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-                /* We might have gotten a TAB theme class, so check if we can draw as a tab page */
-                else if (IsThemePartDefined(theme, TABP_BODY, 0))
-                    hr = DrawThemeBackground(theme, (HDC)wParam, TABP_BODY, 0, &rc, NULL);
-
-                if (FAILED(hr))
-                    return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
-            }
-            return 1;
-        }
 
     default: 
 	/* Call old proc */
