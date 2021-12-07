@@ -46,6 +46,8 @@ static NTSTATUS (WINAPI * pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void
 static NTSTATUS (WINAPI * pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
 static NTSTATUS (WINAPI * pNtSetInformationDebugObject)(HANDLE,DEBUGOBJECTINFOCLASS,PVOID,ULONG,ULONG*);
 static NTSTATUS (WINAPI * pDbgUiConvertStateChangeStructure)(DBGUI_WAIT_STATE_CHANGE*,DEBUG_EVENT*);
+static HANDLE   (WINAPI * pDbgUiGetThreadDebugObject)(void);
+static void     (WINAPI * pDbgUiSetThreadDebugObject)(HANDLE);
 
 static BOOL is_wow64;
 
@@ -99,6 +101,8 @@ static void InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtSetInformationDebugObject);
     NTDLL_GET_PROC(NtGetCurrentProcessorNumber);
     NTDLL_GET_PROC(DbgUiConvertStateChangeStructure);
+    NTDLL_GET_PROC(DbgUiGetThreadDebugObject);
+    NTDLL_GET_PROC(DbgUiSetThreadDebugObject);
 
     pIsWow64Process = (void *)GetProcAddress(hkernel32, "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -2027,6 +2031,127 @@ static void test_query_process_debug_port(int argc, char **argv)
     ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
 }
 
+static void subtest_query_process_debug_port_custom_dacl(int argc, char **argv, ACCESS_MASK access, PSID sid)
+{
+    HANDLE old_debug_obj, debug_obj;
+    OBJECT_ATTRIBUTES attr;
+    SECURITY_DESCRIPTOR sd;
+    union {
+        ACL acl;
+        DWORD buffer[(sizeof(ACL) +
+                      (offsetof(ACCESS_ALLOWED_ACE, SidStart) + SECURITY_MAX_SID_SIZE) +
+                      sizeof(DWORD) - 1) / sizeof(DWORD)];
+    } acl;
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si;
+    DEBUG_EVENT ev;
+    NTSTATUS status;
+    BOOL ret;
+
+    InitializeAcl(&acl.acl, sizeof(acl), ACL_REVISION);
+    AddAccessAllowedAce(&acl.acl, ACL_REVISION, access, sid);
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    SetSecurityDescriptorDacl(&sd, TRUE, &acl.acl, FALSE);
+
+    InitializeObjectAttributes(&attr, NULL, 0, NULL, &sd);
+    status = NtCreateDebugObject(&debug_obj, MAXIMUM_ALLOWED, &attr, DEBUG_KILL_ON_CLOSE);
+    ok(SUCCEEDED(status), "Failed to create debug object: %#010x\n", status);
+    if (!SUCCEEDED(status)) return;
+
+    old_debug_obj = pDbgUiGetThreadDebugObject();
+    pDbgUiSetThreadDebugObject(debug_obj);
+
+    sprintf(cmdline, "%s %s %s %u", argv[0], argv[1], "debuggee:dbgport", access);
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE,
+                         DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    if (!ret) goto close_debug_obj;
+
+    do
+    {
+        ret = WaitForDebugEvent(&ev, INFINITE);
+        ok(ret, "WaitForDebugEvent failed, last error %#x.\n", GetLastError());
+        if (!ret) break;
+
+        ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+        ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
+        if (!ret) break;
+    } while (ev.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
+
+    wait_child_process(pi.hProcess);
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
+    ret = CloseHandle(pi.hProcess);
+    ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
+
+close_debug_obj:
+    pDbgUiSetThreadDebugObject(old_debug_obj);
+    NtClose(debug_obj);
+}
+
+static TOKEN_OWNER *get_current_owner(void)
+{
+    TOKEN_OWNER *owner;
+    ULONG length = 0;
+    HANDLE token;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &token);
+    ok(ret, "Failed to get process token: %u\n", GetLastError());
+
+    ret = GetTokenInformation(token, TokenOwner, NULL, 0, &length);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "GetTokenInformation failed: %u\n", GetLastError());
+    ok(length != 0, "Failed to get token owner information length: %u\n", GetLastError());
+
+    owner = HeapAlloc(GetProcessHeap(), 0, length);
+    ret = GetTokenInformation(token, TokenOwner, owner, length, &length);
+    ok(ret, "Failed to get token owner information: %u)\n", GetLastError());
+
+    CloseHandle(token);
+    return owner;
+}
+
+static void test_query_process_debug_port_custom_dacl(int argc, char **argv)
+{
+    static const ACCESS_MASK all_access_masks[] = {
+        GENERIC_ALL,
+        DEBUG_ALL_ACCESS,
+        STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE,
+    };
+    TOKEN_OWNER *owner;
+    int i;
+
+    if (!pDbgUiSetThreadDebugObject)
+    {
+        skip("DbgUiGetThreadDebugObject not found\n");
+        return;
+    }
+
+    if (!pDbgUiGetThreadDebugObject)
+    {
+        skip("DbgUiSetThreadDebugObject not found\n");
+        return;
+    }
+
+    owner = get_current_owner();
+
+    for (i = 0; i < ARRAY_SIZE(all_access_masks); i++)
+    {
+        ACCESS_MASK access = all_access_masks[i];
+
+        winetest_push_context("debug object access %08x", access);
+        subtest_query_process_debug_port_custom_dacl(argc, argv, access, owner->Owner);
+        winetest_pop_context();
+    }
+
+    HeapFree(GetProcessHeap(), 0, owner);
+}
+
 static void test_query_process_priority(void)
 {
     PROCESS_PRIORITY_CLASS priority[2];
@@ -3374,6 +3499,45 @@ static void test_process_instrumentation_callback(void)
             "Got unexpected status %#x.\n", status );
 }
 
+static void test_debuggee_dbgport(int argc, char **argv)
+{
+    NTSTATUS status, expect_status;
+    DWORD_PTR debug_port = 0xdeadbeef;
+    DWORD debug_flags = 0xdeadbeef;
+    HANDLE handle;
+    ACCESS_MASK access;
+
+    if (argc < 2)
+    {
+        ok(0, "insufficient arguments for child process\n");
+        return;
+    }
+
+    access = strtoul(argv[1], NULL, 0);
+    winetest_push_context("debug object access %08x", access);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort,
+                                         &debug_port, sizeof(debug_port), NULL );
+    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
+    ok( !status, "NtQueryInformationProcess ProcessDebugPort failed, status %#x.\n", status );
+    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
+    ok( debug_port == ~(DWORD_PTR)0, "Expected port %#lx, got %#lx.\n", ~(DWORD_PTR)0, debug_port );
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessDebugFlags,
+                                         &debug_flags, sizeof(debug_flags), NULL );
+    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
+    ok( !status, "NtQueryInformationProcess ProcessDebugFlags failed, status %#x.\n", status );
+
+    expect_status = access ? STATUS_SUCCESS : STATUS_ACCESS_DENIED;
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessDebugObjectHandle,
+                                         &handle, sizeof(handle), NULL );
+    todo_wine_if(access != DEBUG_ALL_ACCESS && access != GENERIC_ALL)
+    ok( status == expect_status, "NtQueryInformationProcess ProcessDebugObjectHandle expected status %#x, actual %#x.\n", expect_status, status );
+    if (SUCCEEDED( status )) NtClose( handle );
+
+    winetest_pop_context();
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -3382,7 +3546,11 @@ START_TEST(info)
     InitFunctionPtrs();
 
     argc = winetest_get_mainargs(&argv);
-    if (argc >= 3) return; /* Child */
+    if (argc >= 3)
+    {
+        if (strcmp(argv[2], "debuggee:dbgport") == 0) test_debuggee_dbgport(argc - 2, argv + 2);
+        return; /* Child */
+    }
 
     /* NtQuerySystemInformation */
     test_query_basic();
@@ -3416,6 +3584,7 @@ START_TEST(info)
     test_query_process_vm();
     test_query_process_times();
     test_query_process_debug_port(argc, argv);
+    test_query_process_debug_port_custom_dacl(argc, argv);
     test_query_process_priority();
     test_query_process_handlecount();
     test_query_process_wow64();
