@@ -1539,6 +1539,13 @@ static void test_LoadImage(void)
     test_LoadImage_working_directory();
 }
 
+static BOOL CALLBACK find_res_proc(HMODULE module, LPCSTR type, LPSTR name, LONG_PTR param)
+{
+    char **res_name = (char **)param;
+    *res_name = name;
+    return FALSE;
+}
+
 static void test_CreateIconFromResource(void)
 {
     HANDLE handle, old_handle;
@@ -1547,6 +1554,13 @@ static void test_CreateIconFromResource(void)
     BITMAPINFOHEADER *icon_header;
     INT16 *hotspot;
     ICONINFO icon_info;
+    HMODULE user32;
+    char *res_name;
+    HRSRC rsrc;
+    HGLOBAL res;
+    BYTE *bits;
+    UINT size;
+
 
 #define ICON_RES_WIDTH 32
 #define ICON_RES_HEIGHT 32
@@ -1706,6 +1720,41 @@ static void test_CreateIconFromResource(void)
     ok(handle != old_handle, "Expect a different handle.\n");
 
     HeapFree(GetProcessHeap(), 0, hotspot);
+
+    /* Get icon resource bits */
+    user32 = GetModuleHandleA("user32.dll");
+    EnumResourceNamesA(user32, (const char *)RT_GROUP_ICON, find_res_proc, (LONG_PTR)&res_name);
+    rsrc = FindResourceA(user32, res_name, (const char *)RT_GROUP_ICON);
+    ok(rsrc != NULL, "Find resource failed, error %u.\n", GetLastError());
+    res = LoadResource(user32, rsrc);
+    ok(res != NULL, "Load resource failed, error %u.\n", GetLastError());
+    bits = LockResource(res);
+    ok(bits != NULL, "Lock resource failed, error %u.\n", GetLastError());
+
+    res_name = MAKEINTRESOURCEA(LookupIconIdFromDirectory(bits, TRUE));
+    rsrc = FindResourceA(user32, res_name, (const char *)RT_ICON);
+    ok(rsrc != NULL, "Find resource failed, error %u.\n", GetLastError());
+    size = SizeofResource(user32, rsrc);
+    ok(size != 0, "Get resource size failed, error %u.\n", GetLastError());
+    res = LoadResource(user32, rsrc);
+    ok(res != NULL, "Load resource failed, error %u.\n", GetLastError());
+    bits = LockResource(res);
+    ok(bits != NULL, "Lock resource failed, error %u.\n", GetLastError());
+
+    /* Test creating and destroying a shared icon from resource bits. */
+    handle = CreateIconFromResourceEx(bits, size, TRUE, 0x00030000, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    ok(handle != NULL, "Create icon failed, error %u\n", GetLastError());
+    ret = DestroyIcon(handle);
+    ok(ret, "Destroy icon failed, error %u.\n", GetLastError());
+    ret = GetIconInfo(handle, &icon_info);
+    todo_wine
+    ok(ret, "Get info failed, error %u.\n", GetLastError());
+
+    /* Test creating a shared icon from resource bits that has been created before. */
+    old_handle = handle;
+    handle = CreateIconFromResourceEx(bits, size, TRUE, 0x00030000, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    ok(handle != NULL, "Create icon failed, error %u.\n", GetLastError());
+    ok(handle != old_handle, "Expect a different handle.\n");
 }
 
 static int check_cursor_data( HDC hdc, HCURSOR hCursor, void *data, int length)
