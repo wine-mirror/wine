@@ -2314,7 +2314,10 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
      * Actual thunks will be created in elf_module from the symbol table
      */
     if (elf_is_in_thunk_area(di->unit_ctx->module_ctx->load_offset + addr_ranges[0].low, di->unit_ctx->module_ctx->thunks) >= 0)
+    {
+        free(addr_ranges);
         return NULL;
+    }
     ret_type = dwarf2_lookup_type(di);
 
     /* FIXME: assuming C source code */
