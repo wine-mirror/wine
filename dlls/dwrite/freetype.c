@@ -814,3 +814,231 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     get_glyph_bitmap,
     get_design_glyph_metrics,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_create_font_object(void *args)
+{
+    struct
+    {
+        PTR32 data;
+        UINT64 size;
+        ULONG index;
+        PTR32 object;
+    } const *params32 = args;
+    struct create_font_object_params params =
+    {
+        ULongToPtr(params32->data),
+        params32->size,
+        params32->index,
+        ULongToPtr(params32->object),
+    };
+
+    return create_font_object(&params);
+}
+
+static NTSTATUS wow64_release_font_object(void *args)
+{
+    struct
+    {
+        UINT64 object;
+    } const *params32 = args;
+    struct release_font_object_params params =
+    {
+        params32->object
+    };
+
+    return release_font_object(&params);
+}
+
+struct dwrite_outline32
+{
+    struct
+    {
+        PTR32 values;
+        ULONG count;
+        ULONG size;
+    } tags;
+
+    struct
+    {
+        PTR32 values;
+        ULONG count;
+        ULONG size;
+    } points;
+};
+
+static NTSTATUS wow64_get_glyph_outline(void *args)
+{
+    struct
+    {
+        UINT64 object;
+        ULONG simulations;
+        ULONG glyph;
+        float emsize;
+        PTR32 outline;
+    } const *params32 = args;
+    struct dwrite_outline32 *outline32 = ULongToPtr(params32->outline);
+    struct dwrite_outline outline =
+    {
+        .tags.values = ULongToPtr(outline32->tags.values),
+        .tags.count = outline32->tags.count,
+        .tags.size = outline32->tags.size,
+        .points.values = ULongToPtr(outline32->points.values),
+        .points.count = outline32->points.count,
+        .points.size = outline32->points.size,
+    };
+
+    struct get_glyph_outline_params params =
+    {
+        params32->object,
+        params32->simulations,
+        params32->glyph,
+        params32->emsize,
+        &outline,
+    };
+    NTSTATUS status;
+
+    status = get_glyph_outline(&params);
+    outline32->points.count = outline.points.count;
+    outline32->tags.count = outline.tags.count;
+    return status;
+}
+
+static NTSTATUS wow64_get_glyph_count(void *args)
+{
+    struct
+    {
+        UINT64 object;
+        PTR32 count;
+    } const *params32 = args;
+    struct get_glyph_count_params params =
+    {
+        params32->object,
+        ULongToPtr(params32->count),
+    };
+
+    return get_glyph_count(&params);
+}
+
+static NTSTATUS wow64_get_glyph_advance(void *args)
+{
+    struct
+    {
+        UINT64 object;
+        ULONG glyph;
+        ULONG mode;
+        float emsize;
+        PTR32 advance;
+        PTR32 has_contours;
+    } const *params32 = args;
+    struct get_glyph_advance_params params =
+    {
+        params32->object,
+        params32->glyph,
+        params32->mode,
+        params32->emsize,
+        ULongToPtr(params32->advance),
+        ULongToPtr(params32->has_contours),
+    };
+
+    return get_glyph_advance(&params);
+}
+
+static NTSTATUS wow64_get_glyph_bbox(void *args)
+{
+    struct
+    {
+        UINT64 object;
+        ULONG simulations;
+        ULONG glyph;
+        float emsize;
+        DWRITE_MATRIX m;
+        PTR32 bbox;
+    } const *params32 = args;
+    struct get_glyph_bbox_params params =
+    {
+        params32->object,
+        params32->simulations,
+        params32->glyph,
+        params32->emsize,
+        params32->m,
+        ULongToPtr(params32->bbox),
+    };
+
+    return get_glyph_bbox(&params);
+}
+
+static NTSTATUS wow64_get_glyph_bitmap(void *args)
+{
+    struct
+    {
+        UINT64 object;
+        ULONG simulations;
+        ULONG glyph;
+        ULONG mode;
+        float emsize;
+        DWRITE_MATRIX m;
+        RECT bbox;
+        int pitch;
+        PTR32 bitmap;
+        PTR32 is_1bpp;
+    } const *params32 = args;
+    struct get_glyph_bitmap_params params =
+    {
+        params32->object,
+        params32->simulations,
+        params32->glyph,
+        params32->mode,
+        params32->emsize,
+        params32->m,
+        params32->bbox,
+        params32->pitch,
+        ULongToPtr(params32->bitmap),
+        ULongToPtr(params32->is_1bpp),
+    };
+
+    return get_glyph_bitmap(&params);
+}
+
+static NTSTATUS wow64_get_design_glyph_metrics(void *args)
+{
+    struct
+    {
+        UINT64 object;
+        ULONG simulations;
+        ULONG glyph;
+        ULONG upem;
+        ULONG ascent;
+        PTR32 metrics;
+    } const *params32 = args;
+    struct get_design_glyph_metrics_params params =
+    {
+        params32->object,
+        params32->simulations,
+        params32->glyph,
+        params32->upem,
+        params32->ascent,
+        ULongToPtr(params32->metrics),
+    };
+
+    return get_design_glyph_metrics(&params);
+};
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    process_attach,
+    process_detach,
+    wow64_create_font_object,
+    wow64_release_font_object,
+    wow64_get_glyph_outline,
+    wow64_get_glyph_count,
+    wow64_get_glyph_advance,
+    wow64_get_glyph_bbox,
+    wow64_get_glyph_bitmap,
+    wow64_get_design_glyph_metrics,
+};
+
+#endif  /* _WIN64 */
