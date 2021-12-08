@@ -5316,10 +5316,15 @@ static UINT64 dwrite_fontface_get_font_object(struct dwrite_fontface *fontface)
                 return 0;
             }
 
-            if (InterlockedCompareExchange64((LONGLONG *)&fontface->font_object, font_object, 0))
+            if (!InterlockedCompareExchange64((LONGLONG *)&fontface->font_object, font_object, 0))
+            {
+                fontface->data_context = data_context;
+            }
+            else
             {
                 release_params.object = font_object;
                 UNIX_CALL(release_font_object, &release_params);
+                IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, data_context);
             }
         }
     }
