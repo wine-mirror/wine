@@ -99,6 +99,7 @@ DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswxa]
 IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*
+SCOPED_IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*"::"
 PATHNAME   [\\/_a-zA-Z0-9\.~@][\\/\-_a-zA-Z0-9\.~@]*
 STRING     \"(\\[^\n]|[^\\"\n])*\"
 
@@ -135,7 +136,6 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 "<<"					{ return OP_SHL; }
 ">>"					{ return OP_SHR; }
 "->"					{ return OP_DRF; }
-"::"					{ return OP_SCOPE; }
 "["					{ return *yytext; }
 "]"					{ return *yytext; }
 
@@ -243,7 +243,7 @@ union					{ return tUNION; }
 enum					{ return tENUM; }
 all                                     { return tALL; }
 
-{IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
+{SCOPED_IDENTIFIER}*{IDENTIFIER}	{ dbg_lval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
 "$"{IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext+1); return tINTVAR; }
 
 <PATH_EXPECTED,PATH_ACCEPTED>{PATHNAME}	{ dbg_lval.string = lexeme_alloc(yytext); return tPATH; }

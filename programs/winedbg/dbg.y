@@ -77,13 +77,13 @@ static void parser(const char*);
 %left '+' '-'
 %left '*' '/' '%'
 %left OP_SIGN '!' '~' OP_DEREF /* OP_INC OP_DEC OP_ADDR */
-%left '.' '[' OP_DRF OP_SCOPE
+%left '.' '[' OP_DRF
 %nonassoc ':'
 
 %type <expression> expr lvalue
 %type <lvalue> expr_lvalue lvalue_addr
 %type <integer> expr_rvalue
-%type <string> pathname identifier cpp_identifier
+%type <string> pathname identifier
 %type <listing> list_arg
 %type <type> type_expr
 %type <strings> list_of_words
@@ -162,15 +162,9 @@ pathname:
     | tPATH                     { $$ = $1; }
     ;
 
-cpp_identifier:
-      tIDENTIFIER               { $$ = $1; }
-    | identifier OP_SCOPE tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 2 + strlen($3) + 1);
-                                       sprintf($$, "%s::%s", $1, $3); }
-    ;
-
 identifier:
-      cpp_identifier            { $$ = $1; }
-    | tIDENTIFIER '!' cpp_identifier { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
+      tIDENTIFIER              { $$ = $1; }
+    | tIDENTIFIER '!' tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
                                        sprintf($$, "%s!%s", $1, $3); }
     ;
 
