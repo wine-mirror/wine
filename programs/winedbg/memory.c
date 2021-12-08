@@ -360,13 +360,13 @@ static void dbg_print_longlong(LONGLONG sv, BOOL is_signed)
     dbg_printf("%s", ptr);
 }
 
-static void dbg_print_hex(DWORD size, ULONGLONG sv)
+static void dbg_print_hex(DWORD size, dbg_lgint_t sv)
 {
     if (!sv)
         dbg_printf("0");
     else
         /* clear unneeded high bits, esp. sign extension */
-        dbg_printf("%#I64x", sv & (~0LLU >> (64 - 8 * size)));
+        dbg_printf("%#I64x", sv & (~(dbg_lguint_t)0 >> (8 * (sizeof(dbg_lgint_t) - size))));
 }
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
@@ -543,7 +543,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
         switch (format)
         {
         case 'x':
-            dbg_print_hex(size, (ULONGLONG)res);
+            dbg_print_hex(size, res);
             return;
 
         case 'd':
