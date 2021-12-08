@@ -1289,7 +1289,7 @@ static LRESULT CALLBACK PROPSHEET_ThemedSubclassProc(HWND hwnd, UINT msg, WPARAM
         /* Using FillRect() to draw background could introduce a tiling effect if the destination
          * rectangle is larger than the pattern brush size, which is usually 10x600. This bug is
          * visible on property sheet pages if system DPI is set to 192. However, the same bug also
-         * exists on XP and explains why vista+ don't use gradient tab body backgound anymore */
+         * exists on XP and explains why vista+ don't use gradient tab body background anymore */
         hdc = (HDC)wp;
         GetViewportOrgEx(hdc, &org);
         SetBrushOrgEx(hdc, org.x, org.y, &old_org);
