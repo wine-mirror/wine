@@ -397,6 +397,7 @@ extern BOOL             memory_fetch_integer(const struct dbg_lvalue* lvalue, un
                                              BOOL is_signed, dbg_lgint_t* ret);
 extern BOOL             memory_store_integer(const struct dbg_lvalue* lvalue, dbg_lgint_t val);
 extern BOOL             memory_fetch_float(const struct dbg_lvalue* lvalue, double *ret);
+extern BOOL             memory_store_float(const struct dbg_lvalue* lvalue, double *ret);
 extern void             memory_examine(const struct dbg_lvalue *lvalue, int count, char format);
 extern void*            memory_to_linear_addr(const ADDRESS64* address);
 extern BOOL             memory_get_current_pc(ADDRESS64* address);
@@ -497,6 +498,7 @@ extern struct dbg_type  types_find_pointer(const struct dbg_type* type);
 extern struct dbg_type  types_find_type(DWORD64 linear, const char* name, enum SymTagEnum tag);
 extern BOOL             types_compare(const struct dbg_type, const struct dbg_type, BOOL* equal);
 extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
+extern BOOL             types_is_float_type(const struct dbg_lvalue*);
 
   /* winedbg.c */
 extern void	        dbg_outputW(const WCHAR* buffer, int len);

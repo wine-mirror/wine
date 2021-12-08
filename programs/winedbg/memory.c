@@ -354,6 +354,23 @@ BOOL memory_fetch_float(const struct dbg_lvalue* lvalue, double *ret)
     return TRUE;
 }
 
+BOOL memory_store_float(const struct dbg_lvalue* lvalue, double *ret)
+{
+    DWORD64 size;
+    if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size)) return FALSE;
+    /* FIXME: this assumes that debuggee and debugger use the same
+     * representation for reals
+     */
+    if (size > sizeof(*ret)) return FALSE;
+    if (size == sizeof(float))
+    {
+        float f = *ret;
+        return memory_write_value(lvalue, size, &f);
+    }
+    if (size != sizeof(double)) return FALSE;
+    return memory_write_value(lvalue, size, ret);
+}
+
 BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
                        BOOL unicode, char* buffer, int size)
 {

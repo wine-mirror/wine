@@ -168,6 +168,12 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
         if (!types_compare(lvalue_to->type, lvalue_from->type, &equal)) return FALSE;
         if (equal)
             return memory_transfer_value(lvalue_to, lvalue_from);
+        if (types_is_float_type(lvalue_from) && types_is_float_type(lvalue_to))
+        {
+            double d;
+            return memory_fetch_float(lvalue_from, &d) &&
+                memory_store_float(lvalue_to, &d);
+        }
     }
     if (types_is_integral_type(lvalue_from) && types_is_integral_type(lvalue_to))
     {
@@ -175,7 +181,6 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
         dbg_lgint_t val = types_extract_as_integer(lvalue_from);
         return memory_store_integer(lvalue_to, val);
     }
-    /* FIXME: should support floats as well */
     dbg_printf("Cannot assign (different types)\n"); return FALSE;
     return FALSE;
 }
@@ -1074,4 +1079,14 @@ BOOL types_is_integral_type(const struct dbg_lvalue* lv)
     if (!types_get_real_type(&type, &tag) ||
         !types_get_info(&type, TI_GET_BASETYPE, &bt)) return FALSE;
     return is_basetype_integer(bt);
+}
+
+BOOL types_is_float_type(const struct dbg_lvalue* lv)
+{
+    struct dbg_type type = lv->type;
+    DWORD tag, bt;
+    if (lv->bitlen) return FALSE;
+    if (!types_get_real_type(&type, &tag) ||
+        !types_get_info(&type, TI_GET_BASETYPE, &bt)) return FALSE;
+    return bt == btFloat;
 }
