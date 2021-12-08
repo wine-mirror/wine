@@ -223,8 +223,7 @@ extern HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_cmap *cmap, 
         DWRITE_UNICODE_RANGE *ranges, unsigned int *count) DECLSPEC_HIDDEN;
 
 struct dwrite_fontface;
-typedef void * font_object_handle;
-typedef font_object_handle (*p_dwrite_fontface_get_font_object)(struct dwrite_fontface *fontface);
+typedef UINT64 (*p_dwrite_fontface_get_font_object)(struct dwrite_fontface *fontface);
 
 struct dwrite_fontface
 {
@@ -238,7 +237,7 @@ struct dwrite_fontface
 
     IDWriteFactory7 *factory;
     struct fontfacecached *cached;
-    font_object_handle font_object;
+    UINT64 font_object;
     void *data_context;
     p_dwrite_fontface_get_font_object get_font_object;
     struct
@@ -716,23 +715,5 @@ extern HRESULT shape_check_typographic_feature(struct scriptshaping_context *con
 
 struct font_data_context;
 extern HMODULE dwrite_module DECLSPEC_HIDDEN;
-
-struct font_backend_funcs
-{
-    font_object_handle (CDECL *create_font_object)(const void *data_ptr, UINT64 data_size, unsigned int index);
-    void (CDECL *release_font_object)(font_object_handle object);
-    int (CDECL *get_glyph_outline)(font_object_handle object, float emsize, unsigned int simulations, UINT16 glyph,
-            struct dwrite_outline *outline);
-    UINT16 (CDECL *get_glyph_count)(font_object_handle object);
-    INT32 (CDECL *get_glyph_advance)(font_object_handle object, float em_size, UINT16 glyph,
-            DWRITE_MEASURING_MODE measuring_mode, BOOL *has_contours);
-    void (CDECL *get_glyph_bbox)(font_object_handle object, struct dwrite_glyphbitmap *bitmap_desc);
-    BOOL (CDECL *get_glyph_bitmap)(font_object_handle object, struct dwrite_glyphbitmap *bitmap_desc);
-    void (CDECL *get_design_glyph_metrics)(font_object_handle object, UINT16 upem, UINT16 ascent, unsigned int simulations,
-            UINT16 glyph, DWRITE_GLYPH_METRICS *metrics);
-};
-
-extern void init_font_backend(void) DECLSPEC_HIDDEN;
-extern void release_font_backend(void) DECLSPEC_HIDDEN;
 
 extern void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *fontface, struct dwrite_glyphbitmap *bitmap) DECLSPEC_HIDDEN;

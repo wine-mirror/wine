@@ -40,6 +40,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "wine/debug.h"
+#include "unixlib.h"
 
 #include "dwrite_private.h"
 
@@ -88,6 +89,8 @@ MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 #undef MAKE_FUNCPTR
 static FT_Error (*pFT_Outline_EmboldenXY)(FT_Outline *, FT_Pos, FT_Pos);
 
+#define FaceFromObject(o) ((FT_Face)(ULONG_PTR)(o))
+
 static FT_Size freetype_set_face_size(FT_Face face, FT_UInt emsize)
 {
     FT_Size size;
@@ -110,7 +113,7 @@ static BOOL freetype_glyph_has_contours(FT_Face face)
     return face->glyph->format == FT_GLYPH_FORMAT_OUTLINE && face->glyph->outline.n_contours;
 }
 
-static BOOL init_freetype(void)
+static NTSTATUS process_attach(void *args)
 {
     FT_Version_t FT_Version;
 
@@ -118,7 +121,7 @@ static BOOL init_freetype(void)
     if (!ft_handle)
     {
         WINE_MESSAGE("Wine cannot find the FreeType font library.\n");
-        return FALSE;
+        return STATUS_DLL_NOT_FOUND;
     }
 
 #define LOAD_FUNCPTR(f) if((p##f = dlsym(ft_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
@@ -153,72 +156,89 @@ static BOOL init_freetype(void)
 #undef LOAD_FUNCPTR
     pFT_Outline_EmboldenXY = dlsym(ft_handle, "FT_Outline_EmboldenXY");
 
-    if (pFT_Init_FreeType(&library) != 0) {
+    if (pFT_Init_FreeType(&library) != 0)
+    {
         ERR("Can't init FreeType library\n");
-	dlclose(ft_handle);
+        dlclose(ft_handle);
         ft_handle = NULL;
-	return FALSE;
+        return STATUS_UNSUCCESSFUL;
     }
     pFT_Library_Version(library, &FT_Version.major, &FT_Version.minor, &FT_Version.patch);
 
     TRACE("FreeType version is %d.%d.%d\n", FT_Version.major, FT_Version.minor, FT_Version.patch);
-    return TRUE;
+    return STATUS_SUCCESS;
 
 sym_not_found:
     WINE_MESSAGE("Wine cannot find certain functions that it needs from FreeType library.\n");
     dlclose(ft_handle);
     ft_handle = NULL;
-    return FALSE;
+    return STATUS_UNSUCCESSFUL;
 }
 
-static font_object_handle CDECL freetype_create_font_object(const void *data_ptr, UINT64 data_size, unsigned int index)
+static NTSTATUS process_detach(void *args)
 {
+    pFT_Done_FreeType(library);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS create_font_object(void *args)
+{
+    struct create_font_object_params *params = args;
     FT_Face face = NULL;
     FT_Error fterror;
 
-    fterror = pFT_New_Memory_Face(library, data_ptr, data_size, index, &face);
+    fterror = pFT_New_Memory_Face(library, params->data, params->size, params->index, &face);
     if (fterror != FT_Err_Ok)
+    {
         WARN("Failed to create a face object, error %d.\n", fterror);
+        return STATUS_UNSUCCESSFUL;
+    }
 
-    return face;
+    *params->object = (ULONG_PTR)face;
+
+    return STATUS_SUCCESS;
 }
 
-static void CDECL freetype_release_font_object(font_object_handle object)
+static NTSTATUS release_font_object(void *args)
 {
-    pFT_Done_Face(object);
+    struct release_font_object_params *params = args;
+    pFT_Done_Face(FaceFromObject(params->object));
+    return STATUS_SUCCESS;
 }
 
-static void CDECL freetype_get_design_glyph_metrics(font_object_handle object, UINT16 upem, UINT16 ascent,
-        unsigned int simulations, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
+static NTSTATUS get_design_glyph_metrics(void *args)
 {
-    FT_Face face = object;
+    struct get_design_glyph_metrics_params *params = args;
+    FT_Face face = FaceFromObject(params->object);
     FT_Size size;
 
-    if (!(size = freetype_set_face_size(face, upem)))
-        return;
+    if (!(size = freetype_set_face_size(face, params->upem)))
+        return STATUS_UNSUCCESSFUL;
 
-    if (!pFT_Load_Glyph(face, glyph, FT_LOAD_NO_SCALE))
+    if (!pFT_Load_Glyph(face, params->glyph, FT_LOAD_NO_SCALE))
     {
         FT_Glyph_Metrics *metrics = &face->glyph->metrics;
 
-        ret->leftSideBearing = metrics->horiBearingX;
-        ret->advanceWidth = metrics->horiAdvance;
-        ret->rightSideBearing = metrics->horiAdvance - metrics->horiBearingX - metrics->width;
+        params->metrics->leftSideBearing = metrics->horiBearingX;
+        params->metrics->advanceWidth = metrics->horiAdvance;
+        params->metrics->rightSideBearing = metrics->horiAdvance - metrics->horiBearingX - metrics->width;
 
-        ret->advanceHeight = metrics->vertAdvance;
-        ret->verticalOriginY = ascent;
-        ret->topSideBearing = ascent - metrics->horiBearingY;
-        ret->bottomSideBearing = metrics->vertAdvance - metrics->height - ret->topSideBearing;
+        params->metrics->advanceHeight = metrics->vertAdvance;
+        params->metrics->verticalOriginY = params->ascent;
+        params->metrics->topSideBearing = params->ascent - metrics->horiBearingY;
+        params->metrics->bottomSideBearing = metrics->vertAdvance - metrics->height - params->metrics->topSideBearing;
 
         /* Adjust in case of bold simulation, glyphs without contours are ignored. */
-        if (simulations & DWRITE_FONT_SIMULATIONS_BOLD && freetype_glyph_has_contours(face))
+        if (params->simulations & DWRITE_FONT_SIMULATIONS_BOLD && freetype_glyph_has_contours(face))
         {
-            if (ret->advanceWidth)
-                ret->advanceWidth += (upem + 49) / 50;
+            if (params->metrics->advanceWidth)
+                params->metrics->advanceWidth += (params->upem + 49) / 50;
         }
     }
 
     pFT_Done_Size(size);
+
+    return STATUS_SUCCESS;
 }
 
 struct decompose_context
@@ -425,52 +445,55 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-static int CDECL freetype_get_glyph_outline(font_object_handle object, float emsize, unsigned int simulations,
-        UINT16 glyph, struct dwrite_outline *outline)
+static NTSTATUS get_glyph_outline(void *args)
 {
-    FT_Face face = object;
+    struct get_glyph_outline_params *params = args;
+    FT_Face face = FaceFromObject(params->object);
     FT_Size size;
-    int ret = 0;
 
-    if (!(size = freetype_set_face_size(face, emsize)))
-        return 0;
+    if (!(size = freetype_set_face_size(face, params->emsize)))
+        return STATUS_UNSUCCESSFUL;
 
-    if (!pFT_Load_Glyph(face, glyph, FT_LOAD_NO_BITMAP))
+    if (!pFT_Load_Glyph(face, params->glyph, FT_LOAD_NO_BITMAP))
     {
         FT_Outline *ft_outline = &face->glyph->outline;
         FT_Matrix m;
 
-        if (outline->points.values)
+        if (params->outline->points.values)
         {
-            if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                embolden_glyph_outline(ft_outline, emsize);
+            if (params->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+                embolden_glyph_outline(ft_outline, params->emsize);
 
             m.xx = 1 << 16;
-            m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
+            m.xy = params->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
             m.yx = 0;
             m.yy = -(1 << 16); /* flip Y axis */
 
             pFT_Outline_Transform(ft_outline, &m);
 
-            ret = decompose_outline(ft_outline, outline);
+            decompose_outline(ft_outline, params->outline);
         }
         else
         {
             /* Intentionally overestimate numbers to keep it simple. */
-            outline->points.count = ft_outline->n_points * 3;
-            outline->tags.count = ft_outline->n_points + ft_outline->n_contours * 2;
+            params->outline->points.count = ft_outline->n_points * 3;
+            params->outline->tags.count = ft_outline->n_points + ft_outline->n_contours * 2;
         }
     }
 
     pFT_Done_Size(size);
 
-    return ret;
+    return STATUS_SUCCESS;
 }
 
-static UINT16 CDECL freetype_get_glyph_count(font_object_handle object)
+static NTSTATUS get_glyph_count(void *args)
 {
-    FT_Face face = object;
-    return face ? face->num_glyphs : 0;
+    struct get_glyph_count_params *params = args;
+    FT_Face face = FaceFromObject(params->object);
+
+    *params->count = face ? face->num_glyphs : 0;
+
+    return STATUS_SUCCESS;
 }
 
 static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matrix *ft_matrix)
@@ -481,9 +504,9 @@ static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matri
     ft_matrix->yy =  m->m22 * 0x10000;
 }
 
-static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
+static BOOL get_glyph_transform(unsigned int simulations, const DWRITE_MATRIX *m, FT_Matrix *ret)
 {
-    FT_Matrix m;
+    FT_Matrix ftm;
 
     ret->xx = 1 << 16;
     ret->xy = 0;
@@ -492,53 +515,53 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
 
     /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
        Disable transform if that's the case. */
-    if (!bitmap->m && !bitmap->simulations)
+    if (!memcmp(m, &identity, sizeof(*m)) && !simulations)
         return FALSE;
 
-    if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
-        m.xx =  1 << 16;
-        m.xy = (1 << 16) / 3;
-        m.yx =  0;
-        m.yy =  1 << 16;
-        pFT_Matrix_Multiply(&m, ret);
+    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE)
+    {
+        ftm.xx =  1 << 16;
+        ftm.xy = (1 << 16) / 3;
+        ftm.yx =  0;
+        ftm.yy =  1 << 16;
+        pFT_Matrix_Multiply(&ftm, ret);
     }
 
-    if (bitmap->m) {
-        ft_matrix_from_dwrite_matrix(bitmap->m, &m);
-        pFT_Matrix_Multiply(&m, ret);
-    }
+    ft_matrix_from_dwrite_matrix(m, &ftm);
+    pFT_Matrix_Multiply(&ftm, ret);
 
     return TRUE;
 }
 
-static void CDECL freetype_get_glyph_bbox(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
+static NTSTATUS get_glyph_bbox(void *args)
 {
-    FT_Face face = object;
+    struct get_glyph_bbox_params *params = args;
+    FT_Face face = FaceFromObject(params->object);
     FT_Glyph glyph = NULL;
     FT_BBox bbox = { 0 };
     BOOL needs_transform;
     FT_Matrix m;
     FT_Size size;
 
-    SetRectEmpty(&bitmap->bbox);
+    SetRectEmpty(params->bbox);
 
-    if (!(size = freetype_set_face_size(face, bitmap->emsize)))
-        return;
+    if (!(size = freetype_set_face_size(face, params->emsize)))
+        return STATUS_UNSUCCESSFUL;
 
-    needs_transform = FT_IS_SCALABLE(face) && get_glyph_transform(bitmap, &m);
+    needs_transform = FT_IS_SCALABLE(face) && get_glyph_transform(params->simulations, &params->m, &m);
 
-    if (pFT_Load_Glyph(face, bitmap->glyph, needs_transform ? FT_LOAD_NO_BITMAP : 0))
+    if (pFT_Load_Glyph(face, params->glyph, needs_transform ? FT_LOAD_NO_BITMAP : 0))
     {
-        WARN("Failed to load glyph %u.\n", bitmap->glyph);
+        WARN("Failed to load glyph %u.\n", params->glyph);
         pFT_Done_Size(size);
-        return;
+        return STATUS_UNSUCCESSFUL;
     }
 
     pFT_Get_Glyph(face->glyph, &glyph);
     if (needs_transform)
     {
-        if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-            embolden_glyph(glyph, bitmap->emsize);
+        if (params->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+            embolden_glyph(glyph, params->emsize);
 
         /* Includes oblique and user transform. */
         pFT_Glyph_Transform(glyph, &m, NULL);
@@ -549,14 +572,18 @@ static void CDECL freetype_get_glyph_bbox(font_object_handle object, struct dwri
     pFT_Done_Size(size);
 
     /* flip Y axis */
-    SetRect(&bitmap->bbox, bbox.xMin, -bbox.yMax, bbox.xMax, -bbox.yMin);
+    SetRect(params->bbox, bbox.xMin, -bbox.yMax, bbox.xMax, -bbox.yMin);
+
+    return STATUS_SUCCESS;
 }
 
-static BOOL freetype_get_aliased_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_Glyph glyph)
+static NTSTATUS freetype_get_aliased_glyph_bitmap(struct get_glyph_bitmap_params *params, FT_Glyph glyph)
 {
-    const RECT *bbox = &bitmap->bbox;
+    const RECT *bbox = &params->bbox;
     int width = bbox->right - bbox->left;
     int height = bbox->bottom - bbox->top;
+
+    *params->is_1bpp = 1;
 
     if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
         FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
@@ -566,9 +593,9 @@ static BOOL freetype_get_aliased_glyph_bitmap(struct dwrite_glyphbitmap *bitmap,
 
         ft_bitmap.width = width;
         ft_bitmap.rows = height;
-        ft_bitmap.pitch = bitmap->pitch;
+        ft_bitmap.pitch = params->pitch;
         ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
-        ft_bitmap.buffer = bitmap->buf;
+        ft_bitmap.buffer = params->bitmap;
 
         /* Note: FreeType will only set 'black' bits for us. */
         if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
@@ -580,28 +607,29 @@ static BOOL freetype_get_aliased_glyph_bitmap(struct dwrite_glyphbitmap *bitmap,
     }
     else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
         FT_Bitmap *ft_bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
-        BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
-        int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
+        BYTE *src = ft_bitmap->buffer, *dst = params->bitmap;
+        int w = min(params->pitch, (ft_bitmap->width + 7) >> 3);
         int h = min(height, ft_bitmap->rows);
 
         while (h--) {
             memcpy(dst, src, w);
             src += ft_bitmap->pitch;
-            dst += bitmap->pitch;
+            dst += params->pitch;
         }
     }
     else
         FIXME("format %x not handled\n", glyph->format);
 
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
-static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_Glyph glyph)
+static NTSTATUS freetype_get_aa_glyph_bitmap(struct get_glyph_bitmap_params *params, FT_Glyph glyph)
 {
-    const RECT *bbox = &bitmap->bbox;
+    const RECT *bbox = &params->bbox;
     int width = bbox->right - bbox->left;
     int height = bbox->bottom - bbox->top;
-    BOOL ret = FALSE;
+
+    *params->is_1bpp = 0;
 
     if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
         FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
@@ -611,9 +639,9 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
 
         ft_bitmap.width = width;
         ft_bitmap.rows = height;
-        ft_bitmap.pitch = bitmap->pitch;
+        ft_bitmap.pitch = params->pitch;
         ft_bitmap.pixel_mode = FT_PIXEL_MODE_GRAY;
-        ft_bitmap.buffer = bitmap->buf;
+        ft_bitmap.buffer = params->bitmap;
 
         /* Note: FreeType will only set 'black' bits for us. */
         if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
@@ -625,55 +653,61 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
     }
     else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
         FT_Bitmap *ft_bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
-        BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
-        int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
+        BYTE *src = ft_bitmap->buffer, *dst = params->bitmap;
+        int w = min(params->pitch, (ft_bitmap->width + 7) >> 3);
         int h = min(height, ft_bitmap->rows);
 
         while (h--) {
             memcpy(dst, src, w);
             src += ft_bitmap->pitch;
-            dst += bitmap->pitch;
+            dst += params->pitch;
         }
 
-        ret = TRUE;
+        *params->is_1bpp = 1;
     }
     else
+    {
         FIXME("format %x not handled\n", glyph->format);
+        return STATUS_NOT_IMPLEMENTED;
+    }
 
-    return ret;
+    return STATUS_SUCCESS;
 }
 
-static BOOL CDECL freetype_get_glyph_bitmap(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
+static NTSTATUS get_glyph_bitmap(void *args)
 {
-    FT_Face face = object;
+    struct get_glyph_bitmap_params *params = args;
+    FT_Face face = FaceFromObject(params->object);
     BOOL needs_transform;
     BOOL ret = FALSE;
     FT_Glyph glyph;
     FT_Size size;
     FT_Matrix m;
 
-    if (!(size = freetype_set_face_size(face, bitmap->emsize)))
-        return FALSE;
+    *params->is_1bpp = 0;
 
-    needs_transform = FT_IS_SCALABLE(face) && get_glyph_transform(bitmap, &m);
+    if (!(size = freetype_set_face_size(face, params->emsize)))
+        return STATUS_UNSUCCESSFUL;
 
-    if (!pFT_Load_Glyph(face, bitmap->glyph, needs_transform ? FT_LOAD_NO_BITMAP : 0))
+    needs_transform = FT_IS_SCALABLE(face) && get_glyph_transform(params->simulations, &params->m, &m);
+
+    if (!pFT_Load_Glyph(face, params->glyph, needs_transform ? FT_LOAD_NO_BITMAP : 0))
     {
         pFT_Get_Glyph(face->glyph, &glyph);
 
         if (needs_transform)
         {
-            if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                embolden_glyph(glyph, bitmap->emsize);
+            if (params->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+                embolden_glyph(glyph, params->emsize);
 
             /* Includes oblique and user transform. */
             pFT_Glyph_Transform(glyph, &m, NULL);
         }
 
-        if (bitmap->aliased)
-            ret = freetype_get_aliased_glyph_bitmap(bitmap, glyph);
+        if (params->mode == DWRITE_RENDERING_MODE1_ALIASED)
+            ret = freetype_get_aliased_glyph_bitmap(params, glyph);
         else
-            ret = freetype_get_aa_glyph_bitmap(bitmap, glyph);
+            ret = freetype_get_aa_glyph_bitmap(params, glyph);
 
         pFT_Done_Glyph(glyph);
     }
@@ -683,128 +717,100 @@ static BOOL CDECL freetype_get_glyph_bitmap(font_object_handle object, struct dw
     return ret;
 }
 
-static INT32 CDECL freetype_get_glyph_advance(font_object_handle object, float emsize, UINT16 glyph,
-        DWRITE_MEASURING_MODE mode, BOOL *has_contours)
+static NTSTATUS get_glyph_advance(void *args)
 {
-    FT_Face face = object;
-    INT32 advance = 0;
+    struct get_glyph_advance_params *params = args;
+    FT_Face face = FaceFromObject(params->object);
     FT_Size size;
 
-    *has_contours = FALSE;
+    *params->advance = 0;
+    *params->has_contours = FALSE;
 
-    if (!(size = freetype_set_face_size(face, emsize)))
-        return 0;
+    if (!(size = freetype_set_face_size(face, params->emsize)))
+        return STATUS_UNSUCCESSFUL;
 
-    if (!pFT_Load_Glyph(face, glyph, mode == DWRITE_MEASURING_MODE_NATURAL ? FT_LOAD_NO_HINTING : 0))
+    if (!pFT_Load_Glyph(face, params->glyph, params->mode == DWRITE_MEASURING_MODE_NATURAL ? FT_LOAD_NO_HINTING : 0))
     {
-        advance = face->glyph->advance.x >> 6;
-        *has_contours = freetype_glyph_has_contours(face);
+        *params->advance = face->glyph->advance.x >> 6;
+        *params->has_contours = freetype_glyph_has_contours(face);
     }
 
     pFT_Done_Size(size);
 
-    return advance;
-}
-
-const static struct font_backend_funcs freetype_funcs =
-{
-    freetype_create_font_object,
-    freetype_release_font_object,
-    freetype_get_glyph_outline,
-    freetype_get_glyph_count,
-    freetype_get_glyph_advance,
-    freetype_get_glyph_bbox,
-    freetype_get_glyph_bitmap,
-    freetype_get_design_glyph_metrics,
-};
-
-static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
-{
-    if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
-    *(const struct font_backend_funcs **)ptr_out = &freetype_funcs;
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS release_freetype_lib(void)
-{
-    pFT_Done_FreeType(library);
     return STATUS_SUCCESS;
 }
 
 #else /* HAVE_FREETYPE */
 
-static font_object_handle CDECL null_create_font_object(const void *data_ptr, UINT64 data_size, unsigned int index)
+static NTSTATUS process_attach(void *args)
 {
-    return NULL;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static void CDECL null_release_font_object(font_object_handle object)
+static NTSTATUS process_detach(void *args)
 {
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static int CDECL null_get_glyph_outline(font_object_handle object, float emSize, unsigned int simulations,
-        UINT16 glyph, struct dwrite_outline *outline)
+static NTSTATUS create_font_object(void *args)
 {
-    return 1;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static UINT16 CDECL null_get_glyph_count(font_object_handle object)
+static NTSTATUS release_font_object(void *args)
 {
-    return 0;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static INT32 CDECL null_get_glyph_advance(font_object_handle object, float emsize, UINT16 glyph,
-        DWRITE_MEASURING_MODE mode, BOOL *has_contours)
+static NTSTATUS get_glyph_outline(void *args)
 {
-    *has_contours = FALSE;
-    return 0;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static void CDECL null_get_glyph_bbox(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
+static NTSTATUS get_glyph_count(void *args)
 {
-    SetRectEmpty(&bitmap->bbox);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static BOOL CDECL null_get_glyph_bitmap(font_object_handle object, struct dwrite_glyphbitmap *bitmap)
+static NTSTATUS get_glyph_advance(void *args)
 {
-    return FALSE;
+    struct get_glyph_advance_params *params = args;
+
+    *params->has_contours = 0;
+    *params->advance = 0;
+
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static void CDECL null_get_design_glyph_metrics(font_object_handle object, UINT16 upem, UINT16 ascent, unsigned int simulations,
-        UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
+static NTSTATUS get_glyph_bbox(void *args)
 {
+    struct get_glyph_bbox_params *params = args;
+    SetRectEmpty(params->bbox);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-const static struct font_backend_funcs null_funcs =
+static NTSTATUS get_glyph_bitmap(void *args)
 {
-    null_create_font_object,
-    null_release_font_object,
-    null_get_glyph_outline,
-    null_get_glyph_count,
-    null_get_glyph_advance,
-    null_get_glyph_bbox,
-    null_get_glyph_bitmap,
-    null_get_design_glyph_metrics,
-};
-
-static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
-{
-    *(const struct font_backend_funcs **)ptr_out = &null_funcs;
-    return STATUS_DLL_NOT_FOUND;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS release_freetype_lib(void)
+static NTSTATUS get_design_glyph_metrics(void *args)
 {
-    return STATUS_DLL_NOT_FOUND;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 #endif /* HAVE_FREETYPE */
 
-NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    if (reason == DLL_PROCESS_ATTACH)
-        return init_freetype_lib(module, reason, ptr_in, ptr_out);
-    else if (reason == DLL_PROCESS_DETACH)
-        return release_freetype_lib();
-    return STATUS_SUCCESS;
-}
+    process_attach,
+    process_detach,
+    create_font_object,
+    release_font_object,
+    get_glyph_outline,
+    get_glyph_count,
+    get_glyph_advance,
+    get_glyph_bbox,
+    get_glyph_bitmap,
+    get_design_glyph_metrics,
+};

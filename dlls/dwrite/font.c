@@ -26,6 +26,7 @@
 #define COBJMACROS
 
 #include "dwrite_private.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 WINE_DECLARE_DEBUG_CHANNEL(dwrite_file);
@@ -45,8 +46,6 @@ static const FLOAT RECOMMENDED_OUTLINE_AA_THRESHOLD = 100.0f;
 static const FLOAT RECOMMENDED_OUTLINE_A_THRESHOLD = 350.0f;
 static const FLOAT RECOMMENDED_NATURAL_PPEM = 20.0f;
 
-static const struct font_backend_funcs *font_funcs;
-
 struct cache_key
 {
     float size;
@@ -59,7 +58,7 @@ struct cache_entry
     struct wine_rb_entry entry;
     struct list mru;
     struct cache_key key;
-    float advance;
+    int advance;
     RECT bbox;
     BYTE *bitmap;
     unsigned int bitmap_size;
@@ -117,19 +116,28 @@ static struct cache_entry * fontface_get_cache_entry(struct dwrite_fontface *fon
     return entry;
 }
 
-static float fontface_get_glyph_advance(struct dwrite_fontface *fontface, float fontsize, unsigned short glyph,
+static int fontface_get_glyph_advance(struct dwrite_fontface *fontface, float fontsize, unsigned short glyph,
         unsigned short mode, BOOL *has_contours)
 {
     struct cache_key key = { .size = fontsize, .glyph = glyph, .mode = mode };
+    struct get_glyph_advance_params params;
     struct cache_entry *entry;
-    BOOL value;
+    unsigned int value;
 
     if (!(entry = fontface_get_cache_entry(fontface, 0, &key)))
-        return 0.0f;
+        return 0;
 
     if (!entry->has_advance)
     {
-        entry->advance = font_funcs->get_glyph_advance(fontface->get_font_object(fontface), fontsize, glyph, mode, &value);
+        params.object = fontface->get_font_object(fontface);
+        params.glyph = glyph;
+        params.mode = mode;
+        params.emsize = fontsize;
+        params.advance = &entry->advance;
+        params.has_contours = &value;
+
+        UNIX_CALL(get_glyph_advance, &params);
+
         entry->has_contours = !!value;
         entry->has_advance = 1;
     }
@@ -142,24 +150,31 @@ void dwrite_fontface_get_glyph_bbox(IDWriteFontFace *iface, struct dwrite_glyphb
 {
     struct cache_key key = { .size = bitmap->emsize, .glyph = bitmap->glyph, .mode = DWRITE_MEASURING_MODE_NATURAL };
     struct dwrite_fontface *fontface = unsafe_impl_from_IDWriteFontFace(iface);
+    struct get_glyph_bbox_params params;
     struct cache_entry *entry;
+
+    params.object = fontface->get_font_object(fontface);
+    params.simulations = bitmap->simulations;
+    params.glyph = bitmap->glyph;
+    params.emsize = bitmap->emsize;
+    params.m = bitmap->m ? *bitmap->m : identity;
 
     EnterCriticalSection(&fontface->cs);
     /* For now bypass cache for transformed cases. */
     if (bitmap->m && memcmp(bitmap->m, &identity, sizeof(*bitmap->m)))
     {
-        font_funcs->get_glyph_bbox(fontface->get_font_object(fontface), bitmap);
+        params.bbox = &bitmap->bbox;
+        UNIX_CALL(get_glyph_bbox, &params);
     }
     else if ((entry = fontface_get_cache_entry(fontface, 0, &key)))
     {
-        if (entry->has_bbox)
-            bitmap->bbox = entry->bbox;
-        else
+        if (!entry->has_bbox)
         {
-            font_funcs->get_glyph_bbox(fontface->get_font_object(fontface), bitmap);
-            entry->bbox = bitmap->bbox;
+            params.bbox = &entry->bbox;
+            UNIX_CALL(get_glyph_bbox, &params);
             entry->has_bbox = 1;
         }
+        bitmap->bbox = entry->bbox;
     }
     LeaveCriticalSection(&fontface->cs);
 }
@@ -170,22 +185,34 @@ static unsigned int get_glyph_bitmap_pitch(DWRITE_RENDERING_MODE1 rendering_mode
 }
 
 static HRESULT dwrite_fontface_get_glyph_bitmap(struct dwrite_fontface *fontface, DWRITE_RENDERING_MODE rendering_mode,
-        BOOL *is_1bpp, struct dwrite_glyphbitmap *bitmap)
+        unsigned int *is_1bpp, struct dwrite_glyphbitmap *bitmap)
 {
     struct cache_key key = { .size = bitmap->emsize, .glyph = bitmap->glyph, .mode = DWRITE_MEASURING_MODE_NATURAL };
+    struct get_glyph_bitmap_params params;
     const RECT *bbox = &bitmap->bbox;
+    unsigned int bitmap_size, _1bpp;
     struct cache_entry *entry;
-    unsigned int bitmap_size;
     HRESULT hr = S_OK;
 
     bitmap_size = get_glyph_bitmap_pitch(rendering_mode, bbox->right - bbox->left) *
             (bbox->bottom - bbox->top);
 
+    params.object = fontface->get_font_object(fontface);
+    params.simulations = fontface->simulations;
+    params.glyph = bitmap->glyph;
+    params.mode = rendering_mode;
+    params.emsize = bitmap->emsize;
+    params.m = bitmap->m ? *bitmap->m : identity;
+    params.bbox = bitmap->bbox;
+    params.pitch = bitmap->pitch;
+    params.bitmap = bitmap->buf;
+    params.is_1bpp = is_1bpp;
+
     EnterCriticalSection(&fontface->cs);
     /* For now bypass cache for transformed cases. */
-    if (bitmap->m && memcmp(bitmap->m, &identity, sizeof(*bitmap->m)))
+    if (memcmp(&params.m, &identity, sizeof(params.m)))
     {
-        *is_1bpp = font_funcs->get_glyph_bitmap(fontface->get_font_object(fontface), bitmap);
+        UNIX_CALL(get_glyph_bitmap, &params);
     }
     else if ((entry = fontface_get_cache_entry(fontface, bitmap_size, &key)))
     {
@@ -195,10 +222,13 @@ static HRESULT dwrite_fontface_get_glyph_bitmap(struct dwrite_fontface *fontface
         }
         else
         {
-            entry->is_1bpp = font_funcs->get_glyph_bitmap(fontface->get_font_object(fontface), bitmap);
+            params.is_1bpp = &_1bpp;
+            UNIX_CALL(get_glyph_bitmap, &params);
+
             entry->bitmap_size = bitmap_size;
             if ((entry->bitmap = malloc(entry->bitmap_size)))
                 memcpy(entry->bitmap, bitmap->buf, entry->bitmap_size);
+            entry->is_1bpp = !!_1bpp;
             entry->has_bitmap = 1;
         }
         *is_1bpp = entry->is_1bpp;
@@ -797,6 +827,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
     ULONG refcount = InterlockedDecrement(&fontface->refcount);
+    struct release_font_object_params params = { fontface->font_object };
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
@@ -837,7 +868,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
         for (i = 0; i < ARRAY_SIZE(fontface->glyphs); i++)
             free(fontface->glyphs[i]);
 
-        font_funcs->release_font_object(fontface->font_object);
+        UNIX_CALL(release_font_object, &params);
         if (fontface->stream)
         {
             IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, fontface->data_context);
@@ -924,16 +955,24 @@ static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace5 *iface, DWRITE_FON
 static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace5 *iface)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+    struct get_glyph_count_params params;
+    unsigned int count;
 
     TRACE("%p.\n", iface);
 
-    return font_funcs->get_glyph_count(fontface->get_font_object(fontface));
+    params.object = fontface->get_font_object(fontface);
+    params.count = &count;
+    UNIX_CALL(get_glyph_count, &params);
+
+    return count;
 }
 
 static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *iface,
     UINT16 const *glyphs, UINT32 glyph_count, DWRITE_GLYPH_METRICS *ret, BOOL is_sideways)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+    struct get_design_glyph_metrics_params params;
+    DWRITE_GLYPH_METRICS metrics;
     HRESULT hr = S_OK;
     unsigned int i;
 
@@ -945,16 +984,20 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *ifa
     if (is_sideways)
         FIXME("sideways metrics are not supported.\n");
 
+    params.object = fontface->get_font_object(fontface);
+    params.simulations = fontface->simulations;
+    params.upem = fontface->metrics.designUnitsPerEm;
+    params.ascent = fontface->typo_metrics.ascent;
+    params.metrics = &metrics;
+
     EnterCriticalSection(&fontface->cs);
     for (i = 0; i < glyph_count; ++i)
     {
-        DWRITE_GLYPH_METRICS metrics;
 
         if (get_cached_glyph_metrics(fontface, glyphs[i], &metrics) != S_OK)
         {
-            font_funcs->get_design_glyph_metrics(fontface->get_font_object(fontface),
-                    fontface->metrics.designUnitsPerEm, fontface->typo_metrics.ascent,
-                    fontface->simulations, glyphs[i], &metrics);
+            params.glyph = glyphs[i];
+            UNIX_CALL(get_design_glyph_metrics, &params);
             if (FAILED(hr = set_cached_glyph_metrics(fontface, glyphs[i], &metrics))) break;
         }
         ret[i] = metrics;
@@ -1024,12 +1067,13 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
     D2D1_POINT_2F *origins, baseline_origin = { 0 };
     struct dwrite_outline outline, outline_size;
+    struct get_glyph_outline_params params;
     D2D1_BEZIER_SEGMENT segment;
     D2D1_POINT_2F point;
     DWRITE_GLYPH_RUN run;
     unsigned int i, j, p;
+    NTSTATUS status;
     HRESULT hr;
-    int ret;
 
     TRACE("%p, %.8e, %p, %p, %p, %u, %d, %d, %p.\n", iface, emSize, glyphs, advances, offsets,
         count, is_sideways, is_rtl, sink);
@@ -1063,28 +1107,35 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     memset(&outline_size, 0, sizeof(outline_size));
     memset(&outline, 0, sizeof(outline));
 
+    params.object = fontface->get_font_object(fontface);
+    params.simulations = fontface->simulations;
+    params.emsize = emSize;
+
     for (i = 0; i < count; ++i)
     {
         outline.tags.count = outline.points.count = 0;
 
         EnterCriticalSection(&fontface->cs);
-        if (!(ret = font_funcs->get_glyph_outline(fontface->get_font_object(fontface), emSize, fontface->simulations,
-                glyphs[i], &outline_size)))
+
+        params.glyph = glyphs[i];
+        params.outline = &outline_size;
+
+        if (!(status = UNIX_CALL(get_glyph_outline, &params)))
         {
             dwrite_array_reserve((void **)&outline.tags.values, &outline.tags.size, outline_size.tags.count,
                     sizeof(*outline.tags.values));
             dwrite_array_reserve((void **)&outline.points.values, &outline.points.size, outline_size.points.count,
                     sizeof(*outline.points.values));
 
-            if ((ret = font_funcs->get_glyph_outline(fontface->get_font_object(fontface), emSize, fontface->simulations,
-                    glyphs[i], &outline)))
+            params.outline = &outline;
+            if ((status = UNIX_CALL(get_glyph_outline, &params)))
             {
                 WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
             }
         }
         LeaveCriticalSection(&fontface->cs);
 
-        if (ret)
+        if (status)
             continue;
 
         for (j = 0, p = 0; j < outline.tags.count; ++j)
@@ -5239,26 +5290,37 @@ HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_ke
     return S_OK;
 }
 
-static font_object_handle dwrite_fontface_get_font_object(struct dwrite_fontface *fontface)
+static UINT64 dwrite_fontface_get_font_object(struct dwrite_fontface *fontface)
 {
-    font_object_handle font_object;
+    struct create_font_object_params create_params;
+    struct release_font_object_params release_params;
+    UINT64 font_object, size;
     const void *data_ptr;
     void *data_context;
-    UINT64 size;
 
     if (!fontface->font_object && SUCCEEDED(IDWriteFontFileStream_GetFileSize(fontface->stream, &size)))
     {
         if (SUCCEEDED(IDWriteFontFileStream_ReadFileFragment(fontface->stream, &data_ptr, 0, size, &data_context)))
         {
-            if (!(font_object = font_funcs->create_font_object(data_ptr, size, fontface->index)))
+            create_params.data = data_ptr;
+            create_params.size = size;
+            create_params.index = fontface->index;
+            create_params.object = &font_object;
+
+            UNIX_CALL(create_font_object, &create_params);
+
+            if (!font_object)
             {
                 WARN("Backend failed to create font object.\n");
                 IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, data_context);
-                return NULL;
+                return 0;
             }
 
-            if (InterlockedCompareExchangePointer((void **)&fontface->font_object, font_object, NULL))
-                font_funcs->release_font_object(font_object);
+            if (InterlockedCompareExchange64((LONGLONG *)&fontface->font_object, font_object, 0))
+            {
+                release_params.object = font_object;
+                UNIX_CALL(release_font_object, &release_params);
+            }
         }
     }
 
@@ -5997,7 +6059,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     {
         BYTE *src = glyph_bitmap.buf, *dst;
         int x, y, width, height;
-        BOOL is_1bpp;
+        unsigned int is_1bpp;
 
         glyph_bitmap.glyph = analysis->run.glyphIndices[i];
         dwrite_fontface_get_glyph_bbox(analysis->run.fontFace, &glyph_bitmap);
@@ -6010,6 +6072,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 
         glyph_bitmap.pitch = get_glyph_bitmap_pitch(analysis->rendering_mode, width);
         memset(src, 0, height * glyph_bitmap.pitch);
+
         if (FAILED(dwrite_fontface_get_glyph_bitmap(fontface, analysis->rendering_mode, &is_1bpp, &glyph_bitmap)))
         {
             WARN("Failed to render glyph[%u] = %#x.\n", i, glyph_bitmap.glyph);
@@ -8139,14 +8202,4 @@ HRESULT create_fontset_builder(IDWriteFactory7 *factory, IDWriteFontSetBuilder2 
     *ret = &builder->IDWriteFontSetBuilder2_iface;
 
     return S_OK;
-}
-
-void init_font_backend(void)
-{
-    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_ATTACH, NULL, &font_funcs);
-}
-
-void release_font_backend(void)
-{
-    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_DETACH, NULL, NULL);
 }

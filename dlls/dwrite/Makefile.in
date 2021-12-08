@@ -1,5 +1,6 @@
 MODULE    = dwrite.dll
 IMPORTLIB = dwrite
+UNIXLIB   = dwrite.so
 IMPORTS   = user32 gdi32 advapi32
 EXTRAINCL = $(FREETYPE_CFLAGS)
 

@@ -30,11 +30,13 @@
 #include "initguid.h"
 
 #include "dwrite_private.h"
+#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 HMODULE dwrite_module = 0;
+unixlib_handle_t unixlib_handle = 0;
 static IDWriteFactory7 *shared_factory;
 static void release_shared_factory(IDWriteFactory7 *factory);
 
@@ -45,13 +47,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
         dwrite_module = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
-        init_font_backend();
+        if (!NtQueryVirtualMemory(GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
+                &unixlib_handle, sizeof(unixlib_handle), NULL))
+            UNIX_CALL(process_attach, NULL);
         init_local_fontfile_loader();
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         release_shared_factory(shared_factory);
-        release_font_backend();
+        if (unixlib_handle) UNIX_CALL(process_detach, NULL);
     }
     return TRUE;
 }
