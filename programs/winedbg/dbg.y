@@ -164,8 +164,6 @@ pathname:
 
 identifier:
       tIDENTIFIER              { $$ = $1; }
-    | tIDENTIFIER '!' tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
-                                       sprintf($$, "%s!%s", $1, $3); }
     ;
 
 list_arg:
