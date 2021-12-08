@@ -317,6 +317,23 @@ BOOL memory_store_integer(const struct dbg_lvalue* lvalue, dbg_lgint_t val)
 {
     DWORD64 size;
     if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size)) return FALSE;
+    if (lvalue->bitlen)
+    {
+        struct dbg_lvalue alt_lvalue = *lvalue;
+        dbg_lguint_t mask, dst;
+
+        /* FIXME: this test isn't sufficient, depending on start of bitfield
+         * (ie a 64 bit field can spread across 9 bytes)
+         */
+        if (lvalue->bitlen > 8 * sizeof(dbg_lgint_t)) return FALSE;
+        /* mask is 1 where bitfield is present, 0 outside */
+        mask = (~(dbg_lguint_t)0 >> (sizeof(val) * 8 - lvalue->bitlen)) << (lvalue->bitstart & 7);
+        alt_lvalue.addr.Offset += lvalue->bitstart >> 3;
+        val <<= lvalue->bitstart & 7;
+        if (!memory_read_value(&alt_lvalue, (unsigned)size, &dst)) return FALSE;
+        val = (dst & ~mask) | (val & mask);
+        return memory_write_value(&alt_lvalue, (unsigned)size, &val);
+    }
     /* this is simple if we're on a little endian CPU */
     return memory_write_value(lvalue, (unsigned)size, &val);
 }
