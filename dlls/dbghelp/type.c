@@ -613,8 +613,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD) = ((const struct symt_basic*)type)->bt;
             break;
         case SymTagEnum:
-            X(DWORD) = btInt;
-            break;
+            return symt_get_info(module, ((const struct symt_enum*)type)->base_type, req, pInfo);
         default:
             return FALSE;
         }
