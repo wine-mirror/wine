@@ -454,7 +454,10 @@ static void test_query_process( BOOL extended )
     typedef struct _SYSTEM_PROCESS_INFORMATION_PRIVATE {
         ULONG NextEntryOffset;
         DWORD dwThreadCount;
-        DWORD dwUnknown1[6];
+        LARGE_INTEGER WorkingSetPrivateSize;
+        ULONG HardFaultCount;
+        ULONG NumberOfThreadsHighWatermark;
+        ULONGLONG CycleTime;
         FILETIME ftCreationTime;
         FILETIME ftUserTime;
         FILETIME ftKernelTime;
@@ -463,8 +466,8 @@ static void test_query_process( BOOL extended )
         HANDLE UniqueProcessId;
         HANDLE ParentProcessId;
         ULONG HandleCount;
-        DWORD dwUnknown3;
-        DWORD dwUnknown4;
+        ULONG SessionId;
+        ULONG_PTR UniqueProcessKey;
         VM_COUNTERS_EX vmCounters;
         IO_COUNTERS ioCounters;
         SYSTEM_THREAD_INFORMATION ti[1];

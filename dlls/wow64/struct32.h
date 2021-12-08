@@ -619,7 +619,10 @@ typedef struct
 {
     ULONG            NextEntryOffset;
     DWORD            dwThreadCount;
-    DWORD            dwUnknown1[6];
+    LARGE_INTEGER    WorkingSetPrivateSize;
+    ULONG            HardFaultCount;
+    ULONG            NumberOfThreadsHighWatermark;
+    ULONGLONG        CycleTime;
     LARGE_INTEGER    CreationTime;
     LARGE_INTEGER    UserTime;
     LARGE_INTEGER    KernelTime;
@@ -629,7 +632,7 @@ typedef struct
     ULONG            ParentProcessId;
     ULONG            HandleCount;
     ULONG            SessionId;
-    DWORD            dwUnknown4;
+    ULONG            UniqueProcessKey;
     VM_COUNTERS_EX32 vmCounters;
     IO_COUNTERS      ioCounters;
     SYSTEM_THREAD_INFORMATION32 ti[1];
