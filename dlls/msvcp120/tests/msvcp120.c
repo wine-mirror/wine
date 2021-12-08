@@ -2093,8 +2093,9 @@ static void test_thrd(void)
     tb = p__Thrd_current();
     ok(ta.id == tb.id, "got a %d b %d\n", ta.id, tb.id);
     ok(ta.id == GetCurrentThreadId(), "expected %d, got %d\n", GetCurrentThreadId(), ta.id);
-    /* these can be different if new threads are created at same time */
-    ok(ta.hnd == tb.hnd, "got a %p b %p\n", ta.hnd, tb.hnd);
+    /* the handles can be different if new threads are created at same time */
+    ok(ta.hnd != NULL, "handle a is NULL\n");
+    ok(tb.hnd != NULL, "handle b is NULL\n");
     ok(!CloseHandle(ta.hnd), "handle %p not closed\n", ta.hnd);
     ok(!CloseHandle(tb.hnd), "handle %p not closed\n", tb.hnd);
 
