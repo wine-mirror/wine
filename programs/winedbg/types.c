@@ -68,6 +68,7 @@ dbg_lgint_t types_extract_as_lgint(const struct dbg_lvalue* lvalue,
     {
         return (LONG_PTR)memory_to_linear_addr(&lvalue->addr);
     }
+    if (tag != SymTagBaseType && lvalue->bitlen) dbg_printf("Unexpected bitfield on tag %d\n", tag);
 
     if (psize) *psize = 0;
     if (issigned) *issigned = FALSE;
@@ -180,14 +181,10 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
  *
  * Implement a structure derefencement
  */
-static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, 
-                                         const struct dbg_type* type, ULONG *tmpbuf)
+static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, const struct dbg_type* type)
 {
     DWORD       offset, bitoffset;
-    DWORD       bt;
     DWORD64     length;
-
-    unsigned    mask;
 
     types_get_info(type, TI_GET_TYPE, &lvalue->type.id);
     lvalue->type.module = type->module;
@@ -197,38 +194,17 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
     if (types_get_info(type, TI_GET_BITPOSITION, &bitoffset))
     {
         types_get_info(type, TI_GET_LENGTH, &length);
-        /* FIXME: this test isn't sufficient, depending on start of bitfield
-         * (ie a 32 bit field can spread across 5 bytes)
-         */
-        if (length > 8 * sizeof(*tmpbuf)) return FALSE;
-        lvalue->addr.Offset += bitoffset >> 3;
-        /*
-         * Bitfield operation.  We have to extract the field and store
-         * it in a temporary buffer so that we get it all right.
-         */
-        if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
-        mask = 0xffffffff << (DWORD)length;
-        *tmpbuf >>= bitoffset & 7;
-        *tmpbuf &= ~mask;
-
-        lvalue->in_debuggee = 0;
-        lvalue->addr.Offset = (ULONG_PTR)tmpbuf;
-
-        /*
-         * OK, now we have the correct part of the number.
-         * Check to see whether the basic type is signed or not, and if so,
-         * we need to sign extend the number.
-         */
-        if (types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt) && 
-            bt == btInt && (*tmpbuf & (1 << ((DWORD)length - 1))))
+        lvalue->bitlen = length;
+        lvalue->bitstart = bitoffset;
+        if (lvalue->bitlen != length || lvalue->bitstart != bitoffset)
         {
-            *tmpbuf |= mask;
+            dbg_printf("too wide bitfields\n"); /* shouldn't happen */
+            return FALSE;
         }
     }
     else
-    {
-        if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
-    }
+        lvalue->bitlen = lvalue->bitstart = 0;
+
     return TRUE;
 }
 
@@ -236,7 +212,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
  *		types_udt_find_element
  *
  */
-BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, ULONG *tmpbuf)
+BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name)
 {
     DWORD                       tag, count;
     char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
@@ -266,7 +242,7 @@ BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, ULONG *
                         WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         if (!strcmp(tmp, name))
-                            return types_get_udt_element_lvalue(lvalue, &type, tmpbuf);
+                            return types_get_udt_element_lvalue(lvalue, &type);
                     }
                 }
             }
@@ -475,7 +451,6 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
-            ULONG                       tmpbuf;
             struct dbg_type             sub_type;
 
             dbg_printf("{");
@@ -493,7 +468,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
                         dbg_printf("%ls=", ptr);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         lvalue_field = *lvalue;
-                        if (types_get_udt_element_lvalue(&lvalue_field, &sub_type, &tmpbuf))
+                        if (types_get_udt_element_lvalue(&lvalue_field, &sub_type))
                         {
                             print_value(&lvalue_field, format, level + 1);
                         }

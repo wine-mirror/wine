@@ -44,9 +44,9 @@
  * - type management:
  *      + some bits of internal types are missing (like type casts and the address
  *        operator)
- *      + all computations should be made on long long
- *              o expr computations are in int:s
- *              o bitfield size is on a 4-bytes
+ *      + all computations should be made on 64bit
+ *              o bitfield spreading on more bytes than dbg_lgint_t isn't supported
+ *                (can happen on 128bit integers, of an ELF build...)
  * - execution:
  *      + set a better fix for gdb (proxy mode) than the step-mode hack
  *      + implement function call in debuggee

@@ -487,7 +487,7 @@ extern dbg_lgint_t      types_extract_as_integer(const struct dbg_lvalue*);
 extern dbg_lgint_t      types_extract_as_lgint(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
 extern void             types_extract_as_address(const struct dbg_lvalue*, ADDRESS64*);
 extern BOOL             types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lvalue_from);
-extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name, ULONG *tmpbuf);
+extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name);
 extern BOOL             types_array_index(const struct dbg_lvalue* value, int index, struct dbg_lvalue* result);
 extern BOOL             types_get_info(const struct dbg_type*, IMAGEHLP_SYMBOL_TYPE_INFO, void*);
 extern BOOL             types_get_real_type(struct dbg_type* type, DWORD* tag);

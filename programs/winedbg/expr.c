@@ -83,7 +83,6 @@ struct expr
         {
             struct expr*        exp1;
             const char*         element_name;
-            ULONG /* FIXME */   result;
         } structure;
 
         struct
@@ -361,8 +360,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         if (exp1.type.id == dbg_itype_none || !types_array_index(&exp1, 0, &rtn) ||
             rtn.type.id == dbg_itype_none)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-        if (!types_udt_find_element(&rtn, exp->un.structure.element_name,
-                                    &exp->un.structure.result))
+        if (!types_udt_find_element(&rtn, exp->un.structure.element_name))
         {
             dbg_printf("%s\n", exp->un.structure.element_name);
             RaiseException(DEBUG_STATUS_NO_FIELD, 0, 0, NULL);
@@ -372,8 +370,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         exp1 = expr_eval(exp->un.structure.exp1);
         if (exp1.type.id == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         rtn = exp1;
-        if (!types_udt_find_element(&rtn, exp->un.structure.element_name,
-                                    &exp->un.structure.result))
+        if (!types_udt_find_element(&rtn, exp->un.structure.element_name))
         {
             dbg_printf("%s\n", exp->un.structure.element_name);
             RaiseException(DEBUG_STATUS_NO_FIELD, 0, 0, NULL);

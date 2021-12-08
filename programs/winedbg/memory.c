@@ -237,15 +237,47 @@ BOOL memory_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
     /* size must fit in ret and be a power of two */
     if (size > sizeof(*ret) || (size & (size - 1))) return FALSE;
 
-    /* we are on little endian CPU */
-    memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
-    if (!memory_read_value(lvalue, size, ret)) return FALSE;
-
-    /* propagate sign information */
-    if (is_signed && size < 8 && (*ret >> (size * 8 - 1)) != 0)
+    if (lvalue->bitlen)
     {
-        dbg_lguint_t neg = -1;
-        *ret |= neg << (size * 8);
+        struct dbg_lvalue alt_lvalue = *lvalue;
+        dbg_lguint_t mask;
+        DWORD bt;
+        /* FIXME: this test isn't sufficient, depending on start of bitfield
+         * (ie a 64 bit field can spread across 9 bytes)
+         */
+        if (lvalue->bitlen > 8 * sizeof(dbg_lgint_t)) return FALSE;
+        alt_lvalue.addr.Offset += lvalue->bitstart >> 3;
+        /*
+         * Bitfield operation.  We have to extract the field.
+         */
+        if (!memory_read_value(&alt_lvalue, sizeof(*ret), ret)) return FALSE;
+        mask = ~(dbg_lguint_t)0 << lvalue->bitlen;
+        *ret >>= lvalue->bitstart & 7;
+        *ret &= ~mask;
+
+        /*
+         * OK, now we have the correct part of the number.
+         * Check to see whether the basic type is signed or not, and if so,
+         * we need to sign extend the number.
+         */
+        if (types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt) &&
+            (bt == btInt || bt == btLong) && (*ret & (1 << (lvalue->bitlen - 1))))
+        {
+            *ret |= mask;
+        }
+    }
+    else
+    {
+        /* we are on little endian CPU */
+        memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
+        if (!memory_read_value(lvalue, size, ret)) return FALSE;
+
+        /* propagate sign information */
+        if (is_signed && size < 8 && (*ret >> (size * 8 - 1)) != 0)
+        {
+            dbg_lguint_t neg = -1;
+            *ret |= neg << (size * 8);
+        }
     }
     return TRUE;
 }
