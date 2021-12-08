@@ -346,18 +346,9 @@ char* memory_offset_to_string(char *str, DWORD64 offset, unsigned mode)
     return str;
 }
 
-static void dbg_print_longlong(LONGLONG sv, BOOL is_signed)
+static void dbg_print_sdecimal(dbg_lgint_t sv)
 {
-    char      tmp[24], *ptr = tmp + sizeof(tmp) - 1;
-    ULONGLONG uv, div;
-    *ptr = '\0';
-    if (is_signed && sv < 0)    uv = -sv;
-    else                        { uv = sv; is_signed = FALSE; }
-    for (div = 10; uv; div *= 10, uv /= 10)
-        *--ptr = '0' + (uv % 10);
-    if (ptr == tmp + sizeof(tmp) - 1) *--ptr = '0';
-    if (is_signed) *--ptr = '-';
-    dbg_printf("%s", ptr);
+    dbg_printf("%I64d", sv);
 }
 
 static void dbg_print_hex(DWORD size, dbg_lgint_t sv)
@@ -512,7 +503,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                     fcp->Start += 256;
                 }
             }
-            if (!ok) dbg_print_longlong(val_int, TRUE);
+            if (!ok) dbg_print_sdecimal(val_int);
         }
         break;
     default:
@@ -547,7 +538,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
             return;
 
         case 'd':
-            dbg_print_longlong(res, TRUE);
+            dbg_print_sdecimal(res);
             return;
 
         case 'c':
@@ -570,7 +561,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     }
     if (lvalue->type.id == dbg_itype_segptr)
     {
-        dbg_print_longlong(types_extract_as_lgint(lvalue, NULL, NULL), TRUE);
+        dbg_print_sdecimal(types_extract_as_lgint(lvalue, NULL, NULL));
     }
     else print_typed_basic(lvalue);
 }
