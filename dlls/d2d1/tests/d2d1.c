@@ -10137,7 +10137,10 @@ static void test_effect_crop(BOOL d3d11)
 static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1RectangleGeometry *rectangle;
+    ID2D1GeometrySink *sink;
+    ID2D1PathGeometry *path;
     ID2D1Factory *factory;
+    D2D1_POINT_2F point;
     D2D1_RECT_F rect;
     unsigned int i;
     BOOL contains;
@@ -10220,6 +10223,27 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{1.0f, 0.0f, 0.0f, 1.0f,   0.0f,  21.0f}}}, {10.0f,  31.0f}, 0.0f, 1.0f, TRUE, TRUE},
         {{{{1.0f, 0.0f, 0.0f, 1.0f,  11.0f,   0.0f}}}, {16.0f,   0.0f}, 0.0f, 1.0f, TRUE, TRUE},
         {{{{1.0f, 0.0f, 0.0f, 1.0f,   0.0f, -21.0f}}}, { 0.0f, -11.0f}, 0.0f, 1.0f, TRUE, TRUE},
+    },
+    path_tests[] =
+    {
+        /* 0. Stroked area hittesting. Edge. */
+        {{{{0.0f}}}, {160.0f,  600.0f},  0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {239.24f, 600.0f},  0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {239.26f, 600.0f},  0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {240.74f, 600.0f},  0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {240.76f, 600.0f},  0.0f, 1.0f, FALSE, FALSE},
+
+        /* 5. Negative tolerance. */
+        {{{{0.0f}}}, {239.24f, 600.0f}, -1.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {239.26f, 600.0f}, -1.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {240.74f, 600.0f}, -1.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {240.76f, 600.0f}, -1.0f, 1.0f, FALSE, FALSE},
+
+        /* 9. Less than default tolerance. */
+        {{{{0.0f}}}, {239.39f, 600.0f},  0.1f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {239.41f, 600.0f},  0.1f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {240.59f, 600.0f},  0.1f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {240.61f, 600.0f},  0.1f, 1.0f, FALSE, FALSE},
     };
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -10243,6 +10267,39 @@ static void test_stroke_contains_point(BOOL d3d11)
         winetest_pop_context();
     }
     ID2D1RectangleGeometry_Release(rectangle);
+
+    hr = ID2D1Factory_CreatePathGeometry(factory, &path);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(path, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    set_point(&point, 160.0f, 240.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 240.0f, 240.0f);
+    line_to(sink, 240.0f, 720.0f);
+    line_to(sink, 160.0f, 720.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    for (i = 0; i < ARRAY_SIZE(path_tests); ++i)
+    {
+        const struct contains_point_test *test = &path_tests[i];
+
+        winetest_push_context("Test %u", i);
+
+        contains = !test->contains;
+        hr = ID2D1PathGeometry_StrokeContainsPoint(path, test->point, test->stroke_width,
+                NULL, test->matrix ? &test->transform : NULL, test->tolerance, &contains);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(contains == test->contains, "Got unexpected result %#x.\n", contains);
+
+        winetest_pop_context();
+    }
+
+    ID2D1PathGeometry_Release(path);
 
     ID2D1Factory_Release(factory);
 }

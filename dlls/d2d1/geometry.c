@@ -3409,11 +3409,74 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
         D2D1_POINT_2F point, float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
         float tolerance, BOOL *contains)
 {
-    FIXME("iface %p, point %s, stroke_width %.8e, stroke_style %p, "
-            "transform %p, tolerance %.8e, contains %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    enum d2d_vertex_type type = D2D_VERTEX_TYPE_NONE;
+    D2D1_POINT_2F p, p1;
+    unsigned int i, j;
+
+    TRACE("iface %p, point %s, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, contains %p.\n",
             iface, debug_d2d_point_2f(&point), stroke_width, stroke_style, transform, tolerance, contains);
 
-    return E_NOTIMPL;
+    if (stroke_style)
+        FIXME("Ignoring stroke style %p.\n", stroke_style);
+
+    if (!transform)
+        transform = &identity;
+
+    if (tolerance <= 0.0f)
+        tolerance = D2D1_DEFAULT_FLATTENING_TOLERANCE;
+
+    *contains = FALSE;
+    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        const struct d2d_figure *figure = &geometry->u.path.figures[i];
+
+        for (j = 0; j < figure->vertex_count; ++j)
+        {
+            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE)
+                continue;
+
+            p = figure->vertices[j];
+            type = figure->vertex_types[j];
+            break;
+        }
+
+        for (++j; j < figure->vertex_count; ++j)
+        {
+            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
+                    || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
+                continue;
+
+            switch (type)
+            {
+                case D2D_VERTEX_TYPE_LINE:
+                    p1 = figure->vertices[j];
+                    *contains = d2d_point_on_line_segment(&point, &p, &p1, transform, stroke_width * 0.5f, tolerance);
+                    p = p1;
+                    break;
+
+                default:
+                    FIXME("Unhandled vertex type %#x.\n", type);
+                    p = figure->vertices[j];
+                    break;
+            }
+            if (*contains)
+                return S_OK;
+            type = figure->vertex_types[j];
+        }
+
+        if (figure->flags & D2D_FIGURE_FLAG_CLOSED && (!*contains) && type == D2D_VERTEX_TYPE_LINE)
+        {
+            p1 = figure->vertices[0];
+            *contains = d2d_point_on_line_segment(&point, &p, &p1, transform, stroke_width * 0.5f, tolerance);
+            p = p1;
+        }
+
+        if (*contains)
+            return S_OK;
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_FillContainsPoint(ID2D1PathGeometry *iface,
