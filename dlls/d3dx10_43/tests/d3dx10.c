@@ -2466,12 +2466,11 @@ todo_wine
     hr = ID3DX10Font_PreloadCharacters(font, 'a', 'z');
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    /* Test multiple textures */
-    hr = ID3DX10Font_PreloadGlyphs(font, 0, 1000);
+    /* Test glyphs that are not rendered */
+    hr = ID3DX10Font_PreloadGlyphs(font, 0, 5);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    /* Test glyphs that are not rendered */
     for (glyph = 1; glyph < 4; ++glyph)
     {
         srv = (void *)0xdeadbeef;
