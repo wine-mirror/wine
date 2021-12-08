@@ -57,8 +57,8 @@
 @ stub SymEnumSymbolsForAddrW
 @ stdcall SymEnumSymbolsW(ptr int64 wstr ptr ptr)
 @ stdcall SymEnumTypes(ptr int64 ptr ptr)
-@ stub SymEnumTypesByName
-@ stub SymEnumTypesByNameW
+@ stdcall SymEnumTypesByName(ptr int64 str ptr ptr)
+@ stdcall SymEnumTypesByNameW(ptr int64 wstr ptr ptr)
 @ stdcall SymEnumTypesW(ptr int64 ptr ptr)
 @ stdcall SymEnumerateModules(long ptr ptr)
 @ stdcall SymEnumerateModules64(long ptr ptr)

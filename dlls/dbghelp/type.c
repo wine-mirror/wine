@@ -544,6 +544,122 @@ BOOL WINAPI SymEnumTypesW(HANDLE hProcess, ULONG64 BaseOfDll,
     return SymEnumTypes(hProcess, BaseOfDll, enum_types_AtoW, &et);
 }
 
+static void enum_types_of_module(struct module_pair* pair, const char* name, PSYM_ENUMERATESYMBOLS_CALLBACK cb, PVOID user)
+{
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
+    struct symt*        type;
+    DWORD64             size;
+    unsigned            i;
+    const char*         tname;
+
+    sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
+    sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
+
+    for (i = 0; i < vector_length(&pair->effective->vtypes); i++)
+    {
+        type = *(struct symt**)vector_at(&pair->effective->vtypes, i);
+        tname = symt_get_name(type);
+        if (tname && SymMatchStringA(tname, name, TRUE))
+        {
+            sym_info->TypeIndex = symt_ptr2index(pair->effective, type);
+            sym_info->Index = 0; /* FIXME */
+            symt_get_info(pair->effective, type, TI_GET_LENGTH, &size);
+            sym_info->Size = size;
+            sym_info->ModBase = pair->requested->module.BaseOfImage;
+            sym_info->Flags = 0; /* FIXME */
+            sym_info->Value = 0; /* FIXME */
+            sym_info->Address = 0; /* FIXME */
+            sym_info->Register = 0; /* FIXME */
+            sym_info->Scope = 0; /* FIXME */
+            sym_info->Tag = type->tag;
+            symbol_setname(sym_info, tname);
+            if (!cb(sym_info, sym_info->Size, user)) break;
+        }
+    }
+}
+
+static BOOL walk_modules(struct module_pair* pair)
+{
+    /* first walk PE only modules */
+    if (!pair->requested || pair->requested->type == DMT_PE)
+    {
+        while ((pair->requested = pair->requested ? pair->requested->next : pair->pcs->lmodules) != NULL)
+        {
+            if (pair->requested->type == DMT_PE && module_get_debug(pair)) return TRUE;
+        }
+    }
+    /* then walk ELF or Mach-O modules, not containing PE modules */
+    while ((pair->requested = pair->requested ? pair->requested->next : pair->pcs->lmodules) != NULL)
+    {
+        if ((pair->requested->type == DMT_ELF || pair->requested->type == DMT_MACHO) &&
+            !module_get_containee(pair->pcs, pair->requested) &&
+            module_get_debug(pair))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL WINAPI SymEnumTypesByName(HANDLE proc, ULONG64 base, PCSTR name, PSYM_ENUMERATESYMBOLS_CALLBACK cb, PVOID user)
+{
+    struct module_pair  pair;
+    const char*         bang;
+
+    TRACE("(%p %I64x %s %p %p)\n", proc, base, wine_dbgstr_a(name), cb, user);
+
+    if (!name) return SymEnumTypes(proc, base, cb, user);
+    bang = strchr(name, '!');
+    if (bang)
+    {
+        DWORD sz;
+        WCHAR* modW;
+        pair.pcs = process_find_by_handle(proc);
+        if (bang == name) return FALSE;
+        if (!pair.pcs) return FALSE;
+        sz = MultiByteToWideChar(CP_ACP, 0, name, bang - name, NULL, 0) + 1;
+        if ((modW = malloc(sz * sizeof(WCHAR))) == NULL) return FALSE;
+        MultiByteToWideChar(CP_ACP, 0, name, bang - name, modW, sz);
+        modW[sz - 1] = L'\0';
+        pair.requested = NULL;
+        while (walk_modules(&pair))
+        {
+            if (SymMatchStringW(pair.requested->modulename, modW, FALSE))
+                enum_types_of_module(&pair, bang + 1, cb, user);
+        }
+        free(modW);
+    }
+    else
+    {
+        if (!module_init_pair(&pair, proc, base) || !module_get_debug(&pair)) return FALSE;
+        enum_types_of_module(&pair, name, cb, user);
+    }
+    return TRUE;
+}
+
+BOOL WINAPI SymEnumTypesByNameW(HANDLE proc, ULONG64 base, PCWSTR nameW, PSYM_ENUMERATESYMBOLS_CALLBACKW cb, PVOID user)
+{
+    struct enum_types_AtoW     et;
+    DWORD len = nameW ? WideCharToMultiByte(CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL) : 0;
+    char* name;
+    BOOL ret;
+
+    TRACE("(%p %I64x %s %p %p)\n", proc, base, wine_dbgstr_w(nameW), cb, user);
+
+    if (len)
+    {
+        if (!(name = malloc(len))) return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, nameW, -1, name, len, NULL, NULL);
+    }
+    else name = NULL;
+
+    et.callback = cb;
+    et.user = user;
+
+    ret = SymEnumTypesByName(proc, base, name, enum_types_AtoW, &et);
+    free(name);
+    return ret;
+}
+
 /******************************************************************
  *		symt_get_info
  *
