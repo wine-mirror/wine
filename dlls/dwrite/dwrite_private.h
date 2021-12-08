@@ -445,8 +445,6 @@ struct dwrite_glyphbitmap
 {
     DWORD simulations;
     float emsize;
-    BOOL nohint;
-    BOOL aliased;
     UINT16 glyph;
     INT pitch;
     RECT bbox;

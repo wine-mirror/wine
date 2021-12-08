@@ -5942,19 +5942,6 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
     return refcount;
 }
 
-static BOOL is_natural_rendering_mode(DWRITE_RENDERING_MODE1 mode)
-{
-    switch (mode)
-    {
-    case DWRITE_RENDERING_MODE1_NATURAL:
-    case DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC:
-    case DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED:
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
 static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *analysis, RECT *bounds)
 {
     struct dwrite_glyphbitmap glyph_bitmap;
@@ -5971,7 +5958,6 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
     glyph_bitmap.simulations = IDWriteFontFace_GetSimulations(analysis->run.fontFace);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
-    glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         glyph_bitmap.m = &analysis->m;
 
@@ -6051,8 +6037,6 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
     glyph_bitmap.simulations = fontface->simulations;
     glyph_bitmap.emsize = analysis->run.fontEmSize;
-    glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
-    glyph_bitmap.aliased = analysis->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED;
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         glyph_bitmap.m = &analysis->m;
     if (!(glyph_bitmap.buf = malloc(analysis->max_glyph_bitmap_size)))

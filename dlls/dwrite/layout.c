@@ -3946,7 +3946,6 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
         memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
         glyph_bitmap.simulations = IDWriteFontFace_GetSimulations(glyph_run.fontFace);
         glyph_bitmap.emsize = glyph_run.fontEmSize;
-        glyph_bitmap.nohint = layout->measuringmode == DWRITE_MEASURING_MODE_NATURAL;
 
         bbox = &glyph_bitmap.bbox;
 
