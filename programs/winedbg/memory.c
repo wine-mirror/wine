@@ -84,7 +84,7 @@ BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result
 {
     BOOL ret = FALSE;
 
-    if (lvalue->cookie == DLV_TARGET)
+    if (lvalue->in_debuggee)
     {
         void*   linear = memory_to_linear_addr(&lvalue->addr);
         if (!(ret = dbg_read_memory(linear, result, size)))
@@ -120,7 +120,7 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     }
 
     /* FIXME: only works on little endian systems */
-    if (lvalue->cookie == DLV_TARGET)
+    if (lvalue->in_debuggee)
     {
         void*       linear = memory_to_linear_addr(&lvalue->addr);
         if (!(ret = dbg_write_memory(linear, value, size)))
@@ -440,7 +440,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             if (!val_ptr) dbg_printf("0x0");
             else if (((bt == btChar || bt == btInt) && size64 == 1) || (bt == btUInt && size64 == 2))
             {
-                if (memory_get_string(dbg_curr_process, val_ptr, sub_lvalue.cookie == DLV_TARGET,
+                if (memory_get_string(dbg_curr_process, val_ptr, sub_lvalue.in_debuggee,
                                       size64 == 2, buffer, sizeof(buffer)))
                     dbg_printf("\"%s\"", buffer);
                 else

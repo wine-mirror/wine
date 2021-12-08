@@ -117,15 +117,28 @@ struct dbg_type
 
 struct dbg_lvalue       /* structure to hold left-values... */
 {
-    int			cookie;	/* DLV_??? */
-/* DLV_TARGET references an address in debuggee's address space, whereas DLV_HOST
- * references the winedbg's address space
- */
-#	define	DLV_TARGET	0xF00D
-#	define	DLV_HOST	0x50DA
+    unsigned            in_debuggee : 1; /* 1 = debuggee address space, 0 = debugger address space */
     ADDRESS64           addr;
     struct dbg_type     type;
 };
+
+static inline void init_lvalue(struct dbg_lvalue* lv, BOOL in_debuggee, void* addr)
+{
+    lv->in_debuggee = !!in_debuggee;
+    lv->addr.Mode = AddrModeFlat;
+    lv->addr.Offset = (DWORD_PTR)addr;
+    lv->type.module = 0;
+    lv->type.id = dbg_itype_none;
+}
+
+static inline void init_lvalue_in_debugger(struct dbg_lvalue* lv, enum dbg_internal_types it, void* addr)
+{
+    lv->in_debuggee = 0;
+    lv->addr.Mode = AddrModeFlat;
+    lv->addr.Offset = (DWORD_PTR)addr;
+    lv->type.module = 0;
+    lv->type.id = it;
+}
 
 enum dbg_exec_mode
 {

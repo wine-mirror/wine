@@ -281,12 +281,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
     DWORD                               tag;
     const struct dbg_internal_var*      div;
 
-    rtn.cookie       = 0;
-    rtn.type.id      = dbg_itype_none;
-    rtn.type.module  = 0;
-    rtn.addr.Mode    = AddrModeFlat;
-    rtn.addr.Offset  = 0;
-    rtn.addr.Segment = 0;
+    init_lvalue_in_debugger(&rtn, dbg_itype_none, NULL);
 
     switch (exp->type)
     {
@@ -340,22 +335,13 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         }
         break;
     case EXPR_TYPE_STRING:
-        rtn.cookie      = DLV_HOST;
-        rtn.type.id     = dbg_itype_astring;
-        rtn.type.module = 0;
-        rtn.addr.Offset = (ULONG_PTR)&exp->un.string.str;
+        init_lvalue_in_debugger(&rtn, dbg_itype_astring, &exp->un.string.str);
         break;
     case EXPR_TYPE_U_CONST:
-        rtn.cookie      = DLV_HOST;
-        rtn.type.id     = dbg_itype_lguint;
-        rtn.type.module = 0;
-        rtn.addr.Offset = (ULONG_PTR)&exp->un.u_const.value;
+        init_lvalue_in_debugger(&rtn, dbg_itype_lguint, &exp->un.u_const.value);
         break;
     case EXPR_TYPE_S_CONST:
-        rtn.cookie      = DLV_HOST;
-        rtn.type.id     = dbg_itype_lgint;
-        rtn.type.module = 0;
-        rtn.addr.Offset = (ULONG_PTR)&exp->un.s_const.value;
+        init_lvalue_in_debugger(&rtn, dbg_itype_lgint, &exp->un.s_const.value);
         break;
     case EXPR_TYPE_SYMBOL:
         switch (symbol_get_lvalue(exp->un.symbol.name, -1, &rtn, FALSE))
@@ -457,28 +443,22 @@ struct dbg_lvalue expr_eval(struct expr* exp)
          */
         exp->un.call.result = 0;
 #endif
-        rtn.cookie = DLV_HOST;
-        /* get return type from function signature tupe */
+        init_lvalue_in_debugger(&rtn, dbg_itype_none, &exp->un.call.result);
+        /* get return type from function signature type */
+        /* FIXME rtn.type.module should be set to function's module... */
         types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type.id);
-        rtn.addr.Offset = (ULONG_PTR)&exp->un.call.result;
         break;
     case EXPR_TYPE_INTVAR:
-        rtn.cookie = DLV_HOST;
         if (!(div = dbg_get_internal_var(exp->un.intvar.name)))
             RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
-        rtn.type.id     = div->typeid;
-        rtn.type.module = 0;
-        rtn.addr.Offset = (ULONG_PTR)div->pval;
+        init_lvalue_in_debugger(&rtn, div->typeid, div->pval);
         break;
     case EXPR_TYPE_BINOP:
-        rtn.cookie = DLV_HOST;
         exp1 = expr_eval(exp->un.binop.exp1);
         exp2 = expr_eval(exp->un.binop.exp2);
         if (exp1.type.id == dbg_itype_none || exp2.type.id == dbg_itype_none)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-        rtn.type.id = dbg_itype_lgint;
-        rtn.type.module = 0;
-        rtn.addr.Offset = (ULONG_PTR)&exp->un.binop.result;
+        init_lvalue_in_debugger(&rtn, dbg_itype_lgint, &exp->un.binop.result);
         type1 = exp1.type;
         type2 = exp2.type;
         switch (exp->un.binop.binop_type)
@@ -605,12 +585,9 @@ struct dbg_lvalue expr_eval(struct expr* exp)
 	}
         break;
     case EXPR_TYPE_UNOP:
-        rtn.cookie = DLV_HOST;
         exp1 = expr_eval(exp->un.unop.exp1);
         if (exp1.type.id == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-        rtn.addr.Offset = (ULONG_PTR)&exp->un.unop.result;
-        rtn.type.id     = dbg_itype_lgint;
-        rtn.type.module = 0;
+        init_lvalue_in_debugger(&rtn, dbg_itype_lgint, &exp->un.unop.result);
         switch (exp->un.unop.unop_type)
 	{
 	case EXP_OP_NEG:
@@ -628,7 +605,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             break;
 	case EXP_OP_FORCE_DEREF:
             rtn = exp1;
-            if (exp1.cookie == DLV_TARGET)
+            if (exp1.in_debuggee)
                 dbg_read_memory(memory_to_linear_addr(&exp1.addr), &rtn.addr.Offset, sizeof(rtn.addr.Offset));
             break;
 	case EXP_OP_ADDR:

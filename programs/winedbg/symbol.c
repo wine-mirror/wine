@@ -71,8 +71,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
 
         if (!memory_get_register(sym->Register, &pval, buffer, sz))
             return FALSE;
-        lvalue->cookie = DLV_HOST;
-        lvalue->addr.Offset = (DWORD_PTR)pval;
+        init_lvalue(lvalue, FALSE, pval);
     }
     else if (sym->Flags & SYMFLAG_REGREL)
     {
@@ -85,8 +84,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         l = strlen(buffer);
         sz -= l;
         buffer += l;
-        lvalue->cookie = DLV_TARGET;
-        lvalue->addr.Offset = (ULONG64)*pval + sym->Address;
+        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(*pval + sym->Address));
         if ((LONG64)sym->Address >= 0)
             snprintf(buffer, sz, "+%I64d]", sym->Address);
         else
@@ -119,21 +117,18 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
             /* this is likely Wine's dbghelp which passes const values by reference
              * (object is managed by dbghelp, hence in debugger address space)
              */
-            lvalue->cookie = DLV_HOST;
-            lvalue->addr.Offset = (DWORD_PTR)sym->Value;
+            init_lvalue(lvalue, FALSE, (void*)(DWORD_PTR)sym->Value);
         }
         else
         {
             DWORD* pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
-            lvalue->cookie = DLV_HOST;
-            lvalue->addr.Offset = (DWORD_PTR)pdw;
+            init_lvalue(lvalue, FALSE, pdw);
             *pdw = sym->Value;
         }
     }
     else if (sym->Flags & SYMFLAG_LOCAL)
     {
-        lvalue->cookie = DLV_TARGET;
-        lvalue->addr.Offset = base + sym->Address;
+        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(base + sym->Address));
     }
     else if (sym->Flags & SYMFLAG_TLSREL)
     {
@@ -176,13 +171,11 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
 
         addr += tlsindex * sizeof(DWORD_PTR);
         if (!dbg_read_memory((void*)addr, &addr, sizeof(addr))) goto tls_error;
-        lvalue->cookie = DLV_TARGET;
-        lvalue->addr.Offset = addr + sym->Address;
+        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(addr + sym->Address));
     }
     else
     {
-        lvalue->cookie = DLV_TARGET;
-        lvalue->addr.Offset = sym->Address;
+        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)sym->Address);
     }
     lvalue->addr.Mode = AddrModeFlat;
     lvalue->type.module = sym->ModBase;

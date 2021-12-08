@@ -357,7 +357,7 @@ void break_check_delayed_bp(void)
             if (symbol_get_lvalue(dbp[i].u.symbol.name, dbp[i].u.symbol.lineno,
                                   &lvalue, TRUE) != sglv_found)
                 continue;
-            if (lvalue.cookie != DLV_TARGET) continue;
+            if (!lvalue.in_debuggee) continue;
         }
         else
             lvalue.addr = dbp[i].u.addr;
@@ -385,7 +385,7 @@ static void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
     int         num;
     DWORD64     l = 4;
 
-    if (lvalue->cookie == DLV_HOST)
+    if (!lvalue->in_debuggee)
     {
         dbg_printf("Cannot set a watch point on register or register-based variable\n");
         return;

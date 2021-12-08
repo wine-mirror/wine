@@ -211,7 +211,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
         *tmpbuf >>= bitoffset & 7;
         *tmpbuf &= ~mask;
 
-        lvalue->cookie      = DLV_HOST;
+        lvalue->in_debuggee = 0;
         lvalue->addr.Offset = (ULONG_PTR)tmpbuf;
 
         /*
@@ -337,7 +337,7 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
      * internal variables is very unlikely. A correct fix would be
      * rather large.
      */
-    result->cookie = DLV_TARGET;
+    result->in_debuggee = 1;
     return TRUE;
 }
 
@@ -531,7 +531,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
                 unsigned len = min(count, sizeof(buffer));
                 memory_get_string(dbg_curr_process,
                                   memory_to_linear_addr(&lvalue->addr),
-                                  lvalue->cookie == DLV_TARGET, TRUE, buffer, len);
+                                  lvalue->in_debuggee, TRUE, buffer, len);
                 dbg_printf("\"%s%s\"", buffer, (len < count) ? "..." : "");
                 break;
             }
