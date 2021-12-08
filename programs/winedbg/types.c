@@ -164,16 +164,33 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
 {
     dbg_lgint_t val;
     DWORD64     size;
+    BOOL        equal;
 
-    if (!types_get_info(&lvalue_to->type, TI_GET_LENGTH, &size)) return FALSE;
-    if (sizeof(val) < size)
+    if (!lvalue_to->bitlen && !lvalue_from->bitlen)
     {
-        dbg_printf("Insufficient size\n");
-        return FALSE;
+        if (!types_compare(lvalue_to->type, lvalue_from->type, &equal)) return FALSE;
+        if (equal)
+        {
+            if (!types_get_info(&lvalue_to->type, TI_GET_LENGTH, &size)) return FALSE;
+            if (sizeof(val) < size)
+            {
+                return memory_read_value(lvalue_from, size, &val) &&
+                    memory_write_value(lvalue_to, size, &val);
+            }
+            dbg_printf("NIY\n");
+            /* else: should allocate intermediate buffer... */
+            return FALSE;
+        }
+    }
+    if (types_is_integral_type(lvalue_from) && types_is_integral_type(lvalue_to))
+    {
+        /* doing integer conversion (about sign, size) */
+        val = types_extract_as_integer(lvalue_from);
+        return memory_store_integer(lvalue_to, val);
     }
     /* FIXME: should support floats as well */
-    val = types_extract_as_integer(lvalue_from);
-    return memory_store_integer(lvalue_to, val);
+    dbg_printf("Cannot assign (different types)\n"); return FALSE;
+    return FALSE;
 }
 
 /******************************************************************
@@ -909,4 +926,165 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
 
 #undef X
     return TRUE;
+}
+
+static BOOL types_compare_name(struct dbg_type type1, struct dbg_type type2, BOOL* equal)
+{
+    LPWSTR name1, name2;
+    BOOL ret;
+
+    if (types_get_info(&type1, TI_GET_SYMNAME, &name1))
+    {
+        if (types_get_info(&type2, TI_GET_SYMNAME, &name2))
+        {
+            *equal = !wcscmp(name1, name2);
+            ret = TRUE;
+            HeapFree(GetProcessHeap(), 0, name2);
+        }
+        else ret = FALSE;
+        HeapFree(GetProcessHeap(), 0, name1);
+    }
+    else ret = FALSE;
+    return ret;
+}
+
+static BOOL types_compare_children(struct dbg_type type1, struct dbg_type type2, BOOL* equal, DWORD tag)
+{
+    DWORD count1, count2, i;
+    DWORD* children;
+    BOOL ret;
+
+    if (!types_get_info(&type1, TI_GET_CHILDRENCOUNT, &count1) ||
+        !types_get_info(&type2, TI_GET_CHILDRENCOUNT, &count2)) return FALSE;
+    if (count1 != count2) {*equal = FALSE; return TRUE;}
+    if (!count1) return *equal = TRUE;
+    if ((children = malloc(sizeof(*children) * 2 * count1)) == NULL) return FALSE;
+    if (types_get_info(&type1, TI_FINDCHILDREN, &children[0]) &&
+        types_get_info(&type2, TI_FINDCHILDREN, &children[count1]))
+    {
+        for (i = 0; i < count1; ++i)
+        {
+            type1.id = children[i];
+            type2.id = children[count1 + i];
+            switch (tag)
+            {
+            case SymTagFunctionType: ret = types_compare(type1, type2, equal); break;
+            case SymTagUDT:
+                /* each child is a SymTagData that describes the member */
+                ret = types_compare_name(type1, type2, equal);
+                if (ret && *equal)
+                {
+                    /* compare type of member */
+                    ret = types_get_info(&type1, TI_GET_TYPE, &type1.id) &&
+                        types_get_info(&type2, TI_GET_TYPE, &type2.id);
+                    if (ret) ret = types_compare(type1, type2, equal);
+                    /* FIXME should compare bitfield info when present */
+                }
+                break;
+            default: ret = FALSE; break;
+            }
+            if (!ret || !*equal) break;
+        }
+        if (i == count1) ret = *equal = TRUE;
+    }
+    else ret = FALSE;
+
+    free(children);
+    return ret;
+}
+
+BOOL types_compare(struct dbg_type type1, struct dbg_type type2, BOOL* equal)
+{
+    DWORD           tag1, tag2;
+    DWORD64         size1, size2;
+    DWORD           bt1, bt2;
+    DWORD           count1, count2;
+    BOOL            ret;
+
+    do
+    {
+        if (type1.module == type2.module && type1.id == type2.id)
+            return *equal = TRUE;
+
+        if (!types_get_real_type(&type1, &tag1) ||
+            !types_get_real_type(&type2, &tag2)) return FALSE;
+
+        if (type1.module == type2.module && type1.id == type2.id)
+            return *equal = TRUE;
+
+        if (tag1 != tag2) return !(*equal = FALSE);
+
+        switch (tag1)
+        {
+        case SymTagBaseType:
+            if (!types_get_info(&type1, TI_GET_BASETYPE, &bt1) ||
+                !types_get_info(&type2, TI_GET_BASETYPE, &bt2) ||
+                !types_get_info(&type1, TI_GET_LENGTH,   &size1) ||
+                !types_get_info(&type2, TI_GET_LENGTH,   &size2))
+                return FALSE;
+            *equal = bt1 == bt2 && size1 == size2;
+            return TRUE;
+        case SymTagPointerType:
+            /* compare sub types */
+            break;
+        case SymTagUDT:
+        case SymTagEnum:
+            ret = types_compare_name(type1, type2, equal);
+            if (!ret || !*equal) return ret;
+            ret = types_compare_children(type1, type2, equal, tag1);
+            if (!ret || !*equal) return ret;
+            if (tag1 == SymTagUDT) return TRUE;
+            /* compare underlying type for enums */
+            break;
+        case SymTagArrayType:
+            if (!types_get_info(&type1, TI_GET_LENGTH, &size1) ||
+                !types_get_info(&type2, TI_GET_LENGTH, &size2) ||
+                !types_get_info(&type1, TI_GET_COUNT,  &count1) ||
+                !types_get_info(&type2, TI_GET_COUNT,  &count2)) return FALSE;
+            if (size1 == size2 && count1 == count2)
+            {
+                struct dbg_type subtype1 = type1, subtype2 = type2;
+                if (!types_get_info(&type1, TI_GET_ARRAYINDEXTYPEID, &subtype1.id) ||
+                    !types_get_info(&type2, TI_GET_ARRAYINDEXTYPEID, &subtype2.id)) return FALSE;
+                if (!types_compare(subtype1, subtype2, equal)) return FALSE;
+                if (!*equal) return TRUE;
+            }
+            else return !(*equal = FALSE);
+            /* compare subtypes */
+            break;
+        case SymTagFunctionType:
+            if (!types_compare_children(type1, type2, equal, tag1)) return FALSE;
+            if (!*equal) return TRUE;
+            /* compare return:ed type */
+            break;
+        case SymTagFunctionArgType:
+            /* compare argument type */
+            break;
+        default:
+            dbg_printf("Unsupported yet tag %d\n", tag1);
+            return FALSE;
+        }
+    } while (types_get_info(&type1, TI_GET_TYPE, &type1.id) &&
+             types_get_info(&type2, TI_GET_TYPE, &type2.id));
+    return FALSE;
+}
+
+static BOOL is_basetype_char(DWORD bt)
+{
+    return bt == btChar || bt == btWChar || bt == btChar8 || bt == btChar16 || bt == btChar32;
+}
+
+static BOOL is_basetype_integer(DWORD bt)
+{
+    return is_basetype_char(bt) || bt == btInt || bt == btUInt || bt == btLong || bt == btULong;
+}
+
+BOOL types_is_integral_type(const struct dbg_lvalue* lv)
+{
+    struct dbg_type type = lv->type;
+    DWORD tag, bt;
+    if (lv->bitlen) return TRUE;
+    if (!types_get_real_type(&type, &tag) ||
+        !types_get_info(&type, TI_GET_BASETYPE, &bt)) return FALSE;
+    return is_basetype_integer(bt);
 }

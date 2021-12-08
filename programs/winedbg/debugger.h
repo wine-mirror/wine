@@ -493,6 +493,8 @@ extern BOOL             types_get_info(const struct dbg_type*, IMAGEHLP_SYMBOL_T
 extern BOOL             types_get_real_type(struct dbg_type* type, DWORD* tag);
 extern struct dbg_type  types_find_pointer(const struct dbg_type* type);
 extern struct dbg_type  types_find_type(DWORD64 linear, const char* name, enum SymTagEnum tag);
+extern BOOL             types_compare(const struct dbg_type, const struct dbg_type, BOOL* equal);
+extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
 
   /* winedbg.c */
 extern void	        dbg_outputW(const WCHAR* buffer, int len);
