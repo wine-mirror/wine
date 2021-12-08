@@ -338,6 +338,21 @@ BOOL memory_store_integer(const struct dbg_lvalue* lvalue, dbg_lgint_t val)
     return memory_write_value(lvalue, (unsigned)size, &val);
 }
 
+BOOL memory_fetch_float(const struct dbg_lvalue* lvalue, double *ret)
+{
+    DWORD64 size;
+    if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size)) return FALSE;
+    /* FIXME: this assumes that debuggee and debugger use the same
+     * representation for reals
+     */
+    if (size > sizeof(*ret)) return FALSE;
+    if (!memory_read_value(lvalue, size, ret)) return FALSE;
+
+    if (size == sizeof(float)) *ret = *(float*)ret;
+    else if (size != sizeof(double)) return FALSE;
+
+    return TRUE;
+}
 
 BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
                        BOOL unicode, char* buffer, int size)
@@ -478,7 +493,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             dbg_print_hex(size, val_int);
             break;
         case btFloat:
-            if (!dbg_curr_process->be_cpu->fetch_float(lvalue, size, &val_real)) return;
+            if (!memory_fetch_float(lvalue, &val_real)) return;
             dbg_printf("%f", val_real);
             break;
         case btChar:

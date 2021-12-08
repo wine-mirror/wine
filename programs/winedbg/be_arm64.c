@@ -228,23 +228,6 @@ static int be_arm64_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
     return 4;
 }
 
-static BOOL be_arm64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
-{
-    char tmp[sizeof(double)];
-
-    /* FIXME: this assumes that debuggee and debugger use the same
-     * representation for reals
-     */
-    if (size > sizeof(tmp)) return FALSE;
-    if (!memory_read_value(lvalue, size, tmp)) return FALSE;
-
-    if (size == sizeof(float)) *ret = *(float*)tmp;
-    else if (size == sizeof(double)) *ret = *(double*)tmp;
-    else return FALSE;
-
-    return TRUE;
-}
-
 void be_arm64_disasm_one_insn(ADDRESS64 *addr, int display)
 {
     dbg_printf("be_arm64_disasm_one_insn: not done\n");
@@ -323,7 +306,6 @@ struct backend_cpu be_arm64 =
     be_arm64_is_watchpoint_set,
     be_arm64_clear_watchpoint,
     be_arm64_adjust_pc_for_break,
-    be_arm64_fetch_float,
     be_arm64_get_context,
     be_arm64_set_context,
     be_arm64_gdb_register_map,

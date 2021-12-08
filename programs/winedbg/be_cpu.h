@@ -118,9 +118,6 @@ struct backend_cpu
     /* -------------------------------------------------------------------------------
      * basic type read/write 
      * -------------------------------------------------------------------------------*/
-    /* Reads a real from memory and stores it inside a long double */
-    BOOL                (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, double*);
-
     BOOL                (*get_context)(HANDLE thread, dbg_ctx_t *ctx);
     BOOL                (*set_context)(HANDLE thread, const dbg_ctx_t *ctx);
 

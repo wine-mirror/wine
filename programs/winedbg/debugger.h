@@ -396,6 +396,7 @@ extern BOOL             memory_transfer_value(const struct dbg_lvalue* to, const
 extern BOOL             memory_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                              BOOL is_signed, dbg_lgint_t* ret);
 extern BOOL             memory_store_integer(const struct dbg_lvalue* lvalue, dbg_lgint_t val);
+extern BOOL             memory_fetch_float(const struct dbg_lvalue* lvalue, double *ret);
 extern void             memory_examine(const struct dbg_lvalue *lvalue, int count, char format);
 extern void*            memory_to_linear_addr(const ADDRESS64* address);
 extern BOOL             memory_get_current_pc(ADDRESS64* address);

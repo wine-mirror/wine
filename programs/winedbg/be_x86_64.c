@@ -699,23 +699,6 @@ static int be_x86_64_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
     return 1;
 }
 
-static BOOL be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
-{
-    char tmp[sizeof(double)];
-
-    /* FIXME: this assumes that debuggee and debugger use the same
-     * representation for reals
-     */
-    if (size > sizeof(tmp)) return FALSE;
-    if (!memory_read_value(lvalue, size, tmp)) return FALSE;
-
-    if (size == sizeof(float)) *ret = *(float*)tmp;
-    else if (size == sizeof(double)) *ret = *(double*)tmp;
-    else return FALSE;
-
-    return TRUE;
-}
-
 static BOOL be_x86_64_get_context(HANDLE thread, dbg_ctx_t *ctx)
 {
     ctx->ctx.ContextFlags = CONTEXT_ALL;
@@ -813,7 +796,6 @@ struct backend_cpu be_x86_64 =
     be_x86_64_is_watchpoint_set,
     be_x86_64_clear_watchpoint,
     be_x86_64_adjust_pc_for_break,
-    be_x86_64_fetch_float,
     be_x86_64_get_context,
     be_x86_64_set_context,
     be_x86_64_gdb_register_map,

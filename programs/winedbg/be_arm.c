@@ -1831,23 +1831,6 @@ static int be_arm_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
     return step;
 }
 
-static BOOL be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
-{
-    char tmp[sizeof(double)];
-
-    /* FIXME: this assumes that debuggee and debugger use the same
-     * representation for reals
-     */
-    if (size > sizeof(tmp)) return FALSE;
-    if (!memory_read_value(lvalue, size, tmp)) return FALSE;
-
-    if (size == sizeof(float)) *ret = *(float*)tmp;
-    else if (size == sizeof(double)) *ret = *(double*)tmp;
-    else return FALSE;
-
-    return TRUE;
-}
-
 static BOOL be_arm_get_context(HANDLE thread, dbg_ctx_t *ctx)
 {
     ctx->ctx.ContextFlags = CONTEXT_ALL;
@@ -1904,7 +1887,6 @@ struct backend_cpu be_arm =
     be_arm_is_watchpoint_set,
     be_arm_clear_watchpoint,
     be_arm_adjust_pc_for_break,
-    be_arm_fetch_float,
     be_arm_get_context,
     be_arm_set_context,
     be_arm_gdb_register_map,
