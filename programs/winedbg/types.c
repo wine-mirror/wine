@@ -162,30 +162,17 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
 
 BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lvalue_from)
 {
-    dbg_lgint_t val;
-    DWORD64     size;
-    BOOL        equal;
-
     if (!lvalue_to->bitlen && !lvalue_from->bitlen)
     {
+        BOOL equal;
         if (!types_compare(lvalue_to->type, lvalue_from->type, &equal)) return FALSE;
         if (equal)
-        {
-            if (!types_get_info(&lvalue_to->type, TI_GET_LENGTH, &size)) return FALSE;
-            if (sizeof(val) < size)
-            {
-                return memory_read_value(lvalue_from, size, &val) &&
-                    memory_write_value(lvalue_to, size, &val);
-            }
-            dbg_printf("NIY\n");
-            /* else: should allocate intermediate buffer... */
-            return FALSE;
-        }
+            return memory_transfer_value(lvalue_to, lvalue_from);
     }
     if (types_is_integral_type(lvalue_from) && types_is_integral_type(lvalue_to))
     {
         /* doing integer conversion (about sign, size) */
-        val = types_extract_as_integer(lvalue_from);
+        dbg_lgint_t val = types_extract_as_integer(lvalue_from);
         return memory_store_integer(lvalue_to, val);
     }
     /* FIXME: should support floats as well */

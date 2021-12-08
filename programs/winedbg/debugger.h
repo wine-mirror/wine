@@ -392,6 +392,7 @@ extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const 
   /* memory.c */
 extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
 extern BOOL             memory_write_value(const struct dbg_lvalue* val, DWORD size, void* value);
+extern BOOL             memory_transfer_value(const struct dbg_lvalue* to, const struct dbg_lvalue* from);
 extern BOOL             memory_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                              BOOL is_signed, dbg_lgint_t* ret);
 extern BOOL             memory_store_integer(const struct dbg_lvalue* lvalue, dbg_lgint_t val);

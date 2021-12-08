@@ -133,6 +133,37 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     return ret;
 }
 
+/* transfer a block of memory
+ * the two lvalue:s are expected to be of same size
+ */
+BOOL memory_transfer_value(const struct dbg_lvalue* to, const struct dbg_lvalue* from)
+{
+    DWORD64 size_to, size_from;
+    BYTE tmp[256];
+    BYTE* ptr = tmp;
+    BOOL ret;
+
+    if (to->bitlen || from->bitlen) return FALSE;
+    if (!types_get_info(&to->type, TI_GET_LENGTH, &size_to) ||
+        !types_get_info(&from->type, TI_GET_LENGTH, &size_from) ||
+        size_from != size_to) return FALSE;
+    /* optimize debugger to debugger transfer */
+    if (!to->in_debuggee && !from->in_debuggee)
+    {
+        memcpy(memory_to_linear_addr(&to->addr), memory_to_linear_addr(&from->addr), size_from);
+        return TRUE;
+    }
+    if (size_to > sizeof(tmp))
+    {
+        ptr = malloc(size_from);
+        if (!ptr) return FALSE;
+    }
+    ret = memory_read_value(from, size_from, ptr) &&
+        memory_write_value(to, size_from, ptr);
+    if (size_to > sizeof(tmp)) free(ptr);
+    return ret;
+}
+
 /***********************************************************************
  *           memory_examine
  *
