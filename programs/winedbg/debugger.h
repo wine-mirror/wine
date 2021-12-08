@@ -117,7 +117,9 @@ struct dbg_type
 
 struct dbg_lvalue       /* structure to hold left-values... */
 {
-    unsigned            in_debuggee : 1; /* 1 = debuggee address space, 0 = debugger address space */
+    unsigned            in_debuggee : 1, /* 1 = debuggee address space, 0 = debugger address space */
+                        bitstart : 8, /* in fact, 7 should be sufficient for underlying 128bit integers */
+                        bitlen;
     ADDRESS64           addr;
     struct dbg_type     type;
 };
@@ -125,6 +127,8 @@ struct dbg_lvalue       /* structure to hold left-values... */
 static inline void init_lvalue(struct dbg_lvalue* lv, BOOL in_debuggee, void* addr)
 {
     lv->in_debuggee = !!in_debuggee;
+    lv->bitstart = 0;
+    lv->bitlen = 0;
     lv->addr.Mode = AddrModeFlat;
     lv->addr.Offset = (DWORD_PTR)addr;
     lv->type.module = 0;
@@ -134,6 +138,8 @@ static inline void init_lvalue(struct dbg_lvalue* lv, BOOL in_debuggee, void* ad
 static inline void init_lvalue_in_debugger(struct dbg_lvalue* lv, enum dbg_internal_types it, void* addr)
 {
     lv->in_debuggee = 0;
+    lv->bitstart = 0;
+    lv->bitlen = 0;
     lv->addr.Mode = AddrModeFlat;
     lv->addr.Offset = (DWORD_PTR)addr;
     lv->type.module = 0;
