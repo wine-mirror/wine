@@ -72,6 +72,7 @@ struct d2d_figure
     size_t bezier_control_count;
 
     D2D1_POINT_2F *original_bezier_controls;
+    size_t original_bezier_controls_size;
     size_t original_bezier_control_count;
 
     D2D1_RECT_F bounds;
@@ -652,6 +653,22 @@ static BOOL d2d_figure_add_bezier_controls(struct d2d_figure *figure, size_t cou
 
     memcpy(&figure->bezier_controls[figure->bezier_control_count], p, count * sizeof(*figure->bezier_controls));
     figure->bezier_control_count += count;
+
+    return TRUE;
+}
+
+static BOOL d2d_figure_add_original_bezier_controls(struct d2d_figure *figure, size_t count, const D2D1_POINT_2F *p)
+{
+    if (!d2d_array_reserve((void **)&figure->original_bezier_controls, &figure->original_bezier_controls_size,
+            figure->original_bezier_control_count + count, sizeof(*figure->original_bezier_controls)))
+    {
+        ERR("Failed to grow cubic Bézier controls array.\n");
+        return FALSE;
+    }
+
+    memcpy(&figure->original_bezier_controls[figure->original_bezier_control_count],
+            p, count * sizeof(*figure->original_bezier_controls));
+    figure->original_bezier_control_count += count;
 
     return TRUE;
 }
@@ -2595,7 +2612,15 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
     {
         D2D1_RECT_F bezier_bounds;
 
-        /* FIXME: This tries to approximate a cubic bezier with a quadratic one. */
+        if (!d2d_figure_add_original_bezier_controls(figure, 1, &beziers[i].point1)
+                || !d2d_figure_add_original_bezier_controls(figure, 1, &beziers[i].point2))
+        {
+            ERR("Failed to add cubic Bézier controls.\n");
+            geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+            return;
+        }
+
+        /* FIXME: This tries to approximate a cubic Bézier with a quadratic one. */
         p.x = (beziers[i].point1.x + beziers[i].point2.x) * 0.75f;
         p.y = (beziers[i].point1.y + beziers[i].point2.y) * 0.75f;
         p.x -= (figure->vertices[figure->vertex_count - 1].x + beziers[i].point3.x) * 0.25f;
@@ -2667,8 +2692,8 @@ static void d2d_path_geometry_free_figures(struct d2d_geometry *geometry)
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
-        heap_free(geometry->u.path.figures[i].bezier_controls);
         heap_free(geometry->u.path.figures[i].original_bezier_controls);
+        heap_free(geometry->u.path.figures[i].bezier_controls);
         heap_free(geometry->u.path.figures[i].vertices);
     }
     heap_free(geometry->u.path.figures);
@@ -2937,7 +2962,6 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
     HRESULT hr = E_FAIL;
-    size_t i;
 
     TRACE("iface %p.\n", iface);
 
@@ -2948,15 +2972,6 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
         return D2DERR_WRONG_STATE;
     }
     geometry->u.path.state = D2D_GEOMETRY_STATE_CLOSED;
-
-    for (i = 0; i < geometry->u.path.figure_count; ++i)
-    {
-        struct d2d_figure *figure = &geometry->u.path.figures[i];
-        size_t size = figure->bezier_control_count * sizeof(*figure->original_bezier_controls);
-        if (!(figure->original_bezier_controls = heap_alloc(size)))
-            goto done;
-        memcpy(figure->original_bezier_controls, figure->bezier_controls, size);
-    }
 
     if (!d2d_geometry_intersect_self(geometry))
         goto done;
@@ -3016,6 +3031,17 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
     for (i = 0; i < bezier_count; ++i)
     {
         D2D1_RECT_F bezier_bounds;
+        D2D1_POINT_2F p[2];
+
+        /* Construct a cubic curve. */
+        d2d_point_lerp(&p[0], &figure->vertices[figure->vertex_count - 1], &beziers[i].point1, 2.0f / 3.0f);
+        d2d_point_lerp(&p[1], &beziers[i].point2, &beziers[i].point1, 2.0f / 3.0f);
+        if (!d2d_figure_add_original_bezier_controls(figure, 2, p))
+        {
+            ERR("Failed to add cubic Bézier controls.\n");
+            geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+            return;
+        }
 
         d2d_rect_get_bezier_bounds(&bezier_bounds, &figure->vertices[figure->vertex_count - 1],
                 &beziers[i].point1, &beziers[i].point2);
@@ -3228,10 +3254,19 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
                     break;
 
                 case D2D_VERTEX_TYPE_BEZIER:
+                    /* FIXME: This attempts to approximate a cubic Bézier with
+                     * a quadratic one. */
                     p1 = figure->original_bezier_controls[bezier_idx++];
                     d2d_point_transform(&p1, transform, p1.x, p1.y);
+                    p2 = figure->original_bezier_controls[bezier_idx++];
+                    d2d_point_transform(&p2, transform, p2.x, p2.y);
+                    p1.x = (p1.x + p2.x) * 0.75f;
+                    p1.y = (p1.y + p2.y) * 0.75f;
                     p2 = figure->vertices[j];
                     d2d_point_transform(&p2, transform, p2.x, p2.y);
+                    p1.x -= (p.x + p2.x) * 0.25f;
+                    p1.y -= (p.y + p2.y) * 0.25f;
+
                     d2d_rect_get_bezier_bounds(&bezier_bounds, &p, &p1, &p2);
                     d2d_rect_union(bounds, &bezier_bounds);
                     p = p2;
@@ -3250,10 +3285,19 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
 
         if (d2d_vertex_type_is_bezier(type))
         {
+            /* FIXME: This attempts to approximate a cubic Bézier with
+             * a quadratic one. */
             p1 = figure->original_bezier_controls[bezier_idx++];
             d2d_point_transform(&p1, transform, p1.x, p1.y);
+            p2 = figure->original_bezier_controls[bezier_idx++];
+            d2d_point_transform(&p2, transform, p2.x, p2.y);
+            p1.x = (p1.x + p2.x) * 0.75f;
+            p1.y = (p1.y + p2.y) * 0.75f;
             p2 = figure->vertices[0];
             d2d_point_transform(&p2, transform, p2.x, p2.y);
+            p1.x -= (p.x + p2.x) * 0.25f;
+            p1.y -= (p.y + p2.y) * 0.25f;
+
             d2d_rect_get_bezier_bounds(&bezier_bounds, &p, &p1, &p2);
             d2d_rect_union(bounds, &bezier_bounds);
         }
@@ -3367,22 +3411,6 @@ static void d2d_geometry_flatten_cubic(ID2D1SimplifiedGeometrySink *sink, const 
     ID2D1SimplifiedGeometrySink_SetSegmentFlags(sink, D2D1_PATH_SEGMENT_NONE);
 }
 
-static void d2d_geometry_simplify_quadratic(ID2D1SimplifiedGeometrySink *sink,
-        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_POINT_2F *p0,
-        const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2, float tolerance)
-{
-    D2D1_BEZIER_SEGMENT b;
-
-    d2d_point_lerp(&b.point1, p0, p1, 2.0f / 3.0f);
-    d2d_point_lerp(&b.point2, p2, p1, 2.0f / 3.0f);
-    b.point3 = *p2;
-
-    if (option == D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES)
-        d2d_geometry_flatten_cubic(sink, p0, &b, tolerance);
-    else
-        ID2D1SimplifiedGeometrySink_AddBeziers(sink, &b, 1);
-}
-
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *iface,
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
@@ -3391,8 +3419,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
     enum d2d_vertex_type type = D2D_VERTEX_TYPE_NONE;
     unsigned int i, j, bezier_idx;
     D2D1_FIGURE_BEGIN begin;
-    D2D1_POINT_2F p, p1, p2;
+    D2D1_BEZIER_SEGMENT b;
     D2D1_FIGURE_END end;
+    D2D1_POINT_2F p;
 
     TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
             iface, option, transform, tolerance, sink);
@@ -3432,14 +3461,21 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
                     break;
 
                 case D2D_VERTEX_TYPE_BEZIER:
-                    p1 = figure->original_bezier_controls[bezier_idx++];
+                    b.point1 = figure->original_bezier_controls[bezier_idx++];
+                    b.point2 = figure->original_bezier_controls[bezier_idx++];
+                    b.point3 = figure->vertices[j];
                     if (transform)
-                        d2d_point_transform(&p1, transform, p1.x, p1.y);
-                    p2 = figure->vertices[j];
-                    if (transform)
-                        d2d_point_transform(&p2, transform, p2.x, p2.y);
-                    d2d_geometry_simplify_quadratic(sink, option, &p, &p1, &p2, tolerance);
-                    p = p2;
+                    {
+                        d2d_point_transform(&b.point1, transform, b.point1.x, b.point1.y);
+                        d2d_point_transform(&b.point2, transform, b.point2.x, b.point2.y);
+                        d2d_point_transform(&b.point3, transform, b.point3.x, b.point3.y);
+                    }
+
+                    if (option == D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES)
+                        d2d_geometry_flatten_cubic(sink, &p, &b, tolerance);
+                    else
+                        ID2D1SimplifiedGeometrySink_AddBeziers(sink, &b, 1);
+                    p = b.point3;
                     break;
 
                 default:
@@ -3456,13 +3492,20 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
 
         if (d2d_vertex_type_is_bezier(type))
         {
-            p1 = figure->original_bezier_controls[bezier_idx++];
+            b.point1 = figure->original_bezier_controls[bezier_idx++];
+            b.point2 = figure->original_bezier_controls[bezier_idx++];
+            b.point3 = figure->vertices[0];
             if (transform)
-                d2d_point_transform(&p1, transform, p1.x, p1.y);
-            p2 = figure->vertices[0];
-            if (transform)
-                d2d_point_transform(&p2, transform, p2.x, p2.y);
-            d2d_geometry_simplify_quadratic(sink, option, &p, &p1, &p2, tolerance);
+            {
+                d2d_point_transform(&b.point1, transform, b.point1.x, b.point1.y);
+                d2d_point_transform(&b.point2, transform, b.point2.x, b.point2.y);
+                d2d_point_transform(&b.point3, transform, b.point3.x, b.point3.y);
+            }
+
+            if (option == D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES)
+                d2d_geometry_flatten_cubic(sink, &p, &b, tolerance);
+            else
+                ID2D1SimplifiedGeometrySink_AddBeziers(sink, &b, 1);
         }
 
         end = figure->flags & D2D_FIGURE_FLAG_CLOSED ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN;
