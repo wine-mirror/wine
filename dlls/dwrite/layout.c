@@ -1594,10 +1594,9 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
     memset(&run->bbox, 0, sizeof(run->bbox));
 
-    /* Check if run direction matches paragraph direction, if it doesn't adjust by
-       run width */
-    if (is_run_rtl(run) ^ is_rtl)
-        run->origin.x = is_rtl ? origin_x - run->width : origin_x + run->width;
+    /* Adjust by run width if direction differs. */
+    if (is_run_rtl(run) != is_rtl)
+        run->origin.x = origin_x + (is_rtl ? -run->width : run->width);
     else
         run->origin.x = origin_x;
 
