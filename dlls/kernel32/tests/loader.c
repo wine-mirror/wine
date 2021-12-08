@@ -1967,12 +1967,6 @@ static void test_section_access(void)
         nt_header.OptionalHeader.FileAlignment = 0x200;
         nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + page_size;
         nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
-        SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
-        ok(ret, "WriteFile error %d\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, &nt_header.OptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER), &dummy, NULL);
-        ok(ret, "WriteFile error %d\n", GetLastError());
 
         section.SizeOfRawData = sizeof(section_data);
         section.PointerToRawData = nt_header.OptionalHeader.FileAlignment;
@@ -1980,6 +1974,16 @@ static void test_section_access(void)
         section.Misc.VirtualSize = section.SizeOfRawData;
         section.Characteristics = td[i].scn_file_access;
         SetLastError(0xdeadbeef);
+
+        nt_header.OptionalHeader.AddressOfEntryPoint = section.VirtualAddress;
+
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &nt_header.OptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
         ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
         ok(ret, "WriteFile error %d\n", GetLastError());
 
@@ -1997,7 +2001,7 @@ static void test_section_access(void)
         CloseHandle(hfile);
 
         SetLastError(0xdeadbeef);
-        hlib = LoadLibraryA(dll_name);
+        hlib = LoadLibraryExA(dll_name, NULL, DONT_RESOLVE_DLL_REFERENCES);
         ok(hlib != 0, "LoadLibrary error %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);
