@@ -10134,6 +10134,119 @@ static void test_effect_crop(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_stroke_contains_point(BOOL d3d11)
+{
+    ID2D1RectangleGeometry *rectangle;
+    ID2D1Factory *factory;
+    D2D1_RECT_F rect;
+    unsigned int i;
+    BOOL contains;
+    HRESULT hr;
+
+    static const struct contains_point_test
+    {
+        D2D1_MATRIX_3X2_F transform;
+        D2D1_POINT_2F point;
+        float tolerance;
+        float stroke_width;
+        BOOL matrix;
+        BOOL contains;
+    }
+    rectangle_tests[] =
+    {
+        /* 0. Stroked area hittesting. Edge. */
+        {{{{0.0f}}}, { 0.4f, 10.0f},  0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, { 0.5f, 10.0f},  0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, { 0.6f, 10.0f},  0.0f, 1.0f, FALSE, FALSE},
+
+        /* 3. Negative tolerance. */
+        {{{{0.0f}}}, {-0.6f, 10.0f}, -1.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, { 0.6f, 10.0f}, -1.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, { 1.4f, 10.0f}, -1.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, { 1.5f, 10.0f}, -1.0f, 1.0f, FALSE, FALSE},
+
+        /* 7. Within tolerance limit around corner. */
+        {{{{0.0f}}}, {-D2D1_DEFAULT_FLATTENING_TOLERANCE - 1.00f, 0.0f}, 0.0f, 2.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {-D2D1_DEFAULT_FLATTENING_TOLERANCE - 1.01f, 0.0f}, 0.0f, 2.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {-D2D1_DEFAULT_FLATTENING_TOLERANCE, -D2D1_DEFAULT_FLATTENING_TOLERANCE},
+                0.0f, 2.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {-D2D1_DEFAULT_FLATTENING_TOLERANCE, -D2D1_DEFAULT_FLATTENING_TOLERANCE - 1.01f},
+                0.0f, 2.0f, FALSE, FALSE},
+
+        /* 11. Center point. */
+        {{{{0.0f}}}, { 5.0f, 10.0f},  0.0f, 1.0f, FALSE, FALSE},
+
+        /* 12. Center point, large stroke width. */
+        {{{{0.0f}}}, { 5.0f, 10.0f},  0.0f, 100.0f, FALSE, TRUE},
+
+        /* 13. Center point, large tolerance. */
+        {{{{0.0f}}}, { 5.0f, 10.0f}, 50.0f, 10.0f, FALSE, TRUE},
+
+        /* With transformation matrix. */
+
+        /* 14. */
+        {{{{0.0f, 0.0f, 0.0f, 1.0f}}}, {0.1f, 10.0f},  0.0f, 1.0f, TRUE, FALSE},
+        {{{{0.0f, 0.0f, 0.0f, 1.0f}}}, {5.0f, 10.0f},  5.0f, 1.0f, TRUE, FALSE},
+        {{{{0.0f, 0.0f, 0.0f, 1.0f}}}, {4.9f, 10.0f},  5.0f, 1.0f, TRUE, TRUE},
+        {{{{0.0f, 0.0f, 0.0f, 1.0f}}}, {5.0f, 10.0f}, -5.0f, 1.0f, TRUE, FALSE},
+        {{{{0.0f, 0.0f, 0.0f, 1.0f}}}, {4.9f, 10.0f}, -5.0f, 1.0f, TRUE, TRUE},
+
+        /* 19. */
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {0.0f, 10.0f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {0.1f, 10.0f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {0.5f, 10.0f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {0.0f, 10.0f}, 1.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {0.59f, 10.0f}, 1.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {-0.59f, 10.0f}, 1.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {0.59f, 10.0f}, -1.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f}}}, {-0.59f, 10.0f}, -1.0f, 1.0f, TRUE, TRUE},
+
+        /* 27. */
+        {{{{1.0f, 1.0f, 0.0f, 1.0f}}}, {5.0f, 4.4f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 1.0f, 0.0f, 1.0f}}}, {5.0f, 4.6f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 1.0f, 0.0f, 1.0f}}}, {5.0f, 5.4f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 1.0f, 0.0f, 1.0f}}}, {5.0f, 5.6f}, 0.0f, 1.0f, TRUE, FALSE},
+
+        /* 31. */
+        {{{{1.0f, 1.0f, 0.0f, 1.0f}}}, {5.0f, 6.9f}, 1.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 1.0f, 0.0f, 1.0f}}}, {5.0f, 7.0f}, 1.0f, 1.0f, TRUE, FALSE},
+
+        /* 33. Offset matrix */
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, -11.0f,   0.0f}}}, { 5.0f,  20.0f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f,   0.0f,  21.0f}}}, {10.0f,  10.0f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f,  11.0f,   0.0f}}}, { 5.0f,   0.0f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f,   0.0f, -21.0f}}}, { 0.0f,  10.0f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, -11.0f,   0.0f}}}, {-6.0f,  20.0f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f,   0.0f,  21.0f}}}, {10.0f,  31.0f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f,  11.0f,   0.0f}}}, {16.0f,   0.0f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f,   0.0f, -21.0f}}}, { 0.0f, -11.0f}, 0.0f, 1.0f, TRUE, TRUE},
+    };
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &rectangle);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(rectangle_tests); ++i)
+    {
+        const struct contains_point_test *test = &rectangle_tests[i];
+
+        winetest_push_context("Test %u", i);
+
+        contains = !test->contains;
+        hr = ID2D1RectangleGeometry_StrokeContainsPoint(rectangle, test->point, test->stroke_width,
+                NULL, test->matrix ? &test->transform : NULL, test->tolerance, &contains);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(contains == test->contains, "Got unexpected result %#x.\n", contains);
+
+        winetest_pop_context();
+    }
+    ID2D1RectangleGeometry_Release(rectangle);
+
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -10198,6 +10311,7 @@ START_TEST(d2d1)
     queue_test(test_effect);
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
+    queue_d3d10_test(test_stroke_contains_point);
 
     run_queued_tests();
 }

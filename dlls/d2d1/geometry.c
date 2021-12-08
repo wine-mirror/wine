@@ -402,11 +402,16 @@ static void d2d_point_calculate_bezier(D2D1_POINT_2F *out, const D2D1_POINT_2F *
     out->y = t_c * (t_c * p0->y + t * p1->y) + t * (t_c * p1->y + t * p2->y);
 }
 
+static float d2d_point_length(const D2D1_POINT_2F *p)
+{
+    return sqrtf(d2d_point_dot(p, p));
+}
+
 static void d2d_point_normalise(D2D1_POINT_2F *p)
 {
     float l;
 
-    if ((l = sqrtf(d2d_point_dot(p, p))) != 0.0f)
+    if ((l = d2d_point_length(p)) != 0.0f)
         d2d_point_scale(p, 1.0f / l);
 }
 
@@ -502,6 +507,83 @@ static float d2d_point_ccw(const D2D1_POINT_2F *a, const D2D1_POINT_2F *b, const
     d2d_fp_fast_expansion_sum_zeroelim(det_d, &det_d_len, det_c2, det_c2_len, temp4, 4);
 
     return det_d[det_d_len - 1];
+}
+
+/* Determine whether the point q is within the given tolerance of the line
+ * segment defined by p0 and p1, with the given stroke width and transform.
+ * Note that we don't care about the tolerance with respect to end-points or
+ * joins here; those are handled separately. */
+static BOOL d2d_point_on_line_segment(const D2D1_POINT_2F *q, const D2D1_POINT_2F *p0,
+        const D2D1_POINT_2F *p1, const D2D1_MATRIX_3X2_F *transform, float stroke_width, float tolerance)
+{
+    D2D1_POINT_2F v_n, v_p, v_q, v_r;
+    float l;
+
+    d2d_point_subtract(&v_p, p1, p0);
+    if ((l = d2d_point_length(&v_p)) == 0.0f)
+        return FALSE;
+
+    /* After (shear) transformation, the line segment is a parallelogram
+     * defined by p⃑' and n⃑':
+     *
+     *   p⃑ = P₁ - P₀
+     *   n⃑ = wp̂⟂
+     *   p⃑' = p⃑T
+     *   n⃑' = n⃑T */
+    l = stroke_width / l;
+    d2d_point_set(&v_r, transform->_31, transform->_32);
+    d2d_point_transform(&v_n, transform, -v_p.y * l, v_p.x * l);
+    d2d_point_subtract(&v_n, &v_n, &v_r);
+    d2d_point_transform(&v_p, transform, v_p.x, v_p.y);
+    d2d_point_subtract(&v_p, &v_p, &v_r);
+
+    /* Decompose the vector q⃑ = Q - P₀T into a linear combination of
+     * p⃑' and n⃑':
+     *
+     *   lq⃑ = xp⃑' + yn⃑' */
+    d2d_point_transform(&v_q, transform, p0->x, p0->y);
+    d2d_point_subtract(&v_q, q, &v_q);
+    l = v_p.x * v_n.y - v_p.y * v_n.x;
+    v_r.x = v_q.x * v_n.y - v_q.y * v_n.x;
+    v_r.y = v_q.x * v_p.y - v_q.y * v_p.x;
+
+    if (l < 0.0f)
+    {
+        l *= -1.0f;
+        v_r.x *= -1.0f;
+    }
+
+    /* Check where Q projects onto p⃑'. */
+    if (v_r.x < 0.0f || v_r.x > l)
+        return FALSE;
+
+    /* Check where Q projects onto n⃑'. */
+    if (fabs(v_r.y) < l)
+        return TRUE;
+
+    /* Q lies outside the segment. Check whether the distance to the edge is
+     * within the tolerance.
+     *
+     *   P₀' = P₀T + n⃑'
+     *   q⃑' = Q - P₀'
+     *      = q⃑ - n⃑'
+     *
+     * The distance is then q⃑' · p̂'⟂. */
+
+    if (v_r.y > 0.0f)
+        d2d_point_scale(&v_n, -1.0f);
+    d2d_point_subtract(&v_q, &v_q, &v_n);
+
+    /* Check where Q projects onto p⃑' + n⃑'. */
+    l = d2d_point_dot(&v_q, &v_p);
+    if (l < 0.0f || l > d2d_point_dot(&v_p, &v_p))
+        return FALSE;
+
+    v_n.x = -v_p.y;
+    v_n.y = v_p.x;
+    d2d_point_normalise(&v_n);
+
+    return fabsf(d2d_point_dot(&v_q, &v_n)) < tolerance;
 }
 
 static void d2d_rect_union(D2D1_RECT_F *l, const D2D1_RECT_F *r)
@@ -4043,10 +4125,76 @@ static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_StrokeContainsPoint(ID2D
         D2D1_POINT_2F point, float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
         float tolerance, BOOL *contains)
 {
-    FIXME("iface %p, point %s, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, contains %p stub!\n",
+    const struct d2d_geometry *geometry = impl_from_ID2D1RectangleGeometry(iface);
+    const D2D1_RECT_F *rect = &geometry->u.rectangle.rect;
+    unsigned int i;
+    struct
+    {
+        D2D1_POINT_2F s, e;
+    }
+    segments[4];
+
+    TRACE("iface %p, point %s, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, contains %p.\n",
             iface, debug_d2d_point_2f(&point), stroke_width, stroke_style, transform, tolerance, contains);
 
-    return E_NOTIMPL;
+    if (stroke_style)
+        FIXME("Ignoring stroke style %p.\n", stroke_style);
+
+    tolerance = fabsf(tolerance);
+
+    if (!transform)
+    {
+        D2D1_POINT_2F d, s;
+
+        s.x = rect->right - rect->left;
+        s.y = rect->bottom - rect->top;
+        d.x = fabsf((rect->right + rect->left) * 0.5f - point.x);
+        d.y = fabsf((rect->bottom + rect->top) * 0.5f - point.y);
+
+        /* Inside test. */
+        if (d.x <= (s.x - stroke_width) * 0.5f - tolerance && d.y <= (s.y - stroke_width) * 0.5f - tolerance)
+        {
+            *contains = FALSE;
+            return S_OK;
+        }
+
+        if (tolerance == 0.0f)
+        {
+            *contains = d.x < (s.x + stroke_width) * 0.5f && d.y < (s.y + stroke_width) * 0.5f;
+        }
+        else
+        {
+            d.x = max(d.x - (s.x + stroke_width) * 0.5f, 0.0f);
+            d.y = max(d.y - (s.y + stroke_width) * 0.5f, 0.0f);
+
+            *contains = d2d_point_dot(&d, &d) < tolerance * tolerance;
+        }
+
+        return S_OK;
+    }
+
+    stroke_width *= 0.5f;
+
+    d2d_point_set(&segments[0].s, rect->left - stroke_width, rect->bottom);
+    d2d_point_set(&segments[0].e, rect->right + stroke_width, rect->bottom);
+    d2d_point_set(&segments[1].s, rect->right, rect->bottom + stroke_width);
+    d2d_point_set(&segments[1].e, rect->right, rect->top - stroke_width);
+    d2d_point_set(&segments[2].s, rect->right + stroke_width, rect->top);
+    d2d_point_set(&segments[2].e, rect->left - stroke_width, rect->top);
+    d2d_point_set(&segments[3].s, rect->left, rect->top - stroke_width);
+    d2d_point_set(&segments[3].e, rect->left, rect->bottom + stroke_width);
+
+    *contains = FALSE;
+    for (i = 0; i < ARRAY_SIZE(segments); ++i)
+    {
+        if (d2d_point_on_line_segment(&point, &segments[i].s, &segments[i].e, transform, stroke_width, tolerance))
+        {
+            *contains = TRUE;
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_FillContainsPoint(ID2D1RectangleGeometry *iface,
