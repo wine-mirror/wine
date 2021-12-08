@@ -104,6 +104,88 @@ static void put_logical_proc_info_ex( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX32 
 }
 
 
+static NTSTATUS put_system_proc_info( SYSTEM_PROCESS_INFORMATION32 *info32,
+                                      const SYSTEM_PROCESS_INFORMATION *info,
+                                      BOOL ext_info, ULONG len, ULONG *retlen )
+{
+    ULONG inpos = 0, outpos = 0, i;
+    SYSTEM_PROCESS_INFORMATION32 *prev = NULL;
+    ULONG ti_size = (ext_info ? sizeof(SYSTEM_EXTENDED_THREAD_INFORMATION) : sizeof(SYSTEM_THREAD_INFORMATION));
+    ULONG ti_size32 = (ext_info ? sizeof(SYSTEM_EXTENDED_THREAD_INFORMATION32) : sizeof(SYSTEM_THREAD_INFORMATION32));
+
+    for (;;)
+    {
+        SYSTEM_EXTENDED_THREAD_INFORMATION *ti;
+        SYSTEM_EXTENDED_THREAD_INFORMATION32 *ti32;
+        SYSTEM_PROCESS_INFORMATION *proc = (SYSTEM_PROCESS_INFORMATION *)((char *)info + inpos);
+        SYSTEM_PROCESS_INFORMATION32 *proc32 = (SYSTEM_PROCESS_INFORMATION32 *)((char *)info32 + outpos);
+        ULONG proc_len = offsetof( SYSTEM_PROCESS_INFORMATION32, ti ) + proc->dwThreadCount * ti_size32;
+
+        if (outpos + proc_len + proc->ProcessName.MaximumLength <= len)
+        {
+            memset( proc32, 0, proc_len );
+
+            proc32->dwThreadCount                = proc->dwThreadCount;
+            proc32->WorkingSetPrivateSize        = proc->WorkingSetPrivateSize;
+            proc32->HardFaultCount               = proc->HardFaultCount;
+            proc32->NumberOfThreadsHighWatermark = proc->NumberOfThreadsHighWatermark;
+            proc32->CycleTime                    = proc->CycleTime;
+            proc32->CreationTime                 = proc->CreationTime;
+            proc32->UserTime                     = proc->UserTime;
+            proc32->KernelTime                   = proc->KernelTime;
+            proc32->ProcessName.Length           = proc->ProcessName.Length;
+            proc32->ProcessName.MaximumLength    = proc->ProcessName.MaximumLength;
+            proc32->ProcessName.Buffer           = PtrToUlong( (char *)proc32 + proc_len );
+            proc32->dwBasePriority               = proc->dwBasePriority;
+            proc32->UniqueProcessId              = HandleToULong( proc->UniqueProcessId );
+            proc32->ParentProcessId              = HandleToULong( proc->ParentProcessId );
+            proc32->HandleCount                  = proc->HandleCount;
+            proc32->SessionId                    = proc->SessionId;
+            proc32->UniqueProcessKey             = proc->UniqueProcessKey;
+            proc32->ioCounters                   = proc->ioCounters;
+            put_vm_counters( &proc32->vmCounters, &proc->vmCounters, sizeof(proc32->vmCounters) );
+            for (i = 0; i < proc->dwThreadCount; i++)
+            {
+                ti = (SYSTEM_EXTENDED_THREAD_INFORMATION *)((char *)proc->ti + i * ti_size);
+                ti32 = (SYSTEM_EXTENDED_THREAD_INFORMATION32 *)((char *)proc32->ti + i * ti_size32);
+                ti32->ThreadInfo.KernelTime        = ti->ThreadInfo.KernelTime;
+                ti32->ThreadInfo.UserTime          = ti->ThreadInfo.UserTime;
+                ti32->ThreadInfo.CreateTime        = ti->ThreadInfo.CreateTime;
+                ti32->ThreadInfo.dwTickCount       = ti->ThreadInfo.dwTickCount;
+                ti32->ThreadInfo.StartAddress      = PtrToUlong( ti->ThreadInfo.StartAddress );
+                ti32->ThreadInfo.dwCurrentPriority = ti->ThreadInfo.dwCurrentPriority;
+                ti32->ThreadInfo.dwBasePriority    = ti->ThreadInfo.dwBasePriority;
+                ti32->ThreadInfo.dwContextSwitches = ti->ThreadInfo.dwContextSwitches;
+                ti32->ThreadInfo.dwThreadState     = ti->ThreadInfo.dwThreadState;
+                ti32->ThreadInfo.dwWaitReason      = ti->ThreadInfo.dwWaitReason;
+                put_client_id( &ti32->ThreadInfo.ClientId, &ti->ThreadInfo.ClientId );
+                if (ext_info)
+                {
+                    ti32->StackBase         = PtrToUlong( ti->StackBase );
+                    ti32->StackLimit        = PtrToUlong( ti->StackLimit );
+                    ti32->Win32StartAddress = PtrToUlong( ti->Win32StartAddress );
+                    ti32->TebBase           = PtrToUlong( ti->TebBase );
+                    ti32->Reserved2         = ti->Reserved2;
+                    ti32->Reserved3         = ti->Reserved3;
+                    ti32->Reserved4         = ti->Reserved4;
+                }
+            }
+            memcpy( (char *)proc32 + proc_len, proc->ProcessName.Buffer,
+                    proc->ProcessName.MaximumLength );
+
+            if (prev) prev->NextEntryOffset = (char *)proc32 - (char *)prev;
+            prev = proc32;
+        }
+        outpos += proc_len + proc->ProcessName.MaximumLength;
+        inpos += proc->NextEntryOffset;
+        if (!proc->NextEntryOffset) break;
+    }
+    if (retlen) *retlen = outpos;
+    if (outpos <= len) return STATUS_SUCCESS;
+    else return STATUS_INFO_LENGTH_MISMATCH;
+}
+
+
 /**********************************************************************
  *           wow64_NtDisplayString
  */
@@ -270,9 +352,9 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
         return status;
 
     case SystemProcessInformation:  /* SYSTEM_PROCESS_INFORMATION */
+    case SystemExtendedProcessInformation:  /* SYSTEM_PROCESS_INFORMATION */
     {
-        ULONG inpos = 0, outpos = 0, size = len * 2, i, retsize;
-        SYSTEM_PROCESS_INFORMATION32 *prev = NULL;
+        ULONG size = len * 2, retsize;
         SYSTEM_PROCESS_INFORMATION *info = Wow64AllocateTemp( size );
 
         status = NtQuerySystemInformation( class, info, size, &retsize );
@@ -281,56 +363,7 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
             if (status == STATUS_INFO_LENGTH_MISMATCH && retlen) *retlen = retsize;
             return status;
         }
-        for (;;)
-        {
-            SYSTEM_PROCESS_INFORMATION *proc = (SYSTEM_PROCESS_INFORMATION *)((char *)info + inpos);
-            SYSTEM_PROCESS_INFORMATION32 *proc32 = (SYSTEM_PROCESS_INFORMATION32 *)((char *)ptr + outpos);
-            ULONG proc_len = offsetof( SYSTEM_PROCESS_INFORMATION32, ti[proc->dwThreadCount] );
-
-            if (outpos + proc_len + proc->ProcessName.MaximumLength <= len)
-            {
-                memset( proc32, 0, proc_len );
-                proc32->dwThreadCount             = proc->dwThreadCount;
-                proc32->CreationTime              = proc->CreationTime;
-                proc32->UserTime                  = proc->UserTime;
-                proc32->KernelTime                = proc->KernelTime;
-                proc32->ProcessName.Length        = proc->ProcessName.Length;
-                proc32->ProcessName.MaximumLength = proc->ProcessName.MaximumLength;
-                proc32->ProcessName.Buffer        = PtrToUlong( (char *)proc32 + proc_len );
-                proc32->dwBasePriority            = proc->dwBasePriority;
-                proc32->UniqueProcessId           = HandleToULong( proc->UniqueProcessId );
-                proc32->ParentProcessId           = HandleToULong( proc->ParentProcessId );
-                proc32->HandleCount               = proc->HandleCount;
-                proc32->SessionId                 = proc->SessionId;
-                proc32->ioCounters                = proc->ioCounters;
-                put_vm_counters( &proc32->vmCounters, &proc->vmCounters, sizeof(proc32->vmCounters) );
-                for (i = 0; i < proc->dwThreadCount; i++)
-                {
-                    proc32->ti[i].KernelTime        = proc->ti[i].KernelTime;
-                    proc32->ti[i].UserTime          = proc->ti[i].UserTime;
-                    proc32->ti[i].CreateTime        = proc->ti[i].CreateTime;
-                    proc32->ti[i].dwTickCount       = proc->ti[i].dwTickCount;
-                    proc32->ti[i].StartAddress      = PtrToUlong( proc->ti[i].StartAddress );
-                    proc32->ti[i].dwCurrentPriority = proc->ti[i].dwCurrentPriority;
-                    proc32->ti[i].dwBasePriority    = proc->ti[i].dwBasePriority;
-                    proc32->ti[i].dwContextSwitches = proc->ti[i].dwContextSwitches;
-                    proc32->ti[i].dwThreadState     = proc->ti[i].dwThreadState;
-                    proc32->ti[i].dwWaitReason      = proc->ti[i].dwWaitReason;
-                    put_client_id( &proc32->ti[i].ClientId, &proc->ti[i].ClientId );
-                }
-                memcpy( (char *)proc32 + proc_len, proc->ProcessName.Buffer,
-                        proc->ProcessName.MaximumLength );
-
-                if (prev) prev->NextEntryOffset = (char *)proc32 - (char *)prev;
-                prev = proc32;
-            }
-            outpos += proc_len + proc->ProcessName.MaximumLength;
-            inpos += proc->NextEntryOffset;
-            if (!proc->NextEntryOffset) break;
-        }
-        if (retlen) *retlen = outpos;
-        if (outpos <= len) return STATUS_SUCCESS;
-        else return STATUS_INFO_LENGTH_MISMATCH;
+        return put_system_proc_info( ptr, info, class == SystemExtendedProcessInformation, len, retlen );
     }
 
     case SystemModuleInformation:  /* RTL_PROCESS_MODULES */
@@ -439,11 +472,6 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
         else status = STATUS_INFO_LENGTH_MISMATCH;
         if (retlen) *retlen = sizeof(SYSTEM_REGISTRY_QUOTA_INFORMATION32);
         return status;
-
-    case SystemExtendedProcessInformation:
-        FIXME( "SystemExtendedProcessInformation, len %u, info %p, stub\n", len, ptr );
-        memset( ptr, 0, len );
-        return STATUS_SUCCESS;
 
     case SystemExtendedHandleInformation:  /* SYSTEM_HANDLE_INFORMATION_EX */
         if (len >= sizeof(SYSTEM_HANDLE_INFORMATION_EX32))

@@ -638,6 +638,18 @@ typedef struct
     SYSTEM_THREAD_INFORMATION32 ti[1];
 } SYSTEM_PROCESS_INFORMATION32;
 
+typedef struct
+{
+    SYSTEM_THREAD_INFORMATION32 ThreadInfo;
+    ULONG                       StackBase;
+    ULONG                       StackLimit;
+    ULONG                       Win32StartAddress;
+    ULONG                       TebBase;
+    ULONG                       Reserved2;
+    ULONG                       Reserved3;
+    ULONG                       Reserved4;
+} SYSTEM_EXTENDED_THREAD_INFORMATION32;
+
 struct __server_iovec32
 {
     ULONG        ptr;
