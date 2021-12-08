@@ -586,6 +586,172 @@ static BOOL d2d_point_on_line_segment(const D2D1_POINT_2F *q, const D2D1_POINT_2
     return fabsf(d2d_point_dot(&v_q, &v_n)) < tolerance;
 }
 
+/* Approximate the Bézier segment with a (wide) line segment. If the point
+ * lies outside the approximation, we're done. If the width of the
+ * approximation is less than the tolerance and the point lies inside, we're
+ * also done. If neither of those is the case, we subdivide the Bézier segment
+ * and try again. */
+static BOOL d2d_point_on_bezier_segment(const D2D1_POINT_2F *q, const D2D1_POINT_2F *p0,
+        const D2D1_BEZIER_SEGMENT *b, const D2D1_MATRIX_3X2_F *transform, float stroke_width, float tolerance)
+{
+    float d1, d2, d3, d4, d, l, m, w, w2;
+    D2D1_POINT_2F t[7], start, end, v_p;
+    D2D1_BEZIER_SEGMENT b0, b1;
+
+    m = 1.0f;
+    w = stroke_width * 0.5f;
+
+    d2d_point_subtract(&v_p, &b->point3, p0);
+    /* If the endpoints coincide, use the line through the control points as
+     * the direction vector. That choice is somewhat arbitrary; other choices
+     * with tighter error bounds exist. */
+    if ((l = d2d_point_dot(&v_p, &v_p)) == 0.0f)
+    {
+        d2d_point_subtract(&v_p, &b->point2, &b->point1);
+        /* If the control points also coincide, the curve is in fact a line. */
+        if ((l = d2d_point_dot(&v_p, &v_p)) == 0.0f)
+        {
+            d2d_point_subtract(&v_p, &b->point1, p0);
+            end.x = p0->x + 0.75f * v_p.x;
+            end.y = p0->y + 0.75f * v_p.y;
+
+            return d2d_point_on_line_segment(q, p0, &end, transform, w, tolerance);
+        }
+        m = 0.0f;
+    }
+    l = sqrtf(l);
+    d2d_point_scale(&v_p, 1.0f / l);
+    m *= l;
+
+    /* Calculate the width w2 of the approximation. */
+
+    end.x = p0->x + v_p.x;
+    end.y = p0->y + v_p.y;
+    /* Here, d1 and d2 are the maximum (signed) distance of the control points
+     * from the line through the start and end points. */
+    d1 = d2d_point_ccw(p0, &end, &b->point1);
+    d2 = d2d_point_ccw(p0, &end, &b->point2);
+    /* It can be shown that if the control points of a cubic Bézier curve lie
+     * on the same side of the line through the endpoints, the distance of the
+     * curve itself to that line will be within 3/4 of the distance of the
+     * control points to that line; if the control points lie on opposite
+     * sides, that distance will be within 4/9 of the distance of the
+     * corresponding control point. We're taking that as a given here. */
+    if (d1 * d2 > 0.0f)
+    {
+        d1 *= 0.75f;
+        d2 *= 0.75f;
+    }
+    else
+    {
+        d1 = (d1 * 4.0f) / 9.0f;
+        d2 = (d2 * 4.0f) / 9.0f;
+    }
+    w2 = max(fabsf(d1), fabsf(d2));
+
+    /* Project the control points onto the line through the endpoints of the
+     * curve. We will use these to calculate the endpoints of the
+     * approximation. */
+    d2d_point_subtract(&t[1], &b->point1, p0);
+    d1 = d2d_point_dot(&v_p, &t[1]);
+    d2d_point_subtract(&t[2], &b->point2, p0);
+    d2 = d2d_point_dot(&v_p, &t[2]);
+
+    /* Calculate the start point of the approximation. Like further above, the
+     * actual curve is somewhat closer to the endpoints than the control
+     * points are. */
+    d = min(min(d1, d2), 0);
+    if (d1 * d2 > 0.0f)
+        d *= 0.75f;
+    else
+        d = (d * 4.0f) / 9.0f;
+    /* Account for the stroke width and tolerance around the endpoints by
+     * adjusting the endpoints here. This matters because there are no joins
+     * in the original geometry for the places where we subdivide the original
+     * curve. We do this here because it's easy; alternatively we could
+     * explicitly test for this when subdividing the curve further below. */
+    d -= min(w + tolerance, w2);
+    start.x = p0->x + d * v_p.x;
+    start.y = p0->y + d * v_p.y;
+
+    /* Calculate the end point of the approximation. */
+    d1 -= m;
+    d2 -= m;
+    d = max(max(d1, d2), 0);
+    if (d1 * d2 > 0.0f)
+        d = m + d * 0.75f;
+    else
+        d = m + (d * 4.0f) / 9.0f;
+    d += min(w2, w + tolerance);
+    end.x = p0->x + d * v_p.x;
+    end.y = p0->y + d * v_p.y;
+
+    /* Calculate the error bounds of the approximation. We do this in
+     * transformed space because we need these to be relative to the given
+     * tolerance. */
+
+    d2d_point_transform(&t[0], transform, p0->x, p0->y);
+    d2d_point_transform(&t[1], transform, b->point1.x, b->point1.y);
+    d2d_point_transform(&t[2], transform, b->point2.x, b->point2.y);
+    d2d_point_transform(&t[3], transform, b->point3.x, b->point3.y);
+    d2d_point_transform(&t[4], transform, start.x, start.y);
+    d2d_point_transform(&t[5], transform, end.x, end.y);
+
+    d2d_point_subtract(&t[6], &t[5], &t[4]);
+    l = d2d_point_length(&t[6]);
+    /* Here, d1 and d2 are the maximum (signed) distance of the control points
+     * from the line through the start and end points. */
+    d1 = d2d_point_ccw(&t[4], &t[5], &t[1]) / l;
+    d2 = d2d_point_ccw(&t[4], &t[5], &t[2]) / l;
+    if (d1 * d2 > 0.0f)
+    {
+        d1 *= 0.75f;
+        d2 *= 0.75f;
+    }
+    else
+    {
+        d1 = (d1 * 4.0f) / 9.0f;
+        d2 = (d2 * 4.0f) / 9.0f;
+    }
+    l = max(max(d1, d2), 0) - min(min(d1, d2), 0);
+
+    /* d3 and d4 are the (unsigned) distance of the endpoints of the
+     * approximation from the original endpoints. */
+    d2d_point_subtract(&t[6], &t[4], &t[0]);
+    d3 = d2d_point_length(&t[6]);
+    d2d_point_subtract(&t[6], &t[5], &t[3]);
+    d4 = d2d_point_length(&t[6]);
+    l = max(max(d3, d4), l);
+
+    /* If the error of the approximation is less than the tolerance, and Q
+     * lies on the approximation, the distance of Q to the stroked curve is
+     * definitely within the tolerance. */
+    if (l <= tolerance && d2d_point_on_line_segment(q, &start, &end, transform, w, tolerance - l))
+        return TRUE;
+    /* On the other hand, if the distance of Q to the stroked curve is more
+     * than the sum of the tolerance and d, the distance of Q to the stroked
+     * curve can't possibly be within the tolerance. */
+    if (!d2d_point_on_line_segment(q, &start, &end, transform, w + w2, tolerance))
+        return FALSE;
+
+    /* Subdivide the curve. Note that simply splitting the segment in half
+     * here works and is easy, but may not be optimal. We could potentially
+     * reduce the number of iterations we need to do by splitting based on
+     * curvature or segment length. */
+    d2d_point_lerp(&t[0], &b->point1, &b->point2, 0.5f);
+
+    b1.point3 = b->point3;
+    d2d_point_lerp(&b1.point2, &b->point3, &b->point2, 0.5f);
+    d2d_point_lerp(&b1.point1, &t[0], &b1.point2, 0.5f);
+
+    d2d_point_lerp(&b0.point1, p0, &b->point1, 0.5f);
+    d2d_point_lerp(&b0.point2, &t[0], &b0.point1, 0.5f);
+    d2d_point_lerp(&b0.point3, &b0.point2, &b1.point1, 0.5f);
+
+    return d2d_point_on_bezier_segment(q, p0, &b0, transform, stroke_width, tolerance)
+            || d2d_point_on_bezier_segment(q, &b0.point3, &b1, transform, stroke_width, tolerance);
+}
+
 static void d2d_rect_union(D2D1_RECT_F *l, const D2D1_RECT_F *r)
 {
     l->left   = min(l->left, r->left);
@@ -3411,8 +3577,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
 {
     struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
     enum d2d_vertex_type type = D2D_VERTEX_TYPE_NONE;
+    unsigned int i, j, bezier_idx;
+    D2D1_BEZIER_SEGMENT b;
     D2D1_POINT_2F p, p1;
-    unsigned int i, j;
 
     TRACE("iface %p, point %s, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, contains %p.\n",
             iface, debug_d2d_point_2f(&point), stroke_width, stroke_style, transform, tolerance, contains);
@@ -3441,7 +3608,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
             break;
         }
 
-        for (++j; j < figure->vertex_count; ++j)
+        for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
         {
             if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
                     || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
@@ -3455,6 +3622,14 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
                     p = p1;
                     break;
 
+                case D2D_VERTEX_TYPE_BEZIER:
+                    b.point1 = figure->original_bezier_controls[bezier_idx++];
+                    b.point2 = figure->original_bezier_controls[bezier_idx++];
+                    b.point3 = figure->vertices[j];
+                    *contains = d2d_point_on_bezier_segment(&point, &p, &b, transform, stroke_width, tolerance);
+                    p = b.point3;
+                    break;
+
                 default:
                     FIXME("Unhandled vertex type %#x.\n", type);
                     p = figure->vertices[j];
@@ -3465,11 +3640,22 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
             type = figure->vertex_types[j];
         }
 
-        if (figure->flags & D2D_FIGURE_FLAG_CLOSED && (!*contains) && type == D2D_VERTEX_TYPE_LINE)
+        if (figure->flags & D2D_FIGURE_FLAG_CLOSED && (!*contains))
         {
-            p1 = figure->vertices[0];
-            *contains = d2d_point_on_line_segment(&point, &p, &p1, transform, stroke_width * 0.5f, tolerance);
-            p = p1;
+            if (type == D2D_VERTEX_TYPE_LINE)
+            {
+                p1 = figure->vertices[0];
+                *contains = d2d_point_on_line_segment(&point, &p, &p1, transform, stroke_width * 0.5f, tolerance);
+                p = p1;
+            }
+            else if (d2d_vertex_type_is_bezier(type))
+            {
+                b.point1 = figure->original_bezier_controls[bezier_idx++];
+                b.point2 = figure->original_bezier_controls[bezier_idx++];
+                b.point3 = figure->vertices[0];
+                *contains = d2d_point_on_bezier_segment(&point, &p, &b, transform, stroke_width, tolerance);
+                p = b.point3;
+            }
         }
 
         if (*contains)

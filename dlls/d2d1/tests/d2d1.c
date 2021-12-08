@@ -10244,6 +10244,67 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{0.0f}}}, {239.41f, 600.0f},  0.1f, 1.0f, FALSE, TRUE},
         {{{{0.0f}}}, {240.59f, 600.0f},  0.1f, 1.0f, FALSE, TRUE},
         {{{{0.0f}}}, {240.61f, 600.0f},  0.1f, 1.0f, FALSE, FALSE},
+
+        /* 13. Curves. */
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {170.0f, 418.6f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {170.0f, 420.1f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {170.0f, 417.7f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 89.5f, 485.3f}, 0.1f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 90.5f, 485.3f}, 0.1f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 91.5f, 485.3f}, 0.1f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 89.0f, 485.3f}, 0.1f, 1.0f, TRUE, FALSE},
+
+        /* 20. A curve where the control points project beyond the endpoints
+         *     onto the line through the endpoints. */
+        {{{{0.0f}}}, {306.97f, 791.67f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {307.27f, 791.67f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {308.47f, 791.67f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {308.77f, 791.67f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        {{{{0.0f}}}, {350.00f, 824.10f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {350.00f, 824.40f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {350.00f, 825.60f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {350.00f, 825.90f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        {{{{0.0f}}}, {391.23f, 791.67f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {391.53f, 791.67f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {392.73f, 791.67f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {393.03f, 791.67f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        /* 32. A curve where the endpoints coincide. */
+        {{{{0.0f}}}, {570.23f, 799.77f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {570.53f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {571.73f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {572.03f, 799.77f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        {{{{0.0f}}}, {600.00f, 824.10f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {600.00f, 824.40f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {600.00f, 825.60f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {600.00f, 825.90f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        {{{{0.0f}}}, {627.97f, 799.77f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {628.27f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {629.47f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {629.77f, 799.77f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        /* 44. A curve with coinciding endpoints, as well as coinciding
+         *     control points. */
+        {{{{0.0f}}}, {825.00f, 800.00f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {861.00f, 824.00f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {861.00f, 826.00f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {862.50f, 825.00f}, 0.0f, 1.0f, FALSE, TRUE},
+        {{{{0.0f}}}, {864.00f, 824.00f}, 0.0f, 1.0f, FALSE, FALSE},
+        {{{{0.0f}}}, {864.00f, 826.00f}, 0.0f, 1.0f, FALSE, FALSE},
+
+        /* 50. Shear transforms. */
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, { 837.2f, 600.0f}, 0.1f, 5.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, { 837.5f, 600.0f}, 0.1f, 5.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1186.3f, 791.7f}, 0.1f, 5.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1186.6f, 791.7f}, 0.1f, 5.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1425.0f, 827.3f}, 0.1f, 5.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1425.0f, 827.6f}, 0.1f, 5.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1620.1f, 800.0f}, 0.1f, 5.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1620.4f, 800.0f}, 0.1f, 5.0f, TRUE, TRUE},
     };
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -10273,11 +10334,43 @@ static void test_stroke_contains_point(BOOL d3d11)
     hr = ID2D1PathGeometry_Open(path, &sink);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
+    /* A limaçon. */
+    set_point(&point, 160.0f, 720.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    cubic_to(sink, 119.0f, 720.0f,  83.0f, 600.0f,  80.0f, 474.0f);
+    cubic_to(sink,  78.0f, 349.0f, 108.0f, 245.0f, 135.0f, 240.0f);
+    cubic_to(sink, 163.0f, 235.0f, 180.0f, 318.0f, 176.0f, 370.0f);
+    cubic_to(sink, 171.0f, 422.0f, 149.0f, 422.0f, 144.0f, 370.0f);
+    cubic_to(sink, 140.0f, 318.0f, 157.0f, 235.0f, 185.0f, 240.0f);
+    cubic_to(sink, 212.0f, 245.0f, 242.0f, 349.0f, 240.0f, 474.0f);
+    cubic_to(sink, 238.0f, 600.0f, 201.0f, 720.0f, 160.0f, 720.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    /* Some straight lines. */
     set_point(&point, 160.0f, 240.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
     line_to(sink, 240.0f, 240.0f);
     line_to(sink, 240.0f, 720.0f);
     line_to(sink, 160.0f, 720.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
+    /* Projected control points extending beyond the line segment through the
+     * endpoints. */
+    set_point(&point, 325.0f, 750.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    cubic_to(sink, 250.0f, 850.0f, 450.0f, 850.0f, 375.0f, 750.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
+    /* Coinciding endpoints. */
+    set_point(&point, 600.0f, 750.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    cubic_to(sink, 500.0f, 850.0f, 700.0f, 850.0f, 600.0f, 750.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
+    /* Coinciding endpoints, as well as coinciding control points. */
+    set_point(&point, 750.0f, 750.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    cubic_to(sink, 900.0f, 850.0f, 900.0f, 850.0f, 750.0f, 750.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
 
     hr = ID2D1GeometrySink_Close(sink);
