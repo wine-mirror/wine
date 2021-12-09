@@ -434,7 +434,6 @@ AC_CHECK_HEADERS(\
 	arpa/nameser.h \
 	asm/types.h \
 	asm/user.h \
-	dirent.h \
 	elf.h \
 	float.h \
 	gettext-po.h \

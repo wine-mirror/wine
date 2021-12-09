@@ -25,17 +25,11 @@
 
 #include "config.h"
 #include <stdarg.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
-#ifdef HAVE_DIRENT_H
-#include <dirent.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
