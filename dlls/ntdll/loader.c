@@ -3042,24 +3042,6 @@ done:
 
 
 /***********************************************************************
- *              __wine_init_unix_lib
- */
-NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    WINE_MODREF *wm;
-    NTSTATUS ret;
-
-    RtlEnterCriticalSection( &loader_section );
-
-    if ((wm = get_modref( module ))) ret = unix_funcs->init_unix_lib( module, reason, ptr_in, ptr_out );
-    else ret = STATUS_INVALID_HANDLE;
-
-    RtlLeaveCriticalSection( &loader_section );
-    return ret;
-}
-
-
-/***********************************************************************
  *              __wine_ctrl_routine
  */
 NTSTATUS WINAPI __wine_ctrl_routine( void *arg )
@@ -4450,11 +4432,6 @@ static void CDECL init_builtin_dll_fallback( void *module )
 {
 }
 
-static NTSTATUS CDECL init_unix_lib_fallback( void *module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    return STATUS_DLL_NOT_FOUND;
-}
-
 static NTSTATUS CDECL unwind_builtin_dll_fallback( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                    CONTEXT *context )
 {
@@ -4472,7 +4449,6 @@ static const struct unix_funcs unix_fallbacks =
 {
     load_so_dll_fallback,
     init_builtin_dll_fallback,
-    init_unix_lib_fallback,
     unwind_builtin_dll_fallback,
     RtlGetSystemTimePrecise_fallback,
 };

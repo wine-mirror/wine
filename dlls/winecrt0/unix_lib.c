@@ -29,7 +29,6 @@
 #include "winternl.h"
 #include "wine/unixlib.h"
 
-static NTSTATUS (__cdecl *p__wine_init_unix_lib)( HMODULE, DWORD, const void *, void * );
 static NTSTATUS (WINAPI *p__wine_unix_call)( unixlib_handle_t, unsigned int, void * );
 
 static void load_func( void **func, const char *name, void *def )
@@ -43,20 +42,9 @@ static void load_func( void **func, const char *name, void *def )
 }
 #define LOAD_FUNC(name) load_func( (void **)&p ## name, #name, fallback ## name )
 
-static NTSTATUS __cdecl fallback__wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    return STATUS_DLL_NOT_FOUND;
-}
-
 static NTSTATUS __cdecl fallback__wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
 {
     return STATUS_DLL_NOT_FOUND;
-}
-
-NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    LOAD_FUNC( __wine_init_unix_lib );
-    return p__wine_init_unix_lib( module, reason, ptr_in, ptr_out );
 }
 
 NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
