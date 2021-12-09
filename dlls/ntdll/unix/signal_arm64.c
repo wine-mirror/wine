@@ -212,12 +212,13 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
         return STATUS_INVALID_DISPOSITION;
     }
     rc = unw_get_proc_info( &cursor, &info );
-    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
+    if (rc < 0) rc = -rc;  /* libunwind may return negative error codes */
+    if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
     {
         WARN( "failed to get info: %d\n", rc );
         return STATUS_INVALID_DISPOSITION;
     }
-    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
+    if (rc == UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
     {
         TRACE( "no info found for %lx ip %lx-%lx, assuming leaf function\n",
                ip, info.start_ip, info.end_ip );

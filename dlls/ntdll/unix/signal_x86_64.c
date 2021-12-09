@@ -1415,6 +1415,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *c
     *frame = context->Rsp;
 
     rc = unw_get_proc_info(&cursor, &info);
+    if (rc < 0) rc = -rc;  /* libunwind may return negative error codes */
     if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
     {
         WARN( "failed to get info: %d\n", rc );
