@@ -8648,12 +8648,6 @@ then :
   printf "%s\n" "#define HAVE_SYS_SYSINFO_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "sys/time.h" "ac_cv_header_sys_time_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_time_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_TIME_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "sys/timeout.h" "ac_cv_header_sys_timeout_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_timeout_h" = xyes
 then :
@@ -9485,9 +9479,7 @@ then :
 fi
 
 
-ac_fn_c_check_header_compile "$LINENO" "linux/videodev2.h" "ac_cv_header_linux_videodev2_h" "#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "linux/videodev2.h" "ac_cv_header_linux_videodev2_h" "#include <sys/time.h>
 #include <sys/types.h>
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>

@@ -49,9 +49,7 @@
 # include <sys/syscall.h>
 #endif
 #include <sys/socket.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
+#include <sys/time.h>
 #ifdef HAVE_SYS_ATTR_H
 #include <sys/attr.h>
 #endif

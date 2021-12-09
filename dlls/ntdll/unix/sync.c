@@ -37,9 +37,7 @@
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
+#include <sys/time.h>
 #include <poll.h>
 #include <unistd.h>
 #ifdef HAVE_SCHED_H

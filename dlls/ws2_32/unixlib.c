@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #ifdef HAVE_NETDB_H
 # include <netdb.h>
 #endif
@@ -62,9 +63,6 @@
 # include <ifaddrs.h>
 #endif
 #include <poll.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
