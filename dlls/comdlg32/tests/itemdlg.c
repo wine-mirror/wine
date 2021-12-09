@@ -2460,6 +2460,42 @@ static void test_overwrite(void)
     IShellItem_Release(psi_current);
 }
 
+static void test_customize_remove_from_empty_combobox(void)
+{
+    IFileDialog *pfod;
+    IFileDialogCustomize *pfdc;
+    UINT i;
+    HRESULT hr;
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfod);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
+
+    hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
+    if(FAILED(hr))
+    {
+        skip("Skipping IFileDialogCustomize tests.\n");
+        IFileDialog_Release(pfod);
+        return;
+    }
+
+    i = 107;
+    hr = IFileDialogCustomize_AddComboBox(pfdc, i);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
+
+    hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
+    ok(hr == E_NOTIMPL, "got 0x%08lx.\n", hr);
+
+    hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, 1000);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
+
+    hr = IFileDialogCustomize_RemoveControlItem(pfdc, i, 0);
+    ok(hr == E_INVALIDARG, "got 0x%08lx.\n", hr);
+
+    IFileDialogCustomize_Release(pfdc);
+    IFileDialog_Release(pfod);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -2484,6 +2520,7 @@ START_TEST(itemdlg)
         test_customize();
         test_persistent_state();
         test_overwrite();
+        test_customize_remove_from_empty_combobox();
     }
     else
         skip("Skipping all Item Dialog tests.\n");

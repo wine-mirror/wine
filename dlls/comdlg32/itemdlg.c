@@ -4159,6 +4159,9 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
 
         item = get_item(ctrl, dwIDItem, CDCS_VISIBLE|CDCS_ENABLED, &position);
 
+        if (!item)
+            return E_INVALIDARG;
+
         if ((item->cdcstate & (CDCS_VISIBLE|CDCS_ENABLED)) == (CDCS_VISIBLE|CDCS_ENABLED))
         {
             if(SendMessageW(ctrl->hwnd, CB_DELETESTRING, position, 0) == CB_ERR)
