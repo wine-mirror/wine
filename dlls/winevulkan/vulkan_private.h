@@ -210,6 +210,8 @@ BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
 uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle) DECLSPEC_HIDDEN;
 
+NTSTATUS init_vulkan(void *args) DECLSPEC_HIDDEN;
+
 extern const struct unix_funcs loader_funcs;
 
 BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name) DECLSPEC_HIDDEN;

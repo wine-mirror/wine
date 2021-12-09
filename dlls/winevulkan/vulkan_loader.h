@@ -20,9 +20,16 @@
 #ifndef __WINE_VULKAN_LOADER_H
 #define __WINE_VULKAN_LOADER_H
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
+#include "wine/unixlib.h"
 
 #include "loader_thunks.h"
 
@@ -63,5 +70,11 @@ void *wine_vk_get_phys_dev_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 
 extern const struct unix_funcs *unix_funcs;
+extern unixlib_handle_t unix_handle DECLSPEC_HIDDEN;
+
+static inline NTSTATUS vk_unix_call(enum unix_call code, void *params)
+{
+    return __wine_unix_call(unix_handle, code, params);
+}
 
 #endif /* __WINE_VULKAN_LOADER_H */

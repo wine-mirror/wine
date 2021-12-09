@@ -23,18 +23,12 @@
 
 #include "config.h"
 #include <time.h>
-#include <stdarg.h>
 #include <stdlib.h>
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
+#include "vulkan_private.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "winternl.h"
-
-#include "vulkan_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
@@ -68,7 +62,6 @@ static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
 }
 
 static const struct vulkan_funcs *vk_funcs;
-static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
 
 #define WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, object, native_handle) \
     wine_vk_add_handle_mapping((instance), (uint64_t) (uintptr_t) (object), (uint64_t) (uintptr_t) (native_handle), &(object)->mapping)
@@ -140,8 +133,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 
     wine_callback_data = *((VkDebugUtilsMessengerCallbackDataEXT *) callback_data);
 
-    object_name_infos = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        wine_callback_data.objectCount * sizeof(*object_name_infos));
+    object_name_infos = calloc(wine_callback_data.objectCount, sizeof(*object_name_infos));
 
     for (i = 0; i < wine_callback_data.objectCount; i++)
     {
@@ -156,7 +148,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
             if (!object_name_infos[i].objectHandle)
             {
                 WARN("handle conversion failed 0x%s\n", wine_dbgstr_longlong(callback_data->pObjects[i].objectHandle));
-                RtlFreeHeap(GetProcessHeap(), 0, object_name_infos);
+                free(object_name_infos);
                 return VK_FALSE;
             }
         }
@@ -171,7 +163,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     /* applications should always return VK_FALSE */
     result = object->user_callback(severity, message_types, &wine_callback_data, object->user_data);
 
-    RtlFreeHeap(GetProcessHeap(), 0, object_name_infos);
+    free(object_name_infos);
 
     return result;
 }
@@ -422,13 +414,10 @@ static void wine_vk_device_free(struct VkDevice_T *device)
     free(device);
 }
 
-NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *driver, void *ptr_out)
+NTSTATUS init_vulkan(void *args)
 {
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-
-    vk_funcs = driver;
-    p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
-    *(const struct unix_funcs **)ptr_out = &loader_funcs;
+    vk_funcs = *(const struct vulkan_funcs **)args;
+    *(const struct unix_funcs **)args = &loader_funcs;
     return STATUS_SUCCESS;
 }
 
@@ -961,6 +950,10 @@ VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice phys_dev,
 VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
 {
     VkResult res;
+
+    static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
+    if (!p_vkEnumerateInstanceVersion)
+        p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
 
     if (p_vkEnumerateInstanceVersion)
     {

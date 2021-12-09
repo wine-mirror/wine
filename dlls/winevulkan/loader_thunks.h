@@ -431,4 +431,10 @@ struct unix_funcs
     BOOL (WINAPI *p_is_available_device_function)(VkDevice, const char *);
 };
 
+enum unix_call
+{
+    unix_init,
+    unix_count,
+};
+
 #endif /* __WINE_VULKAN_LOADER_THUNKS_H */

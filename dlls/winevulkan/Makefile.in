@@ -1,4 +1,5 @@
 MODULE    = winevulkan.dll
+UNIXLIB   = winevulkan.so
 IMPORTLIB = winevulkan
 IMPORTS   = user32 gdi32 advapi32 setupapi win32u
 EXTRALIBS = $(PTHREAD_LIBS)

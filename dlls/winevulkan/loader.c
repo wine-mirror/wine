@@ -17,18 +17,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "winternl.h"
+#include "vulkan_loader.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "initguid.h"
 #include "devguid.h"
 #include "setupapi.h"
-
-#include "vulkan_loader.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
@@ -41,6 +35,7 @@ DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
 
 const struct unix_funcs *unix_funcs;
+unixlib_handle_t unix_handle;
 
 static HINSTANCE hinstance;
 
@@ -220,13 +215,24 @@ VkResult WINAPI vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_ver
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    const struct vulkan_funcs *driver;
+    const void *driver;
 
     driver = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
     if (!driver)
+    {
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
+        return FALSE;
+    }
 
-    return driver && !__wine_init_unix_lib(hinstance, DLL_PROCESS_ATTACH, driver, &unix_funcs);
+    if (NtQueryVirtualMemory(GetCurrentProcess(), hinstance, MemoryWineUnixFuncs,
+                             &unix_handle, sizeof(unix_handle), NULL))
+        return FALSE;
+
+    if (vk_unix_call(unix_init, &driver) || !driver)
+        return FALSE;
+
+    unix_funcs = driver;
+    return TRUE;
 }
 
 static BOOL  wine_vk_init_once(void)

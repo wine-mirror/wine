@@ -9088,3 +9088,9 @@ const struct unix_funcs loader_funcs =
     &wine_vk_is_available_instance_function,
     &wine_vk_is_available_device_function,
 };
+
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    init_vulkan,
+};
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);
