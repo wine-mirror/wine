@@ -80,66 +80,6 @@ struct wined3d_command_list
     struct wined3d_sampler **samplers;
 };
 
-static void wined3d_command_list_destroy_object(void *object)
-{
-    struct wined3d_command_list *list = object;
-    SIZE_T i;
-
-    TRACE("list %p.\n", list);
-
-    for (i = 0; i < list->upload_count; ++i)
-        heap_free(list->uploads[i].sysmem);
-
-    heap_free(list);
-}
-
-ULONG CDECL wined3d_command_list_incref(struct wined3d_command_list *list)
-{
-    ULONG refcount = InterlockedIncrement(&list->refcount);
-
-    TRACE("%p increasing refcount to %u.\n", list, refcount);
-
-    return refcount;
-}
-
-ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
-{
-    ULONG refcount = InterlockedDecrement(&list->refcount);
-    struct wined3d_device *device = list->device;
-
-    TRACE("%p decreasing refcount to %u.\n", list, refcount);
-
-    if (!refcount)
-    {
-        SIZE_T i;
-
-        for (i = 0; i < list->command_list_count; ++i)
-            wined3d_command_list_decref(list->command_lists[i]);
-        for (i = 0; i < list->resource_count; ++i)
-            wined3d_resource_decref(list->resources[i]);
-        for (i = 0; i < list->upload_count; ++i)
-            wined3d_resource_decref(list->uploads[i].resource);
-        for (i = 0; i < list->query_count; ++i)
-            wined3d_query_decref(list->queries[i].query);
-        for (i = 0; i < list->blend_state_count; ++i)
-            wined3d_blend_state_decref(list->blend_states[i]);
-        for (i = 0; i < list->rasterizer_state_count; ++i)
-            wined3d_rasterizer_state_decref(list->rasterizer_states[i]);
-        for (i = 0; i < list->depth_stencil_state_count; ++i)
-            wined3d_depth_stencil_state_decref(list->depth_stencil_states[i]);
-        for (i = 0; i < list->shader_count; ++i)
-            wined3d_shader_decref(list->shaders[i]);
-        for (i = 0; i < list->sampler_count; ++i)
-            wined3d_sampler_decref(list->samplers[i]);
-
-        wined3d_mutex_lock();
-        wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
-        wined3d_mutex_unlock();
-    }
-
-    return refcount;
-}
-
 static void invalidate_client_address(struct wined3d_resource *resource)
 {
     struct wined3d_client_resource *client = &resource->client;
@@ -4149,4 +4089,64 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     wined3d_device_context_unlock(context);
 
     return S_OK;
+}
+
+static void wined3d_command_list_destroy_object(void *object)
+{
+    struct wined3d_command_list *list = object;
+    SIZE_T i;
+
+    TRACE("list %p.\n", list);
+
+    for (i = 0; i < list->upload_count; ++i)
+        heap_free(list->uploads[i].sysmem);
+
+    heap_free(list);
+}
+
+ULONG CDECL wined3d_command_list_incref(struct wined3d_command_list *list)
+{
+    ULONG refcount = InterlockedIncrement(&list->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", list, refcount);
+
+    return refcount;
+}
+
+ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
+{
+    ULONG refcount = InterlockedDecrement(&list->refcount);
+    struct wined3d_device *device = list->device;
+
+    TRACE("%p decreasing refcount to %u.\n", list, refcount);
+
+    if (!refcount)
+    {
+        SIZE_T i;
+
+        for (i = 0; i < list->command_list_count; ++i)
+            wined3d_command_list_decref(list->command_lists[i]);
+        for (i = 0; i < list->resource_count; ++i)
+            wined3d_resource_decref(list->resources[i]);
+        for (i = 0; i < list->upload_count; ++i)
+            wined3d_resource_decref(list->uploads[i].resource);
+        for (i = 0; i < list->query_count; ++i)
+            wined3d_query_decref(list->queries[i].query);
+        for (i = 0; i < list->blend_state_count; ++i)
+            wined3d_blend_state_decref(list->blend_states[i]);
+        for (i = 0; i < list->rasterizer_state_count; ++i)
+            wined3d_rasterizer_state_decref(list->rasterizer_states[i]);
+        for (i = 0; i < list->depth_stencil_state_count; ++i)
+            wined3d_depth_stencil_state_decref(list->depth_stencil_states[i]);
+        for (i = 0; i < list->shader_count; ++i)
+            wined3d_shader_decref(list->shaders[i]);
+        for (i = 0; i < list->sampler_count; ++i)
+            wined3d_sampler_decref(list->samplers[i]);
+
+        wined3d_mutex_lock();
+        wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
 }
