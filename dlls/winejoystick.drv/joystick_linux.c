@@ -44,9 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
 #ifdef HAVE_LINUX_IOCTL_H
 #include <linux/ioctl.h>
 #endif

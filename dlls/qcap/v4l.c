@@ -32,9 +32,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
 #include <sys/mman.h>
 #include <errno.h>
 #include <sys/time.h>

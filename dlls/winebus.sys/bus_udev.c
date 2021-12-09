@@ -33,14 +33,12 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <poll.h>
+#include <sys/ioctl.h>
 #ifdef HAVE_LIBUDEV_H
 # include <libudev.h>
 #endif
 #ifdef HAVE_LINUX_HIDRAW_H
 # include <linux/hidraw.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
 #endif
 #ifdef HAVE_SYS_INOTIFY_H
 # include <sys/inotify.h>

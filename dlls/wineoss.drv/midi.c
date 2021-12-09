@@ -49,9 +49,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
+#include <sys/ioctl.h>
 #include <poll.h>
 #include <sys/soundcard.h>
 

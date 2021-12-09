@@ -479,7 +479,6 @@ AC_CHECK_HEADERS(\
 	sys/epoll.h \
 	sys/event.h \
 	sys/filio.h \
-	sys/ioctl.h \
 	sys/ipc.h \
 	sys/link.h \
 	sys/modem.h \

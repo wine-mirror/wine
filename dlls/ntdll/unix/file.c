@@ -50,6 +50,7 @@
 #endif
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 #ifdef HAVE_SYS_ATTR_H
 #include <sys/attr.h>
 #endif
@@ -78,9 +79,6 @@
 #undef list_tail
 #undef list_move_tail
 #undef list_remove
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
 #endif
 #ifdef HAVE_LINUX_IOCTL_H
 #include <linux/ioctl.h>

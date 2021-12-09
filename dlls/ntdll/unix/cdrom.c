@@ -41,10 +41,7 @@
 # include <sys/sysmacros.h>
 #endif
 #include <sys/types.h>
-
-#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
 #ifdef HAVE_SCSI_SG_H
 # include <scsi/sg.h>
 #endif

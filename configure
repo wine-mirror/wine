@@ -8522,12 +8522,6 @@ then :
   printf "%s\n" "#define HAVE_SYS_FILIO_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "sys/ioctl.h" "ac_cv_header_sys_ioctl_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_ioctl_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_IOCTL_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "sys/ipc.h" "ac_cv_header_sys_ipc_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_ipc_h" = xyes
 then :

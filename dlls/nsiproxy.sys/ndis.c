@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #ifdef HAVE_NET_IF_H
@@ -47,10 +48,6 @@
 
 #ifdef HAVE_NET_ROUTE_H
 #include <net/route.h>
-#endif
-
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
 #endif
 
 #ifdef HAVE_SYS_SYSCTL_H

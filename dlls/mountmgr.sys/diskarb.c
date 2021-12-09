@@ -30,9 +30,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
+#include <sys/ioctl.h>
 #ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
 #include <DiskArbitration/DiskArbitration.h>
 #endif
