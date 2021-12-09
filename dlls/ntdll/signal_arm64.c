@@ -96,7 +96,7 @@ static inline BOOL is_valid_frame( ULONG_PTR frame )
 {
     if (frame & 7) return FALSE;
     return ((void *)frame >= NtCurrentTeb()->Tib.StackLimit &&
-            (void **)frame < (void **)NtCurrentTeb()->Tib.StackBase - 1);
+            (void *)frame <= NtCurrentTeb()->Tib.StackBase);
 }
 
 
