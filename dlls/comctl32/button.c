@@ -1156,7 +1156,10 @@ static void BUTTON_PositionRect(LONG style, const RECT *outerRect, RECT *innerRe
     switch (style & BS_CENTER)
     {
     case BS_CENTER:
-        innerRect->left = outerRect->left + (outerRect->right - outerRect->left - width) / 2;
+        /* The left and right margins are added to the inner rectangle to get a new rectangle. Then
+         * the new rectangle is adjusted to be in the horizontal center */
+        innerRect->left = outerRect->left + (outerRect->right - outerRect->left - width
+                                             + margin->left - margin->right) / 2;
         innerRect->right = innerRect->left + width;
         break;
     case BS_RIGHT:
@@ -1182,7 +1185,10 @@ static void BUTTON_PositionRect(LONG style, const RECT *outerRect, RECT *innerRe
         break;
     case BS_VCENTER:
     default:
-        innerRect->top = outerRect->top + (outerRect->bottom - outerRect->top - height) / 2;
+        /* The top and bottom margins are added to the inner rectangle to get a new rectangle. Then
+         * the new rectangle is adjusted to be in the vertical center */
+        innerRect->top = outerRect->top + (outerRect->bottom - outerRect->top - height
+                                           + margin->top - margin->bottom) / 2;
         innerRect->bottom = innerRect->top + height;
         break;
     }
