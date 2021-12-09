@@ -27,14 +27,12 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
 #endif
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>

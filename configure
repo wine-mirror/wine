@@ -8678,12 +8678,6 @@ then :
   printf "%s\n" "#define HAVE_SYS_VNODE_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "sys/wait.h" "ac_cv_header_sys_wait_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_wait_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "syscall.h" "ac_cv_header_syscall_h" "$ac_includes_default"
 if test "x$ac_cv_header_syscall_h" = xyes
 then :

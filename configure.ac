@@ -505,7 +505,6 @@ AC_CHECK_HEADERS(\
 	sys/user.h \
 	sys/utsname.h \
 	sys/vnode.h \
-	sys/wait.h \
 	syscall.h \
 	utime.h \
 	valgrind/memcheck.h \

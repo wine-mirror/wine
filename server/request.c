@@ -35,9 +35,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
+#include <sys/wait.h>
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
