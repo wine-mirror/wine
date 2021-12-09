@@ -2711,14 +2711,24 @@ map:
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
-    if (gl_info->supported[ARB_BUFFER_STORAGE])
+    if (gl_info->supported[ARB_BUFFER_STORAGE] && wined3d_map_persistent())
     {
-        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size,
-                GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | wined3d_resource_gl_map_flags(bo, flags)))))
-        {
-            if (wined3d_map_persistent())
-                bo->b.map_ptr = map_ptr;
-        }
+        GLbitfield gl_flags;
+
+        /* When mapping the bo persistently, we need to use the access flags
+         * used to create the bo, instead of the access flags passed to the
+         * map call. Otherwise, if for example the initial map call that
+         * caused the bo to be persistently mapped was a read-only map,
+         * subsequent write access to the bo would be undefined. */
+        gl_flags = bo->flags & ~GL_CLIENT_STORAGE_BIT;
+        gl_flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+        if (!(gl_flags & GL_MAP_READ_BIT))
+            gl_flags |= GL_MAP_UNSYNCHRONIZED_BIT;
+        if (gl_flags & GL_MAP_WRITE_BIT)
+            gl_flags |= GL_MAP_FLUSH_EXPLICIT_BIT;
+
+        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, gl_flags))))
+            bo->b.map_ptr = map_ptr;
     }
     else if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
