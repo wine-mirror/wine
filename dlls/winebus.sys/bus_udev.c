@@ -945,7 +945,7 @@ static NTSTATUS lnxev_device_physical_device_set_gain(struct unix_device *iface,
     {
         .type = EV_FF,
         .code = FF_GAIN,
-        .value = percent,
+        .value = 0xffff * percent / 100,
     };
 
     TRACE("iface %p, percent %#x.\n", iface, percent);
