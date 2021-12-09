@@ -37,9 +37,7 @@
 # include <sys/socket.h>
 #endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
+#include <sys/mman.h>
 #ifdef HAVE_SYS_SYSINFO_H
 # include <sys/sysinfo.h>
 #endif

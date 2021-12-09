@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #ifdef HAVE_PWD_H
@@ -47,9 +48,6 @@
 #endif
 #ifdef HAVE_SYS_AUXV_H
 # include <sys/auxv.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
 #endif
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>

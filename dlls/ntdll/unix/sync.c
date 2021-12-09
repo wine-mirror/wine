@@ -33,9 +33,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
-#endif
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif

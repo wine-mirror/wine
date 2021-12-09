@@ -35,9 +35,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
-#endif
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
 #endif

@@ -482,7 +482,6 @@ AC_CHECK_HEADERS(\
 	sys/ioctl.h \
 	sys/ipc.h \
 	sys/link.h \
-	sys/mman.h \
 	sys/modem.h \
 	sys/mtio.h \
 	sys/param.h \
