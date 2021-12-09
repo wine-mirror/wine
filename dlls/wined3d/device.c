@@ -955,18 +955,18 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     wined3d_device_context_set_depth_stencil_view(context, ds_enable ? device->auto_depth_stencil_view : NULL);
 }
 
-void wined3d_device_delete_opengl_contexts_cs(void *object)
+void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
 {
+    struct wined3d_device_gl *device_gl = object;
     struct wined3d_swapchain_gl *swapchain_gl;
-    struct wined3d_device *device = object;
     struct wined3d_context_gl *context_gl;
-    struct wined3d_device_gl *device_gl;
     struct wined3d_context *context;
+    struct wined3d_device *device;
     struct wined3d_shader *shader;
 
-    TRACE("device %p.\n", device);
+    TRACE("device %p.\n", device_gl);
 
-    device_gl = wined3d_device_gl(device);
+    device = &device_gl->d;
 
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
