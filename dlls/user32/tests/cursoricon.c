@@ -1595,10 +1595,8 @@ static void test_CreateIconFromResource(void)
     /* Test the icon information. */
     SetLastError(0xdeadbeef);
     ret = GetIconInfo(handle, &icon_info);
-    todo_wine
     ok(ret, "GetIconInfo() failed.\n");
     error = GetLastError();
-    todo_wine
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     if (ret)
@@ -1616,14 +1614,10 @@ static void test_CreateIconFromResource(void)
         ICONINFOEXA infoex;
         infoex.cbSize = sizeof(infoex);
         ret = pGetIconInfoExA( handle, &infoex );
-        todo_wine
         ok( ret, "GetIconInfoEx failed err %d\n", GetLastError() );
-        if (ret)
-        {
         ok( infoex.wResID == 0, "GetIconInfoEx wrong resid %x\n", infoex.wResID );
         ok( infoex.szModName[0] == 0, "GetIconInfoEx wrong module %s\n", infoex.szModName );
         ok( infoex.szResName[0] == 0, "GetIconInfoEx wrong name %s\n", infoex.szResName );
-        }
     }
 
     /* Test creating an icon. */
@@ -1637,10 +1631,8 @@ static void test_CreateIconFromResource(void)
     /* Test the icon information. */
     SetLastError(0xdeadbeef);
     ret = GetIconInfo(handle, &icon_info);
-    todo_wine
     ok(ret, "GetIconInfo() failed.\n");
     error = GetLastError();
-    todo_wine
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     if (ret)

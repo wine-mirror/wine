@@ -1592,7 +1592,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
 HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
                                            BOOL bIcon, DWORD dwVersion)
 {
-    return CreateIconFromResourceEx( bits, cbSize, bIcon, dwVersion, 0,0,0);
+    return CreateIconFromResourceEx( bits, cbSize, bIcon, dwVersion, 0, 0, LR_DEFAULTSIZE | LR_SHARED );
 }
 
 
