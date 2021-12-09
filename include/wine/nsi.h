@@ -226,8 +226,8 @@ struct nsi_ip_neighbour_dynamic
     DWORD time;
     struct
     {
-        USHORT is_router : 1;
-        USHORT is_unreachable : 1;
+        BOOLEAN is_router;
+        BOOLEAN is_unreachable;
     } flags;
     USHORT phys_addr_len;
     DWORD unk;
