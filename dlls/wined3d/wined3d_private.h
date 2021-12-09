@@ -4875,8 +4875,6 @@ struct wined3d_device_context_ops
     void (*acquire_depth_stencil_state)(struct wined3d_device_context *context,
             struct wined3d_depth_stencil_state *depth_stencil_state);
     void (*acquire_shader)(struct wined3d_device_context *context, struct wined3d_shader *shader);
-    void (*acquire_samplers)(struct wined3d_device_context *context, struct wined3d_sampler * const *samplers,
-            unsigned int count);
 };
 
 struct wined3d_device_context
