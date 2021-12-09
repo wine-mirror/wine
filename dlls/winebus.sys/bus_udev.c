@@ -1041,7 +1041,7 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     if (params->effect_type == PID_USAGE_UNDEFINED) return STATUS_SUCCESS;
     if ((status = set_effect_type_from_usage(&effect, params->effect_type))) return status;
 
-    effect.replay.length = params->duration;
+    effect.replay.length = (params->duration == 0xffff ? 0 : params->duration);
     effect.replay.delay = params->start_delay;
     effect.trigger.button = params->trigger_button;
     effect.trigger.interval = params->trigger_repeat_interval;
