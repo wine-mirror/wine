@@ -3574,6 +3574,15 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_SHADER:
+        {
+            struct wined3d_cs_set_shader *op = (struct wined3d_cs_set_shader *)packet->data;
+
+            if (op->shader)
+                wined3d_shader_decref(op->shader);
+            break;
+        }
+
         default:
             break;
     }
@@ -3595,6 +3604,15 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
                 if (op->samplers[i])
                     wined3d_sampler_incref(op->samplers[i]);
             }
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_SHADER:
+        {
+            struct wined3d_cs_set_shader *op = (struct wined3d_cs_set_shader *)packet->data;
+
+            if (op->shader)
+                wined3d_shader_incref(op->shader);
             break;
         }
 
