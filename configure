@@ -8714,12 +8714,6 @@ then :
   printf "%s\n" "#define HAVE_SYSCALL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "termios.h" "ac_cv_header_termios_h" "$ac_includes_default"
-if test "x$ac_cv_header_termios_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_TERMIOS_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "unistd.h" "ac_cv_header_unistd_h" "$ac_includes_default"
 if test "x$ac_cv_header_unistd_h" = xyes
 then :

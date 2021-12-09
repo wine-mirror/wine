@@ -31,13 +31,11 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#include <termios.h>
 #include <unistd.h>
 #include <poll.h>
 #ifdef HAVE_UTIME_H
 #include <utime.h>
-#endif
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>

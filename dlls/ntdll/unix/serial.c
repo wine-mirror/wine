@@ -31,9 +31,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_TERMIOS_H
 #include <termios.h>
-#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
