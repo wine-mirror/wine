@@ -3217,6 +3217,7 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
     size_t packet_size;
 
     packet = (struct wined3d_cs_packet *)&queue->data[queue->head];
+    TRACE("Queuing op %s at %p.\n", debug_cs_op(*(const enum wined3d_cs_op *)packet->data), packet);
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
     InterlockedExchange(&queue->head, (queue->head + packet_size) & (WINED3D_CS_QUEUE_SIZE - 1));
 
@@ -3429,7 +3430,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
         {
             opcode = *(const enum wined3d_cs_op *)packet->data;
 
-            TRACE("Executing %s.\n", debug_cs_op(opcode));
+            TRACE("Executing %s at %p.\n", debug_cs_op(opcode), packet);
             if (opcode >= WINED3D_CS_OP_STOP)
             {
                 if (opcode > WINED3D_CS_OP_STOP)
@@ -3440,7 +3441,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
             wined3d_cs_command_lock(cs);
             wined3d_cs_op_handlers[opcode](cs, packet->data);
             wined3d_cs_command_unlock(cs);
-            TRACE("%s executed.\n", debug_cs_op(opcode));
+            TRACE("%s at %p executed.\n", debug_cs_op(opcode), packet);
         }
 
         tail &= (WINED3D_CS_QUEUE_SIZE - 1);
