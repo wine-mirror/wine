@@ -3572,6 +3572,54 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
     heap_free(cs);
 }
 
+static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *packet)
+{
+    enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)packet->data;
+    unsigned int i;
+
+    switch (opcode)
+    {
+        case WINED3D_CS_OP_SET_SAMPLERS:
+        {
+            struct wined3d_cs_set_samplers *op = (struct wined3d_cs_set_samplers *)packet->data;
+
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->samplers[i])
+                    wined3d_sampler_decref(op->samplers[i]);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
+{
+    enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)packet->data;
+    unsigned int i;
+
+    switch (opcode)
+    {
+        case WINED3D_CS_OP_SET_SAMPLERS:
+        {
+            struct wined3d_cs_set_samplers *op = (struct wined3d_cs_set_samplers *)packet->data;
+
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->samplers[i])
+                    wined3d_sampler_incref(op->samplers[i]);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
 struct wined3d_deferred_context
 {
     struct wined3d_device_context c;
@@ -3634,16 +3682,18 @@ static void *wined3d_deferred_context_require_space(struct wined3d_device_contex
 
     packet = (struct wined3d_cs_packet *)((BYTE *)deferred->data + deferred->data_size);
     TRACE("size was %zu, adding %zu\n", (size_t)deferred->data_size, packet_size);
-    deferred->data_size += packet_size;
     packet->size = packet_size - header_size;
     return &packet->data;
 }
 
 static void wined3d_deferred_context_submit(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
 {
-    assert(queue_id == WINED3D_CS_QUEUE_DEFAULT);
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    struct wined3d_cs_packet *packet;
 
-    /* Nothing to do. */
+    assert(queue_id == WINED3D_CS_QUEUE_DEFAULT);
+    packet = wined3d_next_cs_packet(deferred->data, &deferred->data_size);
+    wined3d_cs_packet_incref_objects(packet);
 }
 
 static void wined3d_deferred_context_finish(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
@@ -3925,7 +3975,8 @@ HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, str
 void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *context)
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
-    SIZE_T i;
+    const struct wined3d_cs_packet *packet;
+    SIZE_T i, offset = 0;
 
     TRACE("context %p.\n", context);
 
@@ -3967,6 +4018,12 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
     for (i = 0; i < deferred->sampler_count; ++i)
         wined3d_sampler_decref(deferred->samplers[i]);
     heap_free(deferred->samplers);
+
+    while (offset < deferred->data_size)
+    {
+        packet = wined3d_next_cs_packet(deferred->data, &offset);
+        wined3d_cs_packet_decref_objects(packet);
+    }
 
     wined3d_state_destroy(deferred->c.state);
     heap_free(deferred->data);
@@ -4117,13 +4174,13 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
 {
     ULONG refcount = InterlockedDecrement(&list->refcount);
     struct wined3d_device *device = list->device;
+    const struct wined3d_cs_packet *packet;
+    SIZE_T i, offset;
 
     TRACE("%p decreasing refcount to %u.\n", list, refcount);
 
     if (!refcount)
     {
-        SIZE_T i;
-
         for (i = 0; i < list->command_list_count; ++i)
             wined3d_command_list_decref(list->command_lists[i]);
         for (i = 0; i < list->resource_count; ++i)
@@ -4142,6 +4199,13 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
             wined3d_shader_decref(list->shaders[i]);
         for (i = 0; i < list->sampler_count; ++i)
             wined3d_sampler_decref(list->samplers[i]);
+
+        offset = 0;
+        while (offset < list->data_size)
+        {
+            packet = wined3d_next_cs_packet(list->data, &offset);
+            wined3d_cs_packet_decref_objects(packet);
+        }
 
         wined3d_mutex_lock();
         wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
