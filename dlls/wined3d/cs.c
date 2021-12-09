@@ -708,6 +708,15 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
     return wine_dbg_sprintf("UNKNOWN_OP(%#x)", op);
 }
 
+static struct wined3d_cs_packet *wined3d_next_cs_packet(const uint8_t *data, SIZE_T *offset)
+{
+    struct wined3d_cs_packet *packet = (struct wined3d_cs_packet *)&data[*offset];
+
+    *offset += offsetof(struct wined3d_cs_packet, data[packet->size]);
+
+    return packet;
+}
+
 static void wined3d_cs_exec_nop(struct wined3d_cs *cs, const void *data)
 {
 }
@@ -3478,7 +3487,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     enum wined3d_cs_op opcode;
     HMODULE wined3d_module;
     unsigned int poll = 0;
-    LONG tail;
+    SIZE_T tail;
 
     TRACE("Started.\n");
 
@@ -3512,7 +3521,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
         spin_count = 0;
 
         tail = queue->tail;
-        packet = (struct wined3d_cs_packet *)&queue->data[tail];
+        packet = wined3d_next_cs_packet(queue->data, &tail);
         if (packet->size)
         {
             opcode = *(const enum wined3d_cs_op *)packet->data;
@@ -3531,7 +3540,6 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
             TRACE("%s executed.\n", debug_cs_op(opcode));
         }
 
-        tail += FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
         tail &= (WINED3D_CS_QUEUE_SIZE - 1);
         InterlockedExchange(&queue->tail, tail);
     }
