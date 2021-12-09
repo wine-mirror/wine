@@ -2877,12 +2877,13 @@ cleanup:
 
 static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    RECT clientRect, contentRect, imageRect, textRect, bgRect;
+    RECT clientRect, contentRect, labelRect, imageRect, textRect, bgRect;
     HRGN region, textRegion = NULL;
     LOGFONTW lf;
     HFONT font, hPrevFont = NULL;
     BOOL created_font = FALSE;
     TEXTMETRICW textMetric;
+    LONG style;
     int part;
 
     HRESULT hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
@@ -2900,22 +2901,32 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     }
 
     GetClientRect(infoPtr->hwnd, &clientRect);
-    contentRect = clientRect;
     region = set_control_clipping(hDC, &clientRect);
 
-    bgRect = contentRect;
+    bgRect = clientRect;
     GetTextMetricsW(hDC, &textMetric);
     bgRect.top += (textMetric.tmHeight / 2) - 1;
 
-    InflateRect(&contentRect, -7, 1);
-    dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &contentRect, &imageRect, &textRect);
+    labelRect = clientRect;
+    InflateRect(&labelRect, -7, 1);
+    dtFlags = BUTTON_CalcLayoutRects(infoPtr, hDC, &labelRect, &imageRect, &textRect);
     if (dtFlags != (UINT)-1 && !show_image_only(infoPtr))
     {
         textRegion = CreateRectRgnIndirect(&textRect);
         ExtSelectClipRgn(hDC, textRegion, RGN_DIFF);
     }
 
-    part = GetWindowLongW(infoPtr->hwnd, GWL_STYLE) & BS_PUSHLIKE ? BP_PUSHBUTTON : BP_GROUPBOX;
+    style = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
+    if (style & BS_PUSHLIKE)
+    {
+        part = BP_PUSHBUTTON;
+    }
+    else
+    {
+        part = BP_GROUPBOX;
+        GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &contentRect);
+        ExcludeClipRect(hDC, contentRect.left, contentRect.top, contentRect.right, contentRect.bottom);
+    }
     if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
     DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
