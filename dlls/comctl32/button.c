@@ -2922,9 +2922,6 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
     if (dtFlags != (UINT)-1)
     {
-        contentRect.left--;
-        contentRect.right++;
-        contentRect.bottom++;
         if (textRegion)
         {
             SelectClipRgn(hDC, textRegion);
