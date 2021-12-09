@@ -1372,25 +1372,22 @@ static void wined3d_buffer_gl_unload_location(struct wined3d_buffer *buffer,
 static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    struct wined3d_bo_gl *bo_gl = wined3d_bo_gl(buffer->buffer_object);
-    struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(buffer);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const struct wined3d_range *range;
+    struct wined3d_bo_address src, dst;
 
     TRACE("buffer %p, context %p, data %p, data_offset %u, range_count %u, ranges %p.\n",
             buffer, context, data, data_offset, range_count, ranges);
 
-    wined3d_buffer_gl_bind(buffer_gl, context_gl);
+    dst.buffer_object = buffer->buffer_object;
+    src.buffer_object = NULL;
 
     while (range_count--)
     {
-        range = &ranges[range_count];
-        GL_EXTCALL(glBufferSubData(bo_gl->binding, bo_gl->b.buffer_offset + range->offset,
-                range->size, (BYTE *)data + range->offset - data_offset));
+        const struct wined3d_range *range = &ranges[range_count];
+
+        src.addr = (uint8_t *)data + range->offset - data_offset;
+        dst.addr = (void *)(uintptr_t)range->offset;
+        wined3d_context_copy_bo_address(context, &dst, &src, range->size);
     }
-    wined3d_context_gl_reference_bo(context_gl, bo_gl);
-    checkGLcall("buffer upload");
 }
 
 /* Context activation is done by the caller. */
