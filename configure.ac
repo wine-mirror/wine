@@ -511,7 +511,6 @@ AC_CHECK_HEADERS(\
 	sys/vnode.h \
 	sys/wait.h \
 	syscall.h \
-	unistd.h \
 	utime.h \
 	valgrind/memcheck.h \
 	valgrind/valgrind.h

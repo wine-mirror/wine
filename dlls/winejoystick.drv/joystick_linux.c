@@ -39,9 +39,7 @@
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

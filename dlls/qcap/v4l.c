@@ -48,9 +48,7 @@
 #ifdef HAVE_LINUX_VIDEODEV2_H
 #include <linux/videodev2.h>
 #endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

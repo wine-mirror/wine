@@ -30,9 +30,6 @@
 #include <fcntl.h>
 #include <time.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #ifdef _WIN32
 # include <direct.h>

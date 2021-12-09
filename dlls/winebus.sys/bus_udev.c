@@ -31,9 +31,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <dirent.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <unistd.h>
 #include <poll.h>
 #ifdef HAVE_LIBUDEV_H
 # include <libudev.h>

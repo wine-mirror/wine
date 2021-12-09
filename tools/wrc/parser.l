@@ -104,12 +104,7 @@ ws	[ \f\t\r]
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#else
 #define YY_NO_UNISTD_H
-#endif
 
 #include "../tools.h"
 #include "wrc.h"
