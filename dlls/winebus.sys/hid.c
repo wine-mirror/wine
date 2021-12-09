@@ -641,7 +641,7 @@ static BOOL hid_descriptor_add_set_condition(struct unix_device *iface)
             USAGE(1, PID_USAGE_NEGATIVE_SATURATION),
             USAGE(1, PID_USAGE_DEAD_BAND),
             LOGICAL_MINIMUM(1, 0),
-            LOGICAL_MAXIMUM(2, 0x7fff),
+            LOGICAL_MAXIMUM(4, 0xffff),
             PHYSICAL_MINIMUM(1, 0),
             PHYSICAL_MAXIMUM(2, +10000),
             REPORT_SIZE(1, 16),
