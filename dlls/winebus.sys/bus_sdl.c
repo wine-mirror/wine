@@ -515,7 +515,7 @@ static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BY
         pSDL_HapticStopAll(impl->sdl_haptic);
         /* fallthrough */
     case PID_USAGE_OP_EFFECT_START:
-        pSDL_HapticRunEffect(impl->sdl_haptic, id, iterations);
+        pSDL_HapticRunEffect(impl->sdl_haptic, id, (iterations == 0xff ? SDL_HAPTIC_INFINITY : iterations));
         break;
     case PID_USAGE_OP_EFFECT_STOP:
         pSDL_HapticStopEffect(impl->sdl_haptic, id);
@@ -592,7 +592,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
     case PID_USAGE_ET_TRIANGLE:
     case PID_USAGE_ET_SAWTOOTH_UP:
     case PID_USAGE_ET_SAWTOOTH_DOWN:
-        effect.periodic.length = params->duration;
+        effect.periodic.length = (params->duration == 0xffff ? SDL_HAPTIC_INFINITY : params->duration);
         effect.periodic.delay = params->start_delay;
         effect.periodic.button = params->trigger_button;
         effect.periodic.interval = params->trigger_repeat_interval;
@@ -613,7 +613,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
     case PID_USAGE_ET_DAMPER:
     case PID_USAGE_ET_INERTIA:
     case PID_USAGE_ET_FRICTION:
-        effect.condition.length = params->duration;
+        effect.condition.length = (params->duration == 0xffff ? SDL_HAPTIC_INFINITY : params->duration);
         effect.condition.delay = params->start_delay;
         effect.condition.button = params->trigger_button;
         effect.condition.interval = params->trigger_repeat_interval;
@@ -641,7 +641,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         break;
 
     case PID_USAGE_ET_CONSTANT_FORCE:
-        effect.constant.length = params->duration;
+        effect.constant.length = (params->duration == 0xffff ? SDL_HAPTIC_INFINITY : params->duration);
         effect.constant.delay = params->start_delay;
         effect.constant.button = params->trigger_button;
         effect.constant.interval = params->trigger_repeat_interval;
@@ -655,6 +655,8 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.constant.fade_level = params->envelope.fade_level;
         break;
 
+    /* According to the SDL documentation, ramp effect doesn't
+     * support SDL_HAPTIC_INFINITY. */
     case PID_USAGE_ET_RAMP:
         effect.ramp.length = params->duration;
         effect.ramp.delay = params->start_delay;
