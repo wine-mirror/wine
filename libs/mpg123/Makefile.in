@@ -1,6 +1,6 @@
 EXTLIB    = libmpg123.a
 EXTRAINCL = -I$(srcdir)/src -I$(srcdir)/src/compat -I$(srcdir)/src/libmpg123
-EXTRADEFS = -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT -DNO_CATCHSIGNAL
+EXTRADEFS = -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT -DNO_CATCHSIGNAL -DMPG123_NO_LARGENAME
 
 C_SRCS = \
 	src/compat/compat.c \
@@ -17,7 +17,6 @@ C_SRCS = \
 	src/libmpg123/layer1.c \
 	src/libmpg123/layer2.c \
 	src/libmpg123/layer3.c \
-	src/libmpg123/lfs_wrap.c \
 	src/libmpg123/libmpg123.c \
 	src/libmpg123/ntom.c \
 	src/libmpg123/optimize.c \
