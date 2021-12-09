@@ -989,17 +989,19 @@ void wined3d_device_delete_opengl_contexts_cs(void *object)
     }
 }
 
-void wined3d_device_create_primary_opengl_context_cs(void *object)
+void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
 {
-    struct wined3d_device *device = object;
+    struct wined3d_device_gl *device_gl = object;
     struct wined3d_context_gl *context_gl;
     struct wined3d_swapchain *swapchain;
     struct wined3d_context *context;
     struct wined3d_texture *target;
+    struct wined3d_device *device;
     HRESULT hr;
 
-    TRACE("device %p.\n", device);
+    TRACE("device %p.\n", device_gl);
 
+    device = &device_gl->d;
     swapchain = device->swapchains[0];
     target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
     if (!(context = context_acquire(device, target, 0)))
@@ -1032,7 +1034,7 @@ void wined3d_device_create_primary_opengl_context_cs(void *object)
     wined3d_fbo_blitter_create(&device->blitter, context_gl->gl_info);
     wined3d_raw_blitter_create(&device->blitter, context_gl->gl_info);
 
-    wined3d_device_gl_create_dummy_textures(wined3d_device_gl(device), context_gl);
+    wined3d_device_gl_create_dummy_textures(device_gl, context_gl);
     wined3d_device_create_default_samplers(device, context);
     context_release(context);
 }

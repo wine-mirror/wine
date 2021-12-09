@@ -4564,7 +4564,7 @@ static HRESULT adapter_gl_init_3d(struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
 
-    wined3d_cs_init_object(device->cs, wined3d_device_create_primary_opengl_context_cs, device);
+    wined3d_cs_init_object(device->cs, wined3d_device_gl_create_primary_opengl_context_cs, wined3d_device_gl(device));
     wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
     if (!wined3d_swapchain_gl(device->swapchains[0])->context_count)
         return E_FAIL;
