@@ -494,7 +494,6 @@ AC_CHECK_HEADERS(\
 	sys/scsiio.h \
 	sys/shm.h \
 	sys/signal.h \
-	sys/socket.h \
 	sys/socketvar.h \
 	sys/sockio.h \
 	sys/statvfs.h \
@@ -551,9 +550,7 @@ AC_CHECK_HEADERS(\
 	netipx/ipx.h \
 	sys/un.h \
 ,,,[#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -575,11 +572,9 @@ AC_CHECK_HEADERS(\
 
 AC_CHECK_HEADERS([netinet/tcp_timer.h netinet/udp_var.h netinet/icmp_var.h netinet/tcp_var.h ],,,
     [#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
@@ -614,11 +609,9 @@ AC_CHECK_HEADERS([netinet/tcp_timer.h netinet/udp_var.h netinet/icmp_var.h netin
 
 AC_CHECK_HEADERS([linux/ipx.h linux/irda.h linux/rtnetlink.h],,,
     [#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_LINUX_TYPES_H
      # include <linux/types.h>
@@ -626,9 +619,7 @@ AC_CHECK_HEADERS([linux/ipx.h linux/irda.h linux/rtnetlink.h],,,
 
 AC_CHECK_HEADERS([resolv.h],,,
     [#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
@@ -664,11 +655,9 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 [#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <sys/socket.h>
 #ifdef HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif])
 
 dnl **** Check for working dll ****
@@ -2096,9 +2085,7 @@ AC_CHECK_TYPES([request_sense],,,[#include <linux/cdrom.h>])
 
 AC_CHECK_TYPES([struct xinpgen],,,
 [#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>
 #endif
@@ -2179,9 +2166,7 @@ fi
 dnl Check for socket structure members
 AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr_un.sun_len],,,
 [#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
+#include <sys/socket.h>
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>
 #endif])
@@ -2264,14 +2249,10 @@ AC_CHECK_MEMBERS([struct icmpstat.icps_inhist],,,
 
 dnl Check for struct icmpstat.icps_outhist
 AC_CHECK_MEMBERS([struct icmpstat.icps_outhist],,,
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+[#include <sys/types.h>
+#include <sys/socket.h>
 #ifdef HAVE_ALIAS_H
 #include <alias.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>

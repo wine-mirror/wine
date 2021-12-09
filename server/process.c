@@ -31,9 +31,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
+#include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
 #ifdef HAVE_SYS_PARAM_H

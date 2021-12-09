@@ -26,15 +26,12 @@
 #include "config.h"
 #include <stdarg.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <dirent.h>
 #include <unistd.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif
 
 #ifdef HAVE_SYS_SOCKETVAR_H

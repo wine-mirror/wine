@@ -8612,12 +8612,6 @@ then :
   printf "%s\n" "#define HAVE_SYS_SIGNAL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "sys/socket.h" "ac_cv_header_sys_socket_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_socket_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_SOCKET_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "sys/socketvar.h" "ac_cv_header_sys_socketvar_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_socketvar_h" = xyes
 then :
@@ -8859,9 +8853,7 @@ fi
 CFLAGS=$saved_sysctl_h_CFLAGS
 
 ac_fn_c_check_header_compile "$LINENO" "netinet/ip.h" "ac_cv_header_netinet_ip_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -8887,9 +8879,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if.h" "ac_cv_header_net_if_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -8915,9 +8905,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if_arp.h" "ac_cv_header_net_if_arp_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -8943,9 +8931,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if_dl.h" "ac_cv_header_net_if_dl_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -8971,9 +8957,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/if_types.h" "ac_cv_header_net_if_types_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -8999,9 +8983,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "net/route.h" "ac_cv_header_net_route_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9027,9 +9009,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/if_ether.h" "ac_cv_header_netinet_if_ether_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9055,9 +9035,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/if_inarp.h" "ac_cv_header_netinet_if_inarp_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9083,9 +9061,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/in_pcb.h" "ac_cv_header_netinet_in_pcb_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9111,9 +9087,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/ip_icmp.h" "ac_cv_header_netinet_ip_icmp_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9139,9 +9113,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/ip_var.h" "ac_cv_header_netinet_ip_var_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9167,9 +9139,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/udp.h" "ac_cv_header_netinet_udp_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9195,9 +9165,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netipx/ipx.h" "ac_cv_header_netipx_ipx_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9223,9 +9191,7 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/un.h" "ac_cv_header_sys_un_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
@@ -9253,11 +9219,9 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_timer.h" "ac_cv_header_netinet_tcp_timer_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
@@ -9296,11 +9260,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/udp_var.h" "ac_cv_header_netinet_udp_var_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
@@ -9339,11 +9301,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/icmp_var.h" "ac_cv_header_netinet_icmp_var_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
@@ -9382,11 +9342,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_var.h" "ac_cv_header_netinet_tcp_var_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
@@ -9427,11 +9385,9 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "linux/ipx.h" "ac_cv_header_linux_ipx_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_LINUX_TYPES_H
      # include <linux/types.h>
@@ -9443,11 +9399,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "linux/irda.h" "ac_cv_header_linux_irda_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_LINUX_TYPES_H
      # include <linux/types.h>
@@ -9459,11 +9413,9 @@ then :
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "linux/rtnetlink.h" "ac_cv_header_linux_rtnetlink_h" "#include <sys/types.h>
+     #include <sys/socket.h>
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif
      #ifdef HAVE_LINUX_TYPES_H
      # include <linux/types.h>
@@ -9477,9 +9429,7 @@ fi
 
 
 ac_fn_c_check_header_compile "$LINENO" "resolv.h" "ac_cv_header_resolv_h" "#include <sys/types.h>
-     #ifdef HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
+     #include <sys/socket.h>
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
@@ -9553,11 +9503,9 @@ fi
 ac_fn_c_check_header_compile "$LINENO" "libprocstat.h" "ac_cv_header_libprocstat_h" "#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <sys/socket.h>
 #ifdef HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif
 "
 if test "x$ac_cv_header_libprocstat_h" = xyes
@@ -20689,9 +20637,7 @@ fi
 
 
 ac_fn_c_check_type "$LINENO" "struct xinpgen" "ac_cv_type_struct_xinpgen" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>
 #endif
@@ -20866,9 +20812,7 @@ printf "%s\n" "#define HAVE_LINUX_22_JOYSTICK_API 1" >>confdefs.h
 fi
 
 ac_fn_c_check_member "$LINENO" "struct msghdr" "msg_accrights" "ac_cv_member_struct_msghdr_msg_accrights" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
+#include <sys/socket.h>
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>
 #endif
@@ -20881,9 +20825,7 @@ printf "%s\n" "#define HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS 1" >>confdefs.h
 
 fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr_un" "sun_len" "ac_cv_member_struct_sockaddr_un_sun_len" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
+#include <sys/socket.h>
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>
 #endif
@@ -21135,14 +21077,10 @@ printf "%s\n" "#define HAVE_STRUCT_ICMPSTAT_ICPS_INHIST 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_outhist" "ac_cv_member_struct_icmpstat_icps_outhist" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_outhist" "ac_cv_member_struct_icmpstat_icps_outhist" "#include <sys/types.h>
+#include <sys/socket.h>
 #ifdef HAVE_ALIAS_H
 #include <alias.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>

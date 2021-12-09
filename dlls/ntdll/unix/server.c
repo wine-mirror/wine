@@ -44,9 +44,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/mman.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
+#include <sys/socket.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif

@@ -25,11 +25,9 @@
 #include "config.h"
 
 #include <stdarg.h>
-#include <unistd.h>
-
-#ifdef HAVE_SYS_SOCKET_H
+#include <sys/types.h>
 #include <sys/socket.h>
-#endif
+#include <unistd.h>
 
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>

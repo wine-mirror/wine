@@ -25,21 +25,15 @@
 #include "config.h"
 #include <stdarg.h>
 #include <stddef.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
 
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
-#endif
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif
 
 #ifdef HAVE_SYS_SOCKETVAR_H

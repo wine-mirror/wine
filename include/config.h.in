@@ -679,9 +679,6 @@
 /* Define to 1 if you have the <sys/socketvar.h> header file. */
 #undef HAVE_SYS_SOCKETVAR_H
 
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#undef HAVE_SYS_SOCKET_H
-
 /* Define to 1 if you have the <sys/sockio.h> header file. */
 #undef HAVE_SYS_SOCKIO_H
 
