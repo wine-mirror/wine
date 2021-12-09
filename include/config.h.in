@@ -6,9 +6,6 @@
 /* Define to the file extension for executables. */
 #undef EXEEXT
 
-/* Define to 1 if you have the <alias.h> header file. */
-#undef HAVE_ALIAS_H
-
 /* Define to 1 if you have the <AL/al.h> header file. */
 #undef HAVE_AL_AL_H
 
@@ -161,32 +158,8 @@
 /* Define if you have the OpenLDAP development environment */
 #undef HAVE_LDAP
 
-/* Define to 1 if you have the `ldap_count_references' function. */
-#undef HAVE_LDAP_COUNT_REFERENCES
-
-/* Define to 1 if you have the `ldap_first_reference' function. */
-#undef HAVE_LDAP_FIRST_REFERENCE
-
 /* Define to 1 if you have the <ldap.h> header file. */
 #undef HAVE_LDAP_H
-
-/* Define to 1 if you have the `ldap_next_reference' function. */
-#undef HAVE_LDAP_NEXT_REFERENCE
-
-/* Define to 1 if you have the `ldap_parse_reference' function. */
-#undef HAVE_LDAP_PARSE_REFERENCE
-
-/* Define to 1 if you have the `ldap_parse_sortresponse_control' function. */
-#undef HAVE_LDAP_PARSE_SORTRESPONSE_CONTROL
-
-/* Define to 1 if you have the `ldap_parse_sort_control' function. */
-#undef HAVE_LDAP_PARSE_SORT_CONTROL
-
-/* Define to 1 if you have the `ldap_parse_vlvresponse_control' function. */
-#undef HAVE_LDAP_PARSE_VLVRESPONSE_CONTROL
-
-/* Define to 1 if you have the `ldap_parse_vlv_control' function. */
-#undef HAVE_LDAP_PARSE_VLV_CONTROL
 
 /* Define to 1 if you have the `gettextpo' library (-lgettextpo). */
 #undef HAVE_LIBGETTEXTPO
@@ -308,9 +281,6 @@
 /* Define to 1 if you have the <netinet/if_ether.h> header file. */
 #undef HAVE_NETINET_IF_ETHER_H
 
-/* Define to 1 if you have the <netinet/if_inarp.h> header file. */
-#undef HAVE_NETINET_IF_INARP_H
-
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
@@ -334,9 +304,6 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
-
-/* Define to 1 if you have the <netinet/tcp_timer.h> header file. */
-#undef HAVE_NETINET_TCP_TIMER_H
 
 /* Define to 1 if you have the <netinet/tcp_var.h> header file. */
 #undef HAVE_NETINET_TCP_VAR_H
@@ -494,15 +461,6 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if `direction' is a member of `struct ff_effect'. */
-#undef HAVE_STRUCT_FF_EFFECT_DIRECTION
-
-/* Define to 1 if `icps_inhist' is a member of `struct icmpstat'. */
-#undef HAVE_STRUCT_ICMPSTAT_ICPS_INHIST
-
-/* Define to 1 if `icps_outhist' is a member of `struct icmpstat'. */
-#undef HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST
-
 /* Define to 1 if `ifr_hwaddr' is a member of `struct ifreq'. */
 #undef HAVE_STRUCT_IFREQ_IFR_HWADDR
 
@@ -584,9 +542,6 @@
 /* Define to 1 if the system has the type `struct xinpgen'. */
 #undef HAVE_STRUCT_XINPGEN
 
-/* Define to 1 if the system has the type `struct __res_state'. */
-#undef HAVE_STRUCT___RES_STATE
-
 /* Define to 1 if `_u._ext.nscount6' is a member of `struct __res_state'. */
 #undef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
 
@@ -649,9 +604,6 @@
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 #undef HAVE_SYS_PRCTL_H
 
-/* Define to 1 if you have the <sys/protosw.h> header file. */
-#undef HAVE_SYS_PROTOSW_H
-
 /* Define to 1 if you have the <sys/ptrace.h> header file. */
 #undef HAVE_SYS_PTRACE_H
 
@@ -702,9 +654,6 @@
 
 /* Define to 1 if you have the <sys/thr.h> header file. */
 #undef HAVE_SYS_THR_H
-
-/* Define to 1 if you have the <sys/timeout.h> header file. */
-#undef HAVE_SYS_TIMEOUT_H
 
 /* Define to 1 if you have the <sys/times.h> header file. */
 #undef HAVE_SYS_TIMES_H

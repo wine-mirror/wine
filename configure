@@ -8222,12 +8222,6 @@ then :
   printf "%s\n" "#define HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "alias.h" "ac_cv_header_alias_h" "$ac_includes_default"
-if test "x$ac_cv_header_alias_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_ALIAS_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "arpa/inet.h" "ac_cv_header_arpa_inet_h" "$ac_includes_default"
 if test "x$ac_cv_header_arpa_inet_h" = xyes
 then :
@@ -8558,12 +8552,6 @@ then :
   printf "%s\n" "#define HAVE_SYS_PRCTL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "sys/protosw.h" "ac_cv_header_sys_protosw_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_protosw_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_PROTOSW_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "sys/ptrace.h" "ac_cv_header_sys_ptrace_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_ptrace_h" = xyes
 then :
@@ -8640,12 +8628,6 @@ ac_fn_c_check_header_compile "$LINENO" "sys/sysinfo.h" "ac_cv_header_sys_sysinfo
 if test "x$ac_cv_header_sys_sysinfo_h" = xyes
 then :
   printf "%s\n" "#define HAVE_SYS_SYSINFO_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "sys/timeout.h" "ac_cv_header_sys_timeout_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_timeout_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_TIMEOUT_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/times.h" "ac_cv_header_sys_times_h" "$ac_includes_default"
@@ -9016,32 +8998,6 @@ then :
   printf "%s\n" "#define HAVE_NETINET_IF_ETHER_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "netinet/if_inarp.h" "ac_cv_header_netinet_if_inarp_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_NET_ROUTE_H
-     # include <net/route.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NET_IF_H
-     # include <net/if.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
-"
-if test "x$ac_cv_header_netinet_if_inarp_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_NETINET_IF_INARP_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/in_pcb.h" "ac_cv_header_netinet_in_pcb_h" "#include <sys/types.h>
      #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
@@ -9200,57 +9156,10 @@ then :
 fi
 
 
-ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_timer.h" "ac_cv_header_netinet_tcp_timer_h" "#include <sys/types.h>
-     #include <sys/socket.h>
-     #ifdef HAVE_ALIAS_H
-     # include <alias.h>
-     #endif
-     #ifdef HAVE_SYS_SOCKETVAR_H
-     # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_SYS_TIMEOUT_H
-     # include <sys/timeout.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_H
-     # include <netinet/in.h>
-     #endif
-     #ifdef HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_H
-     # include <netinet/ip.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_VAR_H
-     # include <netinet/ip_var.h>
-     #endif
-     #ifdef HAVE_NETINET_IP_ICMP_H
-     # include <netinet/ip_icmp.h>
-     #endif
-     #ifdef HAVE_NETINET_UDP_H
-     # include <netinet/udp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_H
-     # include <netinet/tcp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_TIMER_H
-     #include <netinet/tcp_timer.h>
-     #endif
-"
-if test "x$ac_cv_header_netinet_tcp_timer_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_NETINET_TCP_TIMER_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/udp_var.h" "ac_cv_header_netinet_udp_var_h" "#include <sys/types.h>
      #include <sys/socket.h>
-     #ifdef HAVE_ALIAS_H
-     # include <alias.h>
-     #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_SYS_TIMEOUT_H
-     # include <sys/timeout.h>
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
@@ -9272,9 +9181,6 @@ ac_fn_c_check_header_compile "$LINENO" "netinet/udp_var.h" "ac_cv_header_netinet
      #endif
      #ifdef HAVE_NETINET_TCP_H
      # include <netinet/tcp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_TIMER_H
-     #include <netinet/tcp_timer.h>
      #endif
 "
 if test "x$ac_cv_header_netinet_udp_var_h" = xyes
@@ -9284,14 +9190,8 @@ then :
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/icmp_var.h" "ac_cv_header_netinet_icmp_var_h" "#include <sys/types.h>
      #include <sys/socket.h>
-     #ifdef HAVE_ALIAS_H
-     # include <alias.h>
-     #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_SYS_TIMEOUT_H
-     # include <sys/timeout.h>
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
@@ -9313,9 +9213,6 @@ ac_fn_c_check_header_compile "$LINENO" "netinet/icmp_var.h" "ac_cv_header_netine
      #endif
      #ifdef HAVE_NETINET_TCP_H
      # include <netinet/tcp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_TIMER_H
-     #include <netinet/tcp_timer.h>
      #endif
 "
 if test "x$ac_cv_header_netinet_icmp_var_h" = xyes
@@ -9325,14 +9222,8 @@ then :
 fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_var.h" "ac_cv_header_netinet_tcp_var_h" "#include <sys/types.h>
      #include <sys/socket.h>
-     #ifdef HAVE_ALIAS_H
-     # include <alias.h>
-     #endif
      #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
-     #endif
-     #ifdef HAVE_SYS_TIMEOUT_H
-     # include <sys/timeout.h>
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
@@ -9354,9 +9245,6 @@ ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_var.h" "ac_cv_header_netinet
      #endif
      #ifdef HAVE_NETINET_TCP_H
      # include <netinet/tcp.h>
-     #endif
-     #ifdef HAVE_NETINET_TCP_TIMER_H
-     #include <netinet/tcp_timer.h>
      #endif
 "
 if test "x$ac_cv_header_netinet_tcp_var_h" = xyes
@@ -20445,58 +20333,6 @@ else $as_nop
   LDAP_LIBS=""
 fi
 
-            ac_wine_check_funcs_save_LIBS="$LIBS"
-LIBS="$LIBS $LDAP_LIBS $PTHREAD_LIBS"
-ac_fn_c_check_func "$LINENO" "ldap_count_references" "ac_cv_func_ldap_count_references"
-if test "x$ac_cv_func_ldap_count_references" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_COUNT_REFERENCES 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_first_reference" "ac_cv_func_ldap_first_reference"
-if test "x$ac_cv_func_ldap_first_reference" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_FIRST_REFERENCE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_next_reference" "ac_cv_func_ldap_next_reference"
-if test "x$ac_cv_func_ldap_next_reference" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_NEXT_REFERENCE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_parse_reference" "ac_cv_func_ldap_parse_reference"
-if test "x$ac_cv_func_ldap_parse_reference" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_PARSE_REFERENCE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_parse_sort_control" "ac_cv_func_ldap_parse_sort_control"
-if test "x$ac_cv_func_ldap_parse_sort_control" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_PARSE_SORT_CONTROL 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_parse_sortresponse_control" "ac_cv_func_ldap_parse_sortresponse_control"
-if test "x$ac_cv_func_ldap_parse_sortresponse_control" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_PARSE_SORTRESPONSE_CONTROL 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_parse_vlv_control" "ac_cv_func_ldap_parse_vlv_control"
-if test "x$ac_cv_func_ldap_parse_vlv_control" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_PARSE_VLV_CONTROL 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ldap_parse_vlvresponse_control" "ac_cv_func_ldap_parse_vlvresponse_control"
-if test "x$ac_cv_func_ldap_parse_vlvresponse_control" = xyes
-then :
-  printf "%s\n" "#define HAVE_LDAP_PARSE_VLVRESPONSE_CONTROL 1" >>confdefs.h
-
-fi
-
-LIBS="$ac_wine_check_funcs_save_LIBS"
         else
             LDAP_LIBS=""
         fi
@@ -20641,19 +20477,6 @@ if test "x$ac_cv_type_struct_xinpgen" = xyes
 then :
 
 printf "%s\n" "#define HAVE_STRUCT_XINPGEN 1" >>confdefs.h
-
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "struct ff_effect" "direction" "ac_cv_member_struct_ff_effect_direction" "#ifdef HAVE_LINUX_INPUT_H
-#include <linux/input.h>
-#endif
-"
-if test "x$ac_cv_member_struct_ff_effect_direction" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_FF_EFFECT_DIRECTION 1" >>confdefs.h
 
 
 fi
@@ -20984,9 +20807,7 @@ printf "%s\n" "#define HAVE_STRUCT_STAT___ST_BIRTHTIM 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct sockaddr_in6" "sin6_scope_id" "ac_cv_member_struct_sockaddr_in6_sin6_scope_id" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+ac_fn_c_check_member "$LINENO" "struct sockaddr_in6" "sin6_scope_id" "ac_cv_member_struct_sockaddr_in6_sin6_scope_id" "#include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -20995,25 +20816,6 @@ if test "x$ac_cv_member_struct_sockaddr_in6_sin6_scope_id" = xyes
 then :
 
 printf "%s\n" "#define HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID 1" >>confdefs.h
-
-
-fi
-
-
-ac_fn_c_check_type "$LINENO" "struct __res_state" "ac_cv_type_struct___res_state" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_RESOLV_H
-#include <resolv.h>
-#endif
-"
-if test "x$ac_cv_type_struct___res_state" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT___RES_STATE 1" >>confdefs.h
 
 
 fi
@@ -21032,70 +20834,6 @@ printf "%s\n" "#define HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_inhist" "ac_cv_member_struct_icmpstat_icps_inhist" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
-#endif
-#ifdef HAVE_NETINET_IP_ICMP_H
-#include <netinet/ip_icmp.h>
-#endif
-#ifdef HAVE_NETINET_ICMP_VAR_H
-#include <netinet/icmp_var.h>
-#endif
-"
-if test "x$ac_cv_member_struct_icmpstat_icps_inhist" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_ICMPSTAT_ICPS_INHIST 1" >>confdefs.h
-
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_outhist" "ac_cv_member_struct_icmpstat_icps_outhist" "#include <sys/types.h>
-#include <sys/socket.h>
-#ifdef HAVE_ALIAS_H
-#include <alias.h>
-#endif
-#ifdef HAVE_SYS_SOCKETVAR_H
-#include <sys/socketvar.h>
-#endif
-#ifdef HAVE_SYS_TIMEOUT_H
-#include <sys/timeout.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
-#endif
-#ifdef HAVE_NETINET_IP_VAR_H
-#include <netinet/ip_var.h>
-#endif
-#ifdef HAVE_NETINET_IP_ICMP_H
-#include <netinet/ip_icmp.h>
-#endif
-#ifdef HAVE_NETINET_ICMP_VAR_H
-#include <netinet/icmp_var.h>
-#endif
-"
-if test "x$ac_cv_member_struct_icmpstat_icps_outhist" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST 1" >>confdefs.h
-
-
-fi
-
-
 ac_fn_c_check_member "$LINENO" "struct in6_pktinfo" "ipi6_addr" "ac_cv_member_struct_in6_pktinfo_ipi6_addr" "#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -21109,9 +20847,7 @@ printf "%s\n" "#define HAVE_STRUCT_IN6_PKTINFO_IPI6_ADDR 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct ipstat" "ips_total" "ac_cv_member_struct_ipstat_ips_total" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+ac_fn_c_check_member "$LINENO" "struct ipstat" "ips_total" "ac_cv_member_struct_ipstat_ips_total" "#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>
 #endif
@@ -21144,9 +20880,7 @@ printf "%s\n" "#define HAVE_STRUCT_IP_STATS_IPS_TOTAL 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct tcpstat" "tcps_connattempt" "ac_cv_member_struct_tcpstat_tcps_connattempt" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+ac_fn_c_check_member "$LINENO" "struct tcpstat" "tcps_connattempt" "ac_cv_member_struct_tcpstat_tcps_connattempt" "#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>
 #endif
@@ -21182,9 +20916,7 @@ printf "%s\n" "#define HAVE_STRUCT_TCP_STATS_TCPS_CONNATTEMPT 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct udpstat" "udps_ipackets" "ac_cv_member_struct_udpstat_udps_ipackets" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+ac_fn_c_check_member "$LINENO" "struct udpstat" "udps_ipackets" "ac_cv_member_struct_udpstat_udps_ipackets" "#include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -21207,9 +20939,7 @@ printf "%s\n" "#define HAVE_STRUCT_UDPSTAT_UDPS_IPACKETS 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_hwaddr" "ac_cv_member_struct_ifreq_ifr_hwaddr" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
+ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_hwaddr" "ac_cv_member_struct_ifreq_ifr_hwaddr" "#include <sys/types.h>
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
