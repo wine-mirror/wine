@@ -80,6 +80,8 @@ extern void ntdll_set_exception_jmp_buf( __wine_jmp_buf *jmp );
          } \
     } while (0);
 
+NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len );
+
 /* wide char string functions */
 
 static inline size_t ntdll_wcslen( const WCHAR *str )
