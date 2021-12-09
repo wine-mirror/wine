@@ -27,6 +27,9 @@
 enum
 {
     NtUserCallEnumDisplayMonitor,
+    NtUserCallVulkanDebugReportCallback,
+    NtUserCallVulkanDebugUtilsCallback,
+    NtUserCallCount
 };
 
 /* NtUserCallEnumDisplayMonitor params */

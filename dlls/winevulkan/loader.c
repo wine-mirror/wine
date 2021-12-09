@@ -19,7 +19,7 @@
 
 #include "vulkan_loader.h"
 #include "winreg.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "initguid.h"
 #include "devguid.h"
 #include "setupapi.h"
@@ -373,8 +373,21 @@ void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
     fill_luid_property(properties2);
 }
 
+static BOOL WINAPI call_vulkan_debug_report_callback( struct wine_vk_debug_report_params *params, ULONG size )
+{
+    return params->user_callback(params->flags, params->object_type, params->object_handle, params->location,
+                                 params->code, params->layer_prefix, params->message, params->user_data);
+}
+
+static BOOL WINAPI call_vulkan_debug_utils_callback( struct wine_vk_debug_utils_params *params, ULONG size )
+{
+    return params->user_callback(params->severity, params->message_types, &params->data, params->user_data);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
+    void **kernel_callback_table;
+
     TRACE("%p, %u, %p\n", hinst, reason, reserved);
 
     switch (reason)
@@ -382,6 +395,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
         case DLL_PROCESS_ATTACH:
             hinstance = hinst;
             DisableThreadLibraryCalls(hinst);
+
+            kernel_callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
+            kernel_callback_table[NtUserCallVulkanDebugReportCallback] = call_vulkan_debug_report_callback;
+            kernel_callback_table[NtUserCallVulkanDebugUtilsCallback]  = call_vulkan_debug_utils_callback;
             break;
     }
     return TRUE;

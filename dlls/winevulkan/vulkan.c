@@ -27,8 +27,7 @@
 
 #include "vulkan_private.h"
 #include "winreg.h"
-#include "winuser.h"
-#include "winternl.h"
+#include "ntuser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
@@ -115,9 +114,11 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     const VkDebugUtilsMessengerCallbackDataEXT_host *callback_data,
     void *user_data)
 {
-    struct VkDebugUtilsMessengerCallbackDataEXT wine_callback_data;
+    struct wine_vk_debug_utils_params params;
     VkDebugUtilsObjectNameInfoEXT *object_name_infos;
     struct wine_debug_utils_messenger *object;
+    void *ret_ptr;
+    ULONG ret_len;
     VkBool32 result;
     unsigned int i;
 
@@ -131,11 +132,16 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
         return VK_FALSE;
     }
 
-    wine_callback_data = *((VkDebugUtilsMessengerCallbackDataEXT *) callback_data);
+    /* FIXME: we should pack all referenced structs instead of passing pointers */
+    params.user_callback = object->user_callback;
+    params.user_data = object->user_data;
+    params.severity = severity;
+    params.message_types = message_types;
+    params.data = *((VkDebugUtilsMessengerCallbackDataEXT *) callback_data);
 
-    object_name_infos = calloc(wine_callback_data.objectCount, sizeof(*object_name_infos));
+    object_name_infos = calloc(params.data.objectCount, sizeof(*object_name_infos));
 
-    for (i = 0; i < wine_callback_data.objectCount; i++)
+    for (i = 0; i < params.data.objectCount; i++)
     {
         object_name_infos[i].sType = callback_data->pObjects[i].sType;
         object_name_infos[i].pNext = callback_data->pObjects[i].pNext;
@@ -158,10 +164,11 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
         }
     }
 
-    wine_callback_data.pObjects = object_name_infos;
+    params.data.pObjects = object_name_infos;
 
     /* applications should always return VK_FALSE */
-    result = object->user_callback(severity, message_types, &wine_callback_data, object->user_data);
+    result = KeUserModeCallback( NtUserCallVulkanDebugUtilsCallback, &params, sizeof(params),
+                                 &ret_ptr, &ret_len );
 
     free(object_name_infos);
 
@@ -171,7 +178,10 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type,
     uint64_t object_handle, size_t location, int32_t code, const char *layer_prefix, const char *message, void *user_data)
 {
+    struct wine_vk_debug_report_params params;
     struct wine_debug_report_callback *object;
+    void *ret_ptr;
+    ULONG ret_len;
 
     TRACE("%#x, %#x, 0x%s, 0x%s, %d, %p, %p, %p\n", flags, object_type, wine_dbgstr_longlong(object_handle),
         wine_dbgstr_longlong(location), code, layer_prefix, message, user_data);
@@ -184,12 +194,22 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
         return VK_FALSE;
     }
 
-    object_handle = wine_vk_get_wrapper(object->instance, object_handle);
-    if (!object_handle)
-        object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
+    /* FIXME: we should pack all referenced structs instead of passing pointers */
+    params.user_callback = object->user_callback;
+    params.user_data = object->user_data;
+    params.flags = flags;
+    params.object_type = object_type;
+    params.location = location;
+    params.code = code;
+    params.layer_prefix = layer_prefix;
+    params.message = message;
 
-    return object->user_callback(
-        flags, object_type, object_handle, location, code, layer_prefix, message, object->user_data);
+    params.object_handle = wine_vk_get_wrapper(object->instance, object_handle);
+    if (!params.object_handle)
+        params.object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
+
+    return KeUserModeCallback( NtUserCallVulkanDebugReportCallback, &params, sizeof(params),
+                               &ret_ptr, &ret_len );
 }
 
 static void wine_vk_physical_device_free(struct VkPhysicalDevice_T *phys_dev)

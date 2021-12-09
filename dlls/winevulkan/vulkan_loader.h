@@ -69,6 +69,32 @@ void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_phys_dev_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 
+/* debug callbacks params */
+
+struct wine_vk_debug_utils_params
+{
+    PFN_vkDebugUtilsMessengerCallbackEXT user_callback;
+    void *user_data;
+
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity;
+    VkDebugUtilsMessageTypeFlagsEXT message_types;
+    VkDebugUtilsMessengerCallbackDataEXT data;
+};
+
+struct wine_vk_debug_report_params
+{
+    PFN_vkDebugReportCallbackEXT user_callback;
+    void *user_data;
+
+    VkDebugReportFlagsEXT flags;
+    VkDebugReportObjectTypeEXT object_type;
+    uint64_t object_handle;
+    size_t location;
+    int32_t code;
+    const char *layer_prefix;
+    const char *message;
+};
+
 extern const struct unix_funcs *unix_funcs;
 extern unixlib_handle_t unix_handle DECLSPEC_HIDDEN;
 
