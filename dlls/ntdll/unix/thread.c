@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -1828,6 +1829,48 @@ BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LA
 #endif
 }
 
+static void set_native_thread_name( HANDLE handle, const UNICODE_STRING *name )
+{
+#ifdef linux
+    NTSTATUS status;
+    char path[64], nameA[64];
+    int unix_pid, unix_tid, len, fd;
+
+    SERVER_START_REQ( get_thread_times )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        status = wine_server_call( req );
+        if (status == STATUS_SUCCESS)
+        {
+            unix_pid = reply->unix_pid;
+            unix_tid = reply->unix_tid;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_SUCCESS || unix_pid == -1 || unix_tid == -1)
+        return;
+
+    if (unix_pid != getpid())
+    {
+        static int once;
+        if (!once++) FIXME("cross-process native thread naming not supported\n");
+        return;
+    }
+
+    len = ntdll_wcstoumbs( name->Buffer, name->Length / sizeof(WCHAR), nameA, sizeof(nameA), FALSE );
+    sprintf(path, "/proc/%u/task/%u/comm", unix_pid, unix_tid);
+    if ((fd = open( path, O_WRONLY )) != -1)
+    {
+        write( fd, nameA, len );
+        close( fd );
+    }
+#else
+    static int once;
+    if (!once++) FIXME("not implemented on this platform\n");
+#endif
+}
+
 #ifndef _WIN64
 static BOOL is_process_wow64( const CLIENT_ID *id )
 {
@@ -2254,6 +2297,9 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
+
+        set_native_thread_name( handle, &info->ThreadName );
+
         return status;
     }
 
