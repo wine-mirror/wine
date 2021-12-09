@@ -1589,12 +1589,16 @@ static void test_CreateIconFromResource(void)
     SetLastError(0xdeadbeef);
     handle = CreateIconFromResource((PBYTE) hotspot, CRSR_RES_SIZE, FALSE, 0x00030000);
     ok(handle != NULL, "Create cursor failed.\n");
+    ret = DestroyCursor(handle);
+    ok(ret, "Destroy cursor failed, error %u.\n", GetLastError());
 
     /* Test the icon information. */
     SetLastError(0xdeadbeef);
     ret = GetIconInfo(handle, &icon_info);
+    todo_wine
     ok(ret, "GetIconInfo() failed.\n");
     error = GetLastError();
+    todo_wine
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     if (ret)
@@ -1612,30 +1616,31 @@ static void test_CreateIconFromResource(void)
         ICONINFOEXA infoex;
         infoex.cbSize = sizeof(infoex);
         ret = pGetIconInfoExA( handle, &infoex );
+        todo_wine
         ok( ret, "GetIconInfoEx failed err %d\n", GetLastError() );
+        if (ret)
+        {
         ok( infoex.wResID == 0, "GetIconInfoEx wrong resid %x\n", infoex.wResID );
         ok( infoex.szModName[0] == 0, "GetIconInfoEx wrong module %s\n", infoex.szModName );
         ok( infoex.szResName[0] == 0, "GetIconInfoEx wrong name %s\n", infoex.szResName );
+        }
     }
-
-    /* Clean up. */
-    SetLastError(0xdeadbeef);
-    ret = DestroyCursor(handle);
-    ok(ret, "DestroyCursor() failed.\n");
-    error = GetLastError();
-    ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     /* Test creating an icon. */
     SetLastError(0xdeadbeef);
     handle = CreateIconFromResource((PBYTE) icon_header, ICON_RES_SIZE, TRUE,
 				    0x00030000);
     ok(handle != NULL, "Create icon failed.\n");
+    ret = DestroyIcon(handle);
+    ok(ret, "Destroy icon failed, error %u.\n", GetLastError());
 
     /* Test the icon information. */
     SetLastError(0xdeadbeef);
     ret = GetIconInfo(handle, &icon_info);
+    todo_wine
     ok(ret, "GetIconInfo() failed.\n");
     error = GetLastError();
+    todo_wine
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     if (ret)
@@ -1647,13 +1652,6 @@ static void test_CreateIconFromResource(void)
         ok(icon_info.hbmColor != NULL, "No hbmColor!\n");
         ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
     }
-
-    /* Clean up. */
-    SetLastError(0xdeadbeef);
-    ret = DestroyCursor(handle);
-    ok(ret, "DestroyCursor() failed.\n");
-    error = GetLastError();
-    ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     /* Rejection of NULL pointer crashes at least on WNT4WSSP6, W2KPROSP4, WXPPROSP3
      *
@@ -1667,12 +1665,16 @@ static void test_CreateIconFromResource(void)
     empty_anicursor.frames[0].data.icon_info.idEntries[0].yHotspot = 3;
     handle = CreateIconFromResource((PBYTE) &empty_anicursor, sizeof(empty_anicursor), FALSE, 0x00030000);
     ok(handle != NULL, "Create cursor failed.\n");
+    ret = DestroyCursor(handle);
+    ok(ret, "Destroy cursor failed, error %u.\n", GetLastError());
 
     /* Test the animated cursor's information. */
     SetLastError(0xdeadbeef);
     ret = GetIconInfo(handle, &icon_info);
+    todo_wine
     ok(ret, "GetIconInfo() failed.\n");
     error = GetLastError();
+    todo_wine
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     if (ret)
@@ -1684,13 +1686,6 @@ static void test_CreateIconFromResource(void)
            "No hbmColor!\n");
         ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
     }
-
-    /* Clean up. */
-    SetLastError(0xdeadbeef);
-    ret = DestroyCursor(handle);
-    ok(ret, "DestroyCursor() failed.\n");
-    error = GetLastError();
-    ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
     /* Test creating and destroying a non-shared icon. */
     handle = CreateIconFromResourceEx((BYTE *)icon_header, ICON_RES_SIZE, TRUE, 0x00030000,
