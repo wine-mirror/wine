@@ -3112,14 +3112,14 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
 static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_execute_command_list *op = data;
-    size_t start = 0, end = op->list->data_size;
+    SIZE_T start = 0, end = op->list->data_size;
     const BYTE *cs_data = op->list->data;
 
     TRACE("Executing command list %p.\n", op->list);
 
     while (start < end)
     {
-        const struct wined3d_cs_packet *packet = (const struct wined3d_cs_packet *)&cs_data[start];
+        const struct wined3d_cs_packet *packet = wined3d_next_cs_packet(cs_data, &start);
         enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)packet->data;
 
         if (opcode >= WINED3D_CS_OP_STOP)
@@ -3127,8 +3127,6 @@ static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const vo
         else
             wined3d_cs_op_handlers[opcode](cs, packet->data);
         TRACE("%s executed.\n", debug_cs_op(opcode));
-
-        start += offsetof(struct wined3d_cs_packet, data[packet->size]);
     }
 }
 
