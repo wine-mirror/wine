@@ -78,16 +78,6 @@ typedef struct
     int         col;
 } location_t;
 
-/* Binary resource structure */
-#define RES_BLOCKSIZE	512
-
-typedef struct res {
-	unsigned int	allocsize;	/* Allocated datablock size */
-	unsigned int	size;		/* Actual size of data */
-	unsigned int	dataidx;	/* Tag behind the resource-header */
-	unsigned char	*data;
-} res_t;
-
 /* Resource strings are slightly more complex because they include '\0' */
 enum str_e {str_char, str_unicode};
 
@@ -588,7 +578,6 @@ typedef struct resource {
 		versioninfo_t	*ver;
 		void		*overlay; /* To catch all types at once... */
 	} res;
-	res_t		*binres;	/* To binary converted resource */
 	DWORD		memopt;
 } resource_t;
 
