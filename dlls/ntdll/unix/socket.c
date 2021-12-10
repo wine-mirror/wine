@@ -1003,7 +1003,7 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 }
 
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                           IO_STATUS_BLOCK *io, int fd, const WSABUF *buffers, unsigned int count,
+                           IO_STATUS_BLOCK *io, int fd, const void *buffers_ptr, unsigned int count,
                            const struct WS_sockaddr *addr, unsigned int addr_len, int unix_flags, int force_async )
 {
     struct async_send_ioctl *async;
@@ -1019,10 +1019,25 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         return STATUS_NO_MEMORY;
 
     async->count = count;
-    for (i = 0; i < count; ++i)
+    if (in_wow64_call())
     {
-        async->iov[i].iov_base = buffers[i].buf;
-        async->iov[i].iov_len = buffers[i].len;
+        const struct afd_wsabuf_32 *buffers = buffers_ptr;
+
+        for (i = 0; i < count; ++i)
+        {
+            async->iov[i].iov_base = ULongToPtr( buffers[i].buf );
+            async->iov[i].iov_len = buffers[i].len;
+        }
+    }
+    else
+    {
+        const WSABUF *buffers = buffers_ptr;
+
+        for (i = 0; i < count; ++i)
+        {
+            async->iov[i].iov_base = buffers[i].buf;
+            async->iov[i].iov_len = buffers[i].len;
+        }
     }
     async->unix_flags = unix_flags;
     async->addr = addr;
@@ -1463,8 +1478,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (params->ws_flags & ~(WS_MSG_OOB | WS_MSG_PARTIAL))
                 FIXME( "unknown flags %#x\n", params->ws_flags );
 
-            status = sock_send( handle, event, apc, apc_user, io, fd, params->buffers, params->count,
-                                params->addr, params->addr_len, unix_flags, params->force_async );
+            status = sock_send( handle, event, apc, apc_user, io, fd, u64_to_user_ptr( params->buffers_ptr ), params->count,
+                                u64_to_user_ptr( params->addr_ptr ), params->addr_len, unix_flags, params->force_async );
             break;
         }
 

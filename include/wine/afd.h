@@ -256,6 +256,12 @@ C_ASSERT( sizeof(struct afd_get_events_params) == 56 );
 #define IOCTL_AFD_WINE_GET_IP_RECVTOS                   WINE_AFD_IOC(295)
 #define IOCTL_AFD_WINE_SET_IP_RECVTOS                   WINE_AFD_IOC(296)
 
+struct afd_iovec
+{
+    ULONGLONG ptr;
+    ULONG len;
+};
+
 struct afd_create_params
 {
     int family, type, protocol;
@@ -293,13 +299,14 @@ C_ASSERT( sizeof(struct afd_recvmsg_params) == 48 );
 
 struct afd_sendmsg_params
 {
-    const struct WS(sockaddr) *addr;
+    ULONGLONG addr_ptr; /* const struct WS(sockaddr) */
     unsigned int addr_len;
     unsigned int ws_flags;
     int force_async;
     unsigned int count;
-    const WSABUF *buffers;
+    ULONGLONG buffers_ptr; /* const WSABUF[] */
 };
+C_ASSERT( sizeof(struct afd_sendmsg_params) == 32 );
 
 struct afd_transmit_params
 {

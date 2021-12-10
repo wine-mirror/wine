@@ -992,12 +992,12 @@ static int WS2_sendto( SOCKET s, WSABUF *buffers, DWORD buffer_count, DWORD *ret
         apc = socket_apc;
     }
 
-    params.addr = addr;
+    params.addr_ptr = u64_from_user_ptr( addr );
     params.addr_len = addr_len;
     params.ws_flags = flags;
     params.force_async = !!overlapped;
     params.count = buffer_count;
-    params.buffers = buffers;
+    params.buffers_ptr = u64_from_user_ptr( buffers );
 
     status = NtDeviceIoControlFile( (HANDLE)s, event, apc, cvalue, piosb,
                                     IOCTL_AFD_WINE_SENDMSG, &params, sizeof(params), NULL, 0 );
