@@ -91,6 +91,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
+#define u64_to_user_ptr(u) ((void *)(uintptr_t)(u))
+
 union unix_sockaddr
 {
     struct sockaddr addr;
@@ -1414,6 +1416,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_RECVMSG:
         {
             struct afd_recvmsg_params *params = in_buffer;
+            unsigned int *ws_flags = u64_to_user_ptr(params->ws_flags_ptr);
             int unix_flags = 0;
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
@@ -1425,15 +1428,17 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 break;
             }
 
-            if (*params->ws_flags & WS_MSG_OOB)
+            if (*ws_flags & WS_MSG_OOB)
                 unix_flags |= MSG_OOB;
-            if (*params->ws_flags & WS_MSG_PEEK)
+            if (*ws_flags & WS_MSG_PEEK)
                 unix_flags |= MSG_PEEK;
-            if (*params->ws_flags & WS_MSG_WAITALL)
+            if (*ws_flags & WS_MSG_WAITALL)
                 FIXME( "MSG_WAITALL is not supported\n" );
 
-            status = sock_recv( handle, event, apc, apc_user, io, fd, params->buffers, params->count, params->control,
-                                params->addr, params->addr_len, params->ws_flags, unix_flags, params->force_async );
+            status = sock_recv( handle, event, apc, apc_user, io, fd, u64_to_user_ptr(params->buffers_ptr),
+                                params->count, u64_to_user_ptr(params->control_ptr),
+                                u64_to_user_ptr(params->addr_ptr), u64_to_user_ptr(params->addr_len_ptr),
+                                ws_flags, unix_flags, params->force_async );
             break;
         }
 

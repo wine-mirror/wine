@@ -35,6 +35,8 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define TIMEOUT_INFINITE _I64_MAX
 
+#define u64_from_user_ptr(ptr) ((ULONGLONG)(uintptr_t)(ptr))
+
 static const WSAPROTOCOL_INFOW supported_protocols[] =
 {
     {
@@ -923,13 +925,13 @@ static int WS2_recv_base( SOCKET s, WSABUF *buffers, DWORD buffer_count, DWORD *
         apc = socket_apc;
     }
 
-    params.control = control;
-    params.addr = addr;
-    params.addr_len = addr_len;
-    params.ws_flags = flags;
+    params.control_ptr = u64_from_user_ptr(control);
+    params.addr_ptr = u64_from_user_ptr(addr);
+    params.addr_len_ptr = u64_from_user_ptr(addr_len);
+    params.ws_flags_ptr = u64_from_user_ptr(flags);
     params.force_async = !!overlapped;
     params.count = buffer_count;
-    params.buffers = buffers;
+    params.buffers_ptr = u64_from_user_ptr(buffers);
 
     status = NtDeviceIoControlFile( (HANDLE)s, event, apc, cvalue, piosb,
                                     IOCTL_AFD_WINE_RECVMSG, &params, sizeof(params), NULL, 0 );

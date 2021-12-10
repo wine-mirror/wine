@@ -281,14 +281,15 @@ C_ASSERT( sizeof(struct afd_connect_params) == 8 );
 
 struct afd_recvmsg_params
 {
-    WSABUF *control;
-    struct WS(sockaddr) *addr;
-    int *addr_len;
-    unsigned int *ws_flags;
+    ULONGLONG control_ptr; /* WSABUF */
+    ULONGLONG addr_ptr; /* WS(sockaddr) */
+    ULONGLONG addr_len_ptr; /* int */
+    ULONGLONG ws_flags_ptr; /* unsigned int */
     int force_async;
     unsigned int count;
-    WSABUF *buffers;
+    ULONGLONG buffers_ptr; /* WSABUF[] */
 };
+C_ASSERT( sizeof(struct afd_recvmsg_params) == 48 );
 
 struct afd_sendmsg_params
 {
