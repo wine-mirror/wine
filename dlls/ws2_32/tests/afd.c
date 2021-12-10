@@ -688,7 +688,7 @@ static void test_poll(void)
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
     ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
-    todo_wine ok(!io.Status, "got %#x\n", io.Status);
+    ok(!io.Status, "got %#x\n", io.Status);
     ok(!io.Information, "got %#Ix\n", io.Information);
 
     /* Test passing the same handle twice. */
@@ -1201,7 +1201,7 @@ static void test_recv(void)
     memset(&io, 0, sizeof(io));
     ret = NtDeviceIoControlFile((HANDLE)listener, event, NULL, NULL, &io, IOCTL_AFD_RECV, NULL, 0, NULL, 0);
     todo_wine ok(ret == STATUS_INVALID_CONNECTION, "got %#x\n", ret);
-    todo_wine ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Status, "got status %#x\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1213,7 +1213,7 @@ static void test_recv(void)
     memset(&io, 0, sizeof(io));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io, IOCTL_AFD_RECV, NULL, 0, NULL, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
-    todo_wine ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Status, "got status %#x\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     wsabufs[0].len = sizeof(buffer);
@@ -1301,7 +1301,7 @@ static void test_recv(void)
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_DEVICE_NOT_READY, "got %#x\n", ret);
-    todo_wine ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Status, "got status %#x\n", io.Status);
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     ret = send(server, "data", 5, 0);
@@ -1368,7 +1368,7 @@ static void test_recv(void)
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
-    todo_wine ok(io.Status == 0xdeadbeef, "got %#x\n", io.Status);
+    ok(io.Status == 0xdeadbeef, "got %#x\n", io.Status);
 
     params.msg_flags = AFD_MSG_OOB | AFD_MSG_NOT_OOB;
 
@@ -1376,7 +1376,7 @@ static void test_recv(void)
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
-    todo_wine ok(io.Status == 0xdeadbeef, "got %#x\n", io.Status);
+    ok(io.Status == 0xdeadbeef, "got %#x\n", io.Status);
 
     params.msg_flags = AFD_MSG_OOB;
 

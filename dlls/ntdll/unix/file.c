@@ -5735,7 +5735,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
         return server_ioctl_file( handle, event, apc, apc_context, io, code,
                                   in_buffer, in_size, out_buffer, out_size );
 
-    if (status != STATUS_PENDING) io->u.Status = status;
+    if (status != STATUS_PENDING && !NT_ERROR(status)) io->u.Status = status;
     return status;
 }
 
