@@ -895,7 +895,8 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, const D3DXIMAGE_INFO *in
     BYTE *buffer;
     HRESULT hr;
 
-    if (info->Format != D3DFMT_X8R8G8B8 || info->ImageFileFormat != D3DXIFF_BMP)
+    if (info->Format != D3DFMT_X8R8G8B8 || (info->ImageFileFormat != D3DXIFF_BMP
+            && info->ImageFileFormat != D3DXIFF_TGA))
         return FALSE;
 
     size = info->Width * info->Height * 4;
