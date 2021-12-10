@@ -40,10 +40,7 @@ struct IDirectInputImpl
     IDirectInputJoyConfig8      IDirectInputJoyConfig8_iface;
 
     LONG                        ref;
-
     BOOL                        initialized;
-    struct list                 entry;          /* entry into list of all IDirectInputs */
-
     DWORD                       evsequence;     /* unique sequence number for events */
     DWORD                       dwVersion;      /* direct input version number */
     struct list                 device_players; /* device instance guid to player name */

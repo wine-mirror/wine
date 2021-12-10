@@ -78,9 +78,18 @@ HINSTANCE DINPUT_instance;
 
 static HWND di_em_win;
 
-static BOOL check_hook_thread(void);
+static HANDLE dinput_thread;
+static DWORD dinput_thread_id;
+
 static CRITICAL_SECTION dinput_hook_crit;
-static struct list direct_input_list = LIST_INIT( direct_input_list );
+static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
+{
+    0, 0, &dinput_hook_crit,
+    { &dinput_critsect_debug.ProcessLocksList, &dinput_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dinput_hook_crit") }
+};
+static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0, 0 };
+
 static struct list acquired_mouse_list = LIST_INIT( acquired_mouse_list );
 static struct list acquired_rawmouse_list = LIST_INIT( acquired_rawmouse_list );
 static struct list acquired_keyboard_list = LIST_INIT( acquired_keyboard_list );
@@ -453,18 +462,7 @@ static HRESULT initialize_directinput_instance(IDirectInputImpl *This, DWORD dwV
 
         list_init( &This->device_players );
 
-        /* Add self to the list of the IDirectInputs */
-        EnterCriticalSection( &dinput_hook_crit );
-        list_add_head( &direct_input_list, &This->entry );
-        LeaveCriticalSection( &dinput_hook_crit );
-
         This->initialized = TRUE;
-
-        if (!check_hook_thread())
-        {
-            uninitialize_directinput_instance( This );
-            return DIERR_GENERIC;
-        }
     }
 
     return DI_OK;
@@ -475,16 +473,10 @@ static void uninitialize_directinput_instance(IDirectInputImpl *This)
     if (This->initialized)
     {
         struct DevicePlayer *device_player, *device_player2;
-        /* Remove self from the list of the IDirectInputs */
-        EnterCriticalSection( &dinput_hook_crit );
-        list_remove( &This->entry );
-        LeaveCriticalSection( &dinput_hook_crit );
 
         LIST_FOR_EACH_ENTRY_SAFE( device_player, device_player2,
                 &This->device_players, struct DevicePlayer, entry )
             free( device_player );
-
-        check_hook_thread();
 
         This->initialized = FALSE;
     }
@@ -1262,13 +1254,13 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
-static DWORD WINAPI hook_thread_proc(void *param)
+static DWORD WINAPI dinput_thread_proc( void *params )
 {
+    HANDLE events[128], start_event = params;
     static HHOOK kbd_hook, mouse_hook;
     struct dinput_device *impl, *next;
     SIZE_T events_count = 0;
     HANDLE finished_event;
-    HANDLE events[128];
     HRESULT hr;
     DWORD ret;
     MSG msg;
@@ -1277,7 +1269,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
 
     /* Force creation of the message queue */
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );
-    SetEvent(param);
+    SetEvent( start_event );
 
     while ((ret = MsgWaitForMultipleObjectsEx( events_count, events, INFINITE, QS_ALLINPUT, 0 )) <= events_count)
     {
@@ -1354,61 +1346,36 @@ static DWORD WINAPI hook_thread_proc(void *param)
 done:
     DestroyWindow( di_em_win );
     di_em_win = NULL;
-
-    FreeLibraryAndExitThread(DINPUT_instance, 0);
+    return 0;
 }
 
-static DWORD hook_thread_id;
-static HANDLE hook_thread_event;
-
-static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
+static BOOL WINAPI dinput_thread_start_once( INIT_ONCE *once, void *param, void **context )
 {
-    0, 0, &dinput_hook_crit,
-    { &dinput_critsect_debug.ProcessLocksList, &dinput_critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": dinput_hook_crit") }
-};
-static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0, 0 };
+    HANDLE start_event;
 
-static BOOL check_hook_thread(void)
+    start_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    if (!start_event) ERR( "failed to create start event, error %u\n", GetLastError() );
+
+    dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, &dinput_thread_id );
+    if (!dinput_thread) ERR( "failed to create internal thread, error %u\n", GetLastError() );
+
+    WaitForSingleObject( start_event, INFINITE );
+    CloseHandle( start_event );
+
+    return TRUE;
+}
+
+static void dinput_thread_start(void)
 {
-    static HANDLE hook_thread;
-    HMODULE module;
-    HANDLE wait_handle = NULL;
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce( &init_once, dinput_thread_start_once, NULL, NULL );
+}
 
-    EnterCriticalSection(&dinput_hook_crit);
-
-    TRACE("IDirectInputs left: %d\n", list_count(&direct_input_list));
-    if (!list_empty(&direct_input_list) && !hook_thread)
-    {
-        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR*)DINPUT_instance, &module);
-        hook_thread_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-        hook_thread = CreateThread(NULL, 0, hook_thread_proc, hook_thread_event, 0, &hook_thread_id);
-    }
-    else if (list_empty(&direct_input_list) && hook_thread)
-    {
-        DWORD tid = hook_thread_id;
-
-        if (hook_thread_event) /* if thread is not started yet */
-        {
-            WaitForSingleObject(hook_thread_event, INFINITE);
-            CloseHandle(hook_thread_event);
-            hook_thread_event = NULL;
-        }
-
-        hook_thread_id = 0;
-        PostThreadMessageW(tid, WM_USER+0x10, 0, 0);
-        wait_handle = hook_thread;
-        hook_thread = NULL;
-    }
-
-    LeaveCriticalSection(&dinput_hook_crit);
-
-    if (wait_handle)
-    {
-        WaitForSingleObject(wait_handle, INFINITE);
-        CloseHandle(wait_handle);
-    }
-    return hook_thread_id != 0;
+static void dinput_thread_stop(void)
+{
+    PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 0, 0 );
+    WaitForSingleObject( dinput_thread, INFINITE );
+    CloseHandle( dinput_thread );
 }
 
 void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
@@ -1417,6 +1384,8 @@ void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
     static ULONG foreground_cnt;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HANDLE hook_change_finished_event = NULL;
+
+    dinput_thread_start();
 
     EnterCriticalSection(&dinput_hook_crit);
 
@@ -1435,13 +1404,6 @@ void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
     {
         UnhookWindowsHookEx( callwndproc_hook );
         callwndproc_hook = NULL;
-    }
-
-    if (hook_thread_event) /* if thread is not started yet */
-    {
-        WaitForSingleObject(hook_thread_event, INFINITE);
-        CloseHandle(hook_thread_event);
-        hook_thread_event = NULL;
     }
 
     if (impl->use_raw_input)
@@ -1470,7 +1432,7 @@ void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
     }
 
     hook_change_finished_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, (LPARAM)hook_change_finished_event );
+    PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 1, (LPARAM)hook_change_finished_event );
 
     LeaveCriticalSection(&dinput_hook_crit);
 
@@ -1505,6 +1467,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved)
         break;
       case DLL_PROCESS_DETACH:
         if (reserved) break;
+        dinput_thread_stop();
         unregister_di_em_win_class();
         DeleteCriticalSection(&dinput_hook_crit);
         break;
