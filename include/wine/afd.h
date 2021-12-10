@@ -25,6 +25,12 @@
 #include <winioctl.h>
 #include <mswsock.h>
 
+struct afd_wsabuf_32
+{
+    ULONG len;
+    ULONG buf;
+};
+
 #ifdef USE_WS_PREFIX
 # define WS(x)    WS_##x
 #else

@@ -595,7 +595,7 @@ static BOOL async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 }
 
 static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
-                           int fd, const WSABUF *buffers, unsigned int count, WSABUF *control,
+                           int fd, const void *buffers_ptr, unsigned int count, WSABUF *control,
                            struct WS_sockaddr *addr, int *addr_len, DWORD *ret_flags, int unix_flags, int force_async )
 {
     struct async_recv_ioctl *async;
@@ -614,28 +614,46 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
             return STATUS_INVALID_PARAMETER;
     }
 
-    for (i = 0; i < count; ++i)
-    {
-        if (!virtual_check_buffer_for_write( buffers[i].buf, buffers[i].len ))
-            return STATUS_ACCESS_VIOLATION;
-    }
-
     async_size = offsetof( struct async_recv_ioctl, iov[count] );
 
     if (!(async = (struct async_recv_ioctl *)alloc_fileio( async_size, async_recv_proc, handle )))
         return STATUS_NO_MEMORY;
 
     async->count = count;
-    for (i = 0; i < count; ++i)
+    if (in_wow64_call())
     {
-        async->iov[i].iov_base = buffers[i].buf;
-        async->iov[i].iov_len = buffers[i].len;
+        const struct afd_wsabuf_32 *buffers = buffers_ptr;
+
+        for (i = 0; i < count; ++i)
+        {
+            async->iov[i].iov_base = ULongToPtr( buffers[i].buf );
+            async->iov[i].iov_len = buffers[i].len;
+        }
+    }
+    else
+    {
+        const WSABUF *buffers = buffers_ptr;
+
+        for (i = 0; i < count; ++i)
+        {
+            async->iov[i].iov_base = buffers[i].buf;
+            async->iov[i].iov_len = buffers[i].len;
+        }
     }
     async->unix_flags = unix_flags;
     async->control = control;
     async->addr = addr;
     async->addr_len = addr_len;
     async->ret_flags = ret_flags;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (!virtual_check_buffer_for_write( async->iov[i].iov_base, async->iov[i].iov_len ))
+        {
+            release_fileio( &async->io );
+            return STATUS_ACCESS_VIOLATION;
+        }
+    }
 
     status = try_recv( fd, async, &information );
 
