@@ -879,4 +879,6 @@ SOURCES = \
 	xmldso.idl \
 	xmldsodid.h \
 	xmllite.idl \
+	xpsobjectmodel.idl \
+	xpsobjectmodel_1.idl \
 	zmouse.h
