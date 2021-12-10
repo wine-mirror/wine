@@ -248,13 +248,13 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispa
         return STATUS_INVALID_DISPOSITION;
     }
     rc = unw_get_proc_info( &cursor, &info );
-    if (rc < 0) rc = -rc;  /* libunwind may return negative error codes */
-    if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
+    if (UNW_ENOINFO < 0) rc = -rc;  /* LLVM libunwind has negative error codes */
+    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
     {
         WARN( "failed to get info: %d\n", rc );
         return STATUS_INVALID_DISPOSITION;
     }
-    if (rc == UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
+    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
     {
         NTSTATUS status = context->Pc != context->Lr ?
                           STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;

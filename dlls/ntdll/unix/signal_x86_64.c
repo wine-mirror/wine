@@ -1415,13 +1415,13 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *c
     *frame = context->Rsp;
 
     rc = unw_get_proc_info(&cursor, &info);
-    if (rc < 0) rc = -rc;  /* libunwind may return negative error codes */
-    if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
+    if (UNW_ENOINFO < 0) rc = -rc;  /* LLVM libunwind has negative error codes */
+    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
     {
         WARN( "failed to get info: %d\n", rc );
         return STATUS_INVALID_DISPOSITION;
     }
-    if (rc == UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip || info.end_ip == info.start_ip + 1)
+    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip || info.end_ip == info.start_ip + 1)
         return STATUS_UNSUCCESSFUL;
 
     TRACE( "ip %#lx function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
