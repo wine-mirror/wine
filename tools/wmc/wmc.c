@@ -136,8 +136,6 @@ static const struct long_option long_options[] =
         { NULL }
 };
 
-static void segvhandler(int sig);
-
 static void cleanup_files(void)
 {
     if (output_name) unlink( output_name );
@@ -241,7 +239,6 @@ int main(int argc,char *argv[])
         struct strarray files;
 
 	atexit( cleanup_files );
-	signal(SIGSEGV, segvhandler);
 	signal( SIGTERM, exit_on_signal );
 	signal( SIGINT, exit_on_signal );
 #ifdef SIGHUP
@@ -336,12 +333,4 @@ int main(int argc,char *argv[])
 	output_name = NULL;
 	header_name = NULL;
 	return 0;
-}
-
-static void segvhandler(int sig)
-{
-	fprintf(stderr, "\n%s:%d: Oops, segment violation\n", input_name, line_number);
-	fflush(stdout);
-	fflush(stderr);
-	abort();
 }
