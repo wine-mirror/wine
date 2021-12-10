@@ -310,13 +310,17 @@ C_ASSERT( sizeof(struct afd_sendmsg_params) == 32 );
 
 struct afd_transmit_params
 {
-    HANDLE file;
+    LARGE_INTEGER offset;
+    ULONGLONG head_ptr;
+    ULONGLONG tail_ptr;
+    DWORD head_len;
+    DWORD tail_len;
+    ULONG file;
     DWORD file_len;
     DWORD buffer_size;
-    LARGE_INTEGER offset;
-    TRANSMIT_FILE_BUFFERS buffers;
     DWORD flags;
 };
+C_ASSERT( sizeof(struct afd_transmit_params) == 48 );
 
 struct afd_message_select_params
 {

@@ -819,7 +819,7 @@ static BOOL WINAPI WS2_AcceptEx( SOCKET listener, SOCKET acceptor, void *dest, D
 static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE file, DWORD file_len, DWORD buffer_size,
                                      OVERLAPPED *overlapped, TRANSMIT_FILE_BUFFERS *buffers, DWORD flags )
 {
-    struct afd_transmit_params params = {0};
+    struct afd_transmit_params params = {{{0}}};
     IO_STATUS_BLOCK iosb, *piosb = &iosb;
     HANDLE event = NULL;
     void *cvalue = NULL;
@@ -844,10 +844,16 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE file, DWORD file_len, DWOR
         params.offset.QuadPart = FILE_USE_FILE_POINTER_POSITION;
     }
 
-    params.file = file;
+    params.file = HandleToULong( file );
     params.file_len = file_len;
     params.buffer_size = buffer_size;
-    if (buffers) params.buffers = *buffers;
+    if (buffers)
+    {
+        params.head_ptr = u64_from_user_ptr(buffers->Head);
+        params.head_len = buffers->HeadLength;
+        params.tail_ptr = u64_from_user_ptr(buffers->Tail);
+        params.tail_len = buffers->TailLength;
+    }
     params.flags = flags;
 
     status = NtDeviceIoControlFile( (HANDLE)s, event, NULL, cvalue, piosb,

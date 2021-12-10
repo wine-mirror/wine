@@ -143,7 +143,10 @@ struct async_transmit_ioctl
     unsigned int tail_cursor;   /* amount of tail data already sent */
     unsigned int file_len;      /* total file length to send */
     DWORD flags;
-    TRANSMIT_FILE_BUFFERS buffers;
+    const char *head;
+    const char *tail;
+    unsigned int head_len;
+    unsigned int tail_len;
     LARGE_INTEGER offset;
 };
 
@@ -1090,11 +1093,11 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
 {
     ssize_t ret;
 
-    while (async->head_cursor < async->buffers.HeadLength)
+    while (async->head_cursor < async->head_len)
     {
-        TRACE( "sending %u bytes of header data\n", async->buffers.HeadLength - async->head_cursor );
-        ret = do_send( sock_fd, (char *)async->buffers.Head + async->head_cursor,
-                       async->buffers.HeadLength - async->head_cursor, 0 );
+        TRACE( "sending %u bytes of header data\n", async->head_len - async->head_cursor );
+        ret = do_send( sock_fd, async->head + async->head_cursor,
+                       async->head_len - async->head_cursor, 0 );
         if (ret < 0) return sock_errno_to_status( errno );
         TRACE( "send returned %zd\n", ret );
         async->head_cursor += ret;
@@ -1139,11 +1142,11 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
         return STATUS_DEVICE_NOT_READY; /* still more data to send */
     }
 
-    while (async->tail_cursor < async->buffers.TailLength)
+    while (async->tail_cursor < async->tail_len)
     {
-        TRACE( "sending %u bytes of tail data\n", async->buffers.TailLength - async->tail_cursor );
-        ret = do_send( sock_fd, (char *)async->buffers.Tail + async->tail_cursor,
-                       async->buffers.TailLength - async->tail_cursor, 0 );
+        TRACE( "sending %u bytes of tail data\n", async->tail_len - async->tail_cursor );
+        ret = do_send( sock_fd, async->tail + async->tail_cursor,
+                       async->tail_len - async->tail_cursor, 0 );
         if (ret < 0) return sock_errno_to_status( errno );
         TRACE( "send returned %zd\n", ret );
         async->tail_cursor += ret;
@@ -1202,7 +1205,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
 
     if (params->file)
     {
-        if ((status = server_get_unix_fd( params->file, 0, &file_fd, &file_needs_close, &file_type, NULL )))
+        if ((status = server_get_unix_fd( ULongToHandle( params->file ), 0, &file_fd, &file_needs_close, &file_type, NULL )))
             return status;
         if (file_needs_close) close( file_fd );
 
@@ -1216,7 +1219,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     if (!(async = (struct async_transmit_ioctl *)alloc_fileio( sizeof(*async), async_transmit_proc, handle )))
         return STATUS_NO_MEMORY;
 
-    async->file = params->file;
+    async->file = ULongToHandle( params->file );
     async->buffer_size = params->buffer_size ? params->buffer_size : 65536;
     if (!(async->buffer = malloc( async->buffer_size )))
     {
@@ -1230,7 +1233,10 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     async->tail_cursor = 0;
     async->file_len = params->file_len;
     async->flags = params->flags;
-    async->buffers = params->buffers;
+    async->head = u64_to_user_ptr(params->head_ptr);
+    async->head_len = params->head_len;
+    async->tail = u64_to_user_ptr(params->tail_ptr);
+    async->tail_len = params->tail_len;
     async->offset = params->offset;
 
     SERVER_START_REQ( send_socket )
