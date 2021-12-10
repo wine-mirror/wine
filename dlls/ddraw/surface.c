@@ -64,6 +64,9 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
     BOOL ret;
     RECT r;
 
+    TRACE("surface %p, rect %s, read %#x, swap_interval %u.\n",
+            surface, wine_dbgstr_rect(rect), read, swap_interval);
+
     if (ddraw->flags & DDRAW_SWAPPED && !read)
     {
         ddraw->flags &= ~DDRAW_SWAPPED;
