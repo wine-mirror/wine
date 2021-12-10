@@ -721,19 +721,21 @@ class VkFunction(object):
 
         return proto
 
-    def body(self):
+    def body(self, params_prefix=""):
         body = ""
 
         if not self.needs_private_thunk():
-            body += "    {0}".format(self.trace())
+            body += "    {0}".format(self.trace(params_prefix=params_prefix))
 
-        params = ", ".join([p.variable(conv=False) for p in self.params])
+        params = ", ".join([p.variable(conv=False, params_prefix=params_prefix) for p in self.params])
 
         # Call the native Vulkan function.
         if self.type == "void":
-            body += "    {0}.p_{1}({2});\n".format(self.params[0].dispatch_table(), self.name, params)
+            body += "    {0}{1}.p_{2}({3});\n".format(params_prefix, self.params[0].dispatch_table(),
+                                                      self.name, params)
         else:
-            body += "    return {0}.p_{1}({2});\n".format(self.params[0].dispatch_table(), self.name, params)
+            body += "    return {0}{1}.p_{2}({3});\n".format(params_prefix, self.params[0].dispatch_table(),
+                                                             self.name, params)
 
         return body
 
@@ -750,7 +752,7 @@ class VkFunction(object):
 
         return body
 
-    def body_conversion(self, conv):
+    def body_conversion(self, conv, params_prefix=""):
         body = ""
 
         # Declare a variable to hold the result for non-void functions.
@@ -771,22 +773,24 @@ class VkFunction(object):
                     body += "    {0} {1}_host;\n".format(p.type, p.name)
 
         if not self.needs_private_thunk():
-            body += "    {0}\n".format(self.trace())
+            body += "    {0}\n".format(self.trace(params_prefix=params_prefix))
 
         # Call any win_to_host conversion calls.
         for p in self.params:
             if p.needs_input_conversion() and (p.needs_unwrapping() or conv):
-                body += p.copy(Direction.INPUT)
+                body += p.copy(Direction.INPUT, prefix=params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
         # The param itself knows if conversion is needed and applies it when we set conv=True.
-        params = ", ".join([p.variable(conv=conv) for p in self.params])
+        params = ", ".join([p.variable(conv=conv, params_prefix=params_prefix) for p in self.params])
 
         # Call the native Vulkan function.
         if self.type == "void":
-            body += "    {0}.p_{1}({2});\n".format(self.params[0].dispatch_table(), self.name, params)
+            body += "    {0}{1}.p_{2}({3});\n".format(params_prefix, self.params[0].dispatch_table(),
+                                                      self.name, params)
         else:
-            body += "    result = {0}.p_{1}({2});\n".format(self.params[0].dispatch_table(), self.name, params)
+            body += "    result = {0}{1}.p_{2}({3});\n".format(params_prefix, self.params[0].dispatch_table(),
+                                                               self.name, params)
 
         body += "\n"
 
@@ -795,12 +799,12 @@ class VkFunction(object):
             if not p.needs_output_conversion():
                 continue
 
-            body += p.copy(Direction.OUTPUT)
+            body += p.copy(Direction.OUTPUT, prefix=params_prefix)
 
         # Perform any required cleanups. Most of these are for array functions.
         for p in self.params:
             if p.needs_free() and (p.needs_unwrapping() or conv):
-                body += p.free()
+                body += p.free(prefix=params_prefix)
 
         # Finally return the result.
         if self.type != "void":
@@ -872,7 +876,7 @@ class VkFunction(object):
         thunk += "}\n\n"
         return thunk
 
-    def trace(self, message=None, trace_func=None):
+    def trace(self, message=None, trace_func=None, params_prefix=""):
         """ Create a trace string including all parameters.
 
         Args:
@@ -894,9 +898,9 @@ class VkFunction(object):
         # Second loop for parameter names and optional conversions.
         for param in self.params:
             if param.format_conv is not None:
-                trace += ", " + param.format_conv.format(param.name)
+                trace += ", " + param.format_conv.format("{0}{1}".format(params_prefix, param.name))
             else:
-                trace += ", {0}".format(param.name)
+                trace += ", {0}{1}".format(params_prefix, param.name)
         trace += ");\n"
 
         return trace
@@ -1599,17 +1603,17 @@ class VkParam(object):
             else:
                 LOGGER.warn("Unhandled type: {0}".format(self.type_info))
 
-    def copy(self, direction):
+    def copy(self, direction, prefix=""):
         if direction == Direction.INPUT:
             if self.is_dynamic_array():
-                return "    {0}_host = convert_{1}_array_win_to_host({0}, {2});\n".format(self.name, self.type, self.dyn_array_len)
+                return "    {1}_host = convert_{2}_array_win_to_host({0}{1}, {0}{3});\n".format(prefix, self.name, self.type, self.dyn_array_len)
             else:
-                return "    convert_{0}_win_to_host({1}, &{1}_host);\n".format(self.type, self.name)
+                return "    convert_{0}_win_to_host({1}{2}, &{2}_host);\n".format(self.type, prefix, self.name)
         else:
             if self.is_dynamic_array():
                 LOGGER.error("Unimplemented output conversion for: {0}".format(self.name))
             else:
-                return "    convert_{0}_host_to_win(&{1}_host, {1});\n".format(self.type, self.name)
+                return "    convert_{0}_host_to_win(&{2}_host, {1}{2});\n".format(self.type, prefix, self.name)
 
     def definition(self, postfix=None):
         """ Return prototype for the parameter. E.g. 'const char *foo' """
@@ -1654,13 +1658,13 @@ class VkParam(object):
     def format_string(self):
         return self.format_str
 
-    def free(self):
+    def free(self, prefix=""):
         if self.is_dynamic_array():
             if self.is_struct() and self.struct.returnedonly:
                 # For returnedonly, counts is stored in a pointer.
-                return "    free_{0}_array({1}_host, *{2});\n".format(self.type, self.name, self.dyn_array_len)
+                return "    free_{0}_array({1}_host, *{2}{3});\n".format(self.type, self.name, prefix, self.dyn_array_len)
             else:
-                return "    free_{0}_array({1}_host, {2});\n".format(self.type, self.name, self.dyn_array_len)
+                return "    free_{0}_array({1}_host, {2}{3});\n".format(self.type, self.name, prefix, self.dyn_array_len)
         else:
             # We are operating on a single structure. Some structs (very rare) contain dynamic members,
             # which would need freeing.
@@ -1801,7 +1805,7 @@ class VkParam(object):
 
         LOGGER.error("Unhandled spec conversion for type: {0}".format(self.type))
 
-    def variable(self, conv=False):
+    def variable(self, conv=False, params_prefix=""):
         """ Returns 'glue' code during generation of a function call on how to access the variable.
         This function handles various scenarios such as 'unwrapping' if dispatchable objects and
         renaming of parameters in case of win32 -> host conversion.
@@ -1823,12 +1827,13 @@ class VkParam(object):
                 return "&{0}_host".format(self.name)
         else:
             if self.object_type != None and self.type == "uint64_t":
-                return "wine_vk_unwrap_handle({0}, {1})".format(self.object_type, self.name)
+                return "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(params_prefix, self.object_type, self.name)
 
             # We need to pass the native handle to the native Vulkan calls and
             # the wine driver's handle to calls which are wrapped by the driver.
-            driver_handle = self.handle.driver_handle(self.name) if self.is_handle() else None
-            return driver_handle if driver_handle else self.name
+            p = "{0}{1}".format(params_prefix, self.name)
+            driver_handle = self.handle.driver_handle(p) if self.is_handle() else None
+            return driver_handle if driver_handle else p
 
 
 class VkStruct(Sequence):
