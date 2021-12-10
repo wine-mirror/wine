@@ -221,6 +221,7 @@ M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/iphlpapi/
 F:	dlls/nsi/
 F:	dlls/nsiproxy.sys/
+F:	include/wine/nsi.h
 
 OLE Embedding
 M:	Huw Davies <huw@codeweavers.com>
