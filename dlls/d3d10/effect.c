@@ -2633,6 +2633,12 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
             data_ptr = data + code_offset;
             read_dword(&data_ptr, &blob_size);
 
+            if (!require_space(code_offset, 1, sizeof(uint32_t) + blob_size, data_size))
+            {
+                WARN("Invalid offset %#x (data size %#lx).\n", code_offset, (long)data_size);
+                return E_FAIL;
+            }
+
             dep.id = id;
             dep.idx = idx;
             dep.operation = operation;
