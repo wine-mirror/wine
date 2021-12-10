@@ -1478,120 +1478,6 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 
 /*
  *****************************************************************************
- * Function	: prep_nid_for_label
- * Syntax	: char *prep_nid_for_label(const name_id_t *nid)
- * Input	:
- * Output	:
- * Description	: Converts a resource name into the first 32 (or less)
- *		  characters of the name with conversions.
- * Remarks	:
- *****************************************************************************
-*/
-#define MAXNAMELEN	32
-char *prep_nid_for_label(const name_id_t *nid)
-{
-    static char buf[MAXNAMELEN+1];
-
-    switch (nid->type)
-    {
-    case name_str:
-	if(nid->name.s_name->type == str_unicode)
-	{
-		WCHAR *sptr;
-		int i;
-		sptr = nid->name.s_name->str.wstr;
-		buf[0] = '\0';
-		for(i = 0; *sptr && i < MAXNAMELEN; i++)
-		{
-			if((unsigned)*sptr < 0x80 && isprint(*sptr & 0xff))
-				buf[i] = *sptr++;
-			else
-				warning("Resourcename (str_unicode) contain unprintable characters or invalid translation, ignored\n");
-		}
-		buf[i] = '\0';
-	}
-	else
-	{
-		char *cptr;
-		int i;
-		cptr = nid->name.s_name->str.cstr;
-		buf[0] = '\0';
-		for(i = 0; *cptr && i < MAXNAMELEN; i++)
-		{
-			if((unsigned)*cptr < 0x80 && isprint(*cptr & 0xff))
-				buf[i] = *cptr++;
-			else
-				warning("Resourcename (str_char) contain unprintable characters, ignored\n");
-		}
-		buf[i] = '\0';
-	}
-        break;
-
-    case name_ord:
-        sprintf(buf, "%u", nid->name.i_name);
-        break;
-    }
-    return buf;
-}
-#undef MAXNAMELEN
-
-/*
- *****************************************************************************
- * Function	: make_c_name
- * Syntax	: char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan)
- * Input	:
- * Output	:
- * Description	: Converts a resource name into a valid c-identifier in the
- *		  form "_base_nid".
- * Remarks	:
- *****************************************************************************
-*/
-char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan)
-{
-	char *buf = prep_nid_for_label(nid);
-	return strmake( "_%s_%s_%d", base, buf, lan ? MAKELANGID(lan->id, lan->sub) : 0);
-}
-
-/*
- *****************************************************************************
- * Function	: get_c_typename
- * Syntax	: const char *get_c_typename(enum res_e type)
- * Input	:
- * Output	:
- * Description	: Convert resource enum to char string to be used in c-name
- *		  creation.
- * Remarks	:
- *****************************************************************************
-*/
-const char *get_c_typename(enum res_e type)
-{
-	switch(type)
-	{
-	case res_acc:	return "Acc";
-	case res_anicur:return "AniCur";
-	case res_aniico:return "AniIco";
-	case res_bmp:	return "Bmp";
-	case res_cur:	return "Cur";
-	case res_curg:	return "CurGrp";
-	case res_dlg:	return "Dlg";
-	case res_fnt:	return "Fnt";
-	case res_fntdir:return "FntDir";
-	case res_ico:	return "Ico";
-	case res_icog:	return "IcoGrp";
-	case res_men:	return "Men";
-	case res_rdt:	return "RCDat";
-	case res_stt:	return "StrTab";
-	case res_usr:	return "Usr";
-	case res_msg:	return "MsgTab";
-	case res_ver:	return "VerInf";
-	case res_toolbar:	return "TlBr";
-	case res_dlginit: return "DlgInit";
-	default:	return "Oops";
-	}
-}
-
-/*
- *****************************************************************************
  * Function	: resources2res
  * Syntax	: void resources2res(resource_t *top)
  * Input	:
@@ -1687,7 +1573,6 @@ void resources2res(resource_t *top)
 		default:
 			assert(0);
 		}
-		top->c_name = make_c_name(get_c_typename(top->type), top->name, top->lan);
 		top = top->next;
 	}
 }

@@ -589,7 +589,6 @@ typedef struct resource {
 		void		*overlay; /* To catch all types at once... */
 	} res;
 	res_t		*binres;	/* To binary converted resource */
-	char		*c_name;	/* BaseName in output */
 	DWORD		memopt;
 } resource_t;
 

@@ -29,8 +29,5 @@ void put_byte(res_t *res, unsigned c);
 void put_word(res_t *res, unsigned w);
 void put_dword(res_t *res, unsigned d);
 void resources2res(resource_t *top);
-const char *get_c_typename(enum res_e type);
-char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan);
-char *prep_nid_for_label(const name_id_t *nid);
 
 #endif
