@@ -107,6 +107,14 @@ struct afd_recv_params
     int msg_flags;
 };
 
+struct afd_recv_params_32
+{
+    ULONG buffers;
+    unsigned int count;
+    int recv_flags;
+    int msg_flags;
+};
+
 #include <pshpack4.h>
 struct afd_poll_params
 {

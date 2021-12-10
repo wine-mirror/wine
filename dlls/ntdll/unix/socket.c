@@ -1278,7 +1278,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_RECV:
         {
-            const struct afd_recv_params *params = in_buffer;
+            struct afd_recv_params params;
             int unix_flags = 0;
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
@@ -1286,33 +1286,53 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             if (out_size) FIXME( "unexpected output size %u\n", out_size );
 
-            if (in_size < sizeof(struct afd_recv_params))
+            if (in_wow64_call())
+            {
+                const struct afd_recv_params_32 *params32 = in_buffer;
+
+                if (in_size < sizeof(struct afd_recv_params_32))
+                {
+                    status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+
+                params.recv_flags = params32->recv_flags;
+                params.msg_flags = params32->msg_flags;
+                params.buffers = ULongToPtr( params32->buffers );
+                params.count = params32->count;
+            }
+            else
+            {
+                if (in_size < sizeof(struct afd_recv_params))
+                {
+                    status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+
+                memcpy( &params, in_buffer, sizeof(params) );
+            }
+
+            if ((params.msg_flags & (AFD_MSG_NOT_OOB | AFD_MSG_OOB)) == 0 ||
+                (params.msg_flags & (AFD_MSG_NOT_OOB | AFD_MSG_OOB)) == (AFD_MSG_NOT_OOB | AFD_MSG_OOB))
             {
                 status = STATUS_INVALID_PARAMETER;
                 break;
             }
 
-            if ((params->msg_flags & (AFD_MSG_NOT_OOB | AFD_MSG_OOB)) == 0 ||
-                (params->msg_flags & (AFD_MSG_NOT_OOB | AFD_MSG_OOB)) == (AFD_MSG_NOT_OOB | AFD_MSG_OOB))
-            {
-                status = STATUS_INVALID_PARAMETER;
-                break;
-            }
+            if (params.msg_flags & ~(AFD_MSG_NOT_OOB | AFD_MSG_OOB | AFD_MSG_PEEK | AFD_MSG_WAITALL))
+                FIXME( "unknown msg_flags %#x\n", params.msg_flags );
+            if (params.recv_flags & ~AFD_RECV_FORCE_ASYNC)
+                FIXME( "unknown recv_flags %#x\n", params.recv_flags );
 
-            if (params->msg_flags & ~(AFD_MSG_NOT_OOB | AFD_MSG_OOB | AFD_MSG_PEEK | AFD_MSG_WAITALL))
-                FIXME( "unknown msg_flags %#x\n", params->msg_flags );
-            if (params->recv_flags & ~AFD_RECV_FORCE_ASYNC)
-                FIXME( "unknown recv_flags %#x\n", params->recv_flags );
-
-            if (params->msg_flags & AFD_MSG_OOB)
+            if (params.msg_flags & AFD_MSG_OOB)
                 unix_flags |= MSG_OOB;
-            if (params->msg_flags & AFD_MSG_PEEK)
+            if (params.msg_flags & AFD_MSG_PEEK)
                 unix_flags |= MSG_PEEK;
-            if (params->msg_flags & AFD_MSG_WAITALL)
+            if (params.msg_flags & AFD_MSG_WAITALL)
                 FIXME( "MSG_WAITALL is not supported\n" );
 
-            status = sock_recv( handle, event, apc, apc_user, io, fd, params->buffers, params->count, NULL,
-                                NULL, NULL, NULL, unix_flags, !!(params->recv_flags & AFD_RECV_FORCE_ASYNC) );
+            status = sock_recv( handle, event, apc, apc_user, io, fd, params.buffers, params.count, NULL,
+                                NULL, NULL, NULL, unix_flags, !!(params.recv_flags & AFD_RECV_FORCE_ASYNC) );
             break;
         }
 
