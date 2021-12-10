@@ -37,7 +37,6 @@
 #include "wrc.h"
 #include "utils.h"
 #include "dumpres.h"
-#include "genres.h"
 #include "newstruc.h"
 #include "parser.h"
 #include "wpp_private.h"
@@ -527,9 +526,6 @@ int main(int argc,char *argv[])
             exit(0);
 	}
         if (win32) add_translations( po_dir );
-
-	/* Convert the internal lists to binary data */
-	resources2res(resource_top);
 
 	chat("Writing .res-file\n");
         if (!output_name)

@@ -36,14 +36,13 @@
 
 #include "../tools.h"
 #include "wrc.h"
-#include "genres.h"
 #include "utils.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 
-res_t *new_res(void)
+static res_t *new_res(void)
 {
 	res_t *r;
 	r = xmalloc(sizeof(res_t));
@@ -54,7 +53,7 @@ res_t *new_res(void)
 	return r;
 }
 
-res_t *grow_res(res_t *r, unsigned int add)
+static res_t *grow_res(res_t *r, unsigned int add)
 {
 	r->allocsize += add;
 	r->data = xrealloc(r->data, r->allocsize);
@@ -78,7 +77,7 @@ res_t *grow_res(res_t *r, unsigned int add)
  * Remarks	:
  *****************************************************************************
 */
-void put_byte(res_t *res, unsigned c)
+static void put_byte(res_t *res, unsigned c)
 {
 	if(res->allocsize - res->size < sizeof(char))
 		grow_res(res, RES_BLOCKSIZE);
@@ -86,7 +85,7 @@ void put_byte(res_t *res, unsigned c)
 	res->size += sizeof(char);
 }
 
-void put_word(res_t *res, unsigned w)
+static void put_word(res_t *res, unsigned w)
 {
 	if(res->allocsize - res->size < sizeof(WORD))
 		grow_res(res, RES_BLOCKSIZE);
@@ -95,7 +94,7 @@ void put_word(res_t *res, unsigned w)
 	res->size += sizeof(WORD);
 }
 
-void put_dword(res_t *res, unsigned d)
+static void put_dword(res_t *res, unsigned d)
 {
 	if(res->allocsize - res->size < sizeof(DWORD))
 		grow_res(res, RES_BLOCKSIZE);
@@ -1487,7 +1486,7 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
  * Remarks	:
  *****************************************************************************
 */
-void resources2res(resource_t *top)
+static void resources2res(resource_t *top)
 {
 	while(top)
 	{
@@ -1575,4 +1574,79 @@ void resources2res(resource_t *top)
 		}
 		top = top->next;
 	}
+}
+
+/*
+ *****************************************************************************
+ * Function	: write_resfile
+ * Syntax	: void write_resfile(char *outname, resource_t *top)
+ * Input	:
+ *	outname	- Filename to write to
+ *	top	- The resource-tree to convert
+ * Output	:
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+void write_resfile(char *outname, resource_t *top)
+{
+	FILE *fo;
+	unsigned int ret;
+	char zeros[3] = {0, 0, 0};
+
+	/* Convert the internal lists to binary data */
+	resources2res(resource_top);
+
+	fo = fopen(outname, "wb");
+	if(!fo)
+            fatal_perror("Could not open %s", outname);
+
+	if(win32)
+	{
+		/* Put an empty resource first to signal win32 format */
+		res_t *res = new_res();
+		put_dword(res, 0);		/* ResSize */
+		put_dword(res, 0x00000020);	/* HeaderSize */
+		put_word(res, 0xffff);		/* ResType */
+		put_word(res, 0);
+		put_word(res, 0xffff);		/* ResName */
+		put_word(res, 0);
+		put_dword(res, 0);		/* DataVersion */
+		put_word(res, 0);		/* Memory options */
+		put_word(res, 0);		/* Language */
+		put_dword(res, 0);		/* Version */
+		put_dword(res, 0);		/* Characteristics */
+		ret = fwrite(res->data, 1, res->size, fo);
+		if(ret != res->size)
+		{
+			fclose(fo);
+			error("Error writing %s\n", outname);
+		}
+		free(res);
+	}
+
+	for(; top; top = top->next)
+	{
+		if(!top->binres)
+			continue;
+
+		ret = fwrite(top->binres->data, 1, top->binres->size, fo);
+		if(ret != top->binres->size)
+		{
+			fclose(fo);
+			error("Error writing %s\n", outname);
+		}
+		if(win32 && (top->binres->size & 0x03))
+		{
+			/* Write padding */
+			ret = fwrite(zeros, 1, 4 - (top->binres->size & 0x03), fo);
+			if(ret != 4 - (top->binres->size & 0x03))
+			{
+				fclose(fo);
+				error("Error writing %s\n", outname);
+			}
+		}
+	}
+	if (fclose(fo))
+            fatal_perror("Error writing %s", outname);
 }

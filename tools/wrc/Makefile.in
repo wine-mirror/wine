@@ -9,8 +9,7 @@ C_SRCS = \
 	translation.c \
 	utils.c \
 	wpp.c \
-	wrc.c \
-	writeres.c
+	wrc.c
 
 LEX_SRCS = \
 	parser.l \

@@ -32,7 +32,6 @@
 
 #include "../tools.h"
 #include "wrc.h"
-#include "genres.h"
 #include "newstruc.h"
 #include "utils.h"
 #include "windef.h"
