@@ -1443,31 +1443,6 @@ enum server_fd_type
 @END
 
 
-struct poll_socket_input
-{
-    obj_handle_t socket;        /* socket handle */
-    int flags;                  /* events to poll for */
-};
-
-struct poll_socket_output
-{
-    int flags;                  /* events signaled */
-    unsigned int status;        /* socket status */
-};
-
-/* Perform an async poll on a socket */
-@REQ(poll_socket)
-    int          exclusive;     /* is the poll exclusive? */
-    async_data_t async;         /* async I/O parameters */
-    timeout_t    timeout;       /* timeout */
-    VARARG(sockets,poll_socket_input); /* list of sockets to poll */
-@REPLY
-    obj_handle_t wait;          /* handle to wait on for blocking poll */
-    unsigned int options;       /* file open options */
-    VARARG(sockets,poll_socket_output); /* data returned */
-@END
-
-
 /* Perform a send on a socket */
 @REQ(send_socket)
     async_data_t async;         /* async I/O parameters */

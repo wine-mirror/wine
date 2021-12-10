@@ -122,9 +122,37 @@ struct afd_poll_params
     unsigned int count;
     BOOLEAN exclusive;
     BOOLEAN padding[3];
-    struct
+    struct afd_poll_socket
     {
         SOCKET socket;
+        int flags;
+        NTSTATUS status;
+    } sockets[1];
+};
+
+struct afd_poll_params_64
+{
+    LONGLONG timeout;
+    unsigned int count;
+    BOOLEAN exclusive;
+    BOOLEAN padding[3];
+    struct afd_poll_socket_64
+    {
+        ULONGLONG socket;
+        int flags;
+        NTSTATUS status;
+    } sockets[1];
+};
+
+struct afd_poll_params_32
+{
+    LONGLONG timeout;
+    unsigned int count;
+    BOOLEAN exclusive;
+    BOOLEAN padding[3];
+    struct afd_poll_socket_32
+    {
+        ULONG socket;
         int flags;
         NTSTATUS status;
     } sockets[1];

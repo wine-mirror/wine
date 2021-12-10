@@ -122,13 +122,16 @@ struct poll_req
     struct async *async;
     struct iosb *iosb;
     struct timeout_user *timeout;
+    timeout_t orig_timeout;
     int exclusive;
     unsigned int count;
-    struct poll_socket_output *output;
     struct
     {
         struct sock *sock;
         int mask;
+        obj_handle_t handle;
+        int flags;
+        unsigned int status;
     } sockets[1];
 };
 
@@ -235,6 +238,8 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock );
 static struct sock *accept_socket( struct sock *sock );
 static int sock_get_ntstatus( int err );
 static unsigned int sock_get_error( int err );
+static void poll_socket( struct sock *poll_sock, struct async *async, int exclusive, timeout_t timeout,
+                         unsigned int count, const struct afd_poll_socket_64 *sockets );
 
 static const struct object_ops sock_ops =
 {
@@ -789,7 +794,6 @@ static void free_poll_req( void *private )
     release_object( req->async );
     release_object( req->iosb );
     list_remove( &req->entry );
-    free( req->output );
     free( req );
 }
 
@@ -832,8 +836,7 @@ static int get_poll_flags( struct sock *sock, int event )
 
 static void complete_async_poll( struct poll_req *req, unsigned int status )
 {
-    struct poll_socket_output *output = req->output;
-    unsigned int i;
+    unsigned int i, signaled_count = 0;
 
     for (i = 0; i < req->count; ++i)
     {
@@ -843,9 +846,65 @@ static void complete_async_poll( struct poll_req *req, unsigned int status )
             sock->main_poll = NULL;
     }
 
-    /* pass 0 as result; client will set actual result size */
-    req->output = NULL;
-    async_request_complete( req->async, status, 0, req->count * sizeof(*output), output );
+    if (!status)
+    {
+        for (i = 0; i < req->count; ++i)
+        {
+            if (req->sockets[i].flags)
+                ++signaled_count;
+        }
+    }
+
+    if (is_machine_64bit( async_get_thread( req->async )->process->machine ))
+    {
+        size_t output_size = offsetof( struct afd_poll_params_64, sockets[signaled_count] );
+        struct afd_poll_params_64 *output;
+
+        if (!(output = mem_alloc( output_size )))
+        {
+            async_terminate( req->async, get_error() );
+            return;
+        }
+        memset( output, 0, output_size );
+        output->timeout = req->orig_timeout;
+        output->exclusive = req->exclusive;
+        for (i = 0; i < req->count; ++i)
+        {
+            if (!req->sockets[i].flags) continue;
+            output->sockets[output->count].socket = req->sockets[i].handle;
+            output->sockets[output->count].flags = req->sockets[i].flags;
+            output->sockets[output->count].status = req->sockets[i].status;
+            ++output->count;
+        }
+        assert( output->count == signaled_count );
+
+        async_request_complete( req->async, status, output_size, output_size, output );
+    }
+    else
+    {
+        size_t output_size = offsetof( struct afd_poll_params_32, sockets[signaled_count] );
+        struct afd_poll_params_32 *output;
+
+        if (!(output = mem_alloc( output_size )))
+        {
+            async_terminate( req->async, get_error() );
+            return;
+        }
+        memset( output, 0, output_size );
+        output->timeout = req->orig_timeout;
+        output->exclusive = req->exclusive;
+        for (i = 0; i < req->count; ++i)
+        {
+            if (!req->sockets[i].flags) continue;
+            output->sockets[output->count].socket = req->sockets[i].handle;
+            output->sockets[output->count].flags = req->sockets[i].flags;
+            output->sockets[output->count].status = req->sockets[i].status;
+            ++output->count;
+        }
+        assert( output->count == signaled_count );
+
+        async_request_complete( req->async, status, output_size, output_size, output );
+    }
 }
 
 static void complete_async_polls( struct sock *sock, int event, int error )
@@ -868,8 +927,8 @@ static void complete_async_polls( struct sock *sock, int event, int error )
                 fprintf( stderr, "completing poll for socket %p, wanted %#x got %#x\n",
                          sock, req->sockets[i].mask, flags );
 
-            req->output[i].flags = req->sockets[i].mask & flags;
-            req->output[i].status = sock_get_ntstatus( error );
+            req->sockets[i].flags = req->sockets[i].mask & flags;
+            req->sockets[i].status = sock_get_ntstatus( error );
 
             complete_async_poll( req, STATUS_SUCCESS );
             break;
@@ -1353,8 +1412,8 @@ static int sock_close_handle( struct object *obj, struct process *process, obj_h
                 if (poll_req->sockets[i].sock == sock)
                 {
                     signaled = TRUE;
-                    poll_req->output[i].flags = AFD_POLL_CLOSE;
-                    poll_req->output[i].status = 0;
+                    poll_req->sockets[i].flags = AFD_POLL_CLOSE;
+                    poll_req->sockets[i].status = 0;
                 }
             }
 
@@ -2849,6 +2908,55 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return;
     }
 
+    case IOCTL_AFD_POLL:
+    {
+        if (get_reply_max_size() < get_req_data_size())
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+
+        if (is_machine_64bit( current->process->machine ))
+        {
+            const struct afd_poll_params_64 *params = get_req_data();
+
+            if (get_req_data_size() < sizeof(struct afd_poll_params_64) ||
+                get_req_data_size() < offsetof( struct afd_poll_params_64, sockets[params->count] ))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
+
+            poll_socket( sock, async, params->exclusive, params->timeout, params->count, params->sockets );
+        }
+        else
+        {
+            const struct afd_poll_params_32 *params = get_req_data();
+            struct afd_poll_socket_64 *sockets;
+            unsigned int i;
+
+            if (get_req_data_size() < sizeof(struct afd_poll_params_32) ||
+                get_req_data_size() < offsetof( struct afd_poll_params_32, sockets[params->count] ))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
+
+            if (!(sockets = mem_alloc( params->count * sizeof(*sockets) ))) return;
+            for (i = 0; i < params->count; ++i)
+            {
+                sockets[i].socket = params->sockets[i].socket;
+                sockets[i].flags = params->sockets[i].flags;
+                sockets[i].status = params->sockets[i].status;
+            }
+
+            poll_socket( sock, async, params->exclusive, params->timeout, params->count, sockets );
+            free( sockets );
+        }
+
+        return;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return;
@@ -2899,51 +3007,49 @@ static void handle_exclusive_poll(struct poll_req *req)
 }
 
 static void poll_socket( struct sock *poll_sock, struct async *async, int exclusive, timeout_t timeout,
-                         unsigned int count, const struct poll_socket_input *input )
+                         unsigned int count, const struct afd_poll_socket_64 *sockets )
 {
-    struct poll_socket_output *output;
     BOOL signaled = FALSE;
     struct poll_req *req;
     unsigned int i, j;
 
-    if (!(output = mem_alloc( count * sizeof(*output) )))
-        return;
-    memset( output, 0, count * sizeof(*output) );
-
-    if (!(req = mem_alloc( offsetof( struct poll_req, sockets[count] ) )))
+    if (!count)
     {
-        free( output );
+        set_error( STATUS_INVALID_PARAMETER );
         return;
     }
+
+    if (!(req = mem_alloc( offsetof( struct poll_req, sockets[count] ) )))
+        return;
 
     req->timeout = NULL;
     if (timeout && timeout != TIMEOUT_INFINITE &&
         !(req->timeout = add_timeout_user( timeout, async_poll_timeout, req )))
     {
         free( req );
-        free( output );
         return;
     }
+    req->orig_timeout = timeout;
 
     for (i = 0; i < count; ++i)
     {
-        req->sockets[i].sock = (struct sock *)get_handle_obj( current->process, input[i].socket, 0, &sock_ops );
+        req->sockets[i].sock = (struct sock *)get_handle_obj( current->process, sockets[i].socket, 0, &sock_ops );
         if (!req->sockets[i].sock)
         {
             for (j = 0; j < i; ++j) release_object( req->sockets[i].sock );
             if (req->timeout) remove_timeout_user( req->timeout );
             free( req );
-            free( output );
             return;
         }
-        req->sockets[i].mask = input[i].flags;
+        req->sockets[i].handle = sockets[i].socket;
+        req->sockets[i].mask = sockets[i].flags;
+        req->sockets[i].flags = 0;
     }
 
     req->exclusive = exclusive;
     req->count = count;
     req->async = (struct async *)grab_object( async );
     req->iosb = async_get_iosb( async );
-    req->output = output;
 
     handle_exclusive_poll(req);
 
@@ -2960,16 +3066,16 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
         if (flags)
         {
             signaled = TRUE;
-            output[i].flags = flags;
-            output[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
+            req->sockets[i].flags = flags;
+            req->sockets[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
         }
 
         /* FIXME: do other error conditions deserve a similar treatment? */
         if (sock->state != SOCK_CONNECTING && sock->errors[AFD_POLL_BIT_CONNECT_ERR] && (mask & AFD_POLL_CONNECT_ERR))
         {
             signaled = TRUE;
-            output[i].flags |= AFD_POLL_CONNECT_ERR;
-            output[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
+            req->sockets[i].flags |= AFD_POLL_CONNECT_ERR;
+            req->sockets[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
         }
     }
 
@@ -3332,28 +3438,6 @@ DECL_HANDLER(recv_socket)
         reply->options = get_fd_options( fd );
         release_object( async );
     }
-    release_object( sock );
-}
-
-DECL_HANDLER(poll_socket)
-{
-    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
-    const struct poll_socket_input *input = get_req_data();
-    struct async *async;
-    unsigned int count;
-
-    if (!sock) return;
-
-    count = get_req_data_size() / sizeof(*input);
-
-    if ((async = create_request_async( sock->fd, get_fd_comp_flags( sock->fd ), &req->async )))
-    {
-        poll_socket( sock, async, req->exclusive, req->timeout, count, input );
-        reply->wait = async_handoff( async, NULL, 0 );
-        reply->options = get_fd_options( sock->fd );
-        release_object( async );
-    }
-
     release_object( sock );
 }
 

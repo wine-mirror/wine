@@ -1759,36 +1759,6 @@ struct recv_socket_reply
 };
 
 
-struct poll_socket_input
-{
-    obj_handle_t socket;
-    int flags;
-};
-
-struct poll_socket_output
-{
-    int flags;
-    unsigned int status;
-};
-
-
-struct poll_socket_request
-{
-    struct request_header __header;
-    int          exclusive;
-    async_data_t async;
-    timeout_t    timeout;
-    /* VARARG(sockets,poll_socket_input); */
-};
-struct poll_socket_reply
-{
-    struct reply_header __header;
-    obj_handle_t wait;
-    unsigned int options;
-    /* VARARG(sockets,poll_socket_output); */
-};
-
-
 
 struct send_socket_request
 {
@@ -5493,7 +5463,6 @@ enum request
     REQ_lock_file,
     REQ_unlock_file,
     REQ_recv_socket,
-    REQ_poll_socket,
     REQ_send_socket,
     REQ_get_next_console_request,
     REQ_read_directory_changes,
@@ -5775,7 +5744,6 @@ union generic_request
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
     struct recv_socket_request recv_socket_request;
-    struct poll_socket_request poll_socket_request;
     struct send_socket_request send_socket_request;
     struct get_next_console_request_request get_next_console_request_request;
     struct read_directory_changes_request read_directory_changes_request;
@@ -6055,7 +6023,6 @@ union generic_reply
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
     struct recv_socket_reply recv_socket_reply;
-    struct poll_socket_reply poll_socket_reply;
     struct send_socket_reply send_socket_reply;
     struct get_next_console_request_reply get_next_console_request_reply;
     struct read_directory_changes_reply read_directory_changes_reply;
@@ -6279,7 +6246,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 738
+#define SERVER_PROTOCOL_VERSION 739
 
 /* ### protocol_version end ### */
 
