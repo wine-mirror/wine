@@ -337,7 +337,7 @@ typedef struct {
     dispex_data_t *delayed_init_info;
 } dispex_static_data_t;
 
-typedef HRESULT (*dispex_hook_invoke_t)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,
+typedef HRESULT (*dispex_hook_invoke_t)(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,
                                         EXCEPINFO*,IServiceProvider*);
 
 typedef struct {
@@ -397,6 +397,8 @@ const void *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
 void dispex_info_add_interface(dispex_data_t*,tid_t,const dispex_hook_t*) DECLSPEC_HIDDEN;
 compat_mode_t dispex_compat_mode(DispatchEx*) DECLSPEC_HIDDEN;
 HRESULT dispex_to_string(DispatchEx*,BSTR*) DECLSPEC_HIDDEN;
+HRESULT dispex_call_builtin(DispatchEx *dispex, DISPID id, DISPPARAMS *dp,
+                            VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller) DECLSPEC_HIDDEN;
 
 typedef enum {
     DISPEXPROP_CUSTOM,

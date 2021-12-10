@@ -3314,7 +3314,7 @@ static HRESULT WINAPI EventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *
     return dispatch_event_object(This, event, DISPATCH_STANDARD, result);
 }
 
-static HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     /* If only two arguments were given, implicitly set capture to false */
@@ -3328,14 +3328,13 @@ static HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid,
 
         TRACE("implicit capture\n");
 
-        return IDispatchEx_InvokeEx(&dispex->IDispatchEx_iface, DISPID_IEVENTTARGET_ADDEVENTLISTENER,
-                                    lcid, flags, &new_dp, res, ei, caller);
+        return dispex_call_builtin(dispex, DISPID_IEVENTTARGET_ADDEVENTLISTENER, &new_dp, res, ei, caller);
     }
 
     return S_FALSE; /* fallback to default */
 }
 
-static HRESULT IEventTarget_removeEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT IEventTarget_removeEventListener_hook(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     /* If only two arguments were given, implicitly set capture to false */
@@ -3349,8 +3348,7 @@ static HRESULT IEventTarget_removeEventListener_hook(DispatchEx *dispex, LCID lc
 
         TRACE("implicit capture\n");
 
-        return IDispatchEx_InvokeEx(&dispex->IDispatchEx_iface, DISPID_IEVENTTARGET_REMOVEEVENTLISTENER,
-                                    lcid, flags, &new_dp, res, ei, caller);
+        return dispex_call_builtin(dispex, DISPID_IEVENTTARGET_REMOVEEVENTLISTENER, &new_dp, res, ei, caller);
     }
 
     return S_FALSE; /* fallback to default */

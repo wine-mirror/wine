@@ -1166,6 +1166,18 @@ sync_test("elem_attr", function() {
     r = elem.removeAttribute("testattr");
     ok(r === (v < 9 ? true : undefined), "testattr removeAttribute with custom valueOf returned " + r);
     ok(elem.testattr === (v < 9 ? undefined : arr), "removed testattr with custom valueOf = " + elem.testattr);
+
+    var func = elem.setAttribute;
+    try {
+        func("testattr", arr);
+        todo_wine_if(v >= 9).
+        ok(v < 9, "expected exception setting testattr via func");
+    }catch(ex) {
+        ok(v >= 9, "did not expect exception setting testattr via func");
+        elem.setAttribute("testattr", arr);
+    }
+    r = elem.getAttribute("testattr");
+    ok(r === (v < 8 ? arr : (v < 10 ? "arrval" : "42")), "testattr after setAttribute (as func) = " + r);
     delete arr.valueOf;
     delete arr.toString;
 
@@ -1177,7 +1189,7 @@ sync_test("elem_attr", function() {
     ok(r === (v < 9 ? true : undefined), "id removeAttribute returned " + r);
     ok(elem.id === "", "removed id = " + elem.id);
 
-    var func = function() { };
+    func = function() { };
     elem.onclick = func;
     ok(elem.onclick === func, "onclick = " + elem.onclick);
     r = elem.getAttribute("onclick");

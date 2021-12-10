@@ -6643,7 +6643,7 @@ static IHTMLEventObj *HTMLElement_set_current_event(DispatchEx *dispex, IHTMLEve
     return default_set_current_event(This->node.doc->window, event);
 }
 
-static HRESULT IHTMLElement6_setAttribute_hook(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT IHTMLElement6_setAttribute_hook(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     VARIANT args[2];
@@ -6667,8 +6667,7 @@ static HRESULT IHTMLElement6_setAttribute_hook(DispatchEx *dispex, LCID lcid, WO
         return hres;
     args[1] = dp->rgvarg[dp->cArgs - 1];
 
-    hres = IDispatchEx_InvokeEx(&dispex->IDispatchEx_iface, DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE,
-                                lcid, flags, &new_dp, res, ei, caller);
+    hres = dispex_call_builtin(dispex, DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE, &new_dp, res, ei, caller);
     VariantClear(&args[0]);
     return hres;
 }

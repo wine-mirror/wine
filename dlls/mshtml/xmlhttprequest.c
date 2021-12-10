@@ -475,7 +475,7 @@ static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
     return S_OK;
 }
 
-static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, WORD flags,
         DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     /* If only two arguments were given, implicitly set async to false */
@@ -491,8 +491,7 @@ static HRESULT HTMLXMLHttpRequest_open_hook(DispatchEx *dispex, LCID lcid, WORD 
 
         TRACE("implicit async\n");
 
-        return IDispatchEx_InvokeEx(&dispex->IDispatchEx_iface, DISPID_IHTMLXMLHTTPREQUEST_OPEN,
-                                    lcid, flags, &new_dp, res, ei, caller);
+        return dispex_call_builtin(dispex, DISPID_IHTMLXMLHTTPREQUEST_OPEN, &new_dp, res, ei, caller);
     }
 
     return S_FALSE; /* fallback to default */
