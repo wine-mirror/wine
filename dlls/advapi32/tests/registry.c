@@ -548,12 +548,13 @@ static void test_enum_value(void)
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
     ok( val_count == 3, "val_count set to %d\n", val_count );
-    ok( data_count == 7 || broken( data_count == 8 ), "data_count set to %d instead of 7\n", data_count );
+    /* Chinese, Japanese, and Korean editions of Windows 10 sometimes set data_count to a higher value */
+    ok( data_count == 7 || broken( data_count > 7 ), "data_count set to %d instead of 7\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     /* v5.1.2600.0 (XP Home and Professional) does not touch value or data in this case */
     ok( !strcmp( value, "Te" ) || !strcmp( value, "xxxxxxxxxx" ), 
         "value set to '%s' instead of 'Te' or 'xxxxxxxxxx'\n", value );
-    ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ) || broken( !strcmp( data, "xxxxxxxx" ) && data_count == 8 ),
+    ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ) || broken( !strcmp( data, "xxxxxxxx" ) && data_count > 7 ),
         "data set to '%s' instead of 'foobar' or 'xxxxxxx'\n", data );
 
     /* overflow empty name */
@@ -565,11 +566,12 @@ static void test_enum_value(void)
     res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
     ok( val_count == 0, "val_count set to %d\n", val_count );
-    ok( data_count == 7 || broken( data_count == 8 ), "data_count set to %d instead of 7\n", data_count );
+    /* Chinese, Japanese, and Korean editions of Windows 10 sometimes set data_count to a higher value */
+    ok( data_count == 7 || broken( data_count > 7 ), "data_count set to %d instead of 7\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !strcmp( value, "xxxxxxxxxx" ), "value set to '%s'\n", value );
     /* v5.1.2600.0 (XP Home and Professional) does not touch data in this case */
-    ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ) || broken( !strcmp( data, "xxxxxxxx" ) && data_count == 8 ),
+    ok( !strcmp( data, "foobar" ) || !strcmp( data, "xxxxxxx" ) || broken( !strcmp( data, "xxxxxxxx" ) && data_count > 7 ),
         "data set to '%s' instead of 'foobar' or 'xxxxxxx'\n", data );
 
     /* overflow data */
