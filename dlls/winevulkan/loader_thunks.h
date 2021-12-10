@@ -12,428 +12,420 @@
 #ifndef __WINE_VULKAN_LOADER_THUNKS_H
 #define __WINE_VULKAN_LOADER_THUNKS_H
 
-struct unix_funcs
-{
-    NTSTATUS (WINAPI *p_vkAcquireNextImage2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkAcquireNextImageKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkAcquirePerformanceConfigurationINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkAcquireProfilingLockKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkAllocateCommandBuffers)(void *args);
-    NTSTATUS (WINAPI *p_vkAllocateDescriptorSets)(void *args);
-    NTSTATUS (WINAPI *p_vkAllocateMemory)(void *args);
-    NTSTATUS (WINAPI *p_vkBeginCommandBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkBindAccelerationStructureMemoryNV)(void *args);
-    NTSTATUS (WINAPI *p_vkBindBufferMemory)(void *args);
-    NTSTATUS (WINAPI *p_vkBindBufferMemory2)(void *args);
-    NTSTATUS (WINAPI *p_vkBindBufferMemory2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkBindImageMemory)(void *args);
-    NTSTATUS (WINAPI *p_vkBindImageMemory2)(void *args);
-    NTSTATUS (WINAPI *p_vkBindImageMemory2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkBuildAccelerationStructuresKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginConditionalRenderingEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginDebugUtilsLabelEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginQuery)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginQueryIndexedEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginRenderPass)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginRenderPass2)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginRenderPass2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginRenderingKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBeginTransformFeedbackEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindDescriptorSets)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindIndexBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindInvocationMaskHUAWEI)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindPipeline)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindPipelineShaderGroupNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindShadingRateImageNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindTransformFeedbackBuffersEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindVertexBuffers)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBindVertexBuffers2EXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBlitImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBlitImage2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBuildAccelerationStructureNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBuildAccelerationStructuresIndirectKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdBuildAccelerationStructuresKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdClearAttachments)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdClearColorImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdClearDepthStencilImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyAccelerationStructureKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyAccelerationStructureNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyAccelerationStructureToMemoryKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyBuffer2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyBufferToImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyBufferToImage2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyImage2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyImageToBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyImageToBuffer2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyMemoryToAccelerationStructureKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCopyQueryPoolResults)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdCuLaunchKernelNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDebugMarkerBeginEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDebugMarkerEndEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDebugMarkerInsertEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDispatch)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDispatchBase)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDispatchBaseKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDispatchIndirect)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDraw)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndexed)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndexedIndirect)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndexedIndirectCount)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndexedIndirectCountAMD)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndexedIndirectCountKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndirect)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndirectByteCountEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndirectCount)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndirectCountAMD)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawIndirectCountKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawMeshTasksIndirectCountNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawMeshTasksIndirectNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawMeshTasksNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawMultiEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdDrawMultiIndexedEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndConditionalRenderingEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndDebugUtilsLabelEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndQuery)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndQueryIndexedEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndRenderPass)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndRenderPass2)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndRenderPass2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndRenderingKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdEndTransformFeedbackEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdExecuteCommands)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdExecuteGeneratedCommandsNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdFillBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdInsertDebugUtilsLabelEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdNextSubpass)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdNextSubpass2)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdNextSubpass2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdPipelineBarrier)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdPipelineBarrier2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdPreprocessGeneratedCommandsNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdPushConstants)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdPushDescriptorSetKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdPushDescriptorSetWithTemplateKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdResetEvent)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdResetEvent2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdResetQueryPool)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdResolveImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdResolveImage2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetBlendConstants)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetCheckpointNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetCoarseSampleOrderNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetColorWriteEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetCullModeEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthBias)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthBiasEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthBounds)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthBoundsTestEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthCompareOpEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthTestEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDepthWriteEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDeviceMask)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDeviceMaskKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetDiscardRectangleEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetEvent)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetEvent2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetExclusiveScissorNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetFragmentShadingRateEnumNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetFragmentShadingRateKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetFrontFaceEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetLineStippleEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetLineWidth)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetLogicOpEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetPatchControlPointsEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetPerformanceMarkerINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetPerformanceOverrideINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetPerformanceStreamMarkerINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetPrimitiveRestartEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetPrimitiveTopologyEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetRasterizerDiscardEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetRayTracingPipelineStackSizeKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetSampleLocationsEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetScissor)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetScissorWithCountEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetStencilCompareMask)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetStencilOpEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetStencilReference)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetStencilTestEnableEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetStencilWriteMask)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetVertexInputEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetViewport)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetViewportShadingRatePaletteNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetViewportWScalingNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSetViewportWithCountEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdSubpassShadingHUAWEI)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdTraceRaysIndirectKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdTraceRaysKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdTraceRaysNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdUpdateBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWaitEvents)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWaitEvents2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWriteAccelerationStructuresPropertiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWriteAccelerationStructuresPropertiesNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWriteBufferMarker2AMD)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWriteBufferMarkerAMD)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWriteTimestamp)(void *args);
-    NTSTATUS (WINAPI *p_vkCmdWriteTimestamp2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCompileDeferredNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCopyAccelerationStructureKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCopyAccelerationStructureToMemoryKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCopyMemoryToAccelerationStructureKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateAccelerationStructureKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateAccelerationStructureNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateBufferView)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateCommandPool)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateComputePipelines)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateCuFunctionNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateCuModuleNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDebugReportCallbackEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDebugUtilsMessengerEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDeferredOperationKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDescriptorPool)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDescriptorSetLayout)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDescriptorUpdateTemplate)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDescriptorUpdateTemplateKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateDevice)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateEvent)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateFence)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateFramebuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateGraphicsPipelines)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateImage)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateImageView)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateIndirectCommandsLayoutNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateInstance)(void *args);
-    NTSTATUS (WINAPI *p_vkCreatePipelineCache)(void *args);
-    NTSTATUS (WINAPI *p_vkCreatePipelineLayout)(void *args);
-    NTSTATUS (WINAPI *p_vkCreatePrivateDataSlotEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateQueryPool)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateRayTracingPipelinesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateRayTracingPipelinesNV)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateRenderPass)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateRenderPass2)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateRenderPass2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateSampler)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateSamplerYcbcrConversion)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateSamplerYcbcrConversionKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateSemaphore)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateShaderModule)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateSwapchainKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateValidationCacheEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkCreateWin32SurfaceKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDebugMarkerSetObjectNameEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDebugMarkerSetObjectTagEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDebugReportMessageEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDeferredOperationJoinKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyAccelerationStructureKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyAccelerationStructureNV)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyBufferView)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyCommandPool)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyCuFunctionNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyCuModuleNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDebugReportCallbackEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDebugUtilsMessengerEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDeferredOperationKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDescriptorPool)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDescriptorSetLayout)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDescriptorUpdateTemplate)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDescriptorUpdateTemplateKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyDevice)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyEvent)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyFence)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyFramebuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyImage)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyImageView)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyIndirectCommandsLayoutNV)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyInstance)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyPipeline)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyPipelineCache)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyPipelineLayout)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyPrivateDataSlotEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyQueryPool)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyRenderPass)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroySampler)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroySamplerYcbcrConversion)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroySamplerYcbcrConversionKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroySemaphore)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyShaderModule)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroySurfaceKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroySwapchainKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkDestroyValidationCacheEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkDeviceWaitIdle)(void *args);
-    NTSTATUS (WINAPI *p_vkEndCommandBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumerateDeviceExtensionProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumerateDeviceLayerProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumerateInstanceExtensionProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumerateInstanceVersion)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumeratePhysicalDeviceGroups)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumeratePhysicalDeviceGroupsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkEnumeratePhysicalDevices)(void *args);
-    NTSTATUS (WINAPI *p_vkFlushMappedMemoryRanges)(void *args);
-    NTSTATUS (WINAPI *p_vkFreeCommandBuffers)(void *args);
-    NTSTATUS (WINAPI *p_vkFreeDescriptorSets)(void *args);
-    NTSTATUS (WINAPI *p_vkFreeMemory)(void *args);
-    NTSTATUS (WINAPI *p_vkGetAccelerationStructureBuildSizesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetAccelerationStructureDeviceAddressKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetAccelerationStructureHandleNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetAccelerationStructureMemoryRequirementsNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferDeviceAddress)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferDeviceAddressEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferDeviceAddressKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferMemoryRequirements)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferMemoryRequirements2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferMemoryRequirements2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferOpaqueCaptureAddress)(void *args);
-    NTSTATUS (WINAPI *p_vkGetBufferOpaqueCaptureAddressKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetCalibratedTimestampsEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeferredOperationMaxConcurrencyKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeferredOperationResultKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDescriptorSetLayoutSupport)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDescriptorSetLayoutSupportKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceAccelerationStructureCompatibilityKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceBufferMemoryRequirementsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceGroupPeerMemoryFeatures)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceGroupPeerMemoryFeaturesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceGroupPresentCapabilitiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceGroupSurfacePresentModesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceImageMemoryRequirementsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceImageSparseMemoryRequirementsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceMemoryCommitment)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceMemoryOpaqueCaptureAddress)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceMemoryOpaqueCaptureAddressKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceQueue)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceQueue2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI)(void *args);
-    NTSTATUS (WINAPI *p_vkGetEventStatus)(void *args);
-    NTSTATUS (WINAPI *p_vkGetFenceStatus)(void *args);
-    NTSTATUS (WINAPI *p_vkGetGeneratedCommandsMemoryRequirementsNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageMemoryRequirements)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageMemoryRequirements2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageMemoryRequirements2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageSparseMemoryRequirements)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageSparseMemoryRequirements2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageSparseMemoryRequirements2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageSubresourceLayout)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageViewAddressNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkGetImageViewHandleNVX)(void *args);
-    NTSTATUS (WINAPI *p_vkGetMemoryHostPointerPropertiesEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPerformanceParameterINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceExternalBufferProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceExternalBufferPropertiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceExternalFenceProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceExternalFencePropertiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceExternalSemaphoreProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFeatures)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFeatures2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFeatures2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFormatProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFormatProperties2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFormatProperties2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceFragmentShadingRatesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceImageFormatProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceImageFormatProperties2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceImageFormatProperties2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceMemoryProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceMemoryProperties2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceMemoryProperties2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceMultisamplePropertiesEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDevicePresentRectanglesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceProperties2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceProperties2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceQueueFamilyProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceQueueFamilyProperties2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceQueueFamilyProperties2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSparseImageFormatProperties)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSparseImageFormatProperties2)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSurfaceCapabilities2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSurfaceFormats2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSurfaceFormatsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSurfacePresentModesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceSurfaceSupportKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceToolPropertiesEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPipelineCacheData)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPipelineExecutableInternalRepresentationsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPipelineExecutablePropertiesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPipelineExecutableStatisticsKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetPrivateDataEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkGetQueryPoolResults)(void *args);
-    NTSTATUS (WINAPI *p_vkGetQueueCheckpointData2NV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetQueueCheckpointDataNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetRayTracingShaderGroupHandlesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetRayTracingShaderGroupHandlesNV)(void *args);
-    NTSTATUS (WINAPI *p_vkGetRayTracingShaderGroupStackSizeKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetRenderAreaGranularity)(void *args);
-    NTSTATUS (WINAPI *p_vkGetSemaphoreCounterValue)(void *args);
-    NTSTATUS (WINAPI *p_vkGetSemaphoreCounterValueKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetShaderInfoAMD)(void *args);
-    NTSTATUS (WINAPI *p_vkGetSwapchainImagesKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkGetValidationCacheDataEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkInitializePerformanceApiINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkInvalidateMappedMemoryRanges)(void *args);
-    NTSTATUS (WINAPI *p_vkMapMemory)(void *args);
-    NTSTATUS (WINAPI *p_vkMergePipelineCaches)(void *args);
-    NTSTATUS (WINAPI *p_vkMergeValidationCachesEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueBeginDebugUtilsLabelEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueBindSparse)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueEndDebugUtilsLabelEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueInsertDebugUtilsLabelEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkQueuePresentKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueSetPerformanceConfigurationINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueSubmit)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueSubmit2KHR)(void *args);
-    NTSTATUS (WINAPI *p_vkQueueWaitIdle)(void *args);
-    NTSTATUS (WINAPI *p_vkReleasePerformanceConfigurationINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkReleaseProfilingLockKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkResetCommandBuffer)(void *args);
-    NTSTATUS (WINAPI *p_vkResetCommandPool)(void *args);
-    NTSTATUS (WINAPI *p_vkResetDescriptorPool)(void *args);
-    NTSTATUS (WINAPI *p_vkResetEvent)(void *args);
-    NTSTATUS (WINAPI *p_vkResetFences)(void *args);
-    NTSTATUS (WINAPI *p_vkResetQueryPool)(void *args);
-    NTSTATUS (WINAPI *p_vkResetQueryPoolEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkSetDebugUtilsObjectNameEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkSetDebugUtilsObjectTagEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkSetDeviceMemoryPriorityEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkSetEvent)(void *args);
-    NTSTATUS (WINAPI *p_vkSetPrivateDataEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkSignalSemaphore)(void *args);
-    NTSTATUS (WINAPI *p_vkSignalSemaphoreKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkSubmitDebugUtilsMessageEXT)(void *args);
-    NTSTATUS (WINAPI *p_vkTrimCommandPool)(void *args);
-    NTSTATUS (WINAPI *p_vkTrimCommandPoolKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkUninitializePerformanceApiINTEL)(void *args);
-    NTSTATUS (WINAPI *p_vkUnmapMemory)(void *args);
-    NTSTATUS (WINAPI *p_vkUpdateDescriptorSetWithTemplate)(void *args);
-    NTSTATUS (WINAPI *p_vkUpdateDescriptorSetWithTemplateKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkUpdateDescriptorSets)(void *args);
-    NTSTATUS (WINAPI *p_vkWaitForFences)(void *args);
-    NTSTATUS (WINAPI *p_vkWaitForPresentKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkWaitSemaphores)(void *args);
-    NTSTATUS (WINAPI *p_vkWaitSemaphoresKHR)(void *args);
-    NTSTATUS (WINAPI *p_vkWriteAccelerationStructuresPropertiesKHR)(void *args);
-
-    /* winevulkan specific functions */
-    BOOL (WINAPI *p_is_available_instance_function)(VkInstance, const char *);
-    BOOL (WINAPI *p_is_available_device_function)(VkDevice, const char *);
-};
-
 enum unix_call
 {
     unix_init,
+    unix_vkAcquireNextImage2KHR,
+    unix_vkAcquireNextImageKHR,
+    unix_vkAcquirePerformanceConfigurationINTEL,
+    unix_vkAcquireProfilingLockKHR,
+    unix_vkAllocateCommandBuffers,
+    unix_vkAllocateDescriptorSets,
+    unix_vkAllocateMemory,
+    unix_vkBeginCommandBuffer,
+    unix_vkBindAccelerationStructureMemoryNV,
+    unix_vkBindBufferMemory,
+    unix_vkBindBufferMemory2,
+    unix_vkBindBufferMemory2KHR,
+    unix_vkBindImageMemory,
+    unix_vkBindImageMemory2,
+    unix_vkBindImageMemory2KHR,
+    unix_vkBuildAccelerationStructuresKHR,
+    unix_vkCmdBeginConditionalRenderingEXT,
+    unix_vkCmdBeginDebugUtilsLabelEXT,
+    unix_vkCmdBeginQuery,
+    unix_vkCmdBeginQueryIndexedEXT,
+    unix_vkCmdBeginRenderPass,
+    unix_vkCmdBeginRenderPass2,
+    unix_vkCmdBeginRenderPass2KHR,
+    unix_vkCmdBeginRenderingKHR,
+    unix_vkCmdBeginTransformFeedbackEXT,
+    unix_vkCmdBindDescriptorSets,
+    unix_vkCmdBindIndexBuffer,
+    unix_vkCmdBindInvocationMaskHUAWEI,
+    unix_vkCmdBindPipeline,
+    unix_vkCmdBindPipelineShaderGroupNV,
+    unix_vkCmdBindShadingRateImageNV,
+    unix_vkCmdBindTransformFeedbackBuffersEXT,
+    unix_vkCmdBindVertexBuffers,
+    unix_vkCmdBindVertexBuffers2EXT,
+    unix_vkCmdBlitImage,
+    unix_vkCmdBlitImage2KHR,
+    unix_vkCmdBuildAccelerationStructureNV,
+    unix_vkCmdBuildAccelerationStructuresIndirectKHR,
+    unix_vkCmdBuildAccelerationStructuresKHR,
+    unix_vkCmdClearAttachments,
+    unix_vkCmdClearColorImage,
+    unix_vkCmdClearDepthStencilImage,
+    unix_vkCmdCopyAccelerationStructureKHR,
+    unix_vkCmdCopyAccelerationStructureNV,
+    unix_vkCmdCopyAccelerationStructureToMemoryKHR,
+    unix_vkCmdCopyBuffer,
+    unix_vkCmdCopyBuffer2KHR,
+    unix_vkCmdCopyBufferToImage,
+    unix_vkCmdCopyBufferToImage2KHR,
+    unix_vkCmdCopyImage,
+    unix_vkCmdCopyImage2KHR,
+    unix_vkCmdCopyImageToBuffer,
+    unix_vkCmdCopyImageToBuffer2KHR,
+    unix_vkCmdCopyMemoryToAccelerationStructureKHR,
+    unix_vkCmdCopyQueryPoolResults,
+    unix_vkCmdCuLaunchKernelNVX,
+    unix_vkCmdDebugMarkerBeginEXT,
+    unix_vkCmdDebugMarkerEndEXT,
+    unix_vkCmdDebugMarkerInsertEXT,
+    unix_vkCmdDispatch,
+    unix_vkCmdDispatchBase,
+    unix_vkCmdDispatchBaseKHR,
+    unix_vkCmdDispatchIndirect,
+    unix_vkCmdDraw,
+    unix_vkCmdDrawIndexed,
+    unix_vkCmdDrawIndexedIndirect,
+    unix_vkCmdDrawIndexedIndirectCount,
+    unix_vkCmdDrawIndexedIndirectCountAMD,
+    unix_vkCmdDrawIndexedIndirectCountKHR,
+    unix_vkCmdDrawIndirect,
+    unix_vkCmdDrawIndirectByteCountEXT,
+    unix_vkCmdDrawIndirectCount,
+    unix_vkCmdDrawIndirectCountAMD,
+    unix_vkCmdDrawIndirectCountKHR,
+    unix_vkCmdDrawMeshTasksIndirectCountNV,
+    unix_vkCmdDrawMeshTasksIndirectNV,
+    unix_vkCmdDrawMeshTasksNV,
+    unix_vkCmdDrawMultiEXT,
+    unix_vkCmdDrawMultiIndexedEXT,
+    unix_vkCmdEndConditionalRenderingEXT,
+    unix_vkCmdEndDebugUtilsLabelEXT,
+    unix_vkCmdEndQuery,
+    unix_vkCmdEndQueryIndexedEXT,
+    unix_vkCmdEndRenderPass,
+    unix_vkCmdEndRenderPass2,
+    unix_vkCmdEndRenderPass2KHR,
+    unix_vkCmdEndRenderingKHR,
+    unix_vkCmdEndTransformFeedbackEXT,
+    unix_vkCmdExecuteCommands,
+    unix_vkCmdExecuteGeneratedCommandsNV,
+    unix_vkCmdFillBuffer,
+    unix_vkCmdInsertDebugUtilsLabelEXT,
+    unix_vkCmdNextSubpass,
+    unix_vkCmdNextSubpass2,
+    unix_vkCmdNextSubpass2KHR,
+    unix_vkCmdPipelineBarrier,
+    unix_vkCmdPipelineBarrier2KHR,
+    unix_vkCmdPreprocessGeneratedCommandsNV,
+    unix_vkCmdPushConstants,
+    unix_vkCmdPushDescriptorSetKHR,
+    unix_vkCmdPushDescriptorSetWithTemplateKHR,
+    unix_vkCmdResetEvent,
+    unix_vkCmdResetEvent2KHR,
+    unix_vkCmdResetQueryPool,
+    unix_vkCmdResolveImage,
+    unix_vkCmdResolveImage2KHR,
+    unix_vkCmdSetBlendConstants,
+    unix_vkCmdSetCheckpointNV,
+    unix_vkCmdSetCoarseSampleOrderNV,
+    unix_vkCmdSetColorWriteEnableEXT,
+    unix_vkCmdSetCullModeEXT,
+    unix_vkCmdSetDepthBias,
+    unix_vkCmdSetDepthBiasEnableEXT,
+    unix_vkCmdSetDepthBounds,
+    unix_vkCmdSetDepthBoundsTestEnableEXT,
+    unix_vkCmdSetDepthCompareOpEXT,
+    unix_vkCmdSetDepthTestEnableEXT,
+    unix_vkCmdSetDepthWriteEnableEXT,
+    unix_vkCmdSetDeviceMask,
+    unix_vkCmdSetDeviceMaskKHR,
+    unix_vkCmdSetDiscardRectangleEXT,
+    unix_vkCmdSetEvent,
+    unix_vkCmdSetEvent2KHR,
+    unix_vkCmdSetExclusiveScissorNV,
+    unix_vkCmdSetFragmentShadingRateEnumNV,
+    unix_vkCmdSetFragmentShadingRateKHR,
+    unix_vkCmdSetFrontFaceEXT,
+    unix_vkCmdSetLineStippleEXT,
+    unix_vkCmdSetLineWidth,
+    unix_vkCmdSetLogicOpEXT,
+    unix_vkCmdSetPatchControlPointsEXT,
+    unix_vkCmdSetPerformanceMarkerINTEL,
+    unix_vkCmdSetPerformanceOverrideINTEL,
+    unix_vkCmdSetPerformanceStreamMarkerINTEL,
+    unix_vkCmdSetPrimitiveRestartEnableEXT,
+    unix_vkCmdSetPrimitiveTopologyEXT,
+    unix_vkCmdSetRasterizerDiscardEnableEXT,
+    unix_vkCmdSetRayTracingPipelineStackSizeKHR,
+    unix_vkCmdSetSampleLocationsEXT,
+    unix_vkCmdSetScissor,
+    unix_vkCmdSetScissorWithCountEXT,
+    unix_vkCmdSetStencilCompareMask,
+    unix_vkCmdSetStencilOpEXT,
+    unix_vkCmdSetStencilReference,
+    unix_vkCmdSetStencilTestEnableEXT,
+    unix_vkCmdSetStencilWriteMask,
+    unix_vkCmdSetVertexInputEXT,
+    unix_vkCmdSetViewport,
+    unix_vkCmdSetViewportShadingRatePaletteNV,
+    unix_vkCmdSetViewportWScalingNV,
+    unix_vkCmdSetViewportWithCountEXT,
+    unix_vkCmdSubpassShadingHUAWEI,
+    unix_vkCmdTraceRaysIndirectKHR,
+    unix_vkCmdTraceRaysKHR,
+    unix_vkCmdTraceRaysNV,
+    unix_vkCmdUpdateBuffer,
+    unix_vkCmdWaitEvents,
+    unix_vkCmdWaitEvents2KHR,
+    unix_vkCmdWriteAccelerationStructuresPropertiesKHR,
+    unix_vkCmdWriteAccelerationStructuresPropertiesNV,
+    unix_vkCmdWriteBufferMarker2AMD,
+    unix_vkCmdWriteBufferMarkerAMD,
+    unix_vkCmdWriteTimestamp,
+    unix_vkCmdWriteTimestamp2KHR,
+    unix_vkCompileDeferredNV,
+    unix_vkCopyAccelerationStructureKHR,
+    unix_vkCopyAccelerationStructureToMemoryKHR,
+    unix_vkCopyMemoryToAccelerationStructureKHR,
+    unix_vkCreateAccelerationStructureKHR,
+    unix_vkCreateAccelerationStructureNV,
+    unix_vkCreateBuffer,
+    unix_vkCreateBufferView,
+    unix_vkCreateCommandPool,
+    unix_vkCreateComputePipelines,
+    unix_vkCreateCuFunctionNVX,
+    unix_vkCreateCuModuleNVX,
+    unix_vkCreateDebugReportCallbackEXT,
+    unix_vkCreateDebugUtilsMessengerEXT,
+    unix_vkCreateDeferredOperationKHR,
+    unix_vkCreateDescriptorPool,
+    unix_vkCreateDescriptorSetLayout,
+    unix_vkCreateDescriptorUpdateTemplate,
+    unix_vkCreateDescriptorUpdateTemplateKHR,
+    unix_vkCreateDevice,
+    unix_vkCreateEvent,
+    unix_vkCreateFence,
+    unix_vkCreateFramebuffer,
+    unix_vkCreateGraphicsPipelines,
+    unix_vkCreateImage,
+    unix_vkCreateImageView,
+    unix_vkCreateIndirectCommandsLayoutNV,
+    unix_vkCreateInstance,
+    unix_vkCreatePipelineCache,
+    unix_vkCreatePipelineLayout,
+    unix_vkCreatePrivateDataSlotEXT,
+    unix_vkCreateQueryPool,
+    unix_vkCreateRayTracingPipelinesKHR,
+    unix_vkCreateRayTracingPipelinesNV,
+    unix_vkCreateRenderPass,
+    unix_vkCreateRenderPass2,
+    unix_vkCreateRenderPass2KHR,
+    unix_vkCreateSampler,
+    unix_vkCreateSamplerYcbcrConversion,
+    unix_vkCreateSamplerYcbcrConversionKHR,
+    unix_vkCreateSemaphore,
+    unix_vkCreateShaderModule,
+    unix_vkCreateSwapchainKHR,
+    unix_vkCreateValidationCacheEXT,
+    unix_vkCreateWin32SurfaceKHR,
+    unix_vkDebugMarkerSetObjectNameEXT,
+    unix_vkDebugMarkerSetObjectTagEXT,
+    unix_vkDebugReportMessageEXT,
+    unix_vkDeferredOperationJoinKHR,
+    unix_vkDestroyAccelerationStructureKHR,
+    unix_vkDestroyAccelerationStructureNV,
+    unix_vkDestroyBuffer,
+    unix_vkDestroyBufferView,
+    unix_vkDestroyCommandPool,
+    unix_vkDestroyCuFunctionNVX,
+    unix_vkDestroyCuModuleNVX,
+    unix_vkDestroyDebugReportCallbackEXT,
+    unix_vkDestroyDebugUtilsMessengerEXT,
+    unix_vkDestroyDeferredOperationKHR,
+    unix_vkDestroyDescriptorPool,
+    unix_vkDestroyDescriptorSetLayout,
+    unix_vkDestroyDescriptorUpdateTemplate,
+    unix_vkDestroyDescriptorUpdateTemplateKHR,
+    unix_vkDestroyDevice,
+    unix_vkDestroyEvent,
+    unix_vkDestroyFence,
+    unix_vkDestroyFramebuffer,
+    unix_vkDestroyImage,
+    unix_vkDestroyImageView,
+    unix_vkDestroyIndirectCommandsLayoutNV,
+    unix_vkDestroyInstance,
+    unix_vkDestroyPipeline,
+    unix_vkDestroyPipelineCache,
+    unix_vkDestroyPipelineLayout,
+    unix_vkDestroyPrivateDataSlotEXT,
+    unix_vkDestroyQueryPool,
+    unix_vkDestroyRenderPass,
+    unix_vkDestroySampler,
+    unix_vkDestroySamplerYcbcrConversion,
+    unix_vkDestroySamplerYcbcrConversionKHR,
+    unix_vkDestroySemaphore,
+    unix_vkDestroyShaderModule,
+    unix_vkDestroySurfaceKHR,
+    unix_vkDestroySwapchainKHR,
+    unix_vkDestroyValidationCacheEXT,
+    unix_vkDeviceWaitIdle,
+    unix_vkEndCommandBuffer,
+    unix_vkEnumerateDeviceExtensionProperties,
+    unix_vkEnumerateDeviceLayerProperties,
+    unix_vkEnumerateInstanceExtensionProperties,
+    unix_vkEnumerateInstanceVersion,
+    unix_vkEnumeratePhysicalDeviceGroups,
+    unix_vkEnumeratePhysicalDeviceGroupsKHR,
+    unix_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR,
+    unix_vkEnumeratePhysicalDevices,
+    unix_vkFlushMappedMemoryRanges,
+    unix_vkFreeCommandBuffers,
+    unix_vkFreeDescriptorSets,
+    unix_vkFreeMemory,
+    unix_vkGetAccelerationStructureBuildSizesKHR,
+    unix_vkGetAccelerationStructureDeviceAddressKHR,
+    unix_vkGetAccelerationStructureHandleNV,
+    unix_vkGetAccelerationStructureMemoryRequirementsNV,
+    unix_vkGetBufferDeviceAddress,
+    unix_vkGetBufferDeviceAddressEXT,
+    unix_vkGetBufferDeviceAddressKHR,
+    unix_vkGetBufferMemoryRequirements,
+    unix_vkGetBufferMemoryRequirements2,
+    unix_vkGetBufferMemoryRequirements2KHR,
+    unix_vkGetBufferOpaqueCaptureAddress,
+    unix_vkGetBufferOpaqueCaptureAddressKHR,
+    unix_vkGetCalibratedTimestampsEXT,
+    unix_vkGetDeferredOperationMaxConcurrencyKHR,
+    unix_vkGetDeferredOperationResultKHR,
+    unix_vkGetDescriptorSetLayoutSupport,
+    unix_vkGetDescriptorSetLayoutSupportKHR,
+    unix_vkGetDeviceAccelerationStructureCompatibilityKHR,
+    unix_vkGetDeviceBufferMemoryRequirementsKHR,
+    unix_vkGetDeviceGroupPeerMemoryFeatures,
+    unix_vkGetDeviceGroupPeerMemoryFeaturesKHR,
+    unix_vkGetDeviceGroupPresentCapabilitiesKHR,
+    unix_vkGetDeviceGroupSurfacePresentModesKHR,
+    unix_vkGetDeviceImageMemoryRequirementsKHR,
+    unix_vkGetDeviceImageSparseMemoryRequirementsKHR,
+    unix_vkGetDeviceMemoryCommitment,
+    unix_vkGetDeviceMemoryOpaqueCaptureAddress,
+    unix_vkGetDeviceMemoryOpaqueCaptureAddressKHR,
+    unix_vkGetDeviceQueue,
+    unix_vkGetDeviceQueue2,
+    unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI,
+    unix_vkGetEventStatus,
+    unix_vkGetFenceStatus,
+    unix_vkGetGeneratedCommandsMemoryRequirementsNV,
+    unix_vkGetImageMemoryRequirements,
+    unix_vkGetImageMemoryRequirements2,
+    unix_vkGetImageMemoryRequirements2KHR,
+    unix_vkGetImageSparseMemoryRequirements,
+    unix_vkGetImageSparseMemoryRequirements2,
+    unix_vkGetImageSparseMemoryRequirements2KHR,
+    unix_vkGetImageSubresourceLayout,
+    unix_vkGetImageViewAddressNVX,
+    unix_vkGetImageViewHandleNVX,
+    unix_vkGetMemoryHostPointerPropertiesEXT,
+    unix_vkGetPerformanceParameterINTEL,
+    unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
+    unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
+    unix_vkGetPhysicalDeviceExternalBufferProperties,
+    unix_vkGetPhysicalDeviceExternalBufferPropertiesKHR,
+    unix_vkGetPhysicalDeviceExternalFenceProperties,
+    unix_vkGetPhysicalDeviceExternalFencePropertiesKHR,
+    unix_vkGetPhysicalDeviceExternalSemaphoreProperties,
+    unix_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR,
+    unix_vkGetPhysicalDeviceFeatures,
+    unix_vkGetPhysicalDeviceFeatures2,
+    unix_vkGetPhysicalDeviceFeatures2KHR,
+    unix_vkGetPhysicalDeviceFormatProperties,
+    unix_vkGetPhysicalDeviceFormatProperties2,
+    unix_vkGetPhysicalDeviceFormatProperties2KHR,
+    unix_vkGetPhysicalDeviceFragmentShadingRatesKHR,
+    unix_vkGetPhysicalDeviceImageFormatProperties,
+    unix_vkGetPhysicalDeviceImageFormatProperties2,
+    unix_vkGetPhysicalDeviceImageFormatProperties2KHR,
+    unix_vkGetPhysicalDeviceMemoryProperties,
+    unix_vkGetPhysicalDeviceMemoryProperties2,
+    unix_vkGetPhysicalDeviceMemoryProperties2KHR,
+    unix_vkGetPhysicalDeviceMultisamplePropertiesEXT,
+    unix_vkGetPhysicalDevicePresentRectanglesKHR,
+    unix_vkGetPhysicalDeviceProperties,
+    unix_vkGetPhysicalDeviceProperties2,
+    unix_vkGetPhysicalDeviceProperties2KHR,
+    unix_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR,
+    unix_vkGetPhysicalDeviceQueueFamilyProperties,
+    unix_vkGetPhysicalDeviceQueueFamilyProperties2,
+    unix_vkGetPhysicalDeviceQueueFamilyProperties2KHR,
+    unix_vkGetPhysicalDeviceSparseImageFormatProperties,
+    unix_vkGetPhysicalDeviceSparseImageFormatProperties2,
+    unix_vkGetPhysicalDeviceSparseImageFormatProperties2KHR,
+    unix_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV,
+    unix_vkGetPhysicalDeviceSurfaceCapabilities2KHR,
+    unix_vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+    unix_vkGetPhysicalDeviceSurfaceFormats2KHR,
+    unix_vkGetPhysicalDeviceSurfaceFormatsKHR,
+    unix_vkGetPhysicalDeviceSurfacePresentModesKHR,
+    unix_vkGetPhysicalDeviceSurfaceSupportKHR,
+    unix_vkGetPhysicalDeviceToolPropertiesEXT,
+    unix_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    unix_vkGetPipelineCacheData,
+    unix_vkGetPipelineExecutableInternalRepresentationsKHR,
+    unix_vkGetPipelineExecutablePropertiesKHR,
+    unix_vkGetPipelineExecutableStatisticsKHR,
+    unix_vkGetPrivateDataEXT,
+    unix_vkGetQueryPoolResults,
+    unix_vkGetQueueCheckpointData2NV,
+    unix_vkGetQueueCheckpointDataNV,
+    unix_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR,
+    unix_vkGetRayTracingShaderGroupHandlesKHR,
+    unix_vkGetRayTracingShaderGroupHandlesNV,
+    unix_vkGetRayTracingShaderGroupStackSizeKHR,
+    unix_vkGetRenderAreaGranularity,
+    unix_vkGetSemaphoreCounterValue,
+    unix_vkGetSemaphoreCounterValueKHR,
+    unix_vkGetShaderInfoAMD,
+    unix_vkGetSwapchainImagesKHR,
+    unix_vkGetValidationCacheDataEXT,
+    unix_vkInitializePerformanceApiINTEL,
+    unix_vkInvalidateMappedMemoryRanges,
+    unix_vkMapMemory,
+    unix_vkMergePipelineCaches,
+    unix_vkMergeValidationCachesEXT,
+    unix_vkQueueBeginDebugUtilsLabelEXT,
+    unix_vkQueueBindSparse,
+    unix_vkQueueEndDebugUtilsLabelEXT,
+    unix_vkQueueInsertDebugUtilsLabelEXT,
+    unix_vkQueuePresentKHR,
+    unix_vkQueueSetPerformanceConfigurationINTEL,
+    unix_vkQueueSubmit,
+    unix_vkQueueSubmit2KHR,
+    unix_vkQueueWaitIdle,
+    unix_vkReleasePerformanceConfigurationINTEL,
+    unix_vkReleaseProfilingLockKHR,
+    unix_vkResetCommandBuffer,
+    unix_vkResetCommandPool,
+    unix_vkResetDescriptorPool,
+    unix_vkResetEvent,
+    unix_vkResetFences,
+    unix_vkResetQueryPool,
+    unix_vkResetQueryPoolEXT,
+    unix_vkSetDebugUtilsObjectNameEXT,
+    unix_vkSetDebugUtilsObjectTagEXT,
+    unix_vkSetDeviceMemoryPriorityEXT,
+    unix_vkSetEvent,
+    unix_vkSetPrivateDataEXT,
+    unix_vkSignalSemaphore,
+    unix_vkSignalSemaphoreKHR,
+    unix_vkSubmitDebugUtilsMessageEXT,
+    unix_vkTrimCommandPool,
+    unix_vkTrimCommandPoolKHR,
+    unix_vkUninitializePerformanceApiINTEL,
+    unix_vkUnmapMemory,
+    unix_vkUpdateDescriptorSetWithTemplate,
+    unix_vkUpdateDescriptorSetWithTemplateKHR,
+    unix_vkUpdateDescriptorSets,
+    unix_vkWaitForFences,
+    unix_vkWaitForPresentKHR,
+    unix_vkWaitSemaphores,
+    unix_vkWaitSemaphoresKHR,
+    unix_vkWriteAccelerationStructuresPropertiesKHR,
     unix_count,
 };
 

@@ -751,10 +751,10 @@ class VkFunction(object):
             body += "    params.{0} = {0};\n".format(p.name)
         body += "    ";
 
-        # Call the function from unix_funcs.
+        # Call the Unix function.
         if self.type != "void" and not self.returns_longlong():
             body += "return "
-        body += "unix_funcs->p_{0}(&params);\n".format(self.name)
+        body += "unix_funcs->p_vk_call(unix_{0}, &params);\n".format(self.name)
         if self.returns_longlong():
             body += "    return params.result;\n"
         return body
@@ -861,13 +861,13 @@ class VkFunction(object):
         stub += "}\n\n"
         return stub
 
-    def thunk(self, call_conv=None, prefix=None):
-        if self.needs_private_thunk():
-            thunk = self.prototype(call_conv=call_conv, prefix=prefix)
+    def thunk(self, prefix=None):
+        if prefix == "thunk_":
+            thunk = self.prototype(prefix=prefix)
             thunk += "\n{\n"
             params_prefix = ""
         else:
-            thunk = "NTSTATUS {0} {1}{2}(void *args)\n".format(call_conv, prefix, self.name)
+            thunk = "NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
             thunk += "{\n"
             thunk += "    struct {0}_params *params = args;\n".format(self.name)
             params_prefix = "params->"
@@ -2721,18 +2721,15 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-
-            if vk_func.is_global_func():
-                continue
-
-            if not vk_func.needs_thunk():
+            if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
             if vk_func.needs_private_thunk():
                 f.write(vk_func.thunk(prefix="thunk_"))
-            else:
+
+            if vk_func.thunk_type == ThunkType.PUBLIC:
                 f.write("static ")
-                f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
+                f.write(vk_func.thunk(prefix=prefix))
 
         # Create array of device extensions.
         f.write("static const char * const vk_device_extensions[] =\n{\n")
@@ -2808,8 +2805,9 @@ class VkGenerator(object):
         f.write("    }\n")
         f.write("}\n\n")
 
-        f.write("const struct unix_funcs loader_funcs =\n")
+        f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("{\n")
+        f.write("    init_vulkan,\n")
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
@@ -2817,15 +2815,20 @@ class VkGenerator(object):
                 continue
 
             f.write("    &{1}{0},\n".format(vk_func.name, prefix))
+        f.write("};\n")
+        f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
+
+        f.write("static NTSTATUS WINAPI wine_vk_call(enum unix_call code, void *params)\n")
+        f.write("{\n")
+        f.write("    return __wine_unix_call_funcs[code](params);\n")
+        f.write("}\n\n")
+
+        f.write("const struct unix_funcs loader_funcs =\n")
+        f.write("{\n")
+        f.write("    &wine_vk_call,\n")
         f.write("    &wine_vk_is_available_instance_function,\n")
         f.write("    &wine_vk_is_available_device_function,\n")
-        f.write("};\n\n")
-
-        f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
-        f.write("{\n")
-        f.write("    init_vulkan,\n")
         f.write("};\n")
-        f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n")
 
     def generate_thunks_h(self, f, prefix):
         self._generate_copyright(f)
@@ -2843,7 +2846,7 @@ class VkGenerator(object):
             if vk_func.needs_thunk() and not vk_func.needs_private_thunk():
                 continue
 
-            f.write("NTSTATUS WINAPI {0}{1}(void *args) DECLSPEC_HIDDEN;\n".format(prefix, vk_func.name))
+            f.write("NTSTATUS {0}{1}(void *args) DECLSPEC_HIDDEN;\n".format(prefix, vk_func.name))
         f.write("\n")
 
         f.write("/* Private thunks */\n")
@@ -3013,24 +3016,16 @@ class VkGenerator(object):
         f.write("#ifndef __WINE_VULKAN_LOADER_THUNKS_H\n")
         f.write("#define __WINE_VULKAN_LOADER_THUNKS_H\n\n")
 
-        f.write("struct unix_funcs\n")
+        f.write("enum unix_call\n")
         f.write("{\n")
+        f.write("    unix_init,\n")
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
-            f.write("    NTSTATUS (WINAPI *p_{1})(void *args);\n".format(vk_func.type, vk_func.name))
-        f.write("\n")
-        f.write("    /* winevulkan specific functions */\n")
-        f.write("    BOOL (WINAPI *p_is_available_instance_function)(VkInstance, const char *);\n")
-        f.write("    BOOL (WINAPI *p_is_available_device_function)(VkDevice, const char *);\n")
-        f.write("};\n\n")
-
-        f.write("enum unix_call\n")
-        f.write("{\n")
-        f.write("    unix_init,\n")
+            f.write("    unix_{0},\n".format(vk_func.name))
         f.write("    unix_count,\n")
         f.write("};\n\n")
 

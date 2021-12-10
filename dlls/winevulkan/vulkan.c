@@ -627,7 +627,7 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
     free(instance);
 }
 
-NTSTATUS WINAPI wine_vkAllocateCommandBuffers(void *args)
+NTSTATUS wine_vkAllocateCommandBuffers(void *args)
 {
     struct vkAllocateCommandBuffers_params *params = args;
     VkDevice device = params->device;
@@ -686,7 +686,7 @@ NTSTATUS WINAPI wine_vkAllocateCommandBuffers(void *args)
     return res;
 }
 
-NTSTATUS WINAPI wine_vkCreateDevice(void *args)
+NTSTATUS wine_vkCreateDevice(void *args)
 {
     struct vkCreateDevice_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -784,7 +784,7 @@ fail:
     return res;
 }
 
-NTSTATUS WINAPI wine_vkCreateInstance(void *args)
+NTSTATUS wine_vkCreateInstance(void *args)
 {
     struct vkCreateInstance_params *params = args;
     const VkInstanceCreateInfo *create_info = params->pCreateInfo;
@@ -866,7 +866,7 @@ NTSTATUS WINAPI wine_vkCreateInstance(void *args)
     return VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkDestroyDevice(void *args)
+NTSTATUS wine_vkDestroyDevice(void *args)
 {
     struct vkDestroyDevice_params *params = args;
     VkDevice device = params->device;
@@ -881,7 +881,7 @@ NTSTATUS WINAPI wine_vkDestroyDevice(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkDestroyInstance(void *args)
+NTSTATUS wine_vkDestroyInstance(void *args)
 {
     struct vkDestroyInstance_params *params = args;
     VkInstance instance = params->instance;
@@ -896,7 +896,7 @@ NTSTATUS WINAPI wine_vkDestroyInstance(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkEnumerateDeviceExtensionProperties(void *args)
+NTSTATUS wine_vkEnumerateDeviceExtensionProperties(void *args)
 {
     struct vkEnumerateDeviceExtensionProperties_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -926,7 +926,7 @@ NTSTATUS WINAPI wine_vkEnumerateDeviceExtensionProperties(void *args)
     return *count < phys_dev->extension_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkEnumerateInstanceExtensionProperties(void *args)
+NTSTATUS wine_vkEnumerateInstanceExtensionProperties(void *args)
 {
     struct vkEnumerateInstanceExtensionProperties_params *params = args;
     uint32_t *count = params->pPropertyCount;
@@ -985,7 +985,7 @@ NTSTATUS WINAPI wine_vkEnumerateInstanceExtensionProperties(void *args)
     return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkEnumerateDeviceLayerProperties(void *args)
+NTSTATUS wine_vkEnumerateDeviceLayerProperties(void *args)
 {
     struct vkEnumerateDeviceLayerProperties_params *params = args;
     uint32_t *count = params->pPropertyCount;
@@ -996,7 +996,7 @@ NTSTATUS WINAPI wine_vkEnumerateDeviceLayerProperties(void *args)
     return VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkEnumerateInstanceVersion(void *args)
+NTSTATUS wine_vkEnumerateInstanceVersion(void *args)
 {
     struct vkEnumerateInstanceVersion_params *params = args;
     uint32_t *version = params->pApiVersion;
@@ -1022,7 +1022,7 @@ NTSTATUS WINAPI wine_vkEnumerateInstanceVersion(void *args)
     return res;
 }
 
-VkResult WINAPI wine_vkEnumeratePhysicalDevices(void *args)
+VkResult wine_vkEnumeratePhysicalDevices(void *args)
 {
     struct vkEnumeratePhysicalDevices_params *params = args;
     VkInstance instance = params->instance;
@@ -1048,7 +1048,7 @@ VkResult WINAPI wine_vkEnumeratePhysicalDevices(void *args)
     return *count < instance->phys_dev_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkFreeCommandBuffers(void *args)
+NTSTATUS wine_vkFreeCommandBuffers(void *args)
 {
     struct vkFreeCommandBuffers_params *params = args;
     VkDevice device = params->device;
@@ -1081,7 +1081,7 @@ static VkQueue wine_vk_device_find_queue(VkDevice device, const VkDeviceQueueInf
     return VK_NULL_HANDLE;
 }
 
-NTSTATUS WINAPI wine_vkGetDeviceQueue(void *args)
+NTSTATUS wine_vkGetDeviceQueue(void *args)
 {
     struct vkGetDeviceQueue_params *params = args;
     VkDevice device = params->device;
@@ -1102,7 +1102,7 @@ NTSTATUS WINAPI wine_vkGetDeviceQueue(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkGetDeviceQueue2(void *args)
+NTSTATUS wine_vkGetDeviceQueue2(void *args)
 {
     struct vkGetDeviceQueue2_params *params = args;
     VkDevice device = params->device;
@@ -1119,7 +1119,7 @@ NTSTATUS WINAPI wine_vkGetDeviceQueue2(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkCreateCommandPool(void *args)
+NTSTATUS wine_vkCreateCommandPool(void *args)
 {
     struct vkCreateCommandPool_params *params = args;
     VkDevice device = params->device;
@@ -1154,7 +1154,7 @@ NTSTATUS WINAPI wine_vkCreateCommandPool(void *args)
     return res;
 }
 
-NTSTATUS WINAPI wine_vkDestroyCommandPool(void *args)
+NTSTATUS wine_vkDestroyCommandPool(void *args)
 {
     struct vkDestroyCommandPool_params *params = args;
     VkDevice device = params->device;
@@ -1213,7 +1213,7 @@ static VkResult wine_vk_enumerate_physical_device_groups(struct VkInstance_T *in
     return res;
 }
 
-NTSTATUS WINAPI wine_vkEnumeratePhysicalDeviceGroups(void *args)
+NTSTATUS wine_vkEnumeratePhysicalDeviceGroups(void *args)
 {
     struct vkEnumeratePhysicalDeviceGroups_params *params = args;
     VkInstance instance = params->instance;
@@ -1225,7 +1225,7 @@ NTSTATUS WINAPI wine_vkEnumeratePhysicalDeviceGroups(void *args)
             instance->funcs.p_vkEnumeratePhysicalDeviceGroups, count, properties);
 }
 
-NTSTATUS WINAPI wine_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
+NTSTATUS wine_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
 {
     struct vkEnumeratePhysicalDeviceGroupsKHR_params *params = args;
     VkInstance instance = params->instance;
@@ -1237,7 +1237,7 @@ NTSTATUS WINAPI wine_vkEnumeratePhysicalDeviceGroupsKHR(void *args)
             instance->funcs.p_vkEnumeratePhysicalDeviceGroupsKHR, count, properties);
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalFenceProperties(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceExternalFenceProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalFenceProperties_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1251,7 +1251,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalFenceProperties(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalFencePropertiesKHR_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1265,7 +1265,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalBufferProperties(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceExternalBufferProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferProperties_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1277,7 +1277,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalBufferProperties(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalBufferPropertiesKHR_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1289,7 +1289,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceImageFormatProperties2(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1313,7 +1313,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2(void *args)
     return res;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceImageFormatProperties2KHR_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1383,7 +1383,7 @@ static inline uint64_t convert_timestamp(VkTimeDomainEXT host_domain, VkTimeDoma
     return value;
 }
 
-NTSTATUS WINAPI wine_vkGetCalibratedTimestampsEXT(void *args)
+NTSTATUS wine_vkGetCalibratedTimestampsEXT(void *args)
 {
     struct vkGetCalibratedTimestampsEXT_params *params = args;
     VkDevice device = params->device;
@@ -1418,7 +1418,7 @@ NTSTATUS WINAPI wine_vkGetCalibratedTimestampsEXT(void *args)
     return res;
 }
 
-VkResult WINAPI wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
+VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
 {
     struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1493,7 +1493,7 @@ VkResult WINAPI wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
     return res;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalSemaphoreProperties(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceExternalSemaphoreProperties(void *args)
 {
     struct vkGetPhysicalDeviceExternalSemaphoreProperties_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1507,7 +1507,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalSemaphoreProperties(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceExternalSemaphorePropertiesKHR_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1521,7 +1521,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(void *arg
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkCreateWin32SurfaceKHR(void *args)
+NTSTATUS wine_vkCreateWin32SurfaceKHR(void *args)
 {
     struct vkCreateWin32SurfaceKHR_params *params = args;
     VkInstance instance = params->instance;
@@ -1558,7 +1558,7 @@ NTSTATUS WINAPI wine_vkCreateWin32SurfaceKHR(void *args)
     return VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkDestroySurfaceKHR(void *args)
+NTSTATUS wine_vkDestroySurfaceKHR(void *args)
 {
     struct vkDestroySurfaceKHR_params *params = args;
     VkInstance instance = params->instance;
@@ -1593,7 +1593,7 @@ static inline void adjust_max_image_count(VkPhysicalDevice phys_dev, VkSurfaceCa
     }
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilitiesKHR_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1611,7 +1611,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
     return res;
 }
 
-NTSTATUS WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 {
     struct vkGetPhysicalDeviceSurfaceCapabilities2KHR_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
@@ -1629,7 +1629,7 @@ NTSTATUS WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
     return res;
 }
 
-NTSTATUS WINAPI wine_vkCreateDebugUtilsMessengerEXT(void *args)
+NTSTATUS wine_vkCreateDebugUtilsMessengerEXT(void *args)
 {
     struct vkCreateDebugUtilsMessengerEXT_params *params = args;
     VkInstance instance = params->instance;
@@ -1671,7 +1671,7 @@ NTSTATUS WINAPI wine_vkCreateDebugUtilsMessengerEXT(void *args)
     return VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkDestroyDebugUtilsMessengerEXT(void *args)
+NTSTATUS wine_vkDestroyDebugUtilsMessengerEXT(void *args)
 {
     struct vkDestroyDebugUtilsMessengerEXT_params *params = args;
     VkInstance instance = params->instance;
@@ -1693,7 +1693,7 @@ NTSTATUS WINAPI wine_vkDestroyDebugUtilsMessengerEXT(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkCreateDebugReportCallbackEXT(void *args)
+NTSTATUS wine_vkCreateDebugReportCallbackEXT(void *args)
 {
     struct vkCreateDebugReportCallbackEXT_params *params = args;
     VkInstance instance = params->instance;
@@ -1735,7 +1735,7 @@ NTSTATUS WINAPI wine_vkCreateDebugReportCallbackEXT(void *args)
     return VK_SUCCESS;
 }
 
-NTSTATUS WINAPI wine_vkDestroyDebugReportCallbackEXT(void *args)
+NTSTATUS wine_vkDestroyDebugReportCallbackEXT(void *args)
 {
     struct vkDestroyDebugReportCallbackEXT_params *params = args;
     VkInstance instance = params->instance;
