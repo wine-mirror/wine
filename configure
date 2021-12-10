@@ -1717,7 +1717,6 @@ enable_winecrt0
 enable_wined3d
 enable_winegstreamer
 enable_winehid_sys
-enable_winejoystick_drv
 enable_winemac_drv
 enable_winemapi
 enable_wineoss_drv
@@ -8318,12 +8317,6 @@ then :
   printf "%s\n" "#define HAVE_LINUX_IOCTL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "linux/joystick.h" "ac_cv_header_linux_joystick_h" "$ac_includes_default"
-if test "x$ac_cv_header_linux_joystick_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_LINUX_JOYSTICK_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "linux/major.h" "ac_cv_header_linux_major_h" "$ac_includes_default"
 if test "x$ac_cv_header_linux_major_h" = xyes
 then :
@@ -10870,7 +10863,6 @@ esac
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
-test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 
 if test "x$with_mingw" != xno
@@ -20567,53 +20559,6 @@ printf "%s\n" "#define HAVE_LINUX_GETHOSTBYNAME_R_6 1" >>confdefs.h
 
    fi
 
-if test "$ac_cv_header_linux_joystick_h" = "yes"
-then
-   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether linux/joystick.h uses the Linux 2.2+ API" >&5
-printf %s "checking whether linux/joystick.h uses the Linux 2.2+ API... " >&6; }
-if test ${wine_cv_linux_joystick_22_api+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-	#include <sys/ioctl.h>
-	#include <sys/types.h>
-	#include <linux/joystick.h>
-
-	struct js_event blub;
-	#if !defined(JS_EVENT_AXIS) || !defined(JS_EVENT_BUTTON)
-	#error "no 2.2 header"
-	#endif
-
-int
-main (void)
-{
-/*empty*/
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  wine_cv_linux_joystick_22_api=yes
-else $as_nop
-  wine_cv_linux_joystick_22_api=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_linux_joystick_22_api" >&5
-printf "%s\n" "$wine_cv_linux_joystick_22_api" >&6; }
-   if test "$wine_cv_linux_joystick_22_api" = "yes"
-   then
-
-printf "%s\n" "#define HAVE_LINUX_22_JOYSTICK_API 1" >>confdefs.h
-
-   fi
-fi
-
 ac_fn_c_check_member "$LINENO" "struct msghdr" "msg_accrights" "ac_cv_member_struct_msghdr_msg_accrights" "#include <sys/types.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_UN_H
@@ -22516,7 +22461,6 @@ wine_fn_config_makefile dlls/winecrt0 enable_winecrt0
 wine_fn_config_makefile dlls/wined3d enable_wined3d
 wine_fn_config_makefile dlls/winegstreamer enable_winegstreamer
 wine_fn_config_makefile dlls/winehid.sys enable_winehid_sys
-wine_fn_config_makefile dlls/winejoystick.drv enable_winejoystick_drv
 wine_fn_config_makefile dlls/winemac.drv enable_winemac_drv
 wine_fn_config_makefile dlls/winemapi enable_winemapi
 wine_fn_config_makefile dlls/wineoss.drv enable_wineoss_drv

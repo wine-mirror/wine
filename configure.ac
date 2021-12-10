@@ -445,7 +445,6 @@ AC_CHECK_HEADERS(\
 	linux/hidraw.h \
 	linux/input.h \
 	linux/ioctl.h \
-	linux/joystick.h \
 	linux/major.h \
 	linux/param.h \
 	linux/serial.h \
@@ -866,7 +865,6 @@ esac
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
-test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl Check for cross compiler to build test programs
 AC_SUBST(CROSSTARGET)
@@ -2107,28 +2105,6 @@ AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
       AC_DEFINE(HAVE_LINUX_GETHOSTBYNAME_R_6, 1,
                 [Define if Linux-style gethostbyname_r and gethostbyaddr_r are available])
    fi
-
-if test "$ac_cv_header_linux_joystick_h" = "yes"
-then
-   AC_CACHE_CHECK([whether linux/joystick.h uses the Linux 2.2+ API],
-   	wine_cv_linux_joystick_22_api,
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-	#include <sys/ioctl.h>
-	#include <sys/types.h>
-	#include <linux/joystick.h>
-
-	struct js_event blub;
-	#if !defined(JS_EVENT_AXIS) || !defined(JS_EVENT_BUTTON)
-	#error "no 2.2 header"
-	#endif
-	]], [[/*empty*/]])],[wine_cv_linux_joystick_22_api=yes],[wine_cv_linux_joystick_22_api=no])
-   )
-   if test "$wine_cv_linux_joystick_22_api" = "yes"
-   then
-      AC_DEFINE(HAVE_LINUX_22_JOYSTICK_API, 1,
-                [Define if <linux/joystick.h> defines the Linux 2.2 joystick API])
-   fi
-fi
 
 dnl Check for socket structure members
 AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr_un.sun_len],,,
@@ -3409,7 +3385,6 @@ WINE_CONFIG_MAKEFILE(dlls/winecrt0)
 WINE_CONFIG_MAKEFILE(dlls/wined3d)
 WINE_CONFIG_MAKEFILE(dlls/winegstreamer)
 WINE_CONFIG_MAKEFILE(dlls/winehid.sys)
-WINE_CONFIG_MAKEFILE(dlls/winejoystick.drv)
 WINE_CONFIG_MAKEFILE(dlls/winemac.drv)
 WINE_CONFIG_MAKEFILE(dlls/winemapi)
 WINE_CONFIG_MAKEFILE(dlls/wineoss.drv)

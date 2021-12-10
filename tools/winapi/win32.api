@@ -5615,19 +5615,6 @@ IUnknown *
 IWineD3D *
 IWineD3DClipper *
 
-%%winejoystick.drv
-
-%long
-
-HDRVR
-LPARAM
-LRESULT
-UINT
-
-%long --pointer
-
-DWORD_PTR
-
 %%l3codeca.acm
 
 %long

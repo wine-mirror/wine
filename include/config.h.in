@@ -188,9 +188,6 @@
 /* Define to 1 if you have the <link.h> header file. */
 #undef HAVE_LINK_H
 
-/* Define if <linux/joystick.h> defines the Linux 2.2 joystick API */
-#undef HAVE_LINUX_22_JOYSTICK_API
-
 /* Define to 1 if you have the <linux/capi.h> header file. */
 #undef HAVE_LINUX_CAPI_H
 
@@ -220,9 +217,6 @@
 
 /* Define to 1 if you have the <linux/irda.h> header file. */
 #undef HAVE_LINUX_IRDA_H
-
-/* Define to 1 if you have the <linux/joystick.h> header file. */
-#undef HAVE_LINUX_JOYSTICK_H
 
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
