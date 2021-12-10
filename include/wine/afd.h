@@ -76,6 +76,7 @@ struct afd_bind_params
     int unknown;
     struct WS(sockaddr) addr; /* variable size */
 };
+C_ASSERT( sizeof(struct afd_bind_params) == 20 );
 
 struct afd_listen_params
 {
@@ -83,6 +84,7 @@ struct afd_listen_params
     int backlog;
     int unknown2;
 };
+C_ASSERT( sizeof(struct afd_listen_params) == 12 );
 
 #define AFD_RECV_FORCE_ASYNC    0x2
 
@@ -138,6 +140,7 @@ struct afd_get_events_params
     int flags;
     NTSTATUS status[13];
 };
+C_ASSERT( sizeof(struct afd_get_events_params) == 56 );
 
 #define WINE_AFD_IOC(x) CTL_CODE(FILE_DEVICE_NETWORK, x, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -244,12 +247,14 @@ struct afd_create_params
     int family, type, protocol;
     unsigned int flags;
 };
+C_ASSERT( sizeof(struct afd_create_params) == 16 );
 
 struct afd_accept_into_params
 {
     ULONG accept_handle;
     unsigned int recv_len, local_len;
 };
+C_ASSERT( sizeof(struct afd_accept_into_params) == 12 );
 
 struct afd_connect_params
 {
@@ -258,6 +263,7 @@ struct afd_connect_params
     /* VARARG(addr, struct WS(sockaddr), addr_len); */
     /* VARARG(data, bytes); */
 };
+C_ASSERT( sizeof(struct afd_connect_params) == 8 );
 
 struct afd_recvmsg_params
 {
@@ -297,10 +303,12 @@ struct afd_message_select_params
     unsigned int message;
     int mask;
 };
+C_ASSERT( sizeof(struct afd_message_select_params) == 16 );
 
 struct afd_get_info_params
 {
     int family, type, protocol;
 };
+C_ASSERT( sizeof(struct afd_get_info_params) == 12 );
 
 #endif
