@@ -90,54 +90,6 @@ typedef struct
     FONTINFO16 fi;
 } FNT_HEADER;
 
-typedef struct
-{
-    WORD  offset;
-    WORD  length;
-    WORD  flags;
-    WORD  id;
-    WORD  handle;
-    WORD  usage;
-} NE_NAMEINFO;
-
-typedef struct
-{
-    WORD  type_id;
-    WORD  count;
-    DWORD resloader;
-} NE_TYPEINFO;
-
-#define NE_FFLAGS_SINGLEDATA    0x0001
-#define NE_FFLAGS_MULTIPLEDATA  0x0002
-#define NE_FFLAGS_WIN32         0x0010
-#define NE_FFLAGS_FRAMEBUF      0x0100
-#define NE_FFLAGS_CONSOLE       0x0200
-#define NE_FFLAGS_GUI           0x0300
-#define NE_FFLAGS_SELFLOAD      0x0800
-#define NE_FFLAGS_LINKERROR     0x2000
-#define NE_FFLAGS_CALLWEP       0x4000
-#define NE_FFLAGS_LIBMODULE     0x8000
-
-#define NE_OSFLAGS_WINDOWS      0x02
-
-#define NE_RSCTYPE_FONTDIR            0x8007
-#define NE_RSCTYPE_FONT               0x8008
-#define NE_RSCTYPE_SCALABLE_FONTPATH  0x80cc
-
-#define NE_SEGFLAGS_DATA        0x0001
-#define NE_SEGFLAGS_ALLOCATED   0x0002
-#define NE_SEGFLAGS_LOADED      0x0004
-#define NE_SEGFLAGS_ITERATED    0x0008
-#define NE_SEGFLAGS_MOVEABLE    0x0010
-#define NE_SEGFLAGS_SHAREABLE   0x0020
-#define NE_SEGFLAGS_PRELOAD     0x0040
-#define NE_SEGFLAGS_EXECUTEONLY 0x0080
-#define NE_SEGFLAGS_READONLY    0x0080
-#define NE_SEGFLAGS_RELOC_DATA  0x0100
-#define NE_SEGFLAGS_SELFLOAD    0x0800
-#define NE_SEGFLAGS_DISCARDABLE 0x1000
-#define NE_SEGFLAGS_32BIT       0x2000
-
 typedef struct {
     WORD width;
     DWORD offset;
@@ -188,28 +140,13 @@ static FT_Version_t FT_Version;
 
 #include "poppack.h"
 
+unsigned char *output_buffer = NULL;
+size_t output_buffer_pos = 0;
+size_t output_buffer_size = 0;
+
 #define GET_BE_WORD(ptr)  MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
 #define GET_BE_DWORD(ptr) ((DWORD)MAKELONG( GET_BE_WORD(&((WORD *)(ptr))[1]), \
                                             GET_BE_WORD(&((WORD *)(ptr))[0]) ))
-#ifdef WORDS_BIGENDIAN
-static WORD byteswap_word(WORD x)
-{
-    return ( ( (x & 0xff) << 8) |
-	     ( (x & 0xff00) >> 8) );
-}
-static DWORD byteswap_dword(DWORD x)
-{
-    return ( ( (x & 0xff) << 24) |
-	     ( (x & 0xff00) << 8) |
-	     ( (x & 0xff0000) >> 8) |
-	     ( (x & 0xff000000) >> 24) );
-}
-# define PUT_LE_WORD(x) byteswap_word(x)
-# define PUT_LE_DWORD(x) byteswap_dword(x)
-#else
-# define PUT_LE_WORD(x) (x)
-# define PUT_LE_DWORD(x) (x)
-#endif
 
 struct fontinfo
 {
@@ -424,7 +361,6 @@ static const struct { int codepage; const WCHAR *table; } encodings[] =
     {    0, encoding_1252 },  /* default encoding */
 };
 
-static char *option_output;
 static int option_defchar = ' ';
 static int option_dpi = 96;
 static int option_fnt_mode = 0;
@@ -776,51 +712,92 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     return info;
 }
 
-static void adjust_fontinfo( FONTINFO16 * fi )
+static void put_fontdir( const struct fontinfo *info )
 {
-    fi->dfType = PUT_LE_WORD(fi->dfType);
-    fi->dfPoints = PUT_LE_WORD(fi->dfPoints);
-    fi->dfVertRes = PUT_LE_WORD(fi->dfVertRes);
-    fi->dfHorizRes = PUT_LE_WORD(fi->dfHorizRes);
-    fi->dfAscent = PUT_LE_WORD(fi->dfAscent);
-    fi->dfInternalLeading = PUT_LE_WORD(fi->dfInternalLeading);
-    fi->dfExternalLeading = PUT_LE_WORD(fi->dfExternalLeading);
-    fi->dfWeight = PUT_LE_WORD(fi->dfWeight);
-    fi->dfPixWidth = PUT_LE_WORD(fi->dfPixWidth);
-    fi->dfPixHeight = PUT_LE_WORD(fi->dfPixHeight);
-    fi->dfAvgWidth = PUT_LE_WORD(fi->dfAvgWidth);
-    fi->dfMaxWidth = PUT_LE_WORD(fi->dfMaxWidth);
-    fi->dfWidthBytes = PUT_LE_WORD(fi->dfWidthBytes);
-    fi->dfAspace = PUT_LE_WORD(fi->dfAspace);
-    fi->dfBspace = PUT_LE_WORD(fi->dfBspace);
-    fi->dfCspace = PUT_LE_WORD(fi->dfCspace);
-    fi->dfDevice = PUT_LE_DWORD(fi->dfDevice);
-    fi->dfFace = PUT_LE_DWORD(fi->dfFace);
-    fi->dfBitsPointer = PUT_LE_DWORD(fi->dfBitsPointer);
-    fi->dfBitsOffset = PUT_LE_DWORD(fi->dfBitsOffset);
-    fi->dfFlags = PUT_LE_DWORD(fi->dfFlags);
-    fi->dfColorPointer = PUT_LE_DWORD(fi->dfColorPointer);
+    const char *name = get_face_name( info );
+
+    put_word( info->hdr.dfVersion );
+    put_dword( info->hdr.dfSize );
+    put_data( info->hdr.dfCopyright, sizeof(info->hdr.dfCopyright) );
+    put_word( info->hdr.fi.dfType );
+    put_word( info->hdr.fi.dfPoints );
+    put_word( info->hdr.fi.dfVertRes );
+    put_word( info->hdr.fi.dfHorizRes );
+    put_word( info->hdr.fi.dfAscent );
+    put_word( info->hdr.fi.dfInternalLeading );
+    put_word( info->hdr.fi.dfExternalLeading );
+    put_byte( info->hdr.fi.dfItalic );
+    put_byte( info->hdr.fi.dfUnderline );
+    put_byte( info->hdr.fi.dfStrikeOut );
+    put_word( info->hdr.fi.dfWeight );
+    put_byte( info->hdr.fi.dfCharSet );
+    put_word( info->hdr.fi.dfPixWidth );
+    put_word( info->hdr.fi.dfPixHeight );
+    put_byte( info->hdr.fi.dfPitchAndFamily );
+    put_word( info->hdr.fi.dfAvgWidth );
+    put_word( info->hdr.fi.dfMaxWidth );
+    put_byte( info->hdr.fi.dfFirstChar );
+    put_byte( info->hdr.fi.dfLastChar );
+    put_byte( info->hdr.fi.dfDefaultChar );
+    put_byte( info->hdr.fi.dfBreakChar );
+    put_word( info->hdr.fi.dfWidthBytes );
+    put_dword( info->hdr.fi.dfDevice );
+    put_dword( info->hdr.fi.dfFace );
+    put_dword( 0 );  /* dfReserved */
+    put_byte( 0 );  /* szDeviceName */
+    put_data( name, strlen(name) + 1 );  /* szFaceName */
 }
 
-static void write_fontinfo( const struct fontinfo *info, FILE *fp )
+static void put_font( const struct fontinfo *info )
 {
-    FNT_HEADER tmp_hdr;
     int num_chars, i;
-    CHAR_TABLE_ENTRY tmp_chartable[258];
-    memcpy(&tmp_hdr, &info->hdr, sizeof(info->hdr));
-    tmp_hdr.dfVersion = PUT_LE_WORD(tmp_hdr.dfVersion);
-    tmp_hdr.dfSize = PUT_LE_DWORD(tmp_hdr.dfSize);
-    adjust_fontinfo(&(tmp_hdr.fi));
-    fwrite( &tmp_hdr, sizeof(info->hdr), 1, fp );
-    num_chars = ((unsigned char)info->hdr.fi.dfLastChar - (unsigned char)info->hdr.fi.dfFirstChar) + 3;
 
-    memcpy(&tmp_chartable, info->dfCharTable + info->hdr.fi.dfFirstChar, num_chars * sizeof(CHAR_TABLE_ENTRY));
-    for (i=0; i < num_chars; ++i) {
-        tmp_chartable[i].width = PUT_LE_WORD(tmp_chartable[i].width);
-        tmp_chartable[i].offset = PUT_LE_DWORD(tmp_chartable[i].offset);
+    put_word( info->hdr.dfVersion );
+    put_dword( info->hdr.dfSize );
+    put_data( info->hdr.dfCopyright, sizeof(info->hdr.dfCopyright) );
+    put_word( info->hdr.fi.dfType );
+    put_word( info->hdr.fi.dfPoints );
+    put_word( info->hdr.fi.dfVertRes );
+    put_word( info->hdr.fi.dfHorizRes );
+    put_word( info->hdr.fi.dfAscent );
+    put_word( info->hdr.fi.dfInternalLeading );
+    put_word( info->hdr.fi.dfExternalLeading );
+    put_byte( info->hdr.fi.dfItalic );
+    put_byte( info->hdr.fi.dfUnderline );
+    put_byte( info->hdr.fi.dfStrikeOut );
+    put_word( info->hdr.fi.dfWeight );
+    put_byte( info->hdr.fi.dfCharSet );
+    put_word( info->hdr.fi.dfPixWidth );
+    put_word( info->hdr.fi.dfPixHeight );
+    put_byte( info->hdr.fi.dfPitchAndFamily );
+    put_word( info->hdr.fi.dfAvgWidth );
+    put_word( info->hdr.fi.dfMaxWidth );
+    put_byte( info->hdr.fi.dfFirstChar );
+    put_byte( info->hdr.fi.dfLastChar );
+    put_byte( info->hdr.fi.dfDefaultChar );
+    put_byte( info->hdr.fi.dfBreakChar );
+    put_word( info->hdr.fi.dfWidthBytes );
+    put_dword( info->hdr.fi.dfDevice );
+    put_dword( info->hdr.fi.dfFace );
+    put_dword( info->hdr.fi.dfBitsPointer );
+    put_dword( info->hdr.fi.dfBitsOffset );
+    put_byte( info->hdr.fi.dfReserved );
+    put_dword( info->hdr.fi.dfFlags );
+    put_word( info->hdr.fi.dfAspace );
+    put_word( info->hdr.fi.dfBspace );
+    put_word( info->hdr.fi.dfCspace );
+    put_dword( info->hdr.fi.dfColorPointer );
+    put_dword( info->hdr.fi.dfReserved1[0] );
+    put_dword( info->hdr.fi.dfReserved1[1] );
+    put_dword( info->hdr.fi.dfReserved1[2] );
+    put_dword( info->hdr.fi.dfReserved1[3] );
+    num_chars = ((unsigned char)info->hdr.fi.dfLastChar - (unsigned char)info->hdr.fi.dfFirstChar) + 3;
+    for (i = 0; i < num_chars; i++)
+    {
+        put_word( info->dfCharTable[info->hdr.fi.dfFirstChar + i].width );
+        put_dword( info->dfCharTable[info->hdr.fi.dfFirstChar + i].offset );
     }
-    fwrite( tmp_chartable, sizeof(CHAR_TABLE_ENTRY), num_chars, fp );
-    fwrite( info->data, info->hdr.dfSize - info->hdr.fi.dfBitsOffset, 1, fp );
+    put_data( info->data, info->hdr.dfSize - info->hdr.fi.dfBitsOffset );
 }
 
 static void option_callback( int optc, char *optarg )
@@ -831,7 +808,7 @@ static void option_callback( int optc, char *optarg )
         option_defchar = atoi( optarg );
         break;
     case 'o':
-        option_output = xstrdup( optarg );
+        output_name = xstrdup( optarg );
         break;
     case 'q':
         option_quiet = 1;
@@ -855,22 +832,18 @@ static void option_callback( int optc, char *optarg )
 
 int main(int argc, char **argv)
 {
-    int i, j;
-    FILE *ofp;
-    short align, num_files;
+    int i, num_files;
+    const int typeinfo_size = 4 * sizeof(WORD);
+    const int nameinfo_size = 6 * sizeof(WORD);
     int resource_table_len, non_resident_name_len, resident_name_len;
     unsigned short resource_table_off, resident_name_off, module_ref_off, non_resident_name_off, fontdir_off, font_off;
     char resident_name[200];
     int fontdir_len = 2;
     char non_resident_name[200];
-    unsigned short first_res = 0x0050, pad, res;
-    IMAGE_OS2_HEADER NE_hdr;
-    NE_TYPEINFO rc_type;
-    NE_NAMEINFO rc_name;
+    unsigned short first_res = 0x0050, res;
     struct fontinfo **info;
     const char *input_file;
     struct strarray args;
-    short tmp16;
 
     argv0 = argv[0];
     args = parse_options( argc, argv, "d:ho:qr:s", NULL, 0, option_callback );
@@ -925,32 +898,15 @@ int main(int argc, char **argv)
     non_resident_name_len = strlen(non_resident_name) + 4;
 
     /* shift count + fontdir entry + num_files of font + nul type + \007FONTDIR */
-    resource_table_len = sizeof(align) + sizeof("FONTDIR") +
-                         sizeof(NE_TYPEINFO) + sizeof(NE_NAMEINFO) +
-                         sizeof(NE_TYPEINFO) + sizeof(NE_NAMEINFO) * num_files +
-                         sizeof(NE_TYPEINFO);
-    resource_table_off = sizeof(NE_hdr);
+    resource_table_len = sizeof(WORD) /* align */ + sizeof("FONTDIR") +
+                         typeinfo_size + nameinfo_size +
+                         typeinfo_size + nameinfo_size * num_files +
+                         typeinfo_size;
+    resource_table_off = sizeof(IMAGE_OS2_HEADER);
     resident_name_off = resource_table_off + resource_table_len;
     resident_name_len = strlen(resident_name) + 4;
     module_ref_off = resident_name_off + resident_name_len;
-    non_resident_name_off = sizeof(MZ_hdr) + module_ref_off + sizeof(align);
-
-    memset(&NE_hdr, 0, sizeof(NE_hdr));
-    NE_hdr.ne_magic = PUT_LE_WORD(0x454e);
-    NE_hdr.ne_ver = 5;
-    NE_hdr.ne_rev = 1;
-    NE_hdr.ne_flags = PUT_LE_WORD(NE_FFLAGS_LIBMODULE | NE_FFLAGS_GUI);
-    NE_hdr.ne_cbnrestab = PUT_LE_WORD(non_resident_name_len);
-    NE_hdr.ne_segtab = PUT_LE_WORD(sizeof(NE_hdr));
-    NE_hdr.ne_rsrctab = PUT_LE_WORD(sizeof(NE_hdr));
-    NE_hdr.ne_restab = PUT_LE_WORD(resident_name_off);
-    NE_hdr.ne_modtab = PUT_LE_WORD(module_ref_off);
-    NE_hdr.ne_imptab = PUT_LE_WORD(module_ref_off);
-    NE_hdr.ne_enttab = NE_hdr.ne_modtab;
-    NE_hdr.ne_nrestab = PUT_LE_DWORD(non_resident_name_off);
-    NE_hdr.ne_align = PUT_LE_WORD(4);
-    NE_hdr.ne_exetyp = NE_OSFLAGS_WINDOWS;
-    NE_hdr.ne_expver = PUT_LE_WORD(0x400);
+    non_resident_name_off = sizeof(MZ_hdr) + module_ref_off + sizeof(WORD) /* align */;
 
     fontdir_off = (non_resident_name_off + non_resident_name_len + 15) & ~0xf;
     font_off = (fontdir_off + fontdir_len + 15) & ~0x0f;
@@ -962,123 +918,122 @@ int main(int argc, char **argv)
     signal( SIGHUP, exit_on_signal );
 #endif
 
-    if (!option_output)  /* build a default output name */
-        option_output = strmake( "%s%s", get_basename_noext( input_file ),
-                                 option_fnt_mode ? ".fnt" : ".fon" );
+    if (!output_name)  /* build a default output name */
+        output_name = strmake( "%s%s", get_basename_noext( input_file ),
+                               option_fnt_mode ? ".fnt" : ".fon" );
 
-    if (!(ofp = fopen(option_output, "wb")))
-    {
-        perror( option_output );
-        exit(1);
-    }
-    output_name = option_output;
+    init_output_buffer();
     if (option_fnt_mode)
     {
-        write_fontinfo( info[0], ofp );
+        put_font( info[0] );
         goto done;
     }
 
-    fwrite(MZ_hdr, sizeof(MZ_hdr), 1, ofp);
-    fwrite(&NE_hdr, sizeof(NE_hdr), 1, ofp);
+    put_data(MZ_hdr, sizeof(MZ_hdr));
 
-    align = PUT_LE_WORD(4);
-    fwrite(&align, sizeof(align), 1, ofp);
+    /* NE header */
+    put_word( 0x454e );                           /* ne_magic */
+    put_byte( 5 );                                /* ne_ver */
+    put_byte( 1 );                                /* ne_rev */
+    put_word( module_ref_off );                   /* ne_enttab */
+    put_word( 0 );                                /* ne_cbenttab */
+    put_dword( 0 );                               /* ne_crc */
+    put_word( 0x8300 ); /* ne_flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_GUI */
+    put_word( 0 );                                /* ne_autodata */
+    put_word( 0 );                                /* ne_heap */
+    put_word( 0 );                                /* ne_stack */
+    put_dword( 0 );                               /* ne_csip */
+    put_dword( 0 );                               /* ne_sssp */
+    put_word( 0 );                                /* ne_cseg */
+    put_word( 0 );                                /* ne_cmod */
+    put_word( non_resident_name_len );            /* ne_cbnrestab */
+    put_word( sizeof(IMAGE_OS2_HEADER) );         /* ne_segtab */
+    put_word( sizeof(IMAGE_OS2_HEADER) );         /* ne_rsrctab */
+    put_word( resident_name_off );                /* ne_restab */
+    put_word( module_ref_off );                   /* ne_modtab */
+    put_word( module_ref_off );                   /* ne_imptab */
+    put_dword( non_resident_name_off );           /* ne_nrestab */
+    put_word( 0 );                                /* ne_cmovent */
+    put_word( 4 );                                /* ne_align */
+    put_word( 0 );                                /* ne_cres */
+    put_byte( 2 );               /* ne_exetyp = NE_OSFLAGS_WINDOWS */
+    put_byte( 0 );                                /* ne_flagsothers */
+    put_word( 0 );                                /* ne_pretthunks */
+    put_word( 0 );                                /* ne_psegrefbytes */
+    put_word( 0 );                                /* ne_swaparea */
+    put_word( 0x400 );                            /* ne_expver */
 
-    rc_type.type_id = PUT_LE_WORD(NE_RSCTYPE_FONTDIR);
-    rc_type.count = PUT_LE_WORD(1);
-    rc_type.resloader = 0;
-    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+    put_word( 4 );  /* align */
 
-    rc_name.offset = PUT_LE_WORD(fontdir_off >> 4);
-    rc_name.length = PUT_LE_WORD((fontdir_len + 15) >> 4);
-    rc_name.flags = PUT_LE_WORD(NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_PRELOAD);
-    rc_name.id = PUT_LE_WORD(resident_name_off - sizeof("FONTDIR") - sizeof(NE_hdr));
-    rc_name.handle = 0;
-    rc_name.usage = 0;
-    fwrite(&rc_name, sizeof(rc_name), 1, ofp);
+    /* resources */
 
-    rc_type.type_id = PUT_LE_WORD(NE_RSCTYPE_FONT);
-    rc_type.count = PUT_LE_WORD(num_files);
-    rc_type.resloader = 0;
-    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+    put_word( 0x8007 ); /* type_id = NE_RSCTYPE_FONTDIR */
+    put_word( 1 ); /* count */
+    put_dword( 0 ); /* resloader */
+
+    put_word( fontdir_off >> 4 ); /* offset */
+    put_word( (fontdir_len + 15) >> 4 ); /* length */
+    put_word( 0x0050 ); /* flags = NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_PRELOAD */
+    put_word( resident_name_off - sizeof("FONTDIR") - sizeof(IMAGE_OS2_HEADER) ); /* id */
+    put_word( 0 ); /* handle */
+    put_word( 0 ); /* usage */
+
+    put_word( 0x8008 ); /* type_id = NE_RSCTYPE_FONT */
+    put_word( num_files ); /* count */
+    put_dword( 0 ); /* resloader */
 
     for(res = first_res | 0x8000, i = 0; i < num_files; i++, res++) {
         int len = (info[i]->hdr.dfSize + 15) & ~0xf;
 
-        rc_name.offset = PUT_LE_WORD(font_off >> 4);
-        rc_name.length = PUT_LE_WORD(len >> 4);
-        rc_name.flags = PUT_LE_WORD(NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_SHAREABLE | NE_SEGFLAGS_DISCARDABLE);
-        rc_name.id = PUT_LE_WORD(res);
-        rc_name.handle = 0;
-        rc_name.usage = 0;
-        fwrite(&rc_name, sizeof(rc_name), 1, ofp);
-
+        put_word( font_off >> 4 ); /* offset */
+        put_word( len >> 4 ); /* length */
+        put_word( 0x1030 ); /* flags = NE_SEGFLAGS_MOVEABLE|NE_SEGFLAGS_SHAREABLE|NE_SEGFLAGS_DISCARDABLE */
+        put_word( res ); /* id */
+        put_word( 0 ); /* handle */
+        put_word( 0 ); /* usage */
         font_off += len;
     }
 
-    /* empty type info */
-    memset(&rc_type, 0, sizeof(rc_type));
-    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+    put_word( 0 ); /* type_id */
+    put_word( 0 ); /* count */
+    put_dword( 0 ); /* resloader */
 
-    fputc(strlen("FONTDIR"), ofp);
-    fwrite("FONTDIR", strlen("FONTDIR"), 1, ofp);
-    fputc(strlen(resident_name), ofp);
-    fwrite(resident_name, strlen(resident_name), 1, ofp);
-
-    fputc(0x00, ofp);    fputc(0x00, ofp);
-    fputc(0x00, ofp);
-    fputc(0x00, ofp);    fputc(0x00, ofp);
-
-    fputc(strlen(non_resident_name), ofp);
-    fwrite(non_resident_name, strlen(non_resident_name), 1, ofp);
-    fputc(0x00, ofp); /* terminator */
+    put_byte( strlen("FONTDIR") );
+    put_data( "FONTDIR", strlen("FONTDIR") );
+    put_byte( strlen(resident_name) );
+    put_data( resident_name, strlen(resident_name) );
+    put_byte( 0 );
+    put_byte( 0 );
+    put_byte( 0 );
+    put_byte( 0 );
+    put_byte( 0 );
+    put_byte( strlen(non_resident_name) );
+    put_data( non_resident_name, strlen(non_resident_name) );
+    put_byte( 0 );
 
     /* empty ne_modtab and ne_imptab */
-    fputc(0x00, ofp);
-    fputc(0x00, ofp);
-
-    pad = ftell(ofp) & 0xf;
-    if(pad != 0)
-        pad = 0x10 - pad;
-    for(i = 0; i < pad; i++)
-        fputc(0x00, ofp);
+    put_byte( 0 );
+    put_byte( 0 );
+    align_output( 16 );
 
     /* FONTDIR resource */
-    tmp16 = PUT_LE_WORD(num_files);
-    fwrite(&tmp16, sizeof(tmp16), 1, ofp);
+    put_word( num_files );
 
-    for(res = first_res, i = 0; i < num_files; i++, res++) {
-        FNT_HEADER tmp_hdr;
-        int sz;
-        const char *name = get_face_name( info[i] );
-        tmp16 = PUT_LE_WORD(res);
-        fwrite(&tmp16, sizeof(tmp16), 1, ofp);
-        sz = FIELD_OFFSET(FNT_HEADER,fi.dfBitsOffset);
-        memcpy(&tmp_hdr, &info[i]->hdr, sz);
-        tmp_hdr.dfVersion = PUT_LE_WORD(tmp_hdr.dfVersion);
-        tmp_hdr.dfSize = PUT_LE_DWORD(tmp_hdr.dfSize);
-        adjust_fontinfo(&(tmp_hdr.fi));
-        fwrite(&tmp_hdr, FIELD_OFFSET(FNT_HEADER,fi.dfBitsOffset), 1, ofp);
-        fputc(0x00, ofp);
-        fwrite(name, strlen(name) + 1, 1, ofp);
+    for (i = 0; i < num_files; i++)
+    {
+        put_word( first_res + i );
+        put_fontdir( info[i] );
+    }
+    align_output( 16 );
+
+    for(i = 0; i < num_files; i++)
+    {
+        put_font( info[i] );
+        align_output( 16 );
     }
 
-    pad = ftell(ofp) & 0xf;
-    if(pad != 0)
-        pad = 0x10 - pad;
-    for(i = 0; i < pad; i++)
-        fputc(0x00, ofp);
-
-    for(res = first_res, i = 0; i < num_files; i++, res++) {
-        write_fontinfo( info[i], ofp );
-        pad = info[i]->hdr.dfSize & 0xf;
-        if(pad != 0)
-            pad = 0x10 - pad;
-        for(j = 0; j < pad; j++)
-            fputc(0x00, ofp);
-    }
 done:
-    fclose(ofp);
+    flush_output_buffer( output_name );
     output_name = NULL;
     exit(0);
 }
