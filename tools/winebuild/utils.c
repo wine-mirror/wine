@@ -415,15 +415,6 @@ unsigned char *output_buffer;
 size_t output_buffer_pos;
 size_t output_buffer_size;
 
-static void check_output_buffer_space( size_t size )
-{
-    if (output_buffer_pos + size >= output_buffer_size)
-    {
-        output_buffer_size = max( output_buffer_size * 2, output_buffer_pos + size );
-        output_buffer = xrealloc( output_buffer, output_buffer_size );
-    }
-}
-
 void init_input_buffer( const char *file )
 {
     int fd;
@@ -440,22 +431,6 @@ void init_input_buffer( const char *file )
     input_buffer_size = st.st_size;
     input_buffer_pos = 0;
     byte_swapped = 0;
-}
-
-void init_output_buffer(void)
-{
-    output_buffer_size = 1024;
-    output_buffer_pos = 0;
-    output_buffer = xmalloc( output_buffer_size );
-}
-
-void flush_output_buffer(void)
-{
-    open_output_file();
-    if (fwrite( output_buffer, 1, output_buffer_pos, output_file ) != output_buffer_pos)
-        fatal_error( "Error writing to %s\n", output_file_name );
-    close_output_file();
-    free( output_buffer );
 }
 
 unsigned char get_byte(void)
@@ -490,61 +465,11 @@ unsigned int get_dword(void)
     return ret;
 }
 
-void put_data( const void *data, size_t size )
-{
-    check_output_buffer_space( size );
-    memcpy( output_buffer + output_buffer_pos, data, size );
-    output_buffer_pos += size;
-}
-
-void put_byte( unsigned char val )
-{
-    check_output_buffer_space( 1 );
-    output_buffer[output_buffer_pos++] = val;
-}
-
-void put_word( unsigned short val )
-{
-    if (byte_swapped) val = (val << 8) | (val >> 8);
-    put_data( &val, sizeof(val) );
-}
-
-void put_dword( unsigned int val )
-{
-    if (byte_swapped)
-        val = ((val << 24) | ((val << 8) & 0x00ff0000) | ((val >> 8) & 0x0000ff00) | (val >> 24));
-    put_data( &val, sizeof(val) );
-}
-
-void put_qword( unsigned int val )
-{
-    if (byte_swapped)
-    {
-        put_dword( 0 );
-        put_dword( val );
-    }
-    else
-    {
-        put_dword( val );
-        put_dword( 0 );
-    }
-}
-
 /* pointer-sized word */
 void put_pword( unsigned int val )
 {
     if (get_ptr_size() == 8) put_qword( val );
     else put_dword( val );
-}
-
-void align_output( unsigned int align )
-{
-    size_t size = align - (output_buffer_pos % align);
-
-    if (size == align) return;
-    check_output_buffer_space( size );
-    memset( output_buffer + output_buffer_pos, 0, size );
-    output_buffer_pos += size;
 }
 
 /* output a standard header for generated files */

@@ -222,32 +222,6 @@ static struct resource
 } resources[16];
 static unsigned int nb_resources;
 
-static void check_output_buffer_space( size_t size )
-{
-    if (output_buffer_pos + size >= output_buffer_size)
-    {
-        output_buffer_size = max( output_buffer_size * 2, output_buffer_pos + size );
-        output_buffer = xrealloc( output_buffer, output_buffer_size );
-    }
-}
-
-void init_output_buffer(void)
-{
-    output_buffer_size = 1024;
-    output_buffer_pos = 0;
-    output_buffer = xmalloc( output_buffer_size );
-}
-
-void flush_output_buffer( const char *name )
-{
-    int fd = open( name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666 );
-    if (fd == -1) error( "Error creating %s\n", name );
-    if (write( fd, output_buffer, output_buffer_pos ) != output_buffer_pos)
-        error( "Error writing to %s\n", name );
-    close( fd );
-    free( output_buffer );
-}
-
 static inline void put_resource_id( const char *str )
 {
     if (str[0] != '#')
@@ -335,41 +309,6 @@ void flush_output_resources( const char *name )
     free( output_buffer );
 }
 
-void put_data( const void *data, size_t size )
-{
-    check_output_buffer_space( size );
-    memcpy( output_buffer + output_buffer_pos, data, size );
-    output_buffer_pos += size;
-}
-
-void put_byte( unsigned char val )
-{
-    check_output_buffer_space( 1 );
-    output_buffer[output_buffer_pos++] = val;
-}
-
-void put_word( unsigned short val )
-{
-    check_output_buffer_space( 2 );
-    output_buffer[output_buffer_pos++] = val;
-    output_buffer[output_buffer_pos++] = val >> 8;
-}
-
-void put_dword( unsigned int val )
-{
-    check_output_buffer_space( 4 );
-    output_buffer[output_buffer_pos++] = val;
-    output_buffer[output_buffer_pos++] = val >> 8;
-    output_buffer[output_buffer_pos++] = val >> 16;
-    output_buffer[output_buffer_pos++] = val >> 24;
-}
-
-void put_qword( unsigned int val )
-{
-    put_dword( val );
-    put_dword( 0 );
-}
-
 /* pointer-sized word */
 void put_pword( unsigned int val )
 {
@@ -401,14 +340,4 @@ void put_str( int indent, const char *format, ... )
         }
         check_output_buffer_space( size );
     }
-}
-
-void align_output( unsigned int align )
-{
-    size_t size = align - (output_buffer_pos % align);
-
-    if (size == align) return;
-    check_output_buffer_space( size );
-    memset( output_buffer + output_buffer_pos, 0, size );
-    output_buffer_pos += size;
 }

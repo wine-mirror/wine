@@ -42,64 +42,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-static unsigned char *output_buffer;
-static size_t output_buffer_pos;
-static size_t output_buffer_size;
-
-static void check_output_buffer_space( size_t size )
-{
-    if (output_buffer_pos + size >= output_buffer_size)
-    {
-        output_buffer_size = max( output_buffer_size * 2, output_buffer_pos + size );
-        output_buffer = xrealloc( output_buffer, output_buffer_size );
-    }
-}
-
-static void init_output_buffer(void)
-{
-    output_buffer_size = 1024;
-    output_buffer_pos = 0;
-    output_buffer = xmalloc( output_buffer_size );
-}
-
-static void put_data( const void *data, size_t size )
-{
-    check_output_buffer_space( size );
-    memcpy( output_buffer + output_buffer_pos, data, size );
-    output_buffer_pos += size;
-}
-
-static void put_byte( unsigned char val )
-{
-    check_output_buffer_space( 1 );
-    output_buffer[output_buffer_pos++] = val;
-}
-
-static void put_word( unsigned short val )
-{
-    check_output_buffer_space( 2 );
-    output_buffer[output_buffer_pos++] = val;
-    output_buffer[output_buffer_pos++] = val >> 8;
-}
-
-static void put_dword( unsigned int val )
-{
-    check_output_buffer_space( 4 );
-    output_buffer[output_buffer_pos++] = val;
-    output_buffer[output_buffer_pos++] = val >> 8;
-    output_buffer[output_buffer_pos++] = val >> 16;
-    output_buffer[output_buffer_pos++] = val >> 24;
-}
-
-static void align_output( unsigned int align )
-{
-    size_t size = align - (output_buffer_pos % align);
-
-    if (size == align) return;
-    check_output_buffer_space( size );
-    memset( output_buffer + output_buffer_pos, 0, size );
-    output_buffer_pos += size;
-}
+unsigned char *output_buffer = NULL;
+size_t output_buffer_pos = 0;
+size_t output_buffer_size = 0;
 
 static void set_word(int ofs, unsigned int w)
 {
@@ -1202,13 +1147,6 @@ static void dlginit2res(name_id_t *name, dlginit_t *dit)
 */
 void write_resfile(char *outname, resource_t *top)
 {
-	FILE *fo;
-	unsigned int ret;
-
-	fo = fopen(outname, "wb");
-	if(!fo)
-            fatal_perror("Could not open %s", outname);
-
         init_output_buffer();
 
 	if(win32)
@@ -1256,12 +1194,5 @@ void write_resfile(char *outname, resource_t *top)
 		if (win32) align_output( 4 );
 	}
 
-	ret = fwrite(output_buffer, 1, output_buffer_pos, fo);
-	if(ret != output_buffer_pos)
-	{
-		fclose(fo);
-		error("Error writing %s\n", outname);
-	}
-	if (fclose(fo))
-            fatal_perror("Error writing %s", outname);
+	flush_output_buffer( outname );
 }

@@ -307,23 +307,12 @@ extern const char *input_buffer_filename;
 extern const unsigned char *input_buffer;
 extern size_t input_buffer_pos;
 extern size_t input_buffer_size;
-extern unsigned char *output_buffer;
-extern size_t output_buffer_pos;
-extern size_t output_buffer_size;
 
 extern void init_input_buffer( const char *file );
-extern void init_output_buffer(void);
-extern void flush_output_buffer(void);
 extern unsigned char get_byte(void);
 extern unsigned short get_word(void);
 extern unsigned int get_dword(void);
-extern void put_data( const void *data, size_t size );
-extern void put_byte( unsigned char val );
-extern void put_word( unsigned short val );
-extern void put_dword( unsigned int val );
-extern void put_qword( unsigned int val );
 extern void put_pword( unsigned int val );
-extern void align_output( unsigned int align );
 
 /* global variables */
 

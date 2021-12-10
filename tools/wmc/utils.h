@@ -41,17 +41,4 @@ char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen );
 int is_valid_codepage(int id);
 WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen );
 
-/* buffer management */
-
-extern unsigned char *output_buffer;
-extern size_t output_buffer_pos;
-extern size_t output_buffer_size;
-
-extern void init_output_buffer(void);
-extern void flush_output_buffer( const char *name );
-extern void put_byte( unsigned char val );
-extern void put_word( unsigned short val );
-extern void put_dword( unsigned int val );
-extern void align_output( unsigned int align );
-
 #endif

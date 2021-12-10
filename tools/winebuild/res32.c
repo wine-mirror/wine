@@ -668,7 +668,7 @@ void output_res_o_file( DLLSPEC *spec )
     /* if the output file name is a .res too, don't run the results through windres */
     if (strendswith( output_file_name, ".res"))
     {
-        flush_output_buffer();
+        flush_output_buffer( output_file_name );
         return;
     }
 

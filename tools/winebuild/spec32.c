@@ -1041,7 +1041,7 @@ void output_fake_module( DLLSPEC *spec )
         put_data( pe.sec[i].ptr, pe.sec[i].size );
     }
 
-    flush_output_buffer();
+    flush_output_buffer( output_file_name ? output_file_name : spec->file_name );
 }
 
 
