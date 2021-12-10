@@ -97,7 +97,7 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
      * while in exclusive mode, since it would get obscured by the popup
      * window. On the other hand, if the current frontbuffer *is* the GDI
      * frontbuffer, that's what's supposed to happen; the popup should obscure
-     * (oart of) the ddraw swapchain window.
+     * (part of) the ddraw swapchain window.
      *
      * This affects the "Deer Hunter" demo, which uses a popup window and GDI
      * draws to draw part of the user interface. See also the "fswindow"
