@@ -107,7 +107,7 @@ union unix_sockaddr
 struct async_recv_ioctl
 {
     struct async_fileio io;
-    WSABUF *control;
+    void *control;
     struct WS_sockaddr *addr;
     int *addr_len;
     DWORD *ret_flags;
@@ -504,7 +504,61 @@ error:
     control->len = 0;
     return 0;
 }
+#else
+static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
+{
+    ERR( "Message control headers cannot be properly supported on this system.\n" );
+    control->len = 0;
+    return 0;
+}
 #endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+
+struct cmsghdr_32
+{
+    ULONG cmsg_len;
+    INT cmsg_level;
+    INT cmsg_type;
+    /* UCHAR cmsg_data[]; */
+};
+
+static size_t cmsg_align_32( size_t len )
+{
+    return (len + sizeof(ULONG) - 1) & ~(sizeof(ULONG) - 1);
+}
+
+/* we assume that cmsg_data does not require translation, which is currently
+ * true for all messages */
+static int wow64_translate_control( const WSABUF *control64, struct afd_wsabuf_32 *control32 )
+{
+    char *const buf32 = ULongToPtr(control32->buf);
+    const ULONG max_len = control32->len;
+    const char *ptr64 = control64->buf;
+    char *ptr32 = buf32;
+
+    while (ptr64 < control64->buf + control64->len)
+    {
+        struct cmsghdr_32 *cmsg32 = (struct cmsghdr_32 *)ptr32;
+        const WSACMSGHDR *cmsg64 = (const WSACMSGHDR *)ptr64;
+
+        if (ptr32 + sizeof(*cmsg32) + cmsg_align_32( cmsg64->cmsg_len ) > buf32 + max_len)
+        {
+            control32->len = 0;
+            return 0;
+        }
+
+        cmsg32->cmsg_len = cmsg64->cmsg_len - sizeof(*cmsg64) + sizeof(*cmsg32);
+        cmsg32->cmsg_level = cmsg64->cmsg_level;
+        cmsg32->cmsg_type = cmsg64->cmsg_type;
+        memcpy( cmsg32 + 1, cmsg64 + 1, cmsg64->cmsg_len );
+
+        ptr64 += WSA_CMSG_ALIGN( cmsg64->cmsg_len );
+        ptr32 += cmsg_align_32( cmsg32->cmsg_len );
+    }
+
+    control32->len = ptr32 - buf32;
+    FIXME("-> %d\n", control32->len);
+    return 1;
+}
 
 static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *size )
 {
@@ -543,20 +597,41 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
 
     status = (hdr.msg_flags & MSG_TRUNC) ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
 
-#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     if (async->control)
     {
-        ERR( "Message control headers cannot be properly supported on this system.\n" );
-        async->control->len = 0;
+        if (in_wow64_call())
+        {
+            char control_buffer64[512];
+            WSABUF wsabuf;
+
+            wsabuf.len = sizeof(control_buffer64);
+            wsabuf.buf = control_buffer64;
+            if (convert_control_headers( &hdr, &wsabuf ))
+            {
+                if (!wow64_translate_control( &wsabuf, async->control ))
+                {
+                    WARN( "Application passed insufficient room for control headers.\n" );
+                    *async->ret_flags |= WS_MSG_CTRUNC;
+                    status = STATUS_BUFFER_OVERFLOW;
+                }
+            }
+            else
+            {
+                FIXME( "control buffer is too small\n" );
+                *async->ret_flags |= WS_MSG_CTRUNC;
+                status = STATUS_BUFFER_OVERFLOW;
+            }
+        }
+        else
+        {
+            if (!convert_control_headers( &hdr, async->control ))
+            {
+                WARN( "Application passed insufficient room for control headers.\n" );
+                *async->ret_flags |= WS_MSG_CTRUNC;
+                status = STATUS_BUFFER_OVERFLOW;
+            }
+        }
     }
-#else
-    if (async->control && !convert_control_headers( &hdr, async->control ))
-    {
-        WARN( "Application passed insufficient room for control headers.\n" );
-        *async->ret_flags |= WS_MSG_CTRUNC;
-        status = STATUS_BUFFER_OVERFLOW;
-    }
-#endif
 
     /* If this socket is connected, Linux doesn't give us msg_name and
      * msg_namelen from recvmsg, but it does set msg_namelen to zero.
