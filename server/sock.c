@@ -128,7 +128,7 @@ struct poll_req
     struct
     {
         struct sock *sock;
-        int flags;
+        int mask;
     } sockets[1];
 };
 
@@ -862,13 +862,13 @@ static void complete_async_polls( struct sock *sock, int event, int error )
         for (i = 0; i < req->count; ++i)
         {
             if (req->sockets[i].sock != sock) continue;
-            if (!(req->sockets[i].flags & flags)) continue;
+            if (!(req->sockets[i].mask & flags)) continue;
 
             if (debug_level)
                 fprintf( stderr, "completing poll for socket %p, wanted %#x got %#x\n",
-                         sock, req->sockets[i].flags, flags );
+                         sock, req->sockets[i].mask, flags );
 
-            req->output[i].flags = req->sockets[i].flags & flags;
+            req->output[i].flags = req->sockets[i].mask & flags;
             req->output[i].status = sock_get_ntstatus( error );
 
             complete_async_poll( req, STATUS_SUCCESS );
@@ -1220,7 +1220,7 @@ static int sock_get_poll_events( struct fd *fd )
         {
             if (req->sockets[i].sock != sock) continue;
 
-            ev |= poll_flags_from_afd( sock, req->sockets[i].flags );
+            ev |= poll_flags_from_afd( sock, req->sockets[i].mask );
         }
     }
 
@@ -2936,7 +2936,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
             free( output );
             return;
         }
-        req->sockets[i].flags = input[i].flags;
+        req->sockets[i].mask = input[i].flags;
     }
 
     req->exclusive = exclusive;
@@ -2954,7 +2954,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
     for (i = 0; i < count; ++i)
     {
         struct sock *sock = req->sockets[i].sock;
-        int mask = req->sockets[i].flags;
+        int mask = req->sockets[i].mask;
         int flags = poll_single_socket( sock, mask );
 
         if (flags)
