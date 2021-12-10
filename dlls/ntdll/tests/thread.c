@@ -99,7 +99,7 @@ static void test_dbg_hidden_thread_creation(void)
                                            NULL, NULL, PROCESS_PARAMS_FLAG_NORMALIZED );
     ok( status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status );
 
-    /* NtCreateUserProcess() may return STATUS_INVALID_PARAMATER with some unitialized data in create_info. */
+    /* NtCreateUserProcess() may return STATUS_INVALID_PARAMETER with some uninitialized data in create_info. */
     memset( &create_info, 0, sizeof(create_info) );
     create_info.Size = sizeof(create_info);
 
