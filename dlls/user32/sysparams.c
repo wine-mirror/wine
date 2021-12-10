@@ -1216,7 +1216,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
 {
     UNICODE_STRING str;
     RtlInitUnicodeString( &str, device );
-    return NtUserEnumDisplayDevices( &str, index, info, flags );
+    return NT_SUCCESS(NtUserEnumDisplayDevices( &str, index, info, flags ));
 }
 
 /**********************************************************************

@@ -1562,8 +1562,8 @@ static struct adapter *find_adapter( UNICODE_STRING *name )
 /***********************************************************************
  *	     NtUserEnumDisplayDevices    (win32u.@)
  */
-BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
-                                      DISPLAY_DEVICEW *info, DWORD flags )
+NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
+                                          DISPLAY_DEVICEW *info, DWORD flags )
 {
     struct display_device *found = NULL;
     struct adapter *adapter;
@@ -1571,7 +1571,7 @@ BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 
     TRACE( "%s %u %p %#x\n", debugstr_us( device ), index, info, flags );
 
-    if (!lock_display_devices()) return FALSE;
+    if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
 
     if (!device || !device->Length)
     {
@@ -1613,7 +1613,7 @@ BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
             lstrcpyW( info->DeviceKey, found->device_key );
     }
     unlock_display_devices();
-    return !!found;
+    return found ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 }
 
 #define _X_FIELD(prefix, bits)                              \

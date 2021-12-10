@@ -726,8 +726,8 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
-BOOL WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
-                                      DISPLAY_DEVICEW *info, DWORD flags )
+NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
+                                          DISPLAY_DEVICEW *info, DWORD flags )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserEnumDisplayDevices( device, index, info, flags );
