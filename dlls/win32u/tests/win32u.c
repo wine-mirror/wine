@@ -45,15 +45,23 @@ static void test_NtUserEnumDisplayDevices(void)
 
     SetLastError( 0xdeadbeef );
     ret = NtUserEnumDisplayDevices( NULL, 0, &info, 0 );
-    todo_wine ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
-                  "NtUserEnumDisplayDevices returned %x %u\n", ret,
-                  GetLastError() );
+    ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
+        "NtUserEnumDisplayDevices returned %x %u\n", ret, GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = NtUserEnumDisplayDevices( NULL, 12345, &info, 0 );
     ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
-                  "NtUserEnumDisplayDevices returned %x %u\n", ret,
-                  GetLastError() );
+        "NtUserEnumDisplayDevices returned %x %u\n", ret, GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnumDisplayDevices( NULL, 0, NULL, 0 );
+    ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
+        "NtUserEnumDisplayDevices returned %x %u\n", ret, GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnumDisplayDevices( NULL, 12345, NULL, 0 );
+    ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
+        "NtUserEnumDisplayDevices returned %x %u\n", ret, GetLastError() );
 }
 
 static void test_NtUserCloseWindowStation(void)

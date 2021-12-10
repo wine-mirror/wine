@@ -1571,6 +1571,8 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 
     TRACE( "%s %u %p %#x\n", debugstr_us( device ), index, info, flags );
 
+    if (!info || !info->cb) return STATUS_UNSUCCESSFUL;
+
     if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
 
     if (!device || !device->Length)
