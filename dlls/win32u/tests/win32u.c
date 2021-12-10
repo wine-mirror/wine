@@ -16,11 +16,46 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include "wine/test.h"
 
 #include "winbase.h"
 #include "ntuser.h"
 
+
+static void test_NtUserEnumDisplayDevices(void)
+{
+    NTSTATUS ret;
+    DISPLAY_DEVICEW info = { sizeof(DISPLAY_DEVICEW) };
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnumDisplayDevices( NULL, 0, &info, 0 );
+    todo_wine ok( !ret && GetLastError() == 0xdeadbeef,
+                  "NtUserEnumDisplayDevices returned %x %u\n", ret,
+                  GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnumDisplayDevices( NULL, 12345, &info, 0 );
+    todo_wine ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
+                  "NtUserEnumDisplayDevices returned %x %u\n", ret,
+                  GetLastError() );
+
+    info.cb = 0;
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnumDisplayDevices( NULL, 0, &info, 0 );
+    todo_wine ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
+                  "NtUserEnumDisplayDevices returned %x %u\n", ret,
+                  GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnumDisplayDevices( NULL, 12345, &info, 0 );
+    todo_wine ok( ret == STATUS_UNSUCCESSFUL && GetLastError() == 0xdeadbeef,
+                  "NtUserEnumDisplayDevices returned %x %u\n", ret,
+                  GetLastError() );
+}
 
 static void test_NtUserCloseWindowStation(void)
 {
@@ -67,6 +102,7 @@ START_TEST(win32u)
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
     GetDesktopWindow();
 
+    test_NtUserEnumDisplayDevices(); /* Must run before test_NtUserCloseWindowStation. */
     test_NtUserCloseWindowStation();
     test_window_props();
 }
