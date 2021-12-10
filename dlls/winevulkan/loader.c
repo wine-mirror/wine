@@ -377,7 +377,7 @@ void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
 
     params.physicalDevice = phys_dev;
     params.pProperties = properties2;
-    unix_funcs->p_vk_call(unix_vkGetPhysicalDeviceProperties2, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceProperties2, &params);
     fill_luid_property(properties2);
 }
 
@@ -390,7 +390,7 @@ void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
 
     params.physicalDevice = phys_dev;
     params.pProperties = properties2;
-    unix_funcs->p_vk_call(unix_vkGetPhysicalDeviceProperties2KHR, &params);
+    vk_unix_call(unix_vkGetPhysicalDeviceProperties2KHR, &params);
     fill_luid_property(properties2);
 }
 

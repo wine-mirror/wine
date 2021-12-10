@@ -146,6 +146,16 @@ ALLOWED_X_EXTENSIONS = [
     "VK_NVX_image_view_handle",
 ]
 
+# We can't use syscall interface for functions that may call display drivers
+# until drivers are converted to pure Unix libraries. Also some frequently
+# called functions use direct calls for performance reasons.
+DIRECT_CALL_FUNCTIONS = [
+    "vkCreateDevice",
+    "vkEnumerateInstanceVersion",
+    "vkUpdateDescriptorSets",
+    "vkUpdateDescriptorSetWithTemplate",
+]
+
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
@@ -668,6 +678,12 @@ class VkFunction(object):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
         return self.is_required() and (not self.extensions or not self.extensions.issubset(UNEXPOSED_EXTENSIONS))
 
+    def needs_direct_call(self):
+        # vkCmd* functions are frequently called, use direct calls for performance
+        if self.name.startswith("vkCmd"):
+            return True
+        return self.is_driver_func() or self.name in DIRECT_CALL_FUNCTIONS
+
     def pfn(self, prefix="p", call_conv=None, conv=False):
         """ Create function pointer. """
 
@@ -754,7 +770,10 @@ class VkFunction(object):
         # Call the Unix function.
         if self.type != "void" and not self.returns_longlong():
             body += "return "
-        body += "unix_funcs->p_vk_call(unix_{0}, &params);\n".format(self.name)
+        if self.needs_direct_call():
+            body += "unix_funcs->p_vk_call(unix_{0}, &params);\n".format(self.name)
+        else:
+            body += "vk_unix_call(unix_{0}, &params);\n".format(self.name)
         if self.returns_longlong():
             body += "    return params.result;\n"
         return body
