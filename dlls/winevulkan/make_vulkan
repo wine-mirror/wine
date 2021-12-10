@@ -2833,7 +2833,7 @@ class VkGenerator(object):
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
-            f.write("    &{1}{0},\n".format(vk_func.name, prefix))
+            f.write("    {1}{0},\n".format(vk_func.name, prefix))
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
 
@@ -2844,9 +2844,9 @@ class VkGenerator(object):
 
         f.write("const struct unix_funcs loader_funcs =\n")
         f.write("{\n")
-        f.write("    &wine_vk_call,\n")
-        f.write("    &wine_vk_is_available_instance_function,\n")
-        f.write("    &wine_vk_is_available_device_function,\n")
+        f.write("    wine_vk_call,\n")
+        f.write("    wine_vk_is_available_instance_function,\n")
+        f.write("    wine_vk_is_available_device_function,\n")
         f.write("};\n")
 
     def generate_thunks_h(self, f, prefix):
@@ -2968,7 +2968,7 @@ class VkGenerator(object):
             if not vk_func.needs_exposing():
                 continue
 
-            f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
+            f.write("    {{\"{0}\", {0}}},\n".format(vk_func.name))
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
@@ -2976,7 +2976,7 @@ class VkGenerator(object):
             if not vk_func.needs_exposing():
                 continue
 
-            f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
+            f.write("    {{\"{0}\", {0}}},\n".format(vk_func.name))
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
@@ -2984,7 +2984,7 @@ class VkGenerator(object):
             if not vk_func.needs_exposing():
                 continue
 
-            f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
+            f.write("    {{\"{0}\", {0}}},\n".format(vk_func.name))
         f.write("};\n\n")
 
         f.write("void *wine_vk_get_device_proc_addr(const char *name)\n")
