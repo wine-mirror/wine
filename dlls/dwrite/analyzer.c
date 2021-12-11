@@ -865,7 +865,7 @@ static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 pos
     if (len < length) {
         UINT32 read;
 
-        *buff = malloc(length * sizeof(WCHAR));
+        *buff = calloc(length, sizeof(WCHAR));
         if (!*buff)
             return E_OUTOFMEMORY;
         if (*text)
