@@ -2477,7 +2477,7 @@ static void test_object_identity(void)
 
     pNtClose( h1 );
 
-    h1 = CreateFileA( "\\\\.\\NUL", GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, 0 );
+    h1 = CreateFileA( "\\\\.\\NUL", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( h1 != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
 
     h2 = NULL;
@@ -2490,7 +2490,7 @@ static void test_object_identity(void)
 
     pNtClose( h2 );
 
-    h2 = CreateFileA( "\\\\.\\NUL", GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, 0 );
+    h2 = CreateFileA( "\\\\.\\NUL", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( h2 != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
 
     status = pNtCompareObjects( h1, h2 );
