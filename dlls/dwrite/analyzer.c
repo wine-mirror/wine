@@ -868,7 +868,8 @@ static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 pos
         *buff = malloc(length * sizeof(WCHAR));
         if (!*buff)
             return E_OUTOFMEMORY;
-        memcpy(*buff, *text, len*sizeof(WCHAR));
+        if (*text)
+            memcpy(*buff, *text, len*sizeof(WCHAR));
         read = len;
 
         while (read < length && *text) {
@@ -880,6 +881,8 @@ static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 pos
                 free(*buff);
                 return hr;
             }
+            if (!*text)
+                break;
             memcpy(*buff + read, *text, min(len, length-read)*sizeof(WCHAR));
             read += len;
         }
@@ -1009,7 +1012,8 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnaly
 
         if (!(buff = calloc(length, sizeof(*buff))))
             return E_OUTOFMEMORY;
-        memcpy(buff, text, len*sizeof(WCHAR));
+        if (text)
+            memcpy(buff, text, len*sizeof(WCHAR));
         read = len;
 
         while (read < length && text) {
@@ -1018,6 +1022,8 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnaly
             hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, read, &text, &len);
             if (FAILED(hr))
                 goto done;
+            if (!text)
+                break;
             memcpy(&buff[read], text, min(len, length-read)*sizeof(WCHAR));
             read += len;
         }
