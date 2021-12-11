@@ -875,7 +875,7 @@ static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 pos
         while (read < length && *text) {
             *text = NULL;
             len = 0;
-            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, read, text, &len);
+            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position+read, text, &len);
             if (FAILED(hr))
             {
                 free(*buff);
@@ -1019,7 +1019,7 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnaly
         while (read < length && text) {
             text = NULL;
             len = 0;
-            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, read, &text, &len);
+            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position+read, &text, &len);
             if (FAILED(hr))
                 goto done;
             if (!text)
