@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-03-13 19:49-0300\n"
+"PO-Revision-Date: 2021-12-12 16:22-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Spanish\n"
 "Language: es\n"
@@ -1002,7 +1002,7 @@ msgstr "El archivo no existe"
 
 #: dlls/comdlg32/comdlg32.rc:41
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "La selección contiene un objeto que no es de carpeta"
 
 #: dlls/comdlg32/comdlg32.rc:46
 msgid "Up One Level"
@@ -3659,11 +3659,11 @@ msgstr "Configuración automatica"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
-msgstr ""
+msgstr "Utilice el descubrimiento automático de proxy web (WPAD)"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:127
 msgid "Use Proxy Auto-Config (PAC) script"
-msgstr ""
+msgstr "Utilice el script de configuración automática de proxy (PAC)"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:128 dlls/inetcpl.cpl/inetcpl.rc:132
 msgid "Address:"
@@ -3675,7 +3675,7 @@ msgstr "Servidor Proxy"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:131
 msgid "Use a proxy server"
-msgstr ""
+msgstr "Utilice un servidor proxy"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:134
 msgid "Port:"
@@ -3726,30 +3726,24 @@ msgid "&Disable"
 msgstr "&Deshabilitar"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Resetear"
+msgstr "&Resetear"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Habilitar"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Modificar sustitución"
+msgstr "&Sustitución"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Conectado"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Dispositivo de entrada de voz:"
+msgstr "Conectado (dispositivo xinput)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3760,6 +3754,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Después de deshabilitar o habilitar un dispositivo, los joysticks conectados "
+"no se actualizarán aquí hasta que reinicie este subprograma."
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
@@ -3782,6 +3778,8 @@ msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Presione cualquier botón del controlador para activar el efecto elegido. La "
+"dirección del efecto se puede cambiar con el eje del controlador."
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -3789,7 +3787,7 @@ msgstr "Mandos de juego"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Pruebe y configure los controladores de juegos."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3844,10 +3842,8 @@ msgid "Expected ')'"
 msgstr "Esperado ')'"
 
 #: dlls/jscript/jscript.rc:41
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Identificador del Sujeto de la Clave"
+msgstr "Identificador esperado"
 
 #: dlls/jscript/jscript.rc:42
 msgid "Expected '='"
@@ -3863,7 +3859,7 @@ msgstr "Constante de cadena no terminada"
 
 #: dlls/jscript/jscript.rc:45
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "declaración 'return' fuera de la función"
 
 #: dlls/jscript/jscript.rc:46
 msgid "Can't have 'break' outside of loop"
@@ -3959,7 +3955,7 @@ msgstr "Error de sintaxis en la expresión regular"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Excepción lanzada y no atrapada"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -3974,10 +3970,8 @@ msgid "Number of fraction digits is out of range"
 msgstr "Número de dígitos de fracciones fuera de rango"
 
 #: dlls/jscript/jscript.rc:70
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Subíndice fuera de rango"
+msgstr "Pecisión fuera de rango"
 
 #: dlls/jscript/jscript.rc:71
 msgid "Array length must be a finite positive integer"
@@ -3992,28 +3986,28 @@ msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
+"El atributo 'escribible' en el descriptor de propiedad no se puede "
+"establecer en 'verdadero' en este objeto"
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "No se puede definir la propiedad '|': el objeto no es extensible"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "No se puede redefinir la propiedad no configurable '|'"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "No se puede modificar la propiedad no modificable '|'"
 
 #: dlls/jscript/jscript.rc:77
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a Map object"
-msgstr "'[objeto]' no es un objeto de fecha"
+msgstr "'[this]' no es un objeto Map"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "La propiedad no puede tener tanto descriptores de acceso como un valor"
 
 #: include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -6978,10 +6972,8 @@ msgid "The username could not be found.\n"
 msgstr "No pudo encontrarse el nombre de usuario.\n"
 
 #: dlls/kernel32/winerror.mc:3743
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "El sitio no existe.\n"
+msgstr "Esta conexión de red no existe.\n"
 
 #: dlls/kernel32/winerror.mc:3748
 msgid "Connection reset by peer.\n"
@@ -6996,10 +6988,8 @@ msgid "Call failed.\n"
 msgstr "La llamada ha fallado.\n"
 
 #: dlls/kernel32/winerror.mc:3760
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
-msgstr "El mensaje 0x%1 no pudo encontrarse en el fichero %2.\n"
+msgstr "No se encontró firma en el archivo.\n"
 
 #: dlls/kernel32/winerror.mc:3774
 msgid "Invalid call.\n"
@@ -7010,10 +7000,8 @@ msgid "Resource is not currently available.\n"
 msgstr "El recurso no esta disponible actualmente.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Nombre de Clase:"
+msgstr "Azul Clásico"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
@@ -7021,18 +7009,12 @@ msgid "Normal"
 msgstr "Normal"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "Unidad"
+msgstr "Carta"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Unidad"
+msgstr "Carta pequeña"
 
 #: dlls/localspl/localspl.rc:39
 #, fuzzy
@@ -7055,37 +7037,24 @@ msgid "Statement"
 msgstr "Estado"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "&Ejecutar..."
+msgstr "Ejecutivo"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "T"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "T"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Pequeña"
+msgstr "A4 Pequeña"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "T"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
@@ -7255,24 +7224,16 @@ msgid "Tabloid Extra"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "E&xtras"
+msgstr "A4 Extra"
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "atravesado"
+msgstr "Carta Atravesado"
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "atravesado"
+msgstr "A4 Atravesado"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
@@ -7298,45 +7259,32 @@ msgid "A4 Plus"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "atravesado"
+msgstr "A4 Atravesado"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "E&xtras"
+msgstr "A3 Extra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "E&xtras"
+msgstr "A5 Extra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "T"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "atravesado"
+msgstr "A3 Atravesado"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
@@ -7347,11 +7295,8 @@ msgid "Japanese Double Postcard"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "T"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
@@ -7638,7 +7583,7 @@ msgstr "Enviar correo"
 
 #: dlls/mferror/mferror.mc:249 dlls/mferror/mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "La solicitud de inicio ya se ha realizado.\n"
 
 #: dlls/mferror/mferror.mc:599
 #, fuzzy
@@ -7692,7 +7637,7 @@ msgstr "Operación no soportada.\n"
 
 #: dlls/mferror/mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "No hay más tipos en la lista de tipos de medios sugeridos.\n"
 
 #: dlls/mferror/mferror.mc:95
 msgid "Unsupported service.\n"
@@ -7734,11 +7679,11 @@ msgstr "Tipo no soportado.\n"
 
 #: dlls/mferror/mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "La marca de tiempo no está configurada para la muestra.\n"
 
 #: dlls/mferror/mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "No se ha establecido una duración para la muestra.\n"
 
 #: dlls/mferror/mferror.mc:179
 msgid "Invalid stream data.\n"
@@ -7772,7 +7717,7 @@ msgstr "Nivel de autorización no soportado.\n"
 
 #: dlls/mferror/mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "Se adelantó el cambio de tarifa.\n"
 
 #: dlls/mferror/mferror.mc:228
 #, fuzzy
@@ -7795,10 +7740,8 @@ msgid "Multiple subscribers are not supported.\n"
 msgstr "Atributos extendidos no soportados.\n"
 
 #: dlls/mferror/mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "El controlador no fue activado."
+msgstr "El temporizador quedó huérfano.\n"
 
 #: dlls/mferror/mferror.mc:277
 #, fuzzy
@@ -7818,7 +7761,7 @@ msgstr "Ha ocurrido un error irrecuperable.\n"
 
 #: dlls/mferror/mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "La muestra tiene demasiados búferes.\n"
 
 #: dlls/mferror/mferror.mc:305
 #, fuzzy
@@ -7878,7 +7821,7 @@ msgstr "Tipo del gancho no permitido.\n"
 
 #: dlls/mferror/mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Se requiere la propiedad de vector.\n"
 
 #: dlls/mferror/mferror.mc:389
 msgid "Operation was cancelled.\n"
@@ -7892,7 +7835,7 @@ msgstr "No se ha deshabilitado el servidor.\n"
 
 #: dlls/mferror/mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "La plataforma está deshabilitada en modo seguro.\n"
 
 #: dlls/mferror/mferror.mc:410
 #, fuzzy
@@ -8094,7 +8037,7 @@ msgstr "Atributos de grupo inválidos.\n"
 
 #: dlls/mferror/mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "Bucles encontrados en topología.\n"
 
 #: dlls/mferror/mferror.mc:676
 #, fuzzy
@@ -8122,11 +8065,11 @@ msgstr "Falta el índice.\n"
 
 #: dlls/mferror/mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "El cargador de topología no admite la activación del receptor.\n"
 
 #: dlls/mferror/mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "El reloj no tiene configurada una fuente de hora.\n"
 
 #: dlls/mferror/mferror.mc:718
 #, fuzzy
@@ -8135,10 +8078,8 @@ msgid "Clock state was already set.\n"
 msgstr "La clase ya existe.\n"
 
 #: dlls/mferror/mferror.mc:725
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not simple\n"
-msgstr "Ayuda no disponible."
+msgstr "El reloj no es simples\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -8350,14 +8291,12 @@ msgid "Allocating registry space"
 msgstr "Asignar espacio de registro"
 
 #: dlls/msi/msi.rc:92
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "Aplicación de una sola instancia.\n"
+msgstr "Buscando aplicaciones instaladas"
 
 #: dlls/msi/msi.rc:93
 msgid "Binding executables"
-msgstr ""
+msgstr "Enlazar ejecutables"
 
 #: dlls/msi/msi.rc:94 dlls/msi/msi.rc:137
 #, fuzzy
@@ -8380,22 +8319,16 @@ msgid "Creating shortcuts"
 msgstr "Crear acce&so directo"
 
 #: dlls/msi/msi.rc:99
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "Excepción en el servicio.\n"
+msgstr "Eliminando servicios"
 
 #: dlls/msi/msi.rc:100
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Creating duplicate files"
-msgstr "La creación ha fallado.\n"
+msgstr "Creando archivos duplicados"
 
 #: dlls/msi/msi.rc:102
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "No hay ninguna aplicación asociada.\n"
+msgstr "Buscando aplicaciones relacionadas"
 
 #: dlls/msi/msi.rc:103
 msgid "Copying network install files"
@@ -8406,10 +8339,8 @@ msgid "Copying new files"
 msgstr "Copiando nuevos archivos"
 
 #: dlls/msi/msi.rc:105
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installing ODBC components"
-msgstr "No pudo aplicarse la transformación en la instalación.\n"
+msgstr "Instalación de componentes ODBC"
 
 #: dlls/msi/msi.rc:106
 msgid "Installing new services"
@@ -8429,7 +8360,7 @@ msgstr "Desinstalador de aplicaciones de Wine"
 
 #: dlls/msi/msi.rc:109
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "Evaluación de las condiciones de inicializacion"
 
 #: dlls/msi/msi.rc:110
 msgid "Migrating feature states from related applications"
@@ -8467,7 +8398,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:117
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "Publicación de funciones de productos"
 
 #: dlls/msi/msi.rc:118
 #, fuzzy
@@ -8477,7 +8408,7 @@ msgstr "Información de Cliente"
 
 #: dlls/msi/msi.rc:119
 msgid "Registering Class servers"
-msgstr ""
+msgstr "Registro de servidores de clase"
 
 #: dlls/msi/msi.rc:120
 msgid "Registering COM+ Applications and Components"
@@ -8485,11 +8416,11 @@ msgstr ""
 
 #: dlls/msi/msi.rc:121
 msgid "Registering extension servers"
-msgstr ""
+msgstr "Registro de servidores de extensión"
 
 #: dlls/msi/msi.rc:122
 msgid "Registering fonts"
-msgstr ""
+msgstr "Registro de fuentes"
 
 #: dlls/msi/msi.rc:123
 #, fuzzy
@@ -8503,7 +8434,7 @@ msgstr "Registrando producto"
 
 #: dlls/msi/msi.rc:125
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "Registro de identificadores de programa"
 
 #: dlls/msi/msi.rc:126
 #, fuzzy
@@ -8535,11 +8466,11 @@ msgstr "Eliminando archivos"
 
 #: dlls/msi/msi.rc:132
 msgid "Removing folders"
-msgstr ""
+msgstr "Eliminando carpetas"
 
 #: dlls/msi/msi.rc:133
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "Eliminando entradas de archivos INI"
 
 #: dlls/msi/msi.rc:134
 #, fuzzy
@@ -8548,22 +8479,20 @@ msgid "Removing ODBC components"
 msgstr "Componente de Dominio"
 
 #: dlls/msi/msi.rc:135
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Removing system registry values"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "Eliminando valores de registro del sistema"
 
 #: dlls/msi/msi.rc:136
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "Eliminar atajos"
 
 #: dlls/msi/msi.rc:138
 msgid "Registering modules"
-msgstr ""
+msgstr "Registro de módulos"
 
 #: dlls/msi/msi.rc:139
 msgid "Unregistering modules"
-msgstr ""
+msgstr "Anulando el registro de módulos"
 
 #: dlls/msi/msi.rc:140
 msgid "Initializing ODBC directories"
@@ -8586,10 +8515,8 @@ msgid "Unpublishing Product Features"
 msgstr ""
 
 #: dlls/msi/msi.rc:145
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "Información de Cliente"
+msgstr "Anulando la publicación de información del producto"
 
 #: dlls/msi/msi.rc:146
 msgid "Unregister Class servers"
@@ -8648,10 +8575,8 @@ msgid "Shortcut: [1]"
 msgstr "Atajo: [1]"
 
 #: dlls/msi/msi.rc:166 dlls/msi/msi.rc:197 dlls/msi/msi.rc:198
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "Dispositi&vo:"
+msgstr "Servicio: [1]"
 
 #: dlls/msi/msi.rc:167 dlls/msi/msi.rc:170 dlls/msi/msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
@@ -8666,20 +8591,16 @@ msgid "File: [1], Directory: [9], Size: [6]"
 msgstr "Archivo: [1], Carpeta: [9], Tamaño: [6]"
 
 #: dlls/msi/msi.rc:171
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "Dispositi&vo:"
+msgstr "Servicio: [2]"
 
 #: dlls/msi/msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
 msgstr "Archivos: [1],  Dependencias: [2]"
 
 #: dlls/msi/msi.rc:173
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Aplicaciones"
+msgstr "Aplicacion: [1]"
 
 #: dlls/msi/msi.rc:175 dlls/msi/msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
@@ -8706,10 +8627,8 @@ msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr ""
 
 #: dlls/msi/msi.rc:182 dlls/msi/msi.rc:203
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Solamente Extensiones"
+msgstr "Extensiones: [1]"
 
 #: dlls/msi/msi.rc:183 dlls/msi/msi.rc:204
 msgid "Font: [1]"
@@ -9149,11 +9068,9 @@ msgid "focused"
 msgstr "enfocado"
 
 #: dlls/oleacc/oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "&Comprimido"
+msgstr "presionado"
 
 #: dlls/oleacc/oleacc.rc:102
 msgctxt "object state"
@@ -9208,11 +9125,9 @@ msgid "marqueed"
 msgstr "marqueado"
 
 #: dlls/oleacc/oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "animación"
+msgstr "animado"
 
 #: dlls/oleacc/oleacc.rc:113
 msgctxt "object state"
@@ -9244,11 +9159,9 @@ msgid "self voicing"
 msgstr "autoexpresión"
 
 #: dlls/oleacc/oleacc.rc:118
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focusable"
-msgstr "Pausado"
+msgstr "enfocable"
 
 #: dlls/oleacc/oleacc.rc:119
 #, fuzzy
@@ -9277,11 +9190,9 @@ msgid "multi selectable"
 msgstr "tabla"
 
 #: dlls/oleacc/oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "Seleccione un fichero por favor."
+msgstr "seleccionable extendido"
 
 #: dlls/oleacc/oleacc.rc:124
 #, fuzzy
@@ -9350,7 +9261,7 @@ msgstr "Seleccione el formato que quiere utilizar:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Especifique la fuente de los datos:"
 
 #: dlls/oledb32/version.rc:71
 msgid "Use &data source name"
@@ -9370,7 +9281,7 @@ msgstr "Constr&uir..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Ingrese la información para iniciar sesión en el servidor"
 
 #: dlls/oledb32/version.rc:79
 msgid "User &name:"
@@ -9386,7 +9297,7 @@ msgstr "Permitir guardar contra&seña"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Ingrese el catálogo &inicial a utilizar:"
 
 #: dlls/oledb32/version.rc:87
 msgid "&Test Connection"
@@ -9406,7 +9317,7 @@ msgstr "Nivel de personificación :"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Nivel de p&rotección:"
 
 #: dlls/oledb32/version.rc:101
 msgid "Connect:"
@@ -9429,6 +9340,9 @@ msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Estas son las propiedades de inicialización para este tipo de datos. Para "
+"editar un valor, seleccione una propiedad y luego elija Editar valor a "
+"continuación."
 
 #: dlls/oledb32/version.rc:115
 msgid "&Edit Value..."
@@ -9449,6 +9363,8 @@ msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"El proveedor ya no está disponible. Asegúrese de que el proveedor esté "
+"instalado correctamente."
 
 #: dlls/oledb32/version.rc:36
 #, fuzzy
@@ -10674,7 +10590,7 @@ msgstr "Horario de Verano en China"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
-msgstr ""
+msgstr "(UTC+08:00) Pekín, Chongqing, Hong Kong, Urumqi"
 
 #: dlls/tzres/tzres.rc:267
 msgid "North Asia Standard Time"
@@ -10686,7 +10602,7 @@ msgstr "Horario de Verano en Asia Norte"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+07:00) Krasnoyarsk"
-msgstr ""
+msgstr "(UTC+07:00) Krasnoyarsk"
 
 #: dlls/tzres/tzres.rc:168
 msgid "Georgian Standard Time"
@@ -10698,17 +10614,15 @@ msgstr "Horario de Verano en Georgia"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
-msgstr ""
+msgstr "(UTC+04:00) Tiflis"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:392
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC+12:00) Tiempo Universal Coordinado+12"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Nepal Standard Time"
@@ -10720,7 +10634,7 @@ msgstr "Horario de Verano en Nepal"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+05:45) Kathmandu"
-msgstr ""
+msgstr "(UTC+05:45) Katmandú"
 
 #: dlls/tzres/tzres.rc:90
 msgid "Cape Verde Standard Time"
@@ -10732,7 +10646,7 @@ msgstr "Horario de Verano en Cabo Verde"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) Cabo Verde"
 
 #: dlls/tzres/tzres.rc:183
 msgid "Haiti Standard Time"
@@ -10744,7 +10658,7 @@ msgstr "Horario de Verano en Haití"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) Haiti"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Central European Standard Time"
@@ -10756,7 +10670,7 @@ msgstr "Horario de Verano Europa Central"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
-msgstr ""
+msgstr "(UTC+01:00) Sarajevo, Skopie, Varsovia, Zagreb"
 
 #: dlls/tzres/tzres.rc:234
 msgid "Morocco Standard Time"
@@ -10768,17 +10682,15 @@ msgstr "Horario de Verano en Marruecos"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+01:00) Casablanca"
-msgstr ""
+msgstr "(UTC+01:00) Casablanca"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:401
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC-08:00) Tiempo Universal Coordinado-08"
 
 #: dlls/tzres/tzres.rc:39
 #, fuzzy
@@ -10794,7 +10706,7 @@ msgstr "Horario de Verano en el Atlántico"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
-msgstr ""
+msgstr "(UTC+07:00) Barnaúl, Gorno-Altaysk"
 
 #: dlls/tzres/tzres.rc:108
 msgid "Central Europe Standard Time"
@@ -10806,7 +10718,7 @@ msgstr "Horario de Verano Europa Central"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
-msgstr ""
+msgstr "(UTC+01:00) Belgrado, Bratislava, Budapest, Liubliana, Praga"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Iran Standard Time"
@@ -10818,7 +10730,7 @@ msgstr "Horario de Verano en Irán"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) Teherán"
 
 #: dlls/tzres/tzres.rc:318
 msgid "Saint Pierre Standard Time"
@@ -10829,10 +10741,8 @@ msgid "Saint Pierre Daylight Time"
 msgstr "Horario de Verano en Saint Pierre"
 
 #: dlls/tzres/tzres.rc:320
-#, fuzzy
-#| msgid "Saint Pierre Standard Time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "Horario Estándar en Saint Pierre"
+msgstr "(UTC-03:00) San Pedro y Miquelón"
 
 #: dlls/tzres/tzres.rc:327
 #, fuzzy
@@ -10848,7 +10758,7 @@ msgstr "Horario de Verano en Samoa"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) Santo Tomé"
 
 #: dlls/tzres/tzres.rc:249
 msgid "Namibia Standard Time"
@@ -10860,7 +10770,7 @@ msgstr "Horario de Verano en Namibia"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+02:00) Windhoek"
-msgstr ""
+msgstr "(UTC+02:00) Windhoek"
 
 #: dlls/tzres/tzres.rc:366
 msgid "Tonga Standard Time"
@@ -10872,7 +10782,7 @@ msgstr "Horario de Verano en Tonga"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC+13:00) Nuku'alofa"
-msgstr ""
+msgstr "(UTC+13:00) Nukualofa"
 
 #: dlls/tzres/tzres.rc:240
 msgid "Mountain Standard Time (Mexico)"
@@ -10884,7 +10794,7 @@ msgstr "Horario de Verano de Montaña(México)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
-msgstr ""
+msgstr "(UTC-07:00) Chihuahua, La Paz, Mazatlán"
 
 #: dlls/tzres/tzres.rc:171
 msgid "GMT Standard Time"
@@ -10896,7 +10806,7 @@ msgstr "Horario de Verano GMT"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
-msgstr ""
+msgstr "(UTC+00:00) Dublin, Edimburgo, Lisboa, Londres"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -10908,7 +10818,7 @@ msgstr "Horario de Verano Asia Central"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC+06:00) Astana"
-msgstr ""
+msgstr "(UTC+06:00) Astaná"
 
 #: dlls/tzres/tzres.rc:213
 msgid "Lord Howe Standard Time"
@@ -10920,7 +10830,7 @@ msgstr "Horario de Verano en Lord Howe"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr ""
+msgstr "(UTC+10:30) Isla de Lord Howe"
 
 #: dlls/tzres/tzres.rc:48
 msgid "Arabic Standard Time"
@@ -10932,17 +10842,15 @@ msgstr "Horario de Verano Árabe"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
-msgstr ""
+msgstr "(UTC+03:00) Bagdad"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:395
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC+13:00) Tiempo Universal Coordinado+13"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Magadan Standard Time"
@@ -10954,7 +10862,7 @@ msgstr "Horario de Verano en Magadán"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
-msgstr ""
+msgstr "(UTC+11:00) Magadán"
 
 #: dlls/tzres/tzres.rc:258
 msgid "Newfoundland Standard Time"
@@ -10966,7 +10874,7 @@ msgstr "Horario de Verano en Terranova"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) Terranova y Labrador"
 
 #: dlls/tzres/tzres.rc:345
 #, fuzzy
@@ -10982,7 +10890,7 @@ msgstr "Horario de Verano en Jordania"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+02:00) Khartoum"
-msgstr ""
+msgstr "(UTC+02:00) Jartum"
 
 #: dlls/tzres/tzres.rc:435
 msgid "West Pacific Standard Time"
@@ -10994,7 +10902,7 @@ msgstr "Horario de Verano del Pacifico Occidental"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+10:00) Guam, Port Moresby"
-msgstr ""
+msgstr "(UTC+10:00) Guam, Puerto Moresby"
 
 #: dlls/tzres/tzres.rc:279
 msgid "Pacific Standard Time"
@@ -11006,7 +10914,7 @@ msgstr "Horario de Verano del Pacifico"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-08:00) Hora del Pacífico (US & Canada)"
 
 #: dlls/tzres/tzres.rc:69
 msgid "Azerbaijan Standard Time"
@@ -11018,7 +10926,7 @@ msgstr "Horario de Verano en Azerbaiyán"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC+04:00) Baku"
-msgstr ""
+msgstr "(UTC+04:00) Bakú"
 
 #: dlls/tzres/tzres.rc:219
 msgid "Magallanes Standard Time"
@@ -11030,7 +10938,7 @@ msgstr "Horario de Verano en Magallanes"
 
 #: dlls/tzres/tzres.rc:221
 msgid "(UTC-03:00) Punta Arenas"
-msgstr ""
+msgstr "(UTC-03:00) Punta Arenas"
 
 #: dlls/tzres/tzres.rc:324
 msgid "Samoa Standard Time"
@@ -11042,7 +10950,7 @@ msgstr "Horario de Verano en Samoa"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+13:00) Samoa"
-msgstr ""
+msgstr "(UTC+13:00) Samoa"
 
 #: dlls/tzres/tzres.rc:201
 msgid "Kaliningrad Standard Time"
@@ -11054,7 +10962,7 @@ msgstr "Horario de Verano en Kaliningrado"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC+02:00) Kaliningrad"
-msgstr ""
+msgstr "(UTC+02:00) Kaliningrado"
 
 #: dlls/tzres/tzres.rc:282
 msgid "Pacific Standard Time (Mexico)"
@@ -11066,7 +10974,7 @@ msgstr "Horario de Verano del Pacifico(México)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
-msgstr ""
+msgstr "(UTC-08:00) Baja California"
 
 #: dlls/tzres/tzres.rc:228
 msgid "Middle East Standard Time"
@@ -11078,7 +10986,7 @@ msgstr "Horario de Verano del Oriente Medio"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
-msgstr ""
+msgstr "(UTC+02:00) Beirut"
 
 #: dlls/tzres/tzres.rc:360
 msgid "Tokyo Standard Time"
@@ -11090,7 +10998,7 @@ msgstr "Horario de Verano en Tokyo"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
-msgstr ""
+msgstr "(UTC+09:00) Osaka, Sapporo, Tokio"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Line Islands Standard Time"
@@ -11102,7 +11010,7 @@ msgstr "Horario de Verano en Islas de la Línea"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
-msgstr ""
+msgstr "(UTC+14:00) Kiritimati"
 
 #: dlls/tzres/tzres.rc:129
 msgid "Cuba Standard Time"
@@ -11114,7 +11022,7 @@ msgstr "Horario de Verano en Cuba"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-05:00) Havana"
-msgstr ""
+msgstr "(UTC-05:00) La Habana"
 
 #: dlls/tzres/tzres.rc:198
 msgid "Jordan Standard Time"
@@ -11126,7 +11034,7 @@ msgstr "Horario de Verano en Jordania"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
-msgstr ""
+msgstr "(UTC+02:00) Amán"
 
 #: dlls/tzres/tzres.rc:117
 msgid "Central Standard Time"
@@ -11138,15 +11046,15 @@ msgstr "Horario de Verano Central"
 
 #: dlls/tzres/tzres.rc:119
 msgid "(UTC-06:00) Central Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-06:00) Hora Central (US & Canada)"
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
 msgid "Russia Time Zone 3"
-msgstr ""
+msgstr "Huso horario 3 en Rusia"
 
 #: dlls/tzres/tzres.rc:305
 msgid "(UTC+04:00) Izhevsk, Samara"
-msgstr ""
+msgstr "(UTC+04:00) Izhevsk, Samara"
 
 #: dlls/tzres/tzres.rc:414
 #, fuzzy
@@ -11162,7 +11070,7 @@ msgstr "Horario de Verano en Tonga"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+04:00) Volgograd"
-msgstr ""
+msgstr "(UTC+04:00) Volgogrado"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Azores Standard Time"
@@ -11174,7 +11082,7 @@ msgstr "Horario de Verano en Azores"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
-msgstr ""
+msgstr "(UTC-01:00) Azores"
 
 #: dlls/tzres/tzres.rc:264
 msgid "North Asia East Standard Time"
@@ -11186,17 +11094,15 @@ msgstr "Horario de Verano Noroeste del Asia"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
-msgstr ""
+msgstr "(UTC+08:00) Irkutsk"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:407
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC-11:00) Tiempo Universal Coordinado-11"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Argentina Standard Time"
@@ -11208,7 +11114,7 @@ msgstr "Horario de Verano en Argentina"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC-03:00) City of Buenos Aires"
-msgstr ""
+msgstr "(UTC-03:00) Buenos Aires"
 
 #: dlls/tzres/tzres.rc:375
 #, fuzzy
@@ -11224,7 +11130,7 @@ msgstr "Horario de Verano en Turquía"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) Islas Turcas y Caicos"
 
 #: dlls/tzres/tzres.rc:222
 msgid "Marquesas Standard Time"
@@ -11236,7 +11142,7 @@ msgstr "Horario de Verano Marquesas"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr ""
+msgstr "(UTC-09:30) Islas Marquesas"
 
 #: dlls/tzres/tzres.rc:243
 msgid "Myanmar Standard Time"
@@ -11248,17 +11154,15 @@ msgstr "Horario de Verano en Birmania"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+06:30) Yangon (Rangoon)"
-msgstr ""
+msgstr "(UTC+06:30) Yangon (Rangoon)"
 
 #: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
 msgid "Coordinated Universal Time"
 msgstr "Tiempo Universal Coordinado"
 
 #: dlls/tzres/tzres.rc:389
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC) Coordinated Universal Time"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC)Tiempo Universal Coordinado"
 
 #: dlls/tzres/tzres.rc:189
 msgid "India Standard Time"
@@ -11270,7 +11174,7 @@ msgstr "Horario de Verano en India"
 
 #: dlls/tzres/tzres.rc:191
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
-msgstr ""
+msgstr "(UTC+05:30) Chennai, Calcuta, Bombay, Nueva Delhi"
 
 #: dlls/tzres/tzres.rc:180
 msgid "GTB Standard Time"
@@ -11282,7 +11186,7 @@ msgstr "Horario de Verano GTB"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Athens, Bucharest"
-msgstr ""
+msgstr "(UTC+02:00) Atenas, Bucarest"
 
 #: dlls/tzres/tzres.rc:372
 msgid "Turkey Standard Time"
@@ -11294,7 +11198,7 @@ msgstr "Horario de Verano en Turquía"
 
 #: dlls/tzres/tzres.rc:374
 msgid "(UTC+03:00) Istanbul"
-msgstr ""
+msgstr "(UTC+03:00) Estambul"
 
 #: dlls/tzres/tzres.rc:54
 #, fuzzy
@@ -11310,7 +11214,7 @@ msgstr "Horario de Verano en Alaska"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
-msgstr ""
+msgstr "(UTC+04:00) Astrakhan, Uliánovsk"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Fiji Standard Time"
@@ -11322,7 +11226,7 @@ msgstr "Horario de Verano en Fiyi"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+12:00) Fiji"
-msgstr ""
+msgstr "(UTC+12:00) Fiyi"
 
 #: dlls/tzres/tzres.rc:87
 msgid "Canada Central Standard Time"
@@ -11334,7 +11238,7 @@ msgstr "Horario de Verano en Canadá"
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-06:00) Saskatchewan"
-msgstr ""
+msgstr "(UTC-06:00) Saskatchewan"
 
 #: dlls/tzres/tzres.rc:441
 #, fuzzy
@@ -11350,7 +11254,7 @@ msgstr "Horario de Verano en Yakutsk"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC-07:00) Yukon"
-msgstr ""
+msgstr "(UTC-07:00) Yukón"
 
 #: dlls/tzres/tzres.rc:351
 msgid "Taipei Standard Time"
@@ -11362,7 +11266,7 @@ msgstr "Horario de Verano en Taipéi"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+08:00) Taipei"
-msgstr ""
+msgstr "(UTC+08:00) Taipéi"
 
 #: dlls/tzres/tzres.rc:423
 msgid "W. Europe Standard Time"
@@ -11374,7 +11278,7 @@ msgstr "Horario de Verano Europa Occidental"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
-msgstr ""
+msgstr "(UTC+01:00) Ámsterdam, Berlín, Berna, Roma, Estocolmo, Viena"
 
 #: dlls/tzres/tzres.rc:231
 msgid "Montevideo Standard Time"
@@ -11386,7 +11290,7 @@ msgstr "Horario de Verano en Montevideo"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC-03:00) Montevideo"
-msgstr ""
+msgstr "(UTC-03:00) Montevideo"
 
 #: dlls/tzres/tzres.rc:285
 msgid "Pakistan Standard Time"
@@ -11398,7 +11302,7 @@ msgstr "Horario de Verano en Pakistán"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+05:00) Islamabad, Karachi"
-msgstr ""
+msgstr "(UTC+05:00) Islamabad, Karachi"
 
 #: dlls/tzres/tzres.rc:363
 #, fuzzy
@@ -11414,7 +11318,7 @@ msgstr "Horario de Verano en Tokyo"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+07:00) Tomsk"
-msgstr ""
+msgstr "(UTC+07:00) Tomsk"
 
 #: dlls/tzres/tzres.rc:93
 msgid "Caucasus Standard Time"
@@ -11426,19 +11330,19 @@ msgstr "Horario de Verano en Cáucaso"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
-msgstr ""
+msgstr "(UTC+04:00) Ereván"
 
 #: dlls/tzres/tzres.rc:66
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "Australia Hora Estándar Oriental"
 
 #: dlls/tzres/tzres.rc:67
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "Australia Horario de verano Oriental"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
-msgstr ""
+msgstr "(UTC+10:00) Canberra, Melbourne, Sídney"
 
 #: dlls/tzres/tzres.rc:246
 msgid "N. Central Asia Standard Time"
@@ -11450,19 +11354,19 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
-msgstr ""
+msgstr "(UTC+07:00) Novosibirsk"
 
 #: dlls/tzres/tzres.rc:150
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Horario del este"
 
 #: dlls/tzres/tzres.rc:151
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Horario de verano del este"
 
 #: dlls/tzres/tzres.rc:152
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-05:00) Horario del este (US & Canada)"
 
 #: dlls/tzres/tzres.rc:369
 #, fuzzy
@@ -11478,7 +11382,7 @@ msgstr "Horario de Verano en Tasmania"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+09:00) Chita"
-msgstr ""
+msgstr "(UTC+09:00) Chita"
 
 #: dlls/tzres/tzres.rc:141
 #, fuzzy
@@ -11494,7 +11398,7 @@ msgstr "Horario de Verano Europa Occidental"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
-msgstr ""
+msgstr "(UTC+02:00) Chisináu"
 
 #: dlls/tzres/tzres.rc:120
 msgid "Central Standard Time (Mexico)"
@@ -11506,7 +11410,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
-msgstr ""
+msgstr "(UTC-06:00) Guadalajara, Ciudad de México, Monterrey"
 
 #: dlls/tzres/tzres.rc:330
 #, fuzzy
@@ -11522,7 +11426,7 @@ msgstr "Horario de Verano en Samoa"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
-msgstr ""
+msgstr "(UTC+04:00) Sarátov"
 
 #: dlls/tzres/tzres.rc:57
 msgid "Atlantic Standard Time"
@@ -11534,7 +11438,7 @@ msgstr "Horario de Verano en el Atlántico"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
-msgstr ""
+msgstr "(UTC-04:00) Hora del Atlantico (Canada)"
 
 #: dlls/tzres/tzres.rc:237
 msgid "Mountain Standard Time"
@@ -11558,7 +11462,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:383
 msgid "(UTC-05:00) Indiana (East)"
-msgstr ""
+msgstr "(UTC-05:00) Indiana (Este )"
 
 #: dlls/tzres/tzres.rc:321
 #, fuzzy
@@ -11574,7 +11478,7 @@ msgstr "Horario de Verano en Alaska"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
-msgstr ""
+msgstr "(UTC+11:00) Isla de Sajalín"
 
 #: dlls/tzres/tzres.rc:270
 msgid "North Korea Standard Time"
@@ -11586,7 +11490,7 @@ msgstr "Horario de Verano en Corea del Norte"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC+09:00) Pyongyang"
-msgstr ""
+msgstr "(UTC+09:00) Pionyang"
 
 #: dlls/tzres/tzres.rc:354
 msgid "Tasmania Standard Time"
@@ -11598,7 +11502,7 @@ msgstr "Horario de Verano en Tasmania"
 
 #: dlls/tzres/tzres.rc:356
 msgid "(UTC+10:00) Hobart"
-msgstr ""
+msgstr "(UTC+10:00) Hobart"
 
 #: dlls/tzres/tzres.rc:99
 msgid "Central America Standard Time"
@@ -11610,17 +11514,15 @@ msgstr "Horario de Verano en America Central"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central America"
-msgstr ""
+msgstr "(UTC-06:00) América Central"
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:398
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC-02:00) Tiempo Universal Coordinado-02"
 
 #: dlls/tzres/tzres.rc:384
 msgid "US Mountain Standard Time"
@@ -11632,7 +11534,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:386
 msgid "(UTC-07:00) Arizona"
-msgstr ""
+msgstr "(UTC-07:00) Arizona"
 
 #: dlls/tzres/tzres.rc:339
 msgid "South Africa Standard Time"
@@ -11644,7 +11546,7 @@ msgstr "Horario de Verano en Sudáfrica"
 
 #: dlls/tzres/tzres.rc:341
 msgid "(UTC+02:00) Harare, Pretoria"
-msgstr ""
+msgstr "(UTC+02:00) Harare, Pretoria"
 
 #: dlls/tzres/tzres.rc:96
 msgid "Cen. Australia Standard Time"
@@ -11656,17 +11558,15 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:98
 msgid "(UTC+09:30) Adelaide"
-msgstr ""
+msgstr "(UTC+09:30) Adelaida"
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:404
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr "Tiempo Universal Coordinado"
+msgstr "(UTC-09:00) Tiempo Universal Coordinado-09"
 
 #: dlls/tzres/tzres.rc:342
 msgid "Sri Lanka Standard Time"
@@ -11678,7 +11578,7 @@ msgstr "Horario de Verano en Sri Lanka"
 
 #: dlls/tzres/tzres.rc:344
 msgid "(UTC+05:30) Sri Jayawardenepura"
-msgstr ""
+msgstr "(UTC+05:30) Sri Jayawardenapura"
 
 #: dlls/tzres/tzres.rc:30
 msgid "Afghanistan Standard Time"
@@ -11690,7 +11590,7 @@ msgstr "Horario de Verano en Afgnanistán"
 
 #: dlls/tzres/tzres.rc:32
 msgid "(UTC+04:30) Kabul"
-msgstr ""
+msgstr "(UTC+04:30) Kabul"
 
 #: dlls/tzres/tzres.rc:438
 msgid "Yakutsk Standard Time"
@@ -11702,7 +11602,7 @@ msgstr "Horario de Verano en Yakutsk"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+09:00) Yakutsk"
-msgstr ""
+msgstr "(UTC+09:00) Yakutsk"
 
 #: dlls/tzres/tzres.rc:309
 msgid "SA Eastern Standard Time"
@@ -11714,7 +11614,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
-msgstr ""
+msgstr "(UTC-03:00) Cayena, Fortaleza"
 
 #: dlls/tzres/tzres.rc:42
 msgid "Arab Standard Time"
@@ -11726,7 +11626,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+03:00) Kuwait, Riyadh"
-msgstr ""
+msgstr "(UTC+03:00) Kuwait, Riad"
 
 #: dlls/tzres/tzres.rc:45
 msgid "Arabian Standard Time"
@@ -11738,7 +11638,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
-msgstr ""
+msgstr "(UTC+04:00) Abu Dhabi, Mascate"
 
 #: dlls/tzres/tzres.rc:357
 msgid "Tocantins Standard Time"
@@ -11750,7 +11650,7 @@ msgstr "Horario de Verano en Tocantins"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC-03:00) Araguaina"
-msgstr ""
+msgstr "(UTC-03:00) Araguaína"
 
 #: dlls/tzres/tzres.rc:306
 msgid "Russian Standard Time"
@@ -11762,7 +11662,7 @@ msgstr "Horario de Verano en Rusia"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+03:00) Moscow, St. Petersburg"
-msgstr ""
+msgstr "(UTC+03:00) Moscú, San Petersburgo"
 
 #: dlls/tzres/tzres.rc:63
 msgid "Aus Central W. Standard Time"
@@ -11774,7 +11674,7 @@ msgstr "Horario de Verano Occidental Australiana"
 
 #: dlls/tzres/tzres.rc:65
 msgid "(UTC+08:45) Eucla"
-msgstr ""
+msgstr "(UTC+08:45) Eucla"
 
 #: dlls/tzres/tzres.rc:294
 msgid "Romance Standard Time"
@@ -11786,7 +11686,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
-msgstr ""
+msgstr "(UTC+01:00) Bruselas, Copenhague, Madrid, París"
 
 #: dlls/tzres/tzres.rc:159
 msgid "Ekaterinburg Standard Time"
@@ -11798,15 +11698,15 @@ msgstr "Horario de Verano en Ekaterinburgo"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+05:00) Ekaterinburg"
-msgstr ""
+msgstr "(UTC+05:00) Ekaterimburgo"
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
 msgid "Russia Time Zone 11"
-msgstr ""
+msgstr "Huso horario 11 en Rusia"
 
 #: dlls/tzres/tzres.rc:302
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
-msgstr ""
+msgstr "(UTC+12:00) Anádyr, Petropávlovsk-Kamchatski"
 
 #: dlls/tzres/tzres.rc:432
 #, fuzzy
@@ -11822,7 +11722,7 @@ msgstr "Horario de Verano en Asia Occidental"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+02:00) Gaza, Hebron"
-msgstr ""
+msgstr "(UTC+02:00) Gaza, Hebrón"
 
 #: dlls/tzres/tzres.rc:348
 msgid "Syria Standard Time"
@@ -11834,7 +11734,7 @@ msgstr "Horario de Verano en Siria"
 
 #: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Damascus"
-msgstr ""
+msgstr "(UTC+02:00) Damasco"
 
 #: dlls/tzres/tzres.rc:60
 msgid "AUS Central Standard Time"
@@ -11846,7 +11746,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+09:30) Darwin"
-msgstr ""
+msgstr "(UTC+09:30) Darwin"
 
 #: dlls/tzres/tzres.rc:177
 msgid "Greenwich Standard Time"
@@ -11858,7 +11758,7 @@ msgstr "Horario de Verano en Greenwich"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+00:00) Monrovia, Reykjavik"
-msgstr ""
+msgstr "(UTC+00:00) Monrovia, Reikiavik"
 
 #: dlls/tzres/tzres.rc:378
 msgid "Ulaanbaatar Standard Time"
@@ -11870,7 +11770,7 @@ msgstr "Horario de Verano en Ulán Bator"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC+08:00) Ulaanbaatar"
-msgstr ""
+msgstr "(UTC+08:00) Ulán Bator"
 
 #: dlls/tzres/tzres.rc:261
 #, fuzzy
@@ -11886,7 +11786,7 @@ msgstr "Horario de Verano en Marruecos"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC+11:00) Norfolk Island"
-msgstr ""
+msgstr "(UTC+11:00) Isla Norfolk"
 
 #: dlls/tzres/tzres.rc:195
 msgid "Israel Standard Time"
@@ -11898,7 +11798,7 @@ msgstr "Horario de Verano en Israel"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
-msgstr ""
+msgstr "(UTC+02:00) Jerusalén"
 
 #: dlls/tzres/tzres.rc:78
 msgid "Bangladesh Standard Time"
@@ -11910,7 +11810,7 @@ msgstr "Horario de Verano en Bangladés"
 
 #: dlls/tzres/tzres.rc:80
 msgid "(UTC+06:00) Dhaka"
-msgstr ""
+msgstr "(UTC+06:00) Daca"
 
 #: dlls/tzres/tzres.rc:312
 msgid "SA Pacific Standard Time"
@@ -11922,7 +11822,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
-msgstr ""
+msgstr "(UTC-05:00) Bogotá, Lima, Quito, Rio Branco"
 
 #: dlls/tzres/tzres.rc:429
 msgid "West Asia Standard Time"
@@ -11934,7 +11834,7 @@ msgstr "Horario de Verano en Asia Occidental"
 
 #: dlls/tzres/tzres.rc:431
 msgid "(UTC+05:00) Ashgabat, Tashkent"
-msgstr ""
+msgstr "(UTC+05:00) Asjabad, Taskent"
 
 #: dlls/tzres/tzres.rc:33
 msgid "Alaskan Standard Time"
@@ -11946,7 +11846,7 @@ msgstr "Horario de Verano en Alaska"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-09:00) Alaska"
-msgstr ""
+msgstr "(UTC-09:00) Alaska"
 
 #: dlls/tzres/tzres.rc:288
 msgid "Paraguay Standard Time"
@@ -11958,7 +11858,7 @@ msgstr "Horario de Verano en Paraguay"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC-04:00) Asuncion"
-msgstr ""
+msgstr "(UTC-04:00) Asunción"
 
 #: dlls/tzres/tzres.rc:132
 msgid "Dateline Standard Time"
@@ -11970,7 +11870,7 @@ msgstr "Horario de Verano en la Linea del Dia"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
-msgstr ""
+msgstr "(UTC-12:00) Línea internacional de cambio de fecha Oeste"
 
 #: dlls/tzres/tzres.rc:207
 msgid "Libya Standard Time"
@@ -11982,7 +11882,7 @@ msgstr "Horario de Verano en Libia"
 
 #: dlls/tzres/tzres.rc:209
 msgid "(UTC+02:00) Tripoli"
-msgstr ""
+msgstr "(UTC+02:00) Trípoli"
 
 #: dlls/tzres/tzres.rc:75
 msgid "Bahia Standard Time"
@@ -11994,7 +11894,7 @@ msgstr "Horario de Verano en Bahia"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC-03:00) Salvador"
-msgstr ""
+msgstr "(UTC-03:00) Salvador"
 
 #: dlls/tzres/tzres.rc:408
 msgid "Venezuela Standard Time"
@@ -12006,7 +11906,7 @@ msgstr "Horario de Verano en Venezuela"
 
 #: dlls/tzres/tzres.rc:410
 msgid "(UTC-04:00) Caracas"
-msgstr ""
+msgstr "(UTC-04:00) Caracas"
 
 #: dlls/tzres/tzres.rc:84
 msgid "Bougainville Standard Time"
@@ -12018,7 +11918,7 @@ msgstr "Horario de Verano en Bougainville"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+11:00) Bougainville Island"
-msgstr ""
+msgstr "(UTC+11:00) Isla Bougainville"
 
 #: dlls/tzres/tzres.rc:186
 msgid "Hawaiian Standard Time"
@@ -12030,7 +11930,7 @@ msgstr "Horario de Verano en Hawái"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC-10:00) Hawaii"
-msgstr ""
+msgstr "(UTC-10:00) Hawái"
 
 #: dlls/tzres/tzres.rc:333
 msgid "SE Asia Standard Time"
@@ -12042,7 +11942,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
-msgstr ""
+msgstr "(UTC+07:00) Bangkok, Hanói, Yakarta"
 
 #: dlls/tzres/tzres.rc:291
 #, fuzzy
@@ -12058,7 +11958,7 @@ msgstr "Horario de Verano en Jordania"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
-msgstr ""
+msgstr "(UTC+05:00) Qyzylorda"
 
 #: dlls/tzres/tzres.rc:426
 #, fuzzy
@@ -12074,7 +11974,7 @@ msgstr "Horario de Verano en Tonga"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+07:00) Hovd"
-msgstr ""
+msgstr "(UTC+07:00) Hovd"
 
 #: dlls/tzres/tzres.rc:255
 msgid "New Zealand Standard Time"
@@ -12086,7 +11986,7 @@ msgstr "Horario de Verano en Nueva Zelanda"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+12:00) Auckland, Wellington"
-msgstr ""
+msgstr "(UTC+12:00) Auckland, Wellington"
 
 #: dlls/tzres/tzres.rc:36
 msgid "Aleutian Standard Time"
@@ -12098,7 +11998,7 @@ msgstr "Horario de Verano en Islas Aleutianas"
 
 #: dlls/tzres/tzres.rc:38
 msgid "(UTC-10:00) Aleutian Islands"
-msgstr ""
+msgstr "(UTC-10:00) Islas Aleutianas"
 
 #: dlls/tzres/tzres.rc:273
 #, fuzzy
@@ -12114,7 +12014,7 @@ msgstr "Horario de Verano en Yakutsk"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
-msgstr ""
+msgstr "(UTC+06:00) Omsk"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Central Brazilian Standard Time"
@@ -12126,7 +12026,7 @@ msgstr "Horario de Verano en Brasil Central"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
-msgstr ""
+msgstr "(UTC-04:00) Cuiaba"
 
 #: dlls/tzres/tzres.rc:81
 msgid "Belarus Standard Time"
@@ -12138,7 +12038,7 @@ msgstr "Horario de Verano en Bielorrusia"
 
 #: dlls/tzres/tzres.rc:83
 msgid "(UTC+03:00) Minsk"
-msgstr ""
+msgstr "(UTC+03:00) Minsk"
 
 #: dlls/tzres/tzres.rc:315
 msgid "SA Western Standard Time"
@@ -12150,7 +12050,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
-msgstr ""
+msgstr "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
 
 #: dlls/tzres/tzres.rc:174
 msgid "Greenland Standard Time"
@@ -12162,7 +12062,7 @@ msgstr "Horario de Verano en Groenlandia"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC-03:00) Greenland"
-msgstr ""
+msgstr "(UTC-03:00) Groenlandia"
 
 #: dlls/tzres/tzres.rc:147
 msgid "Easter Island Standard Time"
@@ -12174,15 +12074,15 @@ msgstr "Horario de Verano en Isla de Pascua"
 
 #: dlls/tzres/tzres.rc:149
 msgid "(UTC-06:00) Easter Island"
-msgstr ""
+msgstr "(UTC-06:00) Isla de Pascua"
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
 msgid "Russia Time Zone 10"
-msgstr ""
+msgstr "Huso horario 10 en Rusia"
 
 #: dlls/tzres/tzres.rc:299
 msgid "(UTC+11:00) Chokurdakh"
-msgstr ""
+msgstr "(UTC+11:00) Chokurdakh"
 
 #: dlls/tzres/tzres.rc:156
 msgid "Egypt Standard Time"
@@ -12194,7 +12094,7 @@ msgstr "Horario de Verano en Egipto"
 
 #: dlls/tzres/tzres.rc:158
 msgid "(UTC+02:00) Cairo"
-msgstr ""
+msgstr "(UTC+02:00) Cairo"
 
 #: dlls/tzres/tzres.rc:153
 msgid "Eastern Standard Time (Mexico)"
@@ -12206,7 +12106,7 @@ msgstr "Horario de Verano del Oeste(México)"
 
 #: dlls/tzres/tzres.rc:155
 msgid "(UTC-05:00) Chetumal"
-msgstr ""
+msgstr "(UTC-05:00) Chetumal"
 
 #: dlls/tzres/tzres.rc:225
 msgid "Mauritius Standard Time"
@@ -12218,7 +12118,7 @@ msgstr "Horario de Verano en Mauricio"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+04:00) Port Louis"
-msgstr ""
+msgstr "(UTC+04:00) Port Louis"
 
 #: dlls/tzres/tzres.rc:411
 msgid "Vladivostok Standard Time"
@@ -12230,7 +12130,7 @@ msgstr "Horario de Verano en Vladivostok"
 
 #: dlls/tzres/tzres.rc:413
 msgid "(UTC+10:00) Vladivostok"
-msgstr ""
+msgstr "(UTC+10:00) Vladivostok"
 
 #: dlls/tzres/tzres.rc:336
 msgid "Singapore Standard Time"
@@ -12242,7 +12142,7 @@ msgstr "Horario de Verano en Singapur"
 
 #: dlls/tzres/tzres.rc:338
 msgid "(UTC+08:00) Kuala Lumpur, Singapore"
-msgstr ""
+msgstr "(UTC+08:00) Kuala Lumpur, Singapur"
 
 #: dlls/tzres/tzres.rc:204
 msgid "Korea Standard Time"
@@ -12254,7 +12154,7 @@ msgstr "Horario de Verano en Corea"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC+09:00) Seoul"
-msgstr ""
+msgstr "(UTC+09:00) Seúl"
 
 #: dlls/tzres/tzres.rc:123
 msgid "Chatham Islands Standard Time"
@@ -12266,7 +12166,7 @@ msgstr "Horario de Verano en Islas Chatham"
 
 #: dlls/tzres/tzres.rc:125
 msgid "(UTC+12:45) Chatham Islands"
-msgstr ""
+msgstr "(UTC+12:45) Islas Chatham"
 
 #: dlls/tzres/tzres.rc:135
 msgid "E. Africa Standard Time"
@@ -12278,7 +12178,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:137
 msgid "(UTC+03:00) Nairobi"
-msgstr ""
+msgstr "(UTC+03:00) Nairobi"
 
 #: dlls/tzres/tzres.rc:165
 msgid "FLE Standard Time"
@@ -12290,7 +12190,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
-msgstr ""
+msgstr "(UTC+02:00) Helsinki, Kiev, Riga, Sofía, Tallin, Vilna"
 
 #: dlls/tzres/tzres.rc:144
 msgid "E. South America Standard Time"
@@ -12302,7 +12202,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
-msgstr ""
+msgstr "(UTC-03:00) Brasilia"
 
 #: dlls/tzres/tzres.rc:114
 msgid "Central Pacific Standard Time"
@@ -12314,7 +12214,7 @@ msgstr "Horario de Verano en Pacifico Central"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
-msgstr ""
+msgstr "(UTC+11:00) Isla Salomón, Nueva Caledonia"
 
 #: dlls/tzres/tzres.rc:420
 msgid "W. Central Africa Standard Time"
@@ -12326,7 +12226,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:422
 msgid "(UTC+01:00) West Central Africa"
-msgstr ""
+msgstr "(UTC+01:00) África Central Occidental"
 
 #: dlls/tzres/tzres.rc:276
 msgid "Pacific SA Standard Time"
@@ -12338,7 +12238,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
-msgstr ""
+msgstr "(UTC-04:00) Santiago"
 
 #: dlls/tzres/tzres.rc:138
 msgid "E. Australia Standard Time"
@@ -12350,7 +12250,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:140
 msgid "(UTC+10:00) Brisbane"
-msgstr ""
+msgstr "(UTC+10:00) Brisbane"
 
 #: dlls/tzres/tzres.rc:417
 msgid "W. Australia Standard Time"
@@ -12362,7 +12262,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+08:00) Perth"
-msgstr ""
+msgstr "(UTC+08:00) Perth"
 
 #: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
@@ -12575,7 +12475,7 @@ msgstr ""
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Referencia no válida o no calificada"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
@@ -12619,7 +12519,7 @@ msgstr "Zoom"
 
 #: dlls/winemac.drv/winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Ingrese a pantalla completa"
 
 #: dlls/winemac.drv/winemac.rc:44
 msgid "Bring All to Front"
@@ -12682,7 +12582,7 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Fecha efectiva"
 
 #: dlls/wininet/wininet.rc:37
 msgid "Security Protocol"
@@ -12698,7 +12598,7 @@ msgstr "Tipo de cifrado"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Fuerza de privacidad"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
@@ -12718,7 +12618,7 @@ msgstr "URL inválida.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "El esquema de URL no se pudo reconocer o no es compatible.\n"
 
 #: dlls/wininet/winineterror.mc:46
 #, fuzzy
@@ -12737,6 +12637,8 @@ msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
+"La operación se canceló, generalmente porque el identificador en el que "
+"operaba la solicitud se cerró antes de que se completara la operación.\n"
 
 #: dlls/wininet/winineterror.mc:61
 #, fuzzy
@@ -12750,17 +12652,21 @@ msgstr "No se ha podido conectar al servidor.\n"
 
 #: dlls/wininet/winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "La conexión con el servidor ha finalizado.\n"
 
 #: dlls/wininet/winineterror.mc:76
 msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"La fecha del certificado SSL que se recibió del servidor es incorrecta. El "
+"certificado ha caducado.\n"
 
 #: dlls/wininet/winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
 msgstr ""
+"El nombre común del certificado SSL (campo de nombre de host) es "
+"incorrecto.\n"
 
 #: dlls/winmm/winmm.rc:32
 msgid "The specified command was carried out."
@@ -13711,7 +13617,7 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Página de códigos activa: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
 #, fuzzy
@@ -14596,6 +14502,8 @@ msgstr " (Sí|No|Todo)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"No se puede reconocer '%1' como un comando interno o externo, o una "
+"secuencia de comandos por lotes.\n"
 
 #: programs/cmd/cmd.rc:405
 msgid "Division by zero error.\n"
@@ -14613,7 +14521,7 @@ msgstr "Error de red inesperado.\n"
 
 #: programs/cmd/cmd.rc:408
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Discrepancia entre paréntesis.\n"
 
 #: programs/cmd/cmd.rc:409
 msgid ""
@@ -14915,7 +14823,7 @@ msgstr "Dirección IPv6"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Sufijo DNS primario"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15120,7 +15028,7 @@ msgstr "Conexión LAN"
 
 #: programs/netstat/netstat.rc:46
 msgid "Passive Opens"
-msgstr ""
+msgstr "Aperturas pasivas"
 
 #: programs/netstat/netstat.rc:47
 #, fuzzy
@@ -15148,7 +15056,7 @@ msgstr "Segmentos Enviados"
 
 #: programs/netstat/netstat.rc:52
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Segmentos retransmitidos"
 
 #: programs/netstat/netstat.rc:53
 msgid "UDP Statistics for IPv4"
@@ -15972,7 +15880,7 @@ msgstr "reg: Sintaxis inválida. "
 
 #: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Escriba \"REG %1 /?\" por ayuda.\n"
 
 #: programs/reg/reg.rc:181
 #, fuzzy
@@ -15984,16 +15892,12 @@ msgstr ""
 "especificado\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "La operación finalizó con éxito\n"
+msgstr "reg: La operación finalizó con éxito\n"
 
 #: programs/reg/reg.rc:131
-#, fuzzy
-#| msgid "Operation was cancelled.\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "Operación cancelada.\n"
+msgstr "reg: La operación de registro cancelada\n"
 
 #: programs/reg/reg.rc:174
 #, fuzzy
@@ -16019,7 +15923,7 @@ msgstr "(Por defecto)"
 
 #: programs/reg/reg.rc:141
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Escriba \"REG /?\" por ayuda.\n"
 
 #: programs/reg/reg.rc:35
 msgid ""
@@ -16267,19 +16171,19 @@ msgstr "reg: Opción inválida[%1]. "
 
 #: programs/reg/reg.rc:122
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr ""
+msgstr "reg: la opción [/d] debe ir seguida de un valor numérico válido\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
+msgstr "reg: la opción [/d] debe ir seguida de un valor hexadecimal válido\n"
 
 #: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr ""
+msgstr "reg: la opción [/d] debe ir seguida de una cadena válida\n"
 
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: tipo de datos de registro no controlado [/t 0x%1!x!, /d %2]\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
@@ -16297,7 +16201,7 @@ msgstr "reg: Parámetros de línea de comandos inválidos\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: las claves de origen y destino no pueden ser iguales\n"
 
 #: programs/reg/reg.rc:205
 #, fuzzy
@@ -16331,7 +16235,7 @@ msgstr "El archivo '%1' ya existe. ¿Desea reemplazarlo?"
 
 #: programs/reg/reg.rc:151
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "reg: secuencia de escape no reconocida [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:175
 #, fuzzy
@@ -16349,7 +16253,7 @@ msgstr "(valor no definido)"
 
 #: programs/reg/reg.rc:138
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Búsqueda completa. Número de coincidencias encontradas: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
@@ -16594,12 +16498,16 @@ msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"No se puede cambiar el nombre de la clave '%1'.\n"
+"El nombre de clave especificado ya existe."
 
 #: programs/regedit/regedit.rc:251
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"No se puede cambiar el nombre del valor '%1'.\n"
+"El nombre del valor especificado ya existe."
 
 #: programs/regedit/regedit.rc:252
 msgid "Unable to delete the selected registry key."
@@ -16617,6 +16525,7 @@ msgstr "No se puede cambiar el nombre del valor seleccionado."
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
+"Las claves y valores contenidos en %1 se agregaron correctamente al registro."
 
 #: programs/regedit/regedit.rc:256
 msgid "Unable to import %1. The specified file is not a valid registry file."
@@ -16657,11 +16566,11 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
+msgstr "regedit: cambio no válido o no reconocido [%1]\n"
 
 #: programs/regedit/regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "Escriba \"regedit /?\" por ayuda.\n"
 
 #: programs/regedit/regedit.rc:411
 msgid "regedit: No filename was specified.\n"
@@ -16670,10 +16579,11 @@ msgstr "regedit: No se ha especificado un nombre de archivo.\n"
 #: programs/regedit/regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
+"regedit: No se especificó ninguna clave de registro para su eliminación.\n"
 
 #: programs/regedit/regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
-msgstr ""
+msgstr "regedit: No se encontró el archivo '%1'.\n"
 
 #: programs/regedit/regedit.rc:414
 msgid "regedit: Unable to open the file '%1'.\n"
@@ -16685,7 +16595,7 @@ msgstr "regedit: Acción no controlada.\n"
 
 #: programs/regedit/regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: ¡Sin memoria! (%1!S!, linea %2!u!)\n"
 
 #: programs/regedit/regedit.rc:417
 msgid "regedit: Invalid hexadecimal value.\n"
@@ -16696,10 +16606,12 @@ msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: No se pueden convertir datos hexadecimales. Se encontró un valor no "
+"válido en '%1'.\n"
 
 #: programs/regedit/regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "regedit: secuencia de escape no reconocida [\\%1!c!]\n"
 
 #: programs/regedit/regedit.rc:420
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
@@ -16728,21 +16640,17 @@ msgstr "regedit: Tipo de datos de registro no soportado [0x%1!x!] en '%2'.\n"
 
 #: programs/regedit/regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "regedit: el valor de registro '%1' se exportará como datos binarios.\n"
 
 #: programs/regedit/regedit.rc:427
 msgid "regedit: Invalid system key [%1]\n"
 msgstr "regedit: nombre de clave inválido [%1]\n"
 
 #: programs/regedit/regedit.rc:428
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
-"Error: El sistema no pudo encontrar la clave o el valor del Registro "
-"especificado\n"
+"regedit: No se puede exportar '%1'. No se encontró la clave de registro.\n"
 
 #: programs/regedit/regedit.rc:429
 msgid "regedit: Unable to delete the registry key '%1'.\n"
@@ -16906,7 +16814,7 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Expande o colapsa el nodo seleccionado"
 
 #: programs/regedit/regedit.rc:231
 msgid "Collapse"
@@ -16919,6 +16827,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Utilidad de registro de DLL de Wine\n"
+"\n"
+"Proporciona servicios de registro de DLL. \n"
+"\n"
 
 #: programs/regsvr32/regsvr32.rc:41
 msgid ""
@@ -16939,6 +16851,8 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: cambio no válido o no reconocido [%1] \n"
+"\n"
 
 #: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: Failed to load DLL '%1'\n"
@@ -16946,39 +16860,39 @@ msgstr "regsvr32: No se pudo cargar DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: '%1!S!' no implementado en DLL '%2'\n"
 
 #: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: no se pudo registrar la DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' registrada correctamente\n"
 
 #: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: no se pudo anular el registro de la DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' correctamente desregistrada\n"
 
 #: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: no se pudo instalar la DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' instalado correctamente\n"
 
 #: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: no se pudo desinstalar la DLL '%1'\\b\n"
 
 #: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' desinstalado correctamente\n"
 
 #: programs/start/start.rc:57
 msgid ""
@@ -17912,12 +17826,14 @@ msgstr ""
 
 #: programs/uninstaller/uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "desinstalador: no se encontró la aplicación con GUID '%1'\n"
 
 #: programs/uninstaller/uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"desinstalador: la opción '--remove' debe ir seguida de un GUID de la "
+"aplicación\n"
 
 #: programs/uninstaller/uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
@@ -17930,6 +17846,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Desinstalador de aplicaciones Wine\n"
+"\n"
+"Desinstale aplicaciones del prefijo Wine actual.\n"
+"\n"
 
 #: programs/uninstaller/uninstaller.rc:43
 msgid ""
@@ -18636,6 +18556,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Un programa en su sistema se ha bloqueado, pero WineDbg no pudo conectarse "
+"al proceso para obtener un seguimiento de trazas."
 
 #: programs/winedbg/winedbg.rc:41
 msgid "(unidentified)"
@@ -18920,7 +18842,7 @@ msgstr "Minas"
 
 #: programs/winemine/winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Se perderán todos los resultados. ¿Está seguro?"
 
 #: programs/winemine/winemine.rc:30
 msgid "WineMine"
@@ -19138,11 +19060,11 @@ msgstr "Letras - Mayúsculas"
 
 #: programs/wordpad/wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Números romanos - minúsculas"
 
 #: programs/wordpad/wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Números romanos - mayúsculas"
 
 #: programs/wordpad/wordpad.rc:94 programs/wordpad/wordpad.rc:117
 msgid "&Paragraph..."
