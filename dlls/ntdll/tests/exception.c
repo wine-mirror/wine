@@ -1231,7 +1231,7 @@ static void test_debugger(DWORD cont_status)
                     __asm__( "movw %%ss,%0" : "=r" (ss) );
                     ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
                     ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
-                    if (is_wow64)
+                    if (is_wow64) todo_wine
                     {
                         ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
                         ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
