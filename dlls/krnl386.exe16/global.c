@@ -196,6 +196,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
 {
     void *ptr;
     HGLOBAL16 handle;
+    DWORD align = 0x1f;
 
     TRACE("%d flags=%04x\n", size, flags );
 
@@ -205,8 +206,9 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
 
     /* Fixup the size */
 
-    if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x1f) return 0;
-    size = (size + 0x1f) & ~0x1f;
+    if (size > 0x100000) align = 0xfff;  /* selector limit will be in pages */
+    if (size >= GLOBAL_MAX_ALLOC_SIZE - align) return 0;
+    size = (size + align) & ~align;
 
     /* Allocate the linear memory */
     ptr = HeapAlloc( get_win16_heap(), 0, size );
