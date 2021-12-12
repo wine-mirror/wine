@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-11 12:32-0300\n"
+"PO-Revision-Date: 2021-12-12 12:11-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -3721,30 +3721,24 @@ msgid "&Disable"
 msgstr "&Desativar"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Reiniciar"
+msgstr "&Reiniciar"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Habilitar"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Editar Substituição"
+msgstr "S&obrescrever"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Conectado"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Entrada de voz:"
+msgstr "Conectado (dispositivo xinput)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -10402,7 +10396,7 @@ msgstr "Horário de verão de Cabo Verde"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr "(UTC-01:00) Ilha de Cabo Verde"
+msgstr "(UTC-01:00) Ilha de Cabo Verde."
 
 #: dlls/tzres/tzres.rc:183
 msgid "Haiti Standard Time"
@@ -13272,13 +13266,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Página de código ativa: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Mensagem inválida.\n"
+msgstr "Página de código inválida.\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13291,6 +13283,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [número]\n"
+"\n"
+"  Configura ou apresenta a página de código ativa do console.\n"
+"\n"
+"  número   Página de código do console para ativar.\n"
+"\n"
+"  Tecle CHCP sem um número para exibir a página de código ativa no console.\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -14463,7 +14463,7 @@ msgstr "Endereço IPv6"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Sufixo de DNS Primário"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
