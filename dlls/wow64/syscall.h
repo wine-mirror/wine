@@ -196,6 +196,7 @@
     SYSCALL_ENTRY( NtSaveKey ) \
     SYSCALL_ENTRY( NtSecureConnectPort ) \
     SYSCALL_ENTRY( NtSetContextThread ) \
+    SYSCALL_ENTRY( NtSetDebugFilterState ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEaFile ) \

@@ -270,6 +270,19 @@ NTSTATUS WINAPI wow64_NtQueryInstallUILanguage( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetDebugFilterState
+ */
+NTSTATUS WINAPI wow64_NtSetDebugFilterState( UINT *args )
+{
+    ULONG component_id = get_ulong( &args );
+    ULONG level = get_ulong( &args );
+    BOOLEAN state = get_ulong( &args );
+
+    return NtSetDebugFilterState( component_id, level, state );
+}
+
+
+/**********************************************************************
  *           wow64_NtSetDefaultLocale
  */
 NTSTATUS WINAPI wow64_NtSetDefaultLocale( UINT *args )
