@@ -611,7 +611,18 @@ int CDECL _wstrdate_s(wchar_t* date, size_t size)
  */
 char* CDECL _strtime(char* time)
 {
-    GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, "HH':'mm':'ss", time, 9);
+    SYSTEMTIME st;
+
+    GetLocalTime(&st);
+    time[0] = '0' + st.wHour / 10;
+    time[1] = '0' + st.wHour % 10;
+    time[2] = ':';
+    time[3] = '0' + st.wMinute / 10;
+    time[4] = '0' + st.wMinute % 10;
+    time[5] = ':';
+    time[6] = '0' + st.wSecond / 10;
+    time[7] = '0' + st.wSecond % 10;
+    time[8] = 0;
     return time;
 }
 
