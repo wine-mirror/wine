@@ -190,6 +190,7 @@ static void test_Timer(void)
     call_func1(p__Timer__Stop, &timer);
     ok(!timer.timer, "timer != NULL\n");
     call_func1(p__Timer_dtor, &timer);
+    ResetEvent(callback_called);
 
     call_func3(p__Timer_ctor, &timer, 1, FALSE);
     timer.vtable = vtable;
