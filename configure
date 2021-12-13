@@ -20212,7 +20212,7 @@ then :
 fi
 fi
 
-LDAP_LIBS=${LDAP_LIBS:-"-lldap_r -llber"}
+LDAP_LIBS=${LDAP_LIBS:-"-lldap -llber"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: openldap cflags: $LDAP_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: openldap libs: $LDAP_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
@@ -20236,14 +20236,14 @@ fi
 "
 if test "x$ac_cv_type_LDAPSortKey" = xyes
 then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ldap_initialize in -lldap_r" >&5
-printf %s "checking for ldap_initialize in -lldap_r... " >&6; }
-if test ${ac_cv_lib_ldap_r_ldap_initialize+y}
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ldap_initialize in -lldap" >&5
+printf %s "checking for ldap_initialize in -lldap... " >&6; }
+if test ${ac_cv_lib_ldap_ldap_initialize+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap_r $PTHREAD_LIBS $LDAP_LIBS $LIBS"
+LIBS="-lldap $PTHREAD_LIBS $LDAP_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -20261,17 +20261,17 @@ return ldap_initialize ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_lib_ldap_r_ldap_initialize=yes
+  ac_cv_lib_ldap_ldap_initialize=yes
 else $as_nop
-  ac_cv_lib_ldap_r_ldap_initialize=no
+  ac_cv_lib_ldap_ldap_initialize=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ldap_r_ldap_initialize" >&5
-printf "%s\n" "$ac_cv_lib_ldap_r_ldap_initialize" >&6; }
-if test "x$ac_cv_lib_ldap_r_ldap_initialize" = xyes
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ldap_ldap_initialize" >&5
+printf "%s\n" "$ac_cv_lib_ldap_ldap_initialize" >&6; }
+if test "x$ac_cv_lib_ldap_ldap_initialize" = xyes
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ber_init in -llber" >&5
 printf %s "checking for ber_init in -llber... " >&6; }

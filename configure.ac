@@ -2017,12 +2017,12 @@ dnl **** Check for OpenLDAP ***
 if test "x$with_ldap" != "xno"
 then
     dnl Actually there's no pkg-config support for ldap, but this way we can still override the flags
-    WINE_PACKAGE_FLAGS(LDAP,[openldap],[-lldap_r -llber],,,
+    WINE_PACKAGE_FLAGS(LDAP,[openldap],[-lldap -llber],,,
         [AC_CHECK_HEADERS([ldap.h lber.h])
         if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
         then
             AC_CHECK_TYPE(LDAPSortKey,
-                [AC_CHECK_LIB(ldap_r, ldap_initialize,
+                [AC_CHECK_LIB(ldap, ldap_initialize,
                     [AC_CHECK_LIB(lber, ber_init,
                         [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])],
                         [LDAP_LIBS=""],
