@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-11-23 14:40+0800\n"
+"PO-Revision-Date: 2021-12-13 13:32+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -1155,8 +1155,8 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"您必須先安裝印表機才能使用與印表機有關的功能 (如: 版面設定，列印檔案)。請安裝"
-"印表機後再試一次。"
+"您必須先安裝印表機才能使用與印表機有關的功能 (如: 版面設定，列印檔案)。請在安"
+"裝印表機後再試一次。"
 
 #: dlls/comdlg32/comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -1224,7 +1224,7 @@ msgstr "印表機離線; "
 
 #: dlls/comdlg32/comdlg32.rc:93
 msgid "I/O Active; "
-msgstr "I/O 活動; "
+msgstr "I/O 活動中; "
 
 #: dlls/comdlg32/comdlg32.rc:94
 msgid "Busy; "
@@ -1268,7 +1268,7 @@ msgstr "墨水用盡; "
 
 #: dlls/comdlg32/comdlg32.rc:104
 msgid "Page punt; "
-msgstr "頁處理記憶體超支; "
+msgstr "紙張有問題; "
 
 #: dlls/comdlg32/comdlg32.rc:105
 msgid "Interrupted by user; "
@@ -2510,15 +2510,15 @@ msgstr "請選擇您要使用的格式:"
 
 #: dlls/cryptui/cryptui.rc:413
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "&DER-encoded X.509 (*.cer)"
+msgstr "DER-encoded X.509 (*.cer)(&D)"
 
 #: dlls/cryptui/cryptui.rc:415
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64-encoded X.509 (*.cer):"
+msgstr "Base64-encoded X.509 (*.cer)(&S):"
 
 #: dlls/cryptui/cryptui.rc:417
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "密碼訊息語法標準/PK&CS #7 訊息 (*.p7b)"
+msgstr "密碼訊息語法標準/PK&CS #7 訊息 (*.p7b)(&C)"
 
 #: dlls/cryptui/cryptui.rc:419
 msgid "&Include all certificates in the certification path if possible"
@@ -2526,7 +2526,7 @@ msgstr "儘量在憑證路徑中包含所有憑證(&I)"
 
 #: dlls/cryptui/cryptui.rc:421
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "個人資訊交換/&PKCS #12 (*.pfx)"
+msgstr "個人資訊交換/&PKCS #12 (*.pfx)(&P)"
 
 #: dlls/cryptui/cryptui.rc:423
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -2588,7 +2588,7 @@ msgstr "找不到這個憑證的簽發者。"
 
 #: dlls/cryptui/cryptui.rc:36
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr "這個憑證的所有預定目的都無法被驗證。"
+msgstr "無法驗證這個憑證的所有預定目的。"
 
 #: dlls/cryptui/cryptui.rc:37
 msgid "This certificate is intended for the following purposes:"
@@ -2855,7 +2855,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "您將不能再以這個憑證解密訊息，或用它簽署訊息。\n"
-"確定要移除這個憑證?"
+"您確定要移除這個憑證?"
 
 #: dlls/cryptui/cryptui.rc:111
 msgid ""
@@ -2864,7 +2864,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "您將不能再以這些憑證解密訊息，或用它們簽署訊息。\n"
-"確定要移除這些憑證?"
+"您確定要移除這些憑證?"
 
 #: dlls/cryptui/cryptui.rc:112
 msgid ""
@@ -2873,7 +2873,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "您將不能再以這個憑證加密訊息，或驗證以它簽署的訊息。\n"
-"確定要移除這個憑證?"
+"您確定要移除這個憑證?"
 
 #: dlls/cryptui/cryptui.rc:113
 msgid ""
@@ -2882,7 +2882,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "您將不能再以這些憑證加密訊息，或驗證以它們簽署的訊息。\n"
-"確定要移除這些憑證?"
+"您確定要移除這些憑證?"
 
 #: dlls/cryptui/cryptui.rc:114
 msgid ""
@@ -2891,7 +2891,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "由這個憑證授權單位所發的憑證將不再被信任。\n"
-"確定要移除這個憑證?"
+"您確定要移除這個憑證?"
 
 #: dlls/cryptui/cryptui.rc:115
 msgid ""
@@ -2900,7 +2900,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "由這些憑證授權單位所發的憑證將不再被信任。\n"
-"確定要移除這些憑證?"
+"您確定要移除這些憑證?"
 
 #: dlls/cryptui/cryptui.rc:116
 msgid ""
@@ -2909,7 +2909,7 @@ msgid ""
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
 "由這個憑證授權單位所發的憑證或憑證授權單位將不再被信任。\n"
-"確定要移除這個信任的根憑證?"
+"您確定要移除這個信任的根憑證?"
 
 #: dlls/cryptui/cryptui.rc:117
 msgid ""
@@ -2918,7 +2918,7 @@ msgid ""
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
 "由這些憑證授權單位所發的憑證或憑證授權單位將不再被信任。\n"
-"確定要移除這些信任的根憑證?"
+"您確定要移除這些信任的根憑證?"
 
 #: dlls/cryptui/cryptui.rc:118
 msgid ""
@@ -2926,7 +2926,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "由這個發行者簽署的軟體將將不再被信任。\n"
-"確定要移除這個憑證?"
+"您確定要移除這個憑證?"
 
 #: dlls/cryptui/cryptui.rc:119
 msgid ""
@@ -2934,7 +2934,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "由這些發行者簽署的軟體將不再被信任。\n"
-"確定要移除這些憑證?"
+"您確定要移除這些憑證?"
 
 #: dlls/cryptui/cryptui.rc:120
 msgid "Are you sure you want to remove this certificate?"
@@ -4334,11 +4334,11 @@ msgstr "找不到程序。\n"
 
 #: dlls/kernel32/winerror.mc:508
 msgid "No children to wait for.\n"
-msgstr "沒有要等待的子行程。\n"
+msgstr "沒有要等待的子處理程序。\n"
 
 #: dlls/kernel32/winerror.mc:513
 msgid "Child process has not completed.\n"
-msgstr "子行程還未完成。\n"
+msgstr "子處理程序還未完成。\n"
 
 #: dlls/kernel32/winerror.mc:518
 msgid "Invalid use of direct access handle.\n"
@@ -4686,7 +4686,7 @@ msgstr "旗號太多貼文。\n"
 
 #: dlls/kernel32/winerror.mc:953
 msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr "讀取/寫入行程記憶體已部分完成。\n"
+msgstr "Read/WriteProcessMemory 已部分完成。\n"
 
 #: dlls/kernel32/winerror.mc:958
 msgid "The oplock wasn't granted.\n"
@@ -4894,7 +4894,7 @@ msgstr "服務限定的錯誤。\n"
 
 #: dlls/kernel32/winerror.mc:1213
 msgid "Process aborted.\n"
-msgstr "行程已取消。\n"
+msgstr "處理程序已取消。\n"
 
 #: dlls/kernel32/winerror.mc:1218
 msgid "Service dependency failed.\n"
@@ -13076,13 +13076,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "使用中的字碼頁: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "無效的訊息。\n"
+msgstr "無效的字碼頁\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13095,6 +13093,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [數字]\n"
+"\n"
+"  設定或顯示主控臺正在使用的字碼頁。\n"
+"\n"
+"  數字     要在主控臺使用的字碼頁。\n"
+"\n"
+"  輸入 CHCP 而不輸入數字則顯示主控臺正在使用的字碼頁。\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -16557,60 +16563,60 @@ msgstr "無法翻譯指定的 Unix 檔案名稱到 DOS 檔案名稱。"
 
 #: programs/taskkill/taskkill.rc:30
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr "用法：taskkill [/?] [/f] [/im 行程名稱 | /pid 行程識別號]\n"
+msgstr "用法: taskkill [/?] [/f] [/im 處理程序名稱 | /pid 處理程序 ID]\n"
 
 #: programs/taskkill/taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "錯誤：指定了不明或無效的命令列選項。\n"
+msgstr "錯誤: 指定了不明或無效的命令列選項。\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "錯誤：指定了無效的命令列參數。\n"
+msgstr "錯誤: 指定了無效的命令列參數。\n"
 
 #: programs/taskkill/taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "錯誤：選項 /im 或 /pid 之一必須被指定。\n"
+msgstr "錯誤: 必須指定選項 /im 或 /pid 的其中之一。\n"
 
 #: programs/taskkill/taskkill.rc:34
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "錯誤：選項 %1 預期有一個命令列參數。\n"
+msgstr "錯誤: 選項 %1 需要一個命令列參數。\n"
 
 #: programs/taskkill/taskkill.rc:35
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "錯誤：選項 /im 和 /pid 彼此互斥。\n"
+msgstr "錯誤: 選項 /im 和 /pid 彼此互斥。\n"
 
 #: programs/taskkill/taskkill.rc:36
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr "已發送關閉訊息給具有 PID %1!u! 的行程的最上層視窗。\n"
+msgstr "已將關閉訊息發送到處理程序 PID %1!u! 的最上層視窗。\n"
 
 #: programs/taskkill/taskkill.rc:37
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
-msgstr "已發送關閉訊息給具有 PID %2!u! 的行程 %1 的最上層視窗。\n"
+msgstr "已將關閉訊息發送到處理程序 '%1' (PID %2!u!) 的最上層視窗。\n"
 
 #: programs/taskkill/taskkill.rc:38
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "具有 PID %1!u! 的行程已被強制終止。\n"
+msgstr "處理程序 PID %1!u! 已被強制終止。\n"
 
 #: programs/taskkill/taskkill.rc:39
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "具有 PID %2!u! 的行程 %1 已被強制終止。\n"
+msgstr "處理程序 '%1' (PID: %2!u!) 已被強制終止。\n"
 
 #: programs/taskkill/taskkill.rc:40
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "錯誤：找不到行程 %1。\n"
+msgstr "錯誤: 找不到處理程序 %1。\n"
 
 #: programs/taskkill/taskkill.rc:41
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "錯誤：無法列舉行程清單。\n"
+msgstr "錯誤: 無法列舉處理程序清單。\n"
 
 #: programs/taskkill/taskkill.rc:42
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "錯誤：無法終止行程 %1。\n"
+msgstr "錯誤: 無法終止處理程序 %1。\n"
 
 #: programs/taskkill/taskkill.rc:43
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "錯誤：不允許行程自我終止。\n"
+msgstr "錯誤: 處理程序不允許自我終止。\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18901,7 +18907,7 @@ msgstr "RichEdit 庫載入失敗。"
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
-msgstr "您已經選擇儲存為純文字格式, 這可能導致格式遺失。您確定要這麼做嗎?"
+msgstr "您已經選擇儲存為純文字格式。這可能導致格式遺失。您確定要這麼做嗎?"
 
 #: programs/wordpad/wordpad.rc:198
 msgid "Invalid number format."
@@ -19037,10 +19043,10 @@ msgstr ""
 "XCOPY 來源 [目的地] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
 "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
-"位置:\n"
+"其中:\n"
 "\n"
 "[/I]  如果目的不存在且複製兩個或更多檔案時，\n"
-"\t將目的假設為目錄。\n"
+"\t將假設目的地為目錄。\n"
 "[/S]  複製目錄和子目錄。\n"
 "[/E]  複製目錄和子目錄，包括任何空目錄。\n"
 "[/Q]  安靜模式，在複製期間不列出名稱。\n"
