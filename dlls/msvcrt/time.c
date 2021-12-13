@@ -538,7 +538,18 @@ struct tm* CDECL _gmtime32(const __time32_t* secs)
  */
 char* CDECL _strdate(char* date)
 {
-    GetDateFormatA(LOCALE_NEUTRAL, 0, NULL, "MM'/'dd'/'yy", date, 9);
+    SYSTEMTIME st;
+
+    GetLocalTime(&st);
+    date[0] = '0' + st.wMonth / 10;
+    date[1] = '0' + st.wMonth % 10;
+    date[2] = '/';
+    date[3] = '0' + st.wDay / 10;
+    date[4] = '0' + st.wDay % 10;
+    date[5] = '/';
+    date[6] = '0' + st.wYear / 10 % 10;
+    date[7] = '0' + st.wYear % 10;
+    date[8] = 0;
     return date;
 }
 
