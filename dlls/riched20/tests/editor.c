@@ -7228,32 +7228,34 @@ static void test_EM_CHARFROMPOS(void)
     point.x = -1;
     point.y = 40;
     result = SendMessageA(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
-    todo_wine ok(result == 34, "expected character index of 34 but got %d\n", result);
+    ok(result == 34, "expected character index of 34 but got %d\n", result);
 
     point.x = 1000;
     point.y = 0;
     result = SendMessageA(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
-    todo_wine ok(result == 33, "expected character index of 33 but got %d\n", result);
+    ok(result == 33, "expected character index of 33 but got %d\n", result);
 
     point.x = 1000;
     point.y = 36;
     result = SendMessageA(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
-    todo_wine ok(result == 39, "expected character index of 39 but got %d\n", result);
+    ok(result == 39, "expected character index of 39 but got %d\n", result);
 
     point.x = 1000;
     point.y = -1;
     result = SendMessageA(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    /* This differs from the msftedit result */
     todo_wine ok(result == 0, "expected character index of 0 but got %d\n", result);
 
     point.x = 1000;
     point.y = rcClient.bottom + 1;
     result = SendMessageA(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    /* This differs from the msftedit result */
     todo_wine ok(result == 34, "expected character index of 34 but got %d\n", result);
 
     point.x = 1000;
     point.y = rcClient.bottom;
     result = SendMessageA(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
-    todo_wine ok(result == 39, "expected character index of 39 but got %d\n", result);
+    ok(result == 39, "expected character index of 39 but got %d\n", result);
 
     DestroyWindow(hwnd);
 }

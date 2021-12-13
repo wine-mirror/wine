@@ -2815,7 +2815,6 @@ static BOOL is_link( ME_Run *run )
 void editor_set_cursor( ME_TextEditor *editor, int x, int y )
 {
     ME_Cursor pos;
-    BOOL is_exact;
     static HCURSOR cursor_arrow, cursor_hand, cursor_ibeam, cursor_reverse;
     HCURSOR cursor;
 
@@ -2838,22 +2837,18 @@ void editor_set_cursor( ME_TextEditor *editor, int x, int y )
         else cursor = cursor_ibeam;
     }
     else if (x < editor->rcFormat.left) cursor = cursor_reverse;
-    else
+    else if (cursor_from_coords( editor, x, y, &pos ))
     {
-        ME_CharFromPos( editor, x, y, &pos, &is_exact );
-        if (is_exact)
+        ME_Run *run = pos.run;
+
+        if (is_link( run )) cursor = cursor_hand;
+
+        else if (ME_IsSelection( editor ))
         {
-            ME_Run *run = pos.run;
+            int start, end, offset = ME_GetCursorOfs( &pos );
 
-            if (is_link( run )) cursor = cursor_hand;
-
-            else if (ME_IsSelection( editor ))
-            {
-                int start, end, offset = ME_GetCursorOfs( &pos );
-
-                ME_GetSelectionOfs( editor, &start, &end );
-                if (start <= offset && end >= offset) cursor = cursor_arrow;
-            }
+            ME_GetSelectionOfs( editor, &start, &end );
+            if (start <= offset && end >= offset) cursor = cursor_arrow;
         }
     }
 
@@ -3113,15 +3108,13 @@ static inline int calc_wheel_change( int *remain, int amount_per_click )
 void link_notify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   int x,y;
-  BOOL isExact;
   ME_Cursor cursor; /* The start of the clicked text. */
   ME_Run *run;
   ENLINK info;
 
   x = (short)LOWORD(lParam);
   y = (short)HIWORD(lParam);
-  ME_CharFromPos(editor, x, y, &cursor, &isExact);
-  if (!isExact) return;
+  if (!cursor_from_coords( editor, x, y, &cursor )) return;
 
   if (is_link( cursor.run ))
   { /* The clicked run has CFE_LINK set */
@@ -3853,11 +3846,10 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_CHARFROMPOS:
   {
     ME_Cursor cursor;
-    if (ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y,
-                       &cursor, NULL))
-      return ME_GetCursorOfs(&cursor);
-    else
-      return -1;
+    POINTL *pt = (POINTL *)lParam;
+
+    cursor_from_coords(editor, pt->x, pt->y, &cursor);
+    return ME_GetCursorOfs(&cursor);
   }
   case EM_POSFROMCHAR:
   {

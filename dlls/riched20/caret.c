@@ -993,30 +993,15 @@ static BOOL cursor_from_virtual_coords( ME_TextEditor *editor, int x, int y,
  *
  * x & y are pixel positions in client coordinates.
  *
- * isExact will be set to TRUE if the run is directly under the pixel
- * position, FALSE if it not, unless isExact is set to NULL.
- *
- * return FALSE if outside client area and the cursor is not set,
- * otherwise TRUE is returned.
+ * return TRUE if the run is directly under the pixel
+ * position, FALSE if it not.
  */
-BOOL ME_CharFromPos(ME_TextEditor *editor, int x, int y,
-                    ME_Cursor *cursor, BOOL *isExact)
+BOOL cursor_from_coords( ME_TextEditor *editor, int x, int y, ME_Cursor *cursor )
 {
-  RECT rc;
-  BOOL bResult;
-
-  ITextHost_TxGetClientRect(editor->texthost, &rc);
-  if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom) {
-    if (isExact) *isExact = FALSE;
-    return FALSE;
-  }
-  x += editor->horz_si.nPos;
-  y += editor->vert_si.nPos;
-  bResult = cursor_from_virtual_coords( editor, x, y, cursor, FALSE );
-  if (isExact) *isExact = bResult;
-  return TRUE;
+    x += editor->horz_si.nPos;
+    y += editor->vert_si.nPos;
+    return cursor_from_virtual_coords( editor, x, y, cursor, FALSE );
 }
-
 
 
 /* Extends the selection with a word, line, or paragraph selection type.
