@@ -2290,7 +2290,9 @@ static BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardwar
 {
     struct rawinput_thread_data *thread_data = rawinput_thread_data();
 
-    if (msg->message == WM_INPUT)
+    if (msg->message == WM_INPUT_DEVICE_CHANGE)
+        rawinput_update_device_list();
+    else
     {
         thread_data->buffer->header.dwSize = RAWINPUT_BUFFER_SIZE;
         if (!rawinput_from_hardware_message( thread_data->buffer, msg_data )) return FALSE;
