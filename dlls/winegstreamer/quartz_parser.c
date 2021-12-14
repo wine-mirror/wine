@@ -1327,8 +1327,10 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
      * ensures the seek is serialized between flushes. */
     for (i = 0; i < filter->source_count; ++i)
     {
-        if (filter->sources[i]->pin.pin.peer)
-            EnterCriticalSection(&pin->flushing_cs);
+        struct parser_source *flush_pin = filter->sources[i];
+
+        if (flush_pin->pin.pin.peer)
+            EnterCriticalSection(&flush_pin->flushing_cs);
     }
 
     SourceSeekingImpl_SetPositions(iface, current, current_flags, stop, stop_flags);
@@ -1342,8 +1344,10 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
         for (i = 0; i < filter->source_count; ++i)
         {
-            if (filter->sources[i]->pin.pin.peer)
-                IPin_EndFlush(filter->sources[i]->pin.pin.peer);
+            struct parser_source *flush_pin = filter->sources[i];
+
+            if (flush_pin->pin.pin.peer)
+                IPin_EndFlush(flush_pin->pin.pin.peer);
         }
 
         if (filter->reader)
@@ -1353,8 +1357,10 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     /* Release the flushing locks. */
     for (i = filter->source_count - 1; i >= 0; --i)
     {
-        if (filter->sources[i]->pin.pin.peer)
-            LeaveCriticalSection(&pin->flushing_cs);
+        struct parser_source *flush_pin = filter->sources[i];
+
+        if (flush_pin->pin.pin.peer)
+            LeaveCriticalSection(&flush_pin->flushing_cs);
     }
 
     return S_OK;
