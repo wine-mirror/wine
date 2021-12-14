@@ -1826,14 +1826,12 @@ NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new
 }
 
 static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
-                                 const struct condrv_output_info_params *params, size_t extra_size )
+                                 const struct condrv_output_info_params *params )
 {
     const struct condrv_output_info *info = &params->info;
     NTSTATUS status;
 
     TRACE( "%p\n", screen_buffer );
-
-    extra_size -= sizeof(*params);
 
     if (params->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM)
     {
@@ -2427,8 +2425,8 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         return get_output_info( screen_buffer, out_size );
 
     case IOCTL_CONDRV_SET_OUTPUT_INFO:
-        if (in_size < sizeof(struct condrv_output_info) || *out_size) return STATUS_INVALID_PARAMETER;
-        return set_output_info( screen_buffer, in_data, in_size );
+        if (in_size != sizeof(struct condrv_output_info_params) || *out_size) return STATUS_INVALID_PARAMETER;
+        return set_output_info( screen_buffer, in_data );
 
     case IOCTL_CONDRV_FILL_OUTPUT:
         if (in_size != sizeof(struct condrv_fill_output_params) || *out_size != sizeof(DWORD))
