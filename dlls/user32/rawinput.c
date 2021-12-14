@@ -418,7 +418,8 @@ BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_ms
  */
 UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_count, UINT size)
 {
-    UINT i;
+    static UINT last_check;
+    UINT i, ticks = GetTickCount();
 
     TRACE("devices %p, device_count %p, size %u.\n", devices, device_count, size);
 
@@ -434,7 +435,11 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
         return ~0U;
     }
 
-    rawinput_update_device_list();
+    if (ticks - last_check > 2000)
+    {
+        last_check = ticks;
+        rawinput_update_device_list();
+    }
 
     if (!devices)
     {
