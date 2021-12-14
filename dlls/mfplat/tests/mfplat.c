@@ -6867,7 +6867,12 @@ static void test_d3d12_surface_buffer(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
+    if (hr == E_INVALIDARG)
+    {
 todo_wine
+        win_skip("D3D12 resource buffers are not supported.\n");
+        goto notsupported;
+    }
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
 if (SUCCEEDED(hr))
@@ -6888,6 +6893,8 @@ if (SUCCEEDED(hr))
     IMFDXGIBuffer_Release(dxgi_buffer);
     IMFMediaBuffer_Release(buffer);
 }
+
+notsupported:
     ID3D12Resource_Release(resource);
     refcount = ID3D12Device_Release(device);
     ok(!refcount, "Unexpected device refcount %u.\n", refcount);
