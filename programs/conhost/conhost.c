@@ -1129,6 +1129,7 @@ static const struct edit_line_key_entry win32_key_map_ctrl[] =
     { VK_RIGHT, edit_line_move_right_word },
     { VK_END,   edit_line_kill_suffix     },
     { VK_HOME,  edit_line_kill_prefix     },
+    { 'M',      edit_line_done            },
     { 0 }
 };
 
