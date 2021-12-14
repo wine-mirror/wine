@@ -38,7 +38,6 @@
 #include "evr.h"
 
 #include "wine/test.h"
-#include "wine/heap.h"
 
 #define D3D11_INIT_GUID
 #include "initguid.h"
@@ -4201,7 +4200,7 @@ static void test_attributes_serialization(void)
     ok(hr == S_OK, "Failed to get blob size, hr %#x.\n", hr);
     ok(size == 8, "Got size %u.\n", size);
 
-    buffer = heap_alloc(size);
+    buffer = malloc(size);
 
     hr = MFGetAttributesAsBlob(attributes, buffer, size);
     ok(hr == S_OK, "Failed to serialize, hr %#x.\n", hr);
@@ -4223,7 +4222,7 @@ static void test_attributes_serialization(void)
     ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
     ok(count == 0, "Unexpected count %u.\n", count);
 
-    heap_free(buffer);
+    free(buffer);
 
     /* Set some attributes of various types. */
     IMFAttributes_SetUINT32(attributes, &MF_MT_MAJOR_TYPE, 456);
@@ -4238,12 +4237,12 @@ static void test_attributes_serialization(void)
     ok(hr == S_OK, "Failed to get blob size, hr %#x.\n", hr);
     ok(size > 8, "Got unexpected size %u.\n", size);
 
-    buffer = heap_alloc(size);
+    buffer = malloc(size);
     hr = MFGetAttributesAsBlob(attributes, buffer, size);
     ok(hr == S_OK, "Failed to serialize, hr %#x.\n", hr);
     hr = MFInitAttributesFromBlob(dest, buffer, size);
     ok(hr == S_OK, "Failed to deserialize, hr %#x.\n", hr);
-    heap_free(buffer);
+    free(buffer);
 
     hr = IMFAttributes_GetUINT32(dest, &MF_MT_MAJOR_TYPE, &value32);
     ok(hr == S_OK, "Failed to get get uint32 value, hr %#x.\n", hr);
