@@ -818,7 +818,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateTimerQueueTimer( PHANDLE timer, HANDLE queue
                                                      WAITORTIMERCALLBACK callback, PVOID arg,
                                                      DWORD when, DWORD period, ULONG flags )
 {
-    return set_ntstatus( RtlCreateTimer( timer, queue, callback, arg, when, period, flags ));
+    return set_ntstatus( RtlCreateTimer( queue, timer, callback, arg, when, period, flags ));
 }
 
 

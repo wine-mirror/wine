@@ -887,8 +887,8 @@ static struct timer_queue *get_timer_queue(HANDLE TimerQueue)
  * Creates a new timer associated with the given queue.
  *
  * PARAMS
- *  NewTimer   [O] The newly created timer.
  *  TimerQueue [I] The queue to hold the timer.
+ *  NewTimer   [O] The newly created timer.
  *  Callback   [I] The callback to fire.
  *  Parameter  [I] The argument for the callback.
  *  DueTime    [I] The delay, in milliseconds, before first firing the
@@ -906,7 +906,7 @@ static struct timer_queue *get_timer_queue(HANDLE TimerQueue)
  *  Success: STATUS_SUCCESS.
  *  Failure: Any NTSTATUS code.
  */
-NTSTATUS WINAPI RtlCreateTimer(PHANDLE NewTimer, HANDLE TimerQueue,
+NTSTATUS WINAPI RtlCreateTimer(HANDLE TimerQueue, HANDLE *NewTimer,
                                RTL_WAITORTIMERCALLBACKFUNC Callback,
                                PVOID Parameter, DWORD DueTime, DWORD Period,
                                ULONG Flags)
