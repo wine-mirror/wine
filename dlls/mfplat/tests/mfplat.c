@@ -369,7 +369,12 @@ static ULONG WINAPI testcallback_AddRef(IMFAsyncCallback *iface)
 static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
 {
     struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
-    return InterlockedDecrement(&callback->refcount);
+    ULONG refcount = InterlockedDecrement(&callback->refcount);
+
+    if (!refcount)
+        free(callback);
+
+    return refcount;
 }
 
 static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
@@ -377,7 +382,6 @@ static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD 
     ok(flags != NULL && queue != NULL, "Unexpected arguments.\n");
     return E_NOTIMPL;
 }
-
 
 static BOOL check_clsid(CLSID *clsids, UINT32 count)
 {
@@ -597,23 +601,35 @@ static const IMFAsyncCallbackVtbl events_callback_vtbl =
     source_events_callback_Invoke,
 };
 
+static const IMFAsyncCallbackVtbl testcallbackvtbl;
+
+static struct test_callback * create_test_callback(const IMFAsyncCallbackVtbl *vtbl)
+{
+    struct test_callback *callback = calloc(1, sizeof(*callback));
+
+    callback->IMFAsyncCallback_iface.lpVtbl = vtbl ? vtbl : &testcallbackvtbl;
+    callback->refcount = 1;
+
+    return callback;
+}
+
 static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected_event_type, PROPVARIANT *value)
 {
-    struct test_callback callback = {{ 0 }};
+    struct test_callback *callback;
     MediaEventType event_type;
     BOOL ret = FALSE;
     HRESULT hr;
 
-    callback.IMFAsyncCallback_iface.lpVtbl = &events_callback_vtbl;
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    callback = create_test_callback(&events_callback_vtbl);
+    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     for (;;)
     {
-        hr = IMFMediaEventGenerator_BeginGetEvent(generator, &callback.IMFAsyncCallback_iface,
+        hr = IMFMediaEventGenerator_BeginGetEvent(generator, &callback->IMFAsyncCallback_iface,
                 (IUnknown *)generator);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-        if (WaitForSingleObject(callback.event, 1000) == WAIT_TIMEOUT)
+        if (WaitForSingleObject(callback->event, 1000) == WAIT_TIMEOUT)
         {
             ok(0, "timeout\n");
             break;
@@ -621,14 +637,14 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
 
         Sleep(10);
 
-        hr = IMFMediaEvent_GetType(callback.media_event, &event_type);
+        hr = IMFMediaEvent_GetType(callback->media_event, &event_type);
         ok(hr == S_OK, "Failed to event type, hr %#x.\n", hr);
 
         if ((ret = (event_type == expected_event_type)))
         {
             if (value)
             {
-                hr = IMFMediaEvent_GetValue(callback.media_event, value);
+                hr = IMFMediaEvent_GetValue(callback->media_event, value);
                 ok(hr == S_OK, "Failed to get value of event, hr %#x.\n", hr);
             }
 
@@ -636,17 +652,17 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
         }
     }
 
-    CloseHandle(callback.event);
-    if (callback.media_event)
-        IMFMediaEvent_Release(callback.media_event);
+    CloseHandle(callback->event);
+    if (callback->media_event)
+        IMFMediaEvent_Release(callback->media_event);
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 
     return ret;
 }
 
 static void test_source_resolver(void)
 {
-    struct test_callback callback = { { &test_create_from_url_callback_vtbl } };
-    struct test_callback callback2 = { { &test_create_from_file_handler_callback_vtbl } };
+    struct test_callback *callback, *callback2;
     IMFSourceResolver *resolver, *resolver2;
     IMFPresentationDescriptor *descriptor;
     IMFSchemeHandler *scheme_handler;
@@ -676,6 +692,9 @@ static void test_source_resolver(void)
         win_skip("MFCreateSourceResolver() not found\n");
         return;
     }
+
+    callback = create_test_callback(&test_create_from_url_callback_vtbl);
+    callback2 = create_test_callback(&test_create_from_file_handler_callback_vtbl);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -713,7 +732,7 @@ static void test_source_resolver(void)
     IMFByteStream_Release(stream);
 
     /* Create from URL. */
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, L"nonexisting.mp4", MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
             (IUnknown **)&stream);
@@ -725,13 +744,13 @@ static void test_source_resolver(void)
     IMFByteStream_Release(stream);
 
     hr = IMFSourceResolver_BeginCreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL,
-            &cancel_cookie, &callback.IMFAsyncCallback_iface, (IUnknown *)resolver);
+            &cancel_cookie, &callback->IMFAsyncCallback_iface, (IUnknown *)resolver);
     ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
     ok(cancel_cookie != NULL, "Unexpected cancel object.\n");
     IUnknown_Release(cancel_cookie);
 
     if (SUCCEEDED(hr))
-        WaitForSingleObject(callback.event, INFINITE);
+        WaitForSingleObject(callback->event, INFINITE);
 
     /* With explicit scheme. */
     lstrcpyW(pathW, fileschemeW);
@@ -962,27 +981,30 @@ todo_wine
             (void **)&scheme_handler);
     ok(hr == S_OK, "Failed to create handler object, hr %#x.\n", hr);
 
-    callback2.event = callback.event;
+    callback2->event = callback->event;
     cancel_cookie = NULL;
     hr = IMFSchemeHandler_BeginCreateObject(scheme_handler, pathW, MF_RESOLUTION_MEDIASOURCE, NULL, &cancel_cookie,
-            &callback2.IMFAsyncCallback_iface, (IUnknown *)scheme_handler);
+            &callback2->IMFAsyncCallback_iface, (IUnknown *)scheme_handler);
     ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
     ok(!!cancel_cookie, "Unexpected cancel object.\n");
     IUnknown_Release(cancel_cookie);
 
-    WaitForSingleObject(callback2.event, INFINITE);
+    WaitForSingleObject(callback2->event, INFINITE);
 
     IMFSchemeHandler_Release(scheme_handler);
 
     if (do_uninit)
         CoUninitialize();
 
-    CloseHandle(callback.event);
+    CloseHandle(callback->event);
 
     IMFSourceResolver_Release(resolver);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
+    IMFAsyncCallback_Release(&callback2->IMFAsyncCallback_iface);
 
     DeleteFileW(filename);
 }
@@ -2548,17 +2570,10 @@ static const IMFAsyncCallbackVtbl testcallbackvtbl =
     testcallback_Invoke,
 };
 
-static void init_test_callback(struct test_callback *callback)
-{
-    callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
-    callback->event = NULL;
-    callback->refcount = 1;
-}
-
 static void test_MFCreateAsyncResult(void)
 {
     IMFAsyncResult *result, *result2;
-    struct test_callback callback;
+    struct test_callback *callback;
     IUnknown *state, *object;
     MFASYNCRESULT *data;
     ULONG refcount;
@@ -2567,7 +2582,7 @@ static void test_MFCreateAsyncResult(void)
     HRESULT hr;
     BOOL ret;
 
-    init_test_callback(&callback);
+    callback = create_test_callback(NULL);
 
     hr = MFCreateAsyncResult(NULL, NULL, NULL, NULL);
     ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
@@ -2612,11 +2627,11 @@ static void test_MFCreateAsyncResult(void)
     ok(state == NULL, "Unexpected state.\n");
 
     /* Object. */
-    hr = MFCreateAsyncResult((IUnknown *)result, &callback.IMFAsyncCallback_iface, NULL, &result2);
+    hr = MFCreateAsyncResult((IUnknown *)result, &callback->IMFAsyncCallback_iface, NULL, &result2);
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
 
     data = (MFASYNCRESULT *)result2;
-    ok(data->pCallback == &callback.IMFAsyncCallback_iface, "Unexpected callback value.\n");
+    ok(data->pCallback == &callback->IMFAsyncCallback_iface, "Unexpected callback value.\n");
     ok(data->hrStatusResult == S_OK, "Unexpected status %#x.\n", data->hrStatusResult);
     ok(data->dwBytesTransferred == 0, "Unexpected byte length %u.\n", data->dwBytesTransferred);
     ok(data->hEvent == NULL, "Unexpected event.\n");
@@ -2630,11 +2645,11 @@ static void test_MFCreateAsyncResult(void)
     IMFAsyncResult_Release(result2);
 
     /* State object. */
-    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, (IUnknown *)result, &result2);
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, (IUnknown *)result, &result2);
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
 
     data = (MFASYNCRESULT *)result2;
-    ok(data->pCallback == &callback.IMFAsyncCallback_iface, "Unexpected callback value.\n");
+    ok(data->pCallback == &callback->IMFAsyncCallback_iface, "Unexpected callback value.\n");
     ok(data->hrStatusResult == S_OK, "Unexpected status %#x.\n", data->hrStatusResult);
     ok(data->dwBytesTransferred == 0, "Unexpected byte length %u.\n", data->dwBytesTransferred);
     ok(data->hEvent == NULL, "Unexpected event.\n");
@@ -2668,7 +2683,7 @@ static void test_MFCreateAsyncResult(void)
     ret = GetHandleInformation(event, &flags);
     ok(!ret, "Expected handle to be closed.\n");
 
-    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
 
     data = (MFASYNCRESULT *)result;
@@ -2681,6 +2696,8 @@ static void test_MFCreateAsyncResult(void)
     ok(!refcount, "Unexpected refcount %u.\n", refcount);
     ret = GetHandleInformation(event, &flags);
     ok(!ret, "Expected handle to be closed.\n");
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 }
 
 static void test_startup(void)
@@ -2934,17 +2951,17 @@ static void test_MFHeapAlloc(void)
 
 static void test_scheduled_items(void)
 {
-    struct test_callback callback;
+    struct test_callback *callback;
     IMFAsyncResult *result;
     MFWORKITEM_KEY key, key2;
     HRESULT hr;
 
-    init_test_callback(&callback);
+    callback = create_test_callback(NULL);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
 
-    hr = MFScheduleWorkItem(&callback.IMFAsyncCallback_iface, NULL, -5000, &key);
+    hr = MFScheduleWorkItem(&callback->IMFAsyncCallback_iface, NULL, -5000, &key);
     ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
@@ -2959,7 +2976,7 @@ static void test_scheduled_items(void)
         return;
     }
 
-    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#x.\n", hr);
 
     hr = pMFPutWaitingWorkItem(NULL, 0, result, &key);
@@ -2976,7 +2993,7 @@ static void test_scheduled_items(void)
 
     IMFAsyncResult_Release(result);
 
-    hr = MFScheduleWorkItem(&callback.IMFAsyncCallback_iface, NULL, -5000, &key);
+    hr = MFScheduleWorkItem(&callback->IMFAsyncCallback_iface, NULL, -5000, &key);
     ok(hr == S_OK, "Failed to schedule item, hr %#x.\n", hr);
 
     hr = MFCancelWorkItem(key);
@@ -2984,6 +3001,8 @@ static void test_scheduled_items(void)
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 }
 
 static void test_serial_queue(void)
@@ -3089,15 +3108,15 @@ static void test_periodic_callback(void)
 
 static void test_event_queue(void)
 {
-    struct test_callback callback, callback2;
+    struct test_callback *callback, *callback2;
     IMFMediaEvent *event, *event2;
     IMFMediaEventQueue *queue;
     IMFAsyncResult *result;
     HRESULT hr;
     DWORD ret;
 
-    init_test_callback(&callback);
-    init_test_callback(&callback2);
+    callback = create_test_callback(NULL);
+    callback2 = create_test_callback(NULL);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
@@ -3133,38 +3152,38 @@ static void test_event_queue(void)
     hr = IMFMediaEventQueue_BeginGetEvent(queue, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, (IUnknown *)queue);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback->IMFAsyncCallback_iface, (IUnknown *)queue);
     ok(hr == S_OK, "Failed to Begin*, hr %#x.\n", hr);
 
     /* Same callback, same state. */
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, (IUnknown *)queue);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback->IMFAsyncCallback_iface, (IUnknown *)queue);
     ok(hr == MF_S_MULTIPLE_BEGIN, "Unexpected hr %#x.\n", hr);
 
     /* Same callback, different state. */
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback->IMFAsyncCallback_iface, (IUnknown *)&callback->IMFAsyncCallback_iface);
     ok(hr == MF_E_MULTIPLE_BEGIN, "Unexpected hr %#x.\n", hr);
 
     /* Different callback, same state. */
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback2.IMFAsyncCallback_iface, (IUnknown *)queue);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback2->IMFAsyncCallback_iface, (IUnknown *)queue);
     ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#x.\n", hr);
 
     /* Different callback, different state. */
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback2.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback2->IMFAsyncCallback_iface, (IUnknown *)&callback->IMFAsyncCallback_iface);
     ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#x.\n", hr);
 
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     hr = IMFMediaEventQueue_QueueEvent(queue, event);
     ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
 
-    ret = WaitForSingleObject(callback.event, 500);
+    ret = WaitForSingleObject(callback->event, 500);
     ok(ret == WAIT_OBJECT_0, "Unexpected return value %#x.\n", ret);
 
-    CloseHandle(callback.event);
+    CloseHandle(callback->event);
 
     IMFMediaEvent_Release(event);
 
-    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#x.\n", hr);
 
     hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
@@ -3189,7 +3208,7 @@ static void test_event_queue(void)
     hr = IMFMediaEventQueue_QueueEventParamVar(queue, MEError, &GUID_NULL, E_FAIL, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, NULL);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback->IMFAsyncCallback_iface, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEventQueue_BeginGetEvent(queue, NULL, NULL);
@@ -3204,21 +3223,23 @@ static void test_event_queue(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     IMFMediaEventQueue_Release(queue);
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 
     /* Release while subscribed. */
-    init_test_callback(&callback);
+    callback = create_test_callback(NULL);
 
     hr = MFCreateEventQueue(&queue);
     ok(hr == S_OK, "Failed to create event queue, hr %#x.\n", hr);
 
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, NULL);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback->IMFAsyncCallback_iface, NULL);
     ok(hr == S_OK, "Failed to Begin*, hr %#x.\n", hr);
-    EXPECT_REF(&callback.IMFAsyncCallback_iface, 2);
+    EXPECT_REF(&callback->IMFAsyncCallback_iface, 2);
 
     IMFMediaEventQueue_Release(queue);
-    ret = get_refcount(&callback.IMFAsyncCallback_iface);
+    ret = get_refcount(&callback->IMFAsyncCallback_iface);
     ok(ret == 1 || broken(ret == 2) /* Vista */,
        "Unexpected refcount %d, expected 1.\n", ret);
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
@@ -3736,7 +3757,7 @@ static void test_system_time_source(void)
 
 static void test_MFInvokeCallback(void)
 {
-    struct test_callback callback;
+    struct test_callback *callback;
     IMFAsyncResult *result;
     MFASYNCRESULT *data;
     ULONG refcount;
@@ -3746,9 +3767,9 @@ static void test_MFInvokeCallback(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
 
-    init_test_callback(&callback);
+    callback = create_test_callback(NULL);
 
-    hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
 
     data = (MFASYNCRESULT *)result;
@@ -3763,6 +3784,8 @@ static void test_MFInvokeCallback(void)
 
     refcount = IMFAsyncResult_Release(result);
     ok(!refcount, "Unexpected refcount %u.\n", refcount);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
@@ -4440,33 +4463,37 @@ static const IMFAsyncCallbackVtbl test_create_file_callback_vtbl =
 
 static void test_async_create_file(void)
 {
-    struct test_callback callback = { { &test_create_file_callback_vtbl } };
     WCHAR pathW[MAX_PATH], fileW[MAX_PATH];
+    struct test_callback *callback;
     IUnknown *cancel_cookie;
     HRESULT hr;
     BOOL ret;
 
+    callback = create_test_callback(&test_create_file_callback_vtbl);
+
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Fail to start up, hr %#x.\n", hr);
 
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
     GetTempFileNameW(pathW, NULL, 0, fileW);
 
     hr = MFBeginCreateFile(MF_ACCESSMODE_READWRITE, MF_OPENMODE_DELETE_IF_EXIST, MF_FILEFLAGS_NONE, fileW,
-            &callback.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface, &cancel_cookie);
+            &callback->IMFAsyncCallback_iface, (IUnknown *)&callback->IMFAsyncCallback_iface, &cancel_cookie);
     ok(hr == S_OK, "Async create request failed, hr %#x.\n", hr);
     ok(cancel_cookie != NULL, "Unexpected cancellation object.\n");
 
-    WaitForSingleObject(callback.event, INFINITE);
+    WaitForSingleObject(callback->event, INFINITE);
 
     IUnknown_Release(cancel_cookie);
 
-    CloseHandle(callback.event);
+    CloseHandle(callback->event);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 
     ret = DeleteFileW(fileW);
     ok(ret, "Failed to delete test file.\n");
@@ -5336,21 +5363,22 @@ static const IMFAsyncCallbackVtbl test_queue_com_state_callback_vtbl =
 
 static void test_queue_com_state(const char *name)
 {
-    struct test_callback callback = { { &test_queue_com_state_callback_vtbl } };
+    struct test_callback *callback;
     DWORD queue, queue_type;
     HRESULT hr;
 
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    callback = create_test_callback(&test_queue_com_state_callback_vtbl);
+    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
 
     if (name[0] == 's')
     {
-        callback.param = name[1] - '0';
-        hr = MFPutWorkItem(callback.param, &callback.IMFAsyncCallback_iface, NULL);
+        callback->param = name[1] - '0';
+        hr = MFPutWorkItem(callback->param, &callback->IMFAsyncCallback_iface, NULL);
         ok(SUCCEEDED(hr), "Failed to queue work item, hr %#x.\n", hr);
-        WaitForSingleObject(callback.event, INFINITE);
+        WaitForSingleObject(callback->event, INFINITE);
     }
     else if (name[0] == 'u')
     {
@@ -5362,20 +5390,22 @@ static void test_queue_com_state(const char *name)
 
         if (SUCCEEDED(hr))
         {
-            callback.param = queue;
-            hr = MFPutWorkItem(queue, &callback.IMFAsyncCallback_iface, NULL);
+            callback->param = queue;
+            hr = MFPutWorkItem(queue, &callback->IMFAsyncCallback_iface, NULL);
             ok(SUCCEEDED(hr), "Failed to queue work item, hr %#x.\n", hr);
-            WaitForSingleObject(callback.event, INFINITE);
+            WaitForSingleObject(callback->event, INFINITE);
 
             hr = MFUnlockWorkQueue(queue);
             ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
         }
     }
 
-    CloseHandle(callback.event);
+    CloseHandle(callback->event);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 }
 
 static void test_MFGetStrideForBitmapInfoHeader(void)
