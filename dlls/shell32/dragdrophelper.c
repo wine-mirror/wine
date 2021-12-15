@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 typedef struct
 {
     IDropTargetHelper IDropTargetHelper_iface;
-    IDragSourceHelper IDragSourceHelper_iface;
+    IDragSourceHelper2 IDragSourceHelper2_iface;
     LONG ref;
 } dragdrophelper;
 
@@ -56,9 +56,9 @@ static inline dragdrophelper *impl_from_IDropTargetHelper(IDropTargetHelper *ifa
     return CONTAINING_RECORD(iface, dragdrophelper, IDropTargetHelper_iface);
 }
 
-static inline dragdrophelper *impl_from_IDragSourceHelper(IDragSourceHelper *iface)
+static inline dragdrophelper *impl_from_IDragSourceHelper2(IDragSourceHelper2 *iface)
 {
-    return CONTAINING_RECORD(iface, dragdrophelper, IDragSourceHelper_iface);
+    return CONTAINING_RECORD(iface, dragdrophelper, IDragSourceHelper2_iface);
 }
 
 /**************************************************************************
@@ -76,9 +76,9 @@ static HRESULT WINAPI IDropTargetHelper_fnQueryInterface (IDropTargetHelper * if
     {
         *ppvObj = &This->IDropTargetHelper_iface;
     }
-    else if (IsEqualIID (riid, &IID_IDragSourceHelper))
+    else if (IsEqualIID (riid, &IID_IDragSourceHelper) || IsEqualIID (riid, &IID_IDragSourceHelper2))
     {
-        *ppvObj = &This->IDragSourceHelper_iface;
+        *ppvObj = &This->IDragSourceHelper2_iface;
     }
 
     if (*ppvObj) {
@@ -86,7 +86,7 @@ static HRESULT WINAPI IDropTargetHelper_fnQueryInterface (IDropTargetHelper * if
 	TRACE ("-- Interface: (%p)->(%p)\n", ppvObj, *ppvObj);
 	return S_OK;
     }
-    FIXME ("-- Interface: E_NOINTERFACE\n");
+    FIXME ("%s: E_NOINTERFACE\n", shdebugstr_guid (riid));
     return E_NOINTERFACE;
 }
 
@@ -167,51 +167,61 @@ static const IDropTargetHelperVtbl DropTargetHelperVtbl =
     IDropTargetHelper_fnShow
 };
 
-static HRESULT WINAPI DragSourceHelper_QueryInterface (IDragSourceHelper * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI DragSourceHelper2_QueryInterface (IDragSourceHelper2 * iface, REFIID riid, LPVOID * ppv)
 {
-    dragdrophelper *This = impl_from_IDragSourceHelper(iface);
+    dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
     return IDropTargetHelper_fnQueryInterface(&This->IDropTargetHelper_iface, riid, ppv);
 }
 
-static ULONG WINAPI DragSourceHelper_AddRef (IDragSourceHelper * iface)
+static ULONG WINAPI DragSourceHelper2_AddRef (IDragSourceHelper2 * iface)
 {
-    dragdrophelper *This = impl_from_IDragSourceHelper(iface);
+    dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
     return IDropTargetHelper_fnAddRef(&This->IDropTargetHelper_iface);
 }
 
-static ULONG WINAPI DragSourceHelper_Release (IDragSourceHelper * iface)
+static ULONG WINAPI DragSourceHelper2_Release (IDragSourceHelper2 * iface)
 {
-    dragdrophelper *This = impl_from_IDragSourceHelper(iface);
+    dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
     return IDropTargetHelper_fnRelease(&This->IDropTargetHelper_iface);
 }
 
-static HRESULT WINAPI DragSourceHelper_InitializeFromBitmap(IDragSourceHelper *iface,
+static HRESULT WINAPI DragSourceHelper2_InitializeFromBitmap(IDragSourceHelper2 *iface,
     SHDRAGIMAGE *dragimage, IDataObject *object)
 {
-    dragdrophelper *This = impl_from_IDragSourceHelper(iface);
+    dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
 
     FIXME("(%p)->(%p, %p): stub\n", This, dragimage, object);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DragSourceHelper_InitializeFromWindow(IDragSourceHelper *iface, HWND hwnd,
+static HRESULT WINAPI DragSourceHelper2_InitializeFromWindow(IDragSourceHelper2 *iface, HWND hwnd,
     POINT *pt, IDataObject *object)
 {
-    dragdrophelper *This = impl_from_IDragSourceHelper(iface);
+    dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
 
     FIXME("(%p)->(%p, %s, %p): stub\n", This, hwnd, wine_dbgstr_point(pt), object);
 
     return E_NOTIMPL;
 }
 
-static const IDragSourceHelperVtbl DragSourceHelperVtbl =
+static HRESULT WINAPI DragSourceHelper2_SetFlags(IDragSourceHelper2 *iface, DWORD flags)
 {
-    DragSourceHelper_QueryInterface,
-    DragSourceHelper_AddRef,
-    DragSourceHelper_Release,
-    DragSourceHelper_InitializeFromBitmap,
-    DragSourceHelper_InitializeFromWindow
+    dragdrophelper *This = impl_from_IDragSourceHelper2(iface);
+
+    FIXME("(%p)->(%08x): stub\n", This, flags);
+
+    return S_OK;
+}
+
+static const IDragSourceHelper2Vtbl DragSourceHelper2Vtbl =
+{
+    DragSourceHelper2_QueryInterface,
+    DragSourceHelper2_AddRef,
+    DragSourceHelper2_Release,
+    DragSourceHelper2_InitializeFromBitmap,
+    DragSourceHelper2_InitializeFromWindow,
+    DragSourceHelper2_SetFlags
 };
 
 /**************************************************************************
@@ -233,7 +243,7 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
     if (!dth) return E_OUTOFMEMORY;
 
     dth->IDropTargetHelper_iface.lpVtbl = &DropTargetHelperVtbl;
-    dth->IDragSourceHelper_iface.lpVtbl = &DragSourceHelperVtbl;
+    dth->IDragSourceHelper2_iface.lpVtbl = &DragSourceHelper2Vtbl;
     dth->ref = 1;
 
     hr = IDropTargetHelper_QueryInterface (&dth->IDropTargetHelper_iface, riid, ppv);

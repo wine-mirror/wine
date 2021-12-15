@@ -1577,6 +1577,21 @@ interface IDragSourceHelper : IUnknown
 
 
 /*****************************************************************************
+ * IDragSourceHelper2 interface
+ */
+[
+    object,
+    uuid(83e07d0d-0c5f-4163-bf1a-60b274051e40),
+    pointer_default(unique),
+    local
+]
+interface IDragSourceHelper2 : IDragSourceHelper
+{
+    HRESULT SetFlags([in] DWORD dwFlags);
+}
+
+
+/*****************************************************************************
  * IDropTargetHelper interface
  */
 [
