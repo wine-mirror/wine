@@ -612,7 +612,7 @@ BOOL symt_add_inlinesite_range(struct module* module,
             {
                 struct addr_range* ar = (struct addr_range*)vector_at(&inlined->vranges, i);
                 if (!addr_range_disjoint(ar, p) && !addr_range_inside(ar, p))
-                    FIXME("Added addr_range not compatible with parent\n");
+                    WARN("Added addr_range not compatible with parent\n");
             }
         }
     }

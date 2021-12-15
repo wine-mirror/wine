@@ -1926,7 +1926,7 @@ static struct symt_inlinesite* codeview_create_inline_site(const struct msc_debu
 
     if (!found)
     {
-        FIXME("Couldn't find start address of inlined\n");
+        WARN("Couldn't find start address of inlined\n");
         return NULL;
     }
 
