@@ -381,8 +381,9 @@ static void test_NtQueryDirectoryFile_classes( HANDLE handle, UNICODE_STRING *ma
             if (status == STATUS_BUFFER_OVERFLOW)
             {
                 ok( U(io).Status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, U(io).Status );
-                ok( U(io).Information == data_size, "%u: wrong info %lx\n", class, U(io).Information );
-                ok(data[0] == 0, "%u: wrong offset %x\n",  class, data[0] );
+                ok( U(io).Information == data_size || broken(!U(io).Information), /* win10 1709 */
+                    "%u: wrong info %lx\n", class, U(io).Information );
+                if (U(io).Information) ok(data[0] == 0, "%u: wrong offset %x\n",  class, data[0] );
             }
             else
             {
@@ -653,11 +654,12 @@ static void test_NtQueryDirectoryFile(void)
     memset( data, 0x55, data_size );
     U(io).Status = 0xdeadbeef;
     U(io).Information = 0xdeadbeef;
-    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, data_size,
+    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, (data_size + 7) & ~7,
                                     FileBothDirectoryInformation, FALSE, NULL, TRUE );
     ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
     ok( U(io).Status == STATUS_SUCCESS, "wrong status %x\n", U(io).Status );
-    ok( U(io).Information == data_size, "wrong info %lx / %x\n", U(io).Information, data_size );
+    ok( U(io).Information == data_size || U(io).Information == ((data_size + 7) & ~7),
+        "wrong info %lx / %x\n", U(io).Information, data_size );
     ok( fbdi->NextEntryOffset == ((offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[1] ) + 7) & ~7),
         "wrong offset %x\n",  fbdi->NextEntryOffset );
     ok( fbdi->FileNameLength == sizeof(WCHAR), "wrong length %x\n", fbdi->FileNameLength );
