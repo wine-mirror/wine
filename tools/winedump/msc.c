@@ -504,6 +504,7 @@ static void do_field(const unsigned char* start, const unsigned char* end)
     const char*                 cstr;
     const struct p_string*      pstr;
     int leaf_len, value;
+    struct full_value full_value;
 
     while (ptr < end)
     {
@@ -518,18 +519,18 @@ static void do_field(const unsigned char* start, const unsigned char* end)
         switch (fieldtype->generic.id)
         {
         case LF_ENUMERATE_V1:
-            leaf_len = numeric_leaf(&value, &fieldtype->enumerate_v1.value);
+            leaf_len = full_numeric_leaf(&full_value, &fieldtype->enumerate_v1.value);
             pstr = PSTRING(&fieldtype->enumerate_v1.value, leaf_len);
-            printf("\t\tEnumerate V1: '%s' value:%d\n",
-                   p_string(pstr), value);
+            printf("\t\tEnumerate V1: '%s' value:%s\n",
+                   p_string(pstr), full_value_string(&full_value));
             ptr += 2 + 2 + leaf_len + 1 + pstr->namelen;
             break;
 
         case LF_ENUMERATE_V3:
-            leaf_len = numeric_leaf(&value, &fieldtype->enumerate_v3.value);
+            leaf_len = full_numeric_leaf(&full_value, &fieldtype->enumerate_v3.value);
             cstr = (const char*)&fieldtype->enumerate_v3.value + leaf_len;
-            printf("\t\tEnumerate V3: '%s' value:%d\n",
-                   cstr, value);
+            printf("\t\tEnumerate V3: '%s' value:%s\n",
+                   cstr, full_value_string(&full_value));
             ptr += 2 + 2 + leaf_len + strlen(cstr) + 1;
             break;
 
