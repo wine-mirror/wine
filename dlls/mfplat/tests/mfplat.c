@@ -7467,6 +7467,11 @@ static void test_sample_allocator_d3d12(void)
     ok(hr == S_OK, "Failed to create device manager, hr %#x.\n", hr);
 
     hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)device, token);
+    if (FAILED(hr))
+    {
+        win_skip("Device manager does not support D3D12 devices.\n");
+        goto done;
+    }
     ok(hr == S_OK, "Failed to set a device, hr %#x.\n", hr);
 
     hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocator, (void **)&allocator);
