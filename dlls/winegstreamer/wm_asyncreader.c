@@ -356,6 +356,14 @@ static HRESULT WINAPI WMReader_Stop(IWMReader *iface)
     TRACE("reader %p.\n", reader);
 
     EnterCriticalSection(&reader->reader.cs);
+
+    if (!reader->reader.wg_parser)
+    {
+        LeaveCriticalSection(&reader->reader.cs);
+        WARN("No stream is open; returning E_UNEXPECTED.\n");
+        return E_UNEXPECTED;
+    }
+
     stop_streaming(reader);
     IWMReaderCallback_OnStatus(reader->callback, WMT_STOPPED, S_OK,
             WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);

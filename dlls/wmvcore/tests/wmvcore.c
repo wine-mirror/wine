@@ -2169,6 +2169,9 @@ static void test_async_reader_streaming(void)
     IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
     IWMReader_QueryInterface(reader, &IID_IWMReaderAdvanced2, (void **)&advanced);
 
+    hr = IWMReader_Stop(reader);
+    ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(stream.refcount > 1, "Got refcount %d.\n", stream.refcount);
@@ -2256,6 +2259,9 @@ static void test_async_reader_streaming(void)
     ok(callback.got_closed == 1, "Got %u WMT_CLOSED callbacks.\n", callback.got_closed);
     ok(callback.refcount == 1, "Got outstanding refcount %d.\n", callback.refcount);
     callback_cleanup(&callback);
+
+    hr = IWMReader_Stop(reader);
+    ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
 
     ok(stream.refcount == 1, "Got outstanding refcount %d.\n", stream.refcount);
     CloseHandle(stream.file);
