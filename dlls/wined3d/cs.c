@@ -1768,6 +1768,9 @@ static void wined3d_cs_exec_set_shader(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_shader *op = data;
 
+    /* CB binding may have been skipped earlier if the shader wasn't set, so make it happen. */
+    if (!cs->state.shader[op->type] && op->shader)
+        device_invalidate_state(cs->c.device, STATE_CONSTANT_BUFFER(op->type));
     cs->state.shader[op->type] = op->shader;
     device_invalidate_state(cs->c.device, STATE_SHADER(op->type));
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)

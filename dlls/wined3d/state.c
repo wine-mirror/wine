@@ -4579,6 +4579,10 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
     else
         shader_type = WINED3D_SHADER_TYPE_COMPUTE;
 
+    /* If a shader has not been set, buffer objects are not yet initialised. */
+    if (!state->shader[shader_type])
+        return;
+
     wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, shader_type, &base, &count);
     for (i = 0; i < count; ++i)
     {
