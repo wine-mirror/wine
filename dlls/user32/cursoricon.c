@@ -1753,22 +1753,25 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
 static HBITMAP create_masked_bitmap( int width, int height, const void *and, const void *xor )
 {
-    HDC dc = CreateCompatibleDC( 0 );
-    HBITMAP bitmap;
+    HBITMAP and_bitmap, xor_bitmap, bitmap;
+    HDC src_dc, dst_dc;
 
-    const BITMAPINFO bitmap_info =
-    {
-        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-        .bmiHeader.biWidth = width,
-        .bmiHeader.biHeight = height * 2,
-        .bmiHeader.biPlanes = 1,
-        .bmiHeader.biBitCount = 1,
-    };
-
+    and_bitmap = CreateBitmap( width, height, 1, 1, and );
+    xor_bitmap = CreateBitmap( width, height, 1, 1, xor );
     bitmap = CreateBitmap( width, height * 2, 1, 1, NULL );
-    SetDIBits( dc, bitmap, 0, height, and, &bitmap_info, FALSE );
-    SetDIBits( dc, bitmap, height, height, xor, &bitmap_info, FALSE );
-    DeleteDC( dc );
+    src_dc = CreateCompatibleDC( 0 );
+    dst_dc = CreateCompatibleDC( 0 );
+
+    SelectObject( dst_dc, bitmap );
+    SelectObject( src_dc, and_bitmap );
+    BitBlt( dst_dc, 0, 0, width, height, src_dc, 0, 0, SRCCOPY );
+    SelectObject( src_dc, xor_bitmap );
+    BitBlt( dst_dc, 0, height, width, height, src_dc, 0, 0, SRCCOPY );
+
+    DeleteObject( and_bitmap );
+    DeleteObject( xor_bitmap );
+    DeleteDC( src_dc );
+    DeleteDC( dst_dc );
     return bitmap;
 }
 
