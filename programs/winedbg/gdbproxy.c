@@ -2499,6 +2499,8 @@ static int gdb_remote(unsigned flags, unsigned port)
     struct gdb_context  gdbctx;
 
     if (!gdb_init_context(&gdbctx, flags, port)) return 0;
+    /* don't handle ctrl-c, but let gdb do the job */
+    SetConsoleCtrlHandler(NULL, TRUE);
     for (;;)
     {
         fd_set read_fds, err_fds;
