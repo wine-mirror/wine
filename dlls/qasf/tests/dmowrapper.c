@@ -1375,10 +1375,12 @@ static void test_sink_allocator(IMemInputPin *input)
     IMemAllocator_Release(ret_allocator);
 }
 
-static void test_source_allocator(IFilterGraph2 *graph, IPin *source, struct testfilter *testsink)
+static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
+        IPin *source, struct testfilter *testsink)
 {
     ALLOCATOR_PROPERTIES props, req_props = {2, 30000, 32, 0};
     IMemAllocator *allocator;
+    IMediaSample *sample;
     HRESULT hr;
 
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt2);
@@ -1391,6 +1393,22 @@ static void test_source_allocator(IFilterGraph2 *graph, IPin *source, struct tes
     ok(props.cbBuffer == 16384, "Got size %d.\n", props.cbBuffer);
     ok(props.cbAlign == 1, "Got alignment %d.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %d.\n", props.cbPrefix);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaSample_Release(sample);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
 
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
@@ -1500,7 +1518,8 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 }
 
-static void test_sample_processing(IMediaControl *control, IMemInputPin *input)
+static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
+        struct testfilter *testsink)
 {
     REFERENCE_TIME start, stop;
     IMemAllocator *allocator;
@@ -1863,7 +1882,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     test_filter_state(control);
-    test_sample_processing(control, meminput);
+    test_sample_processing(control, meminput, &testsink);
 
     /* Streaming event tests are more interesting if multiple source pins are
      * connected. */
@@ -2007,7 +2026,7 @@ static void test_connect_pin(void)
 
     ok(!testdmo_input_mt_set, "Input type should not be set.\n");
 
-    test_source_allocator(graph, source, &testsink);
+    test_source_allocator(graph, control, source, &testsink);
 
     IPin_Release(sink);
     IPin_Release(source);
