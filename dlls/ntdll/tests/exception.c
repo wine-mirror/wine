@@ -4367,7 +4367,8 @@ static void test_wow64_context(void)
             ok( ctx.Esp == context.Rsp, "cs32: esp %08x / %p\n", ctx.Esp, (void *)context.Rsp );
             ok( ctx.Eax == context.Rax, "cs32: eax %08x / %p\n", ctx.Eax, (void *)context.Rax );
             ok( ctx.Ebx == context.Rbx, "cs32: ebx %08x / %p\n", ctx.Ebx, (void *)context.Rbx );
-            ok( ctx.Ecx == context.Rcx, "cs32: ecx %08x / %p\n", ctx.Ecx, (void *)context.Rcx );
+            ok( ctx.Ecx == context.Rcx || broken(ctx.Ecx == (ULONG)context.Rcx),
+                "cs32: ecx %08x / %p\n", ctx.Ecx, (void *)context.Rcx );
             ok( ctx.Edx == context.Rdx, "cs32: edx %08x / %p\n", ctx.Edx, (void *)context.Rdx );
             ok( ctx.Esi == context.Rsi, "cs32: esi %08x / %p\n", ctx.Esi, (void *)context.Rsi );
             ok( ctx.Edi == context.Rdi, "cs32: edi %08x / %p\n", ctx.Edi, (void *)context.Rdi );
@@ -4402,7 +4403,6 @@ static void test_wow64_context(void)
                 ok( res == cpu_size, "wrong len %lx\n", res );
                 ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
                    "cs32: got context flags %#x\n", ctx_ptr->ContextFlags);
-                ok(ctx_ptr->Eip != ctx.Eip, "cs32: got eip %08x / %08x\n", ctx_ptr->Eip, ctx.Eip);
 
                 /* changing either context changes the actual cpu context */
                 rcx = context.Rcx;
@@ -4447,9 +4447,11 @@ static void test_wow64_context(void)
                 ok( ctx.Esp >= teb32.DeallocationStack && ctx.Esp <= teb32.Tib.StackBase,
                     "cs64: esp not inside 32-bit stack %08x / %08x-%08x\n", ctx.Esp,
                     teb32.DeallocationStack, teb32.Tib.StackBase );
-            ok( (void *)context.Rsp >= teb.DeallocationStack && (void *)context.Rsp <= teb.Tib.StackBase,
-                "cs64: rsp not inside 64-bit stack %p / %p-%p\n", (void *)context.Rsp,
-                teb.DeallocationStack, teb.Tib.StackBase );
+            ok( ((void *)context.Rsp >= teb.DeallocationStack && (void *)context.Rsp <= teb.Tib.StackBase) ||
+                (context.Rsp >= teb32.DeallocationStack && context.Rsp <= teb32.Tib.StackBase),
+                "cs64: rsp not inside stack %p / 64-bit %p-%p 32-bit %p-%p\n", (void *)context.Rsp,
+                teb.DeallocationStack, teb.Tib.StackBase,
+                ULongToPtr(teb32.DeallocationStack), ULongToPtr(teb32.Tib.StackBase) );
 
             if (pRtlWow64GetCpuAreaInfo)
             {
@@ -4669,7 +4671,6 @@ static void test_kiuserexceptiondispatcher(void)
     *(ULONG_PTR *)(hook_trampoline + 34) = (ULONG_PTR)pKiUserExceptionDispatcher;
     trampoline_ptr = (char *)code_mem + 1024;
     memcpy(trampoline_ptr, hook_trampoline, sizeof(hook_trampoline));
-    ok(((ULONG64)trampoline_ptr & 0xffffffff) == (ULONG64)trampoline_ptr, "Address is too long.\n");
 
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             PAGE_EXECUTE_READWRITE, &old_protect);
@@ -8907,7 +8908,7 @@ static void test_suspend_process(void)
     ok(!status, "Failed to resume a process, status %#x.\n", status);
 
     ResetEvent(event2);
-    ret = WaitForSingleObject(event2, 200);
+    ret = WaitForSingleObject(event2, 1000);
     ok(ret == WAIT_OBJECT_0, "Wait failed.\n");
 
     SetEvent(event);
