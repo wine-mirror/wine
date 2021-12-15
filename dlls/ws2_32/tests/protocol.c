@@ -1904,6 +1904,9 @@ static void test_GetAddrInfoExW(void)
     ok(!ret, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
     pFreeAddrInfoExW(result);
 
+    ret = pGetAddrInfoExOverlappedResult(NULL);
+    ok(ret == WSAEINVAL, "overlapped result is %d\n", ret);
+
     result = (void *)0xdeadbeef;
     memset(&overlapped, 0xcc, sizeof(overlapped));
     overlapped.hEvent = event;

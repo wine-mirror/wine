@@ -514,6 +514,10 @@ int WINAPI GetAddrInfoExW( const WCHAR *name, const WCHAR *servname, DWORD names
 int WINAPI GetAddrInfoExOverlappedResult( OVERLAPPED *overlapped )
 {
     TRACE( "(%p)\n", overlapped );
+
+    if (!overlapped)
+        return WSAEINVAL;
+
     return overlapped->Internal;
 }
 
