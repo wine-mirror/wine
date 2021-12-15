@@ -676,6 +676,7 @@ done:
 
 	if (sei.fMask & SEE_MASK_NOCLOSEPROCESS) {
 		DWORD exitcode;
+		SetConsoleCtrlHandler(NULL, TRUE);
 		WaitForSingleObject(sei.hProcess, INFINITE);
 		GetExitCodeProcess(sei.hProcess, &exitcode);
 		ExitProcess(exitcode);
