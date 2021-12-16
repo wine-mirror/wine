@@ -65,6 +65,11 @@ static BOOL create_backup(const char *filename)
     DWORD rc, attribs;
 
     handle = OpenEventLogA(NULL, "Application");
+    if (!handle && (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        win_skip( "Can't open event log\n" );
+        return FALSE;
+    }
     ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     DeleteFileA(filename);
@@ -274,6 +279,11 @@ static void test_oldest(void)
     ok(oldest == 0xdeadbeef, "Expected oldest to stay unchanged\n");
 
     handle = OpenEventLogA(NULL, "Application");
+    if (!handle && (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        win_skip( "Can't open event log\n" );
+        return;
+    }
     ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -327,6 +337,11 @@ static void test_backup(void)
     ok(GetFileAttributesA(backup) == INVALID_FILE_ATTRIBUTES, "Expected no backup file\n");
 
     handle = OpenEventLogA(NULL, "Application");
+    if (!handle && (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        win_skip( "Can't open event log\n" );
+        return;
+    }
     ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -439,6 +454,11 @@ static void test_read(void)
     HeapFree(GetProcessHeap(), 0, buf);
 
     handle = OpenEventLogA(NULL, "Application");
+    if (!handle && (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        win_skip( "Can't open event log\n" );
+        return;
+    }
     ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     /* Show that we need the proper dwFlags with a (for the rest) proper call */
@@ -537,7 +557,10 @@ static void test_openbackup(void)
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA(NULL, "idontexist.evt");
     ok(handle == NULL, "Didn't expect a handle\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_ACCESS_DENIED ||
+       GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+       "got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA("IDontExist", NULL);
@@ -593,8 +616,10 @@ static void test_openbackup(void)
     handle = OpenBackupEventLogA(NULL, backup);
     ok(handle == NULL, "Didn't expect a handle\n");
     ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
+       GetLastError() == ERROR_ACCESS_DENIED ||
+       GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
        GetLastError() == ERROR_EVENTLOG_FILE_CORRUPT, /* Vista and Win7 */
-       "Expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+       "got %d\n", GetLastError());
     CloseEventLog(handle);
     DeleteFileA(backup);
 
@@ -604,7 +629,10 @@ static void test_openbackup(void)
     SetLastError(0xdeadbeef);
     handle = OpenBackupEventLogA(NULL, backup);
     ok(handle == NULL, "Didn't expect a handle\n");
-    ok(GetLastError() == ERROR_EVENTLOG_FILE_CORRUPT, "Expected ERROR_EVENTLOG_FILE_CORRUPT, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_EVENTLOG_FILE_CORRUPT ||
+       GetLastError() == ERROR_ACCESS_DENIED ||
+       GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+       "got %d\n", GetLastError());
     CloseEventLog(handle);
     DeleteFileA(backup);
 }
