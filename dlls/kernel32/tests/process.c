@@ -1644,8 +1644,6 @@ static void test_Console(void)
 
     ok(modeInC == (modeIn ^ 1), "Wrong console mode\n");
     ok(modeOutC == (modeOut ^ 1), "Wrong console-SB mode\n");
-    trace("cursor position(X): %d/%d\n",sbi.dwCursorPosition.X, sbiC.dwCursorPosition.X);
-    ok(sbiC.dwCursorPosition.Y == (sbi.dwCursorPosition.Y ^ 1), "Wrong cursor position\n");
 
     release_memory();
     DeleteFileA(resfile);
