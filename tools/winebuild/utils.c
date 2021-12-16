@@ -250,7 +250,7 @@ struct strarray find_tool( const char *name, const char * const *names )
         names++;
     }
 
-    if (!file && strcmp( name, "as" )) /* llvm-as is not a gas replacement */
+    if (!file)
     {
         if (cc_command.count) file = find_clang_tool( cc_command, name );
         if (!file && !(file = find_binary( "llvm", name )))
@@ -289,11 +289,36 @@ struct strarray find_link_tool(void)
 struct strarray get_as_command(void)
 {
     struct strarray args = empty_strarray;
+    const char *file;
     unsigned int i;
+    int using_cc = 0;
 
     if (cc_command.count)
     {
         strarray_addall( &args, cc_command );
+        using_cc = 1;
+    }
+    else if (as_command.count)
+    {
+        strarray_addall( &args, as_command );
+    }
+    else if ((file = find_binary( target_alias, "as" )) || (file = find_binary( target_alias, "gas ")))
+    {
+        strarray_add( &args, file );
+    }
+    else if ((file = find_binary( NULL, "clang" )))
+    {
+        strarray_add( &args, file );
+        if (target_alias)
+        {
+            strarray_add( &args, "-target" );
+            strarray_add( &args, target_alias );
+        }
+        using_cc = 1;
+    }
+
+    if (using_cc)
+    {
         strarray_add( &args, "-xassembler" );
         strarray_add( &args, "-c" );
         if (force_pointer_size)
@@ -305,14 +330,6 @@ struct strarray get_as_command(void)
             strarray_add( &args, strmake("-B%s", tools_path.str[i] ));
         return args;
     }
-
-    if (!as_command.count)
-    {
-        static const char * const commands[] = { "gas", "as", NULL };
-        as_command = find_tool( "as", commands );
-    }
-
-    strarray_addall( &args, as_command );
 
     if (force_pointer_size)
     {
