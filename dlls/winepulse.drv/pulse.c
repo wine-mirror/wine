@@ -876,7 +876,7 @@ static NTSTATUS pulse_create_stream(void *args)
             stream->alloc_size = stream->real_bufsize_bytes =
                 stream->bufsize_frames * 2 * pa_frame_size(&stream->ss);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        0, &stream->real_bufsize_bytes, MEM_COMMIT, PAGE_READWRITE))
+                                        0, &stream->alloc_size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
         } else {
             UINT32 i, capture_packets;
