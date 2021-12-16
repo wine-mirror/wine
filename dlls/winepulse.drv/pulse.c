@@ -1675,6 +1675,9 @@ static NTSTATUS pulse_release_render_buffer(void *args)
     stream->clock_written += written_bytes;
     stream->locked = 0;
 
+    /* push as much data as we can to pulseaudio too */
+    pulse_write(stream);
+
     TRACE("Released %u, held %lu\n", params->written_frames, stream->held_bytes / pa_frame_size(&stream->ss));
 
     pulse_unlock();
