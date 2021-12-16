@@ -39,6 +39,7 @@ static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
 
+static BOOL is_win64 = (sizeof(void *) > sizeof(int));
 static BOOL is_wow64;
 static void *code_mem;
 
@@ -234,6 +235,7 @@ static void test_peb_teb(void)
     NTSTATUS status;
     void *redir;
     SIZE_T res;
+    BOOL ret;
     TEB teb;
     PEB peb;
     TEB32 teb32;
@@ -326,15 +328,17 @@ static void test_peb_teb(void)
                 params32.EnvironmentSize, params.EnvironmentSize );
         }
 
-        ok( DebugActiveProcess( pi.dwProcessId ), "debugging failed\n" );
+        ret = DebugActiveProcess( pi.dwProcessId );
+        todo_wine_if( is_win64 )
+        ok( ret, "debugging failed\n" );
         if (!ReadProcessMemory( pi.hProcess, proc_info.PebBaseAddress, &peb, sizeof(peb), &res )) res = 0;
         ok( res == sizeof(peb), "wrong len %lx\n", res );
-        ok( peb.BeingDebugged == 1, "BeingDebugged is %u\n", peb.BeingDebugged );
+        ok( peb.BeingDebugged == !!ret, "BeingDebugged is %u\n", peb.BeingDebugged );
         if (!is_wow64)
         {
             if (!ReadProcessMemory( pi.hProcess, ULongToPtr(teb32.Peb), &peb32, sizeof(peb32), &res )) res = 0;
             ok( res == sizeof(peb32), "wrong len %lx\n", res );
-            ok( peb32.BeingDebugged == 1, "BeingDebugged is %u\n", peb32.BeingDebugged );
+            ok( peb32.BeingDebugged == !!ret, "BeingDebugged is %u\n", peb32.BeingDebugged );
         }
 
         TerminateProcess( pi.hProcess, 0 );
