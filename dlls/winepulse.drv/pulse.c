@@ -260,9 +260,6 @@ static void pulse_underflow_callback(pa_stream *s, void *userdata)
     struct pulse_stream *stream = userdata;
     WARN("%p: Underflow\n", userdata);
     stream->just_underran = TRUE;
-    /* re-sync */
-    stream->pa_offs_bytes = stream->lcl_offs_bytes;
-    stream->pa_held_bytes = stream->held_bytes;
 }
 
 static void pulse_started_callback(pa_stream *s, void *userdata)
