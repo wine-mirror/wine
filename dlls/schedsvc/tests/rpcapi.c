@@ -520,7 +520,10 @@ todo_wine
     if (hr != E_ACCESSDENIED)
     {
         ok(!info, "expected NULL, info %p\n", info);
-        hr = IIDFromString(path, &iid);
+        if (path[0] == '\\')
+            hr = IIDFromString(path + 1, &iid);
+        else
+            hr = IIDFromString(path, &iid);
         ok(hr == S_OK, "IIDFromString(%s) error %#x\n", wine_dbgstr_w(path), hr);
         hr = SchRpcDelete(path, 0);
         ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
