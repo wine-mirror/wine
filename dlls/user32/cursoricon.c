@@ -3183,7 +3183,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
             release_icon_frame( icon, frame );
             release_user_handle_ptr( icon );
 
-            if (res && (flags & LR_COPYDELETEORG)) DeleteObject( hnd );
+            if (res && (flags & LR_COPYDELETEORG)) DestroyIcon( hnd );
             return res;
         }
     }
