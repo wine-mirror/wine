@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
 #include "snmp.h"
 #include "iphlpapi.h"
 #include "wine/debug.h"
@@ -1217,7 +1218,7 @@ static void oidToUdpRow(AsnObjectIdentifier *oid, void *dst)
 
     assert(oid && oid->idLength >= 5);
     row->dwLocalAddr = oidToIpAddr(oid);
-    row->dwLocalPort = oid->ids[4];
+    row->dwLocalPort = htons(oid->ids[4]);
 }
 
 static int __cdecl compareUdpRow(const void *a, const void *b)
@@ -1225,9 +1226,9 @@ static int __cdecl compareUdpRow(const void *a, const void *b)
     const MIB_UDPROW *key = a, *value = b;
     int ret;
 
-    ret = key->dwLocalAddr - value->dwLocalAddr;
+    ret = ntohl(key->dwLocalAddr) - ntohl(value->dwLocalAddr);
     if (ret == 0)
-        ret = key->dwLocalPort - value->dwLocalPort;
+        ret = ntohs(key->dwLocalPort) - ntohs(value->dwLocalPort);
     return ret;
 }
 
@@ -1269,8 +1270,9 @@ static BOOL mib2UdpEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                         udpTable->table[tableIndex - 1].dwLocalAddr);
                     if (ret)
                     {
+                        UINT id = ntohs(udpTable->table[tableIndex - 1].dwLocalPort);
                         oid.idLength = 1;
-                        oid.ids = &udpTable->table[tableIndex - 1].dwLocalPort;
+                        oid.ids = &id;
                         ret = SnmpUtilOidAppend(&pVarBind->name, &oid);
                     }
                 }
