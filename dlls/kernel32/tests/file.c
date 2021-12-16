@@ -2709,7 +2709,7 @@ static void test_FindFirstFileA(void)
 
     /* try FindFirstFileA on "C:\foo\" */
     SetLastError( 0xdeadbeaf );
-    if (!GetTempFileNameA( buffer, "foo", 0, nonexistent ) && GetLastError() == ERROR_ACCESS_DENIED)
+    if (!GetTempFileNameA( buffer, "foo", 0, nonexistent ))
     {
         char tmp[MAX_PATH];
         GetTempPathA( sizeof(tmp), tmp );
@@ -2825,8 +2825,12 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "foo\\bar\\nul");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
-    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+    ok( handle == INVALID_HANDLE_VALUE || broken(1), /* win8 */
+         "FindFirstFile on %s should fail\n", buffer2 );
+    if (handle == INVALID_HANDLE_VALUE)
+        ok( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+    else
+        CloseHandle( handle );
 
     /* try FindFirstFileA on "c:\foo\nul\bar" */
     SetLastError( 0xdeadbeaf );

@@ -718,7 +718,8 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
     else
     {
         ok( ldr_status == expect_status ||
-            broken(il_only && !expect_status && ldr_status == STATUS_INVALID_IMAGE_FORMAT),
+            broken(il_only && !expect_status && ldr_status == STATUS_INVALID_IMAGE_FORMAT) ||
+            broken(nt_header->Signature == IMAGE_OS2_SIGNATURE && ldr_status == STATUS_INVALID_IMAGE_NE_FORMAT),
             "%u: wrong status %x/%x\n", line, ldr_status, expect_status );
         ok( !expect_fallback || broken(il_only) || broken(wrong_machine),
             "%u: failed with %x expected fallback\n", line, ldr_status );

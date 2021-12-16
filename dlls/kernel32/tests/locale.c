@@ -6774,13 +6774,13 @@ static void test_NLSVersion(void)
         ok( !ret, "IsValidNLSVersion succeeded\n" );
         ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
 
-        info.dwNLSVersion -= 0x200;
+        info.dwNLSVersion -= 0x800;
         SetLastError( 0xdeadbeef );
         ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
         ok( !ret, "IsValidNLSVersion succeeded\n" );
         ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
 
-        info.dwNLSVersion += 0x100;
+        info.dwNLSVersion += 0x700;
         info.dwDefinedVersion += 0x100;
         SetLastError( 0xdeadbeef );
         ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
