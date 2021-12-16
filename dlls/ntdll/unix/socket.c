@@ -1106,6 +1106,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
          * actually currently impossible to get STATUS_SUCCESS. The server will
          * either return STATUS_PENDING or an error code, and in neither case
          * should the iosb be filled. */
+        if (!status) FIXME( "Unhandled success status." );
     }
     SERVER_END_REQ;
 
@@ -1142,7 +1143,11 @@ static NTSTATUS do_getsockopt( HANDLE handle, IO_STATUS_BLOCK *io, int level,
     ret = getsockopt( fd, level, option, out_buffer, &len );
     if (needs_close) close( fd );
     if (ret) return sock_errno_to_status( errno );
-    if (io) io->Information = len;
+    if (io)
+    {
+        io->Status = STATUS_SUCCESS;
+        io->Information = len;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -1159,7 +1164,9 @@ static NTSTATUS do_setsockopt( HANDLE handle, IO_STATUS_BLOCK *io, int level,
 
     ret = setsockopt( fd, level, option, optval, optlen );
     if (needs_close) close( fd );
-    return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+    if (ret) return sock_errno_to_status( errno );
+    if (io) io->Status = STATUS_SUCCESS;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1287,10 +1294,10 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 unix_flags |= MSG_PEEK;
             if (params.msg_flags & AFD_MSG_WAITALL)
                 FIXME( "MSG_WAITALL is not supported\n" );
-
             status = sock_recv( handle, event, apc, apc_user, io, fd, params.buffers, params.count, NULL,
                                 NULL, NULL, NULL, unix_flags, !!(params.recv_flags & AFD_RECV_FORCE_ASYNC) );
-            break;
+            if (needs_close) close( fd );
+            return status;
         }
 
         case IOCTL_AFD_WINE_RECVMSG:
@@ -1314,12 +1321,12 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 unix_flags |= MSG_PEEK;
             if (*ws_flags & WS_MSG_WAITALL)
                 FIXME( "MSG_WAITALL is not supported\n" );
-
             status = sock_recv( handle, event, apc, apc_user, io, fd, u64_to_user_ptr(params->buffers_ptr),
                                 params->count, u64_to_user_ptr(params->control_ptr),
                                 u64_to_user_ptr(params->addr_ptr), u64_to_user_ptr(params->addr_len_ptr),
                                 ws_flags, unix_flags, params->force_async );
-            break;
+            if (needs_close) close( fd );
+            return status;
         }
 
         case IOCTL_AFD_WINE_SENDMSG:
@@ -1342,10 +1349,10 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 WARN( "ignoring MSG_PARTIAL\n" );
             if (params->ws_flags & ~(WS_MSG_OOB | WS_MSG_PARTIAL))
                 FIXME( "unknown flags %#x\n", params->ws_flags );
-
             status = sock_send( handle, event, apc, apc_user, io, fd, u64_to_user_ptr( params->buffers_ptr ), params->count,
                                 u64_to_user_ptr( params->addr_ptr ), params->addr_len, unix_flags, params->force_async );
-            break;
+            if (needs_close) close( fd );
+            return status;
         }
 
         case IOCTL_AFD_WINE_TRANSMIT:
@@ -1360,9 +1367,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 status = STATUS_BUFFER_TOO_SMALL;
                 break;
             }
-
             status = sock_transmit( handle, event, apc, apc_user, io, fd, params );
-            break;
+            if (needs_close) close( fd );
+            return status;
         }
 
         case IOCTL_AFD_WINE_COMPLETE_ASYNC:
@@ -1372,7 +1379,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             status = *(NTSTATUS *)in_buffer;
             complete_async( handle, event, apc, apc_user, io, status, 0 );
-            break;
+            return status;
         }
 
         case IOCTL_AFD_WINE_FIONREAD:
@@ -1396,9 +1403,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 if (!getsockopt( fd, SOL_SOCKET, SO_ACCEPTCONN, &value, &len ) && value)
                 {
                     *(int *)out_buffer = 0;
-                    status = STATUS_SUCCESS;
-                    complete_async( handle, event, apc, apc_user, io, status, 0 );
-                    break;
+                    if (needs_close) close( fd );
+                    complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+                    return STATUS_SUCCESS;
                 }
             }
 #endif
@@ -1409,9 +1416,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 break;
             }
             *(int *)out_buffer = value;
-            status = STATUS_SUCCESS;
-            complete_async( handle, event, apc, apc_user, io, status, 0 );
-            break;
+            if (needs_close) close( fd );
+            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            return STATUS_SUCCESS;
         }
 
         case IOCTL_AFD_WINE_SIOCATMARK:
@@ -1448,9 +1455,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 /* windows is reversed with respect to unix */
                 *(int *)out_buffer = !value;
             }
-            status = STATUS_SUCCESS;
-            complete_async( handle, event, apc, apc_user, io, status, 0 );
-            break;
+            if (needs_close) close( fd );
+            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            return STATUS_SUCCESS;
         }
 
         case IOCTL_AFD_WINE_GET_INTERFACE_LIST:
@@ -1460,9 +1467,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             struct ifaddrs *ifaddrs, *ifaddr;
             unsigned int count = 0;
             ULONG ret_size;
-
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-                return status;
 
             if (getifaddrs( &ifaddrs ) < 0)
             {
@@ -1478,10 +1482,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             ret_size = count * sizeof(*info);
             if (out_size < ret_size)
             {
-                status = STATUS_PENDING;
-                complete_async( handle, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
                 freeifaddrs( ifaddrs );
-                break;
+                complete_async( handle, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
+                return STATUS_PENDING;
             }
 
             memset( out_buffer, 0, ret_size );
@@ -1530,8 +1533,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 
             freeifaddrs( ifaddrs );
-            status = STATUS_PENDING;
             complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, ret_size );
+            return STATUS_PENDING;
 #else
             FIXME( "Interface list queries are currently not supported on this platform.\n" );
             status = STATUS_NOT_SUPPORTED;
@@ -1584,9 +1587,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 #endif
             }
 
-            status = STATUS_SUCCESS;
-            complete_async( handle, event, apc, apc_user, io, status, 0 );
-            break;
+            if (needs_close) close( fd );
+            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            return STATUS_SUCCESS;
         }
 
         case IOCTL_AFD_WINE_GETPEERNAME:
@@ -1638,7 +1641,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 return status;
 
             ret = getsockopt( fd, SOL_SOCKET, SO_LINGER, &unix_linger, &len );
-            if (needs_close) close( fd );
             if (!ret)
             {
                 ws_linger->l_onoff = unix_linger.l_onoff;
@@ -1646,7 +1648,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 io->Information = sizeof(*ws_linger);
             }
 
-            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+            status = ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+            break;
         }
 
         case IOCTL_AFD_WINE_SET_SO_LINGER:
@@ -1674,8 +1677,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
          * most programmers assume, anyway */
         case IOCTL_AFD_WINE_SET_SO_REUSEADDR:
         {
-            int fd, needs_close = FALSE;
-            NTSTATUS status;
             int ret;
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
@@ -1685,8 +1686,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 #ifdef __APPLE__
             if (!ret) ret = setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, in_buffer, in_size );
 #endif
-            if (needs_close) close( fd );
-            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+            status = ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+            break;
         }
 
         case IOCTL_AFD_WINE_SET_IP_ADD_MEMBERSHIP:
@@ -1725,10 +1726,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 ret = 0; /* fake success */
             }
 #endif
-            if (needs_close) close( fd );
-            if (ret) return sock_errno_to_status( errno );
-            io->Information = len;
-            return STATUS_SUCCESS;
+            if (ret)
+            {
+                status = sock_errno_to_status( errno );
+            }
+            else
+            {
+                io->Information = len;
+                status = STATUS_SUCCESS;
+            }
+            break;
         }
 
         case IOCTL_AFD_WINE_SET_IP_DONTFRAGMENT:
@@ -1746,7 +1753,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             if (!once++)
                 FIXME( "IP_DONTFRAGMENT is not supported on this platform\n" );
-            return STATUS_SUCCESS; /* fake success */
+            status = STATUS_SUCCESS; /* fake success */
+            break;
         }
 #endif
 
@@ -1931,10 +1939,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 ret = 0; /* fake success */
             }
 #endif
-            if (needs_close) close( fd );
-            if (ret) return sock_errno_to_status( errno );
-            io->Information = len;
-            return STATUS_SUCCESS;
+            if (ret)
+            {
+                status = sock_errno_to_status( errno );
+            }
+            else
+            {
+                io->Information = len;
+                status = STATUS_SUCCESS;
+            }
+            break;
         }
 
         case IOCTL_AFD_WINE_SET_IPV6_DONTFRAG:
@@ -2070,10 +2084,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_SET_IPV6_V6ONLY:
         {
-            int fd, needs_close = FALSE;
             union unix_sockaddr addr;
             socklen_t len = sizeof(addr);
-            NTSTATUS status;
             int ret;
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
@@ -2083,12 +2095,13 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             {
                 /* changing IPV6_V6ONLY succeeds on an unbound IPv4 socket */
                 WARN( "ignoring IPV6_V6ONLY on an unbound IPv4 socket\n" );
-                return STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
+                break;
             }
 
             ret = setsockopt( fd, IPPROTO_IPV6, IPV6_V6ONLY, in_buffer, in_size );
-            if (needs_close) close( fd );
-            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+            status = ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+            break;
         }
 
 #ifdef SOL_IPX
@@ -2100,7 +2113,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 #elif defined(SO_DEFAULT_HEADERS)
         case IOCTL_AFD_WINE_GET_IPX_PTYPE:
         {
-            int fd, needs_close = FALSE;
             struct ipx value;
             socklen_t len = sizeof(value);
             int ret;
@@ -2109,10 +2121,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 return status;
 
             ret = getsockopt( fd, 0, SO_DEFAULT_HEADERS, &value, &len );
-            if (needs_close) close( fd );
-            if (ret) return sock_errno_to_status( errno );
-            *(DWORD *)out_buffer = value.ipx_pt;
-            return STATUS_SUCCESS;
+            if (ret)
+            {
+                status = sock_errno_to_status( errno );
+            }
+            else
+            {
+                *(DWORD *)out_buffer = value.ipx_pt;
+                status = STATUS_SUCCESS;
+            }
+            break;
         }
 
         case IOCTL_AFD_WINE_SET_IPX_PTYPE:
@@ -2134,7 +2152,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             socklen_t len = sizeof(buffer);
             DEVICELIST *ws_list = out_buffer;
             int fd, needs_close = FALSE;
-            NTSTATUS status;
             unsigned int i;
             int ret;
 
@@ -2164,7 +2181,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 ws_dev->irdaDeviceHints2 = unix_dev->hints[1];
                 ws_dev->irdaCharSet = unix_dev->charset;
             }
-            return STATUS_SUCCESS;
+            status = STATUS_SUCCESS;
+            break;
         }
 #endif
 
@@ -2192,5 +2210,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
     }
 
     if (needs_close) close( fd );
+
+    if (status != STATUS_PENDING && !NT_ERROR(status)) io->Status = status;
+
     return status;
 }
