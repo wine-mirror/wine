@@ -444,7 +444,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
         if (!(pid = fork()))  /* grandchild */
         {
             if (params->ConsoleFlags ||
-                params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
+                params->ConsoleHandle == CONSOLE_HANDLE_ALLOC ||
                 (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
             {
                 setsid();
