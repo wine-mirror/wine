@@ -6612,6 +6612,7 @@ static void test_security_flags(void)
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
     WaitForSingleObject(complete_event, INFINITE);
+    todo_wine
     ok(req_error == ERROR_INTERNET_SEC_CERT_ERRORS,
        "req_error = %d\n", req_error);
 
@@ -6675,7 +6676,7 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
 
     if(req_error != ERROR_INTERNET_SEC_CERT_ERRORS) {
-        win_skip("Unexpected cert errors %u, skipping security flags tests\n", req_error);
+        skip("Unexpected cert errors %u, skipping security flags tests\n", req_error);
 
         close_async_handle(ses, 3);
         return;
