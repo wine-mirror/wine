@@ -774,6 +774,7 @@ struct device_manager_ctx
     WCHAR gpu_guid[64];
     LUID gpu_luid;
     HKEY adapter_key;
+    BOOL virtual_monitor;
 };
 
 static void link_device( const WCHAR *instance, const WCHAR *class )
@@ -1047,6 +1048,12 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     static const WCHAR default_monitorW[] =
         {'M','O','N','I','T','O','R','\\','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
+    if (!monitor)
+    {
+        ctx->virtual_monitor = TRUE;
+        return;
+    }
+
     TRACE( "%s %s %s\n", debugstr_w(monitor->name), wine_dbgstr_rect(&monitor->rc_monitor),
            wine_dbgstr_rect(&monitor->rc_work) );
 
@@ -1271,6 +1278,12 @@ static BOOL update_display_cache(void)
 
     user_driver->pUpdateDisplayDevices( &device_manager, FALSE, &ctx );
     release_display_manager_ctx( &ctx );
+    if (ctx.virtual_monitor)
+    {
+        clear_display_devices();
+        list_add_tail( &monitors, &virtual_monitor.entry );
+        return TRUE;
+    }
 
     if (update_display_cache_from_registry()) return TRUE;
     if (ctx.gpu_count)
@@ -1280,20 +1293,6 @@ static BOOL update_display_cache(void)
     }
 
     user_driver->pUpdateDisplayDevices( &device_manager, TRUE, &ctx );
-    if (!ctx.gpu_count)
-    {
-        static const struct gdi_monitor default_monitor =
-        {
-            .rc_work.right = 1024,
-            .rc_work.bottom = 768,
-            .rc_monitor.right = 1024,
-            .rc_monitor.bottom = 768,
-            .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
-        };
-
-        TRACE( "adding default fake monitor\n");
-        add_monitor( &default_monitor, &ctx );
-    }
     release_display_manager_ctx( &ctx );
 
     if (!update_display_cache_from_registry())
@@ -1307,27 +1306,8 @@ static BOOL update_display_cache(void)
 
 static BOOL lock_display_devices(void)
 {
-    USEROBJECTFLAGS flags;
-    HWINSTA winstation;
-
+    if (!update_display_cache()) return FALSE;
     pthread_mutex_lock( &display_lock );
-
-    /* Report physical monitor information only if window station has visible display surfaces */
-    winstation = NtUserGetProcessWindowStation();
-    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) &&
-        (flags.dwFlags & WSF_VISIBLE))
-    {
-        pthread_mutex_unlock( &display_lock );
-        if (!update_display_cache()) return FALSE;
-        pthread_mutex_lock( &display_lock );
-    }
-    else
-    {
-        clear_display_devices();
-        list_add_tail( &monitors, &virtual_monitor.entry );
-        last_query_display_time = 0;
-    }
-
     return TRUE;
 }
 
