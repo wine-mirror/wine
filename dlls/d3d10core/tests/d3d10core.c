@@ -5717,7 +5717,6 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ok(stencil_ref == 3, "Got unexpected stencil ref %u.\n", stencil_ref);
     tmp_ds_state = NULL;
     ID3D10Device_OMGetDepthStencilState(device, &tmp_ds_state, NULL);
-    ok(stencil_ref == 3, "Got unexpected stencil ref %u.\n", stencil_ref);
     ok(tmp_ds_state == ds_state, "Got unexpected depth stencil state %p, expected %p.\n", tmp_ds_state, ds_state);
     ID3D10DepthStencilState_Release(tmp_ds_state);
 
