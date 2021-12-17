@@ -12498,6 +12498,17 @@ static void test_window_placement(void)
     GetWindowRect(hwnd, &rect);
     ok(EqualRect(&rect, &orig), "got window rect %s\n", wine_dbgstr_rect(&rect));
 
+    ret = SetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to set window placement, error %lu\n", GetLastError());
+
+    wp.length = 0;
+    SetLastError(0xdeadbeef);
+    ret = SetWindowPlacement(hwnd, &wp);
+todo_wine {
+    ok(!ret, "SetWindowPlacement should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
+}
+
     DestroyWindow(hwnd);
 }
 
@@ -12657,7 +12668,7 @@ static void test_arrange_iconic_windows(void)
 static void other_process_proc(HWND hwnd)
 {
     HANDLE window_ready_event, test_done_event;
-    WINDOWPLACEMENT wp;
+    WINDOWPLACEMENT wp = {0};
     DWORD ret;
 
     window_ready_event = OpenEventA(EVENT_ALL_ACCESS, FALSE, "test_opw_window");
