@@ -249,10 +249,36 @@ BOOL xstate_compaction_enabled = FALSE;
 #define INEI	0x49656e69	/* "ineI" */
 #define NTEL	0x6c65746e	/* "ntel" */
 
-static inline void do_cpuid(unsigned int ax, unsigned int cx, unsigned int *p)
-{
-    __asm__ ("cpuid" : "=a"(p[0]), "=b" (p[1]), "=c"(p[2]), "=d"(p[3]) : "a"(ax), "c"(cx));
-}
+extern void do_cpuid( unsigned int ax, unsigned int cx, unsigned int *p ) DECLSPEC_HIDDEN;
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushl %esi\n\t"
+                   "pushl %ebx\n\t"
+                   "movl 12(%esp),%eax\n\t"
+                   "movl 16(%esp),%ecx\n\t"
+                   "movl 20(%esp),%esi\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%esi)\n\t"
+                   "movl %ebx,4(%esi)\n\t"
+                   "movl %ecx,8(%esi)\n\t"
+                   "movl %edx,12(%esi)\n\t"
+                   "popl %ebx\n\t"
+                   "popl %esi\n\t"
+                   "ret" )
+#else
+__ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushq %rbx\n\t"
+                   "movl %edi,%eax\n\t"
+                   "movl %esi,%ecx\n\t"
+                   "movq %rdx,%r8\n\t"
+                   "cpuid\n\t"
+                   "movl %eax,(%r8)\n\t"
+                   "movl %ebx,4(%r8)\n\t"
+                   "movl %ecx,8(%r8)\n\t"
+                   "movl %edx,12(%r8)\n\t"
+                   "popq %rbx\n\t"
+                   "ret" )
+#endif
 
 #ifdef __i386__
 extern int have_cpuid(void) DECLSPEC_HIDDEN;
