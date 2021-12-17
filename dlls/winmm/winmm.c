@@ -144,8 +144,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
         if (!WINMM_CreateIData(hInstDLL))
             return FALSE;
-
-        joystick_load( hInstDLL );
         break;
     case DLL_PROCESS_DETACH:
         if(fImpLoad)

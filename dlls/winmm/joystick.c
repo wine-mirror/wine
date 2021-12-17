@@ -152,11 +152,12 @@ static BOOL CALLBACK enum_instances( const DIDEVICEINSTANCEW *instance, void *co
     return DIENUM_CONTINUE;
 }
 
-void joystick_load( HINSTANCE instance )
+static BOOL WINAPI joystick_load_once( INIT_ONCE *once, void *param, void **context )
 {
-    HRESULT hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W,
+    HRESULT hr = DirectInput8Create( hWinMM32Instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W,
                                      (void **)&dinput, NULL );
-    if (FAILED(hr)) WARN( "could not create dinput instance, hr %#x\n", hr );
+    if (FAILED(hr)) ERR( "Could not create dinput instance, hr %#x\n", hr );
+    return TRUE;
 }
 
 void joystick_unload()
@@ -177,10 +178,14 @@ void joystick_unload()
 
 static void find_joysticks(void)
 {
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
     IDirectInputDevice8W *device;
     HANDLE event;
     DWORD index;
     HRESULT hr;
+
+    InitOnceExecuteOnce( &init_once, joystick_load_once, NULL, NULL );
 
     if (!dinput) return;
 

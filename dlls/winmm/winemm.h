@@ -153,7 +153,6 @@ MMRESULT WINMM_CheckCallback(DWORD_PTR dwCallback, DWORD fdwOpen, BOOL mixer) DE
 
 void WINMM_DeleteWaveform(void) DECLSPEC_HIDDEN;
 
-void joystick_load( HMODULE instance ) DECLSPEC_HIDDEN;
 void joystick_unload( void ) DECLSPEC_HIDDEN;
 
 /* Global variables */
