@@ -4261,7 +4261,7 @@ static ChainCheck chainCheck[] = {
    { { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_NESTED,
        CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID, 0 },
-       1, googleSimpleStatus }, TODO_INFO, &oct2016 },
+       1, googleSimpleStatus }, TODO_INFO | TODO_ERROR, &oct2016 },
  /* The stanford chain may or may not have its root trusted, so ignore the error
   */
  { { ARRAY_SIZE(stanfordChain), stanfordChain },
