@@ -123,6 +123,12 @@ static void resetContent(HANDLE hCon, COORD sbSize, BOOL content)
     }
 }
 
+/* dummy console ctrl handler to test reset of ctrl handler's list */
+static BOOL WINAPI mydummych(DWORD event)
+{
+    return TRUE;
+}
+
 static void testCursor(HANDLE hCon, COORD sbSize)
 {
     COORD		c;
@@ -4060,6 +4066,9 @@ static void test_FreeConsole(void)
     BOOL ret;
 
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
+    ok(!SetConsoleCtrlHandler(mydummych, FALSE), "dummy ctrl handler shouldn't be set\n");
+    ret = SetConsoleCtrlHandler(mydummych, TRUE);
+    ok(ret, "SetConsoleCtrlHandler failed: %u\n", GetLastError());
     if (!skip_nt)
     {
         unbound_input  = create_unbound_handle(FALSE, TRUE);
@@ -4168,6 +4177,9 @@ static void test_FreeConsole(void)
     ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
     type = GetFileType(unbound_output);
     ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+
+    todo_wine
+    ok(!SetConsoleCtrlHandler(mydummych, FALSE), "FreeConsole() should have reset ctrl handlers' list\n");
 
     CloseHandle(unbound_input);
     CloseHandle(unbound_output);
@@ -4312,6 +4324,10 @@ static void test_AttachConsole_child(DWORD console_pid)
 
     SetStdHandle(STD_ERROR_HANDLE, pipe_out);
 
+    ok(!SetConsoleCtrlHandler(mydummych, FALSE), "dummy ctrl handler shouldn't be set\n");
+    res = SetConsoleCtrlHandler(mydummych, TRUE);
+    ok(res, "SetConsoleCtrlHandler failed: %u\n", GetLastError());
+
     res = AttachConsole(console_pid);
     ok(res, "AttachConsole failed: %u\n", GetLastError());
 
@@ -4325,6 +4341,9 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(res, "ReadConsoleOutputCharacterA failed: %u\n", GetLastError());
     ok(len == 6, "len = %u\n", len);
     ok(!memcmp(buf, "Parent", 6), "Unexpected console output\n");
+
+    todo_wine
+    ok(!SetConsoleCtrlHandler(mydummych, FALSE), "AttachConsole() should have reset ctrl handlers' list\n");
 
     res = FreeConsole();
     ok(res, "FreeConsole failed: %u\n", GetLastError());
@@ -4416,6 +4435,9 @@ static void test_AllocConsole_child(void)
     res = GetConsoleMode(unbound_output, &mode);
     ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "GetConsoleMode failed: %u\n", GetLastError());
 
+    ok(!SetConsoleCtrlHandler(mydummych, FALSE), "dummy ctrl handler shouldn't be set\n");
+    res = SetConsoleCtrlHandler(mydummych, TRUE);
+    ok(res, "SetConsoleCtrlHandler failed: %u\n", GetLastError());
     res = AllocConsole();
     ok(res, "AllocConsole failed: %u\n", GetLastError());
 
@@ -4427,6 +4449,9 @@ static void test_AllocConsole_child(void)
 
     res = GetConsoleMode(unbound_output, &mode);
     ok(res, "GetConsoleMode failed: %u\n", GetLastError());
+
+    todo_wine
+    ok(!SetConsoleCtrlHandler(mydummych, FALSE), "AllocConsole() should have reset ctrl handlers' list\n");
 
     FreeConsole();
     SetStdHandle(STD_OUTPUT_HANDLE, NULL);
