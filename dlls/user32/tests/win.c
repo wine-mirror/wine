@@ -12504,10 +12504,8 @@ static void test_window_placement(void)
     wp.length = 0;
     SetLastError(0xdeadbeef);
     ret = SetWindowPlacement(hwnd, &wp);
-todo_wine {
     ok(!ret, "SetWindowPlacement should have failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
-}
 
     DestroyWindow(hwnd);
 }

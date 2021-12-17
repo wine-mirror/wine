@@ -2567,6 +2567,11 @@ BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
 {
     UINT flags = PLACE_MAX | PLACE_RECT;
     if (!wpl) return FALSE;
+    if (wpl->length != sizeof(*wpl))
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     if (wpl->flags & WPF_SETMINPOSITION) flags |= PLACE_MIN;
     return set_window_placement( hwnd, wpl, flags );
 }
