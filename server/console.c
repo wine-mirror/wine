@@ -71,13 +71,14 @@ static struct object *console_lookup_name( struct object *obj, struct unicode_st
                                            unsigned int attr, struct object *root );
 static struct object *console_open_file( struct object *obj, unsigned int access,
                                          unsigned int sharing, unsigned int options );
+static int console_add_queue( struct object *obj, struct wait_queue_entry *entry );
 
 static const struct object_ops console_ops =
 {
     sizeof(struct console),           /* size */
     &file_type,                       /* type */
     console_dump,                     /* dump */
-    add_queue,                        /* add_queue */
+    console_add_queue,                /* add_queue */
     remove_queue,                     /* remove_queue */
     console_signaled,                 /* signaled */
     no_satisfied,                     /* satisfied */
@@ -129,14 +130,15 @@ struct console_host_ioctl
 
 struct console_server
 {
-    struct object         obj;         /* object header */
-    struct fd            *fd;          /* pseudo-fd for ioctls */
-    struct console       *console;     /* attached console */
-    struct list           queue;       /* ioctl queue */
-    struct list           read_queue;  /* blocking read queue */
-    int                   busy;        /* flag if server processing an ioctl */
-    int                   term_fd;     /* UNIX terminal fd */
-    struct termios        termios;     /* original termios */
+    struct object         obj;            /* object header */
+    struct fd            *fd;             /* pseudo-fd for ioctls */
+    struct console       *console;        /* attached console */
+    struct list           queue;          /* ioctl queue */
+    struct list           read_queue;     /* blocking read queue */
+    unsigned int          busy : 1;       /* flag if server processing an ioctl */
+    unsigned int          once_input : 1; /* flag if input thread has already been requested */
+    int                   term_fd;        /* UNIX terminal fd */
+    struct termios        termios;        /* original termios */
 };
 
 static void console_server_dump( struct object *obj, int verbose );
@@ -461,6 +463,23 @@ static const struct fd_ops console_connection_fd_ops =
 };
 
 static struct list screen_buffer_list = LIST_INIT(screen_buffer_list);
+
+static int queue_host_ioctl( struct console_server *server, unsigned int code, unsigned int output,
+                             struct async *async, struct async_queue *queue );
+
+static int console_add_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct console *console = (struct console*)obj;
+    assert( obj->ops == &console_ops );
+    /* before waiting, ensure conhost's input thread has been started */
+    if (console->server && !console->server->once_input)
+    {
+        console->server->once_input = 1;
+        if (console->server->term_fd == -1)
+            queue_host_ioctl( console->server, IOCTL_CONDRV_PEEK, 0, NULL, NULL );
+    }
+    return add_queue( &console->obj, entry );
+}
 
 static int console_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
@@ -889,9 +908,10 @@ static struct object *create_console_server( void )
     struct console_server *server;
 
     if (!(server = alloc_object( &console_server_ops ))) return NULL;
-    server->console = NULL;
-    server->busy    = 0;
-    server->term_fd = -1;
+    server->console    = NULL;
+    server->busy       = 0;
+    server->once_input = 0;
+    server->term_fd    = -1;
     list_init( &server->queue );
     list_init( &server->read_queue );
     server->fd = alloc_pseudo_fd( &console_server_fd_ops, &server->obj, FILE_SYNCHRONOUS_IO_NONALERT );
@@ -1315,7 +1335,7 @@ static int console_input_add_queue( struct object *obj, struct wait_queue_entry 
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    return add_queue( &current->process->console->obj, entry );
+    return console_add_queue( &current->process->console->obj, entry );
 }
 
 static struct fd *console_input_get_fd( struct object *obj )
