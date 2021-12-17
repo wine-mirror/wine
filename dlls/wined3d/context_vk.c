@@ -273,6 +273,7 @@ void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk
             chunk_vk->vk_memory, 0, VK_WHOLE_SIZE, 0, &chunk_vk->c.map_ptr))) < 0)
     {
         ERR("Failed to map chunk memory, vr %s.\n", wined3d_debug_vkresult(vr));
+        wined3d_allocator_chunk_vk_unlock(chunk_vk);
         return NULL;
     }
 
