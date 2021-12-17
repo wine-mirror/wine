@@ -12370,6 +12370,7 @@ static void test_create_input_layout(void)
         DXGI_FORMAT_R16G16_FLOAT,
         DXGI_FORMAT_R16G16_UINT,
         DXGI_FORMAT_R16G16_SINT,
+        DXGI_FORMAT_R11G11B10_FLOAT,
         DXGI_FORMAT_R32_FLOAT,
         DXGI_FORMAT_R32_UINT,
         DXGI_FORMAT_R32_SINT,
@@ -13649,6 +13650,7 @@ static void test_format_support(void)
     static const struct format_support vertex_buffers[] =
     {
         {DXGI_FORMAT_R8G8_UINT},
+        {DXGI_FORMAT_R11G11B10_FLOAT},
         {DXGI_FORMAT_R16_FLOAT},
     };
 

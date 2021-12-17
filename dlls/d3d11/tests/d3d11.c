@@ -18549,6 +18549,7 @@ static void test_create_input_layout(void)
         DXGI_FORMAT_R16G16_FLOAT,
         DXGI_FORMAT_R16G16_UINT,
         DXGI_FORMAT_R16G16_SINT,
+        DXGI_FORMAT_R11G11B10_FLOAT,
         DXGI_FORMAT_R32_FLOAT,
         DXGI_FORMAT_R32_UINT,
         DXGI_FORMAT_R32_SINT,
@@ -20623,6 +20624,7 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
     static const struct format_support vertex_buffers[] =
     {
         {DXGI_FORMAT_R8G8_UINT, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R11G11B10_FLOAT, D3D_FEATURE_LEVEL_10_0},
         {DXGI_FORMAT_R16_FLOAT, D3D_FEATURE_LEVEL_10_0},
     };
 
