@@ -6249,7 +6249,7 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS || query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
+        todo_wine
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
 
@@ -6259,7 +6259,7 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS || query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
+        todo_wine
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
 
