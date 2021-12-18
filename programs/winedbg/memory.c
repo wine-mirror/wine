@@ -769,7 +769,7 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
                         const struct dbg_lvalue* xend, int instruction_count)
 {
     static ADDRESS64 last = {0,0,0};
-    int stop = 0;
+    dbg_lgint_t stop = 0;
     int i;
 
     if (!xstart && !xend) 
