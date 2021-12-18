@@ -1730,7 +1730,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     status = HidP_SetScaledUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
                                        0, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#x\n", status );
-    ok( value == 0, "got value %x, expected %#x\n", value, 0 );
 
     value = HidP_MaxUsageListLength( HidP_Feature + 1, 0, preparsed_data );
     ok( value == 0, "HidP_MaxUsageListLength(HidP_Feature + 1, 0) returned %d, expected %d\n", value, 0 );
