@@ -83,6 +83,7 @@ typedef struct {
     void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
     MIDIOUTCAPSW        caps;
     snd_seq_addr_t      addr;
+    int                 port_out;
 } WINE_MIDIOUT;
 
 static WINE_MIDIIN	MidiInDev [MAX_MIDIINDRV ];
@@ -106,7 +107,6 @@ static	int		numOpenMidiSeq = 0;
 static	int		numStartedMidiIn = 0;
 
 static int port_in;
-static int port_out;
 
 static CRITICAL_SECTION crit_sect;   /* protects all MidiIn buffer queues */
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -245,14 +245,6 @@ static int midiOpenSeq(BOOL create_client)
             /* Setting the client name is the only init to do */
             snd_seq_set_client_name(midiSeq, "WINE midi driver");
 
-            port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output",
-                    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
-                    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
-            if (port_out < 0)
-                TRACE("Unable to create output port\n");
-            else
-                TRACE("Outport port %d created successfully\n", port_out);
-
             port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
                     SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
                     SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
@@ -274,7 +266,6 @@ static int midiCloseSeq(void)
 {
     EnterCriticalSection(&midiSeqLock);
     if (--numOpenMidiSeq == 0) {
-	snd_seq_delete_simple_port(midiSeq, port_out);
 	snd_seq_delete_simple_port(midiSeq, port_in);
 	snd_seq_close(midiSeq);
 	midiSeq = NULL;
@@ -736,6 +727,8 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
     int ret;
+    int port_out;
+    char port_out_name[32];
 
     TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
@@ -782,12 +775,37 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiOutDev[wDevID].bufsize = 0x3FFF;
     MidiOutDev[wDevID].midiDesc = *lpDesc;
 
-    /* Connect our app port to the device port */
     EnterCriticalSection(&midiSeqLock);
-    ret = snd_seq_connect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client,
-                             MidiOutDev[wDevID].addr.port);
+    /* Create a port dedicated to a specific device */
+    /* Keep the old name without a number for the first port */
+    if (wDevID)
+	sprintf(port_out_name, "WINE ALSA Output #%d", wDevID);
+
+    port_out = snd_seq_create_simple_port(midiSeq, wDevID?port_out_name:"WINE ALSA Output",
+	    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
+	    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
+
+    if (port_out < 0) {
+	TRACE("Unable to create output port\n");
+	MidiOutDev[wDevID].port_out = -1;
+    } else {
+	TRACE("Outport port %d created successfully\n", port_out);
+	MidiOutDev[wDevID].port_out = port_out;
+
+	/* Connect our app port to the device port */
+	ret = snd_seq_connect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client,
+	                         MidiOutDev[wDevID].addr.port);
+
+	/* usually will happen when the port is already connected */
+	/* other errors should not be fatal either */
+	if (ret < 0)
+	    WARN("Could not connect port %d to %d:%d: %s\n",
+		 wDevID, MidiOutDev[wDevID].addr.client,
+		 MidiOutDev[wDevID].addr.port, snd_strerror(ret));
+    }
     LeaveCriticalSection(&midiSeqLock);
-    if (ret < 0)
+
+    if (port_out < 0)
 	return MMSYSERR_NOTENABLED;
     
     TRACE("Output port :%d connected %d:%d\n",port_out,MidiOutDev[wDevID].addr.client,MidiOutDev[wDevID].addr.port);
@@ -823,7 +841,9 @@ static DWORD modClose(WORD wDevID)
     case MOD_MIDIPORT:
     case MOD_SYNTH:
         EnterCriticalSection(&midiSeqLock);
-        snd_seq_disconnect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+        TRACE("Deleting port :%d, connected to %d:%d\n", MidiOutDev[wDevID].port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+        snd_seq_delete_simple_port(midiSeq, MidiOutDev[wDevID].port_out);
+        MidiOutDev[wDevID].port_out = -1;
         LeaveCriticalSection(&midiSeqLock);
 	midiCloseSeq();
 	break;
@@ -868,7 +888,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
             snd_seq_event_t event;
             snd_seq_ev_clear(&event);
             snd_seq_ev_set_direct(&event);
-            snd_seq_ev_set_source(&event, port_out);
+            snd_seq_ev_set_source(&event, MidiOutDev[wDevID].port_out);
             snd_seq_ev_set_subs(&event);
 	    
 	    switch (evt & 0xF0) {
@@ -1037,7 +1057,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
         }
 	snd_seq_ev_clear(&event);
 	snd_seq_ev_set_direct(&event);
-	snd_seq_ev_set_source(&event, port_out);
+	snd_seq_ev_set_source(&event, MidiOutDev[wDevID].port_out);
 	snd_seq_ev_set_subs(&event);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
         EnterCriticalSection(&midiSeqLock);
@@ -1199,6 +1219,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	    MidiOutDev[MODM_NumDevs].caps.wNotes    = 16;
 	}
 	MidiOutDev[MODM_NumDevs].bEnabled    = TRUE;
+	MidiOutDev[MODM_NumDevs].port_out    = -1;
 
 	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
             "\tALSA info: midi dev-type=%x, capa=0\n",
