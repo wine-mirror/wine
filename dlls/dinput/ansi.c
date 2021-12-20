@@ -840,6 +840,7 @@ static HRESULT WINAPI dinput8_a_ConfigureDevices( IDirectInput8A *iface_a, LPDIC
         params_w.lprgFormats = &format_w;
 
         if (SUCCEEDED(hr)) hr = IDirectInput8_ConfigureDevices( iface_w, callback, &params_w, flags, ref );
+        if (SUCCEEDED(hr)) diactionformat_wtoa( &format_w, format_a );
 
         if (!format_w.hInstString)
         {
