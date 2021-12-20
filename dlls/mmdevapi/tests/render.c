@@ -232,6 +232,14 @@ static void test_audioclient(void)
                   IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)?"PCM":
                   (IsEqualGUID(&pwfxe->SubFormat,
                                &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)?"FLOAT":"Other"));
+            ok(IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT),
+               "got format %s\n", debugstr_guid(&pwfxe->SubFormat));
+
+            pwfxe->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+            hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &pwfx2);
+            ok(hr == S_OK, "Valid IsFormatSupported(Shared) call returns %08x\n", hr);
+            ok(pwfx2 == NULL, "pwfx2 is non-null\n");
+            CoTaskMemFree(pwfx2);
         }
 
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &pwfx2);
