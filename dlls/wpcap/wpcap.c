@@ -240,10 +240,10 @@ static char *build_win32_name( const char *source, const char *adapter_name )
 static char *build_win32_description( const struct pcap_interface *unix_dev )
 {
     int len = strlen(unix_dev->name) + 1;
-    char *ret, *ptr;
+    char *ret;
 
     if (unix_dev->description && unix_dev->description[0]) len += strlen(unix_dev->description) + 1;
-    if ((ret = ptr = malloc( len )))
+    if ((ret = malloc( len )))
     {
         if (unix_dev->description)
         {
