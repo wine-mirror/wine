@@ -894,12 +894,16 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(IFilterMapper3 *iface,
 
     if (FAILED(hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC,
             &IID_IParseDisplayName, (void **)&parser)))
+    {
+        free(display_name);
         return hr;
+    }
 
     if (FAILED(hr = IParseDisplayName_ParseDisplayName(parser, NULL, display_name, &eaten, &moniker)))
     {
         ERR("Failed to parse display name, hr %#x.\n", hr);
         IParseDisplayName_Release(parser);
+        free(display_name);
         return hr;
     }
 
@@ -909,6 +913,7 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(IFilterMapper3 *iface,
     {
         ERR("Failed to get property bag, hr %#x.\n", hr);
         IMoniker_Release(moniker);
+        free(display_name);
         return hr;
     }
 
