@@ -235,7 +235,7 @@ static inline MIB_TCP_STATE tcp_state_to_mib_state( int state )
 
 struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
 {
-    struct ipv6_addr_scope *table = NULL;
+    struct ipv6_addr_scope *table = NULL, *new_table;
     unsigned int table_size = 0, num = 0;
 
 #ifdef __linux__
@@ -260,11 +260,12 @@ struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
             {
                 if (!table_size) table_size = 4;
                 else table_size *= 2;
-                if (!(table = realloc( table, table_size * sizeof(table[0]) )))
+                if (!(new_table = realloc( table, table_size * sizeof(table[0]) )))
                 {
                     fclose( fp );
                     goto failed;
                 }
+                table = new_table;
             }
 
             entry = table + num - 1;
@@ -292,11 +293,12 @@ struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
             {
                 if (!table_size) table_size = 4;
                 else table_size *= 2;
-                if (!(table = realloc( table, table_size * sizeof(table[0]) )))
+                if (!(new_table = realloc( table, table_size * sizeof(table[0]) )))
                 {
                     freeifaddrs( addrs );
                     goto failed;
                 }
+                table = new_table;
             }
 
             sin6 = (struct sockaddr_in6 *)cur->ifa_addr;
