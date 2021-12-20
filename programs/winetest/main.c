@@ -1051,7 +1051,8 @@ run_tests (char *logname, char *outdir)
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
 
-    logfile = CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
+    logfile = strcmp(logname, "-") == 0 ? GetStdHandle( STD_OUTPUT_HANDLE ) :
+              CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            &sa, CREATE_ALWAYS, 0, NULL );
 
@@ -1175,7 +1176,7 @@ run_tests (char *logname, char *outdir)
     report (R_DELTA, 0, "Running: Done");
 
     report (R_STATUS, "Cleaning up - %u failures", failures);
-    CloseHandle( logfile );
+    if (strcmp(logname, "-") != 0) CloseHandle( logfile );
     logfile = 0;
     if (newdir)
         remove_dir (tempdir);
