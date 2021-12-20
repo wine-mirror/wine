@@ -1616,7 +1616,7 @@ BOOL WINAPI NtGdiFlattenPath( HDC hdc )
 static struct gdi_path *PATH_WidenPath(DC *dc)
 {
     INT i, j, numStrokes, penWidth, penWidthIn, penWidthOut, size, penStyle;
-    struct gdi_path *flat_path, *pNewPath, **pStrokes = NULL, *pUpPath, *pDownPath;
+    struct gdi_path *flat_path, *pNewPath, **pStrokes = NULL, **new_strokes, *pUpPath, *pDownPath;
     EXTLOGPEN *elp;
     BYTE *type;
     DWORD obj_type, joint, endcap, penType;
@@ -1681,12 +1681,14 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
             case PT_MOVETO:
                 numStrokes++;
                 j = 0;
-                pStrokes = realloc( pStrokes, numStrokes * sizeof(*pStrokes) );
-                if(!pStrokes)
+                new_strokes = realloc( pStrokes, numStrokes * sizeof(*pStrokes) );
+                if (!new_strokes)
                 {
                     free_gdi_path(flat_path);
+                    free(pStrokes);
                     return NULL;
                 }
+                pStrokes = new_strokes;
                 pStrokes[numStrokes - 1] = alloc_gdi_path(0);
                 /* fall through */
             case PT_LINETO:
