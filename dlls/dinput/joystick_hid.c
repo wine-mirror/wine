@@ -1732,6 +1732,9 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
             FIXME( "multiple " #rep " report ids!\n" );                \
     } while (0)
 
+    if (!instance->wCollectionNumber)
+        return DIENUM_CONTINUE;
+
     if (instance->wCollectionNumber == effect_state->collection)
         SET_REPORT_ID( effect_state );
 
