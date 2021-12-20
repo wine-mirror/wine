@@ -398,6 +398,7 @@ static void VOLUME_GetSuperblockLabel( struct volume *volume, HANDLE handle, con
 {
     const BYTE *label_ptr = NULL;
     DWORD label_len;
+    BYTE pvd[BLOCK_SIZE];
 
     switch (volume->fs_type)
     {
@@ -435,32 +436,28 @@ static void VOLUME_GetSuperblockLabel( struct volume *volume, HANDLE handle, con
             break;
         }
     case FS_UDF:
+        if(!UDF_Find_PVD(handle, pvd))
         {
-            BYTE pvd[BLOCK_SIZE];
+            label_len = 0;
+            break;
+        }
 
-            if(!UDF_Find_PVD(handle, pvd))
-            {
-                label_len = 0;
-                break;
-            }
+        /* [E] 3/10.1.4 and [U] 2.1.1 */
+        if(pvd[24]==8)
+        {
+            label_ptr = pvd + 24 + 1;
+            label_len = pvd[24+32-1];
+            break;
+        }
+        else
+        {
+            unsigned int i;
 
-            /* [E] 3/10.1.4 and [U] 2.1.1 */
-            if(pvd[24]==8)
-            {
-                label_ptr = pvd + 24 + 1;
-                label_len = pvd[24+32-1];
-                break;
-            }
-            else
-            {
-                unsigned int i;
-
-                label_len = 1 + pvd[24+32-1];
-                for (i = 0; i < label_len; i += 2)
-                    volume->label[i/2] = (pvd[24+1+i] << 8) | pvd[24+1+i+1];
-                volume->label[label_len] = 0;
-                return;
-            }
+            label_len = 1 + pvd[24+32-1];
+            for (i = 0; i < label_len; i += 2)
+                volume->label[i/2] = (pvd[24+1+i] << 8) | pvd[24+1+i+1];
+            volume->label[label_len] = 0;
+            return;
         }
     }
     if (label_len) RtlMultiByteToUnicodeN( volume->label, sizeof(volume->label) - sizeof(WCHAR),
