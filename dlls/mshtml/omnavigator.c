@@ -674,7 +674,7 @@ static HRESULT WINAPI OmHistory_get_length(IOmHistory *iface, short *p)
     if(This->window && This->window->base.outer_window)
         browser = This->window->base.outer_window->browser;
 
-    *p = browser->doc->travel_log
+    *p = browser && browser->doc->travel_log
         ? ITravelLog_CountEntries(browser->doc->travel_log, browser->doc->browser_service)
         : 0;
     return S_OK;
