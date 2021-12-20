@@ -1329,7 +1329,7 @@ static HRESULT import_loader_onDataAvailable(void *ctxt, char *ptr, DWORD len)
 
     inputbuffer = xmlParserInputBufferCreateIO(import_loader_io_read, import_loader_io_close, buffer,
             XML_CHAR_ENCODING_NONE);
-    *input = xmlNewIOInputStream(ctxt, inputbuffer, XML_CHAR_ENCODING_NONE);
+    *input = xmlNewIOInputStream(NULL, inputbuffer, XML_CHAR_ENCODING_NONE);
     if (!*input)
         xmlFreeParserInputBuffer(inputbuffer);
 
