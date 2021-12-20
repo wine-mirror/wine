@@ -2905,6 +2905,16 @@ done:
     return status;
 }
 
+/***********************************************************************
+ *	is_apiset_dll_name
+ *
+ */
+static BOOL is_apiset_dll_name( const WCHAR *name )
+{
+    static const WCHAR name_prefix[] = L"api-ms-win-";
+
+    return !wcsnicmp( name, name_prefix, ARRAY_SIZE(name_prefix) - 1 );
+}
 
 /***********************************************************************
  *	find_dll_file
@@ -2948,6 +2958,8 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
     {
         status = search_dll_file( load_path, libname, nt_name, pwm, mapping, image_info, id );
+        if (status == STATUS_DLL_NOT_FOUND && load_path && is_apiset_dll_name( libname ))
+            status = search_dll_file( NULL, libname, nt_name, pwm, mapping, image_info, id );
         if (status == STATUS_DLL_NOT_FOUND)
             status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
     }

@@ -466,6 +466,7 @@ static void testLoadLibraryEx(void)
 
 static void test_LoadLibraryEx_search_flags(void)
 {
+    static const char apiset_dll[] = "api-ms-win-shcore-obsolete-l1-1-0.dll";
     static const struct
     {
         int add_dirs[4];
@@ -684,6 +685,28 @@ static void test_LoadLibraryEx_search_flags(void)
         for (k = 0; tests[j].add_dirs[k]; k++) pRemoveDllDirectory( cookies[k] );
     }
 
+    mod = GetModuleHandleA( apiset_dll );
+    if (mod)
+    {
+        win_skip( "%s already referenced, skipping test.\n", apiset_dll );
+    }
+    else
+    {
+        mod = LoadLibraryA( apiset_dll );
+        if (mod)
+        {
+            FreeLibrary(mod);
+            mod = LoadLibraryExA( apiset_dll, NULL, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+            ok( !!mod, "Got NULL module, error %u.\n", GetLastError() );
+            ok( !!GetModuleHandleA( apiset_dll ), "Got NULL handle.\n" );
+            ret = FreeLibrary( mod );
+            ok( ret, "FreeLibrary failed, error %u.\n", GetLastError() );
+        }
+        else
+        {
+            win_skip( "%s not found, skipping test.\n", apiset_dll );
+        }
+    }
 done:
     for (i = 1; i <= 6; i++)
     {
