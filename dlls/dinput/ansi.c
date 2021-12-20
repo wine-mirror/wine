@@ -829,7 +829,6 @@ static HRESULT WINAPI dinput8_a_ConfigureDevices( IDirectInput8A *iface_a, LPDIC
     HRESULT hr;
     DWORD i;
 
-    if (!callback) return DIERR_INVALIDPARAM;
     if (FAILED(hr = diconfiguredevicesparams_atow( params_a, &params_w ))) return hr;
 
     format_w.dwNumActions = format_a->dwNumActions;
