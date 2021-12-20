@@ -150,7 +150,6 @@ static void diactionformat_wtoa( const DIACTIONFORMATW *in, DIACTIONFORMATA *out
         out->rgoAction[i].guidInstance = in->rgoAction[i].guidInstance;
         out->rgoAction[i].dwObjID = in->rgoAction[i].dwObjID;
         out->rgoAction[i].dwHow = in->rgoAction[i].dwHow;
-        out->rgoAction[i].lptszActionName = 0;
     }
 
     out->guidActionMap = in->guidActionMap;
