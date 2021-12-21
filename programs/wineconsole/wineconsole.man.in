@@ -3,11 +3,11 @@
 wineconsole \- The Wine console
 .SH SYNOPSIS
 .B wineconsole
-.RI [ option "] " command
+.RI [ command "] "
 .SH DESCRIPTION
 .B wineconsole
 is the Wine console manager, used to run console commands and applications. It allows running the
-console either in the current terminal (\fIcurses\fR) or in a newly made window (\fIuser\fR).
+console in a newly made window.
 .SH BUGS
 Bugs can be reported on the
 .UR https://bugs.winehq.org
