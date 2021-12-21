@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-11-25 20:31+0200\n"
+"PO-Revision-Date: 2021-12-21 23:32+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10533,22 +10533,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) Dublinas, Edinburgas, Lisabona, Londonas"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "Sudano juostinis laikas"
+msgstr "Pietų Sudano juostinis laikas"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "Sudano vasaros laikas"
+msgstr "Pietų Sudano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) Jeruzalė"
+msgstr "(UTC+02:00) Džuba"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
