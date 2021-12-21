@@ -726,6 +726,7 @@ static NTSTATUS release_stream( void *args )
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
                             &stream->tmp_buffer_size, MEM_RELEASE);
     free(stream->fmt);
+    free(stream);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
