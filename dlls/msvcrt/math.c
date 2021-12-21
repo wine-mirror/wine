@@ -5167,7 +5167,7 @@ double CDECL modf( double x, double *iptr )
 }
 
 #if defined(__i386__) || defined(__x86_64__)
-static BOOL _setfp_sse( unsigned int *cw, unsigned int cw_mask,
+static void _setfp_sse( unsigned int *cw, unsigned int cw_mask,
         unsigned int *sw, unsigned int sw_mask )
 {
 #if defined(__GNUC__) || defined(__clang__)
@@ -5256,17 +5256,15 @@ static BOOL _setfp_sse( unsigned int *cw, unsigned int cw_mask,
 
     if (fpword != old_fpword)
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
-    return TRUE;
 #else
     FIXME("not implemented\n");
     if (cw) *cw = 0;
     if (sw) *sw = 0;
-    return FALSE;
 #endif
 }
 #endif
 
-static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
+static void _setfp( unsigned int *cw, unsigned int cw_mask,
         unsigned int *sw, unsigned int sw_mask )
 {
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
@@ -5376,16 +5374,15 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
         fenv.status_word = newsw;
         __asm__ __volatile__( "fldenv %0" : : "m" (fenv) : "st", "st(1)",
                 "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)" );
-        return TRUE;
+        return;
     }
 
     if (oldsw != newsw)
         __asm__ __volatile__( "fnclex" );
     if (oldcw != newcw)
         __asm__ __volatile__( "fldcw %0" : : "m" (newcw) );
-    return TRUE;
 #elif defined(__x86_64__)
-    return _setfp_sse(cw, cw_mask, sw, sw_mask);
+    _setfp_sse(cw, cw_mask, sw, sw_mask);
 #elif defined(__aarch64__)
     ULONG_PTR old_fpsr = 0, fpsr = 0, old_fpcr = 0, fpcr = 0;
     unsigned int flags;
@@ -5465,7 +5462,6 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
         __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
     if (old_fpcr != fpcr)
         __asm__ __volatile__( "msr fpcr, %0" :: "r" (fpcr) );
-    return TRUE;
 #elif defined(__arm__) && !defined(__SOFTFP__)
     DWORD old_fpscr, fpscr;
     unsigned int flags;
@@ -5533,12 +5529,10 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
 
     if (old_fpscr != fpscr)
         __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
-    return TRUE;
 #else
     FIXME("not implemented\n");
     if (cw) *cw = 0;
     if (sw) *sw = 0;
-    return FALSE;
 #endif
 }
 
@@ -5648,8 +5642,7 @@ int CDECL __control87_2( unsigned int newval, unsigned int mask,
     if (x86_cw)
     {
         *x86_cw = newval;
-        if (!_setfp(x86_cw, mask, NULL, 0))
-            return 0;
+        _setfp(x86_cw, mask, NULL, 0);
     }
 
     if (!sse2_cw) return 1;
@@ -5657,8 +5650,7 @@ int CDECL __control87_2( unsigned int newval, unsigned int mask,
     if (sse2_supported)
     {
         *sse2_cw = newval;
-        if (!_setfp_sse(sse2_cw, mask, NULL, 0))
-            return 0;
+        _setfp_sse(sse2_cw, mask, NULL, 0);
     }
     else *sse2_cw = 0;
 
@@ -6053,17 +6045,12 @@ int CDECL fesetenv(const fenv_t *env)
 #endif
 
 #ifdef __i386__
-    if (!_setfp(&x87_cw, mask, &x87_stat, ~0))
-        return 1;
+    _setfp(&x87_cw, mask, &x87_stat, ~0);
     if (sse2_supported)
-    {
-        if (!_setfp_sse(&cw, mask, &stat, ~0))
-            return 1;
-    }
+        _setfp_sse(&cw, mask, &stat, ~0);
     return 0;
 #else
-    if (!_setfp(&cw, mask, &stat, ~0))
-        return 1;
+    _setfp(&cw, mask, &stat, ~0);
     return 0;
 #endif
 }
