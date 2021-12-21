@@ -1352,8 +1352,11 @@ static NTSTATUS get_render_buffer(void *args)
 
     if(stream->wri_offs_frames + params->frames > stream->bufsize_frames){
         if(stream->tmp_buffer_frames < params->frames){
-            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                                &stream->tmp_buffer_size, MEM_RELEASE);
+            if(stream->tmp_buffer){
+                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
+                                    &stream->tmp_buffer_size, MEM_RELEASE);
+                stream->tmp_buffer = NULL;
+            }
             stream->tmp_buffer_size = params->frames * stream->fmt->nBlockAlign;
             if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0,
                                        &stream->tmp_buffer_size, MEM_COMMIT, PAGE_READWRITE)){
