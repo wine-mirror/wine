@@ -492,7 +492,7 @@ static INT_PTR CALLBACK data_link_connection_dlg_proc(HWND hwnd, UINT msg, WPARA
         }
         case WM_COMMAND:
         {
-            switch LOWORD(wp)
+            switch (LOWORD(wp))
             {
                 case IDC_RDO_SRC_NAME:
                 case IDC_BTN_CONNECTION:
