@@ -6163,6 +6163,26 @@ static void raw_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             clear_rects, draw_rect, flags, colour, depth, stencil);
 }
 
+static bool gl_formats_compatible(struct wined3d_texture *src_texture, DWORD src_location,
+        struct wined3d_texture *dst_texture, DWORD dst_location)
+{
+    GLuint src_internal, dst_internal;
+    bool src_ds, dst_ds;
+
+    src_ds = src_texture->resource.format->depth_size || src_texture->resource.format->stencil_size;
+    dst_ds = dst_texture->resource.format->depth_size || dst_texture->resource.format->stencil_size;
+    if (src_ds == dst_ds)
+        return true;
+    /* Also check the internal format because, e.g. WINED3DFMT_D24_UNORM_S8_UINT has nonzero depth and stencil
+     * sizes as does WINED3DFMT_R24G8_TYPELESS when bound with flag WINED3D_BIND_DEPTH_STENCIL, but these share
+     * the same internal format with WINED3DFMT_R24_UNORM_X8_TYPELESS. */
+    src_internal = wined3d_gl_get_internal_format(&src_texture->resource,
+            wined3d_format_gl(src_texture->resource.format), src_location == WINED3D_LOCATION_TEXTURE_SRGB);
+    dst_internal = wined3d_gl_get_internal_format(&dst_texture->resource,
+            wined3d_format_gl(dst_texture->resource.format), dst_location == WINED3D_LOCATION_TEXTURE_SRGB);
+    return src_internal == dst_internal;
+}
+
 static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
         struct wined3d_context *context, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         DWORD src_location, const RECT *src_rect, struct wined3d_texture *dst_texture,
@@ -6177,11 +6197,7 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     unsigned int src_level, src_layer, dst_level, dst_layer;
     struct wined3d_blitter *next;
     GLuint src_name, dst_name;
-    bool src_ds, dst_ds;
     DWORD location;
-
-    src_ds = src_texture->resource.format->depth_size || src_texture->resource.format->stencil_size;
-    dst_ds = dst_texture->resource.format->depth_size || dst_texture->resource.format->stencil_size;
 
     /* If we would need to copy from a renderbuffer or drawable, we'd probably
      * be better off using the FBO blitter directly, since we'd need to use it
@@ -6189,7 +6205,7 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
      *
      * We also can't copy between depth/stencil and colour resources, since
      * the formats are considered incompatible in OpenGL. */
-    if (op != WINED3D_BLIT_OP_RAW_BLIT || (src_ds != dst_ds)
+    if (op != WINED3D_BLIT_OP_RAW_BLIT || !gl_formats_compatible(src_texture, src_location, dst_texture, dst_location)
             || (src_texture->resource.format->id == dst_texture->resource.format->id
             && (!(src_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             || !(dst_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB)))))
