@@ -10672,11 +10672,11 @@ msgstr ""
 msgid "(UTC+04:00) Tbilisi"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
+#: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+12"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:392
+#: dlls/tzres/tzres.rc:395
 msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr ""
 
@@ -10748,11 +10748,11 @@ msgstr ""
 msgid "(UTC+01:00) Casablanca"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
+#: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-08"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:401
+#: dlls/tzres/tzres.rc:404
 msgid "(UTC-08:00) Coordinated Universal Time-08"
 msgstr ""
 
@@ -10846,15 +10846,15 @@ msgstr ""
 msgid "(UTC+02:00) Windhoek"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:366
+#: dlls/tzres/tzres.rc:369
 msgid "Tonga Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:367
+#: dlls/tzres/tzres.rc:370
 msgid "Tonga Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:368
+#: dlls/tzres/tzres.rc:371
 msgid "(UTC+13:00) Nuku'alofa"
 msgstr ""
 
@@ -10882,6 +10882,22 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:342
+#, fuzzy
+#| msgid "Date and time"
+msgid "South Sudan Standard Time"
+msgstr "Datum a čas"
+
+#: dlls/tzres/tzres.rc:343
+#, fuzzy
+#| msgid "Date and time"
+msgid "South Sudan Daylight Time"
+msgstr "Datum a čas"
+
+#: dlls/tzres/tzres.rc:344
+msgid "(UTC+02:00) Juba"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:102
@@ -10924,11 +10940,11 @@ msgstr ""
 msgid "(UTC+03:00) Baghdad"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
+#: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC+13"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:395
+#: dlls/tzres/tzres.rc:398
 msgid "(UTC+13:00) Coordinated Universal Time+13"
 msgstr ""
 
@@ -10956,31 +10972,31 @@ msgstr ""
 msgid "(UTC-03:30) Newfoundland"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:345
+#: dlls/tzres/tzres.rc:348
 #, fuzzy
 #| msgid "Date and time"
 msgid "Sudan Standard Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:346
+#: dlls/tzres/tzres.rc:349
 #, fuzzy
 #| msgid "Date and time"
 msgid "Sudan Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:347
+#: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Khartoum"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:435
+#: dlls/tzres/tzres.rc:438
 msgid "West Pacific Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:436
+#: dlls/tzres/tzres.rc:439
 msgid "West Pacific Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:437
+#: dlls/tzres/tzres.rc:440
 msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr ""
 
@@ -11072,15 +11088,15 @@ msgstr ""
 msgid "(UTC+02:00) Beirut"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:360
+#: dlls/tzres/tzres.rc:363
 msgid "Tokyo Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:361
+#: dlls/tzres/tzres.rc:364
 msgid "Tokyo Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:362
+#: dlls/tzres/tzres.rc:365
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
 msgstr ""
 
@@ -11144,19 +11160,19 @@ msgstr ""
 msgid "(UTC+04:00) Izhevsk, Samara"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:414
+#: dlls/tzres/tzres.rc:417
 #, fuzzy
 #| msgid "&Standard bar"
 msgid "Volgograd Standard Time"
 msgstr "&Standardní řádek"
 
-#: dlls/tzres/tzres.rc:415
+#: dlls/tzres/tzres.rc:418
 #, fuzzy
 #| msgid "Date and time"
 msgid "Volgograd Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:416
+#: dlls/tzres/tzres.rc:419
 msgid "(UTC+04:00) Volgograd"
 msgstr ""
 
@@ -11184,11 +11200,11 @@ msgstr ""
 msgid "(UTC+08:00) Irkutsk"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
+#: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
 msgid "UTC-11"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:407
+#: dlls/tzres/tzres.rc:410
 msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr ""
 
@@ -11204,19 +11220,19 @@ msgstr ""
 msgid "(UTC-03:00) City of Buenos Aires"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:375
+#: dlls/tzres/tzres.rc:378
 #, fuzzy
 #| msgid "&Standard bar"
 msgid "Turks And Caicos Standard Time"
 msgstr "&Standardní řádek"
 
-#: dlls/tzres/tzres.rc:376
+#: dlls/tzres/tzres.rc:379
 #, fuzzy
 #| msgid "Date and time"
 msgid "Turks And Caicos Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:377
+#: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
 msgstr ""
 
@@ -11248,11 +11264,11 @@ msgstr ""
 msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
+#: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "Coordinated Universal Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:389
+#: dlls/tzres/tzres.rc:392
 msgid "(UTC) Coordinated Universal Time"
 msgstr ""
 
@@ -11282,15 +11298,15 @@ msgstr ""
 msgid "(UTC+02:00) Athens, Bucharest"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:372
+#: dlls/tzres/tzres.rc:375
 msgid "Turkey Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:373
+#: dlls/tzres/tzres.rc:376
 msgid "Turkey Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:374
+#: dlls/tzres/tzres.rc:377
 msgid "(UTC+03:00) Istanbul"
 msgstr ""
 
@@ -11334,43 +11350,43 @@ msgstr ""
 msgid "(UTC-06:00) Saskatchewan"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:441
+#: dlls/tzres/tzres.rc:444
 #, fuzzy
 #| msgid "Date and time"
 msgid "Yukon Standard Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:442
+#: dlls/tzres/tzres.rc:445
 #, fuzzy
 #| msgid "Date and time"
 msgid "Yukon Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:443
+#: dlls/tzres/tzres.rc:446
 msgid "(UTC-07:00) Yukon"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:351
+#: dlls/tzres/tzres.rc:354
 msgid "Taipei Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:352
+#: dlls/tzres/tzres.rc:355
 msgid "Taipei Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:353
+#: dlls/tzres/tzres.rc:356
 msgid "(UTC+08:00) Taipei"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:423
+#: dlls/tzres/tzres.rc:426
 msgid "W. Europe Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:424
+#: dlls/tzres/tzres.rc:427
 msgid "W. Europe Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:425
+#: dlls/tzres/tzres.rc:428
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
 msgstr ""
 
@@ -11398,19 +11414,19 @@ msgstr ""
 msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:363
+#: dlls/tzres/tzres.rc:366
 #, fuzzy
 #| msgid "&Standard bar"
 msgid "Tomsk Standard Time"
 msgstr "&Standardní řádek"
 
-#: dlls/tzres/tzres.rc:364
+#: dlls/tzres/tzres.rc:367
 #, fuzzy
 #| msgid "Date and time"
 msgid "Tomsk Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:365
+#: dlls/tzres/tzres.rc:368
 msgid "(UTC+07:00) Tomsk"
 msgstr ""
 
@@ -11462,19 +11478,19 @@ msgstr ""
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:369
+#: dlls/tzres/tzres.rc:372
 #, fuzzy
 #| msgid "Date and time"
 msgid "Transbaikal Standard Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:370
+#: dlls/tzres/tzres.rc:373
 #, fuzzy
 #| msgid "Date and time"
 msgid "Transbaikal Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:371
+#: dlls/tzres/tzres.rc:374
 msgid "(UTC+09:00) Chita"
 msgstr ""
 
@@ -11546,15 +11562,15 @@ msgstr ""
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:381
+#: dlls/tzres/tzres.rc:384
 msgid "US Eastern Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:382
+#: dlls/tzres/tzres.rc:385
 msgid "US Eastern Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:383
+#: dlls/tzres/tzres.rc:386
 msgid "(UTC-05:00) Indiana (East)"
 msgstr ""
 
@@ -11590,15 +11606,15 @@ msgstr "Datum a čas"
 msgid "(UTC+09:00) Pyongyang"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:354
+#: dlls/tzres/tzres.rc:357
 msgid "Tasmania Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:355
+#: dlls/tzres/tzres.rc:358
 msgid "Tasmania Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:356
+#: dlls/tzres/tzres.rc:359
 msgid "(UTC+10:00) Hobart"
 msgstr ""
 
@@ -11614,23 +11630,23 @@ msgstr ""
 msgid "(UTC-06:00) Central America"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
+#: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-02"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:398
+#: dlls/tzres/tzres.rc:401
 msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:384
+#: dlls/tzres/tzres.rc:387
 msgid "US Mountain Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:385
+#: dlls/tzres/tzres.rc:388
 msgid "US Mountain Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:386
+#: dlls/tzres/tzres.rc:389
 msgid "(UTC-07:00) Arizona"
 msgstr ""
 
@@ -11658,23 +11674,23 @@ msgstr ""
 msgid "(UTC+09:30) Adelaide"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
+#: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-09"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:404
+#: dlls/tzres/tzres.rc:407
 msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:342
+#: dlls/tzres/tzres.rc:345
 msgid "Sri Lanka Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:343
+#: dlls/tzres/tzres.rc:346
 msgid "Sri Lanka Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:344
+#: dlls/tzres/tzres.rc:347
 msgid "(UTC+05:30) Sri Jayawardenepura"
 msgstr ""
 
@@ -11690,15 +11706,15 @@ msgstr ""
 msgid "(UTC+04:30) Kabul"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:438
+#: dlls/tzres/tzres.rc:441
 msgid "Yakutsk Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:439
+#: dlls/tzres/tzres.rc:442
 msgid "Yakutsk Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:440
+#: dlls/tzres/tzres.rc:443
 msgid "(UTC+09:00) Yakutsk"
 msgstr ""
 
@@ -11738,19 +11754,19 @@ msgstr ""
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:357
+#: dlls/tzres/tzres.rc:360
 #, fuzzy
 #| msgid "Date and time"
 msgid "Tocantins Standard Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:358
+#: dlls/tzres/tzres.rc:361
 #, fuzzy
 #| msgid "Date and time"
 msgid "Tocantins Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:359
+#: dlls/tzres/tzres.rc:362
 msgid "(UTC-03:00) Araguaina"
 msgstr ""
 
@@ -11814,31 +11830,31 @@ msgstr ""
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:432
+#: dlls/tzres/tzres.rc:435
 #, fuzzy
 #| msgid "Date and time"
 msgid "West Bank Standard Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:433
+#: dlls/tzres/tzres.rc:436
 #, fuzzy
 #| msgid "Date and time"
 msgid "West Bank Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:434
+#: dlls/tzres/tzres.rc:437
 msgid "(UTC+02:00) Gaza, Hebron"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:348
+#: dlls/tzres/tzres.rc:351
 msgid "Syria Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:349
+#: dlls/tzres/tzres.rc:352
 msgid "Syria Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:350
+#: dlls/tzres/tzres.rc:353
 msgid "(UTC+02:00) Damascus"
 msgstr ""
 
@@ -11866,15 +11882,15 @@ msgstr ""
 msgid "(UTC+00:00) Monrovia, Reykjavik"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:378
+#: dlls/tzres/tzres.rc:381
 msgid "Ulaanbaatar Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:379
+#: dlls/tzres/tzres.rc:382
 msgid "Ulaanbaatar Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:380
+#: dlls/tzres/tzres.rc:383
 msgid "(UTC+08:00) Ulaanbaatar"
 msgstr ""
 
@@ -11930,15 +11946,15 @@ msgstr ""
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:429
+#: dlls/tzres/tzres.rc:432
 msgid "West Asia Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:430
+#: dlls/tzres/tzres.rc:433
 msgid "West Asia Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:431
+#: dlls/tzres/tzres.rc:434
 msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr ""
 
@@ -12004,15 +12020,15 @@ msgstr ""
 msgid "(UTC-03:00) Salvador"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:408
+#: dlls/tzres/tzres.rc:411
 msgid "Venezuela Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:409
+#: dlls/tzres/tzres.rc:412
 msgid "Venezuela Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:410
+#: dlls/tzres/tzres.rc:413
 msgid "(UTC-04:00) Caracas"
 msgstr ""
 
@@ -12072,19 +12088,19 @@ msgstr "Datum a čas"
 msgid "(UTC+05:00) Qyzylorda"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:426
+#: dlls/tzres/tzres.rc:429
 #, fuzzy
 #| msgid "Date and time"
 msgid "W. Mongolia Standard Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:427
+#: dlls/tzres/tzres.rc:430
 #, fuzzy
 #| msgid "Date and time"
 msgid "W. Mongolia Daylight Time"
 msgstr "Datum a čas"
 
-#: dlls/tzres/tzres.rc:428
+#: dlls/tzres/tzres.rc:431
 msgid "(UTC+07:00) Hovd"
 msgstr ""
 
@@ -12244,15 +12260,15 @@ msgstr ""
 msgid "(UTC+04:00) Port Louis"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:411
+#: dlls/tzres/tzres.rc:414
 msgid "Vladivostok Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:412
+#: dlls/tzres/tzres.rc:415
 msgid "Vladivostok Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:413
+#: dlls/tzres/tzres.rc:416
 msgid "(UTC+10:00) Vladivostok"
 msgstr ""
 
@@ -12346,15 +12362,15 @@ msgstr ""
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:420
+#: dlls/tzres/tzres.rc:423
 msgid "W. Central Africa Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:421
+#: dlls/tzres/tzres.rc:424
 msgid "W. Central Africa Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:422
+#: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) West Central Africa"
 msgstr ""
 
@@ -12382,15 +12398,15 @@ msgstr ""
 msgid "(UTC+10:00) Brisbane"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:417
+#: dlls/tzres/tzres.rc:420
 msgid "W. Australia Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:418
+#: dlls/tzres/tzres.rc:421
 msgid "W. Australia Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:419
+#: dlls/tzres/tzres.rc:422
 msgid "(UTC+08:00) Perth"
 msgstr ""
 

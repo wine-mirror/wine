@@ -10279,11 +10279,11 @@ msgstr "喬治亞夏令時間"
 msgid "(UTC+04:00) Tbilisi"
 msgstr "(UTC+04:00) 提比里斯"
 
-#: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
+#: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+12"
 msgstr "UTC+12"
 
-#: dlls/tzres/tzres.rc:392
+#: dlls/tzres/tzres.rc:395
 msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr "(UTC+12:00) 世界協調時間+12"
 
@@ -10347,11 +10347,11 @@ msgstr "摩洛哥夏令時間"
 msgid "(UTC+01:00) Casablanca"
 msgstr "(UTC+01:00) 卡薩布蘭卡"
 
-#: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
+#: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-08"
 msgstr "UTC-08"
 
-#: dlls/tzres/tzres.rc:401
+#: dlls/tzres/tzres.rc:404
 msgid "(UTC-08:00) Coordinated Universal Time-08"
 msgstr "(UTC-08:00) 世界協調時間-08"
 
@@ -10427,15 +10427,15 @@ msgstr "納米比亞夏令時間"
 msgid "(UTC+02:00) Windhoek"
 msgstr "(UTC+02:00) 溫荷克"
 
-#: dlls/tzres/tzres.rc:366
+#: dlls/tzres/tzres.rc:369
 msgid "Tonga Standard Time"
 msgstr "東加標準時間"
 
-#: dlls/tzres/tzres.rc:367
+#: dlls/tzres/tzres.rc:370
 msgid "Tonga Daylight Time"
 msgstr "東加夏令時間"
 
-#: dlls/tzres/tzres.rc:368
+#: dlls/tzres/tzres.rc:371
 msgid "(UTC+13:00) Nuku'alofa"
 msgstr "(UTC+13:00) 努瓜婁發"
 
@@ -10462,6 +10462,24 @@ msgstr "GMT 夏令時間"
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) 都柏林，愛丁堡，里斯本，倫敦"
+
+#: dlls/tzres/tzres.rc:342
+#, fuzzy
+#| msgid "Sudan Standard Time"
+msgid "South Sudan Standard Time"
+msgstr "蘇丹標準時間"
+
+#: dlls/tzres/tzres.rc:343
+#, fuzzy
+#| msgid "Sudan Daylight Time"
+msgid "South Sudan Daylight Time"
+msgstr "蘇丹夏令時間"
+
+#: dlls/tzres/tzres.rc:344
+#, fuzzy
+#| msgid "(UTC+02:00) Jerusalem"
+msgid "(UTC+02:00) Juba"
+msgstr "(UTC+02:00) 耶路撒冷"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -10499,11 +10517,11 @@ msgstr "伊拉克夏令時間"
 msgid "(UTC+03:00) Baghdad"
 msgstr "(UTC+03:00) 巴格達"
 
-#: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
+#: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC+13"
 msgstr "UTC+13"
 
-#: dlls/tzres/tzres.rc:395
+#: dlls/tzres/tzres.rc:398
 msgid "(UTC+13:00) Coordinated Universal Time+13"
 msgstr "(UTC+13:00) 世界協調時間+13"
 
@@ -10531,27 +10549,27 @@ msgstr "紐芬蘭夏令時間"
 msgid "(UTC-03:30) Newfoundland"
 msgstr "(UTC-03:30) 紐芬蘭"
 
-#: dlls/tzres/tzres.rc:345
+#: dlls/tzres/tzres.rc:348
 msgid "Sudan Standard Time"
 msgstr "蘇丹標準時間"
 
-#: dlls/tzres/tzres.rc:346
+#: dlls/tzres/tzres.rc:349
 msgid "Sudan Daylight Time"
 msgstr "蘇丹夏令時間"
 
-#: dlls/tzres/tzres.rc:347
+#: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Khartoum"
 msgstr "(UTC+02:00) 喀土穆"
 
-#: dlls/tzres/tzres.rc:435
+#: dlls/tzres/tzres.rc:438
 msgid "West Pacific Standard Time"
 msgstr "西太平洋標準時間"
 
-#: dlls/tzres/tzres.rc:436
+#: dlls/tzres/tzres.rc:439
 msgid "West Pacific Daylight Time"
 msgstr "西太平洋夏令時間"
 
-#: dlls/tzres/tzres.rc:437
+#: dlls/tzres/tzres.rc:440
 msgid "(UTC+10:00) Guam, Port Moresby"
 msgstr "(UTC+10:00) 關島，莫爾斯貝港"
 
@@ -10639,15 +10657,15 @@ msgstr "中東夏令時間"
 msgid "(UTC+02:00) Beirut"
 msgstr "(UTC+02:00) 貝魯特"
 
-#: dlls/tzres/tzres.rc:360
+#: dlls/tzres/tzres.rc:363
 msgid "Tokyo Standard Time"
 msgstr "東京標準時間"
 
-#: dlls/tzres/tzres.rc:361
+#: dlls/tzres/tzres.rc:364
 msgid "Tokyo Daylight Time"
 msgstr "東京夏令時間"
 
-#: dlls/tzres/tzres.rc:362
+#: dlls/tzres/tzres.rc:365
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
 msgstr "(UTC+09:00) 大阪，札幌，東京"
 
@@ -10707,15 +10725,15 @@ msgstr "俄羅斯時區 3"
 msgid "(UTC+04:00) Izhevsk, Samara"
 msgstr "(UTC+04:00) 伊熱夫斯克，薩馬拉"
 
-#: dlls/tzres/tzres.rc:414
+#: dlls/tzres/tzres.rc:417
 msgid "Volgograd Standard Time"
 msgstr "伏爾加格勒標準時間"
 
-#: dlls/tzres/tzres.rc:415
+#: dlls/tzres/tzres.rc:418
 msgid "Volgograd Daylight Time"
 msgstr "伏爾加格勒夏令時間"
 
-#: dlls/tzres/tzres.rc:416
+#: dlls/tzres/tzres.rc:419
 msgid "(UTC+04:00) Volgograd"
 msgstr "(UTC+04:00) 伏爾加格勒"
 
@@ -10743,11 +10761,11 @@ msgstr "北亞東部夏令時間"
 msgid "(UTC+08:00) Irkutsk"
 msgstr "(UTC+08:00) 伊爾庫次克"
 
-#: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
+#: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
 msgid "UTC-11"
 msgstr "UTC-11"
 
-#: dlls/tzres/tzres.rc:407
+#: dlls/tzres/tzres.rc:410
 msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr "(UTC-11:00) 世界協調時間-11"
 
@@ -10763,15 +10781,15 @@ msgstr "阿根廷夏令時間"
 msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) 布宜諾斯艾利斯"
 
-#: dlls/tzres/tzres.rc:375
+#: dlls/tzres/tzres.rc:378
 msgid "Turks And Caicos Standard Time"
 msgstr "土克凱可標準時間"
 
-#: dlls/tzres/tzres.rc:376
+#: dlls/tzres/tzres.rc:379
 msgid "Turks And Caicos Daylight Time"
 msgstr "土克凱可夏令時間"
 
-#: dlls/tzres/tzres.rc:377
+#: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
 msgstr "(UTC-05:00) 土克凱可"
 
@@ -10799,11 +10817,11 @@ msgstr "緬甸夏令時間"
 msgid "(UTC+06:30) Yangon (Rangoon)"
 msgstr "(UTC+06:30) 仰光"
 
-#: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
+#: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "Coordinated Universal Time"
 msgstr "世界協調時間"
 
-#: dlls/tzres/tzres.rc:389
+#: dlls/tzres/tzres.rc:392
 msgid "(UTC) Coordinated Universal Time"
 msgstr "(UTC) 世界協調時間"
 
@@ -10831,15 +10849,15 @@ msgstr "GTB 夏令時間"
 msgid "(UTC+02:00) Athens, Bucharest"
 msgstr "(UTC+02:00) 雅典，布加勒斯特"
 
-#: dlls/tzres/tzres.rc:372
+#: dlls/tzres/tzres.rc:375
 msgid "Turkey Standard Time"
 msgstr "土耳其標準時間"
 
-#: dlls/tzres/tzres.rc:373
+#: dlls/tzres/tzres.rc:376
 msgid "Turkey Daylight Time"
 msgstr "土耳其夏令時間"
 
-#: dlls/tzres/tzres.rc:374
+#: dlls/tzres/tzres.rc:377
 msgid "(UTC+03:00) Istanbul"
 msgstr "(UTC+03:00) 伊斯坦堡"
 
@@ -10879,39 +10897,39 @@ msgstr "加拿大中部夏令時間"
 msgid "(UTC-06:00) Saskatchewan"
 msgstr "(UTC-06:00) 薩克其萬"
 
-#: dlls/tzres/tzres.rc:441
+#: dlls/tzres/tzres.rc:444
 msgid "Yukon Standard Time"
 msgstr "育空標準時間"
 
-#: dlls/tzres/tzres.rc:442
+#: dlls/tzres/tzres.rc:445
 msgid "Yukon Daylight Time"
 msgstr "育空夏令時間"
 
-#: dlls/tzres/tzres.rc:443
+#: dlls/tzres/tzres.rc:446
 msgid "(UTC-07:00) Yukon"
 msgstr "(UTC-07:00) 育空"
 
-#: dlls/tzres/tzres.rc:351
+#: dlls/tzres/tzres.rc:354
 msgid "Taipei Standard Time"
 msgstr "臺北標準時間"
 
-#: dlls/tzres/tzres.rc:352
+#: dlls/tzres/tzres.rc:355
 msgid "Taipei Daylight Time"
 msgstr "臺北夏令時間"
 
-#: dlls/tzres/tzres.rc:353
+#: dlls/tzres/tzres.rc:356
 msgid "(UTC+08:00) Taipei"
 msgstr "(UTC+08:00) 臺北"
 
-#: dlls/tzres/tzres.rc:423
+#: dlls/tzres/tzres.rc:426
 msgid "W. Europe Standard Time"
 msgstr "西歐標準時間"
 
-#: dlls/tzres/tzres.rc:424
+#: dlls/tzres/tzres.rc:427
 msgid "W. Europe Daylight Time"
 msgstr "西歐夏令時間"
 
-#: dlls/tzres/tzres.rc:425
+#: dlls/tzres/tzres.rc:428
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
 msgstr "(UTC+01:00) 阿姆斯特丹，柏林，伯恩，羅馬，斯德哥爾摩，維也納"
 
@@ -10939,15 +10957,15 @@ msgstr "巴基斯坦夏令時間"
 msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr "(UTC+05:00) 伊斯蘭瑪巴德，卡拉奇"
 
-#: dlls/tzres/tzres.rc:363
+#: dlls/tzres/tzres.rc:366
 msgid "Tomsk Standard Time"
 msgstr "托木斯克標準時間"
 
-#: dlls/tzres/tzres.rc:364
+#: dlls/tzres/tzres.rc:367
 msgid "Tomsk Daylight Time"
 msgstr "托木斯克夏令時間"
 
-#: dlls/tzres/tzres.rc:365
+#: dlls/tzres/tzres.rc:368
 msgid "(UTC+07:00) Tomsk"
 msgstr "(UTC+07:00) 托木斯克"
 
@@ -10999,15 +11017,15 @@ msgstr "東部夏令時間"
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr "(UTC-05:00) 東部時間 (美國和加拿大)"
 
-#: dlls/tzres/tzres.rc:369
+#: dlls/tzres/tzres.rc:372
 msgid "Transbaikal Standard Time"
 msgstr "外貝加爾標準時間"
 
-#: dlls/tzres/tzres.rc:370
+#: dlls/tzres/tzres.rc:373
 msgid "Transbaikal Daylight Time"
 msgstr "外貝加爾夏令時間"
 
-#: dlls/tzres/tzres.rc:371
+#: dlls/tzres/tzres.rc:374
 msgid "(UTC+09:00) Chita"
 msgstr "(UTC+09:00) 赤塔"
 
@@ -11071,15 +11089,15 @@ msgstr "山區夏令時間"
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr "(UTC-07:00) 山區時間 (美國和加拿大)"
 
-#: dlls/tzres/tzres.rc:381
+#: dlls/tzres/tzres.rc:384
 msgid "US Eastern Standard Time"
 msgstr "美國東部標準時間"
 
-#: dlls/tzres/tzres.rc:382
+#: dlls/tzres/tzres.rc:385
 msgid "US Eastern Daylight Time"
 msgstr "美國東部夏令時間"
 
-#: dlls/tzres/tzres.rc:383
+#: dlls/tzres/tzres.rc:386
 msgid "(UTC-05:00) Indiana (East)"
 msgstr "(UTC-05:00) 印第安納 (東部)"
 
@@ -11107,15 +11125,15 @@ msgstr "北韓夏令時間"
 msgid "(UTC+09:00) Pyongyang"
 msgstr "(UTC+09:00) 平壤"
 
-#: dlls/tzres/tzres.rc:354
+#: dlls/tzres/tzres.rc:357
 msgid "Tasmania Standard Time"
 msgstr "塔斯馬尼亞標準時間"
 
-#: dlls/tzres/tzres.rc:355
+#: dlls/tzres/tzres.rc:358
 msgid "Tasmania Daylight Time"
 msgstr "塔斯馬尼亞夏令時間"
 
-#: dlls/tzres/tzres.rc:356
+#: dlls/tzres/tzres.rc:359
 msgid "(UTC+10:00) Hobart"
 msgstr "(UTC+10:00) 荷巴特"
 
@@ -11131,23 +11149,23 @@ msgstr "中美洲夏令時間"
 msgid "(UTC-06:00) Central America"
 msgstr "(UTC-06:00) 中美洲"
 
-#: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
+#: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-02"
 msgstr "UTC-02"
 
-#: dlls/tzres/tzres.rc:398
+#: dlls/tzres/tzres.rc:401
 msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr "(UTC-02:00) 世界協調時間-02"
 
-#: dlls/tzres/tzres.rc:384
+#: dlls/tzres/tzres.rc:387
 msgid "US Mountain Standard Time"
 msgstr "美國山區標準時間"
 
-#: dlls/tzres/tzres.rc:385
+#: dlls/tzres/tzres.rc:388
 msgid "US Mountain Daylight Time"
 msgstr "美國山區夏令時間"
 
-#: dlls/tzres/tzres.rc:386
+#: dlls/tzres/tzres.rc:389
 msgid "(UTC-07:00) Arizona"
 msgstr "(UTC-07:00) 亞利桑那"
 
@@ -11175,23 +11193,23 @@ msgstr "澳洲中部夏令時間"
 msgid "(UTC+09:30) Adelaide"
 msgstr "(UTC+09:30) 阿得雷德"
 
-#: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
+#: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-09"
 msgstr "UTC-09"
 
-#: dlls/tzres/tzres.rc:404
+#: dlls/tzres/tzres.rc:407
 msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr "(UTC-09:00) 世界協調時間-09"
 
-#: dlls/tzres/tzres.rc:342
+#: dlls/tzres/tzres.rc:345
 msgid "Sri Lanka Standard Time"
 msgstr "斯里蘭卡標準時間"
 
-#: dlls/tzres/tzres.rc:343
+#: dlls/tzres/tzres.rc:346
 msgid "Sri Lanka Daylight Time"
 msgstr "斯里蘭卡夏令時間"
 
-#: dlls/tzres/tzres.rc:344
+#: dlls/tzres/tzres.rc:347
 msgid "(UTC+05:30) Sri Jayawardenepura"
 msgstr "(UTC+05:30) 斯里賈亞瓦德納普拉科特"
 
@@ -11207,15 +11225,15 @@ msgstr "阿富汗夏令時間"
 msgid "(UTC+04:30) Kabul"
 msgstr "(UTC+04:30) 喀布爾"
 
-#: dlls/tzres/tzres.rc:438
+#: dlls/tzres/tzres.rc:441
 msgid "Yakutsk Standard Time"
 msgstr "雅庫次克標準時間"
 
-#: dlls/tzres/tzres.rc:439
+#: dlls/tzres/tzres.rc:442
 msgid "Yakutsk Daylight Time"
 msgstr "雅庫次克夏令時間"
 
-#: dlls/tzres/tzres.rc:440
+#: dlls/tzres/tzres.rc:443
 msgid "(UTC+09:00) Yakutsk"
 msgstr "(UTC+09:00) 雅庫次克"
 
@@ -11255,15 +11273,15 @@ msgstr "阿拉伯夏令時間"
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
 msgstr "(UTC+04:00) 阿布達比，馬斯開特"
 
-#: dlls/tzres/tzres.rc:357
+#: dlls/tzres/tzres.rc:360
 msgid "Tocantins Standard Time"
 msgstr "托坎廷斯標準時間"
 
-#: dlls/tzres/tzres.rc:358
+#: dlls/tzres/tzres.rc:361
 msgid "Tocantins Daylight Time"
 msgstr "托坎廷斯夏令時間"
 
-#: dlls/tzres/tzres.rc:359
+#: dlls/tzres/tzres.rc:362
 msgid "(UTC-03:00) Araguaina"
 msgstr "(UTC-03:00) 阿拉瓜伊納"
 
@@ -11323,27 +11341,27 @@ msgstr "俄羅斯時區 11"
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr "(UTC+12:00) 阿納德爾，堪察加彼得巴甫洛夫斯克"
 
-#: dlls/tzres/tzres.rc:432
+#: dlls/tzres/tzres.rc:435
 msgid "West Bank Standard Time"
 msgstr "西岸標準時間"
 
-#: dlls/tzres/tzres.rc:433
+#: dlls/tzres/tzres.rc:436
 msgid "West Bank Daylight Time"
 msgstr "西岸夏令時間"
 
-#: dlls/tzres/tzres.rc:434
+#: dlls/tzres/tzres.rc:437
 msgid "(UTC+02:00) Gaza, Hebron"
 msgstr "(UTC+02:00) 加薩，希伯侖"
 
-#: dlls/tzres/tzres.rc:348
+#: dlls/tzres/tzres.rc:351
 msgid "Syria Standard Time"
 msgstr "敘利亞標準時間"
 
-#: dlls/tzres/tzres.rc:349
+#: dlls/tzres/tzres.rc:352
 msgid "Syria Daylight Time"
 msgstr "敘利亞夏令時間"
 
-#: dlls/tzres/tzres.rc:350
+#: dlls/tzres/tzres.rc:353
 msgid "(UTC+02:00) Damascus"
 msgstr "(UTC+02:00) 大馬士革"
 
@@ -11371,15 +11389,15 @@ msgstr "格林威治夏令時間"
 msgid "(UTC+00:00) Monrovia, Reykjavik"
 msgstr "(UTC+00:00) 蒙羅維亞，雷克雅維克"
 
-#: dlls/tzres/tzres.rc:378
+#: dlls/tzres/tzres.rc:381
 msgid "Ulaanbaatar Standard Time"
 msgstr "烏蘭巴托標準時間"
 
-#: dlls/tzres/tzres.rc:379
+#: dlls/tzres/tzres.rc:382
 msgid "Ulaanbaatar Daylight Time"
 msgstr "烏蘭巴托夏令時間"
 
-#: dlls/tzres/tzres.rc:380
+#: dlls/tzres/tzres.rc:383
 msgid "(UTC+08:00) Ulaanbaatar"
 msgstr "(UTC+08:00) 烏蘭巴托"
 
@@ -11431,15 +11449,15 @@ msgstr "南美洲太平洋夏令時間"
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr "(UTC-05:00) 波哥大，利馬，基多，里約布蘭科"
 
-#: dlls/tzres/tzres.rc:429
+#: dlls/tzres/tzres.rc:432
 msgid "West Asia Standard Time"
 msgstr "西亞標準時間"
 
-#: dlls/tzres/tzres.rc:430
+#: dlls/tzres/tzres.rc:433
 msgid "West Asia Daylight Time"
 msgstr "西亞夏令時間"
 
-#: dlls/tzres/tzres.rc:431
+#: dlls/tzres/tzres.rc:434
 msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr "(UTC+05:00) 阿什哈巴特，塔什干"
 
@@ -11503,15 +11521,15 @@ msgstr "巴伊亞夏令時間"
 msgid "(UTC-03:00) Salvador"
 msgstr "(UTC-03:00) 薩爾瓦多"
 
-#: dlls/tzres/tzres.rc:408
+#: dlls/tzres/tzres.rc:411
 msgid "Venezuela Standard Time"
 msgstr "委內瑞拉標準時間"
 
-#: dlls/tzres/tzres.rc:409
+#: dlls/tzres/tzres.rc:412
 msgid "Venezuela Daylight Time"
 msgstr "委內瑞拉夏令時間"
 
-#: dlls/tzres/tzres.rc:410
+#: dlls/tzres/tzres.rc:413
 msgid "(UTC-04:00) Caracas"
 msgstr "(UTC-04:00) 卡拉卡斯"
 
@@ -11563,15 +11581,15 @@ msgstr "克孜勒奧爾達夏令時間"
 msgid "(UTC+05:00) Qyzylorda"
 msgstr "(UTC+05:00) 克孜勒奧爾達"
 
-#: dlls/tzres/tzres.rc:426
+#: dlls/tzres/tzres.rc:429
 msgid "W. Mongolia Standard Time"
 msgstr "蒙古西部標準時間"
 
-#: dlls/tzres/tzres.rc:427
+#: dlls/tzres/tzres.rc:430
 msgid "W. Mongolia Daylight Time"
 msgstr "蒙古西部夏令時間"
 
-#: dlls/tzres/tzres.rc:428
+#: dlls/tzres/tzres.rc:431
 msgid "(UTC+07:00) Hovd"
 msgstr "(UTC+07:00) 科布多城"
 
@@ -11715,15 +11733,15 @@ msgstr "模里西斯夏令時間"
 msgid "(UTC+04:00) Port Louis"
 msgstr "(UTC+04:00) 路易士港"
 
-#: dlls/tzres/tzres.rc:411
+#: dlls/tzres/tzres.rc:414
 msgid "Vladivostok Standard Time"
 msgstr "海參崴標準時間"
 
-#: dlls/tzres/tzres.rc:412
+#: dlls/tzres/tzres.rc:415
 msgid "Vladivostok Daylight Time"
 msgstr "海參崴夏令時間"
 
-#: dlls/tzres/tzres.rc:413
+#: dlls/tzres/tzres.rc:416
 msgid "(UTC+10:00) Vladivostok"
 msgstr "(UTC+10:00) 海參崴"
 
@@ -11811,15 +11829,15 @@ msgstr "太平洋中部夏令時間"
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) 索羅門群島，新喀里多尼亞群島"
 
-#: dlls/tzres/tzres.rc:420
+#: dlls/tzres/tzres.rc:423
 msgid "W. Central Africa Standard Time"
 msgstr "中西非標準時間"
 
-#: dlls/tzres/tzres.rc:421
+#: dlls/tzres/tzres.rc:424
 msgid "W. Central Africa Daylight Time"
 msgstr "中西非夏令時間"
 
-#: dlls/tzres/tzres.rc:422
+#: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) West Central Africa"
 msgstr "(UTC+01:00) 中西非"
 
@@ -11847,15 +11865,15 @@ msgstr "澳洲東部夏令時間"
 msgid "(UTC+10:00) Brisbane"
 msgstr "(UTC+10:00) 布里斯本"
 
-#: dlls/tzres/tzres.rc:417
+#: dlls/tzres/tzres.rc:420
 msgid "W. Australia Standard Time"
 msgstr "澳洲西部標準時間"
 
-#: dlls/tzres/tzres.rc:418
+#: dlls/tzres/tzres.rc:421
 msgid "W. Australia Daylight Time"
 msgstr "澳洲西部夏令時間"
 
-#: dlls/tzres/tzres.rc:419
+#: dlls/tzres/tzres.rc:422
 msgid "(UTC+08:00) Perth"
 msgstr "(UTC+08:00) 伯斯"
 
