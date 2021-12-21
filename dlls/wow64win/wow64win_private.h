@@ -27,6 +27,8 @@
 ALL_WIN32_SYSCALLS
 #undef SYSCALL_ENTRY
 
+void * WINAPI Wow64AllocateTemp( SIZE_T size );
+
 struct object_attr64
 {
     OBJECT_ATTRIBUTES   attr;

@@ -104,12 +104,90 @@ static void test_window_props(void)
     DestroyWindow( hwnd );
 }
 
+static BOOL WINAPI count_win( HWND hwnd, LPARAM lparam )
+{
+    ULONG *cnt = (ULONG *)lparam;
+    (*cnt)++;
+    return TRUE;
+}
+
+static void test_NtUserBuildHwndList(void)
+{
+    ULONG size, desktop_windows_cnt;
+    HWND buf[512], hwnd;
+    NTSTATUS status;
+
+    size = 0;
+    status = NtUserBuildHwndList( 0, 0, 0, 0, GetCurrentThreadId(), ARRAYSIZE(buf), buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == 1, "size = %u\n", size );
+    ok( buf[0] == HWND_BOTTOM, "buf[0] = %p\n", buf[0] );
+
+    hwnd = CreateWindowExA( 0, "static", NULL, WS_POPUP, 0,0,0,0,GetDesktopWindow(),0,0, NULL );
+
+    size = 0;
+    status = NtUserBuildHwndList( 0, 0, 0, 0, GetCurrentThreadId(), ARRAYSIZE(buf), buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == 3, "size = %u\n", size );
+    ok( buf[0] == hwnd, "buf[0] = %p\n", buf[0] );
+    ok( buf[2] == HWND_BOTTOM, "buf[0] = %p\n", buf[2] );
+
+    size = 0;
+    status = NtUserBuildHwndList( 0, 0, 0, 0, GetCurrentThreadId(), 3, buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == 3, "size = %u\n", size );
+
+    size = 0;
+    status = NtUserBuildHwndList( 0, 0, 0, 0, GetCurrentThreadId(), 2, buf, &size );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == 3, "size = %u\n", size );
+
+    size = 0;
+    status = NtUserBuildHwndList( 0, 0, 0, 0, GetCurrentThreadId(), 1, buf, &size );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == 3, "size = %u\n", size );
+
+    desktop_windows_cnt = 0;
+    EnumDesktopWindows( 0, count_win, (LPARAM)&desktop_windows_cnt );
+
+    size = 0;
+    status = NtUserBuildHwndList( 0, 0, 0, 1, 0, ARRAYSIZE(buf), buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == desktop_windows_cnt + 1, "size = %u, expected %u\n", size, desktop_windows_cnt + 1 );
+
+    desktop_windows_cnt = 0;
+    EnumDesktopWindows( GetThreadDesktop( GetCurrentThreadId() ), count_win, (LPARAM)&desktop_windows_cnt );
+
+    size = 0;
+    status = NtUserBuildHwndList( GetThreadDesktop(GetCurrentThreadId()), 0, 0, 1, 0,
+                                  ARRAYSIZE(buf), buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == desktop_windows_cnt + 1, "size = %u, expected %u\n", size, desktop_windows_cnt + 1 );
+
+    size = 0;
+    status = NtUserBuildHwndList( GetThreadDesktop(GetCurrentThreadId()), 0, 0, 0, 0,
+                                  ARRAYSIZE(buf), buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#x\n", status );
+    todo_wine
+    ok( size > desktop_windows_cnt + 1, "size = %u, expected %u\n", size, desktop_windows_cnt + 1 );
+
+    size = 0xdeadbeef;
+    status = NtUserBuildHwndList( UlongToHandle(0xdeadbeef), 0, 0, 0, 0,
+                                  ARRAYSIZE(buf), buf, &size );
+    ok( status == STATUS_INVALID_HANDLE, "NtUserBuildHwndList failed: %#x\n", status );
+    ok( size == 0xdeadbeef, "size = %u\n", size );
+
+    DestroyWindow( hwnd );
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
     GetDesktopWindow();
 
-    test_NtUserEnumDisplayDevices(); /* Must run before test_NtUserCloseWindowStation. */
-    test_NtUserCloseWindowStation();
+    test_NtUserEnumDisplayDevices();
     test_window_props();
+    test_NtUserBuildHwndList();
+
+    test_NtUserCloseWindowStation();
 }

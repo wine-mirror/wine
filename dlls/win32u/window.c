@@ -23,6 +23,8 @@
 #pragma makedep unix
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "wine/server.h"
 
@@ -114,4 +116,33 @@ BOOL WINAPI NtUserGetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *al
     SERVER_END_REQ;
 
     return ret;
+}
+
+/*****************************************************************************
+ *           NtUserBuildHwndList (win32u.@)
+ */
+NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
+                                     ULONG thread_id, ULONG count, HWND *buffer, ULONG *size )
+{
+    user_handle_t *list = (user_handle_t *)buffer;
+    int i;
+    NTSTATUS status;
+
+    SERVER_START_REQ( get_window_children )
+    {
+        req->desktop = wine_server_obj_handle( desktop );
+        req->tid = thread_id;
+        if (count) wine_server_set_reply( req, list, (count - 1) * sizeof(user_handle_t) );
+        status = wine_server_call( req );
+        if (status && status != STATUS_BUFFER_TOO_SMALL) return status;
+        *size = reply->count + 1;
+    }
+    SERVER_END_REQ;
+    if (*size > count) return STATUS_BUFFER_TOO_SMALL;
+
+    /* start from the end since HWND is potentially larger than user_handle_t */
+    for (i = *size - 2; i >= 0; i--)
+        buffer[i] = wine_server_ptr_handle( list[i] );
+    buffer[*size - 1] = HWND_BOTTOM;
+    return STATUS_SUCCESS;
 }

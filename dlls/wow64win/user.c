@@ -181,6 +181,31 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
 }
 
+NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
+{
+    HDESK desktop = get_handle( &args );
+    ULONG unk2 = get_ulong( &args );
+    ULONG unk3 = get_ulong( &args );
+    ULONG unk4 = get_ulong( &args );
+    ULONG thread_id = get_ulong( &args );
+    ULONG count = get_ulong( &args );
+    UINT32 *buffer32 = get_ptr( &args );
+    ULONG *size = get_ptr( &args );
+
+    HWND *buffer;
+    ULONG i;
+    NTSTATUS status;
+
+    if (!(buffer = Wow64AllocateTemp( count * sizeof(*buffer) ))) return STATUS_NO_MEMORY;
+
+    if ((status = NtUserBuildHwndList( desktop, unk2, unk3, unk4, thread_id, count, buffer, size )))
+        return status;
+
+    for (i = 0; i < *size; i++)
+        buffer32[i] = HandleToUlong( buffer[i] );
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtUserGetLayeredWindowAttributes( UINT *args )
 {
     HWND hwnd = get_handle( &args );

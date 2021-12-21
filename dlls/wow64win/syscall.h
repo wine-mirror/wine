@@ -90,6 +90,7 @@
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
     SYSCALL_ENTRY( NtUserAddClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserAttachThreadInput ) \
+    SYSCALL_ENTRY( NtUserBuildHwndList ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
     SYSCALL_ENTRY( NtUserCreateDesktopEx ) \

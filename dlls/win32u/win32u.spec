@@ -763,7 +763,7 @@
 @ stub NtUserBlockInput
 @ stub NtUserBroadcastThemeChangeEvent
 @ stub NtUserBuildHimcList
-@ stub NtUserBuildHwndList
+@ stdcall -syscall NtUserBuildHwndList(long long long long long long ptr ptr)
 @ stub NtUserBuildNameList
 @ stub NtUserBuildPropList
 @ stub NtUserCalcMenuBar
