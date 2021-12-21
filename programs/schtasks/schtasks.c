@@ -104,7 +104,7 @@ static BSTR read_file_to_bstr(const WCHAR *file_name)
         r = ReadFile(file, data, file_size.QuadPart, &read_size, NULL);
     CloseHandle(file);
     if (!r) {
-        FIXME("Read filed\n");
+        FIXME("Read failed\n");
         HeapFree(GetProcessHeap(), 0, data);
         return NULL;
     }
