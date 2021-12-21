@@ -5677,8 +5677,11 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 
     __control87_2( newval, mask, &flags, &sse2_cw );
 
-    if ((flags ^ sse2_cw) & (_MCW_EM | _MCW_RC)) flags |= _EM_AMBIGUOUS;
-    flags |= sse2_cw;
+    if (sse2_supported)
+    {
+        if ((flags ^ sse2_cw) & (_MCW_EM | _MCW_RC)) flags |= _EM_AMBIGUOUS;
+        flags |= sse2_cw;
+    }
 #else
     flags = newval;
     _setfp(&flags, mask, NULL, 0);
