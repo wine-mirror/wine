@@ -64,7 +64,9 @@ struct MSVCRT_JUMP_BUFFER
     ULONG64 R14;
     ULONG64 R15;
     ULONG64 Rip;
-    ULONG64 Spare;
+    ULONG  MxCsr;
+    USHORT FpCsr;
+    USHORT Spare;
     M128A   Xmm6;
     M128A   Xmm7;
     M128A   Xmm8;
@@ -1218,6 +1220,9 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
         context->u.s.Xmm13 = jmp->Xmm13;
         context->u.s.Xmm14 = jmp->Xmm14;
         context->u.s.Xmm15 = jmp->Xmm15;
+        context->MxCsr     = jmp->MxCsr;
+        context->u.FltSave.MxCsr = jmp->MxCsr;
+        context->u.FltSave.ControlWord = jmp->FpCsr;
     }
     else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
     {

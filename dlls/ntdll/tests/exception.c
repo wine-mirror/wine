@@ -2460,6 +2460,10 @@ static void test_restore_context(void)
         rec.NumberParameters = 1;
         rec.ExceptionInformation[0] = (DWORD64)&buf;
 
+        ok(buf.MxCsr == 0x1f80, "Got unexpected MxCsr %#x.\n", buf.MxCsr);
+        ok(buf.FpCsr == 0x27f, "Got unexpected FpCsr %#x.\n", buf.FpCsr);
+        buf.FpCsr = 0x7f;
+        buf.MxCsr = 0x3f80;
         /* uses buf.Rip instead of ctx.Rip */
         pRtlRestoreContext(&ctx, &rec);
         ok(0, "shouldn't be reached\n");
@@ -2487,6 +2491,18 @@ static void test_restore_context(void)
                 "longjmp failed for Xmm%d, expected %lx, got %lx\n", i + 6,
                 fltsave[i].Part[1], ctx.FltSave.XmmRegisters[i + 6].High);
         }
+        ok(ctx.FltSave.ControlWord == 0x7f, "Got unexpected float control word %#x.\n", ctx.FltSave.ControlWord);
+        ok(ctx.MxCsr == 0x3f80, "Got unexpected MxCsr %#x.\n", ctx.MxCsr);
+        ok(ctx.FltSave.MxCsr == 0x3f80, "Got unexpected MxCsr %#x.\n", ctx.FltSave.MxCsr);
+        buf.FpCsr = 0x27f;
+        buf.MxCsr = 0x1f80;
+        pRtlRestoreContext(&ctx, &rec);
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 5)
+    {
+        ok(ctx.FltSave.ControlWord == 0x27f, "Got unexpected float control word %#x.\n", ctx.FltSave.ControlWord);
+        ok(ctx.FltSave.MxCsr == 0x1f80, "Got unexpected MxCsr %#x.\n", ctx.MxCsr);
     }
     else
         ok(0, "unexpected pass %d\n", pass);
