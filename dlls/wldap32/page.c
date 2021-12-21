@@ -96,6 +96,7 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie, UCHAR c
     }
     if (!(ctrl->ldctl_oid = strAtoW( LDAP_PAGED_RESULT_OID_STRING )))
     {
+        free( val );
         free( ctrl );
         return LDAP_NO_MEMORY;
     }
