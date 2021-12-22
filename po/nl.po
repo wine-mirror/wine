@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-01 16:10+0100\n"
+"PO-Revision-Date: 2021-12-22 10:00+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -10554,22 +10554,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) Dublin, Edinburgh, Lissabon, Londen"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "Soedan Standaard Tijd"
+msgstr "Zuid-Soedan Standaard Tijd"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "Soedan Zomertijd"
+msgstr "Zuid-Soedan Zomertijd"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) Jeruzalem"
+msgstr "(UTC+02:00) Juba"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
