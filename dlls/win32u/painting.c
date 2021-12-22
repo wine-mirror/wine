@@ -156,7 +156,7 @@ BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
 BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count )
 {
     DC *dc = get_nulldrv_dc( dev );
-    POINT *line_pts = NULL, *bzr_pts = NULL, bzr[4];
+    POINT *line_pts = NULL, *new_line_pts, *bzr_pts = NULL, bzr[4];
     DWORD i;
     INT num_pts, num_bzr_pts, space, size;
 
@@ -182,6 +182,7 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
 
     space = count + 300;
     line_pts = malloc( space * sizeof(POINT) );
+    if (!line_pts) return FALSE;
     num_pts = 1;
 
     line_pts[0] = dc->attr->cur_pos;
@@ -209,7 +210,14 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
                 if (space < size)
                 {
                     space = size * 2;
-                    line_pts = realloc( line_pts, space * sizeof(POINT) );
+                    new_line_pts = realloc( line_pts, space * sizeof(POINT) );
+                    if (!new_line_pts)
+                    {
+                        free( bzr_pts );
+                        free( line_pts );
+                        return FALSE;
+                    }
+                    line_pts = new_line_pts;
                 }
                 memcpy( &line_pts[num_pts], &bzr_pts[1], (num_bzr_pts - 1) * sizeof(POINT) );
                 num_pts += num_bzr_pts - 1;
