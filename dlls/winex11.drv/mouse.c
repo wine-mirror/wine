@@ -275,7 +275,6 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
     thread_data->x_valuator.value = 0;
     thread_data->y_valuator.value = 0;
 }
-#endif
 
 
 /***********************************************************************
@@ -283,7 +282,6 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
  */
 static void enable_xinput2(void)
 {
-#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     struct x11drv_thread_data *data = x11drv_thread_data();
     XIEventMask mask;
     XIDeviceInfo *pointer_info;
@@ -330,8 +328,9 @@ static void enable_xinput2(void)
     data->xi2_current_slave = 0;
 
     data->xi2_state = xi_enabled;
-#endif
 }
+
+#endif
 
 /***********************************************************************
  *              disable_xinput2
@@ -371,6 +370,7 @@ static void disable_xinput2(void)
  */
 static BOOL grab_clipping_window( const RECT *clip )
 {
+#if HAVE_X11_EXTENSIONS_XINPUT2_H
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     struct x11drv_thread_data *data = x11drv_thread_data();
     Window clip_window;
@@ -441,6 +441,10 @@ static BOOL grab_clipping_window( const RECT *clip )
     data->clip_hwnd = msg_hwnd;
     SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, (LPARAM)msg_hwnd );
     return TRUE;
+#else
+    WARN( "XInput2 was not available at compile time\n" );
+    return FALSE;
+#endif
 }
 
 /***********************************************************************
@@ -627,79 +631,6 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
     input->u.mi.dx = pt.x;
     input->u.mi.dy = pt.y;
 }
-
-static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
-{
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
-    XIValuatorClassInfo *x = &thread_data->x_valuator, *y = &thread_data->y_valuator;
-    double x_value = 0, y_value = 0, x_scale, y_scale;
-    const double *values = event->valuators.values;
-    RECT virtual_rect;
-    int i;
-
-    if (x->number < 0 || y->number < 0) return FALSE;
-    if (!event->valuators.mask_len) return FALSE;
-    if (thread_data->xi2_state != xi_enabled) return FALSE;
-
-    /* If there is no slave currently detected, no previous motion nor device
-     * change events were received. Look it up now on the device list in this
-     * case.
-     */
-    if (!thread_data->xi2_current_slave)
-    {
-        XIDeviceInfo *devices = thread_data->xi2_devices;
-
-        for (i = 0; i < thread_data->xi2_device_count; i++)
-        {
-            if (devices[i].use != XISlavePointer) continue;
-            if (devices[i].deviceid != event->deviceid) continue;
-            if (devices[i].attachment != thread_data->xi2_core_pointer) continue;
-            thread_data->xi2_current_slave = event->deviceid;
-            break;
-        }
-    }
-    if (event->deviceid != thread_data->xi2_current_slave) return FALSE;
-
-    virtual_rect = get_virtual_screen_rect();
-
-    if (x->max <= x->min) x_scale = 1;
-    else x_scale = (virtual_rect.right - virtual_rect.left) / (x->max - x->min);
-    if (y->max <= y->min) y_scale = 1;
-    else y_scale = (virtual_rect.bottom - virtual_rect.top) / (y->max - y->min);
-
-    for (i = 0; i <= max( x->number, y->number ); i++)
-    {
-        if (!XIMaskIsSet( event->valuators.mask, i )) continue;
-        if (i == x->number)
-        {
-            x_value = *values;
-            x->value += x_value * x_scale;
-        }
-        if (i == y->number)
-        {
-            y_value = *values;
-            y->value += y_value * y_scale;
-        }
-        values++;
-    }
-
-    input->u.mi.dx = round( x->value );
-    input->u.mi.dy = round( y->value );
-
-    TRACE( "event %f,%f value %f,%f input %d,%d\n", x_value, y_value, x->value, y->value, input->u.mi.dx, input->u.mi.dy );
-
-    x->value -= input->u.mi.dx;
-    y->value -= input->u.mi.dy;
-
-    if (!input->u.mi.dx && !input->u.mi.dy)
-    {
-        TRACE( "accumulating motion\n" );
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *		send_mouse_input
@@ -1884,6 +1815,78 @@ static BOOL X11DRV_DeviceChanged( XGenericEventCookie *xev )
 
     update_relative_valuators( event->classes, event->num_classes );
     data->xi2_current_slave = event->sourceid;
+    return TRUE;
+}
+
+static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
+{
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    XIValuatorClassInfo *x = &thread_data->x_valuator, *y = &thread_data->y_valuator;
+    double x_value = 0, y_value = 0, x_scale, y_scale;
+    const double *values = event->valuators.values;
+    RECT virtual_rect;
+    int i;
+
+    if (x->number < 0 || y->number < 0) return FALSE;
+    if (!event->valuators.mask_len) return FALSE;
+    if (thread_data->xi2_state != xi_enabled) return FALSE;
+
+    /* If there is no slave currently detected, no previous motion nor device
+     * change events were received. Look it up now on the device list in this
+     * case.
+     */
+    if (!thread_data->xi2_current_slave)
+    {
+        XIDeviceInfo *devices = thread_data->xi2_devices;
+
+        for (i = 0; i < thread_data->xi2_device_count; i++)
+        {
+            if (devices[i].use != XISlavePointer) continue;
+            if (devices[i].deviceid != event->deviceid) continue;
+            if (devices[i].attachment != thread_data->xi2_core_pointer) continue;
+            thread_data->xi2_current_slave = event->deviceid;
+            break;
+        }
+    }
+    if (event->deviceid != thread_data->xi2_current_slave) return FALSE;
+
+    virtual_rect = get_virtual_screen_rect();
+
+    if (x->max <= x->min) x_scale = 1;
+    else x_scale = (virtual_rect.right - virtual_rect.left) / (x->max - x->min);
+    if (y->max <= y->min) y_scale = 1;
+    else y_scale = (virtual_rect.bottom - virtual_rect.top) / (y->max - y->min);
+
+    for (i = 0; i <= max( x->number, y->number ); i++)
+    {
+        if (!XIMaskIsSet( event->valuators.mask, i )) continue;
+        if (i == x->number)
+        {
+            x_value = *values;
+            x->value += x_value * x_scale;
+        }
+        if (i == y->number)
+        {
+            y_value = *values;
+            y->value += y_value * y_scale;
+        }
+        values++;
+    }
+
+    input->u.mi.dx = round( x->value );
+    input->u.mi.dy = round( y->value );
+
+    TRACE( "event %f,%f value %f,%f input %d,%d\n", x_value, y_value, x->value, y->value, input->u.mi.dx, input->u.mi.dy );
+
+    x->value -= input->u.mi.dx;
+    y->value -= input->u.mi.dy;
+
+    if (!input->u.mi.dx && !input->u.mi.dy)
+    {
+        TRACE( "accumulating motion\n" );
+        return FALSE;
+    }
+
     return TRUE;
 }
 
