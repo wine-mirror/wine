@@ -666,9 +666,11 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                      ctx.fp.i386_regs.data_off, ctx.fp.i386_regs.data_sel, ctx.fp.i386_regs.cr0npx );
             for (i = 0; i < 8; i++)
             {
-                long double reg = 0;
-                memcpy( &reg, &ctx.fp.i386_regs.regs[10 * i], 10 );
-                fprintf( stderr, ",fp.reg%u=%Lg", i, reg );
+                unsigned __int64 reg[2];
+                memset( reg, 0, sizeof(reg) );
+                memcpy( reg, &ctx.fp.i386_regs.regs[10 * i], 10 );
+                fprintf( stderr, ",fp.reg%u=", i );
+                dump_uint128( "", reg );
             }
         }
         if (ctx.flags & SERVER_CTX_EXTENDED_REGISTERS)
