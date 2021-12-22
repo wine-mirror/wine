@@ -913,6 +913,25 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
     return VFW_S_NO_MORE_ITEMS;
 }
 
+static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    AM_MEDIA_TYPE mt2;
+    IPin *peer2;
+    HRESULT hr;
+
+    hr = IPin_ConnectedTo(peer, &peer2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(peer2 == &iface->pin.IPin_iface, "Peer didn't match.\n");
+    IPin_Release(peer2);
+
+    hr = IPin_ConnectionMediaType(peer, &mt2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(mt, &mt2), "Media types didn't match.\n");
+    FreeMediaType(&mt2);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
@@ -976,6 +995,7 @@ static const struct strmbase_sink_ops testsink_ops =
     .base.pin_query_interface = testsink_query_interface,
     .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
+    .sink_connect = testsink_connect,
     .pfnReceive = testsink_Receive,
     .sink_eos = testsink_eos,
     .sink_new_segment = testsink_new_segment,
