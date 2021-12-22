@@ -4974,7 +4974,7 @@ static void test_scalar_array_methods(ID3D10EffectScalarVariable *var, D3D10_SHA
         const char *name)
 {
     float set_f[2], ret_f[2], expected_f;
-    int set_i[6], ret_i[6], expected_i, expected_i_a[2];
+    int set_i[6], ret_i[6], expected_i, expected_i_a[6];
     BOOL set_b[2], ret_b[2], expected_b, expected_b_a[6];
     unsigned int i;
     HRESULT hr;
