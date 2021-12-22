@@ -1311,16 +1311,9 @@ static DWORD WINAPI dinput_thread_proc( void *params )
                 goto done;
             }
 
-            events_count = 0;
             EnterCriticalSection( &dinput_hook_crit );
             kbd_cnt = list_count( &acquired_keyboard_list );
             mice_cnt = list_count( &acquired_mouse_list );
-            LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, struct dinput_device, entry )
-            {
-                if (!impl->read_event || !impl->vtbl->read) continue;
-                if (events_count >= ARRAY_SIZE(events)) break;
-                events[events_count++] = impl->read_event;
-            }
             LeaveCriticalSection( &dinput_hook_crit );
 
             if (kbd_cnt && !kbd_hook)
@@ -1341,7 +1334,19 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
             SetEvent(finished_event);
         }
+
+        events_count = 0;
+        EnterCriticalSection( &dinput_hook_crit );
+        LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, struct dinput_device, entry )
+        {
+            if (!impl->read_event || !impl->vtbl->read) continue;
+            if (events_count >= ARRAY_SIZE(events)) break;
+            events[events_count++] = impl->read_event;
+        }
+        LeaveCriticalSection( &dinput_hook_crit );
     }
+
+    if (ret != events_count) ERR("Unexpected termination, ret %#x\n", ret);
 
 done:
     DestroyWindow( di_em_win );
