@@ -259,7 +259,7 @@ static struct if_entry *add_entry( DWORD index, char *name )
     struct if_entry *entry;
     int name_len = strlen( name );
 
-    if (name_len >= IFNAMSIZ - 1) return NULL;
+    if (name_len >= sizeof(entry->if_unix_name)) return NULL;
     entry = malloc( sizeof(*entry) );
     if (!entry) return NULL;
 
