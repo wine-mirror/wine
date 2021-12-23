@@ -5328,7 +5328,7 @@ static void _setfp( unsigned int *cw, unsigned int cw_mask,
 
         *cw = (flags & ~cw_mask) | (*cw & cw_mask);
         TRACE("x86 update cw %08x to %08x\n", flags, *cw);
-        newcw &= ~0x1e3f;
+        newcw &= ~0x1f3f;
         if (*cw & _EM_INVALID) newcw |= 0x1;
         if (*cw & _EM_DENORMAL) newcw |= 0x2;
         if (*cw & _EM_ZERODIVIDE) newcw |= 0x4;
