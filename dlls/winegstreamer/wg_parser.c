@@ -450,7 +450,7 @@ static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
     if ((video_format = wg_video_format_to_gst(format->u.video.format)) == GST_VIDEO_FORMAT_UNKNOWN)
         return NULL;
 
-    gst_video_info_set_format(&info, video_format, format->u.video.width, format->u.video.height);
+    gst_video_info_set_format(&info, video_format, format->u.video.width, abs(format->u.video.height));
     if ((caps = gst_video_info_to_caps(&info)))
     {
         /* Clear some fields that shouldn't prevent us from connecting. */
@@ -497,7 +497,7 @@ static bool wg_format_compare(const struct wg_format *a, const struct wg_format 
             /* Do not compare FPS. */
             return a->u.video.format == b->u.video.format
                     && a->u.video.width == b->u.video.width
-                    && a->u.video.height == b->u.video.height;
+                    && abs(a->u.video.height) == abs(b->u.video.height);
     }
 
     assert(0);
@@ -611,6 +611,8 @@ static NTSTATUS wg_parser_stream_enable(void *args)
 
     if (format->major_type == WG_MAJOR_TYPE_VIDEO)
     {
+        bool flip = (format->u.video.height < 0);
+
         switch (format->u.video.format)
         {
             case WG_VIDEO_FORMAT_BGRA:
@@ -618,7 +620,7 @@ static NTSTATUS wg_parser_stream_enable(void *args)
             case WG_VIDEO_FORMAT_BGR:
             case WG_VIDEO_FORMAT_RGB15:
             case WG_VIDEO_FORMAT_RGB16:
-                gst_util_set_object_arg(G_OBJECT(stream->flip), "method", "vertical-flip");
+                flip = !flip;
                 break;
 
             case WG_VIDEO_FORMAT_AYUV:
@@ -630,9 +632,10 @@ static NTSTATUS wg_parser_stream_enable(void *args)
             case WG_VIDEO_FORMAT_YVYU:
             case WG_VIDEO_FORMAT_UNKNOWN:
             case WG_VIDEO_FORMAT_CINEPAK:
-                gst_util_set_object_arg(G_OBJECT(stream->flip), "method", "none");
                 break;
         }
+
+        gst_util_set_object_arg(G_OBJECT(stream->flip), "method", flip ? "vertical-flip" : "none");
     }
 
     gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());

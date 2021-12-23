@@ -63,7 +63,7 @@ struct wg_format
 
                 WG_VIDEO_FORMAT_CINEPAK,
             } format;
-            uint32_t width, height;
+            int32_t width, height;
             uint32_t fps_n, fps_d;
         } video;
         struct
