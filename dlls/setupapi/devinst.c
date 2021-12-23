@@ -407,6 +407,9 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
             lstrcpyW(ret + printed + 1, ReferenceString);
         }
     }
+
+    CharLowerW(ret);
+
     return ret;
 }
 

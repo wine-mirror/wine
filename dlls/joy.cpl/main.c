@@ -100,7 +100,7 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     joystick->num_effects = 0;
 
     IDirectInputDevice8_GetProperty(joystick->device, DIPROP_GUIDANDPATH, &prop_guid_path.diph);
-    joystick->is_xinput = wcsstr(prop_guid_path.wszPath, L"&IG_") != NULL;
+    joystick->is_xinput = wcsstr(prop_guid_path.wszPath, L"&ig_") != NULL;
 
     if (joystick->forcefeedback) data->num_ff++;
 
