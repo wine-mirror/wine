@@ -364,13 +364,14 @@ uint32_t FAudio_PlatformGetDeviceDetails(
 	uint32_t index,
 	FAudioDeviceDetails *details
 ) {
+	WAVEFORMATEX *format, *obtained;
 	WAVEFORMATEXTENSIBLE *ext;
-	WAVEFORMATEX *format;
 	IAudioClient *client;
 	IMMDevice *device;
 	uint32_t ret = 0;
 	HRESULT hr;
 	WCHAR *str;
+	GUID sub;
 
 	FAudio_memset(details, 0, sizeof(FAudioDeviceDetails));
 	if (index > 0) return FAUDIO_E_INVALID_CALL;
@@ -406,6 +407,28 @@ uint32_t FAudio_PlatformGetDeviceDetails(
 	hr = IAudioClient_GetMixFormat(client, &format);
 	FAudio_assert(!FAILED(hr) && "Failed to get audio client mix format!");
 
+	if (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+	{
+		ext = (WAVEFORMATEXTENSIBLE *)format;
+		sub = ext->SubFormat;
+		FAudio_memcpy(
+			&ext->SubFormat,
+			&DATAFORMAT_SUBTYPE_PCM,
+			sizeof(GUID)
+		);
+
+		hr = IAudioClient_IsFormatSupported(client, AUDCLNT_SHAREMODE_SHARED, format, &obtained);
+		if (FAILED(hr))
+		{
+			ext->SubFormat = sub;
+		}
+		else if (obtained)
+		{
+			CoTaskMemFree(format);
+			format = obtained;
+		}
+	}
+
 	details->OutputFormat.Format.wFormatTag = format->wFormatTag;
 	details->OutputFormat.Format.nChannels = format->nChannels;
 	details->OutputFormat.Format.nSamplesPerSec = format->nSamplesPerSec;
@@ -425,6 +448,8 @@ uint32_t FAudio_PlatformGetDeviceDetails(
 			sizeof(GUID)
 		);
 	}
+
+	CoTaskMemFree(format);
 
 	IAudioClient_Release(client);
 

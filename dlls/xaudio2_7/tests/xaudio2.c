@@ -940,7 +940,6 @@ static UINT32 test_DeviceDetails(IXAudio27 *xa)
         else
             ok(dd.Role == NotDefaultDevice, "Got wrong role for index %u: 0x%x\n", i, dd.Role);
 
-        todo_wine
         ok(IsEqualGUID(&dd.OutputFormat.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM),
            "got format %s\n", debugstr_guid(&dd.OutputFormat.SubFormat));
     }
