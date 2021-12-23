@@ -712,14 +712,6 @@ static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, 
     return S_OK;
 }
 
-static HRESULT testsink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
-    if (filter->sink_mt && !compare_media_types(mt, filter->sink_mt))
-        return S_FALSE;
-    return S_OK;
-}
-
 static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
@@ -729,6 +721,14 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
         return S_OK;
     }
     return VFW_S_NO_MORE_ITEMS;
+}
+
+static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    if (filter->sink_mt && !IsEqualGUID(&mt->majortype, &filter->sink_mt->majortype))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    return S_OK;
 }
 
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
@@ -807,8 +807,8 @@ static HRESULT testsink_end_flush(struct strmbase_sink *iface)
 static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
-    .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
+    .sink_connect = testsink_connect,
     .pfnReceive = testsink_Receive,
     .sink_new_segment = testsink_new_segment,
     .sink_eos = testsink_eos,
@@ -1248,15 +1248,20 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
     req_mt.formattype = GUID_NULL;
 
+    /* Test enumeration of sink media types. */
+
     testsink.sink_mt = &req_mt;
+    req_mt.majortype = MEDIATYPE_Audio;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    req_mt.majortype = GUID_NULL;
 
     req_mt.bTemporalCompression = TRUE;
+    req_mt.lSampleSize = 444;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
-    ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
+    todo_wine ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsource.source.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
 
     hr = IPin_EnumMediaTypes(sink, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
