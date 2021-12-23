@@ -468,6 +468,7 @@ static void test_media_types(void)
     pmt->bFixedSizeSamples = FALSE;
     pmt->bTemporalCompression = TRUE;
     pmt->lSampleSize = 123;
+    pmt->formattype = FORMAT_VideoInfo;
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -476,7 +477,7 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Video;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Stream;
 
     pmt->subtype = GUID_NULL;
@@ -484,7 +485,7 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_RGB8;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_Avi;
 
     CoTaskMemFree(pmt);

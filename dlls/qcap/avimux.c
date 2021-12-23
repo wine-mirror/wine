@@ -1110,9 +1110,12 @@ static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, vo
     return S_OK;
 }
 
-static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
-    FIXME("(%p) stub\n", base);
+    if (!IsEqualGUID(&mt->majortype, &GUID_NULL) && !IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
+        return S_FALSE;
+    if (!IsEqualGUID(&mt->subtype, &GUID_NULL) && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_Avi))
+        return S_FALSE;
     return S_OK;
 }
 
