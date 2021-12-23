@@ -516,22 +516,6 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
         return hr;
     }
 
-    if (pin->pFuncsTable->base.pin_get_media_type)
-    {
-        for (i = 0; pin->pFuncsTable->base.pin_get_media_type(&pin->pin, i, &candidate) == S_OK; ++i)
-        {
-            strmbase_dump_media_type(&candidate);
-            if (compare_media_types(mt, &candidate)
-                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, &candidate) == S_OK)
-            {
-                LeaveCriticalSection(&pin->pin.filter->filter_cs);
-                FreeMediaType(&candidate);
-                return S_OK;
-            }
-            FreeMediaType(&candidate);
-        }
-    }
-
     if (SUCCEEDED(IPin_EnumMediaTypes(peer, &enummt)))
     {
         while (IEnumMediaTypes_Next(enummt, 1, &candidate_ptr, &count) == S_OK)
@@ -548,6 +532,22 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
         }
 
         IEnumMediaTypes_Release(enummt);
+    }
+
+    if (pin->pFuncsTable->base.pin_get_media_type)
+    {
+        for (i = 0; pin->pFuncsTable->base.pin_get_media_type(&pin->pin, i, &candidate) == S_OK; ++i)
+        {
+            strmbase_dump_media_type(&candidate);
+            if (compare_media_types(mt, &candidate)
+                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, &candidate) == S_OK)
+            {
+                LeaveCriticalSection(&pin->pin.filter->filter_cs);
+                FreeMediaType(&candidate);
+                return S_OK;
+            }
+            FreeMediaType(&candidate);
+        }
     }
 
     LeaveCriticalSection(&pin->pin.filter->filter_cs);
