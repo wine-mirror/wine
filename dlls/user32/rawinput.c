@@ -101,6 +101,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     struct device *device = NULL;
     UINT32 handle;
     HANDLE file;
+    WCHAR *pos;
     DWORD i, size, type;
 
     SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, &device_data);
@@ -124,6 +125,9 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     }
     detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
     SetupDiGetDeviceInterfaceDetailW(set, iface, detail, size, NULL, NULL);
+
+    /* upper case everything but the GUID */
+    for (pos = detail->DevicePath; *pos && *pos != '{'; pos++) *pos = towupper(*pos);
 
     file = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
