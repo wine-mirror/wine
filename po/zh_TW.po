@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-13 13:32+0800\n"
+"PO-Revision-Date: 2021-12-23 14:09+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -257,7 +257,7 @@ msgstr "應用程式"
 msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
-msgstr "無法執行移除程式 '%s'。您想將這個移除程式從註冊表中移除嗎?"
+msgstr "無法執行移除程式 '%s'。您想將這個移除程式從登錄中移除嗎?"
 
 #: dlls/appwiz.cpl/appwiz.rc:36
 msgid "Not specified"
@@ -4774,7 +4774,7 @@ msgstr "不存在的權杖。\n"
 
 #: dlls/kernel32/winerror.mc:1063
 msgid "Registry corrupt.\n"
-msgstr "註冊表損毀。\n"
+msgstr "登錄損毀。\n"
 
 #: dlls/kernel32/winerror.mc:1068
 msgid "Invalid key.\n"
@@ -4782,47 +4782,47 @@ msgstr "無效的索引鍵。\n"
 
 #: dlls/kernel32/winerror.mc:1073
 msgid "Can't open registry key.\n"
-msgstr "無法開啟註冊表索引鍵。\n"
+msgstr "無法開啟登錄機碼。\n"
 
 #: dlls/kernel32/winerror.mc:1078
 msgid "Can't read registry key.\n"
-msgstr "無法讀取註冊表索引鍵。\n"
+msgstr "無法讀取登錄機碼。\n"
 
 #: dlls/kernel32/winerror.mc:1083
 msgid "Can't write registry key.\n"
-msgstr "無法寫入註冊表索引鍵。\n"
+msgstr "無法寫入登錄機碼。\n"
 
 #: dlls/kernel32/winerror.mc:1088
 msgid "Registry has been recovered.\n"
-msgstr "註冊表已復原。\n"
+msgstr "登錄已復原。\n"
 
 #: dlls/kernel32/winerror.mc:1093
 msgid "Registry is corrupt.\n"
-msgstr "註冊表損毀。\n"
+msgstr "登錄損毀。\n"
 
 #: dlls/kernel32/winerror.mc:1098
 msgid "I/O to registry failed.\n"
-msgstr "註冊表 I/O 時失敗。\n"
+msgstr "I/O 至登錄時失敗。\n"
 
 #: dlls/kernel32/winerror.mc:1103
 msgid "Not registry file.\n"
-msgstr "非註冊表檔案。\n"
+msgstr "非登錄檔案。\n"
 
 #: dlls/kernel32/winerror.mc:1108
 msgid "Key deleted.\n"
-msgstr "索引鍵已刪除。\n"
+msgstr "已刪除機碼。\n"
 
 #: dlls/kernel32/winerror.mc:1113
 msgid "No registry log space.\n"
-msgstr "沒有註冊表記錄檔空間。\n"
+msgstr "沒有登錄記錄檔空間。\n"
 
 #: dlls/kernel32/winerror.mc:1118
 msgid "Registry key has subkeys.\n"
-msgstr "註冊表索引鍵有子項。\n"
+msgstr "登錄機碼有子項。\n"
 
 #: dlls/kernel32/winerror.mc:1123
 msgid "Subkey must be volatile.\n"
-msgstr "子項必須是可變的。\n"
+msgstr "子機碼必須是可變的。\n"
 
 #: dlls/kernel32/winerror.mc:1128
 msgid "Notify change request in progress.\n"
@@ -8020,7 +8020,7 @@ msgstr "新資料夾"
 
 #: dlls/msi/msi.rc:91
 msgid "Allocating registry space"
-msgstr "正在分配註冊表空間"
+msgstr "正在分配登錄空間"
 
 #: dlls/msi/msi.rc:92
 msgid "Searching for installed applications"
@@ -10464,22 +10464,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) 都柏林，愛丁堡，里斯本，倫敦"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "蘇丹標準時間"
+msgstr "南蘇丹標準時間"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "蘇丹夏令時間"
+msgstr "南蘇丹夏令時間"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) 耶路撒冷"
+msgstr "(UTC+02:00) 朱巴"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -13355,7 +13349,7 @@ msgid ""
 msgstr ""
 "PATH 顯示或變更 cmd 的搜尋路徑。\n"
 "\n"
-"輸入 PATH 將會顯示目前的路徑設定 (根據註冊表\n"
+"輸入 PATH 將會顯示目前的路徑設定 (根據登錄\n"
 "進行初始化)。要變更設定就在\n"
 "PATH 命令之後緊接新的值。\n"
 "\n"
@@ -14765,7 +14759,7 @@ msgstr "系統設定(&S)"
 
 #: programs/oleview/oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr "執行註冊表編輯器(&R)"
+msgstr "執行登錄檔編輯器(&R)"
 
 #: programs/oleview/oleview.rc:42
 msgid "&CoCreateInstance Flag"
@@ -14877,7 +14871,7 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"這些設定只改變註冊表內的值。\n"
+"這些設定只改變登錄內的值。\n"
 "它對 Wine 的性能沒有影響。"
 
 #: programs/oleview/oleview.rc:180
@@ -14942,7 +14936,7 @@ msgstr "變更本機分散式 COM 設定"
 
 #: programs/oleview/oleview.rc:108
 msgid "Run the Wine registry editor"
-msgstr "執行 Wine 註冊表編輯器"
+msgstr "執行 Wine 登錄檔編輯器"
 
 #: programs/oleview/oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
@@ -15047,7 +15041,7 @@ msgstr "介面"
 
 #: programs/oleview/oleview.rc:140
 msgid "Registry"
-msgstr "註冊表"
+msgstr "登錄"
 
 #: programs/oleview/oleview.rc:141
 msgid "Implementation"
@@ -15313,7 +15307,7 @@ msgstr "輸入 \"REG %1 /?\" 以取得說明。\n"
 
 #: programs/reg/reg.rc:181
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: 無法存取或建立指定的註冊表鍵\n"
+msgstr "reg: 無法存取或建立指定的登錄機碼\n"
 
 #: programs/reg/reg.rc:116
 msgid "reg: The operation completed successfully\n"
@@ -15321,7 +15315,7 @@ msgstr "reg: 操作成功完成\n"
 
 #: programs/reg/reg.rc:131
 msgid "reg: The registry operation was cancelled\n"
-msgstr "reg: 註冊表操作已經取消\n"
+msgstr "reg: 登錄操作已經取消\n"
 
 #: programs/reg/reg.rc:174
 msgid "reg: Unable to find the specified registry key\n"
@@ -15412,7 +15406,7 @@ msgid ""
 msgstr ""
 "REG ADD <機碼> [/v 值名稱 | /ve] [/t 類型] [/s 分隔符號] [/d 資料] [/f]\n"
 "\n"
-"  新增一個機碼到註冊表，或新增值到給定的登錄機碼。\n"
+"  新增一個機碼到登錄，或新增值到給定的登錄機碼。\n"
 "\n"
 "  <機碼>\n"
 "     要新增的機碼，如果指定了 [/v] 或 [/ve]，\n"
@@ -15438,7 +15432,7 @@ msgstr ""
 "     登錄值。\n"
 "\n"
 "  /t <類型>\n"
-"     要新增到註冊表的資料類型。如果指定了 [/t]，\n"
+"     要新增到登錄的資料類型。如果指定了 [/t]，\n"
 "     <類型> 必須是下列的其中一個:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
@@ -15665,7 +15659,7 @@ msgid ""
 msgstr ""
 "REG IMPORT <檔案>\n"
 "\n"
-"  從給定的檔案匯入機碼、值和資料到註冊表。\n"
+"  從給定的檔案匯入機碼、值和資料到登錄。\n"
 "\n"
 "  <檔案>\n"
 "     要匯入的登錄檔案的名稱和路徑。\n"
@@ -15849,7 +15843,7 @@ msgstr "搜尋完成。相符項目的數目: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
-msgstr "註冊表(&R)"
+msgstr "登錄檔(&R)"
 
 #: programs/regedit/regedit.rc:36
 msgid "&Import Registry File..."
@@ -15921,7 +15915,7 @@ msgstr "移除我的最愛(&R)..."
 
 #: programs/regedit/regedit.rc:80
 msgid "&About Registry Editor"
-msgstr "關於註冊表編輯器(&A)"
+msgstr "關於登錄檔編輯器(&A)"
 
 #: programs/regedit/regedit.rc:89 programs/regedit/regedit.rc:96
 #: programs/regedit/regedit.rc:230
@@ -15934,7 +15928,7 @@ msgstr "修改二進位資料(&B)..."
 
 #: programs/regedit/regedit.rc:267
 msgid "Export registry"
-msgstr "匯出註冊表"
+msgstr "要匯出的登錄"
 
 #: programs/regedit/regedit.rc:269
 msgid "S&elected branch:"
@@ -16016,28 +16010,28 @@ msgstr "編輯多字串"
 
 #: programs/regedit/regedit.rc:159
 msgid "Contains commands for working with the whole registry"
-msgstr "含有與註冊表有關的全部指令"
+msgstr "包含登錄工作相關的全部命令"
 
 #: programs/regedit/regedit.rc:160
 msgid "Contains commands for editing values or keys"
-msgstr "含有與編輯數值有關的全部指令"
+msgstr "包含編輯機碼或值的命令"
 
 #: programs/regedit/regedit.rc:161
 msgid "Contains commands for customizing the registry window"
-msgstr "含有與自訂註冊表視窗有關的全部指令"
+msgstr "包含自訂登錄視窗的命令"
 
 #: programs/regedit/regedit.rc:162
 msgid "Contains commands for accessing frequently used keys"
-msgstr "含有與使用常用索引鍵有關的全部指令"
+msgstr "包含使用常用的機碼的命令"
 
 #: programs/regedit/regedit.rc:163
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
-msgstr "含有顯示登錄編輯程式說明及資訊的命令"
+msgstr "包含顯示登錄編輯程式說明及資訊的命令"
 
 #: programs/regedit/regedit.rc:164
 msgid "Contains commands for creating new keys or values"
-msgstr "含有與建立新值有關的全部指令"
+msgstr "包含建立新機碼或值的指令"
 
 #: programs/regedit/regedit.rc:149
 msgid "Data"
@@ -16045,7 +16039,7 @@ msgstr "資料"
 
 #: programs/regedit/regedit.rc:154
 msgid "Registry Editor"
-msgstr "註冊表編輯器"
+msgstr "登錄檔編輯器"
 
 #: programs/regedit/regedit.rc:221
 msgid "Import Registry File"
@@ -16114,7 +16108,7 @@ msgstr "無法重新命名選定的登錄值"
 #: programs/regedit/regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr "%1 所包含的機碼和值已成功新增至註冊表。"
+msgstr "%1 所包含的機碼和值已成功新增至登錄。"
 
 #: programs/regedit/regedit.rc:256
 msgid "Unable to import %1. The specified file is not a valid registry file."
@@ -16270,7 +16264,7 @@ msgstr "regedit: 該列有錯誤的語法。\n"
 
 #: programs/regedit/regedit.rc:187
 msgid "Quits the Registry Editor"
-msgstr "結束註冊表編輯器"
+msgstr "結束登錄檔編輯器"
 
 #: programs/regedit/regedit.rc:188
 msgid "Adds keys to the favorites list"
@@ -16334,19 +16328,19 @@ msgstr "新增一個新的 32 位元值"
 
 #: programs/regedit/regedit.rc:177
 msgid "Imports a text file into the registry"
-msgstr "將純文字檔案匯入註冊表"
+msgstr "將純文字檔案匯入登錄"
 
 #: programs/regedit/regedit.rc:179
 msgid "Exports all or part of the registry to a text file"
-msgstr "將註冊表匯出到純文字檔案"
+msgstr "將登錄匯出到純文字檔案"
 
 #: programs/regedit/regedit.rc:180
 msgid "Prints all or part of the registry"
-msgstr "列印註冊表的全部或部分"
+msgstr "列印登錄的全部或部分"
 
 #: programs/regedit/regedit.rc:181
 msgid "Opens Registry Editor Help"
-msgstr "開啟註冊表編輯器的說明"
+msgstr "開啟登錄檔編輯器的說明"
 
 #: programs/regedit/regedit.rc:182
 msgid "Displays program information, version number and copyright"
