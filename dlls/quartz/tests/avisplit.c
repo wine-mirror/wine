@@ -894,14 +894,6 @@ static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, 
     return S_OK;
 }
 
-static HRESULT testsink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
-    if (filter->mt && !compare_media_types(mt, filter->mt))
-        return S_FALSE;
-    return S_OK;
-}
-
 static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
@@ -915,6 +907,7 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
 
 static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
 {
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
     AM_MEDIA_TYPE mt2;
     IPin *peer2;
     HRESULT hr;
@@ -929,6 +922,8 @@ static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const A
     ok(compare_media_types(mt, &mt2), "Media types didn't match.\n");
     FreeMediaType(&mt2);
 
+    if (filter->mt && !IsEqualGUID(&mt->majortype, &filter->mt->majortype))
+        return VFW_E_TYPE_NOT_ACCEPTED;
     return S_OK;
 }
 
@@ -993,7 +988,6 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
 static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
-    .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
     .sink_connect = testsink_connect,
     .pfnReceive = testsink_Receive,
@@ -1359,6 +1353,8 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
     ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
+    /* Test enumeration of sink media types. */
+
     testsink.mt = &req_mt;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
@@ -1366,8 +1362,10 @@ static void test_connect_pin(void)
     req_mt.majortype = MEDIATYPE_Video;
     req_mt.subtype = MEDIASUBTYPE_I420;
     req_mt.formattype = FORMAT_VideoInfo;
+    req_mt.lSampleSize = 444;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
 
     IPin_Release(source);
     hr = IFilterGraph2_Disconnect(graph, sink);
