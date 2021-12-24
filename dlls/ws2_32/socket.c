@@ -2395,9 +2395,9 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
     FD_ZERO( &read );
     FD_ZERO( &write );
     FD_ZERO( &except );
-    if (read_ptr) read = *read_ptr;
-    if (write_ptr) write = *write_ptr;
-    if (except_ptr) except = *except_ptr;
+    if (read_ptr) read.fd_count = read_ptr->fd_count;
+    if (write_ptr) write.fd_count = write_ptr->fd_count;
+    if (except_ptr) except.fd_count = except_ptr->fd_count;
 
     if (!(sync_event = get_sync_event())) return -1;
 
@@ -2408,7 +2408,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
 
     for (i = 0; i < read.fd_count; ++i)
     {
-        params->sockets[params->count].socket = read.fd_array[i];
+        params->sockets[params->count].socket = read.fd_array[i] = read_ptr->fd_array[i];
         params->sockets[params->count].flags = AFD_POLL_READ | AFD_POLL_ACCEPT | AFD_POLL_HUP;
         ++params->count;
         poll_socket = read.fd_array[i];
@@ -2416,7 +2416,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
 
     for (i = 0; i < write.fd_count; ++i)
     {
-        params->sockets[params->count].socket = write.fd_array[i];
+        params->sockets[params->count].socket = write.fd_array[i] = write_ptr->fd_array[i];
         params->sockets[params->count].flags = AFD_POLL_WRITE;
         ++params->count;
         poll_socket = write.fd_array[i];
@@ -2424,7 +2424,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
 
     for (i = 0; i < except.fd_count; ++i)
     {
-        params->sockets[params->count].socket = except.fd_array[i];
+        params->sockets[params->count].socket = except.fd_array[i] = except_ptr->fd_array[i];
         params->sockets[params->count].flags = AFD_POLL_OOB | AFD_POLL_CONNECT_ERR;
         ++params->count;
         poll_socket = except.fd_array[i];
