@@ -3152,7 +3152,7 @@ static void test_select(void)
     static char tmp_buf[1024];
 
     SOCKET fdListen, fdRead, fdWrite;
-    fd_set readfds, writefds, exceptfds;
+    fd_set readfds, writefds, exceptfds, *alloc_readfds;
     unsigned int maxfd;
     int ret, len;
     char buffer;
@@ -3160,7 +3160,8 @@ static void test_select(void)
     struct sockaddr_in address;
     select_thread_params thread_params;
     HANDLE thread_handle;
-    DWORD ticks, id;
+    DWORD ticks, id, old_protect;
+    char *page_pair;
 
     fdRead = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
@@ -3325,6 +3326,15 @@ static void test_select(void)
     ok(ret == 2, "select returned %d\n", ret);
     ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
     ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
+
+    page_pair = VirtualAlloc(NULL, 0x1000 * 2, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    VirtualProtect(page_pair + 0x1000, 0x1000, PAGE_NOACCESS, &old_protect);
+    alloc_readfds = (fd_set *)((page_pair + 0x1000) - offsetof(fd_set, fd_array[1]));
+    alloc_readfds->fd_count = 1;
+    alloc_readfds->fd_array[0] = fdRead;
+    ret = select(fdRead+1, alloc_readfds, NULL, NULL, &select_timeout);
+    ok(ret == 1, "select returned %d\n", ret);
+    VirtualFree(page_pair, 0, MEM_RELEASE);
 
     closesocket(fdRead);
     closesocket(fdWrite);
