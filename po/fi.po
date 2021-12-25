@@ -10523,22 +10523,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) Dublin, Edinburgh, Lissabon, Lontoo"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "Sudanin normaaliaika"
+msgstr "Etelä-Sudanin normaaliaika"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "Sudanin kesäaika"
+msgstr "Etelä-Sudanin kesäaika"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) Jerusalem"
+msgstr "(UTC+02:00) Juba"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -13219,10 +13213,8 @@ msgid "Active code page: %1!u!\n"
 msgstr "Aktiivinen koodisivu: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Viesti ei kelpaa.\n"
+msgstr "Koodisivu ei kelpaa.\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13241,7 +13233,7 @@ msgstr ""
 "\n"
 "  numero   Aktivoitava koodisivu.\n"
 "\n"
-"  CHCP ilman numeroa näyttää aktiivisen konsolin koodisivun.\n"
+"  CHCP ilman numeroa näyttää aktiivisen koodisivun.\n"
 "\n"
 
 #: programs/clock/clock.rc:32
