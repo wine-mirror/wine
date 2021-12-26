@@ -56,7 +56,7 @@ static HTHEME (WINAPI *pOpenThemeData)(HWND, LPCWSTR);
 static void detect_locale(void)
 {
     DWORD reading_layout;
-    rtl = GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IREADINGLAYOUT | LOCALE_RETURN_NUMBER,
+    rtl = GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IREADINGLAYOUT | LOCALE_RETURN_NUMBER,
             (void *)&reading_layout, sizeof(reading_layout)) && reading_layout == 1;
 }
 
