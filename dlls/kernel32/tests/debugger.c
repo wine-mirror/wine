@@ -752,7 +752,11 @@ static void test_ExitCode(void)
         ok(0, "could not open the AeDebug key: %d\n", ret);
         return;
     }
-    else debugger_value.data = NULL;
+    else
+    {
+        auto_value.data = NULL;
+        debugger_value.data = NULL;
+    }
 
     if (debugger_value.data && debugger_value.type == REG_SZ &&
         strstr((char*)debugger_value.data, "winedbg --auto"))
