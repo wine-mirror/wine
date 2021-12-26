@@ -4043,6 +4043,7 @@ static void test_GetCPInfo(void)
             ok( !status, "failed %x\n", status );
             ok( size > 0x1000 && size <= 0x8000 , "wrong size %lx\n", size );
             status = pNtGetNlsSectionPtr( 10, 0, NULL, &ptr2, &size );
+            ok( !status, "failed %x\n", status );
             ok( ptr != ptr2, "got same pointer\n" );
             ret = UnmapViewOfFile( ptr );
             ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
