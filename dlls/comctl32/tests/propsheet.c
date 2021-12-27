@@ -92,8 +92,11 @@ static int CALLBACK sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
         size = SizeofResource(module, hrsrc);
         ok(size != 0, "Failed to get size of propsheet dialog resource\n");
         buffer_size = HeapSize(GetProcessHeap(), 0, (void *)lparam);
-        /* Hebrew Windows 10 allocates 2 * size + 8, all others allocate 2 * size */
-        ok(buffer_size >= 2 * size, "Unexpected template buffer size %u, resource size %u\n",
+        /* Hebrew Windows 10 allocates 2 * size + 8,
+         * Arabic Windows 10 allocates 2 * size - 32,
+         * all others allocate exactly 2 * size */
+        ok(buffer_size >= 2 * size || broken(buffer_size == 2 * size - 32),
+                "Unexpected template buffer size %u, resource size %u\n",
                 buffer_size, size);
         break;
       }
