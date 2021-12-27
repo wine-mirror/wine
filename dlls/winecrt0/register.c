@@ -31,7 +31,7 @@
 
 static inline void *image_base(void)
 {
-#if defined(__MINGW32__) || defined(_MSC_VER)
+#ifdef __WINE_PE_BUILD
     extern IMAGE_DOS_HEADER __ImageBase;
     return (void *)&__ImageBase;
 #else
