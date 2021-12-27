@@ -105,6 +105,8 @@ extern LONGLONG CDECL fast_RtlGetSystemTimePrecise(void) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                           CONTEXT *context ) DECLSPEC_HIDDEN;
 
+struct _FILE_FS_DEVICE_INFORMATION;
+
 extern const char wine_build[] DECLSPEC_HIDDEN;
 
 extern const char *home_dir DECLSPEC_HIDDEN;
@@ -267,6 +269,7 @@ extern NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **p
 extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                                 ULONG options, void *ea_buffer, ULONG ea_length ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *info ) DECLSPEC_HIDDEN;
 extern void init_files(void) DECLSPEC_HIDDEN;
 extern void init_cpu_info(void) DECLSPEC_HIDDEN;
 extern void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info, BOOL async ) DECLSPEC_HIDDEN;

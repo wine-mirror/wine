@@ -75,6 +75,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
+#include "winioctl.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "unix_private.h"
@@ -1172,6 +1173,16 @@ static int setup_config_dir(void)
     }
     else if (errno != EEXIST) fatal_perror( "cannot create %s/dosdevices", config_dir );
 
+    if (fd_cwd != -1)
+    {
+        FILE_FS_DEVICE_INFORMATION info;
+        if (!get_device_info( fd_cwd, &info ) && (info.Characteristics & FILE_REMOVABLE_MEDIA))
+        {
+            close( fd_cwd );
+            fd_cwd = -1;
+        }
+    }
+
     if (fd_cwd == -1) fd_cwd = open( "dosdevices/c:", O_RDONLY );
     fcntl( fd_cwd, F_SETFD, FD_CLOEXEC );
     return fd_cwd;
@@ -1215,7 +1226,6 @@ static void server_connect_error( const char *serverdir )
  *           server_connect
  *
  * Attempt to connect to an existing server socket.
- * We need to be in the server directory already.
  */
 static int server_connect(void)
 {
@@ -1544,16 +1554,7 @@ void server_init_process_done(void)
 {
     void *entry, *teb;
     NTSTATUS status;
-    int suspend, needs_close, unixdir;
-
-    if (peb->ProcessParameters->CurrentDirectory.Handle &&
-        !server_get_unix_fd( peb->ProcessParameters->CurrentDirectory.Handle,
-                             FILE_TRAVERSE, &unixdir, &needs_close, NULL, NULL ))
-    {
-        fchdir( unixdir );
-        if (needs_close) close( unixdir );
-    }
-    else chdir( "/" ); /* avoid locking removable devices */
+    int suspend;
 
 #ifdef __APPLE__
     send_server_task_port();

@@ -6223,7 +6223,7 @@ static inline BOOL is_device_placeholder( int fd )
     return !memcmp( buffer, wine_placeholder, sizeof(wine_placeholder) - 1 );
 }
 
-static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
+NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
 {
     struct stat st;
 
