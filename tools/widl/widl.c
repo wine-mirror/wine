@@ -698,7 +698,11 @@ int open_typelib( const char *name )
 
     if (stdinc)
     {
-        if (dlldir) TRYOPEN( strmake( "%s%s/%s", dlldir, pe_dir, name ));
+        if (dlldir)
+        {
+            TRYOPEN( strmake( "%s%s/%s", dlldir, pe_dir, name ));
+            TRYOPEN( strmake( "%s/%s", dlldir, name ));
+        }
         for (i = 0; i < ARRAY_SIZE(default_dirs); i++)
         {
             if (i && !strcmp( default_dirs[i], default_dirs[0] )) continue;
