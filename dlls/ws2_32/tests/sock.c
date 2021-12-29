@@ -3272,6 +3272,16 @@ static void test_select(void)
     ok(ret == 1, "select returned %d\n", ret);
     ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
 
+    /* select the same socket twice */
+    writefds.fd_count = 2;
+    writefds.fd_array[0] = fdWrite;
+    writefds.fd_array[1] = fdWrite;
+    ret = select(0, NULL, &writefds, NULL, &select_timeout);
+    ok(ret == 1, "select returned %d\n", ret);
+    ok(writefds.fd_count == 1, "got count %u\n", writefds.fd_count);
+    ok(writefds.fd_array[0] == fdWrite, "got fd %#Ix\n", writefds.fd_array[0]);
+    ok(writefds.fd_array[1] == fdWrite, "got fd %#Ix\n", writefds.fd_array[1]);
+
     /* tests for overlapping fd_set pointers */
     FD_ZERO(&readfds);
     FD_SET(fdWrite, &readfds);
