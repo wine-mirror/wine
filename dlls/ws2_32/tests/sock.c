@@ -5142,6 +5142,37 @@ static void test_accept_events(struct event_test_ctx *ctx)
     closesocket(client);
 
     closesocket(listener);
+
+    /* The socket returned from accept() inherits the same parameters. */
+
+    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(listener != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    ret = bind(listener, (const struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+    len = sizeof(destaddr);
+    ret = getsockname(listener, (struct sockaddr *)&destaddr, &len);
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+    ret = listen(listener, 2);
+    ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
+
+    select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB | FD_ACCEPT | FD_WRITE);
+    check_events(ctx, FD_ACCEPT, 0, 200);
+
+    server = accept(listener, NULL, NULL);
+    ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
+    ctx->socket = server;
+    check_events_todo(ctx, FD_WRITE, 0, 200);
+    check_events_todo_event(ctx, 0, 0, 0);
+
+    closesocket(server);
+    closesocket(client);
+
+    closesocket(listener);
 }
 
 static void test_connect_events(struct event_test_ctx *ctx)
