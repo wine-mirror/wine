@@ -2301,7 +2301,6 @@ static void test_display_dc(void)
             bpp = GetDeviceCaps(mem_dc, BITSPIXEL);
             ok(bpp == dm2.dmBitsPerPel, "Expected bpp %d, got %d.\n", dm2.dmBitsPerPel, bpp);
             old_hbitmap = SelectObject(mem_dc, hbitmap);
-            todo_wine
             ok(!!old_hbitmap, "Failed to select bitmap.\n");
             bpp = GetDeviceCaps(mem_dc, BITSPIXEL);
             ok(bpp == dm2.dmBitsPerPel, "Expected bpp %d, got %d.\n", dm2.dmBitsPerPel, bpp);
@@ -2329,7 +2328,6 @@ static void test_display_dc(void)
                     ok(!old_hbitmap || broken(!!old_hbitmap) /* Win7 dual-QXL test bot and XP */,
                        "Selecting bitmap succeeded.\n");
                 else
-                    todo_wine_if(bpps[i] == 32)
                     ok(!!old_hbitmap || broken(!old_hbitmap) /* Win7 dual-QXL test bot and XP */,
                        "Failed to select bitmap.\n");
 

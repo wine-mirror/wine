@@ -401,7 +401,9 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
 
     if (!is_bitmapobj_dib( bitmap ) &&
         bitmap->dib.dsBm.bmBitsPixel != 1 &&
-        bitmap->dib.dsBm.bmBitsPixel != NtGdiGetDeviceCaps( hdc, BITSPIXEL ))
+        bitmap->dib.dsBm.bmBitsPixel != NtGdiGetDeviceCaps( hdc, BITSPIXEL ) &&
+        /* Display compatible DCs should accept 32-bit DDBs because other color depths are emulated */
+        !(NtGdiGetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASDISPLAY && bitmap->dib.dsBm.bmBitsPixel == 32))
     {
         WARN( "Wrong format bitmap %u bpp\n", bitmap->dib.dsBm.bmBitsPixel );
         GDI_ReleaseObj( handle );
