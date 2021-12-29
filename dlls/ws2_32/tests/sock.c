@@ -5166,8 +5166,8 @@ static void test_accept_events(struct event_test_ctx *ctx)
     server = accept(listener, NULL, NULL);
     ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
     ctx->socket = server;
-    check_events_todo(ctx, FD_WRITE, 0, 200);
-    check_events_todo_event(ctx, 0, 0, 0);
+    check_events(ctx, FD_WRITE, 0, 200);
+    check_events(ctx, 0, 0, 0);
 
     closesocket(server);
     closesocket(client);
