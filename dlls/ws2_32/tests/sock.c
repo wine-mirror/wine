@@ -3151,9 +3151,8 @@ static void test_select(void)
 {
     static char tmp_buf[1024];
 
-    SOCKET fdListen, fdRead, fdWrite;
-    fd_set readfds, writefds, exceptfds, *alloc_readfds;
-    unsigned int maxfd;
+    fd_set readfds, writefds, exceptfds, *alloc_fds;
+    SOCKET fdListen, fdRead, fdWrite, sockets[200];
     int ret, len;
     char buffer;
     struct timeval select_timeout;
@@ -3161,6 +3160,7 @@ static void test_select(void)
     select_thread_params thread_params;
     HANDLE thread_handle;
     DWORD ticks, id, old_protect;
+    unsigned int maxfd, i;
     char *page_pair;
 
     fdRead = socket(AF_INET, SOCK_STREAM, 0);
@@ -3339,15 +3339,32 @@ static void test_select(void)
 
     page_pair = VirtualAlloc(NULL, 0x1000 * 2, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     VirtualProtect(page_pair + 0x1000, 0x1000, PAGE_NOACCESS, &old_protect);
-    alloc_readfds = (fd_set *)((page_pair + 0x1000) - offsetof(fd_set, fd_array[1]));
-    alloc_readfds->fd_count = 1;
-    alloc_readfds->fd_array[0] = fdRead;
-    ret = select(fdRead+1, alloc_readfds, NULL, NULL, &select_timeout);
+    alloc_fds = (fd_set *)((page_pair + 0x1000) - offsetof(fd_set, fd_array[1]));
+    alloc_fds->fd_count = 1;
+    alloc_fds->fd_array[0] = fdRead;
+    ret = select(fdRead+1, alloc_fds, NULL, NULL, &select_timeout);
     ok(ret == 1, "select returned %d\n", ret);
     VirtualFree(page_pair, 0, MEM_RELEASE);
 
     closesocket(fdRead);
     closesocket(fdWrite);
+
+    alloc_fds = malloc(offsetof(fd_set, fd_array[ARRAY_SIZE(sockets)]));
+    alloc_fds->fd_count = ARRAY_SIZE(sockets);
+    for (i = 0; i < ARRAY_SIZE(sockets); i += 2)
+    {
+        tcp_socketpair(&sockets[i], &sockets[i + 1]);
+        alloc_fds->fd_array[i] = sockets[i];
+        alloc_fds->fd_array[i + 1] = sockets[i + 1];
+    }
+    ret = select(0, NULL, alloc_fds, NULL, &select_timeout);
+    ok(ret == ARRAY_SIZE(sockets), "got %d\n", ret);
+    for (i = 0; i < ARRAY_SIZE(sockets); ++i)
+    {
+        ok(alloc_fds->fd_array[i] == sockets[i], "got socket %#Ix at index %u\n", alloc_fds->fd_array[i], i);
+        closesocket(sockets[i]);
+    }
+    free(alloc_fds);
 
     /* select() works in 3 distinct states:
      * - to check if a connection attempt ended with success or error;

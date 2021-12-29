@@ -19,6 +19,7 @@
 #ifndef __WINE_WS2_32_PRIVATE_H
 #define __WINE_WS2_32_PRIVATE_H
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
