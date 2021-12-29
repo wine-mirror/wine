@@ -1498,6 +1498,7 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
             vk_memory_type_from_access_flags(resource->access, resource->usage), bo_vk)))
     {
         WARN("Failed to create Vulkan buffer.\n");
+        heap_free(bo_vk);
         return FALSE;
     }
 
