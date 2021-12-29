@@ -358,7 +358,10 @@ HRESULT CDECL wmp_decoder_create(struct decoder_info *info, struct decoder **res
     if (PKImageDecode_Create_WMP(&decoder)) return E_FAIL;
     This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
+    {
+        decoder->Release(&decoder);
         return E_OUTOFMEMORY;
+    }
 
     This->decoder_iface.vtable = &wmp_decoder_vtable;
     This->WMPStream_iface.Close = &wmp_stream_Close;
