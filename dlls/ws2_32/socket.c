@@ -2382,7 +2382,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
 {
     char buffer[offsetof( struct afd_poll_params, sockets[FD_SETSIZE * 3] )] = {0};
     struct afd_poll_params *params = (struct afd_poll_params *)buffer;
-    struct fd_set read, write, except;
+    struct fd_set read_input;
     ULONG params_size, i, j;
     SOCKET poll_socket = 0;
     IO_STATUS_BLOCK io;
@@ -2392,12 +2392,8 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
 
     TRACE( "read %p, write %p, except %p, timeout %p\n", read_ptr, write_ptr, except_ptr, timeout );
 
-    FD_ZERO( &read );
-    FD_ZERO( &write );
-    FD_ZERO( &except );
-    if (read_ptr) read.fd_count = read_ptr->fd_count;
-    if (write_ptr) write.fd_count = write_ptr->fd_count;
-    if (except_ptr) except.fd_count = except_ptr->fd_count;
+    FD_ZERO( &read_input );
+    if (read_ptr) read_input.fd_count = read_ptr->fd_count;
 
     if (!(sync_event = get_sync_event())) return -1;
 
@@ -2406,28 +2402,34 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
     else
         params->timeout = TIMEOUT_INFINITE;
 
-    for (i = 0; i < read.fd_count; ++i)
+    for (i = 0; i < read_input.fd_count; ++i)
     {
-        params->sockets[params->count].socket = read.fd_array[i] = read_ptr->fd_array[i];
+        params->sockets[params->count].socket = read_input.fd_array[i] = read_ptr->fd_array[i];
         params->sockets[params->count].flags = AFD_POLL_READ | AFD_POLL_ACCEPT | AFD_POLL_HUP;
         ++params->count;
-        poll_socket = read.fd_array[i];
+        poll_socket = read_input.fd_array[i];
     }
 
-    for (i = 0; i < write.fd_count; ++i)
+    if (write_ptr)
     {
-        params->sockets[params->count].socket = write.fd_array[i] = write_ptr->fd_array[i];
-        params->sockets[params->count].flags = AFD_POLL_WRITE;
-        ++params->count;
-        poll_socket = write.fd_array[i];
+        for (i = 0; i < write_ptr->fd_count; ++i)
+        {
+            params->sockets[params->count].socket = write_ptr->fd_array[i];
+            params->sockets[params->count].flags = AFD_POLL_WRITE;
+            ++params->count;
+            poll_socket = write_ptr->fd_array[i];
+        }
     }
 
-    for (i = 0; i < except.fd_count; ++i)
+    if (except_ptr)
     {
-        params->sockets[params->count].socket = except.fd_array[i] = except_ptr->fd_array[i];
-        params->sockets[params->count].flags = AFD_POLL_OOB | AFD_POLL_CONNECT_ERR;
-        ++params->count;
-        poll_socket = except.fd_array[i];
+        for (i = 0; i < except_ptr->fd_count; ++i)
+        {
+            params->sockets[params->count].socket = except_ptr->fd_array[i];
+            params->sockets[params->count].flags = AFD_POLL_OOB | AFD_POLL_CONNECT_ERR;
+            ++params->count;
+            poll_socket = except_ptr->fd_array[i];
+        }
     }
 
     if (!params->count)
@@ -2459,9 +2461,9 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
             unsigned int flags = params->sockets[i].flags;
             SOCKET s = params->sockets[i].socket;
 
-            for (j = 0; j < read.fd_count; ++j)
+            for (j = 0; j < read_input.fd_count; ++j)
             {
-                if (read.fd_array[j] == s
+                if (read_input.fd_array[j] == s
                         && (flags & (AFD_POLL_READ | AFD_POLL_ACCEPT | AFD_POLL_HUP | AFD_POLL_CLOSE)))
                 {
                     ret_count += add_fd_to_set( s, read_ptr );
@@ -2472,17 +2474,11 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
             if (flags & AFD_POLL_CLOSE)
                 status = STATUS_INVALID_HANDLE;
 
-            for (j = 0; j < write.fd_count; ++j)
-            {
-                if (write.fd_array[j] == s && (flags & AFD_POLL_WRITE))
-                    ret_count += add_fd_to_set( s, write_ptr );
-            }
+            if (flags & AFD_POLL_WRITE)
+                ret_count += add_fd_to_set( s, write_ptr );
 
-            for (j = 0; j < except.fd_count; ++j)
-            {
-                if (except.fd_array[j] == s && (flags & (AFD_POLL_OOB | AFD_POLL_CONNECT_ERR)))
-                    ret_count += add_fd_to_set( s, except_ptr );
-            }
+            if (flags & (AFD_POLL_OOB | AFD_POLL_CONNECT_ERR))
+                ret_count += add_fd_to_set( s, except_ptr );
         }
     }
 
