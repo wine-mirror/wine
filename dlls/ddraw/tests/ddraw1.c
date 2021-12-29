@@ -14191,7 +14191,7 @@ static void test_vtbl_protection(void)
 static BOOL CALLBACK test_window_position_cb(HMONITOR monitor, HDC hdc, RECT *monitor_rect,
         LPARAM lparam)
 {
-    RECT primary_rect, window_rect;
+    RECT primary_rect, window_rect, new_rect;
     IDirectDraw *ddraw;
     HWND window;
     HRESULT hr;
@@ -14213,6 +14213,44 @@ static BOOL CALLBACK test_window_position_cb(HMONITOR monitor, HDC hdc, RECT *mo
     SetRect(&primary_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     ok(EqualRect(&window_rect, &primary_rect), "Expect window rect %s, got %s.\n",
             wine_dbgstr_rect(&primary_rect), wine_dbgstr_rect(&window_rect));
+
+    new_rect = window_rect;
+    --new_rect.right;
+    --new_rect.bottom;
+
+    ret = MoveWindow(window, new_rect.left, new_rect.top, new_rect.right - new_rect.left,
+            new_rect.bottom - new_rect.top, TRUE);
+    ok(ret, "Got unexpected ret %#x, error %#x.\n", ret, GetLastError());
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "Got unexpected ret %#x, error %#x.\n", ret, GetLastError());
+    ok(EqualRect(&window_rect, &new_rect),
+            "Expected window rect %s, got %s.\n",
+            wine_dbgstr_rect(monitor_rect), wine_dbgstr_rect(&window_rect));
+    /* After processing window events window rectangle gets restored. But only once, the size set
+     * on the second resize remains. */
+    flush_events();
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "Got unexpected ret %#x, error %#x.\n", ret, GetLastError());
+    /* Both Windows and Wine change the size of the window. On Windows it is exactly the new size but in Wine
+     * it may get adjusted depending on window manager. */
+    ok(window_rect.right != monitor_rect->right && window_rect.bottom != monitor_rect->bottom,
+            "Expected window rect %s, got %s.\n",
+            wine_dbgstr_rect(monitor_rect), wine_dbgstr_rect(&window_rect));
+
+    ret = MoveWindow(window, new_rect.left, new_rect.top, new_rect.right - new_rect.left,
+            new_rect.bottom - new_rect.top, TRUE);
+    ok(ret, "Got unexpected ret %#x, error %#x.\n", ret, GetLastError());
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "Got unexpected ret %#x, error %#x.\n", ret, GetLastError());
+    ok(EqualRect(&window_rect, &new_rect),
+            "Expected window rect %s, got %s.\n",
+            wine_dbgstr_rect(monitor_rect), wine_dbgstr_rect(&window_rect));
+    flush_events();
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "Got unexpected ret %#x, error %#x.\n", ret, GetLastError());
+    ok(window_rect.right != monitor_rect->right && window_rect.bottom != monitor_rect->bottom,
+            "Expected window rect %s, got %s.\n",
+            wine_dbgstr_rect(monitor_rect), wine_dbgstr_rect(&window_rect));
 
     /* Window activation should restore the window to fit the whole primary monitor */
     ret = SetWindowPos(window, 0, monitor_rect->left, monitor_rect->top, 0, 0,
