@@ -3182,7 +3182,7 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ticks = GetTickCount() - ticks;
     ok(ret == 0, "select should not return any socket handles\n");
-    ok(ticks < 10, "select was blocking for %u ms, expected < 10 ms\n", ticks);
+    ok(ticks < 100, "select was blocking for %u ms\n", ticks);
     ok(!FD_ISSET(fdRead, &readfds), "FD should not be set\n");
     ok(!FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
     ok(!FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
