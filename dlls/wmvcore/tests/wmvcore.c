@@ -2388,6 +2388,8 @@ static void test_async_reader_types(void)
         else
         {
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+            /* Shadowgrounds assumes that the initial video type will be RGB24. */
+            ok(IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB24), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
             got_video = true;
             check_video_type(mt);
         }

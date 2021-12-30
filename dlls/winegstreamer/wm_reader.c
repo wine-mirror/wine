@@ -1503,9 +1503,11 @@ static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
         {
             /* Call of Juarez: Bound in Blood breaks if I420 is enumerated.
              * Some native decoders output I420, but the msmpeg4v3 decoder
-             * never does. */
-            if (stream->format.u.video.format == WG_VIDEO_FORMAT_I420)
-                stream->format.u.video.format = WG_VIDEO_FORMAT_YV12;
+             * never does.
+             *
+             * Shadowgrounds provides wmv3 video and assumes that the initial
+             * video type will be BGR. */
+            stream->format.u.video.format = WG_VIDEO_FORMAT_BGR;
         }
         wg_parser_stream_enable(stream->wg_stream, &stream->format);
     }
