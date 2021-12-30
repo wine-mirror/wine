@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-02 20:37+0900\n"
+"PO-Revision-Date: 2021-12-30 11:19+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -6984,7 +6984,7 @@ msgstr "타블로이드"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr "회계 원장"
+msgstr "레저"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
@@ -6992,11 +6992,11 @@ msgstr "리갈"
 
 #: dlls/localspl/localspl.rc:42
 msgid "Statement"
-msgstr "Statement"
+msgstr "스테이트먼트"
 
 #: dlls/localspl/localspl.rc:43
 msgid "Executive"
-msgstr "Executive"
+msgstr "익스큐티브"
 
 #: dlls/localspl/localspl.rc:44
 msgid "A3"
@@ -7024,11 +7024,11 @@ msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr "Folio"
+msgstr "폴리오"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr "Quarto"
+msgstr "쿼토"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
@@ -7044,23 +7044,23 @@ msgstr "노트"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr "봉투 #9"
+msgstr "봉투 9호"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr "봉투 #10"
+msgstr "봉투 10호"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr "봉투 #11"
+msgstr "봉투 11호"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr "봉투 #12"
+msgstr "봉투 12호"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr "봉투 #14"
+msgstr "봉투 14호"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
@@ -7236,7 +7236,7 @@ msgstr "A3 엑스트라 가로"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr "일본 이중 엽서"
+msgstr "일본 왕복 엽서"
 
 #: dlls/localspl/localspl.rc:104
 msgid "A6"
@@ -7244,19 +7244,19 @@ msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr "일본 봉투 Kaku #2"
+msgstr "일본 봉투 각형 2호"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr "일본 봉투 Kaku #3"
+msgstr "일본 봉투 각형 3호"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr "일본 봉투 Chou #3"
+msgstr "일본 봉투 장형 3호"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr "일본 봉투 Chou #4"
+msgstr "일본 봉투 장형 4호"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
@@ -7288,7 +7288,7 @@ msgstr "일본 엽서 회전"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr "이중 일본 엽서 회전"
+msgstr "일본 왕복 엽서 회전"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
@@ -7296,19 +7296,19 @@ msgstr "A6 회전"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr "일본 봉투 Kaku #2 회전"
+msgstr "일본 봉투 각형 2호 회전"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr "일본 봉투 Kaku #3 회전"
+msgstr "일본 봉투 각형 3호 회전"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr "일본 봉투 Chou #3 회전"
+msgstr "일본 봉투 장형 3호 회전"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr "일본 봉투 Chou #4 회전"
+msgstr "일본 봉투 장형 4호 회전"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
@@ -7324,115 +7324,115 @@ msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr "일본 봉투 You #4"
+msgstr "일본 봉투 서양형 4호"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr "일본 봉투 You #4 회전"
+msgstr "일본 봉투 서양형 4호 회전"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr "PRC 16K"
+msgstr "중국 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr "PRC 32K"
+msgstr "중국 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr "PRC 32K(대)"
+msgstr "중국 32K(대)"
 
 #: dlls/localspl/localspl.rc:130
 msgid "PRC Envelope #1"
-msgstr "PRC 봉투 #1"
+msgstr "중국 봉투 1호"
 
 #: dlls/localspl/localspl.rc:131
 msgid "PRC Envelope #2"
-msgstr "PRC 봉투 #2"
+msgstr "중국 봉투 2호"
 
 #: dlls/localspl/localspl.rc:132
 msgid "PRC Envelope #3"
-msgstr "PRC 봉투 #3"
+msgstr "중국 봉투 3호"
 
 #: dlls/localspl/localspl.rc:133
 msgid "PRC Envelope #4"
-msgstr "PRC 봉투 #4"
+msgstr "중국 봉투 4호"
 
 #: dlls/localspl/localspl.rc:134
 msgid "PRC Envelope #5"
-msgstr "PRC 봉투 #5"
+msgstr "중국 봉투 5호"
 
 #: dlls/localspl/localspl.rc:135
 msgid "PRC Envelope #6"
-msgstr "PRC 봉투 #6"
+msgstr "중국 봉투 6호"
 
 #: dlls/localspl/localspl.rc:136
 msgid "PRC Envelope #7"
-msgstr "PRC 봉투 #7"
+msgstr "중국 봉투 7호"
 
 #: dlls/localspl/localspl.rc:137
 msgid "PRC Envelope #8"
-msgstr "PRC 봉투 #8"
+msgstr "중국 봉투 8호"
 
 #: dlls/localspl/localspl.rc:138
 msgid "PRC Envelope #9"
-msgstr "PRC 봉투 #9"
+msgstr "중국 봉투 9호"
 
 #: dlls/localspl/localspl.rc:139
 msgid "PRC Envelope #10"
-msgstr "PRC 봉투 #10"
+msgstr "중국 봉투 10호"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr "PRC 16K 회전"
+msgstr "중국 16K 회전"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr "PRC 32K 회전"
+msgstr "중국 32K 회전"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr "PRC 32K(대) 회전"
+msgstr "중국 32K(대) 회전"
 
 #: dlls/localspl/localspl.rc:143
 msgid "PRC Envelope #1 Rotated"
-msgstr "PRC 봉투 #1 회전"
+msgstr "중국 봉투 1호 회전"
 
 #: dlls/localspl/localspl.rc:144
 msgid "PRC Envelope #2 Rotated"
-msgstr "PRC 봉투 #2 회전"
+msgstr "중국 봉투 2호 회전"
 
 #: dlls/localspl/localspl.rc:145
 msgid "PRC Envelope #3 Rotated"
-msgstr "PRC 봉투 #3 회전"
+msgstr "중국 봉투 3호 회전"
 
 #: dlls/localspl/localspl.rc:146
 msgid "PRC Envelope #4 Rotated"
-msgstr "PRC 봉투 #4 회전"
+msgstr "중국 봉투 4호 회전"
 
 #: dlls/localspl/localspl.rc:147
 msgid "PRC Envelope #5 Rotated"
-msgstr "PRC 봉투 #5 회전"
+msgstr "중국 봉투 5호 회전"
 
 #: dlls/localspl/localspl.rc:148
 msgid "PRC Envelope #6 Rotated"
-msgstr "PRC 봉투 #6 회전"
+msgstr "중국 봉투 6호 회전"
 
 #: dlls/localspl/localspl.rc:149
 msgid "PRC Envelope #7 Rotated"
-msgstr "PRC 봉투 #7 회전"
+msgstr "중국 봉투 7호 회전"
 
 #: dlls/localspl/localspl.rc:150
 msgid "PRC Envelope #8 Rotated"
-msgstr "PRC 봉투 #8 회전"
+msgstr "중국 봉투 8호 회전"
 
 #: dlls/localspl/localspl.rc:151
 msgid "PRC Envelope #9 Rotated"
-msgstr "PRC 봉투 #9 회전"
+msgstr "중국 봉투 9호 회전"
 
 #: dlls/localspl/localspl.rc:152
 msgid "PRC Envelope #10 Rotated"
-msgstr "PRC 봉투 #10 회전"
+msgstr "중국 봉투 10호 회전"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -10505,22 +10505,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) 더블린, 에든버러, 리스본, 런던"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "수단 표준시"
+msgstr "남수단 표준시"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "수단 일광 절약시"
+msgstr "남수단 일광 절약시"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) 예루살렘"
+msgstr "(UTC+02:00) 주바"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -13332,7 +13326,6 @@ msgstr ""
 "ECHO OFF는 ECHO ON과 반대 효과가 있습니다(기본값은 ECHO OFF입니다).\n"
 "ECHO OFF 앞에 @ 기호룰 두어서 ECHO OFF 명령어 자체가 화면에\n"
 "표시되는 것을 막을 수 있습니다.\n"
-"\n"
 
 #: programs/cmd/cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
