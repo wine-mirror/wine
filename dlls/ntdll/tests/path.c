@@ -119,6 +119,8 @@ static void test_RtlIsDosDeviceName_U(void)
         { "\\\\.\\CON",    8, 6, TRUE },  /* fails on win8 */
         { "\\\\.\\con",    8, 6, TRUE },  /* fails on win8 */
         { "\\\\.\\CON2",   0, 0 },
+        { "\\\\.\\CONIN$", 0, 0 },
+        { "\\\\.\\CONOUT$",0, 0 },
         { "",              0, 0 },
         { "\\\\foo\\nul",  0, 0 },
         { "c:\\nul:",      6, 6 },
@@ -434,6 +436,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         const WCHAR *nt;
         int file_offset;    /* offset to file part */
         const WCHAR *alt_nt;
+        BOOL may_fail;
     }
     tests[] =
     {
@@ -518,6 +521,9 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"\\\\.\\foo/.",   L"\\??\\foo",                    4},
         {L"\\\\.\\foo/..",  L"\\??\\",                      -1},
         {L"\\\\.\\foo. . ", L"\\??\\foo",                    4},
+        {L"\\\\.\\CON",     L"\\??\\CON",                    4, NULL, TRUE}, /* broken on win7 */
+        {L"\\\\.\\CONIN$",  L"\\??\\CONIN$",                 4},
+        {L"\\\\.\\CONOUT$", L"\\??\\CONOUT$",                4},
 
         {L"\\\\?",          L"\\??\\",                      -1},
         {L"\\\\?\\",        L"\\??\\",                      -1},
@@ -585,6 +591,11 @@ static void test_RtlDosPathNameToNtPathName_U(void)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         ret = pRtlDosPathNameToNtPathName_U(tests[i].dos, &nameW, &file_part, NULL);
+        if (!ret && tests[i].may_fail)
+        {
+            win_skip("skipping broken %s\n", debugstr_w(tests[i].dos));
+            continue;
+        }
         ok(ret == TRUE, "%s: Got %d.\n", debugstr_w(tests[i].dos), ret);
 
         if (pRtlDosPathNameToNtPathName_U_WithStatus)
