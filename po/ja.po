@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-23 21:41+0900\n"
+"PO-Revision-Date: 2021-12-29 19:37+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -3700,30 +3700,24 @@ msgid "&Disable"
 msgstr "無効化(&D)"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "リセット"
+msgstr "リセット(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "有効化(&E)"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "オーバーライドの編集"
+msgstr "上書き(&O)"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "接続済み"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "音声入力デバイス:"
+msgstr "接続済み (xinputデバイス)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -10529,22 +10523,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) ダブリン、エディンバラ、リスボン、ロンドン"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "スーダン標準時"
+msgstr "南スーダン標準時"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "スーダン夏時間"
+msgstr "南スーダン夏時間"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) エルサレム"
+msgstr "(UTC+02:00) ジュバ"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -13242,13 +13230,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "現在のコード ページ: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "メッセージが正しくありません。\n"
+msgstr "コード ページが正しくありません\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13261,6 +13247,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [数値]\n"
+"\n"
+"  現在のコンソール コード ページを設定または表示します。\n"
+"\n"
+"  数値    有効化するコンソール コード ページ\n"
+"\n"
+"  CHCP を数値なしで入力すると、現在のコンソール コード ページを表示します。\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -14418,7 +14412,7 @@ msgstr "IPv6 アドレス"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "プライマリ DNS サフィックス"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
