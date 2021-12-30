@@ -10537,8 +10537,8 @@ static LRESULT LISTVIEW_NCPaint(const LISTVIEW_INFO *infoPtr, HRGN region)
 {
     LONG exstyle = GetWindowLongW (infoPtr->hwndSelf, GWL_EXSTYLE);
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+    RECT r, window_rect;
     HDC dc;
-    RECT r;
     HRGN cliprgn;
     int cxEdge = GetSystemMetrics (SM_CXEDGE),
         cyEdge = GetSystemMetrics (SM_CYEDGE);
@@ -10552,7 +10552,13 @@ static LRESULT LISTVIEW_NCPaint(const LISTVIEW_INFO *infoPtr, HRGN region)
         r.right - cxEdge, r.bottom - cyEdge);
     if (region != (HRGN)1)
         CombineRgn (cliprgn, cliprgn, region, RGN_AND);
+
     OffsetRect(&r, -r.left, -r.top);
+    if (infoPtr->hwndHeader && LISTVIEW_IsHeaderEnabled(infoPtr))
+    {
+        GetWindowRect(infoPtr->hwndHeader, &window_rect);
+        r.top = min(r.bottom, r.top + window_rect.bottom - window_rect.top);
+    }
 
     dc = GetDCEx(infoPtr->hwndSelf, region, DCX_WINDOW|DCX_INTERSECTRGN);
 
