@@ -197,7 +197,8 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
         return STATUS_OBJECT_NAME_INVALID;
 
     if (!memcmp(dos_path, global_prefix, sizeof(global_prefix)) ||
-        (!memcmp(dos_path, global_prefix2, sizeof(global_prefix2)) && dos_path[4]))
+        (!memcmp(dos_path, global_prefix2, sizeof(global_prefix2)) && dos_path[4]) ||
+        !wcsicmp( dos_path, L"\\\\.\\CON" ))
     {
         ntpath->Length = wcslen(dos_path) * sizeof(WCHAR);
         ntpath->MaximumLength = ntpath->Length + sizeof(WCHAR);
@@ -205,6 +206,7 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
         if (!ntpath->Buffer) return STATUS_NO_MEMORY;
         memcpy( ntpath->Buffer, dos_path, ntpath->MaximumLength );
         ntpath->Buffer[1] = '?';  /* change \\?\ to \??\ */
+        ntpath->Buffer[2] = '?';
         if (file_part)
         {
             if ((ptr = wcsrchr( ntpath->Buffer, '\\' )) && ptr[1]) *file_part = ptr + 1;
