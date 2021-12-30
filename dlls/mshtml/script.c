@@ -1716,12 +1716,13 @@ static BOOL use_gecko_script(IUri *uri)
         return FALSE;
 
     hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), display_uri, &zone, 0);
-    SysFreeString(display_uri);
     if(FAILED(hres)) {
         WARN("Could not map %s to zone: %08x\n", debugstr_w(display_uri), hres);
+        SysFreeString(display_uri);
         return TRUE;
     }
 
+    SysFreeString(display_uri);
     TRACE("zone %d\n", zone);
     return zone == URLZONE_UNTRUSTED;
 }
