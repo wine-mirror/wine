@@ -127,37 +127,37 @@ static void test_RtlIsDosDeviceName_U(void)
         { "c:\\nul:",      6, 6 },
         { "c:\\nul\\",     0, 0 },
         { "c:\\nul\\foo",  0, 0 },
-        { "c:\\nul::",     6, 6, TRUE },  /* fails on nt4 */
-        { "c:\\nul::::::", 6, 6, TRUE },  /* fails on nt4 */
+        { "c:\\nul::",     6, 6 },
+        { "c:\\nul::::::", 6, 6 },
         { "c:prn     ",    4, 6 },
         { "c:prn.......",  4, 6 },
         { "c:prn... ...",  4, 6 },
-        { "c:NUL  ....  ", 4, 6, TRUE },  /* fails on nt4 */
+        { "c:NUL  ....  ", 4, 6 },
         { "c: . . .",      0, 0 },
         { "c:",            0, 0 },
         { " . . . :",      0, 0 },
         { ":",             0, 0 },
         { "c:nul. . . :",  4, 6 },
-        { "c:nul . . :",   4, 6, TRUE },  /* fails on nt4 */
+        { "c:nul . . :",   4, 6 },
         { "c:nul0",        0, 0 },
-        { "c:prn:aaa",     4, 6, TRUE },  /* fails on win9x */
+        { "c:prn:aaa",     4, 6 },
         { "c:PRN:.txt",    4, 6 },
         { "c:aux:.txt...", 4, 6 },
         { "c:prn:.txt:",   4, 6 },
-        { "c:nul:aaa",     4, 6, TRUE },  /* fails on win9x */
+        { "c:nul:aaa",     4, 6 },
         { "con:",          0, 6 },
         { "lpt1:",         0, 8 },
         { "c:com5:",       4, 8 },
         { "CoM4:",         0, 8 },
         { "lpt9:",         0, 8 },
         { "c:\\lpt0.txt",  0, 0 },
-        { "CONIN$",        0, 12, TRUE }, /* fails on winxp */
-        { "CONOUT$",       0, 14, TRUE }, /* fails on winxp */
+        { "CONIN$",        0, 12, TRUE }, /* fails on win7 */
+        { "CONOUT$",       0, 14, TRUE }, /* fails on win7 */
         { "CONERR$",       0, 0 },
         { "CON",           0, 6 },
         { "PIPE",          0, 0 },
-        { "\\??\\CONIN$",  8, 12, TRUE }, /* fails on winxp */
-        { "\\??\\CONOUT$", 8, 14, TRUE }, /* fails on winxp */
+        { "\\??\\CONIN$",  8, 12, TRUE }, /* fails on win7 */
+        { "\\??\\CONOUT$", 8, 14, TRUE }, /* fails on win7 */
         { "\\??\\CONERR$", 0, 0 },
         { "\\??\\CON",     8, 6 },
         { "c:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -422,8 +422,6 @@ static void test_RtlGetFullPathName_U(void)
 
 static void test_RtlDosPathNameToNtPathName_U(void)
 {
-    static const WCHAR broken_global_prefix[] = L"\\??\\C:\\??";
-
     char curdir[MAX_PATH];
     UNICODE_STRING nameW;
     WCHAR *file_part;
@@ -560,9 +558,9 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"\\??\\foo\\..",  L"\\??\\foo\\..",                8},
         {L"\\??\\foo. . ",  L"\\??\\foo. . ",                4},
 
-        {L"CONIN$",         L"\\??\\CONIN$",                -1, L"\\??\\C:\\windows\\CONIN$"  /* winxp */ },
-        {L"CONOUT$",        L"\\??\\CONOUT$",               -1, L"\\??\\C:\\windows\\CONOUT$" /* winxp */ },
-        {L"cOnOuT$",        L"\\??\\cOnOuT$",               -1, L"\\??\\C:\\windows\\cOnOuT$" /* winxp */ },
+        {L"CONIN$",         L"\\??\\CONIN$",                -1, L"\\??\\C:\\windows\\CONIN$"   /* win7 */ },
+        {L"CONOUT$",        L"\\??\\CONOUT$",               -1, L"\\??\\C:\\windows\\CONOUT$"  /* win7 */ },
+        {L"cOnOuT$",        L"\\??\\cOnOuT$",               -1, L"\\??\\C:\\windows\\cOnOuT$"  /* win7 */ },
         {L"CONERR$",        L"\\??\\C:\\windows\\CONERR$",  15},
     };
     static const WCHAR *error_paths[] = {
@@ -582,8 +580,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         if (pRtlDosPathNameToNtPathName_U_WithStatus)
         {
             status = pRtlDosPathNameToNtPathName_U_WithStatus(error_paths[i], &nameW, &file_part, NULL);
-            ok(status == STATUS_OBJECT_NAME_INVALID || broken(status == STATUS_OBJECT_PATH_NOT_FOUND /* 2003 */),
-               "Got status %#x.\n", status);
+            ok(status == STATUS_OBJECT_NAME_INVALID, "Got status %#x.\n", status);
         }
 
         winetest_pop_context();
@@ -604,13 +601,6 @@ static void test_RtlDosPathNameToNtPathName_U(void)
             RtlFreeUnicodeString(&nameW);
             status = pRtlDosPathNameToNtPathName_U_WithStatus(tests[i].dos, &nameW, &file_part, NULL);
             ok(status == STATUS_SUCCESS, "%s: Got status %#x.\n", debugstr_w(tests[i].dos), status);
-        }
-
-        if (!wcsncmp(tests[i].dos, L"\\??\\", 4) && tests[i].dos[4] &&
-            broken(!wcsncmp(nameW.Buffer, broken_global_prefix, wcslen(broken_global_prefix))))
-        {
-            /* Windows version prior to 2003 don't interpret the \??\ prefix */
-            continue;
         }
 
         ok(!wcscmp(nameW.Buffer, tests[i].nt)
