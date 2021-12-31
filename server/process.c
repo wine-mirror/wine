@@ -680,6 +680,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->trace_data      = 0;
     process->rawinput_mouse  = NULL;
     process->rawinput_kbd    = NULL;
+    memset( &process->image_info, 0, sizeof(process->image_info) );
     list_init( &process->kernel_object );
     list_init( &process->thread_list );
     list_init( &process->locks );
@@ -1502,17 +1503,7 @@ DECL_HANDLER(get_process_info)
         reply->session_id       = process->session_id;
         reply->machine          = process->machine;
         if (get_reply_max_size())
-        {
-            client_ptr_t base;
-            const pe_image_info_t *info;
-            struct memory_view *view = get_exe_view( process );
-            if (view)
-            {
-                if ((info = get_view_image_info( view, &base )))
-                    set_reply_data( info, min( sizeof(*info), get_reply_max_size() ));
-            }
-            else set_error( STATUS_PROCESS_IS_TERMINATING );
-        }
+            set_reply_data( &process->image_info, min( sizeof(process->image_info), get_reply_max_size() ));
         release_object( process );
     }
 }

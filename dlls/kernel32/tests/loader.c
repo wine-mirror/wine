@@ -1931,9 +1931,11 @@ static void test_section_access(void)
     char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
     SIZE_T size;
+    SECTION_IMAGE_INFORMATION image_info;
     MEMORY_BASIC_INFORMATION info;
     STARTUPINFOA sti;
     PROCESS_INFORMATION pi;
+    NTSTATUS status;
     DWORD ret;
 
     /* prevent displaying of the "Unable to load this DLL" message box */
@@ -2083,6 +2085,19 @@ static void test_section_access(void)
             ok(ret, "ReadProcessMemory() error %d\n", GetLastError());
             ok(!memcmp(buf, section_data, section.SizeOfRawData), "wrong section data\n");
         }
+
+        status = NtQueryInformationProcess(pi.hProcess, ProcessImageInformation,
+                &image_info, sizeof(image_info), NULL );
+        ok(!status, "Got unexpected status %#x.\n", status);
+        ok(!(image_info.ImageCharacteristics & IMAGE_FILE_DLL),
+                "Got unexpected characteristics %#x.\n", nt_header.FileHeader.Characteristics);
+        status = NtUnmapViewOfSection(pi.hProcess, info.BaseAddress);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        status = NtQueryInformationProcess(pi.hProcess, ProcessImageInformation,
+                &image_info, sizeof(image_info), NULL );
+        ok(!status, "Got unexpected status %#x.\n", status);
+        ok(!(image_info.ImageCharacteristics & IMAGE_FILE_DLL),
+                "Got unexpected characteristics %#x.\n", nt_header.FileHeader.Characteristics);
 
         SetLastError(0xdeadbeef);
         ret = TerminateProcess(pi.hProcess, 0);

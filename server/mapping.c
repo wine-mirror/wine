@@ -408,6 +408,7 @@ static void add_process_view( struct thread *thread, struct memory_view *view )
             process->image = NULL;
             if (get_view_nt_name( view, &name ) && (process->image = memdup( name.str, name.len )))
                 process->imagelen = name.len;
+            process->image_info = view->image;
             return;
         }
     }
