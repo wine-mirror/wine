@@ -868,7 +868,7 @@ static void set_auxiliary_values( struct wld_auxv *av, const struct wld_auxv *ne
  *
  * Get a field of the auxiliary structure
  */
-static int get_auxiliary( struct wld_auxv *av, int type, int def_val )
+static ElfW(Addr) get_auxiliary( struct wld_auxv *av, int type, ElfW(Addr) def_val )
 {
   for ( ; av->a_type != AT_NULL; av++)
       if( av->a_type == type ) return av->a_un.a_val;
