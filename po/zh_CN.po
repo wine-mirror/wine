@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-12-15 16:24+0800\n"
+"PO-Revision-Date: 2022-01-03 00:36+0800\n"
 "Last-Translator: Jactry Zeng <jzeng@codeweavers.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
@@ -21,26 +21,20 @@ msgid "Security"
 msgstr "安全"
 
 #: dlls/aclui/aclui.rc:32
-#, fuzzy
-#| msgid "&User name:"
 msgid "&Group or user names:"
-msgstr "用户名(&U)："
+msgstr "用户组或用户名(&G):"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "黄色"
+msgstr "允许"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "拒绝"
 
 #: dlls/aclui/aclui.rc:47
-#, fuzzy
-#| msgid "Permission denied"
 msgid "Permissions for %1"
-msgstr "没有权限"
+msgstr "%1 的权限"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -122,39 +116,39 @@ msgstr "确定"
 
 #: dlls/appwiz.cpl/appwiz.rc:79
 msgid "The following information can be used to get technical support for %s:"
-msgstr "%s 技术支持信息："
+msgstr "以下信息可用于寻求 %s 的技术支持:"
 
 #: dlls/appwiz.cpl/appwiz.rc:80
 msgid "Publisher:"
-msgstr "生产商："
+msgstr "生产商:"
 
 #: dlls/appwiz.cpl/appwiz.rc:81 programs/winefile/winefile.rc:165
 msgid "Version:"
-msgstr "版本："
+msgstr "版本:"
 
 #: dlls/appwiz.cpl/appwiz.rc:82
 msgid "Contact:"
-msgstr "联系人："
+msgstr "联系人:"
 
 #: dlls/appwiz.cpl/appwiz.rc:83
 msgid "Support Information:"
-msgstr "支持信息："
+msgstr "支持信息:"
 
 #: dlls/appwiz.cpl/appwiz.rc:84
 msgid "Support Telephone:"
-msgstr "支持电话："
+msgstr "支持电话:"
 
 #: dlls/appwiz.cpl/appwiz.rc:85
 msgid "Readme:"
-msgstr "产品说明："
+msgstr "产品说明:"
 
 #: dlls/appwiz.cpl/appwiz.rc:86
 msgid "Product Updates:"
-msgstr "产品更新："
+msgstr "产品更新:"
 
 #: dlls/appwiz.cpl/appwiz.rc:87
 msgid "Comments:"
-msgstr "备注："
+msgstr "备注:"
 
 #: dlls/appwiz.cpl/appwiz.rc:100
 msgid "Wine Gecko Installer"
@@ -251,7 +245,7 @@ msgstr "添加/删除程序"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "允许你安装新软件或删除现有程序。"
+msgstr "允许您安装新软件，或从您的计算机删除现有的软件。"
 
 #: dlls/appwiz.cpl/appwiz.rc:33 programs/taskmgr/taskmgr.rc:262
 #: programs/winecfg/winecfg.rc:32
@@ -322,7 +316,7 @@ msgstr "压缩选项"
 
 #: dlls/avifil32/avifil32.rc:45
 msgid "&Choose a stream:"
-msgstr "选择来源流(&C)："
+msgstr "选择来源流(&C):"
 
 #: dlls/avifil32/avifil32.rc:48 programs/wordpad/wordpad.rc:76
 msgid "&Options..."
@@ -330,7 +324,7 @@ msgstr "选项(&O)..."
 
 #: dlls/avifil32/avifil32.rc:49
 msgid "&Interleave every"
-msgstr "交织(&I)：每"
+msgstr "交织(&I): 每隔"
 
 #: dlls/avifil32/avifil32.rc:51 dlls/msvfw32/msvfw32.rc:51
 msgid "frames"
@@ -338,11 +332,11 @@ msgstr "帧数"
 
 #: dlls/avifil32/avifil32.rc:52
 msgid "Current format:"
-msgstr "当前格式："
+msgstr "当前格式:"
 
 #: dlls/avifil32/avifil32.rc:30
 msgid "Waveform: %s"
-msgstr "波形：%s"
+msgstr "波形: %s"
 
 #: dlls/avifil32/avifil32.rc:31
 msgid "Waveform"
@@ -467,7 +461,7 @@ msgstr "下移(&D)"
 
 #: dlls/comctl32/comctl32.rc:105
 msgid "A&vailable buttons:"
-msgstr "可用工具栏按钮(&V)："
+msgstr "可用工具栏按钮(&V):"
 
 #: dlls/comctl32/comctl32.rc:107
 msgid "&Add ->"
@@ -479,7 +473,7 @@ msgstr "<- 删除(&R)"
 
 #: dlls/comctl32/comctl32.rc:109
 msgid "&Toolbar buttons:"
-msgstr "当前工具栏按钮(&T)："
+msgstr "当前工具栏按钮(&T):"
 
 #: dlls/comctl32/comctl32.rc:42
 msgid "Separator"
@@ -521,7 +515,7 @@ msgstr "关闭"
 
 #: dlls/comctl32/comctl32.rc:36
 msgid "Today:"
-msgstr "今天："
+msgstr "今天:"
 
 #: dlls/comctl32/comctl32.rc:37
 msgid "Go to today"
@@ -536,19 +530,19 @@ msgstr "打开"
 
 #: dlls/comdlg32/comdlg32.rc:161 dlls/comdlg32/comdlg32.rc:183
 msgid "File &Name:"
-msgstr "文件名(&N)："
+msgstr "文件名(&N):"
 
 #: dlls/comdlg32/comdlg32.rc:164 dlls/comdlg32/comdlg32.rc:186
 msgid "&Directories:"
-msgstr "文件夹(&D)："
+msgstr "文件夹(&D):"
 
 #: dlls/comdlg32/comdlg32.rc:167 dlls/comdlg32/comdlg32.rc:189
 msgid "List Files of &Type:"
-msgstr "文件类型(&T)："
+msgstr "文件类型(&T):"
 
 #: dlls/comdlg32/comdlg32.rc:169 dlls/comdlg32/comdlg32.rc:191
 msgid "Dri&ves:"
-msgstr "驱动器(&V)："
+msgstr "驱动器(&V):"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
 #: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
@@ -572,7 +566,7 @@ msgstr "打印"
 
 #: dlls/comdlg32/comdlg32.rc:205
 msgid "Printer:"
-msgstr "打印机："
+msgstr "打印机:"
 
 #: dlls/comdlg32/comdlg32.rc:207 dlls/comdlg32/comdlg32.rc:375
 msgid "Print range"
@@ -597,15 +591,15 @@ msgstr "设置(&S)"
 
 #: dlls/comdlg32/comdlg32.rc:214
 msgid "&From:"
-msgstr "从(&F)："
+msgstr "从(&F):"
 
 #: dlls/comdlg32/comdlg32.rc:215
 msgid "&To:"
-msgstr "到(&T)："
+msgstr "到(&T):"
 
 #: dlls/comdlg32/comdlg32.rc:216 dlls/wineps.drv/wineps.rc:42
 msgid "Print &Quality:"
-msgstr "打印质量(&Q)："
+msgstr "打印质量(&Q):"
 
 #: dlls/comdlg32/comdlg32.rc:218
 msgid "Print to Fi&le"
@@ -669,16 +663,16 @@ msgstr "字体"
 
 #: dlls/comdlg32/comdlg32.rc:254
 msgid "&Font:"
-msgstr "字体(&F)："
+msgstr "字体(&F):"
 
 #: dlls/comdlg32/comdlg32.rc:257
 msgid "Font St&yle:"
-msgstr "字体样式(&Y)："
+msgstr "字体样式(&Y):"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
 #: programs/winecfg/winecfg.rc:292
 msgid "&Size:"
-msgstr "大小(&S)："
+msgstr "大小(&S):"
 
 #: dlls/comdlg32/comdlg32.rc:267
 msgid "Effects"
@@ -694,7 +688,7 @@ msgstr "下划线(&U)"
 
 #: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:290
 msgid "&Color:"
-msgstr "配色(&C)："
+msgstr "配色(&C):"
 
 #: dlls/comdlg32/comdlg32.rc:273
 msgid "Sample"
@@ -710,11 +704,11 @@ msgstr "颜色"
 
 #: dlls/comdlg32/comdlg32.rc:286
 msgid "&Basic Colors:"
-msgstr "基本颜色(&B)："
+msgstr "基本颜色(&B):"
 
 #: dlls/comdlg32/comdlg32.rc:287
 msgid "&Custom Colors:"
-msgstr "自定义颜色(&C)："
+msgstr "自定义颜色(&C):"
 
 #: dlls/comdlg32/comdlg32.rc:289
 msgid "|S&olid"
@@ -722,29 +716,29 @@ msgstr "|纯色(&O)"
 
 #: dlls/comdlg32/comdlg32.rc:290
 msgid "&Red:"
-msgstr "红(&R)："
+msgstr "红(&R):"
 
 #: dlls/comdlg32/comdlg32.rc:292
 msgid "&Green:"
-msgstr "绿(&G)："
+msgstr "绿(&G):"
 
 #: dlls/comdlg32/comdlg32.rc:294
 msgid "&Blue:"
-msgstr "蓝(&B)："
+msgstr "蓝(&B):"
 
 #: dlls/comdlg32/comdlg32.rc:296
 msgid "&Hue:"
-msgstr "色调(&E)："
+msgstr "色调(&E):"
 
 #: dlls/comdlg32/comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr "饱和度(&S)："
+msgstr "饱和度(&S):"
 
 #: dlls/comdlg32/comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr "亮度(&L)："
+msgstr "亮度(&L):"
 
 #: dlls/comdlg32/comdlg32.rc:310
 msgid "&Add to Custom Colors"
@@ -766,7 +760,7 @@ msgstr "查找"
 
 #: dlls/comdlg32/comdlg32.rc:321 dlls/comdlg32/comdlg32.rc:340
 msgid "Fi&nd What:"
-msgstr "查找(&N)："
+msgstr "查找(&N):"
 
 #: dlls/comdlg32/comdlg32.rc:323 dlls/comdlg32/comdlg32.rc:344
 msgid "Match &Whole Word Only"
@@ -798,7 +792,7 @@ msgstr "替换"
 
 #: dlls/comdlg32/comdlg32.rc:342
 msgid "Re&place With:"
-msgstr "替换为(&P)："
+msgstr "替换为(&P):"
 
 #: dlls/comdlg32/comdlg32.rc:348
 msgid "&Replace"
@@ -822,23 +816,23 @@ msgstr "打印到文件(&L)"
 #: dlls/comdlg32/comdlg32.rc:365 dlls/comdlg32/comdlg32.rc:401
 #: dlls/msacm32/msacm32.rc:34 programs/winefile/winefile.rc:137
 msgid "&Name:"
-msgstr "名称(&N)："
+msgstr "名称(&N):"
 
 #: dlls/comdlg32/comdlg32.rc:366 dlls/comdlg32/comdlg32.rc:404
 msgid "Status:"
-msgstr "状态："
+msgstr "状态:"
 
 #: dlls/comdlg32/comdlg32.rc:368 dlls/comdlg32/comdlg32.rc:406
 msgid "Type:"
-msgstr "型号："
+msgstr "型号:"
 
 #: dlls/comdlg32/comdlg32.rc:370 dlls/comdlg32/comdlg32.rc:408
 msgid "Where:"
-msgstr "位置："
+msgstr "位置:"
 
 #: dlls/comdlg32/comdlg32.rc:372 dlls/comdlg32/comdlg32.rc:410
 msgid "Comment:"
-msgstr "备注："
+msgstr "备注:"
 
 #: dlls/comdlg32/comdlg32.rc:377
 msgid "Pa&ges"
@@ -850,11 +844,11 @@ msgstr "选中的范围(&S)"
 
 #: dlls/comdlg32/comdlg32.rc:381
 msgid "&from:"
-msgstr "从(&F)："
+msgstr "从(&F):"
 
 #: dlls/comdlg32/comdlg32.rc:382
 msgid "&to:"
-msgstr "到(&T)："
+msgstr "到(&T):"
 
 #: dlls/comdlg32/comdlg32.rc:384
 msgid "Copies"
@@ -862,7 +856,7 @@ msgstr "份数"
 
 #: dlls/comdlg32/comdlg32.rc:385
 msgid "Number of &copies:"
-msgstr "份数(&C)："
+msgstr "份数(&C):"
 
 #: dlls/comdlg32/comdlg32.rc:387
 msgid "C&ollate"
@@ -874,7 +868,7 @@ msgstr "大小(&Z):"
 
 #: dlls/comdlg32/comdlg32.rc:416
 msgid "&Source:"
-msgstr "纸张来源(&S)："
+msgstr "纸张来源(&S):"
 
 #: dlls/comdlg32/comdlg32.rc:421
 msgid "P&ortrait"
@@ -890,7 +884,7 @@ msgstr "页面设置"
 
 #: dlls/comdlg32/comdlg32.rc:441
 msgid "&Tray:"
-msgstr "托盘(&T)："
+msgstr "托盘(&T):"
 
 #: dlls/comdlg32/comdlg32.rc:444 dlls/wineps.drv/wineps.rc:35
 msgid "&Portrait"
@@ -898,19 +892,19 @@ msgstr "纵向(&P)"
 
 #: dlls/comdlg32/comdlg32.rc:447
 msgid "L&eft:"
-msgstr "左(&E)："
+msgstr "左(&E):"
 
 #: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:112
 msgid "&Right:"
-msgstr "右(&R)："
+msgstr "右(&R):"
 
 #: dlls/comdlg32/comdlg32.rc:451
 msgid "T&op:"
-msgstr "上(&O)："
+msgstr "上(&O):"
 
 #: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:114
 msgid "&Bottom:"
-msgstr "下(&B)："
+msgstr "下(&B):"
 
 #: dlls/comdlg32/comdlg32.rc:457
 msgid "P&rinter..."
@@ -918,7 +912,7 @@ msgstr "打印机(&P)..."
 
 #: dlls/comdlg32/comdlg32.rc:465 dlls/comdlg32/comdlg32.rc:490
 msgid "Look &in:"
-msgstr "浏览(&I)："
+msgstr "浏览(&I):"
 
 #: dlls/comdlg32/comdlg32.rc:471 dlls/comdlg32/comdlg32.rc:497
 msgid "File &name:"
@@ -926,7 +920,7 @@ msgstr "文件名(&N):"
 
 #: dlls/comdlg32/comdlg32.rc:475 dlls/comdlg32/comdlg32.rc:501
 msgid "Files of &type:"
-msgstr "文件类型(&T)："
+msgstr "文件类型(&T):"
 
 #: dlls/comdlg32/comdlg32.rc:478 dlls/comdlg32/comdlg32.rc:504
 msgid "Open as &read-only"
@@ -940,11 +934,11 @@ msgstr "打开(&O)"
 
 #: dlls/comdlg32/comdlg32.rc:517
 msgid "File name:"
-msgstr "文件名："
+msgstr "文件名:"
 
 #: dlls/comdlg32/comdlg32.rc:520
 msgid "Files of type:"
-msgstr "文件类型："
+msgstr "文件类型:"
 
 #: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:35
 msgid "File not found"
@@ -960,7 +954,7 @@ msgid ""
 "Do you want to create file?"
 msgstr ""
 "文件不存在。\n"
-"是否创建新文件？"
+"是否创建新文件?"
 
 #: dlls/comdlg32/comdlg32.rc:36
 msgid ""
@@ -968,7 +962,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "文件已经存在。\n"
-"是否替换？"
+"是否替换?"
 
 #: dlls/comdlg32/comdlg32.rc:37
 msgid "Invalid character(s) in path"
@@ -979,7 +973,7 @@ msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"文件名中不能包含任何以下字符：\n"
+"文件名中不能包含任何以下字符:\n"
 "                          / : < > |"
 
 #: dlls/comdlg32/comdlg32.rc:39
@@ -1128,7 +1122,7 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"你的打印机不支持这么大的份数。\n"
+"您的打印机不支持这么大的份数。\n"
 "请输入一个 1 和 %d 之间的数。"
 
 #: dlls/comdlg32/comdlg32.rc:68
@@ -1171,7 +1165,7 @@ msgstr "保存(&S)"
 
 #: dlls/comdlg32/comdlg32.rc:144
 msgid "Save &in:"
-msgstr "保存在(&I)："
+msgstr "保存在(&I):"
 
 #: dlls/comdlg32/comdlg32.rc:145
 msgid "Save"
@@ -1316,12 +1310,12 @@ msgstr "毫米"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
-msgstr "用户名(&U)："
+msgstr "用户名(&U):"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
 #: dlls/oledb32/version.rc:81
 msgid "&Password:"
-msgstr "密码(&P)："
+msgstr "密码(&P):"
 
 #: dlls/credui/credui.rc:50
 msgid "&Remember my password"
@@ -1344,7 +1338,7 @@ msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
-"请确认你输入的用户名和密码\n"
+"请确认您输入的用户名和密码\n"
 "是否正确。"
 
 #: dlls/credui/credui.rc:35
@@ -1354,9 +1348,9 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
-"开着大写锁定可能导致你输入错误的密码。\n"
+"开着大写锁定可能导致您输入错误的密码。\n"
 "\n"
-"建议你按下键盘上的 Caps Lock 键以关闭大写锁定，然后再输入密码。"
+"建议您按下键盘上的 Caps Lock 键以关闭大写锁定，然后再输入密码。"
 
 #: dlls/credui/credui.rc:34
 msgid "Caps Lock is On"
@@ -1541,7 +1535,7 @@ msgstr "组织单元"
 
 #: dlls/crypt32/crypt32.rc:74
 msgid "Common Name"
-msgstr "通用名"
+msgstr "公用名"
 
 #: dlls/crypt32/crypt32.rc:75
 msgid "Locality"
@@ -2188,7 +2182,7 @@ msgstr "证书策略"
 
 #: dlls/cryptdlg/cryptdlg.rc:31
 msgid "Policy Identifier: "
-msgstr "策略标识符："
+msgstr "策略标识符:"
 
 #: dlls/cryptdlg/cryptdlg.rc:32
 msgid "Policy Qualifier Info"
@@ -2234,7 +2228,7 @@ msgstr "颁发者声明(&S)"
 
 #: dlls/cryptui/cryptui.rc:205
 msgid "&Show:"
-msgstr "显示(&S)："
+msgstr "显示(&S):"
 
 #: dlls/cryptui/cryptui.rc:210
 msgid "&Edit Properties..."
@@ -2258,7 +2252,7 @@ msgstr "查看证书(&V)"
 
 #: dlls/cryptui/cryptui.rc:223
 msgid "Certificate &status:"
-msgstr "证书状态(&S)："
+msgstr "证书状态(&S):"
 
 #: dlls/cryptui/cryptui.rc:229
 msgid "Disclaimer"
@@ -2270,12 +2264,12 @@ msgstr "更多信息(&I)"
 
 #: dlls/cryptui/cryptui.rc:244
 msgid "&Friendly name:"
-msgstr "易记名称(&F)："
+msgstr "易记名称(&F):"
 
 #: dlls/cryptui/cryptui.rc:246 programs/progman/progman.rc:154
 #: programs/progman/progman.rc:170
 msgid "&Description:"
-msgstr "描述(&D)："
+msgstr "描述(&D):"
 
 #: dlls/cryptui/cryptui.rc:248
 msgid "Certificate purposes"
@@ -2291,7 +2285,7 @@ msgstr "禁用此证书的所有用途(&I)"
 
 #: dlls/cryptui/cryptui.rc:253
 msgid "Enable &only the following purposes for this certificate:"
-msgstr "仅启用此证书的如下用途(&O)："
+msgstr "仅启用此证书的如下用途(&O):"
 
 #: dlls/cryptui/cryptui.rc:258
 msgid "Add &Purpose..."
@@ -2304,7 +2298,7 @@ msgstr "添加用途"
 #: dlls/cryptui/cryptui.rc:265
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr "为您要添加的证书用途添加对象识别 (OID) ："
+msgstr "为您要添加的证书用途添加对象识别 (OID):"
 
 #: dlls/cryptui/cryptui.rc:273 dlls/cryptui/cryptui.rc:69
 msgid "Select Certificate Store"
@@ -2349,7 +2343,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:299 dlls/cryptui/cryptui.rc:435
 msgid "&File name:"
-msgstr "文件名(&F)："
+msgstr "文件名(&F):"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
 #: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:311
@@ -2360,7 +2354,7 @@ msgstr "浏览(&R)..."
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
-msgstr "注意：如下格式的文件可能包含多个证书、证书吊销列表或证书信任列表："
+msgstr "注意: 如下格式的文件可能包含多个证书、证书吊销列表或证书信任列表:"
 
 #: dlls/cryptui/cryptui.rc:304
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
@@ -2387,7 +2381,7 @@ msgstr "自动选择证书存储(&A)"
 
 #: dlls/cryptui/cryptui.rc:320
 msgid "&Place all certificates in the following store:"
-msgstr "将所有证书放入此存储(&P)："
+msgstr "将所有证书放入此存储(&P):"
 
 #: dlls/cryptui/cryptui.rc:330
 msgid "Completing the Certificate Import Wizard"
@@ -2399,7 +2393,7 @@ msgstr "您已成功完成证书导入向导。"
 
 #: dlls/cryptui/cryptui.rc:334 dlls/cryptui/cryptui.rc:448
 msgid "You have specified the following settings:"
-msgstr "您已指定如下设置："
+msgstr "您已指定如下设置:"
 
 #: dlls/cryptui/cryptui.rc:342 dlls/cryptui/cryptui.rc:122
 #: dlls/inetcpl.cpl/inetcpl.rc:111
@@ -2408,7 +2402,7 @@ msgstr "证书"
 
 #: dlls/cryptui/cryptui.rc:345
 msgid "I&ntended purpose:"
-msgstr "预期用途："
+msgstr "预期用途:"
 
 #: dlls/cryptui/cryptui.rc:349
 msgid "&Import..."
@@ -2451,7 +2445,7 @@ msgstr "选择一个或多个在选中高级用途后要列出的用途。"
 
 #: dlls/cryptui/cryptui.rc:366
 msgid "&Certificate purposes:"
-msgstr "证书用途(&C)："
+msgstr "证书用途(&C):"
 
 #: dlls/cryptui/cryptui.rc:375 dlls/cryptui/cryptui.rc:386
 #: dlls/cryptui/cryptui.rc:399 dlls/cryptui/cryptui.rc:409
@@ -2491,7 +2485,7 @@ msgstr "如果您选择导出私钥，将提示您创建密码以保护后页的
 
 #: dlls/cryptui/cryptui.rc:390
 msgid "Do you wish to export the private key?"
-msgstr "您希望导出私钥吗？"
+msgstr "您希望导出私钥吗?"
 
 #: dlls/cryptui/cryptui.rc:391
 msgid "&Yes, export the private key"
@@ -2503,11 +2497,11 @@ msgstr "否，不要导出私钥(&O)"
 
 #: dlls/cryptui/cryptui.rc:404
 msgid "&Confirm password:"
-msgstr "确认密码(&C)："
+msgstr "确认密码(&C):"
 
 #: dlls/cryptui/cryptui.rc:412
 msgid "Select the format you want to use:"
-msgstr "选择您希望使用的格式："
+msgstr "选择您希望使用的格式:"
 
 #: dlls/cryptui/cryptui.rc:413
 msgid "&DER-encoded X.509 (*.cer)"
@@ -2515,7 +2509,7 @@ msgstr "&DER 加密的 X.509 (*.cer)"
 
 #: dlls/cryptui/cryptui.rc:415
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "Ba&se64 加密的 X.509 (*.cer)："
+msgstr "Ba&se64 加密的 X.509 (*.cer):"
 
 #: dlls/cryptui/cryptui.rc:417
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
@@ -2591,15 +2585,15 @@ msgstr "证书的所有预期用途均无法验证。"
 
 #: dlls/cryptui/cryptui.rc:37
 msgid "This certificate is intended for the following purposes:"
-msgstr "该证书的预期用途如下："
+msgstr "该证书的预期用途如下:"
 
 #: dlls/cryptui/cryptui.rc:38
 msgid "Issued to: "
-msgstr "颁发给："
+msgstr "颁发给: "
 
 #: dlls/cryptui/cryptui.rc:39
 msgid "Issued by: "
-msgstr "颁发者："
+msgstr "颁发者: "
 
 #: dlls/cryptui/cryptui.rc:40
 msgid "Valid from "
@@ -2684,7 +2678,7 @@ msgstr "公钥"
 
 #: dlls/cryptui/cryptui.rc:61
 msgid "%1 (%2!d! bits)"
-msgstr "%1（%2!d! 位）"
+msgstr "%1 (%2!d! 位)"
 
 #: dlls/cryptui/cryptui.rc:62
 msgid "SHA1 hash"
@@ -2692,7 +2686,7 @@ msgstr "SHA1 哈希值"
 
 #: dlls/cryptui/cryptui.rc:63
 msgid "Enhanced key usage (property)"
-msgstr "增强密钥用途（财产）"
+msgstr "增强密钥用途 (属性)"
 
 #: dlls/cryptui/cryptui.rc:64
 msgid "Friendly name"
@@ -2854,7 +2848,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "您已不能使用此证书解密或签名消息。\n"
-"您确实要移除此证书吗？"
+"您确实要移除此证书吗?"
 
 #: dlls/cryptui/cryptui.rc:111
 msgid ""
@@ -2863,7 +2857,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "您已不能使用这些证书解密或签名消息。\n"
-"您确实要移除这些证书吗？"
+"您确实要移除这些证书吗?"
 
 #: dlls/cryptui/cryptui.rc:112
 msgid ""
@@ -2872,7 +2866,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "您已不能使用此证书加密或校验消息。\n"
-"您确实要移除此证书吗？"
+"您确实要移除此证书吗?"
 
 #: dlls/cryptui/cryptui.rc:113
 msgid ""
@@ -2881,7 +2875,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "您已不能使用这些证书加密或校验消息。\n"
-"您确实要移除这些证书吗？"
+"您确实要移除这些证书吗?"
 
 #: dlls/cryptui/cryptui.rc:114
 msgid ""
@@ -2890,7 +2884,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "将不再信任由此证书颁发机构颁发的证书。\n"
-"您确实要移除此证书吗？"
+"您确实要移除此证书吗?"
 
 #: dlls/cryptui/cryptui.rc:115
 msgid ""
@@ -2899,7 +2893,7 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "将不再信任由这些证书颁发机构颁发的证书。\n"
-"您确实要移除这些证书吗？"
+"您确实要移除这些证书吗?"
 
 #: dlls/cryptui/cryptui.rc:116
 msgid ""
@@ -2908,7 +2902,7 @@ msgid ""
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
 "将不再信任由此根证书颁发机构颁发的证书或证书颁发机构。\n"
-"您确实要移除此已信任的根证书吗？"
+"您确实要移除此已信任的根证书吗?"
 
 #: dlls/cryptui/cryptui.rc:117
 msgid ""
@@ -2917,7 +2911,7 @@ msgid ""
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
 "将不再信任由这些根证书颁发机构颁发的证书或证书颁发机构。\n"
-"您确实要移除这些已信任的根证书吗？"
+"您确实要移除这些已信任的根证书吗?"
 
 #: dlls/cryptui/cryptui.rc:118
 msgid ""
@@ -2925,7 +2919,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "将不再信任由此发行商签名的软件。\n"
-"您确实要移除此证书吗？"
+"您确实要移除此证书吗?"
 
 #: dlls/cryptui/cryptui.rc:119
 msgid ""
@@ -2933,15 +2927,15 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "将不再信任由这些发行商签名的软件。\n"
-"您确实要移除这些证书吗？"
+"您确实要移除这些证书吗?"
 
 #: dlls/cryptui/cryptui.rc:120
 msgid "Are you sure you want to remove this certificate?"
-msgstr "您确实要移除此证书吗？"
+msgstr "您确实要移除此证书吗?"
 
 #: dlls/cryptui/cryptui.rc:121
 msgid "Are you sure you want to remove these certificates?"
-msgstr "您确实要移除这些证书吗？"
+msgstr "您确实要移除这些证书吗?"
 
 #: dlls/cryptui/cryptui.rc:124
 msgid "Ensures the identity of a remote computer"
@@ -3001,7 +2995,7 @@ msgstr "指定用于保存内容的文件名称。"
 
 #: dlls/cryptui/cryptui.rc:155
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr "指定文件已经存在。是否替换？"
+msgstr "指定文件已经存在。您要替换它吗?"
 
 #: dlls/cryptui/cryptui.rc:156
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -3063,11 +3057,11 @@ msgstr "密码不一致。"
 
 #: dlls/cryptui/cryptui.rc:175
 msgid "Note: The private key for this certificate could not be opened."
-msgstr "注意：无法打开该证书的私钥。"
+msgstr "注意: 无法打开该证书的私钥。"
 
 #: dlls/cryptui/cryptui.rc:176
 msgid "Note: The private key for this certificate is not exportable."
-msgstr "注意：证书的私钥不可导出。"
+msgstr "注意: 证书的私钥不可导出。"
 
 #: dlls/cryptui/cryptui.rc:177
 msgid "Intended Use"
@@ -3456,7 +3450,7 @@ msgstr "请指定您希望在 Internet Explorer 中打开的 URL"
 
 #: dlls/ieframe/ieframe.rc:94
 msgid "Open:"
-msgstr "打开："
+msgstr "打开:"
 
 #: dlls/ieframe/ieframe.rc:70
 msgctxt "home page"
@@ -3604,7 +3598,7 @@ msgstr "使用自动代理服务器配置 (PAC) 脚本"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:128 dlls/inetcpl.cpl/inetcpl.rc:132
 msgid "Address:"
-msgstr "地址："
+msgstr "地址:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:130
 msgid "Proxy server"
@@ -3616,7 +3610,7 @@ msgstr "使用代理服务器"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:134
 msgid "Port:"
-msgstr "端口："
+msgstr "端口:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:31
 msgid "Internet Settings"
@@ -3628,7 +3622,7 @@ msgstr "配置 Wine Internet Explorer 以及相关设置"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:33
 msgid "Security settings for zone: "
-msgstr "此区域的安全设置："
+msgstr "此区域的安全设置: "
 
 #: dlls/inetcpl.cpl/inetcpl.rc:34
 msgid "Custom"
@@ -3663,30 +3657,24 @@ msgid "&Disable"
 msgstr "停用(&D)"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "重设"
+msgstr "重置(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "启用(&E)"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "编辑顶替"
+msgstr "重写(&O)"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "已连接"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "语音输入设备："
+msgstr "已连接 (xinput 设备)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3930,21 +3918,19 @@ msgstr "无法在此对象上更改属性描述符中的“writable”属性为�
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "无法定义属性 '|': 对象不可扩展"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
-msgstr "无法重定义不可配置的属性“|”"
+msgstr "无法重定义不可配置的属性 '|'"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot modify non-writable property '|'"
-msgstr "无法更改不可写的属性“|”"
+msgstr "无法更改不可写的属性 '|'"
 
 #: dlls/jscript/jscript.rc:77
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a Map object"
-msgstr "'[object]' 不是日期对象"
+msgstr "'this' 不是 Map 对象"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
@@ -4785,19 +4771,19 @@ msgstr "注册表损坏。\n"
 
 #: dlls/kernel32/winerror.mc:1068
 msgid "Invalid key.\n"
-msgstr "无效的键。\n"
+msgstr "无效的项。\n"
 
 #: dlls/kernel32/winerror.mc:1073
 msgid "Can't open registry key.\n"
-msgstr "无法打开注册表键。\n"
+msgstr "无法打开注册表项。\n"
 
 #: dlls/kernel32/winerror.mc:1078
 msgid "Can't read registry key.\n"
-msgstr "无法读取注册表键。\n"
+msgstr "无法读取注册表项。\n"
 
 #: dlls/kernel32/winerror.mc:1083
 msgid "Can't write registry key.\n"
-msgstr "无法写入注册表键。\n"
+msgstr "无法写入注册表项。\n"
 
 #: dlls/kernel32/winerror.mc:1088
 msgid "Registry has been recovered.\n"
@@ -4817,7 +4803,7 @@ msgstr "不是注册表文件。\n"
 
 #: dlls/kernel32/winerror.mc:1108
 msgid "Key deleted.\n"
-msgstr "键已删除。\n"
+msgstr "注册表项已删除。\n"
 
 #: dlls/kernel32/winerror.mc:1113
 msgid "No registry log space.\n"
@@ -4825,11 +4811,11 @@ msgstr "注册表日志空间耗尽。\n"
 
 #: dlls/kernel32/winerror.mc:1118
 msgid "Registry key has subkeys.\n"
-msgstr "注册表键包含子键。\n"
+msgstr "注册表项包含子项。\n"
 
 #: dlls/kernel32/winerror.mc:1123
 msgid "Subkey must be volatile.\n"
-msgstr "子键必须为可变。\n"
+msgstr "子项必须为可变。\n"
 
 #: dlls/kernel32/winerror.mc:1128
 msgid "Notify change request in progress.\n"
@@ -6940,10 +6926,8 @@ msgid "Resource is not currently available.\n"
 msgstr "资源当前不可用。\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "类名："
+msgstr "经典蓝"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
@@ -6951,569 +6935,468 @@ msgid "Normal"
 msgstr "普通"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "盘符"
+msgstr "信纸"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "盘符"
+msgstr "小号信纸"
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "表格(&T)"
+msgstr "Tabloid"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Ledger"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "法律专用纸"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "状态"
+msgstr "Statement"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "执行(&E)..."
+msgstr "Executive"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "A"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "A"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "小号"
+msgstr "小号 A4"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "A"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "对开"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "四开"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "记事本"
+msgstr "便笺"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "信封 #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "信封 #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "信封 #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "信封 #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "信封 #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "C 型纸"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "D 型纸"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "E 型纸"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "信封 DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "信封 C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "信封 C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "信封 C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "信封 C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "信封 C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "信封 B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "信封 B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "信封 B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "已封装的 PKCS 7"
+msgstr "信封"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "信封 Monarch"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "已封装的 PKCS 7"
+msgstr "6 3/4 信封"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "美国标准复写簿"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "德国标准复写簿"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "德国法律专用复写簿"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "日语"
+msgstr "日式明信片"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "邀请信封"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "盘符"
+msgstr "特大信纸"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "特大法律专用纸"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "特大 Tabloid"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "其他(&X)"
+msgstr "特大 A4"
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "横向"
+msgstr "信纸横向"
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "横向"
+msgstr "A4 横向"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "特大信纸横向"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "超大 A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "超大 B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "盘符"
+msgstr "加大信纸"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "加大 A4"
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "横向"
+msgstr "A5 横向"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) 横向"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "其他(&X)"
+msgstr "特大 A3"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "其他(&X)"
+msgstr "特大 A5"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "特大 B5 (ISO)"
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "A"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "横向"
+msgstr "A3 横向"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "特大 A3 横向"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "日式双层明信片"
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "A"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "日式信封 Kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "日式信封 Kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "日式信封 Chou #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "日式信封 Chou #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "信纸旋转"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 旋转"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 旋转"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 旋转"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) 旋转"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) 旋转"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "日式明信片旋转"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "日式双层明信片旋转"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 旋转"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "日式信封 Kaku #2 旋转"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "日式信封 Kaku #3 旋转"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "日式信封 Chou #3 旋转"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "日式信封 Chou #4 旋转"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) 旋转"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "日式信纸 You #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "日式信纸 You #4 旋转"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "中国 16 开"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "中国 32 开"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "中国 32 开 (大)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "中国 16 开旋转"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "中国 32 开旋转"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "中国 32 开 (大) 旋转"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #1 旋转"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #2 旋转"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #3 旋转"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #4 旋转"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #5 旋转"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #6 旋转"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #7 旋转"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #8 旋转"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #9 旋转"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "已封装的 PKCS 7"
+msgstr "中国信封 #10 旋转"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7530,7 +7413,7 @@ msgstr "添加本地端口"
 
 #: dlls/localui/localui.rc:42
 msgid "&Enter the port name to add:"
-msgstr "添加本地端口名称(&E)："
+msgstr "添加本地端口名称(&E):"
 
 #: dlls/localui/localui.rc:51
 msgid "Configure LPT Port"
@@ -7542,7 +7425,7 @@ msgstr "超时(秒)"
 
 #: dlls/localui/localui.rc:55
 msgid "&Transmission Retry:"
-msgstr "重试通讯(&T)："
+msgstr "重试通讯(&T):"
 
 #: dlls/localui/localui.rc:32
 msgid "'%s' is not a valid port name"
@@ -7962,7 +7845,7 @@ msgstr "输入网络密码"
 
 #: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:51 dlls/wininet/wininet.rc:71
 msgid "Please enter your username and password:"
-msgstr "请输入用户名和密码："
+msgstr "请输入用户名和密码:"
 
 #: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:52
 msgid "Proxy"
@@ -7994,11 +7877,11 @@ msgstr "保存为(&S)..."
 
 #: dlls/msacm32/msacm32.rc:42
 msgid "&Format:"
-msgstr "格式(&F)："
+msgstr "格式(&F):"
 
 #: dlls/msacm32/msacm32.rc:47
 msgid "&Attributes:"
-msgstr "属性(&A)："
+msgstr "属性(&A):"
 
 #: dlls/mshtml/mshtml.rc:39
 msgid "Hyperlink"
@@ -8010,11 +7893,11 @@ msgstr "超链接信息"
 
 #: dlls/mshtml/mshtml.rc:43 programs/winecfg/winecfg.rc:243
 msgid "&Type:"
-msgstr "类型(&T)："
+msgstr "类型(&T):"
 
 #: dlls/mshtml/mshtml.rc:45
 msgid "&URL:"
-msgstr "网址(&U)："
+msgstr "网址(&U):"
 
 #: dlls/mshtml/mshtml.rc:34
 msgid "HTML Document"
@@ -8076,31 +7959,31 @@ msgid ""
 msgstr ""
 "Windows Installer %s\n"
 "\n"
-"用法：\n"
+"用法:\n"
 "msiexec 命令 {必要参数} [可选参数]\n"
 "\n"
-"安装产品：\n"
+"安装产品:\n"
 "\t/i {安装包|产品序列号} [属性]\n"
 "\t/package {安装包|产品序列号} [属性]\n"
 "\t/a package [属性]\n"
-"修复安装：\n"
+"修复安装:\n"
 "\t/f[p|o|e|d|c|a|u|m|s|v] {产品|序列号}\n"
-"卸载产品：\n"
+"卸载产品:\n"
 "\t/uninstall {产品|序列号} [属性]\n"
 "\t/x {产品|序列号} [属性]\n"
-"宣传产品：\n"
+"宣传产品:\n"
 "\t/j[u|m] package [/t 变形] [/g 语言代号]\n"
 "应用补丁\n"
 "\t/p 补丁包 [属性]\n"
 "\t/p 补丁包 /a 安装包 [属性]\n"
-"以上命令的日志和用户界面修饰：\n"
+"以上命令的日志和用户界面修饰:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] 日志文件\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"注册 MSI 服务：\n"
+"注册 MSI 服务:\n"
 "\t/y\n"
-"取消注册 MSI 服务：\n"
+"取消注册 MSI 服务:\n"
 "\t/z\n"
-"显示此帮助信息：\n"
+"显示此帮助信息:\n"
 "\t/help\n"
 "\t/?\n"
 
@@ -8118,7 +8001,7 @@ msgstr "本功能的网络驱动器不存在"
 
 #: dlls/msi/msi.rc:64
 msgid "feature from:"
-msgstr "功能来自："
+msgstr "功能来自:"
 
 #: dlls/msi/msi.rc:65
 msgid "choose which folder contains %s"
@@ -8374,87 +8257,87 @@ msgstr "正在写入系统注册表值"
 
 #: dlls/msi/msi.rc:161
 msgid "Free space: [1]"
-msgstr "可用空间： [1]"
+msgstr "可用空间: [1]"
 
 #: dlls/msi/msi.rc:162
 msgid "Property: [1], Signature: [2]"
-msgstr "属性：[1]，签名：[2]"
+msgstr "属性: [1]，签名: [2]"
 
 #: dlls/msi/msi.rc:163
 msgid "File: [1]"
-msgstr "文件：[1]"
+msgstr "文件: [1]"
 
 #: dlls/msi/msi.rc:164 dlls/msi/msi.rc:191
 msgid "Folder: [1]"
-msgstr "文件夹：[1]"
+msgstr "文件夹: [1]"
 
 #: dlls/msi/msi.rc:165 dlls/msi/msi.rc:194
 msgid "Shortcut: [1]"
-msgstr "快捷方式：[1]"
+msgstr "快捷方式: [1]"
 
 #: dlls/msi/msi.rc:166 dlls/msi/msi.rc:197 dlls/msi/msi.rc:198
 msgid "Service: [1]"
-msgstr "服务：[1]"
+msgstr "服务: [1]"
 
 #: dlls/msi/msi.rc:167 dlls/msi/msi.rc:170 dlls/msi/msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr "文件：[1]，路径：[9]，大小：[6]"
+msgstr "文件: [1]， 路径: [9]， 大小: [6]"
 
 #: dlls/msi/msi.rc:168
 msgid "Found application: [1]"
-msgstr "找到应用程序：[1]"
+msgstr "找到应用程序: [1]"
 
 #: dlls/msi/msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr "文件：[1]，路径：[9]，大小：[6]"
+msgstr "文件: [1]，路径: [9]，大小: [6]"
 
 #: dlls/msi/msi.rc:171
 msgid "Service: [2]"
-msgstr "服务：[2]"
+msgstr "服务: [2]"
 
 #: dlls/msi/msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
-msgstr "文件：[1]，依赖项：[2]"
+msgstr "文件: [1]， 依赖项: [2]"
 
 #: dlls/msi/msi.rc:173
 msgid "Application: [1]"
-msgstr "应用程序：[1]"
+msgstr "应用程序: [1]"
 
 #: dlls/msi/msi.rc:175 dlls/msi/msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr "应用程序上下文：[1]，组装名称：[2]"
+msgstr "应用程序上下文: [1]，组装名称: [2]"
 
 #: dlls/msi/msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr "文件：[1]，路径：[2]，大小：[3]"
+msgstr "文件: [1]， 路径: [2]， 大小: [3]"
 
 #: dlls/msi/msi.rc:178 dlls/msi/msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
-msgstr "组件 ID：[1]，修饰符：[2]"
+msgstr "组件 ID: [1]，修饰符: [2]"
 
 #: dlls/msi/msi.rc:179 dlls/msi/msi.rc:200
 msgid "Feature: [1]"
-msgstr "特性：[1]"
+msgstr "特性: [1]"
 
 #: dlls/msi/msi.rc:180 dlls/msi/msi.rc:201
 msgid "Class Id: [1]"
-msgstr "类 ID：[1]"
+msgstr "类 ID: [1]"
 
 #: dlls/msi/msi.rc:181
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
+msgstr "应用程序 ID: [1]{{，应用程序类型: [2]，用户: [3]，RSN: [4]}}"
 
 #: dlls/msi/msi.rc:182 dlls/msi/msi.rc:203
 msgid "Extension: [1]"
-msgstr "扩展名：[1]"
+msgstr "扩展名: [1]"
 
 #: dlls/msi/msi.rc:183 dlls/msi/msi.rc:204
 msgid "Font: [1]"
-msgstr "字体：[1]"
+msgstr "字体: [1]"
 
 #: dlls/msi/msi.rc:184 dlls/msi/msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
-msgstr "MIME 内容类型：[1]，扩展名：[2]"
+msgstr "MIME 内容类型: [1]，扩展名: [2]"
 
 #: dlls/msi/msi.rc:185 dlls/msi/msi.rc:206
 msgid "ProgId: [1]"
@@ -8466,27 +8349,27 @@ msgstr "LibID: [1]"
 
 #: dlls/msi/msi.rc:187 dlls/msi/msi.rc:190
 msgid "File: [1], Directory: [9]"
-msgstr "文件：[1]，路径：[9]"
+msgstr "文件: [1]，路径: [9]"
 
 #: dlls/msi/msi.rc:188 dlls/msi/msi.rc:208
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr "名称：[1]，值：[2]，动作 [3]"
+msgstr "名称: [1]，值: [2]，动作 [3]"
 
 #: dlls/msi/msi.rc:189
 msgid "Application: [1], Command line: [2]"
-msgstr "应用程序：[1]，命令行：[2]"
+msgstr "应用程序: [1]，命令行: [2]"
 
 #: dlls/msi/msi.rc:192 dlls/msi/msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr "文件：[1]，板块：[2]，键：[3]，值：［4]"
+msgstr "文件: [1]， 节: [2]， 项: [3]， 值:［4]"
 
 #: dlls/msi/msi.rc:193
 msgid "Key: [1], Name: [2]"
-msgstr "键：[1]，名称：[2]"
+msgstr "项: [1]，名称: [2]"
 
 #: dlls/msi/msi.rc:195 dlls/msi/msi.rc:196
 msgid "File: [1], Folder: [2]"
-msgstr "文件：[1]，文件夹：[2]"
+msgstr "文件: [1]，文件夹: [2]"
 
 #: dlls/msi/msi.rc:202
 msgid "AppId: [1]{{, AppType: [2]}}"
@@ -8494,11 +8377,11 @@ msgstr "AppId: [1]{{, AppType: [2]}}"
 
 #: dlls/msi/msi.rc:210
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr "键：[1]，名称：[2]，值：[3]"
+msgstr "项: [1]，名称: [2]，值: [3]"
 
 #: dlls/msi/msi.rc:72
 msgid "{{Fatal error: }}"
-msgstr "{{致命错误：}}"
+msgstr "{{致命错误: }}"
 
 #: dlls/msi/msi.rc:73
 msgid "{{Error [1]. }}"
@@ -8519,41 +8402,41 @@ msgid ""
 "arguments are: [2], [3], [4]}}"
 msgstr ""
 "安装程序在安装此软件包时遇到了未预期的错误。这可能代表软件包存在问题。错误码"
-"为 [1]。{{参数为：[2]，[3]，[4]}}"
+"为 [1]。{{参数为: [2]，[3]，[4]}}"
 
 #: dlls/msi/msi.rc:77
 msgid "{{Disk full: }}"
-msgstr "{{磁盘已满：}}"
+msgstr "{{磁盘已满: }}"
 
 #: dlls/msi/msi.rc:78
 msgid "Action [Time]: [1]. [2]"
-msgstr "操作 [Time]：[1]。[2]"
+msgstr "操作 [Time]: [1]。[2]"
 
 #: dlls/msi/msi.rc:79
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr "消息类型：[1]，参数：[2]{, [3]}"
+msgstr "消息类型: [1]，参数: [2]{，[3]}"
 
 #: dlls/msi/msi.rc:82
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr "=== 日志开头：[Date]  [Time] ==="
+msgstr "=== 日志开头: [Date]  [Time] ==="
 
 #: dlls/msi/msi.rc:80
 msgid "Action start [Time]: [1]."
-msgstr "操作开始 [Time]：[1]。"
+msgstr "操作开始 [Time]: [1]。"
 
 #: dlls/msi/msi.rc:81
 msgid "Action ended [Time]: [1]. Return value [2]."
-msgstr "操作结束 [Time]：[1]。返回值 [2]。"
+msgstr "操作结束 [Time]: [1]。返回值 [2]。"
 
 #: dlls/msi/msi.rc:84
 msgid "Please insert the disk: [2]"
-msgstr "请插入磁盘：[2]"
+msgstr "请插入磁盘: [2]"
 
 #: dlls/msi/msi.rc:85
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
-msgstr "找不到源文件{{(cabinet)}}：[2]。请检查文件是否存在且可被您访问。"
+msgstr "找不到源文件{{(cabinet)}}: [2]。请检查文件是否存在且可被您访问。"
 
 #: dlls/msrle32/msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -8573,7 +8456,7 @@ msgstr "视频压缩"
 
 #: dlls/msvfw32/msvfw32.rc:39
 msgid "&Compressor:"
-msgstr "压缩器(&C)："
+msgstr "压缩器(&C):"
 
 #: dlls/msvfw32/msvfw32.rc:42
 msgid "Con&figure..."
@@ -8585,7 +8468,7 @@ msgstr "关于(&A)"
 
 #: dlls/msvfw32/msvfw32.rc:47
 msgid "Compression &Quality:"
-msgstr "压缩质量(&Q)："
+msgstr "压缩质量(&Q):"
 
 #: dlls/msvfw32/msvfw32.rc:49
 msgid "&Key Frame Every"
@@ -9049,7 +8932,7 @@ msgstr "提供者"
 
 #: dlls/oledb32/version.rc:59
 msgid "Select the data you want to connect to:"
-msgstr "选择您想要连接的数据源："
+msgstr "选择您想要连接的数据源:"
 
 #: dlls/oledb32/version.rc:66
 msgid "Connection"
@@ -9057,11 +8940,11 @@ msgstr "连接"
 
 #: dlls/oledb32/version.rc:69
 msgid "Specify the following to connect to ODBC data:"
-msgstr "指定以下内容以连接到 ODBC 数据源："
+msgstr "指定以下内容以连接到 ODBC 数据源:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr "1. 指定数据源："
+msgstr "1. 指定数据源:"
 
 #: dlls/oledb32/version.rc:71
 msgid "Use &data source name"
@@ -9073,7 +8956,7 @@ msgstr "使用连接字符串(&O)"
 
 #: dlls/oledb32/version.rc:75
 msgid "&Connection string:"
-msgstr "连接字符串(&C)："
+msgstr "连接字符串(&C):"
 
 #: dlls/oledb32/version.rc:77
 msgid "B&uild..."
@@ -9085,7 +8968,7 @@ msgstr "2. 输入服务器登录信息"
 
 #: dlls/oledb32/version.rc:79
 msgid "User &name:"
-msgstr "用户名(&N)："
+msgstr "用户名(&N):"
 
 #: dlls/oledb32/version.rc:83
 msgid "&Blank password"
@@ -9097,7 +8980,7 @@ msgstr "允许保存密码(&S)"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr "3. 输入要使用的初始目录："
+msgstr "3. 输入要使用的初始目录:"
 
 #: dlls/oledb32/version.rc:87
 msgid "&Test Connection"
@@ -9113,15 +8996,15 @@ msgstr "网络设置"
 
 #: dlls/oledb32/version.rc:96
 msgid "&Impersonation level:"
-msgstr "模拟级别(&I)："
+msgstr "模拟级别(&I):"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr "保护级别(&R)："
+msgstr "保护级别(&R):"
 
 #: dlls/oledb32/version.rc:101
 msgid "Connect:"
-msgstr "连接："
+msgstr "连接:"
 
 #: dlls/oledb32/version.rc:103
 msgid "seconds."
@@ -9129,7 +9012,7 @@ msgstr "秒。"
 
 #: dlls/oledb32/version.rc:104
 msgid "A&ccess:"
-msgstr "访问(&A)："
+msgstr "访问(&A):"
 
 #: dlls/oledb32/version.rc:110
 msgid "All"
@@ -9203,7 +9086,7 @@ msgstr "插入对象"
 
 #: dlls/oledlg/oledlg.rc:61
 msgid "Object Type:"
-msgstr "对象类型："
+msgstr "对象类型:"
 
 #: dlls/oledlg/oledlg.rc:64 dlls/oledlg/oledlg.rc:102
 msgid "Result"
@@ -9235,7 +9118,7 @@ msgstr "浏览..."
 
 #: dlls/oledlg/oledlg.rc:76
 msgid "File:"
-msgstr "文件："
+msgstr "文件:"
 
 #: dlls/oledlg/oledlg.rc:82
 msgid "Paste Special"
@@ -9243,7 +9126,7 @@ msgstr "特殊粘贴"
 
 #: dlls/oledlg/oledlg.rc:85 dlls/setupapi/setupapi.rc:43
 msgid "Source:"
-msgstr "源文件："
+msgstr "源文件:"
 
 #: dlls/oledlg/oledlg.rc:86 dlls/shdoclc/shdoclc.rc:50
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
@@ -9259,7 +9142,7 @@ msgstr "粘贴链接(&L)"
 
 #: dlls/oledlg/oledlg.rc:90
 msgid "&As:"
-msgstr "为(&A)："
+msgstr "为(&A):"
 
 #: dlls/oledlg/oledlg.rc:97
 msgid "&Display As Icon"
@@ -9271,14 +9154,14 @@ msgstr "改变图标(&I)..."
 
 #: dlls/oledlg/oledlg.rc:28
 msgid "Insert a new %s object into your document"
-msgstr "在你的文件中插入一个新的 %s 对象"
+msgstr "在您的文件中插入一个新的 %s 对象"
 
 #: dlls/oledlg/oledlg.rc:29
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"将文件的内容以对象的方式插入到你的文件以便你可以用创建本文件的程序来激活它。"
+"将文件的内容以对象的方式插入到您的文件以便您可以用创建本文件的程序来激活它。"
 
 #: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:195
 msgid "Browse"
@@ -9312,20 +9195,20 @@ msgstr "对象(&O)"
 
 #: dlls/oledlg/oledlg.rc:41
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "将剪贴板的内容以 %s 插入到你的文件。"
+msgstr "将剪贴板的内容以 %s 插入到您的文件。"
 
 #: dlls/oledlg/oledlg.rc:42
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
-msgstr "将剪贴板的内容插入到你的文件以便你可以使用 %s。"
+msgstr "将剪贴板的内容插入到您的文件以便您可以使用 %s。"
 
 #: dlls/oledlg/oledlg.rc:43
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"将剪贴板的内容插入到你的文件，你可以用 %s 激活它。插入的内容会显示为图标。"
+"将剪贴板的内容插入到您的文件，您可以用 %s 激活它。插入的内容会显示为图标。"
 
 #: dlls/oledlg/oledlg.rc:44
 msgid ""
@@ -9333,8 +9216,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"将剪贴板的内容以 %s 插入到你的文件。 数据是链接到源文件的, 对源文件的任何改动"
-"都会反映到反映到你的文档中。"
+"将剪贴板的内容以 %s 插入到您的文件。 数据是链接到源文件的, 对源文件的任何改动"
+"都会反映到反映到您的文档中。"
 
 #: dlls/oledlg/oledlg.rc:45
 msgid ""
@@ -9342,7 +9225,7 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"插入剪贴板中的图片。图片是链接到源文件的，对源文件的任何改动都会反映到你的文"
+"插入剪贴板中的图片。图片是链接到源文件的，对源文件的任何改动都会反映到您的文"
 "档中。"
 
 #: dlls/oledlg/oledlg.rc:46
@@ -9352,11 +9235,11 @@ msgid ""
 "be reflected in your document."
 msgstr ""
 "插入指向剪贴板中文件的快捷方式。快捷方式是链接到源文件的，对源文件的任何改动"
-"都会反映到你的文档中。"
+"都会反映到您的文档中。"
 
 #: dlls/oledlg/oledlg.rc:47
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "将剪贴板的内容插入到你的文件。"
+msgstr "将剪贴板的内容插入到您的文件。"
 
 #: dlls/oledlg/oledlg.rc:48 programs/regedit/regedit.rc:430
 msgid "Unknown Type"
@@ -9434,7 +9317,7 @@ msgstr "复制文件..."
 
 #: dlls/setupapi/setupapi.rc:45
 msgid "Destination:"
-msgstr "目标文件："
+msgstr "目标文件:"
 
 #: dlls/setupapi/setupapi.rc:52
 msgid "Files Needed"
@@ -9448,7 +9331,7 @@ msgstr "插入厂商的安装磁盘，然后确定下面选择了正确的驱动
 
 #: dlls/setupapi/setupapi.rc:57
 msgid "Copy manufacturer's files from:"
-msgstr "从此处复制厂商文件："
+msgstr "从此处复制厂商文件:"
 
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
@@ -9460,7 +9343,7 @@ msgstr "未知"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
-msgstr "文件复制来源："
+msgstr "文件复制来源:"
 
 #: dlls/setupapi/setupapi.rc:34
 msgid "Type the path where the file is located, and then click OK."
@@ -9860,7 +9743,7 @@ msgstr "选择文件夹"
 
 #: dlls/shell32/shell32.rc:291
 msgid "Folder:"
-msgstr "文件夹："
+msgstr "文件夹:"
 
 #: dlls/shell32/shell32.rc:297
 msgid "&Make New Folder"
@@ -9888,7 +9771,7 @@ msgstr "运行于 %s"
 
 #: dlls/shell32/shell32.rc:327
 msgid "Wine was brought to you by:"
-msgstr "Wine 开发人员："
+msgstr "Wine 开发者:"
 
 #: dlls/shell32/shell32.rc:332
 msgid "Run"
@@ -9902,7 +9785,7 @@ msgstr "输入程序，目录，文件或者Internet资源名，Wine将为您打
 
 #: dlls/shell32/shell32.rc:337
 msgid "&Open:"
-msgstr "打开(&O)："
+msgstr "打开(&O):"
 
 #: dlls/shell32/shell32.rc:341 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
@@ -9912,25 +9795,25 @@ msgstr "浏览(&B)..."
 
 #: dlls/shell32/shell32.rc:353 dlls/shell32/shell32.rc:382
 msgid "File type:"
-msgstr "文件类型："
+msgstr "文件类型:"
 
 #: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
-msgstr "位置："
+msgstr "位置:"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
-msgstr "大小："
+msgstr "大小:"
 
 #: dlls/shell32/shell32.rc:363 dlls/shell32/shell32.rc:396
 msgid "Creation date:"
-msgstr "创建日期："
+msgstr "创建日期:"
 
 #: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
 msgid "Attributes:"
-msgstr "属性："
+msgstr "属性:"
 
 #: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
 #: programs/winefile/winefile.rc:173
@@ -9944,7 +9827,7 @@ msgstr "存档(&A)"
 
 #: dlls/shell32/shell32.rc:384
 msgid "Open with:"
-msgstr "打开方式："
+msgstr "打开方式:"
 
 #: dlls/shell32/shell32.rc:387
 msgid "&Change..."
@@ -9952,11 +9835,11 @@ msgstr "更改(&C)..."
 
 #: dlls/shell32/shell32.rc:398
 msgid "Last modified:"
-msgstr "最近修改："
+msgstr "最近修改:"
 
 #: dlls/shell32/shell32.rc:400
 msgid "Last accessed:"
-msgstr "最近访问："
+msgstr "最近访问:"
 
 #: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
 #: programs/winefile/winefile.rc:107
@@ -10154,7 +10037,7 @@ msgstr "下载"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Unable to create new Folder: Permission denied."
-msgstr "无法创建新文件夹：拒绝访问。"
+msgstr "无法创建新文件夹: 拒绝访问。"
 
 #: dlls/shell32/shell32.rc:168
 msgid "Error during creation of a new folder"
@@ -10263,7 +10146,7 @@ msgid ""
 msgstr ""
 "文件 %1 已经存在。\n"
 "\n"
-"是否替换？"
+"您要替换它吗?"
 
 #: dlls/shell32/shell32.rc:248
 msgid ""
@@ -10273,7 +10156,7 @@ msgid ""
 msgstr ""
 "文件夹 %1 已经存在。\n"
 "\n"
-"是否替换？"
+"您要替换它吗?"
 
 #: dlls/shell32/shell32.rc:249
 msgid "Confirm overwrite"
@@ -10357,7 +10240,7 @@ msgstr "中国夏令时"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
-msgstr ""
+msgstr "(UTC+08:00) 北京，重庆，香港，乌鲁木齐"
 
 #: dlls/tzres/tzres.rc:267
 msgid "North Asia Standard Time"
@@ -10369,7 +10252,7 @@ msgstr "北亚夏令时"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+07:00) Krasnoyarsk"
-msgstr ""
+msgstr "(UTC+07:00) 雅茨克"
 
 #: dlls/tzres/tzres.rc:168
 msgid "Georgian Standard Time"
@@ -10381,17 +10264,15 @@ msgstr "格鲁吉亚夏令时"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
-msgstr ""
+msgstr "(UTC+04:00) 第比利斯"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:395
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr "协调世界时"
+msgstr "(UTC+12:00) 协调世界时+12"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Nepal Standard Time"
@@ -10403,7 +10284,7 @@ msgstr "尼泊尔夏令时"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+05:45) Kathmandu"
-msgstr ""
+msgstr "(UTC+05:45) 加德满都"
 
 #: dlls/tzres/tzres.rc:90
 msgid "Cape Verde Standard Time"
@@ -10415,7 +10296,7 @@ msgstr "佛得角夏令时"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) 佛得角群岛"
 
 #: dlls/tzres/tzres.rc:183
 msgid "Haiti Standard Time"
@@ -10427,7 +10308,7 @@ msgstr "海地夏令时"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) 海地"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Central European Standard Time"
@@ -10439,7 +10320,7 @@ msgstr "中欧夏令时"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
-msgstr ""
+msgstr "(UTC+01:00) 萨拉热窝，斯科普里，华沙，萨格勒布"
 
 #: dlls/tzres/tzres.rc:234
 msgid "Morocco Standard Time"
@@ -10451,33 +10332,27 @@ msgstr "摩洛哥夏令时"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+01:00) Casablanca"
-msgstr ""
+msgstr "(UTC+01:00) 卡萨布兰卡"
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:404
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr "协调世界时"
+msgstr "(UTC-08:00) 协调世界时-8"
 
 #: dlls/tzres/tzres.rc:39
-#, fuzzy
-#| msgid "Atlantic Standard Time"
 msgid "Altai Standard Time"
-msgstr "大西洋标准时间"
+msgstr "阿尔泰标准时间"
 
 #: dlls/tzres/tzres.rc:40
-#, fuzzy
-#| msgid "Atlantic Daylight Time"
 msgid "Altai Daylight Time"
-msgstr "大西洋夏令时"
+msgstr "阿尔泰夏令时"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
-msgstr ""
+msgstr "(UTC+07:00) 巴尔瑙尔，戈尔诺-阿尔泰斯克"
 
 #: dlls/tzres/tzres.rc:108
 msgid "Central Europe Standard Time"
@@ -10489,7 +10364,7 @@ msgstr "中欧夏令时"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
-msgstr ""
+msgstr "(UTC+01:00) 贝尔格莱德，布拉迪斯拉发，布达佩斯，卢布尔雅那，布拉格"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Iran Standard Time"
@@ -10501,7 +10376,7 @@ msgstr "伊朗夏令时"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) 德黑兰"
 
 #: dlls/tzres/tzres.rc:318
 msgid "Saint Pierre Standard Time"
@@ -10512,26 +10387,20 @@ msgid "Saint Pierre Daylight Time"
 msgstr "圣皮埃尔夏令时"
 
 #: dlls/tzres/tzres.rc:320
-#, fuzzy
-#| msgid "Saint Pierre Standard Time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "圣皮埃尔标准时间"
+msgstr "(UTC-03:00) 圣皮埃尔和密克隆"
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Sao Tome Standard Time"
-msgstr "萨摩亚标准时间"
+msgstr "圣多美标准时间"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Sao Tome Daylight Time"
-msgstr "萨摩亚夏令时"
+msgstr "圣多美夏令时"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) 圣多美"
 
 #: dlls/tzres/tzres.rc:249
 msgid "Namibia Standard Time"
@@ -10543,7 +10412,7 @@ msgstr "纳米比亚夏令时"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+02:00) Windhoek"
-msgstr ""
+msgstr "(UTC+02:00) 温得和克"
 
 #: dlls/tzres/tzres.rc:369
 msgid "Tonga Standard Time"
@@ -10555,19 +10424,19 @@ msgstr "汤加夏令时"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+13:00) Nuku'alofa"
-msgstr ""
+msgstr "(UTC+13:00) 努库阿洛法"
 
 #: dlls/tzres/tzres.rc:240
 msgid "Mountain Standard Time (Mexico)"
-msgstr "山地标准时间（墨西哥）"
+msgstr "山地标准时间 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:241
 msgid "Mountain Daylight Time (Mexico)"
-msgstr "山地夏令时（墨西哥）"
+msgstr "山地夏令时 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
-msgstr ""
+msgstr "(UTC-07:00) 奇瓦瓦，拉巴斯，马萨特兰"
 
 #: dlls/tzres/tzres.rc:171
 msgid "GMT Standard Time"
@@ -10579,23 +10448,19 @@ msgstr "格林尼治夏令时"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
-msgstr ""
+msgstr "(UTC+00:00) 柏林，爱丁堡，里斯本，伦敦"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "约旦标准时间"
+msgstr "南苏丹标准时间"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "约旦夏令时"
+msgstr "南苏丹夏令时"
 
 #: dlls/tzres/tzres.rc:344
 msgid "(UTC+02:00) Juba"
-msgstr ""
+msgstr "(UTC+02:00) 朱巴"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -10607,7 +10472,7 @@ msgstr "中亚夏令时"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC+06:00) Astana"
-msgstr ""
+msgstr "(UTC+06:00) 阿斯塔纳"
 
 #: dlls/tzres/tzres.rc:213
 msgid "Lord Howe Standard Time"
@@ -10619,7 +10484,7 @@ msgstr "豪勋爵夏令时"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr ""
+msgstr "(UTC+10:30) 豪勋爵岛"
 
 #: dlls/tzres/tzres.rc:48
 msgid "Arabic Standard Time"
@@ -10631,17 +10496,15 @@ msgstr "阿拉伯夏令时"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
-msgstr ""
+msgstr "(UTC+03:00) 巴格达"
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:398
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "协调世界时"
+msgstr "(UTC+13:00) 协调世界时+13"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Magadan Standard Time"
@@ -10653,7 +10516,7 @@ msgstr "马加丹夏令时"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
-msgstr ""
+msgstr "(UTC+11:00) 马加丹"
 
 #: dlls/tzres/tzres.rc:258
 msgid "Newfoundland Standard Time"
@@ -10665,23 +10528,19 @@ msgstr "纽芬兰夏令时"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) 纽芬兰"
 
 #: dlls/tzres/tzres.rc:348
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Sudan Standard Time"
-msgstr "约旦标准时间"
+msgstr "苏丹标准时间"
 
 #: dlls/tzres/tzres.rc:349
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Sudan Daylight Time"
-msgstr "约旦夏令时"
+msgstr "苏丹夏令时"
 
 #: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Khartoum"
-msgstr ""
+msgstr "(UTC+02:00) 喀土穆"
 
 #: dlls/tzres/tzres.rc:438
 msgid "West Pacific Standard Time"
@@ -10693,7 +10552,7 @@ msgstr "西太平洋夏令时"
 
 #: dlls/tzres/tzres.rc:440
 msgid "(UTC+10:00) Guam, Port Moresby"
-msgstr ""
+msgstr "(UTC+10:00) 关岛，莫尔兹比港"
 
 #: dlls/tzres/tzres.rc:279
 msgid "Pacific Standard Time"
@@ -10705,7 +10564,7 @@ msgstr "太平洋夏令时"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC-08:00) Pacific Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-08:00) 太平洋时间 (美国和加拿大)"
 
 #: dlls/tzres/tzres.rc:69
 msgid "Azerbaijan Standard Time"
@@ -10717,7 +10576,7 @@ msgstr "阿塞拜疆夏令时"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC+04:00) Baku"
-msgstr ""
+msgstr "(UTC+04:00) 巴库"
 
 #: dlls/tzres/tzres.rc:219
 msgid "Magallanes Standard Time"
@@ -10729,7 +10588,7 @@ msgstr "麦哲伦夏令时"
 
 #: dlls/tzres/tzres.rc:221
 msgid "(UTC-03:00) Punta Arenas"
-msgstr ""
+msgstr "(UTC-03:00) 蓬塔阿雷纳斯"
 
 #: dlls/tzres/tzres.rc:324
 msgid "Samoa Standard Time"
@@ -10741,7 +10600,7 @@ msgstr "萨摩亚夏令时"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+13:00) Samoa"
-msgstr ""
+msgstr "(UTC+13:00) 萨摩亚"
 
 #: dlls/tzres/tzres.rc:201
 msgid "Kaliningrad Standard Time"
@@ -10753,19 +10612,19 @@ msgstr "加里宁格勒夏令时"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC+02:00) Kaliningrad"
-msgstr ""
+msgstr "(UTC+02:00) 加里宁格勒"
 
 #: dlls/tzres/tzres.rc:282
 msgid "Pacific Standard Time (Mexico)"
-msgstr "太平洋标准时间（墨西哥）"
+msgstr "太平洋标准时间 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:283
 msgid "Pacific Daylight Time (Mexico)"
-msgstr "太平洋夏令时（墨西哥）"
+msgstr "太平洋夏令时 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
-msgstr ""
+msgstr "(UTC-08:00) 下加利福尼亚"
 
 #: dlls/tzres/tzres.rc:228
 msgid "Middle East Standard Time"
@@ -10777,7 +10636,7 @@ msgstr "中东夏令时"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
-msgstr ""
+msgstr "(UTC+02:00) 贝鲁特"
 
 #: dlls/tzres/tzres.rc:363
 msgid "Tokyo Standard Time"
@@ -10789,7 +10648,7 @@ msgstr "东京夏令时"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
-msgstr ""
+msgstr "(UTC+09:00) 大阪，札幌，东京"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Line Islands Standard Time"
@@ -10801,7 +10660,7 @@ msgstr "莱恩群岛夏令时"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
-msgstr ""
+msgstr "(UTC+14:00) 圣诞岛"
 
 #: dlls/tzres/tzres.rc:129
 msgid "Cuba Standard Time"
@@ -10813,7 +10672,7 @@ msgstr "古巴夏令时"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-05:00) Havana"
-msgstr ""
+msgstr "(UTC-05:00) 哈瓦拉"
 
 #: dlls/tzres/tzres.rc:198
 msgid "Jordan Standard Time"
@@ -10825,7 +10684,7 @@ msgstr "约旦夏令时"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
-msgstr ""
+msgstr "(UTC+02:00) 安曼"
 
 #: dlls/tzres/tzres.rc:117
 msgid "Central Standard Time"
@@ -10837,31 +10696,27 @@ msgstr "中部夏令时"
 
 #: dlls/tzres/tzres.rc:119
 msgid "(UTC-06:00) Central Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-06:00) 中部时间 (美国和加拿大)"
 
 #: dlls/tzres/tzres.rc:303 dlls/tzres/tzres.rc:304
 msgid "Russia Time Zone 3"
-msgstr ""
+msgstr "俄罗斯时区 3"
 
 #: dlls/tzres/tzres.rc:305
 msgid "(UTC+04:00) Izhevsk, Samara"
-msgstr ""
+msgstr "(UTC+04:00) 伊热夫斯克，萨马拉"
 
 #: dlls/tzres/tzres.rc:417
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "Volgograd Standard Time"
-msgstr "汤加标准时间"
+msgstr "伏尔加格勒标准时间"
 
 #: dlls/tzres/tzres.rc:418
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "Volgograd Daylight Time"
-msgstr "汤加夏令时"
+msgstr "伏尔加格勒夏令时"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+04:00) Volgograd"
-msgstr ""
+msgstr "(UTC+04:00) 伏尔加格勒"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Azores Standard Time"
@@ -10873,7 +10728,7 @@ msgstr "亚速尔群岛夏令时"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
-msgstr ""
+msgstr "(UTC-01:00) 亚速尔群岛"
 
 #: dlls/tzres/tzres.rc:264
 msgid "North Asia East Standard Time"
@@ -10885,17 +10740,15 @@ msgstr "北亚东部夏令时"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
-msgstr ""
+msgstr "(UTC+08:00) 伊尔库茨克"
 
 #: dlls/tzres/tzres.rc:408 dlls/tzres/tzres.rc:409
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:410
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr "协调世界时"
+msgstr "(UTC-11:00) 协调世界时-11"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Argentina Standard Time"
@@ -10907,23 +10760,19 @@ msgstr "阿根廷夏令时"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC-03:00) City of Buenos Aires"
-msgstr ""
+msgstr "(UTC-03:00) 布宜诺斯艾利斯市"
 
 #: dlls/tzres/tzres.rc:378
-#, fuzzy
-#| msgid "Turkey Standard Time"
 msgid "Turks And Caicos Standard Time"
-msgstr "土耳其标准时间"
+msgstr "特克斯和凯科斯群岛标准时间"
 
 #: dlls/tzres/tzres.rc:379
-#, fuzzy
-#| msgid "Turkey Daylight Time"
 msgid "Turks And Caicos Daylight Time"
-msgstr "土耳其夏令时"
+msgstr "特克斯和凯科斯群岛夏令时"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) 特克斯和凯科斯群岛"
 
 #: dlls/tzres/tzres.rc:222
 msgid "Marquesas Standard Time"
@@ -10935,7 +10784,7 @@ msgstr "马克萨斯夏令时"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr ""
+msgstr "(UTC-09:30) 马克萨斯群岛"
 
 #: dlls/tzres/tzres.rc:243
 msgid "Myanmar Standard Time"
@@ -10947,17 +10796,15 @@ msgstr "缅甸夏令时"
 
 #: dlls/tzres/tzres.rc:245
 msgid "(UTC+06:30) Yangon (Rangoon)"
-msgstr ""
+msgstr "(UTC+06:30) 仰光"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "Coordinated Universal Time"
 msgstr "协调世界时"
 
 #: dlls/tzres/tzres.rc:392
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC) Coordinated Universal Time"
-msgstr "协调世界时"
+msgstr "(UTC) 协调世界时"
 
 #: dlls/tzres/tzres.rc:189
 msgid "India Standard Time"
@@ -10969,7 +10816,7 @@ msgstr "印度夏令时"
 
 #: dlls/tzres/tzres.rc:191
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
-msgstr ""
+msgstr "(UTC+05:30) 马德拉斯，加尔各答，孟买，新德里"
 
 #: dlls/tzres/tzres.rc:180
 msgid "GTB Standard Time"
@@ -10981,7 +10828,7 @@ msgstr "GTB 夏令时"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Athens, Bucharest"
-msgstr ""
+msgstr "(UTC+02:00) 雅典，布加勒斯特"
 
 #: dlls/tzres/tzres.rc:375
 msgid "Turkey Standard Time"
@@ -10993,23 +10840,19 @@ msgstr "土耳其夏令时"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC+03:00) Istanbul"
-msgstr ""
+msgstr "(UTC+03:00) 伊斯坦布尔"
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgid "Arabian Standard Time"
 msgid "Astrakhan Standard Time"
-msgstr "阿拉伯标准时间"
+msgstr "阿斯特拉罕标准时间"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgid "Arabian Daylight Time"
 msgid "Astrakhan Daylight Time"
-msgstr "阿拉伯夏令时"
+msgstr "阿斯特拉罕夏令时"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
-msgstr ""
+msgstr "(UTC+04:00) 阿斯特拉罕，乌里扬诺夫斯克"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Fiji Standard Time"
@@ -11021,7 +10864,7 @@ msgstr "斐济夏令时"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+12:00) Fiji"
-msgstr ""
+msgstr "(UTC+12:00) 斐济"
 
 #: dlls/tzres/tzres.rc:87
 msgid "Canada Central Standard Time"
@@ -11033,23 +10876,19 @@ msgstr "加拿大中部夏令时"
 
 #: dlls/tzres/tzres.rc:89
 msgid "(UTC-06:00) Saskatchewan"
-msgstr ""
+msgstr "(UTC-06:00) 萨斯喀彻温省"
 
 #: dlls/tzres/tzres.rc:444
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Yukon Standard Time"
-msgstr "雅库次克标准时间"
+msgstr "育空标准时间"
 
 #: dlls/tzres/tzres.rc:445
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Yukon Daylight Time"
-msgstr "雅库次克夏令时"
+msgstr "育空夏令时"
 
 #: dlls/tzres/tzres.rc:446
 msgid "(UTC-07:00) Yukon"
-msgstr ""
+msgstr "(UTC-07:00) 育空"
 
 #: dlls/tzres/tzres.rc:354
 msgid "Taipei Standard Time"
@@ -11061,7 +10900,7 @@ msgstr "台北夏令时"
 
 #: dlls/tzres/tzres.rc:356
 msgid "(UTC+08:00) Taipei"
-msgstr ""
+msgstr "(UTC+08:00) 台北"
 
 #: dlls/tzres/tzres.rc:426
 msgid "W. Europe Standard Time"
@@ -11073,7 +10912,7 @@ msgstr "西欧夏令时"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna"
-msgstr ""
+msgstr "(UTC+01:00) 阿姆斯特丹，柏林，伯尔尼，罗马，斯德哥尔摩，维也纳"
 
 #: dlls/tzres/tzres.rc:231
 msgid "Montevideo Standard Time"
@@ -11085,7 +10924,7 @@ msgstr "蒙得维的亚夏令时"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC-03:00) Montevideo"
-msgstr ""
+msgstr "(UTC-03:00) 蒙得维的亚"
 
 #: dlls/tzres/tzres.rc:285
 msgid "Pakistan Standard Time"
@@ -11097,23 +10936,19 @@ msgstr "巴基斯坦夏令时"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+05:00) Islamabad, Karachi"
-msgstr ""
+msgstr "(UTC+05:00) 伊斯兰堡，卡拉奇"
 
 #: dlls/tzres/tzres.rc:366
-#, fuzzy
-#| msgid "Tokyo Standard Time"
 msgid "Tomsk Standard Time"
-msgstr "东京标准时间"
+msgstr "托木斯克标准时间"
 
 #: dlls/tzres/tzres.rc:367
-#, fuzzy
-#| msgid "Tokyo Daylight Time"
 msgid "Tomsk Daylight Time"
-msgstr "东京夏令时"
+msgstr "托木斯克夏令时"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC+07:00) Tomsk"
-msgstr ""
+msgstr "(UTC+07:00) 托木斯克"
 
 #: dlls/tzres/tzres.rc:93
 msgid "Caucasus Standard Time"
@@ -11125,7 +10960,7 @@ msgstr "高加索夏令时"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
-msgstr ""
+msgstr "(UTC+04:00) 埃里温"
 
 #: dlls/tzres/tzres.rc:66
 msgid "AUS Eastern Standard Time"
@@ -11137,7 +10972,7 @@ msgstr "澳大利亚东部夏令时"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
-msgstr ""
+msgstr "(UTC+10:00) 堪培拉，墨尔本，悉尼"
 
 #: dlls/tzres/tzres.rc:246
 msgid "N. Central Asia Standard Time"
@@ -11149,7 +10984,7 @@ msgstr "中北亚夏令时"
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+07:00) Novosibirsk"
-msgstr ""
+msgstr "(UTC+07:00) 新西伯利亚"
 
 #: dlls/tzres/tzres.rc:150
 msgid "Eastern Standard Time"
@@ -11161,67 +10996,55 @@ msgstr "东部夏令时"
 
 #: dlls/tzres/tzres.rc:152
 msgid "(UTC-05:00) Eastern Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-05:00) 东部时间 (美国和加拿大)"
 
 #: dlls/tzres/tzres.rc:372
-#, fuzzy
-#| msgid "Tasmania Standard Time"
 msgid "Transbaikal Standard Time"
-msgstr "塔斯马尼亚标准时间"
+msgstr "外贝加尔标准时间"
 
 #: dlls/tzres/tzres.rc:373
-#, fuzzy
-#| msgid "Tasmania Daylight Time"
 msgid "Transbaikal Daylight Time"
-msgstr "塔斯马尼亚夏令时"
+msgstr "外贝加尔夏令时"
 
 #: dlls/tzres/tzres.rc:374
 msgid "(UTC+09:00) Chita"
-msgstr ""
+msgstr "(UTC+09:00) 赤塔"
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgid "E. Europe Standard Time"
-msgstr "西欧标准时间"
+msgstr "东欧标准时间"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "W. Europe Daylight Time"
 msgid "E. Europe Daylight Time"
-msgstr "西欧夏令时"
+msgstr "东欧夏令时"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
-msgstr ""
+msgstr "(UTC+02:00) 基希讷乌"
 
 #: dlls/tzres/tzres.rc:120
 msgid "Central Standard Time (Mexico)"
-msgstr "中部标准时间（墨西哥）"
+msgstr "中部标准时间 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:121
 msgid "Central Daylight Time (Mexico)"
-msgstr "中部夏令时（墨西哥）"
+msgstr "中部夏令时 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:122
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
-msgstr ""
+msgstr "(UTC-06:00) 瓜达拉哈拉，墨西哥城，蒙特雷"
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Saratov Standard Time"
-msgstr "萨摩亚标准时间"
+msgstr "萨拉托夫标准时间"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Saratov Daylight Time"
-msgstr "萨摩亚夏令时"
+msgstr "萨拉托夫夏令时"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
-msgstr ""
+msgstr "(UTC+04:00) 萨拉托夫"
 
 #: dlls/tzres/tzres.rc:57
 msgid "Atlantic Standard Time"
@@ -11233,7 +11056,7 @@ msgstr "大西洋夏令时"
 
 #: dlls/tzres/tzres.rc:59
 msgid "(UTC-04:00) Atlantic Time (Canada)"
-msgstr ""
+msgstr "(UTC-04:00) 大西洋时间 (加拿大)"
 
 #: dlls/tzres/tzres.rc:237
 msgid "Mountain Standard Time"
@@ -11245,7 +11068,7 @@ msgstr "山地夏令时"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC-07:00) Mountain Time (US & Canada)"
-msgstr ""
+msgstr "(UTC-07:00) 山地时间 (美国和加拿大)"
 
 #: dlls/tzres/tzres.rc:384
 msgid "US Eastern Standard Time"
@@ -11257,23 +11080,19 @@ msgstr "美国东部夏令时"
 
 #: dlls/tzres/tzres.rc:386
 msgid "(UTC-05:00) Indiana (East)"
-msgstr ""
+msgstr "(UTC-05:00) 印第安那 (东部)"
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "Alaskan Standard Time"
 msgid "Sakhalin Standard Time"
-msgstr "阿拉斯加标准时间"
+msgstr "萨哈林加标准时间"
 
 #: dlls/tzres/tzres.rc:322
-#, fuzzy
-#| msgid "Alaskan Daylight Time"
 msgid "Sakhalin Daylight Time"
-msgstr "阿拉斯加夏令时"
+msgstr "萨哈林夏令时"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
-msgstr ""
+msgstr "(UTC+11:00) 萨哈林"
 
 #: dlls/tzres/tzres.rc:270
 msgid "North Korea Standard Time"
@@ -11285,7 +11104,7 @@ msgstr "朝鲜夏令时"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC+09:00) Pyongyang"
-msgstr ""
+msgstr "(UTC+09:00) 平壤"
 
 #: dlls/tzres/tzres.rc:357
 msgid "Tasmania Standard Time"
@@ -11297,7 +11116,7 @@ msgstr "塔斯马尼亚夏令时"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC+10:00) Hobart"
-msgstr ""
+msgstr "(UTC+10:00) 霍巴特"
 
 #: dlls/tzres/tzres.rc:99
 msgid "Central America Standard Time"
@@ -11309,17 +11128,15 @@ msgstr "中美洲夏令时"
 
 #: dlls/tzres/tzres.rc:101
 msgid "(UTC-06:00) Central America"
-msgstr ""
+msgstr "(UTC-06:00) 中美洲"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:401
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr "协调世界时"
+msgstr "(UTC-02:00) 协调世界时-02"
 
 #: dlls/tzres/tzres.rc:387
 msgid "US Mountain Standard Time"
@@ -11331,7 +11148,7 @@ msgstr "美国山地夏令时"
 
 #: dlls/tzres/tzres.rc:389
 msgid "(UTC-07:00) Arizona"
-msgstr ""
+msgstr "(UTC-07:00) 亚利桑那"
 
 #: dlls/tzres/tzres.rc:339
 msgid "South Africa Standard Time"
@@ -11343,7 +11160,7 @@ msgstr "南非夏令时"
 
 #: dlls/tzres/tzres.rc:341
 msgid "(UTC+02:00) Harare, Pretoria"
-msgstr ""
+msgstr "(UTC+02:00) 哈拉雷，比勒陀利亚"
 
 #: dlls/tzres/tzres.rc:96
 msgid "Cen. Australia Standard Time"
@@ -11355,17 +11172,15 @@ msgstr "澳大利亚中部夏令时"
 
 #: dlls/tzres/tzres.rc:98
 msgid "(UTC+09:30) Adelaide"
-msgstr ""
+msgstr "(UTC+09:30) 阿德莱德"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:407
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr "协调世界时"
+msgstr "(UTC-09:00) 协调世界时-09"
 
 #: dlls/tzres/tzres.rc:345
 msgid "Sri Lanka Standard Time"
@@ -11377,7 +11192,7 @@ msgstr "斯里兰卡夏令时"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+05:30) Sri Jayawardenepura"
-msgstr ""
+msgstr "(UTC+05:30) 斯里加亚渥登普拉"
 
 #: dlls/tzres/tzres.rc:30
 msgid "Afghanistan Standard Time"
@@ -11389,7 +11204,7 @@ msgstr "阿富汗夏令时"
 
 #: dlls/tzres/tzres.rc:32
 msgid "(UTC+04:30) Kabul"
-msgstr ""
+msgstr "(UTC+04:30) 喀布尔"
 
 #: dlls/tzres/tzres.rc:441
 msgid "Yakutsk Standard Time"
@@ -11401,7 +11216,7 @@ msgstr "雅库次克夏令时"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC+09:00) Yakutsk"
-msgstr ""
+msgstr "(UTC+09:00) 雅库茨克"
 
 #: dlls/tzres/tzres.rc:309
 msgid "SA Eastern Standard Time"
@@ -11413,7 +11228,7 @@ msgstr "南美东部夏令时"
 
 #: dlls/tzres/tzres.rc:311
 msgid "(UTC-03:00) Cayenne, Fortaleza"
-msgstr ""
+msgstr "(UTC-03:00) 卡宴，福塔雷萨"
 
 #: dlls/tzres/tzres.rc:42
 msgid "Arab Standard Time"
@@ -11425,7 +11240,7 @@ msgstr "阿拉伯夏令时"
 
 #: dlls/tzres/tzres.rc:44
 msgid "(UTC+03:00) Kuwait, Riyadh"
-msgstr ""
+msgstr "(UTC+03:00) 科威特，利雅得"
 
 #: dlls/tzres/tzres.rc:45
 msgid "Arabian Standard Time"
@@ -11437,7 +11252,7 @@ msgstr "阿拉伯夏令时"
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+04:00) Abu Dhabi, Muscat"
-msgstr ""
+msgstr "(UTC+04:00) 阿布扎比，马斯喀特"
 
 #: dlls/tzres/tzres.rc:360
 msgid "Tocantins Standard Time"
@@ -11449,7 +11264,7 @@ msgstr "托坎廷斯夏令时"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC-03:00) Araguaina"
-msgstr ""
+msgstr "(UTC-03:00) 阿拉瓜伊纳"
 
 #: dlls/tzres/tzres.rc:306
 msgid "Russian Standard Time"
@@ -11461,7 +11276,7 @@ msgstr "俄罗斯夏令时"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+03:00) Moscow, St. Petersburg"
-msgstr ""
+msgstr "(UTC+03:00) 莫斯科，圣彼得堡"
 
 #: dlls/tzres/tzres.rc:63
 msgid "Aus Central W. Standard Time"
@@ -11473,7 +11288,7 @@ msgstr "澳大利亚中西部夏令时"
 
 #: dlls/tzres/tzres.rc:65
 msgid "(UTC+08:45) Eucla"
-msgstr ""
+msgstr "(UTC+08:45) 尤克拉"
 
 #: dlls/tzres/tzres.rc:294
 msgid "Romance Standard Time"
@@ -11485,7 +11300,7 @@ msgstr "罗曼夏令时"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
-msgstr ""
+msgstr "(UTC+01:00) 布鲁塞尔，哥本哈根，马德里，巴黎"
 
 #: dlls/tzres/tzres.rc:159
 msgid "Ekaterinburg Standard Time"
@@ -11497,31 +11312,27 @@ msgstr "叶卡捷琳堡夏令时"
 
 #: dlls/tzres/tzres.rc:161
 msgid "(UTC+05:00) Ekaterinburg"
-msgstr ""
+msgstr "(UTC+05:00) 叶卡特琳堡"
 
 #: dlls/tzres/tzres.rc:300 dlls/tzres/tzres.rc:301
 msgid "Russia Time Zone 11"
-msgstr ""
+msgstr "俄罗斯时区 11"
 
 #: dlls/tzres/tzres.rc:302
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
-msgstr ""
+msgstr "(UTC+12:00) 阿纳德尔，彼得罗巴甫洛夫斯克-堪察加"
 
 #: dlls/tzres/tzres.rc:435
-#, fuzzy
-#| msgid "West Asia Standard Time"
 msgid "West Bank Standard Time"
-msgstr "西亚标准时间"
+msgstr "西岸标准时间"
 
 #: dlls/tzres/tzres.rc:436
-#, fuzzy
-#| msgid "West Asia Daylight Time"
 msgid "West Bank Daylight Time"
-msgstr "西亚夏令时"
+msgstr "西岸夏令时"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+02:00) Gaza, Hebron"
-msgstr ""
+msgstr "(UTC+02:00) 加沙，希伯仑"
 
 #: dlls/tzres/tzres.rc:351
 msgid "Syria Standard Time"
@@ -11533,7 +11344,7 @@ msgstr "叙利亚夏令时"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+02:00) Damascus"
-msgstr ""
+msgstr "(UTC+02:00) 大马士革"
 
 #: dlls/tzres/tzres.rc:60
 msgid "AUS Central Standard Time"
@@ -11545,7 +11356,7 @@ msgstr "澳大利亚中部夏令时"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+09:30) Darwin"
-msgstr ""
+msgstr "(UTC+09:30) 达尔文"
 
 #: dlls/tzres/tzres.rc:177
 msgid "Greenwich Standard Time"
@@ -11557,7 +11368,7 @@ msgstr "格林威治夏令时"
 
 #: dlls/tzres/tzres.rc:179
 msgid "(UTC+00:00) Monrovia, Reykjavik"
-msgstr ""
+msgstr "(UTC+00:00) 蒙罗维亚，雷克雅未克"
 
 #: dlls/tzres/tzres.rc:381
 msgid "Ulaanbaatar Standard Time"
@@ -11569,23 +11380,19 @@ msgstr "乌兰巴托夏令时"
 
 #: dlls/tzres/tzres.rc:383
 msgid "(UTC+08:00) Ulaanbaatar"
-msgstr ""
+msgstr "(UTC+08:00) 乌兰巴托"
 
 #: dlls/tzres/tzres.rc:261
-#, fuzzy
-#| msgid "Morocco Standard Time"
 msgid "Norfolk Standard Time"
-msgstr "摩洛哥标准时间"
+msgstr "诺福克标准时间"
 
 #: dlls/tzres/tzres.rc:262
-#, fuzzy
-#| msgid "Morocco Daylight Time"
 msgid "Norfolk Daylight Time"
-msgstr "摩洛哥夏令时"
+msgstr "诺福克夏令时"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC+11:00) Norfolk Island"
-msgstr ""
+msgstr "(UTC+11:00) 诺福克"
 
 #: dlls/tzres/tzres.rc:195
 msgid "Israel Standard Time"
@@ -11597,7 +11404,7 @@ msgstr "以色列夏令时"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+02:00) Jerusalem"
-msgstr ""
+msgstr "(UTC+02:00) 耶路撒冷"
 
 #: dlls/tzres/tzres.rc:78
 msgid "Bangladesh Standard Time"
@@ -11609,7 +11416,7 @@ msgstr "孟加拉夏令时"
 
 #: dlls/tzres/tzres.rc:80
 msgid "(UTC+06:00) Dhaka"
-msgstr ""
+msgstr "(UTC+06:00) 达卡"
 
 #: dlls/tzres/tzres.rc:312
 msgid "SA Pacific Standard Time"
@@ -11621,7 +11428,7 @@ msgstr "南美太平洋夏令时"
 
 #: dlls/tzres/tzres.rc:314
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
-msgstr ""
+msgstr "(UTC-05:00) 波哥大，利马，基多，里奥布朗库"
 
 #: dlls/tzres/tzres.rc:432
 msgid "West Asia Standard Time"
@@ -11633,7 +11440,7 @@ msgstr "西亚夏令时"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+05:00) Ashgabat, Tashkent"
-msgstr ""
+msgstr "(UTC+05:00) 阿什哈巴德，塔什干"
 
 #: dlls/tzres/tzres.rc:33
 msgid "Alaskan Standard Time"
@@ -11645,7 +11452,7 @@ msgstr "阿拉斯加夏令时"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-09:00) Alaska"
-msgstr ""
+msgstr "(UTC-09:00) 阿拉斯加"
 
 #: dlls/tzres/tzres.rc:288
 msgid "Paraguay Standard Time"
@@ -11657,7 +11464,7 @@ msgstr "巴拉圭夏令时"
 
 #: dlls/tzres/tzres.rc:290
 msgid "(UTC-04:00) Asuncion"
-msgstr ""
+msgstr "(UTC-04:00) 亚松森"
 
 #: dlls/tzres/tzres.rc:132
 msgid "Dateline Standard Time"
@@ -11669,7 +11476,7 @@ msgstr "日期变更线夏令时"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
-msgstr ""
+msgstr "(UTC-12:00) 国际日期变更线西"
 
 #: dlls/tzres/tzres.rc:207
 msgid "Libya Standard Time"
@@ -11681,7 +11488,7 @@ msgstr "利比亚夏令时"
 
 #: dlls/tzres/tzres.rc:209
 msgid "(UTC+02:00) Tripoli"
-msgstr ""
+msgstr "(UTC+02:00) 的黎波里"
 
 #: dlls/tzres/tzres.rc:75
 msgid "Bahia Standard Time"
@@ -11693,7 +11500,7 @@ msgstr "巴伊亚夏令时"
 
 #: dlls/tzres/tzres.rc:77
 msgid "(UTC-03:00) Salvador"
-msgstr ""
+msgstr "(UTC-03:00) 萨尔瓦多"
 
 #: dlls/tzres/tzres.rc:411
 msgid "Venezuela Standard Time"
@@ -11705,7 +11512,7 @@ msgstr "委内瑞拉夏令时"
 
 #: dlls/tzres/tzres.rc:413
 msgid "(UTC-04:00) Caracas"
-msgstr ""
+msgstr "(UTC-04:00) 加拉加斯"
 
 #: dlls/tzres/tzres.rc:84
 msgid "Bougainville Standard Time"
@@ -11717,7 +11524,7 @@ msgstr "布干维尔夏令时"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+11:00) Bougainville Island"
-msgstr ""
+msgstr "(UTC+11:00) 布干维尔岛"
 
 #: dlls/tzres/tzres.rc:186
 msgid "Hawaiian Standard Time"
@@ -11729,7 +11536,7 @@ msgstr "夏威夷夏令时"
 
 #: dlls/tzres/tzres.rc:188
 msgid "(UTC-10:00) Hawaii"
-msgstr ""
+msgstr "(UTC-10:00) 夏威夷"
 
 #: dlls/tzres/tzres.rc:333
 msgid "SE Asia Standard Time"
@@ -11741,39 +11548,31 @@ msgstr "东南亚夏令时"
 
 #: dlls/tzres/tzres.rc:335
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
-msgstr ""
+msgstr "(UTC+07:00) 曼谷，河内，雅加达"
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Qyzylorda Standard Time"
-msgstr "约旦标准时间"
+msgstr "克孜洛尔达标准时间"
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Qyzylorda Daylight Time"
-msgstr "约旦夏令时"
+msgstr "克孜洛尔达夏令时"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
-msgstr ""
+msgstr "(UTC+05:00) 克孜洛尔达"
 
 #: dlls/tzres/tzres.rc:429
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "W. Mongolia Standard Time"
-msgstr "汤加标准时间"
+msgstr "西蒙古标准时间"
 
 #: dlls/tzres/tzres.rc:430
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "W. Mongolia Daylight Time"
-msgstr "汤加夏令时"
+msgstr "西蒙古夏令时"
 
 #: dlls/tzres/tzres.rc:431
 msgid "(UTC+07:00) Hovd"
-msgstr ""
+msgstr "(UTC+07:00) 科布多"
 
 #: dlls/tzres/tzres.rc:255
 msgid "New Zealand Standard Time"
@@ -11785,7 +11584,7 @@ msgstr "新西兰夏令时"
 
 #: dlls/tzres/tzres.rc:257
 msgid "(UTC+12:00) Auckland, Wellington"
-msgstr ""
+msgstr "(UTC+12:00) 奥克兰，惠灵顿"
 
 #: dlls/tzres/tzres.rc:36
 msgid "Aleutian Standard Time"
@@ -11797,23 +11596,19 @@ msgstr "阿留申夏令时"
 
 #: dlls/tzres/tzres.rc:38
 msgid "(UTC-10:00) Aleutian Islands"
-msgstr ""
+msgstr "(UTC-10:00) 阿留申群岛"
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Omsk Standard Time"
-msgstr "雅库次克标准时间"
+msgstr "鄂木斯克标准时间"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Omsk Daylight Time"
-msgstr "雅库次克夏令时"
+msgstr "鄂木斯克克夏令时"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
-msgstr ""
+msgstr "(UTC+06:00) 鄂木斯克"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Central Brazilian Standard Time"
@@ -11825,7 +11620,7 @@ msgstr "巴西中部夏令时"
 
 #: dlls/tzres/tzres.rc:107
 msgid "(UTC-04:00) Cuiaba"
-msgstr ""
+msgstr "(UTC-04:00) 库亚巴"
 
 #: dlls/tzres/tzres.rc:81
 msgid "Belarus Standard Time"
@@ -11837,7 +11632,7 @@ msgstr "白罗斯夏令时"
 
 #: dlls/tzres/tzres.rc:83
 msgid "(UTC+03:00) Minsk"
-msgstr ""
+msgstr "(UTC+03:00) 明斯克"
 
 #: dlls/tzres/tzres.rc:315
 msgid "SA Western Standard Time"
@@ -11849,7 +11644,7 @@ msgstr "南美西部夏令时"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
-msgstr ""
+msgstr "(UTC-04:00) 乔治敦，拉巴斯，马瑙斯，圣胡安"
 
 #: dlls/tzres/tzres.rc:174
 msgid "Greenland Standard Time"
@@ -11861,7 +11656,7 @@ msgstr "格陵兰夏令时"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC-03:00) Greenland"
-msgstr ""
+msgstr "(UTC-03:00) 格陵兰"
 
 #: dlls/tzres/tzres.rc:147
 msgid "Easter Island Standard Time"
@@ -11873,15 +11668,15 @@ msgstr "复活节岛夏令时"
 
 #: dlls/tzres/tzres.rc:149
 msgid "(UTC-06:00) Easter Island"
-msgstr ""
+msgstr "(UTC-06:00) 复活节岛"
 
 #: dlls/tzres/tzres.rc:297 dlls/tzres/tzres.rc:298
 msgid "Russia Time Zone 10"
-msgstr ""
+msgstr "俄罗斯时区 10"
 
 #: dlls/tzres/tzres.rc:299
 msgid "(UTC+11:00) Chokurdakh"
-msgstr ""
+msgstr "(UTC+11:00) 乔库尔达赫"
 
 #: dlls/tzres/tzres.rc:156
 msgid "Egypt Standard Time"
@@ -11893,19 +11688,19 @@ msgstr "埃及夏令时"
 
 #: dlls/tzres/tzres.rc:158
 msgid "(UTC+02:00) Cairo"
-msgstr ""
+msgstr "(UTC+02:00) 开罗"
 
 #: dlls/tzres/tzres.rc:153
 msgid "Eastern Standard Time (Mexico)"
-msgstr "东部标准时间（墨西哥）"
+msgstr "东部标准时间 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "东部夏令时（墨西哥）"
+msgstr "东部夏令时 (墨西哥)"
 
 #: dlls/tzres/tzres.rc:155
 msgid "(UTC-05:00) Chetumal"
-msgstr ""
+msgstr "(UTC-05:00) 切图马尔"
 
 #: dlls/tzres/tzres.rc:225
 msgid "Mauritius Standard Time"
@@ -11917,19 +11712,19 @@ msgstr "毛里求斯夏令时"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+04:00) Port Louis"
-msgstr ""
+msgstr "(UTC+04:00) 路易港"
 
 #: dlls/tzres/tzres.rc:414
 msgid "Vladivostok Standard Time"
-msgstr "符拉迪沃斯托克标准时间"
+msgstr "海参崴标准时间"
 
 #: dlls/tzres/tzres.rc:415
 msgid "Vladivostok Daylight Time"
-msgstr "符拉迪沃斯托克夏令时"
+msgstr "海参崴夏令时"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+10:00) Vladivostok"
-msgstr ""
+msgstr "(UTC+10:00) 海参崴"
 
 #: dlls/tzres/tzres.rc:336
 msgid "Singapore Standard Time"
@@ -11941,7 +11736,7 @@ msgstr "新加坡夏令时"
 
 #: dlls/tzres/tzres.rc:338
 msgid "(UTC+08:00) Kuala Lumpur, Singapore"
-msgstr ""
+msgstr "(UTC+08:00) 吉隆坡，新加坡"
 
 #: dlls/tzres/tzres.rc:204
 msgid "Korea Standard Time"
@@ -11953,7 +11748,7 @@ msgstr "韩国夏令时"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC+09:00) Seoul"
-msgstr ""
+msgstr "(UTC+09:00) 首尔"
 
 #: dlls/tzres/tzres.rc:123
 msgid "Chatham Islands Standard Time"
@@ -11965,7 +11760,7 @@ msgstr "查塔姆夏令时"
 
 #: dlls/tzres/tzres.rc:125
 msgid "(UTC+12:45) Chatham Islands"
-msgstr ""
+msgstr "(UTC+12:45) 查塔姆群岛"
 
 #: dlls/tzres/tzres.rc:135
 msgid "E. Africa Standard Time"
@@ -11977,7 +11772,7 @@ msgstr "东非夏令时"
 
 #: dlls/tzres/tzres.rc:137
 msgid "(UTC+03:00) Nairobi"
-msgstr ""
+msgstr "(UTC+03:00) 奈洛比"
 
 #: dlls/tzres/tzres.rc:165
 msgid "FLE Standard Time"
@@ -11989,7 +11784,7 @@ msgstr "FLE 夏令时"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
-msgstr ""
+msgstr "(UTC+02:00) 赫尔辛基，基辅，里加，索菲亚，塔林，维尔纽斯"
 
 #: dlls/tzres/tzres.rc:144
 msgid "E. South America Standard Time"
@@ -12001,7 +11796,7 @@ msgstr "东南美洲夏令时"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC-03:00) Brasilia"
-msgstr ""
+msgstr "(UTC-03:00) 巴西利亚"
 
 #: dlls/tzres/tzres.rc:114
 msgid "Central Pacific Standard Time"
@@ -12013,7 +11808,7 @@ msgstr "中太平洋夏令时"
 
 #: dlls/tzres/tzres.rc:116
 msgid "(UTC+11:00) Solomon Is., New Caledonia"
-msgstr ""
+msgstr "(UTC+11:00) 所罗门群岛，新喀里多尼亚"
 
 #: dlls/tzres/tzres.rc:423
 msgid "W. Central Africa Standard Time"
@@ -12025,7 +11820,7 @@ msgstr "西中非夏令时"
 
 #: dlls/tzres/tzres.rc:425
 msgid "(UTC+01:00) West Central Africa"
-msgstr ""
+msgstr "(UTC+01:00) 中非西部"
 
 #: dlls/tzres/tzres.rc:276
 msgid "Pacific SA Standard Time"
@@ -12037,7 +11832,7 @@ msgstr "太平洋南美夏令时"
 
 #: dlls/tzres/tzres.rc:278
 msgid "(UTC-04:00) Santiago"
-msgstr ""
+msgstr "(UTC-04:00) 圣地亚哥"
 
 #: dlls/tzres/tzres.rc:138
 msgid "E. Australia Standard Time"
@@ -12049,7 +11844,7 @@ msgstr "澳大利亚东部夏令时"
 
 #: dlls/tzres/tzres.rc:140
 msgid "(UTC+10:00) Brisbane"
-msgstr ""
+msgstr "(UTC+10:00) 布里斯班"
 
 #: dlls/tzres/tzres.rc:420
 msgid "W. Australia Standard Time"
@@ -12061,7 +11856,7 @@ msgstr "澳大利亚西部夏令时"
 
 #: dlls/tzres/tzres.rc:422
 msgid "(UTC+08:00) Perth"
-msgstr ""
+msgstr "(UTC+08:00) 珀斯"
 
 #: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
@@ -12069,7 +11864,7 @@ msgstr "安全警告"
 
 #: dlls/urlmon/urlmon.rc:35
 msgid "Do you want to install this software?"
-msgstr "是否安装该软件？"
+msgstr "您是否要安装该软件?"
 
 #: dlls/urlmon/urlmon.rc:39
 msgid "Don't install"
@@ -12085,7 +11880,7 @@ msgstr ""
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
-msgstr "安装组件失败：%08x"
+msgstr "安装组件失败: %08x"
 
 #: dlls/urlmon/urlmon.rc:52
 msgid "Install (%d)"
@@ -12314,11 +12109,11 @@ msgstr "前置全部窗口"
 
 #: dlls/wineps.drv/wineps.rc:31
 msgid "Paper Si&ze:"
-msgstr "纸张大小(&Z)："
+msgstr "纸张大小(&Z):"
 
 #: dlls/wineps.drv/wineps.rc:39
 msgid "Duplex:"
-msgstr "双面："
+msgstr "双面:"
 
 #: dlls/wineps.drv/wineps.rc:50
 msgid "Setup"
@@ -12342,7 +12137,7 @@ msgstr "此站点的证书有问题。"
 
 #: dlls/wininet/wininet.rc:93
 msgid "Do you want to continue anyway?"
-msgstr "还是要继续吗？"
+msgstr "您无论如何还是要继续吗?"
 
 #: dlls/wininet/wininet.rc:28
 msgid "LAN Connection"
@@ -12439,7 +12234,7 @@ msgstr "从服务器接收的 SSL 证书日期无效。该证书已过期。\n"
 
 #: dlls/wininet/winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr "SSL 证书一般名称（域名栏目）不正确。\n"
+msgstr "SSL 证书公用名 (主机名字段) 不正确。\n"
 
 #: dlls/winmm/winmm.rc:32
 msgid "The specified command was carried out."
@@ -12469,7 +12264,7 @@ msgstr "指定的设备句柄无效。"
 
 #: dlls/winmm/winmm.rc:38
 msgid "There is no driver installed on your system!"
-msgstr "你的系统上没有安装任何驱动程序!"
+msgstr "您的系统上没有安装任何驱动程序!"
 
 #: dlls/winmm/winmm.rc:39 dlls/winmm/winmm.rc:65
 msgid ""
@@ -12626,7 +12421,7 @@ msgstr "指定的命令需要一个参数。请提供一个参数。"
 
 #: dlls/winmm/winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
-msgstr "你正在使用的 MCI 设备不支持指定的命令。"
+msgstr "您正在使用的 MCI 设备不支持指定的命令。"
 
 #: dlls/winmm/winmm.rc:76
 msgid ""
@@ -12957,7 +12752,7 @@ msgstr "打印到文件"
 
 #: dlls/winspool.drv/winspool.rc:40
 msgid "&Output File Name:"
-msgstr "输出文件名(&O)："
+msgstr "输出文件名(&O):"
 
 #: dlls/winspool.drv/winspool.rc:31
 msgid "The output file already exists. Click OK to overwrite."
@@ -13217,7 +13012,7 @@ msgstr ""
 
 #: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:376
 msgid "%1: File Not Found\n"
-msgstr "%1：找不到文件\n"
+msgstr "%1: 找不到文件\n"
 
 #: programs/attrib/attrib.rc:50
 msgid ""
@@ -13260,13 +13055,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "当前代码页: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "无效消息。\n"
+msgstr "无效代码页\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13279,6 +13072,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [数字]\n"
+"\n"
+"  设置或显示当前的终端代码页。\n"
+"\n"
+"  数字   要设置的终端代码页。\n"
+"\n"
+"  仅输入 CHCP 而不输入数字将显示当前使用的终端代码页。\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -13401,7 +13202,7 @@ msgid ""
 msgstr ""
 "FOR 用于逐一执行用于一组文件的命令。\n"
 "\n"
-"用法：FOR %变量 IN（命令组）DO 命令\n"
+"用法: FOR %变量 IN (命令组) DO 命令\n"
 "\n"
 "在批处理文件中使用 FOR 时必须将 % 符号写两次。\n"
 
@@ -13447,9 +13248,9 @@ msgid ""
 msgstr ""
 "IF 用于根据条件执行命令。\n"
 "\n"
-"语法：\tIF [NOT] EXIST 文件名 命令\n"
-"\tIF [NOT] 字符串1==字符串2 命令\n"
-"\tIF [NOT] ERRORLEVEL 序号 命令\n"
+"语法: IF [NOT] EXIST 文件名 命令\n"
+"     IF [NOT] 字符串1==字符串2 命令\n"
+"     IF [NOT] ERRORLEVEL 序号 命令\n"
 "\n"
 "在命令的第二种用法中，字符串 1 和字符串 2 必须用双引号包住。比较条件\n"
 "非大小写敏感。\n"
@@ -13464,7 +13265,7 @@ msgid ""
 msgstr ""
 "LABEL 用于设置磁盘卷标。\n"
 "\n"
-"语法：LABEL [drive:]\n"
+"语法: LABEL [drive:]\n"
 "该命令将询问指定驱动器的新卷标。\n"
 "您可以使用 VOL 命令显示磁盘卷标。\n"
 
@@ -13508,7 +13309,7 @@ msgstr ""
 "输入 PATH 将显示当前的 PATH 设置（默认从注册表读取）。在 PATH 后附加\n"
 "新值以改变设置。\n"
 "\n"
-"也可以使用 PATH 环境变量来编辑 PATH 值，例如：\n"
+"也可以使用 PATH 环境变量来编辑 PATH 值，例如:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: programs/cmd/cmd.rc:148
@@ -13550,7 +13351,7 @@ msgstr ""
 "PROMPT 命令后跟随的字符串（包括紧随其后的空格）将在 cmd 等待输入时\n"
 "在行头显示。\n"
 "\n"
-"如下字符串带有特殊含义，如下：\n"
+"如下字符串带有特殊含义，如下:\n"
 "\n"
 "$$    美金符号           $_    换行                $b    管道符号 (|)\n"
 "$d    当前日期           $e    转义                $g    > 符号\n"
@@ -13610,7 +13411,7 @@ msgstr ""
 "\n"
 "SET 不带参数使用可用于显示当前所有的环境变量。\n"
 "\n"
-"传教或修改环境变量的语法如下：\n"
+"传教或修改环境变量的语法如下:\n"
 "\n"
 "SET <变量>=<值>\n"
 "\n"
@@ -13660,11 +13461,11 @@ msgid ""
 "/?             Display this help and exit.\n"
 msgstr ""
 "启动程序，或用一般用于带有某个后缀的程序打开文档。\n"
-"用法：\n"
+"用法:\n"
 "start [选项] 程序文件名 [...]\n"
 "start [选项] 文档文件名\n"
 "\n"
-"选项：\n"
+"选项:\n"
 "“标题”\t设置子窗口的标题。\n"
 "/d 目录\t在指定目录启动程序。\n"
 "/b\t\t不要为程序创建新控制台。\n"
@@ -13711,7 +13512,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY 用于设置、清除或测试校验旗标。有效形式如下：\n"
+"VERIFY 用于设置、清除或测试校验旗标。有效形式如下:\n"
 "\n"
 "VERIFY ON\t设置此旗标。\n"
 "VERIFY OFF\t清除此旗标。\n"
@@ -13770,7 +13571,7 @@ msgid ""
 msgstr ""
 "ASSOC 显示或更改文件扩展名所关联的文件类型。\n"
 "\n"
-"语法：ASSOC [.扩展名[=[文件类型]]]\n"
+"语法: ASSOC [.扩展名[=[文件类型]]]\n"
 "\n"
 "不带参数运行 ASSOC 将显示当前的文件类型关联。\n"
 "如使用文件扩展名作为参数，将显示当前扩展名的关联信息。\n"
@@ -13791,7 +13592,7 @@ msgid ""
 msgstr ""
 "FTYPE 显示或更改与文件类型关联的打开命令。\n"
 "\n"
-"语法：FTYPE [文件类型[=[打开命令]]]\n"
+"语法: FTYPE [文件类型[=[打开命令]]]\n"
 "\n"
 "如不带任何参数运行，该命令将显示已定义启动命令字符串的文件类型。\n"
 "如使用文件类型作为参数，该命令将显示关联于此文件类型的启动命令（如果存"
@@ -13826,9 +13627,9 @@ msgid ""
 msgstr ""
 "创建符号链接。\n"
 "\n"
-"语法：MKLINK [options] link_name target\n"
+"语法: MKLINK [options] link_name target\n"
 "\n"
-"选项：\n"
+"选项: \n"
 "/d             创建目录符号链接。\n"
 "/h             创建硬链接。\n"
 "/j             创建目录结。\n"
@@ -13883,7 +13684,7 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
-"CMD 的内建命令如下：\n"
+"CMD 的内建命令如下:\n"
 "ASSOC\t\t显示或更改文件扩展名关联\n"
 "ATTRIB\t\t显示或更改 DOS 文件属性\n"
 "CALL\t\t在批处理文件中调用另一个批处理文件\n"
@@ -13925,7 +13726,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:365
 msgid "Are you sure?"
-msgstr "确定吗？"
+msgstr "您确定吗?"
 
 #: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
@@ -13947,7 +13748,7 @@ msgstr "没有与文件类型 \"%1\" 相关联的打开命令\n"
 
 #: programs/cmd/cmd.rc:370
 msgid "Overwrite %1?"
-msgstr "覆盖 %1？"
+msgstr "覆盖 %1?"
 
 #: programs/cmd/cmd.rc:371
 msgid "More..."
@@ -13955,7 +13756,7 @@ msgstr "更多..."
 
 #: programs/cmd/cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "批处理中的行可能被截断。正在使用：\n"
+msgstr "批处理中的行可能被截断。正在使用:\n"
 
 #: programs/cmd/cmd.rc:374
 msgid "Argument missing\n"
@@ -13983,11 +13784,11 @@ msgstr "当前时间是 %1\n"
 
 #: programs/cmd/cmd.rc:381
 msgid "Enter new date: "
-msgstr "输入新的日期："
+msgstr "输入新的日期: "
 
 #: programs/cmd/cmd.rc:382
 msgid "Enter new time: "
-msgstr "输入新的时间："
+msgstr "输入新的时间: "
 
 #: programs/cmd/cmd.rc:383
 msgid "Environment variable %1 not defined\n"
@@ -14008,7 +13809,7 @@ msgstr "A"
 
 #: programs/cmd/cmd.rc:387
 msgid "Delete %1?"
-msgstr "删除 %1？"
+msgstr "删除 %1?"
 
 #: programs/cmd/cmd.rc:388
 msgid "Echo is %1\n"
@@ -14129,7 +13930,7 @@ msgstr "命令历史"
 
 #: programs/conhost/conhost.rc:60
 msgid "&Buffer size:"
-msgstr "缓冲区大小(&B)："
+msgstr "缓冲区大小(&B):"
 
 #: programs/conhost/conhost.rc:63
 msgid "&Remove duplicates"
@@ -14177,11 +13978,11 @@ msgstr "缓冲区"
 
 #: programs/conhost/conhost.rc:96
 msgid "&Width:"
-msgstr "宽度(&W)："
+msgstr "宽度(&W):"
 
 #: programs/conhost/conhost.rc:99
 msgid "&Height:"
-msgstr "高度(&H)："
+msgstr "高度(&H):"
 
 #: programs/conhost/conhost.rc:103
 msgid "Window size"
@@ -14189,11 +13990,11 @@ msgstr "窗口大小"
 
 #: programs/conhost/conhost.rc:104
 msgid "W&idth:"
-msgstr "宽度(&I)："
+msgstr "宽度(&I):"
 
 #: programs/conhost/conhost.rc:107
 msgid "H&eight:"
-msgstr "高度(&E)："
+msgstr "高度(&E):"
 
 #: programs/conhost/conhost.rc:111
 msgid "End of program"
@@ -14313,19 +14114,19 @@ msgstr ""
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr "语法：fsutil hardlink create <new> <existing>\n"
+msgstr "语法: fsutil hardlink create <new> <existing>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
-msgstr "用法：hostname\n"
+msgstr "用法: hostname\n"
 
 #: programs/hostname/hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "错误：无效的选项 '%c'。\n"
+msgstr "错误: 无效的选项 '%c'。\n"
 
 #: programs/hostname/hostname.rc:32
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "错误：无法获取主机名：%u。\n"
+msgstr "错误: 无法获取主机名: %u。\n"
 
 #: programs/hostname/hostname.rc:33
 msgid ""
@@ -14335,7 +14136,7 @@ msgstr "错误: 无法使用 hostname 工具设置系统的主机名。\n"
 
 #: programs/ipconfig/ipconfig.rc:30
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr "用法：ipconfig [ /? | /all ]\n"
+msgstr "用法: ipconfig [ /? | /all ]\n"
 
 #: programs/ipconfig/ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
@@ -14403,7 +14204,7 @@ msgstr "IPv6 地址"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "主 DNS 后缀"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -14419,7 +14220,7 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"本命令格式为：\n"
+"本命令格式为:\n"
 "\n"
 "NET 命令 [参数]\n"
 "    -或-\n"
@@ -14436,7 +14237,7 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
-"本命令格式为：\n"
+"本命令格式为:\n"
 "\n"
 "NET START [服务]\n"
 "\n"
@@ -14451,7 +14252,7 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
-"本命令的格式为：\n"
+"本命令的格式为:\n"
 "\n"
 "NET STOP 服务\n"
 "\n"
@@ -14459,7 +14260,7 @@ msgstr ""
 
 #: programs/net/net.rc:33
 msgid "Stopping dependent service: %1\n"
-msgstr "正在停止依赖的服务： %1\n"
+msgstr "正在停止依赖的服务: %1\n"
 
 #: programs/net/net.rc:34
 msgid "Could not stop service %1\n"
@@ -14513,7 +14314,7 @@ msgstr ""
 
 #: programs/net/net.rc:46
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%1      %2      %3      打开资源：%4!u!\n"
+msgstr "%1      %2      %3      打开资源: %4!u!\n"
 
 #: programs/net/net.rc:48
 msgid "Paused"
@@ -14537,7 +14338,7 @@ msgstr "正在重新连接"
 
 #: programs/net/net.rc:43
 msgid "The following services are running:\n"
-msgstr "下列服务正在运行：\n"
+msgstr "下列服务正在运行:\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -14737,11 +14538,11 @@ msgstr "页面设置"
 
 #: programs/notepad/notepad.rc:102
 msgid "&Header:"
-msgstr "页眉(&H)："
+msgstr "页眉(&H):"
 
 #: programs/notepad/notepad.rc:104
 msgid "&Footer:"
-msgstr "页脚(&F)："
+msgstr "页脚(&F):"
 
 #: programs/notepad/notepad.rc:107
 msgid "Margins (millimeters)"
@@ -14749,15 +14550,15 @@ msgstr "边距(毫米)"
 
 #: programs/notepad/notepad.rc:108
 msgid "&Left:"
-msgstr "左(&L)："
+msgstr "左(&L):"
 
 #: programs/notepad/notepad.rc:110
 msgid "&Top:"
-msgstr "上(&T)："
+msgstr "上(&T):"
 
 #: programs/notepad/notepad.rc:126
 msgid "Encoding:"
-msgstr "编码："
+msgstr "编码:"
 
 #: programs/notepad/notepad.rc:132 programs/wordpad/wordpad.rc:289
 msgctxt "accelerator Select All"
@@ -14831,7 +14632,7 @@ msgstr "错误"
 
 #: programs/notepad/notepad.rc:74
 msgid "Untitled"
-msgstr "（未命名）"
+msgstr "(未命名)"
 
 #: programs/notepad/notepad.rc:77 programs/winedbg/winedbg.rc:42
 msgid "Text files (*.txt)"
@@ -14845,7 +14646,7 @@ msgid ""
 msgstr ""
 "文件“%s”不存在。\n"
 "\n"
-"您想新建一个文件吗？"
+"您想新建一个文件吗?"
 
 #: programs/notepad/notepad.rc:82
 msgid ""
@@ -14855,7 +14656,7 @@ msgid ""
 msgstr ""
 "文件“%s”已更改。\n"
 "\n"
-"是否保存更改？"
+"您要保存更改吗?"
 
 #: programs/notepad/notepad.rc:83
 msgid "'%s' could not be found."
@@ -14885,7 +14686,7 @@ msgstr ""
 "%1\n"
 "此文件包含 Unicode 字符。如果用 %2 编码保存，这些字符将会丢失。\n"
 "要保留这些字符，请点“取消”，然后选择一种 Unicode 编码。\n"
-"要继续吗？"
+"要继续吗?"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -14990,7 +14791,7 @@ msgstr "连接到另外一台计算机"
 
 #: programs/oleview/oleview.rc:159
 msgid "&Machine name:"
-msgstr "计算机名称(&M)："
+msgstr "计算机名称(&M):"
 
 #: programs/oleview/oleview.rc:167
 msgid "System Configuration"
@@ -15038,7 +14839,7 @@ msgstr "IPersist 接口查看器"
 
 #: programs/oleview/oleview.rc:196 programs/oleview/oleview.rc:208
 msgid "Class Name:"
-msgstr "类名："
+msgstr "类名:"
 
 #: programs/oleview/oleview.rc:198 programs/oleview/oleview.rc:210
 msgid "CLSID:"
@@ -15305,15 +15106,15 @@ msgstr "移动程序"
 
 #: programs/progman/progman.rc:118
 msgid "Move program:"
-msgstr "移动程序："
+msgstr "移动程序:"
 
 #: programs/progman/progman.rc:120 programs/progman/progman.rc:138
 msgid "From group:"
-msgstr "从此程序组中："
+msgstr "从此程序组中:"
 
 #: programs/progman/progman.rc:122 programs/progman/progman.rc:140
 msgid "&To group:"
-msgstr "移动到程序组(&T)："
+msgstr "移动到程序组(&T):"
 
 #: programs/progman/progman.rc:134
 msgid "Copy Program"
@@ -15321,7 +15122,7 @@ msgstr "复制程序"
 
 #: programs/progman/progman.rc:136
 msgid "Copy program:"
-msgstr "复制程序："
+msgstr "复制程序:"
 
 #: programs/progman/progman.rc:152
 msgid "Program Group Attributes"
@@ -15329,7 +15130,7 @@ msgstr "程序组属性"
 
 #: programs/progman/progman.rc:156
 msgid "&Group file:"
-msgstr "组文件(&G)："
+msgstr "组文件(&G):"
 
 #: programs/progman/progman.rc:168
 msgid "Program Attributes"
@@ -15337,15 +15138,15 @@ msgstr "程序属性"
 
 #: programs/progman/progman.rc:172 programs/progman/progman.rc:212
 msgid "&Command line:"
-msgstr "命令行(&C)："
+msgstr "命令行(&C):"
 
 #: programs/progman/progman.rc:174
 msgid "&Working directory:"
-msgstr "工作目录(&W)："
+msgstr "工作目录(&W):"
 
 #: programs/progman/progman.rc:176
 msgid "&Key combination:"
-msgstr "快捷键(&K)："
+msgstr "快捷键(&K):"
 
 #: programs/progman/progman.rc:179 programs/progman/progman.rc:215
 msgid "&Minimize at launch"
@@ -15361,11 +15162,11 @@ msgstr "修改图标"
 
 #: programs/progman/progman.rc:194
 msgid "&Filename:"
-msgstr "文件名(&F)："
+msgstr "文件名(&F):"
 
 #: programs/progman/progman.rc:196
 msgid "Current &icon:"
-msgstr "当前图标(&I)："
+msgstr "当前图标(&I):"
 
 #: programs/progman/progman.rc:210
 msgid "Execute Program"
@@ -15385,11 +15186,11 @@ msgstr "信息"
 
 #: programs/progman/progman.rc:68
 msgid "Delete group `%s'?"
-msgstr "是否删除程序组 “%s”？"
+msgstr "是否删除程序组“%s”?"
 
 #: programs/progman/progman.rc:69
 msgid "Delete program `%s'?"
-msgstr "是否删除程序组 “%s”?"
+msgstr "是否删除程序组“%s”?"
 
 #: programs/progman/progman.rc:70
 msgid "Not implemented"
@@ -15408,8 +15209,8 @@ msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
-"不能打开组文件 “%s” 。\n"
-"是否继续尝试？"
+"不能打开组文件“%s”。\n"
+"是否继续尝试?"
 
 #: programs/progman/progman.rc:77
 msgid "Help not available."
@@ -15448,37 +15249,24 @@ msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "输入“REG %1 /?”以获取帮助。\n"
 
 #: programs/reg/reg.rc:181
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg：系统无法找到指定的注册表键或值\n"
+msgstr "reg: 无法访问或新建所指定的注册表项\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "操作完成\n"
+msgstr "reg: 操作成功完成\n"
 
 #: programs/reg/reg.rc:131
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "注册表操作已经取消\n"
+msgstr "reg: 注册表操作已被取消\n"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr "reg：系统无法找到指定的注册表键或值\n"
+msgstr "reg: 找不到所指定的注册表项\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr "reg：系统无法找到指定的注册表键或值\n"
+msgstr "reg: 找不到所指定的注册表值\n"
 
 #: programs/reg/reg.rc:132 programs/regedit/regedit.rc:239
 msgid "(Default)"
@@ -15489,17 +15277,6 @@ msgid "Type \"REG /?\" for help.\n"
 msgstr "输入“REG /?”以获取帮助。\n"
 
 #: programs/reg/reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -15511,13 +15288,13 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
-"用法：\n"
+"用法:\n"
 "  REG [操作] [参数]\n"
 "\n"
-"支持的操作：\n"
-"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
+"支持的操作:\n"
+"  ADD | COPY | DELETE | EXPORT | IMPORT | QUERY\n"
 "\n"
-"要获取指定操作的帮助，请输入：\n"
+"要获取指定操作的帮助，请输入:\n"
 "  REG [操作] /?\n"
 "\n"
 
@@ -15686,6 +15463,13 @@ msgid ""
 "     The name and path of the registry file to import.\n"
 "\n"
 msgstr ""
+"REG IMPORT <文件>\n"
+"\n"
+"  从所指定的文件导入注册表项、值或数据到注册表。\n"
+"\n"
+"  <文件>\n"
+"     要导入的注册表文件的名称或路径。\n"
+"\n"
 
 #: programs/reg/reg.rc:114
 msgid ""
@@ -15731,40 +15515,40 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+"  /reg:32\n"
+"     以 32 位视角访问注册表。\n"
+"\n"
+"  /reg:64\n"
+"     以 64 位视角访问注册表。\n"
+"\n"
 
 #: programs/reg/reg.rc:117
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid registry key\n"
-msgstr "reg: 无效的键名\n"
+msgstr "reg: 无效的注册表项\n"
 
 #: programs/reg/reg.rc:119
 msgid "reg: Unable to access remote machine\n"
 msgstr "reg: 无法访问远程设备\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
 msgid "reg: Invalid system key\n"
-msgstr "regedit: 无效的系统键 [%1]\n"
+msgstr "reg: 无效的系统项\n"
 
 #: programs/reg/reg.rc:140
 msgid "reg: Invalid option [%1]. "
 msgstr "reg: 无效的选项 [%1]。"
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值\n"
+msgstr "reg: 选项 [/d] 后必须紧跟一个有效的数字值\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值\n"
+msgstr "reg: 选项 [/d] 后必须紧跟一个有效的十六进制值\n"
 
 #: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串\n"
+msgstr "reg: 选项 [/d] 后必须紧跟一个有效的字符串\n"
 
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
@@ -15784,33 +15568,29 @@ msgstr "reg: 无效的命令行参数\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: 源注册表项和目标项不能相同\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "文件 '%1' 已存在。您想要覆盖它吗?"
+msgstr "值“%1\\%2”已经存在于目标项中。您真的要覆盖它吗?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "您真的要删除注册表键值 '%1' 吗?"
+msgstr "您真的要删除注册表值“%1”吗?"
 
 #: programs/reg/reg.rc:134
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "您真的要删除 '%1' 下的所有注册表键值吗?"
+msgstr "您真的要删除“%1”下的所有注册表值吗?"
 
 #: programs/reg/reg.rc:135
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "您真的要删除注册表键 '%1' 吗?"
+msgstr "您真的要删除注册表项“%1”吗?"
 
 #: programs/reg/reg.rc:137
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit：无法删除注册表键“%1”。\n"
+msgstr "reg: 无法删除“%1”下所有的注册表值\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
@@ -15821,10 +15601,8 @@ msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "reg: 无法识别的转义序列 [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "reg: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: 无法打开注册表键 '%1'。\n"
+msgstr "reg: 无法导入注册表项“%1”\n"
 
 #: programs/reg/reg.rc:150
 msgid "reg: The file '%1' was not found.\n"
@@ -15853,7 +15631,7 @@ msgstr "导出注册表文件(&E)..."
 #: programs/regedit/regedit.rc:47 programs/regedit/regedit.rc:99
 #: programs/regedit/regedit.rc:121
 msgid "&Key"
-msgstr "键(&K)"
+msgstr "项(&K)"
 
 #: programs/regedit/regedit.rc:49 programs/regedit/regedit.rc:101
 #: programs/regedit/regedit.rc:123
@@ -15887,7 +15665,7 @@ msgstr "改名(&R)\tF2"
 
 #: programs/regedit/regedit.rc:59 programs/regedit/regedit.rc:114
 msgid "&Copy Key Name"
-msgstr "复制键名(&C)"
+msgstr "复制项名(&C)"
 
 #: programs/regedit/regedit.rc:61 programs/regedit/regedit.rc:107
 #: programs/wordpad/wordpad.rc:53
@@ -15929,19 +15707,19 @@ msgstr "导出注册表"
 
 #: programs/regedit/regedit.rc:269
 msgid "S&elected branch:"
-msgstr "指定分支(&E)："
+msgstr "指定分支(&E):"
 
 #: programs/regedit/regedit.rc:278
 msgid "Find:"
-msgstr "查找："
+msgstr "查找:"
 
 #: programs/regedit/regedit.rc:280
 msgid "Find in:"
-msgstr "查找范围："
+msgstr "查找范围:"
 
 #: programs/regedit/regedit.rc:281
 msgid "Keys"
-msgstr "键"
+msgstr "项"
 
 #: programs/regedit/regedit.rc:282
 msgid "Value names"
@@ -15961,7 +15739,7 @@ msgstr "添加收藏"
 
 #: programs/regedit/regedit.rc:294 programs/regedit/regedit.rc:305
 msgid "Name:"
-msgstr "名称："
+msgstr "名称:"
 
 #: programs/regedit/regedit.rc:302
 msgid "Remove Favorite"
@@ -15974,12 +15752,12 @@ msgstr "编辑字符串"
 #: programs/regedit/regedit.rc:316 programs/regedit/regedit.rc:329
 #: programs/regedit/regedit.rc:345 programs/regedit/regedit.rc:358
 msgid "Value name:"
-msgstr "值名称："
+msgstr "值名称:"
 
 #: programs/regedit/regedit.rc:318 programs/regedit/regedit.rc:331
 #: programs/regedit/regedit.rc:347 programs/regedit/regedit.rc:360
 msgid "Value data:"
-msgstr "值数据："
+msgstr "值数据:"
 
 #: programs/regedit/regedit.rc:326
 msgid "Edit DWORD"
@@ -16007,19 +15785,19 @@ msgstr "编辑多个字符串"
 
 #: programs/regedit/regedit.rc:159
 msgid "Contains commands for working with the whole registry"
-msgstr "操作整个注册表的命令"
+msgstr "包含用于操作整个注册表的命令"
 
 #: programs/regedit/regedit.rc:160
 msgid "Contains commands for editing values or keys"
-msgstr "编辑键和值的命令"
+msgstr "包含用于编辑项或值的命令"
 
 #: programs/regedit/regedit.rc:161
 msgid "Contains commands for customizing the registry window"
-msgstr "操作窗口显示的命令"
+msgstr "包含用于自定义注册表窗口的命令"
 
 #: programs/regedit/regedit.rc:162
 msgid "Contains commands for accessing frequently used keys"
-msgstr "用于记录常用键的全部命令"
+msgstr "包含用于访问常用项的命令"
 
 #: programs/regedit/regedit.rc:163
 msgid ""
@@ -16028,7 +15806,7 @@ msgstr "包含用于显示注册表编辑器帮助及相关信息的命令"
 
 #: programs/regedit/regedit.rc:164
 msgid "Contains commands for creating new keys or values"
-msgstr "创建新键或值的命令"
+msgstr "包含用于新建项或值的命令"
 
 #: programs/regedit/regedit.rc:149
 msgid "Data"
@@ -16068,7 +15846,7 @@ msgstr "无法修改所选注册表值。"
 
 #: programs/regedit/regedit.rc:248
 msgid "Unable to create a new registry key."
-msgstr "无法创建新注册表键。"
+msgstr "无法创建新注册表项。"
 
 #: programs/regedit/regedit.rc:249
 msgid "Unable to create a new registry value."
@@ -16079,8 +15857,8 @@ msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
-"无法重命名键 '%1'。\n"
-"该键名已存在。"
+"无法重命名项“%1”。\n"
+"该项名已存在。"
 
 #: programs/regedit/regedit.rc:251
 msgid ""
@@ -16092,20 +15870,20 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:252
 msgid "Unable to delete the selected registry key."
-msgstr "无法删除所选注册表键。"
+msgstr "无法删除所选的注册表项。"
 
 #: programs/regedit/regedit.rc:253
 msgid "Unable to rename the selected registry key."
-msgstr "无法重命名所选注册表键。"
+msgstr "无法重命名所选的注册表项。"
 
 #: programs/regedit/regedit.rc:254
 msgid "Unable to rename the selected registry value."
-msgstr "无法重命名所选注册表值。"
+msgstr "无法重命名所选的注册表项。"
 
 #: programs/regedit/regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr "%1 所包含的键和值已被成功添加到注册表中。"
+msgstr "%1 所包含的项和值已被成功添加到注册表中。"
 
 #: programs/regedit/regedit.rc:256
 msgid "Unable to import %1. The specified file is not a valid registry file."
@@ -16141,34 +15919,34 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 msgstr ""
-"用法：\n"
-"    regedit [选项] [文件名] [注册表键]\n"
+"用法:\n"
+"  regedit [选项] [文件名] [注册表项]\n"
 "\n"
-"选项：\n"
-"    [无选项]\t\t启动该程序的图形界面。\n"
-"    /L:system.dat\t要修改的 system.dat 文件的位置。\n"
-"\t\t\t与其他任意开关兼容。该选项将被忽略。\n"
-"    /R:user.dat\t\t要修改的 user.dat 文件的位置。\n"
-"\t\t\t与其他任意开关兼容。该选项将被忽略。\n"
-"    /C\t\t\t导入注册表文件的内容。\n"
-"    /D\t\t\t删除指定的注册表键。\n"
-"    /E\t\t\t将指定注册表键的内容导出到文件。\n"
-"\t\t\t如未指定任何键，将导出整份注册表。\n"
-"    /S\t\t\t静默模式。不显示任何消息。\n"
-"    /V\t\t\t使用高级模式启动图形界面。该选项将被忽略。\n"
-"    /?\t\t\t显示此信息并退出。\n"
-"    [文件名]\t\t要导入的注册表信息文件的位置。和 [/E] 一同使用时，\n"
-"\t\t\t该选项将转而指定用于导出注册表信息的文件的位置。\n"
-"    [注册表键]\t\t要更改的注册表键。\n"
+"选项:\n"
+"  [无选项]        启动该程序的图形界面。\n"
+"  /L:system.dat  要修改的 system.dat 文件的位置。\n"
+"                 与其他任意开关兼容。该选项将被忽略。\n"
+"  /R:user.dat    要修改的 user.dat 文件的位置。\n"
+"                 与其他任意开关兼容。该选项将被忽略。\n"
+"  /C             导入注册表文件的内容。\n"
+"  /D             删除指定的注册表项。\n"
+"  /E             将指定注册表项的内容导出到文件。\n"
+"                 如未指定任何项，将导出整份注册表。\n"
+"  /S             静默模式。不显示任何消息。\n"
+"  /V             使用高级模式启动图形界面。该选项将被忽略。\n"
+"  /?             显示此信息并退出。\n"
+"  [文件名]        要导入的注册表信息文件的位置。和 [/E] 一同使用时，\n"
+"                 该选项将转而指定用于导出注册表信息的文件的位置。  [注册表"
+"项]       要更改的注册表项。\n"
 "\n"
-"用例：\n"
+"用例:\n"
 "  regedit \"import.reg\"\n"
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 
 #: programs/regedit/regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr "regedit：无效或无法识别的开关 [%1]\n"
+msgstr "regedit: 无效或无法识别的开关 [%1]\n"
 
 #: programs/regedit/regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
@@ -16180,7 +15958,7 @@ msgstr "regedit: 没有指定文件名。\n"
 
 #: programs/regedit/regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr "regedit：未指定任何要移除的注册表键。\n"
+msgstr "regedit: 未指定任何要移除的注册表项。\n"
 
 #: programs/regedit/regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
@@ -16230,7 +16008,7 @@ msgstr "regedit: 无法向 '%2' 添加注册表值 '%1'。\n"
 
 #: programs/regedit/regedit.rc:424
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "regedit: 无法打开注册表项“%1”。\n"
 
 #: programs/regedit/regedit.rc:425
 msgid ""
@@ -16243,16 +16021,16 @@ msgstr "regedit: 注册表值 \"%1\" 将会被导出为二进制数据。\n"
 
 #: programs/regedit/regedit.rc:427
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "regedit: 无效的键名 [%1]\n"
+msgstr "regedit: 无效的项名 [%1]\n"
 
 #: programs/regedit/regedit.rc:428
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
-msgstr "regedit: 无法导出 '%1'。未找到指定的注册表键。\n"
+msgstr "regedit: 无法导出“%1”。未找到指定的注册表项。\n"
 
 #: programs/regedit/regedit.rc:429
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit：无法删除注册表键“%1”。\n"
+msgstr "regedit: 无法删除注册表项“%1”。\n"
 
 #: programs/regedit/regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -16264,11 +16042,11 @@ msgstr "退出注册表编辑器"
 
 #: programs/regedit/regedit.rc:188
 msgid "Adds keys to the favorites list"
-msgstr "把键添加到收藏夹"
+msgstr "把项添加到收藏夹列表中"
 
 #: programs/regedit/regedit.rc:189
 msgid "Removes keys from the favorites list"
-msgstr "从收藏夹中删除键"
+msgstr "从收藏夹列表中删除项"
 
 #: programs/regedit/regedit.rc:190
 msgid "Shows or hides the status bar"
@@ -16292,11 +16070,11 @@ msgstr "选定项更名"
 
 #: programs/regedit/regedit.rc:195
 msgid "Copies the name of the selected key to the clipboard"
-msgstr "把键的名称复制到剪贴板"
+msgstr "把所选项的名称复制到剪贴板"
 
 #: programs/regedit/regedit.rc:196
 msgid "Finds a text string in a key, value or data"
-msgstr "在键、值或数据中找字符串"
+msgstr "在项、值或数据中查找字符串"
 
 #: programs/regedit/regedit.rc:197
 msgid "Finds next occurrence of text specified in previous search"
@@ -16308,7 +16086,7 @@ msgstr "修改值的数据"
 
 #: programs/regedit/regedit.rc:171
 msgid "Adds a new key"
-msgstr "添加新键"
+msgstr "添加新项"
 
 #: programs/regedit/regedit.rc:172
 msgid "Adds a new string value"
@@ -16348,7 +16126,7 @@ msgstr "无法打开注册表值 '%1'。"
 
 #: programs/regedit/regedit.rc:207
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "无法编辑该类型的键 (%1!u!)。"
+msgstr "无法编辑该类型的项 (%1!u!)。"
 
 #: programs/regedit/regedit.rc:208
 msgid "The value is too big (%1!u!)."
@@ -16360,7 +16138,7 @@ msgstr "确认删除值"
 
 #: programs/regedit/regedit.rc:210
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "您真的要删除选中的注册表键值吗?"
+msgstr "您真的要删除选中的注册表值吗?"
 
 #: programs/regedit/regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
@@ -16372,7 +16150,7 @@ msgstr "您确认要删除这些值吗?"
 
 #: programs/regedit/regedit.rc:214
 msgid "New Key #%d"
-msgstr "新键 #%d"
+msgstr "新项 #%d"
 
 #: programs/regedit/regedit.rc:215
 msgid "New Value #%d"
@@ -16380,7 +16158,7 @@ msgstr "新值 #%d"
 
 #: programs/regedit/regedit.rc:205
 msgid "Unable to query the registry key '%1'."
-msgstr "无法打开注册表键 '%1'。"
+msgstr "无法打开注册表项“%1”。"
 
 #: programs/regedit/regedit.rc:170
 msgid "Modifies the value's data in binary form"
@@ -16400,12 +16178,12 @@ msgstr "添加新可扩展字串值"
 
 #: programs/regedit/regedit.rc:212
 msgid "Confirm Key Delete"
-msgstr "确认删除键"
+msgstr "确认删除项"
 
 #: programs/regedit/regedit.rc:213
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "您真的要删除该注册表键及其包含的所有子键吗?"
+msgstr "您真的要删除该注册表项及其包含的所有子项吗?"
 
 #: programs/regedit/regedit.rc:199
 msgid "Expands or collapses the selected node"
@@ -16498,37 +16276,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: 成功卸载 DLL \"%1\"\n"
 
 #: programs/start/start.rc:57
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -16559,30 +16306,31 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"启动程序，或用一般用于带有某个后缀的程序打开文档。\n"
-"用法：\n"
+"用于运行程序，或根据文档的后缀，使用一般用于打开此类文档的程序打开文档。\n"
+"用法:\n"
 "start [选项] 程序文件名 [...]\n"
 "start [选项] 文档文件名\n"
 "\n"
-"选项：\n"
-"“标题”\t设置子窗口的标题。\n"
-"/d 目录\t在指定目录启动程序。\n"
-"/b\t\t不要为程序创建新控制台。\n"
-"/i\t\t使用新环境启动程序。\n"
-"/min\t\t最小化启动程序。\n"
-"/max\t\t最大化启动程序。\n"
-"/low\t\t使用 idle 优先级类启动程序。\n"
-"/normal\t\t使用 normal 优先级类启动程序。\n"
-"/high\t\t使用 high 优先级类启动程序。\n"
-"/realtime\t使用 realtime 优先级类启动程序。\n"
-"/abovenormal\t使用 abovenormal 优先级类启动程序。\n"
-"/belownormal\t使用 belownormal 优先级类启动程序。\n"
-"/n\t\t在指定 NUMA 节点启动程序。\n"
-"/affinity 掩码\t使用指定关联性掩码启动程序。\n"
-"/wait\t\t等待启动了的程序完成操作后使用其退出代码退出。\n"
-"/unix\t\t使用 Unix 文件名并像 Windows 资源管理器一样启动文件。\n"
-"/ProgIDOpen\t使用指定 progID 打开文档。\n"
-"/?\t\t显示此帮助并退出。\n"
+"选项:\n"
+"\"标题\"        指定子窗口的标题。\n"
+"/d 目录         在指定的目录中运行程序。\n"
+"/b             不要为程序新建终端。\n"
+"/i             使用新的环境变量运行程序。\n"
+"/min           以最小化模式运行程序。\n"
+"/max           以最大化模式运行程序。\n"
+"/low           以 idle 优先级运行程序。\n"
+"/normal        以 normal 优先级运行程序。\n"
+"/high          以 high 优先级运行程序。\n"
+"/realtime      以 realtime 优先级运行程序。\n"
+"/abovenormal   以 abovenormal 优先级运行程序。\n"
+"/belownormal   以 belownormal 优先级运行程序。\n"
+"/node n        在指定的 NUMA 节点中运行程序。\n"
+"/affinity 掩码  以指定的关联掩码运行程序。\n"
+"/wait          等待运行的程序结束，并以它的返回值退出。\n"
+"/unix          使用 Unix 文件名并像 Windows 文件管理器一样打开该文件。\n"
+"/exec          执行所指定的文件 (在 Wine 内部使用)。\n"
+"/ProgIDOpen    以所指定的 progID 打开文档。\n"
+"/?             显示此帮助并退出。\n"
 
 #: programs/start/start.rc:59
 msgid ""
@@ -16599,27 +16347,27 @@ msgstr "无法将指定 Unix 文件名转换为 DOS 文件名。"
 
 #: programs/taskkill/taskkill.rc:30
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr "用法：taskkill [/?] [/f] [/im 进程名 | /pid 进程ID]\n"
+msgstr "用法: taskkill [/?] [/f] [/im 进程名 | /pid 进程ID]\n"
 
 #: programs/taskkill/taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "错误：指定的命令行选项未知或无效。\n"
+msgstr "错误: 指定的命令行选项未知或无效。\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "错误：指定的命令行参数未知或无效。\n"
+msgstr "错误: 指定的命令行参数未知或无效。\n"
 
 #: programs/taskkill/taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "错误：必须指定 /im 或 /pid 选项。\n"
+msgstr "错误: 必须指定 /im 或 /pid 选项。\n"
 
 #: programs/taskkill/taskkill.rc:34
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "错误：选项 %1 需要命令行参数值。\n"
+msgstr "错误: 选项 %1 需要命令行参数值。\n"
 
 #: programs/taskkill/taskkill.rc:35
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "错误：选项 /im 和 /pid 不能共存。\n"
+msgstr "错误: 选项 /im 和 /pid 不能共存。\n"
 
 #: programs/taskkill/taskkill.rc:36
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -16640,19 +16388,19 @@ msgstr "已经强行结束 PID 为 %2!u! 的进程 \"%1\"。\n"
 
 #: programs/taskkill/taskkill.rc:40
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "错误：找不到进程 \"%1\"。\n"
+msgstr "错误: 找不到进程 \"%1\"。\n"
 
 #: programs/taskkill/taskkill.rc:41
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "错误：无法列举进程清单。\n"
+msgstr "错误: 无法列举进程清单。\n"
 
 #: programs/taskkill/taskkill.rc:42
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "错误：无法结束进程 \"%1\"。\n"
+msgstr "错误: 无法结束进程 \"%1\"。\n"
 
 #: programs/taskkill/taskkill.rc:43
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "错误：不允许结束本进程。\n"
+msgstr "错误: 不允许结束本进程。\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -17386,8 +17134,8 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"警告：改变此进程优先级可能导致意料之外的后果，例如系统不稳定。\n"
-"您确定要改变优先权吗？"
+"警告: 改变此进程优先级可能导致意料之外的后果，例如系统不稳定。\n"
+"您确定要改变优先权吗?"
 
 #: programs/taskmgr/taskmgr.rc:305
 msgid "Unable to Change Priority"
@@ -17401,8 +17149,8 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"警告：结束此进程可能会导致意料之外的后果，例如数据丢失或者系统不稳定。此\n"
-"进程可能在被结束之前来不及保存它的状态和数据。您确定要结束这个进程吗？"
+"警告: 结束此进程可能会导致意料之外的后果，例如数据丢失或者系统不稳定。此\n"
+"进程可能在被结束之前来不及保存它的状态和数据。您确定要结束这个进程吗?"
 
 #: programs/taskmgr/taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -17413,8 +17161,8 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"警告：调试此进程可能会导致数据丢失。\n"
-"您确定要连接调试器吗？"
+"警告: 调试此进程可能会导致数据丢失。\n"
+"您确定要连接调试器吗?"
 
 #: programs/taskmgr/taskmgr.rc:314
 msgid "Unable to Debug Process"
@@ -17459,7 +17207,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "卸载命令 '%s' 运行失败，可能是找不到可执行程序。\n"
-"您想把这项卸载条目从注册表中删除吗？"
+"您想把这项卸载条目从注册表中删除吗?"
 
 #: programs/uninstaller/uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
@@ -17499,10 +17247,10 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
-"用法：\n"
+"用法:\n"
 "  uninstaller [选项]\n"
 "\n"
-"选项：\n"
+"选项:\n"
 "\n"
 "  --help\t    显示本信息。\n"
 "  --list\t    列出安装在本 Wine prefix 中的所有应用程序。\n"
@@ -17566,7 +17314,7 @@ msgid ""
 "option) any later version."
 msgstr ""
 "本程序为自由软件，您可以遵照自由软件基金会出版的 GNU 较宽松通用公共许可证协议"
-"（LGPL）来对其进行添加、修改和重新发布。许可协议版本为2.1，您也可以选择采用更"
+"(LGPL) 来对其进行添加、修改和重新发布。许可协议版本为 2.1，您也可以选择采用更"
 "新的版本。"
 
 #: programs/winecfg/winecfg.rc:142
@@ -17575,11 +17323,11 @@ msgstr "Windows 注册信息"
 
 #: programs/winecfg/winecfg.rc:143
 msgid "&Owner:"
-msgstr "姓名(&O)："
+msgstr "姓名(&O):"
 
 #: programs/winecfg/winecfg.rc:145
 msgid "Organi&zation:"
-msgstr "组织(&Z)："
+msgstr "组织(&Z):"
 
 #: programs/winecfg/winecfg.rc:153
 msgid "Application settings"
@@ -17604,7 +17352,7 @@ msgstr "删除程序设置(&R)"
 
 #: programs/winecfg/winecfg.rc:160
 msgid "&Windows Version:"
-msgstr "&Windows 版本："
+msgstr "&Windows 版本:"
 
 #: programs/winecfg/winecfg.rc:168
 msgid "Window settings"
@@ -17628,7 +17376,7 @@ msgstr "虚拟桌面(&D)"
 
 #: programs/winecfg/winecfg.rc:174
 msgid "Desktop &size:"
-msgstr "桌面大小(&S)："
+msgstr "桌面大小(&S):"
 
 #: programs/winecfg/winecfg.rc:179
 msgid "Screen resolution"
@@ -17653,7 +17401,7 @@ msgstr ""
 
 #: programs/winecfg/winecfg.rc:193
 msgid "&New override for library:"
-msgstr "新增函数库顶替(&N)："
+msgstr "新增函数库顶替(&N):"
 
 #: programs/winecfg/winecfg.rc:195
 msgid "A&dd"
@@ -17661,7 +17409,7 @@ msgstr "添加(&D)"
 
 #: programs/winecfg/winecfg.rc:196
 msgid "Existing &overrides:"
-msgstr "已有的函数库顶替(&O)："
+msgstr "已有的函数库顶替(&O):"
 
 #: programs/winecfg/winecfg.rc:198
 msgid "&Edit..."
@@ -17711,7 +17459,7 @@ msgstr "添加(&D)..."
 
 #: programs/winecfg/winecfg.rc:239
 msgid "&Path:"
-msgstr "路径(&P)："
+msgstr "路径(&P):"
 
 #: programs/winecfg/winecfg.rc:246 programs/winecfg/winecfg.rc:37
 msgid "Show Advan&ced"
@@ -17719,7 +17467,7 @@ msgstr "显示高级选项(&C)"
 
 #: programs/winecfg/winecfg.rc:247
 msgid "De&vice:"
-msgstr "设备(&V)："
+msgstr "设备(&V):"
 
 #: programs/winecfg/winecfg.rc:249
 msgid "Bro&wse..."
@@ -17727,11 +17475,11 @@ msgstr "浏览(&W)..."
 
 #: programs/winecfg/winecfg.rc:251
 msgid "&Label:"
-msgstr "卷标(&L)："
+msgstr "卷标(&L):"
 
 #: programs/winecfg/winecfg.rc:253
 msgid "S&erial:"
-msgstr "序列号(&E)："
+msgstr "序列号(&E):"
 
 #: programs/winecfg/winecfg.rc:256
 msgid "&Show dot files"
@@ -17747,19 +17495,19 @@ msgstr "默认值"
 
 #: programs/winecfg/winecfg.rc:266
 msgid "Output device:"
-msgstr "输出设备："
+msgstr "输出设备:"
 
 #: programs/winecfg/winecfg.rc:267
 msgid "Voice output device:"
-msgstr "语音输出设备："
+msgstr "语音输出设备:"
 
 #: programs/winecfg/winecfg.rc:268
 msgid "Input device:"
-msgstr "输入设备："
+msgstr "输入设备:"
 
 #: programs/winecfg/winecfg.rc:269
 msgid "Voice input device:"
-msgstr "语音输入设备："
+msgstr "语音输入设备:"
 
 #: programs/winecfg/winecfg.rc:274
 msgid "&Test Sound"
@@ -17771,7 +17519,7 @@ msgstr "扬声器设置"
 
 #: programs/winecfg/winecfg.rc:278
 msgid "Speakers:"
-msgstr "扬声器："
+msgstr "扬声器:"
 
 #: programs/winecfg/winecfg.rc:286
 msgid "Appearance"
@@ -17779,7 +17527,7 @@ msgstr "外观"
 
 #: programs/winecfg/winecfg.rc:287
 msgid "&Theme:"
-msgstr "主题(&T)："
+msgstr "主题(&T):"
 
 #: programs/winecfg/winecfg.rc:289
 msgid "&Install theme..."
@@ -17787,11 +17535,11 @@ msgstr "安装主题(&I)..."
 
 #: programs/winecfg/winecfg.rc:294
 msgid "It&em:"
-msgstr "物件(&E)："
+msgstr "物件(&E):"
 
 #: programs/winecfg/winecfg.rc:296
 msgid "C&olor:"
-msgstr "颜色(&O)："
+msgstr "颜色(&O):"
 
 #: programs/winecfg/winecfg.rc:302
 msgid "MIME types"
@@ -17807,7 +17555,7 @@ msgstr "文件夹"
 
 #: programs/winecfg/winecfg.rc:309
 msgid "&Link to:"
-msgstr "映射至(&L)："
+msgstr "映射至(&L):"
 
 #: programs/winecfg/winecfg.rc:33
 msgid "Libraries"
@@ -17827,7 +17575,7 @@ msgstr "隐藏高级选项(&C)"
 
 #: programs/winecfg/winecfg.rc:38
 msgid "(No Theme)"
-msgstr "（无主题）"
+msgstr "(无主题)"
 
 #: programs/winecfg/winecfg.rc:39
 msgid "Graphics"
@@ -17867,11 +17615,11 @@ msgstr "映射至"
 
 #: programs/winecfg/winecfg.rc:44
 msgid "Wine configuration for %s"
-msgstr "Wine 设置：针对 %s"
+msgstr "针对 %s 的 Wine 设置"
 
 #: programs/winecfg/winecfg.rc:83
 msgid "Selected driver: %s"
-msgstr "选中的驱动：%s"
+msgstr "选中的驱动: %s"
 
 #: programs/winecfg/winecfg.rc:84
 msgid "(None)"
@@ -17879,7 +17627,7 @@ msgstr "(无)"
 
 #: programs/winecfg/winecfg.rc:85
 msgid "Audio test failed!"
-msgstr "音频测试失败！"
+msgstr "音频测试失败!"
 
 #: programs/winecfg/winecfg.rc:87
 msgid "(System default)"
@@ -17907,11 +17655,11 @@ msgid ""
 "Are you sure you want to do this?"
 msgstr ""
 "不建议对这个函数库更改载入顺序。\n"
-"你确定要如此吗？"
+"您确定要如此吗?"
 
 #: programs/winecfg/winecfg.rc:54
 msgid "Warning: system library"
-msgstr "警告：系统函数库"
+msgstr "警告: 系统函数库"
 
 #: programs/winecfg/winecfg.rc:55
 msgid "native"
@@ -17990,10 +17738,10 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
-"你确定要删除 C 盘吗？\n"
+"您确定要删除 C 盘吗?\n"
 "\n"
 "大部分 Windows 程序都假定 C 盘存在，如找不到 C 盘可能会导致严重错误。如果要继"
-"续，请重新建立此盘！"
+"续，请重新建立此盘!"
 
 #: programs/winecfg/winecfg.rc:76
 msgctxt "Drive letter"
@@ -18010,9 +17758,9 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"你没有 C 盘。这可不是件好事。\n"
+"您没有 C 盘。这可不是件好事。\n"
 "\n"
-"请记得点选“驱动器”标签的“添加”来建立它！\n"
+"请记得点选“驱动器”标签的“添加”来建立它!\n"
 
 #: programs/winecfg/winecfg.rc:98
 msgid "Controls Background"
@@ -18162,7 +17910,7 @@ msgid ""
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
-"这可能是由程序的问题或者 Wine 的缺陷造成的。你可能需要查看 <a href=\"https://"
+"这可能是由程序的问题或者 Wine 的缺陷造成的。您可能需要查看 <a href=\"https://"
 "appdb.winehq.org\">Application Databa</a> 来获取运行该应用的相关技巧。"
 
 #: programs/winedbg/winedbg.rc:62
@@ -18192,7 +17940,7 @@ msgstr "您系统中的一个程序崩溃了，但是 WineDbg 无法挂载到进
 
 #: programs/winedbg/winedbg.rc:41
 msgid "(unidentified)"
-msgstr "（未被识别的）"
+msgstr "(未被识别的)"
 
 #: programs/winedbg/winedbg.rc:44
 msgid "Saving failed"
@@ -18316,19 +18064,19 @@ msgstr "显示隐藏文件/系统文件(&S)"
 
 #: programs/winefile/winefile.rc:159
 msgid "&File Name:"
-msgstr "文件名(&F)："
+msgstr "文件名(&F):"
 
 #: programs/winefile/winefile.rc:161
 msgid "Full &Path:"
-msgstr "完整路径(&P)："
+msgstr "完整路径(&P):"
 
 #: programs/winefile/winefile.rc:163
 msgid "Last Change:"
-msgstr "最后更改："
+msgstr "最后更改:"
 
 #: programs/winefile/winefile.rc:167
 msgid "Cop&yright:"
-msgstr "版权(&Y)："
+msgstr "版权(&Y):"
 
 #: programs/winefile/winefile.rc:175
 msgid "&System"
@@ -18449,11 +18197,11 @@ msgstr "重置结果"
 
 #: programs/winemine/winemine.rc:80
 msgid "Congratulations!"
-msgstr "祝贺！"
+msgstr "祝贺!"
 
 #: programs/winemine/winemine.rc:82
 msgid "Please enter your name"
-msgstr "请输入你的名字"
+msgstr "请输入您的名字"
 
 #: programs/winemine/winemine.rc:90
 msgid "Custom Game"
@@ -18473,7 +18221,7 @@ msgstr "地雷"
 
 #: programs/winemine/winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr "所有结果都将丢失。您确定吗？"
+msgstr "所有结果都将丢失。您确定吗?"
 
 #: programs/winemine/winemine.rc:30
 msgid "WineMine"
@@ -18565,7 +18313,7 @@ msgstr "帮助文件 (*.hlp)"
 
 #: programs/winhlp32/winhlp32.rc:92
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "找不到文件“%s”。 你想要自己找这个文件吗？"
+msgstr "找不到文件“%s”。您想要自己找这个文件吗?"
 
 #: programs/winhlp32/winhlp32.rc:93
 msgid "Cannot find a richedit implementation... Aborting"
@@ -18573,23 +18321,23 @@ msgstr "找不到 richedit 的实现……终止"
 
 #: programs/winhlp32/winhlp32.rc:94
 msgid "Help topics: "
-msgstr "帮助主题："
+msgstr "帮助主题: "
 
 #: programs/wmic/wmic.rc:28
 msgid "Error: Command line not supported\n"
-msgstr "错误：不支持此命令行\n"
+msgstr "错误: 不支持此命令行\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
-msgstr "错误：找不到该别名\n"
+msgstr "错误: 找不到该别名\n"
 
 #: programs/wmic/wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "错误：无效查询\n"
+msgstr "错误: 无效查询\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "错误：PATH 语法无效\n"
+msgstr "错误: PATH 语法无效\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -18927,7 +18675,7 @@ msgstr "文档"
 
 #: programs/wordpad/wordpad.rc:192
 msgid "Save changes to '%s'?"
-msgstr "要保存“%s”吗？"
+msgstr "要保存“%s”吗?"
 
 #: programs/wordpad/wordpad.rc:193
 msgid "Finished searching the document."
@@ -18941,7 +18689,7 @@ msgstr "RichEdit 装载失败。"
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
-msgstr "你已经选择保存为文本文件，而这可能导致格式丢失。你确定要这么做吗？"
+msgstr "您已经选择保存为文本文件，而这可能导致格式丢失。您确定要这么做吗?"
 
 #: programs/wordpad/wordpad.rc:198
 msgid "Invalid number format."
@@ -18957,7 +18705,7 @@ msgstr "不能保存文件。"
 
 #: programs/wordpad/wordpad.rc:201
 msgid "You do not have access to save the file."
-msgstr "你没有保存文件的权限。"
+msgstr "您没有保存文件的权限。"
 
 #: programs/wordpad/wordpad.rc:202
 msgid "Could not open the file."
@@ -18965,7 +18713,7 @@ msgstr "不能打开文件。"
 
 #: programs/wordpad/wordpad.rc:203
 msgid "You do not have access to open the file."
-msgstr "你没有打开文件的权限。"
+msgstr "您没有打开文件的权限。"
 
 #: programs/wordpad/wordpad.rc:204
 msgid "Printing not implemented."
@@ -19006,16 +18754,16 @@ msgid ""
 "(F - File, D - Directory)\n"
 msgstr ""
 "%1 是一个在目标路径上的\n"
-"文件名还是目录？\n"
+"文件名还是目录?\n"
 "(F - 文件，D - 目录)\n"
 
 #: programs/xcopy/xcopy.rc:38
 msgid "%1? (Yes|No)\n"
-msgstr "%1？(是(Y)|否(N))\n"
+msgstr "%1? (是(Y)|否(N))\n"
 
 #: programs/xcopy/xcopy.rc:39
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "是否覆盖 %1？(是(Y)|否(N)|全部(A))\n"
+msgstr "是否覆盖 %1? (是(Y)|否(N)|全部(A))\n"
 
 #: programs/xcopy/xcopy.rc:40
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
@@ -19073,11 +18821,11 @@ msgid ""
 msgstr ""
 "XCOPY - 将源文件或目录拷贝到目标位置。\n"
 "\n"
-"语法：\n"
+"语法:\n"
 "XCOPY 源 [目标] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U] [/R] [/H]\n"
 "\t     [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y] [/K]\n"
 "\n"
-"说明：\n"
+"说明:\n"
 "[/I] 如果目标位置不存在，并且操作会拷贝两个或更多的文件，就假设目标\n"
 "\t是目录。\n"
 "[/S] 拷贝目录和子目录。\n"
