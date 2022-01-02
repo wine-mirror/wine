@@ -1,12 +1,12 @@
-The Wine development release 7.0-rc3 is now available.
+The Wine development release 7.0-rc4 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/7.0/wine-7.0-rc3.tar.xz
-  http://mirrors.ibiblio.org/wine/source/7.0/wine-7.0-rc3.tar.xz
+  https://dl.winehq.org/wine/source/7.0/wine-7.0-rc4.tar.xz
+  http://mirrors.ibiblio.org/wine/source/7.0/wine-7.0-rc4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,136 +22,128 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 7.0-rc3 (total 22):
+Bugs fixed in 7.0-rc4 (total 38):
 
-  39699  EDT for Windows installer crashes inside wine`s hhctrl.ocx
-  41098  Descent 3 (GOG version) has problem when running with OpenGL renderer (Nvidia proprietary drivers)
-  47875  kernel32:file: FindFirstFile("foo\nul\bar") succeeds on AMD graphics!
-  48032  Origin often fails to install games (regression)
-  48776  GoToMeeting Opener crashes
-  49338  Black screen when playing videos in Lylian demo
-  49397  DX11 Sample "Texturing and Lighting" fails with error "Failed to load texture"
-  50159  Lylian demo plays: we can hear sounds but no video.
-  50668  Submarine Titans crashes when the opening video should be played
-  51159  test_NLSVersion() fails on Windows 10 >= 2004 in kernel32:locale
-  51598  cmd.exe crashes on "if exist" without arguments
-  51862  Error compiling function init_cpu_info() in dlls/ntdll/unix/system.c with GCC 4.8.4
-  52073  The builtin libxml2/libxslt libraries break msxml3:domdoc in wow64 mode
-  52180  Significant performance regression in The Sims 2
-  52198  MotoGP 2 launcher 'Configure controller' menu doesn't open
-  52200  Yamizome Liberator (demo): In-game video isn't played.
-  52202  Notation Player 4 has no sound while playing MIDI file when using winecoreaudio.drv
-  52214  Elite Dangerous game can't recognize network when using WLAN adapter, but launcher works
-  52222  WINEDLLOVERRIDES="DINPUT8.dll=n,b" no longer works since 4f1095a, worked in V6.23.
-  52224  inetmib1:main test times out in linux
-  52225  Several games suffer from audio crackling due to underflows in winepulse.drv
-  52260  Gothic 3: flickering, low-res textures with built-in msvcrt.dll
+  12563  Autocad 2008 installer crashes when trying to configure install
+  25462  Unable to break using 'Break All' button while remote debugging with VS2008 (software breakpoint overwrites syscall instruction in VDSO page)
+  25486  Lego Stunt Rally: 3d scene is black
+  26350  Dungeons demo (OGRE) fails to load its plugins (LoadLibraryEx with LOAD_WITH_ALTERED_SEARCH_PATH and relative path)
+  27419  Mouse problem in Heroes of Might and Magic 3
+  30752  Open/save file dialog "New Folder" button doesn't show new folder
+  32183  Cannot open console device read only, then read from it to get input
+  33758  Mouse sensibility quick in-game
+  36369  Patternz application crashes in winevdm (page fault in 32-bit code)
+  39345  Ubisoft Uplay crash when Win version is set to Vista and > (libcef problem)
+  40535  Max Payne 3 : Crash at start when winecfg is set to WinVista and >
+  42338  Crysis 1 rendering somehow broken
+  42737  [EA Origin]Latest version launch correctly but no windows appear correctly
+  44934  [ACOrigins]Process start and close after launch - DRM Fault ? (log included)
+  45505  PES 2017 settings.exe (.NET 4.0 app) crashes on startup with Wine-Mono
+  47363  Gas Guzzlers: Extreme fails to launch
+  49401  Desperados 3 suffering from wrong colors
+  49649  Multiple games cause X11 to crash on resolution change (Age of Empires 1 & 2, Star Wars: Galactic Battlegrounds)
+  50157  Videos are not played until the end in X3 Reunion
+  50544  Application crashes when external database called
+  51063  Spitfire Audio plugins can't find their sample libraries
+  51263  Frostpunk crashes on start
+  51721  Control crashes while starting a new game in DX11 mode (Vulkan backend)
+  51935  Hitman: Sniper Challenge has bad performance
+  51984  Logos 9 Bible Software (.NET 4.7 app) selection popups don't show
+  52024  App Never Receives Winsock FD_* Messages After FD_ACCEPT
+  52199  Grand Theft Auto Vice City doesn't start
+  52220  TMIDI Player, Cherry: Playback with multiple MIDI ports is broken
+  52256  Current working directory reset to "/" executing a winegcc/wineg++ compiled program
+  52259  osu! sometimes crashes in select()
+  52273  Shadowgrounds crashes before the menu
+  52277  Clonk Endeavour quits unexpectedly after the opening animation
+  52283  After loading roblox studio, some menus are shifted and blinking
+  52287  Cygwin compilation fails: undefined reference to `__wine_spec_nt_header' in winecrt0/register.c
+  52288  Firefox 91 64bit hangs on HEAP.critSection
+  52302  Firefox hangs when loading some URLs (e.g. <https://www.phoronix.com>)
+  52312  Multiple kernel drivers crash due to missing 'ntoskrnl.IoCreateDeviceSecure' stub (Dokan 'dokan1.sys', LabVIEW 201x CVI 'cvintdrv.sys', F-Secure BlackLight Engine 2.2 'fsbldrv.sys' )
+  52315  Fractal AX8 Edit: Crash after I/O operations
 
 ----------------------------------------------------------------
 
-Changes since 7.0-rc2:
+Changes since 7.0-rc3:
 
-Alex Henrie (11):
-      nsiproxy: Fix memory leaks on error paths in get_ipv6_addr_scope_table (cppcheck).
-      win32u: Fix memory leak on error path in PATH_WidenPath (cppcheck).
-      quartz: Fix memory leaks on error paths in FilterMapper3_RegisterFilter (cppcheck).
-      mountmgr: Change scope of variable pvd in VOLUME_GetSuperblockLabel (cppcheck).
-      nsiproxy: Fix use after free in icmp_send_echo (scan-build).
-      wldap32: Fix memory leak on error path in create_page_control (cppcheck).
-      mshtml: Avoid null pointer dereference in OmHistory_get_length (cppcheck).
-      wpcap: Remove unused variable ptr from build_win32_description (cppcheck).
-      win32u: Handle memory allocation failures in nulldrv_PolyBezierTo (cppcheck).
-      api-ms-win-core-windowserrorreporting-l1-1-1: Add DLL.
-      crypt32/tests: Make pfxdata static.
+Akihiro Sagawa (1):
+      po: Update Japanese translation.
 
-Andrey Gusev (4):
-      schtasks: Fix a typo in FIXME() message.
-      oledb32: Add parentheses to the switch statement.
-      ntdll: Fix a variable name in TRACE() message.
-      po: Update Ukrainian translation.
+Alex Henrie (10):
+      kernel32/tests: Remove unused variable size from test_process_info (Coverity).
+      kernel32/tests: Ensure auto_value.data is initialized in test_ExitCode (Coverity).
+      kernel32/tests: Check return value of NtGetNlsSectionPtr in test_GetCPInfo (Coverity).
+      comctl32/tests: Mark smaller propsheet buffer as broken.
+      advapi32/tests: Accept a variable number of x's in some RegEnumValue name overflow tests.
+      comctl32/tests: Use GetLocaleInfoA when the buffer size is in bytes (Coverity).
+      po: Update Catalan translation.
+      mshtml: Fix use after free in use_gecko_script (Coverity).
+      faultrep/tests: Drop workarounds for Windows <= 2000.
+      faultrep/tests: Check for registry virtualization.
 
-Arkadiusz Hiler (2):
-      user32: Uppercase the RawInput device names sans the GUID.
-      setupapi: Use lowercase device paths.
+Alexandre Julliard (4):
+      winecrt0: Check __WINE_PE_BUILD instead of compiler macros.
+      ntdll: Preserve the startup Unix directory unless it's on a removable device.
+      ntdll: Fix current directory initialization on removable devices.
+      Update copyright info for 2022.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+André Zwing (2):
+      kernel32/tests: Don't test functions directly when reporting GetLastError().
+      kernelbase/tests: Don't test functions directly when reporting GetLastError().
 
-Bernhard Übelacker (2):
-      winedbg: Fix disassemble with end addresses exceeding 32-bit.
-      msxml3: Fix crashes due to access to invalid context pointer.
+Byeong-Sik Jeon (1):
+      po: Update Korean translation.
 
-Chilung Chan (1):
-      po: Update Traditional Chinese translation.
+Conor McCarthy (1):
+      wined3d: Also check the internal format when determining GL raw blit compatibility.
 
-Eric Pouech (3):
-      kernelbase: Don't hardcode magic constants.
-      cmd: Don't crash on 'if exist' without parameter.
-      kernel32/tests: Test resetting ctrl-c handlers on some console APIs.
+Eric Pouech (2):
+      po: Update French translation.
+      po: Some more French translations.
 
-Floris Renaud (2):
-      wineconsole: Remove "option" from the man page.
-      po: Update Dutch time zones translation.
+Esme Povirk (1):
+      maintainers: Updating my email address.
 
-François Gouget (1):
-      winetest: Send the tests output to stdout when given "-o -".
-
-Giovanni Mascellani (1):
-      wine.inf: Regenerate time zones.
-
-Huw D. M. Davies (3):
-      winecoreaudio: Set the buffer to NULL after freeing.
-      winecoreaudio: Actually free the stream.
-      nsiproxy: Allow the name length to be IFNAMSIZ - 1.
+Gabriel Ivăncescu (1):
+      winex11.drv: Map the window in UpdateLayeredWindow.
 
 Jacek Caban (2):
-      win32u: Use null driver to handle virtual display devices.
-      win32u: Implement NtUserBuildHwndList.
+      ntdll: Fix handling \\.\CON path in RtlDosPathNameToNtPathName.
+      ntdll/tests: Remove workarounds for old Windows versions.
 
-Keno Fischer (1):
-      kernel32: Fix CancelIoEx return value.
+Jacek Konieczny (1):
+      winealsa.drv: Use separate port for each output device.
 
-Lauri Kenttä (1):
-      po: Update Finnish translation.
+Jactry Zeng (1):
+      po: Update Simplified Chinese translation.
+
+Martin Storsjö (1):
+      widl: Fix including tlb files in mingw-w64-tools configuration.
 
 Michael Stefaniuc (1):
-      dinput8/tests: Don't test value again if it wasn't touched.
+      d3d10core/tests: Don't test stencil_ref again if it wasn't touched.
 
-Paul Gofman (2):
-      ntdll: Restore FP status words from MSVCRT_JUMP_BUFFER on x64.
-      ntdll: Always try searching apiset DLLs in the default directories.
+Nikolay Sivov (1):
+      po: Update Russian translation.
 
-Piotr Caban (3):
-      msvcrt: Don't set _EM_AMBIGOUS flag in _control87 when sse2 is not supported.
-      msvcrt: Make _setfp* helpers infallible.
-      msvcrt: Fix restoring 53-bit precision mode in _control87.
+Paul Gofman (1):
+      server: Store PE image info in process structure.
 
-Rémi Bernon (10):
-      dinput: Keep action names when converting back to ansi.
-      dinput: Ignore NULL callback in IDirectInput_ConfigureDevices.
-      dinput: Convert wide action format back to ansi in ConfigureDevices.
-      dinput: Ignore objects without a collection in init_pid_caps.
-      winmm: Instanciate DirectInput8 class lazily using delay imported DLL.
-      xaudio2/tests: Check that GetDeviceDetails returns a PCM format.
-      mmdevapi/tests: Check that GetMixFormat returns an IEEE_FLOAT format.
-      dinput: Update internal thread events list on every wake up.
-      dinput: Return DIERR_INVALIDPARAM instead of DIERR_INPUTLOST from Acquire.
-      faudio: Return PCM format from IXAudio27_GetDeviceDetails.
+Zebediah Figura (10):
+      include: Fix the definition of D3D_PRIMITIVE enum members.
+      ws2_32: Correctly null-terminate the addrinfo chain.
+      winegstreamer: Use the size of the data read when allocating the read buffer.
+      winegstreamer: Always set the initial video type for the WMF reader to WG_VIDEO_FORMAT_BGR.
+      ws2_32/tests: Test that the socket returned from accept() inherits event selection parameters.
+      server: Reselect the socket returned from accept_socket().
+      ws2_32/tests: Increase tolerance in a timing test.
+      ws2_32/tests: Test selecting the same socket twice.
+      ws2_32: Don't bother checking sockets against the input write or except sets.
+      ws2_32: Do not assume that an fd_set is bounded by FD_SETSIZE.
 
-Torge Matthies (2):
-      ws2_32: Don't read more than necessary from the inputs in select().
-      ws2_32/tests: Test short fd_set with select().
-
-Zebediah Figura (9):
-      winex11: Fix the build when XInput2 headers are not present.
-      server: Avoid using the long double type on non-x86 platforms.
-      quartz/tests: Test querying connection state inside of IPin::ReceiveConnection().
-      winegstreamer: Allow specifying flipped video via negative height.
-      qcap/avimux: Implement source_query_accept().
-      quartz/tests: Test that sink pins are enumerated first.
-      qcap/tests: Test that sink pins are enumerated first.
-      qedit/tests: Test that sink pins are enumerated first.
-      strmbase: Try sink types before source types.
+Zhiyi Zhang (1):
+      comctl32/listview: Do not paint over header when handling WM_NCPAINT.
 
 --
 Alexandre Julliard
