@@ -44,6 +44,13 @@ static BOOL missing_dmsynth(void)
     return TRUE;
 }
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 static void test_dmsynth(void)
 {
     IDirectMusicSynth *dmsynth = NULL;
@@ -52,6 +59,7 @@ static void test_dmsynth(void)
     IReferenceClock* clock_sink = NULL;
     IKsControl* control_synth = NULL;
     IKsControl* control_sink = NULL;
+    ULONG ref_clock_synth, ref_clock_sink;
     HRESULT hr;
     KSPROPERTY property;
     ULONG value;
@@ -104,6 +112,10 @@ static void test_dmsynth(void)
     ok(bytes == sizeof(DWORD), "Returned bytes: %u, should be 4\n", bytes);
     ok(value == TRUE, "Return value: %u, should be 1\n", value);
 
+    /* Synth isn't fully initialized yet */
+    hr = IDirectMusicSynth_Activate(dmsynth, TRUE);
+    todo_wine ok(hr == DMUS_E_NOSYNTHSINK, "IDirectMusicSynth_Activate returned: %x\n", hr);
+
     /* Synth has no default clock */
     hr = IDirectMusicSynth_GetLatencyClock(dmsynth, &clock_synth);
     ok(hr == DMUS_E_NOSYNTHSINK, "IDirectMusicSynth_GetLatencyClock returned: %x\n", hr);
@@ -112,8 +124,9 @@ static void test_dmsynth(void)
     hr = IDirectMusicSynthSink_GetLatencyClock(dmsynth_sink, &clock_sink);
     ok(hr == S_OK, "IDirectMusicSynth_GetLatencyClock returned: %x\n", hr);
     ok(clock_sink != NULL, "No clock returned\n");
+    ref_clock_sink = get_refcount(clock_sink);
 
-    /* This will set clock to Synth */
+    /* This will Init() the SynthSink and finish initializing the Synth */
     hr = IDirectMusicSynth_SetSynthSink(dmsynth, dmsynth_sink);
     ok(hr == S_OK, "IDirectMusicSynth_SetSynthSink returned: %x\n", hr);
 
@@ -122,6 +135,8 @@ static void test_dmsynth(void)
     ok(hr == S_OK, "IDirectMusicSynth_GetLatencyClock returned: %x\n", hr);
     ok(clock_synth != NULL, "No clock returned\n");
     ok(clock_synth == clock_sink, "Synth and SynthSink clocks are not the same\n");
+    ref_clock_synth = get_refcount(clock_synth);
+    ok(ref_clock_synth > ref_clock_sink + 1, "Latency clock refcount didn't increase\n");
 
     if (control_synth)
         IDirectMusicSynth_Release(control_synth);
