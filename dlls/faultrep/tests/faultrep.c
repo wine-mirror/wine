@@ -47,6 +47,19 @@ static BOOL is_process_limited(void)
     return type == TokenElevationTypeLimited;
 }
 
+static BOOL is_registry_virtualization_enabled(void)
+{
+    HANDLE token;
+    DWORD enabled = FALSE;
+    DWORD size;
+
+    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    GetTokenInformation(token, TokenVirtualizationEnabled, &enabled, sizeof(enabled), &size);
+    CloseHandle(token);
+
+    return enabled;
+}
+
 
 /* ###### */
 
@@ -86,7 +99,8 @@ static void test_AddERExcludedApplicationA(void)
     if (is_process_limited())
     {
         /* LastError is not set! */
-        ok(!res, "AddERExcludedApplicationA should have failed got %d\n", res);
+        ok(!res || broken(is_registry_virtualization_enabled()) /* win8 */,
+           "AddERExcludedApplicationA should have failed, got %d\n", res);
     }
     else
     {
