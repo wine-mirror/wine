@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-02 11:32+0100\n"
+"PO-Revision-Date: 2022-01-02 15:45+0100\n"
 "Last-Translator: Eric Pouech <eric.pouech@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -765,11 +765,9 @@ msgid "&Define Custom Colors >>"
 msgstr "&Définir les couleurs personnalisées >>"
 
 #: dlls/comdlg32/comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Non"
+msgstr "S&olide"
 
 #: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:275
 #: programs/regedit/regedit.rc:285
@@ -3903,7 +3901,7 @@ msgstr "Erreur de compilation Microsoft JScript"
 
 #: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Erreur d'exécution de Microsoft JScript"
 
 #: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
@@ -3963,7 +3961,7 @@ msgstr "Erreur de syntaxe dans l'expression rationnelle"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Exception levée mais non capturée"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -4013,11 +4011,11 @@ msgstr "« this » n'est pas un objet de type Map"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
-msgstr ""
+msgstr "La propriété ne peut à la fois avoir une valeur et des accesseurs"
 
 #: include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "DLL noyau de Wine"
 
 #: include/wine/wine_common_ver.rc:134 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
@@ -7025,33 +7023,28 @@ msgid "Letter"
 msgstr "Lettre"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Lettre"
+msgstr "Lettre US petite"
 
 #: dlls/localspl/localspl.rc:39
 msgid "Tabloid"
-msgstr "Tabloïde"
+msgstr "US Tabloïd"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr "Ledger"
+msgstr "Comptabilité US"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr "Legal"
+msgstr "Légal US"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "État"
+msgstr "Instruction US"
 
 #: dlls/localspl/localspl.rc:43
 msgid "Executive"
-msgstr "Executive"
+msgstr "Executive US"
 
 #: dlls/localspl/localspl.rc:44
 msgid "A3"
@@ -7062,10 +7055,8 @@ msgid "A4"
 msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Petite"
+msgstr "A4 petite"
 
 #: dlls/localspl/localspl.rc:47
 msgid "A5"
@@ -7085,215 +7076,195 @@ msgstr "Folio"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr "Quarto"
+msgstr "Papier quarto"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr "10x14"
+msgstr "10x14 pouces"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr "11x17"
+msgstr "11x17 pouces"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "Bloc-notes"
+msgstr "Note US"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr "Enveloppe #9"
+msgstr "Enveloppe US #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Enveloppe US #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Enveloppe US #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Enveloppe US #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Enveloppe US #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "Feuille de taille C"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "Feuille de taille D"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "Feuille de taille F"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Enveloppe DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "Enveloppe C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "Enveloppe C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "Enveloppe C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "Enveloppe C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "Enveloppe C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "Enveloppe B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "Enveloppe B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "Enveloppe B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Enveloppe US Monarch"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe US 6 3/4"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "US Fanfold standard"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "Standard Fanfold allemand"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "Légal Fanfold allemand"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
 msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "Japonais"
+msgstr "Carte postale japonaise"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr "9x11"
+msgstr "9x11 pouces"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr "10x11"
+msgstr "10x11 pouces"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr "15x11"
+msgstr "15x11 pouces"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Enveloppe Invitation"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "Lettre"
+msgstr "Lettre US Extra"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Légal US Extra"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Tabloïd US Extra"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "&Avancé"
+msgstr "A4 Extra"
 
 #: dlls/localspl/localspl.rc:88
 msgid "Letter Transverse"
-msgstr ""
+msgstr "Lettre  horizontale"
 
 #: dlls/localspl/localspl.rc:89
 msgid "A4 Transverse"
-msgstr ""
+msgstr "A4 horizontal"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Lettre US Extra horizontale"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Super A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Super B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "Lettre"
+msgstr "Lettre US Plus"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "A4 Plus"
 
 #: dlls/localspl/localspl.rc:95
 msgid "A5 Transverse"
-msgstr ""
+msgstr "A5 horizontal"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) horizontal"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "&Avancé"
+msgstr "A3 Extra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "&Avancé"
+msgstr "A5 Extra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
@@ -7305,15 +7276,15 @@ msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
 msgid "A3 Transverse"
-msgstr ""
+msgstr "A3 horizontal"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 Extra horizontal"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "Carte postale double japonaise"
 
 #: dlls/localspl/localspl.rc:104
 msgid "A6"
@@ -7321,71 +7292,71 @@ msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "Enveloppe japonaise kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "Enveloppe japonaise kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "Enveloppe japonaise chou #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "Enveloppe japonaise chou #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "Lettre US paysage"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 paysage"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 paysage"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 paysage"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) paysage"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) paysage"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "Carte postale japonaise paysage"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "Carte japonaise double paysage"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 paysage"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "Enveloppe japonaise kaku #2 paysage"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "Enveloppe japonaise kaku #3 paysage"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "Enveloppe japonaise chou #3 paysage"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "Enveloppe japonaise chou #4 paysage"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
@@ -7393,163 +7364,123 @@ msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) paysage"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr "12x11"
+msgstr "12x11 pouces"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "Enveloppe japonaise You #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "Enveloppe japonaise You #4 paysage"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "PRC 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "PRC 32K (Big)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "PRC 16K paysage"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "PRC 32K paysage"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "PRC 32K (Big) paysage"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #1 paysage"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Enveloppe PRC #2 paysage"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #3 paysage"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #4 paysage"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #5 paysage"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #6 paysage"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #7 paysage"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #8 paysage"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #9 paysage"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "Enveloppé avec PKCS 7"
+msgstr "Envelope PRC #10 paysage"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7612,16 +7543,12 @@ msgid "Sink has not been finalized.\n"
 msgstr "UUID d'objet introuvable.\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock was stopped\n"
-msgstr "La classe existe déjà.\n"
+msgstr "L'horloge a été arrếtée\n"
 
 #: dlls/mferror/mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Plate-forme d'installation non prise en charge.\n"
+msgstr "Plate-forme Media Foundation n'a pas été initialisée.\n"
 
 #: dlls/mferror/mferror.mc:39
 msgid "Buffer is too small.\n"
@@ -7674,16 +7601,12 @@ msgid "Invalid file format.\n"
 msgstr "Format de fichier non valide.\n"
 
 #: dlls/mferror/mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "Heure non valide.\n"
+msgstr "Horodatage non valide.\n"
 
 #: dlls/mferror/mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Schéma non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:151
 #, fuzzy
@@ -7692,36 +7615,28 @@ msgid "Unsupported bytestream type.\n"
 msgstr "Type non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Type de format non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "Pas d'horodatage défini pour l'échantillon.\n"
 
 #: dlls/mferror/mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "Pas de durée définie pour l'échantillon.\n"
 
 #: dlls/mferror/mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Données invalides.\n"
+msgstr "Données invalides dans le flux.\n"
 
 #: dlls/mferror/mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "Impossible d'afficher l'aide."
+msgstr "Les fonctions temps réel ne sont pas disponibles.\n"
 
 #: dlls/mferror/mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Le taux d'échantillonage n'est pas pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:200
 #, fuzzy
@@ -7754,16 +7669,12 @@ msgid "Value is not available.\n"
 msgstr "La valeur n'est pas disponible.\n"
 
 #: dlls/mferror/mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Impossible d'afficher l'aide."
+msgstr "L'horloge n'est pas disponible.\n"
 
 #: dlls/mferror/mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "Attributs étendus non pris en charge.\n"
+msgstr "Plusieurs souscripteurs ne sont pas pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:270
 #, fuzzy
@@ -7784,26 +7695,20 @@ msgid "Unsupported state transition.\n"
 msgstr "Niveau d'autorisation non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:291
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "Unrecoverable error occurred.\n"
-msgstr "Une erreur d'impression s'est produite."
+msgstr "Une erreur irrécupérable s'est produite.\n"
 
 #: dlls/mferror/mferror.mc:298
 msgid "Sample has too many buffers.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "Répertoire temporaire non accessible en écriture.\n"
+msgstr "Échantillon non accessible en écriture.\n"
 
 #: dlls/mferror/mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Chemin invalide.\n"
+msgstr "La clé n'est pas valide.\n"
 
 #: dlls/mferror/mferror.mc:319
 #, fuzzy
@@ -7812,10 +7717,8 @@ msgid "Bad startup version.\n"
 msgstr "Version incompatible d'ébauche (stub).\n"
 
 #: dlls/mferror/mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Légende non prise en charge.\n"
 
 #: dlls/mferror/mferror.mc:333
 msgid "Invalid position.\n"
@@ -7866,20 +7769,16 @@ msgid "Platform is disabled in safe mode.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "Ne peut créer de thread de service.\n"
+msgstr "Ne peut analyser le flux d'octets.\n"
 
 #: dlls/mferror/mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "Interface inconnue.\n"
+msgstr "Longueur du flux d'octets inconnue.\n"
 
 #: dlls/mferror/mferror.mc:431
 #, fuzzy
@@ -7900,66 +7799,48 @@ msgid "Invalid media source state transition.\n"
 msgstr "Niveau d'autorisation non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "Le registre a été restauré.\n"
+msgstr "La fin du flux de média a été atteinte.\n"
 
 #: dlls/mferror/mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Le registre a été restauré.\n"
+msgstr "Le flux de média n'a pas d'information de durée.\n"
 
 #: dlls/mferror/mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "Le format de média a été reconnu mais n'est pas valide.\n"
 
 #: dlls/mferror/mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Jeu de propriétés introuvable.\n"
+msgstr "La propriété est introuvable.\n"
 
 #: dlls/mferror/mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Le répertoire n'est pas vide.\n"
+msgstr "La propriété est en lecture seule.\n"
 
 #: dlls/mferror/mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Type de point d'entrée non autorisé.\n"
+msgstr "La propriété n'est pas autorisée.\n"
 
 #: dlls/mferror/mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Ressource en cours d'utilisation.\n"
+msgstr "La source de média n'a pas démarré.\n"
 
 #: dlls/mferror/mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Le format de média n'est pas pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
 msgstr "Ressource en cours d'utilisation.\n"
 
 #: dlls/mferror/mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Aucune donnée détectée.\n"
+msgstr "Aucun flux de données médis n'a été détecté.\n"
 
 #: dlls/mferror/mferror.mc:529
 #, fuzzy
@@ -8016,10 +7897,8 @@ msgid "No streams were selected for the sink.\n"
 msgstr "Aucune donnée détectée.\n"
 
 #: dlls/mferror/mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Nom de fichier trop long.\n"
+msgstr "Métadonnées trop longues.\n"
 
 #: dlls/mferror/mferror.mc:613
 msgid "No samples were processed by the sink.\n"
@@ -8030,10 +7909,8 @@ msgid "Sink was not provided with required headers.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "Connexion invalide.\n"
+msgstr "Le noeud optionnel n'est pas valide.\n"
 
 #: dlls/mferror/mferror.mc:634
 #, fuzzy
@@ -8042,22 +7919,16 @@ msgid "Cannot find decryptor.\n"
 msgstr "Impossible de trouver l'imprimante."
 
 #: dlls/mferror/mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "Module introuvable.\n"
+msgstr "Le Codec n'a pas été trouvé.\n"
 
 #: dlls/mferror/mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "Impossible d'obtenir le descripteur d'appel.\n"
+msgstr "Impossible de connecter les noeuds de la topologie.\n"
 
 #: dlls/mferror/mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "Demande non prise en charge.\n"
+msgstr "Demande de topologie non prise en charge.\n"
 
 #: dlls/mferror/mferror.mc:662
 #, fuzzy
@@ -8067,7 +7938,7 @@ msgstr "Attributs de groupe invalides.\n"
 
 #: dlls/mferror/mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "Un ou plusieurs cycles ont été trouvés dans la topologie.\n"
 
 #: dlls/mferror/mferror.mc:676
 #, fuzzy
@@ -8076,22 +7947,16 @@ msgid "Presentation descriptor is missing.\n"
 msgstr "Source d'installation manquante.\n"
 
 #: dlls/mferror/mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Index manquant.\n"
+msgstr "Descripteur de flux manquant.\n"
 
 #: dlls/mferror/mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "Le périphérique n'est pas connecté.\n"
+msgstr "Le descripteur de flux n'est pas sélectionné.\n"
 
 #: dlls/mferror/mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Index manquant.\n"
+msgstr "La source est manquante.\n"
 
 #: dlls/mferror/mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
@@ -8312,7 +8177,7 @@ msgstr "Calcul de l'espace nécessaire en cours"
 
 #: dlls/msi/msi.rc:97
 msgid "Creating folders"
-msgstr "Création des répertoires"
+msgstr "Création des dossiers"
 
 #: dlls/msi/msi.rc:98
 msgid "Creating shortcuts"
@@ -8358,7 +8223,7 @@ msgstr "Validation de l'opération d'installation"
 
 #: dlls/msi/msi.rc:109
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "Évaluations des conditions de lancement"
 
 #: dlls/msi/msi.rc:110
 msgid "Migrating feature states from related applications"
@@ -8374,7 +8239,7 @@ msgstr "Publication des informations d'assemblage"
 
 #: dlls/msi/msi.rc:113
 msgid "Unpublishing assembly information"
-msgstr ""
+msgstr "Déplublication des informations d'assemblage"
 
 #: dlls/msi/msi.rc:114
 msgid "Patching files"
@@ -8382,7 +8247,7 @@ msgstr "Mise à jour des fichiers"
 
 #: dlls/msi/msi.rc:115
 msgid "Updating component registration"
-msgstr ""
+msgstr "Mise à jour de l'enregistrement des composants"
 
 #: dlls/msi/msi.rc:116
 msgid "Publishing Qualified Components"
@@ -8390,7 +8255,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:117
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "Publication des caractéristiques du produit"
 
 #: dlls/msi/msi.rc:118
 msgid "Publishing product information"
@@ -8402,7 +8267,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:120
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "Enregistrement des applications et composants COM+"
 
 #: dlls/msi/msi.rc:121
 msgid "Registering extension servers"
@@ -8450,7 +8315,7 @@ msgstr "Suppression des fichiers"
 
 #: dlls/msi/msi.rc:132
 msgid "Removing folders"
-msgstr "Suppression des répertoires"
+msgstr "Suppression des dossiers"
 
 #: dlls/msi/msi.rc:133
 msgid "Removing INI files entries"
@@ -8466,15 +8331,15 @@ msgstr "Suppression des valeurs dans le regitre système"
 
 #: dlls/msi/msi.rc:136
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "Suppression des raccourcis"
 
 #: dlls/msi/msi.rc:138
 msgid "Registering modules"
-msgstr ""
+msgstr "Enregistrement des modules"
 
 #: dlls/msi/msi.rc:139
 msgid "Unregistering modules"
-msgstr ""
+msgstr "Suppression de l'enregistrement des modules"
 
 #: dlls/msi/msi.rc:140
 msgid "Initializing ODBC directories"
@@ -8506,7 +8371,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:147
 msgid "Unregistering COM+ Applications and Components"
-msgstr ""
+msgstr "Suppression de l'enregistrement des applications et composants COM+"
 
 #: dlls/msi/msi.rc:148
 msgid "Unregistering extension servers"
@@ -8514,11 +8379,11 @@ msgstr ""
 
 #: dlls/msi/msi.rc:149
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "Suppression de l'enregistrement des polices de caractères"
 
 #: dlls/msi/msi.rc:150
 msgid "Unregistering MIME info"
-msgstr ""
+msgstr "Suppression de l'enregistrement des informations MIME"
 
 #: dlls/msi/msi.rc:151
 msgid "Unregistering program identifiers"
@@ -8526,7 +8391,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:152
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "Suppression de l'enregistrement des bibliothèques de types"
 
 #: dlls/msi/msi.rc:154
 msgid "Writing INI files values"
@@ -8570,7 +8435,7 @@ msgstr "Application trouvée : [1]"
 
 #: dlls/msi/msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "Fichier : [1], Répertoire : [9], Taille : [6]"
 
 #: dlls/msi/msi.rc:171
 msgid "Service: [2]"
@@ -8578,7 +8443,7 @@ msgstr "Service : [2]"
 
 #: dlls/msi/msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "Fichier : [1],  Dépendances : [2]"
 
 #: dlls/msi/msi.rc:173
 msgid "Application: [1]"
@@ -8586,19 +8451,19 @@ msgstr "Application : [1]"
 
 #: dlls/msi/msi.rc:175 dlls/msi/msi.rc:176
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr ""
+msgstr "Contexte d'application :[1], Nom d'assemblage :[2]"
 
 #: dlls/msi/msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "Fichier : [1],  Répertoire : [2],  Taille : [3]"
 
 #: dlls/msi/msi.rc:178 dlls/msi/msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
-msgstr ""
+msgstr "Identifiant du composant : [1], Qualificateur : [2]"
 
 #: dlls/msi/msi.rc:179 dlls/msi/msi.rc:200
 msgid "Feature: [1]"
-msgstr ""
+msgstr "Caractéristique : [1]"
 
 #: dlls/msi/msi.rc:180 dlls/msi/msi.rc:201
 msgid "Class Id: [1]"
@@ -8630,15 +8495,15 @@ msgstr ""
 
 #: dlls/msi/msi.rc:187 dlls/msi/msi.rc:190
 msgid "File: [1], Directory: [9]"
-msgstr ""
+msgstr "Fichier : [1], Répertoire : [9]"
 
 #: dlls/msi/msi.rc:188 dlls/msi/msi.rc:208
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
+msgstr "Nom : [1], Valeur : [2], Action : [3]"
 
 #: dlls/msi/msi.rc:189
 msgid "Application: [1], Command line: [2]"
-msgstr ""
+msgstr "Application : [1], Ligne de commande : [2]"
 
 #: dlls/msi/msi.rc:192 dlls/msi/msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
@@ -8650,7 +8515,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:195 dlls/msi/msi.rc:196
 msgid "File: [1], Folder: [2]"
-msgstr ""
+msgstr "Fichier : [1], Dossier : [2]"
 
 #: dlls/msi/msi.rc:202
 msgid "AppId: [1]{{, AppType: [2]}}"
@@ -8662,11 +8527,11 @@ msgstr ""
 
 #: dlls/msi/msi.rc:72
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Erreur fatale : }}"
 
 #: dlls/msi/msi.rc:73
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Erreur [1]. }}"
 
 #: dlls/msi/msi.rc:74
 msgid "Warning [1]."
@@ -8674,7 +8539,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:75
 msgid "Info [1]."
-msgstr ""
+msgstr "Info [1]."
 
 #: dlls/msi/msi.rc:76
 msgid ""
@@ -8682,6 +8547,9 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"L'installeur a rencontré une erreur inattendue en installant ce paquet. Ceci "
+"peut provenir d'un problème avec ce paquet. Le code d'erreur est [1]. {{Les "
+"arguements sont : [2], [3], [4]}}"
 
 #: dlls/msi/msi.rc:77
 msgid "{{Disk full: }}"
@@ -8689,11 +8557,11 @@ msgstr "{{Disque plein: }}"
 
 #: dlls/msi/msi.rc:78
 msgid "Action [Time]: [1]. [2]"
-msgstr ""
+msgstr "Action [Tempts] : [1]. [2]"
 
 #: dlls/msi/msi.rc:79
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
+msgstr "Type du message type : [1], Argument : [2]{, [3]}"
 
 #: dlls/msi/msi.rc:82
 msgid "=== Logging started: [Date]  [Time] ==="
@@ -8701,21 +8569,23 @@ msgstr ""
 
 #: dlls/msi/msi.rc:80
 msgid "Action start [Time]: [1]."
-msgstr ""
+msgstr "Action démarrée [Temps] : [1]."
 
 #: dlls/msi/msi.rc:81
 msgid "Action ended [Time]: [1]. Return value [2]."
-msgstr ""
+msgstr "Action terminée [Temps] : [1]. Valeur retournée : [2]."
 
 #: dlls/msi/msi.rc:84
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Veuillez insérer le disque : [2]"
 
 #: dlls/msi/msi.rc:85
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
+"Fichier source n'a pas été trouvé{{(cabinet)}} : [2]. Veuillez vérifier que "
+"le fichier existe et que vous avez les droits pour y accéder."
 
 #: dlls/msrle32/msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -9256,7 +9126,7 @@ msgstr "&Construire..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Entrer les informations pour se connecter au serveur"
 
 #: dlls/oledb32/version.rc:79
 msgid "User &name:"
@@ -9272,7 +9142,7 @@ msgstr "Autoriser à mémoriser le mot de passe"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Entrer le catalogue initial à utiliser :"
 
 #: dlls/oledb32/version.rc:87
 msgid "&Test Connection"
@@ -9292,7 +9162,7 @@ msgstr "&Niveau d'emprunt d'identité :"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Niveau de protection :"
 
 #: dlls/oledb32/version.rc:101
 msgid "Connect:"
@@ -9315,6 +9185,8 @@ msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Voici les propriétés à initialiser pour ce type de données. Pour ce faire, "
+"sélectionnez une propriété, et appuyez sur « Modifier valeur... »"
 
 #: dlls/oledb32/version.rc:115
 msgid "&Edit Value..."
@@ -9344,7 +9216,7 @@ msgstr "Propriétés du lien de données"
 
 #: dlls/oledb32/version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "Fournisseur(s) OLE DB"
 
 #: dlls/oledb32/version.rc:41
 msgid "Read"
@@ -10142,16 +10014,12 @@ msgid "&Change..."
 msgstr "&Changer l'&icône..."
 
 #: dlls/shell32/shell32.rc:398
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Modifié"
+msgstr "Dernière modification :"
 
 #: dlls/shell32/shell32.rc:400
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Modification :"
+msgstr "Dernier accès :"
 
 #: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
 #: programs/winefile/winefile.rc:107
@@ -10557,11 +10425,11 @@ msgstr "Sélectionnez une source"
 
 #: dlls/tzres/tzres.rc:126
 msgid "China Standard Time"
-msgstr ""
+msgstr "Heure de Chine"
 
 #: dlls/tzres/tzres.rc:127
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Heure d'été de Chine"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
@@ -10593,7 +10461,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:395
 msgid "(UTC+12:00) Coordinated Universal Time+12"
@@ -10628,24 +10496,20 @@ msgid "Haiti Standard Time"
 msgstr "Heure d'Haïti"
 
 #: dlls/tzres/tzres.rc:184
-#, fuzzy
-#| msgid "Date and time"
 msgid "Haiti Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'Haïti"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "Heure d'été d'Haïti"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Central European Standard Time"
 msgstr "Heure d'Europe centrale"
 
 #: dlls/tzres/tzres.rc:112
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Européen central"
+msgstr "Heure d'été Europe centrale"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
@@ -10676,10 +10540,8 @@ msgid "Altai Standard Time"
 msgstr "Heure d'Altaï"
 
 #: dlls/tzres/tzres.rc:40
-#, fuzzy
-#| msgid "Date and time"
 msgid "Altai Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été d'Altaï"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
@@ -10690,10 +10552,8 @@ msgid "Central Europe Standard Time"
 msgstr "Heure d'Europe centrale"
 
 #: dlls/tzres/tzres.rc:109
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Européen central"
+msgstr "Heure d'été Europe centrale"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
@@ -10716,26 +10576,20 @@ msgid "Saint Pierre Standard Time"
 msgstr "Heure de Saint-Pierre"
 
 #: dlls/tzres/tzres.rc:319
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saint Pierre Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été Saint Pierre"
 
 #: dlls/tzres/tzres.rc:320
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
 msgstr "(UTC-03:00) Saint Pierre et Miquelon"
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Sao Tome Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure de Sao Tomé"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sao Tome Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Sao Tomé"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
@@ -10783,7 +10637,7 @@ msgstr "Heure GMT"
 
 #: dlls/tzres/tzres.rc:172
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "Heure d'été GMT"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
@@ -10794,10 +10648,8 @@ msgid "South Sudan Standard Time"
 msgstr "Heure du Sud Soudan"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Date and time"
 msgid "South Sudan Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Sud Soudan"
 
 #: dlls/tzres/tzres.rc:344
 msgid "(UTC+02:00) Juba"
@@ -10816,16 +10668,12 @@ msgid "(UTC+06:00) Astana"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:213
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Lord Howe Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure de Lord Lowe"
 
 #: dlls/tzres/tzres.rc:214
-#, fuzzy
-#| msgid "Date and time"
 msgid "Lord Howe Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Lord Howe"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC+10:30) Lord Howe Island"
@@ -10880,10 +10728,8 @@ msgid "Sudan Standard Time"
 msgstr "Heure du Soudan"
 
 #: dlls/tzres/tzres.rc:349
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sudan Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Soudan"
 
 #: dlls/tzres/tzres.rc:350
 msgid "(UTC+02:00) Khartoum"
@@ -11018,10 +10864,8 @@ msgid "Cuba Standard Time"
 msgstr "Heure de Cuba"
 
 #: dlls/tzres/tzres.rc:130
-#, fuzzy
-#| msgid "Date and time"
 msgid "Cuba Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Cuba"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-05:00) Havana"
@@ -11064,10 +10908,8 @@ msgid "Volgograd Standard Time"
 msgstr "Heure de Volgograd"
 
 #: dlls/tzres/tzres.rc:418
-#, fuzzy
-#| msgid "Date and time"
 msgid "Volgograd Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Volgograd"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+04:00) Volgograd"
@@ -11118,32 +10960,24 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:378
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Turks And Caicos Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure des Îles Turques-et-Caïques"
 
 #: dlls/tzres/tzres.rc:379
-#, fuzzy
-#| msgid "Date and time"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été des Îles Turques-et-Caïques"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Marquesas Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure des Îles Marquises"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Date and time"
 msgid "Marquesas Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été des Îles Marquises"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-09:30) Marquesas Islands"
@@ -11182,14 +11016,12 @@ msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:180
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure GTB"
 
 #: dlls/tzres/tzres.rc:181
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "Heure d'été GTB"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Athens, Bucharest"
@@ -11208,16 +11040,12 @@ msgid "(UTC+03:00) Istanbul"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgid "Date and time"
 msgid "Astrakhan Standard Time"
-msgstr "Date et heure"
+msgstr "Heure d'Astrakhan"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgid "Date and time"
 msgid "Astrakhan Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été d'Astrakhan"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
@@ -11248,16 +11076,12 @@ msgid "(UTC-06:00) Saskatchewan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:444
-#, fuzzy
-#| msgid "Date and time"
 msgid "Yukon Standard Time"
-msgstr "Date et heure"
+msgstr "Heure du Yucon"
 
 #: dlls/tzres/tzres.rc:445
-#, fuzzy
-#| msgid "Date and time"
 msgid "Yukon Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Yucon"
 
 #: dlls/tzres/tzres.rc:446
 msgid "(UTC-07:00) Yukon"
@@ -11312,14 +11136,12 @@ msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:366
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Tomsk Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure de Tomsk"
 
 #: dlls/tzres/tzres.rc:367
 msgid "Tomsk Daylight Time"
-msgstr "Heure de Tomsk"
+msgstr "Heure d'été de Tomsk"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC+07:00) Tomsk"
@@ -11418,16 +11240,12 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saratov Standard Time"
-msgstr "Date et heure"
+msgstr "Heure de Saratov"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Date and time"
 msgid "Saratov Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Saratov"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
@@ -11470,16 +11288,12 @@ msgid "(UTC-05:00) Indiana (East)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sakhalin Standard Time"
-msgstr "Date et heure"
+msgstr "Heure de Sakhaline"
 
 #: dlls/tzres/tzres.rc:322
-#, fuzzy
-#| msgid "Date and time"
 msgid "Sakhalin Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Sakhaline"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
@@ -11490,10 +11304,8 @@ msgid "North Korea Standard Time"
 msgstr "Heure de Corée du Nord"
 
 #: dlls/tzres/tzres.rc:271
-#, fuzzy
-#| msgid "Date and time"
 msgid "North Korea Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Corée du Nord"
 
 #: dlls/tzres/tzres.rc:272
 msgid "(UTC+09:00) Pyongyang"
@@ -11648,16 +11460,12 @@ msgid "(UTC+04:00) Abu Dhabi, Muscat"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:360
-#, fuzzy
-#| msgid "Date and time"
 msgid "Tocantins Standard Time"
-msgstr "Date et heure"
+msgstr "Heure du Tocantins"
 
 #: dlls/tzres/tzres.rc:361
-#, fuzzy
-#| msgid "Date and time"
 msgid "Tocantins Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Tocantins"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC-03:00) Araguaina"
@@ -11926,16 +11734,12 @@ msgid "(UTC-04:00) Caracas"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Bougainville Standard Time"
-msgstr "Date et heure"
+msgstr "Heure de Bougainville"
 
 #: dlls/tzres/tzres.rc:85
-#, fuzzy
-#| msgid "Date and time"
 msgid "Bougainville Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de Bougainville"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+11:00) Bougainville Island"
@@ -11966,30 +11770,24 @@ msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Qyzylorda Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure du Kyzylorda"
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "Date and time"
 msgid "Qyzylorda Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Kyzylorda"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:429
-#, fuzzy
-#| msgid "Date and time"
 msgid "W. Mongolia Standard Time"
-msgstr "Date et heure"
+msgstr "Heure de l'Ouest Mongolie"
 
 #: dlls/tzres/tzres.rc:430
 msgid "W. Mongolia Daylight Time"
-msgstr "Heure de l'Ouest Mongolie"
+msgstr "Heure d'été de l'Ouest Mongolie"
 
 #: dlls/tzres/tzres.rc:431
 msgid "(UTC+07:00) Hovd"
@@ -12008,16 +11806,12 @@ msgid "(UTC+12:00) Auckland, Wellington"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:36
-#, fuzzy
-#| msgid "Date and time"
 msgid "Aleutian Standard Time"
-msgstr "Date et heure"
+msgstr "Heure des Îles Aléoutiennes"
 
 #: dlls/tzres/tzres.rc:37
-#, fuzzy
-#| msgid "Date and time"
 msgid "Aleutian Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été des Îles Aléoutiennes"
 
 #: dlls/tzres/tzres.rc:38
 msgid "(UTC-10:00) Aleutian Islands"
@@ -12028,10 +11822,8 @@ msgid "Omsk Standard Time"
 msgstr "Heure d'Omsk"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Date and time"
 msgid "Omsk Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été d'Omsk"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
@@ -12086,16 +11878,12 @@ msgid "(UTC-03:00) Greenland"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Date et heure"
+msgstr "Heure de l'Île de Pâques"
 
 #: dlls/tzres/tzres.rc:148
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été de l'Île de Pâques"
 
 #: dlls/tzres/tzres.rc:149
 msgid "(UTC-06:00) Easter Island"
@@ -12214,14 +12002,12 @@ msgid "(UTC+03:00) Nairobi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:165
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure FLE"
 
 #: dlls/tzres/tzres.rc:166
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Heure d'été FLE"
 
 #: dlls/tzres/tzres.rc:167
 msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
@@ -12399,7 +12185,7 @@ msgstr "&Plus de fenêtres..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Dépassement de capacité"
 
 #: dlls/vbscript/vbscript.rc:31
 msgid "Out of memory"
@@ -12407,7 +12193,7 @@ msgstr "Mémoire insuffisante"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Ce tableau est fixe ou temporairement verrouillé"
 
 #: dlls/vbscript/vbscript.rc:34
 msgid "Type mismatch"
@@ -12453,7 +12239,7 @@ msgstr "Utilisation non valide de Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Impossible de créer le fichier temporaire nécessaire"
 
 #: dlls/vbscript/vbscript.rc:46
 msgid "ActiveX component can't create object"
@@ -12472,10 +12258,8 @@ msgid "Object doesn't support named arguments"
 msgstr "Cet objet ne supporte pas les arguments nommés"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "Cet objet ne supporte pas cette action"
+msgstr "Cet objet ne supporte pas les paramètres régionaux actuels"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
 msgid "Named argument not found"
@@ -12499,19 +12283,19 @@ msgstr ""
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Le serveur distant soit n'existe pas soit n'est pas disponible"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Référence non validée ou non qualifiée"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
-msgstr ""
+msgstr "Erreur de compilation Microsoft VBScript"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
-msgstr ""
+msgstr "Erreur d'exécution Microsoft VBScript"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -12611,10 +12395,8 @@ msgid "Effective Date"
 msgstr ""
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Sécurité"
+msgstr "Protocole de sécurité"
 
 #: dlls/wininet/wininet.rc:38
 msgid "Signature Type"
@@ -12630,7 +12412,7 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -13302,10 +13084,8 @@ msgstr ""
 "connecté au réseau."
 
 #: dlls/winmm/winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Programme d'installation de Mono pour Wine"
+msgstr "Mappeur de sons de Wine"
 
 #: dlls/winmm/winmm.rc:137
 msgid "Volume"
@@ -14257,6 +14037,16 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"Créer un lien symbolique.\n"
+"\n"
+"Syntaxe : MKLINK [options] nom_du_lien cible\n"
+"\n"
+"Options :\n"
+"/d             Créer un lien symbolique vers un répertoire.\n"
+"/h             Créer un lien direct.\n"
+"/j             Créer une jonction de répertoires.\n"
+"nom_du_lien est le nom du lien symbolique à créer.\n"
+"cible est le chemin vers lequel nom_du_lien pointe.\n"
 
 #: programs/cmd/cmd.rc:312
 msgid ""
@@ -14734,6 +14524,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Commandes supportées -\n"
+"\n"
+"hardlink      gestion des liens directs\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -14741,10 +14534,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - commandes supportées -\n"
+"\n"
+"create        créer un lien direct\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Syntaxe : fsutil hardlink create <new> <existing>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -15995,6 +15791,58 @@ msgid ""
 "     Modify the registry without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
+"\n"
+"  Ajoute un clé au registre ou ajoute une nouvelle valeur à une clé de\n"
+"  registre donnée.\n"
+"\n"
+"  <key>\n"
+"     La clé de registre à ajouter ou, si soit [/v] ou [/ve] est spécifié,\n"
+"     la clé dans laquelle ajouter les nouvelles valeurs.\n"
+"\n"
+"     Format : RACINE\\Sousclé\n"
+"\n"
+"     RACINE : une clé de registre prédéfinie, parmi une des valeurs "
+"suivantes :\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Sousclé : Le chemin complet vers la clé de registre sous la RACINE\n"
+"     spécifiée.\n"
+"\n"
+"  /v <value_name>\n"
+"     Le nom de la valeur à ajouter.\n"
+"\n"
+"  /ve\n"
+"     Ajouter une valeur de registre sans nom. Cette option modifie la valeur "
+"de\n"
+"     la clé par défaut.\n"
+"\n"
+"  /t <type>\n"
+"     Le type de données à ajouter au registre. Si [/t] est spécifié,\n"
+"     <type> doit être parmi les choix suivants :\n"
+"\n"
+"         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
+"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"\n"
+"     Si [/t] n'est pas spécifié, le type par défaut est REG_SZ.\n"
+"\n"
+"  /s <separator>\n"
+"     Le caractère utilisé pour séparer les chaines de caractères dans\n"
+"     le type REG_MULTI_SZ.\n"
+"\n"
+"     Si [/s] n'est pas spécifié, le séparateur par défaut est \\0.\n"
+"\n"
+"  /d <data>\n"
+"     Les données à ajouter à la valeur dans le registre.\n"
+"\n"
+"  /f\n"
+"     Modifier le registre sans demander de confirmation.\n"
+"\n"
 
 #: programs/reg/reg.rc:202
 msgid ""
@@ -16030,6 +15878,41 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
+"REG COPY <cle1> <cle2> [/s] [/f]\n"
+"\n"
+"  Copie le contenu d'une clé de registre spécifiée vers un autre "
+"emplacement.\n"
+"  Par défaut, cette opération ne copie que les valeurs de la clé.\n"
+"  Utiliser [/s] pour copier récursivement les sous-clés ainsi que leurs "
+"valeurs.\n"
+"\n"
+"  <key1>, <key2>\n"
+"     Les clés de registre définissant la source (<cle1>) et\n"
+"     la destination (<cle2>) des valeurs.\n"
+"     Si la clé <clé2> n'existe pas, elle est créée.\n"
+"\n"
+"     Format : RACINE\\Sousclé\n"
+"\n"
+"     RACINE : une clé de registre prédéfinie, parmi une des valeurs "
+"suivantes :\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Sousclé : Le chemin complet vers la clé de registre sous la RACINE\n"
+"     spécifiée.\n"
+"\n"
+"  /s\n"
+"     Copier les sous-clés et les valeurs depuis <cle1> vers <cle2>.\n"
+"\n"
+"  /f\n"
+"     Écrase toutes les données dans <cle2> sans demander de confirmation.\n"
+"     Cette option ne modifie pas les sous-clés et les valeurs qui ne sont\n"
+"     présentes que dans <cle2>.\n"
+"\n"
 
 #: programs/reg/reg.rc:92
 msgid ""
@@ -16069,6 +15952,47 @@ msgid ""
 "     prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG DELETE <cle> [/v nom_valeur | /ve | /va] [/f]\n"
+"\n"
+"  Efface une clé de registre (ainsi que toutes ses sous-clés et ses "
+"valeurs), ou\n"
+"  efface une ou plusieurs valeurs d'une clé de registre.\n"
+"\n"
+"  <cle>\n"
+"     La clé de registre à effacer, ou si une des options [/v], [/ve] ou [/"
+"va]\n"
+"     est spécifiée, la clé de registre dont une ou plusieurs valeurs seront\n"
+"     effacées.\n"
+"\n"
+"     Format : RACINE\\Sousclé\n"
+"\n"
+"     RACINE : une clé de registre prédéfinie, parmi une des valeurs "
+"suivantes :\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Sousclé : Le chemin complet vers la clé de registre sous la RACINE\n"
+"     spécifiée.\n"
+"\n"
+"  /v <nom_valeur>\n"
+"     Le nom de valeur de la clé de registre à effacer.\n"
+"\n"
+"  /ve\n"
+"     Efface une valeur sans nom.\n"
+"     Cette option efface la valeur par défaut de la clé de registre.\n"
+"\n"
+"  /va\n"
+"     Efface toutes les valeurs de la clé de registre.\n"
+"\n"
+"  /f\n"
+"     Efface une clé de registre (ainsi que toutes ses sous-clés et ses "
+"valeurs)\n"
+"     sans demander de confirmation.\n"
+"\n"
 
 #: programs/reg/reg.rc:170
 msgid ""
@@ -16100,6 +16024,37 @@ msgid ""
 "     Overwrite <file> without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG EXPORT <cle> <fichier> [/y]\n"
+"\n"
+"  Exporte une clé de registre (ainsi que toutes ses sous-clés et ses "
+"valeurs)\n"
+"  vers un fichier.\n"
+"\n"
+"  <cle>\n"
+"     La clé de register à exporter.\n"
+"\n"
+"     Format : RACINE\\Sousclé\n"
+"\n"
+"     RACINE : une clé de registre prédéfinie, parmi une des valeurs "
+"suivantes :\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Sousclé : Le chemin complet vers la clé de registre sous la RACINE\n"
+"     spécifiée.\n"
+"\n"
+"  <fichier>\n"
+"     Le chemin d'accès et le nom du fichier vers lequel le contenu sera "
+"exporté.\n"
+"     Ce fichier doit avoir une extension .reg.\n"
+"\n"
+"  /y\n"
+"     Écrase <fichier> sans demander de confirmation.\n"
+"\n"
 
 #: programs/reg/reg.rc:148
 msgid ""
@@ -16111,6 +16066,13 @@ msgid ""
 "     The name and path of the registry file to import.\n"
 "\n"
 msgstr ""
+"REG IMPORT <fichier>\n"
+"\n"
+"  Importe des clés et leurs valeurs à partir d'un fichier vers le registre.\n"
+"  \n"
+"  <fichier>\n"
+"     Le chemin d'accès et le nom du fichier à importer.\n"
+"\n"
 
 #: programs/reg/reg.rc:114
 msgid ""
@@ -16146,6 +16108,40 @@ msgid ""
 "     List all registry entries under <key> and its subkeys.\n"
 "\n"
 msgstr ""
+"REG QUERY <key> [/v value_name | /ve] [/s]\n"
+"\n"
+"  Recherche une clé de registre spécifiée et affiche toutes ses sous-clés,\n"
+"  ainsi que les valeurs dans cette clé.\n"
+"  Utiliser [/s] pour rechercher récursivement dans les sous-clés.\n"
+"\n"
+"  <key>\n"
+"     La clé de registre à rechercher.\n"
+"\n"
+"     Format : RACINE\\Sousclé\n"
+"\n"
+"     RACINE : une clé de registre prédéfinie, parmi une des valeurs "
+"suivantes :\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"    Sousclé : Le chemin complet vers la clé de registre sous la\n"
+"              RACINE spécifiée.\n"
+"\n"
+"  /v <value_name>\n"
+"     Le nom de la valeur à chercher. Si ni [/v] ni [/ve] ne sont spécifiés,\n"
+"     toutes les valeurs de la clé <key> sont affichées.\n"
+"\n"
+"  /ve\n"
+"     Recherche une valeur sans nom. Cette option recherche la valeur par "
+"défaut.\n"
+"\n"
+"  /s\n"
+"     Recherche récursivement toutes les sous-clés filles de <key>.\n"
+"\n"
 
 #: programs/reg/reg.rc:180
 msgid ""
@@ -16156,6 +16152,12 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+"  /reg:32\n"
+"     Accéder au registre en utilisant une vue sur 32-bit.\n"
+"\n"
+"  /reg:64\n"
+"     Accéder au registre en utilisant une vue sur 64-bit.\n"
+"\n"
 
 #: programs/reg/reg.rc:117
 msgid "reg: Invalid registry key\n"
@@ -16206,7 +16208,7 @@ msgstr "reg : paramètres de ligne de commande invalide\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg : les clés source et destination ne peuvent être les mêmes\n"
 
 #: programs/reg/reg.rc:205
 msgid ""
@@ -16508,7 +16510,7 @@ msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
-"Impossible de changer la valeur '%1'.\n"
+"Impossible de changer la valeur « %1 ».\n"
 "Le nom de valeur spécifié existe déjà."
 
 #: programs/regedit/regedit.rc:252
@@ -16527,6 +16529,8 @@ msgstr "Impossible de renommer la clé de registre sélectionnée."
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
+"Les clés et les valeurs contenues dans « %1 » ont été ajoutées avec succès "
+"au registre."
 
 #: programs/regedit/regedit.rc:256
 msgid "Unable to import %1. The specified file is not a valid registry file."
@@ -16920,11 +16924,13 @@ msgstr "regsvr32 : DLL « %1 » enregistrée avec succès\n"
 
 #: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr "regsvr32 : Impossible d'enregistrer la DLL « %1 »\n"
+msgstr "regsvr32 : Impossible d'annuler l'enregistrement de la DLL « %1 »\n"
 
 #: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr "regsvr32 : DLL « %1 » désenregistrée avec succès\n"
+msgstr ""
+"regsvr32 : annulation de l'enregistrement de la DLL « %1 » réalisée avec "
+"succès\n"
 
 #: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
@@ -17979,7 +17985,7 @@ msgstr "Visionneuse de fichiers Metafile réguliers"
 
 #: programs/view/view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Métafichiers (*.wmf, *.emf)"
 
 #: programs/wineboot/wineboot.rc:31
 msgid "Waiting for Program"
@@ -18251,11 +18257,11 @@ msgstr "Couleu&r :"
 
 #: programs/winecfg/winecfg.rc:302
 msgid "MIME types"
-msgstr ""
+msgstr "Types MIME"
 
 #: programs/winecfg/winecfg.rc:303
 msgid "Manage file &associations"
-msgstr ""
+msgstr "&Gérer les associations de fichier"
 
 #: programs/winecfg/winecfg.rc:306
 msgid "Folders"
@@ -18654,6 +18660,8 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
+"Un programme sur votre système a planté, mais WineDbg n'a pas pu s'y "
+"attacher afin d'obtenir les informations sur le plantage."
 
 #: programs/winedbg/winedbg.rc:41
 msgid "(unidentified)"
@@ -18939,7 +18947,7 @@ msgstr "Mines"
 
 #: programs/winemine/winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Tous les résultats seront perdus. Êtes-vous sûr ?"
 
 #: programs/winemine/winemine.rc:30
 msgid "WineMine"
