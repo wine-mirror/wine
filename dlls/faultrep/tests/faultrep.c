@@ -72,11 +72,6 @@ static void test_AddERExcludedApplicationA(void)
 
     /* clean state */
     lres = RegCreateKeyA(HKEY_LOCAL_MACHINE, regpath_root, &hroot);
-    if (lres == ERROR_ACCESS_DENIED)
-    {
-        skip("Not enough access rights\n");
-        return;
-    }
 
     if (!lres)
         lres = RegOpenKeyA(hroot, regpath_exclude, &hexclude);
