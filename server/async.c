@@ -509,12 +509,11 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             async->completion_callback( async->completion_callback_private );
         async->completion_callback = NULL;
 
-        async_reselect( async );
-
         if (async->queue)
         {
-            async->fd = NULL;
             list_remove( &async->queue_entry );
+            async_reselect( async );
+            async->fd = NULL;
             async->queue = NULL;
             release_object( async );
         }

@@ -11487,16 +11487,12 @@ static void test_simultaneous_async_recv(void)
         DWORD size;
 
         ret = WaitForSingleObject(events[i], 1000);
-        todo_wine_if(i > 0)
         ok(!ret, "wait timed out\n");
 
         size = 0;
         ret = GetOverlappedResult((HANDLE)client, &overlappeds[i], &size, FALSE);
-        todo_wine_if(i > 0)
         ok(ret, "got error %u\n", GetLastError());
-        todo_wine_if(i > 0)
         ok(size == stride, "got size %u\n", size);
-        todo_wine_if(i > 0)
         ok(!memcmp(expect, actual, stride), "expected %s, got %s\n", debugstr_an(expect, stride), debugstr_an(actual, stride));
     }
 
