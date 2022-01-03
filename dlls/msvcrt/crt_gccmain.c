@@ -22,7 +22,7 @@
 #pragma makedep implib
 #endif
 
-#ifdef __MINGW32__
+#ifdef __WINE_PE_BUILD
 
 /* mingw compilers emit call to __main() when main() function is defined.
  * it's used by crt to call global constructors and register global destructors. */
