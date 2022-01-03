@@ -2170,15 +2170,9 @@ static BOOL test_device_types( DWORD version )
         hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
         ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
         check_member( devinst, expect_devinst[i], "%d", dwSize );
-        todo_wine
-        check_member_guid( devinst, expect_devinst[i], guidInstance );
         check_member_guid( devinst, expect_devinst[i], guidProduct );
         todo_wine_if( version <= 0x700 && i == 3 )
         check_member( devinst, expect_devinst[i], "%#x", dwDevType );
-        todo_wine
-        check_member_wstr( devinst, expect_devinst[i], tszInstanceName );
-        todo_wine
-        check_member_wstr( devinst, expect_devinst[i], tszProductName );
         check_member_guid( devinst, expect_devinst[i], guidFFDriver );
         check_member( devinst, expect_devinst[i], "%04x", wUsagePage );
         check_member( devinst, expect_devinst[i], "%04x", wUsage );
