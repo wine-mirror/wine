@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-02 15:45+0100\n"
+"PO-Revision-Date: 2022-01-03 13:08+0100\n"
 "Last-Translator: Eric Pouech <eric.pouech@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -3134,7 +3134,7 @@ msgstr "Note : la clé privée de ce certificat n'est pas exportable."
 
 #: dlls/cryptui/cryptui.rc:177
 msgid "Intended Use"
-msgstr "Utilisation prévue :"
+msgstr "Utilisation prévue"
 
 #: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:150
 msgid "Location"
@@ -3671,7 +3671,7 @@ msgstr "Utiliser un script Proxy Auto-Config (PAC)"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:128 dlls/inetcpl.cpl/inetcpl.rc:132
 msgid "Address:"
-msgstr "Adresse: "
+msgstr "Adresse :"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:130
 msgid "Proxy server"
@@ -3683,7 +3683,7 @@ msgstr "Utiliser un serveur mandataire"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:134
 msgid "Port:"
-msgstr "Port: "
+msgstr "Port :"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:31
 msgid "Internet Settings"
@@ -3809,7 +3809,7 @@ msgstr "Indice hors limites"
 
 #: dlls/jscript/jscript.rc:31
 msgid "Out of stack space"
-msgstr "Dépassement de capacité de pile ; "
+msgstr "Dépassement de capacité de pile :"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -7537,10 +7537,8 @@ msgid "Begin request has already been made.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "UUID d'objet introuvable.\n"
+msgstr "Le récepteur n'a pas été finalisé.\n"
 
 #: dlls/mferror/mferror.mc:732
 msgid "Clock was stopped\n"
@@ -7582,7 +7580,7 @@ msgstr "Représentation non prise en charge.\n"
 
 #: dlls/mferror/mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "Il n'y a plus de types dans la liste de type de médias suggérés.\n"
 
 #: dlls/mferror/mferror.mc:95
 msgid "Unsupported service.\n"
@@ -7609,10 +7607,8 @@ msgid "Unsupported scheme.\n"
 msgstr "Schéma non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Type de flux d'octets non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:158
 msgid "Unsupported time format.\n"
@@ -7787,10 +7783,8 @@ msgid "Invalid work queue index.\n"
 msgstr "Index invalide.\n"
 
 #: dlls/mferror/mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "Aucun serveur de connexion disponible.\n"
+msgstr "Aucun événement disponible.\n"
 
 #: dlls/mferror/mferror.mc:445
 #, fuzzy
@@ -7843,18 +7837,16 @@ msgid "No media streams were selected.\n"
 msgstr "Aucun flux de données médis n'a été détecté.\n"
 
 #: dlls/mferror/mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Caractéristiques du média source non prises en charge.\n"
 
 #: dlls/mferror/mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "Le récepteur de flux a été enlevé.\n"
 
 #: dlls/mferror/mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Les récepteurs de flux sont désynchronisés.\n"
 
 #: dlls/mferror/mferror.mc:550
 #, fuzzy
@@ -7863,38 +7855,28 @@ msgid "Media sink stream sinks set is fixed.\n"
 msgstr "Le registre a été restauré.\n"
 
 #: dlls/mferror/mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Le domaine existe déjà.\n"
+msgstr "Le récepteur de flux existe déjà.\n"
 
 #: dlls/mferror/mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "Opération annulée par l'utilisateur.\n"
+msgstr "L'allocation d'échantillons a été annulée.\n"
 
 #: dlls/mferror/mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Le répertoire n'est pas vide.\n"
+msgstr "L'allocateur d'échantillons est vide.\n"
 
 #: dlls/mferror/mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "La classe existe déjà.\n"
+msgstr "Le récepteur a déjà été arrêté.\n"
 
 #: dlls/mferror/mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Aucune donnée détectée.\n"
+msgstr "Aucun flux n'a été sélectionné pour le récepteur.\n"
 
 #: dlls/mferror/mferror.mc:606
 msgid "Metadata was too long.\n"
@@ -7902,21 +7884,19 @@ msgstr "Métadonnées trop longues.\n"
 
 #: dlls/mferror/mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "Aucun échantillon n'a été traité par le récepteur.\n"
 
 #: dlls/mferror/mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "Le récepteur n'a pas reçu les en-têtes attendues.\n"
 
 #: dlls/mferror/mferror.mc:627
 msgid "Optional node is invalid.\n"
 msgstr "Le noeud optionnel n'est pas valide.\n"
 
 #: dlls/mferror/mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "Impossible de trouver l'imprimante."
+msgstr "Impossible de trouver le décrypteur.\n"
 
 #: dlls/mferror/mferror.mc:641
 msgid "Codec was not found.\n"
@@ -8060,7 +8040,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:32
 msgid "path %s not found"
-msgstr "Le chemin %s est introuvable"
+msgstr "le chemin %s est introuvable"
 
 #: dlls/msi/msi.rc:33
 msgid "insert disk %s"
@@ -8155,7 +8135,7 @@ msgstr "Nouveau dossier"
 
 #: dlls/msi/msi.rc:91
 msgid "Allocating registry space"
-msgstr "Allocation d'espace pour le registre."
+msgstr "Allocation d'espace pour le registre"
 
 #: dlls/msi/msi.rc:92
 msgid "Searching for installed applications"
@@ -8212,10 +8192,8 @@ msgid "Installing new services"
 msgstr "Installation des nouveaux services"
 
 #: dlls/msi/msi.rc:107
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "Installation/Désinstallation"
+msgstr "Installation du catalogue système"
 
 #: dlls/msi/msi.rc:108
 msgid "Validating install"
@@ -8319,7 +8297,7 @@ msgstr "Suppression des dossiers"
 
 #: dlls/msi/msi.rc:133
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "Suppression des entrées dans les fichiers INI"
 
 #: dlls/msi/msi.rc:134
 msgid "Removing ODBC components"
@@ -8395,7 +8373,7 @@ msgstr "Suppression de l'enregistrement des bibliothèques de types"
 
 #: dlls/msi/msi.rc:154
 msgid "Writing INI files values"
-msgstr ""
+msgstr "Écriture des entrées dans les fichiers INI"
 
 #: dlls/msi/msi.rc:155
 msgid "Writing system registry values"
@@ -8483,7 +8461,7 @@ msgstr "Police : [1]"
 
 #: dlls/msi/msi.rc:184 dlls/msi/msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
-msgstr ""
+msgstr "Type de contenu MIME : [1], Extension : [2]"
 
 #: dlls/msi/msi.rc:185 dlls/msi/msi.rc:206
 msgid "ProgId: [1]"
@@ -8507,11 +8485,11 @@ msgstr "Application : [1], Ligne de commande : [2]"
 
 #: dlls/msi/msi.rc:192 dlls/msi/msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
+msgstr "Fichier : [1],  Section : [2],  Clé : [3], Valeur : [4]"
 
 #: dlls/msi/msi.rc:193
 msgid "Key: [1], Name: [2]"
-msgstr ""
+msgstr "Clé : [1], Nom : [2]"
 
 #: dlls/msi/msi.rc:195 dlls/msi/msi.rc:196
 msgid "File: [1], Folder: [2]"
@@ -8523,7 +8501,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:210
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr ""
+msgstr "Clé : [1], Nom : [2], Valeur : [3]"
 
 #: dlls/msi/msi.rc:72
 msgid "{{Fatal error: }}"
@@ -8535,7 +8513,7 @@ msgstr "{{Erreur [1]. }}"
 
 #: dlls/msi/msi.rc:74
 msgid "Warning [1]."
-msgstr ""
+msgstr "Alerte : [1]."
 
 #: dlls/msi/msi.rc:75
 msgid "Info [1]."
@@ -8915,11 +8893,9 @@ msgid "selected"
 msgstr "sélectionné"
 
 #: dlls/oleacc/oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "En pause"
+msgstr "avec focus"
 
 #: dlls/oleacc/oleacc.rc:101
 msgctxt "object state"
@@ -8942,11 +8918,9 @@ msgid "read only"
 msgstr "lecture seule"
 
 #: dlls/oleacc/oleacc.rc:105
-#, fuzzy
-#| msgid "Hot Tracked Item"
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "Élément actif"
+msgstr "actif"
 
 #: dlls/oleacc/oleacc.rc:106
 msgctxt "object state"
@@ -8994,10 +8968,9 @@ msgid "offscreen"
 msgstr "hors écran"
 
 #: dlls/oleacc/oleacc.rc:115
-#, fuzzy
 msgctxt "object state"
 msgid "sizeable"
-msgstr "&activer"
+msgstr "dimensionnable"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
@@ -9032,18 +9005,14 @@ msgid "traversed"
 msgstr ""
 
 #: dlls/oleacc/oleacc.rc:122
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "table"
+msgstr "avec sélection multiple"
 
 #: dlls/oleacc/oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "Sélectionnez un fichier."
+msgstr "avec sélection étendue"
 
 #: dlls/oleacc/oleacc.rc:124
 msgctxt "object state"
@@ -9066,7 +9035,6 @@ msgid "protected"
 msgstr "protégé"
 
 #: dlls/oleacc/oleacc.rc:128
-#, fuzzy
 msgctxt "object state"
 msgid "has popup"
 msgstr "avec popup"
@@ -9118,7 +9086,7 @@ msgstr "Utiliser une chaîne de connexion"
 
 #: dlls/oledb32/version.rc:75
 msgid "&Connection string:"
-msgstr "&Chaîne de connexion"
+msgstr "&Chaîne de connexion :"
 
 #: dlls/oledb32/version.rc:77
 msgid "B&uild..."
@@ -9166,11 +9134,11 @@ msgstr "Niveau de protection :"
 
 #: dlls/oledb32/version.rc:101
 msgid "Connect:"
-msgstr "Connecté"
+msgstr "Connecté :"
 
 #: dlls/oledb32/version.rc:103
 msgid "seconds."
-msgstr "secondes"
+msgstr "secondes."
 
 #: dlls/oledb32/version.rc:104
 msgid "A&ccess:"
@@ -9186,17 +9154,15 @@ msgid ""
 "value, select a property, then choose Edit Value below."
 msgstr ""
 "Voici les propriétés à initialiser pour ce type de données. Pour ce faire, "
-"sélectionnez une propriété, et appuyez sur « Modifier valeur... »"
+"sélectionnez une propriété, et appuyez sur « Modifier valeur... »."
 
 #: dlls/oledb32/version.rc:115
 msgid "&Edit Value..."
 msgstr "&Modifier valeur..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "Propriétés"
+msgstr "Erreur du lien vers les données"
 
 #: dlls/oledb32/version.rc:50
 msgid "Please select a provider."
@@ -9953,7 +9919,7 @@ msgstr "Wine est une réalisation de :"
 
 #: dlls/shell32/shell32.rc:332
 msgid "Run"
-msgstr "E&xécuter..."
+msgstr "E&xécuter"
 
 #: dlls/shell32/shell32.rc:336
 msgid ""
@@ -11196,32 +11162,24 @@ msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:372
-#, fuzzy
-#| msgid "Date and time"
 msgid "Transbaikal Standard Time"
-msgstr "Date et heure"
+msgstr "Heure du Transbaïkal"
 
 #: dlls/tzres/tzres.rc:373
-#, fuzzy
-#| msgid "Date and time"
 msgid "Transbaikal Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Transbaïkal"
 
 #: dlls/tzres/tzres.rc:374
 msgid "(UTC+09:00) Chita"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "Central European"
 msgid "E. Europe Standard Time"
-msgstr "Européen central"
+msgstr "Heure d'Europe de l'Est"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "Central European"
 msgid "E. Europe Daylight Time"
-msgstr "Européen central"
+msgstr "Heure d'été d'Europe de l'Est"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
@@ -11684,14 +11642,12 @@ msgid "(UTC-04:00) Asuncion"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:132
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Date et heure"
+msgstr "Heure de la ligne de changement de date"
 
 #: dlls/tzres/tzres.rc:133
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Heure d'été de la ligne de changement de date"
 
 #: dlls/tzres/tzres.rc:134
 msgid "(UTC-12:00) International Date Line West"
@@ -12221,7 +12177,7 @@ msgstr "Accès refusé"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Erreur d'accès au chemin / fichier"
 
 #: dlls/vbscript/vbscript.rc:42
 msgid "Path not found"
@@ -12428,7 +12384,7 @@ msgstr "L'URL est invalide.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
-msgstr ""
+msgstr "Le schéma d'URL n'a été reconnu ou n'est pas pris en charge.\n"
 
 #: dlls/wininet/winineterror.mc:46
 msgid "The server name could not be resolved.\n"
@@ -12461,10 +12417,12 @@ msgid ""
 "SSL certificate date that was received from the server is bad. The "
 "certificate is expired.\n"
 msgstr ""
+"La date du certificat SSL reçu du serveur est incorrecte : le certificat "
+"n'est plus valide.\n"
 
 #: dlls/wininet/winineterror.mc:81
 msgid "SSL certificate common name (host name field) is incorrect.\n"
-msgstr ""
+msgstr "Le nom commun (champ host name) du certificat SSL est incorrect.\n"
 
 #: dlls/winmm/winmm.rc:32
 msgid "The specified command was carried out."
@@ -13172,10 +13130,8 @@ msgid "Confidentiality Required"
 msgstr "Confidentialité requise"
 
 #: dlls/wldap32/wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Arrêt du système en cours.\n"
+msgstr "Liaison SASL en cours"
 
 #: dlls/wldap32/wldap32.rc:48
 msgid "No Such Attribute"
@@ -14488,7 +14444,7 @@ msgid ""
 "the window."
 msgstr ""
 "La taille du tampon écran doit être plus grande ou égale à celle du tampon "
-"de la fenêtre"
+"de la fenêtre."
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -15793,7 +15749,7 @@ msgid ""
 msgstr ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
-"  Ajoute un clé au registre ou ajoute une nouvelle valeur à une clé de\n"
+"  Ajoute une clé au registre ou ajoute une nouvelle valeur à une clé de\n"
 "  registre donnée.\n"
 "\n"
 "  <key>\n"
@@ -16491,7 +16447,7 @@ msgstr "Impossible de modifier la clé de registre sélectionnée."
 
 #: programs/regedit/regedit.rc:248
 msgid "Unable to create a new registry key."
-msgstr "Impossible de créer un nouvelle clé de registre."
+msgstr "Impossible de créer une nouvelle clé de registre."
 
 #: programs/regedit/regedit.rc:249
 msgid "Unable to create a new registry value."
@@ -18145,11 +18101,11 @@ msgstr "&native (Windows)"
 
 #: programs/winecfg/winecfg.rc:210
 msgid "Buil&tin then Native"
-msgstr "i&ntégrée puis native"
+msgstr "I&ntégrée puis Native."
 
 #: programs/winecfg/winecfg.rc:211
 msgid "Nati&ve then Builtin"
-msgstr "n&ative puis intégrée"
+msgstr "N&ative puis Intégrée"
 
 #: programs/winecfg/winecfg.rc:219
 msgid "Select Drive Letter"
