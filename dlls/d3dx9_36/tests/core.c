@@ -319,6 +319,8 @@ static void test_ID3DXSprite(IDirect3DDevice9 *device)
     ok (hr == D3D_OK, "Begin returned %#x, expected %#x\n", hr, D3D_OK);
     hr = ID3DXSprite_Draw(sprite, tex2, &rect, &center, &pos, D3DCOLOR_XRGB(255, 255, 255));
     ok (hr == D3D_OK, "Draw returned %#x, expected %#x\n", hr, D3D_OK);
+    hr = ID3DXSprite_End(sprite);
+    ok (hr == D3D_OK, "End returned %#x, expected %#x\n", hr, D3D_OK);
 
     IDirect3DDevice9_EndScene(device);
     check_release((IUnknown*)sprite, 0);
