@@ -11451,6 +11451,61 @@ static void test_nonblocking_async_recv(void)
     CloseHandle(overlapped.hEvent);
 }
 
+static void test_simultaneous_async_recv(void)
+{
+    SOCKET client, server;
+    OVERLAPPED overlappeds[2] = {{0}};
+    HANDLE events[2];
+    WSABUF wsabufs[2];
+    DWORD flags[2] = {0};
+    size_t num_io = 2, stride = 16, i;
+    char resbuf[32] = "";
+    static const char msgstr[32] = "-- Lorem ipsum dolor sit amet -";
+    int ret;
+
+    for (i = 0; i < num_io; i++) events[i] = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    tcp_socketpair(&client, &server);
+
+    for (i = 0; i < num_io; i++)
+    {
+        wsabufs[i].buf = resbuf + i * stride;
+        wsabufs[i].len = stride;
+        overlappeds[i].hEvent = events[i];
+        ret = WSARecv(client, &wsabufs[i], 1, NULL, &flags[i], &overlappeds[i], NULL);
+        ok(ret == -1, "got %d\n", ret);
+        ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+    }
+
+    ret = send(server, msgstr, sizeof(msgstr), 0);
+    ok(ret == sizeof(msgstr), "got %d\n", ret);
+
+    for (i = 0; i < num_io; i++)
+    {
+        const void *expect = msgstr + i * stride;
+        const void *actual = resbuf + i * stride;
+        DWORD size;
+
+        ret = WaitForSingleObject(events[i], 1000);
+        todo_wine_if(i > 0)
+        ok(!ret, "wait timed out\n");
+
+        size = 0;
+        ret = GetOverlappedResult((HANDLE)client, &overlappeds[i], &size, FALSE);
+        todo_wine_if(i > 0)
+        ok(ret, "got error %u\n", GetLastError());
+        todo_wine_if(i > 0)
+        ok(size == stride, "got size %u\n", size);
+        todo_wine_if(i > 0)
+        ok(!memcmp(expect, actual, stride), "expected %s, got %s\n", debugstr_an(expect, stride), debugstr_an(actual, stride));
+    }
+
+    closesocket(client);
+    closesocket(server);
+
+    for (i = 0; i < num_io; i++) CloseHandle(events[i]);
+}
+
 static void test_empty_recv(void)
 {
     OVERLAPPED overlapped = {0};
@@ -12009,6 +12064,7 @@ START_TEST( sock )
     test_connecting_socket();
     test_WSAGetOverlappedResult();
     test_nonblocking_async_recv();
+    test_simultaneous_async_recv();
     test_empty_recv();
     test_timeout();
 
