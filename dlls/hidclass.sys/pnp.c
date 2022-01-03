@@ -117,6 +117,8 @@ static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param
     RAWINPUT rawinput;
     INPUT input;
 
+    TRACE("ext %p, lparam %p\n", ext, (void *)param);
+
     if (!IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID )) return;
 
     rawinput.header.dwType = RIM_TYPEHID;
@@ -298,6 +300,8 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     HID_StartDeviceThread(child_pdo);
 
     send_wm_input_device_change(pdo_ext, GIDC_ARRIVAL);
+
+    TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
 }
 
 static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)

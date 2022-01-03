@@ -229,6 +229,8 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     KIRQL irql;
     IRP *irp;
 
+    TRACE("device %p, packet %p\n", device, packet);
+
     if (IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID ))
     {
         size = offsetof( RAWINPUT, data.hid.bRawData[report_len] );
