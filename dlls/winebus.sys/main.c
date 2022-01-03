@@ -322,6 +322,8 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     list_add_tail(&device_list, &ext->entry);
 
     RtlLeaveCriticalSection(&device_list_cs);
+
+    TRACE("created device %p/%#I64x\n", device, unix_device);
     return device;
 }
 
@@ -415,7 +417,7 @@ static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
 
     if (TRACE_ON(hid))
     {
-        TRACE("read input report length %lu:\n", report->length);
+        TRACE("device %p/%#I64x input report length %lu:\n", ext->device, ext->unix_device, report->length);
         for (i = 0; i < report->length;)
         {
             char buffer[256], *buf = buffer;
