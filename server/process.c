@@ -1503,7 +1503,10 @@ DECL_HANDLER(get_process_info)
         reply->session_id       = process->session_id;
         reply->machine          = process->machine;
         if (get_reply_max_size())
-            set_reply_data( &process->image_info, min( sizeof(process->image_info), get_reply_max_size() ));
+        {
+            if (!process->running_threads) set_error( STATUS_PROCESS_IS_TERMINATING );
+            else set_reply_data( &process->image_info, min( sizeof(process->image_info), get_reply_max_size() ));
+        }
         release_object( process );
     }
 }
