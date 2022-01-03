@@ -11,7 +11,9 @@ SOURCES = \
 	dinput8.c \
 	driver_hid.c \
 	driver_hid.spec \
+	force_feedback.c \
 	hid.c \
 	joystick.c \
+	joystick8.c \
 	keyboard.c \
 	mouse.c

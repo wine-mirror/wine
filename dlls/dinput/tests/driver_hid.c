@@ -34,6 +34,7 @@
 
 #include "wine/list.h"
 
+#include "initguid.h"
 #include "driver_hid.h"
 
 static UNICODE_STRING control_symlink;
