@@ -39,7 +39,6 @@ static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
 
-static BOOL is_win64 = (sizeof(void *) > sizeof(int));
 static BOOL is_wow64;
 static void *code_mem;
 
@@ -329,7 +328,6 @@ static void test_peb_teb(void)
         }
 
         ret = DebugActiveProcess( pi.dwProcessId );
-        todo_wine_if( is_win64 )
         ok( ret, "debugging failed\n" );
         if (!ReadProcessMemory( pi.hProcess, proc_info.PebBaseAddress, &peb, sizeof(peb), &res )) res = 0;
         ok( res == sizeof(peb), "wrong len %lx\n", res );

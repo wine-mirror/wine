@@ -92,6 +92,7 @@ static const LONG teb_offset = 0x2000;
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
 
 /* callbacks to PE ntdll from the Unix side */
+extern void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS (WINAPI *pKiRaiseUserExceptionDispatcher)(void) DECLSPEC_HIDDEN;
 extern NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) DECLSPEC_HIDDEN;
