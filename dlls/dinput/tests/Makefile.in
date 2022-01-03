@@ -1,9 +1,17 @@
 TESTDLL   = dinput.dll
-IMPORTS   = dinput ole32 version user32
+IMPORTS   = dinput dinput8 ole32 version user32 advapi32 hid uuid crypt32 newdev setupapi wintrust winmm
 
-C_SRCS = \
+driver_hid_IMPORTS = winecrt0 ntoskrnl hal hidclass
+driver_hid_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+
+SOURCES = \
 	device.c \
+	device8.c \
 	dinput.c \
+	dinput8.c \
+	driver_hid.c \
+	driver_hid.spec \
+	hid.c \
 	joystick.c \
 	keyboard.c \
 	mouse.c

@@ -22,13 +22,12 @@
 #include <windows.h>
 #include <objidl.h>
 
-#include <initguid.h>
 #include <dinput.h>
 #include <dinputd.h>
 
 #include "wine/test.h"
 
-HINSTANCE hInstance;
+static HINSTANCE hInstance;
 
 static BOOL CALLBACK dummy_callback(const DIDEVICEINSTANCEA *instance, void *context)
 {
@@ -711,7 +710,7 @@ static void test_Initialize(void)
     IDirectInput8_Release(pDI);
 }
 
-START_TEST(dinput)
+START_TEST(dinput8)
 {
     hInstance = GetModuleHandleA(NULL);
 

@@ -1836,7 +1836,7 @@ static void test_keyboard_info(void)
     ok( ref == 0, "Release returned %d\n", ref );
 }
 
-START_TEST(device)
+START_TEST(device8)
 {
     instance = GetModuleHandleW( NULL );
 
