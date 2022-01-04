@@ -789,7 +789,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	TRACE("Unable to create output port\n");
 	MidiOutDev[wDevID].port_out = -1;
     } else {
-	TRACE("Outport port %d created successfully\n", port_out);
+	TRACE("Output port %d created successfully\n", port_out);
 	MidiOutDev[wDevID].port_out = port_out;
 
 	/* Connect our app port to the device port */
