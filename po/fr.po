@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-03 13:08+0100\n"
+"PO-Revision-Date: 2022-01-04 15:28+0100\n"
 "Last-Translator: Eric Pouech <eric.pouech@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -520,7 +520,7 @@ msgstr "Cacher les détails"
 
 #: dlls/comctl32/comctl32.rc:63
 msgid "See details"
-msgstr "Void les détails"
+msgstr "Voir les détails"
 
 #: dlls/comctl32/comctl32.rc:31 dlls/cryptui/cryptui.rc:235
 #: programs/regedit/regedit.rc:286 programs/taskmgr/taskmgr.rc:434
@@ -1617,7 +1617,7 @@ msgstr "Mise à jour de Windows"
 
 #: dlls/crypt32/crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Paire nom/value d'enrôlement"
+msgstr "Paire nom/valeur d'enrôlement"
 
 #: dlls/crypt32/crypt32.rc:90
 msgid "OS Version"
@@ -3809,7 +3809,7 @@ msgstr "Indice hors limites"
 
 #: dlls/jscript/jscript.rc:31
 msgid "Out of stack space"
-msgstr "Dépassement de capacité de pile :"
+msgstr "Dépassement de capacité de pile"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -6621,7 +6621,7 @@ msgstr "Fichier de table de conversion de caractères trop petit.\n"
 
 #: dlls/kernel32/winerror.mc:3293
 msgid "Null context handle.\n"
-msgstr "Descripteur de contexte null.\n"
+msgstr "Descripteur de contexte nul.\n"
 
 #: dlls/kernel32/winerror.mc:3298
 msgid "Context handle damaged.\n"
@@ -6637,7 +6637,7 @@ msgstr "Impossible d'obtenir le descripteur d'appel.\n"
 
 #: dlls/kernel32/winerror.mc:3313
 msgid "Null reference pointer.\n"
-msgstr "Pointeur de référence null.\n"
+msgstr "Pointeur de référence nul.\n"
 
 #: dlls/kernel32/winerror.mc:3318
 msgid "Enumeration value out of range.\n"
@@ -7542,7 +7542,7 @@ msgstr "Le récepteur n'a pas été finalisé.\n"
 
 #: dlls/mferror/mferror.mc:732
 msgid "Clock was stopped\n"
-msgstr "L'horloge a été arrếtée\n"
+msgstr "L'horloge a été arrêtée\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7892,7 +7892,7 @@ msgstr "Le récepteur n'a pas reçu les en-têtes attendues.\n"
 
 #: dlls/mferror/mferror.mc:627
 msgid "Optional node is invalid.\n"
-msgstr "Le noeud optionnel n'est pas valide.\n"
+msgstr "Le nœud optionnel n'est pas valide.\n"
 
 #: dlls/mferror/mferror.mc:634
 msgid "Cannot find decryptor.\n"
@@ -7904,7 +7904,7 @@ msgstr "Le Codec n'a pas été trouvé.\n"
 
 #: dlls/mferror/mferror.mc:648
 msgid "Cannot connect topology nodes.\n"
-msgstr "Impossible de connecter les noeuds de la topologie.\n"
+msgstr "Impossible de connecter les nœuds de la topologie.\n"
 
 #: dlls/mferror/mferror.mc:655
 msgid "Topology request is not supported.\n"
@@ -8305,7 +8305,7 @@ msgstr "Suppression des composants ODBC"
 
 #: dlls/msi/msi.rc:135
 msgid "Removing system registry values"
-msgstr "Suppression des valeurs dans le regitre système"
+msgstr "Suppression des valeurs dans le registre système"
 
 #: dlls/msi/msi.rc:136
 msgid "Removing shortcuts"
@@ -8527,7 +8527,7 @@ msgid ""
 msgstr ""
 "L'installeur a rencontré une erreur inattendue en installant ce paquet. Ceci "
 "peut provenir d'un problème avec ce paquet. Le code d'erreur est [1]. {{Les "
-"arguements sont : [2], [3], [4]}}"
+"arguments sont : [2], [3], [4]}}"
 
 #: dlls/msi/msi.rc:77
 msgid "{{Disk full: }}"
@@ -8535,7 +8535,7 @@ msgstr "{{Disque plein: }}"
 
 #: dlls/msi/msi.rc:78
 msgid "Action [Time]: [1]. [2]"
-msgstr "Action [Tempts] : [1]. [2]"
+msgstr "Action [Temps] : [1]. [2]"
 
 #: dlls/msi/msi.rc:79
 msgid "Message type: [1], Argument: [2]{, [3]}"
@@ -12939,7 +12939,7 @@ msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Aucun périphérique audio capable de jouer des fichiers dans le formaten "
+"Aucun périphérique audio capable de jouer des fichiers dans le format en "
 "cours n'est présent. Utiliser l'option pour installer des périphériques "
 "audio."
 
@@ -15658,7 +15658,7 @@ msgstr "reg : L'opération s'est terminée avec succès\n"
 
 #: programs/reg/reg.rc:131
 msgid "reg: The registry operation was cancelled\n"
-msgstr "reg : L'operation sur le registre a été annulée\n"
+msgstr "reg : L'opération sur le registre a été annulée\n"
 
 #: programs/reg/reg.rc:174
 msgid "reg: Unable to find the specified registry key\n"
@@ -17941,7 +17941,7 @@ msgstr "Visionneuse de fichiers Metafile réguliers"
 
 #: programs/view/view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr "Métafichiers (*.wmf, *.emf)"
+msgstr "Méta-fichiers (*.wmf, *.emf)"
 
 #: programs/wineboot/wineboot.rc:31
 msgid "Waiting for Program"
@@ -18101,7 +18101,7 @@ msgstr "&native (Windows)"
 
 #: programs/winecfg/winecfg.rc:210
 msgid "Buil&tin then Native"
-msgstr "I&ntégrée puis Native."
+msgstr "I&ntégrée puis Native"
 
 #: programs/winecfg/winecfg.rc:211
 msgid "Nati&ve then Builtin"
