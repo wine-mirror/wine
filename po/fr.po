@@ -3999,11 +3999,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
-msgstr ""
+msgstr "Impossible de redéfinir une propriété qui n'est pas configurable '|'"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot modify non-writable property '|'"
-msgstr ""
+msgstr "Impossible de modifier une propriété qui est protégée en écriture '|'"
 
 #: dlls/jscript/jscript.rc:77
 msgid "'this' is not a Map object"
@@ -7641,10 +7641,8 @@ msgid "Unsupported thinning.\n"
 msgstr "Type non pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "Demande non prise en charge.\n"
+msgstr "Le sens à rebours n'est pas pris en charge.\n"
 
 #: dlls/mferror/mferror.mc:214
 #, fuzzy
@@ -7741,14 +7739,12 @@ msgid "Property is not empty.\n"
 msgstr "La propriété n'est pas vide.\n"
 
 #: dlls/mferror/mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "Type de point d'entrée non autorisé.\n"
+msgstr "La propriété vecteur n'est pas autorisée.\n"
 
 #: dlls/mferror/mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "La propriété vecteur est requise.\n"
 
 #: dlls/mferror/mferror.mc:389
 msgid "Operation was cancelled.\n"
@@ -7798,7 +7794,7 @@ msgstr "La fin du flux de média a été atteinte.\n"
 
 #: dlls/mferror/mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown() a été appélé.\n"
 
 #: dlls/mferror/mferror.mc:466
 msgid "Media stream has no duration set.\n"
@@ -12236,6 +12232,7 @@ msgstr "La fonction spécifiée n'a pas été trouvée dans la DLL"
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
+"La variable utilise un type d'automatisation non pris en charge dans VBScript"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
@@ -12348,7 +12345,7 @@ msgstr "Ce certificat comporte au moins un problème de sécurité indéterminé
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Date de début de validité"
 
 #: dlls/wininet/wininet.rc:37
 msgid "Security Protocol"
@@ -12410,7 +12407,7 @@ msgstr "La tentative de connexion au serveur a échoué.\n"
 
 #: dlls/wininet/winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
-msgstr ""
+msgstr "La connexion avec le serveur a été perdue.\n"
 
 #: dlls/wininet/winineterror.mc:76
 msgid ""
@@ -14590,7 +14587,7 @@ msgstr "Adresse IPv6"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Suffixe DNS principal"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -16810,7 +16807,7 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Développe ou réduit le nœud sélectionné"
 
 #: programs/regedit/regedit.rc:231
 msgid "Collapse"
