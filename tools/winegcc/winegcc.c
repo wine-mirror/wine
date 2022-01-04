@@ -1254,10 +1254,18 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
 
-    if ((opts->nodefaultlibs || opts->use_msvcrt) && opts->target.platform == PLATFORM_MINGW)
+    if (opts->nodefaultlibs || opts->use_msvcrt)
     {
-        libgcc = find_libgcc(opts->prefix, link_args);
-        if (!libgcc) libgcc = "-lgcc";
+        switch (opts->target.platform)
+        {
+        case PLATFORM_MINGW:
+        case PLATFORM_CYGWIN:
+            libgcc = find_libgcc( opts->prefix, link_args );
+            if (!libgcc) libgcc = "-lgcc";
+            break;
+        default:
+            break;
+        }
     }
 
     strarray_add(&link_args, "-o");
