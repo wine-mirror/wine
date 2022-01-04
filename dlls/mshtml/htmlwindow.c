@@ -85,7 +85,7 @@ void get_top_window(HTMLOuterWindow *window, HTMLOuterWindow **ret)
 {
     HTMLOuterWindow *iter;
 
-    for(iter = window; iter->parent && iter->parent; iter = iter->parent);
+    for(iter = window; iter->parent; iter = iter->parent);
     *ret = iter;
 }
 
