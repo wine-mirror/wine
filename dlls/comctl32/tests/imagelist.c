@@ -88,6 +88,7 @@ static HIMAGELIST (WINAPI *pImageList_Read)(IStream *);
 static BOOL (WINAPI *pImageList_Copy)(HIMAGELIST, int, HIMAGELIST, int, UINT);
 static HIMAGELIST (WINAPI *pImageList_LoadImageW)(HINSTANCE, LPCWSTR, int, int, COLORREF, UINT, UINT);
 static BOOL (WINAPI *pImageList_Draw)(HIMAGELIST,INT,HDC,INT,INT,UINT);
+static HRESULT (WINAPI *pImageList_WriteEx)(HIMAGELIST himl, DWORD flags, IStream *stream);
 
 static HINSTANCE hinst;
 
@@ -2574,6 +2575,28 @@ static void test_IImageList_GetIconSize(void)
     IImageList_Release(imgl);
 }
 
+static void test_ImageList_WriteEx(void)
+{
+    HIMAGELIST himl;
+    IStream *stream;
+    HRESULT hr;
+
+    himl = pImageList_Create(24, 24, ILC_COLOR24, 1, 1);
+    ok(himl != 0, "Failed to create an imagelist.\n");
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pImageList_WriteEx(himl, ILP_NORMAL, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pImageList_WriteEx(himl, ILP_DOWNLEVEL, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IStream_Release(stream);
+    pImageList_Destroy(himl);
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -2601,6 +2624,7 @@ static void init_functions(void)
     X(ImageList_Merge);
     X(ImageList_GetImageInfo);
     X(ImageList_Write);
+    X(ImageList_WriteEx);
     X(ImageList_Read);
     X(ImageList_Copy);
     X(ImageList_LoadImageW);
@@ -2669,6 +2693,7 @@ START_TEST(imagelist)
     test_IImageList_SetBkColor();
     test_IImageList_GetImageCount();
     test_IImageList_GetIconSize();
+    test_ImageList_WriteEx();
 
     CoUninitialize();
 

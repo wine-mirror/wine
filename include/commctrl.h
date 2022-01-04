@@ -602,6 +602,10 @@ BOOL     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT,INT);
 #ifdef __IStream_INTERFACE_DEFINED__
 HIMAGELIST WINAPI ImageList_Read(LPSTREAM);
 BOOL     WINAPI ImageList_Write(HIMAGELIST,IStream*);
+
+#define ILP_NORMAL    0
+#define ILP_DOWNLEVEL 1
+
 HRESULT  WINAPI ImageList_WriteEx(HIMAGELIST,DWORD,IStream*);
 #endif
 
