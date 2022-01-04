@@ -909,6 +909,19 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
 {
     switch (LOWORD( guid ))
     {
+    case (DWORD_PTR)DIPROP_VIDPID:
+    case (DWORD_PTR)DIPROP_TYPENAME:
+    case (DWORD_PTR)DIPROP_USERNAME:
+    case (DWORD_PTR)DIPROP_KEYNAME:
+    case (DWORD_PTR)DIPROP_LOGICALRANGE:
+    case (DWORD_PTR)DIPROP_PHYSICALRANGE:
+    case (DWORD_PTR)DIPROP_APPDATA:
+        if (impl->dinput->dwVersion < 0x0800) return DIERR_UNSUPPORTED;
+        break;
+    }
+
+    switch (LOWORD( guid ))
+    {
     case (DWORD_PTR)DIPROP_INSTANCENAME:
     case (DWORD_PTR)DIPROP_KEYNAME:
     case (DWORD_PTR)DIPROP_PRODUCTNAME:

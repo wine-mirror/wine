@@ -870,7 +870,6 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, NULL );
     ok( hr == DIERR_INVALIDPARAM, "GetProperty returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
         "GetProperty DIPROP_VIDPID returned %#x\n", hr );
     prop_dword.diph.dwHeaderSize = sizeof(DIPROPHEADER) - 1;
@@ -880,7 +879,6 @@ static void test_simple_joystick( DWORD version )
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
         "GetProperty DIPROP_VIDPID returned %#x\n", hr );
     if (hr == DI_OK)
@@ -925,7 +923,6 @@ static void test_simple_joystick( DWORD version )
         ok( !wcscmp( prop_string.wsz, expect_vidpid_str ), "got type %s\n", debugstr_w(prop_string.wsz) );
     }
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_NOEFFECT),
         "GetProperty DIPROP_USERNAME returned %#x\n", hr );
     if (hr == DI_NOEFFECT)
@@ -972,7 +969,6 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_RANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
         "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
@@ -1003,7 +999,6 @@ static void test_simple_joystick( DWORD version )
     prop_string.diph.dwHow = DIPH_BYUSAGE;
     prop_string.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
         "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
     if (hr == DI_OK)
@@ -1042,7 +1037,6 @@ static void test_simple_joystick( DWORD version )
     ok( prop_range.lMin == 0, "got %d expected %d\n", prop_range.lMin, 0 );
     ok( prop_range.lMax == 65535, "got %d expected %d\n", prop_range.lMax, 65535 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
         "GetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
     if (hr == DI_OK)
@@ -1051,7 +1045,6 @@ static void test_simple_joystick( DWORD version )
         ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
     }
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
         "GetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
     if (hr == DI_OK)
@@ -1624,11 +1617,9 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "SetProperty DIPROP_RANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
         "SetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
         "SetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
 
@@ -1683,7 +1674,6 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, NULL );
     ok( hr == DIERR_INVALIDPARAM, "SetProperty returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
         "SetProperty DIPROP_VIDPID returned %#x\n", hr );
 
@@ -1691,7 +1681,6 @@ static void test_simple_joystick( DWORD version )
     prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_READONLY),
         "SetProperty DIPROP_VIDPID returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
@@ -1714,11 +1703,9 @@ static void test_simple_joystick( DWORD version )
         debugstr_w(prop_string.wsz) );
 
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_READONLY),
         "SetProperty DIPROP_TYPENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_READONLY),
         "SetProperty DIPROP_USERNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
@@ -1738,7 +1725,7 @@ static void test_simple_joystick( DWORD version )
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
+    todo_wine_if( version >= 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
         "SetProperty DIPROP_APPDATA returned %#x\n", hr );
 
@@ -1893,7 +1880,6 @@ static void test_simple_joystick( DWORD version )
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_pointer.uData = 0xfeedcafe;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine_if( version < 0x0800 )
     ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
         "SetProperty DIPROP_APPDATA returned %#x\n", hr );
 
