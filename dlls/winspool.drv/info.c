@@ -1002,10 +1002,9 @@ static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault
             if(handle == nb_printer_handles)
                 handle = i;
         }
-        else
+        else if (!queue && name && printer_handles[i]->name && !wcscmp( name, printer_handles[i]->name ))
         {
-            if(!queue && (name) && !wcscmp( name, printer_handles[i]->name ))
-                queue = printer_handles[i]->queue;
+            queue = printer_handles[i]->queue;
         }
     }
 
