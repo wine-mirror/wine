@@ -1513,7 +1513,6 @@ static void test_simple_joystick( DWORD version )
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS | DIDFT_MAKEINSTANCE( 0xff );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine_if( version < 0x0700 )
     ok( hr == (version < 0x0700 ? DI_OK : DIERR_INVALIDPARAM),
         "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS | DIDFT_MAKEINSTANCE( 1 );
