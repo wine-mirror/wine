@@ -39,8 +39,11 @@
 struct check_objects_todos
 {
     BOOL type;
+    BOOL ofs;
     BOOL guid;
+    BOOL flags;
     BOOL usage;
+    BOOL usage_page;
     BOOL name;
 };
 
@@ -77,16 +80,18 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     check_member( *obj, *exp, "%u", dwSize );
     todo_wine_if( todo->guid )
     check_member_guid( *obj, *exp, guidType );
-    todo_wine_if( params->version < 0x700 && (obj->dwType & DIDFT_BUTTON) )
+    todo_wine_if( todo->ofs )
     check_member( *obj, *exp, "%#x", dwOfs );
     todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
+    todo_wine_if( todo->flags )
     check_member( *obj, *exp, "%#x", dwFlags );
     if (!localized) todo_wine_if( todo->name )check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
     check_member( *obj, *exp, "%u", dwFFForceResolution );
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
+    todo_wine_if( todo->usage_page )
     check_member( *obj, *exp, "%#04x", wUsagePage );
     todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
@@ -307,7 +312,7 @@ static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
     }
 }
 
-static void test_simple_joystick(void)
+static void test_simple_joystick( DWORD version )
 {
 #include "psh_hid_macros.h"
     static const unsigned char report_desc[] =
@@ -363,11 +368,12 @@ static void test_simple_joystick(void)
     {
         .InputReportByteLength = 9,
     };
-    static const DIDEVCAPS expect_caps =
+    const DIDEVCAPS expect_caps =
     {
         .dwSize = sizeof(DIDEVCAPS),
         .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
-        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .dwDevType = version >= 0x800 ? DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK
+                                      : DIDEVTYPE_HID | (DIDEVTYPEJOYSTICK_RUDDER << 8) | DIDEVTYPE_JOYSTICK,
         .dwAxes = 6,
         .dwPOVs = 1,
         .dwButtons = 2,
@@ -452,7 +458,8 @@ static void test_simple_joystick(void)
         .dwSize = sizeof(DIDEVICEINSTANCEW),
         .guidInstance = expect_guid_product,
         .guidProduct = expect_guid_product,
-        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .dwDevType = version >= 0x800 ? DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK
+                                      : DIDEVTYPE_HID | (DIDEVTYPEJOYSTICK_RUDDER << 8) | DIDEVTYPE_JOYSTICK,
         .tszInstanceName = L"Wine test root driver",
         .tszProductName = L"Wine test root driver",
         .guidFFDriver = GUID_NULL,
@@ -580,14 +587,110 @@ static void test_simple_joystick(void)
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
     };
-    const DIEFFECTINFOW expect_effects[] = {};
-
+    const DIDEVICEOBJECTINSTANCEW expect_objects_5[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_XAxis,
+            .dwOfs = DIJOFS_X,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(0),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"X Axis",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_X,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_YAxis,
+            .dwOfs = DIJOFS_Y,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(1),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Y Axis",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_Y,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_ZAxis,
+            .dwOfs = DIJOFS_Z,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(2),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Wheel",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_WHEEL,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_RzAxis,
+            .dwOfs = DIJOFS_RZ,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(5),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Rudder",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_SIMULATION,
+            .wUsage = HID_USAGE_SIMULATION_RUDDER,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_POV,
+            .dwOfs = DIJOFS_POV(0),
+            .dwType = DIDFT_POV|DIDFT_MAKEINSTANCE(0),
+            .tszName = L"Hat Switch",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_HATSWITCH,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIJOFS_BUTTON(0),
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0),
+            .tszName = L"Button 0",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_BUTTON,
+            .wUsage = 0x1,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIJOFS_BUTTON(1),
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1),
+            .tszName = L"Button 1",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_BUTTON,
+            .wUsage = 0x2,
+            .wReportId = 1,
+        },
+    };
+    struct check_objects_todos todo_objects_5[ARRAY_SIZE(expect_objects_5)] =
+    {
+        {.guid = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
+        {.guid = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
+        {.guid = TRUE, .type = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .name = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .usage = TRUE, .usage_page = TRUE, .name = TRUE},
+    };
     struct check_objects_params check_objects_params =
     {
-        .version = DIRECTINPUT_VERSION,
-        .expect_count = ARRAY_SIZE(expect_objects),
-        .expect_objs = expect_objects,
+        .version = version,
+        .expect_count = version < 0x700 ? ARRAY_SIZE(expect_objects_5) : ARRAY_SIZE(expect_objects),
+        .expect_objs = version < 0x700 ? expect_objects_5 : expect_objects,
+        .todo_objs = version < 0x700 ? todo_objects_5 : NULL,
+        .todo_extra = version < 0x700 ? TRUE : FALSE,
     };
+
+    const DIEFFECTINFOW expect_effects[] = {};
     struct check_effects_params check_effects_params =
     {
         .expect_count = ARRAY_SIZE(expect_effects),
@@ -641,21 +744,24 @@ static void test_simple_joystick(void)
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEOBJECTDATA objdata[32] = {{0}};
     DIDEVICEOBJECTINSTANCEW objinst = {0};
+    DIDEVICEOBJECTINSTANCEW expect_obj;
     DIDEVICEINSTANCEW devinst = {0};
     DIEFFECTINFOW effectinfo = {0};
     DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
     IDirectInputEffect *effect;
     DIEFFESCAPE escape = {0};
+    ULONG i, size, res, ref;
     DIDEVCAPS caps = {0};
     HANDLE event, file;
     char buffer[1024];
     DIJOYSTATE2 state;
-    ULONG i, res, ref;
     HRESULT hr;
     WCHAR *tmp;
     GUID guid;
     HWND hwnd;
+
+    winetest_push_context( "%#x", version );
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
     GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
@@ -663,24 +769,32 @@ static void test_simple_joystick(void)
 
     cleanup_registry_keys();
     if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 )) goto done;
-    if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
+    if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
 
-    check_dinput_devices( DIRECTINPUT_VERSION, &devinst );
+    check_dinput_devices( version, &devinst );
 
-    hr = IDirectInputDevice8_Initialize( device, instance, 0x0700, &GUID_NULL );
-    todo_wine
-    ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, NULL );
+    hr = IDirectInputDevice8_Initialize( device, instance, 0x800 - (version - 0x700), &GUID_NULL );
+    if (version == 0x800)
+    {
+        todo_wine
+        ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
+    }
+    else
+    {
+        todo_wine
+        ok( hr == DIERR_OLDDIRECTINPUTVERSION, "Initialize returned %#x\n", hr );
+    }
+    hr = IDirectInputDevice8_Initialize( device, instance, version, NULL );
     todo_wine
     ok( hr == E_POINTER, "Initialize returned %#x\n", hr );
-    hr = IDirectInputDevice8_Initialize( device, NULL, DIRECTINPUT_VERSION, &GUID_NULL );
+    hr = IDirectInputDevice8_Initialize( device, NULL, version, &GUID_NULL );
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#x\n", hr );
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_NULL );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_NULL );
     todo_wine
     ok( hr == REGDB_E_CLASSNOTREG, "Initialize returned %#x\n", hr );
 
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &devinst.guidInstance );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &devinst.guidInstance );
     ok( hr == DI_OK, "Initialize returned %#x\n", hr );
     guid = devinst.guidInstance;
     memset( &devinst, 0, sizeof(devinst) );
@@ -689,7 +803,7 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
     ok( IsEqualGUID( &guid, &devinst.guidInstance ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &devinst.guidInstance ) );
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &devinst.guidProduct );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &devinst.guidProduct );
     ok( hr == DI_OK, "Initialize returned %#x\n", hr );
 
     hr = IDirectInputDevice8_GetDeviceInfo( device, NULL );
@@ -704,6 +818,7 @@ static void test_simple_joystick(void)
     todo_wine
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine_if( version < 0x0800 )
     check_member( devinst, expect_devinst, "%#x", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
@@ -718,6 +833,7 @@ static void test_simple_joystick(void)
     todo_wine
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine_if( version < 0x0800 )
     check_member( devinst, expect_devinst, "%#x", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
@@ -736,6 +852,7 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
     check_member( caps, expect_caps, "%d", dwSize );
     check_member( caps, expect_caps, "%#x", dwFlags );
+    todo_wine_if( version < 0x0800 )
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
     check_member( caps, expect_caps, "%d", dwButtons );
@@ -753,7 +870,9 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, NULL );
     ok( hr == DIERR_INVALIDPARAM, "GetProperty returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_string.diph );
-    ok( hr == DIERR_INVALIDPARAM, "GetProperty returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
+        "GetProperty DIPROP_VIDPID returned %#x\n", hr );
     prop_dword.diph.dwHeaderSize = sizeof(DIPROPHEADER) - 1;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
     ok( hr == DIERR_INVALIDPARAM, "GetProperty returned %#x\n", hr );
@@ -761,8 +880,14 @@ static void test_simple_joystick(void)
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
-    ok( prop_dword.dwData == EXPECT_VIDPID, "got %#x expected %#x\n", prop_dword.dwData, EXPECT_VIDPID );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "GetProperty DIPROP_VIDPID returned %#x\n", hr );
+    if (hr == DI_OK)
+    {
+        ok( prop_dword.dwData == EXPECT_VIDPID, "got %#x expected %#x\n",
+            prop_dword.dwData, EXPECT_VIDPID );
+    }
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
     ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
@@ -791,14 +916,23 @@ static void test_simple_joystick(void)
     ok( !wcscmp( prop_string.wsz, expect_devinst.tszProductName ), "got product %s\n",
         debugstr_w(prop_string.wsz) );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
-    todo_wine
-    ok( hr == DI_OK, "GetProperty DIPROP_TYPENAME returned %#x\n", hr );
-    todo_wine
-    ok( !wcscmp( prop_string.wsz, expect_vidpid_str ), "got type %s\n", debugstr_w(prop_string.wsz) );
+    todo_wine_if( version >= 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "GetProperty DIPROP_TYPENAME returned %#x\n", hr );
+    if (hr == DI_OK)
+    {
+        todo_wine
+        ok( !wcscmp( prop_string.wsz, expect_vidpid_str ), "got type %s\n", debugstr_w(prop_string.wsz) );
+    }
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#x\n", hr );
-    todo_wine
-    ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_NOEFFECT),
+        "GetProperty DIPROP_USERNAME returned %#x\n", hr );
+    if (hr == DI_NOEFFECT)
+    {
+        todo_wine
+        ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+    }
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
@@ -838,7 +972,9 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_RANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
-    ok( hr == DIERR_INVALIDPARAM, "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
+        "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
@@ -867,9 +1003,14 @@ static void test_simple_joystick(void)
     prop_string.diph.dwHow = DIPH_BYUSAGE;
     prop_string.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
-    ok( !wcscmp( prop_string.wsz, expect_objects[4].tszName ), "got DIPROP_KEYNAME %s\n",
-        debugstr_w(prop_string.wsz) );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "GetProperty DIPROP_KEYNAME returned %#x\n", hr );
+    if (hr == DI_OK)
+    {
+        ok( !wcscmp( prop_string.wsz, expect_objects[4].tszName ), "got DIPROP_KEYNAME %s\n",
+            debugstr_w(prop_string.wsz) );
+    }
     prop_string.diph.dwObj = MAKELONG( 0x1, HID_USAGE_PAGE_BUTTON );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
     todo_wine
@@ -884,7 +1025,9 @@ static void test_simple_joystick(void)
     prop_range.lMin = 0xdeadbeef;
     prop_range.lMax = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_RANGE returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DI_OK : DIERR_NOTFOUND),
+        "GetProperty DIPROP_RANGE returned %#x\n", hr );
     prop_range.diph.dwObj = MAKELONG( 0, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_RANGE returned %#x\n", hr );
@@ -899,19 +1042,30 @@ static void test_simple_joystick(void)
     ok( prop_range.lMin == 0, "got %d expected %d\n", prop_range.lMin, 0 );
     ok( prop_range.lMax == 65535, "got %d expected %d\n", prop_range.lMax, 65535 );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
-    ok( prop_range.lMin == -25, "got %d expected %d\n", prop_range.lMin, -25 );
-    ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "GetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
+    if (hr == DI_OK)
+    {
+        ok( prop_range.lMin == -25, "got %d expected %d\n", prop_range.lMin, -25 );
+        ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
+    }
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    ok( hr == DI_OK, "GetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
-    ok( prop_range.lMin == -25, "got %d expected %d\n", prop_range.lMin, -25 );
-    ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "GetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
+    if (hr == DI_OK)
+    {
+        ok( prop_range.lMin == -25, "got %d expected %d\n", prop_range.lMin, -25 );
+        ok( prop_range.lMax == 56, "got %d expected %d\n", prop_range.lMax, 56 );
+    }
 
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
-    ok( hr == DIERR_NOTINITIALIZED, "GetProperty DIPROP_APPDATA returned %#x\n", hr );
+    todo_wine_if( version >= 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_NOTINITIALIZED),
+        "GetProperty DIPROP_APPDATA returned %#x\n", hr );
 
     hr = IDirectInputDevice8_EnumObjects( device, NULL, NULL, DIDFT_ALL );
     ok( hr == DIERR_INVALIDPARAM, "EnumObjects returned %#x\n", hr );
@@ -920,7 +1074,8 @@ static void test_simple_joystick(void)
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
-    ok( res == 8, "got %u expected %u\n", res, 8 );
+    todo_wine_if( version < 0x0700 )
+    ok( res == (version < 0x0700 ? 6 : 8), "got %u objects\n", res );
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
@@ -936,26 +1091,30 @@ static void test_simple_joystick(void)
 
     res = MAKELONG( HID_USAGE_GENERIC_Z, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
-    ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DI_OK : DIERR_NOTFOUND), "GetObjectInfo returned: %#x\n", hr );
     res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
     ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[4], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[4], guidType );
-    check_member( objinst, expect_objects[4], "%#x", dwOfs );
-    check_member( objinst, expect_objects[4], "%#x", dwType );
-    check_member( objinst, expect_objects[4], "%#x", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[4], tszName );
-    check_member( objinst, expect_objects[4], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[4], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[4], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[4], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[4], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[4], "%#04x", wUsage );
-    check_member( objinst, expect_objects[4], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[4], "%#04x", wExponent );
-    check_member( objinst, expect_objects[4], "%u", wReportId );
+    if (version < 0x0700) expect_obj = expect_objects_5[0];
+    else expect_obj = expect_objects[4];
+    check_member( objinst, expect_obj, "%u", dwSize );
+    check_member_guid( objinst, expect_obj, guidType );
+    todo_wine_if( version < 0x0700 )
+    check_member( objinst, expect_obj, "%#x", dwOfs );
+    check_member( objinst, expect_obj, "%#x", dwType );
+    check_member( objinst, expect_obj, "%#x", dwFlags );
+    if (!localized) check_member_wstr( objinst, expect_obj, tszName );
+    check_member( objinst, expect_obj, "%u", dwFFMaxForce );
+    check_member( objinst, expect_obj, "%u", dwFFForceResolution );
+    check_member( objinst, expect_obj, "%u", wCollectionNumber );
+    check_member( objinst, expect_obj, "%u", wDesignatorIndex );
+    check_member( objinst, expect_obj, "%#04x", wUsagePage );
+    check_member( objinst, expect_obj, "%#04x", wUsage );
+    check_member( objinst, expect_obj, "%#04x", dwDimension );
+    check_member( objinst, expect_obj, "%#04x", wExponent );
+    check_member( objinst, expect_obj, "%u", wReportId );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0x14, DIPH_BYOFFSET );
     ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
@@ -968,21 +1127,24 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
     ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[8], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[8], guidType );
-    check_member( objinst, expect_objects[8], "%#x", dwOfs );
-    check_member( objinst, expect_objects[8], "%#x", dwType );
-    check_member( objinst, expect_objects[8], "%#x", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[8], tszName );
-    check_member( objinst, expect_objects[8], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[8], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[8], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[8], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[8], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[8], "%#04x", wUsage );
-    check_member( objinst, expect_objects[8], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[8], "%#04x", wExponent );
-    check_member( objinst, expect_objects[8], "%u", wReportId );
+    if (version < 0x0700) expect_obj = expect_objects_5[6];
+    else expect_obj = expect_objects[8];
+    check_member( objinst, expect_obj, "%u", dwSize );
+    check_member_guid( objinst, expect_obj, guidType );
+    todo_wine_if( version < 0x0700 )
+    check_member( objinst, expect_obj, "%#x", dwOfs );
+    check_member( objinst, expect_obj, "%#x", dwType );
+    check_member( objinst, expect_obj, "%#x", dwFlags );
+    if (!localized) check_member_wstr( objinst, expect_obj, tszName );
+    check_member( objinst, expect_obj, "%u", dwFFMaxForce );
+    check_member( objinst, expect_obj, "%u", dwFFForceResolution );
+    check_member( objinst, expect_obj, "%u", wCollectionNumber );
+    check_member( objinst, expect_obj, "%u", wDesignatorIndex );
+    check_member( objinst, expect_obj, "%#04x", wUsagePage );
+    check_member( objinst, expect_obj, "%#04x", wUsage );
+    check_member( objinst, expect_obj, "%#04x", dwDimension );
+    check_member( objinst, expect_obj, "%#04x", wExponent );
+    check_member( objinst, expect_obj, "%u", wReportId );
 
     hr = IDirectInputDevice8_EnumEffects( device, NULL, NULL, DIEFT_ALL );
     ok( hr == DIERR_INVALIDPARAM, "EnumEffects returned %#x\n", hr );
@@ -1026,21 +1188,25 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, DIJOFS_Y, DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[3], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[3], guidType );
-    check_member( objinst, expect_objects[3], "%#x", dwOfs );
-    check_member( objinst, expect_objects[3], "%#x", dwType );
-    check_member( objinst, expect_objects[3], "%#x", dwFlags );
-    if (!localized) check_member_wstr( objinst, expect_objects[3], tszName );
-    check_member( objinst, expect_objects[3], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[3], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[3], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[3], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[3], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[3], "%#04x", wUsage );
-    check_member( objinst, expect_objects[3], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[3], "%#04x", wExponent );
-    check_member( objinst, expect_objects[3], "%u", wReportId );
+    if (version < 0x0700) expect_obj = expect_objects_5[1];
+    else expect_obj = expect_objects[3];
+    if (version < 0x0800) expect_obj.dwOfs = DIJOFS_Y;
+    check_member( objinst, expect_obj, "%u", dwSize );
+    check_member_guid( objinst, expect_obj, guidType );
+    todo_wine_if( version < 0x0800 )
+    check_member( objinst, expect_obj, "%#x", dwOfs );
+    check_member( objinst, expect_obj, "%#x", dwType );
+    check_member( objinst, expect_obj, "%#x", dwFlags );
+    if (!localized) check_member_wstr( objinst, expect_obj, tszName );
+    check_member( objinst, expect_obj, "%u", dwFFMaxForce );
+    check_member( objinst, expect_obj, "%u", dwFFForceResolution );
+    check_member( objinst, expect_obj, "%u", wCollectionNumber );
+    check_member( objinst, expect_obj, "%u", wDesignatorIndex );
+    check_member( objinst, expect_obj, "%#04x", wUsagePage );
+    check_member( objinst, expect_obj, "%#04x", wUsage );
+    check_member( objinst, expect_obj, "%#04x", dwDimension );
+    check_member( objinst, expect_obj, "%#04x", wExponent );
+    check_member( objinst, expect_obj, "%u", wReportId );
 
     hr = IDirectInputDevice8_SetEventNotification( device, (HANDLE)0xdeadbeef );
     todo_wine
@@ -1101,7 +1267,8 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_Poll( device );
-    ok( hr == DI_NOEFFECT, "Poll returned: %#x\n", hr );
+    todo_wine_if( version < 0x0700 )
+    ok( hr == (version < 0x0700 ? DI_OK : DI_NOEFFECT), "Poll returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2) + 1, &state );
     ok( hr == DIERR_INVALIDPARAM, "GetDeviceState returned: %#x\n", hr );
@@ -1145,11 +1312,12 @@ static void test_simple_joystick(void)
     winetest_pop_context();
 
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA) - 1, objdata, &res, DIGDD_PEEK );
-    todo_wine
-    ok( hr == DIERR_INVALIDPARAM, "GetDeviceData returned %#x\n", hr );
+    size = version < 0x0800 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
+    hr = IDirectInputDevice8_GetDeviceData( device, size - 1, objdata, &res, DIGDD_PEEK );
+    todo_wine_if( version >= 0x0800 )
+    ok( hr == (version < 0x0800 ? DI_OK : DIERR_INVALIDPARAM), "GetDeviceData returned %#x\n", hr );
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, DIGDD_PEEK );
     ok( hr == DIERR_NOTBUFFERED, "GetDeviceData returned %#x\n", hr );
 
     hr = IDirectInputDevice8_Unacquire( device );
@@ -1167,7 +1335,7 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
 
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, DIGDD_PEEK );
     ok( hr == DI_OK, "GetDeviceData returned %#x\n", hr );
     ok( res == 0, "got %u expected %u\n", res, 0 );
 
@@ -1177,12 +1345,13 @@ static void test_simple_joystick(void)
     ResetEvent( event );
 
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, DIGDD_PEEK );
+    todo_wine_if( version < 0x0800 )
     ok( hr == DI_BUFFEROVERFLOW, "GetDeviceData returned %#x\n", hr );
     ok( res == 0, "got %u expected %u\n", res, 0 );
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
-    todo_wine
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, 0 );
+    todo_wine_if( version >= 0x0800 )
     ok( hr == DI_OK, "GetDeviceData returned %#x\n", hr );
     ok( res == 0, "got %u expected %u\n", res, 0 );
 
@@ -1202,22 +1371,23 @@ static void test_simple_joystick(void)
     ResetEvent( event );
 
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, DIGDD_PEEK );
     ok( hr == DI_OK, "GetDeviceData returned %#x\n", hr );
     ok( res == 1, "got %u expected %u\n", res, 1 );
     check_member( objdata[0], expect_objdata[0], "%#x", dwOfs );
     check_member( objdata[0], expect_objdata[0], "%#x", dwData );
-    ok( objdata[0].uAppData == -1, "got %p, expected %p\n", (void *)objdata[0].uAppData, (void *)-1 );
+    if (version >= 0x0800) ok( objdata[0].uAppData == -1, "got %p\n", (void *)objdata[0].uAppData );
     res = 4;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, 0 );
     ok( hr == DI_OK, "GetDeviceData returned %#x\n", hr );
     ok( res == 4, "got %u expected %u\n", res, 4 );
     for (i = 0; i < 4; ++i)
     {
+        DIDEVICEOBJECTDATA *ptr = (DIDEVICEOBJECTDATA *)((char *)objdata + size * i);
         winetest_push_context( "objdata[%d]", i );
-        check_member( objdata[i], expect_objdata[1 + i], "%#x", dwOfs );
-        check_member( objdata[i], expect_objdata[1 + i], "%#x", dwData );
-        ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
+        check_member( *ptr, expect_objdata[1 + i], "%#x", dwOfs );
+        check_member( *ptr, expect_objdata[1 + i], "%#x", dwData );
+        if (version >= 0x0800) ok( ptr->uAppData == -1, "got %p\n", (void *)ptr->uAppData );
         winetest_pop_context();
     }
 
@@ -1231,26 +1401,28 @@ static void test_simple_joystick(void)
     ResetEvent( event );
 
     res = 1;
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, 0 );
+    todo_wine_if( version < 0x0800 )
     ok( hr == DI_BUFFEROVERFLOW, "GetDeviceData returned %#x\n", hr );
     ok( res == 1, "got %u expected %u\n", res, 1 );
     todo_wine
     check_member( objdata[0], expect_objdata[5], "%#x", dwOfs );
     todo_wine
     check_member( objdata[0], expect_objdata[5], "%#x", dwData );
-    ok( objdata[0].uAppData == -1, "got %p, expected %p\n", (void *)objdata[0].uAppData, (void *)-1 );
+    if (version >= 0x0800) ok( objdata[0].uAppData == -1, "got %p\n", (void *)objdata[0].uAppData );
     res = ARRAY_SIZE(objdata);
-    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &res, 0 );
     ok( hr == DI_OK, "GetDeviceData returned %#x\n", hr );
     ok( res == 8, "got %u expected %u\n", res, 8 );
     for (i = 0; i < 8; ++i)
     {
+        DIDEVICEOBJECTDATA *ptr = (DIDEVICEOBJECTDATA *)((char *)objdata + size * i);
         winetest_push_context( "objdata[%d]", i );
         todo_wine
-        check_member( objdata[i], expect_objdata[6 + i], "%#x", dwOfs );
+        check_member( *ptr, expect_objdata[6 + i], "%#x", dwOfs );
         todo_wine_if( i == 1 || i == 2 || i == 6 )
-        check_member( objdata[i], expect_objdata[6 + i], "%#x", dwData );
-        ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
+        check_member( *ptr, expect_objdata[6 + i], "%#x", dwData );
+        if (version >= 0x0800) ok( ptr->uAppData == -1, "got %p\n", (void *)ptr->uAppData );
         winetest_pop_context();
     }
 
@@ -1348,7 +1520,9 @@ static void test_simple_joystick(void)
     ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS | DIDFT_MAKEINSTANCE( 0xff );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    ok( hr == DIERR_INVALIDPARAM, "SetDataFormat returned: %#x\n", hr );
+    todo_wine_if( version < 0x0700 )
+    ok( hr == (version < 0x0700 ? DI_OK : DIERR_INVALIDPARAM),
+        "SetDataFormat returned: %#x\n", hr );
     objdataformat[1].dwType = DIDFT_AXIS | DIDFT_MAKEINSTANCE( 1 );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
     ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
@@ -1450,9 +1624,13 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "SetProperty DIPROP_RANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_LOGICALRANGE, &prop_range.diph );
-    ok( hr == DIERR_ACQUIRED, "SetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
+        "SetProperty DIPROP_LOGICALRANGE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_PHYSICALRANGE, &prop_range.diph );
-    ok( hr == DIERR_ACQUIRED, "SetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
+        "SetProperty DIPROP_PHYSICALRANGE returned %#x\n", hr );
 
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
@@ -1505,13 +1683,17 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, NULL );
     ok( hr == DIERR_INVALIDPARAM, "SetProperty returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_string.diph );
-    ok( hr == DIERR_INVALIDPARAM, "SetProperty returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
+        "SetProperty DIPROP_VIDPID returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_DEVICE;
     prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    ok( hr == DIERR_READONLY, "SetProperty DIPROP_VIDPID returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_READONLY),
+        "SetProperty DIPROP_VIDPID returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
     ok( hr == DIERR_READONLY, "SetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
 
@@ -1532,9 +1714,13 @@ static void test_simple_joystick(void)
         debugstr_w(prop_string.wsz) );
 
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
-    ok( hr == DIERR_READONLY, "SetProperty DIPROP_TYPENAME returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_READONLY),
+        "SetProperty DIPROP_TYPENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    ok( hr == DIERR_READONLY, "SetProperty DIPROP_USERNAME returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_READONLY),
+        "SetProperty DIPROP_USERNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     ok( hr == DIERR_READONLY, "SetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
@@ -1553,7 +1739,8 @@ static void test_simple_joystick(void)
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
     todo_wine
-    ok( hr == DIERR_ACQUIRED, "SetProperty DIPROP_APPDATA returned %#x\n", hr );
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DIERR_ACQUIRED),
+        "SetProperty DIPROP_APPDATA returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_DEVICE;
     prop_dword.diph.dwObj = 0;
@@ -1669,8 +1856,8 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
     ok( hr == DI_OK, "GetDeviceState returned: %#x\n", hr );
     winetest_push_context( "state[%d]", i );
-    todo_wine
-    ok( state.lX == 15, "got lX %d, expected %d\n", state.lX, 15 );
+    todo_wine_if( version >= 0x0700 )
+    ok( state.lX == (version < 0x0700 ? -9000 : 15), "got lX %d\n", state.lX );
     check_member( state, expect_state_abs[0], "%d", lY );
     check_member( state, expect_state_abs[0], "%d", lZ );
     check_member( state, expect_state_abs[0], "%d", lRx );
@@ -1706,7 +1893,9 @@ static void test_simple_joystick(void)
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_pointer.uData = 0xfeedcafe;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    ok( hr == DI_OK, "SetProperty DIPROP_APPDATA returned %#x\n", hr );
+    todo_wine_if( version < 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "SetProperty DIPROP_APPDATA returned %#x\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
@@ -1733,9 +1922,10 @@ static void test_simple_joystick(void)
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
-    todo_wine
-    ok( hr == DI_OK, "GetProperty DIPROP_APPDATA returned %#x\n", hr );
-    ok( prop_pointer.uData == 0xfeedcafe, "got %p expected %p\n", (void *)prop_pointer.uData, (void *)0xfeedcafe );
+    todo_wine_if( version >= 0x0800 )
+    ok( hr == (version < 0x0800 ? DIERR_UNSUPPORTED : DI_OK),
+        "GetProperty DIPROP_APPDATA returned %#x\n", hr );
+    if (hr == DI_OK) ok( prop_pointer.uData == 0xfeedcafe, "got %p\n", (void *)prop_pointer.uData );
 
     prop_dword.diph.dwHow = DIPH_DEVICE;
     prop_dword.diph.dwObj = 0;
@@ -1815,15 +2005,15 @@ static void test_simple_joystick(void)
     objdata[0].dwOfs = 0xd;
     objdata[0].dwData = 0x80;
     res = 1;
-    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0xdeadbeef );
+    hr = IDirectInputDevice8_SendDeviceData( device, size, objdata, &res, 0xdeadbeef );
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SendDeviceData returned %#x\n", hr );
     res = 1;
-    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 1 /*DISDD_CONTINUE*/ );
+    hr = IDirectInputDevice8_SendDeviceData( device, size, objdata, &res, 1 /*DISDD_CONTINUE*/ );
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SendDeviceData returned %#x\n", hr );
     res = 1;
-    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    hr = IDirectInputDevice8_SendDeviceData( device, size, objdata, &res, 0 );
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SendDeviceData returned %#x\n", hr );
 
@@ -1879,6 +2069,7 @@ done:
     pnp_driver_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
+    winetest_pop_context();
 }
 
 struct device_desc
@@ -2580,7 +2771,9 @@ START_TEST( joystick8 )
         test_device_types( 0x500 );
         test_device_types( 0x700 );
 
-        test_simple_joystick();
+        test_simple_joystick( 0x500 );
+        test_simple_joystick( 0x700 );
+        test_simple_joystick( 0x800 );
     }
     CoUninitialize();
 
