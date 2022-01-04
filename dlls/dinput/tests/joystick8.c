@@ -889,7 +889,6 @@ static void test_simple_joystick( DWORD version )
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
     ok( hr == DI_OK, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
-    todo_wine
     ok( IsEqualGUID( &prop_guid_path.guidClass, &GUID_DEVCLASS_HIDCLASS ), "got guid %s\n",
         debugstr_guid( &prop_guid_path.guidClass ) );
     todo_wine

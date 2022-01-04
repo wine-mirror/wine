@@ -819,6 +819,7 @@ static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD pro
     case (DWORD_PTR)DIPROP_GUIDANDPATH:
     {
         DIPROPGUIDANDPATH *value = (DIPROPGUIDANDPATH *)header;
+        value->guidClass = GUID_DEVCLASS_HIDCLASS;
         lstrcpynW( value->wszPath, impl->device_path, MAX_PATH );
         return DI_OK;
     }
