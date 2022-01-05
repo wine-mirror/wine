@@ -2515,7 +2515,6 @@ static void test_bsc_marshaling(void)
            "szExtraInfo = %s\n", wine_dbgstr_w(bindinfo.szExtraInfo));
         ok(bindinfo.grfBindInfoF == 22, "grfBindInfoF = %u\n", rem_bindinfo.grfBindInfoF);
         ok(bindinfo.dwBindVerb == 23, "dwBindVerb = %u\n", bindinfo.dwBindVerb);
-        ok(bindinfo.szCustomVerb != verb_out, "szCustomVerb == inbuf\n");
         ok(!lstrcmpW(bindinfo.szCustomVerb, L"custom verb out"), "szCustomVerb = %s\n",
            wine_dbgstr_w(bindinfo.szCustomVerb));
         ok(bindinfo.cbstgmedData == 29, "cbstgmedData = %u\n", bindinfo.cbstgmedData);
