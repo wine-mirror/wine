@@ -1318,7 +1318,7 @@ static void test_AccessibleObjectFromPoint(void)
     ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)&DefWindowProcA),
             "SetWindowLongPtr failed\n");
 
-    point.x = point.y = 0;
+    point.x = point.y = 10;
     ok(ClientToScreen(hwnd, &point), "ClientToScreen failed\n");
 
     if (WindowFromPoint(point) != hwnd)
@@ -1354,6 +1354,12 @@ static void test_AccessibleObjectFromPoint(void)
     child = CreateWindowA("edit", "edit", WS_CHILD | WS_VISIBLE,
             0, 0, 100, 100, hwnd, NULL, NULL, NULL);
     ok(child != NULL, "CreateWindow failed\n");
+
+    if (WindowFromPoint(point) != child)
+    {
+        win_skip("test window not returned from WindowFromPoint\n");
+        return;
+    }
 
     hr = AccessibleObjectFromPoint(point, &acc, &cid);
     ok(hr == S_OK, "got %x\n", hr);
