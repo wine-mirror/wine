@@ -254,7 +254,7 @@ static ULONG WINAPI HttpSecurity_Release(IHttpSecurity *iface)
 
 static  HRESULT WINAPI HttpSecurity_GetWindow(IHttpSecurity* iface, REFGUID rguidReason, HWND *phwnd)
 {
-    trace("HttpSecurity_GetWindow\n");
+    if(winetest_debug > 1) trace("HttpSecurity_GetWindow\n");
 
     return S_FALSE;
 }
@@ -466,13 +466,13 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
     }
 
     if(IsEqualGUID(&IID_IGetBindHandle, guidService)) {
-        trace("QueryService(IID_IGetBindHandle)\n");
+        if(winetest_debug > 1) trace("QueryService(IID_IGetBindHandle)\n");
         *ppv = NULL;
         return E_NOINTERFACE;
     }
 
     if(IsEqualGUID(&IID_IWindowForBindingUI, guidService)) {
-        trace("QueryService(IID_IWindowForBindingUI)\n");
+        if(winetest_debug > 1) trace("QueryService(IID_IWindowForBindingUI)\n");
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -642,7 +642,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
     HRESULT hres;
 
     if (winetest_debug > 1)
-        trace("continue in state %d\n", state);
+        if(winetest_debug > 1) trace("continue in state %d\n", state);
 
     if(state == STATE_CONNECTING) {
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
@@ -949,10 +949,10 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(!lstrcmpW(szStatusText, pjpegW), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_RESERVED_7:
-        trace("BINDSTATUS_RESERVED_7\n");
+        if(winetest_debug > 1) trace("BINDSTATUS_RESERVED_7\n");
         break;
     case BINDSTATUS_RESERVED_8:
-        trace("BINDSTATUS_RESERVED_8\n");
+        if(winetest_debug > 1) trace("BINDSTATUS_RESERVED_8\n");
         break;
     default:
         ok(0, "Unexpected status %d (%d)\n", ulStatusCode, ulStatusCode-BINDSTATUS_LAST);
@@ -2249,33 +2249,33 @@ static HRESULT WINAPI ProtocolUnk_QueryInterface(IUnknown *iface, REFIID riid, v
     Protocol *This = impl_from_IUnknown(iface);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        trace("QI(IUnknown)\n");
+        if(winetest_debug > 1) trace("QI(IUnknown)\n");
         *ppv = &This->IUnknown_inner;
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
-        trace("QI(InternetProtocol)\n");
+        if(winetest_debug > 1) trace("QI(InternetProtocol)\n");
         *ppv = &This->IInternetProtocolEx_iface;
     }else if(IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
-        trace("QI(InternetProtocolEx)\n");
+        if(winetest_debug > 1) trace("QI(InternetProtocolEx)\n");
         if(!impl_protex) {
             *ppv = NULL;
             return E_NOINTERFACE;
         }
         *ppv = &This->IInternetProtocolEx_iface;
     }else if(IsEqualGUID(&IID_IInternetPriority, riid)) {
-        trace("QI(InternetPriority)\n");
+        if(winetest_debug > 1) trace("QI(InternetPriority)\n");
         *ppv = &This->IInternetPriority_iface;
     }else if(IsEqualGUID(&IID_IWinInetInfo, riid)) {
-        trace("QI(IWinInetInfo)\n");
+        if(winetest_debug > 1) trace("QI(IWinInetInfo)\n");
         CHECK_EXPECT(QueryInterface_IWinInetInfo);
         *ppv = NULL;
         return E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
-        trace("QI(IWinInetHttpInfo)\n");
+        if(winetest_debug > 1) trace("QI(IWinInetHttpInfo)\n");
         CHECK_EXPECT(QueryInterface_IWinInetHttpInfo);
         *ppv = NULL;
         return E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
-        trace("QI(%s)\n", wine_dbgstr_guid(riid));
+        if(winetest_debug > 1) trace("QI(%s)\n", wine_dbgstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }else {
@@ -3874,11 +3874,9 @@ static void test_CreateBinding(void)
 
     ok(obj_refcount(protocol) == 4, "wrong protocol refcount %d\n", obj_refcount(protocol));
 
-    trace("Start >\n");
     expect_hrResult = S_OK;
     hres = IInternetProtocol_Start(protocol, test_url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
-    trace("Start <\n");
 
     CHECK_CALLED(QueryService_InternetProtocol);
 
