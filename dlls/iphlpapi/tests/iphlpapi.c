@@ -1580,6 +1580,12 @@ static void test_GetAdaptersAddresses(void)
     ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %u\n", ret);
     if (ret != ERROR_BUFFER_OVERFLOW) return;
 
+    /* GAA_FLAG_SKIP_FRIENDLY_NAME is ignored */
+    osize = 0x7fffffff;
+    ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, NULL, &osize);
+    ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %u\n", ret);
+    ok(osize == size, "expected %d, got %d\n", size, osize);
+
     ptr = HeapAlloc(GetProcessHeap(), 0, size);
     ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, ptr, &size);
     ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
@@ -1589,7 +1595,7 @@ static void test_GetAdaptersAddresses(void)
     size *= 2;
     osize = size;
     ptr = HeapAlloc(GetProcessHeap(), 0, osize);
-    ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, ptr, &osize);
+    ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, ptr, &osize);
     ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
     ok(osize == size, "expected %d, got %d\n", size, osize);
 
