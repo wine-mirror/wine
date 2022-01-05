@@ -193,22 +193,15 @@ static LRESULT CALLBACK input_thread_ll_hook_proc( int code, WPARAM wparam, LPAR
     return skip ? 1 : CallNextHookEx( 0, code, wparam, lparam );
 }
 
-static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam )
+static void dinput_unacquire_window_devices( HWND window )
 {
     struct dinput_device *impl, *next;
-    CWPSTRUCT *msg = (CWPSTRUCT *)lparam;
-    HWND foreground;
-
-    if (code != HC_ACTION || (msg->message != WM_KILLFOCUS &&
-        msg->message != WM_ACTIVATEAPP && msg->message != WM_ACTIVATE))
-        return CallNextHookEx( 0, code, wparam, lparam );
-
-    foreground = GetForegroundWindow();
 
     EnterCriticalSection( &dinput_hook_crit );
+
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_device_list, struct dinput_device, entry )
     {
-        if (msg->hwnd == impl->win && msg->hwnd != foreground)
+        if (window == impl->win)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
             dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
@@ -216,7 +209,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_mouse_list, struct dinput_device, entry )
     {
-        if (msg->hwnd == impl->win && msg->hwnd != foreground)
+        if (window == impl->win)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
             dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
@@ -224,7 +217,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_rawmouse_list, struct dinput_device, entry )
     {
-        if (msg->hwnd == impl->win && msg->hwnd != foreground)
+        if (window == impl->win)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
             dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
@@ -232,13 +225,25 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_keyboard_list, struct dinput_device, entry )
     {
-        if (msg->hwnd == impl->win && msg->hwnd != foreground)
+        if (window == impl->win)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
             dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
         }
     }
+
     LeaveCriticalSection( &dinput_hook_crit );
+}
+
+static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam )
+{
+    CWPSTRUCT *msg = (CWPSTRUCT *)lparam;
+
+    if (code != HC_ACTION || (msg->message != WM_KILLFOCUS &&
+        msg->message != WM_ACTIVATEAPP && msg->message != WM_ACTIVATE))
+        return CallNextHookEx( 0, code, wparam, lparam );
+
+    if (msg->hwnd != GetForegroundWindow()) dinput_unacquire_window_devices( msg->hwnd );
 
     return CallNextHookEx( 0, code, wparam, lparam );
 }
