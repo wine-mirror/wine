@@ -55,8 +55,7 @@ static void test_create_tooltip(BOOL is_v6)
     style = GetWindowLongA(hwnd, GWL_STYLE);
     exp_style = 0x7fffffff | WS_POPUP;
     exp_style &= ~(WS_CHILD | WS_MAXIMIZE | WS_BORDER | WS_DLGFRAME);
-    ok(style == exp_style || broken(style == (exp_style | WS_BORDER)), /* nt4 */
-       "wrong style %08x/%08x\n", style, exp_style);
+    ok(style == exp_style, "wrong style %08x/%08x\n", style, exp_style);
 
     DestroyWindow(hwnd);
 
@@ -243,8 +242,7 @@ static void test_customdraw(void) {
        if (CD_Stages)
        {
            /* Check CustomDraw results */
-           ok(CD_Stages == expectedResults[iterationNumber].ExpectedCalls ||
-              broken(CD_Stages == (expectedResults[iterationNumber].ExpectedCalls & ~TEST_CDDS_POSTPAINT)), /* nt4 */
+           ok(CD_Stages == expectedResults[iterationNumber].ExpectedCalls,
               "%d: CustomDraw stages %x, expected %x\n", iterationNumber, CD_Stages,
               expectedResults[iterationNumber].ExpectedCalls);
        }
@@ -503,14 +501,11 @@ todo_wine
 todo_wine
     ok(!r, "Adding the tool to the tooltip succeeded!\n");
 
-    if (0)  /* crashes on NT4 */
-    {
-        toolinfoW.hwnd = NULL;
-        toolinfoW.uId = 0x1234ABCD;
-        toolinfoW.lpszText = bufW;
-        SendMessageW(hwnd, TTM_GETTEXTW, 0, (LPARAM)&toolinfoW);
-        ok(toolinfoW.lpszText[0] == 0, "lpszText should be an empty string\n");
-    }
+    toolinfoW.hwnd = NULL;
+    toolinfoW.uId = 0x1234ABCD;
+    toolinfoW.lpszText = bufW;
+    SendMessageW(hwnd, TTM_GETTEXTW, 0, (LPARAM)&toolinfoW);
+    ok(toolinfoW.lpszText[0] == 0, "lpszText should be an empty string\n");
 
     /* text with embedded tabs */
     toolinfoA.cbSize = sizeof(TTTOOLINFOA);
@@ -571,9 +566,7 @@ static void test_ttm_gettoolinfo(void)
     ti.lParam = 0xaaaaaaaa;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
     ok(r, "Getting tooltip info failed\n");
-    ok(0x1abe11ed == ti.lParam ||
-       broken(0x1abe11ed != ti.lParam), /* comctl32 < 5.81 */
-       "Expected 0x1abe11ed, got %lx\n", ti.lParam);
+    ok(0x1abe11ed == ti.lParam, "Expected 0x1abe11ed, got %lx\n", ti.lParam);
 
     tiW.cbSize = TTTOOLINFOW_V2_SIZE;
     tiW.hwnd = NULL;
@@ -582,9 +575,7 @@ static void test_ttm_gettoolinfo(void)
     tiW.lpszText = NULL;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOW, 0, (LPARAM)&tiW);
     ok(r, "Getting tooltip info failed\n");
-    ok(0x1abe11ed == tiW.lParam ||
-       broken(0x1abe11ed != tiW.lParam), /* comctl32 < 5.81 */
-       "Expected 0x1abe11ed, got %lx\n", tiW.lParam);
+    ok(0x1abe11ed == tiW.lParam, "Expected 0x1abe11ed, got %lx\n", tiW.lParam);
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE;
     ti.uId = 0x1234ABCD;
@@ -595,9 +586,7 @@ static void test_ttm_gettoolinfo(void)
     ti.lParam = 0xdeadbeef;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&ti);
     ok(r, "Getting tooltip info failed\n");
-    ok(0x55555555 == ti.lParam ||
-       broken(0x55555555 != ti.lParam), /* comctl32 < 5.81 */
-       "Expected 0x55555555, got %lx\n", ti.lParam);
+    ok(0x55555555 == ti.lParam, "Expected 0x55555555, got %lx\n", ti.lParam);
 
     DestroyWindow(hwnd);
 
@@ -854,9 +843,7 @@ static void test_longtextW(void)
         toolinfoW.lpszText = bufW;
         SendMessageW(hwnd, TTM_GETTEXTW, 0, (LPARAM)&toolinfoW);
         textlen = lstrlenW(toolinfoW.lpszText);
-        ok(textlen == lenW ||
-           broken(textlen == 0 && toolinfoW.lpszText == NULL), /* nt4, kb186177 */
-           "lpszText has %d chars\n", textlen);
+        ok(textlen == lenW, "lpszText has %d chars\n", textlen);
     }
 
     DestroyWindow(hwnd);
