@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-03 00:36+0800\n"
+"PO-Revision-Date: 2022-01-05 12:09+0800\n"
 "Last-Translator: Jactry Zeng <jzeng@codeweavers.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
@@ -44,7 +44,7 @@ msgstr "安装/卸载"
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
-msgstr "要从软盘，光盘或硬盘安装新程序，请按'安装'。"
+msgstr "要从软盘，光盘或硬盘安装新程序，请单击“安装”。"
 
 #: dlls/appwiz.cpl/appwiz.rc:62
 msgid "&Install..."
@@ -55,7 +55,8 @@ msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
-msgstr "下列软件可以自动卸载。 按'修改/删除'可卸载选定程序或者调整已安装部件。"
+msgstr ""
+"下列软件可以自动卸载。单击“修改/删除”可卸载选中的程序或修改其已安装的组件。"
 
 #: dlls/appwiz.cpl/appwiz.rc:67
 msgid "&Support Information"
@@ -294,7 +295,7 @@ msgstr "所有文件 (*.*)"
 
 #: dlls/appwiz.cpl/appwiz.rc:46
 msgid "&Modify/Remove"
-msgstr "修改或删除(&M)"
+msgstr "修改/删除(&M)"
 
 #: dlls/appwiz.cpl/appwiz.rc:51
 msgid "Downloading..."
@@ -388,7 +389,7 @@ msgstr "时"
 
 #: dlls/comctl32/comctl32.rc:68 programs/winefile/winefile.rc:156
 msgid "Properties for %s"
-msgstr "属性 %s"
+msgstr "%s 的属性"
 
 #: dlls/comctl32/comctl32.rc:73 dlls/comdlg32/comdlg32.rc:265
 msgid "&Apply"
@@ -429,7 +430,7 @@ msgstr "关闭(&C)"
 
 #: dlls/comctl32/comctl32.rc:101
 msgid "R&eset"
-msgstr "重置(&e)"
+msgstr "重置(&E)"
 
 #: dlls/comctl32/comctl32.rc:102 dlls/comdlg32/comdlg32.rc:173
 #: dlls/comdlg32/comdlg32.rc:195 dlls/comdlg32/comdlg32.rc:266
@@ -637,7 +638,7 @@ msgstr "方向"
 
 #: dlls/comdlg32/comdlg32.rc:237
 msgid "Po&rtrait"
-msgstr "纵向(&P)"
+msgstr "纵向(&R)"
 
 #: dlls/comdlg32/comdlg32.rc:238 dlls/comdlg32/comdlg32.rc:445
 #: dlls/wineps.drv/wineps.rc:37
@@ -728,7 +729,7 @@ msgstr "蓝(&B):"
 
 #: dlls/comdlg32/comdlg32.rc:296
 msgid "&Hue:"
-msgstr "色调(&E):"
+msgstr "色调(&H):"
 
 #: dlls/comdlg32/comdlg32.rc:298
 msgctxt "Saturation"
@@ -784,7 +785,7 @@ msgstr "下(&D)"
 
 #: dlls/comdlg32/comdlg32.rc:329 dlls/comdlg32/comdlg32.rc:347
 msgid "&Find Next"
-msgstr "找下一个(&F)"
+msgstr "查找下一个(&F)"
 
 #: dlls/comdlg32/comdlg32.rc:337
 msgid "Replace"
@@ -872,7 +873,7 @@ msgstr "纸张来源(&S):"
 
 #: dlls/comdlg32/comdlg32.rc:421
 msgid "P&ortrait"
-msgstr "纵向(&P)"
+msgstr "纵向(&O)"
 
 #: dlls/comdlg32/comdlg32.rc:422
 msgid "L&andscape"
@@ -908,7 +909,7 @@ msgstr "下(&B):"
 
 #: dlls/comdlg32/comdlg32.rc:457
 msgid "P&rinter..."
-msgstr "打印机(&P)..."
+msgstr "打印机(&R)..."
 
 #: dlls/comdlg32/comdlg32.rc:465 dlls/comdlg32/comdlg32.rc:490
 msgid "Look &in:"
@@ -946,7 +947,7 @@ msgstr "找不到文件"
 
 #: dlls/comdlg32/comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
-msgstr "请检验是否给予正确的文件名称"
+msgstr "请检查给予的文件名是否正确"
 
 #: dlls/comdlg32/comdlg32.rc:35
 msgid ""
@@ -1050,7 +1051,7 @@ msgstr "紫色"
 
 #: dlls/comdlg32/comdlg32.rc:128 programs/wordpad/wordpad.rc:131
 msgid "Teal"
-msgstr "鸭翅绿"
+msgstr "青色"
 
 #: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
 msgid "Gray"
@@ -1115,7 +1116,7 @@ msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "“份数”项不能空。"
+msgstr "“份数”项不能为空。"
 
 #: dlls/comdlg32/comdlg32.rc:67
 msgid ""
@@ -3227,7 +3228,7 @@ msgstr "正在传输"
 
 #: dlls/gphoto2.ds/gphoto2.rc:46
 msgid "Transferring... Please Wait"
-msgstr "正在传输… 请稍候"
+msgstr "正在传输... 请稍候"
 
 #: dlls/gphoto2.ds/gphoto2.rc:51
 msgid "Connecting to camera"
@@ -3235,7 +3236,7 @@ msgstr "连接照相机"
 
 #: dlls/gphoto2.ds/gphoto2.rc:55
 msgid "Connecting to camera... Please Wait"
-msgstr "正在连接照相机… 请稍候"
+msgstr "正在连接照相机... 请稍候"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:59
 msgid "S&ync"
@@ -6899,7 +6900,7 @@ msgstr "找不到用户名。\n"
 
 #: dlls/kernel32/winerror.mc:3743
 msgid "This network connection does not exist.\n"
-msgstr "该网络链接不存在。\n"
+msgstr "该网络连接不存在。\n"
 
 #: dlls/kernel32/winerror.mc:3748
 msgid "Connection reset by peer.\n"
@@ -8061,7 +8062,7 @@ msgstr "正在复制新文件"
 
 #: dlls/msi/msi.rc:105
 msgid "Installing ODBC components"
-msgstr "正在安装 ODBC 组建"
+msgstr "正在安装 ODBC 组件"
 
 #: dlls/msi/msi.rc:106
 msgid "Installing new services"
@@ -8101,7 +8102,7 @@ msgstr "正在为文件打补丁"
 
 #: dlls/msi/msi.rc:115
 msgid "Updating component registration"
-msgstr "正在更新组建注册信息"
+msgstr "正在更新组件注册信息"
 
 #: dlls/msi/msi.rc:116
 msgid "Publishing Qualified Components"
@@ -9012,7 +9013,7 @@ msgstr "秒。"
 
 #: dlls/oledb32/version.rc:104
 msgid "A&ccess:"
-msgstr "访问(&A):"
+msgstr "访问(&C):"
 
 #: dlls/oledb32/version.rc:110
 msgid "All"
@@ -9259,7 +9260,7 @@ msgstr "正在扫描"
 
 #: dlls/sane.ds/sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "正在扫描… 请稍候"
+msgstr "正在扫描... 请稍候"
 
 #: dlls/sane.ds/sane.rc:31
 msgctxt "unit: pixels"
@@ -9410,11 +9411,11 @@ msgstr "打印目标(&P)"
 #: dlls/shdoclc/shdoclc.rc:71 dlls/shdoclc/shdoclc.rc:154
 #: dlls/shdoclc/shdoclc.rc:178
 msgid "S&how Picture"
-msgstr "显示图片(&S)"
+msgstr "显示图片(&H)"
 
 #: dlls/shdoclc/shdoclc.rc:72 dlls/shdoclc/shdoclc.rc:179
 msgid "&Save Picture As..."
-msgstr "将图片存为(&A)..."
+msgstr "将图片另存为(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:73
 msgid "&E-mail Picture..."
@@ -9471,7 +9472,7 @@ msgstr "行(&R)"
 
 #: dlls/shdoclc/shdoclc.rc:107
 msgid "&Column"
-msgstr "列(&O)"
+msgstr "列(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:108
 msgid "&Table"
@@ -9495,7 +9496,7 @@ msgstr "剪下"
 
 #: dlls/shdoclc/shdoclc.rc:155
 msgid "&Save Video As..."
-msgstr "将视频存为(&V)..."
+msgstr "将视频另存为(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:166 dlls/shdoclc/shdoclc.rc:190
 msgid "Play"
@@ -10205,7 +10206,7 @@ msgstr "错误"
 
 #: dlls/shlwapi/shlwapi.rc:43
 msgid "Don't show me th&is message again"
-msgstr "不要再显示这个讯息(&i)"
+msgstr "不要再显示这个信息(&I)"
 
 #: dlls/shlwapi/shlwapi.rc:30
 msgid "%d bytes"
@@ -11917,7 +11918,7 @@ msgstr "最大化(&X)"
 
 #: dlls/user32/user32.rc:36
 msgid "&Close\tAlt+F4"
-msgstr "关闭(&N)\tAlt+F4"
+msgstr "关闭(&C)\tAlt+F4"
 
 #: dlls/user32/user32.rc:38
 msgid "&About Wine"
@@ -11925,7 +11926,7 @@ msgstr "关于 Wine(&A)"
 
 #: dlls/user32/user32.rc:49
 msgid "&Close\tCtrl+F4"
-msgstr "关闭(&N)\tCtrl+F4"
+msgstr "关闭(&C)\tCtrl+F4"
 
 #: dlls/user32/user32.rc:51
 msgid "Nex&t\tCtrl+F6"
@@ -13837,7 +13838,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:393
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "卷标 (11 个字符, 直接按 <回车> 以留空)?"
+msgstr "卷标 (11 个字符，直接按 <回车> 以留空)?"
 
 #: programs/cmd/cmd.rc:394
 msgid "PATH not found\n"
@@ -14152,7 +14153,7 @@ msgstr "以太网"
 
 #: programs/ipconfig/ipconfig.rc:35
 msgid "Connection-specific DNS suffix"
-msgstr "链接专用的 DNS 后缀"
+msgstr "连接专用的 DNS 后缀"
 
 #: programs/ipconfig/ipconfig.rc:36
 msgid "IPv4 address"
@@ -14754,7 +14755,7 @@ msgstr "专家模式(&E)"
 
 #: programs/oleview/oleview.rc:65
 msgid "&Hidden component categories"
-msgstr "隐藏部件分类(&H)"
+msgstr "隐藏组件分类(&H)"
 
 #: programs/oleview/oleview.rc:67 programs/oleview/oleview.rc:89
 #: programs/winefile/winefile.rc:65 programs/wordpad/wordpad.rc:71
@@ -14952,7 +14953,7 @@ msgstr "对象类型"
 
 #: programs/oleview/oleview.rc:131
 msgid "Grouped by Component Category"
-msgstr "按部件类型分组"
+msgstr "按组件类型分组"
 
 #: programs/oleview/oleview.rc:132
 msgid "OLE 1.0 Objects"
@@ -15032,7 +15033,7 @@ msgstr "新建(&N)..."
 
 #: programs/progman/progman.rc:34
 msgid "O&pen\tEnter"
-msgstr "打开(&O)\tEnter"
+msgstr "打开(&P)\tEnter"
 
 #: programs/progman/progman.rc:35 programs/winefile/winefile.rc:30
 msgid "&Move...\tF7"
@@ -15347,6 +15348,51 @@ msgid ""
 "     Modify the registry without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG ADD <项> [/v 值名称 | /ve] [/t 类型] [/s 分隔符] [/d 数据] [/f]\n"
+"\n"
+"  添加一个项到注册表，或添加一个新的值到所指定的注册表项。\n"
+"\n"
+"  <项>\n"
+"     要添加的注册表项，如果指定了 [/v] 或 [/ve] 选项，\n"
+"     则新的注册表数据将被添加到该项。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 内置的注册表项。应为以下的其中一个:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 位于指定的 ROOT 下的注册表项完整路径。\n"
+"\n"
+"  /v <值名称>\n"
+"     所要添加的注册表值名称。\n"
+"\n"
+"  /ve\n"
+"     添加一个未指定名称的值。该选项将修改 (默认) 注册表值。\n"
+"\n"
+"  /t <类型>\n"
+"     所要添加到注册表的数据的类型。如果指定了 [/t] 选项，\n"
+"     <类型> 应为以下的其中一个:\n"
+"\n"
+"         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
+"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"\n"
+"     如果未指定 [/t] 选项，默认的数据类型是 REG_SZ。\n"
+"\n"
+"  /s <分隔符>\n"
+"     指定一个字符，用于分隔 REG_MULTI_SZ 数据中的字符串。\n"
+"     如果 [/s] 选项未被指定，默认的分隔符是 \\0。\n"
+"\n"
+"  /d <数据>\n"
+"     所要添加到新建注册表值的数据。\n"
+"\n"
+"  /f\n"
+"     无需确认提示，修改注册表。\n"
+"\n"
 
 #: programs/reg/reg.rc:202
 msgid ""
@@ -15382,6 +15428,35 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
+"REG COPY <项1> <项2> [/s] [/f]\n"
+"\n"
+"  复制所指定的注册表项的内容到另外一个位置。\n"
+"  默认情况下，该操作只复制注册表值。使用 [/s] 选项可以\n"
+"  递归复制所有的子项和值。\n"
+"\n"
+"  <项1>，<项2>\n"
+"     用于指定源项 (<项1>) 和目标项 (<项2>)。\n"
+"     如果 <项2> 不存在，它将会被创建。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 内置的注册表项。应为以下的其中一个:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 位于指定的 ROOT 下的注册表项完整路径。\n"
+"\n"
+"  /s\n"
+"     从 <项1> 复制所有的子项和值到 <项2>。\n"
+"\n"
+"  /f\n"
+"     无需确认提示，覆盖 <项2> 中所有的数据。\n"
+"     该选项不会修改只存在于 <项2> 中的子项和值。\n"
+"\n"
 
 #: programs/reg/reg.rc:92
 msgid ""
@@ -15421,6 +15496,39 @@ msgid ""
 "     prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG DELETE <项> [/v 值名称 | /ve | /va] [/f]\n"
+"\n"
+"  删除一个注册表项 (包括所有的子项和值)，或删除\n"
+"  指定注册表项中的一个或多个注册表值。\n"
+"\n"
+"  <项>\n"
+"     所要删除的注册表项，如果指定了 [/v]，[/ve] 或 [/va] 选项的\n"
+"     其中一个，则可删除注册表项内的一个或多个值。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 内置的注册表项。应为以下的其中一个:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 位于指定的 ROOT 下的注册表项完整路径。\n"
+"\n"
+"  /v <值名称>\n"
+"     所要删除的注册表值名称。\n"
+"\n"
+"  /ve\n"
+"     删除一个未指定名称的注册表值。该选项将删除 (默认) 注册表值。\n"
+"\n"
+"  /va\n"
+"     删除注册表项中所有的值。\n"
+"\n"
+"  /f\n"
+"     无需确认提示，删除注册表项 (包括所有的子项和值)。\n"
+"\n"
 
 #: programs/reg/reg.rc:170
 msgid ""
@@ -15452,6 +15560,33 @@ msgid ""
 "     Overwrite <file> without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG EXPORT <项> <文件> [/y]\n"
+"\n"
+"  导出所指定的注册表项 (包括所有的子项和值)\n"
+"  到一个文件。\n"
+"\n"
+"  <key>\n"
+"     所要导出的注册表项。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 内置的注册表项。应为以下的其中一个:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 位于指定的 ROOT 下的注册表项完整路径。\n"
+"\n"
+"  <文件>\n"
+"     所要创建的注册表文件的名称和路径。\n"
+"     该文件必须使用 .reg 扩展名。\n"
+"\n"
+"  /y\n"
+"     无需确认提示，覆盖 <文件>。\n"
+"\n"
 
 #: programs/reg/reg.rc:148
 msgid ""
@@ -15505,6 +15640,36 @@ msgid ""
 "     List all registry entries under <key> and its subkeys.\n"
 "\n"
 msgstr ""
+"REG QUERY <项> [/v 值名称 | /ve] [/s]\n"
+"\n"
+"  查询所指定的注册表项，并列出该注册表项中所有的子项、值和数据。\n"
+"  使用 [/s] 选项可以递归查询每一个子项。\n"
+"\n"
+"  <key>\n"
+"     所要查询的注册表项。\n"
+"\n"
+"     格式: ROOT\\Subkey\n"
+"\n"
+"     ROOT: 内置的注册表项。应为以下的其中一个:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: 位于指定的 ROOT 下的注册表项完整路径。\n"
+"\n"
+"  /v <值名称>\n"
+"     所要查询的注册表值名称，如果未指定 [/v] 或 [/ve] 选项，\n"
+"     <项1> 中所有的值都将被列出。\n"
+"\n"
+"  /ve\n"
+"     查询一个未指定名称的值。该选项将查询 (默认) 注册表值。\n"
+"\n"
+"  /s\n"
+"     列出 <项> 及其子项中的所有注册表项。\n"
+"\n"
 
 #: programs/reg/reg.rc:180
 msgid ""
@@ -15699,7 +15864,7 @@ msgstr "展开"
 
 #: programs/regedit/regedit.rc:134 programs/regedit/regedit.rc:233
 msgid "Modify &Binary Data..."
-msgstr "修改二进制数据...(&B)"
+msgstr "修改二进制数据(&B)..."
 
 #: programs/regedit/regedit.rc:267
 msgid "Export registry"
@@ -16782,7 +16947,7 @@ msgstr "映像名称(&I)"
 
 #: programs/taskmgr/taskmgr.rc:523
 msgid "&PID (Process Identifier)"
-msgstr "&PID (进程编号)"
+msgstr "PID (进程编号)(&P)"
 
 #: programs/taskmgr/taskmgr.rc:525
 msgid "&CPU Usage"
@@ -16790,7 +16955,7 @@ msgstr "&CPU 负载率"
 
 #: programs/taskmgr/taskmgr.rc:527
 msgid "CPU Tim&e"
-msgstr "CPU 耗时(&T)"
+msgstr "CPU 耗时(&E)"
 
 #: programs/taskmgr/taskmgr.rc:529
 msgid "&Memory Usage"
@@ -17372,7 +17537,7 @@ msgstr "允许窗口管理器控制窗口(&W)"
 
 #: programs/winecfg/winecfg.rc:172
 msgid "&Emulate a virtual desktop"
-msgstr "虚拟桌面(&D)"
+msgstr "虚拟桌面(&E)"
 
 #: programs/winecfg/winecfg.rc:174
 msgid "Desktop &size:"
@@ -18004,7 +18169,7 @@ msgstr "按日期排序(&D)"
 
 #: programs/winefile/winefile.rc:59
 msgid "Filter by&..."
-msgstr "过滤标准&..."
+msgstr "过滤标准(&.)..."
 
 #: programs/winefile/winefile.rc:66
 msgid "&Drive Bar"
@@ -18024,7 +18189,7 @@ msgstr "层叠\tCtrl+F5"
 
 #: programs/winefile/winefile.rc:77
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "垂直平铺(&)\tCtrl+F4"
+msgstr "垂直平铺(&V)\tCtrl+F4"
 
 #: programs/winefile/winefile.rc:84
 msgid "&About Wine File Manager"
@@ -18273,7 +18438,7 @@ msgstr "如何使用帮助(&H)\tF1"
 
 #: programs/winhlp32/winhlp32.rc:59
 msgid "&About Wine Help"
-msgstr "关于 Wine 帮助(&I)"
+msgstr "关于 Wine 帮助(&A)"
 
 #: programs/winhlp32/winhlp32.rc:67
 msgid "Annotation..."
@@ -18317,7 +18482,7 @@ msgstr "找不到文件“%s”。您想要自己找这个文件吗?"
 
 #: programs/winhlp32/winhlp32.rc:93
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "找不到 richedit 的实现……终止"
+msgstr "找不到 richedit 的实现... 终止"
 
 #: programs/winhlp32/winhlp32.rc:94
 msgid "Help topics: "
@@ -18517,7 +18682,7 @@ msgstr "添加(&A)"
 
 #: programs/wordpad/wordpad.rc:259
 msgid "Remove al&l"
-msgstr "全部删除(&R)"
+msgstr "全部删除(&L)"
 
 #: programs/wordpad/wordpad.rc:267
 msgid "Line wrapping"
