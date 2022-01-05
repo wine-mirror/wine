@@ -443,7 +443,7 @@ msgstr "閉じる(&C)"
 
 #: dlls/comctl32/comctl32.rc:101
 msgid "R&eset"
-msgstr "リセット(R&)"
+msgstr "リセット(&E)"
 
 #: dlls/comctl32/comctl32.rc:102 dlls/comdlg32/comdlg32.rc:173
 #: dlls/comdlg32/comdlg32.rc:195 dlls/comdlg32/comdlg32.rc:266
@@ -9008,7 +9008,7 @@ msgstr "利用するデータ ソース名(&D)"
 
 #: dlls/oledb32/version.rc:74
 msgid "Use c&onnection string"
-msgstr "利用する接続文字列(&C)"
+msgstr "利用する接続文字列(&O)"
 
 #: dlls/oledb32/version.rc:75
 msgid "&Connection string:"
