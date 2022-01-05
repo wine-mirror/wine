@@ -301,12 +301,13 @@ static void rawinput_update_device_list(void)
     enumerate_devices( RIM_TYPEHID, guid_devinterface_hidW );
 }
 
-static struct device *find_device_from_handle( HANDLE handle )
+static struct device *find_device_from_handle( HANDLE handle, BOOL refresh )
 {
     struct device *device;
 
     LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
         if (device->handle == handle) return device;
+    if (!refresh) return NULL;
 
     rawinput_update_device_list();
 
@@ -399,7 +400,7 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
 
     pthread_mutex_lock( &rawinput_mutex );
 
-    if (!(device = find_device_from_handle( handle )))
+    if (!(device = find_device_from_handle( handle, TRUE )))
     {
         pthread_mutex_unlock( &rawinput_mutex );
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
@@ -568,8 +569,20 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
 
     if (msg->message == WM_INPUT_DEVICE_CHANGE)
     {
+        BOOL refresh = msg->wParam == GIDC_ARRIVAL;
+        struct device *device;
+
         pthread_mutex_lock( &rawinput_mutex );
-        rawinput_update_device_list();
+        if ((device = find_device_from_handle( UlongToHandle( msg_data->rawinput.device ), refresh )))
+        {
+            if (msg->wParam == GIDC_REMOVAL)
+            {
+                list_remove( &device->entry );
+                NtClose( device->file );
+                free( device->data );
+                free( device );
+            }
+        }
         pthread_mutex_unlock( &rawinput_mutex );
     }
     else
