@@ -5133,6 +5133,42 @@ static void test_accept_events(struct event_test_ctx *ctx)
     closesocket(server);
     closesocket(client);
 
+    /* As above, but select on a subset containing FD_ACCEPT first. */
+
+    if (!ctx->is_message)
+    {
+        select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB | FD_ACCEPT);
+
+        client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+        ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
+        ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
+
+        ret = WaitForSingleObject(ctx->event, 200);
+        ok(!ret, "wait timed out\n");
+
+        select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB);
+        ret = WaitForSingleObject(ctx->event, 0);
+        ok(!ret, "wait timed out\n");
+
+        ResetEvent(ctx->event);
+
+        select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB);
+        ret = WaitForSingleObject(ctx->event, 0);
+        ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+
+        select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB | FD_ACCEPT);
+        ret = WaitForSingleObject(ctx->event, 0);
+        todo_wine ok(!ret, "wait timed out\n");
+        if (!ret)
+            check_events(ctx, FD_ACCEPT, 0, 0);
+
+        server = accept(listener, NULL, NULL);
+        ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
+        closesocket(server);
+        closesocket(client);
+    }
+
     /* As above, but select on a subset not containing FD_ACCEPT first. */
 
     select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB);
