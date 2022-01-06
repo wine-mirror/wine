@@ -465,6 +465,7 @@ static HRESULT WINAPI regtasks_Invoke(IRegisteredTaskCollection *iface, DISPID d
 static HRESULT WINAPI regtasks_get_Count(IRegisteredTaskCollection *iface, LONG *count)
 {
     FIXME("%p,%p: stub\n", iface, count);
+    if (count) *count = 0;
     return E_NOTIMPL;
 }
 
