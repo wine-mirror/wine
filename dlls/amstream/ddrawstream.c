@@ -549,6 +549,10 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
     if (format->dwSize != sizeof(DDSURFACEDESC))
         return E_INVALIDARG;
 
+    TRACE("flags %#x, pixel format flags %#x, bit count %u, size %ux%u.\n",
+            format->dwFlags, format->ddpfPixelFormat.dwFlags,
+            format->ddpfPixelFormat.u1.dwRGBBitCount, format->dwWidth, format->dwHeight);
+
     if (format->dwFlags & DDSD_PIXELFORMAT)
     {
         if (format->ddpfPixelFormat.dwSize != sizeof(DDPIXELFORMAT))
