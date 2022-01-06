@@ -915,34 +915,20 @@ static HRESULT WINAPI ProtocolSinkHandler_ReportProgress(IInternetProtocolSink *
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolSinkHandler_ReportData(IInternetProtocolSink *iface,
-        DWORD bscf, ULONG progress, ULONG progress_max)
+static HRESULT report_data(BindProtocol *This)
 {
-    BindProtocol *This = impl_from_IInternetProtocolSinkHandler(iface);
-
-    TRACE("(%p)->(%x %u %u)\n", This, bscf, progress, progress_max);
-
-    This->bscf = bscf;
-    This->progress = progress;
-    This->progress_max = progress_max;
-
-    if(!This->protocol_sink)
-        return S_OK;
+    DWORD bscf = This->bscf;
+    HRESULT hres;
 
     if((This->pi & PI_MIMEVERIFICATION) && !This->reported_mime) {
         BYTE buf[BUFFER_SIZE];
         DWORD read = 0;
         LPWSTR mime;
-        HRESULT hres;
 
         do {
             read = 0;
-            if(is_apartment_thread(This))
-                This->continue_call++;
             hres = IInternetProtocol_Read(This->protocol, buf,
                     sizeof(buf)-This->buf_size, &read);
-            if(is_apartment_thread(This))
-                This->continue_call--;
             if(FAILED(hres) && hres != E_PENDING)
                 return hres;
 
@@ -995,7 +981,34 @@ static HRESULT WINAPI ProtocolSinkHandler_ReportData(IInternetProtocolSink *ifac
     if(!This->protocol_sink)
         return S_OK;
 
-    return IInternetProtocolSink_ReportData(This->protocol_sink, bscf, progress, progress_max);
+    return IInternetProtocolSink_ReportData(This->protocol_sink, bscf, This->progress, This->progress_max);
+}
+
+static HRESULT WINAPI ProtocolSinkHandler_ReportData(IInternetProtocolSink *iface,
+        DWORD bscf, ULONG progress, ULONG progress_max)
+{
+    BindProtocol *This = impl_from_IInternetProtocolSinkHandler(iface);
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %u %u)\n", This, bscf, progress, progress_max);
+
+    This->bscf = bscf;
+    This->progress = progress;
+    This->progress_max = progress_max;
+
+    if(!This->protocol_sink)
+        return S_OK;
+
+    if(is_apartment_thread(This))
+        This->continue_call++;
+
+    hres = report_data(This);
+
+    if(is_apartment_thread(This)) {
+        This->continue_call--;
+        process_tasks(This);
+    }
+    return hres;
 }
 
 static HRESULT handle_redirect(BindProtocol *This, const WCHAR *url)
