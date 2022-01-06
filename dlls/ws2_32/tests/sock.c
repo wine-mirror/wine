@@ -6830,7 +6830,7 @@ static void test_WSAPoll(void)
         fds[0].events = POLLRDNORM | POLLRDBAND | POLLWRNORM;
         fds[0].revents = 0xdead;
         ret = pWSAPoll(fds, 1, 10000);
-        todo_wine ok(ret == 1, "got %d\n", ret);
+        ok(ret == 1, "got %d\n", ret);
         todo_wine ok(fds[0].revents == (POLLWRNORM | POLLHUP | POLLERR), "got events %#x\n", fds[0].revents);
 
         len = sizeof(err);

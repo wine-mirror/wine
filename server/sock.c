@@ -2979,6 +2979,9 @@ static int poll_single_socket( struct sock *sock, int mask )
     if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0)
         return 0;
 
+    if (sock->state == SOCK_CONNECTING && (pollfd.revents & (POLLERR | POLLHUP)))
+        pollfd.revents &= ~POLLOUT;
+
     if ((mask & AFD_POLL_HUP) && (pollfd.revents & POLLIN) && sock->type == WS_SOCK_STREAM)
     {
         char dummy;
