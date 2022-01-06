@@ -5159,9 +5159,8 @@ static void test_accept_events(struct event_test_ctx *ctx)
 
         select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB | FD_ACCEPT);
         ret = WaitForSingleObject(ctx->event, 0);
-        todo_wine ok(!ret, "wait timed out\n");
-        if (!ret)
-            check_events(ctx, FD_ACCEPT, 0, 0);
+        ok(!ret, "wait timed out\n");
+        check_events(ctx, FD_ACCEPT, 0, 0);
 
         server = accept(listener, NULL, NULL);
         ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());

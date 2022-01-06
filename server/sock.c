@@ -2543,6 +2543,11 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         sock->nonblocking = 1;
 
         sock_reselect( sock );
+        /* Explicitly wake the socket up if the mask causes it to become
+         * signaled. Note that reselecting isn't enough, since we might already
+         * have had events recorded in sock->reported_events and we don't want
+         * to select for them again. */
+        sock_wake_up( sock );
 
         return;
     }
