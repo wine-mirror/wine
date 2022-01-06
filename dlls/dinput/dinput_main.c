@@ -1379,7 +1379,8 @@ static void dinput_thread_start(void)
 static void dinput_thread_stop(void)
 {
     PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 0, 0 );
-    WaitForSingleObject( dinput_thread, INFINITE );
+    if (WaitForSingleObject( dinput_thread, 500 ) == WAIT_TIMEOUT)
+        WARN("Timeout while waiting for internal thread\n");
     CloseHandle( dinput_thread );
 }
 
