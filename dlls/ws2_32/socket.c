@@ -1143,6 +1143,8 @@ int WINAPI bind( SOCKET s, const struct sockaddr *addr, int len )
         status = io.u.Status;
     }
 
+    if (!status) TRACE( "successfully bound to address %s\n", debugstr_sockaddr( ret_addr ));
+
     free( params );
     free( ret_addr );
 
