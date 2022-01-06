@@ -25,8 +25,8 @@
 #import <CoreVideo/CoreVideo.h>
 #ifdef HAVE_METAL_METAL_H
 #import <Metal/Metal.h>
-#import <QuartzCore/QuartzCore.h>
 #endif
+#import <QuartzCore/QuartzCore.h>
 
 #import "cocoa_window.h"
 

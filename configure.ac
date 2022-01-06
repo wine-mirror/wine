@@ -757,7 +757,7 @@ case $host_os in
     fi
     if test "$ac_cv_header_Metal_Metal_h" = "yes"
     then
-        AC_SUBST(METAL_LIBS,"-framework Metal -framework QuartzCore")
+        AC_SUBST(METAL_LIBS,"-framework Metal")
     fi
 
     dnl Check for MTLDevice registryID property

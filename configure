@@ -10322,7 +10322,7 @@ fi
     fi
     if test "$ac_cv_header_Metal_Metal_h" = "yes"
     then
-        METAL_LIBS="-framework Metal -framework QuartzCore"
+        METAL_LIBS="-framework Metal"
 
     fi
 
