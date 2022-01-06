@@ -10253,8 +10253,14 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 90.5f, 485.3f}, 0.1f, 1.0f, TRUE, TRUE},
         {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 91.5f, 485.3f}, 0.1f, 1.0f, TRUE, FALSE},
         {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, { 89.0f, 485.3f}, 0.1f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {167.0f, 729.8f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {167.0f, 728.6f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {167.0f, 731.0f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {173.0f, 729.8f}, 0.0f, 1.0f, TRUE, TRUE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {173.0f, 728.6f}, 0.0f, 1.0f, TRUE, FALSE},
+        {{{{1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 10.0f}}}, {173.0f, 731.0f}, 0.0f, 1.0f, TRUE, FALSE},
 
-        /* 20. A curve where the control points project beyond the endpoints
+        /* 26. A curve where the control points project beyond the endpoints
          *     onto the line through the endpoints. */
         {{{{0.0f}}}, {306.97f, 791.67f}, 0.0f, 1.0f, FALSE, FALSE},
         {{{{0.0f}}}, {307.27f, 791.67f}, 0.0f, 1.0f, FALSE, TRUE},
@@ -10271,7 +10277,7 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{0.0f}}}, {392.73f, 791.67f}, 0.0f, 1.0f, FALSE, TRUE},
         {{{{0.0f}}}, {393.03f, 791.67f}, 0.0f, 1.0f, FALSE, FALSE},
 
-        /* 32. A curve where the endpoints coincide. */
+        /* 38. A curve where the endpoints coincide. */
         {{{{0.0f}}}, {570.23f, 799.77f}, 0.0f, 1.0f, FALSE, FALSE},
         {{{{0.0f}}}, {570.53f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
         {{{{0.0f}}}, {571.73f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
@@ -10287,7 +10293,7 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{0.0f}}}, {629.47f, 799.77f}, 0.0f, 1.0f, FALSE, TRUE},
         {{{{0.0f}}}, {629.77f, 799.77f}, 0.0f, 1.0f, FALSE, FALSE},
 
-        /* 44. A curve with coinciding endpoints, as well as coinciding
+        /* 50. A curve with coinciding endpoints, as well as coinciding
          *     control points. */
         {{{{0.0f}}}, {825.00f, 800.00f}, 0.0f, 1.0f, FALSE, TRUE},
         {{{{0.0f}}}, {861.00f, 824.00f}, 0.0f, 1.0f, FALSE, TRUE},
@@ -10296,7 +10302,7 @@ static void test_stroke_contains_point(BOOL d3d11)
         {{{{0.0f}}}, {864.00f, 824.00f}, 0.0f, 1.0f, FALSE, FALSE},
         {{{{0.0f}}}, {864.00f, 826.00f}, 0.0f, 1.0f, FALSE, FALSE},
 
-        /* 50. Shear transforms. */
+        /* 56. Shear transforms. */
         {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, { 837.2f, 600.0f}, 0.1f, 5.0f, TRUE, FALSE},
         {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, { 837.5f, 600.0f}, 0.1f, 5.0f, TRUE, TRUE},
         {{{{1.0f, 0.0f, 1.0f, 1.0f}}}, {1186.3f, 791.7f}, 0.1f, 5.0f, TRUE, TRUE},
