@@ -800,6 +800,7 @@ static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fD
     }
 
     hres = This->vtbl->clone(This, nsnode, &new_node);
+    nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
 
