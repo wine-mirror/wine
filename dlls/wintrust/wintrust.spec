@@ -142,7 +142,7 @@
 @ stdcall WinVerifyTrust(long ptr ptr)
 @ stdcall WinVerifyTrustEx(long ptr ptr)
 @ stdcall WintrustAddActionID(ptr long ptr)
-@ stdcall WintrustAddDefaultForUsage(ptr ptr)
+@ stdcall WintrustAddDefaultForUsage(str ptr)
 @ stdcall WintrustCertificateTrust(ptr)
 @ stub WintrustGetDefaultForUsage
 @ stdcall WintrustGetRegPolicyFlags(ptr)
