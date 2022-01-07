@@ -572,10 +572,10 @@
 @ stdcall -import GetCommTimeouts(long ptr)
 @ stdcall -import GetCommandLineA()
 @ stdcall -import GetCommandLineW()
-@ stdcall -import GetCompressedFileSizeA(long ptr)
+@ stdcall -import GetCompressedFileSizeA(str ptr)
 # @ stub GetCompressedFileSizeTransactedA
 # @ stub GetCompressedFileSizeTransactedW
-@ stdcall -import GetCompressedFileSizeW(long ptr)
+@ stdcall -import GetCompressedFileSizeW(wstr ptr)
 @ stdcall GetComputerNameA(ptr ptr)
 @ stdcall GetComputerNameExA(long ptr ptr)
 @ stdcall -import GetComputerNameExW(long ptr ptr)

@@ -24,8 +24,8 @@
 @ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
 @ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
 @ stdcall FlushFileBuffers(long) kernel32.FlushFileBuffers
-@ stdcall GetCompressedFileSizeA(long ptr) kernel32.GetCompressedFileSizeA
-@ stdcall GetCompressedFileSizeW(long ptr) kernel32.GetCompressedFileSizeW
+@ stdcall GetCompressedFileSizeA(str ptr) kernel32.GetCompressedFileSizeA
+@ stdcall GetCompressedFileSizeW(wstr ptr) kernel32.GetCompressedFileSizeW
 @ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) kernel32.GetDiskFreeSpaceA
 @ stdcall GetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
 @ stdcall GetDiskFreeSpaceExW(wstr ptr ptr ptr) kernel32.GetDiskFreeSpaceExW
