@@ -1578,7 +1578,7 @@ static BOOL find_cached_revocation_status(const CRYPT_INTEGER_BLOB *serial,
     FILE *file;
     int len;
 
-    if (!(file = open_cached_revocation_file(serial, L"r", _SH_DENYWR)))
+    if (!(file = open_cached_revocation_file(serial, L"rb", _SH_DENYWR)))
         return FALSE;
 
     if ((len = fread(buffer, 1, sizeof(buffer), file)) != sizeof(buffer)
@@ -1626,7 +1626,7 @@ static void cache_revocation_status(const CRYPT_INTEGER_BLOB *serial,
 {
     FILE *file;
 
-    if (!(file = open_cached_revocation_file(serial, L"w", _SH_DENYRW)))
+    if (!(file = open_cached_revocation_file(serial, L"wb", _SH_DENYRW)))
         return;
     fwrite(revocation_cache_signature, 1, sizeof(revocation_cache_signature), file);
     fwrite(time, sizeof(*time), 1, file);
