@@ -2711,7 +2711,7 @@ map:
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
-    if (gl_info->supported[ARB_BUFFER_STORAGE] && wined3d_map_persistent())
+    if (gl_info->supported[ARB_BUFFER_STORAGE])
     {
         GLbitfield gl_flags;
 
@@ -2719,15 +2719,28 @@ map:
          * used to create the bo, instead of the access flags passed to the
          * map call. Otherwise, if for example the initial map call that
          * caused the bo to be persistently mapped was a read-only map,
-         * subsequent write access to the bo would be undefined. */
-        gl_flags = bo->flags & ~GL_CLIENT_STORAGE_BIT;
+         * subsequent write access to the bo would be undefined.
+         *
+         * Note that we use GL_MAP_PERSISTENT_BIT for non-persistent maps here
+         * as well, in order to allow draws to succeed while referenced buffer
+         * resources are mapped. On the other hand, we don't want to use the
+         * access flags used to create the bo for non-persistent maps, because
+         * that may imply dropping GL_MAP_UNSYNCHRONIZED_BIT. */
+        if (wined3d_map_persistent())
+        {
+            gl_flags = bo->flags & ~GL_CLIENT_STORAGE_BIT;
+            if (!(gl_flags & GL_MAP_READ_BIT))
+                gl_flags |= GL_MAP_UNSYNCHRONIZED_BIT;
+            if (gl_flags & GL_MAP_WRITE_BIT)
+                gl_flags |= GL_MAP_FLUSH_EXPLICIT_BIT;
+        }
+        else
+        {
+            gl_flags = wined3d_resource_gl_map_flags(bo, flags);
+        }
         gl_flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-        if (!(gl_flags & GL_MAP_READ_BIT))
-            gl_flags |= GL_MAP_UNSYNCHRONIZED_BIT;
-        if (gl_flags & GL_MAP_WRITE_BIT)
-            gl_flags |= GL_MAP_FLUSH_EXPLICIT_BIT;
 
-        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, gl_flags))))
+        if ((map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, 0, bo->size, gl_flags))) && wined3d_map_persistent())
             bo->b.map_ptr = map_ptr;
     }
     else if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
