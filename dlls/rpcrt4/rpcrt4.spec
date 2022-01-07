@@ -494,7 +494,7 @@
 @ stub SimpleTypeAlignment # wxp
 @ stub SimpleTypeBufferSize # wxp
 @ stub SimpleTypeMemorySize # wxp
-@ stdcall TowerConstruct(ptr ptr ptr ptr ptr ptr)
+@ stdcall TowerConstruct(ptr ptr str str str ptr)
 @ stdcall TowerExplode(ptr ptr ptr ptr ptr ptr)
 @ stdcall UuidCompare(ptr ptr ptr)
 @ stdcall UuidCreate(ptr)
