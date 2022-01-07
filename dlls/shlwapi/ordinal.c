@@ -2714,7 +2714,7 @@ DWORD WINAPI SHGetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPWSTR out,
 BOOL WINAPI SHSetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPCWSTR str,
         LPCWSTR filename)
 {
-    TRACE("(%s, %p, %s, %s)\n", debugstr_w(appName), keyName, debugstr_w(str),
+    TRACE("(%s, %s, %s, %s)\n", debugstr_w(appName), debugstr_w(keyName), debugstr_w(str),
             debugstr_w(filename));
 
     return WritePrivateProfileStringW(appName, keyName, str, filename);

@@ -292,7 +292,7 @@
 292 stdcall -noname SHMessageBoxCheckExW(ptr ptr ptr ptr ptr long wstr)
 293 stub -noname SHCancelUserWorkItems
 294 stdcall -noname SHGetIniStringW(wstr wstr ptr long wstr)
-295 stdcall -noname SHSetIniStringW(wstr ptr wstr wstr)
+295 stdcall -noname SHSetIniStringW(wstr wstr wstr wstr)
 296 stub -noname CreateURLFileContentsW
 297 stub -noname CreateURLFileContentsA
 298 stdcall -noname WritePrivateProfileStringWrapW(wstr wstr wstr wstr) kernel32.WritePrivateProfileStringW
