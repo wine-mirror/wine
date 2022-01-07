@@ -1248,6 +1248,7 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
     const struct expected_geometry_figure *expected_figure;
     const struct geometry_figure *figure;
     unsigned int i, j;
+    unsigned int segment_count;
     BOOL match;
 
     ok_(__FILE__, line)(sink->fill_mode == fill_mode,
@@ -1276,7 +1277,10 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
                 "Got unexpected figure %u segment count %u, expected %u.\n",
                 i, figure->segment_count, expected_figure->segment_count);
 
-        for (j = 0; j < figure->segment_count; ++j)
+        segment_count = expected_figure->segment_count < figure->segment_count ?
+            expected_figure->segment_count : figure->segment_count;
+
+        for (j = 0; j < segment_count; ++j)
         {
             expected_segment = &expected_figure->segments[j];
             segment = &figure->segments[j];
@@ -1312,6 +1316,44 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
                             expected_segment->u.bezier.point1.x, expected_segment->u.bezier.point1.y,
                             expected_segment->u.bezier.point2.x, expected_segment->u.bezier.point2.y,
                             expected_segment->u.bezier.point3.x, expected_segment->u.bezier.point3.y);
+                    break;
+            }
+        }
+
+        for (j = segment_count; j < expected_figure->segment_count; ++j)
+        {
+            segment = &expected_figure->segments[j];
+            switch (segment->type)
+            {
+                case SEGMENT_LINE:
+                    ok_(__FILE__, line)(FALSE, "Missing figure %u segment %u {%.8e, %.8e}.\n",
+                            i, j, segment->u.line.x, segment->u.line.y);
+                    break;
+                case SEGMENT_BEZIER:
+                    ok_(__FILE__, line)(FALSE, "Missing figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}\n",
+                            i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
+                            segment->u.bezier.point2.x, segment->u.bezier.point2.y,
+                            segment->u.bezier.point3.x, segment->u.bezier.point3.y);
+                    break;
+            }
+        }
+
+        for (j = segment_count; j < figure->segment_count; ++j)
+        {
+            segment = &figure->segments[j];
+            switch (segment->type)
+            {
+                case SEGMENT_LINE:
+                    ok_(__FILE__, line)(FALSE, "Got unexpected figure %u segment %u {%.8e, %.8e}.\n",
+                            i, j, segment->u.line.x, segment->u.line.y);
+                    break;
+                case SEGMENT_BEZIER:
+                    ok_(__FILE__, line)(FALSE, "Got unexpected figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}\n",
+                            i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
+                            segment->u.bezier.point2.x, segment->u.bezier.point2.y,
+                            segment->u.bezier.point3.x, segment->u.bezier.point3.y);
                     break;
             }
         }
