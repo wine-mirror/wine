@@ -1,5 +1,5 @@
 @ stub RevertToOldImplementation
-@ stdcall D3D10CompileEffectFromMemory(ptr long ptr ptr ptr long long ptr ptr) d3d10.D3D10CompileEffectFromMemory
+@ stdcall D3D10CompileEffectFromMemory(ptr long str ptr ptr long long ptr ptr) d3d10.D3D10CompileEffectFromMemory
 @ stdcall D3D10CompileShader(ptr long str ptr ptr str str long ptr ptr) d3d10.D3D10CompileShader
 @ stdcall D3D10CreateBlob(long ptr) d3d10.D3D10CreateBlob
 @ stdcall D3D10CreateDevice1(ptr long ptr long long long ptr)
