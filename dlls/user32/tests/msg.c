@@ -106,6 +106,7 @@ typedef struct
 } MEASURE_ITEM_STRUCT;
 
 static BOOL test_DestroyWindow_flag;
+static BOOL test_context_menu;
 static HWINEVENTHOOK hEvent_hook;
 static HHOOK hKBD_hook;
 static HHOOK hCBT_hook;
@@ -9984,7 +9985,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
         return 0;
     }
 
-    if (message == WM_CONTEXTMENU)
+    if (!test_context_menu && message == WM_CONTEXTMENU)
     {
         /* don't create context menu */
         return 0;
@@ -16148,6 +16149,13 @@ static const struct message WmRestoreActiveMinimizedOverlappedSeq[] =
     { 0 }
 };
 
+static struct message WmContextMenuSeq[] = {
+    { WM_CONTEXTMENU, sent|wparam, 0 }, /* wparams set in the code */
+    { WM_CONTEXTMENU, sent|wparam|defwinproc, 0 },
+    { WM_CONTEXTMENU, sent|wparam|defwinproc, 0 },
+    { 0 }
+};
+
 struct rbuttonup_thread_data
 {
     HWND hwnd;
@@ -16169,7 +16177,7 @@ static DWORD CALLBACK post_rbuttonup_msg( void *arg )
 
 static void test_defwinproc(void)
 {
-    HWND hwnd;
+    HWND hwnd, child[3];
     MSG msg;
     BOOL gotwmquit = FALSE;
     POINT pos;
@@ -16218,6 +16226,23 @@ static void test_defwinproc(void)
     DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
     flush_events();
     ok_sequence(WmRestoreActiveMinimizedOverlappedSeq, "DefWindowProcA(SC_RESTORE):active minimized overlapped", TRUE);
+
+    child[0] = CreateWindowExA(0, "TestWindowClass", "1st child",
+                               WS_VISIBLE | WS_CHILD, 0,0,500,100, hwnd, 0, 0, NULL);
+    child[1] = CreateWindowExA(0, "TestWindowClass", "2nd child",
+                               WS_VISIBLE | WS_CHILD, 0,0,500,100, child[0], 0, 0, NULL);
+    child[2] = CreateWindowExA(0, "TestWindowClass", "3rd child",
+                               WS_VISIBLE | WS_CHILD, 0,0,500,100, child[1], 0, 0, NULL);
+    flush_events();
+    flush_sequence();
+    test_context_menu = TRUE;
+    DefWindowProcA(child[2], WM_CONTEXTMENU, 0xcafe, 0);
+    test_context_menu = FALSE;
+    WmContextMenuSeq[0].wParam = (WPARAM)child[2];
+    WmContextMenuSeq[1].wParam = (WPARAM)child[1];
+    WmContextMenuSeq[2].wParam = (WPARAM)child[0];
+    ok_sequence(WmContextMenuSeq, "DefWindowProcA(WM_CONTEXTMENU)", FALSE);
+    DestroyWindow(child[0]);
 
     GetCursorPos(&pos);
     GetWindowRect(hwnd, &rect);
