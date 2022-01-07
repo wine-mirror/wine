@@ -917,6 +917,7 @@ HRESULT map_nsresult(nsresult nsres)
 HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
 {
     const PRUnichar *str;
+    HRESULT hres = S_OK;
 
     if(NS_FAILED(nsres)) {
         WARN("failed: %08x\n", nsres);
@@ -929,13 +930,13 @@ HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
     if(*str) {
         *p = SysAllocString(str);
         if(!*p)
-            return E_OUTOFMEMORY;
+            hres = E_OUTOFMEMORY;
     }else {
         *p = NULL;
     }
 
     nsAString_Finish(nsstr);
-    return S_OK;
+    return hres;
 }
 
 HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, unsigned flags, VARIANT *p)
