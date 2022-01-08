@@ -4050,8 +4050,10 @@ static void test_create_rendertarget_view(void)
 
     if (!enable_debug_layer)
     {
+        rtview = (void *)0xdeadbeef;
         hr = ID3D11Device_CreateRenderTargetView(device, NULL, &rtv_desc, &rtview);
         ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(!rtview, "Unexpected pointer %p.\n", rtview);
     }
 
     expected_refcount = get_refcount(device) + 1;
@@ -4168,8 +4170,10 @@ static void test_create_rendertarget_view(void)
         }
 
         get_rtv_desc(&rtv_desc, &invalid_desc_tests[i].rtv_desc);
+        rtview = (void *)0xdeadbeef;
         hr = ID3D11Device_CreateRenderTargetView(device, texture, &rtv_desc, &rtview);
         ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!rtview, "Unexpected pointer %p.\n", rtview);
 
         ID3D11Resource_Release(texture);
     }
