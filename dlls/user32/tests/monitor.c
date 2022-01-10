@@ -1958,12 +1958,14 @@ static void test_display_config(void)
 static void test_DisplayConfigSetDeviceInfo(void)
 {
     static const unsigned int scales[] = {100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500};
+    static const DWORD enabled = 1;
     int current_scale, current_scale_idx, recommended_scale_idx, step, dpi, old_dpi;
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
     DISPLAYCONFIG_GET_SOURCE_DPI_SCALE get_scale_req;
     DISPLAYCONFIG_SET_SOURCE_DPI_SCALE set_scale_req;
     D3DKMT_CLOSEADAPTER close_adapter_desc;
     NTSTATUS status;
+    HKEY key;
     LONG ret;
 
 #define CHECK_FUNC(func)                       \
@@ -1997,6 +1999,12 @@ static void test_DisplayConfigSetDeviceInfo(void)
         goto failed;
     }
 
+    /* Set IgnorePerProcessSystemDPIToast to 1 to disable "fix blurry apps popup" on Windows 10,
+     * which may interfere other tests because it steals focus */
+    RegOpenKeyA(HKEY_CURRENT_USER, "Control Panel\\Desktop", &key);
+    RegSetValueExA(key, "IgnorePerProcessSystemDPIToast", 0, REG_DWORD, (const BYTE *)&enabled,
+                   sizeof(enabled));
+
     dpi = get_primary_dpi();
     old_dpi = dpi;
     current_scale = dpi * 100 / 96;
@@ -2027,6 +2035,10 @@ static void test_DisplayConfigSetDeviceInfo(void)
     ret = pDisplayConfigSetDeviceInfo(&set_scale_req.header);
     ok(ret == NO_ERROR, "DisplayConfigSetDeviceInfo failed, returned %d.\n", ret);
     ok(old_dpi == get_primary_dpi(), "Expected %d, got %d.\n", get_primary_dpi(), old_dpi);
+
+    /* Remove IgnorePerProcessSystemDPIToast registry value */
+    RegDeleteValueA(key, "IgnorePerProcessSystemDPIToast");
+    RegCloseKey(key);
 
 failed:
     close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
