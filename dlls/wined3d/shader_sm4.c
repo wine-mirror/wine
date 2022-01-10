@@ -1460,6 +1460,7 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
 
             default:
                 FIXME("Skipping modifier 0x%08x.\n", m);
+            case 0x01:
                 *modifier = WINED3DSPSM_NONE;
                 break;
         }
