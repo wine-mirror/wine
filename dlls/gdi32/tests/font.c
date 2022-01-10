@@ -2457,7 +2457,8 @@ static void testJustification(const char *context, HDC hdc, PCSTR str, RECT *cli
     {
         /* The width returned by GetTextExtentPoint32() is exactly the same
            returned by GetTextExtentExPointW() - see dlls/gdi32/font.c */
-        ok(error[e].GetTextExtentExPointWWidth == areaWidth,
+        ok(error[e].GetTextExtentExPointWWidth == areaWidth ||
+            broken(abs(areaWidth - error[e].GetTextExtentExPointWWidth) <= 2) /* win10 */,
             "%s: GetTextExtentPointW() for \"%.*s\" should have returned a width of %d, not %d.\n",
            context, error[e].len, error[e].start, areaWidth, error[e].GetTextExtentExPointWWidth);
     }
