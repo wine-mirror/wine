@@ -18745,8 +18745,10 @@ static void test_filling_convention(void)
     D3DVIEWPORT7 vp = { 0, 0, vp_size, vp_size, 0.0, 1.0 };
 
     /* This test data follows the examples in MSDN's
-     * "Rasterization Rules (Direct3D 9)" article. */
-    static const float eps = 1.0f / 512.0f;
+     * "Rasterization Rules (Direct3D 9)" article.
+     *
+     * See the d3d9 test for a comment about the eps value. */
+    static const float eps = 1.0f / 64.0f;
     struct
     {
         struct vec3 position;
