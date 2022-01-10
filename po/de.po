@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-10-21 09:30+0200\n"
+"PO-Revision-Date: 2022-01-10 13:49+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -10555,22 +10555,16 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) Dublin, Edinburgh, Lissabon, London"
 
 #: dlls/tzres/tzres.rc:342
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgid "South Sudan Standard Time"
-msgstr "Sudan Normalzeit"
+msgstr "Südsudan Normalzeit"
 
 #: dlls/tzres/tzres.rc:343
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgid "South Sudan Daylight Time"
-msgstr "Sudan Sommerzeit"
+msgstr "Südsudan Sommerzeit"
 
 #: dlls/tzres/tzres.rc:344
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) Jerusalem"
+msgstr "(UTC+02:00) Juba"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -13296,13 +13290,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Aktive Codepage: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Ungültige Nachricht.\n"
+msgstr "Ungültige Codepage.\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -13315,6 +13307,14 @@ msgid ""
 "  Type CHCP without a number to display the active console code page.\n"
 "\n"
 msgstr ""
+"CHCP [Nummer]\n"
+"\n"
+"  Zeigt die aktive Codepage an oder ändert sie.\n"
+"\n"
+"  Nummer   Die Konsolencodepage, die aktiviert werden soll.\n"
+"\n"
+"  CHCP ohne Angabe einer Nummer zeigt die aktive Codepage an.\n"
+"\n"
 
 #: programs/clock/clock.rc:32
 msgid "Ana&log"
@@ -14498,7 +14498,7 @@ msgstr "IPv6-Adresse"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Primäres DNS-Suffix"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
