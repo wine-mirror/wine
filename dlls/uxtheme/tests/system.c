@@ -997,11 +997,13 @@ todo_wine
 
 static void test_GetThemePartSize(void)
 {
+    static const DWORD enabled = 1;
     DPI_AWARENESS_CONTEXT old_context;
     unsigned int old_dpi, current_dpi;
     HTHEME htheme = NULL;
     HWND hwnd = NULL;
     SIZE size, size2;
+    HKEY key = NULL;
     HRESULT hr;
     HDC hdc;
 
@@ -1010,6 +1012,12 @@ static void test_GetThemePartSize(void)
         win_skip("SetThreadDpiAwarenessContext is unavailable.\n");
         return;
     }
+
+    /* Set IgnorePerProcessSystemDPIToast to 1 to disable "fix blurry apps popup" on Windows 10,
+     * which may interfere other tests because it steals focus */
+    RegOpenKeyA(HKEY_CURRENT_USER, "Control Panel\\Desktop", &key);
+    RegSetValueExA(key, "IgnorePerProcessSystemDPIToast", 0, REG_DWORD, (const BYTE *)&enabled,
+                   sizeof(enabled));
 
     old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     current_dpi = get_primary_monitor_effective_dpi();
@@ -1100,6 +1108,11 @@ done:
         CloseThemeData(htheme);
     if (get_primary_monitor_effective_dpi() != old_dpi)
         set_primary_monitor_effective_dpi(old_dpi);
+    if (key)
+    {
+        RegDeleteValueA(key, "IgnorePerProcessSystemDPIToast");
+        RegCloseKey(key);
+    }
     pSetThreadDpiAwarenessContext(old_context);
 }
 
