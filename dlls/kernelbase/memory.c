@@ -883,6 +883,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
 
     TRACE_(globalmem)( "handle %p\n", handle );
 
+    if (!handle) return NULL;
     if ((ret = unsafe_ptr_from_HLOCAL( handle )))
     {
         __TRY
