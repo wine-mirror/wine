@@ -11330,8 +11330,10 @@ static void test_filling_convention(void)
     };
 
     /* This test data follows the examples in MSDN's
-     * "Rasterization Rules (Direct3D 9)" article. */
-    static const float eps = 1.0f / 512.0f;
+     * "Rasterization Rules (Direct3D 9)" article.
+     *
+     * See the d3d9 test for a comment about the eps value. */
+    static const float eps = 1.0f / 64.0f;
     const struct
     {
         struct vec3 position;
