@@ -117,6 +117,19 @@ static BOOL adapter_is_amd(const D3DADAPTER_IDENTIFIER9 *identifier)
     return adapter_is_vendor(identifier, 0x1002);
 }
 
+static BOOL device_is_d3d10(IDirect3DDevice9 *device)
+{
+    IDirect3D9 *d3d;
+    HRESULT hr;
+
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_QUERY_FILTER, D3DRTYPE_TEXTURE, D3DFMT_A32B32G32R32F);
+    IDirect3D9_Release(d3d);
+
+    return SUCCEEDED(hr);
+}
+
 /* Locks a given surface and returns the color at (x,y).  It's the caller's
  * responsibility to only pass in lockable surfaces and valid x,y coordinates */
 static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y)
@@ -27052,9 +27065,22 @@ static void test_filling_convention(void)
     };
 
     /* This test data follows the examples in MSDN's
-     * "Rasterization Rules (Direct3D 9)" article. */
-    static const float eps = 1.0f / 512.0f;
-    const struct
+     * "Rasterization Rules (Direct3D 9)" article.
+     *
+     * The eps offset is filled in later depending on the GPU generation. The -eps/+eps below
+     * is kept for keeping the code similar to the same test in the other d3d versions.
+     *
+     * For d3d10+ GPUs even an offset of 1/(1024^2) is enough to make a difference. dx9 GPUs
+     * (or at least r500, on which this was tested) need an offset of 1/128. dx7 (or rather,
+     * a Geforce 4 GO, AKA a rebranded geforce 2) need 1/64.
+     *
+     * GameFace is the only software we found that we know is picky regarding small geometry
+     * offsets. It needs d3d10 and newer. A number of games have been written for d3d9 that
+     * actually need d3d10 hardware (e.g. ARGB32F with filtering, some fourcc hacks). There
+     * might be something that needs the d3d10+ precision in the d3d9 API. So demand it if
+     * we find a d3d10+ GPU. */
+    float eps = 0.0f;
+    struct
     {
         struct vec3 position;
         DWORD diffuse;
@@ -27405,6 +27431,19 @@ static void test_filling_convention(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (device_is_d3d10(device))
+        eps = 1.0f / 512.0f;
+    else
+        eps = 1.0f / 64.0f;
+
+    for (i = 0; i < 12; ++i)
+    {
+        nudge_right_tris[i].position.x +=eps;
+        nudge_left_tris[i].position.x -=eps;
+        nudge_top_tris[i].position.y +=eps;
+        nudge_bottom_tris[i].position.y -=eps;
+    }
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
