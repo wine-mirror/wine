@@ -610,6 +610,7 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             CREATESTRUCT16 *cs16 = MapSL(lParam);
             CREATESTRUCTA cs;
             MDICREATESTRUCTA mdi_cs;
+            SEGPTR mdi_cs_segptr = 0;
 
             CREATESTRUCT16to32A( cs16, &cs );
             if (GetWindowLongW(hwnd32, GWL_EXSTYLE) & WS_EX_MDICHILD)
@@ -617,9 +618,15 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
                 MDICREATESTRUCT16 *mdi_cs16 = MapSL(cs16->lpCreateParams);
                 MDICREATESTRUCT16to32A(mdi_cs16, &mdi_cs);
                 cs.lpCreateParams = &mdi_cs;
+                mdi_cs_segptr = cs16->lpCreateParams;
             }
             ret = callback( hwnd32, msg, wParam, (LPARAM)&cs, result, arg );
             CREATESTRUCT32Ato16( &cs, cs16 );
+            if (mdi_cs_segptr)
+            {
+                MDICREATESTRUCT32Ato16( &mdi_cs, MapSL( mdi_cs_segptr ) );
+                cs16->lpCreateParams = mdi_cs_segptr;
+            }
         }
         break;
     case WM_MDICREATE:
