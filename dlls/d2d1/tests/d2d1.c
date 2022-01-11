@@ -6879,6 +6879,45 @@ static void test_draw_geometry(BOOL d3d11)
             "AiWaAiScAiKdAiGeAh+hAhyjAhmuAg3GxgEA");
     ok(match, "Figure does not match.\n");
 
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    set_point(&point, 20.0f, 80.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_HOLLOW);
+    quadratic_to(sink, 20.0f, 160.0f,  60.0f, 160.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    set_point(&point, 100.0f, 80.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_HOLLOW);
+    quadratic_to(sink, 100.0f, 160.0f, 140.0f, 160.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_DrawGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, 10.0f, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID2D1PathGeometry_Release(geometry);
+
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 32,
+            "3iUCngEEnAEGmgEImAEKlgEMlAEOkgEQkAESjgEUjAEWigEYiAEahgEchAEeggEggQEhfyN9JXsn"
+            "eih4KnYUAhZ1FAMWcxQFFnIUBhZwFQcWbxQJFm4UChZsFQsWaxUMFmoVDRZpFQ4WaBUPFmcVEBZm"
+            "FREWZhURFmUVEhZkFhIWZBYSFmQXERZkFxEWZBgQFmQaDhZlGwwWZh0JFmchBBZpOWw2bzN0Lnsn"
+            "2mEA");
+    ok(match, "Figure does not match.\n");
+
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 32,
+            "njIUjAEUjAEUjAEUjAEUjAEUjQEUjAEUjAEUjAEUjQEUjAEUjAEUjQEUjAEUjQEUjAEVjAEUjQEU"
+            "jAEVjAEVjAEVjAEVjAEVjAEVjAEVjQEVjAEVjAEWjAEWjAEXiwEXiwEYigEaiQEbiAEdhgEhgwEz"
+            "ci53KX4ihwEZ6GEA");
+    ok(match, "Figure does not match.\n");
+
     ID2D1SolidColorBrush_Release(brush);
     ID2D1Factory_Release(factory);
     release_test_context(&ctx);
