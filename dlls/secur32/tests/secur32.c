@@ -418,7 +418,6 @@ static void test_SspiPrepareForCredWrite(void)
 static void test_kerberos(void)
 {
     SecPkgInfoA *info;
-    TimeStamp ttl;
     CredHandle cred;
     SECURITY_STATUS status;
 
@@ -460,7 +459,7 @@ static void test_kerberos(void)
     FreeContextBuffer( info );
 
     status = AcquireCredentialsHandleA( NULL, provider, SECPKG_CRED_OUTBOUND, NULL,
-                                        NULL, NULL, NULL, &cred, &ttl );
+                                        NULL, NULL, NULL, &cred, NULL );
     todo_wine ok( status == SEC_E_OK, "AcquireCredentialsHandleA returned %08x\n", status );
     if(status == SEC_E_OK)
         FreeCredentialHandle( &cred );

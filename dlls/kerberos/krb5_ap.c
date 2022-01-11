@@ -87,6 +87,7 @@ static void expiry_to_timestamp( ULONG expiry, TimeStamp *timestamp )
 {
     LARGE_INTEGER time;
 
+    if (!timestamp) return;
     NtQuerySystemTime( &time );
     RtlSystemTimeToLocalTime( &time, &time );
     time.QuadPart += expiry * (ULONGLONG)10000000;
