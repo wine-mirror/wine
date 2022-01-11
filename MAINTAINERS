@@ -189,10 +189,6 @@ F:	dlls/winebus.sys/
 F:	dlls/winexinput.sys/
 F:	dlls/xinput*/
 
-Mac OS X graphics driver
-M:	Ken Thomases <ken@codeweavers.com>
-F:	dlls/winemac.drv/
-
 Media format conversion
 M:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/*.acm/
