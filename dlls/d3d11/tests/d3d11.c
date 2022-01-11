@@ -34001,7 +34001,6 @@ START_TEST(d3d11)
     queue_test(test_scissor);
     queue_test(test_clear_state);
     queue_test(test_il_append_aligned);
-    queue_test(test_instanced_draw);
     queue_test(test_vertex_id);
     queue_test(test_fragment_coords);
     queue_test(test_initial_texture_data);
@@ -34116,4 +34115,9 @@ START_TEST(d3d11)
     queue_test(test_dynamic_map_synchronization);
 
     run_queued_tests();
+
+    /* This test fails randomly on Win10 when run together with others
+     * on Radeon GPUs. Radeon 560 (0x1002:0x67ef), both on the testbot
+     * and Stefan's macbook. */
+    test_instanced_draw();
 }
