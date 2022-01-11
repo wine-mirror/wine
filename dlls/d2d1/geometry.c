@@ -2597,43 +2597,68 @@ static BOOL d2d_geometry_outline_add_arc_quadrant(struct d2d_geometry *geometry,
 static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
         struct d2d_figure *figure, D2D1_FIGURE_END figure_end)
 {
-    const D2D1_POINT_2F *prev, *p0, *next;
-    enum d2d_vertex_type prev_type, type;
-    size_t bezier_idx, i;
+    const D2D1_POINT_2F *prev, *p0, *p1, *next, *next_prev;
+    size_t bezier_idx, i, vertex_count;
+    enum d2d_vertex_type type;
 
-    for (i = 0, bezier_idx = 0; i < figure->vertex_count; ++i)
+    if (!(vertex_count = figure->vertex_count))
+        return TRUE;
+
+    p0 = &figure->vertices[0];
+    if (figure_end == D2D1_FIGURE_END_CLOSED)
     {
-        type = figure->vertex_types[i];
-        if (type == D2D_VERTEX_TYPE_NONE)
+        /* In case of a CLOSED path, a join between first and last vertex is
+         * required. */
+        if (d2d_vertex_type_is_bezier(figure->vertex_types[vertex_count - 1]))
+            prev = &figure->bezier_controls[figure->bezier_control_count - 1];
+        else
+            prev = &figure->vertices[vertex_count - 1];
+    }
+    else
+    {
+        if (!--vertex_count)
+            return TRUE;
+        prev = p0;
+    }
+
+    for (i = 0, bezier_idx = 0; i < vertex_count; ++i)
+    {
+        if ((type = figure->vertex_types[i]) == D2D_VERTEX_TYPE_NONE)
+        {
+            prev = next_prev = &figure->vertices[i];
             continue;
-
-        p0 = &figure->vertices[i];
-
-        if (!i)
-        {
-            prev_type = figure->vertex_types[figure->vertex_count - 1];
-            if (d2d_vertex_type_is_bezier(prev_type))
-                prev = &figure->bezier_controls[figure->bezier_control_count - 1];
-            else
-                prev = &figure->vertices[figure->vertex_count - 1];
-        }
-        else
-        {
-            prev_type = figure->vertex_types[i - 1];
-            if (d2d_vertex_type_is_bezier(prev_type))
-                prev = &figure->bezier_controls[bezier_idx - 1];
-            else
-                prev = &figure->vertices[i - 1];
         }
 
+        /* next: tangent along next segment, at p0.
+         * p1: next vertex. */
         if (d2d_vertex_type_is_bezier(type))
-            next = &figure->bezier_controls[bezier_idx++];
-        else if (i == figure->vertex_count - 1)
-            next = &figure->vertices[0];
-        else
-            next = &figure->vertices[i + 1];
+        {
+            next_prev = next = &figure->bezier_controls[bezier_idx++];
+            /* type BEZIER implies i + 1 < figure->vertex_count. */
+            p1 = &figure->vertices[i + 1];
 
-        if (figure_end == D2D1_FIGURE_END_CLOSED || (i && i < figure->vertex_count - 1))
+            if (!d2d_geometry_outline_add_bezier_segment(geometry, p0, next, p1))
+            {
+                ERR("Failed to add bezier segment.\n");
+                return FALSE;
+            }
+        }
+        else
+        {
+            if (i + 1 == figure->vertex_count)
+                next = p1 = &figure->vertices[0];
+            else
+                next = p1 = &figure->vertices[i + 1];
+            next_prev = p0;
+
+            if (!d2d_geometry_outline_add_line_segment(geometry, p0, p1))
+            {
+                ERR("Failed to add line segment.\n");
+                return FALSE;
+            }
+        }
+
+        if (i || figure_end == D2D1_FIGURE_END_CLOSED)
         {
             D2D1_POINT_2F q_next, q_prev;
 
@@ -2650,27 +2675,8 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
             }
         }
 
-        if (type == D2D_VERTEX_TYPE_LINE && (figure_end == D2D1_FIGURE_END_CLOSED || i < figure->vertex_count - 1)
-                && !d2d_geometry_outline_add_line_segment(geometry, p0, next))
-        {
-            ERR("Failed to add line segment.\n");
-            return FALSE;
-        }
-        else if (d2d_vertex_type_is_bezier(type))
-        {
-            const D2D1_POINT_2F *p2;
-
-            if (i == figure->vertex_count - 1)
-                p2 = &figure->vertices[0];
-            else
-                p2 = &figure->vertices[i + 1];
-
-            if (!d2d_geometry_outline_add_bezier_segment(geometry, p0, next, p2))
-            {
-                ERR("Failed to add bezier segment.\n");
-                return FALSE;
-            }
-        }
+        p0 = p1;
+        prev = next_prev;
     }
 
     return TRUE;
