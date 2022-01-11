@@ -832,7 +832,6 @@ static NTSTATUS dispatch_volume( struct dispatch_context *context )
     irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
-    context->in_buff = NULL;
 
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate out_buff */
     return dispatch_irp( device, irp, context );
