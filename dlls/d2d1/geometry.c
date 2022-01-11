@@ -2007,8 +2007,6 @@ static BOOL d2d_geometry_intersect_bezier_line(struct d2d_geometry *geometry,
     p[0] = &figure->vertices[idx_p->vertex_idx];
     p[1] = &figure->bezier_controls[idx_p->control_idx];
     next = idx_p->vertex_idx + 1;
-    if (next == figure->vertex_count)
-        next = 0;
     p[2] = &figure->vertices[next];
 
     figure = &geometry->u.path.figures[idx_q->figure_idx];
@@ -2085,16 +2083,12 @@ static BOOL d2d_geometry_intersect_bezier_bezier(struct d2d_geometry *geometry,
     p[0] = &figure->vertices[idx_p->vertex_idx];
     p[1] = &figure->bezier_controls[idx_p->control_idx];
     next = idx_p->vertex_idx + 1;
-    if (next == figure->vertex_count)
-        next = 0;
     p[2] = &figure->vertices[next];
 
     figure = &geometry->u.path.figures[idx_q->figure_idx];
     q[0] = &figure->vertices[idx_q->vertex_idx];
     q[1] = &figure->bezier_controls[idx_q->control_idx];
     next = idx_q->vertex_idx + 1;
-    if (next == figure->vertex_count)
-        next = 0;
     q[2] = &figure->vertices[next];
 
     d2d_rect_get_bezier_segment_bounds(&p_bounds, p[0], p[1], p[2], start_p, end_p);
@@ -2178,8 +2172,6 @@ static BOOL d2d_geometry_apply_intersections(struct d2d_geometry *geometry,
         p[0] = &figure->vertices[inter->vertex_idx + vertex_offset];
         p[1] = &figure->bezier_controls[inter->control_idx + control_offset];
         next = inter->vertex_idx + vertex_offset + 1;
-        if (next == figure->vertex_count)
-            next = 0;
         p[2] = &figure->vertices[next];
 
         d2d_point_lerp(&q[0], p[0], p[1], t);
@@ -3016,18 +3008,12 @@ static BOOL d2d_geometry_check_bezier_overlap(struct d2d_geometry *geometry,
     figure = &geometry->u.path.figures[idx_p->figure_idx];
     a[0] = &figure->vertices[idx_p->vertex_idx];
     a[1] = &figure->bezier_controls[idx_p->control_idx];
-    if (idx_p->vertex_idx == figure->vertex_count - 1)
-        a[2] = &figure->vertices[0];
-    else
-        a[2] = &figure->vertices[idx_p->vertex_idx + 1];
+    a[2] = &figure->vertices[idx_p->vertex_idx + 1];
 
     figure = &geometry->u.path.figures[idx_q->figure_idx];
     b[0] = &figure->vertices[idx_q->vertex_idx];
     b[1] = &figure->bezier_controls[idx_q->control_idx];
-    if (idx_q->vertex_idx == figure->vertex_count - 1)
-        b[2] = &figure->vertices[0];
-    else
-        b[2] = &figure->vertices[idx_q->vertex_idx + 1];
+    b[2] = &figure->vertices[idx_q->vertex_idx + 1];
 
     if (d2d_point_ccw(a[0], a[1], a[2]) == 0.0f || d2d_point_ccw(b[0], b[1], b[2]) == 0.0f)
         return FALSE;
@@ -3097,9 +3083,6 @@ static float d2d_geometry_bezier_ccw(struct d2d_geometry *geometry, const struct
     const struct d2d_figure *figure = &geometry->u.path.figures[idx->figure_idx];
     size_t next = idx->vertex_idx + 1;
 
-    if (next == figure->vertex_count)
-        next = 0;
-
     return d2d_point_ccw(&figure->vertices[idx->vertex_idx],
             &figure->bezier_controls[idx->control_idx], &figure->vertices[next]);
 }
@@ -3115,8 +3098,6 @@ static BOOL d2d_geometry_split_bezier(struct d2d_geometry *geometry, const struc
     p[0] = &figure->vertices[idx->vertex_idx];
     p[1] = &figure->bezier_controls[idx->control_idx];
     next = idx->vertex_idx + 1;
-    if (next == figure->vertex_count)
-        next = 0;
     p[2] = &figure->vertices[next];
 
     d2d_point_lerp(&q[0], p[0], p[1], 0.5f);
