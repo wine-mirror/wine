@@ -3856,6 +3856,18 @@ static void test_path_geometry(BOOL d3d11)
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
+    set_point(&point, 20.0f,   80.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 40.0f, 100.0f);
+    quadratic_to(sink, 40.0f, 65.0f, 20.0f, 80.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
+    set_point(&point, 80.0f,   20.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 60.0f, 40.0f);
+    quadratic_to(sink, 95.0f, 40.0f, 80.0f, 20.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
+
     set_point(&point, 120.0f,  180.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
     line_to(sink, 140.0f, 160.0f);
@@ -3875,7 +3887,7 @@ static void test_path_geometry(BOOL d3d11)
     set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
     hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    match = compare_rect(&rect, 115.5f, 110.0f, 180.0f, 180.0f, 1);
+    match = compare_rect(&rect, 20.0f, 20.0f, 180.0f, 180.0f, 0);
     ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
@@ -3883,7 +3895,7 @@ static void test_path_geometry(BOOL d3d11)
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
             NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 2, &expected_figures[31], 1);
+    geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 4, &expected_figures[29], 1);
     geometry_sink_cleanup(&simplify_sink);
 
     ID2D1PathGeometry_Release(geometry);

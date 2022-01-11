@@ -50,6 +50,7 @@ enum d2d_vertex_type
     D2D_VERTEX_TYPE_LINE,
     D2D_VERTEX_TYPE_BEZIER,
     D2D_VERTEX_TYPE_SPLIT_BEZIER,
+    D2D_VERTEX_TYPE_END,
 };
 
 struct d2d_segment_idx
@@ -2219,7 +2220,9 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
         idx_p.control_idx = 0;
         for (idx_p.vertex_idx = 0; idx_p.vertex_idx < figure_p->vertex_count; ++idx_p.vertex_idx)
         {
-            type_p = figure_p->vertex_types[idx_p.vertex_idx];
+            if ((type_p = figure_p->vertex_types[idx_p.vertex_idx]) == D2D_VERTEX_TYPE_END)
+                continue;
+
             for (idx_q.figure_idx = 0; idx_q.figure_idx <= idx_p.figure_idx; ++idx_q.figure_idx)
             {
                 figure_q = &geometry->u.path.figures[idx_q.figure_idx];
@@ -2227,7 +2230,9 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                 {
                     if (!d2d_rect_check_overlap(&figure_p->bounds, &figure_q->bounds))
                         continue;
-                    max_q = figure_q->vertex_count;
+                    if ((max_q = figure_q->vertex_count)
+                            && figure_q->vertex_types[max_q - 1] == D2D_VERTEX_TYPE_END)
+                        --max_q;
                 }
                 else
                 {
@@ -2607,6 +2612,9 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
     p0 = &figure->vertices[0];
     if (figure_end == D2D1_FIGURE_END_CLOSED)
     {
+        if (figure->vertex_types[vertex_count - 1] == D2D_VERTEX_TYPE_END && !--vertex_count)
+            return TRUE;
+
         /* In case of a CLOSED path, a join between first and last vertex is
          * required. */
         if (d2d_vertex_type_is_bezier(figure->vertex_types[vertex_count - 1]))
@@ -2921,13 +2929,14 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
     }
 
     figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
-    figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
+    if (memcmp(&figure->vertices[0], &figure->vertices[figure->vertex_count - 1], sizeof(*figure->vertices)))
+        figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
+    else
+        figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_END;
     if (figure_end == D2D1_FIGURE_END_CLOSED)
     {
         ++geometry->u.path.segment_count;
         figure->flags |= D2D_FIGURE_FLAG_CLOSED;
-        if (!memcmp(&figure->vertices[0], &figure->vertices[figure->vertex_count - 1], sizeof(*figure->vertices)))
-            --figure->vertex_count;
     }
 
     if (!d2d_geometry_add_figure_outline(geometry, figure, figure_end))
@@ -3476,14 +3485,6 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
         if (figure->flags & D2D_FIGURE_FLAG_HOLLOW)
             continue;
 
-        /* Single vertex figures are reduced by CloseFigure(). */
-        if (figure->vertex_count == 0)
-        {
-            d2d_point_transform(&p, transform, figure->bounds.left, figure->bounds.top);
-            d2d_rect_expand(bounds, &p);
-            continue;
-        }
-
         for (j = 0; j < figure->vertex_count; ++j)
         {
             if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE)
@@ -3498,8 +3499,10 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
 
         for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
         {
-            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
-                    || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
+            enum d2d_vertex_type next_type;
+
+            if ((next_type = figure->vertex_types[j]) == D2D_VERTEX_TYPE_NONE
+                    || d2d_vertex_type_is_split_bezier(next_type))
                 continue;
 
             switch (type)
@@ -3537,26 +3540,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
                     break;
             }
 
-            type = figure->vertex_types[j];
-        }
-
-        if (d2d_vertex_type_is_bezier(type))
-        {
-            /* FIXME: This attempts to approximate a cubic Bézier with
-             * a quadratic one. */
-            p1 = figure->original_bezier_controls[bezier_idx++];
-            d2d_point_transform(&p1, transform, p1.x, p1.y);
-            p2 = figure->original_bezier_controls[bezier_idx++];
-            d2d_point_transform(&p2, transform, p2.x, p2.y);
-            p1.x = (p1.x + p2.x) * 0.75f;
-            p1.y = (p1.y + p2.y) * 0.75f;
-            p2 = figure->vertices[0];
-            d2d_point_transform(&p2, transform, p2.x, p2.y);
-            p1.x -= (p.x + p2.x) * 0.25f;
-            p1.y -= (p.y + p2.y) * 0.25f;
-
-            d2d_rect_get_bezier_bounds(&bezier_bounds, &p, &p1, &p2);
-            d2d_rect_union(bounds, &bezier_bounds);
+            type = next_type;
         }
     }
 
@@ -3619,8 +3603,10 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
 
         for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
         {
-            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
-                    || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
+            enum d2d_vertex_type next_type;
+
+            if ((next_type = figure->vertex_types[j]) == D2D_VERTEX_TYPE_NONE
+                    || d2d_vertex_type_is_split_bezier(next_type))
                 continue;
 
             switch (type)
@@ -3646,25 +3632,14 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
             }
             if (*contains)
                 return S_OK;
-            type = figure->vertex_types[j];
+            type = next_type;
         }
 
-        if (figure->flags & D2D_FIGURE_FLAG_CLOSED && (!*contains))
+        if (type == D2D_VERTEX_TYPE_LINE)
         {
-            if (type == D2D_VERTEX_TYPE_LINE)
-            {
-                p1 = figure->vertices[0];
+            p1 = figure->vertices[0];
+            if (figure->flags & D2D_FIGURE_FLAG_CLOSED)
                 *contains = d2d_point_on_line_segment(&point, &p, &p1, transform, stroke_width * 0.5f, tolerance);
-                p = p1;
-            }
-            else if (d2d_vertex_type_is_bezier(type))
-            {
-                b.point1 = figure->original_bezier_controls[bezier_idx++];
-                b.point2 = figure->original_bezier_controls[bezier_idx++];
-                b.point3 = figure->vertices[0];
-                *contains = d2d_point_on_bezier_segment(&point, &p, &b, transform, stroke_width, tolerance);
-                p = b.point3;
-            }
         }
 
         if (*contains)
@@ -3787,8 +3762,10 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
 
         for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
         {
-            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
-                    || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
+            enum d2d_vertex_type next_type;
+
+            if ((next_type = figure->vertex_types[j]) == D2D_VERTEX_TYPE_NONE
+                    || d2d_vertex_type_is_split_bezier(next_type))
                 continue;
 
             switch (type)
@@ -3827,25 +3804,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
                     break;
             }
 
-            type = figure->vertex_types[j];
-        }
-
-        if (d2d_vertex_type_is_bezier(type))
-        {
-            b.point1 = figure->original_bezier_controls[bezier_idx++];
-            b.point2 = figure->original_bezier_controls[bezier_idx++];
-            b.point3 = figure->vertices[0];
-            if (transform)
-            {
-                d2d_point_transform(&b.point1, transform, b.point1.x, b.point1.y);
-                d2d_point_transform(&b.point2, transform, b.point2.x, b.point2.y);
-                d2d_point_transform(&b.point3, transform, b.point3.x, b.point3.y);
-            }
-
-            if (option == D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES)
-                d2d_geometry_flatten_cubic(sink, &p, &b, tolerance);
-            else
-                ID2D1SimplifiedGeometrySink_AddBeziers(sink, &b, 1);
+            type = next_type;
         }
 
         end = figure->flags & D2D_FIGURE_FLAG_CLOSED ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN;
