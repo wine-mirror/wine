@@ -2773,7 +2773,10 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_SetFillMode(ID2D1GeometrySink *i
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_SetSegmentFlags(ID2D1GeometrySink *iface, D2D1_PATH_SEGMENT flags)
 {
-    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    if (flags != D2D1_PATH_SEGMENT_NONE)
+        FIXME("Ignoring flags %#x.\n", flags);
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *iface,
