@@ -3041,6 +3041,23 @@ static void test_path_geometry(BOOL d3d11)
         /* Figure 28. */
         {SEGMENT_LINE,   {{{ 75.0f, 300.0f}}}},
         {SEGMENT_LINE,   {{{  5.0f, 300.0f}}}},
+        /* Figure 29. */
+        {SEGMENT_LINE,   {{{ 40.0f, 100.0f}}}},
+        {SEGMENT_BEZIER, {{{4.00000000e+01f, 7.66666666e+01f},
+                           {3.33333333e+01f, 7.00000000e+01f},
+                           {2.00000000e+01f, 8.00000000e+01f}}}},
+        {SEGMENT_LINE,   {{{ 60.0f,  40.0f}}}},
+        {SEGMENT_BEZIER, {{{8.33333333e+01f, 4.00000000e+01f},
+                           {9.00000000e+01f, 3.33333333e+01f},
+                           {8.00000000e+01f, 2.00000000e+01f}}}},
+        {SEGMENT_LINE,   {{{140.0f, 160.0f}}}},
+        {SEGMENT_BEZIER, {{{1.16666666e+02f, 1.60000000e+02f},
+                           {1.10000000e+02f, 1.66666666e+02f},
+                           {1.20000000e+02f, 1.80000000e+02f}}}},
+        {SEGMENT_LINE,   {{{170.0f, 110.0f}}}},
+        {SEGMENT_BEZIER, {{{1.70000000e+02f, 1.26666666e+02f},
+                           {1.73333333e+02f, 1.30000000e+02f},
+                           {1.80000000e+02f, 1.20000000e+02f}}}},
     };
     static const struct expected_geometry_figure expected_figures[] =
     {
@@ -3084,6 +3101,11 @@ static void test_path_geometry(BOOL d3d11)
         {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, { 20.0f, 612.0f},  8, &expected_segments[164]},
         /* 28 */
         {D2D1_FIGURE_BEGIN_HOLLOW, D2D1_FIGURE_END_OPEN,   { 40.0f,  20.0f},  2, &expected_segments[172]},
+        /* 29 */
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_OPEN,   {  20.0f,  80.0f},  2, &expected_segments[174]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_OPEN,   {  80.0f,  20.0f},  2, &expected_segments[176]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, { 120.0f, 180.0f},  2, &expected_segments[178]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, { 180.0f, 120.0f},  2, &expected_segments[180]},
     };
 
     if (!init_test_context(&ctx, d3d11))
@@ -3825,6 +3847,43 @@ static void test_path_geometry(BOOL d3d11)
             NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
     ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[28], 1);
+    geometry_sink_cleanup(&simplify_sink);
+
+    ID2D1PathGeometry_Release(geometry);
+
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    set_point(&point, 120.0f,  180.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 140.0f, 160.0f);
+    quadratic_to(sink, 105.0f, 160.0f, 120.0f, 180.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    set_point(&point, 180.0f,  120.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 170.0f, 110.0f);
+    quadratic_to(sink, 170.0f, 135.0f, 180.0f, 120.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    match = compare_rect(&rect, 115.5f, 110.0f, 180.0f, 180.0f, 1);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    geometry_sink_init(&simplify_sink);
+    hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 2, &expected_figures[31], 1);
     geometry_sink_cleanup(&simplify_sink);
 
     ID2D1PathGeometry_Release(geometry);
