@@ -780,7 +780,8 @@ NTSTATUS WINAPI NtReplaceKey( OBJECT_ATTRIBUTES *attr, HANDLE key, OBJECT_ATTRIB
 NTSTATUS WINAPI NtQueryLicenseValue( const UNICODE_STRING *name, ULONG *type,
                                      void *data, ULONG length, ULONG *retlen )
 {
-    static const WCHAR nameW[] = {'M','a','c','h','i','n','e','\\',
+    static const WCHAR nameW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                  'M','a','c','h','i','n','e','\\',
                                   'S','o','f','t','w','a','r','e','\\',
                                   'W','i','n','e','\\','L','i','c','e','n','s','e',
                                   'I','n','f','o','r','m','a','t','i','o','n',0};
