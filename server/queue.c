@@ -2145,6 +2145,14 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
             clear_bits &= ~get_hardware_msg_bit( msg );
             continue;
         }
+
+        reply->total = msg->data_size;
+        if (msg->data_size > get_reply_max_size())
+        {
+            set_error( STATUS_BUFFER_OVERFLOW );
+            return 1;
+        }
+
         /* now we can return it */
         if (!msg->unique_id) msg->unique_id = get_unique_id();
         reply->type   = MSG_HARDWARE;
