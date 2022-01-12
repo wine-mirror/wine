@@ -34088,7 +34088,6 @@ START_TEST(d3d11)
             test_compressed_format_compatibility);
     queue_test(test_clip_distance);
     queue_test(test_combined_clip_and_cull_distances);
-    queue_test(test_generate_mips);
     queue_test(test_alpha_to_coverage);
     queue_test(test_unbound_multisample_texture);
     queue_test(test_multiple_viewports);
@@ -34116,8 +34115,9 @@ START_TEST(d3d11)
 
     run_queued_tests();
 
-    /* This test fails randomly on Win10 when run together with others
-     * on Radeon GPUs. Radeon 560 (0x1002:0x67ef), both on the testbot
-     * and Stefan's macbook. */
+    /* There should be no reason these tests can't be run in parallel with the
+     * others, yet they randomly fail or crash when doing so.
+     * (Radeon 560, Windows 10) */
     test_instanced_draw();
+    test_generate_mips();
 }
