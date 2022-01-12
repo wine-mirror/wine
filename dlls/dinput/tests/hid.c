@@ -2314,7 +2314,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
         ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
         ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        todo_wine_if( report_id )
         ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
 
         CloseHandle( overlapped.hEvent );

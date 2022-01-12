@@ -53,15 +53,16 @@ static void WINAPI read_cancel_routine(DEVICE_OBJECT *device, IRP *irp)
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
-static struct hid_report *hid_report_create( HID_XFER_PACKET *packet )
+static struct hid_report *hid_report_create( HID_XFER_PACKET *packet, ULONG length )
 {
     struct hid_report *report;
 
-    if (!(report = malloc( offsetof( struct hid_report, buffer[packet->reportBufferLen] ) )))
+    if (!(report = malloc( offsetof( struct hid_report, buffer[length] ) )))
         return NULL;
     report->ref = 1;
-    report->length = packet->reportBufferLen;
-    memcpy( report->buffer, packet->reportBuffer, report->length );
+    report->length = length;
+    memcpy( report->buffer, packet->reportBuffer, packet->reportBufferLen );
+    memset( report->buffer + packet->reportBufferLen, 0, length - packet->reportBufferLen );
 
     return report;
 }
@@ -218,18 +219,19 @@ static struct hid_report *hid_queue_pop_report( struct hid_queue *queue )
 static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *packet )
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     const BOOL polled = ext->u.pdo.information.Polled;
+    ULONG size, report_len = polled ? packet->reportBufferLen : desc->InputLength;
     struct hid_report *last_report, *report;
     struct hid_queue *queue;
     LIST_ENTRY completed, *entry;
     RAWINPUT *rawinput;
-    ULONG size;
     KIRQL irql;
     IRP *irp;
 
     if (IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID ))
     {
-        size = offsetof( RAWINPUT, data.hid.bRawData[packet->reportBufferLen] );
+        size = offsetof( RAWINPUT, data.hid.bRawData[report_len] );
         if (!(rawinput = malloc( size ))) ERR( "Failed to allocate rawinput data!\n" );
         else
         {
@@ -240,8 +242,9 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
             rawinput->header.hDevice = ULongToHandle( ext->u.pdo.rawinput_handle );
             rawinput->header.wParam = RIM_INPUT;
             rawinput->data.hid.dwCount = 1;
-            rawinput->data.hid.dwSizeHid = packet->reportBufferLen;
+            rawinput->data.hid.dwSizeHid = report_len;
             memcpy( rawinput->data.hid.bRawData, packet->reportBuffer, packet->reportBufferLen );
+            memset( rawinput->data.hid.bRawData + packet->reportBufferLen, 0, report_len - packet->reportBufferLen );
 
             input.type = INPUT_HARDWARE;
             input.hi.uMsg = WM_INPUT;
@@ -253,7 +256,7 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
         }
     }
 
-    if (!(last_report = hid_report_create( packet )))
+    if (!(last_report = hid_report_create( packet, report_len )))
     {
         ERR( "Failed to allocate hid_report!\n" );
         return;
