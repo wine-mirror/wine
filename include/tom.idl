@@ -269,6 +269,8 @@ interface ITextDocument2Old : ITextDocument
 interface ITextDisplays;
 interface ITextFont2;
 interface ITextPara2;
+interface ITextRange2;
+interface ITextSelection2;
 interface ITextStory;
 interface ITextStoryRanges2;
 interface ITextStrings;
@@ -330,69 +332,6 @@ interface ITextRow : IDispatch
     HRESULT Reset([in] LONG value);
     HRESULT SetProperty([in] LONG type, [in] LONG value);
 }
-
-[
-    object,
-    uuid(c241f5e2-7206-11d8-a2c7-00a0d1d6c6b3)
-]
-interface ITextRange2 : ITextSelection
-{
-    HRESULT GetCch([retval, out] LONG *count);
-    HRESULT GetCells([retval, out] IUnknown **cells);
-    HRESULT GetColumn([retval, out] IUnknown **column);
-    HRESULT GetCount([retval, out] LONG *count);
-    HRESULT GetDuplicate2([retval, out] ITextRange2 **range);
-    HRESULT GetFont2([retval, out] ITextFont2 **font);
-    HRESULT SetFont2([in] ITextFont2 *font);
-    HRESULT GetFormattedText2([retval, out] ITextRange2 **range);
-    HRESULT SetFormattedText2([in] ITextRange2 *range);
-    HRESULT GetGravity([retval, out] LONG *value);
-    HRESULT SetGravity([in] LONG value);
-    HRESULT GetPara2([retval, out] ITextPara2 **para);
-    HRESULT SetPara2([in] ITextPara2 *para);
-    HRESULT GetRow([retval, out] ITextRow **row);
-    HRESULT GetStartPara([retval, out] LONG *value);
-    HRESULT GetTable([retval, out] IUnknown **table);
-    HRESULT GetURL([retval, out] BSTR *url);
-    HRESULT SetURL([in] BSTR url);
-    HRESULT AddSubrange([in] LONG cp1, [in] LONG cp2, [in] LONG activate);
-    HRESULT BuildUpMath([in] LONG flags);
-    HRESULT DeleteSubrange([in] LONG first, [in] LONG lim);
-    HRESULT Find([in] ITextRange2 *range, [in] LONG count, [in] LONG flags, [out] LONG *delta);
-    HRESULT GetChar2([out] LONG *ch, [in] LONG offset);
-    HRESULT GetDropCap([out] LONG *line, [out] LONG *pos);
-    HRESULT GetInlineObject([out] LONG *type, [out] LONG *align, [out] LONG *ch,
-            [out] LONG *ch1, [out] LONG *ch2, [out] LONG *count, [out] LONG *texstyle,
-            [out] LONG *ccol, [out] LONG *level);
-    HRESULT GetProperty([in] LONG type, [out] LONG *value);
-    HRESULT GetRect([in] LONG type, [out] LONG *left, [out] LONG *top,
-            [out] LONG *right, [out] LONG *bottom, [out] LONG *hit);
-    HRESULT GetSubrange([in] LONG subrange, [out] LONG *first, [out] LONG *limit);
-    HRESULT GetText2([in] LONG flags, [out] BSTR *str);
-    HRESULT HexToUnicode();
-    HRESULT InsertTable([in] LONG col, [in] LONG row, [in] LONG autofit);
-    HRESULT Linearize([in] LONG flags);
-    HRESULT SetActiveSubrange([in] LONG anchor, [in] LONG active);
-    HRESULT SetDropCap([in] LONG line, [in] LONG pos);
-    HRESULT SetProperty([in] LONG type, [in] LONG value);
-    HRESULT SetText2([in] LONG flags, [in] BSTR str);
-    HRESULT UnicodeToHex();
-    HRESULT SetInlineObject([in] LONG type, [in] LONG align, [in] LONG ch,
-            [in] LONG ch1, [in] LONG ch2, [in] LONG count, [in] LONG texstyle,
-            [in] LONG ccol);
-    HRESULT GetMathFunctionType([in] BSTR str, [out] LONG *value);
-    HRESULT InsertImage([in] LONG width, [in] LONG height, [in] LONG ascent,
-            [in] LONG type, [in] BSTR alttext, [in] IStream *stream);
-}
-
-[
-    object,
-    uuid(c241f5e1-7206-11d8-a2c7-00a0d1d6c6b3)
-]
-interface ITextSelection2 : ITextRange2
-{
-}
-
 
 [
   object,
@@ -526,6 +465,69 @@ interface ITextSelection : ITextRange
     HRESULT EndKey([in]LONG Unit, [in]LONG Extend, [retval, out]LONG *pDelta);
     HRESULT TypeText([in]BSTR bstr);
 }
+
+[
+    object,
+    uuid(c241f5e2-7206-11d8-a2c7-00a0d1d6c6b3)
+]
+interface ITextRange2 : ITextSelection
+{
+    HRESULT GetCch([retval, out] LONG *count);
+    HRESULT GetCells([retval, out] IUnknown **cells);
+    HRESULT GetColumn([retval, out] IUnknown **column);
+    HRESULT GetCount([retval, out] LONG *count);
+    HRESULT GetDuplicate2([retval, out] ITextRange2 **range);
+    HRESULT GetFont2([retval, out] ITextFont2 **font);
+    HRESULT SetFont2([in] ITextFont2 *font);
+    HRESULT GetFormattedText2([retval, out] ITextRange2 **range);
+    HRESULT SetFormattedText2([in] ITextRange2 *range);
+    HRESULT GetGravity([retval, out] LONG *value);
+    HRESULT SetGravity([in] LONG value);
+    HRESULT GetPara2([retval, out] ITextPara2 **para);
+    HRESULT SetPara2([in] ITextPara2 *para);
+    HRESULT GetRow([retval, out] ITextRow **row);
+    HRESULT GetStartPara([retval, out] LONG *value);
+    HRESULT GetTable([retval, out] IUnknown **table);
+    HRESULT GetURL([retval, out] BSTR *url);
+    HRESULT SetURL([in] BSTR url);
+    HRESULT AddSubrange([in] LONG cp1, [in] LONG cp2, [in] LONG activate);
+    HRESULT BuildUpMath([in] LONG flags);
+    HRESULT DeleteSubrange([in] LONG first, [in] LONG lim);
+    HRESULT Find([in] ITextRange2 *range, [in] LONG count, [in] LONG flags, [out] LONG *delta);
+    HRESULT GetChar2([out] LONG *ch, [in] LONG offset);
+    HRESULT GetDropCap([out] LONG *line, [out] LONG *pos);
+    HRESULT GetInlineObject([out] LONG *type, [out] LONG *align, [out] LONG *ch,
+            [out] LONG *ch1, [out] LONG *ch2, [out] LONG *count, [out] LONG *texstyle,
+            [out] LONG *ccol, [out] LONG *level);
+    HRESULT GetProperty([in] LONG type, [out] LONG *value);
+    HRESULT GetRect([in] LONG type, [out] LONG *left, [out] LONG *top,
+            [out] LONG *right, [out] LONG *bottom, [out] LONG *hit);
+    HRESULT GetSubrange([in] LONG subrange, [out] LONG *first, [out] LONG *limit);
+    HRESULT GetText2([in] LONG flags, [out] BSTR *str);
+    HRESULT HexToUnicode();
+    HRESULT InsertTable([in] LONG col, [in] LONG row, [in] LONG autofit);
+    HRESULT Linearize([in] LONG flags);
+    HRESULT SetActiveSubrange([in] LONG anchor, [in] LONG active);
+    HRESULT SetDropCap([in] LONG line, [in] LONG pos);
+    HRESULT SetProperty([in] LONG type, [in] LONG value);
+    HRESULT SetText2([in] LONG flags, [in] BSTR str);
+    HRESULT UnicodeToHex();
+    HRESULT SetInlineObject([in] LONG type, [in] LONG align, [in] LONG ch,
+            [in] LONG ch1, [in] LONG ch2, [in] LONG count, [in] LONG texstyle,
+            [in] LONG ccol);
+    HRESULT GetMathFunctionType([in] BSTR str, [out] LONG *value);
+    HRESULT InsertImage([in] LONG width, [in] LONG height, [in] LONG ascent,
+            [in] LONG type, [in] BSTR alttext, [in] IStream *stream);
+}
+
+[
+    object,
+    uuid(c241f5e1-7206-11d8-a2c7-00a0d1d6c6b3)
+]
+interface ITextSelection2 : ITextRange2
+{
+}
+
 
 [
   object,
