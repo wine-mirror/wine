@@ -2110,6 +2110,16 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
                 .ret_status = STATUS_SUCCESS,
             },
         };
+        struct hid_expect expect_small[] =
+        {
+            {
+                .code = IOCTL_HID_READ_REPORT,
+                .report_len = report_id ? 2 : caps.InputReportByteLength - 1,
+                .report_buf = {report_id ? report_id + 1 : 0x5a,0x5a,0x5a},
+                .ret_length = report_id ? 2 : caps.InputReportByteLength - 1,
+                .ret_status = STATUS_SUCCESS,
+            },
+        };
 
         send_hid_input( file, expect, sizeof(expect) );
 
@@ -2190,6 +2200,21 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
             value, (report_id ? 3 : 4) );
         ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );
 
+        send_hid_input( file, expect_small, sizeof(expect_small) );
+
+        Sleep( 600 );
+
+        SetLastError( 0xdeadbeef );
+        memset( report, 0, sizeof(report) );
+        ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
+        ok( !ret, "ReadFile succeeded\n" );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+
+        ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
+        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
+        ok( value == report_id ? 2 : caps.InputReportByteLength - 1,
+            "got length %u, expected %u\n", value, report_id ? 2 : caps.InputReportByteLength - 1 );
+
         CloseHandle( overlapped.hEvent );
         CloseHandle( overlapped2.hEvent );
     }
@@ -2209,6 +2234,16 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
                 .report_len = caps.InputReportByteLength - (report_id ? 0 : 1),
                 .report_buf = {report_id ? report_id : 0xa5,0xa5,0xa5,0xa5,0xa5},
                 .ret_length = caps.InputReportByteLength - (report_id ? 0 : 1),
+                .ret_status = STATUS_SUCCESS,
+            },
+        };
+        struct hid_expect expect_small[] =
+        {
+            {
+                .code = IOCTL_HID_READ_REPORT,
+                .report_len = report_id ? 2 : caps.InputReportByteLength - 1,
+                .report_buf = {report_id ? report_id + 1 : 0x5a,0x5a,0x5a},
+                .ret_length = report_id ? 2 : caps.InputReportByteLength - 1,
                 .ret_status = STATUS_SUCCESS,
             },
         };
@@ -2268,6 +2303,19 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
             "expected identical reports\n" );
         ok( !memcmp( buffer + off, buffer + caps.InputReportByteLength, caps.InputReportByteLength - off ),
             "expected identical reports\n" );
+
+        SetLastError( 0xdeadbeef );
+        memset( report, 0, sizeof(report) );
+        ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
+        ok( !ret, "ReadFile succeeded\n" );
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+
+        send_hid_input( file, expect_small, sizeof(expect_small) );
+
+        ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
+        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
+        todo_wine_if( report_id )
+        ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
 
         CloseHandle( overlapped.hEvent );
         CloseHandle( overlapped2.hEvent );
