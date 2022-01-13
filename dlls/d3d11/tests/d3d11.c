@@ -16529,8 +16529,7 @@ static void test_clear_image_unordered_access_view(void)
     {
         {D3D11_RESOURCE_DIMENSION_TEXTURE2D, D3D11_UAV_DIMENSION_TEXTURE2D,      FALSE},
         {D3D11_RESOURCE_DIMENSION_TEXTURE2D, D3D11_UAV_DIMENSION_TEXTURE2DARRAY, TRUE },
-        /* Expected behaviour with partial layer coverage is unclear. */
-        {D3D11_RESOURCE_DIMENSION_TEXTURE3D, D3D11_UAV_DIMENSION_TEXTURE3D,      FALSE},
+        {D3D11_RESOURCE_DIMENSION_TEXTURE3D, D3D11_UAV_DIMENSION_TEXTURE3D,      TRUE },
     };
 
     if (!init_test_context(&test_context, NULL))
@@ -16549,13 +16548,15 @@ static void test_clear_image_unordered_access_view(void)
     {
         for (i = 0; i < ARRAY_SIZE(tests); ++i)
         {
-            winetest_push_context("Dim %u, Test %u", d, i);
-
             if (tests[i].image_layers > 1 && !uav_dimensions[d].is_layered)
-            {
-                winetest_pop_context();
                 continue;
-            }
+
+            /* Expected behaviour with partial layer coverage is unclear. */
+            if (uav_dimensions[d].view_dim == D3D11_UAV_DIMENSION_TEXTURE3D
+                    && tests[i].image_layers != tests[i].layer_count)
+                continue;
+
+            winetest_push_context("Dim %u, Test %u", d, i);
 
             resource_desc.dimension = uav_dimensions[d].resource_dim;
             resource_desc.depth_or_array_size = tests[i].image_layers;
