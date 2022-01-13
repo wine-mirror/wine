@@ -1504,10 +1504,19 @@ void wined3d_unordered_access_view_gl_clear(struct wined3d_unordered_access_view
 
         format_gl = wined3d_format_gl(resource->format);
         texture_gl = wined3d_texture_gl(texture_from_resource(resource));
-        layer_count = view_gl->v.desc.u.texture.layer_count;
         level_count = view_gl->v.desc.u.texture.level_count;
-        base_layer = view_gl->v.desc.u.texture.layer_idx;
         base_level = view_gl->v.desc.u.texture.level_idx;
+
+        if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+        {
+            layer_count = 1;
+            base_layer = 0;
+        }
+        else
+        {
+            layer_count = view_gl->v.desc.u.texture.layer_count;
+            base_layer = view_gl->v.desc.u.texture.layer_idx;
+        }
 
         if (format_gl->f.byte_count <= 4 && !fp)
         {
