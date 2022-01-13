@@ -1208,8 +1208,8 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG i, index, count, report_len = impl->caps.InputReportByteLength;
     DIDATAFORMAT *format = impl->base.device_format;
-    struct parse_device_state_params params = {{0}};
     char *report_buf = impl->input_report_buf;
+    struct parse_device_state_params params;
     struct hid_joystick_effect *effect;
     DWORD device_state, effect_state;
     USAGE_AND_PAGE *usages;
@@ -1247,6 +1247,7 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
             params.time = GetCurrentTime();
             params.seq = impl->base.dinput->evsequence++;
             memcpy( params.old_state, impl->base.device_state, format->dwDataSize );
+            memset( params.buttons, 0, sizeof(params.buttons) );
             memset( impl->base.device_state, 0, format->dwDataSize );
 
             while (count--)
