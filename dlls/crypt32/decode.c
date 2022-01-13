@@ -47,7 +47,7 @@
 #include "crypt32_private.h"
 
 /* This is a bit arbitrary, but to set some limit: */
-#define MAX_ENCODED_LEN 0x02000000
+#define MAX_ENCODED_LEN 0x04000000
 
 #define ASN_FLAGS_MASK 0xe0
 #define ASN_TYPE_MASK  0x1f
@@ -6411,6 +6411,7 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     }
     if (cbEncoded > MAX_ENCODED_LEN)
     {
+        FIXME_(crypt)("Returning CRYPT_E_ASN1_LARGE, cbEncoded %u.\n", cbEncoded);
         SetLastError(CRYPT_E_ASN1_LARGE);
         return FALSE;
     }
