@@ -28,6 +28,7 @@
 #include "winineti.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winnls.h"
 
 #include "wine/test.h"
 
@@ -896,60 +897,73 @@ static void InternetTimeFromSystemTimeW_test(void)
         error );
 }
 
-static void InternetTimeToSystemTimeA_test(void)
+static void test_InternetTimeToSystemTime(void)
 {
     BOOL ret;
+    unsigned int i;
     SYSTEMTIME time;
-    static const SYSTEMTIME expect = { 2005, 1, 5, 7, 12, 6, 35, 0 };
-    static const char string[] = "Fri, 07 Jan 2005 12:06:35 GMT";
-    static const char string2[] = " fri 7 jan 2005 12 06 35";
+    WCHAR buffer[64];
+    static const SYSTEMTIME expect1 = { 2005, 1, 5, 7,  12, 6,  35, 0 };
+    static const SYSTEMTIME expect2 = { 2022, 1, 2, 11, 11, 13, 5,  0 };
 
-    ret = pInternetTimeToSystemTimeA( string, &time, 0 );
-    ok( ret, "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
-    ok( !memcmp( &time, &expect, sizeof(expect) ),
-        "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
+    static const struct test_data
+    {
+        const char *string;
+        const SYSTEMTIME *expect;
+        BOOL match;
+        BOOL todo;
+    }
+    test_data[] =
+    {
+        { "Fri, 07 Jan 2005 12:06:35 GMT", &expect1, TRUE },
+        { " fri, 7 jan 2005 12 06 35",     &expect1, TRUE },
+        { "Fri, 07-01-2005 12:06:35",      &expect1, TRUE, TRUE },
+        { "5, 07-01-2005 12:06:35 GMT",    &expect1, TRUE, TRUE },
+        { "5, 07-01-2005 12:06:35 GMT;",   &expect1, TRUE, TRUE },
+        { "5, 07-01-2005 12:06:35 GMT123", &expect1, TRUE, TRUE },
+        { "2, 11 01 2022 11 13 05",        &expect2, TRUE, TRUE },
+        { "2, 11-01-2022 11#13^05",        &expect2, TRUE, TRUE },
+        { "2, 11*01/2022 11+13=05",        &expect2, TRUE, TRUE },
+        { "2, 11-Jan-2022 11:13:05",       &expect2, TRUE, TRUE },
+        { "Fr",                            NULL,     FALSE },
+    };
 
-    ret = pInternetTimeToSystemTimeA( string2, &time, 0 );
-    ok( ret, "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
-    ok( !memcmp( &time, &expect, sizeof(expect) ),
-        "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
-}
+    ret = pInternetTimeToSystemTimeA(NULL, NULL, 0);
+    ok(!ret, "InternetTimeToSystemTimeA succeeded.\n");
+    ret = pInternetTimeToSystemTimeA(NULL, &time, 0);
+    ok(!ret, "InternetTimeToSystemTimeA succeeded.\n");
+    ret = pInternetTimeToSystemTimeW(NULL, NULL, 0);
+    ok(!ret, "InternetTimeToSystemTimeW succeeded.\n");
+    ret = pInternetTimeToSystemTimeW(NULL, &time, 0);
+    ok(!ret, "InternetTimeToSystemTimeW succeeded.\n");
 
-static void InternetTimeToSystemTimeW_test(void)
-{
-    BOOL ret;
-    SYSTEMTIME time;
-    static const SYSTEMTIME expect = { 2005, 1, 5, 7, 12, 6, 35, 0 };
-    static const WCHAR string[] = { 'F','r','i',',',' ','0','7',' ','J','a','n',' ','2','0','0','5',' ',
-                                    '1','2',':','0','6',':','3','5',' ','G','M','T',0 };
-    static const WCHAR string2[] = { ' ','f','r','i',' ','7',' ','j','a','n',' ','2','0','0','5',' ',
-                                     '1','2',' ','0','6',' ','3','5',0 };
-    static const WCHAR string3[] = { 'F','r',0 };
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
+    {
+        const struct test_data *test = &test_data[i];
+        winetest_push_context("Test %u", i);
 
-    ret = pInternetTimeToSystemTimeW( NULL, NULL, 0 );
-    ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
+        memset(&time, 0, sizeof(time));
+        ret = pInternetTimeToSystemTimeA(test->string, NULL, 0);
+        ok(!ret, "InternetTimeToSystemTimeA succeeded.\n");
+        ret = pInternetTimeToSystemTimeA(test->string, &time, 0);
+        ok(ret, "InternetTimeToSystemTimeA failed: %u.\n", GetLastError());
+        todo_wine_if(test->todo)
+        ok(!test->match || !memcmp(&time, test->expect, sizeof(*test->expect)),
+           "Got unexpected system time.\n");
 
-    ret = pInternetTimeToSystemTimeW( NULL, &time, 0 );
-    ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
+        MultiByteToWideChar(CP_ACP, 0, test->string, -1, buffer, ARRAY_SIZE(buffer));
 
-    ret = pInternetTimeToSystemTimeW( string, NULL, 0 );
-    ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
+        memset(&time, 0, sizeof(time));
+        ret = pInternetTimeToSystemTimeW(buffer, NULL, 0);
+        ok(!ret, "InternetTimeToSystemTimeW succeeded.\n");
+        ret = pInternetTimeToSystemTimeW(buffer, &time, 0);
+        ok(ret, "InternetTimeToSystemTimeW failed: %u.\n", GetLastError());
+        todo_wine_if(test->todo)
+        ok(!test->match || !memcmp(&time, test->expect, sizeof(*test->expect)),
+           "Got unexpected system time.\n");
 
-    ret = pInternetTimeToSystemTimeW( string, &time, 0 );
-    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
-
-    ret = pInternetTimeToSystemTimeW( string, &time, 0 );
-    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
-    ok( !memcmp( &time, &expect, sizeof(expect) ),
-        "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
-
-    ret = pInternetTimeToSystemTimeW( string2, &time, 0 );
-    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
-    ok( !memcmp( &time, &expect, sizeof(expect) ),
-        "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
-
-    ret = pInternetTimeToSystemTimeW( string3, &time, 0 );
-    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+        winetest_pop_context();
+    }
 }
 
 static void test_IsDomainLegalCookieDomainW(void)
@@ -1922,8 +1936,7 @@ START_TEST(internet)
     {
         InternetTimeFromSystemTimeA_test();
         InternetTimeFromSystemTimeW_test();
-        InternetTimeToSystemTimeA_test();
-        InternetTimeToSystemTimeW_test();
+        test_InternetTimeToSystemTime();
     }
     if (pIsDomainLegalCookieDomainW &&
         ((void*)pIsDomainLegalCookieDomainW == (void*)pCreateUrlCacheContainerA ||
