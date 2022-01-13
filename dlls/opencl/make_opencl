@@ -37,21 +37,22 @@ my %core_categories = ();
 
 my %arg_types =
     (
-        "cl_bitfield"    => [ "int64",  "wine_dbgstr_longlong(%s)" ],
-        "double"         => [ "double", "%.16e" ],
-        "float"          => [ "float",  "%.8e" ],
-        "int"            => [ "long",   "%d" ],
-        "int8_t"         => [ "long",   "%d" ],
-        "int16_t"        => [ "long",   "%d" ],
-        "int32_t"        => [ "long",   "%d" ],
-        "int64_t"        => [ "int64",  "wine_dbgstr_longlong(%s)" ],
-        "intptr_t"       => [ "long",   "%Id" ],
-        "size_t"         => [ "long",   "%Iu" ],
-        "uint8_t"        => [ "long",   "%u" ],
-        "uint16_t"       => [ "long",   "%u" ],
-        "uint32_t"       => [ "long",   "%u" ],
-        "uint64_t"       => [ "int64",  "wine_dbgstr_longlong(%s)" ],
-        "unsigned int"   => [ "long",   "%u" ],
+        #                      spec      unixlib         format
+        "cl_bitfield"    => [ "int64",  "ULONGLONG",    "wine_dbgstr_longlong(%s)" ],
+        "double"         => [ "double", "DOUBLE",       "%.16e" ],
+        "float"          => [ "float",  "float",        "%.8e" ],
+        "int"            => [ "long",   "int",          "%d" ],
+        "int8_t"         => [ "long",   "int8_t",       "%d" ],
+        "int16_t"        => [ "long",   "int16_t",      "%d" ],
+        "int32_t"        => [ "long",   "int32_t",      "%d" ],
+        "int64_t"        => [ "int64",  "LONGLONG",     "wine_dbgstr_longlong(%s)" ],
+        "intptr_t"       => [ "long",   "INT_PTR",      "%Id" ],
+        "size_t"         => [ "long",   "SIZE_T",       "%Iu" ],
+        "uint8_t"        => [ "long",   "uint8_t",      "%u" ],
+        "uint16_t"       => [ "long",   "uint16_t",     "%u" ],
+        "uint32_t"       => [ "long",   "uint32_t",     "%u" ],
+        "uint64_t"       => [ "int64",  "ULONGLONG",    "wine_dbgstr_longlong(%s)" ],
+        "unsigned int"   => [ "long",   "unsigned int", "%u" ],
     );
 
 my %unsupported_extensions =
@@ -99,7 +100,7 @@ sub generate_pe_thunk($$)
         }
         elsif (defined $arg_types{$ptype})
         {
-            my $format = ${$arg_types{$ptype}}[1];
+            my $format = ${$arg_types{$ptype}}[2];
             $trace_arg .= ", " . ($format =~ /^%/ ? $format : "%s");
             $trace_call_arg .= ", " . sprintf $format =~ /^%/ ? "%s" : $format, $pname;
         }
@@ -220,10 +221,23 @@ sub get_func_params($$)
     $params .= "    $proto* __retval;\n" unless $proto eq "cl_int";
     foreach my $arg (@{$func->[1]})
     {
+        my $ptype = get_arg_type( $arg );
         next unless $arg->findnodes("./name");
-        (my $argtext = $arg->textContent()) =~ s/ +/ /g;
-        $argtext =~ s/CL_CALLBACK/WINAPI/g;
-        $params .= "    $argtext;\n";
+        my $pname = get_arg_name( $arg );
+        (my $param = $arg->textContent()) =~ s/ +/ /g;
+        $param =~ s/CL_CALLBACK/WINAPI/g;
+        if ($param =~ /[[*]/)
+        {
+            $params .= "    $param;\n";
+        }
+        elsif (defined $arg_types{$ptype})
+        {
+            $params .= "    ${$arg_types{$ptype}}[1] $pname;\n";
+        }
+        else
+        {
+            die "Unknown type %s in %s\n", $param, $name;
+        }
     }
     return $params . "};\n";
 }
@@ -398,7 +412,7 @@ sub parse_file($)
             my $basetype = @{$type->findnodes("./type")}[0];
             if ($type->textContent() =~ /[[*]/)
             {
-                $arg_types{$name} = ["ptr", "%p"];
+                $arg_types{$name} = ["ptr", $name, "%p"];
             }
             elsif (defined($basetype) and defined($arg_types{$basetype->textContent}))
             {
