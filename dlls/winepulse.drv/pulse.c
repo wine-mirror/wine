@@ -928,6 +928,7 @@ static NTSTATUS pulse_release_stream(void *args)
 {
     struct release_stream_params *params = args;
     struct pulse_stream *stream = params->stream;
+    SIZE_T size;
 
     if(params->timer) {
         stream->please_quit = TRUE;
@@ -944,12 +945,16 @@ static NTSTATUS pulse_release_stream(void *args)
     pa_stream_unref(stream->stream);
     pulse_unlock();
 
-    if (stream->tmp_buffer)
+    if (stream->tmp_buffer) {
+        size = 0;
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                            &stream->tmp_buffer_bytes, MEM_RELEASE);
-    if (stream->local_buffer)
+                            &size, MEM_RELEASE);
+    }
+    if (stream->local_buffer) {
+        size = 0;
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                            &stream->alloc_size, MEM_RELEASE);
+                            &size, MEM_RELEASE);
+    }
     free(stream->peek_buffer);
     free(stream);
     return STATUS_SUCCESS;
@@ -1514,13 +1519,16 @@ static NTSTATUS pulse_reset(void *args)
 
 static BOOL alloc_tmp_buffer(struct pulse_stream *stream, SIZE_T bytes)
 {
+    SIZE_T size;
+
     if (stream->tmp_buffer_bytes >= bytes)
         return TRUE;
 
     if (stream->tmp_buffer)
     {
+        size = 0;
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                            &stream->tmp_buffer_bytes, MEM_RELEASE);
+                            &size, MEM_RELEASE);
         stream->tmp_buffer = NULL;
         stream->tmp_buffer_bytes = 0;
     }
