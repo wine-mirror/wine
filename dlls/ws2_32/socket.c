@@ -2574,7 +2574,7 @@ int WINAPI WSAPoll( WSAPOLLFD *fds, ULONG count, int timeout )
         return SOCKET_ERROR;
     }
 
-    params->timeout = (timeout >= 0 ? timeout * -10000 : TIMEOUT_INFINITE);
+    params->timeout = (timeout >= 0 ? (LONGLONG)timeout * -10000 : TIMEOUT_INFINITE);
 
     for (i = 0; i < count; ++i)
     {
