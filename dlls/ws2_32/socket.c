@@ -2409,7 +2409,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
     }
 
     if (timeout)
-        params->timeout = timeout->tv_sec * -10000000 + timeout->tv_usec * -10;
+        params->timeout = (LONGLONG)timeout->tv_sec * -10000000 + (LONGLONG)timeout->tv_usec * -10;
     else
         params->timeout = TIMEOUT_INFINITE;
 
