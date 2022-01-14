@@ -1,12 +1,13 @@
-The Wine development release 7.0-rc5 is now available.
+The Wine development release 7.0-rc6 is now available. This is
+expected to be the last release candidate before the final 7.0.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/7.0/wine-7.0-rc5.tar.xz
-  http://mirrors.ibiblio.org/wine/source/7.0/wine-7.0-rc5.tar.xz
+  https://dl.winehq.org/wine/source/7.0/wine-7.0-rc6.tar.xz
+  http://mirrors.ibiblio.org/wine/source/7.0/wine-7.0-rc6.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,139 +23,143 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 7.0-rc5 (total 30):
+Bugs fixed in 7.0-rc6 (total 47):
 
-  23782  Spaceforce Rogue Universe: can't enter game (intro videos looping)
-  41239  FUEL Aborts on Start Due to Shader Validation Failing
-  46841  JASC Paint Shop Pro 8.x and 9.x crash on startup (msvcrt c++ exception handling)
-  48084  Crouzet Soft 1.11 crashes on start
-  49099  MIDI events sent to all devices at once
-  49174  Duplicate checking iter->parent in mshtml/htmlwindow.c
-  50100  Unable to log in to the Bentley CONNECTION client (needs 'let' statements support)
-  50527  Dying Light shows a black screen after starting a new game
-  51805  Tropico 2: mouse cursor is black
-  51829  Roblox Player: Long freeze during loading
-  51853  Logos 9 Bible Software - Printing Option Available - Does Not Print
-  51872  Logos Bible Software 9 (.Net 4.8 app) System.AccessViolationException regression
-  52042  Ketarin crash in WINE 6.21 THREAD transition from RUNNING to DONE_BLOCKING
-  52071  mshtml:script fails in externalDisp_InvokeEx() on Windows
-  52074  crash in open source flight simulator Rowan's Battle of Britain
-  52142  Ketarin Listview error unknown msg in Wine 6.22
-  52143  mscoree:parse_startup error in Ketarin on Wine
-  52144  Ketarin stops refreshing program window on Wine 6.22
-  52157  ntdll:wow64 fails on 64-bit Wine
-  52216  winemac.drv fails to compile without Metal support
-  52231  Notation Software 4 freeze when moving mouse over buttons
-  52263  Ground Control II freezes on exit
-  52267  Fallout 1 & 2 fail to start: can't initialize input device
-  52272  Escape from Tarkov launcher crashes on start
-  52292  Cygwin compilation fails in ld: undefined reference to `__main' @ include/wine/test.h
-  52295  Crash when calling StackWalk() with '-gstabs' symbol format
-  52311  Starting executables from removable devices no longer works with Wine 7.0-rc3-7-g3e73437ae8f
-  52323  MSBuild fails to build simple application
-  52328  Cygwin compilation fails: undefined references to __chkstk_ms, __popcountsi2, __divdi3, __udivmoddi4 (etc.) in dlls/
-  52332  Incoming data on socket only satisfies the first async I/O request in the queue
+   9805  Program "de rouck" does not start.
+  12030  MozyHome backup service does not work
+  12915  Star Wars Episode I Racer: Assign key cause freeze
+  34010  Gabriel Knight 3 demo - Depth / stencil buffer locking is not implemented
+  34340  Mingw gdb hangs
+  37439  Saints Row: The Third characters don't render correctly
+  38907  Homesite+ (v5.5) closing search window does not correctly refocus editor window
+  39342  Thunder crashes without native riched20 (ME_GetCursorCoordinates: Assertion `~para->member.para.nFlags & 0x01')
+  42174  TeraCopy 3.0b2 crashes on startup
+  42395  Saints Row: The Third has graphical glitches
+  43502  Microsoft Flight Simulator 2000 : only bottom half view rendered and moved to the top
+  43650  nolf2 game error on install
+  44008  XNA Game Studio 4 installer crashes when cancelled
+  44111  Simple WPF/.Net app has rendering issues
+  44970  Deus Ex Human Revolution: people are invisible when closer than 3 meters
+  45121  Steam uses high CPU while idle
+  45168  Visual Novel "The Fruit of Grisaia" has flickering glitches
+  46118  FlatOut has graphical glitches with csmt enabled
+  46213  Sniper Elite 4 launcher window doesn't display properly
+  46304  The virgl driver is identified as Nvidia vendor but should be MESA and it should probably not fall back to any Nvidia card
+  46423  Kara no Shoujo crashes in fullscreen mode
+  48103  Lego Stunt Rally crashes when entering championship
+  49541  Lara Croft and the Temple of Osiris stops silently at launch
+  49732  Death End Re;Quest 2 crashes on startup
+  49919  Logos 8 Bible Software crashes when entering text in passage guide search field
+  49976  FIFA 11 Demo fifaconfig crashes when pressing OK button
+  49995  Evernote 6.24 stopped displaying notes after upgrade to Wine 5.19
+  50521  Guild Wars 2 fails to launch
+  50617  Objects become invisible with tessellation enabled in Sniper Elite 3 with OpenGL renderer
+  50813  X-Beyond The Frontier & X-Tension crash on start
+  51195  Lara Croft and the Temple of Osiris doesn't launch
+  51423  WeChat can't send a big picture
+  51442  Socket connection is not established properly
+  51592  Call of Cthulhu Crashes on Launch
+  52108  user32:monitor breaks user32:win on Win10 1809
+  52252  IDA Pro 7.2 debugger fails to attach to a process.
+  52286  Zombie Army Trilogy launcher crashes on start
+  52327  Wrong WM_CONTEXTMENU message default  processing
+  52335  StarCraft Remastered hangs in Multiplayer screen
+  52349  Vortex Mod Manager Starts but Infinitely Loads
+  52353  PuTTY plink 0.76 crashes
+  52356  Folio Bound Views crashes on start
+  52378  Python WMI module: AttributeError: wbemErrInvalidQuery
+  52381  wineg++: Compile error in tom.h
+  52387  Joystick does not release buttons properly
+  52389  GPU Caps Viewer does not report any OpenCL devices
+  52390  World of Warcraft crashes in d3d11 mode inside of wined3d_unordered_access_view_gl_clear()
 
 ----------------------------------------------------------------
 
-Changes since 7.0-rc4:
+Changes since 7.0-rc5:
 
-Alex Henrie (7):
-      faultrep/tests: Remove registry writability check.
-      wined3d: Fix memory leak on error path in wined3d_buffer_vk_create_buffer_object (Coverity).
-      wmphoto: Fix memory leak on error path in wmp_decoder_create (Coverity).
-      kernel32/tests: Drop path test workarounds for Windows <= 2000.
-      comctl32/tests: Drop tooltips test workarounds for Windows <= 2000.
-      kernel32/tests: Drop change test workarounds for Windows <= 2000.
-      d3dx9_36/tests: Add missing call to ID3DXSprite_End.
+Alex Henrie (3):
+      d3d10/tests: Increase size of array expected_i_a in test_scalar_array_methods (cppcheck).
+      gdi32/tests: Mark a GetTextExtentPointW test as broken on Windows 10.
+      gdi32/tests: Drop font test workarounds for Windows <= 2000.
 
 Alexandre Julliard (2):
-      server: Don't return image information for terminating processes.
-      ntdll: Support debugger attach from a 64-bit process to a 32-bit process.
+      maintainers: Remove Ken Thomases.
+      include: Move the ITextRange2 definition to avoid an undefined reference.
 
-Eric Pouech (4):
-      dbghelp: Don't use .debug_frame section if non present when unwinding.
-      po: Some more French translations.
-      po: Fixed typos in French translation.
-      po: Some more French translations.
+Andrew Eikum (2):
+      winecoreaudio.drv: Fix memory leak.
+      winepulse.drv: Fix memory leak.
 
-Gabriel Ivăncescu (1):
-      mshtml: Fix nsnode leak when cloning.
+Andrey Gusev (2):
+      wined3d: Handle WINED3DSPSM_NONE in shader_sm4_read_param().
+      dxgi: Handle WINED3D_BIND_UNORDERED_ACCESS in dxgi_usage_from_wined3d_bind_flags().
 
-Henri Verbeet (1):
-      wined3d: Use GL_MAP_PERSISTENT_BIT even for non-persistent bo maps.
+André Zwing (5):
+      kernel32: Fix GetCompressedFileSize[AW] spec file entries.
+      rpcrt4: Fix TowerConstruct spec file entry.
+      wintrust: Fix WintrustAddDefaultForUsage spec file entry.
+      shlwapi: Report keyName as string.
+      d3d10: Fix D3D10CompileEffectFromMemory spec file entry.
 
-Huw D. M. Davies (4):
-      winspool: Don't try to match a printer to a server handle.
-      winemac: Don't try to update when the window is closing.
-      iphlpapi: Always populate the friendly name.
-      user32: Set WM_CONTEXTMENU's wparam to the child window's handle.
+Dmitry Timoshkov (1):
+      ntdll: Use full registry key name in NtQueryLicenseValue.
 
-Jacek Caban (6):
-      msvcrt: Use __WINE_PE_BUILD in crt_gccmain.c.
-      mshtml: Remove duplicate check in get_top_window.
-      winegcc: Use libgcc on Cygwin target.
-      urlmon/tests: Silence some debug traces.
-      urlmon/tests: Remove unreliable test.
-      urlmon: Don't allow direct sink callbacks when reporting data.
+Hans Leidekker (1):
+      kerberos: Avoid a crash on NULL expiry parameter.
 
-Jactry Zeng (2):
-      po: Update Simplified Chinese translation.
-      po: Update Japanese translation.
+Huw D. M. Davies (2):
+      commdlg: Pass the 16-bit structure to the WM_INITDIALOG hook.
+      user: Copy back the 16-bit MDICREATESTRUCT.
 
-Jinoh Kang (2):
-      ws2_32/tests: Add a test for simultaneous WSARecv().
-      server: Reselect only after dequeueing async request.
+Julian Rüger (1):
+      po: Update German translation.
 
-Keno Fischer (1):
-      winemac: Unconditionally link to QuartzCore.
-
-Masanori Kakura (1):
-      winealsa.drv: Fix a typo in TRACE() message.
-
-Michael Stefaniuc (1):
-      dmsynth/tests: Clarify the sink init / synth latency clock relationship.
-
-Nikolay Sivov (2):
-      po: Update Russian translation.
-      comctl32/tests: Add a basic test for ImageList_WriteEx().
-
-Olivier F. R. Dierick (1):
-      taskschd: Set count to zero in regtasks_get_Count stub.
+Nikolay Sivov (3):
+      d3d11: Always initialize out view pointer in CreateRenderTargetView().
+      include: Add WbemErrorEnum error codes.
+      mfplat: Add MECapture* events to tracing.
 
 Paul Gofman (1):
-      ddraw/tests: Port tests for fullscreen window size reset from d3d9.
+      crypt32: Increase maximum object encode length.
 
-Piotr Caban (1):
-      oleacc/tests: Fix intermittent AccessibleObjectFromPoint tests failures.
+Rémi Bernon (5):
+      dinput/tests: Check that InputReportByteLength bytes are read.
+      user32: Increase the default message buffer size.
+      server: Return error when hardware message is too large.
+      hidclass.sys: Always read InputReportByteLength bytes when not polling.
+      dinput: Reset button state for each report read.
 
-Roman Pišl (1):
-      comctl32: Fix return type of ImageList_WriteEx.
+Stefan Brüns (7):
+      d2d1: Silence SetSegmentFlags() FIXME when setting default value.
+      d2d1/tests: Add a test for single quadratic Bézier segment.
+      d2d1/tests: Test coincident last/first vertex for both OPEN and CLOSED.
+      d2d1: Refactor outline generation as preparation for the new TYPE_END vertex type.
+      d2d1: Use the TYPE_END vertex type when last/first vertices coincide.
+      d2d1: Remove extraneous checks for last vertex.
+      d2d1/tests: Avoid out-of-bounds access when comparing segments.
 
-Rémi Bernon (8):
-      dinput/tests: Move tests from dinput8/tests.
-      dinput/tests: Split joystick tests into separate sources.
-      dinput/tests: Remove verbose and redundant tests.
-      dinput/tests: Test simple joystick with older dinput versions.
-      dinput: Return DIERR_UNSUPPORTED for properties with old dinput version.
-      dinput: Allow 0xff as a DIDFT_ANYINSTANCE alias with old dinput version.
-      dinput: Return HID class guid in DIPROP_GUIDANDPATH property.
-      dinput: Wait for the internal thread with a timeout.
+Stefan Dösinger (7):
+      ddraw/tests: Reduce precision in test_filling_convention.
+      d3d8/tests: Reduce precision in test_filling_convention.
+      d3d9/tests: Use a HW generation dependent offset for the filling convetion test.
+      d3d11/tests: Run test_instanced_draw separately.
+      d3d10core/tests: Run test_instanced_draw() separately.
+      d3d10core/tests: Run test_generate_mips separately.
+      d3d11/tests: Run test_generate_mips separately.
 
-Stefan Brüns (1):
-      d2d1/tests: Test StrokeContains when last segment is bezier and closes the path.
-
-Zebediah Figura (6):
-      ws2_32/tests: Test whether WSAEventSelect() modifies the event state.
-      server: Set the event in IOCTL_AFD_EVENT_SELECT if the socket becomes signaled.
-      ws2_32: Trace the address bound to in bind().
-      server: Avoid reporting POLLOUT on connection failure in poll_single_socket().
-      amstream: Trace some format fields in IDirectDrawMediaStream::SetFormat().
-      cryptnet: Open the revocation cache file in binary mode.
+Zebediah Figura (5):
+      opencl: Use types with consistent alignment for unixlib params structures.
+      wined3d: Do not iterate over multiple layers when clearing 3D UAVs.
+      d3d11/tests: Test UAV clears of 3D view with nontrivial depth.
+      ws2_32: Cast timeval fields to LONGLONG before multiplying.
+      ws2_32: Cast the WSAPoll() timeout to LONGLONG before multiplying.
 
 Zhiyi Zhang (2):
-      user32/tests: Test selecting DDBs of different depth into display compatible DCs.
-      win32u: Allow selecting 32-bit DDBs into display compatible DCs.
+      user32/tests: Avoid fix blurry apps popup in test_DisplayConfigSetDeviceInfo().
+      uxtheme/tests: Avoid fix blurry apps popup in test_GetThemePartSize().
+
+Ziqing Hui (1):
+      wininet/tests: Add more tests for InternetTimeToSystemTime().
 
 --
 Alexandre Julliard
