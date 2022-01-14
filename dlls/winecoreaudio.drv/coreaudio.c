@@ -709,6 +709,7 @@ static NTSTATUS release_stream( void *args )
 {
     struct release_stream_params *params = args;
     struct coreaudio_stream *stream = params->stream;
+    SIZE_T size;
 
     if(stream->unit){
         AudioOutputUnitStop(stream->unit);
@@ -719,12 +720,16 @@ static NTSTATUS release_stream( void *args )
     free(stream->resamp_buffer);
     free(stream->wrap_buffer);
     free(stream->cap_buffer);
-    if(stream->local_buffer)
+    if(stream->local_buffer){
+        size = 0;
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                            &stream->local_buffer_size, MEM_RELEASE);
-    if(stream->tmp_buffer)
+                            &size, MEM_RELEASE);
+    }
+    if(stream->tmp_buffer){
+        size = 0;
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                            &stream->tmp_buffer_size, MEM_RELEASE);
+                            &size, MEM_RELEASE);
+    }
     free(stream->fmt);
     free(stream);
     params->result = S_OK;
@@ -1354,8 +1359,9 @@ static NTSTATUS get_render_buffer(void *args)
     if(stream->wri_offs_frames + params->frames > stream->bufsize_frames){
         if(stream->tmp_buffer_frames < params->frames){
             if(stream->tmp_buffer){
+                SIZE_T size = 0;
                 NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                                    &stream->tmp_buffer_size, MEM_RELEASE);
+                                    &size, MEM_RELEASE);
                 stream->tmp_buffer = NULL;
             }
             stream->tmp_buffer_size = params->frames * stream->fmt->nBlockAlign;
