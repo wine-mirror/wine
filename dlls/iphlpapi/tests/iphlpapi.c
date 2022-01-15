@@ -2231,10 +2231,17 @@ static void test_interface_identifier_conversion_failure(void)
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
     char nameA[IF_MAX_STRING_SIZE + 1], *name;
     NET_IFINDEX index;
+    NET_LUID luid;
+    GUID guid;
+    static const GUID guid_zero;
+    static const GUID guid_ones = { 0xffffffffUL, 0xffff, 0xffff, { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } };
 
     /* ConvertInterfaceIndexToLuid */
     ret = ConvertInterfaceIndexToLuid( 0, NULL );
     ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    ret = ConvertInterfaceIndexToLuid( -1, &luid );
+    ok( ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %lu\n", ret );
 
     /* ConvertInterfaceLuidToIndex */
     ret = ConvertInterfaceLuidToIndex( NULL, NULL );
@@ -2243,9 +2250,21 @@ static void test_interface_identifier_conversion_failure(void)
     ret = ConvertInterfaceLuidToIndex( NULL, &index );
     ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
 
+    luid.Value = -1;
+    index = -1;
+    ret = ConvertInterfaceLuidToIndex( &luid, &index );
+    ok( ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %lu\n", ret );
+    ok( index == 0, "index shall be zero (got %lu)\n", index );
+
     /* ConvertInterfaceLuidToGuid */
     ret = ConvertInterfaceLuidToGuid( NULL, NULL );
     ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    luid.Value = -1;
+    memcpy( &guid, &guid_ones, sizeof(guid) );
+    ret = ConvertInterfaceLuidToGuid( &luid, &guid );
+    ok( ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %lu\n", ret );
+    ok( memcmp( &guid, &guid_zero, sizeof(guid) ) == 0, "guid shall be nil\n" );
 
     /* ConvertInterfaceGuidToLuid */
     ret = ConvertInterfaceGuidToLuid( NULL, NULL );
@@ -2255,15 +2274,19 @@ static void test_interface_identifier_conversion_failure(void)
     ret = ConvertInterfaceLuidToNameW( NULL, NULL, 0 );
     ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
 
+    memset( nameW, 0, sizeof(nameW) );
     ret = ConvertInterfaceLuidToNameW( NULL, nameW, 0 );
     ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+    ok( !nameW[0], "nameW shall not change\n" );
 
     /* ConvertInterfaceLuidToNameA */
     ret = ConvertInterfaceLuidToNameA( NULL, NULL, 0 );
     ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
 
+    memset( nameA, 0, sizeof(nameA) );
     ret = ConvertInterfaceLuidToNameA( NULL, nameA, 0 );
     ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
+    ok( !nameA[0], "nameA shall not change\n" );
 
     /* ConvertInterfaceNameToLuidW */
     ret = ConvertInterfaceNameToLuidW( NULL, NULL );
