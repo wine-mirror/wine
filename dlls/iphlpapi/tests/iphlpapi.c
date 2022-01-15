@@ -1481,6 +1481,62 @@ static void testGetBestInterface(void)
         bestIfIndex, apiReturn, NO_ERROR );
 }
 
+static void testGetBestInterfaceEx(void)
+{
+    DWORD apiReturn;
+    DWORD bestIfIndex = 0;
+    struct sockaddr_in destAddr;
+
+    memset(&destAddr, 0, sizeof(struct sockaddr_in));
+    destAddr.sin_family = AF_INET;
+    destAddr.sin_addr.S_un.S_addr = INADDR_ANY;
+    apiReturn = GetBestInterfaceEx( (struct sockaddr *)&destAddr, &bestIfIndex );
+    trace( "GetBestInterfaceEx([0.0.0.0], {%lu}) = %lu\n", bestIfIndex, apiReturn );
+    if (apiReturn == ERROR_NOT_SUPPORTED)
+    {
+        skip( "GetBestInterfaceEx not supported\n" );
+        return;
+    }
+
+    apiReturn = GetBestInterfaceEx( NULL, NULL );
+    ok( apiReturn == ERROR_INVALID_PARAMETER,
+        "GetBestInterfaceEx(NULL, NULL) returned %lu, expected %d\n",
+        apiReturn, ERROR_INVALID_PARAMETER );
+
+    apiReturn = GetBestInterfaceEx( NULL, &bestIfIndex );
+    ok( apiReturn == ERROR_INVALID_PARAMETER,
+        "GetBestInterfaceEx(NULL, {%lu}) returned %lu, expected %d\n",
+        bestIfIndex, apiReturn, ERROR_INVALID_PARAMETER );
+
+    memset(&destAddr, 0, sizeof(struct sockaddr_in));
+    apiReturn = GetBestInterfaceEx( (struct sockaddr *)&destAddr, NULL );
+    ok( apiReturn == ERROR_INVALID_PARAMETER,
+        "GetBestInterfaceEx(<AF_UNSPEC>, NULL) returned %lu, expected %d\n",
+        apiReturn, ERROR_INVALID_PARAMETER );
+
+    memset(&destAddr, -1, sizeof(struct sockaddr_in));
+    apiReturn = GetBestInterfaceEx( (struct sockaddr *)&destAddr, NULL );
+    ok( apiReturn == ERROR_INVALID_PARAMETER,
+        "GetBestInterfaceEx(<INVALID>, NULL) returned %lu, expected %d\n",
+        apiReturn, ERROR_INVALID_PARAMETER );
+
+    memset(&destAddr, 0, sizeof(struct sockaddr_in));
+    destAddr.sin_family = AF_INET;
+    destAddr.sin_addr.S_un.S_addr = INADDR_LOOPBACK;
+    apiReturn = GetBestInterfaceEx( (struct sockaddr *)&destAddr, NULL );
+    ok( apiReturn == ERROR_INVALID_PARAMETER,
+        "GetBestInterfaceEx([127.0.0.1], NULL) returned %lu, expected %d\n",
+        apiReturn, ERROR_INVALID_PARAMETER );
+
+    memset(&destAddr, 0, sizeof(struct sockaddr_in));
+    destAddr.sin_family = AF_INET;
+    destAddr.sin_addr.S_un.S_addr = INADDR_LOOPBACK;
+    apiReturn = GetBestInterfaceEx( (struct sockaddr *)&destAddr, &bestIfIndex );
+    ok( apiReturn == NO_ERROR,
+        "GetBestInterfaceEx([127.0.0.1], {%lu}) returned %lu, expected %d\n",
+        bestIfIndex, apiReturn, ERROR_INVALID_PARAMETER );
+}
+
 static void testGetBestRoute(void)
 {
     DWORD apiReturn;
@@ -1516,6 +1572,7 @@ static DWORD CALLBACK testWin98Functions(void *p)
   testGetAdaptersInfo();
   testGetNetworkParams();
   testGetBestInterface();
+  testGetBestInterfaceEx();
   testGetBestRoute();
   return 0;
 }
