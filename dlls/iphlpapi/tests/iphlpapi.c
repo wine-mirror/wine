@@ -2087,9 +2087,6 @@ static void test_interface_identifier_conversion(void)
         MIB_IF_ROW2 *row = table->Table + i;
 
         /* ConvertInterfaceIndexToLuid */
-        ret = ConvertInterfaceIndexToLuid( 0, NULL );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         memset( &luid, 0xff, sizeof(luid) );
         ret = ConvertInterfaceIndexToLuid( 0, &luid );
         ok( ret == ERROR_FILE_NOT_FOUND, "got %lu\n", ret );
@@ -2103,12 +2100,6 @@ static void test_interface_identifier_conversion(void)
         ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
 
         /* ConvertInterfaceLuidToIndex */
-        ret = ConvertInterfaceLuidToIndex( NULL, NULL );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
-        ret = ConvertInterfaceLuidToIndex( NULL, &index );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         ret = ConvertInterfaceLuidToIndex( &luid, NULL );
         ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
 
@@ -2117,9 +2108,6 @@ static void test_interface_identifier_conversion(void)
         ok( index == row->InterfaceIndex, "mismatch\n" );
 
         /* ConvertInterfaceLuidToGuid */
-        ret = ConvertInterfaceLuidToGuid( NULL, NULL );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         memset( &guid, 0xff, sizeof(guid) );
         ret = ConvertInterfaceLuidToGuid( NULL, &guid );
         ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
@@ -2134,9 +2122,6 @@ static void test_interface_identifier_conversion(void)
         ok( IsEqualGUID( &guid, &row->InterfaceGuid ), "mismatch\n" );
 
         /* ConvertInterfaceGuidToLuid */
-        ret = ConvertInterfaceGuidToLuid( NULL, NULL );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         luid.Info.NetLuidIndex = 1;
         ret = ConvertInterfaceGuidToLuid( NULL, &luid );
         ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
@@ -2154,13 +2139,7 @@ static void test_interface_identifier_conversion(void)
         if (luid.Value != row->InterfaceLuid.Value) continue;
 
         /* ConvertInterfaceLuidToNameW */
-        ret = ConvertInterfaceLuidToNameW( NULL, NULL, 0 );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         ret = ConvertInterfaceLuidToNameW( &luid, NULL, 0 );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
-        ret = ConvertInterfaceLuidToNameW( NULL, nameW, 0 );
         ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
 
         ret = ConvertInterfaceLuidToNameW( &luid, nameW, 0 );
@@ -2174,14 +2153,8 @@ static void test_interface_identifier_conversion(void)
         ok( !wcscmp( nameW, expect_nameW ), "got %s vs %s\n", debugstr_w( nameW ), debugstr_w( expect_nameW ) );
 
         /* ConvertInterfaceLuidToNameA */
-        ret = ConvertInterfaceLuidToNameA( NULL, NULL, 0 );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         ret = ConvertInterfaceLuidToNameA( &luid, NULL, 0 );
         ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %lu\n", ret );
-
-        ret = ConvertInterfaceLuidToNameA( NULL, nameA, 0 );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
 
         ret = ConvertInterfaceLuidToNameA( &luid, nameA, 0 );
         ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %lu\n", ret );
@@ -2193,9 +2166,6 @@ static void test_interface_identifier_conversion(void)
         ok( nameA[0], "name not set\n" );
 
         /* ConvertInterfaceNameToLuidW */
-        ret = ConvertInterfaceNameToLuidW( NULL, NULL );
-        ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
-
         luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
         ret = ConvertInterfaceNameToLuidW( NULL, &luid );
         ok( ret == ERROR_INVALID_NAME, "got %lu\n", ret );
@@ -2212,9 +2182,6 @@ static void test_interface_identifier_conversion(void)
         ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
 
         /* ConvertInterfaceNameToLuidA */
-        ret = ConvertInterfaceNameToLuidA( NULL, NULL );
-        ok( ret == ERROR_INVALID_NAME, "got %lu\n", ret );
-
         luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
         ret = ConvertInterfaceNameToLuidA( NULL, &luid );
         ok( ret == ERROR_INVALID_NAME, "got %lu\n", ret );
@@ -2240,8 +2207,6 @@ static void test_interface_identifier_conversion(void)
         ok( !ret, "got %lu\n", ret );
         ok( !wcscmp( alias, row->Alias ), "got %s vs %s\n", wine_dbgstr_w( alias ), wine_dbgstr_w( row->Alias ) );
 
-        index = if_nametoindex( NULL );
-        ok( !index, "Got unexpected index %lu\n", index );
         index = if_nametoindex( nameA );
         ok( index == row->InterfaceIndex, "Got index %lu for %s, expected %lu\n", index, nameA, row->InterfaceIndex );
         /* Wargaming.net Game Center passes a GUID-like string. */
@@ -2250,15 +2215,7 @@ static void test_interface_identifier_conversion(void)
         index = if_nametoindex( wine_dbgstr_guid( &guid ) );
         ok( !index, "Got unexpected index %lu for input %s\n", index, wine_dbgstr_guid( &guid ) );
 
-        name = if_indextoname( 0, NULL );
-        ok( name == NULL, "got %s\n", name );
-
-        name = if_indextoname( 0, nameA );
-        ok( name == NULL, "got %p\n", name );
-
-        name = if_indextoname( ~0u, nameA );
-        ok( name == NULL, "got %p\n", name );
-
+        /* if_indextoname */
         nameA[0] = 0;
         name = if_indextoname( row->InterfaceIndex, nameA );
         ConvertInterfaceLuidToNameA( &row->InterfaceLuid, expect_nameA, ARRAY_SIZE(expect_nameA) );
@@ -2266,6 +2223,69 @@ static void test_interface_identifier_conversion(void)
         ok( !strcmp( nameA, expect_nameA ), "mismatch\n" );
     }
     FreeMibTable( table );
+}
+
+static void test_interface_identifier_conversion_failure(void)
+{
+    DWORD ret;
+    WCHAR nameW[IF_MAX_STRING_SIZE + 1];
+    char nameA[IF_MAX_STRING_SIZE + 1], *name;
+    NET_IFINDEX index;
+
+    /* ConvertInterfaceIndexToLuid */
+    ret = ConvertInterfaceIndexToLuid( 0, NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    /* ConvertInterfaceLuidToIndex */
+    ret = ConvertInterfaceLuidToIndex( NULL, NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    ret = ConvertInterfaceLuidToIndex( NULL, &index );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    /* ConvertInterfaceLuidToGuid */
+    ret = ConvertInterfaceLuidToGuid( NULL, NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    /* ConvertInterfaceGuidToLuid */
+    ret = ConvertInterfaceGuidToLuid( NULL, NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    /* ConvertInterfaceLuidToNameW */
+    ret = ConvertInterfaceLuidToNameW( NULL, NULL, 0 );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    ret = ConvertInterfaceLuidToNameW( NULL, nameW, 0 );
+    ok( ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", ret );
+
+    /* ConvertInterfaceLuidToNameA */
+    ret = ConvertInterfaceLuidToNameA( NULL, NULL, 0 );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
+
+    ret = ConvertInterfaceLuidToNameA( NULL, nameA, 0 );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
+
+    /* ConvertInterfaceNameToLuidW */
+    ret = ConvertInterfaceNameToLuidW( NULL, NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %lu\n", ret );
+
+    /* ConvertInterfaceNameToLuidA */
+    ret = ConvertInterfaceNameToLuidA( NULL, NULL );
+    ok( ret == ERROR_INVALID_NAME, "got %lu\n", ret );
+
+    /* if_nametoindex */
+    index = if_nametoindex( NULL );
+    ok( !index, "Got unexpected index %lu\n", index );
+
+    /* if_indextoname */
+    name = if_indextoname( 0, NULL );
+    ok( name == NULL, "expected NULL, got %s\n", name );
+
+    name = if_indextoname( 0, nameA );
+    ok( name == NULL, "expected NULL, got %p\n", name );
+
+    name = if_indextoname( ~0u, nameA );
+    ok( name == NULL, "expected NULL, got %p\n", name );
 }
 
 static void test_GetIfEntry2(void)
@@ -2804,6 +2824,7 @@ START_TEST(iphlpapi)
     test_AllocateAndGetTcpExTableFromStack();
     test_CreateSortedAddressPairs();
     test_interface_identifier_conversion();
+    test_interface_identifier_conversion_failure();
     test_GetIfEntry2();
     test_GetIfTable2();
     test_GetIfTable2Ex();
