@@ -1481,9 +1481,32 @@ static void testGetBestInterface(void)
         bestIfIndex, apiReturn, NO_ERROR );
 }
 
+static void testGetBestRoute(void)
+{
+    DWORD apiReturn;
+    MIB_IPFORWARDROW bestRoute;
+
+    apiReturn = GetBestRoute( INADDR_ANY, 0, &bestRoute );
+    trace( "GetBestRoute([0.0.0.0], 0, [...]) = %lu\n", apiReturn );
+    if (apiReturn == ERROR_NOT_SUPPORTED)
+    {
+        skip( "GetBestRoute is not supported\n" );
+        return;
+    }
+
+    apiReturn = GetBestRoute( INADDR_ANY, 0, NULL );
+    ok( apiReturn == ERROR_INVALID_PARAMETER,
+        "GetBestRoute([0.0.0.0], 0, NULL) returned %lu, expected %d\n",
+        apiReturn, ERROR_INVALID_PARAMETER );
+
+    apiReturn = GetBestRoute( INADDR_LOOPBACK, 0, &bestRoute );
+    ok( apiReturn == NO_ERROR,
+        "GetBestRoute([127.0.0.1], 0, NULL) returned %lu, expected %d\n",
+        apiReturn, NO_ERROR );
+}
+
 /*
 still-to-be-tested 98-onward functions:
-GetBestRoute
 IpReleaseAddress
 IpRenewAddress
 */
@@ -1493,6 +1516,7 @@ static DWORD CALLBACK testWin98Functions(void *p)
   testGetAdaptersInfo();
   testGetNetworkParams();
   testGetBestInterface();
+  testGetBestRoute();
   return 0;
 }
 
