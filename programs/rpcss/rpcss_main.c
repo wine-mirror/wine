@@ -52,7 +52,7 @@ struct registered_class
 static CRITICAL_SECTION registered_classes_cs = { NULL, -1, 0, 0, 0, 0 };
 static struct list registered_classes = LIST_INIT(registered_classes);
 
-HRESULT __cdecl irpcss_server_register(handle_t h, const GUID *clsid, DWORD flags,
+HRESULT __cdecl irpcss_server_register(handle_t h, const GUID *clsid, unsigned int flags,
         PMInterfacePointer object, unsigned int *cookie)
 {
     struct registered_class *entry;
