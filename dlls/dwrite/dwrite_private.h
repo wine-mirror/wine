@@ -687,10 +687,10 @@ extern void release_scriptshaping_cache(struct scriptshaping_cache*) DECLSPEC_HI
 extern struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_fontface *fontface) DECLSPEC_HIDDEN;
 
 extern void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache) DECLSPEC_HIDDEN;
-extern DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD kind, DWORD tag,
-        unsigned int *script_index) DECLSPEC_HIDDEN;
-extern DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWORD kind, DWORD tag,
-        unsigned int script_index, unsigned int *language_index) DECLSPEC_HIDDEN;
+extern unsigned int opentype_layout_find_script(const struct scriptshaping_cache *cache, unsigned int kind,
+        DWORD tag, unsigned int *script_index) DECLSPEC_HIDDEN;
+extern unsigned int opentype_layout_find_language(const struct scriptshaping_cache *cache, unsigned int kind,
+        DWORD tag, unsigned int script_index, unsigned int *language_index) DECLSPEC_HIDDEN;
 extern void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, struct shaping_features *features) DECLSPEC_HIDDEN;
 extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
