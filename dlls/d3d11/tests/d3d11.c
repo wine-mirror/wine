@@ -7422,74 +7422,88 @@ static void test_device_context_state(void)
     refcount = ID3D11VertexShader_Release(tmp_vs);
     ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-    /* context states may be used with other devices instances too */
-    d3d11_device2 = create_device(NULL);
-    ok(!!d3d11_device2, "Failed to create device.\n");
-    hr = ID3D11Device_QueryInterface(d3d11_device2, &IID_ID3D11Device1, (void **)&device2);
-    ok(SUCCEEDED(hr), "Failed to query device interface, hr %#x.\n", hr);
-    ID3D11Device_Release(d3d11_device2);
-    ID3D11Device1_GetImmediateContext1(device2, &context2);
-    ok(!!context2, "Failed to get immediate context.\n");
+    /* context states may be used with other devices instances too
+     *
+     * Or at least, no error is returned right away. Using objects like shaders
+     * from other device instances causes a segfault later on Nvidia Windows
+     * drivers. This suggests the feature tested below is more a bug than a
+     * feature.
+     *
+     * The tests below suggest that a ContextState object stores its own state
+     * for every device it is used with. This isn't entirely true, e.g. the
+     * primitive topology can be transfered between devices, but will cause odd
+     * refcounting behavior afterwards (IAGetPrimitiveTopology will leak 54
+     * references on the context's device for example). */
+    if (0)
+    {
+        d3d11_device2 = create_device(NULL);
+        ok(!!d3d11_device2, "Failed to create device.\n");
+        hr = ID3D11Device_QueryInterface(d3d11_device2, &IID_ID3D11Device1, (void **)&device2);
+        ok(SUCCEEDED(hr), "Failed to query device interface, hr %#x.\n", hr);
+        ID3D11Device_Release(d3d11_device2);
+        ID3D11Device1_GetImmediateContext1(device2, &context2);
+        ok(!!context2, "Failed to get immediate context.\n");
 
-    /* but they track a distinct state on each context */
-    ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, &tmp_context_state);
-    ok(!!tmp_context_state, "Failed to get context state.\n");
-    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
-    ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
-    ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
+        /* but they track a distinct state on each context */
+        ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, &tmp_context_state);
+        ok(!!tmp_context_state, "Failed to get context state.\n");
+        tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+        ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
+        ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
 
-    /* updating context2 vertex shader doesn't update other contexts using the same state */
-    ID3D11DeviceContext1_VSSetShader(context2, vs, NULL, 0);
-    ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
-    ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
-    refcount = ID3D11VertexShader_Release(tmp_vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        /* updating context2 vertex shader doesn't update other contexts using the same state */
+        ID3D11DeviceContext1_VSSetShader(context2, vs, NULL, 0);
+        ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
+        ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
+        refcount = ID3D11VertexShader_Release(tmp_vs);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-    ID3D11DeviceContext1_SwapDeviceContextState(context2, tmp_context_state, &context_state2);
-    refcount = ID3DDeviceContextState_Release(tmp_context_state);
-    ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
-    refcount = ID3DDeviceContextState_Release(context_state2);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
-    ok(context_state2 == context_state, "Got unexpected state pointer.\n");
+        ID3D11DeviceContext1_SwapDeviceContextState(context2, tmp_context_state, &context_state2);
+        refcount = ID3DDeviceContextState_Release(tmp_context_state);
+        ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
+        refcount = ID3DDeviceContextState_Release(context_state2);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ok(context_state2 == context_state, "Got unexpected state pointer.\n");
 
-    /* swapping the default state on context2 effectively clears the vertex shader */
-    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
-    ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
-    ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
+        /* swapping the default state on context2 effectively clears the vertex shader */
+        tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+        ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
+        ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
 
-    ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, &tmp_context_state);
-    ok(!!tmp_context_state, "Failed to get context state.\n");
-    refcount = ID3DDeviceContextState_Release(tmp_context_state);
-    ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
+        ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, &tmp_context_state);
+        ok(!!tmp_context_state, "Failed to get context state.\n");
+        refcount = ID3DDeviceContextState_Release(tmp_context_state);
+        ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
 
-    /* clearing the vertex shader on context doesn't have side effect on context2 */
-    ID3D11DeviceContext1_VSSetShader(context, NULL, NULL, 0);
-    refcount = ID3D11VertexShader_Release(vs2);
-    ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
-    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
-    ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
-    ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
-    refcount = ID3D11VertexShader_Release(tmp_vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        /* clearing the vertex shader on context doesn't have side effect on context2 */
+        ID3D11DeviceContext1_VSSetShader(context, NULL, NULL, 0);
+        refcount = get_refcount(vs2);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+        ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
+        ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
+        refcount = ID3D11VertexShader_Release(tmp_vs);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-    /* even after swapping it again */
-    ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, NULL);
-    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
-    ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
-    ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
-    refcount = ID3D11VertexShader_Release(tmp_vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        /* even after swapping it again */
+        ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, NULL);
+        tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+        ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
+        ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
+        refcount = ID3D11VertexShader_Release(tmp_vs);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-    /* swapping the initial state on context2 doesn't have side effect on context either */
-    ID3D11DeviceContext1_SwapDeviceContextState(context2, previous_context_state, NULL);
-    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
-    ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
-    ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
+        /* swapping the initial state on context2 doesn't have side effect on context either */
+        ID3D11DeviceContext1_SwapDeviceContextState(context2, previous_context_state, NULL);
+        tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+        ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
+        ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
 
-    refcount = ID3D11DeviceContext1_Release(context2);
-    ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
-    refcount = ID3D11Device1_Release(device2);
-    ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+        refcount = ID3D11DeviceContext1_Release(context2);
+        ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+        refcount = ID3D11Device1_Release(device2);
+        ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+    }
 
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &tmp_context_state);
     refcount = ID3DDeviceContextState_Release(previous_context_state);
@@ -8158,6 +8172,7 @@ static void test_device_context_state(void)
     if (hs) ID3D11HullShader_Release(hs);
     ID3D11PixelShader_Release(ps);
     ID3D11GeometryShader_Release(gs);
+    ID3D11VertexShader_Release(vs2);
     ID3D11VertexShader_Release(vs);
     ID3D11Buffer_Release(cb);
     ID3D11ShaderResourceView_Release(srv);
