@@ -2974,18 +2974,17 @@ static BOOL wined3d_texture_gl_load_sysmem(struct wined3d_texture_gl *texture_gl
     sub_resource = &texture_gl->t.sub_resources[sub_resource_idx];
 
     /* We cannot download data from multisample textures directly. */
-    if (wined3d_texture_gl_is_multisample_location(texture_gl, WINED3D_LOCATION_TEXTURE_RGB))
-    {
+    if (wined3d_texture_gl_is_multisample_location(texture_gl, WINED3D_LOCATION_TEXTURE_RGB)
+            || sub_resource->locations & WINED3D_LOCATION_RB_MULTISAMPLE)
         wined3d_texture_load_location(&texture_gl->t, sub_resource_idx, &context_gl->c, WINED3D_LOCATION_RB_RESOLVED);
+
+    if (sub_resource->locations & WINED3D_LOCATION_RB_RESOLVED)
+    {
         texture2d_read_from_framebuffer(&texture_gl->t, sub_resource_idx, &context_gl->c,
                 WINED3D_LOCATION_RB_RESOLVED, dst_location);
         return TRUE;
     }
 
-    if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED))
-        wined3d_texture_load_location(&texture_gl->t, sub_resource_idx, &context_gl->c, WINED3D_LOCATION_TEXTURE_RGB);
-
-    /* Download the sub-resource to system memory. */
     if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
     {
         unsigned int row_pitch, slice_pitch, level;

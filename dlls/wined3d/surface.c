@@ -359,6 +359,9 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     uint8_t *offset;
     unsigned int i;
 
+    TRACE("texture %p, sub_resource_idx %u, context %p, src_location %s, dst_location %s.\n",
+            texture, sub_resource_idx, context, wined3d_debug_location(src_location), wined3d_debug_location(dst_location));
+
     /* dst_location was already prepared by the caller. */
     wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, dst_location);
     offset = data.addr;
@@ -382,10 +385,9 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
                     resource, sub_resource_idx, NULL, 0, src_location);
     }
 
-    /* Select the correct read buffer, and give some debug output.
-     * There is no need to keep track of the current read buffer or reset it,
-     * every part of the code that reads sets the read buffer as desired.
-     */
+    /* Select the correct read buffer, and give some debug output. There is no
+     * need to keep track of the current read buffer or reset it, every part
+     * of the code that reads pixels sets the read buffer as desired. */
     if (src_location != WINED3D_LOCATION_DRAWABLE || wined3d_resource_is_offscreen(resource))
     {
         /* Mapping the primary render target which is not on a swapchain.
