@@ -1517,15 +1517,25 @@ static void test_application_protocol_negotiation(void)
     closesocket(sock);
 }
 
+static void init_dtls_output_buffer(SecBufferDesc *buffer)
+{
+    buffer->pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    buffer->pBuffers[0].cbBuffer = 1420;
+    buffer->pBuffers[1].BufferType = SECBUFFER_ALERT;
+    buffer->pBuffers[1].cbBuffer = 1024;
+    if (!buffer->pBuffers[1].pvBuffer)
+        buffer->pBuffers[1].pvBuffer = HeapAlloc( GetProcessHeap(), 0, 1024 );
+}
+
 static void test_dtls(void)
 {
     SECURITY_STATUS status;
     TimeStamp exp;
     SCHANNEL_CRED cred;
     CredHandle cred_handle;
-    CtxtHandle ctx_handle;
+    CtxtHandle ctx_handle, ctx_handle2;
     SecBufferDesc buffers[3];
-    ULONG flags_req, flags_ret, attr;
+    ULONG flags_req, flags_ret, attr, prev_buf_len;
 
     init_cred( &cred );
     cred.grbitEnabledProtocols = SP_PROT_DTLS_CLIENT | SP_PROT_DTLS1_2_CLIENT;
@@ -1549,11 +1559,7 @@ static void test_dtls(void)
     buffers[0].pBuffers[0].cbBuffer = 2;
 
     init_buffers( &buffers[1], 2, 2048 );
-    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
-    buffers[1].pBuffers[0].cbBuffer = 1420;
-    buffers[1].pBuffers[1].BufferType = SECBUFFER_ALERT;
-    buffers[1].pBuffers[1].cbBuffer = 1024;
-    buffers[1].pBuffers[1].pvBuffer = HeapAlloc( GetProcessHeap(), 0, 1024 );
+    init_dtls_output_buffer(&buffers[1]);
 
     attr = 0;
     exp.LowPart = exp.HighPart = 0xdeadbeef;
@@ -1566,22 +1572,57 @@ static void test_dtls(void)
     ok( attr == flags_ret, "got %08x\n", attr );
     ok( !exp.LowPart, "got %08x\n", exp.LowPart );
     ok( !exp.HighPart, "got %08x\n", exp.HighPart );
+    ok( buffers[1].pBuffers[1].BufferType == SECBUFFER_ALERT, "Expected buffertype SECBUFFER_ALERT, got %#x\n", buffers[1].pBuffers[1].BufferType);
+    todo_wine ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
+    prev_buf_len = buffers[1].pBuffers[0].cbBuffer;
 
+    /*
+     * If we don't set the SECBUFFER_ALERT cbBuffer value, we will get
+     * SEC_E_INSUFFICIENT_MEMORY.
+     */
     buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
     buffers[1].pBuffers[0].cbBuffer = 1420;
 
     attr = 0;
     exp.LowPart = exp.HighPart = 0xdeadbeef;
+    ctx_handle2.dwLower = ctx_handle2.dwUpper = 0xdeadbeef;
     status = InitializeSecurityContextA( &cred_handle, &ctx_handle, (SEC_CHAR *)"winetest", flags_req, 0, 16, NULL, 0,
-                                         &ctx_handle, &buffers[1], &attr, &exp );
+                                         &ctx_handle2, &buffers[1], &attr, &exp );
     ok( status == SEC_E_INSUFFICIENT_MEMORY, "got %08x\n", status );
 
     flags_ret = ISC_RET_CONFIDENTIALITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT;
     todo_wine ok( attr == flags_ret, "got %08x\n", attr );
     ok( !exp.LowPart, "got %08x\n", exp.LowPart );
     ok( !exp.HighPart, "got %08x\n", exp.HighPart );
+    ok( ctx_handle2.dwLower == 0xdeadbeef, "Did not expect dwLower to be set on new context\n");
+    ok( ctx_handle2.dwUpper == 0xdeadbeef, "Did not expect dwUpper to be set on new context\n");
+
+    /* No new input buffer value, just repeats the same behavior as before. */
+    init_dtls_output_buffer(&buffers[1]);
+
+    attr = 0;
+    exp.LowPart = exp.HighPart = 0xdeadbeef;
+    ctx_handle2.dwLower = ctx_handle2.dwUpper = 0xdeadbeef;
+    status = InitializeSecurityContextA( &cred_handle, &ctx_handle, (SEC_CHAR *)"winetest", flags_req, 0, 16, NULL, 0,
+                                         &ctx_handle2, &buffers[1], &attr, &exp );
+    todo_wine ok( status == SEC_I_CONTINUE_NEEDED, "got %08x\n", status );
+
+    flags_ret = ISC_RET_MANUAL_CRED_VALIDATION | ISC_RET_STREAM | ISC_RET_EXTENDED_ERROR | ISC_RET_DATAGRAM |
+                ISC_RET_USED_SUPPLIED_CREDS | ISC_RET_CONFIDENTIALITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT;
+    todo_wine ok( attr == flags_ret, "got %08x\n", attr );
+    todo_wine ok( exp.LowPart, "got %08x\n", exp.LowPart );
+    todo_wine ok( exp.HighPart, "got %08x\n", exp.HighPart );
+    ok( buffers[1].pBuffers[1].BufferType == SECBUFFER_ALERT, "Expected buffertype SECBUFFER_ALERT, got %#x\n", buffers[1].pBuffers[1].BufferType);
+    todo_wine ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
+    todo_wine ok( ctx_handle.dwLower == ctx_handle2.dwLower, "dwLower mismatch, expected %#lx, got %#lx\n", ctx_handle.dwLower, ctx_handle2.dwLower);
+    todo_wine ok( ctx_handle.dwUpper == ctx_handle2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", ctx_handle.dwUpper, ctx_handle2.dwUpper);
+
+    /* With no new input buffer, output buffer length should match prior call. */
+    todo_wine ok(buffers[1].pBuffers[0].cbBuffer == prev_buf_len, "Output buffer size mismatch, expected %#x, got %#x\n",
+            prev_buf_len, buffers[1].pBuffers[0].cbBuffer);
 
     free_buffers( &buffers[0] );
+    HeapFree(GetProcessHeap(), 0, buffers[1].pBuffers[1].pvBuffer);
     free_buffers( &buffers[1] );
     DeleteSecurityContext( &ctx_handle );
     FreeCredentialsHandle( &cred_handle );
