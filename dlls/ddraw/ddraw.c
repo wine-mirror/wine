@@ -559,7 +559,7 @@ static HRESULT ddraw_set_focus_window(struct ddraw *ddraw, HWND window)
 }
 
 static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
-        BOOL windowed, struct wined3d_swapchain **wined3d_swapchain)
+        DWORD cooplevel, struct wined3d_swapchain **wined3d_swapchain)
 {
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_display_mode mode;
@@ -582,10 +582,10 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
     swapchain_desc.backbuffer_count = 1;
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     swapchain_desc.device_window = window;
-    swapchain_desc.windowed = windowed;
+    swapchain_desc.windowed = !(cooplevel & DDSCL_FULLSCREEN);
     swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH | WINED3D_SWAPCHAIN_IMPLICIT;
 
-    if (window != GetForegroundWindow())
+    if ((cooplevel & DDSCL_NOWINDOWCHANGES) || window != GetForegroundWindow())
         swapchain_desc.flags |= WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES;
 
     if (ddraw->flags & DDRAW_NO3D)
@@ -642,7 +642,7 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
     return DD_OK;
 }
 
-static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL windowed)
+static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, DWORD cooplevel)
 {
     HRESULT hr;
 
@@ -652,7 +652,7 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
         return E_FAIL;
     }
 
-    if (FAILED(hr = ddraw_attach_d3d_device(ddraw, window, windowed, &ddraw->wined3d_swapchain)))
+    if (FAILED(hr = ddraw_attach_d3d_device(ddraw, window, cooplevel, &ddraw->wined3d_swapchain)))
     {
         ERR("Failed to create swapchain, hr %#x.\n", hr);
         return hr;
@@ -778,7 +778,7 @@ static HRESULT WINAPI ddraw1_RestoreDisplayMode(IDirectDraw *iface)
  * Unsure about this: DDSCL_FPUSETUP
  *
  * These don't seem very important for wine:
- *  DDSCL_ALLOWREBOOT, DDSCL_NOWINDOWCHANGES, DDSCL_ALLOWMODEX
+ *  DDSCL_ALLOWREBOOT, DDSCL_ALLOWMODEX
  *
  * Returns:
  *  DD_OK if the cooperative level was set successfully
@@ -947,7 +947,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         ddraw_destroy_swapchain(ddraw);
     }
 
-    if (FAILED(hr = ddraw_create_swapchain(ddraw, window, !(cooplevel & DDSCL_FULLSCREEN))))
+    if (FAILED(hr = ddraw_create_swapchain(ddraw, window, cooplevel)))
         ERR("Failed to create swapchain, hr %#x.\n", hr);
 
     if (restore_state)
