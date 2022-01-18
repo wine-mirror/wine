@@ -1304,6 +1304,8 @@ static HRESULT d3d12_swapchain_create_user_buffers(struct d3d12_swapchain *swapc
     image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT
             | VK_IMAGE_USAGE_TRANSFER_DST_BIT
             | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (swapchain->desc.BufferUsage & DXGI_USAGE_SHADER_INPUT)
+            image_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_info.queueFamilyIndexCount = 0;
     image_info.pQueueFamilyIndices = NULL;
@@ -1794,6 +1796,12 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     usage |= surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     if (!(usage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) || !(usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT))
         WARN("Transfer not supported for swapchain images.\n");
+    if (swapchain->desc.BufferUsage & DXGI_USAGE_SHADER_INPUT)
+    {
+        usage |= surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_SAMPLED_BIT;
+        if (!(usage & VK_IMAGE_USAGE_SAMPLED_BIT))
+            WARN("Sampling not supported for swapchain images.\n");
+    }
 
     vk_swapchain_desc.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     vk_swapchain_desc.pNext = NULL;
@@ -3087,8 +3095,8 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         IDXGIOutput_Release(output);
     }
 
-    if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)
-        FIXME("Ignoring buffer usage %#x.\n", swapchain_desc->BufferUsage);
+    if (swapchain_desc->BufferUsage & ~(DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT))
+        FIXME("Ignoring buffer usage %#x.\n", swapchain_desc->BufferUsage & ~(DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT));
     if (swapchain_desc->Scaling != DXGI_SCALING_STRETCH && swapchain_desc->Scaling != DXGI_SCALING_NONE)
         FIXME("Ignoring scaling %#x.\n", swapchain_desc->Scaling);
     if (swapchain_desc->AlphaMode && swapchain_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
