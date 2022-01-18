@@ -3598,11 +3598,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState(ID3D11Device
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct d3d_rasterizer_state *object;
+    D3D11_RASTERIZER_DESC1 desc1;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, rasterizer_state %p.\n", iface, desc, rasterizer_state);
 
-    if (FAILED(hr = d3d_rasterizer_state_create(device, desc, &object)))
+    if (!desc)
+        return E_INVALIDARG;
+
+    memcpy(&desc1, desc, sizeof(*desc));
+    desc1.ForcedSampleCount = 0;
+
+    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc1, &object)))
         return hr;
 
     *rasterizer_state = (ID3D11RasterizerState *)&object->ID3D11RasterizerState1_iface;
@@ -4210,9 +4217,21 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState1(ID3D11Device2 *i
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState1(ID3D11Device2 *iface,
         const D3D11_RASTERIZER_DESC1 *desc, ID3D11RasterizerState1 **state)
 {
-    FIXME("iface %p, desc %p, state %p stub!\n", iface, desc, state);
+    struct d3d_device *device = impl_from_ID3D11Device2(iface);
+    struct d3d_rasterizer_state *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, state %p.\n", iface, desc, state);
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = d3d_rasterizer_state_create(device, desc, &object)))
+        return hr;
+
+    *state = &object->ID3D11RasterizerState1_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Device2 *iface, UINT flags,
@@ -6239,11 +6258,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_rasterizer_state *object;
+    D3D11_RASTERIZER_DESC1 desc1;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, rasterizer_state %p.\n", iface, desc, rasterizer_state);
 
-    if (FAILED(hr = d3d_rasterizer_state_create(device, (const D3D11_RASTERIZER_DESC *)desc, &object)))
+    if (!desc)
+        return E_INVALIDARG;
+
+    memcpy(&desc1, desc, sizeof(*desc));
+    desc1.ForcedSampleCount = 0;
+
+    if (FAILED(hr = d3d_rasterizer_state_create(device, &desc1, &object)))
         return hr;
 
     *rasterizer_state = &object->ID3D10RasterizerState_iface;
@@ -6779,8 +6805,8 @@ static int d3d_depthstencil_state_compare(const void *key, const struct wine_rb_
 
 static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
-    const D3D11_RASTERIZER_DESC *ka = key;
-    const D3D11_RASTERIZER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_rasterizer_state, entry)->desc;
+    const D3D11_RASTERIZER_DESC1 *ka = key;
+    const D3D11_RASTERIZER_DESC1 *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_rasterizer_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }

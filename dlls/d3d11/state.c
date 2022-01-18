@@ -958,7 +958,7 @@ static void STDMETHODCALLTYPE d3d11_rasterizer_state_GetDesc(ID3D11RasterizerSta
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = state->desc;
+    memcpy(desc, &state->desc, sizeof(*desc));
 }
 
 static void STDMETHODCALLTYPE d3d11_rasterizer_state_GetDesc1(ID3D11RasterizerState1 *iface,
@@ -968,8 +968,7 @@ static void STDMETHODCALLTYPE d3d11_rasterizer_state_GetDesc1(ID3D11RasterizerSt
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    memcpy(desc, &state->desc, sizeof(state->desc));
-    desc->ForcedSampleCount = 0;
+    *desc = state->desc;
 }
 
 static const struct ID3D11RasterizerState1Vtbl d3d11_rasterizer_state_vtbl =
@@ -1122,7 +1121,7 @@ static enum wined3d_cull wined3d_cull_from_d3d11(D3D11_CULL_MODE mode)
 }
 
 static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
-        const D3D11_RASTERIZER_DESC *desc)
+        const D3D11_RASTERIZER_DESC1 *desc)
 {
     struct wined3d_rasterizer_state_desc wined3d_desc;
     HRESULT hr;
@@ -1157,6 +1156,13 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
             FIXME("Ignoring MultisampleEnable %#x.\n", desc->MultisampleEnable);
     }
 
+    if (desc->ForcedSampleCount)
+    {
+        static unsigned int once;
+        if (!once++)
+            FIXME("Ignoring ForcedSampleCount %#x.\n", desc->ForcedSampleCount);
+    }
+
     /* We cannot fail after creating a wined3d_rasterizer_state object. It
      * would lead to double free. */
     if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device, &wined3d_desc,
@@ -1173,15 +1179,12 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     return S_OK;
 }
 
-HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTERIZER_DESC *desc,
+HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTERIZER_DESC1 *desc,
         struct d3d_rasterizer_state **state)
 {
     struct d3d_rasterizer_state *object;
     struct wine_rb_entry *entry;
     HRESULT hr;
-
-    if (!desc)
-        return E_INVALIDARG;
 
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->rasterizer_states, desc)))

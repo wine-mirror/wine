@@ -5586,6 +5586,13 @@ static void test_create_rasterizer_state(void)
 
         ID3D11RasterizerState1_Release(state_ex1);
 
+        memcpy(&desc1, &desc, sizeof(desc));
+        desc1.ForcedSampleCount = 0;
+        hr = ID3D11Device1_CreateRasterizerState1(device1, &desc1, &state_ex1);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ID3D11RasterizerState1_Release(state_ex1);
+
         ID3D11Device1_Release(device1);
     }
 
