@@ -583,8 +583,10 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = windowed;
-    swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH
-            | WINED3D_SWAPCHAIN_IMPLICIT | WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES;
+    swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH | WINED3D_SWAPCHAIN_IMPLICIT;
+
+    if (window != GetForegroundWindow())
+        swapchain_desc.flags |= WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES;
 
     if (ddraw->flags & DDRAW_NO3D)
         return wined3d_swapchain_create(ddraw->wined3d_device, &swapchain_desc,
