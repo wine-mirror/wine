@@ -1094,6 +1094,8 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
 
             IMFMediaTypeHandler_Release(type_handler);
         }
+
+        IMFStreamDescriptor_Release(sd);
     }
 
     if (!sd_video && !sd_audio)
