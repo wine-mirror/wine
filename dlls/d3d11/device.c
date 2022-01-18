@@ -2283,7 +2283,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_RSGetState(ID3D11DeviceContex
     if ((wined3d_state = wined3d_device_context_get_rasterizer_state(context->wined3d_context)))
     {
         rasterizer_state_impl = wined3d_rasterizer_state_get_parent(wined3d_state);
-        ID3D11RasterizerState_AddRef(*rasterizer_state = &rasterizer_state_impl->ID3D11RasterizerState_iface);
+        *rasterizer_state = (ID3D11RasterizerState *)&rasterizer_state_impl->ID3D11RasterizerState1_iface;
+        ID3D11RasterizerState_AddRef(*rasterizer_state);
     }
     else
     {
@@ -3604,7 +3605,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState(ID3D11Device
     if (FAILED(hr = d3d_rasterizer_state_create(device, desc, &object)))
         return hr;
 
-    *rasterizer_state = &object->ID3D11RasterizerState_iface;
+    *rasterizer_state = (ID3D11RasterizerState *)&object->ID3D11RasterizerState1_iface;
 
     return S_OK;
 }
@@ -4950,7 +4951,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device1 *iface, ID3D
 
     rasterizer_state_object = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state);
     d3d11_device_context_RSSetState(&device->immediate_context.ID3D11DeviceContext1_iface,
-            rasterizer_state_object ? &rasterizer_state_object->ID3D11RasterizerState_iface : NULL);
+            rasterizer_state_object ? (ID3D11RasterizerState *)&rasterizer_state_object->ID3D11RasterizerState1_iface : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,

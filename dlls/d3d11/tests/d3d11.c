@@ -5507,6 +5507,7 @@ static void test_create_rasterizer_state(void)
     D3D10_RASTERIZER_DESC d3d10_desc;
     D3D11_RASTERIZER_DESC desc;
     ID3D11Device *device, *tmp;
+    ID3D11Device1 *device1;
     HRESULT hr;
 
     if (!(device = create_device(NULL)))
@@ -5568,6 +5569,24 @@ static void test_create_rasterizer_state(void)
 
         refcount = ID3D10RasterizerState_Release(d3d10_rast_state);
         ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    }
+
+    if (ID3D11Device_QueryInterface(device, &IID_ID3D11Device1, (void **)&device1) == S_OK)
+    {
+        ID3D11RasterizerState1 *state_ex1;
+        D3D11_RASTERIZER_DESC1 desc1;
+
+        hr = ID3D11RasterizerState_QueryInterface(rast_state1, &IID_ID3D11RasterizerState1, (void **)&state_ex1);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        memset(&desc1, 0xcc, sizeof(desc1));
+        ID3D11RasterizerState1_GetDesc1(state_ex1, &desc1);
+        ok(!memcmp(&desc1, &desc, sizeof(desc)), "D3D11 desc didn't match.\n");
+        ok(!desc1.ForcedSampleCount, "Got forced sample count %u.\n", desc1.ForcedSampleCount);
+
+        ID3D11RasterizerState1_Release(state_ex1);
+
+        ID3D11Device1_Release(device1);
     }
 
     refcount = ID3D11RasterizerState_Release(rast_state2);

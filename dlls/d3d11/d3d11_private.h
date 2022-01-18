@@ -461,7 +461,7 @@ struct d3d_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
 /* ID3D11RasterizerState, ID3D10RasterizerState */
 struct d3d_rasterizer_state
 {
-    ID3D11RasterizerState ID3D11RasterizerState_iface;
+    ID3D11RasterizerState1 ID3D11RasterizerState1_iface;
     ID3D10RasterizerState ID3D10RasterizerState_iface;
     LONG refcount;
 
