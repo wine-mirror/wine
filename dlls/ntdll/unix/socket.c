@@ -429,8 +429,9 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 #if defined(IP_TOS)
                     case IP_TOS:
                     {
+                        INT tos = *(unsigned char *)CMSG_DATA(cmsg_unix);
                         ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_TOS, ptr, &ctlsize,
-                                                    CMSG_DATA(cmsg_unix), sizeof(INT) );
+                                                    &tos, sizeof(INT) );
                         if (!ptr) goto error;
                         break;
                     }
