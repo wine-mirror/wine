@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.2.201"
+VK_XML_VERSION = "1.2.203"
 WINE_VK_VERSION = (1, 2)
 
 # Filenames to create.
@@ -109,6 +109,7 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_EXT_external_memory_dma_buf",
     "VK_EXT_image_drm_format_modifier",
     "VK_EXT_physical_device_drm",
+    "VK_GOOGLE_surfaceless_query",
     "VK_KHR_external_fence_fd",
     "VK_KHR_external_memory_fd",
     "VK_KHR_external_semaphore_fd",

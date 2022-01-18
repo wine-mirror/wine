@@ -3632,6 +3632,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM:
+        {
+            const VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM *in = (const VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM *)in_header;
+            VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->fragmentDensityMapOffset = in->fragmentDensityMapOffset;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES:
         {
             const VkPhysicalDeviceScalarBlockLayoutFeatures *in = (const VkPhysicalDeviceScalarBlockLayoutFeatures *)in_header;
@@ -4678,6 +4694,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->rasterizationOrderColorAttachmentAccess = in->rasterizationOrderColorAttachmentAccess;
             out->rasterizationOrderDepthAttachmentAccess = in->rasterizationOrderDepthAttachmentAccess;
             out->rasterizationOrderStencilAttachmentAccess = in->rasterizationOrderStencilAttachmentAccess;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV:
+        {
+            const VkPhysicalDeviceLinearColorAttachmentFeaturesNV *in = (const VkPhysicalDeviceLinearColorAttachmentFeaturesNV *)in_header;
+            VkPhysicalDeviceLinearColorAttachmentFeaturesNV *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->linearColorAttachment = in->linearColorAttachment;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -9240,6 +9272,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_geometry_shader_passthrough",
     "VK_NV_glsl_shader",
     "VK_NV_inherited_viewport_scissor",
+    "VK_NV_linear_color_attachment",
     "VK_NV_mesh_shader",
     "VK_NV_ray_tracing",
     "VK_NV_ray_tracing_motion_blur",
@@ -9252,6 +9285,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_shading_rate_image",
     "VK_NV_viewport_array2",
     "VK_NV_viewport_swizzle",
+    "VK_QCOM_fragment_density_map_offset",
     "VK_QCOM_render_pass_shader_resolve",
     "VK_QCOM_render_pass_store_ops",
     "VK_QCOM_render_pass_transform",
