@@ -970,6 +970,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
 
     if (!(cooplevel & DDSCL_EXCLUSIVE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
+        /* When going from exclusive mode to normal, ddraw removes the
+           topmost bit unless the DDSCL_NOWINDOWCHANGES flag is set in
+           this call that sets it to normal, not in the old coop level. */
+        if (!(cooplevel & DDSCL_NOWINDOWCHANGES))
+            SetWindowPos(window, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
         if (restore_mode_on_normal && FAILED(ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface)))
             ERR("RestoreDisplayMode failed\n");
         ClipCursor(NULL);

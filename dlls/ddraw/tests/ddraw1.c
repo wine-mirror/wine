@@ -2701,7 +2701,7 @@ static void test_window_style(void)
     tmp = GetWindowLongA(window, GWL_STYLE);
     ok(tmp == style, "Expected window style %#x, got %#x.\n", style, tmp);
     tmp = GetWindowLongA(window, GWL_EXSTYLE);
-    todo_wine ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
+    ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
 
     ShowWindow(window, SW_SHOW);
     ret = SetForegroundWindow(GetDesktopWindow());
@@ -2763,7 +2763,7 @@ static void test_window_style(void)
     tmp = GetWindowLongA(window, GWL_STYLE);
     ok(tmp == style, "Expected window style %#x, got %#x.\n", style, tmp);
     tmp = GetWindowLongA(window, GWL_EXSTYLE);
-    todo_wine ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
+    ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
 
     ShowWindow(window, SW_SHOW);
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
