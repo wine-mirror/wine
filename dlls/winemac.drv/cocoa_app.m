@@ -1864,7 +1864,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
                     break;
                 }
             }
-            if (!process && ![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
+            if (!process && ![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noForeground)
                 [self windowGotFocus:windowBroughtForward];
         }
 

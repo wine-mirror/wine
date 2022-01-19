@@ -378,7 +378,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @interface WineWindow ()
 
 @property (readwrite, nonatomic) BOOL disabled;
-@property (readwrite, nonatomic) BOOL noActivate;
+@property (readwrite, nonatomic) BOOL noForeground;
 @property (readwrite, nonatomic) BOOL floating;
 @property (readwrite, nonatomic) BOOL drawnSinceShown;
 @property (readwrite, nonatomic) BOOL closing;
@@ -942,7 +942,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     static WineWindow* causing_becomeKeyWindow;
 
-    @synthesize disabled, noActivate, floating, fullscreen, fakingClose, closing, latentParentWindow, hwnd, queue;
+    @synthesize disabled, noForeground, floating, fullscreen, fakingClose, closing, latentParentWindow, hwnd, queue;
     @synthesize drawnSinceShown;
     @synthesize surface, surface_mutex;
     @synthesize shapeChangedSinceLastDraw;
@@ -1232,7 +1232,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         NSWindowCollectionBehavior behavior;
 
         self.disabled = state->disabled;
-        self.noActivate = state->no_activate;
+        self.noForeground = state->no_foreground;
 
         if (self.floating != state->floating)
         {
@@ -2338,7 +2338,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (BOOL) canBecomeKeyWindow
     {
         if (causing_becomeKeyWindow == self) return YES;
-        if (self.disabled || self.noActivate) return NO;
+        if (self.disabled || self.noForeground) return NO;
         if ([self isKeyWindow]) return YES;
 
         // If a window's collectionBehavior says it participates in cycling,
@@ -2406,7 +2406,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         BOOL ret = [super validateMenuItem:menuItem];
 
         if ([menuItem action] == @selector(makeKeyAndOrderFront:))
-            ret = [self isKeyWindow] || (!self.disabled && !self.noActivate);
+            ret = [self isKeyWindow] || (!self.disabled && !self.noForeground);
         if ([menuItem action] == @selector(toggleFullScreen:) && (self.disabled || maximized))
             ret = NO;
 
@@ -2421,7 +2421,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self orderBelow:nil orAbove:nil activate:NO];
         [[self ancestorWineWindow] postBroughtForwardEvent];
 
-        if (![self isKeyWindow] && !self.disabled && !self.noActivate)
+        if (![self isKeyWindow] && !self.disabled && !self.noForeground)
             [[WineApplicationController sharedController] windowGotFocus:self];
     }
 
@@ -2815,7 +2815,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if (![self parentWindow])
             [self postBroughtForwardEvent];
 
-        if (!self.disabled && !self.noActivate)
+        if (!self.disabled && !self.noForeground)
         {
             causing_becomeKeyWindow = self;
             [self makeKeyWindow];

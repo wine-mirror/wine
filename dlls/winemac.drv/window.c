@@ -90,17 +90,17 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 
 
 /*******************************************************************
- *              can_activate_window
+ *              can_window_become_foreground
  *
- * Check if we can activate the specified window.
+ * Check if the specified window can become the foreground/key
+ * window.
  */
-static inline BOOL can_activate_window(HWND hwnd)
+static inline BOOL can_window_become_foreground(HWND hwnd)
 {
     LONG style = GetWindowLongW(hwnd, GWL_STYLE);
 
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
-    if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOACTIVATE) return FALSE;
     if (hwnd == GetDesktopWindow()) return FALSE;
     return !(style & WS_DISABLED);
 }
@@ -115,7 +115,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
 {
     memset(state, 0, sizeof(*state));
     state->disabled = (style & WS_DISABLED) != 0;
-    state->no_activate = !can_activate_window(data->hwnd);
+    state->no_foreground = !can_window_become_foreground(data->hwnd);
     state->floating = (ex_style & WS_EX_TOPMOST) != 0;
     state->excluded_by_expose = state->excluded_by_cycle =
         (!(ex_style & WS_EX_APPWINDOW) &&
@@ -2347,7 +2347,7 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
           hwnd, event->window, event->window_got_focus.serial, IsWindowEnabled(hwnd),
           IsWindowVisible(hwnd), style, GetFocus(), GetActiveWindow(), GetForegroundWindow());
 
-    if (can_activate_window(hwnd) && !(style & WS_MINIMIZE))
+    if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
         /* simulate a mouse click on the menu to find out
          * whether the window wants to be activated */
@@ -2570,7 +2570,7 @@ void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
     data->drag_event = drag_event;
     release_win_data(data);
 
-    if (!event->window_drag_begin.no_activate && can_activate_window(hwnd) && GetForegroundWindow() != hwnd)
+    if (!event->window_drag_begin.no_activate && can_window_become_foreground(hwnd) && GetForegroundWindow() != hwnd)
     {
         /* ask whether the window wants to be activated */
         LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE, (WPARAM)GetAncestor(hwnd, GA_ROOT),

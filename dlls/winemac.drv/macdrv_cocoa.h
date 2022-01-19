@@ -542,7 +542,7 @@ struct macdrv_window_features {
 
 struct macdrv_window_state {
     unsigned int    disabled:1;
-    unsigned int    no_activate:1;
+    unsigned int    no_foreground:1;
     unsigned int    floating:1;
     unsigned int    excluded_by_expose:1;
     unsigned int    excluded_by_cycle:1;
