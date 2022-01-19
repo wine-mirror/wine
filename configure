@@ -800,7 +800,6 @@ ac_ct_AR
 AR
 BISON
 FLEX
-api_manext
 SED_CMD
 RUNTESTFLAGS
 MAKEDEP
@@ -6738,8 +6737,6 @@ MAKEDEP=$wine_makedep
 RUNTESTFLAGS="-q -P wine"
 
 SED_CMD="LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@dlldir@,\${dlldir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"
-
-api_manext=3w
 
 
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
@@ -22835,11 +22832,7 @@ fi
 
 
 wine_fn_append_rule "distclean:: clean
-	rm -rf autom4te.cache documentation/html documentation/api-guide documentation/api-guide-xml documentation/man\$(api_manext)"
-
-
-wine_fn_append_rule "install-manpages:: manpages
-	for i in documentation/man\$(api_manext)/*.\$(api_manext); do ${wine_srcdir}tools/install-sh -m 644 \$(INSTALL_DATA_FLAGS) \$\$i \$(DESTDIR)\$(mandir)/\$\$i; done"
+	rm -rf autom4te.cache"
 
 
 wine_fn_append_rule "dlls/ntdll/unix/version.c: dummy
@@ -23557,10 +23550,6 @@ wine_fn_output_makefile ()
 # uninstall:       uninstall everything
 # ctags:           create a tags file for vim and others.
 # etags:           create a TAGS file for Emacs.
-# manpages:        compile manpages for Wine API
-# htmlpages:       compile html pages for Wine API
-# sgmlpages:       compile sgml source for the Wine API Guide
-# xmlpages:        compile xml source for the Wine API Guide
 
 SHELL = $SHELL
 PATH_SEPARATOR = $PATH_SEPARATOR
@@ -23633,7 +23622,6 @@ toolsdir = $toolsdir
 MAKEDEP = $MAKEDEP
 RUNTESTFLAGS = $RUNTESTFLAGS
 SED_CMD = $SED_CMD
-api_manext = $api_manext
 FLEX = $FLEX
 BISON = $BISON
 AR = $AR

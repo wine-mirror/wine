@@ -250,7 +250,6 @@ AC_SUBST(toolsdir,[$wine_cv_toolsdir])
 AC_SUBST(MAKEDEP,[$wine_makedep])
 AC_SUBST(RUNTESTFLAGS,["-q -P wine"])
 AC_SUBST(SED_CMD,["LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@dlldir@,\${dlldir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"])
-AC_SUBST(api_manext,[3w])
 
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
@@ -3692,10 +3691,6 @@ AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 # uninstall:       uninstall everything
 # ctags:           create a tags file for vim and others.
 # etags:           create a TAGS file for Emacs.
-# manpages:        compile manpages for Wine API
-# htmlpages:       compile html pages for Wine API
-# sgmlpages:       compile sgml source for the Wine API Guide
-# xmlpages:        compile xml source for the Wine API Guide
 
 m4_set_foreach([_AC_SUBST_VARS],[var],[var = $var
 ])$SET_MAKE
@@ -3801,13 +3796,7 @@ dnl Rules for cleaning
 
 WINE_APPEND_RULE(
 [distclean:: clean
-	rm -rf autom4te.cache documentation/html documentation/api-guide documentation/api-guide-xml documentation/man\$(api_manext)])
-
-dnl Rules for API documentation
-
-WINE_APPEND_RULE(
-[install-manpages:: manpages
-	for i in documentation/man\$(api_manext)/*.\$(api_manext); do ${wine_srcdir}tools/install-sh -m 644 \$(INSTALL_DATA_FLAGS) \$\$i \$(DESTDIR)\$(mandir)/\$\$i; done])
+	rm -rf autom4te.cache])
 
 dnl Rules for generated source files
 

@@ -146,7 +146,6 @@ static const char *tools_dir;
 static const char *tools_ext;
 static const char *exe_ext;
 static const char *dll_ext;
-static const char *man_ext;
 static const char *host_cpu;
 static const char *pe_dir;
 static const char *so_dir;
@@ -215,7 +214,6 @@ struct makefile
     struct strarray unixobj_files;
     struct strarray res_files;
     struct strarray font_files;
-    struct strarray c2man_files;
     struct strarray debug_files;
     struct strarray dlldata_files;
     struct strarray implib_files;
@@ -3020,20 +3018,17 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output_filename( "$(CROSSCFLAGS)" );
         output( "\n" );
     }
-    if (strendswith( source->name, ".c" ) && !(source->file->flags & FLAG_GENERATED))
+    if (make->testdll && !is_dll_src && strendswith( source->name, ".c" ) &&
+        !(source->file->flags & FLAG_GENERATED))
     {
-        strarray_add( &make->c2man_files, source->filename );
-        if (make->testdll && !is_dll_src)
-        {
-            strarray_add( &make->test_files, obj );
-            strarray_add( &make->ok_files, strmake( "%s.ok", obj ));
-            output( "%s.ok:\n", obj_dir_path( make, obj ));
-            output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s%s %s && touch $@\n",
-                    cmd_prefix( "TEST" ),
-                    root_src_dir_path( "tools/runtest" ), make->testdll,
-                    obj_dir_path( make, replace_extension( make->testdll, ".dll", "_test.exe" )),
-                    make->is_cross ? "" : dll_ext, obj );
-        }
+        strarray_add( &make->test_files, obj );
+        strarray_add( &make->ok_files, strmake( "%s.ok", obj ));
+        output( "%s.ok:\n", obj_dir_path( make, obj ));
+        output( "\t%s%s $(RUNTESTFLAGS) -T . -M %s -p %s%s %s && touch $@\n",
+                cmd_prefix( "TEST" ),
+                root_src_dir_path( "tools/runtest" ), make->testdll,
+                obj_dir_path( make, replace_extension( make->testdll, ".dll", "_test.exe" )),
+                make->is_cross ? "" : dll_ext, obj );
     }
     if (need_obj) output_filename( strmake( "%s.o", obj_dir_path( make, obj )));
     if (need_cross) output_filename( strmake( "%s.cross.o", obj_dir_path( make, obj )));
@@ -3085,51 +3080,6 @@ static char *get_unix_lib_name( struct makefile *make )
         return strmake( "%s%s", get_base_name( make->module ), dll_ext );
     }
     return NULL;
-}
-
-
-/*******************************************************************
- *         output_man_pages
- */
-static void output_man_pages( struct makefile *make )
-{
-    if (make->c2man_files.count)
-    {
-        char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
-
-        output( "manpages::\n" );
-        output( "\t%s -w %s", root_src_dir_path( "tools/c2man.pl" ), spec_file );
-        output_filename( strmake( "-R%s", root_src_dir_path( "" )));
-        output_filename( strmake( "-I%s", root_src_dir_path( "include" )));
-        output_filename( strmake( "-o documentation/man%s", man_ext ));
-        output_filenames( make->c2man_files );
-        output( "\n" );
-        output( "htmlpages::\n" );
-        output( "\t%s -Th -w %s", root_src_dir_path( "tools/c2man.pl" ), spec_file );
-        output_filename( strmake( "-R%s", root_src_dir_path( "" )));
-        output_filename( strmake( "-I%s", root_src_dir_path( "include" )));
-        output_filename( "-o documentation/html" );
-        output_filenames( make->c2man_files );
-        output( "\n" );
-        output( "sgmlpages::\n" );
-        output( "\t%s -Ts -w %s", root_src_dir_path( "tools/c2man.pl" ), spec_file );
-        output_filename( strmake( "-R%s", root_src_dir_path( "" )));
-        output_filename( strmake( "-I%s", root_src_dir_path( "include" )));
-        output_filename( "-o documentation/api-guide" );
-        output_filenames( make->c2man_files );
-        output( "\n" );
-        output( "xmlpages::\n" );
-        output( "\t%s -Tx -w %s", root_src_dir_path( "tools/c2man.pl" ), spec_file );
-        output_filename( strmake( "-R%s", root_src_dir_path( "" )));
-        output_filename( strmake( "-I%s", root_src_dir_path( "include" )));
-        output_filename( "-o documentation/api-guide-xml" );
-        output_filenames( make->c2man_files );
-        output( "\n" );
-        strarray_add( &make->phony_targets, "manpages" );
-        strarray_add( &make->phony_targets, "htmlpages" );
-        strarray_add( &make->phony_targets, "sgmlpages" );
-        strarray_add( &make->phony_targets, "xmlpages" );
-    }
 }
 
 
@@ -3201,9 +3151,7 @@ static void output_module( struct makefile *make )
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
 
-    if (spec_file)
-        output_man_pages( make );
-    else if (*dll_ext && !make->is_win16 && strendswith( make->module, ".exe" ))
+    if (*dll_ext && make->is_exe && !make->is_win16 && strendswith( make->module, ".exe" ))
     {
         char *binary = replace_extension( make->module, ".exe", "" );
         add_install_rule( make, binary, "wineapploader", strmake( "t$(bindir)/%s", binary ));
@@ -4318,7 +4266,6 @@ int main( int argc, char *argv[] )
     tools_dir          = get_expanded_make_variable( top_makefile, "toolsdir" );
     tools_ext          = get_expanded_make_variable( top_makefile, "toolsext" );
     exe_ext            = get_expanded_make_variable( top_makefile, "EXEEXT" );
-    man_ext            = get_expanded_make_variable( top_makefile, "api_manext" );
     dll_ext            = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
     host_cpu           = get_expanded_make_variable( top_makefile, "host_cpu" );
     crosstarget        = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
@@ -4340,7 +4287,6 @@ int main( int argc, char *argv[] )
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
-    if (!man_ext) man_ext = "3w";
     if (host_cpu && (host_cpu = normalize_arch( host_cpu )))
     {
         so_dir = strmake( "$(dlldir)/%s-unix", host_cpu );
