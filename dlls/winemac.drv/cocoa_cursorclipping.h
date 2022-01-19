@@ -21,15 +21,8 @@
 
 #import <AppKit/AppKit.h>
 
-@interface WineEventTapClipCursorHandler : NSObject
-{
-    BOOL clippingCursor;
-    CGRect cursorClipRect;
-    CFMachPortRef cursorClippingEventTap;
-    NSMutableArray* warpRecords;
-    CGPoint synthesizedLocation;
-    NSTimeInterval lastEventTapEventTime;
-}
+
+@protocol WineClipCursorHandler <NSObject>
 
 @property (readonly, nonatomic) BOOL clippingCursor;
 @property (readonly, nonatomic) CGRect cursorClipRect;
@@ -41,6 +34,24 @@
 
     - (void) setRetinaMode:(int)mode;
 
+    @optional
+    /* If provided, should reposition the cursor as needed given the current
+     * clipping rect. If not provided, the location will be clipped by
+     * -clipCursorLocation, and the cursor will be warped normally.
+     */
     - (BOOL) setCursorPosition:(CGPoint)pos;
+
+@end
+
+
+@interface WineEventTapClipCursorHandler : NSObject <WineClipCursorHandler>
+{
+    BOOL clippingCursor;
+    CGRect cursorClipRect;
+    CFMachPortRef cursorClippingEventTap;
+    NSMutableArray* warpRecords;
+    CGPoint synthesizedLocation;
+    NSTimeInterval lastEventTapEventTime;
+}
 
 @end

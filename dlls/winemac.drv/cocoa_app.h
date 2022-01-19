@@ -67,8 +67,8 @@ enum {
 
 
 @class WineEventQueue;
-@class WineEventTapClipCursorHandler;
 @class WineWindow;
+@protocol WineClipCursorHandler;
 
 
 @interface WineApplicationController : NSObject <NSApplicationDelegate>
@@ -121,7 +121,7 @@ enum {
 
     NSTimeInterval lastSetCursorPositionTime;
 
-    WineEventTapClipCursorHandler* clipCursorHandler;
+    id<WineClipCursorHandler> clipCursorHandler;
 
     NSImage* applicationIcon;
 

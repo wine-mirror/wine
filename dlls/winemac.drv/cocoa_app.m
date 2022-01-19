@@ -1148,10 +1148,13 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         if ([windowsBeingDragged count])
             ret = FALSE;
-        else if (self.clippingCursor)
+        else if (self.clippingCursor && [clipCursorHandler respondsToSelector:@selector(setCursorPosition:)])
             ret = [clipCursorHandler setCursorPosition:pos];
         else
         {
+            if (self.clippingCursor)
+                [clipCursorHandler clipCursorLocation:&pos];
+
             // Annoyingly, CGWarpMouseCursorPosition() effectively disassociates
             // the mouse from the cursor position for 0.25 seconds.  This means
             // that mouse movement during that interval doesn't move the cursor
