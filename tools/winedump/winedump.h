@@ -139,7 +139,7 @@ typedef struct __globals
 
 extern _globals globals;
 extern void *dump_base;
-extern unsigned long dump_total_len;
+extern size_t dump_total_len;
 
 /* Names to use for output DLL */
 #define OUTPUT_DLL_NAME \

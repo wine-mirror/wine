@@ -542,21 +542,13 @@ static void byteswap( unsigned int *data, unsigned int count )
 
 static void load_mo_file( const char *name )
 {
-    struct stat st;
-    int res, fd;
+    size_t size;
 
-    fd = open( name, O_RDONLY | O_BINARY );
-    if (fd == -1) fatal_perror( "Failed to open %s", name );
-    fstat( fd, &st );
-    mo_file = xmalloc( st.st_size );
-    res = read( fd, mo_file, st.st_size );
-    if (res == -1) fatal_perror( "Failed to read %s", name );
-    else if (res != st.st_size) error( "Failed to read %s\n", name );
-    close( fd );
+    if (!(mo_file = read_file( name, &size ))) fatal_perror( "Failed to read %s", name );
 
     /* sanity checks */
 
-    if (st.st_size < sizeof(*mo_file))
+    if (size < sizeof(*mo_file))
         error( "%s is not a valid .mo file\n", name );
     if (mo_file->magic == 0xde120495)
         byteswap( &mo_file->revision, 4 );
@@ -564,9 +556,9 @@ static void load_mo_file( const char *name )
         error( "%s is not a valid .mo file\n", name );
     if ((mo_file->revision >> 16) > 1)
         error( "%s: unsupported file version %x\n", name, mo_file->revision );
-    if (mo_file->msgid_off >= st.st_size ||
-        mo_file->msgstr_off >= st.st_size ||
-        st.st_size < sizeof(*mo_file) + 2 * 8 * mo_file->count)
+    if (mo_file->msgid_off >= size ||
+        mo_file->msgstr_off >= size ||
+        size < sizeof(*mo_file) + 2 * 8 * mo_file->count)
         error( "%s: corrupted file\n", name );
 
     if (mo_file->magic == 0xde120495)

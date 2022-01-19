@@ -350,6 +350,28 @@ static inline int make_temp_file( const char *prefix, const char *suffix, char *
 }
 
 
+static inline void *read_file( const char *name, size_t *size )
+{
+    struct stat st;
+    int res, fd;
+    void *data;
+
+    if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) return NULL;
+    fstat( fd, &st );
+    data = xmalloc( st.st_size );
+    res = read( fd, data, st.st_size );
+    if (res == -1)
+    {
+        free( data );
+        data = NULL;
+        *size = 0;
+    }
+    else *size = res;
+    close( fd );
+    return data;
+}
+
+
 static inline struct target get_default_target(void)
 {
     struct target target;
