@@ -320,7 +320,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetLatencyClock(IDirectMusicSynth8 
     if (!clock)
         return E_POINTER;
 
-    if (!This->synth_sink)
+    if (!This->sink)
         return DMUS_E_NOSYNTHSINK;
 
     *clock = This->pLatencyClock;
@@ -341,16 +341,16 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Activate(IDirectMusicSynth8 *iface,
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_SetSynthSink(IDirectMusicSynth8 *iface,
-        IDirectMusicSynthSink *synth_sink)
+        IDirectMusicSynthSink *sink)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
 
-    TRACE("(%p)->(%p)\n", iface, synth_sink);
+    TRACE("(%p)->(%p)\n", iface, sink);
 
-    This->synth_sink = synth_sink;
+    This->sink = sink;
 
-    if (synth_sink)
-        return IDirectMusicSynthSink_GetLatencyClock(synth_sink, &This->pLatencyClock);
+    if (sink)
+        return IDirectMusicSynthSink_GetLatencyClock(sink, &This->pLatencyClock);
 
     return S_OK;
 }

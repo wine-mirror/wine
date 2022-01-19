@@ -65,7 +65,7 @@ struct IDirectMusicSynth8Impl {
     DMUS_PORTCAPS pCaps;
     BOOL fActive;
     IReferenceClock* pLatencyClock;
-    IDirectMusicSynthSink *synth_sink;
+    IDirectMusicSynthSink *sink;
 };
 
 /*****************************************************************************
