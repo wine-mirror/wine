@@ -37,6 +37,8 @@ static __int64 (__cdecl *p_tr2_sys__Last_write_time_wchar)(WCHAR const*);
 static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 static void (__cdecl *p_tr2_sys__Last_write_time_set_wchar)(WCHAR const*, __int64);
 
+static const BYTE *p_byte_reverse_table;
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -76,6 +78,7 @@ static BOOL init(void)
         SET(p_tr2_sys__Last_write_time_set_wchar,
                 "?_Last_write_time@sys@tr2@std@@YAXPB_W_J@Z");
     }
+    SET(p_byte_reverse_table, "?_Byte_reverse_table@details@Concurrency@@3QBEB");
     return TRUE;
 }
 
@@ -205,10 +208,31 @@ static void test_vbtable_size_exports(void)
     }
 }
 
+static BYTE byte_reverse(BYTE b)
+{
+    b = ((b & 0xf0) >> 4) | ((b & 0x0f) << 4);
+    b = ((b & 0xcc) >> 2) | ((b & 0x33) << 2);
+    b = ((b & 0xaa) >> 1) | ((b & 0x55) << 1);
+    return b;
+}
+
+static void test_data_exports(void)
+{
+    unsigned int i;
+
+    ok(IsBadWritePtr((BYTE *)p_byte_reverse_table, 256), "byte_reverse_table is writeable.\n");
+    for (i = 0; i < 256; ++i)
+    {
+        ok(p_byte_reverse_table[i] == byte_reverse(i), "Got unexpected byte %#x, expected %#x.\n",
+                p_byte_reverse_table[i], byte_reverse(i));
+    }
+}
+
 START_TEST(msvcp110)
 {
     if(!init()) return;
     test_tr2_sys__Last_write_time();
     test_vbtable_size_exports();
+    test_data_exports();
     FreeLibrary(msvcp);
 }
