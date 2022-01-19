@@ -67,6 +67,29 @@
 @end;
 
 
+static void clip_cursor_location(CGRect cursorClipRect, CGPoint *location)
+{
+    if (location->x < CGRectGetMinX(cursorClipRect))
+        location->x = CGRectGetMinX(cursorClipRect);
+    if (location->y < CGRectGetMinY(cursorClipRect))
+        location->y = CGRectGetMinY(cursorClipRect);
+    if (location->x > CGRectGetMaxX(cursorClipRect) - 1)
+        location->x = CGRectGetMaxX(cursorClipRect) - 1;
+    if (location->y > CGRectGetMaxY(cursorClipRect) - 1)
+        location->y = CGRectGetMaxY(cursorClipRect) - 1;
+}
+
+
+static void scale_rect_for_retina_mode(int mode, CGRect *cursorClipRect)
+{
+    double scale = mode ? 0.5 : 2.0;
+    cursorClipRect->origin.x *= scale;
+    cursorClipRect->origin.y *= scale;
+    cursorClipRect->size.width *= scale;
+    cursorClipRect->size.height *= scale;
+}
+
+
 @implementation WineEventTapClipCursorHandler
 
 @synthesize clippingCursor, cursorClipRect;
@@ -86,18 +109,6 @@
     {
         [warpRecords release];
         [super dealloc];
-    }
-
-    - (void) clipCursorLocation:(CGPoint*)location
-    {
-        if (location->x < CGRectGetMinX(cursorClipRect))
-            location->x = CGRectGetMinX(cursorClipRect);
-        if (location->y < CGRectGetMinY(cursorClipRect))
-            location->y = CGRectGetMinY(cursorClipRect);
-        if (location->x > CGRectGetMaxX(cursorClipRect) - 1)
-            location->x = CGRectGetMaxX(cursorClipRect) - 1;
-        if (location->y > CGRectGetMaxY(cursorClipRect) - 1)
-            location->y = CGRectGetMaxY(cursorClipRect) - 1;
     }
 
     - (BOOL) warpCursorTo:(CGPoint*)newLocation from:(const CGPoint*)currentLocation
@@ -341,13 +352,14 @@
         return TRUE;
     }
 
+    - (void) clipCursorLocation:(CGPoint*)location
+    {
+        clip_cursor_location(cursorClipRect, location);
+    }
+
     - (void) setRetinaMode:(int)mode
     {
-        double scale = mode ? 0.5 : 2.0;
-        cursorClipRect.origin.x *= scale;
-        cursorClipRect.origin.y *= scale;
-        cursorClipRect.size.width *= scale;
-        cursorClipRect.size.height *= scale;
+        scale_rect_for_retina_mode(mode, &cursorClipRect);
     }
 
 @end
