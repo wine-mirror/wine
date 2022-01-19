@@ -696,8 +696,6 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     case IOCTL_HID_GET_STRING:
     {
-        static unsigned int once;
-        if (!once++) todo_wine ok( 0, "unexpected IOCTL_HID_GET_STRING\n" );
         memcpy( irp->UserBuffer, L"Wine Test", sizeof(L"Wine Test") );
         irp->IoStatus.Information = sizeof(L"Wine Test");
         ret = STATUS_SUCCESS;
