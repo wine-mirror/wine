@@ -90,6 +90,8 @@ static void (__thiscall *p__Timer_dtor)(_Timer*);
 static void (__thiscall *p__Timer__Start)(_Timer*);
 static void (__thiscall *p__Timer__Stop)(_Timer*);
 
+static const BYTE *p_byte_reverse_table;
+
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
@@ -142,6 +144,7 @@ static BOOL init(void)
     }
 
     init_thiscall_thunk();
+    SET(p_byte_reverse_table, "?_Byte_reverse_table@details@Concurrency@@3QBEB");
     return TRUE;
 }
 
@@ -217,9 +220,30 @@ static void test_Timer(void)
     CloseHandle(callback_called);
 }
 
+static BYTE byte_reverse(BYTE b)
+{
+    b = ((b & 0xf0) >> 4) | ((b & 0x0f) << 4);
+    b = ((b & 0xcc) >> 2) | ((b & 0x33) << 2);
+    b = ((b & 0xaa) >> 1) | ((b & 0x55) << 1);
+    return b;
+}
+
+static void test_data_exports(void)
+{
+    unsigned int i;
+
+    ok(IsBadWritePtr((BYTE *)p_byte_reverse_table, 256), "byte_reverse_table is writeable.\n");
+    for (i = 0; i < 256; ++i)
+    {
+        ok(p_byte_reverse_table[i] == byte_reverse(i), "Got unexpected byte %#x, expected %#x.\n",
+                p_byte_reverse_table[i], byte_reverse(i));
+    }
+}
+
 START_TEST(concrt140)
 {
     if (!init()) return;
     test_CurrentContext();
     test_Timer();
+    test_data_exports();
 }
