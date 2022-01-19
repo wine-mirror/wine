@@ -57,6 +57,7 @@ int right_command_is_ctrl = 0;
 BOOL allow_software_rendering = FALSE;
 BOOL disable_window_decorations = FALSE;
 int allow_immovable_windows = TRUE;
+int use_confinement_cursor_clipping = TRUE;
 int cursor_clipping_locks_windows = TRUE;
 int use_precise_scrolling = TRUE;
 int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
@@ -193,6 +194,9 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "AllowImmovableWindows", buffer, sizeof(buffer)))
         allow_immovable_windows = IS_OPTION_TRUE(buffer[0]);
+
+    if (!get_config_key(hkey, appkey, "UseConfinementCursorClipping", buffer, sizeof(buffer)))
+        use_confinement_cursor_clipping = IS_OPTION_TRUE(buffer[0]);
 
     if (!get_config_key(hkey, appkey, "CursorClippingLocksWindows", buffer, sizeof(buffer)))
         cursor_clipping_locks_windows = IS_OPTION_TRUE(buffer[0]);

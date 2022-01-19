@@ -34,6 +34,10 @@
  * -[NSWindow setMouseConfinementRect:]. It comes with its own drawbacks,
  * but is generally far simpler. It is described and implemented in
  * the WineConfinementClipCursorHandler class.
+ *
+ * On macOS 10.13+, WineConfinementClipCursorHandler is the default.
+ * The Mac driver registry key UseConfinementCursorClipping can be set
+ * to "n" to use the event tap implementation.
  */
 
 

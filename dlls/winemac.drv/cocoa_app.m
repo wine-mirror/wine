@@ -1211,8 +1211,12 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
     - (BOOL) startClippingCursor:(CGRect)rect
     {
-        if (!clipCursorHandler)
-            clipCursorHandler = [[WineEventTapClipCursorHandler alloc] init];
+        if (!clipCursorHandler) {
+            if (use_confinement_cursor_clipping && [WineConfinementClipCursorHandler isAvailable])
+                clipCursorHandler = [[WineConfinementClipCursorHandler alloc] init];
+            else
+                clipCursorHandler = [[WineEventTapClipCursorHandler alloc] init];
+        }
 
         if (self.clippingCursor && CGRectEqualToRect(rect, clipCursorHandler.cursorClipRect))
             return TRUE;
