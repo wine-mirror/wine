@@ -332,10 +332,28 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetLatencyClock(IDirectMusicSynth8 
 static HRESULT WINAPI IDirectMusicSynth8Impl_Activate(IDirectMusicSynth8 *iface, BOOL enable)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%d)\n", This, enable);
 
-    This->fActive = enable;
+    if (!This->sink)
+        return DMUS_E_NOSYNTHSINK;
+
+    if (enable == This->active) {
+        if (enable)
+            return DMUS_E_SYNTHACTIVE;
+        else
+            return S_FALSE;
+    }
+
+    if ((hr = IDirectMusicSynthSink_Activate(This->sink, enable)) != S_OK) {
+        if (hr == DMUS_E_SYNTHACTIVE || hr == S_FALSE)
+            WARN("Synth and sink active state out of sync. Fixing.\n");
+        else
+            return hr;
+    }
+
+    This->active = enable;
 
     return S_OK;
 }

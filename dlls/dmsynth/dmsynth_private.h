@@ -63,7 +63,7 @@ struct IDirectMusicSynth8Impl {
 
     /* IDirectMusicSynth8 fields */
     DMUS_PORTCAPS pCaps;
-    BOOL fActive;
+    BOOL active;
     IReferenceClock* pLatencyClock;
     IDirectMusicSynthSink *sink;
 };

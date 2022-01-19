@@ -114,7 +114,7 @@ static void test_dmsynth(void)
 
     /* Synth isn't fully initialized yet */
     hr = IDirectMusicSynth_Activate(dmsynth, TRUE);
-    todo_wine ok(hr == DMUS_E_NOSYNTHSINK, "IDirectMusicSynth_Activate returned: %x\n", hr);
+    ok(hr == DMUS_E_NOSYNTHSINK, "IDirectMusicSynth_Activate returned: %x\n", hr);
 
     /* Synth has no default clock */
     hr = IDirectMusicSynth_GetLatencyClock(dmsynth, &clock_synth);
