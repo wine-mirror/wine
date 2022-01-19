@@ -55,3 +55,19 @@
 }
 
 @end
+
+
+@interface WineConfinementClipCursorHandler : NSObject <WineClipCursorHandler>
+{
+    BOOL clippingCursor;
+    CGRect cursorClipRect;
+    /* The number of the window that "owns" the clipping (i.e., the one with a
+     * mouseConfinementRect set). Using this rather than a WineWindow* to avoid
+     * tricky retain situations. */
+    NSInteger clippingWindowNumber;
+}
+
+    /* Returns true if the API in use by this handler is available. */
+    + (BOOL) isAvailable;
+
+@end

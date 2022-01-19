@@ -21,9 +21,24 @@
 
 #import "cocoa_app.h"
 #import "cocoa_cursorclipping.h"
+#import "cocoa_window.h"
 
 
 /* Neither Quartz nor Cocoa has an exact analog for Win32 cursor clipping.
+ *
+ * Historically, we've used a CGEventTap and the
+ * CGAssociateMouseAndMouseCursorPosition function, as implemented in
+ * the WineEventTapClipCursorHandler class.
+ *
+ * As of macOS 10.13, there is an undocumented alternative,
+ * -[NSWindow setMouseConfinementRect:]. It comes with its own drawbacks,
+ * but is generally far simpler. It is described and implemented in
+ * the WineConfinementClipCursorHandler class.
+ */
+
+
+/* Clipping via CGEventTap and CGAssociateMouseAndMouseCursorPosition:
+ *
  * For one simple case, clipping to a 1x1 rectangle, Quartz does have an
  * equivalent: CGAssociateMouseAndMouseCursorPosition(false).  For the
  * general case, we leverage that.  We disassociate mouse movements from
@@ -348,6 +363,132 @@ static void scale_rect_for_retina_mode(int mode, CGRect *cursorClipRect)
 
         CGEventTapEnable(cursorClippingEventTap, FALSE);
         [warpRecords removeAllObjects];
+
+        return TRUE;
+    }
+
+    - (void) clipCursorLocation:(CGPoint*)location
+    {
+        clip_cursor_location(cursorClipRect, location);
+    }
+
+    - (void) setRetinaMode:(int)mode
+    {
+        scale_rect_for_retina_mode(mode, &cursorClipRect);
+    }
+
+@end
+
+
+/* Clipping via mouse confinement rects:
+ *
+ * The undocumented -[NSWindow setMouseConfinementRect:] method is almost
+ * perfect for our needs. It has two main drawbacks compared to the CGEventTap
+ * approach:
+ * 1. It requires macOS 10.13+
+ * 2. A mouse confinement rect is tied to a region of a particular window. If
+ *    an app calls ClipCursor with a rect that is outside the bounds of a
+ *    window, the best we can do is intersect that rect with the window's bounds
+ *    and clip to the result. If no windows are visible in the app, we can't do
+ *    any clipping. Switching between windows in the same app while clipping is
+ *    active is likewise impossible.
+ *
+ * But it has two major benefits:
+ * 1. The code is far simpler.
+ * 2. CGEventTap started requiring Accessibility permissions from macOS in
+ *    Catalina. It's a hassle to enable, and if it's triggered while an app is
+ *    fullscreen (which is often the case with clipping), it's easy to miss.
+ */
+
+
+@interface NSWindow (UndocumentedMouseConfinement)
+    /* Confines the system's mouse location to the provided window-relative rect
+     * while the app is frontmost and the window is key or a child of the key
+     * window. Confinement rects will be unioned among the key window and its
+     * children. The app should invoke this any time internal window geometry
+     * changes to keep the region up to date. Set NSZeroRect to remove mouse
+     * location confinement.
+     *
+     * These have been available since 10.13.
+     */
+    - (NSRect) mouseConfinementRect;
+    - (void) setMouseConfinementRect:(NSRect)mouseConfinementRect;
+@end
+
+
+@implementation WineConfinementClipCursorHandler
+
+@synthesize clippingCursor, cursorClipRect;
+
+    + (BOOL) isAvailable
+    {
+        if ([NSProcessInfo instancesRespondToSelector:@selector(isOperatingSystemAtLeastVersion:)])
+        {
+            NSOperatingSystemVersion requiredVersion = { 10, 13, 0 };
+            return [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:requiredVersion] &&
+                   [NSWindow instancesRespondToSelector:@selector(setMouseConfinementRect:)];
+        }
+
+        return FALSE;
+    }
+
+    /* Returns the region of the given rect that intersects with the given
+     * window. The rect should be in screen coordinates. The result will be in
+     * window-relative coordinates.
+     *
+     * Returns NSZeroRect if the rect lies entirely outside the window.
+     */
+    + (NSRect) rectForScreenRect:(CGRect)rect inWindow:(NSWindow*)window
+    {
+        NSRect flippedRect = NSRectFromCGRect(rect);
+        [[WineApplicationController sharedController] flipRect:&flippedRect];
+
+        NSRect intersection = NSIntersectionRect([window frame], flippedRect);
+
+        if (NSIsEmptyRect(intersection))
+            return NSZeroRect;
+
+        return [window convertRectFromScreen:intersection];
+    }
+
+    - (BOOL) startClippingCursor:(CGRect)rect
+    {
+        if (clippingCursor && ![self stopClippingCursor])
+            return FALSE;
+
+        WineWindow *ownerWindow = [[WineApplicationController sharedController] frontWineWindow];
+        if (!ownerWindow)
+        {
+            /* There's nothing we can do here in this case, since confinement
+             * rects must be tied to a window. */
+            return FALSE;
+        }
+
+        NSRect clipRectInWindowCoords = [WineConfinementClipCursorHandler rectForScreenRect:rect
+                                                                                   inWindow:ownerWindow];
+
+        if (NSIsEmptyRect(clipRectInWindowCoords))
+        {
+            /* If the clip region is entirely outside of the bounds of the
+             * window, there's again nothing we can do. */
+            return FALSE;
+        }
+
+        [ownerWindow setMouseConfinementRect:clipRectInWindowCoords];
+
+        clippingWindowNumber = ownerWindow.windowNumber;
+        cursorClipRect = rect;
+        clippingCursor = TRUE;
+
+        return TRUE;
+    }
+
+    - (BOOL) stopClippingCursor
+    {
+        NSWindow *ownerWindow = [NSApp windowWithWindowNumber:clippingWindowNumber];
+        [ownerWindow setMouseConfinementRect:NSZeroRect];
+
+        clippingCursor = FALSE;
 
         return TRUE;
     }
