@@ -3024,6 +3024,7 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
 static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
         const char **ptr, BOOL shared_type_desc, struct d3d10_effect_variable *v)
 {
+    struct d3d10_effect_var_array *vars;
     struct d3d10_effect_variable *var;
     unsigned int i, j, element_count;
     HRESULT hr;
@@ -3137,11 +3138,37 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
                     return E_FAIL;
                 }
 
+                switch (v->type->basetype)
+                {
+                    case D3D10_SVT_DEPTHSTENCIL:
+                        vars = &v->effect->ds_states;
+                        break;
+                    case D3D10_SVT_BLEND:
+                        vars = &v->effect->blend_states;
+                        break;
+                    case D3D10_SVT_RASTERIZER:
+                        vars = &v->effect->rs_states;
+                        break;
+                    case D3D10_SVT_SAMPLER:
+                        vars = &v->effect->samplers;
+                        break;
+                    default:
+                        ;
+                }
+
                 for (i = 0; i < element_count; ++i)
                 {
                     unsigned int prop_count;
 
                     var = d3d10_array_get_element(v, i);
+
+                    if (vars->current >= vars->count)
+                    {
+                         WARN("Wrong variable array size for %#x.\n", v->type->basetype);
+                         return E_FAIL;
+                    }
+                    var->u.state.index = vars->current;
+                    vars->v[vars->current++] = var;
 
                     read_dword(ptr, &prop_count);
                     TRACE("State object property count: %#x.\n", prop_count);
@@ -3555,6 +3582,30 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     if (!(e->shaders.v = heap_calloc(e->shaders.count, sizeof(*e->shaders.v))))
     {
         ERR("Failed to allocate used shaders memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (!(e->samplers.v = heap_calloc(e->samplers.count, sizeof(*e->samplers.v))))
+    {
+        ERR("Failed to allocate samplers array.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (!(e->blend_states.v = heap_calloc(e->blend_states.count, sizeof(*e->blend_states.v))))
+    {
+        ERR("Failed to allocate blend states array.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (!(e->ds_states.v = heap_calloc(e->ds_states.count, sizeof(*e->ds_states.v))))
+    {
+        ERR("Failed to allocate depth stencil states array.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (!(e->rs_states.v = heap_calloc(e->rs_states.count, sizeof(*e->rs_states.v))))
+    {
+        ERR("Failed to allocate rasterizer states array.\n");
         return E_OUTOFMEMORY;
     }
 

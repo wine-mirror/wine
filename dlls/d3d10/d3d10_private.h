@@ -127,6 +127,7 @@ struct d3d10_effect_state_object_variable
         ID3D10SamplerState *sampler;
         IUnknown *object;
     } object;
+    unsigned int index;
     struct d3d10_effect_prop_dependencies dependencies;
 };
 
