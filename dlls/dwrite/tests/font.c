@@ -30,7 +30,6 @@
 #include "initguid.h"
 #include "d2d1.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
@@ -634,11 +633,12 @@ static ULONG WINAPI singlefontfileenumerator_AddRef(IDWriteFontFileEnumerator *i
 
 static ULONG WINAPI singlefontfileenumerator_Release(IDWriteFontFileEnumerator *iface)
 {
-    struct test_fontenumerator *This = impl_from_IDWriteFontFileEnumerator(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    if (!ref) {
-        IDWriteFontFile_Release(This->font_file);
-        heap_free(This);
+    struct test_fontenumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
+    ULONG ref = InterlockedDecrement(&enumerator->ref);
+    if (!ref)
+    {
+        IDWriteFontFile_Release(enumerator->font_file);
+        free(enumerator);
     }
     return ref;
 }
@@ -678,8 +678,7 @@ static HRESULT create_enumerator(IDWriteFontFile *font_file, IDWriteFontFileEnum
 {
     struct test_fontenumerator *enumerator;
 
-    enumerator = heap_alloc(sizeof(struct test_fontenumerator));
-    if (!enumerator)
+    if (!(enumerator = calloc(1, sizeof(*enumerator))))
         return E_OUTOFMEMORY;
 
     enumerator->IDWriteFontFileEnumerator_iface.lpVtbl = &singlefontfileenumeratorvtbl;
@@ -2989,7 +2988,7 @@ static ULONG WINAPI fontcollectionloader_Release(IDWriteFontCollectionLoader *if
     ULONG ref = InterlockedDecrement(&loader->ref);
 
     if (!ref)
-        heap_free(loader);
+        free(loader);
 
     return ref;
 }
@@ -3011,7 +3010,7 @@ static const struct IDWriteFontCollectionLoaderVtbl dwritefontcollectionloadervt
 
 static IDWriteFontCollectionLoader *create_collection_loader(void)
 {
-    struct collection_loader *loader = heap_alloc(sizeof(*loader));
+    struct collection_loader *loader = malloc(sizeof(*loader));
 
     loader->IDWriteFontCollectionLoader_iface.lpVtbl = &dwritefontcollectionloadervtbl;
     loader->ref = 1;
@@ -3573,7 +3572,7 @@ static void array_reserve(void **elements, size_t *capacity, size_t count, size_
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return;
 
     *elements = new_elements;
@@ -3705,7 +3704,7 @@ static UINT32 fontface_get_expected_unicode_ranges(IDWriteFontFace1 *fontface, D
     count = opentype_cmap_get_unicode_ranges(&cmap, &ranges);
     IDWriteFontFace1_ReleaseFontTable(fontface, cmap.context);
 
-    *out = heap_alloc(count * sizeof(**out));
+    *out = malloc(count * sizeof(**out));
 
     /* Eliminate duplicates and merge ranges together. */
     for (i = 0, j = 0; i < count; ++i) {
@@ -3720,7 +3719,7 @@ static UINT32 fontface_get_expected_unicode_ranges(IDWriteFontFace1 *fontface, D
         (*out)[j++] = ranges[i];
     }
 
-    heap_free(ranges);
+    free(ranges);
 
     return j;
 }
@@ -3776,7 +3775,7 @@ static void test_GetUnicodeRanges(void)
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     ok(count > 1, "got %u\n", count);
 
-    ranges = heap_alloc(count*sizeof(DWRITE_UNICODE_RANGE));
+    ranges = malloc(count*sizeof(DWRITE_UNICODE_RANGE));
     hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, count, ranges, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -3785,7 +3784,7 @@ static void test_GetUnicodeRanges(void)
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     ok(ranges[0].first != 0 && ranges[0].last != 0, "got 0x%x-0x%0x\n", ranges[0].first, ranges[0].last);
 
-    heap_free(ranges);
+    free(ranges);
 
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &rloader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3848,7 +3847,7 @@ if (strcmp(winetest_platform, "wine")) {
             hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 0, NULL, &range_count);
             ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
 
-            ranges = heap_alloc(range_count * sizeof(*ranges));
+            ranges = malloc(range_count * sizeof(*ranges));
 
             hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, range_count, ranges, &range_count);
             ok(hr == S_OK, "Failed to get ranges, hr %#x.\n", hr);
@@ -3870,8 +3869,8 @@ if (strcmp(winetest_platform, "wine")) {
                 }
             }
 
-            heap_free(expected_ranges);
-            heap_free(ranges);
+            free(expected_ranges);
+            free(ranges);
 
             IDWriteFontFace1_Release(fontface1);
             IDWriteFontFace_Release(fontface);

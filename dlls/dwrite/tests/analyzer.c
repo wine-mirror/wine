@@ -30,7 +30,6 @@
 #include "winternl.h"
 #include "dwrite_3.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static IDWriteFactory *factory;
@@ -1551,7 +1550,7 @@ static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family,
     hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 0, NULL, &count);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
 
-    ranges = heap_alloc(count * sizeof(*ranges));
+    ranges = malloc(count * sizeof(*ranges));
 
     hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, count, ranges, &count);
     ok(hr == S_OK, "Failed to get ranges, hr %#x.\n", hr);
@@ -1608,7 +1607,7 @@ static void test_glyph_props(IDWriteTextAnalyzer *analyzer, const WCHAR *family,
         }
     }
 
-    heap_free(ranges);
+    free(ranges);
 
     IDWriteFontFace_ReleaseFontTable(fontface, gdef.context);
     IDWriteFontFace1_Release(fontface1);
