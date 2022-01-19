@@ -142,7 +142,7 @@ enum {
 
     + (WineApplicationController*) sharedController;
 
-    - (void) transformProcessToForeground;
+    - (void) transformProcessToForeground:(BOOL)activateIfTransformed;
 
     - (BOOL) registerEventQueue:(WineEventQueue*)queue;
     - (void) unregisterEventQueue:(WineEventQueue*)queue;

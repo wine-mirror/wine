@@ -237,7 +237,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         [super dealloc];
     }
 
-    - (void) transformProcessToForeground
+    - (void) transformProcessToForeground:(BOOL)activateIfTransformed
     {
         if ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular)
         {
@@ -248,7 +248,10 @@ static NSString* WineLocalizedString(unsigned int stringID)
             NSMenuItem* item;
 
             [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-            [NSApp activateIgnoringOtherApps:YES];
+
+            if (activateIfTransformed)
+                [NSApp activateIgnoringOtherApps:YES];
+
 #if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
             if (!enable_app_nap && [NSProcessInfo instancesRespondToSelector:@selector(beginActivityWithOptions:reason:)])
             {
@@ -884,7 +887,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             if (!modes.count)
                 return FALSE;
 
-            [self transformProcessToForeground];
+            [self transformProcessToForeground:YES];
 
             BOOL active = [NSApp isActive];
 

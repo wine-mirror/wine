@@ -391,6 +391,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
 @property (readwrite, nonatomic) BOOL disabled;
 @property (readwrite, nonatomic) BOOL noForeground;
+@property (readwrite, nonatomic) BOOL preventsAppActivation;
 @property (readwrite, nonatomic) BOOL floating;
 @property (readwrite, nonatomic) BOOL drawnSinceShown;
 @property (readwrite, nonatomic) BOOL closing;
@@ -954,7 +955,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     static WineWindow* causing_becomeKeyWindow;
 
-    @synthesize disabled, noForeground, floating, fullscreen, fakingClose, closing, latentParentWindow, hwnd, queue;
+    @synthesize disabled, noForeground, preventsAppActivation, floating, fullscreen, fakingClose, closing, latentParentWindow, hwnd, queue;
     @synthesize drawnSinceShown;
     @synthesize surface, surface_mutex;
     @synthesize shapeChangedSinceLastDraw;
@@ -1142,6 +1143,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                                              NSWindowStyleMaskNonactivatingPanel;
         NSUInteger currentStyle = [self styleMask];
         NSUInteger newStyle = style_mask_for_features(wf) | (currentStyle & ~usedStyles);
+
+        self.preventsAppActivation = wf->prevents_app_activation;
 
         if (newStyle != currentStyle)
         {
@@ -1686,7 +1689,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             WineWindow* parent;
             WineWindow* child;
 
-            [controller transformProcessToForeground];
+            [controller transformProcessToForeground:!self.preventsAppActivation];
             if ([NSApp isHidden])
                 [NSApp unhide:nil];
             wasVisible = [self isVisible];
@@ -2056,7 +2059,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         if (activate)
         {
-            [[WineApplicationController sharedController] transformProcessToForeground];
+            [[WineApplicationController sharedController] transformProcessToForeground:YES];
             [NSApp activateIgnoringOtherApps:YES];
         }
 
