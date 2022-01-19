@@ -1235,14 +1235,14 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
     const char *ptr;
     HRESULT hr;
 
-    if (v->effect->used_shader_current >= v->effect->used_shader_count)
+    if (v->effect->shaders.current >= v->effect->shaders.count)
     {
-        WARN("Invalid shader? Used shader current(%u) >= used shader count(%u)\n", v->effect->used_shader_current, v->effect->used_shader_count);
+        WARN("Invalid effect? Used shader current(%u) >= used shader count(%u)\n",
+                v->effect->shaders.current, v->effect->shaders.count);
         return E_FAIL;
     }
 
-    v->effect->used_shaders[v->effect->used_shader_current] = v;
-    ++v->effect->used_shader_current;
+    v->effect->shaders.v[v->effect->shaders.current++] = v;
 
     if (offset >= data_size || !require_space(offset, 1, sizeof(dxbc_size), data_size))
     {
@@ -3552,7 +3552,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->used_shaders = heap_calloc(e->used_shader_count, sizeof(*e->used_shaders))))
+    if (!(e->shaders.v = heap_calloc(e->shaders.count, sizeof(*e->shaders.v))))
     {
         ERR("Failed to allocate used shaders memory\n");
         return E_OUTOFMEMORY;
@@ -3698,8 +3698,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->depthstencilview_count);
     TRACE("Depthstencilview count: %u\n", e->depthstencilview_count);
 
-    read_dword(&ptr, &e->used_shader_count);
-    TRACE("Used shader count: %u\n", e->used_shader_count);
+    read_dword(&ptr, &e->shaders.count);
+    TRACE("Used shader count: %u\n", e->shaders.count);
 
     read_dword(&ptr, &e->anonymous_shader_count);
     TRACE("Anonymous shader count: %u\n", e->anonymous_shader_count);
@@ -3999,7 +3999,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             heap_free(This->anonymous_shaders);
         }
 
-        heap_free(This->used_shaders);
+        heap_free(This->shaders.v);
 
         wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
 
@@ -4312,9 +4312,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
     if (effect->flags & D3D10_EFFECT_OPTIMIZED)
         return S_OK;
 
-    for (i = 0; i < effect->used_shader_count; ++i)
+    for (i = 0; i < effect->shaders.count; ++i)
     {
-        v = effect->used_shaders[i];
+        v = effect->shaders.v[i];
 
         if (v->u.shader.reflection)
         {
@@ -8065,19 +8065,19 @@ static HRESULT d3d10_get_shader_variable(struct d3d10_effect_variable *v, UINT s
 
     /* Index is used as an offset from this variable. */
 
-    for (i = 0; i < v->effect->used_shader_count; ++i)
+    for (i = 0; i < v->effect->shaders.count; ++i)
     {
-        if (v == v->effect->used_shaders[i]) break;
+        if (v == v->effect->shaders.v[i]) break;
     }
 
-    if (i + shader_index >= v->effect->used_shader_count)
+    if (i + shader_index >= v->effect->shaders.count)
     {
         WARN("Invalid shader index %u.\n", shader_index);
         return E_FAIL;
     }
 
-    *s = &v->effect->used_shaders[i + shader_index]->u.shader;
-    if (basetype) *basetype = v->effect->used_shaders[i + shader_index]->type->basetype;
+    *s = &v->effect->shaders.v[i + shader_index]->u.shader;
+    if (basetype) *basetype = v->effect->shaders.v[i + shader_index]->type->basetype;
 
     return S_OK;
 }
