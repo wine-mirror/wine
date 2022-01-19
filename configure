@@ -9828,8 +9828,7 @@ then :
   LDDLLFLAGS="-Wl,--disable-stdcall-fixup"
 fi ;;
     esac
-        enable_mountmgr_sys=${enable_mountmgr_sys:-no}
-    enable_loader=${enable_loader:-no}
+        enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
         with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
