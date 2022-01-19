@@ -44,6 +44,16 @@ enum {
 #endif
 
 
+@interface NSWindow (PrivatePreventsActivation)
+
+/* Needed to ensure proper behavior after adding or removing
+ * NSWindowStyleMaskNonactivatingPanel.
+ * Available since at least macOS 10.6. */
+- (void)_setPreventsActivation:(BOOL)flag;
+
+@end
+
+
 static NSUInteger style_mask_for_features(const struct macdrv_window_features* wf)
 {
     NSUInteger style_mask;
@@ -57,6 +67,8 @@ static NSUInteger style_mask_for_features(const struct macdrv_window_features* w
         if (wf->utility) style_mask |= NSWindowStyleMaskUtilityWindow;
     }
     else style_mask = NSWindowStyleMaskBorderless;
+
+    if (wf->prevents_app_activation) style_mask |= NSWindowStyleMaskNonactivatingPanel;
 
     return style_mask;
 }
@@ -1126,7 +1138,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) setWindowFeatures:(const struct macdrv_window_features*)wf
     {
         static const NSUInteger usedStyles = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
-                                             NSWindowStyleMaskResizable | NSWindowStyleMaskUtilityWindow | NSWindowStyleMaskBorderless;
+                                             NSWindowStyleMaskResizable | NSWindowStyleMaskUtilityWindow | NSWindowStyleMaskBorderless |
+                                             NSWindowStyleMaskNonactivatingPanel;
         NSUInteger currentStyle = [self styleMask];
         NSUInteger newStyle = style_mask_for_features(wf) | (currentStyle & ~usedStyles);
 
@@ -1145,6 +1158,17 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [self setStyleMask:newStyle ^ NSWindowStyleMaskClosable];
             }
             [self setStyleMask:newStyle];
+
+            BOOL isNonActivating = (currentStyle & NSWindowStyleMaskNonactivatingPanel) != 0;
+            BOOL shouldBeNonActivating = (newStyle & NSWindowStyleMaskNonactivatingPanel) != 0;
+            if (isNonActivating != shouldBeNonActivating) {
+                // Changing NSWindowStyleMaskNonactivatingPanel with -setStyleMask is also
+                // buggy. If it's added, clicking the title bar will still activate the
+                // app. If it's removed, nothing changes at all.
+                // This private method ensures the correct behavior.
+                if ([self respondsToSelector:@selector(_setPreventsActivation:)])
+                    [self _setPreventsActivation:shouldBeNonActivating];
+            }
 
             // -setStyleMask: resets the firstResponder to the window.  Set it
             // back to the content view.

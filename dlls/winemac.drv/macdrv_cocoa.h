@@ -538,6 +538,7 @@ struct macdrv_window_features {
     unsigned int    maximize_button:1;
     unsigned int    utility:1;
     unsigned int    shadow:1;
+    unsigned int    prevents_app_activation:1;
 };
 
 struct macdrv_window_state {
