@@ -387,6 +387,11 @@ static const struct column col_sid[] =
     { L"SID",                  CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"SidLength",            CIM_UINT32 },
 };
+static const struct column col_softwarelicensingproduct[] =
+{
+    { L"LicenseIsAddon", CIM_BOOLEAN },
+    { L"LicenseStatus",  CIM_UINT32 },
+};
 static const struct column col_sounddevice[] =
 {
     { L"DeviceID",     CIM_STRING|COL_FLAG_DYNAMIC },
@@ -809,6 +814,11 @@ struct record_sid
     const WCHAR *sid;
     UINT32       sidlength;
 };
+struct record_softwarelicensingproduct
+{
+    int    license_is_addon;
+    UINT32 license_status;
+};
 struct record_sounddevice
 {
     const WCHAR *deviceid;
@@ -976,6 +986,11 @@ static const struct record_qualifier data_qualifier[] =
 static const struct record_quickfixengineering data_quickfixengineering[] =
 {
     { L"http://winehq.org", L"KB1234567" },
+};
+
+static const struct record_softwarelicensingproduct data_softwarelicensingproduct[] =
+{
+    { 0, 1 },
 };
 
 static const struct record_stdregprov data_stdregprov[] =
@@ -4110,6 +4125,7 @@ static struct table cimv2_builtin_classes[] =
     { L"CIM_DataFile", C(col_datafile), 0, 0, NULL, fill_datafile },
     { L"CIM_LogicalDisk", C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
     { L"CIM_Processor", C(col_processor), 0, 0, NULL, fill_processor },
+    { L"SoftwareLicensingProduct", C(col_softwarelicensingproduct), D(data_softwarelicensingproduct) },
     { L"StdRegProv", C(col_stdregprov), D(data_stdregprov) },
     { L"SystemRestore", C(col_sysrestore), D(data_sysrestore) },
     { L"Win32_BIOS", C(col_bios), 0, 0, NULL, fill_bios },
