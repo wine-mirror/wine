@@ -631,7 +631,7 @@ static const BYTE guid_conv_table[256] =
     0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf                             /* 0x60 */
 };
 
-static WCHAR* GUIDToString(WCHAR *str, REFGUID guid)
+static WCHAR* guid_to_string(WCHAR *str, REFGUID guid)
 {
     swprintf(str, 39, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
             guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
@@ -706,7 +706,7 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
     WCHAR str[250];
     UINT8 *blob;
 
-    GUIDToString(buffer, clsid);
+    guid_to_string(buffer, clsid);
     swprintf(str, ARRAY_SIZE(str), L"%s\\%s", transform_keyW, buffer);
 
     if ((ret = RegCreateKeyW(HKEY_CLASSES_ROOT, str, &hclsid)))
@@ -767,8 +767,8 @@ static HRESULT register_category(CLSID *clsid, GUID *category)
     WCHAR guid1[64], guid2[64];
     WCHAR str[350];
 
-    GUIDToString(guid1, category);
-    GUIDToString(guid2, clsid);
+    guid_to_string(guid1, category);
+    guid_to_string(guid2, clsid);
 
     swprintf(str, ARRAY_SIZE(str), L"%s\\%s\\%s", categories_keyW, guid1, guid2);
 
@@ -1030,7 +1030,7 @@ static BOOL mft_is_type_info_match(struct mft_registration *mft, const GUID *cat
     return matching;
 }
 
-static void mft_get_reg_type_info(const WCHAR *clsidW, const WCHAR *typeW, MFT_REGISTER_TYPE_INFO **type,
+static void mft_get_reg_type_info_internal(const WCHAR *clsidW, const WCHAR *typeW, MFT_REGISTER_TYPE_INFO **type,
         UINT32 *count)
 {
     HKEY htransform, hfilter;
@@ -1109,7 +1109,7 @@ static HRESULT mft_collect_machine_reg(struct list *mfts, const GUID *category, 
     if (RegOpenKeyW(HKEY_CLASSES_ROOT, categories_keyW, &hcategory))
         return E_FAIL;
 
-    GUIDToString(clsidW, category);
+    guid_to_string(clsidW, category);
     ret = RegOpenKeyW(hcategory, clsidW, &hlist);
     RegCloseKey(hcategory);
     if (ret)
@@ -1126,10 +1126,10 @@ static HRESULT mft_collect_machine_reg(struct list *mfts, const GUID *category, 
         mft_get_reg_flags(clsidW, L"MFTFlags", &mft.flags);
 
         if (output_type)
-            mft_get_reg_type_info(clsidW, L"OutputTypes", &mft.output_types, &mft.output_types_count);
+            mft_get_reg_type_info_internal(clsidW, L"OutputTypes", &mft.output_types, &mft.output_types_count);
 
         if (input_type)
-            mft_get_reg_type_info(clsidW, L"InputTypes", &mft.input_types, &mft.input_types_count);
+            mft_get_reg_type_info_internal(clsidW, L"InputTypes", &mft.input_types, &mft.input_types_count);
 
         if (!mft_is_type_info_match(&mft, category, flags, plugin_control, input_type, output_type))
         {
@@ -1416,7 +1416,7 @@ HRESULT WINAPI MFTUnregister(CLSID clsid)
 
     TRACE("(%s)\n", debugstr_guid(&clsid));
 
-    GUIDToString(buffer, &clsid);
+    guid_to_string(buffer, &clsid);
 
     if (!RegOpenKeyW(HKEY_CLASSES_ROOT, transform_keyW, &htransform))
     {
@@ -1440,6 +1440,141 @@ HRESULT WINAPI MFTUnregister(CLSID clsid)
     }
 
     return S_OK;
+}
+
+static HRESULT mft_get_name(HKEY hkey, WCHAR **name)
+{
+    DWORD size;
+
+    if (!name)
+        return S_OK;
+
+    *name = NULL;
+
+    if (!RegQueryValueExW(hkey, NULL, NULL, NULL, NULL, &size))
+    {
+        if (!(*name = CoTaskMemAlloc(size)))
+            return E_OUTOFMEMORY;
+
+        RegQueryValueExW(hkey, NULL, NULL, NULL, (BYTE *)*name, &size);
+    }
+
+    return S_OK;
+}
+
+static HRESULT mft_get_reg_type_info(const WCHAR *clsid, const WCHAR *key, MFT_REGISTER_TYPE_INFO **ret_types,
+        UINT32 *ret_count)
+{
+    MFT_REGISTER_TYPE_INFO *types = NULL;
+    UINT32 count = 0;
+
+    if (!ret_types)
+        return S_OK;
+
+    mft_get_reg_type_info_internal(clsid, key, &types, &count);
+    if (count)
+    {
+        if (!(*ret_types = CoTaskMemAlloc(count * sizeof(**ret_types))))
+        {
+            free(types);
+            return E_OUTOFMEMORY;
+        }
+
+        memcpy(*ret_types, types, count * sizeof(**ret_types));
+        *ret_count = count;
+    }
+
+    free(types);
+
+    return S_OK;
+}
+
+static HRESULT mft_get_attributes(HKEY hkey, IMFAttributes **ret)
+{
+    IMFAttributes *attributes;
+    UINT8 *blob;
+    DWORD size;
+    HRESULT hr;
+
+    if (!ret)
+        return S_OK;
+
+    if (FAILED(hr = MFCreateAttributes(&attributes, 0)))
+        return hr;
+
+    if (!RegQueryValueExW(hkey, L"Attributes", NULL, NULL, NULL, &size) && size)
+    {
+        if (!(blob = malloc(size)))
+        {
+            IMFAttributes_Release(attributes);
+            return E_OUTOFMEMORY;
+        }
+
+        if (!RegQueryValueExW(hkey, L"Attributes", NULL, NULL, blob, &size))
+        {
+            if (FAILED(hr = MFInitAttributesFromBlob(attributes, blob, size)))
+                WARN("Failed to initialize attributes, hr %#x.\n", hr);
+        }
+
+        free(blob);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        *ret = attributes;
+        IMFAttributes_AddRef(*ret);
+    }
+
+    IMFAttributes_Release(attributes);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFTGetInfo (mfplat.@)
+ */
+HRESULT WINAPI MFTGetInfo(CLSID clsid, WCHAR **name, MFT_REGISTER_TYPE_INFO **input_types,
+        UINT32 *input_types_count, MFT_REGISTER_TYPE_INFO **output_types, UINT32 *output_types_count,
+        IMFAttributes **attributes)
+{
+    HRESULT hr = S_OK;
+    WCHAR clsidW[64];
+    HKEY hroot, hmft;
+    DWORD ret;
+
+    TRACE("%s, %p, %p, %p, %p, %p, %p.\n", debugstr_guid(&clsid), name, input_types,
+            input_types_count, output_types, output_types_count, attributes);
+
+    guid_to_string(clsidW, &clsid);
+
+    if ((ret = RegOpenKeyW(HKEY_CLASSES_ROOT, transform_keyW, &hroot)))
+        return HRESULT_FROM_WIN32(ret);
+
+    ret = RegOpenKeyW(hroot, clsidW, &hmft);
+    RegCloseKey(hroot);
+    if (ret)
+        return HRESULT_FROM_WIN32(ret);
+
+    if (input_types_count)
+        *input_types_count = 0;
+
+    if (output_types_count)
+        *output_types_count = 0;
+
+    hr = mft_get_name(hmft, name);
+
+    if (SUCCEEDED(hr))
+        hr = mft_get_reg_type_info(clsidW, L"InputTypes", input_types, input_types_count);
+
+    if (SUCCEEDED(hr))
+        hr = mft_get_reg_type_info(clsidW, L"OutputTypes", output_types, output_types_count);
+
+    if (SUCCEEDED(hr))
+        hr = mft_get_attributes(hmft, attributes);
+
+    RegCloseKey(hmft);
+
+    return hr;
 }
 
 /***********************************************************************
