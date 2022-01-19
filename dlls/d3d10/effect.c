@@ -161,6 +161,20 @@ static struct d3d10_effect_variable * d3d10_array_get_element(struct d3d10_effec
     return &v->elements[index];
 }
 
+static struct d3d10_effect_variable * d3d10_get_state_variable(struct d3d10_effect_variable *v,
+        unsigned int index, const struct d3d10_effect_var_array *array)
+{
+    v = d3d10_array_get_element(v, 0);
+
+    if (v->u.state.index + index >= array->count)
+    {
+        WARN("Invalid index %u.\n", index);
+        return NULL;
+    }
+
+    return array->v[v->u.state.index + index];
+}
+
 enum d3d10_effect_container_type
 {
     D3D10_C_NONE,
@@ -9267,20 +9281,19 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetBackingStore(I
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
-
-    if (v->type->basetype != D3D10_SVT_SAMPLER)
+    if (!iface->lpVtbl->IsValid(iface))
     {
-        WARN("Variable is not a sampler state.\n");
+        WARN("Invalid variable.\n");
         return E_FAIL;
     }
+
+    if (!(v = d3d10_get_state_variable(v, index, &v->effect->samplers)))
+        return E_FAIL;
 
     *desc = v->u.state.desc.sampler.desc;
 
     return S_OK;
 }
-
 
 static const struct ID3D10EffectSamplerVariableVtbl d3d10_effect_sampler_variable_vtbl =
 {
