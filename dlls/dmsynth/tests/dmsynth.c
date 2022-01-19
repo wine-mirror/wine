@@ -54,7 +54,7 @@ static ULONG get_refcount(void *iface)
 static void test_dmsynth(void)
 {
     IDirectMusicSynth *dmsynth = NULL;
-    IDirectMusicSynthSink *dmsynth_sink = NULL;
+    IDirectMusicSynthSink *dmsynth_sink = NULL, *dmsynth_sink2 = NULL;
     IReferenceClock* clock_synth = NULL;
     IReferenceClock* clock_sink = NULL;
     IKsControl* control_synth = NULL;
@@ -68,7 +68,11 @@ static void test_dmsynth(void)
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (LPVOID*)&dmsynth);
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
-    hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (LPVOID*)&dmsynth_sink);
+    hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink,
+            (void **)&dmsynth_sink);
+    ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
+    hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink,
+            (void **)&dmsynth_sink2);
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
     hr = IDirectMusicSynth_QueryInterface(dmsynth, &IID_IKsControl, (LPVOID*)&control_synth);
@@ -127,6 +131,8 @@ static void test_dmsynth(void)
     ref_clock_sink = get_refcount(clock_sink);
 
     /* This will Init() the SynthSink and finish initializing the Synth */
+    hr = IDirectMusicSynth_SetSynthSink(dmsynth, dmsynth_sink2);
+    ok(hr == S_OK, "IDirectMusicSynth_SetSynthSink returned: %x\n", hr);
     hr = IDirectMusicSynth_SetSynthSink(dmsynth, dmsynth_sink);
     ok(hr == S_OK, "IDirectMusicSynth_SetSynthSink returned: %x\n", hr);
 
@@ -148,6 +154,8 @@ static void test_dmsynth(void)
         IReferenceClock_Release(clock_sink);
     if (dmsynth_sink)
         IDirectMusicSynthSink_Release(dmsynth_sink);
+    if (dmsynth_sink2)
+        IDirectMusicSynthSink_Release(dmsynth_sink2);
     IDirectMusicSynth_Release(dmsynth);
 }
 

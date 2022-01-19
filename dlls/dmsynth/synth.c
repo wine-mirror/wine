@@ -362,15 +362,28 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetSynthSink(IDirectMusicSynth8 *if
         IDirectMusicSynthSink *sink)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", iface, sink);
 
+    if (sink == This->sink)
+        return S_OK;
+
+    if (!sink || This->sink) {
+        /* Disconnect the sink */
+        if (This->latency_clock)
+            IReferenceClock_Release(This->latency_clock);
+        IDirectMusicSynthSink_Release(This->sink);
+    }
+
     This->sink = sink;
+    if (!sink)
+        return S_OK;
 
-    if (sink)
-        return IDirectMusicSynthSink_GetLatencyClock(sink, &This->latency_clock);
-
-    return S_OK;
+    IDirectMusicSynthSink_AddRef(This->sink);
+    if (FAILED(hr = IDirectMusicSynthSink_Init(sink, (IDirectMusicSynth *)iface)))
+        return hr;
+    return IDirectMusicSynthSink_GetLatencyClock(sink, &This->latency_clock);
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_Render(IDirectMusicSynth8 *iface, short *buffer,
