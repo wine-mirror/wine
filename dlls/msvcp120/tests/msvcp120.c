@@ -417,6 +417,8 @@ static void (__thiscall *p_vector_base_v4__Internal_resize)(
         vector_base_v4*, size_t, size_t, size_t, void (__cdecl*)(void*, size_t),
         void (__cdecl *copy)(void*, const void*, size_t), const void*);
 
+static const BYTE *p_byte_reverse_table;
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -808,6 +810,8 @@ static BOOL init(void)
             "_Cnd_unregister_at_thread_exit");
     SET(p__Cnd_do_broadcast_at_thread_exit,
             "_Cnd_do_broadcast_at_thread_exit");
+
+    SET(p_byte_reverse_table, "?_Byte_reverse_table@details@Concurrency@@3QBEB");
 
     hdll = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
@@ -3305,6 +3309,26 @@ static void test_vector_base_v4(void)
     ok(!vector_alloc_count, "vector_alloc_count = %d, expected 0\n", vector_alloc_count);
 }
 
+static BYTE byte_reverse(BYTE b)
+{
+    b = ((b & 0xf0) >> 4) | ((b & 0x0f) << 4);
+    b = ((b & 0xcc) >> 2) | ((b & 0x33) << 2);
+    b = ((b & 0xaa) >> 1) | ((b & 0x55) << 1);
+    return b;
+}
+
+static void test_data_exports(void)
+{
+    unsigned int i;
+
+    ok(IsBadWritePtr((BYTE *)p_byte_reverse_table, 256), "byte_reverse_table is writeable.\n");
+    for (i = 0; i < 256; ++i)
+    {
+        ok(p_byte_reverse_table[i] == byte_reverse(i), "Got unexpected byte %#x, expected %#x.\n",
+                p_byte_reverse_table[i], byte_reverse(i));
+    }
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -3349,6 +3373,8 @@ START_TEST(msvcp120)
     test_vector_base_v4();
 
     test_vbtable_size_exports();
+
+    test_data_exports();
 
     free_expect_struct();
     TlsFree(expect_idx);
