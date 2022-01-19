@@ -3680,23 +3680,23 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->texture_count);
     TRACE("Texture count: %u\n", e->texture_count);
 
-    read_dword(&ptr, &e->depthstencilstate_count);
-    TRACE("Depthstencilstate count: %u\n", e->depthstencilstate_count);
+    read_dword(&ptr, &e->ds_states.count);
+    TRACE("Depthstencilstate count: %u\n", e->ds_states.count);
 
-    read_dword(&ptr, &e->blendstate_count);
-    TRACE("Blendstate count: %u\n", e->blendstate_count);
+    read_dword(&ptr, &e->blend_states.count);
+    TRACE("Blendstate count: %u\n", e->blend_states.count);
 
-    read_dword(&ptr, &e->rasterizerstate_count);
-    TRACE("Rasterizerstate count: %u\n", e->rasterizerstate_count);
+    read_dword(&ptr, &e->rs_states.count);
+    TRACE("Rasterizerstate count: %u\n", e->rs_states.count);
 
-    read_dword(&ptr, &e->samplerstate_count);
-    TRACE("Samplerstate count: %u\n", e->samplerstate_count);
+    read_dword(&ptr, &e->samplers.count);
+    TRACE("Samplerstate count: %u\n", e->samplers.count);
 
-    read_dword(&ptr, &e->rendertargetview_count);
-    TRACE("Rendertargetview count: %u\n", e->rendertargetview_count);
+    read_dword(&ptr, &e->rtvs.count);
+    TRACE("Rendertargetview count: %u\n", e->rtvs.count);
 
-    read_dword(&ptr, &e->depthstencilview_count);
-    TRACE("Depthstencilview count: %u\n", e->depthstencilview_count);
+    read_dword(&ptr, &e->dsvs.count);
+    TRACE("Depthstencilview count: %u\n", e->dsvs.count);
 
     read_dword(&ptr, &e->shaders.count);
     TRACE("Used shader count: %u\n", e->shaders.count);
@@ -3953,60 +3953,66 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_AddRef(ID3D10Effect *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
 {
-    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
+    ULONG refcount = InterlockedDecrement(&effect->refcount);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
     {
         unsigned int i;
 
-        if (This->techniques)
+        if (effect->techniques)
         {
-            for (i = 0; i < This->technique_count; ++i)
+            for (i = 0; i < effect->technique_count; ++i)
             {
-                d3d10_effect_technique_destroy(&This->techniques[i]);
+                d3d10_effect_technique_destroy(&effect->techniques[i]);
             }
-            heap_free(This->techniques);
+            heap_free(effect->techniques);
         }
 
-        if (This->local_variables)
+        if (effect->local_variables)
         {
-            for (i = 0; i < This->local_variable_count; ++i)
+            for (i = 0; i < effect->local_variable_count; ++i)
             {
-                d3d10_effect_variable_destroy(&This->local_variables[i]);
+                d3d10_effect_variable_destroy(&effect->local_variables[i]);
             }
-            heap_free(This->local_variables);
+            heap_free(effect->local_variables);
         }
 
-        if (This->local_buffers)
+        if (effect->local_buffers)
         {
-            for (i = 0; i < This->local_buffer_count; ++i)
+            for (i = 0; i < effect->local_buffer_count; ++i)
             {
-                d3d10_effect_local_buffer_destroy(&This->local_buffers[i]);
+                d3d10_effect_local_buffer_destroy(&effect->local_buffers[i]);
             }
-            heap_free(This->local_buffers);
+            heap_free(effect->local_buffers);
         }
 
-        if (This->anonymous_shaders)
+        if (effect->anonymous_shaders)
         {
-            for (i = 0; i < This->anonymous_shader_count; ++i)
+            for (i = 0; i < effect->anonymous_shader_count; ++i)
             {
-                d3d10_effect_variable_destroy(&This->anonymous_shaders[i].shader);
-                heap_free(This->anonymous_shaders[i].type.name);
+                d3d10_effect_variable_destroy(&effect->anonymous_shaders[i].shader);
+                heap_free(effect->anonymous_shaders[i].type.name);
             }
-            heap_free(This->anonymous_shaders);
+            heap_free(effect->anonymous_shaders);
         }
 
-        heap_free(This->shaders.v);
+        heap_free(effect->shaders.v);
+        heap_free(effect->samplers.v);
+        heap_free(effect->rtvs.v);
+        heap_free(effect->dsvs.v);
+        heap_free(effect->blend_states.v);
+        heap_free(effect->ds_states.v);
+        heap_free(effect->rs_states.v);
 
-        wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
+        wine_rb_destroy(&effect->types, d3d10_effect_type_destroy, NULL);
 
-        if (This->pool)
-            IUnknown_Release(&This->pool->ID3D10Effect_iface);
-        ID3D10Device_Release(This->device);
-        heap_free(This);
+        if (effect->pool)
+            IUnknown_Release(&effect->pool->ID3D10Effect_iface);
+        ID3D10Device_Release(effect->device);
+        heap_free(effect);
     }
 
     return refcount;

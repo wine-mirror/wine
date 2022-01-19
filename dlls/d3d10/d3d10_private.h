@@ -288,12 +288,6 @@ struct d3d10_effect
     DWORD technique_count;
     DWORD index_offset;
     DWORD texture_count;
-    DWORD depthstencilstate_count;
-    DWORD blendstate_count;
-    DWORD rasterizerstate_count;
-    DWORD samplerstate_count;
-    DWORD rendertargetview_count;
-    DWORD depthstencilview_count;
     DWORD anonymous_shader_count;
     DWORD flags;
 
@@ -304,6 +298,12 @@ struct d3d10_effect
     struct d3d10_effect_variable *local_variables;
     struct d3d10_effect_anonymous_shader *anonymous_shaders;
     struct d3d10_effect_var_array shaders;
+    struct d3d10_effect_var_array samplers;
+    struct d3d10_effect_var_array rtvs;
+    struct d3d10_effect_var_array dsvs;
+    struct d3d10_effect_var_array blend_states;
+    struct d3d10_effect_var_array ds_states;
+    struct d3d10_effect_var_array rs_states;
     struct d3d10_effect_technique *techniques;
 };
 
