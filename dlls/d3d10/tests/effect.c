@@ -4519,6 +4519,8 @@ static void test_effect_state_groups(void)
             blend_desc.RenderTargetWriteMask[0]);
     ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
             blend_desc.RenderTargetWriteMask[7]);
+    b->lpVtbl->GetBackingStore(b, 1, &blend_desc);
+    ok(blend_desc.SrcBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     d = v->lpVtbl->AsDepthStencil(v);
