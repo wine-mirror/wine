@@ -2311,6 +2311,9 @@ static BOOL test_device_types( DWORD version )
         },
     };
 
+    C_ASSERT(ARRAY_SIZE(expect_caps) == ARRAY_SIZE(device_desc));
+    C_ASSERT(ARRAY_SIZE(expect_devinst) == ARRAY_SIZE(device_desc));
+
     DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
