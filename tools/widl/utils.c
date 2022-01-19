@@ -276,7 +276,6 @@ void add_output_to_resources( const char *type, const char *name )
 
 void flush_output_resources( const char *name )
 {
-    int fd;
     unsigned int i;
 
     /* all output must have been saved with add_output_to_resources() first */
@@ -294,19 +293,13 @@ void flush_output_resources( const char *name )
     put_dword( 0 );      /* Version */
     put_dword( 0 );      /* Characteristics */
 
-    fd = open( name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666 );
-    if (fd == -1) error( "Error creating %s\n", name );
-    if (write( fd, output_buffer, output_buffer_pos ) != output_buffer_pos)
-        error( "Error writing to %s\n", name );
     for (i = 0; i < nb_resources; i++)
     {
-        if (write( fd, resources[i].data, resources[i].size ) != resources[i].size)
-            error( "Error writing to %s\n", name );
+        put_data( resources[i].data, resources[i].size );
         free( resources[i].data );
     }
-    close( fd );
+    flush_output_buffer( name );
     nb_resources = 0;
-    free( output_buffer );
 }
 
 /* pointer-sized word */
