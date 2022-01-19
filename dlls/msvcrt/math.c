@@ -798,6 +798,7 @@ static float asinf_R(float z)
 float CDECL acosf( float x )
 {
     static const double pio2_lo = 6.12323399573676603587e-17;
+    static const double pio2_hi = 1.57079632679489655800e+00;
 
     float z, w, s, c, df;
     unsigned int hx, ix;
@@ -818,13 +819,13 @@ float CDECL acosf( float x )
     if (ix < 0x3f000000) {
         if (ix <= 0x32800000) /* |x| < 2**-26 */
             return M_PI_2;
-        return M_PI_2 - (x - (pio2_lo - x * asinf_R(x * x)));
+        return pio2_hi - (x - (pio2_lo - x * asinf_R(x * x)));
     }
     /* x < -0.5 */
     if (hx >> 31) {
         z = (1 + x) * 0.5f;
         s = sqrtf(z);
-        return M_PI - 2 * (s + ((double)s * asinf_R(z)));
+        return 2*(pio2_hi - (s + (asinf_R(z) * s - pio2_lo)));
     }
     /* x > 0.5 */
     z = (1 - x) * 0.5f;
