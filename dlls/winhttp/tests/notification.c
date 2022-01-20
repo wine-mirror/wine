@@ -659,9 +659,9 @@ static const struct notification websocket_test[] =
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NF_SIGNAL },
     { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_SIGNAL },
-    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
-    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NF_SIGNAL },
+    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
+    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NF_SIGNAL },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, NF_WINE_ALLOW },
@@ -793,6 +793,11 @@ static void test_websocket(BOOL secure)
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     WaitForSingleObject( info.wait, INFINITE );
 
+    setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
+    err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+    WaitForSingleObject( info.wait, INFINITE );
+
     setup_test( &info, winhttp_websocket_receive, __LINE__ );
     buffer[0] = 0;
     size = 0xdeadbeef;
@@ -814,11 +819,6 @@ static void test_websocket(BOOL secure)
     ok( size == 0xdeadbeef, "got %u\n", size );
     ok( type == 0xdeadbeef, "got %u\n", type );
     ok( buffer[0] == 'h', "unexpected data\n" );
-
-    setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
-    err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
-    ok( err == ERROR_SUCCESS, "got %u\n", err );
-    WaitForSingleObject( info.wait, INFINITE );
 
     setup_test( &info, winhttp_websocket_close, __LINE__ );
     ret = pWinHttpWebSocketClose( socket, 1000, (void *)"success", sizeof("success") );

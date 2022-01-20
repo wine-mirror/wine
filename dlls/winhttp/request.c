@@ -3554,7 +3554,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
     }
-    if (socket->state != SOCKET_STATE_OPEN)
+    if (socket->state > SOCKET_STATE_SHUTDOWN)
     {
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
