@@ -149,8 +149,7 @@ static HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(IDirectMusicDown
     return S_OK;
 }
 
-/* SynthPortImpl IDirectMusicPort IUnknown part follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_QueryInterface(LPDIRECTMUSICPORT iface, REFIID riid, LPVOID *ret_iface)
+static HRESULT WINAPI synth_port_QueryInterface(IDirectMusicPort *iface, REFIID riid, void **ret_iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -175,7 +174,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_QueryInterface(LPDIRECTMUSI
     return S_OK;
 }
 
-static ULONG WINAPI SynthPortImpl_IDirectMusicPort_AddRef(LPDIRECTMUSICPORT iface)
+static ULONG WINAPI synth_port_AddRef(IDirectMusicPort *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -187,7 +186,7 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPort_AddRef(LPDIRECTMUSICPORT ifac
     return ref;
 }
 
-static ULONG WINAPI SynthPortImpl_IDirectMusicPort_Release(LPDIRECTMUSICPORT iface)
+static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -214,8 +213,7 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPort_Release(LPDIRECTMUSICPORT ifa
     return ref;
 }
 
-/* SynthPortImpl IDirectMusicPort interface follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_PlayBuffer(LPDIRECTMUSICPORT iface, LPDIRECTMUSICBUFFER buffer)
+static HRESULT WINAPI synth_port_PlayBuffer(IDirectMusicPort *iface, IDirectMusicBuffer *buffer)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     HRESULT hr;
@@ -242,7 +240,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_PlayBuffer(LPDIRECTMUSICPOR
     return hr;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetReadNotificationHandle(LPDIRECTMUSICPORT iface, HANDLE event)
+static HRESULT WINAPI synth_port_SetReadNotificationHandle(IDirectMusicPort *iface, HANDLE event)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -251,7 +249,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetReadNotificationHandle(L
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Read(LPDIRECTMUSICPORT iface, LPDIRECTMUSICBUFFER buffer)
+static HRESULT WINAPI synth_port_Read(IDirectMusicPort *iface, IDirectMusicBuffer *buffer)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -260,7 +258,8 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Read(LPDIRECTMUSICPORT ifac
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DownloadInstrument(LPDIRECTMUSICPORT iface, IDirectMusicInstrument* instrument, IDirectMusicDownloadedInstrument** downloaded_instrument, DMUS_NOTERANGE* note_ranges, DWORD num_note_ranges)
+static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDirectMusicInstrument *instrument,
+        IDirectMusicDownloadedInstrument **downloaded_instrument, DMUS_NOTERANGE *note_ranges, DWORD num_note_ranges)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     IDirectMusicInstrumentImpl *instrument_object;
@@ -346,7 +345,8 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DownloadInstrument(LPDIRECT
     return E_FAIL;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_UnloadInstrument(LPDIRECTMUSICPORT iface, IDirectMusicDownloadedInstrument *downloaded_instrument)
+static HRESULT WINAPI synth_port_UnloadInstrument(IDirectMusicPort *iface,
+        IDirectMusicDownloadedInstrument *downloaded_instrument)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     IDirectMusicDownloadedInstrumentImpl *downloaded_object = unsafe_impl_from_IDirectMusicDownloadedInstrument(downloaded_instrument);
@@ -366,7 +366,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_UnloadInstrument(LPDIRECTMU
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetLatencyClock(LPDIRECTMUSICPORT iface, IReferenceClock** clock)
+static HRESULT WINAPI synth_port_GetLatencyClock(IDirectMusicPort *iface, IReferenceClock **clock)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -378,7 +378,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetLatencyClock(LPDIRECTMUS
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetRunningStats(LPDIRECTMUSICPORT iface, LPDMUS_SYNTHSTATS stats)
+static HRESULT WINAPI synth_port_GetRunningStats(IDirectMusicPort *iface, DMUS_SYNTHSTATS *stats)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -387,7 +387,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetRunningStats(LPDIRECTMUS
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Compact(LPDIRECTMUSICPORT iface)
+static HRESULT WINAPI synth_port_Compact(IDirectMusicPort *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -396,7 +396,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Compact(LPDIRECTMUSICPORT i
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetCaps(LPDIRECTMUSICPORT iface, LPDMUS_PORTCAPS port_caps)
+static HRESULT WINAPI synth_port_GetCaps(IDirectMusicPort *iface, DMUS_PORTCAPS *port_caps)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -407,8 +407,9 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetCaps(LPDIRECTMUSICPORT i
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DeviceIoControl(LPDIRECTMUSICPORT iface, DWORD io_control_code, LPVOID in_buffer, DWORD in_buffer_size,
-                                                           LPVOID out_buffer, DWORD out_buffer_size, LPDWORD bytes_returned, LPOVERLAPPED overlapped)
+static HRESULT WINAPI synth_port_DeviceIoControl(IDirectMusicPort *iface, DWORD io_control_code,
+        void *in_buffer, DWORD in_buffer_size, void *out_buffer, DWORD out_buffer_size,
+        DWORD *bytes_returned, OVERLAPPED *overlapped)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -417,7 +418,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_DeviceIoControl(LPDIRECTMUS
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetNumChannelGroups(LPDIRECTMUSICPORT iface, DWORD channel_groups)
+static HRESULT WINAPI synth_port_SetNumChannelGroups(IDirectMusicPort *iface, DWORD channel_groups)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -428,7 +429,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetNumChannelGroups(LPDIREC
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetNumChannelGroups(LPDIRECTMUSICPORT iface, LPDWORD channel_groups)
+static HRESULT WINAPI synth_port_GetNumChannelGroups(IDirectMusicPort *iface, DWORD *channel_groups)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -439,7 +440,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetNumChannelGroups(LPDIREC
     return S_OK;
 }
 
-static HRESULT WINAPI synth_dmport_Activate(IDirectMusicPort *iface, BOOL active)
+static HRESULT WINAPI synth_port_Activate(IDirectMusicPort *iface, BOOL active)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -468,7 +469,8 @@ static HRESULT WINAPI synth_dmport_Activate(IDirectMusicPort *iface, BOOL active
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetChannelPriority(LPDIRECTMUSICPORT iface, DWORD channel_group, DWORD channel, DWORD priority)
+static HRESULT WINAPI synth_port_SetChannelPriority(IDirectMusicPort *iface, DWORD channel_group,
+        DWORD channel, DWORD priority)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -483,7 +485,8 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetChannelPriority(LPDIRECT
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetChannelPriority(LPDIRECTMUSICPORT iface, DWORD channel_group, DWORD channel, LPDWORD priority)
+static HRESULT WINAPI synth_port_GetChannelPriority(IDirectMusicPort *iface, DWORD channel_group,
+        DWORD channel, DWORD *priority)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
@@ -494,7 +497,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetChannelPriority(LPDIRECT
     return S_OK;
 }
 
-static HRESULT WINAPI synth_dmport_SetDirectSound(IDirectMusicPort *iface, IDirectSound *dsound,
+static HRESULT WINAPI synth_port_SetDirectSound(IDirectMusicPort *iface, IDirectSound *dsound,
         IDirectSoundBuffer *dsbuffer)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
@@ -525,7 +528,8 @@ static HRESULT WINAPI synth_dmport_SetDirectSound(IDirectMusicPort *iface, IDire
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetFormat(LPDIRECTMUSICPORT iface, LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSize, LPDWORD pdwBufferSize)
+static HRESULT WINAPI synth_port_GetFormat(IDirectMusicPort *iface, WAVEFORMATEX *pWaveFormatEx,
+        DWORD *pdwWaveFormatExSize, DWORD *pdwBufferSize)
 {
 	struct synth_port *This = synth_from_IDirectMusicPort(iface);
 	WAVEFORMATEX format;
@@ -570,33 +574,32 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetFormat(LPDIRECTMUSICPORT
 	return S_OK;
 }
 
-static const IDirectMusicPortVtbl SynthPortImpl_DirectMusicPort_Vtbl = {
+static const IDirectMusicPortVtbl synth_port_vtbl = {
     /**** IDirectMusicPort IUnknown part methods ***/
-    SynthPortImpl_IDirectMusicPort_QueryInterface,
-    SynthPortImpl_IDirectMusicPort_AddRef,
-    SynthPortImpl_IDirectMusicPort_Release,
+    synth_port_QueryInterface,
+    synth_port_AddRef,
+    synth_port_Release,
     /**** IDirectMusicPort methods ***/
-    SynthPortImpl_IDirectMusicPort_PlayBuffer,
-    SynthPortImpl_IDirectMusicPort_SetReadNotificationHandle,
-    SynthPortImpl_IDirectMusicPort_Read,
-    SynthPortImpl_IDirectMusicPort_DownloadInstrument,
-    SynthPortImpl_IDirectMusicPort_UnloadInstrument,
-    SynthPortImpl_IDirectMusicPort_GetLatencyClock,
-    SynthPortImpl_IDirectMusicPort_GetRunningStats,
-    SynthPortImpl_IDirectMusicPort_Compact,
-    SynthPortImpl_IDirectMusicPort_GetCaps,
-    SynthPortImpl_IDirectMusicPort_DeviceIoControl,
-    SynthPortImpl_IDirectMusicPort_SetNumChannelGroups,
-    SynthPortImpl_IDirectMusicPort_GetNumChannelGroups,
-    synth_dmport_Activate,
-    SynthPortImpl_IDirectMusicPort_SetChannelPriority,
-    SynthPortImpl_IDirectMusicPort_GetChannelPriority,
-    synth_dmport_SetDirectSound,
-    SynthPortImpl_IDirectMusicPort_GetFormat
+    synth_port_PlayBuffer,
+    synth_port_SetReadNotificationHandle,
+    synth_port_Read,
+    synth_port_DownloadInstrument,
+    synth_port_UnloadInstrument,
+    synth_port_GetLatencyClock,
+    synth_port_GetRunningStats,
+    synth_port_Compact,
+    synth_port_GetCaps,
+    synth_port_DeviceIoControl,
+    synth_port_SetNumChannelGroups,
+    synth_port_GetNumChannelGroups,
+    synth_port_Activate,
+    synth_port_SetChannelPriority,
+    synth_port_GetChannelPriority,
+    synth_port_SetDirectSound,
+    synth_port_GetFormat
 };
 
-/* SynthPortImpl IDirectMusicPortDownload IUnknown part follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_QueryInterface(LPDIRECTMUSICPORTDOWNLOAD iface, REFIID riid, LPVOID *ret_iface)
+static HRESULT WINAPI synth_port_download_QueryInterface(IDirectMusicPortDownload *iface, REFIID riid, void **ret_iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -605,7 +608,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_QueryInterface(LPDI
     return IDirectMusicPort_QueryInterface(&This->IDirectMusicPort_iface, riid, ret_iface);
 }
 
-static ULONG WINAPI SynthPortImpl_IDirectMusicPortDownload_AddRef (LPDIRECTMUSICPORTDOWNLOAD iface)
+static ULONG WINAPI synth_port_download_AddRef(IDirectMusicPortDownload *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -614,7 +617,7 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPortDownload_AddRef (LPDIRECTMUSIC
     return IDirectMusicPort_AddRef(&This->IDirectMusicPort_iface);
 }
 
-static ULONG WINAPI SynthPortImpl_IDirectMusicPortDownload_Release(LPDIRECTMUSICPORTDOWNLOAD iface)
+static ULONG WINAPI synth_port_download_Release(IDirectMusicPortDownload *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -623,8 +626,8 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPortDownload_Release(LPDIRECTMUSIC
     return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
 }
 
-/* SynthPortImpl IDirectMusicPortDownload Interface follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_GetBuffer(LPDIRECTMUSICPORTDOWNLOAD iface, DWORD DLId, IDirectMusicDownload** IDMDownload)
+static HRESULT WINAPI synth_port_download_GetBuffer(IDirectMusicPortDownload *iface, DWORD DLId,
+        IDirectMusicDownload **IDMDownload)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -636,7 +639,8 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_GetBuffer(LPDIRECTM
     return DMUSIC_CreateDirectMusicDownloadImpl(&IID_IDirectMusicDownload, (LPVOID*)IDMDownload, NULL);
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_AllocateBuffer(LPDIRECTMUSICPORTDOWNLOAD iface, DWORD size, IDirectMusicDownload** IDMDownload)
+static HRESULT WINAPI synth_port_download_AllocateBuffer(IDirectMusicPortDownload *iface, DWORD size,
+        IDirectMusicDownload **IDMDownload)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -645,7 +649,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_AllocateBuffer(LPDI
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_GetDLId(LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* start_DLId, DWORD count)
+static HRESULT WINAPI synth_port_download_GetDLId(IDirectMusicPortDownload *iface, DWORD *start_DLId, DWORD count)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -654,7 +658,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_GetDLId(LPDIRECTMUS
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_GetAppend (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* append)
+static HRESULT WINAPI synth_port_download_GetAppend(IDirectMusicPortDownload *iface, DWORD *append)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -663,7 +667,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_GetAppend (LPDIRECT
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_Download(LPDIRECTMUSICPORTDOWNLOAD iface, IDirectMusicDownload* IDMDownload)
+static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *iface, IDirectMusicDownload *IDMDownload)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -672,7 +676,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_Download(LPDIRECTMU
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_Unload(LPDIRECTMUSICPORTDOWNLOAD iface, IDirectMusicDownload* IDMDownload)
+static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface, IDirectMusicDownload *IDMDownload)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
@@ -681,22 +685,21 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPortDownload_Unload(LPDIRECTMUSI
     return S_OK;
 }
 
-static const IDirectMusicPortDownloadVtbl SynthPortImpl_DirectMusicPortDownload_Vtbl = {
+static const IDirectMusicPortDownloadVtbl synth_port_download_vtbl = {
     /*** IDirectMusicPortDownload IUnknown part methods ***/
-    SynthPortImpl_IDirectMusicPortDownload_QueryInterface,
-    SynthPortImpl_IDirectMusicPortDownload_AddRef,
-    SynthPortImpl_IDirectMusicPortDownload_Release,
+    synth_port_download_QueryInterface,
+    synth_port_download_AddRef,
+    synth_port_download_Release,
     /*** IDirectMusicPortDownload methods ***/
-    SynthPortImpl_IDirectMusicPortDownload_GetBuffer,
-    SynthPortImpl_IDirectMusicPortDownload_AllocateBuffer,
-    SynthPortImpl_IDirectMusicPortDownload_GetDLId,
-    SynthPortImpl_IDirectMusicPortDownload_GetAppend,
-    SynthPortImpl_IDirectMusicPortDownload_Download,
-    SynthPortImpl_IDirectMusicPortDownload_Unload
+    synth_port_download_GetBuffer,
+    synth_port_download_AllocateBuffer,
+    synth_port_download_GetDLId,
+    synth_port_download_GetAppend,
+    synth_port_download_Download,
+    synth_port_download_Unload
 };
 
-/* SynthPortImpl IDirectMusicThru IUnknown part follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicThru_QueryInterface(LPDIRECTMUSICTHRU iface, REFIID riid, LPVOID *ret_iface)
+static HRESULT WINAPI synth_port_thru_QueryInterface(IDirectMusicThru *iface, REFIID riid, void **ret_iface)
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
@@ -705,7 +708,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicThru_QueryInterface(LPDIRECTMUSI
     return IDirectMusicPort_QueryInterface(&This->IDirectMusicPort_iface, riid, ret_iface);
 }
 
-static ULONG WINAPI SynthPortImpl_IDirectMusicThru_AddRef(LPDIRECTMUSICTHRU iface)
+static ULONG WINAPI synth_port_thru_AddRef(IDirectMusicThru *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
@@ -714,7 +717,7 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicThru_AddRef(LPDIRECTMUSICTHRU ifac
     return IDirectMusicPort_AddRef(&This->IDirectMusicPort_iface);
 }
 
-static ULONG WINAPI SynthPortImpl_IDirectMusicThru_Release(LPDIRECTMUSICTHRU iface)
+static ULONG WINAPI synth_port_thru_Release(IDirectMusicThru *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
@@ -723,9 +726,9 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicThru_Release(LPDIRECTMUSICTHRU ifa
     return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
 }
 
-/*  SynthPortImpl IDirectMusicThru Interface follows: */
-static HRESULT WINAPI SynthPortImpl_IDirectMusicThru_ThruChannel(LPDIRECTMUSICTHRU iface, DWORD source_channel_group, DWORD source_channel, DWORD destination_channel_group,
-                                                       DWORD destination_channel, LPDIRECTMUSICPORT destination_port)
+static HRESULT WINAPI synth_port_thru_ThruChannel(IDirectMusicThru *iface, DWORD source_channel_group,
+        DWORD source_channel, DWORD destination_channel_group, DWORD destination_channel,
+        IDirectMusicPort *destination_port)
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
@@ -734,13 +737,13 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicThru_ThruChannel(LPDIRECTMUSICTH
     return S_OK;
 }
 
-static const IDirectMusicThruVtbl SynthPortImpl_DirectMusicThru_Vtbl = {
+static const IDirectMusicThruVtbl synth_port_thru_vtbl = {
     /*** IDirectMusicThru IUnknown part methods */
-    SynthPortImpl_IDirectMusicThru_QueryInterface,
-    SynthPortImpl_IDirectMusicThru_AddRef,
-    SynthPortImpl_IDirectMusicThru_Release,
+    synth_port_thru_QueryInterface,
+    synth_port_thru_AddRef,
+    synth_port_thru_Release,
     /*** IDirectMusicThru methods ***/
-    SynthPortImpl_IDirectMusicThru_ThruChannel
+    synth_port_thru_ThruChannel
 };
 
 static HRESULT WINAPI IKsControlImpl_QueryInterface(IKsControl *iface, REFIID riid,
@@ -827,9 +830,9 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
     if (!obj)
         return E_OUTOFMEMORY;
 
-    obj->IDirectMusicPort_iface.lpVtbl = &SynthPortImpl_DirectMusicPort_Vtbl;
-    obj->IDirectMusicPortDownload_iface.lpVtbl = &SynthPortImpl_DirectMusicPortDownload_Vtbl;
-    obj->IDirectMusicThru_iface.lpVtbl = &SynthPortImpl_DirectMusicThru_Vtbl;
+    obj->IDirectMusicPort_iface.lpVtbl = &synth_port_vtbl;
+    obj->IDirectMusicPortDownload_iface.lpVtbl = &synth_port_download_vtbl;
+    obj->IDirectMusicThru_iface.lpVtbl = &synth_port_thru_vtbl;
     obj->IKsControl_iface.lpVtbl = &ikscontrol_vtbl;
     obj->ref = 1;
     obj->parent = parent;
