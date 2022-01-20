@@ -2186,6 +2186,127 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    static const unsigned char wheel_steering_only_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_STEERING),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 5),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    static const unsigned char wheel_dualpedals_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_STEERING),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_ACCELERATOR),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_BRAKE),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 4),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 5),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    static const unsigned char wheel_threepedals_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_STEERING),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_ACCELERATOR),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_BRAKE),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_CLUTCH),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 5),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 5),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
 #include "pop_hid_macros.h"
 
     static struct device_desc device_desc[] =
@@ -2222,6 +2343,30 @@ static BOOL test_device_types( DWORD version )
                 .InputReportByteLength = 5,
             },
         },
+        {
+            .report_desc_buf = wheel_steering_only_desc,
+            .report_desc_len = sizeof(wheel_steering_only_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 3,
+            },
+        },
+        {
+            .report_desc_buf = wheel_dualpedals_desc,
+            .report_desc_len = sizeof(wheel_dualpedals_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 6,
+            },
+        },
+        {
+            .report_desc_buf = wheel_threepedals_desc,
+            .report_desc_len = sizeof(wheel_threepedals_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 7,
+            },
+        },
     };
     const DIDEVCAPS expect_caps[] =
     {
@@ -2254,6 +2399,33 @@ static BOOL test_device_types( DWORD version )
             .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK
                                           : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_UNKNOWN << 8)|DIDEVTYPE_JOYSTICK,
             .dwAxes = 3,
+            .dwPOVs = 1,
+            .dwButtons = 5,
+        },
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEDRIVING_LIMITED << 8)|DI8DEVTYPE_DRIVING
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_WHEEL << 8)|DIDEVTYPE_JOYSTICK,
+            .dwAxes = 1,
+            .dwPOVs = 1,
+            .dwButtons = 5,
+        },
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEDRIVING_DUALPEDALS << 8)|DI8DEVTYPE_DRIVING
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_WHEEL << 8)|DIDEVTYPE_JOYSTICK,
+            .dwAxes = 4,
+            .dwPOVs = 1,
+            .dwButtons = 5,
+        },
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEDRIVING_THREEPEDALS << 8)|DI8DEVTYPE_DRIVING
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_WHEEL << 8)|DIDEVTYPE_JOYSTICK,
+            .dwAxes = 5,
             .dwPOVs = 1,
             .dwButtons = 5,
         },
@@ -2309,6 +2481,42 @@ static BOOL test_device_types( DWORD version )
             .wUsagePage = HID_USAGE_PAGE_GENERIC,
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEDRIVING_LIMITED << 8)|DI8DEVTYPE_DRIVING
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_WHEEL << 8)|DIDEVTYPE_JOYSTICK,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEDRIVING_DUALPEDALS << 8)|DI8DEVTYPE_DRIVING
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_WHEEL << 8)|DIDEVTYPE_JOYSTICK,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = version >= 0x800 ? DIDEVTYPE_HID|(DI8DEVTYPEDRIVING_THREEPEDALS << 8)|DI8DEVTYPE_DRIVING
+                                          : DIDEVTYPE_HID|(DIDEVTYPEJOYSTICK_WHEEL << 8)|DIDEVTYPE_JOYSTICK,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
     };
 
     C_ASSERT(ARRAY_SIZE(expect_caps) == ARRAY_SIZE(device_desc));
@@ -2349,7 +2557,7 @@ static BOOL test_device_types( DWORD version )
         ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
         check_member( devinst, expect_devinst[i], "%d", dwSize );
         check_member_guid( devinst, expect_devinst[i], guidProduct );
-        todo_wine_if( version <= 0x700 && i == 3 )
+        todo_wine_if( (version <= 0x700 && i == 3) || i > 3 )
         check_member( devinst, expect_devinst[i], "%#x", dwDevType );
         check_member_guid( devinst, expect_devinst[i], guidFFDriver );
         check_member( devinst, expect_devinst[i], "%04x", wUsagePage );
@@ -2359,7 +2567,7 @@ static BOOL test_device_types( DWORD version )
         ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
         check_member( caps, expect_caps[i], "%d", dwSize );
         check_member( caps, expect_caps[i], "%#x", dwFlags );
-        todo_wine_if( version <= 0x700 && i == 3 )
+        todo_wine_if( (version <= 0x700 && i == 3) || i > 3 )
         check_member( caps, expect_caps[i], "%#x", dwDevType );
         check_member( caps, expect_caps[i], "%d", dwAxes );
         check_member( caps, expect_caps[i], "%d", dwButtons );
