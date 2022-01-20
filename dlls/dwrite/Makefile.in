@@ -10,6 +10,7 @@ C_SRCS = \
 	bracket.c \
 	direction.c \
 	font.c \
+	format.c \
 	freetype.c \
 	gdiinterop.c \
 	layout.c \
