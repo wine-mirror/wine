@@ -305,9 +305,12 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetMasterClock(IDirectMusicSynth8 *
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, clock);
+    TRACE("(%p)->(%p)\n", This, clock);
 
-    return S_OK;
+    if (!This->sink)
+        return DMUS_E_NOSYNTHSINK;
+
+    return IDirectMusicSynthSink_SetMasterClock(This->sink, clock);
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_GetLatencyClock(IDirectMusicSynth8 *iface,
