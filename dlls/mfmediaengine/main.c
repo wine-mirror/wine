@@ -114,6 +114,7 @@ struct rect
 struct media_engine
 {
     IMFMediaEngine IMFMediaEngine_iface;
+    IMFGetService IMFGetService_iface;
     IMFAsyncCallback session_events;
     IMFAsyncCallback load_handler;
     IMFSampleGrabberSinkCallback grabber_callback;
@@ -722,6 +723,11 @@ static inline struct media_engine *impl_from_IMFMediaEngine(IMFMediaEngine *ifac
     return CONTAINING_RECORD(iface, struct media_engine, IMFMediaEngine_iface);
 }
 
+static inline struct media_engine *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_engine, IMFGetService_iface);
+}
+
 static struct media_engine *impl_from_session_events_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct media_engine, session_events);
@@ -1254,19 +1260,28 @@ static const IMFAsyncCallbackVtbl media_engine_load_handler_vtbl =
 
 static HRESULT WINAPI media_engine_QueryInterface(IMFMediaEngine *iface, REFIID riid, void **obj)
 {
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFMediaEngine) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFMediaEngine_AddRef(iface);
-        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &engine->IMFGetService_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
 }
 
 static ULONG WINAPI media_engine_AddRef(IMFMediaEngine *iface)
@@ -2288,6 +2303,40 @@ static const IMFMediaEngineVtbl media_engine_vtbl =
     media_engine_OnVideoStreamTick,
 };
 
+static HRESULT WINAPI media_engine_gs_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct media_engine *engine = impl_from_IMFGetService(iface);
+    return IMFMediaEngine_QueryInterface(&engine->IMFMediaEngine_iface, riid, obj);
+}
+
+static ULONG WINAPI media_engine_gs_AddRef(IMFGetService *iface)
+{
+    struct media_engine *engine = impl_from_IMFGetService(iface);
+    return IMFMediaEngine_AddRef(&engine->IMFMediaEngine_iface);
+}
+
+static ULONG WINAPI media_engine_gs_Release(IMFGetService *iface)
+{
+    struct media_engine *engine = impl_from_IMFGetService(iface);
+    return IMFMediaEngine_Release(&engine->IMFMediaEngine_iface);
+}
+
+static HRESULT WINAPI media_engine_gs_GetService(IMFGetService *iface, REFGUID service,
+        REFIID riid, void **object)
+{
+    FIXME("%p, %s, %s, %p stub.\n", iface, debugstr_guid(service), debugstr_guid(riid), object);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl media_engine_get_service_vtbl =
+{
+    media_engine_gs_QueryInterface,
+    media_engine_gs_AddRef,
+    media_engine_gs_Release,
+    media_engine_gs_GetService,
+};
+
 static HRESULT WINAPI media_engine_grabber_callback_QueryInterface(IMFSampleGrabberSinkCallback *iface,
         REFIID riid, void **obj)
 {
@@ -2442,6 +2491,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     HRESULT hr;
 
     engine->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
+    engine->IMFGetService_iface.lpVtbl = &media_engine_get_service_vtbl;
     engine->session_events.lpVtbl = &media_engine_session_events_vtbl;
     engine->load_handler.lpVtbl = &media_engine_load_handler_vtbl;
     engine->grabber_callback.lpVtbl = &media_engine_grabber_callback_vtbl;

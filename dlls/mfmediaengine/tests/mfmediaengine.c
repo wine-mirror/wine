@@ -46,6 +46,21 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static void init_functions(void)
 {
     HMODULE mod = GetModuleHandleA("mfplat.dll");
@@ -197,6 +212,7 @@ static void test_CreateInstance(void)
     IMFDXGIDeviceManager *manager;
     IMFMediaEngine *media_engine;
     IMFAttributes *attributes;
+    IUnknown *unk;
     UINT token;
     HRESULT hr;
 
@@ -226,6 +242,13 @@ static void test_CreateInstance(void)
 
     hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
     ok(hr == S_OK, "Failed to create media engine, hr %#x.\n", hr);
+
+    check_interface(media_engine, &IID_IMFMediaEngine, TRUE);
+
+    hr = IMFMediaEngine_QueryInterface(media_engine, &IID_IMFGetService, (void **)&unk);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* supported since win10 */, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
 
     IMFMediaEngine_Release(media_engine);
     IMFAttributes_Release(attributes);
