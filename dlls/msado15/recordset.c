@@ -1531,7 +1531,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     hr = ICommandText_Execute(command_text, NULL, &IID_IUnknown, NULL, &affected, &rowset);
     ICommandText_Release(command_text);
-    if (FAILED(hr))
+    if (FAILED(hr) || !rowset)
         return hr;
 
     ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
