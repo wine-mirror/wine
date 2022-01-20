@@ -1400,6 +1400,7 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
                                           PHIDP_PREPARSED_DATA *preparsed, HIDD_ATTRIBUTES *attrs,
                                           HIDP_CAPS *caps, DIDEVICEINSTANCEW *instance, DWORD version )
 {
+    BOOL has_accelerator, has_brake, has_clutch;
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
     DWORD type = 0, button_count = 0;
     HIDP_BUTTON_CAPS buttons[10];
@@ -1485,6 +1486,36 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
                                         &value, &count, preparsed_data );
     if (status != HIDP_STATUS_SUCCESS || !count)
         type = DI8DEVTYPE_SUPPLEMENTAL | (DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8) | DIDEVTYPE_HID;
+
+    count = 1;
+    status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_SIMULATION, 0, HID_USAGE_SIMULATION_STEERING,
+                                        &value, &count, preparsed_data );
+    if (status == HIDP_STATUS_SUCCESS && count)
+    {
+        type = DI8DEVTYPE_DRIVING | DIDEVTYPE_HID;
+
+        count = 1;
+        status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_SIMULATION, 0, HID_USAGE_SIMULATION_ACCELERATOR,
+                                            &value, &count, preparsed_data );
+        has_accelerator = (status == HIDP_STATUS_SUCCESS && count);
+
+        count = 1;
+        status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_SIMULATION, 0, HID_USAGE_SIMULATION_BRAKE,
+                                            &value, &count, preparsed_data );
+        has_brake = (status == HIDP_STATUS_SUCCESS && count);
+
+        count = 1;
+        status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_SIMULATION, 0, HID_USAGE_SIMULATION_CLUTCH,
+                                            &value, &count, preparsed_data );
+        has_clutch = (status == HIDP_STATUS_SUCCESS && count);
+
+        if (has_accelerator && has_brake && has_clutch)
+            type |= (DI8DEVTYPEDRIVING_THREEPEDALS << 8);
+        else if (has_accelerator && has_brake)
+            type |= (DI8DEVTYPEDRIVING_DUALPEDALS << 8);
+        else
+            type |= (DI8DEVTYPEDRIVING_LIMITED << 8);
+    }
 
     instance->dwDevType = device_type_for_version( type, version );
 

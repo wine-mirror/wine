@@ -2557,7 +2557,7 @@ static BOOL test_device_types( DWORD version )
         ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
         check_member( devinst, expect_devinst[i], "%d", dwSize );
         check_member_guid( devinst, expect_devinst[i], guidProduct );
-        todo_wine_if( (version <= 0x700 && i == 3) || i > 3 )
+        todo_wine_if( version <= 0x700 && i == 3 )
         check_member( devinst, expect_devinst[i], "%#x", dwDevType );
         check_member_guid( devinst, expect_devinst[i], guidFFDriver );
         check_member( devinst, expect_devinst[i], "%04x", wUsagePage );
@@ -2567,7 +2567,7 @@ static BOOL test_device_types( DWORD version )
         ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
         check_member( caps, expect_caps[i], "%d", dwSize );
         check_member( caps, expect_caps[i], "%#x", dwFlags );
-        todo_wine_if( (version <= 0x700 && i == 3) || i > 3 )
+        todo_wine_if( version <= 0x700 && i == 3 )
         check_member( caps, expect_caps[i], "%#x", dwDevType );
         check_member( caps, expect_caps[i], "%d", dwAxes );
         check_member( caps, expect_caps[i], "%d", dwButtons );
