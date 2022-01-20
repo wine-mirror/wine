@@ -2496,6 +2496,11 @@ static void test_BCryptSignHash(void)
     ok(!ret, "got %08x\n", ret);
     ok(len == 256, "got %u\n", len);
 
+    /* test len return when only output is NULL, as described in BCryptSignHash doc */
+    ret = BCryptSignHash(key, &pad, hash, sizeof(hash), NULL, 0, &len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %08x\n", ret);
+    ok(len == 256, "got %u\n", len);
+
     len = 0;
     ret = BCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
     ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_INTERNAL_ERROR) /* < win7 */, "got %08x\n", ret);
