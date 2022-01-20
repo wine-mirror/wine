@@ -447,6 +447,11 @@ static inline unsigned int wined3d_popcount(unsigned int x)
 #endif
 }
 
+static inline int wined3d_uint32_compare(uint32_t x, uint32_t y)
+{
+    return (x > y) - (x < y);
+}
+
 #define ORM_BACKBUFFER  0
 #define ORM_FBO         1
 

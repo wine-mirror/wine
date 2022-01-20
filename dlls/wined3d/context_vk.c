@@ -1797,9 +1797,10 @@ static int wined3d_pipeline_layout_vk_compare(const void *key, const struct wine
     const struct wined3d_pipeline_layout_key_vk *a = key;
     const struct wined3d_pipeline_layout_key_vk *b = &WINE_RB_ENTRY_VALUE(entry,
             const struct wined3d_pipeline_layout_vk, entry)->key;
+    int ret;
 
-    if (a->binding_count != b->binding_count)
-        return a->binding_count - b->binding_count;
+    if ((ret = wined3d_uint32_compare(a->binding_count, b->binding_count)))
+        return ret;
     return memcmp(a->bindings, b->bindings, a->binding_count * sizeof(*a->bindings));
 }
 
