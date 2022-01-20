@@ -139,6 +139,7 @@
 #include "commctrl.h"
 #include "comctl32.h"
 #include "uxtheme.h"
+#include "vsstyle.h"
 #include "shlwapi.h"
 
 #include "wine/debug.h"
@@ -8424,15 +8425,62 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
  * Creates the checkbox imagelist.  Helper for LISTVIEW_SetExtendedListViewStyle
  *
  */
+static HIMAGELIST LISTVIEW_CreateThemedCheckBoxImageList(const LISTVIEW_INFO *info)
+{
+    HBITMAP bitmap, old_bitmap;
+    HIMAGELIST image_list;
+    HDC hdc, mem_hdc;
+    HTHEME theme;
+    RECT rect;
+    SIZE size;
+
+    if (!GetWindowTheme(info->hwndSelf))
+        return NULL;
+
+    theme = OpenThemeDataForDpi(NULL, L"Button", GetDpiForWindow(info->hwndSelf));
+    if (!theme)
+        return NULL;
+
+    hdc = GetDC(info->hwndSelf);
+    GetThemePartSize(theme, hdc, BP_CHECKBOX, 0, NULL, TS_DRAW, &size);
+    SetRect(&rect, 0, 0, size.cx, size.cy);
+    image_list = ImageList_Create(size.cx, size.cy, ILC_COLOR32, 2, 2);
+    mem_hdc = CreateCompatibleDC(hdc);
+    bitmap = CreateCompatibleBitmap(hdc, size.cx, size.cy);
+    old_bitmap = SelectObject(mem_hdc, bitmap);
+    ReleaseDC(info->hwndSelf, hdc);
+
+    if (IsThemeBackgroundPartiallyTransparent(theme, BP_CHECKBOX, CBS_UNCHECKEDNORMAL))
+        FillRect(mem_hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
+    DrawThemeBackground(theme, mem_hdc, BP_CHECKBOX, CBS_UNCHECKEDNORMAL, &rect, NULL);
+    ImageList_Add(image_list, bitmap, NULL);
+
+    if (IsThemeBackgroundPartiallyTransparent(theme, BP_CHECKBOX, CBS_CHECKEDNORMAL))
+        FillRect(mem_hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
+    DrawThemeBackground(theme, mem_hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, &rect, NULL);
+    ImageList_Add(image_list, bitmap, NULL);
+
+    SelectObject(mem_hdc, old_bitmap);
+    DeleteObject(bitmap);
+    DeleteDC(mem_hdc);
+    CloseThemeData(theme);
+    return image_list;
+}
+
 static HIMAGELIST LISTVIEW_CreateCheckBoxIL(const LISTVIEW_INFO *infoPtr)
 {
     HDC hdc_wnd, hdc;
     HBITMAP hbm_im, hbm_mask, hbm_orig;
     RECT rc;
-    HBRUSH hbr_white = GetStockObject(WHITE_BRUSH);
-    HBRUSH hbr_black = GetStockObject(BLACK_BRUSH);
+    HBRUSH hbr_white, hbr_black;
     HIMAGELIST himl;
 
+    himl = LISTVIEW_CreateThemedCheckBoxImageList(infoPtr);
+    if (himl)
+        return himl;
+
+    hbr_white = GetStockObject(WHITE_BRUSH);
+    hbr_black = GetStockObject(BLACK_BRUSH);
     himl = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                             ILC_COLOR | ILC_MASK, 2, 2);
     hdc_wnd = GetDC(infoPtr->hwndSelf);
