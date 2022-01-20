@@ -1507,6 +1507,16 @@ static void wined3d_texture_destroy_object(void *object)
         heap_free(texture->dirty_regions);
     }
 
+    /* Discard the contents of resources with CPU access, to avoid downloading
+     * them to SYSMEM on unload. */
+    if (resource->access & WINED3D_RESOURCE_ACCESS_CPU)
+    {
+        for (i = 0; i < sub_count; ++i)
+        {
+            wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_DISCARDED);
+            wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_DISCARDED);
+        }
+    }
     resource->resource_ops->resource_unload(resource);
 }
 
