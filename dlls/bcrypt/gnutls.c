@@ -1707,7 +1707,7 @@ static NTSTATUS key_asymmetric_sign( void *args )
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!params->input)
+    if (!params->output)
     {
         *params->ret_len = key->u.a.bitlen / 8;
         return STATUS_SUCCESS;
