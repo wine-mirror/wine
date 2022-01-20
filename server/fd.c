@@ -1867,7 +1867,7 @@ static WCHAR *dup_nt_name( struct fd *root, struct unicode_str name, data_size_t
         name.str++;
         name.len -= sizeof(WCHAR);
     }
-    if ((ret = malloc( retlen + name.len + 1 )))
+    if ((ret = malloc( retlen + name.len + sizeof(WCHAR) )))
     {
         memcpy( ret, root->nt_name, root->nt_namelen );
         if (name.len && name.str[0] != '\\' &&
