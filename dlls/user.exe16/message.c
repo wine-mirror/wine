@@ -161,6 +161,7 @@ static WNDPROC16 alloc_win16_thunk( WNDPROC handle )
         if (!(thunk_selector = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT,
                                               MAX_WINPROCS16 * sizeof(WINPROC_THUNK) )))
             return NULL;
+        FarSetOwner16( thunk_selector, 0 );
         PrestoChangoSelector16( thunk_selector, thunk_selector );
         thunk_array = GlobalLock16( thunk_selector );
         relay = GetProcAddress16( GetModuleHandle16("user"), "__wine_call_wndproc" );
