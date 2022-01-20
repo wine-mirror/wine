@@ -6549,7 +6549,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
     }
     else
     {
-        settings->texcoords_initialized = (1u << WINED3D_MAX_TEXTURES) - 1;
+        settings->texcoords_initialized = wined3d_mask_from_size(WINED3D_MAX_TEXTURES);
     }
 
     settings->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
