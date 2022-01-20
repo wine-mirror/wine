@@ -5733,11 +5733,11 @@ static int wined3d_so_desc_compare(const void *key, const struct wine_rb_entry *
     unsigned int i;
     int ret;
 
-    if ((ret = (k->element_count - desc->element_count)))
+    if ((ret = wined3d_uint32_compare(k->element_count, desc->element_count)))
         return ret;
-    if ((ret = (k->buffer_stride_count - desc->buffer_stride_count)))
+    if ((ret = wined3d_uint32_compare(k->buffer_stride_count, desc->buffer_stride_count)))
         return ret;
-    if ((ret = (k->rasterizer_stream_idx - desc->rasterizer_stream_idx)))
+    if ((ret = wined3d_uint32_compare(k->rasterizer_stream_idx, desc->rasterizer_stream_idx)))
         return ret;
 
     for (i = 0; i < k->element_count; ++i)
@@ -5745,25 +5745,25 @@ static int wined3d_so_desc_compare(const void *key, const struct wine_rb_entry *
         const struct wined3d_stream_output_element *b = &desc->elements[i];
         const struct wined3d_stream_output_element *a = &k->elements[i];
 
-        if ((ret = (a->stream_idx - b->stream_idx)))
+        if ((ret = wined3d_uint32_compare(a->stream_idx, b->stream_idx)))
             return ret;
         if ((ret = (!a->semantic_name - !b->semantic_name)))
             return ret;
         if (a->semantic_name && (ret = strcmp(a->semantic_name, b->semantic_name)))
             return ret;
-        if ((ret = (a->semantic_idx - b->semantic_idx)))
+        if ((ret = wined3d_uint32_compare(a->semantic_idx, b->semantic_idx)))
             return ret;
-        if ((ret = (a->component_idx - b->component_idx)))
+        if ((ret = wined3d_uint32_compare(a->component_idx, b->component_idx)))
             return ret;
-        if ((ret = (a->component_count - b->component_count)))
+        if ((ret = wined3d_uint32_compare(a->component_count, b->component_count)))
             return ret;
-        if ((ret = (a->output_slot - b->output_slot)))
+        if ((ret = wined3d_uint32_compare(a->output_slot, b->output_slot)))
             return ret;
     }
 
     for (i = 0; i < k->buffer_stride_count; ++i)
     {
-        if ((ret = (k->buffer_strides[i] - desc->buffer_strides[i])))
+        if ((ret = wined3d_uint32_compare(k->buffer_strides[i], desc->buffer_strides[i])))
             return ret;
     }
 
