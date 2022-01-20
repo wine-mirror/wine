@@ -906,11 +906,20 @@ static HRESULT WINAPI gdiinterop1_GetFontSignature(IDWriteGdiInterop1 *iface, ID
 }
 
 static HRESULT WINAPI gdiinterop1_GetMatchingFontsByLOGFONT(IDWriteGdiInterop1 *iface, LOGFONTW const *logfont,
-    IDWriteFontSet *fontset, IDWriteFontSet **subset)
+        IDWriteFontSet *fontset, IDWriteFontSet **subset)
 {
-    FIXME("%p, %p, %p, %p: stub.\n", iface, logfont, fontset, subset);
+    DWRITE_FONT_PROPERTY property;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %p.\n", iface, logfont, fontset, subset);
+
+    if (!logfont || !fontset)
+        return E_INVALIDARG;
+
+    property.propertyId = DWRITE_FONT_PROPERTY_ID_WIN32_FAMILY_NAME;
+    property.propertyValue = logfont->lfFaceName;
+    property.localeName = L"";
+
+    return IDWriteFontSet_GetMatchingFonts(fontset, &property, 1, subset);
 }
 
 static const IDWriteGdiInterop1Vtbl gdiinteropvtbl =

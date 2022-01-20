@@ -10319,6 +10319,62 @@ if (SUCCEEDED(hr))
     DELETE_FONTFILE(path);
 }
 
+static void test_GetMatchingFontsByLOGFONT(void)
+{
+    IDWriteFontSet *systemset, *set;
+    IDWriteGdiInterop1 *interop;
+    IDWriteGdiInterop *interop0;
+    IDWriteFactory3 *factory;
+    ULONG refcount, count;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    factory = create_factory_iid(&IID_IDWriteFactory3);
+    if (!factory)
+    {
+        win_skip("Skipping GetMatchingFontsByLOGFONT() tests.\n");
+        return;
+    }
+
+    hr = IDWriteFactory3_GetSystemFontSet(factory, &systemset);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    interop = NULL;
+    hr = IDWriteFactory3_GetGdiInterop(factory, &interop0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteGdiInterop_QueryInterface(interop0, &IID_IDWriteGdiInterop1, (void **)&interop);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IDWriteGdiInterop_Release(interop0);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_BOLD;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, L"tahoma");
+
+    hr = IDWriteGdiInterop1_GetMatchingFontsByLOGFONT(interop, NULL, systemset, &set);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteGdiInterop1_GetMatchingFontsByLOGFONT(interop, &logfont, NULL, &set);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteGdiInterop1_GetMatchingFontsByLOGFONT(interop, &logfont, systemset, &set);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IDWriteFontSet_GetFontCount(set);
+    ok(count > 0, "Unexpected count %u.\n", count);
+
+    IDWriteFontSet_Release(set);
+
+    IDWriteGdiInterop1_Release(interop);
+    IDWriteFontSet_Release(systemset);
+
+    refcount = IDWriteFactory3_Release(factory);
+    ok(!refcount, "Factory wasn't released, %u.\n", refcount);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -10393,6 +10449,7 @@ START_TEST(font)
     test_family_font_set();
     test_system_font_set();
     test_CreateFontCollectionFromFontSet();
+    test_GetMatchingFontsByLOGFONT();
 
     IDWriteFactory_Release(factory);
 }
