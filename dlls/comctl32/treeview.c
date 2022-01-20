@@ -2962,6 +2962,52 @@ TREEVIEW_Invalidate(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
         InvalidateRect(infoPtr->hwnd, NULL, TRUE);
 }
 
+static BOOL TREEVIEW_InitThemedCheckboxes(TREEVIEW_INFO *info)
+{
+    HBITMAP bitmap, old_bitmap;
+    HDC hdc, hdc_screen;
+    HTHEME theme;
+    RECT rect;
+    SIZE size;
+
+    if (!GetWindowTheme(info->hwnd))
+        return FALSE;
+
+    theme = OpenThemeDataForDpi(NULL, L"Button", GetDpiForWindow(info->hwnd));
+    if (!theme)
+        return FALSE;
+
+    hdc_screen = GetDC(0);
+    hdc = CreateCompatibleDC(hdc_screen);
+    GetThemePartSize(theme, hdc, BP_CHECKBOX, 0, NULL, TS_DRAW, &size);
+    bitmap = CreateCompatibleBitmap(hdc_screen, size.cx * 3, size.cy);
+    old_bitmap = SelectObject(hdc, bitmap);
+
+    SetRect(&rect, 0, 0, size.cx * 3, size.cy);
+    FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
+
+    rect.left = size.cx;
+    rect.right = rect.left + size.cx;
+    DrawThemeBackground(theme, hdc, BP_CHECKBOX, CBS_UNCHECKEDNORMAL, &rect, NULL);
+
+    rect.left = size.cx * 2;
+    rect.right = rect.left + size.cx;
+    DrawThemeBackground(theme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, &rect, NULL);
+
+    SelectObject(hdc, old_bitmap);
+    info->himlState = ImageList_Create(size.cx, size.cy, ILC_COLOR32, 3, 0);
+    ImageList_Add(info->himlState, bitmap, NULL);
+
+    DeleteObject(bitmap);
+    DeleteDC(hdc);
+    ReleaseDC(0, hdc_screen);
+    CloseThemeData(theme);
+
+    info->stateImageWidth = size.cx;
+    info->stateImageHeight = size.cy;
+    return TRUE;
+}
+
 static void
 TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
 {
@@ -2969,6 +3015,9 @@ TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
     HBITMAP hbm, hbmOld;
     HDC hdc, hdcScreen;
     int nIndex;
+
+    if (TREEVIEW_InitThemedCheckboxes(infoPtr))
+        return;
 
     infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
 
