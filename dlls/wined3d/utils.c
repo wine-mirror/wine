@@ -6734,7 +6734,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
             settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
         }
         if (d3d_info->full_ffp_varyings)
-            settings->texcoords = (1u << WINED3D_MAX_TEXTURES) - 1;
+            settings->texcoords = wined3d_mask_from_size(WINED3D_MAX_TEXTURES);
 
         if (d3d_info->emulated_flatshading)
             settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
@@ -6783,7 +6783,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
     }
     if (d3d_info->full_ffp_varyings)
-        settings->texcoords = (1u << WINED3D_MAX_TEXTURES) - 1;
+        settings->texcoords = wined3d_mask_from_size(WINED3D_MAX_TEXTURES);
 
     for (i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
     {
