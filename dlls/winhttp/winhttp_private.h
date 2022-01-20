@@ -248,6 +248,8 @@ struct socket
     USHORT status;
     char reason[123];
     DWORD reason_len;
+    char *send_frame_buffer;
+    unsigned int send_frame_buffer_size;
 };
 
 struct send_request
@@ -397,5 +399,7 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
 }
 
 extern HINSTANCE winhttp_instance DECLSPEC_HIDDEN;
+
+#define MAX_FRAME_BUFFER_SIZE 65536
 
 #endif /* _WINE_WINHTTP_PRIVATE_H_ */

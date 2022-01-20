@@ -3063,6 +3063,7 @@ static void socket_destroy( struct object_header *hdr )
     stop_queue( &socket->recv_q );
 
     release_object( &socket->request->hdr );
+    free( socket->send_frame_buffer );
     free( socket );
 }
 
@@ -3142,10 +3143,12 @@ static DWORD send_bytes( struct socket *socket, char *bytes, int len )
 static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHORT status, const char *buf,
                          DWORD buflen, BOOL final )
 {
-    DWORD i = 0, j, ret, offset = 2, len = buflen;
-    char hdr[14], byte, *mask = NULL;
+    DWORD i = 0, j, offset = 2, len = buflen;
+    DWORD buffer_size, ret = 0, send_size;
+    char hdr[14], *mask = NULL;
+    char *ptr;
 
-    TRACE("sending %02x frame\n", opcode);
+    TRACE( "sending %02x frame, len %u.\n", opcode, len );
 
     if (opcode == SOCKET_OPCODE_CLOSE) len += sizeof(status);
 
@@ -3171,29 +3174,56 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
         offset += 8;
     }
 
-    if ((ret = send_bytes( socket, hdr, offset ))) return ret;
+    buffer_size = len + offset;
+    if (len) buffer_size += 4;
+    assert( buffer_size - len < MAX_FRAME_BUFFER_SIZE );
+    if (buffer_size > socket->send_frame_buffer_size && socket->send_frame_buffer_size < MAX_FRAME_BUFFER_SIZE)
+    {
+        DWORD new_size;
+        void *new;
+
+        new_size = min( buffer_size, MAX_FRAME_BUFFER_SIZE );
+        if (!(new = realloc( socket->send_frame_buffer, new_size )))
+        {
+            ERR("Out of memory, buffer_size %u.\n", buffer_size);
+            return ERROR_OUTOFMEMORY;
+        }
+        socket->send_frame_buffer = new;
+        socket->send_frame_buffer_size = new_size;
+    }
+    ptr = socket->send_frame_buffer;
+
+    memcpy(ptr, hdr, offset);
+    ptr += offset;
     if (len)
     {
         mask = &hdr[offset];
         RtlGenRandom( mask, 4 );
-        if ((ret = send_bytes( socket, mask, 4 ))) return ret;
+        memcpy( ptr, mask, 4 );
+        ptr += 4;
     }
 
     if (opcode == SOCKET_OPCODE_CLOSE) /* prepend status code */
     {
-        byte = (status >> 8) ^ mask[i++ % 4];
-        if ((ret = send_bytes( socket, &byte, 1 ))) return ret;
-
-        byte = (status & 0xff) ^ mask[i++ % 4];
-        if ((ret = send_bytes( socket, &byte, 1 ))) return ret;
+        *ptr++ = (status >> 8) ^ mask[i++ % 4];
+        *ptr++ = (status & 0xff) ^ mask[i++ % 4];
     }
 
-    for (j = 0; j < buflen; j++)
+    offset = ptr - socket->send_frame_buffer;
+    send_size = offset + buflen;
+    while (1)
     {
-        byte = buf[j] ^ mask[i++ % 4];
-        if ((ret = send_bytes( socket, &byte, 1 ))) return ret;
-    }
+        j = 0;
+        while (j < buflen && offset < MAX_FRAME_BUFFER_SIZE)
+            socket->send_frame_buffer[offset++] = buf[j++] ^ mask[i++ % 4];
 
+        if ((ret = send_bytes( socket, socket->send_frame_buffer, offset ))) return ret;
+
+        if (!(send_size -= offset)) break;
+        offset = 0;
+        buf += j;
+        buflen -= j;
+    }
     return ERROR_SUCCESS;
 }
 
