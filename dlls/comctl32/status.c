@@ -191,32 +191,12 @@ STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART 
 static void
 STATUSBAR_RefreshPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part, int itemID)
 {
-    HBRUSH hbrBk;
-    HTHEME theme;
-
     TRACE("item %d\n", itemID);
 
     if (part->bound.right < part->bound.left) return;
 
     if (!RectVisible(hdc, &part->bound))
         return;
-
-    if ((theme = GetWindowTheme (infoPtr->Self)))
-    {
-        RECT cr;
-        GetClientRect (infoPtr->Self, &cr);
-        DrawThemeBackground(theme, hdc, 0, 0, &cr, &part->bound);
-    }
-    else
-    {
-        if (infoPtr->clrBk != CLR_DEFAULT)
-                hbrBk = CreateSolidBrush (infoPtr->clrBk);
-        else
-                hbrBk = GetSysColorBrush (COLOR_3DFACE);
-        FillRect(hdc, &part->bound, hbrBk);
-        if (infoPtr->clrBk != CLR_DEFAULT)
-                DeleteObject (hbrBk);
-    }
 
     STATUSBAR_DrawPart (infoPtr, hdc, part, itemID);
 }
