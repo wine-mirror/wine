@@ -108,7 +108,7 @@ struct netconn
     ULONGLONG keep_until;
     CtxtHandle ssl_ctx;
     SecPkgContext_StreamSizes ssl_sizes;
-    char *ssl_buf;
+    char *ssl_read_buf, *ssl_write_buf;
     char *extra_buf;
     size_t extra_len;
     char *peek_msg;
