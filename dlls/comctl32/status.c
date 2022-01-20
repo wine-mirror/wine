@@ -139,7 +139,6 @@ STATUSBAR_DrawSizeGrip (HTHEME theme, HDC hdc, LPRECT lpRect)
     DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
 }
 
-
 static void
 STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part, int itemID)
 {
@@ -187,7 +186,7 @@ STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART 
         SendMessageW (infoPtr->Notify, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     } else {
         r.left += x;
-        DrawStatusTextW (hdc, &r, part->text, SBT_NOBORDERS);
+        COMCTL32_DrawStatusText(hdc, &r, part->text, 0, FALSE);
     }
 }
 

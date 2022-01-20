@@ -460,39 +460,25 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, const INT *lpInfo)
     } while (*lpRun);
 }
 
-
-/***********************************************************************
- * DrawStatusTextW [COMCTL32.@]
- *
- * Draws text with borders, like in a status bar.
- *
- * PARAMS
- *     hdc   [I] handle to the window's display context
- *     lprc  [I] pointer to a rectangle
- *     text  [I] pointer to the text
- *     style [I] drawing style
- *
- * RETURNS
- *     No return value.
- *
- * NOTES
- *     The style variable can have one of the following values:
- *     (will be written ...)
- */
-
-void WINAPI DrawStatusTextW (HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
+void COMCTL32_DrawStatusText(HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style, BOOL draw_background)
 {
     RECT r = *lprc;
-    UINT border = BDR_SUNKENOUTER;
+    UINT border;
     COLORREF oldbkcolor;
 
-    if (style & SBT_POPOUT)
-        border = BDR_RAISEDOUTER;
-    else if (style & SBT_NOBORDERS)
-        border = 0;
+    if (draw_background)
+    {
+        if (style & SBT_POPOUT)
+            border = BDR_RAISEDOUTER;
+        else if (style & SBT_NOBORDERS)
+            border = 0;
+        else
+            border = BDR_SUNKENOUTER;
 
-    oldbkcolor = SetBkColor (hdc, comctl32_color.clrBtnFace);
-    DrawEdge (hdc, &r, border, BF_MIDDLE|BF_RECT|BF_ADJUST);
+        oldbkcolor = SetBkColor (hdc, comctl32_color.clrBtnFace);
+        DrawEdge (hdc, &r, border, BF_MIDDLE|BF_RECT|BF_ADJUST);
+        SetBkColor (hdc, oldbkcolor);
+    }
 
     /* now draw text */
     if (text) {
@@ -524,10 +510,31 @@ void WINAPI DrawStatusTextW (HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
         SetBkMode (hdc, oldbkmode);
         SetTextColor (hdc, oldtextcolor);
     }
-
-    SetBkColor (hdc, oldbkcolor);
 }
 
+/***********************************************************************
+ * DrawStatusTextW [COMCTL32.@]
+ *
+ * Draws text with borders, like in a status bar.
+ *
+ * PARAMS
+ *     hdc   [I] handle to the window's display context
+ *     lprc  [I] pointer to a rectangle
+ *     text  [I] pointer to the text
+ *     style [I] drawing style
+ *
+ * RETURNS
+ *     No return value.
+ *
+ * NOTES
+ *     The style variable can have one of the following values:
+ *     (will be written ...)
+ */
+
+void WINAPI DrawStatusTextW(HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style)
+{
+    COMCTL32_DrawStatusText(hdc, lprc, text, style, TRUE);
+}
 
 /***********************************************************************
  * DrawStatusText  [COMCTL32.@]
