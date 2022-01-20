@@ -671,7 +671,7 @@ static const struct notification websocket_test[] =
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, NF_SIGNAL }
 };
 
-static void test_websocket(void)
+static void test_websocket(BOOL secure)
 {
     HANDLE session, connection, request, socket, event;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
@@ -680,6 +680,7 @@ static void test_websocket(void)
     struct info info, *context = &info;
     char buffer[1024];
     USHORT close_status;
+    DWORD protocols, flags;
 
     if (!pWinHttpWebSocketCompleteUpgrade)
     {
@@ -703,6 +704,13 @@ static void test_websocket(void)
         unload = FALSE;
     }
 
+    if (secure)
+    {
+        protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
+        ret = WinHttpSetOption(session, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
+        ok(ret, "failed to set protocols %u\n", GetLastError());
+    }
+
     SetLastError( 0xdeadbeef );
     WinHttpSetStatusCallback( session, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
     err = GetLastError();
@@ -723,10 +731,18 @@ static void test_websocket(void)
 
     setup_test( &info, winhttp_open_request, __LINE__ );
     SetLastError( 0xdeadbeef );
-    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, 0 );
+    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, secure ? WINHTTP_FLAG_SECURE : 0);
     err = GetLastError();
     ok( request != NULL, "got %u\n", err );
     ok( err == ERROR_SUCCESS, "got %u\n", err );
+
+    if (secure)
+    {
+        flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+                SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+        ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+        ok(ret, "failed to set security flags %u\n", GetLastError());
+    }
 
     ret = WinHttpSetOption( request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0 );
     ok( ret, "got %u\n", GetLastError() );
@@ -1380,7 +1396,10 @@ START_TEST (notification)
     test_connection_cache();
     test_redirect();
     test_async();
-    test_websocket();
+    test_websocket( FALSE );
+    winetest_push_context( "secure" );
+    test_websocket( TRUE );
+    winetest_pop_context();
     test_recursion();
 
     si.event = CreateEventW( NULL, 0, 0, NULL );
