@@ -104,7 +104,12 @@ static ULONG WINAPI media_engine_notify_AddRef(IMFMediaEngineNotify *iface)
 static ULONG WINAPI media_engine_notify_Release(IMFMediaEngineNotify *iface)
 {
     struct media_engine_notify *notify = impl_from_IMFMediaEngineNotify(iface);
-    return InterlockedDecrement(&notify->refcount);
+    ULONG refcount = InterlockedDecrement(&notify->refcount);
+
+    if (!refcount)
+        free(notify);
+
+    return refcount;
 }
 
 static HRESULT WINAPI media_engine_notify_EventNotify(IMFMediaEngineNotify *iface, DWORD event, DWORD_PTR param1, DWORD param2)
@@ -119,6 +124,18 @@ static IMFMediaEngineNotifyVtbl media_engine_notify_vtbl =
     media_engine_notify_Release,
     media_engine_notify_EventNotify,
 };
+
+static struct media_engine_notify *create_callback(void)
+{
+    struct media_engine_notify *object;
+
+    object = calloc(1, sizeof(*object));
+
+    object->IMFMediaEngineNotify_iface.lpVtbl = &media_engine_notify_vtbl;
+    object->refcount = 1;
+
+    return object;
+}
 
 static IMFMediaEngine *create_media_engine(IMFMediaEngineNotify *callback)
 {
@@ -150,9 +167,8 @@ static IMFMediaEngine *create_media_engine(IMFMediaEngineNotify *callback)
 
 static void test_factory(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *notify = &notify_impl.IMFMediaEngineNotify_iface;
     IMFMediaEngineClassFactory *factory, *factory2;
+    struct media_engine_notify *notify;
     IMFDXGIDeviceManager *manager;
     IMFMediaEngine *media_engine;
     IMFAttributes *attributes;
@@ -167,6 +183,8 @@ static void test_factory(void)
         win_skip("Media Engine is not supported.\n");
         return;
     }
+
+    notify = create_callback();
 
     /* Aggregation is not supported. */
     hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, (IUnknown *)factory, CLSCTX_INPROC_SERVER,
@@ -189,7 +207,7 @@ static void test_factory(void)
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
 
     IMFAttributes_DeleteAllItems(attributes);
-    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)notify);
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)&notify->IMFMediaEngineNotify_iface);
     ok(hr == S_OK, "IMFAttributes_SetUnknown failed: %#x.\n", hr);
     hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
     ok(hr == S_OK, "IMFAttributes_SetUINT32 failed: %#x.\n", hr);
@@ -203,18 +221,20 @@ static void test_factory(void)
     IMFAttributes_Release(attributes);
     IMFDXGIDeviceManager_Release(manager);
     IMFMediaEngineClassFactory_Release(factory);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_CreateInstance(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *notify = &notify_impl.IMFMediaEngineNotify_iface;
+    struct media_engine_notify *notify;
     IMFDXGIDeviceManager *manager;
     IMFMediaEngine *media_engine;
     IMFAttributes *attributes;
     IUnknown *unk;
     UINT token;
     HRESULT hr;
+
+    notify = create_callback();
 
     hr = pMFCreateDXGIDeviceManager(&token, &manager);
     ok(hr == S_OK, "Failed to create dxgi device manager, hr %#x.\n", hr);
@@ -235,7 +255,7 @@ static void test_CreateInstance(void)
 
     IMFAttributes_DeleteAllItems(attributes);
 
-    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)notify);
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)&notify->IMFMediaEngineNotify_iface);
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
     hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
@@ -253,12 +273,12 @@ static void test_CreateInstance(void)
     IMFMediaEngine_Release(media_engine);
     IMFAttributes_Release(attributes);
     IMFDXGIDeviceManager_Release(manager);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_Shutdown(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    struct media_engine_notify *notify;
     IMFMediaTimeRange *time_range;
     IMFMediaEngine *media_engine;
     unsigned int state;
@@ -267,7 +287,9 @@ static void test_Shutdown(void)
     HRESULT hr;
     BSTR str;
 
-    media_engine = create_media_engine(callback);
+    notify = create_callback();
+
+    media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
@@ -407,12 +429,12 @@ todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFMediaEngine_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_Play(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    struct media_engine_notify *notify;
     IMFMediaTimeRange *range, *range1;
     IMFMediaEngine *media_engine;
     LONGLONG pts;
@@ -420,7 +442,9 @@ static void test_Play(void)
     HRESULT hr;
     BOOL ret;
 
-    media_engine = create_media_engine(callback);
+    notify = create_callback();
+
+    media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     hr = IMFMediaEngine_GetBuffered(media_engine, &range);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -469,7 +493,7 @@ static void test_Play(void)
     IMFMediaEngine_Release(media_engine);
 
     /* Play -> Pause */
-    media_engine = create_media_engine(callback);
+    media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     hr = IMFMediaEngine_Play(media_engine);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -484,17 +508,19 @@ static void test_Play(void)
     ok(!!ret, "Unexpected state %d.\n", ret);
 
     IMFMediaEngine_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_playback_rate(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    struct media_engine_notify *notify;
     IMFMediaEngine *media_engine;
     double rate;
     HRESULT hr;
 
-    media_engine = create_media_engine(callback);
+    notify = create_callback();
+
+    media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     rate = IMFMediaEngine_GetDefaultPlaybackRate(media_engine);
     ok(rate == 1.0, "Unexpected default rate.\n");
@@ -512,17 +538,19 @@ static void test_playback_rate(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMFMediaEngine_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_mute(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    struct media_engine_notify *notify;
     IMFMediaEngine *media_engine;
     HRESULT hr;
     BOOL ret;
 
-    media_engine = create_media_engine(callback);
+    notify = create_callback();
+
+    media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     ret = IMFMediaEngine_GetMuted(media_engine);
     ok(!ret, "Unexpected state.\n");
@@ -540,18 +568,20 @@ static void test_mute(void)
     ok(ret, "Unexpected state.\n");
 
     IMFMediaEngine_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_error(void)
 {
-    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
-    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    struct media_engine_notify *notify;
     IMFMediaEngine *media_engine;
     IMFMediaError *eo, *eo2;
     unsigned int code;
     HRESULT hr;
 
-    media_engine = create_media_engine(callback);
+    notify = create_callback();
+
+    media_engine = create_media_engine(&notify->IMFMediaEngineNotify_iface);
 
     eo = (void *)0xdeadbeef;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
@@ -624,6 +654,7 @@ static void test_error(void)
     ok(hr == E_FAIL, "Unexpected code %#x.\n", hr);
 
     IMFMediaError_Release(eo);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
 static void test_time_range(void)
