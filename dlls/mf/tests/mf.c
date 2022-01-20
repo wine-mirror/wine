@@ -28,7 +28,9 @@
 #include "winbase.h"
 
 #include "initguid.h"
+#include "mediaobj.h"
 #include "ole2.h"
+#include "wmcodecdsp.h"
 #include "propvarutil.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -5350,6 +5352,132 @@ static void test_MFRequireProtectedEnvironment(void)
     IMFPresentationDescriptor_Release(pd);
 }
 
+static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
+        MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name,
+        const media_type_desc *expect_input, ULONG expect_input_count,
+        const media_type_desc *expect_output, ULONG expect_output_count,
+        IMFTransform **transform, GUID *class_id)
+{
+    MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
+    UINT32 input_count = 0, output_count = 0;
+    GUID *class_ids = NULL;
+    ULONG count = 0, i;
+    WCHAR *name;
+    HRESULT hr;
+
+    hr = MFTEnum(category, 0, input_type, output_type, NULL, &class_ids, &count);
+    if (FAILED(hr))
+    {
+        todo_wine
+        win_skip("Failed to enumerate %s, skipping tests.\n", debugstr_w(expect_name));
+        return FALSE;
+    }
+
+    ok(hr == S_OK, "MFTEnum returned %x\n", hr);
+    ok(count == 1, "got %u\n", count);
+    *class_id = class_ids[0];
+    CoTaskMemFree(class_ids);
+
+    hr = MFTGetInfo(*class_id, &name, &input_types, &input_count, &output_types, &output_count, NULL);
+    if (FAILED(hr))
+    {
+        todo_wine
+        win_skip("Failed to get %s info, skipping tests.\n", debugstr_w(expect_name));
+    }
+    else
+    {
+        ok(hr == S_OK, "MFTEnum returned %x\n", hr);
+        ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
+        ok(input_count == expect_input_count, "got input_count %u\n", input_count);
+        for (i = 0; i < input_count; ++i)
+        {
+            ok(IsEqualGUID(&input_types[i].guidMajorType, expect_input[i][0].value.puuid),
+                    "got input[%u] major %s\n", i, debugstr_guid(&input_types[i].guidMajorType));
+            ok(IsEqualGUID(&input_types[i].guidSubtype, expect_input[i][1].value.puuid),
+                    "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
+        }
+        ok(output_count == expect_output_count, "got output_count %u\n", output_count);
+        for (i = 0; i < output_count; ++i)
+        {
+            ok(IsEqualGUID(&output_types[i].guidMajorType, expect_output[i][0].value.puuid),
+                    "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
+            ok(IsEqualGUID(&output_types[i].guidSubtype, expect_output[i][1].value.puuid),
+                    "got output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
+        }
+        CoTaskMemFree(output_types);
+        CoTaskMemFree(input_types);
+        CoTaskMemFree(name);
+    }
+
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)transform);
+    if (FAILED(hr))
+    {
+        todo_wine
+        win_skip("Failed to create %s instance, skipping tests.\n", debugstr_w(expect_name));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void test_wma_decoder(void)
+{
+    static const media_type_desc transform_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MEDIASUBTYPE_MSAUDIO1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV9),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudio_Lossless),
+        },
+    };
+    static const media_type_desc transform_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        },
+    };
+
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    IMFTransform *transform;
+    GUID class_id;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"WMAudio Decoder MFT",
+            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
+            &transform, &class_id))
+        goto failed;
+
+    todo_wine
+    check_interface(transform, &IID_IMediaObject, TRUE);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %u\n", ret);
+
+failed:
+    CoUninitialize();
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -5383,4 +5511,5 @@ START_TEST(mf)
     test_sample_copier_output_processing();
     test_MFGetTopoNodeCurrentType();
     test_MFRequireProtectedEnvironment();
+    test_wma_decoder();
 }
