@@ -851,13 +851,13 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
         hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (void**)&obj->synth_sink);
 
     if (SUCCEEDED(hr))
+        hr = IDirectMusicSynth_SetSynthSink(obj->synth, obj->synth_sink);
+
+    if (SUCCEEDED(hr))
         hr = IDirectMusicSynth_SetMasterClock(obj->synth, obj->pLatencyClock);
 
     if (SUCCEEDED(hr))
         hr = IDirectMusicSynthSink_SetMasterClock(obj->synth_sink, obj->pLatencyClock);
-
-    if (SUCCEEDED(hr))
-        hr = IDirectMusicSynth_SetSynthSink(obj->synth, obj->synth_sink);
 
     if (SUCCEEDED(hr))
         hr = IDirectMusicSynth_Open(obj->synth, port_params);
