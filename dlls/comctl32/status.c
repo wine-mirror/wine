@@ -144,16 +144,12 @@ static void
 STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part, int itemID)
 {
     RECT r = part->bound;
-    UINT border = BDR_SUNKENOUTER;
+    UINT border;
     HTHEME theme = GetWindowTheme (infoPtr->Self);
     int themePart = SP_PANE;
     int x = 0;
 
     TRACE("part bound %s\n", wine_dbgstr_rect(&r));
-    if (part->style & SBT_POPOUT)
-        border = BDR_RAISEDOUTER;
-    else if (part->style & SBT_NOBORDERS)
-        border = 0;
 
     if (theme)
     {
@@ -163,7 +159,15 @@ STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART 
         DrawThemeBackground(theme, hdc, themePart, 0, &r, NULL);
     }
     else
+    {
+        if (part->style & SBT_POPOUT)
+            border = BDR_RAISEDOUTER;
+        else if (part->style & SBT_NOBORDERS)
+            border = 0;
+        else
+            border = BDR_SUNKENOUTER;
         DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
+    }
 
     if (part->hIcon) {
         INT cy = r.bottom - r.top;
