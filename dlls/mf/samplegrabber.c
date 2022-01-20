@@ -849,11 +849,7 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
         if (grabber->clock)
             IMFPresentationClock_Release(grabber->clock);
         if (grabber->timer)
-        {
-            if (grabber->cancel_key)
-                IMFTimer_CancelTimer(grabber->timer, grabber->cancel_key);
             IMFTimer_Release(grabber->timer);
-        }
         if (grabber->cancel_key)
             IUnknown_Release(grabber->cancel_key);
         if (grabber->stream_event_queue)
@@ -973,10 +969,21 @@ static HRESULT WINAPI sample_grabber_sink_GetStreamSinkById(IMFMediaSink *iface,
     return hr;
 }
 
+static void sample_grabber_cancel_timer(struct sample_grabber *grabber)
+{
+    if (grabber->timer && grabber->cancel_key)
+    {
+        IMFTimer_CancelTimer(grabber->timer, grabber->cancel_key);
+        IUnknown_Release(grabber->cancel_key);
+        grabber->cancel_key = NULL;
+    }
+}
+
 static void sample_grabber_set_presentation_clock(struct sample_grabber *grabber, IMFPresentationClock *clock)
 {
     if (grabber->clock)
     {
+        sample_grabber_cancel_timer(grabber);
         IMFPresentationClock_RemoveClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
         IMFPresentationClock_Release(grabber->clock);
         if (grabber->timer)
@@ -1122,6 +1129,9 @@ static HRESULT sample_grabber_set_state(struct sample_grabber *grabber, enum sin
             hr = MF_E_INVALID_STATE_TRANSITION;
         else
         {
+            if (state == SINK_STATE_STOPPED)
+                sample_grabber_cancel_timer(grabber);
+
             if (state == SINK_STATE_RUNNING && grabber->state == SINK_STATE_STOPPED)
             {
                 /* Every transition to running state sends a bunch requests to build up initial queue. */
