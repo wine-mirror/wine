@@ -339,7 +339,7 @@ static const char inf_text[] =
     "ServiceType=1\n"
     "StartType=3\n"
     "ErrorControl=1\n"
-    "LoadOrderGroup=Extended Base\n"
+    "LoadOrderGroup=WinePlugPlay\n"
     "DisplayName=\"winetest bus driver\"\n"
     "; they don't sleep anymore, on the beach\n";
 

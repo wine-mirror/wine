@@ -248,9 +248,6 @@ static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
         prop_dword.dwData = 0xdeadbeef;
         hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
         ok( hr == DI_OK, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
-        /* Wine may get the wrong device here, because the test driver creates another instance of
-           hidclass.sys, and gets duplicate rawinput handles, which we use in the guidInstance */
-        todo_wine_if( prop_dword.dwData != EXPECT_VIDPID )
         ok( prop_dword.dwData == EXPECT_VIDPID, "got %#x expected %#x\n", prop_dword.dwData, EXPECT_VIDPID );
 
         ref = IDirectInputDevice8_Release( device );
