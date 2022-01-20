@@ -891,7 +891,7 @@ int attribute_align_arg mpg123_framebyframe_decode(mpg123_handle *mh, off_t *num
 
 	if(num != NULL) *num = mh->num;
 	debug("decoding");
-	if(!mh->state_flags & FRAME_DECODER_LIVE)
+	if(!(mh->state_flags & FRAME_DECODER_LIVE))
 		return MPG123_ERR;
 	decode_the_frame(mh);
 	mh->to_decode = mh->to_ignore = FALSE;
