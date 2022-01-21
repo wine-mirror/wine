@@ -26911,7 +26911,15 @@ static void test_sample_mask(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     get_rt_readback(rt, &rb);
     colour = get_readback_color(&rb, 64, 64);
-    ok(color_match(colour, 0xffff8080, 1), "Got unexpected colour %08x.\n", colour);
+    /* Multiple generations of Nvidia cards return broken results.
+     * A mask with no bits or all bits set produce the expected results (0x00 / 0xff),
+     * but any other mask behaves almost as if the result is 0.5 + (enabled / total)
+     * samples. It's not quite that though (you'd expect 0xbf or 0xc0 instead of 0xbc).
+     *
+     * I looked at a few other possible problems: Incorrectly enabled Z test, alpha test,
+     * culling, the multisample mask affecting CopyRects. Neither of these make a difference. */
+    ok(color_match(colour, 0xffff8080, 1) || broken(color_match(colour, 0xffffbcbc, 1)),
+            "Got unexpected colour %08x.\n", colour);
     release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_EndScene(device);
