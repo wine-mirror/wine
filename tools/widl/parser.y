@@ -483,8 +483,7 @@ typedecl:
 
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 	;
-import_start: tIMPORT aSTRING ';'		{ assert(yychar == PARSER_EMPTY);
-						  $$ = xmalloc(sizeof(struct _import_t));
+import_start: tIMPORT aSTRING ';'		{ $$ = xmalloc(sizeof(struct _import_t));
 						  $$->name = $2;
 						  $$->import_performed = do_import($2);
 						  if (!$$->import_performed) yychar = aEOF;

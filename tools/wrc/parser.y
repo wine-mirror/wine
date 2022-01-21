@@ -199,6 +199,9 @@ static resource_t *build_fontdirs(resource_t *tail);
 static resource_t *build_fontdir(resource_t **fnt, int nfnt);
 static int rsrcid_to_token(int lookahead);
 
+/* bison >= 3.6 applies api.prefix also to YYEMPTY */
+#define YYEMPTY (-2)
+
 %}
 
 %define api.prefix {parser_}
@@ -490,11 +493,11 @@ resource
 		 * want_id because we already have a lookahead that
 		 * cannot be undone.
 		 */
-		if(yychar != PARSER_EMPTY && yychar != tNL)
+		if(yychar != YYEMPTY && yychar != tNL)
 			dont_want_id = 1;
 
 		if(yychar == tNL)
-			yychar = PARSER_EMPTY;	/* Could use 'yyclearin', but we already need the*/
+			yychar = YYEMPTY;	/* Could use 'yyclearin', but we already need the*/
 						/* direct access to yychar in rule 'usrcvt' below. */
 		else if(yychar == tIDENT)
 			parser_warning("LANGUAGE statement not delimited with newline; next identifier might be wrong\n");
@@ -2725,7 +2728,7 @@ static int rsrcid_to_token(int lookahead)
 	int token;
 
 	/* Get a token if we don't have one yet */
-	if(lookahead == PARSER_EMPTY)
+	if(lookahead == YYEMPTY)
 		lookahead = yylex();
 
 	/* Only numbers are possibly interesting */
