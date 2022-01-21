@@ -3796,7 +3796,9 @@ dnl Rules for cleaning
 
 WINE_APPEND_RULE(
 [distclean:: clean
-	rm -rf autom4te.cache])
+	rm -rf autom4te.cache
+maintainer-clean::
+	rm -f configure include/config.h.in])
 
 dnl Rules for generated source files
 

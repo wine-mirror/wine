@@ -208,6 +208,7 @@ struct makefile
     struct strarray test_files;
     struct strarray clean_files;
     struct strarray distclean_files;
+    struct strarray maintainerclean_files;
     struct strarray uninstall_files;
     struct strarray object_files;
     struct strarray crossobj_files;
@@ -2583,7 +2584,7 @@ static void output_uninstall_rules( struct makefile *make )
 /*******************************************************************
  *         output_po_files
  */
-static void output_po_files( const struct makefile *make )
+static void output_po_files( struct makefile *make )
 {
     const char *po_dir = src_dir_path( make, "po" );
     unsigned int i;
@@ -2595,7 +2596,7 @@ static void output_po_files( const struct makefile *make )
         output( ": %s/wine.pot\n", po_dir );
         output( "\t%smsgmerge --previous -q $@ %s/wine.pot | msgattrib --no-obsolete -o $@.new && mv $@.new $@\n",
                 cmd_prefix( "MSG" ), po_dir );
-        output( "po:" );
+        output( "po/all:" );
         for (i = 0; i < linguas.count; i++)
             output_filename( strmake( "%s/%s.po", po_dir, linguas.str[i] ));
         output( "\n" );
@@ -2606,6 +2607,7 @@ static void output_po_files( const struct makefile *make )
     output( "\t%smsgcat -o $@", cmd_prefix( "MSG" ));
     output_filenames( make->pot_files );
     output( "\n" );
+    strarray_add( &make->maintainerclean_files, strmake( "%s/wine.pot", po_dir ));
 }
 
 
@@ -2817,6 +2819,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
         output( "\t%s%s -script %s %s $@\n", cmd_prefix( "GEN" ),
                 fontforge, root_src_dir_path( "fonts/genttf.ff" ), source->filename );
         if (!(source->file->flags & FLAG_SFD_FONTS)) strarray_add( &make->font_files, ttf_obj );
+        strarray_add( &make->maintainerclean_files, ttf_obj );
     }
     if (source->file->flags & FLAG_INSTALL)
     {
@@ -2852,7 +2855,7 @@ static void output_source_svg( struct makefile *make, struct incl_file *source, 
     static const char * const images[] = { "bmp", "cur", "ico", NULL };
     unsigned int i;
 
-    if (convert && rsvg && icotool && !make->src_dir)
+    if (convert && rsvg && icotool)
     {
         for (i = 0; images[i]; i++)
             if (find_include_file( make, strmake( "%s.%s", obj, images[i] ))) break;
@@ -2863,6 +2866,7 @@ static void output_source_svg( struct makefile *make, struct incl_file *source, 
             output( "\t%sCONVERT=\"%s\" ICOTOOL=\"%s\" RSVG=\"%s\" %s %s $@\n",
                     cmd_prefix( "GEN" ), convert, icotool, rsvg,
                     root_src_dir_path( "tools/buildimage" ), source->filename );
+            strarray_add( &make->maintainerclean_files, strmake( "%s.%s", obj, images[i] ));
         }
     }
 }
@@ -3566,12 +3570,14 @@ static void output_subdirs( struct makefile *make )
         strarray_addall_uniq( &dependencies, submakes[i]->dependencies );
         strarray_addall_path( &clean_files, submakes[i]->obj_dir, submakes[i]->clean_files );
         strarray_addall_path( &distclean_files, submakes[i]->obj_dir, submakes[i]->distclean_files );
+        strarray_addall_path( &make->maintainerclean_files, submakes[i]->obj_dir, submakes[i]->maintainerclean_files );
         strarray_addall_path( &testclean_files, submakes[i]->obj_dir, submakes[i]->ok_files );
         strarray_addall_path( &make->pot_files, submakes[i]->obj_dir, submakes[i]->pot_files );
 
         if (submakes[i]->disabled) continue;
 
         strarray_addall_path( &all_targets, submakes[i]->obj_dir, submakes[i]->all_targets );
+        strarray_addall_path( &all_targets, submakes[i]->obj_dir, submakes[i]->font_files );
         if (!strcmp( submakes[i]->obj_dir, "tools" ) || !strncmp( submakes[i]->obj_dir, "tools/", 6 ))
             strarray_add( &tooldeps_deps, obj_dir_path( submakes[i], "all" ));
         if (submakes[i]->testdll)
@@ -3620,14 +3626,19 @@ static void output_subdirs( struct makefile *make )
     strarray_add_uniq( &make->phony_targets, "check" );
     strarray_add_uniq( &make->phony_targets, "test" );
 
+    if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
+
     output( "clean::\n");
     output_rm_filenames( clean_files );
     output( "testclean::\n");
     output_rm_filenames( testclean_files );
     output( "distclean::\n");
     output_rm_filenames( distclean_files );
+    output( "maintainer-clean::\n");
+    output_rm_filenames( make->maintainerclean_files );
     strarray_add_uniq( &make->phony_targets, "distclean" );
     strarray_add_uniq( &make->phony_targets, "testclean" );
+    strarray_add_uniq( &make->phony_targets, "maintainer-clean" );
 
     if (tooldeps_deps.count)
     {
@@ -3636,8 +3647,6 @@ static void output_subdirs( struct makefile *make )
         output( "\n" );
         strarray_add_uniq( &make->phony_targets, "__tooldeps__" );
     }
-
-    if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
 
     if (make->phony_targets.count)
     {
