@@ -1796,3 +1796,17 @@ HRESULT __RPC_STUB ITransactionLocal_StartTransaction_Stub(ITransactionLocal* Th
     FIXME("(%p)->(%d, 0x%08x, %p, %p, %p): stub\n", This, level, flags, options, trans_level, info);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK ITransactionObject_GetTransactionObject_Proxy(ITransactionObject* This,
+    ULONG level, ITransaction **transaction)
+{
+    FIXME("(%p)->(%d, %p): stub\n", This, level, transaction);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ITransactionObject_GetTransactionObject_Stub(ITransactionObject* This,
+    ULONG level, ITransaction **transaction, IErrorInfo **info)
+{
+    FIXME("(%p)->(%d, %p, %p): stub\n", This, level, transaction, info);
+    return E_NOTIMPL;
+}
