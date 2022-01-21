@@ -4446,6 +4446,7 @@ static void test_effect_state_groups(void)
     ID3D10EffectBlendVariable *b;
     D3D10_BLEND_DESC blend_desc;
     D3D10_STATE_BLOCK_MASK mask;
+    ID3D10SamplerState *sampler;
     D3D10_PASS_DESC pass_desc;
     ID3D10EffectVariable *v;
     ID3D10EffectPass *pass;
@@ -4496,9 +4497,19 @@ static void test_effect_state_groups(void)
     ok(sampler_desc.BorderColor[3] == 4.0f, "Got unexpected BorderColor[3] %.8e.\n", sampler_desc.BorderColor[3]);
     ok(sampler_desc.MinLOD == 6.0f, "Got unexpected MinLOD %.8e.\n", sampler_desc.MinLOD);
     ok(sampler_desc.MaxLOD == 5.0f, "Got unexpected MaxLOD %.8e.\n", sampler_desc.MaxLOD);
+    hr = s->lpVtbl->GetSampler(s, 0, &sampler);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10SamplerState_GetDesc(sampler, &sampler_desc);
+    ok(sampler_desc.Filter == D3D10_FILTER_MIN_MAG_MIP_LINEAR, "Got unexpected Filter %#x.\n", sampler_desc.Filter);
+    ID3D10SamplerState_Release(sampler);
 
     s->lpVtbl->GetBackingStore(s, 1, &sampler_desc);
     ok(sampler_desc.AddressU == D3D10_TEXTURE_ADDRESS_MIRROR, "Got unexpected AddressU %#x.\n", sampler_desc.AddressU);
+    hr = s->lpVtbl->GetSampler(s, 1, &sampler);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10SamplerState_GetDesc(sampler, &sampler_desc);
+    ok(sampler_desc.AddressU == D3D10_TEXTURE_ADDRESS_MIRROR, "Got unexpected AddressU %#x.\n", sampler_desc.AddressU);
+    ID3D10SamplerState_Release(sampler);
 
     v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
     b = v->lpVtbl->AsBlend(v);

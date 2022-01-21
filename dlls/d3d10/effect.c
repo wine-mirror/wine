@@ -9254,16 +9254,14 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_sampler_variable_GetSampler(ID3D10
 
     TRACE("iface %p, index %u, sampler %p.\n", iface, index, sampler);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
-    else if (index)
-        return E_FAIL;
-
-    if (v->type->basetype != D3D10_SVT_SAMPLER)
+    if (!iface->lpVtbl->IsValid(iface))
     {
-        WARN("Variable is not a sampler state.\n");
+        WARN("Invalid variable.\n");
         return E_FAIL;
     }
+
+    if (!(v = d3d10_get_state_variable(v, index, &v->effect->samplers)))
+        return E_FAIL;
 
     if ((*sampler = v->u.state.object.sampler))
         ID3D10SamplerState_AddRef(*sampler);
