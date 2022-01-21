@@ -6775,7 +6775,7 @@ static void test_updatetexture(void)
         UINT dst_width, dst_height;
         UINT src_levels, dst_levels;
         D3DFORMAT src_format, dst_format;
-        BOOL broken;
+        BOOL broken_result, broken_updatetex;
     }
     tests[] =
     {
@@ -6793,7 +6793,8 @@ static void test_updatetexture(void)
          * one or something like that). */
         /* {8, 8, 7, 7, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, */
         {8, 8, 8, 8, 1, 4, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 8 */
-        {4, 4, 8, 8, 1, 1, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 9 */
+        /* For this one UpdateTexture() returns failure on WARP on > Win 10 1709. */
+        {4, 4, 8, 8, 1, 1, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE, TRUE}, /* 9 */
         /* This one causes weird behavior on Windows (it probably writes out
          * of the texture memory). */
         /* {8, 8, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, */
@@ -7020,7 +7021,8 @@ static void test_updatetexture(void)
             hr = IDirect3DDevice8_UpdateTexture(device, src, dst);
             if (FAILED(hr))
             {
-                todo_wine ok(SUCCEEDED(hr), "Failed to update texture, hr %#x, case %u, %u.\n", hr, t, i);
+                todo_wine ok(SUCCEEDED(hr) || broken(tests[i].broken_updatetex),
+                        "Failed to update texture, hr %#x, case %u, %u.\n", hr, t, i);
                 IDirect3DBaseTexture8_Release(src);
                 IDirect3DBaseTexture8_Release(dst);
                 continue;
@@ -7044,7 +7046,7 @@ static void test_updatetexture(void)
                 ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
                 color = getPixelColor(device, 320, 240);
-                ok (color_match(color, 0x007f7f00, 3) || broken(tests[i].broken)
+                ok (color_match(color, 0x007f7f00, 3) || broken(tests[i].broken_result)
                         || broken(color == 0x00adbeef), /* WARP device often just breaks down. */
                         "Got unexpected color 0x%08x, case %u, %u.\n", color, t, i);
             }
