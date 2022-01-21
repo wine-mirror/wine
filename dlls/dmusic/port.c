@@ -35,7 +35,6 @@ struct synth_port {
     IDirectMusic8Impl *parent;
     IDirectSound *dsound;
     IDirectSoundBuffer *dsbuffer;
-    IReferenceClock *pLatencyClock;
     IDirectMusicSynth *synth;
     IDirectMusicSynthSink *synth_sink;
     BOOL active;
@@ -200,7 +199,6 @@ static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
         IDirectMusicSynth_Close(This->synth);
         IDirectMusicSynth_Release(This->synth);
         IDirectMusicSynthSink_Release(This->synth_sink);
-        IReferenceClock_Release(This->pLatencyClock);
         if (This->dsbuffer)
            IDirectSoundBuffer_Release(This->dsbuffer);
         if (This->dsound)
@@ -372,10 +370,7 @@ static HRESULT WINAPI synth_port_GetLatencyClock(IDirectMusicPort *iface, IRefer
 
     TRACE("(%p/%p)->(%p)\n", iface, This, clock);
 
-    *clock = This->pLatencyClock;
-    IReferenceClock_AddRef(*clock);
-
-    return S_OK;
+    return IDirectMusicSynth8_GetLatencyClock(This->synth, clock);
 }
 
 static HRESULT WINAPI synth_port_GetRunningStats(IDirectMusicPort *iface, DMUS_SYNTHSTATS *stats)
@@ -840,15 +835,8 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
     obj->params = *port_params;
     obj->caps = *port_caps;
 
-    hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&obj->pLatencyClock, NULL);
-    if (hr != S_OK)
-    {
-        HeapFree(GetProcessHeap(), 0, obj);
-        return hr;
-    }
-
-    if (SUCCEEDED(hr))
-        hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (void**)&obj->synth);
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth,
+            (void **)&obj->synth);
 
     if (SUCCEEDED(hr))
         hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (void**)&obj->synth_sink);
@@ -898,8 +886,6 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
         IDirectMusicSynth_Release(obj->synth);
     if (obj->synth_sink)
         IDirectMusicSynthSink_Release(obj->synth_sink);
-    if (obj->pLatencyClock)
-        IReferenceClock_Release(obj->pLatencyClock);
     HeapFree(GetProcessHeap(), 0, obj);
 
     return hr;
