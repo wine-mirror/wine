@@ -756,7 +756,16 @@ static struct incl_file *find_include_file( const struct makefile *make, const c
     struct incl_file *file;
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry )
-        if (!strcmp( name, file->name )) return file;
+    {
+        const char *filename = file->filename;
+        if (!filename) continue;
+        if (make->obj_dir && strlen(make->obj_dir) < strlen(filename))
+        {
+            filename += strlen(make->obj_dir);
+            while (*filename == '/') filename++;
+        }
+        if (!strcmp( name, filename )) return file;
+    }
     return NULL;
 }
 
