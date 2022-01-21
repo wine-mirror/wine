@@ -4559,8 +4559,18 @@ static void test_effect_state_groups(void)
             ds_desc.BackFace.StencilPassOp);
     ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
             ds_desc.BackFace.StencilFunc);
+    hr = d->lpVtbl->GetDepthStencilState(d, 0, &ds_state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10DepthStencilState_GetDesc(ds_state, &ds_desc);
+    ok(ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ID3D10DepthStencilState_Release(ds_state);
     d->lpVtbl->GetBackingStore(d, 1, &ds_desc);
     ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    hr = d->lpVtbl->GetDepthStencilState(d, 1, &ds_state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10DepthStencilState_GetDesc(ds_state, &ds_desc);
+    ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ID3D10DepthStencilState_Release(ds_state);
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
     r = v->lpVtbl->AsRasterizer(v);
