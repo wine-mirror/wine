@@ -4567,6 +4567,8 @@ static void test_effect_state_groups(void)
     ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
     ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
             rast_desc.AntialiasedLineEnable);
+    r->lpVtbl->GetBackingStore(r, 1, &rast_desc);
+    ok(rast_desc.CullMode == D3D10_CULL_BACK, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
     ok(technique->lpVtbl->IsValid(technique), "Expected valid technique.\n");
