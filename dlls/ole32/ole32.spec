@@ -187,7 +187,7 @@
 @ stdcall Ole32DllGetClassObject(ptr ptr ptr)
 @ stdcall OleBuildVersion()
 @ stdcall OleConvertIStorageToOLESTREAM(ptr ptr)
-@ stub OleConvertIStorageToOLESTREAMEx
+@ stdcall OleConvertIStorageToOLESTREAMEx(ptr long long long long ptr ptr)
 @ stdcall OleConvertOLESTREAMToIStorage(ptr ptr ptr)
 @ stub OleConvertOLESTREAMToIStorageEx
 @ stdcall OleCreate(ptr ptr long ptr ptr ptr ptr)
