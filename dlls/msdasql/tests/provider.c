@@ -409,6 +409,9 @@ static void test_sessions(void)
     IGetDataSource *datasource = NULL;
     ISessionProperties *session_props = NULL;
     IUnknown *unimplemented = NULL;
+    ITransaction *transaction = NULL;
+    ITransactionLocal *local = NULL;
+    ITransactionObject *object = NULL;
     ITransactionJoin *join = NULL;
     IUnknown *cmd = NULL;
     HRESULT hr;
@@ -462,6 +465,19 @@ static void test_sessions(void)
     ok(dsource == props, "different pointers\n");
     IDBProperties_Release(dsource);
     IGetDataSource_Release(datasource);
+
+    hr = IUnknown_QueryInterface(session, &IID_ITransaction, (void**)&transaction);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if(hr == S_OK)
+        ITransaction_Release(transaction);
+
+    hr = IUnknown_QueryInterface(session, &IID_ITransactionLocal, (void**)&local);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if(hr == S_OK)
+        ITransactionLocal_Release(local);
+
+    hr = IUnknown_QueryInterface(session, &IID_ITransactionObject, (void**)&object);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
     hr = IUnknown_QueryInterface(session, &IID_ITransactionJoin, (void**)&join);
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
