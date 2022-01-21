@@ -30,6 +30,9 @@
 
 #include "initguid.h"
 #include "msdasql.h"
+#include "odbcinst.h"
+#include "sqlext.h"
+#include "sqlucode.h"
 
 #include "msdasql_private.h"
 
@@ -39,6 +42,22 @@ DEFINE_GUID(DBPROPSET_DATASOURCEINFO, 0xc8b522bb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x
 DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 DEFINE_GUID(DBGUID_DEFAULT,      0xc8b521fb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+
+static void dump_sql_diag_records(SQLSMALLINT type, SQLHANDLE handle)
+{
+    SQLCHAR state[6], msg[SQL_MAX_MESSAGE_LENGTH];
+    SQLINTEGER native;
+    SQLSMALLINT i = 1, len;
+
+    if (!TRACE_ON(msdasql))
+        return;
+
+    while(SQLGetDiagRec(type, handle, i, state, &native, msg, sizeof(msg), &len) != SQL_SUCCESS)
+    {
+        WARN("%d: %s: %s\n", i, state, msg);
+        i++;
+    }
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -210,6 +229,10 @@ struct msdasql
 
     LONG     ref;
     struct msdasql_prop properties[14];
+
+    /* ODBC Support */
+    HENV henv;
+    HDBC hdbc;
 };
 
 static inline struct msdasql *impl_from_IUnknown(IUnknown *iface)
@@ -294,6 +317,10 @@ static ULONG  WINAPI msdsql_Release(IUnknown *iface)
 
     if (!ref)
     {
+        SQLDisconnect(provider->hdbc);
+
+        SQLFreeHandle(SQL_HANDLE_DBC, provider->hdbc);
+        SQLFreeHandle(SQL_HANDLE_ENV, provider->henv);
         free(provider);
     }
 
@@ -502,8 +529,33 @@ static ULONG WINAPI dbinit_Release(IDBInitialize *iface)
 static HRESULT WINAPI dbinit_Initialize(IDBInitialize *iface)
 {
     struct msdasql *provider = impl_from_IDBInitialize(iface);
+    int i;
+    SQLRETURN ret;
 
-    FIXME("%p stub\n", provider);
+    FIXME("%p semi-stub\n", provider);
+
+    for(i=0; i < sizeof(provider->properties); i++)
+    {
+        if (provider->properties[i].id == DBPROP_INIT_DATASOURCE)
+            break;
+    }
+
+    if (i >= sizeof(provider->properties))
+    {
+        ERR("Datasource not found\n");
+        return E_FAIL;
+    }
+
+    ret = SQLConnectW( provider->hdbc, (SQLWCHAR *)V_BSTR(&provider->properties[i].value),
+        SQL_NTS, (SQLWCHAR *)NULL, SQL_NTS, (SQLWCHAR *)NULL, SQL_NTS );
+    TRACE("SQLConnectW ret %d\n", ret);
+    if (ret != SQL_SUCCESS)
+    {
+        dump_sql_diag_records(SQL_HANDLE_DBC, provider->hdbc);
+
+        if (ret != SQL_SUCCESS_WITH_INFO)
+           return E_FAIL;
+    }
 
     return S_OK;
 }
@@ -652,6 +704,15 @@ static HRESULT create_msdasql_provider(REFIID riid, void **ppv)
                 V_VT(&provider->properties[i].value) = VT_EMPTY;
         }
     }
+
+    SQLAllocHandle(SQL_HANDLE_ENV, NULL, &provider->henv );
+    if (SQLSetEnvAttr(provider->henv, SQL_ATTR_ODBC_VERSION, (void *)SQL_OV_ODBC3_80, 0) == SQL_ERROR)
+    {
+        WARN("Falling back to SQL_OV_ODBC3\n");
+        SQLSetEnvAttr(provider->henv, SQL_ATTR_ODBC_VERSION, (void *)SQL_OV_ODBC3, 0);
+    }
+
+    SQLAllocHandle(SQL_HANDLE_DBC, provider->henv, &provider->hdbc);
 
     hr = IUnknown_QueryInterface(&provider->MSDASQL_iface, riid, ppv);
     IUnknown_Release(&provider->MSDASQL_iface);
