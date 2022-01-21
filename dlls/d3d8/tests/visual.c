@@ -459,15 +459,22 @@ static void lighting_test(void)
         const D3DMATRIX *world_matrix;
         const void *quad;
         unsigned int size;
-        DWORD expected;
+        DWORD expected, broken;
         const char *message;
     }
     tests[] =
     {
-        {&mat, nquad, sizeof(nquad[0]), 0x000000ff, "Lit quad with light"},
-        {&mat_singular, nquad, sizeof(nquad[0]), 0x000000ff, "Lit quad with singular world matrix"},
-        {&mat_transf, rotatedquad, sizeof(rotatedquad[0]), 0x000000ff, "Lit quad with transformation matrix"},
-        {&mat_nonaffine, translatedquad, sizeof(translatedquad[0]), 0x00000000, "Lit quad with non-affine matrix"},
+        {&mat, nquad, sizeof(nquad[0]), 0x000000ff, 0xdeadbeef,
+                "Lit quad with light"},
+        /* Starting around Win10 20H? this test returns 0x00000000, but only
+         * in d3d8. In ddraw and d3d9 it works like in older windows versions.
+         * The behavior is GPU independent. */
+        {&mat_singular, nquad, sizeof(nquad[0]), 0x000000ff, 0x00000000,
+                "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, sizeof(rotatedquad[0]), 0x000000ff, 0xdeadbeef,
+                "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, sizeof(translatedquad[0]), 0x00000000, 0xdeadbeef,
+                "Lit quad with non-affine matrix"},
     };
 
     window = create_window();
@@ -569,7 +576,8 @@ static void lighting_test(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        ok(color == tests[i].expected || broken(color == tests[i].broken),
+                "%s has color 0x%08x.\n", tests[i].message, color);
     }
 
     refcount = IDirect3DDevice8_Release(device);
