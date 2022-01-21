@@ -60,12 +60,7 @@ HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
     res = SetPropW (hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled), 
                     UlongToHandle(dwFlags|0x80000000));
         /* 0x80000000 serves as a "flags set" flag */
-    if (!res)
-          return HRESULT_FROM_WIN32(GetLastError());
-    if (dwFlags & ETDT_USETABTEXTURE)
-        return SetWindowTheme (hwnd, NULL, L"Tab");
-    else
-        return SetWindowTheme (hwnd, NULL, NULL);
+    return res ? S_OK : HRESULT_FROM_WIN32(GetLastError());
  }
 
 /***********************************************************************

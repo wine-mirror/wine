@@ -2018,7 +2018,7 @@ static void test_EnableThemeDialogTexture(void)
             hr = EnableThemeDialogTexture(dialog, flags[i]);
             ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
             ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
-                        "EnableThemeDialogTexture first flag", TRUE);
+                        "EnableThemeDialogTexture first flag", FALSE);
             ret = IsThemeDialogTextureEnabled(dialog);
             /* Non-zero flags without ETDT_DISABLE enables dialog texture */
             todo_wine_if(flags[i] == ETDT_USETABTEXTURE || flags[i] == ETDT_USEAEROWIZARDTABTEXTURE)
@@ -2040,7 +2040,7 @@ static void test_EnableThemeDialogTexture(void)
             hr = EnableThemeDialogTexture(dialog, flags[j]);
             ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
             ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
-                        "EnableThemeDialogTexture second flag", TRUE);
+                        "EnableThemeDialogTexture second flag", FALSE);
             ret = IsThemeDialogTextureEnabled(dialog);
             /* If the flag is zero, it will have previous dialog texture status */
             if (flags[j])
