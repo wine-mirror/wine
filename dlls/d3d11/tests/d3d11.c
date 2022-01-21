@@ -20645,7 +20645,7 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
 
         if (formats[i].fl_required <= feature_level)
         {
-            todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER)
+            todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
                 ok(supported, "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
                         format, feature_name, feature_level, format_support[format]);
             continue;
@@ -20659,7 +20659,7 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
             continue;
         }
 
-        todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER)
+        todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY)
             ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
                     format, feature_name, feature_level, format_support[format]);
     }

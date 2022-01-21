@@ -1822,7 +1822,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
             allowed_usage = WINED3DUSAGE_DYNAMIC;
             allowed_bind_flags = WINED3D_BIND_SHADER_RESOURCE
                     | WINED3D_BIND_UNORDERED_ACCESS
-                    | WINED3D_BIND_VERTEX_BUFFER;
+                    | WINED3D_BIND_VERTEX_BUFFER
+                    | WINED3D_BIND_INDEX_BUFFER;
             gl_type = gl_type_end = WINED3D_GL_RES_TYPE_BUFFER;
             break;
 
@@ -1856,6 +1857,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         format_flags |= WINED3DFMT_FLAG_UNORDERED_ACCESS;
     if (bind_flags & WINED3D_BIND_VERTEX_BUFFER)
         format_flags |= WINED3DFMT_FLAG_VERTEX_ATTRIBUTE;
+    if (bind_flags & WINED3D_BIND_INDEX_BUFFER)
+        format_flags |= WINED3DFMT_FLAG_INDEX_BUFFER;
 
     if (usage & WINED3DUSAGE_QUERY_FILTER)
         format_flags |= WINED3DFMT_FLAG_FILTERING;

@@ -13630,7 +13630,7 @@ static void check_format_support(const unsigned int *format_support,
             continue;
         }
 
-        todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER)
+        todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
         ok(supported, "Format %#x - %s supported, format support %#x.\n",
                 format, feature_name, format_support[format]);
     }
