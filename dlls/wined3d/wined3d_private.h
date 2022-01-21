@@ -4877,8 +4877,6 @@ struct wined3d_device_context_ops
     void (*acquire_blend_state)(struct wined3d_device_context *context, struct wined3d_blend_state *blend_state);
     void (*acquire_rasterizer_state)(struct wined3d_device_context *context,
             struct wined3d_rasterizer_state *rasterizer_state);
-    void (*acquire_depth_stencil_state)(struct wined3d_device_context *context,
-            struct wined3d_depth_stencil_state *depth_stencil_state);
 };
 
 struct wined3d_device_context
