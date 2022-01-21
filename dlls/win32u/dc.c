@@ -1026,13 +1026,18 @@ BOOL WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform )
  */
 BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD_PTR dwHookData )
 {
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc = get_dc_obj( hdc );
 
     if (!dc) return FALSE;
+    if (dc->attr->disabled)
+    {
+        GDI_ReleaseObj( hdc );
+        return 0;
+    }
 
     dc->dwHookData = dwHookData;
     dc->hookProc = hookProc;
-    release_dc_ptr( dc );
+    GDI_ReleaseObj( hdc );
     return TRUE;
 }
 
@@ -1044,13 +1049,18 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD_PTR dwHookData )
  */
 DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
 {
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc = get_dc_obj( hdc );
     DWORD_PTR ret;
 
     if (!dc) return 0;
+    if (dc->attr->disabled)
+    {
+        GDI_ReleaseObj( hdc );
+        return 0;
+    }
     if (proc) *proc = dc->hookProc;
     ret = dc->dwHookData;
-    release_dc_ptr( dc );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
