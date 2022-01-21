@@ -6624,6 +6624,37 @@ static void test_selected_column(void)
     }
 }
 
+static void test_LVM_GETNEXTITEMINDEX(void)
+{
+    LVITEMINDEX index;
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = create_listview_control(LVS_REPORT);
+
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 1);
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEMINDEX, 0, LVNI_ALL);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+
+    index.iItem = -1;
+    index.iGroup = 0;
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEMINDEX, (WPARAM)&index, LVNI_ALL);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ok(index.iItem == 0, "Unexpected item index %d.\n", index.iItem);
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEMINDEX, (WPARAM)&index, LVNI_ALL);
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ok(index.iItem == 1, "Unexpected item index %d.\n", index.iItem);
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEMINDEX, (WPARAM)&index, LVNI_ALL);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(index.iItem == -1, "Unexpected item index %d.\n", index.iItem);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -6730,6 +6761,7 @@ START_TEST(listview)
     test_LVM_GETCOUNTPERPAGE();
     test_item_state_change();
     test_selected_column();
+    test_LVM_GETNEXTITEMINDEX();
 
     unload_v6_module(ctx_cookie, hCtx);
 
