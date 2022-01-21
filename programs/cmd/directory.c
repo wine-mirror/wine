@@ -787,7 +787,7 @@ void WCMD_directory (WCHAR *args)
       }
       WINE_TRACE("Using location '%s'\n", wine_dbgstr_w(fullname));
 
-      status = GetFullPathNameW(fullname, ARRAY_SIZE(path), path, NULL);
+      if (!WCMD_get_fullpath(fullname, ARRAY_SIZE(path), path, NULL)) continue;
 
       /*
        *  If the path supplied does not include a wildcard, and the endpoint of the

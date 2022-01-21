@@ -4576,7 +4576,7 @@ msgstr "找不到環境變數。\n"
 msgid "No signal sent.\n"
 msgstr "未發送任何信號。\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "檔案名稱過長。\n"
 

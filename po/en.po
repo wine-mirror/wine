@@ -4624,7 +4624,7 @@ msgstr "Environment variable not found.\n"
 msgid "No signal sent.\n"
 msgstr "No signal sent.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "File name is too long.\n"
 

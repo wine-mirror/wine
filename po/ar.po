@@ -4669,7 +4669,7 @@ msgstr "متغير البيئة غير موجود.\n"
 msgid "No signal sent.\n"
 msgstr "الإشارة لم ترسل.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "اسم الملف طويل جدًا.\n"
 

@@ -4641,7 +4641,7 @@ msgstr "No es troba la variable d'entorn.\n"
 msgid "No signal sent.\n"
 msgstr "No s'ha enviat cap senyal.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "El nom de fitxer és massa llarg.\n"
 

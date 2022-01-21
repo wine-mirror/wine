@@ -406,4 +406,5 @@ Enter HELP <command> for further information on any of the above commands.\n"
   WCMD_NOOPERATOR, "Expected an operator.\n"
   WCMD_BADPAREN, "Mismatch in parentheses.\n"
   WCMD_BADHEXOCT, "Badly formed number - must be one of decimal (12),\n hexadecimal (0x34) or octal (056).\n"
+  WCMD_FILENAMETOOLONG, "File name is too long.\n"
 }

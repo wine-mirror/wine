@@ -4605,7 +4605,7 @@ msgstr "환경변수를 찾을 수 없습니다.\n"
 msgid "No signal sent.\n"
 msgstr "시그널 전송 실패.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "너무 긴 파일 이름.\n"
 

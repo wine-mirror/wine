@@ -4583,7 +4583,7 @@ msgstr "පරිසරය විචල්‍යය හම්බු වෙලා
 msgid "No signal sent.\n"
 msgstr "සංඥාවක් යැවුවේ නැහැ.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "ගොනුවේ නම දිග වැඩි.\n"
 

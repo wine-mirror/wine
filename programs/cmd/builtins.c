@@ -805,7 +805,7 @@ void WCMD_copy(WCHAR * args) {
     WINE_TRACE("Destination supplied, processing to see if file or directory\n");
 
     /* Convert to fully qualified path/filename */
-    GetFullPathNameW(destination->name, ARRAY_SIZE(destname), destname, &filenamepart);
+    if (!WCMD_get_fullpath(destination->name, ARRAY_SIZE(destname), destname, &filenamepart)) return;
     WINE_TRACE("Full dest name is '%s'\n", wine_dbgstr_w(destname));
 
     /* If parameter is a directory, ensure it ends in \ */
@@ -887,7 +887,7 @@ void WCMD_copy(WCHAR * args) {
 
     /* Convert to fully qualified path/filename in srcpath, file filenamepart pointing
        to where the filename portion begins (used for wildcard expansion).             */
-    GetFullPathNameW(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart);
+    if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart)) return;
     WINE_TRACE("Full src name is '%s'\n", wine_dbgstr_w(srcpath));
 
     /* If parameter is a directory, ensure it ends in \* */
@@ -897,7 +897,7 @@ void WCMD_copy(WCHAR * args) {
       /* We need to know where the filename part starts, so append * and
          recalculate the full resulting path                              */
       lstrcatW(thiscopy->name, L"*");
-      GetFullPathNameW(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart);
+      if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart)) return;
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
 
     } else if ((wcspbrk(srcpath, L"*?") == NULL) &&
@@ -907,7 +907,7 @@ void WCMD_copy(WCHAR * args) {
       /* We need to know where the filename part starts, so append \* and
          recalculate the full resulting path                              */
       lstrcatW(thiscopy->name, L"\\*");
-      GetFullPathNameW(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart);
+      if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart)) return;
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
     }
 
@@ -1191,7 +1191,7 @@ static BOOL WCMD_delete_confirm_wildcard(const WCHAR *filename, BOOL *pPrompted)
         WCHAR fpath[MAX_PATH];
 
         /* Convert path into actual directory spec */
-        GetFullPathNameW(filename, ARRAY_SIZE(fpath), fpath, NULL);
+        if (!WCMD_get_fullpath(filename, ARRAY_SIZE(fpath), fpath, NULL)) return FALSE;
         _wsplitpath(fpath, drive, dir, fname, ext);
 
         /* Only prompt for * and *.*, not *a, a*, *.a* etc */
@@ -1319,7 +1319,8 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
       WCHAR ext[MAX_PATH];
 
       /* Convert path into actual directory spec */
-      GetFullPathNameW(argCopy, ARRAY_SIZE(thisDir), thisDir, NULL);
+      if (!WCMD_get_fullpath(argCopy, ARRAY_SIZE(thisDir), thisDir, NULL)) return FALSE;
+
       _wsplitpath(thisDir, drive, dir, fname, ext);
 
       lstrcpyW(thisDir, drive);
@@ -2933,8 +2934,8 @@ void WCMD_move (void)
 
   /* If 2nd parm is directory, then use original filename */
   /* Convert partial path to full path */
-  GetFullPathNameW(param1, ARRAY_SIZE(input), input, NULL);
-  GetFullPathNameW(param2, ARRAY_SIZE(output), output, NULL);
+  if (!WCMD_get_fullpath(param1, ARRAY_SIZE(input), input, NULL) ||
+      !WCMD_get_fullpath(param2, ARRAY_SIZE(output), output, NULL)) return;
   WINE_TRACE("Move from '%s'('%s') to '%s'\n", wine_dbgstr_w(input),
              wine_dbgstr_w(param1), wine_dbgstr_w(output));
 
@@ -3158,7 +3159,7 @@ void WCMD_rename (void)
   }
 
   /* Convert partial path to full path */
-  GetFullPathNameW(param1, ARRAY_SIZE(input), input, NULL);
+  if (!WCMD_get_fullpath(param1, ARRAY_SIZE(input), input, NULL)) return;
   WINE_TRACE("Rename from '%s'('%s') to '%s'\n", wine_dbgstr_w(input),
              wine_dbgstr_w(param1), wine_dbgstr_w(param2));
   dotDst = wcschr(param2, '.');
@@ -3439,7 +3440,7 @@ void WCMD_setshow_default (const WCHAR *args) {
           WCHAR ext[MAX_PATH];
 
           /* Convert path into actual directory spec */
-          GetFullPathNameW(string, ARRAY_SIZE(fpath), fpath, NULL);
+          if (!WCMD_get_fullpath(string, ARRAY_SIZE(fpath), fpath, NULL)) return;
           _wsplitpath(fpath, drive, dir, fname, ext);
 
           /* Rebuild path */

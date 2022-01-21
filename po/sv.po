@@ -4671,7 +4671,7 @@ msgstr "Miljövariabeln hittades inte.\n"
 msgid "No signal sent.\n"
 msgstr "Ingen signal skickades.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "Filnamnet för långt.\n"
 

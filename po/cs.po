@@ -4610,7 +4610,7 @@ msgstr "Proměnná prostředí nebyla nalezena.\n"
 msgid "No signal sent.\n"
 msgstr "Nebyl zaslán žádný signál.\n"
 
-#: dlls/kernel32/winerror.mc:818
+#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
 msgid "File name is too long.\n"
 msgstr "Název souboru je příliš dlouhý.\n"
 

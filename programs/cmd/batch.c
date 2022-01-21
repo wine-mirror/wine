@@ -472,7 +472,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   /* After this, we need full information on the file,
     which is valid not to exist.  */
   if (!skipFileParsing) {
-    if (GetFullPathNameW(outputparam, MAX_PATH, fullfilename, &filepart) == 0) {
+    if (!WCMD_get_fullpath(outputparam, MAX_PATH, fullfilename, &filepart)) {
       exists = FALSE;
       fullfilename[0] = 0x00;
     } else {

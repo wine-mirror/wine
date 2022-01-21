@@ -71,6 +71,7 @@ void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
 void WCMD_exit (CMD_LIST **cmdList);
 void WCMD_for (WCHAR *, CMD_LIST **cmdList);
+BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
 void WCMD_give_help (const WCHAR *args);
 void WCMD_goto (CMD_LIST **cmdList);
 void WCMD_if (WCHAR *, CMD_LIST **cmdList);
@@ -317,3 +318,4 @@ extern WCHAR version_string[];
 #define WCMD_NOOPERATOR       1043
 #define WCMD_BADPAREN         1044
 #define WCMD_BADHEXOCT        1045
+#define WCMD_FILENAMETOOLONG  1046
