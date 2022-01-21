@@ -1228,6 +1228,27 @@ static struct file *open_local_file( const struct makefile *make, const char *pa
 
 
 /*******************************************************************
+ *         open_local_generated_file
+ *
+ * Open a generated file in the directory of the makefile.
+ */
+static struct file *open_local_generated_file( const struct makefile *make, struct incl_file *file,
+                                               const char *ext, const char *src_ext )
+{
+    char *filename;
+    struct file *ret = NULL;
+
+    if (strendswith( file->name, ext ) &&
+        (ret = open_local_file( make, replace_extension( file->name, ext, src_ext ), &filename )))
+    {
+        file->sourcename = filename;
+        file->filename = obj_dir_path( make, file->name );
+    }
+    return ret;
+}
+
+
+/*******************************************************************
  *         open_global_file
  *
  * Open a file in the top-level source directory.
@@ -1251,6 +1272,27 @@ static struct file *open_global_header( const struct makefile *make, const char 
 {
     if (!strncmp( path, "../", 3 )) return NULL;
     return open_global_file( make, strmake( "include/%s", path ), filename );
+}
+
+
+/*******************************************************************
+ *         open_global_generated_file
+ *
+ * Open a generated file in the top-level source directory.
+ */
+static struct file *open_global_generated_file( const struct makefile *make, struct incl_file *file,
+                                                const char *ext, const char *src_ext )
+{
+    char *filename;
+    struct file *ret = NULL;
+
+    if (strendswith( file->name, ext ) &&
+        (ret = open_global_header( make, replace_extension( file->name, ext, src_ext ), &filename )))
+    {
+        file->sourcename = filename;
+        file->filename = strmake( "include/%s", file->name );
+    }
+    return ret;
 }
 
 
@@ -1306,30 +1348,13 @@ static int has_external_import( const struct makefile *make )
 static struct file *open_include_file( const struct makefile *make, struct incl_file *pFile )
 {
     struct file *file = NULL;
-    char *filename;
     unsigned int i, len;
 
     errno = ENOENT;
 
-    /* check for generated bison header */
-
-    if (strendswith( pFile->name, ".tab.h" ) &&
-        (file = open_local_file( make, replace_extension( pFile->name, ".tab.h", ".y" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = obj_dir_path( make, pFile->name );
-        return file;
-    }
-
-    /* check for corresponding idl file in source dir */
-
-    if (strendswith( pFile->name, ".h" ) &&
-        (file = open_local_file( make, replace_extension( pFile->name, ".h", ".idl" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = obj_dir_path( make, pFile->name );
-        return file;
-    }
+    /* check for generated files */
+    if ((file = open_local_generated_file( make, pFile, ".tab.h", ".y" ))) return file;
+    if ((file = open_local_generated_file( make, pFile, ".h", ".idl" ))) return file;
 
     /* check for extra targets */
     if (strarray_exists( &make->extra_targets, pFile->name ))
@@ -1343,45 +1368,19 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if ((file = open_local_file( make, pFile->name, &pFile->filename ))) return file;
 
     /* check for global importlib (module dependency) */
-
     if (pFile->type == INCL_IMPORTLIB && find_importlib_module( pFile->name ))
     {
         pFile->filename = pFile->name;
         return NULL;
     }
 
-    /* check for corresponding idl file in global includes */
-
-    if (strendswith( pFile->name, ".h" ) &&
-        (file = open_global_header( make, replace_extension( pFile->name, ".h", ".idl" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = strmake( "include/%s", pFile->name );
-        return file;
-    }
-
-    /* check for corresponding .in file in global includes (for config.h.in) */
-
-    if (strendswith( pFile->name, ".h" ) &&
-        (file = open_global_header( make, replace_extension( pFile->name, ".h", ".h.in" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = strmake( "include/%s", pFile->name );
-        return file;
-    }
-
-    /* check for corresponding .x file in global includes */
-
+    /* check for generated files in global includes */
+    if ((file = open_global_generated_file( make, pFile, ".h", ".idl" ))) return file;
+    if ((file = open_global_generated_file( make, pFile, ".h", ".h.in" ))) return file;
     if (strendswith( pFile->name, "tmpl.h" ) &&
-        (file = open_global_header( make, replace_extension( pFile->name, ".h", ".x" ), &filename )))
-    {
-        pFile->sourcename = filename;
-        pFile->filename = strmake( "include/%s", pFile->name );
-        return file;
-    }
+        (file = open_global_generated_file( make, pFile, ".h", ".x" ))) return file;
 
     /* check in global includes source dir */
-
     if ((file = open_global_header( make, pFile->name, &pFile->filename ))) return file;
 
     /* check in global msvcrt includes */
