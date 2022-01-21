@@ -3558,6 +3558,19 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS:
+        {
+            struct wined3d_cs_set_shader_resource_views *op;
+
+            op = (struct wined3d_cs_set_shader_resource_views *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->views[i])
+                    wined3d_shader_resource_view_decref(op->views[i]);
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -3630,6 +3643,19 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             {
                 if (op->views[i])
                     wined3d_rendertarget_view_incref(op->views[i]);
+            }
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS:
+        {
+            struct wined3d_cs_set_shader_resource_views *op;
+
+            op = (struct wined3d_cs_set_shader_resource_views *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->views[i])
+                    wined3d_shader_resource_view_incref(op->views[i]);
             }
             break;
         }
