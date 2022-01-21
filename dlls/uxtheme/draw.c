@@ -69,14 +69,11 @@ HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
 BOOL WINAPI IsThemeDialogTextureEnabled(HWND hwnd)
 {
     DWORD dwDialogTextureFlags;
+
     TRACE("(%p)\n", hwnd);
 
     dwDialogTextureFlags = HandleToUlong( GetPropW( hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled) ));
-    if (dwDialogTextureFlags == 0) 
-        /* Means EnableThemeDialogTexture wasn't called for this dialog */
-        return TRUE;
-
-    return (dwDialogTextureFlags & ETDT_ENABLE) && !(dwDialogTextureFlags & ETDT_DISABLE);
+    return dwDialogTextureFlags && !(dwDialogTextureFlags & ETDT_DISABLE);
 }
 
 /***********************************************************************

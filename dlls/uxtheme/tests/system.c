@@ -1649,12 +1649,12 @@ static void test_EnableThemeDialogTexture(void)
     }
     invalid_flag_tests[] =
     {
-        {0, FALSE},
+        {0, FALSE, TRUE},
         {ETDT_DISABLE | ETDT_ENABLE, FALSE},
         {ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB, TRUE},
-        {ETDT_USETABTEXTURE | ETDT_USEAEROWIZARDTABTEXTURE, TRUE, TRUE},
+        {ETDT_USETABTEXTURE | ETDT_USEAEROWIZARDTABTEXTURE, TRUE},
         {ETDT_VALIDBITS, FALSE},
-        {~ETDT_VALIDBITS, FALSE},
+        {~ETDT_VALIDBITS, FALSE, TRUE},
         {~ETDT_VALIDBITS | ETDT_DISABLE, FALSE}
     };
 
@@ -1746,7 +1746,6 @@ static void test_EnableThemeDialogTexture(void)
 
     /* Test dialog texture is disabled by default. EnableThemeDialogTexture() needs to be called */
     ret = IsThemeDialogTextureEnabled(dialog);
-    todo_wine
     ok(!ret, "Expected theme dialog texture disabled.\n");
     ok(GetWindowTheme(dialog) == NULL, "Expected NULL theme handle.\n");
 
@@ -2021,7 +2020,7 @@ static void test_EnableThemeDialogTexture(void)
                         "EnableThemeDialogTexture first flag", FALSE);
             ret = IsThemeDialogTextureEnabled(dialog);
             /* Non-zero flags without ETDT_DISABLE enables dialog texture */
-            todo_wine_if(flags[i] == ETDT_USETABTEXTURE || flags[i] == ETDT_USEAEROWIZARDTABTEXTURE)
+            todo_wine_if(flags[i] == 0)
             ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
 
             child = GetDlgItem(dialog, 100);
@@ -2044,10 +2043,9 @@ static void test_EnableThemeDialogTexture(void)
             ret = IsThemeDialogTextureEnabled(dialog);
             /* If the flag is zero, it will have previous dialog texture status */
             if (flags[j])
-                todo_wine_if(flags[j] == ETDT_USETABTEXTURE || flags[j] == ETDT_USEAEROWIZARDTABTEXTURE)
                 ok(ret == !(flags[j] & ETDT_DISABLE), "Wrong dialog texture status.\n");
             else
-                todo_wine_if((!(flags[i] & ETDT_DISABLE) && flags[i]))
+                todo_wine_if(!flags[i] || flags[i] == ETDT_DISABLE || flags[i] == (ETDT_DISABLE | ETDT_ENABLE))
                 ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
             lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
             ok(lr != 0, "WM_ERASEBKGND failed.\n");
@@ -2159,12 +2157,12 @@ static void test_EnableThemeDialogTexture(void)
                          0, 0, NULL);
     ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
     ret = IsThemeDialogTextureEnabled(hwnd);
-    todo_wine
     ok(!ret, "Wrong dialog texture status.\n");
     child = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hwnd, 0, 0,
                           NULL);
     ok(child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
     ret = IsThemeDialogTextureEnabled(hwnd);
+    todo_wine
     ok(ret, "Wrong dialog texture status.\n");
 
     /* Test that if you move the child control to another window, it doesn't enables tab texture for
@@ -2173,18 +2171,15 @@ static void test_EnableThemeDialogTexture(void)
                           0, 0, NULL);
     ok(hwnd2 != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
     ret = IsThemeDialogTextureEnabled(hwnd2);
-    todo_wine
     ok(!ret, "Wrong dialog texture status.\n");
 
     SetParent(child, hwnd2);
     ok(GetParent(child) == hwnd2, "Wrong parent.\n");
     ret = IsThemeDialogTextureEnabled(hwnd2);
-    todo_wine
     ok(!ret, "Wrong dialog texture status.\n");
     InvalidateRect(child, NULL, TRUE);
     flush_events();
     ret = IsThemeDialogTextureEnabled(hwnd2);
-    todo_wine
     ok(!ret, "Wrong dialog texture status.\n");
 
     DestroyWindow(hwnd2);
