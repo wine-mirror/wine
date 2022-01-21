@@ -10570,6 +10570,17 @@ enum stream_1ole_flags {
     OleStream_Convert      = 0x00000004
 };
 
+/*************************************************************************
+ * OleConvertIStorageToOLESTREAMEx [OLE32.@]
+ */
+HRESULT WINAPI OleConvertIStorageToOLESTREAMEx ( LPSTORAGE stg, CLIPFORMAT cf, LONG width, LONG height,
+                                                 DWORD size, LPSTGMEDIUM medium, LPOLESTREAM olestream )
+{
+    FIXME("%p %x %d %d %d %p %p stub\n", stg, cf, width, height, size, medium, olestream);
+
+    return E_NOTIMPL;
+}
+
 /***********************************************************************
  *		GetConvertStg (OLE32.@)
  */

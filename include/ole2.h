@@ -161,6 +161,8 @@ typedef struct _OLESTREAM {
 
 HRESULT     WINAPI OleConvertOLESTREAMToIStorage( LPOLESTREAM lpolestream, LPSTORAGE pstg, const DVTARGETDEVICE* ptd);
 HRESULT     WINAPI OleConvertIStorageToOLESTREAM( LPSTORAGE pstg, LPOLESTREAM lpolestream);
+HRESULT     WINAPI OleConvertIStorageToOLESTREAMEx( LPSTORAGE stg, CLIPFORMAT cf, LONG width, LONG height,
+                                                    DWORD size, LPSTGMEDIUM medium, LPOLESTREAM olestream );
 
 HRESULT     WINAPI OleDoAutoConvert( LPSTORAGE pStg, LPCLSID pClsidNew );
 HRESULT     WINAPI OleGetAutoConvert( REFCLSID clsidOld, LPCLSID pClsidNew );
