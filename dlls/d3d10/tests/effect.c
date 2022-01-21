@@ -4548,6 +4548,8 @@ static void test_effect_state_groups(void)
             ds_desc.BackFace.StencilPassOp);
     ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
             ds_desc.BackFace.StencilFunc);
+    d->lpVtbl->GetBackingStore(d, 1, &ds_desc);
+    ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
 
     v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
     r = v->lpVtbl->AsRasterizer(v);

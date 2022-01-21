@@ -8796,20 +8796,19 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetBackingS
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
-
-    if (v->type->basetype != D3D10_SVT_DEPTHSTENCIL)
+    if (!iface->lpVtbl->IsValid(iface))
     {
-        WARN("Variable is not a depth stencil state.\n");
+        WARN("Invalid variable.\n");
         return E_FAIL;
     }
+
+    if (!(v = d3d10_get_state_variable(v, index, &v->effect->ds_states)))
+        return E_FAIL;
 
     *desc = v->u.state.desc.depth_stencil;
 
     return S_OK;
 }
-
 
 static const struct ID3D10EffectDepthStencilVariableVtbl d3d10_effect_depth_stencil_variable_vtbl =
 {
