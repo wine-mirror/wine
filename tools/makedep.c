@@ -1204,6 +1204,28 @@ static struct file *open_file_same_dir( const struct incl_file *parent, const ch
 
 
 /*******************************************************************
+ *         open_same_dir_generated_file
+ *
+ * Open a generated_file in the same directory as the parent.
+ */
+static struct file *open_same_dir_generated_file( const struct makefile *make,
+                                                  const struct incl_file *parent, struct incl_file *file,
+                                                  const char *ext, const char *src_ext )
+{
+    char *filename;
+    struct file *ret = NULL;
+
+    if (strendswith( file->name, ext ) &&
+        (ret = open_file_same_dir( parent, replace_extension( file->name, ext, src_ext ), &filename )))
+    {
+        file->sourcename = filename;
+        file->filename = obj_dir_path( make, replace_filename( parent->name, file->name ));
+    }
+    return ret;
+}
+
+
+/*******************************************************************
  *         open_local_file
  *
  * Open a file in the source directory of the makefile.
@@ -1426,7 +1448,9 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if (pFile->type == INCL_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
-    if ((file = open_file_same_dir( pFile->included_by, pFile->name, &pFile->filename )))
+    if ((file = open_same_dir_generated_file( make, pFile->included_by, pFile, ".tab.h", ".y" )) ||
+        (file = open_same_dir_generated_file( make, pFile->included_by, pFile, ".h", ".idl" )) ||
+        (file = open_file_same_dir( pFile->included_by, pFile->name, &pFile->filename )))
     {
         pFile->is_external = pFile->included_by->is_external;
         return file;
