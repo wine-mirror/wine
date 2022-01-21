@@ -9013,16 +9013,14 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_rasterizer_variable_GetRasterizerS
 
     TRACE("iface %p, index %u, rasterizer_state %p.\n", iface, index, rasterizer_state);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
-    else if (index)
-        return E_FAIL;
-
-    if (v->type->basetype != D3D10_SVT_RASTERIZER)
+    if (!iface->lpVtbl->IsValid(iface))
     {
-        WARN("Variable is not a rasterizer state.\n");
+        WARN("Invalid variable.\n");
         return E_FAIL;
     }
+
+    if (!(v = d3d10_get_state_variable(v, index, &v->effect->rs_states)))
+        return E_FAIL;
 
     if ((*rasterizer_state = v->u.state.object.rasterizer))
         ID3D10RasterizerState_AddRef(*rasterizer_state);

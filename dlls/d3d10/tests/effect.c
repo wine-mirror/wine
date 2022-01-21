@@ -4578,8 +4578,19 @@ static void test_effect_state_groups(void)
     ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
     ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
             rast_desc.AntialiasedLineEnable);
+    hr = r->lpVtbl->GetRasterizerState(r, 0, &rast_state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10RasterizerState_GetDesc(rast_state, &rast_desc);
+    ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ID3D10RasterizerState_Release(rast_state);
+
     r->lpVtbl->GetBackingStore(r, 1, &rast_desc);
     ok(rast_desc.CullMode == D3D10_CULL_BACK, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    hr = r->lpVtbl->GetRasterizerState(r, 1, &rast_state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10RasterizerState_GetDesc(rast_state, &rast_desc);
+    ok(rast_desc.CullMode == D3D10_CULL_BACK, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ID3D10RasterizerState_Release(rast_state);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
     ok(technique->lpVtbl->IsValid(technique), "Expected valid technique.\n");
