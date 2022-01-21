@@ -3545,6 +3545,19 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_RENDERTARGET_VIEWS:
+        {
+            struct wined3d_cs_set_rendertarget_views *op;
+
+            op = (struct wined3d_cs_set_rendertarget_views *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->views[i])
+                    wined3d_rendertarget_view_decref(op->views[i]);
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -3605,6 +3618,19 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             op = (struct wined3d_cs_set_blend_state *)packet->data;
             if (op->state)
                 wined3d_blend_state_incref(op->state);
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_RENDERTARGET_VIEWS:
+        {
+            struct wined3d_cs_set_rendertarget_views *op;
+
+            op = (struct wined3d_cs_set_rendertarget_views *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->views[i])
+                    wined3d_rendertarget_view_incref(op->views[i]);
+            }
             break;
         }
 
