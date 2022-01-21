@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = ntdsapi.dll
 IMPORTLIB = ntdsapi
 IMPORTS   = user32

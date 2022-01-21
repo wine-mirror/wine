@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wsdapi.dll
 IMPORTLIB = wsdapi
 IMPORTS   = bcrypt iphlpapi rpcrt4 user32 webservices ws2_32

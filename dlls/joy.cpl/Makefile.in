@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = joy.cpl
 IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32 advapi32
 

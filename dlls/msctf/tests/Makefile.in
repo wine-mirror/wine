@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = msctf.dll
 IMPORTS   = ole32 user32 advapi32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = netstat.exe
 IMPORTS   = iphlpapi user32 ws2_32
 

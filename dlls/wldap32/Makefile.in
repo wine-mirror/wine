@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wldap32.dll
 UNIXLIB   = wldap32.so
 IMPORTLIB = wldap32

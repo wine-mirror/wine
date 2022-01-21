@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = cabinet.dll
 IMPORTLIB = cabinet
 IMPORTS   = $(ZLIB_PE_LIBS)

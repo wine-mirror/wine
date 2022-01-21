@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = inetcpl.cpl
 IMPORTS   = comctl32 shlwapi user32 advapi32
 DELAYIMPORTS = cryptui wininet ole32 urlmon shell32

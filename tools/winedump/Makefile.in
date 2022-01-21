@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 PROGRAMS = winedump
 MANPAGES = winedump.man.in
 SCRIPTS  = function_grep.pl

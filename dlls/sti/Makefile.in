@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = sti.dll
 IMPORTLIB = sti
 IMPORTS   = uuid ole32 oleaut32 rpcrt4 advapi32

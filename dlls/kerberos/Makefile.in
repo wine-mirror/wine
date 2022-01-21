@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = kerberos.dll
 UNIXLIB   = kerberos.so
 EXTRAINCL = $(KRB5_CFLAGS) $(GSSAPI_CFLAGS)

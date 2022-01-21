@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = net.exe
 IMPORTS   = netapi32 user32 advapi32
 

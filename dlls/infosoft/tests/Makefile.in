@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = infosoft.dll
 IMPORTS   = ole32
 

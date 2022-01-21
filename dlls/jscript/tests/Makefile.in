@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = jscript.dll
 IMPORTS   = oleaut32 ole32 advapi32
 

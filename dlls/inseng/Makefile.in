@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = inseng.dll
 IMPORTS   = uuid ole32 advapi32
 

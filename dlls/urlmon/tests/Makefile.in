@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = urlmon.dll
 IMPORTS   = urlmon wininet ole32 oleaut32 shlwapi user32 advapi32
 

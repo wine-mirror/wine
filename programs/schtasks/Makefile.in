@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = schtasks.exe
 IMPORTS   = oleaut32 ole32
 

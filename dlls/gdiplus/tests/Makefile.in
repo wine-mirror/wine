@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = gdiplus.dll
 IMPORTS   = gdiplus ole32 user32 gdi32
 

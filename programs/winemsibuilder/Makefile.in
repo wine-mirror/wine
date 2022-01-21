@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winemsibuilder.exe
 IMPORTS   = msi ole32
 

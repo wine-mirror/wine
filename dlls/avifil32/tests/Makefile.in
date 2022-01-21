@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = avifil32.dll
 IMPORTS   = avifil32 ole32
 

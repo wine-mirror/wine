@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL  = msado15.dll
 IMPORTS  = oleaut32 ole32
 

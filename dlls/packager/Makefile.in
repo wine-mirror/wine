@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE = packager.dll
 IMPORTS = uuid shell32 shlwapi user32
 

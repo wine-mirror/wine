@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mssign32.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native

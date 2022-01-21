@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = imm32.dll
 IMPORTS   = imm32 ole32 user32
 

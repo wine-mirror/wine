@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msdmo.dll
 IMPORTLIB = msdmo
 IMPORTS   = dmoguids uuid ole32 user32 advapi32

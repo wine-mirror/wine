@@ -1,7 +1,7 @@
 MODULE    = urlmon.dll
 IMPORTLIB = urlmon
 IMPORTS   = uuid ole32 oleaut32 shell32 rpcrt4 shlwapi wininet user32 advapi32
-EXTRADEFS = -D_URLMON_
+EXTRADEFS = -DWINE_NO_LONG_TYPES -D_URLMON_
 DELAYIMPORTS = advpack
 
 C_SRCS = \

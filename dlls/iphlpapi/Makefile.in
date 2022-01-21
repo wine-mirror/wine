@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = iphlpapi.dll
 IMPORTLIB = iphlpapi
 IMPORTS   = advapi32 dnsapi nsi uuid

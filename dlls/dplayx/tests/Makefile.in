@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = dplayx.dll
 IMPORTS   = ole32 oleaut32 version advapi32
 

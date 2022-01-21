@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL = d3dx10_34.dll
 IMPORTS = d3dx10_34 ole32 gdi32
 PARENTSRC = ../../d3dx10_43/tests

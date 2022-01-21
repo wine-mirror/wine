@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineps.drv
 IMPORTS   = user32 gdi32 winspool advapi32
 

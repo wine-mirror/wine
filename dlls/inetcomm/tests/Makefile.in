@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = inetcomm.dll
 IMPORTS   = inetcomm urlmon oleaut32 ole32
 

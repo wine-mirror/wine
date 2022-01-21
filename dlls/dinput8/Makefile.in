@@ -1,7 +1,7 @@
 MODULE    = dinput8.dll
 IMPORTLIB = dinput8
 IMPORTS   = dinput8 dxguid uuid comctl32 ole32 user32 advapi32 hid setupapi
-EXTRADEFS = -DDIRECTINPUT_VERSION=0x0800
+EXTRADEFS = -DWINE_NO_LONG_TYPES -DDIRECTINPUT_VERSION=0x0800
 PARENTSRC = ../dinput
 
 C_SRCS = \

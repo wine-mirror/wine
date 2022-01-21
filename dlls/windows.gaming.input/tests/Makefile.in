@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL = windows.gaming.input.dll
 IMPORTS = combase uuid
 

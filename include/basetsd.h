@@ -108,7 +108,6 @@ typedef /* [public] */ signed __int3264   INT_PTR, *PINT_PTR;
 typedef /* [public] */ signed __int3264   LONG_PTR, *PLONG_PTR;
 typedef /* [public] */ unsigned __int3264 UINT_PTR, *PUINT_PTR;
 typedef /* [public] */ unsigned __int3264 ULONG_PTR, *PULONG_PTR;
-typedef ULONG_PTR                   DWORD_PTR, *PDWORD_PTR;
 
 #elif defined(_WIN64)
 
@@ -118,17 +117,20 @@ typedef signed __int64   INT_PTR, *PINT_PTR;
 typedef signed __int64   LONG_PTR, *PLONG_PTR;
 typedef unsigned __int64 UINT_PTR, *PUINT_PTR;
 typedef unsigned __int64 ULONG_PTR, *PULONG_PTR;
-typedef ULONG_PTR        DWORD_PTR, *PDWORD_PTR;
 
 #else
 
 #define __int3264 __int32
 
+#ifdef WINE_NO_LONG_TYPES
 typedef long          INT_PTR, *PINT_PTR;
 typedef unsigned long UINT_PTR, *PUINT_PTR;
+#else
+typedef int           INT_PTR, *PINT_PTR;
+typedef unsigned int  UINT_PTR, *PUINT_PTR;
+#endif
 typedef long          LONG_PTR, *PLONG_PTR;
 typedef unsigned long ULONG_PTR, *PULONG_PTR;
-typedef ULONG_PTR     DWORD_PTR, *PDWORD_PTR;
 
 #endif
 
@@ -262,7 +264,7 @@ typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
-
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
 #define MINLONGLONG             ((LONGLONG)~MAXLONGLONG)

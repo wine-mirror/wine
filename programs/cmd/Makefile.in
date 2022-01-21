@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = cmd.exe
 IMPORTS   = shell32 user32 advapi32
 

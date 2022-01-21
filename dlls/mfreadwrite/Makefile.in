@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mfreadwrite.dll
 IMPORTLIB = mfreadwrite
 IMPORTS   = mfuuid uuid mfplat ole32

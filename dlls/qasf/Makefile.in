@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = qasf.dll
 IMPORTS   = strmbase dmoguids strmiids uuid ole32 oleaut32
 

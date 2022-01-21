@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = msrle32.dll
 IMPORTS   = msvfw32
 

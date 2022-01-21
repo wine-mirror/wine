@@ -1,4 +1,4 @@
-EXTRADEFS = -D_ADVAPI32_
+EXTRADEFS = -DWINE_NO_LONG_TYPES -D_ADVAPI32_
 MODULE    = advapi32.dll
 IMPORTLIB = advapi32
 IMPORTS   = kernelbase sechost msvcrt

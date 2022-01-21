@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = explorerframe.dll
 IMPORTS   = uuid shell32 ole32 user32
 

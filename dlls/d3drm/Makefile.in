@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = d3drm.dll
 IMPORTLIB = d3drm
 IMPORTS   = d3dxof ddraw

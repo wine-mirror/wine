@@ -1,7 +1,7 @@
 MODULE    = atl.dll
 IMPORTLIB = atl
 IMPORTS   = uuid oleaut32 ole32 user32 gdi32 advapi32 shlwapi
-EXTRADEFS = -D_ATL_VER=_ATL_VER_30
+EXTRADEFS = -DWINE_NO_LONG_TYPES -D_ATL_VER=_ATL_VER_30
 
 C_SRCS = \
 	atl.c \

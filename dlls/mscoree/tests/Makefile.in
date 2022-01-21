@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = mscoree.dll
 IMPORTS   = ole32 shlwapi uuid shell32 advapi32
 

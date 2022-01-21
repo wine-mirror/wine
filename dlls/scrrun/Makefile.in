@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = scrrun.dll
 IMPORTS   = uuid oleaut32 version advapi32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msi.dll
 IMPORTLIB = msi
 IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 version user32 gdi32 advapi32 rpcrt4 sxs imagehlp mspatcha odbccp32 wintrust crypt32

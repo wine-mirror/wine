@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = webservices.dll
 IMPORTLIB = webservices
 IMPORTS   = winhttp rpcrt4 user32 ws2_32

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineoss.drv
 IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm

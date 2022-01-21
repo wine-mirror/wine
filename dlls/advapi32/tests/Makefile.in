@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = advapi32.dll
 IMPORTS   = ole32 advapi32
 

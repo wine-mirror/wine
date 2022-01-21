@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = secur32.dll
 IMPORTLIB = secur32
 UNIXLIB   = secur32.so

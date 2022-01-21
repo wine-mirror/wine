@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wbemprox.dll
 IMPORTS   = winspool version iphlpapi dxgi oleaut32 ole32 advapi32 user32 gdi32 ws2_32 rpcrt4 setupapi
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dmime.dll
 IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
 

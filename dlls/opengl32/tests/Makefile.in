@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = opengl32.dll
 IMPORTS   = opengl32 user32 gdi32
 

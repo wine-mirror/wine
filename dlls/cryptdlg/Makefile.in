@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = cryptdlg.dll
 IMPORTS   = cryptui crypt32 wintrust user32 advapi32
 

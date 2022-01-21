@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineboot.exe
 IMPORTS   = uuid advapi32 ws2_32 kernelbase
 DELAYIMPORTS = shell32 shlwapi version user32 setupapi newdev

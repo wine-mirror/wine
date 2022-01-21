@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = qmgr.dll
 IMPORTS   = uuid winhttp ole32 advapi32
 

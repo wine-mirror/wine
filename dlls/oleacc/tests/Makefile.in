@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = oleacc.dll
 IMPORTS   = ole32 oleacc oleaut32 user32
 

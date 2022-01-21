@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE  = wineandroid.drv
 IMPORTS = uuid ole32 user32 gdi32 advapi32 ntoskrnl win32u
 

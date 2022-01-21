@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wmp.dll
 IMPORTS   = oleaut32 ole32 urlmon shlwapi user32 gdi32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = d3d12.dll
 IMPORTLIB = d3d12
 IMPORTS   = dxgi dxguid gdi32 user32 uuid win32u

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = psapi.dll
 IMPORTS   = psapi user32
 

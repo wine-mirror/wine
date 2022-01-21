@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = netapi32.dll
 IMPORTS   = advapi32 netapi32
 

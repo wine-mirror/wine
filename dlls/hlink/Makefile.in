@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = hlink.dll
 IMPORTLIB = hlink
 IMPORTS   = uuid shell32 ole32 advapi32

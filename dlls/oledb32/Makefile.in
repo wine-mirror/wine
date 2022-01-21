@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = oledb32.dll
 IMPORTS   = uuid oleaut32 ole32 comctl32 user32 advapi32
 

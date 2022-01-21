@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = gameux.dll
 IMPORTS   = uuid shlwapi oleaut32 ole32 advapi32 shell32
 

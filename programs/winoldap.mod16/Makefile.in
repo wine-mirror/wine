@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winoldap.mod16
 
 EXTRADLLFLAGS = -mconsole -m16

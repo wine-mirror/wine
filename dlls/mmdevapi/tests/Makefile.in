@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = mmdevapi.dll
 IMPORTS   = ole32 version user32 advapi32 winmm
 

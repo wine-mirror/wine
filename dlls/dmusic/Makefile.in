@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dmusic.dll
 IMPORTS   = dxguid uuid ole32 advapi32 dsound user32 winmm
 

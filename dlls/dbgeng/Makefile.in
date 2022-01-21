@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dbgeng.dll
 IMPORTLIB = dbgeng
 DELAYIMPORTS = version

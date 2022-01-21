@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wintab32.dll
 IMPORTLIB = wintab32
 IMPORTS   = user32 advapi32

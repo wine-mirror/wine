@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 STATICLIB = libwinecrt0.a
 
 C_SRCS = \

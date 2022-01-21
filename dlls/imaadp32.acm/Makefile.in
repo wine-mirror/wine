@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = imaadp32.acm
 IMPORTS   = winmm user32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msident.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native

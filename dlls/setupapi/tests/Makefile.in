@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = setupapi.dll
 IMPORTS   = advapi32 cabinet ole32 setupapi shell32 uuid user32
 

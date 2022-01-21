@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = msacm32.dll
 IMPORTS   = msacm32 winmm
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = schedsvc.dll
 IMPORTS   = rpcrt4 ole32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL = d3d11.dll
 IMPORTS = d3d11 dxgi user32 gdi32
 

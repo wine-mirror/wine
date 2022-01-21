@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = gphoto2.ds
 UNIXLIB   = gphoto2.so
 IMPORTS   = $(JPEG_PE_LIBS) comctl32 user32 gdi32 advapi32

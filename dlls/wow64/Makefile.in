@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wow64.dll
 IMPORTLIB = wow64
 IMPORTS   = ntdll winecrt0

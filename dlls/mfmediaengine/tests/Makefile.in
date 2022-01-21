@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = mfmediaengine.dll
 IMPORTS   = ole32 mfplat oleaut32 mfuuid uuid
 

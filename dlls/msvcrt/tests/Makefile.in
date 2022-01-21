@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = msvcrt.dll
 IMPORTS   = advapi32
 

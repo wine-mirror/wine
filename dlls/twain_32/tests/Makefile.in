@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = twain_32.dll
 IMPORTS   = user32 gdi32
 

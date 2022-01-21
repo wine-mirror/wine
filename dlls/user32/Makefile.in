@@ -1,4 +1,4 @@
-EXTRADEFS = -D_USER32_ -D_WINABLE_
+EXTRADEFS = -DWINE_NO_LONG_TYPES -D_USER32_ -D_WINABLE_
 MODULE    = user32.dll
 IMPORTLIB = user32
 IMPORTS   = $(PNG_PE_LIBS) setupapi gdi32 version sechost advapi32 kernelbase win32u

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = commdlg.dll16
 IMPORTS   = comdlg32 user32 gdi32
 EXTRADLLFLAGS = -m16 -Wb,--main-module,comdlg32.dll

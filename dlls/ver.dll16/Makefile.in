@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = ver.dll16
 IMPORTS   = version lz32
 

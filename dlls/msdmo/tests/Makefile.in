@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL = msdmo.dll
 IMPORTS = advapi32 dmoguids msdmo uuid
 

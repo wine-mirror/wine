@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineconsole.exe
 IMPORTS   = advapi32
 DELAYIMPORTS = comctl32 user32 gdi32

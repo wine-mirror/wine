@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = fsutil.exe
 IMPORTS   = advapi32 user32
 

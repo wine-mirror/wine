@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mountmgr.sys
 UNIXLIB   = mountmgr.so
 IMPORTS   = uuid advapi32 ntoskrnl

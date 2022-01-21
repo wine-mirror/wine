@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mpr.dll
 IMPORTLIB = mpr
 IMPORTS   = user32 advapi32

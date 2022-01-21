@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = cards.dll
 IMPORTLIB = cards
 IMPORTS   = user32 gdi32

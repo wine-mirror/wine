@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = qedit.dll
 IMPORTS   = strmiids strmbase uuid oleaut32 ole32 advapi32
 

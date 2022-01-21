@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wmphoto.dll
 IMPORTS   = $(JXR_PE_LIBS) windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi
 EXTRAINCL = $(JXR_PE_CFLAGS)

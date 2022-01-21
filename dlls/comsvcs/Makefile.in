@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = comsvcs.dll
 IMPORTLIB = comsvcs
 IMPORTS   = ole32 uuid

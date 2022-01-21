@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mmsystem.dll16
 IMPORTS   = winmm user32
 

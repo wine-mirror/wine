@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dmsynth.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wmvcore.dll
 IMPORTLIB = wmvcore
 IMPORTS   = kernel32

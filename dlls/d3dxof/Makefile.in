@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = d3dxof.dll
 IMPORTLIB = d3dxof
 IMPORTS   = dxguid uuid ole32 advapi32

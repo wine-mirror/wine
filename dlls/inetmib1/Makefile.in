@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = inetmib1.dll
 IMPORTS   = snmpapi
 DELAYIMPORTS = iphlpapi

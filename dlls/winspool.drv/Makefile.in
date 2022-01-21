@@ -1,4 +1,4 @@
-EXTRADEFS = -D_SPOOL32_
+EXTRADEFS = -DWINE_NO_LONG_TYPES -D_SPOOL32_
 MODULE    = winspool.drv
 UNIXLIB   = winspool.so
 IMPORTLIB = winspool

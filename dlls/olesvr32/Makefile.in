@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = olesvr32.dll
 IMPORTLIB = olesvr32
 

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = wtsapi32.dll
 IMPORTS   = wtsapi32 advapi32 psapi
 

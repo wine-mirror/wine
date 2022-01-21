@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msvideo.dll16
 IMPORTS   = msvfw32 version advapi32 user32
 

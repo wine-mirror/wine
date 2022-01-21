@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mciavi32.dll
 IMPORTS   = msvfw32 winmm user32 gdi32
 

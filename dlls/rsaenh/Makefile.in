@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = rsaenh.dll
 IMPORTLIB = rsaenh
 IMPORTS   = bcrypt crypt32 advapi32

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wtsapi32.dll
 IMPORTLIB = wtsapi32
 IMPORTS   = advapi32

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = cryptnet.dll
 IMPORTLIB = cryptnet
 IMPORTS   = crypt32 shell32 ole32

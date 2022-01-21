@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = advpack.dll
 IMPORTS   = cabinet advapi32 advpack
 

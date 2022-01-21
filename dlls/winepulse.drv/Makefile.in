@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winepulse.drv
 UNIXLIB   = winepulse.so
 IMPORTS   = dxguid uuid winmm user32 advapi32 ole32

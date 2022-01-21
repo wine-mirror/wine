@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = oleaut32.dll
 IMPORTS   = oleaut32 ole32 rpcrt4 user32 gdi32 advapi32
 

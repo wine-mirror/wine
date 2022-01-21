@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = msscript.ocx
 IMPORTS   = user32 gdi32 ole32 oleaut32 advapi32
 

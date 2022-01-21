@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = d3d8.dll
 IMPORTS   = d3d8 user32 gdi32
 

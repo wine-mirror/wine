@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = gdi.exe16
 IMPORTS   = user32 advapi32 gdi32 win32u
 

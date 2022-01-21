@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = t2embed.dll
 IMPORTLIB = t2embed
 IMPORTS   = gdi32 advapi32

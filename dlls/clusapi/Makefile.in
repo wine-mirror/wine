@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = clusapi.dll
 IMPORTLIB = clusapi
 

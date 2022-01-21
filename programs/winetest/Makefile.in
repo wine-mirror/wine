@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winetest.exe
 IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32 msvcrt
 DELAYIMPORTS = ole32

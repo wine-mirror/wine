@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wsock32.dll
 IMPORTLIB = wsock32
 IMPORTS   = mswsock ws2_32 iphlpapi

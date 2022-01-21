@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dpwsockx.dll
 IMPORTS   = dxguid ws2_32
 

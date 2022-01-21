@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dispex.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
 

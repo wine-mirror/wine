@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wusa.exe
 IMPORTS   = cabinet shlwapi ole32 oleaut32 advapi32
 

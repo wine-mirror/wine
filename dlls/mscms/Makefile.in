@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = mscms.dll
 IMPORTLIB = mscms
 IMPORTS   = $(LCMS2_PE_LIBS) shlwapi advapi32

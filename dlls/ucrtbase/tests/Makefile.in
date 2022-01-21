@@ -1,6 +1,6 @@
 TESTDLL   = ucrtbase.dll
 IMPORTS   = ucrtbase
-EXTRADEFS = -fno-builtin
+EXTRADEFS = -DWINE_NO_LONG_TYPES -fno-builtin
 
 SOURCES = \
 	cpp.c \

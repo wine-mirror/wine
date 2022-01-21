@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winhlp32.exe
 IMPORTS   = user32 gdi32
 DELAYIMPORTS = shell32 comctl32 comdlg32

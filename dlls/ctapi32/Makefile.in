@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = ctapi32.dll
 UNIXLIB   = ctapi32.so
 IMPORTS   = advapi32

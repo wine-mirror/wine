@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wintrust.dll
 IMPORTLIB = wintrust
 IMPORTS   = crypt32 user32 advapi32

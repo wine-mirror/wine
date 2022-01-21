@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = shlwapi.dll
 IMPORTS   = shlwapi shell32 mlang oleaut32 ole32 user32 advapi32
 

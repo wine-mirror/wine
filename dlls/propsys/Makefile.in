@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = propsys.dll
 IMPORTLIB = propsys
 IMPORTS   = ole32 oleaut32 uuid

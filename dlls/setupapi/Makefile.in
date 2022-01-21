@@ -1,4 +1,4 @@
-EXTRADEFS = -D_SETUPAPI_
+EXTRADEFS = -DWINE_NO_LONG_TYPES -D_SETUPAPI_
 MODULE    = setupapi.dll
 IMPORTLIB = setupapi
 IMPORTS   = uuid version advapi32 rpcrt4 kernelbase

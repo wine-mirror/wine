@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = dpnet.dll
 IMPORTS   = dxguid uuid dpnet ole32 oleaut32 version advapi32
 

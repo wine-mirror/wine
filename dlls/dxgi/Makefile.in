@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dxgi.dll
 IMPORTLIB = dxgi
 IMPORTS   = gdi32 dxguid uuid wined3d user32 win32u

@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = d3d8.dll
 IMPORTLIB = d3d8
 IMPORTS   = dxguid uuid wined3d

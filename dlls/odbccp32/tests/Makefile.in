@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = odbccp32.dll
 IMPORTS   = odbccp32 advapi32
 
