@@ -795,17 +795,22 @@ interface IDWriteFontFace5 : IDWriteFontFace4
     BOOL Equals(IDWriteFontFace *fontface);
 }
 
-typedef struct DWRITE_COLOR_GLYPH_RUN1
-{
-    DWRITE_GLYPH_RUN glyphRun;
-    DWRITE_GLYPH_RUN_DESCRIPTION *glyphRunDescription;
-    FLOAT baselineOriginX;
-    FLOAT baselineOriginY;
-    DWRITE_COLOR_F runColor;
-    UINT16 paletteIndex;
-    DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormat;
-    DWRITE_MEASURING_MODE measuringMode;
-} DWRITE_COLOR_GLYPH_RUN1;
+typedef struct DWRITE_COLOR_GLYPH_RUN1 DWRITE_COLOR_GLYPH_RUN1;
+
+cpp_quote("struct DWRITE_COLOR_GLYPH_RUN1")
+cpp_quote("{")
+cpp_quote("    DWRITE_GLYPH_RUN glyphRun;")
+cpp_quote("    DWRITE_GLYPH_RUN_DESCRIPTION *glyphRunDescription;")
+cpp_quote("    FLOAT baselineOriginX;")
+cpp_quote("    FLOAT baselineOriginY;")
+cpp_quote("    DWRITE_COLOR_F runColor;")
+cpp_quote("    UINT16 paletteIndex;")
+cpp_quote("#ifdef _WIN64")
+cpp_quote("    UINT32 _pad;")
+cpp_quote("#endif")
+cpp_quote("    DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormat;")
+cpp_quote("    DWRITE_MEASURING_MODE measuringMode;")
+cpp_quote("};")
 
 [
     local,
