@@ -1687,6 +1687,10 @@ Normal+space+garbage
 Quoted should fail
 Normal+tab
 Normal+tab+garbage
+------------ Testing length wrt. MAX_PATH ------------
+@todo_wine@21
+Success
+@todo_wine@Success
 ------------ Testing combined CALLs/GOTOs ------------
 world
 cheball
