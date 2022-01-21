@@ -35,6 +35,8 @@ static void parser(const char*);
 
 %}
 
+%define api.prefix {dbg_}
+
 %union
 {
     struct dbg_lvalue   lvalue;

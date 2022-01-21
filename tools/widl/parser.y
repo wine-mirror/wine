@@ -120,6 +120,9 @@ static statement_list_t *parameterized_type_stmts = NULL;
 static typelib_t *current_typelib;
 
 %}
+
+%define api.prefix {parser_}
+
 %union {
 	attr_t *attr;
 	attr_list_t *attr_list;
@@ -480,7 +483,7 @@ typedecl:
 
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 	;
-import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
+import_start: tIMPORT aSTRING ';'		{ assert(yychar == PARSER_EMPTY);
 						  $$ = xmalloc(sizeof(struct _import_t));
 						  $$->name = $2;
 						  $$->import_performed = do_import($2);

@@ -65,6 +65,8 @@ int asmshader_lex(void);
 
 %}
 
+%define api.prefix {asmshader_}
+
 %union {
     struct {
         float           val;

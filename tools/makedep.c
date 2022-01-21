@@ -2622,15 +2622,15 @@ static void output_source_y( struct makefile *make, struct incl_file *source, co
     if (find_include_file( make, header ))
     {
         output( "%s: %s\n", obj_dir_path( make, header ), source->filename );
-        output( "\t%s%s -p %s_ -o %s.tab.c -d %s\n",
-                cmd_prefix( "BISON" ), bison, obj, obj_dir_path( make, obj ), source->filename );
+        output( "\t%s%s -o %s.tab.c -d %s\n",
+                cmd_prefix( "BISON" ), bison, obj_dir_path( make, obj ), source->filename );
         output( "%s.tab.c: %s %s\n", obj_dir_path( make, obj ),
                 source->filename, obj_dir_path( make, header ));
         strarray_add( &make->clean_files, header );
     }
     else output( "%s.tab.c: %s\n", obj_dir_path( make, obj ), source->filename );
 
-    output( "\t%s%s -p %s_ -o $@ %s\n", cmd_prefix( "BISON" ), bison, obj, source->filename );
+    output( "\t%s%s -o $@ %s\n", cmd_prefix( "BISON" ), bison, source->filename );
 }
 
 

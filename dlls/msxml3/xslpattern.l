@@ -26,6 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #define SCAN    xslpattern_get_extra(yyscanner)
+#define YYSTYPE XSLPATTERN_STYPE
 
 #define YY_INPUT(tok_buf, tok_len, max) \
         do { \
