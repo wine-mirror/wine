@@ -4150,8 +4150,8 @@ static void test_GetInformationalStrings(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     exists = TRUE;
-    strings = (void*)0xdeadbeef;
-    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1, &strings, &exists);
+    strings = (void *)0xdeadbeef;
+    hr = IDWriteFont_GetInformationalStrings(font, 0xdead, &strings, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == FALSE, "got %d\n", exists);
     ok(strings == NULL, "got %p\n", strings);
