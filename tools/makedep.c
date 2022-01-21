@@ -1386,6 +1386,13 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     /* check for generated files */
     if ((file = open_local_generated_file( make, pFile, ".tab.h", ".y" ))) return file;
     if ((file = open_local_generated_file( make, pFile, ".h", ".idl" ))) return file;
+    if (fontforge && (file = open_local_generated_file( make, pFile, ".ttf", ".sfd" ))) return file;
+    if (convert && rsvg && icotool)
+    {
+        if ((file = open_local_generated_file( make, pFile, ".bmp", ".svg" ))) return file;
+        if ((file = open_local_generated_file( make, pFile, ".cur", ".svg" ))) return file;
+        if ((file = open_local_generated_file( make, pFile, ".ico", ".svg" ))) return file;
+    }
 
     /* check for extra targets */
     if (strarray_exists( &make->extra_targets, pFile->name ))
