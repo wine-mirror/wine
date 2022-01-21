@@ -1,6 +1,7 @@
 /* Unit test suite for uxtheme API functions
  *
  * Copyright 2006 Paul Vriens
+ * Copyright 2021-2022 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,8 @@
 
 #include "msg.h"
 #include "wine/test.h"
+
+#include "v6util.h"
 
 static HTHEME  (WINAPI * pOpenThemeDataEx)(HWND, LPCWSTR, DWORD);
 static HTHEME (WINAPI *pOpenThemeDataForDpi)(HWND, LPCWSTR, UINT);
@@ -1545,8 +1548,656 @@ static void test_DrawThemeParentBackground(void)
     UnregisterClassA("TestDrawThemeParentBackgroundClass", GetModuleHandleA(0));
 }
 
+struct test_EnableThemeDialogTexture_param
+{
+    const CHAR *class_name;
+    DWORD style;
+};
+
+static const struct message empty_seq[] =
+{
+    {0}
+};
+
+static HWND dialog_child;
+static DWORD dialog_init_flag;
+static BOOL handle_WM_CTLCOLORSTATIC;
+
+static INT_PTR CALLBACK test_EnableThemeDialogTexture_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    struct test_EnableThemeDialogTexture_param *param;
+    struct message message = {0};
+
+    message.message = msg;
+    message.flags = sent | wparam | lparam;
+    message.wParam = wp;
+    message.lParam = lp;
+    add_message(sequences, PARENT_SEQ_INDEX, &message);
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        param = (struct test_EnableThemeDialogTexture_param *)lp;
+        dialog_child = CreateWindowA(param->class_name, "child",
+                                     param->style | WS_CHILD | WS_VISIBLE, 1, 2, 50, 50, hwnd,
+                                     (HMENU)100, 0, NULL);
+        ok(dialog_child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+        if (dialog_init_flag)
+            EnableThemeDialogTexture(hwnd, dialog_init_flag);
+        return TRUE;
+
+    case WM_CTLCOLORSTATIC:
+        return (INT_PTR)(handle_WM_CTLCOLORSTATIC ? GetSysColorBrush(COLOR_MENU) : 0);
+
+    case WM_CLOSE:
+        DestroyWindow(dialog_child);
+        dialog_child = NULL;
+        return TRUE;
+
+    default:
+        return FALSE;
+    }
+}
+
+static void test_EnableThemeDialogTexture(void)
+{
+    struct test_EnableThemeDialogTexture_param param;
+    HWND dialog, child, hwnd, hwnd2;
+    int mode, old_mode, count, i, j;
+    COLORREF color, old_color;
+    HBRUSH brush, brush2;
+    HDC child_hdc, hdc;
+    LOGBRUSH log_brush;
+    ULONG_PTR proc;
+    WNDCLASSA cls;
+    HTHEME theme;
+    DWORD error;
+    BITMAP bmp;
+    HRESULT hr;
+    LRESULT lr;
+    POINT org;
+    SIZE size;
+    BOOL ret;
+
+    struct
+    {
+        DLGTEMPLATE template;
+        WORD menu;
+        WORD class;
+        WORD title;
+    } temp = {{0}};
+
+    static const DWORD flags[] =
+    {
+        ETDT_DISABLE,
+        ETDT_ENABLE,
+        ETDT_USETABTEXTURE,
+        ETDT_USEAEROWIZARDTABTEXTURE,
+        ETDT_ENABLETAB,
+        ETDT_ENABLEAEROWIZARDTAB,
+        /* Bad flags */
+        0,
+        ETDT_DISABLE | ETDT_ENABLE,
+        ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB
+    };
+
+    static const struct invalid_flag_test
+    {
+        DWORD flag;
+        BOOL enabled;
+        BOOL todo;
+    }
+    invalid_flag_tests[] =
+    {
+        {0, FALSE},
+        {ETDT_DISABLE | ETDT_ENABLE, FALSE},
+        {ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB, TRUE},
+        {ETDT_USETABTEXTURE | ETDT_USEAEROWIZARDTABTEXTURE, TRUE, TRUE},
+        {ETDT_VALIDBITS, FALSE},
+        {~ETDT_VALIDBITS, FALSE},
+        {~ETDT_VALIDBITS | ETDT_DISABLE, FALSE}
+    };
+
+    static const struct class_test
+    {
+        struct test_EnableThemeDialogTexture_param param;
+        BOOL texture_enabled;
+    }
+    class_tests[] =
+    {
+        {{ANIMATE_CLASSA}},
+        {{WC_BUTTONA, BS_PUSHBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_DEFPUSHBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_CHECKBOX}, TRUE},
+        {{WC_BUTTONA, BS_AUTOCHECKBOX}, TRUE},
+        {{WC_BUTTONA, BS_RADIOBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_3STATE}, TRUE},
+        {{WC_BUTTONA, BS_AUTO3STATE}, TRUE},
+        {{WC_BUTTONA, BS_GROUPBOX}, TRUE},
+        {{WC_BUTTONA, BS_USERBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_AUTORADIOBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_PUSHBOX}, TRUE},
+        {{WC_BUTTONA, BS_OWNERDRAW}, TRUE},
+        {{WC_BUTTONA, BS_SPLITBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_DEFSPLITBUTTON}, TRUE},
+        {{WC_BUTTONA, BS_COMMANDLINK}, TRUE},
+        {{WC_BUTTONA, BS_DEFCOMMANDLINK}, TRUE},
+        {{WC_COMBOBOXA}},
+        {{WC_COMBOBOXEXA}},
+        {{DATETIMEPICK_CLASSA}},
+        {{WC_EDITA}},
+        {{WC_HEADERA}},
+        {{HOTKEY_CLASSA}},
+        {{WC_IPADDRESSA}},
+        {{WC_LISTBOXA}},
+        {{WC_LISTVIEWA}},
+        {{MONTHCAL_CLASSA}},
+        {{WC_NATIVEFONTCTLA}},
+        {{WC_PAGESCROLLERA}},
+        {{PROGRESS_CLASSA}},
+        {{REBARCLASSNAMEA}},
+        {{WC_STATICA, SS_LEFT}, TRUE},
+        {{WC_STATICA, SS_ICON}, TRUE},
+        {{WC_STATICA, SS_BLACKRECT}, TRUE},
+        {{WC_STATICA, SS_OWNERDRAW}, TRUE},
+        {{WC_STATICA, SS_BITMAP}, TRUE},
+        {{WC_STATICA, SS_ENHMETAFILE}, TRUE},
+        {{WC_STATICA, SS_ETCHEDHORZ}, TRUE},
+        {{STATUSCLASSNAMEA}},
+        {{"SysLink"}},
+        {{WC_TABCONTROLA}},
+        {{TOOLBARCLASSNAMEA}},
+        {{TOOLTIPS_CLASSA}},
+        {{TRACKBAR_CLASSA}},
+        {{WC_TREEVIEWA}},
+        {{UPDOWN_CLASSA}},
+        {{WC_SCROLLBARA}},
+    };
+
+    if (!IsThemeActive())
+    {
+        skip("Theming is inactive.\n");
+        return;
+    }
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(GRAY_BRUSH);
+    cls.lpszClassName = "TestEnableThemeDialogTextureClass";
+    RegisterClassA(&cls);
+
+    temp.template.style = WS_CHILD | WS_VISIBLE;
+    temp.template.cx = 100;
+    temp.template.cy = 100;
+    param.class_name = cls.lpszClassName;
+    param.style = 0;
+    dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                        test_EnableThemeDialogTexture_proc, (LPARAM)&param);
+    ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+    child = GetDlgItem(dialog, 100);
+    ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+    child_hdc = GetDC(child);
+
+    /* Test that dialog procedure is unchanged */
+    proc = GetWindowLongPtrA(dialog, DWLP_DLGPROC);
+    ok(proc == (ULONG_PTR)test_EnableThemeDialogTexture_proc, "Unexpected proc %#lx.\n", proc);
+
+    /* Test dialog texture is disabled by default. EnableThemeDialogTexture() needs to be called */
+    ret = IsThemeDialogTextureEnabled(dialog);
+    todo_wine
+    ok(!ret, "Expected theme dialog texture disabled.\n");
+    ok(GetWindowTheme(dialog) == NULL, "Expected NULL theme handle.\n");
+
+    /* Test ETDT_ENABLE | ETDT_USETABTEXTURE doesn't take effect immediately */
+    hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE | ETDT_USETABTEXTURE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ret = IsThemeDialogTextureEnabled(dialog);
+    ok(ret, "Expected theme dialog texture enabled.\n");
+
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
+       GetSysColorBrush(COLOR_BTNFACE), brush);
+    ret = GetBrushOrgEx(child_hdc, &org);
+    ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
+    ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
+
+    /* Test WM_THEMECHANGED doesn't make ETDT_ENABLE | ETDT_USETABTEXTURE take effect */
+    lr = SendMessageA(dialog, WM_THEMECHANGED, 0, 0);
+    ok(lr == 0, "WM_THEMECHANGED failed.\n");
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
+       GetSysColorBrush(COLOR_BTNFACE), brush);
+
+    /* Test WM_ERASEBKGND make ETDT_ENABLE | ETDT_USETABTEXTURE take effect */
+    lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
+    ok(lr != 0, "WM_ERASEBKGND failed.\n");
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
+    ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected brush changed.\n");
+
+    /* Test disabling theme dialog texture should change the brush immediately */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    hr = EnableThemeDialogTexture(dialog, ETDT_DISABLE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
+    ok(brush2 != brush, "Expected a different brush.\n");
+    ok(brush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
+       GetSysColorBrush(COLOR_BTNFACE), brush2);
+
+    /* Test re-enabling theme dialog texture with ETDT_ENABLE doesn't change the brush */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush2 == brush, "Expected the same brush.\n");
+    ok(brush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
+       GetSysColorBrush(COLOR_BTNFACE), brush2);
+
+    /* Test adding ETDT_USETABTEXTURE should change the brush immediately */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    hr = EnableThemeDialogTexture(dialog, ETDT_USETABTEXTURE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
+    ok(brush2 != brush, "Expected a different brush.\n");
+
+    /* Test ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE should change the brush immediately */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    /* ETDT_USEAEROWIZARDTABTEXTURE is supported only on Vista+ */
+    if (LOBYTE(LOWORD(GetVersion())) < 6)
+        ok(brush2 == brush, "Expected the same brush.\n");
+    else
+        todo_wine
+        ok(brush2 != brush, "Expected a different brush.\n");
+
+    hr = EnableThemeDialogTexture(dialog, ETDT_DISABLE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    hr = EnableThemeDialogTexture(dialog, ETDT_ENABLE | ETDT_USETABTEXTURE);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+
+    /* Test that the dialog procedure should take precedence over DefDlgProc() for WM_CTLCOLORSTATIC */
+    handle_WM_CTLCOLORSTATIC = TRUE;
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush == GetSysColorBrush(COLOR_MENU), "Expected brush %p, got %p.\n",
+       GetSysColorBrush(COLOR_MENU), brush);
+    handle_WM_CTLCOLORSTATIC = FALSE;
+
+    /* Test that WM_CTLCOLORSTATIC changes brush origin when dialog texture is on */
+    ret = SetBrushOrgEx(child_hdc, 0, 0, NULL);
+    ok(ret, "SetBrushOrgEx failed, error %u.\n", GetLastError());
+    SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ret = GetBrushOrgEx(child_hdc, &org);
+    ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
+    todo_wine
+    ok(org.x == -1 && org.y == -2, "Expected (-1,-2), got %s.\n", wine_dbgstr_point(&org));
+
+    /* Test that WM_CTLCOLORSTATIC changes background mode when dialog texture is on */
+    old_mode = SetBkMode(child_hdc, OPAQUE);
+    ok(old_mode != 0, "SetBkMode failed.\n");
+    SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    mode = SetBkMode(child_hdc, old_mode);
+    todo_wine
+    ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
+
+    /* Test that WM_CTLCOLORSTATIC changes background color when dialog texture is on */
+    old_color = SetBkColor(child_hdc, 0xaa5511);
+    ok(old_color != CLR_INVALID, "SetBkColor failed.\n");
+    SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    color = SetBkColor(child_hdc, old_color);
+    ok(color == GetSysColor(COLOR_BTNFACE), "Expected background color %#x, got %#x.\n",
+       GetSysColor(COLOR_BTNFACE), color);
+
+    /* Test that dialog doesn't have theme handle opened for itself */
+    ok(GetWindowTheme(dialog) == NULL, "Expected NULL theme handle.\n");
+
+    /* Test that the returned brush is a pattern brush created from the tab body */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    memset(&log_brush, 0, sizeof(log_brush));
+    count = GetObjectA(brush, sizeof(log_brush), &log_brush);
+    ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
+    todo_wine
+    ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
+    todo_wine
+    ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
+       log_brush.lbStyle);
+
+    memset(&bmp, 0, sizeof(bmp));
+    count = GetObjectA((HBITMAP)log_brush.lbHatch, sizeof(bmp), &bmp);
+    todo_wine
+    ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
+
+    theme = OpenThemeData(NULL, L"Tab");
+    ok(theme != NULL, "OpenThemeData failed.\n");
+
+    size.cx = 0;
+    size.cy = 0;
+    hr = GetThemePartSize(theme, NULL, TABP_BODY, 0, NULL, TS_TRUE, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
+    todo_wine
+    ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
+    todo_wine
+    ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
+
+    CloseThemeData(theme);
+
+    /* Test that DefDlgProcA/W() are hooked for WM_CTLCOLORSTATIC */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
+    ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
+    brush2 = (HBRUSH)DefDlgProcW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush2 == brush, "Expected the same brush.\n");
+    brush2 = (HBRUSH)DefDlgProcA(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush2 == brush, "Expected the same brush.\n");
+
+    /* Test that DefWindowProcA/W() are also hooked for WM_CTLCOLORSTATIC */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
+    ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
+    brush2 = (HBRUSH)DefWindowProcW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush2 == brush, "Expected the same brush.\n");
+    brush2 = (HBRUSH)DefWindowProcA(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush2 == brush, "Expected the same brush.\n");
+
+    /* Test that DefWindowProcA/W() are not hooked for WM_ERASEBKGND. So the background is still
+     * drawn with hbrBackground, which in this case, is GRAY_BRUSH.
+     *
+     * This test means it could be that both DefWindowProc() and DefDlgProc() are hooked for
+     * WM_CTLCOLORSTATIC and only DefDlgProc() is hooked for WM_ERASEBKGND. Or it could mean
+     * DefWindowProc() is hooked for WM_CTLCOLORSTATIC and DefDlgProc() is hooked for WM_ERASEBKGND.
+     * Considering the dialog theming needs a WM_ERASEBKGND to activate, it would be weird for let
+     * only DefWindowProc() to hook WM_CTLCOLORSTATIC. For example, what's the point of hooking
+     * WM_CTLCOLORSTATIC in DefWindowProc() for a feature that can only be activated in
+     * DefDlgProc()? So I tend to believe both DefWindowProc() and DefDlgProc() are hooked for
+     * WM_CTLCOLORSTATIC */
+    hwnd = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, 0, 0,
+                         0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    hwnd2 = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 10, 10, 20, 20, hwnd, NULL, 0,
+                          NULL);
+    hr = EnableThemeDialogTexture(hwnd, ETDT_ENABLETAB);
+    ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+    ret = IsThemeDialogTextureEnabled(hwnd);
+    ok(ret, "Wrong dialog texture status.\n");
+    flush_events();
+
+    hdc = GetDC(hwnd);
+    color = GetPixel(hdc, 0, 0);
+    ok(color == 0x808080 || broken(color == 0xffffffff), /* Win 7 may report 0xffffffff */
+       "Expected color %#x, got %#x.\n", 0x808080, color);
+    color = GetPixel(hdc, 50, 50);
+    ok(color == 0x808080 || broken(color == 0xffffffff), /* Win 7 may report 0xffffffff */
+       "Expected color %#x, got %#x.\n", 0x808080, color);
+    color = GetPixel(hdc, 99, 99);
+    ok(color == 0x808080 || broken(color == 0xffffffff), /* Win 7 may report 0xffffffff */
+       "Expected color %#x, got %#x.\n", 0x808080, color);
+    ReleaseDC(hwnd, hdc);
+
+    /* Test EnableThemeDialogTexture() doesn't work for non-dialog windows */
+    hdc = GetDC(hwnd2);
+    brush = (HBRUSH)SendMessageW(hwnd, WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd2);
+    ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
+    ReleaseDC(hwnd2, hdc);
+
+    DestroyWindow(hwnd);
+
+    /* Test that the brush is not a system object and has only one reference and shouldn't be freed */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ret = DeleteObject(brush);
+    ok(ret, "DeleteObject failed, error %u.\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = GetObjectA(brush, sizeof(log_brush), &log_brush);
+    error = GetLastError();
+    todo_wine
+    ok(!ret || broken(ret) /* XP */, "GetObjectA succeeded.\n");
+    todo_wine
+    ok(error == ERROR_INVALID_PARAMETER || broken(error == 0xdeadbeef) /* XP */,
+       "Expected error %u, got %u.\n", ERROR_INVALID_PARAMETER, error);
+    ret = DeleteObject(brush);
+    todo_wine
+    ok(!ret || broken(ret) /* XP */, "DeleteObject succeeded.\n");
+
+    /* Should still report the same brush handle after the brush handle was freed */
+    brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    ok(brush2 == brush, "Expected the same brush.\n");
+
+    /* Test WM_THEMECHANGED can update the brush now that ETDT_ENABLE | ETDT_USETABTEXTURE is in
+     * effect. This test needs to be ran last as it affect other tests for the same dialog for
+     * unknown reason, causing the brush not to update */
+    brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    lr = SendMessageA(dialog, WM_THEMECHANGED, 0, 0);
+    ok(lr == 0, "WM_THEMECHANGED failed.\n");
+    brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
+    ok(brush2 != brush, "Expected a different brush.\n");
+
+    ReleaseDC(child, child_hdc);
+    EndDialog(dialog, 0);
+
+    /* Test invalid flags */
+    for (i = 0; i < ARRAY_SIZE(invalid_flag_tests); ++i)
+    {
+        winetest_push_context("%d flag %#x", i, invalid_flag_tests[i].flag);
+
+        dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                            test_EnableThemeDialogTexture_proc, (LPARAM)&param);
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        hr = EnableThemeDialogTexture(dialog, invalid_flag_tests[i].flag);
+        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+        ret = IsThemeDialogTextureEnabled(dialog);
+        todo_wine_if(invalid_flag_tests[i].todo)
+        ok(ret == invalid_flag_tests[i].enabled, "Wrong dialog texture status.\n");
+        EndDialog(dialog, 0);
+
+        winetest_pop_context();
+    }
+
+    /* Test different flag combinations */
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        for (j = 0; j < ARRAY_SIZE(flags); ++j)
+        {
+            /* ETDT_USEAEROWIZARDTABTEXTURE is supported only on Vista+ */
+            if (LOBYTE(LOWORD(GetVersion())) < 6
+                && ((flags[i] | flags[j]) & ETDT_USEAEROWIZARDTABTEXTURE))
+                continue;
+
+            winetest_push_context("%#x to %#x", flags[i], flags[j]);
+
+            dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                                test_EnableThemeDialogTexture_proc, (LPARAM)&param);
+            ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+            flush_events();
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+            hr = EnableThemeDialogTexture(dialog, flags[i]);
+            ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+            ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                        "EnableThemeDialogTexture first flag", TRUE);
+            ret = IsThemeDialogTextureEnabled(dialog);
+            /* Non-zero flags without ETDT_DISABLE enables dialog texture */
+            todo_wine_if(flags[i] == ETDT_USETABTEXTURE || flags[i] == ETDT_USEAEROWIZARDTABTEXTURE)
+            ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
+
+            child = GetDlgItem(dialog, 100);
+            ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+            child_hdc = GetDC(child);
+            lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
+            ok(lr != 0, "WM_ERASEBKGND failed.\n");
+            brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+            if (flags[i] == ETDT_ENABLETAB || flags[i] == ETDT_ENABLEAEROWIZARDTAB)
+                todo_wine
+                ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
+            else
+                ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+            hr = EnableThemeDialogTexture(dialog, flags[j]);
+            ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
+            ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                        "EnableThemeDialogTexture second flag", TRUE);
+            ret = IsThemeDialogTextureEnabled(dialog);
+            /* If the flag is zero, it will have previous dialog texture status */
+            if (flags[j])
+                todo_wine_if(flags[j] == ETDT_USETABTEXTURE || flags[j] == ETDT_USEAEROWIZARDTABTEXTURE)
+                ok(ret == !(flags[j] & ETDT_DISABLE), "Wrong dialog texture status.\n");
+            else
+                todo_wine_if((!(flags[i] & ETDT_DISABLE) && flags[i]))
+                ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
+            lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
+            ok(lr != 0, "WM_ERASEBKGND failed.\n");
+            brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+            /* Dialog texture is turned on when the flag contains ETDT_ENABLETAB or
+             * ETDT_ENABLEAEROWIZARDTAB. The flag can be turned on in multiple steps, but you can't
+             * do things like set ETDT_ENABLETAB and then ETDT_USEAEROWIZARDTABTEXTURE */
+            if (((flags[j] == ETDT_ENABLETAB || flags[j] == ETDT_ENABLEAEROWIZARDTAB)
+                 || ((((flags[i] | flags[j]) & ETDT_ENABLETAB) == ETDT_ENABLETAB
+                      || ((flags[i] | flags[j]) & ETDT_ENABLEAEROWIZARDTAB) == ETDT_ENABLEAEROWIZARDTAB)
+                      && !((flags[i] | flags[j]) & ETDT_DISABLE)))
+                 && (((flags[i] | flags[j]) & (ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB)) != (ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB)))
+                todo_wine
+                ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
+            else
+                ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
+
+            ReleaseDC(child, child_hdc);
+            EndDialog(dialog, 0);
+
+            winetest_pop_context();
+        }
+    }
+
+    /* Test that the dialog procedure should set ETDT_USETABTEXTURE/ETDT_USEAEROWIZARDTABTEXTURE and
+     * find out which comctl32 class should set ETDT_ENABLE to turn on dialog texture */
+    for (i = 0; i < ARRAY_SIZE(class_tests); ++i)
+    {
+        winetest_push_context("%s %#x", wine_dbgstr_a(class_tests[i].param.class_name),
+                              class_tests[i].param.style);
+
+        dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                            test_EnableThemeDialogTexture_proc,
+                                            (LPARAM)&class_tests[i].param);
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        /* GetDlgItem() fails to get the child control if the child is a tooltip */
+        child = dialog_child;
+        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        child_hdc = GetDC(child);
+
+        brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+        ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
+
+        ReleaseDC(child, child_hdc);
+        EndDialog(dialog, 0);
+
+        dialog_init_flag = ETDT_ENABLE;
+        dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                            test_EnableThemeDialogTexture_proc,
+                                            (LPARAM)&class_tests[i].param);
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        child = dialog_child;
+        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        child_hdc = GetDC(child);
+
+        brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+        ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
+
+        ReleaseDC(child, child_hdc);
+        EndDialog(dialog, 0);
+
+        dialog_init_flag = ETDT_USETABTEXTURE;
+        dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                            test_EnableThemeDialogTexture_proc,
+                                            (LPARAM)&class_tests[i].param);
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        child = dialog_child;
+        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        child_hdc = GetDC(child);
+        brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+        if (class_tests[i].texture_enabled)
+            todo_wine
+            ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
+        else
+            ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
+        ReleaseDC(child, child_hdc);
+        EndDialog(dialog, 0);
+
+        if (LOBYTE(LOWORD(GetVersion())) < 6)
+        {
+            dialog_init_flag = 0;
+            winetest_pop_context();
+            continue;
+        }
+
+        dialog_init_flag = ETDT_USEAEROWIZARDTABTEXTURE;
+        dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                            test_EnableThemeDialogTexture_proc,
+                                            (LPARAM)&class_tests[i].param);
+        ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %d.\n", GetLastError());
+        child = dialog_child;
+        ok(child != NULL, "Failed to get child control, error %d.\n", GetLastError());
+        child_hdc = GetDC(child);
+        brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+        if (class_tests[i].texture_enabled)
+            todo_wine
+            ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
+        else
+            ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
+        ReleaseDC(child, child_hdc);
+        EndDialog(dialog, 0);
+        dialog_init_flag = 0;
+
+        winetest_pop_context();
+    }
+
+    /* Test that EnableThemeDialogTexture() is called from child controls for its parent */
+    hwnd = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, 0,
+                         0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ret = IsThemeDialogTextureEnabled(hwnd);
+    todo_wine
+    ok(!ret, "Wrong dialog texture status.\n");
+    child = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hwnd, 0, 0,
+                          NULL);
+    ok(child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ret = IsThemeDialogTextureEnabled(hwnd);
+    ok(ret, "Wrong dialog texture status.\n");
+
+    /* Test that if you move the child control to another window, it doesn't enables tab texture for
+     * the new parent */
+    hwnd2 = CreateWindowA(cls.lpszClassName, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, 0,
+                          0, 0, NULL);
+    ok(hwnd2 != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    ret = IsThemeDialogTextureEnabled(hwnd2);
+    todo_wine
+    ok(!ret, "Wrong dialog texture status.\n");
+
+    SetParent(child, hwnd2);
+    ok(GetParent(child) == hwnd2, "Wrong parent.\n");
+    ret = IsThemeDialogTextureEnabled(hwnd2);
+    todo_wine
+    ok(!ret, "Wrong dialog texture status.\n");
+    InvalidateRect(child, NULL, TRUE);
+    flush_events();
+    ret = IsThemeDialogTextureEnabled(hwnd2);
+    todo_wine
+    ok(!ret, "Wrong dialog texture status.\n");
+
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd);
+
+    UnregisterClassA(cls.lpszClassName, GetModuleHandleA(NULL));
+}
+
 START_TEST(system)
 {
+    ULONG_PTR ctx_cookie;
+    HANDLE ctx;
+
     init_funcs();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -1567,6 +2218,13 @@ START_TEST(system)
     test_GetThemeIntList();
     test_GetThemeTransitionDuration();
     test_DrawThemeParentBackground();
+
+    if (load_v6_module(&ctx_cookie, &ctx))
+    {
+        test_EnableThemeDialogTexture();
+
+        unload_v6_module(ctx_cookie, ctx);
+    }
 
     /* Test EnableTheming() in the end because it may disable theming */
     test_EnableTheming();
