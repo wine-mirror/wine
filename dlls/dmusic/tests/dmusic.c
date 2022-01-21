@@ -553,6 +553,8 @@ static void test_COM_synthport(void)
     ok(hr == E_NOINTERFACE, "QueryInterface for IID_IReferenceClock failed: %08x\n", hr);
 
     while (IDirectMusicPort_Release(port));
+    refcount = IDirectMusic_Release(dmusic);
+    ok(!refcount, "Got outstanding refcount %d.\n", refcount);
 }
 
 struct chunk {
