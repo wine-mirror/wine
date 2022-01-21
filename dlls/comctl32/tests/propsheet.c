@@ -20,8 +20,6 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include <uxtheme.h>
-#include <vsstyle.h>
 #include "msg.h"
 
 #include "resources.h"
@@ -45,13 +43,8 @@ static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPageW)(const PROPSHEETPAGEW *
 static BOOL (WINAPI *pDestroyPropertySheetPage)(HPROPSHEETPAGE proppage);
 static INT_PTR (WINAPI *pPropertySheetA)(const PROPSHEETHEADERA *header);
 
-static HRESULT (WINAPI *pCloseThemeData)(HTHEME);
-static HRESULT (WINAPI *pEnableThemeDialogTexture)(HWND, DWORD);
-static HRESULT (WINAPI *pGetThemePartSize)(HTHEME, HDC, int, int, RECT *, THEMESIZE, SIZE *);
-static HTHEME (WINAPI *pGetWindowTheme)(HWND);
 static BOOL (WINAPI *pIsThemeActive)(void);
 static BOOL (WINAPI *pIsThemeDialogTextureEnabled)(HWND);
-static HTHEME (WINAPI *pOpenThemeData)(HWND, LPCWSTR);
 
 static void detect_locale(void)
 {
@@ -1198,26 +1191,12 @@ static void test_bad_control_class(void)
     DestroyWindow((HWND)ret);
 }
 
-static BOOL handle_WM_CTLCOLORSTATIC;
-
 static INT_PTR CALLBACK test_WM_CTLCOLORSTATIC_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    static HWND child;
-
     switch(msg)
     {
     case WM_INITDIALOG:
         sheethwnd = hwnd;
-        child = CreateWindowA(WC_STATICA, "child", WS_CHILD | WS_VISIBLE, 1, 2, 50, 50, hwnd,
-                              (HMENU)100, 0, NULL);
-        ok(child != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
-        return FALSE;
-
-    case WM_CTLCOLORSTATIC:
-        return (INT_PTR)(handle_WM_CTLCOLORSTATIC ? GetSysColorBrush(COLOR_MENU) : 0);
-
-    case WM_CLOSE:
-        DestroyWindow(child);
         return FALSE;
 
     default:
@@ -1225,26 +1204,16 @@ static INT_PTR CALLBACK test_WM_CTLCOLORSTATIC_proc(HWND hwnd, UINT msg, WPARAM 
     }
 }
 
-static void test_WM_CTLCOLORSTATIC(void)
+static void test_page_dialog_texture(void)
 {
-    HWND hdlg, child, parent, hwnd;
-    COLORREF color, old_color;
-    int mode, old_mode, count;
-    HBRUSH hbrush, hbrush2;
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETHEADERA psh;
-    HDC child_hdc, hdc;
-    LOGBRUSH log_brush;
     PROPSHEETPAGEA psp;
     ULONG_PTR dlgproc;
-    WNDCLASSA cls;
-    HTHEME theme;
-    DWORD error;
-    BITMAP bmp;
-    HRESULT hr;
-    POINT org;
-    SIZE size;
+    HWND hdlg, hwnd;
+    HBRUSH hbrush;
     BOOL ret;
+    HDC hdc;
 
     memset(&psp, 0, sizeof(psp));
     psp.dwSize = sizeof(psp);
@@ -1265,193 +1234,28 @@ static void test_WM_CTLCOLORSTATIC(void)
     ok(hdlg != INVALID_HANDLE_VALUE, "Got invalid handle value %p.\n", hdlg);
     flush_events();
 
-    child = GetDlgItem(sheethwnd, 100);
-    ok(child != NULL, "Failed to get child static control, error %d.\n", GetLastError());
-    parent = GetParent(child);
-    ok(parent == sheethwnd, "Expected parent %p, got %p.\n", sheethwnd, parent);
-    ok(sheethwnd != hdlg, "Expected handles not equal.\n");
-
     /* Test that page dialog procedure is unchanged */
     dlgproc = GetWindowLongPtrA(sheethwnd, DWLP_DLGPROC);
     ok(dlgproc == (ULONG_PTR)test_WM_CTLCOLORSTATIC_proc, "Unexpected dlgproc %#lx.\n", dlgproc);
-
-    child_hdc = GetDC(child);
-    old_mode = SetBkMode(child_hdc, OPAQUE);
-    ok(old_mode != 0, "SetBkMode failed.\n");
-    old_color = SetBkColor(child_hdc, 0xaa5511);
-    ok(old_color != CLR_INVALID, "SetBkColor failed.\n");
-
-    /* Test that brush origin is at (0,0) */
-    ret = GetBrushOrgEx(child_hdc, &org);
-    ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
-    ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
 
     /* Test that theme dialog texture is enabled for comctl32 v6, even when theming is off */
     ret = pIsThemeDialogTextureEnabled(sheethwnd);
     todo_wine_if(!is_v6)
     ok(ret == is_v6, "Wrong theme dialog texture status.\n");
 
-    hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    hwnd = CreateWindowA(WC_EDITA, "child", WS_POPUP | WS_VISIBLE, 1, 2, 50, 50, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
+    hdc = GetDC(hwnd);
+
+    hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd);
     if (is_v6 && is_theme_active)
     {
-        /* Test that brush origin is changed after WM_CTLCOLORSTATIC */
-        ret = GetBrushOrgEx(child_hdc, &org);
-        ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
-        ok(org.x == -1 && org.y == -2, "Expected (-1,-2), got %s.\n", wine_dbgstr_point(&org));
-
-        /* Test that device context is set to transparent after WM_CTLCOLORSTATIC */
-        mode = SetBkMode(child_hdc, old_mode);
-        ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
-
-        /* Test that the brush is a pattern brush created from the tab body bitmap in the theme */
+        /* Test that dialog tab texture is enabled even without any child controls in the dialog */
         ok(hbrush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
-        ok(hbrush != GetStockObject(NULL_BRUSH), "Expected a different brush.\n");
-        hbrush2 = SelectObject(child_hdc, GetSysColorBrush(COLOR_BTNFACE));
-        ok(hbrush2 != hbrush, "Expected a different brush.\n");
-
-        memset(&log_brush, 0, sizeof(log_brush));
-        count = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
-        ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
-        ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
-        ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
-           log_brush.lbStyle);
-
-        memset(&bmp, 0, sizeof(bmp));
-        count = GetObjectA((HBITMAP)log_brush.lbHatch, sizeof(bmp), &bmp);
-        ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
-
-        ok(pGetWindowTheme(hdlg) == NULL, "Expected NULL theme handle.\n");
-        ok(pGetWindowTheme(sheethwnd) == NULL, "Expected NULL theme handle.\n");
-
-        memset(&cls, 0, sizeof(cls));
-        cls.lpfnWndProc = DefWindowProcA;
-        cls.hInstance = GetModuleHandleA(NULL);
-        cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
-        cls.hbrBackground = GetStockObject(WHITE_BRUSH);
-        cls.lpszClassName = "TestClass";
-        RegisterClassA(&cls);
-
-        hwnd = CreateWindowA("TestClass", "test", WS_POPUP | WS_VISIBLE, 0, 0, 4, 4, 0, 0, 0, NULL);
-        ok(hwnd != NULL, "CreateWindowA failed, error %d.\n", GetLastError());
-        theme = pOpenThemeData(hwnd, L"Tab");
-        ok(theme != NULL, "OpenThemeData failed.\n");
-
-        size.cx = 0;
-        size.cy = 0;
-        hr = pGetThemePartSize(theme, NULL, TABP_BODY, 0, NULL, TS_TRUE, &size);
-        ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-        ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
-        ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
-
-        pCloseThemeData(theme);
-
-        /* Test that other controls besides static controls also get the same brush */
-        hdc = GetDC(hwnd);
-        old_mode = SetBkMode(hdc, OPAQUE);
-        ok(old_mode != 0, "SetBkMode failed.\n");
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd);
-        ok(hbrush2 == hbrush, "Expected the same brush.\n");
-        mode = SetBkMode(hdc, old_mode);
-        ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
-        ReleaseDC(hwnd, hdc);
-        DestroyWindow(hwnd);
-        UnregisterClassA("TestClass", GetModuleHandleA(NULL));
-
-        /* Test disabling theme dialog texture should change the brush */
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        hr = pEnableThemeDialogTexture(sheethwnd, ETDT_DISABLE);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        ok(hbrush2 != hbrush, "Expected a different brush.\n");
-        ok(hbrush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
-           GetSysColorBrush(COLOR_BTNFACE), hbrush2);
-
-        /* Test re-enabling theme dialog texture with ETDT_ENABLE doesn't change the brush*/
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        hr = pEnableThemeDialogTexture(sheethwnd, ETDT_ENABLE);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        todo_wine_if(hbrush2 != hbrush)
-        ok(hbrush2 == hbrush, "Expected the same brush.\n");
-
-        /* Test ETDT_ENABLE | ETDT_USETABTEXTURE should change the brush */
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        hr = pEnableThemeDialogTexture(sheethwnd, ETDT_ENABLE | ETDT_USETABTEXTURE);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        todo_wine_if(hbrush2 == hbrush)
-        ok(hbrush2 != hbrush, "Expected a different brush.\n");
-
-        /* Test ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE should change the brush */
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        hr = pEnableThemeDialogTexture(sheethwnd, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        /* ETDT_USEAEROWIZARDTABTEXTURE is supported only on Vista+ */
-        if (LOBYTE(LOWORD(GetVersion())) < 6)
-            ok(hbrush2 == hbrush, "Expected the same brush.\n");
-        else
-            todo_wine_if(hbrush2 == hbrush)
-            ok(hbrush2 != hbrush, "Expected a different brush.\n");
-
-        hr = pEnableThemeDialogTexture(sheethwnd, ETDT_DISABLE);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
-        hr = pEnableThemeDialogTexture(sheethwnd, ETDT_ENABLE | ETDT_USETABTEXTURE);
-        ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
-
-        /* Test that the page procedure should take precedence if WM_CTLCOLORSTATIC is handled */
-        handle_WM_CTLCOLORSTATIC = TRUE;
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        ok(hbrush == GetSysColorBrush(COLOR_MENU), "Expected brush %p, got %p.\n",
-           GetSysColorBrush(COLOR_MENU), hbrush);
-        handle_WM_CTLCOLORSTATIC = FALSE;
-
-        /* Test that the brush is not a system object and has only one reference and shouldn't be freed */
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        ret = DeleteObject(hbrush);
-        ok(ret, "DeleteObject failed, error %u.\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
-        error = GetLastError();
-        ok(!ret, "GetObjectA succeeded.\n");
-        todo_wine
-        ok(error == ERROR_INVALID_PARAMETER, "Expected error %u, got %u.\n",
-           ERROR_INVALID_PARAMETER, error);
-        ret = DeleteObject(hbrush);
-        ok(!ret, "DeleteObject succeeded.\n");
-
-        /* Should still report the same brush handle after the brush handle was freed */
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        ok(hbrush2 == hbrush, "Expected the same brush.\n");
-
-        /* Test that WM_THEMECHANGED should recreate the brush */
-        hbrush = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        SendMessageW(sheethwnd, WM_THEMECHANGED, 0, 0);
-        hbrush2 = (HBRUSH)SendMessageW(sheethwnd, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-        ok(hbrush2 != hbrush, "Expected a different brush.\n");
-        ret = GetObjectA(hbrush, sizeof(log_brush), &log_brush);
-        ok(!ret, "GetObjectA succeeded.\n");
     }
-    else
-    {
-        /* Test that brush origin is at (0,0) */
-        ret = GetBrushOrgEx(child_hdc, &org);
-        ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
-        todo_wine_if(is_theme_active)
-        ok(org.x == 0 && org.y == 0, "Expected (0,0), got %s.\n", wine_dbgstr_point(&org));
 
-        todo_wine_if(is_theme_active)
-        ok(hbrush == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
-           GetSysColorBrush(COLOR_BTNFACE), hbrush);
-        mode = SetBkMode(child_hdc, old_mode);
-        todo_wine_if(is_theme_active)
-        ok(mode == OPAQUE, "Expected mode %#x, got %#x.\n", OPAQUE, mode);
-    }
-    color = SetBkColor(child_hdc, old_color);
-    ok(color == GetSysColor(COLOR_BTNFACE), "Expected background color %#x, got %#x.\n",
-       GetSysColor(COLOR_BTNFACE), color);
-
-    ReleaseDC(child, child_hdc);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
     DestroyWindow(hdlg);
 }
 
@@ -1472,13 +1276,8 @@ static void init_uxtheme_functions(void)
     HMODULE uxtheme = LoadLibraryA("uxtheme.dll");
 
 #define X(f) p##f = (void *)GetProcAddress(uxtheme, #f);
-    X(CloseThemeData)
-    X(EnableThemeDialogTexture)
-    X(GetThemePartSize)
-    X(GetWindowTheme)
     X(IsThemeActive)
     X(IsThemeDialogTextureEnabled)
-    X(OpenThemeData)
 #undef X
 }
 
@@ -1511,7 +1310,7 @@ START_TEST(propsheet)
     test_PSM_ADDPAGE();
     test_PSM_INSERTPAGE();
     test_CreatePropertySheetPage();
-    test_WM_CTLCOLORSTATIC();
+    test_page_dialog_texture();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
@@ -1519,7 +1318,7 @@ START_TEST(propsheet)
     init_comctl32_functions();
     is_v6 = TRUE;
 
-    test_WM_CTLCOLORSTATIC();
+    test_page_dialog_texture();
 
     unload_v6_module(ctx_cookie, ctx);
 }
