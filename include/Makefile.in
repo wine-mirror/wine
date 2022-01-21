@@ -717,6 +717,7 @@ SOURCES = \
 	traffic.h \
 	transact.idl \
 	trnjoi.idl \
+	trnlcl.idl \
 	twain.h \
 	txcoord.idl \
 	txdtc.idl \

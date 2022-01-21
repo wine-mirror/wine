@@ -81,6 +81,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "mulres.idl"
 #include "transact.idl"
 #include "trnjoi.idl"
+#include "trnlcl.idl"
 #include "cmdwpr.idl"
 
 cpp_quote("#include <accctrl.h>")
