@@ -281,6 +281,7 @@ static typelib_t *current_typelib;
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <expr> contract_req
 %type <expr> static_attr
+%type <expr> activatable_attr
 %type <type> delegatedef
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
@@ -582,8 +583,15 @@ static_attr: decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTER
 						  $$ = make_exprt(EXPR_MEMBER, declare_var(NULL, $1, make_declarator(NULL), 0), $3);
 						}
 
+activatable_attr:
+	  decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTERFACE)
+						      error_loc("type %s is not an interface\n", $1->type->name);
+						  $$ = make_exprt(EXPR_MEMBER, declare_var(NULL, $1, make_declarator(NULL), 0), $3);
+						}
+	| contract_req				{ $$ = $1; } /* activatable on the default activation factory */
+
 attribute:					{ $$ = NULL; }
-	| tACTIVATABLE '(' contract_req ')'	{ $$ = make_attrp(ATTR_ACTIVATABLE, $3); }
+	| tACTIVATABLE '(' activatable_attr ')'	{ $$ = make_attrp(ATTR_ACTIVATABLE, $3); }
 	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
 	| tANNOTATION '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ANNOTATION, $3); }
 	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
