@@ -56,6 +56,7 @@
 #define NSWindowStyleMaskResizable          NSResizableWindowMask
 #define NSWindowStyleMaskTitled             NSTitledWindowMask
 #define NSWindowStyleMaskUtilityWindow      NSUtilityWindowMask
+#define NSWindowStyleMaskNonactivatingPanel NSNonactivatingPanelMask
 #endif
 
 #define ERR(...) do { if (macdrv_err_on) LogError(__func__, __VA_ARGS__); } while (false)
