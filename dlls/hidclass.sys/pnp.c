@@ -162,9 +162,9 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     }
     ext = fdo->DeviceExtension;
     ext->is_fdo = TRUE;
-    ext->u.fdo.hid_ext.MiniDeviceExtension = ext + 1;
-    ext->u.fdo.hid_ext.PhysicalDeviceObject = bus_pdo;
-    ext->u.fdo.hid_ext.NextDeviceObject = bus_pdo;
+    ext->hid.MiniDeviceExtension = ext + 1;
+    ext->hid.PhysicalDeviceObject = bus_pdo;
+    ext->hid.NextDeviceObject = bus_pdo;
     swprintf(ext->device_id, ARRAY_SIZE(ext->device_id), L"HID\\%s", wcsrchr(device_id, '\\') + 1);
     wcscpy(ext->instance_id, instance_id);
 
@@ -269,10 +269,10 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
     {
         if (fdo_ext->u.fdo.device_desc.CollectionDescLength > 1)
             swprintf( pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p&%d", device->DriverObject,
-                      fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, i );
+                      fdo_ext->hid.PhysicalDeviceObject, i );
         else
             swprintf( pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", device->DriverObject,
-                      fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject );
+                      fdo_ext->hid.PhysicalDeviceObject );
 
         RtlInitUnicodeString(&string, pdo_name);
         if ((status = IoCreateDevice( device->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo )))
@@ -285,6 +285,7 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
         fdo_ext->u.fdo.child_count++;
 
         pdo_ext = child_pdo->DeviceExtension;
+        pdo_ext->hid = fdo_ext->hid;
         pdo_ext->u.pdo.parent_fdo = device;
         list_init( &pdo_ext->u.pdo.queues );
         KeInitializeSpinLock( &pdo_ext->u.pdo.lock );
@@ -324,7 +325,7 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
         TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
     }
 
-    IoInvalidateDeviceRelations( fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations );
+    IoInvalidateDeviceRelations( fdo_ext->hid.PhysicalDeviceObject, BusRelations );
     return STATUS_SUCCESS;
 }
 
@@ -364,7 +365,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.Information = (ULONG_PTR)devices;
             irp->IoStatus.Status = STATUS_SUCCESS;
             IoSkipCurrentIrpStackLocation(irp);
-            return IoCallDriver(ext->u.fdo.hid_ext.NextDeviceObject, irp);
+            return IoCallDriver(ext->hid.NextDeviceObject, irp);
         }
 
         case IRP_MN_START_DEVICE:
@@ -384,7 +385,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             status = minidriver->PNPDispatch( device, irp );
             HidP_FreeCollectionDescription( &ext->u.fdo.device_desc );
             free( ext->u.fdo.child_pdos );
-            IoDetachDevice( ext->u.fdo.hid_ext.NextDeviceObject );
+            IoDetachDevice( ext->hid.NextDeviceObject );
             IoDeleteDevice( device );
             return status;
 

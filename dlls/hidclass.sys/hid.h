@@ -41,13 +41,12 @@ struct ReportRingBuffer;
 
 struct device
 {
+    HID_DEVICE_EXTENSION hid; /* must be first */
+
     union
     {
         struct
         {
-            /* this must be the first member */
-            HID_DEVICE_EXTENSION hid_ext;
-
             HID_DEVICE_ATTRIBUTES attrs;
             HIDP_DEVICE_DESC device_desc;
             WCHAR serial[256];
