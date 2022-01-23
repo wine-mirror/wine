@@ -190,7 +190,7 @@ static void test_ParseDisplayName(void)
 
         count = 0xdeadbeef;
         hr = MkParseDisplayName(bc, test[i].path, &count, &mk);
-todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
+        todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
         ok(hr == test[i].hr, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
         {
@@ -394,7 +394,7 @@ static void test_DirectorySearch(void)
     ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
 
     hr = IDirectorySearch_GetPreviousRow(ds, sh);
-todo_wine
+    todo_wine
     ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
 
     while (IDirectorySearch_GetNextRow(ds, sh) != S_ADS_NOMORE_ROWS)
@@ -430,9 +430,9 @@ todo_wine
 
     name = NULL;
     hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
-todo_wine
+    todo_wine
     ok(hr == S_OK || broken(hr == S_ADS_NOMORE_COLUMNS) /* XP */, "got %#x\n", hr);
-todo_wine
+    todo_wine
     ok((name && !wcscmp(name, L"ADsPath")) || broken(!name) /* XP */, "got %s\n", wine_dbgstr_w(name));
     FreeADsMem(name);
 
@@ -488,7 +488,7 @@ static void test_DirectoryObject(void)
     ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IDirectoryObject_QueryInterface(dirobj, &IID_IADsOpenDSObject, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
     if (hr == S_OK) IUnknown_Release(unk);
     hr = IDirectoryObject_QueryInterface(dirobj, &IID_IDispatch, (void **)&unk);
