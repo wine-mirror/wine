@@ -69,6 +69,12 @@ struct object_properties
     DWORD calibration_mode;
 };
 
+enum device_status
+{
+    STATUS_UNACQUIRED,
+    STATUS_ACQUIRED,
+};
+
 /* Device implementation */
 struct dinput_device
 {
@@ -84,7 +90,7 @@ struct dinput_device
     DIDEVCAPS                   caps;
     DWORD                       dwCoopLevel;
     HWND                        win;
-    int                         acquired;
+    enum device_status          status;
 
     BOOL                        use_raw_input; /* use raw input instead of low-level messages */
     RAWINPUTDEVICE              raw_device;    /* raw device to (un)register */

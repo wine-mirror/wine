@@ -128,10 +128,10 @@ static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface )
     TRACE( "iface %p.\n", iface );
 
     EnterCriticalSection( &impl->crit );
-    if (impl->acquired)
+    if (impl->status == STATUS_ACQUIRED)
     {
         impl->vtbl->unacquire( iface );
-        impl->acquired = FALSE;
+        impl->status = STATUS_UNACQUIRED;
         list_remove( &impl->entry );
     }
     LeaveCriticalSection( &impl->crit );

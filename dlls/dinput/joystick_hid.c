@@ -243,7 +243,7 @@ static inline struct hid_joystick_effect *impl_from_IDirectInputEffect( IDirectI
 
 static inline BOOL is_exclusively_acquired( struct hid_joystick *joystick )
 {
-    return joystick->base.acquired && (joystick->base.dwCoopLevel & DISCL_EXCLUSIVE);
+    return joystick->base.status == STATUS_ACQUIRED && (joystick->base.dwCoopLevel & DISCL_EXCLUSIVE);
 }
 
 static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
