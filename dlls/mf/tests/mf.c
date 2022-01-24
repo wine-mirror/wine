@@ -5674,6 +5674,33 @@ static void test_wma_decoder(void)
             ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         },
     };
+    static const media_type_desc expect_available_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+            ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+            ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+            ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
+            ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+            ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+            ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+            ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 88200),
+            ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+            ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        },
+    };
 
     const struct attribute_desc input_type_desc[] =
     {
@@ -5717,6 +5744,10 @@ static void test_wma_decoder(void)
     check_interface(transform, &IID_IMediaObject, TRUE);
 
     /* check default media types */
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#x\n", hr);
 
     i = -1;
     while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
@@ -5770,6 +5801,23 @@ static void test_wma_decoder(void)
     ok(hr == S_OK, "SetInputType returned %#x.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %u\n", ret);
+
+    /* check new output media types */
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %u", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#x\n", hr);
+        check_media_type(media_type, expect_available_outputs[i], -1);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %u\n", ret);
+        winetest_pop_context();
+    }
+    todo_wine
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#x\n", hr);
+    todo_wine
+    ok(i == 2, "%u output media types\n", i);
 
     /* check required output media type attributes */
 
