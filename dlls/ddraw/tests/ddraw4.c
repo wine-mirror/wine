@@ -149,6 +149,11 @@ static BOOL ddraw_is_vendor(IDirectDraw4 *ddraw, DWORD vendor)
             && identifier.dwVendorId == vendor;
 }
 
+static BOOL ddraw_is_amd(IDirectDraw4 *ddraw)
+{
+    return ddraw_is_vendor(ddraw, 0x1002);
+}
+
 static BOOL ddraw_is_intel(IDirectDraw4 *ddraw)
 {
     return ddraw_is_vendor(ddraw, 0x8086);
@@ -16252,7 +16257,8 @@ static void test_depth_readback(void)
                  *
                  * Some of the tested places pass on some GPUs on Wine by accident. */
                 todo_wine_if(tests[i].todo && !compare_uint(expected_depth, depth, max_diff))
-                    ok(compare_uint(expected_depth, depth, max_diff) || ddraw_is_nvidia(ddraw),
+                    ok(compare_uint(expected_depth, depth, max_diff) || ddraw_is_nvidia(ddraw)
+                            || (ddraw_is_amd(ddraw) && !tests[i].s_depth && tests[i].z_mask == 0x00ffffff),
                              "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                              i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
                 if (!compare_uint(expected_depth, depth, max_diff))

@@ -15716,7 +15716,8 @@ static void test_depth_readback(void)
                 depth = raw_value & tests[i].z_mask;
                 expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * tests[i].z_mask;
                 max_diff = ((0.5f * 0.9f) / 640.0f) * tests[i].z_mask;
-                /* This test is very reliably on AMD, but fails in a number of interesting ways on Nvidia GPUs:
+                /* This test is very reliably on older AMD drivers, but fails in a number of interesting
+                 * ways on Nvidia GPUs:
                  *
                  * Geforce 7 GPUs work only with D16. D24 and D24S8 return 0, D24X8 broken data.
                  *
@@ -15729,10 +15730,14 @@ static void test_depth_readback(void)
                  * Arx Fatalis is broken on the Geforce 9 in the same way it was broken in Wine (bug 43654).
                  * The !tests[i].s_depth is supposed to rule out D16 on GF9 and D24X8 on GF7.
                  *
+                 * On new-ish AMD GPUs (Radeon Polaris at least) returns weird data for D24 and D24X8. D16
+                 * and D24S8 work.
+                 *
                  * Some of the tested places pass on some GPUs on Wine by accident. */
                 todo_wine_if(tests[i].todo && !compare_uint(expected_depth, depth, max_diff))
                     ok(compare_uint(expected_depth, depth, max_diff)
-                            || (ddraw_is_nvidia(ddraw) && (all_zero || all_one || !tests[i].s_depth)),
+                            || (ddraw_is_nvidia(ddraw) && (all_zero || all_one || !tests[i].s_depth))
+                            || (ddraw_is_amd(ddraw) && !tests[i].s_depth && tests[i].z_mask == 0x00ffffff),
                             "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                             i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
                 if (!compare_uint(expected_depth, depth, max_diff))

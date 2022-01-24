@@ -148,6 +148,11 @@ static BOOL ddraw_is_vendor(IDirectDraw2 *ddraw, DWORD vendor)
             && identifier.dwVendorId == vendor;
 }
 
+static BOOL ddraw_is_amd(IDirectDraw2 *ddraw)
+{
+    return ddraw_is_vendor(ddraw, 0x1002);
+}
+
 static BOOL ddraw_is_intel(IDirectDraw2 *ddraw)
 {
     return ddraw_is_vendor(ddraw, 0x8086);
@@ -13640,7 +13645,8 @@ static void test_depth_readback(void)
                 /* The ddraw2 version of this test behaves similarly to the ddraw7 version on Nvidia GPUs,
                  * except that we only have D16 (broken on geforce 9) and D24X8 (broken on geforce 7) available.
                  * Accept all nvidia GPUs as broken here, but still expect one of the formats to pass. */
-                ok(compare_uint(expected_depth, depth, max_diff) || ddraw_is_nvidia(ddraw),
+                ok(compare_uint(expected_depth, depth, max_diff) || ddraw_is_nvidia(ddraw)
+                        || (ddraw_is_amd(ddraw) && tests[i].z_depth == 24),
                         "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                         i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
                 if (!compare_uint(expected_depth, depth, max_diff))
