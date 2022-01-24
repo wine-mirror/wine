@@ -232,7 +232,7 @@ static void put_name_id(name_id_t *nid, int upcase, const language_t *lang)
 			put_word(0xffff);
 		else
 			put_byte(0xff);
-		put_word((WORD)nid->name.i_name);
+		put_word(nid->name.i_name);
 		break;
 	case name_str:
 		if(upcase)
@@ -275,7 +275,7 @@ static void put_lvc(lvc_t *lvc)
  *		  contains the header size upon exit.
  *****************************************************************************
 */
-static int put_res_header(int type, name_id_t *name, DWORD memopt, lvc_t *lvc)
+static int put_res_header(int type, name_id_t *name, unsigned int memopt, lvc_t *lvc)
 {
 	int tag = output_buffer_pos;
 	if(win32)

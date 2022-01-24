@@ -2381,8 +2381,8 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 	resource_t *rsctail = NULL;
 	int i;
 	int j;
-	DWORD andsum;
-	DWORD orsum;
+	unsigned int andsum;
+	unsigned int orsum;
 	characts_t *characts;
 	version_t *version;
 

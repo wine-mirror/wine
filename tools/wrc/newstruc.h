@@ -43,8 +43,8 @@ string_t *new_string(void);
 toolbar_item_t *new_toolbar_item(void);
 ani_any_t *new_ani_any(void);
 resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan);
-version_t *new_version(DWORD v);
-characts_t *new_characts(DWORD c);
+version_t *new_version(unsigned int v);
+characts_t *new_characts(unsigned int c);
 language_t *new_language(int id, int sub);
 language_t *dup_language(language_t *l);
 version_t *dup_version(version_t *v);
@@ -68,6 +68,6 @@ int *new_int(int i);
 stringtable_t *new_stringtable(lvc_t *lvc);
 toolbar_t *new_toolbar(int button_width, int button_Height, toolbar_item_t *items, int nitems);
 style_pair_t *new_style_pair(style_t *style, style_t *exstyle);
-style_t *new_style(DWORD or_mask, DWORD and_mask);
+style_t *new_style(unsigned int or_mask, unsigned int and_mask);
 
 #endif

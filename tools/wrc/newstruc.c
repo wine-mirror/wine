@@ -38,11 +38,11 @@
 #include <pshpack2.h>
 typedef struct
 {
-    DWORD biSize;
-    WORD  biWidth;
-    WORD  biHeight;
-    WORD  biPlanes;
-    WORD  biBitCount;
+    unsigned int   biSize;
+    unsigned short biWidth;
+    unsigned short biHeight;
+    unsigned short biPlanes;
+    unsigned short biBitCount;
 } BITMAPOS2HEADER;
 #include <poppack.h>
 
@@ -196,14 +196,14 @@ resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan)
 	return r;
 }
 
-version_t *new_version(DWORD v)
+version_t *new_version(unsigned int v)
 {
 	version_t *vp = xmalloc(sizeof(version_t));
 	*vp = v;
 	return vp;
 }
 
-characts_t *new_characts(DWORD c)
+characts_t *new_characts(unsigned int c)
 {
 	characts_t *cp = xmalloc(sizeof(characts_t));
 	*cp = c;
@@ -562,16 +562,16 @@ bitmap_t *new_bitmap(raw_data_t *rd, int *memopt)
 ver_words_t *new_ver_words(int i)
 {
 	ver_words_t *w = xmalloc(sizeof(ver_words_t));
-	w->words = xmalloc(sizeof(WORD));
-	w->words[0] = (WORD)i;
+	w->words = xmalloc(sizeof(unsigned short));
+	w->words[0] = i;
 	w->nwords = 1;
 	return w;
 }
 
 ver_words_t *add_ver_words(ver_words_t *w, int i)
 {
-	w->words = xrealloc(w->words, (w->nwords+1) * sizeof(WORD));
-	w->words[w->nwords] = (WORD)i;
+	w->words = xrealloc(w->words, (w->nwords+1) * sizeof(unsigned short));
+	w->words[w->nwords] = i;
 	w->nwords++;
 	return w;
 }
@@ -590,7 +590,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 	else
 		msg->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE;
 
-	if(rd->size < sizeof(DWORD))
+	if(rd->size < sizeof(unsigned int))
 		parser_error("Invalid messagetable, size too small");
 
 	return msg;
@@ -665,7 +665,7 @@ style_pair_t *new_style_pair(style_t *style, style_t *exstyle)
 	return sp;
 }
 
-style_t *new_style(DWORD or_mask, DWORD and_mask)
+style_t *new_style(unsigned int or_mask, unsigned int and_mask)
 {
 	style_t *st = xmalloc(sizeof(style_t));
 	st->or_mask = or_mask;

@@ -68,8 +68,8 @@
 #define CT_SCROLLBAR	0x84
 #define CT_COMBOBOX	0x85
 
-#define GET_WORD(ptr)  (((BYTE *)(ptr))[0] | (((BYTE *)(ptr))[1] << 8))
-#define GET_DWORD(ptr) (((BYTE *)(ptr))[0] | (((BYTE *)(ptr))[1] << 8) | (((BYTE *)(ptr))[2] << 16)  | (((BYTE *)(ptr))[3] << 24))
+#define GET_WORD(ptr)  (((unsigned char *)(ptr))[0] | (((unsigned char *)(ptr))[1] << 8))
+#define GET_DWORD(ptr) (((unsigned char *)(ptr))[0] | (((unsigned char *)(ptr))[1] << 8) | (((unsigned char *)(ptr))[2] << 16)  | (((unsigned char *)(ptr))[3] << 24))
 
 typedef struct
 {
@@ -108,8 +108,8 @@ typedef struct language {
 	int	sub;
 } language_t;
 
-typedef DWORD characts_t;
-typedef DWORD version_t;
+typedef unsigned int characts_t;
+typedef unsigned int version_t;
 
 typedef struct lvc {
 	language_t	*language;
@@ -126,8 +126,8 @@ typedef struct font_id {
 
 /* control styles */
 typedef struct style {
-    	DWORD 			or_mask;
-	DWORD			and_mask;
+	unsigned int	or_mask;
+	unsigned int	and_mask;
 } style_t;
 
 /* resource types */
@@ -192,7 +192,7 @@ typedef struct control {
 	int		height;
 	style_t		*style;		/* Style */
 	style_t		*exstyle;
-	DWORD		helpid;		/* EX: */
+	unsigned int	helpid;		/* EX: */
 	int		gotstyle;	/* Used to determine whether the default */
 	int		gotexstyle;	/* styles must be set */
 	int		gothelpid;
@@ -200,14 +200,14 @@ typedef struct control {
 } control_t;
 
 typedef struct dialog {
-	DWORD		memopt;
+	unsigned int	memopt;
 	int		x;		/* Position */
 	int		y;
 	int		width;		/* Size */
 	int		height;
 	style_t		*style;		/* Style */
 	style_t		*exstyle;
-	DWORD		helpid;		/* EX: */
+	unsigned int	helpid;		/* EX: */
 	int		gotstyle;	/* Used to determine whether the default */
 	int		gotexstyle;	/* styles must be set */
 	int		gothelpid;
@@ -226,8 +226,8 @@ typedef struct menu_item {
 	struct menu_item *prev;
 	struct menu_item *popup;
 	int		id;
-	DWORD		type;
-	DWORD		state;
+	unsigned int	type;
+	unsigned int	state;
 	int		helpid;
 	string_t	*name;
 	int		gotid;
@@ -237,7 +237,7 @@ typedef struct menu_item {
 } menu_item_t;
 
 typedef struct menu {
-	DWORD		memopt;
+	unsigned int	memopt;
 	lvc_t		lvc;
 	int		is_ex;
 	menu_item_t	*items;
@@ -246,8 +246,8 @@ typedef struct menu {
 typedef struct itemex_opt
 {
 	int	id;
-	DWORD	type;
-	DWORD	state;
+	unsigned int type;
+	unsigned int state;
 	int	helpid;
 	int	gotid;
 	int	gottype;
@@ -259,12 +259,12 @@ typedef struct itemex_opt
  * Font resources
  */
 typedef struct font {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } font_t;
 
 typedef struct fontdir {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } fontdir_t;
 
@@ -272,20 +272,20 @@ typedef struct fontdir {
  * Icon resources
  */
 typedef struct icon_header {
-	WORD	reserved;	/* Don't know, should be 0 I guess */
-	WORD	type;		/* Always 1 for icons */
-	WORD	count;		/* Number of packed icons in resource */
+	unsigned short	reserved;	/* Don't know, should be 0 I guess */
+	unsigned short	type;		/* Always 1 for icons */
+	unsigned short	count;		/* Number of packed icons in resource */
 } icon_header_t;
 
 typedef struct icon_dir_entry {
-	BYTE	width;		/* From the SDK doc. */
-	BYTE	height;
-	BYTE	nclr;
-	BYTE	reserved;
-	WORD	planes;
-	WORD	bits;
-	DWORD	ressize;
-	DWORD	offset;
+	unsigned char	width;		/* From the SDK doc. */
+	unsigned char	height;
+	unsigned char	nclr;
+	unsigned char	reserved;
+	unsigned short	planes;
+	unsigned short	bits;
+	unsigned int	ressize;
+	unsigned int	offset;
 } icon_dir_entry_t;
 
 typedef struct icon {
@@ -302,7 +302,7 @@ typedef struct icon {
 } icon_t;
 
 typedef struct icon_group {
-	DWORD		memopt;
+	unsigned int	memopt;
 	lvc_t		lvc;
 	icon_t		*iconlist;
 	int		nicon;
@@ -312,20 +312,20 @@ typedef struct icon_group {
  * Cursor resources
  */
 typedef struct cursor_header {
-	WORD	reserved;	/* Don't know, should be 0 I guess */
-	WORD	type;		/* Always 2 for cursors */
-	WORD	count;		/* Number of packed cursors in resource */
+	unsigned short	reserved;	/* Don't know, should be 0 I guess */
+	unsigned short	type;		/* Always 2 for cursors */
+	unsigned short	count;		/* Number of packed cursors in resource */
 } cursor_header_t;
 
 typedef struct cursor_dir_entry {
-	BYTE	width;		/* From the SDK doc. */
-	BYTE	height;
-	BYTE	nclr;
-	BYTE	reserved;
-	WORD	xhot;
-	WORD	yhot;
-	DWORD	ressize;
-	DWORD	offset;
+	unsigned char	width;		/* From the SDK doc. */
+	unsigned char	height;
+	unsigned char	nclr;
+	unsigned char	reserved;
+	unsigned short	xhot;
+	unsigned short	yhot;
+	unsigned int	ressize;
+	unsigned int	offset;
 } cursor_dir_entry_t;
 
 typedef struct cursor {
@@ -344,7 +344,7 @@ typedef struct cursor {
 } cursor_t;
 
 typedef struct cursor_group {
-	DWORD		memopt;
+	unsigned int	memopt;
 	lvc_t		lvc;
 	cursor_t	*cursorlist;
 	int		ncursor;
@@ -354,24 +354,24 @@ typedef struct cursor_group {
  * Animated cursors and icons
  */
 typedef struct aniheader {
-	DWORD	structsize;	/* Header size (36 bytes) */
-	DWORD	frames;		/* Number of unique icons in this cursor */
-	DWORD	steps;		/* Number of blits before the animation cycles */
-	DWORD	cx;		/* reserved, must be 0? */
-	DWORD	cy;		/* reserved, must be 0? */
-	DWORD	bitcount;	/* reserved, must be 0? */
-	DWORD	planes;		/* reserved, must be 0? */
-	DWORD	rate;		/* Default rate (1/60th of a second) if "rate" not present */
-	DWORD	flags;		/* Animation flag (1==AF_ICON, although both icons and cursors set this) */
+	unsigned int	structsize;	/* Header size (36 bytes) */
+	unsigned int	frames;		/* Number of unique icons in this cursor */
+	unsigned int	steps;		/* Number of blits before the animation cycles */
+	unsigned int	cx;		/* reserved, must be 0? */
+	unsigned int	cy;		/* reserved, must be 0? */
+	unsigned int	bitcount;	/* reserved, must be 0? */
+	unsigned int	planes;		/* reserved, must be 0? */
+	unsigned int	rate;		/* Default rate (1/60th of a second) if "rate" not present */
+	unsigned int	flags;		/* Animation flag (1==AF_ICON, although both icons and cursors set this) */
 } aniheader_t;
 
 typedef struct riff_tag {
-	BYTE	tag[4];
-	DWORD	size;
+	unsigned char	tag[4];
+	unsigned int	size;
 } riff_tag_t;
 
 typedef struct ani_curico {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } ani_curico_t;
 
@@ -388,22 +388,22 @@ typedef struct ani_any {
  * Bitmaps
  */
 typedef struct bitmap {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } bitmap_t;
 
 typedef struct html {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } html_t;
 
 typedef struct rcdata {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } rcdata_t;
 
 typedef struct {
-	DWORD		memopt;
+	unsigned int	memopt;
 	name_id_t	*type;
 	raw_data_t	*data;
 } user_t;
@@ -412,19 +412,19 @@ typedef struct {
  * Messagetables
  */
 typedef struct msgtab_block {
-	DWORD	idlo;		/* Lowest id in the set */
-	DWORD	idhi;		/* Highest is in the set */
-	DWORD	offset;		/* Offset from resource start to first entry */
+	unsigned int	idlo;		/* Lowest id in the set */
+	unsigned int	idhi;		/* Highest is in the set */
+	unsigned int	offset;		/* Offset from resource start to first entry */
 } msgtab_block_t;
 
 typedef struct msgtab_entry {
-	WORD	length;		/* Length of the data in bytes */
-	WORD	flags;		/* 0 for char, 1 for WCHAR */
+	unsigned short	length;		/* Length of the data in bytes */
+	unsigned short	flags;		/* 0 for char, 1 for WCHAR */
 /*	{char}|{WCHAR} data[...]; */
 } msgtab_entry_t;
 
 typedef struct messagetable {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } messagetable_t;
 
@@ -432,7 +432,7 @@ typedef struct messagetable {
 typedef struct stt_entry {
 	string_t		*str;
 	int			id;
-	DWORD			memopt;
+	unsigned int		memopt;
 	characts_t		*characts;
 	version_t		*version;
 } stt_entry_t;
@@ -440,7 +440,7 @@ typedef struct stt_entry {
 typedef struct stringtable {
 	struct stringtable	*next;
 	struct stringtable	*prev;
-	DWORD			memopt;
+	unsigned int		memopt;
 	lvc_t			lvc;
 	int			idbase;
 	int			nentries;
@@ -453,8 +453,8 @@ enum ver_val_e {val_str, val_words, val_block};
 struct ver_block;	/* Forward ref */
 
 typedef struct ver_words {
-	WORD	*words;
-	int	nwords;
+	unsigned short	*words;
+	int		nwords;
 } ver_words_t;
 
 typedef struct ver_value {
@@ -501,7 +501,7 @@ typedef struct versioninfo {
 	} gotit;
 	ver_block_t	*blocks;
 	lvc_t		lvc;
-	DWORD		memopt;
+	unsigned int	memopt;
 } versioninfo_t;
 
 /* Accelerator structures */
@@ -522,7 +522,7 @@ typedef struct event {
 } event_t;
 
 typedef struct accelerator {
-	DWORD		memopt;
+	unsigned int	memopt;
 	lvc_t		lvc;
 	event_t		*events;
 } accelerator_t;
@@ -535,7 +535,7 @@ typedef struct toolbar_item {
 } toolbar_item_t;
 
 typedef struct toolbar {
-	DWORD		memopt;
+	unsigned int	memopt;
 	lvc_t		lvc;
 	int		button_width;
 	int		button_height;
@@ -544,7 +544,7 @@ typedef struct toolbar {
 } toolbar_t;
 
 typedef struct dlginit {
-	DWORD		memopt;
+	unsigned int	memopt;
 	raw_data_t	*data;
 } dlginit_t;
 
@@ -578,7 +578,7 @@ typedef struct resource {
 		versioninfo_t	*ver;
 		void		*overlay; /* To catch all types at once... */
 	} res;
-	DWORD		memopt;
+	unsigned int	memopt;
 } resource_t;
 
 /* Resource count */

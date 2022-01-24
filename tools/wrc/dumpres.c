@@ -162,7 +162,7 @@ const char *get_nameid_str(const name_id_t *n)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_memopt(DWORD memopt)
+static void dump_memopt(unsigned int memopt)
 {
 	printf("Memory/load options: ");
 	if(memopt & 0x0040)

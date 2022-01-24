@@ -52,22 +52,22 @@ struct mo_file
     /* ... rest of file data here */
 };
 
-static BOOL is_english( const language_t *lan )
+static int is_english( const language_t *lan )
 {
     return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
 }
 
-static BOOL is_rtl_language( const language_t *lan )
+static int is_rtl_language( const language_t *lan )
 {
     return lan->id == LANG_ARABIC || lan->id == LANG_HEBREW || lan->id == LANG_PERSIAN;
 }
 
-static BOOL uses_larger_font( const language_t *lan )
+static int uses_larger_font( const language_t *lan )
 {
     return lan->id == LANG_CHINESE || lan->id == LANG_JAPANESE || lan->id == LANG_KOREAN;
 }
 
-static WORD get_default_sublang( const language_t *lan )
+static int get_default_sublang( const language_t *lan )
 {
     if (lan->sub != SUBLANG_NEUTRAL)
         return lan->sub;
@@ -136,7 +136,7 @@ static char *get_message_context( char **msgid )
     return context;
 }
 
-static BOOL control_has_title( const control_t *ctrl )
+static int control_has_title( const control_t *ctrl )
 {
     if (!ctrl->title) return FALSE;
     if (ctrl->title->type != name_str) return FALSE;
@@ -893,7 +893,7 @@ static void add_po_menu( const resource_t *english, const resource_t *res )
     add_po_menu_items( po, english_items, items, res->res.men->lvc.language );
 }
 
-static BOOL string_has_context( const string_t *str )
+static int string_has_context( const string_t *str )
 {
     char *id, *id_buffer, *context;
 
@@ -1346,7 +1346,7 @@ static ver_value_t *translate_stringfileinfo( ver_value_t *val, language_t *lang
     ver_value_t *new_val, *head = NULL, *tail = NULL;
     const char *english_block_name[2] = { "040904b0", "040904e4" };
     char *block_name[2];
-    LANGID langid = MAKELANGID( lang->id, get_default_sublang( lang ) );
+    int langid = MAKELANGID( lang->id, get_default_sublang( lang ) );
 
     block_name[0] = strmake( "%04x%04x", langid, 1200 );
     block_name[1] = strmake( "%04x%04x", langid, get_language_codepage( lang->id, lang->sub ) );
@@ -1416,8 +1416,7 @@ static ver_value_t *translate_varfileinfo( ver_value_t *val, language_t *lang )
                 val->value.words->words[0] == MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US ))
             {
                 ver_words_t *new_words;
-                LANGID langid;
-                WORD codepage;
+                int langid, codepage;
                 langid = MAKELANGID( lang->id, get_default_sublang( lang ) );
                 new_words = new_ver_words( langid );
                 if (val->value.words->words[1] == 1200)
