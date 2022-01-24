@@ -503,10 +503,10 @@ static const unsigned char Lookup_224[128 * 3] = {
  *  skind and lcid, while the low word is based on a repeated string
  *  hash of skind/str.
  */
-unsigned int lhash_val_of_name_sys( syskind_t skind, LCID lcid, LPCSTR lpStr)
+unsigned int lhash_val_of_name_sys( syskind_t skind, int lcid, const char *lpStr)
 {
-  ULONG nOffset, nMask = skind == SYS_MAC ? 1 : 0;
-  ULONG nHiWord, nLoWord = 0x0deadbee;
+  unsigned int nOffset, nMask = skind == SYS_MAC ? 1 : 0;
+  unsigned int nHiWord, nLoWord = 0x0deadbee;
   const unsigned char *str = (const unsigned char *)lpStr, *pnLookup = NULL;
 
   if (!str)
@@ -669,7 +669,7 @@ unsigned int lhash_val_of_name_sys( syskind_t skind, LCID lcid, LPCSTR lpStr)
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 static void sha1_transform(struct sha1_context *ctx)
 {
-   DWORD a, b, c, d, e, *block = (DWORD *)ctx->buffer;
+   unsigned int a, b, c, d, e, *block = (unsigned int *)ctx->buffer;
 
    /* Copy ctx->state[] to working variables */
    a = ctx->state[0];
@@ -748,7 +748,7 @@ void sha1_update(struct sha1_context *ctx, const char *data, size_t data_size)
    }
 }
 
-void sha1_finalize(struct sha1_context *ctx, DWORD result[5])
+void sha1_finalize(struct sha1_context *ctx, unsigned int result[5])
 {
    unsigned int *count, length_hi, length_lo, i;
    size_t pad_size, buffer_size;

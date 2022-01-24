@@ -160,7 +160,7 @@ static size_t append_var_list_signature(char **buf, size_t *len, size_t pos, var
 
 static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t *type)
 {
-    const GUID *uuid;
+    const uuid_t *uuid;
     size_t n = 0;
 
     if (!type) return 0;
@@ -329,7 +329,7 @@ static char *format_parameterized_type_signature(type_t *type, typeref_list_t *p
     size_t len = 0, pos = 0;
     char *buf = NULL;
     typeref_t *ref;
-    const GUID *uuid;
+    const uuid_t *uuid;
 
      if (!(uuid = get_attrp(type->attrs, ATTR_UUID)))
         error_loc_info(&type->loc_info, "cannot compute type signature, no uuid found for type %s.\n", type->name);
@@ -1237,18 +1237,18 @@ static void compute_interface_signature_uuid(type_t *iface)
     static const int version = 5;
     struct sha1_context ctx;
     unsigned char hash[20];
-    GUID *uuid;
+    uuid_t *uuid;
 
     if (!(uuid = get_attrp(iface->attrs, ATTR_UUID)))
     {
-        uuid = xmalloc(sizeof(GUID));
+        uuid = xmalloc(sizeof(*uuid));
         iface->attrs = append_attr(iface->attrs, make_attrp(ATTR_UUID, uuid));
     }
 
     sha1_init(&ctx);
     sha1_update(&ctx, winrt_pinterface_namespace, sizeof(winrt_pinterface_namespace));
     sha1_update(&ctx, iface->signature, strlen(iface->signature));
-    sha1_finalize(&ctx, (ULONG *)hash);
+    sha1_finalize(&ctx, (unsigned int *)hash);
 
     /* https://tools.ietf.org/html/rfc4122:
 
@@ -1263,10 +1263,10 @@ static void compute_interface_signature_uuid(type_t *iface)
     hash[6] = ((hash[6] & 0x0f) | (version << 4));
     hash[8] = ((hash[8] & 0x3f) | 0x80);
 
-    uuid->Data1 = ((DWORD)hash[0] << 24)|((DWORD)hash[1] << 16)|((DWORD)hash[2] << 8)|(DWORD)hash[3];
-    uuid->Data2 = ((WORD)hash[4] << 8)|(WORD)hash[5];
-    uuid->Data3 = ((WORD)hash[6] << 8)|(WORD)hash[7];
-    memcpy(&uuid->Data4, hash + 8, sizeof(*uuid) - offsetof(GUID, Data4));
+    uuid->Data1 = ((unsigned int)hash[0] << 24) | ((unsigned int)hash[1] << 16) | ((unsigned int)hash[2] << 8) | hash[3];
+    uuid->Data2 = ((unsigned short)hash[4] << 8) | hash[5];
+    uuid->Data3 = ((unsigned short)hash[6] << 8) | hash[7];
+    memcpy(&uuid->Data4, hash + 8, sizeof(*uuid) - offsetof(uuid_t, Data4));
 }
 
 type_t *type_parameterized_type_specialize_define(type_t *type)

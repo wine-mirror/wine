@@ -22,19 +22,17 @@
 #ifndef __WIDL_HASH_H
 #define __WIDL_HASH_H
 
-#include "windef.h"
-
-extern unsigned int lhash_val_of_name_sys( syskind_t skind, LCID lcid, LPCSTR lpStr);
+extern unsigned int lhash_val_of_name_sys( syskind_t skind, int lcid, const char *lpStr);
 
 struct sha1_context
 {
-   DWORD state[5];
-   DWORD count[2];
-   char buffer[64];
+   unsigned int state[5];
+   unsigned int count[2];
+   char         buffer[64];
 };
 
 void sha1_init(struct sha1_context *ctx);
 void sha1_update(struct sha1_context *ctx, const char *data, size_t data_size);
-void sha1_finalize(struct sha1_context *ctx, DWORD hash[5]);
+void sha1_finalize(struct sha1_context *ctx, unsigned int hash[5]);
 
 #endif

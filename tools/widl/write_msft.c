@@ -39,10 +39,6 @@
 #define NONAMELESSUNION
 
 #include "widl.h"
-#include "winerror.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
 #include "typelib.h"
 #include "typelib_struct.h"
 #include "utils.h"
@@ -73,7 +69,7 @@ enum MSFT_segment_index {
 
 typedef struct tagMSFT_ImpFile {
     int guid;
-    LCID lcid;
+    int lcid;
     int version;
     char filename[0]; /* preceded by two bytes of encoded (length << 2) + flags in the low two bits. */
 } MSFT_ImpFile;
@@ -86,12 +82,12 @@ typedef struct _msft_typelib_t
     unsigned char *typelib_segment_data[MSFT_SEG_MAX];
     int typelib_segment_block_length[MSFT_SEG_MAX];
 
-    INT typelib_typeinfo_offsets[0x200]; /* Hope that's enough. */
+    int typelib_typeinfo_offsets[0x200]; /* Hope that's enough. */
 
-    INT *typelib_namehash_segment;
-    INT *typelib_guidhash_segment;
+    int *typelib_namehash_segment;
+    int *typelib_guidhash_segment;
 
-    INT help_string_dll_offset;
+    int help_string_dll_offset;
 
     struct _msft_typeinfo_t *typeinfos;
     struct _msft_typeinfo_t *last_typeinfo;
@@ -190,8 +186,7 @@ static void ctl2_init_segdir(
  *
  *  The hash key for the GUID.
  */
-static int ctl2_hash_guid(
-	REFGUID guid)                /* [I] The guid to hash. */
+static int ctl2_hash_guid(const uuid_t *guid)
 {
     int hash;
     int i;
@@ -216,7 +211,7 @@ static int ctl2_hash_guid(
 static int ctl2_find_guid(
 	msft_typelib_t *typelib,   /* [I] The typelib to operate against. */
 	int hash_key,              /* [I] The hash key for the guid. */
-	REFGUID guid)              /* [I] The guid to find. */
+	const uuid_t *guid)        /* [I] The guid to find. */
 {
     int offset;
     MSFT_GuidEntry *guidentry;
@@ -225,7 +220,7 @@ static int ctl2_find_guid(
     while (offset != -1) {
 	guidentry = (MSFT_GuidEntry *)&typelib->typelib_segment_data[MSFT_SEG_GUID][offset];
 
-	if (!memcmp(guidentry, guid, sizeof(GUID))) return offset;
+	if (!memcmp(guidentry, guid, sizeof(*guid))) return offset;
 
 	offset = guidentry->next_hash;
     }
@@ -691,7 +686,7 @@ static void alloc_importinfo(msft_typelib_t *typelib, importinfo_t *importinfo)
 
         importlib->allocated = -1;
 
-        memcpy(&guid.guid, &importlib->guid, sizeof(GUID));
+        memcpy(&guid.guid, &importlib->guid, sizeof(guid.guid));
         guid.hreftype = 2;
 
         guid_idx = ctl2_alloc_guid(typelib, &guid);
@@ -710,13 +705,13 @@ static void alloc_importinfo(msft_typelib_t *typelib, importinfo_t *importinfo)
             MSFT_GuidEntry guid;
 
             guid.hreftype = 0;
-            memcpy(&guid.guid, &importinfo->guid, sizeof(GUID));
+            memcpy(&guid.guid, &importinfo->guid, sizeof(guid.guid));
 
             impinfo.oGuid = ctl2_alloc_guid(typelib, &guid);
 
             importinfo->offset = alloc_msft_importinfo(typelib, &impinfo);
 
-            typelib->typelib_segment_data[MSFT_SEG_GUID][impinfo.oGuid+sizeof(GUID)]
+            typelib->typelib_segment_data[MSFT_SEG_GUID][impinfo.oGuid+sizeof(guid.guid)]
                 = importinfo->offset+1;
 
             if(!strcmp(importinfo->name, "IDispatch"))
@@ -1260,8 +1255,8 @@ static void write_default_value(msft_typelib_t *typelib, type_t *type, expr_t *e
     write_int_value(typelib, out, vt, expr->cval);
 }
 
-static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
-                            int vt, const void *value, int *offset)
+static void set_custdata(msft_typelib_t *typelib, const uuid_t *guid,
+                         int vt, const void *value, int *offset)
 {
     int guidoffset;
     int custoffset;
@@ -1295,11 +1290,9 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     custdata[1] = data_out;
     custdata[2] = *offset;
     *offset = custoffset;
-
-    return S_OK;
 }
 
-static HRESULT set_custdata_attr(msft_typelib_t *typelib, attr_custdata_t *custdata, int *offset)
+static void set_custdata_attr(msft_typelib_t *typelib, attr_custdata_t *custdata, int *offset)
 {
     switch(custdata->pval->type) {
         case EXPR_STRLIT:
@@ -1314,11 +1307,9 @@ static HRESULT set_custdata_attr(msft_typelib_t *typelib, attr_custdata_t *custd
             error("custom() attribute with unknown type\n");
             break;
     }
-
-    return S_OK;
 }
 
-static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
+static int add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 {
     int offset, name_offset;
     int *typedata, typedata_size;
@@ -1354,7 +1345,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 
     if (is_local( func->attrs )) {
         chat("add_func_desc: skipping local function\n");
-        return S_FALSE;
+        return FALSE;
     }
 
     if (type_function_get_args(func->declspec.type))
@@ -1637,8 +1628,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     typeinfo->typeinfo->cElement += 1;
 
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + name_offset;
-    if (*((INT *)namedata) == -1) {
-	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
+    if (*((int *)namedata) == -1) {
+	*((int *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
         if(typeinfo->typekind == TKIND_MODULE)
             namedata[9] |= 0x10;
     } else
@@ -1662,17 +1653,17 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             i++;
         }
     }
-    return S_OK;
+    return TRUE;
 }
 
-static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
+static void add_var_desc(msft_typeinfo_t *typeinfo, unsigned int index, var_t* var)
 {
     int offset, id;
     unsigned int typedata_size;
     int extra_attr = 0;
-    INT *typedata;
+    int *typedata;
     unsigned int var_datawidth, var_alignment = 0;
-    int var_type_size, var_kind = 0 /* VAR_PERINSTANCE */; 
+    int var_type_size, var_kind = 0 /* VAR_PERINSTANCE */;
     int alignment;
     int varflags = 0;
     const attr_t *attr;
@@ -1853,11 +1844,10 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     typeinfo->typeinfo->size = (typeinfo->datawidth + (alignment - 1)) & ~(alignment - 1);
 
     offset = ctl2_alloc_name(typeinfo->typelib, var->name);
-    if (offset == -1) return E_OUTOFMEMORY;
 
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
-    if (*((INT *)namedata) == -1) {
-	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
+    if (*((int *)namedata) == -1) {
+	*((int *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
         if(typeinfo->typekind != TKIND_DISPATCH)
             namedata[9] |= 0x10;
     } else
@@ -1867,11 +1857,9 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 	namedata[9] |= 0x20;
     }
     typeinfo->var_names[var_num] = offset;
-
-    return S_OK;
 }
 
-static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref, importinfo_t *importinfo)
+static void add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref, importinfo_t *importinfo)
 {
     if(importinfo) {
         alloc_importinfo(typeinfo->typelib, importinfo);
@@ -1886,7 +1874,6 @@ static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref, importinfo_
     }
 
     typeinfo->typeinfo->cImplTypes++;
-    return S_OK;
 }
 
 static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_kind kind,
@@ -2005,7 +1992,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             break;
 
         case ATTR_UUID:
-            guidentry.guid = *(GUID*)attr->u.pval;
+            guidentry.guid = *(uuid_t *)attr->u.pval;
             guidentry.hreftype = typelib->typelib_typeinfo_offsets[typeinfo->typekind >> 16];
             guidentry.next_hash = -1;
             typeinfo->posguid = ctl2_alloc_guid(typelib, &guidentry);
@@ -2038,8 +2025,8 @@ static void add_dispatch(msft_typelib_t *typelib)
     int guid_offset, impfile_offset, hash_key;
     MSFT_GuidEntry guidentry;
     MSFT_ImpInfo impinfo;
-    GUID stdole =        {0x00020430,0x0000,0x0000,{0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46}};
-    GUID iid_idispatch = {0x00020400,0x0000,0x0000,{0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46}};
+    static const uuid_t stdole =        {0x00020430,0x0000,0x0000,{0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46}};
+    static const uuid_t iid_idispatch = {0x00020400,0x0000,0x0000,{0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46}};
 
     if(typelib->typelib_header.dispatchpos != -1) return;
 
@@ -2137,7 +2124,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     {
         idx = 0;
         LIST_FOR_EACH_ENTRY( func, type_dispiface_get_methods(dispinterface), var_t, entry )
-            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+            if(add_func_desc(msft_typeinfo, func, idx))
                 idx++;
     }
 
@@ -2215,7 +2202,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 
     STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(interface) ) {
         var_t *func = stmt_func->u.var;
-        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+        if(add_func_desc(msft_typeinfo, func, idx))
             idx++;
     }
 
@@ -2427,7 +2414,7 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
 
     STATEMENTS_FOR_EACH_FUNC( stmt, module->details.module->stmts ) {
         var_t *func = stmt->u.var;
-        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+        if(add_func_desc(msft_typeinfo, func, idx))
             idx++;
     }
 
@@ -2520,17 +2507,11 @@ static void set_version(msft_typelib_t *typelib)
 
 static void set_guid(msft_typelib_t *typelib)
 {
-    MSFT_GuidEntry guidentry;
+    MSFT_GuidEntry guidentry = { {0}, -2, -1 };
     int offset;
-    void *ptr;
-    GUID guid = {0,0,0,{0,0,0,0,0,0}};
+    uuid_t *ptr = get_attrp( typelib->typelib->attrs, ATTR_UUID );
 
-    guidentry.guid = guid;
-    guidentry.hreftype = -2;
-    guidentry.next_hash = -1;
-
-    ptr = get_attrp( typelib->typelib->attrs, ATTR_UUID );
-    if (ptr) guidentry.guid = *(GUID *)ptr;
+    if (ptr) guidentry.guid = *ptr;
 
     offset = ctl2_alloc_guid(typelib, &guidentry);
     typelib->typelib_header.posguid = offset;
@@ -2772,9 +2753,9 @@ int create_msft_typelib(typelib_t *typelib)
     time_t cur_time;
     char *time_override;
     unsigned int version = 7 << 24 | 555; /* 7.00.0555 */
-    GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
-    GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
-    GUID midl_info_guid = {0xde77ba65,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
+    static const uuid_t midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
+    static const uuid_t midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
+    static const uuid_t midl_info_guid = {0xde77ba65,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}};
     char info_string[128];
 
     msft = xmalloc(sizeof(*msft));

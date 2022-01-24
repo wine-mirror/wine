@@ -847,9 +847,9 @@ static int cmp_iid( const void *ptr1, const void *ptr2 )
 {
     const type_t * const *iface1 = ptr1;
     const type_t * const *iface2 = ptr2;
-    const UUID *uuid1 = get_attrp( (*iface1)->attrs, ATTR_UUID );
-    const UUID *uuid2 = get_attrp( (*iface2)->attrs, ATTR_UUID );
-    return memcmp( uuid1, uuid2, sizeof(UUID) );
+    const uuid_t *uuid1 = get_attrp( (*iface1)->attrs, ATTR_UUID );
+    const uuid_t *uuid2 = get_attrp( (*iface2)->attrs, ATTR_UUID );
+    return memcmp( uuid1, uuid2, sizeof(*uuid1) );
 }
 
 static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], int *count )

@@ -96,9 +96,9 @@ static unsigned int xstrtoul(const char *nptr, char **endptr, int base)
     return val;
 }
 
-UUID *parse_uuid(const char *u)
+uuid_t *parse_uuid(const char *u)
 {
-  UUID* uuid = xmalloc(sizeof(UUID));
+  uuid_t* uuid = xmalloc(sizeof(*uuid));
   char b[3];
   /* it would be nice to use UuidFromStringA */
   uuid->Data1 = strtoul(u, NULL, 16);
