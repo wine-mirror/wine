@@ -56,7 +56,6 @@ struct pulse_stream
     AUDCLNT_SHAREMODE share;
     HANDLE event;
     float vol[PA_CHANNELS_MAX];
-    BOOL mute;
 
     INT32 locked;
     BOOL started;
