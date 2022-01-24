@@ -297,6 +297,8 @@ struct socket_send
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     const void *buf;
     DWORD len;
+    WSAOVERLAPPED ovr;
+    BOOL complete_async;
 };
 
 struct socket_receive
@@ -331,7 +333,7 @@ ULONG netconn_query_data_available( struct netconn * ) DECLSPEC_HIDDEN;
 DWORD netconn_recv( struct netconn *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
 DWORD netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
 DWORD netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL ) DECLSPEC_HIDDEN;
-DWORD netconn_send( struct netconn *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
+DWORD netconn_send( struct netconn *, const void *, size_t, int *, WSAOVERLAPPED * ) DECLSPEC_HIDDEN;
 DWORD netconn_set_timeout( struct netconn *, BOOL, int ) DECLSPEC_HIDDEN;
 BOOL netconn_is_alive( struct netconn * ) DECLSPEC_HIDDEN;
 const void *netconn_get_certificate( struct netconn * ) DECLSPEC_HIDDEN;

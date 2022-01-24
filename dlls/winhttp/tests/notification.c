@@ -62,6 +62,7 @@ struct notification
 #define NF_ALLOW       0x0001  /* notification may or may not happen */
 #define NF_WINE_ALLOW  0x0002  /* wine sends notification when it should not */
 #define NF_SIGNAL      0x0004  /* signal wait handle when notified */
+#define NF_MAIN_THREAD 0x0008  /* the operation completes synchronously and callback is called from the main thread */
 
 struct info
 {
@@ -71,6 +72,7 @@ struct info
     unsigned int index;
     HANDLE wait;
     unsigned int line;
+    DWORD main_thread_id;
     DWORD last_thread_id;
     DWORD last_status;
 };
@@ -110,6 +112,12 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
     function_ok = (info->test[info->index].function == info->function);
     ok(status_ok, "%u: expected status 0x%08x got 0x%08x\n", info->line, info->test[info->index].status, status);
     ok(function_ok, "%u: expected function %u got %u\n", info->line, info->test[info->index].function, info->function);
+
+    if (info->test[info->index].flags & NF_MAIN_THREAD)
+    {
+        ok(GetCurrentThreadId() == info->main_thread_id, "%u: expected callback to be called from the same thread\n",
+                info->line);
+    }
 
     if (status_ok && function_ok && info->test[info->index++].flags & NF_SIGNAL)
     {
@@ -184,6 +192,7 @@ static void setup_test( struct info *info, enum api function, unsigned int line 
                        info->test[info->index].function, function);
     info->last_thread_id = 0xdeadbeef;
     info->last_status = 0xdeadbeef;
+    info->main_thread_id = GetCurrentThreadId();
 }
 
 static void end_test( struct info *info, unsigned int line )
@@ -658,8 +667,8 @@ static const struct notification websocket_test[] =
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NF_SIGNAL },
     { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, NF_SIGNAL },
-    { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_SIGNAL },
-    { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_SIGNAL },
+    { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
+    { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
@@ -792,6 +801,9 @@ static void test_websocket(BOOL secure)
 
     for (i = 0; i < 2; ++i)
     {
+        /* The send is executed synchronously (even if sending a reasonably big buffer exceeding SSL buffer size).
+         * It is possible to trigger queueing the send into another thread but that involves sending a considerable
+         * amount of big enough buffers. */
         setup_test( &info, winhttp_websocket_send, __LINE__ );
         err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
                                      (void*)"hello", sizeof("hello") );

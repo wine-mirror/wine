@@ -32,15 +32,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
-static int sock_send(int fd, const void *msg, size_t len, int flags)
+static int sock_send(int fd, const void *msg, size_t len, WSAOVERLAPPED *ovr)
 {
-    int ret;
-    do
+    WSABUF wsabuf;
+    DWORD size;
+    DWORD err;
+
+    wsabuf.len = len;
+    wsabuf.buf = (void *)msg;
+
+    if (!WSASend( (SOCKET)fd, &wsabuf, 1, &size, 0, ovr, NULL ))
     {
-        if ((ret = send(fd, msg, len, flags)) == -1) WARN("send error %u\n", WSAGetLastError());
+        assert( size == len );
+        return size;
     }
-    while(ret == -1 && WSAGetLastError() == WSAEINTR);
-    return ret;
+    err = WSAGetLastError();
+    if (!(ovr && err == WSA_IO_PENDING)) WARN( "send error %u\n", err );
+    return -1;
 }
 
 static int sock_recv(int fd, void *msg, size_t len, int flags)
@@ -190,7 +198,7 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
     if (!(conn = calloc( 1, sizeof(*conn) ))) return ERROR_OUTOFMEMORY;
     conn->host = host;
     conn->sockaddr = *sockaddr;
-    if ((conn->socket = socket( sockaddr->ss_family, SOCK_STREAM, 0 )) == -1)
+    if ((conn->socket = WSASocketW( sockaddr->ss_family, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED )) == -1)
     {
         ret = WSAGetLastError();
         WARN("unable to create socket (%u)\n", ret);
@@ -290,7 +298,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
 
             TRACE("sending %u bytes\n", out_buf.cbBuffer);
 
-            size = sock_send(conn->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
+            size = sock_send(conn->socket, out_buf.pvBuffer, out_buf.cbBuffer, NULL);
             if(size != out_buf.cbBuffer) {
                 ERR("send failed\n");
                 res = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
@@ -398,7 +406,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
     return ERROR_SUCCESS;
 }
 
-static DWORD send_ssl_chunk( struct netconn *conn, const void *msg, size_t size )
+static DWORD send_ssl_chunk( struct netconn *conn, const void *msg, size_t size, WSAOVERLAPPED *ovr )
 {
     SecBuffer bufs[4] = {
         {conn->ssl_sizes.cbHeader, SECBUFFER_STREAM_HEADER, conn->ssl_write_buf},
@@ -416,7 +424,8 @@ static DWORD send_ssl_chunk( struct netconn *conn, const void *msg, size_t size 
         return res;
     }
 
-    if (sock_send( conn->socket, conn->ssl_write_buf, bufs[0].cbBuffer + bufs[1].cbBuffer + bufs[2].cbBuffer, 0 ) < 1)
+    if (sock_send( conn->socket, conn->ssl_write_buf,
+                   bufs[0].cbBuffer + bufs[1].cbBuffer + bufs[2].cbBuffer, ovr ) < 1)
     {
         WARN("send failed\n");
         return WSAGetLastError();
@@ -425,7 +434,7 @@ static DWORD send_ssl_chunk( struct netconn *conn, const void *msg, size_t size 
     return ERROR_SUCCESS;
 }
 
-DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent )
+DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent, WSAOVERLAPPED *ovr )
 {
     if (conn->secure)
     {
@@ -433,11 +442,13 @@ DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent
         size_t chunk_size;
         DWORD res;
 
+        if (ovr && len > conn->ssl_sizes.cbMaximumMessage) return WSAEWOULDBLOCK;
+
         *sent = 0;
         while (len)
         {
             chunk_size = min( len, conn->ssl_sizes.cbMaximumMessage );
-            if ((res = send_ssl_chunk( conn, ptr, chunk_size )))
+            if ((res = send_ssl_chunk( conn, ptr, chunk_size, ovr )))
                 return res;
 
             *sent += chunk_size;
@@ -448,7 +459,7 @@ DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent
         return ERROR_SUCCESS;
     }
 
-    if ((*sent = sock_send( conn->socket, msg, len, 0 )) < 0) return WSAGetLastError();
+    if ((*sent = sock_send( conn->socket, msg, len, ovr )) < 0) return WSAGetLastError();
     return ERROR_SUCCESS;
 }
 
