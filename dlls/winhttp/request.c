@@ -3240,6 +3240,25 @@ static enum socket_opcode map_buffer_type( WINHTTP_WEB_SOCKET_BUFFER_TYPE type )
     }
 }
 
+static void socket_send_complete( struct socket *socket, DWORD ret, WINHTTP_WEB_SOCKET_BUFFER_TYPE type, DWORD len )
+{
+    if (!ret)
+    {
+        WINHTTP_WEB_SOCKET_STATUS status;
+        status.dwBytesTransferred = len;
+        status.eBufferType        = type;
+        send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, &status, sizeof(status) );
+    }
+    else
+    {
+        WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+        result.AsyncResult.dwResult = API_WRITE_DATA;
+        result.AsyncResult.dwError  = ret;
+        result.Operation = WINHTTP_WEB_SOCKET_SEND_OPERATION;
+        send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+    }
+}
+
 static DWORD socket_send( struct socket *socket, WINHTTP_WEB_SOCKET_BUFFER_TYPE type, const void *buf, DWORD len,
                           BOOL async )
 {
@@ -3247,24 +3266,7 @@ static DWORD socket_send( struct socket *socket, WINHTTP_WEB_SOCKET_BUFFER_TYPE 
     DWORD ret;
 
     ret = send_frame( socket, opcode, 0, buf, len, TRUE );
-    if (async)
-    {
-        if (!ret)
-        {
-            WINHTTP_WEB_SOCKET_STATUS status;
-            status.dwBytesTransferred = len;
-            status.eBufferType        = type;
-            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, &status, sizeof(status) );
-        }
-        else
-        {
-            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
-            result.AsyncResult.dwResult = API_WRITE_DATA;
-            result.AsyncResult.dwError  = ret;
-            result.Operation = WINHTTP_WEB_SOCKET_SEND_OPERATION;
-            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
-        }
-    }
+    if (async) socket_send_complete( socket, ret, type, len );
     return ret;
 }
 
