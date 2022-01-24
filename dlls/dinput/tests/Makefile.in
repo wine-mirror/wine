@@ -13,6 +13,7 @@ SOURCES = \
 	driver_hid.spec \
 	force_feedback.c \
 	hid.c \
+	hotplug.c \
 	joystick.c \
 	joystick8.c \
 	keyboard.c \
