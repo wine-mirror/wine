@@ -5420,6 +5420,59 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
     return TRUE;
 }
 
+static void test_wma_encoder(void)
+{
+    static const media_type_desc transform_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        },
+    };
+    static const media_type_desc transform_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV9),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudio_Lossless),
+        },
+    };
+
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    IMFTransform *transform;
+    GUID class_id;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    if (!create_transform(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, L"WMAudio Encoder MFT",
+            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
+            &transform, &class_id))
+        goto failed;
+
+    check_interface(transform, &IID_IMediaObject, TRUE);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %u\n", ret);
+
+failed:
+    CoUninitialize();
+}
+
 static void test_wma_decoder(void)
 {
     static const media_type_desc transform_inputs[] =
@@ -5511,5 +5564,6 @@ START_TEST(mf)
     test_sample_copier_output_processing();
     test_MFGetTopoNodeCurrentType();
     test_MFRequireProtectedEnvironment();
+    test_wma_encoder();
     test_wma_decoder();
 }
