@@ -512,6 +512,7 @@ static void test_hstring_struct(void)
     prv = CONTAINING_RECORD(str, struct hstring_private, header);
 
     ok(prv->header.flags == 0, "Expected 0 in flags field, got %#x.\n", prv->header.flags);
+    ok(prv->header.length == 6, "Expected 6 in length field, got %u.\n", prv->header.length);
     todo_wine
     ok(prv->header.str == prv->buffer, "Expected str to point at buffer, instead pointing at %p.\n", prv->header.str);
     todo_wine
@@ -546,6 +547,7 @@ static void test_hstring_struct(void)
 
     ok(prv == prv2, "Pointers not identical.\n");
     ok(prv2->header.flags == 1, "Expected HSTRING_REFERENCE_FLAG to be set, got %#x.\n", prv2->header.flags);
+    ok(prv2->header.length == 6, "Expected 6 in length field, got %u.\n", prv2->header.length);
     todo_wine
     ok(prv2->header.str == input_string, "Expected str to point at input_string, instead pointing at %p.\n", prv2->header.str);
 
