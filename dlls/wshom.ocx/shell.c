@@ -24,7 +24,6 @@
 #include "dispex.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
@@ -49,7 +48,7 @@ typedef struct
     LONG ref;
 
     IShellLinkW *link;
-    BSTR path_link;
+    WCHAR *path_link;
 } WshShortcut;
 
 typedef struct
@@ -130,7 +129,7 @@ static ULONG WINAPI WshExec_Release(IWshExec *iface)
     if (!ref) {
         CloseHandle(This->info.hThread);
         CloseHandle(This->info.hProcess);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -321,24 +320,25 @@ static const IWshExecVtbl WshExecVtbl = {
 static HRESULT WshExec_create(BSTR command, IWshExec **ret)
 {
     STARTUPINFOW si = {0};
-    WshExecImpl *This;
+    WshExecImpl *object;
 
     *ret = NULL;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    This->IWshExec_iface.lpVtbl = &WshExecVtbl;
-    This->ref = 1;
+    object->IWshExec_iface.lpVtbl = &WshExecVtbl;
+    object->ref = 1;
 
-    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &This->info)) {
-        heap_free(This);
+    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &object->info))
+    {
+        free(object);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    init_classinfo(&CLSID_WshExec, (IUnknown *)&This->IWshExec_iface, &This->classinfo);
-    *ret = &This->IWshExec_iface;
+    init_classinfo(&CLSID_WshExec, (IUnknown *)&object->IWshExec_iface, &object->classinfo);
+    *ret = &object->IWshExec_iface;
+
     return S_OK;
 }
 
@@ -383,7 +383,7 @@ static ULONG WINAPI WshEnvironment_Release(IWshEnvironment *iface)
     TRACE("(%p) ref = %d\n", This, ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -519,16 +519,16 @@ static const IWshEnvironmentVtbl WshEnvironmentVtbl = {
 
 static HRESULT WshEnvironment_Create(IWshEnvironment **env)
 {
-    WshEnvironment *This;
+    WshEnvironment *object;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IWshEnvironment_iface.lpVtbl = &WshEnvironmentVtbl;
-    This->ref = 1;
+    object->IWshEnvironment_iface.lpVtbl = &WshEnvironmentVtbl;
+    object->ref = 1;
 
-    init_classinfo(&IID_IWshEnvironment, (IUnknown *)&This->IWshEnvironment_iface, &This->classinfo);
-    *env = &This->IWshEnvironment_iface;
+    init_classinfo(&IID_IWshEnvironment, (IUnknown *)&object->IWshEnvironment_iface, &object->classinfo);
+    *env = &object->IWshEnvironment_iface;
 
     return S_OK;
 }
@@ -574,7 +574,7 @@ static ULONG WINAPI WshCollection_Release(IWshCollection *iface)
     TRACE("(%p) ref = %d\n", This, ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -718,16 +718,16 @@ static const IWshCollectionVtbl WshCollectionVtbl = {
 
 static HRESULT WshCollection_Create(IWshCollection **collection)
 {
-    WshCollection *This;
+    WshCollection *object;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IWshCollection_iface.lpVtbl = &WshCollectionVtbl;
-    This->ref = 1;
+    object->IWshCollection_iface.lpVtbl = &WshCollectionVtbl;
+    object->ref = 1;
 
-    init_classinfo(&IID_IWshCollection, (IUnknown *)&This->IWshCollection_iface, &This->classinfo);
-    *collection = &This->IWshCollection_iface;
+    init_classinfo(&IID_IWshCollection, (IUnknown *)&object->IWshCollection_iface, &object->classinfo);
+    *collection = &object->IWshCollection_iface;
 
     return S_OK;
 }
@@ -775,9 +775,9 @@ static ULONG WINAPI WshShortcut_Release(IWshShortcut *iface)
 
     if (!ref)
     {
-        SysFreeString(This->path_link);
         IShellLinkW_Release(This->link);
-        heap_free(This);
+        free(This->path_link);
+        free(This);
     }
 
     return ref;
@@ -1070,35 +1070,34 @@ static const IWshShortcutVtbl WshShortcutVtbl = {
 
 static HRESULT WshShortcut_Create(const WCHAR *path, IDispatch **shortcut)
 {
-    WshShortcut *This;
+    WshShortcut *object;
     HRESULT hr;
 
     *shortcut = NULL;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IWshShortcut_iface.lpVtbl = &WshShortcutVtbl;
-    This->ref = 1;
+    object->IWshShortcut_iface.lpVtbl = &WshShortcutVtbl;
+    object->ref = 1;
 
-    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IShellLinkW, (void**)&This->link);
+    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (void **)&object->link);
     if (FAILED(hr))
     {
-        heap_free(This);
+        free(object);
         return hr;
     }
 
-    This->path_link = SysAllocString(path);
-    if (!This->path_link)
+    object->path_link = wcsdup(path);
+    if (!object->path_link)
     {
-        IShellLinkW_Release(This->link);
-        heap_free(This);
+        IShellLinkW_Release(object->link);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
-    init_classinfo(&IID_IWshShortcut, (IUnknown *)&This->IWshShortcut_iface, &This->classinfo);
-    *shortcut = (IDispatch*)&This->IWshShortcut_iface;
+    init_classinfo(&IID_IWshShortcut, (IUnknown *)&object->IWshShortcut_iface, &object->classinfo);
+    *shortcut = (IDispatch *)&object->IWshShortcut_iface;
 
     return S_OK;
 }
@@ -1220,7 +1219,7 @@ static WCHAR *split_command( BSTR cmd, WCHAR **params )
     WCHAR *ret, *ptr;
     BOOL in_quotes = FALSE;
 
-    if (!(ret = heap_alloc((lstrlenW(cmd) + 1) * sizeof(WCHAR)))) return NULL;
+    if (!(ret = malloc((lstrlenW(cmd) + 1) * sizeof(WCHAR)))) return NULL;
     lstrcpyW( ret, cmd );
 
     *params = NULL;
@@ -1283,7 +1282,7 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
     info.nShow = V_I4(&s);
 
     ret = ShellExecuteExW(&info);
-    heap_free( file );
+    free(file);
     if (!ret)
     {
         TRACE("ShellExecute failed, %d\n", GetLastError());
@@ -1454,7 +1453,7 @@ static HRESULT split_reg_path(const WCHAR *path, WCHAR **subkey, WCHAR **value)
             unsigned int len = *value - *subkey - 1;
             WCHAR *ret;
 
-            ret = heap_alloc((len + 1)*sizeof(WCHAR));
+            ret = malloc((len + 1)*sizeof(WCHAR));
             if (!ret)
                 return E_OUTOFMEMORY;
 
@@ -1494,7 +1493,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
     if (ret == ERROR_SUCCESS) {
         void *data;
 
-        data = heap_alloc(datalen);
+        data = malloc(datalen);
         if (!data) {
             hr = E_OUTOFMEMORY;
             goto fail;
@@ -1502,7 +1501,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
 
         ret = RegGetValueW(root, subkey, val, RRF_RT_ANY, &type, data, &datalen);
         if (ret) {
-            heap_free(data);
+            free(data);
             hr = HRESULT_FROM_WIN32(ret);
             goto fail;
         }
@@ -1592,7 +1591,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
             hr = E_FAIL;
         };
 
-        heap_free(data);
+        free(data);
         if (FAILED(hr))
             VariantInit(value);
     }
@@ -1601,7 +1600,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
 
 fail:
     if (val)
-        heap_free(subkey);
+        free(subkey);
     return hr;
 }
 
@@ -1684,7 +1683,7 @@ static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR name, VARIANT *
 fail:
     VariantClear(&v);
     if (val)
-        heap_free(subkey);
+        free(subkey);
     return hr;
 }
 
