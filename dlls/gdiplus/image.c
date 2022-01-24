@@ -4544,6 +4544,7 @@ static GpStatus encode_frame_wic(IWICBitmapEncoder *encoder, GpImage *image)
     GpBitmap *bitmap;
     IWICBitmapFrameEncode *frameencode;
     IPropertyBag2 *encoderoptions;
+    GUID container_format;
     HRESULT hr;
     UINT width, height;
     PixelFormat gdipformat=0;
@@ -4570,7 +4571,20 @@ static GpStatus encode_frame_wic(IWICBitmapEncoder *encoder, GpImage *image)
 
     if (SUCCEEDED(hr)) /* created frame */
     {
-        hr = IWICBitmapFrameEncode_Initialize(frameencode, encoderoptions);
+        hr = IWICBitmapEncoder_GetContainerFormat(encoder, &container_format);
+        if (SUCCEEDED(hr) && IsEqualGUID(&container_format, &GUID_ContainerFormatPng))
+        {
+            /* disable PNG filters for faster encoding */
+            PROPBAG2 filter_option = { .pstrName = (LPOLESTR) L"FilterOption" };
+            VARIANT filter_value;
+            VariantInit(&filter_value);
+            V_VT(&filter_value) = VT_UI1;
+            V_UI1(&filter_value) = WICPngFilterNone;
+            hr = IPropertyBag2_Write(encoderoptions, 1, &filter_option, &filter_value);
+        }
+
+        if (SUCCEEDED(hr))
+            hr = IWICBitmapFrameEncode_Initialize(frameencode, encoderoptions);
 
         if (SUCCEEDED(hr))
             hr = IWICBitmapFrameEncode_SetSize(frameencode, width, height);
