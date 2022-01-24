@@ -659,6 +659,7 @@ static const struct notification websocket_test[] =
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NF_SIGNAL },
     { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_SIGNAL },
+    { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
@@ -681,6 +682,7 @@ static void test_websocket(BOOL secure)
     char buffer[1024];
     USHORT close_status;
     DWORD protocols, flags;
+    unsigned int i;
 
     if (!pWinHttpWebSocketCompleteUpgrade)
     {
@@ -788,10 +790,14 @@ static void test_websocket(BOOL secure)
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     WaitForSingleObject( info.wait, INFINITE );
 
-    setup_test( &info, winhttp_websocket_send, __LINE__ );
-    err = pWinHttpWebSocketSend( socket, 0, (void *)"hello", sizeof("hello") );
-    ok( err == ERROR_SUCCESS, "got %u\n", err );
-    WaitForSingleObject( info.wait, INFINITE );
+    for (i = 0; i < 2; ++i)
+    {
+        setup_test( &info, winhttp_websocket_send, __LINE__ );
+        err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
+                                     (void*)"hello", sizeof("hello") );
+        ok( err == ERROR_SUCCESS, "got %u\n", err );
+        WaitForSingleObject( info.wait, INFINITE );
+    }
 
     setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
     err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );

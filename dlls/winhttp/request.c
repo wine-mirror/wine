@@ -3686,9 +3686,16 @@ static DWORD socket_close( struct socket *socket, USHORT status, const void *rea
         socket->state = SOCKET_STATE_SHUTDOWN;
     }
 
-    if ((ret = receive_frame( socket, &count, &socket->opcode ))) goto done;
-    if (socket->opcode != SOCKET_OPCODE_CLOSE ||
-        (count && (count < sizeof(socket->status) || count > sizeof(socket->status) + sizeof(socket->reason))))
+    while (1)
+    {
+        if ((ret = receive_frame( socket, &count, &socket->opcode ))) goto done;
+        if (socket->opcode == SOCKET_OPCODE_CLOSE) break;
+
+        socket->read_size = count;
+        if ((ret = socket_drain( socket ))) goto done;
+    }
+
+    if ((count && (count < sizeof(socket->status) || count > sizeof(socket->status) + sizeof(socket->reason))))
     {
         ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
         goto done;
