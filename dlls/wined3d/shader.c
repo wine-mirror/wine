@@ -3882,7 +3882,7 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
             return E_INVALIDARG;
         }
 
-        mask = ((1u << e->component_count) - 1) << component_idx;
+        mask = wined3d_mask_from_size(e->component_count) << component_idx;
         if ((output->mask & 0xff & mask) != mask)
         {
             WARN("Invalid component range %u-%u (mask %#x), output mask %#x.\n",
