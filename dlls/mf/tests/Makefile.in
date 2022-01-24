@@ -1,5 +1,5 @@
 TESTDLL   = mf.dll
-IMPORTS   = mf mfplat mfuuid ole32 user32
+IMPORTS   = mf mfplat mfuuid ole32 user32 propsys
 
 C_SRCS = \
 	mf.c

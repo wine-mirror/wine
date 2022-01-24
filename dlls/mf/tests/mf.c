@@ -110,6 +110,7 @@ typedef struct attribute_desc media_type_desc[32];
 
 #define ATTR_GUID(k, g)      {.key = &k, .name = #k, {.vt = VT_CLSID, .puuid = (GUID *)&g}}
 #define ATTR_UINT32(k, v)    {.key = &k, .name = #k, {.vt = VT_UI4, .ulVal = v}}
+#define ATTR_BLOB(k, p, n)   {.key = &k, .name = #k, {.vt = VT_VECTOR | VT_UI1, .caub = {.pElems = (void *)p, .cElems = n}}}
 
 static HWND create_window(void)
 {
@@ -5420,6 +5421,43 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
     return TRUE;
 }
 
+static IMFSample *create_sample(const BYTE *data, ULONG size)
+{
+    IMFMediaBuffer *media_buffer;
+    IMFSample *sample;
+    DWORD length;
+    BYTE *buffer;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "MFCreateSample returned %#x\n", hr);
+    hr = MFCreateMemoryBuffer(size, &media_buffer);
+    ok(hr == S_OK, "MFCreateMemoryBuffer returned %#x\n", hr);
+    if (data)
+    {
+        hr = IMFMediaBuffer_SetCurrentLength(media_buffer, size);
+        ok(hr == S_OK, "SetCurrentLength returned %#x\n", hr);
+        hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
+        ok(hr == S_OK, "Lock returned %#x\n", hr);
+        ok(length == size, "got size %u\n", length);
+        if (!data) memset(buffer, 0xcd, length);
+        else memcpy(buffer, data, length);
+        hr = IMFMediaBuffer_Unlock(media_buffer);
+        ok(hr == S_OK, "Unlock returned %#x\n", hr);
+    }
+    hr = IMFSample_AddBuffer(sample, media_buffer);
+    ok(hr == S_OK, "AddBuffer returned %#x\n", hr);
+    ret = IMFMediaBuffer_Release(media_buffer);
+    ok(ret == 1, "Release returned %u\n", ret);
+
+    return sample;
+}
+
+static const BYTE wma_codec_data[10] = {0, 0x44, 0, 0, 0x17, 0, 0, 0, 0, 0};
+static const BYTE wma_decoded_data[0x4000] = {0};
+static const ULONG wma_block_size = 1487;
+
 static void test_wma_encoder(void)
 {
     static const media_type_desc transform_inputs[] =
@@ -5449,12 +5487,39 @@ static void test_wma_encoder(void)
         },
     };
 
+    static const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        {0},
+    };
+    const struct attribute_desc output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wma_block_size),
+        ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
+        {0},
+    };
+
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    MFT_OUTPUT_STREAM_INFO output_info;
+    MFT_INPUT_STREAM_INFO input_info;
+    IMFMediaType *media_type;
     IMFTransform *transform;
+    IMFSample *sample;
     GUID class_id;
+    ULONG i, ret;
     HRESULT hr;
-    ULONG ret;
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
@@ -5465,6 +5530,49 @@ static void test_wma_encoder(void)
         goto failed;
 
     check_interface(transform, &IID_IMediaObject, TRUE);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#x\n", hr);
+    init_media_type(media_type, input_type_desc, -1);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#x.\n", hr);
+    init_media_type(media_type, output_type_desc, -1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#x.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %u\n", ret);
+
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == S_OK, "GetInputStreamInfo returned %#x\n", hr);
+    ok(input_info.hnsMaxLatency == 19969161, "got hnsMaxLatency %s\n",
+            wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    ok(input_info.dwFlags == 0, "got dwFlags %#x\n", input_info.dwFlags);
+    ok(input_info.cbSize == 8, "got cbSize %u\n", input_info.cbSize);
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#x\n", input_info.cbMaxLookahead);
+    ok(input_info.cbAlignment == 1, "got cbAlignment %#x\n", input_info.cbAlignment);
+
+    memset(&output_info, 0xcd, sizeof(output_info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "GetOutputStreamInfo returned %#x\n", hr);
+    ok(output_info.dwFlags == 0, "got dwFlags %#x\n", output_info.dwFlags);
+    ok(output_info.cbSize == wma_block_size, "got cbSize %#x\n", output_info.cbSize);
+    ok(output_info.cbAlignment == 1, "got cbAlignment %#x\n", output_info.cbAlignment);
+
+    i = 0;
+    sample = create_sample(wma_decoded_data, sizeof(wma_decoded_data));
+    while (SUCCEEDED(hr = IMFTransform_ProcessInput(transform, 0, sample, 0)))
+    {
+        ok(hr == S_OK, "ProcessInput returned %#x\n", hr);
+        i += sizeof(wma_decoded_data);
+    }
+    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#x\n", hr);
+    ok(i == 0x204000, "ProcessInput consumed %#x bytes\n", i);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+    ok(hr == S_OK, "ProcessMessage returned %#x\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#x\n", hr);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
