@@ -482,7 +482,7 @@ static void test_GetTempName(void)
     result = (BSTR)0xdeadbeef;
     hr = IFileSystem3_GetTempName(fs3, &result);
     ok(hr == S_OK, "GetTempName returned %x, expected S_OK\n", hr);
-    todo_wine ok(!!wcsstr( result,L".tmp"), "GetTempName returned %s, expected .tmp suffix\n", debugstr_w(result));
+    ok(!!wcsstr( result,L".tmp"), "GetTempName returned %s, expected .tmp suffix\n", debugstr_w(result));
     SysFreeString(result);
 }
 

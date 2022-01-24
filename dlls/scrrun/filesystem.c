@@ -3318,12 +3318,12 @@ static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *result)
     if (!result)
         return E_POINTER;
 
-    if (!(*result = SysAllocStringLen(NULL, 12)))
+    if (!(*result = SysAllocStringLen(NULL, 13)))
         return E_OUTOFMEMORY;
 
     if(!RtlGenRandom(&random, sizeof(random)))
         return E_FAIL;
-    swprintf(*result, 12, L"rad%05X.txt", random & 0xfffff);
+    swprintf(*result, 13, L"rad%05X.tmp", random & 0xfffff);
     return S_OK;
 }
 
