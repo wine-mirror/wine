@@ -2097,7 +2097,7 @@ static void test_EnableThemeDialogTexture(void)
         child_hdc = GetDC(child);
         brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
         if (class_tests[i].texture_enabled)
-            todo_wine
+            todo_wine_if(!lstrcmpA(class_tests[i].param.class_name, WC_STATICA))
             ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
         else
             ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
@@ -2121,7 +2121,7 @@ static void test_EnableThemeDialogTexture(void)
         child_hdc = GetDC(child);
         brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
         if (class_tests[i].texture_enabled)
-            todo_wine
+            todo_wine_if(!lstrcmpA(class_tests[i].param.class_name, WC_STATICA))
             ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
         else
             ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
