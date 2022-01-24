@@ -1812,38 +1812,41 @@ static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wi
     unsigned int i;
     int ret;
 
-    if (a->pipeline_desc.stageCount != b->pipeline_desc.stageCount)
-        return a->pipeline_desc.stageCount - b->pipeline_desc.stageCount;
+    if ((ret = wined3d_uint32_compare(a->pipeline_desc.stageCount, b->pipeline_desc.stageCount)))
+        return ret;
     for (i = 0; i < a->pipeline_desc.stageCount; ++i)
     {
-        if (a->stages[i].module != b->stages[i].module)
-            return a->stages[i].module - b->stages[i].module;
+        if ((ret = wined3d_uint64_compare(a->stages[i].module, b->stages[i].module)))
+            return ret;
     }
 
-    if (a->divisor_desc.vertexBindingDivisorCount != b->divisor_desc.vertexBindingDivisorCount)
-        return a->divisor_desc.vertexBindingDivisorCount - b->divisor_desc.vertexBindingDivisorCount;
+    if ((ret = wined3d_uint32_compare(a->divisor_desc.vertexBindingDivisorCount,
+            b->divisor_desc.vertexBindingDivisorCount)))
+        return ret;
     if ((ret = memcmp(a->divisors, b->divisors,
             a->divisor_desc.vertexBindingDivisorCount * sizeof(*a->divisors))))
         return ret;
 
-    if (a->input_desc.vertexAttributeDescriptionCount != b->input_desc.vertexAttributeDescriptionCount)
-        return a->input_desc.vertexAttributeDescriptionCount - b->input_desc.vertexAttributeDescriptionCount;
+    if ((ret = wined3d_uint32_compare(a->input_desc.vertexAttributeDescriptionCount,
+            b->input_desc.vertexAttributeDescriptionCount)))
+        return ret;
     if ((ret = memcmp(a->attributes, b->attributes,
             a->input_desc.vertexAttributeDescriptionCount * sizeof(*a->attributes))))
         return ret;
-    if (a->input_desc.vertexBindingDescriptionCount != b->input_desc.vertexBindingDescriptionCount)
-        return a->input_desc.vertexBindingDescriptionCount - b->input_desc.vertexBindingDescriptionCount;
+    if ((ret = wined3d_uint32_compare(a->input_desc.vertexBindingDescriptionCount,
+            b->input_desc.vertexBindingDescriptionCount)))
+        return ret;
     if ((ret = memcmp(a->bindings, b->bindings,
             a->input_desc.vertexBindingDescriptionCount * sizeof(*a->bindings))))
         return ret;
 
-    if (a->ia_desc.topology != b->ia_desc.topology)
-        return a->ia_desc.topology - b->ia_desc.topology;
-    if (a->ia_desc.primitiveRestartEnable != b->ia_desc.primitiveRestartEnable)
-        return a->ia_desc.primitiveRestartEnable - b->ia_desc.primitiveRestartEnable;
+    if ((ret = wined3d_uint32_compare(a->ia_desc.topology, b->ia_desc.topology)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(a->ia_desc.primitiveRestartEnable, b->ia_desc.primitiveRestartEnable)))
+        return ret;
 
-    if (a->ts_desc.patchControlPoints != b->ts_desc.patchControlPoints)
-        return a->ts_desc.patchControlPoints - b->ts_desc.patchControlPoints;
+    if ((ret = wined3d_uint32_compare(a->ts_desc.patchControlPoints, b->ts_desc.patchControlPoints)))
+        return ret;
 
     if ((ret = memcmp(&a->viewport, &b->viewport, sizeof(a->viewport))))
         return ret;
@@ -1854,27 +1857,27 @@ static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wi
     if ((ret = memcmp(&a->rs_desc, &b->rs_desc, sizeof(a->rs_desc))))
         return ret;
 
-    if (a->ms_desc.rasterizationSamples != b->ms_desc.rasterizationSamples)
-        return a->ms_desc.rasterizationSamples - b->ms_desc.rasterizationSamples;
-    if (a->ms_desc.alphaToCoverageEnable != b->ms_desc.alphaToCoverageEnable)
-        return a->ms_desc.alphaToCoverageEnable - b->ms_desc.alphaToCoverageEnable;
-    if (a->sample_mask != b->sample_mask)
-        return a->sample_mask - b->sample_mask;
+    if ((ret = wined3d_uint32_compare(a->ms_desc.rasterizationSamples, b->ms_desc.rasterizationSamples)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(a->ms_desc.alphaToCoverageEnable, b->ms_desc.alphaToCoverageEnable)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(a->sample_mask, b->sample_mask)))
+        return ret;
 
     if ((ret = memcmp(&a->ds_desc, &b->ds_desc, sizeof(a->ds_desc))))
         return ret;
 
-    if (a->blend_desc.attachmentCount != b->blend_desc.attachmentCount)
-        return a->blend_desc.attachmentCount - b->blend_desc.attachmentCount;
+    if ((ret = wined3d_uint32_compare(a->blend_desc.attachmentCount, b->blend_desc.attachmentCount)))
+        return ret;
     if ((ret = memcmp(a->blend_attachments, b->blend_attachments,
             a->blend_desc.attachmentCount * sizeof(*a->blend_attachments))))
         return ret;
 
-    if (a->pipeline_desc.layout != b->pipeline_desc.layout)
-        return a->pipeline_desc.layout - b->pipeline_desc.layout;
+    if ((ret = wined3d_uint64_compare(a->pipeline_desc.layout, b->pipeline_desc.layout)))
+        return ret;
 
-    if (a->pipeline_desc.renderPass != b->pipeline_desc.renderPass)
-        return a->pipeline_desc.renderPass - b->pipeline_desc.renderPass;
+    if ((ret = wined3d_uint64_compare(a->pipeline_desc.renderPass, b->pipeline_desc.renderPass)))
+        return ret;
 
     return 0;
 }
