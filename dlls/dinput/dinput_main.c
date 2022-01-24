@@ -1261,7 +1261,6 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     struct dinput_device *impl, *next;
     SIZE_T events_count = 0;
     HANDLE finished_event;
-    HRESULT hr;
     DWORD ret;
     MSG msg;
 
@@ -1282,8 +1281,11 @@ static DWORD WINAPI dinput_thread_proc( void *params )
             {
                 if (impl->read_event == events[ret])
                 {
-                    hr = impl->vtbl->read( &impl->IDirectInputDevice8W_iface );
-                    if (FAILED( hr )) dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
+                    if (FAILED( impl->vtbl->read( &impl->IDirectInputDevice8W_iface ) ))
+                    {
+                        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
+                        impl->status = STATUS_UNPLUGGED;
+                    }
                     break;
                 }
             }

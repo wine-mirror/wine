@@ -872,7 +872,7 @@ static HRESULT hid_joystick_acquire( IDirectInputDevice8W *iface )
     {
         impl->device = CreateFileW( impl->device_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                     NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
-        if (impl->device == INVALID_HANDLE_VALUE) return DIERR_INVALIDPARAM;
+        if (impl->device == INVALID_HANDLE_VALUE) return DIERR_UNPLUGGED;
     }
 
     memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
@@ -882,7 +882,7 @@ static HRESULT hid_joystick_acquire( IDirectInputDevice8W *iface )
     {
         CloseHandle( impl->device );
         impl->device = INVALID_HANDLE_VALUE;
-        return DIERR_INVALIDPARAM;
+        return DIERR_UNPLUGGED;
     }
 
     IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );

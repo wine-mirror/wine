@@ -116,20 +116,15 @@ static BOOL test_input_lost( DWORD version )
     pnp_driver_stop();
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    todo_wine
     ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#x\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    todo_wine
     ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#x\n", hr );
     hr = IDirectInputDevice8_GetDeviceData( device, size, objdata, &count, DIGDD_PEEK );
-    todo_wine
     ok( hr == DIERR_INPUTLOST, "GetDeviceData returned %#x\n", hr );
     hr = IDirectInputDevice8_Poll( device );
-    todo_wine
     ok( hr == DIERR_INPUTLOST, "Poll returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_Acquire( device );
-    todo_wine
     ok( hr == DIERR_UNPLUGGED, "Acquire returned %#x\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
     ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#x\n", hr );

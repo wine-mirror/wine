@@ -73,6 +73,7 @@ enum device_status
 {
     STATUS_UNACQUIRED,
     STATUS_ACQUIRED,
+    STATUS_UNPLUGGED,
 };
 
 /* Device implementation */
