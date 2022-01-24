@@ -1883,12 +1883,13 @@ static int wined3d_bo_slab_vk_compare(const void *key, const struct wine_rb_entr
 {
     const struct wined3d_bo_slab_vk *slab = WINE_RB_ENTRY_VALUE(entry, const struct wined3d_bo_slab_vk, entry);
     const struct wined3d_bo_slab_vk_key *k = key;
+    int ret;
 
-    if (k->memory_type != slab->requested_memory_type)
-        return k->memory_type - slab->requested_memory_type;
-    if (k->usage != slab->bo.usage)
-        return k->usage - slab->bo.usage;
-    return k->size - slab->bo.size;
+    if ((ret = wined3d_uint32_compare(k->memory_type, slab->requested_memory_type)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->usage, slab->bo.usage)))
+        return ret;
+    return wined3d_uint64_compare(k->size, slab->bo.size);
 }
 
 static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context_vk *context_vk)

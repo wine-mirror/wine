@@ -452,6 +452,11 @@ static inline int wined3d_uint32_compare(uint32_t x, uint32_t y)
     return (x > y) - (x < y);
 }
 
+static inline int wined3d_uint64_compare(uint64_t x, uint64_t y)
+{
+    return (x > y) - (x < y);
+}
+
 #define ORM_BACKBUFFER  0
 #define ORM_FBO         1
 
