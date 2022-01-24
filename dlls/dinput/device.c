@@ -82,6 +82,11 @@ static inline const char *debugstr_diobjectdataformat( const DIOBJECTDATAFORMAT 
                              debugstr_guid( data->pguid ), data->dwOfs, data->dwType, data->dwFlags );
 }
 
+static inline BOOL is_exclusively_acquired( struct dinput_device *device )
+{
+    return device->acquired && (device->dwCoopLevel & DISCL_EXCLUSIVE);
+}
+
 /******************************************************************************
  *	Various debugging tools
  */
@@ -1073,7 +1078,7 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
 
         case (DWORD_PTR)DIPROP_FFLOAD:
             if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
-            if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) return DIERR_NOTEXCLUSIVEACQUIRED;
+            if (!is_exclusively_acquired( impl )) return DIERR_NOTEXCLUSIVEACQUIRED;
             /* fallthrough */
         case (DWORD_PTR)DIPROP_PRODUCTNAME:
         case (DWORD_PTR)DIPROP_INSTANCENAME:
@@ -1399,7 +1404,7 @@ static HRESULT WINAPI dinput_device_set_property( IDirectInputDevice8W *iface, c
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
         if (!impl->vtbl->send_device_gain) return DIERR_UNSUPPORTED;
         impl->device_gain = value->dwData;
-        if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) return DI_OK;
+        if (!is_exclusively_acquired( impl )) return DI_OK;
         return impl->vtbl->send_device_gain( iface, impl->device_gain );
     }
     case (DWORD_PTR)DIPROP_AXISMODE:
@@ -1679,7 +1684,7 @@ static HRESULT WINAPI dinput_device_CreateEffect( IDirectInputDevice8W *iface, c
     if (!params) return DI_OK;
 
     flags = params->dwSize == sizeof(DIEFFECT_DX6) ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
-    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) flags |= DIEP_NODOWNLOAD;
+    if (!is_exclusively_acquired( impl )) flags |= DIEP_NODOWNLOAD;
     hr = IDirectInputEffect_SetParameters( *out, params, flags );
     if (FAILED(hr)) goto failed;
     return DI_OK;
@@ -1788,10 +1793,8 @@ static HRESULT WINAPI dinput_device_GetForceFeedbackState( IDirectInputDevice8W 
     if (!(impl->caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
 
     EnterCriticalSection( &impl->crit );
-    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE))
-        hr = DIERR_NOTEXCLUSIVEACQUIRED;
-    else
-        *out = impl->force_feedback_state;
+    if (!is_exclusively_acquired( impl )) hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else *out = impl->force_feedback_state;
     LeaveCriticalSection( &impl->crit );
 
     return hr;
@@ -1819,7 +1822,7 @@ static HRESULT WINAPI dinput_device_SendForceFeedbackCommand( IDirectInputDevice
     if (!impl->vtbl->send_force_feedback_command) return DIERR_UNSUPPORTED;
 
     EnterCriticalSection( &impl->crit );
-    if (!impl->acquired || !(impl->dwCoopLevel & DISCL_EXCLUSIVE)) hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    if (!is_exclusively_acquired( impl )) hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else hr = impl->vtbl->send_force_feedback_command( iface, command, FALSE );
     LeaveCriticalSection( &impl->crit );
 

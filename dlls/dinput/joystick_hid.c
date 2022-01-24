@@ -241,6 +241,11 @@ static inline struct hid_joystick_effect *impl_from_IDirectInputEffect( IDirectI
     return CONTAINING_RECORD( iface, struct hid_joystick_effect, IDirectInputEffect_iface );
 }
 
+static inline BOOL is_exclusively_acquired( struct hid_joystick *joystick )
+{
+    return joystick->base.acquired && (joystick->base.dwCoopLevel & DISCL_EXCLUSIVE);
+}
+
 static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
 {
     switch (usage_page)
@@ -827,7 +832,7 @@ static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD pro
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
         if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
-        if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE)) return DIERR_NOTEXCLUSIVEACQUIRED;
+        if (!is_exclusively_acquired( impl )) return DIERR_NOTEXCLUSIVEACQUIRED;
         value->dwData = 0;
         return DI_OK;
     }
@@ -898,7 +903,7 @@ static HRESULT hid_joystick_unacquire( IDirectInputDevice8W *iface )
     else WaitForSingleObject( impl->base.read_event, INFINITE );
 
     if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DI_OK;
-    if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE)) return DI_OK;
+    if (!is_exclusively_acquired( impl )) return DI_OK;
     hid_joystick_send_force_feedback_command( iface, DISFFC_RESET, TRUE );
     return DI_OK;
 }
@@ -2682,7 +2687,7 @@ static HRESULT WINAPI hid_joystick_effect_Start( IDirectInputEffect *iface, DWOR
     else control = PID_USAGE_OP_EFFECT_START;
 
     EnterCriticalSection( &impl->joystick->base.crit );
-    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+    if (!is_exclusively_acquired( impl->joystick ))
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if ((flags & DIES_NODOWNLOAD) && !impl->index)
         hr = DIERR_NOTDOWNLOADED;
@@ -2730,7 +2735,7 @@ static HRESULT WINAPI hid_joystick_effect_Stop( IDirectInputEffect *iface )
     TRACE( "iface %p.\n", iface );
 
     EnterCriticalSection( &impl->joystick->base.crit );
-    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+    if (!is_exclusively_acquired( impl->joystick ))
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if (!impl->index)
         hr = DIERR_NOTDOWNLOADED;
@@ -2775,7 +2780,7 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
     *status = 0;
 
     EnterCriticalSection( &impl->joystick->base.crit );
-    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+    if (!is_exclusively_acquired( impl->joystick ))
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if (!impl->index)
         hr = DIERR_NOTDOWNLOADED;
@@ -2850,7 +2855,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     if (impl->modified) hr = DI_OK;
     else hr = DI_NOEFFECT;
 
-    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+    if (!is_exclusively_acquired( impl->joystick ))
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else if ((impl->flags & complete_mask) != complete_mask)
         hr = DIERR_INCOMPLETEEFFECT;
