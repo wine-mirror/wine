@@ -1645,16 +1645,15 @@ static void test_EnableThemeDialogTexture(void)
     {
         DWORD flag;
         BOOL enabled;
-        BOOL todo;
     }
     invalid_flag_tests[] =
     {
-        {0, FALSE, TRUE},
+        {0, FALSE},
         {ETDT_DISABLE | ETDT_ENABLE, FALSE},
         {ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB, TRUE},
         {ETDT_USETABTEXTURE | ETDT_USEAEROWIZARDTABTEXTURE, TRUE},
         {ETDT_VALIDBITS, FALSE},
-        {~ETDT_VALIDBITS, FALSE, TRUE},
+        {~ETDT_VALIDBITS, FALSE},
         {~ETDT_VALIDBITS | ETDT_DISABLE, FALSE}
     };
 
@@ -1989,7 +1988,6 @@ static void test_EnableThemeDialogTexture(void)
         hr = EnableThemeDialogTexture(dialog, invalid_flag_tests[i].flag);
         ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
         ret = IsThemeDialogTextureEnabled(dialog);
-        todo_wine_if(invalid_flag_tests[i].todo)
         ok(ret == invalid_flag_tests[i].enabled, "Wrong dialog texture status.\n");
         EndDialog(dialog, 0);
 
@@ -2020,7 +2018,6 @@ static void test_EnableThemeDialogTexture(void)
                         "EnableThemeDialogTexture first flag", FALSE);
             ret = IsThemeDialogTextureEnabled(dialog);
             /* Non-zero flags without ETDT_DISABLE enables dialog texture */
-            todo_wine_if(flags[i] == 0)
             ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
 
             child = GetDlgItem(dialog, 100);
@@ -2045,7 +2042,6 @@ static void test_EnableThemeDialogTexture(void)
             if (flags[j])
                 ok(ret == !(flags[j] & ETDT_DISABLE), "Wrong dialog texture status.\n");
             else
-                todo_wine_if(!flags[i] || flags[i] == ETDT_DISABLE || flags[i] == (ETDT_DISABLE | ETDT_ENABLE))
                 ok(ret == (!(flags[i] & ETDT_DISABLE) && flags[i]), "Wrong dialog texture status.\n");
             lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
             ok(lr != 0, "WM_ERASEBKGND failed.\n");

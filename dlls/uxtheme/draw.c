@@ -52,14 +52,32 @@ extern ATOM atDialogThemeEnabled;
 /***********************************************************************
  *      EnableThemeDialogTexture                            (UXTHEME.@)
  */
-HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
+HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD new_flag)
 {
+    DWORD old_flag = 0;
     BOOL res;
 
-    TRACE("(%p,0x%08x\n", hwnd, dwFlags);
-    res = SetPropW (hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled), 
-                    UlongToHandle(dwFlags|0x80000000));
-        /* 0x80000000 serves as a "flags set" flag */
+    TRACE("(%p,%#x\n", hwnd, new_flag);
+
+    new_flag &= ETDT_VALIDBITS;
+
+    if (new_flag == 0)
+        return S_OK;
+
+    if (new_flag & ETDT_DISABLE)
+    {
+        new_flag = ETDT_DISABLE;
+        old_flag = 0;
+    }
+
+    if (new_flag & ~ETDT_DISABLE)
+    {
+        old_flag = HandleToUlong(GetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled)));
+        old_flag &= ~ETDT_DISABLE;
+    }
+
+    new_flag = new_flag | old_flag;
+    res = SetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled), UlongToHandle(new_flag));
     return res ? S_OK : HRESULT_FROM_WIN32(GetLastError());
  }
 
