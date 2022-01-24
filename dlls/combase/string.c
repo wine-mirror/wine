@@ -26,31 +26,38 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winstring);
 
+#define HSTRING_REFERENCE_FLAG 1
+
+struct hstring_header
+{
+    UINT32 flags;
+};
+
 struct hstring_private
 {
+    struct hstring_header header;
     LPWSTR buffer;
     UINT32 length;
-    BOOL   reference;
     LONG   refcount;
 };
 
 static const WCHAR empty[1];
 
-C_ASSERT(sizeof(struct hstring_private) <= sizeof(HSTRING_HEADER));
+C_ASSERT(sizeof(struct hstring_header) <= sizeof(HSTRING_HEADER));
 
 static inline struct hstring_private *impl_from_HSTRING(HSTRING string)
 {
-   return (struct hstring_private *)string;
+    return (struct hstring_private *)string;
 }
 
 static inline struct hstring_private *impl_from_HSTRING_HEADER(HSTRING_HEADER *header)
 {
-   return (struct hstring_private *)header;
+    return CONTAINING_RECORD(header, struct hstring_private, header);
 }
 
 static inline struct hstring_private *impl_from_HSTRING_BUFFER(HSTRING_BUFFER buffer)
 {
-   return (struct hstring_private *)buffer;
+    return CONTAINING_RECORD(buffer, struct hstring_private, buffer);
 }
 
 static BOOL alloc_string(UINT32 len, HSTRING *out)
@@ -59,11 +66,13 @@ static BOOL alloc_string(UINT32 len, HSTRING *out)
     priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv) + (len + 1) * sizeof(*priv->buffer));
     if (!priv)
         return FALSE;
+
+    priv->header.flags = 0;
     priv->buffer = (LPWSTR)(priv + 1);
     priv->length = len;
-    priv->reference = FALSE;
     priv->refcount = 1;
     priv->buffer[len] = '\0';
+
     *out = (HSTRING)priv;
     return TRUE;
 }
@@ -115,10 +124,12 @@ HRESULT WINAPI WindowsCreateStringReference(LPCWSTR ptr, UINT32 len,
     }
     if (ptr == NULL)
         return E_POINTER;
+
     priv->buffer = (LPWSTR)ptr;
     priv->length = len;
-    priv->reference = TRUE;
-    *out = (HSTRING)header;
+    priv->header.flags = HSTRING_REFERENCE_FLAG;
+
+    *out = (HSTRING)priv;
     return S_OK;
 }
 
@@ -133,7 +144,7 @@ HRESULT WINAPI WindowsDeleteString(HSTRING str)
 
     if (str == NULL)
         return S_OK;
-    if (priv->reference)
+    if (priv->header.flags & HSTRING_REFERENCE_FLAG)
         return S_OK;
     if (InterlockedDecrement(&priv->refcount) == 0)
         HeapFree(GetProcessHeap(), 0, priv);
@@ -156,7 +167,7 @@ HRESULT WINAPI WindowsDuplicateString(HSTRING str, HSTRING *out)
         *out = NULL;
         return S_OK;
     }
-    if (priv->reference)
+    if (priv->header.flags & HSTRING_REFERENCE_FLAG)
         return WindowsCreateString(priv->buffer, priv->length, out);
     InterlockedIncrement(&priv->refcount);
     *out = str;
@@ -187,7 +198,7 @@ HRESULT WINAPI WindowsPreallocateStringBuffer(UINT32 len, WCHAR **outptr,
         return E_OUTOFMEMORY;
     priv = impl_from_HSTRING(str);
     *outptr = priv->buffer;
-    *out = (HSTRING_BUFFER)str;
+    *out = (HSTRING_BUFFER)&priv->buffer;
     return S_OK;
 }
 
@@ -196,9 +207,14 @@ HRESULT WINAPI WindowsPreallocateStringBuffer(UINT32 len, WCHAR **outptr,
  */
 HRESULT WINAPI WindowsDeleteStringBuffer(HSTRING_BUFFER buf)
 {
+    struct hstring_private *priv = NULL;
+
     TRACE("(%p)\n", buf);
 
-    return WindowsDeleteString((HSTRING)buf);
+    if(buf)
+        priv = impl_from_HSTRING_BUFFER(buf);
+
+    return WindowsDeleteString((HSTRING)priv);
 }
 
 /***********************************************************************
@@ -217,9 +233,9 @@ HRESULT WINAPI WindowsPromoteStringBuffer(HSTRING_BUFFER buf, HSTRING *out)
         *out = NULL;
         return S_OK;
     }
-    if (priv->buffer[priv->length] != 0 || priv->reference || priv->refcount != 1)
+    if (priv->buffer[priv->length] != 0 || priv->header.flags & HSTRING_REFERENCE_FLAG || priv->refcount != 1)
         return E_INVALIDARG;
-    *out = (HSTRING)buf;
+    *out = (HSTRING)priv;
     return S_OK;
 }
 
