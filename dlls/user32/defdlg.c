@@ -354,10 +354,7 @@ out:
     return dlgInfo;
 }
 
-/***********************************************************************
- *              DefDlgProcA (USER32.@)
- */
-LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+static LRESULT USER_DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
     DLGPROC dlgproc;
@@ -411,10 +408,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     return GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
 }
 
-/***********************************************************************
- *              DefDlgProcW (USER32.@)
- */
-LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+static LRESULT USER_DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO *dlgInfo;
     DLGPROC dlgproc;
@@ -466,4 +460,28 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         return result;
 
     return GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
+}
+
+LRESULT WINAPI USER_DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+    if (unicode)
+        return USER_DefDlgProcW( hwnd, msg, wParam, lParam );
+    else
+        return USER_DefDlgProcA( hwnd, msg, wParam, lParam );
+}
+
+/***********************************************************************
+ *              DefDlgProcA (USER32.@)
+ */
+LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return user_api->pDefDlgProc( hwnd, msg, wParam, lParam, FALSE );
+}
+
+/***********************************************************************
+ *              DefDlgProcW (USER32.@)
+ */
+LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return user_api->pDefDlgProc( hwnd, msg, wParam, lParam, TRUE );
 }

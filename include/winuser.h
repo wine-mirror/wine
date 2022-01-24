@@ -4435,6 +4435,7 @@ struct SCROLL_TRACKING_INFO
 
 struct user_api_hook
 {
+    LRESULT (WINAPI *pDefDlgProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
     void (WINAPI *pScrollBarDraw)(HWND, HDC, INT, enum SCROLL_HITTEST,
                                   const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, INT, INT,
                                   INT, BOOL);

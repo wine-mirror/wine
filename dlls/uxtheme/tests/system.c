@@ -1772,7 +1772,6 @@ static void test_EnableThemeDialogTexture(void)
     lr = SendMessageA(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
     ok(lr != 0, "WM_ERASEBKGND failed.\n");
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine
     ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected brush changed.\n");
 
     /* Test disabling theme dialog texture should change the brush immediately */
@@ -1780,7 +1779,6 @@ static void test_EnableThemeDialogTexture(void)
     hr = EnableThemeDialogTexture(dialog, ETDT_DISABLE);
     ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine
     ok(brush2 != brush, "Expected a different brush.\n");
     ok(brush2 == GetSysColorBrush(COLOR_BTNFACE), "Expected brush %p, got %p.\n",
        GetSysColorBrush(COLOR_BTNFACE), brush2);
@@ -1799,7 +1797,6 @@ static void test_EnableThemeDialogTexture(void)
     hr = EnableThemeDialogTexture(dialog, ETDT_USETABTEXTURE);
     ok(hr == S_OK, "EnableThemeDialogTexture failed, hr %#x.\n", hr);
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine
     ok(brush2 != brush, "Expected a different brush.\n");
 
     /* Test ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE should change the brush immediately */
@@ -1811,7 +1808,6 @@ static void test_EnableThemeDialogTexture(void)
     if (LOBYTE(LOWORD(GetVersion())) < 6)
         ok(brush2 == brush, "Expected the same brush.\n");
     else
-        todo_wine
         ok(brush2 != brush, "Expected a different brush.\n");
 
     hr = EnableThemeDialogTexture(dialog, ETDT_DISABLE);
@@ -1832,7 +1828,6 @@ static void test_EnableThemeDialogTexture(void)
     SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     ret = GetBrushOrgEx(child_hdc, &org);
     ok(ret, "GetBrushOrgEx failed, error %u.\n", GetLastError());
-    todo_wine
     ok(org.x == -1 && org.y == -2, "Expected (-1,-2), got %s.\n", wine_dbgstr_point(&org));
 
     /* Test that WM_CTLCOLORSTATIC changes background mode when dialog texture is on */
@@ -1840,7 +1835,6 @@ static void test_EnableThemeDialogTexture(void)
     ok(old_mode != 0, "SetBkMode failed.\n");
     SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     mode = SetBkMode(child_hdc, old_mode);
-    todo_wine
     ok(mode == TRANSPARENT, "Expected mode %#x, got %#x.\n", TRANSPARENT, mode);
 
     /* Test that WM_CTLCOLORSTATIC changes background color when dialog texture is on */
@@ -1859,15 +1853,12 @@ static void test_EnableThemeDialogTexture(void)
     memset(&log_brush, 0, sizeof(log_brush));
     count = GetObjectA(brush, sizeof(log_brush), &log_brush);
     ok(count == sizeof(log_brush), "GetObjectA failed, error %u.\n", GetLastError());
-    todo_wine
     ok(log_brush.lbColor == 0, "Expected brush color %#x, got %#x.\n", 0, log_brush.lbColor);
-    todo_wine
     ok(log_brush.lbStyle == BS_PATTERN, "Expected brush style %#x, got %#x.\n", BS_PATTERN,
        log_brush.lbStyle);
 
     memset(&bmp, 0, sizeof(bmp));
     count = GetObjectA((HBITMAP)log_brush.lbHatch, sizeof(bmp), &bmp);
-    todo_wine
     ok(count == sizeof(bmp), "GetObjectA failed, error %u.\n", GetLastError());
 
     theme = OpenThemeData(NULL, L"Tab");
@@ -1877,16 +1868,13 @@ static void test_EnableThemeDialogTexture(void)
     size.cy = 0;
     hr = GetThemePartSize(theme, NULL, TABP_BODY, 0, NULL, TS_TRUE, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    todo_wine
     ok(bmp.bmWidth == size.cx, "Expected width %d, got %d.\n", size.cx, bmp.bmWidth);
-    todo_wine
     ok(bmp.bmHeight == size.cy, "Expected height %d, got %d.\n", size.cy, bmp.bmHeight);
 
     CloseThemeData(theme);
 
     /* Test that DefDlgProcA/W() are hooked for WM_CTLCOLORSTATIC */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine
     ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
     brush2 = (HBRUSH)DefDlgProcW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
     ok(brush2 == brush, "Expected the same brush.\n");
@@ -1895,11 +1883,12 @@ static void test_EnableThemeDialogTexture(void)
 
     /* Test that DefWindowProcA/W() are also hooked for WM_CTLCOLORSTATIC */
     brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine
     ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected a different brush.\n");
     brush2 = (HBRUSH)DefWindowProcW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
     ok(brush2 == brush, "Expected the same brush.\n");
     brush2 = (HBRUSH)DefWindowProcA(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
+    todo_wine
     ok(brush2 == brush, "Expected the same brush.\n");
 
     /* Test that DefWindowProcA/W() are not hooked for WM_ERASEBKGND. So the background is still
@@ -1951,13 +1940,11 @@ static void test_EnableThemeDialogTexture(void)
     SetLastError(0xdeadbeef);
     ret = GetObjectA(brush, sizeof(log_brush), &log_brush);
     error = GetLastError();
-    todo_wine
     ok(!ret || broken(ret) /* XP */, "GetObjectA succeeded.\n");
     todo_wine
     ok(error == ERROR_INVALID_PARAMETER || broken(error == 0xdeadbeef) /* XP */,
        "Expected error %u, got %u.\n", ERROR_INVALID_PARAMETER, error);
     ret = DeleteObject(brush);
-    todo_wine
     ok(!ret || broken(ret) /* XP */, "DeleteObject succeeded.\n");
 
     /* Should still report the same brush handle after the brush handle was freed */
@@ -1971,7 +1958,6 @@ static void test_EnableThemeDialogTexture(void)
     lr = SendMessageA(dialog, WM_THEMECHANGED, 0, 0);
     ok(lr == 0, "WM_THEMECHANGED failed.\n");
     brush2 = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
-    todo_wine
     ok(brush2 != brush, "Expected a different brush.\n");
 
     ReleaseDC(child, child_hdc);
@@ -2027,7 +2013,6 @@ static void test_EnableThemeDialogTexture(void)
             ok(lr != 0, "WM_ERASEBKGND failed.\n");
             brush = (HBRUSH)SendMessageW(dialog, WM_CTLCOLORSTATIC, (WPARAM)child_hdc, (LPARAM)child);
             if (flags[i] == ETDT_ENABLETAB || flags[i] == ETDT_ENABLEAEROWIZARDTAB)
-                todo_wine
                 ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
             else
                 ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
@@ -2054,7 +2039,6 @@ static void test_EnableThemeDialogTexture(void)
                       || ((flags[i] | flags[j]) & ETDT_ENABLEAEROWIZARDTAB) == ETDT_ENABLEAEROWIZARDTAB)
                       && !((flags[i] | flags[j]) & ETDT_DISABLE)))
                  && (((flags[i] | flags[j]) & (ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB)) != (ETDT_ENABLETAB | ETDT_ENABLEAEROWIZARDTAB)))
-                todo_wine
                 ok(brush != GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture enabled.\n");
             else
                 ok(brush == GetSysColorBrush(COLOR_BTNFACE), "Expected tab texture disabled.\n");
