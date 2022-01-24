@@ -3607,6 +3607,15 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW:
+        {
+            struct wined3d_cs_clear_unordered_access_view *op;
+
+            op = (struct wined3d_cs_clear_unordered_access_view *)packet->data;
+            wined3d_unordered_access_view_decref(op->view);
+            break;
+        }
+
         default:
             break;
     }
@@ -3729,6 +3738,15 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
                 if (op->buffers[i].buffer)
                     wined3d_buffer_incref(op->buffers[i].buffer);
             }
+            break;
+        }
+
+        case WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW:
+        {
+            struct wined3d_cs_clear_unordered_access_view *op;
+
+            op = (struct wined3d_cs_clear_unordered_access_view *)packet->data;
+            wined3d_unordered_access_view_incref(op->view);
             break;
         }
 
