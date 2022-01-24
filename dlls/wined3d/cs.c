@@ -3616,6 +3616,20 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_CLEAR:
+        {
+            struct wined3d_cs_clear *op = (struct wined3d_cs_clear *)packet->data;
+
+            for (i = 0; i < op->rt_count; ++i)
+            {
+                if (op->fb.render_targets[i])
+                    wined3d_rendertarget_view_decref(op->fb.render_targets[i]);
+            }
+            if (op->fb.depth_stencil)
+                wined3d_rendertarget_view_decref(op->fb.depth_stencil);
+            break;
+        }
+
         default:
             break;
     }
@@ -3747,6 +3761,20 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
 
             op = (struct wined3d_cs_clear_unordered_access_view *)packet->data;
             wined3d_unordered_access_view_incref(op->view);
+            break;
+        }
+
+        case WINED3D_CS_OP_CLEAR:
+        {
+            struct wined3d_cs_clear *op = (struct wined3d_cs_clear *)packet->data;
+
+            for (i = 0; i < op->rt_count; ++i)
+            {
+                if (op->fb.render_targets[i])
+                    wined3d_rendertarget_view_incref(op->fb.render_targets[i]);
+            }
+            if (op->fb.depth_stencil)
+                wined3d_rendertarget_view_incref(op->fb.depth_stencil);
             break;
         }
 
