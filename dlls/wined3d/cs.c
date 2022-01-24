@@ -3571,6 +3571,19 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEWS:
+        {
+            struct wined3d_cs_set_unordered_access_views *op;
+
+            op = (struct wined3d_cs_set_unordered_access_views *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->uavs[i].view)
+                    wined3d_unordered_access_view_decref(op->uavs[i].view);
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -3656,6 +3669,19 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             {
                 if (op->views[i])
                     wined3d_shader_resource_view_incref(op->views[i]);
+            }
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEWS:
+        {
+            struct wined3d_cs_set_unordered_access_views *op;
+
+            op = (struct wined3d_cs_set_unordered_access_views *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->uavs[i].view)
+                    wined3d_unordered_access_view_incref(op->uavs[i].view);
             }
             break;
         }
