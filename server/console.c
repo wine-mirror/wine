@@ -824,7 +824,7 @@ static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry 
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    return add_queue( &screen_buffer->input->obj, entry );
+    return console_add_queue( &screen_buffer->input->obj, entry );
 }
 
 static struct fd *screen_buffer_get_fd( struct object *obj )
@@ -1407,7 +1407,7 @@ static int console_output_add_queue( struct object *obj, struct wait_queue_entry
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    return add_queue( &current->process->console->obj, entry );
+    return console_add_queue( &current->process->console->obj, entry );
 }
 
 static struct fd *console_output_get_fd( struct object *obj )
