@@ -479,6 +479,81 @@ static void test_trim(void)
     ok(WindowsDeleteString(str1) == S_OK, "Failed to delete string\n");
 }
 
+static void test_hstring_struct(void)
+{
+    struct hstring_header
+    {
+        UINT32 flags;
+        UINT32 length;
+        UINT32 padding1;
+        UINT32 padding2;
+        const WCHAR *str;
+    };
+
+    struct hstring_private
+    {
+        struct hstring_header header;
+        LONG refcount;
+        WCHAR buffer[1];
+    };
+
+    HSTRING str;
+    HSTRING str2;
+    HSTRING_HEADER hdr;
+    struct hstring_private* prv;
+    struct hstring_private* prv2;
+
+    BOOL arch64 = (sizeof(void*) == 8);
+
+    ok(arch64 ? (sizeof(prv->header) == 24) : (sizeof(prv->header) == 20), "hstring_header size incorrect.\n");
+
+    ok(WindowsCreateString(input_string, 6, &str) == S_OK, "Failed to create string.\n");
+
+    prv = CONTAINING_RECORD(str, struct hstring_private, header);
+
+    todo_wine
+    ok(prv->header.flags == 0, "Expected 0 in flags field, got %#x.\n", prv->header.flags);
+    todo_wine
+    ok(prv->header.str == prv->buffer, "Expected str to point at buffer, instead pointing at %p.\n", prv->header.str);
+    todo_wine
+    ok(prv->refcount == 1, "Expected 1 in refcount, got %u.\n", prv->refcount);
+    todo_wine
+    ok(wcscmp(input_string, prv->buffer) == 0, "Expected strings to match.\n");
+    todo_wine
+    ok(prv->buffer[prv->header.length] == '\0', "Expected buffer to be null terminated.\n");
+
+    ok(WindowsDuplicateString(str, &str2) == S_OK, "Failed to duplicate string.\n");
+
+    prv2 = CONTAINING_RECORD(str2, struct hstring_private, header);
+
+    todo_wine
+    ok(prv->refcount == 2, "Expected 2 in refcount, got %u.\n", prv->refcount);
+    todo_wine
+    ok(prv2->refcount == 2, "Expected 2 in refcount, got %u.\n", prv2->refcount);
+    todo_wine
+    ok(wcscmp(input_string, prv2->buffer) == 0, "Expected strings to match.\n");
+
+    ok(WindowsDeleteString(str) == S_OK, "Failed to delete string.\n");
+
+    todo_wine
+    ok(prv->refcount == 1, "Expected 1 in refcount, got %u.\n", prv->refcount);
+
+    ok(WindowsDeleteString(str) == S_OK, "Failed to delete string.\n");
+
+    ok(WindowsCreateStringReference(input_string, 6, &hdr, &str) == S_OK, "Failed to create string ref.\n");
+
+    prv = CONTAINING_RECORD(&hdr, struct hstring_private, header);
+    prv2 = CONTAINING_RECORD(str, struct hstring_private, header);
+
+    ok(prv == prv2, "Pointers not identical.\n");
+    todo_wine
+    ok(prv2->header.flags == 1, "Expected HSTRING_REFERENCE_FLAG to be set, got %#x.\n", prv2->header.flags);
+    todo_wine
+    ok(prv2->header.str == input_string, "Expected str to point at input_string, instead pointing at %p.\n", prv2->header.str);
+
+    ok(WindowsDeleteString(str) == S_OK, "Failed to delete string ref.\n");
+}
+
 START_TEST(string)
 {
     test_create_delete();
@@ -489,4 +564,5 @@ START_TEST(string)
     test_concat();
     test_compare();
     test_trim();
+    test_hstring_struct();
 }
