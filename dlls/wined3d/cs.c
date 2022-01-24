@@ -3584,6 +3584,16 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW:
+        {
+            struct wined3d_cs_set_depth_stencil_view *op;
+
+            op = (struct wined3d_cs_set_depth_stencil_view *)packet->data;
+            if (op->view)
+                wined3d_rendertarget_view_decref(op->view);
+            break;
+        }
+
         default:
             break;
     }
@@ -3683,6 +3693,16 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
                 if (op->uavs[i].view)
                     wined3d_unordered_access_view_incref(op->uavs[i].view);
             }
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW:
+        {
+            struct wined3d_cs_set_depth_stencil_view *op;
+
+            op = (struct wined3d_cs_set_depth_stencil_view *)packet->data;
+            if (op->view)
+                wined3d_rendertarget_view_incref(op->view);
             break;
         }
 
