@@ -3594,6 +3594,19 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_CONSTANT_BUFFERS:
+        {
+            struct wined3d_cs_set_constant_buffers *op;
+
+            op = (struct wined3d_cs_set_constant_buffers *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->buffers[i].buffer)
+                    wined3d_buffer_decref(op->buffers[i].buffer);
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -3703,6 +3716,19 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             op = (struct wined3d_cs_set_depth_stencil_view *)packet->data;
             if (op->view)
                 wined3d_rendertarget_view_incref(op->view);
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_CONSTANT_BUFFERS:
+        {
+            struct wined3d_cs_set_constant_buffers *op;
+
+            op = (struct wined3d_cs_set_constant_buffers *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->buffers[i].buffer)
+                    wined3d_buffer_incref(op->buffers[i].buffer);
+            }
             break;
         }
 
