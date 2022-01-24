@@ -513,29 +513,21 @@ static void test_hstring_struct(void)
 
     ok(prv->header.flags == 0, "Expected 0 in flags field, got %#x.\n", prv->header.flags);
     ok(prv->header.length == 6, "Expected 6 in length field, got %u.\n", prv->header.length);
-    todo_wine
     ok(prv->header.str == prv->buffer, "Expected str to point at buffer, instead pointing at %p.\n", prv->header.str);
-    todo_wine
     ok(prv->refcount == 1, "Expected 1 in refcount, got %u.\n", prv->refcount);
-    todo_wine
     ok(wcscmp(input_string, prv->buffer) == 0, "Expected strings to match.\n");
-    todo_wine
     ok(prv->buffer[prv->header.length] == '\0', "Expected buffer to be null terminated.\n");
 
     ok(WindowsDuplicateString(str, &str2) == S_OK, "Failed to duplicate string.\n");
 
     prv2 = CONTAINING_RECORD(str2, struct hstring_private, header);
 
-    todo_wine
     ok(prv->refcount == 2, "Expected 2 in refcount, got %u.\n", prv->refcount);
-    todo_wine
     ok(prv2->refcount == 2, "Expected 2 in refcount, got %u.\n", prv2->refcount);
-    todo_wine
     ok(wcscmp(input_string, prv2->buffer) == 0, "Expected strings to match.\n");
 
     ok(WindowsDeleteString(str) == S_OK, "Failed to delete string.\n");
 
-    todo_wine
     ok(prv->refcount == 1, "Expected 1 in refcount, got %u.\n", prv->refcount);
 
     ok(WindowsDeleteString(str) == S_OK, "Failed to delete string.\n");

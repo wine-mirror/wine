@@ -40,8 +40,8 @@ struct hstring_header
 struct hstring_private
 {
     struct hstring_header header;
-    LPWSTR buffer;
-    LONG   refcount;
+    LONG refcount;
+    WCHAR buffer[1];
 };
 
 static const WCHAR empty[1];
@@ -66,14 +66,14 @@ static inline struct hstring_private *impl_from_HSTRING_BUFFER(HSTRING_BUFFER bu
 static BOOL alloc_string(UINT32 len, HSTRING *out)
 {
     struct hstring_private *priv;
-    priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv) + (len + 1) * sizeof(*priv->buffer));
+    priv = HeapAlloc(GetProcessHeap(), 0, offsetof(struct hstring_private, buffer[len+1]));
     if (!priv)
         return FALSE;
 
     priv->header.flags = 0;
-    priv->buffer = (LPWSTR)(priv + 1);
     priv->header.length = len;
     priv->header.str = priv->buffer;
+
     priv->refcount = 1;
     priv->buffer[len] = '\0';
 
