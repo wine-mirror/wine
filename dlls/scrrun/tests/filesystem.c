@@ -472,6 +472,20 @@ static void test_GetFileName(void)
     }
 }
 
+static void test_GetTempName(void)
+{
+    BSTR result;
+    HRESULT hr;
+
+    hr = IFileSystem3_GetTempName(fs3, NULL);
+    ok(hr == E_POINTER, "GetTempName returned %x, expected E_POINTER\n", hr);
+    result = (BSTR)0xdeadbeef;
+    hr = IFileSystem3_GetTempName(fs3, &result);
+    ok(hr == S_OK, "GetTempName returned %x, expected S_OK\n", hr);
+    todo_wine ok(!!wcsstr( result,L".tmp"), "GetTempName returned %s, expected .tmp suffix\n", debugstr_w(result));
+    SysFreeString(result);
+}
+
 static void test_GetBaseName(void)
 {
     static const struct
@@ -2598,6 +2612,7 @@ START_TEST(filesystem)
     test_GetBaseName();
     test_GetAbsolutePathName();
     test_GetFile();
+    test_GetTempName();
     test_CopyFolder();
     test_BuildPath();
     test_GetFolder();
