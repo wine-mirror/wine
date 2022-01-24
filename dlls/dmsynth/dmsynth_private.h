@@ -77,6 +77,7 @@ struct IDirectMusicSynthSinkImpl {
     LONG ref;
     IReferenceClock *latency_clock;
     IReferenceClock *master_clock;
+    IDirectMusicSynth *synth;   /* No reference hold! */
     BOOL active;
 };
 

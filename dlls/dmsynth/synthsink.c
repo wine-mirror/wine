@@ -96,7 +96,11 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_Init(IDirectMusicSynthSink *ifac
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, synth);
+    TRACE("(%p)->(%p)\n", This, synth);
+
+    /* Not holding a reference to avoid circular dependencies.
+       The synth will release the sink during the synth's destruction. */
+    This->synth = synth;
 
     return S_OK;
 }

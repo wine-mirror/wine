@@ -195,10 +195,10 @@ static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
     if (!ref)
     {
         dmusic_remove_port(This->parent, iface);
+        IDirectMusicSynthSink_Release(This->synth_sink);
         IDirectMusicSynth_Activate(This->synth, FALSE);
         IDirectMusicSynth_Close(This->synth);
         IDirectMusicSynth_Release(This->synth);
-        IDirectMusicSynthSink_Release(This->synth_sink);
         if (This->dsbuffer)
            IDirectSoundBuffer_Release(This->dsbuffer);
         if (This->dsound)

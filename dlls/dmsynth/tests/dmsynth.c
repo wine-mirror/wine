@@ -131,6 +131,8 @@ static void test_dmsynth(void)
     ref_clock_sink = get_refcount(clock_sink);
 
     /* This will Init() the SynthSink and finish initializing the Synth */
+    hr = IDirectMusicSynthSink_Init(dmsynth_sink2, NULL);
+    ok(hr == S_OK, "IDirectMusicSynthSink_Init returned: %x\n", hr);
     hr = IDirectMusicSynth_SetSynthSink(dmsynth, dmsynth_sink2);
     ok(hr == S_OK, "IDirectMusicSynth_SetSynthSink returned: %x\n", hr);
     hr = IDirectMusicSynth_SetSynthSink(dmsynth, dmsynth_sink);
