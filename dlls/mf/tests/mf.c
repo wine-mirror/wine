@@ -112,6 +112,43 @@ typedef struct attribute_desc media_type_desc[32];
 #define ATTR_UINT32(k, v)    {.key = &k, .name = #k, {.vt = VT_UI4, .ulVal = v}}
 #define ATTR_BLOB(k, p, n)   {.key = &k, .name = #k, {.vt = VT_VECTOR | VT_UI1, .caub = {.pElems = (void *)p, .cElems = n}}}
 
+#define check_media_type(a, b, c) check_attributes_(__LINE__, (IMFAttributes *)a, b, c)
+#define check_attributes(a, b, c) check_attributes_(__LINE__, a, b, c)
+static void check_attributes_(int line, IMFAttributes *attributes, const struct attribute_desc *desc, ULONG limit)
+{
+    char buffer[256], *buf = buffer;
+    PROPVARIANT value;
+    int i, j, ret;
+    HRESULT hr;
+
+    for (i = 0; i < limit && desc[i].key; ++i)
+    {
+        hr = IMFAttributes_GetItem(attributes, desc[i].key, &value);
+        ok_(__FILE__, line)(hr == S_OK, "%s missing, hr %#x\n", debugstr_a(desc[i].name), hr);
+        if (hr != S_OK) continue;
+
+        switch (value.vt)
+        {
+        default: sprintf(buffer, "??"); break;
+        case VT_CLSID: sprintf(buffer, "%s", debugstr_guid(value.puuid)); break;
+        case VT_UI4: sprintf(buffer, "%u", value.ulVal); break;
+        case VT_VECTOR | VT_UI1:
+            buf += sprintf(buf, "size %u, data {", value.caub.cElems);
+            for (j = 0; j < 16 && j < value.caub.cElems; ++j)
+                buf += sprintf(buf, "0x%02x,", value.caub.pElems[i + j]);
+            if (value.caub.cElems > 16)
+                buf += sprintf(buf, "...}");
+            else
+                buf += sprintf(buf - (j ? 1 : 0), "}");
+            break;
+        }
+
+        ret = PropVariantCompareEx(&value, &desc[i].value, 0, 0);
+        ok_(__FILE__, line)(ret == 0, "%s mismatch, type %u, value %s\n",
+                debugstr_a(desc[i].name), value.vt, buffer);
+    }
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -5614,6 +5651,30 @@ static void test_wma_decoder(void)
         },
     };
 
+    static const media_type_desc expect_available_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MEDIASUBTYPE_MSAUDIO1),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV9),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudio_Lossless),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+    };
+
     const struct attribute_desc input_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
@@ -5654,6 +5715,25 @@ static void test_wma_decoder(void)
 
     todo_wine
     check_interface(transform, &IID_IMediaObject, TRUE);
+
+    /* check default media types */
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("in %u", i);
+        ok(hr == S_OK, "GetInputAvailableType returned %#x\n", hr);
+        check_media_type(media_type, expect_available_inputs[i], -1);
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#x.\n", hr);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %u\n", ret);
+        winetest_pop_context();
+    }
+    todo_wine
+    ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#x\n", hr);
+    todo_wine
+    ok(i == 4, "%u input media types\n", i);
 
     /* setting output media type first doesn't work */
 
