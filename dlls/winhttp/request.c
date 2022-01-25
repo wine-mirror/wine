@@ -3505,6 +3505,22 @@ static DWORD socket_drain( struct socket *socket )
     return ERROR_SUCCESS;
 }
 
+static DWORD receive_close_status( struct socket *socket, unsigned int len )
+{
+    DWORD reason_len, ret;
+
+    if ((len && (len < sizeof(socket->status) || len > sizeof(socket->status) + sizeof(socket->reason))))
+        return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+
+    if (!len) return ERROR_SUCCESS;
+
+    reason_len = len - sizeof(socket->status);
+    if ((ret = receive_bytes( socket, (char *)&socket->status, sizeof(socket->status), &len, TRUE )))
+        return ret;
+    socket->status = RtlUshortByteSwap( socket->status );
+    return receive_bytes( socket, socket->reason, reason_len, &socket->reason_len, TRUE );
+}
+
 static DWORD handle_control_frame( struct socket *socket )
 {
     switch (socket->opcode)
@@ -3749,19 +3765,8 @@ static DWORD socket_close( struct socket *socket )
         if ((ret = socket_drain( socket ))) return ret;
     }
 
-    if ((count && (count < sizeof(socket->status) || count > sizeof(socket->status) + sizeof(socket->reason))))
-        return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-
-    if (count)
-    {
-        DWORD reason_len = count - sizeof(socket->status);
-        if ((ret = receive_bytes( socket, (char *)&socket->status, sizeof(socket->status), &count, TRUE ))) return ret;
-        socket->status = RtlUshortByteSwap( socket->status );
-        if ((ret = receive_bytes( socket, socket->reason, reason_len, &socket->reason_len, TRUE ))) return ret;
-    }
     socket->state = SOCKET_STATE_CLOSED;
-
-    return ERROR_SUCCESS;
+    return receive_close_status( socket, count );
 }
 
 static void CALLBACK task_socket_close( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
