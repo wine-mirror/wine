@@ -314,6 +314,7 @@ struct socket_shutdown
     USHORT status;
     char reason[123];
     DWORD len;
+    BOOL send_callback;
 };
 
 struct object_header *addref_object( struct object_header * ) DECLSPEC_HIDDEN;
