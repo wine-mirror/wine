@@ -7318,7 +7318,7 @@ static void shader_glsl_generate_stream_output_setup(struct wined3d_string_buffe
             DWORD write_mask;
             char str_mask[6];
 
-            write_mask = ((1u << e->component_count) - 1) << component_idx;
+            write_mask = wined3d_mask_from_size(e->component_count) << component_idx;
             shader_glsl_write_mask_to_str(write_mask, str_mask);
             shader_addline(buffer, "shader_out.reg%u_%u_%u = outputs[%u]%s;\n",
                     register_idx, component_idx, component_idx + e->component_count - 1,
