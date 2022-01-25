@@ -64,6 +64,7 @@ static void test_dmsynth(void)
     KSPROPERTY property;
     ULONG value;
     ULONG bytes;
+    DMUS_PORTCAPS caps;
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (LPVOID*)&dmsynth);
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
@@ -145,6 +146,16 @@ static void test_dmsynth(void)
     ok(clock_synth == clock_sink, "Synth and SynthSink clocks are not the same\n");
     ref_clock_synth = get_refcount(clock_synth);
     ok(ref_clock_synth > ref_clock_sink + 1, "Latency clock refcount didn't increase\n");
+
+    /* GetPortCaps */
+    hr = IDirectMusicSynth_GetPortCaps(dmsynth, NULL);
+    ok(hr == E_INVALIDARG, "GetPortCaps failed: %#x\n", hr);
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirectMusicSynth_GetPortCaps(dmsynth, &caps);
+    ok(hr == E_INVALIDARG, "GetPortCaps failed: %#x\n", hr);
+    caps.dwSize = sizeof(caps) + 1;
+    hr = IDirectMusicSynth_GetPortCaps(dmsynth, &caps);
+    ok(hr == S_OK, "GetPortCaps failed: %#x\n", hr);
 
     if (control_synth)
         IDirectMusicSynth_Release(control_synth);

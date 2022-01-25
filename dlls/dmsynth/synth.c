@@ -295,6 +295,9 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetPortCaps(IDirectMusicSynth8 *ifa
 
     TRACE("(%p)->(%p)\n", This, caps);
 
+    if (!caps || caps->dwSize < sizeof(*caps))
+        return E_INVALIDARG;
+
     *caps = This->caps;
 
     return S_OK;
