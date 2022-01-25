@@ -64,6 +64,12 @@ const struct luid SeManageVolumePrivilege         = { 28, 0 };
 const struct luid SeImpersonatePrivilege          = { 29, 0 };
 const struct luid SeCreateGlobalPrivilege         = { 30, 0 };
 
+struct sid_attrs
+{
+    const SID   *sid;
+    unsigned int attrs;
+};
+
 #define SID_N(n) struct /* same fields as struct SID */ \
     { \
         BYTE Revision; \
@@ -86,9 +92,6 @@ static const SID_N(3) builtin_logon_sid = { SID_REVISION, 3, { SECURITY_NT_AUTHO
 static const SID_N(5) domain_users_sid = { SID_REVISION, 5, { SECURITY_NT_AUTHORITY }, { SECURITY_NT_NON_UNIQUE, 0, 0, 0, DOMAIN_GROUP_RID_USERS } };
 
 const PSID security_world_sid = (PSID)&world_sid;
-static const PSID security_local_sid = (PSID)&local_sid;
-static const PSID security_interactive_sid = (PSID)&interactive_sid;
-static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
 const PSID security_local_system_sid = (PSID)&local_system_sid;
 const PSID security_local_user_sid = (PSID)&local_user_sid;
 const PSID security_builtin_admins_sid = (PSID)&builtin_admins_sid;
@@ -541,7 +544,7 @@ static void token_destroy( struct object *obj )
  *   allocated.
  */
 static struct token *create_token( unsigned int primary, unsigned int session_id, const SID *user,
-                                   const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
+                                   const struct sid_attrs *groups, unsigned int group_count,
                                    const struct luid_attr *privs, unsigned int priv_count,
                                    const ACL *default_dacl, TOKEN_SOURCE source,
                                    const struct luid *modified_id,
@@ -581,7 +584,7 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
         /* copy groups */
         for (i = 0; i < group_count; i++)
         {
-            size_t size = FIELD_OFFSET( struct group, sid.SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] );
+            size_t size = FIELD_OFFSET( struct group, sid.SubAuthority[groups[i].sid->SubAuthorityCount] );
             struct group *group = mem_alloc( size );
 
             if (!group)
@@ -589,12 +592,12 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
                 release_object( token );
                 return NULL;
             }
-            memcpy( &group->sid, groups[i].Sid, security_sid_len( groups[i].Sid ));
+            memcpy( &group->sid, groups[i].sid, security_sid_len( groups[i].sid ));
             group->enabled = TRUE;
             group->def = TRUE;
-            group->logon = (groups[i].Attributes & SE_GROUP_LOGON_ID) != 0;
-            group->mandatory = (groups[i].Attributes & SE_GROUP_MANDATORY) != 0;
-            group->owner = (groups[i].Attributes & SE_GROUP_OWNER) != 0;
+            group->logon = (groups[i].attrs & SE_GROUP_LOGON_ID) != 0;
+            group->mandatory = (groups[i].attrs & SE_GROUP_MANDATORY) != 0;
+            group->owner = (groups[i].attrs & SE_GROUP_OWNER) != 0;
             group->resource = FALSE;
             group->deny_only = FALSE;
             list_add_tail( &token->groups, &group->entry );
@@ -878,13 +881,13 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
         };
         /* note: we don't include non-builtin groups here for the user -
          * telling us these is the job of a client-side program */
-        const SID_AND_ATTRIBUTES admin_groups[] =
+        const struct sid_attrs admin_groups[] =
         {
-            { security_world_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
-            { security_local_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
-            { security_interactive_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
-            { security_authenticated_user_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
-            { security_domain_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
+            { &world_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { &local_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { &interactive_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { &authenticated_user_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { (SID *)&domain_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
             { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
             { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
