@@ -3046,7 +3046,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
         req->sockets[i].sock = (struct sock *)get_handle_obj( current->process, sockets[i].socket, 0, &sock_ops );
         if (!req->sockets[i].sock)
         {
-            for (j = 0; j < i; ++j) release_object( req->sockets[i].sock );
+            for (j = 0; j < i; ++j) release_object( req->sockets[j].sock );
             if (req->timeout) remove_timeout_user( req->timeout );
             free( req );
             return;
