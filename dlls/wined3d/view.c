@@ -1985,11 +1985,16 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
+        struct wined3d_buffer *buffer = buffer_from_resource(resource);
+
         uav_location = WINED3D_LOCATION_BUFFER;
         layout = state->buffer_layout;
         vk_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
 
-        constants.extent.width  = view_desc->u.buffer.count;
+        if (buffer->structure_byte_stride)
+            constants.extent.width = view_desc->u.buffer.count * buffer->structure_byte_stride / 4;
+        else
+            constants.extent.width = view_desc->u.buffer.count;
         constants.extent.height = 1;
     }
     else

@@ -16290,10 +16290,8 @@ static void test_clear_buffer_unordered_access_view(void)
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
     buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
     buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-    buffer_desc.StructureByteStride = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-    buffer_desc.StructureByteStride = 4;
+    buffer_desc.StructureByteStride = 8;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
@@ -16319,9 +16317,10 @@ static void test_clear_buffer_unordered_access_view(void)
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        SetRect(&rect, 0, 0, U(uav_desc).Buffer.NumElements, 1);
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.NumElements * buffer_desc.StructureByteStride / sizeof(uvec4.x), 1);
         check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
-        SetRect(&rect, U(uav_desc).Buffer.NumElements, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        rect.left = rect.right;
+        rect.right = buffer_desc.ByteWidth / sizeof(uvec4.x);
         check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
     }
