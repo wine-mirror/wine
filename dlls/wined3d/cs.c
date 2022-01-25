@@ -3671,6 +3671,19 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_SET_STREAM_SOURCES:
+        {
+            struct wined3d_cs_set_stream_sources *op;
+
+            op = (struct wined3d_cs_set_stream_sources *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->streams[i].buffer)
+                    wined3d_buffer_decref(op->streams[i].buffer);
+            }
+            break;
+        }
+
         default:
             break;
     }
@@ -3856,6 +3869,19 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             {
                 if (op->outputs[i].buffer)
                     wined3d_buffer_incref(op->outputs[i].buffer);
+            }
+            break;
+        }
+
+        case WINED3D_CS_OP_SET_STREAM_SOURCES:
+        {
+            struct wined3d_cs_set_stream_sources *op;
+
+            op  = (struct wined3d_cs_set_stream_sources *)packet->data;
+            for (i = 0; i < op->count; ++i)
+            {
+                if (op->streams[i].buffer)
+                    wined3d_buffer_incref(op->streams[i].buffer);
             }
             break;
         }
