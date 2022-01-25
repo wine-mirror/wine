@@ -3509,20 +3509,24 @@ static DWORD receive_close_status( struct socket *socket, unsigned int len )
 {
     DWORD reason_len, ret;
 
+    socket->close_frame_received = TRUE;
     if ((len && (len < sizeof(socket->status) || len > sizeof(socket->status) + sizeof(socket->reason))))
-        return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        return (socket->close_frame_receive_err = ERROR_WINHTTP_INVALID_SERVER_RESPONSE);
 
-    if (!len) return ERROR_SUCCESS;
+    if (!len) return (socket->close_frame_receive_err = ERROR_SUCCESS);
 
     reason_len = len - sizeof(socket->status);
     if ((ret = receive_bytes( socket, (char *)&socket->status, sizeof(socket->status), &len, TRUE )))
-        return ret;
+        return (socket->close_frame_receive_err = ret);
     socket->status = RtlUshortByteSwap( socket->status );
-    return receive_bytes( socket, socket->reason, reason_len, &socket->reason_len, TRUE );
+    return (socket->close_frame_receive_err
+            = receive_bytes( socket, socket->reason, reason_len, &socket->reason_len, TRUE ));
 }
 
 static DWORD handle_control_frame( struct socket *socket )
 {
+    TRACE( "opcode %u.\n", socket->opcode );
+
     switch (socket->opcode)
     {
     case SOCKET_OPCODE_PING:
@@ -3530,6 +3534,19 @@ static DWORD handle_control_frame( struct socket *socket )
 
     case SOCKET_OPCODE_PONG:
         return socket_drain( socket );
+
+    case SOCKET_OPCODE_CLOSE:
+        if (socket->state != SOCKET_STATE_CLOSED)
+            WARN( "SOCKET_OPCODE_CLOSE received, socket->state %u.\n", socket->state );
+        if (socket->close_frame_received)
+        {
+            FIXME( "Close frame already received.\n" );
+            return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        }
+
+        receive_close_status( socket, socket->read_size );
+        socket->read_size = 0;
+        return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
 
     default:
         ERR("unhandled control opcode %02x\n", socket->opcode);
@@ -3753,6 +3770,8 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
 static DWORD socket_close( struct socket *socket )
 {
     DWORD ret, count;
+
+    if (socket->close_frame_received) return socket->close_frame_receive_err;
 
     if ((ret = socket_drain( socket ))) return ret;
 
