@@ -130,13 +130,13 @@ typedef struct
  * Win8 info, reported if the app doesn't provide compat GUID in the manifest and
  * doesn't have higher OS version in PE header.
  */
-static const struct version_info windows8_version_info = { 6, 2, 0x23f0 };
+static const struct version_info windows8_version_info = { 6, 2, 9200 };
 
 /***********************************************************************
  * Win8.1 info, reported if the app doesn't provide compat GUID in the manifest and
  * OS version in PE header is 8.1 or higher but below 10.
  */
-static const struct version_info windows8_1_version_info = { 6, 3, 0x2580 };
+static const struct version_info windows8_1_version_info = { 6, 3, 9600 };
 
 
 /***********************************************************************
@@ -151,12 +151,12 @@ static const struct
 {
     /* Windows 8.1 */
     {
-        { 6, 3, 0x2580 },
+        { 6, 3, 9600 },
         {0x1f676c76,0x80e1,0x4239,{0x95,0xbb,0x83,0xd0,0xf6,0xd0,0xda,0x78}}
     },
     /* Windows 10 */
     {
-        { 10, 0, 0x42ee },
+        { 10, 0, 18362 },
         {0x8e0f7a12,0xbfb3,0x4fe8,{0xb9,0xa5,0x48,0xfd,0x50,0xa1,0x5a,0x9a}}
     }
 };
