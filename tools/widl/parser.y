@@ -50,7 +50,7 @@ static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t 
         enum storage_class stgclass, enum type_qualifier qual, enum function_specifier func_specifier);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned int val);
-static attr_t *make_custom_attr(uuid_t *id, expr_t *pval);
+static attr_t *make_custom_attr(struct uuid *id, expr_t *pval);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl, int top);
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
@@ -141,7 +141,7 @@ static typelib_t *current_typelib;
 	typeref_t *typeref;
 	typeref_list_t *typeref_list;
 	char *str;
-	uuid_t *uuid;
+	struct uuid *uuid;
 	unsigned int num;
 	double dbl;
 	typelib_t *typelib;
@@ -1523,7 +1523,7 @@ attr_t *make_attrp(enum attr_type type, void *val)
   return a;
 }
 
-static attr_t *make_custom_attr(uuid_t *id, expr_t *pval)
+static attr_t *make_custom_attr(struct uuid *id, expr_t *pval)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   attr_custdata_t *cstdata = xmalloc(sizeof(attr_custdata_t));

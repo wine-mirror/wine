@@ -141,7 +141,7 @@ static char *format_parameterized_type_args(const type_t *type, const char *pref
     return buf;
 }
 
-static void write_guid(FILE *f, const char *guid_prefix, const char *name, const uuid_t *uuid)
+static void write_guid(FILE *f, const char *guid_prefix, const char *name, const struct uuid *uuid)
 {
   if (!uuid) return;
   fprintf(f, "DEFINE_GUID(%s_%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
@@ -151,7 +151,7 @@ static void write_guid(FILE *f, const char *guid_prefix, const char *name, const
         uuid->Data4[6], uuid->Data4[7]);
 }
 
-static void write_uuid_decl(FILE *f, type_t *type, const uuid_t *uuid)
+static void write_uuid_decl(FILE *f, type_t *type, const struct uuid *uuid)
 {
   fprintf(f, "#ifdef __CRT_UUID_DECL\n");
   fprintf(f, "__CRT_UUID_DECL(%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
@@ -162,7 +162,7 @@ static void write_uuid_decl(FILE *f, type_t *type, const uuid_t *uuid)
   fprintf(f, "#endif\n");
 }
 
-static const char *uuid_string(const uuid_t *uuid)
+static const char *uuid_string(const struct uuid *uuid)
 {
   static char buf[37];
 
@@ -937,7 +937,7 @@ static void write_declaration(FILE *header, const var_t *v)
 
 static void write_library(FILE *header, const typelib_t *typelib)
 {
-  const uuid_t *uuid = get_attrp(typelib->attrs, ATTR_UUID);
+  const struct uuid *uuid = get_attrp(typelib->attrs, ATTR_UUID);
   fprintf(header, "\n");
   write_guid(header, "LIBID", typelib->name, uuid);
   fprintf(header, "\n");
@@ -1680,7 +1680,7 @@ static void write_widl_using_method_macros(FILE *header, const type_t *iface, co
 
 static void write_widl_using_macros(FILE *header, type_t *iface)
 {
-    const uuid_t *uuid = get_attrp(iface->attrs, ATTR_UUID);
+    const struct uuid *uuid = get_attrp(iface->attrs, ATTR_UUID);
     const char *name = iface->short_name ? iface->short_name : iface->name;
     char *macro;
 
@@ -1702,7 +1702,7 @@ static void write_widl_using_macros(FILE *header, type_t *iface)
 static void write_com_interface_end(FILE *header, type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
-  const uuid_t *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  const struct uuid *uuid = get_attrp(iface->attrs, ATTR_UUID);
   expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
   type_t *type;
 
@@ -1836,7 +1836,7 @@ static void write_rpc_interface_end(FILE *header, const type_t *iface)
 
 static void write_coclass(FILE *header, type_t *cocl)
 {
-  const uuid_t *uuid = get_attrp(cocl->attrs, ATTR_UUID);
+  const struct uuid *uuid = get_attrp(cocl->attrs, ATTR_UUID);
 
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s coclass\n", cocl->name);

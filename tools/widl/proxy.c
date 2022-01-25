@@ -847,8 +847,8 @@ static int cmp_iid( const void *ptr1, const void *ptr2 )
 {
     const type_t * const *iface1 = ptr1;
     const type_t * const *iface2 = ptr2;
-    const uuid_t *uuid1 = get_attrp( (*iface1)->attrs, ATTR_UUID );
-    const uuid_t *uuid2 = get_attrp( (*iface2)->attrs, ATTR_UUID );
+    const struct uuid *uuid1 = get_attrp( (*iface1)->attrs, ATTR_UUID );
+    const struct uuid *uuid2 = get_attrp( (*iface2)->attrs, ATTR_UUID );
     return memcmp( uuid1, uuid2, sizeof(*uuid1) );
 }
 

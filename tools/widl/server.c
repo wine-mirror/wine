@@ -399,7 +399,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
 static void write_serverinterfacedecl(type_t *iface)
 {
     unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
-    uuid_t *uuid = get_attrp(iface->attrs, ATTR_UUID);
+    struct uuid *uuid = get_attrp(iface->attrs, ATTR_UUID);
     const str_list_t *endpoints = get_attrp(iface->attrs, ATTR_ENDPOINT);
 
     if (endpoints) write_endpoints( server, iface->name, endpoints );

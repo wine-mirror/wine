@@ -239,7 +239,7 @@ unsigned short get_type_vt(type_t *t)
   return 0;
 }
 
-static void msft_read_guid(void *data, MSFT_SegDir *segdir, int offset, uuid_t *guid)
+static void msft_read_guid(void *data, MSFT_SegDir *segdir, int offset, struct uuid *guid)
 {
     memcpy( guid, (char *)data + segdir->pGuidTab.offset + offset, sizeof(*guid) );
 }

@@ -34,7 +34,7 @@
 
 static int indent;
 
-static const char *format_uuid( const uuid_t *uuid )
+static const char *format_uuid( const struct uuid *uuid )
 {
     static char buffer[40];
     sprintf( buffer, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
@@ -76,8 +76,8 @@ static const type_t *find_ps_factory( const statement_list_t *stmts )
 
 static void write_interface( const type_t *iface, const type_t *ps_factory )
 {
-    const uuid_t *uuid = get_attrp( iface->attrs, ATTR_UUID );
-    const uuid_t *ps_uuid = get_attrp( ps_factory->attrs, ATTR_UUID );
+    const struct uuid *uuid = get_attrp( iface->attrs, ATTR_UUID );
+    const struct uuid *ps_uuid = get_attrp( ps_factory->attrs, ATTR_UUID );
 
     if (!uuid) return;
     if (!is_object( iface )) return;
@@ -109,8 +109,8 @@ static void write_interfaces( const statement_list_t *stmts, const type_t *ps_fa
 
 static void write_typelib_interface( const type_t *iface, const typelib_t *typelib )
 {
-    const uuid_t *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
-    const uuid_t *uuid = get_attrp( iface->attrs, ATTR_UUID );
+    const struct uuid *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
+    const struct uuid *uuid = get_attrp( iface->attrs, ATTR_UUID );
     unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );
 
     if (!uuid) return;
@@ -139,7 +139,7 @@ static void write_typelib_interfaces( const typelib_t *typelib )
 
 static int write_coclass( const type_t *class, const typelib_t *typelib )
 {
-    const uuid_t *uuid = get_attrp( class->attrs, ATTR_UUID );
+    const struct uuid *uuid = get_attrp( class->attrs, ATTR_UUID );
     const char *descr = get_attrp( class->attrs, ATTR_HELPSTRING );
     const char *progid = get_attrp( class->attrs, ATTR_PROGID );
     const char *vi_progid = get_attrp( class->attrs, ATTR_VIPROGID );
@@ -157,7 +157,7 @@ static int write_coclass( const type_t *class, const typelib_t *typelib )
     if (progid) put_str( indent, "ProgId = s '%s'\n", progid );
     if (typelib)
     {
-        const uuid_t *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
+        const struct uuid *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
         put_str( indent, "TypeLib = s '%s'\n", format_uuid( typelib_uuid ));
         if (!version) version = get_attrv( typelib->attrs, ATTR_VERSION );
     }
@@ -200,7 +200,7 @@ static void write_runtimeclasses_registry( const statement_list_t *stmts )
 
 static int write_progid( const type_t *class )
 {
-    const uuid_t *uuid = get_attrp( class->attrs, ATTR_UUID );
+    const struct uuid *uuid = get_attrp( class->attrs, ATTR_UUID );
     const char *descr = get_attrp( class->attrs, ATTR_HELPSTRING );
     const char *progid = get_attrp( class->attrs, ATTR_PROGID );
     const char *vi_progid = get_attrp( class->attrs, ATTR_VIPROGID );
@@ -324,7 +324,7 @@ void write_typelib_regscript( const statement_list_t *stmts )
 
 void output_typelib_regscript( const typelib_t *typelib )
 {
-    const uuid_t *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
+    const struct uuid *typelib_uuid = get_attrp( typelib->attrs, ATTR_UUID );
     const char *descr = get_attrp( typelib->attrs, ATTR_HELPSTRING );
     const expr_t *lcid_expr = get_attrp( typelib->attrs, ATTR_LIBLCID );
     unsigned int version = get_attrv( typelib->attrs, ATTR_VERSION );

@@ -35,7 +35,7 @@ size_t strappend(char **buf, size_t *len, size_t pos, const char* fmt, ...) __at
 
 size_t widl_getline(char **linep, size_t *lenp, FILE *fp);
 
-uuid_t *parse_uuid(const char *u);
+struct uuid *parse_uuid(const char *u);
 int is_valid_uuid(const char *s);
 
 /* buffer management */

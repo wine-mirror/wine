@@ -242,7 +242,7 @@ typedef struct {
 
 /* this is how a guid is stored */
 typedef struct {
-    uuid_t guid;
+    struct uuid guid;
     int   hreftype;     /* -2 for the typelib guid, typeinfo offset
 			   for typeinfo guid, low two bits are 01 if
 			   this is an imported typeinfo, low two bits
@@ -357,10 +357,10 @@ typedef struct {
 	unsigned short syskind;		/* == 1 for win32, 0 for win16 */
 	unsigned short lcid;		/* == 0x409, 0x809 etc */
 	unsigned int   res12;		/* == 0 */
- 	unsigned short libflags;	/* LIBFLAG_* */
+	unsigned short libflags;	/* LIBFLAG_* */
 	unsigned short maj_vers;
 	unsigned short min_vers;
-	uuid_t uuid;
+	struct uuid uuid;
 } SLTG_LibBlk;
 
 #define SLTG_LIBBLK_MAGIC 0x51cc
@@ -379,7 +379,7 @@ typedef struct {
     unsigned short res20;      /* 0xffff */
     unsigned int   helpcontext;
     unsigned short res26;      /* 0xffff */
-    uuid_t uuid;
+    struct uuid uuid;
 } SLTG_OtherTypeInfo;
 
 /* Next we get WORD 0x0003 followed by a DWORD which if we add to

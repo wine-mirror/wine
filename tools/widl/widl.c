@@ -382,7 +382,7 @@ void write_dlldata(const statement_list_t *stmts)
   write_dlldata_list(filenames, define_proxy_delegation);
 }
 
-static void write_id_guid(FILE *f, const char *type, const char *guid_prefix, const char *name, const uuid_t *uuid)
+static void write_id_guid(FILE *f, const char *type, const char *guid_prefix, const char *name, const struct uuid *uuid)
 {
   if (!uuid) return;
   fprintf(f, "MIDL_DEFINE_GUID(%s, %s_%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
@@ -402,7 +402,7 @@ static void write_id_data_stmts(const statement_list_t *stmts)
       const type_t *type = stmt->u.type;
       if (type_get_type(type) == TYPE_INTERFACE)
       {
-        const uuid_t *uuid;
+        const struct uuid *uuid;
         if (!is_object(type) && !is_attr(type->attrs, ATTR_DISPINTERFACE))
           continue;
         uuid = get_attrp(type->attrs, ATTR_UUID);
@@ -416,13 +416,13 @@ static void write_id_data_stmts(const statement_list_t *stmts)
       }
       else if (type_get_type(type) == TYPE_COCLASS)
       {
-        const uuid_t *uuid = get_attrp(type->attrs, ATTR_UUID);
+        const struct uuid *uuid = get_attrp(type->attrs, ATTR_UUID);
         write_id_guid(idfile, "CLSID", "CLSID", type->name, uuid);
       }
     }
     else if (stmt->type == STMT_LIBRARY)
     {
-      const uuid_t *uuid = get_attrp(stmt->u.lib->attrs, ATTR_UUID);
+      const struct uuid *uuid = get_attrp(stmt->u.lib->attrs, ATTR_UUID);
       write_id_guid(idfile, "IID", "LIBID", stmt->u.lib->name, uuid);
       write_id_data_stmts(stmt->u.lib->stmts);
     }
