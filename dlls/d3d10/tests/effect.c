@@ -3852,7 +3852,7 @@ if (0)
     hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 0, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_Target"), "Unexpected semantic %s.\n", sign.SemanticName);
-todo_wine
+    todo_wine
     ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 4, 0, &sign);
@@ -7114,7 +7114,7 @@ static void test_effect_pool(void)
     ok(!!device2, "Failed to create d3d device.\n");
 
     hr = D3D10CreateEffectPoolFromMemory(NULL, 0, 0, device, &pool);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = create_effect_pool(fx_test_pool, device, &pool);
@@ -7131,7 +7131,7 @@ todo_wine
     effect->lpVtbl->Release(effect);
 
     hr = pool->lpVtbl->QueryInterface(pool, &IID_IUnknown, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr)) IUnknown_Release(unk);
 
@@ -7144,7 +7144,7 @@ todo_wine
     IUnknown_Release(unk);
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_IUnknown, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr)) IUnknown_Release(unk);
 
@@ -7228,12 +7228,12 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = effect2->lpVtbl->QueryInterface(effect2, &IID_IUnknown, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr)) IUnknown_Release(unk);
 
     hr = effect2->lpVtbl->QueryInterface(effect2, &IID_ID3D10Effect, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr)) IUnknown_Release(unk);
 
