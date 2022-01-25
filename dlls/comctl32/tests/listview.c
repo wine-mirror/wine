@@ -1688,7 +1688,7 @@ static void test_create(BOOL is_version_6)
     hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
     hHeader = (HWND)SendMessageA(hList, LVM_GETHEADER, 0, 0);
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
 
     /* insert column */
@@ -1703,7 +1703,7 @@ todo_wine_if(is_version_6)
     /* LVS_REPORT without WS_VISIBLE, try to show it */
     hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
 
     ShowWindow(hList, SW_SHOW);
@@ -1722,7 +1722,7 @@ todo_wine_if(is_version_6)
     /* setting LVS_EX_HEADERDRAGDROP creates header */
     hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
 
     SendMessageA(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_HEADERDRAGDROP);
@@ -1732,7 +1732,7 @@ todo_wine_if(is_version_6)
     /* setting LVS_EX_GRIDLINES creates header */
     hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
 
     SendMessageA(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_GRIDLINES);
@@ -1742,7 +1742,7 @@ todo_wine_if(is_version_6)
     /* setting LVS_EX_FULLROWSELECT creates header */
     hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
     SendMessageA(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
     TEST_HEADER_EXPECTED(hList);
@@ -1758,7 +1758,7 @@ todo_wine_if(is_version_6)
     /* requesting header info with LVM_GETSUBITEMRECT doesn't create it */
     hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
 
     SetRect(&rect, LVIR_BOUNDS, 1, -10, -10);
@@ -1767,7 +1767,7 @@ todo_wine_if(is_version_6)
     /* right value contains garbage, probably because header columns are not set up */
     ok(rect.bottom >= 0, "Unexpected rectangle.\n");
 
-todo_wine_if(is_version_6)
+    todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
     DestroyWindow(hList);
 
@@ -3993,7 +3993,7 @@ static void test_getitemrect(void)
     expect(0, rect.left);
     expect(0, rect.top);
     /* estimate it as width / height ratio */
-todo_wine
+    todo_wine
     ok((rect.right / rect.bottom) >= 5, "got right %d, bottom %d\n", rect.right, rect.bottom);
     DestroyWindow(hwnd);
 
@@ -5088,20 +5088,20 @@ static void test_approximate_viewrect(void)
 
     /* Empty control without columns */
     ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, 0, MAKELPARAM(100, 100));
-todo_wine
+    todo_wine
     ok(LOWORD(ret) == 0, "Unexpected width %d.\n", LOWORD(ret));
     ok(HIWORD(ret) != 0, "Unexpected height %d.\n", HIWORD(ret));
 
     ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, 0, 0);
     ok(LOWORD(ret) == 0, "Unexpected width %d.\n", LOWORD(ret));
-todo_wine
+    todo_wine
     ok(HIWORD(ret) != 0, "Unexpected height %d.\n", HIWORD(ret));
 
     header_height = HIWORD(ret);
 
     ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, 1, 0);
     ok(LOWORD(ret) == 0, "Unexpected width %d.\n", LOWORD(ret));
-todo_wine
+    todo_wine
     ok(HIWORD(ret) > header_height, "Unexpected height %d.\n", HIWORD(ret));
 
     item_height = HIWORD(ret) - header_height;
@@ -5135,7 +5135,7 @@ todo_wine {
 
     ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, 1, 0);
     ok(LOWORD(ret) == item_width, "Unexpected width %d.\n", LOWORD(ret));
-todo_wine
+    todo_wine
     ok(HIWORD(ret) > header_height, "Unexpected height %d.\n", HIWORD(ret));
 
     item_height = HIWORD(ret) - header_height;
@@ -5163,7 +5163,7 @@ todo_wine
 
         ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, 0, 0);
         ok(LOWORD(ret) >= column_width, "Unexpected width %d.\n", LOWORD(ret));
-    todo_wine
+        todo_wine
         ok(HIWORD(ret) != 0, "Unexpected height %d.\n", HIWORD(ret));
 
         header_height = HIWORD(ret);
@@ -5177,7 +5177,7 @@ todo_wine
 
         ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, -2, 0);
         ok(LOWORD(ret) == item_width, "Unexpected width %d.\n", LOWORD(ret));
-    todo_wine
+        todo_wine
         ok(HIWORD(ret) == header_height - 2 * item_height, "Unexpected height %d.\n", HIWORD(ret));
 
         ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, -1, 0);
@@ -5194,12 +5194,12 @@ todo_wine
 
         ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, -2, MAKELONG(item_width * 2, 0));
         ok(LOWORD(ret) == item_width, "Unexpected width %d.\n", LOWORD(ret));
-    todo_wine
+        todo_wine
         ok(HIWORD(ret) == header_height - 2 * item_height, "Unexpected height %d.\n", HIWORD(ret));
 
         ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, -2, MAKELONG(-1, -1));
         ok(LOWORD(ret) == item_width, "Unexpected width %d.\n", LOWORD(ret));
-    todo_wine
+        todo_wine
         ok(HIWORD(ret) == header_height - 2 * item_height, "Unexpected height %d.\n", HIWORD(ret));
     }
 
@@ -6143,11 +6143,11 @@ static void test_callback_mask(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
-todo_wine
+    todo_wine
     ok(ret == 0, "Unexpected focused item, ret %d\n", ret);
 
     ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
-todo_wine
+    todo_wine
     ok(ret == 0, "Unexpected selection mark, %d\n", ret);
 
     ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 0, 0);
@@ -6197,7 +6197,7 @@ todo_wine
     ok(ret == -1, "Unexpected focused item, ret %d\n", ret);
 
     ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
-todo_wine
+    todo_wine
     ok(ret == -1, "Unexpected selection mark, %d\n", ret);
 
     ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);

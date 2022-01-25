@@ -2268,7 +2268,7 @@ static void test_cchildren(void)
     /* check cChildren */
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-todo_wine
+    todo_wine
     expect(1, item.cChildren);
 
     DestroyWindow(hTree);
@@ -2832,7 +2832,7 @@ static void test_TVM_SORTCHILDREN(void)
     /* with NULL item nothing is sorted */
     fill_treeview_sort_test(hwnd);
     ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, 0);
-todo_wine
+    todo_wine
     ok(ret, "Unexpected ret value %d\n", ret);
     get_item_names_string(hwnd, NULL, buff);
     ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, initial_order);
@@ -2840,7 +2840,7 @@ todo_wine
     /* TVI_ROOT as item */
     fill_treeview_sort_test(hwnd);
     ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, (LPARAM)TVI_ROOT);
-todo_wine
+    todo_wine
     ok(ret, "Unexpected ret value %d\n", ret);
     get_item_names_string(hwnd, NULL, buff);
     ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, initial_order);
@@ -2857,7 +2857,7 @@ todo_wine
     /* non-zero WPARAM, NULL item */
     fill_treeview_sort_test(hwnd);
     ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, 0);
-todo_wine
+    todo_wine
     ok(ret, "Unexpected ret value %d\n", ret);
     get_item_names_string(hwnd, NULL, buff);
     ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, sorted_order);
@@ -2865,7 +2865,7 @@ todo_wine
     /* TVI_ROOT as item */
     fill_treeview_sort_test(hwnd);
     ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, (LPARAM)TVI_ROOT);
-todo_wine
+    todo_wine
     ok(ret, "Unexpected ret value %d\n", ret);
     get_item_names_string(hwnd, NULL, buff);
     ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, sorted_order);

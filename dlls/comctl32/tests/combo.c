@@ -715,7 +715,7 @@ static void test_combo_setitemheight(DWORD style)
     font_height = get_font_height(hFont);
     SendMessageA(hCombo, CB_SETITEMHEIGHT, -1, font_height / 2);
     height = SendMessageA(hCombo, CB_GETITEMHEIGHT, -1, 0);
-todo_wine
+    todo_wine
     ok(height == font_height / 2, "Unexpected item height %d, expected %d.\n", height, font_height / 2);
 
     SetWindowPos(hCombo, NULL, 10, 10, 150, 5 * font_height, SWP_SHOWWINDOW);
@@ -1485,7 +1485,7 @@ static void test_comboex_CBEN_GETDISPINFO(void)
     di_context.mask = 0;
     res = SendMessageA(combo, CBEM_GETITEMA, 0, (LPARAM)&item);
     ok(res == 1, "Unexpected return value %u.\n", res);
-todo_wine
+    todo_wine
     ok(di_context.mask == CBEIF_IMAGE, "Unexpected mask %#x.\n", di_context.mask);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, getdisp_parent_seq, "Get disp DI_SETITEM seq", TRUE);
@@ -1504,7 +1504,7 @@ todo_wine
     di_context.mask = 0;
     res = SendMessageA(combo, CBEM_GETITEMA, 0, (LPARAM)&item);
     ok(res == 1, "Unexpected return value %u.\n", res);
-todo_wine
+    todo_wine
     ok(di_context.mask == CBEIF_INDENT, "Unexpected mask %#x.\n", di_context.mask);
 
     di_context.set_CBEIF_DI_SETITEM = FALSE;

@@ -68,7 +68,7 @@ static void test_create_tooltip(BOOL is_v6)
     exp_style = WS_POPUP | WS_CLIPSIBLINGS;
     if (!is_v6)
         exp_style |= WS_BORDER;
-todo_wine_if(is_v6)
+    todo_wine_if(is_v6)
     ok(style == exp_style || broken(style == (exp_style | WS_BORDER)) /* XP */,
         "Unexpected window style %#x.\n", style);
 
@@ -389,7 +389,7 @@ static void test_gettext(void)
 
     toolinfoA.lpszText = bufA;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
-todo_wine
+    todo_wine
     ok(!r, "got %ld\n", r);
     ok(toolinfoA.lpszText == NULL, "expected NULL, got %p\n", toolinfoA.lpszText);
 
@@ -414,7 +414,7 @@ todo_wine
 
     toolinfoA.hinst = (HINSTANCE)0xdeadbee;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
-todo_wine
+    todo_wine
     ok(!r, "got %ld\n", r);
     ok(toolinfoA.hinst == NULL, "expected NULL, got %p\n", toolinfoA.hinst);
 
@@ -447,7 +447,7 @@ todo_wine
     memset(bufA, 0x1f, sizeof(bufA));
     toolinfoA.lpszText = bufA;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
-todo_wine
+    todo_wine
     ok(!r, "got %ld\n", r);
     ok(!strcmp(toolinfoA.lpszText, testtipA), "expected %s, got %p\n", testtipA, toolinfoA.lpszText);
 
@@ -475,7 +475,7 @@ todo_wine
 
     toolinfoA.lpszText = bufA;
     r = SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
-todo_wine
+    todo_wine
     ok(!r, "got %ld\n", r);
     ok(toolinfoA.lpszText == LPSTR_TEXTCALLBACKA, "expected LPSTR_TEXTCALLBACKA, got %p\n", toolinfoA.lpszText);
 
@@ -498,7 +498,7 @@ todo_wine
     r = SendMessageW(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&toolinfoW);
     /* Wine currently checks for V3 structure size, which matches what V6 control does.
        Older implementation was never updated to support lpReserved field. */
-todo_wine
+    todo_wine
     ok(!r, "Adding the tool to the tooltip succeeded!\n");
 
     toolinfoW.hwnd = NULL;
@@ -1144,7 +1144,7 @@ static void test_TTM_ADDTOOL(BOOL is_v6)
         GetClientRect(hwnd, &tiW.rect);
 
         ret = SendMessageA(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&tiW);
-    todo_wine_if(!is_v6 && size > max_size)
+        todo_wine_if(!is_v6 && size > max_size)
         ok(size <= max_size ? ret : !ret, "%d: Unexpected ret value %d, size %d, max size %d.\n", is_v6, ret, size, max_size);
         if (ret)
         {

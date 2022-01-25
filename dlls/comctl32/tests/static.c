@@ -101,7 +101,7 @@ static void test_updates(int style, int flags)
     {
         HDC hdc = GetDC(hStatic);
         COLORREF colour = GetPixel(hdc, 10, 10);
-    todo_wine
+        todo_wine
         ok(colour == 0, "Unexpected pixel color.\n");
         ReleaseDC(hStatic, hdc);
     }
