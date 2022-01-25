@@ -816,6 +816,12 @@ static void test_websocket(BOOL secure)
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     WaitForSingleObject( info.wait, INFINITE );
 
+    err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
+    ok( err == ERROR_INVALID_OPERATION, "got %u\n", err );
+    err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
+                                 (void*)"hello", sizeof("hello") );
+    ok( err == ERROR_INVALID_OPERATION, "got %u\n", err );
+
     setup_test( &info, winhttp_websocket_receive, __LINE__ );
     buffer[0] = 0;
     size = 0xdeadbeef;
@@ -838,8 +844,15 @@ static void test_websocket(BOOL secure)
     ok( type == 0xdeadbeef, "got %u\n", type );
     ok( buffer[0] == 'h', "unexpected data\n" );
 
+    close_status = 0xdead;
+    size = sizeof(buffer) + 1;
+    err = pWinHttpWebSocketQueryCloseStatus( socket, &close_status, buffer, sizeof(buffer), &size );
+    ok( err == ERROR_INVALID_OPERATION, "got %u\n", err );
+    ok( close_status == 0xdead, "got %u\n", close_status );
+    ok( size == sizeof(buffer) + 1, "got %u\n", size );
+
     setup_test( &info, winhttp_websocket_close, __LINE__ );
-    ret = pWinHttpWebSocketClose( socket, 1000, (void *)"success", sizeof("success") );
+    err = pWinHttpWebSocketClose( socket, 1000, (void *)"success", sizeof("success") );
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     WaitForSingleObject( info.wait, INFINITE );
 

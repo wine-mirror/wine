@@ -3324,7 +3324,7 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
     if (socket->state != SOCKET_STATE_OPEN)
     {
         release_object( &socket->hdr );
-        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        return ERROR_INVALID_OPERATION;
     }
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
@@ -3625,7 +3625,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
     if (socket->state > SOCKET_STATE_SHUTDOWN)
     {
         release_object( &socket->hdr );
-        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        return ERROR_INVALID_OPERATION;
     }
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
@@ -3704,7 +3704,7 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
     if (socket->state >= SOCKET_STATE_SHUTDOWN)
     {
         release_object( &socket->hdr );
-        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        return ERROR_INVALID_OPERATION;
     }
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
@@ -3814,7 +3814,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
     if (socket->state >= SOCKET_STATE_CLOSED)
     {
         release_object( &socket->hdr );
-        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        return ERROR_INVALID_OPERATION;
     }
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
@@ -3859,7 +3859,7 @@ DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status
     if (socket->state < SOCKET_STATE_CLOSED)
     {
         release_object( &socket->hdr );
-        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        return ERROR_INVALID_OPERATION;
     }
 
     *status = socket->status;
