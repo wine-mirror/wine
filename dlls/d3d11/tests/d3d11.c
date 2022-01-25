@@ -33939,6 +33939,46 @@ static void test_dynamic_map_synchronization(void)
     release_test_context(&test_context);
 }
 
+static void test_user_defined_annotation(void)
+{
+    struct d3d11_test_context test_context;
+    ID3DUserDefinedAnnotation *annotation;
+    ID3D11DeviceContext *context;
+    HRESULT hr;
+    int ret;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    hr = ID3D11DeviceContext_QueryInterface(test_context.immediate_context,
+            &IID_ID3DUserDefinedAnnotation, (void **)&annotation);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ret = ID3DUserDefinedAnnotation_BeginEvent(annotation, L"Event 1");
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ret = ID3DUserDefinedAnnotation_EndEvent(annotation);
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ID3DUserDefinedAnnotation_SetMarker(annotation, L"Marker 1");
+    ret = ID3DUserDefinedAnnotation_GetStatus(annotation);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
+    ID3DUserDefinedAnnotation_Release(annotation);
+
+    hr = ID3D11Device_CreateDeferredContext(test_context.device, 0, &context);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_QueryInterface(context, &IID_ID3DUserDefinedAnnotation, (void **)&annotation);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ret = ID3DUserDefinedAnnotation_BeginEvent(annotation, L"Event 2");
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ret = ID3DUserDefinedAnnotation_EndEvent(annotation);
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ID3DUserDefinedAnnotation_SetMarker(annotation, L"Marker 2");
+    ret = ID3DUserDefinedAnnotation_GetStatus(annotation);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
+    ID3DUserDefinedAnnotation_Release(annotation);
+    ID3D11DeviceContext_Release(context);
+
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -34113,6 +34153,7 @@ START_TEST(d3d11)
     queue_test(test_texture_compressed_3d);
     queue_test(test_constant_buffer_offset);
     queue_test(test_dynamic_map_synchronization);
+    queue_test(test_user_defined_annotation);
 
     run_queued_tests();
 
