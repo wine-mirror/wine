@@ -453,11 +453,11 @@ static void test_new_moniker(void)
     ok(moniker_type == MKSYS_NONE, "Unexpected moniker type %d.\n", moniker_type);
 
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
@@ -468,7 +468,7 @@ todo_wine
     IUnknown_Release(obj);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
-todo_wine
+    todo_wine
     ok(hr == MK_E_NOSTORAGE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Inverse(moniker, &inverse);
@@ -535,7 +535,7 @@ todo_wine
     ok(hr == S_OK, "Failed to get rot, hr %#x.\n", hr);
 
     hr = IRunningObjectTable_GetObject(rot, moniker, &obj2);
-todo_wine
+    todo_wine
     ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
 
     IRunningObjectTable_Release(rot);
