@@ -1419,6 +1419,8 @@ static int add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             break;
         case ATTR_OUT:
             break;
+        case ATTR_OVERLOAD:
+            break;
         case ATTR_PROPGET:
             invokekind = 0x2; /* INVOKE_PROPERTYGET */
             break;

@@ -231,6 +231,7 @@ static typelib_t *current_typelib;
 %token tOBJECT tODL tOLEAUTOMATION
 %token tOPTIMIZE tOPTIONAL
 %token tOUT
+%token tOVERLOAD
 %token tPARTIALIGNORE tPASCAL
 %token tPOINTERDEFAULT
 %token tPRAGMA_WARNING
@@ -669,6 +670,7 @@ attribute:					{ $$ = NULL; }
 	| tOPTIMIZE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_OPTIMIZE, $3); }
 	| tOPTIONAL                             { $$ = make_attr(ATTR_OPTIONAL); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
+	| tOVERLOAD '(' aSTRING ')'		{ $$ = make_attrp(ATTR_OVERLOAD, $3); }
 	| tPARTIALIGNORE			{ $$ = make_attr(ATTR_PARTIALIGNORE); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
 	| tPROGID '(' aSTRING ')'		{ $$ = make_attrp(ATTR_PROGID, $3); }
@@ -2385,6 +2387,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_OPTIMIZE */            { 0, 0, 0,  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "optimize" },
     /* ATTR_OPTIONAL */            { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "optional" },
     /* ATTR_OUT */                 { 1, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "out" },
+    /* ATTR_OVERLOAD */            { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "overload" },
     /* ATTR_PARAMLCID */           { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "lcid" },
     /* ATTR_PARTIALIGNORE */       { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "partial_ignore" },
     /* ATTR_POINTERDEFAULT */      { 1, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "pointer_default" },
