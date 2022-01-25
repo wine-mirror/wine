@@ -2728,7 +2728,7 @@ static void test_EventLog(void)
        !strcmpi(config->lpBinaryPathName, "C:\\windows\\system32\\svchost.exe -k LocalServiceNetworkRestricted") /* Vista+ */ ||
        !strcmpi(config->lpBinaryPathName, "C:\\windows\\system32\\svchost.exe -k LocalServiceNetworkRestricted -p") /* Win10 */,
        "got %s\n", config->lpBinaryPathName);
-todo_wine
+    todo_wine
     ok(!strcmpi(config->lpLoadOrderGroup, "Event Log"), "got %s\n", config->lpLoadOrderGroup);
     ok(config->dwTagId == 0, "Expected 0, got %d\n", config->dwTagId);
     ok(!config->lpDependencies[0], "lpDependencies is not empty\n");
@@ -2749,7 +2749,7 @@ todo_wine
        status.dwServiceType == (SERVICE_WIN32_SHARE_PROCESS | SERVICE_WIN32_OWN_PROCESS) /* Win10 */,
        "got %#x\n", status.dwServiceType);
     ok(status.dwCurrentState == SERVICE_RUNNING, "got %#x\n", status.dwCurrentState);
-todo_wine
+    todo_wine
     ok(status.dwControlsAccepted == SERVICE_ACCEPT_SHUTDOWN /* XP */ ||
        status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN) /* 2008 */ ||
        status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_TIMECHANGE | SERVICE_ACCEPT_SHUTDOWN),

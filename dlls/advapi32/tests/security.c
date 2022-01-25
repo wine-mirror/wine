@@ -1028,7 +1028,7 @@ cleanup:
 
     rc = GetFileAttributesA(file);
     rc &= ~(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED|FILE_ATTRIBUTE_COMPRESSED);
-todo_wine
+    todo_wine
     ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
        "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
 
@@ -1488,10 +1488,10 @@ static void test_AccessCheck(void)
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       0, &PrivSetLen, &Access, &AccessStatus);
     err = GetLastError();
-todo_wine
+    todo_wine
     ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
        "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
-todo_wine
+    todo_wine
     ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
     ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
        "Access and/or AccessStatus were changed!\n");
@@ -1600,7 +1600,7 @@ todo_wine
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     err = GetLastError();
     ok(ret, "AccessCheck failed with error %d\n", GetLastError());
-todo_wine
+    todo_wine
     ok(PrivSetLen == sizeof(PRIVILEGE_SET) + 1, "PrivSetLen returns %d\n", PrivSetLen);
     ok(AccessStatus && (Access == KEY_READ),
         "AccessCheck failed to grant access with error %d\n", GetLastError());
@@ -5365,9 +5365,9 @@ static void validate_default_security_descriptor(SECURITY_DESCRIPTOR *sd)
     SetLastError(0xdeadbeef);
     ret = GetSecurityDescriptorDacl(sd, &present, &acl, &defaulted);
     ok(ret, "GetSecurityDescriptorDacl error %d\n", GetLastError());
-todo_wine
+    todo_wine
     ok(present == 1, "acl is not present\n");
-todo_wine
+    todo_wine
     ok(acl != (void *)0xdeadbeef && acl != NULL, "acl pointer is not set\n");
     ok(defaulted == 0, "defaulted is set to TRUE\n");
 
@@ -5376,7 +5376,7 @@ todo_wine
     SetLastError(0xdeadbeef);
     ret = GetSecurityDescriptorOwner(sd, &sid, &defaulted);
     ok(ret, "GetSecurityDescriptorOwner error %d\n", GetLastError());
-todo_wine
+    todo_wine
     ok(sid != (void *)0xdeadbeef && sid != NULL, "sid pointer is not set\n");
     ok(defaulted == 0, "defaulted is set to TRUE\n");
 
@@ -5385,7 +5385,7 @@ todo_wine
     SetLastError(0xdeadbeef);
     ret = GetSecurityDescriptorGroup(sd, &sid, &defaulted);
     ok(ret, "GetSecurityDescriptorGroup error %d\n", GetLastError());
-todo_wine
+    todo_wine
     ok(sid != (void *)0xdeadbeef && sid != NULL, "sid pointer is not set\n");
     ok(defaulted == 0, "defaulted is set to TRUE\n");
 }
