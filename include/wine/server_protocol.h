@@ -385,6 +385,14 @@ struct acl
     unsigned short pad2;
 };
 
+struct sid
+{
+    unsigned char revision;
+    unsigned char sub_count;
+    unsigned char id_auth[6];
+    unsigned int  sub_auth[15];
+};
+
 typedef struct
 {
     unsigned int read;
@@ -4411,7 +4419,7 @@ struct filter_token_request
     unsigned int  flags;
     data_size_t   privileges_size;
     /* VARARG(privileges,luid_attr,privileges_size); */
-    /* VARARG(disable_sids,SID); */
+    /* VARARG(disable_sids,sid); */
 };
 struct filter_token_reply
 {
@@ -4450,7 +4458,7 @@ struct get_token_sid_reply
 {
     struct reply_header __header;
     data_size_t     sid_len;
-    /* VARARG(sid,SID); */
+    /* VARARG(sid,sid); */
     char __pad_12[4];
 };
 
@@ -6261,7 +6269,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 741
+#define SERVER_PROTOCOL_VERSION 742
 
 /* ### protocol_version end ### */
 

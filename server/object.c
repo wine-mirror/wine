@@ -543,7 +543,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
 {
     struct security_descriptor new_sd, *new_sd_ptr;
     int present;
-    const SID *owner = NULL, *group = NULL;
+    const struct sid *owner = NULL, *group = NULL;
     const struct acl *sacl, *dacl;
     struct acl *replaced_sacl = NULL;
     char *ptr;
@@ -565,7 +565,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
     else if (token)
     {
         owner = token_get_user( token );
-        new_sd.owner_len = security_sid_len( owner );
+        new_sd.owner_len = sid_len( owner );
     }
     else new_sd.owner_len = 0;
 
@@ -582,7 +582,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
     else if (token)
     {
         group = token_get_primary_group( token );
-        new_sd.group_len = security_sid_len( group );
+        new_sd.group_len = sid_len( group );
     }
     else new_sd.group_len = 0;
 

@@ -737,7 +737,7 @@ DECL_HANDLER(get_security_object)
     unsigned int access = READ_CONTROL;
     struct security_descriptor req_sd;
     int present;
-    const SID *owner, *group;
+    const struct sid *owner, *group;
     const struct acl *sacl, *dacl;
     struct acl *label_acl = NULL;
 

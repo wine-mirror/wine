@@ -1016,33 +1016,27 @@ static void dump_varargs_luid_attr( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
-static void dump_inline_sid( const char *prefix, const SID *sid, data_size_t size )
+static void dump_inline_sid( const char *prefix, const struct sid *sid, data_size_t size )
 {
     DWORD i;
 
-    /* security check */
-    if ((FIELD_OFFSET(SID, SubAuthority[0]) > size) ||
-        (FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]) > size))
+    fprintf( stderr,"%s", prefix );
+    if (sid_valid_size( sid, size ))
     {
-        fprintf( stderr, "<invalid sid>" );
-        return;
+        fprintf( stderr, "S-%u-%u", sid->revision,
+                 ((unsigned int)sid->id_auth[2] << 24) |
+                 ((unsigned int)sid->id_auth[3] << 16) |
+                 ((unsigned int)sid->id_auth[4] << 8) |
+                 ((unsigned int)sid->id_auth[5]) );
+        for (i = 0; i < sid->sub_count; i++) fprintf( stderr, "-%u", sid->sub_auth[i] );
     }
-
-    fprintf( stderr,"%s{", prefix );
-    fprintf( stderr, "S-%u-%u", sid->Revision, MAKELONG(
-        MAKEWORD( sid->IdentifierAuthority.Value[5],
-                  sid->IdentifierAuthority.Value[4] ),
-        MAKEWORD( sid->IdentifierAuthority.Value[3],
-                  sid->IdentifierAuthority.Value[2] ) ) );
-    for (i = 0; i < sid->SubAuthorityCount; i++)
-        fprintf( stderr, "-%u", sid->SubAuthority[i] );
-    fputc( '}', stderr );
+    else fprintf( stderr, "<invalid>" );
 }
 
-static void dump_varargs_SID( const char *prefix, data_size_t size )
+static void dump_varargs_sid( const char *prefix, data_size_t size )
 {
-    const SID *sid = cur_data;
-    dump_inline_sid( prefix, sid, size );
+    const struct sid *sid = cur_data;
+    if (size) dump_inline_sid( prefix, sid, size );
     remove_data( size );
 }
 
@@ -1062,7 +1056,7 @@ static void dump_inline_acl( const char *prefix, const struct acl *acl, data_siz
         size -= sizeof(*acl);
         for (i = 0, ace = ace_first( acl ); i < acl->count; i++, ace = ace_next( ace ))
         {
-            const SID *sid = (const SID *)(ace + 1);
+            const struct sid *sid = (const struct sid *)(ace + 1);
             data_size_t sid_size;
 
             if (size < sizeof(*ace) || size < ace->size) break;
@@ -1104,17 +1098,17 @@ static void dump_inline_security_descriptor( const char *prefix, const struct se
     {
         size_t offset = sizeof(struct security_descriptor);
         fprintf( stderr, "control=%08x", sd->control );
-        if ((sd->owner_len > FIELD_OFFSET(SID, SubAuthority[255])) || (offset + sd->owner_len > size))
+        if ((sd->owner_len > offsetof(struct sid, sub_auth[255])) || (offset + sd->owner_len > size))
             return;
         if (sd->owner_len)
-            dump_inline_sid( ",owner=", (const SID *)((const char *)sd + offset), sd->owner_len );
+            dump_inline_sid( ",owner=", (const struct sid *)((const char *)sd + offset), sd->owner_len );
         else
             fprintf( stderr, ",owner=<not present>" );
         offset += sd->owner_len;
-        if ((sd->group_len > FIELD_OFFSET(SID, SubAuthority[255])) || (offset + sd->group_len > size))
+        if ((sd->group_len > offsetof(struct sid, sub_auth[255])) || (offset + sd->group_len > size))
             return;
         if (sd->group_len)
-            dump_inline_sid( ",group=", (const SID *)((const char *)sd + offset), sd->group_len );
+            dump_inline_sid( ",group=", (const struct sid *)((const char *)sd + offset), sd->group_len );
         else
             fprintf( stderr, ",group=<not present>" );
         offset += sd->group_len;
@@ -1156,16 +1150,14 @@ static void dump_varargs_token_groups( const char *prefix, data_size_t size )
             fputc( '[', stderr );
             for (i = 0; i < tg->count; i++)
             {
-                const SID *sid = (const SID *)((const char *)cur_data + offset);
+                const struct sid *sid = (const struct sid *)((const char *)cur_data + offset);
                 if (i != 0)
                     fputc( ',', stderr );
                 fputc( '{', stderr );
                 fprintf( stderr, "attributes=%08x", attr[i] );
                 dump_inline_sid( ",sid=", sid, size - offset );
-                if ((offset + FIELD_OFFSET(SID, SubAuthority[0]) > size) ||
-                    (offset + FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]) > size))
-                    break;
-                offset += FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]);
+                if (!sid_valid_size( sid, size - offset )) break;
+                offset += sid_len( sid );
                 fputc( '}', stderr );
             }
             fputc( ']', stderr );
@@ -3834,7 +3826,7 @@ static void dump_filter_token_request( const struct filter_token_request *req )
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", privileges_size=%u", req->privileges_size );
     dump_varargs_luid_attr( ", privileges=", min(cur_size,req->privileges_size) );
-    dump_varargs_SID( ", disable_sids=", cur_size );
+    dump_varargs_sid( ", disable_sids=", cur_size );
 }
 
 static void dump_filter_token_reply( const struct filter_token_reply *req )
@@ -3867,7 +3859,7 @@ static void dump_get_token_sid_request( const struct get_token_sid_request *req 
 static void dump_get_token_sid_reply( const struct get_token_sid_reply *req )
 {
     fprintf( stderr, " sid_len=%u", req->sid_len );
-    dump_varargs_SID( ", sid=", cur_size );
+    dump_varargs_sid( ", sid=", cur_size );
 }
 
 static void dump_get_token_groups_request( const struct get_token_groups_request *req )

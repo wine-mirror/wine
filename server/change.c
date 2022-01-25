@@ -364,7 +364,7 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
                        unsigned int set_info )
 {
     struct dir *dir = (struct dir *)obj;
-    const SID *owner;
+    const struct sid *owner;
     struct stat st;
     mode_t mode;
     int unix_fd;
@@ -383,7 +383,7 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
             set_error( STATUS_INVALID_SECURITY_DESCR );
             return 0;
         }
-        if (!obj->sd || !security_equal_sid( owner, sd_get_owner( obj->sd ) ))
+        if (!obj->sd || !equal_sid( owner, sd_get_owner( obj->sd ) ))
         {
             /* FIXME: get Unix uid and call fchown */
         }

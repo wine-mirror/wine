@@ -401,6 +401,14 @@ struct acl
     unsigned short pad2;
 };
 
+struct sid
+{
+    unsigned char revision;
+    unsigned char sub_count;
+    unsigned char id_auth[6];
+    unsigned int  sub_auth[15];
+};
+
 typedef struct
 {
     unsigned int read;
@@ -418,8 +426,8 @@ struct security_descriptor
     data_size_t  group_len;
     data_size_t  sacl_len;
     data_size_t  dacl_len;
-    /* VARARG(owner,SID); */
-    /* VARARG(group,SID); */
+    /* VARARG(owner,sid); */
+    /* VARARG(group,sid); */
     /* VARARG(sacl,acl); */
     /* VARARG(dacl,acl); */
 };
@@ -451,7 +459,7 @@ struct token_groups
 {
     unsigned int count;
     /* unsigned int attributes[count]; */
-    /* VARARG(sids,SID); */
+    /* VARARG(sids,sid); */
 };
 
 enum select_op
@@ -3138,7 +3146,7 @@ enum caret_state
     unsigned int  flags;           /* flags */
     data_size_t   privileges_size; /* size of privileges */
     VARARG(privileges,luid_attr,privileges_size); /* privileges to remove from new token */
-    VARARG(disable_sids,SID);      /* array of groups to remove from new token */
+    VARARG(disable_sids,sid);      /* array of groups to remove from new token */
 @REPLY
     obj_handle_t  new_handle;      /* filtered handle */
 @END
@@ -3160,7 +3168,7 @@ enum caret_state
     unsigned int    which_sid;    /* which SID to retrieve from the token */
 @REPLY
     data_size_t     sid_len;      /* length needed to store sid */
-    VARARG(sid,SID);              /* the sid specified by which_sid from the token */
+    VARARG(sid,sid);              /* the sid specified by which_sid from the token */
 @END
 
 @REQ(get_token_groups)

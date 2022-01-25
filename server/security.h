@@ -44,13 +44,13 @@ extern const struct luid SeManageVolumePrivilege;
 extern const struct luid SeImpersonatePrivilege;
 extern const struct luid SeCreateGlobalPrivilege;
 
-extern const PSID security_world_sid;
-extern const PSID security_local_user_sid;
-extern const PSID security_local_system_sid;
-extern const PSID security_builtin_users_sid;
-extern const PSID security_builtin_admins_sid;
-extern const PSID security_domain_users_sid;
-extern const PSID security_high_label_sid;
+extern const struct sid world_sid;
+extern const struct sid local_user_sid;
+extern const struct sid local_system_sid;
+extern const struct sid builtin_users_sid;
+extern const struct sid builtin_admins_sid;
+extern const struct sid domain_users_sid;
+extern const struct sid high_label_sid;
 
 struct ace
 {
@@ -64,19 +64,19 @@ struct ace
 
 extern struct token *get_token_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct token *token_create_admin( unsigned primary, int impersonation_level, int elevation, unsigned int session_id );
-extern int token_assign_label( struct token *token, PSID label );
+extern int token_assign_label( struct token *token, const struct sid *label );
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
                                       int impersonation_level, const struct security_descriptor *sd,
                                       const struct luid_attr *remove_privs, unsigned int remove_priv_count,
-                                      const SID *remove_groups, unsigned int remove_group_count );
+                                      const struct sid *remove_groups, unsigned int remove_group_count );
 extern int token_check_privileges( struct token *token, int all_required,
                                    const struct luid_attr *reqprivs,
                                    unsigned int count, struct luid_attr *usedprivs );
 extern const struct acl *token_get_default_dacl( struct token *token );
-extern const SID *token_get_user( struct token *token );
-extern const SID *token_get_primary_group( struct token *token );
+extern const struct sid *token_get_user( struct token *token );
+extern const struct sid *token_get_primary_group( struct token *token );
 extern unsigned int token_get_session_id( struct token *token );
-extern int token_sid_present( struct token *token, const SID *sid, int deny);
+extern int token_sid_present( struct token *token, const struct sid *sid, int deny );
 
 static inline struct ace *ace_first( const struct acl *acl )
 {
@@ -88,35 +88,40 @@ static inline struct ace *ace_next( const struct ace *ace )
     return (struct ace *)((char *)ace + ace->size);
 }
 
-static inline size_t security_sid_len( const SID *sid )
+static inline size_t sid_len( const struct sid *sid )
 {
-    return offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+    return offsetof( struct sid, sub_auth[sid->sub_count] );
 }
 
-static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
+static inline int equal_sid( const struct sid *sid1, const struct sid *sid2 )
 {
-    return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
-            !memcmp( sid1, sid2, security_sid_len( sid1 )));
+    return ((sid1->sub_count == sid2->sub_count) && !memcmp( sid1, sid2, sid_len( sid1 )));
 }
 
-static inline int sid_valid_size( const SID *sid, data_size_t size )
+static inline void *copy_sid( struct sid *dst, const struct sid *src )
 {
-    return (size >= offsetof( SID, SubAuthority[0] ) && size >= security_sid_len( sid ));
+    memcpy( dst, src, sid_len( src ));
+    return (char *)dst + sid_len( src );
 }
 
-static inline struct ace *set_ace( struct ace *ace, const SID *sid, unsigned char type,
+static inline int sid_valid_size( const struct sid *sid, data_size_t size )
+{
+    return (size >= offsetof( struct sid, sub_auth[0] ) && size >= sid_len( sid ));
+}
+
+static inline struct ace *set_ace( struct ace *ace, const struct sid *sid, unsigned char type,
                                    unsigned char flags, unsigned int mask )
 {
     ace->type  = type;
     ace->flags = flags;
-    ace->size  = sizeof(*ace) + security_sid_len( sid );
+    ace->size  = sizeof(*ace) + sid_len( sid );
     ace->mask  = mask;
-    memcpy( ace + 1, sid, security_sid_len( sid ));
+    memcpy( ace + 1, sid, sid_len( sid ));
     return ace;
 }
 
 extern void security_set_thread_token( struct thread *thread, obj_handle_t handle );
-extern const SID *security_unix_uid_to_sid( uid_t uid );
+extern const struct sid *security_unix_uid_to_sid( uid_t uid );
 extern int check_object_access( struct token *token, struct object *obj, unsigned int *access );
 
 static inline int thread_single_check_privilege( struct thread *thread, struct luid priv )
@@ -161,19 +166,19 @@ static inline const struct acl *sd_get_sacl( const struct security_descriptor *s
 }
 
 /* gets the owner from a security descriptor */
-static inline const SID *sd_get_owner( const struct security_descriptor *sd )
+static inline const struct sid *sd_get_owner( const struct security_descriptor *sd )
 {
     if (sd->owner_len)
-        return (const SID *)(sd + 1);
+        return (const struct sid *)(sd + 1);
     else
         return NULL;
 }
 
 /* gets the primary group from a security descriptor */
-static inline const SID *sd_get_group( const struct security_descriptor *sd )
+static inline const struct sid *sd_get_group( const struct security_descriptor *sd )
 {
     if (sd->group_len)
-        return (const SID *)((const char *)(sd + 1) + sd->owner_len);
+        return (const struct sid *)((const char *)(sd + 1) + sd->owner_len);
     else
         return NULL;
 }

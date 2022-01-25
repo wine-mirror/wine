@@ -371,8 +371,9 @@ static struct security_descriptor *key_get_sd( struct object *obj )
     {
         struct acl *dacl;
         struct ace *ace;
-        size_t users_sid_len = security_sid_len( security_builtin_users_sid );
-        size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
+        struct sid *sid;
+        size_t users_sid_len = sid_len( &builtin_users_sid );
+        size_t admins_sid_len = sid_len( &builtin_admins_sid );
         size_t dacl_len = sizeof(*dacl) + 2 * sizeof(*ace) + users_sid_len + admins_sid_len;
 
         key_default_sd = mem_alloc( sizeof(*key_default_sd) + 2 * admins_sid_len + dacl_len );
@@ -381,8 +382,9 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         key_default_sd->group_len = admins_sid_len;
         key_default_sd->sacl_len  = 0;
         key_default_sd->dacl_len  = dacl_len;
-        memcpy( key_default_sd + 1, security_builtin_admins_sid, admins_sid_len );
-        memcpy( (char *)(key_default_sd + 1) + admins_sid_len, security_builtin_admins_sid, admins_sid_len );
+        sid = (struct sid *)(key_default_sd + 1);
+        sid = copy_sid( sid, &builtin_admins_sid );
+        sid = copy_sid( sid, &builtin_admins_sid );
 
         dacl = (struct acl *)((char *)(key_default_sd + 1) + 2 * admins_sid_len);
         dacl->revision = ACL_REVISION;
@@ -390,9 +392,9 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         dacl->size     = dacl_len;
         dacl->count    = 2;
         dacl->pad2     = 0;
-        ace = set_ace( ace_first( dacl ), security_builtin_users_sid, ACCESS_ALLOWED_ACE_TYPE,
+        ace = set_ace( ace_first( dacl ), &builtin_users_sid, ACCESS_ALLOWED_ACE_TYPE,
                        INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE, GENERIC_READ );
-        set_ace( ace_next( ace ), security_builtin_admins_sid, ACCESS_ALLOWED_ACE_TYPE, 0, KEY_ALL_ACCESS );
+        set_ace( ace_next( ace ), &builtin_admins_sid, ACCESS_ALLOWED_ACE_TYPE, 0, KEY_ALL_ACCESS );
     }
     return key_default_sd;
 }
@@ -1791,17 +1793,17 @@ static int load_init_registry_from_file( const char *filename, struct key *key )
     return (f != NULL);
 }
 
-static WCHAR *format_user_registry_path( const SID *sid, struct unicode_str *path )
+static WCHAR *format_user_registry_path( const struct sid *sid, struct unicode_str *path )
 {
-    char buffer[7 + 11 + 11 + 11 * SID_MAX_SUB_AUTHORITIES], *p = buffer;
+    char buffer[7 + 11 + 11 + 11 * ARRAY_SIZE(sid->sub_auth)], *p = buffer;
     unsigned int i;
 
-    p += sprintf( p, "User\\S-%u-%u", sid->Revision,
-                  MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
-                                      sid->IdentifierAuthority.Value[4] ),
-                            MAKEWORD( sid->IdentifierAuthority.Value[3],
-                                      sid->IdentifierAuthority.Value[2] )));
-    for (i = 0; i < sid->SubAuthorityCount; i++) p += sprintf( p, "-%u", sid->SubAuthority[i] );
+    p += sprintf( p, "User\\S-%u-%u", sid->revision,
+                  ((unsigned int)sid->id_auth[2] << 24) |
+                  ((unsigned int)sid->id_auth[3] << 16) |
+                  ((unsigned int)sid->id_auth[4] << 8) |
+                  ((unsigned int)sid->id_auth[5]) );
+    for (i = 0; i < sid->sub_count; i++) p += sprintf( p, "-%u", sid->sub_auth[i] );
     return ascii_to_unicode_str( buffer, path );
 }
 
@@ -1900,7 +1902,7 @@ void init_registry(void)
     /* load user.reg into HKEY_CURRENT_USER */
 
     /* FIXME: match default user in token.c. should get from process token instead */
-    current_user_path = format_user_registry_path( security_local_user_sid, &current_user_str );
+    current_user_path = format_user_registry_path( &local_user_sid, &current_user_str );
     if (!current_user_path ||
         !(hkcu = create_key_recursive( root_key, &current_user_str, current_time )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
