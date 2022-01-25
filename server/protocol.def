@@ -455,13 +455,6 @@ struct object_type_info
     /* VARARG(name,unicode_str); */
 };
 
-struct token_groups
-{
-    unsigned int count;
-    /* unsigned int attributes[count]; */
-    /* VARARG(sids,sid); */
-};
-
 enum select_op
 {
     SELECT_NONE,
@@ -3174,8 +3167,10 @@ enum caret_state
 @REQ(get_token_groups)
     obj_handle_t    handle;       /* handle to the token */
 @REPLY
-    data_size_t     user_len;     /* length needed to store user */
-    VARARG(user,token_groups);    /* groups the token's user belongs to */
+    data_size_t     attr_len;     /* length needed to store attrs */
+    data_size_t     sid_len;      /* length needed to store sids */
+    VARARG(attrs,uints,attr_len); /* group attributes */
+    VARARG(sids,sids);            /* group sids */
 @END
 
 @REQ(get_token_default_dacl)

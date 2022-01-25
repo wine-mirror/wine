@@ -1390,49 +1390,27 @@ DECL_HANDLER(get_token_groups)
 {
     struct token *token;
 
-    reply->user_len = 0;
-
-    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
-                                                 TOKEN_QUERY,
-                                                 &token_ops )))
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle, TOKEN_QUERY, &token_ops )))
     {
-        size_t size_needed = sizeof(struct token_groups);
-        size_t sid_size = 0;
         unsigned int group_count = 0;
         const struct group *group;
 
         LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
         {
             group_count++;
-            sid_size += sid_len( &group->sid );
+            reply->sid_len += sid_len( &group->sid );
         }
-        size_needed += sid_size;
-        /* attributes size */
-        size_needed += sizeof(unsigned int) * group_count;
+        reply->attr_len = sizeof(unsigned int) * group_count;
 
-        /* reply buffer contains size_needed bytes formatted as:
-
-           unsigned int count;
-           unsigned int attrib[count];
-           char sid_data[];
-
-           user_len includes extra data needed for TOKEN_GROUPS representation,
-           required caller buffer size calculated here to avoid extra server call */
-        reply->user_len = FIELD_OFFSET( TOKEN_GROUPS, Groups[group_count] ) + sid_size;
-
-        if (reply->user_len <= get_reply_max_size())
+        if (reply->attr_len + reply->sid_len <= get_reply_max_size())
         {
-            struct token_groups *tg = set_reply_data_size( size_needed );
-            if (tg)
+            unsigned int *attr_ptr = set_reply_data_size( reply->attr_len + reply->sid_len );
+            struct sid *sid = (struct sid *)(attr_ptr + group_count);
+
+            if (attr_ptr)
             {
-                unsigned int *attr_ptr = (unsigned int *)(tg + 1);
-                struct sid *sid = (struct sid *)(attr_ptr + group_count);
-
-                tg->count = group_count;
-
                 LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
                 {
-
                     *attr_ptr = 0;
                     if (group->mandatory) *attr_ptr |= SE_GROUP_MANDATORY;
                     if (group->def) *attr_ptr |= SE_GROUP_ENABLED_BY_DEFAULT;

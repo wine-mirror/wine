@@ -1040,6 +1040,28 @@ static void dump_varargs_sid( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_sids( const char *prefix, data_size_t size )
+{
+    const struct sid *sid = cur_data;
+    data_size_t len = size;
+
+    fprintf( stderr,"%s{", prefix );
+    while (len > 0)
+    {
+        if (!sid_valid_size( sid, len ))
+        {
+            fprintf( stderr, "bad len %u", len);
+            break;
+        }
+        dump_inline_sid( "", sid, size );
+        len -= sid_len( sid );
+        sid = (const struct sid *)((const char *)sid + sid_len( sid ));
+        if (len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 static void dump_inline_acl( const char *prefix, const struct acl *acl, data_size_t size )
 {
     const struct ace *ace;
@@ -1129,41 +1151,6 @@ static void dump_varargs_security_descriptor( const char *prefix, data_size_t si
     const struct security_descriptor *sd = cur_data;
     dump_inline_security_descriptor( prefix, sd, size );
     remove_data( size );
-}
-
-static void dump_varargs_token_groups( const char *prefix, data_size_t size )
-{
-    const struct token_groups *tg = cur_data;
-
-    fprintf( stderr,"%s{", prefix );
-    if (size >= sizeof(struct token_groups))
-    {
-        size_t offset = sizeof(*tg);
-        fprintf( stderr, "count=%08x,", tg->count );
-        if (tg->count * sizeof(unsigned int) <= size)
-        {
-            unsigned int i;
-            const unsigned int *attr = (const unsigned int *)(tg + 1);
-
-            offset += tg->count * sizeof(unsigned int);
-
-            fputc( '[', stderr );
-            for (i = 0; i < tg->count; i++)
-            {
-                const struct sid *sid = (const struct sid *)((const char *)cur_data + offset);
-                if (i != 0)
-                    fputc( ',', stderr );
-                fputc( '{', stderr );
-                fprintf( stderr, "attributes=%08x", attr[i] );
-                dump_inline_sid( ",sid=", sid, size - offset );
-                if (!sid_valid_size( sid, size - offset )) break;
-                offset += sid_len( sid );
-                fputc( '}', stderr );
-            }
-            fputc( ']', stderr );
-        }
-    }
-    fputc( '}', stderr );
 }
 
 static void dump_varargs_process_info( const char *prefix, data_size_t size )
@@ -3869,8 +3856,10 @@ static void dump_get_token_groups_request( const struct get_token_groups_request
 
 static void dump_get_token_groups_reply( const struct get_token_groups_reply *req )
 {
-    fprintf( stderr, " user_len=%u", req->user_len );
-    dump_varargs_token_groups( ", user=", cur_size );
+    fprintf( stderr, " attr_len=%u", req->attr_len );
+    fprintf( stderr, ", sid_len=%u", req->sid_len );
+    dump_varargs_uints( ", attrs=", min(cur_size,req->attr_len) );
+    dump_varargs_sids( ", sids=", cur_size );
 }
 
 static void dump_get_token_default_dacl_request( const struct get_token_default_dacl_request *req )
