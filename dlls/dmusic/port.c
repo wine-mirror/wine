@@ -240,20 +240,14 @@ static HRESULT WINAPI synth_port_PlayBuffer(IDirectMusicPort *iface, IDirectMusi
 
 static HRESULT WINAPI synth_port_SetReadNotificationHandle(IDirectMusicPort *iface, HANDLE event)
 {
-    struct synth_port *This = synth_from_IDirectMusicPort(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, event);
-
-    return S_OK;
+    TRACE("(%p, %p): method not implemented\n", iface, event);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synth_port_Read(IDirectMusicPort *iface, IDirectMusicBuffer *buffer)
 {
-    struct synth_port *This = synth_from_IDirectMusicPort(iface);
-
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, buffer);
-
-    return S_OK;
+    TRACE("(%p, %p): method not implemented\n", iface, buffer);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDirectMusicInstrument *instrument,
@@ -384,11 +378,8 @@ static HRESULT WINAPI synth_port_GetRunningStats(IDirectMusicPort *iface, DMUS_S
 
 static HRESULT WINAPI synth_port_Compact(IDirectMusicPort *iface)
 {
-    struct synth_port *This = synth_from_IDirectMusicPort(iface);
-
-    FIXME("(%p/%p)->(): stub\n", iface, This);
-
-    return S_OK;
+    TRACE("(%p): method not implemented\n", iface);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synth_port_GetCaps(IDirectMusicPort *iface, DMUS_PORTCAPS *port_caps)
