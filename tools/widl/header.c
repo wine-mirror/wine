@@ -872,21 +872,27 @@ static void write_typedef(FILE *header, type_t *type, int declonly)
     type_t *t = type_alias_get_aliasee_type(type);
     if (winrt_mode && t->namespace && !is_global_namespace(t->namespace))
     {
-        fprintf(header, "#ifdef __cplusplus\n");
-        write_namespace_start(header, t->namespace);
-        indent(header, 0);
-    }
-    fprintf(header, "typedef ");
-    write_type_v(header, type_alias_get_aliasee(type), FALSE, declonly, type->name, NAME_DEFAULT);
-    fprintf(header, ";\n");
-    if (winrt_mode && t->namespace && !is_global_namespace(t->namespace))
-    {
-        write_namespace_end(header, t->namespace);
-        fprintf(header, "#else /* __cplusplus */\n");
+        fprintf(header, "#ifndef __cplusplus\n");
         fprintf(header, "typedef ");
         write_type_v(header, type_alias_get_aliasee(type), FALSE, declonly, type->c_name, NAME_C);
         fprintf(header, ";\n");
+        if (type_get_type_detect_alias(t) != TYPE_ENUM)
+        {
+            fprintf(header, "#else /* __cplusplus */\n");
+            write_namespace_start(header, t->namespace);
+            indent(header, 0);
+            fprintf(header, "typedef ");
+            write_type_v(header, type_alias_get_aliasee(type), FALSE, declonly, type->name, NAME_DEFAULT);
+            fprintf(header, ";\n");
+            write_namespace_end(header, t->namespace);
+        }
         fprintf(header, "#endif /* __cplusplus */\n\n");
+    }
+    else
+    {
+        fprintf(header, "typedef ");
+        write_type_v(header, type_alias_get_aliasee(type), FALSE, declonly, type->name, NAME_DEFAULT);
+        fprintf(header, ";\n");
     }
 }
 
