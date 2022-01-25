@@ -484,6 +484,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_QueryInterface(ID3D11Devic
     {
         *out = &context->ID3D11Multithread_iface;
     }
+    else if (IsEqualGUID(iid, &IID_ID3DUserDefinedAnnotation))
+    {
+        *out = &context->ID3DUserDefinedAnnotation_iface;
+    }
     else
     {
         WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
@@ -3186,11 +3190,86 @@ static const struct ID3D11MultithreadVtbl d3d11_multithread_vtbl =
     d3d11_multithread_GetMultithreadProtected,
 };
 
+/* ID3DUserDefinedAnnotation methods */
+
+static inline struct d3d11_device_context *impl_from_ID3DUserDefinedAnnotation(ID3DUserDefinedAnnotation *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d11_device_context, ID3DUserDefinedAnnotation_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_user_defined_annotation_QueryInterface(ID3DUserDefinedAnnotation *iface,
+        REFIID iid, void **out)
+{
+    struct d3d11_device_context *context = impl_from_ID3DUserDefinedAnnotation(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    return d3d11_device_context_QueryInterface(&context->ID3D11DeviceContext1_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_user_defined_annotation_AddRef(ID3DUserDefinedAnnotation *iface)
+{
+    struct d3d11_device_context *context = impl_from_ID3DUserDefinedAnnotation(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3d11_device_context_AddRef(&context->ID3D11DeviceContext1_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_user_defined_annotation_Release(ID3DUserDefinedAnnotation *iface)
+{
+    struct d3d11_device_context *context = impl_from_ID3DUserDefinedAnnotation(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3d11_device_context_Release(&context->ID3D11DeviceContext1_iface);
+}
+
+static int STDMETHODCALLTYPE d3d11_user_defined_annotation_BeginEvent(ID3DUserDefinedAnnotation *iface,
+        const WCHAR *name)
+{
+    TRACE("iface %p, name %s.\n", iface, debugstr_w(name));
+
+    return -1;
+}
+
+static int STDMETHODCALLTYPE d3d11_user_defined_annotation_EndEvent(ID3DUserDefinedAnnotation *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return -1;
+}
+
+static void STDMETHODCALLTYPE d3d11_user_defined_annotation_SetMarker(ID3DUserDefinedAnnotation *iface,
+        const WCHAR *name)
+{
+    TRACE("iface %p, name %s.\n", iface, debugstr_w(name));
+}
+
+static BOOL STDMETHODCALLTYPE d3d11_user_defined_annotation_GetStatus(ID3DUserDefinedAnnotation *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return FALSE;
+}
+
+static const struct ID3DUserDefinedAnnotationVtbl d3d11_user_defined_annotation_vtbl =
+{
+    d3d11_user_defined_annotation_QueryInterface,
+    d3d11_user_defined_annotation_AddRef,
+    d3d11_user_defined_annotation_Release,
+    d3d11_user_defined_annotation_BeginEvent,
+    d3d11_user_defined_annotation_EndEvent,
+    d3d11_user_defined_annotation_SetMarker,
+    d3d11_user_defined_annotation_GetStatus,
+};
+
 static void d3d11_device_context_init(struct d3d11_device_context *context, struct d3d_device *device,
         D3D11_DEVICE_CONTEXT_TYPE type)
 {
     context->ID3D11DeviceContext1_iface.lpVtbl = &d3d11_device_context_vtbl;
     context->ID3D11Multithread_iface.lpVtbl = &d3d11_multithread_vtbl;
+    context->ID3DUserDefinedAnnotation_iface.lpVtbl = &d3d11_user_defined_annotation_vtbl;
     context->refcount = 1;
     context->type = type;
 
