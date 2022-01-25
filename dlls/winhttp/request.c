@@ -3734,57 +3734,52 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
     return ret;
 }
 
-static DWORD socket_close( struct socket *socket, BOOL async )
+static DWORD socket_close( struct socket *socket )
 {
     DWORD ret, count;
 
-    if ((ret = socket_drain( socket ))) goto done;
+    if ((ret = socket_drain( socket ))) return ret;
 
     while (1)
     {
-        if ((ret = receive_frame( socket, &count, &socket->opcode ))) goto done;
+        if ((ret = receive_frame( socket, &count, &socket->opcode ))) return ret;
         if (socket->opcode == SOCKET_OPCODE_CLOSE) break;
 
         socket->read_size = count;
-        if ((ret = socket_drain( socket ))) goto done;
+        if ((ret = socket_drain( socket ))) return ret;
     }
 
     if ((count && (count < sizeof(socket->status) || count > sizeof(socket->status) + sizeof(socket->reason))))
-    {
-        ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-        goto done;
-    }
+        return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
 
     if (count)
     {
         DWORD reason_len = count - sizeof(socket->status);
-        if ((ret = receive_bytes( socket, (char *)&socket->status, sizeof(socket->status), &count, TRUE ))) goto done;
+        if ((ret = receive_bytes( socket, (char *)&socket->status, sizeof(socket->status), &count, TRUE ))) return ret;
         socket->status = RtlUshortByteSwap( socket->status );
-        if ((ret = receive_bytes( socket, socket->reason, reason_len, &socket->reason_len, TRUE ))) goto done;
+        if ((ret = receive_bytes( socket, socket->reason, reason_len, &socket->reason_len, TRUE ))) return ret;
     }
     socket->state = SOCKET_STATE_CLOSED;
 
-done:
-    if (async)
-    {
-        if (!ret) send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NULL, 0 );
-        else
-        {
-            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
-            result.AsyncResult.dwResult = API_READ_DATA; /* FIXME */
-            result.AsyncResult.dwError  = ret;
-            result.Operation = WINHTTP_WEB_SOCKET_CLOSE_OPERATION;
-            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
-        }
-    }
-    return ret;
+    return ERROR_SUCCESS;
 }
 
 static void CALLBACK task_socket_close( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
 {
     struct socket_shutdown *s = ctx;
+    DWORD ret;
 
-    socket_close( s->socket, TRUE );
+    ret = socket_close( s->socket );
+
+    if (!ret) send_callback( &s->socket->hdr, WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NULL, 0 );
+    else
+    {
+        WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+        result.AsyncResult.dwResult = API_READ_DATA; /* FIXME */
+        result.AsyncResult.dwError  = ret;
+        result.Operation = WINHTTP_WEB_SOCKET_CLOSE_OPERATION;
+        send_callback( &s->socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+    }
 
     TRACE("running %p\n", work);
     release_object( &s->socket->hdr );
@@ -3829,7 +3824,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
             free( s );
         }
     }
-    else ret = socket_close( socket, FALSE );
+    else ret = socket_close( socket );
 
 done:
     release_object( &socket->hdr );
