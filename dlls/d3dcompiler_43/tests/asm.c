@@ -1725,7 +1725,7 @@ static void test_disassemble_shader(void)
     HRESULT hr;
 
     hr = D3DDisassemble(vs_2_0, 0, 0, NULL, &blob);
-todo_wine
+    todo_wine
 #if D3D_COMPILER_VERSION >= 46
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 #else
@@ -1733,7 +1733,7 @@ todo_wine
 #endif
 
     hr = D3DDisassemble(vs_2_0, sizeof(vs_2_0), 0, NULL, &blob);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Blob_Release(blob);
