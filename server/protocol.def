@@ -392,6 +392,15 @@ struct luid_attr
     unsigned int attrs;
 };
 
+struct acl
+{
+    unsigned char  revision;
+    unsigned char  pad1;
+    unsigned short size;
+    unsigned short count;
+    unsigned short pad2;
+};
+
 typedef struct
 {
     unsigned int read;
@@ -411,8 +420,8 @@ struct security_descriptor
     data_size_t  dacl_len;
     /* VARARG(owner,SID); */
     /* VARARG(group,SID); */
-    /* VARARG(sacl,ACL); */
-    /* VARARG(dacl,ACL); */
+    /* VARARG(sacl,acl); */
+    /* VARARG(dacl,acl); */
 };
 
 struct object_attributes
@@ -3165,12 +3174,12 @@ enum caret_state
     obj_handle_t    handle;     /* handle to the token */
 @REPLY
     data_size_t     acl_len;    /* length needed to store access control list */
-    VARARG(acl,ACL);            /* access control list */
+    VARARG(acl,acl);            /* access control list */
 @END
 
 @REQ(set_token_default_dacl)
     obj_handle_t    handle;     /* handle to the token */
-    VARARG(acl,ACL);            /* default dacl to set */
+    VARARG(acl,acl);            /* default dacl to set */
 @END
 
 @REQ(set_security_object)

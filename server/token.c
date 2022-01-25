@@ -128,7 +128,7 @@ struct token
     SID           *primary_group;   /* SID of user's primary group (points to one of groups) */
     unsigned int   primary;         /* is this a primary or impersonation token? */
     unsigned int   session_id;      /* token session id */
-    ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
+    struct acl    *default_dacl;    /* the default DACL to assign to objects created by this user */
     TOKEN_SOURCE   source;          /* source of the token */
     int            impersonation_level; /* impersonation level this token is capable of if non-primary token */
     int            elevation;       /* elevation type */
@@ -235,20 +235,18 @@ const SID *security_unix_uid_to_sid( uid_t uid )
         return &anonymous_logon_sid;
 }
 
-static int acl_is_valid( const ACL *acl, data_size_t size )
+static int acl_is_valid( const struct acl *acl, data_size_t size )
 {
     ULONG i;
     const ACE_HEADER *ace;
 
-    if (size < sizeof(ACL))
-        return FALSE;
+    if (size < sizeof(*acl)) return FALSE;
 
     size = min(size, MAX_ACL_LEN);
-
-    size -= sizeof(ACL);
+    size -= sizeof(*acl);
 
     ace = (const ACE_HEADER *)(acl + 1);
-    for (i = 0; i < acl->AceCount; i++)
+    for (i = 0; i < acl->count; i++)
     {
         const SID *sid;
         data_size_t sid_size;
@@ -310,8 +308,8 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     size_t offset = sizeof(struct security_descriptor);
     const SID *group;
     const SID *owner;
-    const ACL *sacl;
-    const ACL *dacl;
+    const struct acl *sacl;
+    const struct acl *dacl;
     int dummy;
 
     if (size < offset)
@@ -357,16 +355,16 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
 }
 
 /* extract security labels from SACL */
-ACL *extract_security_labels( const ACL *sacl )
+struct acl *extract_security_labels( const struct acl *sacl )
 {
-    size_t size = sizeof(ACL);
+    size_t size = sizeof(*sacl);
     const ACE_HEADER *ace;
     ACE_HEADER *label_ace;
     unsigned int i, count = 0;
-    ACL *label_acl;
+    struct acl *label_acl;
 
     ace = (const ACE_HEADER *)(sacl + 1);
-    for (i = 0; i < sacl->AceCount; i++, ace = ace_next( ace ))
+    for (i = 0; i < sacl->count; i++, ace = ace_next( ace ))
     {
         if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
         {
@@ -378,15 +376,15 @@ ACL *extract_security_labels( const ACL *sacl )
     label_acl = mem_alloc( size );
     if (!label_acl) return NULL;
 
-    label_acl->AclRevision = sacl->AclRevision;
-    label_acl->Sbz1 = 0;
-    label_acl->AclSize = size;
-    label_acl->AceCount = count;
-    label_acl->Sbz2 = 0;
+    label_acl->revision = sacl->revision;
+    label_acl->pad1     = 0;
+    label_acl->size     = size;
+    label_acl->count    = count;
+    label_acl->pad2     = 0;
     label_ace = (ACE_HEADER *)(label_acl + 1);
 
     ace = (const ACE_HEADER *)(sacl + 1);
-    for (i = 0; i < sacl->AceCount; i++, ace = ace_next( ace ))
+    for (i = 0; i < sacl->count; i++, ace = ace_next( ace ))
     {
         if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
         {
@@ -398,20 +396,20 @@ ACL *extract_security_labels( const ACL *sacl )
 }
 
 /* replace security labels in an existing SACL */
-ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
+struct acl *replace_security_labels( const struct acl *old_sacl, const struct acl *new_sacl )
 {
     const ACE_HEADER *ace;
     ACE_HEADER *replaced_ace;
-    size_t size = sizeof(ACL);
+    size_t size = sizeof(*new_sacl);
     unsigned int i, count = 0;
     BYTE revision = ACL_REVISION;
-    ACL *replaced_acl;
+    struct acl *replaced_acl;
 
     if (old_sacl)
     {
-        revision = max( revision, old_sacl->AclRevision );
+        revision = max( revision, old_sacl->revision );
         ace = (const ACE_HEADER *)(old_sacl + 1);
-        for (i = 0; i < old_sacl->AceCount; i++, ace = ace_next( ace ))
+        for (i = 0; i < old_sacl->count; i++, ace = ace_next( ace ))
         {
             if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
             size += ace->AceSize;
@@ -421,9 +419,9 @@ ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
 
     if (new_sacl)
     {
-        revision = max( revision, new_sacl->AclRevision );
+        revision = max( revision, new_sacl->revision );
         ace = (const ACE_HEADER *)(new_sacl + 1);
-        for (i = 0; i < new_sacl->AceCount; i++, ace = ace_next( ace ))
+        for (i = 0; i < new_sacl->count; i++, ace = ace_next( ace ))
         {
             if (ace->AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
             size += ace->AceSize;
@@ -434,17 +432,17 @@ ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
     replaced_acl = mem_alloc( size );
     if (!replaced_acl) return NULL;
 
-    replaced_acl->AclRevision = revision;
-    replaced_acl->Sbz1 = 0;
-    replaced_acl->AclSize = size;
-    replaced_acl->AceCount = count;
-    replaced_acl->Sbz2 = 0;
-    replaced_ace = (ACE_HEADER *)(replaced_acl + 1);
+    replaced_acl->revision = revision;
+    replaced_acl->pad1     = 0;
+    replaced_acl->size     = size;
+    replaced_acl->count    = count;
+    replaced_acl->pad2     = 0;
 
+    replaced_ace = (ACE_HEADER *)(replaced_acl + 1);
     if (old_sacl)
     {
         ace = (const ACE_HEADER *)(old_sacl + 1);
-        for (i = 0; i < old_sacl->AceCount; i++, ace = ace_next( ace ))
+        for (i = 0; i < old_sacl->count; i++, ace = ace_next( ace ))
         {
             if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
             memcpy( replaced_ace, ace, ace->AceSize );
@@ -455,7 +453,7 @@ ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
     if (new_sacl)
     {
         ace = (const ACE_HEADER *)(new_sacl + 1);
-        for (i = 0; i < new_sacl->AceCount; i++, ace = ace_next( ace ))
+        for (i = 0; i < new_sacl->count; i++, ace = ace_next( ace ))
         {
             if (ace->AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
             memcpy( replaced_ace, ace, ace->AceSize );
@@ -546,7 +544,7 @@ static void token_destroy( struct object *obj )
 static struct token *create_token( unsigned int primary, unsigned int session_id, const SID *user,
                                    const struct sid_attrs *groups, unsigned int group_count,
                                    const struct luid_attr *privs, unsigned int priv_count,
-                                   const ACL *default_dacl, TOKEN_SOURCE source,
+                                   const struct acl *default_dacl, TOKEN_SOURCE source,
                                    const struct luid *modified_id,
                                    int impersonation_level, int elevation )
 {
@@ -623,7 +621,7 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
 
         if (default_dacl)
         {
-            token->default_dacl = memdup( default_dacl, default_dacl->AclSize );
+            token->default_dacl = memdup( default_dacl, default_dacl->size );
             if (!token->default_dacl)
             {
                 release_object( token );
@@ -730,12 +728,12 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
     return token;
 }
 
-static ACL *create_default_dacl( const SID *user )
+static struct acl *create_default_dacl( const SID *user )
 {
     ACCESS_ALLOWED_ACE *aaa;
-    ACL *default_dacl;
+    struct acl *default_dacl;
     SID *sid;
-    size_t default_dacl_size = sizeof(ACL) +
+    size_t default_dacl_size = sizeof(*default_dacl) +
                                2*(sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
                                sizeof(local_system_sid) +
                                security_sid_len( user );
@@ -743,11 +741,11 @@ static ACL *create_default_dacl( const SID *user )
     default_dacl = mem_alloc( default_dacl_size );
     if (!default_dacl) return NULL;
 
-    default_dacl->AclRevision = ACL_REVISION;
-    default_dacl->Sbz1 = 0;
-    default_dacl->AclSize = default_dacl_size;
-    default_dacl->AceCount = 2;
-    default_dacl->Sbz2 = 0;
+    default_dacl->revision = ACL_REVISION;
+    default_dacl->pad1     = 0;
+    default_dacl->size     = default_dacl_size;
+    default_dacl->count    = 2;
+    default_dacl->pad2     = 0;
 
     /* GENERIC_ALL for Local System */
     aaa = (ACCESS_ALLOWED_ACE *)(default_dacl + 1);
@@ -783,9 +781,9 @@ static struct security_descriptor *create_security_label_sd( struct token *token
     size_t sid_len = security_sid_len( label_sid ), sacl_size, sd_size;
     SYSTEM_MANDATORY_LABEL_ACE *smla;
     struct security_descriptor *sd;
-    ACL *sacl;
+    struct acl *sacl;
 
-    sacl_size = sizeof(ACL) + FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart) + sid_len;
+    sacl_size = sizeof(*sacl) + FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart) + sid_len;
     sd_size = sizeof(struct security_descriptor) + sacl_size;
     if (!(sd = mem_alloc( sd_size )))
         return NULL;
@@ -796,12 +794,12 @@ static struct security_descriptor *create_security_label_sd( struct token *token
     sd->sacl_len  = sacl_size;
     sd->dacl_len  = 0;
 
-    sacl = (ACL *)(sd + 1);
-    sacl->AclRevision = ACL_REVISION;
-    sacl->Sbz1 = 0;
-    sacl->AclSize = sacl_size;
-    sacl->AceCount = 1;
-    sacl->Sbz2 = 0;
+    sacl = (struct acl *)(sd + 1);
+    sacl->revision = ACL_REVISION;
+    sacl->pad1     = 0;
+    sacl->size     = sacl_size;
+    sacl->count    = 1;
+    sacl->pad2     = 0;
 
     smla = (SYSTEM_MANDATORY_LABEL_ACE *)(sacl + 1);
     smla->Header.AceType = SYSTEM_MANDATORY_LABEL_ACE_TYPE;
@@ -845,7 +843,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
     PSID alias_users_sid;
     PSID logon_sid;
     const SID *user_sid = security_unix_uid_to_sid( getuid() );
-    ACL *default_dacl = create_default_dacl( user_sid );
+    struct acl *default_dacl = create_default_dacl( user_sid );
 
     alias_admins_sid = security_sid_alloc( &nt_authority, ARRAY_SIZE( alias_admins_subauth ),
                                            alias_admins_subauth );
@@ -1028,7 +1026,7 @@ static unsigned int token_access_check( struct token *token,
     unsigned int current_access = 0;
     unsigned int denied_access = 0;
     ULONG i;
-    const ACL *dacl;
+    const struct acl *dacl;
     int dacl_present;
     const ACE_HEADER *ace;
     const SID *owner;
@@ -1116,7 +1114,7 @@ static unsigned int token_access_check( struct token *token,
 
     /* 4: Grant rights according to the DACL */
     ace = (const ACE_HEADER *)(dacl + 1);
-    for (i = 0; i < dacl->AceCount; i++, ace = ace_next( ace ))
+    for (i = 0; i < dacl->count; i++, ace = ace_next( ace ))
     {
         const ACCESS_ALLOWED_ACE *aa_ace;
         const ACCESS_DENIED_ACE *ad_ace;
@@ -1175,7 +1173,7 @@ done:
     return STATUS_SUCCESS;
 }
 
-const ACL *token_get_default_dacl( struct token *token )
+const struct acl *token_get_default_dacl( struct token *token )
 {
     return token->default_dacl;
 }
@@ -1606,11 +1604,11 @@ DECL_HANDLER(get_token_default_dacl)
                                                  &token_ops )))
     {
         if (token->default_dacl)
-            reply->acl_len = token->default_dacl->AclSize;
+            reply->acl_len = token->default_dacl->size;
 
         if (reply->acl_len <= get_reply_max_size())
         {
-            ACL *acl_reply = set_reply_data_size( reply->acl_len );
+            struct acl *acl_reply = set_reply_data_size( reply->acl_len );
             if (acl_reply)
                 memcpy( acl_reply, token->default_dacl, reply->acl_len );
         }
@@ -1623,14 +1621,19 @@ DECL_HANDLER(get_token_default_dacl)
 DECL_HANDLER(set_token_default_dacl)
 {
     struct token *token;
+    const struct acl *acl = get_req_data();
+    unsigned int acl_size = get_req_data_size();
+
+    if (acl_size && !acl_is_valid( acl, acl_size ))
+    {
+        set_error( STATUS_INVALID_ACL );
+        return;
+    }
 
     if ((token = (struct token *)get_handle_obj( current->process, req->handle,
                                                  TOKEN_ADJUST_DEFAULT,
                                                  &token_ops )))
     {
-        const ACL *acl = get_req_data();
-        unsigned int acl_size = get_req_data_size();
-
         free( token->default_dacl );
         token->default_dacl = NULL;
 

@@ -738,8 +738,8 @@ DECL_HANDLER(get_security_object)
     struct security_descriptor req_sd;
     int present;
     const SID *owner, *group;
-    const ACL *sacl, *dacl;
-    ACL *label_acl = NULL;
+    const struct acl *sacl, *dacl;
+    struct acl *label_acl = NULL;
 
     if (req->security_info & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
@@ -769,7 +769,7 @@ DECL_HANDLER(get_security_object)
         else if (req->security_info & LABEL_SECURITY_INFORMATION && present && sacl)
         {
             if (!(label_acl = extract_security_labels( sacl ))) goto done;
-            req_sd.sacl_len = label_acl->AclSize;
+            req_sd.sacl_len = label_acl->size;
             sacl = label_acl;
         }
         else

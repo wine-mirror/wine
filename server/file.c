@@ -312,13 +312,13 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
     size_t dacl_size;
     ACE_HEADER *current_ace;
     ACCESS_ALLOWED_ACE *aaa;
-    ACL *dacl;
+    struct acl *dacl;
     SID *sid;
     char *ptr;
     const SID *world_sid = security_world_sid;
     const SID *local_system_sid = security_local_system_sid;
 
-    dacl_size = sizeof(ACL) + FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
+    dacl_size = sizeof(*dacl) + FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
         security_sid_len( local_system_sid );
     if (mode & S_IRWXU)
         dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( user );
@@ -346,16 +346,18 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
     memcpy( ptr, group, sd->group_len );
     ptr += sd->group_len;
 
-    dacl = (ACL *)ptr;
-    dacl->AclRevision = ACL_REVISION;
-    dacl->Sbz1 = 0;
-    dacl->AclSize = dacl_size;
-    dacl->AceCount = 1 + (mode & S_IRWXU ? 1 : 0) + (mode & S_IRWXO ? 1 : 0);
+    dacl = (struct acl *)ptr;
+    dacl->revision = ACL_REVISION;
+    dacl->pad1     = 0;
+    dacl->size     = dacl_size;
+    dacl->count    = 1;
+    dacl->pad2     = 0;
+    if (mode & S_IRWXU) dacl->count++;
     if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
         (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
         (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
-        dacl->AceCount++;
-    dacl->Sbz2 = 0;
+        dacl->count++;
+    if (mode & S_IRWXO) dacl->count++;
 
     /* always give FILE_ALL_ACCESS for Local System */
     aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
@@ -470,12 +472,12 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
     mode_t bits_to_set = ~0;
     mode_t mode;
     int present;
-    const ACL *dacl = sd_get_dacl( sd, &present );
+    const struct acl *dacl = sd_get_dacl( sd, &present );
     if (present && dacl)
     {
         const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
         ULONG i;
-        for (i = 0; i < dacl->AceCount; i++, ace = ace_next( ace ))
+        for (i = 0; i < dacl->count; i++, ace = ace_next( ace ))
         {
             const ACCESS_ALLOWED_ACE *aa_ace;
             const ACCESS_DENIED_ACE *ad_ace;

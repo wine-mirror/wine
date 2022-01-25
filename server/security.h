@@ -65,7 +65,7 @@ extern struct token *token_duplicate( struct token *src_token, unsigned primary,
 extern int token_check_privileges( struct token *token, int all_required,
                                    const struct luid_attr *reqprivs,
                                    unsigned int count, struct luid_attr *usedprivs );
-extern const ACL *token_get_default_dacl( struct token *token );
+extern const struct acl *token_get_default_dacl( struct token *token );
 extern const SID *token_get_user( struct token *token );
 extern const SID *token_get_primary_group( struct token *token );
 extern unsigned int token_get_session_id( struct token *token );
@@ -105,28 +105,28 @@ static inline int thread_single_check_privilege( struct thread *thread, struct l
 /* security descriptor helper functions */
 
 extern int sd_is_valid( const struct security_descriptor *sd, data_size_t size );
-extern ACL *extract_security_labels( const ACL *sacl );
-extern ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl );
+extern struct acl *extract_security_labels( const struct acl *sacl );
+extern struct acl *replace_security_labels( const struct acl *old_sacl, const struct acl *new_sacl );
 
 /* gets the discretionary access control list from a security descriptor */
-static inline const ACL *sd_get_dacl( const struct security_descriptor *sd, int *present )
+static inline const struct acl *sd_get_dacl( const struct security_descriptor *sd, int *present )
 {
     *present = (sd->control & SE_DACL_PRESENT) != 0;
 
     if (sd->dacl_len)
-        return (const ACL *)((const char *)(sd + 1) +
+        return (const struct acl *)((const char *)(sd + 1) +
             sd->owner_len + sd->group_len + sd->sacl_len);
     else
         return NULL;
 }
 
 /* gets the system access control list from a security descriptor */
-static inline const ACL *sd_get_sacl( const struct security_descriptor *sd, int *present )
+static inline const struct acl *sd_get_sacl( const struct security_descriptor *sd, int *present )
 {
     *present = (sd->control & SE_SACL_PRESENT) != 0;
 
     if (sd->sacl_len)
-        return (const ACL *)((const char *)(sd + 1) +
+        return (const struct acl *)((const char *)(sd + 1) +
             sd->owner_len + sd->group_len);
     else
         return NULL;

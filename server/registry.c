@@ -369,12 +369,12 @@ static struct security_descriptor *key_get_sd( struct object *obj )
 
     if (!key_default_sd)
     {
+        struct acl *dacl;
         size_t users_sid_len = security_sid_len( security_builtin_users_sid );
         size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
-        size_t dacl_len = sizeof(ACL) + 2 * offsetof( ACCESS_ALLOWED_ACE, SidStart )
+        size_t dacl_len = sizeof(*dacl) + 2 * offsetof( ACCESS_ALLOWED_ACE, SidStart )
                           + users_sid_len + admins_sid_len;
         ACCESS_ALLOWED_ACE *aaa;
-        ACL *dacl;
 
         key_default_sd = mem_alloc( sizeof(*key_default_sd) + 2 * admins_sid_len + dacl_len );
         key_default_sd->control   = SE_DACL_PRESENT;
@@ -385,12 +385,12 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         memcpy( key_default_sd + 1, security_builtin_admins_sid, admins_sid_len );
         memcpy( (char *)(key_default_sd + 1) + admins_sid_len, security_builtin_admins_sid, admins_sid_len );
 
-        dacl = (ACL *)((char *)(key_default_sd + 1) + 2 * admins_sid_len);
-        dacl->AclRevision = ACL_REVISION;
-        dacl->Sbz1 = 0;
-        dacl->AclSize = dacl_len;
-        dacl->AceCount = 2;
-        dacl->Sbz2 = 0;
+        dacl = (struct acl *)((char *)(key_default_sd + 1) + 2 * admins_sid_len);
+        dacl->revision = ACL_REVISION;
+        dacl->pad1     = 0;
+        dacl->size     = dacl_len;
+        dacl->count    = 2;
+        dacl->pad2     = 0;
         aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
         aaa->Header.AceFlags = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE;

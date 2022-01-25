@@ -1045,7 +1045,7 @@ static void dump_varargs_SID( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
-static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t size )
+static void dump_inline_acl( const char *prefix, const struct acl *acl, data_size_t size )
 {
     const ACE_HEADER *ace;
     ULONG i;
@@ -1053,14 +1053,14 @@ static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t siz
     fprintf( stderr,"%s{", prefix );
     if (size)
     {
-        if (size < sizeof(ACL))
+        if (size < sizeof(*acl))
         {
             fprintf( stderr, "<invalid acl>}" );
             return;
         }
-        size -= sizeof(ACL);
+        size -= sizeof(*acl);
         ace = (const ACE_HEADER *)(acl + 1);
-        for (i = 0; i < acl->AceCount; i++)
+        for (i = 0; i < acl->count; i++)
         {
             const SID *sid = NULL;
             data_size_t sid_size = 0;
@@ -1115,9 +1115,9 @@ static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t siz
     fputc( '}', stderr );
 }
 
-static void dump_varargs_ACL( const char *prefix, data_size_t size )
+static void dump_varargs_acl( const char *prefix, data_size_t size )
 {
-    const ACL *acl = cur_data;
+    const struct acl *acl = cur_data;
     dump_inline_acl( prefix, acl, size );
     remove_data( size );
 }
@@ -1145,11 +1145,11 @@ static void dump_inline_security_descriptor( const char *prefix, const struct se
         offset += sd->group_len;
         if ((sd->sacl_len >= MAX_ACL_LEN) || (offset + sd->sacl_len > size))
             return;
-        dump_inline_acl( ",sacl=", (const ACL *)((const char *)sd + offset), sd->sacl_len );
+        dump_inline_acl( ",sacl=", (const struct acl *)((const char *)sd + offset), sd->sacl_len );
         offset += sd->sacl_len;
         if ((sd->dacl_len >= MAX_ACL_LEN) || (offset + sd->dacl_len > size))
             return;
-        dump_inline_acl( ",dacl=", (const ACL *)((const char *)sd + offset), sd->dacl_len );
+        dump_inline_acl( ",dacl=", (const struct acl *)((const char *)sd + offset), sd->dacl_len );
         offset += sd->dacl_len;
     }
     fputc( '}', stderr );
@@ -3914,13 +3914,13 @@ static void dump_get_token_default_dacl_request( const struct get_token_default_
 static void dump_get_token_default_dacl_reply( const struct get_token_default_dacl_reply *req )
 {
     fprintf( stderr, " acl_len=%u", req->acl_len );
-    dump_varargs_ACL( ", acl=", cur_size );
+    dump_varargs_acl( ", acl=", cur_size );
 }
 
 static void dump_set_token_default_dacl_request( const struct set_token_default_dacl_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    dump_varargs_ACL( ", acl=", cur_size );
+    dump_varargs_acl( ", acl=", cur_size );
 }
 
 static void dump_set_security_object_request( const struct set_security_object_request *req )
@@ -5400,6 +5400,7 @@ static const struct
     { "INFO_LENGTH_MISMATCH",        STATUS_INFO_LENGTH_MISMATCH },
     { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },
     { "INSUFFICIENT_RESOURCES",      STATUS_INSUFFICIENT_RESOURCES },
+    { "INVALID_ACL",                 STATUS_INVALID_ACL },
     { "INVALID_ADDRESS",             STATUS_INVALID_ADDRESS },
     { "INVALID_ADDRESS_COMPONENT",   STATUS_INVALID_ADDRESS_COMPONENT },
     { "INVALID_CID",                 STATUS_INVALID_CID },
