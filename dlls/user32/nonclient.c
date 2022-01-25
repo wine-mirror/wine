@@ -635,22 +635,24 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
     return HTNOWHERE;
 }
 
-LRESULT NC_HandleNCMouseMove(HWND hwnd, POINT pt)
+LRESULT NC_HandleNCMouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    LONG hittest;
     RECT rect;
+    POINT pt;
 
-    TRACE("hwnd=%p pt=%s\n", hwnd, wine_dbgstr_point(&pt));
+    TRACE("hwnd=%p wparam=%#lx lparam=%#lx\n", hwnd, wParam, lParam);
 
-    hittest = NC_HandleNCHitTest(hwnd, pt);
-    if (hittest != HTHSCROLL && hittest != HTVSCROLL)
+    if (wParam != HTHSCROLL && wParam != HTVSCROLL)
         return 0;
 
     WIN_GetRectangles(hwnd, COORDS_CLIENT, &rect, NULL);
+
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
     ScreenToClient(hwnd, &pt);
     pt.x -= rect.left;
     pt.y -= rect.top;
-    SCROLL_HandleScrollEvent(hwnd, hittest == HTHSCROLL ? SB_HORZ : SB_VERT, WM_NCMOUSEMOVE, pt);
+    SCROLL_HandleScrollEvent(hwnd, wParam == HTHSCROLL ? SB_HORZ : SB_VERT, WM_NCMOUSEMOVE, pt);
     return 0;
 }
 

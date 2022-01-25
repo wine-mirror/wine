@@ -246,12 +246,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return NC_HandleNCPaint( hwnd, (HRGN)wParam );
 
     case WM_NCMOUSEMOVE:
-        {
-            POINT pt;
-            pt.x = (short)LOWORD(lParam);
-            pt.y = (short)HIWORD(lParam);
-            return NC_HandleNCMouseMove( hwnd, pt );
-        }
+        return NC_HandleNCMouseMove( hwnd, wParam, lParam );
 
     case WM_NCMOUSELEAVE:
         return NC_HandleNCMouseLeave( hwnd );
