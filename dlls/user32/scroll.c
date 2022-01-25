@@ -39,6 +39,7 @@ typedef struct
     INT   maxVal;   /* Maximum scroll-bar value */
     INT   page;     /* Page size of scroll bar (Win32) */
     UINT  flags;    /* EnableScrollBar flags */
+    BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
 } SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
 
 /* data for window that has (one or two) scroll bars */
@@ -643,6 +644,29 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
     }
 }
 
+void SCROLL_SetStandardScrollPainted( HWND hwnd, INT bar, BOOL painted )
+{
+    LPSCROLLBAR_INFO info;
+
+    if (bar != SB_HORZ && bar != SB_VERT)
+        return;
+
+    info = SCROLL_GetInternalInfo( hwnd, bar, FALSE );
+    if (info)
+        info->painted = painted;
+}
+
+static BOOL SCROLL_IsStandardScrollPainted( HWND hwnd, INT bar )
+{
+    LPSCROLLBAR_INFO info;
+
+    if (bar != SB_HORZ && bar != SB_VERT)
+        return FALSE;
+
+    info = SCROLL_GetInternalInfo( hwnd, bar, FALSE );
+    return info ? info->painted : FALSE;
+}
+
 /***********************************************************************
  *           SCROLL_DrawScrollBar
  *
@@ -653,9 +677,9 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT bar, enum SCROLL_HITTEST hit_
                            BOOL draw_interior )
 {
     INT arrow_size, thumb_size, thumb_pos;
+    RECT rect, clip_box, intersect;
     BOOL vertical;
     DWORD style;
-    RECT rect;
 
     if (!(hwnd = WIN_GetFullHandle( hwnd )))
         return;
@@ -682,6 +706,13 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT bar, enum SCROLL_HITTEST hit_
           GetCapture());
     user_api->pScrollBarDraw( hwnd, hdc, bar, hit_test, tracking_info, draw_arrows, draw_interior,
                               &rect, arrow_size, thumb_pos, thumb_size, vertical );
+
+    if (bar == SB_HORZ || bar == SB_VERT)
+    {
+        GetClipBox( hdc, &clip_box );
+        if (IntersectRect(&intersect, &rect, &clip_box))
+            SCROLL_SetStandardScrollPainted( hwnd, bar, TRUE );
+    }
 }
 
 void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical )
@@ -899,7 +930,13 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
     switch (g_tracking_info.hit_test)
     {
     case SCROLL_NOWHERE:  /* No tracking in progress */
-        if (msg == WM_MOUSEMOVE || msg == WM_MOUSELEAVE || msg == WM_NCMOUSEMOVE || msg == WM_NCMOUSELEAVE)
+        /* For standard scroll bars, hovered state gets painted only when the scroll bar was
+         * previously painted by DefWinProc(). If an application handles WM_NCPAINT by itself, then
+         * the scrollbar shouldn't be repainted here to avoid overwriting the application painted
+         * content */
+        if (msg == WM_MOUSEMOVE || msg == WM_MOUSELEAVE
+            || ((msg == WM_NCMOUSEMOVE || msg == WM_NCMOUSELEAVE)
+                && SCROLL_IsStandardScrollPainted( hwnd, nBar)))
             SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, TRUE, TRUE );
         break;
 
