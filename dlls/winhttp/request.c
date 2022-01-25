@@ -3652,14 +3652,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
 
 static DWORD socket_shutdown( struct socket *socket, USHORT status, const void *reason, DWORD len )
 {
-    DWORD ret;
-
-    stop_queue( &socket->send_q );
-    if (!(ret = send_frame( socket, SOCKET_OPCODE_CLOSE, status, reason, len, TRUE, NULL )))
-    {
-        socket->state = SOCKET_STATE_SHUTDOWN;
-    }
-    return ret;
+    return send_frame( socket, SOCKET_OPCODE_CLOSE, status, reason, len, TRUE, NULL );
 }
 
 static void CALLBACK task_socket_shutdown( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
@@ -3706,6 +3699,8 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
         release_object( &socket->hdr );
         return ERROR_INVALID_OPERATION;
     }
+
+    socket->state = SOCKET_STATE_SHUTDOWN;
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {

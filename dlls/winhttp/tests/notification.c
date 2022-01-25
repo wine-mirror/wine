@@ -814,6 +814,11 @@ static void test_websocket(BOOL secure)
     setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
     err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
     ok( err == ERROR_SUCCESS, "got %u\n", err );
+
+    err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
+                                 (void*)"hello", sizeof("hello") );
+    ok( err == ERROR_INVALID_OPERATION, "got %u\n", err );
+
     WaitForSingleObject( info.wait, INFINITE );
 
     err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
