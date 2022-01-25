@@ -2469,7 +2469,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
 
     /* Constant buffer */
     hr = tx->lpVtbl->GetConstantBuffer(tx, &buffer);
-todo_wine
+    todo_wine
     ok(SUCCEEDED(hr), "Failed to get texture shader constant buffer.\n");
     if (FAILED(hr))
     {
@@ -2650,7 +2650,7 @@ todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
 
     hr = tx->lpVtbl->GetConstantBuffer(tx, &buffer);
-todo_wine
+    todo_wine
     ok(SUCCEEDED(hr), "Failed to get texture shader constant buffer.\n");
     if (FAILED(hr))
     {
