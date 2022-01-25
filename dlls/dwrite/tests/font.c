@@ -1566,8 +1566,8 @@ static void test_GetFontFamily(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(font2 != font, "got %p, %p\n", font2, font);
 
-if (0) /* crashes on native */
-    hr = IDWriteFont_GetFontFamily(font, NULL);
+    if (0) /* crashes on native */
+        hr = IDWriteFont_GetFontFamily(font, NULL);
 
     EXPECT_REF(font, 1);
     hr = IDWriteFont_GetFontFamily(font, &family);
@@ -1986,7 +1986,7 @@ static void test_CreateFontFace(void)
     ok(hr == DWRITE_E_FILEFORMAT || broken(hr == E_FAIL) /* < win10 */, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_RAW_CFF, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
-todo_wine
+    todo_wine
     ok(hr == DWRITE_E_UNSUPPORTEDOPERATION || broken(hr == E_INVALIDARG) /* older versions */, "got 0x%08x\n", hr);
 
     fontface = (void*)0xdeadbeef;
@@ -2006,7 +2006,7 @@ todo_wine
 
     fontface = NULL;
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_UNKNOWN, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
-todo_wine
+    todo_wine
     ok(hr == S_OK || broken(hr == E_INVALIDARG) /* < win10 */, "got 0x%08x\n", hr);
     if (hr == S_OK) {
         ok(fontface != NULL, "got %p\n", fontface);
@@ -2596,7 +2596,7 @@ static void test_system_fontcollection(void)
         EXPECT_REF(collection1, 2);
         EXPECT_REF(factory, 2);
         hr = IDWriteFontCollection1_GetFontSet(collection1, &fontset);
-    todo_wine
+        todo_wine
         ok(hr == S_OK, "Failed to get fontset, hr %#x.\n", hr);
     if (hr == S_OK) {
         EXPECT_REF(collection1, 2);
@@ -2635,7 +2635,7 @@ static void test_system_fontcollection(void)
         HANDLE event;
 
         event = IDWriteFontCollection3_GetExpirationEvent(collection3);
-todo_wine
+        todo_wine
         ok(!!event, "Expected event handle.\n");
 
         check_familymodel(collection3, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
@@ -3075,7 +3075,7 @@ static void test_CustomFontCollection(void)
     EXPECT_REF(factory, 1);
     hr = IDWriteFactory_CreateCustomFontCollection(factory, loader, "Billy", 6, &font_collection);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
+    todo_wine
     EXPECT_REF(factory, 1);
     EXPECT_REF(loader, 2);
     IDWriteFontCollection_Release(font_collection);
@@ -3361,7 +3361,7 @@ if (0) { /* crashes on win10 */
     /* file was created with different factory */
     face2 = NULL;
     hr = IDWriteFactory_CreateFontFace(factory2, face_type, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face2);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 if (face2) {
     IDWriteFontFace_Release(face2);
@@ -5223,7 +5223,7 @@ static void test_GetDesignGlyphAdvances(void)
         advance = 0;
         hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &index, &advance, TRUE);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine
+        todo_wine
         ok(advance == 2048, "got %i\n", advance);
 
         IDWriteFontFace1_Release(fontface1);
@@ -6026,7 +6026,7 @@ static void test_CreateGlyphRunAnalysis(void)
         ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
 
         hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect, bits, size - 1);
-    todo_wine
+        todo_wine
         ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
 
         HeapFree(GetProcessHeap(), 0, bits);
@@ -6037,7 +6037,7 @@ static void test_CreateGlyphRunAnalysis(void)
 
         hr = IDWriteGlyphRunAnalysis_GetAlphaBlendParams(analysis, params, &gamma, &contrast, &cleartype_level);
         ok(hr == S_OK, "Failed to get alpha blend params, hr %#x.\n", hr);
-    todo_wine
+        todo_wine
         ok(cleartype_level == 0.0f, "Unexpected cleartype level %f.\n", cleartype_level);
 
         IDWriteRenderingParams_Release(params);
@@ -6107,7 +6107,7 @@ static void test_CreateGlyphRunAnalysis(void)
         ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
 
         hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect, bits, size - 1);
-    todo_wine
+        todo_wine
         ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
 
         HeapFree(GetProcessHeap(), 0, bits);
@@ -6272,8 +6272,8 @@ if (0) { /* this is not consistent */
             metrics->subscriptSizeY, expected->subscriptSizeY);
     ok(metrics->superscriptPositionX == expected->superscriptPositionX, "supX: got %d expect %d.\n",
             metrics->superscriptPositionX, expected->superscriptPositionX);
-if (0)
-    ok(metrics->superscriptPositionY == expected->superscriptPositionY, "supY: got %d expect %d.\n",
+    if (0)
+        ok(metrics->superscriptPositionY == expected->superscriptPositionY, "supY: got %d expect %d.\n",
             metrics->superscriptPositionY, expected->superscriptPositionY);
     ok(metrics->superscriptSizeX == expected->superscriptSizeX, "supsizeX: got %d expect %d.\n",
             metrics->superscriptSizeX, expected->superscriptSizeX);
@@ -7851,7 +7851,7 @@ static void test_TranslateColorGlyphRun(void)
             ok(!!colorrun1->glyphRun.glyphIndices, "Unexpected indices %p.\n", colorrun1->glyphRun.glyphIndices);
             ok(!!colorrun1->glyphRun.glyphAdvances, "Unexpected advances %p.\n", colorrun1->glyphRun.glyphAdvances);
             ok(!colorrun1->glyphRunDescription, "Unexpected description pointer.\n");
-        todo_wine
+            todo_wine
             ok(colorrun1->glyphImageFormat == (DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE | DWRITE_GLYPH_IMAGE_FORMATS_COLR) ||
                     colorrun1->glyphImageFormat == DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE, "Unexpected glyph image format %#x.\n",
                     colorrun1->glyphImageFormat);
@@ -8018,14 +8018,14 @@ static void test_CreateFontFaceReference(void)
     IDWriteFontFile_Release(file);
 
     hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface);
-todo_wine
+    todo_wine
     ok(hr == DWRITE_E_FILEFORMAT, "got 0x%08x\n", hr);
 
     IDWriteFontFaceReference_Release(ref);
 
     /* path however has to be valid */
     hr = IDWriteFactory3_CreateFontFaceReference(factory, L"dummy", NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
-todo_wine
+    todo_wine
     ok(hr == DWRITE_E_FILENOTFOUND, "got 0x%08x\n", hr);
     if (hr == S_OK)
         IDWriteFontFaceReference_Release(ref);
@@ -8133,13 +8133,13 @@ todo_wine
                     (void **)&ref2)))
             {
                 UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
-            todo_wine
+                todo_wine
                 ok(axis_count >= 4, "Unexpected axis value count.\n");
 
                 hr = IDWriteFontFaceReference1_GetFontAxisValues(ref2, axis_values, ARRAY_SIZE(axis_values));
                 ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-            todo_wine
+                todo_wine
                 ok(has_main_axis_values(axis_values, axis_count), "Unexpected axis returned.\n");
 
                 IDWriteFontFaceReference1_Release(ref2);
@@ -9632,7 +9632,7 @@ static void test_fontsetbuilder(void)
         hr = IDWriteFontSetBuilder1_CreateFontSet(builder1, &fontset);
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
         hr = IDWriteFactory3_CreateFontCollectionFromFontSet(factory, fontset, &collection);
-    todo_wine
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
         if (SUCCEEDED(hr))
         {
@@ -9649,7 +9649,7 @@ static void test_fontsetbuilder(void)
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
         hr = IDWriteFactory3_CreateFontCollectionFromFontSet(factory, fontset, &collection);
-    todo_wine
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
         if (SUCCEEDED(hr))
         {
@@ -9670,7 +9670,7 @@ static void test_fontsetbuilder(void)
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
         count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref1);
-    todo_wine
+        todo_wine
         ok(count == 4, "Unexpected axis count %u.\n", count);
 
     if (count == 4)
@@ -10182,7 +10182,7 @@ static void test_expiration_event(void)
     IDWriteFontCollection3_Release(collection3);
 
     event = get_collection_expiration_event(collection);
-todo_wine
+    todo_wine
     ok(!!event, "Unexpected event handle.\n");
 
     /* Compare handles with another isolated factory. */
@@ -10373,7 +10373,7 @@ static void test_CreateFontCollectionFromFontSet(void)
     props[0].propertyValue = L"Another Font";
     props[0].localeName = L"en-US";
     hr = IDWriteFontSetBuilder1_AddFontFaceReference_(builder, ref, props, 1);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
     IDWriteFontFaceReference_Release(ref);
 
@@ -10381,7 +10381,7 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
     hr = IDWriteFactory5_CreateFontCollectionFromFontSet(factory, fontset, &collection);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
 if (SUCCEEDED(hr))

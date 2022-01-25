@@ -1821,7 +1821,7 @@ static void test_Draw(void)
     ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
     hr = IDWriteTextLayout_GetMetrics(layout, &tm);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
+    todo_wine
     ok(tm.lineCount == 6, "got %u\n", tm.lineCount);
     IDWriteTextLayout_Release(layout);
 
@@ -3308,7 +3308,7 @@ static void test_GetMetrics(void)
     ok(metrics.height > 0.0, "got %.2f\n", metrics.height);
     ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
     ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
-todo_wine
+    todo_wine
     ok(metrics.maxBidiReorderingDepth > 1, "got %u\n", metrics.maxBidiReorderingDepth);
     ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
 
@@ -4646,7 +4646,7 @@ todo_wine {
     ok(mappedlength == 1, "got %u\n", mappedlength);
 }
     ok(scale == 1.0f, "got %f\n", scale);
-todo_wine
+    todo_wine
     ok(font != NULL, "got %p\n", font);
 if (font) {
     IDWriteFont_Release(font);
@@ -4663,7 +4663,7 @@ todo_wine {
     ok(mappedlength == 3, "got %u\n", mappedlength);
 }
     ok(scale == 1.0f, "got %f\n", scale);
-todo_wine
+    todo_wine
     ok(font != NULL, "got %p\n", font);
 if (font) {
     IDWriteFont_Release(font);
@@ -4680,7 +4680,7 @@ todo_wine {
     ok(mappedlength == 1, "got %u\n", mappedlength);
 }
     ok(scale == 1.0f, "got %f\n", scale);
-todo_wine
+    todo_wine
     ok(font != NULL, "got %p\n", font);
 if (font) {
     IDWriteFont_Release(font);
@@ -4696,7 +4696,7 @@ todo_wine {
     ok(mappedlength == 1, "got %u\n", mappedlength);
 }
     ok(scale == 1.0f, "got %f\n", scale);
-todo_wine
+    todo_wine
     ok(font != NULL, "got %p\n", font);
 if (font) {
     IDWriteFont_Release(font);
@@ -4740,7 +4740,7 @@ if (font) {
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
     hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
+    todo_wine
     ok(lstrcmpW(buffW, L"Tahoma"), "Unexpected string %s.\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
     IDWriteFont_Release(font);
@@ -5908,7 +5908,7 @@ static void test_text_format_axes(void)
     }
 
     hr = IDWriteFactory6_CreateTextFormat(factory, L"test_family", NULL, NULL, 0, 10.0f, L"en-us", &format3);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
 if (SUCCEEDED(hr))
@@ -6408,7 +6408,7 @@ static void test_HitTestTextRange(void)
     /* Start index exceeding layout text length, dummy range returned. */
     count = 0;
     hr = IDWriteTextLayout_HitTestTextRange(layout, 7, 10, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 if (SUCCEEDED(hr))
 {
@@ -6420,7 +6420,7 @@ if (SUCCEEDED(hr))
     /* Length exceeding layout text length, trimmed. */
     count = 0;
     hr = IDWriteTextLayout_HitTestTextRange(layout, 0, 10, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 if (SUCCEEDED(hr))
 {
@@ -6437,7 +6437,7 @@ if (SUCCEEDED(hr))
 
     count = 0;
     hr = IDWriteTextLayout_HitTestTextRange(layout, 0, 6, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 if (SUCCEEDED(hr))
 {
@@ -6459,7 +6459,7 @@ if (SUCCEEDED(hr))
 
     count = 0;
     hr = IDWriteTextLayout_HitTestTextRange(layout, 0, 6, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 if (SUCCEEDED(hr))
 {
@@ -6473,7 +6473,7 @@ if (SUCCEEDED(hr))
 }
     count = 0;
     hr = IDWriteTextLayout_HitTestTextRange(layout, 7, 10, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 if (SUCCEEDED(hr))
 {
