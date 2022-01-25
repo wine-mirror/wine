@@ -314,7 +314,7 @@ static HRESULT WINAPI Host_Echo(IHost *iface, SAFEARRAY *args)
 {
     WCHAR *output = NULL, *ptr;
     unsigned argc, i, len;
-    int ubound, lbound;
+    LONG ubound, lbound;
     VARIANT *argv;
     BSTR *strs;
     HRESULT hres;
