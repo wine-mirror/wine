@@ -639,6 +639,7 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 {
     HRGN whole_rgn = get_update_region( hwnd, flags, child );
     HRGN client_rgn = 0;
+    DWORD style;
 
     if (child) hwnd = *child;
 
@@ -678,7 +679,17 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
         if (whole_rgn) /* NOTE: WM_NCPAINT allows wParam to be 1 */
         {
-            if (*flags & UPDATE_NONCLIENT) SendMessageW( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
+            if (*flags & UPDATE_NONCLIENT)
+            {
+                /* Mark standard scroll bars as not painted before sending WM_NCPAINT */
+                style = GetWindowLongW( hwnd, GWL_STYLE );
+                if (style & WS_HSCROLL)
+                    SCROLL_SetStandardScrollPainted( hwnd, SB_HORZ, FALSE );
+                if (style & WS_VSCROLL)
+                    SCROLL_SetStandardScrollPainted( hwnd, SB_VERT, FALSE );
+
+                SendMessageW( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
+            }
             if (whole_rgn > (HRGN)1) DeleteObject( whole_rgn );
         }
         SetThreadDpiAwarenessContext( context );

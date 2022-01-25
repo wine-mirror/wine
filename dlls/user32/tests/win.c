@@ -1269,7 +1269,6 @@ static void test_nonclient_area(HWND hwnd)
     RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
     color = GetPixel(hdc, 50 - GetSystemMetrics(SM_CXVSCROLL) / 2,
                      50 - GetSystemMetrics(SM_CYHSCROLL) / 2);
-    todo_wine
     ok(color == old_color, "Expected color %#x, got %#x.\n", old_color, color);
 
     ReleaseDC(parent, hdc);
