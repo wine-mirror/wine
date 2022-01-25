@@ -676,7 +676,24 @@ done:
 
 	if (sei.fMask & SEE_MASK_NOCLOSEPROCESS) {
 		DWORD exitcode;
+		HANDLE hJob;
+		JOBOBJECT_EXTENDED_LIMIT_INFORMATION info;
+
 		SetConsoleCtrlHandler(NULL, TRUE);
+		hJob = CreateJobObjectA(NULL, NULL);
+		/* Create a job where the child is associated... if the start.exe terminates
+		 * before the child, the job will be terminated, and the child will be terminated as well.
+		 * (The idea is to allow to kill (from a Unix standpoint) a created Windows
+		 * process (here start.exe), and that the unix-kill of start.exe will be also terminate
+		 * start.exe's child process).
+		 */
+		memset(&info, 0, sizeof(info));
+		info.BasicLimitInformation.LimitFlags =
+                    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
+                    JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
+		SetInformationJobObject(hJob, JobObjectExtendedLimitInformation, &info, sizeof(info));
+		AssignProcessToJobObject(hJob, sei.hProcess);
+
 		WaitForSingleObject(sei.hProcess, INFINITE);
 		GetExitCodeProcess(sei.hProcess, &exitcode);
 		ExitProcess(exitcode);
