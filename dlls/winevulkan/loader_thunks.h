@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2021 The Khronos Group Inc.
+ * Copyright 2015-2022 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
@@ -602,7 +602,7 @@ struct vkCmdBeginRenderPass2KHR_params
 struct vkCmdBeginRenderingKHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkRenderingInfoKHR *pRenderingInfo;
+    const VkRenderingInfo *pRenderingInfo;
 };
 
 struct vkCmdBeginTransformFeedbackEXT_params
@@ -708,7 +708,7 @@ struct vkCmdBlitImage_params
 struct vkCmdBlitImage2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkBlitImageInfo2KHR *pBlitImageInfo;
+    const VkBlitImageInfo2 *pBlitImageInfo;
 };
 
 struct vkCmdBuildAccelerationStructureNV_params
@@ -803,7 +803,7 @@ struct vkCmdCopyBuffer_params
 struct vkCmdCopyBuffer2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkCopyBufferInfo2KHR *pCopyBufferInfo;
+    const VkCopyBufferInfo2 *pCopyBufferInfo;
 };
 
 struct vkCmdCopyBufferToImage_params
@@ -819,7 +819,7 @@ struct vkCmdCopyBufferToImage_params
 struct vkCmdCopyBufferToImage2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkCopyBufferToImageInfo2KHR *pCopyBufferToImageInfo;
+    const VkCopyBufferToImageInfo2 *pCopyBufferToImageInfo;
 };
 
 struct vkCmdCopyImage_params
@@ -836,7 +836,7 @@ struct vkCmdCopyImage_params
 struct vkCmdCopyImage2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkCopyImageInfo2KHR *pCopyImageInfo;
+    const VkCopyImageInfo2 *pCopyImageInfo;
 };
 
 struct vkCmdCopyImageToBuffer_params
@@ -852,7 +852,7 @@ struct vkCmdCopyImageToBuffer_params
 struct vkCmdCopyImageToBuffer2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkCopyImageToBufferInfo2KHR *pCopyImageToBufferInfo;
+    const VkCopyImageToBufferInfo2 *pCopyImageToBufferInfo;
 };
 
 struct vkCmdCopyMemoryToAccelerationStructureKHR_params
@@ -1217,7 +1217,7 @@ struct vkCmdPipelineBarrier_params
 struct vkCmdPipelineBarrier2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkDependencyInfoKHR *pDependencyInfo;
+    const VkDependencyInfo *pDependencyInfo;
 };
 
 struct vkCmdPreprocessGeneratedCommandsNV_params
@@ -1266,7 +1266,7 @@ struct vkCmdResetEvent2KHR_params
 {
     VkCommandBuffer commandBuffer;
     VkEvent event;
-    VkPipelineStageFlags2KHR stageMask;
+    VkPipelineStageFlags2 stageMask;
 };
 
 struct vkCmdResetQueryPool_params
@@ -1291,7 +1291,7 @@ struct vkCmdResolveImage_params
 struct vkCmdResolveImage2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkResolveImageInfo2KHR *pResolveImageInfo;
+    const VkResolveImageInfo2 *pResolveImageInfo;
 };
 
 struct vkCmdSetBlendConstants_params
@@ -1403,7 +1403,7 @@ struct vkCmdSetEvent2KHR_params
 {
     VkCommandBuffer commandBuffer;
     VkEvent event;
-    const VkDependencyInfoKHR *pDependencyInfo;
+    const VkDependencyInfo *pDependencyInfo;
 };
 
 struct vkCmdSetExclusiveScissorNV_params
@@ -1674,7 +1674,7 @@ struct vkCmdWaitEvents2KHR_params
     VkCommandBuffer commandBuffer;
     uint32_t eventCount;
     const VkEvent *pEvents;
-    const VkDependencyInfoKHR *pDependencyInfos;
+    const VkDependencyInfo *pDependencyInfos;
 };
 
 struct vkCmdWriteAccelerationStructuresPropertiesKHR_params
@@ -1700,7 +1700,7 @@ struct vkCmdWriteAccelerationStructuresPropertiesNV_params
 struct vkCmdWriteBufferMarker2AMD_params
 {
     VkCommandBuffer commandBuffer;
-    VkPipelineStageFlags2KHR stage;
+    VkPipelineStageFlags2 stage;
     VkBuffer dstBuffer;
     VkDeviceSize dstOffset;
     uint32_t marker;
@@ -1726,7 +1726,7 @@ struct vkCmdWriteTimestamp_params
 struct vkCmdWriteTimestamp2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    VkPipelineStageFlags2KHR stage;
+    VkPipelineStageFlags2 stage;
     VkQueryPool queryPool;
     uint32_t query;
 };
@@ -1972,9 +1972,9 @@ struct vkCreatePipelineLayout_params
 struct vkCreatePrivateDataSlotEXT_params
 {
     VkDevice device;
-    const VkPrivateDataSlotCreateInfoEXT *pCreateInfo;
+    const VkPrivateDataSlotCreateInfo *pCreateInfo;
     const VkAllocationCallbacks *pAllocator;
-    VkPrivateDataSlotEXT *pPrivateDataSlot;
+    VkPrivateDataSlot *pPrivateDataSlot;
 };
 
 struct vkCreateQueryPool_params
@@ -2300,7 +2300,7 @@ struct vkDestroyPipelineLayout_params
 struct vkDestroyPrivateDataSlotEXT_params
 {
     VkDevice device;
-    VkPrivateDataSlotEXT privateDataSlot;
+    VkPrivateDataSlot privateDataSlot;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -2603,7 +2603,7 @@ struct vkGetDeviceAccelerationStructureCompatibilityKHR_params
 struct vkGetDeviceBufferMemoryRequirementsKHR_params
 {
     VkDevice device;
-    const VkDeviceBufferMemoryRequirementsKHR *pInfo;
+    const VkDeviceBufferMemoryRequirements *pInfo;
     VkMemoryRequirements2 *pMemoryRequirements;
 };
 
@@ -2641,14 +2641,14 @@ struct vkGetDeviceGroupSurfacePresentModesKHR_params
 struct vkGetDeviceImageMemoryRequirementsKHR_params
 {
     VkDevice device;
-    const VkDeviceImageMemoryRequirementsKHR *pInfo;
+    const VkDeviceImageMemoryRequirements *pInfo;
     VkMemoryRequirements2 *pMemoryRequirements;
 };
 
 struct vkGetDeviceImageSparseMemoryRequirementsKHR_params
 {
     VkDevice device;
-    const VkDeviceImageMemoryRequirementsKHR *pInfo;
+    const VkDeviceImageMemoryRequirements *pInfo;
     uint32_t *pSparseMemoryRequirementCount;
     VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements;
 };
@@ -3087,7 +3087,7 @@ struct vkGetPhysicalDeviceToolPropertiesEXT_params
 {
     VkPhysicalDevice physicalDevice;
     uint32_t *pToolCount;
-    VkPhysicalDeviceToolPropertiesEXT *pToolProperties;
+    VkPhysicalDeviceToolProperties *pToolProperties;
 };
 
 struct vkGetPhysicalDeviceWin32PresentationSupportKHR_params
@@ -3133,7 +3133,7 @@ struct vkGetPrivateDataEXT_params
     VkDevice device;
     VkObjectType objectType;
     uint64_t objectHandle;
-    VkPrivateDataSlotEXT privateDataSlot;
+    VkPrivateDataSlot privateDataSlot;
     uint64_t *pData;
 };
 
@@ -3336,7 +3336,7 @@ struct vkQueueSubmit2KHR_params
 {
     VkQueue queue;
     uint32_t submitCount;
-    const VkSubmitInfo2KHR *pSubmits;
+    const VkSubmitInfo2 *pSubmits;
     VkFence fence;
 };
 
@@ -3435,7 +3435,7 @@ struct vkSetPrivateDataEXT_params
     VkDevice device;
     VkObjectType objectType;
     uint64_t objectHandle;
-    VkPrivateDataSlotEXT privateDataSlot;
+    VkPrivateDataSlot privateDataSlot;
     uint64_t data;
 };
 

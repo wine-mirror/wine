@@ -3,7 +3,7 @@
 # This file is generated from Vulkan vk.xml file covered
 # by the following copyright and permission notice:
 #
-# Copyright 2015-2021 The Khronos Group Inc.
+# Copyright 2015-2022 The Khronos Group Inc.
 #
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 #
@@ -24,18 +24,25 @@
 @ stdcall vkCmdBeginQuery(ptr int64 long long)
 @ stdcall vkCmdBeginRenderPass(ptr ptr long)
 @ stdcall vkCmdBeginRenderPass2(ptr ptr ptr)
+@ stub vkCmdBeginRendering
 @ stdcall vkCmdBindDescriptorSets(ptr long int64 long long ptr long ptr)
 @ stdcall vkCmdBindIndexBuffer(ptr int64 int64 long)
 @ stdcall vkCmdBindPipeline(ptr long int64)
 @ stdcall vkCmdBindVertexBuffers(ptr long long ptr ptr)
+@ stub vkCmdBindVertexBuffers2
 @ stdcall vkCmdBlitImage(ptr int64 long int64 long long ptr long)
+@ stub vkCmdBlitImage2
 @ stdcall vkCmdClearAttachments(ptr long ptr long ptr)
 @ stdcall vkCmdClearColorImage(ptr int64 long ptr long ptr)
 @ stdcall vkCmdClearDepthStencilImage(ptr int64 long ptr long ptr)
 @ stdcall vkCmdCopyBuffer(ptr int64 int64 long ptr)
+@ stub vkCmdCopyBuffer2
 @ stdcall vkCmdCopyBufferToImage(ptr int64 int64 long long ptr)
+@ stub vkCmdCopyBufferToImage2
 @ stdcall vkCmdCopyImage(ptr int64 long int64 long long ptr)
+@ stub vkCmdCopyImage2
 @ stdcall vkCmdCopyImageToBuffer(ptr int64 long int64 long ptr)
+@ stub vkCmdCopyImageToBuffer2
 @ stdcall vkCmdCopyQueryPoolResults(ptr int64 long long int64 int64 int64 long)
 @ stdcall vkCmdDispatch(ptr long long long)
 @ stdcall vkCmdDispatchBase(ptr long long long long long long)
@@ -49,29 +56,50 @@
 @ stdcall vkCmdEndQuery(ptr int64 long)
 @ stdcall vkCmdEndRenderPass(ptr)
 @ stdcall vkCmdEndRenderPass2(ptr ptr)
+@ stub vkCmdEndRendering
 @ stdcall vkCmdExecuteCommands(ptr long ptr)
 @ stdcall vkCmdFillBuffer(ptr int64 int64 int64 long)
 @ stdcall vkCmdNextSubpass(ptr long)
 @ stdcall vkCmdNextSubpass2(ptr ptr ptr)
 @ stdcall vkCmdPipelineBarrier(ptr long long long long ptr long ptr long ptr)
+@ stub vkCmdPipelineBarrier2
 @ stdcall vkCmdPushConstants(ptr int64 long long long ptr)
 @ stdcall vkCmdResetEvent(ptr int64 long)
+@ stub vkCmdResetEvent2
 @ stdcall vkCmdResetQueryPool(ptr int64 long long)
 @ stdcall vkCmdResolveImage(ptr int64 long int64 long long ptr)
+@ stub vkCmdResolveImage2
 @ stdcall vkCmdSetBlendConstants(ptr ptr)
+@ stub vkCmdSetCullMode
 @ stdcall vkCmdSetDepthBias(ptr float float float)
+@ stub vkCmdSetDepthBiasEnable
 @ stdcall vkCmdSetDepthBounds(ptr float float)
+@ stub vkCmdSetDepthBoundsTestEnable
+@ stub vkCmdSetDepthCompareOp
+@ stub vkCmdSetDepthTestEnable
+@ stub vkCmdSetDepthWriteEnable
 @ stdcall vkCmdSetDeviceMask(ptr long)
 @ stdcall vkCmdSetEvent(ptr int64 long)
+@ stub vkCmdSetEvent2
+@ stub vkCmdSetFrontFace
 @ stdcall vkCmdSetLineWidth(ptr float)
+@ stub vkCmdSetPrimitiveRestartEnable
+@ stub vkCmdSetPrimitiveTopology
+@ stub vkCmdSetRasterizerDiscardEnable
 @ stdcall vkCmdSetScissor(ptr long long ptr)
+@ stub vkCmdSetScissorWithCount
 @ stdcall vkCmdSetStencilCompareMask(ptr long long)
+@ stub vkCmdSetStencilOp
 @ stdcall vkCmdSetStencilReference(ptr long long)
+@ stub vkCmdSetStencilTestEnable
 @ stdcall vkCmdSetStencilWriteMask(ptr long long)
 @ stdcall vkCmdSetViewport(ptr long long ptr)
+@ stub vkCmdSetViewportWithCount
 @ stdcall vkCmdUpdateBuffer(ptr int64 int64 int64 ptr)
 @ stdcall vkCmdWaitEvents(ptr long ptr long long long ptr long ptr long ptr)
+@ stub vkCmdWaitEvents2
 @ stdcall vkCmdWriteTimestamp(ptr long int64 long)
+@ stub vkCmdWriteTimestamp2
 @ stdcall vkCreateBuffer(ptr ptr ptr ptr)
 @ stdcall vkCreateBufferView(ptr ptr ptr ptr)
 @ stdcall vkCreateCommandPool(ptr ptr ptr ptr)
@@ -91,6 +119,7 @@
 @ stdcall vkCreateInstance(ptr ptr ptr)
 @ stdcall vkCreatePipelineCache(ptr ptr ptr ptr)
 @ stdcall vkCreatePipelineLayout(ptr ptr ptr ptr)
+@ stub vkCreatePrivateDataSlot
 @ stdcall vkCreateQueryPool(ptr ptr ptr ptr)
 @ stdcall vkCreateRenderPass(ptr ptr ptr ptr)
 @ stdcall vkCreateRenderPass2(ptr ptr ptr ptr)
@@ -117,6 +146,7 @@
 @ stdcall vkDestroyPipeline(ptr int64 ptr)
 @ stdcall vkDestroyPipelineCache(ptr int64 ptr)
 @ stdcall vkDestroyPipelineLayout(ptr int64 ptr)
+@ stub vkDestroyPrivateDataSlot
 @ stdcall vkDestroyQueryPool(ptr int64 ptr)
 @ stdcall vkDestroyRenderPass(ptr int64 ptr)
 @ stdcall vkDestroySampler(ptr int64 ptr)
@@ -143,9 +173,12 @@
 @ stdcall vkGetBufferMemoryRequirements2(ptr ptr ptr)
 @ stdcall vkGetBufferOpaqueCaptureAddress(ptr ptr)
 @ stdcall vkGetDescriptorSetLayoutSupport(ptr ptr ptr)
+@ stub vkGetDeviceBufferMemoryRequirements
 @ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long ptr)
 @ stdcall vkGetDeviceGroupPresentCapabilitiesKHR(ptr ptr)
 @ stdcall vkGetDeviceGroupSurfacePresentModesKHR(ptr int64 ptr)
+@ stub vkGetDeviceImageMemoryRequirements
+@ stub vkGetDeviceImageSparseMemoryRequirements
 @ stdcall vkGetDeviceMemoryCommitment(ptr int64 ptr)
 @ stdcall vkGetDeviceMemoryOpaqueCaptureAddress(ptr ptr)
 @ stdcall vkGetDeviceProcAddr(ptr str)
@@ -188,8 +221,10 @@
 @ stdcall vkGetPhysicalDeviceSurfaceFormatsKHR(ptr int64 ptr ptr)
 @ stdcall vkGetPhysicalDeviceSurfacePresentModesKHR(ptr int64 ptr ptr)
 @ stdcall vkGetPhysicalDeviceSurfaceSupportKHR(ptr long int64 ptr)
+@ stub vkGetPhysicalDeviceToolProperties
 @ stdcall vkGetPhysicalDeviceWin32PresentationSupportKHR(ptr long)
 @ stdcall vkGetPipelineCacheData(ptr int64 ptr ptr)
+@ stub vkGetPrivateData
 @ stdcall vkGetQueryPoolResults(ptr int64 long long long ptr int64 long)
 @ stdcall vkGetRenderAreaGranularity(ptr int64 ptr)
 @ stdcall vkGetSemaphoreCounterValue(ptr int64 ptr)
@@ -200,6 +235,7 @@
 @ stdcall vkQueueBindSparse(ptr long ptr int64)
 @ stdcall vkQueuePresentKHR(ptr ptr)
 @ stdcall vkQueueSubmit(ptr long ptr int64)
+@ stub vkQueueSubmit2
 @ stdcall vkQueueWaitIdle(ptr)
 @ stdcall vkResetCommandBuffer(ptr long)
 @ stdcall vkResetCommandPool(ptr int64 long)
@@ -208,6 +244,7 @@
 @ stdcall vkResetFences(ptr long ptr)
 @ stdcall vkResetQueryPool(ptr int64 long long)
 @ stdcall vkSetEvent(ptr int64)
+@ stub vkSetPrivateData
 @ stdcall vkSignalSemaphore(ptr ptr)
 @ stdcall vkTrimCommandPool(ptr int64 long)
 @ stdcall vkUnmapMemory(ptr int64)

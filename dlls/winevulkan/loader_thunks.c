@@ -3,7 +3,7 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2021 The Khronos Group Inc.
+ * Copyright 2015-2022 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
@@ -227,7 +227,7 @@ void WINAPI vkCmdBeginRenderPass2KHR(VkCommandBuffer commandBuffer, const VkRend
     unix_funcs->p_vk_call(unix_vkCmdBeginRenderPass2KHR, &params);
 }
 
-void WINAPI vkCmdBeginRenderingKHR(VkCommandBuffer commandBuffer, const VkRenderingInfoKHR *pRenderingInfo)
+void WINAPI vkCmdBeginRenderingKHR(VkCommandBuffer commandBuffer, const VkRenderingInfo *pRenderingInfo)
 {
     struct vkCmdBeginRenderingKHR_params params;
     params.commandBuffer = commandBuffer;
@@ -357,7 +357,7 @@ void WINAPI vkCmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkIm
     unix_funcs->p_vk_call(unix_vkCmdBlitImage, &params);
 }
 
-void WINAPI vkCmdBlitImage2KHR(VkCommandBuffer commandBuffer, const VkBlitImageInfo2KHR *pBlitImageInfo)
+void WINAPI vkCmdBlitImage2KHR(VkCommandBuffer commandBuffer, const VkBlitImageInfo2 *pBlitImageInfo)
 {
     struct vkCmdBlitImage2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -474,7 +474,7 @@ void WINAPI vkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, V
     unix_funcs->p_vk_call(unix_vkCmdCopyBuffer, &params);
 }
 
-void WINAPI vkCmdCopyBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyBufferInfo2KHR *pCopyBufferInfo)
+void WINAPI vkCmdCopyBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyBufferInfo2 *pCopyBufferInfo)
 {
     struct vkCmdCopyBuffer2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -494,7 +494,7 @@ void WINAPI vkCmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBu
     unix_funcs->p_vk_call(unix_vkCmdCopyBufferToImage, &params);
 }
 
-void WINAPI vkCmdCopyBufferToImage2KHR(VkCommandBuffer commandBuffer, const VkCopyBufferToImageInfo2KHR *pCopyBufferToImageInfo)
+void WINAPI vkCmdCopyBufferToImage2KHR(VkCommandBuffer commandBuffer, const VkCopyBufferToImageInfo2 *pCopyBufferToImageInfo)
 {
     struct vkCmdCopyBufferToImage2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -515,7 +515,7 @@ void WINAPI vkCmdCopyImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkIm
     unix_funcs->p_vk_call(unix_vkCmdCopyImage, &params);
 }
 
-void WINAPI vkCmdCopyImage2KHR(VkCommandBuffer commandBuffer, const VkCopyImageInfo2KHR *pCopyImageInfo)
+void WINAPI vkCmdCopyImage2KHR(VkCommandBuffer commandBuffer, const VkCopyImageInfo2 *pCopyImageInfo)
 {
     struct vkCmdCopyImage2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -535,7 +535,7 @@ void WINAPI vkCmdCopyImageToBuffer(VkCommandBuffer commandBuffer, VkImage srcIma
     unix_funcs->p_vk_call(unix_vkCmdCopyImageToBuffer, &params);
 }
 
-void WINAPI vkCmdCopyImageToBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyImageToBufferInfo2KHR *pCopyImageToBufferInfo)
+void WINAPI vkCmdCopyImageToBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyImageToBufferInfo2 *pCopyImageToBufferInfo)
 {
     struct vkCmdCopyImageToBuffer2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -988,7 +988,7 @@ void WINAPI vkCmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageF
     unix_funcs->p_vk_call(unix_vkCmdPipelineBarrier, &params);
 }
 
-void WINAPI vkCmdPipelineBarrier2KHR(VkCommandBuffer commandBuffer, const VkDependencyInfoKHR *pDependencyInfo)
+void WINAPI vkCmdPipelineBarrier2KHR(VkCommandBuffer commandBuffer, const VkDependencyInfo *pDependencyInfo)
 {
     struct vkCmdPipelineBarrier2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -1048,7 +1048,7 @@ void WINAPI vkCmdResetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipe
     unix_funcs->p_vk_call(unix_vkCmdResetEvent, &params);
 }
 
-void WINAPI vkCmdResetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags2KHR stageMask)
+void WINAPI vkCmdResetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags2 stageMask)
 {
     struct vkCmdResetEvent2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -1080,7 +1080,7 @@ void WINAPI vkCmdResolveImage(VkCommandBuffer commandBuffer, VkImage srcImage, V
     unix_funcs->p_vk_call(unix_vkCmdResolveImage, &params);
 }
 
-void WINAPI vkCmdResolveImage2KHR(VkCommandBuffer commandBuffer, const VkResolveImageInfo2KHR *pResolveImageInfo)
+void WINAPI vkCmdResolveImage2KHR(VkCommandBuffer commandBuffer, const VkResolveImageInfo2 *pResolveImageInfo)
 {
     struct vkCmdResolveImage2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -1225,7 +1225,7 @@ void WINAPI vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipeli
     unix_funcs->p_vk_call(unix_vkCmdSetEvent, &params);
 }
 
-void WINAPI vkCmdSetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, const VkDependencyInfoKHR *pDependencyInfo)
+void WINAPI vkCmdSetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, const VkDependencyInfo *pDependencyInfo)
 {
     struct vkCmdSetEvent2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -1565,7 +1565,7 @@ void WINAPI vkCmdWaitEvents(VkCommandBuffer commandBuffer, uint32_t eventCount, 
     unix_funcs->p_vk_call(unix_vkCmdWaitEvents, &params);
 }
 
-void WINAPI vkCmdWaitEvents2KHR(VkCommandBuffer commandBuffer, uint32_t eventCount, const VkEvent *pEvents, const VkDependencyInfoKHR *pDependencyInfos)
+void WINAPI vkCmdWaitEvents2KHR(VkCommandBuffer commandBuffer, uint32_t eventCount, const VkEvent *pEvents, const VkDependencyInfo *pDependencyInfos)
 {
     struct vkCmdWaitEvents2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -1599,7 +1599,7 @@ void WINAPI vkCmdWriteAccelerationStructuresPropertiesNV(VkCommandBuffer command
     unix_funcs->p_vk_call(unix_vkCmdWriteAccelerationStructuresPropertiesNV, &params);
 }
 
-void WINAPI vkCmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer, VkPipelineStageFlags2KHR stage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker)
+void WINAPI vkCmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer, VkPipelineStageFlags2 stage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker)
 {
     struct vkCmdWriteBufferMarker2AMD_params params;
     params.commandBuffer = commandBuffer;
@@ -1631,7 +1631,7 @@ void WINAPI vkCmdWriteTimestamp(VkCommandBuffer commandBuffer, VkPipelineStageFl
     unix_funcs->p_vk_call(unix_vkCmdWriteTimestamp, &params);
 }
 
-void WINAPI vkCmdWriteTimestamp2KHR(VkCommandBuffer commandBuffer, VkPipelineStageFlags2KHR stage, VkQueryPool queryPool, uint32_t query)
+void WINAPI vkCmdWriteTimestamp2KHR(VkCommandBuffer commandBuffer, VkPipelineStageFlags2 stage, VkQueryPool queryPool, uint32_t query)
 {
     struct vkCmdWriteTimestamp2KHR_params params;
     params.commandBuffer = commandBuffer;
@@ -1930,7 +1930,7 @@ VkResult WINAPI vkCreatePipelineLayout(VkDevice device, const VkPipelineLayoutCr
     return vk_unix_call(unix_vkCreatePipelineLayout, &params);
 }
 
-VkResult WINAPI vkCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataSlotCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPrivateDataSlotEXT *pPrivateDataSlot)
+VkResult WINAPI vkCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataSlotCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPrivateDataSlot *pPrivateDataSlot)
 {
     struct vkCreatePrivateDataSlotEXT_params params;
     params.device = device;
@@ -2346,7 +2346,7 @@ void WINAPI vkDestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLa
     vk_unix_call(unix_vkDestroyPipelineLayout, &params);
 }
 
-void WINAPI vkDestroyPrivateDataSlotEXT(VkDevice device, VkPrivateDataSlotEXT privateDataSlot, const VkAllocationCallbacks *pAllocator)
+void WINAPI vkDestroyPrivateDataSlotEXT(VkDevice device, VkPrivateDataSlot privateDataSlot, const VkAllocationCallbacks *pAllocator)
 {
     struct vkDestroyPrivateDataSlotEXT_params params;
     params.device = device;
@@ -2719,7 +2719,7 @@ void WINAPI vkGetDeviceAccelerationStructureCompatibilityKHR(VkDevice device, co
     vk_unix_call(unix_vkGetDeviceAccelerationStructureCompatibilityKHR, &params);
 }
 
-void WINAPI vkGetDeviceBufferMemoryRequirementsKHR(VkDevice device, const VkDeviceBufferMemoryRequirementsKHR *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
+void WINAPI vkGetDeviceBufferMemoryRequirementsKHR(VkDevice device, const VkDeviceBufferMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
 {
     struct vkGetDeviceBufferMemoryRequirementsKHR_params params;
     params.device = device;
@@ -2767,7 +2767,7 @@ VkResult WINAPI vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfac
     return unix_funcs->p_vk_call(unix_vkGetDeviceGroupSurfacePresentModesKHR, &params);
 }
 
-void WINAPI vkGetDeviceImageMemoryRequirementsKHR(VkDevice device, const VkDeviceImageMemoryRequirementsKHR *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
+void WINAPI vkGetDeviceImageMemoryRequirementsKHR(VkDevice device, const VkDeviceImageMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
 {
     struct vkGetDeviceImageMemoryRequirementsKHR_params params;
     params.device = device;
@@ -2776,7 +2776,7 @@ void WINAPI vkGetDeviceImageMemoryRequirementsKHR(VkDevice device, const VkDevic
     vk_unix_call(unix_vkGetDeviceImageMemoryRequirementsKHR, &params);
 }
 
-void WINAPI vkGetDeviceImageSparseMemoryRequirementsKHR(VkDevice device, const VkDeviceImageMemoryRequirementsKHR *pInfo, uint32_t *pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements)
+void WINAPI vkGetDeviceImageSparseMemoryRequirementsKHR(VkDevice device, const VkDeviceImageMemoryRequirements *pInfo, uint32_t *pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements)
 {
     struct vkGetDeviceImageSparseMemoryRequirementsKHR_params params;
     params.device = device;
@@ -3320,7 +3320,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDe
     return unix_funcs->p_vk_call(unix_vkGetPhysicalDeviceSurfaceSupportKHR, &params);
 }
 
-VkResult WINAPI vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDevice, uint32_t *pToolCount, VkPhysicalDeviceToolPropertiesEXT *pToolProperties)
+VkResult WINAPI vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDevice, uint32_t *pToolCount, VkPhysicalDeviceToolProperties *pToolProperties)
 {
     struct vkGetPhysicalDeviceToolPropertiesEXT_params params;
     params.physicalDevice = physicalDevice;
@@ -3377,7 +3377,7 @@ VkResult WINAPI vkGetPipelineExecutableStatisticsKHR(VkDevice device, const VkPi
     return vk_unix_call(unix_vkGetPipelineExecutableStatisticsKHR, &params);
 }
 
-void WINAPI vkGetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlotEXT privateDataSlot, uint64_t *pData)
+void WINAPI vkGetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t *pData)
 {
     struct vkGetPrivateDataEXT_params params;
     params.device = device;
@@ -3633,7 +3633,7 @@ VkResult WINAPI vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmi
     return vk_unix_call(unix_vkQueueSubmit, &params);
 }
 
-VkResult WINAPI vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2KHR *pSubmits, VkFence fence)
+VkResult WINAPI vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2 *pSubmits, VkFence fence)
 {
     struct vkQueueSubmit2KHR_params params;
     params.queue = queue;
@@ -3761,7 +3761,7 @@ VkResult WINAPI vkSetEvent(VkDevice device, VkEvent event)
     return vk_unix_call(unix_vkSetEvent, &params);
 }
 
-VkResult WINAPI vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlotEXT privateDataSlot, uint64_t data)
+VkResult WINAPI vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data)
 {
     struct vkSetPrivateDataEXT_params params;
     params.device = device;
