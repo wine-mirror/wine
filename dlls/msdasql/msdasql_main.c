@@ -52,7 +52,7 @@ static void dump_sql_diag_records(SQLSMALLINT type, SQLHANDLE handle)
     if (!TRACE_ON(msdasql))
         return;
 
-    while(SQLGetDiagRec(type, handle, i, state, &native, msg, sizeof(msg), &len) != SQL_SUCCESS)
+    while(SQLGetDiagRec(type, handle, i, state, &native, msg, sizeof(msg), &len) == SQL_SUCCESS)
     {
         WARN("%d: %s: %s\n", i, state, msg);
         i++;
