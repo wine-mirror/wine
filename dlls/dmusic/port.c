@@ -38,7 +38,6 @@ struct synth_port {
     IDirectMusicSynth *synth;
     IDirectMusicSynthSink *synth_sink;
     BOOL active;
-    DMUS_PORTCAPS caps;
     DMUS_PORTPARAMS params;
     int nrofgroups;
     DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
@@ -388,9 +387,7 @@ static HRESULT WINAPI synth_port_GetCaps(IDirectMusicPort *iface, DMUS_PORTCAPS 
 
     TRACE("(%p/%p)->(%p)\n", iface, This, port_caps);
 
-    *port_caps = This->caps;
-
-    return S_OK;
+    return IDirectMusicSynth_GetPortCaps(This->synth, port_caps);
 }
 
 static HRESULT WINAPI synth_port_DeviceIoControl(IDirectMusicPort *iface, DWORD io_control_code,
@@ -808,7 +805,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
     HRESULT hr = E_FAIL;
     int i;
 
-    TRACE("(%p, %p, %p)\n", port_params, port_caps, port);
+    TRACE("(%p, %p)\n", port_params, port);
 
     *port = NULL;
 
@@ -824,7 +821,6 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
     obj->parent = parent;
     obj->active = FALSE;
     obj->params = *port_params;
-    obj->caps = *port_caps;
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth,
             (void **)&obj->synth);
