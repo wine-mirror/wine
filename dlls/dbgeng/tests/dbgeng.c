@@ -303,7 +303,7 @@ static void test_attach(void)
     ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
 
     hr = client->lpVtbl->EndSession(client, DEBUG_END_ACTIVE_DETACH);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to end session, hr %#x.\n", hr);
 
     SetEvent(event);
