@@ -6215,7 +6215,7 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
     shader_glsl_swizzle_to_str(ins->src[resource_param_idx].swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
     shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], 0, resource_info->data_type);
 
-    shader_glsl_add_src_param(ins, &ins->src[0], (1u << coord_size) - 1, &coord_param);
+    shader_glsl_add_src_param(ins, &ins->src[0], wined3d_mask_from_size(coord_size), &coord_param);
 
     shader_addline(buffer, "textureGather%s(%s_sampler%u, %s",
             has_offset ? "Offset" : "", prefix, sampler_bind_idx, coord_param.param_str);
@@ -6226,7 +6226,7 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
     }
     if (ins->handler_idx == WINED3DSIH_GATHER4_PO || ins->handler_idx == WINED3DSIH_GATHER4_PO_C)
     {
-        shader_glsl_add_src_param(ins, &ins->src[1], (1u << offset_size) - 1, &offset_param);
+        shader_glsl_add_src_param(ins, &ins->src[1], wined3d_mask_from_size(offset_size), &offset_param);
         shader_addline(buffer, ", %s", offset_param.param_str);
     }
     else if (has_offset)
