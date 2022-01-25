@@ -2383,15 +2383,15 @@ static void test_font(void)
     ok(!!hdc, "Unexpected hdc %p.\n", hdc);
 
     hr = ID3DX10Font_GetGlyphData(font, 0, NULL, &blackbox, &cellinc);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_GetGlyphData(font, 0, &srv, NULL, &cellinc);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10ShaderResourceView_Release(srv);
     hr = ID3DX10Font_GetGlyphData(font, 0, &srv, &blackbox, NULL);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10ShaderResourceView_Release(srv);
@@ -2399,7 +2399,7 @@ todo_wine
     hr = ID3DX10Font_PreloadCharacters(font, 'b', 'a');
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadGlyphs(font, 1, 0);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Font_PreloadCharacters(font, 'a', 'a');
@@ -2412,7 +2412,7 @@ todo_wine
         ok(count != GDI_ERROR, "Unexpected count %u.\n", count);
 
         hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, &blackbox, &cellinc);
-    todo_wine
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         if (FAILED(hr))
@@ -2468,7 +2468,7 @@ todo_wine
 
     /* Test glyphs that are not rendered */
     hr = ID3DX10Font_PreloadGlyphs(font, 0, 5);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     for (glyph = 1; glyph < 4; ++glyph)
@@ -2498,7 +2498,7 @@ todo_wine
         ok(count != GDI_ERROR, "Unexpected count %u.\n", count);
 
         hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, NULL, NULL);
-    todo_wine
+        todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         if (FAILED(hr))
@@ -3139,78 +3139,78 @@ static void test_sprite(void)
 
     /* View transform */
     hr = ID3DX10Sprite_SetViewTransform(sprite, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_SetViewTransform(sprite, &mat);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Begin */
     hr = ID3DX10Sprite_Begin(sprite, 0);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Flush/End */
     hr = ID3DX10Sprite_Flush(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_End(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* May not be called before next Begin */
     hr = ID3DX10Sprite_Flush(sprite);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Sprite_End(sprite);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     /* Draw */
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, NULL, 0);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     memset(&sprite_desc, 0, sizeof(sprite_desc));
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 0);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_Begin(sprite, 0);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     memset(&sprite_desc, 0, sizeof(sprite_desc));
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     sprite_desc.pTexture = srv1;
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_Flush(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_Flush(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_End(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* D3DX10_SPRITE_ADDREF_TEXTURES */
     hr = ID3DX10Sprite_Begin(sprite, D3DX10_SPRITE_ADDREF_TEXTURES);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     memset(&sprite_desc, 0, sizeof(sprite_desc));
@@ -3224,12 +3224,12 @@ todo_wine {
 }
 
     hr = ID3DX10Sprite_Flush(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(get_refcount(srv1) == refcount, "Unexpected refcount.\n");
 
     hr = ID3DX10Sprite_End(sprite);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     ID3DX10Sprite_Release(sprite);
