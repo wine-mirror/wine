@@ -364,11 +364,17 @@ struct filesystem_event
     char        name[1];
 };
 
-typedef struct
+struct luid
 {
     unsigned int low_part;
     int          high_part;
-} luid_t;
+};
+
+struct luid_attr
+{
+    struct luid  luid;
+    unsigned int attrs;
+};
 
 typedef struct
 {
@@ -4331,13 +4337,13 @@ struct adjust_token_privileges_request
     obj_handle_t  handle;
     int           disable_all;
     int           get_modified_state;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    /* VARARG(privileges,luid_attr); */
 };
 struct adjust_token_privileges_reply
 {
     struct reply_header __header;
     unsigned int  len;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    /* VARARG(privileges,luid_attr); */
     char __pad_12[4];
 };
 
@@ -4351,7 +4357,7 @@ struct get_token_privileges_reply
 {
     struct reply_header __header;
     unsigned int  len;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    /* VARARG(privileges,luid_attr); */
     char __pad_12[4];
 };
 
@@ -4361,14 +4367,14 @@ struct check_token_privileges_request
     struct request_header __header;
     obj_handle_t  handle;
     int           all_required;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    /* VARARG(privileges,luid_attr); */
     char __pad_20[4];
 };
 struct check_token_privileges_reply
 {
     struct reply_header __header;
     int           has_privileges;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    /* VARARG(privileges,luid_attr); */
     char __pad_12[4];
 };
 
@@ -4395,7 +4401,7 @@ struct filter_token_request
     obj_handle_t  handle;
     unsigned int  flags;
     data_size_t   privileges_size;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES,privileges_size); */
+    /* VARARG(privileges,luid_attr,privileges_size); */
     /* VARARG(disable_sids,SID); */
 };
 struct filter_token_reply
@@ -4420,7 +4426,7 @@ struct access_check_reply
     unsigned int    access_granted;
     unsigned int    access_status;
     unsigned int    privileges_len;
-    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+    /* VARARG(privileges,luid_attr); */
     char __pad_20[4];
 };
 
@@ -4732,7 +4738,7 @@ struct allocate_locally_unique_id_request
 struct allocate_locally_unique_id_reply
 {
     struct reply_header __header;
-    luid_t         luid;
+    struct luid    luid;
 };
 
 
@@ -4904,8 +4910,8 @@ struct get_token_info_request
 struct get_token_info_reply
 {
     struct reply_header __header;
-    luid_t         token_id;
-    luid_t         modified_id;
+    struct luid    token_id;
+    struct luid    modified_id;
     unsigned int   session_id;
     int            primary;
     int            impersonation_level;
@@ -6246,7 +6252,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 739
+#define SERVER_PROTOCOL_VERSION 740
 
 /* ### protocol_version end ### */
 

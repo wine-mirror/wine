@@ -42,27 +42,27 @@
 
 #define MAX_SUBAUTH_COUNT 1
 
-const LUID SeIncreaseQuotaPrivilege        = {  5, 0 };
-const LUID SeTcbPrivilege                  = {  7, 0 };
-const LUID SeSecurityPrivilege             = {  8, 0 };
-const LUID SeTakeOwnershipPrivilege        = {  9, 0 };
-const LUID SeLoadDriverPrivilege           = { 10, 0 };
-const LUID SeSystemProfilePrivilege        = { 11, 0 };
-const LUID SeSystemtimePrivilege           = { 12, 0 };
-const LUID SeProfileSingleProcessPrivilege = { 13, 0 };
-const LUID SeIncreaseBasePriorityPrivilege = { 14, 0 };
-const LUID SeCreatePagefilePrivilege       = { 15, 0 };
-const LUID SeBackupPrivilege               = { 17, 0 };
-const LUID SeRestorePrivilege              = { 18, 0 };
-const LUID SeShutdownPrivilege             = { 19, 0 };
-const LUID SeDebugPrivilege                = { 20, 0 };
-const LUID SeSystemEnvironmentPrivilege    = { 22, 0 };
-const LUID SeChangeNotifyPrivilege         = { 23, 0 };
-const LUID SeRemoteShutdownPrivilege       = { 24, 0 };
-const LUID SeUndockPrivilege               = { 25, 0 };
-const LUID SeManageVolumePrivilege         = { 28, 0 };
-const LUID SeImpersonatePrivilege          = { 29, 0 };
-const LUID SeCreateGlobalPrivilege         = { 30, 0 };
+const struct luid SeIncreaseQuotaPrivilege        = {  5, 0 };
+const struct luid SeTcbPrivilege                  = {  7, 0 };
+const struct luid SeSecurityPrivilege             = {  8, 0 };
+const struct luid SeTakeOwnershipPrivilege        = {  9, 0 };
+const struct luid SeLoadDriverPrivilege           = { 10, 0 };
+const struct luid SeSystemProfilePrivilege        = { 11, 0 };
+const struct luid SeSystemtimePrivilege           = { 12, 0 };
+const struct luid SeProfileSingleProcessPrivilege = { 13, 0 };
+const struct luid SeIncreaseBasePriorityPrivilege = { 14, 0 };
+const struct luid SeCreatePagefilePrivilege       = { 15, 0 };
+const struct luid SeBackupPrivilege               = { 17, 0 };
+const struct luid SeRestorePrivilege              = { 18, 0 };
+const struct luid SeShutdownPrivilege             = { 19, 0 };
+const struct luid SeDebugPrivilege                = { 20, 0 };
+const struct luid SeSystemEnvironmentPrivilege    = { 22, 0 };
+const struct luid SeChangeNotifyPrivilege         = { 23, 0 };
+const struct luid SeRemoteShutdownPrivilege       = { 24, 0 };
+const struct luid SeUndockPrivilege               = { 25, 0 };
+const struct luid SeManageVolumePrivilege         = { 28, 0 };
+const struct luid SeImpersonatePrivilege          = { 29, 0 };
+const struct luid SeCreateGlobalPrivilege         = { 30, 0 };
 
 #define SID_N(n) struct /* same fields as struct SID */ \
     { \
@@ -96,7 +96,7 @@ const PSID security_builtin_users_sid = (PSID)&builtin_users_sid;
 const PSID security_domain_users_sid = (PSID)&domain_users_sid;
 const PSID security_high_label_sid = (PSID)&high_label_sid;
 
-static luid_t prev_luid_value = { 1000, 0 };
+static struct luid prev_luid_value = { 1000, 0 };
 
 static const WCHAR token_name[] = {'T','o','k','e','n'};
 
@@ -116,8 +116,8 @@ struct type_descr token_type =
 struct token
 {
     struct object  obj;             /* object header */
-    luid_t         token_id;        /* system-unique id of token */
-    luid_t         modified_id;     /* new id allocated every time token is modified */
+    struct luid    token_id;        /* system-unique id of token */
+    struct luid    modified_id;     /* new id allocated every time token is modified */
     struct list    privileges;      /* privileges available to the token */
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
@@ -134,7 +134,7 @@ struct token
 struct privilege
 {
     struct list entry;
-    LUID        luid;
+    struct luid luid;
     unsigned    enabled  : 1; /* is the privilege currently enabled? */
     unsigned    def      : 1; /* is the privilege enabled by default? */
 };
@@ -463,12 +463,12 @@ ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
     return replaced_acl;
 }
 
-static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
+static inline int is_equal_luid( struct luid luid1, struct luid luid2 )
 {
-    return (luid1->LowPart == luid2->LowPart && luid1->HighPart == luid2->HighPart);
+    return (luid1.low_part == luid2.low_part && luid1.high_part == luid2.high_part);
 }
 
-static inline void allocate_luid( luid_t *luid )
+static inline void allocate_luid( struct luid *luid )
 {
     prev_luid_value.low_part++;
     *luid = prev_luid_value;
@@ -479,20 +479,21 @@ DECL_HANDLER( allocate_locally_unique_id )
     allocate_luid( &reply->luid );
 }
 
-static inline void luid_and_attr_from_privilege( LUID_AND_ATTRIBUTES *out, const struct privilege *in)
+static inline struct luid_attr luid_and_attr_from_privilege( const struct privilege *in )
 {
-    out->Luid = in->luid;
-    out->Attributes =
-        (in->enabled ? SE_PRIVILEGE_ENABLED : 0) |
-        (in->def ? SE_PRIVILEGE_ENABLED_BY_DEFAULT : 0);
+    struct luid_attr ret = { in->luid };
+
+    ret.attrs = (in->enabled ? SE_PRIVILEGE_ENABLED : 0) |
+                (in->def ? SE_PRIVILEGE_ENABLED_BY_DEFAULT : 0);
+    return ret;
 }
 
-static struct privilege *privilege_add( struct token *token, const LUID *luid, int enabled )
+static struct privilege *privilege_add( struct token *token, struct luid luid, int enabled )
 {
     struct privilege *privilege = mem_alloc( sizeof(*privilege) );
     if (privilege)
     {
-        privilege->luid = *luid;
+        privilege->luid = luid;
         privilege->def = privilege->enabled = (enabled != 0);
         list_add_tail( &token->privileges, &privilege->entry );
     }
@@ -541,9 +542,9 @@ static void token_destroy( struct object *obj )
  */
 static struct token *create_token( unsigned int primary, unsigned int session_id, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
-                                   const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
+                                   const struct luid_attr *privs, unsigned int priv_count,
                                    const ACL *default_dacl, TOKEN_SOURCE source,
-                                   const luid_t *modified_id,
+                                   const struct luid *modified_id,
                                    int impersonation_level, int elevation )
 {
     struct token *token = alloc_object( &token_ops );
@@ -610,8 +611,7 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
         {
             /* note: we don't check uniqueness: the caller must make sure
              * privs doesn't contain any duplicate luids */
-            if (!privilege_add( token, &privs[i].Luid,
-                                privs[i].Attributes & SE_PRIVILEGE_ENABLED ))
+            if (!privilege_add( token, privs[i].luid, privs[i].attrs & SE_PRIVILEGE_ENABLED ))
             {
                 release_object( token );
                 return NULL;
@@ -646,25 +646,22 @@ static int filter_group( struct group *group, const SID *filter, unsigned int co
     return 0;
 }
 
-static int filter_privilege( struct privilege *privilege, const LUID_AND_ATTRIBUTES *filter, unsigned int count )
+static int filter_privilege( struct privilege *privilege, const struct luid_attr *filter, unsigned int count )
 {
     unsigned int i;
 
     for (i = 0; i < count; i++)
-    {
-        if (!memcmp( &privilege->luid, &filter[i].Luid, sizeof(LUID) ))
-            return 1;
-    }
+        if (is_equal_luid( privilege->luid, filter[i].luid )) return 1;
 
     return 0;
 }
 
 struct token *token_duplicate( struct token *src_token, unsigned primary,
                                int impersonation_level, const struct security_descriptor *sd,
-                               const LUID_AND_ATTRIBUTES *remove_privs, unsigned int remove_priv_count,
+                               const struct luid_attr *remove_privs, unsigned int remove_priv_count,
                                const SID *remove_groups, unsigned int remove_group_count)
 {
-    const luid_t *modified_id =
+    const struct luid *modified_id =
         primary || (impersonation_level == src_token->impersonation_level) ?
             &src_token->modified_id : NULL;
     struct token *token = NULL;
@@ -717,7 +714,7 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
     LIST_FOR_EACH_ENTRY( privilege, &src_token->privileges, struct privilege, entry )
     {
         if (filter_privilege( privilege, remove_privs, remove_priv_count )) continue;
-        if (!privilege_add( token, &privilege->luid, privilege->enabled ))
+        if (!privilege_add( token, privilege->luid, privilege->enabled ))
         {
             release_object( token );
             return NULL;
@@ -855,7 +852,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
 
     if (alias_admins_sid && alias_users_sid && logon_sid && default_dacl)
     {
-        const LUID_AND_ATTRIBUTES admin_privs[] =
+        const struct luid_attr admin_privs[] =
         {
             { SeChangeNotifyPrivilege        , SE_PRIVILEGE_ENABLED },
             { SeTcbPrivilege                 , 0                    },
@@ -908,12 +905,12 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
     return token;
 }
 
-static struct privilege *token_find_privilege( struct token *token, const LUID *luid, int enabled_only )
+static struct privilege *token_find_privilege( struct token *token, struct luid luid, int enabled_only )
 {
     struct privilege *privilege;
     LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
     {
-        if (is_equal_luid( luid, &privilege->luid ))
+        if (is_equal_luid( luid, privilege->luid ))
         {
             if (enabled_only && !privilege->enabled)
                 return NULL;
@@ -923,8 +920,8 @@ static struct privilege *token_find_privilege( struct token *token, const LUID *
     return NULL;
 }
 
-static unsigned int token_adjust_privileges( struct token *token, const LUID_AND_ATTRIBUTES *privs,
-                                             unsigned int count, LUID_AND_ATTRIBUTES *mod_privs,
+static unsigned int token_adjust_privileges( struct token *token, const struct luid_attr *privs,
+                                             unsigned int count, struct luid_attr *mod_privs,
                                              unsigned int mod_privs_count )
 {
     unsigned int i, modified_count = 0;
@@ -934,31 +931,24 @@ static unsigned int token_adjust_privileges( struct token *token, const LUID_AND
 
     for (i = 0; i < count; i++)
     {
-        struct privilege *privilege =
-            token_find_privilege( token, &privs[i].Luid, FALSE );
+        struct privilege *privilege = token_find_privilege( token, privs[i].luid, FALSE );
         if (!privilege)
         {
             set_error( STATUS_NOT_ALL_ASSIGNED );
             continue;
         }
 
-        if (privs[i].Attributes & SE_PRIVILEGE_REMOVED)
-            privilege_remove( privilege );
+        if (privs[i].attrs & SE_PRIVILEGE_REMOVED) privilege_remove( privilege );
         else
         {
             /* save previous state for caller */
             if (mod_privs_count)
             {
-                luid_and_attr_from_privilege(mod_privs, privilege);
-                mod_privs++;
+                *mod_privs++ = luid_and_attr_from_privilege( privilege );
                 mod_privs_count--;
                 modified_count++;
             }
-
-            if (privs[i].Attributes & SE_PRIVILEGE_ENABLED)
-                privilege->enabled = TRUE;
-            else
-                privilege->enabled = FALSE;
+            privilege->enabled = !!(privs[i].attrs & SE_PRIVILEGE_ENABLED);
         }
     }
     return modified_count;
@@ -975,16 +965,14 @@ static void token_disable_privileges( struct token *token )
         privilege->enabled = FALSE;
 }
 
-int token_check_privileges( struct token *token, int all_required,
-                            const LUID_AND_ATTRIBUTES *reqprivs,
-                            unsigned int count, LUID_AND_ATTRIBUTES *usedprivs)
+int token_check_privileges( struct token *token, int all_required, const struct luid_attr *reqprivs,
+                            unsigned int count, struct luid_attr *usedprivs)
 {
     unsigned int i, enabled_count = 0;
 
     for (i = 0; i < count; i++)
     {
-        struct privilege *privilege = 
-            token_find_privilege( token, &reqprivs[i].Luid, TRUE );
+        struct privilege *privilege = token_find_privilege( token, reqprivs[i].luid, TRUE );
 
         if (usedprivs)
             usedprivs[i] = reqprivs[i];
@@ -992,8 +980,7 @@ int token_check_privileges( struct token *token, int all_required,
         if (privilege && privilege->enabled)
         {
             enabled_count++;
-            if (usedprivs)
-                usedprivs[i].Attributes |= SE_PRIVILEGE_USED_FOR_ACCESS;
+            if (usedprivs) usedprivs[i].attrs |= SE_PRIVILEGE_USED_FOR_ACCESS;
         }
     }
 
@@ -1029,7 +1016,7 @@ int token_sid_present( struct token *token, const SID *sid, int deny )
 static unsigned int token_access_check( struct token *token,
                                  const struct security_descriptor *sd,
                                  unsigned int desired_access,
-                                 LUID_AND_ATTRIBUTES *privs,
+                                 struct luid_attr *privs,
                                  unsigned int *priv_count,
                                  const generic_map_t *mapping,
                                  unsigned int *granted_access,
@@ -1076,8 +1063,8 @@ static unsigned int token_access_check( struct token *token,
      * is only granted if specifically asked for */
     if (desired_access & ACCESS_SYSTEM_SECURITY)
     {
-        const LUID_AND_ATTRIBUTES security_priv = { SeSecurityPrivilege, 0 };
-        LUID_AND_ATTRIBUTES retpriv = security_priv;
+        const struct luid_attr security_priv = { SeSecurityPrivilege, 0 };
+        struct luid_attr retpriv = security_priv;
         if (token_check_privileges( token, TRUE, &security_priv, 1, &retpriv ))
         {
             if (priv_count)
@@ -1282,9 +1269,9 @@ DECL_HANDLER(adjust_token_privileges)
     if ((token = (struct token *)get_handle_obj( current->process, req->handle,
                                                  access, &token_ops )))
     {
-        const LUID_AND_ATTRIBUTES *privs = get_req_data();
-        LUID_AND_ATTRIBUTES *modified_privs = NULL;
-        unsigned int priv_count = get_req_data_size() / sizeof(LUID_AND_ATTRIBUTES);
+        const struct luid_attr *privs = get_req_data();
+        struct luid_attr *modified_privs = NULL;
+        unsigned int priv_count = get_req_data_size() / sizeof(*privs);
         unsigned int modified_priv_count = 0;
 
         if (req->get_modified_state && !req->disable_all)
@@ -1293,8 +1280,7 @@ DECL_HANDLER(adjust_token_privileges)
             /* count modified privs */
             for (i = 0; i < priv_count; i++)
             {
-                struct privilege *privilege =
-                    token_find_privilege( token, &privs[i].Luid, FALSE );
+                struct privilege *privilege = token_find_privilege( token, privs[i].luid, FALSE );
                 if (privilege && req->get_modified_state)
                     modified_priv_count++;
             }
@@ -1324,7 +1310,7 @@ DECL_HANDLER(get_token_privileges)
                                                  &token_ops )))
     {
         int priv_count = 0;
-        LUID_AND_ATTRIBUTES *privs;
+        struct luid_attr *privs;
         struct privilege *privilege;
 
         LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
@@ -1335,14 +1321,8 @@ DECL_HANDLER(get_token_privileges)
         {
             privs = set_reply_data_size( priv_count * sizeof(*privs) );
             if (privs)
-            {
-                int i = 0;
                 LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
-                {
-                    luid_and_attr_from_privilege( &privs[i], privilege );
-                    i++;
-                }
-            }
+                    *privs++ = luid_and_attr_from_privilege( privilege );
         }
         else
             set_error(STATUS_BUFFER_TOO_SMALL);
@@ -1383,14 +1363,14 @@ DECL_HANDLER(filter_token)
 
     if ((src_token = (struct token *)get_handle_obj( current->process, req->handle, TOKEN_DUPLICATE, &token_ops )))
     {
-        const LUID_AND_ATTRIBUTES *filter_privileges = get_req_data();
+        const struct luid_attr *filter_privileges = get_req_data();
         unsigned int priv_count, group_count;
         const SID *filter_groups;
         struct token *token;
 
-        priv_count = min( req->privileges_size, get_req_data_size() ) / sizeof(LUID_AND_ATTRIBUTES);
-        filter_groups = (const SID *)((char *)filter_privileges + priv_count * sizeof(LUID_AND_ATTRIBUTES));
-        group_count = get_sid_count( filter_groups, get_req_data_size() - priv_count * sizeof(LUID_AND_ATTRIBUTES) );
+        priv_count = min( req->privileges_size, get_req_data_size() ) / sizeof(struct luid_attr);
+        filter_groups = (const SID *)((char *)filter_privileges + priv_count * sizeof(struct luid_attr));
+        group_count = get_sid_count( filter_groups, get_req_data_size() - priv_count * sizeof(struct luid_attr) );
 
         token = token_duplicate( src_token, src_token->primary, src_token->impersonation_level, NULL,
                                  filter_privileges, priv_count, filter_groups, group_count );
@@ -1413,13 +1393,13 @@ DECL_HANDLER(check_token_privileges)
                                                  TOKEN_QUERY,
                                                  &token_ops )))
     {
-        unsigned int count = get_req_data_size() / sizeof(LUID_AND_ATTRIBUTES);
+        unsigned int count = get_req_data_size() / sizeof(struct luid_attr);
 
         if (!token->primary && token->impersonation_level <= SecurityAnonymous)
             set_error( STATUS_BAD_IMPERSONATION_LEVEL );
-        else if (get_reply_max_size() >= count * sizeof(LUID_AND_ATTRIBUTES))
+        else if (get_reply_max_size() >= count * sizeof(struct luid_attr))
         {
-            LUID_AND_ATTRIBUTES *usedprivs = set_reply_data_size( count * sizeof(*usedprivs) );
+            struct luid_attr *usedprivs = set_reply_data_size( count * sizeof(*usedprivs) );
             reply->has_privileges = token_check_privileges( token, req->all_required, get_req_data(), count, usedprivs );
         }
         else
@@ -1447,7 +1427,7 @@ DECL_HANDLER(access_check)
                                                  &token_ops )))
     {
         unsigned int status;
-        LUID_AND_ATTRIBUTES priv;
+        struct luid_attr priv;
         unsigned int priv_count = 1;
 
         memset(&priv, 0, sizeof(priv));
@@ -1470,11 +1450,11 @@ DECL_HANDLER(access_check)
         status = token_access_check( token, sd, req->desired_access, &priv, &priv_count, &req->mapping,
                                      &reply->access_granted, &reply->access_status );
 
-        reply->privileges_len = priv_count*sizeof(LUID_AND_ATTRIBUTES);
+        reply->privileges_len = priv_count*sizeof(struct luid_attr);
 
         if ((priv_count > 0) && (reply->privileges_len <= get_reply_max_size()))
         {
-            LUID_AND_ATTRIBUTES *privs = set_reply_data_size( priv_count * sizeof(*privs) );
+            struct luid_attr *privs = set_reply_data_size( priv_count * sizeof(*privs) );
             memcpy( privs, &priv, sizeof(priv) );
         }
 

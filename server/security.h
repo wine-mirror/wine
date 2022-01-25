@@ -23,26 +23,26 @@
 
 #include <sys/types.h>
 
-extern const LUID SeIncreaseQuotaPrivilege;
-extern const LUID SeSecurityPrivilege;
-extern const LUID SeTakeOwnershipPrivilege;
-extern const LUID SeLoadDriverPrivilege;
-extern const LUID SeSystemProfilePrivilege;
-extern const LUID SeSystemtimePrivilege;
-extern const LUID SeProfileSingleProcessPrivilege;
-extern const LUID SeIncreaseBasePriorityPrivilege;
-extern const LUID SeCreatePagefilePrivilege;
-extern const LUID SeBackupPrivilege;
-extern const LUID SeRestorePrivilege;
-extern const LUID SeShutdownPrivilege;
-extern const LUID SeDebugPrivilege;
-extern const LUID SeSystemEnvironmentPrivilege;
-extern const LUID SeChangeNotifyPrivilege;
-extern const LUID SeRemoteShutdownPrivilege;
-extern const LUID SeUndockPrivilege;
-extern const LUID SeManageVolumePrivilege;
-extern const LUID SeImpersonatePrivilege;
-extern const LUID SeCreateGlobalPrivilege;
+extern const struct luid SeIncreaseQuotaPrivilege;
+extern const struct luid SeSecurityPrivilege;
+extern const struct luid SeTakeOwnershipPrivilege;
+extern const struct luid SeLoadDriverPrivilege;
+extern const struct luid SeSystemProfilePrivilege;
+extern const struct luid SeSystemtimePrivilege;
+extern const struct luid SeProfileSingleProcessPrivilege;
+extern const struct luid SeIncreaseBasePriorityPrivilege;
+extern const struct luid SeCreatePagefilePrivilege;
+extern const struct luid SeBackupPrivilege;
+extern const struct luid SeRestorePrivilege;
+extern const struct luid SeShutdownPrivilege;
+extern const struct luid SeDebugPrivilege;
+extern const struct luid SeSystemEnvironmentPrivilege;
+extern const struct luid SeChangeNotifyPrivilege;
+extern const struct luid SeRemoteShutdownPrivilege;
+extern const struct luid SeUndockPrivilege;
+extern const struct luid SeManageVolumePrivilege;
+extern const struct luid SeImpersonatePrivilege;
+extern const struct luid SeCreateGlobalPrivilege;
 
 extern const PSID security_world_sid;
 extern const PSID security_local_user_sid;
@@ -60,11 +60,11 @@ extern struct token *token_create_admin( unsigned primary, int impersonation_lev
 extern int token_assign_label( struct token *token, PSID label );
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
                                       int impersonation_level, const struct security_descriptor *sd,
-                                      const LUID_AND_ATTRIBUTES *remove_privs, unsigned int remove_priv_count,
+                                      const struct luid_attr *remove_privs, unsigned int remove_priv_count,
                                       const SID *remove_groups, unsigned int remove_group_count );
 extern int token_check_privileges( struct token *token, int all_required,
-                                   const LUID_AND_ATTRIBUTES *reqprivs,
-                                   unsigned int count, LUID_AND_ATTRIBUTES *usedprivs);
+                                   const struct luid_attr *reqprivs,
+                                   unsigned int count, struct luid_attr *usedprivs );
 extern const ACL *token_get_default_dacl( struct token *token );
 extern const SID *token_get_user( struct token *token );
 extern const SID *token_get_primary_group( struct token *token );
@@ -91,10 +91,10 @@ extern void security_set_thread_token( struct thread *thread, obj_handle_t handl
 extern const SID *security_unix_uid_to_sid( uid_t uid );
 extern int check_object_access( struct token *token, struct object *obj, unsigned int *access );
 
-static inline int thread_single_check_privilege( struct thread *thread, const LUID *priv)
+static inline int thread_single_check_privilege( struct thread *thread, struct luid priv )
 {
     struct token *token = thread_get_impersonation_token( thread );
-    const LUID_AND_ATTRIBUTES privs = { *priv, 0 };
+    const struct luid_attr privs = { priv, 0 };
 
     if (!token) return FALSE;
 

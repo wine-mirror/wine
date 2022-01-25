@@ -457,7 +457,7 @@ static void dump_hw_input( const char *prefix, const hw_input_t *input )
     }
 }
 
-static void dump_luid( const char *prefix, const luid_t *luid )
+static void dump_luid( const char *prefix, const struct luid *luid )
 {
     fprintf( stderr, "%s%d.%u", prefix, luid->high_part, luid->low_part );
 }
@@ -999,16 +999,15 @@ static void dump_varargs_properties( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_LUID_AND_ATTRIBUTES( const char *prefix, data_size_t size )
+static void dump_varargs_luid_attr( const char *prefix, data_size_t size )
 {
-    const LUID_AND_ATTRIBUTES *lat = cur_data;
+    const struct luid_attr *lat = cur_data;
     data_size_t len = size / sizeof(*lat);
 
     fprintf( stderr,"%s{", prefix );
     while (len > 0)
     {
-        fprintf( stderr, "{luid=%08x%08x,attr=%x}",
-                 lat->Luid.HighPart, lat->Luid.LowPart, lat->Attributes );
+        fprintf( stderr, "{luid=%08x%08x,attrs=%x}", lat->luid.high_part, lat->luid.low_part, lat->attrs );
         lat++;
         if (--len) fputc( ',', stderr );
     }
@@ -3807,13 +3806,13 @@ static void dump_adjust_token_privileges_request( const struct adjust_token_priv
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", disable_all=%d", req->disable_all );
     fprintf( stderr, ", get_modified_state=%d", req->get_modified_state );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", cur_size );
+    dump_varargs_luid_attr( ", privileges=", cur_size );
 }
 
 static void dump_adjust_token_privileges_reply( const struct adjust_token_privileges_reply *req )
 {
     fprintf( stderr, " len=%08x", req->len );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", cur_size );
+    dump_varargs_luid_attr( ", privileges=", cur_size );
 }
 
 static void dump_get_token_privileges_request( const struct get_token_privileges_request *req )
@@ -3824,20 +3823,20 @@ static void dump_get_token_privileges_request( const struct get_token_privileges
 static void dump_get_token_privileges_reply( const struct get_token_privileges_reply *req )
 {
     fprintf( stderr, " len=%08x", req->len );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", cur_size );
+    dump_varargs_luid_attr( ", privileges=", cur_size );
 }
 
 static void dump_check_token_privileges_request( const struct check_token_privileges_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", all_required=%d", req->all_required );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", cur_size );
+    dump_varargs_luid_attr( ", privileges=", cur_size );
 }
 
 static void dump_check_token_privileges_reply( const struct check_token_privileges_reply *req )
 {
     fprintf( stderr, " has_privileges=%d", req->has_privileges );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", cur_size );
+    dump_varargs_luid_attr( ", privileges=", cur_size );
 }
 
 static void dump_duplicate_token_request( const struct duplicate_token_request *req )
@@ -3859,7 +3858,7 @@ static void dump_filter_token_request( const struct filter_token_request *req )
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", privileges_size=%u", req->privileges_size );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", min(cur_size,req->privileges_size) );
+    dump_varargs_luid_attr( ", privileges=", min(cur_size,req->privileges_size) );
     dump_varargs_SID( ", disable_sids=", cur_size );
 }
 
@@ -3881,7 +3880,7 @@ static void dump_access_check_reply( const struct access_check_reply *req )
     fprintf( stderr, " access_granted=%08x", req->access_granted );
     fprintf( stderr, ", access_status=%08x", req->access_status );
     fprintf( stderr, ", privileges_len=%08x", req->privileges_len );
-    dump_varargs_LUID_AND_ATTRIBUTES( ", privileges=", cur_size );
+    dump_varargs_luid_attr( ", privileges=", cur_size );
 }
 
 static void dump_get_token_sid_request( const struct get_token_sid_request *req )
