@@ -3630,6 +3630,15 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_DISPATCH:
+        {
+            struct wined3d_cs_dispatch *op = (struct wined3d_cs_dispatch *)packet->data;
+
+            if (op->parameters.indirect)
+                wined3d_buffer_decref(op->parameters.u.indirect.buffer);
+            break;
+        }
+
         default:
             break;
     }
@@ -3775,6 +3784,15 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             }
             if (op->fb.depth_stencil)
                 wined3d_rendertarget_view_incref(op->fb.depth_stencil);
+            break;
+        }
+
+        case WINED3D_CS_OP_DISPATCH:
+        {
+            struct wined3d_cs_dispatch *op = (struct wined3d_cs_dispatch *)packet->data;
+
+            if (op->parameters.indirect)
+                wined3d_buffer_incref(op->parameters.u.indirect.buffer);
             break;
         }
 
