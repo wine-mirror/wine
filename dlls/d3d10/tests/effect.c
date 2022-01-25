@@ -4530,8 +4530,22 @@ static void test_effect_state_groups(void)
             blend_desc.RenderTargetWriteMask[0]);
     ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
             blend_desc.RenderTargetWriteMask[7]);
+    hr = b->lpVtbl->GetBlendState(b, 0, &blend_state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10BlendState_GetDesc(blend_state, &blend_desc);
+    ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    ID3D10BlendState_Release(blend_state);
     b->lpVtbl->GetBackingStore(b, 1, &blend_desc);
     ok(blend_desc.SrcBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    hr = b->lpVtbl->GetBlendState(b, 1, &blend_state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10BlendState_GetDesc(blend_state, &blend_desc);
+    /* We can't check the SrcBlend value from the ID3D10BlendState object
+     * descriptor because BlendEnable[0] is effectively false, which forces
+     * normalization of all the other descriptor values. We can at least
+     * confirm that we got blend_state2 by checking BlendEnable[0] itself. */
+    ok(!blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
+    ID3D10BlendState_Release(blend_state);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     d = v->lpVtbl->AsDepthStencil(v);

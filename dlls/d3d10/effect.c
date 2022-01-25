@@ -8531,16 +8531,14 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_blend_variable_GetBlendState(ID3D1
 
     TRACE("iface %p, index %u, blend_state %p.\n", iface, index, blend_state);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
-    else if (index)
-        return E_FAIL;
-
-    if (v->type->basetype != D3D10_SVT_BLEND)
+    if (!iface->lpVtbl->IsValid(iface))
     {
-        WARN("Variable is not a blend state.\n");
+        WARN("Invalid variable.\n");
         return E_FAIL;
     }
+
+    if (!(v = d3d10_get_state_variable(v, index, &v->effect->blend_states)))
+        return E_FAIL;
 
     if ((*blend_state = v->u.state.object.blend))
         ID3D10BlendState_AddRef(*blend_state);
