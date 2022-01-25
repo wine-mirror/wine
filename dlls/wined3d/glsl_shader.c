@@ -10506,7 +10506,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
     {
         unsigned int clip_distance_count = wined3d_popcount(pre_rasterization_shader->reg_maps.clip_distance_mask);
         entry->shader_controlled_clip_distances = 1;
-        entry->clip_distance_mask = (1u << clip_distance_count) - 1;
+        entry->clip_distance_mask = wined3d_mask_from_size(clip_distance_count);
     }
 
     if (needs_legacy_glsl_syntax(gl_info))
