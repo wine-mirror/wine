@@ -3784,7 +3784,6 @@ static DWORD socket_close( struct socket *socket )
         if ((ret = socket_drain( socket ))) return ret;
     }
 
-    socket->state = SOCKET_STATE_CLOSED;
     return receive_close_status( socket, count );
 }
 
@@ -3834,6 +3833,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
     if (socket->state < SOCKET_STATE_SHUTDOWN
         && (ret = send_socket_shutdown( socket, status, reason, len, FALSE ))) goto done;
 
+    socket->state = SOCKET_STATE_CLOSED;
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
         struct socket_shutdown *s;
