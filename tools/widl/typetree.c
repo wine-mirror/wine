@@ -81,7 +81,7 @@ static const var_t *find_arg(const var_list_t *args, const char *name)
     return NULL;
 }
 
-const char *type_get_name(const type_t *type, enum name_type name_type)
+const char *type_get_decl_name(const type_t *type, enum name_type name_type)
 {
     switch(name_type) {
     case NAME_DEFAULT:
@@ -94,13 +94,13 @@ const char *type_get_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
-const char *type_get_qualified_name(const type_t *type, enum name_type name_type)
+const char *type_get_name(const type_t *type, enum name_type name_type)
 {
     switch(name_type) {
     case NAME_DEFAULT:
-        return type->qualified_name;
+        return type->qualified_name ? type->qualified_name : type->name;
     case NAME_C:
-        return type->c_name;
+        return type->c_name ? type->c_name : type->name;
     }
 
     assert(0);

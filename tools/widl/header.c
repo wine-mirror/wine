@@ -339,11 +339,12 @@ static void write_pointer_left(FILE *h, type_t *ref)
 void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, int declonly, int write_callconv)
 {
   type_t *t = ds->type;
-  const char *name;
+  const char *decl_name, *name;
   char *args;
 
   if (!h) return;
 
+  decl_name = type_get_decl_name(t, name_type);
   name = type_get_name(t, name_type);
 
   if (ds->func_specifier & FUNCTION_SPECIFIER_INLINE)
@@ -356,9 +357,10 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
   else {
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
-        if (!declonly && !t->written) {
+        if (declonly) fprintf(h, "enum %s", decl_name ? decl_name : "");
+        else if (!t->written) {
           assert(t->defined);
-          if (name) fprintf(h, "enum %s {\n", name);
+          if (decl_name) fprintf(h, "enum %s {\n", decl_name);
           else fprintf(h, "enum {\n");
           t->written = TRUE;
           indentation++;
@@ -366,13 +368,15 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
           indent(h, -1);
           fprintf(h, "}");
         }
+        else if (winrt_mode && name_type == NAME_DEFAULT && name) fprintf(h, "%s", name);
         else fprintf(h, "enum %s", name ? name : "");
         break;
       case TYPE_STRUCT:
       case TYPE_ENCAPSULATED_UNION:
-        if (!declonly && !t->written) {
+        if (declonly) fprintf(h, "struct %s", decl_name ? decl_name : "");
+        else if (!t->written) {
           assert(t->defined);
-          if (name) fprintf(h, "struct %s {\n", name);
+          if (decl_name) fprintf(h, "struct %s {\n", decl_name);
           else fprintf(h, "struct {\n");
           t->written = TRUE;
           indentation++;
@@ -383,12 +387,14 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
           indent(h, -1);
           fprintf(h, "}");
         }
+        else if (winrt_mode && name_type == NAME_DEFAULT && name) fprintf(h, "%s", name);
         else fprintf(h, "struct %s", name ? name : "");
         break;
       case TYPE_UNION:
-        if (!declonly && !t->written) {
+        if (declonly) fprintf(h, "union %s", decl_name ? decl_name : "");
+        else if (!t->written) {
           assert(t->defined);
-          if (t->name) fprintf(h, "union %s {\n", t->name);
+          if (decl_name) fprintf(h, "union %s {\n", decl_name);
           else fprintf(h, "union {\n");
           t->written = TRUE;
           indentation++;
@@ -396,7 +402,8 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
           indent(h, -1);
           fprintf(h, "}");
         }
-        else fprintf(h, "union %s", t->name ? t->name : "");
+        else if (winrt_mode && name_type == NAME_DEFAULT && name) fprintf(h, "%s", name);
+        else fprintf(h, "union %s", name ? name : "");
         break;
       case TYPE_POINTER:
       {
@@ -482,13 +489,13 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
       case TYPE_INTERFACE:
       case TYPE_MODULE:
       case TYPE_COCLASS:
-        fprintf(h, "%s", type_get_qualified_name(t, name_type));
+        fprintf(h, "%s", type_get_name(t, name_type));
         break;
       case TYPE_RUNTIMECLASS:
         fprintf(h, "%s", type_get_name(type_runtimeclass_get_default_iface(t, TRUE), name_type));
         break;
       case TYPE_DELEGATE:
-        fprintf(h, "%s", type_get_qualified_name(type_delegate_get_iface(t), name_type));
+        fprintf(h, "%s", type_get_name(type_delegate_get_iface(t), name_type));
         break;
       case TYPE_VOID:
         fprintf(h, "void");
@@ -882,7 +889,7 @@ static void write_typedef(FILE *header, type_t *type, int declonly)
             write_namespace_start(header, t->namespace);
             indent(header, 0);
             fprintf(header, "typedef ");
-            write_type_v(header, type_alias_get_aliasee(type), FALSE, declonly, type->name, NAME_DEFAULT);
+            write_type_v(header, type_alias_get_aliasee(type), FALSE, TRUE, type->name, NAME_DEFAULT);
             fprintf(header, ";\n");
             write_namespace_end(header, t->namespace);
         }
