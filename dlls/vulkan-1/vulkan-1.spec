@@ -21,25 +21,25 @@
 @ stdcall vkCmdBeginQuery(ptr int64 long long) winevulkan.vkCmdBeginQuery
 @ stdcall vkCmdBeginRenderPass(ptr ptr long) winevulkan.vkCmdBeginRenderPass
 @ stdcall vkCmdBeginRenderPass2(ptr ptr ptr) winevulkan.vkCmdBeginRenderPass2
-@ stub vkCmdBeginRendering
+@ stdcall vkCmdBeginRendering(ptr ptr) winevulkan.vkCmdBeginRendering
 @ stdcall vkCmdBindDescriptorSets(ptr long int64 long long ptr long ptr) winevulkan.vkCmdBindDescriptorSets
 @ stdcall vkCmdBindIndexBuffer(ptr int64 int64 long) winevulkan.vkCmdBindIndexBuffer
 @ stdcall vkCmdBindPipeline(ptr long int64) winevulkan.vkCmdBindPipeline
 @ stdcall vkCmdBindVertexBuffers(ptr long long ptr ptr) winevulkan.vkCmdBindVertexBuffers
-@ stub vkCmdBindVertexBuffers2
+@ stdcall vkCmdBindVertexBuffers2(ptr long long ptr ptr ptr ptr) winevulkan.vkCmdBindVertexBuffers2
 @ stdcall vkCmdBlitImage(ptr int64 long int64 long long ptr long) winevulkan.vkCmdBlitImage
-@ stub vkCmdBlitImage2
+@ stdcall vkCmdBlitImage2(ptr ptr) winevulkan.vkCmdBlitImage2
 @ stdcall vkCmdClearAttachments(ptr long ptr long ptr) winevulkan.vkCmdClearAttachments
 @ stdcall vkCmdClearColorImage(ptr int64 long ptr long ptr) winevulkan.vkCmdClearColorImage
 @ stdcall vkCmdClearDepthStencilImage(ptr int64 long ptr long ptr) winevulkan.vkCmdClearDepthStencilImage
 @ stdcall vkCmdCopyBuffer(ptr int64 int64 long ptr) winevulkan.vkCmdCopyBuffer
-@ stub vkCmdCopyBuffer2
+@ stdcall vkCmdCopyBuffer2(ptr ptr) winevulkan.vkCmdCopyBuffer2
 @ stdcall vkCmdCopyBufferToImage(ptr int64 int64 long long ptr) winevulkan.vkCmdCopyBufferToImage
-@ stub vkCmdCopyBufferToImage2
+@ stdcall vkCmdCopyBufferToImage2(ptr ptr) winevulkan.vkCmdCopyBufferToImage2
 @ stdcall vkCmdCopyImage(ptr int64 long int64 long long ptr) winevulkan.vkCmdCopyImage
-@ stub vkCmdCopyImage2
+@ stdcall vkCmdCopyImage2(ptr ptr) winevulkan.vkCmdCopyImage2
 @ stdcall vkCmdCopyImageToBuffer(ptr int64 long int64 long ptr) winevulkan.vkCmdCopyImageToBuffer
-@ stub vkCmdCopyImageToBuffer2
+@ stdcall vkCmdCopyImageToBuffer2(ptr ptr) winevulkan.vkCmdCopyImageToBuffer2
 @ stdcall vkCmdCopyQueryPoolResults(ptr int64 long long int64 int64 int64 long) winevulkan.vkCmdCopyQueryPoolResults
 @ stdcall vkCmdDispatch(ptr long long long) winevulkan.vkCmdDispatch
 @ stdcall vkCmdDispatchBase(ptr long long long long long long) winevulkan.vkCmdDispatchBase
@@ -53,50 +53,50 @@
 @ stdcall vkCmdEndQuery(ptr int64 long) winevulkan.vkCmdEndQuery
 @ stdcall vkCmdEndRenderPass(ptr) winevulkan.vkCmdEndRenderPass
 @ stdcall vkCmdEndRenderPass2(ptr ptr) winevulkan.vkCmdEndRenderPass2
-@ stub vkCmdEndRendering
+@ stdcall vkCmdEndRendering(ptr) winevulkan.vkCmdEndRendering
 @ stdcall vkCmdExecuteCommands(ptr long ptr) winevulkan.vkCmdExecuteCommands
 @ stdcall vkCmdFillBuffer(ptr int64 int64 int64 long) winevulkan.vkCmdFillBuffer
 @ stdcall vkCmdNextSubpass(ptr long) winevulkan.vkCmdNextSubpass
 @ stdcall vkCmdNextSubpass2(ptr ptr ptr) winevulkan.vkCmdNextSubpass2
 @ stdcall vkCmdPipelineBarrier(ptr long long long long ptr long ptr long ptr) winevulkan.vkCmdPipelineBarrier
-@ stub vkCmdPipelineBarrier2
+@ stdcall vkCmdPipelineBarrier2(ptr ptr) winevulkan.vkCmdPipelineBarrier2
 @ stdcall vkCmdPushConstants(ptr int64 long long long ptr) winevulkan.vkCmdPushConstants
 @ stdcall vkCmdResetEvent(ptr int64 long) winevulkan.vkCmdResetEvent
-@ stub vkCmdResetEvent2
+@ stdcall vkCmdResetEvent2(ptr int64 int64) winevulkan.vkCmdResetEvent2
 @ stdcall vkCmdResetQueryPool(ptr int64 long long) winevulkan.vkCmdResetQueryPool
 @ stdcall vkCmdResolveImage(ptr int64 long int64 long long ptr) winevulkan.vkCmdResolveImage
-@ stub vkCmdResolveImage2
+@ stdcall vkCmdResolveImage2(ptr ptr) winevulkan.vkCmdResolveImage2
 @ stdcall vkCmdSetBlendConstants(ptr ptr) winevulkan.vkCmdSetBlendConstants
-@ stub vkCmdSetCullMode
+@ stdcall vkCmdSetCullMode(ptr long) winevulkan.vkCmdSetCullMode
 @ stdcall vkCmdSetDepthBias(ptr float float float) winevulkan.vkCmdSetDepthBias
-@ stub vkCmdSetDepthBiasEnable
+@ stdcall vkCmdSetDepthBiasEnable(ptr long) winevulkan.vkCmdSetDepthBiasEnable
 @ stdcall vkCmdSetDepthBounds(ptr float float) winevulkan.vkCmdSetDepthBounds
-@ stub vkCmdSetDepthBoundsTestEnable
-@ stub vkCmdSetDepthCompareOp
-@ stub vkCmdSetDepthTestEnable
-@ stub vkCmdSetDepthWriteEnable
+@ stdcall vkCmdSetDepthBoundsTestEnable(ptr long) winevulkan.vkCmdSetDepthBoundsTestEnable
+@ stdcall vkCmdSetDepthCompareOp(ptr long) winevulkan.vkCmdSetDepthCompareOp
+@ stdcall vkCmdSetDepthTestEnable(ptr long) winevulkan.vkCmdSetDepthTestEnable
+@ stdcall vkCmdSetDepthWriteEnable(ptr long) winevulkan.vkCmdSetDepthWriteEnable
 @ stdcall vkCmdSetDeviceMask(ptr long) winevulkan.vkCmdSetDeviceMask
 @ stdcall vkCmdSetEvent(ptr int64 long) winevulkan.vkCmdSetEvent
-@ stub vkCmdSetEvent2
-@ stub vkCmdSetFrontFace
+@ stdcall vkCmdSetEvent2(ptr int64 ptr) winevulkan.vkCmdSetEvent2
+@ stdcall vkCmdSetFrontFace(ptr long) winevulkan.vkCmdSetFrontFace
 @ stdcall vkCmdSetLineWidth(ptr float) winevulkan.vkCmdSetLineWidth
-@ stub vkCmdSetPrimitiveRestartEnable
-@ stub vkCmdSetPrimitiveTopology
-@ stub vkCmdSetRasterizerDiscardEnable
+@ stdcall vkCmdSetPrimitiveRestartEnable(ptr long) winevulkan.vkCmdSetPrimitiveRestartEnable
+@ stdcall vkCmdSetPrimitiveTopology(ptr long) winevulkan.vkCmdSetPrimitiveTopology
+@ stdcall vkCmdSetRasterizerDiscardEnable(ptr long) winevulkan.vkCmdSetRasterizerDiscardEnable
 @ stdcall vkCmdSetScissor(ptr long long ptr) winevulkan.vkCmdSetScissor
-@ stub vkCmdSetScissorWithCount
+@ stdcall vkCmdSetScissorWithCount(ptr long ptr) winevulkan.vkCmdSetScissorWithCount
 @ stdcall vkCmdSetStencilCompareMask(ptr long long) winevulkan.vkCmdSetStencilCompareMask
-@ stub vkCmdSetStencilOp
+@ stdcall vkCmdSetStencilOp(ptr long long long long long) winevulkan.vkCmdSetStencilOp
 @ stdcall vkCmdSetStencilReference(ptr long long) winevulkan.vkCmdSetStencilReference
-@ stub vkCmdSetStencilTestEnable
+@ stdcall vkCmdSetStencilTestEnable(ptr long) winevulkan.vkCmdSetStencilTestEnable
 @ stdcall vkCmdSetStencilWriteMask(ptr long long) winevulkan.vkCmdSetStencilWriteMask
 @ stdcall vkCmdSetViewport(ptr long long ptr) winevulkan.vkCmdSetViewport
-@ stub vkCmdSetViewportWithCount
+@ stdcall vkCmdSetViewportWithCount(ptr long ptr) winevulkan.vkCmdSetViewportWithCount
 @ stdcall vkCmdUpdateBuffer(ptr int64 int64 int64 ptr) winevulkan.vkCmdUpdateBuffer
 @ stdcall vkCmdWaitEvents(ptr long ptr long long long ptr long ptr long ptr) winevulkan.vkCmdWaitEvents
-@ stub vkCmdWaitEvents2
+@ stdcall vkCmdWaitEvents2(ptr long ptr ptr) winevulkan.vkCmdWaitEvents2
 @ stdcall vkCmdWriteTimestamp(ptr long int64 long) winevulkan.vkCmdWriteTimestamp
-@ stub vkCmdWriteTimestamp2
+@ stdcall vkCmdWriteTimestamp2(ptr int64 int64 long) winevulkan.vkCmdWriteTimestamp2
 @ stdcall vkCreateBuffer(ptr ptr ptr ptr) winevulkan.vkCreateBuffer
 @ stdcall vkCreateBufferView(ptr ptr ptr ptr) winevulkan.vkCreateBufferView
 @ stdcall vkCreateCommandPool(ptr ptr ptr ptr) winevulkan.vkCreateCommandPool
@@ -116,7 +116,7 @@
 @ stdcall vkCreateInstance(ptr ptr ptr) winevulkan.vkCreateInstance
 @ stdcall vkCreatePipelineCache(ptr ptr ptr ptr) winevulkan.vkCreatePipelineCache
 @ stdcall vkCreatePipelineLayout(ptr ptr ptr ptr) winevulkan.vkCreatePipelineLayout
-@ stub vkCreatePrivateDataSlot
+@ stdcall vkCreatePrivateDataSlot(ptr ptr ptr ptr) winevulkan.vkCreatePrivateDataSlot
 @ stdcall vkCreateQueryPool(ptr ptr ptr ptr) winevulkan.vkCreateQueryPool
 @ stdcall vkCreateRenderPass(ptr ptr ptr ptr) winevulkan.vkCreateRenderPass
 @ stdcall vkCreateRenderPass2(ptr ptr ptr ptr) winevulkan.vkCreateRenderPass2
@@ -143,7 +143,7 @@
 @ stdcall vkDestroyPipeline(ptr int64 ptr) winevulkan.vkDestroyPipeline
 @ stdcall vkDestroyPipelineCache(ptr int64 ptr) winevulkan.vkDestroyPipelineCache
 @ stdcall vkDestroyPipelineLayout(ptr int64 ptr) winevulkan.vkDestroyPipelineLayout
-@ stub vkDestroyPrivateDataSlot
+@ stdcall vkDestroyPrivateDataSlot(ptr int64 ptr) winevulkan.vkDestroyPrivateDataSlot
 @ stdcall vkDestroyQueryPool(ptr int64 ptr) winevulkan.vkDestroyQueryPool
 @ stdcall vkDestroyRenderPass(ptr int64 ptr) winevulkan.vkDestroyRenderPass
 @ stdcall vkDestroySampler(ptr int64 ptr) winevulkan.vkDestroySampler
@@ -170,12 +170,12 @@
 @ stdcall vkGetBufferMemoryRequirements2(ptr ptr ptr) winevulkan.vkGetBufferMemoryRequirements2
 @ stdcall vkGetBufferOpaqueCaptureAddress(ptr ptr) winevulkan.vkGetBufferOpaqueCaptureAddress
 @ stdcall vkGetDescriptorSetLayoutSupport(ptr ptr ptr) winevulkan.vkGetDescriptorSetLayoutSupport
-@ stub vkGetDeviceBufferMemoryRequirements
+@ stdcall vkGetDeviceBufferMemoryRequirements(ptr ptr ptr) winevulkan.vkGetDeviceBufferMemoryRequirements
 @ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long ptr) winevulkan.vkGetDeviceGroupPeerMemoryFeatures
 @ stdcall vkGetDeviceGroupPresentCapabilitiesKHR(ptr ptr) winevulkan.vkGetDeviceGroupPresentCapabilitiesKHR
 @ stdcall vkGetDeviceGroupSurfacePresentModesKHR(ptr int64 ptr) winevulkan.vkGetDeviceGroupSurfacePresentModesKHR
-@ stub vkGetDeviceImageMemoryRequirements
-@ stub vkGetDeviceImageSparseMemoryRequirements
+@ stdcall vkGetDeviceImageMemoryRequirements(ptr ptr ptr) winevulkan.vkGetDeviceImageMemoryRequirements
+@ stdcall vkGetDeviceImageSparseMemoryRequirements(ptr ptr ptr ptr) winevulkan.vkGetDeviceImageSparseMemoryRequirements
 @ stdcall vkGetDeviceMemoryCommitment(ptr int64 ptr) winevulkan.vkGetDeviceMemoryCommitment
 @ stdcall vkGetDeviceMemoryOpaqueCaptureAddress(ptr ptr) winevulkan.vkGetDeviceMemoryOpaqueCaptureAddress
 @ stdcall vkGetDeviceProcAddr(ptr str) winevulkan.vkGetDeviceProcAddr
@@ -218,10 +218,10 @@
 @ stdcall vkGetPhysicalDeviceSurfaceFormatsKHR(ptr int64 ptr ptr) winevulkan.vkGetPhysicalDeviceSurfaceFormatsKHR
 @ stdcall vkGetPhysicalDeviceSurfacePresentModesKHR(ptr int64 ptr ptr) winevulkan.vkGetPhysicalDeviceSurfacePresentModesKHR
 @ stdcall vkGetPhysicalDeviceSurfaceSupportKHR(ptr long int64 ptr) winevulkan.vkGetPhysicalDeviceSurfaceSupportKHR
-@ stub vkGetPhysicalDeviceToolProperties
+@ stdcall vkGetPhysicalDeviceToolProperties(ptr ptr ptr) winevulkan.vkGetPhysicalDeviceToolProperties
 @ stdcall vkGetPhysicalDeviceWin32PresentationSupportKHR(ptr long) winevulkan.vkGetPhysicalDeviceWin32PresentationSupportKHR
 @ stdcall vkGetPipelineCacheData(ptr int64 ptr ptr) winevulkan.vkGetPipelineCacheData
-@ stub vkGetPrivateData
+@ stdcall vkGetPrivateData(ptr long int64 int64 ptr) winevulkan.vkGetPrivateData
 @ stdcall vkGetQueryPoolResults(ptr int64 long long long ptr int64 long) winevulkan.vkGetQueryPoolResults
 @ stdcall vkGetRenderAreaGranularity(ptr int64 ptr) winevulkan.vkGetRenderAreaGranularity
 @ stdcall vkGetSemaphoreCounterValue(ptr int64 ptr) winevulkan.vkGetSemaphoreCounterValue
@@ -232,7 +232,7 @@
 @ stdcall vkQueueBindSparse(ptr long ptr int64) winevulkan.vkQueueBindSparse
 @ stdcall vkQueuePresentKHR(ptr ptr) winevulkan.vkQueuePresentKHR
 @ stdcall vkQueueSubmit(ptr long ptr int64) winevulkan.vkQueueSubmit
-@ stub vkQueueSubmit2
+@ stdcall vkQueueSubmit2(ptr long ptr int64) winevulkan.vkQueueSubmit2
 @ stdcall vkQueueWaitIdle(ptr) winevulkan.vkQueueWaitIdle
 @ stdcall vkResetCommandBuffer(ptr long) winevulkan.vkResetCommandBuffer
 @ stdcall vkResetCommandPool(ptr int64 long) winevulkan.vkResetCommandPool
@@ -241,7 +241,7 @@
 @ stdcall vkResetFences(ptr long ptr) winevulkan.vkResetFences
 @ stdcall vkResetQueryPool(ptr int64 long long) winevulkan.vkResetQueryPool
 @ stdcall vkSetEvent(ptr int64) winevulkan.vkSetEvent
-@ stub vkSetPrivateData
+@ stdcall vkSetPrivateData(ptr long int64 int64 int64) winevulkan.vkSetPrivateData
 @ stdcall vkSignalSemaphore(ptr ptr) winevulkan.vkSignalSemaphore
 @ stdcall vkTrimCommandPool(ptr int64 long) winevulkan.vkTrimCommandPool
 @ stdcall vkUnmapMemory(ptr int64) winevulkan.vkUnmapMemory
