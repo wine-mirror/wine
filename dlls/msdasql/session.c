@@ -30,6 +30,7 @@
 
 #include "msdasql.h"
 #include "oledberr.h"
+#include "sqlucode.h"
 
 #include "msdasql_private.h"
 
@@ -45,6 +46,8 @@ struct msdasql_session
     LONG refs;
 
     IUnknown *datasource;
+
+    HDBC hdbc;
 };
 
 static inline struct msdasql_session *impl_from_IUnknown( IUnknown *iface )
@@ -305,6 +308,8 @@ struct command
     LONG refs;
     WCHAR *query;
     IUnknown *session;
+    HDBC hdbc;
+    SQLHSTMT hstmt;
 };
 
 static inline struct command *impl_from_ICommandText( ICommandText *iface )
@@ -424,6 +429,10 @@ static ULONG WINAPI command_Release(ICommandText *iface)
         TRACE( "destroying %p\n", command );
         if (command->session)
             IUnknown_Release(command->session);
+
+        if (command->hstmt)
+            SQLFreeHandle(SQL_HANDLE_STMT, command->hstmt);
+
         heap_free( command->query );
         heap_free( command );
     }
@@ -1051,7 +1060,24 @@ static ULONG WINAPI commandprepare_Release(ICommandPrepare *iface)
 static HRESULT WINAPI commandprepare_Prepare(ICommandPrepare *iface, ULONG runs)
 {
     struct command *command = impl_from_ICommandPrepare( iface );
+    RETCODE ret;
+
     TRACE("%p, %u\n", command, runs);
+
+    if (!command->query)
+        return DB_E_NOCOMMAND;
+
+    if (command->hstmt)
+        SQLFreeHandle(SQL_HANDLE_STMT, command->hstmt);
+
+    SQLAllocHandle(SQL_HANDLE_STMT, command->hdbc, &command->hstmt);
+
+    ret = SQLPrepareW(command->hstmt, command->query, SQL_NTS);
+    if (ret != SQL_SUCCESS)
+    {
+        dump_sql_diag_records(SQL_HANDLE_STMT, command->hstmt);
+        return E_FAIL;
+    }
     return S_OK;
 }
 
@@ -1147,6 +1173,8 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->ICommandWithParameters_iface.lpVtbl = &command_with_params_vtbl;
     command->refs = 1;
     command->query = NULL;
+    command->hdbc = session->hdbc;
+    command->hstmt = NULL;
 
     IUnknown_QueryInterface(&session->session_iface, &IID_IUnknown, (void**)&command->session);
 
@@ -1163,7 +1191,7 @@ static const IDBCreateCommandVtbl createcommandVtbl =
     createcommand_CreateCommand
 };
 
-HRESULT create_db_session(REFIID riid, IUnknown *datasource, void **unk)
+HRESULT create_db_session(REFIID riid, IUnknown *datasource, HDBC hdbc, void **unk)
 {
     struct msdasql_session *session;
     HRESULT hr;
@@ -1179,6 +1207,7 @@ HRESULT create_db_session(REFIID riid, IUnknown *datasource, void **unk)
     session->IDBCreateCommand_iface.lpVtbl = &createcommandVtbl;
     IUnknown_QueryInterface(datasource, &IID_IUnknown, (void**)&session->datasource);
     session->refs = 1;
+    session->hdbc = hdbc;
 
     hr = IUnknown_QueryInterface(&session->session_iface, riid, unk);
     IUnknown_Release(&session->session_iface);

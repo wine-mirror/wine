@@ -43,7 +43,7 @@ DEFINE_GUID(DBPROPSET_DBINIT,    0xc8b522bc, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0
 
 DEFINE_GUID(DBGUID_DEFAULT,      0xc8b521fb, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
-static void dump_sql_diag_records(SQLSMALLINT type, SQLHANDLE handle)
+void dump_sql_diag_records(SQLSMALLINT type, SQLHANDLE handle)
 {
     SQLCHAR state[6], msg[SQL_MAX_MESSAGE_LENGTH];
     SQLINTEGER native;
@@ -611,7 +611,7 @@ static HRESULT WINAPI dbsess_CreateSession(IDBCreateSession *iface, IUnknown *ou
     if (outer)
         FIXME("outer currently not supported.\n");
 
-    hr = create_db_session(riid, &provider->MSDASQL_iface, (void**)session);
+    hr = create_db_session(riid, &provider->MSDASQL_iface, provider->hdbc, (void**)session);
 
     return hr;
 }

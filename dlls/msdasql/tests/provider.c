@@ -354,6 +354,7 @@ static void test_rowset_interfaces(IRowset *rowset, ICommandText *commandtext)
 static void test_command_rowset(IUnknown *cmd)
 {
     ICommandText *command_text;
+    ICommandPrepare *commandprepare;
     HRESULT hr;
     IUnknown *unk = NULL;
     IRowset *rowset;
@@ -362,8 +363,21 @@ static void test_command_rowset(IUnknown *cmd)
     hr = IUnknown_QueryInterface(cmd, &IID_ICommandText, (void**)&command_text);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IUnknown_QueryInterface(cmd, &IID_ICommandPrepare, (void**)&commandprepare);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandPrepare_Prepare(commandprepare, 1);
+    ok(hr == DB_E_NOCOMMAND, "got 0x%08x\n", hr);
+
     hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"CREATE TABLE testing (col1 INT, col2 SHORT)");
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICommandPrepare_Prepare(commandprepare, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ICommandPrepare_Release(commandprepare);
 
     affected = 9999;
     hr = ICommandText_Execute(command_text, NULL, &IID_IRowset, NULL, &affected, &unk);
