@@ -185,20 +185,23 @@ static int imagefile_index_to_property(int index)
 static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStateId,
                                            const RECT *pRect, BOOL glyph, int *imageDpi)
 {
-    PTHEME_PROPERTY tp;
-    int imageselecttype = IST_NONE;
+    int imageselecttype = IST_NONE, glyphtype = GT_NONE;
+    PTHEME_PROPERTY tp = NULL;
     int i;
-    int image;
-    if(glyph)
-        image = TMT_GLYPHIMAGEFILE;
-    else
-        image = TMT_IMAGEFILE;
 
     if (imageDpi)
         *imageDpi = 96;
 
-    if((tp=MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, image)))
-        return tp;
+    /* Try TMT_IMAGEFILE first when drawing part background and the part contains glyph images.
+     * Otherwise, search TMT_IMAGEFILE1~7 and then TMT_IMAGEFILE or TMT_GLYPHIMAGEFILE */
+    if (!glyph)
+    {
+        GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_GLYPHTYPE, &glyphtype);
+        if (glyphtype == GT_IMAGEGLYPH &&
+            (tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, TMT_IMAGEFILE)))
+                return tp;
+    }
+
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_IMAGESELECTTYPE, &imageselecttype);
 
     if(imageselecttype == IST_DPI) {
@@ -223,7 +226,7 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStat
             }
         }
         /* If an image couldn't be selected, choose the first one */
-        return MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, TMT_IMAGEFILE1);
+        tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, TMT_IMAGEFILE1);
     }
     else if(imageselecttype == IST_SIZE) {
         POINT size = {pRect->right-pRect->left, pRect->bottom-pRect->top};
@@ -270,9 +273,13 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStat
             }
         }
         /* If an image couldn't be selected, choose the smallest one */
-        return MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, TMT_IMAGEFILE1);
+        tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, TMT_IMAGEFILE1);
     }
-    return NULL;
+
+    if (!tp)
+        tp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME,
+                                   glyph ? TMT_GLYPHIMAGEFILE : TMT_IMAGEFILE);
+    return tp;
 }
 
 /***********************************************************************
