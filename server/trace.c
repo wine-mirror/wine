@@ -44,6 +44,7 @@
 #include "winsock2.h"
 #include "file.h"
 #include "request.h"
+#include "security.h"
 #include "unicode.h"
 
 static const void *cur_data;
@@ -1047,7 +1048,7 @@ static void dump_varargs_SID( const char *prefix, data_size_t size )
 
 static void dump_inline_acl( const char *prefix, const struct acl *acl, data_size_t size )
 {
-    const ACE_HEADER *ace;
+    const struct ace *ace;
     ULONG i;
 
     fprintf( stderr,"%s{", prefix );
@@ -1059,56 +1060,30 @@ static void dump_inline_acl( const char *prefix, const struct acl *acl, data_siz
             return;
         }
         size -= sizeof(*acl);
-        ace = (const ACE_HEADER *)(acl + 1);
-        for (i = 0; i < acl->count; i++)
+        for (i = 0, ace = ace_first( acl ); i < acl->count; i++, ace = ace_next( ace ))
         {
-            const SID *sid = NULL;
-            data_size_t sid_size = 0;
+            const SID *sid = (const SID *)(ace + 1);
+            data_size_t sid_size;
 
-            if (size < sizeof(ACE_HEADER) || size < ace->AceSize) break;
-            size -= ace->AceSize;
+            if (size < sizeof(*ace) || size < ace->size) break;
+            size -= ace->size;
+            sid_size = ace->size - sizeof(*ace);
             if (i != 0) fputc( ',', stderr );
-            fprintf( stderr, "{AceType=" );
-            switch (ace->AceType)
+            fprintf( stderr, "{type=" );
+            switch (ace->type)
             {
-            case ACCESS_DENIED_ACE_TYPE:
-                sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
-                sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart);
-                fprintf( stderr, "ACCESS_DENIED_ACE_TYPE,Mask=%x",
-                         ((const ACCESS_DENIED_ACE *)ace)->Mask );
-                break;
-            case ACCESS_ALLOWED_ACE_TYPE:
-                sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
-                sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart);
-                fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE,Mask=%x",
-                         ((const ACCESS_ALLOWED_ACE *)ace)->Mask );
-                break;
-            case SYSTEM_AUDIT_ACE_TYPE:
-                sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
-                sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart);
-                fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE,Mask=%x",
-                         ((const SYSTEM_AUDIT_ACE *)ace)->Mask );
-                break;
-            case SYSTEM_ALARM_ACE_TYPE:
-                sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
-                sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_ALARM_ACE, SidStart);
-                fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE,Mask=%x",
-                         ((const SYSTEM_ALARM_ACE *)ace)->Mask );
-                break;
-            case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
-                sid = (const SID *)&((const SYSTEM_MANDATORY_LABEL_ACE *)ace)->SidStart;
-                sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart);
-                fprintf( stderr, "SYSTEM_MANDATORY_LABEL_ACE_TYPE,Mask=%x",
-                         ((const SYSTEM_MANDATORY_LABEL_ACE *)ace)->Mask );
-                break;
+            case ACCESS_DENIED_ACE_TYPE:          fprintf( stderr, "ACCESS_DENIED" ); break;
+            case ACCESS_ALLOWED_ACE_TYPE:         fprintf( stderr, "ACCESS_ALLOWED" ); break;
+            case SYSTEM_AUDIT_ACE_TYPE:           fprintf( stderr, "SYSTEM_AUDIT" ); break;
+            case SYSTEM_ALARM_ACE_TYPE:           fprintf( stderr, "SYSTEM_ALARM" ); break;
+            case SYSTEM_MANDATORY_LABEL_ACE_TYPE: fprintf( stderr, "SYSTEM_MANDATORY_LABEL" ); break;
             default:
-                fprintf( stderr, "unknown<%d>", ace->AceType );
+                fprintf( stderr, "%02x", ace->type );
+                sid = NULL;
                 break;
             }
-            fprintf( stderr, ",AceFlags=%x", ace->AceFlags );
-            if (sid)
-                dump_inline_sid( ",Sid=", sid, sid_size );
-            ace = (const ACE_HEADER *)((const char *)ace + ace->AceSize);
+            fprintf( stderr, ",flags=%x,mask=%x", ace->flags, ace->mask );
+            if (sid) dump_inline_sid( ",sid=", sid, sid_size );
             fputc( '}', stderr );
         }
     }

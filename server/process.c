@@ -823,12 +823,11 @@ static struct security_descriptor *process_get_sd( struct object *obj )
 
     if (!process_default_sd)
     {
+        struct ace *ace;
+        struct acl *dacl;
         size_t users_sid_len = security_sid_len( security_domain_users_sid );
         size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
-        size_t dacl_len = sizeof(struct acl) + 2 * offsetof( ACCESS_ALLOWED_ACE, SidStart )
-                          + users_sid_len + admins_sid_len;
-        ACCESS_ALLOWED_ACE *aaa;
-        struct acl *dacl;
+        size_t dacl_len = sizeof(*dacl) + 2 * sizeof(*ace) + users_sid_len + admins_sid_len;
 
         process_default_sd = mem_alloc( sizeof(*process_default_sd) + admins_sid_len + users_sid_len
                                     + dacl_len );
@@ -846,18 +845,9 @@ static struct security_descriptor *process_get_sd( struct object *obj )
         dacl->size     = dacl_len;
         dacl->count    = 2;
         dacl->pad2     = 0;
-        aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
-        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-        aaa->Header.AceFlags = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE;
-        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
-        aaa->Mask = GENERIC_READ;
-        memcpy( &aaa->SidStart, security_domain_users_sid, users_sid_len );
-        aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
-        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-        aaa->Header.AceFlags = 0;
-        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + admins_sid_len;
-        aaa->Mask = PROCESS_ALL_ACCESS;
-        memcpy( &aaa->SidStart, security_builtin_admins_sid, admins_sid_len );
+        ace = set_ace( ace_first( dacl ), security_domain_users_sid, ACCESS_ALLOWED_ACE_TYPE,
+                       INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE, GENERIC_READ );
+        set_ace( ace_next( ace ), security_builtin_admins_sid, ACCESS_ALLOWED_ACE_TYPE, 0, PROCESS_ALL_ACCESS );
     }
     return process_default_sd;
 }

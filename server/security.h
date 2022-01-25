@@ -52,6 +52,13 @@ extern const PSID security_builtin_admins_sid;
 extern const PSID security_domain_users_sid;
 extern const PSID security_high_label_sid;
 
+struct ace
+{
+    unsigned char  type;
+    unsigned char  flags;
+    unsigned short size;
+    unsigned int   mask;
+};
 
 /* token functions */
 
@@ -71,9 +78,14 @@ extern const SID *token_get_primary_group( struct token *token );
 extern unsigned int token_get_session_id( struct token *token );
 extern int token_sid_present( struct token *token, const SID *sid, int deny);
 
-static inline const ACE_HEADER *ace_next( const ACE_HEADER *ace )
+static inline struct ace *ace_first( const struct acl *acl )
 {
-    return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
+    return (struct ace *)(acl + 1);
+}
+
+static inline struct ace *ace_next( const struct ace *ace )
+{
+    return (struct ace *)((char *)ace + ace->size);
 }
 
 static inline size_t security_sid_len( const SID *sid )
@@ -85,6 +97,22 @@ static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
 {
     return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
             !memcmp( sid1, sid2, security_sid_len( sid1 )));
+}
+
+static inline int sid_valid_size( const SID *sid, data_size_t size )
+{
+    return (size >= offsetof( SID, SubAuthority[0] ) && size >= security_sid_len( sid ));
+}
+
+static inline struct ace *set_ace( struct ace *ace, const SID *sid, unsigned char type,
+                                   unsigned char flags, unsigned int mask )
+{
+    ace->type  = type;
+    ace->flags = flags;
+    ace->size  = sizeof(*ace) + security_sid_len( sid );
+    ace->mask  = mask;
+    memcpy( ace + 1, sid, security_sid_len( sid ));
+    return ace;
 }
 
 extern void security_set_thread_token( struct thread *thread, obj_handle_t handle );

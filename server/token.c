@@ -238,52 +238,29 @@ const SID *security_unix_uid_to_sid( uid_t uid )
 static int acl_is_valid( const struct acl *acl, data_size_t size )
 {
     ULONG i;
-    const ACE_HEADER *ace;
+    const struct ace *ace;
 
     if (size < sizeof(*acl)) return FALSE;
 
     size = min(size, MAX_ACL_LEN);
     size -= sizeof(*acl);
 
-    ace = (const ACE_HEADER *)(acl + 1);
-    for (i = 0; i < acl->count; i++)
+    for (i = 0, ace = ace_first( acl ); i < acl->count; i++, ace = ace_next( ace ))
     {
-        const SID *sid;
-        data_size_t sid_size;
-
-        if (size < sizeof(ACE_HEADER))
-            return FALSE;
-        if (size < ace->AceSize)
-            return FALSE;
-        size -= ace->AceSize;
-        switch (ace->AceType)
+        if (size < sizeof(*ace) || size < ace->size) return FALSE;
+        size -= ace->size;
+        switch (ace->type)
         {
         case ACCESS_DENIED_ACE_TYPE:
-            sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
-            sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart);
-            break;
         case ACCESS_ALLOWED_ACE_TYPE:
-            sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
-            sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart);
-            break;
         case SYSTEM_AUDIT_ACE_TYPE:
-            sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
-            sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart);
-            break;
         case SYSTEM_ALARM_ACE_TYPE:
-            sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
-            sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_ALARM_ACE, SidStart);
-            break;
         case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
-            sid = (const SID *)&((const SYSTEM_MANDATORY_LABEL_ACE *)ace)->SidStart;
-            sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart);
             break;
         default:
             return FALSE;
         }
-        if (sid_size < FIELD_OFFSET(SID, SubAuthority[0]) || sid_size < security_sid_len( sid ))
-            return FALSE;
-        ace = ace_next( ace );
+        if (!sid_valid_size( (const SID *)(ace + 1), ace->size - sizeof(*ace) )) return FALSE;
     }
     return TRUE;
 }
@@ -358,17 +335,16 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
 struct acl *extract_security_labels( const struct acl *sacl )
 {
     size_t size = sizeof(*sacl);
-    const ACE_HEADER *ace;
-    ACE_HEADER *label_ace;
+    const struct ace *ace;
+    struct ace *label_ace;
     unsigned int i, count = 0;
     struct acl *label_acl;
 
-    ace = (const ACE_HEADER *)(sacl + 1);
-    for (i = 0; i < sacl->count; i++, ace = ace_next( ace ))
+    for (i = 0, ace = ace_first( sacl ); i < sacl->count; i++, ace = ace_next( ace ))
     {
-        if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+        if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
         {
-            size += ace->AceSize;
+            size += ace->size;
             count++;
         }
     }
@@ -381,15 +357,14 @@ struct acl *extract_security_labels( const struct acl *sacl )
     label_acl->size     = size;
     label_acl->count    = count;
     label_acl->pad2     = 0;
-    label_ace = (ACE_HEADER *)(label_acl + 1);
 
-    ace = (const ACE_HEADER *)(sacl + 1);
-    for (i = 0; i < sacl->count; i++, ace = ace_next( ace ))
+    label_ace = ace_first( label_acl );
+    for (i = 0, ace = ace_first( sacl ); i < sacl->count; i++, ace = ace_next( ace ))
     {
-        if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+        if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
         {
-            memcpy( label_ace, ace, ace->AceSize );
-            label_ace = (ACE_HEADER *)ace_next( label_ace );
+            memcpy( label_ace, ace, ace->size );
+            label_ace = ace_next( label_ace );
         }
     }
     return label_acl;
@@ -398,21 +373,20 @@ struct acl *extract_security_labels( const struct acl *sacl )
 /* replace security labels in an existing SACL */
 struct acl *replace_security_labels( const struct acl *old_sacl, const struct acl *new_sacl )
 {
-    const ACE_HEADER *ace;
-    ACE_HEADER *replaced_ace;
-    size_t size = sizeof(*new_sacl);
+    const struct ace *ace;
+    struct ace *replaced_ace;
     unsigned int i, count = 0;
-    BYTE revision = ACL_REVISION;
+    unsigned char revision = ACL_REVISION;
     struct acl *replaced_acl;
+    data_size_t size = sizeof(*replaced_acl);
 
     if (old_sacl)
     {
         revision = max( revision, old_sacl->revision );
-        ace = (const ACE_HEADER *)(old_sacl + 1);
-        for (i = 0; i < old_sacl->count; i++, ace = ace_next( ace ))
+        for (i = 0, ace = ace_first( old_sacl ); i < old_sacl->count; i++, ace = ace_next( ace ))
         {
-            if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            size += ace->AceSize;
+            if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            size += ace->size;
             count++;
         }
     }
@@ -420,13 +394,17 @@ struct acl *replace_security_labels( const struct acl *old_sacl, const struct ac
     if (new_sacl)
     {
         revision = max( revision, new_sacl->revision );
-        ace = (const ACE_HEADER *)(new_sacl + 1);
-        for (i = 0; i < new_sacl->count; i++, ace = ace_next( ace ))
+        for (i = 0, ace = ace_first( new_sacl ); i < new_sacl->count; i++, ace = ace_next( ace ))
         {
-            if (ace->AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            size += ace->AceSize;
+            if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            size += ace->size;
             count++;
         }
+    }
+    if (size > MAX_ACL_LEN)
+    {
+        set_error( STATUS_INVALID_ACL );
+        return NULL;
     }
 
     replaced_acl = mem_alloc( size );
@@ -438,26 +416,24 @@ struct acl *replace_security_labels( const struct acl *old_sacl, const struct ac
     replaced_acl->count    = count;
     replaced_acl->pad2     = 0;
 
-    replaced_ace = (ACE_HEADER *)(replaced_acl + 1);
+    replaced_ace = (struct ace *)(replaced_acl + 1);
     if (old_sacl)
     {
-        ace = (const ACE_HEADER *)(old_sacl + 1);
-        for (i = 0; i < old_sacl->count; i++, ace = ace_next( ace ))
+        for (i = 0, ace = ace_first( old_sacl ); i < old_sacl->count; i++, ace = ace_next( ace ))
         {
-            if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            memcpy( replaced_ace, ace, ace->AceSize );
-            replaced_ace = (ACE_HEADER *)ace_next( replaced_ace );
+            if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            memcpy( replaced_ace, ace, ace->size );
+            replaced_ace = ace_next( replaced_ace );
         }
     }
 
     if (new_sacl)
     {
-        ace = (const ACE_HEADER *)(new_sacl + 1);
-        for (i = 0; i < new_sacl->count; i++, ace = ace_next( ace ))
+        for (i = 0, ace = ace_first( new_sacl ); i < new_sacl->count; i++, ace = ace_next( ace ))
         {
-            if (ace->AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            memcpy( replaced_ace, ace, ace->AceSize );
-            replaced_ace = (ACE_HEADER *)ace_next( replaced_ace );
+            if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            memcpy( replaced_ace, ace, ace->size );
+            replaced_ace = ace_next( replaced_ace );
         }
     }
 
@@ -730,13 +706,10 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
 
 static struct acl *create_default_dacl( const SID *user )
 {
-    ACCESS_ALLOWED_ACE *aaa;
+    struct ace *ace;
     struct acl *default_dacl;
-    SID *sid;
-    size_t default_dacl_size = sizeof(*default_dacl) +
-                               2*(sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
-                               sizeof(local_system_sid) +
-                               security_sid_len( user );
+    size_t default_dacl_size = sizeof(*default_dacl) + 2 * sizeof(*ace) +
+                               sizeof(local_system_sid) + security_sid_len( user );
 
     default_dacl = mem_alloc( default_dacl_size );
     if (!default_dacl) return NULL;
@@ -748,23 +721,9 @@ static struct acl *create_default_dacl( const SID *user )
     default_dacl->pad2     = 0;
 
     /* GENERIC_ALL for Local System */
-    aaa = (ACCESS_ALLOWED_ACE *)(default_dacl + 1);
-    aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    aaa->Header.AceFlags = 0;
-    aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
-                          sizeof(local_system_sid);
-    aaa->Mask = GENERIC_ALL;
-    sid = (SID *)&aaa->SidStart;
-    memcpy( sid, &local_system_sid, sizeof(local_system_sid) );
-
+    ace = set_ace( ace_first( default_dacl ), &local_system_sid, ACCESS_ALLOWED_ACE_TYPE, 0, GENERIC_ALL );
     /* GENERIC_ALL for specified user */
-    aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
-    aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    aaa->Header.AceFlags = 0;
-    aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) + security_sid_len( user );
-    aaa->Mask = GENERIC_ALL;
-    sid = (SID *)&aaa->SidStart;
-    memcpy( sid, user, security_sid_len( user ));
+    set_ace( ace_next( ace ), user, ACCESS_ALLOWED_ACE_TYPE, 0, GENERIC_ALL );
 
     return default_dacl;
 }
@@ -779,11 +738,10 @@ struct sid_data
 static struct security_descriptor *create_security_label_sd( struct token *token, PSID label_sid )
 {
     size_t sid_len = security_sid_len( label_sid ), sacl_size, sd_size;
-    SYSTEM_MANDATORY_LABEL_ACE *smla;
     struct security_descriptor *sd;
     struct acl *sacl;
 
-    sacl_size = sizeof(*sacl) + FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart) + sid_len;
+    sacl_size = sizeof(*sacl) + sizeof(struct ace) + sid_len;
     sd_size = sizeof(struct security_descriptor) + sacl_size;
     if (!(sd = mem_alloc( sd_size )))
         return NULL;
@@ -801,13 +759,8 @@ static struct security_descriptor *create_security_label_sd( struct token *token
     sacl->count    = 1;
     sacl->pad2     = 0;
 
-    smla = (SYSTEM_MANDATORY_LABEL_ACE *)(sacl + 1);
-    smla->Header.AceType = SYSTEM_MANDATORY_LABEL_ACE_TYPE;
-    smla->Header.AceFlags = 0;
-    smla->Header.AceSize = FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart) + sid_len;
-    smla->Mask = SYSTEM_MANDATORY_LABEL_NO_WRITE_UP;
-    memcpy( &smla->SidStart, label_sid, sid_len );
-
+    set_ace( ace_first( sacl ), label_sid, SYSTEM_MANDATORY_LABEL_ACE_TYPE, 0,
+             SYSTEM_MANDATORY_LABEL_NO_WRITE_UP );
     assert( sd_is_valid( sd, sd_size ) );
     return sd;
 }
@@ -1028,7 +981,7 @@ static unsigned int token_access_check( struct token *token,
     ULONG i;
     const struct acl *dacl;
     int dacl_present;
-    const ACE_HEADER *ace;
+    const struct ace *ace;
     const SID *owner;
 
     /* assume no access rights */
@@ -1113,24 +1066,18 @@ static unsigned int token_access_check( struct token *token,
     }
 
     /* 4: Grant rights according to the DACL */
-    ace = (const ACE_HEADER *)(dacl + 1);
-    for (i = 0; i < dacl->count; i++, ace = ace_next( ace ))
+    for (i = 0, ace = ace_first( dacl ); i < dacl->count; i++, ace = ace_next( ace ))
     {
-        const ACCESS_ALLOWED_ACE *aa_ace;
-        const ACCESS_DENIED_ACE *ad_ace;
-        const SID *sid;
+        const SID *sid = (const SID *)(ace + 1);
 
-        if (ace->AceFlags & INHERIT_ONLY_ACE)
-            continue;
+        if (ace->flags & INHERIT_ONLY_ACE) continue;
 
-        switch (ace->AceType)
+        switch (ace->type)
         {
         case ACCESS_DENIED_ACE_TYPE:
-            ad_ace = (const ACCESS_DENIED_ACE *)ace;
-            sid = (const SID *)&ad_ace->SidStart;
             if (token_sid_present( token, sid, TRUE ))
             {
-                unsigned int access = map_access( ad_ace->Mask, mapping );
+                unsigned int access = map_access( ace->mask, mapping );
                 if (desired_access & MAXIMUM_ALLOWED)
                     denied_access |= access;
                 else
@@ -1141,11 +1088,9 @@ static unsigned int token_access_check( struct token *token,
             }
             break;
         case ACCESS_ALLOWED_ACE_TYPE:
-            aa_ace = (const ACCESS_ALLOWED_ACE *)ace;
-            sid = (const SID *)&aa_ace->SidStart;
             if (token_sid_present( token, sid, FALSE ))
             {
-                unsigned int access = map_access( aa_ace->Mask, mapping );
+                unsigned int access = map_access( ace->mask, mapping );
                 if (desired_access & MAXIMUM_ALLOWED)
                     current_access |= access;
                 else
