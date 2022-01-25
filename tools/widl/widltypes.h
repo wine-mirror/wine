@@ -483,7 +483,7 @@ enum type_type
 };
 
 struct _type_t {
-  const char *name;
+  const char *name;               /* C++ name with parameters in brackets */
   struct namespace *namespace;
   enum type_type type_type;
   attr_list_t *attrs;
@@ -504,11 +504,12 @@ struct _type_t {
     struct parameterized_details parameterized;
     struct delegate_details delegate;
   } details;
-  const char *c_name;
+  const char *c_name;             /* mangled C name, with namespaces and parameters */
   const char *signature;
-  const char *qualified_name;
-  const char *impl_name;
-  const char *short_name;
+  const char *qualified_name;     /* C++ fully qualified name */
+  const char *impl_name;          /* C++ parameterized types impl base class name */
+  const char *param_name;         /* used to build c_name of a parameterized type, when used as a parameter */
+  const char *short_name;         /* widl specific short name */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;

@@ -53,6 +53,7 @@ type_t *make_type(enum type_type type)
     t->signature = NULL;
     t->qualified_name = NULL;
     t->impl_name = NULL;
+    t->param_name = NULL;
     t->short_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
@@ -291,29 +292,36 @@ char *format_parameterized_type_name(type_t *type, typeref_list_t *params)
 }
 
 static char const *parameterized_type_shorthands[][2] = {
+    {"Windows__CFoundation__CCollections__C", "__F"},
     {"Windows_CFoundation_CCollections_C", "__F"},
+    {"Windows__CFoundation__C", "__F"},
     {"Windows_CFoundation_C", "__F"},
 };
 
-static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *params, const char *prefix)
+static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *params, const char *prefix, const char *separator)
 {
+    const char *tmp, *ns_prefix = "__x_", *abi_prefix = NULL;
     size_t len = 0, pos = 0;
-    char *buf = NULL, *tmp;
+    char *buf = NULL;
     int i, count = params ? list_count(params) : 0;
     typeref_t *ref;
 
-    pos += append_namespaces(&buf, &len, pos, type->namespace, "__x_", "_C", "", use_abi_namespace ? "ABI" : NULL);
+    if (!strcmp(separator, "__C")) ns_prefix = "_C";
+    else if (use_abi_namespace) abi_prefix = "ABI";
+
+    pos += append_namespaces(&buf, &len, pos, type->namespace, ns_prefix, separator, "", abi_prefix);
     pos += strappend(&buf, &len, pos, "%s%s_%d", prefix, type->name, count);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
-        pos += append_namespaces(&buf, &len, pos, type->namespace, "_", "__C", type->name, NULL);
+        if ((tmp = type->param_name)) pos += strappend(&buf, &len, pos, "_%s", tmp);
+        else pos += append_namespaces(&buf, &len, pos, type->namespace, "_", "__C", type->name, NULL);
     }
 
     for (i = 0; i < ARRAY_SIZE(parameterized_type_shorthands); ++i)
     {
         if ((tmp = strstr(buf, parameterized_type_shorthands[i][0])) &&
-            (tmp - buf) == strlen(use_abi_namespace ? "__x_ABI_C" : "__x_C"))
+            (tmp - buf) == strlen(ns_prefix) + (abi_prefix ? 5 : 0))
         {
            tmp += strlen(parameterized_type_shorthands[i][0]);
            strcpy(buf, parameterized_type_shorthands[i][1]);
@@ -358,7 +366,8 @@ static char *format_parameterized_type_short_name(type_t *type, typeref_list_t *
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
-        pos += strappend(&buf, &len, pos, "_%s", type->name);
+        if (type->short_name) pos += strappend(&buf, &len, pos, "_%s", type->short_name);
+        else pos += strappend(&buf, &len, pos, "_%s", type->name);
     }
 
     return buf;
@@ -895,8 +904,10 @@ static void compute_delegate_iface_names(type_t *delegate, type_t *type, typeref
     type_t *iface = delegate->details.delegate.iface;
     iface->namespace = delegate->namespace;
     iface->name = strmake("I%s", delegate->name);
-    if (type) iface->c_name = format_parameterized_type_c_name(type, params, "I");
+    if (type) iface->c_name = format_parameterized_type_c_name(type, params, "I", "_C");
     else iface->c_name = format_namespace(delegate->namespace, "__x_", "_C", iface->name, use_abi_namespace ? "ABI" : NULL);
+    if (type) iface->param_name = format_parameterized_type_c_name(type, params, "I", "__C");
+    else iface->param_name = format_namespace(delegate->namespace, "_", "__C", iface->name, NULL);
     iface->qualified_name = format_namespace(delegate->namespace, "", "::", iface->name, use_abi_namespace ? "ABI" : NULL);
 }
 
@@ -1218,8 +1229,9 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
     new_type->namespace = type->namespace;
     new_type->name = format_parameterized_type_name(type, params);
     reg_type(new_type, new_type->name, new_type->namespace, 0);
-    new_type->c_name = format_parameterized_type_c_name(type, params, "");
+    new_type->c_name = format_parameterized_type_c_name(type, params, "", "_C");
     new_type->short_name = format_parameterized_type_short_name(type, params, "");
+    new_type->param_name = format_parameterized_type_c_name(type, params, "", "__C");
 
     if (new_type->type_type == TYPE_DELEGATE)
     {
