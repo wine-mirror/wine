@@ -711,9 +711,9 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
                                     const DTBGOPTS *pOptions)
 {
     HRESULT hr = S_OK;
-    HBITMAP bmpSrc, bmpSrcResized = NULL;
+    HBITMAP bmpSrc;
     HGDIOBJ oldSrc;
-    HDC hdcSrc, hdcOrigSrc = NULL;
+    HDC hdcSrc;
     RECT rcSrc;
     RECT rcDst;
     POINT dstSize;
@@ -777,33 +777,17 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
 
         GetThemeMargins(hTheme, hdc, iPartId, iStateId, TMT_SIZINGMARGINS, NULL, &sm);
 
-        /* Resize source image if destination smaller than margins */
+        /* Resize sizing margins if destination is smaller */
         if (sm.cyTopHeight + sm.cyBottomHeight > dstSize.y || sm.cxLeftWidth + sm.cxRightWidth > dstSize.x) {
             if (sm.cyTopHeight + sm.cyBottomHeight > dstSize.y) {
                 sm.cyTopHeight = MulDiv(sm.cyTopHeight, dstSize.y, srcSize.y);
                 sm.cyBottomHeight = dstSize.y - sm.cyTopHeight;
-                srcSize.y = dstSize.y;
             }
 
             if (sm.cxLeftWidth + sm.cxRightWidth > dstSize.x) {
                 sm.cxLeftWidth = MulDiv(sm.cxLeftWidth, dstSize.x, srcSize.x);
                 sm.cxRightWidth = dstSize.x - sm.cxLeftWidth;
-                srcSize.x = dstSize.x;
             }
-
-            hdcOrigSrc = hdcSrc;
-            hdcSrc = CreateCompatibleDC(NULL);
-            bmpSrcResized = CreateBitmap(srcSize.x, srcSize.y, 1, 32, NULL);
-            SelectObject(hdcSrc, bmpSrcResized);
-
-            /* Use ALPHABLEND_NONE because the image is getting resized, rather than blended with the target */
-            UXTHEME_StretchBlt(hdcSrc, 0, 0, srcSize.x, srcSize.y, hdcOrigSrc, rcSrc.left, rcSrc.top,
-                               rcSrc.right - rcSrc.left, rcSrc.bottom - rcSrc.top, ALPHABLEND_NONE, 0);
-
-            rcSrc.left = 0;
-            rcSrc.top = 0;
-            rcSrc.right = srcSize.x;
-            rcSrc.bottom = srcSize.y;
         }
 
         hdcDst = hdc;
@@ -910,8 +894,6 @@ draw_error:
     }
     SelectObject(hdcSrc, oldSrc);
     DeleteDC(hdcSrc);
-    if (bmpSrcResized) DeleteObject(bmpSrcResized);
-    if (hdcOrigSrc) DeleteDC(hdcOrigSrc);
     *pRect = rcDst;
     return hr;
 }
