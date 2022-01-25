@@ -211,13 +211,13 @@ static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t 
         {
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT32:
-            n += strappend(buf, len, pos + n, type_basic_get_sign(type) < 0 ? "i4" : "u4");
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) <= 0 ? "i4" : "u4");
             return n;
         case TYPE_BASIC_INT64:
-            n += strappend(buf, len, pos + n, type_basic_get_sign(type) < 0 ? "i8" : "u8");
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) <= 0 ? "i8" : "u8");
             return n;
         case TYPE_BASIC_INT8:
-            assert(type_basic_get_sign(type) >= 0); /* signature string for signed char isn't specified */
+            assert(type_basic_get_sign(type) > 0); /* signature string for signed char isn't specified */
             n += strappend(buf, len, pos + n, "u1");
             return n;
         case TYPE_BASIC_FLOAT:
