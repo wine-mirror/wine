@@ -628,7 +628,7 @@ static BOOL is_import_dll_system( LDR_DATA_TABLE_ENTRY *mod, const IMAGE_IMPORT_
 {
     const char *name = get_rva( mod->DllBase, import->Name );
 
-    return !strcmp( name, "ntdll.dll" ) || !strcmp( name, "kernel32.dll" );
+    return !_stricmp( name, "ntdll.dll" ) || !_stricmp( name, "kernel32.dll" );
 }
 
 /**********************************************************************
