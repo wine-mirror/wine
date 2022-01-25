@@ -1132,12 +1132,42 @@ static void wine_AdjustWindowRectExForDpi( RECT *rect, LONG style, BOOL menu, LO
         InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
 }
 
+static int offset;
+
+static LRESULT CALLBACK test_standard_scrollbar_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    switch (msg)
+    {
+    case WM_NCPAINT:
+    {
+        HRGN region;
+        RECT rect;
+
+        GetWindowRect(hwnd, &rect);
+        region = CreateRectRgn(rect.left, rect.top, rect.right, rect.bottom - offset);
+        DefWindowProcA(hwnd, msg, (WPARAM)region, lp);
+        DeleteObject(region);
+        return 0;
+    }
+    default:
+        return DefWindowProcA(hwnd, msg, wp, lp);
+    }
+}
+
 static void test_nonclient_area(HWND hwnd)
 {
+    BOOL (WINAPI *pIsThemeActive)(void);
+    POINT point, old_cursor_pos;
+    COLORREF color, old_color;
+    BOOL is_theme_active;
     DWORD style, exstyle;
     RECT rc_window, rc_client, rc;
+    HWND child, parent;
+    HMODULE uxtheme;
+    WNDCLASSA cls;
     BOOL menu;
     LRESULT ret;
+    HDC hdc;
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
@@ -1189,6 +1219,98 @@ static void test_nonclient_area(HWND hwnd)
     ok(EqualRect(&rc, &rc_client),
        "synthetic rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, client=%s, calc=%s\n",
        style, exstyle, menu, wine_dbgstr_rect(&rc_client), wine_dbgstr_rect(&rc));
+
+    /* Test standard scroll bars */
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    ok(!!uxtheme, "Failed to load uxtheme.dll, error %u.\n", GetLastError());
+    pIsThemeActive = (void *)GetProcAddress(uxtheme, "IsThemeActive");
+    ok(!!pIsThemeActive, "Failed to load IsThemeActive, error %u.\n", GetLastError());
+    is_theme_active = pIsThemeActive();
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hCursor = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    cls.lpszClassName = "TestStandardScrollbarParentClass";
+    RegisterClassA(&cls);
+
+    cls.lpfnWndProc = test_standard_scrollbar_proc;
+    cls.hbrBackground = GetStockObject(GRAY_BRUSH);
+    cls.lpszClassName = "TestStandardScrollbarClass";
+    RegisterClassA(&cls);
+
+    parent = CreateWindowA("TestStandardScrollbarParentClass", "parent", WS_POPUP | WS_VISIBLE, 100,
+                           100, 100, 100, NULL, NULL, 0, NULL);
+    ok(!!parent, "Failed to create a parent window, error %u.\n", GetLastError());
+    GetCursorPos(&old_cursor_pos);
+
+    /* Place the cursor on the standard scroll bar arrow button when not painting it at all.
+     * Expects the standard scroll bar not to appear before and after the cursor position change */
+    offset = GetSystemMetrics(SM_CYHSCROLL);
+    child = CreateWindowA("TestStandardScrollbarClass", "test", WS_CHILD | WS_HSCROLL | WS_VISIBLE,
+                          0, 0, 50, 50, parent, NULL, 0, NULL);
+    ok(!!child, "Failed to create a test window, error %u.\n", GetLastError());
+    hdc = GetDC(parent);
+    ok(!!hdc, "GetDC failed, error %d.\n", GetLastError());
+
+    SetCursorPos(0, 0);
+    flush_events(TRUE);
+    RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
+    old_color = GetPixel(hdc, 50 - GetSystemMetrics(SM_CXVSCROLL) / 2,
+                         50 - GetSystemMetrics(SM_CYHSCROLL) / 2);
+    ok(old_color == 0xc0c0c0, "Expected color %#x, got %#x.\n", 0xc0c0c0, old_color);
+
+    point.x = 50 - GetSystemMetrics(SM_CXVSCROLL) / 2;
+    point.y = 50 - GetSystemMetrics(SM_CYHSCROLL) / 2;
+    ClientToScreen(child, &point);
+    SetCursorPos(point.x, point.y);
+    flush_events(TRUE);
+    RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
+    color = GetPixel(hdc, 50 - GetSystemMetrics(SM_CXVSCROLL) / 2,
+                     50 - GetSystemMetrics(SM_CYHSCROLL) / 2);
+    todo_wine
+    ok(color == old_color, "Expected color %#x, got %#x.\n", old_color, color);
+
+    ReleaseDC(parent, hdc);
+    DestroyWindow(child);
+
+    /* Place the cursor on standard scroll bar arrow button when painting 1 pixel of the scroll bar.
+     * Expects the scroll bar to appear after the cursor position change */
+    offset = GetSystemMetrics(SM_CYHSCROLL) - 1;
+    child = CreateWindowA("TestStandardScrollbarClass", "test", WS_CHILD | WS_HSCROLL | WS_VISIBLE,
+                          0, 0, 50, 50, parent, NULL, 0, NULL);
+    ok(!!child, "Failed to create a test window, error %u.\n", GetLastError());
+    hdc = GetDC(parent);
+    ok(!!hdc, "GetDC failed, error %d.\n", GetLastError());
+
+    SetCursorPos(0, 0);
+    flush_events(TRUE);
+    RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
+    old_color = GetPixel(hdc, 50 - GetSystemMetrics(SM_CXVSCROLL) / 2,
+                         50 - GetSystemMetrics(SM_CYHSCROLL) / 2);
+
+    point.x = 50 - GetSystemMetrics(SM_CXVSCROLL) / 2;
+    point.y = 50 - GetSystemMetrics(SM_CYHSCROLL) / 2;
+    ClientToScreen(child, &point);
+    SetCursorPos(point.x, point.y);
+    flush_events(TRUE);
+    RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
+    color = GetPixel(hdc, 50 - GetSystemMetrics(SM_CXVSCROLL) / 2,
+                     50 - GetSystemMetrics(SM_CYHSCROLL) / 2);
+    if (is_theme_active)
+        ok(color != old_color || broken(color == old_color), /* Win 10 1507 64-bit */
+           "Got unexpected color %#x.\n", color);
+    else
+        todo_wine
+        ok(color == old_color, "Expected color %#x, got %#x.\n", old_color, color);
+
+    SetCursorPos(old_cursor_pos.x, old_cursor_pos.y);
+    ReleaseDC(parent, hdc);
+    DestroyWindow(parent);
+    UnregisterClassA("TestStandardScrollbarClass", GetModuleHandleA(0));
+    UnregisterClassA("TestStandardScrollbarParentClass", GetModuleHandleA(0));
+    FreeLibrary(uxtheme);
 }
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
