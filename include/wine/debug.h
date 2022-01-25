@@ -451,9 +451,9 @@ static inline const char *wine_dbgstr_variant( const VARIANT *v )
     case VT_UI1:
         return wine_dbg_sprintf( "%p {VT_UI1: %u}", v, V_UI1(v) );
     case VT_UI2:
-        return wine_dbg_sprintf( "%p {VT_UI2: %d}", v, V_UI2(v) );
+        return wine_dbg_sprintf( "%p {VT_UI2: %u}", v, V_UI2(v) );
     case VT_UI4:
-        return wine_dbg_sprintf( "%p {VT_UI4: %d}", v, V_UI4(v) );
+        return wine_dbg_sprintf( "%p {VT_UI4: %u}", v, V_UI4(v) );
     case VT_I8:
         return wine_dbg_sprintf( "%p {VT_I8: %s}", v, wine_dbgstr_longlong(V_I8(v)) );
     case VT_UI8:
