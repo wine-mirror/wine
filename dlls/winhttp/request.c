@@ -3727,6 +3727,19 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
     return ret;
 }
 
+static void socket_shutdown_complete( struct socket *socket, DWORD ret )
+{
+    if (!ret) send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NULL, 0 );
+    else
+    {
+        WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+        result.AsyncResult.dwResult = API_WRITE_DATA;
+        result.AsyncResult.dwError  = ret;
+        result.Operation = WINHTTP_WEB_SOCKET_SHUTDOWN_OPERATION;
+        send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+    }
+}
+
 static void CALLBACK task_socket_shutdown( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
 {
     struct socket_shutdown *s = ctx;
@@ -3734,21 +3747,11 @@ static void CALLBACK task_socket_shutdown( TP_CALLBACK_INSTANCE *instance, void 
 
     TRACE("running %p\n", work);
 
-    ret = send_frame( s->socket, SOCKET_OPCODE_CLOSE, s->status, s->reason, s->len, TRUE, NULL );
-    send_io_complete( &s->socket->hdr );
+    if (s->complete_async) ret = complete_send_frame( s->socket, &s->ovr, s->reason );
+    else                   ret = send_frame( s->socket, SOCKET_OPCODE_CLOSE, s->status, s->reason, s->len, TRUE, NULL );
 
-    if (s->send_callback)
-    {
-        if (!ret) send_callback( &s->socket->hdr, WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NULL, 0 );
-        else
-        {
-            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
-            result.AsyncResult.dwResult = API_WRITE_DATA;
-            result.AsyncResult.dwError  = ret;
-            result.Operation = WINHTTP_WEB_SOCKET_SHUTDOWN_OPERATION;
-            send_callback( &s->socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
-        }
-    }
+    send_io_complete( &s->socket->hdr );
+    if (s->send_callback) socket_shutdown_complete( s->socket, ret );
     release_object( &s->socket->hdr );
     free( s );
 }
@@ -3762,22 +3765,48 @@ static DWORD send_socket_shutdown( struct socket *socket, USHORT status, const v
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
+        BOOL async_send, complete_async = FALSE;
         struct socket_shutdown *s;
 
         if (!(s = malloc( sizeof(*s) ))) return FALSE;
-        s->socket = socket;
-        s->status = status;
-        memcpy( s->reason, reason, len );
-        s->len    = len;
-        s->send_callback = send_callback;
 
-        addref_object( &socket->hdr );
-        InterlockedIncrement( &socket->hdr.pending_sends );
-        if ((ret = queue_task( &socket->send_q, task_socket_shutdown, s )))
+        async_send = InterlockedIncrement( &socket->hdr.pending_sends ) > 1 || socket->hdr.recursion_count >= 3;
+        if (!async_send)
+        {
+            memset( &s->ovr, 0, sizeof(s->ovr) );
+            if ((ret = send_frame( socket, SOCKET_OPCODE_CLOSE, status, reason, len, TRUE, &s->ovr )) == WSA_IO_PENDING)
+            {
+                async_send = TRUE;
+                complete_async = TRUE;
+            }
+        }
+
+        if (async_send)
+        {
+            s->complete_async = complete_async;
+            s->socket = socket;
+            s->status = status;
+            memcpy( s->reason, reason, len );
+            s->len    = len;
+            s->send_callback = send_callback;
+
+            addref_object( &socket->hdr );
+            if ((ret = queue_task( &socket->send_q, task_socket_shutdown, s )))
+            {
+                InterlockedDecrement( &socket->hdr.pending_sends );
+                release_object( &socket->hdr );
+                free( s );
+            }
+        }
+        else
         {
             InterlockedDecrement( &socket->hdr.pending_sends );
-            release_object( &socket->hdr );
             free( s );
+            if (send_callback)
+            {
+                socket_shutdown_complete( socket, ret );
+                ret = ERROR_SUCCESS;
+            }
         }
     }
     else ret = send_frame( socket, SOCKET_OPCODE_CLOSE, status, reason, len, TRUE, NULL );

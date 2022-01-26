@@ -323,6 +323,8 @@ struct socket_shutdown
     char reason[123];
     DWORD len;
     BOOL send_callback;
+    WSAOVERLAPPED ovr;
+    BOOL complete_async;
 };
 
 struct object_header *addref_object( struct object_header * ) DECLSPEC_HIDDEN;
