@@ -200,7 +200,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
     unsigned char endpoint[] = "\\pipe\\wine_plugplay";
-    unsigned char protseq[] = "ncalrpc";
+    unsigned char protseq[] = "ncacn_np";
     SERVICE_STATUS status;
     RPC_STATUS err;
 

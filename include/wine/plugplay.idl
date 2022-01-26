@@ -20,6 +20,7 @@ import "wtypes.idl";
 
 [
     uuid(57c680ac-7bce-4f39-97fd-ffea566754d5),
+    endpoint("ncacn_np:[\\pipe\\wine_plugplay]"),
     implicit_handle(handle_t plugplay_binding_handle)
 ]
 interface plugplay

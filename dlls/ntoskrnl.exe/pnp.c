@@ -1084,7 +1084,7 @@ void pnp_manager_start(void)
 {
     static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','P','n','p','M','a','n','a','g','e','r',0};
     WCHAR endpoint[] = L"\\pipe\\wine_plugplay";
-    WCHAR protseq[] = L"ncalrpc";
+    WCHAR protseq[] = L"ncacn_np";
     UNICODE_STRING driver_nameU;
     RPC_WSTR binding_str;
     NTSTATUS status;

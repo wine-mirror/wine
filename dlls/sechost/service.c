@@ -1988,7 +1988,7 @@ struct device_notify_registration
 static DWORD WINAPI device_notify_proc( void *arg )
 {
     WCHAR endpoint[] = L"\\pipe\\wine_plugplay";
-    WCHAR protseq[] = L"ncalrpc";
+    WCHAR protseq[] = L"ncacn_np";
     RPC_WSTR binding_str;
     DWORD err = ERROR_SUCCESS;
     struct device_notify_registration *registration;
