@@ -3174,8 +3174,7 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
         offset += 8;
     }
 
-    buffer_size = len + offset;
-    if (len) buffer_size += 4;
+    buffer_size = len + offset + 4;
     assert( buffer_size - len < MAX_FRAME_BUFFER_SIZE );
     if (ovr && buffer_size > MAX_FRAME_BUFFER_SIZE) return WSAEWOULDBLOCK;
     if (buffer_size > socket->send_frame_buffer_size && socket->send_frame_buffer_size < MAX_FRAME_BUFFER_SIZE)
@@ -3196,13 +3195,11 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
 
     memcpy(ptr, hdr, offset);
     ptr += offset;
-    if (len)
-    {
-        mask = &hdr[offset];
-        RtlGenRandom( mask, 4 );
-        memcpy( ptr, mask, 4 );
-        ptr += 4;
-    }
+
+    mask = &hdr[offset];
+    RtlGenRandom( mask, 4 );
+    memcpy( ptr, mask, 4 );
+    ptr += 4;
 
     if (opcode == SOCKET_OPCODE_CLOSE) /* prepend status code */
     {
