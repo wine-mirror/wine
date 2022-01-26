@@ -252,7 +252,7 @@ NTSTATUS WINAPI wow64_NtGdiEqualRgn( UINT *args )
     return NtGdiEqualRgn( hrgn1, hrgn2 );
 }
 
-INT WINAPI wow64_NtGdiGetRgnBox( UINT *args )
+NTSTATUS WINAPI wow64_NtGdiGetRgnBox( UINT *args )
 {
     HRGN hrgn = get_handle( &args );
     RECT *rect = get_ptr( &args );
@@ -260,7 +260,7 @@ INT WINAPI wow64_NtGdiGetRgnBox( UINT *args )
     return NtGdiGetRgnBox( hrgn, rect );
 }
 
-BOOL WINAPI wow64_NtGdiSetRectRgn( UINT *args )
+NTSTATUS WINAPI wow64_NtGdiSetRectRgn( UINT *args )
 {
     HRGN hrgn = get_handle( &args );
     INT left = get_ulong( &args );
@@ -271,7 +271,7 @@ BOOL WINAPI wow64_NtGdiSetRectRgn( UINT *args )
     return NtGdiSetRectRgn( hrgn, left, top, right, bottom );
 }
 
-INT WINAPI wow64_NtGdiOffsetRgn( UINT *args )
+NTSTATUS WINAPI wow64_NtGdiOffsetRgn( UINT *args )
 {
     HRGN hrgn = get_handle( &args );
     INT x = get_ulong( &args );
@@ -299,7 +299,7 @@ NTSTATUS WINAPI wow64_NtGdiPtInRegion( UINT *args )
     return NtGdiPtInRegion( hrgn, x, y );
 }
 
-BOOL WINAPI wow64_NtGdiRectInRegion( UINT *args )
+NTSTATUS WINAPI wow64_NtGdiRectInRegion( UINT *args )
 {
     HRGN hrgn = get_handle( &args );
     const RECT *rect = get_ptr( &args );
@@ -321,7 +321,7 @@ NTSTATUS WINAPI wow64_NtGdiSaveDC( UINT *args )
     return NtGdiSaveDC( hdc );
 }
 
-BOOL WINAPI wow64_NtGdiSetBrushOrg( UINT *args )
+NTSTATUS WINAPI wow64_NtGdiSetBrushOrg( UINT *args )
 {
     HDC hdc = get_handle( &args );
     INT x = get_ulong( &args );
@@ -331,7 +331,7 @@ BOOL WINAPI wow64_NtGdiSetBrushOrg( UINT *args )
     return NtGdiSetBrushOrg( hdc, x, y, prev_org );
 }
 
-BOOL WINAPI wow64_NtGdiGetTransform( UINT *args )
+NTSTATUS WINAPI wow64_NtGdiGetTransform( UINT *args )
 {
     HDC hdc = get_handle( &args );
     DWORD which = get_ulong( &args );
