@@ -52,7 +52,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
    indicates that pairs are not reordered basing on hash value.
  */
 
-struct keyitem_pair {
+struct keyitem_pair
+{
     struct  list entry;
     struct  list bucket;
     DWORD   hash;
@@ -60,7 +61,7 @@ struct keyitem_pair {
     VARIANT item;
 };
 
-typedef struct
+struct dictionary
 {
     struct provideclassinfo classinfo;
     IDictionary IDictionary_iface;
@@ -71,20 +72,21 @@ typedef struct
     struct list pairs;
     struct list buckets[BUCKET_COUNT];
     struct list notifier;
-} dictionary;
+};
 
-struct dictionary_enum {
+struct dictionary_enum
+{
     IEnumVARIANT IEnumVARIANT_iface;
     LONG ref;
 
-    dictionary *dict;
+    struct dictionary *dict;
     struct list *cur;
     struct list notify;
 };
 
-static inline dictionary *impl_from_IDictionary(IDictionary *iface)
+static inline struct dictionary *impl_from_IDictionary(IDictionary *iface)
 {
-    return CONTAINING_RECORD(iface, dictionary, IDictionary_iface);
+    return CONTAINING_RECORD(iface, struct dictionary, IDictionary_iface);
 }
 
 static inline struct dictionary_enum *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
@@ -92,7 +94,7 @@ static inline struct dictionary_enum *impl_from_IEnumVARIANT(IEnumVARIANT *iface
     return CONTAINING_RECORD(iface, struct dictionary_enum, IEnumVARIANT_iface);
 }
 
-static inline struct list *get_bucket_head(dictionary *dict, DWORD hash)
+static inline struct list *get_bucket_head(struct dictionary *dict, DWORD hash)
 {
     return &dict->buckets[hash % BUCKET_COUNT];
 }
@@ -115,7 +117,7 @@ static inline WCHAR *get_key_strptr(const VARIANT *key)
 }
 
 /* should be used only when both keys are of string type, it's not checked */
-static inline int strcmp_key(const dictionary *dict, const VARIANT *key1, const VARIANT *key2)
+static inline int strcmp_key(const struct dictionary *dict, const VARIANT *key1, const VARIANT *key2)
 {
     const WCHAR *str1, *str2;
 
@@ -124,7 +126,7 @@ static inline int strcmp_key(const dictionary *dict, const VARIANT *key1, const 
     return dict->method == BinaryCompare ? wcscmp(str1, str2) : wcsicmp(str1, str2);
 }
 
-static BOOL is_matching_key(const dictionary *dict, const struct keyitem_pair *pair, const VARIANT *key, DWORD hash)
+static BOOL is_matching_key(const struct dictionary *dict, const struct keyitem_pair *pair, const VARIANT *key, DWORD hash)
 {
     if (is_string_key(key) && is_string_key(&pair->key)) {
         if (hash != pair->hash)
@@ -141,7 +143,7 @@ static BOOL is_matching_key(const dictionary *dict, const struct keyitem_pair *p
     return hash == pair->hash;
 }
 
-static struct keyitem_pair *get_keyitem_pair(dictionary *dict, VARIANT *key)
+static struct keyitem_pair *get_keyitem_pair(struct dictionary *dict, VARIANT *key)
 {
     struct keyitem_pair *pair;
     struct list *head, *entry;
@@ -165,7 +167,7 @@ static struct keyitem_pair *get_keyitem_pair(dictionary *dict, VARIANT *key)
     return NULL;
 }
 
-static HRESULT add_keyitem_pair(dictionary *dict, VARIANT *key, VARIANT *item)
+static HRESULT add_keyitem_pair(struct dictionary *dict, VARIANT *key, VARIANT *item)
 {
     struct keyitem_pair *pair;
     struct list *head;
@@ -316,7 +318,7 @@ static HRESULT WINAPI dict_enum_Reset(IEnumVARIANT *iface)
     return S_OK;
 }
 
-static HRESULT create_dict_enum(dictionary*, IUnknown**);
+static HRESULT create_dict_enum(struct dictionary *, IUnknown**);
 
 static HRESULT WINAPI dict_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **cloned)
 {
@@ -335,7 +337,7 @@ static const IEnumVARIANTVtbl dictenumvtbl = {
     dict_enum_Clone
 };
 
-static HRESULT create_dict_enum(dictionary *dict, IUnknown **ret)
+static HRESULT create_dict_enum(struct dictionary *dict, IUnknown **ret)
 {
     struct dictionary_enum *object;
 
@@ -373,8 +375,9 @@ static void notify_remove_pair(struct list *notifier, struct list *pair)
 
 static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid, void **obj)
 {
-    dictionary *This = impl_from_IDictionary(iface);
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     *obj = NULL;
 
@@ -382,11 +385,11 @@ static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid,
        IsEqualIID(riid, &IID_IDispatch) ||
        IsEqualIID(riid, &IID_IDictionary))
     {
-        *obj = &This->IDictionary_iface;
+        *obj = &dictionary->IDictionary_iface;
     }
     else if (IsEqualIID(riid, &IID_IProvideClassInfo))
     {
-        *obj = &This->classinfo.IProvideClassInfo_iface;
+        *obj = &dictionary->classinfo.IProvideClassInfo_iface;
     }
     else if ( IsEqualGUID( riid, &IID_IDispatchEx ))
     {
@@ -412,17 +415,17 @@ static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid,
 
 static ULONG WINAPI dictionary_AddRef(IDictionary *iface)
 {
-    dictionary *This = impl_from_IDictionary(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
+    ULONG ref = InterlockedIncrement(&dictionary->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("%p, refcount %u.\n", iface, ref);
 
     return ref;
 }
 
 static ULONG WINAPI dictionary_Release(IDictionary *iface)
 {
-    dictionary *dictionary = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     ULONG ref = InterlockedDecrement(&dictionary->ref);
 
     TRACE("%p, refcount %u.\n", iface, ref);
@@ -438,9 +441,7 @@ static ULONG WINAPI dictionary_Release(IDictionary *iface)
 
 static HRESULT WINAPI dictionary_GetTypeInfoCount(IDictionary *iface, UINT *pctinfo)
 {
-    dictionary *This = impl_from_IDictionary(iface);
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
+    TRACE("%p, %p.\n", iface, pctinfo);
 
     *pctinfo = 1;
     return S_OK;
@@ -448,20 +449,18 @@ static HRESULT WINAPI dictionary_GetTypeInfoCount(IDictionary *iface, UINT *pcti
 
 static HRESULT WINAPI dictionary_GetTypeInfo(IDictionary *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    TRACE("%p, %u, %u, %p.\n", iface, iTInfo, lcid, ppTInfo);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo(IDictionary_tid, ppTInfo);
 }
 
 static HRESULT WINAPI dictionary_GetIDsOfNames(IDictionary *iface, REFIID riid, LPOLESTR *rgszNames,
                 UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    dictionary *This = impl_from_IDictionary(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %u, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IDictionary_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -477,17 +476,17 @@ static HRESULT WINAPI dictionary_Invoke(IDictionary *iface, DISPID dispIdMember,
                 LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
                 EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %d, %s, %d, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IDictionary_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IDictionary_iface, dispIdMember, wFlags,
+        hr = ITypeInfo_Invoke(typeinfo, &dictionary->IDictionary_iface, dispIdMember, wFlags,
                 pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -497,21 +496,19 @@ static HRESULT WINAPI dictionary_Invoke(IDictionary *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI dictionary_putref_Item(IDictionary *iface, VARIANT *Key, VARIANT *pRetItem)
 {
-    dictionary *This = impl_from_IDictionary(iface);
-
-    FIXME("(%p)->(%p %p)\n", This, Key, pRetItem);
+    FIXME("%p, %p, %p stub\n", iface, Key, pRetItem);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI dictionary_put_Item(IDictionary *iface, VARIANT *key, VARIANT *item)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
 
-    TRACE("(%p)->(%s %s)\n", This, debugstr_variant(key), debugstr_variant(item));
+    TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(item));
 
-    if ((pair = get_keyitem_pair(This, key)))
+    if ((pair = get_keyitem_pair(dictionary, key)))
         return VariantCopyInd(&pair->item, item);
 
     return IDictionary_Add(iface, key, item);
@@ -519,12 +516,12 @@ static HRESULT WINAPI dictionary_put_Item(IDictionary *iface, VARIANT *key, VARI
 
 static HRESULT WINAPI dictionary_get_Item(IDictionary *iface, VARIANT *key, VARIANT *item)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(key), item);
+    TRACE("%p, %s, %p.\n", iface, debugstr_variant(key), item);
 
-    if ((pair = get_keyitem_pair(This, key)))
+    if ((pair = get_keyitem_pair(dictionary, key)))
         VariantCopy(item, &pair->item);
     else {
         VariantInit(item);
@@ -536,42 +533,42 @@ static HRESULT WINAPI dictionary_get_Item(IDictionary *iface, VARIANT *key, VARI
 
 static HRESULT WINAPI dictionary_Add(IDictionary *iface, VARIANT *key, VARIANT *item)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%s %s)\n", This, debugstr_variant(key), debugstr_variant(item));
+    TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(item));
 
-    if (get_keyitem_pair(This, key))
+    if (get_keyitem_pair(dictionary, key))
         return CTL_E_KEY_ALREADY_EXISTS;
 
-    return add_keyitem_pair(This, key, item);
+    return add_keyitem_pair(dictionary, key, item);
 }
 
 static HRESULT WINAPI dictionary_get_Count(IDictionary *iface, LONG *count)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%p)\n", This, count);
+    TRACE("%p, %p.\n", iface, count);
 
-    *count = This->count;
+    *count = dictionary->count;
     return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Exists(IDictionary *iface, VARIANT *key, VARIANT_BOOL *exists)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(key), exists);
+    TRACE("%p, %s, %p.\n", iface, debugstr_variant(key), exists);
 
     if (!exists)
         return CTL_E_ILLEGALFUNCTIONCALL;
 
-    *exists = get_keyitem_pair(This, key) != NULL ? VARIANT_TRUE : VARIANT_FALSE;
+    *exists = get_keyitem_pair(dictionary, key) != NULL ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
     SAFEARRAYBOUND bound;
     SAFEARRAY *sa;
@@ -579,13 +576,13 @@ static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
     HRESULT hr;
     LONG i;
 
-    TRACE("(%p)->(%p)\n", This, items);
+    TRACE("%p, %p.\n", iface, items);
 
     if (!items)
         return S_OK;
 
     bound.lLbound = 0;
-    bound.cElements = This->count;
+    bound.cElements = dictionary->count;
     sa = SafeArrayCreate(VT_VARIANT, 1, &bound);
     if (!sa)
         return E_OUTOFMEMORY;
@@ -597,7 +594,8 @@ static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
     }
 
     i = 0;
-    LIST_FOR_EACH_ENTRY(pair, &This->pairs, struct keyitem_pair, entry) {
+    LIST_FOR_EACH_ENTRY(pair, &dictionary->pairs, struct keyitem_pair, entry)
+    {
         VariantCopy(&v[i], &pair->item);
         i++;
     }
@@ -610,14 +608,15 @@ static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
 
 static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *key, VARIANT *newkey)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
     VARIANT empty;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %s)\n", This, debugstr_variant(key), debugstr_variant(newkey));
+    TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(newkey));
 
-    if ((pair = get_keyitem_pair(This, key))) {
+    if ((pair = get_keyitem_pair(dictionary, key)))
+    {
         /* found existing pair for a key, add new pair with new key
            and old item and remove old pair after that */
 
@@ -634,7 +633,7 @@ static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *key, VARIA
 
 static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
     SAFEARRAYBOUND bound;
     SAFEARRAY *sa;
@@ -642,13 +641,13 @@ static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
     HRESULT hr;
     LONG i;
 
-    TRACE("(%p)->(%p)\n", This, keys);
+    TRACE("%p, %p.\n", iface, keys);
 
     if (!keys)
         return S_OK;
 
     bound.lLbound = 0;
-    bound.cElements = This->count;
+    bound.cElements = dictionary->count;
     sa = SafeArrayCreate(VT_VARIANT, 1, &bound);
     if (!sa)
         return E_OUTOFMEMORY;
@@ -660,7 +659,8 @@ static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
     }
 
     i = 0;
-    LIST_FOR_EACH_ENTRY(pair, &This->pairs, struct keyitem_pair, entry) {
+    LIST_FOR_EACH_ENTRY(pair, &dictionary->pairs, struct keyitem_pair, entry)
+    {
         VariantCopy(&v[i], &pair->key);
         i++;
     }
@@ -673,18 +673,18 @@ static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
 
 static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_variant(key));
+    TRACE("%p, %s.\n", iface, debugstr_variant(key));
 
-    if (!(pair = get_keyitem_pair(This, key)))
+    if (!(pair = get_keyitem_pair(dictionary, key)))
         return CTL_E_ELEMENT_NOT_FOUND;
 
-    notify_remove_pair(&This->notifier, &pair->entry);
+    notify_remove_pair(&dictionary->notifier, &pair->entry);
     list_remove(&pair->entry);
     list_remove(&pair->bucket);
-    This->count--;
+    dictionary->count--;
 
     free_keyitem_pair(pair);
     return S_OK;
@@ -692,55 +692,56 @@ static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
 
 static HRESULT WINAPI dictionary_RemoveAll(IDictionary *iface)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
     struct keyitem_pair *pair, *pair2;
 
-    TRACE("(%p)\n", This);
+    TRACE("%p.\n", iface);
 
-    if (This->count == 0)
+    if (!dictionary->count)
         return S_OK;
 
-    notify_remove_pair(&This->notifier, NULL);
-    LIST_FOR_EACH_ENTRY_SAFE(pair, pair2, &This->pairs, struct keyitem_pair, entry) {
+    notify_remove_pair(&dictionary->notifier, NULL);
+    LIST_FOR_EACH_ENTRY_SAFE(pair, pair2, &dictionary->pairs, struct keyitem_pair, entry)
+    {
         list_remove(&pair->entry);
         list_remove(&pair->bucket);
         free_keyitem_pair(pair);
     }
-    This->count = 0;
+    dictionary->count = 0;
 
     return S_OK;
 }
 
 static HRESULT WINAPI dictionary_put_CompareMode(IDictionary *iface, CompareMethod method)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%d)\n", This, method);
+    TRACE("%p, %d.\n", iface, method);
 
-    if (This->count)
+    if (dictionary->count)
         return CTL_E_ILLEGALFUNCTIONCALL;
 
-    This->method = method;
+    dictionary->method = method;
     return S_OK;
 }
 
 static HRESULT WINAPI dictionary_get_CompareMode(IDictionary *iface, CompareMethod *method)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%p)\n", This, method);
+    TRACE("%p, %p.\n", iface, method);
 
-    *method = This->method;
+    *method = dictionary->method;
     return S_OK;
 }
 
 static HRESULT WINAPI dictionary__NewEnum(IDictionary *iface, IUnknown **ret)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%p)\n", This, ret);
+    TRACE("%p, %p.\n", iface, ret);
 
-    return create_dict_enum(This, ret);
+    return create_dict_enum(dictionary, ret);
 }
 
 static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
@@ -789,16 +790,16 @@ static DWORD get_ptr_hash(void *ptr)
 
 static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, VARIANT *hash)
 {
-    dictionary *This = impl_from_IDictionary(iface);
+    struct dictionary *dictionary = impl_from_IDictionary(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(key), hash);
+    TRACE("%p, %s, %p.\n", iface, debugstr_variant(key), hash);
 
     V_VT(hash) = VT_I4;
     switch (V_VT(key))
     {
     case VT_BSTR|VT_BYREF:
     case VT_BSTR:
-        V_I4(hash) = get_str_hash(get_key_strptr(key), This->method);
+        V_I4(hash) = get_str_hash(get_key_strptr(key), dictionary->method);
         break;
     case VT_UI1|VT_BYREF:
     case VT_UI1:
@@ -887,7 +888,7 @@ static const struct IDictionaryVtbl dictionary_vtbl =
 
 HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **ret)
 {
-    dictionary *object;
+    struct dictionary *object;
 
     TRACE("(%p, %p, %s, %p)\n", factory, outer, debugstr_guid(riid), ret);
 
