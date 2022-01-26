@@ -254,6 +254,7 @@ struct socket
     DWORD reason_len;
     char *send_frame_buffer;
     unsigned int send_frame_buffer_size;
+    unsigned int bytes_in_send_frame_buffer;
 };
 
 struct send_request

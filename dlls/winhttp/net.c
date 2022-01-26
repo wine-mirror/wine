@@ -436,21 +436,23 @@ static DWORD send_ssl_chunk( struct netconn *conn, const void *msg, size_t size,
 
 DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent, WSAOVERLAPPED *ovr )
 {
+    DWORD err;
+
     if (conn->secure)
     {
         const BYTE *ptr = msg;
         size_t chunk_size;
         DWORD res;
 
-        if (ovr && len > conn->ssl_sizes.cbMaximumMessage) return WSAEWOULDBLOCK;
-
         *sent = 0;
         while (len)
         {
             chunk_size = min( len, conn->ssl_sizes.cbMaximumMessage );
             if ((res = send_ssl_chunk( conn, ptr, chunk_size, ovr )))
+            {
+                if (res == WSA_IO_PENDING) *sent += chunk_size;
                 return res;
-
+            }
             *sent += chunk_size;
             ptr += chunk_size;
             len -= chunk_size;
@@ -459,7 +461,12 @@ DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent
         return ERROR_SUCCESS;
     }
 
-    if ((*sent = sock_send( conn->socket, msg, len, ovr )) < 0) return WSAGetLastError();
+    if ((*sent = sock_send( conn->socket, msg, len, ovr )) < 0)
+    {
+        err = WSAGetLastError();
+        *sent = (err == WSA_IO_PENDING) ? len : 0;
+        return err;
+    }
     return ERROR_SUCCESS;
 }
 

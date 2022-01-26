@@ -678,8 +678,8 @@ static const struct notification websocket_test[] =
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NF_SIGNAL },
-    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
-    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
+    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SAVE_BUFFER | NF_SIGNAL },
+    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SAVE_BUFFER | NF_SIGNAL },
     { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NF_SIGNAL },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, NF_WINE_ALLOW },
@@ -712,18 +712,22 @@ static const struct notification websocket_test2[] =
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, NF_SIGNAL }
 };
 
+#define BIG_BUFFER_SIZE (32 * 1024)
+
 static void test_websocket(BOOL secure)
 {
     HANDLE session, connection, request, socket, event;
     WINHTTP_WEB_SOCKET_ASYNC_RESULT *result;
+    WINHTTP_WEB_SOCKET_STATUS *ws_status;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     DWORD size, status, err;
     BOOL ret, unload = TRUE;
     struct info info, *context = &info;
+    unsigned char *big_buffer;
     char buffer[1024];
     USHORT close_status;
     DWORD protocols, flags;
-    unsigned int i;
+    unsigned int i, test_index, offset;
 
     if (!pWinHttpWebSocketCompleteUpgrade)
     {
@@ -831,17 +835,24 @@ static void test_websocket(BOOL secure)
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     WaitForSingleObject( info.wait, INFINITE );
 
-    for (i = 0; i < 2; ++i)
-    {
-        /* The send is executed synchronously (even if sending a reasonably big buffer exceeding SSL buffer size).
-         * It is possible to trigger queueing the send into another thread but that involves sending a considerable
-         * amount of big enough buffers. */
-        setup_test( &info, winhttp_websocket_send, __LINE__ );
-        err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
-                                     (void*)"hello", sizeof("hello") );
-        ok( err == ERROR_SUCCESS, "got %u\n", err );
-        WaitForSingleObject( info.wait, INFINITE );
-    }
+    /* The send is executed synchronously (even if sending a reasonably big buffer exceeding SSL buffer size).
+     * It is possible to trigger queueing the send into another thread but that involves sending a considerable
+     * amount of big enough buffers. */
+    big_buffer = malloc( BIG_BUFFER_SIZE );
+    for (i = 0; i < BIG_BUFFER_SIZE; ++i)
+        big_buffer[i] = (i & 0xff) ^ 0xcc;
+
+    setup_test( &info, winhttp_websocket_send, __LINE__ );
+    err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
+                                 big_buffer, BIG_BUFFER_SIZE );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+    WaitForSingleObject( info.wait, INFINITE );
+
+    setup_test( &info, winhttp_websocket_send, __LINE__ );
+    err = pWinHttpWebSocketSend( socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE,
+                                 (void*)"hello", sizeof("hello") );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+    WaitForSingleObject( info.wait, INFINITE );
 
     setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
     err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
@@ -866,20 +877,47 @@ static void test_websocket(BOOL secure)
     err = pWinHttpWebSocketReceive( socket, buffer, sizeof(buffer), &size, &type );
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     WaitForSingleObject( info.wait, INFINITE );
+    ok( info.buflen == sizeof(*ws_status), "got unexpected buflen %u.\n", info.buflen );
+    ws_status = (WINHTTP_WEB_SOCKET_STATUS *)info.buffer;
+    ok( ws_status->eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE,
+        "Got unexpected eBufferType %u.\n", ws_status->eBufferType );
     ok( size == 0xdeadbeef, "got %u\n", size );
     ok( type == 0xdeadbeef, "got %u\n", type );
     ok( buffer[0] == 'R', "unexpected data\n" );
 
-    setup_test( &info, winhttp_websocket_receive, __LINE__ );
-    buffer[0] = 0;
-    size = 0xdeadbeef;
-    type = 0xdeadbeef;
-    err = pWinHttpWebSocketReceive( socket, buffer, sizeof(buffer), &size, &type );
-    ok( err == ERROR_SUCCESS, "got %u\n", err );
-    WaitForSingleObject( info.wait, INFINITE );
-    ok( size == 0xdeadbeef, "got %u\n", size );
-    ok( type == 0xdeadbeef, "got %u\n", type );
-    ok( buffer[0] == 'h', "unexpected data\n" );
+    memset( big_buffer, 0, BIG_BUFFER_SIZE );
+    offset = 0;
+    test_index = info.index;
+    do
+    {
+        info.index = test_index;
+        setup_test( &info, winhttp_websocket_receive, __LINE__ );
+        size = 0xdeadbeef;
+        type = 0xdeadbeef;
+        ws_status = (WINHTTP_WEB_SOCKET_STATUS *)info.buffer;
+        ws_status->eBufferType = ~0u;
+        err = pWinHttpWebSocketReceive( socket, big_buffer + offset, BIG_BUFFER_SIZE - offset, &size, &type );
+        ok( err == ERROR_SUCCESS, "got %u\n", err );
+        WaitForSingleObject( info.wait, INFINITE );
+        ok( info.buflen == sizeof(*ws_status), "got unexpected buflen %u.\n", info.buflen );
+        ok( ws_status->eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE
+            || ws_status->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE,
+            "Got unexpected eBufferType %u.\n", ws_status->eBufferType );
+        offset += ws_status->dwBytesTransferred;
+        ok( offset <= BIG_BUFFER_SIZE, "Got unexpected dwBytesTransferred %u.\n",
+            ws_status->dwBytesTransferred );
+        ok( size == 0xdeadbeef, "got %u\n", size );
+        ok( type == 0xdeadbeef, "got %u\n", type );
+    }
+    while (ws_status->eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE);
+
+    ok( offset == BIG_BUFFER_SIZE, "Got unexpected offset %u.\n", offset );
+
+    for (i = 0; i < BIG_BUFFER_SIZE; ++i)
+        if (big_buffer[i] != ((i & 0xff) ^ 0xcc)) break;
+    ok( i == BIG_BUFFER_SIZE, "unexpected data %#x at %u\n", (unsigned char)big_buffer[i], i );
+
+    free( big_buffer );
 
     close_status = 0xdead;
     size = sizeof(buffer) + 1;
