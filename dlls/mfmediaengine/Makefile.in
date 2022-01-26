@@ -1,5 +1,4 @@
 MODULE    = mfmediaengine.dll
-IMPORTLIB = mfmediaengine
 IMPORTS = oleaut32 ole32 mfplat mf mfuuid dxguid uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
