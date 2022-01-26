@@ -126,7 +126,7 @@ static HRESULT STDMETHODCALLTYPE hstring_vector_GetTrustLevel(IVectorView_HSTRIN
 }
 
 static HRESULT STDMETHODCALLTYPE hstring_vector_GetAt(IVectorView_HSTRING *iface,
-        ULONG index, HSTRING *value)
+        UINT32 index, HSTRING *value)
 {
     struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
 
@@ -138,7 +138,7 @@ static HRESULT STDMETHODCALLTYPE hstring_vector_GetAt(IVectorView_HSTRING *iface
 }
 
 static HRESULT STDMETHODCALLTYPE hstring_vector_get_Size(IVectorView_HSTRING *iface,
-        ULONG *value)
+        UINT32 *value)
 {
     struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
 
@@ -149,7 +149,7 @@ static HRESULT STDMETHODCALLTYPE hstring_vector_get_Size(IVectorView_HSTRING *if
 }
 
 static HRESULT STDMETHODCALLTYPE hstring_vector_IndexOf(IVectorView_HSTRING *iface,
-        HSTRING element, ULONG *index, BOOLEAN *found)
+        HSTRING element, UINT32 *index, BOOLEAN *found)
 {
     struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
     INT32 i, order;
@@ -175,7 +175,7 @@ static HRESULT STDMETHODCALLTYPE hstring_vector_IndexOf(IVectorView_HSTRING *ifa
 }
 
 static HRESULT STDMETHODCALLTYPE hstring_vector_GetMany(IVectorView_HSTRING *iface,
-        ULONG start_index, ULONG items_size, HSTRING *items, UINT *count)
+        UINT32 start_index, UINT32 items_size, HSTRING *items, UINT *count)
 {
     struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
     HRESULT hr = S_OK;
