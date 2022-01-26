@@ -4766,7 +4766,7 @@ static void test_shared_bitmap(BOOL d3d11)
             bitmap_desc.pixelFormat = bitmap_format_tests[i].original;
 
             hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_IDXGISurface, surface2, &bitmap_desc, &bitmap2);
-        todo_wine_if(i == 2 || i == 3 || i == 5 || i == 6)
+            todo_wine_if(i == 2 || i == 3 || i == 5 || i == 6)
             ok(hr == bitmap_format_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
 
             if (SUCCEEDED(bitmap_format_tests[i].hr))
@@ -5233,8 +5233,7 @@ static void test_draw_text_layout(BOOL d3d11)
     ID2D1RenderTarget_DrawTextLayout(rt, origin, text_layout, (ID2D1Brush*)brush, D2D1_DRAW_TEXT_OPTIONS_NONE);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
-todo_wine
-    ok(hr == D2DERR_WRONG_FACTORY, "Unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == D2DERR_WRONG_FACTORY, "Got unexpected hr %#x.\n", hr);
 
     /* Effect is d2d resource, but not a brush. */
     set_rect(&rect, 0.0f, 0.0f, 10.0f, 10.0f);
@@ -5500,8 +5499,7 @@ static void test_dc_target(BOOL d3d11)
 
     /* Invalid DC. */
     hr = ID2D1DCRenderTarget_BindDC(rt, (HDC)0xdeadbeef, &rect);
-todo_wine
-    ok(hr == E_INVALIDARG, "BindDC() returned %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     ID2D1DCRenderTarget_BeginDraw(rt);
 
@@ -5512,8 +5510,7 @@ todo_wine
     ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     clr = GetPixel(hdc2, 0, 0);
-todo_wine
-    ok(clr == RGB(255, 0, 0), "Unexpected color 0x%08x.\n", clr);
+    todo_wine ok(clr == RGB(255, 0, 0), "Got unexpected colour 0x%08x.\n", clr);
 
     hr = ID2D1DCRenderTarget_BindDC(rt, NULL, &rect);
     ok(hr == E_INVALIDARG, "BindDC() returned %#x.\n", hr);
@@ -5527,8 +5524,7 @@ todo_wine
     ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     clr = GetPixel(hdc2, 0, 0);
-todo_wine
-    ok(clr == RGB(0, 0, 255), "Unexpected color 0x%08x.\n", clr);
+    todo_wine ok(clr == RGB(0, 0, 255), "Got unexpected colour 0x%08x.\n", clr);
 
     DeleteDC(hdc);
     DeleteDC(hdc2);
@@ -7884,8 +7880,7 @@ static void test_gdi_interop(BOOL d3d11)
     dc = (void *)0xdeadbeef;
     hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
     ok(FAILED(hr), "GetDC() was expected to fail, hr %#x.\n", hr);
-todo_wine
-    ok(dc == NULL, "Expected NULL dc, got %p.\n", dc);
+    todo_wine ok(!dc, "Got unexpected DC %p.\n", dc);
     ID2D1GdiInteropRenderTarget_Release(interop);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
@@ -7942,8 +7937,7 @@ todo_wine
 
     ID2D1RenderTarget_BeginDraw(rt);
     hr = IWICBitmap_Lock(wic_bitmap, NULL, WICBitmapLockRead, &wic_lock);
-todo_wine
-    ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Expected bitmap to be locked, hr %#x.\n", hr);
+    todo_wine ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         IWICBitmapLock_Release(wic_lock);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
@@ -7954,8 +7948,7 @@ todo_wine
     ok(SUCCEEDED(hr), "Expected bitmap to be unlocked, hr %#x.\n", hr);
     ID2D1RenderTarget_BeginDraw(rt);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
-todo_wine
-    ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Got unexpected hr %#x.\n", hr);
     IWICBitmapLock_Release(wic_lock);
 
     ID2D1GdiInteropRenderTarget_Release(interop);
@@ -8460,7 +8453,7 @@ static void test_bitmap_surface(BOOL d3d11)
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
 
         hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, ctx.surface, &bitmap_desc, &bitmap);
-    todo_wine_if(bitmap_format_tests[i].hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
+        todo_wine_if(bitmap_format_tests[i].hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
         ok(hr == bitmap_format_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
 
         if (SUCCEEDED(bitmap_format_tests[i].hr))
@@ -8716,8 +8709,7 @@ static void test_device_context(BOOL d3d11)
     ok(options == (D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW),
             "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
-todo_wine
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     ID2D1Bitmap1_Release(bitmap);
 
     ID2D1DeviceContext_SetTarget(device_context, NULL);
@@ -8982,8 +8974,7 @@ static void test_command_list(BOOL d3d11)
     ok(device_context != NULL, "Failed to create device context.\n");
 
     hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
-todo_wine
-    ok(SUCCEEDED(hr), "Failed to create command list, hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     if (FAILED(hr))
     {
