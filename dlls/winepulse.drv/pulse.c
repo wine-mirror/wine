@@ -59,7 +59,7 @@ struct pulse_stream
 
     INT32 locked;
     BOOL started;
-    SIZE_T bufsize_frames, alloc_size, real_bufsize_bytes, period_bytes;
+    SIZE_T bufsize_frames, real_bufsize_bytes, period_bytes;
     SIZE_T peek_ofs, read_offs_bytes, lcl_offs_bytes, pa_offs_bytes;
     SIZE_T tmp_buffer_bytes, held_bytes, peek_len, peek_buffer_len, pa_held_bytes;
     BYTE *local_buffer, *tmp_buffer, *peek_buffer;
@@ -868,14 +868,16 @@ static NTSTATUS pulse_create_stream(void *args)
     if (SUCCEEDED(hr)) {
         UINT32 unalign;
         const pa_buffer_attr *attr = pa_stream_get_buffer_attr(stream->stream);
+        SIZE_T size;
+
         stream->attr = *attr;
         /* Update frames according to new size */
         dump_attr(attr);
         if (stream->dataflow == eRender) {
-            stream->alloc_size = stream->real_bufsize_bytes =
+            size = stream->real_bufsize_bytes =
                 stream->bufsize_frames * 2 * pa_frame_size(&stream->ss);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        0, &stream->alloc_size, MEM_COMMIT, PAGE_READWRITE))
+                                        0, &size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
         } else {
             UINT32 i, capture_packets;
@@ -887,9 +889,9 @@ static NTSTATUS pulse_create_stream(void *args)
 
             capture_packets = stream->real_bufsize_bytes / stream->period_bytes;
 
-            stream->alloc_size = stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket);
+            size = stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        0, &stream->alloc_size, MEM_COMMIT, PAGE_READWRITE))
+                                        0, &size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
             else {
                 ACPacket *cur_packet = (ACPacket*)((char*)stream->local_buffer + stream->real_bufsize_bytes);
