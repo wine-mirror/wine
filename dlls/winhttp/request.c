@@ -3244,6 +3244,12 @@ static void send_io_complete( struct object_header *hdr )
     assert( count >= 0 );
 }
 
+static void receive_io_complete( struct socket *socket )
+{
+    LONG count = InterlockedDecrement( &socket->hdr.pending_receives );
+    assert( count >= 0 );
+}
+
 static enum socket_opcode map_buffer_type( WINHTTP_WEB_SOCKET_BUFFER_TYPE type )
 {
     switch (type)
@@ -3614,6 +3620,7 @@ static void CALLBACK task_socket_receive( TP_CALLBACK_INSTANCE *instance, void *
 
     TRACE("running %p\n", work);
     ret = socket_receive( r->socket, r->buf, r->len, &count, &type );
+    receive_io_complete( r->socket );
 
     if (!ret)
     {
@@ -3667,8 +3674,10 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
         r->len    = len;
 
         addref_object( &socket->hdr );
+        InterlockedIncrement( &socket->hdr.pending_receives );
         if ((ret = queue_task( &socket->recv_q, task_socket_receive, r )))
         {
+            InterlockedDecrement( &socket->hdr.pending_receives );
             release_object( &socket->hdr );
             free( r );
         }
