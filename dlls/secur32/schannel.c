@@ -831,6 +831,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         }
 
         TRACE("Using expected_size %lu.\n", expected_size);
+
+        if (phNewContext) *phNewContext = *phContext;
     }
 
     ctx->req_ctx_attr = fContextReq;

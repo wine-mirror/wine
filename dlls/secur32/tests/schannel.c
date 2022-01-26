@@ -953,7 +953,7 @@ static void test_communication(void)
     ULONG attrs;
     SCHANNEL_CRED cred;
     CredHandle cred_handle;
-    CtxtHandle context;
+    CtxtHandle context, context2;
     SecPkgCredentials_NamesA names;
     SecPkgContext_StreamSizes sizes;
     SecPkgContext_ConnectionInfo conn_info;
@@ -1044,12 +1044,15 @@ todo_wine
     send(sock, buf->pvBuffer, buf->cbBuffer, 0);
     buf->cbBuffer = buf_size;
 
+    context2.dwLower = context2.dwUpper = 0xdeadbeef;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
-            0, 0, NULL, 0, NULL, &buffers[0], &attrs, NULL);
+            0, 0, NULL, 0, &context2, &buffers[0], &attrs, NULL);
     ok(status == SEC_E_INCOMPLETE_MESSAGE, "Got unexpected status %#x.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+    ok( context2.dwLower == 0xdeadbeef, "Did not expect dwLower to be set on new context\n");
+    ok( context2.dwUpper == 0xdeadbeef, "Did not expect dwUpper to be set on new context\n");
 
     buffers[1].cBuffers = 1;
     buffers[1].pBuffers[0].cbBuffer = 0;
@@ -1076,19 +1079,22 @@ todo_wine
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
 
+    context2.dwLower = context2.dwUpper = 0xdeadbeef;
     buffers[1].pBuffers[0].cbBuffer = 5;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
-            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+            0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
     ok(status == SEC_E_INCOMPLETE_MESSAGE || status == SEC_E_INVALID_TOKEN,
        "Got unexpected status %#x.\n", status);
     ok(buffers[0].pBuffers[0].cbBuffer == buf_size, "Output buffer size changed.\n");
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_TOKEN, "Output buffer type changed.\n");
+    ok( context2.dwLower == 0xdeadbeef, "Did not expect dwLower to be set on new context\n");
+    ok( context2.dwUpper == 0xdeadbeef, "Did not expect dwUpper to be set on new context\n");
 
     buffers[1].pBuffers[0].cbBuffer = ret;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS,
-            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+            0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
     buffers[1].pBuffers[0].cbBuffer = buf_size;
     while (status == SEC_I_CONTINUE_NEEDED)
     {
@@ -1096,11 +1102,15 @@ todo_wine
         send(sock, buf->pvBuffer, buf->cbBuffer, 0);
         buf->cbBuffer = buf_size;
 
+        ok( context.dwLower == context2.dwLower, "dwLower mismatch, expected %#lx, got %#lx\n", context.dwLower, context2.dwLower);
+        ok( context.dwUpper == context2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", context.dwUpper, context2.dwUpper);
+
         buf = &buffers[1].pBuffers[0];
         ret = receive_data(sock, buf);
         if (ret == -1)
             return;
 
+        context2.dwLower = context2.dwUpper = 0xdeadbeef;
         buf->BufferType = SECBUFFER_TOKEN;
 
         status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
@@ -1338,7 +1348,7 @@ todo_wine
 
     buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
-        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, NULL,
+        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, &context2,
         &buffers[0], &attrs, NULL);
     buffers[1].pBuffers[0].cbBuffer = buf_size;
     while (status == SEC_I_CONTINUE_NEEDED)
@@ -1347,14 +1357,18 @@ todo_wine
         send(sock, buf->pvBuffer, buf->cbBuffer, 0);
         buf->cbBuffer = buf_size;
 
+        todo_wine ok( context.dwLower == context2.dwLower, "dwLower mismatch, expected %#lx, got %#lx\n", context.dwLower, context2.dwLower);
+        todo_wine ok( context.dwUpper == context2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", context.dwUpper, context2.dwUpper);
+
         buf = &buffers[1].pBuffers[0];
         ret = receive_data(sock, buf);
         if (ret == -1)
             return;
 
+        context2.dwLower = context2.dwUpper = 0xdeadbeef;
         buf->BufferType = SECBUFFER_TOKEN;
         status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
-            ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+            ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
         buffers[1].pBuffers[0].cbBuffer = buf_size;
     }
     ok (status == SEC_E_OK, "got %08x\n", status);
@@ -1399,7 +1413,7 @@ static void test_application_protocol_negotiation(void)
     ULONG attrs;
     SCHANNEL_CRED cred;
     CredHandle cred_handle;
-    CtxtHandle context;
+    CtxtHandle context, context2;
     SecPkgContext_ApplicationProtocol protocol;
     SecBufferDesc buffers[3];
     SecBuffer *buf;
@@ -1467,9 +1481,10 @@ static void test_application_protocol_negotiation(void)
     if (ret == -1)
         return;
 
+    context2.dwLower = context2.dwUpper = 0xdeadbeef;
     buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
-        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, NULL,
+        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, &context2,
         &buffers[0], &attrs, NULL);
     buffers[1].pBuffers[0].cbBuffer = buf_size;
     while (status == SEC_I_CONTINUE_NEEDED)
@@ -1478,11 +1493,15 @@ static void test_application_protocol_negotiation(void)
         send(sock, buf->pvBuffer, buf->cbBuffer, 0);
         buf->cbBuffer = buf_size;
 
+        ok( context.dwLower == context2.dwLower, "dwLower mismatch, expected %#lx, got %#lx\n", context.dwLower, context2.dwLower);
+        ok( context.dwUpper == context2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", context.dwUpper, context2.dwUpper);
+
         buf = &buffers[1].pBuffers[0];
         ret = receive_data(sock, buf);
         if (ret == -1)
             return;
 
+        context2.dwLower = context2.dwUpper = 0xdeadbeef;
         buf->BufferType = SECBUFFER_TOKEN;
         status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
