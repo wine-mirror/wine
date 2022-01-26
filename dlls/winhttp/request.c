@@ -3578,7 +3578,7 @@ static WINHTTP_WEB_SOCKET_BUFFER_TYPE map_opcode( enum socket_opcode opcode, BOO
 }
 
 static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD *ret_len,
-                             WINHTTP_WEB_SOCKET_BUFFER_TYPE *ret_type, BOOL async )
+                             WINHTTP_WEB_SOCKET_BUFFER_TYPE *ret_type )
 {
     DWORD count, ret = ERROR_SUCCESS;
 
@@ -3601,29 +3601,8 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
             WARN("Short read.\n");
 
         socket->read_size -= count;
-        if (!async)
-        {
-            *ret_len = count;
-            *ret_type = map_opcode( socket->opcode, socket->read_size != 0 );
-        }
-    }
-    if (async)
-    {
-        if (!ret)
-        {
-            WINHTTP_WEB_SOCKET_STATUS status;
-            status.dwBytesTransferred = count;
-            status.eBufferType        = map_opcode( socket->opcode, socket->read_size != 0 );
-            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, &status, sizeof(status) );
-        }
-        else
-        {
-            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
-            result.AsyncResult.dwResult = API_READ_DATA;
-            result.AsyncResult.dwError  = ret;
-            result.Operation = WINHTTP_WEB_SOCKET_RECEIVE_OPERATION;
-            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
-        }
+        *ret_len = count;
+        *ret_type = map_opcode( socket->opcode, socket->read_size != 0 );
     }
     return ret;
 }
@@ -3631,9 +3610,26 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
 static void CALLBACK task_socket_receive( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
 {
     struct socket_receive *r = ctx;
+    DWORD ret, count, type;
 
     TRACE("running %p\n", work);
-    socket_receive( r->socket, r->buf, r->len, NULL, NULL, TRUE );
+    ret = socket_receive( r->socket, r->buf, r->len, &count, &type );
+
+    if (!ret)
+    {
+        WINHTTP_WEB_SOCKET_STATUS status;
+        status.dwBytesTransferred = count;
+        status.eBufferType        = type;
+        send_callback( &r->socket->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, &status, sizeof(status) );
+    }
+    else
+    {
+        WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+        result.AsyncResult.dwResult = API_READ_DATA;
+        result.AsyncResult.dwError  = ret;
+        result.Operation = WINHTTP_WEB_SOCKET_RECEIVE_OPERATION;
+        send_callback( &r->socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+    }
 
     release_object( &r->socket->hdr );
     free( r );
@@ -3677,7 +3673,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
             free( r );
         }
     }
-    else ret = socket_receive( socket, buf, len, ret_len, ret_type, FALSE );
+    else ret = socket_receive( socket, buf, len, ret_len, ret_type );
 
     release_object( &socket->hdr );
     return ret;
