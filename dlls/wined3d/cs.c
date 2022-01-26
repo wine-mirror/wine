@@ -3693,6 +3693,17 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_BLT_SUB_RESOURCE:
+        {
+            struct wined3d_cs_blt_sub_resource *op;
+
+            op = (struct wined3d_cs_blt_sub_resource *)packet->data;
+            if (op->src_resource)
+                wined3d_resource_decref(op->src_resource);
+            wined3d_resource_decref(op->dst_resource);
+            break;
+        }
+
         default:
             break;
     }
@@ -3901,6 +3912,17 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
 
             op = (struct wined3d_cs_update_sub_resource *)packet->data;
             wined3d_resource_incref(op->resource);
+            break;
+        }
+
+        case WINED3D_CS_OP_BLT_SUB_RESOURCE:
+        {
+            struct wined3d_cs_blt_sub_resource *op;
+
+            op = (struct wined3d_cs_blt_sub_resource *)packet->data;
+            if (op->src_resource)
+                wined3d_resource_incref(op->src_resource);
+            wined3d_resource_incref(op->dst_resource);
             break;
         }
 
