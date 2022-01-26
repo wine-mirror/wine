@@ -10978,24 +10978,20 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
     const struct glsl_program_key *k = key;
     const struct glsl_shader_prog_link *prog = WINE_RB_ENTRY_VALUE(entry,
             const struct glsl_shader_prog_link, program_lookup_entry);
+    int ret;
 
-    if (k->vs_id > prog->vs.id) return 1;
-    else if (k->vs_id < prog->vs.id) return -1;
-
-    if (k->gs_id > prog->gs.id) return 1;
-    else if (k->gs_id < prog->gs.id) return -1;
-
-    if (k->ps_id > prog->ps.id) return 1;
-    else if (k->ps_id < prog->ps.id) return -1;
-
-    if (k->hs_id > prog->hs.id) return 1;
-    else if (k->hs_id < prog->hs.id) return -1;
-
-    if (k->ds_id > prog->ds.id) return 1;
-    else if (k->ds_id < prog->ds.id) return -1;
-
-    if (k->cs_id > prog->cs.id) return 1;
-    else if (k->cs_id < prog->cs.id) return -1;
+    if ((ret = wined3d_uint32_compare(k->vs_id, prog->vs.id)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->gs_id, prog->gs.id)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->ps_id, prog->ps.id)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->hs_id, prog->hs.id)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->ds_id, prog->ds.id)))
+        return ret;
+    if ((ret = wined3d_uint32_compare(k->cs_id, prog->cs.id)))
+        return ret;
 
     return 0;
 }
