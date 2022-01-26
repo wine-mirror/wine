@@ -18151,8 +18151,9 @@ static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC2 *surface_des
     if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
         return DDENUMRET_OK;
 
+    /* See comment in ddraw7 about the frequency. */
     if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height &&
-            surface_desc->dwRefreshRate != param->old_frequency)
+            !compare_uint(surface_desc->dwRefreshRate, param->old_frequency, 1))
     {
         param->new_width = surface_desc->dwWidth;
         param->new_height = surface_desc->dwHeight;

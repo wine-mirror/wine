@@ -18417,8 +18417,17 @@ static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC2 *surface_des
     if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
         return DDENUMRET_OK;
 
+    /* Windows will advertise 59hz (for 59.94) and 60hz (for proper 60hz) on monitors that support
+     * only one of the two (usually 59.94). If an application requests 60hz windows will apply 59.94.
+     * Thus if we think we found a different refresh rate, we get 59hz instead of the 60hz we
+     * requested.
+     *
+     * The same is true of other 1% slowed-down TV compatible refresh rates according to a Microsoft
+     * support document: 23.976 vs 24, 30, 48, 72 and 120 hz. It can be reproduced by attempting to
+     * set 60hz in the advanced display properties manually. Usually the restriction to one refresh
+     * rate applies to laptop panels. */
     if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height &&
-            surface_desc->dwRefreshRate != param->old_frequency)
+            !compare_uint(surface_desc->dwRefreshRate, param->old_frequency, 1))
     {
         param->new_width = surface_desc->dwWidth;
         param->new_height = surface_desc->dwHeight;
