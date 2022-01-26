@@ -56,7 +56,7 @@ HRESULT __cdecl irpcss_server_register(handle_t h, const GUID *clsid, unsigned i
         PMInterfacePointer object, unsigned int *cookie)
 {
     struct registered_class *entry;
-    static int next_cookie;
+    static LONG next_cookie;
 
     if (!(entry = heap_alloc_zero(sizeof(*entry))))
         return E_OUTOFMEMORY;
