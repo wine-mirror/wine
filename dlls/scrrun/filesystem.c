@@ -33,7 +33,6 @@
 #include "scrrun_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
@@ -317,15 +316,16 @@ static ULONG WINAPI textstream_AddRef(ITextStream *iface)
 
 static ULONG WINAPI textstream_Release(ITextStream *iface)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct textstream *stream = impl_from_ITextStream(iface);
+    ULONG ref = InterlockedDecrement(&stream->ref);
+
+    TRACE("%p, refcount %d.\n", iface, ref);
 
     if (!ref)
     {
-        if (This->read_buf_size) heap_free(This->read_buf);
-        CloseHandle(This->file);
-        heap_free(This);
+        if (stream->read_buf_size) free(stream->read_buf);
+        CloseHandle(stream->file);
+        free(stream);
     }
 
     return ref;
@@ -462,9 +462,9 @@ static HRESULT append_read_data(struct textstream *stream, const char *buf, size
         SetFilePointerEx(stream->file, revert, NULL, FILE_CURRENT);
 
     if (!stream->read_buf_size)
-        new_buf = heap_alloc(len * sizeof(WCHAR));
+        new_buf = malloc(len * sizeof(WCHAR));
     else
-        new_buf = heap_realloc(stream->read_buf, (len + stream->read_buf_size) * sizeof(WCHAR));
+        new_buf = realloc(stream->read_buf, (len + stream->read_buf_size) * sizeof(WCHAR));
     if (!new_buf) return E_OUTOFMEMORY;
 
     if (stream->unicode)
@@ -504,7 +504,7 @@ static BOOL read_from_buffer(struct textstream *stream, size_t len, BSTR *ret, s
     if (stream->read_buf_size)
         memmove(stream->read_buf, stream->read_buf + len, stream->read_buf_size * sizeof(WCHAR));
     else
-        heap_free(stream->read_buf);
+        free(stream->read_buf);
     return TRUE;
 }
 
@@ -622,14 +622,14 @@ static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
         char *buffA;
         HRESULT hr;
 
-        buffA = heap_alloc(len);
+        buffA = malloc(len);
         if (!buffA)
             return E_OUTOFMEMORY;
 
         WideCharToMultiByte(CP_ACP, 0, text, SysStringLen(text), buffA, len, NULL, NULL);
         ret = WriteFile(stream->file, buffA, len, &written, NULL);
         hr = (ret && written == len) ? S_OK : create_error(GetLastError());
-        heap_free(buffA);
+        free(buffA);
         return hr;
     }
 }
@@ -765,21 +765,18 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
         return E_INVALIDARG;
     }
 
-    stream = heap_alloc(sizeof(struct textstream));
-    if (!stream) return E_OUTOFMEMORY;
+    if (!(stream = calloc(1, sizeof(*stream))))
+        return E_OUTOFMEMORY;
 
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
     stream->mode = mode;
-    stream->eof = FALSE;
-    stream->read_buf = NULL;
-    stream->read_buf_size = 0;
 
     stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
     if (stream->file == INVALID_HANDLE_VALUE)
     {
         HRESULT hr = create_error(GetLastError());
-        heap_free(stream);
+        free(stream);
         return hr;
     }
 
@@ -877,12 +874,13 @@ static ULONG WINAPI drive_AddRef(IDrive *iface)
 
 static ULONG WINAPI drive_Release(IDrive *iface)
 {
-    struct drive *This = impl_from_IDrive(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct drive *drive = impl_from_IDrive(iface);
+    ULONG ref = InterlockedDecrement(&drive->ref);
+
+    TRACE("%p, refcount %d.\n", iface, ref);
 
     if (!ref)
-        heap_free(This);
+        free(drive);
 
     return ref;
 }
@@ -1182,7 +1180,7 @@ static HRESULT create_drive(WCHAR letter, IDrive **drive)
 
     *drive = NULL;
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if (!object) return E_OUTOFMEMORY;
 
     object->IDrive_iface.lpVtbl = &drivevtbl;
@@ -1235,7 +1233,7 @@ static ULONG WINAPI foldercoll_enumvariant_Release(IEnumVARIANT *iface)
     {
         IFolderCollection_Release(&This->data.u.foldercoll.coll->IFolderCollection_iface);
         FindClose(This->data.u.foldercoll.find);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1392,7 +1390,7 @@ static HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnkn
 
     *newenum = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IEnumVARIANT_iface.lpVtbl = &foldercollenumvariantvtbl;
@@ -1417,7 +1415,7 @@ static ULONG WINAPI filecoll_enumvariant_Release(IEnumVARIANT *iface)
     {
         IFileCollection_Release(&This->data.u.filecoll.coll->IFileCollection_iface);
         FindClose(This->data.u.filecoll.find);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1534,7 +1532,7 @@ static HRESULT create_filecoll_enum(struct filecollection *collection, IUnknown 
 
     *newenum = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IEnumVARIANT_iface.lpVtbl = &filecollenumvariantvtbl;
@@ -1558,7 +1556,7 @@ static ULONG WINAPI drivecoll_enumvariant_Release(IEnumVARIANT *iface)
     if (!ref)
     {
         IDriveCollection_Release(&This->data.u.drivecoll.coll->IDriveCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1657,7 +1655,7 @@ static HRESULT create_drivecoll_enum(struct drivecollection *collection, IUnknow
 
     *newenum = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IEnumVARIANT_iface.lpVtbl = &drivecollenumvariantvtbl;
@@ -1713,7 +1711,7 @@ static ULONG WINAPI foldercoll_Release(IFolderCollection *iface)
     if (!ref)
     {
         SysFreeString(This->path);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1854,7 +1852,7 @@ static HRESULT create_foldercoll(BSTR path, IFolderCollection **folders)
 
     *folders = NULL;
 
-    This = heap_alloc(sizeof(struct foldercollection));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IFolderCollection_iface.lpVtbl = &foldercollvtbl;
@@ -1862,7 +1860,7 @@ static HRESULT create_foldercoll(BSTR path, IFolderCollection **folders)
     This->path = SysAllocString(path);
     if (!This->path)
     {
-        heap_free(This);
+        free(This);
         return E_OUTOFMEMORY;
     }
 
@@ -1914,7 +1912,7 @@ static ULONG WINAPI filecoll_Release(IFileCollection *iface)
     if (!ref)
     {
         SysFreeString(This->path);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2047,7 +2045,7 @@ static HRESULT create_filecoll(BSTR path, IFileCollection **files)
 
     *files = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IFileCollection_iface.lpVtbl = &filecollectionvtbl;
@@ -2055,7 +2053,7 @@ static HRESULT create_filecoll(BSTR path, IFileCollection **files)
     This->path = SysAllocString(path);
     if (!This->path)
     {
-        heap_free(This);
+        free(This);
         return E_OUTOFMEMORY;
     }
 
@@ -2104,7 +2102,7 @@ static ULONG WINAPI drivecoll_Release(IDriveCollection *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -2219,7 +2217,7 @@ static HRESULT create_drivecoll(IDriveCollection **drives)
 
     *drives = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IDriveCollection_iface.lpVtbl = &drivecollectionvtbl;
@@ -2276,7 +2274,7 @@ static ULONG WINAPI folder_Release(IFolder *iface)
     if (!ref)
     {
         SysFreeString(This->path);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2568,26 +2566,26 @@ static const IFolderVtbl foldervtbl = {
 
 HRESULT create_folder(const WCHAR *path, IFolder **folder)
 {
-    struct folder *This;
+    struct folder *object;
 
     *folder = NULL;
 
     TRACE("%s\n", debugstr_w(path));
 
-    This = heap_alloc(sizeof(struct folder));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(object = malloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IFolder_iface.lpVtbl = &foldervtbl;
-    This->ref = 1;
-    This->path = SysAllocString(path);
-    if (!This->path)
+    object->IFolder_iface.lpVtbl = &foldervtbl;
+    object->ref = 1;
+    object->path = SysAllocString(path);
+    if (!object->path)
     {
-        heap_free(This);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
-    init_classinfo(&CLSID_Folder, (IUnknown *)&This->IFolder_iface, &This->classinfo);
-    *folder = &This->IFolder_iface;
+    init_classinfo(&CLSID_Folder, (IUnknown *)&object->IFolder_iface, &object->classinfo);
+    *folder = &object->IFolder_iface;
 
     return S_OK;
 }
@@ -2629,15 +2627,15 @@ static ULONG WINAPI file_AddRef(IFile *iface)
 
 static ULONG WINAPI file_Release(IFile *iface)
 {
-    struct file *This = impl_from_IFile(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    struct file *file = impl_from_IFile(iface);
+    LONG ref = InterlockedDecrement(&file->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, ref);
 
-    if(!ref)
+    if (!ref)
     {
-        heap_free(This->path);
-        heap_free(This);
+        free(file->path);
+        free(file);
     }
 
     return ref;
@@ -2942,7 +2940,7 @@ static HRESULT create_file(BSTR path, IFile **file)
 
     *file = NULL;
 
-    f = heap_alloc(sizeof(struct file));
+    f = malloc(sizeof(struct file));
     if(!f)
         return E_OUTOFMEMORY;
 
@@ -2950,28 +2948,31 @@ static HRESULT create_file(BSTR path, IFile **file)
     f->ref = 1;
 
     len = GetFullPathNameW(path, 0, NULL, NULL);
-    if(!len) {
-        heap_free(f);
+    if (!len)
+    {
+        free(f);
         return E_FAIL;
     }
 
-    f->path = heap_alloc(len*sizeof(WCHAR));
-    if(!f->path) {
-        heap_free(f);
+    f->path = malloc(len*sizeof(WCHAR));
+    if(!f->path)
+    {
+        free(f);
         return E_OUTOFMEMORY;
     }
 
-    if(!GetFullPathNameW(path, len, f->path, NULL)) {
-        heap_free(f->path);
-        heap_free(f);
+    if (!GetFullPathNameW(path, len, f->path, NULL))
+    {
+        free(f->path);
+        free(f);
         return E_FAIL;
     }
 
     attrs = GetFileAttributesW(f->path);
-    if(attrs==INVALID_FILE_ATTRIBUTES ||
-            (attrs&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))) {
-        heap_free(f->path);
-        heap_free(f);
+    if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE)))
+    {
+        free(f->path);
+        free(f);
         return create_error(GetLastError());
     }
 
@@ -3931,22 +3932,22 @@ static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR name, BST
     if (!len)
         return HRESULT_FROM_WIN32(GetLastError());
 
-    ptr = heap_alloc(len);
+    ptr = malloc(len);
     if (!GetFileVersionInfoW(name, 0, len, ptr))
     {
-        heap_free(ptr);
+        free(ptr);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     ret = VerQueryValueW(ptr, L"\\", (void **)&info, &len);
     if (!ret)
     {
-        heap_free(ptr);
+        free(ptr);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     get_versionstring(info, ver);
-    heap_free(ptr);
+    free(ptr);
 
     *version = SysAllocString(ver);
     TRACE("version=%s\n", debugstr_w(ver));

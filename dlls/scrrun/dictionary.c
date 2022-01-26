@@ -30,7 +30,6 @@
 #include "scrrun_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
@@ -177,8 +176,7 @@ static HRESULT add_keyitem_pair(dictionary *dict, VARIANT *key, VARIANT *item)
     if (FAILED(hr))
         return hr;
 
-    pair = heap_alloc(sizeof(*pair));
-    if (!pair)
+    if (!(pair = malloc(sizeof(*pair))))
         return E_OUTOFMEMORY;
 
     pair->hash = V_I4(&hash);
@@ -207,7 +205,7 @@ static HRESULT add_keyitem_pair(dictionary *dict, VARIANT *key, VARIANT *item)
 failed:
     VariantClear(&pair->key);
     VariantClear(&pair->item);
-    heap_free(pair);
+    free(pair);
     return hr;
 }
 
@@ -215,7 +213,7 @@ static void free_keyitem_pair(struct keyitem_pair *pair)
 {
     VariantClear(&pair->key);
     VariantClear(&pair->item);
-    heap_free(pair);
+    free(pair);
 }
 
 static HRESULT WINAPI dict_enum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **obj)
@@ -251,10 +249,11 @@ static ULONG WINAPI dict_enum_Release(IEnumVARIANT *iface)
 
     TRACE("(%p)->(%u)\n", This, ref);
 
-    if (!ref) {
+    if (!ref)
+    {
         list_remove(&This->notify);
         IDictionary_Release(&This->dict->IDictionary_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -338,22 +337,22 @@ static const IEnumVARIANTVtbl dictenumvtbl = {
 
 static HRESULT create_dict_enum(dictionary *dict, IUnknown **ret)
 {
-    struct dictionary_enum *This;
+    struct dictionary_enum *object;
 
     *ret = NULL;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    This->IEnumVARIANT_iface.lpVtbl = &dictenumvtbl;
-    This->ref = 1;
-    This->cur = list_head(&dict->pairs);
-    list_add_tail(&dict->notifier, &This->notify);
-    This->dict = dict;
+    object->IEnumVARIANT_iface.lpVtbl = &dictenumvtbl;
+    object->ref = 1;
+    object->cur = list_head(&dict->pairs);
+    list_add_tail(&dict->notifier, &object->notify);
+    object->dict = dict;
     IDictionary_AddRef(&dict->IDictionary_iface);
 
-    *ret = (IUnknown*)&This->IEnumVARIANT_iface;
+    *ret = (IUnknown *)&object->IEnumVARIANT_iface;
+
     return S_OK;
 }
 
@@ -423,14 +422,15 @@ static ULONG WINAPI dictionary_AddRef(IDictionary *iface)
 
 static ULONG WINAPI dictionary_Release(IDictionary *iface)
 {
-    dictionary *This = impl_from_IDictionary(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    dictionary *dictionary = impl_from_IDictionary(iface);
+    ULONG ref = InterlockedDecrement(&dictionary->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("%p, refcount %u.\n", iface, ref);
 
-    if (!ref) {
+    if (!ref)
+    {
         IDictionary_RemoveAll(iface);
-        heap_free(This);
+        free(dictionary);
     }
 
     return ref;
@@ -885,27 +885,26 @@ static const struct IDictionaryVtbl dictionary_vtbl =
     dictionary_get_HashVal
 };
 
-HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory,IUnknown *outer,REFIID riid, void **obj)
+HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **ret)
 {
-    dictionary *This;
+    dictionary *object;
 
-    TRACE("(%p, %p, %s, %p)\n", factory, outer, debugstr_guid(riid), obj);
+    TRACE("(%p, %p, %s, %p)\n", factory, outer, debugstr_guid(riid), ret);
 
-    *obj = NULL;
+    *ret = NULL;
 
-    This = heap_alloc(sizeof(*This));
-    if(!This) return E_OUTOFMEMORY;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IDictionary_iface.lpVtbl = &dictionary_vtbl;
-    This->ref = 1;
-    This->method = BinaryCompare;
-    This->count = 0;
-    list_init(&This->pairs);
-    list_init(&This->notifier);
-    memset(This->buckets, 0, sizeof(This->buckets));
+    object->IDictionary_iface.lpVtbl = &dictionary_vtbl;
+    object->ref = 1;
+    object->method = BinaryCompare;
+    list_init(&object->pairs);
+    list_init(&object->notifier);
 
-    init_classinfo(&CLSID_Dictionary, (IUnknown *)&This->IDictionary_iface, &This->classinfo);
-    *obj = &This->IDictionary_iface;
+    init_classinfo(&CLSID_Dictionary, (IUnknown *)&object->IDictionary_iface, &object->classinfo);
+
+    *ret = &object->IDictionary_iface;
 
     return S_OK;
 }
