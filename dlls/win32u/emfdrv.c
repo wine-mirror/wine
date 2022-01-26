@@ -318,7 +318,7 @@ static BOOL CDECL EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD coun
 }
 
 static BOOL CDECL EMFDRV_PolyPolyline( PHYSDEV dev, const POINT *pt,
-                                       const DWORD *counts, UINT polys )
+                                       const DWORD *counts, DWORD polys )
 {
     /* FIXME: update bounding rect */
     return TRUE;

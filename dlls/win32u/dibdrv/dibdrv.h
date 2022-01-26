@@ -138,7 +138,7 @@ extern BOOL     CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWO
 extern BOOL     CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                   INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons ) DECLSPEC_HIDDEN;
+extern BOOL     CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, UINT polygons ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts,
                                            DWORD polylines ) DECLSPEC_HIDDEN;
 extern DWORD    CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,

@@ -147,7 +147,7 @@ BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
         pts[0] = dc->attr->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
         count++;
-        ret = NtGdiPolyPolyDraw( dev->hdc, pts, &count, 1, NtGdiPolyBezier );
+        ret = NtGdiPolyPolyDraw( dev->hdc, pts, (UINT *)&count, 1, NtGdiPolyBezier );
         free( pts );
     }
     return ret;
@@ -550,7 +550,7 @@ BOOL WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn )
  *          NtGdiPolyPolyDraw  (win32u.@)
  */
 ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts,
-                                UINT count, UINT function )
+                                DWORD count, UINT function )
 {
     PHYSDEV physdev;
     ULONG ret;
@@ -572,7 +572,7 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
 
     case NtGdiPolyPolyline:
         physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
-        ret = physdev->funcs->pPolyPolyline( physdev, points, counts, count );
+        ret = physdev->funcs->pPolyPolyline( physdev, points, (const DWORD *)counts, count );
         break;
 
     case NtGdiPolyBezier:
