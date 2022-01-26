@@ -3704,6 +3704,16 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_COPY_UAV_COUNTER:
+        {
+            struct wined3d_cs_copy_uav_counter *op;
+
+            op = (struct wined3d_cs_copy_uav_counter *)packet->data;
+            wined3d_buffer_decref(op->buffer);
+            wined3d_unordered_access_view_decref(op->view);
+            break;
+        }
+
         default:
             break;
     }
@@ -3923,6 +3933,16 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             if (op->src_resource)
                 wined3d_resource_incref(op->src_resource);
             wined3d_resource_incref(op->dst_resource);
+            break;
+        }
+
+        case WINED3D_CS_OP_COPY_UAV_COUNTER:
+        {
+            struct wined3d_cs_copy_uav_counter *op;
+
+            op = (struct wined3d_cs_copy_uav_counter *)packet->data;
+            wined3d_buffer_incref(op->buffer);
+            wined3d_unordered_access_view_incref(op->view);
             break;
         }
 
