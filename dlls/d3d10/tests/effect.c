@@ -8209,6 +8209,43 @@ static void test_effect_value_expression(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#if 0
+technique10 tech0
+{
+    pass pass0 {}
+};
+#endif
+static DWORD fx_test_fx_4_1[] =
+{
+    0x43425844, 0x228fcf4d, 0x9396b2f5, 0xd817b31f, 0xab6dd460, 0x00000001, 0x000000a0, 0x00000001,
+    0x00000024, 0x30315846, 0x00000074, 0xfeff1011, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000010, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x68636574,
+    0x61700030, 0x00307373, 0x00000004, 0x00000001, 0x00000000, 0x0000000a, 0x00000000, 0x00000000,
+};
+
+static void test_effect_fx_4_1(void)
+{
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_fx_4_1, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect, hr %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -8235,4 +8272,5 @@ START_TEST(effect)
     test_effect_dynamic_numeric_field();
     test_effect_index_expression();
     test_effect_value_expression();
+    test_effect_fx_4_1();
 }
