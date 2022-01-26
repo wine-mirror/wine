@@ -171,7 +171,7 @@ WineFakeDlls=FakeDllsWin32
 
 [DefaultInstall.Services]
 AddService=BITS,0,BITSService
-AddService=EventLog,0,EventLogService
+AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
@@ -190,7 +190,7 @@ AddService=nsiproxy,0x800,NsiProxyService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
-AddService=EventLog,0,EventLogService
+AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
@@ -209,7 +209,7 @@ AddService=nsiproxy,0x800,NsiProxyService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
-AddService=EventLog,0,EventLogService
+AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
@@ -228,7 +228,7 @@ AddService=nsiproxy,0x800,NsiProxyService
 
 [DefaultInstall.ntarm64.Services]
 AddService=BITS,0,BITSService
-AddService=EventLog,0,EventLogService
+AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
