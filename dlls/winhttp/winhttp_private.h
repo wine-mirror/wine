@@ -247,6 +247,8 @@ struct socket
     struct queue recv_q;
     enum socket_opcode opcode;
     DWORD read_size;
+    char mask[4];
+    unsigned int mask_index;
     BOOL close_frame_received;
     DWORD close_frame_receive_err;
     USHORT status;
@@ -254,7 +256,9 @@ struct socket
     DWORD reason_len;
     char *send_frame_buffer;
     unsigned int send_frame_buffer_size;
+    unsigned int send_remaining_size;
     unsigned int bytes_in_send_frame_buffer;
+    unsigned int client_buffer_offset;
 };
 
 struct send_request

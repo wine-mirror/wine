@@ -3145,10 +3145,10 @@ static DWORD send_bytes( struct socket *socket, char *bytes, int len, int *sent,
 static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHORT status, const char *buf,
                          DWORD buflen, BOOL final, WSAOVERLAPPED *ovr )
 {
-    DWORD i = 0, j, offset = 2, len = buflen;
-    DWORD buffer_size, ret = 0, send_size;
-    char hdr[14], *mask = NULL;
+    DWORD i, offset = 2, len = buflen;
+    DWORD buffer_size, ret = 0;
     int sent_size;
+    char hdr[14];
     char *ptr;
 
     TRACE( "sending %02x frame, len %u.\n", opcode, len );
@@ -3179,7 +3179,6 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
 
     buffer_size = len + offset + 4;
     assert( buffer_size - len < MAX_FRAME_BUFFER_SIZE );
-    if (ovr && buffer_size > MAX_FRAME_BUFFER_SIZE) return WSAEWOULDBLOCK;
     if (buffer_size > socket->send_frame_buffer_size && socket->send_frame_buffer_size < MAX_FRAME_BUFFER_SIZE)
     {
         DWORD new_size;
@@ -3199,27 +3198,32 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
     memcpy(ptr, hdr, offset);
     ptr += offset;
 
-    mask = &hdr[offset];
-    RtlGenRandom( mask, 4 );
-    memcpy( ptr, mask, 4 );
+    RtlGenRandom( socket->mask, 4 );
+    memcpy( ptr, socket->mask, 4 );
     ptr += 4;
+    socket->mask_index = 0;
 
     if (opcode == SOCKET_OPCODE_CLOSE) /* prepend status code */
     {
-        *ptr++ = (status >> 8) ^ mask[i++ % 4];
-        *ptr++ = (status & 0xff) ^ mask[i++ % 4];
+        *ptr++ = (status >> 8) ^ socket->mask[socket->mask_index++ % 4];
+        *ptr++ = (status & 0xff) ^ socket->mask[socket->mask_index++ % 4];
     }
 
     offset = ptr - socket->send_frame_buffer;
-    send_size = offset + buflen;
-    while (1)
+    socket->send_remaining_size = offset + buflen;
+    socket->client_buffer_offset = 0;
+    while (socket->send_remaining_size)
     {
-        j = 0;
-        while (j < buflen && offset < MAX_FRAME_BUFFER_SIZE)
-            socket->send_frame_buffer[offset++] = buf[j++] ^ mask[i++ % 4];
+        len = min( buflen, MAX_FRAME_BUFFER_SIZE - offset );
+        for (i = 0; i < len; ++i)
+        {
+            socket->send_frame_buffer[offset++] = buf[socket->client_buffer_offset++]
+                                                  ^ socket->mask[socket->mask_index++ % 4];
+        }
 
         sent_size = 0;
         ret = send_bytes( socket, socket->send_frame_buffer, offset, &sent_size, ovr );
+        socket->send_remaining_size -= sent_size;
         if (ret)
         {
             if (ovr && ret == WSA_IO_PENDING)
@@ -3229,17 +3233,16 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
             }
             return ret;
         }
-        if (!(send_size -= offset)) break;
+        assert( sent_size == offset );
         offset = 0;
-        buf += j;
-        buflen -= j;
+        buflen -= len;
     }
     return ERROR_SUCCESS;
 }
 
 static DWORD complete_send_frame( struct socket *socket, WSAOVERLAPPED *ovr, const char *buf )
 {
-    DWORD ret, retflags, len;
+    DWORD ret, retflags, len, i;
 
     if (!WSAGetOverlappedResult( socket->request->netconn->socket, ovr, &len, TRUE, &retflags ))
         return WSAGetLastError();
@@ -3248,6 +3251,22 @@ static DWORD complete_send_frame( struct socket *socket, WSAOVERLAPPED *ovr, con
     {
         ret = send_bytes( socket, socket->send_frame_buffer, socket->bytes_in_send_frame_buffer, NULL, NULL );
         if (ret) return ret;
+    }
+
+    assert( socket->bytes_in_send_frame_buffer <= socket->send_remaining_size );
+    socket->send_remaining_size -= socket->bytes_in_send_frame_buffer;
+
+    while (socket->send_remaining_size)
+    {
+        len = min( socket->send_remaining_size, MAX_FRAME_BUFFER_SIZE );
+        for (i = 0; i < len; ++i)
+        {
+            socket->send_frame_buffer[i] = buf[socket->client_buffer_offset++]
+                                           ^ socket->mask[socket->mask_index++ % 4];
+        }
+        ret = send_bytes( socket, socket->send_frame_buffer, len, NULL, NULL );
+        if (ret) return ret;
+        socket->send_remaining_size -= len;
     }
     return ERROR_SUCCESS;
 }
@@ -3371,7 +3390,6 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
                 async_send = TRUE;
                 complete_async = TRUE;
             }
-            else if (ret == WSAEWOULDBLOCK) async_send = TRUE;
         }
 
         if (async_send)
