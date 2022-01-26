@@ -3909,6 +3909,12 @@ DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status
         return ERROR_INVALID_OPERATION;
     }
 
+    if (!socket->close_frame_received || socket->close_frame_receive_err)
+    {
+        ret = socket->close_frame_received ? socket->close_frame_receive_err : ERROR_INVALID_OPERATION;
+        release_object( &socket->hdr );
+        return ret;
+    }
     *status = socket->status;
     *ret_len = socket->reason_len;
     if (socket->reason_len > len) ret = ERROR_INSUFFICIENT_BUFFER;
