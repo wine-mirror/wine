@@ -15116,7 +15116,7 @@ static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC *surface_desc
 
     /* See comment in ddraw7 about the frequency. */
     if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height &&
-            !compare_uint(surface_desc->dwRefreshRate, param->old_frequency, 1))
+            (!compare_uint(surface_desc->dwRefreshRate, param->old_frequency, 1) || !param->old_frequency))
     {
         param->new_width = surface_desc->dwWidth;
         param->new_height = surface_desc->dwHeight;
