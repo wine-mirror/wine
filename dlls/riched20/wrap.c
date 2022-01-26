@@ -1032,7 +1032,7 @@ BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc, BOOL invalidate )
 
   ME_InitContext( &c, editor, hdc );
 
-  entry = wine_rb_head( editor->marked_paras.root );
+  entry = rb_head( editor->marked_paras.root );
   while (entry)
   {
     para = WINE_RB_ENTRY_VALUE( entry, ME_Paragraph, marked_entry );
@@ -1045,7 +1045,7 @@ BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc, BOOL invalidate )
         next_entry = entry;
     }
     else
-        next_entry = wine_rb_next( entry );
+        next_entry = rb_next( entry );
 
     c.pt = para->pt;
     prev_width = para->nWidth;
@@ -1076,7 +1076,7 @@ BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc, BOOL invalidate )
     }
     entry = next_entry;
   }
-  wine_rb_clear( &editor->marked_paras, NULL, NULL );
+  wine_rb_destroy( &editor->marked_paras, NULL, NULL );
 
   editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
   editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;

@@ -1182,10 +1182,10 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     wined3d_device_context_emit_reset_state(&device->cs->c, true);
     state_cleanup(state);
 
-    wine_rb_clear(&device->samplers, device_free_sampler, NULL);
-    wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
-    wine_rb_clear(&device->blend_states, device_free_blend_state, NULL);
-    wine_rb_clear(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
+    wine_rb_destroy(&device->samplers, device_free_sampler, NULL);
+    wine_rb_destroy(&device->rasterizer_states, device_free_rasterizer_state, NULL);
+    wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
+    wine_rb_destroy(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
@@ -5556,10 +5556,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    wine_rb_clear(&device->samplers, device_free_sampler, NULL);
-    wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
-    wine_rb_clear(&device->blend_states, device_free_blend_state, NULL);
-    wine_rb_clear(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
+    wine_rb_destroy(&device->samplers, device_free_sampler, NULL);
+    wine_rb_destroy(&device->rasterizer_states, device_free_rasterizer_state, NULL);
+    wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
+    wine_rb_destroy(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
 
     if (reset_state)
     {
