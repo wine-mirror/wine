@@ -511,7 +511,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   HLOCAL hProgram;
   INT    NumProg, Title, Progs, Icons, Extension;
   INT    CurrProg, CurrIcon, nCmdShow, ptr, seqnum;
-  DWORD  sizeAnd, sizeXor;
+  UINT   sizeAnd, sizeXor;
   BOOL   need_extension;
   LPCSTR lpszTitle = LocalLock(group->hName);
 
