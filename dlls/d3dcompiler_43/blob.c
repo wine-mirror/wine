@@ -514,9 +514,28 @@ HRESULT WINAPI D3DReadFileToBlob(const WCHAR *filename, ID3DBlob **contents)
     return S_OK;
 }
 
-HRESULT WINAPI D3DWriteBlobToFile(ID3DBlob* blob, const WCHAR *filename, BOOL overwrite)
+HRESULT WINAPI D3DWriteBlobToFile(ID3DBlob *blob, const WCHAR *filename, BOOL overwrite)
 {
-    FIXME("blob %p, filename %s, overwrite %d\n", blob, debugstr_w(filename), overwrite);
+    DWORD written_size;
+    SIZE_T data_size;
+    HANDLE file;
+    BOOL ret;
 
-    return E_NOTIMPL;
+    TRACE("blob %p, filename %s, overwrite %#x.\n", blob, debugstr_w(filename), overwrite);
+
+    file = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL, overwrite ? CREATE_ALWAYS : CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    data_size = ID3D10Blob_GetBufferSize(blob);
+    ret = WriteFile(file, ID3D10Blob_GetBufferPointer(blob), data_size, &written_size, NULL);
+    CloseHandle(file);
+    if (!ret || data_size != written_size)
+    {
+        WARN("Failed to write blob contents.\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
 }

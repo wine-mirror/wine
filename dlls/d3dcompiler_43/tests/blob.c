@@ -859,6 +859,37 @@ static void test_D3DReadFileToBlob(void)
     DeleteFileW(filename);
     ID3D10Blob_Release(blob);
 }
+
+static void test_D3DWriteBlobToFile(void)
+{
+    WCHAR temp_dir[MAX_PATH], filename[MAX_PATH];
+    ID3DBlob *blob;
+    HRESULT hr;
+
+    GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    GetTempFileNameW(temp_dir, NULL, 0, filename);
+
+    hr = D3DCreateBlob(16, &blob);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DWriteBlobToFile(blob, filename, FALSE);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "Unexpected hr %#x.\n", hr);
+
+    hr = D3DWriteBlobToFile(blob, filename, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    DeleteFileW(filename);
+
+    hr = D3DWriteBlobToFile(blob, filename, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DWriteBlobToFile(blob, filename, FALSE);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "Unexpected hr %#x.\n", hr);
+
+    DeleteFileW(filename);
+
+    ID3D10Blob_Release(blob);
+}
 #endif
 #endif
 
@@ -870,6 +901,7 @@ START_TEST(blob)
     test_get_blob_part2();
 #if D3D_COMPILER_VERSION >= 46
     test_D3DReadFileToBlob();
+    test_D3DWriteBlobToFile();
 #endif
 #endif
 }
