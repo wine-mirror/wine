@@ -18,7 +18,7 @@
 @ stub __std_execution_wait_on_uchar
 @ stub __std_execution_wake_by_address_all
 @ stub __std_free_crt
-@ stub __std_parallel_algorithms_hw_threads
+@ stdcall __std_parallel_algorithms_hw_threads()
 @ stub __std_release_shared_mutex_for_instance
 @ stub __std_submit_threadpool_work
 @ stub __std_tzdb_delete_current_zone
