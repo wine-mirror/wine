@@ -66,6 +66,7 @@ BOOL dinput_test_init_( const char *file, int line );
 void dinput_test_exit(void);
 
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );
+DWORD WINAPI dinput_test_device_thread( void *stop_event );
 
 #define check_member_( file, line, val, exp, fmt, member )                                         \
     ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )
