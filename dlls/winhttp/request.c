@@ -3505,7 +3505,10 @@ static void CALLBACK task_socket_send_pong( TP_CALLBACK_INSTANCE *instance, void
     struct socket_send *s = ctx;
 
     TRACE("running %p\n", work);
-    send_frame( s->socket, SOCKET_OPCODE_PONG, 0, NULL, 0, TRUE, NULL );
+
+    if (s->complete_async) complete_send_frame( s->socket, &s->ovr, NULL );
+    else                   send_frame( s->socket, SOCKET_OPCODE_PONG, 0, NULL, 0, TRUE, NULL );
+
     send_io_complete( &s->socket->hdr );
 
     release_object( &s->socket->hdr );
@@ -3516,18 +3519,38 @@ static DWORD socket_send_pong( struct socket *socket )
 {
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
+        BOOL async_send, complete_async = FALSE;
         struct socket_send *s;
-        DWORD ret;
+        DWORD ret = 0;
 
         if (!(s = malloc( sizeof(*s) ))) return ERROR_OUTOFMEMORY;
-        s->socket = socket;
 
-        addref_object( &socket->hdr );
-        InterlockedIncrement( &socket->hdr.pending_sends );
-        if ((ret = queue_task( &socket->send_q, task_socket_send_pong, s )))
+        async_send = InterlockedIncrement( &socket->hdr.pending_sends ) > 1;
+        if (!async_send)
+        {
+            memset( &s->ovr, 0, sizeof(s->ovr) );
+            if ((ret = send_frame( socket, SOCKET_OPCODE_PONG, 0, NULL, 0, TRUE, &s->ovr )) == WSA_IO_PENDING)
+            {
+                async_send = TRUE;
+                complete_async = TRUE;
+            }
+        }
+
+        if (async_send)
+        {
+            s->complete_async = complete_async;
+            s->socket = socket;
+            addref_object( &socket->hdr );
+            if ((ret = queue_task( &socket->send_q, task_socket_send_pong, s )))
+            {
+                InterlockedDecrement( &socket->hdr.pending_sends );
+                release_object( &socket->hdr );
+                free( s );
+            }
+        }
+        else
         {
             InterlockedDecrement( &socket->hdr.pending_sends );
-            release_object( &socket->hdr );
             free( s );
         }
         return ret;
