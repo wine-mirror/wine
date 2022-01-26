@@ -2676,7 +2676,7 @@ static HRESULT WINAPI d3drm_mesh_SetGroupTexture(IDirect3DRMMesh *iface,
     return IDirect3DRMTexture3_QueryInterface(texture, &IID_IDirect3DRMTexture, (void **)&mesh->groups[id].texture);
 }
 
-static DWORD WINAPI d3drm_mesh_GetGroupCount(IDirect3DRMMesh *iface)
+static UINT WINAPI d3drm_mesh_GetGroupCount(IDirect3DRMMesh *iface)
 {
     struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
