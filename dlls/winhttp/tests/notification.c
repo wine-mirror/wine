@@ -63,6 +63,7 @@ struct notification
 #define NF_WINE_ALLOW  0x0002  /* wine sends notification when it should not */
 #define NF_SIGNAL      0x0004  /* signal wait handle when notified */
 #define NF_MAIN_THREAD 0x0008  /* the operation completes synchronously and callback is called from the main thread */
+#define NF_SAVE_BUFFER 0x0010  /* save buffer data when notified */
 
 struct info
 {
@@ -75,6 +76,8 @@ struct info
     DWORD main_thread_id;
     DWORD last_thread_id;
     DWORD last_status;
+    char buffer[256];
+    unsigned int buflen;
 };
 
 struct test_request
@@ -117,6 +120,11 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
     {
         ok(GetCurrentThreadId() == info->main_thread_id, "%u: expected callback to be called from the same thread\n",
                 info->line);
+    }
+    if (info->test[info->index].flags & NF_SAVE_BUFFER)
+    {
+        info->buflen = buflen;
+        memcpy( info->buffer, buffer, min( buflen, sizeof(info->buffer) ));
     }
 
     if (status_ok && function_ok && info->test[info->index++].flags & NF_SIGNAL)
@@ -694,7 +702,7 @@ static const struct notification websocket_test2[] =
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NF_SIGNAL },
     { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
-    { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_REQUEST_ERROR },
+    { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, NF_MAIN_THREAD | NF_SAVE_BUFFER},
     { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NF_SIGNAL },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, NF_WINE_ALLOW },
@@ -707,6 +715,7 @@ static const struct notification websocket_test2[] =
 static void test_websocket(BOOL secure)
 {
     HANDLE session, connection, request, socket, event;
+    WINHTTP_WEB_SOCKET_ASYNC_RESULT *result;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     DWORD size, status, err;
     BOOL ret, unload = TRUE;
@@ -951,6 +960,13 @@ static void test_websocket(BOOL secure)
     setup_test( &info, winhttp_websocket_close, __LINE__ );
     ret = pWinHttpWebSocketClose( socket, 1000, (void *)"success", sizeof("success") );
     ok( err == ERROR_SUCCESS, "got %u\n", err );
+    ok( info.buflen == sizeof(*result), "got unexpected buflen %u.\n", info.buflen );
+    result = (WINHTTP_WEB_SOCKET_ASYNC_RESULT *)info.buffer;
+    ok( result->Operation == WINHTTP_WEB_SOCKET_RECEIVE_OPERATION, "got unexpected operation %u.\n",
+        result->Operation );
+    ok( !result->AsyncResult.dwResult, "got unexpected result %lu.\n", result->AsyncResult.dwResult );
+    ok( result->AsyncResult.dwError == ERROR_WINHTTP_OPERATION_CANCELLED, "got unexpected error %u.\n",
+        result->AsyncResult.dwError );
 
     close_status = 0xdead;
     size = sizeof(buffer) + 1;

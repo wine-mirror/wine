@@ -3244,10 +3244,14 @@ static void send_io_complete( struct object_header *hdr )
     assert( count >= 0 );
 }
 
-static void receive_io_complete( struct socket *socket )
+/* returns FALSE if sending callback should be omitted. */
+static BOOL receive_io_complete( struct socket *socket )
 {
     LONG count = InterlockedDecrement( &socket->hdr.pending_receives );
-    assert( count >= 0 );
+    assert( count >= 0 || socket->state == SOCKET_STATE_CLOSED);
+    /* count is reset to zero during websocket close so if count went negative
+     * then WinHttpWebSocketClose() is to send the callback. */
+    return count >= 0;
 }
 
 static enum socket_opcode map_buffer_type( WINHTTP_WEB_SOCKET_BUFFER_TYPE type )
@@ -3620,22 +3624,24 @@ static void CALLBACK task_socket_receive( TP_CALLBACK_INSTANCE *instance, void *
 
     TRACE("running %p\n", work);
     ret = socket_receive( r->socket, r->buf, r->len, &count, &type );
-    receive_io_complete( r->socket );
 
-    if (!ret)
+    if (receive_io_complete( r->socket ))
     {
-        WINHTTP_WEB_SOCKET_STATUS status;
-        status.dwBytesTransferred = count;
-        status.eBufferType        = type;
-        send_callback( &r->socket->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, &status, sizeof(status) );
-    }
-    else
-    {
-        WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
-        result.AsyncResult.dwResult = API_READ_DATA;
-        result.AsyncResult.dwError  = ret;
-        result.Operation = WINHTTP_WEB_SOCKET_RECEIVE_OPERATION;
-        send_callback( &r->socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        if (!ret)
+        {
+            WINHTTP_WEB_SOCKET_STATUS status;
+            status.dwBytesTransferred = count;
+            status.eBufferType        = type;
+            send_callback( &r->socket->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, &status, sizeof(status) );
+        }
+        else
+        {
+            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+            result.AsyncResult.dwResult = API_READ_DATA;
+            result.AsyncResult.dwError  = ret;
+            result.Operation = WINHTTP_WEB_SOCKET_RECEIVE_OPERATION;
+            send_callback( &r->socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
     }
 
     release_object( &r->socket->hdr );
@@ -3719,7 +3725,7 @@ static DWORD send_socket_shutdown( struct socket *socket, USHORT status, const v
 {
     DWORD ret;
 
-    socket->state = SOCKET_STATE_SHUTDOWN;
+    if (socket->state < SOCKET_STATE_SHUTDOWN) socket->state = SOCKET_STATE_SHUTDOWN;
 
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
@@ -3816,6 +3822,8 @@ static void CALLBACK task_socket_close( TP_CALLBACK_INSTANCE *instance, void *ct
 
 DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reason, DWORD len )
 {
+    enum socket_state prev_state;
+    LONG pending_receives = 0;
     struct socket *socket;
     DWORD ret;
 
@@ -3835,10 +3843,29 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
         return ERROR_INVALID_OPERATION;
     }
 
-    if (socket->state < SOCKET_STATE_SHUTDOWN
+    prev_state = socket->state;
+    socket->state = SOCKET_STATE_CLOSED;
+
+    if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        /* When closing the socket pending receives are cancelled. Setting socket->hdr.pending_receives to zero
+         * will prevent pending receives from sending callbacks. */
+        pending_receives = InterlockedExchange( &socket->hdr.pending_receives, 0 );
+        assert( pending_receives >= 0 );
+        if (pending_receives)
+        {
+            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+
+            result.AsyncResult.dwResult = 0;
+            result.AsyncResult.dwError = ERROR_WINHTTP_OPERATION_CANCELLED;
+            result.Operation = WINHTTP_WEB_SOCKET_RECEIVE_OPERATION;
+            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+
+    if (prev_state < SOCKET_STATE_SHUTDOWN
         && (ret = send_socket_shutdown( socket, status, reason, len, FALSE ))) goto done;
 
-    socket->state = SOCKET_STATE_CLOSED;
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
         struct socket_shutdown *s;
