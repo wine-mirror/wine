@@ -1022,7 +1022,7 @@ NTSTATUS wine_vkEnumerateInstanceVersion(void *args)
     return res;
 }
 
-VkResult wine_vkEnumeratePhysicalDevices(void *args)
+NTSTATUS wine_vkEnumeratePhysicalDevices(void *args)
 {
     struct vkEnumeratePhysicalDevices_params *params = args;
     VkInstance instance = params->instance;
@@ -1418,7 +1418,7 @@ NTSTATUS wine_vkGetCalibratedTimestampsEXT(void *args)
     return res;
 }
 
-VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
+NTSTATUS wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(void *args)
 {
     struct vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_params *params = args;
     VkPhysicalDevice phys_dev = params->physicalDevice;
