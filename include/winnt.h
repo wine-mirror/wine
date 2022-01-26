@@ -6276,6 +6276,7 @@ typedef enum _PROCESS_MITIGATION_POLICY
 #define InterlockedDecrement16 _InterlockedDecrement16
 #define InterlockedExchange _InterlockedExchange
 #define InterlockedExchangeAdd _InterlockedExchangeAdd
+#define InterlockedExchangeAdd64 _InterlockedExchangeAdd64
 #define InterlockedExchangePointer _InterlockedExchangePointer
 #define InterlockedIncrement _InterlockedIncrement
 #define InterlockedIncrement16 _InterlockedIncrement16
@@ -6291,6 +6292,7 @@ typedef enum _PROCESS_MITIGATION_POLICY
 #pragma intrinsic(_InterlockedCompareExchange64)
 #pragma intrinsic(_InterlockedExchange)
 #pragma intrinsic(_InterlockedExchangeAdd)
+#pragma intrinsic(_InterlockedExchangeAdd64)
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedIncrement16)
 #pragma intrinsic(_InterlockedDecrement)
@@ -6307,6 +6309,7 @@ long      _InterlockedDecrement(long volatile*);
 short     _InterlockedDecrement16(short volatile*);
 long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
+long long _InterlockedExchangeAdd64(long long volatile*,long long);
 long      _InterlockedIncrement(long volatile*);
 short     _InterlockedIncrement16(short volatile*);
 long      _InterlockedOr(long volatile *,long);
@@ -6432,6 +6435,11 @@ static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG
     return __sync_fetch_and_add( dest, incr );
 }
 
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAdd64( LONGLONG volatile *dest, LONGLONG incr )
+{
+    return __sync_fetch_and_add( dest, incr );
+}
+
 static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
     return __sync_add_and_fetch( dest, 1 );
@@ -6515,7 +6523,14 @@ static FORCEINLINE unsigned char InterlockedCompareExchange128( volatile __int64
 }
 
 #endif
-#endif
+
+#define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd64((LONGLONG *)(a), (b))
+
+#else /* _WIN64 */
+
+#define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd((LONG *)(a), (b))
+
+#endif /* _WIN64 */
 
 static FORCEINLINE void YieldProcessor(void)
 {
