@@ -1910,6 +1910,19 @@ if (0) { /* crashes */
         ok(!lstrcmpiW(path, path2), "expected equal paths: %s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(path2));
         CoTaskMemFree(path2);
 
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_DEFAULT_PATH, NULL, &path2);
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+        ok(path2 != NULL, "expected path != NULL\n");
+        CoTaskMemFree(path2);
+
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_NOT_PARENT_RELATIVE, NULL, &path2);
+        ok(hr == E_INVALIDARG, "expected S_OK, got 0x%08x\n", hr);
+
+        hr = pSHGetKnownFolderPath(folder_id, KF_FLAG_DEFAULT_PATH | KF_FLAG_NOT_PARENT_RELATIVE, NULL, &path2);
+        ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+        ok(path2 != NULL, "expected path != NULL\n");
+        CoTaskMemFree(path2);
+
         CoTaskMemFree(path);
     }
 

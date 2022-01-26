@@ -3529,11 +3529,24 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
         return HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
 
     if (flags & ~(KF_FLAG_CREATE|KF_FLAG_SIMPLE_IDLIST|KF_FLAG_DONT_UNEXPAND|
-        KF_FLAG_DONT_VERIFY|KF_FLAG_NO_ALIAS|KF_FLAG_INIT|KF_FLAG_DEFAULT_PATH))
+        KF_FLAG_DONT_VERIFY|KF_FLAG_NO_ALIAS|KF_FLAG_INIT|KF_FLAG_DEFAULT_PATH|KF_FLAG_NOT_PARENT_RELATIVE))
     {
         FIXME("flags 0x%08x not supported\n", flags);
         return E_INVALIDARG;
     }
+
+    if ((flags & (KF_FLAG_DEFAULT_PATH | KF_FLAG_NOT_PARENT_RELATIVE)) == KF_FLAG_NOT_PARENT_RELATIVE)
+    {
+        WARN("Invalid flags mask %#x.\n", flags);
+        return E_INVALIDARG;
+    }
+
+    if (flags & KF_FLAG_NOT_PARENT_RELATIVE)
+    {
+        FIXME("Ignoring KF_FLAG_NOT_PARENT_RELATIVE.\n");
+        flags &= ~KF_FLAG_NOT_PARENT_RELATIVE;
+    }
+
     folder |= flags & CSIDL_FLAG_MASK;
     shgfp_flags = flags & KF_FLAG_DEFAULT_PATH ? SHGFP_TYPE_DEFAULT : SHGFP_TYPE_CURRENT;
 
