@@ -52,11 +52,6 @@ static DWORD exiting_thread_id;
 
 extern void WDML_NotifyThreadDetach(void);
 
-#ifdef __MINGW32__
-/* work around a Mingw build issue where _wassert causes a duplicate reference to MessageBoxW */
-void __cdecl _wassert( const WCHAR *msg, const WCHAR *file, unsigned line) { abort(); }
-#endif
-
 /***********************************************************************
  *           USER_Lock
  */
