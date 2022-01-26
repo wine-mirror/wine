@@ -494,9 +494,8 @@ static void test_sessions(void)
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
     hr = IUnknown_QueryInterface(session, &IID_ITransactionJoin, (void**)&join);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    if(hr == S_OK)
-        ITransactionJoin_Release(join);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITransactionJoin_Release(join);
 
     hr = IUnknown_QueryInterface(session, &IID_IBindResource, (void**)&unimplemented);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
