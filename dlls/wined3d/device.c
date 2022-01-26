@@ -3509,8 +3509,8 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     struct wined3d_box box = {0};
     struct wined3d_shader *vs;
     unsigned int i, j;
+    uint32_t map;
     HRESULT hr;
-    WORD map;
 
     TRACE("device %p, src_start_idx %u, dst_idx %u, vertex_count %u, "
             "dst_buffer %p, declaration %p, flags %#x, dst_fvf %#x.\n",
@@ -3530,14 +3530,13 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
      * VBOs in those buffers and fix up the stream_info structure.
      *
      * Also apply the start index. */
-    for (i = 0, map = stream_info.use_map; map; map >>= 1, ++i)
+    map = stream_info.use_map;
+    while (map)
     {
         struct wined3d_stream_info_element *e;
         struct wined3d_map_desc map_desc;
 
-        if (!(map & 1))
-            continue;
-
+        i = wined3d_bit_scan(&map);
         e = &stream_info.elements[i];
         resource = &state->streams[e->stream_idx].buffer->resource;
         box.left = src_start_idx * e->stride;
@@ -3545,10 +3544,12 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         if (FAILED(wined3d_resource_map(resource, 0, &map_desc, &box, WINED3D_MAP_READ)))
         {
             ERR("Failed to map resource.\n");
-            for (j = 0, map = stream_info.use_map; map && j < i; map >>= 1, ++j)
+            map = stream_info.use_map;
+            while (map)
             {
-                if (!(map & 1))
-                    continue;
+                j = wined3d_bit_scan(&map);
+                if (j >= i)
+                    break;
 
                 e = &stream_info.elements[j];
                 resource = &state->streams[e->stream_idx].buffer->resource;
@@ -3564,11 +3565,10 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     hr = process_vertices_strided(device, dst_idx, vertex_count,
             &stream_info, dst_buffer, flags, dst_fvf);
 
-    for (i = 0, map = stream_info.use_map; map; map >>= 1, ++i)
+    map = stream_info.use_map;
+    while (map)
     {
-        if (!(map & 1))
-            continue;
-
+        i = wined3d_bit_scan(&map);
         resource = &state->streams[stream_info.elements[i].stream_idx].buffer->resource;
         if (FAILED(wined3d_resource_unmap(resource, 0)))
             ERR("Failed to unmap resource.\n");
