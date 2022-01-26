@@ -29,8 +29,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(find);
 static BOOL read_char_from_handle(HANDLE handle, char *char_out)
 {
     static char buffer[4096];
-    static UINT buffer_max = 0;
-    static UINT buffer_pos = 0;
+    static DWORD buffer_max = 0;
+    static DWORD buffer_pos = 0;
 
     /* Read next content into buffer */
     if (buffer_pos >= buffer_max)
