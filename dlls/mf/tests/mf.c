@@ -5727,6 +5727,7 @@ static void test_wma_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *media_type;
     IMFTransform *transform;
     GUID class_id;
@@ -5746,6 +5747,9 @@ static void test_wma_decoder(void)
 
     /* check default media types */
 
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#x\n", hr);
@@ -5803,6 +5807,10 @@ static void test_wma_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %u\n", ret);
 
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#x\n", hr);
+
     /* check new output media types */
 
     i = -1;
@@ -5844,6 +5852,21 @@ static void test_wma_decoder(void)
     ok(hr == S_OK, "SetOutputType returned %#x.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %u\n", ret);
+
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
+    ok(hr == S_OK, "GetInputStreamInfo returned %#x\n", hr);
+    todo_wine
+    ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    todo_wine
+    ok(input_info.dwFlags == 0, "got dwFlags %#x\n", input_info.dwFlags);
+    todo_wine
+    ok(input_info.cbSize == wma_block_size, "got cbSize %u\n", input_info.cbSize);
+    todo_wine
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#x\n", input_info.cbMaxLookahead);
+    todo_wine
+    ok(input_info.cbAlignment == 1, "got cbAlignment %#x\n", input_info.cbAlignment);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %u\n", ret);
