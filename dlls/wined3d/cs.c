@@ -3714,6 +3714,15 @@ static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *pac
             break;
         }
 
+        case WINED3D_CS_OP_GENERATE_MIPMAPS:
+        {
+            struct wined3d_cs_generate_mipmaps *op;
+
+            op = (struct wined3d_cs_generate_mipmaps *)packet->data;
+            wined3d_shader_resource_view_decref(op->view);
+            break;
+        }
+
         default:
             break;
     }
@@ -3943,6 +3952,15 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
             op = (struct wined3d_cs_copy_uav_counter *)packet->data;
             wined3d_buffer_incref(op->buffer);
             wined3d_unordered_access_view_incref(op->view);
+            break;
+        }
+
+        case WINED3D_CS_OP_GENERATE_MIPMAPS:
+        {
+            struct wined3d_cs_generate_mipmaps *op;
+
+            op = (struct wined3d_cs_generate_mipmaps *)packet->data;
+            wined3d_shader_resource_view_incref(op->view);
             break;
         }
 
