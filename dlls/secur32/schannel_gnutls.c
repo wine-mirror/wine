@@ -372,7 +372,7 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
     SIZE_T len = buff_len;
     char *b;
 
-    TRACE("Push %lu bytes\n", len);
+    TRACE("Pull %lu bytes\n", len);
 
     b = get_buffer(t, &t->in, &len);
     if (!b)
@@ -382,7 +382,7 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
     }
     memcpy(buff, b, len);
     t->in.offset += len;
-    TRACE("Wrote %lu bytes\n", len);
+    TRACE("Read %lu bytes\n", len);
     return len;
 }
 
