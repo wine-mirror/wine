@@ -390,12 +390,12 @@ void context_preload_textures(struct wined3d_context *context, const struct wine
     }
     else
     {
-        WORD ffu_map = context->fixed_function_usage_map;
+        uint32_t ffu_map = context->fixed_function_usage_map;
 
-        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+        while (ffu_map)
         {
-            if (ffu_map & 1)
-                context_preload_texture(context, state, i);
+            i = wined3d_bit_scan(&ffu_map);
+            context_preload_texture(context, state, i);
         }
     }
 }
