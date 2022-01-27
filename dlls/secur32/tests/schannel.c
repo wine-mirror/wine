@@ -1693,17 +1693,17 @@ static void test_dtls(void)
     ctx_handle2.dwLower = ctx_handle2.dwUpper = 0xdeadbeef;
     status = InitializeSecurityContextA( &cred_handle, &ctx_handle, (SEC_CHAR *)"winetest", flags_req, 0, 16, NULL, 0,
                                          &ctx_handle2, &buffers[1], &attr, &exp );
-    todo_wine ok( status == SEC_I_CONTINUE_NEEDED, "got %08x\n", status );
+    ok( status == SEC_I_CONTINUE_NEEDED, "got %08x\n", status );
 
     flags_ret = ISC_RET_MANUAL_CRED_VALIDATION | ISC_RET_STREAM | ISC_RET_EXTENDED_ERROR | ISC_RET_DATAGRAM |
                 ISC_RET_USED_SUPPLIED_CREDS | ISC_RET_CONFIDENTIALITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT;
-    todo_wine ok( attr == flags_ret, "got %08x\n", attr );
+    ok( attr == flags_ret, "got %08x\n", attr );
     todo_wine ok( exp.LowPart, "got %08x\n", exp.LowPart );
     todo_wine ok( exp.HighPart, "got %08x\n", exp.HighPart );
     ok( buffers[1].pBuffers[1].BufferType == SECBUFFER_ALERT, "Expected buffertype SECBUFFER_ALERT, got %#x\n", buffers[1].pBuffers[1].BufferType);
-    todo_wine ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
-    todo_wine ok( ctx_handle.dwLower == ctx_handle2.dwLower, "dwLower mismatch, expected %#lx, got %#lx\n", ctx_handle.dwLower, ctx_handle2.dwLower);
-    todo_wine ok( ctx_handle.dwUpper == ctx_handle2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", ctx_handle.dwUpper, ctx_handle2.dwUpper);
+    ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
+    ok( ctx_handle.dwLower == ctx_handle2.dwLower, "dwLower mismatch, expected %#lx, got %#lx\n", ctx_handle.dwLower, ctx_handle2.dwLower);
+    ok( ctx_handle.dwUpper == ctx_handle2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", ctx_handle.dwUpper, ctx_handle2.dwUpper);
 
     /* With no new input buffer, output buffer length should match prior call. */
     todo_wine ok(buffers[1].pBuffers[0].cbBuffer == prev_buf_len, "Output buffer size mismatch, expected %#x, got %#x\n",
