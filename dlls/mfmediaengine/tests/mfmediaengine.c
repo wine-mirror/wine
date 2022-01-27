@@ -29,6 +29,8 @@
 #include "mferror.h"
 #include "dxgi.h"
 #include "initguid.h"
+#include "mmdeviceapi.h"
+#include "audiosessiontypes.h"
 
 #include "wine/heap.h"
 #include "wine/test.h"
@@ -297,6 +299,7 @@ static void test_Shutdown(void)
     IMFMediaTimeRange *time_range;
     IMFMediaEngine *media_engine;
     unsigned int state;
+    UINT32 value;
     DWORD cx, cy;
     double val;
     HRESULT hr;
@@ -446,6 +449,18 @@ todo_wine
     if (SUCCEEDED(IMFMediaEngine_QueryInterface(media_engine, &IID_IMFMediaEngineEx, (void **)&media_engine_ex)))
     {
         hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, NULL, NULL);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaEngineEx_GetAudioStreamCategory(media_engine_ex, &value);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaEngineEx_GetAudioEndpointRole(media_engine_ex, &value);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaEngineEx_SetAudioStreamCategory(media_engine_ex, AudioCategory_ForegroundOnlyMedia);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaEngineEx_SetAudioEndpointRole(media_engine_ex, eConsole);
         ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
         IMFMediaEngineEx_Release(media_engine_ex);
@@ -800,6 +815,34 @@ static void test_SetSourceFromByteStream(void)
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
+static void test_audio_configuration(void)
+{
+    struct media_engine_notify *notify;
+    IMFMediaEngineEx *media_engine;
+    UINT32 value;
+    HRESULT hr;
+
+    notify = create_callback();
+
+    media_engine = create_media_engine_ex(&notify->IMFMediaEngineNotify_iface);
+    if (!media_engine)
+    {
+        IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+        return;
+    }
+
+    hr = IMFMediaEngineEx_GetAudioStreamCategory(media_engine, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == AudioCategory_Other, "Unexpected value %u.\n", value);
+
+    hr = IMFMediaEngineEx_GetAudioEndpointRole(media_engine, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == eMultimedia, "Unexpected value %u.\n", value);
+
+    IMFMediaEngineEx_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -829,6 +872,7 @@ START_TEST(mfmediaengine)
     test_error();
     test_time_range();
     test_SetSourceFromByteStream();
+    test_audio_configuration();
 
     IMFMediaEngineClassFactory_Release(factory);
 

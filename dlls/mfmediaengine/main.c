@@ -29,6 +29,8 @@
 #include "mferror.h"
 #include "dxgi.h"
 #include "d3d11.h"
+#include "mmdeviceapi.h"
+#include "audiosessiontypes.h"
 
 #include "wine/debug.h"
 
@@ -2495,30 +2497,78 @@ static HRESULT WINAPI media_engine_EnableHorizontalMirrorMode(IMFMediaEngineEx *
 
 static HRESULT WINAPI media_engine_GetAudioStreamCategory(IMFMediaEngineEx *iface, UINT32 *category)
 {
-    FIXME("%p, %p stub.\n", iface, category);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, category);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = IMFAttributes_GetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_CATEGORY, category);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_SetAudioStreamCategory(IMFMediaEngineEx *iface, UINT32 category)
 {
-    FIXME("%p, %u stub.\n", iface, category);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u.\n", iface, category);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = IMFAttributes_SetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_CATEGORY, category);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetAudioEndpointRole(IMFMediaEngineEx *iface, UINT32 *role)
 {
-    FIXME("%p, %p stub.\n", iface, role);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, role);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = IMFAttributes_GetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_ENDPOINT_ROLE, role);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_SetAudioEndpointRole(IMFMediaEngineEx *iface, UINT32 role)
 {
-    FIXME("%p, %u stub.\n", iface, role);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u.\n", iface, role);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = IMFAttributes_SetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_ENDPOINT_ROLE, role);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetRealTimeMode(IMFMediaEngineEx *iface, BOOL *enabled)
@@ -2866,6 +2916,12 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
 
     if (FAILED(hr = IMFAttributes_CopyAllItems(attributes, engine->attributes)))
         return hr;
+
+    /* Set default audio configuration */
+    if (FAILED(IMFAttributes_GetItem(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_CATEGORY, NULL)))
+        IMFAttributes_SetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_CATEGORY, AudioCategory_Other);
+    if (FAILED(IMFAttributes_GetItem(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_ENDPOINT_ROLE, NULL)))
+        IMFAttributes_SetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_ENDPOINT_ROLE, eMultimedia);
 
     IMFAttributes_GetUINT64(attributes, &MF_MEDIA_ENGINE_PLAYBACK_HWND, &playback_hwnd);
     hr = IMFAttributes_GetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, &output_format);
