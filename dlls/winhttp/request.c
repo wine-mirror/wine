@@ -3743,13 +3743,24 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
     {
         struct socket_receive *r;
 
-        if (!(r = malloc( sizeof(*r) ))) return FALSE;
+        if (InterlockedIncrement( &socket->hdr.pending_receives ) > 1)
+        {
+            InterlockedDecrement( &socket->hdr.pending_receives );
+            WARN( "Attempt to queue receive while another is pending.\n" );
+            release_object( &socket->hdr );
+            return ERROR_INVALID_OPERATION;
+        }
+
+        if (!(r = malloc( sizeof(*r) )))
+        {
+            InterlockedDecrement( &socket->hdr.pending_receives );
+            return ERROR_OUTOFMEMORY;
+        }
         r->socket = socket;
         r->buf    = buf;
         r->len    = len;
 
         addref_object( &socket->hdr );
-        InterlockedIncrement( &socket->hdr.pending_receives );
         if ((ret = queue_task( &socket->recv_q, task_socket_receive, r )))
         {
             InterlockedDecrement( &socket->hdr.pending_receives );

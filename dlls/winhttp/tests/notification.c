@@ -1104,6 +1104,8 @@ static void test_websocket(BOOL secure)
 
     err = pWinHttpWebSocketReceive( socket, buffer, sizeof(buffer), &size, &type );
     ok( err == ERROR_SUCCESS, "got %u\n", err );
+    err = pWinHttpWebSocketReceive( socket, buffer, sizeof(buffer), &size, &type );
+    ok( err == ERROR_INVALID_OPERATION, "got %u\n", err );
 
     setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
     ws_status = (WINHTTP_WEB_SOCKET_STATUS *)info.buffer;
