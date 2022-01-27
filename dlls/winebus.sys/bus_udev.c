@@ -360,6 +360,21 @@ static void hidraw_device_read_report(struct unix_device *iface)
     }
 }
 
+static void hidraw_disable_sony_quirks(struct unix_device *iface)
+{
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+
+    /* FIXME: we may want to validate CRC at the end of the outbound HID reports,
+     * as controllers do not switch modes if it is incorrect.
+     */
+
+    if ((impl->quirks & QUIRK_DS4_BT))
+    {
+        TRACE("Disabling report quirk for Bluetooth DualShock4 controller iface %p\n", iface);
+        impl->quirks &= ~QUIRK_DS4_BT;
+    }
+}
+
 static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
@@ -379,6 +394,7 @@ static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_
 
     if (count > 0)
     {
+        hidraw_disable_sony_quirks(iface);
         io->Information = count;
         io->Status = STATUS_SUCCESS;
     }
@@ -411,6 +427,7 @@ static void hidraw_device_get_feature_report(struct unix_device *iface, HID_XFER
 
     if (count > 0)
     {
+        hidraw_disable_sony_quirks(iface);
         io->Information = count;
         io->Status = STATUS_SUCCESS;
     }
@@ -447,6 +464,7 @@ static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER
 
     if (count > 0)
     {
+        hidraw_disable_sony_quirks(iface);
         io->Information = count;
         io->Status = STATUS_SUCCESS;
     }
