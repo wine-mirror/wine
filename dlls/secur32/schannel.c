@@ -808,6 +808,12 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             else WARN("invalid buffer size %u\n", buffer->cbBuffer);
         }
 
+        if (is_dtls_context(ctx))
+        {
+            struct set_dtls_timeouts_params params = { ctx->transport.session, 0, 60000 };
+            GNUTLS_CALL( set_dtls_timeouts, &params );
+        }
+
         phNewContext->dwLower = handle;
         phNewContext->dwUpper = 0;
     }

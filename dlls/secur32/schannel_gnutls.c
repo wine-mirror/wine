@@ -60,6 +60,7 @@ static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 static void (*pgnutls_transport_set_pull_timeout_function)(gnutls_session_t,
                                                            int (*)(gnutls_transport_ptr_t, unsigned int));
 static void (*pgnutls_dtls_set_mtu)(gnutls_session_t, unsigned int);
+static void (*pgnutls_dtls_set_timeouts)(gnutls_session_t, unsigned int, unsigned int);
 
 /* Not present in gnutls version < 3.2.0. */
 static int (*pgnutls_alpn_get_selected_protocol)(gnutls_session_t, gnutls_datum_t *);
@@ -194,6 +195,12 @@ static int compat_gnutls_alpn_set_protocols(gnutls_session_t session, const gnut
 }
 
 static void compat_gnutls_dtls_set_mtu(gnutls_session_t session, unsigned int mtu)
+{
+    FIXME("\n");
+}
+
+static void compat_gnutls_dtls_set_timeouts(gnutls_session_t session, unsigned int retrans_timeout,
+        unsigned int total_timeout)
 {
     FIXME("\n");
 }
@@ -989,6 +996,15 @@ static NTSTATUS schan_set_dtls_mtu( void *args )
     return SEC_E_OK;
 }
 
+static NTSTATUS schan_set_dtls_timeouts( void *args )
+{
+    const struct set_dtls_timeouts_params *params = args;
+    gnutls_session_t s = (gnutls_session_t)params->session;
+
+    pgnutls_dtls_set_timeouts(s, params->retrans_timeout, params->total_timeout);
+    return SEC_E_OK;
+}
+
 static inline void reverse_bytes(BYTE *buf, ULONG len)
 {
     BYTE tmp;
@@ -1245,6 +1261,11 @@ static NTSTATUS process_attach( void *args )
         WARN("gnutls_dtls_set_mtu not found\n");
         pgnutls_dtls_set_mtu = compat_gnutls_dtls_set_mtu;
     }
+    if (!(pgnutls_dtls_set_timeouts = dlsym(libgnutls_handle, "gnutls_dtls_set_timeouts")))
+    {
+        WARN("gnutls_dtls_set_timeouts not found\n");
+        pgnutls_dtls_set_timeouts = compat_gnutls_dtls_set_timeouts;
+    }
     if (!(pgnutls_privkey_export_x509 = dlsym(libgnutls_handle, "gnutls_privkey_export_x509")))
     {
         WARN("gnutls_privkey_export_x509 not found\n");
@@ -1308,6 +1329,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     schan_set_application_protocols,
     schan_set_dtls_mtu,
     schan_set_session_target,
+    schan_set_dtls_timeouts,
 };
 
 #endif /* SONAME_LIBGNUTLS */

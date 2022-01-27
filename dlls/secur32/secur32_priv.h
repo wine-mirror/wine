@@ -203,6 +203,13 @@ struct set_session_target_params
     const char *target;
 };
 
+struct set_dtls_timeouts_params
+{
+    schan_session session;
+    unsigned int retrans_timeout;
+    unsigned int total_timeout;
+};
+
 enum schan_funcs
 {
     unix_process_attach,
@@ -225,6 +232,7 @@ enum schan_funcs
     unix_set_application_protocols,
     unix_set_dtls_mtu,
     unix_set_session_target,
+    unix_set_dtls_timeouts,
 };
 
 #endif /* __SECUR32_PRIV_H__ */
