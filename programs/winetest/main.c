@@ -318,7 +318,8 @@ static BOOL is_native_dll( HMODULE module )
  */
 static BOOL is_stub_dll(const char *filename)
 {
-    DWORD size, ver;
+    UINT size;
+    DWORD ver;
     BOOL isstub = FALSE;
     char *p, *data;
 
