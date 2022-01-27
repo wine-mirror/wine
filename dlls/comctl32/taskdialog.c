@@ -430,7 +430,8 @@ static void taskdialog_get_expando_size(struct taskdialog_info *dialog_info, HWN
     HFONT hfont, old_hfont;
     HDC hdc;
     RECT rect = {0};
-    LONG icon_width, icon_height, text_offset;
+    LONG icon_width, icon_height;
+    INT text_offset;
     LONG max_width, max_text_height;
 
     hdc = GetDC(hwnd);
@@ -1092,7 +1093,8 @@ static void taskdialog_draw_expando_control(struct taskdialog_info *dialog_info,
     HDC hdc;
     RECT rect = {0};
     WCHAR *text;
-    LONG icon_width, icon_height, text_offset;
+    LONG icon_width, icon_height;
+    INT text_offset;
     UINT style = DFCS_FLAT;
     BOOL draw_focus;
 

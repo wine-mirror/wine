@@ -1229,7 +1229,12 @@ static SIZE BUTTON_GetImageSize(const BUTTON_INFO *infoPtr)
 
     /* ImageList has priority over image */
     if (infoPtr->imagelist.himl)
-        ImageList_GetIconSize(infoPtr->imagelist.himl, &size.cx, &size.cy);
+    {
+        int scx, scy;
+        ImageList_GetIconSize(infoPtr->imagelist.himl, &scx, &scy);
+        size.cx = scx;
+        size.cy = scy;
+    }
     else if (infoPtr->u.image)
     {
         if (infoPtr->image_type == IMAGE_ICON)
