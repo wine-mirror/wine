@@ -356,7 +356,7 @@ static void test_device_manager(void)
 
         count = 0;
         hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
-    todo_wine_if(rt_formats[i] == MAKEFOURCC('A','Y','U','V'))
+        todo_wine_if(rt_formats[i] == MAKEFOURCC('A','Y','U','V'))
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         if (FAILED(hr)) continue;
         ok(count > 0, "Unexpected device count.\n");
