@@ -3817,7 +3817,7 @@ static void test_CoGetInstanceFromFile(void)
     mqi[0].pItf = NULL;
     mqi[0].hr = E_NOTIMPL;
     hr = CoGetInstanceFromFile(NULL, NULL, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
-todo_wine
+    todo_wine
     ok(hr == MK_E_CANTOPENFILE, "got 0x%08x\n", hr);
     ok(mqi[0].pItf == NULL, "got %p\n", mqi[0].pItf);
     ok(mqi[0].hr == E_NOINTERFACE, "got 0x%08x\n", mqi[0].hr);
@@ -4186,7 +4186,7 @@ static void test_CoCreateInstanceFromApp(void)
 
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_APPCONTAINER, NULL,
             &IID_IClassFactory, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = CoCreateInstance(&CLSID_WineOOPTest, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);

@@ -650,7 +650,7 @@ static void test_propertyset_storage_enum(void)
 
     hr = IPropertyStorage_Stat(prop_storage, &psstg);
     ok(hr == S_OK, "Failed to get prop storage stats, hr %#x.\n", hr);
-todo_wine
+    todo_wine
     ok(IsEqualCLSID(&psstg.clsid, &IID_IUnknown), "Unexpected storage clsid %s.\n", wine_dbgstr_guid(&psstg.clsid));
 
     hr = IPropertySetStorage_Enum(ps_storage, NULL);
@@ -671,7 +671,7 @@ todo_wine
     memset(&ftime, 0, sizeof(ftime));
     ftime.dwLowDateTime = 1;
     hr = IPropertyStorage_SetTimes(prop_storage, NULL, NULL, &ftime);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to set storage times, hr %#x.\n", hr);
 
     hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
@@ -703,10 +703,10 @@ todo_wine
     hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
     ok(hr == S_OK, "Failed to reset enumerator, hr %#x.\n", hr);
     hr = IEnumSTATPROPSETSTG_Skip(ps_enum, 2);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Failed to skip, hr %#x.\n", hr);
     hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Failed to get enum item, hr %#x.\n", hr);
 
     hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
@@ -714,7 +714,7 @@ todo_wine
     hr = IEnumSTATPROPSETSTG_Skip(ps_enum, 1);
     ok(hr == S_OK, "Failed to skip, hr %#x.\n", hr);
     hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Failed to get enum item, hr %#x.\n", hr);
 
     hr = IEnumSTATPROPSETSTG_Reset(ps_enum);

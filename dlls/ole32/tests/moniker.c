@@ -96,7 +96,7 @@ static void _test_moniker_type(IMoniker *moniker, DWORD type, BOOL todo, int lin
 
     hr = IMoniker_IsSystemMoniker(moniker, &type2);
     ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine_if(todo)
+    todo_wine_if(todo)
     ok_(__FILE__, line)(type2 == type, "Unexpected moniker type %d.\n", type2);
 }
 
@@ -1029,7 +1029,7 @@ static void test_ROT(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&factory.IClassFactory_iface,
             pMoniker, &dwCookie);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     IMoniker_Release(pMoniker);
 
@@ -1245,7 +1245,7 @@ static void test_MkParseDisplayName(void)
     eaten = 0xdeadbeef;
     pmk = (IMoniker *)0xdeadbeef;
     hr = MkParseDisplayName(pbc, wszNonExistentProgId, &eaten, &pmk);
-todo_wine
+    todo_wine
     ok(hr == MK_E_SYNTAX, "Unexpected hr %#x.\n", hr);
     ok(eaten == 0, "Processed character count should have been 0 instead of %u\n", eaten);
     ok(pmk == NULL, "Output moniker pointer should have been NULL instead of %p\n", pmk);
@@ -1255,7 +1255,7 @@ todo_wine
     eaten = 0xdeadbeef;
     pmk = (IMoniker *)0xdeadbeef;
     hr = MkParseDisplayName(pbc, wszDisplayNameClsid, &eaten, &pmk);
-todo_wine
+    todo_wine
     ok(hr == MK_E_SYNTAX, "Unexpected hr %#x.\n", hr);
     ok(eaten == 0, "Processed character count should have been 0 instead of %u\n", eaten);
     ok(pmk == NULL, "Output moniker pointer should have been NULL instead of %p\n", pmk);
@@ -1331,7 +1331,7 @@ todo_wine
     eaten = 0xdeadbeef;
     pmk = (IMoniker *)0xdeadbeef;
     hr = MkParseDisplayName(pbc, wszDisplayNameProgIdFail, &eaten, &pmk);
-todo_wine
+    todo_wine
     ok(hr == MK_E_SYNTAX, "Unexpected hr %#x.\n", hr);
     ok(eaten == 0, "Processed character count should have been 0 instead of %u\n", eaten);
     ok(pmk == NULL, "Output moniker pointer should have been NULL instead of %p\n", pmk);
@@ -1783,7 +1783,7 @@ static void test_moniker(
 
     hr = IMoniker_GetSizeMax(moniker, &max_size);
     ok(hr == S_OK, "Failed to get max size, hr %#x.\n", hr);
-todo_wine_if(moniker_type == MKSYS_GENERICCOMPOSITE)
+    todo_wine_if(moniker_type == MKSYS_GENERICCOMPOSITE)
     ok(expected_max_size == max_size.u.LowPart, "%s: unexpected max size %u.\n", testname, max_size.u.LowPart);
 
     hr = IMoniker_Save(moniker, stream, TRUE);
@@ -1926,7 +1926,7 @@ static void test_class_moniker(void)
     {
         eaten = 0xdeadbeef;
         hr = MkParseDisplayName(bindctx, tests[i].name, &eaten, &moniker);
-    todo_wine_if(i == 5)
+        todo_wine_if(i == 5)
         ok(hr == tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
         ok(eaten == tests[i].eaten, "%u: unexpected eaten length %u, expected %u.\n", i, eaten, tests[i].eaten);
         if (SUCCEEDED(hr))
@@ -2101,7 +2101,7 @@ static void test_class_moniker(void)
     ok(!enummoniker, "Unexpected pointer.\n");
 
     hr = IMoniker_Enum(moniker, FALSE, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IBindCtx_Release(bindctx);
@@ -2223,7 +2223,7 @@ static void test_file_moniker(WCHAR* path)
     ok(!enummoniker, "Unexpected pointer.\n");
 
     hr = IMoniker_Enum(moniker1, FALSE, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IBindCtx_Release(bind_ctx);
@@ -2312,7 +2312,7 @@ static void test_file_monikers(void)
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
 
     check_interface(moniker, &IID_IMoniker, TRUE);
-todo_wine
+    todo_wine
     check_interface(moniker, &IID_IPersist, FALSE);
     check_interface(moniker, &IID_IPersistStream, TRUE);
     check_interface(moniker, &CLSID_FileMoniker, TRUE);
@@ -2707,7 +2707,7 @@ static void test_item_moniker(void)
     ok(!enummoniker, "Unexpected pointer.\n");
 
     hr = IMoniker_Enum(moniker, FALSE, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, NULL);
@@ -2872,7 +2872,7 @@ static void test_anti_moniker(void)
     ok_ole_success(hr, CreateAntiMoniker);
 
     check_interface(moniker, &IID_IMoniker, TRUE);
-todo_wine
+    todo_wine
     check_interface(moniker, &IID_IPersist, FALSE);
     check_interface(moniker, &IID_IPersistStream, TRUE);
     check_interface(moniker, &CLSID_AntiMoniker, TRUE);
@@ -3037,7 +3037,7 @@ todo_wine
     ok(!enummoniker, "Unexpected pointer.\n");
 
     hr = IMoniker_Enum(moniker, FALSE, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* CommonPrefixWith() */
@@ -3225,7 +3225,7 @@ static void test_generic_composite_moniker(void)
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
 
     check_interface(moniker, &IID_IMoniker, TRUE);
-todo_wine
+    todo_wine
     check_interface(moniker, &IID_IPersist, FALSE);
     check_interface(moniker, &IID_IPersistStream, TRUE);
     check_interface(moniker, &IID_IROTData, TRUE);
@@ -3237,7 +3237,7 @@ todo_wine
 
     /* Generic composite is special, as it does not addref in this case. */
     hr = IMoniker_QueryInterface(moniker, &CLSID_CompositeMoniker, (void **)&unknown);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
@@ -3338,14 +3338,14 @@ todo_wine
     cookie = 0;
     hr = IRunningObjectTable_Register(rot, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)moniker4,
             moniker4, &cookie);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_BindToObject(moniker3, bindctx, moniker2, &IID_IMoniker, (void **)&unknown);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     hr = IRunningObjectTable_Revoke(rot, cookie);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMoniker_Release(moniker3);
@@ -3480,7 +3480,7 @@ todo_wine
     IMoniker_Release(moniker3);
 
     hr = IMoniker_CommonPrefixWith(moniker2, moniker, &moniker3);
-todo_wine
+    todo_wine
     ok(hr == MK_S_ME, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
@@ -3843,7 +3843,7 @@ static void test_pointer_moniker(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     check_interface(moniker, &IID_IMoniker, TRUE);
-todo_wine
+    todo_wine
     check_interface(moniker, &IID_IPersist, FALSE);
     check_interface(moniker, &IID_IPersistStream, TRUE);
     check_interface(moniker, &CLSID_PointerMoniker, TRUE);
@@ -4135,7 +4135,7 @@ static void test_objref_moniker(void)
     hr = CoUnmarshalInterface(stream, &IID_IMoniker, (void **)&moniker2);
     ok(hr == S_OK, "Failed to unmarshal, hr %#x\n", hr);
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Expected equal moniker, hr %#x\n", hr);
     IMoniker_Release(moniker2);
 
@@ -4151,7 +4151,7 @@ todo_wine
     ok(hr == S_OK, "CreateBindCtx failed: 0x%08x\n", hr);
 
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &display_name);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "IMoniker_GetDisplayName failed: 0x%08x\n", hr);
 
     IBindCtx_Release(bindctx);
@@ -4170,7 +4170,7 @@ todo_wine
     ok(hr == S_OK, "CreateStreamOnHGlobal failed: 0x%08x\n", hr);
 
     hr = IMoniker_Save(moniker, stream, TRUE);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "IMoniker_Save failed: 0x%08x\n", hr);
 
     IStream_Release(stream);
@@ -4184,7 +4184,7 @@ todo_wine
     TEST_MONIKER_TYPE(moniker, MKSYS_OBJREFMONIKER);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to get inverse, hr %#x\n", hr);
 if (hr == S_OK)
 {
@@ -4197,38 +4197,38 @@ if (hr == S_OK)
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "IMoniker_IsRunning should return S_OK, not 0x%08x\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
     ok(hr == MK_E_UNAVAILABLE, "IMoniker_GetTimeOfLastChange should return MK_E_UNAVAILABLE, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "IMoniker_BindToObject failed: 0x%08x\n", hr);
-if (hr == S_OK)
-    IUnknown_Release(unknown);
+    if (hr == S_OK)
+        IUnknown_Release(unknown);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "IMoniker_BindToObject failed: 0x%08x\n", hr);
-if (hr == S_OK)
-    IUnknown_Release(unknown);
+    if (hr == S_OK)
+        IUnknown_Release(unknown);
 
     IMoniker_Release(moniker);
 
-todo_wine
+    todo_wine
     ok(factory.refcount > 1, "Unexpected factory refcount %u\n", factory.refcount);
 
     hr = CreateObjrefMoniker(NULL, &moniker);
     ok(hr == S_OK, "CreateObjrefMoniker failed, hr %#x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-todo_wine
+    todo_wine
     ok(hr == E_UNEXPECTED, "IMoniker_BindToObject should have returned E_UNEXPECTED instead of 0x%08x\n", hr);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-todo_wine
+    todo_wine
     ok(hr == E_UNEXPECTED, "IMoniker_BindToStorage should have returned E_UNEXPECTED instead of 0x%08x\n", hr);
 
     IBindCtx_Release(bindctx);
@@ -4254,23 +4254,23 @@ todo_wine
     ok(hr == S_OK, "CreateObjrefMoniker failed: hr %#x\n", hr);
 
     hr = IMoniker_IsEqual(moniker, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x\n", hr);
 
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x\n", hr);
 
     hr = IMoniker_CommonPrefixWith(moniker, moniker2, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x\n", hr);
 
     hr = IMoniker_CommonPrefixWith(moniker, NULL, &prefix);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x\n", hr);
 
     hr = IMoniker_CommonPrefixWith(moniker, moniker2, &prefix);
-todo_wine
+    todo_wine
     ok(hr == MK_S_US, "Unexpected hr %#x\n", hr);
 if (hr == S_OK)
 {
@@ -4284,11 +4284,11 @@ if (hr == S_OK)
     ok(hr == S_OK, "Failed to create moniker, hr %#x\n", hr);
 
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x\n", hr);
 
     hr = IMoniker_CommonPrefixWith(moniker, moniker2, &prefix);
-todo_wine
+    todo_wine
     ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x\n", hr);
 
     IMoniker_Release(moniker2);
@@ -4298,16 +4298,16 @@ todo_wine
     /* P + A -> () */
     anti = create_antimoniker(1);
     hr = IMoniker_ComposeWith(moniker, anti, TRUE, &moniker2);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to compose, hr %#x\n", hr);
-if (hr == S_OK)
-    ok(!moniker2, "Unexpected pointer\n");
+    if (hr == S_OK)
+        ok(!moniker2, "Unexpected pointer\n");
     IMoniker_Release(anti);
 
     /* P + A2 -> A */
     anti = create_antimoniker(2);
     hr = IMoniker_ComposeWith(moniker, anti, TRUE, &moniker2);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to compose, hr %#x\n", hr);
 if (hr == S_OK)
 {
