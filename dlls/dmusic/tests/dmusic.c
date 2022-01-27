@@ -498,31 +498,40 @@ static BOOL missing_dmusic(void)
     return TRUE;
 }
 
+static IDirectMusicPort *create_synth_port(IDirectMusic **dmusic)
+{
+    IDirectMusicPort *port = NULL;
+    DMUS_PORTPARAMS params;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (void **)dmusic);
+    ok(hr == S_OK, "Cannot create DirectMusic object: %#x\n", hr);
+
+    params.dwSize = sizeof(params);
+    params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
+    params.dwChannelGroups = 1;
+    params.dwAudioChannels = 2;
+    hr = IDirectMusic_SetDirectSound(*dmusic, NULL, NULL);
+    ok(hr == S_OK, "IDirectMusic_SetDirectSound failed: %#x\n", hr);
+    hr = IDirectMusic_CreatePort(*dmusic, &GUID_NULL, &params, &port, NULL);
+    ok(hr == S_OK, "IDirectMusic_CreatePort failed: %#x\n", hr);
+
+    return port;
+}
+
 static void test_COM_synthport(void)
 {
-    IDirectMusic *dmusic = NULL;
-    IDirectMusicPort *port = NULL;
+    IDirectMusic *dmusic;
+    IDirectMusicPort *port;
     IDirectMusicPortDownload *dmpd;
     IDirectMusicThru *dmt;
     IKsControl *iksc;
     IReferenceClock *clock;
     IUnknown *unk;
-    DMUS_PORTPARAMS port_params;
     ULONG refcount;
     HRESULT hr;
 
-    /* Create a IDirectMusicPort */
-    hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic,
-            (void**)&dmusic);
-    ok(hr == S_OK, "Cannot create DirectMusic object (%x)\n", hr);
-    port_params.dwSize = sizeof(port_params);
-    port_params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
-    port_params.dwChannelGroups = 1;
-    port_params.dwAudioChannels = 2;
-    hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
-    ok(hr == S_OK, "IDirectMusic_SetDirectSound returned: %x\n", hr);
-    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, &port, NULL);
-    ok(hr == S_OK, "IDirectMusic_CreatePort returned: %x\n", hr);
+    port = create_synth_port(&dmusic);
 
     /* Same refcount for all DirectMusicPort interfaces */
     refcount = IDirectMusicPort_AddRef(port);
@@ -861,6 +870,62 @@ static void test_master_clock(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_synthport(void)
+{
+    IDirectMusic *dmusic;
+    IDirectMusicBuffer *buf;
+    IDirectMusicPort *port;
+    DMUS_BUFFERDESC desc;
+    DMUS_PORTCAPS caps;
+    HRESULT hr;
+
+    port = create_synth_port(&dmusic);
+
+    /* Create a IDirectMusicPortBuffer */
+    desc.dwSize = sizeof(DMUS_BUFFERDESC);
+    desc.dwFlags = 0;
+    desc.cbBuffer = 1023;
+    memcpy(&desc.guidBufferFormat, &GUID_NULL, sizeof(GUID));
+    hr = IDirectMusic_CreateMusicBuffer(dmusic, &desc, &buf, NULL);
+    ok(hr == S_OK, "IDirectMusic_CreateMusicBuffer failed: %#x\n", hr);
+
+    /* Unsupported methods */
+    hr = IDirectMusicPort_Read(port, NULL);
+    todo_wine ok(hr == E_POINTER, "Read returned: %#x\n", hr);
+    hr = IDirectMusicPort_Read(port, buf);
+    ok(hr == E_NOTIMPL, "Read returned: %#x\n", hr);
+    hr = IDirectMusicPort_SetReadNotificationHandle(port, NULL);
+    ok(hr == E_NOTIMPL, "SetReadNotificationHandle returned: %#x\n", hr);
+    hr = IDirectMusicPort_Compact(port);
+    ok(hr == E_NOTIMPL, "Compact returned: %#x\n", hr);
+
+    /* GetCaps */
+    hr = IDirectMusicPort_GetCaps(port, NULL);
+    ok(hr == E_INVALIDARG, "GetCaps failed: %#x\n", hr);
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirectMusicPort_GetCaps(port, &caps);
+    ok(hr == E_INVALIDARG, "GetCaps failed: %#x\n", hr);
+    caps.dwSize = sizeof(caps);
+    hr = IDirectMusicPort_GetCaps(port, &caps);
+    ok(hr == S_OK, "GetCaps failed: %#x\n", hr);
+    ok(caps.dwSize == sizeof(caps), "dwSize was modified to %d\n", caps.dwSize);
+    ok(IsEqualGUID(&caps.guidPort, &CLSID_DirectMusicSynth), "Expected port guid CLSID_DirectMusicSynth, got %s\n",
+            wine_dbgstr_guid(&caps.guidPort));
+    ok(caps.dwClass == DMUS_PC_OUTPUTCLASS, "Got wrong dwClass: %#x\n", caps.dwClass);
+    ok(caps.dwType == DMUS_PORT_USER_MODE_SYNTH, "Got wrong dwType: %#x\n", caps.dwType);
+    ok(caps.dwFlags == (DMUS_PC_AUDIOPATH|DMUS_PC_DIRECTSOUND|DMUS_PC_DLS|DMUS_PC_DLS2|DMUS_PC_SOFTWARESYNTH|
+                DMUS_PC_WAVE), "Unexpected dwFlags returned: %#x\n", caps.dwFlags);
+    ok(caps.dwMemorySize == DMUS_PC_SYSTEMMEMORY, "Got dwMemorySize: %#x\n", caps.dwMemorySize);
+    ok(caps.dwMaxChannelGroups == 1000, "Got dwMaxChannelGroups: %d\n", caps.dwMaxChannelGroups);
+    ok(caps.dwMaxVoices == 1000, "Got dwMaxVoices: %d\n", caps.dwMaxVoices);
+    ok(caps.dwMaxAudioChannels == 2, "Got dwMaxAudioChannels: %#x\n", caps.dwMaxAudioChannels);
+    ok(caps.dwEffectFlags == DMUS_EFFECT_REVERB, "Unexpected dwEffectFlags returned: %#x\n", caps.dwEffectFlags);
+    trace("Port wszDescription: %s\n", wine_dbgstr_w(caps.wszDescription));
+
+    IDirectMusicPort_Release(port);
+    IDirectMusic_Release(dmusic);
+}
+
 START_TEST(dmusic)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -880,6 +945,7 @@ START_TEST(dmusic)
     test_dmcoll();
     test_parsedescriptor();
     test_master_clock();
+    test_synthport();
 
     CoUninitialize();
 }
