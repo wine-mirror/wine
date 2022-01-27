@@ -5313,12 +5313,12 @@ static void test_SetFileInformationByHandle(void)
     /* test FileDispositionInfo, additional details already covered by ntdll tests */
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileDispositionInfo, &dispinfo, 0);
-todo_wine
+    todo_wine
     ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "got %d, error %d\n", ret, GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileBasicInfo, &basicinfo, 0);
-todo_wine
+    todo_wine
     ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "got %d, error %d\n", ret, GetLastError());
 
     memset(&basicinfo, 0, sizeof(basicinfo));
@@ -5409,7 +5409,7 @@ static void test_SetFileRenameInfo(void)
     fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
     memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
     ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
-todo_wine
+    todo_wine
     ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "FileRenameInfo unexpected result %d\n", GetLastError());
     CloseHandle(file);
 

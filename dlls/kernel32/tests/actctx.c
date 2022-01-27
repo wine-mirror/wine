@@ -2668,7 +2668,7 @@ todo_wine {
     SetLastError(0xdeadbeef);
     handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-todo_wine
+    todo_wine
     ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY) /* XP, win2k3 */,
         "got error %d\n", GetLastError());
 
@@ -2770,7 +2770,7 @@ static void test_ZombifyActCtx(void)
 
     SetLastError(0xdeadbeef);
     ret = ZombifyActCtx(NULL);
-todo_wine
+    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     handle = create_manifest("test.manifest", testdep_manifest3, __LINE__);
@@ -2800,7 +2800,7 @@ todo_wine
     ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
 
     ret = ZombifyActCtx(handle);
-todo_wine
+    todo_wine
     ok(ret, "got %d\n", ret);
 
     memset(&basicinfo, 0xff, sizeof(basicinfo));
@@ -2822,7 +2822,7 @@ todo_wine
 
     /* one more time */
     ret = ZombifyActCtx(handle);
-todo_wine
+    todo_wine
     ok(ret, "got %d\n", ret);
 
     ret = DeactivateActCtx(0, cookie);

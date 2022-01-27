@@ -2338,7 +2338,7 @@ static void test_thread_info(void)
             break;
 
         case ThreadIsIoPending:
-todo_wine
+            todo_wine
             ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
 

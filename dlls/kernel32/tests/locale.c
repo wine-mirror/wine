@@ -5519,7 +5519,7 @@ static void test_GetThreadPreferredUILanguages(void)
     ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-todo_wine
+    todo_wine
     ok(size == size_id || size == size_id - 1 /* before win10 1809 */, "expected %u, got %u\n", size_id, size);
 
     HeapFree(GetProcessHeap(), 0, buf);
