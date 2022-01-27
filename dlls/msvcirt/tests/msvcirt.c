@@ -3586,8 +3586,8 @@ static void test_ostream(void) {
     ret = (int) call_func1(p_ostream_opfx, &os1);
     ok(ret == 1, "expected 1 got %d\n", ret);
     os1.base_ios.sb = NULL;
-if (0) /* crashes on native */
-    call_func1(p_ostream_osfx, &os1);
+    if (0) /* crashes on native */
+        call_func1(p_ostream_osfx, &os1);
     os1.base_ios.sb = &fb1.base;
     os1.base_ios.flags = FLAGS_unitbuf;
     call_func1(p_ostream_osfx, &os1);
