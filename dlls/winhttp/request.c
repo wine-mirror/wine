@@ -3959,6 +3959,13 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
     if (prev_state < SOCKET_STATE_SHUTDOWN
         && (ret = send_socket_shutdown( socket, status, reason, len, FALSE ))) goto done;
 
+    if (!pending_receives && socket->close_frame_received)
+    {
+        if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+            socket_close_complete( socket, socket->close_frame_receive_err );
+        goto done;
+    }
+
     if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
         struct socket_shutdown *s;

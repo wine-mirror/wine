@@ -728,6 +728,8 @@ static const struct notification websocket_test3[] =
 
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NF_MAIN_THREAD },
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SAVE_BUFFER | NF_SIGNAL },
+    { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE,
+                                                                 NF_MAIN_THREAD| NF_SAVE_BUFFER | NF_SIGNAL },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, NF_WINE_ALLOW },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, NF_WINE_ALLOW },
@@ -1129,6 +1131,14 @@ static void test_websocket(BOOL secure)
     ok( err == ERROR_SUCCESS, "got %u\n", err );
     ok( close_status == 1000, "got %u\n", close_status );
     ok( size <= sizeof(buffer), "got %u\n", size );
+
+    info.buflen = 0xdeadbeef;
+    setup_test( &info, winhttp_websocket_close, __LINE__ );
+    err = pWinHttpWebSocketClose( socket, 1000, (void *)"success", sizeof("success") );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+
+    WaitForSingleObject( info.wait, INFINITE );
+    ok( !info.buflen, "Got unexpected buflen %u.\n", info.buflen );
 
     setup_test( &info, winhttp_close_handle, __LINE__ );
 
