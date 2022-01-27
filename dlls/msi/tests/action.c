@@ -2782,7 +2782,7 @@ static void test_register_product(void)
     }
 
     res = RegDeleteKeyA(usage, "");
-todo_wine
+    todo_wine
     ok(!res, "got %d\n", res);
     RegCloseKey(usage);
     res = RegDeleteKeyA(hkey, "");
@@ -2887,7 +2887,7 @@ todo_wine
     }
 
     res = RegDeleteKeyA(usage, "");
-todo_wine
+    todo_wine
     ok(!res, "got %d\n", res);
     RegCloseKey(usage);
     res = RegDeleteKeyA(hkey, "");
@@ -2999,7 +2999,7 @@ todo_wine
         }
 
         res = RegDeleteKeyA(usage, "");
-    todo_wine
+        todo_wine
         ok(!res, "got %d\n", res);
         RegCloseKey(usage);
         res = RegDeleteKeyA(hkey, "");
