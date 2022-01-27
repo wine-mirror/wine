@@ -358,7 +358,7 @@ static void test_converttoi1(void)
     dst_len = dst = 0x12;
     *(int *)src = 0x4321cafe;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I4, DBTYPE_I1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -492,7 +492,7 @@ todo_wine
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI1, DBTYPE_I1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
-todo_wine
+    todo_wine
     ok(broken(dst_len == sizeof(dst)) || dst_len == 0x12 /* W2K+ */, "got %ld\n", dst_len);
     ok(dst == 0x12, "got %08x\n", dst);
 
@@ -507,7 +507,7 @@ todo_wine
     dst_len = dst = 0x12;
     *(DWORD*)src = 0xabcd1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_I1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -516,7 +516,7 @@ todo_wine
     dst_len = dst = 0x12;
     *(DWORD*)src = 0x12abcd;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_I1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -602,7 +602,7 @@ todo_wine
     dst_len = dst = 0x12;
     *(DWORD*)src = 0xabcd1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -611,7 +611,7 @@ todo_wine
     dst_len = dst = 0x12;
     *(DWORD*)src = 0x12abcd;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -669,7 +669,7 @@ static void test_converttoi2(void)
     dst_len = dst = 0x1234;
     *(int *)src = 0x4321cafe;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I4, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -811,14 +811,14 @@ todo_wine
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI2, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
-todo_wine
+    todo_wine
     ok(broken(dst_len == sizeof(dst)) || dst_len == 0x1234 /* W2K+ */, "got %ld\n", dst_len);
     ok(dst == 0x1234, "got %08x\n", dst);
 
     dst_len = dst = 0x1234;
     *(DWORD*)src = 0xabcd1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -827,7 +827,7 @@ todo_wine
     dst_len = dst = 0x1234;
     *(DWORD*)src = 0x1234abcd;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -914,7 +914,7 @@ todo_wine
     dst_len = dst = 0x1234;
     *(DWORD*)src = 0xabcd1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -923,7 +923,7 @@ todo_wine
     dst_len = dst = 0x1234;
     *(DWORD*)src = 0x1234abcd;
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_UI2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
+    todo_wine
     ok(hr == DB_E_DATAOVERFLOW, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
@@ -1132,7 +1132,7 @@ static void test_converttoi4(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_UI4, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_DATAOVERFLOW, "got %08x\n", dst_status);
-todo_wine
+    todo_wine
     ok(broken(dst_len == sizeof(i4)) || dst_len == 0x1234 /* W2K+ */, "got %ld\n", dst_len);
     ok(i4 == 0x12345678, "got %08x\n", i4);
 
@@ -2817,9 +2817,9 @@ static void test_converttoui4(void)
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_UI4, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
-todo_wine
+    todo_wine
     ok(dst_status == DBSTATUS_E_SIGNMISMATCH, "got %08x\n", dst_status);
-todo_wine
+    todo_wine
     ok(broken(dst_len == sizeof(dst)) || dst_len == 0x1234 /* W2K+ */, "got %ld\n", dst_len);
     ok(dst == 0x12345678, "got %08x\n", dst);
 
@@ -3056,9 +3056,9 @@ static void test_converttoui8(void)
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_I4, DBTYPE_UI8, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_ERRORSOCCURRED, "got %08x\n", hr);
-todo_wine
+    todo_wine
     ok(dst_status == DBSTATUS_E_SIGNMISMATCH, "got %08x\n", dst_status);
-todo_wine
+    todo_wine
     ok(dst_len == 0x1234, "got %ld\n", dst_len);
     ok(dst.QuadPart == 0xcc, "got %d\n", (int)dst.QuadPart);
 
