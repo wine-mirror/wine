@@ -4708,7 +4708,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
      * them is printed after decoding the vertex declaration. */
     for (vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx)
     {
-        unsigned int tmp_tex_mask;
+        uint32_t tmp_tex_mask;
 
         stride_idx = get_stride_idx(idx_data, idx_size, base_vertex_idx, start_idx, vertex_idx);
 
@@ -4747,11 +4747,9 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
         }
 
         tmp_tex_mask = tex_mask;
-        for (texture_idx = 0; tmp_tex_mask; tmp_tex_mask >>= 1, ++texture_idx)
+        while (tmp_tex_mask)
         {
-            if (!(tmp_tex_mask & 1))
-                continue;
-
+            texture_idx = wined3d_bit_scan(&tmp_tex_mask);
             coord_idx = state->texture_states[texture_idx][WINED3D_TSS_TEXCOORD_INDEX];
             ptr = tex_coords[coord_idx] + (stride_idx * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
             ops->texcoord[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->emit_idx](
