@@ -2933,7 +2933,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     EXPECT_REF(dual, 2);
     hres = ITypeInfo_GetRefTypeInfo(dual, -2, &ti);
     ok(hres == S_OK, "got %08x\n", hres);
-todo_wine
+    todo_wine
     EXPECT_REF(dual, 3);
 
     hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
@@ -2958,7 +2958,7 @@ todo_wine {
     EXPECT_REF(dual, 4);
 }
     ITypeInfo_AddRef(ti_2);
-todo_wine
+    todo_wine
     EXPECT_REF(dual, 5);
     ITypeInfo_Release(ti_2);
 
