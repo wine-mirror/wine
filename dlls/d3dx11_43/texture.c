@@ -27,7 +27,7 @@ HRESULT WINAPI D3DX11CreateShaderResourceViewFromMemory(ID3D11Device *device, co
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11ShaderResourceView **view, HRESULT *hresult)
 {
-    FIXME("device %p, data %p, data_size %lu, load_info %p, pump %p, view %p, hresult %p stub!\n",
+    FIXME("device %p, data %p, data_size %Iu, load_info %p, pump %p, view %p, hresult %p stub!\n",
             device, data, data_size, load_info, pump, view, hresult);
 
     return E_NOTIMPL;
@@ -57,7 +57,7 @@ HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *d
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11Resource **texture, HRESULT *hresult)
 {
-    FIXME("device %p, data %p, data_size %lu, load_info %p, pump %p, texture %p, hresult %p stub.\n",
+    FIXME("device %p, data %p, data_size %Iu, load_info %p, pump %p, texture %p, hresult %p stub.\n",
             device, data, data_size, load_info, pump, texture, hresult);
 
     return E_NOTIMPL;
