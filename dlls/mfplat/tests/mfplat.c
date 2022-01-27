@@ -918,7 +918,7 @@ static void test_source_resolver(void)
     ok(hr == S_OK, "Failed to get current media type, hr %#x.\n", hr);
     hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
     ok(hr == S_OK, "Failed to get media sub type, hr %#x.\n", hr);
-todo_wine
+    todo_wine
     ok(IsEqualGUID(&guid, &MFVideoFormat_M4S2), "Unexpected sub type %s.\n", debugstr_guid(&guid));
 
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_ROTATION, &rotation);
@@ -6920,7 +6920,7 @@ static void test_d3d12_surface_buffer(void)
     hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D12Resource, (IUnknown *)resource, 0, FALSE, &buffer);
     if (hr == E_INVALIDARG)
     {
-todo_wine
+        todo_wine
         win_skip("D3D12 resource buffers are not supported.\n");
         goto notsupported;
     }
@@ -7088,7 +7088,7 @@ static void test_sample_allocator_sysmem(void)
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
+    todo_wine
     ok(!count, "Unexpected count %d.\n", count);
 
     check_interface(sample, &IID_IMFTrackedSample, TRUE);
@@ -7112,7 +7112,7 @@ todo_wine
 
     hr = IMFVideoSampleAllocator_UninitializeSampleAllocator(allocator);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
+    todo_wine
     EXPECT_REF(video_type, 2);
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
@@ -7455,7 +7455,7 @@ static void test_sample_allocator_d3d11(void)
         hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, video_type);
         if (sharing[i] == (D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED))
         {
-        todo_wine
+            todo_wine
             ok(hr == E_INVALIDARG, "%u: Unexpected hr %#x.\n", i, hr);
             IMFVideoSampleAllocatorEx_Release(allocatorex);
             continue;
@@ -7540,7 +7540,7 @@ static void test_sample_allocator_d3d12(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
-todo_wine
+    todo_wine
     ok(hr == S_OK || broken(hr == MF_E_UNEXPECTED) /* Some Win10 versions fail. */, "Unexpected hr %#x.\n", hr);
     if (FAILED(hr)) goto done;
 
