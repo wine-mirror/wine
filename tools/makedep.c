@@ -3057,6 +3057,11 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output_filenames( make->extlib ? extra_cross_cflags_extlib : extra_cross_cflags );
         if (make->module && is_crt_module( make->module ))
             output_filename( "-fno-builtin" );
+        /* force -Wformat when using 'long' types, until all modules have been converted
+         * and we can remove -Wno-format */
+        if (!make->extlib && strarray_exists( &extra_cross_cflags, "-Wno-format" ) &&
+            !strarray_exists( &defines, "-DWINE_NO_LONG_TYPES" ))
+            output_filename( "-Wformat" );
         output_filenames( cpp_flags );
         output_filename( "$(CROSSCFLAGS)" );
         output( "\n" );
