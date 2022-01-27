@@ -1202,10 +1202,10 @@ static void media_engine_start_playback(struct media_engine *engine)
 static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_engine *engine = impl_from_load_handler_IMFAsyncCallback(iface);
+    IUnknown *object = NULL, *state;
     unsigned int start_playback;
     MF_OBJECT_TYPE obj_type;
     IMFMediaSource *source;
-    IUnknown *object = NULL;
     HRESULT hr;
 
     EnterCriticalSection(&engine->cs);
@@ -1216,7 +1216,15 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
     start_playback = engine->flags & FLAGS_ENGINE_PLAY_PENDING;
     media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING | FLAGS_ENGINE_PLAY_PENDING, FALSE);
 
-    if (FAILED(hr = IMFSourceResolver_EndCreateObjectFromURL(engine->resolver, result, &obj_type, &object)))
+    if (SUCCEEDED(IMFAsyncResult_GetState(result, &state)))
+    {
+        hr = IMFSourceResolver_EndCreateObjectFromByteStream(engine->resolver, result, &obj_type, &object);
+        IUnknown_Release(state);
+    }
+    else
+        hr = IMFSourceResolver_EndCreateObjectFromURL(engine->resolver, result, &obj_type, &object);
+
+    if (FAILED(hr))
         WARN("Failed to create source object, hr %#x.\n", hr);
 
     if (object)
@@ -1384,10 +1392,51 @@ static HRESULT WINAPI media_engine_SetSourceElements(IMFMediaEngineEx *iface, IM
     return E_NOTIMPL;
 }
 
+static HRESULT media_engine_set_source(struct media_engine *engine, IMFByteStream *bytestream, BSTR url)
+{
+    IPropertyStore *props = NULL;
+    unsigned int flags;
+    HRESULT hr = S_OK;
+
+    SysFreeString(engine->current_source);
+    engine->current_source = NULL;
+    if (url)
+        engine->current_source = SysAllocString(url);
+
+    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_NOTHING;
+
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
+
+    engine->network_state = MF_MEDIA_ENGINE_NETWORK_NO_SOURCE;
+
+    if (url || bytestream)
+    {
+        flags = MF_RESOLUTION_MEDIASOURCE;
+        if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
+            flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
+
+        IMFAttributes_GetUnknown(engine->attributes, &MF_MEDIA_ENGINE_SOURCE_RESOLVER_CONFIG_STORE,
+                &IID_IPropertyStore, (void **)&props);
+        if (bytestream)
+            hr = IMFSourceResolver_BeginCreateObjectFromByteStream(engine->resolver, bytestream, url, flags,
+                    props, NULL, &engine->load_handler, (IUnknown *)bytestream);
+        else
+            hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL,
+                    &engine->load_handler, NULL);
+        if (SUCCEEDED(hr))
+            media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING, TRUE);
+
+        if (props)
+            IPropertyStore_Release(props);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI media_engine_SetSource(IMFMediaEngineEx *iface, BSTR url)
 {
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("%p, %s.\n", iface, debugstr_w(url));
 
@@ -1396,38 +1445,7 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngineEx *iface, BSTR url)
     if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else
-    {
-        SysFreeString(engine->current_source);
-        engine->current_source = NULL;
-        if (url)
-            engine->current_source = SysAllocString(url);
-
-        engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_NOTHING;
-
-        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
-
-        engine->network_state = MF_MEDIA_ENGINE_NETWORK_NO_SOURCE;
-
-        if (url)
-        {
-            IPropertyStore *props = NULL;
-            unsigned int flags;
-
-            flags = MF_RESOLUTION_MEDIASOURCE;
-            if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
-                flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
-
-            IMFAttributes_GetUnknown(engine->attributes, &MF_MEDIA_ENGINE_SOURCE_RESOLVER_CONFIG_STORE,
-                    &IID_IPropertyStore, (void **)&props);
-            hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL,
-                    &engine->load_handler, NULL);
-            if (SUCCEEDED(hr))
-                media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING, TRUE);
-
-            if (props)
-                IPropertyStore_Release(props);
-        }
-    }
+        hr = media_engine_set_source(engine, NULL, url);
 
     LeaveCriticalSection(&engine->cs);
 
@@ -2257,9 +2275,23 @@ static HRESULT WINAPI media_engine_OnVideoStreamTick(IMFMediaEngineEx *iface, LO
 
 static HRESULT WINAPI media_engine_SetSourceFromByteStream(IMFMediaEngineEx *iface, IMFByteStream *bytestream, BSTR url)
 {
-    FIXME("%p, %p, %s stub.\n", iface, bytestream, debugstr_w(url));
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %s.\n", iface, bytestream, debugstr_w(url));
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!bytestream || !url)
+        hr = E_POINTER;
+    else
+        hr = media_engine_set_source(engine, bytestream, url);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetStatistics(IMFMediaEngineEx *iface, MF_MEDIA_ENGINE_STATISTIC stat_id, PROPVARIANT *stat)

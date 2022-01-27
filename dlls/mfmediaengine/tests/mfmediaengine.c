@@ -165,6 +165,20 @@ static IMFMediaEngine *create_media_engine(IMFMediaEngineNotify *callback)
     return media_engine;
 }
 
+static IMFMediaEngineEx *create_media_engine_ex(IMFMediaEngineNotify *callback)
+{
+    IMFMediaEngine *engine = create_media_engine(callback);
+    IMFMediaEngineEx *engine_ex = NULL;
+
+    if (engine)
+    {
+        IMFMediaEngine_QueryInterface(engine, &IID_IMFMediaEngineEx, (void **)&engine_ex);
+        IMFMediaEngine_Release(engine);
+    }
+
+    return engine_ex;
+}
+
 static void test_factory(void)
 {
     IMFMediaEngineClassFactory *factory, *factory2;
@@ -279,6 +293,7 @@ static void test_CreateInstance(void)
 static void test_Shutdown(void)
 {
     struct media_engine_notify *notify;
+    IMFMediaEngineEx *media_engine_ex;
     IMFMediaTimeRange *time_range;
     IMFMediaEngine *media_engine;
     unsigned int state;
@@ -427,6 +442,14 @@ todo_wine
 
     hr = IMFMediaEngine_GetVideoAspectRatio(media_engine, &cx, &cy);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    if (SUCCEEDED(IMFMediaEngine_QueryInterface(media_engine, &IID_IMFMediaEngineEx, (void **)&media_engine_ex)))
+    {
+        hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, NULL, NULL);
+        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+        IMFMediaEngineEx_Release(media_engine_ex);
+    }
 
     IMFMediaEngine_Release(media_engine);
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
@@ -754,6 +777,29 @@ todo_wine {
     IMFMediaTimeRange_Release(range);
 }
 
+static void test_SetSourceFromByteStream(void)
+{
+    struct media_engine_notify *notify;
+    IMFMediaEngineEx *media_engine;
+    HRESULT hr;
+
+    notify = create_callback();
+
+    media_engine = create_media_engine_ex(&notify->IMFMediaEngineNotify_iface);
+    if (!media_engine)
+    {
+        win_skip("IMFMediaEngineEx is not supported.\n");
+        IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+        return;
+    }
+
+    hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaEngineEx_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -782,6 +828,7 @@ START_TEST(mfmediaengine)
     test_mute();
     test_error();
     test_time_range();
+    test_SetSourceFromByteStream();
 
     IMFMediaEngineClassFactory_Release(factory);
 
