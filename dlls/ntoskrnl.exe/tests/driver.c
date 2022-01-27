@@ -280,7 +280,7 @@ static void test_mdl_map(void)
     MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 
     addr = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, NormalPagePriority);
-todo_wine
+    todo_wine
     ok(addr != NULL, "MmMapLockedPagesSpecifyCache failed\n");
 
     MmUnmapLockedPages(addr, mdl);
