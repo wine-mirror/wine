@@ -203,7 +203,7 @@ static void test_shutdown(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_UpdateVideo(player);
-todo_wine
+    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, &item);
@@ -316,7 +316,7 @@ static void test_video_control(void)
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_UpdateVideo(player);
-todo_wine
+    todo_wine
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
     IMFPMediaPlayer_Release(player);
@@ -356,7 +356,7 @@ todo_wine
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_UpdateVideo(player);
-todo_wine
+    todo_wine
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
     IMFPMediaPlayer_Release(player);
