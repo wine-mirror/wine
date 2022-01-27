@@ -1453,10 +1453,10 @@ static void test_Language(void)
         CHECK_CALLED(QI_IActiveScriptParse);
         CHECK_CALLED(InitNew);
         hr = IScriptControl_get_Language(sc, &str);
-    todo_wine
+        todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-     if (hr == S_OK)
-        ok(!lstrcmpW(L"testscript", str), "%s\n", wine_dbgstr_w(str));
+         if (hr == S_OK)
+            ok(!lstrcmpW(L"testscript", str), "%s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IActiveScriptSite_Release(site);
@@ -2437,7 +2437,7 @@ static void _check_error(IScriptControl *sc, LONG exp_num, BOOL todo, int line)
     error_num = 0xdeadbeef;
     hr = IScriptError_get_Number(script_err, &error_num);
     ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-todo_wine_if(todo == TRUE)
+    todo_wine_if(todo == TRUE)
     ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
                        error_num, exp_num);
     IScriptError_Release(script_err);
