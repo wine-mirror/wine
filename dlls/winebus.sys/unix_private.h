@@ -266,5 +266,6 @@ extern void hid_device_set_effect_state(struct unix_device *iface, BYTE index, B
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 BOOL is_dualshock4_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
+BOOL is_dualsense_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 
 #endif /* __WINEBUS_UNIX_PRIVATE_H */
