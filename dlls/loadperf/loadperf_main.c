@@ -71,7 +71,7 @@ DWORD WINAPI InstallPerfDllA(LPCSTR computer, LPCSTR ini, ULONG_PTR flags)
  */
 DWORD WINAPI InstallPerfDllW(LPCWSTR computer, LPCWSTR ini, ULONG_PTR flags)
 {
-    FIXME("(%s, %s, %lx)\n", debugstr_w(computer), debugstr_w(ini), flags);
+    FIXME("(%s, %s, %Ix)\n", debugstr_w(computer), debugstr_w(ini), flags);
     return ERROR_SUCCESS;
 }
 
