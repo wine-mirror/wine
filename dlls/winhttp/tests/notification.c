@@ -1126,9 +1126,9 @@ static void test_websocket(BOOL secure)
     close_status = 0xdead;
     size = sizeof(buffer) + 1;
     err = pWinHttpWebSocketQueryCloseStatus( socket, &close_status, buffer, sizeof(buffer), &size );
-    todo_wine ok( err == ERROR_SUCCESS, "got %u\n", err );
-    todo_wine ok( close_status == 1000, "got %u\n", close_status );
-    todo_wine ok( size <= sizeof(buffer), "got %u\n", size );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+    ok( close_status == 1000, "got %u\n", close_status );
+    ok( size <= sizeof(buffer), "got %u\n", size );
 
     setup_test( &info, winhttp_close_handle, __LINE__ );
 

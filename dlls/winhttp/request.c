@@ -3991,11 +3991,6 @@ DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
     }
-    if (socket->state < SOCKET_STATE_CLOSED)
-    {
-        release_object( &socket->hdr );
-        return ERROR_INVALID_OPERATION;
-    }
 
     if (!socket->close_frame_received || socket->close_frame_receive_err)
     {
