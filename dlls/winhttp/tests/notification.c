@@ -1132,6 +1132,9 @@ static void test_websocket(BOOL secure)
     ok( close_status == 1000, "got %u\n", close_status );
     ok( size <= sizeof(buffer), "got %u\n", size );
 
+    err = pWinHttpWebSocketReceive( socket, buffer, sizeof(buffer), &size, &type );
+    ok( err == ERROR_INVALID_OPERATION, "got %u\n", err );
+
     info.buflen = 0xdeadbeef;
     setup_test( &info, winhttp_websocket_close, __LINE__ );
     err = pWinHttpWebSocketClose( socket, 1000, (void *)"success", sizeof("success") );
