@@ -3886,24 +3886,29 @@ static DWORD socket_close( struct socket *socket )
     return receive_close_status( socket, count );
 }
 
-static void CALLBACK task_socket_close( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
+static void socket_close_complete( struct socket *socket, DWORD ret )
 {
-    struct socket_shutdown *s = ctx;
-    DWORD ret;
-
-    ret = socket_close( s->socket );
-
-    if (!ret) send_callback( &s->socket->hdr, WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NULL, 0 );
+    if (!ret) send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NULL, 0 );
     else
     {
         WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
         result.AsyncResult.dwResult = API_READ_DATA; /* FIXME */
         result.AsyncResult.dwError  = ret;
         result.Operation = WINHTTP_WEB_SOCKET_CLOSE_OPERATION;
-        send_callback( &s->socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
     }
+}
+
+static void CALLBACK task_socket_close( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
+{
+    struct socket_shutdown *s = ctx;
+    DWORD ret;
 
     TRACE("running %p\n", work);
+
+    ret = socket_close( s->socket );
+    socket_close_complete( s->socket, ret );
+
     release_object( &s->socket->hdr );
     free( s );
 }
