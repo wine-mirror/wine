@@ -1623,6 +1623,7 @@ static void test_dtls(void)
     CtxtHandle ctx_handle, ctx_handle2;
     SecBufferDesc buffers[3];
     ULONG flags_req, flags_ret, attr, prev_buf_len;
+    char *buf, *buf2;
 
     init_cred( &cred );
     cred.grbitEnabledProtocols = SP_PROT_DTLS_CLIENT | SP_PROT_DTLS1_2_CLIENT;
@@ -1663,6 +1664,9 @@ static void test_dtls(void)
     ok( buffers[1].pBuffers[1].BufferType == SECBUFFER_ALERT, "Expected buffertype SECBUFFER_ALERT, got %#x\n", buffers[1].pBuffers[1].BufferType);
     ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
     prev_buf_len = buffers[1].pBuffers[0].cbBuffer;
+    buf = HeapAlloc( GetProcessHeap(), 0, prev_buf_len );
+    memcpy( buf, buffers[1].pBuffers[0].pvBuffer, prev_buf_len );
+    ok( buf[10] == 0, "Expected initial packet to have sequence number value of 0, got %d\n", buf[10]);
 
     /*
      * If we don't set the SECBUFFER_ALERT cbBuffer value, we will get
@@ -1709,7 +1713,17 @@ static void test_dtls(void)
     ok(buffers[1].pBuffers[0].cbBuffer == prev_buf_len, "Output buffer size mismatch, expected %#x, got %#x\n",
             prev_buf_len, buffers[1].pBuffers[0].cbBuffer);
 
+    /*
+     * The retransmission packet and the original packet should only differ in
+     * their sequence number value.
+     */
+    buf2 = (char *)buffers[1].pBuffers[0].pvBuffer;
+    ok( buf2[10] == 1, "Expected retransmitted packet to have sequence number value of 1, got %d\n", buf2[10]);
+    ok( !memcmp(buf2, buf, 9), "Lower portion mismatch between retransmitted packet and original packet\n");
+    ok( !memcmp(buf2 + 11, buf + 11, prev_buf_len - 11), "Upper portion mismatch between retransmitted packet and original packet\n");
+
     free_buffers( &buffers[0] );
+    HeapFree(GetProcessHeap(), 0, buf);
     HeapFree(GetProcessHeap(), 0, buffers[1].pBuffers[1].pvBuffer);
     free_buffers( &buffers[1] );
     DeleteSecurityContext( &ctx_handle );
