@@ -85,7 +85,7 @@ cl_int WINAPI clGetPlatformInfo( cl_platform_id platform, cl_platform_info name,
 {
     cl_int ret;
 
-    TRACE( "(%p, %#x, %ld, %p, %p)\n", platform, name, size, value, ret_size );
+    TRACE( "(%p, %#x, %Id, %p, %p)\n", platform, name, size, value, ret_size );
 
     if (name == CL_PLATFORM_EXTENSIONS)
     {
@@ -128,7 +128,7 @@ cl_int WINAPI clGetDeviceInfo( cl_device_id device, cl_device_info name,
 {
     cl_int ret;
 
-    TRACE( "(%p, %#x, %ld, %p, %p)\n", device, name, size, value, ret_size );
+    TRACE( "(%p, %#x, %Id, %p, %p)\n", device, name, size, value, ret_size );
 
     if (name == CL_DEVICE_EXTENSIONS)
     {
