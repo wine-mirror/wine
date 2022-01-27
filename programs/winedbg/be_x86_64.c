@@ -341,7 +341,7 @@ static BOOL be_x86_64_is_break_insn(const void* insn)
     return dbg_read_memory(insn, &c, sizeof(c)) && c == 0xCC;
 }
 
-static BOOL fetch_value(const char* addr, unsigned sz, int* value)
+static BOOL fetch_value(const char* addr, unsigned sz, LONG* value)
 {
     char        value8;
     short       value16;
