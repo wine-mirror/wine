@@ -6,3 +6,5 @@ IMPORTS   = hal ntoskrnl user32 hidparse
 C_SRCS = \
 	device.c \
 	pnp.c
+
+RC_SRCS = hidclass.rc
