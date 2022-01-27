@@ -1830,15 +1830,15 @@ static void test_GetKerningPairs(void)
            kd[i].otmMacDescent, otm.otmMacDescent);
         ok(near_match(kd[i].otmMacAscent, otm.otmMacAscent), "expected %d, got %d\n",
            kd[i].otmMacAscent, otm.otmMacAscent);
-todo_wine
+        todo_wine
         ok(kd[i].otmsCapEmHeight == otm.otmsCapEmHeight, "expected %u, got %u\n",
            kd[i].otmsCapEmHeight, otm.otmsCapEmHeight);
-todo_wine
+        todo_wine
         ok(kd[i].otmsXHeight == otm.otmsXHeight, "expected %u, got %u\n",
            kd[i].otmsXHeight, otm.otmsXHeight);
         ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
            kd[i].otmMacLineGap, otm.otmMacLineGap);
-todo_wine
+        todo_wine
         ok(kd[i].otmusMinimumPPEM == otm.otmusMinimumPPEM, "expected %u, got %u\n",
            kd[i].otmusMinimumPPEM, otm.otmusMinimumPPEM);
 
@@ -4130,7 +4130,7 @@ static void test_nonexistent_font(void)
     hfont = CreateFontIndirectA(&lf);
     hfont = SelectObject(hdc, hfont);
     GetTextFaceA(hdc, sizeof(buf), buf);
-todo_wine /* Wine uses Arial for all substitutions */
+    todo_wine /* Wine uses Arial for all substitutions */
     ok(!lstrcmpiA(buf, "Nonexistent font") /* XP, Vista */ ||
        !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
        "Got %s\n", buf);
@@ -4165,10 +4165,10 @@ todo_wine /* Wine uses Arial for all substitutions */
     for (i = 0; i < ARRAY_SIZE(font_subst); i++)
     {
         ret = is_font_installed(font_subst[i].name);
-todo_wine
+        todo_wine
         ok(ret, "%s should be enumerated\n", font_subst[i].name);
         ret = is_truetype_font_installed(font_subst[i].name);
-todo_wine
+        todo_wine
         ok(ret, "%s should be enumerated\n", font_subst[i].name);
 
         memset(&lf, 0, sizeof(lf));
@@ -4511,7 +4511,7 @@ static void test_oemcharset(void)
     hfont = CreateFontIndirectA(&lf);
     old_hfont = SelectObject(hdc, hfont);
     charset = GetTextCharset(hdc);
-todo_wine
+    todo_wine
     ok(charset == OEM_CHARSET, "expected %d charset, got %d\n", OEM_CHARSET, charset);
     hfont = SelectObject(hdc, old_hfont);
     GetObjectA(hfont, sizeof(clf), &clf);
@@ -5090,7 +5090,7 @@ static void test_realization_info(const char *name, DWORD size, BOOL is_memory_r
     /* Zero buffer size. */
     memset(data, 0xcc, size);
     ret = pGetFontFileData(info.instance_id, 0, 16, data, 0);
-todo_wine
+    todo_wine
     ok(ret == 0 && GetLastError() == ERROR_NOACCESS, "Unexpected return value %d, error %d\n", ret, GetLastError());
     ok(*(DWORD *)data == 0xcccccccc, "Unexpected buffer contents %#x.\n", *(DWORD *)data);
 
@@ -5153,7 +5153,7 @@ static void test_AddFontMemResource(void)
     ok(num_fonts == 1, "Unexpected number of fonts %u.\n", num_fonts);
 
     bRet = is_truetype_font_installed("wine_test");
-todo_wine
+    todo_wine
     ok(!bRet, "Font wine_test should not be enumerated.\n");
 
     test_realization_info("wine_test", font_size, TRUE);
@@ -5758,7 +5758,7 @@ static void test_GetGlyphOutline_metric_clipping(void)
 
     /* Test tmLastChar - wine_test has code points fffb-fffe mapped to glyph 0 */
     GetTextMetricsW(hdc, &tmW);
-todo_wine
+    todo_wine
     ok( tmW.tmLastChar == 0xfffe, "got %04x\n", tmW.tmLastChar);
 
     SelectObject(hdc, hfont_prev);
