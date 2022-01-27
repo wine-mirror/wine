@@ -2705,6 +2705,96 @@ static void init_functions(void)
 #undef X
 }
 
+static void test_BTNS_SEP(void)
+{
+    TBBUTTON buttons[1], button;
+    LRESULT ret;
+    HWND hwnd;
+
+    rebuild_toolbar(&hwnd);
+
+    /* 0 iBitmap */
+    memset(buttons, 0, sizeof(buttons));
+    buttons[0].idCommand = 5;
+    buttons[0].fsStyle = BTNS_SEP;
+    buttons[0].fsState = TBSTATE_ENABLED;
+    buttons[0].iString = -1;
+
+    ret = SendMessageA(hwnd, TB_ADDBUTTONSA, 1, (LPARAM)buttons);
+    ok(ret == 1, "Unexpected return value.\n");
+    ret = SendMessageA(hwnd, TB_AUTOSIZE, 0, 0);
+    ok(!ret, "Unexpected return value.\n");
+
+    memset(&button, 0, sizeof(button));
+    ret = SendMessageA(hwnd, TB_GETBUTTON, 0, (LPARAM)&button);
+    ok(ret == 1, "Unexpected return value.\n");
+todo_wine
+    ok(button.iBitmap == 8, "Unexpected iBitmap value %d.\n", button.iBitmap);
+
+    rebuild_toolbar(&hwnd);
+
+    /* Nonzero iBitmap */
+    memset(buttons, 0, sizeof(buttons));
+    buttons[0].idCommand = 5;
+    buttons[0].fsStyle = BTNS_SEP;
+    buttons[0].fsState = TBSTATE_ENABLED;
+    buttons[0].iString = -1;
+    buttons[0].iBitmap = 2;
+
+    ret = SendMessageA(hwnd, TB_ADDBUTTONSA, 1, (LPARAM)buttons);
+    ok(ret == 1, "Unexpected return value.\n");
+    ret = SendMessageA(hwnd, TB_AUTOSIZE, 0, 0);
+    ok(!ret, "Unexpected return value.\n");
+
+    memset(&button, 0, sizeof(button));
+    ret = SendMessageA(hwnd, TB_GETBUTTON, 0, (LPARAM)&button);
+    ok(ret == 1, "Unexpected return value.\n");
+    ok(button.iBitmap == 2, "Unexpected iBitmap value %d.\n", button.iBitmap);
+
+    rebuild_toolbar(&hwnd);
+
+    /* Exceeds default width */
+    memset(buttons, 0, sizeof(buttons));
+    buttons[0].idCommand = 5;
+    buttons[0].fsStyle = BTNS_SEP;
+    buttons[0].fsState = TBSTATE_ENABLED;
+    buttons[0].iString = -1;
+    buttons[0].iBitmap = 32;
+
+    ret = SendMessageA(hwnd, TB_ADDBUTTONSA, 1, (LPARAM)buttons);
+    ok(ret == 1, "Unexpected return value.\n");
+    ret = SendMessageA(hwnd, TB_AUTOSIZE, 0, 0);
+    ok(!ret, "Unexpected return value.\n");
+
+    memset(&button, 0, sizeof(button));
+    ret = SendMessageA(hwnd, TB_GETBUTTON, 0, (LPARAM)&button);
+    ok(ret == 1, "Unexpected return value.\n");
+    ok(button.iBitmap == 32, "Unexpected iBitmap value %d.\n", button.iBitmap);
+
+    rebuild_toolbar(&hwnd);
+
+    /* Negative */
+    memset(buttons, 0, sizeof(buttons));
+    buttons[0].idCommand = 5;
+    buttons[0].fsStyle = BTNS_SEP;
+    buttons[0].fsState = TBSTATE_ENABLED;
+    buttons[0].iString = -1;
+    buttons[0].iBitmap = -3;
+
+    ret = SendMessageA(hwnd, TB_ADDBUTTONSA, 1, (LPARAM)buttons);
+    ok(ret == 1, "Unexpected return value.\n");
+    ret = SendMessageA(hwnd, TB_AUTOSIZE, 0, 0);
+    ok(!ret, "Unexpected return value.\n");
+
+    memset(&button, 0, sizeof(button));
+    ret = SendMessageA(hwnd, TB_GETBUTTON, 0, (LPARAM)&button);
+    ok(ret == 1, "Unexpected return value.\n");
+todo_wine
+    ok(button.iBitmap == 8, "Unexpected iBitmap value %d.\n", button.iBitmap);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -2755,12 +2845,14 @@ START_TEST(toolbar)
     test_save();
     test_drawtext_flags();
     test_imagelist();
+    test_BTNS_SEP();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
 
     test_create(TRUE);
     test_visual();
+    test_BTNS_SEP();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
