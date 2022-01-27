@@ -631,7 +631,7 @@ static void test_ip_neighbour( int family )
         err = NsiAllocateAndGetTable( 1, mod, NSI_IP_NEIGHBOUR_TABLE, (void **)&key_tbl, key_size,
                                       (void **)&rw_tbl, sizeof(*rw), (void **)&dyn_tbl, sizeof(*dyn),
                                       NULL, 0, &count, 0 );
-todo_wine_if( family == AF_INET6 )
+        todo_wine_if( family == AF_INET6 )
         ok( !err, "got %x\n", err );
         if (err) goto err;
 
