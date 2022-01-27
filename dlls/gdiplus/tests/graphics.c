@@ -3803,7 +3803,7 @@ static void test_GdipMeasureString(void)
 
         expectf(0.0, bounds.X);
         expectf(0.0, bounds.Y);
-todo_wine
+        todo_wine
         expectf_(height, bounds.Height, height / 100.0);
         expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
         expect(7, chars);
@@ -3820,7 +3820,7 @@ todo_wine
         expect(Ok, status);
         expectf(50.0, bounds.X);
         expectf(50.0, bounds.Y);
-todo_wine
+        todo_wine
         expectf_(height, bounds.Height, height / 100.0);
         expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
         expect(7, chars);
@@ -3892,7 +3892,7 @@ todo_wine
 
             expectf(0.0, bounds.X);
             expectf(0.0, bounds.Y);
-todo_wine
+            todo_wine
             expectf_(height, bounds.Height, height / 85.0);
             expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
             expect(7, chars);
@@ -3909,7 +3909,7 @@ todo_wine
             expect(Ok, status);
             expectf(50.0, bounds.X);
             expectf(50.0, bounds.Y);
-todo_wine
+            todo_wine
             expectf_(height, bounds.Height, height / 85.0);
             expectf_(bounds.Height / base_cy, bounds.Width / base_cx, 0.1);
             expect(7, chars);
@@ -3921,7 +3921,7 @@ todo_wine
                 height *= td[i].page_scale;
             /*trace("%u: unit %u, %.1fx%.1f dpi, scale %.1f, height %f, pixels %f\n",
                   i, td[i].unit, td[i].res_x, td[i].res_y, td[i].page_scale, bounds.Height, height);*/
-todo_wine
+            todo_wine
             expectf_(100.0, height, 1.1);
 
             status = GdipDeleteGraphics(graphics);
@@ -4376,7 +4376,7 @@ static void test_font_height_scaling(void)
             status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, NULL, NULL);
             expect(Ok, status);
             /*trace("bounds: %f,%f,%f,%f\n", bounds.X, bounds.Y, bounds.Width, bounds.Height);*/
-todo_wine
+            todo_wine
             expectf_(font_height + margin_y, bounds.Height, 0.005);
 
             ptf.X = 0;
@@ -4384,14 +4384,14 @@ todo_wine
             status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &ptf, 1);
             expect(Ok, status);
             match = fabs(100.0 - ptf.Y) <= 1.0;
-todo_wine
+            todo_wine
             ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* verify the result */
             ptf.Y = units_to_pixels(bounds.Height, gfx_unit, dpi);
             ptf.Y /= 100.0;
             match = fabs(100.0 - ptf.Y) <= 1.0;
-todo_wine
+            todo_wine
             ok(match, "Expected 100.0, got %f\n", ptf.Y);
 
             /* bounds.width of 1 glyph: [margin]+[width]+[margin] */
@@ -4499,7 +4499,7 @@ static void test_measure_string(void)
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
     expectf(width, bounds.Width);
-todo_wine
+    todo_wine
     expectf(height / 2.0, bounds.Height);
 
     range.First = 0;
@@ -4519,7 +4519,7 @@ todo_wine
     expectf_(5.0 + margin_x, bounds.X, 1.0);
     expectf(5.0, bounds.Y);
     expectf_(width - margin_x*2.0, bounds.Width, 1.0);
-todo_wine
+    todo_wine
     expectf_(height - margin_y, bounds.Height, 1.0);
 
     width_rgn = bounds.Width;
@@ -4575,7 +4575,7 @@ todo_wine
     expectf_(5.0 + margin_x, bounds.X, 1.0);
     expectf(5.0, bounds.Y);
     expectf_(width_1, bounds.Width, 1.0);
-todo_wine
+    todo_wine
     expectf_(height - margin_y, bounds.Height, 1.0);
 
     status = GdipSetStringFormatFlags(format, StringFormatFlagsNoWrap | StringFormatFlagsNoClip);
@@ -4618,7 +4618,7 @@ todo_wine
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
     expectf_(width, bounds.Width, 0.01);
-todo_wine
+    todo_wine
     expectf(height, bounds.Height);
 
     set_rect_empty(&rect);
@@ -4711,7 +4711,7 @@ todo_wine
     expectf_(5.0 + margin_x, bounds.X, 1.0);
     expectf(5.0, bounds.Y);
     expectf_(width - margin_x*2.0, bounds.Width, 1.0);
-todo_wine
+    todo_wine
     expectf_(height - margin_y, bounds.Height, 1.0);
 
     width_rgn = bounds.Width;
@@ -4730,9 +4730,9 @@ todo_wine
     expect(Ok, status);
     expect(3, glyphs);
     expect(1, lines);
-todo_wine
+    todo_wine
     expectf_(5.0 + width/2.0, bounds.X, 0.01);
-todo_wine
+    todo_wine
     expectf(5.0 + height/2.0, bounds.Y);
     expectf_(width, bounds.Width, 0.01);
     expectf(height, bounds.Height);
@@ -4746,9 +4746,9 @@ todo_wine
     expect(Ok, status);
     expect(3, glyphs);
     expect(1, lines);
-todo_wine
+    todo_wine
     expectf_(5.0 - width/2.0, bounds.X, 0.01);
-todo_wine
+    todo_wine
     expectf(5.0 - height/2.0, bounds.Y);
     expectf_(width, bounds.Width, 0.01);
     expectf(height, bounds.Height);
@@ -4762,9 +4762,9 @@ todo_wine
     set_rect_empty(&bounds);
     status = GdipGetRegionBounds(region, graphics, &bounds);
     expect(Ok, status);
-todo_wine
+    todo_wine
     expectf_(5.0 + width_rgn/2.0, bounds.X, 1.0);
-todo_wine
+    todo_wine
     expectf_(5.0 + height_rgn/2.0, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
@@ -4778,9 +4778,9 @@ todo_wine
     set_rect_empty(&bounds);
     status = GdipGetRegionBounds(region, graphics, &bounds);
     expect(Ok, status);
-todo_wine
+    todo_wine
     expectf_(5.0 - width_rgn/2.0, bounds.X, 1.0);
-todo_wine
+    todo_wine
     expectf_(5.0 - height_rgn/2.0, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
@@ -4798,9 +4798,9 @@ todo_wine
     expect(Ok, status);
     expect(3, glyphs);
     expect(1, lines);
-todo_wine
+    todo_wine
     expectf_(5.0 + width, bounds.X, 0.01);
-todo_wine
+    todo_wine
     expectf(5.0 + height, bounds.Y);
     expectf_(width, bounds.Width, 0.01);
     expectf(height, bounds.Height);
@@ -4814,9 +4814,9 @@ todo_wine
     expect(Ok, status);
     expect(3, glyphs);
     expect(1, lines);
-todo_wine
+    todo_wine
     expectf_(5.0 - width, bounds.X, 0.01);
-todo_wine
+    todo_wine
     expectf(5.0 - height, bounds.Y);
     expectf_(width, bounds.Width, 0.01);
     expectf(height, bounds.Height);
@@ -4830,9 +4830,9 @@ todo_wine
     set_rect_empty(&bounds);
     status = GdipGetRegionBounds(region, graphics, &bounds);
     expect(Ok, status);
-todo_wine
+    todo_wine
     expectf_(5.0 + width_rgn, bounds.X, 2.0);
-todo_wine
+    todo_wine
     expectf_(5.0 + height_rgn, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
@@ -4846,9 +4846,9 @@ todo_wine
     set_rect_empty(&bounds);
     status = GdipGetRegionBounds(region, graphics, &bounds);
     expect(Ok, status);
-todo_wine
+    todo_wine
     expectf_(5.0 - width_rgn, bounds.X, 2.0);
-todo_wine
+    todo_wine
     expectf_(5.0 - height_rgn, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
