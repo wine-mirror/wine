@@ -3570,18 +3570,16 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
 {
     const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
     unsigned int i, tex;
-    WORD ffu_map;
+    uint32_t ffu_map;
 
     ffu_map = context_gl->c.fixed_function_usage_map;
 
     if (d3d_info->limits.ffp_textures == d3d_info->limits.ffp_blend_stages
             || context_gl->c.lowest_disabled_stage <= d3d_info->limits.ffp_textures)
     {
-        for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+        while (ffu_map)
         {
-            if (!(ffu_map & 1))
-                continue;
-
+            i = wined3d_bit_scan(&ffu_map);
             if (context_gl->tex_unit_map[i] != i)
             {
                 wined3d_context_gl_map_stage(context_gl, i, i);
@@ -3594,11 +3592,9 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
 
     /* Now work out the mapping */
     tex = 0;
-    for (i = 0; ffu_map; ffu_map >>= 1, ++i)
+    while (ffu_map)
     {
-        if (!(ffu_map & 1))
-            continue;
-
+        i = wined3d_bit_scan(&ffu_map);
         if (context_gl->tex_unit_map[i] != tex)
         {
             wined3d_context_gl_map_stage(context_gl, i, tex);
