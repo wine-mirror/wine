@@ -645,15 +645,15 @@ static void test_default_mixer(void)
     ok(color == 0x121212, "Unexpected color %#x.\n", color);
 
     hr = IMFVideoProcessor_GetFilteringRange(processor, DXVA2_DetailFilterChromaLevel, &range);
-todo_wine
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetFilteringValue(processor, DXVA2_DetailFilterChromaLevel, &dxva_value);
-todo_wine
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetAvailableVideoProcessorModes(processor, &count, &guids);
-todo_wine
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     IMFVideoProcessor_Release(processor);
@@ -1284,11 +1284,11 @@ static void test_default_mixer_type_negotiation(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetVideoProcessorMode(processor, &guid);
-todo_wine
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetVideoProcessorCaps(processor, (GUID *)&DXVA2_VideoProcSoftwareDevice, &caps);
-todo_wine
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -1300,7 +1300,7 @@ todo_wine
     IMFMediaType_Release(media_type);
 
     hr = IMFVideoProcessor_GetAvailableVideoProcessorModes(processor, &count, &guids);
-todo_wine
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
@@ -1313,11 +1313,11 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetVideoProcessorMode(processor, &guid);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetAvailableVideoProcessorModes(processor, &count, &guids);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         CoTaskMemFree(guids);
@@ -2263,21 +2263,21 @@ static void test_presenter_quality_control(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFQualityAdviseLimits_GetMaximumDropMode(qa_limits, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFQualityAdviseLimits_GetMaximumDropMode(qa_limits, &mode);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ok(mode == MF_DROP_MODE_NONE, "Unexpected mode %d.\n", mode);
 
     hr = IMFQualityAdviseLimits_GetMinimumQualityLevel(qa_limits, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFQualityAdviseLimits_GetMinimumQualityLevel(qa_limits, &level);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ok(level == MF_QUALITY_NORMAL, "Unexpected level %d.\n", level);
