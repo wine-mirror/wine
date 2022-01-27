@@ -894,6 +894,12 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         pInput->pBuffers[1].cbBuffer = pInput->pBuffers[0].cbBuffer-ctx->transport.in.offset;
     }
 
+    for (i = 0; i < pOutput->cBuffers; i++)
+    {
+        SecBuffer *buffer = &pOutput->pBuffers[i];
+        if (buffer->BufferType == SECBUFFER_ALERT) buffer->cbBuffer = 0;
+    }
+
     *pfContextAttr = ISC_RET_REPLAY_DETECT | ISC_RET_SEQUENCE_DETECT | ISC_RET_CONFIDENTIALITY | ISC_RET_STREAM;
     if (ctx->req_ctx_attr & ISC_REQ_EXTENDED_ERROR) *pfContextAttr |= ISC_RET_EXTENDED_ERROR;
     if (ctx->req_ctx_attr & ISC_REQ_DATAGRAM) *pfContextAttr |= ISC_RET_DATAGRAM;

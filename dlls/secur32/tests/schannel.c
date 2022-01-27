@@ -700,7 +700,7 @@ static void test_context_output_buffer_size(DWORD protocol, DWORD flags, ULONG c
         status = InitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost", ctxt_flags_req,
                 0, 0, &in_buffers, 0, &context, &out_buffers, &attrs, NULL);
         ok(status == SEC_I_CONTINUE_NEEDED, "%d: Expected SEC_I_CONTINUE_NEEDED, got %08x\n", i, status);
-        if (i) todo_wine ok(!buffer->cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty\n");
+        if (i) ok(!buffer->cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty\n");
         DeleteSecurityContext(&context);
     }
 
@@ -1661,7 +1661,7 @@ static void test_dtls(void)
     ok( !exp.LowPart, "got %08x\n", exp.LowPart );
     ok( !exp.HighPart, "got %08x\n", exp.HighPart );
     ok( buffers[1].pBuffers[1].BufferType == SECBUFFER_ALERT, "Expected buffertype SECBUFFER_ALERT, got %#x\n", buffers[1].pBuffers[1].BufferType);
-    todo_wine ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
+    ok( !buffers[1].pBuffers[1].cbBuffer, "Expected SECBUFFER_ALERT buffer to be empty, got %#x\n", buffers[1].pBuffers[1].cbBuffer);
     prev_buf_len = buffers[1].pBuffers[0].cbBuffer;
 
     /*
