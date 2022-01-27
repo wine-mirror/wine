@@ -635,7 +635,7 @@ static void test_rel_part_uri(void)
 
             hr = IOpcPartUri_GetRawUri(rel_uri, &str);
             ok(SUCCEEDED(hr), "Failed to get rel uri, hr %#x.\n", hr);
-        todo_wine_if(i == 3 || i == 4 || i == 8 || i == 9)
+            todo_wine_if(i == 3 || i == 4 || i == 8 || i == 9)
             ok(!lstrcmpW(str, rel_uriW), "%u: unexpected rel uri %s, expected %s.\n", i, wine_dbgstr_w(str),
                     wine_dbgstr_w(rel_uriW));
             SysFreeString(str);
@@ -1136,7 +1136,7 @@ static void test_combine_uri(void)
 
         hr = IOpcPartUri_GetRawUri(combined_uri, &str);
         ok(SUCCEEDED(hr), "%u: failed to get raw uri, hr %#x.\n", i, hr);
-    todo_wine_if(i == 2 || i == 3)
+        todo_wine_if(i == 2 || i == 3)
         ok(!lstrcmpW(str, combinedW), "%u: unexpected uri %s.\n", i, wine_dbgstr_w(str));
         SysFreeString(str);
 
@@ -1190,7 +1190,7 @@ static void test_create_part_uri(void)
 
         hr = IOpcPartUri_GetRawUri(part_uri, &str);
         ok(SUCCEEDED(hr), "Failed to get raw uri, hr %#x.\n", hr);
-    todo_wine_if(i == 1 || i == 2 || i == 4)
+        todo_wine_if(i == 1 || i == 2 || i == 4)
         ok(!lstrcmpW(str, rawW), "%u: unexpected raw uri %s.\n", i, wine_dbgstr_w(str));
         SysFreeString(str);
 
@@ -1200,7 +1200,7 @@ static void test_create_part_uri(void)
         ret = FALSE;
         hr = IOpcPartUri_IsEqual(part_uri, uri, &ret);
         ok(SUCCEEDED(hr), "IsEqual failed, hr %#x.\n", hr);
-    todo_wine_if(i == 1 || i == 2 || i == 4)
+        todo_wine_if(i == 1 || i == 2 || i == 4)
         ok(!!ret, "%u: unexpected result %d.\n", i, ret);
 
         IOpcPartUri_Release(part_uri);
