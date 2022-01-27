@@ -160,7 +160,7 @@ static void init_options(void)
 static const char * __cdecl fallback__wine_dbg_strdup( const char *str )
 {
     static char *list[32];
-    static int pos;
+    static LONG pos;
     char *ret = strdup( str );
     int idx;
 
