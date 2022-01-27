@@ -38,10 +38,10 @@ HRESULT WINAPI ShowPlayerPickerUI(HSTRING prompt_display_text, const HSTRING *xu
         const HSTRING *preselected_xuids, size_t preselected_xuid_count, size_t min_selection_count,
         size_t max_selection_count, PlayerPickerUICompletionRoutine completion_routine, void *context)
 {
-    FIXME("prompt_display_text %p, xuids %p, xuid_count %lu, preselected_xuids %p, preselected_xuid_count %lu,"
-            " min_selection_count %lu, max_selection_count %lu, completion_routine %p, context %p semi-stub.\n",
-            prompt_display_text, xuids, (SIZE_T)xuid_count, preselected_xuids, (SIZE_T)preselected_xuid_count,
-            (SIZE_T)min_selection_count, (SIZE_T)max_selection_count, completion_routine, context);
+    FIXME("prompt_display_text %p, xuids %p, xuid_count %Iu, preselected_xuids %p, preselected_xuid_count %Iu,"
+            " min_selection_count %Iu, max_selection_count %Iu, completion_routine %p, context %p semi-stub.\n",
+            prompt_display_text, xuids, xuid_count, preselected_xuids, preselected_xuid_count,
+            min_selection_count, max_selection_count, completion_routine, context);
 
     if (completion_routine)
         completion_routine(S_OK, context, preselected_xuids, preselected_xuid_count);
