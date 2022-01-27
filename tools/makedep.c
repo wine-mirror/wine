@@ -2986,6 +2986,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
+        output_filenames( make->extlib ? extra_cflags_extlib : extra_cflags );
         if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
         {
             output_filenames( unix_dllflags );
@@ -2997,7 +2998,6 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             if (!*dll_ext && make->module && is_crt_module( make->module ))
                 output_filename( "-fno-builtin" );
         }
-        output_filenames( make->extlib ? extra_cflags_extlib : extra_cflags );
         output_filenames( cpp_flags );
         output_filename( "$(CFLAGS)" );
         output( "\n" );
