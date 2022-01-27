@@ -1706,7 +1706,7 @@ static void test_dtls(void)
     ok( ctx_handle.dwUpper == ctx_handle2.dwUpper, "dwUpper mismatch, expected %#lx, got %#lx\n", ctx_handle.dwUpper, ctx_handle2.dwUpper);
 
     /* With no new input buffer, output buffer length should match prior call. */
-    todo_wine ok(buffers[1].pBuffers[0].cbBuffer == prev_buf_len, "Output buffer size mismatch, expected %#x, got %#x\n",
+    ok(buffers[1].pBuffers[0].cbBuffer == prev_buf_len, "Output buffer size mismatch, expected %#x, got %#x\n",
             prev_buf_len, buffers[1].pBuffers[0].cbBuffer);
 
     free_buffers( &buffers[0] );

@@ -461,14 +461,13 @@ static NTSTATUS schan_get_enabled_protocols( void *args )
 static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = (gnutls_session_t)t->session;
     SIZE_T count = 0;
 
     TRACE("\n");
 
     if (get_buffer(t, &t->in, &count)) return 1;
-    pgnutls_transport_set_errno(s, EAGAIN);
-    return -1;
+
+    return 0;
 }
 
 static NTSTATUS schan_create_session( void *args )
@@ -483,7 +482,7 @@ static NTSTATUS schan_create_session( void *args )
 
     if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
     {
-        flags |= GNUTLS_DATAGRAM;
+        flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
     }
 
     err = pgnutls_init(s, flags);
