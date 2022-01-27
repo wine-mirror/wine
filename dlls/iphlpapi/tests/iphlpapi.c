@@ -2017,7 +2017,7 @@ static void test_interface_identifier_conversion(void)
         memset( &guid, 0xff, sizeof(guid) );
         ret = ConvertInterfaceLuidToGuid( NULL, &guid );
         ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-        ok( guid.Data1 == 0xffffffff, "got %x\n", guid.Data1 );
+        ok( guid.Data1 == 0xffffffff, "got %s\n", debugstr_guid(&guid) );
 
         ret = ConvertInterfaceLuidToGuid( &luid, NULL );
         ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );

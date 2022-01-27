@@ -2280,7 +2280,7 @@ static void test_bsc_marshaling(void)
     ok(!in_bindinfo.dwOptions, "dwOptions = %u\n", in_bindinfo.dwOptions);
     ok(!in_bindinfo.dwOptionsFlags, "dwOptionsFlags = %u\n", in_bindinfo.dwOptionsFlags);
     ok(!in_bindinfo.dwCodePage, "dwCodePage = %u\n", in_bindinfo.dwCodePage);
-    ok(!in_bindinfo.iid.Data1, "iid.Data1 = %u\n", in_bindinfo.iid.Data1);
+    ok(!in_bindinfo.iid.Data1, "iid = %s\n", debugstr_guid(&in_bindinfo.iid));
     ok(!in_bindinfo.pUnk, "pUnk = %p\n", in_bindinfo.pUnk);
     ok(!in_bindinfo.dwReserved, "dwReserved = %u\n", in_bindinfo.dwReserved);
     ok(!in_bindinfo.securityAttributes.nLength, "securityAttributes.nLength = %u\n",
@@ -2305,7 +2305,7 @@ static void test_bsc_marshaling(void)
     ok(bindinfo.dwOptions == 24, "dwOptions = %u\n", bindinfo.dwOptions);
     ok(bindinfo.dwOptionsFlags == 25, "dwOptionsFlags = %u\n", bindinfo.dwOptionsFlags);
     ok(bindinfo.dwCodePage, "dwCodePage = %u\n", bindinfo.dwCodePage);
-    ok(!bindinfo.iid.Data1, "iid.Data1 = %u\n", bindinfo.iid.Data1);
+    ok(!bindinfo.iid.Data1, "iid = %s\n", debugstr_guid(&bindinfo.iid));
     ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
     ok(bindinfo.dwReserved == 18, "dwReserved = %u\n", bindinfo.dwReserved);
     ok(bindinfo.securityAttributes.nLength == 30, "securityAttributes.nLength = %u\n",
@@ -2497,7 +2497,7 @@ static void test_bsc_marshaling(void)
         ok(!in_bindinfo.dwOptions, "dwOptions = %u\n", in_bindinfo.dwOptions);
         ok(!in_bindinfo.dwOptionsFlags, "dwOptionsFlags = %u\n", in_bindinfo.dwOptionsFlags);
         ok(!in_bindinfo.dwCodePage, "dwCodePage = %u\n", in_bindinfo.dwCodePage);
-        ok(!in_bindinfo.iid.Data1, "iid.Data1 = %u\n", in_bindinfo.iid.Data1);
+        ok(!in_bindinfo.iid.Data1, "iid = %s\n", debugstr_guid(&in_bindinfo.iid));
         ok(!in_bindinfo.pUnk, "pUnk = %p\n", in_bindinfo.pUnk);
         ok(!in_bindinfo.dwReserved, "dwReserved = %u\n", in_bindinfo.dwReserved);
         ok(!in_bindinfo.securityAttributes.nLength, "securityAttributes.nLength = %u\n",
@@ -2521,7 +2521,7 @@ static void test_bsc_marshaling(void)
         ok(bindinfo.dwOptions == 24, "dwOptions = %u\n", bindinfo.dwOptions);
         ok(bindinfo.dwOptionsFlags == 25, "dwOptionsFlags = %u\n", bindinfo.dwOptionsFlags);
         ok(bindinfo.dwCodePage, "dwCodePage = %u\n", bindinfo.dwCodePage);
-        ok(!bindinfo.iid.Data1, "iid.Data1 = %u\n", bindinfo.iid.Data1);
+        ok(!bindinfo.iid.Data1, "iid = %s\n", debugstr_guid(&bindinfo.iid));
         ok(!bindinfo.pUnk, "pUnk = %p\n", bindinfo.pUnk);
         ok(bindinfo.dwReserved == 18, "dwReserved = %u\n", bindinfo.dwReserved);
         ok(bindinfo.securityAttributes.nLength == 30, "securityAttributes.nLength = %u\n",

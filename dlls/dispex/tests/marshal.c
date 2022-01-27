@@ -152,7 +152,7 @@ static inline dispex *impl_from_IDispatchEx(IDispatchEx *iface)
 static HRESULT WINAPI dispex_QueryInterface(IDispatchEx* iface,
                                             REFIID iid,  void **obj)
 {
-    trace("QI {%08x-...}\n", iid->Data1);
+    trace("QI %s\n", debugstr_guid(iid));
     if(IsEqualIID(iid, &IID_IUnknown) ||
        IsEqualIID(iid, &IID_IDispatchEx))
     {

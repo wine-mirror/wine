@@ -694,7 +694,7 @@ static void test_CreateDispTypeInfo(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTypeAttr->typekind == TKIND_INTERFACE, "typekind %0x\n", pTypeAttr->typekind);
     ok(pTypeAttr->cFuncs == 4, "cFuncs %d\n", pTypeAttr->cFuncs);
-    ok(IsEqualGUID(&pTypeAttr->guid, &GUID_NULL), "guid {%08x-...}\n", pTypeAttr->guid.Data1);
+    ok(IsEqualGUID(&pTypeAttr->guid, &GUID_NULL), "guid %s\n", debugstr_guid(&pTypeAttr->guid));
     ok(pTypeAttr->wTypeFlags == 0, "typeflags %08x\n", pTypeAttr->wTypeFlags);
 
     ITypeInfo_ReleaseTypeAttr(pTI2, pTypeAttr);
@@ -1657,7 +1657,7 @@ static void test_inheritance(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", debugstr_guid(&pTA->guid));
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 
@@ -1691,7 +1691,7 @@ static void test_inheritance(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", debugstr_guid(&pTA->guid));
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
     hr = ITypeInfo_GetFuncDesc(pTI, 1, &pFD);
@@ -1722,7 +1722,7 @@ static void test_inheritance(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", debugstr_guid(&pTA->guid));
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
     hr = ITypeInfo_GetFuncDesc(pTI, 6, &pFD);
@@ -1750,7 +1750,7 @@ static void test_inheritance(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", debugstr_guid(&pTA->guid));
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 
@@ -1781,7 +1781,7 @@ static void test_inheritance(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", debugstr_guid(&pTA->guid));
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 
@@ -1814,7 +1814,7 @@ static void test_inheritance(void)
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", debugstr_guid(&pTA->guid));
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
 

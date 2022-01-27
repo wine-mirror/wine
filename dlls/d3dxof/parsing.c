@@ -79,7 +79,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof_parsing);
 #define TOKEN_CSTRING     51
 #define TOKEN_ARRAY       52
 
-#define CLSIDFMT "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>"
+#define CLSIDFMT "<%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>"
 
 /* FOURCC to string conversion for debug messages */
 static const char *debugstr_fourcc(DWORD fourcc)

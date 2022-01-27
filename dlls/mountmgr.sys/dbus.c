@@ -97,7 +97,7 @@ static GUID *parse_uuid( GUID *guid, const char *str )
         int i;
         unsigned char *out = guid->Data4;
 
-        if (sscanf( str, "%x-%hx-%hx-", &guid->Data1, &guid->Data2, &guid->Data3 ) != 3) return NULL;
+        if (sscanf( str, "%x-%hx-%hx-", (int *)&guid->Data1, &guid->Data2, &guid->Data3 ) != 3) return NULL;
         for (i = 19; i < 36; i++)
         {
             unsigned char val;
