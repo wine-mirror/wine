@@ -191,6 +191,7 @@ static LRESULT WOD_Close(HWAVEOUT hwave);
 static LRESULT WID_Open(WINMM_OpenInfo *info);
 static LRESULT WID_Close(HWAVEIN hwave);
 static MMRESULT WINMM_BeginPlaying(WINMM_Device *device);
+static void WOD_PushData(WINMM_Device *device);
 
 void WINMM_DeleteWaveform(void)
 {
@@ -775,8 +776,11 @@ static HRESULT reroute_mapper_device(WINMM_Device *device, BOOL is_out)
 
     HeapFree(GetProcessHeap(), 0, info.format);
 
-    if(!stopped)
+    if(!stopped){
+        if(is_out)
+            WOD_PushData(device);
         WINMM_BeginPlaying(device);
+    }
 
     LeaveCriticalSection(&device->lock);
 
@@ -1948,10 +1952,6 @@ static MMRESULT WINMM_BeginPlaying(WINMM_Device *device)
 
     TRACE("(%p)\n", device->handle);
 
-    if(device->render)
-        /* prebuffer data before starting */
-        WOD_PushData(device);
-
     if(device->stopped){
         device->stopped = FALSE;
 
@@ -2893,6 +2893,9 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR *header, UINT uSize)
     header->dwFlags &= ~WHDR_DONE;
     header->dwFlags |= WHDR_INQUEUE;
 
+    if(device->stopped)
+        WOD_PushData(device);
+
     mr = WINMM_BeginPlaying(device);
 
     LeaveCriticalSection(&device->lock);
@@ -2969,6 +2972,9 @@ UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
         return MMSYSERR_INVALHANDLE;
 
     device->stopped = TRUE;
+
+    if(device->render)
+        WOD_PushData(device);
 
     mr = WINMM_BeginPlaying(device);
 

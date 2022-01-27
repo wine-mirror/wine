@@ -1640,7 +1640,6 @@ static void CALLBACK test_reentrant_callback_func(HWAVEOUT hwo, UINT uMsg,
 
         case WOM_DONE:
             /* verify that WOM_DONE is not sent during the following waveOutWrite */
-            todo_wine_if(wom_done_count == 1)
             ok(g_tid == 0, "callback called reentrantly\n");
 
             g_tid = GetCurrentThreadId();
