@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(compstui);
  */
 LONG WINAPI CommonPropertySheetUIA(HWND hWnd, PFNPROPSHEETUI pfnPropSheetUI, LPARAM lparam, LPDWORD pResult)
 {
-    FIXME("(%p, %p, 0x%lx, %p)\n", hWnd, pfnPropSheetUI, lparam, pResult);
+    FIXME("(%p, %p, 0x%Ix, %p)\n", hWnd, pfnPropSheetUI, lparam, pResult);
     return CPSUI_CANCEL;
 }
 
@@ -47,7 +47,7 @@ LONG WINAPI CommonPropertySheetUIA(HWND hWnd, PFNPROPSHEETUI pfnPropSheetUI, LPA
  */
 LONG WINAPI CommonPropertySheetUIW(HWND hWnd, PFNPROPSHEETUI pfnPropSheetUI, LPARAM lparam, LPDWORD pResult)
 {
-    FIXME("(%p, %p, 0x%lx, %p)\n", hWnd, pfnPropSheetUI, lparam, pResult);
+    FIXME("(%p, %p, 0x%Ix, %p)\n", hWnd, pfnPropSheetUI, lparam, pResult);
     return CPSUI_CANCEL;
 }
 
@@ -67,6 +67,6 @@ ULONG_PTR WINAPI GetCPSUIUserData(HWND hDlg)
  */
 BOOL WINAPI SetCPSUIUserData(HWND hDlg, ULONG_PTR UserData )
 {
-    FIXME("(%p, %08lx): stub\n", hDlg, UserData);
+    FIXME("(%p, %08Ix): stub\n", hDlg, UserData);
     return TRUE;
 }
