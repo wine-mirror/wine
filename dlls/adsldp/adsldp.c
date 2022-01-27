@@ -245,7 +245,7 @@ static HRESULT WINAPI sysinfo_get_UserName(IADsADSystemInfo *iface, BSTR *retval
 
 static HRESULT WINAPI sysinfo_get_ComputerName(IADsADSystemInfo *iface, BSTR *retval)
 {
-    UINT size;
+    ULONG size;
     WCHAR *name;
 
     TRACE("%p,%p\n", iface, retval);
