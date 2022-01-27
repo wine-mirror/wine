@@ -2251,7 +2251,7 @@ static void test_query_process_image_file_name(void)
     buffer = heap_alloc(ReturnLength);
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, buffer, ReturnLength, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-todo_wine
+    todo_wine
     ok(!memcmp(buffer->Buffer, deviceW, sizeof(deviceW)),
         "Expected image name to begin with \\Device\\, got %s\n",
         wine_dbgstr_wn(buffer->Buffer, buffer->Length / sizeof(WCHAR)));

@@ -1113,7 +1113,7 @@ static void test_file_io_completion(void)
     U(iosb).Status = 0xdeadbeef;
     res = pNtSetInformationFile( server, &iosb, &fci, sizeof(fci), FileCompletionInformation );
     ok( res == STATUS_INVALID_PARAMETER, "NtSetInformationFile failed: %#x\n", res );
-todo_wine
+    todo_wine
     ok( U(iosb).Status == 0xdeadbeef, "wrong status %#x\n", U(iosb).Status );
     CloseHandle( client );
     CloseHandle( server );
@@ -3020,20 +3020,20 @@ static void test_file_disposition_information(void)
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
     ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
     res = nt_get_file_attrs( buffer, &fdi2 );
-todo_wine
+    todo_wine
     ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
     /* can't open the deleted file */
     handle3 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
-todo_wine
+    todo_wine
     ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
-if (handle3 != INVALID_HANDLE_VALUE)
-    CloseHandle( handle3 );
-todo_wine
+    if (handle3 != INVALID_HANDLE_VALUE)
+        CloseHandle( handle3 );
+    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
     /* can't open the deleted file (wrong sharing mode) */
     handle3 = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
-todo_wine
+    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
@@ -3153,12 +3153,12 @@ todo_wine
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( !fileDeleted, "File shouldn't have been deleted\n" );
     res = nt_get_file_attrs( buffer, &fdi2 );
-todo_wine
+    todo_wine
     ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
     /* can't open the deleted file */
     handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
     ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
-todo_wine
+    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
@@ -3202,13 +3202,13 @@ todo_wine
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
     res = nt_get_file_attrs( buffer, &fdi2 );
-todo_wine
+    todo_wine
     ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
     /* can't open the deleted directory */
     handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
-todo_wine
+    todo_wine
     ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
-todo_wine
+    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
     if (handle2 != INVALID_HANDLE_VALUE) CloseHandle( handle2 );
     CloseHandle( handle );
@@ -3227,20 +3227,20 @@ todo_wine
     res = pNtSetInformationFile( handle2, &io, &fdi, sizeof fdi, FileDispositionInformation );
     ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %x)\n", res );
     res = nt_get_file_attrs( buffer, &fdi2 );
-todo_wine
+    todo_wine
     ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
     /* can't open the deleted directory */
     handle3 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
-todo_wine
+    todo_wine
     ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
-if (handle3 != INVALID_HANDLE_VALUE)
-    CloseHandle( handle3 );
-todo_wine
+    if (handle3 != INVALID_HANDLE_VALUE)
+        CloseHandle( handle3 );
+    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
     /* can't open the deleted directory (wrong sharing mode) */
     handle3 = CreateFileA(buffer, DELETE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     ok( handle3 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
-todo_wine
+    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
     CloseHandle( handle2 );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
@@ -4231,7 +4231,7 @@ static void test_NtCreateFile(void)
             /* FIXME: leave only 'else' case below once Wine is fixed */
             if (ret != td[i].attrib_out)
             {
-            todo_wine
+                todo_wine
                 ok(ret == td[i].attrib_out, "%d: expected %#x got %#x\n", i, td[i].attrib_out, ret);
                 SetFileAttributesW(path, td[i].attrib_out);
             }
