@@ -2706,7 +2706,7 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_
 
 map:
     if (bo->b.map_ptr)
-        return (uint8_t *)bo->b.map_ptr;
+        return bo->b.map_ptr;
 
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
