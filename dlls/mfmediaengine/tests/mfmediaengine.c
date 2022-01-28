@@ -417,7 +417,6 @@ todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_Pause(media_engine);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     state = IMFMediaEngine_GetMuted(media_engine);

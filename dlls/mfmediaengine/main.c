@@ -1820,25 +1820,31 @@ static HRESULT WINAPI media_engine_Play(IMFMediaEngineEx *iface)
 static HRESULT WINAPI media_engine_Pause(IMFMediaEngineEx *iface)
 {
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p.\n", iface);
 
     EnterCriticalSection(&engine->cs);
 
-    if (!(engine->flags & FLAGS_ENGINE_PAUSED))
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
     {
-        media_engine_set_flag(engine, FLAGS_ENGINE_WAITING | FLAGS_ENGINE_IS_ENDED, FALSE);
-        media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, TRUE);
+        if (!(engine->flags & FLAGS_ENGINE_PAUSED))
+        {
+            media_engine_set_flag(engine, FLAGS_ENGINE_WAITING | FLAGS_ENGINE_IS_ENDED, FALSE);
+            media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, TRUE);
 
-        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
-        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PAUSE, 0, 0);
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PAUSE, 0, 0);
+        }
+
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
     }
-
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
 
     LeaveCriticalSection(&engine->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static BOOL WINAPI media_engine_GetMuted(IMFMediaEngineEx *iface)
