@@ -24,6 +24,8 @@
 
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
+static PTP_WORK (__stdcall *p___std_create_threadpool_work)(PTP_WORK_CALLBACK, void*, PTP_CALLBACK_ENVIRON);
+
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static HMODULE init(void)
@@ -34,6 +36,8 @@ static HMODULE init(void)
         return NULL;
 
     SET(p___std_parallel_algorithms_hw_threads, "__std_parallel_algorithms_hw_threads");
+
+    SET(p___std_create_threadpool_work, "__std_create_threadpool_work");
     return msvcp;
 }
 
@@ -74,9 +78,14 @@ static void test_threadpool_work(void)
     TP_CALLBACK_ENVIRON environment;
     TP_CALLBACK_ENVIRON_V3 environment3;
 
+    if (0) /* crash on windows */
+    {
+        p___std_create_threadpool_work(NULL, NULL, NULL);
+    }
+
     /* simple test */
     workcalled = 0;
-    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled, NULL);
+    work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, NULL);
     ok(!!work, "failed to create threadpool_work\n");
     SubmitThreadpoolWork(work);
     WaitForThreadpoolWorkCallbacks(work, FALSE);
@@ -91,7 +100,7 @@ static void test_threadpool_work(void)
     environment.Version = 1;
     environment.FinalizationCallback = threadpool_workfinalization;
     workcalled = 0;
-    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled, &environment);
+    work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, &environment);
     ok(!!work, "failed to create threadpool_work\n");
     SubmitThreadpoolWork(work);
     WaitForThreadpoolWorkCallbacks(work, FALSE);
@@ -106,7 +115,7 @@ static void test_threadpool_work(void)
     environment3.Version = 3;
     environment3.CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
     SetLastError(0xdeadbeef);
-    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled,
+    work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled,
                                           (TP_CALLBACK_ENVIRON *)&environment3);
     gle = GetLastError();
     ok(gle == 0xdeadbeef, "expected 0xdeadbeef, got %x\n", gle);
@@ -117,7 +126,7 @@ static void test_threadpool_work(void)
     environment3.Version = 3;
     environment3.CallbackPriority = TP_CALLBACK_PRIORITY_INVALID;
     SetLastError(0xdeadbeef);
-    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled,
+    work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled,
                                           (TP_CALLBACK_ENVIRON *)&environment3);
     gle = GetLastError();
     ok(gle == ERROR_INVALID_PARAMETER, "expected %d, got %d\n", ERROR_INVALID_PARAMETER, gle);

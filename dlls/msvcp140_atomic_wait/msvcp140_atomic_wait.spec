@@ -14,7 +14,7 @@
 @ stub __std_bulk_submit_threadpool_work
 @ stub __std_calloc_crt
 @ stub __std_close_threadpool_work
-@ stub __std_create_threadpool_work
+@ stdcall __std_create_threadpool_work(ptr ptr ptr)
 @ stub __std_execution_wait_on_uchar
 @ stub __std_execution_wake_by_address_all
 @ stub __std_free_crt
