@@ -1211,16 +1211,15 @@ static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, co
 
 /* Context activation is done by the caller. */
 static void shader_glsl_load_constants_i(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_ivec4 *constants, const GLint locations[WINED3D_MAX_CONSTS_I], WORD constants_set)
+        const struct wined3d_ivec4 *constants, const GLint locations[WINED3D_MAX_CONSTS_I], uint32_t constants_set)
 {
     unsigned int i;
     struct list* ptr;
 
-    for (i = 0; constants_set; constants_set >>= 1, ++i)
+    while (constants_set)
     {
-        if (!(constants_set & 1)) continue;
-
         /* We found this uniform name in the program - go ahead and send the data */
+        i = wined3d_bit_scan(&constants_set);
         GL_EXTCALL(glUniform4iv(locations[i], 1, &constants[i].x));
     }
 
