@@ -443,7 +443,7 @@ static void test_namedvalueset(void)
 
     V_I4(&var) = 20;
     hr = ISWbemNamedValue_put_Value( value2, &var );
-todo_wine
+    todo_wine
     ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
 
     V_I4(&var) = 0;
@@ -474,7 +474,7 @@ todo_wine {
     ok( count == 1, "Unexpected count %d.\n", count );
 }
     hr = ISWbemNamedValueSet_DeleteAll( set );
-todo_wine
+    todo_wine
     ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
 
     count = 1;
@@ -485,7 +485,7 @@ todo_wine {
 }
     V_I4(&var) = 20;
     hr = ISWbemNamedValue_put_Value( value, &var );
-todo_wine
+    todo_wine
     ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
 
     count = 0;
