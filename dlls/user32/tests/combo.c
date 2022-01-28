@@ -101,7 +101,7 @@ static void test_setitemheight(DWORD style)
     font_height = get_font_height(hFont);
     SendMessageA(hCombo, CB_SETITEMHEIGHT, -1, font_height / 2);
     height = SendMessageA(hCombo, CB_GETITEMHEIGHT, -1, 0);
-todo_wine
+    todo_wine
     ok(height == font_height / 2, "Unexpected item height %d, expected %d.\n", height, font_height / 2);
 
     SetWindowPos(hCombo, NULL, 10, 10, 150, 5 * font_height, SWP_SHOWWINDOW);
