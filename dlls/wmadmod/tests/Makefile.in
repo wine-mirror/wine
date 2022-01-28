@@ -1,0 +1,5 @@
+TESTDLL = wmadmod.dll
+IMPORTS = dmoguids msdmo ole32 strmiids uuid mfuuid wmcodecdspuuid
+
+C_SRCS = \
+	wmadmod.c

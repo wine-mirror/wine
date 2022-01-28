@@ -1,0 +1,4 @@
+MODULE    = wmadmod.dll
+
+C_SRCS = \
+	main.c
