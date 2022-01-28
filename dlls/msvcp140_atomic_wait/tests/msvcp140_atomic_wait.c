@@ -47,6 +47,83 @@ static void test___std_parallel_algorithms_hw_threads(void)
     ok(nthr == si.dwNumberOfProcessors, "expected %u, got %u\n", si.dwNumberOfProcessors, nthr);
 }
 
+static PTP_WORK cb_work;
+static void *cb_context;
+static void WINAPI threadpool_workcallback(PTP_CALLBACK_INSTANCE instance, void *context, PTP_WORK work) {
+    LONG *workcalled = context;
+    cb_work = work;
+    cb_context = context;
+
+    InterlockedIncrement(workcalled);
+}
+
+static HANDLE cb_event;
+static void CALLBACK threadpool_workfinalization(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    LONG *workcalled = context;
+
+    InterlockedIncrement(workcalled);
+    SetEvent(cb_event);
+}
+
+static void test_threadpool_work(void)
+{
+    PTP_WORK work;
+    DWORD gle, ret;
+    LONG workcalled;
+    TP_CALLBACK_ENVIRON environment;
+    TP_CALLBACK_ENVIRON_V3 environment3;
+
+    /* simple test */
+    workcalled = 0;
+    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled, NULL);
+    ok(!!work, "failed to create threadpool_work\n");
+    SubmitThreadpoolWork(work);
+    WaitForThreadpoolWorkCallbacks(work, FALSE);
+    CloseThreadpoolWork(work);
+    ok(workcalled == 1, "expected work to be called once, got %d\n", workcalled);
+    ok(cb_work == work, "expected %p, got %p\n", work, cb_work);
+    ok(cb_context == &workcalled, "expected %p, got %p\n", &workcalled, cb_context);
+
+    /* test with environment */
+    cb_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.FinalizationCallback = threadpool_workfinalization;
+    workcalled = 0;
+    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled, &environment);
+    ok(!!work, "failed to create threadpool_work\n");
+    SubmitThreadpoolWork(work);
+    WaitForThreadpoolWorkCallbacks(work, FALSE);
+    CloseThreadpoolWork(work);
+    ret = WaitForSingleObject(cb_event, 1000);
+    ok(ret == WAIT_OBJECT_0, "expected finalization callback to be called\n");
+    ok(workcalled == 2, "expected work to be called twice, got %d\n", workcalled);
+    CloseHandle(cb_event);
+
+    /* test with environment version 3 */
+    memset(&environment3, 0, sizeof(environment3));
+    environment3.Version = 3;
+    environment3.CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
+    SetLastError(0xdeadbeef);
+    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled,
+                                          (TP_CALLBACK_ENVIRON *)&environment3);
+    gle = GetLastError();
+    ok(gle == 0xdeadbeef, "expected 0xdeadbeef, got %x\n", gle);
+    ok(!!work, "failed to create threadpool_work\n");
+    CloseThreadpoolWork(work);
+
+    memset(&environment3, 0, sizeof(environment3));
+    environment3.Version = 3;
+    environment3.CallbackPriority = TP_CALLBACK_PRIORITY_INVALID;
+    SetLastError(0xdeadbeef);
+    work = CreateThreadpoolWork(threadpool_workcallback, &workcalled,
+                                          (TP_CALLBACK_ENVIRON *)&environment3);
+    gle = GetLastError();
+    ok(gle == ERROR_INVALID_PARAMETER, "expected %d, got %d\n", ERROR_INVALID_PARAMETER, gle);
+    ok(!work, "expected failure\n");
+}
+
 START_TEST(msvcp140_atomic_wait)
 {
     HMODULE msvcp;
@@ -56,5 +133,6 @@ START_TEST(msvcp140_atomic_wait)
         return;
     }
     test___std_parallel_algorithms_hw_threads();
+    test_threadpool_work();
     FreeLibrary(msvcp);
 }
