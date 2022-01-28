@@ -252,87 +252,63 @@ static void test_RegisterDeviceNotification(void)
 
     SetLastError( 0xdeadbeef );
     devnotify = RegisterDeviceNotificationA( NULL, NULL, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     devnotify = RegisterDeviceNotificationA( (HWND)0xdeadbeef, NULL, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     devnotify = RegisterDeviceNotificationA( hwnd, NULL, 2 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_OEM) );
     header->dbch_size = sizeof(DEV_BROADCAST_OEM);
     header->dbch_devicetype = DBT_DEVTYP_OEM;
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
         "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_DEVNODE) );
     header->dbch_size = sizeof(DEV_BROADCAST_DEVNODE);
     header->dbch_devicetype = DBT_DEVTYP_DEVNODE;
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
         "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_VOLUME) );
     header->dbch_size = sizeof(DEV_BROADCAST_VOLUME);
     header->dbch_devicetype = DBT_DEVTYP_VOLUME;
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
         "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_PORT_A) );
     header->dbch_size = sizeof(DEV_BROADCAST_PORT_A);
     header->dbch_devicetype = DBT_DEVTYP_PORT;
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
         "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     SetLastError( 0xdeadbeef );
     memset( header, 0, sizeof(DEV_BROADCAST_NET) );
     header->dbch_size = sizeof(DEV_BROADCAST_NET);
     header->dbch_devicetype = DBT_DEVTYP_NET;
     devnotify = RegisterDeviceNotificationA( hwnd, header, 0 );
-    todo_wine
     ok( !devnotify, "RegisterDeviceNotificationA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_SERVICE_SPECIFIC_ERROR,
         "got error %u\n", GetLastError() );
-    if (devnotify) UnregisterDeviceNotification( devnotify );
 
     devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_WINDOW_HANDLE );
     ok( !!devnotify, "RegisterDeviceNotificationA failed, error %u\n", GetLastError() );

@@ -1170,6 +1170,11 @@ struct device_notification_details
 {
     DWORD (CALLBACK *cb)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
     HANDLE handle;
+    union
+    {
+        DEV_BROADCAST_HDR header;
+        DEV_BROADCAST_DEVICEINTERFACE_W iface;
+    } filter;
 };
 
 extern HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_details *details,
@@ -1196,11 +1201,43 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hRecipient, LPVOID pNotific
 HDEVNOTIFY WINAPI RegisterDeviceNotificationW( HANDLE handle, void *filter, DWORD flags )
 {
     struct device_notification_details details;
+    DEV_BROADCAST_HDR *header = filter;
 
     TRACE("handle %p, filter %p, flags %#x\n", handle, filter, flags);
 
     if (flags & ~(DEVICE_NOTIFY_SERVICE_HANDLE | DEVICE_NOTIFY_ALL_INTERFACE_CLASSES))
-        FIXME("unhandled flags %#x\n", flags);
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if (!(flags & DEVICE_NOTIFY_SERVICE_HANDLE) && !IsWindow( handle ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if (!header) details.filter.header.dbch_devicetype = 0;
+    else if (header->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
+    {
+        DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)header;
+        details.filter.iface = *iface;
+
+        if (flags & DEVICE_NOTIFY_ALL_INTERFACE_CLASSES)
+            details.filter.iface.dbcc_size = offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_classguid );
+        else
+            details.filter.iface.dbcc_size = offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name );
+    }
+    else if (header->dbch_devicetype == DBT_DEVTYP_HANDLE)
+    {
+        FIXME( "DBT_DEVTYP_HANDLE filter type not implemented\n" );
+        details.filter.header.dbch_devicetype = 0;
+    }
+    else
+    {
+        SetLastError( ERROR_INVALID_DATA );
+        return NULL;
+    }
 
     details.handle = handle;
 

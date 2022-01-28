@@ -1974,6 +1974,11 @@ struct device_notification_details
 {
     DWORD (CALLBACK *cb)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
     HANDLE handle;
+    union
+    {
+        DEV_BROADCAST_HDR header;
+        DEV_BROADCAST_DEVICEINTERFACE_W iface;
+    } filter;
 };
 
 static HANDLE device_notify_thread;
