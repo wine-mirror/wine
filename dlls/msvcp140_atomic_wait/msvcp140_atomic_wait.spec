@@ -20,7 +20,7 @@
 @ stub __std_free_crt
 @ stdcall __std_parallel_algorithms_hw_threads()
 @ stub __std_release_shared_mutex_for_instance
-@ stub __std_submit_threadpool_work
+@ stdcall __std_submit_threadpool_work(ptr)
 @ stub __std_tzdb_delete_current_zone
 @ stub __std_tzdb_delete_leap_seconds
 @ stub __std_tzdb_delete_sys_info

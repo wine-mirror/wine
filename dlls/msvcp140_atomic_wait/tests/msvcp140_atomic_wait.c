@@ -25,6 +25,7 @@
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
 static PTP_WORK (__stdcall *p___std_create_threadpool_work)(PTP_WORK_CALLBACK, void*, PTP_CALLBACK_ENVIRON);
+static void (__stdcall *p___std_submit_threadpool_work)(PTP_WORK);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -38,6 +39,7 @@ static HMODULE init(void)
     SET(p___std_parallel_algorithms_hw_threads, "__std_parallel_algorithms_hw_threads");
 
     SET(p___std_create_threadpool_work, "__std_create_threadpool_work");
+    SET(p___std_submit_threadpool_work, "__std_submit_threadpool_work");
     return msvcp;
 }
 
@@ -81,13 +83,14 @@ static void test_threadpool_work(void)
     if (0) /* crash on windows */
     {
         p___std_create_threadpool_work(NULL, NULL, NULL);
+        p___std_submit_threadpool_work(NULL);
     }
 
     /* simple test */
     workcalled = 0;
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, NULL);
     ok(!!work, "failed to create threadpool_work\n");
-    SubmitThreadpoolWork(work);
+    p___std_submit_threadpool_work(work);
     WaitForThreadpoolWorkCallbacks(work, FALSE);
     CloseThreadpoolWork(work);
     ok(workcalled == 1, "expected work to be called once, got %d\n", workcalled);
@@ -102,7 +105,7 @@ static void test_threadpool_work(void)
     workcalled = 0;
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, &environment);
     ok(!!work, "failed to create threadpool_work\n");
-    SubmitThreadpoolWork(work);
+    p___std_submit_threadpool_work(work);
     WaitForThreadpoolWorkCallbacks(work, FALSE);
     CloseThreadpoolWork(work);
     ret = WaitForSingleObject(cb_event, 1000);

@@ -37,3 +37,9 @@ PTP_WORK __stdcall __std_create_threadpool_work(PTP_WORK_CALLBACK callback, void
     TRACE("(%p %p %p)\n", callback, context, environ);
     return CreateThreadpoolWork(callback, context, environ);
 }
+
+void __stdcall __std_submit_threadpool_work(PTP_WORK work)
+{
+    TRACE("(%p)\n", work);
+    return SubmitThreadpoolWork(work);
+}
