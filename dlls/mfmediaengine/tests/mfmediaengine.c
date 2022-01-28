@@ -344,12 +344,10 @@ static void test_Shutdown(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_Load(media_engine);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     str = SysAllocString(L"video/mp4");
     hr = IMFMediaEngine_CanPlayType(media_engine, str, &state);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
     SysFreeString(str);
 
@@ -363,7 +361,6 @@ todo_wine
     ok(val == 0.0, "Unexpected time %f.\n", val);
 
     hr = IMFMediaEngine_SetCurrentTime(media_engine, 1.0);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     val = IMFMediaEngine_GetStartTime(media_engine);
@@ -382,11 +379,9 @@ todo_wine
     ok(val == 1.0, "Unexpected rate %f.\n", val);
 
     hr = IMFMediaEngine_GetPlayed(media_engine, &time_range);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_GetSeekable(media_engine, &time_range);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     state = IMFMediaEngine_IsEnded(media_engine);
