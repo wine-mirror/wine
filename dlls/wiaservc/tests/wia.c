@@ -49,7 +49,7 @@ static void test_EnumDeviceInfo(void)
 
     count = 1000;
     hr = IEnumWIA_DEV_INFO_GetCount(devenum, &count);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count != 1000, "got %u\n", count);
 
@@ -61,11 +61,11 @@ static void test_SelectDeviceDlg(void)
     HRESULT hr;
     IWiaItem *root;
     hr = IWiaDevMgr_SelectDeviceDlg(devmanager, NULL, StiDeviceTypeDefault, 0, NULL, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     hr = IWiaDevMgr_SelectDeviceDlg(devmanager, NULL, StiDeviceTypeDefault, 0, NULL, &root);
-todo_wine
+    todo_wine
     ok(hr == S_OK || hr == WIA_S_NO_DEVICE_AVAILABLE, "got 0x%08x\n", hr);
 }
 
