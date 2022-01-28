@@ -201,14 +201,12 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
             debugstr_guid( &iface->dbcc_classguid ) );
         ok( iface->dbcc_size >= offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[wcslen( iface->dbcc_name ) + 1] ),
             "got dbcc_size %u\n", iface->dbcc_size );
-        todo_wine
         ok( !wcsncmp( iface->dbcc_name, expect_prefix, wcslen( expect_prefix ) ),
             "got dbcc_name %s\n", debugstr_w(iface->dbcc_name) );
 
         upper_end = wcschr( iface->dbcc_name + wcslen( expect_prefix ), '#' );
         name_end = iface->dbcc_name + wcslen( iface->dbcc_name ) + 1;
         ok( !!upper_end, "got dbcc_name %s\n", debugstr_w(iface->dbcc_name) );
-        todo_wine
         ok( all_upper( iface->dbcc_name, upper_end ), "got dbcc_name %s\n", debugstr_w(iface->dbcc_name) );
         ok( all_lower( upper_end, name_end ), "got dbcc_name %s\n", debugstr_w(iface->dbcc_name) );
 

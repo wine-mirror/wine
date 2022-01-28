@@ -698,11 +698,11 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     size_t namelen = name->Length / sizeof(WCHAR);
     DEV_BROADCAST_DEVICEINTERFACE_W *broadcast;
+    WCHAR *path, *refstr, *p, *upper_end;
     struct device_interface *iface;
     HANDLE iface_key, control_key;
     OBJECT_ATTRIBUTES attr = {0};
     struct wine_rb_entry *entry;
-    WCHAR *path, *refstr, *p;
     UNICODE_STRING string;
     DWORD data = enable;
     NTSTATUS ret;
@@ -788,6 +788,12 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         broadcast->dbcc_classguid  = iface->interface_class;
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
         if (namelen > 1) broadcast->dbcc_name[1] = '\\';
+
+        upper_end = wcschr( broadcast->dbcc_name, '#' );
+        if (upper_end) upper_end = wcschr( upper_end + 1, '#' );
+        while (upper_end && upper_end-- != broadcast->dbcc_name)
+            *upper_end = towupper( *upper_end );
+
         send_devicechange( enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
         heap_free( broadcast );
     }
