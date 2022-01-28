@@ -7643,7 +7643,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     unsigned int i, extra_constants_needed = 0;
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
-    DWORD map;
+    uint32_t map;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
@@ -7762,11 +7762,10 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
     }
 
-    for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
+    map = reg_maps->bumpmat;
+    while (map)
     {
-        if (!(map & 1))
-            continue;
-
+        i = wined3d_bit_scan(&map);
         shader_addline(buffer, "uniform mat2 bumpenv_mat%u;\n", i);
 
         if (reg_maps->luminanceparams & (1u << i))
@@ -7903,7 +7902,6 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     if (reg_maps->shader_version.major < 3 || args->vp_mode != WINED3D_VP_MODE_SHADER)
     {
         unsigned int i;
-        WORD map = reg_maps->texcoord;
 
         if (legacy_syntax)
         {
@@ -7913,19 +7911,18 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
                 shader_addline(buffer, "ffp_varying_specular = gl_SecondaryColor;\n");
         }
 
-        for (i = 0; map; map >>= 1, ++i)
+        map = reg_maps->texcoord;
+        while (map)
         {
-            if (map & 1)
-            {
-                if (args->pointsprite)
-                    shader_addline(buffer, "ffp_texcoord[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", i);
-                else if (args->texcoords_initialized & (1u << i))
-                    shader_addline(buffer, "ffp_texcoord[%u] = %s[%u];\n", i,
-                            legacy_syntax ? "gl_TexCoord" : "ffp_varying_texcoord", i);
-                else
-                    shader_addline(buffer, "ffp_texcoord[%u] = vec4(0.0);\n", i);
-                shader_addline(buffer, "vec4 T%u = ffp_texcoord[%u];\n", i, i);
-            }
+            i = wined3d_bit_scan(&map);
+            if (args->pointsprite)
+                shader_addline(buffer, "ffp_texcoord[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", i);
+            else if (args->texcoords_initialized & (1u << i))
+                shader_addline(buffer, "ffp_texcoord[%u] = %s[%u];\n", i,
+                        legacy_syntax ? "gl_TexCoord" : "ffp_varying_texcoord", i);
+            else
+                shader_addline(buffer, "ffp_texcoord[%u] = vec4(0.0);\n", i);
+            shader_addline(buffer, "vec4 T%u = ffp_texcoord[%u];\n", i, i);
         }
 
         if (legacy_syntax)
