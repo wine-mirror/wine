@@ -319,7 +319,6 @@ static void test_Shutdown(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_GetCurrentSource(media_engine, &str);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     state = IMFMediaEngine_GetNetworkState(media_engine);

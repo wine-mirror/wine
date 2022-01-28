@@ -1464,11 +1464,15 @@ static HRESULT WINAPI media_engine_GetCurrentSource(IMFMediaEngineEx *iface, BST
     *url = NULL;
 
     EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
     if (engine->current_source)
     {
         if (!(*url = SysAllocString(engine->current_source)))
             hr = E_OUTOFMEMORY;
     }
+
     LeaveCriticalSection(&engine->cs);
 
     return hr;
