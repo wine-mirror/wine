@@ -124,7 +124,7 @@ struct device
 {
     BOOL is_fdo;
     BOOL is_gamepad;
-    BOOL removed;
+    LONG removed;
     WCHAR device_id[MAX_DEVICE_ID_LEN];
 };
 
@@ -204,28 +204,28 @@ static void translate_report_to_xinput_state(struct func_device *fdo)
     count = ARRAY_SIZE(usages);
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages,
                             &count, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                 &hat, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue hat returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue hat returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                 &lx, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue x returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue x returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y,
                                 &ly, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue y returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue y returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                 &lt, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue z returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue z returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX,
                                 &rx, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue rx returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue rx returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
                                 &ry, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue ry returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue ry returned %#lx\n", status);
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ,
                                 &rt, preparsed, fdo->report_buf, fdo->report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue rz returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue rz returned %#lx\n", status);
 
     if (hat < 1 || hat > 8) fdo->xinput_state.buttons = 0;
     else fdo->xinput_state.buttons = hat << 10;
@@ -322,7 +322,7 @@ static NTSTATUS WINAPI gamepad_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
 
-    TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
+    TRACE("device %p, irp %p, code %#lx, bus_device %p.\n", device, irp, code, fdo->bus_device);
 
     switch (code)
     {
@@ -397,7 +397,7 @@ static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
         return STATUS_DELETE_PENDING;
     }
 
-    TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
+    TRACE("device %p, irp %p, code %#lx, bus_device %p.\n", device, irp, code, fdo->bus_device);
 
     if (code == IOCTL_HID_READ_REPORT) return try_complete_pending_read(device, irp);
     if (impl->is_gamepad) return gamepad_internal_ioctl(device, irp);
@@ -465,7 +465,7 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
     struct device *impl = impl_from_DEVICE_OBJECT(device);
-    ULONG code = stack->MinorFunction;
+    UCHAR code = stack->MinorFunction;
     NTSTATUS status;
     IRP *pending;
 
@@ -568,7 +568,7 @@ static NTSTATUS create_child_pdos(DEVICE_OBJECT *device)
     if ((status = IoCreateDevice(device->DriverObject, sizeof(struct phys_device),
                                  &name_str, 0, 0, FALSE, &gamepad_device)))
     {
-        ERR("failed to create gamepad device, status %#x.\n", status);
+        ERR("failed to create gamepad device, status %#lx.\n", status);
         return status;
     }
 
@@ -579,7 +579,7 @@ static NTSTATUS create_child_pdos(DEVICE_OBJECT *device)
     if ((status = IoCreateDevice(device->DriverObject, sizeof(struct phys_device),
                                  &name_str, 0, 0, FALSE, &xinput_device)))
     {
-        ERR("failed to create xinput device, status %#x.\n", status);
+        ERR("failed to create xinput device, status %#lx.\n", status);
         IoDeleteDevice(gamepad_device);
         return status;
     }
@@ -641,7 +641,7 @@ static void check_value_caps(struct func_device *fdo, USHORT usage, HIDP_VALUE_C
 static NTSTATUS initialize_device(DEVICE_OBJECT *device)
 {
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
-    ULONG i, u, button_count, report_desc_len, report_count;
+    UINT i, u, button_count, report_desc_len, report_count;
     PHIDP_REPORT_DESCRIPTOR report_desc;
     PHIDP_PREPARSED_DATA preparsed;
     HIDP_BUTTON_CAPS *button_caps;
@@ -669,7 +669,7 @@ static NTSTATUS initialize_device(DEVICE_OBJECT *device)
     button_count = 0;
     if (!(button_caps = malloc(sizeof(*button_caps) * caps.NumberInputButtonCaps))) return STATUS_NO_MEMORY;
     status = HidP_GetButtonCaps(HidP_Input, button_caps, &caps.NumberInputButtonCaps, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#lx\n", status);
     else for (i = 0; i < caps.NumberInputButtonCaps; i++)
     {
         if (button_caps[i].UsagePage != HID_USAGE_PAGE_BUTTON) continue;
@@ -682,7 +682,7 @@ static NTSTATUS initialize_device(DEVICE_OBJECT *device)
 
     if (!(value_caps = malloc(sizeof(*value_caps) * caps.NumberInputValueCaps))) return STATUS_NO_MEMORY;
     status = HidP_GetValueCaps(HidP_Input, value_caps, &caps.NumberInputValueCaps, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#lx\n", status);
     else for (i = 0; i < caps.NumberInputValueCaps; i++)
     {
         HIDP_VALUE_CAPS *caps = value_caps + i;
@@ -721,7 +721,7 @@ static NTSTATUS WINAPI fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
-    ULONG code = stack->MinorFunction;
+    UCHAR code = stack->MinorFunction;
     DEVICE_RELATIONS *devices;
     DEVICE_OBJECT *child;
     NTSTATUS status;
@@ -839,7 +839,7 @@ static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_devi
 
     if ((status = get_device_id(bus_device, BusQueryDeviceID, bus_id)))
     {
-        ERR("failed to get bus device id, status %#x.\n", status);
+        ERR("failed to get bus device id, status %#lx.\n", status);
         return status;
     }
 
@@ -852,14 +852,14 @@ static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_devi
 
     if ((status = get_device_id(bus_device, BusQueryInstanceID, instance_id)))
     {
-        ERR("failed to get bus device instance id, status %#x.\n", status);
+        ERR("failed to get bus device instance id, status %#lx.\n", status);
         return status;
     }
 
     if ((status = IoCreateDevice(driver, sizeof(struct func_device), NULL,
                                  FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &device)))
     {
-        ERR("failed to create bus FDO, status %#x.\n", status);
+        ERR("failed to create bus FDO, status %#lx.\n", status);
         return status;
     }
 
