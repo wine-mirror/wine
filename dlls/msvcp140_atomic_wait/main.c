@@ -43,3 +43,9 @@ void __stdcall __std_submit_threadpool_work(PTP_WORK work)
     TRACE("(%p)\n", work);
     return SubmitThreadpoolWork(work);
 }
+
+void __stdcall __std_wait_for_threadpool_work_callbacks(PTP_WORK work, BOOL cancel)
+{
+    TRACE("(%p %d)\n", work, cancel);
+    return WaitForThreadpoolWorkCallbacks(work, cancel);
+}

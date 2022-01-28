@@ -26,6 +26,7 @@ static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
 static PTP_WORK (__stdcall *p___std_create_threadpool_work)(PTP_WORK_CALLBACK, void*, PTP_CALLBACK_ENVIRON);
 static void (__stdcall *p___std_submit_threadpool_work)(PTP_WORK);
+static void (__stdcall *p___std_wait_for_threadpool_work_callbacks)(PTP_WORK, BOOL);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -40,6 +41,7 @@ static HMODULE init(void)
 
     SET(p___std_create_threadpool_work, "__std_create_threadpool_work");
     SET(p___std_submit_threadpool_work, "__std_submit_threadpool_work");
+    SET(p___std_wait_for_threadpool_work_callbacks, "__std_wait_for_threadpool_work_callbacks");
     return msvcp;
 }
 
@@ -84,6 +86,7 @@ static void test_threadpool_work(void)
     {
         p___std_create_threadpool_work(NULL, NULL, NULL);
         p___std_submit_threadpool_work(NULL);
+        p___std_wait_for_threadpool_work_callbacks(NULL, FALSE);
     }
 
     /* simple test */
@@ -91,7 +94,7 @@ static void test_threadpool_work(void)
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, NULL);
     ok(!!work, "failed to create threadpool_work\n");
     p___std_submit_threadpool_work(work);
-    WaitForThreadpoolWorkCallbacks(work, FALSE);
+    p___std_wait_for_threadpool_work_callbacks(work, FALSE);
     CloseThreadpoolWork(work);
     ok(workcalled == 1, "expected work to be called once, got %d\n", workcalled);
     ok(cb_work == work, "expected %p, got %p\n", work, cb_work);
@@ -106,7 +109,7 @@ static void test_threadpool_work(void)
     work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, &environment);
     ok(!!work, "failed to create threadpool_work\n");
     p___std_submit_threadpool_work(work);
-    WaitForThreadpoolWorkCallbacks(work, FALSE);
+    p___std_wait_for_threadpool_work_callbacks(work, FALSE);
     CloseThreadpoolWork(work);
     ret = WaitForSingleObject(cb_event, 1000);
     ok(ret == WAIT_OBJECT_0, "expected finalization callback to be called\n");
