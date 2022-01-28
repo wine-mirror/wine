@@ -497,27 +497,26 @@ static void shader_arb_load_np2fixup_constants(const struct arb_ps_np2fixup_info
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
 {
     GLfloat np2fixup_constants[4 * WINED3D_MAX_FRAGMENT_SAMPLERS];
-    WORD active = fixup->super.active;
-    UINT i;
+    uint32_t active = fixup->super.active;
+    const struct wined3d_texture *tex;
+    unsigned char idx;
+    GLfloat *tex_dim;
+    unsigned int i;
 
     if (!active)
         return;
 
-    for (i = 0; active; active >>= 1, ++i)
+    while (active)
     {
-        const struct wined3d_texture *tex = state->textures[i];
-        unsigned char idx = fixup->super.idx[i];
-        GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
-
-        if (!(active & 1))
-            continue;
-
-        if (!tex)
+        i = wined3d_bit_scan(&active);
+        if (!(tex = state->textures[i]))
         {
             ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
             continue;
         }
 
+        idx = fixup->super.idx[i];
+        tex_dim = &np2fixup_constants[(idx >> 1) * 4];
         if (idx % 2)
         {
             tex_dim[2] = tex->pow2_matrix[0];
