@@ -607,13 +607,28 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
     switch (location)
     {
         case WINED3D_LOCATION_SYSMEM:
-            range.offset = 0;
-            range.size = buffer->resource.size;
-            buffer->buffer_ops->buffer_download_ranges(buffer, context,
-                    buffer->resource.heap_memory, 0, 1, &range);
+            if (buffer->locations & WINED3D_LOCATION_CLEARED)
+            {
+                memset(buffer->resource.heap_memory, 0, buffer->resource.size);
+            }
+            else
+            {
+                range.offset = 0;
+                range.size = buffer->resource.size;
+                buffer->buffer_ops->buffer_download_ranges(buffer, context,
+                        buffer->resource.heap_memory, 0, 1, &range);
+            }
             break;
 
         case WINED3D_LOCATION_BUFFER:
+            if (buffer->locations & WINED3D_LOCATION_CLEARED)
+            {
+                /* FIXME: Clear the buffer on the GPU if possible. */
+                if (!wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_SYSMEM))
+                    return FALSE;
+                memset(buffer->resource.heap_memory, 0, buffer->resource.size);
+            }
+
             if (!buffer->conversion_map)
                 buffer->buffer_ops->buffer_upload_ranges(buffer, context,
                         buffer->resource.heap_memory, 0, buffer->modified_areas, buffer->maps);
@@ -650,7 +665,7 @@ DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_co
     TRACE("buffer %p, context %p, data %p, locations %s.\n",
             buffer, context, data, wined3d_debug_location(locations));
 
-    if (locations & WINED3D_LOCATION_DISCARDED)
+    if (locations & (WINED3D_LOCATION_DISCARDED | WINED3D_LOCATION_CLEARED))
     {
         locations = ((buffer->flags & WINED3D_BUFFER_USE_BO) ? WINED3D_LOCATION_BUFFER : WINED3D_LOCATION_SYSMEM);
         if (!wined3d_buffer_load_location(buffer, context, locations))
@@ -949,7 +964,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
         }
 
         if (flags & WINED3D_MAP_WRITE)
-            wined3d_buffer_invalidate_range(buffer, WINED3D_LOCATION_BUFFER, dirty_offset, dirty_size);
+            wined3d_buffer_invalidate_range(buffer, ~WINED3D_LOCATION_SYSMEM, dirty_offset, dirty_size);
     }
     else
     {
@@ -971,7 +986,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
         if (flags & WINED3D_MAP_WRITE)
         {
-            wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_SYSMEM);
+            wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
             buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
         }
 
@@ -1241,7 +1256,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
     }
     buffer->buffer_ops = buffer_ops;
     buffer->structure_byte_stride = desc->structure_byte_stride;
-    buffer->locations = data ? WINED3D_LOCATION_DISCARDED : WINED3D_LOCATION_SYSMEM;
+    buffer->locations = WINED3D_LOCATION_CLEARED;
 
     TRACE("buffer %p, size %#x, usage %#x, memory @ %p.\n",
             buffer, buffer->resource.size, buffer->resource.usage, buffer->resource.heap_memory);
