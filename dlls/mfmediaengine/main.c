@@ -1784,31 +1784,37 @@ static HRESULT WINAPI media_engine_SetLoop(IMFMediaEngineEx *iface, BOOL loop)
 static HRESULT WINAPI media_engine_Play(IMFMediaEngineEx *iface)
 {
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p.\n", iface);
 
     EnterCriticalSection(&engine->cs);
 
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
-
-    if (!(engine->flags & FLAGS_ENGINE_WAITING))
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
     {
-        media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED | FLAGS_ENGINE_IS_ENDED, FALSE);
-        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
 
-        if (!(engine->flags & FLAGS_ENGINE_SOURCE_PENDING))
-            media_engine_start_playback(engine);
-        else
-            media_engine_set_flag(engine, FLAGS_ENGINE_PLAY_PENDING, TRUE);
+        if (!(engine->flags & FLAGS_ENGINE_WAITING))
+        {
+            media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED | FLAGS_ENGINE_IS_ENDED, FALSE);
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
 
-        media_engine_set_flag(engine, FLAGS_ENGINE_WAITING, TRUE);
+            if (!(engine->flags & FLAGS_ENGINE_SOURCE_PENDING))
+                media_engine_start_playback(engine);
+            else
+                media_engine_set_flag(engine, FLAGS_ENGINE_PLAY_PENDING, TRUE);
+
+            media_engine_set_flag(engine, FLAGS_ENGINE_WAITING, TRUE);
+        }
+
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_WAITING, 0, 0);
     }
-
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_WAITING, 0, 0);
 
     LeaveCriticalSection(&engine->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_Pause(IMFMediaEngineEx *iface)

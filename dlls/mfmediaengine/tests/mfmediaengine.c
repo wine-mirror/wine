@@ -414,7 +414,6 @@ todo_wine
     ok(!!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_Play(media_engine);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_Pause(media_engine);
