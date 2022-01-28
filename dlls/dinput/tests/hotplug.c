@@ -197,7 +197,6 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
 
         winetest_push_context( "%u", device_change_count );
 
-        todo_wine_if( IsEqualGUID( &iface->dbcc_classguid, &control_class ) && !device_change_all )
         ok( IsEqualGUID( &iface->dbcc_classguid, &expect_guid ), "got dbch_classguid %s\n",
             debugstr_guid( &iface->dbcc_classguid ) );
         ok( iface->dbcc_size >= offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[wcslen( iface->dbcc_name ) + 1] ),
@@ -315,8 +314,7 @@ static void test_RegisterDeviceNotification(void)
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
     device_change_count = 0;
-    if (!strcmp( winetest_platform, "wine" )) device_change_expect = 4;
-    else device_change_expect = 2;
+    device_change_expect = 2;
     device_change_hwnd = hwnd;
     device_change_all = FALSE;
     stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
@@ -349,8 +347,7 @@ static void test_RegisterDeviceNotification(void)
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
     device_change_count = 0;
-    if (!strcmp( winetest_platform, "wine" )) device_change_expect = 4;
-    else device_change_expect = 2;
+    device_change_expect = 2;
     device_change_hwnd = hwnd;
     device_change_all = FALSE;
     stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );

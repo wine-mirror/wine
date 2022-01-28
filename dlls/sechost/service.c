@@ -1990,6 +1990,23 @@ struct device_notify_registration
     struct device_notification_details details;
 };
 
+static BOOL notification_filter_matches( DEV_BROADCAST_HDR *filter, DEV_BROADCAST_HDR *event )
+{
+    if (!filter->dbch_devicetype) return TRUE;
+    if (filter->dbch_devicetype != event->dbch_devicetype) return FALSE;
+
+    if (filter->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
+    {
+        DEV_BROADCAST_DEVICEINTERFACE_W *filter_iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)filter;
+        DEV_BROADCAST_DEVICEINTERFACE_W *event_iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)event;
+        if (filter_iface->dbcc_size == offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_classguid)) return TRUE;
+        return IsEqualGUID( &filter_iface->dbcc_classguid, &event_iface->dbcc_classguid );
+    }
+
+    FIXME( "Filter dbch_devicetype %u not implemented\n", filter->dbch_devicetype );
+    return TRUE;
+}
+
 static DWORD WINAPI device_notify_proc( void *arg )
 {
     WCHAR endpoint[] = L"\\pipe\\wine_plugplay";
@@ -2074,6 +2091,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
         for (i = 0; i < details_copy_nelems; i++)
         {
+            if (!notification_filter_matches( &details_copy[i].filter.header, (DEV_BROADCAST_HDR *)buf )) continue;
             details_copy[i].cb( details_copy[i].handle, code, (DEV_BROADCAST_HDR *)buf );
         }
         MIDL_user_free(buf);
@@ -2103,8 +2121,6 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_det
     struct device_notify_registration *registration;
 
     TRACE("callback %p, handle %p, filter %p, flags %#x\n", details->cb, details->handle, filter, flags);
-
-    if (filter) FIXME("Notification filters are not yet implemented.\n");
 
     if (!(registration = heap_alloc(sizeof(struct device_notify_registration))))
     {
