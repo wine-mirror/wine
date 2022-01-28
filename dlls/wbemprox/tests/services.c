@@ -214,11 +214,11 @@ static void test_IWbemContext(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IWbemContext_Next(context, 0, &str, &var);
-todo_wine
+    todo_wine
     ok(hr == WBEM_E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
 
     hr = IWbemContext_BeginEnumeration(context, 0);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     str = NULL;
@@ -229,7 +229,7 @@ todo_wine {
     SysFreeString(str);
 }
     hr = IWbemContext_EndEnumeration(context);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Overwrite */
