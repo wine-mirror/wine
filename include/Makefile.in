@@ -89,6 +89,7 @@ SOURCES = \
 	cordebug.idl \
 	corerror.h \
 	corhdr.h \
+	corsym.idl \
 	cpl.h \
 	crtrow.idl \
 	cryptdlg.h \
