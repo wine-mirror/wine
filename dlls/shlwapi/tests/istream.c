@@ -810,7 +810,7 @@ static void test_SHCreateMemStream(void)
     ok(num == 0, "expected 0, got 0x%08x\n", num);
 
     hr = IStream_Clone(stream, &stream2);
-todo_wine
+    todo_wine
     ok(hr == S_OK || broken(hr == E_NOTIMPL) /* < Win8 */, "Failed to clone a stream, hr %#x.\n", hr);
     if (hr == S_OK)
         IStream_Release(stream2);
