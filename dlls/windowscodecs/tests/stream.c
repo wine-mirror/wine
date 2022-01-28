@@ -32,7 +32,7 @@ static void _check_cur_pos(IStream *stream, ULONGLONG expected_pos, BOOL todo, u
     offset.QuadPart = 0;
     hr = IStream_Seek(stream, offset, STREAM_SEEK_CUR, &pos);
     ok_(__FILE__, line)(hr == S_OK, "Failed to get current position, hr %#x.\n", hr);
-todo_wine_if(todo)
+    todo_wine_if(todo)
     ok_(__FILE__, line)(pos.QuadPart == expected_pos, "Unexpected stream position %s.\n",
         wine_dbgstr_longlong(pos.QuadPart));
 }

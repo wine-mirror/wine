@@ -824,7 +824,7 @@ todo_wine_if(td[i].todo_load)
 
         hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
         ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
-todo_wine_if(td[i].todo)
+        todo_wine_if(td[i].todo)
         ok(IsEqualGUID(&format, td[i].format_PLTE_tRNS),
            "PLTE+tRNS: expected %s, got %s (type %d, bpp %d)\n",
             wine_dbgstr_guid(td[i].format_PLTE_tRNS), wine_dbgstr_guid(&format), td[i].color_type, td[i].bit_depth);
@@ -907,7 +907,7 @@ todo_wine_if(td[i].todo_load)
 
         hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
         ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
-todo_wine_if(td[i].todo)
+        todo_wine_if(td[i].todo)
         ok(IsEqualGUID(&format, td[i].format_PLTE_tRNS),
            "tRNS: expected %s, got %s (type %d, bpp %d)\n",
             wine_dbgstr_guid(td[i].format_PLTE_tRNS), wine_dbgstr_guid(&format), td[i].color_type, td[i].bit_depth);
