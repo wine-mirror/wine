@@ -168,7 +168,7 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
 
     if (!(button_caps = malloc(sizeof(*button_caps) * controller->hid.caps.NumberInputButtonCaps))) return FALSE;
     status = HidP_GetButtonCaps(HidP_Input, button_caps, &controller->hid.caps.NumberInputButtonCaps, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#lx\n", status);
     else for (i = 0; i < controller->hid.caps.NumberInputButtonCaps; i++)
     {
         if (button_caps[i].UsagePage != HID_USAGE_PAGE_BUTTON)
@@ -185,7 +185,7 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
 
     if (!(value_caps = malloc(sizeof(*value_caps) * controller->hid.caps.NumberInputValueCaps))) return FALSE;
     status = HidP_GetValueCaps(HidP_Input, value_caps, &controller->hid.caps.NumberInputValueCaps, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#lx\n", status);
     else for (i = 0; i < controller->hid.caps.NumberInputValueCaps; i++)
     {
         HIDP_VALUE_CAPS *caps = value_caps + i;
@@ -214,7 +214,7 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
     collections_count = controller->hid.caps.NumberLinkCollectionNodes;
     if (!(collections = malloc(sizeof(*collections) * controller->hid.caps.NumberLinkCollectionNodes))) return FALSE;
     status = HidP_GetLinkCollectionNodes(collections, &collections_count, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetLinkCollectionNodes returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetLinkCollectionNodes returned %#lx\n", status);
     else for (i = 0; i < collections_count; ++i)
     {
         if (collections[i].LinkUsagePage != HID_USAGE_PAGE_HAPTICS) continue;
@@ -232,15 +232,15 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
     status = HidP_GetSpecificValueCaps(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &waveform_cap, &caps_count, preparsed);
     if (status != HIDP_STATUS_SUCCESS || !caps_count)
     {
-        WARN("could not find haptics waveform list report id, status %#x\n", status);
+        WARN("could not find haptics waveform list report id, status %#lx\n", status);
         return TRUE;
     }
 
     status = HidP_InitializeReportForID(HidP_Feature, waveform_cap.ReportID, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
     if (!HidD_GetFeature(device, report_buf, report_len))
     {
-        WARN("failed to get waveform list report, error %u\n", GetLastError());
+        WARN("failed to get waveform list report, error %lu\n", GetLastError());
         return TRUE;
     }
 
@@ -251,7 +251,7 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
         ULONG waveform = 0;
         status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list,
                                     i, &waveform, preparsed, report_buf, report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue returned %#x\n", status);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue returned %#lx\n", status);
         else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_BUZZ) controller->hid.haptics_buzz_index = i;
         else if (waveform == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE) controller->hid.haptics_rumble_index = i;
     }
@@ -263,7 +263,7 @@ static BOOL controller_check_caps(struct xinput_controller *controller, HANDLE d
     caps_count = 1;
     status = HidP_GetSpecificValueCaps(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
                                        &waveform_cap, &caps_count, preparsed);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetSpecificValueCaps MANUAL_TRIGGER returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetSpecificValueCaps MANUAL_TRIGGER returned %#lx\n", status);
     else if (!caps_count) WARN("haptics manual trigger not supported\n");
     else
     {
@@ -293,31 +293,31 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
 
     /* send haptics rumble report (left motor) */
     status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_INTENSITY,
                                 state->wLeftMotorSpeed, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
                                 controller->hid.haptics_rumble_index, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
     if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
     {
-        WARN("HidD_SetOutputReport failed with error %u\n", GetLastError());
+        WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
         return GetLastError();
     }
 
     /* send haptics buzz report (right motor) */
     status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_InitializeReportForID returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_INTENSITY,
                                 state->wRightMotorSpeed, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue INTENSITY returned %#lx\n", status);
     status = HidP_SetUsageValue(HidP_Output, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_MANUAL_TRIGGER,
                                 controller->hid.haptics_buzz_index, preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_SetUsageValue MANUAL_TRIGGER returned %#lx\n", status);
     if (!HidD_SetOutputReport(controller->device, report_buf, report_len))
     {
-        WARN("HidD_SetOutputReport failed with error %u\n", GetLastError());
+        WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
         return GetLastError();
     }
 
@@ -475,9 +475,9 @@ static void update_controller_list(void)
 
         preparsed = NULL;
         if (!HidD_GetPreparsedData(device, &preparsed))
-            WARN("ignoring HID device, HidD_GetPreparsedData failed with error %u\n", GetLastError());
+            WARN("ignoring HID device, HidD_GetPreparsedData failed with error %lu\n", GetLastError());
         else if ((status = HidP_GetCaps(preparsed, &caps)) != HIDP_STATUS_SUCCESS)
-            WARN("ignoring HID device, HidP_GetCaps returned %#x\n", status);
+            WARN("ignoring HID device, HidP_GetCaps returned %#lx\n", status);
         else if (caps.UsagePage != HID_USAGE_PAGE_GENERIC)
             WARN("ignoring HID device, unsupported usage page %04x\n", caps.UsagePage);
         else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK &&
@@ -561,13 +561,13 @@ static void read_controller_state(struct xinput_controller *controller)
     {
         if (GetLastError() == ERROR_OPERATION_ABORTED) return;
         if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE) controller_destroy(controller, TRUE);
-        else ERR("Failed to read input report, GetOverlappedResult failed with error %u\n", GetLastError());
+        else ERR("Failed to read input report, GetOverlappedResult failed with error %lu\n", GetLastError());
         return;
     }
 
     button_length = ARRAY_SIZE(buttons);
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#lx\n", status);
 
     state.Gamepad.wButtons = 0;
     for (i = 0; i < button_length; i++)
@@ -589,7 +589,7 @@ static void read_controller_state(struct xinput_controller *controller)
     }
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#lx\n", status);
     else switch (value)
     {
     /* 8 1 2
@@ -607,27 +607,27 @@ static void read_controller_state(struct xinput_controller *controller)
     }
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#lx\n", status);
     else state.Gamepad.sThumbLX = scale_value(value, &controller->hid.lx_caps, -32768, 32767);
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#lx\n", status);
     else state.Gamepad.sThumbLY = -scale_value(value, &controller->hid.ly_caps, -32768, 32767) - 1;
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#lx\n", status);
     else state.Gamepad.sThumbRX = scale_value(value, &controller->hid.rx_caps, -32768, 32767);
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#lx\n", status);
     else state.Gamepad.sThumbRY = -scale_value(value, &controller->hid.ry_caps, -32768, 32767) - 1;
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#lx\n", status);
     else state.Gamepad.bRightTrigger = scale_value(value, &controller->hid.rt_caps, 0, 255);
 
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, controller->hid.preparsed, report_buf, report_len);
-    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#lx\n", status);
     else state.Gamepad.bLeftTrigger = scale_value(value, &controller->hid.lt_caps, 0, 255);
 
     EnterCriticalSection(&controller->crit);
@@ -708,7 +708,7 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
     DestroyWindow(hwnd);
     UnregisterClassW(cls.lpszClassName, xinput_instance);
 
-    if (ret != count - 1) ERR("update thread exited unexpectedly, ret %u\n", ret);
+    if (ret != count - 1) ERR("update thread exited unexpectedly, ret %lu\n", ret);
     SetEvent(done_event);
     return ret;
 }
@@ -718,19 +718,19 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
     HANDLE thread;
 
     start_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (!start_event) ERR("failed to create start event, error %u\n", GetLastError());
+    if (!start_event) ERR("failed to create start event, error %lu\n", GetLastError());
 
     stop_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (!stop_event) ERR("failed to create stop event, error %u\n", GetLastError());
+    if (!stop_event) ERR("failed to create stop event, error %lu\n", GetLastError());
 
     done_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (!done_event) ERR("failed to create done event, error %u\n", GetLastError());
+    if (!done_event) ERR("failed to create done event, error %lu\n", GetLastError());
 
     update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (!update_event) ERR("failed to create update event, error %u\n", GetLastError());
+    if (!update_event) ERR("failed to create update event, error %lu\n", GetLastError());
 
     thread = CreateThread(NULL, 0, hid_update_thread_proc, NULL, 0, NULL);
-    if (!thread) ERR("failed to create update thread, error %u\n", GetLastError());
+    if (!thread) ERR("failed to create update thread, error %lu\n", GetLastError());
     CloseHandle(thread);
 
     WaitForSingleObject(start_event, INFINITE);
@@ -765,6 +765,8 @@ static void controller_unlock(struct xinput_controller *controller)
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
+    TRACE("inst %p, reason %lu, reserved %p.\n", inst, reason, reserved);
+
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
@@ -783,7 +785,7 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
 {
     int index;
 
-    TRACE("(enable %d)\n", enable);
+    TRACE("enable %d.\n", enable);
 
     /* Setting to false will stop messages from XInputSetState being sent
     to the controllers. Setting to true will send the last vibration
@@ -804,7 +806,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION *vib
 {
     DWORD ret;
 
-    TRACE("(index %u, vibration %p)\n", index, vibration);
+    TRACE("index %lu, vibration %p.\n", index, vibration);
 
     start_update_thread();
 
@@ -839,7 +841,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE *state)
 {
     DWORD ret;
 
-    TRACE("(index %u, state %p)!\n", index, state);
+    TRACE("index %lu, state %p.\n", index, state);
 
     ret = xinput_get_state(index, state);
     if (ret != ERROR_SUCCESS) return ret;
@@ -852,7 +854,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE *state)
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE *state)
 {
-    TRACE("(index %u, state %p)!\n", index, state);
+    TRACE("index %lu, state %p.\n", index, state);
 
     return xinput_get_state(index, state);
 }
@@ -1052,7 +1054,7 @@ done:
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
 {
-    TRACE("(index %u, reserved %u, keystroke %p)\n", index, reserved, keystroke);
+    TRACE("index %lu, reserved %lu, keystroke %p.\n", index, reserved, keystroke);
 
     if (index >= XUSER_MAX_COUNT && index != XUSER_INDEX_ANY) return ERROR_BAD_ARGUMENTS;
 
@@ -1070,7 +1072,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetKeystroke(DWORD index, DWORD reserved, P
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES *capabilities)
 {
-    TRACE("(index %u, flags 0x%x, capabilities %p)\n", index, flags, capabilities);
+    TRACE("index %lu, flags %#lx, capabilities %p.\n", index, flags, capabilities);
 
     start_update_thread();
 
@@ -1093,7 +1095,8 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, X
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID *render_guid, GUID *capture_guid)
 {
-    FIXME("(index %u, render guid %p, capture guid %p) Stub!\n", index, render_guid, capture_guid);
+    FIXME("index %lu, render_guid %s, capture_guid %s stub!\n", index, debugstr_guid(render_guid),
+          debugstr_guid(capture_guid));
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
     if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
@@ -1105,7 +1108,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetBatteryInformation(DWORD index, BYTE typ
 {
     static int once;
 
-    if (!once++) FIXME("(index %u, type %u, battery %p) Stub!\n", index, type, battery);
+    if (!once++) FIXME("index %lu, type %u, battery %p.\n", index, type, battery);
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
     if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
