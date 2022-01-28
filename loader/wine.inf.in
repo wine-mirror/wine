@@ -2635,6 +2635,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
 11,,fusion.dll,-
+11,,diasymreader.dll,-
 11,,mscorwks.dll,-
 11,,regsvcs.exe,-
 11,,regasm.exe,-
@@ -2689,6 +2690,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
 11,,fusion.dll,-
+11,,diasymreader.dll,-
 11,,mscorwks.dll,-
 11,,regsvcs.exe,-
 11,,regasm.exe,-
