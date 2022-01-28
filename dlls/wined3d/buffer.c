@@ -653,14 +653,12 @@ DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_co
     if (locations & WINED3D_LOCATION_DISCARDED)
     {
         locations = ((buffer->flags & WINED3D_BUFFER_USE_BO) ? WINED3D_LOCATION_BUFFER : WINED3D_LOCATION_SYSMEM);
-        if (!wined3d_buffer_prepare_location(buffer, context, locations))
+        if (!wined3d_buffer_load_location(buffer, context, locations))
         {
             data->buffer_object = 0;
             data->addr = NULL;
             return 0;
         }
-        wined3d_buffer_validate_location(buffer, locations);
-        wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_DISCARDED);
     }
     if (locations & WINED3D_LOCATION_BUFFER)
     {
