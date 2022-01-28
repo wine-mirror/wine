@@ -911,105 +911,110 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
         void **map_ptr, const struct wined3d_box *box, uint32_t flags)
 {
     struct wined3d_buffer *buffer = buffer_from_resource(resource);
+    unsigned int offset, size, dirty_offset, dirty_size;
     struct wined3d_device *device = resource->device;
     struct wined3d_context *context;
-    unsigned int offset, size;
+    struct wined3d_bo_address addr;
     uint8_t *base;
     LONG count;
 
     TRACE("resource %p, sub_resource_idx %u, map_ptr %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_ptr, debug_box(box), flags);
 
-    offset = box->left;
-    size = box->right - box->left;
+    dirty_offset = offset = box->left;
+    dirty_size = size = box->right - box->left;
 
     count = ++resource->map_count;
 
-    if (buffer->buffer_object)
+    /* DISCARD invalidates the entire buffer, regardless of the specified
+     * offset and size. Some applications also depend on the entire buffer
+     * being uploaded in that case. Two such applications are Port Royale
+     * and Darkstar One. */
+    if (flags & WINED3D_MAP_DISCARD)
     {
-        unsigned int dirty_offset = offset, dirty_size = size;
-        struct wined3d_bo_address addr;
+        dirty_offset = 0;
+        dirty_size = 0;
+    }
 
-        /* DISCARD invalidates the entire buffer, regardless of the specified
-         * offset and size. Some applications also depend on the entire buffer
-         * being uploaded in that case. Two such applications are Port Royale
-         * and Darkstar One. */
-        if (flags & WINED3D_MAP_DISCARD)
+    if (((flags & WINED3D_MAP_WRITE) && !(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD)))
+            || (!(flags & WINED3D_MAP_WRITE) && (buffer->locations & WINED3D_LOCATION_SYSMEM))
+            || buffer->flags & WINED3D_BUFFER_PIN_SYSMEM
+            || !(buffer->flags & WINED3D_BUFFER_USE_BO))
+    {
+        if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
         {
-            dirty_offset = 0;
-            dirty_size = 0;
+            context = context_acquire(device, NULL, 0);
+            wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+            context_release(context);
         }
 
-        if (((flags & WINED3D_MAP_WRITE) && !(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD)))
-                || (!(flags & WINED3D_MAP_WRITE) && (buffer->locations & WINED3D_LOCATION_SYSMEM))
-                || buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
-        {
-            if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
-            {
-                context = context_acquire(device, NULL, 0);
-                wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
-                context_release(context);
-            }
+        if (flags & WINED3D_MAP_WRITE)
+            wined3d_buffer_invalidate_range(buffer, WINED3D_LOCATION_BUFFER, dirty_offset, dirty_size);
+    }
+    else
+    {
+        context = context_acquire(device, NULL, 0);
 
-            if (flags & WINED3D_MAP_WRITE)
-                wined3d_buffer_invalidate_range(buffer, WINED3D_LOCATION_BUFFER, dirty_offset, dirty_size);
+        if (flags & WINED3D_MAP_DISCARD)
+        {
+            if (!wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER))
+            {
+                context_release(context);
+                return E_OUTOFMEMORY;
+            }
+            wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
         }
         else
         {
-            context = context_acquire(device, NULL, 0);
-
-            if (flags & WINED3D_MAP_DISCARD)
-                wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
-            else
-                wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
-
-            if (flags & WINED3D_MAP_WRITE)
-            {
-                wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_SYSMEM);
-                buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
-            }
-
-            if ((flags & WINED3D_MAP_DISCARD) && resource->heap_memory)
-                wined3d_buffer_evict_sysmem(buffer);
-
-            if (count == 1)
-            {
-                addr.buffer_object = buffer->buffer_object;
-                addr.addr = 0;
-                buffer->map_ptr = wined3d_context_map_bo_address(context, &addr, resource->size, flags);
-                /* We are accessing buffer->resource.client from the CS thread,
-                 * but it's safe because the client thread will wait for the
-                 * map to return, thus completely serializing this call with
-                 * other client code. */
-                buffer->resource.client.addr = addr;
-
-                if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
-                {
-                    WARN("Pointer %p is not %u byte aligned.\n", buffer->map_ptr, RESOURCE_ALIGNMENT);
-
-                    wined3d_context_unmap_bo_address(context, &addr, 0, NULL);
-                    buffer->map_ptr = NULL;
-
-                    if (resource->usage & WINED3DUSAGE_DYNAMIC)
-                    {
-                        /* The extra copy is more expensive than not using VBOs
-                         * at all on the NVIDIA Linux driver, which is the
-                         * only driver that returns unaligned pointers. */
-                        TRACE("Dynamic buffer, dropping VBO.\n");
-                        wined3d_buffer_drop_bo(buffer);
-                    }
-                    else
-                    {
-                        TRACE("Falling back to doublebuffered operation.\n");
-                        wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
-                        buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
-                    }
-                    TRACE("New pointer is %p.\n", resource->heap_memory);
-                }
-            }
-
-            context_release(context);
+            wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
         }
+
+        if (flags & WINED3D_MAP_WRITE)
+        {
+            wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_SYSMEM);
+            buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
+        }
+
+        if ((flags & WINED3D_MAP_DISCARD) && resource->heap_memory)
+            wined3d_buffer_evict_sysmem(buffer);
+
+        if (count == 1)
+        {
+            addr.buffer_object = buffer->buffer_object;
+            addr.addr = 0;
+            buffer->map_ptr = wined3d_context_map_bo_address(context, &addr, resource->size, flags);
+            /* We are accessing buffer->resource.client from the CS thread,
+             * but it's safe because the client thread will wait for the
+             * map to return, thus completely serializing this call with
+             * other client code. */
+            buffer->resource.client.addr = addr;
+
+            if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
+            {
+                WARN("Pointer %p is not %u byte aligned.\n", buffer->map_ptr, RESOURCE_ALIGNMENT);
+
+                wined3d_context_unmap_bo_address(context, &addr, 0, NULL);
+                buffer->map_ptr = NULL;
+
+                if (resource->usage & WINED3DUSAGE_DYNAMIC)
+                {
+                    /* The extra copy is more expensive than not using VBOs
+                     * at all on the NVIDIA Linux driver, which is the
+                     * only driver that returns unaligned pointers. */
+                    TRACE("Dynamic buffer, dropping VBO.\n");
+                    wined3d_buffer_drop_bo(buffer);
+                }
+                else
+                {
+                    TRACE("Falling back to doublebuffered operation.\n");
+                    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+                    buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
+                }
+                TRACE("New pointer is %p.\n", resource->heap_memory);
+            }
+        }
+
+        context_release(context);
     }
 
     base = buffer->map_ptr ? buffer->map_ptr : resource->heap_memory;
