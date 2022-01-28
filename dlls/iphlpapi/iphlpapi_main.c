@@ -1057,6 +1057,7 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
             if (flags & GAA_FLAG_INCLUDE_PREFIX)
             {
                 memset( &sockaddr, 0, sizeof(sockaddr) );
+                prefix_len = 0;
                 if (family == AF_INET)
                 {
                     if (!key4->next_hop.s_addr)
