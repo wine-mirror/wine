@@ -341,7 +341,6 @@ static void test_Shutdown(void)
     ok(state == 100, "Unexpected state %d.\n", state);
 
     hr = IMFMediaEngine_GetBuffered(media_engine, &time_range);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_Load(media_engine);

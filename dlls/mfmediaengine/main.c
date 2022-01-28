@@ -1525,8 +1525,12 @@ static HRESULT WINAPI media_engine_GetBuffered(IMFMediaEngineEx *iface, IMFMedia
         return hr;
 
     EnterCriticalSection(&engine->cs);
-    if (!isnan(engine->duration))
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!isnan(engine->duration))
         hr = IMFMediaTimeRange_AddRange(*range, 0.0, engine->duration);
+
     LeaveCriticalSection(&engine->cs);
 
     return hr;
