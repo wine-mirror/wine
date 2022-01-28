@@ -24,6 +24,7 @@
 
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
+static void (__stdcall *p___std_close_threadpool_work)(PTP_WORK);
 static PTP_WORK (__stdcall *p___std_create_threadpool_work)(PTP_WORK_CALLBACK, void*, PTP_CALLBACK_ENVIRON);
 static void (__stdcall *p___std_submit_threadpool_work)(PTP_WORK);
 static void (__stdcall *p___std_wait_for_threadpool_work_callbacks)(PTP_WORK, BOOL);
@@ -39,6 +40,7 @@ static HMODULE init(void)
 
     SET(p___std_parallel_algorithms_hw_threads, "__std_parallel_algorithms_hw_threads");
 
+    SET(p___std_close_threadpool_work, "__std_close_threadpool_work");
     SET(p___std_create_threadpool_work, "__std_create_threadpool_work");
     SET(p___std_submit_threadpool_work, "__std_submit_threadpool_work");
     SET(p___std_wait_for_threadpool_work_callbacks, "__std_wait_for_threadpool_work_callbacks");
@@ -87,6 +89,7 @@ static void test_threadpool_work(void)
         p___std_create_threadpool_work(NULL, NULL, NULL);
         p___std_submit_threadpool_work(NULL);
         p___std_wait_for_threadpool_work_callbacks(NULL, FALSE);
+        p___std_close_threadpool_work(NULL);
     }
 
     /* simple test */
@@ -95,7 +98,7 @@ static void test_threadpool_work(void)
     ok(!!work, "failed to create threadpool_work\n");
     p___std_submit_threadpool_work(work);
     p___std_wait_for_threadpool_work_callbacks(work, FALSE);
-    CloseThreadpoolWork(work);
+    p___std_close_threadpool_work(work);
     ok(workcalled == 1, "expected work to be called once, got %d\n", workcalled);
     ok(cb_work == work, "expected %p, got %p\n", work, cb_work);
     ok(cb_context == &workcalled, "expected %p, got %p\n", &workcalled, cb_context);
@@ -110,7 +113,7 @@ static void test_threadpool_work(void)
     ok(!!work, "failed to create threadpool_work\n");
     p___std_submit_threadpool_work(work);
     p___std_wait_for_threadpool_work_callbacks(work, FALSE);
-    CloseThreadpoolWork(work);
+    p___std_close_threadpool_work(work);
     ret = WaitForSingleObject(cb_event, 1000);
     ok(ret == WAIT_OBJECT_0, "expected finalization callback to be called\n");
     ok(workcalled == 2, "expected work to be called twice, got %d\n", workcalled);
@@ -126,7 +129,7 @@ static void test_threadpool_work(void)
     gle = GetLastError();
     ok(gle == 0xdeadbeef, "expected 0xdeadbeef, got %x\n", gle);
     ok(!!work, "failed to create threadpool_work\n");
-    CloseThreadpoolWork(work);
+    p___std_close_threadpool_work(work);
 
     memset(&environment3, 0, sizeof(environment3));
     environment3.Version = 3;

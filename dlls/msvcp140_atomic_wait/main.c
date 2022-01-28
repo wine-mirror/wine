@@ -31,6 +31,12 @@ unsigned int __stdcall __std_parallel_algorithms_hw_threads(void)
     return _Thrd_hardware_concurrency();
 }
 
+void __stdcall __std_close_threadpool_work(PTP_WORK work)
+{
+    TRACE("(%p)\n", work);
+    return CloseThreadpoolWork(work);
+}
+
 PTP_WORK __stdcall __std_create_threadpool_work(PTP_WORK_CALLBACK callback, void *context,
                                                 PTP_CALLBACK_ENVIRON environ)
 {
