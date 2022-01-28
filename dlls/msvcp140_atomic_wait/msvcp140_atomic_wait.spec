@@ -11,7 +11,7 @@
 @ stub __std_atomic_wait_get_deadline
 @ stub __std_atomic_wait_get_remaining_timeout
 @ stub __std_atomic_wait_indirect
-@ stub __std_bulk_submit_threadpool_work
+@ stdcall __std_bulk_submit_threadpool_work(ptr long)
 @ stub __std_calloc_crt
 @ stdcall __std_close_threadpool_work(ptr)
 @ stdcall __std_create_threadpool_work(ptr ptr ptr)

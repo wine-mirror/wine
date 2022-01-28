@@ -31,6 +31,13 @@ unsigned int __stdcall __std_parallel_algorithms_hw_threads(void)
     return _Thrd_hardware_concurrency();
 }
 
+void __stdcall __std_bulk_submit_threadpool_work(PTP_WORK work, size_t count)
+{
+    TRACE("(%p %Iu)\n", work, count);
+    while (count--)
+        SubmitThreadpoolWork(work);
+}
+
 void __stdcall __std_close_threadpool_work(PTP_WORK work)
 {
     TRACE("(%p)\n", work);

@@ -24,6 +24,7 @@
 
 static unsigned int (__stdcall *p___std_parallel_algorithms_hw_threads)(void);
 
+static void (__stdcall *p___std_bulk_submit_threadpool_work)(PTP_WORK, size_t);
 static void (__stdcall *p___std_close_threadpool_work)(PTP_WORK);
 static PTP_WORK (__stdcall *p___std_create_threadpool_work)(PTP_WORK_CALLBACK, void*, PTP_CALLBACK_ENVIRON);
 static void (__stdcall *p___std_submit_threadpool_work)(PTP_WORK);
@@ -40,6 +41,7 @@ static HMODULE init(void)
 
     SET(p___std_parallel_algorithms_hw_threads, "__std_parallel_algorithms_hw_threads");
 
+    SET(p___std_bulk_submit_threadpool_work, "__std_bulk_submit_threadpool_work");
     SET(p___std_close_threadpool_work, "__std_close_threadpool_work");
     SET(p___std_create_threadpool_work, "__std_create_threadpool_work");
     SET(p___std_submit_threadpool_work, "__std_submit_threadpool_work");
@@ -86,6 +88,7 @@ static void test_threadpool_work(void)
 
     if (0) /* crash on windows */
     {
+        p___std_bulk_submit_threadpool_work(NULL, 5);
         p___std_create_threadpool_work(NULL, NULL, NULL);
         p___std_submit_threadpool_work(NULL);
         p___std_wait_for_threadpool_work_callbacks(NULL, FALSE);
@@ -102,6 +105,23 @@ static void test_threadpool_work(void)
     ok(workcalled == 1, "expected work to be called once, got %d\n", workcalled);
     ok(cb_work == work, "expected %p, got %p\n", work, cb_work);
     ok(cb_context == &workcalled, "expected %p, got %p\n", &workcalled, cb_context);
+
+    /* bulk submit */
+    workcalled = 0;
+    work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, NULL);
+    ok(!!work, "failed to create threadpool_work\n");
+    p___std_bulk_submit_threadpool_work(work, 13);
+    p___std_wait_for_threadpool_work_callbacks(work, FALSE);
+    p___std_close_threadpool_work(work);
+    ok(workcalled == 13, "expected work to be called 13 times, got %d\n", workcalled);
+
+    workcalled = 0;
+    work = p___std_create_threadpool_work(threadpool_workcallback, &workcalled, NULL);
+    ok(!!work, "failed to create threadpool_work\n");
+    p___std_bulk_submit_threadpool_work(work, 0);
+    p___std_wait_for_threadpool_work_callbacks(work, FALSE);
+    p___std_close_threadpool_work(work);
+    ok(workcalled == 0, "expected no work, got %d\n", workcalled);
 
     /* test with environment */
     cb_event = CreateEventW(NULL, TRUE, FALSE, NULL);
