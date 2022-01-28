@@ -729,7 +729,6 @@ static void test_time_range(void)
     ok(end == 1.0, "Unexpected end %.e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 2.0, 3.0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
@@ -737,48 +736,128 @@ todo_wine
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(start == 2.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(end == 3.0, "Unexpected end %.8e.\n", end);
 
     hr = IMFMediaTimeRange_AddRange(range, 10.0, 9.0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
-todo_wine
     ok(count == 2, "Unexpected range count.\n");
 
     hr = IMFMediaTimeRange_GetStart(range, 0, &start);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(start == 2.0, "Unexpected start %.8e.\n", start);
 
     hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(end == 3.0, "Unexpected end %.8e.\n", end);
 
     start = 0.0;
     hr = IMFMediaTimeRange_GetStart(range, 1, &start);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(start == 10.0, "Unexpected start %.8e.\n", start);
-}
+
     hr = IMFMediaTimeRange_GetEnd(range, 1, &end);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(end == 9.0, "Unexpected end %.8e.\n", end);
-}
+
+    hr = IMFMediaTimeRange_AddRange(range, 2.0, 9.1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 2, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 2.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 9.1, "Unexpected end %.8e.\n", end);
+
+    hr = IMFMediaTimeRange_GetStart(range, 1, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 10.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 1, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 9.0, "Unexpected end %.8e.\n", end);
+
+    hr = IMFMediaTimeRange_AddRange(range, 8.5, 2.5);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 2, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 2.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 9.1, "Unexpected end %.8e.\n", end);
+
+    hr = IMFMediaTimeRange_AddRange(range, 20.0, 20.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 3, "Unexpected range count.\n");
+
     hr = IMFMediaTimeRange_Clear(range);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     count = IMFMediaTimeRange_GetLength(range);
     ok(!count, "Unexpected range count.\n");
+
+    /* Intersect */
+    hr = IMFMediaTimeRange_AddRange(range, 5.0, 10.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTimeRange_AddRange(range, 6.0, 12.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 5.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 12.0, "Unexpected end %.8e.\n", end);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 1, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_AddRange(range, 4.0, 6.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 1, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 4.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 12.0, "Unexpected end %.8e.\n", end);
+
+    hr = IMFMediaTimeRange_AddRange(range, 5.0, 3.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 1, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 4.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 12.0, "Unexpected end %.8e.\n", end);
 
     IMFMediaTimeRange_Release(range);
 }

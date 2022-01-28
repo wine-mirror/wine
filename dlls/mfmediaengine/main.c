@@ -653,13 +653,35 @@ static BOOL WINAPI time_range_ContainsTime(IMFMediaTimeRange *iface, double time
 static HRESULT WINAPI time_range_AddRange(IMFMediaTimeRange *iface, double start, double end)
 {
     struct time_range *range = impl_from_IMFMediaTimeRange(iface);
+    struct range *c;
+    size_t i;
 
     TRACE("%p, %.8e, %.8e.\n", iface, start, end);
 
-    if (range->count)
+    for (i = 0; i < range->count; ++i)
     {
-        FIXME("Range merging is not implemented.\n");
-        return E_NOTIMPL;
+        c = &range->ranges[i];
+
+        /* New range is fully contained within existing one. */
+        if (c->start <= start && c->end >= end)
+            return S_OK;
+
+        /* New range fully contains existing one. */
+        if (c->start >= start && c->end <= end)
+        {
+            c->start = start;
+            c->end = end;
+            return S_OK;
+        }
+
+        /* Merge if ranges intersect. */
+        if ((start >= c->start && start <= c->end) ||
+                (end >= c->start && end <= c->end))
+        {
+            c->start = min(c->start, start);
+            c->end = max(c->end, end);
+            return S_OK;
+        }
     }
 
     if (!mf_array_reserve((void **)&range->ranges, &range->capacity, range->count + 1, sizeof(*range->ranges)))
