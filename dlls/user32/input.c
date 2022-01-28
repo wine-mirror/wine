@@ -1186,13 +1186,9 @@ extern BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle );
  *
  * See RegisterDeviceNotificationW.
  */
-HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hRecipient, LPVOID pNotificationFilter, DWORD dwFlags)
+HDEVNOTIFY WINAPI RegisterDeviceNotificationA( HANDLE handle, void *filter, DWORD flags )
 {
-    TRACE("(hwnd=%p, filter=%p,flags=0x%08x)\n",
-        hRecipient,pNotificationFilter,dwFlags);
-    if (pNotificationFilter)
-        FIXME("The notification filter will requires an A->W when filter support is implemented\n");
-    return RegisterDeviceNotificationW(hRecipient, pNotificationFilter, dwFlags);
+    return RegisterDeviceNotificationW( handle, filter, flags );
 }
 
 /***********************************************************************
