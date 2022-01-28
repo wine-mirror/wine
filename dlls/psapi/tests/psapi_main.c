@@ -184,7 +184,7 @@ static void test_EnumProcessModules(void)
         SetLastError(0xdeadbeef);
         ret = EnumProcessModules(pi.hProcess, &hMod, sizeof(HMODULE), &cbNeeded);
         ok(!ret, "got %d\n", ret);
-todo_wine
+        todo_wine
         ok(GetLastError() == ERROR_PARTIAL_COPY, "got error %u\n", GetLastError());
 
         TerminateProcess(pi.hProcess, 0);
