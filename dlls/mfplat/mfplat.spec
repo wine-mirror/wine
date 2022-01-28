@@ -162,7 +162,7 @@
 @ stdcall MFTEnumEx(int128 long ptr ptr ptr ptr)
 @ stdcall MFTGetInfo(int128 ptr ptr ptr ptr ptr ptr)
 @ stdcall MFTRegister(int128 int128 wstr long long ptr long ptr ptr)
-@ stdcall MFTRegisterLocal(ptr ptr wstr long long  ptr long ptr)
+@ stdcall MFTRegisterLocal(ptr ptr wstr long long ptr long ptr)
 @ stdcall MFTRegisterLocalByCLSID(ptr ptr wstr long long ptr long ptr)
 @ stdcall MFTUnregister(int128)
 @ stdcall MFTUnregisterLocal(ptr)
