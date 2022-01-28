@@ -1632,7 +1632,7 @@ static void test_InternetGetConnectedStateExA(void)
     buffer[0] = 0;
     res = pInternetGetConnectedStateExA(&flags, buffer, sizeof(buffer), 0);
     trace("Internet Connection: Flags 0x%02x - Name '%s'\n", flags, buffer);
-todo_wine
+    todo_wine
     ok (flags & INTERNET_RAS_INSTALLED, "Missing RAS flag\n");
     if(!res) {
         win_skip("InternetGetConnectedStateExA tests require a valid connection\n");
@@ -1734,7 +1734,7 @@ static void test_InternetGetConnectedStateExW(void)
     buffer[0] = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, ARRAY_SIZE(buffer), 0);
     trace("Internet Connection: Flags 0x%02x - Name '%s'\n", flags, wine_dbgstr_w(buffer));
-todo_wine
+    todo_wine
     ok (flags & INTERNET_RAS_INSTALLED, "Missing RAS flag\n");
     if(!res) {
         win_skip("InternetGetConnectedStateExW tests require a valid connection\n");
