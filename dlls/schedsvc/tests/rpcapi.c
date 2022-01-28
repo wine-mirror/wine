@@ -493,15 +493,15 @@ START_TEST(rpcapi)
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %u\n", state);
 
     hr = SchRpcEnableTask(L"\\Wine\\Task1", 0xdeadbeef);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     enabled = state = 0xdeadbeef;
     hr = SchRpcGetTaskInfo(L"\\Wine\\Task1", SCH_FLAG_STATE, &enabled, &state);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
-todo_wine
+    todo_wine
     ok(enabled == 1, "expected 1, got %u\n", enabled);
-todo_wine
+    todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %u\n", state);
 
     hr = SchRpcDelete(L"Wine\\Task1", 0);
