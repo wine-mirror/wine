@@ -4816,7 +4816,7 @@ static void test_IWinHttpRequest_Invoke(void)
     VariantInit(&arg[2]);
     params.cArgs = 3;
     hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, &ret, NULL, &err);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "error %#x\n", hr);
 
     VariantInit(&arg[0]);
@@ -4861,7 +4861,7 @@ todo_wine
 
     params.cArgs = 2;
     hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYGET, &params, NULL, NULL, NULL);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "error %#x\n", hr);
 
     params.cArgs = 0;
