@@ -60,7 +60,7 @@ static inline struct gamepad_vector *impl_from_IVectorView_Gamepad(IVectorView_G
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_QueryInterface(
         IVectorView_Gamepad *iface, REFIID iid, void **out)
 {
-    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IInspectable) ||
@@ -82,7 +82,7 @@ static ULONG STDMETHODCALLTYPE vector_view_gamepad_AddRef(
 {
     struct gamepad_vector *impl = impl_from_IVectorView_Gamepad(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
@@ -91,7 +91,7 @@ static ULONG STDMETHODCALLTYPE vector_view_gamepad_Release(
 {
     struct gamepad_vector *impl = impl_from_IVectorView_Gamepad(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
@@ -119,7 +119,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetTrustLevel(
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetAt(
         IVectorView_Gamepad *iface, UINT32 index, IGamepad **value)
 {
-    FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
+    FIXME("iface %p, index %u, value %p stub!\n", iface, index, value);
     *value = NULL;
     return E_BOUNDS;
 }
@@ -145,7 +145,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetMany(
         IVectorView_Gamepad *iface, UINT32 start_index,
         UINT32 items_size, IGamepad **items, UINT *value)
 {
-    FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
+    FIXME("iface %p, start_index %u, items_size %u, items %p, value %p stub!\n", iface, start_index,
+            items_size, items, value);
     *value = 0;
     return E_BOUNDS;
 }
@@ -186,7 +187,7 @@ static inline struct raw_game_controller_vector *impl_from_IVectorView_RawGameCo
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_QueryInterface(
         IVectorView_RawGameController *iface, REFIID iid, void **out)
 {
-    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IInspectable) ||
@@ -208,7 +209,7 @@ static ULONG STDMETHODCALLTYPE vector_view_raw_game_controller_AddRef(
 {
     struct raw_game_controller_vector *impl = impl_from_IVectorView_RawGameController(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
@@ -217,7 +218,7 @@ static ULONG STDMETHODCALLTYPE vector_view_raw_game_controller_Release(
 {
     struct raw_game_controller_vector *impl = impl_from_IVectorView_RawGameController(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
@@ -245,7 +246,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetTrustLevel(
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetAt(
         IVectorView_RawGameController *iface, UINT32 index, IRawGameController **value)
 {
-    FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
+    FIXME("iface %p, index %u, value %p stub!\n", iface, index, value);
     *value = NULL;
     return E_BOUNDS;
 }
@@ -271,7 +272,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetMany(
         IVectorView_RawGameController *iface, UINT32 start_index,
         UINT32 items_size, IRawGameController **items, UINT *value)
 {
-    FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
+    FIXME("iface %p, start_index %u, items_size %u, items %p, value %p stub!\n", iface, start_index,
+            items_size, items, value);
     *value = 0;
     return E_BOUNDS;
 }
@@ -326,7 +328,7 @@ static HRESULT STDMETHODCALLTYPE windows_gaming_input_QueryInterface(
 {
     struct windows_gaming_input *impl = impl_from_IActivationFactory(iface);
 
-    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IInspectable) ||
@@ -362,7 +364,7 @@ static ULONG STDMETHODCALLTYPE windows_gaming_input_AddRef(
 {
     struct windows_gaming_input *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
@@ -371,7 +373,7 @@ static ULONG STDMETHODCALLTYPE windows_gaming_input_Release(
 {
     struct windows_gaming_input *impl = impl_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
-    TRACE("iface %p, ref %u.\n", iface, ref);
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
