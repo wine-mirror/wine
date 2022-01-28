@@ -2168,7 +2168,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context_gl *c
     const struct wined3d_shader_lconst *lconst;
     const char *prefix;
     unsigned int i;
-    DWORD map;
+    uint32_t map;
 
     if (wined3d_settings.strict_shader_math)
         shader_addline(buffer, "#pragma optionNV(fastmath off)\n");
@@ -2176,9 +2176,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context_gl *c
     prefix = shader_glsl_get_prefix(version->type);
 
     /* Prototype the subroutines */
-    for (i = 0, map = reg_maps->labels; map; map >>= 1, ++i)
+    map = reg_maps->labels;
+    while (map)
     {
-        if (map & 1) shader_addline(buffer, "void subroutine%u();\n", i);
+        i = wined3d_bit_scan(&map);
+        shader_addline(buffer, "void subroutine%u();\n", i);
     }
 
     if (version->type != WINED3D_SHADER_TYPE_PIXEL && version->type != WINED3D_SHADER_TYPE_COMPUTE)
@@ -2500,9 +2502,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context_gl *c
     }
 
     /* Declare address variables */
-    for (i = 0, map = reg_maps->address; map; map >>= 1, ++i)
+    map = reg_maps->address;
+    while (map)
     {
-        if (map & 1) shader_addline(buffer, "ivec4 A%u;\n", i);
+        i = wined3d_bit_scan(&map);
+        shader_addline(buffer, "ivec4 A%u;\n", i);
     }
 
     /* Declare output register temporaries */
@@ -2517,10 +2521,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context_gl *c
     }
     else if (version->major < 4)
     {
-        for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
+        map = reg_maps->temporary;
+        while (map)
         {
-            if (map & 1)
-                shader_addline(buffer, "vec4 R%u;\n", i);
+            i = wined3d_bit_scan(&map);
+            shader_addline(buffer, "vec4 R%u;\n", i);
         }
     }
 
