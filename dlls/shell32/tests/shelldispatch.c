@@ -781,16 +781,16 @@ static void test_items(void)
     }
 
     r = FolderItems__NewEnum(items, &unk);
-todo_wine
+    todo_wine
     ok(r == S_OK, "FolderItems::_NewEnum failed: %08x\n", r);
-todo_wine
+    todo_wine
     ok(!!unk, "unk is null\n");
     if (unk) IUnknown_Release(unk);
 
     if (items3)
     {
         r = FolderItems3_Filter(items3, 0, NULL);
-todo_wine
+        todo_wine
         ok(r == S_OK, "expected S_OK, got %08x\n", r);
 
         if (0) /* crashes on xp */
@@ -800,7 +800,7 @@ todo_wine
         }
 
         r = FolderItems3_get_Verbs(items3, &verbs);
-todo_wine
+        todo_wine
         ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
         ok(!verbs, "verbs is not null\n");
     }
@@ -1137,7 +1137,7 @@ static void test_ShellWindows(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IWebBrowser2_Refresh(wb);
-todo_wine
+        todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IWebBrowser2_get_Application(wb, &app);
@@ -1219,7 +1219,7 @@ if (hr == S_OK) {
     V_I4(&v) = cookie;
     VariantInit(&v2);
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_BROWSER, &ret, SWFO_COOKIEPASSED, &disp);
-todo_wine
+    todo_wine
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(disp == NULL, "got %p\n", disp);
     ok(ret == 0, "got %d\n", ret);

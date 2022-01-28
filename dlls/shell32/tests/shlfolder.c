@@ -208,7 +208,7 @@ static void test_ParseDisplayName(void)
     for (i = 0; i < ARRAY_SIZE(parse_tests); i++)
     {
         hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, parse_tests[i].path, NULL, &pidl, NULL);
-todo_wine_if(parse_tests[i].todo)
+        todo_wine_if(parse_tests[i].todo)
         ok(hr == parse_tests[i].hr, "%s: expected %#x, got %#x\n",
             wine_dbgstr_w(parse_tests[i].path), parse_tests[i].hr, hr);
         if (SUCCEEDED(hr))
@@ -4334,16 +4334,16 @@ static void test_contextmenu_qi(IContextMenu *menu, BOOL todo)
     HRESULT hr;
 
     hr = IContextMenu_QueryInterface(menu, &IID_IShellExtInit, (void **)&unk);
-todo_wine_if(todo)
+    todo_wine_if(todo)
     ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
-if (hr == S_OK)
-    IUnknown_Release(unk);
+    if (hr == S_OK)
+        IUnknown_Release(unk);
 
     hr = IContextMenu_QueryInterface(menu, &IID_IObjectWithSite, (void **)&unk);
-todo_wine_if(todo)
+    todo_wine_if(todo)
     ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
-if (hr == S_OK)
-    IUnknown_Release(unk);
+    if (hr == S_OK)
+        IUnknown_Release(unk);
 }
 
 static void test_contextmenu(IContextMenu *menu, BOOL background)
@@ -4418,7 +4418,7 @@ static void test_contextmenu(IContextMenu *menu, BOOL background)
         /* Attempt to execute a nonexistent command */
         cmi.lpVerb = MAKEINTRESOURCEA(9999);
         hr = IContextMenu_InvokeCommand(menu, &cmi);
-    todo_wine_if(background)
+        todo_wine_if(background)
         ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
 
         cmi.lpVerb = "foobar_wine_test";
@@ -5290,18 +5290,18 @@ static void test_SHLimitInputEdit(void)
     ok(hr == S_OK, "Failed to get desktop folder, hr %#x.\n", hr);
 
     hr = SHLimitInputEdit(NULL, desktop);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     hwnd = CreateWindowA("EDIT", NULL, WS_VISIBLE, 0, 0, 100, 30, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "Failed to create Edit control.\n");
 
     hr = SHLimitInputEdit(hwnd, desktop);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to set input limits, hr %#x.\n", hr);
 
     hr = SHLimitInputEdit(hwnd, desktop);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to set input limits, hr %#x.\n", hr);
 
     DestroyWindow(hwnd);

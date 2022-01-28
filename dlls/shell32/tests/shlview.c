@@ -1479,7 +1479,7 @@ static void test_newmenu(void)
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_NewMenu, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to create NewMenu object, hr %#x.\n", hr);
     if (hr != S_OK)
     {
