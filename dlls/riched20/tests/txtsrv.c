@@ -1126,7 +1126,7 @@ static void test_TxGetScroll(void)
     ret = ITextServices_TxGetVScroll( txtserv, &min_pos, &max_pos, &pos, &page, &enabled );
     ok( ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret );
     ok( min_pos == 0, "got %d\n", min_pos );
-todo_wine
+    todo_wine
     ok( max_pos == 0, "got %d\n", max_pos );
     ok( pos == 0, "got %d\n", pos );
     ok( page == client.bottom, "got %d\n", page );
@@ -1150,7 +1150,7 @@ todo_wine
     ret = ITextServices_TxGetVScroll( txtserv, &min_pos, &max_pos, &pos, &page, &enabled );
     ok( ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret );
     ok( min_pos == 0, "got %d\n", min_pos );
-todo_wine
+    todo_wine
     ok( max_pos == 0, "got %d\n", max_pos );
     ok( pos == 0, "got %d\n", pos );
     ok( page == client.bottom, "got %d\n", page );
