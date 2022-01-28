@@ -885,11 +885,11 @@ static void test_buffered_paint(void)
 
     /* clearing */
     hr = pBufferedPaintClear(NULL, NULL);
-todo_wine
+    todo_wine
     ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
 
     hr = pBufferedPaintClear(buffer, NULL);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Unexpected return code %#x\n", hr);
 
     /* access buffer attributes */
