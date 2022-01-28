@@ -151,11 +151,11 @@ static void test_GetFolder(void)
     ok(hr == S_OK, "Connect error %#x\n", hr);
 
     hr = ITaskService_GetFolder(service, slash, &folder);
-todo_wine
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     hr = ITaskService_GetFolder(service, dot, &folder);
-todo_wine
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
        "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
@@ -198,7 +198,7 @@ todo_wine
     ITaskFolder_DeleteFolder(folder, Wine, 0);
 
     hr = ITaskFolder_CreateFolder(folder, slash, v_null, &subfolder);
-todo_wine
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     hr = ITaskService_GetFolder(service, Wine_Folder1_Folder2, &subfolder);
@@ -206,7 +206,7 @@ todo_wine
        "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_CreateFolder(folder, bslash, v_null, &subfolder);
-todo_wine
+    todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_Folder2, v_null, &subfolder);
@@ -360,7 +360,7 @@ todo_wine
     ok(hr == E_ACCESSDENIED || hr == E_INVALIDARG /* Vista */, "expected E_ACCESSDENIED, got %#x\n", hr);
 
     hr = ITaskFolder_DeleteFolder(folder, slash, 0);
-todo_wine
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     ITaskFolder_Release(folder);
@@ -799,7 +799,7 @@ static void test_GetTask(void)
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
-todo_wine
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || broken(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)) /* Vista */, "expected ERROR_ACCESS_DENIED, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
@@ -860,11 +860,11 @@ todo_wine
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
     ok(hr == S_OK, "get_State error %#x\n", hr);
-todo_wine
+    todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-todo_wine
+    todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task2);
@@ -897,11 +897,11 @@ todo_wine
     ok(hr == S_OK, "put_Enabled error %#x\n", hr);
     hr = IRegisteredTask_get_State(task1, &state);
     ok(hr == S_OK, "get_State error %#x\n", hr);
-todo_wine
+    todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-todo_wine
+    todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task1);
@@ -919,11 +919,11 @@ todo_wine
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
     ok(hr == S_OK, "get_State error %#x\n", hr);
-todo_wine
+    todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-todo_wine
+    todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     hr = IRegisteredTask_get_State(task2, NULL);
@@ -934,7 +934,7 @@ todo_wine
     IRegisteredTask_Release(task2);
 
     hr = ITaskFolder_DeleteTask(folder, NULL, 0);
-todo_wine
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_DIR_NOT_EMPTY), "expected ERROR_DIR_NOT_EMPTY, got %#x\n", hr);
 
     hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
@@ -1592,7 +1592,7 @@ static void test_TaskDefinition(void)
 
     MultiByteToWideChar(CP_ACP, 0, xml3, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
-todo_wine
+    todo_wine
     ok(hr == SCHED_E_UNEXPECTEDNODE, "expected SCHED_E_UNEXPECTEDNODE, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, ARRAY_SIZE(xmlW));
@@ -1601,7 +1601,7 @@ todo_wine
 
     MultiByteToWideChar(CP_ACP, 0, xml5, -1, xmlW, ARRAY_SIZE(xmlW));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
-todo_wine
+    todo_wine
     ok(hr == SCHED_E_MISSINGNODE, "expected SCHED_E_MISSINGNODE, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml6, -1, xmlW, ARRAY_SIZE(xmlW));
@@ -1703,10 +1703,10 @@ todo_wine
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = NULL;
     hr = IRegistrationInfo_get_SecurityDescriptor(reginfo, &var);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "get_SecurityDescriptor error %#x\n", hr);
-if (hr == S_OK)
-    ok(V_VT(&var) == VT_EMPTY, "expected VT_EMPTY, got %u\n", V_VT(&var));
+    if (hr == S_OK)
+        ok(V_VT(&var) == VT_EMPTY, "expected VT_EMPTY, got %u\n", V_VT(&var));
 
     IRegistrationInfo_Release(reginfo);
 
