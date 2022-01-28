@@ -134,16 +134,13 @@ static void add_call(struct call_sequence **seq, int sequence_index, const struc
     if (!call_seq->sequence)
     {
         call_seq->size = 10;
-        call_seq->sequence = HeapAlloc(GetProcessHeap(), 0,
-                                      call_seq->size * sizeof (struct call_entry));
+        call_seq->sequence = malloc(call_seq->size * sizeof(*call_seq->sequence));
     }
 
     if (call_seq->count == call_seq->size)
     {
         call_seq->size *= 2;
-        call_seq->sequence = HeapReAlloc(GetProcessHeap(), 0,
-                                        call_seq->sequence,
-                                        call_seq->size * sizeof (struct call_entry));
+        call_seq->sequence = realloc(call_seq->sequence, call_seq->size * sizeof(*call_seq->sequence));
     }
 
     assert(call_seq->sequence);
@@ -155,7 +152,7 @@ static inline void flush_sequence(struct call_sequence **seg, int sequence_index
 {
     struct call_sequence *call_seq = seg[sequence_index];
 
-    HeapFree(GetProcessHeap(), 0, call_seq->sequence);
+    free(call_seq->sequence);
     call_seq->sequence = NULL;
     call_seq->count = call_seq->size = 0;
 }
@@ -165,7 +162,7 @@ static void init_call_sequences(struct call_sequence **seq, int n)
     int i;
 
     for (i = 0; i < n; i++)
-        seq[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct call_sequence));
+        seq[i] = calloc(1, sizeof(*seq[i]));
 }
 
 static void test_uint(UINT32 actual, UINT32 expected, const char *name, const struct testcontext *ctxt)
