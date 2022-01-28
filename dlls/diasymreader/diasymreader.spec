@@ -1,8 +1,8 @@
 @ stub CreateNGenPdbWriter
 @ stub DllCanUnloadNow
-@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub DllGetClassObjectInternal
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub VSDllRegisterServer
 @ stub VSDllUnregisterServer

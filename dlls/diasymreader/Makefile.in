@@ -1,3 +1,8 @@
 MODULE    = diasymreader.dll
+IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
+
+C_SRCS = main.c
+
+RC_SRCS = diasymreader.rc
