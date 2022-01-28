@@ -840,7 +840,7 @@ static void test_PropVariantCompareEx(void)
 
     /* VT_R4/VT_R8 */
     res = PropVariantCompareEx(&r4_0, &r8_0, 0, 0);
-todo_wine
+    todo_wine
     ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&r4_0, &r4_0, 0, 0);
@@ -2014,7 +2014,7 @@ static void test_PSCreatePropertyStoreFromObject(void)
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = PSCreatePropertyStoreFromObject((IUnknown *)propstore, STGM_READWRITE, &IID_IUnknown, (void **)&unk);
-todo_wine
+    todo_wine
     ok(hr == S_OK, "Failed to create wrapper, hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
