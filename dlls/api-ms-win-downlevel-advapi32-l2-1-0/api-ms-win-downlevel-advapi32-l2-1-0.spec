@@ -1,7 +1,7 @@
 @ stdcall CloseServiceHandle(long) advapi32.CloseServiceHandle
 @ stdcall ConvertSidToStringSidW(ptr ptr) advapi32.ConvertSidToStringSidW
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr) advapi32.ConvertStringSecurityDescriptorToSecurityDescriptorW
-@ stdcall ConvertStringSidToSidW(ptr ptr) advapi32.ConvertStringSidToSidW
+@ stdcall ConvertStringSidToSidW(wstr ptr) advapi32.ConvertStringSidToSidW
 @ stdcall CredDeleteW(wstr long long) advapi32.CredDeleteW
 @ stdcall CredEnumerateW(wstr long ptr ptr) advapi32.CredEnumerateW
 @ stdcall CredFree(ptr) advapi32.CredFree

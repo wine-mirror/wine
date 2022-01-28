@@ -1,5 +1,5 @@
 @ stdcall ChangeServiceConfig2A(long long ptr) advapi32.ChangeServiceConfig2A
-@ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str) advapi32.ChangeServiceConfigA
+@ stdcall ChangeServiceConfigA(long long long long str str ptr str str str str) advapi32.ChangeServiceConfigA
 @ stdcall ControlService(long long ptr) advapi32.ControlService
 @ stub ControlServiceExA
 @ stdcall CreateServiceA(long str str long long long long str str ptr str str str) advapi32.CreateServiceA

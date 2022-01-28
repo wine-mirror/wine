@@ -23,7 +23,7 @@
 @ stdcall RegQueryValueW(long wstr ptr ptr) advapi32.RegQueryValueW
 @ stdcall RegReplaceKeyA(long str str str) advapi32.RegReplaceKeyA
 @ stdcall RegReplaceKeyW(long wstr wstr wstr) advapi32.RegReplaceKeyW
-@ stdcall RegSaveKeyA(long ptr ptr) advapi32.RegSaveKeyA
-@ stdcall RegSaveKeyW(long ptr ptr) advapi32.RegSaveKeyW
-@ stdcall RegSetValueA(long str long ptr long) advapi32.RegSetValueA
-@ stdcall RegSetValueW(long wstr long ptr long) advapi32.RegSetValueW
+@ stdcall RegSaveKeyA(long str ptr) advapi32.RegSaveKeyA
+@ stdcall RegSaveKeyW(long wstr ptr) advapi32.RegSaveKeyW
+@ stdcall RegSetValueA(long str long str long) advapi32.RegSetValueA
+@ stdcall RegSetValueW(long wstr long wstr long) advapi32.RegSetValueW
