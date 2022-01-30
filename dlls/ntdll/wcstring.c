@@ -252,6 +252,17 @@ LPWSTR __cdecl wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 
 
 /*********************************************************************
+ *           wcsnlen    (NTDLL.@)
+ */
+size_t __cdecl wcsnlen( const WCHAR *str, size_t len )
+{
+    const WCHAR *s = str;
+    for (s = str; len && *s; s++, len--) ;
+    return s - str;
+}
+
+
+/*********************************************************************
  *           wcspbrk    (NTDLL.@)
  */
 LPWSTR __cdecl wcspbrk( LPCWSTR str, LPCWSTR accept )
