@@ -30,10 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(string);
 
-#define isxdigit(ch) (((ch) >= '0' && (ch) <= '9') || \
-                      ((ch) >= 'A' && (ch) <= 'F') || \
-                      ((ch) >= 'a' && (ch) <= 'f'))
-
 static BOOL char_compare(WORD ch1, WORD ch2, DWORD flags)
 {
     char str1[3], str2[3];

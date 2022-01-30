@@ -36,13 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(path);
 
-#define isalnum(ch)  (((ch) >= '0' && (ch) <= '9') || \
-                      ((ch) >= 'A' && (ch) <= 'Z') || \
-                      ((ch) >= 'a' && (ch) <= 'z'))
-#define isxdigit(ch) (((ch) >= '0' && (ch) <= '9') || \
-                      ((ch) >= 'A' && (ch) <= 'F') || \
-                      ((ch) >= 'a' && (ch) <= 'f'))
-
 static const char hexDigits[] = "0123456789ABCDEF";
 
 static const unsigned char hashdata_lookup[256] =
@@ -107,13 +100,12 @@ static WCHAR *heap_strdupAtoW(const char *str)
 
 static BOOL is_drive_spec( const WCHAR *str )
 {
-    return ((str[0] >= 'A' && str[0] <= 'Z') || (str[0] >= 'a' && str[0] <= 'z')) && str[1] == ':';
+    return isalpha( str[0] ) && str[1] == ':';
 }
 
 static BOOL is_escaped_drive_spec( const WCHAR *str )
 {
-    return ((str[0] >= 'A' && str[0] <= 'Z') || (str[0] >= 'a' && str[0] <= 'z')) &&
-        (str[1] == ':' || str[1] == '|');
+    return isalpha( str[0] ) && (str[1] == ':' || str[1] == '|');
 }
 
 static BOOL is_prefixed_unc(const WCHAR *string)
@@ -2794,8 +2786,7 @@ HRESULT WINAPI ParseURLA(const char *url, PARSEDURLA *result)
     if (result->cbSize != sizeof(*result))
         return E_INVALIDARG;
 
-    while (*ptr && ((*ptr >= 'a' && *ptr <= 'z') || (*ptr >= 'A' && *ptr <= 'Z') ||
-                    (*ptr >= '0' && *ptr <= '9') || *ptr == '-' || *ptr == '+' || *ptr == '.'))
+    while (*ptr && (isalnum( *ptr ) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
         ptr++;
 
     if (*ptr != ':' || ptr <= url + 1)
@@ -4177,8 +4168,7 @@ static const WCHAR * scan_url(const WCHAR *start, DWORD *size, enum url_scan_typ
     switch (type)
     {
     case SCHEME:
-        while ((*start >= 'a' && *start <= 'z') || (*start >= '0' && *start <= '9') ||
-               *start == '+' || *start == '-' || *start == '.')
+        while ((isalnum( *start ) && !isupper( *start )) || *start == '+' || *start == '-' || *start == '.')
         {
             start++;
             (*size)++;
