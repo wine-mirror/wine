@@ -105,15 +105,6 @@ static WCHAR *heap_strdupAtoW(const char *str)
     return ret;
 }
 
-static SIZE_T strnlenW(const WCHAR *string, SIZE_T maxlen)
-{
-    SIZE_T i;
-
-    for (i = 0; i < maxlen; i++)
-        if (!string[i]) break;
-    return i;
-}
-
 static BOOL is_drive_spec( const WCHAR *str )
 {
     return ((str[0] >= 'A' && str[0] <= 'Z') || (str[0] >= 'a' && str[0] <= 'z')) && str[1] == ':';
@@ -517,7 +508,7 @@ HRESULT WINAPI PathCchAddExtension(WCHAR *path, SIZE_T size, const WCHAR *extens
     if (FAILED(hr)) return hr;
     if (*existing_extension) return S_FALSE;
 
-    path_length = strnlenW(path, size);
+    path_length = wcsnlen(path, size);
     dot_length = has_dot ? 0 : 1;
     extension_length = lstrlenW(extension);
 
@@ -752,7 +743,7 @@ HRESULT WINAPI PathCchRemoveBackslashEx(WCHAR *path, SIZE_T path_size, WCHAR **p
         return E_INVALIDARG;
     }
 
-    path_length = strnlenW(path, path_size);
+    path_length = wcsnlen(path, path_size);
     if (path_length == path_size && !path[path_length]) return E_INVALIDARG;
 
     root_end = get_root_end(path);
