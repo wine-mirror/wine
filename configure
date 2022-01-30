@@ -13361,7 +13361,7 @@ printf "%s\n" "$as_me:${as_lineno-$LINENO}: png libs: $PNG_PE_LIBS" >&5
 
 if ${TIFF_PE_LIBS:+false} :
 then :
-  TIFF_PE_LIBS=tiff
+  TIFF_PE_LIBS="tiff \$(ZLIB_PE_LIBS)"
    if ${TIFF_PE_CFLAGS:+false} :
 then :
   TIFF_PE_CFLAGS="-I\$(top_srcdir)/libs/tiff/libtiff"
