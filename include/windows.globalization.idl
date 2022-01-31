@@ -29,8 +29,30 @@ import "windows.foundation.idl";
 namespace Windows {
     namespace Globalization {
         typedef enum DayOfWeek DayOfWeek;
+        typedef enum LanguageLayoutDirection LanguageLayoutDirection;
+        interface ILanguage;
+        interface ILanguage2;
+        interface ILanguage3;
+        interface ILanguageExtensionSubtags;
+        interface ILanguageFactory;
+        interface ILanguageStatics;
+        interface ILanguageStatics2;
+        interface ILanguageStatics3;
+        runtimeclass Language;
     }
 }
+
+namespace Windows {
+    namespace Globalization {
+        declare{
+            interface Windows.Foundation.Collections.IIterable<Windows.Globalization.Language*>;
+            interface Windows.Foundation.Collections.IIterator<Windows.Globalization.Language*>;
+            interface Windows.Foundation.Collections.IVectorView<Windows.Globalization.Language*>;
+            interface Windows.Foundation.Collections.IVector<Windows.Globalization.Language*>;
+        }
+    }
+}
+
 
 namespace Windows {
     namespace Globalization {
@@ -45,5 +67,115 @@ namespace Windows {
             Friday    = 5,
             Saturday  = 6
         };
+
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)]
+        enum LanguageLayoutDirection
+        {
+            Ltr = 0,
+            Rtl = 1,
+            TtbLtr = 2,
+            TtbRtl = 3,
+        };
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(ea79a752-f7c2-4265-b1bd-c4dec4e4f080)
+        ]
+        interface ILanguage : IInspectable
+        {
+            [propget] HRESULT LanguageTag([out, retval] HSTRING *value);
+            [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+            [propget] HRESULT NativeName([out, retval] HSTRING *value);
+            [propget] HRESULT Script([out, retval] HSTRING *value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 6.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(6a47e5b5-d94d-4886-a404-a5a5b9d5b494)
+        ]
+        interface ILanguage2 : IInspectable
+        {
+            [propget] HRESULT LayoutDirection([out, retval] Windows.Globalization.LanguageLayoutDirection *value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 10.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(c6af3d10-641a-5ba4-bb43-5e12aed75954)
+        ]
+        interface ILanguage3 : IInspectable
+        {
+            [propget] HRESULT AbbreviatedName([out, retval] HSTRING *value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(7d7daf45-368d-4364-852b-dec927037b85)
+        ]
+        interface ILanguageExtensionSubtags : IInspectable
+        {
+            HRESULT GetExtensionSubtags([in] HSTRING tag, [out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(9b0252ac-0c27-44f8-b792-9793fb66c63e)
+        ]
+        interface ILanguageFactory : IInspectable
+        {
+            HRESULT CreateLanguage([in] HSTRING tag, [out, retval] Windows.Globalization.Language **value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(b23cd557-0865-46d4-89b8-d59be8990f0d)
+        ]
+        interface ILanguageStatics : IInspectable
+        {
+            HRESULT IsWellFormed([in] HSTRING tag, [out, retval] BOOLEAN *result);
+            [propget] HRESULT CurrentInputMethodLanguageTag([out, retval] HSTRING *value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(30199f6e-914b-4b2a-9d6e-e3b0e27dbe4f)
+        ]
+        interface ILanguageStatics2 : IInspectable
+        {
+            HRESULT TrySetInputMethodLanguageTag([in] HSTRING tag, [out, retval] BOOLEAN *result);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 10.0),
+            exclusiveto(Windows.Globalization.Language),
+            uuid(d15ecb5a-71de-5752-9542-fac5b4f27261)
+        ]
+        interface ILanguageStatics3 : IInspectable
+        {
+            HRESULT GetMuiCompatibleLanguageListFromLanguageTags([in] Windows.Foundation.Collections.IIterable<HSTRING> *tags, [out, retval] Windows.Foundation.Collections.IVector<HSTRING> **result);
+        }
+
+        [
+            activatable(Windows.Globalization.ILanguageFactory, Windows.Foundation.UniversalApiContract, 1.0),
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            marshaling_behavior(agile),
+            static(Windows.Globalization.ILanguageStatics, Windows.Foundation.UniversalApiContract, 1.0),
+            static(Windows.Globalization.ILanguageStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+            static(Windows.Globalization.ILanguageStatics3, Windows.Foundation.UniversalApiContract, 10.0),
+            threading(both)
+        ]
+        runtimeclass Language
+        {
+            [contract(Windows.Foundation.UniversalApiContract, 1.0), default] interface Windows.Globalization.ILanguage;
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Globalization.ILanguageExtensionSubtags;
+            [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Globalization.ILanguage2;
+            [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.Globalization.ILanguage3;
+        }
     }
 }
