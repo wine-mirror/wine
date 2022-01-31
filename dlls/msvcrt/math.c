@@ -5058,8 +5058,8 @@ double CDECL fma( double x, double y, double z )
 float CDECL fmaf( float x, float y, float z )
 {
     union { double f; UINT64 i; } u;
-    double xy, adjust;
-    int e;
+    double xy, err;
+    int e, neg;
 
     xy = (double)x * y;
     u.f = xy + z;
@@ -5083,11 +5083,15 @@ float CDECL fmaf( float x, float y, float z )
      * If result is inexact, and exactly halfway between two float values,
      * we need to adjust the low-order bit in the direction of the error.
      */
-    _controlfp(_RC_CHOP, _MCW_RC);
-    adjust = fp_barrier(xy + z);
-    _controlfp(_RC_NEAR, _MCW_RC);
-    if (u.f == adjust)
+    neg = u.i >> 63;
+    if (neg == (z > xy))
+        err = xy - u.f + z;
+    else
+        err = z - u.f + xy;
+    if (neg == (err < 0))
         u.i++;
+    else
+        u.i--;
     return u.f;
 }
 
