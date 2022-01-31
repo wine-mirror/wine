@@ -101,7 +101,7 @@ static void mouse_stop(struct unix_device *iface)
 {
 }
 
-static NTSTATUS mouse_haptics_start(struct unix_device *iface, DWORD duration,
+static NTSTATUS mouse_haptics_start(struct unix_device *iface, UINT duration,
                                     USHORT rumble_intensity, USHORT buzz_intensity)
 {
     return STATUS_NOT_SUPPORTED;
@@ -184,7 +184,7 @@ static void keyboard_stop(struct unix_device *iface)
 {
 }
 
-static NTSTATUS keyboard_haptics_start(struct unix_device *iface, DWORD duration,
+static NTSTATUS keyboard_haptics_start(struct unix_device *iface, UINT duration,
                                        USHORT rumble_intensity, USHORT buzz_intensity)
 {
     return STATUS_NOT_SUPPORTED;

@@ -94,7 +94,7 @@ struct raw_device_vtbl
     void (*destroy)(struct unix_device *iface);
     NTSTATUS (*start)(struct unix_device *iface);
     void (*stop)(struct unix_device *iface);
-    NTSTATUS (*get_report_descriptor)(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *out_length);
+    NTSTATUS (*get_report_descriptor)(struct unix_device *iface, BYTE *buffer, UINT length, UINT *out_length);
     void (*set_output_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
     void (*get_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
     void (*set_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
@@ -105,7 +105,7 @@ struct hid_device_vtbl
     void (*destroy)(struct unix_device *iface);
     NTSTATUS (*start)(struct unix_device *iface);
     void (*stop)(struct unix_device *iface);
-    NTSTATUS (*haptics_start)(struct unix_device *iface, DWORD duration_ms,
+    NTSTATUS (*haptics_start)(struct unix_device *iface, UINT duration_ms,
                               USHORT rumble_intensity, USHORT buzz_intensity);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
     NTSTATUS (*physical_device_set_gain)(struct unix_device *iface, BYTE percent);
@@ -132,9 +132,9 @@ enum haptics_waveform_index
 
 struct hid_haptics_features
 {
-    WORD  waveform_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
-    WORD  duration_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
-    DWORD waveform_cutoff_time_ms;
+    WORD waveform_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
+    WORD duration_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
+    UINT waveform_cutoff_time_ms;
 };
 
 struct hid_haptics_waveform

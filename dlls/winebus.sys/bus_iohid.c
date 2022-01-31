@@ -183,7 +183,7 @@ static void iohid_device_stop(struct unix_device *iface)
 }
 
 static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
-                                                   DWORD length, DWORD *out_length)
+                                                   UINT length, UINT *out_length)
 {
     struct iohid_device *impl = impl_from_unix_device(iface);
     CFDataRef data = IOHIDDeviceGetProperty(impl->device, CFSTR(kIOHIDReportDescriptorKey));

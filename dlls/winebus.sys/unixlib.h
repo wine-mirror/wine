@@ -32,11 +32,11 @@
 
 struct device_desc
 {
-    DWORD vid;
-    DWORD pid;
-    DWORD version;
-    DWORD input;
-    DWORD uid;
+    UINT vid;
+    UINT pid;
+    UINT version;
+    UINT input;
+    UINT uid;
     BOOL is_gamepad;
 
     WCHAR manufacturer[MAX_PATH];
@@ -48,7 +48,7 @@ struct sdl_bus_options
 {
     BOOL map_controllers;
     /* freed after bus_init */
-    DWORD mappings_count;
+    UINT mappings_count;
     char **mappings;
 };
 
@@ -104,8 +104,8 @@ struct device_descriptor_params
 {
     struct unix_device *iface;
     BYTE *buffer;
-    DWORD length;
-    DWORD *out_length;
+    UINT length;
+    UINT *out_length;
 };
 
 struct device_report_params

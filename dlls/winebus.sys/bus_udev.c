@@ -296,7 +296,7 @@ static void hidraw_device_stop(struct unix_device *iface)
 }
 
 static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
-                                                    DWORD length, DWORD *out_length)
+                                                    UINT length, UINT *out_length)
 {
 #ifdef HAVE_LINUX_HIDRAW_H
     struct hidraw_report_descriptor descriptor;
@@ -415,7 +415,7 @@ static void hidraw_disable_sony_quirks(struct unix_device *iface)
 static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    ULONG length = packet->reportBufferLen;
+    unsigned int length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
 
@@ -448,7 +448,7 @@ static void hidraw_device_get_feature_report(struct unix_device *iface, HID_XFER
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
     struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    ULONG length = packet->reportBufferLen;
+    unsigned int length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
 
@@ -485,7 +485,7 @@ static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
     struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    ULONG length = packet->reportBufferLen;
+    unsigned int length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
 
@@ -865,7 +865,7 @@ static void lnxev_device_read_report(struct unix_device *iface)
         bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
 }
 
-static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD duration_ms,
+static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, UINT duration_ms,
                                            USHORT rumble_intensity, USHORT buzz_intensity)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);

@@ -1025,7 +1025,7 @@ static void hid_device_stop(struct unix_device *iface)
     iface->hid_vtbl->stop(iface);
 }
 
-NTSTATUS hid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *out_length)
+NTSTATUS hid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer, UINT length, UINT *out_length)
 {
     *out_length = iface->hid_report_descriptor.size;
     if (length < iface->hid_report_descriptor.size) return STATUS_BUFFER_TOO_SMALL;
