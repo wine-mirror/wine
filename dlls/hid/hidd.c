@@ -21,6 +21,7 @@
 
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "wine/debug.h"
 
@@ -55,7 +56,7 @@ static BOOL sync_ioctl(HANDLE file, DWORD code, void *in_buf, DWORD in_len, void
 BOOLEAN WINAPI HidD_FreePreparsedData( PHIDP_PREPARSED_DATA preparsed_data )
 {
     TRACE( "preparsed_data %p.\n", preparsed_data );
-    HeapFree( GetProcessHeap(), 0, preparsed_data );
+    free( preparsed_data );
     return TRUE;
 }
 
@@ -142,11 +143,11 @@ BOOLEAN WINAPI HidD_GetPreparsedData( HANDLE file, PHIDP_PREPARSED_DATA *prepars
     if (!sync_ioctl( file, IOCTL_HID_GET_COLLECTION_INFORMATION, NULL, 0, &info, sizeof(info) ))
         return FALSE;
 
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, info.DescriptorSize))) return FALSE;
+    if (!(data = malloc( info.DescriptorSize ))) return FALSE;
 
     if (!sync_ioctl( file, IOCTL_HID_GET_COLLECTION_DESCRIPTOR, NULL, 0, data, info.DescriptorSize ))
     {
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
         return FALSE;
     }
     *preparsed_data = data;
