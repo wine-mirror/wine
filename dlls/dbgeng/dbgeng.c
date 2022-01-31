@@ -81,7 +81,7 @@ static struct target_process *debug_client_get_target(struct debug_client *debug
 }
 
 static HRESULT debug_target_return_string(const char *str, char *buffer, unsigned int buffer_size,
-        unsigned int *size)
+                                          ULONG *size)
 {
     unsigned int len = strlen(str), dst_len;
 
@@ -1877,7 +1877,8 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleVersionInformation(IDebug
     struct target_process *target;
     void *version_info, *ptr;
     HRESULT hr = E_FAIL;
-    DWORD handle, size;
+    DWORD handle;
+    UINT size;
 
     TRACE("%p, %u, %s, %s, %p, %u, %p.\n", iface, index, wine_dbgstr_longlong(base), debugstr_a(item), buffer,
             buffer_size, info_size);
