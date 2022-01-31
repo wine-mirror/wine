@@ -168,7 +168,7 @@ static void free_async( struct async_header *async )
     if (async->sink) IWbemObjectSink_Release( async->sink );
     CloseHandle( async->cancel );
     CloseHandle( async->wait );
-    heap_free( async );
+    free( async );
 }
 
 static BOOL init_async( struct async_header *async, IWbemObjectSink *sink,
@@ -247,7 +247,7 @@ static ULONG WINAPI wbem_services_Release(
         DeleteCriticalSection( &ws->cs );
         if (ws->context)
             IWbemContext_Release( ws->context );
-        heap_free( ws );
+        free( ws );
     }
     return refs;
 }
@@ -342,7 +342,7 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
     const WCHAR *p = str, *q;
     UINT len;
 
-    if (!(path = heap_alloc_zero( sizeof(*path) ))) return E_OUTOFMEMORY;
+    if (!(path = calloc( 1, sizeof(*path) ))) return E_OUTOFMEMORY;
 
     if (*p == '\\')
     {
@@ -353,7 +353,7 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
         p++;
         if (*p != '\\')
         {
-            heap_free( path );
+            free( path );
             return WBEM_E_INVALID_OBJECT_PATH;
         }
         p++;
@@ -362,14 +362,14 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
         while (*p && *p != '\\') p++;
         if (!*p)
         {
-            heap_free( path );
+            free( path );
             return WBEM_E_INVALID_OBJECT_PATH;
         }
 
         len = p - q;
         if (!GetComputerNameW( server, &server_len ) || server_len != len || wcsnicmp( q, server, server_len ))
         {
-            heap_free( path );
+            free( path );
             return WBEM_E_NOT_SUPPORTED;
         }
 
@@ -377,14 +377,14 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
         while (*p && *p != ':') p++;
         if (!*p)
         {
-            heap_free( path );
+            free( path );
             return WBEM_E_INVALID_OBJECT_PATH;
         }
 
         len = p - q;
         if (len != ARRAY_SIZE(cimv2W) - 1 || wcsnicmp( q, cimv2W, ARRAY_SIZE(cimv2W) - 1 ))
         {
-            heap_free( path );
+            free( path );
             return WBEM_E_INVALID_NAMESPACE;
         }
         p++;
@@ -394,9 +394,9 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
     while (*p && *p != '.') p++;
 
     len = p - q;
-    if (!(path->class = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    if (!(path->class = malloc( (len + 1) * sizeof(WCHAR) )))
     {
-        heap_free( path );
+        free( path );
         return E_OUTOFMEMORY;
     }
     memcpy( path->class, q, len * sizeof(WCHAR) );
@@ -409,10 +409,10 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
         while (*q) q++;
 
         len = q - p;
-        if (!(path->filter = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+        if (!(path->filter = malloc( (len + 1) * sizeof(WCHAR) )))
         {
-            heap_free( path->class );
-            heap_free( path );
+            free( path->class );
+            free( path );
             return E_OUTOFMEMORY;
         }
         memcpy( path->filter, p, len * sizeof(WCHAR) );
@@ -426,9 +426,9 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
 void free_path( struct path *path )
 {
     if (!path) return;
-    heap_free( path->class );
-    heap_free( path->filter );
-    heap_free( path );
+    free( path->class );
+    free( path->filter );
+    free( path );
 }
 
 WCHAR *query_from_path( const struct path *path )
@@ -441,13 +441,13 @@ WCHAR *query_from_path( const struct path *path )
     if (path->filter)
     {
         len = path->class_len + path->filter_len + ARRAY_SIZE(selectW);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+        if (!(query = malloc( len * sizeof(WCHAR) ))) return NULL;
         swprintf( query, len, selectW, path->class, path->filter );
     }
     else
     {
         len = path->class_len + ARRAY_SIZE(select_allW);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+        if (!(query = malloc( len * sizeof(WCHAR) ))) return NULL;
         lstrcpyW( query, select_allW );
         lstrcatW( query, path->class );
     }
@@ -461,7 +461,7 @@ static HRESULT create_instance_enum( enum wbm_namespace ns, const struct path *p
 
     if (!(query = query_from_path( path ))) return E_OUTOFMEMORY;
     hr = exec_query( ns, query, iter );
-    heap_free( query );
+    free( query );
     return hr;
 }
 
@@ -707,7 +707,7 @@ static void async_exec_query( struct async_header *hdr )
         IEnumWbemClassObject_Release( result );
     }
     IWbemObjectSink_SetStatus( query->hdr.sink, WBEM_STATUS_COMPLETE, hr, NULL, NULL );
-    heap_free( query->str );
+    free( query->str );
 }
 
 static HRESULT WINAPI wbem_services_ExecQueryAsync(
@@ -740,7 +740,7 @@ static HRESULT WINAPI wbem_services_ExecQueryAsync(
         hr = WBEM_E_FAILED;
         goto done;
     }
-    if (!(query = heap_alloc_zero( sizeof(*query) ))) goto done;
+    if (!(query = calloc( 1, sizeof(*query) ))) goto done;
     query->ns = services->ns;
     async = (struct async_header *)query;
 
@@ -758,7 +758,7 @@ static HRESULT WINAPI wbem_services_ExecQueryAsync(
     if (hr == S_OK) services->async = async;
     else
     {
-        heap_free( query->str );
+        free( query->str );
         free_async( async );
     }
 
@@ -810,7 +810,7 @@ static HRESULT WINAPI wbem_services_ExecNotificationQueryAsync(
         hr = WBEM_E_FAILED;
         goto done;
     }
-    if (!(query = heap_alloc_zero( sizeof(*query) ))) goto done;
+    if (!(query = calloc( 1, sizeof(*query) ))) goto done;
     async = (struct async_header *)query;
 
     if (!(init_async( async, sink, async_exec_query )))
@@ -827,7 +827,7 @@ static HRESULT WINAPI wbem_services_ExecNotificationQueryAsync(
     if (hr == S_OK) services->async = async;
     else
     {
-        heap_free( query->str );
+        free( query->str );
         free_async( async );
     }
 
@@ -896,7 +896,7 @@ done:
     if (obj) IWbemClassObject_Release( obj );
     free_query( query );
     free_path( path );
-    heap_free( str );
+    free( str );
     return hr;
 }
 
@@ -955,8 +955,7 @@ HRESULT WbemServices_create( const WCHAR *namespace, IWbemContext *context, LPVO
     else if ((ns = get_namespace_from_string( namespace )) == WBEMPROX_NAMESPACE_LAST)
         return WBEM_E_INVALID_NAMESPACE;
 
-    ws = heap_alloc_zero( sizeof(*ws) );
-    if (!ws) return E_OUTOFMEMORY;
+    if (!(ws = calloc( 1, sizeof(*ws) ))) return E_OUTOFMEMORY;
 
     ws->IWbemServices_iface.lpVtbl = &wbem_services_vtbl;
     ws->refs      = 1;
@@ -994,8 +993,8 @@ static void wbem_context_delete_values(struct wbem_context *context)
     {
         list_remove( &value->entry );
         VariantClear( &value->value );
-        heap_free( value->name );
-        heap_free( value );
+        free( value->name );
+        free( value );
     }
 }
 
@@ -1043,7 +1042,7 @@ static ULONG WINAPI wbem_context_Release(
     {
         TRACE("destroying %p\n", context);
         wbem_context_delete_values( context );
-        heap_free( context );
+        free( context );
     }
     return refs;
 }
@@ -1152,16 +1151,16 @@ static HRESULT WINAPI wbem_context_SetValue(
     }
     else
     {
-        if (!(value = heap_alloc_zero( sizeof(*value) ))) return E_OUTOFMEMORY;
+        if (!(value = calloc( 1, sizeof(*value) ))) return E_OUTOFMEMORY;
         if (!(value->name = heap_strdupW( name )))
         {
-            heap_free( value );
+            free( value );
             return E_OUTOFMEMORY;
         }
         if (FAILED(hr = VariantCopy( &value->value, var )))
         {
-            heap_free( value->name );
-            heap_free( value );
+            free( value->name );
+            free( value );
             return hr;
         }
 
@@ -1232,8 +1231,7 @@ HRESULT WbemContext_create( void **obj )
 
     TRACE("(%p)\n", obj);
 
-    context = heap_alloc( sizeof(*context) );
-    if (!context) return E_OUTOFMEMORY;
+    if (!(context = malloc( sizeof(*context) ))) return E_OUTOFMEMORY;
 
     context->IWbemContext_iface.lpVtbl = &wbem_context_vtbl;
     context->refs = 1;

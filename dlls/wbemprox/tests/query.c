@@ -25,7 +25,6 @@
 #include "initguid.h"
 #include "objidl.h"
 #include "wbemcli.h"
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static HRESULT exec_query( IWbemServices *services, const WCHAR *str, IEnumWbemClassObject **result )
@@ -195,7 +194,7 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
     hr = IEnumWbemClassObject_Reset( result );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    obj = heap_alloc( num_objects * sizeof( IWbemClassObject * ) );
+    obj = malloc( num_objects * sizeof( IWbemClassObject * ) );
 
     count = 0;
     hr = IEnumWbemClassObject_Next( result, 10000, num_objects, obj, &count );
@@ -216,7 +215,7 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
     for (i = 0; i < count; i++)
         IWbemClassObject_Release( obj[i] );
 
-    heap_free( obj );
+    free( obj );
 
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );

@@ -171,11 +171,11 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, IWbemCo
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    if (!(strings = heap_alloc( count * sizeof(BSTR) ))) return E_OUTOFMEMORY;
+    if (!(strings = malloc( count * sizeof(BSTR) ))) return E_OUTOFMEMORY;
     if ((res = RegOpenKeyExW( root, subkey, 0, KEY_ENUMERATE_SUB_KEYS | reg_get_access_mask( context ), &hkey )))
     {
         set_variant( VT_UI4, res, NULL, retval );
-        heap_free( strings );
+        free( strings );
         return S_OK;
     }
     for (;;)
@@ -183,7 +183,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, IWbemCo
         if (i >= count)
         {
             count *= 2;
-            if (!(tmp = heap_realloc( strings, count * sizeof(BSTR) )))
+            if (!(tmp = realloc( strings, count * sizeof(BSTR) )))
             {
                 RegCloseKey( hkey );
                 return E_OUTOFMEMORY;
@@ -211,7 +211,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, IWbemCo
     }
     set_variant( VT_UI4, res, NULL, retval );
     RegCloseKey( hkey );
-    heap_free( strings );
+    free( strings );
     return hr;
 }
 
@@ -287,9 +287,9 @@ static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARI
         goto done;
 
     hr = E_OUTOFMEMORY;
-    if (!(buf = heap_alloc( (buflen + 1) * sizeof(WCHAR) ))) goto done;
-    if (!(value_names = heap_alloc( count * sizeof(BSTR) ))) goto done;
-    if (!(value_types = heap_alloc( count * sizeof(DWORD) ))) goto done;
+    if (!(buf = malloc( (buflen + 1) * sizeof(WCHAR) ))) goto done;
+    if (!(value_names = malloc( count * sizeof(BSTR) ))) goto done;
+    if (!(value_types = malloc( count * sizeof(DWORD) ))) goto done;
 
     hr = S_OK;
     for (;;)
@@ -320,9 +320,9 @@ static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARI
 done:
     set_variant( VT_UI4, res, NULL, retval );
     RegCloseKey( hkey );
-    heap_free( value_names );
-    heap_free( value_types );
-    heap_free( buf );
+    free( value_names );
+    free( value_types );
+    free( buf );
     return hr;
 }
 

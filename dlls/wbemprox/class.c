@@ -61,7 +61,7 @@ static ULONG WINAPI enum_class_object_Release(
     {
         TRACE("destroying %p\n", ec);
         release_query( ec->query );
-        heap_free( ec );
+        free( ec );
     }
     return refs;
 }
@@ -205,8 +205,7 @@ HRESULT EnumWbemClassObject_create( struct query *query, LPVOID *ppObj )
 
     TRACE("%p\n", ppObj);
 
-    ec = heap_alloc( sizeof(*ec) );
-    if (!ec) return E_OUTOFMEMORY;
+    if (!(ec = malloc( sizeof(*ec) ))) return E_OUTOFMEMORY;
 
     ec->IEnumWbemClassObject_iface.lpVtbl = &enum_class_object_vtbl;
     ec->refs  = 1;
@@ -225,10 +224,10 @@ static struct record *create_record( struct table *table )
     UINT i;
     struct record *record;
 
-    if (!(record = heap_alloc( sizeof(struct record) ))) return NULL;
-    if (!(record->fields = heap_alloc( table->num_cols * sizeof(struct field) )))
+    if (!(record = malloc( sizeof(struct record) ))) return NULL;
+    if (!(record->fields = malloc( table->num_cols * sizeof(struct field) )))
     {
-        heap_free( record );
+        free( record );
         return NULL;
     }
     for (i = 0; i < table->num_cols; i++)
@@ -247,10 +246,10 @@ void destroy_array( struct array *array, CIMTYPE type )
     if (!array) return;
     if (type == CIM_STRING || type == CIM_DATETIME || type == CIM_REFERENCE)
     {
-        for (i = 0; i < array->count; i++) heap_free( *(WCHAR **)((char *)array->ptr + i * array->elem_size) );
+        for (i = 0; i < array->count; i++) free( *(WCHAR **)((char *)array->ptr + i * array->elem_size) );
     }
-    heap_free( array->ptr );
-    heap_free( array );
+    free( array->ptr );
+    free( array );
 }
 
 static void destroy_record( struct record *record )
@@ -263,12 +262,12 @@ static void destroy_record( struct record *record )
     {
         if (record->fields[i].type == CIM_STRING ||
             record->fields[i].type == CIM_DATETIME ||
-            record->fields[i].type == CIM_REFERENCE) heap_free( record->fields[i].u.sval );
+            record->fields[i].type == CIM_REFERENCE) free( record->fields[i].u.sval );
         else if (record->fields[i].type & CIM_FLAG_ARRAY)
             destroy_array( record->fields[i].u.aval, record->fields[i].type & CIM_TYPE_MASK );
     }
-    heap_free( record->fields );
-    heap_free( record );
+    free( record->fields );
+    free( record );
 }
 
 struct class_object
@@ -307,8 +306,8 @@ static ULONG WINAPI class_object_Release(
         TRACE("destroying %p\n", co);
         if (co->iter) IEnumWbemClassObject_Release( co->iter );
         destroy_record( co->record );
-        heap_free( co->name );
-        heap_free( co );
+        free( co->name );
+        free( co );
     }
     return refs;
 }
@@ -774,8 +773,8 @@ static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UI
     int i = 0;
 
     count = count_instances( iter );
-    if (!(columns = heap_alloc( count * sizeof(struct column) ))) return E_OUTOFMEMORY;
-    if (!(row = heap_alloc_zero( count * sizeof(LONGLONG) ))) goto error;
+    if (!(columns = malloc( count * sizeof(struct column) ))) return E_OUTOFMEMORY;
+    if (!(row = calloc( count, sizeof(LONGLONG) ))) goto error;
 
     for (;;)
     {
@@ -805,9 +804,9 @@ static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UI
     return S_OK;
 
 error:
-    for (; i >= 0; i--) heap_free( (WCHAR *)columns[i].name );
-    heap_free( columns );
-    heap_free( row );
+    for (; i >= 0; i--) free( (WCHAR *)columns[i].name );
+    free( columns );
+    free( row );
     return hr;
 }
 
@@ -825,7 +824,7 @@ static HRESULT create_signature_table( IEnumWbemClassObject *iter, enum wbm_name
     if (!(table = create_table( name, num_cols, columns, 1, 1, row, NULL )))
     {
         free_columns( columns, num_cols );
-        heap_free( row );
+        free( row );
         return E_OUTOFMEMORY;
     }
     if (!add_table( ns, table )) free_table( table ); /* already exists */
@@ -837,7 +836,7 @@ static WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *metho
     UINT len = ARRAY_SIZE(L"__%s_%s_%s") + ARRAY_SIZE(L"OUT") + lstrlenW( class ) + lstrlenW( method );
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, len, L"__%s_%s_%s", class, method, dir == PARAM_IN ? L"IN" : L"OUT" );
     return wcsupr( ret );
 }
@@ -852,11 +851,11 @@ HRESULT create_signature( enum wbm_namespace ns, const WCHAR *class, const WCHAR
     HRESULT hr;
 
     len += lstrlenW( class ) + lstrlenW( method );
-    if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    if (!(query = malloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
     swprintf( query, len, selectW, class, method, dir >= 0 ? L">=0" : L"<=0" );
 
     hr = exec_query( ns, query, &iter );
-    heap_free( query );
+    free( query );
     if (hr != S_OK) return hr;
 
     if (!count_instances( iter ))
@@ -876,7 +875,7 @@ HRESULT create_signature( enum wbm_namespace ns, const WCHAR *class, const WCHAR
     if (hr == S_OK)
         hr = get_object( ns, name, sig );
 
-    heap_free( name );
+    free( name );
     return hr;
 }
 
@@ -1064,15 +1063,14 @@ HRESULT create_class_object( enum wbm_namespace ns, const WCHAR *name, IEnumWbem
 
     TRACE("%s, %p\n", debugstr_w(name), obj);
 
-    co = heap_alloc( sizeof(*co) );
-    if (!co) return E_OUTOFMEMORY;
+    if (!(co = malloc( sizeof(*co) ))) return E_OUTOFMEMORY;
 
     co->IWbemClassObject_iface.lpVtbl = &class_object_vtbl;
     co->refs  = 1;
     if (!name) co->name = NULL;
     else if (!(co->name = heap_strdupW( name )))
     {
-        heap_free( co );
+        free( co );
         return E_OUTOFMEMORY;
     }
     co->iter           = iter;

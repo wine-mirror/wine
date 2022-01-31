@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 static HRESULT append_table( struct view *view, struct table *table )
 {
     struct table **tmp;
-    if (!(tmp = heap_realloc( view->table, (view->table_count + 1) * sizeof(*tmp) ))) return E_OUTOFMEMORY;
+    if (!(tmp = realloc( view->table, (view->table_count + 1) * sizeof(*tmp) ))) return E_OUTOFMEMORY;
     view->table = tmp;
     view->table[view->table_count++] = table;
     return S_OK;
@@ -41,7 +41,7 @@ static HRESULT append_table( struct view *view, struct table *table )
 HRESULT create_view( enum view_type type, enum wbm_namespace ns, const WCHAR *path, const struct keyword *keywordlist,
                      const WCHAR *class, const struct property *proplist, const struct expr *cond, struct view **ret )
 {
-    struct view *view = heap_alloc_zero( sizeof(*view) );
+    struct view *view = calloc( 1, sizeof(*view) );
 
     if (!view) return E_OUTOFMEMORY;
 
@@ -59,7 +59,7 @@ HRESULT create_view( enum view_type type, enum wbm_namespace ns, const WCHAR *pa
 
         if (table && (hr = append_table( view, table )) != S_OK)
         {
-            heap_free( view );
+            free( view );
             return hr;
         }
         else if (!table && ns == WBEMPROX_NAMESPACE_LAST) return WBEM_E_INVALID_CLASS;
@@ -69,7 +69,7 @@ HRESULT create_view( enum view_type type, enum wbm_namespace ns, const WCHAR *pa
     }
     default:
         ERR( "unhandled type %u\n", type );
-        heap_free( view );
+        free( view );
         return E_INVALIDARG;
     }
 
@@ -84,9 +84,9 @@ void destroy_view( struct view *view )
     ULONG i;
     if (!view) return;
     for (i = 0; i < view->table_count; i++) release_table( view->table[i] );
-    heap_free( view->table );
-    heap_free( view->result );
-    heap_free( view );
+    free( view->table );
+    free( view->result );
+    free( view );
 }
 
 static BOOL eval_like( const WCHAR *lstr, const WCHAR *rstr )
@@ -477,7 +477,7 @@ static WCHAR *build_assoc_query( const WCHAR *class, UINT class_len )
     UINT len = class_len + ARRAY_SIZE(fmtW);
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, len, fmtW, class );
     return ret;
 }
@@ -490,7 +490,7 @@ static HRESULT create_assoc_enum( enum wbm_namespace ns, const WCHAR *class, UIN
 
     if (!(query = build_assoc_query( class, class_len ))) return E_OUTOFMEMORY;
     hr = exec_query( ns, query, iter );
-    heap_free( query );
+    free( query );
     return hr;
 }
 
@@ -500,7 +500,7 @@ static WCHAR *build_antecedent_query( const WCHAR *assocclass, const WCHAR *depe
     UINT len = lstrlenW(assocclass) + lstrlenW(dependent) + ARRAY_SIZE(fmtW);
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, len, fmtW, assocclass, dependent );
     return ret;
 }
@@ -534,7 +534,7 @@ static WCHAR *build_canonical_path( const WCHAR *relpath )
     }
 
     len = ARRAY_SIZE( L"\\\\%s\\%s:" ) + SysStringLen( server ) + SysStringLen( namespace ) + lstrlenW( relpath );
-    if ((ret = heap_alloc( len * sizeof(WCHAR ) )))
+    if ((ret = malloc( len * sizeof(WCHAR ) )))
     {
         len = swprintf( ret, len, L"\\\\%s\\%s:", server, namespace );
         for (i = 0; i < lstrlenW( relpath ); i ++)
@@ -577,8 +577,8 @@ static HRESULT get_antecedent( enum wbm_namespace ns, const WCHAR *assocclass, c
 
 done:
     if (iter) IEnumWbemClassObject_Release( iter );
-    heap_free( str );
-    heap_free( fullpath );
+    free( str );
+    free( fullpath );
     return hr;
 }
 
@@ -627,7 +627,7 @@ done:
     if (query) release_query( query );
     free_path( path );
     SysFreeString( antecedent );
-    heap_free( str );
+    free( str );
     return hr;
 }
 
@@ -671,7 +671,7 @@ static HRESULT exec_assoc_view( struct view *view )
 
     if (view->table_count)
     {
-        if (!(view->result = heap_alloc_zero( view->table_count * sizeof(UINT) ))) hr = E_OUTOFMEMORY;
+        if (!(view->result = calloc( view->table_count, sizeof(UINT) ))) hr = E_OUTOFMEMORY;
         else view->result_count = view->table_count;
     }
 
@@ -699,7 +699,7 @@ static HRESULT exec_select_view( struct view *view )
     if (!table->num_rows) return S_OK;
 
     len = min( table->num_rows, 16 );
-    if (!(view->result = heap_alloc( len * sizeof(UINT) ))) return E_OUTOFMEMORY;
+    if (!(view->result = malloc( len * sizeof(UINT) ))) return E_OUTOFMEMORY;
 
     for (i = 0; i < table->num_rows; i++)
     {
@@ -711,7 +711,7 @@ static HRESULT exec_select_view( struct view *view )
         {
             UINT *tmp;
             len *= 2;
-            if (!(tmp = heap_realloc( view->result, len * sizeof(UINT) ))) return E_OUTOFMEMORY;
+            if (!(tmp = realloc( view->result, len * sizeof(UINT) ))) return E_OUTOFMEMORY;
             view->result = tmp;
         }
         if (status == FILL_STATUS_FILTERED) val = 1;
@@ -743,7 +743,7 @@ struct query *create_query( enum wbm_namespace ns )
 {
     struct query *query;
 
-    if (!(query = heap_alloc( sizeof(*query) ))) return NULL;
+    if (!(query = malloc( sizeof(*query) ))) return NULL;
     list_init( &query->mem );
     query->ns = ns;
     query->refs = 1;
@@ -756,8 +756,8 @@ void free_query( struct query *query )
 
     if (!query) return;
     destroy_view( query->view );
-    LIST_FOR_EACH_SAFE( mem, next, &query->mem ) { heap_free( mem ); }
-    heap_free( query );
+    LIST_FOR_EACH_SAFE( mem, next, &query->mem ) { free( mem ); }
+    free( query );
 }
 
 struct query *addref_query( struct query *query )
@@ -811,7 +811,7 @@ static BSTR build_proplist( const struct table *table, UINT row, UINT count, UIN
     UINT i, j, offset;
     BSTR *values, ret = NULL;
 
-    if (!(values = heap_alloc( count * sizeof(BSTR) ))) return NULL;
+    if (!(values = malloc( count * sizeof(BSTR) ))) return NULL;
 
     *len = j = 0;
     for (i = 0; i < table->num_cols; i++)
@@ -839,7 +839,7 @@ static BSTR build_proplist( const struct table *table, UINT row, UINT count, UIN
         }
     }
     for (i = 0; i < count; i++) SysFreeString( values[i] );
-    heap_free( values );
+    free( values );
     return ret;
 }
 
@@ -1278,13 +1278,13 @@ static struct array *to_array( VARIANT *var, CIMTYPE *type )
     if (SafeArrayGetVartype( V_ARRAY( var ), &vartype ) != S_OK) return NULL;
     if (!(basetype = to_cimtype( vartype ))) return NULL;
     if (SafeArrayGetUBound( V_ARRAY( var ), 1, &bound ) != S_OK) return NULL;
-    if (!(ret = heap_alloc( sizeof(struct array) ))) return NULL;
+    if (!(ret = malloc( sizeof(struct array) ))) return NULL;
 
     ret->count     = bound + 1;
     ret->elem_size = get_type_size( basetype );
-    if (!(ret->ptr = heap_alloc_zero( ret->count * ret->elem_size )))
+    if (!(ret->ptr = calloc( ret->count, ret->elem_size )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     for (i = 0; i < ret->count; i++)

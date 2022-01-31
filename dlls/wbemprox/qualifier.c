@@ -60,9 +60,9 @@ static ULONG WINAPI qualifier_set_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", set);
-        heap_free( set->class );
-        heap_free( set->member );
-        heap_free( set );
+        free( set->class );
+        free( set->member );
+        free( set );
     }
     return refs;
 }
@@ -103,24 +103,24 @@ static HRESULT create_qualifier_enum( enum wbm_namespace ns, const WCHAR *class,
     if (member && name)
     {
         len = lstrlenW( class ) + lstrlenW( member ) + lstrlenW( name ) + ARRAY_SIZE(fmtW);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        if (!(query = malloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
         swprintf( query, len, fmtW, class, member, name );
     }
     else if (member)
     {
         len = lstrlenW( class ) + lstrlenW( member ) + ARRAY_SIZE(fmt2W);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        if (!(query = malloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
         swprintf( query, len, fmt2W, class, member );
     }
     else
     {
         len = lstrlenW( class ) + ARRAY_SIZE(fmt3W);
-        if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        if (!(query = malloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
         swprintf( query, len, fmt3W, class );
     }
 
     hr = exec_query( ns, query, iter );
-    heap_free( query );
+    free( query );
     return hr;
 }
 
@@ -279,19 +279,19 @@ HRESULT WbemQualifierSet_create( enum wbm_namespace ns, const WCHAR *class, cons
 
     TRACE("%p\n", ppObj);
 
-    if (!(set = heap_alloc( sizeof(*set) ))) return E_OUTOFMEMORY;
+    if (!(set = malloc( sizeof(*set) ))) return E_OUTOFMEMORY;
 
     set->IWbemQualifierSet_iface.lpVtbl = &qualifier_set_vtbl;
     if (!(set->class = heap_strdupW( class )))
     {
-        heap_free( set );
+        free( set );
         return E_OUTOFMEMORY;
     }
     if (!member) set->member = NULL;
     else if (!(set->member = heap_strdupW( member )))
     {
-        heap_free( set->class );
-        heap_free( set );
+        free( set->class );
+        free( set );
         return E_OUTOFMEMORY;
     }
     set->ns = ns;

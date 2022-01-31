@@ -17,7 +17,6 @@
  */
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 enum wbm_namespace
@@ -280,7 +279,7 @@ static inline WCHAR *heap_strdupW( const WCHAR *src )
 {
     WCHAR *dst;
     if (!src) return NULL;
-    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
+    if ((dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
     return dst;
 }
 
@@ -290,7 +289,7 @@ static inline WCHAR *heap_strdupAW( const char *src )
     WCHAR *dst;
     if (!src) return NULL;
     len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-    if ((dst = heap_alloc( len * sizeof(*dst) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+    if ((dst = malloc( len * sizeof(*dst) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     return dst;
 }
 

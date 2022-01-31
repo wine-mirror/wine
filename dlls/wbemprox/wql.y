@@ -49,7 +49,7 @@ struct string
 
 static void *alloc_mem( struct parser *parser, UINT size )
 {
-    struct list *mem = heap_alloc( sizeof(struct list) + size );
+    struct list *mem = malloc( sizeof(struct list) + size );
     list_add_tail( parser->mem, mem );
     return &mem[1];
 }

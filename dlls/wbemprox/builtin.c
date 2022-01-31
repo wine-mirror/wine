@@ -1055,7 +1055,7 @@ static BOOL resize_table( struct table *table, UINT row_count, UINT row_size )
 {
     if (!table->num_rows_allocated)
     {
-        if (!(table->data = heap_alloc( row_count * row_size ))) return FALSE;
+        if (!(table->data = malloc( row_count * row_size ))) return FALSE;
         table->num_rows_allocated = row_count;
         return TRUE;
     }
@@ -1063,7 +1063,7 @@ static BOOL resize_table( struct table *table, UINT row_count, UINT row_size )
     {
         BYTE *data;
         UINT count = max( row_count, table->num_rows_allocated * 2 );
-        if (!(data = heap_realloc( table->data, count * row_size ))) return FALSE;
+        if (!(data = realloc( table->data, count * row_size ))) return FALSE;
         table->data = data;
         table->num_rows_allocated = count;
     }
@@ -1250,7 +1250,7 @@ static enum fill_status fill_baseboard( struct table *table, const struct expr *
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = heap_alloc( len ))) return FILL_STATUS_FAILED;
+    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_baseboard *)table->data;
@@ -1264,7 +1264,7 @@ static enum fill_status fill_baseboard( struct table *table, const struct expr *
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
-    heap_free( buf );
+    free( buf );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -1331,7 +1331,7 @@ static WCHAR *convert_bios_date( const WCHAR *str )
     else if (q - p == 2) year = 1900 + (p[0] - '0') * 10 + p[1] - '0';
     else return NULL;
 
-    if (!(ret = heap_alloc( sizeof(fmtW) ))) return NULL;
+    if (!(ret = malloc( sizeof(fmtW) ))) return NULL;
     swprintf( ret, ARRAY_SIZE(fmtW), fmtW, year, month, day );
     return ret;
 }
@@ -1340,7 +1340,7 @@ static WCHAR *get_bios_releasedate( const char *buf, UINT len )
 {
     WCHAR *ret, *date = get_bios_string( 3, buf, len );
     if (!date || !(ret = convert_bios_date( date ))) ret = heap_strdupW( L"20120608000000.000000+000" );
-    heap_free( date );
+    free( date );
     return ret;
 }
 
@@ -1409,7 +1409,7 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = heap_alloc( len ))) return FILL_STATUS_FAILED;
+    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_bios *)table->data;
@@ -1431,7 +1431,7 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
-    heap_free( buf );
+    free( buf );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -1500,11 +1500,11 @@ static UINT get_logical_processor_count( UINT *num_physical, UINT *num_packages 
     status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), NULL, 0, &len );
     if (status != STATUS_INFO_LENGTH_MISMATCH) return get_processor_count();
 
-    if (!(buf = heap_alloc( len ))) return get_processor_count();
+    if (!(buf = malloc( len ))) return get_processor_count();
     status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &all, sizeof(all), buf, len, NULL );
     if (status != STATUS_SUCCESS)
     {
-        heap_free( buf );
+        free( buf );
         return get_processor_count();
     }
 
@@ -1524,7 +1524,7 @@ static UINT get_logical_processor_count( UINT *num_physical, UINT *num_packages 
         offset += entry->Size;
     }
 
-    heap_free( buf );
+    free( buf );
     if (num_physical) *num_physical = core_relation_count;
     if (num_packages) *num_packages = package_relation_count;
     return smt_enabled ? core_relation_count * 2 : core_relation_count;
@@ -1553,7 +1553,7 @@ static WCHAR *get_computername(void)
     WCHAR *ret;
     DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
 
-    if (!(ret = heap_alloc( size * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( size * sizeof(WCHAR) ))) return NULL;
     GetComputerNameW( ret, &size );
     return ret;
 }
@@ -1569,7 +1569,7 @@ static WCHAR *get_username(void)
     usersize = 0;
     GetUserNameW( NULL, &usersize );
     size = compsize + usersize; /* two null terminators account for the \ */
-    if (!(ret = heap_alloc( size * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( size * sizeof(WCHAR) ))) return NULL;
     GetComputerNameW( ret, &compsize );
     ret[compsize] = '\\';
     GetUserNameW( ret + compsize + 1, &usersize );
@@ -1639,7 +1639,7 @@ static WCHAR *get_compsysproduct_uuid( const char *buf, UINT len )
 
     if (!(hdr = find_smbios_entry( SMBIOS_TYPE_SYSTEM, buf, len )) || hdr->length < sizeof(*system)) goto done;
     system = (const struct smbios_system *)hdr;
-    if (!memcmp( system->uuid, none, sizeof(none) ) || !(ret = heap_alloc( 37 * sizeof(WCHAR) ))) goto done;
+    if (!memcmp( system->uuid, none, sizeof(none) ) || !(ret = malloc( 37 * sizeof(WCHAR) ))) goto done;
 
     ptr = system->uuid;
     swprintf( ret, 37, L"%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X", ptr[0], ptr[1],
@@ -1674,7 +1674,7 @@ static enum fill_status fill_compsysproduct( struct table *table, const struct e
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = heap_alloc( len ))) return FILL_STATUS_FAILED;
+    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_computersystemproduct *)table->data;
@@ -1687,7 +1687,7 @@ static enum fill_status fill_compsysproduct( struct table *table, const struct e
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
-    heap_free( buf );
+    free( buf );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -1706,16 +1706,16 @@ static struct dirstack *alloc_dirstack( UINT size )
 {
     struct dirstack *dirstack;
 
-    if (!(dirstack = heap_alloc( sizeof(*dirstack) ))) return NULL;
-    if (!(dirstack->dirs = heap_alloc( sizeof(WCHAR *) * size )))
+    if (!(dirstack = malloc( sizeof(*dirstack) ))) return NULL;
+    if (!(dirstack->dirs = malloc( sizeof(WCHAR *) * size )))
     {
-        heap_free( dirstack );
+        free( dirstack );
         return NULL;
     }
-    if (!(dirstack->len_dirs = heap_alloc( sizeof(UINT) * size )))
+    if (!(dirstack->len_dirs = malloc( sizeof(UINT) * size )))
     {
-        heap_free( dirstack->dirs );
-        heap_free( dirstack );
+        free( dirstack->dirs );
+        free( dirstack );
         return NULL;
     }
     dirstack->num_dirs = 0;
@@ -1726,16 +1726,16 @@ static struct dirstack *alloc_dirstack( UINT size )
 static void clear_dirstack( struct dirstack *dirstack )
 {
     UINT i;
-    for (i = 0; i < dirstack->num_dirs; i++) heap_free( dirstack->dirs[i] );
+    for (i = 0; i < dirstack->num_dirs; i++) free( dirstack->dirs[i] );
     dirstack->num_dirs = 0;
 }
 
 static void free_dirstack( struct dirstack *dirstack )
 {
     clear_dirstack( dirstack );
-    heap_free( dirstack->dirs );
-    heap_free( dirstack->len_dirs );
-    heap_free( dirstack );
+    free( dirstack->dirs );
+    free( dirstack->len_dirs );
+    free( dirstack );
 }
 
 static BOOL push_dir( struct dirstack *dirstack, WCHAR *dir, UINT len )
@@ -1750,9 +1750,9 @@ static BOOL push_dir( struct dirstack *dirstack, WCHAR *dir, UINT len )
         UINT *len_tmp;
 
         size = dirstack->num_allocated * 2;
-        if (!(tmp = heap_realloc( dirstack->dirs, size * sizeof(WCHAR *) ))) return FALSE;
+        if (!(tmp = realloc( dirstack->dirs, size * sizeof(WCHAR *) ))) return FALSE;
         dirstack->dirs = tmp;
-        if (!(len_tmp = heap_realloc( dirstack->len_dirs, size * sizeof(UINT) ))) return FALSE;
+        if (!(len_tmp = realloc( dirstack->len_dirs, size * sizeof(UINT) ))) return FALSE;
         dirstack->len_dirs = len_tmp;
         dirstack->num_allocated = size;
     }
@@ -1785,7 +1785,7 @@ static WCHAR *build_glob( WCHAR drive, const WCHAR *path, UINT len )
     UINT i = 0;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( (len + 6) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len + 6) * sizeof(WCHAR) ))) return NULL;
     ret[i++] = drive;
     ret[i++] = ':';
     ret[i++] = '\\';
@@ -1811,7 +1811,7 @@ static WCHAR *build_name( WCHAR drive, const WCHAR *path )
         if (*p == '\\') len += 2;
         else len++;
     };
-    if (!(ret = heap_alloc( (len + 5) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len + 5) * sizeof(WCHAR) ))) return NULL;
     ret[i++] = drive;
     ret[i++] = ':';
     ret[i++] = '\\';
@@ -1844,7 +1844,7 @@ static WCHAR *build_dirname( const WCHAR *path, UINT *ret_len )
     while (p >= start && *p != '\\') { len--; p--; };
     while (p >= start && *p == '\\') { len--; p--; };
 
-    if (!(ret = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
     for (i = 0, p = start; p < start + len; p++)
     {
         if (p[0] == '\\' && p[1] == '\\')
@@ -1897,11 +1897,11 @@ static UINT seed_dirs( struct dirstack *dirstack, const struct expr *cond, WCHAR
         {
             if (seen_dir( dirstack, path ))
             {
-                heap_free( path );
+                free( path );
                 return ++*count;
             }
             else if (push_dir( dirstack, path, len )) return ++*count;
-            heap_free( path );
+            free( path );
             return *count = 0;
         }
     }
@@ -1923,7 +1923,7 @@ static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
 
     *len = 0;
     if (path) len_path = lstrlenW( path );
-    if (!(ret = heap_alloc( (len_path + len_segment + 2) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len_path + len_segment + 2) * sizeof(WCHAR) ))) return NULL;
     if (path && len_path)
     {
         memcpy( ret, path, len_path * sizeof(WCHAR) );
@@ -1943,22 +1943,22 @@ static WCHAR *get_file_version( const WCHAR *filename )
     void *block;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
-    if (!(size = GetFileVersionInfoSizeW( filename, NULL )) || !(block = heap_alloc( size )))
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(size = GetFileVersionInfoSizeW( filename, NULL )) || !(block = malloc( size )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     if (!GetFileVersionInfoW( filename, 0, size, block ) ||
         !VerQueryValueW( block, L"\\", (void **)&info, &size ))
     {
-        heap_free( block );
-        heap_free( ret );
+        free( block );
+        free( ret );
         return NULL;
     }
     swprintf( ret, len, L"%u.%u.%u.%u", info->dwFileVersionMS >> 16, info->dwFileVersionMS & 0xffff,
                                         info->dwFileVersionLS >> 16, info->dwFileVersionLS & 0xffff );
-    heap_free( block );
+    free( block );
     return ret;
 }
 
@@ -1989,8 +1989,8 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
 
         for (;;)
         {
-            heap_free( glob );
-            heap_free( path );
+            free( glob );
+            free( path );
             path = pop_dir( dirstack, &len );
             if (!(glob = build_glob( root[0], path, len )))
             {
@@ -2019,7 +2019,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
                     if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                     {
                         if (push_dir( dirstack, new_path, len )) continue;
-                        heap_free( new_path );
+                        free( new_path );
                         FindClose( handle );
                         status = FILL_STATUS_FAILED;
                         goto done;
@@ -2027,7 +2027,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
                     rec = (struct record_datafile *)(table->data + offset);
                     rec->name    = build_name( root[0], new_path );
                     rec->version = get_file_version( rec->name );
-                    heap_free( new_path );
+                    free( new_path );
                     if (!match_row( table, row, cond, &status ))
                     {
                         free_row_values( table, row );
@@ -2052,8 +2052,8 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
 
 done:
     free_dirstack( dirstack );
-    heap_free( glob );
-    heap_free( path );
+    free( glob );
+    free( path );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -2117,8 +2117,8 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 
         for (;;)
         {
-            heap_free( glob );
-            heap_free( path );
+            free( glob );
+            free( path );
             path = pop_dir( dirstack, &len );
             if (!(glob = build_glob( root[0], path, len )))
             {
@@ -2148,7 +2148,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 
                     if (!(push_dir( dirstack, new_path, len )))
                     {
-                        heap_free( new_path );
+                        free( new_path );
                         FindClose( handle );
                         status = FILL_STATUS_FAILED;
                         goto done;
@@ -2156,7 +2156,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
                     rec = (struct record_directory *)(table->data + offset);
                     rec->accessmask = FILE_ALL_ACCESS;
                     rec->name       = build_name( root[0], new_path );
-                    heap_free( new_path );
+                    free( new_path );
                     if (!match_row( table, row, cond, &status ))
                     {
                         free_row_values( table, row );
@@ -2181,8 +2181,8 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 
 done:
     free_dirstack( dirstack );
-    heap_free( glob );
-    heap_free( path );
+    free( glob );
+    free( path );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -2229,15 +2229,15 @@ static WCHAR *get_diskdrive_serialnumber( WCHAR letter )
     size = sizeof(*desc) + 256;
     for (;;)
     {
-        if (!(desc = heap_alloc( size ))) break;
+        if (!(desc = malloc( size ))) break;
         if (DeviceIoControl( handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), desc, size, NULL, NULL ))
         {
             if (desc->SerialNumberOffset) ret = heap_strdupAW( (const char *)desc + desc->SerialNumberOffset );
-            heap_free( desc );
+            free( desc );
             break;
         }
         size = desc->Size;
-        heap_free( desc );
+        free( desc );
         if (GetLastError() != ERROR_MORE_DATA) break;
     }
 
@@ -2308,10 +2308,10 @@ static void free_associations( struct association *assoc, UINT count )
     if (!assoc) return;
     for (i = 0; i < count; i++)
     {
-        heap_free( assoc[i].ref );
-        heap_free( assoc[i].ref2 );
+        free( assoc[i].ref );
+        free( assoc[i].ref2 );
     }
-    heap_free( assoc );
+    free( assoc );
 }
 
 static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
@@ -2332,7 +2332,7 @@ static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
                            &query2->view, &query2->mem )) != S_OK) goto done;
     if ((hr = execute_view( query2->view )) != S_OK) goto done;
 
-    if (!(ret = heap_alloc_zero( query->view->result_count * sizeof(*ret) ))) goto done;
+    if (!(ret = calloc( query->view->result_count, sizeof(*ret) ))) goto done;
 
     for (i = 0; i < query->view->result_count; i++)
     {
@@ -2387,7 +2387,7 @@ static enum fill_status fill_diskdrivetodiskpartition( struct table *table, cons
         row++;
     }
 
-    heap_free( assoc );
+    free( assoc );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -2491,7 +2491,7 @@ static WCHAR *get_ip4_string( DWORD addr )
     DWORD len = sizeof("ddd.ddd.ddd.ddd");
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, len, L"%u.%u.%u.%u", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff );
     return ret;
 }
@@ -2504,15 +2504,15 @@ static enum fill_status fill_ip4routetable( struct table *table, const struct ex
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (GetIpForwardTable( NULL, &size, TRUE ) != ERROR_INSUFFICIENT_BUFFER) return FILL_STATUS_FAILED;
-    if (!(forwards = heap_alloc( size ))) return FILL_STATUS_FAILED;
+    if (!(forwards = malloc( size ))) return FILL_STATUS_FAILED;
     if (GetIpForwardTable( forwards, &size, TRUE ))
     {
-        heap_free( forwards );
+        free( forwards );
         return FILL_STATUS_FAILED;
     }
     if (!resize_table( table, max(forwards->dwNumEntries, 1), sizeof(*rec) ))
     {
-        heap_free( forwards );
+        free( forwards );
         return FILL_STATUS_FAILED;
     }
 
@@ -2535,7 +2535,7 @@ static enum fill_status fill_ip4routetable( struct table *table, const struct ex
     TRACE("created %u rows\n", row);
     table->num_rows = row;
 
-    heap_free( forwards );
+    free( forwards );
     return status;
 }
 
@@ -2621,7 +2621,7 @@ static struct association *get_logicaldisktopartition_pairs( UINT *count )
                            &query2->mem )) != S_OK) goto done;
     if ((hr = execute_view( query2->view )) != S_OK) goto done;
 
-    if (!(ret = heap_alloc_zero( query->view->result_count * sizeof(*ret) ))) goto done;
+    if (!(ret = calloc( query->view->result_count, sizeof(*ret) ))) goto done;
 
     /* assume fixed and removable disks are enumerated in the same order as partitions */
     for (i = 0; i < query->view->result_count; i++)
@@ -2677,7 +2677,7 @@ static enum fill_status fill_logicaldisktopartition( struct table *table, const 
         row++;
     }
 
-    heap_free( assoc );
+    free( assoc );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -2701,7 +2701,7 @@ static UINT16 get_connection_status( IF_OPER_STATUS status )
 static WCHAR *get_mac_address( const BYTE *addr, DWORD len )
 {
     WCHAR *ret;
-    if (len != 6 || !(ret = heap_alloc( 18 * sizeof(WCHAR) ))) return NULL;
+    if (len != 6 || !(ret = malloc( 18 * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, 18, L"%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
     return ret;
 }
@@ -2740,7 +2740,7 @@ static const WCHAR *get_adaptertype( DWORD type, int *id, int *physical )
 static WCHAR *guid_to_str( const GUID *ptr )
 {
     WCHAR *ret;
-    if (!(ret = heap_alloc( GUID_SIZE * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( GUID_SIZE * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, GUID_SIZE, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
               ptr->Data1, ptr->Data2, ptr->Data3, ptr->Data4[0], ptr->Data4[1], ptr->Data4[2],
               ptr->Data4[3], ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
@@ -2767,10 +2767,10 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
-    if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
+    if (!(buffer = malloc( size ))) return FILL_STATUS_FAILED;
     if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
     {
-        heap_free( buffer );
+        free( buffer );
         return FILL_STATUS_FAILED;
     }
     for (aa = buffer; aa; aa = aa->Next)
@@ -2779,7 +2779,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
-        heap_free( buffer );
+        free( buffer );
         return FILL_STATUS_FAILED;
     }
     for (aa = buffer; aa; aa = aa->Next)
@@ -2814,7 +2814,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     TRACE("created %u rows\n", row);
     table->num_rows = row;
 
-    heap_free( buffer );
+    free( buffer );
     return status;
 }
 
@@ -2838,10 +2838,10 @@ static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
     if (!list) return NULL;
     for (gateway = list; gateway; gateway = gateway->Next) count++;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = malloc( sizeof(*ptr) * count )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     for (gateway = list; gateway; gateway = gateway->Next)
@@ -2850,9 +2850,9 @@ static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
         if (WSAAddressToStringW( gateway->Address.lpSockaddr, gateway->Address.iSockaddrLength,
                                  NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
         {
-            for (; i > 0; i--) heap_free( ptr[i - 1] );
-            heap_free( ptr );
-            heap_free( ret );
+            for (; i > 0; i--) free( ptr[i - 1] );
+            free( ptr );
+            free( ret );
             return NULL;
         }
     }
@@ -2871,10 +2871,10 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
     if (!list) return NULL;
     for (server = list; server; server = server->Next) count++;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = malloc( sizeof(*ptr) * count )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     for (server = list; server; server = server->Next)
@@ -2883,9 +2883,9 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
         if (WSAAddressToStringW( server->Address.lpSockaddr, server->Address.iSockaddrLength,
                                  NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
         {
-            for (; i > 0; i--) heap_free( ptr[i - 1] );
-            heap_free( ptr );
-            heap_free( ret );
+            for (; i > 0; i--) free( ptr[i - 1] );
+            free( ptr );
+            free( ret );
             return NULL;
         }
         if ((p = wcsrchr( ptr[i - 1], ':' ))) *p = 0;
@@ -2905,10 +2905,10 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     if (!list) return NULL;
     for (address = list; address; address = address->Next) count++;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = malloc( sizeof(*ptr) * count )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     for (address = list; address; address = address->Next)
@@ -2917,9 +2917,9 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
         if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
                                  NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
         {
-            for (; i > 0; i--) heap_free( ptr[i - 1] );
-            heap_free( ptr );
-            heap_free( ret );
+            for (; i > 0; i--) free( ptr[i - 1] );
+            free( ptr );
+            free( ret );
             return NULL;
         }
     }
@@ -2938,10 +2938,10 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     if (!list) return NULL;
     for (address = list; address; address = address->Next) count++;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = malloc( sizeof(*ptr) * count )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     for (address = list; address; address = address->Next)
@@ -2968,9 +2968,9 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
         }
         if (!ptr[i++])
         {
-            for (; i > 0; i--) heap_free( ptr[i - 1] );
-            heap_free( ptr );
-            heap_free( ret );
+            for (; i > 0; i--) free( ptr[i - 1] );
+            free( ptr );
+            free( ret );
             return NULL;
         }
     }
@@ -2998,10 +2998,10 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     ret = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
-    if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
+    if (!(buffer = malloc( size ))) return FILL_STATUS_FAILED;
     if (GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, buffer, &size ))
     {
-        heap_free( buffer );
+        free( buffer );
         return FILL_STATUS_FAILED;
     }
     for (aa = buffer; aa; aa = aa->Next)
@@ -3010,7 +3010,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
-        heap_free( buffer );
+        free( buffer );
         return FILL_STATUS_FAILED;
     }
     for (aa = buffer; aa; aa = aa->Next)
@@ -3042,7 +3042,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     TRACE("created %u rows\n", row);
     table->num_rows = row;
 
-    heap_free( buffer );
+    free( buffer );
     return status;
 }
 
@@ -3132,15 +3132,15 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &size, &count );
     if (!count) return FILL_STATUS_UNFILTERED;
 
-    if (!(info = heap_alloc( size ))) return FILL_STATUS_FAILED;
+    if (!(info = malloc( size ))) return FILL_STATUS_FAILED;
     if (!EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, (BYTE *)info, size, &size, &count ))
     {
-        heap_free( info );
+        free( info );
         return FILL_STATUS_FAILED;
     }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
-        heap_free( info );
+        free( info );
         return FILL_STATUS_FAILED;
     }
 
@@ -3168,7 +3168,7 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     TRACE("created %u rows\n", num_rows);
     table->num_rows = num_rows;
 
-    heap_free( info );
+    free( info );
     return status;
 }
 
@@ -3345,11 +3345,11 @@ static UINT get_processor_currentclockspeed( UINT index )
     UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
-    if ((info = heap_alloc( size )))
+    if ((info = malloc( size )))
     {
         status = NtPowerInformation( ProcessorInformation, NULL, 0, info, size );
         if (!status) ret = info[index].CurrentMhz;
-        heap_free( info );
+        free( info );
     }
     return ret;
 }
@@ -3359,11 +3359,11 @@ static UINT get_processor_maxclockspeed( UINT index )
     UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
-    if ((info = heap_alloc( size )))
+    if ((info = malloc( size )))
     {
         status = NtPowerInformation( ProcessorInformation, NULL, 0, info, size );
         if (!status) ret = info[index].MaxMhz;
-        heap_free( info );
+        free( info );
     }
     return ret;
 }
@@ -3429,7 +3429,7 @@ static WCHAR *get_lastbootuptime(void)
     TIME_FIELDS tf;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( 26 * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( 26 * sizeof(WCHAR) ))) return NULL;
 
     NtQuerySystemInformation( SystemTimeOfDayInformation, &ti, sizeof(ti), NULL );
     RtlTimeToTimeFields( &ti.BootTime, &tf );
@@ -3453,7 +3453,7 @@ static WCHAR *get_localdatetime(void)
         Bias+= tzi.DaylightBias;
     else
         Bias+= tzi.StandardBias;
-    if (!(ret = heap_alloc( 26 * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( 26 * sizeof(WCHAR) ))) return NULL;
 
     GetLocalTime(&st);
     swprintf( ret, 26, L"%04u%02u%02u%02u%02u%02u.%06u%+03d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute,
@@ -3465,7 +3465,7 @@ static WCHAR *get_systemdirectory(void)
     void *redir;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( MAX_PATH * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( MAX_PATH * sizeof(WCHAR) ))) return NULL;
     Wow64DisableWow64FsRedirection( &redir );
     GetSystemDirectoryW( ret, MAX_PATH );
     Wow64RevertWow64FsRedirection( redir );
@@ -3473,32 +3473,32 @@ static WCHAR *get_systemdirectory(void)
 }
 static WCHAR *get_systemdrive(void)
 {
-    WCHAR *ret = heap_alloc( 3 * sizeof(WCHAR) ); /* "c:" */
+    WCHAR *ret = malloc( 3 * sizeof(WCHAR) ); /* "c:" */
     if (ret && GetEnvironmentVariableW( L"SystemDrive", ret, 3 )) return ret;
-    heap_free( ret );
+    free( ret );
     return NULL;
 }
 static WCHAR *get_codeset(void)
 {
-    WCHAR *ret = heap_alloc( 11 * sizeof(WCHAR) );
+    WCHAR *ret = malloc( 11 * sizeof(WCHAR) );
     if (ret) swprintf( ret, 11, L"%u", GetACP() );
     return ret;
 }
 static WCHAR *get_countrycode(void)
 {
-    WCHAR *ret = heap_alloc( 6 * sizeof(WCHAR) );
+    WCHAR *ret = malloc( 6 * sizeof(WCHAR) );
     if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ICOUNTRY, ret, 6 );
     return ret;
 }
 static WCHAR *get_locale(void)
 {
-    WCHAR *ret = heap_alloc( 5 * sizeof(WCHAR) );
+    WCHAR *ret = malloc( 5 * sizeof(WCHAR) );
     if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, ret, 5 );
     return ret;
 }
 static WCHAR *get_osbuildnumber( OSVERSIONINFOEXW *ver )
 {
-    WCHAR *ret = heap_alloc( 11 * sizeof(WCHAR) );
+    WCHAR *ret = malloc( 11 * sizeof(WCHAR) );
     if (ret) swprintf( ret, 11, L"%u", ver->dwBuildNumber );
     return ret;
 }
@@ -3519,7 +3519,7 @@ static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
     int len = ARRAY_SIZE( windowsW ) - 1;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) + sizeof(win2003W) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) + sizeof(win2003W) ))) return NULL;
     memcpy( ret, windowsW, sizeof(windowsW) );
     if (ver->dwMajorVersion == 10 && ver->dwMinorVersion == 0) memcpy( ret + len, win10W, sizeof(win10W) );
     else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 3) memcpy( ret + len, win81W, sizeof(win81W) );
@@ -3549,7 +3549,7 @@ static WCHAR *get_osname( const WCHAR *caption )
     int len = lstrlenW( caption );
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) + sizeof(partitionW) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) + sizeof(partitionW) ))) return NULL;
     memcpy( ret, caption, len * sizeof(WCHAR) );
     memcpy( ret + len, partitionW, sizeof(partitionW) );
     return ret;
@@ -3562,12 +3562,12 @@ static WCHAR *get_osserialnumber(void)
 
     if (!RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hkey ) &&
         !RegQueryValueExW( hkey, L"ProductId", NULL, &type, NULL, &size ) && type == REG_SZ &&
-        (ret = heap_alloc( size + sizeof(WCHAR) )))
+        (ret = malloc( size + sizeof(WCHAR) )))
     {
         size += sizeof(WCHAR);
         if (RegQueryValueExW( hkey, L"ProductId", NULL, NULL, (BYTE *)ret, &size ))
         {
-            heap_free( ret );
+            free( ret );
             ret = NULL;
         }
     }
@@ -3577,7 +3577,7 @@ static WCHAR *get_osserialnumber(void)
 }
 static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
 {
-    WCHAR *ret = heap_alloc( 33 * sizeof(WCHAR) );
+    WCHAR *ret = malloc( 33 * sizeof(WCHAR) );
     if (ret) swprintf( ret, 33, L"%u.%u.%u", ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
     return ret;
 }
@@ -3693,9 +3693,9 @@ static QUERY_SERVICE_CONFIGW *query_service_config( SC_HANDLE manager, const WCH
     if (!(service = OpenServiceW( manager, name, SERVICE_QUERY_CONFIG ))) return NULL;
     QueryServiceConfigW( service, NULL, 0, &size );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
-    if (!(config = heap_alloc( size ))) goto done;
+    if (!(config = malloc( size ))) goto done;
     if (QueryServiceConfigW( service, config, size, &size )) goto done;
-    heap_free( config );
+    free( config );
     config = NULL;
 
 done:
@@ -3716,7 +3716,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
     BOOL ret;
 
     if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE ))) return FILL_STATUS_FAILED;
-    if (!(services = heap_alloc( size ))) goto done;
+    if (!(services = malloc( size ))) goto done;
 
     ret = EnumServicesStatusExW( manager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL,
                                  SERVICE_STATE_ALL, (BYTE *)services, size, &needed,
@@ -3725,7 +3725,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
     {
         if (GetLastError() != ERROR_MORE_DATA) goto done;
         size = needed;
-        if (!(tmp = heap_realloc( services, size ))) goto done;
+        if (!(tmp = realloc( services, size ))) goto done;
         services = tmp;
         ret = EnumServicesStatusExW( manager, SC_ENUM_PROCESS_INFO, SERVICE_TYPE_ALL,
                                      SERVICE_STATE_ALL, (BYTE *)services, size, &needed,
@@ -3758,7 +3758,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
         rec->resume_service = service_resume_service;
         rec->start_service  = service_start_service;
         rec->stop_service   = service_stop_service;
-        heap_free( config );
+        free( config );
         if (!match_row( table, row, cond, &fill_status ))
         {
             free_row_values( table, row );
@@ -3773,7 +3773,7 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
 
 done:
     CloseServiceHandle( manager );
-    heap_free( services );
+    free( services );
     return fill_status;
 }
 
@@ -3787,10 +3787,10 @@ static struct array *get_binaryrepresentation( PSID sid, UINT len )
     struct array *ret;
     UINT8 *ptr;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    if (!(ptr = heap_alloc( len )))
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = malloc( len )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     memcpy( ptr, sid, len );
@@ -3906,10 +3906,10 @@ static int get_systemenclosure_lockpresent( const char *buf, UINT len )
 static struct array *dup_array( const struct array *src )
 {
     struct array *dst;
-    if (!(dst = heap_alloc( sizeof(*dst) ))) return NULL;
-    if (!(dst->ptr = heap_alloc( src->count * src->elem_size )))
+    if (!(dst = malloc( sizeof(*dst) ))) return NULL;
+    if (!(dst->ptr = malloc( src->count * src->elem_size )))
     {
-        heap_free( dst );
+        free( dst );
         return NULL;
     }
     memcpy( dst->ptr, src->ptr, src->count * src->elem_size );
@@ -3928,10 +3928,10 @@ static struct array *get_systemenclosure_chassistypes( const char *buf, UINT len
     if (!(hdr = find_smbios_entry( SMBIOS_TYPE_CHASSIS, buf, len )) || hdr->length < sizeof(*chassis)) goto done;
     chassis = (const struct smbios_chassis *)hdr;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) goto done;
-    if (!(types = heap_alloc( sizeof(*types) )))
+    if (!(ret = malloc( sizeof(*ret) ))) goto done;
+    if (!(types = malloc( sizeof(*types) )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     types[0] = chassis->type & ~0x80;
@@ -3955,7 +3955,7 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = heap_alloc( len ))) return FILL_STATUS_FAILED;
+    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_systemenclosure *)table->data;
@@ -3969,7 +3969,7 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
-    heap_free( buf );
+    free( buf );
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
@@ -3982,7 +3982,7 @@ static WCHAR *get_videocontroller_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
     UINT len = sizeof(fmtW) + 2;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, len, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
     return ret;
 }
@@ -4082,7 +4082,7 @@ static WCHAR *get_sounddevice_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
     UINT len = sizeof(fmtW) + 2;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
     swprintf( ret, len, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
     return ret;
 }
