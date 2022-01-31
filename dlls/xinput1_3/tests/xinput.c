@@ -68,7 +68,7 @@ static void test_set_state(void)
         vibrator.wLeftMotorSpeed = 0;
         vibrator.wRightMotorSpeed = 0;
         result = pXInputSetState(controllerNum, &vibrator);
-        ok(result == ERROR_SUCCESS, "XInputSetState failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS, "XInputSetState returned %lu\n", result);
 
         /* Disabling XInput here, queueing a vibration and then re-enabling XInput
          * is used to prove that vibrations are auto enabled when resuming XInput.
@@ -79,7 +79,7 @@ static void test_set_state(void)
         vibrator.wLeftMotorSpeed = 65535;
         vibrator.wRightMotorSpeed = 65535;
         result = pXInputSetState(controllerNum, &vibrator);
-        ok(result == ERROR_SUCCESS, "XInputSetState failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS, "XInputSetState returned %lu\n", result);
 
         if (pXInputEnable) pXInputEnable(1);
         Sleep(250);
@@ -87,11 +87,11 @@ static void test_set_state(void)
         vibrator.wLeftMotorSpeed = 0;
         vibrator.wRightMotorSpeed = 0;
         result = pXInputSetState(controllerNum, &vibrator);
-        ok(result == ERROR_SUCCESS, "XInputSetState failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS, "XInputSetState returned %lu\n", result);
     }
 
     result = pXInputSetState(XUSER_MAX_COUNT+1, &vibrator);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputSetState returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputSetState returned %lu\n", result);
 }
 
 static void test_get_state(void)
@@ -110,42 +110,42 @@ static void test_get_state(void)
             else
                 result = pXInputGetStateEx(controllerNum, &state);
             ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED,
-               "%s failed with (%d)\n", i == 0 ? "XInputGetState" : "XInputGetStateEx", result);
+               "%s returned %lu\n", i == 0 ? "XInputGetState" : "XInputGetStateEx", result);
 
             if (ERROR_DEVICE_NOT_CONNECTED == result)
             {
-                skip("Controller %d is not connected\n", controllerNum);
+                skip("Controller %lu is not connected\n", controllerNum);
                 continue;
             }
 
-            trace("-- Results for controller %d --\n", controllerNum);
+            trace("-- Results for controller %lu --\n", controllerNum);
             if (i == 0)
             {
                 good = controllerNum;
-                trace("XInputGetState: %d\n", result);
+                trace("XInputGetState: %lu\n", result);
             }
             else
-                trace("XInputGetStateEx: %d\n", result);
-            trace("State->dwPacketNumber: %d\n", state.dwPacketNumber);
+                trace("XInputGetStateEx: %lu\n", result);
+            trace("State->dwPacketNumber: %lu\n", state.dwPacketNumber);
             dump_gamepad(&state.Gamepad);
         }
     }
 
     result = pXInputGetState(0, NULL);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned %lu\n", result);
 
     result = pXInputGetState(XUSER_MAX_COUNT, &state);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned %lu\n", result);
 
     result = pXInputGetState(XUSER_MAX_COUNT+1, &state);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned %lu\n", result);
     if (pXInputGetStateEx)
     {
         result = pXInputGetStateEx(XUSER_MAX_COUNT, &state);
-        ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+        ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned %lu\n", result);
 
         result = pXInputGetStateEx(XUSER_MAX_COUNT+1, &state);
-        ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+        ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned %lu\n", result);
     }
 
     if (winetest_interactive && good < XUSER_MAX_COUNT)
@@ -183,17 +183,17 @@ static void test_get_keystroke(void)
 
         result = pXInputGetKeystroke(controllerNum, XINPUT_FLAG_GAMEPAD, &keystroke);
         ok(result == ERROR_EMPTY || result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED,
-           "XInputGetKeystroke failed with (%d)\n", result);
+           "XInputGetKeystroke returned %lu\n", result);
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
-            skip("Controller %d is not connected\n", controllerNum);
+            skip("Controller %lu is not connected\n", controllerNum);
         }
     }
 
     ZeroMemory(&keystroke, sizeof(XINPUT_KEYSTROKE));
     result = pXInputGetKeystroke(XUSER_MAX_COUNT+1, XINPUT_FLAG_GAMEPAD, &keystroke);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetKeystroke returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetKeystroke returned %lu\n", result);
 }
 
 static void test_get_capabilities(void)
@@ -207,11 +207,11 @@ static void test_get_capabilities(void)
         ZeroMemory(&capabilities, sizeof(XINPUT_CAPABILITIES));
 
         result = pXInputGetCapabilities(controllerNum, XINPUT_FLAG_GAMEPAD, &capabilities);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetCapabilities failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetCapabilities returned %lu\n", result);
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
-            skip("Controller %d is not connected\n", controllerNum);
+            skip("Controller %lu is not connected\n", controllerNum);
             continue;
         }
 
@@ -221,7 +221,7 @@ static void test_get_capabilities(void)
 
     ZeroMemory(&capabilities, sizeof(XINPUT_CAPABILITIES));
     result = pXInputGetCapabilities(XUSER_MAX_COUNT+1, XINPUT_FLAG_GAMEPAD, &capabilities);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetCapabilities returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetCapabilities returned %lu\n", result);
 }
 
 static void test_get_dsoundaudiodevice(void)
@@ -236,11 +236,11 @@ static void test_get_dsoundaudiodevice(void)
     {
         soundRender = soundCapture = testGuid;
         result = pXInputGetDSoundAudioDeviceGuids(controllerNum, &soundRender, &soundCapture);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetDSoundAudioDeviceGuids failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetDSoundAudioDeviceGuids returned %lu\n", result);
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
-            skip("Controller %d is not connected\n", controllerNum);
+            skip("Controller %lu is not connected\n", controllerNum);
             continue;
         }
 
@@ -256,7 +256,7 @@ static void test_get_dsoundaudiodevice(void)
     }
 
     result = pXInputGetDSoundAudioDeviceGuids(XUSER_MAX_COUNT+1, &soundRender, &soundCapture);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned %lu\n", result);
 }
 
 static void test_get_batteryinformation(void)
@@ -270,17 +270,17 @@ static void test_get_batteryinformation(void)
         ZeroMemory(&batteryInfo, sizeof(XINPUT_BATTERY_INFORMATION));
 
         result = pXInputGetBatteryInformation(controllerNum, BATTERY_DEVTYPE_GAMEPAD, &batteryInfo);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetBatteryInformation failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetBatteryInformation returned %lu\n", result);
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
             ok(batteryInfo.BatteryLevel == BATTERY_TYPE_DISCONNECTED, "Failed to report device as being disconnected.\n");
-            skip("Controller %d is not connected\n", controllerNum);
+            skip("Controller %lu is not connected\n", controllerNum);
         }
     }
 
     result = pXInputGetBatteryInformation(XUSER_MAX_COUNT+1, BATTERY_DEVTYPE_GAMEPAD, &batteryInfo);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetBatteryInformation returned (%d)\n", result);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetBatteryInformation returned %lu\n", result);
 }
 
 #define check_member_(file, line, val, exp, fmt, member)               \
@@ -441,14 +441,15 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     USAGE usages[15];
     NTSTATUS status;
     USHORT count;
-    DWORD i, res;
+    DWORD res;
     BOOL ret;
+    int i;
 
     res = pXInputGetCapabilities(index, 0, &xi_caps);
-    ok(res == ERROR_SUCCESS, "XInputGetCapabilities %d returned %u\n", index, res);
+    ok(res == ERROR_SUCCESS, "XInputGetCapabilities %lu returned %lu\n", index, res);
 
     res = pXInputGetState(index, &state);
-    ok(res == ERROR_SUCCESS, "XInputGetState %d returned %u\n", index, res);
+    ok(res == ERROR_SUCCESS, "XInputGetState %lu returned %lu\n", index, res);
 
     ok(hid_caps->UsagePage == HID_USAGE_PAGE_GENERIC, "unexpected usage page %04x\n", hid_caps->UsagePage);
     ok(hid_caps->Usage == HID_USAGE_GENERIC_GAMEPAD, "unexpected usage %04x\n", hid_caps->Usage);
@@ -471,8 +472,8 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
     length = hid_caps->NumberLinkCollectionNodes;
     status = HidP_GetLinkCollectionNodes(collections, &length, preparsed);
-    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes returned %#x\n", status);
-    ok(length == ARRAY_SIZE(expect_collections), "got %d collections\n", length);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes returned %#lx\n", status);
+    ok(length == ARRAY_SIZE(expect_collections), "got %lu collections\n", length);
 
     for (i = 0; i < min(length, ARRAY_SIZE(expect_collections)); ++i)
     {
@@ -490,7 +491,7 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
     count = hid_caps->NumberInputButtonCaps;
     status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, preparsed);
-    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetButtonCaps returned %#x\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetButtonCaps returned %#lx\n", status);
     ok(count == ARRAY_SIZE(expect_button_caps), "got %d button caps\n", count);
 
     for (i = 0; i < ARRAY_SIZE(expect_button_caps); ++i)
@@ -541,7 +542,7 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
     count = hid_caps->NumberInputValueCaps;
     status = HidP_GetValueCaps(HidP_Input, value_caps, &count, preparsed);
-    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetValueCaps returned %#x\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetValueCaps returned %#lx\n", status);
     ok(count == ARRAY_SIZE(expect_value_caps), "got %d value caps\n", count);
 
     for (i = 0; i < min(count, ARRAY_SIZE(expect_value_caps)); ++i)
@@ -562,12 +563,12 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
         check_member(value_caps[i], expect_value_caps[i], "%d", HasNull);
         check_member(value_caps[i], expect_value_caps[i], "%d", BitSize);
         check_member(value_caps[i], expect_value_caps[i], "%d", ReportCount);
-        check_member(value_caps[i], expect_value_caps[i], "%d", UnitsExp);
-        check_member(value_caps[i], expect_value_caps[i], "%d", Units);
-        check_member(value_caps[i], expect_value_caps[i], "%d", LogicalMin);
-        check_member(value_caps[i], expect_value_caps[i], "%d", LogicalMax);
-        check_member(value_caps[i], expect_value_caps[i], "%d", PhysicalMin);
-        check_member(value_caps[i], expect_value_caps[i], "%d", PhysicalMax);
+        check_member(value_caps[i], expect_value_caps[i], "%#lx", UnitsExp);
+        check_member(value_caps[i], expect_value_caps[i], "%#lx", Units);
+        check_member(value_caps[i], expect_value_caps[i], "%+ld", LogicalMin);
+        check_member(value_caps[i], expect_value_caps[i], "%+ld", LogicalMax);
+        check_member(value_caps[i], expect_value_caps[i], "%+ld", PhysicalMin);
+        check_member(value_caps[i], expect_value_caps[i], "%+ld", PhysicalMax);
 
         if (!value_caps[i].IsRange && !expect_value_caps[i].IsRange)
         {
@@ -601,13 +602,13 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     }
 
     status = HidP_InitializeReportForID(HidP_Input, 0, preparsed, buffer, hid_caps->InputReportByteLength);
-    ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status);
 
     SetLastError(0xdeadbeef);
     memset(buffer, 0, sizeof(buffer));
     ret = HidD_GetInputReport(device, buffer, hid_caps->InputReportByteLength);
     ok(!ret, "HidD_GetInputReport succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "HidD_GetInputReport returned error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "HidD_GetInputReport returned error %lu\n", GetLastError());
 
     if (!winetest_interactive) skip("skipping interactive tests\n");
     /* ReadFile on Xbox One For Windows controller seems to never succeed */
@@ -615,15 +616,15 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     else
     {
         res = pXInputGetState(index, &last_state);
-        ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+        ok(res == ERROR_SUCCESS, "XInputGetState returned %#lx\n", res);
 
-        trace("press A button on gamepad %d\n", index);
+        trace("press A button on gamepad %lu\n", index);
 
         do
         {
             Sleep(5);
             res = pXInputGetState(index, &state);
-            ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+            ok(res == ERROR_SUCCESS, "XInputGetState returned %#lx\n", res);
         } while (res == ERROR_SUCCESS && state.dwPacketNumber == last_state.dwPacketNumber);
         ok(state.Gamepad.wButtons & XINPUT_GAMEPAD_A, "unexpected button state %#x\n", state.Gamepad.wButtons);
 
@@ -634,24 +635,24 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
             memset(buffer, 0, sizeof(buffer));
             length = hid_caps->InputReportByteLength;
             ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
-            ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+            ok(ret, "ReadFile failed, last error %lu\n", GetLastError());
+            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %lu\n", length);
         }
         last_state = state;
 
         length = ARRAY_SIZE(usages);
         status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &length, preparsed, buffer, hid_caps->InputReportByteLength);
-        ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
-        ok(length == 1, "got length %u\n", length);
+        ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#lx\n", status);
+        ok(length == 1, "got length %lu\n", length);
         ok(usages[0] == 1, "got usages[0] %u\n", usages[0]);
 
-        trace("release A on gamepad %d\n", index);
+        trace("release A on gamepad %lu\n", index);
 
         do
         {
             Sleep(5);
             res = pXInputGetState(index, &state);
-            ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+            ok(res == ERROR_SUCCESS, "XInputGetState returned %#lx\n", res);
         } while (res == ERROR_SUCCESS && state.dwPacketNumber == last_state.dwPacketNumber);
         ok(!state.Gamepad.wButtons, "unexpected button state %#x\n", state.Gamepad.wButtons);
 
@@ -662,17 +663,17 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
             memset(buffer, 0, sizeof(buffer));
             length = hid_caps->InputReportByteLength;
             ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
-            ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+            ok(ret, "ReadFile failed, last error %lu\n", GetLastError());
+            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %lu\n", length);
         }
         last_state = state;
 
         length = ARRAY_SIZE(usages);
         status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &length, preparsed, buffer, hid_caps->InputReportByteLength);
-        ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
-        ok(length == 0, "got length %u\n", length);
+        ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#lx\n", status);
+        ok(length == 0, "got length %lu\n", length);
 
-        trace("press both LT and RT on gamepad %d\n", index);
+        trace("press both LT and RT on gamepad %lu\n", index);
 
         do
         {
@@ -680,7 +681,7 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
             {
                 Sleep(5);
                 res = pXInputGetState(index, &state);
-                ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+                ok(res == ERROR_SUCCESS, "XInputGetState returned %#lx\n", res);
             } while (res == ERROR_SUCCESS && state.dwPacketNumber == last_state.dwPacketNumber);
 
             /* now read as many reports from the device to get a consistent final state */
@@ -690,35 +691,35 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
                 memset(buffer, 0, sizeof(buffer));
                 length = hid_caps->InputReportByteLength;
                 ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
-                ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-                ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+                ok(ret, "ReadFile failed, last error %lu\n", GetLastError());
+                ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %lu\n", length);
             }
             last_state = state;
 
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-            ok(value == state.Gamepad.sThumbLX + 32768, "got LX value %d\n", value);
+            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status);
+            ok(value == state.Gamepad.sThumbLX + 32768, "got LX value %lu\n", value);
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-            ok(value == 32767 - state.Gamepad.sThumbLY, "got LY value %d\n", value);
+            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status);
+            ok(value == 32767 - state.Gamepad.sThumbLY, "got LY value %lu\n", value);
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-            ok(value == state.Gamepad.sThumbRX + 32768, "got LX value %d\n", value);
+            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status);
+            ok(value == state.Gamepad.sThumbRX + 32768, "got LX value %lu\n", value);
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-            ok(value == 32767 - state.Gamepad.sThumbRY, "got LY value %d\n", value);
+            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status);
+            ok(value == 32767 - state.Gamepad.sThumbRY, "got LY value %lu\n", value);
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-            ok(value == 32768 + (state.Gamepad.bLeftTrigger - state.Gamepad.bRightTrigger) * 128, "got Z value %d (RT %d, LT %d)\n",
+            ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status);
+            ok(value == 32768 + (state.Gamepad.bLeftTrigger - state.Gamepad.bRightTrigger) * 128, "got Z value %lu (RT %d, LT %d)\n",
                value, state.Gamepad.bRightTrigger, state.Gamepad.bLeftTrigger);
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetUsageValue returned %#x\n", status);
+            ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetUsageValue returned %#lx\n", status);
         } while (ret && (state.Gamepad.bRightTrigger != 255 || state.Gamepad.bLeftTrigger != 255));
     }
 }
@@ -765,7 +766,7 @@ static void test_hid_reports(void)
     HidD_GetHidGuid(&hid);
 
     set = SetupDiGetClassDevsW(&hid, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsW failed, error %u\n", GetLastError());
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsW failed, error %lu\n", GetLastError());
 
     while (SetupDiEnumDeviceInterfaces(set, NULL, &hid, i++, &iface))
     {

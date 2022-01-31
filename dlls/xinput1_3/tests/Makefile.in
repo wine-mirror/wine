@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = xinput1_3.dll
 IMPORTS   = user32 hid setupapi
 
