@@ -6873,13 +6873,25 @@ double CDECL nearbyint(double x)
  */
 float CDECL nearbyintf(float x)
 {
-    fenv_t env;
+    BOOL update_cw, update_sw;
+    unsigned int cw, sw;
 
-    fegetenv(&env);
-    _control87(_MCW_EM, _MCW_EM);
+    _setfp(&cw, 0, &sw, 0);
+    update_cw = !(cw & _EM_INEXACT);
+    update_sw = !(sw & _SW_INEXACT);
+    if (update_cw)
+    {
+        cw |= _EM_INEXACT;
+        _setfp(&cw, _EM_INEXACT, NULL, 0);
+    }
     x = rintf(x);
-    feclearexcept(FE_INEXACT);
-    feupdateenv(&env);
+    if (update_cw || update_sw)
+    {
+        sw = 0;
+        cw &= ~_EM_INEXACT;
+        _setfp(update_cw ? &cw : NULL, _EM_INEXACT,
+                update_sw ? &sw : NULL, _SW_INEXACT);
+    }
     return x;
 }
 
