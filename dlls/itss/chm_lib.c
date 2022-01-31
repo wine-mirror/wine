@@ -941,7 +941,7 @@ static UChar *_chm_find_in_PMGL(UChar *page_buf,
      *      that is provided for us.
      */
     struct chmPmglHeader header;
-    UInt32 hremain;
+    unsigned int hremain;
     UChar *end;
     UChar *cur;
     UChar *temp;
@@ -983,7 +983,7 @@ static Int32 _chm_find_in_PMGI(UChar *page_buf,
      *      that is provided for us
      */
     struct chmPmgiHeader header;
-    UInt32 hremain;
+    unsigned int hremain;
     int page=-1;
     UChar *end;
     UChar *cur;
@@ -1093,7 +1093,7 @@ static BOOL _chm_get_cmpblock_bounds(struct chmFile *h,
                                      Int64 *len)
 {
     UChar buffer[8], *dummy;
-    UInt32 remain;
+    unsigned int remain;
 
     /* for all but the last block, use the reset table */
     if (block < h->reset_table.block_count-1)
