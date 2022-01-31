@@ -29,7 +29,6 @@
 #include "wbemdisp.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wbemdisp_private.h"
 #include "wbemdisp_classes.h"
 
@@ -55,7 +54,7 @@ static WCHAR *heap_strdupW( const WCHAR *src )
 {
     WCHAR *dst;
     if (!src) return NULL;
-    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
+    if ((dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
     return dst;
 }
 
@@ -162,7 +161,7 @@ static ULONG WINAPI property_Release( ISWbemProperty *iface )
         TRACE( "destroying %p\n", property );
         IWbemClassObject_Release( property->object );
         SysFreeString( property->name );
-        heap_free( property );
+        free( property );
     }
     return refs;
 }
@@ -322,7 +321,7 @@ static HRESULT SWbemProperty_create( IWbemClassObject *wbem_object, BSTR name, I
 
     TRACE( "%p, %p\n", obj, wbem_object );
 
-    if (!(property = heap_alloc( sizeof(*property) ))) return E_OUTOFMEMORY;
+    if (!(property = malloc( sizeof(*property) ))) return E_OUTOFMEMORY;
     property->ISWbemProperty_iface.lpVtbl = &property_vtbl;
     property->refs = 1;
     property->object = wbem_object;
@@ -360,7 +359,7 @@ static ULONG WINAPI propertyset_Release( ISWbemPropertySet *iface )
     {
         TRACE( "destroying %p\n", propertyset );
         IWbemClassObject_Release( propertyset->object );
-        heap_free( propertyset );
+        free( propertyset );
     }
     return refs;
 }
@@ -520,7 +519,7 @@ static HRESULT SWbemPropertySet_create( IWbemClassObject *wbem_object, ISWbemPro
 
     TRACE( "%p, %p\n", obj, wbem_object );
 
-    if (!(propertyset = heap_alloc( sizeof(*propertyset) ))) return E_OUTOFMEMORY;
+    if (!(propertyset = malloc( sizeof(*propertyset) ))) return E_OUTOFMEMORY;
     propertyset->ISWbemPropertySet_iface.lpVtbl = &propertyset_vtbl;
     propertyset->refs = 1;
     propertyset->object = wbem_object;
@@ -613,8 +612,8 @@ static ULONG WINAPI method_Release( ISWbemMethod *iface )
     {
         TRACE( "destroying %p\n", method );
         ISWbemMethodSet_Release( &method->set->ISWbemMethodSet_iface );
-        heap_free( method->name );
-        heap_free( method );
+        free( method->name );
+        free( method );
     }
     return refs;
 }
@@ -779,8 +778,7 @@ static HRESULT SWbemMethod_create( struct methodset *set, const WCHAR *name, ISW
 {
     struct method *method;
 
-    if (!(method = heap_alloc(sizeof(*method))))
-        return E_OUTOFMEMORY;
+    if (!(method = malloc( sizeof(*method) ))) return E_OUTOFMEMORY;
 
     method->ISWbemMethod_iface.lpVtbl = &methodvtbl;
     method->refs = 1;
@@ -837,7 +835,7 @@ static ULONG WINAPI methodset_Release( ISWbemMethodSet *iface )
     {
         TRACE( "destroying %p\n", set );
         ISWbemObject_Release( &set->object->ISWbemObject_iface );
-        heap_free( set );
+        free( set );
     }
     return refs;
 }
@@ -982,8 +980,7 @@ static HRESULT SWbemMethodSet_create( struct object *object, ISWbemMethodSet **o
 {
     struct methodset *set;
 
-    if (!(set = heap_alloc(sizeof(*set))))
-        return E_OUTOFMEMORY;
+    if (!(set = malloc( sizeof(*set) ))) return E_OUTOFMEMORY;
 
     set->ISWbemMethodSet_iface.lpVtbl = &methodsetvtbl;
     set->refs = 1;
@@ -1024,8 +1021,8 @@ static ULONG WINAPI object_Release(
         IWbemClassObject_Release( object->object );
         ISWbemServices_Release( &object->services->ISWbemServices_iface );
         for (i = 0; i < object->nb_members; i++) SysFreeString( object->members[i].name );
-        heap_free( object->members );
-        heap_free( object );
+        free( object->members );
+        free( object );
     }
     return refs;
 }
@@ -1094,7 +1091,7 @@ static BOOL object_reserve_member( struct object *object, unsigned int count, un
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_members = heap_realloc( object->members, new_capacity * sizeof(*new_members) )))
+    if (!(new_members = realloc( object->members, new_capacity * sizeof(*new_members) )))
         return FALSE;
 
     object->members = new_members;
@@ -1153,7 +1150,7 @@ static HRESULT init_members( struct object *object )
 error:
     for (i = 0; i < count; ++i)
         SysFreeString( object->members[i].name );
-    heap_free( object->members );
+    free( object->members );
     object->members = NULL;
     object->nb_members = 0;
     return E_FAIL;
@@ -1677,7 +1674,7 @@ static HRESULT SWbemObject_create( struct services *services, IWbemClassObject *
 
     TRACE( "%p, %p\n", obj, wbem_object );
 
-    if (!(object = heap_alloc( sizeof(*object) ))) return E_OUTOFMEMORY;
+    if (!(object = malloc( sizeof(*object) ))) return E_OUTOFMEMORY;
     object->ISWbemObject_iface.lpVtbl = &object_vtbl;
     object->refs = 1;
     object->object = wbem_object;
@@ -1726,7 +1723,7 @@ static ULONG WINAPI objectset_Release(
         TRACE( "destroying %p\n", objectset );
         IEnumWbemClassObject_Release( objectset->objectenum );
         ISWbemServices_Release( &objectset->services->ISWbemServices_iface );
-        heap_free( objectset );
+        free( objectset );
     }
     return refs;
 }
@@ -1949,7 +1946,7 @@ static HRESULT SWbemObjectSet_create( struct services *services, IEnumWbemClassO
 
     TRACE( "%p, %p\n", obj, wbem_objectenum );
 
-    if (!(objectset = heap_alloc( sizeof(*objectset) ))) return E_OUTOFMEMORY;
+    if (!(objectset = malloc( sizeof(*objectset) ))) return E_OUTOFMEMORY;
     objectset->ISWbemObjectSet_iface.lpVtbl = &objectset_vtbl;
     objectset->refs = 1;
     objectset->objectenum = wbem_objectenum;
@@ -1994,7 +1991,7 @@ static ULONG WINAPI enumvar_Release(
         TRACE( "destroying %p\n", enumvar );
         IEnumWbemClassObject_Release( enumvar->objectenum );
         ISWbemServices_Release( &enumvar->services->ISWbemServices_iface );
-        heap_free( enumvar );
+        free( enumvar );
     }
     return refs;
 }
@@ -2087,7 +2084,7 @@ static HRESULT EnumVARIANT_create( struct services *services, IEnumWbemClassObje
 {
     struct enumvar *enumvar;
 
-    if (!(enumvar = heap_alloc( sizeof(*enumvar) ))) return E_OUTOFMEMORY;
+    if (!(enumvar = malloc( sizeof(*enumvar) ))) return E_OUTOFMEMORY;
     enumvar->IEnumVARIANT_iface.lpVtbl = &enumvar_vtbl;
     enumvar->refs = 1;
     enumvar->objectenum = objectenum;
@@ -2122,7 +2119,7 @@ static ULONG WINAPI services_Release(
     {
         TRACE( "destroying %p\n", services );
         IWbemServices_Release( services->services );
-        heap_free( services );
+        free( services );
     }
     return refs;
 }
@@ -2587,7 +2584,7 @@ static HRESULT SWbemServices_create( IWbemServices *wbem_services, ISWbemService
 
     TRACE( "%p, %p\n", obj, wbem_services );
 
-    if (!(services = heap_alloc( sizeof(*services) ))) return E_OUTOFMEMORY;
+    if (!(services = malloc( sizeof(*services) ))) return E_OUTOFMEMORY;
     services->ISWbemServices_iface.lpVtbl = &services_vtbl;
     services->refs = 1;
     services->services = wbem_services;
@@ -2627,7 +2624,7 @@ static ULONG WINAPI locator_Release(
         TRACE( "destroying %p\n", locator );
         if (locator->locator)
             IWbemLocator_Release( locator->locator );
-        heap_free( locator );
+        free( locator );
     }
     return refs;
 }
@@ -2829,7 +2826,7 @@ HRESULT SWbemLocator_create( void **obj )
 
     TRACE( "%p\n", obj );
 
-    if (!(locator = heap_alloc( sizeof(*locator) ))) return E_OUTOFMEMORY;
+    if (!(locator = malloc( sizeof(*locator) ))) return E_OUTOFMEMORY;
     locator->ISWbemLocator_iface.lpVtbl = &locator_vtbl;
     locator->refs = 1;
     locator->locator = NULL;
@@ -2867,7 +2864,7 @@ static ULONG WINAPI security_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", security );
-        heap_free( security );
+        free( security );
     }
     return refs;
 }
@@ -3056,7 +3053,7 @@ static HRESULT ISWbemSecurity_create( ISWbemSecurity **obj )
 
     TRACE( "%p\n", obj );
 
-    if (!(security = heap_alloc( sizeof(*security) ))) return E_OUTOFMEMORY;
+    if (!(security = malloc( sizeof(*security) ))) return E_OUTOFMEMORY;
     security->ISWbemSecurity_iface.lpVtbl = &security_vtbl;
     security->refs = 1;
     security->implevel = wbemImpersonationLevelImpersonate;
@@ -3122,7 +3119,7 @@ static ULONG WINAPI namedvalue_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", value );
-        heap_free( value );
+        free( value );
     }
     return refs;
 }
@@ -3249,8 +3246,7 @@ static HRESULT namedvalue_create( ISWbemNamedValue **value )
 {
     struct namedvalue *object;
 
-    if (!(object = heap_alloc(sizeof(*object))))
-        return E_OUTOFMEMORY;
+    if (!(object = malloc( sizeof(*object) ))) return E_OUTOFMEMORY;
 
     object->ISWbemNamedValue_iface.lpVtbl = &namedvaluevtbl;
     object->refs = 1;
@@ -3301,7 +3297,7 @@ static ULONG WINAPI namedvalueset_Release(
         TRACE( "destroying %p\n", set );
         if (set->context)
             IWbemContext_Release( set->context );
-        heap_free( set );
+        free( set );
     }
     return refs;
 }
@@ -3513,7 +3509,7 @@ HRESULT SWbemNamedValueSet_create( void **obj )
 
     TRACE( "%p\n", obj );
 
-    if (!(set = heap_alloc_zero( sizeof(*set) ))) return E_OUTOFMEMORY;
+    if (!(set = calloc( 1, sizeof(*set) ))) return E_OUTOFMEMORY;
     set->ISWbemNamedValueSet_iface.lpVtbl = &namedvalueset_vtbl;
     set->refs = 1;
 
