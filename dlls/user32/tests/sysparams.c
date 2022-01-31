@@ -30,10 +30,6 @@
 #include "winuser.h"
 #include "winnls.h"
 
-#ifndef SPI_GETDESKWALLPAPER
-# define SPI_GETDESKWALLPAPER 0x0073
-#endif
-
 static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
 static BOOL (WINAPI *pSetProcessDPIAware)(void);

@@ -34,10 +34,6 @@
 
 #include "wine/test.h"
 
-#ifndef SPI_GETDESKWALLPAPER
-#define SPI_GETDESKWALLPAPER 0x0073
-#endif
-
 #ifndef WM_SYSTIMER
 #define WM_SYSTIMER 0x0118
 #endif
