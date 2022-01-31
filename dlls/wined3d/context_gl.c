@@ -2758,6 +2758,19 @@ map:
     return map_ptr;
 }
 
+static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context_gl *context_gl)
+{
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+
+    if (bo->b.map_ptr)
+        return;
+
+    wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
+    GL_EXTCALL(glUnmapBuffer(bo->binding));
+    wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
+    checkGLcall("Unmap buffer object");
+}
+
 void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *data, size_t size, uint32_t flags)
 {
@@ -2817,7 +2830,6 @@ static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct 
 void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
 {
-    const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *bo;
 
     if (!data->buffer_object)
@@ -2825,15 +2837,7 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
     bo = wined3d_bo_gl(data->buffer_object);
 
     flush_bo_ranges(context_gl, wined3d_const_bo_address(data), range_count, ranges);
-
-    if (bo->b.map_ptr)
-        return;
-
-    gl_info = context_gl->gl_info;
-    wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
-    GL_EXTCALL(glUnmapBuffer(bo->binding));
-    wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
-    checkGLcall("Unmap buffer object");
+    wined3d_bo_gl_unmap(bo, context_gl);
 }
 
 void wined3d_context_gl_flush_bo_address(struct wined3d_context_gl *context_gl,
