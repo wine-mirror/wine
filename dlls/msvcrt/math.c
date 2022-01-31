@@ -10365,7 +10365,7 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
         case 0x300: fpword |= _PC_64; break;
     }
     if (cw & 0x1000) fpword |= _IC_AFFINE;
-    _control87(fpword, 0xffffffff);
+    _setfp(&fpword, _MCW_EM | _MCW_RC | _MCW_PC | _MCW_IC, NULL, 0);
 
     return res;
 }
