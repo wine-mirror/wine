@@ -2249,7 +2249,7 @@ static void test_mdi(void)
     mdi_hwndMain = CreateWindowExA(0, "MDI_parent_Class", "MDI parent window",
                                    WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                    WS_MAXIMIZEBOX /*| WS_VISIBLE*/,
-                                   100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                   200, 100, CW_USEDEFAULT, CW_USEDEFAULT,
                                    GetDesktopWindow(), 0,
                                    GetModuleHandleA(NULL), NULL);
     assert(mdi_hwndMain);
