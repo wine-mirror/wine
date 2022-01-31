@@ -19433,8 +19433,10 @@ static void test_create_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 64;
     U(uav_desc).Buffer.Flags = 0;
 
+    uav = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!uav, "Unexpected pointer %p.\n", uav);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
@@ -19483,8 +19485,10 @@ static void test_create_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 64;
     U(uav_desc).Buffer.Flags = 0;
 
+    uav = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!uav, "Unexpected pointer %p.\n", uav);
 
     ID3D11Buffer_Release(buffer);
 
@@ -19579,9 +19583,11 @@ static void test_create_unordered_access_view(void)
             texture = (ID3D11Resource *)texture3d;
         }
 
+        uav = (void *)0xdeadbeef;
         get_uav_desc(&uav_desc, &invalid_desc_tests[i].uav_desc);
         hr = ID3D11Device_CreateUnorderedAccessView(device, texture, &uav_desc, &uav);
         ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!uav, "Unexpected pointer %p.\n", uav);
 
         ID3D11Resource_Release(texture);
     }

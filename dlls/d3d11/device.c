@@ -3399,6 +3399,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateUnorderedAccessView(ID3D11De
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
 
+    *view = NULL;
+
     if (FAILED(hr = d3d11_unordered_access_view_create(device, resource, desc, &object)))
         return hr;
 
