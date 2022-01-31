@@ -789,7 +789,7 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
     HRESULT hr;
     DIEFFECT dieffect;
     DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
-    int direction[2] = {0, 0};
+    LONG direction[2] = {0, 0};
     int num_axes = 2;
     struct Joystick *joystick = pvRef;
     DIRAMPFORCE rforce;
