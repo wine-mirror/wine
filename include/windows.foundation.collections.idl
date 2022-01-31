@@ -118,6 +118,26 @@ cpp_quote("#endif")
                 HRESULT IndexOf([in, optional] T element, [out] UINT32 *index, [out, retval] BOOLEAN *value);
                 HRESULT GetMany([in] UINT32 start_index, [in] UINT32 items_size, [out] T *items, [out, retval] UINT32 *value);
             }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(913337e9-11a1-4345-a3a2-4e7f956e222d)
+            ]
+            interface IVector<T> : IInspectable
+            {
+                HRESULT GetAt([in, optional] UINT32 index, [out, retval] T *value);
+                [propget] HRESULT Size([out, retval] UINT32 *value);
+                HRESULT GetView([out, retval] IVectorView<T> **value);
+                HRESULT IndexOf([in, optional] T element, [out] UINT32 *index, [out, retval] BOOLEAN *value);
+                HRESULT SetAt([in] UINT32 index, [in, optional] T value);
+                HRESULT InsertAt([in] UINT32 index, [in, optional] T value);
+                HRESULT RemoveAt([in] UINT32 index);
+                HRESULT Append([in, optional] T value);
+                HRESULT RemoveAtEnd();
+                HRESULT Clear();
+                HRESULT GetMany([in] UINT32 start_index, [in] UINT32 items_size, [out] T *items, [out, retval] UINT32 *value);
+                HRESULT ReplaceAll([in] UINT32 count, [in] T *items);
+            }
         }
 #endif
     }
