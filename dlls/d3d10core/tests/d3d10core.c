@@ -3555,8 +3555,10 @@ static void test_create_shader_resource_view(void)
 
     buffer = create_buffer(device, D3D10_BIND_SHADER_RESOURCE, 1024, NULL);
 
+    srview = (void *)0xdeadbeef;
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, NULL, &srview);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!srview, "Unexpected pointer %p\n", srview);
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_BUFFER;
@@ -3586,8 +3588,10 @@ static void test_create_shader_resource_view(void)
     /* Without D3D10_BIND_SHADER_RESOURCE. */
     buffer = create_buffer(device, 0, 1024, NULL);
 
+    srview = (void *)0xdeadbeef;
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!srview, "Unexpected pointer %p\n", srview);
 
     ID3D10Buffer_Release(buffer);
 
@@ -3693,9 +3697,11 @@ static void test_create_shader_resource_view(void)
             texture = (ID3D10Resource *)texture3d;
         }
 
+        srview = (void *)0xdeadbeef;
         get_srv_desc(&srv_desc, &invalid_desc_tests[i].srv_desc);
         hr = ID3D10Device_CreateShaderResourceView(device, texture, &srv_desc, &srview);
         ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!srview, "Unexpected pointer %p.\n", srview);
 
         ID3D10Resource_Release(texture);
     }
