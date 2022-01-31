@@ -39,7 +39,7 @@
 #include "oaidl.h"
 #include <wine/list.h>
 
-#define ADDRSIZE        (dbg_curr_process ? dbg_curr_process->be_cpu->pointer_size : (int)sizeof(void*))
+#define ADDRSIZE        ((int)(dbg_curr_process ? dbg_curr_process->be_cpu->pointer_size : sizeof(void*)))
 #define ADDRWIDTH       (ADDRSIZE * 2)
 
 /* the debugger uses these exceptions for its internal use */
