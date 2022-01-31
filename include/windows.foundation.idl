@@ -29,12 +29,24 @@ import "windows.foundation.collections.idl";
 
 namespace Windows {
     namespace Foundation {
+        interface IAsyncAction;
+    }
+}
+
+namespace Windows {
+    namespace Foundation {
         typedef enum PropertyType PropertyType;
         typedef struct Point Point;
         typedef struct Size Size;
         typedef struct Rect Rect;
         typedef struct DateTime DateTime;
         typedef struct TimeSpan TimeSpan;
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(a4ed5c81-76c9-40bd-8be6-b1d90fb20ae7)
+        ]
+        delegate HRESULT AsyncActionCompletedHandler([in] Windows.Foundation.IAsyncAction *action, [in] AsyncStatus status);
 
         [contract(Windows.Foundation.FoundationContract, 1.0)]
         enum PropertyType {
@@ -127,6 +139,18 @@ namespace Windows {
         interface IClosable : IInspectable
         {
             HRESULT Close();
+        }
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(5a648006-843a-4da9-865b-9d26e5dfad7b)
+        ]
+        interface IAsyncAction : IInspectable
+            requires IAsyncInfo
+        {
+            [propput] HRESULT Completed([in] Windows.Foundation.AsyncActionCompletedHandler *handler);
+            [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncActionCompletedHandler **handler);
+            HRESULT GetResults();
         }
     }
 }
