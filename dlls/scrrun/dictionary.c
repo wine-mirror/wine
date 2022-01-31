@@ -240,7 +240,7 @@ static ULONG WINAPI dict_enum_AddRef(IEnumVARIANT *iface)
 {
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -249,7 +249,7 @@ static ULONG WINAPI dict_enum_Release(IEnumVARIANT *iface)
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -267,7 +267,7 @@ static HRESULT WINAPI dict_enum_Next(IEnumVARIANT *iface, ULONG count, VARIANT *
     struct keyitem_pair *pair;
     ULONG i = 0;
 
-    TRACE("(%p)->(%u %p %p)\n", This, count, keys, fetched);
+    TRACE("%p, %lu, %p, %p.\n", iface, count, keys, fetched);
 
     if (fetched)
         *fetched = 0;
@@ -292,7 +292,7 @@ static HRESULT WINAPI dict_enum_Skip(IEnumVARIANT *iface, ULONG count)
 {
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
 
-    TRACE("(%p)->(%u)\n", This, count);
+    TRACE("%p, %lu.\n", iface, count);
 
     if (!count)
         return S_OK;
@@ -418,7 +418,7 @@ static ULONG WINAPI dictionary_AddRef(IDictionary *iface)
     struct dictionary *dictionary = impl_from_IDictionary(iface);
     ULONG ref = InterlockedIncrement(&dictionary->ref);
 
-    TRACE("%p, refcount %u.\n", iface, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
     return ref;
 }
@@ -428,7 +428,7 @@ static ULONG WINAPI dictionary_Release(IDictionary *iface)
     struct dictionary *dictionary = impl_from_IDictionary(iface);
     ULONG ref = InterlockedDecrement(&dictionary->ref);
 
-    TRACE("%p, refcount %u.\n", iface, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -449,7 +449,7 @@ static HRESULT WINAPI dictionary_GetTypeInfoCount(IDictionary *iface, UINT *pcti
 
 static HRESULT WINAPI dictionary_GetTypeInfo(IDictionary *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    TRACE("%p, %u, %u, %p.\n", iface, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IDictionary_tid, ppTInfo);
 }
@@ -460,7 +460,7 @@ static HRESULT WINAPI dictionary_GetIDsOfNames(IDictionary *iface, REFIID riid, 
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p, %s, %p, %u, %u, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IDictionary_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -476,18 +476,16 @@ static HRESULT WINAPI dictionary_Invoke(IDictionary *iface, DISPID dispIdMember,
                 LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
                 EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct dictionary *dictionary = impl_from_IDictionary(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p, %d, %s, %d, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IDictionary_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &dictionary->IDictionary_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 

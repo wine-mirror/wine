@@ -187,7 +187,7 @@ static inline HRESULT create_error(DWORD err)
     case ERROR_FILE_EXISTS: return CTL_E_FILEALREADYEXISTS;
     case ERROR_ALREADY_EXISTS: return CTL_E_FILEALREADYEXISTS;
     default:
-        FIXME("Unsupported error code: %d\n", err);
+        FIXME("Unsupported error code: %ld\n", err);
         return E_FAIL;
     }
 }
@@ -308,9 +308,11 @@ static HRESULT WINAPI textstream_QueryInterface(ITextStream *iface, REFIID riid,
 
 static ULONG WINAPI textstream_AddRef(ITextStream *iface)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct textstream *stream = impl_from_ITextStream(iface);
+    ULONG ref = InterlockedIncrement(&stream->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
@@ -319,7 +321,7 @@ static ULONG WINAPI textstream_Release(ITextStream *iface)
     struct textstream *stream = impl_from_ITextStream(iface);
     ULONG ref = InterlockedDecrement(&stream->ref);
 
-    TRACE("%p, refcount %d.\n", iface, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
@@ -342,8 +344,8 @@ static HRESULT WINAPI textstream_GetTypeInfoCount(ITextStream *iface, UINT *pcti
 static HRESULT WINAPI textstream_GetTypeInfo(ITextStream *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(ITextStream_tid, ppTInfo);
 }
 
@@ -351,11 +353,10 @@ static HRESULT WINAPI textstream_GetIDsOfNames(ITextStream *iface, REFIID riid,
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(ITextStream_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -372,11 +373,10 @@ static HRESULT WINAPI textstream_Invoke(ITextStream *iface, DISPID dispIdMember,
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(ITextStream_tid, &typeinfo);
@@ -513,7 +513,7 @@ static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
     struct textstream *This = impl_from_ITextStream(iface);
     HRESULT hr = S_OK;
 
-    TRACE("(%p)->(%d %p)\n", This, len, text);
+    TRACE("%p, %ld, %p.\n", iface, len, text);
 
     if (!text)
         return E_POINTER;
@@ -685,15 +685,15 @@ static HRESULT WINAPI textstream_WriteLine(ITextStream *iface, BSTR text)
 
 static HRESULT WINAPI textstream_WriteBlankLines(ITextStream *iface, LONG lines)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%d): stub\n", This, lines);
+    FIXME("%p, %ld stub\n", iface, lines);
+
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI textstream_Skip(ITextStream *iface, LONG count)
 {
-    struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%d): stub\n", This, count);
+    FIXME("%p, %ld stub\n", iface, count);
+
     return E_NOTIMPL;
 }
 
@@ -866,9 +866,11 @@ static HRESULT WINAPI drive_QueryInterface(IDrive *iface, REFIID riid, void **ob
 
 static ULONG WINAPI drive_AddRef(IDrive *iface)
 {
-    struct drive *This = impl_from_IDrive(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct drive *drive = impl_from_IDrive(iface);
+    ULONG ref = InterlockedIncrement(&drive->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
@@ -877,7 +879,7 @@ static ULONG WINAPI drive_Release(IDrive *iface)
     struct drive *drive = impl_from_IDrive(iface);
     ULONG ref = InterlockedDecrement(&drive->ref);
 
-    TRACE("%p, refcount %d.\n", iface, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
         free(drive);
@@ -896,8 +898,8 @@ static HRESULT WINAPI drive_GetTypeInfoCount(IDrive *iface, UINT *pctinfo)
 static HRESULT WINAPI drive_GetTypeInfo(IDrive *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct drive *This = impl_from_IDrive(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IDrive_tid, ppTInfo);
 }
 
@@ -905,11 +907,10 @@ static HRESULT WINAPI drive_GetIDsOfNames(IDrive *iface, REFIID riid,
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    struct drive *This = impl_from_IDrive(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IDrive_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -926,11 +927,10 @@ static HRESULT WINAPI drive_Invoke(IDrive *iface, DISPID dispIdMember,
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct drive *This = impl_from_IDrive(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IDrive_tid, &typeinfo);
@@ -1218,7 +1218,7 @@ static ULONG WINAPI enumvariant_AddRef(IEnumVARIANT *iface)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -1227,7 +1227,7 @@ static ULONG WINAPI foldercoll_enumvariant_Release(IEnumVARIANT *iface)
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
@@ -1274,7 +1274,7 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
     WIN32_FIND_DATAW data;
     ULONG count = 0;
 
-    TRACE("(%p)->(%d %p %p)\n", This, celt, var, fetched);
+    TRACE("%p, %lu, %p, %p.\n", iface, celt, var, fetched);
 
     if (fetched)
         *fetched = 0;
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG cel
     HANDLE handle = This->data.u.foldercoll.find;
     WIN32_FIND_DATAW data;
 
-    TRACE("(%p)->(%d)\n", This, celt);
+    TRACE("%p, %lu.\n", iface, celt);
 
     if (!celt) return S_OK;
 
@@ -1409,7 +1409,7 @@ static ULONG WINAPI filecoll_enumvariant_Release(IEnumVARIANT *iface)
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
@@ -1428,7 +1428,7 @@ static HRESULT WINAPI filecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt,
     WIN32_FIND_DATAW data;
     ULONG count = 0;
 
-    TRACE("(%p)->(%d %p %p)\n", This, celt, var, fetched);
+    TRACE("%p, %ld, %p, %p.\n", iface, celt, var, fetched);
 
     if (fetched)
         *fetched = 0;
@@ -1475,7 +1475,7 @@ static HRESULT WINAPI filecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
     HANDLE handle = This->data.u.filecoll.find;
     WIN32_FIND_DATAW data;
 
-    TRACE("(%p)->(%d)\n", This, celt);
+    TRACE("%p, %lu.\n", iface, celt);
 
     if (!celt) return S_OK;
 
@@ -1551,7 +1551,7 @@ static ULONG WINAPI drivecoll_enumvariant_Release(IEnumVARIANT *iface)
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
@@ -1581,7 +1581,7 @@ static HRESULT WINAPI drivecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
     ULONG count = 0;
 
-    TRACE("(%p)->(%d %p %p)\n", This, celt, var, fetched);
+    TRACE("%p, %lu, %p, %p.\n", iface, celt, var, fetched);
 
     if (fetched)
         *fetched = 0;
@@ -1612,7 +1612,7 @@ static HRESULT WINAPI drivecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
 
-    TRACE("(%p)->(%d)\n", This, celt);
+    TRACE("%p, %lu.\n", iface, celt);
 
     if (!celt) return S_OK;
 
@@ -1696,22 +1696,25 @@ static HRESULT WINAPI foldercoll_QueryInterface(IFolderCollection *iface, REFIID
 
 static ULONG WINAPI foldercoll_AddRef(IFolderCollection *iface)
 {
-    struct foldercollection *This = impl_from_IFolderCollection(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct foldercollection *collection = impl_from_IFolderCollection(iface);
+    ULONG ref = InterlockedIncrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
 static ULONG WINAPI foldercoll_Release(IFolderCollection *iface)
 {
-    struct foldercollection *This = impl_from_IFolderCollection(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct foldercollection *collection = impl_from_IFolderCollection(iface);
+    ULONG ref = InterlockedDecrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
-        SysFreeString(This->path);
-        free(This);
+        SysFreeString(collection->path);
+        free(collection);
     }
 
     return ref;
@@ -1728,8 +1731,8 @@ static HRESULT WINAPI foldercoll_GetTypeInfoCount(IFolderCollection *iface, UINT
 static HRESULT WINAPI foldercoll_GetTypeInfo(IFolderCollection *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct foldercollection *This = impl_from_IFolderCollection(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IFolderCollection_tid, ppTInfo);
 }
 
@@ -1737,11 +1740,10 @@ static HRESULT WINAPI foldercoll_GetIDsOfNames(IFolderCollection *iface, REFIID 
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    struct foldercollection *This = impl_from_IFolderCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IFolderCollection_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -1758,11 +1760,10 @@ static HRESULT WINAPI foldercoll_Invoke(IFolderCollection *iface, DISPID dispIdM
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct foldercollection *This = impl_from_IFolderCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IFolderCollection_tid, &typeinfo);
@@ -1897,22 +1898,25 @@ static HRESULT WINAPI filecoll_QueryInterface(IFileCollection *iface, REFIID rii
 
 static ULONG WINAPI filecoll_AddRef(IFileCollection *iface)
 {
-    struct filecollection *This = impl_from_IFileCollection(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct filecollection *collection = impl_from_IFileCollection(iface);
+    ULONG ref = InterlockedIncrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
 static ULONG WINAPI filecoll_Release(IFileCollection *iface)
 {
-    struct filecollection *This = impl_from_IFileCollection(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct filecollection *collection = impl_from_IFileCollection(iface);
+    ULONG ref = InterlockedDecrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
-        SysFreeString(This->path);
-        free(This);
+        SysFreeString(collection->path);
+        free(collection);
     }
 
     return ref;
@@ -1929,8 +1933,8 @@ static HRESULT WINAPI filecoll_GetTypeInfoCount(IFileCollection *iface, UINT *pc
 static HRESULT WINAPI filecoll_GetTypeInfo(IFileCollection *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct filecollection *This = impl_from_IFileCollection(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IFileCollection_tid, ppTInfo);
 }
 
@@ -1938,11 +1942,10 @@ static HRESULT WINAPI filecoll_GetIDsOfNames(IFileCollection *iface, REFIID riid
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    struct filecollection *This = impl_from_IFileCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IFileCollection_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -1959,11 +1962,10 @@ static HRESULT WINAPI filecoll_Invoke(IFileCollection *iface, DISPID dispIdMembe
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct filecollection *This = impl_from_IFileCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IFileCollection_tid, &typeinfo);
@@ -2089,20 +2091,23 @@ static HRESULT WINAPI drivecoll_QueryInterface(IDriveCollection *iface, REFIID r
 
 static ULONG WINAPI drivecoll_AddRef(IDriveCollection *iface)
 {
-    struct drivecollection *This = impl_from_IDriveCollection(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct drivecollection *collection = impl_from_IDriveCollection(iface);
+    ULONG ref = InterlockedIncrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
 static ULONG WINAPI drivecoll_Release(IDriveCollection *iface)
 {
-    struct drivecollection *This = impl_from_IDriveCollection(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct drivecollection *collection = impl_from_IDriveCollection(iface);
+    ULONG ref = InterlockedDecrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
-        free(This);
+        free(collection);
 
     return ref;
 }
@@ -2118,8 +2123,8 @@ static HRESULT WINAPI drivecoll_GetTypeInfoCount(IDriveCollection *iface, UINT *
 static HRESULT WINAPI drivecoll_GetTypeInfo(IDriveCollection *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct drivecollection *This = impl_from_IDriveCollection(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IDriveCollection_tid, ppTInfo);
 }
 
@@ -2127,11 +2132,10 @@ static HRESULT WINAPI drivecoll_GetIDsOfNames(IDriveCollection *iface, REFIID ri
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    struct drivecollection *This = impl_from_IDriveCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IDriveCollection_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -2148,11 +2152,10 @@ static HRESULT WINAPI drivecoll_Invoke(IDriveCollection *iface, DISPID dispIdMem
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct drivecollection *This = impl_from_IDriveCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IDriveCollection_tid, &typeinfo);
@@ -2259,22 +2262,25 @@ static HRESULT WINAPI folder_QueryInterface(IFolder *iface, REFIID riid, void **
 
 static ULONG WINAPI folder_AddRef(IFolder *iface)
 {
-    struct folder *This = impl_from_IFolder(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct folder *folder = impl_from_IFolder(iface);
+    ULONG ref = InterlockedIncrement(&folder->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
 static ULONG WINAPI folder_Release(IFolder *iface)
 {
-    struct folder *This = impl_from_IFolder(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    struct folder *folder = impl_from_IFolder(iface);
+    ULONG ref = InterlockedDecrement(&folder->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
-        SysFreeString(This->path);
-        free(This);
+        SysFreeString(folder->path);
+        free(folder);
     }
 
     return ref;
@@ -2291,8 +2297,8 @@ static HRESULT WINAPI folder_GetTypeInfoCount(IFolder *iface, UINT *pctinfo)
 static HRESULT WINAPI folder_GetTypeInfo(IFolder *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct folder *This = impl_from_IFolder(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IFolder_tid, ppTInfo);
 }
 
@@ -2300,11 +2306,10 @@ static HRESULT WINAPI folder_GetIDsOfNames(IFolder *iface, REFIID riid,
                                         LPOLESTR *rgszNames, UINT cNames,
                                         LCID lcid, DISPID *rgDispId)
 {
-    struct folder *This = impl_from_IFolder(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IFolder_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -2321,11 +2326,10 @@ static HRESULT WINAPI folder_Invoke(IFolder *iface, DISPID dispIdMember,
                                       DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                       EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct folder *This = impl_from_IFolder(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IFolder_tid, &typeinfo);
@@ -2617,10 +2621,10 @@ static HRESULT WINAPI file_QueryInterface(IFile *iface, REFIID riid, void **obj)
 
 static ULONG WINAPI file_AddRef(IFile *iface)
 {
-    struct file *This = impl_from_IFile(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    struct file *file = impl_from_IFile(iface);
+    LONG ref = InterlockedIncrement(&file->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     return ref;
 }
@@ -2630,7 +2634,7 @@ static ULONG WINAPI file_Release(IFile *iface)
     struct file *file = impl_from_IFile(iface);
     LONG ref = InterlockedDecrement(&file->ref);
 
-    TRACE("%p, refcount %d.\n", iface, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
@@ -2654,9 +2658,7 @@ static HRESULT WINAPI file_GetTypeInfoCount(IFile *iface, UINT *pctinfo)
 static HRESULT WINAPI file_GetTypeInfo(IFile *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    struct file *This = impl_from_IFile(iface);
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
 
     return get_typeinfo(IFile_tid, ppTInfo);
 }
@@ -2664,11 +2666,10 @@ static HRESULT WINAPI file_GetTypeInfo(IFile *iface,
 static HRESULT WINAPI file_GetIDsOfNames(IFile *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    struct file *This = impl_from_IFile(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid),
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid),
             rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IFile_tid, &typeinfo);
@@ -2679,13 +2680,13 @@ static HRESULT WINAPI file_GetIDsOfNames(IFile *iface, REFIID riid,
     return hr;
 }
 
-static HRESULT WINAPI file_Invoke(IFile *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+static HRESULT WINAPI file_Invoke(IFile *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    struct file *This = impl_from_IFile(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
             lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IFile_tid, &typeinfo);
@@ -3046,7 +3047,8 @@ static HRESULT WINAPI filesys_GetTypeInfoCount(IFileSystem3 *iface, UINT *pctinf
 static HRESULT WINAPI filesys_GetTypeInfo(IFileSystem3 *iface, UINT iTInfo,
                                         LCID lcid, ITypeInfo **ppTInfo)
 {
-    TRACE("(%p)->(%u %u %p)\n", iface, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IFileSystem3_tid, ppTInfo);
 }
 
@@ -3057,7 +3059,7 @@ static HRESULT WINAPI filesys_GetIDsOfNames(IFileSystem3 *iface, REFIID riid,
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IFileSystem3_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -3077,7 +3079,7 @@ static HRESULT WINAPI filesys_Invoke(IFileSystem3 *iface, DISPID dispIdMember,
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", iface, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IFileSystem3_tid, &typeinfo);
@@ -3939,7 +3941,7 @@ static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR name, BST
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    ret = VerQueryValueW(ptr, L"\\", (void **)&info, &len);
+    ret = VerQueryValueW(ptr, L"\\", (void **)&info, NULL);
     if (!ret)
     {
         free(ptr);
