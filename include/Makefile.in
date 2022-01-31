@@ -784,6 +784,7 @@ SOURCES = \
 	windows.h \
 	windows.media.devices.idl \
 	windows.media.idl \
+	windows.media.speechrecognition.idl \
 	windows.media.speechsynthesis.idl \
 	windows.storage.streams.idl \
 	windows.system.idl \

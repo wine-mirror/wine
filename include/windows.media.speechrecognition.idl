@@ -1,0 +1,88 @@
+/*
+ * Copyright 2022 Bernhard Kölbl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.globalization.idl";
+/*import "windows.phone.idl";*/
+/*import "windows.storage.idl";*/
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechRecognition {
+            typedef enum SpeechRecognitionConstraintProbability SpeechRecognitionConstraintProbability;
+            typedef enum SpeechRecognitionConstraintType SpeechRecognitionConstraintType;
+            interface ISpeechRecognitionConstraint;
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechRecognition {
+            declare {
+            }
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechRecognition {
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionConstraintProbability
+            {
+                Default = 0,
+                Min = 1,
+                Max = 2,
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            enum SpeechRecognitionConstraintType
+            {
+                Topic = 0,
+                List = 1,
+                Grammar = 2,
+                VoiceCommandDefinition = 3,
+            };
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                uuid(79ac1628-4d68-43c4-8911-40dc4101b55b)
+            ]
+            interface ISpeechRecognitionConstraint : IInspectable
+            {
+                [propget] HRESULT IsEnabled([out, retval] boolean *value);
+                [propput] HRESULT IsEnabled([in] boolean value);
+                [propget] HRESULT Tag([out, retval] HSTRING *value);
+                [propput] HRESULT Tag([in] HSTRING value);
+                [propget] HRESULT Type([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintType *value);
+                [propget] HRESULT Probability([out, retval] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintProbability *value);
+                [propput] HRESULT Probability([in] Windows.Media.SpeechRecognition.SpeechRecognitionConstraintProbability value);
+            }
+        }
+    }
+}
