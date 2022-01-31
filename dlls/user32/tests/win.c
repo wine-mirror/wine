@@ -106,22 +106,6 @@ static void flush_events( BOOL remove_messages )
     }
 }
 
-static BOOL wait_for_event(HANDLE event, int timeout)
-{
-    DWORD end_time = GetTickCount() + timeout;
-    MSG msg;
-
-    do {
-        if(MsgWaitForMultipleObjects(1, &event, FALSE, timeout, QS_ALLINPUT) == WAIT_OBJECT_0)
-            return TRUE;
-        while(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
-            DispatchMessageA(&msg);
-        timeout = end_time - GetTickCount();
-    }while(timeout > 0);
-
-    return FALSE;
-}
-
 /* check the values returned by the various parent/owner functions on a given window */
 static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_parent,
                            HWND gw_owner, HWND ga_root, HWND ga_root_owner )
@@ -186,6 +170,28 @@ static BOOL ignore_message( UINT message, HWND hwnd )
             message == WM_SYSTIMER ||
             message == WM_TIMECHANGE ||
             message == WM_DEVICECHANGE);
+}
+
+static DWORD wait_for_events( DWORD count, HANDLE *events, DWORD timeout )
+{
+    DWORD ret, end = GetTickCount() + timeout;
+    MSG msg;
+
+    while ((ret = MsgWaitForMultipleObjects( count, events, FALSE, timeout, QS_ALLINPUT )) <= count)
+    {
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageA( &msg );
+        }
+        if (ret < count) return ret;
+        if (timeout == INFINITE) continue;
+        if (end <= GetTickCount()) timeout = 0;
+        else timeout = end - GetTickCount();
+    }
+
+    ok( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#x\n", ret );
+    return ret;
 }
 
 static BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
@@ -3437,29 +3443,140 @@ static void test_SetFocus(HWND hwnd)
     DestroyWindow( child );
 }
 
+static void test_SetActiveWindow_0_proc( char **argv )
+{
+    HANDLE start_event, stop_event;
+    HWND hwnd, other, tmp;
+    BOOL ret;
+
+    sscanf( argv[3], "%p", &other );
+    start_event = CreateEventW( NULL, FALSE, FALSE, L"test_SetActiveWindow_0_start" );
+    ok( start_event != 0, "CreateEventW failed, error %u\n", GetLastError() );
+    stop_event = CreateEventW( NULL, FALSE, FALSE, L"test_SetActiveWindow_0_stop" );
+    ok( stop_event != 0, "CreateEventW failed, error %u\n", GetLastError() );
+
+    hwnd = CreateWindowExA( 0, "static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200, 0, 0, NULL, NULL );
+    ok( !!hwnd, "CreateWindowExA failed, error %u\n", GetLastError() );
+    flush_events( TRUE );
+
+    ret = SetForegroundWindow( hwnd );
+    ok( ret, "SetForegroundWindow failed, error %u\n", GetLastError() );
+
+    tmp = GetForegroundWindow();
+    ok( tmp == hwnd, "GetForegroundWindow returned %p\n", tmp );
+    tmp = GetActiveWindow();
+    ok( tmp == hwnd, "GetActiveWindow returned %p\n", tmp );
+    tmp = GetFocus();
+    ok( tmp == hwnd, "GetFocus returned %p\n", tmp );
+
+    SetLastError( 0xdeadbeef );
+    tmp = SetActiveWindow( 0 );
+    if (!tmp) ok( GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError() );
+    else /* < Win10 */
+    {
+        ok( tmp == hwnd, "SetActiveWindow returned %p\n", tmp );
+        todo_wine
+        ok( GetLastError() == 0, "got error %u\n", GetLastError() );
+
+        tmp = GetForegroundWindow();
+        ok( tmp == other || tmp == 0, "GetForegroundWindow returned %p\n", tmp );
+        tmp = GetActiveWindow();
+        ok( tmp == 0, "GetActiveWindow returned %p\n", tmp );
+        tmp = GetFocus();
+        ok( tmp == 0, "GetFocus returned %p\n", tmp );
+
+        SetEvent( start_event );
+        wait_for_events( 1, &stop_event, INFINITE );
+
+        tmp = GetForegroundWindow();
+        todo_wine
+        ok( tmp == other, "GetForegroundWindow returned %p\n", tmp );
+        tmp = GetActiveWindow();
+        ok( tmp == 0, "GetActiveWindow returned %p\n", tmp );
+        tmp = GetFocus();
+        ok( tmp == 0, "GetFocus returned %p\n", tmp );
+    }
+
+    tmp = SetActiveWindow( 0 );
+    ok( tmp == 0, "SetActiveWindow returned %p\n", tmp );
+    tmp = GetForegroundWindow();
+    todo_wine
+    ok( tmp == hwnd, "GetForegroundWindow returned %p\n", tmp );
+    tmp = GetActiveWindow();
+    todo_wine
+    ok( tmp == hwnd, "GetActiveWindow returned %p\n", tmp );
+    tmp = GetFocus();
+    todo_wine
+    ok( tmp == hwnd, "GetFocus returned %p\n", tmp );
+
+    CloseHandle( start_event );
+    CloseHandle( stop_event );
+    DestroyWindow( hwnd );
+}
+
+static void test_SetActiveWindow_0( char **argv )
+{
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info;
+    char cmdline[MAX_PATH];
+    HANDLE events[3];
+    HWND hwnd, tmp;
+    BOOL ret;
+
+    hwnd = CreateWindowExA( 0, "static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200, 0, 0, NULL, NULL );
+    ok( !!hwnd, "CreateWindowExA failed, error %u\n", GetLastError() );
+    SetWindowPos( hwnd, HWND_TOPMOST, 150, 150, 300, 300, SWP_FRAMECHANGED | SWP_SHOWWINDOW );
+    flush_events( TRUE );
+
+    tmp = GetForegroundWindow();
+    ok( tmp == hwnd, "GetForegroundWindow returned %p\n", tmp );
+    tmp = GetActiveWindow();
+    ok( tmp == hwnd, "GetActiveWindow returned %p\n", tmp );
+    tmp = GetFocus();
+    ok( tmp == hwnd, "GetFocus returned %p\n", tmp );
+
+    events[1] = CreateEventW( NULL, FALSE, FALSE, L"test_SetActiveWindow_0_start" );
+    ok( events[1] != 0, "CreateEventW failed, error %u\n", GetLastError() );
+    events[2] = CreateEventW( NULL, FALSE, FALSE, L"test_SetActiveWindow_0_stop" );
+    ok( events[2] != 0, "CreateEventW failed, error %u\n", GetLastError() );
+
+    sprintf( cmdline, "%s %s SetActiveWindow_0 %p", argv[0], argv[1], hwnd );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok( ret, "CreateProcessA failed, error %u\n", GetLastError() );
+
+    events[0] = info.hProcess;
+    if (wait_for_events( 2, events, INFINITE ) == 1)
+    {
+        tmp = GetForegroundWindow();
+        todo_wine
+        ok( tmp == hwnd, "GetForegroundWindow returned %p\n", tmp );
+        tmp = GetActiveWindow();
+        todo_wine
+        ok( tmp == hwnd, "GetActiveWindow returned %p\n", tmp );
+        tmp = GetFocus();
+        todo_wine
+        ok( tmp == hwnd, "GetFocus returned %p\n", tmp );
+        SetEvent( events[2] );
+    }
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( events[1] );
+    CloseHandle( events[2] );
+
+    DestroyWindow( hwnd );
+}
+
 static void test_SetActiveWindow(HWND hwnd)
 {
     HWND hwnd2, ret;
 
     flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
-    SetFocus(0);
-    SetActiveWindow(0);
     check_wnd_state(0, 0, 0, 0);
 
     ShowWindow(hwnd, SW_SHOW);
-    check_wnd_state(hwnd, hwnd, hwnd, 0);
-
-    SetLastError(0xdeadbeef);
-    ret = SetActiveWindow(0);
-    ok(ret == hwnd || broken(!ret) /* Win10 1809 */, "expected %p, got %p\n", hwnd, ret);
-    if (!ret) ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
-    if (!GetActiveWindow())  /* doesn't always work on vista */
-    {
-        check_wnd_state(0, 0, 0, 0);
-        ret = SetActiveWindow(hwnd);
-        ok(ret == 0, "SetActiveWindow returned %p instead of 0\n", ret);
-    }
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
     SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
@@ -3510,17 +3627,7 @@ static void test_SetActiveWindow(HWND hwnd)
     ret = SetActiveWindow(hwnd2);
     ok(ret == hwnd, "expected %p, got %p\n", hwnd, ret);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
-    SetLastError(0xdeadbeef);
-    ret = SetActiveWindow(0);
-    ok(ret == hwnd || broken(!ret) /* Win10 1809 */, "expected %p, got %p\n", hwnd, ret);
-    if (!ret) ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
-    if (!GetActiveWindow())
-    {
-        ret = SetActiveWindow(hwnd2);
-        ok(ret == NULL, "expected NULL, got %p\n", ret);
-        todo_wine
-        check_active_state(hwnd, hwnd, hwnd);
-    }
+
     DestroyWindow(hwnd2);
 }
 
@@ -3561,21 +3668,10 @@ static void test_SetForegroundWindow(HWND hwnd)
 
     flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
-    SetFocus(0);
-    SetActiveWindow(0);
     check_wnd_state(0, 0, 0, 0);
 
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
-
-    SetLastError(0xdeadbeef);
-    hwnd2 = SetActiveWindow(0);
-    ok(hwnd2 == hwnd || broken(!hwnd2) /* Win10 1809 */, "expected %p, got %p\n", hwnd, hwnd2);
-    if (!hwnd2) ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
-    if (GetActiveWindow() == hwnd)  /* doesn't always work on vista */
-        check_wnd_state(hwnd, hwnd, hwnd, 0);
-    else
-        check_wnd_state(0, 0, 0, 0);
 
     ret = SetForegroundWindow(hwnd);
     if (!ret)
@@ -9876,7 +9972,7 @@ static void test_window_from_point(const char *argv0)
     startup.cb = sizeof(startup);
     ok(CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL,
                 &startup, &info), "CreateProcess failed.\n");
-    ok(wait_for_event(start_event, 1000), "didn't get start_event\n");
+    ok(wait_for_events(1, &start_event, 1000) == 0, "didn't get start_event\n");
 
     child = GetWindow(hwnd, GW_CHILD);
     win = WindowFromPoint(pt);
@@ -12502,6 +12598,12 @@ START_TEST(win)
         return;
     }
 
+    if (argc == 4 && !strcmp( argv[2], "SetActiveWindow_0" ))
+    {
+        test_SetActiveWindow_0_proc( argv );
+        return;
+    }
+
     if (!RegisterWindowClasses()) assert(0);
 
     hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
@@ -12563,6 +12665,7 @@ START_TEST(win)
     test_SetWindowPos(hwndMain, hwndMain2);
     test_SetMenu(hwndMain);
     test_SetFocus(hwndMain);
+    test_SetActiveWindow_0( argv );
     test_SetActiveWindow(hwndMain);
     test_NCRedraw();
 
