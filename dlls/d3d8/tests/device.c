@@ -1227,6 +1227,20 @@ static void test_cursor_pos(void)
         {0, 0},
     };
 
+    /* Windows 10 1709 is unreliable. One or more of the cursor movements we
+     * expect don't show up. Moving the mouse to a defined position beforehand
+     * seems to get it into better shape - only the final 150x150 move we do
+     * below is missing - it looks as if this Windows version filters redundant
+     * SetCursorPos calls on the user32 level, although I am not entirely sure.
+     *
+     * The weird thing is that the previous test leaves the cursor position
+     * reliably at 512x384 on the testbot. So the 50x50 mouse move shouldn't
+     * be stripped away anyway, but it might be a difference between moving the
+     * cursor through SetCursorPos vs moving it by changing the display mode. */
+    ret = SetCursorPos(99, 99);
+    ok(ret, "Failed to set cursor position.\n");
+    flush_events();
+
     wc.lpfnWndProc = test_cursor_proc;
     wc.lpszClassName = "d3d8_test_cursor_wc";
     ok(RegisterClassA(&wc), "Failed to register window class.\n");
@@ -1259,7 +1273,8 @@ static void test_cursor_pos(void)
 
     IDirect3DDevice8_SetCursorPosition(device, 75, 75, 0);
     flush_events();
-    /* SetCursorPosition() eats duplicates. */
+    /* SetCursorPosition() eats duplicates. FIXME: Since we accept unexpected
+     * mouse moves the test doesn't actually demonstrate that. */
     IDirect3DDevice8_SetCursorPosition(device, 75, 75, 0);
     flush_events();
 
@@ -1280,13 +1295,14 @@ static void test_cursor_pos(void)
 
     IDirect3DDevice8_SetCursorPosition(device, 150, 150, 0);
     flush_events();
-    /* SetCursorPos() doesn't. */
+    /* SetCursorPos() doesn't. Except for Win10 1709. */
     ret = SetCursorPos(150, 150);
     ok(ret, "Failed to set cursor position.\n");
     flush_events();
 
-    ok(!expect_pos->x && !expect_pos->y, "Didn't receive MOUSEMOVE %u (%d, %d).\n",
-       (unsigned)(expect_pos - points), expect_pos->x, expect_pos->y);
+    ok((!expect_pos->x && !expect_pos->y) || broken(expect_pos - points == 7),
+        "Didn't receive MOUSEMOVE %u (%d, %d).\n",
+        (unsigned)(expect_pos - points), expect_pos->x, expect_pos->y);
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
