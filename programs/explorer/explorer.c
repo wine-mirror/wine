@@ -671,8 +671,11 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     switch(uMsg)
     {
     case WM_DESTROY:
-        IShellWindows_Revoke(info->sw, info->sw_cookie);
-        IShellWindows_Release(info->sw);
+        if(info->sw)
+        {
+            IShellWindows_Revoke(info->sw, info->sw_cookie);
+            IShellWindows_Release(info->sw);
+        }
 
         IExplorerBrowser_Unadvise(browser,info->advise_cookie);
         IExplorerBrowser_Destroy(browser);
