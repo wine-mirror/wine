@@ -52,116 +52,116 @@ static BOOL sync_ioctl(HANDLE file, DWORD code, void *in_buf, DWORD in_len, void
     return ret;
 }
 
-BOOLEAN WINAPI HidD_FreePreparsedData(PHIDP_PREPARSED_DATA PreparsedData)
+BOOLEAN WINAPI HidD_FreePreparsedData( PHIDP_PREPARSED_DATA preparsed_data )
 {
-    TRACE("(%p)\n", PreparsedData);
-    HeapFree(GetProcessHeap(), 0, PreparsedData);
+    TRACE( "preparsed_data %p.\n", preparsed_data );
+    HeapFree( GetProcessHeap(), 0, preparsed_data );
     return TRUE;
 }
 
-BOOLEAN WINAPI HidD_GetAttributes(HANDLE HidDeviceObject, PHIDD_ATTRIBUTES Attr)
+BOOLEAN WINAPI HidD_GetAttributes( HANDLE file, PHIDD_ATTRIBUTES attributes )
 {
     HID_COLLECTION_INFORMATION info;
     BOOLEAN ret;
 
-    TRACE("(%p %p)\n", HidDeviceObject, Attr);
+    TRACE( "file %p, attributes %p.\n", file, attributes );
 
-    ret = sync_ioctl(HidDeviceObject, IOCTL_HID_GET_COLLECTION_INFORMATION, NULL, 0, &info, sizeof(HID_COLLECTION_INFORMATION));
+    ret = sync_ioctl( file, IOCTL_HID_GET_COLLECTION_INFORMATION, NULL, 0, &info, sizeof(HID_COLLECTION_INFORMATION) );
 
     if (ret)
     {
-        Attr->Size = sizeof(HIDD_ATTRIBUTES);
-        Attr->VendorID = info.VendorID;
-        Attr->ProductID = info.ProductID;
-        Attr->VersionNumber = info.VersionNumber;
+        attributes->Size = sizeof(HIDD_ATTRIBUTES);
+        attributes->VendorID = info.VendorID;
+        attributes->ProductID = info.ProductID;
+        attributes->VersionNumber = info.VersionNumber;
     }
     return ret;
 }
 
-BOOLEAN WINAPI HidD_GetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
+BOOLEAN WINAPI HidD_GetFeature( HANDLE file, void *report_buf, ULONG report_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_GET_FEATURE, NULL, 0, ReportBuffer, ReportBufferLength);
+    TRACE( "file %p, report_buf %p, report_len %lu.\n", file, report_buf, report_len );
+    return sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report_buf, report_len );
 }
 
 void WINAPI HidD_GetHidGuid(LPGUID guid)
 {
-    TRACE("(%p)\n", guid);
+    TRACE( "guid %s.\n", debugstr_guid( guid ) );
     *guid = GUID_DEVINTERFACE_HID;
 }
 
-BOOLEAN WINAPI HidD_GetInputReport(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
+BOOLEAN WINAPI HidD_GetInputReport( HANDLE file, void *report_buf, ULONG report_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, ReportBuffer, ReportBufferLength);
+    TRACE( "file %p, report_buf %p, report_len %lu.\n", file, report_buf, report_len );
+    return sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report_buf, report_len );
 }
 
-BOOLEAN WINAPI HidD_GetManufacturerString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
+BOOLEAN WINAPI HidD_GetManufacturerString( HANDLE file, void *buffer, ULONG buffer_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_GET_MANUFACTURER_STRING, NULL, 0, Buffer, BufferLength);
+    TRACE( "file %p, buffer %p, buffer_len %lu.\n", file, buffer, buffer_len );
+    return sync_ioctl( file, IOCTL_HID_GET_MANUFACTURER_STRING, NULL, 0, buffer, buffer_len );
 }
 
-BOOLEAN WINAPI HidD_GetNumInputBuffers(HANDLE HidDeviceObject, ULONG *NumberBuffers)
+BOOLEAN WINAPI HidD_GetNumInputBuffers( HANDLE file, ULONG *num_buffer )
 {
-    TRACE("(%p %p)\n", HidDeviceObject, NumberBuffers);
-    return sync_ioctl(HidDeviceObject, IOCTL_GET_NUM_DEVICE_INPUT_BUFFERS, NULL, 0, NumberBuffers, sizeof(*NumberBuffers));
+    TRACE( "file %p, num_buffer %p.\n", file, num_buffer );
+    return sync_ioctl( file, IOCTL_GET_NUM_DEVICE_INPUT_BUFFERS, NULL, 0, num_buffer, sizeof(*num_buffer) );
 }
 
-BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
+BOOLEAN WINAPI HidD_SetFeature( HANDLE file, void *report_buf, ULONG report_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_SET_FEATURE, ReportBuffer, ReportBufferLength, NULL, 0);
+    TRACE( "file %p, report_buf %p, report_len %lu.\n", file, report_buf, report_len );
+    return sync_ioctl( file, IOCTL_HID_SET_FEATURE, report_buf, report_len, NULL, 0 );
 }
 
-BOOLEAN WINAPI HidD_SetNumInputBuffers(HANDLE HidDeviceObject, ULONG NumberBuffers)
+BOOLEAN WINAPI HidD_SetNumInputBuffers( HANDLE file, ULONG num_buffer )
 {
-    TRACE("(%p %i)\n", HidDeviceObject, NumberBuffers);
-    return sync_ioctl(HidDeviceObject, IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS, &NumberBuffers, sizeof(NumberBuffers), NULL, 0);
+    TRACE( "file %p, num_buffer %lu.\n", file, num_buffer );
+    return sync_ioctl( file, IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS, &num_buffer, sizeof(num_buffer), NULL, 0 );
 }
 
-BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
+BOOLEAN WINAPI HidD_GetProductString( HANDLE file, void *buffer, ULONG buffer_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_GET_PRODUCT_STRING, NULL, 0, Buffer, BufferLength);
+    TRACE( "file %p, buffer %p, buffer_len %lu.\n", file, buffer, buffer_len );
+    return sync_ioctl( file, IOCTL_HID_GET_PRODUCT_STRING, NULL, 0, buffer, buffer_len );
 }
 
-BOOLEAN WINAPI HidD_GetSerialNumberString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
+BOOLEAN WINAPI HidD_GetSerialNumberString( HANDLE file, void *buffer, ULONG buffer_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_GET_SERIALNUMBER_STRING, NULL, 0, Buffer, BufferLength);
+    TRACE( "file %p, buffer %p, buffer_len %lu.\n", file, buffer, buffer_len );
+    return sync_ioctl( file, IOCTL_HID_GET_SERIALNUMBER_STRING, NULL, 0, buffer, buffer_len );
 }
 
-BOOLEAN WINAPI HidD_GetPreparsedData(HANDLE HidDeviceObject, PHIDP_PREPARSED_DATA *PreparsedData)
+BOOLEAN WINAPI HidD_GetPreparsedData( HANDLE file, PHIDP_PREPARSED_DATA *preparsed_data )
 {
     HID_COLLECTION_INFORMATION info;
     PHIDP_PREPARSED_DATA data;
 
-    TRACE("(%p %p)\n", HidDeviceObject, PreparsedData);
+    TRACE( "file %p, preparsed_data %p.\n", file, preparsed_data );
 
-    if (!sync_ioctl(HidDeviceObject, IOCTL_HID_GET_COLLECTION_INFORMATION, NULL, 0, &info, sizeof(info)))
+    if (!sync_ioctl( file, IOCTL_HID_GET_COLLECTION_INFORMATION, NULL, 0, &info, sizeof(info) ))
         return FALSE;
 
     if (!(data = HeapAlloc(GetProcessHeap(), 0, info.DescriptorSize))) return FALSE;
 
-    if (!sync_ioctl(HidDeviceObject, IOCTL_HID_GET_COLLECTION_DESCRIPTOR, NULL, 0, data, info.DescriptorSize))
+    if (!sync_ioctl( file, IOCTL_HID_GET_COLLECTION_DESCRIPTOR, NULL, 0, data, info.DescriptorSize ))
     {
         HeapFree( GetProcessHeap(), 0, data );
         return FALSE;
     }
-    *PreparsedData = data;
+    *preparsed_data = data;
     return TRUE;
 }
 
-BOOLEAN WINAPI HidD_SetOutputReport(HANDLE HidDeviceObject, void *ReportBuffer, ULONG ReportBufferLength)
+BOOLEAN WINAPI HidD_SetOutputReport( HANDLE file, void *report_buf, ULONG report_len )
 {
-    TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
-    return sync_ioctl(HidDeviceObject, IOCTL_HID_SET_OUTPUT_REPORT, ReportBuffer, ReportBufferLength, NULL, 0);
+    TRACE( "file %p, report_buf %p, report_len %lu.\n", file, report_buf, report_len );
+    return sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report_buf, report_len, NULL, 0 );
 }
 
 BOOLEAN WINAPI HidD_GetIndexedString(HANDLE file, ULONG index, void *buffer, ULONG length)
 {
-    TRACE("file %p, index %u, buffer %p, length %u.\n", file, index, buffer, length);
+    TRACE( "file %p, index %lu, buffer %p, length %lu.\n", file, index, buffer, length );
     return sync_ioctl(file, IOCTL_HID_GET_INDEXED_STRING, &index, sizeof(index), buffer, length);
 }
 

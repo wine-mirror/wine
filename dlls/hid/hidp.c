@@ -270,7 +270,7 @@ NTSTATUS WINAPI HidP_GetScaledUsageValue( HIDP_REPORT_TYPE report_type, USAGE us
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage };
     USHORT count = 1;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %p, preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, value %p, preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
 
     *value = 0;
@@ -303,7 +303,7 @@ NTSTATUS WINAPI HidP_GetUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_pa
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %p, preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, value %p, preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -321,8 +321,8 @@ NTSTATUS WINAPI HidP_GetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usa
     struct caps_filter filter = {.values = TRUE, .array = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value_buf %p, value_len %u, "
-           "preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, value_buf %p, value_len %u, "
+           "preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usage, value_buf, value_len, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -383,8 +383,9 @@ NTSTATUS WINAPI HidP_GetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, 
     NTSTATUS status;
     USHORT limit = -1;
 
-    TRACE( "report_type %d, collection %d, usages %p, usages_len %p, preparsed_data %p, report_buf %p, report_len %u.\n",
-           report_type, collection, usages, usages_len, preparsed_data, report_buf, report_len );
+    TRACE( "report_type %d, usage_page %u, collection %u, usages %p, usages_len %p, preparsed_data %p, "
+           "report_buf %p, report_len %lu.\n",
+           report_type, usage_page, collection, usages, usages_len, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
 
@@ -410,7 +411,7 @@ NTSTATUS WINAPI HidP_InitializeReportForID( HIDP_REPORT_TYPE report_type, UCHAR 
     const struct hid_value_caps *caps, *end;
     NTSTATUS status;
 
-    TRACE( "report_type %d, report_id %x, preparsed_data %p, report_buf %p, report_len %u.\n", report_type,
+    TRACE( "report_type %d, report_id %u, preparsed_data %p, report_buf %p, report_len %lu.\n", report_type,
            report_id, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -439,7 +440,7 @@ ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_
     USHORT limit = -1;
     ULONG count = 0;
 
-    TRACE( "report_type %d, usage_page %x, preparsed_data %p.\n", report_type, usage_page, preparsed_data );
+    TRACE( "report_type %d, usage_page %u, preparsed_data %p.\n", report_type, usage_page, preparsed_data );
 
     enum_value_caps( preparsed, report_type, 0, &filter, get_usage_list_length, &count, &limit );
     return count;
@@ -485,7 +486,7 @@ NTSTATUS WINAPI HidP_SetScaledUsageValue( HIDP_REPORT_TYPE report_type, USAGE us
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage };
     USHORT count = 1;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %d, preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, value %ld, preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -516,7 +517,7 @@ NTSTATUS WINAPI HidP_SetUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_pa
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %u, preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, value %lu, preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -534,8 +535,8 @@ NTSTATUS WINAPI HidP_SetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usa
     struct caps_filter filter = {.values = TRUE, .array = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value_buf %p, value_len %u, "
-           "preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, value_buf %p, value_len %u, "
+           "preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usage, value_buf, value_len, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -590,8 +591,8 @@ NTSTATUS WINAPI HidP_SetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, 
     USHORT limit = 1;
     ULONG i, count = *usage_count;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usages %p, usage_count %p, preparsed_data %p, "
-           "report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usages %p, usage_count %p, preparsed_data %p, "
+           "report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usages, usage_count, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -656,8 +657,8 @@ NTSTATUS WINAPI HidP_UnsetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page
     USHORT limit = 1;
     ULONG i, count = *usage_count;
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usages %p, usage_count %p, preparsed_data %p, "
-           "report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usages %p, usage_count %p, preparsed_data %p, "
+           "report_buf %p, report_len %lu.\n",
            report_type, usage_page, collection, usages, usage_count, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -679,8 +680,8 @@ NTSTATUS WINAPI HidP_TranslateUsagesToI8042ScanCodes(USAGE *ChangedUsageList,
     HIDP_KEYBOARD_MODIFIER_STATE *ModifierState,
     PHIDP_INSERT_SCANCODES InsertCodesProcedure, VOID *InsertCodesContext)
 {
-    FIXME("stub: %p, %i, %i, %p, %p, %p\n", ChangedUsageList, UsageListLength,
-        KeyAction, ModifierState, InsertCodesProcedure, InsertCodesContext);
+    FIXME( "ChangedUsageList %p, UsageListLength %lu, KeyAction %u, ModifierState %p, InsertCodesProcedure %p, InsertCodesContext %p stub!\n",
+           ChangedUsageList, UsageListLength, KeyAction, ModifierState, InsertCodesProcedure, InsertCodesContext );
 
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -736,7 +737,7 @@ NTSTATUS WINAPI HidP_GetSpecificButtonCaps( HIDP_REPORT_TYPE report_type, USAGE 
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     const struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, caps %p, caps_count %p, preparsed_data %p.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, caps %p, caps_count %p, preparsed_data %p.\n",
            report_type, usage_page, collection, usage, caps, caps_count, preparsed_data );
 
     return enum_value_caps( preparsed, report_type, 0, &filter, get_button_caps, &caps, caps_count );
@@ -803,7 +804,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps( HIDP_REPORT_TYPE report_type, USAGE u
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     const struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
 
-    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, caps %p, caps_count %p, preparsed_data %p.\n",
+    TRACE( "report_type %d, usage_page %u, collection %u, usage %u, caps %p, caps_count %p, preparsed_data %p.\n",
            report_type, usage_page, collection, usage, caps, caps_count, preparsed_data );
 
     return enum_value_caps( preparsed, report_type, 0, &filter, get_value_caps, &caps, caps_count );
@@ -868,7 +869,7 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
     NTSTATUS status;
     USHORT limit = -1;
 
-    TRACE( "report_type %d, collection %d, usages %p, usages_len %p, preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, collection %u, usages %p, usages_len %p, preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, collection, usages, usages_len, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
@@ -980,7 +981,7 @@ NTSTATUS WINAPI HidP_GetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULO
     NTSTATUS status;
     USHORT limit = -1;
 
-    TRACE( "report_type %d, data %p, data_len %p, preparsed_data %p, report_buf %p, report_len %u.\n",
+    TRACE( "report_type %d, data %p, data_len %p, preparsed_data %p, report_buf %p, report_len %lu.\n",
            report_type, data, data_len, preparsed_data, report_buf, report_len );
 
     if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;

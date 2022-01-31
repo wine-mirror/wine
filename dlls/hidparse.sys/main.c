@@ -103,7 +103,7 @@ static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
 {
     if (!caps) return "(null)";
     return wine_dbg_sprintf( "RId %d, Usg %02x:%02x-%02x Dat %02x-%02x, Str %d-%d, Des %d-%d, "
-                             "Bits %02x Flags %#x, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
+                             "Bits %02lx Flags %#lx, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %lx E%+ld, Log %+ld-%+ld, Phy %+ld-%+ld",
                              caps->report_id, caps->usage_page, caps->usage_min, caps->usage_max, caps->data_index_min, caps->data_index_max,
                              caps->string_min, caps->string_max, caps->designator_min, caps->designator_max, caps->bit_field, caps->flags,
                              caps->link_collection, caps->link_usage_page, caps->link_usage, caps->bit_size, caps->report_count,
@@ -113,7 +113,7 @@ static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
 static inline const char *debugstr_hid_collection_node( struct hid_collection_node *node )
 {
     if (!node) return "(null)";
-    return wine_dbg_sprintf( "Usg %02x:%02x, Parent %u, Next %u, NbChild %u, Child %u, Type %02x",
+    return wine_dbg_sprintf( "Usg %02x:%02x, Parent %u, Next %u, NbChild %u, Child %u, Type %02lx",
                              node->usage_page, node->usage, node->parent, node->next_sibling,
                              node->number_of_children, node->first_child, node->collection_type );
 }
@@ -416,8 +416,8 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
 
 static void free_parser_state( struct hid_parser_state *state )
 {
-    if (state->global_idx) ERR( "%u unpopped device caps on the stack\n", state->global_idx );
-    if (state->collection_idx) ERR( "%u unpopped device collection on the stack\n", state->collection_idx );
+    if (state->global_idx) ERR( "%lu unpopped device caps on the stack\n", state->global_idx );
+    if (state->collection_idx) ERR( "%lu unpopped device collection on the stack\n", state->collection_idx );
     free( state->stack );
     free( state->collections );
     free( state->values[HidP_Input] );
@@ -647,7 +647,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     struct hid_value_caps *caps, *caps_end;
     struct hid_preparsed_data *preparsed;
 
-    TRACE( "report_desc %p, report_desc_len %u, pool_type %u, device_desc %p.\n",
+    TRACE( "report_desc %p, report_desc_len %lu, pool_type %u, device_desc %p.\n",
             report_desc, report_desc_len, pool_type, device_desc );
 
     memset( device_desc, 0, sizeof(*device_desc) );
