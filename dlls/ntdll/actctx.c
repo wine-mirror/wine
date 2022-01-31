@@ -532,7 +532,7 @@ enum context_sections
 typedef struct _ACTIVATION_CONTEXT
 {
     ULONG               magic;
-    int                 ref_count;
+    LONG                ref_count;
     struct file_info    config;
     struct file_info    appdir;
     struct assembly    *assemblies;
