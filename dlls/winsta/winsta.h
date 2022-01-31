@@ -82,11 +82,7 @@ typedef struct _TS_ALL_PROCESSES_INFO
 {
     PTS_SYS_PROCESS_INFORMATION pTsProcessInfo;
     DWORD SizeOfSid;
-#ifdef MIDL_PASS
-    [size_is(SizeOfSid)] PBYTE pSid;
-#else
     PBYTE pSid;
-#endif
 } TS_ALL_PROCESSES_INFO, *PTS_ALL_PROCESSES_INFO;
 
 BOOLEAN WINAPI WinStationEnumerateW(HANDLE,PSESSIONIDW *,PULONG);
