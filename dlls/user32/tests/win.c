@@ -170,8 +170,14 @@ static void check_active_state_(const char *file, int line,
     ok_(file, line)(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
 }
 
-static BOOL ignore_message( UINT message )
+static BOOL ignore_message( UINT message, HWND hwnd )
 {
+    WCHAR buffer[256];
+
+    if (GetClassNameW( hwnd, buffer, ARRAY_SIZE(buffer) ) == 22 &&
+        !wcscmp( buffer, L"UserAdapterWindowClass" ))
+        return TRUE;
+
     /* these are always ignored */
     return (message >= 0xc000 ||
             message == WM_GETICON ||
@@ -179,8 +185,7 @@ static BOOL ignore_message( UINT message )
             message == WM_TIMER ||
             message == WM_SYSTIMER ||
             message == WM_TIMECHANGE ||
-            message == WM_DEVICECHANGE ||
-            message == 0x0060 /* undocumented, used by Win10 1709+ */);
+            message == WM_DEVICECHANGE);
 }
 
 static BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
@@ -3953,7 +3958,7 @@ static BOOL peek_message( MSG *msg )
     do
     {
         ret = PeekMessageA(msg, 0, 0, 0, PM_REMOVE);
-    } while (ret && ignore_message(msg->message));
+    } while (ret && ignore_message(msg->message, msg->hwnd));
     return ret;
 }
 
@@ -4113,7 +4118,7 @@ static void test_mouse_input(HWND hwnd)
     /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
-        if (ignore_message(msg.message)) continue;
+        if (ignore_message(msg.message, msg.hwnd)) continue;
         ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE,
            "hwnd %p message %04x\n", msg.hwnd, msg.message);
         DispatchMessageA(&msg);
