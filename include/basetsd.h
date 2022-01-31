@@ -153,15 +153,31 @@ typedef unsigned int UHALF_PTR, *PUHALF_PTR;
 
 #if !defined(__midl) && !defined(__WIDL__)
 
-static inline ULONG32 HandleToULong(const void *h)
+#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
+
+static inline unsigned long HandleToULong(const void *h)
 {
-    return (ULONG32)(ULONG_PTR)h;
+    return (unsigned long)(ULONG_PTR)h;
 }
 
-static inline LONG32 HandleToLong(const void *h)
+static inline long HandleToLong(const void *h)
 {
-    return (LONG32)(LONG_PTR)h;
+    return (long)(LONG_PTR)h;
 }
+
+#else
+
+static inline unsigned HandleToULong(const void *h)
+{
+    return (unsigned)(ULONG_PTR)h;
+}
+
+static inline int HandleToLong(const void *h)
+{
+    return (int)(LONG_PTR)h;
+}
+
+#endif /* !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) */
 
 static inline void *ULongToHandle(ULONG32 ul)
 {
