@@ -296,12 +296,6 @@ typedef struct
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 extern BOOL get_icon_size( HICON handle, SIZE *size ) DECLSPEC_HIDDEN;
 
-/* Mingw's assert() imports MessageBoxA and gets confused by user32 exporting it */
-#ifdef __MINGW32__
-#undef assert
-#define assert(expr) ((void)0)
-#endif
-
 extern struct user_api_hook *user_api DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_DefDlgProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_ScrollBarProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
