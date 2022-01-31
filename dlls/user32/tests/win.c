@@ -7127,7 +7127,7 @@ static void test_ShowWindow(void)
 {
     HWND hwnd;
     DWORD style;
-    RECT rcMain, rc, rcMinimized, rcClient, rcEmpty, rcMaximized, rcResized, rcNonClient;
+    RECT rcMain, rc, rcMinimized, rcClient, rcEmpty, rcMaximized, rcResized, rcNonClient, rcBroken;
     LPARAM ret;
     MONITORINFO mon_info;
     unsigned int i;
@@ -7430,8 +7430,17 @@ static void test_ShowWindow(void)
         style = GetWindowLongA(hwnd, GWL_STYLE);
         ok(style & WS_MAXIMIZE, "Test %u: window should be maximized\n", i);
         GetWindowRect(hwnd, &rc);
-        ok(EqualRect(&rcMaximized, &rc), "Test %u: expected %s, got %s\n",
-           i, wine_dbgstr_rect(&rcMaximized), wine_dbgstr_rect(&rc));
+
+        rcBroken = rcMaximized;
+        if (test_style[i] & WS_THICKFRAME)
+        {
+            InflateRect(&rcBroken, -2, -2);
+            OffsetRect(&rcBroken, -2, -2);
+        }
+
+        ok(EqualRect(&rcMaximized, &rc) || broken(EqualRect(&rcBroken, &rc)),
+           "Test %u: expected %s, got %s\n", i, wine_dbgstr_rect(&rcMaximized),
+           wine_dbgstr_rect(&rc));
 
         ret = ShowWindow(hwnd, SW_RESTORE);
         ok(ret, "unexpected ret: %lu\n", ret);
