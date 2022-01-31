@@ -1409,7 +1409,7 @@ static void testGetAdaptersInfo(void)
         GetIfEntry( &row );
         ConvertInterfaceIndexToLuid( ptr->Index, &luid );
         ConvertInterfaceLuidToGuid( &luid, &guid );
-        sprintf( name, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        sprintf( name, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                  guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
                  guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
                  guid.Data4[6], guid.Data4[7] );
@@ -1671,7 +1671,7 @@ static void test_GetAdaptersAddresses(void)
 
         status = ConvertInterfaceLuidToGuid(&aa->Luid, &guid);
         ok(!status, "got %u\n", status);
-        sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+        sprintf(buf, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                 guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
                 guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
                 guid.Data4[6], guid.Data4[7]);

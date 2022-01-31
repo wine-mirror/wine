@@ -1041,7 +1041,7 @@ static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
 
 static ULONG format_guid( const GUID *ptr, unsigned char *buf )
 {
-    static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
+    static const char fmt[] = "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
                     ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
                     ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
@@ -1049,7 +1049,7 @@ static ULONG format_guid( const GUID *ptr, unsigned char *buf )
 
 static ULONG format_urn( const GUID *ptr, unsigned char *buf )
 {
-    static const char fmt[] = "urn:uuid:%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
+    static const char fmt[] = "urn:uuid:%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
                     ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
                     ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );

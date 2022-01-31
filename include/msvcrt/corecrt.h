@@ -334,4 +334,12 @@ typedef struct threadlocaleinfostruct {
 #define _THREADLOCALEINFO
 #endif
 
+#if !defined(__WINE_USE_MSVCRT) || defined(__MINGW32__)
+#define __WINE_CRT_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#define __WINE_CRT_SCANF_ATTR(fmt,args)  __attribute__((format (scanf,fmt,args)))
+#else
+#define __WINE_CRT_PRINTF_ATTR(fmt,args)
+#define __WINE_CRT_SCANF_ATTR(fmt,args)
+#endif
+
 #endif /* __WINE_CORECRT_H */

@@ -865,7 +865,7 @@ static HMODULE load_com_dll(const char *name, char **path, char *filename)
 
     if(!get_main_clsid(name, &clsid)) return NULL;
 
-    sprintf(keyname, "CLSID\\{%08x-%04x-%04x-%02x%2x-%02x%2x%02x%2x%02x%2x}\\InprocServer32",
+    sprintf(keyname, "CLSID\\{%08lx-%04x-%04x-%02x%2x-%02x%2x%02x%2x%02x%2x}\\InprocServer32",
             clsid.Data1, clsid.Data2, clsid.Data3, clsid.Data4[0], clsid.Data4[1],
             clsid.Data4[2], clsid.Data4[3], clsid.Data4[4], clsid.Data4[5],
             clsid.Data4[6], clsid.Data4[7]);

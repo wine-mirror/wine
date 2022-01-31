@@ -657,7 +657,7 @@ HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
  */
 INT16 WINAPI StringFromGUID216(REFGUID id, char *str, INT16 cmax)
 {
-    static const char format[] = "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}";
+    static const char format[] = "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}";
     if (!id || cmax < CHARS_IN_GUID) return 0;
     sprintf( str, format, id->Data1, id->Data2, id->Data3,
              id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
