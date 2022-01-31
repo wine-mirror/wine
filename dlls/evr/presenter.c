@@ -282,7 +282,7 @@ static void video_presenter_reset_media_type(struct video_presenter *presenter)
 
 static HRESULT video_presenter_set_media_type(struct video_presenter *presenter, IMFMediaType *media_type)
 {
-    unsigned int flags;
+    DWORD flags;
     HRESULT hr;
 
     if (!media_type)
@@ -328,9 +328,9 @@ static HRESULT video_presenter_set_media_type(struct video_presenter *presenter,
 static HRESULT video_presenter_configure_output_type(struct video_presenter *presenter, const MFVideoArea *aperture,
         IMFMediaType *media_type)
 {
-    unsigned int size;
     GUID subtype;
     LONG stride;
+    DWORD size;
     HRESULT hr;
 
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)aperture->Area.cx << 32 | aperture->Area.cy);
@@ -1104,8 +1104,8 @@ static void video_presenter_set_mixer_rect(struct video_presenter *presenter)
 static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, IMFTopologyServiceLookup *service_lookup)
 {
     IMFVideoDeviceID *device_id;
-    unsigned int count;
     GUID id = { 0 };
+    DWORD count;
     HRESULT hr;
 
     count = 1;
@@ -1143,8 +1143,8 @@ static HRESULT WINAPI video_presenter_service_client_InitServicePointers(IMFTopo
         IMFTopologyServiceLookup *service_lookup)
 {
     struct video_presenter *presenter = impl_from_IMFTopologyServiceLookupClient(iface);
-    unsigned int count;
     HRESULT hr = S_OK;
+    DWORD count;
 
     TRACE("%p, %p.\n", iface, service_lookup);
 

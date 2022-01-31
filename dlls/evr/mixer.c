@@ -906,8 +906,9 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
     const unsigned int equality_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
     HRESULT hr = MF_E_INVALIDMEDIATYPE;
-    unsigned int i, compare_flags;
     BOOL is_compressed = TRUE;
+    DWORD compare_flags;
+    unsigned int i;
 
     TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
 
@@ -1557,7 +1558,7 @@ static HRESULT WINAPI video_mixer_service_client_InitServicePointers(IMFTopology
         IMFTopologyServiceLookup *service_lookup)
 {
     struct video_mixer *mixer = impl_from_IMFTopologyServiceLookupClient(iface);
-    unsigned int count;
+    DWORD count;
     HRESULT hr;
 
     TRACE("%p, %p.\n", iface, service_lookup);
