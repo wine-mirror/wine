@@ -1210,6 +1210,7 @@ static void test_cursor_pos(void)
     HWND window;
     HRESULT hr;
     BOOL ret;
+    POINT pt;
 
     /* Note that we don't check for movement we're not supposed to receive.
      * That's because it's hard to distinguish from the user accidentally
@@ -1240,6 +1241,18 @@ static void test_cursor_pos(void)
     ret = SetCursorPos(99, 99);
     ok(ret, "Failed to set cursor position.\n");
     flush_events();
+
+    /* Check if we can move the cursor. If we're running in a virtual desktop
+     * that does not have focus or the mouse is outside the desktop window, some
+     * window managers (e.g. kwin) will refuse to let us steal the pointer. That
+     * is reasonable, but breaks the test. */
+    ret = GetCursorPos(&pt);
+    ok(ret, "Failed to get cursor position.\n");
+    if (pt.x != 99 || pt.y != 99)
+    {
+        skip("Could not warp the cursor (cur pos %ux%u), skipping test.\n", pt.x, pt.y);
+        return;
+    }
 
     wc.lpfnWndProc = test_cursor_proc;
     wc.lpszClassName = "d3d8_test_cursor_wc";
