@@ -116,7 +116,7 @@ static ULONG WINAPI WshExec_AddRef(IWshExec *iface)
 {
     WshExecImpl *This = impl_from_IWshExec(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -124,7 +124,7 @@ static ULONG WINAPI WshExec_Release(IWshExec *iface)
 {
     WshExecImpl *This = impl_from_IWshExec(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref) {
         CloseHandle(This->info.hThread);
@@ -145,19 +145,18 @@ static HRESULT WINAPI WshExec_GetTypeInfoCount(IWshExec *iface, UINT *pctinfo)
 
 static HRESULT WINAPI WshExec_GetTypeInfo(IWshExec *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IWshExec_tid, ppTInfo);
 }
 
 static HRESULT WINAPI WshExec_GetIDsOfNames(IWshExec *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IWshExec_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -172,18 +171,16 @@ static HRESULT WINAPI WshExec_GetIDsOfNames(IWshExec *iface, REFIID riid, LPOLES
 static HRESULT WINAPI WshExec_Invoke(IWshExec *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
         WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WshExecImpl *This = impl_from_IWshExec(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IWshExec_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IWshExec_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -372,7 +369,7 @@ static ULONG WINAPI WshEnvironment_AddRef(IWshEnvironment *iface)
 {
     WshEnvironment *This = impl_from_IWshEnvironment(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -380,7 +377,7 @@ static ULONG WINAPI WshEnvironment_Release(IWshEnvironment *iface)
 {
     WshEnvironment *This = impl_from_IWshEnvironment(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
         free(This);
@@ -398,19 +395,18 @@ static HRESULT WINAPI WshEnvironment_GetTypeInfoCount(IWshEnvironment *iface, UI
 
 static HRESULT WINAPI WshEnvironment_GetTypeInfo(IWshEnvironment *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    WshEnvironment *This = impl_from_IWshEnvironment(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IWshEnvironment_tid, ppTInfo);
 }
 
 static HRESULT WINAPI WshEnvironment_GetIDsOfNames(IWshEnvironment *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WshEnvironment *This = impl_from_IWshEnvironment(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IWshEnvironment_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -425,18 +421,16 @@ static HRESULT WINAPI WshEnvironment_GetIDsOfNames(IWshEnvironment *iface, REFII
 static HRESULT WINAPI WshEnvironment_Invoke(IWshEnvironment *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
         WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WshEnvironment *This = impl_from_IWshEnvironment(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IWshEnvironment_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IWshEnvironment_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -561,20 +555,22 @@ static HRESULT WINAPI WshCollection_QueryInterface(IWshCollection *iface, REFIID
 
 static ULONG WINAPI WshCollection_AddRef(IWshCollection *iface)
 {
-    WshCollection *This = impl_from_IWshCollection(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    WshCollection *collection = impl_from_IWshCollection(iface);
+    LONG ref = InterlockedIncrement(&collection->ref);
+
+    TRACE("%p, refcount %ld.\n", iface, ref);
+
     return ref;
 }
 
 static ULONG WINAPI WshCollection_Release(IWshCollection *iface)
 {
-    WshCollection *This = impl_from_IWshCollection(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    WshCollection *collection = impl_from_IWshCollection(iface);
+    LONG ref = InterlockedDecrement(&collection->ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
-        free(This);
+        free(collection);
 
     return ref;
 }
@@ -589,19 +585,18 @@ static HRESULT WINAPI WshCollection_GetTypeInfoCount(IWshCollection *iface, UINT
 
 static HRESULT WINAPI WshCollection_GetTypeInfo(IWshCollection *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    WshCollection *This = impl_from_IWshCollection(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IWshCollection_tid, ppTInfo);
 }
 
 static HRESULT WINAPI WshCollection_GetIDsOfNames(IWshCollection *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WshCollection *This = impl_from_IWshCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IWshCollection_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -616,18 +611,16 @@ static HRESULT WINAPI WshCollection_GetIDsOfNames(IWshCollection *iface, REFIID 
 static HRESULT WINAPI WshCollection_Invoke(IWshCollection *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
         WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WshCollection *This = impl_from_IWshCollection(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IWshCollection_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IWshCollection_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -763,7 +756,7 @@ static ULONG WINAPI WshShortcut_AddRef(IWshShortcut *iface)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -771,7 +764,7 @@ static ULONG WINAPI WshShortcut_Release(IWshShortcut *iface)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) ref = %d\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (!ref)
     {
@@ -793,19 +786,18 @@ static HRESULT WINAPI WshShortcut_GetTypeInfoCount(IWshShortcut *iface, UINT *pc
 
 static HRESULT WINAPI WshShortcut_GetTypeInfo(IWshShortcut *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    WshShortcut *This = impl_from_IWshShortcut(iface);
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IWshShortcut_tid, ppTInfo);
 }
 
 static HRESULT WINAPI WshShortcut_GetIDsOfNames(IWshShortcut *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WshShortcut *This = impl_from_IWshShortcut(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IWshShortcut_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -820,18 +812,16 @@ static HRESULT WINAPI WshShortcut_GetIDsOfNames(IWshShortcut *iface, REFIID riid
 static HRESULT WINAPI WshShortcut_Invoke(IWshShortcut *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
         WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WshShortcut *This = impl_from_IWshShortcut(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IWshShortcut_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IWshShortcut_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -1155,7 +1145,8 @@ static HRESULT WINAPI WshShell3_GetTypeInfoCount(IWshShell3 *iface, UINT *pctinf
 
 static HRESULT WINAPI WshShell3_GetTypeInfo(IWshShell3 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    TRACE("(%u %u %p)\n", iTInfo, lcid, ppTInfo);
+    TRACE("%u, %lx, %p.\n", iTInfo, lcid, ppTInfo);
+
     return get_typeinfo(IWshShell3_tid, ppTInfo);
 }
 
@@ -1165,7 +1156,7 @@ static HRESULT WINAPI WshShell3_GetIDsOfNames(IWshShell3 *iface, REFIID riid, LP
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%s %p %u %u %p)\n", debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    TRACE("%s, %p, %u, %lx, %p.\n", debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IWshShell3_tid, &typeinfo);
     if(SUCCEEDED(hr))
@@ -1183,7 +1174,7 @@ static HRESULT WINAPI WshShell3_Invoke(IWshShell3 *iface, DISPID dispIdMember, R
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%d %s %d %d %p %p %p %p)\n", dispIdMember, debugstr_guid(riid),
+    TRACE("%ld, %s, %lx, %d, %p, %p, %p, %p.\n", dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IWshShell3_tid, &typeinfo);
@@ -1255,7 +1246,7 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
     hr = VariantChangeType(&s, style, 0, VT_I4);
     if (FAILED(hr))
     {
-        ERR("failed to convert style argument, 0x%08x\n", hr);
+        ERR("failed to convert style argument, %#lx\n", hr);
         return hr;
     }
 
@@ -1285,7 +1276,7 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
     free(file);
     if (!ret)
     {
-        TRACE("ShellExecute failed, %d\n", GetLastError());
+        TRACE("ShellExecute failed, %ld\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
     else
@@ -1587,7 +1578,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
             break;
         }
         default:
-            FIXME("value type %d not supported\n", type);
+            FIXME("value type %ld not supported\n", type);
             hr = E_FAIL;
         };
 
@@ -1663,12 +1654,12 @@ static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR name, VARIANT *
         data_len = sizeof(DWORD);
         break;
     default:
-        FIXME("unexpected regtype %d\n", regtype);
+        FIXME("unexpected regtype %ld\n", regtype);
         return E_FAIL;
     };
 
     if (FAILED(hr)) {
-        FIXME("failed to convert value, regtype %d, 0x%08x\n", regtype, hr);
+        FIXME("failed to convert value, regtype %ld, %#lx.\n", regtype, hr);
         return hr;
     }
 
