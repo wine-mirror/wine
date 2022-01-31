@@ -1242,7 +1242,7 @@ static bool adapter_vk_alloc_bo(struct wined3d_device *device, struct wined3d_re
 
         if (!bo_vk->b.map_ptr)
         {
-            WARN_(d3d_perf)("BO %p (chunk %p, slab %p) is not persistently mapped.\n",
+            WARN_(d3d_perf)("BO %p (chunk %p, slab %p) is not mapped.\n",
                     bo_vk, bo_vk->memory ? bo_vk->memory->chunk : NULL, bo_vk->slab);
 
             if (!wined3d_bo_vk_map(bo_vk, context_vk))

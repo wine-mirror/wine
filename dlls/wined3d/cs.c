@@ -3073,34 +3073,41 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
 {
     /* Limit NOOVERWRITE maps to buffers for now; there are too many ways that
      * a texture can be invalidated to even count. */
-    if (wined3d_map_persistent() && resource->type == WINED3D_RTYPE_BUFFER
-            && (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
+    if (resource->type == WINED3D_RTYPE_BUFFER && (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
     {
         struct wined3d_client_resource *client = &resource->client;
         struct wined3d_device *device = context->device;
+        struct wined3d_bo_address addr;
         const struct wined3d_bo *bo;
         uint8_t *map_ptr;
 
         if (flags & WINED3D_MAP_DISCARD)
         {
-            if (!device->adapter->adapter_ops->adapter_alloc_bo(device, resource, sub_resource_idx, &client->addr))
+            if (!device->adapter->adapter_ops->adapter_alloc_bo(device, resource, sub_resource_idx, &addr))
                 return false;
+
+            if (wined3d_map_persistent())
+                client->addr = addr;
+        }
+        else
+        {
+            addr = client->addr;
         }
 
-        bo = client->addr.buffer_object;
+        bo = addr.buffer_object;
         map_ptr = bo ? bo->map_ptr : NULL;
-        map_ptr += (uintptr_t)client->addr.addr;
+        map_ptr += (uintptr_t)addr.addr;
 
         if (!map_ptr)
         {
-            TRACE("Sub-resource is not persistently mapped.\n");
+            TRACE("Sub-resource is not mapped.\n");
             return false;
         }
 
         wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx,
                 &map_desc->row_pitch, &map_desc->slice_pitch);
 
-        client->mapped_upload.addr = *wined3d_const_bo_address(&client->addr);
+        client->mapped_upload.addr = *wined3d_const_bo_address(&addr);
         client->mapped_upload.flags = 0;
         if (bo)
         {
