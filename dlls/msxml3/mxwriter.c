@@ -336,7 +336,7 @@ static HRESULT write_output_buffer(mxwriter *writer, const WCHAR *data, int len)
 {
     output_buffer *buffer = &writer->buffer;
     encoded_buffer *buff;
-    unsigned int written;
+    ULONG written;
     int src_len;
 
     if (!len || !*data)

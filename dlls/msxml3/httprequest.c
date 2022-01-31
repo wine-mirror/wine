@@ -687,7 +687,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     BindStatusCallback *bsc;
     IBindCtx *pbc;
     HRESULT hr;
-    int size;
+    LONG size;
 
     hr = CreateBindCtx(0, &pbc);
     if (hr != S_OK) return hr;
