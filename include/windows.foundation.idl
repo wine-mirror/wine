@@ -158,9 +158,13 @@ namespace Windows {
 namespace Windows {
     namespace Foundation {
         declare {
+            interface Windows.Foundation.Collections.IIterable<HSTRING>;
+            interface Windows.Foundation.Collections.IIterator<HSTRING>;
+            interface Windows.Foundation.Collections.IVectorView<HSTRING>;
+            interface Windows.Foundation.Collections.IVector<HSTRING>;
+            interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING>*>;
             interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
             interface Windows.Foundation.IAsyncOperation<boolean>;
-            interface Windows.Foundation.Collections.IVectorView<HSTRING>;
         }
     }
 }
