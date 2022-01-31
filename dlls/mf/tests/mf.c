@@ -1562,7 +1562,7 @@ static ULONG WINAPI test_source_Release(IMFMediaSource *iface)
     ULONG refcount = InterlockedDecrement(&source->refcount);
 
     if (!refcount)
-        HeapFree(GetProcessHeap(), 0, source);
+        free(source);
 
     return refcount;
 }
@@ -1650,7 +1650,7 @@ static IMFMediaSource *create_test_source(void)
 {
     struct test_source *source;
 
-    source = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*source));
+    source = calloc(1, sizeof(*source));
     source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
     source->refcount = 1;
 
