@@ -1716,7 +1716,7 @@ end:
 
 #define CHARS_IN_GUID 39
 
-HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
+HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
 {
     static const WCHAR wszFileSlash[] = L"file:///";
     static const WCHAR wszCLSIDSlash[] = L"CLSID\\";
@@ -1739,7 +1739,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     DWORD dwBufLen = 350;
 
     lstrcpyW(path, wszCLSIDSlash);
-    StringFromGUID2(riid, path + lstrlenW(wszCLSIDSlash), CHARS_IN_GUID);
+    StringFromGUID2(clsid, path + lstrlenW(wszCLSIDSlash), CHARS_IN_GUID);
     lstrcatW(path, wszInprocServer32);
 
     TRACE("Registry key: %s\n", debugstr_w(path));
@@ -1832,7 +1832,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     }
     else
     {
-        if (!try_create_registration_free_com(riid, classname, ARRAY_SIZE(classname), filename, ARRAY_SIZE(filename)))
+        if (!try_create_registration_free_com(clsid, classname, ARRAY_SIZE(classname), filename, ARRAY_SIZE(filename)))
             return CLASS_E_CLASSNOTAVAILABLE;
 
         TRACE("classname (%s)\n", debugstr_w(classname));
