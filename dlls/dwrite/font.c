@@ -5084,7 +5084,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     struct dwrite_fontcollection *collection;
     WCHAR eudckeypathW[16];
     HKEY eudckey;
-    DWORD index;
+    UINT32 index;
     BOOL exists;
     LONG retval;
     HRESULT hr;

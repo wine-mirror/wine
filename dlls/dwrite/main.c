@@ -1515,8 +1515,9 @@ static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory7 *if
 
 static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
 {
-    unsigned int index = 0, value_size, name_count, max_name_count, type, data_size;
+    unsigned int index = 0, value_size, max_name_count;
     WCHAR **paths = NULL, *name, *value = NULL;
+    DWORD name_count, type, data_size;
     size_t capacity = 0, count = 0;
     HKEY hkey;
     LONG r;

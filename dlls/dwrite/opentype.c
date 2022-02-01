@@ -4607,8 +4607,8 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     next_bit = global_bit_shift + 1;
     for (i = 0; i < features->count; ++i)
     {
-        unsigned int bits_needed;
         BOOL found = FALSE;
+        DWORD bits_needed;
 
         feature = &features->features[i];
 
@@ -5077,7 +5077,8 @@ static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_con
     if (format == 1)
     {
         const struct ot_gsub_altsubst_format1 *format1 = table_read_ensure(table, subtable_offset, sizeof(*format1));
-        unsigned int shift, alt_index;
+        DWORD shift;
+        unsigned int alt_index;
         UINT16 set_offset;
 
         coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_altsubst_format1, coverage));

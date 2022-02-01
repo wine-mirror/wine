@@ -67,10 +67,10 @@ void release_scriptshaping_cache(struct scriptshaping_cache *cache)
     free(cache);
 }
 
-static unsigned int shape_select_script(const struct scriptshaping_cache *cache, DWORD kind, const DWORD *scripts,
+static unsigned int shape_select_script(const struct scriptshaping_cache *cache, DWORD kind, const unsigned int *scripts,
         unsigned int *script_index)
 {
-    static const DWORD fallback_scripts[] =
+    static const unsigned int fallback_scripts[] =
     {
         DWRITE_MAKE_OPENTYPE_TAG('D','F','L','T'),
         DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t'),
