@@ -2851,8 +2851,7 @@ static void test_startup(void)
         data.lpVendorInfo = (void *)0xdeadbeef;
         ret = WSAStartup(tests[i].version, &data);
         ok(ret == (LOBYTE(tests[i].version) ? 0 : WSAVERNOTSUPPORTED), "got %d\n", ret);
-        todo_wine_if (tests[i].version != tests[i].ret_version)
-            ok(data.wVersion == tests[i].ret_version, "got version %#x\n", data.wVersion);
+        ok(data.wVersion == tests[i].ret_version, "got version %#x\n", data.wVersion);
         if (!ret)
         {
             ret = WSAStartup(tests[i].version, &data);

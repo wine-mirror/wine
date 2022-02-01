@@ -578,7 +578,13 @@ int WINAPI WSAStartup( WORD version, WSADATA *data )
 
     if (data)
     {
-        data->wVersion = version;
+        if (!LOBYTE(version) || LOBYTE(version) > 2
+                || (LOBYTE(version) == 2 && HIBYTE(version) > 2))
+            data->wVersion = MAKEWORD(2, 2);
+        else if (LOBYTE(version) == 1 && HIBYTE(version) > 1)
+            data->wVersion = MAKEWORD(1, 1);
+        else
+            data->wVersion = version;
         data->wHighVersion = MAKEWORD(2, 2);
         strcpy( data->szDescription, "WinSock 2.0" );
         strcpy( data->szSystemStatus, "Running" );
