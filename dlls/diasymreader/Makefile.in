@@ -3,6 +3,8 @@ IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = main.c
+C_SRCS = \
+	main.c \
+	writer.c
 
 RC_SRCS = diasymreader.rc
