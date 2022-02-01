@@ -825,7 +825,7 @@ static NTSTATUS query_context_attributes( void *args )
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG qop )
+static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsigned qop )
 {
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
@@ -874,7 +874,7 @@ static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG qop )
+static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsigned qop )
 {
     gss_buffer_desc input, output;
     OM_uint32 ret, minor_status;
@@ -902,7 +902,7 @@ static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, UL
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
-        DWORD len_data = msg->pBuffers[data_idx].cbBuffer, len_token = msg->pBuffers[token_idx].cbBuffer;
+        unsigned len_data = msg->pBuffers[data_idx].cbBuffer, len_token = msg->pBuffers[token_idx].cbBuffer;
         if (len_token < output.length - len_data)
         {
             TRACE( "buffer too small %lu > %u\n", (SIZE_T)output.length - len_data, len_token );
