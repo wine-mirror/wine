@@ -450,7 +450,7 @@ BOOL WINAPI NtGdiPolyDraw( HDC hdc, const POINT *points, const BYTE *types, DWOR
     return unix_funcs->pNtGdiPolyDraw( hdc, points, types, count );
 }
 
-ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts,
+ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const ULONG *counts,
                                 DWORD count, UINT function )
 {
     if (!unix_funcs) return 0;

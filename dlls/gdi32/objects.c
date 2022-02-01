@@ -674,7 +674,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA *dat
  */
 HRGN WINAPI CreatePolyPolygonRgn( const POINT *points, const INT *counts, INT count, INT mode )
 {
-    ULONG ret = NtGdiPolyPolyDraw( ULongToHandle(mode), points, (const UINT *)counts,
+    ULONG ret = NtGdiPolyPolyDraw( ULongToHandle(mode), points, (const ULONG *)counts,
                                    count, NtGdiPolyPolygonRgn );
     return ULongToHandle( ret );
 }

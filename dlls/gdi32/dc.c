@@ -1438,7 +1438,7 @@ BOOL WINAPI Polygon( HDC hdc, const POINT *points, INT count )
     if (is_meta_dc( hdc )) return METADC_Polygon( hdc, points, count );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_Polygon( dc_attr, points, count )) return FALSE;
-    return NtGdiPolyPolyDraw( hdc, points, (const UINT *)&count, 1, NtGdiPolyPolygon );
+    return NtGdiPolyPolyDraw( hdc, points, (const ULONG *)&count, 1, NtGdiPolyPolygon );
 }
 
 /**********************************************************************
@@ -1453,7 +1453,7 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT *points, const INT *counts, UINT p
     if (is_meta_dc( hdc )) return METADC_PolyPolygon( hdc, points, counts, polygons );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_PolyPolygon( dc_attr, points, counts, polygons )) return FALSE;
-    return NtGdiPolyPolyDraw( hdc, points, (const UINT *)counts, polygons, NtGdiPolyPolygon );
+    return NtGdiPolyPolyDraw( hdc, points, (const ULONG *)counts, polygons, NtGdiPolyPolygon );
 }
 
 /**********************************************************************
@@ -1468,7 +1468,7 @@ BOOL WINAPI Polyline( HDC hdc, const POINT *points, INT count )
     if (is_meta_dc( hdc )) return METADC_Polyline( hdc, points, count );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_Polyline( dc_attr, points, count )) return FALSE;
-    return NtGdiPolyPolyDraw( hdc, points, (const UINT *)&count, 1, NtGdiPolyPolyline );
+    return NtGdiPolyPolyDraw( hdc, points, (const ULONG *)&count, 1, NtGdiPolyPolyline );
 }
 
 /**********************************************************************

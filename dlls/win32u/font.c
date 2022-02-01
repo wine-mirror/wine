@@ -5248,7 +5248,7 @@ static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *
     dp_to_lp( dc, pts, count );
     for (i = 0; i < count; i += 2)
     {
-        const UINT pts_count = 2;
+        const ULONG pts_count = 2;
         NtGdiPolyPolyDraw( dc->hSelf, pts + i, &pts_count, 1, NtGdiPolyPolyline );
     }
     free( pts );
@@ -5745,7 +5745,7 @@ done:
 
         if (lf.lfUnderline)
         {
-            const UINT cnt = 5;
+            const ULONG cnt = 5;
             pts[0].x = x - (underlinePos + underlineWidth / 2) * sinEsc;
             pts[0].y = y - (underlinePos + underlineWidth / 2) * cosEsc;
             pts[1].x = x + width.x - (underlinePos + underlineWidth / 2) * sinEsc;
@@ -5762,7 +5762,7 @@ done:
 
         if (lf.lfStrikeOut)
         {
-            const UINT cnt = 5;
+            const ULONG cnt = 5;
             pts[0].x = x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
             pts[0].y = y - (strikeoutPos + strikeoutWidth / 2) * cosEsc;
             pts[1].x = x + width.x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
