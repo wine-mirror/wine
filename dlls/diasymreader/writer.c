@@ -214,7 +214,7 @@ static HRESULT WINAPI SymWriter_Initialize(ISymUnmanagedWriter5 *iface, IUnknown
     IStream *pIStream, BOOL fFullBuild)
 {
     FIXME("(%p,%p,%s,%p,%u)\n", iface, emitter, debugstr_w(filename), pIStream, fFullBuild);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_GetDebugInfo(ISymUnmanagedWriter5 *iface, IMAGE_DEBUG_DIRECTORY *pIDD, DWORD cData,
