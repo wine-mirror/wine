@@ -184,7 +184,8 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
 
     refcount = get_refcount((IUnknown *)ports);
     hr = IStaticPortMappingCollection_get__NewEnum(ports, &unk);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    if (FAILED(hr)) return;
 
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void **)&enum_ports);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);

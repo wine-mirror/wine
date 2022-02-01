@@ -114,7 +114,8 @@ static REFIID tid_id[] =
     &IID_INetFwPolicy,
     &IID_INetFwPolicy2,
     &IID_INetFwProfile,
-    &IID_IUPnPNAT
+    &IID_IUPnPNAT,
+    &IID_IStaticPortMappingCollection,
 };
 
 HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
