@@ -27,6 +27,7 @@
 #include "string.h"
 #include "assert.h"
 #include "winsock2.h"
+#include "winhttp.h"
 #include "ole2.h"
 #include "netfw.h"
 #include "natupnp.h"
@@ -40,10 +41,48 @@ static struct
 {
     LONG refs;
     BOOL winsock_initialized;
+    WCHAR locationW[256];
 }
 upnp_gateway_connection;
 
 static SRWLOCK upnp_gateway_connection_lock = SRWLOCK_INIT;
+
+static BOOL parse_search_response( char *response, WCHAR *locationW, unsigned int location_size )
+{
+    char *saveptr = NULL, *tok, *tok2;
+    unsigned int status;
+
+    tok = strtok_s( response, "\n", &saveptr );
+    if (!tok) return FALSE;
+
+    /* HTTP/1.1 200 OK */
+    tok2 = strtok( tok, " " );
+    if (!tok2) return FALSE;
+    tok2 = strtok( NULL, " " );
+    if (!tok2) return FALSE;
+    status = atoi( tok2 );
+    if (status != HTTP_STATUS_OK)
+    {
+        WARN( "status %u.\n", status );
+        return FALSE;
+    }
+    while ((tok = strtok_s( NULL, "\n", &saveptr )))
+    {
+        tok2 = strtok( tok, " " );
+        if (!tok2) continue;
+        if (!stricmp( tok2, "LOCATION:" ))
+        {
+            tok2 = strtok( NULL, " \r" );
+            if (!tok2)
+            {
+                WARN( "Error parsing location.\n" );
+                return FALSE;
+            }
+            return !!MultiByteToWideChar( CP_UTF8, 0, tok2, -1, locationW,  location_size / 2 );
+        }
+    }
+    return FALSE;
+}
 
 static void gateway_connection_cleanup(void)
 {
@@ -118,6 +157,13 @@ static BOOL init_gateway_connection(void)
         return FALSE;
     }
     TRACE( "Received reply from gateway, len %d.\n", len );
+    buffer[len] = 0;
+    if (!parse_search_response( buffer, upnp_gateway_connection.locationW, sizeof(upnp_gateway_connection.locationW) ))
+    {
+        WARN( "Error parsing response.\n" );
+        return FALSE;
+    }
+    TRACE( "Gateway description location %s.\n", debugstr_w(upnp_gateway_connection.locationW) );
     return TRUE;
 }
 
