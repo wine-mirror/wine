@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
@@ -29,7 +30,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -106,7 +106,7 @@ static struct writer *alloc_writer(void)
     struct writer *ret;
     ULONG size = sizeof(*ret) + prop_size( writer_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
+    if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic      = WRITER_MAGIC;
     InitializeCriticalSection( &ret->cs );
@@ -122,11 +122,11 @@ static void free_writer( struct writer *writer )
     destroy_nodes( writer->root );
     free_xml_string( writer->current_ns );
     WsFreeHeap( writer->output_heap );
-    heap_free( writer->stream_buf );
+    free( writer->stream_buf );
 
     writer->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &writer->cs );
-    heap_free( writer );
+    free( writer );
 }
 
 static void write_insert_eof( struct writer *writer, struct node *eof )
@@ -430,7 +430,7 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
     case WS_XML_WRITER_OUTPUT_TYPE_STREAM:
     {
         const WS_XML_WRITER_STREAM_OUTPUT *stream = (const WS_XML_WRITER_STREAM_OUTPUT *)output;
-        if (!writer->stream_buf && !(writer->stream_buf = heap_alloc( STREAM_BUFSIZE )))
+        if (!writer->stream_buf && !(writer->stream_buf = malloc( STREAM_BUFSIZE )))
         {
             hr = E_OUTOFMEMORY;
             goto done;
@@ -1283,12 +1283,12 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         len = text_utf8->value.length;
         if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK)
         {
-            heap_free( new );
+            free( new );
             return hr;
         }
         write_char( writer, len );
         write_bytes( writer, text_utf8->value.bytes, len );
-        heap_free( new );
+        free( new );
         return S_OK;
     }
     case RECORD_CHARS16_TEXT:
@@ -1306,12 +1306,12 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         len = text_utf8->value.length;
         if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK)
         {
-            heap_free( new );
+            free( new );
             return hr;
         }
         write_bytes( writer, (const BYTE *)&len, sizeof(len) );
         write_bytes( writer, text_utf8->value.bytes, len );
-        heap_free( new );
+        free( new );
         return S_OK;
     }
     case RECORD_BYTES8_TEXT:
@@ -1629,7 +1629,7 @@ static HRESULT add_namespace_attribute( struct writer *writer, const WS_XML_STRI
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     HRESULT hr;
 
-    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+    if (!(attr = calloc( 1, sizeof(*attr) ))) return E_OUTOFMEMORY;
 
     attr->singleQuote = !!single;
     attr->isXmlNs = 1;
@@ -2044,7 +2044,7 @@ static HRESULT write_add_attribute( struct writer *writer, const WS_XML_STRING *
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     HRESULT hr;
 
-    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+    if (!(attr = calloc( 1, sizeof(*attr) ))) return E_OUTOFMEMORY;
 
     if (!prefix && ns->length) prefix = elem->prefix;
 
@@ -2477,7 +2477,7 @@ static HRESULT write_set_attribute_value( struct writer *writer, const WS_XML_TE
     {
         WS_XML_UTF8_TEXT *new, *old = (WS_XML_UTF8_TEXT *)elem->attributes[elem->attributeCount - 1]->value;
         if ((hr = text_to_utf8text( value, old, NULL, &new )) != S_OK) return hr;
-        heap_free( old );
+        free( old );
         elem->attributes[elem->attributeCount - 1]->value = &new->text;
         break;
     }
@@ -2485,7 +2485,7 @@ static HRESULT write_set_attribute_value( struct writer *writer, const WS_XML_TE
     {
         WS_XML_TEXT *new, *old = elem->attributes[elem->attributeCount - 1]->value;
         if ((hr = text_to_text( value, old, NULL, &new )) != S_OK) return hr;
-        heap_free( old );
+        free( old );
         elem->attributes[elem->attributeCount - 1]->value = new;
         break;
     }
@@ -2517,7 +2517,7 @@ static HRESULT write_add_text_node( struct writer *writer, const WS_XML_TEXT *va
         WS_XML_UTF8_TEXT *new;
         if ((hr = text_to_utf8text( value, NULL, NULL, &new )) != S_OK)
         {
-            heap_free( node );
+            free( node );
             return hr;
         }
         text->text = &new->text;
@@ -2528,7 +2528,7 @@ static HRESULT write_add_text_node( struct writer *writer, const WS_XML_TEXT *va
         WS_XML_TEXT *new;
         if ((hr = text_to_text( value, NULL, NULL, &new )) != S_OK)
         {
-            heap_free( node );
+            free( node );
             return hr;
         }
         text->text = new;
@@ -2536,7 +2536,7 @@ static HRESULT write_add_text_node( struct writer *writer, const WS_XML_TEXT *va
     }
     default:
         FIXME( "unhandled output encoding %u\n", writer->output_enc );
-        heap_free( node );
+        free( node );
         return E_NOTIMPL;
     }
 
@@ -2691,13 +2691,13 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         len = text_utf8->value.length;
         if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK)
         {
-            heap_free( new );
+            free( new );
             return hr;
         }
         write_char( writer, type );
         write_char( writer, len );
         write_bytes( writer, text_utf8->value.bytes, len );
-        heap_free( new );
+        free( new );
         return S_OK;
     }
     case RECORD_CHARS16_TEXT_WITH_ENDELEMENT:
@@ -2715,13 +2715,13 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         len = text_utf8->value.length;
         if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK)
         {
-            heap_free( new );
+            free( new );
             return hr;
         }
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&len, sizeof(len) );
         write_bytes( writer, text_utf8->value.bytes, len );
-        heap_free( new );
+        free( new );
         return S_OK;
     }
     case RECORD_BYTES8_TEXT:
@@ -2920,7 +2920,7 @@ static HRESULT write_text_node( struct writer *writer, const WS_XML_TEXT *text )
             WS_XML_UTF8_TEXT *new, *old = (WS_XML_UTF8_TEXT *)node->text;
             offset = old->value.length;
             if ((hr = text_to_utf8text( text, old, &offset, &new )) != S_OK) return hr;
-            heap_free( old );
+            free( old );
             node->text = &new->text;
             break;
         }
@@ -2928,7 +2928,7 @@ static HRESULT write_text_node( struct writer *writer, const WS_XML_TEXT *text )
         {
             WS_XML_TEXT *new, *old = node->text;
             if ((hr = text_to_text( text, old, &offset, &new )) != S_OK) return hr;
-            heap_free( old );
+            free( old );
             node->text = new;
             break;
         }
@@ -4610,7 +4610,7 @@ static HRESULT write_add_comment_node( struct writer *writer, const WS_XML_STRIN
     if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
     comment = (WS_XML_COMMENT_NODE *)node;
 
-    if (value->length && !(comment->value.bytes = heap_alloc( value->length )))
+    if (value->length && !(comment->value.bytes = malloc( value->length )))
     {
         free_node( node );
         return E_OUTOFMEMORY;

@@ -901,7 +901,7 @@ static void test_simple_struct_type(void)
     s.fields        = fields;
     s.fieldCount    = 1;
 
-    test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
+    test = malloc( sizeof(*test) );
     test->field  = L"value";
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
@@ -968,7 +968,7 @@ static void test_simple_struct_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<struct struct=\"value\"/>", __LINE__ );
 
-    HeapFree( GetProcessHeap(), 0, test );
+    free( test );
     WsFreeWriter( writer );
 }
 
@@ -1005,7 +1005,7 @@ static void test_WsWriteElement(void)
     desc.type             = WS_STRUCT_TYPE;
     desc.typeDescription  = &s;
 
-    test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
+    test = malloc( sizeof(*test) );
     test->str = L"test";
     hr = WsWriteElement( NULL, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -1049,7 +1049,7 @@ static void test_WsWriteElement(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<str str=\"test\"/>", __LINE__ );
 
-    HeapFree( GetProcessHeap(), 0, test );
+    free( test );
     WsFreeWriter( writer );
 }
 
@@ -1192,7 +1192,7 @@ static void test_WsWriteAttribute(void)
     desc.type               = WS_STRUCT_TYPE;
     desc.typeDescription    = &s;
 
-    test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
+    test = malloc( sizeof(*test) );
     test->str = L"test";
     hr = WsWriteAttribute( NULL, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -1219,7 +1219,7 @@ static void test_WsWriteAttribute(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<str str=\"test\"/>", __LINE__ );
 
-    HeapFree( GetProcessHeap(), 0, test );
+    free( test );
     WsFreeWriter( writer );
 }
 
@@ -1652,7 +1652,7 @@ static void test_complex_struct_type(void)
     s.typeNs        = &ns;
 
     size = sizeof(struct officeconfig) + sizeof(struct services);
-    test = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    test = calloc( 1, size );
     test->services = (struct services *)(test + 1);
     test->services->generationtime = L"2015-09-03T18:47:54";
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
@@ -1663,7 +1663,7 @@ static void test_complex_struct_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_buffer( buffer, expected, __LINE__ );
 
-    HeapFree( GetProcessHeap(), 0, test );
+    free( test );
     WsFreeWriter( writer );
     WsFreeHeap( heap );
 }
@@ -3116,7 +3116,7 @@ static void test_repeating_element(void)
     hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) + 2 * sizeof(const WCHAR *) );
+    test = malloc( sizeof(*test) + 2 * sizeof(const WCHAR *) );
     test->val = (const WCHAR **)(test + 1);
     test->val[0] = L"1";
     test->val[1] = L"2";
@@ -3127,7 +3127,7 @@ static void test_repeating_element(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<test><wrapper><val>1</val><val>2</val></wrapper></test>", __LINE__ );
-    HeapFree( GetProcessHeap(), 0, test );
+    free( test );
 
     /* array of integers, no wrapper */
     hr = set_output( writer );
@@ -3139,7 +3139,7 @@ static void test_repeating_element(void)
     f.localName = NULL;
     f.ns        = NULL;
 
-    test2 = HeapAlloc( GetProcessHeap(), 0, sizeof(*test2) + 2 * sizeof(INT32) );
+    test2 = malloc( sizeof(*test2) + 2 * sizeof(INT32) );
     test2->val = (INT32 *)(test2 + 1);
     test2->val[0] = 1;
     test2->val[1] = 2;
@@ -3167,7 +3167,7 @@ static void test_repeating_element(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<test><val>1</val><val>2</val></test>", __LINE__ );
-    HeapFree( GetProcessHeap(), 0, test2 );
+    free( test2 );
 
     /* nillable item */
     hr = set_output( writer );
@@ -3198,7 +3198,7 @@ static void test_repeating_element(void)
     f.options         = WS_FIELD_POINTER|WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE|WS_FIELD_NILLABLE_ITEM;
 
     value.data = -1;
-    test3 = HeapAlloc( GetProcessHeap(), 0, sizeof(*test3) + 2 * sizeof(const struct value *) );
+    test3 = malloc( sizeof(*test3) + 2 * sizeof(const struct value *) );
     test3->val = (const struct value **)(test3 + 1);
     test3->val[0] = &value;
     test3->val[1] = NULL;
@@ -3211,7 +3211,7 @@ static void test_repeating_element(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<test><wrapper><val><data>-1</data></val><val a:nil=\"true\" "
                           "xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/></wrapper></test>", __LINE__ );
-    HeapFree( GetProcessHeap(), 0, test3 );
+    free( test3 );
 
     WsFreeWriter( writer );
 }

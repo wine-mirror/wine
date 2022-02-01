@@ -24,7 +24,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 #include "sock.h"
@@ -128,18 +127,18 @@ static struct listener *alloc_listener(void)
     struct listener *ret;
     ULONG size = sizeof(*ret) + prop_size( listener_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
+    if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic = LISTENER_MAGIC;
     if (!(ret->wait = CreateEventW( NULL, FALSE, FALSE, NULL )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     if (!(ret->cancel = CreateEventW( NULL, FALSE, FALSE, NULL )))
     {
         CloseHandle( ret->wait );
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     InitializeCriticalSection( &ret->cs );
@@ -181,7 +180,7 @@ static void free_listener( struct listener *listener )
 
     listener->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &listener->cs );
-    heap_free( listener );
+    free( listener );
 }
 
 static HRESULT create_listener( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
@@ -327,7 +326,7 @@ HRESULT parse_url( const WS_STRING *str, WS_URL_SCHEME_TYPE *scheme, WCHAR **hos
     if (url->host.length == 1 && (url->host.chars[0] == '+' || url->host.chars[0] == '*')) *host = NULL;
     else
     {
-        if (!(*host = heap_alloc( (url->host.length + 1) * sizeof(WCHAR) )))
+        if (!(*host = malloc( (url->host.length + 1) * sizeof(WCHAR) )))
         {
             WsFreeHeap( heap );
             return E_OUTOFMEMORY;
@@ -355,14 +354,14 @@ static HRESULT open_listener_tcp( struct listener *listener, const WS_STRING *ur
     if ((hr = parse_url( url, &scheme, &host, &port )) != S_OK) return hr;
     if (scheme != WS_URL_NETTCP_SCHEME_TYPE)
     {
-        heap_free( host );
+        free( host );
         return WS_E_INVALID_ENDPOINT_URL;
     }
 
     winsock_init();
 
     hr = resolve_hostname( host, port, addr, &addr_len, AI_PASSIVE );
-    heap_free( host );
+    free( host );
     if (hr != S_OK) return hr;
 
     if ((listener->u.tcp.socket = socket( addr->sa_family, SOCK_STREAM, 0 )) == -1)
@@ -406,14 +405,14 @@ static HRESULT open_listener_udp( struct listener *listener, const WS_STRING *ur
     if ((hr = parse_url( url, &scheme, &host, &port )) != S_OK) return hr;
     if (scheme != WS_URL_SOAPUDP_SCHEME_TYPE)
     {
-        heap_free( host );
+        free( host );
         return WS_E_INVALID_ENDPOINT_URL;
     }
 
     winsock_init();
 
     hr = resolve_hostname( host, port, addr, &addr_len, AI_PASSIVE );
-    heap_free( host );
+    free( host );
     if (hr != S_OK) return hr;
 
     if ((listener->u.udp.socket = socket( addr->sa_family, SOCK_DGRAM, 0 )) == -1)

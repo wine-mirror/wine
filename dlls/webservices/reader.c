@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <float.h>
 #include <locale.h>
@@ -27,7 +28,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -72,7 +72,7 @@ struct node *alloc_node( WS_XML_NODE_TYPE type )
 {
     struct node *ret;
 
-    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     ret->hdr.node.nodeType = type;
     list_init( &ret->entry );
     list_init( &ret->children );
@@ -85,8 +85,8 @@ void free_attribute( WS_XML_ATTRIBUTE *attr )
     free_xml_string( attr->prefix );
     free_xml_string( attr->localName );
     free_xml_string( attr->ns );
-    heap_free( attr->value );
-    heap_free( attr );
+    free( attr->value );
+    free( attr );
 }
 
 void free_node( struct node *node )
@@ -100,7 +100,7 @@ void free_node( struct node *node )
         ULONG i;
 
         for (i = 0; i < elem->attributeCount; i++) free_attribute( elem->attributes[i] );
-        heap_free( elem->attributes );
+        free( elem->attributes );
         free_xml_string( elem->prefix );
         free_xml_string( elem->localName );
         free_xml_string( elem->ns );
@@ -109,13 +109,13 @@ void free_node( struct node *node )
     case WS_XML_NODE_TYPE_TEXT:
     {
         WS_XML_TEXT_NODE *text = (WS_XML_TEXT_NODE *)node;
-        heap_free( text->text );
+        free( text->text );
         break;
     }
     case WS_XML_NODE_TYPE_COMMENT:
     {
         WS_XML_COMMENT_NODE *comment = (WS_XML_COMMENT_NODE *)node;
-        heap_free( comment->value.bytes );
+        free( comment->value.bytes );
         break;
     }
     case WS_XML_NODE_TYPE_CDATA:
@@ -129,7 +129,7 @@ void free_node( struct node *node )
         ERR( "unhandled type %u\n", node_type( node ) );
         break;
     }
-    heap_free( node );
+    free( node );
 }
 
 void destroy_nodes( struct node *node )
@@ -151,7 +151,7 @@ static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src, WS_XML_WRIT
     WS_XML_ATTRIBUTE *dst;
     HRESULT hr;
 
-    if (!(dst = heap_alloc_zero( sizeof(*dst) ))) return NULL;
+    if (!(dst = calloc( 1, sizeof(*dst) ))) return NULL;
     dst->singleQuote = src->singleQuote;
     dst->isXmlNs     = src->isXmlNs;
 
@@ -191,13 +191,13 @@ static WS_XML_ATTRIBUTE **dup_attributes( WS_XML_ATTRIBUTE * const *src, ULONG c
     WS_XML_ATTRIBUTE **dst;
     ULONG i;
 
-    if (!(dst = heap_alloc( sizeof(*dst) * count ))) return NULL;
+    if (!(dst = malloc( sizeof(*dst) * count ))) return NULL;
     for (i = 0; i < count; i++)
     {
         if (!(dst[i] = dup_attribute( src[i], enc )))
         {
             for (; i > 0; i--) free_attribute( dst[i - 1] );
-            heap_free( dst );
+            free( dst );
             return NULL;
         }
     }
@@ -273,7 +273,7 @@ static struct node *dup_comment_node( const WS_XML_COMMENT_NODE *src )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return NULL;
     dst = (WS_XML_COMMENT_NODE *)node;
 
-    if (src->value.length && !(dst->value.bytes = heap_alloc( src->value.length )))
+    if (src->value.length && !(dst->value.bytes = malloc( src->value.length )))
     {
         free_node( node );
         return NULL;
@@ -413,10 +413,10 @@ static struct reader *alloc_reader(void)
     struct reader *ret;
     ULONG size = sizeof(*ret) + prop_size( reader_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
-    if (!(ret->prefixes = heap_alloc_zero( sizeof(*ret->prefixes) )))
+    if (!(ret = calloc( 1, size ))) return NULL;
+    if (!(ret->prefixes = calloc( 1, sizeof(*ret->prefixes) )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     ret->nb_prefixes = ret->nb_prefixes_allocated = 1;
@@ -466,11 +466,12 @@ static HRESULT bind_prefix( struct reader *reader, const WS_XML_STRING *prefix, 
     }
     if (i >= reader->nb_prefixes_allocated)
     {
-        ULONG new_size = reader->nb_prefixes_allocated * sizeof(*reader->prefixes) * 2;
-        struct prefix *tmp = heap_realloc_zero( reader->prefixes, new_size  );
+        ULONG new_size = reader->nb_prefixes_allocated * 2;
+        struct prefix *tmp = realloc( reader->prefixes, new_size * sizeof(*tmp)  );
         if (!tmp) return E_OUTOFMEMORY;
+        memset( tmp + reader->nb_prefixes_allocated, 0, (new_size - reader->nb_prefixes_allocated) * sizeof(*tmp) );
         reader->prefixes = tmp;
-        reader->nb_prefixes_allocated *= 2;
+        reader->nb_prefixes_allocated = new_size;
     }
     if ((hr = set_prefix( &reader->prefixes[i], prefix, ns )) != S_OK) return hr;
     reader->nb_prefixes++;
@@ -517,13 +518,13 @@ static void free_reader( struct reader *reader )
 {
     destroy_nodes( reader->root );
     clear_prefixes( reader->prefixes, reader->nb_prefixes );
-    heap_free( reader->prefixes );
-    heap_free( reader->stream_buf );
-    heap_free( reader->input_conv );
+    free( reader->prefixes );
+    free( reader->stream_buf );
+    free( reader->input_conv );
 
     reader->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &reader->cs );
-    heap_free( reader );
+    free( reader );
 }
 
 static HRESULT init_reader( struct reader *reader )
@@ -839,7 +840,7 @@ WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *data, ULONG len )
 {
     WS_XML_UTF8_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) + len ))) return NULL;
     ret->text.textType    = WS_XML_TEXT_TYPE_UTF8;
     ret->value.length     = len;
     ret->value.bytes      = len ? (BYTE *)(ret + 1) : NULL;
@@ -853,7 +854,7 @@ WS_XML_UTF16_TEXT *alloc_utf16_text( const BYTE *data, ULONG len )
 {
     WS_XML_UTF16_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) + len ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_UTF16;
     ret->byteCount     = len;
     ret->bytes         = len ? (BYTE *)(ret + 1) : NULL;
@@ -865,7 +866,7 @@ WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *data, ULONG len )
 {
     WS_XML_BASE64_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) + len ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_BASE64;
     ret->length        = len;
     ret->bytes         = len ? (BYTE *)(ret + 1) : NULL;
@@ -877,7 +878,7 @@ WS_XML_BOOL_TEXT *alloc_bool_text( BOOL value )
 {
     WS_XML_BOOL_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_BOOL;
     ret->value         = value;
     return ret;
@@ -887,7 +888,7 @@ WS_XML_INT32_TEXT *alloc_int32_text( INT32 value )
 {
     WS_XML_INT32_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_INT32;
     ret->value         = value;
     return ret;
@@ -897,7 +898,7 @@ WS_XML_INT64_TEXT *alloc_int64_text( INT64 value )
 {
     WS_XML_INT64_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_INT64;
     ret->value         = value;
     return ret;
@@ -907,7 +908,7 @@ WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 value )
 {
     WS_XML_UINT64_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_UINT64;
     ret->value         = value;
     return ret;
@@ -917,7 +918,7 @@ WS_XML_FLOAT_TEXT *alloc_float_text( float value )
 {
     WS_XML_FLOAT_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_FLOAT;
     ret->value         = value;
     return ret;
@@ -927,7 +928,7 @@ WS_XML_DOUBLE_TEXT *alloc_double_text( double value )
 {
     WS_XML_DOUBLE_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_DOUBLE;
     ret->value         = value;
     return ret;
@@ -937,7 +938,7 @@ WS_XML_GUID_TEXT *alloc_guid_text( const GUID *value )
 {
     WS_XML_GUID_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_GUID;
     ret->value         = *value;
     return ret;
@@ -947,7 +948,7 @@ WS_XML_UNIQUE_ID_TEXT *alloc_unique_id_text( const GUID *value )
 {
     WS_XML_UNIQUE_ID_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
     ret->value         = *value;
     return ret;
@@ -957,7 +958,7 @@ WS_XML_DATETIME_TEXT *alloc_datetime_text( const WS_DATETIME *value )
 {
     WS_XML_DATETIME_TEXT *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     ret->text.textType = WS_XML_TEXT_TYPE_DATETIME;
     ret->value         = *value;
     return ret;
@@ -1138,11 +1139,10 @@ HRESULT append_attribute( WS_XML_ELEMENT_NODE *elem, WS_XML_ATTRIBUTE *attr )
     if (elem->attributeCount)
     {
         WS_XML_ATTRIBUTE **tmp;
-        if (!(tmp = heap_realloc( elem->attributes, (elem->attributeCount + 1) * sizeof(attr) )))
-            return E_OUTOFMEMORY;
+        if (!(tmp = realloc( elem->attributes, (elem->attributeCount + 1) * sizeof(attr) ))) return E_OUTOFMEMORY;
         elem->attributes = tmp;
     }
-    else if (!(elem->attributes = heap_alloc( sizeof(attr) ))) return E_OUTOFMEMORY;
+    else if (!(elem->attributes = malloc( sizeof(attr) ))) return E_OUTOFMEMORY;
     elem->attributes[elem->attributeCount++] = attr;
     return S_OK;
 }
@@ -1377,7 +1377,7 @@ static HRESULT read_attribute_value_text( struct reader *reader, WS_XML_ATTRIBUT
         if (!(utf8 = alloc_utf8_text( NULL, len ))) return E_OUTOFMEMORY;
         if ((hr = decode_text( start, len, utf8->value.bytes, &utf8->value.length )) != S_OK)
         {
-            heap_free( utf8 );
+            free( utf8 );
             return hr;
         }
     }
@@ -1596,7 +1596,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         if (!(text_base64 = alloc_base64_text( NULL, val_uint8 ))) return E_OUTOFMEMORY;
         if ((hr = read_bytes( reader, text_base64->bytes, val_uint8 )) != S_OK)
         {
-            heap_free( text_base64 );
+            free( text_base64 );
             return hr;
         }
         break;
@@ -1606,7 +1606,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         if (!(text_base64 = alloc_base64_text( NULL, val_uint16 ))) return E_OUTOFMEMORY;
         if ((hr = read_bytes( reader, text_base64->bytes, val_uint16 )) != S_OK)
         {
-            heap_free( text_base64 );
+            free( text_base64 );
             return hr;
         }
         break;
@@ -1617,7 +1617,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         if (!(text_base64 = alloc_base64_text( NULL, val_int32 ))) return E_OUTOFMEMORY;
         if ((hr = read_bytes( reader, text_base64->bytes, val_int32 )) != S_OK)
         {
-            heap_free( text_base64 );
+            free( text_base64 );
             return hr;
         }
         break;
@@ -1684,7 +1684,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         if (!len) text_utf8->value.bytes = (BYTE *)(text_utf8 + 1); /* quirk */
         if ((hr = read_bytes( reader, text_utf8->value.bytes, len )) != S_OK)
         {
-            heap_free( text_utf8 );
+            free( text_utf8 );
             return hr;
         }
     }
@@ -1702,7 +1702,7 @@ static HRESULT read_attribute_text( struct reader *reader, WS_XML_ATTRIBUTE **re
     WS_XML_STRING *prefix, *localname;
     HRESULT hr;
 
-    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+    if (!(attr = calloc( 1, sizeof(*attr) ))) return E_OUTOFMEMORY;
 
     start = read_current_ptr( reader );
     for (;;)
@@ -1773,7 +1773,7 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
 
     if ((hr = read_byte( reader, &type )) != S_OK) return hr;
     if (!is_attribute_type( type )) return WS_E_INVALID_FORMAT;
-    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+    if (!(attr = calloc( 1, sizeof(*attr) ))) return E_OUTOFMEMORY;
 
     if (type >= RECORD_PREFIX_ATTRIBUTE_A && type <= RECORD_PREFIX_ATTRIBUTE_Z)
     {
@@ -2175,13 +2175,13 @@ static HRESULT read_text_text( struct reader *reader )
     text = (WS_XML_TEXT_NODE *)node;
     if (!(utf8 = alloc_utf8_text( NULL, len )))
     {
-        heap_free( node );
+        free( node );
         return E_OUTOFMEMORY;
     }
     if ((hr = decode_text( start, len, utf8->value.bytes, &utf8->value.length )) != S_OK)
     {
-        heap_free( utf8 );
-        heap_free( node );
+        free( utf8 );
+        free( node );
         return hr;
     }
     text->text = &utf8->text;
@@ -2201,7 +2201,7 @@ static struct node *alloc_utf8_text_node( const BYTE *data, ULONG len, WS_XML_UT
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(utf8 = alloc_utf8_text( data, len )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2219,7 +2219,7 @@ static struct node *alloc_base64_text_node( const BYTE *data, ULONG len, WS_XML_
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(base64 = alloc_base64_text( data, len )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2237,7 +2237,7 @@ static struct node *alloc_bool_text_node( BOOL value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_bool = alloc_bool_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2254,7 +2254,7 @@ static struct node *alloc_int32_text_node( INT32 value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_int32 = alloc_int32_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2271,7 +2271,7 @@ static struct node *alloc_int64_text_node( INT64 value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_int64 = alloc_int64_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2288,7 +2288,7 @@ static struct node *alloc_float_text_node( float value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_float = alloc_float_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2305,7 +2305,7 @@ static struct node *alloc_double_text_node( double value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_double = alloc_double_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2322,7 +2322,7 @@ static struct node *alloc_datetime_text_node( const WS_DATETIME *value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_datetime = alloc_datetime_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2339,7 +2339,7 @@ static struct node *alloc_unique_id_text_node( const GUID *value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_unique_id = alloc_unique_id_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2356,7 +2356,7 @@ static struct node *alloc_guid_text_node( const GUID *value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_guid = alloc_guid_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2373,7 +2373,7 @@ static struct node *alloc_uint64_text_node( UINT64 value )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     if (!(text_uint64 = alloc_uint64_text( value )))
     {
-        heap_free( node );
+        free( node );
         return NULL;
     }
     text = (WS_XML_TEXT_NODE *)node;
@@ -2389,7 +2389,7 @@ static HRESULT append_text_bytes( struct reader *reader, WS_XML_TEXT_NODE *node,
     if (!(new = alloc_base64_text( NULL, old->length + len ))) return E_OUTOFMEMORY;
     memcpy( new->bytes, old->bytes, old->length );
     if ((hr = read_bytes( reader, new->bytes + old->length, len )) != S_OK) return hr;
-    heap_free( old );
+    free( old );
     node->text = &new->text;
     return S_OK;
 }
@@ -2896,9 +2896,9 @@ static HRESULT read_comment_text( struct reader *reader )
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
     comment = (WS_XML_COMMENT_NODE *)node;
-    if (!(comment->value.bytes = heap_alloc( len )))
+    if (!(comment->value.bytes = malloc( len )))
     {
-        heap_free( node );
+        free( node );
         return E_OUTOFMEMORY;
     }
     memcpy( comment->value.bytes, start, len );
@@ -2925,9 +2925,9 @@ static HRESULT read_comment_bin( struct reader *reader )
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
     comment = (WS_XML_COMMENT_NODE *)node;
-    if (!(comment->value.bytes = heap_alloc( len )))
+    if (!(comment->value.bytes = malloc( len )))
     {
-        heap_free( node );
+        free( node );
         return E_OUTOFMEMORY;
     }
     if ((hr = read_bytes( reader, comment->value.bytes, len )) != S_OK)
@@ -2955,7 +2955,7 @@ static HRESULT read_startcdata( struct reader *reader )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_CDATA ))) return E_OUTOFMEMORY;
     if (!(endnode = alloc_node( WS_XML_NODE_TYPE_END_CDATA )))
     {
-        heap_free( node );
+        free( node );
         return E_OUTOFMEMORY;
     }
     list_add_tail( &node->children, &endnode->entry );
@@ -2988,7 +2988,7 @@ static HRESULT read_cdata( struct reader *reader )
     text = (WS_XML_TEXT_NODE *)node;
     if (!(utf8 = alloc_utf8_text( start, len )))
     {
-        heap_free( node );
+        free( node );
         return E_OUTOFMEMORY;
     }
     text->text = &utf8->text;
@@ -6905,7 +6905,7 @@ static HRESULT utf16le_to_utf8( const unsigned char *data, ULONG size, unsigned 
 {
     if (size % sizeof(WCHAR)) return E_INVALIDARG;
     *buflen = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data, size / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(*buf = heap_alloc( *buflen ))) return E_OUTOFMEMORY;
+    if (!(*buf = malloc( *buflen ))) return E_OUTOFMEMORY;
     WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data, size / sizeof(WCHAR), (char *)*buf, *buflen, NULL, NULL );
     return S_OK;
 }
@@ -6922,7 +6922,7 @@ static HRESULT set_input_buffer( struct reader *reader, const unsigned char *dat
         HRESULT hr;
 
         if ((hr = utf16le_to_utf8( data, size, &buf, &buflen )) != S_OK) return hr;
-        heap_free( reader->input_conv );
+        free( reader->input_conv );
         reader->read_bufptr = reader->input_conv = buf;
         reader->read_size   = reader->input_size = buflen;
     }
@@ -7032,7 +7032,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     case WS_XML_READER_INPUT_TYPE_STREAM:
     {
         const WS_XML_READER_STREAM_INPUT *stream = (const WS_XML_READER_STREAM_INPUT *)input;
-        if (!reader->stream_buf && !(reader->stream_buf = heap_alloc( STREAM_BUFSIZE )))
+        if (!reader->stream_buf && !(reader->stream_buf = malloc( STREAM_BUFSIZE )))
         {
             hr = E_OUTOFMEMORY;
             goto done;
@@ -7071,7 +7071,7 @@ static HRESULT set_input_xml_buffer( struct reader *reader, struct xmlbuf *xmlbu
         HRESULT hr;
 
         if ((hr = utf16le_to_utf8( xmlbuf->bytes.bytes, xmlbuf->bytes.length, &buf, &buflen )) != S_OK) return hr;
-        heap_free( reader->input_conv );
+        free( reader->input_conv );
         reader->read_bufptr = reader->input_conv = buf;
         reader->read_size   = reader->input_size = buflen;
     }
@@ -7196,7 +7196,7 @@ HRESULT WINAPI WsSetReaderPosition( WS_XML_READER *handle, const WS_XML_NODE_POS
 static HRESULT utf8_to_base64( const WS_XML_UTF8_TEXT *utf8, WS_XML_BASE64_TEXT *base64 )
 {
     if (utf8->value.length % 4) return WS_E_INVALID_FORMAT;
-    if (!(base64->bytes = heap_alloc( utf8->value.length * 3 / 4 ))) return E_OUTOFMEMORY;
+    if (!(base64->bytes = malloc( utf8->value.length * 3 / 4 ))) return E_OUTOFMEMORY;
     base64->length = decode_base64( utf8->value.bytes, utf8->value.length, base64->bytes );
     return S_OK;
 }
@@ -7242,14 +7242,14 @@ HRESULT WINAPI WsReadBytes( WS_XML_READER *handle, void *bytes, ULONG max_count,
         if ((hr = utf8_to_base64( (const WS_XML_UTF8_TEXT *)text->text, &base64 )) != S_OK) goto done;
         if (reader->text_conv_offset == base64.length)
         {
-            heap_free( base64.bytes );
+            free( base64.bytes );
             hr = read_node( reader );
             goto done;
         }
         *count = min( base64.length - reader->text_conv_offset, max_count );
         memcpy( bytes, base64.bytes + reader->text_conv_offset, *count );
         reader->text_conv_offset += *count;
-        heap_free( base64.bytes );
+        free( base64.bytes );
     }
 
 done:
@@ -7261,7 +7261,7 @@ done:
 static HRESULT utf8_to_utf16( const WS_XML_UTF8_TEXT *utf8, WS_XML_UTF16_TEXT *utf16 )
 {
     int len = MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, NULL, 0 );
-    if (!(utf16->bytes = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    if (!(utf16->bytes = malloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
     MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, (WCHAR *)utf16->bytes, len );
     utf16->byteCount = len * sizeof(WCHAR);
     return S_OK;
@@ -7309,14 +7309,14 @@ HRESULT WINAPI WsReadChars( WS_XML_READER *handle, WCHAR *chars, ULONG max_count
         if ((hr = utf8_to_utf16( (const WS_XML_UTF8_TEXT *)text->text, &utf16 )) != S_OK) goto done;
         if (reader->text_conv_offset == utf16.byteCount / sizeof(WCHAR))
         {
-            heap_free( utf16.bytes );
+            free( utf16.bytes );
             hr = read_node( reader );
             goto done;
         }
         *count = min( utf16.byteCount / sizeof(WCHAR) - reader->text_conv_offset, max_count );
         memcpy( chars, utf16.bytes + reader->text_conv_offset * sizeof(WCHAR), *count * sizeof(WCHAR) );
         reader->text_conv_offset += *count;
-        heap_free( utf16.bytes );
+        free( utf16.bytes );
     }
 
 done:

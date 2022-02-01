@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -24,7 +25,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -181,7 +181,7 @@ static struct heap *alloc_heap(void)
     struct heap *ret;
     ULONG size = sizeof(*ret) + prop_size( heap_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
+    if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic      = HEAP_MAGIC;
     InitializeCriticalSection( &ret->cs );
@@ -247,7 +247,7 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
 
     heap->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &heap->cs );
-    heap_free( heap );
+    free( heap );
 }
 
 /**************************************************************************

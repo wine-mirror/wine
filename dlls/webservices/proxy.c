@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -24,7 +25,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -59,7 +59,7 @@ static struct proxy *alloc_proxy(void)
     struct proxy *ret;
     ULONG size = sizeof(*ret) + prop_size( proxy_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
+    if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic      = PROXY_MAGIC;
     InitializeCriticalSection( &ret->cs );
@@ -83,7 +83,7 @@ static void free_proxy( struct proxy *proxy )
 
     proxy->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &proxy->cs );
-    heap_free( proxy );
+    free( proxy );
 }
 
 static HRESULT create_proxy( WS_CHANNEL *channel, const WS_PROXY_PROPERTY *properties, ULONG count,

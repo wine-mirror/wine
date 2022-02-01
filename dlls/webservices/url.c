@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -25,7 +26,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -70,7 +70,7 @@ static unsigned char *strdup_utf8( const WCHAR *str, ULONG len, ULONG *ret_len )
 {
     unsigned char *ret;
     *ret_len = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
-    if ((ret = heap_alloc( *ret_len )))
+    if ((ret = malloc( *ret_len )))
         WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)ret, *ret_len, NULL, NULL );
     return ret;
 }
@@ -156,13 +156,13 @@ static WCHAR *url_decode( WCHAR *str, ULONG len, WS_HEAP *heap, ULONG *ret_len )
                                           len_utf8, NULL, 0 )))
     {
         WARN( "invalid UTF-8 sequence\n" );
-        heap_free( utf8 );
+        free( utf8 );
         return NULL;
     }
     if ((ret = ws_alloc( heap, *ret_len * sizeof(WCHAR) )))
         MultiByteToWideChar( CP_UTF8, 0, (char *)utf8, len_utf8, ret, *ret_len );
 
-    heap_free( utf8 );
+    free( utf8 );
     return ret;
 }
 
@@ -357,7 +357,7 @@ static HRESULT url_encode_size( const WCHAR *str, ULONG len, const char *except,
     *ret_len = 0;
     if (!(utf8 = strdup_utf8( str, len, &len_utf8 ))) return E_OUTOFMEMORY;
     for (i = 0; i < len_utf8; i++) *ret_len += escape_size( utf8[i], except );
-    heap_free( utf8 );
+    free( utf8 );
 
     return S_OK;
 }
@@ -416,7 +416,7 @@ static HRESULT url_encode( const WCHAR *str, ULONG len, WCHAR *buf, const char *
         p += len_enc;
     }
 
-    heap_free( utf8 );
+    free( utf8 );
     return hr;
 }
 

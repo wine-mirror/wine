@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -25,7 +26,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -94,10 +94,10 @@ static struct msg *alloc_msg(void)
     struct msg *ret;
     ULONG size = sizeof(*ret) + prop_size( msg_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
-    if (!(ret->header = heap_alloc( HEADER_ARRAY_SIZE * sizeof(struct header *) )))
+    if (!(ret = calloc( 1, size ))) return NULL;
+    if (!(ret->header = malloc( HEADER_ARRAY_SIZE * sizeof(struct header *) )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     ret->magic       = MSG_MAGIC;
@@ -114,10 +114,10 @@ static struct msg *alloc_msg(void)
 
 static void free_header( struct header *header )
 {
-    heap_free( header->name.bytes );
-    heap_free( header->ns.bytes );
+    free( header->name.bytes );
+    free( header->ns.bytes );
     if (header->mapped) free_xml_string( header->u.text );
-    heap_free( header );
+    free( header );
 }
 
 static void reset_msg( struct msg *msg )
@@ -129,7 +129,7 @@ static void reset_msg( struct msg *msg )
     UuidCreate( &msg->id );
     memset( &msg->id_req, 0, sizeof(msg->id_req) );
     msg->is_addressed  = FALSE;
-    heap_free( msg->addr.chars );
+    free( msg->addr.chars );
     msg->addr.chars    = NULL;
     msg->addr.length   = 0;
 
@@ -159,11 +159,11 @@ static void free_msg( struct msg *msg )
     WsFreeWriter( msg->writer );
     WsFreeReader( msg->reader );
     WsFreeHeap( msg->heap );
-    heap_free( msg->header );
+    free( msg->header );
 
     msg->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &msg->cs );
-    heap_free( msg );
+    free( msg );
 }
 
 #define HEAP_MAX_SIZE (1 << 16)
@@ -454,7 +454,7 @@ HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *
     if (msg->state < WS_MESSAGE_STATE_INITIALIZED || msg->is_addressed) hr = WS_E_INVALID_OPERATION;
     else if (addr && addr->url.length)
     {
-        if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
+        if (!(msg->addr.chars = malloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
         else
         {
             memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
@@ -1101,8 +1101,7 @@ static HRESULT grow_header_array( struct msg *msg, ULONG size )
 {
     struct header **tmp;
     if (size <= msg->header_size) return S_OK;
-    if (!(tmp = heap_realloc( msg->header, 2 * msg->header_size * sizeof(struct header *) )))
-        return E_OUTOFMEMORY;
+    if (!(tmp = realloc( msg->header, 2 * msg->header_size * sizeof(struct header *) ))) return E_OUTOFMEMORY;
     msg->header = tmp;
     msg->header_size *= 2;
     return S_OK;
@@ -1112,10 +1111,10 @@ static struct header *alloc_header( WS_HEADER_TYPE type, BOOL mapped, const WS_X
                                     const WS_XML_STRING *ns )
 {
     struct header *ret;
-    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     if (name && name->length)
     {
-        if (!(ret->name.bytes = heap_alloc( name->length )))
+        if (!(ret->name.bytes = malloc( name->length )))
         {
             free_header( ret );
             return NULL;
@@ -1125,7 +1124,7 @@ static struct header *alloc_header( WS_HEADER_TYPE type, BOOL mapped, const WS_X
     }
     if (ns && ns->length)
     {
-        if (!(ret->ns.bytes = heap_alloc( ns->length )))
+        if (!(ret->ns.bytes = malloc( ns->length )))
         {
             free_header( ret );
             return NULL;
@@ -1845,7 +1844,7 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
 static WCHAR *build_http_header( const WCHAR *name, const WCHAR *value, ULONG *ret_len )
 {
     int len_name = lstrlenW( name ), len_value = lstrlenW( value );
-    WCHAR *ret = heap_alloc( (len_name + len_value + 2) * sizeof(WCHAR) );
+    WCHAR *ret = malloc( (len_name + len_value + 2) * sizeof(WCHAR) );
 
     if (!ret) return NULL;
     memcpy( ret, name, len_name * sizeof(WCHAR) );
@@ -1866,7 +1865,7 @@ static WCHAR *from_xml_string( const WS_XML_STRING *str )
 {
     WCHAR *ret;
     int len = MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, NULL, 0 );
-    if (!(ret = heap_alloc( (len + 1) * sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( (len + 1) * sizeof(*ret) ))) return NULL;
     MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, ret, len );
     ret[len] = 0;
     return ret;
@@ -1885,16 +1884,16 @@ static HRESULT insert_mapped_headers( struct msg *msg, HINTERNET req )
         if (!(name = from_xml_string( &msg->header[i]->name ))) return E_OUTOFMEMORY;
         if (!(value = from_xml_string( msg->header[i]->u.text )))
         {
-            heap_free( name );
+            free( name );
             return E_OUTOFMEMORY;
         }
         header = build_http_header( name, value, &len );
-        heap_free( name );
-        heap_free( value );
+        free( name );
+        free( value );
         if (!header) return E_OUTOFMEMORY;
 
         hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE );
-        heap_free( header );
+        free( header );
         if (hr != S_OK) return hr;
     }
     return S_OK;
@@ -1932,13 +1931,13 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     if (!header) goto done;
 
     if ((hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_ADD )) != S_OK) goto done;
-    heap_free( header );
+    free( header );
 
     hr = E_OUTOFMEMORY;
     if (!(header = build_http_header( L"Content-Type", L"charset=utf-8", &len ))) goto done;
     if ((hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON )) != S_OK)
         goto done;
-    heap_free( header );
+    free( header );
     header = NULL;
 
     switch (msg->version_env)
@@ -1949,14 +1948,14 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
             break;
 
         hr = E_OUTOFMEMORY;
-        if (!(buf = heap_alloc( (len + 3) * sizeof(WCHAR) ))) goto done;
+        if (!(buf = malloc( (len + 3) * sizeof(WCHAR) ))) goto done;
         buf[0] = '"';
         MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, buf + 1, len );
         buf[len + 1] = '"';
         buf[len + 2] = 0;
 
         header = build_http_header( L"SOAPAction", buf, &len );
-        heap_free( buf );
+        free( buf );
         if (!header) goto done;
 
         hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_ADD );
@@ -1970,7 +1969,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
             break;
 
         hr = E_OUTOFMEMORY;
-        if (!(buf = heap_alloc( (len + len_action + 2) * sizeof(WCHAR) ))) goto done;
+        if (!(buf = malloc( (len + len_action + 2) * sizeof(WCHAR) ))) goto done;
         memcpy( buf, L"action=\"", len_action * sizeof(WCHAR) );
         MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, buf + len_action, len );
         len += len_action;
@@ -1978,7 +1977,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
         buf[len] = 0;
 
         header = build_http_header( L"Content-Type", buf, &len );
-        heap_free( buf );
+        free( buf );
         if (!header) goto done;
 
         hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
@@ -1992,7 +1991,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     if (hr == S_OK) hr = insert_mapped_headers( msg, req );
 
 done:
-    heap_free( header );
+    free( header );
     LeaveCriticalSection( &msg->cs );
     TRACE( "returning %08x\n", hr );
     return hr;
@@ -2012,26 +2011,26 @@ static HRESULT map_http_response_headers( struct msg *msg, HINTERNET req, const 
             GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
             HRESULT hr;
-            if (!(value = heap_alloc( size )))
+            if (!(value = malloc( size )))
             {
-                heap_free( name );
+                free( name );
                 return E_OUTOFMEMORY;
             }
             if (!WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, name, value, &size, NULL ))
             {
-                heap_free( name );
+                free( name );
                 return HRESULT_FROM_WIN32( GetLastError() );
             }
             hr = add_mapped_header( msg, &mapping->responseHeaderMappings[i]->headerName, WS_WSZ_TYPE,
                                     WS_WRITE_REQUIRED_POINTER, &value, sizeof(value) );
-            heap_free( value );
+            free( value );
             if (hr != S_OK)
             {
-                heap_free( name );
+                free( name );
                 return hr;
             }
         }
-        heap_free( name );
+        free( name );
     }
     return S_OK;
 }

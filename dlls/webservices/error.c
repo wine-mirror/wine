@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -24,7 +25,6 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "webservices_private.h"
 
@@ -53,7 +53,7 @@ static struct error *alloc_error(void)
     struct error *ret;
     ULONG size = sizeof(*ret) + prop_size( error_props, count );
 
-    if (!(ret = heap_alloc_zero( size ))) return NULL;
+    if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic      = ERROR_MAGIC;
     InitializeCriticalSection( &ret->cs );
@@ -68,7 +68,7 @@ static void free_error( struct error *error )
 {
     error->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &error->cs );
-    heap_free( error );
+    free( error );
 }
 
 /**************************************************************************
