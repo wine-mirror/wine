@@ -610,7 +610,7 @@ static ULONG export_gnutls_datum( UCHAR *buffer, ULONG buflen, gnutls_datum_t *d
 }
 
 #define EXPORT_SIZE(d,f,p) export_gnutls_datum( NULL, bitlen / f, &d, p )
-static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, ULONG *pubkey_len )
+static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, unsigned *pubkey_len )
 {
     BCRYPT_RSAKEY_BLOB *rsa_blob = pubkey;
     gnutls_datum_t m, e;
@@ -649,7 +649,7 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
 }
 
 static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_id alg_id, void *pubkey,
-                                          ULONG *pubkey_len )
+                                          unsigned *pubkey_len )
 {
     BCRYPT_ECCKEY_BLOB *ecc_blob = pubkey;
     gnutls_ecc_curve_t curve;
@@ -709,7 +709,7 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, ULONG *pubkey_len )
+static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, unsigned *pubkey_len )
 {
     BCRYPT_DSA_KEY_BLOB *dsa_blob = pubkey;
     gnutls_datum_t p, q, g, y;
@@ -773,8 +773,8 @@ static void reverse_bytes( UCHAR *buf, ULONG len )
 }
 
 #define Q_SIZE 20
-static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, const DSSSEED *seed, ULONG bitlen,
-                                               void *pubkey, ULONG *pubkey_len )
+static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, const DSSSEED *seed, unsigned bitlen,
+                                               void *pubkey, unsigned *pubkey_len )
 {
     BLOBHEADER *hdr = pubkey;
     DSSPUBKEY *dsskey;
@@ -1492,7 +1492,7 @@ static NTSTATUS key_asymmetric_verify( void *args )
 {
     const struct key_asymmetric_verify_params *params = args;
     struct key *key = params->key;
-    ULONG flags = params->flags;
+    unsigned flags = params->flags;
     gnutls_digest_algorithm_t hash_alg;
     gnutls_sign_algorithm_t sign_alg;
     gnutls_datum_t gnutls_hash, gnutls_signature;
@@ -1644,7 +1644,7 @@ static NTSTATUS key_asymmetric_sign( void *args )
 {
     const struct key_asymmetric_sign_params *params = args;
     struct key *key = params->key;
-    ULONG flags = params->flags;
+    unsigned flags = params->flags;
     BCRYPT_PKCS1_PADDING_INFO *pad = params->padding;
     gnutls_datum_t hash, signature;
     gnutls_digest_algorithm_t hash_alg;
