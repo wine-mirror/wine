@@ -1747,6 +1747,52 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
     res = RegOpenKeyExW(HKEY_CLASSES_ROOT, path, 0, KEY_READ, &key);
     if (res != ERROR_FILE_NOT_FOUND)
     {
+        res = RegOpenKeyExW( key, L"Server", 0, KEY_READ, &subkey );
+        if (res == ERROR_SUCCESS)
+        {
+            /* Not a managed class, just chain through LoadLibraryShim */
+            HMODULE module;
+            HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID*);
+            IClassFactory *classfactory;
+
+            dwBufLen = ARRAY_SIZE( filename );
+            res = RegGetValueW( subkey, NULL, NULL, RRF_RT_REG_SZ, NULL, filename, &dwBufLen );
+
+            RegCloseKey( subkey );
+
+            if (res != ERROR_SUCCESS)
+            {
+                WARN("Can't read default value from Server subkey.\n");
+                hr = CLASS_E_CLASSNOTAVAILABLE;
+                goto cleanup;
+            }
+
+            hr = LoadLibraryShim( filename, L"v4.0.30319", NULL, &module);
+            if (FAILED(hr))
+            {
+                WARN("Can't load %s.\n", debugstr_w(filename));
+                goto cleanup;
+            }
+
+            pDllGetClassObject = (void*)GetProcAddress( module, "DllGetClassObject" );
+            if (!pDllGetClassObject)
+            {
+                WARN("Can't get DllGetClassObject from %s.\n", debugstr_w(filename));
+                hr = CLASS_E_CLASSNOTAVAILABLE;
+                goto cleanup;
+            }
+
+            hr = pDllGetClassObject( clsid, &IID_IClassFactory, (void**)&classfactory );
+            if (SUCCEEDED(hr))
+            {
+                hr = IClassFactory_CreateInstance( classfactory, NULL, &IID_IUnknown, ppObj );
+
+                IClassFactory_Release( classfactory );
+            }
+
+            goto cleanup;
+        }
+
         res = RegGetValueW( key, NULL, L"Class", RRF_RT_REG_SZ, NULL, classname, &dwBufLen);
         if(res != ERROR_SUCCESS)
         {
