@@ -25,9 +25,12 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "string.h"
+#include "initguid.h"
 #include "assert.h"
 #include "winsock2.h"
 #include "winhttp.h"
+#include "shlwapi.h"
+#include "xmllite.h"
 #include "ole2.h"
 #include "netfw.h"
 #include "natupnp.h"
@@ -43,6 +46,9 @@ static struct
     BOOL winsock_initialized;
     WCHAR locationW[256];
     HINTERNET session, connection;
+    WCHAR desc_urlpath[128];
+    WCHAR control_url[256];
+    unsigned int version;
 }
 upnp_gateway_connection;
 
@@ -85,19 +91,99 @@ static BOOL parse_search_response( char *response, WCHAR *locationW, unsigned in
     return FALSE;
 }
 
+static BOOL parse_desc_xml( const char *desc_xml )
+{
+    static const WCHAR urn_wanipconnection[] = L"urn:schemas-upnp-org:service:WANIPConnection:";
+    WCHAR control_url[ARRAY_SIZE(upnp_gateway_connection.control_url)];
+    BOOL service_type_matches, control_url_found, found = FALSE;
+    unsigned int version = 0;
+    XmlNodeType node_type;
+    IXmlReader *reader;
+    const WCHAR *value;
+    BOOL ret = FALSE;
+    IStream *stream;
+    HRESULT hr;
+
+    if (!(stream = SHCreateMemStream( (BYTE *)desc_xml, strlen( desc_xml ) + 1 ))) return FALSE;
+    if (FAILED(hr = CreateXmlReader( &IID_IXmlReader, (void **)&reader, NULL )))
+    {
+        IStream_Release( stream );
+        return FALSE;
+    }
+    if (FAILED(hr = IXmlReader_SetInput( reader, (IUnknown*)stream ))) goto done;
+
+    while (SUCCEEDED(IXmlReader_Read( reader, &node_type )) && node_type != XmlNodeType_None)
+    {
+        if (node_type != XmlNodeType_Element) continue;
+
+        if (FAILED(IXmlReader_GetLocalName( reader, &value, NULL ))) goto done;
+        if (wcsicmp( value, L"service" )) continue;
+        control_url_found = service_type_matches = FALSE;
+        while (SUCCEEDED(IXmlReader_Read( reader, &node_type )))
+        {
+            if (node_type != XmlNodeType_Element && node_type != XmlNodeType_EndElement) continue;
+            if (FAILED(IXmlReader_GetLocalName( reader, &value, NULL )))
+            {
+                WARN( "IXmlReader_GetLocalName failed.\n" );
+                goto done;
+            }
+            if (node_type == XmlNodeType_EndElement)
+            {
+                if (!wcsicmp( value, L"service" )) break;
+                continue;
+            }
+            if (!wcsicmp( value, L"serviceType" ))
+            {
+                if (FAILED(IXmlReader_Read(reader, &node_type ))) goto done;
+                if (node_type != XmlNodeType_Text) goto done;
+                if (FAILED(IXmlReader_GetValue( reader, &value, NULL ))) goto done;
+                if (wcsnicmp( value, urn_wanipconnection, ARRAY_SIZE(urn_wanipconnection) - 1 )) break;
+                version = _wtoi( value + ARRAY_SIZE(urn_wanipconnection) - 1 );
+                service_type_matches = version >= 1;
+            }
+            else if (!wcsicmp( value, L"controlURL" ))
+            {
+                if (FAILED(IXmlReader_Read(reader, &node_type ))) goto done;
+                if (node_type != XmlNodeType_Text) goto done;
+                if (FAILED(IXmlReader_GetValue( reader, &value, NULL ))) goto done;
+                if (wcslen( value ) + 1 > ARRAY_SIZE(control_url)) goto done;
+                wcscpy( control_url, value );
+                control_url_found = TRUE;
+            }
+        }
+        if (service_type_matches && control_url_found)
+        {
+            if (found)
+            {
+                FIXME( "Found another WANIPConnection service, ignoring.\n" );
+                continue;
+            }
+            found = TRUE;
+            wcscpy( upnp_gateway_connection.control_url, control_url );
+            upnp_gateway_connection.version = version;
+        }
+    }
+
+    ret = found;
+done:
+    IXmlReader_Release( reader );
+    IStream_Release( stream );
+    return ret;
+}
+
 static BOOL open_gateway_connection(void)
 {
     static const int timeout = 3000;
 
-    WCHAR hostname[64], urlpath[128];
+    WCHAR hostname[64];
     URL_COMPONENTS url;
 
     memset( &url, 0, sizeof(url) );
     url.dwStructSize = sizeof(url);
     url.lpszHostName = hostname;
     url.dwHostNameLength = ARRAY_SIZE(hostname);
-    url.lpszUrlPath = urlpath;
-    url.dwUrlPathLength = ARRAY_SIZE(urlpath);
+    url.lpszUrlPath = upnp_gateway_connection.desc_urlpath;
+    url.dwUrlPathLength = ARRAY_SIZE(upnp_gateway_connection.desc_urlpath);
 
     if (!WinHttpCrackUrl( upnp_gateway_connection.locationW, 0, 0, &url )) return FALSE;
 
@@ -107,7 +193,8 @@ static BOOL open_gateway_connection(void)
     if (!WinHttpSetTimeouts( upnp_gateway_connection.session, timeout, timeout, timeout, timeout ))
         return FALSE;
 
-    TRACE( "hostname %s, urlpath %s, port %u.\n", debugstr_w(hostname), debugstr_w(urlpath), url.nPort );
+    TRACE( "hostname %s, urlpath %s, port %u.\n",
+           debugstr_w(hostname), debugstr_w(upnp_gateway_connection.desc_urlpath), url.nPort );
     upnp_gateway_connection.connection = WinHttpConnect ( upnp_gateway_connection.session, hostname, url.nPort, 0 );
     if (!upnp_gateway_connection.connection)
     {
@@ -115,6 +202,69 @@ static BOOL open_gateway_connection(void)
         return FALSE;
     }
     return TRUE;
+}
+
+static BOOL get_control_url(void)
+{
+    static const WCHAR *accept_types[] =
+    {
+        L"text/xml",
+        NULL
+    };
+    unsigned int desc_xml_size, offset;
+    DWORD size, status = 0;
+    HINTERNET request;
+    char *desc_xml;
+    BOOL ret;
+
+    request = WinHttpOpenRequest( upnp_gateway_connection.connection, NULL, upnp_gateway_connection.desc_urlpath, NULL,
+                                  WINHTTP_NO_REFERER, accept_types, 0 );
+    if (!request) return FALSE;
+
+    if (!WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, NULL, 0, 0, 0 ))
+    {
+        WARN( "Error sending request %u.\n", GetLastError() );
+        WinHttpCloseHandle( request );
+        return FALSE;
+    }
+    if (!WinHttpReceiveResponse(request, NULL))
+    {
+        WARN( "Error receiving response %u.\n", GetLastError() );
+        WinHttpCloseHandle( request );
+        return FALSE;
+    }
+    size = sizeof(status);
+    if (!WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, &status, &size, NULL) || status != HTTP_STATUS_OK )
+    {
+        WARN( "Error response from server, error %u, http status %u.\n", GetLastError(), status );
+        WinHttpCloseHandle( request );
+        return FALSE;
+    }
+    desc_xml_size = 1024;
+    desc_xml = malloc( desc_xml_size );
+    offset = 0;
+    while (WinHttpReadData( request, desc_xml + offset, desc_xml_size - offset - 1, &size ) && size)
+    {
+        offset += size;
+        if (offset + 1 == desc_xml_size)
+        {
+            char *new;
+
+            desc_xml_size *= 2;
+            if (!(new = realloc( desc_xml, desc_xml_size )))
+            {
+                ERR( "No memory.\n" );
+                break;
+            }
+            desc_xml = new;
+        }
+    }
+    desc_xml[offset] = 0;
+    WinHttpCloseHandle( request );
+    ret = parse_desc_xml( desc_xml );
+    free( desc_xml );
+    return ret;
 }
 
 static void gateway_connection_cleanup(void)
@@ -205,6 +355,14 @@ static BOOL init_gateway_connection(void)
         return FALSE;
     }
     TRACE( "Opened gateway connection.\n" );
+    if (!get_control_url())
+    {
+        WARN( "Could not get_control URL.\n" );
+        gateway_connection_cleanup();
+        return FALSE;
+    }
+    TRACE( "control_url %s, version %u.\n", debugstr_w(upnp_gateway_connection.control_url),
+            upnp_gateway_connection.version );
     return TRUE;
 }
 
