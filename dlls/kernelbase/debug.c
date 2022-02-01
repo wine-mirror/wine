@@ -461,13 +461,13 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     {
         size_t format_size = lstrlenW( format ) + 2*20;
         cmdline = HeapAlloc( GetProcessHeap(), 0, format_size * sizeof(WCHAR) );
-        swprintf( cmdline, format_size, format, (long)GetCurrentProcessId(), (long)HandleToLong(event) );
+        swprintf( cmdline, format_size, format, GetCurrentProcessId(), HandleToLong(event) );
         HeapFree( GetProcessHeap(), 0, format );
     }
     else
     {
         cmdline = HeapAlloc( GetProcessHeap(), 0, 80 * sizeof(WCHAR) );
-        swprintf( cmdline, 80, L"winedbg --auto %ld %ld", (long)GetCurrentProcessId(), (long)HandleToLong(event) );
+        swprintf( cmdline, 80, L"winedbg --auto %ld %ld", GetCurrentProcessId(), HandleToLong(event) );
     }
 
     if (!autostart)
