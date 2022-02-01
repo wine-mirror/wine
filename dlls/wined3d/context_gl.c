@@ -3131,6 +3131,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
         {
             case GL_ATOMIC_COUNTER_BUFFER:
             case GL_DRAW_INDIRECT_BUFFER:
+            case GL_PIXEL_UNPACK_BUFFER:
                 if ((memory = wined3d_context_gl_allocate_memory(context_gl, memory_type_idx, size, &id)))
                     buffer_offset = memory->offset;
                 break;
