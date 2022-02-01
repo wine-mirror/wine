@@ -29,6 +29,12 @@
 #include "netfw.h"
 #include "natupnp.h"
 
+static ULONG get_refcount(IUnknown *unk)
+{
+    IUnknown_AddRef(unk);
+    return IUnknown_Release(unk);
+}
+
 static void test_policy2_rules(INetFwPolicy2 *policy2)
 {
     HRESULT hr;
@@ -164,6 +170,119 @@ static void test_NetFwAuthorizedApplication(void)
     INetFwAuthorizedApplication_Release(app);
 }
 
+static void test_static_port_mapping_collection( IStaticPortMappingCollection *ports )
+{
+    LONG i, count, count2, expected_count, external_port;
+    IStaticPortMapping *pm, *pm2;
+    ULONG refcount, refcount2;
+    IEnumVARIANT *enum_ports;
+    IUnknown *unk;
+    ULONG fetched;
+    BSTR protocol;
+    VARIANT var;
+    HRESULT hr;
+
+    refcount = get_refcount((IUnknown *)ports);
+    hr = IStaticPortMappingCollection_get__NewEnum(ports, &unk);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void **)&enum_ports);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount2 = get_refcount((IUnknown *)ports);
+    ok(refcount2 == refcount, "Got unexpected refcount %u, refcount2 %u.\n", refcount, refcount2);
+
+    hr = IEnumVARIANT_Reset(enum_ports);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IStaticPortMappingCollection_get_Count(ports, &count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, 12345, (BSTR)L"UDP", &pm);
+    if (SUCCEEDED(hr))
+    {
+        expected_count = count;
+        IStaticPortMapping_Release(pm);
+    }
+    else
+    {
+        expected_count = count + 1;
+    }
+
+    hr = IStaticPortMappingCollection_Add(ports, 12345, (BSTR)L"udp", 12345, (BSTR)L"1.2.3.4",
+            VARIANT_TRUE, (BSTR)L"wine_test", &pm);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = IStaticPortMappingCollection_Add(ports, 12345, (BSTR)L"UDP", 12345, (BSTR)L"1.2.3.4",
+            VARIANT_TRUE, (BSTR)L"wine_test", &pm);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Count(ports, &count2);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(count2 == expected_count, "Got unexpected count2 %u, expected %u.\n", count2, expected_count);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, 12345, NULL, &pm);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, 12345, (BSTR)L"UDP", NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, 12345, (BSTR)L"udp", &pm);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, -1, (BSTR)L"UDP", &pm);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, 65536, (BSTR)L"UDP", &pm);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_get_Item(ports, 12346, (BSTR)L"UDP", &pm);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Got unexpected hr %#x.\n", hr);
+
+    hr = IEnumVARIANT_Reset(enum_ports);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < count2; ++i)
+    {
+        VariantInit(&var);
+
+        fetched = 0xdeadbeef;
+        hr = IEnumVARIANT_Next(enum_ports, 1, &var, &fetched);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(fetched == 1, "Got unexpected fetched %u.\n", fetched);
+        ok(V_VT(&var) == VT_DISPATCH, "Got unexpected variant type %u.\n", V_VT(&var));
+
+        hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IStaticPortMapping, (void **)&pm);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IStaticPortMapping_get_Protocol(pm, &protocol);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        external_port = 0xdeadbeef;
+        hr = IStaticPortMapping_get_ExternalPort(pm, &external_port);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        ok(!wcscmp(protocol, L"UDP") || !wcscmp(protocol, L"TCP"), "Got unexpected protocol %s.\n",
+                debugstr_w(protocol));
+        hr = IStaticPortMappingCollection_get_Item(ports, external_port, protocol, &pm2);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(pm2 != pm, "Got same interface.\n");
+
+        IStaticPortMapping_Release(pm);
+        IStaticPortMapping_Release(pm2);
+
+        SysFreeString(protocol);
+
+        VariantClear(&var);
+    }
+    hr = IEnumVARIANT_Next(enum_ports, 1, &var, &fetched);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+
+    hr = IStaticPortMappingCollection_Remove(ports, 12345, (BSTR)L"UDP");
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    IEnumVARIANT_Release(enum_ports);
+}
+
 static void test_IUPnPNAT(void)
 {
     IUPnPNAT *nat;
@@ -171,6 +290,7 @@ static void test_IUPnPNAT(void)
     IDynamicPortMappingCollection *dync_ports;
     INATEventManager *manager;
     IProvideClassInfo *provider;
+    ULONG refcount, refcount2;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_UPnPNAT, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, &IID_IUPnPNAT, (void**)&nat);
@@ -179,11 +299,21 @@ static void test_IUPnPNAT(void)
     hr = IUPnPNAT_QueryInterface(nat, &IID_IProvideClassInfo, (void**)&provider);
     ok(hr == E_NOINTERFACE, "got: %08x\n", hr);
 
+    refcount = get_refcount((IUnknown *)nat);
     hr = IUPnPNAT_get_StaticPortMappingCollection(nat, &static_ports);
+
     ok(hr == S_OK, "got: %08x\n", hr);
     if(hr == S_OK && static_ports)
+    {
+        refcount2 = get_refcount((IUnknown *)nat);
+        ok(refcount2 == refcount, "Got unexpected refcount %u, refcount2 %u.\n", refcount, refcount2);
+        test_static_port_mapping_collection( static_ports );
         IStaticPortMappingCollection_Release(static_ports);
-
+    }
+    else if (hr == S_OK)
+    {
+        skip( "UPNP gateway not found.\n" );
+    }
     hr = IUPnPNAT_get_DynamicPortMappingCollection(nat, &dync_ports);
     ok(hr == S_OK || hr == E_NOTIMPL /* Windows 8.1 */, "got: %08x\n", hr);
     if(hr == S_OK && dync_ports)
