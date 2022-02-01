@@ -594,7 +594,7 @@ int WINAPI WSAStartup( WORD version, WSADATA *data )
     if (!LOBYTE(version))
         return WSAVERNOTSUPPORTED;
 
-    if (!data) return WSAEINVAL;
+    if (!data) return WSAEFAULT;
 
     num_startup++;
     TRACE( "increasing startup count to %d\n", num_startup );

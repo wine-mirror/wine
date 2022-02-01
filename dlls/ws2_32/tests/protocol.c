@@ -2880,8 +2880,7 @@ static void test_startup(void)
         ok(WSAGetLastError() == WSANOTINITIALISED, "got error %u\n", WSAGetLastError());
 
         ret = WSAStartup(tests[i].version, NULL);
-        todo_wine_if (LOBYTE(tests[i].version))
-            ok(ret == (LOBYTE(tests[i].version) ? WSAEFAULT : WSAVERNOTSUPPORTED), "got %d\n", ret);
+        ok(ret == (LOBYTE(tests[i].version) ? WSAEFAULT : WSAVERNOTSUPPORTED), "got %d\n", ret);
 
         winetest_pop_context();
     }
