@@ -419,7 +419,6 @@ static BOOL socket_list_remove( SOCKET socket )
     return FALSE;
 }
 
-#define MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define MAX_UDP_DATAGRAM             1024
 static INT WINAPI WSA_DefaultBlockingHook( FARPROC x );
 
@@ -588,7 +587,7 @@ int WINAPI WSAStartup( WORD version, WSADATA *data )
         data->wHighVersion = MAKEWORD(2, 2);
         strcpy( data->szDescription, "WinSock 2.0" );
         strcpy( data->szSystemStatus, "Running" );
-        data->iMaxSockets = MAX_SOCKETS_PER_PROCESS;
+        data->iMaxSockets = (LOBYTE(version) == 1 ? 32767 : 0);
         data->iMaxUdpDg = MAX_UDP_DATAGRAM;
         /* don't fill lpVendorInfo */
     }

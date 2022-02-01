@@ -2871,7 +2871,7 @@ static void test_startup(void)
         ok(data.wHighVersion == 0x202, "got maximum version %#x\n", data.wHighVersion);
         ok(!strcmp(data.szDescription, "WinSock 2.0"), "got description %s\n", debugstr_a(data.szDescription));
         ok(!strcmp(data.szSystemStatus, "Running"), "got status %s\n", debugstr_a(data.szSystemStatus));
-        todo_wine ok(data.iMaxSockets == (LOBYTE(tests[i].version) == 1 ? 32767 : 0), "got maximum sockets %u\n", data.iMaxSockets);
+        ok(data.iMaxSockets == (LOBYTE(tests[i].version) == 1 ? 32767 : 0), "got maximum sockets %u\n", data.iMaxSockets);
         todo_wine ok(data.iMaxUdpDg == (LOBYTE(tests[i].version) == 1 ? 65467 : 0), "got maximum datagram size %u\n", data.iMaxUdpDg);
 
         WSASetLastError(0xdeadbeef);
