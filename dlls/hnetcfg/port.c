@@ -42,6 +42,7 @@ static struct
     LONG refs;
     BOOL winsock_initialized;
     WCHAR locationW[256];
+    HINTERNET session, connection;
 }
 upnp_gateway_connection;
 
@@ -84,9 +85,43 @@ static BOOL parse_search_response( char *response, WCHAR *locationW, unsigned in
     return FALSE;
 }
 
+static BOOL open_gateway_connection(void)
+{
+    static const int timeout = 3000;
+
+    WCHAR hostname[64], urlpath[128];
+    URL_COMPONENTS url;
+
+    memset( &url, 0, sizeof(url) );
+    url.dwStructSize = sizeof(url);
+    url.lpszHostName = hostname;
+    url.dwHostNameLength = ARRAY_SIZE(hostname);
+    url.lpszUrlPath = urlpath;
+    url.dwUrlPathLength = ARRAY_SIZE(urlpath);
+
+    if (!WinHttpCrackUrl( upnp_gateway_connection.locationW, 0, 0, &url )) return FALSE;
+
+    upnp_gateway_connection.session = WinHttpOpen( L"hnetcfg", WINHTTP_ACCESS_TYPE_NO_PROXY,
+                           WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0 );
+    if (!upnp_gateway_connection.session) return FALSE;
+    if (!WinHttpSetTimeouts( upnp_gateway_connection.session, timeout, timeout, timeout, timeout ))
+        return FALSE;
+
+    TRACE( "hostname %s, urlpath %s, port %u.\n", debugstr_w(hostname), debugstr_w(urlpath), url.nPort );
+    upnp_gateway_connection.connection = WinHttpConnect ( upnp_gateway_connection.session, hostname, url.nPort, 0 );
+    if (!upnp_gateway_connection.connection)
+    {
+        WARN( "WinHttpConnect error %u.\n", GetLastError() );
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static void gateway_connection_cleanup(void)
 {
     TRACE( ".\n" );
+    WinHttpCloseHandle( upnp_gateway_connection.connection );
+    WinHttpCloseHandle( upnp_gateway_connection.session );
     if (upnp_gateway_connection.winsock_initialized) WSACleanup();
     memset( &upnp_gateway_connection, 0, sizeof(upnp_gateway_connection) );
 }
@@ -164,6 +199,12 @@ static BOOL init_gateway_connection(void)
         return FALSE;
     }
     TRACE( "Gateway description location %s.\n", debugstr_w(upnp_gateway_connection.locationW) );
+    if (!open_gateway_connection())
+    {
+        WARN( "Error opening gateway connection.\n" );
+        return FALSE;
+    }
+    TRACE( "Opened gateway connection.\n" );
     return TRUE;
 }
 

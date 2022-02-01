@@ -1,7 +1,7 @@
 EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = hnetcfg.dll
 IMPORTS   = oleaut32 ole32 advapi32 mpr uuid
-DELAYIMPORTS = ws2_32
+DELAYIMPORTS = ws2_32 winhttp
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
