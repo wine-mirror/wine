@@ -25,6 +25,7 @@ cpp_quote("#if 0")
 typedef UINT32 mdToken;
 typedef mdToken mdMethodDef;
 typedef mdToken mdTypeDef;
+typedef mdToken mdSignature;
 /* defined in winnt.h */
 typedef SIZE_T IMAGE_DEBUG_DIRECTORY;
 cpp_quote("#endif")
@@ -91,6 +92,56 @@ interface ISymUnmanagedWriter : IUnknown
     HRESULT DefineConstant([in] const WCHAR *name, [in] VARIANT value, [in] ULONG32 cSig,
                            [in, size_is(cSig)] unsigned char signature[]);
     HRESULT Abort();
+}
+
+[
+    object,
+    uuid(0b97726e-9e6d-4f05-9a26-424022093caa),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter2 : ISymUnmanagedWriter
+{
+    HRESULT DefineLocalVariable2([in] const WCHAR *name, [in] ULONG32 attributes, [in] mdSignature sigToken,
+                                 [in] ULONG32 addrKind, [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3,
+                                 [in] ULONG32 startOffset, [in] ULONG32 endOffset);
+    HRESULT DefineGlobalVariable2([in] const WCHAR *name, [in] ULONG32 attributes, [in] mdSignature sigToken,
+                                  [in] ULONG32 addrKind, [in] ULONG32 addr1, [in] ULONG32 addr2, [in] ULONG32 addr3);
+    HRESULT DefineConstant2([in] const WCHAR *name, [in] VARIANT value, [in] mdSignature sigToken);
+}
+
+[
+    object,
+    uuid(12f1e02c-1e05-4b0e-9468-ebc9d1bb040f),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter3 : ISymUnmanagedWriter2
+{
+    HRESULT OpenMethod2([in] mdMethodDef method, [in] ULONG32 isect, [in] ULONG32 offset);
+    HRESULT Commit();
+}
+
+[
+    object,
+    uuid(bc7e3f53-f458-4c23-9dbd-a189e6e96594),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter4 : ISymUnmanagedWriter3
+{
+    HRESULT GetDebugInfoWithPadding([in, out] IMAGE_DEBUG_DIRECTORY *pIDD, [in] DWORD cbData, [out] DWORD* pcData,
+                                    [out, size_is(cbData), length_is(*pcData)] BYTE data[]);
+}
+
+[
+    object,
+    uuid(dcf7780d-bde9-45df-acfe-21731a32000c),
+    pointer_default(unique)
+]
+interface ISymUnmanagedWriter5 : ISymUnmanagedWriter4
+{
+    HRESULT OpenMapTokensToSourceSpans();
+    HRESULT CloseMapTokensToSourceSpans();
+    HRESULT MapTokenToSourceSpan([in] mdToken token, [in] ISymUnmanagedDocumentWriter* document,
+                                 [in] ULONG32 line, [in] ULONG32 column, [in] ULONG32 endLine, [in] ULONG32 endColumn);
 }
 
 cpp_quote("DEFINE_GUID(CLSID_CorSymWriter_SxS, 0x0ae2deb0,0xf901,0x478b,0xbb,0x9f,0x88,0x1e,0xe8,0x06,0x67,0x88);")
