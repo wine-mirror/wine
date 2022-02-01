@@ -677,7 +677,7 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
     if (*datasource && prov)
     {
         DBPROPIDSET propidset;
-        enum DBPROPENUM prop;
+        DWORD prop;
         CLSID initprov;
         ULONG count;
 
