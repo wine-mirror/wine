@@ -61,7 +61,7 @@ static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
         return IoCallDriver(((HID_DEVICE_EXTENSION *)device->DeviceExtension)->NextDeviceObject, irp);
 
     default:
-        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+        FIXME("Unsupported ioctl %#lx (device=%lx access=%lx func=%lx method=%lx)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return status;
