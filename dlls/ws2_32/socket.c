@@ -572,29 +572,28 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 /***********************************************************************
  *      WSAStartup		(WS2_32.115)
  */
-int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
+int WINAPI WSAStartup( WORD version, WSADATA *data )
 {
-    TRACE("verReq=%x\n", wVersionRequested);
+    TRACE( "version %#x\n", version );
 
-    if (LOBYTE(wVersionRequested) < 1)
+    if (data)
+    {
+        data->wVersion = version;
+        data->wHighVersion = MAKEWORD(2, 2);
+        strcpy( data->szDescription, "WinSock 2.0" );
+        strcpy( data->szSystemStatus, "Running" );
+        data->iMaxSockets = MAX_SOCKETS_PER_PROCESS;
+        data->iMaxUdpDg = MAX_UDP_DATAGRAM;
+        /* don't fill lpVendorInfo */
+    }
+
+    if (!LOBYTE(version))
         return WSAVERNOTSUPPORTED;
 
-    if (!lpWSAData) return WSAEINVAL;
+    if (!data) return WSAEINVAL;
 
     num_startup++;
-
-    /* that's the whole of the negotiation for now */
-    lpWSAData->wVersion = wVersionRequested;
-    /* return winsock information */
-    lpWSAData->wHighVersion = 0x0202;
-    strcpy(lpWSAData->szDescription, "WinSock 2.0" );
-    strcpy(lpWSAData->szSystemStatus, "Running" );
-    lpWSAData->iMaxSockets = MAX_SOCKETS_PER_PROCESS;
-    lpWSAData->iMaxUdpDg = MAX_UDP_DATAGRAM;
-    /* don't do anything with lpWSAData->lpVendorInfo */
-    /* (some apps don't allocate the space for this field) */
-
-    TRACE("succeeded starts: %d\n", num_startup);
+    TRACE( "increasing startup count to %d\n", num_startup );
     return 0;
 }
 
