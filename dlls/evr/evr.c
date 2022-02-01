@@ -109,7 +109,7 @@ static HRESULT WINAPI filter_config_SetNumberOfStreams(IEVRFilterConfig *iface, 
 {
     struct evr *filter = impl_from_IEVRFilterConfig(iface);
 
-    FIXME("filter %p, count %u, stub!\n", filter, count);
+    FIXME("filter %p, count %lu, stub!\n", filter, count);
 
     return E_NOTIMPL;
 }

@@ -314,7 +314,7 @@ static ULONG WINAPI video_mixer_inner_AddRef(IUnknown *iface)
     struct video_mixer *mixer = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&mixer->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -339,7 +339,7 @@ static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
     ULONG refcount = InterlockedDecrement(&mixer->refcount);
     unsigned int i;
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -419,7 +419,7 @@ static HRESULT WINAPI video_mixer_transform_GetStreamIDs(IMFTransform *iface, DW
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p, %u, %p.\n", iface, input_size, inputs, output_size, outputs);
+    TRACE("%p, %lu, %p, %lu, %p.\n", iface, input_size, inputs, output_size, outputs);
 
     EnterCriticalSection(&mixer->cs);
     if (mixer->input_count > input_size || !output_size)
@@ -438,7 +438,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputStreamInfo(IMFTransform *ifa
     struct input_stream *input;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, info);
+    TRACE("%p, %lu, %p.\n", iface, id, info);
 
     EnterCriticalSection(&mixer->cs);
 
@@ -456,7 +456,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputStreamInfo(IMFTransform *ifa
 
 static HRESULT WINAPI video_mixer_transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    TRACE("%p, %u, %p.\n", iface, id, info);
+    TRACE("%p, %lu, %p.\n", iface, id, info);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -488,7 +488,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputStreamAttributes(IMFTransfor
     struct input_stream *input;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, attributes);
+    TRACE("%p, %lu, %p.\n", iface, id, attributes);
 
     EnterCriticalSection(&mixer->cs);
 
@@ -507,7 +507,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputStreamAttributes(IMFTransfor
 static HRESULT WINAPI video_mixer_transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id,
         IMFAttributes **attributes)
 {
-    TRACE("%p, %u, %p.\n", iface, id, attributes);
+    TRACE("%p, %lu, %p.\n", iface, id, attributes);
 
     return E_NOTIMPL;
 }
@@ -519,7 +519,7 @@ static HRESULT WINAPI video_mixer_transform_DeleteInputStream(IMFTransform *ifac
     unsigned int idx;
     HRESULT hr;
 
-    TRACE("%p, %u.\n", iface, id);
+    TRACE("%p, %lu.\n", iface, id);
 
     if (!id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -561,7 +561,7 @@ static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface,
     unsigned int i, len;
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p.\n", iface, count, ids);
+    TRACE("%p, %lu, %p.\n", iface, count, ids);
 
     if (!ids)
         return E_POINTER;
@@ -620,7 +620,7 @@ static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface,
 static HRESULT WINAPI video_mixer_transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+    TRACE("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     return E_NOTIMPL;
 }
@@ -631,7 +631,7 @@ static HRESULT WINAPI video_mixer_transform_GetOutputAvailableType(IMFTransform 
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+    TRACE("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -853,7 +853,7 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
     unsigned int count;
     GUID *guids;
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, media_type, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, media_type, flags);
 
     EnterCriticalSection(&mixer->cs);
 
@@ -910,7 +910,7 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
     DWORD compare_flags;
     unsigned int i;
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -985,7 +985,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputCurrentType(IMFTransform *if
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, type);
+    TRACE("%p, %lu, %p.\n", iface, id, type);
 
     EnterCriticalSection(&mixer->cs);
 
@@ -1010,7 +1010,7 @@ static HRESULT WINAPI video_mixer_transform_GetOutputCurrentType(IMFTransform *i
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %u, %p.\n", iface, id, type);
+    TRACE("%p, %lu, %p.\n", iface, id, type);
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -1036,7 +1036,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputStatus(IMFTransform *iface, 
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, status);
+    TRACE("%p, %lu, %p.\n", iface, id, status);
 
     if (!status)
         return E_POINTER;
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI video_mixer_transform_SetOutputBounds(IMFTransform *iface,
 
 static HRESULT WINAPI video_mixer_transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
 {
-    FIXME("%p, %u, %p.\n", iface, id, event);
+    FIXME("%p, %lu, %p.\n", iface, id, event);
 
     return E_NOTIMPL;
 }
@@ -1126,7 +1126,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
     HRESULT hr = S_OK;
     unsigned int i;
 
-    TRACE("%p, %#x, %#lx.\n", iface, message, param);
+    TRACE("%p, %#x, %Iu.\n", iface, message, param);
 
     EnterCriticalSection(&mixer->cs);
 
@@ -1177,7 +1177,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DW
     struct input_stream *input;
     HRESULT hr;
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, sample, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, sample, flags);
 
     if (!sample)
         return E_POINTER;
@@ -1317,7 +1317,7 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
         if (FAILED(hr = video_mixer_get_sample_surface(stream->sample, &surface)))
         {
-            WARN("Failed to get source surface for stream %u, hr %#x.\n", i, hr);
+            WARN("Failed to get source surface for stream %u, hr %#lx.\n", i, hr);
             break;
         }
 
@@ -1346,7 +1346,7 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
         if (FAILED(hr = IDirectXVideoProcessor_VideoProcessBlt(mixer->processor, rt, &params, samples,
                 mixer->input_count, NULL)))
         {
-            WARN("Failed to process samples, hr %#x.\n", hr);
+            WARN("Failed to process samples, hr %#lx.\n", hr);
         }
     }
 
@@ -1395,7 +1395,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
     unsigned int i;
     HRESULT hr;
 
-    TRACE("%p, %#x, %u, %p, %p.\n", iface, flags, count, buffers, status);
+    TRACE("%p, %#lx, %lu, %p, %p.\n", iface, flags, count, buffers, status);
 
     if (!buffers || !count || count > 1 || !buffers->pSample)
         return E_INVALIDARG;
@@ -1572,7 +1572,7 @@ static HRESULT WINAPI video_mixer_service_client_InitServicePointers(IMFTopology
     if (FAILED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
             &MR_VIDEO_RENDER_SERVICE, &IID_IMediaEventSink, (void **)&mixer->event_sink, &count)))
     {
-        WARN("Failed to get renderer event sink, hr %#x.\n", hr);
+        WARN("Failed to get renderer event sink, hr %#lx.\n", hr);
     }
 
     LeaveCriticalSection(&mixer->cs);
@@ -1630,7 +1630,7 @@ static HRESULT WINAPI video_mixer_control_SetStreamZOrder(IMFVideoMixerControl2 
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %u.\n", iface, id, zorder);
+    TRACE("%p, %lu, %lu.\n", iface, id, zorder);
 
     /* Can't change reference stream. */
     if (!id && zorder)
@@ -1663,7 +1663,7 @@ static HRESULT WINAPI video_mixer_control_GetStreamZOrder(IMFVideoMixerControl2 
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, zorder);
+    TRACE("%p, %lu, %p.\n", iface, id, zorder);
 
     if (!zorder)
         return E_POINTER;
@@ -1685,7 +1685,7 @@ static HRESULT WINAPI video_mixer_control_SetStreamOutputRect(IMFVideoMixerContr
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %s.\n", iface, id, debugstr_normalized_rect(rect));
+    TRACE("%p, %lu, %s.\n", iface, id, debugstr_normalized_rect(rect));
 
     if (!rect)
         return E_POINTER;
@@ -1713,7 +1713,7 @@ static HRESULT WINAPI video_mixer_control_GetStreamOutputRect(IMFVideoMixerContr
     struct input_stream *stream;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", iface, id, rect);
+    TRACE("%p, %lu, %p.\n", iface, id, rect);
 
     if (!rect)
         return E_POINTER;
@@ -1732,7 +1732,7 @@ static HRESULT WINAPI video_mixer_control_SetMixingPrefs(IMFVideoMixerControl2 *
 {
     struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
 
-    TRACE("%p, %#x.\n", iface, flags);
+    TRACE("%p, %#lx.\n", iface, flags);
 
     EnterCriticalSection(&mixer->cs);
     mixer->mixing_flags = flags;
@@ -1898,7 +1898,7 @@ static ULONG WINAPI video_mixer_position_mapper_Release(IMFVideoPositionMapper *
 static HRESULT WINAPI video_mixer_position_mapper_MapOutputCoordinateToInputStream(IMFVideoPositionMapper *iface,
         float x_out, float y_out, DWORD output_stream, DWORD input_stream, float *x_in, float *y_in)
 {
-    FIXME("%p, %f, %f, %u, %u, %p, %p.\n", iface, x_out, y_out, output_stream, input_stream, x_in, y_in);
+    FIXME("%p, %f, %f, %lu, %lu, %p, %p.\n", iface, x_out, y_out, output_stream, input_stream, x_in, y_in);
 
     return E_NOTIMPL;
 }
@@ -1961,42 +1961,42 @@ static HRESULT WINAPI video_mixer_processor_SetVideoProcessorMode(IMFVideoProces
 
 static HRESULT WINAPI video_mixer_processor_GetProcAmpRange(IMFVideoProcessor *iface, DWORD prop, DXVA2_ValueRange *range)
 {
-    FIXME("%p, %#x, %p.\n", iface, prop, range);
+    FIXME("%p, %#lx, %p.\n", iface, prop, range);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_mixer_processor_GetProcAmpValues(IMFVideoProcessor *iface, DWORD flags, DXVA2_ProcAmpValues *values)
 {
-    FIXME("%p, %#x, %p.\n", iface, flags, values);
+    FIXME("%p, %#lx, %p.\n", iface, flags, values);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_mixer_processor_SetProcAmpValues(IMFVideoProcessor *iface, DWORD flags, DXVA2_ProcAmpValues *values)
 {
-    FIXME("%p, %#x, %p.\n", iface, flags, values);
+    FIXME("%p, %#lx, %p.\n", iface, flags, values);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_mixer_processor_GetFilteringRange(IMFVideoProcessor *iface, DWORD prop, DXVA2_ValueRange *range)
 {
-    FIXME("%p, %#x, %p.\n", iface, prop, range);
+    FIXME("%p, %#lx, %p.\n", iface, prop, range);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_mixer_processor_GetFilteringValue(IMFVideoProcessor *iface, DWORD prop, DXVA2_Fixed32 *value)
 {
-    FIXME("%p, %#x, %p.\n", iface, prop, value);
+    FIXME("%p, %#lx, %p.\n", iface, prop, value);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_mixer_processor_SetFilteringValue(IMFVideoProcessor *iface, DWORD prop, DXVA2_Fixed32 *value)
 {
-    FIXME("%p, %#x, %p.\n", iface, prop, value);
+    FIXME("%p, %#lx, %p.\n", iface, prop, value);
 
     return E_NOTIMPL;
 }
@@ -2037,7 +2037,7 @@ static HRESULT WINAPI video_mixer_processor_SetBackgroundColor(IMFVideoProcessor
 {
     struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
 
-    TRACE("%p, %#x.\n", iface, color);
+    TRACE("%p, %#lx.\n", iface, color);
 
     EnterCriticalSection(&mixer->cs);
     if (mixer->bkgnd_color.rgba != color)
