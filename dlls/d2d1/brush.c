@@ -50,7 +50,7 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_AddRef(ID2D1GradientStopCollection *
     struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
     ULONG refcount = InterlockedIncrement(&gradient->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -60,7 +60,7 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
     struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
     ULONG refcount = InterlockedDecrement(&gradient->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -170,7 +170,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
     heap_free(data);
     if (FAILED(hr))
     {
-        ERR("Failed to create buffer, hr %#x.\n", hr);
+        ERR("Failed to create buffer, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -183,7 +183,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
     ID3D11Buffer_Release(buffer);
     if (FAILED(hr))
     {
-        ERR("Failed to create view, hr %#x.\n", hr);
+        ERR("Failed to create view, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -288,7 +288,7 @@ static ULONG STDMETHODCALLTYPE d2d_solid_color_brush_AddRef(ID2D1SolidColorBrush
     struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
     ULONG refcount = InterlockedIncrement(&brush->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -298,7 +298,7 @@ static ULONG STDMETHODCALLTYPE d2d_solid_color_brush_Release(ID2D1SolidColorBrus
     struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
     ULONG refcount = InterlockedDecrement(&brush->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
         d2d_brush_destroy(brush);
@@ -431,7 +431,7 @@ static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_AddRef(ID2D1LinearGradi
     struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
     ULONG refcount = InterlockedIncrement(&brush->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -441,7 +441,7 @@ static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_Release(ID2D1LinearGrad
     struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
     ULONG refcount = InterlockedDecrement(&brush->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -618,7 +618,7 @@ static ULONG STDMETHODCALLTYPE d2d_radial_gradient_brush_AddRef(ID2D1RadialGradi
     struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
     ULONG refcount = InterlockedIncrement(&brush->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -628,7 +628,7 @@ static ULONG STDMETHODCALLTYPE d2d_radial_gradient_brush_Release(ID2D1RadialGrad
     struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
     ULONG refcount = InterlockedDecrement(&brush->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -851,7 +851,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_AddRef(ID2D1BitmapBrush1 *iface)
     struct d2d_brush *brush = impl_from_ID2D1BitmapBrush1(iface);
     ULONG refcount = InterlockedIncrement(&brush->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -861,7 +861,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_Release(ID2D1BitmapBrush1 *iface
     struct d2d_brush *brush = impl_from_ID2D1BitmapBrush1(iface);
     ULONG refcount = InterlockedDecrement(&brush->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1281,7 +1281,7 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_con
         sampler_desc.MaxLOD = 0.0f;
 
         if (FAILED(hr = ID3D11Device1_CreateSamplerState(context->d3d_device, &sampler_desc, sampler_state)))
-            ERR("Failed to create sampler state, hr %#x.\n", hr);
+            ERR("Failed to create sampler state, hr %#lx.\n", hr);
     }
 
     ID3D11DeviceContext_PSSetSamplers(d3d_context, brush_idx, 1, sampler_state);

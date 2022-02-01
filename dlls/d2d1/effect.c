@@ -79,7 +79,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_AddRef(ID2D1Effect *iface)
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
     ULONG refcount = InterlockedIncrement(&effect->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -89,7 +89,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_Release(ID2D1Effect *iface)
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
     ULONG refcount = InterlockedDecrement(&effect->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {

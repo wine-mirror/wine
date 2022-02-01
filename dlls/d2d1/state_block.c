@@ -50,7 +50,7 @@ static ULONG STDMETHODCALLTYPE d2d_state_block_AddRef(ID2D1DrawingStateBlock1 *i
     struct d2d_state_block *state_block = impl_from_ID2D1DrawingStateBlock1(iface);
     ULONG refcount = InterlockedIncrement(&state_block->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -60,7 +60,7 @@ static ULONG STDMETHODCALLTYPE d2d_state_block_Release(ID2D1DrawingStateBlock1 *
     struct d2d_state_block *state_block = impl_from_ID2D1DrawingStateBlock1(iface);
     ULONG refcount = InterlockedDecrement(&state_block->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {

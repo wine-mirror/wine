@@ -51,7 +51,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_AddRef(ID2D1BitmapRender
     struct d2d_bitmap_render_target *render_target = impl_from_ID2D1BitmapRenderTarget(iface);
     ULONG refcount = InterlockedIncrement(&render_target->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -61,7 +61,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_Release(ID2D1BitmapRende
     struct d2d_bitmap_render_target *render_target = impl_from_ID2D1BitmapRenderTarget(iface);
     ULONG refcount = InterlockedDecrement(&render_target->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -787,7 +787,7 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
             parent_target->ops ? &d2d_bitmap_render_target_ops : NULL,
             &dxgi_rt_desc, (void **)&render_target->dxgi_inner)))
     {
-        WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        WARN("Failed to create DXGI surface render target, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -798,7 +798,7 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
             &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
     {
-        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#lx.\n", hr);
         IUnknown_Release(render_target->dxgi_inner);
         return hr;
     }
@@ -816,7 +816,7 @@ HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_ta
     ID2D1DeviceContext_Release(context);
     if (FAILED(hr))
     {
-        WARN("Failed to create target bitmap, hr %#x.\n", hr);
+        WARN("Failed to create target bitmap, hr %#lx.\n", hr);
         IUnknown_Release(render_target->dxgi_inner);
         return hr;
     }

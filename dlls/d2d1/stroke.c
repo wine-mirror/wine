@@ -49,7 +49,7 @@ static ULONG STDMETHODCALLTYPE d2d_stroke_style_AddRef(ID2D1StrokeStyle1 *iface)
     struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
     ULONG refcount = InterlockedIncrement(&style->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -59,7 +59,7 @@ static ULONG STDMETHODCALLTYPE d2d_stroke_style_Release(ID2D1StrokeStyle1 *iface
     struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle1(iface);
     ULONG refcount = InterlockedDecrement(&style->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {

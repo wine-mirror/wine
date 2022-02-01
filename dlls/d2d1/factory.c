@@ -102,7 +102,7 @@ static ULONG STDMETHODCALLTYPE d2d_factory_AddRef(ID2D1Factory2 *iface)
     struct d2d_factory *factory = impl_from_ID2D1Factory2(iface);
     ULONG refcount = InterlockedIncrement(&factory->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -112,7 +112,7 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory2 *iface)
     struct d2d_factory *factory = impl_from_ID2D1Factory2(iface);
     ULONG refcount = InterlockedDecrement(&factory->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -157,7 +157,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factor
 
     if (FAILED(hr = d2d_rectangle_geometry_init(object, (ID2D1Factory *)iface, rect)))
     {
-        WARN("Failed to initialize rectangle geometry, hr %#x.\n", hr);
+        WARN("Failed to initialise rectangle geometry, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -181,7 +181,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRoundedRectangleGeometry(ID2D
 
     if (FAILED(hr = d2d_rounded_rectangle_geometry_init(object, (ID2D1Factory *)iface, rounded_rect)))
     {
-        WARN("Failed to initialize rounded rectangle geometry, hr %#x.\n", hr);
+        WARN("Failed to initialise rounded rectangle geometry, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -205,7 +205,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateEllipseGeometry(ID2D1Factory2
 
     if (FAILED(hr = d2d_ellipse_geometry_init(object, (ID2D1Factory *)iface, ellipse)))
     {
-        WARN("Failed to initialize ellipse geometry, hr %#x.\n", hr);
+        WARN("Failed to initialise ellipse geometry, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -230,7 +230,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGeometryGroup(ID2D1Factory2 *
 
     if (FAILED(hr = d2d_geometry_group_init(object, (ID2D1Factory *)iface, fill_mode, geometries, geometry_count)))
     {
-        WARN("Failed to initialize geometry group, hr %#x.\n", hr);
+        WARN("Failed to initialise geometry group, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -303,7 +303,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory2 *if
 
     if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface, &desc1, dashes, dash_count)))
     {
-        WARN("Failed to initialize stroke style, hr %#x.\n", hr);
+        WARN("Failed to initialise stroke style, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -348,7 +348,7 @@ static HRESULT d2d_factory_get_device(struct d2d_factory *factory, ID3D10Device1
 
     if (!factory->device && FAILED(hr = D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_BGRA_SUPPORT,
             D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &factory->device)))
-        WARN("Failed to create device, hr %#x.\n", hr);
+        WARN("Failed to create device, hr %#lx.\n", hr);
 
     *device = factory->device;
     return hr;
@@ -375,7 +375,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Fa
 
     if (FAILED(hr = d2d_wic_render_target_init(object, (ID2D1Factory1 *)iface, device, target, desc)))
     {
-        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        WARN("Failed to initialise render target, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -405,7 +405,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
 
     if (FAILED(hr = d2d_hwnd_render_target_init(object, (ID2D1Factory1 *)iface, device, desc, hwnd_rt_desc)))
     {
-        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        WARN("Failed to initialise render target, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -427,7 +427,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDxgiSurfaceRenderTarget(ID2D1
 
     if (FAILED(hr = IDXGISurface_GetDevice(surface, &IID_IDXGIDevice, (void **)&dxgi_device)))
     {
-        WARN("Failed to get DXGI device, hr %#x.\n", hr);
+        WARN("Failed to get DXGI device, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -435,7 +435,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDxgiSurfaceRenderTarget(ID2D1
     IDXGIDevice_Release(dxgi_device);
     if (FAILED(hr))
     {
-        WARN("Failed to create D2D device, hr %#x.\n", hr);
+        WARN("Failed to create D2D device, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -462,7 +462,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory2 
 
     if (FAILED(hr = d2d_dc_render_target_init(object, (ID2D1Factory1 *)iface, device, desc)))
     {
-        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        WARN("Failed to initialise render target, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -507,7 +507,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle1(ID2D1Factory2 *i
     if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface,
             desc, dashes, dash_count)))
     {
-        WARN("Failed to initialize stroke style, hr %#x.\n", hr);
+        WARN("Failed to initialise stroke style, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

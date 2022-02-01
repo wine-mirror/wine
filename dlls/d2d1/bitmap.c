@@ -52,7 +52,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_AddRef(ID2D1Bitmap1 *iface)
     struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap1(iface);
     ULONG refcount = InterlockedIncrement(&bitmap->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -62,7 +62,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap1 *iface)
     struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap1(iface);
     ULONG refcount = InterlockedDecrement(&bitmap->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -295,13 +295,13 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context
     if (bitmap->options & D2D1_BITMAP_OPTIONS_TARGET)
     {
         if (FAILED(hr = ID3D11Device_CreateRenderTargetView(d3d_device, resource, NULL, &bitmap->rtv)))
-            WARN("Failed to create RTV, hr %#x.\n", hr);
+            WARN("Failed to create RTV, hr %#lx.\n", hr);
     }
 
     if (!(bitmap->options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
     {
         if (FAILED(hr = ID3D11Device_CreateShaderResourceView(d3d_device, resource, NULL, &bitmap->srv)))
-            WARN("Failed to create SRV, hr %#x.\n", hr);
+            WARN("Failed to create SRV, hr %#lx.\n", hr);
     }
     ID3D11Device_Release(d3d_device);
 
@@ -366,7 +366,7 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
     if (FAILED(hr = ID3D11Device1_CreateTexture2D(context->d3d_device, &texture_desc,
             src_data ? &resource_data : NULL, &texture)))
     {
-        ERR("Failed to create texture, hr %#x.\n", hr);
+        ERR("Failed to create texture, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -468,7 +468,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
 
         if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
         {
-            WARN("Failed to get surface desc, hr %#x.\n", hr);
+            WARN("Failed to get surface desc, hr %#lx.\n", hr);
             ID3D11Resource_Release(resource);
             return hr;
         }
@@ -536,7 +536,7 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(struct d2d_device_context *context, IW
 
     if (FAILED(hr = IWICBitmapSource_GetSize(bitmap_source, &size.width, &size.height)))
     {
-        WARN("Failed to get bitmap size, hr %#x.\n", hr);
+        WARN("Failed to get bitmap size, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -556,7 +556,7 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(struct d2d_device_context *context, IW
 
     if (FAILED(hr = IWICBitmapSource_GetPixelFormat(bitmap_source, &wic_format)))
     {
-        WARN("Failed to get bitmap format, hr %#x.\n", hr);
+        WARN("Failed to get bitmap format, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -605,7 +605,7 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(struct d2d_device_context *context, IW
     rect.Height = size.height;
     if (FAILED(hr = IWICBitmapSource_CopyPixels(bitmap_source, &rect, pitch, data_size, data)))
     {
-        WARN("Failed to copy bitmap pixels, hr %#x.\n", hr);
+        WARN("Failed to copy bitmap pixels, hr %#lx.\n", hr);
         heap_free(data);
         return hr;
     }

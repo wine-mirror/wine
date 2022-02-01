@@ -49,7 +49,7 @@ static ULONG STDMETHODCALLTYPE d2d_mesh_AddRef(ID2D1Mesh *iface)
     struct d2d_mesh *mesh = impl_from_ID2D1Mesh(iface);
     ULONG refcount = InterlockedIncrement(&mesh->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -59,7 +59,7 @@ static ULONG STDMETHODCALLTYPE d2d_mesh_Release(ID2D1Mesh *iface)
     struct d2d_mesh *mesh = impl_from_ID2D1Mesh(iface);
     ULONG refcount = InterlockedDecrement(&mesh->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {

@@ -39,7 +39,7 @@ static HRESULT d2d_dc_render_target_present(IUnknown *outer_unknown)
 
     if (FAILED(hr = IDXGISurface1_GetDC(render_target->dxgi_surface, FALSE, &src_hdc)))
     {
-        WARN("GetDC() failed, %#x.\n", hr);
+        WARN("GetDC() failed, %#lx.\n", hr);
         return S_OK;
     }
 
@@ -81,7 +81,7 @@ static ULONG STDMETHODCALLTYPE d2d_dc_render_target_AddRef(ID2D1DCRenderTarget *
     struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
     ULONG refcount = InterlockedIncrement(&render_target->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -91,7 +91,7 @@ static ULONG STDMETHODCALLTYPE d2d_dc_render_target_Release(ID2D1DCRenderTarget 
     struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
     ULONG refcount = InterlockedDecrement(&render_target->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -709,7 +709,7 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_BindDC(ID2D1DCRenderTarget
     if (FAILED(hr = ID2D1DeviceContext_CreateBitmap(context, bitmap_size, NULL, 0, &bitmap_desc,
             (ID2D1Bitmap1 **)&bitmap)))
     {
-        WARN("Failed to create target bitmap, hr %#x.\n", hr);
+        WARN("Failed to create target bitmap, hr %#lx.\n", hr);
         ID2D1DeviceContext_Release(context);
         return hr;
     }
@@ -826,7 +826,7 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
 
     if (FAILED(hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device)))
     {
-        WARN("Failed to get DXGI device interface, hr %#x.\n", hr);
+        WARN("Failed to get DXGI device interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -834,7 +834,7 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
     IDXGIDevice_Release(dxgi_device);
     if (FAILED(hr))
     {
-        WARN("Failed to create D2D device, hr %#x.\n", hr);
+        WARN("Failed to create D2D device, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -843,14 +843,14 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
     ID2D1Device_Release(device);
     if (FAILED(hr))
     {
-        WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        WARN("Failed to create DXGI surface render target, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
             &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
     {
-        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#lx.\n", hr);
         IUnknown_Release(render_target->dxgi_inner);
         return hr;
     }

@@ -43,7 +43,7 @@ static HRESULT d2d_wic_render_target_present(IUnknown *outer_unknown)
     if (FAILED(hr = IDXGISurface_QueryInterface(render_target->dxgi_surface,
             &IID_ID3D10Resource, (void **)&src_resource)))
     {
-        ERR("Failed to get source resource interface, hr %#x.\n", hr);
+        ERR("Failed to get source resource interface, hr %#lx.\n", hr);
         goto end;
     }
 
@@ -58,27 +58,27 @@ static HRESULT d2d_wic_render_target_present(IUnknown *outer_unknown)
     dst_rect.Height = render_target->height;
     if (FAILED(hr = IWICBitmap_Lock(render_target->bitmap, &dst_rect, WICBitmapLockWrite, &bitmap_lock)))
     {
-        ERR("Failed to lock destination bitmap, hr %#x.\n", hr);
+        ERR("Failed to lock destination bitmap, hr %#lx.\n", hr);
         goto end;
     }
 
     if (FAILED(hr = IWICBitmapLock_GetDataPointer(bitmap_lock, &dst_size, &dst)))
     {
-        ERR("Failed to get data pointer, hr %#x.\n", hr);
+        ERR("Failed to get data pointer, hr %#lx.\n", hr);
         IWICBitmapLock_Release(bitmap_lock);
         goto end;
     }
 
     if (FAILED(hr = IWICBitmapLock_GetStride(bitmap_lock, &dst_pitch)))
     {
-        ERR("Failed to get stride, hr %#x.\n", hr);
+        ERR("Failed to get stride, hr %#lx.\n", hr);
         IWICBitmapLock_Release(bitmap_lock);
         goto end;
     }
 
     if (FAILED(hr = ID3D10Texture2D_Map(render_target->readback_texture, 0, D3D10_MAP_READ, 0, &mapped_texture)))
     {
-        ERR("Failed to map readback texture, hr %#x.\n", hr);
+        ERR("Failed to map readback texture, hr %#lx.\n", hr);
         IWICBitmapLock_Release(bitmap_lock);
         goto end;
     }
@@ -113,7 +113,7 @@ static ULONG STDMETHODCALLTYPE d2d_wic_render_target_AddRef(IUnknown *iface)
     struct d2d_wic_render_target *render_target = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&render_target->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -123,7 +123,7 @@ static ULONG STDMETHODCALLTYPE d2d_wic_render_target_Release(IUnknown *iface)
     struct d2d_wic_render_target *render_target = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&render_target->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -162,7 +162,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
 
     if (FAILED(hr = IWICBitmap_GetSize(bitmap, &render_target->width, &render_target->height)))
     {
-        WARN("Failed to get bitmap dimensions, hr %#x.\n", hr);
+        WARN("Failed to get bitmap dimensions, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -178,7 +178,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
 
         if (FAILED(hr = IWICBitmap_GetPixelFormat(bitmap, &bitmap_format)))
         {
-            WARN("Failed to get bitmap format, hr %#x.\n", hr);
+            WARN("Failed to get bitmap format, hr %#lx.\n", hr);
             return hr;
         }
 
@@ -215,7 +215,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
 
     if (FAILED(hr = ID3D10Device1_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture)))
     {
-        WARN("Failed to create texture, hr %#x.\n", hr);
+        WARN("Failed to create texture, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -223,7 +223,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     ID3D10Texture2D_Release(texture);
     if (FAILED(hr))
     {
-        WARN("Failed to get DXGI surface interface, hr %#x.\n", hr);
+        WARN("Failed to get DXGI surface interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -234,14 +234,14 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
 
     if (FAILED(hr = ID3D10Device1_CreateTexture2D(d3d_device, &texture_desc, NULL, &render_target->readback_texture)))
     {
-        WARN("Failed to create readback texture, hr %#x.\n", hr);
+        WARN("Failed to create readback texture, hr %#lx.\n", hr);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
     }
 
     if (FAILED(hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device)))
     {
-        WARN("Failed to get DXGI device, hr %#x.\n", hr);
+        WARN("Failed to get DXGI device, hr %#lx.\n", hr);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
     }
@@ -250,7 +250,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     IDXGIDevice_Release(dxgi_device);
     if (FAILED(hr))
     {
-        WARN("Failed to create D2D device, hr %#x.\n", hr);
+        WARN("Failed to create D2D device, hr %#lx.\n", hr);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
     }
@@ -260,7 +260,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     ID2D1Device_Release(device);
     if (FAILED(hr))
     {
-        WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        WARN("Failed to create DXGI surface render target, hr %#lx.\n", hr);
         ID3D10Texture2D_Release(render_target->readback_texture);
         IDXGISurface_Release(render_target->dxgi_surface);
         return hr;
@@ -269,7 +269,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
             &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
     {
-        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#lx.\n", hr);
         IUnknown_Release(render_target->dxgi_inner);
         ID3D10Texture2D_Release(render_target->readback_texture);
         IDXGISurface_Release(render_target->dxgi_surface);

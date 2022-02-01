@@ -49,7 +49,7 @@ static ULONG STDMETHODCALLTYPE d2d_layer_AddRef(ID2D1Layer *iface)
     struct d2d_layer *layer = impl_from_ID2D1Layer(iface);
     ULONG refcount = InterlockedIncrement(&layer->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -59,7 +59,7 @@ static ULONG STDMETHODCALLTYPE d2d_layer_Release(ID2D1Layer *iface)
     struct d2d_layer *layer = impl_from_ID2D1Layer(iface);
     ULONG refcount = InterlockedDecrement(&layer->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {

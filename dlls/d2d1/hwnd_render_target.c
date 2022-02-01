@@ -32,7 +32,7 @@ static HRESULT d2d_hwnd_render_target_present(IUnknown *outer_unknown)
     HRESULT hr;
 
     if (FAILED(hr = IDXGISwapChain_Present(render_target->swapchain, render_target->sync_interval, 0)))
-        WARN("Present failed, %#x.\n", hr);
+        WARN("Present failed, %#lx.\n", hr);
 
     return S_OK;
 }
@@ -67,7 +67,7 @@ static ULONG STDMETHODCALLTYPE d2d_hwnd_render_target_AddRef(ID2D1HwndRenderTarg
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
     ULONG refcount = InterlockedIncrement(&render_target->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -77,7 +77,7 @@ static ULONG STDMETHODCALLTYPE d2d_hwnd_render_target_Release(ID2D1HwndRenderTar
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
     ULONG refcount = InterlockedDecrement(&render_target->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -687,7 +687,7 @@ static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_Resize(ID2D1HwndRenderTa
         if (FAILED(hr = IDXGISwapChain_GetBuffer(render_target->swapchain, 0, &IID_IDXGISurface1,
                 (void **)&dxgi_surface)))
         {
-            WARN("Failed to get buffer, hr %#x.\n", hr);
+            WARN("Failed to get buffer, hr %#lx.\n", hr);
             ID2D1DeviceContext_Release(context);
             return hr;
         }
@@ -696,7 +696,7 @@ static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_Resize(ID2D1HwndRenderTa
         IDXGISurface1_Release(dxgi_surface);
         if (FAILED(hr))
         {
-            WARN("Failed to create target bitmap, hr %#x.\n", hr);
+            WARN("Failed to create target bitmap, hr %#lx.\n", hr);
             ID2D1DeviceContext_Release(context);
             return hr;
         }
@@ -810,7 +810,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
 
     if (FAILED(hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device)))
     {
-        WARN("Failed to get IDXGIDevice interface, hr %#x.\n", hr);
+        WARN("Failed to get IDXGIDevice interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -818,7 +818,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     IDXGIDevice_Release(dxgi_device);
     if (FAILED(hr))
     {
-        WARN("Failed to get IDXGIAdapter interface, hr %#x.\n", hr);
+        WARN("Failed to get IDXGIAdapter interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -826,7 +826,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     IDXGIAdapter_Release(dxgi_adapter);
     if (FAILED(hr))
     {
-        WARN("Failed to get IDXGIFactory interface, hr %#x.\n", hr);
+        WARN("Failed to get IDXGIFactory interface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -861,13 +861,13 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     IDXGIFactory_Release(dxgi_factory);
     if (FAILED(hr))
     {
-        WARN("Failed to create a swapchain, hr %#x.\n", hr);
+        WARN("Failed to create a swapchain, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = IDXGISwapChain_GetBuffer(render_target->swapchain, 0, &IID_IDXGISurface, (void **)&dxgi_surface)))
     {
-        WARN("Failed to get buffer, hr %#x.\n", hr);
+        WARN("Failed to get buffer, hr %#lx.\n", hr);
         IDXGISwapChain_Release(render_target->swapchain);
         return hr;
     }
@@ -876,7 +876,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
 
     if (FAILED(hr = IDXGISurface_GetDevice(dxgi_surface, &IID_IDXGIDevice, (void **)&dxgi_device)))
     {
-        WARN("Failed to get DXGI device, hr %#X.\n", hr);
+        WARN("Failed to get DXGI device, hr %#lx.\n", hr);
         IDXGISurface_Release(dxgi_surface);
         IDXGISwapChain_Release(render_target->swapchain);
         return hr;
@@ -886,7 +886,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     IDXGIDevice_Release(dxgi_device);
     if (FAILED(hr))
     {
-        WARN("Failed to create D2D device, hr %#X.\n", hr);
+        WARN("Failed to create D2D device, hr %#lx.\n", hr);
         IDXGISurface_Release(dxgi_surface);
         IDXGISwapChain_Release(render_target->swapchain);
         return hr;
@@ -899,7 +899,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     ID2D1Device_Release(device);
     if (FAILED(hr))
     {
-        WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
+        WARN("Failed to create DXGI surface render target, hr %#lx.\n", hr);
         IDXGISwapChain_Release(render_target->swapchain);
         return hr;
     }
@@ -907,7 +907,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     if (FAILED(hr = IUnknown_QueryInterface(render_target->dxgi_inner,
             &IID_ID2D1RenderTarget, (void **)&render_target->dxgi_target)))
     {
-        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#x.\n", hr);
+        WARN("Failed to retrieve ID2D1RenderTarget interface, hr %#lx.\n", hr);
         IUnknown_Release(render_target->dxgi_inner);
         IDXGISwapChain_Release(render_target->swapchain);
         return hr;
