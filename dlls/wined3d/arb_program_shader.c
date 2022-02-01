@@ -765,7 +765,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     const struct wined3d_shader_lconst *lconst;
     unsigned max_constantsF;
-    DWORD map;
+    uint32_t map;
 
     /* In pixel shaders, all private constants are program local, we don't need anything
      * from program.env. Thus we can advertise the full set of constants in pixel shaders.
@@ -837,21 +837,27 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
         }
     }
 
-    for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
+    map = reg_maps->temporary;
+    while (map)
     {
-        if (map & 1) shader_addline(buffer, "TEMP R%u;\n", i);
+        i = wined3d_bit_scan(&map);
+        shader_addline(buffer, "TEMP R%u;\n", i);
     }
 
-    for (i = 0, map = reg_maps->address; map; map >>= 1, ++i)
+    map = reg_maps->address;
+    while (map)
     {
-        if (map & 1) shader_addline(buffer, "ADDRESS A%u;\n", i);
+        i = wined3d_bit_scan(&map);
+        shader_addline(buffer, "ADDRESS A%u;\n", i);
     }
 
     if (pshader && reg_maps->shader_version.major == 1 && reg_maps->shader_version.minor <= 3)
     {
-        for (i = 0, map = reg_maps->texcoord; map; map >>= 1, ++i)
+        map = reg_maps->texcoord;
+        while (map)
         {
-            if (map & 1) shader_addline(buffer, "TEMP T%u;\n", i);
+            i = wined3d_bit_scan(&map);
+            shader_addline(buffer, "TEMP T%u;\n", i);
         }
     }
 
