@@ -77,9 +77,9 @@ HRESULT WINAPI DwmExtendFrameIntoClientArea(HWND hwnd, const MARGINS* margins)
 /**********************************************************************
  *           DwmGetColorizationColor      (DWMAPI.@)
  */
-HRESULT WINAPI DwmGetColorizationColor(DWORD *colorization, BOOL opaque_blend)
+HRESULT WINAPI DwmGetColorizationColor(DWORD *colorization, BOOL *opaque_blend)
 {
-    FIXME("(%p, %d) stub\n", colorization, opaque_blend);
+    FIXME("(%p, %p) stub\n", colorization, opaque_blend);
 
     return E_NOTIMPL;
 }

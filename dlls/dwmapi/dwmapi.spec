@@ -67,7 +67,7 @@
 @ stdcall DwmEnableMMCSS(long)
 @ stdcall DwmExtendFrameIntoClientArea(long ptr)
 @ stdcall DwmFlush()
-@ stdcall DwmGetColorizationColor(ptr long)
+@ stdcall DwmGetColorizationColor(ptr ptr)
 @ stdcall DwmGetCompositionTimingInfo(long ptr)
 @ stdcall DwmGetGraphicsStreamClient(long ptr)
 @ stdcall DwmGetGraphicsStreamTransformHint(long ptr)

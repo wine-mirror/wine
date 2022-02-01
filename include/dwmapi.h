@@ -198,7 +198,7 @@ DWMAPI DwmEnableComposition(UINT);
 DWMAPI DwmEnableMMCSS(BOOL);
 DWMAPI DwmExtendFrameIntoClientArea(HWND,const MARGINS*);
 DWMAPI DwmFlush(void);
-DWMAPI DwmGetColorizationColor(DWORD*,BOOL);
+DWMAPI DwmGetColorizationColor(DWORD *, BOOL *);
 DWMAPI DwmGetCompositionTimingInfo(HWND,DWM_TIMING_INFO*);
 DWMAPI DwmGetGraphicsStreamClient(UINT, UUID *);
 DWMAPI DwmGetGraphicsStreamTransformHint(UINT, MilMatrix3x2D *);
