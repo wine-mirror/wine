@@ -937,9 +937,10 @@ D2D1_COLOR_F WINAPI D2D1ConvertColorSpace(D2D1_COLOR_SPACE src_colour_space,
     return ret;
 }
 
-static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
+static bool get_config_key_u32(HKEY default_key, HKEY application_key, const char *name, uint32_t *value)
 {
-    DWORD type, data, size;
+    DWORD type, size;
+    uint32_t data;
 
     size = sizeof(data);
     if (application_key && !RegQueryValueExA(application_key,
@@ -951,11 +952,11 @@ static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const c
             name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD)
         goto success;
 
-    return FALSE;
+    return false;
 
 success:
     *value = data;
-    return TRUE;
+    return true;
 }
 
 static void d2d_settings_init(void)
@@ -989,7 +990,7 @@ static void d2d_settings_init(void)
     if (!default_key && !application_key)
         return;
 
-    if (get_config_key_dword(default_key, application_key, "max_version_factory", &d2d_settings.max_version_factory))
+    if (get_config_key_u32(default_key, application_key, "max_version_factory", &d2d_settings.max_version_factory))
         ERR_(winediag)("Limiting maximum Direct2D factory version to %#x.\n", d2d_settings.max_version_factory);
 
     if (application_key)
