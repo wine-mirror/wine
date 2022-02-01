@@ -179,7 +179,7 @@ static DWORD MIDI_mciReadByte(WINE_MCIMIDI* wmm, BYTE *lpbyt)
 {
     DWORD	ret = 0;
 
-    if (mmioRead(wmm->hFile, (HPSTR)lpbyt, sizeof(BYTE)) != (long)sizeof(BYTE)) {
+    if (mmioRead(wmm->hFile, (HPSTR)lpbyt, sizeof(BYTE)) != sizeof(BYTE)) {
 	WARN("Error reading wmm=%p\n", wmm);
 	ret = MCIERR_INVALID_FILE;
     }
@@ -319,8 +319,7 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
     DWORD		toberead;
     FOURCC		fourcc;
 
-    if (mmioRead(wmm->hFile, (HPSTR)&fourcc, (long)sizeof(FOURCC)) !=
-	(long)sizeof(FOURCC)) {
+    if (mmioRead(wmm->hFile, (HPSTR)&fourcc, sizeof(FOURCC)) != sizeof(FOURCC)) {
 	return MCIERR_INVALID_FILE;
     }
 
@@ -413,8 +412,7 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
 	WARN("Can't seek at %08X begin of 'MThd'\n", dwOffset);
 	return MCIERR_INVALID_FILE;
     }
-    if (mmioRead(wmm->hFile, (HPSTR)&fourcc,
-		   (long) sizeof(FOURCC)) != (long) sizeof(FOURCC))
+    if (mmioRead(wmm->hFile, (HPSTR)&fourcc, sizeof(FOURCC)) != sizeof(FOURCC))
 	return MCIERR_INVALID_FILE;
 
     if (fourcc != mmioFOURCC('M', 'T', 'h', 'd')) {
