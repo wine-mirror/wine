@@ -143,7 +143,7 @@ static ULONG WINAPI session_AddRef(IUnknown *iface)
 {
     struct msdasql_session *session = impl_from_IUnknown( iface );
     LONG refs = InterlockedIncrement( &session->refs );
-    TRACE( "%p new refcount %d\n", session, refs );
+    TRACE( "%p new refcount %ld\n", session, refs );
     return refs;
 }
 
@@ -151,7 +151,7 @@ static ULONG WINAPI session_Release(IUnknown *iface)
 {
     struct msdasql_session *session = impl_from_IUnknown( iface );
     LONG refs = InterlockedDecrement( &session->refs );
-    TRACE( "%p new refcount %d\n", session, refs );
+    TRACE( "%p new refcount %ld\n", session, refs );
     if (!refs)
     {
         TRACE( "destroying %p\n", session );
@@ -230,7 +230,7 @@ HRESULT WINAPI openrowset_OpenRowset(IOpenRowset *iface, IUnknown *pUnkOuter, DB
             DBID *index, REFIID riid, ULONG count, DBPROPSET propertysets[], IUnknown **rowset)
 {
     struct msdasql_session *session = impl_from_IOpenRowset( iface );
-    FIXME("%p, %p, %p %p %s, %d %p %p stub\n", session, pUnkOuter, table, index, debugstr_guid(riid),
+    FIXME("%p, %p, %p %p %s, %ld %p %p stub\n", session, pUnkOuter, table, index, debugstr_guid(riid),
             count, propertysets, rowset);
 
     return E_NOTIMPL;
@@ -267,7 +267,7 @@ static HRESULT WINAPI properties_GetProperties(ISessionProperties *iface, ULONG 
     const DBPROPIDSET id_sets[], ULONG *count, DBPROPSET **sets)
 {
     struct msdasql_session *session = impl_from_ISessionProperties( iface );
-    FIXME("%p %d %p %p %p\n", session, set_count, id_sets, count, sets);
+    FIXME("%p %lu %p %p %p\n", session, set_count, id_sets, count, sets);
 
     return E_NOTIMPL;
 }
@@ -276,7 +276,7 @@ static HRESULT WINAPI properties_SetProperties(ISessionProperties *iface, ULONG 
     DBPROPSET sets[])
 {
     struct msdasql_session *session = impl_from_ISessionProperties( iface );
-    FIXME("%p %d %p\n", session, count, sets);
+    FIXME("%p %lu %p\n", session, count, sets);
 
     return S_OK;
 }
@@ -426,7 +426,7 @@ static ULONG WINAPI command_AddRef(ICommandText *iface)
 {
     struct command *command = impl_from_ICommandText( iface );
     LONG refs = InterlockedIncrement( &command->refs );
-    TRACE( "%p new refcount %d\n", command, refs );
+    TRACE( "%p new refcount %ld\n", command, refs );
     return refs;
 }
 
@@ -434,7 +434,7 @@ static ULONG WINAPI command_Release(ICommandText *iface)
 {
     struct command *command = impl_from_ICommandText( iface );
     LONG refs = InterlockedDecrement( &command->refs );
-    TRACE( "%p new refcount %d\n", command, refs );
+    TRACE( "%p new refcount %ld\n", command, refs );
     if (!refs)
     {
         TRACE( "destroying %p\n", command );
@@ -551,7 +551,7 @@ static ULONG WINAPI msdasql_rowset_AddRef(IRowset *iface)
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
     LONG refs = InterlockedIncrement( &rowset->refs );
-    TRACE( "%p new refcount %d\n", rowset, refs );
+    TRACE( "%p new refcount %ld\n", rowset, refs );
     return refs;
 }
 
@@ -559,7 +559,7 @@ static ULONG WINAPI msdasql_rowset_Release(IRowset *iface)
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
     LONG refs = InterlockedDecrement( &rowset->refs );
-    TRACE( "%p new refcount %d\n", rowset, refs );
+    TRACE( "%p new refcount %ld\n", rowset, refs );
     if (!refs)
     {
         TRACE( "destroying %p\n", rowset );
@@ -576,14 +576,14 @@ static HRESULT WINAPI msdasql_rowset_AddRefRows(IRowset *iface, DBCOUNTITEM coun
         const HROW rows[], DBREFCOUNT ref_counts[], DBROWSTATUS status[])
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
-    FIXME("%p, %ld, %p, %p, %p\n", rowset, count, rows, ref_counts, status);
+    FIXME("%p, %Id, %p, %p, %p\n", rowset, count, rows, ref_counts, status);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI msdasql_rowset_GetData(IRowset *iface, HROW row, HACCESSOR accessor, void *data)
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
-    FIXME("%p, %ld, %ld, %p\n", rowset, row, accessor, data);
+    FIXME("%p, %Id, %Id, %p\n", rowset, row, accessor, data);
     return E_NOTIMPL;
 }
 
@@ -591,7 +591,7 @@ static HRESULT WINAPI msdasql_rowset_GetNextRows(IRowset *iface, HCHAPTER reserv
         DBROWCOUNT count, DBCOUNTITEM *obtained, HROW **rows)
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
-    FIXME("%p, %ld, %ld, %ld, %p, %p\n", rowset, reserved, offset, count, obtained, rows);
+    FIXME("%p, %Id, %Id, %Id, %p, %p\n", rowset, reserved, offset, count, obtained, rows);
     return E_NOTIMPL;
 }
 
@@ -600,14 +600,14 @@ static HRESULT WINAPI msdasql_rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM cou
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
 
-    FIXME("%p, %ld, %p, %p, %p, %p\n", rowset, count, rows, options, ref_counts, status);
+    FIXME("%p, %Id, %p, %p, %p, %p\n", rowset, count, rows, options, ref_counts, status);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI msdasql_rowset_RestartPosition(IRowset *iface, HCHAPTER reserved)
 {
     struct msdasql_rowset *rowset = impl_from_IRowset( iface );
-    FIXME("%p, %ld\n", rowset, reserved);
+    FIXME("%p, %Id\n", rowset, reserved);
     return E_NOTIMPL;
 }
 
@@ -645,7 +645,7 @@ static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG 
         const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets)
 {
     struct msdasql_rowset *rowset = impl_from_IRowsetInfo( iface );
-    FIXME("%p, %d, %p, %p, %p\n", rowset, count, propertyidsets, out_count, propertysets);
+    FIXME("%p, %lu, %p, %p, %p\n", rowset, count, propertyidsets, out_count, propertysets);
     return E_NOTIMPL;
 }
 
@@ -653,7 +653,7 @@ static HRESULT WINAPI rowset_info_GetReferencedRowset(IRowsetInfo *iface, DBORDI
         REFIID riid, IUnknown **unk)
 {
     struct msdasql_rowset *rowset = impl_from_IRowsetInfo( iface );
-    FIXME("%p, %ld, %s, %p\n", rowset, ordinal, debugstr_guid(riid), unk);
+    FIXME("%p, %Id, %s, %p\n", rowset, ordinal, debugstr_guid(riid), unk);
     return E_NOTIMPL;
 }
 
@@ -713,7 +713,7 @@ static HRESULT WINAPI rowset_colsinfo_MapColumnIDs(IColumnsInfo *iface, DBORDINA
         const DBID *dbids, DBORDINAL *columns)
 {
     struct msdasql_rowset *rowset = rowset_impl_from_IColumnsInfo( iface );
-    FIXME("%p, %lu, %p, %p\n", rowset, column_ids, dbids, columns);
+    FIXME("%p, %Id, %p, %p\n", rowset, column_ids, dbids, columns);
     return E_NOTIMPL;
 }
 
@@ -747,7 +747,7 @@ static ULONG  WINAPI rowset_accessor_Release(IAccessor *iface)
 static HRESULT WINAPI rowset_accessor_AddRefAccessor(IAccessor *iface, HACCESSOR accessor, DBREFCOUNT *count)
 {
     struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
-    FIXME("%p, %lu, %p\n", rowset, accessor, count);
+    FIXME("%p, %Id, %p\n", rowset, accessor, count);
     return E_NOTIMPL;
 }
 
@@ -756,7 +756,7 @@ static HRESULT WINAPI rowset_accessor_CreateAccessor(IAccessor *iface, DBACCESSO
         DBBINDSTATUS status[])
 {
     struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
-    FIXME("%p 0x%08x, %lu, %p, %lu, %p, %p\n", rowset, flags, count, bindings, row_size, accessor, status);
+    FIXME("%p, 0x%08lx, %Id, %p, %Id, %p, %p\n", rowset, flags, count, bindings, row_size, accessor, status);
     return E_NOTIMPL;
 }
 
@@ -764,14 +764,14 @@ static HRESULT WINAPI rowset_accessor_GetBindings(IAccessor *iface, HACCESSOR ac
         DBACCESSORFLAGS *flags, DBCOUNTITEM *count, DBBINDING **bindings)
 {
     struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
-    FIXME("%p %lu, %p, %p, %p\n", rowset, accessor, flags, count, bindings);
+    FIXME("%p, %Id, %p, %p, %p\n", rowset, accessor, flags, count, bindings);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI rowset_accessor_ReleaseAccessor(IAccessor *iface, HACCESSOR accessor, DBREFCOUNT *count)
 {
     struct msdasql_rowset *rowset = impl_from_IAccessor( iface );
-    FIXME("%p, %lu, %p\n", rowset, accessor, count);
+    FIXME("%p, %Id, %p\n", rowset, accessor, count);
     return E_NOTIMPL;
 }
 
@@ -815,7 +815,7 @@ static HRESULT WINAPI column_rs_GetColumnsRowset(IColumnsRowset *iface, IUnknown
         const DBID columns[], REFIID riid, ULONG property_cnt, DBPROPSET property_sets[], IUnknown **unk_rs)
 {
     struct msdasql_rowset *rowset = impl_from_IColumnsRowset( iface );
-    FIXME("(%p)->(%p %ld %p %s %u, %p %p): stub\n", rowset, outer, count, columns, debugstr_guid(riid),
+    FIXME("(%p)->(%p, %Id, %p, %s, %lu, %p, %p): stub\n", rowset, outer, count, columns, debugstr_guid(riid),
           property_cnt, property_sets, unk_rs);
     return E_NOTIMPL;
 }
@@ -953,7 +953,7 @@ static HRESULT WINAPI command_prop_GetProperties(ICommandProperties *iface, ULON
         const DBPROPIDSET propertyidsets[], ULONG *sets_cnt, DBPROPSET **propertyset)
 {
     struct command *command = impl_from_ICommandProperties( iface );
-    FIXME("%p %d %p %p %p\n", command, count, propertyidsets, sets_cnt, propertyset);
+    FIXME("%p %lu %p %p %p\n", command, count, propertyidsets, sets_cnt, propertyset);
     return E_NOTIMPL;
 }
 
@@ -961,7 +961,7 @@ static HRESULT WINAPI command_prop_SetProperties(ICommandProperties *iface, ULON
         DBPROPSET propertyset[])
 {
     struct command *command = impl_from_ICommandProperties( iface );
-    FIXME("%p %p\n", command, propertyset);
+    FIXME("%p, %lu, %p\n", command, count, propertyset);
     return S_OK;
 }
 
@@ -1004,7 +1004,7 @@ static HRESULT WINAPI colsinfo_MapColumnIDs(IColumnsInfo *iface, DBORDINAL colum
         const DBID *dbids, DBORDINAL *columns)
 {
     struct command *command = impl_from_IColumnsInfo( iface );
-    FIXME("%p, %lu, %p, %p\n", command, column_ids, dbids, columns);
+    FIXME("%p, %Iu, %p, %p\n", command, column_ids, dbids, columns);
     return E_NOTIMPL;
 }
 
@@ -1038,7 +1038,7 @@ static ULONG WINAPI converttype_Release(IConvertType *iface)
 static HRESULT WINAPI converttype_CanConvert(IConvertType *iface, DBTYPE from, DBTYPE to, DBCONVERTFLAGS flags)
 {
     struct command *command = impl_from_IConvertType( iface );
-    FIXME("%p, %u, %d, 0x%08x\n", command, from, to, flags);
+    FIXME("%p, %u, %d, 0x%08lx\n", command, from, to, flags);
     return E_NOTIMPL;
 }
 
@@ -1073,7 +1073,7 @@ static HRESULT WINAPI commandprepare_Prepare(ICommandPrepare *iface, ULONG runs)
     struct command *command = impl_from_ICommandPrepare( iface );
     RETCODE ret;
 
-    TRACE("%p, %u\n", command, runs);
+    TRACE("%p, %lu\n", command, runs);
 
     if (!command->query)
         return DB_E_NOCOMMAND;
@@ -1138,7 +1138,7 @@ static HRESULT WINAPI cmd_with_params_MapParameterNames(ICommandWithParameters *
         LPCWSTR names[], DB_LPARAMS ordinals[])
 {
     struct command *command = impl_from_ICommandWithParameters( iface );
-    FIXME("%p, %ld, %p, %p\n", command, uparams, names, ordinals);
+    FIXME("%p, %Iu, %p, %p\n", command, uparams, names, ordinals);
     return E_NOTIMPL;
 }
 
@@ -1146,7 +1146,7 @@ static HRESULT WINAPI cmd_with_params_SetParameterInfo(ICommandWithParameters *i
         const DB_UPARAMS ordinals[], const DBPARAMBINDINFO bindinfo[])
 {
     struct command *command = impl_from_ICommandWithParameters( iface );
-    FIXME("%p, %ld, %p, %p\n", command, uparams, ordinals, bindinfo);
+    FIXME("%p, %Iu, %p, %p\n", command, uparams, ordinals, bindinfo);
     return E_NOTIMPL;
 }
 
@@ -1234,7 +1234,7 @@ static HRESULT WINAPI transjoin_JoinTransaction(ITransactionJoin *iface, IUnknow
 {
     struct msdasql_session *session = impl_from_ITransactionJoin( iface );
 
-    FIXME("%p, %p, %d, 0x%08x, %p\n", session, unk, level, flags, options);
+    FIXME("%p, %p, %lu, 0x%08lx, %p\n", session, unk, level, flags, options);
 
     return E_NOTIMPL;
 }
