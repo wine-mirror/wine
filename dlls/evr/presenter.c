@@ -65,6 +65,7 @@ struct sample_queue
     unsigned int used;
     unsigned int front;
     unsigned int back;
+    IMFSample *last_presented;
 };
 
 struct streaming_thread
@@ -120,6 +121,7 @@ struct video_presenter
     struct
     {
         int presented;
+        LONGLONG sampletime;
     } frame_stats;
 
     CRITICAL_SECTION cs;
@@ -507,6 +509,13 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
     IDirect3DSwapChain9_Present(presenter->swapchain, NULL, NULL, NULL, NULL, 0);
     presenter->frame_stats.presented++;
 
+    EnterCriticalSection(&presenter->cs);
+    if (presenter->thread.queue.last_presented)
+        IMFSample_Release(presenter->thread.queue.last_presented);
+    presenter->thread.queue.last_presented = sample;
+    IMFSample_AddRef(presenter->thread.queue.last_presented);
+    LeaveCriticalSection(&presenter->cs);
+
     IDirect3DDevice9_Release(device);
     IDirect3DSurface9_Release(backbuffer);
     IDirect3DSurface9_Release(surface);
@@ -739,6 +748,8 @@ static HRESULT video_presenter_end_streaming(struct video_presenter *presenter)
 
     TRACE("Terminated streaming thread tid %#lx.\n", presenter->thread.tid);
 
+    if (presenter->thread.queue.last_presented)
+        IMFSample_Release(presenter->thread.queue.last_presented);
     memset(&presenter->thread, 0, sizeof(presenter->thread));
     video_presenter_set_allocator_callback(presenter, NULL);
 
@@ -1461,9 +1472,88 @@ static HRESULT WINAPI video_presenter_control_RepaintVideo(IMFVideoDisplayContro
 static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayControl *iface, BITMAPINFOHEADER *header,
         BYTE **dib, DWORD *dib_size, LONGLONG *timestamp)
 {
-    FIXME("%p, %p, %p, %p, %p.\n", iface, header, dib, dib_size, timestamp);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    IDirect3DSurface9 *readback = NULL, *surface;
+    D3DSURFACE_DESC surface_desc;
+    D3DLOCKED_RECT mapped_rect;
+    IDirect3DDevice9 *device;
+    IMFSample *sample;
+    LONG stride;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %p, %p.\n", iface, header, dib, dib_size, timestamp);
+
+    EnterCriticalSection(&presenter->cs);
+
+    sample = presenter->thread.queue.last_presented;
+    presenter->thread.queue.last_presented = NULL;
+
+    if (!presenter->swapchain || !sample)
+    {
+        hr = MF_E_INVALIDREQUEST;
+    }
+    else if (SUCCEEDED(hr = video_presenter_get_sample_surface(sample, &surface)))
+    {
+        IDirect3DSwapChain9_GetDevice(presenter->swapchain, &device);
+        IDirect3DSurface9_GetDesc(surface, &surface_desc);
+
+        if (surface_desc.Format != D3DFMT_X8R8G8B8)
+        {
+            FIXME("Unexpected surface format %d.\n", surface_desc.Format);
+            hr = E_FAIL;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            if (FAILED(hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, surface_desc.Width,
+                    surface_desc.Height, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &readback, NULL)))
+            {
+                WARN("Failed to create readback surface, hr %#lx.\n", hr);
+            }
+        }
+
+        if (SUCCEEDED(hr))
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surface, readback);
+
+        if (SUCCEEDED(hr))
+        {
+            MFGetStrideForBitmapInfoHeader(D3DFMT_X8R8G8B8, surface_desc.Width, &stride);
+            *dib_size = abs(stride) * surface_desc.Height;
+            if (!(*dib = CoTaskMemAlloc(*dib_size)))
+                hr = E_OUTOFMEMORY;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(readback, &mapped_rect, NULL, D3DLOCK_READONLY)))
+            {
+                memcpy(*dib, mapped_rect.pBits, *dib_size);
+                IDirect3DSurface9_UnlockRect(readback);
+            }
+        }
+
+        memset(header, 0, sizeof(*header));
+        header->biSize = sizeof(*header);
+        header->biWidth = surface_desc.Width;
+        header->biHeight = surface_desc.Height;
+        header->biPlanes = 1;
+        header->biBitCount = 32;
+        header->biSizeImage = *dib_size;
+        IMFSample_GetSampleTime(sample, timestamp);
+
+        if (readback)
+            IDirect3DSurface9_Release(readback);
+        IDirect3DSurface9_Release(surface);
+
+        IDirect3DDevice9_Release(device);
+    }
+
+    if (sample)
+        IMFSample_Release(sample);
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_control_SetBorderColor(IMFVideoDisplayControl *iface, COLORREF color)
