@@ -840,7 +840,7 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
 
     read = 0;
     hr = ISequentialStream_Read(readerinput->stream, buffer->data + buffer->written, len, &read);
-    TRACE("written=%d, alloc=%d, requested=%d, read=%d, ret=0x%08x\n", buffer->written, buffer->allocated, len, read, hr);
+    TRACE("written=%d, alloc=%d, requested=%ld, read=%ld, ret=%#lx\n", buffer->written, buffer->allocated, len, read, hr);
     readerinput->pending = hr == E_PENDING;
     if (FAILED(hr)) return hr;
     buffer->written += read;
@@ -2579,7 +2579,7 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
 
                 /* try to detect encoding by BOM or data and set input code page */
                 hr = readerinput_detectencoding(reader->input, &enc);
-                TRACE("detected encoding %s, 0x%08x\n", enc == XmlEncoding_Unknown ? "(unknown)" :
+                TRACE("detected encoding %s, %#lx.\n", enc == XmlEncoding_Unknown ? "(unknown)" :
                         debugstr_w(xml_encoding_map[enc].name), hr);
                 if (FAILED(hr)) return hr;
 
@@ -2679,9 +2679,9 @@ static HRESULT WINAPI xmlreader_QueryInterface(IXmlReader *iface, REFIID riid, v
 
 static ULONG WINAPI xmlreader_AddRef(IXmlReader *iface)
 {
-    xmlreader *This = impl_from_IXmlReader(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    xmlreader *reader = impl_from_IXmlReader(iface);
+    ULONG ref = InterlockedIncrement(&reader->ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -2725,7 +2725,7 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
     xmlreader *This = impl_from_IXmlReader(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (ref == 0)
     {
@@ -2841,7 +2841,7 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
-    TRACE("(%p)->(%s 0x%lx)\n", This, debugstr_reader_prop(property), value);
+    TRACE("%p, %s, %Ix.\n", iface, debugstr_reader_prop(property), value);
 
     switch (property)
     {
@@ -3590,9 +3590,9 @@ static HRESULT WINAPI xmlreaderinput_QueryInterface(IXmlReaderInput *iface, REFI
 
 static ULONG WINAPI xmlreaderinput_AddRef(IXmlReaderInput *iface)
 {
-    xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    xmlreaderinput *input = impl_from_IXmlReaderInput(iface);
+    ULONG ref = InterlockedIncrement(&input->ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -3601,7 +3601,7 @@ static ULONG WINAPI xmlreaderinput_Release(IXmlReaderInput *iface)
     xmlreaderinput *This = impl_from_IXmlReaderInput(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
     if (ref == 0)
     {
@@ -3662,7 +3662,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     hr = IXmlReader_QueryInterface(&reader->IXmlReader_iface, riid, obj);
     IXmlReader_Release(&reader->IXmlReader_iface);
 
-    TRACE("returning iface %p, hr %#x\n", *obj, hr);
+    TRACE("returning iface %p, hr %#lx.\n", *obj, hr);
 
     return hr;
 }
