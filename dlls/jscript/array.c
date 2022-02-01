@@ -53,7 +53,7 @@ unsigned array_get_length(jsdisp_t *array)
     return array_from_jsdisp(array)->length;
 }
 
-static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsdisp_t **jsthis, DWORD *ret)
+static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsdisp_t **jsthis, UINT32 *ret)
 {
     ArrayInstance *array;
     jsval_t val;
@@ -314,7 +314,7 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         jsval_t *r)
 {
     jsdisp_t *jsthis;
-    DWORD length;
+    UINT32 length;
     HRESULT hres;
 
     TRACE("\n");
@@ -346,7 +346,7 @@ static HRESULT Array_pop(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
 {
     jsdisp_t *jsthis;
     jsval_t val;
-    DWORD length;
+    UINT32 length;
     HRESULT hres;
 
     TRACE("\n");
@@ -395,7 +395,7 @@ static HRESULT Array_push(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         jsval_t *r)
 {
     jsdisp_t *jsthis;
-    DWORD length = 0;
+    UINT32 length = 0;
     unsigned i;
     HRESULT hres;
 
@@ -424,7 +424,7 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
         jsval_t *r)
 {
     jsdisp_t *jsthis;
-    DWORD length, k, l;
+    UINT32 length, k, l;
     jsval_t v1, v2;
     HRESULT hres1, hres2;
 
@@ -479,7 +479,7 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
         jsval_t *r)
 {
     jsdisp_t *jsthis;
-    DWORD length = 0, i;
+    UINT32 length = 0, i;
     jsval_t v, ret;
     HRESULT hres;
 
@@ -534,7 +534,7 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
 {
     jsdisp_t *arr, *jsthis;
     DOUBLE range;
-    DWORD length, start, end, idx;
+    UINT32 length, start, end, idx;
     HRESULT hres;
 
     TRACE("\n");
@@ -656,7 +656,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
 {
     jsdisp_t *jsthis, *cmp_func = NULL;
     jsval_t *vtab, **sorttab = NULL;
-    DWORD length;
+    UINT32 length;
     DWORD i;
     HRESULT hres = S_OK;
 
@@ -800,7 +800,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
 static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    DWORD length, start=0, delete_cnt=0, i, add_args = 0;
+    UINT32 length, start=0, delete_cnt=0, i, add_args = 0;
     jsdisp_t *ret_array = NULL, *jsthis;
     jsval_t val;
     double d;
@@ -1037,7 +1037,7 @@ static HRESULT Array_map(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
     IDispatch *context_this = NULL, *callback;
     jsval_t callback_args[3], mapped_value;
     jsdisp_t *jsthis, *array;
-    DWORD length, k;
+    UINT32 length, k;
     HRESULT hres;
 
     TRACE("\n");
@@ -1100,7 +1100,7 @@ static HRESULT Array_reduce(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsig
     jsval_t callback_args[4], acc, new_acc;
     BOOL have_value = FALSE;
     jsdisp_t *jsthis;
-    DWORD length, k;
+    UINT32 length, k;
     HRESULT hres;
 
     TRACE("\n");
@@ -1168,7 +1168,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
 {
     jsdisp_t *jsthis;
     WCHAR buf[14], *buf_end, *str;
-    DWORD i, length;
+    UINT32 i, length;
     jsval_t val;
     DISPID id;
     HRESULT hres;

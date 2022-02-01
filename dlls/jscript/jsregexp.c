@@ -642,7 +642,7 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
 
 HRESULT create_regexp_var(script_ctx_t *ctx, jsval_t src_arg, jsval_t *flags_arg, jsdisp_t **ret)
 {
-    unsigned flags = 0;
+    DWORD flags = 0;
     const WCHAR *opt = NULL;
     jsstr_t *src;
     HRESULT hres = S_OK;
@@ -695,7 +695,7 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *jsstr, jsv
 {
     RegExpInstance *regexp = regexp_from_jsdisp(re);
     match_result_t *match_result;
-    unsigned match_cnt, i;
+    DWORD match_cnt, i;
     const WCHAR *str;
     jsdisp_t *array;
     HRESULT hres;

@@ -297,7 +297,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *argc, jsval_t **ret)
 {
     jsval_t *argv, val;
-    DWORD length, i;
+    UINT32 length, i;
     HRESULT hres;
 
     hres = jsdisp_propget_name(arg_array, L"length", &val);

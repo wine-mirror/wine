@@ -1596,7 +1596,7 @@ static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, vdisp_t *jsthis, WOR
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     WCHAR *ret_str;
-    DWORD i, code;
+    UINT32 i, code;
     jsstr_t *ret;
     HRESULT hres;
 

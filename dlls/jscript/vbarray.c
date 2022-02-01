@@ -63,7 +63,8 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, un
         jsval_t *r)
 {
     VBArrayInstance *vbarray;
-    int i, *indexes;
+    unsigned i;
+    LONG *indexes;
     VARIANT out;
     HRESULT hres;
 
@@ -76,12 +77,12 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, un
     if(argc < SafeArrayGetDim(vbarray->safearray))
         return JS_E_SUBSCRIPT_OUT_OF_RANGE;
 
-    indexes = heap_alloc(sizeof(int)*argc);
+    indexes = heap_alloc(sizeof(indexes[0])*argc);
     if(!indexes)
         return E_OUTOFMEMORY;
 
     for(i=0; i<argc; i++) {
-        hres = to_int32(ctx, argv[i], indexes+i);
+        hres = to_long(ctx, argv[i], indexes + i);
         if(FAILED(hres)) {
             heap_free(indexes);
             return hres;
@@ -106,7 +107,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, uns
         jsval_t *r)
 {
     VBArrayInstance *vbarray;
-    int dim;
+    LONG dim;
     HRESULT hres;
 
     TRACE("\n");
@@ -116,7 +117,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, uns
         return JS_E_VBARRAY_EXPECTED;
 
     if(argc) {
-        hres = to_int32(ctx, argv[0], &dim);
+        hres = to_long(ctx, argv[0], &dim);
         if(FAILED(hres))
             return hres;
     } else
@@ -140,7 +141,7 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, un
     jsdisp_t *array;
     jsval_t val;
     VARIANT *v;
-    int i, size = 1, ubound, lbound;
+    LONG i, size = 1, ubound, lbound;
     HRESULT hres;
 
     TRACE("\n");
@@ -192,7 +193,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, uns
         jsval_t *r)
 {
     VBArrayInstance *vbarray;
-    int dim;
+    LONG dim;
     HRESULT hres;
 
     TRACE("\n");
@@ -202,7 +203,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, uns
         return JS_E_VBARRAY_EXPECTED;
 
     if(argc) {
-        hres = to_int32(ctx, argv[0], &dim);
+        hres = to_long(ctx, argv[0], &dim);
         if(FAILED(hres))
             return hres;
     } else

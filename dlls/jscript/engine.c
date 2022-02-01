@@ -147,7 +147,7 @@ static inline HRESULT stack_pop_int(script_ctx_t *ctx, INT *r)
     return to_int32(ctx, stack_pop(ctx), r);
 }
 
-static inline HRESULT stack_pop_uint(script_ctx_t *ctx, DWORD *r)
+static inline HRESULT stack_pop_uint(script_ctx_t *ctx, UINT32 *r)
 {
     return to_uint32(ctx, stack_pop(ctx), r);
 }
@@ -2643,7 +2643,7 @@ static HRESULT interp_neg(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.7.1 */
 static HRESULT interp_lshift(script_ctx_t *ctx)
 {
-    DWORD r;
+    UINT32 r;
     INT l;
     HRESULT hres;
 
@@ -2661,7 +2661,7 @@ static HRESULT interp_lshift(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.7.2 */
 static HRESULT interp_rshift(script_ctx_t *ctx)
 {
-    DWORD r;
+    UINT32 r;
     INT l;
     HRESULT hres;
 
@@ -2679,7 +2679,7 @@ static HRESULT interp_rshift(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.7.3 */
 static HRESULT interp_rshift2(script_ctx_t *ctx)
 {
-    DWORD r, l;
+    UINT32 r, l;
     HRESULT hres;
 
     hres = stack_pop_uint(ctx, &r);
