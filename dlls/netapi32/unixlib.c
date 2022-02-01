@@ -132,7 +132,7 @@ static NET_API_STATUS server_info_101_from_samba( const unsigned char *buf, void
     return NERR_Success;
 }
 
-static NET_API_STATUS server_info_from_samba( DWORD level, const unsigned char *buf, void *buffer, ULONG *size )
+static NET_API_STATUS server_info_from_samba( unsigned int level, const unsigned char *buf, void *buffer, ULONG *size )
 {
     switch (level)
     {
@@ -438,9 +438,9 @@ static unsigned char ace_flags_to_samba( BYTE flags )
 #define GENERIC_WRITE_ACCESS   (1u << 30)
 #define GENERIC_READ_ACCESS    (1u << 31)
 
-static unsigned int access_mask_to_samba( DWORD mask )
+static unsigned int access_mask_to_samba( unsigned int mask )
 {
-    static const DWORD known_rights =
+    static const unsigned int known_rights =
         GENERIC_ALL | GENERIC_EXECUTE | GENERIC_WRITE | GENERIC_READ;
     unsigned int ret = 0;
 
@@ -692,7 +692,7 @@ static NET_API_STATUS share_info_502_to_samba( const BYTE *buf, unsigned char **
     return NERR_Success;
 }
 
-static NET_API_STATUS share_info_to_samba( DWORD level, const BYTE *buf, unsigned char **bufptr )
+static NET_API_STATUS share_info_to_samba( unsigned int level, const BYTE *buf, unsigned char **bufptr )
 {
     switch (level)
     {
@@ -793,7 +793,7 @@ static NET_API_STATUS wksta_info_100_from_samba( const unsigned char *buf, void 
     return NERR_Success;
 }
 
-static NET_API_STATUS wksta_info_from_samba( DWORD level, const unsigned char *buf, void *buffer, ULONG *size )
+static NET_API_STATUS wksta_info_from_samba( unsigned int level, const unsigned char *buf, void *buffer, ULONG *size )
 {
     switch (level)
     {
@@ -826,7 +826,7 @@ static NTSTATUS wksta_getinfo( void *args )
 
 static NTSTATUS netapi_init( void *args )
 {
-    DWORD status;
+    unsigned int status;
     void *ctx;
 
     if (!(libnetapi_handle = dlopen( SONAME_LIBNETAPI, RTLD_NOW )))
