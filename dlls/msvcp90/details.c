@@ -448,7 +448,7 @@ typedef struct compact_block
 /* Return the integer base-2 logarithm of (x|1). Result is 0 for x == 0. */
 static inline unsigned int log2i(unsigned int x)
 {
-    unsigned int index;
+    ULONG index;
     BitScanReverse(&index, x|1);
     return index;
 }
