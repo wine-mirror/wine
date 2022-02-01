@@ -481,9 +481,8 @@ static void test_sessions(void)
     IGetDataSource_Release(datasource);
 
     hr = IUnknown_QueryInterface(session, &IID_ITransaction, (void**)&transaction);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    if(hr == S_OK)
-        ITransaction_Release(transaction);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITransaction_Release(transaction);
 
     hr = IUnknown_QueryInterface(session, &IID_ITransactionLocal, (void**)&local);
     todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);

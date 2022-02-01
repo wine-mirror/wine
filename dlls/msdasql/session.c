@@ -44,6 +44,7 @@ struct msdasql_session
     ISessionProperties ISessionProperties_iface;
     IDBCreateCommand IDBCreateCommand_iface;
     ITransactionJoin ITransactionJoin_iface;
+    ITransaction ITransaction_iface;
     LONG refs;
 
     IUnknown *datasource;
@@ -79,6 +80,11 @@ static inline struct msdasql_session *impl_from_IDBCreateCommand( IDBCreateComma
 static inline struct msdasql_session *impl_from_ITransactionJoin( ITransactionJoin *iface )
 {
     return CONTAINING_RECORD( iface, struct msdasql_session, ITransactionJoin_iface );
+}
+
+static inline struct msdasql_session *impl_from_ITransaction( ITransaction *iface )
+{
+    return CONTAINING_RECORD( iface, struct msdasql_session, ITransaction_iface );
 }
 
 static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -117,6 +123,11 @@ static HRESULT WINAPI session_QueryInterface(IUnknown *iface, REFIID riid, void 
     {
         TRACE("(%p)->(ITransactionJoin %p)\n", iface, ppv);
         *ppv = &session->ITransactionJoin_iface;
+    }
+    else if(IsEqualGUID(&IID_ITransaction, riid))
+    {
+        TRACE("(%p)->(ITransaction %p)\n", iface, ppv);
+        *ppv = &session->ITransaction_iface;
     }
     else if(IsEqualGUID(&IID_IBindResource, riid))
     {
@@ -1248,6 +1259,61 @@ static const ITransactionJoinVtbl transactionjoinVtbl =
     transjoin_JoinTransaction
 };
 
+static HRESULT WINAPI transaction_QueryInterface(ITransaction *iface, REFIID riid, void **out)
+{
+    struct msdasql_session *session = impl_from_ITransaction( iface );
+    return IUnknown_QueryInterface(&session->session_iface, riid, out);
+}
+
+static ULONG WINAPI transaction_AddRef(ITransaction *iface)
+{
+    struct msdasql_session *session = impl_from_ITransaction( iface );
+    return IUnknown_AddRef(&session->session_iface);
+}
+
+static ULONG WINAPI transaction_Release(ITransaction *iface)
+{
+    struct msdasql_session *session = impl_from_ITransaction( iface );
+    return IUnknown_Release(&session->session_iface);
+}
+
+static HRESULT WINAPI transaction_Commit(ITransaction *iface, BOOL retaining, DWORD tc, DWORD rm)
+{
+    struct msdasql_session *session = impl_from_ITransaction( iface );
+
+    FIXME("%p, %d, %ld, %ld\n", session, retaining, tc, rm);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI transaction_Abort(ITransaction *iface, BOID *reason, BOOL retaining, BOOL async)
+{
+    struct msdasql_session *session = impl_from_ITransaction( iface );
+
+    FIXME("%p, %p, %d, %d\n", session, reason, retaining, async);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI transaction_GetTransactionInfo(ITransaction *iface, XACTTRANSINFO *info)
+{
+    struct msdasql_session *session = impl_from_ITransaction( iface );
+
+    FIXME("%p, %p\n", session, info);
+
+    return E_NOTIMPL;
+}
+
+static const ITransactionVtbl transactionVtbl =
+{
+    transaction_QueryInterface,
+    transaction_AddRef,
+    transaction_Release,
+    transaction_Commit,
+    transaction_Abort,
+    transaction_GetTransactionInfo
+};
+
 HRESULT create_db_session(REFIID riid, IUnknown *datasource, HDBC hdbc, void **unk)
 {
     struct msdasql_session *session;
@@ -1263,6 +1329,8 @@ HRESULT create_db_session(REFIID riid, IUnknown *datasource, HDBC hdbc, void **u
     session->ISessionProperties_iface.lpVtbl = &propertiesVtbl;
     session->IDBCreateCommand_iface.lpVtbl = &createcommandVtbl;
     session->ITransactionJoin_iface.lpVtbl = &transactionjoinVtbl;
+    session->ITransaction_iface.lpVtbl = &transactionVtbl;
+
     IUnknown_QueryInterface(datasource, &IID_IUnknown, (void**)&session->datasource);
     session->refs = 1;
     session->hdbc = hdbc;
