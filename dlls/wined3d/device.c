@@ -955,6 +955,101 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     wined3d_device_context_set_depth_stencil_view(context, ds_enable ? device->auto_depth_stencil_view : NULL);
 }
 
+static struct wined3d_allocator_chunk *wined3d_allocator_gl_create_chunk(struct wined3d_allocator *allocator,
+        struct wined3d_context *context, unsigned int memory_type, size_t chunk_size)
+{
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    struct wined3d_allocator_chunk_gl *chunk_gl;
+
+    TRACE("allocator %p, context %p, memory_type %u, chunk_size %zu.\n", allocator, context, memory_type, chunk_size);
+
+    if (!(chunk_gl = heap_alloc(sizeof(*chunk_gl))))
+        return NULL;
+
+    if (!wined3d_allocator_chunk_init(&chunk_gl->c, allocator))
+    {
+        heap_free(chunk_gl);
+        return NULL;
+    }
+
+    chunk_gl->memory_type = memory_type;
+    if (!(chunk_gl->gl_buffer = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, chunk_size)))
+    {
+        wined3d_allocator_chunk_cleanup(&chunk_gl->c);
+        heap_free(chunk_gl);
+        return NULL;
+    }
+    list_add_head(&allocator->pools[memory_type].chunks, &chunk_gl->c.entry);
+
+    return &chunk_gl->c;
+}
+
+static void wined3d_allocator_gl_destroy_chunk(struct wined3d_allocator_chunk *chunk)
+{
+    struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(chunk);
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context_gl *context_gl;
+    struct wined3d_device_gl *device_gl;
+
+    TRACE("chunk %p.\n", chunk);
+
+    device_gl = CONTAINING_RECORD(chunk_gl->c.allocator, struct wined3d_device_gl, allocator);
+    context_gl = wined3d_context_gl(context_acquire(&device_gl->d, NULL, 0));
+    gl_info = context_gl->gl_info;
+
+    wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
+    if (chunk_gl->c.map_ptr)
+        GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+    GL_EXTCALL(glDeleteBuffers(1, &chunk_gl->gl_buffer));
+    TRACE("Freed buffer %u.\n", chunk_gl->gl_buffer);
+    wined3d_allocator_chunk_cleanup(&chunk_gl->c);
+    heap_free(chunk_gl);
+
+    context_release(&context_gl->c);
+}
+
+static const struct wined3d_allocator_ops wined3d_allocator_gl_ops =
+{
+    .allocator_create_chunk = wined3d_allocator_gl_create_chunk,
+    .allocator_destroy_chunk = wined3d_allocator_gl_destroy_chunk,
+};
+
+static const struct
+{
+    GLbitfield flags;
+}
+gl_memory_types[] =
+{
+    {0},
+    {GL_MAP_READ_BIT},
+    {GL_MAP_WRITE_BIT},
+    {GL_MAP_READ_BIT | GL_MAP_WRITE_BIT},
+
+    {GL_CLIENT_STORAGE_BIT},
+    {GL_CLIENT_STORAGE_BIT | GL_MAP_READ_BIT},
+    {GL_CLIENT_STORAGE_BIT | GL_MAP_WRITE_BIT},
+    {GL_CLIENT_STORAGE_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT},
+};
+
+unsigned int wined3d_device_gl_find_memory_type(GLbitfield flags)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(gl_memory_types); ++i)
+    {
+        if (gl_memory_types[i].flags == flags)
+            return i;
+    }
+
+    assert(0);
+    return 0;
+}
+
+GLbitfield wined3d_device_gl_get_memory_type_flags(unsigned int memory_type_idx)
+{
+    return gl_memory_types[memory_type_idx].flags;
+}
+
 void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
 {
     struct wined3d_device_gl *device_gl = object;
@@ -978,6 +1073,12 @@ void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
     device->blitter->ops->blitter_destroy(device->blitter, context);
     device->shader_backend->shader_free_private(device, context);
     wined3d_device_gl_destroy_dummy_textures(device_gl, context_gl);
+
+    wined3d_context_gl_submit_command_fence(context_gl);
+    wined3d_context_gl_wait_command_fence(context_gl,
+            wined3d_device_gl(context_gl->c.device)->current_fence_id - 1);
+    wined3d_allocator_cleanup(&device_gl->allocator);
+
     context_release(context);
 
     while (device->context_count)
@@ -1010,10 +1111,18 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
         return;
     }
 
+    if (!wined3d_allocator_init(&device_gl->allocator, ARRAY_SIZE(gl_memory_types), &wined3d_allocator_gl_ops))
+    {
+        WARN("Failed to initialise allocator.\n");
+        context_release(context);
+        return;
+    }
+
     if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
             device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
     {
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
+        wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
         return;
     }
@@ -1022,6 +1131,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
     {
         ERR("Failed to create CPU blitter.\n");
         device->shader_backend->shader_free_private(device, NULL);
+        wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
         return;
     }

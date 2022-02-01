@@ -4283,6 +4283,7 @@ static void adapter_gl_destroy_device(struct wined3d_device *device)
     struct wined3d_device_gl *device_gl = wined3d_device_gl(device);
 
     wined3d_device_cleanup(&device_gl->d);
+    heap_free(device_gl->retired_blocks);
     heap_free(device_gl);
 }
 
