@@ -28,7 +28,6 @@
 #include "netfw.h"
 #include "natupnp.h"
 
-#include "wine/heap.h"
 #include "wine/debug.h"
 #include "hnetcfg_private.h"
 
@@ -64,7 +63,7 @@ static ULONG WINAPI fw_port_Release(
     {
         TRACE("destroying %p\n", fw_port);
         SysFreeString( fw_port->name );
-        HeapFree( GetProcessHeap(), 0, fw_port );
+        free( fw_port );
     }
     return refs;
 }
@@ -363,7 +362,7 @@ HRESULT NetFwOpenPort_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    fp = HeapAlloc( GetProcessHeap(), 0, sizeof(*fp) );
+    fp = malloc( sizeof(*fp) );
     if (!fp) return E_OUTOFMEMORY;
 
     fp->INetFwOpenPort_iface.lpVtbl = &fw_port_vtbl;
@@ -404,7 +403,7 @@ static ULONG WINAPI fw_ports_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", fw_ports);
-        HeapFree( GetProcessHeap(), 0, fw_ports );
+        free( fw_ports );
     }
     return refs;
 }
@@ -592,7 +591,7 @@ HRESULT NetFwOpenPorts_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
-    fp = HeapAlloc( GetProcessHeap(), 0, sizeof(*fp) );
+    fp = malloc( sizeof(*fp) );
     if (!fp) return E_OUTOFMEMORY;
 
     fp->INetFwOpenPorts_iface.lpVtbl = &fw_ports_vtbl;
@@ -653,7 +652,7 @@ static ULONG WINAPI upnpnat_Release(IUPnPNAT *iface)
     LONG refs = InterlockedDecrement( &This->ref );
     if (!refs)
     {
-        heap_free( This );
+        free( This );
     }
     return refs;
 }
@@ -762,7 +761,7 @@ HRESULT IUPnPNAT_create(IUnknown *outer, void **object)
 
     TRACE("(%p,%p)\n", outer, object);
 
-    nat = heap_alloc( sizeof(*nat) );
+    nat = malloc( sizeof(*nat) );
     if (!nat) return E_OUTOFMEMORY;
 
     nat->IUPnPNAT_iface.lpVtbl = &upnpnat_vtbl;
