@@ -20,8 +20,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -36,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
-    NTSTATUS status = irp->IoStatus.u.Status;
+    NTSTATUS status = irp->IoStatus.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
 
