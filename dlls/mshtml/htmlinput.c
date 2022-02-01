@@ -1245,7 +1245,7 @@ static HRESULT WINAPI HTMLInputTextElement2_put_selectionStart(IHTMLInputTextEle
 static HRESULT WINAPI HTMLInputTextElement2_get_selectionStart(IHTMLInputTextElement2 *iface, LONG *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement2(iface);
-    INT32 selection_start;
+    LONG selection_start;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1278,7 +1278,7 @@ static HRESULT WINAPI HTMLInputTextElement2_put_selectionEnd(IHTMLInputTextEleme
 static HRESULT WINAPI HTMLInputTextElement2_get_selectionEnd(IHTMLInputTextElement2 *iface, LONG *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement2(iface);
-    INT32 selection_end;
+    LONG selection_end;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

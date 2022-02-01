@@ -378,7 +378,7 @@ static BOOL check_script_safety(PluginHost *host)
     DWORD policy_size, policy;
     struct CONFIRMSAFETY cs;
     BYTE *ppolicy;
-    ULONG err = 0;
+    UINT err = 0;
     VARIANT v;
     HRESULT hres;
 
@@ -412,7 +412,7 @@ static void update_readystate(PluginHost *host)
     DISPPARAMS params = {NULL,NULL,0,0};
     IDispatchEx *dispex;
     IDispatch *disp;
-    ULONG err = 0;
+    UINT err = 0;
     VARIANT v;
     HRESULT hres;
 
@@ -643,7 +643,7 @@ static void notif_enabled(PluginHost *plugin_host)
 {
     DISPPARAMS args = {NULL, NULL, 0, 0};
     IDispatch *disp;
-    ULONG err = 0;
+    UINT err = 0;
     VARIANT res;
     HRESULT hres;
 

@@ -945,7 +945,7 @@ static HRESULT invoke_disp_value(DispatchEx *This, IDispatch *func_disp, LCID lc
         hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, lcid, flags, &new_dp, res, ei, caller);
         IDispatchEx_Release(dispex);
     }else {
-        ULONG err = 0;
+        UINT err = 0;
         hres = IDispatch_Invoke(func_disp, DISPID_VALUE, &IID_NULL, lcid, flags, &new_dp, res, ei, &err);
     }
     if(SUCCEEDED(hres))

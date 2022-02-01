@@ -792,7 +792,7 @@ static HRESULT WINAPI HTMLSelectElement_put_size(IHTMLSelectElement *iface, LONG
 static HRESULT WINAPI HTMLSelectElement_get_size(IHTMLSelectElement *iface, LONG *p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    DWORD val;
+    UINT32 val;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);

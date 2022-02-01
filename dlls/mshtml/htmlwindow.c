@@ -2428,7 +2428,7 @@ static HRESULT WINAPI HTMLWindow7_get_performance(IHTMLWindow7 *iface, VARIANT *
 static HRESULT WINAPI HTMLWindow7_get_innerWidth(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    INT32 ret;
+    LONG ret;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -2446,7 +2446,7 @@ static HRESULT WINAPI HTMLWindow7_get_innerWidth(IHTMLWindow7 *iface, LONG *p)
 static HRESULT WINAPI HTMLWindow7_get_innerHeight(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    INT32 ret;
+    LONG ret;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -2465,7 +2465,7 @@ static HRESULT WINAPI HTMLWindow7_get_pageXOffset(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
     nsresult nsres;
-    INT32 ret;
+    LONG ret;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -2483,7 +2483,7 @@ static HRESULT WINAPI HTMLWindow7_get_pageYOffset(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
     nsresult nsres;
-    INT32 ret;
+    LONG ret;
 
     TRACE("(%p)->(%p)\n", This, p);
 

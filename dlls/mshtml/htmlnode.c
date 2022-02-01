@@ -107,7 +107,7 @@ static ULONG WINAPI HTMLDOMChildrenCollectionEnum_Release(IEnumVARIANT *iface)
 
 static ULONG get_enum_len(HTMLDOMChildrenCollectionEnum *This)
 {
-    ULONG len;
+    UINT32 len;
     nsresult nsres;
 
     nsres = nsIDOMNodeList_GetLength(This->col->nslist, &len);

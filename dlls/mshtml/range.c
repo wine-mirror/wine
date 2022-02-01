@@ -1389,7 +1389,7 @@ static HRESULT WINAPI HTMLTxtRange_setEndPoint(IHTMLTxtRange *iface, BSTR how,
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
     HTMLTxtRange *src_range;
     nsIDOMNode *ref_node;
-    INT32 ref_offset;
+    LONG ref_offset;
     BOOL set_start;
     int how_type;
     INT16 cmp;

@@ -1198,7 +1198,7 @@ static HRESULT WINAPI DOMUIEvent_get_view(IDOMUIEvent *iface, IHTMLWindow2 **p)
 static HRESULT WINAPI DOMUIEvent_get_detail(IDOMUIEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMUIEvent(iface);
-    INT32 detail;
+    LONG detail;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1314,7 +1314,7 @@ static HRESULT WINAPI DOMMouseEvent_Invoke(IDOMMouseEvent *iface, DISPID dispIdM
 static HRESULT WINAPI DOMMouseEvent_get_screenX(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    INT32 screen_x;
+    LONG screen_x;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1330,7 +1330,7 @@ static HRESULT WINAPI DOMMouseEvent_get_screenX(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_screenY(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    INT32 screen_y;
+    LONG screen_y;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1346,7 +1346,7 @@ static HRESULT WINAPI DOMMouseEvent_get_screenY(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_clientX(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    INT32 client_x;
+    LONG client_x;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1362,7 +1362,7 @@ static HRESULT WINAPI DOMMouseEvent_get_clientX(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_clientY(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    INT32 client_y;
+    LONG client_y;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1653,7 +1653,7 @@ static HRESULT WINAPI DOMMouseEvent_get_offsetY(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_pageX(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    INT32 r;
+    LONG r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1669,7 +1669,7 @@ static HRESULT WINAPI DOMMouseEvent_get_pageX(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_pageY(IDOMMouseEvent *iface, LONG *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    INT32 r;
+    LONG r;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -2375,7 +2375,7 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, IHTMLEventObj *event
 {
     DISPPARAMS dp = {NULL,NULL,0,0};
     VARIANT event_arg;
-    ULONG argerr;
+    UINT argerr;
     EXCEPINFO ei;
 
     TRACE("%p,%d,%p,%p\n", disp, dispid, event_obj, retv);
