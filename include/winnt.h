@@ -6292,7 +6292,6 @@ typedef enum _PROCESS_MITIGATION_POLICY
 #pragma intrinsic(_InterlockedCompareExchange64)
 #pragma intrinsic(_InterlockedExchange)
 #pragma intrinsic(_InterlockedExchangeAdd)
-#pragma intrinsic(_InterlockedExchangeAdd64)
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedIncrement16)
 #pragma intrinsic(_InterlockedDecrement)
@@ -6309,7 +6308,6 @@ long      _InterlockedDecrement(long volatile*);
 short     _InterlockedDecrement16(short volatile*);
 long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
-long long _InterlockedExchangeAdd64(long long volatile*,long long);
 long      _InterlockedIncrement(long volatile*);
 short     _InterlockedIncrement16(short volatile*);
 long      _InterlockedOr(long volatile *,long);
@@ -6352,8 +6350,10 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #elif defined(__x86_64__)
 
+#pragma intrinsic(_InterlockedExchangeAdd64)
 #pragma intrinsic(__faststorefence)
 
+long long _InterlockedExchangeAdd64(long long volatile *, long long);
 void __faststorefence(void);
 
 static FORCEINLINE void MemoryBarrier(void)
