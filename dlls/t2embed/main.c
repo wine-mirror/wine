@@ -34,7 +34,7 @@ LONG WINAPI TTLoadEmbeddedFont(HANDLE *phFontReference, ULONG ulFlags,
                                LPVOID lpvReadStream, LPWSTR szWinFamilyName,
                                LPSTR szMacFamilyName, TTLOADINFO *pTTLoadInfo)
 {
-    FIXME("(%p 0x%08x %p 0x%08x %p %p %p %s %s %p) stub\n", phFontReference,
+    FIXME("%p, %#lx, %p, %lu, %p, %p, %p, %s, %s, %p stub\n", phFontReference,
           ulFlags, pulPrivStatus, ulPrivs, pulStatus, lpfnReadFromStream,
           lpvReadStream, debugstr_w(szWinFamilyName), szMacFamilyName,
           pTTLoadInfo);
@@ -47,7 +47,7 @@ LONG WINAPI TTEmbedFont(HDC hDC, ULONG ulFlags, ULONG ulCharSet, ULONG *pulPrivS
                          USHORT *pusCharCodeSet, USHORT usCharCodeCount, USHORT usLanguage,
                          TTEMBEDINFO *pTTEmbedInfo)
 {
-    FIXME("(%p 0x%08x 0x%08x %p %p %p %p %p %u %u %p) stub\n", hDC,
+    FIXME("%p, %#lx, %lu, %p, %p, %p, %p, %p, %u, %u, %p stub\n", hDC,
           ulFlags, ulCharSet, pulPrivStatus, pulStatus, lpfnWriteToStream,
           lpvWriteStream, pusCharCodeSet, usCharCodeCount, usLanguage,
           pTTEmbedInfo);
@@ -87,7 +87,7 @@ LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
         *status = EMBED_INSTALLABLE;
     }
 
-    TRACE("fsType 0x%04x, status %u\n", fsType, *status);
+    TRACE("fsType 0x%04x, status %lu\n", fsType, *status);
     return E_NONE;
 }
 
@@ -163,6 +163,6 @@ LONG WINAPI TTIsEmbeddingEnabled(HDC hDC, BOOL *enabled)
 
 LONG WINAPI TTDeleteEmbeddedFont(HANDLE hFontReference, ULONG flags, ULONG *status)
 {
-    FIXME("(%p 0x%08x %p) stub\n", hFontReference, flags, status);
+    FIXME("%p, %#lx, %p stub\n", hFontReference, flags, status);
     return E_API_NOTIMPL;
 }
