@@ -143,13 +143,13 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
 
     if ((status = get_device_id(bus_pdo, BusQueryDeviceID, device_id)))
     {
-        ERR("Failed to get PDO device id, status %#x.\n", status);
+        ERR( "Failed to get PDO device id, status %#lx.\n", status );
         return status;
     }
 
     if ((status = get_device_id(bus_pdo, BusQueryInstanceID, instance_id)))
     {
-        ERR("Failed to get PDO instance id, status %#x.\n", status);
+        ERR( "Failed to get PDO instance id, status %#lx.\n", status );
         return status;
     }
 
@@ -159,7 +159,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     if ((status = IoCreateDevice(driver, sizeof(*ext) + minidriver->minidriver.DeviceExtensionSize,
             NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &fdo)))
     {
-        ERR("Failed to create bus FDO, status %#x.\n", status);
+        ERR( "Failed to create bus FDO, status %#lx.\n", status );
         return status;
     }
     ext = fdo->DeviceExtension;
@@ -177,7 +177,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     status = minidriver->AddDevice(minidriver->minidriver.DriverObject, fdo);
     if (status != STATUS_SUCCESS)
     {
-        ERR("Minidriver AddDevice failed (%x)\n",status);
+        ERR( "Minidriver AddDevice failed (%lx)\n", status );
         IoDeleteDevice(fdo);
         return status;
     }
@@ -206,7 +206,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     call_minidriver( IOCTL_HID_GET_DEVICE_ATTRIBUTES, fdo, NULL, 0, &attr, sizeof(attr), &io );
     if (io.Status != STATUS_SUCCESS)
     {
-        ERR( "Minidriver failed to get attributes, status %#x.\n", io.Status );
+        ERR( "Minidriver failed to get attributes, status %#lx.\n", io.Status );
         return;
     }
 
@@ -215,7 +215,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     RtlInitUnicodeString(&string, pdo_name);
     if ((status = IoCreateDevice(fdo->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo)))
     {
-        ERR( "Failed to create child PDO, status %#x.\n", io.Status );
+        ERR( "Failed to create child PDO, status %#lx.\n", io.Status );
         return;
     }
     fdo_ext->u.fdo.child_pdo = child_pdo;
@@ -236,7 +236,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     call_minidriver( IOCTL_HID_GET_DEVICE_DESCRIPTOR, fdo, NULL, 0, &descriptor, sizeof(descriptor), &io );
     if (io.Status != STATUS_SUCCESS)
     {
-        ERR("Cannot get Device Descriptor(%x)\n",status);
+        ERR( "Cannot get Device Descriptor, status %#lx\n", status );
         IoDeleteDevice(child_pdo);
         return;
     }
@@ -256,7 +256,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
                      descriptor.DescriptorList[i].wReportLength, &io );
     if (io.Status != STATUS_SUCCESS)
     {
-        ERR("Cannot get Report Descriptor(%x)\n",status);
+        ERR( "Cannot get Report Descriptor, status %#lx\n", status );
         free(reportDescriptor);
         IoDeleteDevice(child_pdo);
         return;
@@ -290,7 +290,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
                                           PLUGPLAY_PROPERTY_PERSISTENT, DEVPROP_TYPE_UINT32,
                                           sizeof(pdo_ext->u.pdo.rawinput_handle), &pdo_ext->u.pdo.rawinput_handle)))
     {
-        ERR("Failed to set device handle property, status %x\n", status);
+        ERR( "Failed to set device handle property, status %#lx\n", status );
         IoDeleteDevice(child_pdo);
         return;
     }
@@ -444,7 +444,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_START_DEVICE:
             if ((status = IoRegisterDeviceInterface(device, ext->class_guid, NULL, &ext->u.pdo.link_name)))
             {
-                ERR("Failed to register interface, status %#x.\n", status);
+                ERR( "Failed to register interface, status %#lx.\n", status );
                 break;
             }
 

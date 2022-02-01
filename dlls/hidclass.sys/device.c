@@ -351,7 +351,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
             if (!(report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE )))
                 WARN( "dropping unknown input id %u\n", buffer[0] );
             else if (!polled && io.Information < report->InputLength)
-                WARN( "dropping short report, len %u expected %u\n", (ULONG)io.Information, report->InputLength );
+                WARN( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
             else
             {
                 packet->reportId = buffer[0];
@@ -364,7 +364,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
         res = WaitForSingleObject(ext->u.pdo.halt_event, polled ? ext->u.pdo.poll_interval : 0);
     } while (res == WAIT_TIMEOUT);
 
-    TRACE("device thread exiting, res %#x\n", res);
+    TRACE( "device thread exiting, res %#lx\n", res );
     return 1;
 }
 
@@ -561,7 +561,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     irp->IoStatus.Information = 0;
 
-    TRACE("device %p ioctl(%x)\n", device, irpsp->Parameters.DeviceIoControl.IoControlCode);
+    TRACE( "device %p code %#lx\n", device, irpsp->Parameters.DeviceIoControl.IoControlCode );
 
     KeAcquireSpinLock(&ext->u.pdo.lock, &irql);
     removed = ext->u.pdo.removed;
@@ -661,8 +661,8 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
-            FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
-                  code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+            FIXME( "Unsupported ioctl %#lx (device=%lx access=%lx func=%lx method=%lx)\n", code,
+                   code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3 );
             irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
             break;
         }
