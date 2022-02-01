@@ -54,6 +54,7 @@
 #  define __ASM_SEH(str)
 # else
 #  define __ASM_SEH(str) str
+#  define __ASM_SEH_SUPPORTED
 # endif
 #else
 # define __ASM_SEH(str)
