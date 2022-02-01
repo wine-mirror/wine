@@ -2036,7 +2036,7 @@ static const char *get_native_unix_lib( const struct makefile *make, const char 
 static struct makefile *get_parent_makefile( struct makefile *make )
 {
     char *dir, *p;
-    int i;
+    unsigned int i;
 
     if (!make->obj_dir) return NULL;
     dir = xstrdup( make->obj_dir );
@@ -3924,7 +3924,7 @@ static void output_testlist( const struct makefile *make )
  */
 static void output_gitignore( const char *dest, struct strarray files )
 {
-    int i;
+    unsigned int i;
 
     output_file = create_temp_file( dest );
 
@@ -4026,7 +4026,8 @@ static void output_top_makefile( struct makefile *make )
 {
     char buffer[1024];
     FILE *src_file;
-    int i, found = 0;
+    unsigned int i;
+    int found = 0;
 
     output_file_name = obj_dir_path( make, output_makefile_name );
     output_file = create_temp_file( output_file_name );
