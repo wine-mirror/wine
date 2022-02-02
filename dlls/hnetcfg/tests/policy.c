@@ -280,7 +280,7 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
     hr = IStaticPortMappingCollection_Remove(ports, 12345, (BSTR)L"UDP");
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IStaticPortMappingCollection_Remove(ports, 12345, (BSTR)L"UDP");
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     IEnumVARIANT_Release(enum_ports);
 }

@@ -515,7 +515,8 @@ enum port_mapping_parameter
     PM_ENABLED,
     PM_DESC,
     PM_LEASE_DURATION,
-    PM_LAST
+    PM_LAST,
+    PM_REMOVE_PORT_LAST = PM_INTERNAL,
 };
 
 static struct xml_value_desc port_mapping_template[] =
@@ -600,6 +601,41 @@ static void update_mapping_list(void)
         upnp_gateway_connection.mappings = new_mappings;
         upnp_gateway_connection.mapping_count = ++index;
     }
+}
+
+static BOOL remove_port_mapping( LONG port, BSTR protocol )
+{
+    struct xml_value_desc mapping_desc[PM_REMOVE_PORT_LAST];
+    DWORD status = 0;
+    BSTR error_str;
+    WCHAR portW[6];
+    BOOL ret;
+
+    AcquireSRWLockExclusive( &upnp_gateway_connection_lock );
+    memcpy( mapping_desc, port_mapping_template, sizeof(mapping_desc) );
+    swprintf( portW, ARRAY_SIZE(portW), L"%u", port );
+    mapping_desc[PM_EXTERNAL_IP].value = SysAllocString( L"" );
+    mapping_desc[PM_EXTERNAL].value = SysAllocString( portW );
+    mapping_desc[PM_PROTOCOL].value = protocol;
+
+    ret = request_service( L"DeletePortMapping", mapping_desc, PM_REMOVE_PORT_LAST,
+                           NULL, 0, &status, &error_str );
+    if (ret && status != HTTP_STATUS_OK)
+    {
+        WARN( "status %u, server returned error %s.\n", status, debugstr_w(error_str) );
+        SysFreeString( error_str );
+        ret = FALSE;
+    }
+    else if (!ret)
+    {
+        WARN( "Request failed.\n" );
+    }
+    update_mapping_list();
+    ReleaseSRWLockExclusive( &upnp_gateway_connection_lock );
+
+    SysFreeString( mapping_desc[PM_EXTERNAL_IP].value );
+    SysFreeString( mapping_desc[PM_EXTERNAL].value );
+    return ret;
 }
 
 static BOOL init_gateway_connection(void)
@@ -1402,9 +1438,14 @@ static HRESULT WINAPI static_ports_Remove(
     LONG port,
     BSTR protocol )
 {
-    FIXME( "iface %p, port %d, protocol %s stub.\n", iface, port, debugstr_w(protocol) );
+    TRACE( "iface %p, port %d, protocol %s.\n", iface, port, debugstr_w(protocol) );
 
-    return E_NOTIMPL;
+    if (!is_valid_protocol( protocol )) return E_INVALIDARG;
+    if (port < 0 || port > 65535) return E_INVALIDARG;
+
+    if (!remove_port_mapping( port, protocol )) return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI static_ports_Add(
