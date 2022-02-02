@@ -181,7 +181,7 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
 {
     KERB_PROTOCOL_MESSAGE_TYPE msg;
 
-    TRACE("%p,%p,%p,%u,%p,%p,%p\n", req, in_buf, client_buf_base, in_buf_len, out_buf, out_buf_len, ret_status);
+    TRACE("%p, %p, %p, %lu, %p, %p, %p\n", req, in_buf, client_buf_base, in_buf_len, out_buf, out_buf_len, ret_status);
 
     if (!in_buf || in_buf_len < sizeof(msg)) return STATUS_INVALID_PARAMETER;
 
@@ -287,7 +287,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
     ULONG exptime;
 
-    TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
+    TRACE( "%s, %#lx, %p, %p, %p, %p, %p, %p\n", debugstr_us(principal_us), credential_use,
            logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
 
     if (principal_us && !(principal = get_str_unixcp( principal_us ))) return SEC_E_INSUFFICIENT_MEMORY;
@@ -319,7 +319,7 @@ done:
 
 static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credential )
 {
-    TRACE( "(%lx)\n", credential );
+    TRACE( "%Ix\n", credential );
     if (!credential) return SEC_E_INVALID_HANDLE;
     return KRB5_CALL( free_credentials_handle, (void *)credential );
 }
@@ -336,10 +336,10 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     NTSTATUS status;
     ULONG exptime;
 
-    TRACE( "(%lx %lx %s 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, debugstr_us(target_name),
+    TRACE( "%Ix, %Ix, %s, %#lx, %lu, %p, %p, %p, %p, %p, %p, %p\n", credential, context, debugstr_us(target_name),
            context_req, target_data_rep, input, new_context, output, context_attr, expiry,
            mapped_context, context_data );
-    if (context_req & ~supported) FIXME( "flags 0x%08x not supported\n", context_req & ~supported );
+    if (context_req & ~supported) FIXME( "flags %#lx not supported\n", context_req & ~supported );
 
     if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
     if (target_name && !(target = get_str_unixcp( target_name ))) return SEC_E_INSUFFICIENT_MEMORY;
@@ -366,9 +366,9 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     NTSTATUS status = SEC_E_INVALID_HANDLE;
     ULONG exptime;
 
-    TRACE( "(%lx %lx 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, context_req, target_data_rep, input,
-           new_context, output, context_attr, expiry, mapped_context, context_data );
-    if (context_req) FIXME( "ignoring flags 0x%08x\n", context_req );
+    TRACE( "%Ix, %Ix, %#lx, %lu, %p, %p, %p, %p, %p, %p, %p\n", credential, context, context_req, target_data_rep,
+           input, new_context, output, context_attr, expiry, mapped_context, context_data );
+    if (context_req) FIXME( "ignoring flags %#lx\n", context_req );
 
     if (context || input || credential)
     {
@@ -386,7 +386,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
 static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 {
-    TRACE( "(%lx)\n", context );
+    TRACE( "%Ix\n", context );
     if (!context) return SEC_E_INVALID_HANDLE;
     return KRB5_CALL( delete_context, (void *)context );
 }
@@ -411,7 +411,7 @@ static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
 
 static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
 {
-    TRACE( "(%lx %u %p)\n", context, attribute, buffer );
+    TRACE( "%Ix, %lu, %p\n", context, attribute, buffer );
 
     if (!context) return SEC_E_INVALID_HANDLE;
 
@@ -444,7 +444,7 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     }
 #undef X
     default:
-        FIXME( "unknown attribute %u\n", attribute );
+        FIXME( "unknown attribute %lu\n", attribute );
         break;
     }
 
@@ -454,7 +454,7 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
 static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
 {
-    TRACE("%lu,%p,%p\n", package_id, params, lsa_function_table);
+    TRACE("%Iu, %p, %p\n", package_id, params, lsa_function_table);
 
     if (!krb5_handle)
     {
@@ -516,7 +516,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
 NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
     PSECPKG_FUNCTION_TABLE *table, PULONG table_count)
 {
-    TRACE("%#x,%p,%p,%p\n", lsa_version, package_version, table, table_count);
+    TRACE("%#lx, %p, %p, %p\n", lsa_version, package_version, table, table_count);
 
     *package_version = SECPKG_INTERFACE_VERSION;
     *table = &kerberos_table;
@@ -526,16 +526,16 @@ NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
 
 static NTSTATUS NTAPI kerberos_SpInstanceInit(ULONG version, SECPKG_DLL_FUNCTIONS *dll_function_table, void **user_functions)
 {
-    TRACE("%#x,%p,%p\n", version, dll_function_table, user_functions);
+    TRACE("%#lx, %p, %p\n", version, dll_function_table, user_functions);
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no )
 {
-    TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
-    if (quality_of_protection) FIXME( "ignoring quality_of_protection 0x%08x\n", quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
+    TRACE( "%Ix, %#lx, %p, %lu\n", context, quality_of_protection, message, message_seq_no );
+    if (quality_of_protection) FIXME( "ignoring quality_of_protection %#lx\n", quality_of_protection );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %lu\n", message_seq_no );
 
     if (context)
     {
@@ -548,8 +548,8 @@ static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULON
 static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection )
 {
-    TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
+    TRACE( "%Ix, %p, %lu, %p\n", context, message, message_seq_no, quality_of_protection );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %lu\n", message_seq_no );
 
     if (context)
     {
@@ -562,8 +562,8 @@ static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBuf
 static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no )
 {
-    TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
+    TRACE( "%Ix, %#lx, %p, %lu\n", context, quality_of_protection, message, message_seq_no );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %lu\n", message_seq_no );
 
     if (context)
     {
@@ -576,8 +576,8 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
 static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection )
 {
-    TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
+    TRACE( "%Ix, %p, %lu, %p\n", context, message, message_seq_no, quality_of_protection );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %lu\n", message_seq_no );
 
     if (context)
     {
@@ -608,7 +608,7 @@ static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
 NTSTATUS NTAPI SpUserModeInitialize(ULONG lsa_version, PULONG package_version,
     PSECPKG_USER_FUNCTION_TABLE *table, PULONG table_count)
 {
-    TRACE("%#x,%p,%p,%p\n", lsa_version, package_version, table, table_count);
+    TRACE("%#lx, %p, %p, %p\n", lsa_version, package_version, table, table_count);
 
     *package_version = SECPKG_INTERFACE_VERSION;
     *table = &kerberos_user_table;

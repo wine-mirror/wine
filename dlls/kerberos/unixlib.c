@@ -452,7 +452,7 @@ static NTSTATUS status_gss_to_sspi( OM_uint32 status )
     case GSS_S_FAILURE:              return SEC_E_INTERNAL_ERROR;
 
     default:
-        FIXME( "couldn't convert status 0x%08x to NTSTATUS\n", status );
+        FIXME( "couldn't convert status %#x to NTSTATUS\n", status );
         return SEC_E_INTERNAL_ERROR;
     }
 }
@@ -468,10 +468,10 @@ static void trace_gss_status_ex( OM_uint32 code, int type )
         ret = pgss_display_status( &minor_status, code, type, GSS_C_NULL_OID, &msg_ctx, &buf );
         if (GSS_ERROR( ret ))
         {
-            TRACE( "gss_display_status(0x%08x,%d) returned %08x minor status %08x\n", code, type, ret, minor_status );
+            TRACE( "gss_display_status(%#x, %d) returned %#x minor status %#x\n", code, type, ret, minor_status );
             return;
         }
-        TRACE( "GSS-API error: 0x%08x: %s\n", code, debugstr_an(buf.value, buf.length) );
+        TRACE( "GSS-API error: %#x: %s\n", code, debugstr_an(buf.value, buf.length) );
         pgss_release_buffer( &minor_status, &buf );
         if (!msg_ctx) return;
     }
@@ -544,13 +544,14 @@ static NTSTATUS accept_context( void *args )
 
     ret = pgss_accept_sec_context( &minor_status, &ctx_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
                                    NULL, NULL, &output_token, &ret_flags, &expiry_time, NULL );
-    TRACE( "gss_accept_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
+    TRACE( "gss_accept_sec_context returned %#x minor status %#x ret_flags %#x\n", ret, minor_status, ret_flags );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
         if (output_token.length > params->output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
         {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, params->output->pBuffers[idx].cbBuffer );
+            TRACE( "buffer too small %lu > %u\n",
+                   (SIZE_T)output_token.length, (unsigned int)params->output->pBuffers[idx].cbBuffer );
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_BUFFER_TOO_SMALL;
@@ -605,7 +606,7 @@ static NTSTATUS import_name( const char *src, gss_name_t *dst )
     buf.length = strlen( src );
     buf.value  = (void *)src;
     ret = pgss_import_name( &minor_status, &buf, GSS_C_NO_OID, dst );
-    TRACE( "gss_import_name returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_import_name returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     return status_gss_to_sspi( ret );
 }
@@ -639,7 +640,7 @@ static NTSTATUS acquire_credentials_handle( void *args )
 
     ret = pgss_acquire_cred( &minor_status, name, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage, &cred_handle,
                              NULL, &expiry_time );
-    TRACE( "gss_acquire_cred returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_acquire_cred returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
@@ -657,7 +658,7 @@ static NTSTATUS delete_context( void *args )
     gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( (LSA_SEC_HANDLE)args );
 
     ret = pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
-    TRACE( "gss_delete_sec_context returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_delete_sec_context returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     return status_gss_to_sspi( ret );
 }
@@ -668,7 +669,7 @@ static NTSTATUS free_credentials_handle( void *args )
     gss_cred_id_t cred = credhandle_sspi_to_gss( (LSA_SEC_HANDLE)args );
 
     ret = pgss_release_cred( &minor_status, &cred );
-    TRACE( "gss_release_cred returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_release_cred returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     return status_gss_to_sspi( ret );
 }
@@ -730,13 +731,14 @@ static NTSTATUS initialize_context( void *args )
     ret = pgss_init_sec_context( &minor_status, cred_handle, &ctx_handle, target, GSS_C_NO_OID, req_flags, 0,
                                  GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
                                  &expiry_time );
-    TRACE( "gss_init_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
+    TRACE( "gss_init_sec_context returned %#x minor status %#x ret_flags %#x\n", ret, minor_status, ret_flags );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
         if (output_token.length > params->output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
         {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, params->output->pBuffers[idx].cbBuffer );
+            TRACE( "buffer too small %lu > %u\n",
+                   (SIZE_T)output_token.length, (unsigned int)params->output->pBuffers[idx].cbBuffer );
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_INCOMPLETE_MESSAGE;
@@ -773,7 +775,7 @@ static NTSTATUS make_signature( void *args )
     token_buffer.value  = NULL;
 
     ret = pgss_get_mic( &minor_status, ctx_handle, GSS_C_QOP_DEFAULT, &data_buffer, &token_buffer );
-    TRACE( "gss_get_mic returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_get_mic returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
@@ -837,7 +839,7 @@ static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsig
         conf_flag = 0; /* only integrity */
     else
     {
-        FIXME( "QOP %08x not supported\n", qop );
+        FIXME( "QOP %#x not supported\n", qop );
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -862,7 +864,7 @@ static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsig
     iov[3].buffer.value  = NULL;
 
     ret = pgss_wrap_iov( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
-    TRACE( "gss_wrap_iov returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_wrap_iov returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
@@ -886,7 +888,7 @@ static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, un
         conf_flag = 0; /* only integrity */
     else
     {
-        FIXME( "QOP %08x not supported\n", qop );
+        FIXME( "QOP %#x not supported\n", qop );
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -898,7 +900,7 @@ static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, un
     input.value  = msg->pBuffers[data_idx].pvBuffer;
 
     ret = pgss_wrap( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
-    TRACE( "gss_wrap returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_wrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
@@ -953,7 +955,7 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULO
     iov[3].buffer.value  = msg->pBuffers[token_idx].pvBuffer;
 
     ret = pgss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 4 );
-    TRACE( "gss_unwrap_iov returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_unwrap_iov returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE && qop)
     {
@@ -982,7 +984,7 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, 
 
     ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
     free( input.value );
-    TRACE( "gss_unwrap returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_unwrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
@@ -1021,7 +1023,7 @@ static NTSTATUS verify_signature( void *args )
     token_buffer.value  = msg->pBuffers[token_idx].pvBuffer;
 
     ret = pgss_verify_mic( &minor_status, ctx_handle, &data_buffer, &token_buffer, NULL );
-    TRACE( "gss_verify_mic returned %08x minor status %08x\n", ret, minor_status );
+    TRACE( "gss_verify_mic returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE && params->qop) *params->qop = 0;
 
