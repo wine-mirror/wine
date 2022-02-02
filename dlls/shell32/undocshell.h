@@ -38,58 +38,6 @@ BOOL WINAPI StrRetToStrNA(LPSTR,DWORD,LPSTRRET,const ITEMIDLIST*);
 BOOL WINAPI StrRetToStrNW(LPWSTR,DWORD,LPSTRRET,const ITEMIDLIST*);
 
 /****************************************************************************
- * Shell Common Dialogs
- */
-
-/* RunFileDlg flags */
-#define RFF_NOBROWSE       0x01
-#define RFF_NODEFAULT      0x02
-#define RFF_CALCDIRECTORY  0x04
-#define RFF_NOLABEL        0x08
-#define RFF_NOSEPARATEMEM  0x20  /* NT only */
-
-/* RunFileFlg notification structure */
-typedef struct
-{
-  NMHDR   hdr;
-  LPCSTR  lpFile;
-  LPCSTR  lpDirectory;
-  int     nShow;
-} NM_RUNFILEDLG, * LPNM_RUNFILEDLG;
-
-/* RunFileDlg notification return values */
-#define RF_OK      0x00
-#define RF_CANCEL  0x01
-#define RF_RETRY   0x02
-
-void WINAPI RunFileDlg(
-	HWND hwndOwner,
-	HICON hIcon,
-	LPCSTR lpstrDirectory,
-	LPCSTR lpstrTitle,
-	LPCSTR lpstrDescription,
-	UINT uFlags);
-
-void WINAPI ExitWindowsDialog(HWND hwndOwner);
-
-BOOL WINAPI SHFindComputer(
-	LPCITEMIDLIST pidlRoot,
-	LPCITEMIDLIST pidlSavedSearch);
-
-void WINAPI SHHandleDiskFull(HWND hwndOwner,
-	UINT uDrive);
-
-int  WINAPI SHOutOfMemoryMessageBox(
-	HWND hwndOwner,
-	LPCSTR lpCaption,
-	UINT uType);
-
-DWORD WINAPI SHNetConnectionDialog(
-	HWND hwndOwner,
-	LPCSTR lpstrRemoteName,
-	DWORD dwType);
-
-/****************************************************************************
  * Memory Routines
  */
 

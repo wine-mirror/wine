@@ -36,6 +36,27 @@
 #include "shresdef.h"
 #include "undocshell.h"
 
+/* RunFileDlg flags */
+#define RFF_NOBROWSE        0x01
+#define RFF_NODEFAULT       0x02
+#define RFF_CALCDIRECTORY   0x04
+#define RFF_NOLABEL         0x08
+#define RFF_NOSEPARATEMEM   0x20  /* NT only */
+
+/* RunFileFlg notification structure */
+typedef struct
+{
+    NMHDR hdr;
+    const char *lpFile;
+    const char *lpDirectory;
+    int nShow;
+} NM_RUNFILEDLG;
+
+/* RunFileDlg notification return values */
+#define RF_OK      0x00
+#define RF_CANCEL  0x01
+#define RF_RETRY   0x02
+
 typedef struct
     {
 	HWND hwndOwner ;
