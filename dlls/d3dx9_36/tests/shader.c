@@ -458,7 +458,7 @@ static void test_get_shader_constant_table_ex(void)
     ok(constant_table != NULL, "D3DXGetShaderConstantTableEx() failed, got NULL\n");
 
     size = ID3DXConstantTable_GetBufferSize(constant_table);
-    ok(size == 28, "Got result %lx, expected 28\n", size);
+    ok(size == 28, "Unexpected size %lu.\n", size);
 
     data = ID3DXConstantTable_GetBufferPointer(constant_table);
     ok(!memcmp(data, shader_with_ctab + 6, size), "Retrieved wrong CTAB data\n");
@@ -471,7 +471,7 @@ static void test_get_shader_constant_table_ex(void)
     ok(desc.Creator == (const char *)data + 0x10, "Got result %p, expected %p\n",
             desc.Creator, (const char *)data + 0x10);
     ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %lx, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
-    ok(desc.Constants == 0, "Got result %x, expected 0\n", desc.Constants);
+    ok(desc.Constants == 0, "Unexpected Constants %u.\n", desc.Constants);
 
     ID3DXConstantTable_Release(constant_table);
 
