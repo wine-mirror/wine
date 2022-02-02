@@ -5748,7 +5748,6 @@ static void test_wma_decoder(void)
     /* check default media types */
 
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#x\n", hr);
@@ -5804,7 +5803,6 @@ static void test_wma_decoder(void)
     ok(ret == 0, "Release returned %u\n", ret);
 
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#x\n", hr);
@@ -5847,17 +5845,11 @@ static void test_wma_decoder(void)
 
     memset(&input_info, 0xcd, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
-    todo_wine
     ok(hr == S_OK, "GetInputStreamInfo returned %#x\n", hr);
-    todo_wine
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
-    todo_wine
     ok(input_info.dwFlags == 0, "got dwFlags %#x\n", input_info.dwFlags);
-    todo_wine
     ok(input_info.cbSize == wma_block_size, "got cbSize %u\n", input_info.cbSize);
-    todo_wine
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#x\n", input_info.cbMaxLookahead);
-    todo_wine
     ok(input_info.cbAlignment == 1, "got cbAlignment %#x\n", input_info.cbAlignment);
 
     memset(&output_info, 0xcd, sizeof(output_info));
