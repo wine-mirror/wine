@@ -30,7 +30,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "shlobj.h"
-#include "undocshell.h"
 #include "shlwapi.h"
 #include "shell32_main.h"
 
@@ -38,13 +37,30 @@
 #include "wine/debug.h"
 #include "debughlp.h"
 
-#ifdef FM_SEPARATOR
-#undef FM_SEPARATOR
-#endif
-#define FM_SEPARATOR (LPCWSTR)1
+/* FileMenu_Create nSelHeight constants */
+#define FM_DEFAULT_SELHEIGHT  -1
+#define FM_FULL_SELHEIGHT     0
+
+/* FileMenu_Create flags */
+#define FMF_SMALL_ICONS      0x00
+#define FMF_LARGE_ICONS      0x08
+#define FMF_NO_COLUMN_BREAK  0x10
+
+/* FileMenu_AppendItem constants */
+#define FM_SEPARATOR       ((const WCHAR *)1)
+#define FM_BLANK_ICON      -1
+#define FM_DEFAULT_HEIGHT  0
+
+/* FileMenu_InsertUsingPidl flags */
+#define FMF_NO_EMPTY_ITEM      0x01
+#define FMF_NO_PROGRAM_GROUPS  0x04
+
+/* FileMenu_InsertUsingPidl callback function */
+typedef void (CALLBACK *LPFNFMCALLBACK)(LPCITEMIDLIST pidlFolder, LPCITEMIDLIST pidlFile);
 
 static BOOL FileMenu_AppendItemW(HMENU hMenu, LPCWSTR lpText, UINT uID, int icon,
                                  HMENU hMenuPopup, int nItemHeight);
+BOOL WINAPI FileMenu_DeleteAllItems(HMENU hMenu);
 
 typedef struct
 {
