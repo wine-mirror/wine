@@ -563,7 +563,7 @@ static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, V
     }
 
     for(i=0; i<argc; i++) {
-        hres = to_int(get_arg(dp, i), indices+i);
+        hres = to_int(get_arg(dp, i), (int *)(indices+i));
         if(FAILED(hres)) {
             heap_free(indices);
             SafeArrayUnlock(array);
