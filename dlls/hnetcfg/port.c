@@ -638,6 +638,51 @@ static BOOL remove_port_mapping( LONG port, BSTR protocol )
     return ret;
 }
 
+static BOOL add_port_mapping( LONG external, BSTR protocol, LONG internal, BSTR client,
+                              VARIANT_BOOL enabled, BSTR description )
+{
+    struct xml_value_desc mapping_desc[PM_LAST];
+    WCHAR externalW[6], internalW[6];
+    DWORD status = 0;
+    BSTR error_str;
+    BOOL ret;
+
+    AcquireSRWLockExclusive( &upnp_gateway_connection_lock );
+    memcpy( mapping_desc, port_mapping_template, sizeof(mapping_desc) );
+    swprintf( externalW, ARRAY_SIZE(externalW), L"%u", external );
+    swprintf( internalW, ARRAY_SIZE(internalW), L"%u", internal );
+    mapping_desc[PM_EXTERNAL_IP].value = SysAllocString( L"" );
+    mapping_desc[PM_EXTERNAL].value = SysAllocString( externalW );
+    mapping_desc[PM_PROTOCOL].value = protocol;
+    mapping_desc[PM_INTERNAL].value = SysAllocString( internalW );
+    mapping_desc[PM_CLIENT].value = client;
+    mapping_desc[PM_ENABLED].value = SysAllocString( enabled ? L"1" : L"0" );
+    mapping_desc[PM_DESC].value = description;
+    mapping_desc[PM_LEASE_DURATION].value = SysAllocString( L"0" );
+
+    ret = request_service( L"AddPortMapping", mapping_desc, PM_LAST,
+                           NULL, 0, &status, &error_str );
+    if (ret && status != HTTP_STATUS_OK)
+    {
+        WARN( "status %u, server returned error %s.\n", status, debugstr_w(error_str) );
+        SysFreeString( error_str );
+        ret = FALSE;
+    }
+    else if (!ret)
+    {
+        WARN( "Request failed.\n" );
+    }
+    update_mapping_list();
+    ReleaseSRWLockExclusive( &upnp_gateway_connection_lock );
+
+    SysFreeString( mapping_desc[PM_EXTERNAL_IP].value );
+    SysFreeString( mapping_desc[PM_EXTERNAL].value );
+    SysFreeString( mapping_desc[PM_INTERNAL].value );
+    SysFreeString( mapping_desc[PM_ENABLED].value );
+    SysFreeString( mapping_desc[PM_LEASE_DURATION].value );
+    return ret;
+}
+
 static BOOL init_gateway_connection(void)
 {
     static const char upnp_search_request[] =
@@ -1458,12 +1503,37 @@ static HRESULT WINAPI static_ports_Add(
     BSTR description,
     IStaticPortMapping **mapping )
 {
-    FIXME( "iface %p, external %d, protocol %s, internal %d, client %s, enabled %d, descritption %s, mapping %p stub.\n",
+    struct port_mapping mapping_data;
+    HRESULT ret;
+
+    TRACE( "iface %p, external %d, protocol %s, internal %d, client %s, enabled %d, descritption %s, mapping %p.\n",
            iface, external, debugstr_w(protocol), internal, debugstr_w(client), enabled, debugstr_w(description),
            mapping );
 
-    if (mapping) *mapping = NULL;
-    return E_NOTIMPL;
+    if (!mapping) return E_POINTER;
+    *mapping = NULL;
+
+    if (!is_valid_protocol( protocol )) return E_INVALIDARG;
+    if (external < 0 || external > 65535) return E_INVALIDARG;
+    if (internal < 0 || internal > 65535) return E_INVALIDARG;
+    if (!client || !description) return E_INVALIDARG;
+
+    if (!add_port_mapping( external, protocol, internal, client, enabled, description )) return E_FAIL;
+
+    mapping_data.external_ip = NULL;
+    mapping_data.external = external;
+    mapping_data.protocol = SysAllocString( protocol );
+    mapping_data.internal = internal;
+    mapping_data.client = SysAllocString( client );
+    mapping_data.enabled = enabled;
+    mapping_data.descr = SysAllocString( description );
+    if (!mapping_data.protocol || !mapping_data.client || !mapping_data.descr)
+    {
+        free_port_mapping( &mapping_data );
+        return E_OUTOFMEMORY;
+    }
+    if (FAILED(ret = static_port_mapping_create( &mapping_data, mapping ))) free_port_mapping( &mapping_data );
+    return ret;
 }
 
 static const IStaticPortMappingCollectionVtbl static_ports_vtbl =

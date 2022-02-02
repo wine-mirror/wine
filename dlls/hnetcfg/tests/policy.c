@@ -212,14 +212,14 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
 
     hr = IStaticPortMappingCollection_Add(ports, 12345, (BSTR)L"udp", 12345, (BSTR)L"1.2.3.4",
             VARIANT_TRUE, (BSTR)L"wine_test", &pm);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = IStaticPortMappingCollection_Add(ports, 12345, (BSTR)L"UDP", 12345, (BSTR)L"1.2.3.4",
             VARIANT_TRUE, (BSTR)L"wine_test", &pm);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IStaticPortMappingCollection_get_Count(ports, &count2);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(count2 == expected_count, "Got unexpected count2 %u, expected %u.\n", count2, expected_count);
+    ok(count2 == expected_count, "Got unexpected count2 %u, expected %u.\n", count2, expected_count);
 
     hr = IStaticPortMappingCollection_get_Item(ports, 12345, NULL, &pm);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
