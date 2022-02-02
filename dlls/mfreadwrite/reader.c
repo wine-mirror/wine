@@ -87,7 +87,7 @@ struct media_stream
     struct stream_transform decoder;
     IMFVideoSampleAllocatorEx *allocator;
     IMFVideoSampleAllocatorNotify notify_cb;
-    unsigned int id;
+    DWORD id;
     unsigned int index;
     enum media_stream_state state;
     unsigned int flags;
@@ -162,9 +162,9 @@ struct source_reader
     unsigned int first_audio_stream_index;
     unsigned int first_video_stream_index;
     unsigned int last_read_index;
-    unsigned int stream_count;
+    DWORD stream_count;
     unsigned int flags;
-    unsigned int queue;
+    DWORD queue;
     enum media_source_state source_state;
     struct media_stream *streams;
     struct list responses;
@@ -368,8 +368,8 @@ static void source_reader_response_ready(struct source_reader *reader, struct st
 static void source_reader_copy_sample_buffer(IMFSample *src, IMFSample *dst)
 {
     IMFMediaBuffer *buffer;
-    unsigned int flags;
     LONGLONG time;
+    DWORD flags;
     HRESULT hr;
 
     IMFSample_CopyAllItems(src, (IMFAttributes *)dst);
@@ -1057,7 +1057,7 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
     return !request_sample;
 }
 
-static HRESULT source_reader_get_next_selected_stream(struct source_reader *reader, unsigned int *stream_index)
+static HRESULT source_reader_get_next_selected_stream(struct source_reader *reader, DWORD *stream_index)
 {
     unsigned int i, first_selected = ~0u, requests = ~0u;
     BOOL selected, stream_drained;
@@ -1095,7 +1095,7 @@ static HRESULT source_reader_get_next_selected_stream(struct source_reader *read
     return first_selected == ~0u ? MF_E_MEDIA_SOURCE_NO_STREAMS_SELECTED : S_OK;
 }
 
-static HRESULT source_reader_get_stream_read_index(struct source_reader *reader, unsigned int index, unsigned int *stream_index)
+static HRESULT source_reader_get_stream_read_index(struct source_reader *reader, unsigned int index, DWORD *stream_index)
 {
     BOOL selected;
     HRESULT hr;
@@ -1814,7 +1814,8 @@ static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFG
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     struct source_reader_async_command *command;
-    unsigned int i, flags;
+    unsigned int i;
+    DWORD flags;
     HRESULT hr;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(format), position);
@@ -1871,8 +1872,8 @@ static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFG
 static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD index, DWORD flags, DWORD *actual_index,
         DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
-    unsigned int actual_index_tmp;
     struct media_stream *stream;
+    DWORD actual_index_tmp;
     LONGLONG timestamp_tmp;
     DWORD stream_index;
     HRESULT hr = S_OK;
@@ -1931,7 +1932,7 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
 }
 
 static HRESULT source_reader_read_sample_async(struct source_reader *reader, unsigned int index, unsigned int flags,
-        unsigned int *actual_index, unsigned int *stream_flags, LONGLONG *timestamp, IMFSample **sample)
+        DWORD *actual_index, DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
     struct source_reader_async_command *command;
     HRESULT hr;
@@ -2166,7 +2167,7 @@ static const IMFSourceReaderVtbl srcreader_vtbl =
 
 static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor, const GUID *major)
 {
-    unsigned int count, i;
+    DWORD count, i;
     BOOL selected;
     HRESULT hr;
     GUID guid;
@@ -2415,8 +2416,9 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
         { mp4vmagic, L".m4v", mp4mask },
     };
     unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
-    unsigned int i, j, length = 0, caps = 0;
     IMFAttributes *attributes;
+    DWORD length = 0, caps = 0;
+    unsigned int i, j;
     QWORD position;
     HRESULT hr;
 
@@ -2424,12 +2426,13 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
 
     if (SUCCEEDED(IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
     {
-        IMFAttributes_GetStringLength(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &length);
+        UINT32 string_length = 0;
+        IMFAttributes_GetStringLength(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &string_length);
         IMFAttributes_Release(attributes);
-    }
 
-    if (length)
-        return S_OK;
+        if (string_length)
+            return S_OK;
+    }
 
     if (FAILED(hr = IMFByteStream_GetCapabilities(stream, &caps)))
         return hr;
