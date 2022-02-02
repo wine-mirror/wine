@@ -1289,6 +1289,7 @@ static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsig
 {
     struct attribute            range;
     struct addr_range*          ranges;
+    struct addr_range*          new_ranges;
 
     if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
     {
@@ -1312,8 +1313,13 @@ static struct addr_range* dwarf2_get_ranges(const dwarf2_debug_info_t* di, unsig
             if (*num_ranges >= alloc)
             {
                 alloc *= 2;
-                ranges = realloc(ranges, sizeof(struct addr_range) * alloc);
-                if (!ranges) return NULL;
+                new_ranges = realloc(ranges, sizeof(struct addr_range) * alloc);
+                if (!new_ranges)
+                {
+                    free(ranges);
+                    return NULL;
+                }
+                ranges = new_ranges;
             }
             ranges[*num_ranges].low = di->unit_ctx->compiland->address + low;
             ranges[*num_ranges].high = di->unit_ctx->compiland->address + high;
