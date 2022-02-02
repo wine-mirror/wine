@@ -839,6 +839,13 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     return S_OK;
 }
 
+HRESULT WINAPI DoOpenPipeStream(HANDLE pipe, IOMode mode, ITextStream **stream)
+{
+    FIXME("%p, %d, %p.\n", pipe, mode, stream);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI drive_QueryInterface(IDrive *iface, REFIID riid, void **obj)
 {
     struct drive *This = impl_from_IDrive(iface);
