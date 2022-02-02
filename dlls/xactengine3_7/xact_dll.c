@@ -75,7 +75,7 @@ static HRESULT WINAPI IXACT3CueImpl_Stop(IXACT3Cue *iface, DWORD dwFlags)
 {
     XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
 
-    TRACE("(%p)->(%u)\n", iface, dwFlags);
+    TRACE("(%p)->(%lu)\n", iface, dwFlags);
 
     return FACTCue_Stop(This->fact_cue, dwFlags);
 }
@@ -86,7 +86,7 @@ static HRESULT WINAPI IXACT3CueImpl_GetState(IXACT3Cue *iface, DWORD *pdwState)
 
     TRACE("(%p)->(%p)\n", iface, pdwState);
 
-    return FACTCue_GetState(This->fact_cue, pdwState);
+    return FACTCue_GetState(This->fact_cue, (uint32_t *)pdwState);
 }
 
 static HRESULT WINAPI IXACT3CueImpl_Destroy(IXACT3Cue *iface)
@@ -108,7 +108,7 @@ static HRESULT WINAPI IXACT3CueImpl_Destroy(IXACT3Cue *iface)
 static HRESULT WINAPI IXACT3CueImpl_GetChannelMap(IXACT3Cue *iface,
         XACTCHANNELMAP *map, DWORD size, DWORD *needed_size)
 {
-    FIXME("(%p)->(%p, %u, %p)\n", iface, map, size, needed_size);
+    FIXME("(%p)->(%p, %lu, %p)\n", iface, map, size, needed_size);
 
     return E_NOTIMPL;
 }
@@ -306,7 +306,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
     FACTCue *fcue;
     UINT ret;
 
-    TRACE("(%p)->(%u, 0x%x, %u, %p)\n", This, nCueIndex, dwFlags, timeOffset,
+    TRACE("(%p)->(%u, 0x%lx, %lu, %p)\n", This, nCueIndex, dwFlags, timeOffset,
             ppCue);
 
     ret = FACTSoundBank_Prepare(This->fact_soundbank, nCueIndex, dwFlags,
@@ -343,7 +343,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
     FACTCue *fcue;
     HRESULT hr;
 
-    TRACE("(%p)->(%u, 0x%x, %u, %p)\n", This, nCueIndex, dwFlags, timeOffset,
+    TRACE("(%p)->(%u, 0x%lx, %lu, %p)\n", This, nCueIndex, dwFlags, timeOffset,
             ppCue);
 
     /* If the application doesn't want a handle, don't generate one at all.
@@ -380,7 +380,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Stop(IXACT3SoundBank *iface,
 {
     XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
 
-    TRACE("(%p)->(%u)\n", This, dwFlags);
+    TRACE("(%p)->(%lu)\n", This, dwFlags);
 
     return FACTSoundBank_Stop(This->fact_soundbank, nCueIndex, dwFlags);
 }
@@ -404,7 +404,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_GetState(IXACT3SoundBank *iface,
 
     TRACE("(%p)->(%p)\n", This, pdwState);
 
-    return FACTSoundBank_GetState(This->fact_soundbank, pdwState);
+    return FACTSoundBank_GetState(This->fact_soundbank, (uint32_t *)pdwState);
 }
 
 static const IXACT3SoundBankVtbl XACT3SoundBank_Vtbl =
@@ -459,7 +459,7 @@ static HRESULT WINAPI IXACT3WaveImpl_Stop(IXACT3Wave *iface, DWORD dwFlags)
 {
     XACT3WaveImpl *This = impl_from_IXACT3Wave(iface);
 
-    TRACE("(%p)->(0x%x)\n", This, dwFlags);
+    TRACE("(%p)->(0x%lx)\n", This, dwFlags);
 
     return FACTWave_Stop(This->fact_wave, dwFlags);
 }
@@ -479,7 +479,7 @@ static HRESULT WINAPI IXACT3WaveImpl_GetState(IXACT3Wave *iface, DWORD *pdwState
 
     TRACE("(%p)->(%p)\n", This, pdwState);
 
-    return FACTWave_GetState(This->fact_wave, pdwState);
+    return FACTWave_GetState(This->fact_wave, (uint32_t *)pdwState);
 }
 
 static HRESULT WINAPI IXACT3WaveImpl_SetPitch(IXACT3Wave *iface, XACTPITCH pitch)
@@ -604,7 +604,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Prepare(IXACT3WaveBank *iface,
     FACTWave *fwave;
     UINT ret;
 
-    TRACE("(%p)->(0x%x, %u, 0x%x, %u, %p)\n", This, nWaveIndex, dwFlags,
+    TRACE("(%p)->(0x%x, %lu, 0x%lx, %u, %p)\n", This, nWaveIndex, dwFlags,
             dwPlayOffset, nLoopCount, ppWave);
 
     ret = FACTWaveBank_Prepare(This->fact_wavebank, nWaveIndex, dwFlags,
@@ -641,7 +641,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Play(IXACT3WaveBank *iface,
     FACTWave *fwave;
     HRESULT hr;
 
-    TRACE("(%p)->(0x%x, %u, 0x%x, %u, %p)\n", This, nWaveIndex, dwFlags, dwPlayOffset,
+    TRACE("(%p)->(0x%x, %lu, 0x%lx, %u, %p)\n", This, nWaveIndex, dwFlags, dwPlayOffset,
             nLoopCount, ppWave);
 
     /* If the application doesn't want a handle, don't generate one at all.
@@ -678,7 +678,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Stop(IXACT3WaveBank *iface,
 {
     XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
 
-    TRACE("(%p)->(%u, %u)\n", This, nWaveIndex, dwFlags);
+    TRACE("(%p)->(%u, %lu)\n", This, nWaveIndex, dwFlags);
 
     return FACTWaveBank_Stop(This->fact_wavebank, nWaveIndex, dwFlags);
 }
@@ -692,7 +692,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_GetState(IXACT3WaveBank *iface,
 
     TRACE("(%p)->(%p)\n", This, pdwState);
 
-    return FACTWaveBank_GetState(This->fact_wavebank, pdwState);
+    return FACTWaveBank_GetState(This->fact_wavebank, (uint32_t *)pdwState);
 }
 
 static const IXACT3WaveBankVtbl XACT3WaveBank_Vtbl =
@@ -733,7 +733,7 @@ static int32_t FACTCALL wrap_readfile(
 {
     wrap_readfile_struct *wrap = (wrap_readfile_struct*) hFile;
     return wrap->engine->pReadFile(wrap->file, lpBuffer, nNumberOfBytesRead,
-            lpNumberOfBytesRead, (LPOVERLAPPED)lpOverlapped);
+            (DWORD *)lpNumberOfBytesRead, (LPOVERLAPPED)lpOverlapped);
 }
 
 static int32_t FACTCALL wrap_getoverlappedresult(
@@ -744,7 +744,7 @@ static int32_t FACTCALL wrap_getoverlappedresult(
 {
     wrap_readfile_struct *wrap = (wrap_readfile_struct*) hFile;
     return wrap->engine->pGetOverlappedResult(wrap->file, (LPOVERLAPPED)lpOverlapped,
-            lpNumberOfBytesTransferred, bWait);
+            (DWORD *)lpNumberOfBytesTransferred, bWait);
 }
 
 static inline XACT3EngineImpl *impl_from_IXACT3Engine(IXACT3Engine *iface)
@@ -780,7 +780,7 @@ static ULONG WINAPI IXACT3EngineImpl_AddRef(IXACT3Engine *iface)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
     ULONG ref = FACTAudioEngine_AddRef(This->fact_engine);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     return ref;
 }
 
@@ -789,7 +789,7 @@ static ULONG WINAPI IXACT3EngineImpl_Release(IXACT3Engine *iface)
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
     ULONG ref = FACTAudioEngine_Release(This->fact_engine);
 
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
 
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
@@ -936,7 +936,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
     FACTSoundBank *fsb;
     UINT ret;
 
-    TRACE("(%p)->(%p, %u, 0x%x, 0x%x, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
+    TRACE("(%p)->(%p, %lu, 0x%lx, 0x%lx, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
             dwAllocAttributes, ppSoundBank);
 
     ret = FACTAudioEngine_CreateSoundBank(This->fact_engine, pvBuffer, dwSize,
@@ -973,7 +973,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
     FACTWaveBank *fwb;
     UINT ret;
 
-    TRACE("(%p)->(%p, %u, 0x%x, 0x%x, %p)\n", This, pvBuffer, dwSize, dwFlags,
+    TRACE("(%p)->(%p, %lu, 0x%lx, 0x%lx, %p)\n", This, pvBuffer, dwSize, dwFlags,
             dwAllocAttributes, ppWaveBank);
 
     ret = FACTAudioEngine_CreateInMemoryWaveBank(This->fact_engine, pvBuffer,
@@ -1082,7 +1082,7 @@ static HRESULT WINAPI IXACT3EngineImpl_PrepareWave(IXACT3Engine *iface,
     FACTWave *fwave = NULL;
     UINT ret;
 
-    TRACE("(%p)->(0x%08x, %s, %d, %d, %d, %d, %p)\n", This, dwFlags, debugstr_a(szWavePath),
+    TRACE("(%p)->(0x%08lx, %s, %d, %ld, %ld, %d, %p)\n", This, dwFlags, debugstr_a(szWavePath),
           wStreamingPacketSize, dwAlignment, dwPlayOffset, nLoopCount, ppWave);
 
     ret = FACTAudioEngine_PrepareWave(This->fact_engine, dwFlags, szWavePath, wStreamingPacketSize,
@@ -1278,7 +1278,7 @@ static HRESULT WINAPI IXACT3EngineImpl_Stop(IXACT3Engine *iface,
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
 
-    TRACE("(%p)->(%u, 0x%x)\n", This, nCategory, dwFlags);
+    TRACE("(%p)->(%u, 0x%lx)\n", This, nCategory, dwFlags);
 
     return FACTAudioEngine_Stop(This->fact_engine, nCategory, dwFlags);
 }
@@ -1460,7 +1460,7 @@ static IClassFactory XACTFactory = { &XACT3CF_Vtbl };
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
 {
-    TRACE("(%p, %d, %p)\n", hinstDLL, reason, pReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, reason, pReserved);
 
     switch (reason)
     {
