@@ -735,6 +735,16 @@ static BOOL find_port_mapping( LONG port, BSTR protocol, struct port_mapping *re
     return found;
 }
 
+static unsigned int get_port_mapping_count(void)
+{
+    unsigned int ret;
+
+    AcquireSRWLockExclusive( &upnp_gateway_connection_lock );
+    ret = upnp_gateway_connection.mapping_count;
+    ReleaseSRWLockExclusive( &upnp_gateway_connection_lock );
+    return ret;
+}
+
 static BOOL is_valid_protocol( BSTR protocol )
 {
     if (!protocol) return FALSE;
@@ -1205,10 +1215,11 @@ static HRESULT WINAPI static_ports_get_Count(
     IStaticPortMappingCollection *iface,
     LONG *count )
 {
-    FIXME( "iface %p, count %p stub.\n", iface, count );
+    TRACE( "iface %p, count %p.\n", iface, count );
 
-    if (count) *count = 0;
-    return E_NOTIMPL;
+    if (!count) return E_POINTER;
+    *count = get_port_mapping_count();
+    return S_OK;
 }
 
 static HRESULT WINAPI static_ports_Remove(
