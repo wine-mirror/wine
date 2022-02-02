@@ -1074,8 +1074,8 @@ static HRESULT media_engine_create_video_renderer(struct media_engine *engine, I
 static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMediaSource *source)
 {
     IMFStreamDescriptor *sd_audio = NULL, *sd_video = NULL;
-    unsigned int stream_count = 0, i;
     IMFPresentationDescriptor *pd;
+    DWORD stream_count = 0, i;
     IMFTopology *topology;
     UINT64 duration;
     HRESULT hr;
