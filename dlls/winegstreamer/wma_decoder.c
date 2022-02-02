@@ -37,6 +37,11 @@ static const GUID *wma_decoder_input_types[] =
     &MFAudioFormat_WMAudioV9,
     &MFAudioFormat_WMAudio_Lossless,
 };
+static const GUID *wma_decoder_output_types[] =
+{
+    &MFAudioFormat_Float,
+    &MFAudioFormat_PCM,
+};
 
 struct wma_decoder
 {
@@ -210,8 +215,74 @@ static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("iface %p, id %u, index %u, type %p stub!\n", iface, id, index, type);
-    return E_NOTIMPL;
+    UINT32 channel_count, sample_size, sample_rate, block_alignment;
+    struct wma_decoder *decoder = impl_from_IMFTransform(iface);
+    IMFMediaType *media_type;
+    const GUID *output_type;
+    HRESULT hr;
+
+    TRACE("iface %p, id %u, index %u, type %p.\n", iface, id, index, type);
+
+    if (!decoder->input_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    *type = NULL;
+
+    if (index >= ARRAY_SIZE(wma_decoder_output_types))
+        return MF_E_NO_MORE_TYPES;
+    output_type = wma_decoder_output_types[index];
+
+    if (FAILED(hr = MFCreateMediaType(&media_type)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)))
+        goto done;
+    if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, output_type)))
+        goto done;
+
+    if (IsEqualGUID(output_type, &MFAudioFormat_Float))
+        sample_size = 32;
+    else if (IsEqualGUID(output_type, &MFAudioFormat_PCM))
+        sample_size = 16;
+    else
+    {
+        FIXME("Subtype %s not implemented!\n", debugstr_guid(output_type));
+        hr = E_NOTIMPL;
+        goto done;
+    }
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, sample_size)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_GetUINT32(decoder->input_type, &MF_MT_AUDIO_NUM_CHANNELS, &channel_count)))
+        goto done;
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, channel_count)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_GetUINT32(decoder->input_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &sample_rate)))
+        goto done;
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, sample_rate)))
+        goto done;
+
+    block_alignment = sample_size * channel_count / 8;
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, block_alignment)))
+        goto done;
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, sample_rate * block_alignment)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1)))
+        goto done;
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1)))
+        goto done;
+    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1)))
+        goto done;
+
+done:
+    if (SUCCEEDED(hr))
+        IMFMediaType_AddRef((*type = media_type));
+
+    IMFMediaType_Release(media_type);
+    return hr;
 }
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)

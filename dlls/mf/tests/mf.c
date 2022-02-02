@@ -5754,7 +5754,6 @@ static void test_wma_decoder(void)
     todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#x\n", hr);
 
     i = -1;
@@ -5825,9 +5824,7 @@ static void test_wma_decoder(void)
         ok(ret == 0, "Release returned %u\n", ret);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#x\n", hr);
-    todo_wine
     ok(i == 2, "%u output media types\n", i);
 
     /* check required output media type attributes */
