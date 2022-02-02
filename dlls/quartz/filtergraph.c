@@ -4733,50 +4733,54 @@ static ULONG WINAPI MediaEvent_Release(IMediaEventEx *iface)
     return IUnknown_Release(graph->outer_unk);
 }
 
-/*** IDispatch methods ***/
-static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface, UINT *pctinfo)
+static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface, UINT *count)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
-
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
-
+    TRACE("iface %p, count %p.\n", iface, count);
+    *count = 1;
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface, UINT iTInfo, LCID lcid,
-        ITypeInfo **ppTInfo)
+static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
-
-    TRACE("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
-
-    return S_OK;
+    TRACE("iface %p, index %u, lcid %#x, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    return strmbase_get_typeinfo(IMediaEvent_tid, typeinfo);
 }
 
-static HRESULT WINAPI MediaEvent_GetIDsOfNames(IMediaEventEx *iface, REFIID riid,
-        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+static HRESULT WINAPI MediaEvent_GetIDsOfNames(IMediaEventEx *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%s, %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), rgszNames,
-            cNames, lcid, rgDispId);
+    TRACE("iface %p, iid %s, names %p, count %u, lcid %#x, ids %p.\n",
+            iface, debugstr_guid(iid), names, count, lcid, ids);
 
-    return S_OK;
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IMediaEvent_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
 }
 
-static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface, DISPID dispIdMember, REFIID riid,
-        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo,
-        UINT *puArgErr)
+static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%d, %s, %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember,
-            debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    TRACE("iface %p, id %d, iid %s, lcid %#x, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
+            iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
 
-    return S_OK;
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IMediaEvent_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
 }
 
-/*** IMediaEvent methods ***/
 static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface, OAEVENT *event)
 {
     struct filter_graph *graph = impl_from_IMediaEventEx(iface);
