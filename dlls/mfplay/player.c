@@ -657,16 +657,17 @@ static HRESULT WINAPI media_item_GetPresentationAttribute(IMFPMediaItem *iface, 
 static HRESULT WINAPI media_item_GetCharacteristics(IMFPMediaItem *iface, MFP_MEDIAITEM_CHARACTERISTICS *flags)
 {
     struct media_item *item = impl_from_IMFPMediaItem(iface);
+    DWORD value = 0;
     HRESULT hr;
 
     TRACE("%p, %p.\n", iface, flags);
 
     *flags = 0;
 
-    if (SUCCEEDED(hr = IMFMediaSource_GetCharacteristics(item->source, flags)))
+    if (SUCCEEDED(hr = IMFMediaSource_GetCharacteristics(item->source, &value)))
     {
-        *flags &= (MFP_MEDIAITEM_IS_LIVE | MFP_MEDIAITEM_CAN_SEEK |
-                MFP_MEDIAITEM_CAN_PAUSE | MFP_MEDIAITEM_HAS_SLOW_SEEK);
+        *flags = value & (MFP_MEDIAITEM_IS_LIVE | MFP_MEDIAITEM_CAN_SEEK |
+                          MFP_MEDIAITEM_CAN_PAUSE | MFP_MEDIAITEM_HAS_SLOW_SEEK);
     }
 
     return hr;
