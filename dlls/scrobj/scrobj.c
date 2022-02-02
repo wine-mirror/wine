@@ -1598,7 +1598,7 @@ static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory, struct 
     XmlNodeType node_type;
     size_t buf_size, size;
     WCHAR *new_body;
-    DWORD read;
+    UINT read;
     HRESULT hres;
 
     TRACE("\n");
