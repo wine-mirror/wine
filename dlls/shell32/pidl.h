@@ -270,6 +270,14 @@ void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl) DECLSPEC_HIDDEN;
 LPITEMIDLIST * _ILCopyaPidl(const LPCITEMIDLIST * apidlsrc, UINT cidl) DECLSPEC_HIDDEN;
 LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, const CIDA * cida) DECLSPEC_HIDDEN;
 
+/* type parameter for ILGetDisplayNameEx() */
+#define ILGDN_FORPARSING  0
+#define ILGDN_NORMAL      1
+#define ILGDN_INFOLDER    2
+
 BOOL ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWORD type) DECLSPEC_HIDDEN;
+HRESULT SHILCreateFromPathW(const WCHAR *path, LPITEMIDLIST *pidl, DWORD *attributes);
+LPITEMIDLIST SHSimpleIDListFromPathA(const char *path);
+LPITEMIDLIST SHSimpleIDListFromPathW(const WCHAR *path);
 
 #endif

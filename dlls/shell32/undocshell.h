@@ -31,35 +31,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-/****************************************************************************
- *	IDList Functions
- */
-BOOL WINAPI ILGetDisplayName(
-	LPCITEMIDLIST pidl,
-	LPVOID path);
-
-/* type parameter for ILGetDisplayNameEx() */
-#define ILGDN_FORPARSING  0
-#define ILGDN_NORMAL      1
-#define ILGDN_INFOLDER    2
-
-BOOL WINAPI ILGetDisplayNameEx(
-	LPSHELLFOLDER psf,
-	LPCITEMIDLIST pidl,
-	LPVOID path,
-	DWORD type);
-
-LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl);
-void WINAPI ILGlobalFree(LPITEMIDLIST pidl);
-
-LPITEMIDLIST SHSimpleIDListFromPathA (LPCSTR lpszPath);
-LPITEMIDLIST SHSimpleIDListFromPathW (LPCWSTR lpszPath);
-
-HRESULT SHILCreateFromPathW (
-	LPCWSTR path,
-	LPITEMIDLIST * ppidl,
-	DWORD *attributes);
-
 /*
 	string functions
 */
