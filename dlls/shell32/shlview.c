@@ -3282,7 +3282,7 @@ static HRESULT WINAPI IShellFolderView_fnGetSelectedCount(
     if (FAILED(hr))
         return hr;
 
-    hr = IShellItemArray_GetCount(selection, count);
+    hr = IShellItemArray_GetCount(selection, (DWORD *)count);
     IShellItemArray_Release(selection);
     return hr;
 }

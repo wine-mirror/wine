@@ -337,9 +337,13 @@ static INT SIC_IconAppend (const WCHAR *sourcefile, INT src_index, HICON *hicons
 
 static BOOL get_imagelist_icon_size(int list, SIZE *size)
 {
+    int cx, cy;
     if (list < 0 || list >= ARRAY_SIZE(shell_imagelists)) return FALSE;
 
-    return ImageList_GetIconSize( shell_imagelists[list], &size->cx, &size->cy );
+    if (!ImageList_GetIconSize( shell_imagelists[list], &cx, &cy )) return FALSE;
+    size->cx = cx;
+    size->cy = cy;
+    return TRUE;
 }
 
 /****************************************************************************
@@ -358,8 +362,8 @@ static INT SIC_LoadIcon (const WCHAR *sourcefile, INT index, DWORD flags)
 
     for (i = 0; i < ARRAY_SIZE(hicons); i++)
     {
-        get_imagelist_icon_size( i, &size );
-        if (!PrivateExtractIconsW( sourcefile, index, size.cx, size.cy, &hicons[i], 0, 1, 0 ))
+        if (!get_imagelist_icon_size( i, &size ) ||
+            !PrivateExtractIconsW( sourcefile, index, size.cx, size.cy, &hicons[i], 0, 1, 0 ))
             WARN("Failed to load icon %d from %s.\n", index, debugstr_w(sourcefile));
         if (!hicons[i]) goto fail;
     }

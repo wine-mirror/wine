@@ -3677,7 +3677,7 @@ static HRESULT get_known_folder_redirection_place(
 {
     HRESULT hr;
     LPWSTR lpRegistryPath = NULL;
-    KF_CATEGORY category;
+    DWORD category;
 
     /* first, get known folder's category */
     hr = get_known_folder_registry_path(rfid, NULL, &lpRegistryPath);
@@ -3918,7 +3918,7 @@ static HRESULT WINAPI knownfolder_GetCategory(
         hr = E_FAIL;
 
     if(SUCCEEDED(hr))
-        hr = get_known_folder_dword(knownfolder->registryPath, L"Category", pCategory);
+        hr = get_known_folder_dword(knownfolder->registryPath, L"Category", (DWORD *)pCategory);
 
     return hr;
 }
@@ -3943,7 +3943,7 @@ static HRESULT get_known_folder_path(
     DWORD dwSize, dwType;
     WCHAR path[MAX_PATH] = {0};
     WCHAR parentGuid[39];
-    KF_CATEGORY category;
+    DWORD category;
     LPWSTR parentRegistryPath, parentPath;
     HKEY hRedirectionRootKey = NULL;
 
@@ -4138,7 +4138,7 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
     ZeroMemory(pKFD, sizeof(*pKFD));
 
     /* required fields */
-    hr = get_known_folder_dword(knownfolder->registryPath, L"Category", &pKFD->category);
+    hr = get_known_folder_dword(knownfolder->registryPath, L"Category", (DWORD *)&pKFD->category);
     if(FAILED(hr))
         return hr;
 
