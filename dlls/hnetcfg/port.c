@@ -735,6 +735,22 @@ static BOOL find_port_mapping( LONG port, BSTR protocol, struct port_mapping *re
     return found;
 }
 
+static unsigned int get_port_mapping_range( unsigned int index, unsigned int count, struct port_mapping *ret )
+{
+    unsigned int i;
+
+    AcquireSRWLockExclusive( &upnp_gateway_connection_lock );
+    for (i = 0; i < count && index + i < upnp_gateway_connection.mapping_count; ++i)
+        if (!copy_port_mapping( &ret[i], &upnp_gateway_connection.mappings[index + i] ))
+        {
+            ERR( "No memory.\n" );
+            break;
+        }
+    ReleaseSRWLockExclusive( &upnp_gateway_connection_lock );
+
+    return i;
+}
+
 static unsigned int get_port_mapping_count(void)
 {
     unsigned int ret;
@@ -1048,6 +1064,164 @@ static HRESULT static_port_mapping_create( const struct port_mapping *mapping_da
     return S_OK;
 }
 
+struct port_mapping_enum
+{
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG refs;
+    unsigned int index;
+};
+
+static inline struct port_mapping_enum *impl_from_IEnumVARIANT( IEnumVARIANT *iface )
+{
+    return CONTAINING_RECORD(iface, struct port_mapping_enum, IEnumVARIANT_iface);
+}
+
+static ULONG WINAPI port_mapping_enum_AddRef(
+    IEnumVARIANT *iface )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+    return InterlockedIncrement( &mapping_enum->refs );
+}
+
+static ULONG WINAPI port_mapping_enum_Release(
+    IEnumVARIANT *iface )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+    LONG refs = InterlockedDecrement( &mapping_enum->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", mapping_enum);
+        free( mapping_enum );
+        release_gateway_connection();
+    }
+    return refs;
+}
+
+static HRESULT WINAPI port_mapping_enum_QueryInterface(
+    IEnumVARIANT *iface,
+    REFIID riid,
+    void **ppvObject )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+
+    TRACE("%p %s %p\n", mapping_enum, debugstr_guid( riid ), ppvObject );
+
+    if ( IsEqualGUID( riid, &IID_IEnumVARIANT ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IEnumVARIANT_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI port_mapping_enum_Next( IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+    struct port_mapping *data;
+    IStaticPortMapping *pm;
+    unsigned int i, count;
+    HRESULT ret;
+
+    TRACE( "iface %p, celt %u, var %p, fetched %p.\n", iface, celt, var, fetched );
+
+    if (fetched) *fetched = 0;
+    if (!celt) return S_OK;
+    if (!var) return E_POINTER;
+
+    if (!(data = calloc( 1, celt * sizeof(*data) ))) return E_OUTOFMEMORY;
+    count = get_port_mapping_range( mapping_enum->index, celt, data );
+    TRACE( "count %u.\n", count );
+    for (i = 0; i < count; ++i)
+    {
+        if (FAILED(static_port_mapping_create( &data[i], &pm ))) break;
+
+        V_VT(&var[i]) = VT_DISPATCH;
+        V_DISPATCH(&var[i]) = (IDispatch *)pm;
+    }
+    mapping_enum->index += i;
+    if (fetched) *fetched = i;
+    ret = (i < celt) ? S_FALSE : S_OK;
+    for (     ; i < count; ++i)
+    {
+        free_port_mapping( &data[i] );
+        VariantInit( &var[i] );
+    }
+    for (     ; i < celt; ++i)
+        VariantInit( &var[i] );
+
+    free( data );
+    return ret;
+}
+
+static HRESULT WINAPI port_mapping_enum_Skip( IEnumVARIANT *iface, ULONG celt )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+    unsigned int count = get_port_mapping_count();
+
+    TRACE( "iface %p, celt %u.\n", iface, celt );
+
+    mapping_enum->index += celt;
+    return mapping_enum->index <= count ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI port_mapping_enum_Reset( IEnumVARIANT *iface )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+
+    TRACE( "iface %p.\n", iface );
+
+    mapping_enum->index = 0;
+    return S_OK;
+}
+
+static HRESULT create_port_mapping_enum( IUnknown **ret );
+
+static HRESULT WINAPI port_mapping_enum_Clone( IEnumVARIANT *iface, IEnumVARIANT **ret )
+{
+    struct port_mapping_enum *mapping_enum = impl_from_IEnumVARIANT( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, ret %p.\n", iface, ret );
+
+    if (!ret) return E_POINTER;
+    *ret = NULL;
+    if (FAILED(hr = create_port_mapping_enum( (IUnknown **)ret ))) return hr;
+    impl_from_IEnumVARIANT( *ret )->index = mapping_enum->index;
+    return S_OK;
+}
+
+static const IEnumVARIANTVtbl port_mapping_enum_vtbl =
+{
+    port_mapping_enum_QueryInterface,
+    port_mapping_enum_AddRef,
+    port_mapping_enum_Release,
+    port_mapping_enum_Next,
+    port_mapping_enum_Skip,
+    port_mapping_enum_Reset,
+    port_mapping_enum_Clone,
+};
+
+static HRESULT create_port_mapping_enum( IUnknown **ret )
+{
+    struct port_mapping_enum *mapping_enum;
+
+    if (!(mapping_enum = calloc( 1, sizeof(*mapping_enum) ))) return E_OUTOFMEMORY;
+
+    grab_gateway_connection();
+
+    mapping_enum->refs = 1;
+    mapping_enum->IEnumVARIANT_iface.lpVtbl = &port_mapping_enum_vtbl;
+    mapping_enum->index = 0;
+    *ret = (IUnknown *)&mapping_enum->IEnumVARIANT_iface;
+    return S_OK;
+}
+
 struct static_port_mapping_collection
 {
     IStaticPortMappingCollection IStaticPortMappingCollection_iface;
@@ -1183,11 +1357,12 @@ static HRESULT WINAPI static_ports__NewEnum(
     IStaticPortMappingCollection *iface,
     IUnknown **ret )
 {
-    FIXME( "iface %p, ret %p stub.\n", iface, ret );
+    TRACE( "iface %p, ret %p.\n", iface, ret );
 
-    if (ret) *ret = NULL;
+    if (!ret) return E_POINTER;
 
-    return E_NOTIMPL;
+    *ret = NULL;
+    return create_port_mapping_enum( ret );
 }
 
 static HRESULT WINAPI static_ports_get_Item(

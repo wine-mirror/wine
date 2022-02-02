@@ -184,8 +184,7 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
 
     refcount = get_refcount((IUnknown *)ports);
     hr = IStaticPortMappingCollection_get__NewEnum(ports, &unk);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    if (FAILED(hr)) return;
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void **)&enum_ports);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -213,14 +212,14 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
 
     hr = IStaticPortMappingCollection_Add(ports, 12345, (BSTR)L"udp", 12345, (BSTR)L"1.2.3.4",
             VARIANT_TRUE, (BSTR)L"wine_test", &pm);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = IStaticPortMappingCollection_Add(ports, 12345, (BSTR)L"UDP", 12345, (BSTR)L"1.2.3.4",
             VARIANT_TRUE, (BSTR)L"wine_test", &pm);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IStaticPortMappingCollection_get_Count(ports, &count2);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(count2 == expected_count, "Got unexpected count2 %u, expected %u.\n", count2, expected_count);
+    todo_wine ok(count2 == expected_count, "Got unexpected count2 %u, expected %u.\n", count2, expected_count);
 
     hr = IStaticPortMappingCollection_get_Item(ports, 12345, NULL, &pm);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
@@ -280,6 +279,8 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
 
     hr = IStaticPortMappingCollection_Remove(ports, 12345, (BSTR)L"UDP");
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IStaticPortMappingCollection_Remove(ports, 12345, (BSTR)L"UDP");
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     IEnumVARIANT_Release(enum_ports);
 }
