@@ -396,7 +396,7 @@ static ULONG WINAPI ISynchronize_fnRelease(ISynchronize *iface)
 static HRESULT WINAPI ISynchronize_fnWait(ISynchronize *iface, DWORD dwFlags, DWORD dwMilliseconds)
 {
     MREImpl *This = impl_from_ISynchronize(iface);
-    UINT index;
+    DWORD index;
     TRACE("%p (%08x, %08x)\n", This, dwFlags, dwMilliseconds);
     return CoWaitForMultipleHandles(dwFlags, dwMilliseconds, 1, &This->event, &index);
 }
