@@ -92,6 +92,28 @@ static void free_mappings(void)
     upnp_gateway_connection.mapping_count = 0;
 }
 
+static BOOL copy_port_mapping( struct port_mapping *dst, const struct port_mapping *src )
+{
+    memset( dst, 0, sizeof(*dst) );
+
+#define COPY_BSTR_CHECK(name) if (src->name && !(dst->name = SysAllocString( src->name ))) \
+    { \
+        free_port_mapping( dst ); \
+        return FALSE; \
+    }
+
+    COPY_BSTR_CHECK( external_ip );
+    COPY_BSTR_CHECK( protocol );
+    COPY_BSTR_CHECK( client );
+    COPY_BSTR_CHECK( descr );
+#undef COPY_BSTR_CHECK
+
+    dst->external = src->external;
+    dst->internal = src->internal;
+    dst->enabled = src->enabled;
+    return TRUE;
+}
+
 static BOOL parse_search_response( char *response, WCHAR *locationW, unsigned int location_size )
 {
     char *saveptr = NULL, *tok, *tok2;
@@ -695,6 +717,327 @@ static void release_gateway_connection(void)
     ReleaseSRWLockExclusive( &upnp_gateway_connection_lock );
 }
 
+static BOOL find_port_mapping( LONG port, BSTR protocol, struct port_mapping *ret )
+{
+    unsigned int i;
+    BOOL found;
+
+    AcquireSRWLockExclusive( &upnp_gateway_connection_lock );
+    for (i = 0; i < upnp_gateway_connection.mapping_count; ++i)
+    {
+        if (upnp_gateway_connection.mappings[i].external == port
+            && !wcscmp( upnp_gateway_connection.mappings[i].protocol, protocol ))
+            break;
+    }
+    found = i < upnp_gateway_connection.mapping_count;
+    if (found) copy_port_mapping( ret, &upnp_gateway_connection.mappings[i] );
+    ReleaseSRWLockExclusive( &upnp_gateway_connection_lock );
+    return found;
+}
+
+static BOOL is_valid_protocol( BSTR protocol )
+{
+    if (!protocol) return FALSE;
+    return !wcscmp( protocol, L"UDP" ) || !wcscmp( protocol, L"TCP" );
+}
+
+struct static_port_mapping
+{
+    IStaticPortMapping IStaticPortMapping_iface;
+    LONG refs;
+    struct port_mapping data;
+};
+
+static inline struct static_port_mapping *impl_from_IStaticPortMapping( IStaticPortMapping *iface )
+{
+    return CONTAINING_RECORD(iface, struct static_port_mapping, IStaticPortMapping_iface);
+}
+
+static ULONG WINAPI static_port_mapping_AddRef(
+    IStaticPortMapping *iface )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+    return InterlockedIncrement( &mapping->refs );
+}
+
+static ULONG WINAPI static_port_mapping_Release(
+    IStaticPortMapping *iface )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+    LONG refs = InterlockedDecrement( &mapping->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", mapping);
+        free_port_mapping( &mapping->data );
+        free( mapping );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI static_port_mapping_QueryInterface(
+    IStaticPortMapping *iface,
+    REFIID riid,
+    void **ppvObject )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE("%p %s %p\n", mapping, debugstr_guid( riid ), ppvObject );
+
+    if ( IsEqualGUID( riid, &IID_IStaticPortMapping ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IStaticPortMapping_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_GetTypeInfoCount(
+    IStaticPortMapping *iface,
+    UINT *pctinfo )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE("%p %p\n", mapping, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_GetTypeInfo(
+    IStaticPortMapping *iface,
+    UINT iTInfo,
+    LCID lcid,
+    ITypeInfo **ppTInfo )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE("%p %u %u %p\n", mapping, iTInfo, lcid, ppTInfo);
+    return get_typeinfo( IStaticPortMapping_tid, ppTInfo );
+}
+
+static HRESULT WINAPI static_port_mapping_GetIDsOfNames(
+    IStaticPortMapping *iface,
+    REFIID riid,
+    LPOLESTR *rgszNames,
+    UINT cNames,
+    LCID lcid,
+    DISPID *rgDispId )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p %s %p %u %u %p\n", mapping, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo( IStaticPortMapping_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, rgszNames, cNames, rgDispId );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI static_port_mapping_Invoke(
+    IStaticPortMapping *iface,
+    DISPID dispIdMember,
+    REFIID riid,
+    LCID lcid,
+    WORD wFlags,
+    DISPPARAMS *pDispParams,
+    VARIANT *pVarResult,
+    EXCEPINFO *pExcepInfo,
+    UINT *puArgErr )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p %d %s %d %d %p %p %p %p\n", mapping, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo( IStaticPortMapping_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &mapping->IStaticPortMapping_iface, dispIdMember,
+                               wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI static_port_mapping_get_ExternalIPAddress(
+    IStaticPortMapping *iface,
+    BSTR *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = SysAllocString( mapping->data.external_ip );
+    if (mapping->data.external_ip && !*value) return E_OUTOFMEMORY;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_get_ExternalPort(
+    IStaticPortMapping *iface,
+    LONG *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = mapping->data.external;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_get_InternalPort(
+    IStaticPortMapping *iface,
+    LONG *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = mapping->data.internal;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_get_Protocol(
+    IStaticPortMapping *iface,
+    BSTR *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = SysAllocString( mapping->data.protocol );
+    if (mapping->data.protocol && !*value) return E_OUTOFMEMORY;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_get_InternalClient(
+    IStaticPortMapping *iface,
+    BSTR *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = SysAllocString( mapping->data.client );
+    if (mapping->data.client && !*value) return E_OUTOFMEMORY;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_get_Enabled(
+    IStaticPortMapping *iface,
+    VARIANT_BOOL *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = mapping->data.enabled;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_get_Description(
+    IStaticPortMapping *iface,
+    BSTR *value )
+{
+    struct static_port_mapping *mapping = impl_from_IStaticPortMapping( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (!value) return E_POINTER;
+    *value = SysAllocString( mapping->data.descr );
+    if (mapping->data.descr && !*value) return E_OUTOFMEMORY;
+    return S_OK;
+}
+
+static HRESULT WINAPI static_port_mapping_EditInternalClient(
+    IStaticPortMapping *iface,
+    BSTR value )
+{
+    FIXME( "iface %p, value %s stub.\n", iface, debugstr_w(value) );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI static_port_mapping_Enable(
+    IStaticPortMapping *iface,
+    VARIANT_BOOL value )
+{
+    FIXME( "iface %p, value %d stub.\n", iface, value );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI static_port_mapping_EditDescription(
+    IStaticPortMapping *iface,
+    BSTR value )
+{
+    FIXME( "iface %p, value %s stub.\n", iface, debugstr_w(value) );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI static_port_mapping_EditInternalPort(
+    IStaticPortMapping *iface,
+    LONG value )
+{
+    FIXME( "iface %p, value %d stub.\n", iface, value );
+
+    return E_NOTIMPL;
+}
+
+static const IStaticPortMappingVtbl static_port_mapping_vtbl =
+{
+    static_port_mapping_QueryInterface,
+    static_port_mapping_AddRef,
+    static_port_mapping_Release,
+    static_port_mapping_GetTypeInfoCount,
+    static_port_mapping_GetTypeInfo,
+    static_port_mapping_GetIDsOfNames,
+    static_port_mapping_Invoke,
+    static_port_mapping_get_ExternalIPAddress,
+    static_port_mapping_get_ExternalPort,
+    static_port_mapping_get_InternalPort,
+    static_port_mapping_get_Protocol,
+    static_port_mapping_get_InternalClient,
+    static_port_mapping_get_Enabled,
+    static_port_mapping_get_Description,
+    static_port_mapping_EditInternalClient,
+    static_port_mapping_Enable,
+    static_port_mapping_EditDescription,
+    static_port_mapping_EditInternalPort,
+};
+
+static HRESULT static_port_mapping_create( const struct port_mapping *mapping_data, IStaticPortMapping **ret )
+{
+    struct static_port_mapping *mapping;
+
+    if (!(mapping = calloc( 1, sizeof(*mapping) ))) return E_OUTOFMEMORY;
+
+    mapping->refs = 1;
+    mapping->IStaticPortMapping_iface.lpVtbl = &static_port_mapping_vtbl;
+    mapping->data = *mapping_data;
+    *ret = &mapping->IStaticPortMapping_iface;
+    return S_OK;
+}
+
 struct static_port_mapping_collection
 {
     IStaticPortMappingCollection IStaticPortMappingCollection_iface;
@@ -843,10 +1186,19 @@ static HRESULT WINAPI static_ports_get_Item(
     BSTR protocol,
     IStaticPortMapping **mapping )
 {
-    FIXME( "iface %p, port %d, protocol %s stub.\n", iface, port, debugstr_w(protocol) );
+    struct port_mapping mapping_data;
+    HRESULT ret;
 
-    if (mapping) *mapping = NULL;
-    return E_NOTIMPL;
+    TRACE( "iface %p, port %d, protocol %s.\n", iface, port, debugstr_w(protocol) );
+
+    if (!mapping) return E_POINTER;
+    *mapping = NULL;
+    if (!is_valid_protocol( protocol )) return E_INVALIDARG;
+    if (port < 0 || port > 65535) return E_INVALIDARG;
+
+    if (!find_port_mapping( port, protocol, &mapping_data )) return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    if (FAILED(ret = static_port_mapping_create( &mapping_data, mapping ))) free_port_mapping( &mapping_data );
+    return ret;
 }
 
 static HRESULT WINAPI static_ports_get_Count(
