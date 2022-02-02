@@ -345,7 +345,7 @@ enum ConcRT_EventType
     CONCRT_EVENT_DETACH
 };
 
-static int context_tls_index = TLS_OUT_OF_INDEXES;
+static DWORD context_tls_index = TLS_OUT_OF_INDEXES;
 
 static CRITICAL_SECTION default_scheduler_cs;
 static CRITICAL_SECTION_DEBUG default_scheduler_cs_debug =
@@ -620,21 +620,23 @@ static Context* try_get_current_context(void)
     return TlsGetValue(context_tls_index);
 }
 
+static BOOL WINAPI init_context_tls_index(INIT_ONCE *once, void *param, void **context)
+{
+    context_tls_index = TlsAlloc();
+    return context_tls_index != TLS_OUT_OF_INDEXES;
+}
+
 static Context* get_current_context(void)
 {
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     Context *ret;
 
-    if (context_tls_index == TLS_OUT_OF_INDEXES) {
-        int tls_index = TlsAlloc();
-        if (tls_index == TLS_OUT_OF_INDEXES) {
-            scheduler_resource_allocation_error e;
-            scheduler_resource_allocation_error_ctor_name(&e, NULL,
-                    HRESULT_FROM_WIN32(GetLastError()));
-            _CxxThrowException(&e, &scheduler_resource_allocation_error_exception_type);
-        }
-
-        if(InterlockedCompareExchange(&context_tls_index, tls_index, TLS_OUT_OF_INDEXES) != TLS_OUT_OF_INDEXES)
-            TlsFree(tls_index);
+    if(!InitOnceExecuteOnce(&init_once, init_context_tls_index, NULL, NULL))
+    {
+        scheduler_resource_allocation_error e;
+        scheduler_resource_allocation_error_ctor_name(&e, NULL,
+                HRESULT_FROM_WIN32(GetLastError()));
+        _CxxThrowException(&e, &scheduler_resource_allocation_error_exception_type);
     }
 
     ret = TlsGetValue(context_tls_index);
