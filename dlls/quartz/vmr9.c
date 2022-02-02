@@ -2987,8 +2987,6 @@ static IDirect3D9 *init_d3d9(HMODULE d3d9_handle)
 static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv)
 {
     struct default_presenter *object;
-    HRESULT hr = S_OK;
-    int i;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -2997,24 +2995,6 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     if (!object->d3d9_ptr)
     {
         WARN("Could not initialize d3d9.dll\n");
-        free(object);
-        return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
-    }
-
-    i = 0;
-    do
-    {
-        D3DDISPLAYMODE mode;
-
-        hr = IDirect3D9_EnumAdapterModes(object->d3d9_ptr, i++, D3DFMT_X8R8G8B8, 0, &mode);
-	if (hr == D3DERR_INVALIDCALL) break; /* out of adapters */
-    } while (FAILED(hr));
-    if (FAILED(hr))
-        ERR("HR: %08x\n", hr);
-    if (hr == D3DERR_NOTAVAILABLE)
-    {
-        ERR("Format not supported\n");
-        IDirect3D9_Release(object->d3d9_ptr);
         free(object);
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
