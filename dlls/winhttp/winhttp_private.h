@@ -259,6 +259,7 @@ struct socket
     unsigned int send_remaining_size;
     unsigned int bytes_in_send_frame_buffer;
     unsigned int client_buffer_offset;
+    SRWLOCK send_lock;
 };
 
 struct send_request
