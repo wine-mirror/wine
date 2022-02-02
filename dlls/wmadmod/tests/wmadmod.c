@@ -52,11 +52,8 @@ static void test_DMOGetTypes(void)
 
     hr = DMOGetTypes( &CLSID_CWMADecMediaObject, ARRAY_SIZE(input), &input_count, input,
                       ARRAY_SIZE(output), &output_count, output );
-    todo_wine
     ok( hr == S_OK, "DMOGetTypes returned %#lx\n", hr );
-    todo_wine
     ok( input_count == ARRAY_SIZE(expect_input), "got input_count %lu\n", input_count );
-    todo_wine
     ok( output_count == ARRAY_SIZE(expect_output), "got output_count %lu\n", output_count );
 
     for (i = 0; i < input_count; ++i)
@@ -135,9 +132,7 @@ static void test_interfaces(void)
 
     hr = CoCreateInstance( &CLSID_CWMADecMediaObject, &outer, CLSCTX_INPROC_SERVER, &IID_IUnknown,
                            (void **)&unknown );
-    todo_wine
     ok( hr == S_OK, "CoCreateInstance returned %#lx\n", hr );
-    if (FAILED(hr)) return;
     hr = IUnknown_QueryInterface( unknown, &IID_IMFTransform, (void **)&transform );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     hr = IUnknown_QueryInterface( unknown, &IID_IMediaObject, (void **)&media_object );

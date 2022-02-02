@@ -5743,7 +5743,6 @@ static void test_wma_decoder(void)
             &transform, &class_id))
         goto failed;
 
-    todo_wine
     check_interface(transform, &IID_IMediaObject, TRUE);
 
     /* check default media types */

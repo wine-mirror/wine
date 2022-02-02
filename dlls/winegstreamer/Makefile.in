@@ -2,7 +2,7 @@ EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winegstreamer.dll
 UNIXLIB   = winegstreamer.so
 IMPORTLIB = winegstreamer
-IMPORTS   = strmbase ole32
+IMPORTS   = strmbase ole32 msdmo
 DELAYIMPORTS = mfplat
 EXTRAINCL = $(GSTREAMER_CFLAGS)
 EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
@@ -16,7 +16,8 @@ C_SRCS = \
 	wg_parser.c \
 	wm_asyncreader.c \
 	wm_reader.c \
-	wm_syncreader.c
+	wm_syncreader.c \
+	wma_decoder.c
 
 IDL_SRCS = \
 	winegstreamer_classes.idl

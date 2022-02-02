@@ -29,8 +29,8 @@
 #include "dvdmedia.h"
 #include "mmreg.h"
 #include "ks.h"
-#include "initguid.h"
 #include "wmcodecdsp.h"
+#include "initguid.h"
 #include "ksmedia.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);

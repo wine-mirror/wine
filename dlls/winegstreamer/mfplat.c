@@ -21,6 +21,7 @@
 
 #include "ks.h"
 #include "ksmedia.h"
+#include "wmcodecdsp.h"
 #include "initguid.h"
 #include "mfapi.h"
 
@@ -442,6 +443,20 @@ static const GUID *audio_converter_supported_types[] =
     &MFAudioFormat_Float,
 };
 
+static WCHAR wma_decoderW[] = L"WMAudio Decoder MFT";
+static const GUID *wma_decoder_input_types[] =
+{
+    &MEDIASUBTYPE_MSAUDIO1,
+    &MFAudioFormat_WMAudioV8,
+    &MFAudioFormat_WMAudioV9,
+    &MFAudioFormat_WMAudio_Lossless,
+};
+static const GUID *wma_decoder_output_types[] =
+{
+    &MFAudioFormat_PCM,
+    &MFAudioFormat_Float,
+};
+
 static const struct mft
 {
     const GUID *clsid;
@@ -467,13 +482,24 @@ mfts[] =
         ARRAY_SIZE(audio_converter_supported_types),
         audio_converter_supported_types,
     },
+    {
+        &CLSID_WMADecMediaObject,
+        &MFT_CATEGORY_AUDIO_DECODER,
+        wma_decoderW,
+        MFT_ENUM_FLAG_SYNCMFT,
+        &MFMediaType_Audio,
+        ARRAY_SIZE(wma_decoder_input_types),
+        wma_decoder_input_types,
+        ARRAY_SIZE(wma_decoder_output_types),
+        wma_decoder_output_types,
+    },
 };
 
 HRESULT mfplat_DllRegisterServer(void)
 {
     unsigned int i, j;
     HRESULT hr;
-    MFT_REGISTER_TYPE_INFO input_types[2], output_types[2];
+    MFT_REGISTER_TYPE_INFO input_types[4], output_types[2];
 
     for (i = 0; i < ARRAY_SIZE(mfts); i++)
     {
