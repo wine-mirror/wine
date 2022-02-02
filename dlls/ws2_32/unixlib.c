@@ -865,9 +865,9 @@ static NTSTATUS unix_gethostbyaddr( void *args )
         }
 
         if (!unix_host)
-            return (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
-
-        ret = hostent_from_unix( unix_host, params->host, params->size );
+            ret = (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
+        else
+            ret = hostent_from_unix( unix_host, params->host, params->size );
 
         free( unix_buffer );
         return ret;
@@ -915,9 +915,9 @@ static NTSTATUS unix_gethostbyname( void *args )
     }
 
     if (!unix_host)
-        return (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
-
-    ret = hostent_from_unix( unix_host, params->host, params->size );
+        ret = (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
+    else
+        ret = hostent_from_unix( unix_host, params->host, params->size );
 
     free( unix_buffer );
     return ret;
