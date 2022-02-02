@@ -4033,11 +4033,11 @@ msgstr "No s'ha trobat el fitxer.\n"
 msgid "Path not found.\n"
 msgstr "No s'ha trobat el camí.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "Hi ha massa fitxers oberts.\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr "S'ha denegat l'accés.\n"
 
@@ -5389,7 +5389,7 @@ msgstr "L'usuari ha cancel·lat l'operació.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "El fitxer té una secció assignada per usuari.\n"
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "S'ha refusat la connexió.\n"
 
@@ -6976,26 +6976,72 @@ msgid "This network connection does not exist.\n"
 msgstr "Aquesta connexió de xarxa no existeix.\n"
 
 #: dlls/kernel32/winerror.mc:3748
+#, fuzzy
+#| msgid "Invalid at interrupt time.\n"
+msgid "Call interrupted.\n"
+msgstr "No era vàlid a l'hora d'interrupció.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "L'identificador no és vàlid.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "L'adreça de xarxa no és vàlida.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "El nom no és vàlid.\n"
+
+#: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Un igual ha restablert la connexió.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "No s'ha trobat el punt.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "Attribute is not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "No s'ha trobat l'atribut.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "Unrecoverable error occurred.\n"
+msgid "Nonrecoverable error.\n"
+msgstr "Ha ocorregut un error no recuperable.\n"
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
 msgstr "No implementat.\n"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 msgid "Call failed.\n"
 msgstr "La trucada ha fallat.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr "No s'ha trobat cap signatura en el fitxer.\n"
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 msgid "Invalid call.\n"
 msgstr "La trucada no és vàlida.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
 msgstr "El recurs actualment no està disponible.\n"
 

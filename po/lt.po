@@ -4019,11 +4019,11 @@ msgstr "Failas nerastas.\n"
 msgid "Path not found.\n"
 msgstr "Kelias nerastas.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "Per daug atvertų failų.\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr "Prieiga nesuteikta.\n"
 
@@ -5377,7 +5377,7 @@ msgstr "Operacija nutraukta naudotojo.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "Failas turi naudotojo atvaizduotą sekciją.\n"
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "Sujungimas nepriimtas.\n"
 
@@ -6962,26 +6962,72 @@ msgid "This network connection does not exist.\n"
 msgstr "Šis tinklo ryšys neegzistuoja.\n"
 
 #: dlls/kernel32/winerror.mc:3748
+#, fuzzy
+#| msgid "Invalid at interrupt time.\n"
+msgid "Call interrupted.\n"
+msgstr "Netinkamas pertraukties metu.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "Neteisinga rodyklė.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "Neteisingas tinklo adresas.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "Neteisingas vardas.\n"
+
+#: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Sujungimas nutrauktas kito serverio.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "Taškas nerastas.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "Attribute is not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "Atributas nerastas.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "Unrecoverable error occurred.\n"
+msgid "Nonrecoverable error.\n"
+msgstr "Įvyko nepataisoma klaida.\n"
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
 msgstr "Nerealizuota.\n"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 msgid "Call failed.\n"
 msgstr "Kreipinys nepavyko.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr "Joks parašas nerastas faile.\n"
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 msgid "Invalid call.\n"
 msgstr "Neteisingas kreipinys.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
 msgstr "Išteklius šiuo metu neprieinamas.\n"
 

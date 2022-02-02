@@ -4008,11 +4008,11 @@ msgstr "ファイルが見つかりません。\n"
 msgid "Path not found.\n"
 msgstr "パスが見つかりません。\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "これ以上ファイルを開けません。\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr "アクセスが拒否されました。\n"
 
@@ -5364,7 +5364,7 @@ msgstr "操作はユーザーによって中断されました。\n"
 msgid "File has a user-mapped section.\n"
 msgstr "ファイルにはユーザー マップされたセクションがあります。\n"
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "接続は拒否されました。\n"
 
@@ -6950,26 +6950,72 @@ msgid "This network connection does not exist.\n"
 msgstr "このネットワーク接続は存在しません。\n"
 
 #: dlls/kernel32/winerror.mc:3748
+#, fuzzy
+#| msgid "Invalid at interrupt time.\n"
+msgid "Call interrupted.\n"
+msgstr "割り込み時間においては正しくありません。\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "ハンドルが正しくありません。\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "ネットワーク アドレスが正しくありません。\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "名前は正しくありません。\n"
+
+#: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "相手側により接続がリセットされました。\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "ポイントが見つかりません。\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "Attribute is not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "属性が見つかりません。\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "Unrecoverable error occurred.\n"
+msgid "Nonrecoverable error.\n"
+msgstr "回復不可能なエラーが発生しました。\n"
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
 msgstr "未実装です。\n"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 msgid "Call failed.\n"
 msgstr "呼び出しが失敗しました。\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr "ファイルにデジタル署名がありません。\n"
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 msgid "Invalid call.\n"
 msgstr "呼び出しは正しくありません。\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
 msgstr "リソースは現在使用できません。\n"
 

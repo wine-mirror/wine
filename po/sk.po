@@ -4013,11 +4013,11 @@ msgstr "Súbor nenájdený.\n"
 msgid "Path not found.\n"
 msgstr "Cesta nenájdená.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "Prílš veľa otvorení súborov.\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr "Prístup zamietnutý.\n"
 
@@ -5389,7 +5389,7 @@ msgstr "Operácia prerušená užívateľom.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr ""
 
@@ -7006,32 +7006,77 @@ msgstr "Súbor neexistuje.\n"
 
 #: dlls/kernel32/winerror.mc:3748
 #, fuzzy
+#| msgid "Call not implemented.\n"
+msgid "Call interrupted.\n"
+msgstr "Volanie neimplementované.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid file handle.\n"
+msgstr "Nesprávne údaje.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "Nesprávna sieťová adresa.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "Nesprávny názov.\n"
+
+#: dlls/kernel32/winerror.mc:3778
+#, fuzzy
 #| msgid "Connection is active.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Pripojenie je aktícne.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Host not found.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "Súbor nenájdený.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Nonrecoverable error.\n"
+msgstr "Chyba tlačiarne."
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 #, fuzzy
 #| msgid "Not implemented"
 msgid "Not implemented.\n"
 msgstr "Neimplementované"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 #, fuzzy
 msgid "Call failed.\n"
 msgstr "Otvoriť súbor.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 #, fuzzy
 #| msgid "Invalid data.\n"
 msgid "Invalid call.\n"
 msgstr "Nesprávne údaje.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 #, fuzzy
 #| msgid "Help not available."
 msgid "Resource is not currently available.\n"

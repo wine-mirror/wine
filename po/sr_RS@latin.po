@@ -4183,11 +4183,11 @@ msgstr "Datoteka nije pronađena.\n"
 msgid "Path not found.\n"
 msgstr "%s putanja nije pronađena.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr ""
 
@@ -5640,7 +5640,7 @@ msgstr "Instalacioni programi.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 #, fuzzy
 msgid "Connection refused.\n"
 msgstr "Povezivanje na %s.\n"
@@ -7376,30 +7376,70 @@ msgstr "Datoteka ne postoji.\n"
 
 #: dlls/kernel32/winerror.mc:3748
 #, fuzzy
+msgid "Call interrupted.\n"
+msgstr "Nije jos u programu.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+msgid "Invalid file handle.\n"
+msgstr "Neispravna sintaksa.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+msgid "Invalid pointer address.\n"
+msgstr "IP adresa.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+msgid "Invalid argument.\n"
+msgstr "Neispravna sintaksa.\n"
+
+#: dlls/kernel32/winerror.mc:3778
+#, fuzzy
 msgid "Connection reset by peer.\n"
 msgstr "Povezivanje na %s.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Host not found.\n"
+msgstr "%s putanja nije pronađena.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+msgid "Nonauthoritative host not found.\n"
+msgstr "Datoteka nije pronađena.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Nonrecoverable error.\n"
+msgstr "Došlo je do greške u štampaču."
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 #, fuzzy
 #| msgid "Not implemented"
 msgid "Not implemented.\n"
 msgstr "Nije jos u programu"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 #, fuzzy
 msgid "Call failed.\n"
 msgstr "Otvori datoteku.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 #, fuzzy
 msgid "Invalid call.\n"
 msgstr "Neispravni akreditivi.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 #, fuzzy
 msgid "Resource is not currently available.\n"
 msgstr "Nedostupno"

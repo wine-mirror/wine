@@ -4084,11 +4084,11 @@ msgstr "Ficheiro não encontrado.\n"
 msgid "Path not found.\n"
 msgstr "Caminho não encontrado.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "Demasiados ficheiros abertos.\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr "Acesso negado.\n"
 
@@ -5440,7 +5440,7 @@ msgstr "Operação cancelada pelo utilizador.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "O ficheiro tem uma secção mapeada para o utilizador.\n"
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "Ligação recusada.\n"
 
@@ -7025,34 +7025,80 @@ msgid "This network connection does not exist.\n"
 msgstr "Esta conexão de rede não existe.\n"
 
 #: dlls/kernel32/winerror.mc:3748
+#, fuzzy
+#| msgid "Invalid at interrupt time.\n"
+msgid "Call interrupted.\n"
+msgstr "Inválido no tempo de interrupção.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "Descritor inválido.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "Endereço de rede inválido.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "Nome inválido.\n"
+
+#: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Conexão cancelada pelo cliente.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "Ponto não encontrado.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "Ficheiro não encontrado.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Nonrecoverable error.\n"
+msgstr "Ocorreu um erro de impressão."
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 #, fuzzy
 #| msgid "Not implemented"
 msgid "Not implemented.\n"
 msgstr "Não implementado"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 #, fuzzy
 #| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
 msgstr "Chamada RPC falhou.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
 msgstr "Mensagem 0x%1 não encontrada no ficheiro %2.\n"
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 #, fuzzy
 #| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
 msgstr "Nível inválido.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 #, fuzzy
 #| msgid "Help not available."
 msgid "Resource is not currently available.\n"

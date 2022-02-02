@@ -3972,11 +3972,11 @@ msgstr "Dosiero ne estis trovita.\n"
 msgid "Path not found.\n"
 msgstr "Mi ne trovis la vojon.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr ""
 
@@ -5330,7 +5330,7 @@ msgstr "Operacio nuligita de uzanto.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "Konekto rifuzita.\n"
 
@@ -6920,33 +6920,79 @@ msgstr "Ejo estas neekzistanta.\n"
 
 #: dlls/kernel32/winerror.mc:3748
 #, fuzzy
+#| msgid "Call not implemented.\n"
+msgid "Call interrupted.\n"
+msgstr "Ne jam funkcias.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid monitor handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "Nevalida ekranbloka numero.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid printer name.\n"
+msgid "Invalid pointer address.\n"
+msgstr "Nevalida printila nomo.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid parameter.\n"
+msgid "Invalid argument.\n"
+msgstr "Nevalida parametro.\n"
+
+#: dlls/kernel32/winerror.mc:3778
+#, fuzzy
 #| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Konekto rifuzita.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "Punkto ne troviĝis.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "Dosiero ne estis trovita.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Nonrecoverable error.\n"
+msgstr "Okazis printila eraro."
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 #, fuzzy
 #| msgid "Not implemented"
 msgid "Not implemented.\n"
 msgstr "Ne realigita"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 #, fuzzy
 #| msgid "Creation failed.\n"
 msgid "Call failed.\n"
 msgstr "Kreado malsukcesis.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 #, fuzzy
 #| msgid "Invalid table.\n"
 msgid "Invalid call.\n"
 msgstr "Nevalida tabelo.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 #, fuzzy
 #| msgid "Name service unavailable.\n"
 msgid "Resource is not currently available.\n"

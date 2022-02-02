@@ -3933,11 +3933,11 @@ msgstr "Nun s'alcontró'l ficheru.\n"
 msgid "Path not found.\n"
 msgstr "Nun s'alcontró'l camín.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "Milenta ficheros abiertos.\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr ""
 
@@ -5289,7 +5289,7 @@ msgstr ""
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "Refugóse la conexón.\n"
 
@@ -6874,32 +6874,78 @@ msgid "This network connection does not exist.\n"
 msgstr ""
 
 #: dlls/kernel32/winerror.mc:3748
+#, fuzzy
+#| msgid "Open failed.\n"
+msgid "Call interrupted.\n"
+msgstr "Falló l'apertura.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid field.\n"
+msgid "Invalid file handle.\n"
+msgstr "El campu nun ye válidu.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "La direición nun ye válida.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "El nome nun ye válidu.\n"
+
+#: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Path not found.\n"
+msgid "Host not found.\n"
+msgstr "Nun s'alcontró'l camín.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "Nun s'alcontró'l ficheru.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "An internal error has occurred.\n"
+msgid "Nonrecoverable error.\n"
+msgstr "Asocedió un fallu internu.\n"
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 #, fuzzy
 #| msgid "Not implemented"
 msgid "Not implemented.\n"
 msgstr "Nun s'implementó"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 #, fuzzy
 #| msgid "Open failed.\n"
 msgid "Call failed.\n"
 msgstr "Falló l'apertura.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr ""
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 #, fuzzy
 #| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
 msgstr "El nivel nun ye válidu.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 #, fuzzy
 #| msgid "Help not available."
 msgid "Resource is not currently available.\n"

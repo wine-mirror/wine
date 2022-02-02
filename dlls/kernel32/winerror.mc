@@ -3740,6 +3740,36 @@ SymbolicName=ERROR_NOT_CONNECTED
 Language=ENU
 This network connection does not exist.
 .
+MessageId=10004
+SymbolicName=WSAEINTR
+Language=ENU
+Call interrupted.
+.
+MessageId=10009
+SymbolicName=WSAEBADF
+Language=ENU
+Invalid file handle.
+.
+MessageId=10013
+SymbolicName=WSAEACCES
+Language=ENU
+Access denied.
+.
+MessageId=10014
+SymbolicName=WSAEFAULT
+Language=ENU
+Invalid pointer address.
+.
+MessageId=10022
+SymbolicName=WSAEINVAL
+Language=ENU
+Invalid argument.
+.
+MessageId=10024
+SymbolicName=WSAEMFILE
+Language=ENU
+Too many open files.
+.
 MessageId=10054
 SymbolicName=WSAECONNRESET
 Language=ENU
@@ -3749,6 +3779,26 @@ MessageId=10061
 SymbolicName=WSAECONNREFUSED
 Language=ENU
 Connection refused.
+.
+MessageId=11001
+SymbolicName=WSAHOST_NOT_FOUND
+Language=ENU
+Host not found.
+.
+MessageId=11002
+SymbolicName=WSATRY_AGAIN
+Language=ENU
+Nonauthoritative host not found.
+.
+MessageId=11003
+SymbolicName=WSANO_RECOVERY
+Language=ENU
+Nonrecoverable error.
+.
+MessageId=11004
+SymbolicName=WSANO_DATA
+Language=ENU
+Name valid, no data record.
 .
 MessageId=0x100
 Severity=CoError

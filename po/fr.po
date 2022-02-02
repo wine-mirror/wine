@@ -4038,11 +4038,11 @@ msgstr "Fichier introuvable.\n"
 msgid "Path not found.\n"
 msgstr "Chemin introuvable.\n"
 
-#: dlls/kernel32/winerror.mc:48
+#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
 msgid "Too many open files.\n"
 msgstr "Trop de fichiers ouverts.\n"
 
-#: dlls/kernel32/winerror.mc:53
+#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
 msgid "Access denied.\n"
 msgstr "Accès refusé.\n"
 
@@ -5398,7 +5398,7 @@ msgstr "Opération annulée par l'utilisateur.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "Le fichier contient une section mappée par l'utilisateur.\n"
 
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3753
+#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
 msgid "Connection refused.\n"
 msgstr "Connexion refusée.\n"
 
@@ -6986,26 +6986,72 @@ msgid "This network connection does not exist.\n"
 msgstr "Cette connexion réseau n'existe pas.\n"
 
 #: dlls/kernel32/winerror.mc:3748
+#, fuzzy
+#| msgid "Invalid at interrupt time.\n"
+msgid "Call interrupted.\n"
+msgstr "Non valide au moment de l'interruption.\n"
+
+#: dlls/kernel32/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "Descripteur invalide.\n"
+
+#: dlls/kernel32/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "Adresse réseau invalide.\n"
+
+#: dlls/kernel32/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "Nom non valide.\n"
+
+#: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Connexion fermée par le pair.\n"
 
-#: dlls/kernel32/winerror.mc:3767
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "Point introuvable.\n"
+
+#: dlls/kernel32/winerror.mc:3793
+#, fuzzy
+#| msgid "Attribute is not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "L'attribut n'a pas été trouvé.\n"
+
+#: dlls/kernel32/winerror.mc:3798
+#, fuzzy
+#| msgid "Unrecoverable error occurred.\n"
+msgid "Nonrecoverable error.\n"
+msgstr "Une erreur irrécupérable s'est produite.\n"
+
+#: dlls/kernel32/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
 msgstr "Non implémenté.\n"
 
-#: dlls/kernel32/winerror.mc:3788
+#: dlls/kernel32/winerror.mc:3838
 msgid "Call failed.\n"
 msgstr "Échec de l'appel.\n"
 
-#: dlls/kernel32/winerror.mc:3760
+#: dlls/kernel32/winerror.mc:3810
 msgid "No Signature found in file.\n"
 msgstr "Pas de signature trouvée dans le fichier.\n"
 
-#: dlls/kernel32/winerror.mc:3774
+#: dlls/kernel32/winerror.mc:3824
 msgid "Invalid call.\n"
 msgstr "Appel non valide.\n"
 
-#: dlls/kernel32/winerror.mc:3781
+#: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
 msgstr "La ressource n'est pas actuellement disponible.\n"
 
