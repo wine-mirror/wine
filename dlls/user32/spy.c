@@ -2045,7 +2045,7 @@ typedef struct
     WCHAR      wnd_name[16];     /* window name for message            */
 } SPY_INSTANCE;
 
-static int indent_tls_index = TLS_OUT_OF_INDEXES;
+static LONG indent_tls_index = TLS_OUT_OF_INDEXES;
 
 /***********************************************************************
  *           get_indent_level

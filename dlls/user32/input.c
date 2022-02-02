@@ -49,7 +49,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
-INT global_key_state_counter = 0;
+LONG global_key_state_counter = 0;
 
 /***********************************************************************
  *           get_key_state

@@ -4192,7 +4192,8 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
     if (process_layout == ~0u)
     {
         WCHAR *str, buffer[MAX_PATH];
-        DWORD i, len, version_layout = 0;
+        DWORD i, version_layout = 0;
+        UINT len;
         DWORD user_lang = GetUserDefaultLangID();
         DWORD *languages;
         void *data = NULL;

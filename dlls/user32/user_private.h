@@ -120,7 +120,7 @@ struct rawinput_thread_data
     RAWINPUT buffer[1]; /* rawinput message data buffer */
 };
 
-extern INT global_key_state_counter DECLSPEC_HIDDEN;
+extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern BOOL (WINAPI *imm_register_window)(HWND) DECLSPEC_HIDDEN;
 extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
 #define WM_IME_INTERNAL 0x287
