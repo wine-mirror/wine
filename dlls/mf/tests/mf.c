@@ -5751,7 +5751,6 @@ static void test_wma_decoder(void)
     todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#x\n", hr);
@@ -5808,7 +5807,6 @@ static void test_wma_decoder(void)
     todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#x\n", hr);
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#x\n", hr);
 
     /* check new output media types */
@@ -5864,13 +5862,10 @@ static void test_wma_decoder(void)
 
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#x\n", hr);
-    todo_wine
     ok(output_info.dwFlags == 0, "got dwFlags %#x\n", output_info.dwFlags);
     todo_wine
     ok(output_info.cbSize == 0, "got cbSize %#x\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 1, "got cbAlignment %#x\n", output_info.cbAlignment);
 
     /* MF_MT_AUDIO_AVG_BYTES_PER_SECOND isn't required by SetInputType, but is needed for the transform to work */
@@ -5884,7 +5879,6 @@ static void test_wma_decoder(void)
     ok(hr == S_OK, "SetInputType returned %#x.\n", hr);
 
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#x\n", hr);
 
     init_media_type(media_type, output_type_desc, -1);
@@ -5895,13 +5889,9 @@ static void test_wma_decoder(void)
 
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#x\n", hr);
-    todo_wine
     ok(output_info.dwFlags == 0, "got dwFlags %#x\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize == sizeof(wma_decoded_data), "got cbSize %#x\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 1, "got cbAlignment %#x\n", output_info.cbAlignment);
 
     ret = IMFTransform_Release(transform);

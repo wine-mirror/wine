@@ -174,8 +174,25 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    FIXME("iface %p, id %u, info %p stub!\n", iface, id, info);
-    return E_NOTIMPL;
+    struct wma_decoder *decoder = impl_from_IMFTransform(iface);
+    UINT32 channel_count, block_alignment;
+    HRESULT hr;
+
+    TRACE("iface %p, id %u, info %p.\n", iface, id, info);
+
+    if (!decoder->input_type || !decoder->output_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = IMFMediaType_GetUINT32(decoder->output_type, &MF_MT_AUDIO_NUM_CHANNELS, &channel_count)))
+        return hr;
+    if (FAILED(hr = IMFMediaType_GetUINT32(decoder->output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
+        return hr;
+
+    info->dwFlags = 0;
+    info->cbSize = 1024 * block_alignment * channel_count;
+    info->cbAlignment = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
