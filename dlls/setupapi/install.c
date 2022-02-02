@@ -826,7 +826,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
 {
     WCHAR lnkpath[MAX_PATH];
     LPWSTR cmdline=NULL, lnkpath_end;
-    unsigned int name_size;
+    DWORD name_size;
     INFCONTEXT name_context, context;
     int attrs=0;
 
@@ -846,7 +846,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
 
     if (!(attrs & FLG_PROFITEM_GROUP) && SetupFindFirstLineW( hinf, field, L"SubDir", &context ))
     {
-        unsigned int subdir_size;
+        DWORD subdir_size;
 
         if (!SetupGetStringFieldW( &context, 1, lnkpath_end, (lnkpath+MAX_PATH)-lnkpath_end, &subdir_size ))
             return TRUE;
@@ -878,7 +878,8 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
         /* calculate command line */
         if (SetupFindFirstLineW( hinf, field, L"CmdLine", &context ))
         {
-            unsigned int dir_len=0, subdir_size=0, filename_size=0;
+            unsigned int dir_len=0;
+            DWORD subdir_size=0, filename_size=0;
             int dirid=0;
             LPCWSTR dir;
             LPWSTR cmdline_end;
