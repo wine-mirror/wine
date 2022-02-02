@@ -1302,7 +1302,11 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
         props = NULL;
     else
     {
-        if (count && !names) return E_ADS_BAD_PARAMETER;
+        if (count && !names)
+        {
+            heap_free(ldap_ctx);
+            return E_ADS_BAD_PARAMETER;
+        }
 
         props = heap_alloc((count + 1) * sizeof(props[0]));
         if (!props)
