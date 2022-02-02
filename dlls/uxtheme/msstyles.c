@@ -42,6 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
  */
 
 static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
+static BOOL MSSTYLES_GetNextLong(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LONG *value);
 static BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize);
 static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
 static HRESULT MSSTYLES_GetFont (LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LOGFONTW* logfont);
@@ -1159,10 +1160,10 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
     return img->image;
 }
 
-static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
+static BOOL MSSTYLES_GetNextLong(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LONG *value)
 {
     LPCWSTR cur = lpStringStart;
-    int total = 0;
+    LONG total = 0;
     BOOL gotNeg = FALSE;
 
     while(cur < lpStringEnd && (*cur < '0' || *cur > '9' || *cur == '-')) cur++;
@@ -1181,6 +1182,11 @@ static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, 
     *value = total;
     if(lpValEnd) *lpValEnd = cur;
     return TRUE;
+}
+
+static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
+{
+    return MSSTYLES_GetNextLong(lpStringStart, lpStringEnd, lpValEnd, (LONG *)value);
 }
 
 static inline BOOL isSpace(WCHAR c)
@@ -1377,10 +1383,10 @@ HRESULT MSSTYLES_GetPropertyRect(PTHEME_PROPERTY tp, RECT *pRect)
     LPCWSTR lpCur = tp->lpValue;
     LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
 
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->left);
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->top);
-    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->right);
-    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pRect->bottom)) {
+    MSSTYLES_GetNextLong(lpCur, lpEnd, &lpCur, &pRect->left);
+    MSSTYLES_GetNextLong(lpCur, lpEnd, &lpCur, &pRect->top);
+    MSSTYLES_GetNextLong(lpCur, lpEnd, &lpCur, &pRect->right);
+    if(!MSSTYLES_GetNextLong(lpCur, lpEnd, &lpCur, &pRect->bottom)) {
         TRACE("Could not parse rect property\n");
         return E_PROP_ID_UNSUPPORTED;
     }
