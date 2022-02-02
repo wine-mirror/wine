@@ -1198,7 +1198,7 @@ ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
   int nChars;
 
   if (dwFormat & SFF_SELECTION) {
-    int nStart, nTo;
+    LONG nStart, nTo;
     start = editor->pCursors[ME_GetSelectionOfs(editor, &nStart, &nTo)];
     nChars = nTo - nStart;
   } else {

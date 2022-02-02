@@ -1567,7 +1567,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 {
   RTF_Info parser;
   ME_Style *style;
-  int from, to, nUndoMode;
+  LONG from, to;
+  int nUndoMode;
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
   BOOL invalidRTF = FALSE;
@@ -2087,7 +2088,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 
     if (ex->flags & GT_SELECTION)
     {
-      int from, to;
+      LONG from, to;
       int nStartCur = ME_GetSelectionOfs(editor, &from, &to);
       start = editor->pCursors[nStartCur];
       nChars = to - from;
@@ -2366,7 +2367,7 @@ HRESULT editor_copy_or_cut( ME_TextEditor *editor, BOOL cut, ME_Cursor *start, i
 static BOOL copy_or_cut( ME_TextEditor *editor, BOOL cut )
 {
     HRESULT hr;
-    int offs, count;
+    LONG offs, count;
     int start_cursor = ME_GetSelectionOfs( editor, &offs, &count );
     ME_Cursor *sel_start = &editor->pCursors[start_cursor];
 
@@ -2412,7 +2413,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
     {
         ME_Cursor cursor = editor->pCursors[0];
         ME_Paragraph *para = cursor.para;
-        int from, to;
+        LONG from, to;
         ME_Style *style, *eop_style;
 
         if (editor->props & TXTBIT_READONLY)
@@ -2689,7 +2690,7 @@ static LRESULT handle_wm_char( ME_TextEditor *editor, WCHAR wstr, LPARAM flags )
   {
     ME_Cursor cursor = editor->pCursors[0];
     ME_Paragraph *para = cursor.para;
-    int from, to;
+    LONG from, to;
     BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
     ME_GetSelectionOfs(editor, &from, &to);
     if (wstr == '\t' &&
@@ -2845,7 +2846,8 @@ void editor_set_cursor( ME_TextEditor *editor, int x, int y )
 
         else if (ME_IsSelection( editor ))
         {
-            int start, end, offset = ME_GetCursorOfs( &pos );
+            LONG start, end;
+            int offset = ME_GetCursorOfs( &pos );
 
             ME_GetSelectionOfs( editor, &start, &end );
             if (start <= offset && end >= offset) cursor = cursor_arrow;
@@ -3144,7 +3146,8 @@ void link_notify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void ME_ReplaceSel(ME_TextEditor *editor, BOOL can_undo, const WCHAR *str, int len)
 {
-  int from, to, nStartCursor;
+  LONG from, to;
+  int nStartCursor;
   ME_Style *style;
 
   nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
@@ -3279,10 +3282,10 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETSEL:
   {
     /* Note: wParam/lParam can be NULL */
-    UINT from, to;
-    PUINT pfrom = wParam ? (PUINT)wParam : &from;
-    PUINT pto = lParam ? (PUINT)lParam : &to;
-    ME_GetSelectionOfs(editor, (int *)pfrom, (int *)pto);
+    LONG from, to;
+    LONG *pfrom = wParam ? (LONG *)wParam : &from;
+    LONG *pto = lParam ? (LONG *)lParam : &to;
+    ME_GetSelectionOfs(editor, pfrom, pto);
     if ((*pfrom|*pto) & 0xFFFF0000)
       return -1;
     return MAKELONG(*pfrom,*pto);
@@ -3388,7 +3391,8 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     LPWSTR wszText;
     SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
-    int from, to, len;
+    LONG from, to;
+    int len;
     ME_Style *style;
     BOOL bRtf, bUnicode, bSelection, bUTF8;
     int oldModify = editor->nModifyStep;
@@ -3545,7 +3549,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_CLEAR:
   {
-    int from, to;
+    LONG from, to;
     int nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
     ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to-from, FALSE);
     ME_CommitUndo(editor);
@@ -3660,7 +3664,8 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return ME_GetTextEx(editor, (GETTEXTEX*)wParam, lParam);
   case EM_GETSELTEXT:
   {
-    int nFrom, nTo, nStartCur = ME_GetSelectionOfs(editor, &nFrom, &nTo);
+    LONG nFrom, nTo;
+    int nStartCur = ME_GetSelectionOfs(editor, &nFrom, &nTo);
     ME_Cursor *from = &editor->pCursors[nStartCur];
     return get_text_range( editor, (WCHAR *)lParam, from, nTo - nFrom );
   }
