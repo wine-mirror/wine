@@ -100,7 +100,11 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         if (screen_buffer->font.face_len)
         {
             screen_buffer->font.face_name = malloc( screen_buffer->font.face_len * sizeof(WCHAR) );
-            if (!screen_buffer->font.face_name) return NULL;
+            if (!screen_buffer->font.face_name)
+            {
+                free( screen_buffer );
+                return NULL;
+            }
 
             memcpy( screen_buffer->font.face_name, console->active->font.face_name,
                     screen_buffer->font.face_len * sizeof(WCHAR) );
