@@ -688,7 +688,7 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
 
     if (*pubkey_len < sizeof(*ecc_blob) + size * 2)
     {
-        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, (ULONG)sizeof(*ecc_blob) + size * 2 );
+        FIXME( "wrong pubkey len %u / %lu\n", *pubkey_len, sizeof(*ecc_blob) + size * 2 );
         pgnutls_perror( ret );
         free( x.data ); free( y.data );
         return STATUS_BUFFER_TOO_SMALL;
@@ -730,7 +730,7 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
 
     if (*pubkey_len < sizeof(*dsa_blob) + bitlen / 8 * 3)
     {
-        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, (ULONG)sizeof(*dsa_blob) + bitlen / 8 * 3 );
+        FIXME( "wrong pubkey len %u / %lu\n", *pubkey_len, sizeof(*dsa_blob) + bitlen / 8 * 3 );
         pgnutls_perror( ret );
         free( p.data ); free( q.data ); free( g.data ); free( y.data );
         return STATUS_NO_MEMORY;
@@ -1506,7 +1506,7 @@ static NTSTATUS key_asymmetric_verify( void *args )
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     {
-        if (flags) FIXME( "flags %08x not supported\n", flags );
+        if (flags) FIXME( "flags %#x not supported\n", flags );
 
         /* only the hash size must match, not the actual hash function */
         switch (params->hash_len)
@@ -1540,7 +1540,7 @@ static NTSTATUS key_asymmetric_verify( void *args )
     }
     case ALG_ID_DSA:
     {
-        if (flags) FIXME( "flags %08x not supported\n", flags );
+        if (flags) FIXME( "flags %#x not supported\n", flags );
         if (params->hash_len != 20)
         {
             FIXME( "hash size %u not supported\n", params->hash_len );
@@ -1674,7 +1674,7 @@ static NTSTATUS key_asymmetric_sign( void *args )
     }
     else if (key->alg_id == ALG_ID_DSA)
     {
-        if (flags) FIXME( "flags %08x not supported\n", flags );
+        if (flags) FIXME( "flags %#x not supported\n", flags );
         if (params->input_len != 20)
         {
             FIXME( "hash size %u not supported\n", params->input_len );
@@ -1698,12 +1698,12 @@ static NTSTATUS key_asymmetric_sign( void *args )
     }
     else if (!flags)
     {
-         WARN( "invalid flags %08x\n", flags );
+         WARN( "invalid flags %#x\n", flags );
          return STATUS_INVALID_PARAMETER;
     }
     else
     {
-        FIXME( "flags %08x not implemented\n", flags );
+        FIXME( "flags %#x not implemented\n", flags );
         return STATUS_NOT_IMPLEMENTED;
     }
 
