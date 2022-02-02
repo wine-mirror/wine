@@ -204,48 +204,6 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID *sOtherDirs);
  * Shell Namespace Routines
  */
 
-/* Generic structure used by several messages */
-typedef struct
-{
-  DWORD          dwReserved;
-  DWORD          dwReserved2;
-  LPCITEMIDLIST  pidl;
-  LPDWORD        lpdwUser;
-} SFVCBINFO, * LPSFVCBINFO;
-typedef const SFVCBINFO * LPCSFVCBINFO;
-
-/* SFVCB_SELECTIONCHANGED structure */
-typedef struct
-{
-  UINT           uOldState;
-  UINT           uNewState;
-  LPCITEMIDLIST  pidl;
-  LPDWORD        lpdwUser;
-} SFVSELECTSTATE, * LPSFVSELECTSTATE;
-typedef const SFVSELECTSTATE * LPCSFVSELECTSTATE;
-
-/* SFVCB_COPYHOOKCALLBACK structure */
-typedef struct
-{
-  HWND    hwnd;
-  UINT    wFunc;
-  UINT    wFlags;
-  LPCSTR  pszSrcFile;
-  DWORD   dwSrcAttribs;
-  LPCSTR  pszDestFile;
-  DWORD   dwDestAttribs;
-} SFVCOPYHOOKINFO, * LPSFVCOPYHOOKINFO;
-typedef const SFVCOPYHOOKINFO * LPCSFVCOPYHOOKINFO;
-
-/* SFVCB_GETDETAILSOF structure */
-typedef struct
-{
-  LPCITEMIDLIST  pidl;
-  int            fmt;
-  int            cx;
-  STRRET         lpText;
-} SFVCOLUMNINFO, * LPSFVCOLUMNINFO;
-
 /****************************************************************************
  * Misc Stuff
  */
