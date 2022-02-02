@@ -172,7 +172,7 @@ static DWORD parse_port( const WCHAR *str, DWORD len, INTERNET_PORT *ret )
  */
 BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW uc )
 {
-    WCHAR *p, *q, *r, *url_decoded = NULL, *url_escaped = NULL;
+    WCHAR *p, *q, *r, *url_transformed = NULL;
     INTERNET_SCHEME scheme_number = 0;
     struct url_component scheme, username, password, hostname, path, extra;
     BOOL overflow = FALSE;
@@ -189,25 +189,26 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
     if (flags & ICU_ESCAPE)
     {
-        if ((err = escape_url( url, &len, &url_escaped )))
+        if ((err = escape_url( url, &len, &url_transformed )))
         {
             SetLastError( err );
             return FALSE;
         }
-        url = url_escaped;
+        url = url_transformed;
     }
     else if (flags & ICU_DECODE)
     {
-        if (!(url_decoded = decode_url( url, &len )))
+        if (!(url_transformed = decode_url( url, &len )))
         {
             SetLastError( ERROR_OUTOFMEMORY );
             return FALSE;
         }
-        url = url_decoded;
+        url = url_transformed;
     }
     if (!(p = wcschr( url, ':' )))
     {
         SetLastError( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
+        free( url_transformed );
         return FALSE;
     }
     if (p - url == 4 && !wcsnicmp( url, L"http", 4 )) scheme_number = INTERNET_SCHEME_HTTP;
@@ -331,8 +332,7 @@ exit:
         if (overflow) err = ERROR_INSUFFICIENT_BUFFER;
         uc->nScheme = scheme_number;
     }
-    free( url_decoded );
-    free( url_escaped );
+    free( url_transformed );
     SetLastError( err );
     return !err;
 }
