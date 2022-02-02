@@ -40,6 +40,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hnetcfg);
 
+struct port_mapping
+{
+    BSTR external_ip;
+    LONG external;
+    BSTR protocol;
+    LONG internal;
+    BSTR client;
+    VARIANT_BOOL enabled;
+    BSTR descr;
+};
+
+struct xml_value_desc
+{
+    const WCHAR *name;
+    BSTR value;
+};
+
 static struct
 {
     LONG refs;
@@ -49,10 +66,31 @@ static struct
     WCHAR desc_urlpath[128];
     WCHAR control_url[256];
     unsigned int version;
+    struct port_mapping *mappings;
+    unsigned int mapping_count;
 }
 upnp_gateway_connection;
 
 static SRWLOCK upnp_gateway_connection_lock = SRWLOCK_INIT;
+
+static void free_port_mapping( struct port_mapping *mapping )
+{
+    SysFreeString( mapping->external_ip );
+    SysFreeString( mapping->protocol );
+    SysFreeString( mapping->client );
+    SysFreeString( mapping->descr );
+}
+
+static void free_mappings(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < upnp_gateway_connection.mapping_count; ++i)
+        free_port_mapping( &upnp_gateway_connection.mappings[i] );
+    free( upnp_gateway_connection.mappings );
+    upnp_gateway_connection.mappings = NULL;
+    upnp_gateway_connection.mapping_count = 0;
+}
 
 static BOOL parse_search_response( char *response, WCHAR *locationW, unsigned int location_size )
 {
@@ -171,6 +209,64 @@ done:
     return ret;
 }
 
+static BOOL get_xml_elements( const char *desc_xml, struct xml_value_desc *values, unsigned int value_count )
+{
+    XmlNodeType node_type;
+    IXmlReader *reader;
+    const WCHAR *value;
+    BOOL ret = FALSE;
+    IStream *stream;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < value_count; ++i) assert( !values[i].value );
+
+    if (!(stream = SHCreateMemStream( (BYTE *)desc_xml, strlen( desc_xml ) + 1 ))) return FALSE;
+    if (FAILED(hr = CreateXmlReader( &IID_IXmlReader, (void **)&reader, NULL )))
+    {
+        IStream_Release( stream );
+        return FALSE;
+    }
+    if (FAILED(hr = IXmlReader_SetInput( reader, (IUnknown*)stream ))) goto done;
+
+    while (SUCCEEDED(IXmlReader_Read( reader, &node_type )) && node_type != XmlNodeType_None)
+    {
+        if (node_type != XmlNodeType_Element) continue;
+
+        if (FAILED(IXmlReader_GetQualifiedName( reader, &value, NULL ))) goto done;
+        for (i = 0; i < value_count; ++i)
+            if (!wcsicmp( value, values[i].name )) break;
+        if (i == value_count) continue;
+        if (FAILED(IXmlReader_Read(reader, &node_type ))) goto done;
+        if (node_type != XmlNodeType_Text)
+        {
+            if (node_type == XmlNodeType_EndElement) value = L"";
+            else                                     goto done;
+        }
+        if (FAILED(IXmlReader_GetValue( reader, &value, NULL ))) goto done;
+        if (values[i].value)
+        {
+            WARN( "Duplicate value %s.\n", debugstr_w(values[i].name) );
+            goto done;
+        }
+        if (!(values[i].value = SysAllocString( value ))) goto done;
+    }
+    ret = TRUE;
+
+done:
+    if (!ret)
+    {
+        for (i = 0; i < value_count; ++i)
+        {
+            SysFreeString( values[i].value );
+            values[i].value = NULL;
+        }
+    }
+    IXmlReader_Release( reader );
+    IStream_Release( stream );
+    return ret;
+}
+
 static BOOL open_gateway_connection(void)
 {
     static const int timeout = 3000;
@@ -270,10 +366,218 @@ static BOOL get_control_url(void)
 static void gateway_connection_cleanup(void)
 {
     TRACE( ".\n" );
+    free_mappings();
     WinHttpCloseHandle( upnp_gateway_connection.connection );
     WinHttpCloseHandle( upnp_gateway_connection.session );
     if (upnp_gateway_connection.winsock_initialized) WSACleanup();
     memset( &upnp_gateway_connection, 0, sizeof(upnp_gateway_connection) );
+}
+
+static BOOL request_service( const WCHAR *function, const struct xml_value_desc *request_param,
+                             unsigned int request_param_count, struct xml_value_desc *result,
+                             unsigned int result_count, DWORD *http_status, BSTR *server_error_code_str )
+{
+    static const char request_template_header[] =
+        "<?xml version=\"1.0\"?>\r\n"
+        "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" "
+                                "SOAP-ENV:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\r\n"
+        "  <SOAP-ENV:Body>\r\n"
+        "    <m:%S xmlns:m=\"urn:schemas-upnp-org:service:WANIPConnection:%u\">\r\n";
+    static const char request_template_footer[] =
+        "    </m:%S>\r\n"
+        "  </SOAP-ENV:Body>\r\n"
+        "</SOAP-ENV:Envelope>\r\n";
+
+    unsigned int request_data_size, request_len, offset, i, reply_buffer_size;
+    char *request_data, *reply_buffer = NULL, *ptr;
+    struct xml_value_desc error_value_desc;
+    WCHAR request_headers[1024];
+    HINTERNET request = NULL;
+    BOOL ret = FALSE;
+    DWORD size;
+
+    *server_error_code_str = NULL;
+    request_data_size = strlen(request_template_header) + strlen(request_template_footer) + 2 * wcslen( function )
+                        + 9 /* version + zero terminator */;
+    for (i = 0; i < request_param_count; ++i)
+    {
+        request_data_size += 13 + 2 * wcslen( request_param[i].name ) + wcslen( request_param[i].value );
+    }
+    if (!(request_data = malloc( request_data_size ))) return FALSE;
+
+    request = WinHttpOpenRequest( upnp_gateway_connection.connection, L"POST", upnp_gateway_connection.control_url,
+                                  NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0 );
+    if (!request) goto done;
+
+    ptr = request_data;
+    snprintf( ptr, request_data_size, request_template_header, function, upnp_gateway_connection.version );
+    offset = strlen( ptr );
+    ptr += offset;
+    request_data_size -= offset;
+    for (i = 0; i < request_param_count; ++i)
+    {
+        snprintf( ptr, request_data_size, "      <%S>%S</%S>\r\n",
+                  request_param[i].name, request_param[i].value, request_param[i].name);
+        offset = strlen( ptr );
+        ptr += offset;
+        request_data_size -= offset;
+    }
+    snprintf( ptr, request_data_size, request_template_footer, function );
+
+    request_len = strlen( request_data );
+    swprintf( request_headers, ARRAY_SIZE(request_headers),
+            L"SOAPAction: \"urn:schemas-upnp-org:service:WANIPConnection:%u#%s\"\r\n"
+            L"Content-Type: text/xml",
+            upnp_gateway_connection.version, function );
+    if (!WinHttpSendRequest( request, request_headers, -1, request_data, request_len, request_len, 0 ))
+    {
+        WARN( "Error sending request %u.\n", GetLastError() );
+        goto done;
+    }
+    if (!WinHttpReceiveResponse(request, NULL))
+    {
+        WARN( "Error receiving response %u.\n", GetLastError() );
+        goto done;
+    }
+    size = sizeof(*http_status);
+    if (!WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, http_status, &size, NULL) || *http_status != HTTP_STATUS_OK )
+    {
+        if (*http_status != HTTP_STATUS_SERVER_ERROR)
+        {
+            ret = TRUE;
+            goto done;
+        }
+    }
+
+    offset = 0;
+    reply_buffer_size = 1024;
+    if (!(reply_buffer = malloc( reply_buffer_size ))) goto done;
+    while ((ret = WinHttpReadData( request, reply_buffer + offset, reply_buffer_size - offset - 1, &size )) && size)
+    {
+        offset += size;
+        if (offset + 1 == reply_buffer_size)
+        {
+            char *new;
+
+            reply_buffer_size *= 2;
+            if (!(new = realloc( reply_buffer, reply_buffer_size ))) goto done;
+            reply_buffer = new;
+        }
+    }
+    reply_buffer[offset] = 0;
+
+    if (*http_status == HTTP_STATUS_OK) ret = get_xml_elements( reply_buffer, result, result_count );
+    else
+    {
+        error_value_desc.name = L"errorCode";
+        error_value_desc.value = NULL;
+        if ((ret = get_xml_elements( reply_buffer, &error_value_desc, 1 )))
+            *server_error_code_str = error_value_desc.value;
+    }
+
+done:
+    free( reply_buffer );
+    free( request_data );
+    WinHttpCloseHandle( request );
+    return ret;
+}
+
+enum port_mapping_parameter
+{
+    PM_EXTERNAL_IP,
+    PM_EXTERNAL,
+    PM_PROTOCOL,
+    PM_INTERNAL,
+    PM_CLIENT,
+    PM_ENABLED,
+    PM_DESC,
+    PM_LEASE_DURATION,
+    PM_LAST
+};
+
+static struct xml_value_desc port_mapping_template[] =
+{
+    { L"NewRemoteHost" },
+    { L"NewExternalPort" },
+    { L"NewProtocol" },
+    { L"NewInternalPort" },
+    { L"NewInternalClient" },
+    { L"NewEnabled" },
+    { L"NewPortMappingDescription" },
+    { L"NewLeaseDuration" },
+};
+
+static LONG long_from_bstr( BSTR s )
+{
+    if (!s) return 0;
+    return _wtoi( s );
+}
+
+static void update_mapping_list(void)
+{
+    struct xml_value_desc mapping_desc[ARRAY_SIZE(port_mapping_template)];
+    struct xml_value_desc index_param;
+    struct port_mapping *new_mappings;
+    unsigned int i, index;
+    WCHAR index_str[9];
+    BSTR error_str;
+    DWORD status;
+    BOOL ret;
+
+    free_mappings();
+
+    index_param.name = L"NewPortMappingIndex";
+
+    index = 0;
+    while (1)
+    {
+        new_mappings = realloc( upnp_gateway_connection.mappings, (index + 1) * sizeof(*new_mappings) );
+        if (!new_mappings) break;
+        upnp_gateway_connection.mappings = new_mappings;
+
+        memcpy( mapping_desc, port_mapping_template, sizeof(mapping_desc) );
+        swprintf( index_str, ARRAY_SIZE(index_str), L"%u", index );
+        index_param.value = SysAllocString( index_str );
+        ret = request_service( L"GetGenericPortMappingEntry", &index_param, 1,
+                               mapping_desc, ARRAY_SIZE(mapping_desc), &status, &error_str );
+        SysFreeString( index_param.value );
+        if (!ret) break;
+        if (status != HTTP_STATUS_OK)
+        {
+            if (error_str)
+            {
+                if (long_from_bstr( error_str ) != 713)
+                    WARN( "Server returned error %s.\n", debugstr_w(error_str) );
+                SysFreeString( error_str );
+            }
+            break;
+        }
+        new_mappings[index].external_ip = mapping_desc[PM_EXTERNAL_IP].value;
+        mapping_desc[PM_EXTERNAL_IP].value = NULL;
+        new_mappings[index].external = long_from_bstr( mapping_desc[PM_EXTERNAL].value );
+        new_mappings[index].protocol = mapping_desc[PM_PROTOCOL].value;
+        mapping_desc[PM_PROTOCOL].value = NULL;
+        new_mappings[index].internal = long_from_bstr( mapping_desc[PM_INTERNAL].value );
+        new_mappings[index].client = mapping_desc[PM_CLIENT].value;
+        mapping_desc[PM_CLIENT].value = NULL;
+        if (!wcsicmp( mapping_desc[PM_ENABLED].value, L"true" ) || long_from_bstr( mapping_desc[PM_ENABLED].value ))
+            new_mappings[index].enabled = VARIANT_TRUE;
+        else
+            new_mappings[index].enabled = VARIANT_FALSE;
+        new_mappings[index].descr = mapping_desc[PM_DESC].value;
+        mapping_desc[PM_DESC].value = NULL;
+
+        TRACE( "%s %s %s:%u -> %s:%u, enabled %d.\n", debugstr_w(new_mappings[index].descr),
+               debugstr_w(new_mappings[index].protocol), debugstr_w(new_mappings[index].external_ip),
+               new_mappings[index].external, debugstr_w(new_mappings[index].client),
+               new_mappings[index].internal, new_mappings[index].enabled );
+
+        for (i = 0; i < ARRAY_SIZE(mapping_desc); ++i)
+            SysFreeString( mapping_desc[i].value );
+        upnp_gateway_connection.mappings = new_mappings;
+        upnp_gateway_connection.mapping_count = ++index;
+    }
 }
 
 static BOOL init_gateway_connection(void)
@@ -363,6 +667,8 @@ static BOOL init_gateway_connection(void)
     }
     TRACE( "control_url %s, version %u.\n", debugstr_w(upnp_gateway_connection.control_url),
             upnp_gateway_connection.version );
+
+    update_mapping_list();
     return TRUE;
 }
 
