@@ -52,7 +52,7 @@
 @ stdcall EtwEventSetInformation(int64 long ptr long)
 @ stdcall EtwEventUnregister(int64)
 @ stdcall EtwEventWrite(int64 ptr long ptr)
-@ stdcall EtwEventWriteString(int64 long int64 ptr)
+@ stdcall EtwEventWriteString(int64 long int64 wstr)
 @ stdcall EtwEventWriteTransfer(int64 ptr ptr ptr long ptr)
 @ stdcall EtwGetTraceEnableFlags(int64)
 @ stdcall EtwGetTraceEnableLevel(int64)
@@ -594,7 +594,7 @@
 @ stub RtlDeleteNoSplay
 @ stub RtlDeleteOwnersRanges
 @ stub RtlDeleteRange
-@ stdcall RtlDeleteRegistryValue(long ptr ptr)
+@ stdcall RtlDeleteRegistryValue(long ptr wstr)
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(ptr)
 @ stdcall RtlDeleteTimer(ptr ptr ptr)
@@ -1089,7 +1089,7 @@
 @ stdcall RtlWow64IsWowGuestMachineSupported(long ptr)
 @ stdcall -arch=win64 RtlWow64SetThreadContext(long ptr)
 @ stub RtlWriteMemoryStream
-@ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long)
+@ stdcall RtlWriteRegistryValue(long ptr wstr long ptr long)
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long)
 @ stdcall RtlZombifyActivationContext(ptr)
