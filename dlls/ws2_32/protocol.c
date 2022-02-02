@@ -806,7 +806,7 @@ static struct hostent *get_local_ips( char *hostname )
     IP_ADAPTER_INFO *adapters = NULL, *k;
     struct hostent *hostlist = NULL;
     MIB_IPFORWARDTABLE *routes = NULL;
-    struct route *route_addrs = NULL;
+    struct route *route_addrs = NULL, *new_route_addrs;
     DWORD adap_size, route_size, n;
 
     /* Obtain the size of the adapter list and routing table, also allocate memory */
@@ -852,9 +852,10 @@ static struct hostent *get_local_ips( char *hostname )
         }
         if (exists)
             continue;
-        route_addrs = realloc( route_addrs, (numroutes + 1) * sizeof(struct route) );
-        if (!route_addrs)
+        new_route_addrs = realloc( route_addrs, (numroutes + 1) * sizeof(struct route) );
+        if (!new_route_addrs)
             goto cleanup;
+        route_addrs = new_route_addrs;
         route_addrs[numroutes].interface = ifindex;
         route_addrs[numroutes].metric = ifmetric;
         route_addrs[numroutes].default_route = ifdefault;
