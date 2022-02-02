@@ -957,8 +957,6 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
             if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &mixer->output.rt_formats[i].device,
                     &video_desc, rt_format, MAX_MIXER_INPUT_SUBSTREAMS, &mixer->processor)))
             {
-                ERR("picked dxva device %s\n", debugstr_guid(&mixer->output.rt_formats[i].device));
-
                 if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&mixer->aperture,
                         sizeof(mixer->aperture), NULL)))
                 {
