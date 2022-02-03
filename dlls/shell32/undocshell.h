@@ -208,16 +208,6 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID *sOtherDirs);
  * Misc Stuff
  */
 
-/* SHWaitForFileToOpen flags */
-#define SHWFF_ADD     0x01
-#define SHWFF_REMOVE  0x02
-#define SHWFF_WAIT    0x04
-
-BOOL WINAPI SHWaitForFileToOpen(
-	LPCITEMIDLIST pidl,
-	DWORD dwFlags,
-	DWORD dwTimeout);
-
 WORD WINAPI ArrangeWindows(HWND hwndParent, DWORD dwReserved, const RECT *lpRect,
         WORD cKids, const HWND *lpKids);
 
