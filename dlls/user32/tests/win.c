@@ -7232,7 +7232,7 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rc, &rcNonClient), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcNonClient), wine_dbgstr_rect(&rc));
 
-    ShowWindow(hwnd, SW_RESTORE);
+    ret = ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
@@ -7246,7 +7246,7 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
-    ShowWindow(hwnd, SW_MAXIMIZE);
+    ret = ShowWindow(hwnd, SW_MAXIMIZE);
     ok(ret, "not expected ret: %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
@@ -7264,7 +7264,7 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcResized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcResized), wine_dbgstr_rect(&rc));
 
-    ShowWindow(hwnd, SW_RESTORE);
+    ret = ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
