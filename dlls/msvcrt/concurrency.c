@@ -169,7 +169,7 @@ typedef struct cs_queue
 {
     struct cs_queue *next;
 #if _MSVCR_VER >= 110
-    BOOL free;
+    LONG free;
     int unknown;
 #endif
 } cs_queue;
@@ -249,7 +249,7 @@ typedef struct thread_wait_entry
 typedef struct thread_wait
 {
     void *signaled;
-    int pending_waits;
+    LONG pending_waits;
     thread_wait_entry entries[1];
 } thread_wait;
 
@@ -263,7 +263,7 @@ typedef struct
 #if _MSVCR_VER >= 110
 typedef struct cv_queue {
     struct cv_queue *next;
-    BOOL expired;
+    LONG expired;
 } cv_queue;
 
 typedef struct {

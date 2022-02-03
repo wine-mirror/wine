@@ -266,7 +266,7 @@ typedef enum {
 typedef struct _iosarray {
     struct _iosarray *next;
     int index;
-    int long_val;
+    LONG long_val;
     void *ptr_val;
 } IOS_BASE_iosarray;
 

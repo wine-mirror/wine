@@ -954,7 +954,7 @@ int __cdecl __uncaught_exceptions(void)
 typedef struct
 {
     EXCEPTION_RECORD *rec;
-    int *ref; /* not binary compatible with native */
+    LONG *ref; /* not binary compatible with native */
 } exception_ptr;
 
 /*********************************************************************

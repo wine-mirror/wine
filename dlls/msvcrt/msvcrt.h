@@ -66,7 +66,7 @@ typedef struct __lc_time_data {
     LCID lcid;
 #endif
     int unk;
-    int refcount;
+    LONG refcount;
 #if _MSVCR_VER == 0 || _MSVCR_VER >= 100
     union {
         const wchar_t *wstr[43];
@@ -90,7 +90,7 @@ typedef struct __lc_time_data {
 } __lc_time_data;
 
 typedef struct threadmbcinfostruct {
-    int refcount;
+    LONG refcount;
     int mbcodepage;
     int ismbcodepage;
     int mblcid;

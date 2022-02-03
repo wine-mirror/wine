@@ -1134,7 +1134,7 @@ const char * __thiscall type_info_name_internal_method(type_info * _this, struct
 typedef struct
 {
     EXCEPTION_RECORD *rec;
-    int *ref; /* not binary compatible with native msvcr100 */
+    LONG *ref; /* not binary compatible with native msvcr100 */
 } exception_ptr;
 
 #if _MSVCR_VER >= 100
