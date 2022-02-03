@@ -369,13 +369,34 @@ sub generate_struct($)
     return $ret;
 }
 
+my %all_functions;
+my %all_enums;
+my %all_types;
+
+sub parse_feature($)
+{
+    my $feature = shift;
+
+    foreach my $cmd ($feature->findnodes("./require/command"))
+    {
+        $core_functions{$cmd->{name}} = $all_functions{$cmd->{name}};
+    }
+    foreach my $enum ($feature->findnodes("./require/enum"))
+    {
+        $header_enums{$enum->{name}} = $all_enums{$enum->{name}};
+    }
+    foreach my $type ($feature->findnodes("./require/type"))
+    {
+        next unless $all_types{$type->{name}};
+        push @header_types, $type->{name} unless $header_types{$type->{name}};
+        $header_types{$type->{name}} = $all_types{$type->{name}};
+    }
+}
+
 sub parse_file($)
 {
     my $file = shift;
     my $xml = XML::LibXML->load_xml( location => $file );
-    my %functions;
-    my %enums;
-    my %types;
 
     # save all functions
     foreach my $command ($xml->findnodes("/registry/commands/command"))
@@ -384,7 +405,7 @@ sub parse_file($)
         my $name = @{$command->findnodes("./proto/name")}[0];
         $proto->removeChild( $name );
         my @params = $command->findnodes("./param");
-        $functions{$name->textContent()} = [ $proto, \@params ];
+        $all_functions{$name->textContent()} = [ $proto, \@params ];
     }
 
     # save all enums
@@ -392,11 +413,11 @@ sub parse_file($)
     {
         if (defined $enum->{value})
         {
-            $enums{$enum->{name}} = $enum->{value};
+            $all_enums{$enum->{name}} = $enum->{value};
         }
         else
         {
-            $enums{$enum->{name}} = "(1 << " . $enum->{bitpos} . ")";
+            $all_enums{$enum->{name}} = "(1 << " . $enum->{bitpos} . ")";
         }
     }
 
@@ -407,7 +428,7 @@ sub parse_file($)
         {
             my $name = @{$type->findnodes("./name")}[0];
             $name = $name->textContent;
-            $types{$name} = $type;
+            $all_types{$name} = $type;
 
             my $basetype = @{$type->findnodes("./type")}[0];
             if ($type->textContent() =~ /[[*]/)
@@ -426,28 +447,14 @@ sub parse_file($)
         elsif ($type->{category} eq "struct")
         {
             my $name = $type->{name};
-            $types{$name} = $type;
+            $all_types{$name} = $type;
         }
     }
 
     # generate core functions
     foreach my $feature ($xml->findnodes("/registry/feature"))
     {
-        next unless defined $core_categories{$feature->{name}};
-        foreach my $cmd ($feature->findnodes("./require/command"))
-        {
-            $core_functions{$cmd->{name}} = $functions{$cmd->{name}};
-        }
-        foreach my $enum ($feature->findnodes("./require/enum"))
-        {
-            $header_enums{$enum->{name}} = $enums{$enum->{name}};
-        }
-        foreach my $type ($feature->findnodes("./require/type"))
-        {
-            next unless $types{$type->{name}};
-            push @header_types, $type->{name} unless $header_types{$type->{name}};
-            $header_types{$type->{name}} = $types{$type->{name}};
-        }
+        parse_feature($feature) if defined $core_categories{$feature->{name}};
     }
 
     # generate extension list
