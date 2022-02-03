@@ -107,7 +107,7 @@ static ULONG WINAPI SupportErrorInfo_AddRef(ISupportErrorInfo *iface)
 {
     SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref );
+    TRACE("%p, refcount %ld.\n", iface, ref );
     return ref;
 }
 
@@ -116,9 +116,9 @@ static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
     SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
-    if (ref == 0)
+    if (!ref)
         heap_free(This);
 
     return ref;
@@ -1350,7 +1350,7 @@ static HRESULT xslt_doc_get_uri(const xmlChar *uri, void *_ctxt, xsltLoadType ty
     SysFreeString(uriW);
     if (FAILED(hr))
     {
-        WARN("Failed to create href uri, %#x.\n", hr);
+        WARN("Failed to create href uri, %#lx.\n", hr);
         return hr;
     }
 
@@ -1364,14 +1364,14 @@ static HRESULT xslt_doc_get_uri(const xmlChar *uri, void *_ctxt, xsltLoadType ty
         SysFreeString(baseuriW);
         if (FAILED(hr))
         {
-            WARN("Failed to create base uri, %#x.\n", hr);
+            WARN("Failed to create base uri, %#lx.\n", hr);
             return hr;
         }
 
         hr = CoInternetCombineIUri(base_uri, href_uri, 0, doc_uri, 0);
         IUri_Release(base_uri);
         if (FAILED(hr))
-            WARN("Failed to combine uris, %#x.\n", hr);
+            WARN("Failed to combine uris, hr %#lx.\n", hr);
     }
     else
     {
@@ -1717,14 +1717,9 @@ static HRESULT WINAPI unknode_GetTypeInfo(
     LCID lcid,
     ITypeInfo** ppTInfo )
 {
-    unknode *This = unknode_from_IXMLDOMNode( iface );
-    HRESULT hr;
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
 
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    hr = get_typeinfo(IXMLDOMNode_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDOMNode_tid, ppTInfo);
 }
 
 static HRESULT WINAPI unknode_GetIDsOfNames(
@@ -1735,12 +1730,10 @@ static HRESULT WINAPI unknode_GetIDsOfNames(
     LCID lcid,
     DISPID* rgDispId )
 {
-    unknode *This = unknode_from_IXMLDOMNode( iface );
-
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
     if(!rgszNames || cNames == 0 || !rgDispId)
@@ -1767,17 +1760,16 @@ static HRESULT WINAPI unknode_Invoke(
     EXCEPINFO* pExcepInfo,
     UINT* puArgErr )
 {
-    unknode *This = unknode_from_IXMLDOMNode( iface );
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IXMLDOMNode_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMNode_iface, dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }

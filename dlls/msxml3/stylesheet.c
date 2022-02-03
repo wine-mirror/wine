@@ -139,7 +139,7 @@ static ULONG WINAPI xsltemplate_AddRef( IXSLTemplate *iface )
 {
     xsltemplate *This = impl_from_IXSLTemplate( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -148,7 +148,7 @@ static ULONG WINAPI xsltemplate_Release( IXSLTemplate *iface )
     xsltemplate *This = impl_from_IXSLTemplate( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     if ( ref == 0 )
     {
         if (This->node) IXMLDOMNode_Release( This->node );
@@ -317,7 +317,7 @@ static ULONG WINAPI xslprocessor_AddRef( IXSLProcessor *iface )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -326,7 +326,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
     xslprocessor *This = impl_from_IXSLProcessor( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     if ( ref == 0 )
     {
         struct xslprocessor_par *par, *par2;
@@ -509,7 +509,7 @@ static HRESULT WINAPI xslprocessor_put_output(
         if (FAILED(hr))
         {
             output_type = PROCESSOR_OUTPUT_NOT_SET;
-            WARN("failed to get output interface, 0x%08x\n", hr);
+            WARN("failed to get output interface, hr %#lx.\n", hr);
         }
         break;
     default:

@@ -755,14 +755,14 @@ void schemasCleanup(void)
 static LONG cache_entry_add_ref(cache_entry* entry)
 {
     LONG ref = InterlockedIncrement(&entry->ref);
-    TRACE("(%p)->(%d)\n", entry, ref);
+    TRACE("%p, refcount %ld.\n", entry, ref);
     return ref;
 }
 
 static LONG cache_entry_release(cache_entry* entry)
 {
     LONG ref = InterlockedDecrement(&entry->ref);
-    TRACE("(%p)->(%d)\n", entry, ref);
+    TRACE("%p, refcount %ld.\n", entry, ref);
 
     if (ref == 0)
     {
@@ -936,7 +936,7 @@ static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXM
     hr = IXMLDOMDocument3_load(domdoc, url, &b);
     if (hr != S_OK)
     {
-        ERR("IXMLDOMDocument3_load() returned 0x%08x\n", hr);
+        ERR("load() returned %#lx.\n", hr);
         if (b != VARIANT_TRUE)
         {
             FIXME("Failed to load doc at %s\n", debugstr_w(V_BSTR(&url)));
@@ -1126,7 +1126,7 @@ static ULONG WINAPI schema_cache_AddRef(IXMLDOMSchemaCollection2* iface)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
@@ -1134,9 +1134,9 @@ static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection2* iface)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %ld.\n", iface, ref);
 
-    if (ref == 0)
+    if (!ref)
     {
         int i;
 
@@ -1367,7 +1367,7 @@ static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection2* if
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
 
-    TRACE("(%p)->(%i %p)\n", This, index, uri);
+    TRACE("%p, %ld, %p.\n", iface, index, uri);
 
     if (!uri)
         return E_POINTER;

@@ -88,26 +88,25 @@ static HRESULT WINAPI domfrag_QueryInterface(
     return S_OK;
 }
 
-static ULONG WINAPI domfrag_AddRef(
-    IXMLDOMDocumentFragment *iface )
+static ULONG WINAPI domfrag_AddRef(IXMLDOMDocumentFragment *iface)
 {
-    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    domfrag *domfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    ULONG ref = InterlockedIncrement(&domfrag->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
-static ULONG WINAPI domfrag_Release(
-    IXMLDOMDocumentFragment *iface )
+static ULONG WINAPI domfrag_Release(IXMLDOMDocumentFragment *iface)
 {
-    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    ULONG ref = InterlockedDecrement( &This->ref );
+    domfrag *domfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    ULONG ref = InterlockedDecrement(&domfrag->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
-    if ( ref == 0 )
+    TRACE("%p, refcount %lu.\n", iface, ref);
+
+    if (!ref)
     {
-        destroy_xmlnode(&This->node);
-        heap_free( This );
+        destroy_xmlnode(&domfrag->node);
+        heap_free(domfrag);
     }
 
     return ref;

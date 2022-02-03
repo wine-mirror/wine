@@ -118,7 +118,7 @@ static ULONG WINAPI xmlnodelist_AddRef(
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -128,8 +128,9 @@ static ULONG WINAPI xmlnodelist_Release(
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%d)\n", This, ref);
-    if ( ref == 0 )
+    TRACE("%p, refcount %lu.\n", iface, ref);
+
+    if (!ref)
     {
         xmldoc_release( This->parent->doc );
         if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
@@ -196,7 +197,7 @@ static HRESULT WINAPI xmlnodelist_get_item(
     xmlNodePtr curr;
     LONG nodeIndex = 0;
 
-    TRACE("(%p)->(%d %p)\n", This, index, listItem);
+    TRACE("%p, %ld, %p.\n", iface, index, listItem);
 
     if(!listItem)
         return E_INVALIDARG;
@@ -312,7 +313,7 @@ static HRESULT xmlnodelist_get_dispid(IUnknown *iface, BSTR name, DWORD flags, D
         return DISP_E_UNKNOWNNAME;
 
     *dispid = DISPID_DOM_COLLECTION_BASE + idx;
-    TRACE("ret %x\n", *dispid);
+    TRACE("ret %lx\n", *dispid);
     return S_OK;
 }
 
@@ -321,7 +322,7 @@ static HRESULT xmlnodelist_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( (IXMLDOMNodeList*)iface );
 
-    TRACE("(%p)->(%x %x %x %p %p %p)\n", This, id, lcid, flags, params, res, ei);
+    TRACE("%p, %ld, %lx, %x, %p, %p, %p.\n", iface, id, lcid, flags, params, res, ei);
 
     if (id >= DISPID_DOM_COLLECTION_BASE && id <= DISPID_DOM_COLLECTION_MAX)
     {

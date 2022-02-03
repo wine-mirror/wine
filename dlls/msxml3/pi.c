@@ -96,7 +96,7 @@ static ULONG WINAPI dom_pi_AddRef(
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -106,7 +106,7 @@ static ULONG WINAPI dom_pi_Release(
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);
@@ -900,7 +900,7 @@ static HRESULT dom_pi_remove_named_item(xmlNodePtr node, BSTR name, IXMLDOMNode 
 
 static HRESULT dom_pi_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode **item)
 {
-    FIXME("(%p)->(%d %p): stub\n", node, index, item);
+    FIXME("%p, %ld, %p: stub\n", node, index, item);
     return E_NOTIMPL;
 }
 
@@ -914,7 +914,7 @@ static HRESULT dom_pi_get_length(const xmlNodePtr node, LONG *length)
 
 static HRESULT dom_pi_next_node(const xmlNodePtr node, LONG *iter, IXMLDOMNode **nextNode)
 {
-    FIXME("(%p)->(%d %p): stub\n", node, *iter, nextNode);
+    FIXME("%p, %ld, %p: stub\n", node, *iter, nextNode);
     return E_NOTIMPL;
 }
 

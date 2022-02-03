@@ -76,24 +76,23 @@ static HRESULT WINAPI domimpl_QueryInterface(
     return S_OK;
 }
 
-static ULONG WINAPI domimpl_AddRef(
-    IXMLDOMImplementation *iface )
+static ULONG WINAPI domimpl_AddRef(IXMLDOMImplementation *iface)
 {
-    domimpl *This = impl_from_IXMLDOMImplementation( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
+    ULONG ref = InterlockedIncrement(&domimpl->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
-static ULONG WINAPI domimpl_Release(
-    IXMLDOMImplementation *iface )
+static ULONG WINAPI domimpl_Release(IXMLDOMImplementation *iface)
 {
-    domimpl *This = impl_from_IXMLDOMImplementation( iface );
-    ULONG ref = InterlockedDecrement( &This->ref );
+    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
+    ULONG ref = InterlockedDecrement(&domimpl->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
-    if ( ref == 0 )
-        heap_free( This );
+    TRACE("%p, refcount %lu.\n", iface, ref);
+
+    if (!ref)
+        heap_free(domimpl);
 
     return ref;
 }

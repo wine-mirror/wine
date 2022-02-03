@@ -121,7 +121,7 @@ static ULONG WINAPI xmlnodemap_AddRef(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -131,8 +131,9 @@ static ULONG WINAPI xmlnodemap_Release(
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%d)\n", This, ref);
-    if ( ref == 0 )
+    TRACE("%p, refcount %lu.\n", iface, ref);
+
+    if (!ref)
     {
         xmlnode_release( This->node );
         xmldoc_release( This->node->doc );
@@ -225,7 +226,7 @@ static HRESULT WINAPI xmlnodemap_get_item(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
 
-    TRACE("(%p)->(%d %p)\n", This, index, item);
+    TRACE("%p, %ld, %p.\n", iface, index, item);
 
     return This->funcs->get_item(This->node, index, item);
 }
@@ -273,7 +274,7 @@ static HRESULT WINAPI xmlnodemap_nextNode(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
 
-    TRACE("(%p)->(%p: %d)\n", This, nextItem, This->iterator);
+    TRACE("%p, %p, %ld.\n", iface, nextItem, This->iterator);
 
     return This->funcs->next_node(This->node, &This->iterator, nextItem);
 }
@@ -283,7 +284,7 @@ static HRESULT WINAPI xmlnodemap_reset(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
 
-    TRACE("(%p)->(%d)\n", This, This->iterator);
+    TRACE("%p, %ld.\n", iface, This->iterator);
 
     This->iterator = 0;
 
@@ -371,7 +372,7 @@ static HRESULT xmlnodemap_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DI
         return DISP_E_UNKNOWNNAME;
 
     *dispid = DISPID_DOM_COLLECTION_BASE + idx;
-    TRACE("ret %x\n", *dispid);
+    TRACE("ret %lx\n", *dispid);
     return S_OK;
 }
 
@@ -380,7 +381,7 @@ static HRESULT xmlnodemap_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fla
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( (IXMLDOMNamedNodeMap*)iface );
 
-    TRACE("(%p)->(%x %x %x %p %p %p)\n", This, id, lcid, flags, params, res, ei);
+    TRACE("%p, %ld, %lx, %x, %p, %p, %p.\n", iface, id, lcid, flags, params, res, ei);
 
     V_VT(res) = VT_DISPATCH;
     V_DISPATCH(res) = NULL;

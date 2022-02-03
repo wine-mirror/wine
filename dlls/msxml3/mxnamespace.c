@@ -293,7 +293,7 @@ static HRESULT WINAPI namespacemanager_getDeclaredPrefix(IMXNamespaceManager *if
     HRESULT hr;
     BSTR prfx;
 
-    TRACE("(%p)->(%d %p %p)\n", This, index, prefix, prefix_len);
+    TRACE("%p, %ld, %p, %p.\n", This, index, prefix, prefix_len);
 
     if (!prefix_len) return E_POINTER;
 
@@ -315,15 +315,15 @@ static HRESULT WINAPI namespacemanager_getDeclaredPrefix(IMXNamespaceManager *if
 static HRESULT WINAPI namespacemanager_getPrefix(IMXNamespaceManager *iface,
     const WCHAR *uri, LONG index, WCHAR *prefix, int *prefix_len)
 {
-    namespacemanager *This = impl_from_IMXNamespaceManager( iface );
+    namespacemanager *manager = impl_from_IMXNamespaceManager(iface);
     HRESULT hr;
     BSTR prfx;
 
-    TRACE("(%p)->(%s %d %p %p)\n", This, debugstr_w(uri), index, prefix, prefix_len);
+    TRACE("%p, %s, %ld, %p, %p.\n", iface, debugstr_w(uri), index, prefix, prefix_len);
 
     if (!uri || !*uri || !prefix_len) return E_INVALIDARG;
 
-    hr = get_declared_prefix_uri(&This->ctxts, uri, &prfx);
+    hr = get_declared_prefix_uri(&manager->ctxts, uri, &prfx);
     if (hr == S_OK)
     {
         /* TODO: figure out what index argument is for */
@@ -429,9 +429,9 @@ static HRESULT WINAPI vbnamespacemanager_QueryInterface(IVBMXNamespaceManager *i
 
 static ULONG WINAPI vbnamespacemanager_AddRef(IVBMXNamespaceManager *iface)
 {
-    namespacemanager *This = impl_from_IVBMXNamespaceManager( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%u)\n", This, ref );
+    namespacemanager *manager = impl_from_IVBMXNamespaceManager(iface);
+    ULONG ref = InterlockedIncrement(&manager->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -440,9 +440,9 @@ static ULONG WINAPI vbnamespacemanager_Release(IVBMXNamespaceManager *iface)
     namespacemanager *This = impl_from_IVBMXNamespaceManager( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%u)\n", This, ref );
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
-    if ( ref == 0 )
+    if (!ref)
     {
         struct nscontext *ctxt, *ctxt2;
 

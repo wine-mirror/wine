@@ -195,20 +195,22 @@ static inline DOMFactory *DOMFactory_from_IClassFactory(IClassFactory *iface)
 
 static ULONG WINAPI DOMClassFactory_AddRef(IClassFactory *iface )
 {
-    DOMFactory *This = DOMFactory_from_IClassFactory(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) ref = %u\n", This, ref);
+    DOMFactory *factory = DOMFactory_from_IClassFactory(iface);
+    ULONG ref = InterlockedIncrement(&factory->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
 static ULONG WINAPI DOMClassFactory_Release(IClassFactory *iface )
 {
-    DOMFactory *This = DOMFactory_from_IClassFactory(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) ref = %u\n", This, ref);
-    if(!ref) {
-        heap_free(This);
-    }
+    DOMFactory *factory = DOMFactory_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&factory->ref);
+
+    TRACE("%p, refcount %lu.\n", iface, ref);
+
+    if (!ref)
+        heap_free(factory);
+
     return ref;
 }
 

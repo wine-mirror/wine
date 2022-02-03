@@ -95,9 +95,9 @@ static HRESULT WINAPI domattr_QueryInterface(
 static ULONG WINAPI domattr_AddRef(
     IXMLDOMAttribute *iface )
 {
-    domattr *This = impl_from_IXMLDOMAttribute( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p)->(%d)\n", This, ref);
+    domattr *attr = impl_from_IXMLDOMAttribute( iface );
+    ULONG ref = InterlockedIncrement( &attr->ref );
+    TRACE("%p, refcount %lu.\n", iface, ref);
     return ref;
 }
 
@@ -107,7 +107,7 @@ static ULONG WINAPI domattr_Release(
     domattr *This = impl_from_IXMLDOMAttribute( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);
