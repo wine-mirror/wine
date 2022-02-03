@@ -188,6 +188,7 @@ static void test_static_port_mapping_collection( IStaticPortMappingCollection *p
 
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void **)&enum_ports);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    IUnknown_Release( unk );
 
     refcount2 = get_refcount((IUnknown *)ports);
     ok(refcount2 == refcount, "Got unexpected refcount %u, refcount2 %u.\n", refcount, refcount2);
