@@ -812,7 +812,7 @@ case $host_os in
 
   *)
     AC_DEFINE(_GNU_SOURCE,1,[Define to 1 to enable GNU extensions on Linux])
-    AC_DEFINE(_TIME_BITS,64,[Define to 64 to enable 64-bit time_t on Linux])
+    test "$ac_cv_sys_file_offset_bits" = 64 && AC_DEFINE(_TIME_BITS,64,[Define to 64 to enable 64-bit time_t on Linux])
     case $host_cpu in
       *i[[3456789]]86*)
         DLLFLAGS="$DLLFLAGS -fno-PIC"
