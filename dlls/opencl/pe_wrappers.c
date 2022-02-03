@@ -21,6 +21,7 @@
 #include "opencl_private.h"
 #include "opencl_types.h"
 #include "unixlib.h"
+#include "wine/wgl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
@@ -199,6 +200,82 @@ void * WINAPI clGetExtensionFunctionAddressForPlatform( cl_platform_id platform,
 {
     FIXME( "(%p, %s) stub!\n", platform, debugstr_a(func_name) );
     return NULL;
+}
+
+
+cl_mem WINAPI clCreateFromGLBuffer( cl_context *context, cl_mem_flags flags, GLuint bufobj, int *errcode_ret )
+{
+    FIXME( "(%p, %s, %u, %p) stub!\n", context, wine_dbgstr_longlong(flags), bufobj, errcode_ret );
+    return NULL;
+}
+
+
+cl_mem WINAPI clCreateFromGLRenderbuffer( cl_context *context,
+        cl_mem_flags flags, GLuint renderbuffer, int *errcode_ret )
+{
+    FIXME( "(%p, %s, %u, %p) stub!\n", context, wine_dbgstr_longlong(flags), renderbuffer, errcode_ret );
+    return NULL;
+}
+
+
+cl_mem WINAPI clCreateFromGLTexture( cl_context *context, cl_mem_flags flags,
+        GLenum target, GLint miplevel, GLuint texture, cl_int *errcode_ret )
+{
+    FIXME( "(%p, %s, %u, %d, %u, %p) stub!\n",
+            context, wine_dbgstr_longlong(flags), target, miplevel, texture, errcode_ret );
+    return NULL;
+}
+
+
+cl_mem WINAPI clCreateFromGLTexture2D( cl_context *context, cl_mem_flags flags,
+        GLenum target, GLint miplevel, GLuint texture, cl_int *errcode_ret )
+{
+    FIXME( "(%p, %s, %u, %d, %u, %p) stub!\n",
+            context, wine_dbgstr_longlong(flags), target, miplevel, texture, errcode_ret );
+    return NULL;
+}
+
+
+cl_mem WINAPI clCreateFromGLTexture3D( cl_context *context, cl_mem_flags flags,
+        GLenum target, GLint miplevel, GLuint texture, cl_int *errcode_ret )
+{
+    FIXME( "(%p, %s, %u, %d, %u, %p) stub!\n",
+            context, wine_dbgstr_longlong(flags), target, miplevel, texture, errcode_ret );
+    return NULL;
+}
+
+
+cl_int WINAPI clEnqueueAcquireGLObjects( cl_command_queue queue, cl_uint num_objects, const cl_mem *mem_objects,
+        cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event )
+{
+    FIXME( "(%p, %u, %p, %u, %p, %p) stub!\n",
+            queue, num_objects, mem_objects, num_events_in_wait_list, event_wait_list, event );
+    return CL_INVALID_DEVICE;
+}
+
+
+cl_int WINAPI clEnqueueReleaseGLObjects( cl_command_queue queue, cl_uint num_objects, const cl_mem *mem_objects,
+        cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event )
+{
+    FIXME( "(%p, %u, %p, %u, %p, %p) stub!\n",
+            queue, num_objects, mem_objects, num_events_in_wait_list, event_wait_list, event );
+    return CL_INVALID_DEVICE;
+}
+
+
+cl_int WINAPI clGetGLObjectInfo( cl_mem memobj, cl_gl_object_type *gl_object_type, GLuint *gl_object_name )
+{
+    FIXME( "(%p, %p, %p) stub!\n", memobj, gl_object_type, gl_object_name );
+    return CL_INVALID_DEVICE;
+}
+
+
+cl_int WINAPI clGetGLTextureInfo( cl_mem memobj, cl_gl_texture_info param_name,
+        size_t param_value_size, void *param_value, size_t param_value_size_ret )
+{
+    FIXME( "(%p, %#x, %Iu, %p, %Iu) stub!\n",
+            memobj, param_name, param_value_size, param_value, param_value_size_ret );
+    return CL_INVALID_DEVICE;
 }
 
 

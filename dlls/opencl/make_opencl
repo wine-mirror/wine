@@ -315,6 +315,17 @@ sub needs_pe_wrapper($)
 
             # deprecated and absent from headers
             "clSetCommandQueueProperty" => 1,
+
+            # needs GL object unwrapping
+            "clCreateFromGLBuffer" => 1,
+            "clCreateFromGLRenderbuffer" => 1,
+            "clCreateFromGLTexture" => 1,
+            "clCreateFromGLTexture2D" => 1,
+            "clCreateFromGLTexture3D" => 1,
+            "clEnqueueAcquireGLObjects" => 1,
+            "clEnqueueReleaseGLObjects" => 1,
+            "clGetGLObjectInfo" => 1,
+            "clGetGLTextureInfo" => 1,
         );
     my $name = shift;
 
@@ -349,6 +360,17 @@ sub needs_unix_function($)
             "clGetExtensionFunctionAddress" => 1,
             "clGetExtensionFunctionAddressForPlatform" => 1,
             "clSetCommandQueueProperty" => 1,
+
+            # not yet implemented
+            "clCreateFromGLBuffer" => 1,
+            "clCreateFromGLRenderbuffer" => 1,
+            "clCreateFromGLTexture" => 1,
+            "clCreateFromGLTexture2D" => 1,
+            "clCreateFromGLTexture3D" => 1,
+            "clEnqueueAcquireGLObjects" => 1,
+            "clEnqueueReleaseGLObjects" => 1,
+            "clGetGLObjectInfo" => 1,
+            "clGetGLTextureInfo" => 1,
         );
     my $name = shift;
 
@@ -373,12 +395,29 @@ my %all_functions;
 my %all_enums;
 my %all_types;
 
-sub parse_feature($)
+sub parse_feature($$)
 {
-    my $feature = shift;
+    my ($feature, $is_core) = @_;
+
+    my %extra_core_functions =
+        (
+            # these are not core, but exported from the loader anyway
+            "clCreateFromGLBuffer" => 1,
+            "clCreateFromGLRenderbuffer" => 1,
+            "clCreateFromGLTexture" => 1,
+            "clCreateFromGLTexture2D" => 1,
+            "clCreateFromGLTexture3D" => 1,
+            "clEnqueueAcquireGLObjects" => 1,
+            "clEnqueueReleaseGLObjects" => 1,
+            "clGetGLObjectInfo" => 1,
+            "clGetGLTextureInfo" => 1,
+        );
 
     foreach my $cmd ($feature->findnodes("./require/command"))
     {
+        # TODO: store these in a separate list
+        next unless $is_core or defined $extra_core_functions{$cmd->{name}};
+
         $core_functions{$cmd->{name}} = $all_functions{$cmd->{name}};
     }
     foreach my $enum ($feature->findnodes("./require/enum"))
@@ -454,10 +493,10 @@ sub parse_file($)
     # generate core functions
     foreach my $feature ($xml->findnodes("/registry/feature"))
     {
-        parse_feature($feature) if defined $core_categories{$feature->{name}};
+        parse_feature($feature, 1) if defined $core_categories{$feature->{name}};
     }
 
-    # generate extension list
+    # generate extension list and functions
     foreach my $ext ($xml->findnodes("/registry/extensions/extension"))
     {
         # we currently don't support clGetExtensionFunctionAddress, and
@@ -465,6 +504,11 @@ sub parse_file($)
         # we need to generate a table of thunks per platform and retrieve the
         # platform from the called object
         $unsupported_extensions{lc($ext->{name})} = 1 if $ext->findnodes("./require/command");
+
+        # FIXME: Parse all supported extensions. Note that we don't actually
+        # support KHR_gl_sharing yet, but we need to export the functions anyway
+        # (some applications expect them to be present).
+        parse_feature($ext, 0) if lc($ext->{name}) eq "cl_khr_gl_sharing";
     }
 }
 

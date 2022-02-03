@@ -79,6 +79,10 @@ typedef struct _cl_image_desc
  cl_mem mem_object;
  };
 } cl_image_desc;
+typedef cl_uint          cl_gl_context_info;
+typedef cl_uint          cl_gl_object_type;
+typedef cl_uint          cl_gl_texture_info;
+typedef cl_uint          cl_gl_platform_info;
 
 #define CL_A 0x10B1
 #define CL_ADDRESS_CLAMP 0x1132
@@ -95,6 +99,7 @@ typedef struct _cl_image_desc
 #define CL_BUILD_NONE -1
 #define CL_BUILD_PROGRAM_FAILURE -11
 #define CL_BUILD_SUCCESS 0
+#define CL_CGL_SHAREGROUP_KHR 0x200C
 #define CL_CHAR_BIT 8
 #define CL_CHAR_MAX CL_SCHAR_MAX
 #define CL_CHAR_MIN CL_SCHAR_MIN
@@ -132,6 +137,7 @@ typedef struct _cl_image_desc
 #define CL_CONTEXT_PLATFORM 0x1084
 #define CL_CONTEXT_PROPERTIES 0x1082
 #define CL_CONTEXT_REFERENCE_COUNT 0x1080
+#define CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR 0x2006
 #define CL_DBL_DIG 15
 #define CL_DBL_EPSILON 2.220446049250313080847e-16
 #define CL_DBL_MANT_DIG 53
@@ -142,6 +148,7 @@ typedef struct _cl_image_desc
 #define CL_DBL_MIN_10_EXP -307
 #define CL_DBL_MIN_EXP -1021
 #define CL_DBL_RADIX 2
+#define CL_DEVICES_FOR_GL_CONTEXT_KHR 0x2007
 #define CL_DEVICE_ADDRESS_BITS 0x100D
 #define CL_DEVICE_AFFINITY_DOMAIN_L1_CACHE (1 << 4)
 #define CL_DEVICE_AFFINITY_DOMAIN_L2_CACHE (1 << 3)
@@ -234,6 +241,7 @@ typedef struct _cl_image_desc
 #define CL_DEVICE_VENDOR_ID 0x1001
 #define CL_DEVICE_VERSION 0x102F
 #define CL_DRIVER_VERSION 0x102D
+#define CL_EGL_DISPLAY_KHR 0x2009
 #define CL_EVENT_COMMAND_EXECUTION_STATUS 0x11D3
 #define CL_EVENT_COMMAND_QUEUE 0x11D0
 #define CL_EVENT_COMMAND_TYPE 0x11D1
@@ -265,6 +273,19 @@ typedef struct _cl_image_desc
 #define CL_FP_ROUND_TO_ZERO (1 << 3)
 #define CL_FP_SOFT_FLOAT (1 << 6)
 #define CL_GLOBAL 0x2
+#define CL_GLX_DISPLAY_KHR 0x200A
+#define CL_GL_CONTEXT_KHR 0x2008
+#define CL_GL_MIPMAP_LEVEL 0x2005
+#define CL_GL_NUM_SAMPLES 0x2012
+#define CL_GL_OBJECT_BUFFER 0x2000
+#define CL_GL_OBJECT_RENDERBUFFER 0x2003
+#define CL_GL_OBJECT_TEXTURE1D 0x200F
+#define CL_GL_OBJECT_TEXTURE1D_ARRAY 0x2010
+#define CL_GL_OBJECT_TEXTURE2D 0x2001
+#define CL_GL_OBJECT_TEXTURE2D_ARRAY 0x200E
+#define CL_GL_OBJECT_TEXTURE3D 0x2002
+#define CL_GL_OBJECT_TEXTURE_BUFFER 0x2011
+#define CL_GL_TEXTURE_TARGET 0x2004
 #define CL_HALF_FLOAT 0x10DD
 #define CL_HUGE_VAL ((cl_double) 1e500)
 #define CL_HUGE_VALF ((cl_float) 1e50)
@@ -302,6 +323,7 @@ typedef struct _cl_image_desc
 #define CL_INVALID_GLOBAL_OFFSET -56
 #define CL_INVALID_GLOBAL_WORK_SIZE -63
 #define CL_INVALID_GL_OBJECT -60
+#define CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR -1000
 #define CL_INVALID_HOST_PTR -37
 #define CL_INVALID_IMAGE_DESCRIPTOR -65
 #define CL_INVALID_IMAGE_FORMAT_DESCRIPTOR -39
@@ -474,3 +496,4 @@ typedef struct _cl_image_desc
 #define CL_UNSIGNED_INT32 0x10DC
 #define CL_UNSIGNED_INT8 0x10DA
 #define CL_USHRT_MAX 65535
+#define CL_WGL_HDC_KHR 0x200B
