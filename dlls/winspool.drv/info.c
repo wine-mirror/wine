@@ -1775,7 +1775,7 @@ INT WINAPI DeviceCapabilitiesA(const char *device, const char *portA, WORD cap,
         WCHAR *outputW;
 
         ret = DeviceCapabilitiesW(device_name, port, cap, NULL, devmode);
-        if (ret == -1) return ret;
+        if (ret == -1) goto cleanup;
 
         switch (cap) {
         case DC_BINNAMES:
@@ -1795,6 +1795,7 @@ INT WINAPI DeviceCapabilitiesA(const char *device, const char *portA, WORD cap,
     } else {
         ret = DeviceCapabilitiesW(device_name, port, cap, (WCHAR *)output, devmode);
     }
+cleanup:
     HeapFree(GetProcessHeap(), 0, device_name);
     HeapFree(GetProcessHeap(), 0, devmode);
     HeapFree(GetProcessHeap(), 0, port);
