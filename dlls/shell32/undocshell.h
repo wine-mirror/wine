@@ -62,31 +62,6 @@ LPVOID WINAPI SHLockShared(
 BOOL WINAPI SHUnlockShared(LPVOID pv);
 
 /****************************************************************************
- * Cabinet Window Messages
- */
-
-#define CWM_SETPATH           (WM_USER + 2)
-#define CWM_WANTIDLE	      (WM_USER + 3)
-#define CWM_GETSETCURRENTINFO (WM_USER + 4)
-#define CWM_SELECTITEM        (WM_USER + 5)
-#define CWM_SELECTITEMSTR     (WM_USER + 6)
-#define CWM_GETISHELLBROWSER  (WM_USER + 7)
-#define CWM_TESTPATH          (WM_USER + 9)
-#define CWM_STATECHANGE       (WM_USER + 10)
-#define CWM_GETPATH           (WM_USER + 12)
-
-/* CWM_TESTPATH types */
-#define CWTP_ISEQUAL  0
-#define CWTP_ISCHILD  1
-
-/* CWM_TESTPATH structure */
-typedef struct
-{
-	DWORD dwType;
-	ITEMIDLIST idl;
-} CWTESTPATHSTRUCT,* LPCWTESTPATHSTRUCT;
-
-/****************************************************************************
  * System Imagelist Routines
  */
 
