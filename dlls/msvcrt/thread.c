@@ -235,7 +235,7 @@ uintptr_t CDECL _beginthreadex(
 #endif
 
   thread = CreateThread(security, stack_size, _beginthreadex_trampoline,
-          trampoline, initflag, thrdaddr);
+          trampoline, initflag, (DWORD *)thrdaddr);
   if(!thread) {
 #if _MSVCR_VER >= 140
       FreeLibrary(trampoline->module);
