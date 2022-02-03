@@ -260,7 +260,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         break;
     }
     default:
-        ok(0, "unexpected dispIdMember %d\n", dispIdMember);
+        ok(0, "unexpected dispIdMember %ld\n", dispIdMember);
         return E_NOTIMPL;
     }
 
@@ -345,8 +345,8 @@ static void run_script_file(const char *file_name, DWORD expected_exit_code)
     WaitForSingleObject(pi.hProcess, INFINITE);
 
     bres = GetExitCodeProcess(pi.hProcess, &exit_code);
-    ok(bres, "GetExitCodeProcess failed: %u\n", GetLastError());
-    ok(exit_code == expected_exit_code, "exit_code = %u, expected %u\n", exit_code, expected_exit_code);
+    ok(bres, "GetExitCodeProcess failed: %lu\n", GetLastError());
+    ok(exit_code == expected_exit_code, "exit_code = %lu, expected %lu\n", exit_code, expected_exit_code);
 
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
@@ -371,13 +371,13 @@ static void run_script(const char *name, const char *script_data, size_t script_
 
     file = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
     if(file == INVALID_HANDLE_VALUE)
         return;
 
     res = WriteFile(file, script_data, script_size, &size, NULL);
     CloseHandle(file);
-    ok(res, "Could not write to file: %u\n", GetLastError());
+    ok(res, "Could not write to file: %lu\n", GetLastError());
     if(!res)
         return;
 
@@ -400,7 +400,7 @@ static BOOL WINAPI test_enum_proc(HMODULE module, LPCSTR type, LPSTR name, LONG_
     trace("running %s test...\n", name);
 
     src = FindResourceA(NULL, name, type);
-    ok(src != NULL, "Could not find resource %s: %u\n", name, GetLastError());
+    ok(src != NULL, "Could not find resource %s: %lu\n", name, GetLastError());
     if(!src)
         return TRUE;
 
@@ -451,7 +451,7 @@ static BOOL register_activex(void)
 
     hres = CoRegisterClassObject(&CLSID_TestObj, (IUnknown *)&testobj_cf,
             CLSCTX_SERVER, REGCLS_MULTIPLEUSE, &regid);
-    ok(hres == S_OK, "Could not register script engine: %08x\n", hres);
+    ok(hres == S_OK, "Could not register script engine: %08lx\n", hres);
     return TRUE;
 }
 
