@@ -98,23 +98,30 @@ static void test_interfaces(void)
     IFilterGraph2 *graph = create_graph();
 
     check_interface(graph, &IID_IBasicAudio, TRUE);
+    check_interface(graph, &IID_IBasicVideo, TRUE);
     check_interface(graph, &IID_IBasicVideo2, TRUE);
+    check_interface(graph, &IID_IFilterGraph, TRUE);
     check_interface(graph, &IID_IFilterGraph2, TRUE);
     check_interface(graph, &IID_IFilterMapper, TRUE);
+    check_interface(graph, &IID_IFilterMapper2, TRUE);
     check_interface(graph, &IID_IFilterMapper3, TRUE);
+    check_interface(graph, &IID_IGraphBuilder, TRUE);
     check_interface(graph, &IID_IGraphConfig, TRUE);
     check_interface(graph, &IID_IGraphVersion, TRUE);
     check_interface(graph, &IID_IMediaControl, TRUE);
     check_interface(graph, &IID_IMediaEvent, TRUE);
-    check_interface(graph, &IID_IMediaFilter, TRUE);
+    check_interface(graph, &IID_IMediaEventEx, TRUE);
     check_interface(graph, &IID_IMediaEventSink, TRUE);
+    check_interface(graph, &IID_IMediaFilter, TRUE);
     check_interface(graph, &IID_IMediaPosition, TRUE);
     check_interface(graph, &IID_IMediaSeeking, TRUE);
     check_interface(graph, &IID_IObjectWithSite, TRUE);
     check_interface(graph, &IID_IVideoFrameStep, TRUE);
     check_interface(graph, &IID_IVideoWindow, TRUE);
+    check_interface(graph, &IID_IUnknown, TRUE);
 
     check_interface(graph, &IID_IBaseFilter, FALSE);
+    check_interface(graph, &IID_IDispatch, FALSE);
 
     IFilterGraph2_Release(graph);
 }
