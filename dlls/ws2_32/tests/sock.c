@@ -1259,6 +1259,69 @@ static void test_set_getsockopt(void)
     ok(err == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
        "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n", err, WSAGetLastError());
 
+    /* TCP_NODELAY: optlen doesn't matter on windows, it should work with any positive value */
+    size = sizeof(value);
+
+    value = 1;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, 1);
+    ok (!err, "setsockopt TCP_NODELAY failed with optlen == 1\n");
+    value = 0xff;
+    err = getsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, &size);
+    ok(!err, "getsockopt TCP_NODELAY failed\n");
+    ok(value == 1, "TCP_NODELAY should be 1\n");
+    value = 0;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(value));
+    ok(!err, "Failed to reset TCP_NODELAY to 0\n");
+
+    value = 1;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, 4);
+    ok (!err, "setsockopt TCP_NODELAY failed with optlen == 4\n");
+    value = 0xff;
+    err = getsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, &size);
+    ok(!err, "getsockopt TCP_NODELAY failed\n");
+    ok(value == 1, "TCP_NODELAY should be 1\n");
+    value = 0;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(value));
+    ok(!err, "Failed to reset TCP_NODELAY to 0\n");
+
+    value = 1;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, 42);
+    ok (!err, "setsockopt TCP_NODELAY failed with optlen == 42\n");
+    value = 0xff;
+    err = getsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, &size);
+    ok(!err, "getsockopt TCP_NODELAY failed\n");
+    ok(value == 1, "TCP_NODELAY should be 1\n");
+    value = 0;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, sizeof(value));
+    ok(!err, "Failed to reset TCP_NODELAY to 0\n");
+
+    value = 1;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, 0);
+    ok(err == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n", err, WSAGetLastError());
+    value = 0xff;
+    err = getsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, &size);
+    ok(!err, "getsockopt TCP_NODELAY failed\n");
+    ok(!value, "TCP_NODELAY should be 0\n");
+
+    value = 1;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, -1);
+    /* On win 10 pro, this sets the error to WSAENOBUFS instead of WSAEFAULT */
+    ok(err == SOCKET_ERROR && (WSAGetLastError() == WSAEFAULT || WSAGetLastError() == WSAENOBUFS),
+       "got %d with %d (expected SOCKET_ERROR with either WSAEFAULT or WSAENOBUFS)\n", err, WSAGetLastError());
+    value = 0xff;
+    err = getsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, &size);
+    ok(!err, "getsockopt TCP_NODELAY failed\n");
+    ok(!value, "TCP_NODELAY should be 0\n");
+
+    value = 0x100;
+    err = setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, 4);
+    ok (!err, "setsockopt TCP_NODELAY failed with optlen == 4 and optvalue = 0x100\n");
+    value = 0xff;
+    err = getsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&value, &size);
+    ok(!err, "getsockopt TCP_NODELAY failed\n");
+    ok(!value, "TCP_NODELAY should be 0\n");
+
     /* Test for erroneously passing a value instead of a pointer as optval */
     size = sizeof(char);
     err = setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *)1, size);
