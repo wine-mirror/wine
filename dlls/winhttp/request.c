@@ -3586,7 +3586,7 @@ static DWORD socket_drain( struct socket *socket )
     return ERROR_SUCCESS;
 }
 
-static DWORD receive_close_status( struct socket *socket, unsigned int len )
+static DWORD receive_close_status( struct socket *socket, DWORD len )
 {
     DWORD reason_len, ret;
 
@@ -3694,7 +3694,8 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
 static void CALLBACK task_socket_receive( TP_CALLBACK_INSTANCE *instance, void *ctx, TP_WORK *work )
 {
     struct socket_receive *r = ctx;
-    DWORD ret, count, type;
+    DWORD ret, count;
+    WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
 
     TRACE("running %p\n", work);
     ret = socket_receive( r->socket, r->buf, r->len, &count, &type );
