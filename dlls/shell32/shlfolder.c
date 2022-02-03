@@ -48,6 +48,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
+/* SHCreateLinks flags */
+#define SHCLF_PREFIXNAME        0x01
+#define SHCLF_CREATEONDESKTOP   0x02
+
 /***************************************************************************
  *  SHELL32_GetCustomFolderAttribute (internal function)
  *

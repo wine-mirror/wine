@@ -226,17 +226,6 @@ HRESULT WINAPI SHCreateDefClassObject(
 
 void WINAPI SHFreeUnusedLibraries(void);
 
-/* SHCreateLinks flags */
-#define SHCLF_PREFIXNAME       0x01
-#define SHCLF_CREATEONDESKTOP  0x02
-
-HRESULT WINAPI SHCreateLinks(
-	HWND hWnd,
-	LPCSTR lpszDir,
-	LPDATAOBJECT lpDataObject,
-	UINT uFlags,
-	LPITEMIDLIST *lppidlLinks);
-
 DWORD WINAPI CheckEscapesA(LPSTR string, DWORD len);
 DWORD WINAPI CheckEscapesW(LPWSTR string, DWORD len);
 
