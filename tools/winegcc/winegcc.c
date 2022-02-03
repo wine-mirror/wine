@@ -889,6 +889,8 @@ static struct strarray get_winebuild_args(struct options *opts)
         strarray_add( &spec_args, "--target" );
         strarray_add( &spec_args, opts->target_alias );
     }
+    if (opts->force_pointer_size)
+        strarray_add(&spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     for (i = 0; i < opts->prefix.count; i++)
         strarray_add( &spec_args, strmake( "-B%s", opts->prefix.str[i] ));
     strarray_addall( &spec_args, opts->winebuild_args );
@@ -1017,8 +1019,6 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
     }
 
     spec_o_name = get_temp_file(output_name, ".spec.o");
-    if (opts->force_pointer_size)
-        strarray_add(&spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     if (opts->pic && !is_pe) strarray_add(&spec_args, "-fPIC");
     strarray_add(&spec_args, opts->shared ? "--dll" : "--exe");
     if (opts->fake_module)
