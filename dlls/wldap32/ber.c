@@ -145,7 +145,7 @@ void CDECL ber_bvfree( BERVAL *berval )
  */
 ULONG CDECL ber_first_element( BerElement *ber, ULONG *len, char **opaque )
 {
-    struct ber_first_element_params params = { BER(ber), len, opaque };
+    struct ber_first_element_params params = { BER(ber), (unsigned int *)len, opaque };
     return LDAP_CALL( ber_first_element, &params );
 }
 
@@ -265,7 +265,7 @@ BerElement * CDECL ber_init( BERVAL *berval )
  */
 ULONG CDECL ber_next_element( BerElement *ber, ULONG *len, char *opaque )
 {
-    struct ber_next_element_params params = { BER(ber), len, opaque };
+    struct ber_next_element_params params = { BER(ber), (unsigned int *)len, opaque };
     return LDAP_CALL( ber_next_element, &params );
 }
 
@@ -285,7 +285,7 @@ ULONG CDECL ber_next_element( BerElement *ber, ULONG *len, char *opaque )
  */
 ULONG CDECL ber_peek_tag( BerElement *ber, ULONG *len )
 {
-    struct ber_peek_tag_params params = { BER(ber), len };
+    struct ber_peek_tag_params params = { BER(ber), (unsigned int *)len };
     return LDAP_CALL( ber_peek_tag, &params );
 }
 
@@ -305,7 +305,7 @@ ULONG CDECL ber_peek_tag( BerElement *ber, ULONG *len )
  */
 ULONG CDECL ber_skip_tag( BerElement *ber, ULONG *len )
 {
-    struct ber_skip_tag_params params = { BER(ber), len };
+    struct ber_skip_tag_params params = { BER(ber), (unsigned int *)len };
     return LDAP_CALL( ber_skip_tag, &params );
 }
 

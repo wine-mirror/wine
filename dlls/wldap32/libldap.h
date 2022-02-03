@@ -106,7 +106,7 @@ struct ber_alloc_t_params
 struct ber_first_element_params
 {
     void *ber;
-    ULONG *ret_len;
+    unsigned int *ret_len;
     char **last;
 };
 
