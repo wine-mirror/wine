@@ -184,53 +184,53 @@ static void test_command_syntax(void)
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export /?", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export /h", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export -H", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export \\\\remote-pc\\HKLM\\Wine file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_DYN_DATA file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKDD file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export file.reg HKEY_CURRENT_USER\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     /* This test fails because the registry key doesn't exist */
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg file2.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /reg:32 /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /reg:32 /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /reg:64 /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 }
 
 static void test_export(void)
@@ -246,18 +246,18 @@ static void test_export(void)
     add_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export /y HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " /y file.reg", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
     ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE), /* winxp */
-       "got exit code %d, expected 0\n", r);
+       "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     /* Test registry export with a simple data structure */
@@ -266,12 +266,12 @@ static void test_export(void)
     add_value(hkey, "String", REG_SZ, "Your text here...", 18);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 
     /* Test whether a .reg file extension is required when exporting */
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " foo /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("foo", simple_data_test, 0), "compare_export() failed\n");
 
     /* Test registry export with a complex data structure */
@@ -309,7 +309,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", complex_data_test, 0), "compare_export() failed\n");
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -319,7 +319,7 @@ static void test_export(void)
     add_key(hkey, "Subkey1", 0, NULL);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
     delete_key(hkey, "Subkey1", 0);
     delete_key(hkey, "Subkey2", 0);
@@ -332,7 +332,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", value_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -349,7 +349,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_hex_test, 0), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -359,7 +359,7 @@ static void test_export(void)
                      "\"Wine2a\"=hex(1):\n"
                      "\"Wine2b\"=hex(3):\n"
                      "\"Wine2c\"=hex(4):\n\n", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
     verify_reg(hkey, "Wine2a", REG_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine2b", REG_BINARY, NULL, 0, 0);
@@ -367,7 +367,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -376,7 +376,7 @@ static void test_export(void)
                      "\"Wine3a\"=hex(1):56,00,61,00,6c,00,75,00,65,00,00,00\n"
                      "\"Wine3b\"=hex(3):12,34,56,78\n"
                      "\"Wine3c\"=hex(4):40,30,20,10\n\n", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
     verify_reg(hkey, "Wine3a", REG_SZ, "Value", 6, 0);
     memcpy(hex, "\x12\x34\x56\x78", 4);
@@ -386,7 +386,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", hex_types_test, 0), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -402,7 +402,7 @@ static void test_export(void)
                      "\"Wine4g\"=\"Value2\"\n"
                      "\"Wine4h\"=hex(1):61,00,62,00,63,00,00,00, \\\n"
                      "  64,00,65,00,66,00,00,00\n\n", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
     dword = 0x5;
     verify_reg(hkey, "Wine4a", REG_DWORD, &dword, sizeof(dword), 0);
@@ -411,9 +411,9 @@ static void test_export(void)
     /* Wine4d */
     size = sizeof(buffer);
     err = RegQueryValueExA(hkey, "Wine4d", NULL, &type, (BYTE *)&buffer, &size);
-    ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
-    ok(type == REG_SZ, "got wrong type %u, expected %u\n", type, REG_SZ);
-    ok(size == 5 || broken(size == 4) /* WinXP */, "got wrong size %u, expected 5\n", size);
+    ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %ld\n", err);
+    ok(type == REG_SZ, "got wrong type %lu, expected %u\n", type, REG_SZ);
+    ok(size == 5 || broken(size == 4) /* WinXP */, "got wrong size %lu, expected 5\n", size);
     ok(memcmp(buffer, "\0abc", size) == 0, "got wrong data\n");
     dword = 0x100;
     verify_reg(hkey, "Wine4e", REG_DWORD, &dword, sizeof(dword), 0);
@@ -423,7 +423,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", embedded_null_test, 0), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -435,7 +435,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", slashes_test, TODO_REG_COMPARE), "compare_export() failed\n");
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -450,7 +450,7 @@ static void test_export(void)
     close_key(hkey);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", escaped_null_test, 0), "compare_export() failed\n");
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
 }
@@ -488,11 +488,11 @@ static void test_registry_view_win32(void)
     create_test_key(KEY_WOW64_32KEY);
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
@@ -501,11 +501,11 @@ static void test_registry_view_win32(void)
     create_test_key(KEY_WOW64_64KEY);
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
@@ -528,11 +528,11 @@ static void test_registry_view_win64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
@@ -542,11 +542,11 @@ static void test_registry_view_win64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 }
@@ -567,11 +567,11 @@ static void test_registry_view_wow64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
@@ -581,11 +581,11 @@ static void test_registry_view_wow64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg export HKEY_LOCAL_MACHINE\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 }

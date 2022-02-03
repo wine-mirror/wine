@@ -26,55 +26,55 @@ static void test_command_syntax(void)
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg delete", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete /?", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg delete /h", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg delete -H", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     /* Multiple /v* switches */
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Wine /ve", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Wine /va", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /ve /ve", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /ve /va", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /va /va", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Test /ve /va", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Wine /v Test /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     /* No /v argument */
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f /v", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     /* Test registry view */
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f /reg:32 /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f /reg:32 /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f /reg:64 /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 }
 
 static void test_delete(void)
@@ -94,15 +94,15 @@ static void test_delete(void)
     add_key(hkey, "subkey", 0, NULL);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v bar /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "bar");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /ve /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /va /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "foo");
     verify_key(hkey, "subkey", 0);
 
@@ -112,15 +112,15 @@ static void test_delete(void)
     add_value(hkey, "\\foo\\bar", REG_SZ, "", 1);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE "\\https://winehq.org /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "https://winehq.org", 0);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v count/up /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "count/up");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v \\foo\\bar /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "\\foo\\bar");
 
     add_value(hkey, "string\\01", REG_SZ, "Value", 6);
@@ -128,25 +128,25 @@ static void test_delete(void)
     add_value(hkey, "\\0", REG_SZ, "Value", 6);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v string\\01 /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "string\\01");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v string2 /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "string2");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v \\0 /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "\\0");
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 }
 
 static void create_test_key(REGSAM sam)
@@ -189,27 +189,27 @@ static void test_registry_view_win32(void)
     open_key(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY, &hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /v DWORD /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "DWORD");
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /ve /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, NULL);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /va /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "String");
     verify_reg_nonexist(hkey, "Multiple Strings");
     verify_key(hkey, "Subkey", KEY_WOW64_32KEY);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE "\\Subkey /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey", KEY_WOW64_32KEY);
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     /* Test deletion from the 64-bit registry view, which doesn't exist on 32-bit Windows */
@@ -218,27 +218,27 @@ static void test_registry_view_win32(void)
     open_key(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY, &hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /v DWORD /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "DWORD");
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /ve /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, NULL);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /va /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "String");
     verify_reg_nonexist(hkey, "Multiple Strings");
     verify_key(hkey, "Subkey", KEY_WOW64_64KEY);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE "\\Subkey /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey", KEY_WOW64_64KEY);
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 }
 
@@ -264,27 +264,27 @@ static void test_registry_view_win64(void)
     open_key(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY, &hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /v DWORD /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "DWORD");
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /ve /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, NULL);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /va /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "String");
     verify_reg_nonexist(hkey, "Multiple Strings");
     verify_key(hkey, "Subkey", KEY_WOW64_32KEY);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE "\\Subkey /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey", KEY_WOW64_32KEY);
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     /* Test deletion from the 64-bit registry view (64-bit Windows) */
@@ -295,27 +295,27 @@ static void test_registry_view_win64(void)
     open_key(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY, &hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /v DWORD /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "DWORD");
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /ve /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, NULL);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /va /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "String");
     verify_reg_nonexist(hkey, "Multiple Strings");
     verify_key(hkey, "Subkey", KEY_WOW64_64KEY);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE "\\Subkey /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey", KEY_WOW64_64KEY);
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 }
 
@@ -340,27 +340,27 @@ static void test_registry_view_wow64(void)
     open_key(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY, &hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /v DWORD /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "DWORD");
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /ve /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, NULL);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /va /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "String");
     verify_reg_nonexist(hkey, "Multiple Strings");
     verify_key(hkey, "Subkey", KEY_WOW64_32KEY);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE "\\Subkey /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey", KEY_WOW64_32KEY);
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     /* Test deletion from the 64-bit registry view (WOW64) */
@@ -371,27 +371,27 @@ static void test_registry_view_wow64(void)
     open_key(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY, &hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /v DWORD /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "DWORD");
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /ve /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, NULL);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /va /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_reg_nonexist(hkey, "String");
     verify_reg_nonexist(hkey, "Multiple Strings");
     verify_key(hkey, "Subkey", KEY_WOW64_64KEY);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE "\\Subkey /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey", KEY_WOW64_64KEY);
 
     close_key(hkey);
 
     run_reg_exe("reg delete HKLM\\" KEY_BASE " /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 }
 

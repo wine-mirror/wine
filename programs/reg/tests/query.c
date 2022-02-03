@@ -76,7 +76,7 @@ static BOOL read_reg_output_(const char *file, unsigned line, const char *cmd,
         TerminateProcess(pi.hProcess, 1);
 
     bret = GetExitCodeProcess(pi.hProcess, rc);
-    lok(bret, "GetExitCodeProcess failed: %d\n", GetLastError());
+    lok(bret, "GetExitCodeProcess failed: %ld\n", GetLastError());
 
     CloseHandle(pipe_stdout_rd);
     CloseHandle(pi.hThread);
@@ -110,38 +110,38 @@ static void test_command_syntax(void)
     DWORD r;
 
     run_reg_exe("reg query", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg query /?", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg query /h", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg query -H", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /v", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /v Test1 /v Test2", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /v Test1 /ve", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /s /s", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     /* Test registry view */
     run_reg_exe("reg query HKCU\\" KEY_BASE " /reg:32 /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /reg:32 /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /reg:64 /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 }
 
 static void test_query(void)
@@ -207,7 +207,7 @@ static void test_query(void)
 
     /* Key not present */
     run_reg_exe("reg query HKCU\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     /* Create a test key */
     add_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
@@ -215,22 +215,22 @@ static void test_query(void)
     add_value(hkey, "Test2", REG_DWORD, &dword, sizeof(dword));
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /v Missing", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     read_reg_output("reg query HKCU\\" KEY_BASE, buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test1, FALSE, 0);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /ve", &r);
     ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
-       "got exit code %d, expected 0\n", r);
+       "got exit code %ld, expected 0\n", r);
 
     read_reg_output("reg query HKCU\\" KEY_BASE " /v Test1", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test2, FALSE, 0);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /v Test2", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     add_value(hkey, "Wine", REG_SZ, "First instance", 15);
 
@@ -238,7 +238,7 @@ static void test_query(void)
     add_key(hkey, "subkey", 0, &subkey);
 
     read_reg_output("reg query HKCU\\" KEY_BASE, buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test3, FALSE, 0);
 
     add_value(subkey, "Test3", REG_SZ, "Some string data", 16);
@@ -246,30 +246,30 @@ static void test_query(void)
     add_value(subkey, "Test4", REG_DWORD, &dword, sizeof(dword));
 
     read_reg_output("reg query HKCU\\" KEY_BASE "\\subkey", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test4, FALSE, 0);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE "\\subkey /v Test3", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     read_reg_output("reg query HKCU\\" KEY_BASE "\\subkey /v Test4", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test5, FALSE, 0);
 
     add_value(subkey, "Wine", REG_SZ, "Second instance", 16);
 
     /* Test recursion */
     read_reg_output("reg query HKCU\\" KEY_BASE " /s", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test6, FALSE, 0);
 
     read_reg_output("reg query HKCU\\" KEY_BASE "\\ /s", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test6, FALSE, 0);
 
     read_reg_output("reg query HKCU\\" KEY_BASE " /v Wine /s", buf, sizeof(buf), &r);
     ok(r == REG_EXIT_SUCCESS || r == REG_EXIT_FAILURE /* WinXP */,
-       "got exit code %d, expected 0\n", r);
+       "got exit code %ld, expected 0\n", r);
     compare_query(buf, test7, TRUE, 0);
 
     add_value(hkey, NULL, REG_SZ, "Empty", 6);
@@ -278,11 +278,11 @@ static void test_query(void)
     close_key(hkey);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE "\\subkey /ve", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /ve /s", &r);
     ok(r == REG_EXIT_SUCCESS || r == REG_EXIT_FAILURE /* WinXP */,
-       "got exit code %d, expected 0\n", r);
+       "got exit code %ld, expected 0\n", r);
 
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
 
@@ -295,11 +295,11 @@ static void test_query(void)
     close_key(hkey);
 
     read_reg_output("reg query HKCU\\" KEY_BASE, buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test8a, FALSE, 0);
 
     read_reg_output("reg query HKCU\\" KEY_BASE " /s", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test8b, FALSE, 0);
 
     delete_tree(HKEY_CURRENT_USER, KEY_BASE, 0);
@@ -366,15 +366,15 @@ static void test_registry_view_win32(void)
     create_test_key(KEY_WOW64_32KEY);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9a, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /s /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9b, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /v Wine /s /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9c, TRUE, 0);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
@@ -383,15 +383,15 @@ static void test_registry_view_win32(void)
     create_test_key(KEY_WOW64_64KEY);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9a, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /s /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9b, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /v Wine /s /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9c, TRUE, 0);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
@@ -414,15 +414,15 @@ static void test_registry_view_win64(void)
     create_test_key(KEY_WOW64_32KEY);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9a, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /s /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9b, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /v Wine /s /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9c, TRUE, 0);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
@@ -432,15 +432,15 @@ static void test_registry_view_win64(void)
     create_test_key(KEY_WOW64_64KEY);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9a, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /s /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9b, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /v Wine /s /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9c, TRUE, 0);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
@@ -462,15 +462,15 @@ static void test_registry_view_wow64(void)
     create_test_key(KEY_WOW64_32KEY);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9a, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /s /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9b, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /v Wine /s /reg:32", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9c, TRUE, 0);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
@@ -480,15 +480,15 @@ static void test_registry_view_wow64(void)
     create_test_key(KEY_WOW64_64KEY);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9a, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /s /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9b, FALSE, 0);
 
     read_reg_output("reg query HKLM\\" KEY_BASE " /v Wine /s /reg:64", buf, sizeof(buf), &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     compare_query(buf, test9c, TRUE, 0);
 
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);

@@ -25,101 +25,101 @@ static void test_command_syntax(void)
     DWORD r;
 
     run_reg_exe("reg copy", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /?", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg copy /h", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg copy -H", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg copy /? /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /h /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /? /s", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /h /s", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /s", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /s /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /f /s", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " foo /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy /f HKCU\\" COPY_SRC " HKCU\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " /f HKCU\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " /s HKCU\\" KEY_BASE, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /a", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f /a", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     /* Source and destination keys are the same */
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" COPY_SRC, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" COPY_SRC, &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" COPY_SRC "\\", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" COPY_SRC "\\", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" COPY_SRC " /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" COPY_SRC " /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" COPY_SRC "\\ /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" COPY_SRC "\\ /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" COPY_SRC " /s /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" COPY_SRC " /s /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" COPY_SRC "\\ /s /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" COPY_SRC "\\ /s /f", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 }
 
 static void test_copy_empty_key(void)
@@ -133,53 +133,53 @@ static void test_copy_empty_key(void)
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE "\\ /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" KEY_BASE "\\ /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /s /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 }
 
@@ -200,53 +200,53 @@ static void test_copy_simple_data(void)
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE "\\ /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC "\\ HKCU\\" KEY_BASE "\\ /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /s /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 }
 
@@ -299,20 +299,20 @@ static void test_copy_complex_data(void)
 
     /* Copy values only */
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", simple_data_test, 0), "compare_export() failed\n");
 
     /* Copy subkeys and values */
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /s /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", complex_data_test, 0), "compare_export() failed\n");
 }
 
@@ -330,11 +330,11 @@ static void test_copy_key_order(void)
     close_key(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /s /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
 }
 
@@ -352,11 +352,11 @@ static void test_copy_value_order(void)
     close_key(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", value_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
 }
 
@@ -381,11 +381,11 @@ static void test_copy_hex_data(void)
     close_key(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_hex_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, COPY_SRC, 0);
@@ -397,14 +397,14 @@ static void test_copy_hex_data(void)
                      "\"Wine2a\"=hex(1):\n"
                      "\"Wine2b\"=hex(3):\n"
                      "\"Wine2c\"=hex(4):\n\n", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, COPY_SRC, 0);
@@ -416,14 +416,14 @@ static void test_copy_hex_data(void)
                      "\"Wine3a\"=hex(1):56,00,61,00,6c,00,75,00,65,00,00,00\n"
                      "\"Wine3b\"=hex(3):12,34,56,78\n"
                      "\"Wine3c\"=hex(4):40,30,20,10\n\n", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", hex_types_test, 0), "compare_export() failed\n");
 }
 
@@ -445,14 +445,14 @@ static void test_copy_embedded_null_values(void)
                      "\"Wine4g\"=\"Value2\"\n"
                      "\"Wine4h\"=hex(1):61,00,62,00,63,00,00,00, \\\n"
                      "  64,00,65,00,66,00,00,00\n\n", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", embedded_null_test, 0), "compare_export() failed\n");
 }
 
@@ -471,11 +471,11 @@ static void test_copy_slashes(void)
     close_key(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /s /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", slashes_test, TODO_REG_COMPARE), "compare_export() failed\n");
 }
 
@@ -497,11 +497,11 @@ static void test_copy_escaped_null_values(void)
     close_key(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     run_reg_exe("reg export HKCU\\" KEY_BASE " file.reg /y", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", escaped_null_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, COPY_SRC, 0);
@@ -518,20 +518,20 @@ static void test_copy_key_class(void)
 
     rc = RegCreateKeyExA(HKEY_CURRENT_USER, COPY_SRC, 0, class, REG_OPTION_NON_VOLATILE,
                          KEY_READ|KEY_WRITE, NULL, &hkey, NULL);
-    ok(rc == ERROR_SUCCESS, "RegCreateKeyExA failed: got %d, expected 0\n", rc);
+    ok(rc == ERROR_SUCCESS, "RegCreateKeyExA failed: got %ld, expected 0\n", rc);
 
     add_value(hkey, "String", REG_SZ, "Data", 5);
 
     buf_size = sizeof(buf);
 
     rc = RegQueryInfoKeyA(hkey, buf, &buf_size, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(rc == ERROR_SUCCESS, "RegQueryInfoKeyA failed: got %d, expected 0\n", rc);
+    ok(rc == ERROR_SUCCESS, "RegQueryInfoKeyA failed: got %ld, expected 0\n", rc);
     ok(!strcmp(buf, "class"), "Incorrect key class set; got '%s', expected '%s'\n", buf, class);
 
     RegCloseKey(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     verify_key(HKEY_CURRENT_USER, KEY_BASE, 0);
 
     open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
@@ -541,7 +541,7 @@ static void test_copy_key_class(void)
     buf_size = sizeof(buf);
 
     rc = RegQueryInfoKeyA(hkey, buf, &buf_size, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    ok(rc == ERROR_SUCCESS, "RegQueryInfoKeyA failed: got %d, expected 0\n", rc);
+    ok(rc == ERROR_SUCCESS, "RegQueryInfoKeyA failed: got %ld, expected 0\n", rc);
     ok(strlen(buf) == 0, "Key class should not exist\n");
 
     RegCloseKey(hkey);
@@ -573,7 +573,7 @@ static void test_copy_overwrite(void)
     close_key(hkey);
 
     run_reg_exe("reg copy HKCU\\" COPY_SRC " HKCU\\" KEY_BASE " /f", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
     verify_reg(hkey, "Wine1", REG_SZ, "def", 4, 0);
@@ -622,10 +622,10 @@ static void test_registry_view_win32(void)
     create_test_key(KEY_WOW64_32KEY);
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export HKLM\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     delete_tree(HKEY_LOCAL_MACHINE, COPY_SRC, KEY_WOW64_32KEY);
@@ -635,10 +635,10 @@ static void test_registry_view_win32(void)
     create_test_key(KEY_WOW64_64KEY);
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export HKLM\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     delete_tree(HKEY_LOCAL_MACHINE, COPY_SRC, KEY_WOW64_64KEY);
@@ -666,14 +666,14 @@ static void test_registry_view_win64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export HKLM\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, COPY_SRC, KEY_WOW64_32KEY);
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
@@ -684,14 +684,14 @@ static void test_registry_view_win64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export HKLM\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, COPY_SRC, KEY_WOW64_64KEY);
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
@@ -717,14 +717,14 @@ static void test_registry_view_wow64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export HKLM\\" KEY_BASE " file.reg /y /reg:32", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:64", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, COPY_SRC, KEY_WOW64_32KEY);
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
@@ -735,14 +735,14 @@ static void test_registry_view_wow64(void)
     verify_key_nonexist(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_32KEY);
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
 
     run_reg_exe("reg export HKLM\\" KEY_BASE " file.reg /y /reg:64", &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %ld, expected 0\n", r);
     ok(compare_export("file.reg", registry_view_test, 0), "compare_export() failed\n");
 
     run_reg_exe("reg copy HKLM\\" COPY_SRC " HKLM\\" KEY_BASE " /s /f /reg:32", &r);
-    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %ld, expected 1\n", r);
 
     delete_tree(HKEY_LOCAL_MACHINE, COPY_SRC, KEY_WOW64_64KEY);
     delete_tree(HKEY_LOCAL_MACHINE, KEY_BASE, KEY_WOW64_64KEY);

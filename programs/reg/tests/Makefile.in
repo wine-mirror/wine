@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = reg.exe
 IMPORTS   = advapi32
 
