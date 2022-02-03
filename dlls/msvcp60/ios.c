@@ -8442,7 +8442,7 @@ basic_istream_char* __thiscall basic_istream_char_read_int(basic_istream_char *t
         istreambuf_iterator_char first={0}, last={0};
 
         first.strbuf = strbuf;
-        num_get_char_get_long(numget, &last, first, last, &base->base, &state, v);
+        num_get_char_get_long(numget, &last, first, last, &base->base, &state, (LONG*)v);
     }
     basic_istream_char_sentry_destroy(this);
 
@@ -9953,7 +9953,7 @@ static basic_istream_wchar* basic_istream_read_int(basic_istream_wchar *this, in
         istreambuf_iterator_wchar first={0}, last={0};
 
         first.strbuf = strbuf;
-        num_get_wchar_get_long(numget, &last, first, last, &base->base, &state, v);
+        num_get_wchar_get_long(numget, &last, first, last, &base->base, &state, (LONG*)v);
     }
     basic_istream_wchar_sentry_destroy(this);
 

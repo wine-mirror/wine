@@ -5931,7 +5931,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_uint(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, unsigned int *pval)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
-    return num_get_wchar_do_get_ulong(this, ret, first, last, base, state, pval);
+    return num_get_wchar_do_get_ulong(this, ret, first, last, base, state, (ULONG*)pval);
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
@@ -5941,7 +5941,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_uint(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, unsigned int *pval)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
-    return num_get_short_do_get_ulong(this, ret, first, last, base, state, pval);
+    return num_get_short_do_get_ulong(this, ret, first, last, base, state, (ULONG*)pval);
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
@@ -6921,7 +6921,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_uint(const num_get *thi
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned int *pval)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
-    return num_get_char_do_get_ulong(this, ret, first, last, base, state, pval);
+    return num_get_char_do_get_ulong(this, ret, first, last, base, state, (ULONG*)pval);
 }
 
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
