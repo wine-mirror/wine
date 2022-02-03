@@ -31,12 +31,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-/*
-	string functions
-*/
-BOOL WINAPI StrRetToStrNA(LPSTR,DWORD,LPSTRRET,const ITEMIDLIST*);
-BOOL WINAPI StrRetToStrNW(LPWSTR,DWORD,LPSTRRET,const ITEMIDLIST*);
-
 /****************************************************************************
  * Memory Routines
  */

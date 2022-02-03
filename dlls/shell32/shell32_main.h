@@ -290,4 +290,7 @@ typedef struct
     ITEMIDLIST idl;
 } CWTESTPATHSTRUCT;
 
+BOOL WINAPI StrRetToStrNA(char *, DWORD, STRRET *, const ITEMIDLIST *);
+BOOL WINAPI StrRetToStrNW(WCHAR *, DWORD, STRRET *, const ITEMIDLIST *);
+
 #endif
