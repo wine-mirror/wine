@@ -2381,8 +2381,9 @@ static HRESULT topology_loader_resolve_branch(struct topoloader_context *context
 static HRESULT topology_loader_resolve_nodes(struct topoloader_context *context, unsigned int *layer_size)
 {
     IMFTopologyNode *downstream_node, *node, *orig_node;
-    unsigned int input_index, size = 0;
     MF_TOPOLOGY_TYPE node_type;
+    unsigned int size = 0;
+    DWORD input_index;
     HRESULT hr = S_OK;
     TOPOID id;
 
@@ -2444,7 +2445,7 @@ static BOOL topology_loader_is_node_d3d_aware(IMFTopologyNode *node)
     return !!d3d_aware;
 }
 
-static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, unsigned int upstream_output,
+static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, DWORD upstream_output,
         IMFTopologyNode *downstream_node, unsigned int downstream_input, IMFTransform **copier)
 {
     IMFMediaType *input_type = NULL, *output_type = NULL;
@@ -2483,7 +2484,7 @@ static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, uns
 }
 
 static HRESULT topology_loader_connect_copier(struct topoloader_context *context, IMFTopologyNode *upstream_node,
-        unsigned int upstream_output, IMFTopologyNode *downstream_node, unsigned int downstream_input, IMFTransform *copier)
+        DWORD upstream_output, IMFTopologyNode *downstream_node, DWORD downstream_input, IMFTransform *copier)
 {
     IMFTopologyNode *copier_node;
     HRESULT hr;
@@ -2506,9 +2507,9 @@ static HRESULT topology_loader_connect_d3d_aware_input(struct topoloader_context
         IMFTopologyNode *node)
 {
     IMFTopologyNode *upstream_node;
-    unsigned int upstream_output;
-    IMFStreamSink *stream_sink;
     IMFTransform *copier = NULL;
+    IMFStreamSink *stream_sink;
+    DWORD upstream_output;
     HRESULT hr;
 
     if (FAILED(hr = topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))

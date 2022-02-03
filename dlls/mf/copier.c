@@ -247,7 +247,7 @@ static HRESULT WINAPI sample_copier_transform_GetOutputAvailableType(IMFTransfor
     return hr;
 }
 
-static HRESULT sample_copier_get_buffer_size(IMFMediaType *type, DWORD *size)
+static HRESULT sample_copier_get_buffer_size(IMFMediaType *type, UINT32 *size)
 {
     GUID major, subtype;
     UINT64 frame_size;
@@ -281,7 +281,7 @@ static HRESULT sample_copier_get_buffer_size(IMFMediaType *type, DWORD *size)
 static HRESULT sample_copier_set_media_type(struct sample_copier *transform, BOOL input, DWORD id, IMFMediaType *type,
         DWORD flags)
 {
-    DWORD buffer_size;
+    UINT32 buffer_size;
     HRESULT hr = S_OK;
 
     if (id)

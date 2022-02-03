@@ -1072,10 +1072,11 @@ static int __cdecl qsort_string_compare(const void *a, const void *b)
 static HRESULT mf_get_handler_strings(const WCHAR *path, WCHAR filter, unsigned int maxlen, PROPVARIANT *dst)
 {
     static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
-    unsigned int capacity = 0, count, size;
+    unsigned int capacity = 0, count;
     HRESULT hr = S_OK;
     int i, index;
     WCHAR *buffW;
+    DWORD size;
 
     if (!(buffW = calloc(maxlen, sizeof(*buffW))))
         return E_OUTOFMEMORY;

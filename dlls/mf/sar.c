@@ -1493,7 +1493,7 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_IsMediaTypeSupported(IM
         IMFMediaType *in_type, IMFMediaType **out_type)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
-    unsigned int flags;
+    DWORD flags;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", iface, in_type, out_type);
@@ -1618,8 +1618,8 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_SetCurrentMediaType(IMF
     struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
     const unsigned int test_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
     BOOL compare_result;
-    unsigned int flags;
     HRESULT hr = S_OK;
+    DWORD flags;
 
     TRACE("%p, %p.\n", iface, media_type);
 
@@ -1777,11 +1777,12 @@ static HRESULT WINAPI audio_renderer_render_callback_GetParameters(IMFAsyncCallb
 
 static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResult *result)
 {
-    unsigned int src_frames, dst_frames, max_frames, pad_frames, src_len;
+    unsigned int src_frames, dst_frames, max_frames, pad_frames;
     struct queued_object *obj, *obj2;
     BOOL keep_sample = FALSE;
     IMFMediaBuffer *buffer;
     BYTE *dst, *src;
+    DWORD src_len;
     HRESULT hr;
 
     LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &renderer->queue, struct queued_object, entry)

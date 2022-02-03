@@ -1633,8 +1633,8 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 
     if (SUCCEEDED(hr))
     {
-        unsigned int input_count, output_count;
-        unsigned int *ids, *oids;
+        DWORD input_count, output_count;
+        DWORD *ids, *oids;
         size_t i;
 
         /* Create stream sinks for inputs that mixer already has by default. */

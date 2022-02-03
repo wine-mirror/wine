@@ -185,7 +185,7 @@ struct topo_node
         struct
         {
             IMFMediaSource *source;
-            unsigned int stream_id;
+            DWORD stream_id;
         } source;
         struct
         {
@@ -197,11 +197,11 @@ struct topo_node
         struct
         {
             struct transform_stream *inputs;
-            unsigned int *input_map;
+            DWORD *input_map;
             unsigned int input_count;
 
             struct transform_stream *outputs;
-            unsigned int *output_map;
+            DWORD *output_map;
             unsigned int output_count;
         } transform;
     } u;
@@ -867,8 +867,9 @@ static void session_start(struct media_session *session, const GUID *time_format
 static void session_set_started(struct media_session *session)
 {
     struct media_source *source;
-    unsigned int caps, flags;
     IMFMediaEvent *event;
+    unsigned int caps;
+    DWORD flags;
 
     session->state = SESSION_STATE_STARTED;
 
@@ -1181,17 +1182,18 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
     return S_OK;
 }
 
-static unsigned int transform_node_get_stream_id(struct topo_node *node, BOOL output, unsigned int index)
+static DWORD transform_node_get_stream_id(struct topo_node *node, BOOL output, unsigned int index)
 {
-    unsigned int *map = output ? node->u.transform.output_map : node->u.transform.input_map;
+    DWORD *map = output ? node->u.transform.output_map : node->u.transform.input_map;
     return map ? map[index] : index;
 }
 
 static HRESULT session_set_transform_stream_info(struct topo_node *node)
 {
-    unsigned int *input_map = NULL, *output_map = NULL;
-    unsigned int i, input_count, output_count, block_alignment;
+    DWORD *input_map = NULL, *output_map = NULL;
+    DWORD i, input_count, output_count;
     struct transform_stream *streams;
+    unsigned int block_alignment;
     IMFMediaType *media_type;
     GUID major = { 0 };
     HRESULT hr;
@@ -2130,7 +2132,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
     struct media_session *session = impl_from_commands_callback_IMFAsyncCallback(iface);
     struct topo_node *topo_node;
     IMFTopologyNode *upstream_node;
-    unsigned int upstream_output;
+    DWORD upstream_output;
 
     EnterCriticalSection(&session->cs);
 
@@ -2460,8 +2462,8 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
     struct media_sink *sink;
     enum object_state state;
     struct topo_node *node;
-    unsigned int i, count;
     BOOL changed = FALSE;
+    DWORD i, count;
     HRESULT hr;
 
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
@@ -2666,10 +2668,11 @@ static struct sample *transform_create_sample(IMFSample *sample)
 static HRESULT transform_get_external_output_sample(const struct media_session *session, struct topo_node *transform,
         unsigned int output_index, const MFT_OUTPUT_STREAM_INFO *stream_info, IMFSample **sample)
 {
-    unsigned int buffer_size, downstream_input;
     IMFTopologyNode *downstream_node;
     IMFMediaBuffer *buffer = NULL;
     struct topo_node *topo_node;
+    unsigned int buffer_size;
+    DWORD downstream_input;
     TOPOID node_id;
     HRESULT hr;
 
@@ -2711,9 +2714,9 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
     MFT_OUTPUT_STREAM_INFO stream_info;
     MFT_OUTPUT_DATA_BUFFER *buffers;
     struct sample *queued_sample;
+    HRESULT hr = E_UNEXPECTED;
     DWORD status = 0;
     unsigned int i;
-    HRESULT hr = E_UNEXPECTED;
 
     if (!(buffers = calloc(node->u.transform.output_count, sizeof(*buffers))))
         return E_OUTOFMEMORY;
@@ -2886,7 +2889,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
 static HRESULT session_request_sample_from_node(struct media_session *session, IMFTopologyNode *node, DWORD output)
 {
     IMFTopologyNode *downstream_node, *upstream_node;
-    unsigned int downstream_input, upstream_output;
+    DWORD downstream_input, upstream_output;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
     struct sample *sample;
@@ -3535,8 +3538,8 @@ static HRESULT session_is_presentation_rate_supported(struct media_session *sess
     struct media_source *source;
     struct media_sink *sink;
     float value = 0.0f, tmp;
-    unsigned int flags;
     HRESULT hr = S_OK;
+    DWORD flags;
 
     if (!nearest_rate) nearest_rate = &tmp;
 
