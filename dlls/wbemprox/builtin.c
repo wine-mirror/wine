@@ -1939,7 +1939,8 @@ static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
 static WCHAR *get_file_version( const WCHAR *filename )
 {
     VS_FIXEDFILEINFO *info;
-    DWORD size, len = 4 * 5 + ARRAY_SIZE( L"%u.%u.%u.%u" );
+    UINT size;
+    DWORD len = 4 * 5 + ARRAY_SIZE( L"%u.%u.%u.%u" );
     void *block;
     WCHAR *ret;
 
@@ -2499,7 +2500,8 @@ static WCHAR *get_ip4_string( DWORD addr )
 static enum fill_status fill_ip4routetable( struct table *table, const struct expr *cond )
 {
     struct record_ip4routetable *rec;
-    UINT i, row = 0, offset = 0, size = 0;
+    UINT i, row = 0, offset = 0;
+    ULONG size = 0;
     MIB_IPFORWARDTABLE *forwards;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
@@ -3710,8 +3712,8 @@ static enum fill_status fill_service( struct table *table, const struct expr *co
     ENUM_SERVICE_STATUS_PROCESSW *tmp, *services = NULL;
     SERVICE_STATUS_PROCESS *status;
     WCHAR sysnameW[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD len = ARRAY_SIZE( sysnameW );
-    UINT i, row = 0, offset = 0, size = 256, needed, count;
+    DWORD len = ARRAY_SIZE( sysnameW ), needed, count;
+    UINT i, row = 0, offset = 0, size = 256;
     enum fill_status fill_status = FILL_STATUS_FAILED;
     BOOL ret;
 
