@@ -824,7 +824,7 @@ static ID3D10Device1 *create_d3d10_device(void)
 
 static ID3D11Device *create_d3d11_device(void)
 {
-    DWORD level = D3D_FEATURE_LEVEL_11_0;
+    D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
     ID3D11Device *device;
 
     if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL,
