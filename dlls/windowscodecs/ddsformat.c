@@ -1331,7 +1331,8 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     LARGE_INTEGER seek;
     UINT width, height, depth, block_width, block_height, width_in_blocks, height_in_blocks, size;
     UINT frame_width = 0, frame_height = 0, frame_width_in_blocks = 0, frame_height_in_blocks = 0, frame_size = 0;
-    UINT bytes_per_block, bytesread, i;
+    UINT bytes_per_block, i;
+    DWORD bytesread;
     DdsFrameDecode *frame_decode = NULL;
 
     TRACE("(%p,%u,%u,%u,%p)\n", iface, arrayIndex, mipLevel, sliceIndex, bitmapFrame);

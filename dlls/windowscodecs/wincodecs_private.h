@@ -265,7 +265,7 @@ struct decoder_info
 struct decoder_stat
 {
     DWORD flags;
-    DWORD frame_count;
+    UINT frame_count;
 };
 
 struct decoder_frame
@@ -361,7 +361,7 @@ struct encoder_frame
     UINT bpp;
     BOOL indexed;
     DOUBLE dpix, dpiy;
-    DWORD num_colors;
+    UINT num_colors;
     WICColor palette[256];
     /* encoder options */
     BOOL interlace;
