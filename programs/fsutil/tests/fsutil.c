@@ -97,7 +97,7 @@ static void test_hardlink(void)
                         FILE_ATTRIBUTE_NORMAL, NULL);
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open the hardlink\n");
     boolrc = GetFileInformationByHandle(hfile, &info);
-    ok(boolrc, "failed to get info about hardlink, error %#x\n", GetLastError());
+    ok(boolrc, "failed to get info about hardlink, error %#lx\n", GetLastError());
     CloseHandle(hfile);
 
     ok(info.nNumberOfLinks == 2, "our link is not a hardlink\n");
@@ -109,9 +109,9 @@ static void test_hardlink(void)
     ok(rc == 1, "fsutil didn't complain about nonexisting source file\n");
 
     boolrc = DeleteFileA("link");
-    ok(boolrc, "failed to delete the hardlink, error %#x\n", GetLastError());
+    ok(boolrc, "failed to delete the hardlink, error %#lx\n", GetLastError());
     boolrc = DeleteFileA("file");
-    ok(boolrc, "failed to delete the file, error %#x\n", GetLastError());
+    ok(boolrc, "failed to delete the file, error %#lx\n", GetLastError());
 }
 
 START_TEST(fsutil)
