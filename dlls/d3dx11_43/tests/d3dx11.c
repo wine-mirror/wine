@@ -316,42 +316,42 @@ static void test_D3DX11CreateAsyncMemoryLoader(void)
     void *ptr;
 
     hr = D3DX11CreateAsyncMemoryLoader(NULL, 0, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncMemoryLoader(NULL, 0, &loader);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncMemoryLoader(&data, 0, &loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     size = 100;
     hr = ID3DX11DataLoader_Decompress(loader, &ptr, &size);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ptr == &data, "Got data pointer %p, original %p.\n", ptr, &data);
     ok(!size, "Got unexpected data size.\n");
 
     /* Load() is no-op. */
     hr = ID3DX11DataLoader_Load(loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3DX11DataLoader_Destroy(loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     data = 0;
     hr = D3DX11CreateAsyncMemoryLoader(&data, sizeof(data), &loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Load() is no-op. */
     hr = ID3DX11DataLoader_Load(loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3DX11DataLoader_Decompress(loader, &ptr, &size);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ptr == &data, "Got data pointer %p, original %p.\n", ptr, &data);
     ok(size == sizeof(data), "Got unexpected data size.\n");
 
     hr = ID3DX11DataLoader_Destroy(loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 }
 
 static void create_testfile(WCHAR *path, const void *data, int data_len)
@@ -364,7 +364,7 @@ static void create_testfile(WCHAR *path, const void *data, int data_len)
     lstrcatW(path, L"asyncloader.data");
 
     file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Test file creation failed, at %s, error %d.\n",
+    ok(file != INVALID_HANDLE_VALUE, "Test file creation failed, at %s, error %ld.\n",
             wine_dbgstr_w(path), GetLastError());
 
     ret = WriteFile(file, data, data_len, &written, NULL);
@@ -385,59 +385,59 @@ static void test_D3DX11CreateAsyncFileLoader(void)
     BOOL ret;
 
     hr = D3DX11CreateAsyncFileLoaderA(NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncFileLoaderA(NULL, &loader);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncFileLoaderA("nonexistentfilename", &loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3DX11DataLoader_Decompress(loader, &ptr, &size);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3DX11DataLoader_Load(loader);
-    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3DX11DataLoader_Decompress(loader, &ptr, &size);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3DX11DataLoader_Destroy(loader);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Test file sharing using dummy empty file. */
     create_testfile(path, test_data1, sizeof(test_data1));
 
     hr = D3DX11CreateAsyncFileLoaderW(path, &loader);
-    ok(SUCCEEDED(hr), "Failed to create file loader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ret = DeleteFileW(path);
-    ok(ret, "DeleteFile() failed, ret %d, error %d.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, error %ld.\n", ret, GetLastError());
 
     /* File was removed before Load(). */
     hr = ID3DX11DataLoader_Load(loader);
-    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Load() returned unexpected result, hr %#x.\n", hr);
+    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
 
     /* Create it again. */
     create_testfile(path, test_data1, sizeof(test_data1));
     hr = ID3DX11DataLoader_Load(loader);
-    ok(SUCCEEDED(hr), "Load() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Already loaded. */
     hr = ID3DX11DataLoader_Load(loader);
-    ok(SUCCEEDED(hr), "Load() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ret = DeleteFileW(path);
-    ok(ret, "DeleteFile() failed, ret %d, error %d.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, error %ld.\n", ret, GetLastError());
 
     /* Already loaded, file removed. */
     hr = ID3DX11DataLoader_Load(loader);
-    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Load() returned unexpected result, hr %#x.\n", hr);
+    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
 
     /* Decompress still works. */
     ptr = NULL;
     hr = ID3DX11DataLoader_Decompress(loader, &ptr, &size);
-    ok(SUCCEEDED(hr), "Decompress() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ptr != NULL, "Got unexpected ptr %p.\n", ptr);
     ok(size == sizeof(test_data1), "Got unexpected decompressed size.\n");
     if (size == sizeof(test_data1))
@@ -447,21 +447,21 @@ static void test_D3DX11CreateAsyncFileLoader(void)
     create_testfile(path, test_data2, sizeof(test_data2));
 
     hr = ID3DX11DataLoader_Load(loader);
-    ok(SUCCEEDED(hr), "Load() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ptr = NULL;
     hr = ID3DX11DataLoader_Decompress(loader, &ptr, &size);
-    ok(SUCCEEDED(hr), "Decompress() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ptr != NULL, "Got unexpected ptr %p.\n", ptr);
     ok(size == sizeof(test_data2), "Got unexpected decompressed size.\n");
     if (size == sizeof(test_data2))
         ok(!memcmp(ptr, test_data2, size), "Got unexpected file data.\n");
 
     hr = ID3DX11DataLoader_Destroy(loader);
-    ok(SUCCEEDED(hr), "Destroy() failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ret = DeleteFileW(path);
-    ok(ret, "DeleteFile() failed, ret %d, error %d.\n", ret, GetLastError());
+    ok(ret, "Got unexpected ret %#x, error %ld.\n", ret, GetLastError());
 }
 
 static void test_D3DX11CreateAsyncResourceLoader(void)
@@ -470,22 +470,22 @@ static void test_D3DX11CreateAsyncResourceLoader(void)
     HRESULT hr;
 
     hr = D3DX11CreateAsyncResourceLoaderA(NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncResourceLoaderA(NULL, NULL, &loader);
-    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncResourceLoaderA(NULL, "noname", &loader);
-    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncResourceLoaderW(NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncResourceLoaderW(NULL, NULL, &loader);
-    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DX11CreateAsyncResourceLoaderW(NULL, L"noname", &loader);
-    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#lx.\n", hr);
 }
 
 static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
@@ -574,8 +574,9 @@ static void test_D3DX11CompileFromFile(void)
     create_file(L"include1.h", include1, strlen(include1), NULL);
     create_file(L"include\\include2.h", include2, strlen(include2), NULL);
 
-    hr = D3DX11CompileFromFileW(filename, NULL, &include.ID3DInclude_iface, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    hr = D3DX11CompileFromFileW(filename, NULL, &include.ID3DInclude_iface,
+            "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
     ok(!errors, "Got unexpected errors.\n");
     if (blob)
@@ -588,7 +589,7 @@ static void test_D3DX11CompileFromFile(void)
      * instead of using the immediate parent, as it would be the case for
      * standard C preprocessor includes. */
     hr = D3DX11CompileFromFileW(filename, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
     ok(!errors, "Got unexpected errors.\n");
     if (blob)
@@ -600,7 +601,7 @@ static void test_D3DX11CompileFromFile(void)
     len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
     hr = D3DX11CompileFromFileA(filename_a, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
     ok(!errors, "Got unexpected errors.\n");
     if (blob)
@@ -613,7 +614,7 @@ static void test_D3DX11CompileFromFile(void)
     SetCurrentDirectoryW(temp_dir);
 
     hr = D3DX11CompileFromFileW(L"source.ps", NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
     ok(!errors, "Got unexpected errors.\n");
     if (blob)
@@ -730,7 +731,7 @@ static void check_dds_pixel_format_(unsigned int line, DWORD flags, DWORD fourcc
     memset(dds.data, 0, sizeof(dds.data));
 
     hr = D3DX11GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
-    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#x for pixel format %#x.\n", hr, expected_format);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx for pixel format %#x.\n", hr, expected_format);
     if (SUCCEEDED(hr))
     {
         ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x, expected %#x\n",
@@ -750,50 +751,50 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     }
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL, &info, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp) + 5, NULL, &info, NULL); /* too large size */
-    ok(hr == S_OK, "Unexpected hr %#x.", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, sizeof(noimage), NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, sizeof(noimage), NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp) - 1, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp + 1, sizeof(bmp_1bpp) - 1, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, 0, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, 0, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(noimage, 0, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(NULL, 4, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(NULL, 4, NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(NULL, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     /* test BMP support */
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL, &info, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.", hr);
     ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -805,10 +806,10 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_2bpp, sizeof(bmp_2bpp), NULL, &info, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.", hr);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_4bpp, sizeof(bmp_4bpp), NULL, &info, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -820,7 +821,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_8bpp, sizeof(bmp_8bpp), NULL, &info, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -832,7 +833,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_32bpp_xrgb, sizeof(bmp_32bpp_xrgb), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -844,7 +845,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_32bpp_argb, sizeof(bmp_32bpp_argb), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -857,7 +858,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
 
     /* Grayscale PNG */
     hr = D3DX11GetImageInfoFromMemory(png_grayscale, sizeof(png_grayscale), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -870,7 +871,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
 
     /* test DDS support */
     hr = D3DX11GetImageInfoFromMemory(dds_24bit, sizeof(dds_24bit), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -881,7 +882,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(dds_24bit, sizeof(dds_24bit) - 1, NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -892,7 +893,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(dds_16bit, sizeof(dds_16bit), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -904,7 +905,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
 
     memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_16bit, sizeof(dds_16bit) - 1, NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -916,7 +917,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
 
     memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_8bit, sizeof(dds_8bit), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 16, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -927,7 +928,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(dds_cube_map, sizeof(dds_cube_map), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -938,7 +939,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(dds_cube_map, sizeof(dds_cube_map) - 1, NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
@@ -949,7 +950,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(dds_volume_map, sizeof(dds_volume_map), NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 2, "Unexpected depth %u.\n", info.Depth);
@@ -960,7 +961,7 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DX11GetImageInfoFromMemory(dds_volume_map, sizeof(dds_volume_map) - 1, NULL, &info, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
     ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
     ok(info.Depth == 2, "Unexpected depth %u.\n", info.Depth);
