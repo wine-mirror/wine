@@ -540,6 +540,22 @@ static LONG long_from_bstr( BSTR s )
     return _wtoi( s );
 }
 
+static BSTR mapping_move_bstr( BSTR *s )
+{
+    BSTR ret;
+
+    if (*s)
+    {
+        ret = *s;
+        *s = NULL;
+    }
+    else if (!(ret = SysAllocString( L"" )))
+    {
+        ERR( "No memory.\n" );
+    }
+    return ret;
+}
+
 static void update_mapping_list(void)
 {
     struct xml_value_desc mapping_desc[ARRAY_SIZE(port_mapping_template)];
@@ -579,20 +595,17 @@ static void update_mapping_list(void)
             }
             break;
         }
-        new_mappings[index].external_ip = mapping_desc[PM_EXTERNAL_IP].value;
-        mapping_desc[PM_EXTERNAL_IP].value = NULL;
+        new_mappings[index].external_ip = mapping_move_bstr( &mapping_desc[PM_EXTERNAL_IP].value );
         new_mappings[index].external = long_from_bstr( mapping_desc[PM_EXTERNAL].value );
-        new_mappings[index].protocol = mapping_desc[PM_PROTOCOL].value;
-        mapping_desc[PM_PROTOCOL].value = NULL;
+        new_mappings[index].protocol = mapping_move_bstr( &mapping_desc[PM_PROTOCOL].value );
         new_mappings[index].internal = long_from_bstr( mapping_desc[PM_INTERNAL].value );
-        new_mappings[index].client = mapping_desc[PM_CLIENT].value;
-        mapping_desc[PM_CLIENT].value = NULL;
-        if (!wcsicmp( mapping_desc[PM_ENABLED].value, L"true" ) || long_from_bstr( mapping_desc[PM_ENABLED].value ))
+        new_mappings[index].client = mapping_move_bstr( &mapping_desc[PM_CLIENT].value );
+        if (mapping_desc[PM_ENABLED].value && (!wcsicmp( mapping_desc[PM_ENABLED].value, L"true" )
+                                               || long_from_bstr( mapping_desc[PM_ENABLED].value )))
             new_mappings[index].enabled = VARIANT_TRUE;
         else
             new_mappings[index].enabled = VARIANT_FALSE;
-        new_mappings[index].descr = mapping_desc[PM_DESC].value;
-        mapping_desc[PM_DESC].value = NULL;
+        new_mappings[index].descr = mapping_move_bstr( &mapping_desc[PM_DESC].value );
 
         TRACE( "%s %s %s:%u -> %s:%u, enabled %d.\n", debugstr_w(new_mappings[index].descr),
                debugstr_w(new_mappings[index].protocol), debugstr_w(new_mappings[index].external_ip),
