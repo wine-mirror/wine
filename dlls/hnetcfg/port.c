@@ -265,7 +265,10 @@ static BOOL get_xml_elements( const char *desc_xml, struct xml_value_desc *value
             if (node_type == XmlNodeType_EndElement) value = L"";
             else                                     goto done;
         }
-        if (FAILED(IXmlReader_GetValue( reader, &value, NULL ))) goto done;
+        else
+        {
+            if (FAILED(IXmlReader_GetValue( reader, &value, NULL ))) goto done;
+        }
         if (values[i].value)
         {
             WARN( "Duplicate value %s.\n", debugstr_w(values[i].name) );
