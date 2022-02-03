@@ -211,16 +211,6 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID *sOtherDirs);
 WORD WINAPI ArrangeWindows(HWND hwndParent, DWORD dwReserved, const RECT *lpRect,
         WORD cKids, const HWND *lpKids);
 
-/* RegisterShellHook types */
-#define RSH_DEREGISTER        0
-#define RSH_REGISTER          1
-#define RSH_REGISTER_PROGMAN  2
-#define RSH_REGISTER_TASKMAN  3
-
-BOOL WINAPI RegisterShellHook(
-	HWND hWnd,
-	DWORD dwType);
-
 /* SHCreateDefClassObject callback function */
 typedef HRESULT (CALLBACK *LPFNCDCOCALLBACK)(
 	LPUNKNOWN pUnkOuter,

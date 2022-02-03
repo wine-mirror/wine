@@ -55,6 +55,12 @@ WINE_DECLARE_DEBUG_CHANNEL(pidl);
 #define SHWFF_REMOVE    0x02
 #define SHWFF_WAIT      0x04
 
+/* RegisterShellHook types */
+#define RSH_DEREGISTER          0
+#define RSH_REGISTER            1
+#define RSH_REGISTER_PROGMAN    2
+#define RSH_REGISTER_TASKMAN    3
+
 /* FIXME: !!! move CREATEMRULIST and flags to header file !!! */
 /*        !!! it is in both here and comctl32undoc.c      !!! */
 typedef struct tagCREATEMRULIST
