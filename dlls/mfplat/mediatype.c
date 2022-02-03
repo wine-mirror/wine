@@ -2926,8 +2926,10 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value)))
         format->nChannels = value;
-    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &format->nSamplesPerSec);
-    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &format->nAvgBytesPerSec);
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &value)))
+        format->nSamplesPerSec = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value)))
+        format->nAvgBytesPerSec = value;
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value)))
         format->nBlockAlign = value;
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value)))
@@ -2939,7 +2941,8 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
         if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
             format_ext->Samples.wSamplesPerBlock = value;
 
-        IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &format_ext->dwChannelMask);
+        if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &value)))
+            format_ext->dwChannelMask = value;
         memcpy(&format_ext->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM, sizeof(format_ext->SubFormat));
     }
 
@@ -3085,8 +3088,8 @@ HRESULT WINAPI MFCreateAudioMediaType(const WAVEFORMATEX *format, IMFAudioMediaT
     return S_OK;
 }
 
-static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, UINT32 *numerator,
-        UINT32 *denominator)
+static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, DWORD *numerator,
+        DWORD *denominator)
 {
     UINT64 value;
 
@@ -3102,7 +3105,7 @@ static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, UIN
  */
 HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MFVIDEOFORMAT **video_format, UINT32 *size)
 {
-    UINT32 flags, palette_size = 0, avgrate;
+    UINT32 flags, palette_size = 0, value;
     MFVIDEOFORMAT *format;
     INT32 stride;
     GUID guid;
@@ -3162,11 +3165,12 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
     if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&stride)) && stride < 0)
         format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
 
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &avgrate)))
-        format->compressedInfo.AvgBitrate = avgrate;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &avgrate)))
-        format->compressedInfo.AvgBitErrorRate = avgrate;
-    IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &format->compressedInfo.MaxKeyFrameSpacing);
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &value)))
+        format->compressedInfo.AvgBitrate = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &value)))
+        format->compressedInfo.AvgBitErrorRate = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &value)))
+        format->compressedInfo.MaxKeyFrameSpacing = value;
 
     /* Palette. */
     if (palette_size)

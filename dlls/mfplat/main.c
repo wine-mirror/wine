@@ -702,9 +702,10 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
     HRESULT hr = S_OK;
     HKEY hclsid = 0;
     WCHAR buffer[64];
-    DWORD size, ret;
     WCHAR str[250];
     UINT8 *blob;
+    UINT32 size;
+    DWORD ret;
 
     guid_to_string(buffer, clsid);
     swprintf(str, ARRAY_SIZE(str), L"%s\\%s", transform_keyW, buffer);
@@ -6094,8 +6095,9 @@ static const IRtwqAsyncCallbackVtbl source_resolver_callback_url_vtbl =
 
 static HRESULT resolver_create_registered_handler(HKEY hkey, REFIID riid, void **handler)
 {
-    unsigned int j = 0, name_length, type;
+    DWORD name_length, type;
     HRESULT hr = E_FAIL;
+    unsigned int j = 0;
     WCHAR clsidW[39];
     CLSID clsid;
 
@@ -9207,7 +9209,7 @@ static ULONGLONG lldiv128(ULARGE_INTEGER c1, ULARGE_INTEGER c0, LONGLONG denom)
 {
     ULARGE_INTEGER q1, q0, rhat;
     ULARGE_INTEGER v, cmp1, cmp2;
-    unsigned int s = 0;
+    DWORD s = 0;
 
     v.QuadPart = llabs(denom);
 
