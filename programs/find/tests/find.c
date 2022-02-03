@@ -174,7 +174,7 @@ static void run_find_stdin_(const WCHAR *commandline, const BYTE *input, int inp
 
     check_find_output(child_output, child_output_len, out_expected, out_expected_len, file, line);
 
-    ok_(file, line)(exitcode == exitcode_expected, "Expected exitcode %d, got %d\n", exitcode_expected, exitcode);
+    ok_(file, line)(exitcode == exitcode_expected, "Expected exitcode %d, got %ld\n", exitcode_expected, exitcode);
 
     heap_free(child_output);
 }
