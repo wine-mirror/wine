@@ -297,8 +297,8 @@ sub generate_spec_entry($$)
 }
 
 my %core_functions;
-my %cl_enums;
-my (%cl_types, @cl_types);  # also use an array to preserve declaration order
+my %header_enums;
+my (%header_types, @header_types);  # also use an array to preserve declaration order
 
 # some functions need a hand-written wrapper
 sub needs_pe_wrapper($)
@@ -440,13 +440,13 @@ sub parse_file($)
         }
         foreach my $enum ($feature->findnodes("./require/enum"))
         {
-            $cl_enums{$enum->{name}} = $enums{$enum->{name}};
+            $header_enums{$enum->{name}} = $enums{$enum->{name}};
         }
         foreach my $type ($feature->findnodes("./require/type"))
         {
             next unless $types{$type->{name}};
-            push @cl_types, $type->{name} unless $cl_types{$type->{name}};
-            $cl_types{$type->{name}} = $types{$type->{name}};
+            push @header_types, $type->{name} unless $header_types{$type->{name}};
+            $header_types{$type->{name}} = $types{$type->{name}};
         }
     }
 
@@ -588,9 +588,9 @@ typedef uint64_t DECLSPEC_ALIGN(8) cl_ulong;
 END
 ;
 
-foreach (@cl_types)
+foreach (@header_types)
 {
-    my $type = $cl_types{$_};
+    my $type = $header_types{$_};
     if ($type->{category} eq "define")
     {
         print TYPES $type->textContent() . "\n";
@@ -603,9 +603,9 @@ foreach (@cl_types)
 
 print TYPES "\n";
 
-foreach (sort keys %cl_enums)
+foreach (sort keys %header_enums)
 {
-    printf TYPES "#define %s %s\n", $_, $cl_enums{$_};
+    printf TYPES "#define %s %s\n", $_, $header_enums{$_};
 }
 
 close(TYPES);
