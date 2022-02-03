@@ -85,8 +85,8 @@ static void test_winstation(void)
     service_ok(winstation != NULL, "winstation = NULL\n");
 
     r = GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL);
-    service_ok(r, "GetUserObjectInformation(UOI_NAME) failed: %u\n", GetLastError());
-    service_ok(!(flags.dwFlags & WSF_VISIBLE), "winstation has flags %x\n", flags.dwFlags);
+    service_ok(r, "GetUserObjectInformation(UOI_NAME) failed: %lu\n", GetLastError());
+    service_ok(!(flags.dwFlags & WSF_VISIBLE), "winstation has flags %lx\n", flags.dwFlags);
 }
 
 /*
@@ -118,22 +118,22 @@ static void test_create_window(void)
     hwnd = CreateWindowA("service_test", "service_test",
             WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
             515, 530, NULL, NULL, NULL, NULL);
-    service_ok(hwnd != NULL, "CreateWindow failed: %u\n", GetLastError());
+    service_ok(hwnd != NULL, "CreateWindow failed: %lu\n", GetLastError());
 
     style = GetWindowLongW(hwnd, GWL_STYLE);
-    service_ok(!(style & WS_VISIBLE), "style = %x, expected invisible\n", style);
+    service_ok(!(style & WS_VISIBLE), "style = %lx, expected invisible\n", style);
 
     r = ShowWindow(hwnd, SW_SHOW);
     service_ok(!r, "ShowWindow returned %x\n", r);
 
     style = GetWindowLongW(hwnd, GWL_STYLE);
-    service_ok(style & WS_VISIBLE, "style = %x, expected visible\n", style);
+    service_ok(style & WS_VISIBLE, "style = %lx, expected visible\n", style);
 
     r = ShowWindow(hwnd, SW_SHOW);
     service_ok(r, "ShowWindow returned %x\n", r);
 
     r = DestroyWindow(hwnd);
-    service_ok(r, "DestroyWindow failed: %08x\n", GetLastError());
+    service_ok(r, "DestroyWindow failed: %08lx\n", GetLastError());
 }
 
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPARAM lparam)
@@ -150,7 +150,7 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPAR
 
     SetLastError(0xdeadbeef);
     r = GetMonitorInfoA(NULL, (MONITORINFO*)&mi);
-    service_ok(GetLastError() == ERROR_INVALID_MONITOR_HANDLE, "Unexpected GetLastError: %#x.\n", GetLastError());
+    service_ok(GetLastError() == ERROR_INVALID_MONITOR_HANDLE, "Unexpected GetLastError: %#lx.\n", GetLastError());
     service_ok(!r, "GetMonitorInfo with NULL HMONITOR succeeded.\n");
 
     r = GetMonitorInfoA(hmon, (MONITORINFO*)&mi);
@@ -218,7 +218,7 @@ static void WINAPI service_main(DWORD argc, char **argv)
     char buf[64];
     BOOL res;
 
-    service_ok(argc == 3, "argc = %u, expected 3\n", argc);
+    service_ok(argc == 3, "argc = %lu, expected 3\n", argc);
     service_ok(!strcmp(argv[0], service_name), "argv[0] = '%s', expected '%s'\n", argv[0], service_name);
     service_ok(!strcmp(argv[1], "param1"), "argv[1] = '%s', expected 'param1'\n", argv[1]);
     service_ok(!strcmp(argv[2], "param2"), "argv[2] = '%s', expected 'param2'\n", argv[2]);
@@ -228,7 +228,7 @@ static void WINAPI service_main(DWORD argc, char **argv)
     service_ok(buf[0], "did not find PATHEXT environment variable\n");
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, service_handler, NULL);
-    service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
+    service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %lu\n", GetLastError());
     if(!service_handle)
         return;
 
@@ -240,7 +240,7 @@ static void WINAPI service_main(DWORD argc, char **argv)
     status.dwCheckPoint              = 0;
     status.dwWaitHint                = 10000;
     res = SetServiceStatus(service_handle, &status);
-    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %u\n", GetLastError());
+    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %lu\n", GetLastError());
 
     service_event("RUNNING");
 
@@ -249,7 +249,7 @@ static void WINAPI service_main(DWORD argc, char **argv)
     status.dwCurrentState     = SERVICE_STOPPED;
     status.dwControlsAccepted = 0;
     res = SetServiceStatus(service_handle, &status);
-    service_ok(res, "SetServiceStatus(SERVICE_STOPPED) failed: %u\n", GetLastError());
+    service_ok(res, "SetServiceStatus(SERVICE_STOPPED) failed: %lu\n", GetLastError());
 }
 
 static void service_process(void (WINAPI *p_service_main)(DWORD, char **))
@@ -272,12 +272,12 @@ static void service_process(void (WINAPI *p_service_main)(DWORD, char **))
     service_trace("Starting...\n");
 
     service_stop_event = CreateEventA(NULL, TRUE, FALSE, NULL);
-    service_ok(service_stop_event != NULL, "Could not create event: %u\n", GetLastError());
+    service_ok(service_stop_event != NULL, "Could not create event: %lu\n", GetLastError());
     if(!service_stop_event)
         return;
 
     res = StartServiceCtrlDispatcherA(servtbl);
-    service_ok(res, "StartServiceCtrlDispatcher failed: %u\n", GetLastError());
+    service_ok(res, "StartServiceCtrlDispatcher failed: %lu\n", GetLastError());
 
     /* Let service thread terminate */
     Sleep(50);
@@ -319,11 +319,11 @@ static void WINAPI no_stop_main(DWORD argc, char **argv)
     SERVICE_STATUS status;
     BOOL res;
 
-    service_ok(argc == 1, "argc = %u, expected 1\n", argc);
+    service_ok(argc == 1, "argc = %lu, expected 1\n", argc);
     service_ok(!strcmp(argv[0], service_name), "argv[0] = '%s', expected '%s'\n", argv[0], service_name);
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, no_stop_handler, NULL);
-    service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
+    service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %lu\n", GetLastError());
     if(!service_handle)
         return;
 
@@ -335,7 +335,7 @@ static void WINAPI no_stop_main(DWORD argc, char **argv)
     status.dwCheckPoint              = 0;
     status.dwWaitHint                = 10000;
     res = SetServiceStatus(service_handle, &status);
-    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %u\n", GetLastError());
+    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %lu\n", GetLastError());
 
     service_event("RUNNING");
 }
@@ -376,7 +376,7 @@ static SC_HANDLE register_service(const char *test_name)
         return NULL;
     }
 
-    ok(service != NULL, "CreateService failed: %u\n", GetLastError());
+    ok(service != NULL, "CreateService failed: %lu\n", GetLastError());
     return service;
 }
 
@@ -388,7 +388,7 @@ static void expect_event(const char *event_name)
     trace("waiting for %s\n", event_name);
 
     res = WaitForSingleObject(event_handle, 30000);
-    ok(res == WAIT_OBJECT_0, "WaitForSingleObject failed: %u\n", res);
+    ok(res == WAIT_OBJECT_0, "WaitForSingleObject failed: %lu\n", res);
     if(res != WAIT_OBJECT_0)
         return;
 
@@ -407,13 +407,13 @@ static DWORD WINAPI pipe_thread(void *arg)
     BOOL res;
 
     res = ConnectNamedPipe(pipe_handle, NULL);
-    ok(res || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe failed: %u\n", GetLastError());
+    ok(res || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe failed: %lu\n", GetLastError());
 
     while(1) {
         res = ReadFile(pipe_handle, buf, sizeof(buf), &read, NULL);
         if(!res) {
             ok(GetLastError() == ERROR_BROKEN_PIPE || GetLastError() == ERROR_INVALID_HANDLE,
-               "ReadFile failed: %u\n", GetLastError());
+               "ReadFile failed: %lu\n", GetLastError());
             break;
         }
 
@@ -456,7 +456,7 @@ static void test_service(void)
 
     trace("starting...\n");
     res = StartServiceA(service_handle, 2, argv);
-    ok(res, "StartService failed: %u\n", GetLastError());
+    ok(res, "StartService failed: %lu\n", GetLastError());
     if(!res) {
         DeleteService(service_handle);
         CloseServiceHandle(service_handle);
@@ -465,32 +465,32 @@ static void test_service(void)
     expect_event("RUNNING");
 
     res = QueryServiceStatus(service_handle, &status);
-    ok(res, "QueryServiceStatus failed: %d\n", GetLastError());
-    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %x\n", status.dwServiceType);
-    ok(status.dwCurrentState == SERVICE_RUNNING, "status.dwCurrentState = %x\n", status.dwCurrentState);
+    ok(res, "QueryServiceStatus failed: %ld\n", GetLastError());
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %lx\n", status.dwServiceType);
+    ok(status.dwCurrentState == SERVICE_RUNNING, "status.dwCurrentState = %lx\n", status.dwCurrentState);
     ok(status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN),
-            "status.dwControlsAccepted = %x\n", status.dwControlsAccepted);
-    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %d\n", status.dwWin32ExitCode);
-    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %d\n",
+            "status.dwControlsAccepted = %lx\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %ld\n", status.dwWin32ExitCode);
+    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %ld\n",
             status.dwServiceSpecificExitCode);
-    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %d\n", status.dwCheckPoint);
-    todo_wine ok(status.dwWaitHint == 0, "status.dwWaitHint = %d\n", status.dwWaitHint);
+    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %ld\n", status.dwCheckPoint);
+    todo_wine ok(status.dwWaitHint == 0, "status.dwWaitHint = %ld\n", status.dwWaitHint);
 
     res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
-    ok(status2.dwCurrentState == SERVICE_RUNNING, "status2.dwCurrentState = %x\n", status2.dwCurrentState);
-    ok(status2.dwProcessId != 0, "status2.dwProcessId = %d\n", status2.dwProcessId);
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
+    ok(status2.dwCurrentState == SERVICE_RUNNING, "status2.dwCurrentState = %lx\n", status2.dwCurrentState);
+    ok(status2.dwProcessId != 0, "status2.dwProcessId = %ld\n", status2.dwProcessId);
 
     res = ControlService(service_handle, 128, &status);
-    ok(res, "ControlService failed: %u\n", GetLastError());
+    ok(res, "ControlService failed: %lu\n", GetLastError());
     expect_event("CUSTOM");
 
     res = ControlService(service_handle, SERVICE_CONTROL_STOP, &status);
-    ok(res, "ControlService failed: %u\n", GetLastError());
+    ok(res, "ControlService failed: %lu\n", GetLastError());
     expect_event("STOP");
 
     res = DeleteService(service_handle);
-    ok(res, "DeleteService failed: %u\n", GetLastError());
+    ok(res, "DeleteService failed: %lu\n", GetLastError());
 
     CloseServiceHandle(service_handle);
 }
@@ -508,7 +508,7 @@ static inline void test_no_stop(void)
 
     trace("starting...\n");
     res = StartServiceA(service_handle, 0, NULL);
-    ok(res, "StartService failed: %u\n", GetLastError());
+    ok(res, "StartService failed: %lu\n", GetLastError());
     if(!res) {
         DeleteService(service_handle);
         CloseServiceHandle(service_handle);
@@ -520,91 +520,91 @@ static inline void test_no_stop(void)
     Sleep(1000);
 
     res = QueryServiceStatus(service_handle, &status);
-    ok(res, "QueryServiceStatus failed: %d\n", GetLastError());
-    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %x\n", status.dwServiceType);
-    ok(status.dwCurrentState == SERVICE_RUNNING, "status.dwCurrentState = %x\n", status.dwCurrentState);
+    ok(res, "QueryServiceStatus failed: %ld\n", GetLastError());
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %lx\n", status.dwServiceType);
+    ok(status.dwCurrentState == SERVICE_RUNNING, "status.dwCurrentState = %lx\n", status.dwCurrentState);
     ok(status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN),
-            "status.dwControlsAccepted = %x\n", status.dwControlsAccepted);
-    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %d\n", status.dwWin32ExitCode);
-    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %d\n",
+            "status.dwControlsAccepted = %lx\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %ld\n", status.dwWin32ExitCode);
+    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %ld\n",
             status.dwServiceSpecificExitCode);
-    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %d\n", status.dwCheckPoint);
-    todo_wine ok(status.dwWaitHint == 0, "status.dwWaitHint = %d\n", status.dwWaitHint);
+    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %ld\n", status.dwCheckPoint);
+    todo_wine ok(status.dwWaitHint == 0, "status.dwWaitHint = %ld\n", status.dwWaitHint);
 
     res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
-    ok(status2.dwCurrentState == SERVICE_RUNNING, "status2.dwCurrentState = %x\n", status2.dwCurrentState);
-    ok(status2.dwProcessId != 0, "status2.dwProcessId = %d\n", status2.dwProcessId);
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
+    ok(status2.dwCurrentState == SERVICE_RUNNING, "status2.dwCurrentState = %lx\n", status2.dwCurrentState);
+    ok(status2.dwProcessId != 0, "status2.dwProcessId = %ld\n", status2.dwProcessId);
 
     res = ControlService(service_handle, SERVICE_CONTROL_STOP, &status);
-    ok(res, "ControlService failed: %u\n", GetLastError());
+    ok(res, "ControlService failed: %lu\n", GetLastError());
     expect_event("STOP");
 
     res = QueryServiceStatus(service_handle, &status);
-    ok(res, "QueryServiceStatus failed: %d\n", GetLastError());
-    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %x\n", status.dwServiceType);
+    ok(res, "QueryServiceStatus failed: %ld\n", GetLastError());
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %lx\n", status.dwServiceType);
     ok(status.dwCurrentState==SERVICE_STOPPED || status.dwCurrentState==SERVICE_STOP_PENDING,
-            "status.dwCurrentState = %x\n", status.dwCurrentState);
-    ok(status.dwControlsAccepted == 0, "status.dwControlsAccepted = %x\n", status.dwControlsAccepted);
-    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %d\n", status.dwWin32ExitCode);
-    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %d\n",
+            "status.dwCurrentState = %lx\n", status.dwCurrentState);
+    ok(status.dwControlsAccepted == 0, "status.dwControlsAccepted = %lx\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %ld\n", status.dwWin32ExitCode);
+    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %ld\n",
             status.dwServiceSpecificExitCode);
-    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %d\n", status.dwCheckPoint);
-    ok(status.dwWaitHint == 0, "status.dwWaitHint = %d\n", status.dwWaitHint);
+    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %ld\n", status.dwCheckPoint);
+    ok(status.dwWaitHint == 0, "status.dwWaitHint = %ld\n", status.dwWaitHint);
 
     res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
     ok(status2.dwProcessId == 0 || broken(status2.dwProcessId != 0),
-       "status2.dwProcessId = %d\n", status2.dwProcessId);
+       "status2.dwProcessId = %ld\n", status2.dwProcessId);
 
     res = DeleteService(service_handle);
-    ok(res, "DeleteService failed: %u\n", GetLastError());
+    ok(res, "DeleteService failed: %lu\n", GetLastError());
 
     res = QueryServiceStatus(service_handle, &status);
-    ok(res, "QueryServiceStatus failed: %d\n", GetLastError());
-    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %x\n", status.dwServiceType);
+    ok(res, "QueryServiceStatus failed: %ld\n", GetLastError());
+    ok(status.dwServiceType == SERVICE_WIN32_OWN_PROCESS, "status.dwServiceType = %lx\n", status.dwServiceType);
     ok(status.dwCurrentState==SERVICE_STOPPED || status.dwCurrentState==SERVICE_STOP_PENDING,
-            "status.dwCurrentState = %x\n", status.dwCurrentState);
-    ok(status.dwControlsAccepted == 0, "status.dwControlsAccepted = %x\n", status.dwControlsAccepted);
-    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %d\n", status.dwWin32ExitCode);
-    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %d\n",
+            "status.dwCurrentState = %lx\n", status.dwCurrentState);
+    ok(status.dwControlsAccepted == 0, "status.dwControlsAccepted = %lx\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == 0, "status.dwExitCode = %ld\n", status.dwWin32ExitCode);
+    ok(status.dwServiceSpecificExitCode == 0, "status.dwServiceSpecificExitCode = %ld\n",
             status.dwServiceSpecificExitCode);
-    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %d\n", status.dwCheckPoint);
-    ok(status.dwWaitHint == 0, "status.dwWaitHint = %d\n", status.dwWaitHint);
+    ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %ld\n", status.dwCheckPoint);
+    ok(status.dwWaitHint == 0, "status.dwWaitHint = %ld\n", status.dwWaitHint);
 
     res = QueryServiceStatusEx(service_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status2, sizeof(status2), &bytes);
-    ok(res, "QueryServiceStatusEx failed: %u\n", GetLastError());
+    ok(res, "QueryServiceStatusEx failed: %lu\n", GetLastError());
     ok(status2.dwProcessId == 0 || broken(status2.dwProcessId != 0),
-       "status2.dwProcessId = %d\n", status2.dwProcessId);
+       "status2.dwProcessId = %ld\n", status2.dwProcessId);
 
     CloseServiceHandle(service_handle);
 
     res = QueryServiceStatus(service_handle, &status);
     ok(!res, "QueryServiceStatus should have failed\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError = %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError = %ld\n", GetLastError());
 }
 
 static void test_runner(void (*p_run_test)(void))
 {
     HANDLE thread;
 
-    sprintf(service_name, "WineTestService%d", GetTickCount());
+    sprintf(service_name, "WineTestService%ld", GetTickCount());
     trace("service_name: %s\n", service_name);
     sprintf(named_pipe_name, "\\\\.\\pipe\\%s_pipe", service_name);
 
     pipe_handle = CreateNamedPipeA(named_pipe_name, PIPE_ACCESS_INBOUND,
                                    PIPE_TYPE_MESSAGE|PIPE_READMODE_MESSAGE|PIPE_WAIT, 10, 2048, 2048, 10000, NULL);
-    ok(pipe_handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    ok(pipe_handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError());
     if(pipe_handle == INVALID_HANDLE_VALUE)
         return;
 
     event_handle = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(event_handle != INVALID_HANDLE_VALUE, "CreateEvent failed: %u\n", GetLastError());
+    ok(event_handle != INVALID_HANDLE_VALUE, "CreateEvent failed: %lu\n", GetLastError());
     if(event_handle == INVALID_HANDLE_VALUE)
         return;
 
     thread = CreateThread(NULL, 0, pipe_thread, NULL, 0, NULL);
-    ok(thread != NULL, "CreateThread failed: %u\n", GetLastError());
+    ok(thread != NULL, "CreateThread failed: %lu\n", GetLastError());
     if(!thread)
         return;
 
@@ -630,7 +630,7 @@ START_TEST(service)
     }
 
     scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
-    ok(scm_handle != NULL || GetLastError() == ERROR_ACCESS_DENIED, "OpenSCManager failed: %u\n", GetLastError());
+    ok(scm_handle != NULL || GetLastError() == ERROR_ACCESS_DENIED, "OpenSCManager failed: %lu\n", GetLastError());
     if(!scm_handle) {
         skip("OpenSCManager failed, skipping tests\n");
         return;
