@@ -771,65 +771,66 @@ static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
     return VFW_E_NOT_FOUND;
 }
 
-/* Don't allow a circular connection to form, return VFW_E_CIRCULAR_GRAPH if this would be the case.
- * A circular connection will be formed if from the filter of the output pin, the input pin can be reached
- */
-static HRESULT CheckCircularConnection(struct filter_graph *This, IPin *out, IPin *in)
+static HRESULT check_cyclic_connection(IPin *source, IPin *sink)
 {
+    IPin *upstream_source, *upstream_sink;
+    PIN_INFO source_info, sink_info;
+    IEnumPins *enumpins;
     HRESULT hr;
-    PIN_INFO info_out, info_in;
 
-    hr = IPin_QueryPinInfo(out, &info_out);
+    hr = IPin_QueryPinInfo(sink, &sink_info);
     if (FAILED(hr))
-        return hr;
-
-    hr = IPin_QueryPinInfo(in, &info_in);
-    if (SUCCEEDED(hr))
-        IBaseFilter_Release(info_in.pFilter);
-    if (FAILED(hr))
-        goto out;
-
-    if (info_out.pFilter == info_in.pFilter)
-        hr = VFW_E_CIRCULAR_GRAPH;
-    else
     {
-        IEnumPins *enumpins;
-        IPin *test;
+        ERR("Failed to query pin, hr %#x.\n", hr);
+        return hr;
+    }
+    IBaseFilter_Release(sink_info.pFilter);
 
-        hr = IBaseFilter_EnumPins(info_out.pFilter, &enumpins);
-        if (FAILED(hr))
-            goto out;
-
-        IEnumPins_Reset(enumpins);
-        while ((hr = IEnumPins_Next(enumpins, 1, &test, NULL)) == S_OK)
-        {
-            PIN_DIRECTION dir = PINDIR_OUTPUT;
-            IPin_QueryDirection(test, &dir);
-            if (dir == PINDIR_INPUT)
-            {
-                IPin *victim = NULL;
-                IPin_ConnectedTo(test, &victim);
-                if (victim)
-                {
-                    hr = CheckCircularConnection(This, victim, in);
-                    IPin_Release(victim);
-                    if (FAILED(hr))
-                    {
-                        IPin_Release(test);
-                        break;
-                    }
-                }
-            }
-            IPin_Release(test);
-        }
-        IEnumPins_Release(enumpins);
+    hr = IPin_QueryPinInfo(source, &source_info);
+    if (FAILED(hr))
+    {
+        ERR("Failed to query pin, hr %#x.\n", hr);
+        return hr;
     }
 
-out:
-    IBaseFilter_Release(info_out.pFilter);
+    if (sink_info.pFilter == source_info.pFilter)
+    {
+        WARN("Cyclic connection detected; returning VFW_E_CIRCULAR_GRAPH.\n");
+        IBaseFilter_Release(source_info.pFilter);
+        return VFW_E_CIRCULAR_GRAPH;
+    }
+
+    hr = IBaseFilter_EnumPins(source_info.pFilter, &enumpins);
     if (FAILED(hr))
-        ERR("Checking filtergraph returned %08x, something's not right!\n", hr);
-    return hr;
+    {
+        ERR("Failed to enumerate pins, hr %#x.\n", hr);
+        IBaseFilter_Release(source_info.pFilter);
+        return hr;
+    }
+
+    while ((hr = IEnumPins_Next(enumpins, 1, &upstream_sink, NULL)) == S_OK)
+    {
+        PIN_DIRECTION dir = PINDIR_OUTPUT;
+
+        IPin_QueryDirection(upstream_sink, &dir);
+        if (dir == PINDIR_INPUT && IPin_ConnectedTo(upstream_sink, &upstream_source) == S_OK)
+        {
+            hr = check_cyclic_connection(upstream_source, sink);
+            IPin_Release(upstream_source);
+            if (FAILED(hr))
+            {
+                IPin_Release(upstream_sink);
+                IEnumPins_Release(enumpins);
+                IBaseFilter_Release(source_info.pFilter);
+                return hr;
+            }
+        }
+        IPin_Release(upstream_sink);
+    }
+    IEnumPins_Release(enumpins);
+
+    IBaseFilter_Release(source_info.pFilter);
+    return S_OK;
 }
 
 static struct filter *find_sorted_filter(struct filter_graph *graph, IBaseFilter *iface)
@@ -855,7 +856,7 @@ static void sort_filter_recurse(struct filter_graph *graph, struct filter *filte
 
     TRACE("Sorting filter %p.\n", filter->filter);
 
-    /* Cyclic connections should be caught by CheckCircularConnection(). */
+    /* Cyclic connections should be caught by check_cyclic_connection(). */
     assert(!filter->sorting);
 
     filter->sorting = TRUE;
@@ -935,13 +936,13 @@ static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppi
     {
         if (dir == PINDIR_INPUT)
         {
-            hr = CheckCircularConnection(This, ppinOut, ppinIn);
+            hr = check_cyclic_connection(ppinOut, ppinIn);
             if (SUCCEEDED(hr))
                 hr = IPin_Connect(ppinOut, ppinIn, pmt);
         }
         else
         {
-            hr = CheckCircularConnection(This, ppinIn, ppinOut);
+            hr = check_cyclic_connection(ppinIn, ppinOut);
             if (SUCCEEDED(hr))
                 hr = IPin_Connect(ppinIn, ppinOut, pmt);
         }
