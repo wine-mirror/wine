@@ -782,22 +782,12 @@ static HRESULT CheckCircularConnection(struct filter_graph *This, IPin *out, IPi
     hr = IPin_QueryPinInfo(out, &info_out);
     if (FAILED(hr))
         return hr;
-    if (info_out.dir != PINDIR_OUTPUT)
-    {
-        IBaseFilter_Release(info_out.pFilter);
-        return VFW_E_CANNOT_CONNECT;
-    }
 
     hr = IPin_QueryPinInfo(in, &info_in);
     if (SUCCEEDED(hr))
         IBaseFilter_Release(info_in.pFilter);
     if (FAILED(hr))
         goto out;
-    if (info_in.dir != PINDIR_INPUT)
-    {
-        hr = VFW_E_CANNOT_CONNECT;
-        goto out;
-    }
 
     if (info_out.pFilter == info_in.pFilter)
         hr = VFW_E_CIRCULAR_GRAPH;
