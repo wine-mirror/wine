@@ -359,6 +359,18 @@ static inline int WINAPIV _snscanf_l(const char *buffer, size_t size, const char
     return ret;
 }
 
+static inline int WINAPIV _sscanf_l(const char *buffer, const char *format, _locale_t locale, ...) __WINE_CRT_SCANF_ATTR(2, 4);
+static inline int WINAPIV _sscanf_l(const char *buffer, const char *format, _locale_t locale, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, locale);
+    ret = __stdio_common_vsscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, buffer, -1, format, locale, args);
+    va_end(args);
+    return ret;
+}
+
 static inline int WINAPIV fscanf(FILE *file, const char *format, ...) __WINE_CRT_SCANF_ATTR(2, 3);
 static inline int WINAPIV fscanf(FILE *file, const char *format, ...)
 {
@@ -432,6 +444,7 @@ static inline int vsnprintf(char *buffer, size_t size, const char *format, va_li
 { return _vsnprintf(buffer,size,format,args); }
 
 _ACRTIMP int WINAPIV _snscanf_l(const char*,size_t,const char*,_locale_t,...) __WINE_CRT_SCANF_ATTR(3, 5);
+_ACRTIMP int WINAPIV _sscanf_l(const char *,const char*,_locale_t,...) __WINE_CRT_SCANF_ATTR(2, 4);
 _ACRTIMP int WINAPIV fscanf(FILE*,const char*,...) __WINE_CRT_SCANF_ATTR(2, 3);
 _ACRTIMP int WINAPIV fscanf_s(FILE*,const char*,...) __WINE_CRT_SCANF_ATTR(2, 3);
 _ACRTIMP int WINAPIV scanf(const char*,...) __WINE_CRT_SCANF_ATTR(1, 2);
