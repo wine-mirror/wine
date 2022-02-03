@@ -43,7 +43,7 @@ static void fetch_console_output_(unsigned int line)
                    sizeof(console_output) - console_output_count, NULL, &o);
     if (!ret)
     {
-        ok_(__FILE__,line)(GetLastError() == ERROR_IO_PENDING, "read failed: %u\n", GetLastError());
+        ok_(__FILE__,line)(GetLastError() == ERROR_IO_PENDING, "read failed: %lu\n", GetLastError());
         if (GetLastError() != ERROR_IO_PENDING) return;
         WaitForSingleObject(o.hEvent, 5000);
     }
@@ -51,7 +51,7 @@ static void fetch_console_output_(unsigned int line)
     if (!ret && GetLastError() == ERROR_IO_INCOMPLETE)
         CancelIoEx(console_pipe, &o);
 
-    ok_(__FILE__,line)(ret, "Read file failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(ret, "Read file failed: %lu\n", GetLastError());
     CloseHandle(o.hEvent);
     if (ret) console_output_count += count;
 }
@@ -63,8 +63,8 @@ static void expect_empty_output_(unsigned int line)
     BOOL ret;
 
     ret = PeekNamedPipe(console_pipe, NULL, 0, NULL, &avail, NULL);
-    ok_(__FILE__,line)(ret, "PeekNamedPipe failed: %u\n", GetLastError());
-    ok_(__FILE__,line)(!avail, "avail = %u\n", avail);
+    ok_(__FILE__,line)(ret, "PeekNamedPipe failed: %lu\n", GetLastError());
+    ok_(__FILE__,line)(!avail, "avail = %lu\n", avail);
     if (avail) fetch_console_output_(line);
     ok_(__FILE__,line)(!console_output_count, "expected empty buffer, got %s\n",
                        wine_dbgstr_an(console_output, console_output_count));
@@ -216,7 +216,7 @@ static void child_string_request(enum req_type type, const WCHAR *title)
     memcpy(req->u.string, title, len * sizeof(WCHAR));
     ret = WriteFile(child_pipe, req, FIELD_OFFSET(struct pseudoconsole_req, u.string[len]),
                     &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_write_characters(const WCHAR *buf, unsigned int x, unsigned int y)
@@ -234,7 +234,7 @@ static void child_write_characters(const WCHAR *buf, unsigned int x, unsigned in
     memcpy(req->u.write_characters.buf, buf, len * sizeof(WCHAR));
     ret = WriteFile(child_pipe, req, FIELD_OFFSET(struct pseudoconsole_req, u.write_characters.buf[len + 1]),
                     &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_set_cursor(const unsigned int x, unsigned int y)
@@ -247,7 +247,7 @@ static void child_set_cursor(const unsigned int x, unsigned int y)
     req.u.coord.X = x;
     req.u.coord.Y = y;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static HANDLE child_create_screen_buffer(void)
@@ -259,9 +259,9 @@ static HANDLE child_create_screen_buffer(void)
 
     req.type = REQ_CREATE_SCREEN_BUFFER;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
     ret = ReadFile(child_pipe, &handle, sizeof(handle), &count, NULL);
-    ok(ret, "ReadFile failed: %u\n", GetLastError());
+    ok(ret, "ReadFile failed: %lu\n", GetLastError());
     return handle;
 }
 
@@ -274,7 +274,7 @@ static void child_set_active(HANDLE handle)
     req.type = REQ_SET_ACTIVE;
     req.u.handle = handle;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 #define child_write_output(a,b,c,d,e,f,g,h,j,k,l,m,n) child_write_output_(__LINE__,a,b,c,d,e,f,g,h,j,k,l,m,n)
@@ -300,9 +300,9 @@ static void child_write_output_(unsigned int line, CHAR_INFO *buf, unsigned int 
     req->u.write_output.region.Bottom = bottom;
     memcpy(req->u.write_output.buf, buf, size_x * size_y * sizeof(*buf));
     ret = WriteFile(child_pipe, req, FIELD_OFFSET(struct pseudoconsole_req, u.write_output.buf[size_x * size_y]), &count, NULL);
-    ok_(__FILE__,line)(ret, "WriteFile failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(ret, "WriteFile failed: %lu\n", GetLastError());
     ret = ReadFile(child_pipe, &region, sizeof(region), &count, NULL);
-    ok_(__FILE__,line)(ret, "WriteFile failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(ret, "WriteFile failed: %lu\n", GetLastError());
     ok_(__FILE__,line)(region.Left == out_left, "Left = %u\n", region.Left);
     ok_(__FILE__,line)(region.Top == out_top, "Top = %u\n", region.Top);
     ok_(__FILE__,line)(region.Right == out_right, "Right = %u\n", region.Right);
@@ -326,7 +326,7 @@ static void child_scroll(unsigned int src_left, unsigned int src_top, unsigned i
     req.u.scroll.fill.Char.UnicodeChar = fill;
     req.u.scroll.fill.Attributes = 0;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
@@ -340,7 +340,7 @@ static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
     req.u.fill.coord.X = x;
     req.u.fill.coord.Y = y;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_set_input_mode(HANDLE pipe, DWORD mode)
@@ -352,7 +352,7 @@ static void child_set_input_mode(HANDLE pipe, DWORD mode)
     req.type = REQ_SET_INPUT_MODE;
     req.u.mode = mode;
     ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_set_output_mode(DWORD mode)
@@ -364,7 +364,7 @@ static void child_set_output_mode(DWORD mode)
     req.type = REQ_SET_OUTPUT_MODE;
     req.u.mode = mode;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_set_input_cp(int cp)
@@ -376,7 +376,7 @@ static void child_set_input_cp(int cp)
     req.type = REQ_SET_INPUT_CP;
     req.u.cp = cp;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_read_console(HANDLE pipe, size_t size)
@@ -388,7 +388,7 @@ static void child_read_console(HANDLE pipe, size_t size)
     req.type = REQ_READ_CONSOLE;
     req.u.size = size;
     ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_read_console_a(HANDLE pipe, size_t size)
@@ -400,7 +400,7 @@ static void child_read_console_a(HANDLE pipe, size_t size)
     req.type = REQ_READ_CONSOLE_A;
     req.u.size = size;
     ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void child_read_console_file(HANDLE pipe, size_t size)
@@ -412,7 +412,7 @@ static void child_read_console_file(HANDLE pipe, size_t size)
     req.type = REQ_READ_CONSOLE_FILE;
     req.u.size = size;
     ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 }
 
 #define child_expect_read_result(a,b) child_expect_read_result_(__LINE__,a,b)
@@ -424,8 +424,8 @@ static void child_expect_read_result_(unsigned int line, HANDLE pipe, const WCHA
     BOOL ret;
 
     ret = ReadFile(pipe, buf, sizeof(buf), &count, NULL);
-    ok_(__FILE__,line)(ret, "ReadFile failed: %u\n", GetLastError());
-    ok_(__FILE__,line)(count == exlen * sizeof(WCHAR), "got %u, expected %u\n",
+    ok_(__FILE__,line)(ret, "ReadFile failed: %lu\n", GetLastError());
+    ok_(__FILE__,line)(count == exlen * sizeof(WCHAR), "got %lu, expected %Iu\n",
                        count, exlen * sizeof(WCHAR));
     buf[count / sizeof(WCHAR)] = 0;
     ok_(__FILE__,line)(!memcmp(expect, buf, count), "unexpected data %s\n", wine_dbgstr_w(buf));
@@ -440,9 +440,9 @@ static void child_expect_read_result_a_(unsigned int line, HANDLE pipe, const ch
     BOOL ret;
 
     ret = ReadFile(pipe, buf, sizeof(buf), &count, NULL);
-    ok_(__FILE__,line)(ret, "ReadFile failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(ret, "ReadFile failed: %lu\n", GetLastError());
     todo_wine_if(exlen && expect[exlen - 1] == '\xcc')
-    ok_(__FILE__,line)(count == exlen, "got %u, expected %u\n", count, exlen);
+    ok_(__FILE__,line)(count == exlen, "got %lu, expected %Iu\n", count, exlen);
     buf[count] = 0;
     ok_(__FILE__,line)(!memcmp(expect, buf, count), "unexpected data %s\n", wine_dbgstr_a(buf));
 }
@@ -455,10 +455,10 @@ static void expect_input(unsigned int event_type, INPUT_RECORD *record)
     BOOL ret;
 
     ret = WriteFile(child_pipe, &req, sizeof(req), &read, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 
     ret = ReadFile(child_pipe, &input, sizeof(input), &read, NULL);
-    ok(ret, "ReadFile failed: %u\n", GetLastError());
+    ok(ret, "ReadFile failed: %lu\n", GetLastError());
 
     ok(input.EventType == event_type, "EventType = %u, expected %u\n", input.EventType, event_type);
     if (record) *record = input;
@@ -502,7 +502,7 @@ static void expect_key_input_(unsigned int line, unsigned int ctx, WCHAR ch, uns
                        "%x: wVirtualScanCode = %x expected %x\n", ctx,
                        record.Event.KeyEvent.wVirtualScanCode, vs);
     ok_(__FILE__,line)(record.Event.KeyEvent.dwControlKeyState == ctrl_state,
-                       "%x: dwControlKeyState = %x\n", ctx, record.Event.KeyEvent.dwControlKeyState);
+                       "%x: dwControlKeyState = %lx\n", ctx, record.Event.KeyEvent.dwControlKeyState);
 }
 
 #define get_input_key_vt() get_input_key_vt_(__LINE__)
@@ -561,10 +561,10 @@ static void _test_cursor_pos(unsigned line, int expect_x, int expect_y)
     BOOL ret;
 
     ret = WriteFile(child_pipe, &req, sizeof(req), &read, NULL);
-    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(ret, "WriteFile failed: %lu\n", GetLastError());
 
     ret = ReadFile(child_pipe, &info, sizeof(info), &read, NULL);
-    ok(ret, "ReadFile failed: %u\n", GetLastError());
+    ok(ret, "ReadFile failed: %lu\n", GetLastError());
 
     ok_(__FILE__,line)(info.dwCursorPosition.X == expect_x, "dwCursorPosition.X = %u, expected %u\n",
                        info.dwCursorPosition.X, expect_x);
@@ -1195,7 +1195,7 @@ static void write_console_pipe(const char *buf)
     DWORD written;
     BOOL res;
     res = WriteFile(console_pipe, buf, strlen(buf), &written, NULL);
-    ok(res, "WriteFile failed: %u\n", GetLastError());
+    ok(res, "WriteFile failed: %lu\n", GetLastError());
 }
 
 static void test_read_console(void)
@@ -1427,9 +1427,9 @@ static void child_process(HANDLE pipe)
                 handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                                    CONSOLE_TEXTMODE_BUFFER, NULL);
-                ok(handle != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %u\n", GetLastError());
+                ok(handle != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %lu\n", GetLastError());
                 ret = WriteFile(pipe, &handle, sizeof(handle), &count, NULL);
-                ok(ret, "WriteFile failed: %u\n", GetLastError());
+                ok(ret, "WriteFile failed: %lu\n", GetLastError());
                 break;
             }
 
@@ -1437,10 +1437,10 @@ static void child_process(HANDLE pipe)
             {
                 INPUT_RECORD record;
                 ret = ReadConsoleInputW(input, &record, 1, &count);
-                ok(ret, "ReadConsoleInputW failed: %u\n", GetLastError());
-                ok(count == 1, "count = %u\n", count);
+                ok(ret, "ReadConsoleInputW failed: %lu\n", GetLastError());
+                ok(count == 1, "count = %lu\n", count);
                 ret = WriteFile(pipe, &record, sizeof(record), &count, NULL);
-                ok(ret, "WriteFile failed: %u\n", GetLastError());
+                ok(ret, "WriteFile failed: %lu\n", GetLastError());
                 break;
             }
 
@@ -1448,98 +1448,98 @@ static void child_process(HANDLE pipe)
             {
                 CONSOLE_SCREEN_BUFFER_INFO info;
                 ret = GetConsoleScreenBufferInfo(output, &info);
-                ok(ret, "GetConsoleScreenBufferInfo failed: %u\n", GetLastError());
+                ok(ret, "GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
                 ret = WriteFile(pipe, &info, sizeof(info), &count, NULL);
-                ok(ret, "WriteFile failed: %u\n", GetLastError());
+                ok(ret, "WriteFile failed: %lu\n", GetLastError());
                 break;
             }
 
         case REQ_READ_CONSOLE:
             ret = ReadConsoleW(input, buf, req->u.size, &count, NULL );
-            ok(ret, "ReadConsoleW failed: %u\n", GetLastError());
+            ok(ret, "ReadConsoleW failed: %lu\n", GetLastError());
             ret = WriteFile(pipe, buf, count * sizeof(WCHAR), NULL, NULL);
-            ok(ret, "WriteFile failed: %u\n", GetLastError());
+            ok(ret, "WriteFile failed: %lu\n", GetLastError());
             break;
 
         case REQ_READ_CONSOLE_A:
             count = req->u.size;
             memset(buf, 0xcc, sizeof(buf));
             ret = ReadConsoleA(input, buf, count, &count, NULL );
-            ok(ret, "ReadConsoleA failed: %u\n", GetLastError());
+            ok(ret, "ReadConsoleA failed: %lu\n", GetLastError());
             ret = WriteFile(pipe, buf, count, NULL, NULL);
-            ok(ret, "WriteFile failed: %u\n", GetLastError());
+            ok(ret, "WriteFile failed: %lu\n", GetLastError());
             break;
 
         case REQ_READ_CONSOLE_FILE:
             count = req->u.size;
             memset(buf, 0xcc, sizeof(buf));
             ret = ReadFile(input, buf, count, &count, NULL );
-            ok(ret, "ReadFile failed: %u\n", GetLastError());
+            ok(ret, "ReadFile failed: %lu\n", GetLastError());
             ret = WriteFile(pipe, buf, count, NULL, NULL);
-            ok(ret, "WriteFile failed: %u\n", GetLastError());
+            ok(ret, "WriteFile failed: %lu\n", GetLastError());
             break;
 
         case REQ_SCROLL:
             ret = ScrollConsoleScreenBufferW(output, &req->u.scroll.rect, NULL, req->u.scroll.dst, &req->u.scroll.fill);
-            ok(ret, "ScrollConsoleScreenBuffer failed: %u\n", GetLastError());
+            ok(ret, "ScrollConsoleScreenBuffer failed: %lu\n", GetLastError());
             break;
 
         case REQ_FILL_CHAR:
             ret = FillConsoleOutputCharacterW(output, req->u.fill.ch, req->u.fill.count, req->u.fill.coord, &count);
-            ok(ret, "FillConsoleOutputCharacter failed: %u\n", GetLastError());
-            ok(count == req->u.fill.count, "count = %u, expected %u\n", count, req->u.fill.count);
+            ok(ret, "FillConsoleOutputCharacter failed: %lu\n", GetLastError());
+            ok(count == req->u.fill.count, "count = %lu, expected %lu\n", count, req->u.fill.count);
             break;
 
         case REQ_SET_ACTIVE:
             output = req->u.handle;
             ret = SetConsoleActiveScreenBuffer(output);
-            ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleActiveScreenBuffer failed: %lu\n", GetLastError());
             break;
 
         case REQ_SET_CURSOR:
             ret = SetConsoleCursorPosition(output, req->u.coord);
-            ok(ret, "SetConsoleCursorPosition failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleCursorPosition failed: %lu\n", GetLastError());
             break;
 
         case REQ_SET_INPUT_CP:
             ret = SetConsoleCP(req->u.cp);
-            ok(ret, "SetConsoleCP failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleCP failed: %lu\n", GetLastError());
             break;
 
         case REQ_SET_INPUT_MODE:
             ret = SetConsoleMode(input, req->u.mode);
-            ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleMode failed: %lu\n", GetLastError());
             break;
 
         case REQ_SET_OUTPUT_MODE:
             ret = SetConsoleMode(output, req->u.mode);
-            ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleMode failed: %lu\n", GetLastError());
             break;
 
         case REQ_SET_TITLE:
             ret = SetConsoleTitleW(req->u.string);
-            ok(ret, "SetConsoleTitleW failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
             break;
 
         case REQ_WRITE_CHARACTERS:
             ret = WriteConsoleOutputCharacterW(output, req->u.write_characters.buf,
                                                req->u.write_characters.len,
                                                req->u.write_characters.coord, &count);
-            ok(ret, "WriteConsoleOutputCharacterW failed: %u\n", GetLastError());
+            ok(ret, "WriteConsoleOutputCharacterW failed: %lu\n", GetLastError());
             break;
 
         case REQ_WRITE_CONSOLE:
             ret = WriteConsoleW(output, req->u.string, lstrlenW(req->u.string), NULL, NULL);
-            ok(ret, "SetConsoleTitleW failed: %u\n", GetLastError());
+            ok(ret, "SetConsoleTitleW failed: %lu\n", GetLastError());
             break;
 
         case REQ_WRITE_OUTPUT:
             {
                 SMALL_RECT region = req->u.write_output.region;
                 ret = WriteConsoleOutputW(output, req->u.write_output.buf, req->u.write_output.size, req->u.write_output.coord, &region);
-                ok(ret, "WriteConsoleOutput failed: %u\n", GetLastError());
+                ok(ret, "WriteConsoleOutput failed: %lu\n", GetLastError());
                 ret = WriteFile(pipe, &region, sizeof(region), &count, NULL);
-                ok(ret, "WriteFile failed: %u\n", GetLastError());
+                ok(ret, "WriteFile failed: %lu\n", GetLastError());
                 break;
             }
 
@@ -1547,7 +1547,7 @@ static void child_process(HANDLE pipe)
             ok(0, "unexpected request type %u\n", req->type);
         };
     }
-    ok(GetLastError() == ERROR_BROKEN_PIPE, "ReadFile failed: %u\n", GetLastError());
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "ReadFile failed: %lu\n", GetLastError());
     CloseHandle(output);
     CloseHandle(input);
 }
@@ -1570,7 +1570,7 @@ static HANDLE run_child(HANDLE console, HANDLE pipe)
     sprintf(cmdline, "\"%s\" %s child %p", argv[0], argv[1], pipe);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
                          &startup.StartupInfo, &info);
-    ok(ret, "CreateProcessW failed: %u\n", GetLastError());
+    ok(ret, "CreateProcessW failed: %lu\n", GetLastError());
 
     CloseHandle(info.hThread);
     HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
@@ -1589,27 +1589,27 @@ static HPCON create_pseudo_console(HANDLE *console_pipe_end, HANDLE *child_proce
 
     console_pipe = CreateNamedPipeW(L"\\\\.\\pipe\\pseudoconsoleconn", PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                     PIPE_WAIT | PIPE_TYPE_BYTE, 1, 4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, NULL);
-    ok(console_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %u\n", GetLastError());
+    ok(console_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %lu\n", GetLastError());
 
     *console_pipe_end = CreateFileW(L"\\\\.\\pipe\\pseudoconsoleconn", GENERIC_READ | GENERIC_WRITE,
                                     0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(*console_pipe_end != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(*console_pipe_end != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
 
     child_pipe = CreateNamedPipeW(L"\\\\.\\pipe\\pseudoconsoleserver", PIPE_ACCESS_DUPLEX,
                                   PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 1, 5000, 6000,
                                   NMPWAIT_USE_DEFAULT_WAIT, NULL);
-    ok(child_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %u\n", GetLastError());
+    ok(child_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %lu\n", GetLastError());
 
     child_pipe_end = CreateFileW(L"\\\\.\\pipe\\pseudoconsoleserver", GENERIC_READ | GENERIC_WRITE, 0,
                                  &sec_attr, OPEN_EXISTING, 0, NULL);
-    ok(child_pipe_end != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(child_pipe_end != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
 
     read_mode = PIPE_READMODE_MESSAGE;
     r = SetNamedPipeHandleState(child_pipe_end, &read_mode, NULL, NULL);
-    ok(r, "SetNamedPipeHandleState failed: %u\n", GetLastError());
+    ok(r, "SetNamedPipeHandleState failed: %lu\n", GetLastError());
 
     hres = pCreatePseudoConsole(size, *console_pipe_end, *console_pipe_end, 0, &console);
-    ok(hres == S_OK, "CreatePseudoConsole failed: %08x\n", hres);
+    ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
 
     *child_process = run_child(console, child_pipe_end);
     CloseHandle(child_pipe_end);
