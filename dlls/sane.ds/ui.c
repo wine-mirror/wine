@@ -318,6 +318,7 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
     if (trail_edit)
         *count+=1;
 
+    free(trail_edit);
     return leading_len + local_len + padding + padding2 + trail_len;
 }
 
