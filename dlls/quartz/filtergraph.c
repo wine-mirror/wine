@@ -776,7 +776,6 @@ static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
  */
 static HRESULT CheckCircularConnection(struct filter_graph *This, IPin *out, IPin *in)
 {
-#if 1
     HRESULT hr;
     PIN_INFO info_out, info_in;
 
@@ -841,10 +840,6 @@ out:
     if (FAILED(hr))
         ERR("Checking filtergraph returned %08x, something's not right!\n", hr);
     return hr;
-#else
-    /* Debugging filtergraphs not enabled */
-    return S_OK;
-#endif
 }
 
 static struct filter *find_sorted_filter(struct filter_graph *graph, IBaseFilter *iface)
