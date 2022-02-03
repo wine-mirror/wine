@@ -113,7 +113,7 @@ static LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
 
   if( size > (dwBlockSize - sizeof(BOOL)) )
   {
-    FIXME( "Size exceeded. Request of 0x%08x\n", size );
+    FIXME( "Size exceeded. Request of 0x%08lx\n", size );
     size = dwBlockSize - sizeof(BOOL);
   }
 
@@ -193,7 +193,7 @@ static BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppID, LPDPLAYX_LOBBYDATA* lplpDplDat
   if( dwAppID == 0 )
   {
     dwAppID = GetCurrentProcessId();
-    TRACE( "Translated dwAppID == 0 into 0x%08x\n", dwAppID );
+    TRACE( "Translated dwAppID == 0 into 0x%08lx\n", dwAppID );
   }
 
   for( i=0; i < numSupportedLobbies; i++ )
@@ -201,7 +201,7 @@ static BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppID, LPDPLAYX_LOBBYDATA* lplpDplDat
     if( lobbyData[ i ].dwAppID == dwAppID )
     {
       /* This process is lobbied */
-      TRACE( "Found 0x%08x @ %u\n", dwAppID, i );
+      TRACE( "Found 0x%08lx @ %u\n", dwAppID, i );
       *lplpDplData = &lobbyData[ i ];
       return TRUE;
     }
@@ -229,7 +229,7 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID )
     if( lobbyData[ i ].dwAppID == 0 )
     {
       /* This process is now lobbied */
-      TRACE( "Setting lobbyData[%u] for (0x%08x,0x%08x)\n",
+      TRACE( "Setting lobbyData[%u] for (0x%08lx,0x%08lx)\n",
               i, dwAppID, GetCurrentProcessId() );
 
       lobbyData[ i ].dwAppID              = dwAppID;
@@ -386,7 +386,7 @@ BOOL DPLAYX_ConstructData(void)
   }
   else
   {
-    ERR( ": semaphore error %d\n", GetLastError() );
+    ERR( ": semaphore error %ld\n", GetLastError() );
     return FALSE;
   }
 
@@ -409,7 +409,7 @@ BOOL DPLAYX_ConstructData(void)
   }
   else
   {
-    ERR( ": unable to create shared memory (%d)\n", GetLastError() );
+    ERR( ": unable to create shared memory (%ld)\n", GetLastError() );
     DPLAYX_ReleaseSemaphore();
     return FALSE;
   }
@@ -429,7 +429,7 @@ BOOL DPLAYX_ConstructData(void)
 
   if( lpSharedStaticData == NULL )
   {
-    ERR( ": unable to map static data into process memory space (%d)\n",
+    ERR( ": unable to map static data into process memory space (%ld)\n",
          GetLastError() );
     DPLAYX_ReleaseSemaphore();
     return FALSE;
@@ -795,7 +795,7 @@ HRESULT DPLAYX_GetConnectionSettingsA
   {
     DPLAYX_ReleaseSemaphore();
 
-    TRACE( "Application 0x%08x is not lobbied\n", dwAppID );
+    TRACE( "Application 0x%08lx is not lobbied\n", dwAppID );
     return DPERR_NOTLOBBIED;
   }
 
@@ -911,7 +911,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
   /* Store information */
   if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
   {
-    ERR(": old/new DPLCONNECTION type? Size=%08x\n", lpConn->dwSize );
+    ERR(": old/new DPLCONNECTION type? Size=%08lx\n", lpConn->dwSize );
 
     return DPERR_INVALIDPARAMS;
   }
@@ -931,7 +931,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
   {
     DPLAYX_ReleaseSemaphore();
 
-    ERR("DPSESSIONDESC passed in? Size=%u\n",
+    ERR("DPSESSIONDESC passed in? Size=%lu\n",
         lpConn->lpSessionDesc?lpConn->lpSessionDesc->dwSize:0 );
 
     return DPERR_INVALIDPARAMS;
@@ -974,7 +974,7 @@ HRESULT DPLAYX_SetConnectionSettingsW
   /* Store information */
   if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
   {
-    ERR(": old/new DPLCONNECTION type? Size=%u\n", lpConn->dwSize );
+    ERR(": old/new DPLCONNECTION type? Size=%lu\n", lpConn->dwSize );
 
     return DPERR_INVALIDPARAMS;
   }
@@ -1208,7 +1208,7 @@ LPCSTR DPLAYX_HresultToString(HRESULT hr)
     default:
       /* For errors not in the list, return HRESULT as a string
          This part is not thread safe */
-      WARN( "Unknown error 0x%08x\n", hr );
+      WARN( "Unknown error 0x%08lx\n", hr );
       wsprintfA( szTempStr, "0x%08x", hr );
       return szTempStr;
   }

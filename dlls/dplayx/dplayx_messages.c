@@ -118,7 +118,7 @@ static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext )
   dwWaitResult = WaitForSingleObject( lpThreadInfo->hStart, 10000 /* 10 sec */ );
   if( dwWaitResult == WAIT_TIMEOUT )
   {
-    FIXME( "Should signal app/wait creation failure (0x%08x)\n", dwWaitResult );
+    FIXME( "Should signal app/wait creation failure (0x%08lx)\n", dwWaitResult );
     goto end_of_thread;
   }
 
@@ -130,7 +130,7 @@ static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext )
   dwWaitResult = WaitForSingleObject( lpThreadInfo->hSettingRead, INFINITE );
   if( dwWaitResult == WAIT_TIMEOUT )
   {
-    ERR( "App Read connection setting timeout fail (0x%08x)\n", dwWaitResult );
+    ERR( "App Read connection setting timeout fail (0x%08lx)\n", dwWaitResult );
   }
 
   /* Close this handle as it's not needed anymore */
@@ -215,7 +215,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
     data.bSystemMessage = TRUE; /* Allow reply to be sent */
     data.lpISP          = This->dp2->spData.lpISP;
 
-    TRACE( "Asking for player id w/ dwFlags 0x%08x\n",
+    TRACE( "Asking for player id w/ dwFlags 0x%08lx\n",
            lpMsgBody->dwFlags );
 
     DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, DPMSGCMD_NEWPLAYERIDREPLY,
@@ -231,7 +231,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
 
     *lpdpidAllocatedId = lpcReply->dpidNewPlayerId;
 
-    TRACE( "Received reply for id = 0x%08x\n", lpcReply->dpidNewPlayerId );
+    TRACE( "Received reply for id = 0x%08lx\n", lpcReply->dpidNewPlayerId );
 
     /* FIXME: I think that the rest of the message has something to do
      *        with remote data for the player that perhaps I need to setup.
@@ -313,14 +313,14 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 
   lpMsgBody->unknown4[3] =  NS_GetNsMagic( This->dp2->lpNameServerData ) -
                             0x02000000;
-  TRACE( "Setting first magic to 0x%08x\n", lpMsgBody->unknown4[3] );
+  TRACE( "Setting first magic to 0x%08lx\n", lpMsgBody->unknown4[3] );
 
   lpMsgBody->unknown4[4] =  0x0;
   lpMsgBody->unknown4[5] =  0x0;
   lpMsgBody->unknown4[6] =  0x0;
 
   lpMsgBody->unknown4[7] =  NS_GetNsMagic( This->dp2->lpNameServerData );
-  TRACE( "Setting second magic to 0x%08x\n", lpMsgBody->unknown4[7] );
+  TRACE( "Setting second magic to 0x%08lx\n", lpMsgBody->unknown4[7] );
 
   lpMsgBody->unknown4[8] =  0x0;
   lpMsgBody->unknown4[9] =  0x0;
@@ -342,7 +342,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
     data.bSystemMessage = TRUE; /* Allow reply to be sent */
     data.lpISP          = This->dp2->spData.lpISP;
 
-    TRACE( "Sending forward player request with 0x%08x\n", dpidServer );
+    TRACE( "Sending forward player request with 0x%08lx\n", dpidServer );
 
     lpMsg = DP_MSG_ExpectReply( This, &data,
                                 DPMSG_WAIT_60_SECS,
@@ -377,7 +377,7 @@ static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, D
   hMsgReceipt = DP_MSG_BuildAndLinkReplyStruct( This, &replyStructList,
                                                 wReplyCommandId );
 
-  TRACE( "Sending msg and expecting cmd %u in reply within %u ticks\n",
+  TRACE( "Sending msg and expecting cmd %u in reply within %lu ticks\n",
          wReplyCommandId, dwWaitTime );
   hr = (*This->dp2->spData.lpCB->Send)( lpData );
 
@@ -393,7 +393,7 @@ static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, D
   dwWaitReturn = WaitForSingleObject( hMsgReceipt, dwWaitTime );
   if( dwWaitReturn != WAIT_OBJECT_0 )
   {
-    ERR( "Wait failed 0x%08x\n", dwWaitReturn );
+    ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
     return NULL;
   }
 

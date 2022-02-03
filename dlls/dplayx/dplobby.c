@@ -211,7 +211,7 @@ static ULONG WINAPI IDirectPlayLobbyAImpl_AddRef( IDirectPlayLobbyA *iface )
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobbyA( iface );
     ULONG ref = InterlockedIncrement( &This->refA );
 
-    TRACE( "(%p) refA=%d\n", This, ref );
+    TRACE( "(%p) refA=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -224,7 +224,7 @@ static ULONG WINAPI IDirectPlayLobbyImpl_AddRef( IDirectPlayLobby *iface )
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref=%d\n", This, ref );
+    TRACE( "(%p) ref=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -237,7 +237,7 @@ static ULONG WINAPI IDirectPlayLobby2AImpl_AddRef(IDirectPlayLobby2A *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby2A( iface );
     ULONG ref = InterlockedIncrement( &This->ref2A );
 
-    TRACE( "(%p) ref2A=%d\n", This, ref );
+    TRACE( "(%p) ref2A=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -250,7 +250,7 @@ static ULONG WINAPI IDirectPlayLobby2Impl_AddRef(IDirectPlayLobby2 *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby2( iface );
     ULONG ref = InterlockedIncrement( &This->ref2 );
 
-    TRACE( "(%p) ref2=%d\n", This, ref );
+    TRACE( "(%p) ref2=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -263,7 +263,7 @@ static ULONG WINAPI IDirectPlayLobby3AImpl_AddRef(IDirectPlayLobby3A *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
     ULONG ref = InterlockedIncrement( &This->ref3A );
 
-    TRACE( "(%p) ref3A=%d\n", This, ref );
+    TRACE( "(%p) ref3A=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -276,7 +276,7 @@ static ULONG WINAPI IDirectPlayLobby3Impl_AddRef(IDirectPlayLobby3 *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
     ULONG ref = InterlockedIncrement( &This->ref3 );
 
-    TRACE( "(%p) ref3=%d\n", This, ref );
+    TRACE( "(%p) ref3=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -289,7 +289,7 @@ static ULONG WINAPI IDirectPlayLobbyAImpl_Release( IDirectPlayLobbyA *iface )
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobbyA( iface );
     ULONG ref = InterlockedDecrement( &This->refA );
 
-    TRACE( "(%p) refA=%d\n", This, ref );
+    TRACE( "(%p) refA=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -302,7 +302,7 @@ static ULONG WINAPI IDirectPlayLobbyImpl_Release( IDirectPlayLobby *iface )
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby( iface );
     ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE( "(%p) ref=%d\n", This, ref );
+    TRACE( "(%p) ref=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -315,7 +315,7 @@ static ULONG WINAPI IDirectPlayLobby2AImpl_Release(IDirectPlayLobby2A *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby2A( iface );
     ULONG ref = InterlockedDecrement( &This->ref2A );
 
-    TRACE( "(%p) ref2A=%d\n", This, ref );
+    TRACE( "(%p) ref2A=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -328,7 +328,7 @@ static ULONG WINAPI IDirectPlayLobby2Impl_Release(IDirectPlayLobby2 *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby2( iface );
     ULONG ref = InterlockedDecrement( &This->ref2 );
 
-    TRACE( "(%p) ref2=%d\n", This, ref );
+    TRACE( "(%p) ref2=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -341,7 +341,7 @@ static ULONG WINAPI IDirectPlayLobby3AImpl_Release(IDirectPlayLobby3A *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
     ULONG ref = InterlockedDecrement( &This->ref3A );
 
-    TRACE( "(%p) ref3A=%d\n", This, ref );
+    TRACE( "(%p) ref3A=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -354,7 +354,7 @@ static ULONG WINAPI IDirectPlayLobby3Impl_Release(IDirectPlayLobby3 *iface)
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
     ULONG ref = InterlockedDecrement( &This->ref3 );
 
-    TRACE( "(%p) ref3=%d\n", This, ref );
+    TRACE( "(%p) ref3=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -379,7 +379,7 @@ static HRESULT DPL_ConnectEx( IDirectPlayLobbyImpl *This, DWORD dwFlags, REFIID 
   DWORD           dwConnSize = 0;
   LPDPLCONNECTION lpConn;
 
-  FIXME("(%p)->(0x%08x,%p,%p): semi stub\n", This, dwFlags, lplpDP, pUnk );
+  FIXME("(%p)->(0x%08lx,%p,%p): semi stub\n", This, dwFlags, lplpDP, pUnk );
 
   if( pUnk )
   {
@@ -560,7 +560,7 @@ static HRESULT DPL_CreateAddress(
   const DWORD dwNumAddElements = 2; /* Service Provide & address data type */
   DPCOMPOUNDADDRESSELEMENT addressElements[ 2 /* dwNumAddElements */ ];
 
-  TRACE( "(%p)->(%p,%p,0x%08x,%p,%p,%d)\n", guidSP, guidDataType, lpData, dwDataSize,
+  TRACE( "(%p)->(%p,%p,0x%08lx,%p,%p,%d)\n", guidSP, guidDataType, lpData, dwDataSize,
                                              lpAddress, lpdwAddressSize, bAnsiInterface );
 
   addressElements[ 0 ].guidDataType = DPAID_ServiceProvider;
@@ -623,7 +623,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumAddress( IDirectPlayLobby3A *if
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
 
-  TRACE("(%p)->(%p,%p,0x%08x,%p)\n", This, lpEnumAddressCallback, lpAddress,
+  TRACE("(%p)->(%p,%p,0x%08lx,%p)\n", This, lpEnumAddressCallback, lpAddress,
                                       dwAddressSize, lpContext );
 
   return DPL_EnumAddress( lpEnumAddressCallback, lpAddress, dwAddressSize, lpContext );
@@ -635,7 +635,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_EnumAddress( IDirectPlayLobby3 *ifac
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
 
-  TRACE("(%p)->(%p,%p,0x%08x,%p)\n", This, lpEnumAddressCallback, lpAddress,
+  TRACE("(%p)->(%p,%p,0x%08lx,%p)\n", This, lpEnumAddressCallback, lpAddress,
                                       dwAddressSize, lpContext );
 
   return DPL_EnumAddress( lpEnumAddressCallback, lpAddress, dwAddressSize, lpContext );
@@ -720,7 +720,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumAddressTypes( IDirectPlayLobby3
   char   subKeyName[51];
   FILETIME filetime;
 
-  TRACE(" (%p)->(%p,%p,%p,0x%08x)\n", This, lpEnumAddressTypeCallback, guidSP, lpContext, dwFlags );
+  TRACE(" (%p)->(%p,%p,%p,0x%08lx)\n", This, lpEnumAddressTypeCallback, guidSP, lpContext, dwFlags );
 
   if( dwFlags != 0 )
   {
@@ -848,7 +848,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_EnumLocalApplications( IDirectPlayLo
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
 
-  FIXME("(%p)->(%p,%p,0x%08x):stub\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
+  FIXME("(%p)->(%p,%p,0x%08lx):stub\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
 
   return DPERR_OUTOFMEMORY;
 }
@@ -897,7 +897,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_EnumLocalApplications( IDirectPlayL
   char subKeyName[51];
   FILETIME filetime;
 
-  TRACE("(%p)->(%p,%p,0x%08x)\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
+  TRACE("(%p)->(%p,%p,0x%08lx)\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
 
   if( dwFlags != 0 )
   {
@@ -1022,7 +1022,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_GetConnectionSettings( IDirectPlayL
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
   HRESULT hr;
 
-  TRACE("(%p)->(0x%08x,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
+  TRACE("(%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
 
   EnterCriticalSection( &This->lock );
 
@@ -1042,7 +1042,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_GetConnectionSettings( IDirectPlayLo
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
   HRESULT hr;
 
-  TRACE("(%p)->(0x%08x,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
+  TRACE("(%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
 
   EnterCriticalSection( &This->lock );
 
@@ -1099,7 +1099,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_ReceiveLobbyMessage( IDirectPlayLob
         DWORD *lpdwDataSize )
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
-  FIXME(":stub %p %08x %08x %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
+  FIXME(":stub %p %08lx %08lx %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
          lpdwDataSize );
   return DPERR_OUTOFMEMORY;
 }
@@ -1109,7 +1109,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_ReceiveLobbyMessage( IDirectPlayLobb
         DWORD *lpdwDataSize )
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
-  FIXME(":stub %p %08x %08x %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
+  FIXME(":stub %p %08lx %08lx %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
          lpdwDataSize );
   return DPERR_OUTOFMEMORY;
 }
@@ -1304,7 +1304,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
   DWORD dwSuspendCount;
   HANDLE hStart, hDeath, hSettingRead;
 
-  TRACE( "(%p)->(0x%08x,%p,%p,%p)\n",
+  TRACE( "(%p)->(0x%08lx,%p,%p,%p)\n",
          This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
 
   if( dwFlags != 0 )
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
   /* Reserve this global application id! */
   if( !DPLAYX_CreateLobbyApplication( newProcessInfo.dwProcessId ) )
   {
-    ERR( "Unable to create global application data for 0x%08x\n",
+    ERR( "Unable to create global application data for 0x%08lx\n",
            newProcessInfo.dwProcessId );
   }
 
@@ -1410,7 +1410,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
   /* Unsuspend the process - should return the prev suspension count */
   if( ( dwSuspendCount = ResumeThread( newProcessInfo.hThread ) ) != 1 )
   {
-    ERR( "ResumeThread failed with 0x%08x\n", dwSuspendCount );
+    ERR( "ResumeThread failed with 0x%08lx\n", dwSuspendCount );
   }
 
   return DP_OK;
@@ -1420,7 +1420,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_RunApplication( IDirectPlayLobby3 *i
         DWORD *lpdwAppID, DPLCONNECTION *lpConn, HANDLE hReceiveEvent )
 {
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
-  FIXME( "(%p)->(0x%08x,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
+  FIXME( "(%p)->(0x%08lx,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
   return DPERR_OUTOFMEMORY;
 }
 
@@ -1488,7 +1488,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_SetConnectionSettings( IDirectPlayLo
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
   HRESULT hr;
 
-  TRACE("(%p)->(0x%08x,0x%08x,%p)\n", This, dwFlags, dwAppID, lpConn );
+  TRACE("(%p)->(0x%08lx,0x%08lx,%p)\n", This, dwFlags, dwAppID, lpConn );
 
   EnterCriticalSection( &This->lock );
 
@@ -1551,7 +1551,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_SetConnectionSettings( IDirectPlayL
   IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
   HRESULT hr;
 
-  TRACE("(%p)->(0x%08x,0x%08x,%p)\n", This, dwFlags, dwAppID, lpConn );
+  TRACE("(%p)->(0x%08lx,0x%08lx,%p)\n", This, dwFlags, dwAppID, lpConn );
 
   EnterCriticalSection( &This->lock );
 
@@ -1667,7 +1667,7 @@ HRESULT DPL_CreateCompoundAddress
   DWORD dwElements;
   LPCDPCOMPOUNDADDRESSELEMENT lpOrigElements = lpElements;
 
-  TRACE("(%p,0x%08x,%p,%p)\n", lpElements, dwElementCount, lpAddress, lpdwAddressSize );
+  TRACE("(%p,0x%08lx,%p,%p)\n", lpElements, dwElementCount, lpAddress, lpdwAddressSize );
 
   /* Parameter check */
   if( ( lpElements == NULL ) ||
@@ -1875,7 +1875,7 @@ static HRESULT WINAPI IDirectPlayLobby3Impl_WaitForConnectionSettings( IDirectPl
   HRESULT hr         = DP_OK;
   BOOL    bStartWait = !(dwFlags & DPLWAIT_CANCEL);
 
-  TRACE( "(%p)->(0x%08x)\n", iface, dwFlags );
+  TRACE( "(%p)->(0x%08lx)\n", iface, dwFlags );
 
   if( DPLAYX_WaitForConnectionSettings( bStartWait ) )
   {
@@ -1892,7 +1892,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings( IDirectP
   HRESULT hr         = DP_OK;
   BOOL    bStartWait = !(dwFlags & DPLWAIT_CANCEL);
 
-  TRACE( "(%p)->(0x%08x)\n", iface, dwFlags );
+  TRACE( "(%p)->(0x%08lx)\n", iface, dwFlags );
 
   if( DPLAYX_WaitForConnectionSettings( bStartWait ) )
   {
@@ -2069,7 +2069,7 @@ HRESULT dplobby_create( REFIID riid, void **ppv )
 HRESULT WINAPI DirectPlayLobbyCreateA( GUID *lpGUIDDSP, IDirectPlayLobbyA **lplpDPL,
         IUnknown *lpUnk, void *lpData, DWORD dwDataSize )
 {
-  TRACE("lpGUIDDSP=%p lplpDPL=%p lpUnk=%p lpData=%p dwDataSize=%08x\n",
+  TRACE("lpGUIDDSP=%p lplpDPL=%p lpUnk=%p lpData=%p dwDataSize=%08lx\n",
         lpGUIDDSP,lplpDPL,lpUnk,lpData,dwDataSize);
 
   /* Parameter Check: lpGUIDSP, lpUnk & lpData must be NULL. dwDataSize must
@@ -2098,7 +2098,7 @@ HRESULT WINAPI DirectPlayLobbyCreateA( GUID *lpGUIDDSP, IDirectPlayLobbyA **lplp
 HRESULT WINAPI DirectPlayLobbyCreateW( GUID *lpGUIDDSP, IDirectPlayLobby **lplpDPL,
         IUnknown *lpUnk, void *lpData, DWORD dwDataSize )
 {
-  TRACE("lpGUIDDSP=%p lplpDPL=%p lpUnk=%p lpData=%p dwDataSize=%08x\n",
+  TRACE("lpGUIDDSP=%p lplpDPL=%p lpUnk=%p lpData=%p dwDataSize=%08lx\n",
         lpGUIDDSP,lplpDPL,lpUnk,lpData,dwDataSize);
 
   /* Parameter Check: lpGUIDSP, lpUnk & lpData must be NULL. dwDataSize must

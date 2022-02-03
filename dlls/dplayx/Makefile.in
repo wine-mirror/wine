@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = dplayx.dll
 IMPORTLIB = dplayx
 IMPORTS   = dxguid uuid winmm ole32 user32 advapi32

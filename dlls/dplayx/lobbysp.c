@@ -60,7 +60,7 @@ static ULONG WINAPI IDPLobbySPImpl_AddRef( IDPLobbySP *iface )
   IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   ULONG ref = InterlockedIncrement( &This->ref );
 
-  TRACE( "(%p) ref=%d\n", This, ref );
+  TRACE( "(%p) ref=%ld\n", This, ref );
 
   return ref;
 }
@@ -70,7 +70,7 @@ static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
   IDPLobbySPImpl *This = impl_from_IDPLobbySP( iface );
   ULONG ref = InterlockedDecrement( &This->ref );
 
-  TRACE( "(%p) ref=%d\n", This, ref );
+  TRACE( "(%p) ref=%ld\n", This, ref );
 
   if( !ref )
     HeapFree( GetProcessHeap(), 0, This );
