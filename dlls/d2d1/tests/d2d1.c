@@ -536,6 +536,7 @@ static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
     HCRYPTPROV provider;
     BYTE hash_data[20];
     HCRYPTHASH hash;
+    DWORD hash_size;
     unsigned int i;
     char sha1[41];
     BOOL ret;
@@ -552,10 +553,10 @@ static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
     }
     ok(ret, "Failed to hash data.\n");
 
-    i = sizeof(hash_data);
-    ret = CryptGetHashParam(hash, HP_HASHVAL, hash_data, &i, 0);
+    hash_size = sizeof(hash_data);
+    ret = CryptGetHashParam(hash, HP_HASHVAL, hash_data, &hash_size, 0);
     ok(ret, "Failed to get hash value.\n");
-    ok(i == sizeof(hash_data), "Got unexpected hash size %u.\n", i);
+    ok(hash_size == sizeof(hash_data), "Got unexpected hash size %u.\n", hash_size);
 
     ret = CryptDestroyHash(hash);
     ok(ret, "Failed to destroy hash.\n");
