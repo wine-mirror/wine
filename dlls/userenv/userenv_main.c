@@ -243,7 +243,10 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             }
 
             if (get_reg_value(env, hkey, L"Public", buf, UNICODE_STRING_MAX_CHARS))
+            {
                 set_env_var(&env, L"ALLUSERSPROFILE", buf);
+                set_env_var(&env, L"ProgramData", buf);
+            }
         }
         else
         {

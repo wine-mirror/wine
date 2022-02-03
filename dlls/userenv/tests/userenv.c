@@ -78,7 +78,7 @@ static void test_create_env(void)
     BOOL r, is_wow64 = FALSE;
     HANDLE htok;
     WCHAR * env[4];
-    char * st, systemroot[100];
+    char * st, systemroot[100], programdata[100];
     int i, j;
 
     static const struct profile_item common_vars[] = {
@@ -96,6 +96,7 @@ static void test_create_env(void)
     };
     static const struct profile_item common_post_nt4_vars[] = {
         { "ALLUSERSPROFILE" },
+        { "ProgramData" },
         { "TEMP" },
         { "TMP" },
         { "CommonProgramFiles" },
@@ -117,6 +118,12 @@ static void test_create_env(void)
     ok(r != 0, "GetEnvironmentVariable failed (%d)\n", GetLastError());
 
     r = SetEnvironmentVariableA("SystemRoot", "overwrite");
+    expect(TRUE, r);
+
+    r = GetEnvironmentVariableA("ProgramData", programdata, sizeof(programdata));
+    ok(r != 0, "GetEnvironmentVariable failed (%d)\n", GetLastError());
+
+    r = SetEnvironmentVariableA("ProgramData", "overwrite");
     expect(TRUE, r);
 
     if (0)
@@ -151,10 +158,18 @@ static void test_create_env(void)
     r = SetEnvironmentVariableA("SystemRoot", systemroot);
     expect(TRUE, r);
 
+    r = SetEnvironmentVariableA("ProgramData", programdata);
+    expect(TRUE, r);
+
     for(i=0; i<4; i++)
     {
         r = get_env(env[i], "SystemRoot", &st);
         ok(!strcmp(st, "SystemRoot=overwrite"), "%s\n", st);
+        expect(TRUE, r);
+        HeapFree(GetProcessHeap(), 0, st);
+
+        r = get_env(env[i], "ProgramData", &st);
+        ok(strcmp(st, "ProgramData=overwrite"), "%s\n", st);
         expect(TRUE, r);
         HeapFree(GetProcessHeap(), 0, st);
     }
