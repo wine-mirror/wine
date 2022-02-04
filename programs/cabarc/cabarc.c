@@ -299,7 +299,7 @@ static void create_directories( const WCHAR *name )
     {
         *p = 0;
         if (!CreateDirectoryW( path, NULL ))
-            WINE_TRACE("Couldn't create directory %s - error: %d\n", wine_dbgstr_w(path), GetLastError());
+            WINE_TRACE("Couldn't create directory %s - error: %ld\n", wine_dbgstr_w(path), GetLastError());
         *p = '\\';
         p = wcschr(p+1, '\\');
     }
