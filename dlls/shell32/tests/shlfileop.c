@@ -29,10 +29,6 @@
 
 #include "wine/test.h"
 
-#ifndef FOF_NORECURSION
-#define FOF_NORECURSION 0x1000
-#endif
-
 /* Error codes could be pre-Win32 */
 #define DE_SAMEFILE      0x71
 #define DE_MANYSRC1DEST  0x72
