@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <time.h>
 
 #define COBJMACROS
 
@@ -39,6 +40,7 @@ typedef struct SymWriter {
     LONG ref;
     CRITICAL_SECTION lock;
     GUID pdb_guid;
+    DWORD pdb_timestamp;
     DWORD pdb_age;
     WCHAR pdb_filename[MAX_PATH];
 } SymWriter;
@@ -239,6 +241,8 @@ static HRESULT WINAPI SymWriter_Initialize(ISymUnmanagedWriter5 *iface, IUnknown
 
     if (filename)
         wcsncpy_s(This->pdb_filename, MAX_PATH, filename, _TRUNCATE);
+
+    This->pdb_timestamp = _time32(NULL);
 
     LeaveCriticalSection(&This->lock);
 
@@ -465,8 +469,20 @@ static HRESULT WINAPI SymWriter_GetPath(IPdbWriter *iface, DWORD ccData, DWORD *
 
 static HRESULT WINAPI SymWriter_GetSignatureAge(IPdbWriter *iface, DWORD *timestamp, DWORD *age)
 {
-    FIXME("(%p,%p,%p)\n", iface, timestamp, age);
-    return E_NOTIMPL;
+    SymWriter *This = impl_from_IPdbWriter(iface);
+
+    TRACE("(%p,%p,%p)\n", This, timestamp, age);
+
+    EnterCriticalSection(&This->lock);
+
+    if (timestamp)
+        *timestamp = This->pdb_timestamp;
+    if (age)
+        *age = This->pdb_age;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static const IPdbWriterVtbl SymWriter_PdbWriter_Vtbl = {
