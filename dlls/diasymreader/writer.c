@@ -144,7 +144,8 @@ static HRESULT WINAPI SymWriter_OpenScope(ISymUnmanagedWriter5 *iface, ULONG32 s
     ULONG32 *pRetVal)
 {
     FIXME("(%p,%u,%p)\n", iface, startOffset, pRetVal);
-    return E_NOTIMPL;
+    *pRetVal = 0xdeadbeef;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_CloseScope(ISymUnmanagedWriter5 *iface, ULONG32 endOffset)
