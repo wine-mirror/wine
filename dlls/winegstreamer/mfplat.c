@@ -437,21 +437,21 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
 }
 
 static WCHAR audio_converterW[] = L"Audio Converter";
-static const GUID *audio_converter_supported_types[] =
+static const GUID *const audio_converter_supported_types[] =
 {
     &MFAudioFormat_PCM,
     &MFAudioFormat_Float,
 };
 
 static WCHAR wma_decoderW[] = L"WMAudio Decoder MFT";
-static const GUID *wma_decoder_input_types[] =
+static const GUID *const wma_decoder_input_types[] =
 {
     &MEDIASUBTYPE_MSAUDIO1,
     &MFAudioFormat_WMAudioV8,
     &MFAudioFormat_WMAudioV9,
     &MFAudioFormat_WMAudio_Lossless,
 };
-static const GUID *wma_decoder_output_types[] =
+static const GUID *const wma_decoder_output_types[] =
 {
     &MFAudioFormat_PCM,
     &MFAudioFormat_Float,
@@ -465,9 +465,9 @@ static const struct mft
     const UINT32 flags;
     const GUID *major_type;
     const UINT32 input_types_count;
-    const GUID **input_types;
+    const GUID *const *input_types;
     const UINT32 output_types_count;
-    const GUID **output_types;
+    const GUID *const *output_types;
 }
 mfts[] =
 {

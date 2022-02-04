@@ -30,14 +30,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmadec);
 
-static const GUID *wma_decoder_input_types[] =
+static const GUID *const wma_decoder_input_types[] =
 {
     &MEDIASUBTYPE_MSAUDIO1,
     &MFAudioFormat_WMAudioV8,
     &MFAudioFormat_WMAudioV9,
     &MFAudioFormat_WMAudio_Lossless,
 };
-static const GUID *wma_decoder_output_types[] =
+static const GUID *const wma_decoder_output_types[] =
 {
     &MFAudioFormat_Float,
     &MFAudioFormat_PCM,
