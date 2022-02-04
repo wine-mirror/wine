@@ -626,78 +626,78 @@ void CDECL _vcomp_reduction_i2(unsigned int flags, short *dest, short val)
 
 void CDECL _vcomp_atomic_add_i4(int *dest, int val)
 {
-    InterlockedExchangeAdd(dest, val);
+    InterlockedExchangeAdd((LONG *)dest, val);
 }
 
 void CDECL _vcomp_atomic_and_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old & val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old & val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old / val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_ui4(unsigned int *dest, unsigned int val)
 {
     unsigned int old;
-    do old = *dest; while (InterlockedCompareExchange((int *)dest, old / val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_mul_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old * val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old * val, old) != old);
 }
 
 void CDECL _vcomp_atomic_or_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old | val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old | val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shl_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old << val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old << val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old >> val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_ui4(unsigned int *dest, unsigned int val)
 {
     unsigned int old;
-    do old = *dest; while (InterlockedCompareExchange((int *)dest, old >> val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_sub_i4(int *dest, int val)
 {
-    InterlockedExchangeAdd(dest, -val);
+    InterlockedExchangeAdd((LONG *)dest, -val);
 }
 
 void CDECL _vcomp_atomic_xor_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old ^ val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old ^ val, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_and_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old && val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old && val, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_or_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (InterlockedCompareExchange(dest, old ? old : (val != 0), old) != old);
+    do old = *dest; while (InterlockedCompareExchange((LONG *)dest, old ? old : (val != 0), old) != old);
 }
 
 void CDECL _vcomp_reduction_i4(unsigned int flags, int *dest, int val)
@@ -822,7 +822,7 @@ void CDECL _vcomp_atomic_add_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old + val;
     }
-    while (InterlockedCompareExchange((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((LONG *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_r4(float *dest, float val)
@@ -833,7 +833,7 @@ void CDECL _vcomp_atomic_div_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old / val;
     }
-    while (InterlockedCompareExchange((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((LONG *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_mul_r4(float *dest, float val)
@@ -844,7 +844,7 @@ void CDECL _vcomp_atomic_mul_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old * val;
     }
-    while (InterlockedCompareExchange((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((LONG *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_sub_r4(float *dest, float val)
@@ -855,7 +855,7 @@ void CDECL _vcomp_atomic_sub_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old - val;
     }
-    while (InterlockedCompareExchange((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((LONG *)dest, new, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_and_r4(float *dest, float val)
@@ -866,7 +866,7 @@ static void CDECL _vcomp_atomic_bool_and_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = (*(float *)&old != 0.0) ? (val != 0.0) : 0.0;
     }
-    while (InterlockedCompareExchange((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((LONG *)dest, new, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_or_r4(float *dest, float val)
@@ -877,7 +877,7 @@ static void CDECL _vcomp_atomic_bool_or_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = (*(float *)&old != 0.0) ? *(float *)&old : (val != 0.0);
     }
-    while (InterlockedCompareExchange((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((LONG *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_reduction_r4(unsigned int flags, float *dest, float val)
@@ -1850,7 +1850,7 @@ static void CDECL c2vectparallel_wrapper(int start, int end, int step, int end_i
                 curr_end -= step;
             }
 
-            if ((new_start = InterlockedCompareExchange(dynamic_start, next_start, start)) != start)
+            if ((new_start = InterlockedCompareExchange((LONG volatile*)dynamic_start, next_start, start)) != start)
             {
                 start = new_start;
                 continue;
