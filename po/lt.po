@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-21 23:32+0200\n"
+"PO-Revision-Date: 2022-02-04 10:44+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 "X-Project-Style: default\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
@@ -6962,54 +6962,40 @@ msgid "This network connection does not exist.\n"
 msgstr "Šis tinklo ryšys neegzistuoja.\n"
 
 #: dlls/kernel32/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Netinkamas pertraukties metu.\n"
+msgstr "Kreipinys pertrauktas.\n"
 
 #: dlls/kernel32/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Neteisinga rodyklė.\n"
+msgstr "Neteisinga failo rodyklė.\n"
 
 #: dlls/kernel32/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Neteisingas tinklo adresas.\n"
+msgstr "Neteisingas rodyklės adresas.\n"
 
 #: dlls/kernel32/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Neteisingas vardas.\n"
+msgstr "Neteisingas argumentas.\n"
 
 #: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Sujungimas nutrauktas kito serverio.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "Taškas nerastas.\n"
+msgstr "Serveris nerastas.\n"
 
 #: dlls/kernel32/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "Atributas nerastas.\n"
+msgstr "Neautoritetingas serveris nerastas.\n"
 
 #: dlls/kernel32/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "Įvyko nepataisoma klaida.\n"
+msgstr "Nepataisoma klaida.\n"
 
 #: dlls/kernel32/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "Vardas teisingas, nėra duomenų įrašo.\n"
 
 #: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
