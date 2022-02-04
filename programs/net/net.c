@@ -61,7 +61,7 @@ static int output_vprintf(const WCHAR* fmt, va_list va_args)
 
     len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt, 0, 0, str, ARRAY_SIZE(str), &va_args);
     if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
     else
         output_write(str, len);
     return 0;
@@ -184,7 +184,7 @@ static BOOL net_enum_services(void)
     for(i = 0; i < count; i++)
     {
         output_printf(L"    %1\n", services[i].lpDisplayName);
-        WINE_TRACE("service=%s state=%d controls=%x\n",
+        WINE_TRACE("service=%s state=%ld controls=%lx\n",
                    wine_dbgstr_w(services[i].lpServiceName),
                    services[i].ServiceStatusProcess.dwCurrentState,
                    services[i].ServiceStatusProcess.dwControlsAccepted);
