@@ -84,7 +84,7 @@ HRESULT __cdecl IrotRegister(
 
     if (grfFlags & ~(ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT))
     {
-        WINE_ERR("Invalid grfFlags: 0x%08x\n", grfFlags & ~(ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT));
+        WINE_ERR("Invalid grfFlags: 0x%08lx\n", grfFlags & ~(ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT));
         return E_INVALIDARG;
     }
 
@@ -132,7 +132,7 @@ HRESULT __cdecl IrotRegister(
             !memcmp(&data->abData, &existing_rot_entry->moniker_data->abData, data->ulCntData))
         {
             hr = MK_S_MONIKERALREADYREGISTERED;
-            WINE_TRACE("moniker already registered with cookie %d\n", existing_rot_entry->cookie);
+            WINE_TRACE("moniker already registered with cookie %ld\n", existing_rot_entry->cookie);
             break;
         }
     }
@@ -157,7 +157,7 @@ HRESULT __cdecl IrotRevoke(
 {
     struct rot_entry *rot_entry;
 
-    WINE_TRACE("%d\n", cookie);
+    WINE_TRACE("%ld\n", cookie);
 
     EnterCriticalSection(&csRunningObjectTable);
     LIST_FOR_EACH_ENTRY(rot_entry, &RunningObjectTable, struct rot_entry, entry)
@@ -269,7 +269,7 @@ HRESULT __cdecl IrotNoteChangeTime(
 {
     struct rot_entry *rot_entry;
 
-    WINE_TRACE("%d %p\n", cookie, last_modified_time);
+    WINE_TRACE("%ld %p\n", cookie, last_modified_time);
 
     EnterCriticalSection(&csRunningObjectTable);
     LIST_FOR_EACH_ENTRY(rot_entry, &RunningObjectTable, struct rot_entry, entry)

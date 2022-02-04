@@ -98,7 +98,7 @@ void __cdecl ept_insert(handle_t h,
     unsigned32 i;
     RPC_STATUS rpc_status;
 
-    WINE_TRACE("(%p, %u, %p, %u, %p)\n", h, num_ents, entries, replace, status);
+    WINE_TRACE("(%p, %lu, %p, %lu, %p)\n", h, num_ents, entries, replace, status);
 
     *status = RPC_S_OK;
 
@@ -119,7 +119,7 @@ void __cdecl ept_insert(handle_t h,
                                   &entry->address);
         if (rpc_status != RPC_S_OK)
         {
-            WINE_WARN("TowerExplode failed %u\n", rpc_status);
+            WINE_WARN("TowerExplode failed %lu\n", rpc_status);
             *status = rpc_status;
             HeapFree(GetProcessHeap(), 0, entry);
             break; /* FIXME: more cleanup? */
@@ -149,7 +149,7 @@ void __cdecl ept_delete(handle_t h,
 
     *status = RPC_S_OK;
 
-    WINE_TRACE("(%p, %u, %p, %p)\n", h, num_ents, entries, status);
+    WINE_TRACE("(%p, %lu, %p, %p)\n", h, num_ents, entries, status);
 
     EnterCriticalSection(&csEpm);
 
@@ -215,7 +215,7 @@ void __cdecl ept_map(handle_t h,
     *status = RPC_S_OK;
     *num_towers = 0;
 
-    WINE_TRACE("(%p, %p, %p, %p, %u, %p, %p, %p)\n", h, object, map_tower,
+    WINE_TRACE("(%p, %p, %p, %p, %lu, %p, %p, %p)\n", h, object, map_tower,
           entry_handle, max_towers, num_towers, towers, status);
 
     rpc_status = TowerExplode(map_tower, &iface, &syntax, &protseq,
@@ -282,7 +282,7 @@ void __cdecl ept_mgmt_delete(handle_t h,
                              twr_p_t tower,
                              error_status_t *status)
 {
-    WINE_FIXME("(%p, %d, %p, %p, %p): stub\n", h, object_speced, object, tower, status);
+    WINE_FIXME("(%p, %ld, %p, %p, %p): stub\n", h, object_speced, object, tower, status);
 
     *status = EPT_S_CANT_PERFORM_OP;
 }

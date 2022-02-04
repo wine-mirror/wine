@@ -230,7 +230,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
         SetEvent( exit_event );
         return NO_ERROR;
     default:
-        FIXME( "got service ctrl %x\n", ctrl );
+        FIXME( "got service ctrl %lx\n", ctrl );
         status.dwCurrentState = SERVICE_RUNNING;
         SetServiceStatus( service_handle, &status );
         return NO_ERROR;
@@ -246,7 +246,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 
     if ((ret = RPCSS_Initialize()))
     {
-        WARN("Failed to initialize rpc interfaces, status %d.\n", ret);
+        WARN("Failed to initialize rpc interfaces, status %ld.\n", ret);
         return;
     }
 
