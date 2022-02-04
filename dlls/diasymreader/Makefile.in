@@ -1,5 +1,5 @@
 MODULE    = diasymreader.dll
-IMPORTS   = uuid
+IMPORTS   = uuid rpcrt4
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

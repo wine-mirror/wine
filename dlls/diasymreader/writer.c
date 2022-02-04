@@ -23,7 +23,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "rpc.h"
 
+#include "wine/mscvpdb.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -34,6 +36,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(diasymreader);
 typedef struct SymWriter {
     ISymUnmanagedWriter5 iface;
     LONG ref;
+    CRITICAL_SECTION lock;
+    GUID pdb_guid;
+    DWORD pdb_age;
+    WCHAR pdb_filename[MAX_PATH];
 } SymWriter;
 
 static inline SymWriter *impl_from_ISymUnmanagedWriter5(ISymUnmanagedWriter5 *iface)
@@ -87,6 +93,8 @@ static ULONG WINAPI SymWriter_Release(ISymUnmanagedWriter5 *iface)
 
     if (ref == 0)
     {
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
         heap_free(This);
     }
 
@@ -213,15 +221,62 @@ static HRESULT WINAPI SymWriter_SetMethodSourceRange(ISymUnmanagedWriter5 *iface
 static HRESULT WINAPI SymWriter_Initialize(ISymUnmanagedWriter5 *iface, IUnknown *emitter, const WCHAR *filename,
     IStream *pIStream, BOOL fFullBuild)
 {
+    SymWriter *This = impl_from_ISymUnmanagedWriter5(iface);
+
     FIXME("(%p,%p,%s,%p,%u)\n", iface, emitter, debugstr_w(filename), pIStream, fFullBuild);
+
+    EnterCriticalSection(&This->lock);
+
+    if (filename)
+        wcsncpy_s(This->pdb_filename, MAX_PATH, filename, _TRUNCATE);
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_GetDebugInfo(ISymUnmanagedWriter5 *iface, IMAGE_DEBUG_DIRECTORY *pIDD, DWORD cData,
     DWORD *pcData, BYTE data[])
 {
-    FIXME("(%p,%p,%lu,%p,%p)\n", iface, pIDD, cData, pcData, data);
-    return E_NOTIMPL;
+    SymWriter *This = impl_from_ISymUnmanagedWriter5(iface);
+    DWORD name_length, data_size;
+    OMFSignatureRSDS *rsds_data = (OMFSignatureRSDS*)data;
+
+    TRACE("(%p,%p,%lu,%p,%p)\n", iface, pIDD, cData, pcData, data);
+
+    EnterCriticalSection(&This->lock);
+
+    name_length = WideCharToMultiByte(CP_UTF8, 0, This->pdb_filename, -1, NULL, 0, NULL, NULL);
+    data_size = FIELD_OFFSET(OMFSignatureRSDS, name) + name_length;
+    if (pcData)
+        *pcData = data_size;
+
+    if (pIDD)
+    {
+        pIDD->Characteristics = 0;
+        pIDD->MajorVersion = 0;
+        pIDD->MinorVersion = 0;
+        pIDD->Type = IMAGE_DEBUG_TYPE_CODEVIEW;
+        pIDD->SizeOfData = data_size;
+    }
+
+    if (data)
+    {
+        if (data_size > cData)
+        {
+            LeaveCriticalSection(&This->lock);
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+
+        memcpy(rsds_data->Signature, "RSDS", 4);
+        rsds_data->guid = This->pdb_guid;
+        rsds_data->age = This->pdb_age;
+        WideCharToMultiByte(CP_UTF8, 0, This->pdb_filename, -1, rsds_data->name, name_length, NULL, NULL);
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineSequencePoints(ISymUnmanagedWriter5 *iface, ISymUnmanagedDocumentWriter *document,
@@ -367,6 +422,11 @@ HRESULT SymWriter_CreateInstance(REFIID iid, void **ppv)
 
     This->iface.lpVtbl = &SymWriter_Vtbl;
     This->ref = 1;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SymWriter.lock");
+    UuidCreate(&This->pdb_guid);
+    This->pdb_age = 1;
+    This->pdb_filename[0] = 0;
 
     hr = IUnknown_QueryInterface(&This->iface, iid, ppv);
 
