@@ -72,7 +72,7 @@ static ULONG WINAPI IUnknownImpl_AddRef(IUnknown *iface)
     IDirectMusicWaveImpl *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -82,7 +82,7 @@ static ULONG WINAPI IUnknownImpl_Release(IUnknown *iface)
     IDirectMusicWaveImpl *This = impl_from_IUnknown(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
