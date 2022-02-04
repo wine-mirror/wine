@@ -70,16 +70,16 @@ static BOOL eject_cd( WCHAR drive )
     WINE_TRACE( "ejecting %c:\n", (char)drive );
 
     if (!DeviceIoControl( handle, FSCTL_DISMOUNT_VOLUME, NULL, 0, NULL, 0, &result, NULL ))
-        WINE_WARN( "FSCTL_DISMOUNT_VOLUME failed with err %d\n", GetLastError() );
+        WINE_WARN( "FSCTL_DISMOUNT_VOLUME failed with err %ld\n", GetLastError() );
 
     removal.PreventMediaRemoval = FALSE;
     if (!DeviceIoControl( handle, IOCTL_STORAGE_MEDIA_REMOVAL, &removal, sizeof(removal), NULL, 0, &result, NULL ))
-        WINE_WARN( "IOCTL_STORAGE_MEDIA_REMOVAL failed with err %d\n", GetLastError() );
+        WINE_WARN( "IOCTL_STORAGE_MEDIA_REMOVAL failed with err %ld\n", GetLastError() );
 
     if (!unmount_only)
     {
         if (!DeviceIoControl( handle, IOCTL_STORAGE_EJECT_MEDIA, NULL, 0, NULL, 0, &result, NULL ))
-            WINE_WARN( "IOCTL_STORAGE_EJECT_MEDIA failed with err %d\n", GetLastError() );
+            WINE_WARN( "IOCTL_STORAGE_EJECT_MEDIA failed with err %ld\n", GetLastError() );
     }
 
     CloseHandle( handle );
