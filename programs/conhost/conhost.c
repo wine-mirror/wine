@@ -162,7 +162,7 @@ static void tty_flush( struct console *console )
     TRACE("%s\n", debugstr_an(console->tty_buffer, console->tty_buffer_count));
     if (!WriteFile( console->tty_output, console->tty_buffer, console->tty_buffer_count,
                     NULL, NULL ))
-        WARN( "write failed: %u\n", GetLastError() );
+        WARN( "write failed: %lu\n", GetLastError() );
     console->tty_buffer_count = 0;
 }
 
@@ -180,7 +180,7 @@ static void tty_write( struct console *console, const char *buffer, size_t size 
     {
         assert( !console->tty_buffer_count );
         if (!WriteFile( console->tty_output, buffer, size, NULL, NULL ))
-            WARN( "write failed: %u\n", GetLastError() );
+            WARN( "write failed: %lu\n", GetLastError() );
     }
 }
 
@@ -461,7 +461,7 @@ static NTSTATUS read_complete( struct console *console, NTSTATUS status, const v
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (status && (console->read_ioctl || status != STATUS_INVALID_HANDLE)) ERR( "failed: %#x\n", status );
+    if (status && (console->read_ioctl || status != STATUS_INVALID_HANDLE)) ERR( "failed: %#lx\n", status );
     console->signaled = signal;
     console->read_ioctl = 0;
     console->pending_read = 0;
@@ -472,7 +472,7 @@ static NTSTATUS read_console_input( struct console *console, size_t out_size )
 {
     size_t count = min( out_size / sizeof(INPUT_RECORD), console->record_count );
 
-    TRACE("count %u\n", count);
+    TRACE("count %Iu\n", count);
 
     read_complete( console, STATUS_SUCCESS, console->records, count * sizeof(*console->records),
                    console->record_count > count );
@@ -1271,7 +1271,7 @@ static NTSTATUS process_console_input( struct console *console )
 
         if (ir.EventType != KEY_EVENT || !ir.Event.KeyEvent.bKeyDown) continue;
 
-        TRACE( "key code=%02x scan=%02x char=%02x state=%08x\n",
+        TRACE( "key code=%02x scan=%02x char=%02x state=%08lx\n",
                ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualScanCode,
                ir.Event.KeyEvent.uChar.UnicodeChar, ir.Event.KeyEvent.dwControlKeyState );
 
@@ -1638,7 +1638,7 @@ static DWORD WINAPI tty_input( void *param )
         unsigned int h = condrv_handle( console->tty_input );
         status = NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_SETUP_INPUT,
                                         &h, sizeof(h), NULL, 0 );
-        if (status) ERR( "input setup failed: %#x\n", status );
+        if (status) ERR( "input setup failed: %#lx\n", status );
     }
 
     event = CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1695,7 +1695,7 @@ static DWORD WINAPI tty_input( void *param )
         LeaveCriticalSection( &console_section );
     }
 
-    TRACE( "NtReadFile failed: %#x\n", status );
+    TRACE( "NtReadFile failed: %#lx\n", status );
 
 done:
     EnterCriticalSection( &console_section );
@@ -1705,7 +1705,7 @@ done:
         unsigned int h = 0;
         status = NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_SETUP_INPUT,
                                         &h, sizeof(h), NULL, 0 );
-        if (status) ERR( "input restore failed: %#x\n", status );
+        if (status) ERR( "input restore failed: %#lx\n", status );
     }
     CloseHandle( console->input_thread );
     console->input_thread = NULL;
@@ -2632,7 +2632,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
         }
         if (status)
         {
-            TRACE( "failed to get next request: %#x\n", status );
+            TRACE( "failed to get next request: %#lx\n", status );
             return status;
         }
 

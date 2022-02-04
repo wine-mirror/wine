@@ -110,8 +110,8 @@ static const char *debugstr_config( const struct console_config *config )
 
 static const char *debugstr_logfont( const LOGFONTW *lf, unsigned int ft )
 {
-    return wine_dbg_sprintf( "%s%s%s%s  lfHeight=%d lfWidth=%d lfEscapement=%d "
-                             "lfOrientation=%d lfWeight=%d lfItalic=%u lfUnderline=%u "
+    return wine_dbg_sprintf( "%s%s%s%s  lfHeight=%ld lfWidth=%ld lfEscapement=%ld "
+                             "lfOrientation=%ld lfWeight=%ld lfItalic=%u lfUnderline=%u "
                              "lfStrikeOut=%u lfCharSet=%u lfPitchAndFamily=%u lfFaceName=%s",
                              (ft & RASTER_FONTTYPE) ? "raster" : "",
                              (ft & TRUETYPE_FONTTYPE) ? "truetype" : "",
@@ -124,8 +124,8 @@ static const char *debugstr_logfont( const LOGFONTW *lf, unsigned int ft )
 
 static const char *debugstr_textmetric( const TEXTMETRICW *tm, unsigned int ft )
 {
-        return wine_dbg_sprintf( "%s%s%s%s tmHeight=%d tmAscent=%d tmDescent=%d "
-                                 "tmAveCharWidth=%d tmMaxCharWidth=%d tmWeight=%d "
+        return wine_dbg_sprintf( "%s%s%s%s tmHeight=%ld tmAscent=%ld tmDescent=%ld "
+                                 "tmAveCharWidth=%ld tmMaxCharWidth=%ld tmWeight=%ld "
                                  "tmPitchAndFamily=%u tmCharSet=%u",
                                  (ft & RASTER_FONTTYPE) ? "raster" : "",
                                  (ft & TRUETYPE_FONTTYPE) ? "truetype" : "",
@@ -2453,7 +2453,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
             break;
         case IDS_SCROLL:
         case IDS_SEARCH:
-            FIXME( "Unhandled yet command: %lx\n", wparam );
+            FIXME( "Unhandled yet command: %Ix\n", wparam );
             break;
         default:
             return DefWindowProcW( hwnd, msg, wparam, lparam );
