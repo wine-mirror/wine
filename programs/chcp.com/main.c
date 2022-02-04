@@ -56,7 +56,7 @@ static void output_formatstring(const WCHAR *fmt, va_list va_args)
                          fmt, 0, 0, (WCHAR *)&str, 0, &va_args);
     if (!len && GetLastError() != ERROR_NO_WORK_DONE)
     {
-        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
         return;
     }
     output_writeconsole(str, len);
@@ -71,7 +71,7 @@ static void WINAPIV output_message(unsigned int id, ...)
 
     if (!(len = LoadStringW(GetModuleHandleW(NULL), id, (WCHAR *)&fmt, 0)))
     {
-        WINE_FIXME("LoadString failed with %d\n", GetLastError());
+        WINE_FIXME("LoadString failed with %ld\n", GetLastError());
         return;
     }
 
