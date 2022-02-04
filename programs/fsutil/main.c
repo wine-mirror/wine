@@ -59,7 +59,7 @@ static int WINAPIV output_string(int msg, ...)
     va_end(arguments);
 
     if (len == 0 && GetLastError() != NO_ERROR)
-        WINE_FIXME("Could not format string: le=%u, msg=%d\n", GetLastError(), msg);
+        WINE_FIXME("Could not format string: le=%lu, msg=%d\n", GetLastError(), msg);
     else
         output_write(out, len);
 
