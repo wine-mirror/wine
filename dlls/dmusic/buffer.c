@@ -56,7 +56,7 @@ static ULONG WINAPI IDirectMusicBufferImpl_AddRef(LPDIRECTMUSICBUFFER iface)
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p): new ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -66,7 +66,7 @@ static ULONG WINAPI IDirectMusicBufferImpl_Release(LPDIRECTMUSICBUFFER iface)
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p): new ref = %lu\n", iface, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This->data);
@@ -104,7 +104,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER 
     DWORD new_write_pos = This->write_pos + DMUS_EVENT_SIZE(sizeof(channel_message));
     DMUS_EVENTHEADER *header;
 
-    TRACE("(%p)->(0x%s, %u, 0x%x)\n", iface, wine_dbgstr_longlong(ref_time), channel_group, channel_message);
+    TRACE("(%p, 0x%s, %lu, %#lx)\n", iface, wine_dbgstr_longlong(ref_time), channel_group, channel_message);
 
     if (new_write_pos > This->size)
         return DMUS_E_BUFFER_FULL;
@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackUnstructured(IDirectMusicBuffer
     DWORD new_write_pos = This->write_pos + DMUS_EVENT_SIZE(len);
     DMUS_EVENTHEADER *header;
 
-    TRACE("(%p, 0x%s, %d, %d, %p)\n", This, wine_dbgstr_longlong(ref_time), channel_group, len, data);
+    TRACE("(%p, 0x%s, %ld, %ld, %p)\n", This, wine_dbgstr_longlong(ref_time), channel_group, len, data);
 
     if (new_write_pos > This->size)
         return DMUS_E_BUFFER_FULL;
@@ -263,7 +263,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes(LPDIRECTMUSICBUFFER if
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
 
-    TRACE("(%p)->(%u)\n", iface, used_bytes);
+    TRACE("(%p, %lu)\n", iface, used_bytes);
 
     if (used_bytes > This->size)
         return DMUS_E_BUFFER_FULL;

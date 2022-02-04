@@ -222,12 +222,12 @@ static const char* debugstr_DMUS_PORTPARAMS_FLAGS(DWORD flagmask)
 void dump_DMUS_PORTPARAMS(LPDMUS_PORTPARAMS params)
 {
     TRACE("DMUS_PORTPARAMS (%p):\n", params);
-    TRACE(" - dwSize = %d\n", params->dwSize);
+    TRACE(" - dwSize = %ld\n", params->dwSize);
     TRACE(" - dwValidParams = %s\n", debugstr_DMUS_PORTPARAMS_FLAGS(params->dwValidParams));
-    if (params->dwValidParams & DMUS_PORTPARAMS_VOICES)        TRACE(" - dwVoices = %u\n", params->dwVoices);
-    if (params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) TRACE(" - dwChannelGroup = %u\n", params->dwChannelGroups);
-    if (params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS) TRACE(" - dwAudioChannels = %u\n", params->dwAudioChannels);
-    if (params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE)    TRACE(" - dwSampleRate = %u\n", params->dwSampleRate);
-    if (params->dwValidParams & DMUS_PORTPARAMS_EFFECTS)       TRACE(" - dwEffectFlags = %x\n", params->dwEffectFlags);
+    if (params->dwValidParams & DMUS_PORTPARAMS_VOICES)        TRACE(" - dwVoices = %lu\n", params->dwVoices);
+    if (params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) TRACE(" - dwChannelGroup = %lu\n", params->dwChannelGroups);
+    if (params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS) TRACE(" - dwAudioChannels = %lu\n", params->dwAudioChannels);
+    if (params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE)    TRACE(" - dwSampleRate = %lu\n", params->dwSampleRate);
+    if (params->dwValidParams & DMUS_PORTPARAMS_EFFECTS)       TRACE(" - dwEffectFlags = %lx\n", params->dwEffectFlags);
     if (params->dwValidParams & DMUS_PORTPARAMS_SHARE)         TRACE(" - fShare = %u\n", params->fShare);
 }

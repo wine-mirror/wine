@@ -51,7 +51,7 @@ static ULONG WINAPI IDirectMusicDownloadImpl_AddRef(IDirectMusicDownload *iface)
     IDirectMusicDownloadImpl *This = impl_from_IDirectMusicDownload(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p): new ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -61,7 +61,7 @@ static ULONG WINAPI IDirectMusicDownloadImpl_Release(IDirectMusicDownload *iface
     IDirectMusicDownloadImpl *This = impl_from_IDirectMusicDownload(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p): new ref = %lu\n", iface, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);

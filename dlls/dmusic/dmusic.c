@@ -62,7 +62,7 @@ static ULONG WINAPI master_IReferenceClock_AddRef(IReferenceClock *iface)
     struct master_clock *This = impl_from_IReferenceClock(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", iface, ref);
+    TRACE("(%p) ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -72,7 +72,7 @@ static ULONG WINAPI master_IReferenceClock_Release(IReferenceClock *iface)
     struct master_clock *This = impl_from_IReferenceClock(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", iface, ref);
+    TRACE("(%p) ref = %lu\n", iface, ref);
 
     if (!ref)
         heap_free(This);
@@ -115,7 +115,7 @@ static HRESULT WINAPI master_IReferenceClock_AdvisePeriodic(IReferenceClock *ifa
 
 static HRESULT WINAPI master_IReferenceClock_Unadvise(IReferenceClock *iface, DWORD cookie)
 {
-    TRACE("(%p, %#x): method not implemented\n", iface, cookie);
+    TRACE("(%p, %#lx): method not implemented\n", iface, cookie);
     return E_NOTIMPL;
 }
 
@@ -183,7 +183,7 @@ static ULONG WINAPI IDirectMusic8Impl_AddRef(LPDIRECTMUSIC8 iface)
     IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     return ref;
 }
@@ -193,7 +193,7 @@ static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
     IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     if (!ref) {
         IReferenceClock_Release(This->master_clock);
@@ -213,7 +213,7 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumPort(LPDIRECTMUSIC8 iface, DWORD ind
 {
     IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
 
-    TRACE("(%p, %d, %p)\n", This, index, port_caps);
+    TRACE("(%p, %ld, %p)\n", This, index, port_caps);
 
     if (!port_caps)
         return E_POINTER;
@@ -333,7 +333,7 @@ void dmusic_remove_port(IDirectMusic8Impl *dmusic, IDirectMusicPort *port)
 
 static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DWORD index, LPDMUS_CLOCKINFO clock_info)
 {
-    TRACE("(%p)->(%d, %p)\n", iface, index, clock_info);
+    TRACE("(%p, %ld, %p)\n", iface, index, clock_info);
 
     if (!clock_info)
         return E_POINTER;

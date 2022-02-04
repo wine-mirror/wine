@@ -49,7 +49,7 @@ static ULONG WINAPI IReferenceClockImpl_AddRef(IReferenceClock *iface)
     IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     return ref;
 }
@@ -59,7 +59,7 @@ static ULONG WINAPI IReferenceClockImpl_Release(IReferenceClock *iface)
     IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -103,7 +103,7 @@ static HRESULT WINAPI IReferenceClockImpl_Unadvise(IReferenceClock *iface, DWORD
 {
     IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
 
-    FIXME("(%p)->(%d): stub\n", This, dwAdviseCookie);
+    FIXME("(%p, %ld): stub\n", This, dwAdviseCookie);
 
     return S_OK;
 }

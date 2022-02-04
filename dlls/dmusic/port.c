@@ -90,7 +90,7 @@ static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef(LPDIRECTMUSICDOW
     IDirectMusicDownloadedInstrumentImpl *This = impl_from_IDirectMusicDownloadedInstrument(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p): new ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -100,7 +100,7 @@ static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release(LPDIRECTMUSICDO
     IDirectMusicDownloadedInstrumentImpl *This = impl_from_IDirectMusicDownloadedInstrument(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p): new ref = %lu\n", iface, ref);
 
     if (!ref)
     {
@@ -177,7 +177,7 @@ static ULONG WINAPI synth_port_AddRef(IDirectMusicPort *iface)
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     DMUSIC_LockModule();
 
@@ -189,7 +189,7 @@ static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     if (!ref)
     {
@@ -266,7 +266,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
     ULONG size;
     ULONG i;
 
-    TRACE("(%p/%p)->(%p, %p, %p, %d)\n", iface, This, instrument, downloaded_instrument, note_ranges, num_note_ranges);
+    TRACE("(%p, %p, %p, %p, %ld)\n", iface, instrument, downloaded_instrument, note_ranges, num_note_ranges);
 
     if (!instrument || !downloaded_instrument || (num_note_ranges && !note_ranges))
         return E_POINTER;
@@ -396,7 +396,7 @@ static HRESULT WINAPI synth_port_DeviceIoControl(IDirectMusicPort *iface, DWORD 
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    FIXME("(%p/%p)->(%d, %p, %d, %p, %d, %p, %p): stub\n", iface, This, io_control_code, in_buffer, in_buffer_size, out_buffer, out_buffer_size, bytes_returned, overlapped);
+    FIXME("(%p/%p, %ld, %p, %ld, %p, %ld, %p, %p): stub\n", iface, This, io_control_code, in_buffer, in_buffer_size, out_buffer, out_buffer_size, bytes_returned, overlapped);
 
     return S_OK;
 }
@@ -405,7 +405,7 @@ static HRESULT WINAPI synth_port_SetNumChannelGroups(IDirectMusicPort *iface, DW
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    FIXME("(%p/%p)->(%d): semi-stub\n", iface, This, channel_groups);
+    FIXME("(%p, %ld): semi-stub\n", iface, channel_groups);
 
     This->nrofgroups = channel_groups;
 
@@ -457,11 +457,11 @@ static HRESULT WINAPI synth_port_SetChannelPriority(IDirectMusicPort *iface, DWO
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    FIXME("(%p/%p)->(%d, %d, %d): semi-stub\n", iface, This, channel_group, channel, priority);
+    FIXME("(%p/%p, %ld, %ld, %ld): semi-stub\n", iface, This, channel_group, channel, priority);
 
     if (channel > 16)
     {
-        WARN("isn't there supposed to be 16 channels (no. %d requested)?! (faking as it is ok)\n", channel);
+        WARN("isn't there supposed to be 16 channels (no. %ld requested)?! (faking as it is ok)\n", channel);
         /*return E_INVALIDARG;*/
     }
 
@@ -473,7 +473,7 @@ static HRESULT WINAPI synth_port_GetChannelPriority(IDirectMusicPort *iface, DWO
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    TRACE("(%p/%p)->(%u, %u, %p)\n", iface, This, channel_group, channel, priority);
+    TRACE("(%p, %lu, %lu, %p)\n", iface, channel_group, channel, priority);
 
     *priority = This->group[channel_group - 1].channel[channel].priority;
 
@@ -614,7 +614,7 @@ static HRESULT WINAPI synth_port_download_GetBuffer(IDirectMusicPortDownload *if
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    FIXME("(%p/%p)->(%u, %p): stub\n", iface, This, DLId, IDMDownload);
+    FIXME("(%p/%p, %lu, %p): stub\n", iface, This, DLId, IDMDownload);
 
     if (!IDMDownload)
         return E_POINTER;
@@ -627,7 +627,7 @@ static HRESULT WINAPI synth_port_download_AllocateBuffer(IDirectMusicPortDownloa
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    FIXME("(%p/%p)->(%u, %p): stub\n", iface, This, size, IDMDownload);
+    FIXME("(%p/%p, %lu, %p): stub\n", iface, This, size, IDMDownload);
 
     return S_OK;
 }
@@ -636,7 +636,7 @@ static HRESULT WINAPI synth_port_download_GetDLId(IDirectMusicPortDownload *ifac
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    FIXME("(%p/%p)->(%p, %u): stub\n", iface, This, start_DLId, count);
+    FIXME("(%p/%p, %p, %lu): stub\n", iface, This, start_DLId, count);
 
     return S_OK;
 }
@@ -715,7 +715,7 @@ static HRESULT WINAPI synth_port_thru_ThruChannel(IDirectMusicThru *iface, DWORD
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
-    FIXME("(%p/%p)->(%d, %d, %d, %d, %p): stub\n", iface, This, source_channel_group, source_channel, destination_channel_group, destination_channel, destination_port);
+    FIXME("(%p/%p, %ld, %ld, %ld, %ld, %p): stub\n", iface, This, source_channel_group, source_channel, destination_channel_group, destination_channel, destination_port);
 
     return S_OK;
 }
@@ -754,12 +754,12 @@ static ULONG WINAPI IKsControlImpl_Release(IKsControl *iface)
 static HRESULT WINAPI IKsControlImpl_KsProperty(IKsControl *iface, KSPROPERTY *prop,
         ULONG prop_len, void *data, ULONG data_len, ULONG *ret_len)
 {
-    TRACE("(%p)->(%p, %u, %p, %u, %p)\n", iface, prop, prop_len, data, data_len, ret_len);
-    TRACE("prop = %s - %u - %u\n", debugstr_guid(&prop->u.s.Set), prop->u.s.Id, prop->u.s.Flags);
+    TRACE("(%p, %p, %lu, %p, %lu, %p)\n", iface, prop, prop_len, data, data_len, ret_len);
+    TRACE("prop = %s - %lu - %lu\n", debugstr_guid(&prop->u.s.Set), prop->u.s.Id, prop->u.s.Flags);
 
     if (prop->u.s.Flags != KSPROPERTY_TYPE_GET)
     {
-        FIXME("prop flags %u not yet supported\n", prop->u.s.Flags);
+        FIXME("prop flags %lu not yet supported\n", prop->u.s.Flags);
         return S_FALSE;
     }
 
@@ -776,7 +776,7 @@ static HRESULT WINAPI IKsControlImpl_KsProperty(IKsControl *iface, KSPROPERTY *p
 static HRESULT WINAPI IKsControlImpl_KsMethod(IKsControl *iface, KSMETHOD *method,
         ULONG method_len, void *data, ULONG data_len, ULONG *ret_len)
 {
-    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, method, method_len, data, data_len, ret_len);
+    FIXME("(%p, %p, %lu, %p, %lu, %p): stub\n", iface, method, method_len, data, data_len, ret_len);
 
     return E_NOTIMPL;
 }
@@ -784,7 +784,7 @@ static HRESULT WINAPI IKsControlImpl_KsMethod(IKsControl *iface, KSMETHOD *metho
 static HRESULT WINAPI IKsControlImpl_KsEvent(IKsControl *iface, KSEVENT *event, ULONG event_len,
         void *data, ULONG data_len, ULONG *ret_len)
 {
-    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, event, event_len, data, data_len, ret_len);
+    FIXME("(%p, %p, %lu, %p, %lu, %p): stub\n", iface, event, event_len, data, data_len, ret_len);
 
     return E_NOTIMPL;
 }
@@ -917,7 +917,7 @@ static ULONG WINAPI midi_IDirectMusicPort_AddRef(IDirectMusicPort *iface)
     struct midi_port *This = impl_from_IDirectMusicPort(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", iface, ref);
+    TRACE("(%p) ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -927,7 +927,7 @@ static ULONG WINAPI midi_IDirectMusicPort_Release(IDirectMusicPort *iface)
     struct midi_port *This = impl_from_IDirectMusicPort(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", iface, ref);
+    TRACE("(%p) ref = %lu\n", iface, ref);
 
     if (!ref) {
         if (This->clock)
@@ -966,7 +966,7 @@ static HRESULT WINAPI midi_IDirectMusicPort_DownloadInstrument(IDirectMusicPort 
         IDirectMusicInstrument *instrument, IDirectMusicDownloadedInstrument **downloaded,
         DMUS_NOTERANGE *ranges, DWORD num_ranges)
 {
-    FIXME("(%p, %p, %p, %p, %u) stub!\n", iface, instrument, downloaded, ranges, num_ranges);
+    FIXME("(%p, %p, %p, %p, %lu) stub!\n", iface, instrument, downloaded, ranges, num_ranges);
 
     return E_NOTIMPL;
 }
@@ -1021,7 +1021,7 @@ static HRESULT WINAPI midi_IDirectMusicPort_DeviceIoControl(IDirectMusicPort *if
         DWORD io_control_code, void *in, DWORD size_in, void *out, DWORD size_out, DWORD *ret_len,
         OVERLAPPED *overlapped)
 {
-    FIXME("(%p, %u, %p, %u, %p, %u, %p, %p) stub!\n", iface, io_control_code, in, size_in, out
+    FIXME("(%p, %lu, %p, %lu, %p, %lu, %p, %p) stub!\n", iface, io_control_code, in, size_in, out
             , size_out, ret_len, overlapped);
 
     return E_NOTIMPL;
@@ -1030,7 +1030,7 @@ static HRESULT WINAPI midi_IDirectMusicPort_DeviceIoControl(IDirectMusicPort *if
 static HRESULT WINAPI midi_IDirectMusicPort_SetNumChannelGroups(IDirectMusicPort *iface,
         DWORD cgroups)
 {
-    FIXME("(%p, %u) stub!\n", iface, cgroups);
+    FIXME("(%p, %lu) stub!\n", iface, cgroups);
 
     return E_NOTIMPL;
 }
@@ -1053,7 +1053,7 @@ static HRESULT WINAPI midi_IDirectMusicPort_Activate(IDirectMusicPort *iface, BO
 static HRESULT WINAPI midi_IDirectMusicPort_SetChannelPriority(IDirectMusicPort *iface,
         DWORD channel_group, DWORD channel, DWORD priority)
 {
-    FIXME("(%p, %u, %u, %u) stub!\n", iface, channel_group, channel, priority);
+    FIXME("(%p, %lu, %lu, %lu) stub!\n", iface, channel_group, channel, priority);
 
     return E_NOTIMPL;
 }
@@ -1061,7 +1061,7 @@ static HRESULT WINAPI midi_IDirectMusicPort_SetChannelPriority(IDirectMusicPort 
 static HRESULT WINAPI midi_IDirectMusicPort_GetChannelPriority(IDirectMusicPort *iface,
         DWORD channel_group, DWORD channel, DWORD *priority)
 {
-    FIXME("(%p, %u, %u, %p) stub!\n", iface, channel_group, channel, priority);
+    FIXME("(%p, %lu, %lu, %p) stub!\n", iface, channel_group, channel, priority);
 
     return E_NOTIMPL;
 }
@@ -1135,7 +1135,7 @@ static ULONG WINAPI midi_IDirectMusicThru_Release(IDirectMusicThru *iface)
 static HRESULT WINAPI midi_IDirectMusicThru_ThruChannel(IDirectMusicThru *iface, DWORD src_group,
         DWORD src_channel, DWORD dest_group, DWORD dest_channel, IDirectMusicPort *dest_port)
 {
-    FIXME("(%p, %u, %u, %u, %u, %p) stub!\n", iface, src_group, src_channel, dest_group,
+    FIXME("(%p, %lu, %lu, %lu, %lu, %p) stub!\n", iface, src_group, src_channel, dest_group,
             dest_channel, dest_port);
 
     return S_OK;
