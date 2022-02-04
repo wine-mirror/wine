@@ -1353,7 +1353,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
  *
  * See shlwapi.SHAllocShared
  */
-HANDLE WINAPI SHAllocShared(LPVOID lpvData, DWORD dwSize, DWORD dwProcId)
+HANDLE WINAPI SHAllocShared(const void *lpvData, DWORD dwSize, DWORD dwProcId)
 {
     GET_FUNC(pSHAllocShared, shlwapi, (char*)7, NULL);
     return pSHAllocShared(lpvData, dwSize, dwProcId);
