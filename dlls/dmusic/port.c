@@ -151,7 +151,7 @@ static HRESULT WINAPI synth_port_QueryInterface(IDirectMusicPort *iface, REFIID 
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPort))
         *ret_iface = &This->IDirectMusicPort_iface;
@@ -218,7 +218,7 @@ static HRESULT WINAPI synth_port_PlayBuffer(IDirectMusicPort *iface, IDirectMusi
     LPBYTE data;
     DWORD size;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, buffer);
+    TRACE("(%p, %p)\n", iface, buffer);
 
     if (!buffer)
         return E_POINTER;
@@ -339,10 +339,9 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
 static HRESULT WINAPI synth_port_UnloadInstrument(IDirectMusicPort *iface,
         IDirectMusicDownloadedInstrument *downloaded_instrument)
 {
-    struct synth_port *This = synth_from_IDirectMusicPort(iface);
     IDirectMusicDownloadedInstrumentImpl *downloaded_object = unsafe_impl_from_IDirectMusicDownloadedInstrument(downloaded_instrument);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, downloaded_instrument);
+    TRACE("(%p, %p)\n", iface, downloaded_instrument);
 
     if (!downloaded_instrument)
         return E_POINTER;
@@ -361,7 +360,7 @@ static HRESULT WINAPI synth_port_GetLatencyClock(IDirectMusicPort *iface, IRefer
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, clock);
+    TRACE("(%p, %p)\n", iface, clock);
 
     return IDirectMusicSynth8_GetLatencyClock(This->synth, clock);
 }
@@ -385,7 +384,7 @@ static HRESULT WINAPI synth_port_GetCaps(IDirectMusicPort *iface, DMUS_PORTCAPS 
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, port_caps);
+    TRACE("(%p, %p)\n", iface, port_caps);
 
     return IDirectMusicSynth_GetPortCaps(This->synth, port_caps);
 }
@@ -416,7 +415,7 @@ static HRESULT WINAPI synth_port_GetNumChannelGroups(IDirectMusicPort *iface, DW
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, channel_groups);
+    TRACE("(%p, %p)\n", iface, channel_groups);
 
     *channel_groups = This->nrofgroups;
 
@@ -586,7 +585,7 @@ static HRESULT WINAPI synth_port_download_QueryInterface(IDirectMusicPortDownloa
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
     return IDirectMusicPort_QueryInterface(&This->IDirectMusicPort_iface, riid, ret_iface);
 }
@@ -595,7 +594,7 @@ static ULONG WINAPI synth_port_download_AddRef(IDirectMusicPortDownload *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("(%p)\n", iface);
 
     return IDirectMusicPort_AddRef(&This->IDirectMusicPort_iface);
 }
@@ -604,7 +603,7 @@ static ULONG WINAPI synth_port_download_Release(IDirectMusicPortDownload *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("(%p)\n", iface);
 
     return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
 }
@@ -686,7 +685,7 @@ static HRESULT WINAPI synth_port_thru_QueryInterface(IDirectMusicThru *iface, RE
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
     return IDirectMusicPort_QueryInterface(&This->IDirectMusicPort_iface, riid, ret_iface);
 }
@@ -695,7 +694,7 @@ static ULONG WINAPI synth_port_thru_AddRef(IDirectMusicThru *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("(%p)\n", iface);
 
     return IDirectMusicPort_AddRef(&This->IDirectMusicPort_iface);
 }
@@ -704,7 +703,7 @@ static ULONG WINAPI synth_port_thru_Release(IDirectMusicThru *iface)
 {
     struct synth_port *This = synth_from_IDirectMusicThru(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
+    TRACE("(%p)\n", iface);
 
     return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
 }

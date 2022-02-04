@@ -60,7 +60,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_QueryInterface(IDirectMusicColl
 {
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
     *ret_iface = NULL;
 
@@ -72,7 +72,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_QueryInterface(IDirectMusicColl
         *ret_iface = &This->dmobj.IPersistStream_iface;
     else
     {
-        WARN("(%p/%p)->(%s, %p): not found\n", iface, This, debugstr_dmguid(riid), ret_iface);
+        WARN("(%p, %s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
         return E_NOINTERFACE;
     }
 
