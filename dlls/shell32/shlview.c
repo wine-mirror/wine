@@ -55,7 +55,6 @@
 #include "winuser.h"
 #include "shlobj.h"
 #include "shobjidl.h"
-#include "undocshell.h"
 #include "shresdef.h"
 #include "wine/debug.h"
 

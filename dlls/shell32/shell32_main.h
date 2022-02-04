@@ -32,7 +32,6 @@
 #include "commctrl.h"
 #include "objbase.h"
 #include "docobj.h"
-#include "undocshell.h"
 #include "shlobj.h"
 #include "shellapi.h"
 #include "wine/heap.h"

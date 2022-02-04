@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
-#include "undocshell.h"
 #include "shlguid.h"
 
 #include "wine/debug.h"

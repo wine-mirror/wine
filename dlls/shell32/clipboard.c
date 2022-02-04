@@ -43,7 +43,6 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "pidl.h"
-#include "undocshell.h"
 #include "shell32_main.h"
 #include "shlwapi.h"
 

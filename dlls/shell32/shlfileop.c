@@ -41,7 +41,6 @@
 #include "shlwapi.h"
 #include "shell32_main.h"
 #include "shfldr.h"
-#include "undocshell.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

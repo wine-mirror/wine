@@ -46,7 +46,6 @@
 #include "shtypes.h"
 #include "shresdef.h"
 #include "shell32_main.h"
-#include "undocshell.h"
 #include "pidl.h"
 #include "shlwapi.h"
 #include "sddl.h"

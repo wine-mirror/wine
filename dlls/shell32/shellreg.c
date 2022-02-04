@@ -30,7 +30,6 @@
 #include "shlobj.h"
 #include "winreg.h"
 
-#include "undocshell.h"
 #include "shell32_main.h"
 
 #include "wine/debug.h"

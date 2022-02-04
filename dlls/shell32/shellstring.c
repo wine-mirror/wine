@@ -34,10 +34,11 @@
 #include "shlobj.h"
 #include "shlwapi.h"
 #include "shell32_main.h"
-#include "undocshell.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
+
+DWORD WINAPI CheckEscapesW(WCHAR *string, DWORD len);
 
 /************************* STRRET functions ****************************/
 

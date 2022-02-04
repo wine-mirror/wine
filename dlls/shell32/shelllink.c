@@ -45,7 +45,6 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "shlobj.h"
-#include "undocshell.h"
 
 #include "pidl.h"
 #include "shell32_main.h"

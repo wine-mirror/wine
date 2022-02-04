@@ -39,7 +39,6 @@
 #include "commctrl.h"
 #include "cpanel.h"
 #include "pidl.h"
-#include "undocshell.h"
 #include "shell32_main.h"
 #include "shresdef.h"
 #include "shlwapi.h"

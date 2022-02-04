@@ -34,7 +34,6 @@
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "shresdef.h"
-#include "undocshell.h"
 
 /* RunFileDlg flags */
 #define RFF_NOBROWSE        0x01

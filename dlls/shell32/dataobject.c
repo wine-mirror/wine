@@ -30,7 +30,6 @@
 #include "winerror.h"
 #include "shell32_main.h"
 #include "wine/debug.h"
-#include "undocshell.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 

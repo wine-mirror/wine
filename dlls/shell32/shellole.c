@@ -39,7 +39,6 @@
 #include "winreg.h"
 #include "winerror.h"
 
-#include "undocshell.h"
 #include "shell32_main.h"
 
 #include "wine/debug.h"

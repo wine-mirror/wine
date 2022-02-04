@@ -41,7 +41,6 @@
 #include "winuser.h"
 #include "shlobj.h"
 #include "shell32_main.h"
-#include "undocshell.h"
 #include "pidl.h"
 #include "shlwapi.h"
 #include "commdlg.h"

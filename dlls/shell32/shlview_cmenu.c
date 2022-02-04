@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "pidl.h"
-#include "undocshell.h"
 #include "shlobj.h"
 #include "winreg.h"
 #include "prsht.h"

@@ -36,7 +36,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "undocshell.h"
 #include "shlwapi.h"
 #include "winerror.h"
 #include "objbase.h"
