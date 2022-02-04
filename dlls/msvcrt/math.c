@@ -10314,7 +10314,7 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
 {
     ULONG_PTR exception_arg;
     DWORD exception = 0;
-    DWORD fpword = 0;
+    unsigned int fpword = 0;
     WORD operation;
     int raise = 0;
 
