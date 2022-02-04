@@ -3692,6 +3692,16 @@ NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack )
 
     mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
     vprot = get_page_vprot( page );
+
+#ifdef __APPLE__
+    /* Rosetta on Apple Silicon misreports certain write faults as read faults. */
+    if (err == EXCEPTION_READ_FAULT && (get_unix_prot( vprot ) & PROT_READ))
+    {
+        WARN( "treating read fault in a readable page as a write fault, addr %p\n", addr );
+        err = EXCEPTION_WRITE_FAULT;
+    }
+#endif
+
     if (!is_inside_signal_stack( stack ) && (vprot & VPROT_GUARD))
     {
         struct thread_stack_info stack_info;
