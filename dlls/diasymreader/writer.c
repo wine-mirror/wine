@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(diasymreader);
 
 typedef struct SymWriter {
     ISymUnmanagedWriter5 iface;
+    IPdbWriter IPdbWriter_iface;
     LONG ref;
     CRITICAL_SECTION lock;
     GUID pdb_guid;
@@ -45,6 +46,11 @@ typedef struct SymWriter {
 static inline SymWriter *impl_from_ISymUnmanagedWriter5(ISymUnmanagedWriter5 *iface)
 {
     return CONTAINING_RECORD(iface, SymWriter, iface);
+}
+
+static inline SymWriter *impl_from_IPdbWriter(IPdbWriter *iface)
+{
+    return CONTAINING_RECORD(iface, SymWriter, IPdbWriter_iface);
 }
 
 static HRESULT WINAPI SymWriter_QueryInterface(ISymUnmanagedWriter5 *iface, REFIID iid,
@@ -62,6 +68,10 @@ static HRESULT WINAPI SymWriter_QueryInterface(ISymUnmanagedWriter5 *iface, REFI
         IsEqualIID(&IID_ISymUnmanagedWriter5, iid))
     {
         *ppv = &This->iface;
+    }
+    else if (IsEqualIID(&IID_IPdbWriter, iid))
+    {
+        *ppv = &This->IPdbWriter_iface;
     }
     else
     {
@@ -411,6 +421,65 @@ static const ISymUnmanagedWriter5Vtbl SymWriter_Vtbl = {
     SymWriter_MapTokenToSourceSpan
 };
 
+static HRESULT WINAPI SymWriter_PdbWriter_QueryInterface(IPdbWriter *iface, REFIID iid, void **ppv)
+{
+    SymWriter *This = impl_from_IPdbWriter(iface);
+    return ISymUnmanagedWriter5_QueryInterface(&This->iface, iid, ppv);
+}
+
+static ULONG WINAPI SymWriter_PdbWriter_AddRef(IPdbWriter *iface)
+{
+    SymWriter *This = impl_from_IPdbWriter(iface);
+    return ISymUnmanagedWriter5_AddRef(&This->iface);
+}
+
+static ULONG WINAPI SymWriter_PdbWriter_Release(IPdbWriter *iface)
+{
+    SymWriter *This = impl_from_IPdbWriter(iface);
+    return ISymUnmanagedWriter5_Release(&This->iface);
+}
+
+static HRESULT WINAPI SymWriter_SetPath(IPdbWriter *iface, const WCHAR *fullpath, IStream *stream, BOOL fullbuild)
+{
+    FIXME("(%p,%s,%p,%u)\n", iface, debugstr_w(fullpath), stream, fullbuild);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SymWriter_OpenMod(IPdbWriter *iface, const WCHAR *modulename, const WCHAR *fullpath)
+{
+    FIXME("(%p,%s,%s)\n", iface, debugstr_w(modulename), debugstr_w(fullpath));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SymWriter_CloseMod(IPdbWriter *iface)
+{
+    FIXME("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SymWriter_GetPath(IPdbWriter *iface, DWORD ccData, DWORD *pccData, WCHAR *path)
+{
+    FIXME("(%p,%lu,%p,%p)\n", iface, ccData, pccData, path);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SymWriter_GetSignatureAge(IPdbWriter *iface, DWORD *timestamp, DWORD *age)
+{
+    FIXME("(%p,%p,%p)\n", iface, timestamp, age);
+    return E_NOTIMPL;
+}
+
+static const IPdbWriterVtbl SymWriter_PdbWriter_Vtbl = {
+    SymWriter_PdbWriter_QueryInterface,
+    SymWriter_PdbWriter_AddRef,
+    SymWriter_PdbWriter_Release,
+    SymWriter_SetPath,
+    SymWriter_OpenMod,
+    SymWriter_CloseMod,
+    SymWriter_GetPath,
+    SymWriter_GetSignatureAge
+};
+
 HRESULT SymWriter_CreateInstance(REFIID iid, void **ppv)
 {
     SymWriter *This;
@@ -421,6 +490,7 @@ HRESULT SymWriter_CreateInstance(REFIID iid, void **ppv)
         return E_OUTOFMEMORY;
 
     This->iface.lpVtbl = &SymWriter_Vtbl;
+    This->IPdbWriter_iface.lpVtbl = &SymWriter_PdbWriter_Vtbl;
     This->ref = 1;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SymWriter.lock");

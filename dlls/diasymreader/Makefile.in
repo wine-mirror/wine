@@ -7,4 +7,6 @@ C_SRCS = \
 	main.c \
 	writer.c
 
+IDL_SRCS = diasymreader.idl
+
 RC_SRCS = diasymreader.rc
