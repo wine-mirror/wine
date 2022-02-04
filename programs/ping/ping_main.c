@@ -184,7 +184,7 @@ int __cdecl main(int argc, char** argv)
         {
             reply = (ICMP_ECHO_REPLY *) reply_buffer;
             if (reply->RoundTripTime >= 1)
-                sprintf(rtt, "=%d", reply->RoundTripTime);
+                sprintf(rtt, "=%ld", reply->RoundTripTime);
             else
                 strcpy(rtt, "<1");
             printf("Reply from %s: bytes=%d time%sms TTL=%d\n", ip, l,
