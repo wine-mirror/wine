@@ -66,7 +66,7 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef(IDirectMusicSynthSink *ifac
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     return ref;
 }
@@ -76,7 +76,7 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(IDirectMusicSynthSink *ifa
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", This, ref);
+    TRACE("(%p): new ref = %lu\n", This, ref);
 
     if (!ref) {
         if (This->latency_clock)
@@ -232,13 +232,13 @@ static ULONG WINAPI DMSynthSinkImpl_IKsControl_Release(IKsControl* iface)
 static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsProperty(IKsControl* iface, PKSPROPERTY Property, ULONG PropertyLength, LPVOID PropertyData,
                                                             ULONG DataLength, ULONG* BytesReturned)
 {
-    TRACE("(%p)->(%p, %u, %p, %u, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
+    TRACE("(%p, %p, %lu, %p, %lu, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
 
-    TRACE("Property = %s - %u - %u\n", debugstr_guid(&Property->u.s.Set), Property->u.s.Id, Property->u.s.Flags);
+    TRACE("Property = %s - %lu - %lu\n", debugstr_guid(&Property->u.s.Set), Property->u.s.Id, Property->u.s.Flags);
 
     if (Property->u.s.Flags != KSPROPERTY_TYPE_GET)
     {
-        FIXME("Property flags %u not yet supported\n", Property->u.s.Flags);
+        FIXME("Property flags %lu not yet supported\n", Property->u.s.Flags);
         return S_FALSE;
     }
 
@@ -263,7 +263,7 @@ static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsProperty(IKsControl* iface, P
 static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsMethod(IKsControl* iface, PKSMETHOD Method, ULONG MethodLength, LPVOID MethodData,
                                                           ULONG DataLength, ULONG* BytesReturned)
 {
-    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, Method, MethodLength, MethodData, DataLength, BytesReturned);
+    FIXME("(%p, %p, %lu, %p, %lu, %p): stub\n", iface, Method, MethodLength, MethodData, DataLength, BytesReturned);
 
     return E_NOTIMPL;
 }
@@ -271,7 +271,7 @@ static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsMethod(IKsControl* iface, PKS
 static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsEvent(IKsControl* iface, PKSEVENT Event, ULONG EventLength, LPVOID EventData,
                                                          ULONG DataLength, ULONG* BytesReturned)
 {
-    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, Event, EventLength, EventData, DataLength, BytesReturned);
+    FIXME("(%p, %p, %lu, %p, %lu, %p): stub\n", iface, Event, EventLength, EventData, DataLength, BytesReturned);
 
     return E_NOTIMPL;
 }
