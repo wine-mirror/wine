@@ -838,7 +838,7 @@ invalid:
 /* handler for parser UNKNOWN_DATA state */
 static WCHAR *unknown_data_state(struct parser *parser, WCHAR *pos)
 {
-    FIXME("Unknown registry data type [0x%x]\n", parser->data_type);
+    FIXME("Unknown registry data type [0x%lx]\n", parser->data_type);
 
     set_state(parser, LINE_START);
     return pos;

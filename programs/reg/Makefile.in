@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = reg.exe
 IMPORTS   = advapi32
 DELAYIMPORTS = user32
