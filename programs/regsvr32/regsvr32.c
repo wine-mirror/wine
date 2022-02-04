@@ -47,7 +47,7 @@ static void WINAPIV output_write(UINT id, ...)
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
     {
-        WINE_FIXME("LoadString failed with %d\n", GetLastError());
+        WINE_FIXME("LoadString failed with %ld\n", GetLastError());
         return;
     }
 
@@ -57,7 +57,7 @@ static void WINAPIV output_write(UINT id, ...)
     va_end(va_args);
     if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
     {
-        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
         return;
     }
 
@@ -153,7 +153,7 @@ static void reexec_self( WORD machine )
     }
     else
     {
-        WINE_TRACE("failed to restart, err=%d\n", GetLastError());
+        WINE_TRACE("failed to restart, err=%ld\n", GetLastError());
     }
     Wow64RevertWow64FsRedirection(cookie);
     HeapFree(GetProcessHeap(), 0, cmdline);
