@@ -190,7 +190,7 @@ struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
                           &IID_IDxDiagProvider, (void **)&pddp);
     if (FAILED(hr))
     {
-        WINE_ERR("IDxDiagProvider instance creation failed with 0x%08x\n", hr);
+        WINE_ERR("IDxDiagProvider instance creation failed with 0x%08lx\n", hr);
         goto error;
     }
 
