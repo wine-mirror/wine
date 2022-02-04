@@ -125,19 +125,19 @@ static HRESULT WINAPI SymWriter_DefineDocument(ISymUnmanagedWriter5 *iface, cons
 static HRESULT WINAPI SymWriter_SetUserEntryPoint(ISymUnmanagedWriter5 *iface, mdMethodDef entryMethod)
 {
     FIXME("(%p,0x%x)\n", iface, entryMethod);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_OpenMethod(ISymUnmanagedWriter5 *iface, mdMethodDef method)
 {
     FIXME("(%p,0x%x)\n", iface, method);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_CloseMethod(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_OpenScope(ISymUnmanagedWriter5 *iface, ULONG32 startOffset,
@@ -150,14 +150,14 @@ static HRESULT WINAPI SymWriter_OpenScope(ISymUnmanagedWriter5 *iface, ULONG32 s
 static HRESULT WINAPI SymWriter_CloseScope(ISymUnmanagedWriter5 *iface, ULONG32 endOffset)
 {
     FIXME("(%p,%u)\n", iface, endOffset);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_SetScopeRange(ISymUnmanagedWriter5 *iface, ULONG32 scopeID, ULONG32 startOffset,
     ULONG32 endOffset)
 {
     FIXME("(%p,%u,%u,%u)\n", iface, scopeID, startOffset, endOffset);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineLocalVariable(ISymUnmanagedWriter5 *iface, const WCHAR *name,
@@ -165,7 +165,7 @@ static HRESULT WINAPI SymWriter_DefineLocalVariable(ISymUnmanagedWriter5 *iface,
     ULONG32 addr1, ULONG32 addr2, ULONG32 addr3, ULONG32 startOffset, ULONG32 endOffset)
 {
     FIXME("(%p,%s,0x%x,%u,%u)\n", iface, debugstr_w(name), attributes, cSig, addrKind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineParameter(ISymUnmanagedWriter5 *iface, const WCHAR *name,
@@ -173,7 +173,7 @@ static HRESULT WINAPI SymWriter_DefineParameter(ISymUnmanagedWriter5 *iface, con
     ULONG32 addr1, ULONG32 addr2, ULONG32 addr3)
 {
     FIXME("(%p,%s,0x%x,%u,%u)\n", iface, debugstr_w(name), attributes, sequence, addrKind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineField(ISymUnmanagedWriter5 *iface, mdTypeDef parent,
@@ -181,7 +181,7 @@ static HRESULT WINAPI SymWriter_DefineField(ISymUnmanagedWriter5 *iface, mdTypeD
     ULONG32 addr1, ULONG32 addr2, ULONG32 addr3)
 {
     FIXME("(%p,0x%x,%s,0x%x,%u,%u)\n", iface, parent, debugstr_w(name), attributes, cSig, addrKind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineGlobalVariable(ISymUnmanagedWriter5 *iface, const WCHAR *name,
@@ -189,45 +189,45 @@ static HRESULT WINAPI SymWriter_DefineGlobalVariable(ISymUnmanagedWriter5 *iface
     ULONG32 addr1, ULONG32 addr2, ULONG32 addr3)
 {
     FIXME("(%p,%s,0x%x,%u,%u)\n", iface, debugstr_w(name), attributes, cSig, addrKind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_Close(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_SetSymAttributes(ISymUnmanagedWriter5 *iface, mdToken parent,
     const WCHAR *name, ULONG32 cData, unsigned char data[])
 {
     FIXME("(%p,0x%x,%s,%u)\n", iface, parent, debugstr_w(name), cData);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_OpenNamespace(ISymUnmanagedWriter5 *iface, const WCHAR *name)
 {
     FIXME("(%p,%s)\n", iface, debugstr_w(name));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_CloseNamespace(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_UsingNamespace(ISymUnmanagedWriter5 *iface, const WCHAR *fullName)
 {
     FIXME("(%p,%s)\n", iface, debugstr_w(fullName));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_SetMethodSourceRange(ISymUnmanagedWriter5 *iface, ISymUnmanagedDocumentWriter *startDoc,
     ULONG32 startLine, ULONG32 startColumn, ISymUnmanagedDocumentWriter *endDoc, ULONG32 endLine, ULONG32 endColumn)
 {
     FIXME("(%p,%p,%u,%u,%p,%u,%u)\n", iface, startDoc, startLine, startColumn, endDoc, endLine, endColumn);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_Initialize(ISymUnmanagedWriter5 *iface, IUnknown *emitter, const WCHAR *filename,
@@ -297,33 +297,33 @@ static HRESULT WINAPI SymWriter_DefineSequencePoints(ISymUnmanagedWriter5 *iface
     ULONG32 spCount, ULONG32 offsets[], ULONG32 lines[], ULONG32 columns[], ULONG32 endLines[], ULONG32 endColumns[])
 {
     FIXME("(%p,%p,%u)\n", iface, document, spCount);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_RemapToken(ISymUnmanagedWriter5 *iface, mdToken oldToken, mdToken newToken)
 {
     FIXME("(%p,0x%x,0x%x)\n", iface, oldToken, newToken);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_Initialize2(ISymUnmanagedWriter5 *iface, IUnknown *emitter, const WCHAR *tempFilename,
     IStream *pIStream, BOOL fFullBuild, const WCHAR *finalFilename)
 {
     FIXME("(%p,%p,%s,%p,%u,%s)\n", iface, emitter, debugstr_w(tempFilename), pIStream, fFullBuild, debugstr_w(finalFilename));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineConstant(ISymUnmanagedWriter5 *iface, const WCHAR *name, VARIANT value, ULONG32 cSig,
     unsigned char signature[])
 {
     FIXME("(%p,%s,%s,%u,%p)\n", iface, debugstr_w(name), debugstr_variant(&value), cSig, signature);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_Abort(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineLocalVariable2(ISymUnmanagedWriter5 *iface, const WCHAR *name, ULONG32 attributes,
@@ -331,32 +331,32 @@ static HRESULT WINAPI SymWriter_DefineLocalVariable2(ISymUnmanagedWriter5 *iface
     ULONG32 startOffset, ULONG32 endOffset)
 {
     FIXME("(%p,%s,0x%x,0x%x,%u)\n", iface, debugstr_w(name), attributes, sigToken, addrKind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineGlobalVariable2(ISymUnmanagedWriter5 *iface, const WCHAR *name, ULONG32 attributes,
     mdSignature sigToken, ULONG32 addrKind, ULONG32 addr1, ULONG32 addr2, ULONG32 addr3)
 {
     FIXME("(%p,%s,0x%x,0x%x,%u)\n", iface, debugstr_w(name), attributes, sigToken, addrKind);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_DefineConstant2(ISymUnmanagedWriter5 *iface, const WCHAR *name, VARIANT value, mdSignature sigToken)
 {
     FIXME("(%p,%s,%s,0x%x)\n", iface, debugstr_w(name), debugstr_variant(&value), sigToken);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_OpenMethod2(ISymUnmanagedWriter5 *iface, mdMethodDef method, ULONG32 isect, ULONG32 offset)
 {
     FIXME("(%p,0x%x,%u,%u)\n", iface, method, isect, offset);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_Commit(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_GetDebugInfoWithPadding(ISymUnmanagedWriter5 *iface, IMAGE_DEBUG_DIRECTORY *pIDD, DWORD cbData,
@@ -369,20 +369,20 @@ static HRESULT WINAPI SymWriter_GetDebugInfoWithPadding(ISymUnmanagedWriter5 *if
 static HRESULT WINAPI SymWriter_OpenMapTokensToSourceSpans(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_CloseMapTokensToSourceSpans(ISymUnmanagedWriter5 *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_MapTokenToSourceSpan(ISymUnmanagedWriter5 *iface, mdToken token, ISymUnmanagedDocumentWriter* document,
                                  ULONG32 line, ULONG32 column, ULONG32 endLine, ULONG32 endColumn)
 {
     FIXME("(%p,%x,%p,%u,%u,%u,%u)\n", iface, token, document, line, column, endLine, endColumn);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 
@@ -458,7 +458,7 @@ static HRESULT WINAPI SymWriter_OpenMod(IPdbWriter *iface, const WCHAR *modulena
 static HRESULT WINAPI SymWriter_CloseMod(IPdbWriter *iface)
 {
     FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_GetPath(IPdbWriter *iface, DWORD ccData, DWORD *pccData, WCHAR *path)
