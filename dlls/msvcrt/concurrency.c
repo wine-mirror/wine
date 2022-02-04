@@ -34,8 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 typedef exception cexception;
 CREATE_EXCEPTION_OBJECT(cexception)
 
-static int context_id = -1;
-static int scheduler_id = -1;
+static LONG context_id = -1;
+static LONG scheduler_id = -1;
 
 typedef enum {
     SchedulerKind,

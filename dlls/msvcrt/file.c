@@ -144,8 +144,8 @@ static int MSVCRT_max_streams = 512, MSVCRT_stream_idx;
 static int MSVCRT_umask = 0;
 
 /* INTERNAL: static data for tmpnam and _wtmpname functions */
-static int tmpnam_unique;
-static int tmpnam_s_unique;
+static LONG tmpnam_unique;
+static LONG tmpnam_s_unique;
 
 static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';
 static const unsigned int BAT = 'b' << 16 | 'a' << 8 | 't';
@@ -4935,7 +4935,7 @@ void CDECL setbuf(FILE* file, char *buf)
   setvbuf(file, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }
 
-static int tmpnam_helper(char *s, size_t size, int *tmpnam_unique, int tmp_max)
+static int tmpnam_helper(char *s, size_t size, LONG *tmpnam_unique, int tmp_max)
 {
     char tmpstr[8];
     char *p = s;
@@ -5006,7 +5006,7 @@ char * CDECL tmpnam(char *s)
   return tmpnam_helper(s, -1, &tmpnam_unique, TMP_MAX) ? NULL : s;
 }
 
-static int wtmpnam_helper(wchar_t *s, size_t size, int *tmpnam_unique, int tmp_max)
+static int wtmpnam_helper(wchar_t *s, size_t size, LONG *tmpnam_unique, int tmp_max)
 {
     wchar_t tmpstr[8];
     wchar_t *p = s;

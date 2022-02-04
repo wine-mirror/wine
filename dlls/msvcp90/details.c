@@ -385,7 +385,7 @@ void __thiscall _Concurrent_queue_base_v4_dummy(_Concurrent_queue_base_v4 *this)
 
 DEFINE_RTTI_DATA0(_Concurrent_queue_base_v4, 0, ".?AV_Concurrent_queue_base_v4@details@Concurrency@@")
 
-static int _Runtime_object_id;
+static LONG _Runtime_object_id;
 
 typedef struct
 {
