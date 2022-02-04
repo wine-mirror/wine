@@ -81,7 +81,7 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface,
         LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown **ppunkItem, ITypeInfo **ppti)
 {
-    WINE_TRACE("(%s %x %p %p)\n", wine_dbgstr_w(pstrName), dwReturnMask, ppunkItem, ppti);
+    WINE_TRACE("(%s %lx %p %p)\n", wine_dbgstr_w(pstrName), dwReturnMask, ppunkItem, ppti);
 
     if(lstrcmpW(pstrName, L"WSH") && lstrcmpW(pstrName, L"WScript"))
         return E_FAIL;
@@ -368,13 +368,13 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
             SCRIPTTEXT_HOSTMANAGESSOURCE|SCRIPTITEM_ISVISIBLE, NULL, NULL);
     SysFreeString(text);
     if(FAILED(hres)) {
-        WINE_FIXME("ParseScriptText failed: %08x\n", hres);
+        WINE_FIXME("ParseScriptText failed: %08lx\n", hres);
         return;
     }
 
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
     if(FAILED(hres))
-        WINE_FIXME("SetScriptState failed: %08x\n", hres);
+        WINE_FIXME("SetScriptState failed: %08lx\n", hres);
 }
 
 static BOOL set_host_properties(const WCHAR *prop)

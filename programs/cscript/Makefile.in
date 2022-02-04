@@ -1,6 +1,6 @@
 MODULE    = cscript.exe
 IMPORTS   = uuid shell32 oleaut32 ole32 user32 advapi32
-EXTRADEFS = -DWINE_NO_LONG_TYPES -DCSCRIPT_BUILD
+EXTRADEFS = -DCSCRIPT_BUILD
 PARENTSRC = ../wscript
 
 EXTRADLLFLAGS = -mwindows -municode

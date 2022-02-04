@@ -70,7 +70,7 @@ static HRESULT WINAPI Arguments2_GetTypeInfoCount(IArguments2 *iface, UINT *pcti
 static HRESULT WINAPI Arguments2_GetTypeInfo(IArguments2 *iface, UINT iTInfo, LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    WINE_TRACE("(%x %x %p\n", iTInfo, lcid, ppTInfo);
+    WINE_TRACE("(%x %lx %p\n", iTInfo, lcid, ppTInfo);
 
     ITypeInfo_AddRef(arguments_ti);
     *ppTInfo = arguments_ti;
@@ -80,7 +80,7 @@ static HRESULT WINAPI Arguments2_GetTypeInfo(IArguments2 *iface, UINT iTInfo, LC
 static HRESULT WINAPI Arguments2_GetIDsOfNames(IArguments2 *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WINE_TRACE("(%s %p %d %x %p)\n", wine_dbgstr_guid(riid), rgszNames,
+    WINE_TRACE("(%s %p %d %lx %p)\n", wine_dbgstr_guid(riid), rgszNames,
         cNames, lcid, rgDispId);
 
     return ITypeInfo_GetIDsOfNames(arguments_ti, rgszNames, cNames, rgDispId);
@@ -90,7 +90,7 @@ static HRESULT WINAPI Arguments2_Invoke(IArguments2 *iface, DISPID dispIdMember,
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WINE_TRACE("(%d %p %p)\n", dispIdMember, pDispParams, pVarResult);
+    WINE_TRACE("(%ld %p %p)\n", dispIdMember, pDispParams, pVarResult);
 
     return ITypeInfo_Invoke(arguments_ti, iface, dispIdMember, wFlags, pDispParams,
             pVarResult, pExcepInfo, puArgErr);
@@ -98,7 +98,7 @@ static HRESULT WINAPI Arguments2_Invoke(IArguments2 *iface, DISPID dispIdMember,
 
 static HRESULT WINAPI Arguments2_Item(IArguments2 *iface, LONG index, BSTR *out_Value)
 {
-    WINE_TRACE("(%d %p)\n", index, out_Value);
+    WINE_TRACE("(%ld %p)\n", index, out_Value);
 
     if(index<0 || index >= numOfArgs)
         return E_INVALIDARG;
