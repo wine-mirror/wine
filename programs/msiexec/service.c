@@ -83,7 +83,7 @@ static BOOL UpdateSCMStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode,
 
 static void WINAPI ServiceCtrlHandler(DWORD code)
 {
-    WINE_TRACE("%d\n", code);
+    WINE_TRACE("%ld\n", code);
 
     switch (code)
     {
@@ -93,7 +93,7 @@ static void WINAPI ServiceCtrlHandler(DWORD code)
             KillService();
             break;
         default:
-            fprintf(stderr, "Unhandled service control code: %d\n", code);
+            fprintf(stderr, "Unhandled service control code: %ld\n", code);
             UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0);
             break;
     }

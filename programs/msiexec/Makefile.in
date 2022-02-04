@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = msiexec.exe
 IMPORTS   = msi ole32 advapi32 user32 comctl32
 
