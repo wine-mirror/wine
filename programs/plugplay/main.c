@@ -190,7 +190,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
         SetEvent( stop_event );
         return NO_ERROR;
     default:
-        WINE_FIXME( "got service ctrl %x\n", ctrl );
+        WINE_FIXME( "got service ctrl %lx\n", ctrl );
         status.dwCurrentState = SERVICE_RUNNING;
         SetServiceStatus( service_handle, &status );
         return NO_ERROR;
@@ -208,17 +208,17 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 
     if ((err = RpcServerUseProtseqEpA( protseq, 0, endpoint, NULL )))
     {
-        ERR("RpcServerUseProtseqEp() failed, error %u\n", err);
+        ERR("RpcServerUseProtseqEp() failed, error %lu\n", err);
         return;
     }
     if ((err = RpcServerRegisterIf( plugplay_v0_0_s_ifspec, NULL, NULL )))
     {
-        ERR("RpcServerRegisterIf() failed, error %u\n", err);
+        ERR("RpcServerRegisterIf() failed, error %lu\n", err);
         return;
     }
     if ((err = RpcServerListen( 1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE )))
     {
-        ERR("RpcServerListen() failed, error %u\n", err);
+        ERR("RpcServerListen() failed, error %lu\n", err);
         return;
     }
 
