@@ -2969,6 +2969,153 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
     out[35] = 0.9057110548f * in[31] - 0.4192627370f * in[33] + 0.0624999329f * in[35];
 }
 
+static void set_vec3(D3DXVECTOR3 *v, float x, float y, float z)
+{
+    v->x = x;
+    v->y = y;
+    v->z = z;
+}
+
+/*
+ * The following implementation of D3DXSHProjectCubeMap is based on the
+ * SHProjectCubeMap() implementation from Microsoft's DirectXMath library,
+ * covered under the following copyright:
+ *
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ */
+HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *texture, float *red, float *green, float *blue)
+{
+    const unsigned int order_square = order * order;
+    const struct pixel_format_desc *format;
+    unsigned int x, y, i, face;
+    float B, S, proj_normal;
+    D3DSURFACE_DESC desc;
+    float Wt = 0.0f;
+    float *temp;
+    HRESULT hr;
+
+    TRACE("order %u, texture %p, red %p, green %p, blue %p.\n", order, texture, red, green, blue);
+
+    if (!texture || !red || order < D3DXSH_MINORDER || order > D3DXSH_MAXORDER)
+        return D3DERR_INVALIDCALL;
+
+    memset(red, 0, order_square * sizeof(float));
+    if (green)
+        memset(green, 0, order_square * sizeof(float));
+    if (blue)
+        memset(blue, 0, order_square * sizeof(float));
+
+    if (FAILED(hr = IDirect3DCubeTexture9_GetLevelDesc(texture, 0, &desc)))
+    {
+        ERR("Failed to get level desc, hr %#x.\n", hr);
+        return hr;
+    }
+
+    format = get_format_info(desc.Format);
+    if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16 && format->type != FORMAT_ARGBF)
+    {
+        FIXME("Unsupported texture format %#x.\n", desc.Format);
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (!(temp = malloc(order_square * sizeof(*temp))))
+        return E_OUTOFMEMORY;
+
+    B = -1.0f + 1.0f / desc.Width;
+    if (desc.Width > 1)
+        S = 2.0f * (1.0f - 1.0f / desc.Width) / (desc.Width - 1.0f);
+    else
+        S = 0.0f;
+
+    for (face = 0; face < 6; ++face)
+    {
+        D3DLOCKED_RECT map_desc;
+
+        if (FAILED(hr = IDirect3DCubeTexture9_LockRect(texture, face, 0, &map_desc, NULL, D3DLOCK_READONLY)))
+        {
+            ERR("Failed to map texture, hr %#x.\n", hr);
+            free(temp);
+            return hr;
+        }
+
+        for (y = 0; y < desc.Height; ++y)
+        {
+            const BYTE *row = (const BYTE *)map_desc.pBits + y * map_desc.Pitch;
+
+            for (x = 0; x < desc.Width; ++x)
+            {
+                float diff_solid, x_3d, y_3d;
+                const float u = x * S + B;
+                const float v = y * S + B;
+                struct vec4 colour;
+                D3DXVECTOR3 dir;
+
+                x_3d = (x * 2.0f + 1.0f) / desc.Width - 1.0f;
+                y_3d = (y * 2.0f + 1.0f) / desc.Width - 1.0f;
+
+                switch (face)
+                {
+                    case D3DCUBEMAP_FACE_POSITIVE_X:
+                        set_vec3(&dir, 1.0f, -y_3d, -x_3d);
+                        break;
+
+                    case D3DCUBEMAP_FACE_NEGATIVE_X:
+                        set_vec3(&dir, -1.0f, -y_3d, x_3d);
+                        break;
+
+                    case D3DCUBEMAP_FACE_POSITIVE_Y:
+                        set_vec3(&dir, x_3d, 1.0f, y_3d);
+                        break;
+
+                    case D3DCUBEMAP_FACE_NEGATIVE_Y:
+                        set_vec3(&dir, x_3d, -1.0f, -y_3d);
+                        break;
+
+                    case D3DCUBEMAP_FACE_POSITIVE_Z:
+                        set_vec3(&dir, x_3d, -y_3d, 1.0f);
+                        break;
+
+                    case D3DCUBEMAP_FACE_NEGATIVE_Z:
+                        set_vec3(&dir, -x_3d, -y_3d, -1.0f);
+                        break;
+                }
+
+                /* This is more complex than powf(..., 1.5f), but also happens
+                 * to be slightly more accurate, and slightly faster as well. */
+                diff_solid = 4.0f / ((1.0f + u * u + v * v) * sqrtf(1.0f + u * u + v * v));
+                Wt += diff_solid;
+
+                D3DXVec3Normalize(&dir, &dir);
+                D3DXSHEvalDirection(temp, order, &dir);
+
+                format_to_vec4(format, &row[x * format->block_byte_count], &colour);
+
+                for (i = 0; i < order_square; ++i)
+                {
+                    red[i] += temp[i] * colour.x * diff_solid;
+                    if (green)
+                        green[i] += temp[i] * colour.y * diff_solid;
+                    if (blue)
+                        blue[i] += temp[i] * colour.z * diff_solid;
+                }
+            }
+        }
+
+        IDirect3DCubeTexture9_UnlockRect(texture, face, 0);
+    }
+
+    proj_normal = (4.0f * M_PI) / Wt;
+    D3DXSHScale(red, order, red, proj_normal);
+    if (green)
+        D3DXSHScale(green, order, green, proj_normal);
+    if (blue)
+        D3DXSHScale(blue, order, blue, proj_normal);
+
+    free(temp);
+    return D3D_OK;
+}
+
 FLOAT* WINAPI D3DXSHRotate(FLOAT *out, UINT order, const D3DXMATRIX *matrix, const FLOAT *in)
 {
     FLOAT alpha, beta, gamma, sinb, temp[36], temp1[36];

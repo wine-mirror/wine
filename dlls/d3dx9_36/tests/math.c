@@ -22,6 +22,7 @@
 #include "wine/test.h"
 #include "d3dx9.h"
 #include <math.h>
+#include <stdint.h>
 
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
@@ -203,6 +204,53 @@ static void set_matrix(D3DXMATRIX* mat,
     U(mat)->m[1][0] = m10; U(mat)->m[1][1] = m11; U(mat)->m[1][2] = m12; U(mat)->m[1][3] = m13;
     U(mat)->m[2][0] = m20; U(mat)->m[2][1] = m21; U(mat)->m[2][2] = m22; U(mat)->m[2][3] = m23;
     U(mat)->m[3][0] = m30; U(mat)->m[3][1] = m31; U(mat)->m[3][2] = m32; U(mat)->m[3][3] = m33;
+}
+
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    unsigned int adapter_ordinal;
+    IDirect3DDevice9 *device;
+    DWORD behavior_flags = D3DCREATE_HARDWARE_VERTEXPROCESSING;
+
+    adapter_ordinal = D3DADAPTER_DEFAULT;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = focus_window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, adapter_ordinal, D3DDEVTYPE_HAL, focus_window,
+            behavior_flags, &present_parameters, &device)))
+        return device;
+
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, adapter_ordinal, D3DDEVTYPE_HAL, focus_window,
+            behavior_flags, &present_parameters, &device)))
+        return device;
+
+    behavior_flags = (behavior_flags
+            & ~(D3DCREATE_MIXED_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING))
+            | D3DCREATE_HARDWARE_VERTEXPROCESSING;
+
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, adapter_ordinal, D3DDEVTYPE_HAL, focus_window,
+            behavior_flags, &present_parameters, &device)))
+        return device;
+
+    return NULL;
 }
 
 static void D3DXColorTest(void)
@@ -4364,6 +4412,165 @@ static void test_D3DXSHScale(void)
     }
 }
 
+static void test_D3DXSHProjectCubeMap(void)
+{
+    unsigned int i, j, level, face, x, y;
+    float red[4], green[4], blue[4];
+    IDirect3DCubeTexture9 *texture;
+    IDirect3DDevice9 *device;
+    D3DLOCKED_RECT map_desc;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        D3DFORMAT format;
+        float red[4];
+        float green[4];
+        float blue[4];
+    }
+    tests[] =
+    {
+        {D3DFMT_A8R8G8B8,
+            {1.77656245f, -1.11197047e-2f,  2.08763797e-2f, -2.10229922e-2f},
+            {1.75811982f, -4.82511893e-2f,  1.67397819e-2f, -1.71497762e-2f},
+            {1.75515056f, -4.07523997e-2f,  1.05397226e-2f, -2.46812664e-2f}},
+        {D3DFMT_X8R8G8B8,
+            {1.77656245f, -1.11197047e-2f,  2.08763797e-2f, -2.10229922e-2f},
+            {1.75811982f, -4.82511893e-2f,  1.67397819e-2f, -1.71497762e-2f},
+            {1.75515056f, -4.07523997e-2f,  1.05397226e-2f, -2.46812664e-2f}},
+        {D3DFMT_A8B8G8R8,
+            {1.75515056f, -4.07523997e-2f,  1.05397226e-2f, -2.46812664e-2f},
+            {1.75811982f, -4.82511893e-2f,  1.67397819e-2f, -1.71497762e-2f},
+            {1.77656245f, -1.11197047e-2f,  2.08763797e-2f, -2.10229922e-2f}},
+        {D3DFMT_R5G6B5,
+            {1.77099848f, -3.88867334e-2f,  6.73775524e-2f, -1.26888147e-2f},
+            {1.77244151f, -5.64723741e-4f, -2.77878426e-4f, -9.10691451e-3f},
+            {1.78902030f,  2.79005636e-2f,  1.62461456e-2f,  2.21668324e-3f}},
+        {D3DFMT_A1R5G5B5,
+            {1.78022826f,  1.46923587e-2f,  3.58058624e-2f,  2.51076911e-2f},
+            {1.77233493f, -7.58088892e-4f, -2.03727093e-3f, -1.34809706e-2f},
+            {1.78902030f,  2.79005636e-2f,  1.62461456e-2f,  2.21668324e-3f}},
+        {D3DFMT_X1R5G5B5,
+            {1.78022826f,  1.46923587e-2f,  3.58058624e-2f,  2.51076911e-2f},
+            {1.77233493f, -7.58088892e-4f, -2.03727093e-3f, -1.34809706e-2f},
+            {1.78902030f,  2.79005636e-2f,  1.62461456e-2f,  2.21668324e-3f}},
+        {D3DFMT_A2R10G10B10,
+            {1.79359019f, -7.74506712e-4f,  8.65613017e-3f,  5.75336441e-3f},
+            {1.77067971f,  6.42523961e-3f,  1.35379164e-2f,  2.24088971e-3f},
+            {1.76601243f, -4.94002625e-2f,  1.28124524e-2f, -7.69229094e-3f}},
+        {D3DFMT_A2B10G10R10,
+            {1.76601243f, -4.94002625e-2f,  1.28124524e-2f, -7.69229094e-3f},
+            {1.77067971f,  6.42523961e-3f,  1.35379164e-2f,  2.24088971e-3f},
+            {1.79359019f, -7.74506712e-4f,  8.65613017e-3f,  5.75336441e-3f}},
+        {D3DFMT_A16B16G16R16,
+            {1.75979614f,  1.44450525e-2f, -3.25212209e-3f,  2.98178056e-3f},
+            {1.78080165f, -2.63770130e-2f,  6.31967233e-3f,  3.66022950e-3f},
+            {1.77588308f, -1.93727610e-3f, -3.22831096e-3f, -6.18841546e-3f}},
+        {D3DFMT_A16B16G16R16F,
+            { 5.17193642e+1f, -3.41681671e+2f, -8.82221741e+2f,  7.77049316e+2f},
+            {-2.08198950e+3f,  5.24323584e+3f, -3.42663379e+3f,  3.80999243e+3f},
+            {-1.10743945e+3f, -9.43649292e+2f,  5.48424316e+2f,  1.65352710e+3f}},
+    };
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Format %#x", tests[i].format);
+
+        hr = IDirect3DDevice9_CreateCubeTexture(device, 8, 4, D3DUSAGE_DYNAMIC,
+                tests[i].format, D3DPOOL_DEFAULT, &texture, NULL);
+        if (FAILED(hr))
+        {
+            skip("Failed to create cube texture.\n");
+            winetest_pop_context();
+            continue;
+        }
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (face = 0; face < 6; ++face)
+        {
+            hr = IDirect3DCubeTexture9_LockRect(texture, face, 0, &map_desc, NULL, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+            for (y = 0; y < 8; ++y)
+            {
+                uint8_t *row = (uint8_t *)map_desc.pBits + y * map_desc.Pitch;
+
+                for (x = 0; x < map_desc.Pitch; ++x)
+                    row[x] = face * 111 + y * 39 + x * 7;
+            }
+
+            hr = IDirect3DCubeTexture9_UnlockRect(texture, face, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+            for (level = 1; level < 4; ++level)
+            {
+                hr = IDirect3DCubeTexture9_LockRect(texture, face, level, &map_desc, NULL, 0);
+                ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+                memset(map_desc.pBits, 0xcc, 4 * map_desc.Pitch);
+                hr = IDirect3DCubeTexture9_UnlockRect(texture, face, level);
+                ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            }
+        }
+
+        hr = D3DXSHProjectCubeMap(1, texture, red, green, blue);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+        hr = D3DXSHProjectCubeMap(7, texture, red, green, blue);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+        hr = D3DXSHProjectCubeMap(2, NULL, red, green, blue);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+        memset(red, 0, sizeof(red));
+        memset(green, 0, sizeof(green));
+        memset(blue, 0, sizeof(blue));
+        hr = D3DXSHProjectCubeMap(2, texture, red, green, blue);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (j = 0; j < 4; ++j)
+        {
+            ok(compare_float(red[j], tests[i].red[j], 1024),
+                    "Got unexpected value %.8e for red coefficient %u.\n", red[j], j);
+            ok(compare_float(green[j], tests[i].green[j], 1024),
+                    "Got unexpected value %.8e for green coefficient %u.\n", green[j], j);
+            ok(compare_float(blue[j], tests[i].blue[j], 1024),
+                    "Got unexpected value %.8e for blue coefficient %u.\n", blue[j], j);
+        }
+
+        hr = D3DXSHProjectCubeMap(2, texture, red, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = D3DXSHProjectCubeMap(2, texture, NULL, green, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+        hr = D3DXSHProjectCubeMap(2, texture, NULL, NULL, blue);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+        IDirect3DCubeTexture9_Release(texture);
+
+        winetest_pop_context();
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(math)
 {
     D3DXColorTest();
@@ -4393,4 +4600,5 @@ START_TEST(math)
     test_D3DXSHRotate();
     test_D3DXSHRotateZ();
     test_D3DXSHScale();
+    test_D3DXSHProjectCubeMap();
 }

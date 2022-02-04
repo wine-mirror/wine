@@ -1564,7 +1564,7 @@ static DWORD make_argb_color(const struct argb_conversion_info *info, const DWOR
 }
 
 /* It doesn't work for components bigger than 32 bits (or somewhat smaller but unaligned). */
-static void format_to_vec4(const struct pixel_format_desc *format, const BYTE *src, struct vec4 *dst)
+void format_to_vec4(const struct pixel_format_desc *format, const BYTE *src, struct vec4 *dst)
 {
     DWORD mask, tmp;
     unsigned int c;

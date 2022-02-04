@@ -100,6 +100,8 @@ HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer) DECLSPE
 const struct pixel_format_desc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
 const struct pixel_format_desc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 
+void format_to_vec4(const struct pixel_format_desc *format, const BYTE *src, struct vec4 *dst);
+
 void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
     BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *size,
     const struct pixel_format_desc *format) DECLSPEC_HIDDEN;
