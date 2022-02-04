@@ -223,7 +223,7 @@ static UINT_PTR handle_appbarmessage(DWORD msg, struct appbar_data_msg *abd)
     case ABM_WINDOWPOSCHANGED:
         return TRUE;
     default:
-        WINE_FIXME("SHAppBarMessage(%x) unimplemented\n", msg);
+        WINE_FIXME("SHAppBarMessage(%lx) unimplemented\n", msg);
         return FALSE;
     }
 }

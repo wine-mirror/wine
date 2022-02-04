@@ -594,7 +594,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         }
         break;
     default:
-        WINE_FIXME("unhandled tray message: %ld\n", cds->dwData);
+        WINE_FIXME("unhandled tray message: %Id\n", cds->dwData);
         break;
     }
 
