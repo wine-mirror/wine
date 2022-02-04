@@ -51,6 +51,8 @@ interface ConnectionEventsVt;
 dispinterface ConnectionEvents;
 dispinterface RecordsetEvents;
 
+typedef [uuid(54D8B4B9-663B-4a9c-95F6-0E749ABD70F1)] LONG_PTR ADO_LONGPTR;
+
 typedef [uuid(0000052A-0000-0010-8000-00AA006D2EA4)] enum ErrorValueEnum
 {
     adErrInvalidArgument            = 3001,
@@ -125,7 +127,7 @@ typedef [uuid(00000528-0000-0010-8000-00aa006d2ea4)] enum PositionEnum
     adPosEOF = -3
 } PositionEnum;
 
-typedef [uuid(a56187c5-d690-4037-ae32-a00edc376ac3), public] PositionEnum PositionEnum_Param;
+typedef [uuid(a56187c5-d690-4037-ae32-a00edc376ac3), public] ADO_LONGPTR PositionEnum_Param;
 
 typedef [uuid(0000051f-0000-0010-8000-00aa006d2ea4)] enum DataTypeEnum
 {
@@ -626,7 +628,7 @@ interface Field20 : _ADO
 {
     [id(0x00000455), propget]
     HRESULT ActualSize(
-        [out, retval] LONG *size);
+        [out, retval] ADO_LONGPTR *size);
 
     [id(0x0000040c), propget]
     HRESULT Attributes(
@@ -634,7 +636,7 @@ interface Field20 : _ADO
 
     [id(0x0000044f), propget]
     HRESULT DefinedSize(
-        [out, retval] LONG *size);
+        [out, retval] ADO_LONGPTR *size);
 
     [id(0x0000044c), propget]
     HRESULT Name(
@@ -699,7 +701,7 @@ interface Field20 : _ADO
 
     [id(0x0000044f), propput]
     HRESULT DefinedSize(
-        [in] LONG size);
+        [in] ADO_LONGPTR size);
 
     [id(0x0000040c), propput]
     HRESULT Attributes(
@@ -748,7 +750,7 @@ interface Fields20 : Fields15
     HRESULT _Append(
         [in] BSTR name,
         [in] DataTypeEnum type,
-        [in, defaultvalue(0)] LONG size,
+        [in, defaultvalue(0)] ADO_LONGPTR size,
         [in, defaultvalue(adFldUnspecified)] FieldAttributeEnum attr);
 
     [id(0x60030002)]
@@ -769,7 +771,7 @@ interface Fields : Fields20
     HRESULT Append(
         [in] BSTR name,
         [in] DataTypeEnum type,
-        [in, defaultvalue(0)] LONG size,
+        [in, defaultvalue(0)] ADO_LONGPTR size,
         [in, defaultvalue(adFldUnspecified)] FieldAttributeEnum attr,
         [in, optional] VARIANT value);
 
@@ -859,15 +861,15 @@ interface Recordset15 : _ADO
 
     [id(0x000003f1), propget]
     HRESULT MaxRecords(
-        [out, retval] LONG *max_records);
+        [out, retval] ADO_LONGPTR *max_records);
 
     [id(0x000003f1), propput]
     HRESULT MaxRecords(
-        [in] LONG max_records);
+        [in] ADO_LONGPTR max_records);
 
     [id(0x000003f2), propget]
     HRESULT RecordCount(
-        [out, retval] LONG *count);
+        [out, retval] ADO_LONGPTR *count);
 
     [id(0x000003f3), propputref]
     HRESULT Source(
@@ -905,7 +907,7 @@ interface Recordset15 : _ADO
 
     [id(0x000003f9)]
     HRESULT Move(
-        [in] LONG num_records,
+        [in] ADO_LONGPTR num_records,
         [in, optional] VARIANT start);
 
     [id(0x000003fa)]
@@ -963,7 +965,7 @@ interface Recordset15 : _ADO
 
     [id(0x0000041a), propget]
     HRESULT PageCount(
-        [out, retval] LONG *count);
+        [out, retval] ADO_LONGPTR *count);
 
     [id(0x00000418), propget]
     HRESULT PageSize(
@@ -1408,11 +1410,11 @@ interface _Parameter : _ADO
 
     [id(0x6003000c), propput]
     HRESULT Size(
-        [in] LONG size);
+        [in] ADO_LONGPTR size);
 
     [id(0x6003000c), propget]
     HRESULT Size(
-        [out, retval] LONG *size);
+        [out, retval] ADO_LONGPTR *size);
 
     [id(0x6003000e)]
     HRESULT AppendChunk(
@@ -1517,7 +1519,7 @@ interface Command15 : _ADO
         [in,  defaultvalue("")] BSTR name,
         [in, defaultvalue(adEmpty)] DataTypeEnum type,
         [in, defaultvalue(adParamInput)] ParameterDirectionEnum direction,
-        [in, defaultvalue(0)] LONG size,
+        [in, defaultvalue(0)] ADO_LONGPTR size,
         [in, optional] VARIANT value,
         [out, retval] _Parameter **parameter);
 
@@ -1844,7 +1846,7 @@ interface _Stream : IDispatch
 {
     [id(1), propget]
     HRESULT Size(
-        [out, retval] LONG *size);
+        [out, retval] ADO_LONGPTR *size);
 
     [id(2), propget]
     HRESULT EOS(
@@ -1852,11 +1854,11 @@ interface _Stream : IDispatch
 
     [id(3), propget]
     HRESULT Position(
-        [out, retval] LONG *position);
+        [out, retval] ADO_LONGPTR *position);
 
     [id(3), propput]
     HRESULT Position(
-        [in] LONG position);
+        [in] ADO_LONGPTR position);
 
     [id(4), propget]
     HRESULT Type(
@@ -1923,7 +1925,7 @@ interface _Stream : IDispatch
     [id(15)]
     HRESULT CopyTo(
         [in] _Stream *dest,
-        [in, defaultvalue(-1)] LONG size);
+        [in, defaultvalue(-1)] ADO_LONGPTR size);
 
     [id(16)]
     HRESULT Flush(void);
@@ -2111,11 +2113,11 @@ interface ADORecordsetConstruction : IDispatch
 
     [propget]
     HRESULT Chapter(
-        [out, retval] LONG *chapter);
+        [out, retval] ADO_LONGPTR *chapter);
 
     [propput]
     HRESULT Chapter(
-        [in] LONG chapter);
+        [in] ADO_LONGPTR chapter);
 
     [propget]
     HRESULT RowPosition(

@@ -144,7 +144,7 @@ static HRESULT WINAPI stream_Invoke( _Stream *iface, DISPID member, REFIID riid,
     return hr;
 }
 
-static HRESULT WINAPI stream_get_Size( _Stream *iface, LONG *size )
+static HRESULT WINAPI stream_get_Size( _Stream *iface, ADO_LONGPTR *size )
 {
     struct stream *stream = impl_from_Stream( iface );
     TRACE( "%p, %p\n", stream, size );
@@ -166,7 +166,7 @@ static HRESULT WINAPI stream_get_EOS( _Stream *iface, VARIANT_BOOL *eos )
     return S_OK;
 }
 
-static HRESULT WINAPI stream_get_Position( _Stream *iface, LONG *pos )
+static HRESULT WINAPI stream_get_Position( _Stream *iface, ADO_LONGPTR *pos )
 {
     struct stream *stream = impl_from_Stream( iface );
     TRACE( "%p, %p\n", stream, pos );
@@ -191,12 +191,12 @@ static HRESULT resize_buffer( struct stream *stream, LONG size )
     return S_OK;
 }
 
-static HRESULT WINAPI stream_put_Position( _Stream *iface, LONG pos )
+static HRESULT WINAPI stream_put_Position( _Stream *iface, ADO_LONGPTR pos )
 {
     struct stream *stream = impl_from_Stream( iface );
     HRESULT hr;
 
-    TRACE( "%p, %d\n", stream, pos );
+    TRACE( "%p, %ld\n", stream, pos );
 
     if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
     if (pos < 0) return MAKE_ADO_HRESULT( adErrInvalidArgument );
@@ -406,9 +406,9 @@ static HRESULT WINAPI stream_SetEOS( _Stream *iface )
     return resize_buffer( stream, stream->pos );
 }
 
-static HRESULT WINAPI stream_CopyTo( _Stream *iface, _Stream *dst, LONG size )
+static HRESULT WINAPI stream_CopyTo( _Stream *iface, _Stream *dst, ADO_LONGPTR size )
 {
-    FIXME( "%p, %p, %d\n", iface, dst, size );
+    FIXME( "%p, %p, %ld\n", iface, dst, size );
     return E_NOTIMPL;
 }
 

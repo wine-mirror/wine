@@ -53,6 +53,7 @@ static void test_Recordset(void)
     Properties *props;
     Property *prop;
     LONG count, state;
+    ADO_LONGPTR rec_count;
     VARIANT missing, val, index;
     CursorLocationEnum location;
     CursorTypeEnum cursor;
@@ -212,20 +213,20 @@ static void test_Recordset(void)
     hr = _Recordset_put_Bookmark( recordset, bookmark );
     ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08x\n", hr );
 
-    count = -1;
-    hr = _Recordset_get_RecordCount( recordset, &count );
+    rec_count = -1;
+    hr = _Recordset_get_RecordCount( recordset, &rec_count );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !count, "got %d\n", count );
+    ok( !rec_count, "got %ld\n", rec_count );
 
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !is_eof( recordset ), "eof\n" );
     ok( !is_bof( recordset ), "bof\n" );
 
-    count = -1;
-    hr = _Recordset_get_RecordCount( recordset, &count );
+    rec_count = -1;
+    hr = _Recordset_get_RecordCount( recordset, &rec_count );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( count == 1, "got %d\n", count );
+    ok( rec_count == 1, "got %ld\n", rec_count );
 
     /* get_Fields still returns the same object */
     hr = _Recordset_get_Fields( recordset, &fields2 );
@@ -631,7 +632,7 @@ static void test_ADORecordsetConstruction(void)
     if (count > 0)
     {
         VARIANT index;
-        LONG size;
+        ADO_LONGPTR size;
         DataTypeEnum type;
 
         V_VT( &index ) = VT_BSTR;
@@ -646,7 +647,7 @@ static void test_ADORecordsetConstruction(void)
         size = -1;
         hr = Field_get_DefinedSize( field, &size );
         ok( hr == S_OK, "got %08x\n", hr );
-        ok( size == 5, "got %d\n", size );
+        ok( size == 5, "got %ld\n", size );
 
         VariantClear(&index);
 
@@ -672,7 +673,8 @@ static void test_Fields(void)
     Field *field, *field2;
     VARIANT val, index;
     BSTR name;
-    LONG count, size;
+    LONG count;
+    ADO_LONGPTR size;
     DataTypeEnum type;
     FieldAttributeEnum attrs;
     HRESULT hr;
@@ -747,7 +749,7 @@ static void test_Fields(void)
     size = -1;
     hr = Field_get_DefinedSize( field, &size );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( size == 4, "got %d\n", size );
+    ok( size == 4, "got %ld\n", size );
     attrs = 0xdead;
     hr = Field_get_Attributes( field, &attrs );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -785,7 +787,8 @@ static void test_Stream(void)
     VARIANT_BOOL eos;
     StreamTypeEnum type;
     LineSeparatorEnum sep;
-    LONG refs, size, pos;
+    LONG refs;
+    ADO_LONGPTR size, pos;
     ObjectStateEnum state;
     ConnectModeEnum mode;
     BSTR charset, str;
@@ -875,7 +878,7 @@ static void test_Stream(void)
     size = -1;
     hr = _Stream_get_Size( stream, &size );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !size, "got %d\n", size );
+    ok( !size, "got %ld\n", size );
 
     eos = VARIANT_FALSE;
     hr = _Stream_get_EOS( stream, &eos );
@@ -885,12 +888,12 @@ static void test_Stream(void)
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !pos, "got %d\n", pos );
+    ok( !pos, "got %ld\n", pos );
 
     size = -1;
     hr = _Stream_get_Size( stream, &size );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !size, "got %d\n", size );
+    ok( !size, "got %ld\n", size );
 
     hr = _Stream_Read( stream, 2, &val );
     ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
@@ -903,7 +906,7 @@ static void test_Stream(void)
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !pos, "got %d\n", pos );
+    ok( !pos, "got %ld\n", pos );
 
     str = SysAllocString( L"test" );
     hr = _Stream_WriteText( stream, str, adWriteChar );
@@ -925,7 +928,7 @@ static void test_Stream(void)
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( pos == 10, "got %d\n", pos );
+    ok( pos == 10, "got %ld\n", pos );
 
     eos = VARIANT_FALSE;
     hr = _Stream_get_EOS( stream, &eos );
@@ -938,7 +941,7 @@ static void test_Stream(void)
     size = -1;
     hr = _Stream_get_Size( stream, &size );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( size == 10, "got %d\n", size );
+    ok( size == 10, "got %ld\n", size );
 
     hr = _Stream_put_Position( stream, 2 );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -949,12 +952,12 @@ static void test_Stream(void)
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( pos == 2, "got %d\n", pos );
+    ok( pos == 2, "got %ld\n", pos );
 
     size = -1;
     hr = _Stream_get_Size( stream, &size );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( size == 2, "got %d\n", size );
+    ok( size == 2, "got %ld\n", size );
 
     hr = _Stream_Close( stream );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1006,7 +1009,7 @@ static void test_Stream(void)
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( pos == 4, "got %d\n", pos );
+    ok( pos == 4, "got %ld\n", pos );
 
     hr = _Stream_put_Position( stream, 0 );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1020,7 +1023,7 @@ static void test_Stream(void)
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( pos == 4, "got %d\n", pos );
+    ok( pos == 4, "got %ld\n", pos );
 
     refs = _Stream_Release( stream );
     ok( !refs, "got %d\n", refs );
@@ -1187,7 +1190,7 @@ if (0) /* Crashes on windows */
     todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
 
     hr = _Connection_Open(connection, str, NULL, NULL, adConnectUnspecified);
-    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+    ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
     SysFreeString(str);
 
     str2 = NULL;

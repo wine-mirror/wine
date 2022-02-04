@@ -234,10 +234,10 @@ static HRESULT WINAPI command_Execute( _Command *iface, VARIANT *affected, VARIA
 }
 
 static HRESULT WINAPI command_CreateParameter( _Command *iface, BSTR name, DataTypeEnum type,
-                                               ParameterDirectionEnum direction, LONG size, VARIANT value,
+                                               ParameterDirectionEnum direction, ADO_LONGPTR size, VARIANT value,
                                                _Parameter **parameter )
 {
-    FIXME( "%p, %s, %d, %d, %d, %p\n", iface, debugstr_w(name), type, direction, size, parameter );
+    FIXME( "%p, %s, %d, %d, %ld, %p\n", iface, debugstr_w(name), type, direction, size, parameter );
     return E_NOTIMPL;
 }
 

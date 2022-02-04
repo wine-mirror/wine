@@ -195,7 +195,7 @@ static HRESULT WINAPI field_get_Properties( Field *iface, Properties **obj )
     return S_OK;
 }
 
-static HRESULT WINAPI field_get_ActualSize( Field *iface, LONG *size )
+static HRESULT WINAPI field_get_ActualSize( Field *iface, ADO_LONGPTR *size )
 {
     FIXME( "%p, %p\n", iface, size );
     return E_NOTIMPL;
@@ -211,7 +211,7 @@ static HRESULT WINAPI field_get_Attributes( Field *iface, LONG *attrs )
     return S_OK;
 }
 
-static HRESULT WINAPI field_get_DefinedSize( Field *iface, LONG *size )
+static HRESULT WINAPI field_get_DefinedSize( Field *iface, ADO_LONGPTR *size )
 {
     struct field *field = impl_from_Field( iface );
 
@@ -360,11 +360,11 @@ static HRESULT WINAPI field_put_Type( Field *iface, DataTypeEnum type )
     return S_OK;
 }
 
-static HRESULT WINAPI field_put_DefinedSize( Field *iface, LONG size )
+static HRESULT WINAPI field_put_DefinedSize( Field *iface, ADO_LONGPTR size )
 {
     struct field *field = impl_from_Field( iface );
 
-    TRACE( "%p, %d\n", field, size );
+    TRACE( "%p, %ld\n", field, size );
 
     field->defined_size = size;
     return S_OK;
@@ -829,11 +829,11 @@ static HRESULT append_field( struct fields *fields, BSTR name, DataTypeEnum type
     return S_OK;
 }
 
-static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr )
+static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum type, ADO_LONGPTR size, FieldAttributeEnum attr )
 {
     struct fields *fields = impl_from_Fields( iface );
 
-    TRACE( "%p, %s, %u, %d, %d\n", fields, debugstr_w(name), type, size, attr );
+    TRACE( "%p, %s, %u, %ld, %d\n", fields, debugstr_w(name), type, size, attr );
 
     return append_field( fields, name, type, size, attr, NULL );
 }
@@ -844,12 +844,12 @@ static HRESULT WINAPI fields_Delete( Fields *iface, VARIANT index )
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI fields_Append( Fields *iface, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr,
+static HRESULT WINAPI fields_Append( Fields *iface, BSTR name, DataTypeEnum type, ADO_LONGPTR size, FieldAttributeEnum attr,
                                      VARIANT value )
 {
     struct fields *fields = impl_from_Fields( iface );
 
-    TRACE( "%p, %s, %u, %d, %d, %s\n", fields, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
+    TRACE( "%p, %s, %u, %ld, %d, %s\n", fields, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
 
     return append_field( fields, name, type, size, attr, &value );
 }
@@ -1156,7 +1156,7 @@ static HRESULT WINAPI recordset_get_AbsolutePosition( _Recordset *iface, Positio
 
 static HRESULT WINAPI recordset_put_AbsolutePosition( _Recordset *iface, PositionEnum_Param pos )
 {
-    FIXME( "%p, %d\n", iface, pos );
+    FIXME( "%p, %ld\n", iface, pos );
     return E_NOTIMPL;
 }
 
@@ -1290,19 +1290,19 @@ static HRESULT WINAPI recordset_put_LockType( _Recordset *iface, LockTypeEnum lo
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI recordset_get_MaxRecords( _Recordset *iface, LONG *max_records )
+static HRESULT WINAPI recordset_get_MaxRecords( _Recordset *iface, ADO_LONGPTR *max_records )
 {
     FIXME( "%p, %p\n", iface, max_records );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, LONG max_records )
+static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, ADO_LONGPTR max_records )
 {
-    FIXME( "%p, %d\n", iface, max_records );
+    FIXME( "%p, %ld\n", iface, max_records );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI recordset_get_RecordCount( _Recordset *iface, LONG *count )
+static HRESULT WINAPI recordset_get_RecordCount( _Recordset *iface, ADO_LONGPTR *count )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
 
@@ -1392,9 +1392,9 @@ static HRESULT WINAPI recordset_GetRows( _Recordset *iface, LONG rows, VARIANT s
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI recordset_Move( _Recordset *iface, LONG num_records, VARIANT start )
+static HRESULT WINAPI recordset_Move( _Recordset *iface, ADO_LONGPTR num_records, VARIANT start )
 {
-    FIXME( "%p, %d, %s\n", iface, num_records, debugstr_variant(&start) );
+    FIXME( "%p, %ld, %s\n", iface, num_records, debugstr_variant(&start) );
     return E_NOTIMPL;
 }
 
@@ -1569,7 +1569,7 @@ static HRESULT WINAPI recordset_get_AbsolutePage( _Recordset *iface, PositionEnu
 
 static HRESULT WINAPI recordset_put_AbsolutePage( _Recordset *iface, PositionEnum_Param pos )
 {
-    FIXME( "%p, %d\n", iface, pos );
+    FIXME( "%p, %ld\n", iface, pos );
     return E_NOTIMPL;
 }
 
@@ -1591,7 +1591,7 @@ static HRESULT WINAPI recordset_put_Filter( _Recordset *iface, VARIANT criteria 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI recordset_get_PageCount( _Recordset *iface, LONG *count )
+static HRESULT WINAPI recordset_get_PageCount( _Recordset *iface, ADO_LONGPTR *count )
 {
     FIXME( "%p, %p\n", iface, count );
     return E_NOTIMPL;
@@ -2061,17 +2061,17 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI rsconstruction_get_Chapter(ADORecordsetConstruction *iface, LONG *chapter)
+static HRESULT WINAPI rsconstruction_get_Chapter(ADORecordsetConstruction *iface, ADO_LONGPTR *chapter)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
     FIXME( "%p, %p\n", recordset, chapter );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI rsconstruction_put_Chapter(ADORecordsetConstruction *iface, LONG chapter)
+static HRESULT WINAPI rsconstruction_put_Chapter(ADORecordsetConstruction *iface, ADO_LONGPTR chapter)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p, %d\n", recordset, chapter );
+    FIXME( "%p, %ld\n", recordset, chapter );
     return E_NOTIMPL;
 }
 

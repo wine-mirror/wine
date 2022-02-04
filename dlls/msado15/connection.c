@@ -336,8 +336,10 @@ static HRESULT WINAPI connection_Execute( _Connection *iface, BSTR command, VARI
 
     if (records_affected)
     {
+        ADO_LONGPTR count;
+        _Recordset_get_RecordCount(recordset, &count);
         V_VT(records_affected) = VT_I4;
-        _Recordset_get_RecordCount(recordset, &V_I4(records_affected));
+        V_I4(records_affected) = count;
     }
 
     *record_set = recordset;
