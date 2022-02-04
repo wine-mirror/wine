@@ -66,7 +66,7 @@ static ULONG WINAPI seeking_passthrough_AddRef(IUnknown *iface)
     struct seeking_passthrough *passthrough = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&passthrough->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", passthrough, refcount);
+    TRACE("%p increasing refcount to %lu.\n", passthrough, refcount);
     return refcount;
 }
 
@@ -75,7 +75,7 @@ static ULONG WINAPI seeking_passthrough_Release(IUnknown *iface)
     struct seeking_passthrough *passthrough = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&passthrough->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", passthrough, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", passthrough, refcount);
     if (!refcount)
     {
         strmbase_passthrough_cleanup(&passthrough->passthrough);

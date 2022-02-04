@@ -110,7 +110,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Cannot get pointer to sample data (%x)\n", hr);
+        ERR("Failed to get input buffer pointer, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -135,8 +135,6 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     tMed = tStart;
     mtMed = mtStart;
 
-    TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
-
     ash.pbSrc = pbSrcStream;
     ash.cbSrcLength = cbSrcStream;
 
@@ -145,7 +143,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &pOutSample, NULL, NULL, 0);
         if (FAILED(hr))
         {
-            ERR("Unable to get delivery buffer (%x)\n", hr);
+            ERR("Failed to get sample, hr %#lx.\n", hr);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -155,7 +153,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
 
 	hr = IMediaSample_GetPointer(pOutSample, &pbDstStream);
 	if (FAILED(hr)) {
-	    ERR("Unable to get pointer to buffer (%x)\n", hr);
+            ERR("Failed to get output buffer pointer, hr %#lx.\n", hr);
 	    goto error;
 	}
 	cbDstStream = IMediaSample_GetSize(pOutSample);
@@ -192,7 +190,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
             goto error;
         }
 
-        TRACE("used in %u/%u, used out %u/%u\n", ash.cbSrcLengthUsed, ash.cbSrcLength, ash.cbDstLengthUsed, ash.cbDstLength);
+        TRACE("used in %lu/%lu, used out %lu/%lu\n", ash.cbSrcLengthUsed, ash.cbSrcLength, ash.cbDstLengthUsed, ash.cbDstLength);
 
         hr = IMediaSample_SetActualDataLength(pOutSample, ash.cbDstLengthUsed);
         assert(hr == S_OK);
@@ -200,7 +198,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         /* Bug in acm codecs? It apparently uses the input, but doesn't necessarily output immediately */
         if (!ash.cbSrcLengthUsed)
         {
-            WARN("Sample was skipped? Outputted: %u\n", ash.cbDstLengthUsed);
+            WARN("Sample was skipped? Outputted: %lu\n", ash.cbDstLengthUsed);
             ash.cbSrcLength = 0;
             goto error;
         }
@@ -243,7 +241,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         hr = IMemInputPin_Receive(This->source.pMemInputPin, pOutSample);
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
-                ERR("Error sending sample (%x)\n", hr);
+                ERR("Failed to send sample, hr %#lx.\n", hr);
             goto error;
         }
 
@@ -419,7 +417,7 @@ static HRESULT WINAPI acm_wrapper_source_qc_Notify(IQualityControl *iface,
     IQualityControl *peer;
     HRESULT hr = S_OK;
 
-    TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
+    TRACE("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s.\n",
             filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
     if (filter->source_qc_sink)
@@ -492,7 +490,7 @@ static HRESULT acm_wrapper_init_stream(struct strmbase_filter *iface)
     HRESULT hr;
 
     if (filter->source.pin.peer && FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
-        ERR("Failed to commit allocator, hr %#x.\n", hr);
+        ERR("Failed to commit allocator, hr %#lx.\n", hr);
     return S_OK;
 }
 

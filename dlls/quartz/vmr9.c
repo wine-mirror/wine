@@ -244,7 +244,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
 
     if (FAILED(hr = IMediaSample_GetPointer(sample, &data)))
     {
-        ERR("Failed to get pointer to sample data, hr %#x.\n", hr);
+        ERR("Failed to get pointer to sample data, hr %#lx.\n", hr);
         return hr;
     }
     data_size = IMediaSample_GetActualDataLength(sample);
@@ -267,7 +267,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
 
     if (FAILED(hr = IDirect3DSurface9_LockRect(info.lpSurf, &locked_rect, NULL, D3DLOCK_DISCARD)))
     {
-        ERR("Failed to lock surface, hr %#x.\n", hr);
+        ERR("Failed to lock surface, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -332,7 +332,7 @@ static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *
     if (FAILED(hr = IVMRSurfaceAllocator9_InitializeDevice(filter->allocator,
             filter->cookie, info, &count)))
     {
-        WARN("Failed to initialize device (flags %#x), hr %#x.\n", info->dwFlags, hr);
+        WARN("Failed to initialize device (flags %#lx), hr %#lx.\n", info->dwFlags, hr);
         return hr;
     }
 
@@ -341,7 +341,7 @@ static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *
         if (FAILED(hr = IVMRSurfaceAllocator9_GetSurface(filter->allocator,
                 filter->cookie, i, 0, &filter->surfaces[i])))
         {
-            ERR("Failed to get surface %u, hr %#x.\n", i, hr);
+            ERR("Failed to get surface %lu, hr %#lx.\n", i, hr);
             while (i--)
                 IDirect3DSurface9_Release(filter->surfaces[i]);
             IVMRSurfaceAllocator9_TerminateDevice(filter->allocator, filter->cookie);
@@ -425,7 +425,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
             break;
 
         default:
-            WARN("Unhandled video compression %#x.\n", filter->bmiheader.biCompression);
+            WARN("Unhandled video compression %#lx.\n", filter->bmiheader.biCompression);
             free(filter->surfaces);
             return VFW_E_TYPE_NOT_ACCEPTED;
         }
@@ -882,11 +882,12 @@ static HRESULT WINAPI VMR7FilterConfig_SetImageCompositor(IVMRFilterConfig *ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR7FilterConfig_SetNumberOfStreams(IVMRFilterConfig *iface, DWORD max)
+static HRESULT WINAPI VMR7FilterConfig_SetNumberOfStreams(IVMRFilterConfig *iface, DWORD count)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
 
-    FIXME("(%p/%p)->(%u) stub\n", iface, This, max);
+    FIXME("filter %p, count %lu, stub!\n", filter, count);
+
     return E_NOTIMPL;
 }
 
@@ -898,11 +899,12 @@ static HRESULT WINAPI VMR7FilterConfig_GetNumberOfStreams(IVMRFilterConfig *ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR7FilterConfig_SetRenderingPrefs(IVMRFilterConfig *iface, DWORD renderflags)
+static HRESULT WINAPI VMR7FilterConfig_SetRenderingPrefs(IVMRFilterConfig *iface, DWORD flags)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
 
-    FIXME("(%p/%p)->(%u) stub\n", iface, This, renderflags);
+    FIXME("filter %p, flags %#lx, stub!\n", filter, flags);
+
     return E_NOTIMPL;
 }
 
@@ -918,7 +920,7 @@ static HRESULT WINAPI VMR7FilterConfig_SetRenderingMode(IVMRFilterConfig *iface,
 {
     struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
 
-    TRACE("iface %p, mode %#x.\n", iface, mode);
+    TRACE("iface %p, mode %#lx.\n", iface, mode);
 
     return IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, mode);
 }
@@ -1104,7 +1106,7 @@ static HRESULT WINAPI VMR7MonitorConfig_GetAvailableMonitors(IVMRMonitorConfig *
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
     struct get_available_monitors_args args;
 
-    FIXME("(%p/%p)->(%p, %u, %p) semi-stub\n", iface, This, info, arraysize, numdev);
+    TRACE("filter %p, info %p, arraysize %lu, numdev %p.\n", This, info, arraysize, numdev);
 
     if (!numdev)
         return E_POINTER;
@@ -1204,7 +1206,7 @@ static HRESULT WINAPI VMR9MonitorConfig_GetAvailableMonitors(IVMRMonitorConfig9 
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
     struct get_available_monitors_args args;
 
-    FIXME("(%p/%p)->(%p, %u, %p) semi-stub\n", iface, This, info, arraysize, numdev);
+    TRACE("filter %p, info %p, arraysize %lu, numdev %p.\n", This, info, arraysize, numdev);
 
     if (!numdev)
         return E_POINTER;
@@ -1264,7 +1266,7 @@ static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *ifa
 {
     struct quartz_vmr *filter = impl_from_IVMRFilterConfig9(iface);
 
-    FIXME("iface %p, count %u, stub!\n", iface, count);
+    FIXME("iface %p, count %lu, stub!\n", iface, count);
 
     if (!count)
     {
@@ -1307,11 +1309,12 @@ static HRESULT WINAPI VMR9FilterConfig_GetNumberOfStreams(IVMRFilterConfig9 *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9FilterConfig_SetRenderingPrefs(IVMRFilterConfig9 *iface, DWORD renderflags)
+static HRESULT WINAPI VMR9FilterConfig_SetRenderingPrefs(IVMRFilterConfig9 *iface, DWORD flags)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig9(iface);
 
-    FIXME("(%p/%p)->(%u) stub\n", iface, This, renderflags);
+    TRACE("filter %p, flags %#lx.\n", filter, flags);
+
     return E_NOTIMPL;
 }
 
@@ -1328,7 +1331,7 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     HRESULT hr = S_OK;
     struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
 
-    TRACE("(%p/%p)->(%u)\n", iface, This, mode);
+    TRACE("filter %p, mode %lu.\n", This, mode);
 
     EnterCriticalSection(&This->renderer.filter.filter_cs);
     if (This->mode)
@@ -1353,14 +1356,14 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
 
         if (FAILED(hr = VMR9DefaultAllocatorPresenterImpl_create(This, (void **)&This->presenter)))
         {
-            ERR("Failed to create default presenter, hr %#x.\n", hr);
+            ERR("Failed to create default presenter, hr %#lx.\n", hr);
             break;
         }
 
         if (FAILED(hr = IVMRImagePresenter9_QueryInterface(This->presenter,
                     &IID_IVMRSurfaceAllocator9, (void **)&This->allocator)))
         {
-            ERR("Failed to query for IVMRSurfaceAllocator9, hr %#x.\n", hr);
+            ERR("Failed to query for IVMRSurfaceAllocator9, hr %#lx.\n", hr);
             IVMRImagePresenter9_Release(This->presenter);
             This->allocator = NULL;
             This->presenter = NULL;
@@ -1720,7 +1723,7 @@ static HRESULT WINAPI VMR9WindowlessControl_SetAspectRatioMode(IVMRWindowlessCon
 {
     struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
 
-    TRACE("filter %p, mode %u.\n", filter, mode);
+    TRACE("filter %p, mode %lu.\n", filter, mode);
 
     EnterCriticalSection(&filter->renderer.filter.filter_cs);
     filter->aspect_mode = mode;
@@ -1936,7 +1939,7 @@ static ULONG WINAPI VMR9SurfaceAllocatorNotify_AddRef(IVMRSurfaceAllocatorNotify
     struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
     ULONG refcount = InterlockedIncrement(&filter->IVMRSurfaceAllocatorNotify9_refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -1946,7 +1949,7 @@ static ULONG WINAPI VMR9SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotif
     struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
     ULONG refcount = InterlockedDecrement(&filter->IVMRSurfaceAllocatorNotify9_refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount && !filter->renderer.filter.refcount)
         free(filter);
@@ -2031,7 +2034,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
     if (!allocinfo || !numbuffers || !surface)
         return E_POINTER;
 
-    TRACE("Flags %#x, size %ux%u, format %u (%#x), pool %u, minimum buffers %u.\n",
+    TRACE("Flags %#lx, size %lux%lu, format %u (%#x), pool %u, minimum buffers %lu.\n",
             allocinfo->dwFlags, allocinfo->dwWidth, allocinfo->dwHeight,
             allocinfo->Format, allocinfo->Format, allocinfo->Pool, allocinfo->MinBuffers);
 
@@ -2056,7 +2059,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
 
     if (!*numbuffers || *numbuffers < allocinfo->MinBuffers)
     {
-        WARN("%u surfaces requested (minimum %u); returning E_INVALIDARG.\n",
+        WARN("%lu surfaces requested (minimum %lu); returning E_INVALIDARG.\n",
                 *numbuffers, allocinfo->MinBuffers);
         return E_INVALIDARG;
     }
@@ -2103,12 +2106,12 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
     }
     else
     {
-        FIXME("Unhandled flags %#x.\n", allocinfo->dwFlags);
+        FIXME("Unhandled flags %#lx.\n", allocinfo->dwFlags);
         return E_NOTIMPL;
     }
 
     if (FAILED(hr))
-        WARN("%u/%u surfaces allocated, hr %#x.\n", i, *numbuffers, hr);
+        WARN("%lu/%lu surfaces allocated, hr %#lx.\n", i, *numbuffers, hr);
 
     if (i >= allocinfo->MinBuffers)
     {
@@ -2170,7 +2173,7 @@ static HRESULT WINAPI mixer_control9_SetAlpha(IVMRMixerControl9 *iface, DWORD st
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, stream %u, alpha %.8e, stub!\n", filter, stream, alpha);
+    FIXME("filter %p, stream %lu, alpha %.8e, stub!\n", filter, stream, alpha);
 
     return E_NOTIMPL;
 }
@@ -2179,7 +2182,7 @@ static HRESULT WINAPI mixer_control9_GetAlpha(IVMRMixerControl9 *iface, DWORD st
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, stream %u, alpha %p, stub!\n", filter, stream, alpha);
+    FIXME("filter %p, stream %lu, alpha %p, stub!\n", filter, stream, alpha);
 
     return E_NOTIMPL;
 }
@@ -2188,7 +2191,7 @@ static HRESULT WINAPI mixer_control9_SetZOrder(IVMRMixerControl9 *iface, DWORD s
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, stream %u, z %u, stub!\n", filter, stream, z);
+    FIXME("filter %p, stream %lu, z %lu, stub!\n", filter, stream, z);
 
     return E_NOTIMPL;
 }
@@ -2197,7 +2200,7 @@ static HRESULT WINAPI mixer_control9_GetZOrder(IVMRMixerControl9 *iface, DWORD s
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, stream %u, z %p, stub!\n", filter, stream, z);
+    FIXME("filter %p, stream %lu, z %p, stub!\n", filter, stream, z);
 
     return E_NOTIMPL;
 }
@@ -2207,7 +2210,7 @@ static HRESULT WINAPI mixer_control9_SetOutputRect(IVMRMixerControl9 *iface,
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, stream %u, rect %s, stub!\n", filter, stream, debugstr_normalized_rect(rect));
+    FIXME("filter %p, stream %lu, rect %s, stub!\n", filter, stream, debugstr_normalized_rect(rect));
 
     return E_NOTIMPL;
 }
@@ -2217,7 +2220,7 @@ static HRESULT WINAPI mixer_control9_GetOutputRect(IVMRMixerControl9 *iface,
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, stream %u, rect %p, stub!\n", filter, stream, rect);
+    FIXME("filter %p, stream %lu, rect %p, stub!\n", filter, stream, rect);
 
     return E_NOTIMPL;
 }
@@ -2226,7 +2229,7 @@ static HRESULT WINAPI mixer_control9_SetBackgroundClr(IVMRMixerControl9 *iface, 
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, color #%06x, stub!\n", filter, color);
+    FIXME("filter %p, color #%06lx, stub!\n", filter, color);
 
     return E_NOTIMPL;
 }
@@ -2244,7 +2247,7 @@ static HRESULT WINAPI mixer_control9_SetMixingPrefs(IVMRMixerControl9 *iface, DW
 {
     struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
 
-    FIXME("filter %p, flags %#x, stub!\n", filter, flags);
+    FIXME("filter %p, flags %#lx, stub!\n", filter, flags);
 
     EnterCriticalSection(&filter->renderer.filter.filter_cs);
     filter->mixing_prefs = flags;
@@ -2341,7 +2344,7 @@ static HRESULT WINAPI mixer_bitmap9_SetAlphaBitmap(IVMRMixerBitmap9 *iface,
         const VMR9AlphaBitmap *bitmap)
 {
     FIXME("iface %p, bitmap %p, stub!\n", iface, bitmap);
-    TRACE("dwFlags %#x, hdc %p, pDDS %p, rSrc %s, rDest %s, fAlpha %.8e, clrSrcKey #%06x, dwFilterMode %#x.\n",
+    TRACE("dwFlags %#lx, hdc %p, pDDS %p, rSrc %s, rDest %s, fAlpha %.8e, clrSrcKey #%06lx, dwFilterMode %#lx.\n",
             bitmap->dwFlags, bitmap->hdc, bitmap->pDDS, wine_dbgstr_rect(&bitmap->rSrc),
             debugstr_normalized_rect(&bitmap->rDest), bitmap->fAlpha, bitmap->clrSrcKey, bitmap->dwFilterMode);
     return E_NOTIMPL;
@@ -2410,7 +2413,7 @@ static HRESULT WINAPI aspect_ratio_control9_SetAspectRatioMode(IVMRAspectRatioCo
 {
     struct quartz_vmr *filter = impl_from_IVMRAspectRatioControl9(iface);
 
-    TRACE("filter %p, mode %u.\n", filter, mode);
+    TRACE("filter %p, mode %lu.\n", filter, mode);
 
     EnterCriticalSection(&filter->renderer.filter.filter_cs);
     filter->aspect_mode = mode;
@@ -2458,7 +2461,7 @@ static HRESULT WINAPI overlay_GetPalette(IOverlay *iface, DWORD *count, PALETTEE
 
 static HRESULT WINAPI overlay_SetPalette(IOverlay *iface, DWORD count, PALETTEENTRY *palette)
 {
-    FIXME("iface %p, count %u, palette %p, stub!\n", iface, count, palette);
+    FIXME("iface %p, count %lu, palette %p, stub!\n", iface, count, palette);
     return E_NOTIMPL;
 }
 
@@ -2507,7 +2510,7 @@ static HRESULT WINAPI overlay_GetVideoPosition(IOverlay *iface, RECT *source, RE
 
 static HRESULT WINAPI overlay_Advise(IOverlay *iface, IOverlayNotify *sink, DWORD flags)
 {
-    FIXME("iface %p, sink %p, flags %#x, stub!\n", iface, sink, flags);
+    FIXME("iface %p, sink %p, flags %#lx, stub!\n", iface, sink, flags);
     return E_NOTIMPL;
 }
 
@@ -2623,32 +2626,30 @@ static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *if
 
 static ULONG WINAPI VMR9_ImagePresenter_AddRef(IVMRImagePresenter9 *iface)
 {
-    struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
+    struct default_presenter *presenter = impl_from_IVMRImagePresenter9(iface);
+    ULONG refcount = InterlockedIncrement(&presenter->refCount);
 
-    TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
+    TRACE("%p increasing refcount to %lu.\n", presenter, refcount);
 
-    return refCount;
+    return refcount;
 }
 
 static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
 {
     struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
+    ULONG refcount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
+    TRACE("%p decreasing refcount to %lu.\n", This, refcount);
 
-    if (!refCount)
+    if (!refcount)
     {
         DWORD i;
-        TRACE("Destroying\n");
+
         IDirect3D9_Release(This->d3d9_ptr);
 
-        TRACE("Number of surfaces: %u\n", This->num_surfaces);
         for (i = 0; i < This->num_surfaces; ++i)
         {
             IDirect3DSurface9 *surface = This->d3d9_surfaces[i];
-            TRACE("Releasing surface %p\n", surface);
             if (surface)
                 IDirect3DSurface9_Release(surface);
         }
@@ -2661,7 +2662,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
         free(This);
         return 0;
     }
-    return refCount;
+    return refcount;
 }
 
 static HRESULT WINAPI VMR9_ImagePresenter_StartPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
@@ -2701,23 +2702,23 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
 
     if (FAILED(hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET,
             D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0)))
-        ERR("Failed to clear, hr %#x.\n", hr);
+        ERR("Failed to clear, hr %#lx.\n", hr);
 
     if (FAILED(hr = IDirect3DDevice9_BeginScene(device)))
-        ERR("Failed to begin scene, hr %#x.\n", hr);
+        ERR("Failed to begin scene, hr %#lx.\n", hr);
 
     if (FAILED(hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer)))
     {
-        ERR("Failed to get backbuffer, hr %#x.\n", hr);
+        ERR("Failed to get backbuffer, hr %#lx.\n", hr);
         return hr;
     }
 
     if (FAILED(hr = IDirect3DDevice9_StretchRect(device, info->lpSurf, NULL, backbuffer, NULL, D3DTEXF_POINT)))
-        ERR("Failed to blit image, hr %#x.\n", hr);
+        ERR("Failed to blit image, hr %#lx.\n", hr);
     IDirect3DSurface9_Release(backbuffer);
 
     if (FAILED(hr = IDirect3DDevice9_EndScene(device)))
-        ERR("Failed to end scene, hr %#x.\n", hr);
+        ERR("Failed to end scene, hr %#lx.\n", hr);
 
     if (filter->aspect_mode == VMR9ARMode_LetterBox)
     {
@@ -2745,7 +2746,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     }
 
     if (FAILED(hr = IDirect3DDevice9_Present(device, &src, &dst, NULL, NULL)))
-        ERR("Failed to present, hr %#x.\n", hr);
+        ERR("Failed to present, hr %#lx.\n", hr);
 
     return S_OK;
 }
@@ -2873,7 +2874,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
             NULL, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
     if (FAILED(hr))
     {
-        ERR("Could not create device: %08x\n", hr);
+        ERR("Failed to create device, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -2897,7 +2898,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
             info, numbuffers, This->d3d9_surfaces);
     if (FAILED(hr))
     {
-        ERR("Failed to allocate surfaces, hr %#x.\n", hr);
+        ERR("Failed to allocate surfaces, hr %#lx.\n", hr);
         IVMRSurfaceAllocator9_TerminateDevice(This->pVMR9->allocator, This->pVMR9->cookie);
         return hr;
     }
@@ -2909,7 +2910,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
 
 static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocator9 *iface, DWORD_PTR cookie)
 {
-    TRACE("iface %p, cookie %#lx.\n", iface, cookie);
+    TRACE("iface %p, cookie %#Ix.\n", iface, cookie);
 
     return S_OK;
 }

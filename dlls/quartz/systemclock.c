@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static int cookie_counter;
+static LONG cookie_counter;
 
 struct advise_sink
 {
@@ -42,7 +42,8 @@ struct system_clock
     IUnknown *outer_unk;
     LONG refcount;
 
-    BOOL thread_created, thread_stopped;
+    LONG thread_created;
+    BOOL thread_stopped;
     HANDLE thread;
     LARGE_INTEGER frequency;
     REFERENCE_TIME last_time;
@@ -90,7 +91,7 @@ static ULONG WINAPI system_clock_inner_AddRef(IUnknown *iface)
     struct system_clock *clock = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&clock->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", clock, refcount);
+    TRACE("%p increasing refcount to %lu.\n", clock, refcount);
 
     return refcount;
 }
@@ -101,7 +102,7 @@ static ULONG WINAPI system_clock_inner_Release(IUnknown *iface)
     ULONG refcount = InterlockedDecrement(&clock->refcount);
     struct advise_sink *sink, *cursor;
 
-    TRACE("%p decreasing refcount to %u.\n", clock, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", clock, refcount);
 
     if (!refcount)
     {
@@ -267,7 +268,7 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock *iface,
 {
     struct system_clock *clock = impl_from_IReferenceClock(iface);
 
-    TRACE("clock %p, base %s, offset %s, event %#lx, cookie %p.\n",
+    TRACE("clock %p, base %s, offset %s, event %#Ix, cookie %p.\n",
             clock, debugstr_time(base), debugstr_time(offset), event, cookie);
 
     if (base + offset <= 0)
@@ -281,7 +282,7 @@ static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface,
 {
     struct system_clock *clock = impl_from_IReferenceClock(iface);
 
-    TRACE("clock %p, start %s, period %s, semaphore %#lx, cookie %p.\n",
+    TRACE("clock %p, start %s, period %s, semaphore %#Ix, cookie %p.\n",
             clock, debugstr_time(start), debugstr_time(period), semaphore, cookie);
 
     if (start <= 0 || period <= 0)
@@ -295,7 +296,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
     struct system_clock *clock = impl_from_IReferenceClock(iface);
     struct advise_sink *sink;
 
-    TRACE("clock %p, cookie %#lx.\n", clock, cookie);
+    TRACE("clock %p, cookie %#Ix.\n", clock, cookie);
 
     EnterCriticalSection(&clock->cs);
 

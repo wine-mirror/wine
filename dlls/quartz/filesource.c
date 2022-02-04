@@ -217,7 +217,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
     if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
             OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
     {
-        WARN("Failed to open file %s, error %u.\n", debugstr_w(filename), GetLastError());
+        WARN("Failed to open file %s, error %lu.\n", debugstr_w(filename), GetLastError());
         return FALSE;
     }
 
@@ -393,14 +393,14 @@ static DWORD CALLBACK io_thread(void *arg)
         EnterCriticalSection(&filter->sample_cs);
 
         req = CONTAINING_RECORD(ovl, struct request, ovl);
-        TRACE("Got sample %u.\n", req - filter->requests);
+        TRACE("Got sample %Iu.\n", req - filter->requests);
         assert(req >= filter->requests && req < filter->requests + filter->max_requests);
 
         if (ret)
             WakeConditionVariable(&filter->sample_cv);
         else
         {
-            ERR("GetQueuedCompletionStatus() returned failure, error %u.\n", GetLastError());
+            ERR("GetQueuedCompletionStatus() returned failure, error %lu.\n", GetLastError());
             req->sample = NULL;
         }
 
@@ -624,7 +624,6 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_sourc
         FreeMediaType(&This->pin.mt);
     }
 
-    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -712,7 +711,7 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader *iface, IMediaSample 
     HRESULT hr;
     BYTE *data;
 
-    TRACE("filter %p, sample %p, cookie %#lx.\n", filter, sample, cookie);
+    TRACE("filter %p, sample %p, cookie %#Ix.\n", filter, sample, cookie);
 
     if (!sample)
         return E_POINTER;
@@ -765,7 +764,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader *iface,
     struct async_reader *filter = impl_from_IAsyncReader(iface);
     unsigned int i;
 
-    TRACE("filter %p, timeout %u, sample %p, cookie %p.\n", filter, timeout, sample, cookie);
+    TRACE("filter %p, timeout %lu, sample %p, cookie %p.\n", filter, timeout, sample, cookie);
 
     *sample = NULL;
     *cookie = 0;
@@ -824,7 +823,7 @@ static BOOL sync_read(HANDLE file, LONGLONG offset, LONG length, BYTE *buffer, D
     if (ret || GetLastError() == ERROR_IO_PENDING)
         ret = GetOverlappedResult(file, &ovl, read_len, TRUE);
 
-    TRACE("Returning %u bytes.\n", *read_len);
+    TRACE("Returning %lu bytes.\n", *read_len);
 
     CloseHandle(ovl.hEvent);
     return ret;
@@ -873,7 +872,7 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
     HRESULT hr;
     BOOL ret;
 
-    TRACE("filter %p, offset %s, length %d, buffer %p.\n",
+    TRACE("filter %p, offset %s, length %ld, buffer %p.\n",
             filter, wine_dbgstr_longlong(offset), length, buffer);
 
     ret = sync_read(filter->file, offset, length, buffer, &read_len);

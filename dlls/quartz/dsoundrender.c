@@ -126,7 +126,7 @@ static void DSoundRender_UpdatePositions(struct dsound_render *This, DWORD *seqw
         adv = playpos - old_playpos;
     This->last_playpos = playpos;
     if (adv) {
-        TRACE("Moving from %u to %u: clearing %u bytes\n", old_playpos, playpos, adv);
+        TRACE("Moving from %lu to %lu: clearing %lu bytes.\n", old_playpos, playpos, adv);
         IDirectSoundBuffer_Lock(This->dsbuffer, old_playpos, adv, (void**)&buf1, &size1, (void**)&buf2, &size2, 0);
         memset(buf1, wfx->wBitsPerSample == 8 ? 128  : 0, size1);
         memset(buf2, wfx->wBitsPerSample == 8 ? 128  : 0, size2);
@@ -190,19 +190,19 @@ static HRESULT DSoundRender_GetWritePos(struct dsound_render *This,
         past = min_writepos_t - write_at;
         if (past >= 0) {
             DWORD skipbytes = pos_from_time(This, past);
-            WARN("Skipping %u bytes\n", skipbytes);
+            WARN("Skipping %lu bytes.\n", skipbytes);
             *skip = skipbytes;
             *ret_writepos = min_writepos;
         } else {
             DWORD aheadbytes = pos_from_time(This, -past);
-            WARN("Advancing %u bytes\n", aheadbytes);
+            WARN("Advancing %lu bytes.\n", aheadbytes);
             *ret_writepos = (min_writepos + aheadbytes) % This->buf_size;
         }
     } else /* delta_t > 0 */ {
         DWORD aheadbytes;
         WARN("Delta too big %s/%s, too far ahead\n", debugstr_time(delta_t), debugstr_time(max_lag));
         aheadbytes = pos_from_time(This, delta_t);
-        WARN("Advancing %u bytes\n", aheadbytes);
+        WARN("Advancing %lu bytes.\n", aheadbytes);
         if (delta_t >= DSoundRenderer_Max_Fill)
             return S_FALSE;
         *ret_writepos = (min_writepos + aheadbytes) % This->buf_size;
@@ -254,13 +254,13 @@ static HRESULT DSoundRender_SendSampleData(struct dsound_render *This,
             if (This->sink.flushing || This->filter.state == State_Stopped)
                 return This->filter.state == State_Paused ? S_OK : VFW_E_WRONG_STATE;
             if (ret != WAIT_TIMEOUT)
-                ERR("%x\n", ret);
+                ERR("WaitForSingleObject() returned %ld.\n", ret);
             continue;
         }
         tStart = -1;
 
         if (skip)
-            FIXME("Sample dropped %u of %u bytes\n", skip, size);
+            FIXME("Sample dropped %lu of %lu bytes.\n", skip, size);
         if (skip >= size)
             return S_OK;
         data += skip;
@@ -268,7 +268,7 @@ static HRESULT DSoundRender_SendSampleData(struct dsound_render *This,
 
         hr = IDirectSoundBuffer_Lock(This->dsbuffer, writepos, min(free, size), (void**)&buf1, &size1, (void**)&buf2, &size2, 0);
         if (hr != DS_OK) {
-            ERR("Unable to lock sound buffer! (%x)\n", hr);
+            ERR("Failed to lock sound buffer, hr %#lx.\n", hr);
             break;
         }
         memcpy(buf1, data, size1);
@@ -276,7 +276,7 @@ static HRESULT DSoundRender_SendSampleData(struct dsound_render *This,
             memcpy(buf2, data+size1, size2);
         IDirectSoundBuffer_Unlock(This->dsbuffer, buf1, size1, buf2, size2);
         This->writepos = (writepos + size1 + size2) % This->buf_size;
-        TRACE("Wrote %u bytes at %u, next at %u - (%u/%u)\n", size1+size2, writepos, This->writepos, free, size);
+        TRACE("Wrote %lu bytes at %lu, next at %lu - (%lu/%lu)\n", size1+size2, writepos, This->writepos, free, size);
         data += size1 + size2;
         size -= size1 + size2;
     }
@@ -330,13 +330,13 @@ static HRESULT DSoundRender_DoRenderSample(struct dsound_render *This, IMediaSam
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Cannot get pointer to sample data (%x)\n", hr);
+        ERR("Failed to get buffer pointer, hr %#lx.\n", hr);
         return hr;
     }
 
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr)) {
-        ERR("Cannot get sample time (%x)\n", hr);
+        ERR("Failed to get sample time, hr %#lx.\n", hr);
         tStart = tStop = -1;
     }
 
@@ -347,8 +347,6 @@ static HRESULT DSoundRender_DoRenderSample(struct dsound_render *This, IMediaSam
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-    TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
-
     return DSoundRender_SendSampleData(This, tStart, tStop, pbSrcStream, cbSrcStream);
 }
 
@@ -416,17 +414,17 @@ static HRESULT dsound_render_sink_connect(struct strmbase_sink *iface, IPin *pee
     hr = IDirectSound8_CreateSoundBuffer(This->dsound, &buf_desc, &This->dsbuffer, NULL);
     This->writepos = This->buf_size;
     if (FAILED(hr))
-        ERR("Can't create sound buffer (%x)\n", hr);
+        ERR("Failed to create sound buffer, hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
     {
         hr = IDirectSoundBuffer_SetVolume(This->dsbuffer, This->volume);
         if (FAILED(hr))
-            ERR("Can't set volume to %d (%x)\n", This->volume, hr);
+            ERR("Failed to set volume to %ld, hr %#lx.\n", This->volume, hr);
 
         hr = IDirectSoundBuffer_SetPan(This->dsbuffer, This->pan);
         if (FAILED(hr))
-            ERR("Can't set pan to %d (%x)\n", This->pan, hr);
+            ERR("Failed to set pan to %ld, hr %#lx.\n", This->pan, hr);
         hr = S_OK;
     }
 
@@ -701,7 +699,7 @@ HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *count)
 HRESULT WINAPI basic_audio_GetTypeInfo(IBasicAudio *iface, UINT index,
         LCID lcid, ITypeInfo **typeinfo)
 {
-    TRACE("iface %p, index %u, lcid %#x, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    TRACE("iface %p, index %u, lcid %#lx, typeinfo %p.\n", iface, index, lcid, typeinfo);
     return strmbase_get_typeinfo(IBasicAudio_tid, typeinfo);
 }
 
@@ -711,7 +709,7 @@ HRESULT WINAPI basic_audio_GetIDsOfNames(IBasicAudio *iface, REFIID iid,
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("iface %p, iid %s, names %p, count %u, lcid %#x, ids %p.\n",
+    TRACE("iface %p, iid %s, names %p, count %u, lcid %#lx, ids %p.\n",
             iface, debugstr_guid(iid), names, count, lcid, ids);
 
     if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicAudio_tid, &typeinfo)))
@@ -728,7 +726,7 @@ static HRESULT WINAPI basic_audio_Invoke(IBasicAudio *iface, DISPID id, REFIID i
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("iface %p, id %d, iid %s, lcid %#x, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
+    TRACE("iface %p, id %ld, iid %s, lcid %#lx, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
             iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
 
     if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicAudio_tid, &typeinfo)))
@@ -743,7 +741,7 @@ static HRESULT WINAPI Basicaudio_put_Volume(IBasicAudio *iface,
                                             LONG lVolume) {
     struct dsound_render *This = impl_from_IBasicAudio(iface);
 
-    TRACE("(%p/%p)->(%d)\n", This, iface, lVolume);
+    TRACE("filter %p, volume %ld.\n", This, lVolume);
 
     if (lVolume > DSBVOLUME_MAX || lVolume < DSBVOLUME_MIN)
         return E_INVALIDARG;
@@ -774,7 +772,7 @@ static HRESULT WINAPI Basicaudio_put_Balance(IBasicAudio *iface,
                                              LONG lBalance) {
     struct dsound_render *This = impl_from_IBasicAudio(iface);
 
-    TRACE("(%p/%p)->(%d)\n", This, iface, lBalance);
+    TRACE("filter %p, balance %ld.\n", This, lBalance);
 
     if (lBalance < DSBPAN_LEFT || lBalance > DSBPAN_RIGHT)
         return E_INVALIDARG;
@@ -963,7 +961,7 @@ static HRESULT WINAPI dsound_render_qc_Notify(IQualityControl *iface,
 {
     struct dsound_render *filter = impl_from_IQualityControl(iface);
 
-    FIXME("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s, stub!\n",
+    FIXME("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s, stub!\n",
             filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
     return E_NOTIMPL;
