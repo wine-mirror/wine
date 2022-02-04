@@ -64,7 +64,7 @@ static ULONG WINAPI video_processor_AddRef(IMFTransform *iface)
     struct video_processor *transform = impl_video_processor_from_IMFTransform(iface);
     ULONG refcount = InterlockedIncrement(&transform->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -74,7 +74,7 @@ static ULONG WINAPI video_processor_Release(IMFTransform *iface)
     struct video_processor *transform = impl_video_processor_from_IMFTransform(iface);
     ULONG refcount = InterlockedDecrement(&transform->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -146,7 +146,7 @@ static HRESULT WINAPI video_processor_GetOutputStreamAttributes(IMFTransform *if
 {
     struct video_processor *transform = impl_video_processor_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p.\n", iface, id, attributes);
+    TRACE("%p, %lu, %p.\n", iface, id, attributes);
 
     *attributes = transform->output_attributes;
     IMFAttributes_AddRef(*attributes);
@@ -156,14 +156,14 @@ static HRESULT WINAPI video_processor_GetOutputStreamAttributes(IMFTransform *if
 
 static HRESULT WINAPI video_processor_DeleteInputStream(IMFTransform *iface, DWORD id)
 {
-    TRACE("%p, %u.\n", iface, id);
+    TRACE("%p, %lu.\n", iface, id);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
 {
-    TRACE("%p, %u, %p.\n", iface, streams, ids);
+    TRACE("%p, %lu, %p.\n", iface, streams, ids);
 
     return E_NOTIMPL;
 }
@@ -171,7 +171,7 @@ static HRESULT WINAPI video_processor_AddInputStreams(IMFTransform *iface, DWORD
 static HRESULT WINAPI video_processor_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("%p, %u, %u, %p.\n", iface, id, index, type);
+    FIXME("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     return E_NOTIMPL;
 }
@@ -179,42 +179,42 @@ static HRESULT WINAPI video_processor_GetInputAvailableType(IMFTransform *iface,
 static HRESULT WINAPI video_processor_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("%p, %u, %u, %p.\n", iface, id, index, type);
+    FIXME("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    FIXME("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    FIXME("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("%p, %u, %p.\n", iface, id, type);
+    FIXME("%p, %lu, %p.\n", iface, id, type);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("%p, %u, %p.\n", iface, id, type);
+    FIXME("%p, %lu, %p.\n", iface, id, type);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
 {
-    FIXME("%p, %u, %p.\n", iface, id, flags);
+    FIXME("%p, %lu, %p.\n", iface, id, flags);
 
     return E_NOTIMPL;
 }
@@ -235,21 +235,21 @@ static HRESULT WINAPI video_processor_SetOutputBounds(IMFTransform *iface, LONGL
 
 static HRESULT WINAPI video_processor_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
 {
-    TRACE("%p, %u, %p.\n", iface, id, event);
+    TRACE("%p, %lu, %p.\n", iface, id, event);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("%p, %u.\n", iface, message);
+    FIXME("%p, %u, %#Ix.\n", iface, message, param);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_processor_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, sample, flags);
+    FIXME("%p, %lu, %p, %#lx.\n", iface, id, sample, flags);
 
     return E_NOTIMPL;
 }
@@ -257,7 +257,7 @@ static HRESULT WINAPI video_processor_ProcessInput(IMFTransform *iface, DWORD id
 static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
-    FIXME("%p, %#x, %u, %p, %p.\n", iface, flags, count, samples, status);
+    FIXME("%p, %#lx, %lu, %p, %p.\n", iface, flags, count, samples, status);
 
     return E_NOTIMPL;
 }
@@ -521,7 +521,7 @@ HRESULT mfplat_DllRegisterServer(void)
 
         if (FAILED(hr))
         {
-            FIXME("Failed to register MFT, hr %#x\n", hr);
+            FIXME("Failed to register MFT, hr %#lx.\n", hr);
             return hr;
         }
     }

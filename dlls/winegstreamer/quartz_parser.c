@@ -452,7 +452,7 @@ static bool amt_to_wg_format_audio(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     }
     if (mt->cbFormat < sizeof(WAVEFORMATEX) || !mt->pbFormat)
     {
-        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
         return false;
     }
 
@@ -504,7 +504,7 @@ static bool amt_to_wg_format_audio_mpeg1(const AM_MEDIA_TYPE *mt, struct wg_form
     }
     if (mt->cbFormat < sizeof(*audio_format) || !mt->pbFormat)
     {
-        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
         return false;
     }
 
@@ -533,7 +533,7 @@ static bool amt_to_wg_format_audio_mpeg1_layer3(const AM_MEDIA_TYPE *mt, struct 
     }
     if (mt->cbFormat < sizeof(*audio_format) || !mt->pbFormat)
     {
-        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
         return false;
     }
 
@@ -578,7 +578,7 @@ static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     }
     if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
     {
-        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
         return false;
     }
 
@@ -674,11 +674,11 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
     HRESULT hr;
     BYTE *ptr = NULL;
 
-    TRACE("offset %u, size %u, sample size %u\n", offset, size, IMediaSample_GetSize(sample));
+    TRACE("offset %u, size %u, sample size %lu.\n", offset, size, IMediaSample_GetSize(sample));
 
     hr = IMediaSample_SetActualDataLength(sample, size);
     if(FAILED(hr)){
-        WARN("SetActualDataLength failed: %08x\n", hr);
+        ERR("Failed to set sample size, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -728,12 +728,10 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
     IMediaSample_SetSyncPoint(sample, !event->u.buffer.delta);
 
     if (!pin->pin.pin.peer)
-        hr = VFW_E_NOT_CONNECTED;
-    else
-        hr = IMemInputPin_Receive(pin->pin.pMemInputPin, sample);
+        return VFW_E_NOT_CONNECTED;
 
-    TRACE("sending sample returned: %08x\n", hr);
-
+    hr = IMemInputPin_Receive(pin->pin.pMemInputPin, sample);
+    TRACE("Receive() returned hr %#lx.\n", hr);
     return hr;
 }
 
@@ -760,7 +758,7 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
             if (FAILED(hr))
             {
                 if (hr != VFW_E_NOT_CONNECTED)
-                    ERR("Could not get a delivery buffer (%x), returning GST_FLOW_FLUSHING\n", hr);
+                    ERR("Failed to get a sample, hr %#lx.\n", hr);
                 break;
             }
 
@@ -783,7 +781,7 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
         if (FAILED(hr))
         {
             if (hr != VFW_E_NOT_CONNECTED)
-                ERR("Could not get a delivery buffer (%x), returning GST_FLOW_FLUSHING\n", hr);
+                ERR("Failed to get a sample, hr %#lx.\n", hr);
         }
         else
         {
@@ -879,7 +877,7 @@ static DWORD CALLBACK read_thread(void *arg)
 
         hr = IAsyncReader_SyncRead(filter->reader, offset, size, data);
         if (FAILED(hr))
-            ERR("Failed to read %u bytes at offset %I64u, hr %#x.\n", size, offset, hr);
+            ERR("Failed to read %u bytes at offset %I64u, hr %#lx.\n", size, offset, hr);
 
         wg_parser_push_data(filter->wg_parser, SUCCEEDED(hr) ? data : NULL, size);
     }
@@ -970,7 +968,7 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
             continue;
 
         if (FAILED(hr = IMemAllocator_Commit(filter->sources[i]->pin.pAllocator)))
-            ERR("Failed to commit allocator, hr %#x.\n", hr);
+            ERR("Failed to commit allocator, hr %#lx.\n", hr);
 
         filter->sources[i]->thread = CreateThread(NULL, 0, stream_thread, filter->sources[i], 0, NULL);
     }
@@ -1230,14 +1228,14 @@ static HRESULT WINAPI stream_select_Info(IAMStreamSelect *iface, LONG index,
         AM_MEDIA_TYPE **mt, DWORD *flags, LCID *lcid, DWORD *group, WCHAR **name,
         IUnknown **object, IUnknown **unknown)
 {
-    FIXME("iface %p, index %d, mt %p, flags %p, lcid %p, group %p, name %p, object %p, unknown %p, stub!\n",
+    FIXME("iface %p, index %ld, mt %p, flags %p, lcid %p, group %p, name %p, object %p, unknown %p, stub!\n",
             iface, index, mt, flags, lcid, group, name, object, unknown);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI stream_select_Enable(IAMStreamSelect *iface, LONG index, DWORD flags)
 {
-    FIXME("iface %p, index %d, flags %#x, stub!\n", iface, index, flags);
+    FIXME("iface %p, index %ld, flags %#lx, stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
@@ -1299,7 +1297,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     int i;
 
-    TRACE("pin %p, current %s, current_flags %#x, stop %s, stop_flags %#x.\n",
+    TRACE("pin %p, current %s, current_flags %#lx, stop %s, stop_flags %#lx.\n",
             pin, current ? debugstr_time(*current) : "<null>", current_flags,
             stop ? debugstr_time(*stop) : "<null>", stop_flags);
 
@@ -1419,7 +1417,7 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     uint64_t timestamp;
     int64_t diff;
 
-    TRACE("pin %p, sender %p, type %s, proportion %u, late %s, timestamp %s.\n",
+    TRACE("pin %p, sender %p, type %s, proportion %ld, late %s, timestamp %s.\n",
             pin, sender, q.Type == Famine ? "Famine" : "Flood", q.Proportion,
             debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 

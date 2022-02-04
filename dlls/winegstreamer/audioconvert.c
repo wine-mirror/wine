@@ -64,7 +64,7 @@ static ULONG WINAPI audio_converter_AddRef(IMFTransform *iface)
     struct audio_converter *transform = impl_audio_converter_from_IMFTransform(iface);
     ULONG refcount = InterlockedIncrement(&transform->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -74,7 +74,7 @@ static ULONG WINAPI audio_converter_Release(IMFTransform *iface)
     struct audio_converter *transform = impl_audio_converter_from_IMFTransform(iface);
     ULONG refcount = InterlockedDecrement(&transform->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -108,21 +108,21 @@ static HRESULT WINAPI audio_converter_GetStreamCount(IMFTransform *iface, DWORD 
 static HRESULT WINAPI audio_converter_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
         DWORD output_size, DWORD *outputs)
 {
-    TRACE("%p %u %p %u %p.\n", iface, input_size, inputs, output_size, outputs);
+    TRACE("%p, %lu, %p, %lu, %p.\n", iface, input_size, inputs, output_size, outputs);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI audio_converter_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
 {
-    FIXME("%p %u %p.\n", iface, id, info);
+    FIXME("%p, %lu, %p.\n", iface, id, info);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI audio_converter_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    FIXME("%p %u %p.\n", iface, id, info);
+    FIXME("%p. %lu, %p.\n", iface, id, info);
 
     return E_NOTIMPL;
 }
@@ -137,7 +137,7 @@ static HRESULT WINAPI audio_converter_GetAttributes(IMFTransform *iface, IMFAttr
 static HRESULT WINAPI audio_converter_GetInputStreamAttributes(IMFTransform *iface, DWORD id,
         IMFAttributes **attributes)
 {
-    FIXME("%p, %u, %p.\n", iface, id, attributes);
+    FIXME("%p, %lu, %p.\n", iface, id, attributes);
 
     return E_NOTIMPL;
 }
@@ -145,21 +145,21 @@ static HRESULT WINAPI audio_converter_GetInputStreamAttributes(IMFTransform *ifa
 static HRESULT WINAPI audio_converter_GetOutputStreamAttributes(IMFTransform *iface, DWORD id,
         IMFAttributes **attributes)
 {
-    FIXME("%p, %u, %p.\n", iface, id, attributes);
+    FIXME("%p, %lu, %p.\n", iface, id, attributes);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI audio_converter_DeleteInputStream(IMFTransform *iface, DWORD id)
 {
-    TRACE("%p, %u.\n", iface, id);
+    TRACE("%p, %lu.\n", iface, id);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI audio_converter_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
 {
-    TRACE("%p, %u, %p.\n", iface, streams, ids);
+    TRACE("%p, %lu, %p.\n", iface, streams, ids);
 
     return E_NOTIMPL;
 }
@@ -170,7 +170,7 @@ static HRESULT WINAPI audio_converter_GetInputAvailableType(IMFTransform *iface,
     IMFMediaType *ret;
     HRESULT hr;
 
-    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+    TRACE("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -222,7 +222,7 @@ static HRESULT WINAPI audio_converter_GetOutputAvailableType(IMFTransform *iface
     const GUID *subtype;
     DWORD rate, channels, bps;
 
-    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+    TRACE("%p, %lu, %lu, %p.\n", iface, id, index, type);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -272,12 +272,12 @@ fail:
 static HRESULT WINAPI audio_converter_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
     GUID major_type, subtype;
-    DWORD unused;
+    UINT32 unused;
     HRESULT hr;
 
     struct audio_converter *converter = impl_audio_converter_from_IMFTransform(iface);
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -345,10 +345,10 @@ static HRESULT WINAPI audio_converter_SetOutputType(IMFTransform *iface, DWORD i
 {
     struct audio_converter *converter = impl_audio_converter_from_IMFTransform(iface);
     GUID major_type, subtype;
-    DWORD unused;
+    UINT32 unused;
     HRESULT hr;
 
-    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    TRACE("%p, %lu, %p, %#lx.\n", iface, id, type, flags);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -421,7 +421,7 @@ static HRESULT WINAPI audio_converter_GetInputCurrentType(IMFTransform *iface, D
     IMFMediaType *ret;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", converter, id, type);
+    TRACE("%p, %lu, %p.\n", converter, id, type);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -452,7 +452,7 @@ static HRESULT WINAPI audio_converter_GetOutputCurrentType(IMFTransform *iface, 
     IMFMediaType *ret;
     HRESULT hr;
 
-    TRACE("%p, %u, %p.\n", converter, id, type);
+    TRACE("%p, %lu, %p.\n", converter, id, type);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
@@ -479,7 +479,7 @@ static HRESULT WINAPI audio_converter_GetOutputCurrentType(IMFTransform *iface, 
 
 static HRESULT WINAPI audio_converter_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
 {
-    FIXME("%p, %u, %p.\n", iface, id, flags);
+    FIXME("%p, %lu, %p.\n", iface, id, flags);
 
     return E_NOTIMPL;
 }
@@ -500,14 +500,14 @@ static HRESULT WINAPI audio_converter_SetOutputBounds(IMFTransform *iface, LONGL
 
 static HRESULT WINAPI audio_converter_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
 {
-    TRACE("%p, %u, %p.\n", iface, id, event);
+    TRACE("%p, %lu, %p.\n", iface, id, event);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI audio_converter_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    TRACE("%p, %u %lu.\n", iface, message, param);
+    TRACE("%p, %u, %Iu.\n", iface, message, param);
 
     switch(message)
     {
@@ -521,7 +521,7 @@ static HRESULT WINAPI audio_converter_ProcessMessage(IMFTransform *iface, MFT_ME
 
 static HRESULT WINAPI audio_converter_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, sample, flags);
+    FIXME("%p, %lu, %p, %#lx.\n", iface, id, sample, flags);
 
     return E_NOTIMPL;
 }
@@ -529,7 +529,7 @@ static HRESULT WINAPI audio_converter_ProcessInput(IMFTransform *iface, DWORD id
 static HRESULT WINAPI audio_converter_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
-    FIXME("%p, %#x, %u, %p, %p.\n", iface, flags, count, samples, status);
+    FIXME("%p, %#lx, %lu, %p, %p.\n", iface, flags, count, samples, status);
 
     return E_NOTIMPL;
 }

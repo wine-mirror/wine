@@ -67,7 +67,7 @@ static HRESULT WINAPI WMSyncReader_Close(IWMSyncReader2 *iface)
 static HRESULT WINAPI WMSyncReader_GetMaxOutputSampleSize(IWMSyncReader2 *iface, DWORD output, DWORD *max)
 {
     struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, output, max);
+    FIXME("(%p)->(%lu %p): stub!\n", This, output, max);
     return E_NOTIMPL;
 }
 
@@ -160,7 +160,7 @@ static HRESULT WINAPI WMSyncReader_GetOutputFormat(IWMSyncReader2 *iface,
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("reader %p, output %u, index %u, props %p.\n", reader, output, index, props);
+    TRACE("reader %p, output %lu, index %lu, props %p.\n", reader, output, index, props);
 
     return wm_reader_get_output_format(&reader->reader, output, index, props);
 }
@@ -169,7 +169,7 @@ static HRESULT WINAPI WMSyncReader_GetOutputFormatCount(IWMSyncReader2 *iface, D
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("reader %p, output %u, count %p.\n", reader, output, count);
+    TRACE("reader %p, output %lu, count %p.\n", reader, output, count);
 
     return wm_reader_get_output_format_count(&reader->reader, output, count);
 }
@@ -190,7 +190,7 @@ static HRESULT WINAPI WMSyncReader_GetOutputProps(IWMSyncReader2 *iface,
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("reader %p, output %u, props %p.\n", reader, output, props);
+    TRACE("reader %p, output %lu, props %p.\n", reader, output, props);
 
     return wm_reader_get_output_props(&reader->reader, output, props);
 }
@@ -199,7 +199,7 @@ static HRESULT WINAPI WMSyncReader_GetOutputSetting(IWMSyncReader2 *iface, DWORD
         WMT_ATTR_DATATYPE *type, BYTE *value, WORD *length)
 {
     struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%u %s %p %p %p): stub!\n", This, output_num, debugstr_w(name), type, value, length);
+    FIXME("(%p)->(%lu %s %p %p %p): stub!\n", This, output_num, debugstr_w(name), type, value, length);
     return E_NOTIMPL;
 }
 
@@ -215,7 +215,7 @@ static HRESULT WINAPI WMSyncReader_GetStreamNumberForOutput(IWMSyncReader2 *ifac
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("reader %p, output %u, stream_number %p.\n", reader, output, stream_number);
+    TRACE("reader %p, output %lu, stream_number %p.\n", reader, output, stream_number);
 
     *stream_number = output + 1;
     return S_OK;
@@ -253,7 +253,7 @@ static HRESULT WINAPI WMSyncReader_SetOutputProps(IWMSyncReader2 *iface, DWORD o
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("reader %p, output %u, props %p.\n", reader, output, props);
+    TRACE("reader %p, output %lu, props %p.\n", reader, output, props);
 
     return wm_reader_set_output_props(&reader->reader, output, props);
 }
@@ -263,7 +263,7 @@ static HRESULT WINAPI WMSyncReader_SetOutputSetting(IWMSyncReader2 *iface, DWORD
 {
     struct sync_reader *reader = impl_from_IWMSyncReader2(iface);
 
-    TRACE("reader %p, output %u, name %s, type %#x, value %p, size %u.\n",
+    TRACE("reader %p, output %lu, name %s, type %#x, value %p, size %u.\n",
             reader, output, debugstr_w(name), type, value, size);
 
     if (!wcscmp(name, L"VideoSampleDurations"))
@@ -336,28 +336,28 @@ static HRESULT WINAPI WMSyncReader2_SetRangeByFrameEx(IWMSyncReader2 *iface, WOR
 static HRESULT WINAPI WMSyncReader2_SetAllocateForOutput(IWMSyncReader2 *iface, DWORD output_num, IWMReaderAllocatorEx *allocator)
 {
     struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, output_num, allocator);
+    FIXME("(%p)->(%lu %p): stub!\n", This, output_num, allocator);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WMSyncReader2_GetAllocateForOutput(IWMSyncReader2 *iface, DWORD output_num, IWMReaderAllocatorEx **allocator)
 {
     struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, output_num, allocator);
+    FIXME("(%p)->(%lu %p): stub!\n", This, output_num, allocator);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WMSyncReader2_SetAllocateForStream(IWMSyncReader2 *iface, DWORD stream_num, IWMReaderAllocatorEx *allocator)
 {
     struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, stream_num, allocator);
+    FIXME("(%p)->(%lu %p): stub!\n", This, stream_num, allocator);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WMSyncReader2_GetAllocateForStream(IWMSyncReader2 *iface, DWORD stream_num, IWMReaderAllocatorEx **allocator)
 {
     struct sync_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%d %p): stub!\n", This, stream_num, allocator);
+    FIXME("(%p)->(%lu %p): stub!\n", This, stream_num, allocator);
     return E_NOTIMPL;
 }
 

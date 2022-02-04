@@ -24,7 +24,7 @@ static struct wm_stream *get_stream_by_output_number(struct wm_reader *reader, D
 {
     if (output < reader->stream_count)
         return &reader->streams[output];
-    WARN("Invalid output number %u.\n", output);
+    WARN("Invalid output number %lu.\n", output);
     return NULL;
 }
 
@@ -65,7 +65,7 @@ static ULONG WINAPI output_props_AddRef(IWMOutputMediaProps *iface)
     struct output_props *props = impl_from_IWMOutputMediaProps(iface);
     ULONG refcount = InterlockedIncrement(&props->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", props, refcount);
+    TRACE("%p increasing refcount to %lu.\n", props, refcount);
 
     return refcount;
 }
@@ -75,7 +75,7 @@ static ULONG WINAPI output_props_Release(IWMOutputMediaProps *iface)
     struct output_props *props = impl_from_IWMOutputMediaProps(iface);
     ULONG refcount = InterlockedDecrement(&props->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", props, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", props, refcount);
 
     if (!refcount)
         free(props);
@@ -209,7 +209,7 @@ static ULONG WINAPI buffer_AddRef(INSSBuffer *iface)
     struct buffer *buffer = impl_from_INSSBuffer(iface);
     ULONG refcount = InterlockedIncrement(&buffer->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", buffer, refcount);
+    TRACE("%p increasing refcount to %lu.\n", buffer, refcount);
 
     return refcount;
 }
@@ -219,7 +219,7 @@ static ULONG WINAPI buffer_Release(INSSBuffer *iface)
     struct buffer *buffer = impl_from_INSSBuffer(iface);
     ULONG refcount = InterlockedDecrement(&buffer->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", buffer, refcount);
 
     if (!refcount)
         free(buffer);
@@ -237,7 +237,7 @@ static HRESULT WINAPI buffer_SetLength(INSSBuffer *iface, DWORD size)
 {
     struct buffer *buffer = impl_from_INSSBuffer(iface);
 
-    TRACE("iface %p, size %u.\n", buffer, size);
+    TRACE("iface %p, size %lu.\n", buffer, size);
 
     if (size > buffer->capacity)
         return E_INVALIDARG;
@@ -329,7 +329,7 @@ static ULONG WINAPI stream_config_AddRef(IWMStreamConfig *iface)
     struct stream_config *config = impl_from_IWMStreamConfig(iface);
     ULONG refcount = InterlockedIncrement(&config->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", config, refcount);
+    TRACE("%p increasing refcount to %lu.\n", config, refcount);
 
     return refcount;
 }
@@ -339,7 +339,7 @@ static ULONG WINAPI stream_config_Release(IWMStreamConfig *iface)
     struct stream_config *config = impl_from_IWMStreamConfig(iface);
     ULONG refcount = InterlockedDecrement(&config->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", config, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", config, refcount);
 
     if (!refcount)
     {
@@ -422,7 +422,7 @@ static HRESULT WINAPI stream_config_GetBitrate(IWMStreamConfig *iface, DWORD *bi
 
 static HRESULT WINAPI stream_config_SetBitrate(IWMStreamConfig *iface, DWORD bitrate)
 {
-    FIXME("iface %p, bitrate %u, stub!\n", iface, bitrate);
+    FIXME("iface %p, bitrate %lu, stub!\n", iface, bitrate);
     return E_NOTIMPL;
 }
 
@@ -434,7 +434,7 @@ static HRESULT WINAPI stream_config_GetBufferWindow(IWMStreamConfig *iface, DWOR
 
 static HRESULT WINAPI stream_config_SetBufferWindow(IWMStreamConfig *iface, DWORD window)
 {
-    FIXME("iface %p, window %u, stub!\n", iface, window);
+    FIXME("iface %p, window %lu, stub!\n", iface, window);
     return E_NOTIMPL;
 }
 
@@ -591,7 +591,7 @@ static DWORD CALLBACK read_thread(void *arg)
             if (!SetFilePointerEx(file, large_offset, NULL, FILE_BEGIN)
                     || !ReadFile(file, data, size, &ret_size, NULL))
             {
-                ERR("Failed to read %u bytes at offset %I64u, error %u.\n", size, offset, GetLastError());
+                ERR("Failed to read %u bytes at offset %I64u, error %lu.\n", size, offset, GetLastError());
                 wg_parser_push_data(reader->wg_parser, NULL, 0);
                 continue;
             }
@@ -602,14 +602,14 @@ static DWORD CALLBACK read_thread(void *arg)
                 hr = IStream_Read(stream, data, size, &ret_size);
             if (FAILED(hr))
             {
-                ERR("Failed to read %u bytes at offset %I64u, hr %#x.\n", size, offset, hr);
+                ERR("Failed to read %u bytes at offset %I64u, hr %#lx.\n", size, offset, hr);
                 wg_parser_push_data(reader->wg_parser, NULL, 0);
                 continue;
             }
         }
 
         if (ret_size != size)
-            ERR("Unexpected short read: requested %u bytes, got %u.\n", size, ret_size);
+            ERR("Unexpected short read: requested %u bytes, got %lu.\n", size, ret_size);
         wg_parser_push_data(reader->wg_parser, data, ret_size);
     }
 
@@ -674,7 +674,7 @@ static ULONG WINAPI profile_AddRef(IWMProfile3 *iface)
     struct wm_reader *reader = impl_from_IWMProfile3(iface);
     ULONG refcount = InterlockedIncrement(&reader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", reader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", reader, refcount);
 
     return refcount;
 }
@@ -684,7 +684,7 @@ static ULONG WINAPI profile_Release(IWMProfile3 *iface)
     struct wm_reader *reader = impl_from_IWMProfile3(iface);
     ULONG refcount = InterlockedDecrement(&reader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", reader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", reader, refcount);
 
     if (!refcount)
         reader->ops->destroy(reader);
@@ -742,14 +742,14 @@ static HRESULT WINAPI profile_GetStream(IWMProfile3 *iface, DWORD index, IWMStre
     struct wm_reader *reader = impl_from_IWMProfile3(iface);
     struct stream_config *object;
 
-    TRACE("reader %p, index %u, config %p.\n", reader, index, config);
+    TRACE("reader %p, index %lu, config %p.\n", reader, index, config);
 
     EnterCriticalSection(&reader->cs);
 
     if (index >= reader->stream_count)
     {
         LeaveCriticalSection(&reader->cs);
-        WARN("Index %u exceeds stream count %u; returning E_INVALIDARG.\n", index, reader->stream_count);
+        WARN("Index %lu exceeds stream count %u; returning E_INVALIDARG.\n", index, reader->stream_count);
         return E_INVALIDARG;
     }
 
@@ -816,7 +816,7 @@ static HRESULT WINAPI profile_GetMutualExclusionCount(IWMProfile3 *iface, DWORD 
 
 static HRESULT WINAPI profile_GetMutualExclusion(IWMProfile3 *iface, DWORD index, IWMMutualExclusion **excl)
 {
-    FIXME("iface %p, index %u, excl %p, stub!\n", iface, index, excl);
+    FIXME("iface %p, index %lu, excl %p, stub!\n", iface, index, excl);
     return E_NOTIMPL;
 }
 
@@ -864,7 +864,7 @@ static HRESULT WINAPI profile_GetBandwidthSharingCount(IWMProfile3 *iface, DWORD
 
 static HRESULT WINAPI profile_GetBandwidthSharing(IWMProfile3 *iface, DWORD index, IWMBandwidthSharing **sharing)
 {
-    FIXME("iface %p, index %d, sharing %p, stub!\n", iface, index, sharing);
+    FIXME("iface %p, index %lu, sharing %p, stub!\n", iface, index, sharing);
     return E_NOTIMPL;
 }
 
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI header_info_GetCodecInfoCount(IWMHeaderInfo3 *iface, DWORD
 static HRESULT WINAPI header_info_GetCodecInfo(IWMHeaderInfo3 *iface, DWORD index, WORD *name_len,
         WCHAR *name, WORD *desc_len, WCHAR *desc, WMT_CODEC_INFO_TYPE *type, WORD *size, BYTE *info)
 {
-    FIXME("iface %p, index %u, name_len %p, name %p, desc_len %p, desc %p, type %p, size %p, info %p, stub!\n",
+    FIXME("iface %p, index %lu, name_len %p, name %p, desc_len %p, desc %p, type %p, size %p, info %p, stub!\n",
             iface, index, name_len, name, desc_len, desc, type, size, info);
     return E_NOTIMPL;
 }
@@ -1163,7 +1163,7 @@ static HRESULT WINAPI header_info_GetAttributeByIndexEx(IWMHeaderInfo3 *iface,
 static HRESULT WINAPI header_info_ModifyAttribute(IWMHeaderInfo3 *iface, WORD stream_number,
         WORD index, WMT_ATTR_DATATYPE type, WORD lang_index, const BYTE *value, DWORD size)
 {
-    FIXME("iface %p, stream_number %u, index %u, type %#x, lang_index %u, value %p, size %u, stub!\n",
+    FIXME("iface %p, stream_number %u, index %u, type %#x, lang_index %u, value %p, size %lu, stub!\n",
             iface, stream_number, index, type, lang_index, value, size);
     return E_NOTIMPL;
 }
@@ -1172,7 +1172,7 @@ static HRESULT WINAPI header_info_AddAttribute(IWMHeaderInfo3 *iface,
         WORD stream_number, const WCHAR *name, WORD *index,
         WMT_ATTR_DATATYPE type, WORD lang_index, const BYTE *value, DWORD size)
 {
-    FIXME("iface %p, stream_number %u, name %s, index %p, type %#x, lang_index %u, value %p, size %u, stub!\n",
+    FIXME("iface %p, stream_number %u, name %s, index %p, type %#x, lang_index %u, value %p, size %lu, stub!\n",
             iface, stream_number, debugstr_w(name), index, type, lang_index, value, size);
     return E_NOTIMPL;
 }
@@ -1309,7 +1309,7 @@ static HRESULT WINAPI packet_size_GetMaxPacketSize(IWMPacketSize2 *iface, DWORD 
 
 static HRESULT WINAPI packet_size_SetMaxPacketSize(IWMPacketSize2 *iface, DWORD size)
 {
-    FIXME("iface %p, size %u, stub!\n", iface, size);
+    FIXME("iface %p, size %lu, stub!\n", iface, size);
     return E_NOTIMPL;
 }
 
@@ -1321,7 +1321,7 @@ static HRESULT WINAPI packet_size_GetMinPacketSize(IWMPacketSize2 *iface, DWORD 
 
 static HRESULT WINAPI packet_size_SetMinPacketSize(IWMPacketSize2 *iface, DWORD size)
 {
-    FIXME("iface %p, size %u, stub!\n", iface, size);
+    FIXME("iface %p, size %lu, stub!\n", iface, size);
     return E_NOTIMPL;
 }
 
@@ -1365,14 +1365,14 @@ static ULONG WINAPI playlist_Release(IWMReaderPlaylistBurn *iface)
 static HRESULT WINAPI playlist_InitPlaylistBurn(IWMReaderPlaylistBurn *iface, DWORD count,
         const WCHAR **filenames, IWMStatusCallback *callback, void *context)
 {
-    FIXME("iface %p, count %u, filenames %p, callback %p, context %p, stub!\n",
+    FIXME("iface %p, count %lu, filenames %p, callback %p, context %p, stub!\n",
             iface, count, filenames, callback, context);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI playlist_GetInitResults(IWMReaderPlaylistBurn *iface, DWORD count, HRESULT *hrs)
 {
-    FIXME("iface %p, count %u, hrs %p, stub!\n", iface, count, hrs);
+    FIXME("iface %p, count %lu, hrs %p, stub!\n", iface, count, hrs);
     return E_NOTIMPL;
 }
 
@@ -1384,7 +1384,7 @@ static HRESULT WINAPI playlist_Cancel(IWMReaderPlaylistBurn *iface)
 
 static HRESULT WINAPI playlist_EndPlaylistBurn(IWMReaderPlaylistBurn *iface, HRESULT hr)
 {
-    FIXME("iface %p, hr %#x, stub!\n", iface, hr);
+    FIXME("iface %p, hr %#lx, stub!\n", iface, hr);
     return E_NOTIMPL;
 }
 
@@ -1468,7 +1468,7 @@ static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
 
     if (FAILED(hr = wg_parser_connect(reader->wg_parser, file_size)))
     {
-        ERR("Failed to connect parser, hr %#x.\n", hr);
+        ERR("Failed to connect parser, hr %#lx.\n", hr);
         goto out_shutdown_thread;
     }
 
@@ -1543,7 +1543,7 @@ HRESULT wm_reader_open_stream(struct wm_reader *reader, IStream *stream)
 
     if (FAILED(hr = IStream_Stat(stream, &stat, STATFLAG_NONAME)))
     {
-        ERR("Failed to stat stream, hr %#x.\n", hr);
+        ERR("Failed to stat stream, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1569,13 +1569,13 @@ HRESULT wm_reader_open_file(struct wm_reader *reader, const WCHAR *filename)
     if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
             OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
     {
-        ERR("Failed to open %s, error %u.\n", debugstr_w(filename), GetLastError());
+        ERR("Failed to open %s, error %lu.\n", debugstr_w(filename), GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     if (!GetFileSizeEx(file, &size))
     {
-        ERR("Failed to get the size of %s, error %u.\n", debugstr_w(filename), GetLastError());
+        ERR("Failed to get the size of %s, error %lu.\n", debugstr_w(filename), GetLastError());
         CloseHandle(file);
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -1851,7 +1851,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                     if (FAILED(hr = IWMReaderCallbackAdvanced_AllocateForStream(callback_advanced,
                             stream->index + 1, event.u.buffer.size, &sample, NULL)))
                     {
-                        ERR("Failed to allocate stream sample of %u bytes, hr %#x.\n", event.u.buffer.size, hr);
+                        ERR("Failed to allocate stream sample of %u bytes, hr %#lx.\n", event.u.buffer.size, hr);
                         wg_parser_stream_release_buffer(wg_stream);
                         return hr;
                     }
@@ -1861,7 +1861,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                     if (FAILED(hr = IWMReaderCallbackAdvanced_AllocateForOutput(callback_advanced,
                             stream->index, event.u.buffer.size, &sample, NULL)))
                     {
-                        ERR("Failed to allocate output sample of %u bytes, hr %#x.\n", event.u.buffer.size, hr);
+                        ERR("Failed to allocate output sample of %u bytes, hr %#lx.\n", event.u.buffer.size, hr);
                         wg_parser_stream_release_buffer(wg_stream);
                         return hr;
                     }
@@ -1886,11 +1886,11 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                 }
 
                 if (FAILED(hr = INSSBuffer_GetBufferAndLength(sample, &data, &size)))
-                    ERR("Failed to get data pointer, hr %#x.\n", hr);
+                    ERR("Failed to get data pointer, hr %#lx.\n", hr);
                 if (FAILED(hr = INSSBuffer_GetMaxLength(sample, &capacity)))
-                    ERR("Failed to get capacity, hr %#x.\n", hr);
+                    ERR("Failed to get capacity, hr %#lx.\n", hr);
                 if (event.u.buffer.size > capacity)
-                    ERR("Returned capacity %u is less than requested capacity %u.\n",
+                    ERR("Returned capacity %lu is less than requested capacity %u.\n",
                             capacity, event.u.buffer.size);
 
                 if (!wg_parser_stream_copy_buffer(wg_stream, data, 0, event.u.buffer.size))
@@ -1901,7 +1901,7 @@ HRESULT wm_reader_get_stream_sample(struct wm_stream *stream,
                 }
 
                 if (FAILED(hr = INSSBuffer_SetLength(sample, event.u.buffer.size)))
-                    ERR("Failed to set size %u, hr %#x.\n", event.u.buffer.size, hr);
+                    ERR("Failed to set size %u, hr %#lx.\n", event.u.buffer.size, hr);
 
                 wg_parser_stream_release_buffer(wg_stream);
 

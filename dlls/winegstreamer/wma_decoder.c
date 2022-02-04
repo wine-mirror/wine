@@ -90,7 +90,7 @@ static ULONG WINAPI unknown_AddRef(IUnknown *iface)
     struct wma_decoder *decoder = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&decoder->refcount);
 
-    TRACE("iface %p increasing refcount to %u.\n", decoder, refcount);
+    TRACE("iface %p increasing refcount to %lu.\n", decoder, refcount);
 
     return refcount;
 }
@@ -100,7 +100,7 @@ static ULONG WINAPI unknown_Release(IUnknown *iface)
     struct wma_decoder *decoder = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&decoder->refcount);
 
-    TRACE("iface %p decreasing refcount to %u.\n", decoder, refcount);
+    TRACE("iface %p decreasing refcount to %lu.\n", decoder, refcount);
 
     if (!refcount)
     {
@@ -161,7 +161,7 @@ static HRESULT WINAPI transform_GetStreamCount(IMFTransform *iface, DWORD *input
 static HRESULT WINAPI transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
         DWORD output_size, DWORD *outputs)
 {
-    FIXME("iface %p, input_size %u, inputs %p, output_size %u, outputs %p stub!\n", iface,
+    FIXME("iface %p, input_size %lu, inputs %p, output_size %lu, outputs %p stub!\n", iface,
             input_size, inputs, output_size, outputs);
     return E_NOTIMPL;
 }
@@ -172,7 +172,7 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
     UINT32 block_alignment;
     HRESULT hr;
 
-    TRACE("iface %p, id %u, info %p.\n", iface, id, info);
+    TRACE("iface %p, id %lu, info %p.\n", iface, id, info);
 
     if (!decoder->input_type || !decoder->output_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -195,7 +195,7 @@ static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD i
     UINT32 channel_count, block_alignment;
     HRESULT hr;
 
-    TRACE("iface %p, id %u, info %p.\n", iface, id, info);
+    TRACE("iface %p, id %lu, info %p.\n", iface, id, info);
 
     if (!decoder->input_type || !decoder->output_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -220,32 +220,32 @@ static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes
 
 static HRESULT WINAPI transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
-    FIXME("iface %p, id %u, attributes %p stub!\n", iface, id, attributes);
+    FIXME("iface %p, id %lu, attributes %p stub!\n", iface, id, attributes);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
-    FIXME("iface %p, id %u, attributes %p stub!\n", iface, id, attributes);
+    FIXME("iface %p, id %lu, attributes %p stub!\n", iface, id, attributes);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_DeleteInputStream(IMFTransform *iface, DWORD id)
 {
-    FIXME("iface %p, id %u stub!\n", iface, id);
+    FIXME("iface %p, id %lu stub!\n", iface, id);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
 {
-    FIXME("iface %p, streams %u, ids %p stub!\n", iface, streams, ids);
+    FIXME("iface %p, streams %lu, ids %p stub!\n", iface, streams, ids);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("iface %p, id %u, index %u, type %p stub!\n", iface, id, index, type);
+    FIXME("iface %p, id %lu, index %lu, type %p stub!\n", iface, id, index, type);
     return E_NOTIMPL;
 }
 
@@ -258,7 +258,7 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
     const GUID *output_type;
     HRESULT hr;
 
-    TRACE("iface %p, id %u, index %u, type %p.\n", iface, id, index, type);
+    TRACE("iface %p, id %lu, index %lu, type %p.\n", iface, id, index, type);
 
     if (!decoder->input_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -330,7 +330,7 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     HRESULT hr;
     ULONG i;
 
-    TRACE("iface %p, id %u, type %p, flags %#x.\n", iface, id, type, flags);
+    TRACE("iface %p, id %lu, type %p, flags %#lx.\n", iface, id, type, flags);
 
     if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major)) ||
         FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
@@ -384,7 +384,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     GUID major, subtype;
     HRESULT hr;
 
-    TRACE("iface %p, id %u, type %p, flags %#x.\n", iface, id, type, flags);
+    TRACE("iface %p, id %lu, type %p, flags %#lx.\n", iface, id, type, flags);
 
     if (!decoder->input_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -448,19 +448,19 @@ failed:
 
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("iface %p, id %u, type %p stub!\n", iface, id, type);
+    FIXME("iface %p, id %lu, type %p stub!\n", iface, id, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("iface %p, id %u, type %p stub!\n", iface, id, type);
+    FIXME("iface %p, id %lu, type %p stub!\n", iface, id, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
 {
-    FIXME("iface %p, id %u, flags %p stub!\n", iface, id, flags);
+    FIXME("iface %p, id %lu, flags %p stub!\n", iface, id, flags);
     return E_NOTIMPL;
 }
 
@@ -479,7 +479,7 @@ static HRESULT WINAPI transform_SetOutputBounds(IMFTransform *iface, LONGLONG lo
 
 static HRESULT WINAPI transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
 {
-    FIXME("iface %p, id %u, event %p stub!\n", iface, id, event);
+    FIXME("iface %p, id %lu, event %p stub!\n", iface, id, event);
     return E_NOTIMPL;
 }
 
@@ -491,14 +491,14 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
 
 static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
-    FIXME("iface %p, id %u, sample %p, flags %#x stub!\n", iface, id, sample, flags);
+    FIXME("iface %p, id %lu, sample %p, flags %#lx stub!\n", iface, id, sample, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
-    FIXME("iface %p, flags %#x, count %u, samples %p, status %p stub!\n", iface, flags, count, samples, status);
+    FIXME("iface %p, flags %#lx, count %lu, samples %p, status %p stub!\n", iface, flags, count, samples, status);
     return E_NOTIMPL;
 }
 
@@ -564,79 +564,79 @@ static HRESULT WINAPI media_object_GetStreamCount(IMediaObject *iface, DWORD *in
 
 static HRESULT WINAPI media_object_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %u, flags %p stub!\n", iface, index, flags);
+    FIXME("iface %p, index %lu, flags %p stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %u, flags %p stub!\n", iface, index, flags);
+    FIXME("iface %p, index %lu, flags %p stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type_index %u, type %p stub!\n", iface, index, type_index, type);
+    FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type_index %u, type %p stub!\n", iface, index, type_index, type);
+    FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %u, type %p, flags %#x stub!\n", iface, index, type, flags);
+    FIXME("iface %p, index %lu, type %p, flags %#lx stub!\n", iface, index, type, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %u, type %p, flags %#x stub!\n", iface, index, type, flags);
+    FIXME("iface %p, index %lu, type %p, flags %#lx stub!\n", iface, index, type, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type %p stub!\n", iface, index, type);
+    FIXME("iface %p, index %lu, type %p stub!\n", iface, index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %u, type %p stub!\n", iface, index, type);
+    FIXME("iface %p, index %lu, type %p stub!\n", iface, index, type);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size,
         DWORD *lookahead, DWORD *alignment)
 {
-    FIXME("iface %p, index %u, size %p, lookahead %p, alignment %p stub!\n", iface, index, size,
+    FIXME("iface %p, index %lu, size %p, lookahead %p, alignment %p stub!\n", iface, index, size,
             lookahead, alignment);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
 {
-    FIXME("iface %p, index %u, size %p, alignment %p stub!\n", iface, index, size, alignment);
+    FIXME("iface %p, index %lu, size %p, alignment %p stub!\n", iface, index, size, alignment);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)
 {
-    FIXME("iface %p, index %u, latency %p stub!\n", iface, index, latency);
+    FIXME("iface %p, index %lu, latency %p stub!\n", iface, index, latency);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_SetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME latency)
 {
-    FIXME("iface %p, index %u, latency %s stub!\n", iface, index, wine_dbgstr_longlong(latency));
+    FIXME("iface %p, index %lu, latency %s stub!\n", iface, index, wine_dbgstr_longlong(latency));
     return E_NOTIMPL;
 }
 
@@ -648,7 +648,7 @@ static HRESULT WINAPI media_object_Flush(IMediaObject *iface)
 
 static HRESULT WINAPI media_object_Discontinuity(IMediaObject *iface, DWORD index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    FIXME("iface %p, index %lu stub!\n", iface, index);
     return E_NOTIMPL;
 }
 
@@ -666,14 +666,14 @@ static HRESULT WINAPI media_object_FreeStreamingResources(IMediaObject *iface)
 
 static HRESULT WINAPI media_object_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("iface %p, index %u, flags %p stub!\n", iface, index, flags);
+    FIXME("iface %p, index %lu, flags %p stub!\n", iface, index, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_ProcessInput(IMediaObject *iface, DWORD index,
         IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
 {
-    FIXME("iface %p, index %u, buffer %p, flags %#x, timestamp %s, timelength %s stub!\n", iface,
+    FIXME("iface %p, index %lu, buffer %p, flags %#lx, timestamp %s, timelength %s stub!\n", iface,
             index, buffer, flags, wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
     return E_NOTIMPL;
 }
@@ -681,13 +681,13 @@ static HRESULT WINAPI media_object_ProcessInput(IMediaObject *iface, DWORD index
 static HRESULT WINAPI media_object_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count,
         DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
-    FIXME("iface %p, flags %#x, count %u, buffers %p, status %p stub!\n", iface, flags, count, buffers, status);
+    FIXME("iface %p, flags %#lx, count %lu, buffers %p, status %p stub!\n", iface, flags, count, buffers, status);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_object_Lock(IMediaObject *iface, LONG lock)
 {
-    FIXME("iface %p, lock %d stub!\n", iface, lock);
+    FIXME("iface %p, lock %ld stub!\n", iface, lock);
     return E_NOTIMPL;
 }
 
