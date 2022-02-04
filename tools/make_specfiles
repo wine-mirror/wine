@@ -137,6 +137,7 @@ my @dll_groups =
   "api-ms-win-security-base-private-l1-1-1",
   "api-ms-win-security-credentials-l1-1-0",
   "api-ms-win-security-cryptoapi-l1-1-0",
+  "api-ms-win-security-lsalookup-ansi-l2-1-0",
   "api-ms-win-security-lsalookup-l1-1-0",
   "api-ms-win-security-lsalookup-l1-1-1",
   "api-ms-win-security-lsalookup-l2-1-0",
