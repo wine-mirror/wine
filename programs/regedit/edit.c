@@ -288,7 +288,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 	if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
 	    CHAR* valueA = GetMultiByteString(stringValueData);
-	    if (sscanf(valueA, isDecimal ? "%u" : "%x", &val)) {
+	    if (sscanf(valueA, isDecimal ? "%lu" : "%lx", &val)) {
 		lRet = RegSetValueExW(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
 		if (lRet == ERROR_SUCCESS) result = TRUE;
                 else error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);

@@ -220,7 +220,7 @@ static int add_favourite_key_items(HMENU hMenu, HWND hList)
                           &max_value_len, NULL, NULL, NULL);
     if (rc != ERROR_SUCCESS)
     {
-        ERR("RegQueryInfoKey failed: %d\n", rc);
+        ERR("RegQueryInfoKey failed: %ld\n", rc);
         goto exit;
     }
 
