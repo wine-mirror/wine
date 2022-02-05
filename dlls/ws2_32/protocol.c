@@ -229,7 +229,7 @@ done:
 
         for (ai = *info; ai != NULL; ai = ai->ai_next)
         {
-            TRACE( "=> %p, flags %#x, family %d, type %d, protocol %d, len %ld, name %s, addr %s\n",
+            TRACE( "=> %p, flags %#x, family %d, type %d, protocol %d, len %Id, name %s, addr %s\n",
                    ai, ai->ai_flags, ai->ai_family, ai->ai_socktype, ai->ai_protocol, ai->ai_addrlen,
                    ai->ai_canonname, debugstr_sockaddr(ai->ai_addr) );
         }
@@ -489,11 +489,11 @@ int WINAPI GetAddrInfoExW( const WCHAR *name, const WCHAR *servname, DWORD names
 {
     int ret;
 
-    TRACE( "name %s, servname %s, namespace %u, namespace_id %s)\n",
+    TRACE( "name %s, servname %s, namespace %lu, namespace_id %s)\n",
            debugstr_w(name), debugstr_w(servname), namespace, debugstr_guid(namespace_id) );
 
     if (namespace != NS_DNS)
-        FIXME( "Unsupported namespace %u\n", namespace );
+        FIXME( "Unsupported namespace %lu\n", namespace );
     if (namespace_id)
         FIXME( "Unsupported namespace_id %s\n", debugstr_guid(namespace_id) );
     if (timeout)
@@ -639,7 +639,7 @@ int WINAPI getnameinfo( const SOCKADDR *addr, socklen_t addr_len, char *host,
 {
     struct getnameinfo_params params = { addr, addr_len, host, host_len, serv, serv_len, flags };
 
-    TRACE( "addr %s, addr_len %d, host %p, host_len %u, serv %p, serv_len %d, flags %#x\n",
+    TRACE( "addr %s, addr_len %d, host %p, host_len %lu, serv %p, serv_len %lu, flags %#x\n",
            debugstr_sockaddr(addr), addr_len, host, host_len, serv, serv_len, flags );
 
     return WS_CALL( getnameinfo, &params );
@@ -1054,7 +1054,7 @@ static char *read_etc_file( const WCHAR *filename, DWORD *ret_size )
     if ((ret = RegGetValueW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\tcpip\\Parameters",
                              L"DatabasePath", RRF_RT_REG_SZ, NULL, path, &size )))
     {
-        ERR( "failed to get database path, error %u\n", ret );
+        ERR( "failed to get database path, error %lu\n", ret );
         return NULL;
     }
     wcscat( path, L"\\" );
@@ -1063,14 +1063,14 @@ static char *read_etc_file( const WCHAR *filename, DWORD *ret_size )
     file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     if (file == INVALID_HANDLE_VALUE)
     {
-        ERR( "failed to open %s, error %u\n", debugstr_w( path ), GetLastError() );
+        ERR( "failed to open %s, error %lu\n", debugstr_w( path ), GetLastError() );
         return NULL;
     }
 
     size = GetFileSize( file, NULL );
     if (!(data = malloc( size )) || !ReadFile( file, data, size, ret_size, NULL ))
     {
-        WARN( "failed to read file, error %u\n", GetLastError() );
+        WARN( "failed to read file, error %lu\n", GetLastError() );
         free( data );
         data = NULL;
     }
@@ -1502,7 +1502,7 @@ const char * WINAPI inet_ntop( int family, void *addr, char *buffer, SIZE_T len 
     NTSTATUS status;
     ULONG size = min( len, (ULONG)-1 );
 
-    TRACE( "family %d, addr %p, buffer %p, len %ld\n", family, addr, buffer, len );
+    TRACE( "family %d, addr %p, buffer %p, len %Id\n", family, addr, buffer, len );
     if (!buffer)
     {
         SetLastError( STATUS_INVALID_PARAMETER );
@@ -1603,7 +1603,7 @@ const WCHAR * WINAPI InetNtopW( int family, void *addr, WCHAR *buffer, SIZE_T le
     char bufferA[INET6_ADDRSTRLEN];
     PWSTR ret = NULL;
 
-    TRACE( "family %d, addr %p, buffer %p, len %ld\n", family, addr, buffer, len );
+    TRACE( "family %d, addr %p, buffer %p, len %Iu\n", family, addr, buffer, len );
 
     if (inet_ntop( family, addr, bufferA, sizeof(bufferA) ))
     {
@@ -1789,7 +1789,7 @@ int WINAPI WSAAddressToStringA( struct sockaddr *addr, DWORD addr_len,
             return -1;
         }
         if (addr6->sin6_scope_id)
-            sprintf( buffer + strlen( buffer ), "%%%u", addr6->sin6_scope_id );
+            sprintf( buffer + strlen( buffer ), "%%%lu", addr6->sin6_scope_id );
         if (addr6->sin6_port)
             sprintf( buffer + strlen( buffer ), "]:%u", ntohs( addr6->sin6_port ) );
         break;
@@ -1809,7 +1809,7 @@ int WINAPI WSAAddressToStringA( struct sockaddr *addr, DWORD addr_len,
         return -1;
     }
 
-    TRACE( "=> %s, %u bytes\n", debugstr_a(buffer), size );
+    TRACE( "=> %s, %lu chars\n", debugstr_a(buffer), size );
     *string_len = size;
     strcpy( string, buffer );
     return 0;
@@ -1825,12 +1825,12 @@ int WINAPI WSAAddressToStringW( struct sockaddr *addr, DWORD addr_len,
     INT ret;
     char buf[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
 
-    TRACE( "(%p, %d, %p, %p, %p)\n", addr, addr_len, info, string, string_len );
+    TRACE( "(%p, %lu, %p, %p, %p)\n", addr, addr_len, info, string, string_len );
 
     if ((ret = WSAAddressToStringA( addr, addr_len, NULL, buf, string_len ))) return ret;
 
     MultiByteToWideChar( CP_ACP, 0, buf, *string_len, string, *string_len );
-    TRACE( "=> %s, %u chars\n", debugstr_w(string), *string_len );
+    TRACE( "=> %s, %lu chars\n", debugstr_w(string), *string_len );
     return 0;
 }
 
@@ -2022,7 +2022,7 @@ int WINAPI WSAGetServiceClassNameByClassIdW( GUID *class, WCHAR *service, DWORD 
  */
 int WINAPI WSALookupServiceBeginA( WSAQUERYSETA *query, DWORD flags, HANDLE *lookup )
 {
-    FIXME( "(%p 0x%08x %p) Stub!\n", query, flags, lookup );
+    FIXME( "(%p %#lx %p) Stub!\n", query, flags, lookup );
     SetLastError( WSA_NOT_ENOUGH_MEMORY );
     return -1;
 }
@@ -2033,7 +2033,7 @@ int WINAPI WSALookupServiceBeginA( WSAQUERYSETA *query, DWORD flags, HANDLE *loo
  */
 int WINAPI WSALookupServiceBeginW( WSAQUERYSETW *query, DWORD flags, HANDLE *lookup )
 {
-    FIXME( "(%p 0x%08x %p) Stub!\n", query, flags, lookup );
+    FIXME( "(%p %#lx %p) Stub!\n", query, flags, lookup );
     SetLastError( WSA_NOT_ENOUGH_MEMORY );
     return -1;
 }
@@ -2054,7 +2054,7 @@ int WINAPI WSALookupServiceEnd( HANDLE lookup )
  */
 int WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, DWORD *len, WSAQUERYSETA *results )
 {
-    FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
+    FIXME( "(%p %#lx %p %p) Stub!\n", lookup, flags, len, results );
     SetLastError( WSA_E_NO_MORE );
     return -1;
 }
@@ -2065,7 +2065,7 @@ int WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, DWORD *len, WSAQUE
  */
 int WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, DWORD *len, WSAQUERYSETW *results )
 {
-    FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
+    FIXME( "(%p %#lx %p %p) Stub!\n", lookup, flags, len, results );
     SetLastError( WSA_E_NO_MORE );
     return -1;
 }
@@ -2076,7 +2076,7 @@ int WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, DWORD *len, WSAQUE
  */
 int WINAPI WSASetServiceA( WSAQUERYSETA *query, WSAESETSERVICEOP operation, DWORD flags )
 {
-    FIXME( "(%p 0x%08x 0x%08x) Stub!\n", query, operation, flags );
+    FIXME( "(%p %#x %#lx) Stub!\n", query, operation, flags );
     return 0;
 }
 
@@ -2086,7 +2086,7 @@ int WINAPI WSASetServiceA( WSAQUERYSETA *query, WSAESETSERVICEOP operation, DWOR
  */
 int WINAPI WSASetServiceW( WSAQUERYSETW *query, WSAESETSERVICEOP operation, DWORD flags )
 {
-    FIXME( "(%p 0x%08x 0x%08x) Stub!\n", query, operation, flags );
+    FIXME( "(%p %#x %#lx) Stub!\n", query, operation, flags );
     return 0;
 }
 
@@ -2129,7 +2129,7 @@ int WINAPI WSANSPIoctl( HANDLE lookup, DWORD code, void *in_buffer,
                         DWORD in_size, void *out_buffer, DWORD out_size,
                         DWORD *ret_size, WSACOMPLETION *completion )
 {
-    FIXME( "(%p, 0x%08x, %p, 0x%08x, %p, 0x%08x, %p, %p) Stub!\n", lookup, code,
+    FIXME( "(%p, %#lx, %p, %#lx, %p, %#lx, %p, %p) Stub!\n", lookup, code,
            in_buffer, in_size, out_buffer, out_size, ret_size, completion );
     SetLastError( WSA_NOT_ENOUGH_MEMORY );
     return -1;
@@ -2141,7 +2141,7 @@ int WINAPI WSANSPIoctl( HANDLE lookup, DWORD code, void *in_buffer,
  */
 int WINAPI WSCEnableNSProvider( GUID *provider, BOOL enable )
 {
-    FIXME( "(%s 0x%08x) Stub!\n", debugstr_guid(provider), enable );
+    FIXME( "(%s %d) Stub!\n", debugstr_guid(provider), enable );
     return 0;
 }
 
@@ -2152,7 +2152,7 @@ int WINAPI WSCEnableNSProvider( GUID *provider, BOOL enable )
 int WINAPI WSCGetProviderInfo( GUID *provider, WSC_PROVIDER_INFO_TYPE info_type,
                                BYTE *info, size_t *len, DWORD flags, int *errcode )
 {
-    FIXME( "(%s 0x%08x %p %p 0x%08x %p) Stub!\n",
+    FIXME( "(%s %#x %p %p %#lx %p) Stub!\n",
            debugstr_guid(provider), info_type, info, len, flags, errcode );
 
     if (!errcode)
@@ -2200,7 +2200,7 @@ int WINAPI WSCGetProviderPath( GUID *provider, WCHAR *path, int *len, int *errco
 int WINAPI WSCInstallNameSpace( WCHAR *identifier, WCHAR *path, DWORD namespace,
                                 DWORD version, GUID *provider )
 {
-    FIXME( "(%s %s 0x%08x 0x%08x %s) Stub!\n", debugstr_w(identifier), debugstr_w(path),
+    FIXME( "(%s %s %#lx %#lx %s) Stub!\n", debugstr_w(identifier), debugstr_w(path),
            namespace, version, debugstr_guid(provider) );
     return 0;
 }
@@ -2221,7 +2221,7 @@ int WINAPI WSCUnInstallNameSpace( GUID *provider )
  */
 int WINAPI WSCWriteProviderOrder( DWORD *entry, DWORD number )
 {
-    FIXME( "(%p 0x%08x) Stub!\n", entry, number );
+    FIXME( "(%p %#lx) Stub!\n", entry, number );
     return 0;
 }
 
@@ -2232,7 +2232,7 @@ int WINAPI WSCWriteProviderOrder( DWORD *entry, DWORD number )
 int WINAPI WSCInstallProvider( GUID *provider, const WCHAR *path,
                                WSAPROTOCOL_INFOW *protocol_info, DWORD count, int *err )
 {
-    FIXME( "(%s, %s, %p, %d, %p): stub !\n", debugstr_guid(provider),
+    FIXME( "(%s, %s, %p, %lu, %p): stub !\n", debugstr_guid(provider),
            debugstr_w(path), protocol_info, count, err );
     *err = 0;
     return 0;
@@ -2256,7 +2256,7 @@ int WINAPI WSCDeinstallProvider( GUID *provider, int *err )
 int WINAPI WSCSetApplicationCategory( const WCHAR *path, DWORD len, const WCHAR *extra, DWORD extralen,
                                       DWORD lspcat, DWORD *prev_lspcat, int *err )
 {
-    FIXME( "(%s %d %s %d %d %p) Stub!\n", debugstr_w(path), len, debugstr_w(extra),
+    FIXME( "(%s %lu %s %lu %#lx %p) Stub!\n", debugstr_w(path), len, debugstr_w(extra),
            extralen, lspcat, prev_lspcat );
     return 0;
 }
