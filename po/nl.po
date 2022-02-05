@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-22 10:00+0100\n"
+"PO-Revision-Date: 2022-02-05 10:30+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -6972,54 +6972,40 @@ msgid "This network connection does not exist.\n"
 msgstr "Deze netwerkverbinding bestaat niet.\n"
 
 #: dlls/kernel32/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Ongeldig op interruptietijd.\n"
+msgstr "Oproep onderbroken.\n"
 
 #: dlls/kernel32/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Ongeldige handle.\n"
+msgstr "Ongeldige bestandsingang.\n"
 
 #: dlls/kernel32/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Ongeldig netwerkadres.\n"
+msgstr "Ongeldig pointeradres.\n"
 
 #: dlls/kernel32/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Ongeldige naam.\n"
+msgstr "Ongeldig argument.\n"
 
 #: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Verbinding opnieuw ingesteld door gelijkwaardige computer.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "Punt niet gevonden.\n"
+msgstr "Host niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "Kenmerk is niet gevonden.\n"
+msgstr "Niet-gemachtigde host niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "Onherstelbare fout opgetreden.\n"
+msgstr "Onherstelbare fout.\n"
 
 #: dlls/kernel32/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "Geldige naam, geen gegevensrecord.\n"
 
 #: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
