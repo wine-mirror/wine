@@ -3305,8 +3305,9 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 
     if (!num_startup)
     {
-        err = WSANOTINITIALISED;
-        goto done;
+        WARN( "not initialised\n" );
+        SetLastError( WSANOTINITIALISED );
+        return -1;
     }
 
     /* hack for WSADuplicateSocket */
@@ -3406,11 +3407,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     }
     WSASetLastError(0);
     return ret;
-
-done:
-    WARN("\t\tfailed, error %d!\n", err);
-    SetLastError(err);
-    return INVALID_SOCKET;
 }
 
 /***********************************************************************
