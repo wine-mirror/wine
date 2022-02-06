@@ -84,7 +84,7 @@ static void test_interfaces(void)
             trace("%d %s not registered. Skipping\n", i, wine_dbgstr_guid(xact_interfaces[i].clsid) );
             continue;
         }
-        ok(hr == xact_interfaces[i].expected, "%d, Unexpected value 0x%08x\n", i, hr);
+        ok(hr == xact_interfaces[i].expected, "%d, Unexpected value 0x%08lx\n", i, hr);
         if (hr == S_OK)
             IUnknown_Release(unk);
     }
