@@ -477,6 +477,7 @@ struct msdasql_rowset
     IColumnsRowset IColumnsRowset_iface;
     IUnknown *caller;
     LONG refs;
+    SQLHSTMT hstmt;
 };
 
 static inline struct msdasql_rowset *impl_from_IRowset( IRowset *iface )
@@ -574,6 +575,8 @@ static ULONG WINAPI msdasql_rowset_Release(IRowset *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", rowset );
+
+        SQLFreeHandle(SQL_HANDLE_STMT, rowset->hstmt);
 
         if (rowset->caller)
             IUnknown_Release(rowset->caller);
@@ -845,27 +848,53 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
 {
     struct command *command = impl_from_ICommandText( iface );
     struct msdasql_rowset *msrowset;
-    HRESULT hr;
+    HRESULT hr = S_OK;
+    RETCODE ret;
+    SQLHSTMT hstmt = command->hstmt;
+    SQLLEN results = -1;
 
-    FIXME("%p, %p, %s, %p %p %p Semi Stub\n", command, outer, debugstr_guid(riid), params, affected, rowset);
+    TRACE("%p, %p, %s, %p %p %p\n", command, outer, debugstr_guid(riid), params, affected, rowset);
 
-    msrowset = heap_alloc(sizeof(*msrowset));
-    if (!msrowset)
-        return E_OUTOFMEMORY;
+    if (!hstmt)
+        SQLAllocHandle(SQL_HANDLE_STMT, command->hdbc, &hstmt);
 
-    msrowset->IRowset_iface.lpVtbl = &msdasql_rowset_vtbl;
-    msrowset->IRowsetInfo_iface.lpVtbl = &rowset_info_vtbl;
-    msrowset->IColumnsInfo_iface.lpVtbl = &rowset_columninfo_vtbll;
-    msrowset->IAccessor_iface.lpVtbl = &accessor_vtbl;
-    msrowset->IColumnsRowset_iface.lpVtbl = &columnrs_rs_vtbl;
-    msrowset->refs = 1;
-    ICommandText_QueryInterface(iface, &IID_IUnknown, (void**)&msrowset->caller);
+    ret = SQLExecDirectW(hstmt, command->query, SQL_NTS);
+    if (ret != SQL_SUCCESS)
+    {
+        dump_sql_diag_records(SQL_HANDLE_STMT, hstmt);
+        return E_FAIL;
+    }
+
+    ret = SQLRowCount(hstmt, &results);
+    if (ret != SQL_SUCCESS)
+        ERR("SQLRowCount failed (%d)\n", ret);
 
     if (affected)
-        *affected = 0; /* FIXME */
+        *affected = results;
 
-    hr = IRowset_QueryInterface(&msrowset->IRowset_iface, riid, (void**)rowset);
-    IRowset_Release(&msrowset->IRowset_iface);
+    *rowset = NULL;
+    if (!wcsnicmp( command->query, L"select ", 7 ))
+    {
+        msrowset = heap_alloc(sizeof(*msrowset));
+        if (!msrowset)
+            return E_OUTOFMEMORY;
+
+        command->hstmt = NULL;
+
+        msrowset->IRowset_iface.lpVtbl = &msdasql_rowset_vtbl;
+        msrowset->IRowsetInfo_iface.lpVtbl = &rowset_info_vtbl;
+        msrowset->IColumnsInfo_iface.lpVtbl = &rowset_columninfo_vtbll;
+        msrowset->IAccessor_iface.lpVtbl = &accessor_vtbl;
+        msrowset->IColumnsRowset_iface.lpVtbl = &columnrs_rs_vtbl;
+        msrowset->refs = 1;
+        ICommandText_QueryInterface(iface, &IID_IUnknown, (void**)&msrowset->caller);
+        msrowset->hstmt = hstmt;
+
+        hr = IRowset_QueryInterface(&msrowset->IRowset_iface, riid, (void**)rowset);
+        IRowset_Release(&msrowset->IRowset_iface);
+    }
+    else
+        SQLFreeStmt(hstmt, SQL_CLOSE);
 
     return hr;
 }

@@ -382,10 +382,19 @@ static void test_command_rowset(IUnknown *cmd)
     affected = 9999;
     hr = ICommandText_Execute(command_text, NULL, &IID_IRowset, NULL, &affected, &unk);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
-    todo_wine ok(unk == NULL, "Unexpected value\n");
-    todo_wine ok(affected == -1, "got %Id\n", affected);
+    ok(unk == NULL, "Unexpected value\n");
+    ok(affected == -1, "got %Id\n", affected);
     if (unk)
         IUnknown_Release(unk);
+
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"insert into testing values(1, 0)");
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+    affected = 9999;
+    hr = ICommandText_Execute(command_text, NULL, &IID_IRowset, NULL, &affected, &unk);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(affected == 1, "got %Id\n", affected);
+    ok(unk == NULL, "Unexpected value\n");
 
     hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"select * from testing");
     ok(hr == S_OK, "got 0x%08lx\n", hr);
@@ -396,7 +405,7 @@ static void test_command_rowset(IUnknown *cmd)
     ok(unk != NULL, "Unexpected value\n");
     if (hr == S_OK)
     {
-        ok(affected == -1, "wrong affected value\n");
+        ok(affected == -1, "got %Id\n", affected);
 
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
