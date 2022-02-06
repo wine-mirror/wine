@@ -2067,7 +2067,11 @@ static void test_ck_default(void)
     hr = IDirect3DDevice_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
-    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    /* Color keying is supposed to be on by default in ddraw1, but used only if a ckey is set.
+     * WARP begs to differ. The default of D3DRENDERSTATE_COLORKEYENABLE is random, and it
+     * doesn't mind the absence of a color key (the latter part affects other tests, not this one). */
+    ok(compare_color(color, 0x0000ff00, 1) || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x000000ff, 1)),
+            "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
     ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
