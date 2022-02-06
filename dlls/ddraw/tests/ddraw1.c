@@ -11872,6 +11872,8 @@ static void test_texture_load(void)
     emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
     emit_texture_load(&ptr, dst_texture_handle, src_texture_handle);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, dst_texture_handle);
+    /* WARP randomly applies color keying without having a key set. */
+    emit_set_rs(&ptr, D3DRENDERSTATE_COLORKEYENABLE, FALSE);
     emit_tquad(&ptr, 0);
     emit_end(&ptr);
     inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData - sizeof(tquad);
