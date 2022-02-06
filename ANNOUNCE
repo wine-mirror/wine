@@ -1,14 +1,12 @@
-The Wine maintenance release 6.0.2 is now available.
+The Wine maintenance release 6.0.3 is now available.
 
 What's new in this release (see below for details):
-  - Compilation fixes (freetype, gcc 11)
-  - Default to building with GnuTLS support on macOS, if present
   - Various bug fixes
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/6.0/wine-6.0.2.tar.xz
-  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0.2.tar.xz
+  https://dl.winehq.org/wine/source/6.0/wine-6.0.3.tar.xz
+  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0.3.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -24,244 +22,230 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 6.0.2 (total 51):
+Bugs fixed in 6.0.3 (total 46):
 
-  12076  Multiple applications refuse to install unless '%SystemRoot%\System32\Drivers\Etc\{services,host}' exist (Informix Database apps, Autodesk 3ds Max 9, SAP GUI)
-  12457  Multiple apps crash with NotImplementedException at IWebBrowser2.get_LocationName() (SharpDevelop 2.2, Clarion Enterprise Edition 9.0.10376)
-  19756  Date/time picker doesn't notify app about checkbox changes (TaskCoach: Cannot add new task with a due date)
-  24893  File/folder context menus have missing options (Explorer++, Double Commander)
-  29903  Multiple games and applications fail to enumerate processes due to 'wtsapi32.WTSEnumerateProcessesW' stub (Visual Studio 2005, .NET 2.0 SDK DbgCLR, Akamai DL Manager, Dekaron)
-  32749  Implement atl100.dll.AtlAxDialogBoxW to show error dialogs (Visual Studio 2010 (10.0) Express Edition)
-  35539  Proteus 8 demo fails to install
-  36010  Changing font resolution on winecfg changes default main font to Tahoma
-  39841  IShellFolder.CreateViewObject() doesn't support IID_IContextMenu (Double Commander "Error: invalid parameter" when right-clicking on an empty space)
-  44813  Some applications fail when calling ntdll.NtReadFile on a directory (expect STATUS_INVALID_DEVICE_REQUEST)
-  46817  Steam Big Picture needs d3d11_device_CreateDeviceContextState
-  47296  Google drive crashes before login
-  47310  Canon TS3100 series full driver and software package refuses to install: "To install the software, you must be logged in to an administrator account."
-  48123  Word 97 crashes after calling stub URLMoniker_ComposeWith
-  48412  Multiple games have lighting issue and textures blinking (Call of Duty 4: Modern Warfare, Call of Duty: Modern Warfare 2)
-  48507  osu! icons in the setting and music player are not being rendered
-  49434  Wine builtin 'iexplore' crashes upon loading Google Account login page
-  49663  Performance regression in TrackMania Nations Forever
-  49954  Multiple games and applications need msvcp140_1._Aligned_get_default_resource (EVE Online Launcher, QT Creator 3.x, Kate, Snap Camera 1.11.x, Cppcheck 2.3)
-  50119  Dark Souls II: Scholar of the First Sin shows a white screen with vulkan renderer
-  50147  Microsoft WebView2 "evergreen bootstrapper"/installer needs IStream::CopyTo()
-  50168  Error when running notepad.exe: Failed to start RpcSs service
-  50318  'HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\DataBasePath' registry entry has non-standard value
-  50362  Fl Studio 20.8 crashes on startup
-  50436  Upstream FAudio pkg-config file not found
-  50492  Amazon Chime 4.x (.NET 4.5 app) reports 'Failed to InjectErrorHandlingScript, Unable to cast COM object of type 'System.__ComObject' to interface type 'mshtml.HTMLHeadElement''
-  50628  Fairy Tale About Father Frost, Ivan and Nastya crashes on DDERR_SURFACE_LOST
-  50673  FlatOut 2 crashes on launch
-  50697  Multiple applications crash due to DHTMLEdit 'IOleObject::GetExtent' stub (Atomic Mail Sender 4.2x)
-  50725  Nvidia FrameView 1.2 (Win10 app) crashes on unimplemented function tdh.dll.TdhLoadManifestFromBinary
-  50756  "Path is invalid." when using "SVN update" with SVN for Windows, which is used by TortoiseSVN
-  50791  NtQueryObject( ..., ObjectBasicInformation, NULL, 0, &retLen) returns incorrect NTSTATUS error code and no buffer size (EditSection, Google sandbox-attacksurface-analysis-tools v1.1.x)
-  50805  Win32_OperatingSystem class is missing 'ProductType' (affects Chocolatey)
-  50809  Multiple .NET 4.x application installers fail due to 'MsiNetAssemblySupport' property returning incorrect version (IronPython 2.7.5)
-  50811  gdi32.res fails to compile when freetype pkg-config cflags contain "-pthread"
-  50818  Mahou Shoujo Shoumou Sensen - DeadΩAegis (Trial) shows unreadable text in the message box.
-  50829  Process Hacker 2.38 crashes on unimplemented function dbghelp.dll.SymFromNameW
-  50830  Process Hacker 2.38 crashes on unimplemented function advapi32.dll.LsaEnumerateAccounts
-  50845  jscript crashes on internal assert(0) in PE build with clang
-  50854  Multiple Windows 10 application installers refuse to install, requiring 'advapi32.dll' version >= 6.3.10000.0 (Elgato Stream Deck 4.9.3, Windows Admin Center 2103)
-  50875  HTMLElement_get_offsetParent crashes wine if a NULL offset parent is expected (VbsEdit)
-  50885  PdfSharp creates invalid PDF files
-  50925  Error fetching public key in GetRSAKeyFromCert - File not found
-  50952  Legends of Runeterra crashes at launch
-  50960  NETCoreCheck from .NET Deployment Tools crashes on unimplemented function api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vfwprintf_p
-  51035  Alacritty v0.7.2 portable crashes: SetEnvironmentVariable  ("some_non-existant_var", NULL) should return TRUE
-  51041  Scalable fonts with fsCsb[0] == 0 are not enumerated correctly
-  51076  demangle_datatype in ucrtbase crash in vc2019 x86 mode
-  51117  Silverlight_x64.exe (part of LEGO MINDSTORMS EV3 Home Edition installer) crashes
-  51324  Imperium Great Battles of Rome can't play videos
-  51631  winhttp:winhttp and winhttp:notification fail because echo.websocket.org is out of commission
+  30244  Might & Magic Clash of Heroes: fails to start
+  36887  Trusteer Rapport setup crashes on unimplemented function ntoskrnl.exe.PsGetCurrentProcessSessionId
+  37592  Filenames in themed file dialog change size
+  39142  Roblox Client/Server connection is dropped with error "This server has shut down."
+  41292  Nexton LC-ScriptEngine freezes, possibly bad dsound notifications
+  47047  Multiple kernel drivers crash due to missing 'ntoskrnl.exe.MmGetPhysicalAddress' semi-stub (64-bit MRAC Anti-Cheat (My.Com Warface) kernel service, DELL BIOS flash utility, BattlEye Anti-Cheat)
+  47505  Levelhead: Fatal error when attempting to access the game's servers when logged in
+  47791  Inconsistent %ERRORLEVEL% after setting env var value in cmd.exe
+  48891  Bash from Cygwin/msys2 terminates after first command
+  49625  winedbg --command 'info wnd' fails with Exception c0000005
+  49726  ChrisPC Free VPN Connection 2.x crashes on unimplemented function rasapi32.dll.RasSetCredentialsA when clicking 'Connect to VPN'
+  50041  Amnesia: Rebirth crashes with builtin vcomp140
+  50113  Total Commander 9.51: when using a third-party theme with Windows XP, the drive buttons and function buttons at the bottom of the window (F5 Copy) are not displayed
+  50244  Melodyne 5: activation via internet fails with 12152 error
+  50272  Melodyne 5: activation via internet produces "Unknown Error"
+  50404  Sims 4 crashes on startup with builtin msvcrt
+  50412  Wrong check for needed access rights in QueryServiceConfig2
+  50603  WiX Toolset v3.11 installer crashes when loading update feed XML
+  50615  Excel 2007 needs ICreateTypeInfo2::DeleteFuncDesc()
+  50735  MSBuild fails to launch FileTracker
+  51221  Dangerous Water crash when starting a Multiplayer game (requires IDirectPlay8Server_EnumServiceProviders implementation)
+  51244  Frostpunk doesn't launch with builtin msvcr120
+  51264  GUI exe receives invalid StdOutput HANDLE if launched via ShellExecuteEx
+  51267  Rise of Legends Demo crashes with null pointer exception inside SAXReader::parseURL
+  51291  Youkoso! Sukebe Elf no Mori e (demo) doesn't show thumbnail image in monitor settings.
+  51302  NASCAR '15 Victory Edition gets in infinite loop on launch
+  51303  Metal Gear Solid V: Ground Zeroes needs d3d11_swapchain_GetLastPresentCount implementation
+  51348  uxtheme.SetWindowTheme should use SendMessage to send WM_THEMECHANGED
+  51358  Civilization 4: XML load error when trying to start
+  51382  NetEase Cloud Music crashes on zh_CN.UTF-8 locale.
+  51435  iostream float formatting broken since Wine 5.12-170-g1bc6f0c8617
+  51452  oleaut32:varformat fails in Wine when the currency sign has two characters or more
+  51465  EVE Online launcher crashes
+  51503  vbscript parser error in expression with # char
+  51505  MIDISelector's MIDI mapper configuration doesn't take effect
+  51506  Disabled controls are not greyed out when theming is active
+  51535  Native Access 1.13.3 crashes on unimplemented function virtdisk.dll.DetachVirtualDisk
+  51553  Purple bitmap should be transparent in scrollbar theming
+  51574  swscanf_s with %zu fails for valid value
+  51576  Click-N-Type 3.03 virtual keyboard installer sometimes has two task panes
+  51590  services:service fails when the KDE taskbar is at the top
+  51591  AFxW: file list panes aren't updated at start-up
+  51635  wine fails to build with glibc 2.34
+  51728  copypasta in pwcache.c:ctox()
+  51894  ucrtbase:misc fails on some Windows 10 1607 and 1709
+  51932  wine-stable 6.0.2 build fails in Ubuntu 21.10
 
 ----------------------------------------------------------------
 
-Changes since 6.0.1:
+Changes since 6.0.2:
 
-Akihiro Sagawa (2):
-      gdi32: Move otmEMSquare initialization to freetype_load_font.
-      gdi32: Fix text metrics used in EnumFonts families.
+Akihiro Sagawa (6):
+      ntdll/tests: Expand path name tests with path + device name.
+      ntdll: Validate directory path when the path name ends with a dos device name.
+      ntdll: Fix null pointer dereference in RtlDosPathNameToNtPathName_U_WithStatus.
+      midimap: Introduce XP form and prefer it.
+      user32/tests: Test pending redraw state with owner-drawn list box.
+      user32/listbox: Fix redraw after LB_SETCOUNT message.
 
-Alexandre Julliard (7):
-      makefiles: Only allow includes and defines in pkg-config flags.
-      configure: Fix package name for FAudio.
-      ws2_32: Install network database files.
-      wine.inf: Fix the Tcpip database path.
-      explorer: Store the graphics driver basename instead of the full path.
-      gdi32/tests: Regenerate ttf files with the official fontforge version.
-      gdiplus/tests: Regenerate ttf files with the official fontforge version.
+Alex Henrie (2):
+      ntoskrnl: Add MmGetPhysicalAddress semi-stub.
+      rasapi32: Add RasSetCredentialsA/W stubs.
 
-Alistair Leslie-Hughes (1):
-      gdi32: Don't override FontSubstitutes on a DPI only change.
+Alexandre Julliard (2):
+      ntdll: Avoid crash on shutting down partially initialized thread.
+      wininet/tests: Mark a failing test as todo.
+
+Alistair Leslie-Hughes (5):
+      services: Check correct permission for QueryServiceConfig2W.
+      dpnet: Implement IDirectPlay8Server EnumServiceProviders.
+      ntoskrnl.exe: Implement PsGetCurrentProcessSessionId.
+      wininet: Reset context length for http status 304.
+      wininet: Allow up to 4K for response headers.
+
+Andrew Boyarshin (1):
+      include: Fix IRequestDictionary IID.
 
 Andrew Eikum (1):
-      windowscodecs: Avoid types deprecated in libtiff 4.3.
+      comctl32: Avoid gcc 11 maybe-uninitialized warning.
 
-Andrey Turkin (1):
-      ieframe: Implement IWebBrowser2::get_LocationName().
+Andrey Gusev (1):
+      msvcr120: Add version.rc file.
 
-Anton Baskanov (4):
-      amstream/tests: Add a test for event parameter of IDirectDrawStreamSample::Update.
-      amstream: Support the event parameter in IDirectDrawStreamSample::Update.
-      fonts: Fix breve glyph position in 16px MS Sans Serif.
-      fonts: Fix dotaccent glyph position in Small Fonts.
+Austin English (1):
+      virtdisk: Add DetachVirtualDisk stub.
 
-Arkadiusz Hiler (3):
-      msvcp90: Add helpers for creating base class RTTI.
-      msvcp140_1: Implement the DLL.
-      kernelbase: Fix GetFileVersionInfo*() crashes with malformed resources.
+Bernhard Übelacker (1):
+      attrib: Avoid crash when called without parameter.
 
-Austin English (2):
-      tdh: Add TdhLoadManifestFromBinary stub.
-      readme: Document Libera Chat migration.
+Brendan McGrath (1):
+      kernelbase: Don't pass StdHandles with CREATE_NEW_CONSOLE.
 
-Brendan Shanks (2):
-      wined3d: Add GPU information for Intel UHD Graphics 630.
-      configure: Work around Xcode 12's ld assuming 16KB page sizes.
+Damjan Jovanovic (4):
+      server: The owner of a securable object should have all the standard access rights.
+      msxml3: Return S_FALSE from IXMLDOMNamedNodeMap::nextNode() when there are no attributes.
+      msxml3/tests: Add some regex tests.
+      msxml3: Use XSD regex quantifier format S{0, m} instead of S{, m}.
 
-Damjan Jovanovic (6):
-      comctl32: Send DTN_DATETIMECHANGE when the checkbox changes too.
-      shell32: The menu wIDs in hmenu were rebased by idCmdFirst.
-      shell32: Use a smaller range of shellview menu IDs in our IContextMenu functions.
-      shell32: Implement IID_IContextMenu in CreateViewObject() methods for shell folders that support it.
-      shell32/tests: Fix test failures from ad412b11a7ea17b708994ed6609f8ed0cbfb169b.
-      shell32: Fix a lock leak.
+Dmitry Timoshkov (1):
+      vcruntime140_1: Fix compilation with clang.
 
-David Torok (1):
-      ntdll: Add NtCreateThread stub.
+Eric Pouech (1):
+      winedbg: Fix crash when no process attached in 'info wnd' command.
 
-David White (1):
-      urlmon: Implement IMoniker_ComposeWith() for url monikers.
+Fabian Maurer (3):
+      configure: Improve resolv lib test for glibc 2.34.
+      mpr: Fix copy paste error when converting hex char to int.
+      msi: Set dialog as parent in subsequent dialog.
 
-Dmitry Kislyuk (1):
-      mshtml: Fix NULL offset parent handling in IHTMLElement::get_offsetParent.
+Florian Eder (1):
+      cmd: Do not change errorlevel when setting environment variables.
 
-Dmitry Timoshkov (3):
-      crypt32: Implement CryptImportPublicKeyInfoEx2.
-      crypt32: Add support for importing RSA public keys with BCrypt.
-      ntdll: Exclude large integer APIs from relay tracing.
+François Gouget (16):
+      ntdll: Fix the spelling of a comment.
+      oleaut32/tests: Allow testing VarParseNumFromStr() using Unicode strings.
+      oleaut32/tests: Add more VarParseNumFromStr() tests.
+      oleaut32: Fix VarParseNumFromStr()'s support for two-character currencies.
+      oleaut32: VarParseNumFromStr() accepts trailing currency symbols.
+      oleaut32: Setting sThousand to a non-breaking space also matches regular spaces.
+      oleaut32: Fix a trace containing a null character.
+      oleaut32/tests: Fix the Swiss franc and Moroccan dirham tests.
+      oleaut32: VarParseNumFromStr() does not allow leading thousands separators.
+      oleaut32: Fix VarParseNumFromStr()'s support for trailing thousands separator spaces.
+      oleaut32/tests: Test VarParseNumFromStr()'s handling of LOCALE_SMON*.
+      oleaut32/tests: Add more VarParseNumFromStr() hexadecimal/octal tests.
+      oleaut32: Remove caching from VARIANT_GetLocalisedNumberChars().
+      oleaut32: Fix VarParseNumFromStr()'s handling of currency thousands separators.
+      oleaut32: Add support for longer currency symbols.
+      gdiplus: GdipGetFamilyName() should not crash when given a NULL name.
 
-Esme Povirk (1):
-      gdiplus: Implement reference counting for private font families.
+Gerald Pfeifer (1):
+      ntdll: Only use sysinfo function when present.
 
-François Gouget (3):
-      tests: Trace the filename in winetest_wait_child_process().
-      tests: Add ignore_exceptions().
-      make_unicode: Add support for the 720 codepage (Arabic, Farsi and Urdu).
+Gijs Vermeulen (2):
+      vcomp: Implement omp_get_num_procs().
+      ntdll: Avoid declaration-after-statement warning.
 
-Gijs Vermeulen (11):
-      wtsapi32: Avoid calling GetUserNameW() twice in WTSQuerySessionInformationW(WTSUserName).
-      wtsapi32/tests: Test returned username for WTSQuerySessionInformation(WTSUserName).
-      kernelbase: Reject SORT_DIGITSASNUMBERS in CompareStringA().
-      kernelbase: Support FileRenameInfo in SetFileInformationByHandle.
-      ntdll: Return STATUS_INFO_LENGTH_MISMATCH when len is too small in NtQueryObject(ObjectBasicInformation).
-      dbghelp: Implement SymFromNameW().
-      ntdll/tests: Refactor RtlSetEnvironmentVariable() tests.
-      ntdll: Don't fail when trying to remove the value of a non-existant variable in RtlSetEnvironmentVariable().
-      amstream: Handle AMMSF_RENDERALLSTREAMS in IAMMultiMediaStream::OpenFile().
-      winecfg: Disable virtual desktop when using macdrv.
-      secur32: Default to building with GnuTLS support on macOS, if present.
+Giovanni Mascellani (1):
+      kernelbase: Fix an incorrect allocation size.
 
-Haidong Yu (2):
-      shell32: Fix a memory leak.
-      shell32: Fix a memory leak.
+Hans Leidekker (10):
+      wldap32: Rename ldap_connect() to avoid a name conflict.
+      winhttp: Pass a socket pointer to send_bytes() and receive_bytes().
+      winhttp: Read any data left in the request buffer for websocket connections.
+      winhttp: Call read_data() at least once in drain_content().
+      winhttp: Call drain_content() before clear_response_headers().
+      winhttp: Fix return value for relative redirects.
+      winhttp: Don't remove content-type/length headers in handle_redirect().
+      winhttp/tests: Add redirect tests.
+      wbemprox: Return an empty array for __DERIVATION.
+      wbemprox: Add __DERIVATION to the list of system properties.
 
-Hans Leidekker (3):
-      ntdll: Fall back to reading /dev/urandom if getrandom() is not supported.
-      msi: Fix building the fusion filename.
-      winhttp: Use ws.ifelse.io for websocket tests.
+Henri Verbeet (2):
+      dxgi/tests: Add a test for swapchain present counts.
+      dxgi: Implement d3d11_swapchain_GetLastPresentCount().
 
-Haoyang Chen (2):
-      gdiplus: Avoid filtering of special characters.
-      gdi32: Fix a memory leak.
+Hiroki Awata (1):
+      dsound: Notify DSBPN_OFFSETSTOP earlier.
 
-Jacek Caban (3):
-      mshtml: Support DispHTMLHeadElement interface.
-      jscript: Use quiet NaNs in jsval.
-      msvcrt: Add sincos to importlib.
+Jacek Caban (2):
+      advapi32: Link to msvcrt.dll.
+      include: Use __builtin_offsetof on Clang.
+
+Jactry Zeng (1):
+      gdi32: Fix a typo in unix_face_create().
 
 Jan Sikorski (1):
-      wined3d: Handle different slice pitches in uncompressed texture updates.
+      winemac.drv: Omit WM_ENTER/EXITSIZEMOVE on non-interactive window changes.
 
-John Zourlios (1):
-      kernelbase: Accept LINGUISTIC_IGNOREDIACRITIC & SORT_DIGITSASNUMBERS in CompareStringEx().
+Jefferson Carpenter (1):
+      msxml3/saxreader: Handle null url in parseURL().
 
-Lauri Kenttä (1):
-      msvcrt: Handle negative zero, infinity and nan in _ecvt and others.
-
-Louis Lenders (5):
-      wtsapi32: Implement WTSQuerySessionInformation(WTSDomainName).
-      wbemprox: Add ProductType to win32_operatingsystem class.
-      advapi32: Update version resource.
-      advapi32: Add stub for LsaEnumerateAccounts.
-      kernel32: Remove entry for BasepDebugDump.
-
-Matteo Bruni (2):
-      wined3d: Handle blits to Vulkan swapchains not matching the D3D swapchain.
-      wined3d: Don't skip FFP vertex pipeline state handlers when STATE_VDECL is dirty.
-
-Michele Dionisio (1):
-      msvcrt: Add __stdio_common_vfprintf_p and __stdio_common_vfwprintf_p.
-
-Nguyễn Chính Hữu (1):
-      wined3d: Add GPU information for NVIDIA GT 1030.
+Kalen Alwardt (1):
+      ntdll: Export ZwFilterToken().
 
 Nikolay Sivov (2):
-      gdi32: Enumerate scalable fonts with zero charset mask as OEM.
-      shcore/stream: Implement generic CopyTo().
+      oleaut32: Added ICreateTypeInfo2::DeleteFuncDesc().
+      d3dx9/effect: Reset output handle for next after last technique in FindNextValidTechnique().
 
-Owen Rudge (1):
-      winspool: Filter invalid characters when creating the PPD filename.
+Oleg Dubinskiy (1):
+      include: Add RASCREDENTIALSA/W structures.
 
 Paul Gofman (2):
-      ddraw/tests: Also test RT caps for software device.
-      vcruntime140_1: Support two continuation addresses for catchblock.
+      wined3d: Add GPU information for AMD VANGOGH.
+      kernelbase: Fix copy size for delete_privs in CreateRestrictedToken().
 
-Piotr Caban (7):
-      msvcp90: Add macro that define type_info vtable.
-      msvcrt: Cleanup _ecvt tests.
-      msvcrt/tests: Link to malloc/free functions in cpp tests.
-      msvcrt/tests: Cleanup datatype demangle tests.
-      msvcrt: Fix _unDName crash when demangling class function pointer.
-      msvcrt: Improve memmove performance on i386 and x86_64 architectures.
-      winemac.drv: Don't filter non active displays out.
+Piotr Caban (3):
+      msvcrt: Update round_limb on first limb length change in printf.
+      msvcrt: Support z length modifier in scanf.
+      ucrtbase: Fix fopen x mode test failures.
 
-Qian Hong (1):
-      atl: Implement AtlAxDialogBox().
+Robert Wilhelm (1):
+      vbscript: Support date and time literals.
 
-Roman Pišl (2):
-      kernel32/tests: Add test for FileRenameInfo in SetFileInformationByHandle.
-      kernelbase: Convert DOS to NT path for FileRenameInfo in SetFileInformationByHandle.
+Roman Pišl (1):
+      ntdll: Don't pretend that the whole address space is reserved on non-i386.
 
-Rémi Bernon (3):
-      d3d11: Add initial implementation of CreateDeviceContextState.
-      dinput: Wait for the hook thread to exit when stopping it.
-      dinput: Prevent a device interface leak when enumerating.
+Rémi Bernon (4):
+      msvcrt: Set next_token when str is empty in wcstok_s.
+      dssenh/tests: Add CryptAcquireContextA last error check.
+      dssenh: Return NTE_BAD_KEYSET when key cannot be opened.
+      dssenh: Only fill hash buffer when it's provided.
 
-Sebastian Lackner (1):
-      ntdll: Return STATUS_INVALID_DEVICE_REQUEST when trying to call NtReadFile on directory.
+Ted Lyngmo (1):
+      ucrtbase: Add support for x mode in fopen.
 
-Torge Matthies (1):
-      winex11.drv: Avoid race condition in X11 error handling.
+Vijay Kiran Kamuju (1):
+      msdrm: Add stub DRMRegisterContent function.
 
-Vijay Kiran Kamuju (3):
-      dhtmled.ocx: Implement IOleObject::SetExtent and IOleObject::GetExtent functions.
-      dhtmled.ocx: Add stub IOleControl interface.
-      dhtmled.ocx: Fake success in IDHTMLEdit::NewDocument.
+Zebediah Figura (2):
+      quartz: Do not print an incorrect state warning in MediaFilter_GetState() if a filter has been run asynchronously.
+      server: Return STATUS_KEY_DELETED when trying to retrieve the full name of a deleted key.
 
-Zebediah Figura (5):
-      msi: Check for a NULL return from deformat_string() when checking for failure.
-      include: Factor out winetest_printf().
-      include: Introduce winetest_push_context() and winetest_pop_context().
-      wtsapi32: Implement WTSEnumerateProcessesW().
-      wine.inf: Install the protocol database at etc\protocol.
-
-Zhiyi Zhang (1):
-      ntoskrnl.exe: Exclude large integer APIs from relay tracing.
+Zhiyi Zhang (8):
+      uxtheme/tests: Test SetWindowTheme() with a non-existent subclass.
+      uxtheme: Fall back to default class if the specified subclass is not found.
+      uxtheme/tests: Test that SetWindowTheme() should send WM_THEMECHANGED instead of posting it.
+      uxtheme: Send WM_THEMECHANGED instead of posting it in SetWindowTheme().
+      uxtheme: Fix incorrect part IDs in button class map.
+      uxtheme: Use TransparentBlt() for bitmaps with all alpha values being 0xff.
+      user32: Report a fake monitor when running on an invisible window station.
+      uxtheme: Get and set system metrics in 96 DPI.
 
 --
 Michael Stefaniuc
