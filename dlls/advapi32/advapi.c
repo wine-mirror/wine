@@ -180,7 +180,7 @@ BOOL WINAPI InitiateSystemShutdownExA( LPSTR lpMachineName, LPSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
          DWORD dwReason)
 {
-     FIXME("%s %s %d %d %d %#x\n", debugstr_a(lpMachineName),
+     FIXME("%s %s %ld %d %d %#lx\n", debugstr_a(lpMachineName),
             debugstr_a(lpMessage), dwTimeout, bForceAppsClosed,
             bRebootAfterShutdown, dwReason);
      return TRUE;
@@ -195,7 +195,7 @@ BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
          DWORD dwReason)
 {
-     FIXME("%s %s %d %d %d %#x\n", debugstr_w(lpMachineName),
+     FIXME("%s %s %ld %d %d %#lx\n", debugstr_w(lpMachineName),
             debugstr_w(lpMessage), dwTimeout, bForceAppsClosed,
             bRebootAfterShutdown, dwReason);
      return TRUE;
@@ -222,7 +222,7 @@ BOOL WINAPI InitiateSystemShutdownW( LPWSTR lpMachineName, LPWSTR lpMessage, DWO
  */
 DWORD WINAPI InitiateShutdownA(char *name, char *message, DWORD seconds, DWORD flags, DWORD reason)
 {
-    FIXME("%s, %s, %d, %d, %d stub\n", debugstr_a(name), debugstr_a(message), seconds, flags, reason);
+    FIXME("%s, %s, %ld, %ld, %ld stub\n", debugstr_a(name), debugstr_a(message), seconds, flags, reason);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -231,7 +231,7 @@ DWORD WINAPI InitiateShutdownA(char *name, char *message, DWORD seconds, DWORD f
  */
 DWORD WINAPI InitiateShutdownW(WCHAR *name, WCHAR *message, DWORD seconds, DWORD flags, DWORD reason)
 {
-    FIXME("%s, %s, %d, %d, %d stub\n", debugstr_w(name), debugstr_w(message), seconds, flags, reason);
+    FIXME("%s, %s, %ld, %ld, %ld stub\n", debugstr_w(name), debugstr_w(message), seconds, flags, reason);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -241,7 +241,7 @@ BOOL WINAPI LogonUserA( LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassw
     WCHAR *usernameW = NULL, *domainW = NULL, *passwordW = NULL;
     BOOL ret = FALSE;
 
-    TRACE("%s %s %p 0x%08x 0x%08x %p\n", debugstr_a(lpszUsername),
+    TRACE("%s %s %p 0x%08lx 0x%08lx %p\n", debugstr_a(lpszUsername),
           debugstr_a(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
 
     if (lpszUsername && !(usernameW = strdupAW( lpszUsername ))) return FALSE;
@@ -260,7 +260,7 @@ done:
 BOOL WINAPI LogonUserW( LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
                         DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken )
 {
-    FIXME("%s %s %p 0x%08x 0x%08x %p - stub\n", debugstr_w(lpszUsername),
+    FIXME("%s %s %p 0x%08lx 0x%08lx %p - stub\n", debugstr_w(lpszUsername),
           debugstr_w(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
 
     *phToken = (HANDLE *)0xdeadbeef;

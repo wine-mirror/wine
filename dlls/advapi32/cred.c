@@ -303,11 +303,11 @@ static DWORD host_write_credential( const CREDENTIALW *credential, BOOL preserve
     BOOL ret;
 
     if (credential->Flags)
-        FIXME( "flags 0x%x not written\n", credential->Flags );
+        FIXME( "flags 0x%lx not written\n", credential->Flags );
     if (credential->Type != CRED_TYPE_DOMAIN_PASSWORD)
-        FIXME( "credential type of %d not supported\n", credential->Type );
+        FIXME( "credential type of %ld not supported\n", credential->Type );
     if (credential->Persist != CRED_PERSIST_LOCAL_MACHINE)
-        FIXME( "persist value of %d not supported\n", credential->Persist );
+        FIXME( "persist value of %ld not supported\n", credential->Persist );
     if (credential->AttributeCount)
         FIXME( "custom attributes not supported\n" );
 
@@ -721,7 +721,7 @@ BOOL WINAPI CredDeleteA(LPCSTR TargetName, DWORD Type, DWORD Flags)
     DWORD len;
     BOOL ret;
 
-    TRACE("(%s, %d, 0x%x)\n", debugstr_a(TargetName), Type, Flags);
+    TRACE("(%s, %ld, 0x%lx)\n", debugstr_a(TargetName), Type, Flags);
 
     if (!TargetName)
     {
@@ -784,7 +784,7 @@ BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
     DWORD ret;
     LPWSTR key_name;
 
-    TRACE("(%s, %d, 0x%x)\n", debugstr_w(TargetName), Type, Flags);
+    TRACE("(%s, %ld, 0x%lx)\n", debugstr_w(TargetName), Type, Flags);
 
     if (!TargetName)
     {
@@ -794,14 +794,14 @@ BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
 
     if (Type != CRED_TYPE_GENERIC && Type != CRED_TYPE_DOMAIN_PASSWORD)
     {
-        FIXME("unhandled type %d\n", Type);
+        FIXME("unhandled type %ld\n", Type);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     if (Flags)
     {
-        FIXME("unhandled flags 0x%x\n", Flags);
+        FIXME("unhandled flags 0x%lx\n", Flags);
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
@@ -816,7 +816,7 @@ BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
     ret = open_cred_mgr_key(&hkeyMgr, TRUE);
     if (ret != ERROR_SUCCESS)
     {
-        WARN("couldn't open/create manager key, error %d\n", ret);
+        WARN("couldn't open/create manager key, error %ld\n", ret);
         SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
         return FALSE;
     }
@@ -847,7 +847,7 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
     INT needed;
     char *buffer;
 
-    TRACE("(%s, 0x%x, %p, %p)\n", debugstr_a(Filter), Flags, Count, Credentials);
+    TRACE("(%s, 0x%lx, %p, %p)\n", debugstr_a(Filter), Flags, Count, Credentials);
 
     if (Filter)
     {
@@ -1012,7 +1012,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
     char *buffer;
     BYTE key_data[KEY_SIZE];
 
-    TRACE("(%s, 0x%x, %p, %p)\n", debugstr_w(Filter), Flags, Count, Credentials);
+    TRACE("(%s, 0x%lx, %p, %p)\n", debugstr_w(Filter), Flags, Count, Credentials);
 
     if (Flags)
     {
@@ -1023,7 +1023,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
     ret = open_cred_mgr_key(&hkeyMgr, FALSE);
     if (ret != ERROR_SUCCESS)
     {
-        WARN("couldn't open/create manager key, error %d\n", ret);
+        WARN("couldn't open/create manager key, error %ld\n", ret);
         SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
         return FALSE;
     }
@@ -1119,7 +1119,7 @@ BOOL WINAPI CredReadA(LPCSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALA *
     PCREDENTIALW CredentialW;
     INT len;
 
-    TRACE("(%s, %d, 0x%x, %p)\n", debugstr_a(TargetName), Type, Flags, Credential);
+    TRACE("(%s, %ld, 0x%lx, %p)\n", debugstr_a(TargetName), Type, Flags, Credential);
 
     if (!TargetName)
     {
@@ -1249,7 +1249,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
     DWORD len;
     BYTE key_data[KEY_SIZE];
 
-    TRACE("(%s, %d, 0x%x, %p)\n", debugstr_w(TargetName), Type, Flags, Credential);
+    TRACE("(%s, %ld, 0x%lx, %p)\n", debugstr_w(TargetName), Type, Flags, Credential);
 
     if (!TargetName)
     {
@@ -1259,14 +1259,14 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
 
     if (Type != CRED_TYPE_GENERIC && Type != CRED_TYPE_DOMAIN_PASSWORD)
     {
-        FIXME("unhandled type %d\n", Type);
+        FIXME("unhandled type %ld\n", Type);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     if (Flags)
     {
-        FIXME("unhandled flags 0x%x\n", Flags);
+        FIXME("unhandled flags 0x%lx\n", Flags);
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
@@ -1285,7 +1285,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
     ret = open_cred_mgr_key(&hkeyMgr, FALSE);
     if (ret != ERROR_SUCCESS)
     {
-        WARN("couldn't open/create manager key, error %d\n", ret);
+        WARN("couldn't open/create manager key, error %ld\n", ret);
         SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
         return FALSE;
     }
@@ -1347,7 +1347,7 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
     BOOL ret;
     PCREDENTIALW* CredentialsW;
 
-    TRACE("(%p, 0x%x, %p, %p)\n", TargetInformation, Flags, Size, Credentials);
+    TRACE("(%p, 0x%lx, %p, %p)\n", TargetInformation, Flags, Size, Credentials);
 
     /* follow Windows behavior - do not test for NULL, initialize early */
     *Size = 0;
@@ -1486,7 +1486,7 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
 BOOL WINAPI CredReadDomainCredentialsW(PCREDENTIAL_TARGET_INFORMATIONW TargetInformation, DWORD Flags,
                                        DWORD *Size, PCREDENTIALW **Credentials)
 {
-    FIXME("(%p, 0x%x, %p, %p) stub\n", TargetInformation, Flags, Size, Credentials);
+    FIXME("(%p, 0x%lx, %p, %p) stub\n", TargetInformation, Flags, Size, Credentials);
 
     /* follow Windows behavior - do not test for NULL, initialize early */
     *Size = 0;
@@ -1510,7 +1510,7 @@ BOOL WINAPI CredWriteA(PCREDENTIALA Credential, DWORD Flags)
     INT len;
     PCREDENTIALW CredentialW;
 
-    TRACE("(%p, 0x%x)\n", Credential, Flags);
+    TRACE("(%p, 0x%lx)\n", Credential, Flags);
 
     if (!Credential || !Credential->TargetName)
     {
@@ -1546,7 +1546,7 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
     LPWSTR key_name;
     BYTE key_data[KEY_SIZE];
 
-    TRACE("(%p, 0x%x)\n", Credential, Flags);
+    TRACE("(%p, 0x%lx)\n", Credential, Flags);
 
     if (!Credential || !Credential->TargetName)
     {
@@ -1556,23 +1556,23 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
 
     if (Flags & ~CRED_PRESERVE_CREDENTIAL_BLOB)
     {
-        FIXME("unhandled flags 0x%x\n", Flags);
+        FIXME("unhandled flags 0x%lx\n", Flags);
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
 
     if (Credential->Type != CRED_TYPE_GENERIC && Credential->Type != CRED_TYPE_DOMAIN_PASSWORD)
     {
-        FIXME("unhandled type %d\n", Credential->Type);
+        FIXME("unhandled type %ld\n", Credential->Type);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    TRACE("Credential->Flags = 0x%08x\n", Credential->Flags);
-    TRACE("Credential->Type = %u\n", Credential->Type);
+    TRACE("Credential->Flags = 0x%08lx\n", Credential->Flags);
+    TRACE("Credential->Type = %lu\n", Credential->Type);
     TRACE("Credential->TargetName = %s\n", debugstr_w(Credential->TargetName));
     TRACE("Credential->Comment = %s\n", debugstr_w(Credential->Comment));
-    TRACE("Credential->Persist = %u\n", Credential->Persist);
+    TRACE("Credential->Persist = %lu\n", Credential->Persist);
     TRACE("Credential->TargetAlias = %s\n", debugstr_w(Credential->TargetAlias));
     TRACE("Credential->UserName = %s\n", debugstr_w(Credential->UserName));
 
@@ -1604,7 +1604,7 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
     ret = open_cred_mgr_key(&hkeyMgr, FALSE);
     if (ret != ERROR_SUCCESS)
     {
-        WARN("couldn't open/create manager key, error %d\n", ret);
+        WARN("couldn't open/create manager key, error %ld\n", ret);
         SetLastError(ERROR_NO_SUCH_LOGON_SESSION);
         return FALSE;
     }
@@ -1649,7 +1649,7 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
  */
 WINADVAPI BOOL WINAPI CredGetSessionTypes(DWORD persistCount, LPDWORD persists)
 {
-    TRACE("(%u, %p)\n", persistCount, persists);
+    TRACE("(%lu, %p)\n", persistCount, persists);
 
     memset(persists, CRED_PERSIST_NONE, persistCount*sizeof(*persists));
     if (CRED_TYPE_GENERIC < persistCount)

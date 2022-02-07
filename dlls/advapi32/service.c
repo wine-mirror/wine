@@ -64,7 +64,7 @@ EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     DWORD sz, n;
     char *p;
 
-    TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
+    TRACE("%p 0x%lx 0x%lx %p %lu %p %p %p\n", hmngr, type, state, services, size, needed,
           returned, resume_handle);
 
     if (!hmngr)
@@ -128,7 +128,7 @@ EnumServicesStatusW( SC_HANDLE manager, DWORD type, DWORD state, ENUM_SERVICE_ST
     DWORD alloc_size, count, i;
     WCHAR *p;
 
-    TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", manager, type, state, status, size,
+    TRACE("%p 0x%lx 0x%lx %p %lu %p %p %p\n", manager, type, state, status, size,
           ret_size, ret_count, resume_handle);
 
     if (!manager)
@@ -225,7 +225,7 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
     DWORD sz, n;
     char *p;
 
-    TRACE("%p %u 0x%x 0x%x %p %u %p %p %p %s\n", hmngr, level, type, state, buffer,
+    TRACE("%p %u 0x%lx 0x%lx %p %lu %p %p %p %s\n", hmngr, level, type, state, buffer,
           size, needed, returned, resume_handle, debugstr_a(group));
 
     sz = max( 2 * size, sizeof(*servicesW) );
@@ -333,7 +333,7 @@ BOOL WINAPI QueryServiceLockStatusA( SC_HANDLE hSCManager,
                                      LPQUERY_SERVICE_LOCK_STATUSA lpLockStatus,
                                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p %08x %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+    FIXME("%p %p %08lx %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
 
     return FALSE;
 }
@@ -345,7 +345,7 @@ BOOL WINAPI QueryServiceLockStatusW( SC_HANDLE hSCManager,
                                      LPQUERY_SERVICE_LOCK_STATUSW lpLockStatus,
                                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    FIXME("%p %p %08x %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+    FIXME("%p %p %08lx %p\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
 
     return FALSE;
 }
@@ -405,7 +405,7 @@ BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
         BOOL bSetBitsOn,
         BOOL bUpdateImmediately)
 {
-    FIXME("%p %08x %x %x\n", hServiceStatus, dwServiceBits,
+    FIXME("%p %08lx %x %x\n", hServiceStatus, dwServiceBits,
           bSetBitsOn, bUpdateImmediately);
     return TRUE;
 }
@@ -417,7 +417,7 @@ BOOL WINAPI EnumDependentServicesA( SC_HANDLE hService, DWORD dwServiceState,
                                     LPENUM_SERVICE_STATUSA lpServices, DWORD cbBufSize,
         LPDWORD pcbBytesNeeded, LPDWORD lpServicesReturned )
 {
-    FIXME("%p 0x%08x %p 0x%08x %p %p - stub\n", hService, dwServiceState,
+    FIXME("%p 0x%08lx %p 0x%08lx %p %p - stub\n", hService, dwServiceState,
           lpServices, cbBufSize, pcbBytesNeeded, lpServicesReturned);
 
     *lpServicesReturned = 0;

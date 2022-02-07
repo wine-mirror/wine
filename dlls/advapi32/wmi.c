@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmi);
 ULONG WMIAPI WmiExecuteMethodA(WMIHANDLE handle, const char *name, ULONG method, ULONG inputsize,
                                void *inputbuffer, ULONG *outputsize, void *outputbuffer)
 {
-    FIXME(" %p %s %u %u %p %p %p: stub\n", handle, debugstr_a(name), method, inputsize, inputbuffer,
+    FIXME(" %p %s %lu %lu %p %p %p: stub\n", handle, debugstr_a(name), method, inputsize, inputbuffer,
                                            outputsize, outputbuffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
@@ -52,7 +52,7 @@ ULONG WMIAPI WmiExecuteMethodA(WMIHANDLE handle, const char *name, ULONG method,
 ULONG WMIAPI WmiExecuteMethodW(WMIHANDLE handle, const WCHAR *name, ULONG method, ULONG inputsize,
                                void *inputbuffer, ULONG *outputsize, void *outputbuffer)
 {
-    FIXME("%p %s %u %u %p %p %p: stub\n", handle, debugstr_w(name), method, inputsize, inputbuffer,
+    FIXME("%p %s %lu %lu %p %p %p: stub\n", handle, debugstr_w(name), method, inputsize, inputbuffer,
                                           outputsize, outputbuffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
@@ -89,7 +89,7 @@ ULONG WMIAPI WmiMofEnumerateResourcesW(MOFHANDLE handle, ULONG *count, MOFRESOUR
 ULONG WMIAPI WmiNotificationRegistrationA(GUID *guid, BOOLEAN enable, void *info,
                                           ULONG_PTR context, ULONG flags)
 {
-    FIXME("%s %u %p 0x%lx 0x%08x: stub\n", debugstr_guid(guid), enable, info, context, flags);
+    FIXME("%s %u %p 0x%Ix 0x%08lx: stub\n", debugstr_guid(guid), enable, info, context, flags);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -99,7 +99,7 @@ ULONG WMIAPI WmiNotificationRegistrationA(GUID *guid, BOOLEAN enable, void *info
 ULONG WMIAPI WmiNotificationRegistrationW(GUID *guid, BOOLEAN enable, void *info,
                                           ULONG_PTR context, ULONG flags)
 {
-    FIXME("%s %u %p 0x%lx 0x%08x: stub\n", debugstr_guid(guid), enable, info, context, flags);
+    FIXME("%s %u %p 0x%Ix 0x%08lx: stub\n", debugstr_guid(guid), enable, info, context, flags);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -108,7 +108,7 @@ ULONG WMIAPI WmiNotificationRegistrationW(GUID *guid, BOOLEAN enable, void *info
  */
 ULONG WINAPI WmiOpenBlock(GUID *guid, ULONG access, WMIHANDLE *handle)
 {
-    FIXME("%s %u %p: stub\n", debugstr_guid(guid), access, handle);
+    FIXME("%s %lu %p: stub\n", debugstr_guid(guid), access, handle);
     return ERROR_SUCCESS;
 }
 
@@ -145,7 +145,7 @@ ULONG WMIAPI WmiQueryGuidInformation(WMIHANDLE handle, WMIGUIDINFORMATION *info)
 ULONG WMIAPI WmiSetSingleInstanceA(WMIHANDLE handle, const char *name, ULONG reserved,
                                    ULONG size, void *buffer)
 {
-    FIXME("%p %s %u %u %p: stub\n", handle, debugstr_a(name), reserved, size, buffer);
+    FIXME("%p %s %lu %lu %p: stub\n", handle, debugstr_a(name), reserved, size, buffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -155,7 +155,7 @@ ULONG WMIAPI WmiSetSingleInstanceA(WMIHANDLE handle, const char *name, ULONG res
 ULONG WMIAPI WmiSetSingleInstanceW(WMIHANDLE handle, const WCHAR *name, ULONG reserved,
                                    ULONG size, void *buffer)
 {
-    FIXME("%p %s %u %u %p: stub\n", handle, debugstr_w(name), reserved, size, buffer);
+    FIXME("%p %s %lu %lu %p: stub\n", handle, debugstr_w(name), reserved, size, buffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -165,7 +165,7 @@ ULONG WMIAPI WmiSetSingleInstanceW(WMIHANDLE handle, const WCHAR *name, ULONG re
 ULONG WMIAPI WmiSetSingleItemA(WMIHANDLE handle, const char *name, ULONG id, ULONG reserved,
                                ULONG size, void *buffer)
 {
-    FIXME("%p %s %u %u %u %p: stub\n", handle, debugstr_a(name), id, reserved, size, buffer);
+    FIXME("%p %s %lu %lu %lu %p: stub\n", handle, debugstr_a(name), id, reserved, size, buffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -175,6 +175,6 @@ ULONG WMIAPI WmiSetSingleItemA(WMIHANDLE handle, const char *name, ULONG id, ULO
 ULONG WMIAPI WmiSetSingleItemW(WMIHANDLE handle, const WCHAR *name, ULONG id, ULONG reserved,
                                ULONG size, void *buffer)
 {
-    FIXME("%p %s %u %u %u %p: stub\n", handle, debugstr_w(name), id, reserved, size, buffer);
+    FIXME("%p %s %lu %lu %lu %p: stub\n", handle, debugstr_w(name), id, reserved, size, buffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }

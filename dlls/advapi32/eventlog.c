@@ -205,7 +205,7 @@ ULONG WINAPI EnableTraceEx( LPCGUID provider, LPCGUID source, TRACEHANDLE hSessi
                             UCHAR level, ULONGLONG anykeyword, ULONGLONG allkeyword, ULONG enableprop,
                             PEVENT_FILTER_DESCRIPTOR filterdesc )
 {
-    FIXME("(%s, %s, %s, %u, %u, %s, %s, %u, %p): stub\n", debugstr_guid(provider),
+    FIXME("(%s, %s, %s, %lu, %u, %s, %s, %lu, %p): stub\n", debugstr_guid(provider),
             debugstr_guid(source), wine_dbgstr_longlong(hSession), enable, level,
             wine_dbgstr_longlong(anykeyword), wine_dbgstr_longlong(allkeyword),
             enableprop, filterdesc);
@@ -218,7 +218,7 @@ ULONG WINAPI EnableTraceEx( LPCGUID provider, LPCGUID source, TRACEHANDLE hSessi
  */
 ULONG WINAPI EnableTrace( ULONG enable, ULONG flag, ULONG level, LPCGUID guid, TRACEHANDLE hSession )
 {
-    FIXME("(%d, 0x%x, %d, %s, %s): stub\n", enable, flag, level,
+    FIXME("(%ld, 0x%lx, %ld, %s, %s): stub\n", enable, flag, level,
             debugstr_guid(guid), wine_dbgstr_longlong(hSession));
 
     return ERROR_SUCCESS;
@@ -245,7 +245,7 @@ BOOL WINAPI GetEventLogInformation( HANDLE hEventLog, DWORD dwInfoLevel, LPVOID 
 {
     EVENTLOG_FULL_INFORMATION *efi;
 
-    FIXME("(%p, %d, %p, %d, %p) stub\n", hEventLog, dwInfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+    FIXME("(%p, %ld, %p, %ld, %p) stub\n", hEventLog, dwInfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
 
     if (dwInfoLevel != EVENTLOG_FULL_INFO)
     {
@@ -506,7 +506,7 @@ HANDLE WINAPI OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
     LPVOID lpBuffer, DWORD nNumberOfBytesToRead, DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
 {
-    FIXME("(%p,0x%08x,0x%08x,%p,0x%08x,%p,%p) stub\n", hEventLog, dwReadFlags,
+    FIXME("(%p,0x%08lx,0x%08lx,%p,0x%08lx,%p,%p) stub\n", hEventLog, dwReadFlags,
           dwRecordOffset, lpBuffer, nNumberOfBytesToRead, pnBytesRead, pnMinNumberOfBytesNeeded);
 
     SetLastError(ERROR_HANDLE_EOF);
@@ -521,7 +521,7 @@ BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
 BOOL WINAPI ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
     LPVOID lpBuffer, DWORD nNumberOfBytesToRead, DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
 {
-    FIXME("(%p,0x%08x,0x%08x,%p,0x%08x,%p,%p) stub\n", hEventLog, dwReadFlags,
+    FIXME("(%p,0x%08lx,0x%08lx,%p,0x%08lx,%p,%p) stub\n", hEventLog, dwReadFlags,
           dwRecordOffset, lpBuffer, nNumberOfBytesToRead, pnBytesRead, pnMinNumberOfBytesNeeded);
 
     SetLastError(ERROR_HANDLE_EOF);
@@ -602,7 +602,7 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
     UINT i;
     BOOL ret;
 
-    FIXME("(%p,0x%04x,0x%04x,0x%08x,%p,0x%04x,0x%08x,%p,%p): stub\n", hEventLog,
+    FIXME("(%p,0x%04x,0x%04x,0x%08lx,%p,0x%04x,0x%08lx,%p,%p): stub\n", hEventLog,
           wType, wCategory, dwEventID, lpUserSid, wNumStrings, dwDataSize, lpStrings, lpRawData);
 
     if (wNumStrings == 0) return TRUE;
@@ -632,7 +632,7 @@ BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dw
 {
     UINT i;
 
-    FIXME("(%p,0x%04x,0x%04x,0x%08x,%p,0x%04x,0x%08x,%p,%p): stub\n", hEventLog,
+    FIXME("(%p,0x%04x,0x%04x,0x%08lx,%p,0x%04x,0x%08lx,%p,%p): stub\n", hEventLog,
           wType, wCategory, dwEventID, lpUserSid, wNumStrings, dwDataSize, lpStrings, lpRawData);
 
     /* partial stub */
@@ -709,6 +709,6 @@ TRACEHANDLE WINAPI OpenTraceA( PEVENT_TRACE_LOGFILEA logfile )
 ULONG WINAPI EnumerateTraceGuids(PTRACE_GUID_PROPERTIES *propertiesarray,
                                  ULONG arraycount, PULONG guidcount)
 {
-    FIXME("%p %d %p: stub\n", propertiesarray, arraycount, guidcount);
+    FIXME("%p %ld %p: stub\n", propertiesarray, arraycount, guidcount);
     return ERROR_INVALID_PARAMETER;
 }
