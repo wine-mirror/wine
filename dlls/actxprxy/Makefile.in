@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = actxprxy.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4
 

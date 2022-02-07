@@ -175,7 +175,7 @@ HRESULT CALLBACK IEnumShellItems_Next_Proxy(
     ULONG *pceltFetched)
 {
     ULONG fetched;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%ld, %p, %p)\n", This, celt, rgelt, pceltFetched);
     if (!pceltFetched) pceltFetched = &fetched;
     return IEnumShellItems_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
@@ -187,7 +187,7 @@ HRESULT __RPC_STUB IEnumShellItems_Next_Stub(
     ULONG *pceltFetched)
 {
     HRESULT hr;
-    TRACE("(%p)->(%d, %p, %p)\n", This, celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%ld, %p, %p)\n", This, celt, rgelt, pceltFetched);
     *pceltFetched = 0;
     hr = IEnumShellItems_Next(This, celt, rgelt, pceltFetched);
     if (hr == S_OK) *pceltFetched = celt;
