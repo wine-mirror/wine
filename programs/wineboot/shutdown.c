@@ -96,7 +96,7 @@ static void CALLBACK end_session_message_callback( HWND hwnd, UINT msg, ULONG_PT
 {
     struct callback_data *cb_data = (struct callback_data *)data;
 
-    WINE_TRACE( "received response %s hwnd %p lresult %ld\n",
+    WINE_TRACE( "received response %s hwnd %p lresult %Id\n",
                 msg == WM_QUERYENDSESSION ? "WM_QUERYENDSESSION" : (msg == WM_ENDSESSION ? "WM_ENDSESSION" : "Unknown"),
                 hwnd, lresult );
 
@@ -143,7 +143,7 @@ static INT_PTR CALLBACK endtask_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
             handle = OpenProcess( PROCESS_TERMINATE, FALSE, data->win[0].pid );
             if (handle)
             {
-                WINE_TRACE( "terminating process %04x\n", data->win[0].pid );
+                WINE_TRACE( "terminating process %04lx\n", data->win[0].pid );
                 TerminateProcess( handle, 0 );
                 CloseHandle( handle );
                 data->terminated = TRUE;
@@ -297,7 +297,7 @@ static DWORD_PTR send_end_session_messages( struct window_info *win, UINT count,
         HANDLE handle = OpenProcess( PROCESS_TERMINATE, FALSE, win[0].pid );
         if (handle)
         {
-            WINE_TRACE( "terminating process %04x\n", win[0].pid );
+            WINE_TRACE( "terminating process %04lx\n", win[0].pid );
             TerminateProcess( handle, 0 );
             CloseHandle( handle );
         }
@@ -341,14 +341,14 @@ static BOOL CALLBACK shutdown_one_desktop( LPWSTR name, LPARAM force )
     hdesk = OpenDesktopW( name, 0, FALSE, GENERIC_ALL );
     if (hdesk == NULL)
     {
-        WINE_ERR("Cannot open desktop %s, err=%i\n", wine_dbgstr_w(name), GetLastError());
+        WINE_ERR("Cannot open desktop %s, err=%li\n", wine_dbgstr_w(name), GetLastError());
         return FALSE;
     }
 
     if (!SetThreadDesktop( hdesk ))
     {
         CloseDesktop( hdesk );
-        WINE_ERR("Cannot set thread desktop %s, err=%i\n", wine_dbgstr_w(name), GetLastError());
+        WINE_ERR("Cannot set thread desktop %s, err=%li\n", wine_dbgstr_w(name), GetLastError());
         return FALSE;
     }
 
@@ -391,7 +391,7 @@ void kill_processes( BOOL kill_desktop )
         {
             if (process.th32ProcessID == GetCurrentProcessId()) continue;
             if (process.th32ProcessID == desktop_pid) continue;
-            WINE_TRACE("killing process %04x %s\n",
+            WINE_TRACE("killing process %04lx %s\n",
                        process.th32ProcessID, wine_dbgstr_w(process.szExeFile) );
             if (!(handle = OpenProcess( PROCESS_TERMINATE, FALSE, process.th32ProcessID )))
                 continue;
