@@ -290,7 +290,7 @@ HOTKEY_KeyDown (HOTKEY_INFO *infoPtr, DWORD key, DWORD flags)
     if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
         return 0;
 
-    TRACE("() Key: %d\n", key);
+    TRACE("() Key: %ld\n", key);
 
     wOldHotKey = infoPtr->HotKey;
     bOldMod = infoPtr->CurrMod;
@@ -350,7 +350,7 @@ HOTKEY_KeyUp (HOTKEY_INFO *infoPtr, DWORD key)
     if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
         return 0;
 
-    TRACE("() Key: %d\n", key);
+    TRACE("() Key: %ld\n", key);
 
     bOldMod = infoPtr->CurrMod;
 
@@ -511,7 +511,9 @@ static LRESULT WINAPI
 HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HOTKEY_INFO *infoPtr = (HOTKEY_INFO *)GetWindowLongPtrW (hwnd, 0);
-    TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+
+    TRACE("hwnd %p, msg %x, wparam %Ix, lparam %Ix\n", hwnd, uMsg, wParam, lParam);
+
     if (!infoPtr && (uMsg != WM_NCCREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
@@ -577,8 +579,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
-		ERR("unknown msg %04x wp=%08lx lp=%08lx\n",
-		     uMsg, wParam, lParam);
+		ERR("unknown msg %04x, wp %Ix, lp %Ix\n", uMsg, wParam, lParam);
 	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }
     return 0;

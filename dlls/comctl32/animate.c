@@ -508,16 +508,16 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 
     mmioRead(infoPtr->hMMio, (LPSTR)&infoPtr->mah, sizeof(infoPtr->mah));
 
-    TRACE("mah.dwMicroSecPerFrame=%d\n", 	infoPtr->mah.dwMicroSecPerFrame);
-    TRACE("mah.dwMaxBytesPerSec=%d\n",		infoPtr->mah.dwMaxBytesPerSec);
-    TRACE("mah.dwPaddingGranularity=%d\n", 	infoPtr->mah.dwPaddingGranularity);
-    TRACE("mah.dwFlags=%d\n",			infoPtr->mah.dwFlags);
-    TRACE("mah.dwTotalFrames=%d\n",		infoPtr->mah.dwTotalFrames);
-    TRACE("mah.dwInitialFrames=%d\n",		infoPtr->mah.dwInitialFrames);
-    TRACE("mah.dwStreams=%d\n",			infoPtr->mah.dwStreams);
-    TRACE("mah.dwSuggestedBufferSize=%d\n",	infoPtr->mah.dwSuggestedBufferSize);
-    TRACE("mah.dwWidth=%d\n",			infoPtr->mah.dwWidth);
-    TRACE("mah.dwHeight=%d\n",			infoPtr->mah.dwHeight);
+    TRACE("mah.dwMicroSecPerFrame=%ld\n", 	infoPtr->mah.dwMicroSecPerFrame);
+    TRACE("mah.dwMaxBytesPerSec=%ld\n",		infoPtr->mah.dwMaxBytesPerSec);
+    TRACE("mah.dwPaddingGranularity=%ld\n", 	infoPtr->mah.dwPaddingGranularity);
+    TRACE("mah.dwFlags=%ld\n",			infoPtr->mah.dwFlags);
+    TRACE("mah.dwTotalFrames=%ld\n",		infoPtr->mah.dwTotalFrames);
+    TRACE("mah.dwInitialFrames=%ld\n",		infoPtr->mah.dwInitialFrames);
+    TRACE("mah.dwStreams=%ld\n",		infoPtr->mah.dwStreams);
+    TRACE("mah.dwSuggestedBufferSize=%ld\n",	infoPtr->mah.dwSuggestedBufferSize);
+    TRACE("mah.dwWidth=%ld\n",			infoPtr->mah.dwWidth);
+    TRACE("mah.dwHeight=%ld\n",			infoPtr->mah.dwHeight);
 
     mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
 
@@ -543,17 +543,17 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	                                        HIBYTE(LOWORD(infoPtr->ash.fccHandler)),
 	                                        LOBYTE(HIWORD(infoPtr->ash.fccHandler)),
 	                                        HIBYTE(HIWORD(infoPtr->ash.fccHandler)));
-    TRACE("ash.dwFlags=%d\n", 			infoPtr->ash.dwFlags);
+    TRACE("ash.dwFlags=%ld\n", 			infoPtr->ash.dwFlags);
     TRACE("ash.wPriority=%d\n", 		infoPtr->ash.wPriority);
     TRACE("ash.wLanguage=%d\n", 		infoPtr->ash.wLanguage);
-    TRACE("ash.dwInitialFrames=%d\n", 		infoPtr->ash.dwInitialFrames);
-    TRACE("ash.dwScale=%d\n", 			infoPtr->ash.dwScale);
-    TRACE("ash.dwRate=%d\n", 			infoPtr->ash.dwRate);
-    TRACE("ash.dwStart=%d\n", 			infoPtr->ash.dwStart);
-    TRACE("ash.dwLength=%d\n",			infoPtr->ash.dwLength);
-    TRACE("ash.dwSuggestedBufferSize=%d\n", 	infoPtr->ash.dwSuggestedBufferSize);
-    TRACE("ash.dwQuality=%d\n", 		infoPtr->ash.dwQuality);
-    TRACE("ash.dwSampleSize=%d\n", 		infoPtr->ash.dwSampleSize);
+    TRACE("ash.dwInitialFrames=%ld\n", 		infoPtr->ash.dwInitialFrames);
+    TRACE("ash.dwScale=%ld\n", 			infoPtr->ash.dwScale);
+    TRACE("ash.dwRate=%ld\n", 			infoPtr->ash.dwRate);
+    TRACE("ash.dwStart=%ld\n", 			infoPtr->ash.dwStart);
+    TRACE("ash.dwLength=%lu\n",			infoPtr->ash.dwLength);
+    TRACE("ash.dwSuggestedBufferSize=%lu\n", 	infoPtr->ash.dwSuggestedBufferSize);
+    TRACE("ash.dwQuality=%lu\n", 		infoPtr->ash.dwQuality);
+    TRACE("ash.dwSampleSize=%lu\n", 		infoPtr->ash.dwSampleSize);
     TRACE("ash.rcFrame=(%d,%d,%d,%d)\n", 	infoPtr->ash.rcFrame.top, infoPtr->ash.rcFrame.left,
 	  infoPtr->ash.rcFrame.bottom, infoPtr->ash.rcFrame.right);
 
@@ -573,17 +573,17 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 
     mmioRead(infoPtr->hMMio, (LPSTR)infoPtr->inbih, mmckInfo.cksize);
 
-    TRACE("bih.biSize=%d\n", 		infoPtr->inbih->biSize);
-    TRACE("bih.biWidth=%d\n", 		infoPtr->inbih->biWidth);
-    TRACE("bih.biHeight=%d\n",		infoPtr->inbih->biHeight);
+    TRACE("bih.biSize=%lu\n", 		infoPtr->inbih->biSize);
+    TRACE("bih.biWidth=%ld\n", 		infoPtr->inbih->biWidth);
+    TRACE("bih.biHeight=%ld\n",		infoPtr->inbih->biHeight);
     TRACE("bih.biPlanes=%d\n", 		infoPtr->inbih->biPlanes);
     TRACE("bih.biBitCount=%d\n", 	infoPtr->inbih->biBitCount);
-    TRACE("bih.biCompression=%d\n", 	infoPtr->inbih->biCompression);
-    TRACE("bih.biSizeImage=%d\n", 	infoPtr->inbih->biSizeImage);
-    TRACE("bih.biXPelsPerMeter=%d\n", 	infoPtr->inbih->biXPelsPerMeter);
-    TRACE("bih.biYPelsPerMeter=%d\n", 	infoPtr->inbih->biYPelsPerMeter);
-    TRACE("bih.biClrUsed=%d\n", 	infoPtr->inbih->biClrUsed);
-    TRACE("bih.biClrImportant=%d\n", 	infoPtr->inbih->biClrImportant);
+    TRACE("bih.biCompression=%lu\n", 	infoPtr->inbih->biCompression);
+    TRACE("bih.biSizeImage=%lu\n", 	infoPtr->inbih->biSizeImage);
+    TRACE("bih.biXPelsPerMeter=%lu\n", 	infoPtr->inbih->biXPelsPerMeter);
+    TRACE("bih.biYPelsPerMeter=%lu\n", 	infoPtr->inbih->biYPelsPerMeter);
+    TRACE("bih.biClrUsed=%lu\n", 	infoPtr->inbih->biClrUsed);
+    TRACE("bih.biClrImportant=%lu\n", 	infoPtr->inbih->biClrImportant);
 
     mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
 
@@ -625,13 +625,15 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	numFrame++;
 	mmioAscend(infoPtr->hMMio, &mmckInfo, 0);
     }
-    if (numFrame != infoPtr->mah.dwTotalFrames) {
-	WARN("Found %d frames (/%d)\n", numFrame, infoPtr->mah.dwTotalFrames);
-	return FALSE;
+    if (numFrame != infoPtr->mah.dwTotalFrames)
+    {
+        WARN("Found %lu frames (/%lu)\n", numFrame, infoPtr->mah.dwTotalFrames);
+        return FALSE;
     }
-    if (insize > infoPtr->ash.dwSuggestedBufferSize) {
-	WARN("insize=%d suggestedSize=%d\n", insize, infoPtr->ash.dwSuggestedBufferSize);
-	infoPtr->ash.dwSuggestedBufferSize = insize;
+    if (insize > infoPtr->ash.dwSuggestedBufferSize)
+    {
+        WARN("insize %lu suggestedSize %lu\n", insize, infoPtr->ash.dwSuggestedBufferSize);
+        infoPtr->ash.dwSuggestedBufferSize = insize;
     }
 
     infoPtr->indata = heap_alloc_zero(infoPtr->ash.dwSuggestedBufferSize);
@@ -818,7 +820,7 @@ static BOOL ANIMATE_Create(HWND hWnd, const CREATESTRUCTW *lpcs)
     infoPtr->hbmPrevFrame = 0;
     infoPtr->dwStyle = lpcs->style;
 
-    TRACE("Animate style=0x%08x, parent=%p\n", infoPtr->dwStyle, infoPtr->hwndNotify);
+    TRACE("Animate style %#lx, parent %p\n", infoPtr->dwStyle, infoPtr->hwndNotify);
 
     InitializeCriticalSection(&infoPtr->cs);
     infoPtr->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ANIMATE_INFO*->cs");
@@ -859,8 +861,7 @@ static BOOL ANIMATE_EraseBackground(ANIMATE_INFO const *infoPtr, HDC hdc)
 
 static LRESULT ANIMATE_StyleChanged(ANIMATE_INFO *infoPtr, WPARAM wStyleType, const STYLESTRUCT *lpss)
 {
-    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
-          wStyleType, lpss->styleOld, lpss->styleNew);
+    TRACE("%#Ix, styleOld %#lx, styleNew %#lx.\n", wStyleType, lpss->styleOld, lpss->styleNew);
 
     if (wStyleType != GWL_STYLE) return 0;
   
@@ -875,7 +876,8 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 {
     ANIMATE_INFO *infoPtr = (ANIMATE_INFO *)GetWindowLongPtrW(hWnd, 0);
 
-    TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n", hWnd, uMsg, wParam, lParam);
+    TRACE("hwnd %p, msg %x, wparam %#Ix, lparam %#Ix.\n", hWnd, uMsg, wParam, lParam);
+
     if (!infoPtr && (uMsg != WM_NCCREATE))
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     switch (uMsg)
@@ -953,7 +955,7 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
     default:
 	if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
-	    ERR("unknown msg %04x wp=%08lx lp=%08lx\n", uMsg, wParam, lParam);
+	    ERR("unknown msg %#x, wp %#Ix, lp %#Ix.\n", uMsg, wParam, lParam);
 
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }

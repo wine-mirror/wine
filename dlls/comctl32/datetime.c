@@ -1455,7 +1455,7 @@ DATETIME_Size (DATETIME_INFO *infoPtr, INT width, INT height)
     infoPtr->rcClient.bottom = height;
     infoPtr->rcClient.right = width;
 
-    TRACE("Height=%d, Width=%d\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
+    TRACE("Height %ld, Width %ld\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
 
     infoPtr->rcDraw = infoPtr->rcClient;
     
@@ -1489,8 +1489,7 @@ DATETIME_Size (DATETIME_INFO *infoPtr, INT width, INT height)
 static LRESULT
 DATETIME_StyleChanging(DATETIME_INFO *infoPtr, WPARAM wStyleType, STYLESTRUCT *lpss)
 {
-    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
-          wStyleType, lpss->styleOld, lpss->styleNew);
+    TRACE("styletype %Ix, styleOld %#lx, styleNew %#lx\n", wStyleType, lpss->styleOld, lpss->styleNew);
 
     /* block DTS_SHOWNONE change */
     if ((lpss->styleNew ^ lpss->styleOld) & DTS_SHOWNONE)
@@ -1507,8 +1506,7 @@ DATETIME_StyleChanging(DATETIME_INFO *infoPtr, WPARAM wStyleType, STYLESTRUCT *l
 static LRESULT 
 DATETIME_StyleChanged(DATETIME_INFO *infoPtr, WPARAM wStyleType, const STYLESTRUCT *lpss)
 {
-    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
-          wStyleType, lpss->styleOld, lpss->styleNew);
+    TRACE("styletype %Ix, styleOld %#lx, styleNew %#lx\n", wStyleType, lpss->styleOld, lpss->styleNew);
 
     if (wStyleType != GWL_STYLE) return 0;
   
@@ -1595,7 +1593,7 @@ static BOOL DATETIME_GetIdealSize(DATETIME_INFO *infoPtr, SIZE *size)
     size->cx += 12;
     size->cy += 4;
 
-    TRACE("cx=%d cy=%d\n", size->cx, size->cy);
+    TRACE("cx %ld, cy %ld\n", size->cx, size->cy);
     return TRUE;
 }
 
@@ -1710,7 +1708,7 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     DATETIME_INFO *infoPtr = ((DATETIME_INFO *)GetWindowLongPtrW (hwnd, 0));
 
-    TRACE ("%x, %lx, %lx\n", uMsg, wParam, lParam);
+    TRACE("%x, %Ix, %Ix\n", uMsg, wParam, lParam);
 
     if (!infoPtr && (uMsg != WM_CREATE) && (uMsg != WM_NCCREATE))
 	return DefWindowProcW( hwnd, uMsg, wParam, lParam );
@@ -1839,10 +1837,9 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return CB_ERR;
 
     default:
-	if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
-		ERR("unknown msg %04x wp=%08lx lp=%08lx\n",
-		     uMsg, wParam, lParam);
-	return DefWindowProcW (hwnd, uMsg, wParam, lParam);
+        if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
+            ERR("unknown msg %04x, wp %Ix, lp %Ix\n", uMsg, wParam, lParam);
+        return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }
 }
 

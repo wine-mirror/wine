@@ -349,7 +349,7 @@ REBAR_DumpBandInfo(const REBARBANDINFOW *pB)
         TRACE("ID=%u, ", pB->wID);
     TRACE("size=%u, child=%p", pB->cbSize, pB->hwndChild);
     if (pB->fMask & RBBIM_COLORS)
-        TRACE(", clrF=0x%06x, clrB=0x%06x", pB->clrFore, pB->clrBack);
+        TRACE(", clrF=%#lx, clrB=%#lx", pB->clrFore, pB->clrBack);
     TRACE("\n");
 
     TRACE("band info: mask=0x%08x (%s)\n", pB->fMask, REBAR_FmtMask(buff, pB->fMask));
@@ -364,7 +364,7 @@ REBAR_DumpBandInfo(const REBARBANDINFOW *pB)
 	if (pB->fMask & RBBIM_HEADERSIZE)
 	    TRACE(" xHeader=%u", pB->cxHeader);
 	if (pB->fMask & RBBIM_LPARAM)
-	    TRACE(" lParam=0x%08lx", pB->lParam);
+	    TRACE(" lParam %Ix", pB->lParam);
 	TRACE("\n");
     }
     if (pB->fMask & RBBIM_CHILDSIZE)
@@ -382,14 +382,14 @@ REBAR_DumpBand (const REBAR_INFO *iP)
 
     if(! TRACE_ON(rebar) ) return;
 
-    TRACE("hwnd=%p: color=%08x/%08x, bands=%u, rows=%u, cSize=%d,%d\n",
+    TRACE("hwnd=%p: color=%#lx/%#lx, bands=%u, rows=%u, cSize=%ld,%ld\n",
 	  iP->hwndSelf, iP->clrText, iP->clrBk, iP->uNumBands, iP->uNumRows,
 	  iP->calcSize.cx, iP->calcSize.cy);
-    TRACE("hwnd=%p: flags=%08x, dragStart=%d,%d, dragNow=%d,%d, iGrabbedBand=%d\n",
+    TRACE("hwnd=%p: flags=%#x, dragStart=%ld,%ld, dragNow=%ld,%ld, iGrabbedBand=%d\n",
 	  iP->hwndSelf, iP->fStatus, iP->dragStart.x, iP->dragStart.y,
 	  iP->dragNow.x, iP->dragNow.y,
 	  iP->iGrabbedBand);
-    TRACE("hwnd=%p: style=%08x, notify in Unicode=%s, redraw=%s\n",
+    TRACE("hwnd=%p: style=%#lx, notify in Unicode=%s, redraw=%s\n",
           iP->hwndSelf, iP->dwStyle, (iP->bUnicode)?"TRUE":"FALSE",
           (iP->DoRedraw)?"TRUE":"FALSE");
     for (i = 0; i < iP->uNumBands; i++) {
@@ -400,7 +400,7 @@ REBAR_DumpBand (const REBAR_INFO *iP)
 	if (pB->fMask & RBBIM_CHILD)
 	    TRACE(" child=%p", pB->hwndChild);
 	if (pB->fMask & RBBIM_COLORS)
-            TRACE(" clrF=0x%06x clrB=0x%06x", pB->clrFore, pB->clrBack);
+            TRACE(" clrF=%#lx clrB=%#lx", pB->clrFore, pB->clrBack);
 	TRACE("\n");
 	TRACE("band # %u: mask=0x%08x (%s)\n", i, pB->fMask, REBAR_FmtMask(buff, pB->fMask));
 	if (pB->fMask & RBBIM_STYLE)
@@ -413,7 +413,7 @@ REBAR_DumpBand (const REBAR_INFO *iP)
 	    if (pB->fMask & RBBIM_IDEALSIZE)
 		TRACE(" xIdeal=%u", pB->cxIdeal);
 	    if (pB->fMask & RBBIM_LPARAM)
-		TRACE(" lParam=0x%08lx", pB->lParam);
+		TRACE(" lParam %Ix", pB->lParam);
 	}
 	TRACE("\n");
 	if (RBBIM_CHILDSIZE)
@@ -946,7 +946,7 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
     INT xedge = 0, yedge = 0;
     RECT rcSelf;
 
-    TRACE("new size [%d x %d]\n", infoPtr->calcSize.cx, infoPtr->calcSize.cy);
+    TRACE("new size [%ld x %ld]\n", infoPtr->calcSize.cx, infoPtr->calcSize.cy);
 
     if (infoPtr->dwStyle & CCS_NORESIZE)
         return;
@@ -993,8 +993,8 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
 	width = rcSelf.right - rcSelf.left;
     }
 
-    TRACE("hwnd %p, style=%08x, setting at (%d,%d) for (%d,%d)\n",
-	infoPtr->hwndSelf, infoPtr->dwStyle, x, y, width, height);
+    TRACE("hwnd %p, style %#lx, setting at (%d,%d) for (%d,%d)\n", infoPtr->hwndSelf, infoPtr->dwStyle,
+            x, y, width, height);
 
     /* Set flag to ignore next WM_SIZE message and resize the window */
     infoPtr->fStatus |= SELF_RESIZE;
@@ -1059,7 +1059,7 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
 
 		/* center combo box inside child area */
-		TRACE("moving child (Combo(Ex)) %p to (%d,%d) for (%d,%d)\n",
+		TRACE("moving child (Combo(Ex)) %p to (%ld,%d) for (%ld,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, yPos,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1074,7 +1074,7 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		    ERR("DeferWindowPos returned NULL\n");
 	    }
 	    else {
-		TRACE("moving child (Other) %p to (%d,%d) for (%d,%d)\n",
+		TRACE("moving child (Other) %p to (%ld,%ld) for (%ld,%ld)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, lpBand->rcChild.top,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1390,7 +1390,7 @@ REBAR_Layout(REBAR_INFO *infoPtr)
     adjcx = get_rect_cx(infoPtr, &rcAdj);
 
     if (infoPtr->uNumBands == 0) {
-        TRACE("No bands - setting size to (0,%d), style: %x\n", adjcx, infoPtr->dwStyle);
+        TRACE("No bands - setting size to (0,%d), style: %#lx\n", adjcx, infoPtr->dwStyle);
         infoPtr->calcSize.cx = adjcx;
         /* the calcSize.cy won't change for a 0 band rebar */
         infoPtr->uNumRows = 0;
@@ -1434,9 +1434,8 @@ REBAR_Layout(REBAR_INFO *infoPtr)
 
     infoPtr->calcSize.cx = adjcx;
     infoPtr->calcSize.cy = yPos;
-    TRACE("calcsize size=(%d, %d), origheight=(%d,%d)\n",
-            infoPtr->calcSize.cx, infoPtr->calcSize.cy,
-	    oldSize.cx, oldSize.cy);
+    TRACE("calcsize size=(%ld, %ld), origheight=(%ld,%ld)\n", infoPtr->calcSize.cx, infoPtr->calcSize.cy,
+            oldSize.cx, oldSize.cy);
 
     REBAR_DumpBand (infoPtr);
     REBAR_MoveChildWindows (infoPtr, 0, infoPtr->uNumBands);
@@ -1929,7 +1928,7 @@ static LRESULT REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, HDC hdc)
         else
         {
             old = SetBkColor (hdc, new);
-            TRACE("%s background color=0x%06x, band %s\n",
+            TRACE("%s background color %#lx, band %s\n",
                   (lpBand->clrBack == CLR_NONE) ? "none" :
                     ((lpBand->clrBack == CLR_DEFAULT) ? "dft" : ""),
                   GetBkColor(hdc), wine_dbgstr_rect(&rcBand));
@@ -2362,7 +2361,7 @@ REBAR_GetBkColor (const REBAR_INFO *infoPtr)
     if (clr == CLR_DEFAULT)
       clr = infoPtr->clrBtnFace;
 
-    TRACE("background color 0x%06x!\n", clr);
+    TRACE("background color %#lx\n", clr);
 
     return clr;
 }
@@ -2434,7 +2433,7 @@ REBAR_GetRowHeight (const REBAR_INFO *infoPtr, INT iRow)
 static inline LRESULT
 REBAR_GetTextColor (const REBAR_INFO *infoPtr)
 {
-    TRACE("text color 0x%06x!\n", infoPtr->clrText);
+    TRACE("text color %#lx\n", infoPtr->clrText);
 
     return infoPtr->clrText;
 }
@@ -2599,7 +2598,7 @@ REBAR_MaximizeBand (const REBAR_INFO *infoPtr, INT iBand, LPARAM lParam)
         extra = REBAR_ShrinkBandsLTR(infoPtr, next_visible(infoPtr, iBand), iRowEnd, extra, TRUE);
     lpBand->cxEffective += extraOrig - extra;
     lpBand->cx = lpBand->cxEffective;
-    TRACE("(%d, %ld): Wanted size %d, obtained %d (shrink %d, %d)\n", iBand, lParam, cxDesired, lpBand->cx, extraOrig, extra);
+    TRACE("(%d, %Id): Wanted size %d, obtained %d (shrink %d, %d)\n", iBand, lParam, cxDesired, lpBand->cx, extraOrig, extra);
     REBAR_SetRowRectsX(infoPtr, iRowBegin, iRowEnd);
 
     if (infoPtr->dwStyle & CCS_VERT)
@@ -2784,8 +2783,7 @@ REBAR_SetBarInfo (REBAR_INFO *infoPtr, const REBARINFO *lpInfo)
 	    infoPtr->imageSize.cx = 0;
 	    infoPtr->imageSize.cy = 0;
 	}
-	TRACE("new image cx=%d, cy=%d\n", infoPtr->imageSize.cx,
-	      infoPtr->imageSize.cy);
+	TRACE("new image cx=%ld, cy=%ld\n", infoPtr->imageSize.cx, infoPtr->imageSize.cy);
     }
 
     /* revalidate all bands to reset flags for images in headers of bands */
@@ -2806,7 +2804,7 @@ REBAR_SetBkColor (REBAR_INFO *infoPtr, COLORREF clr)
     clrTemp = infoPtr->clrBk;
     infoPtr->clrBk = clr;
 
-    TRACE("background color 0x%06x!\n", infoPtr->clrBk);
+    TRACE("background color %#lx\n", infoPtr->clrBk);
 
     return clrTemp;
 }
@@ -2835,7 +2833,7 @@ REBAR_SetTextColor (REBAR_INFO *infoPtr, COLORREF clr)
     clrTemp = infoPtr->clrText;
     infoPtr->clrText = clr;
 
-    TRACE("text color 0x%06x!\n", infoPtr->clrText);
+    TRACE("text color %#lx\n", infoPtr->clrText);
 
     return clrTemp;
 }
@@ -3309,12 +3307,12 @@ REBAR_NCHitTest (const REBAR_INFO *infoPtr, LPARAM lParam)
     nmmouse.dwItemData = 0;
     nmmouse.pt = clpt;
     nmmouse.dwHitInfo = 0;
-    if ((i = REBAR_Notify((NMHDR *) &nmmouse, infoPtr, NM_NCHITTEST))) {
-	TRACE("notify changed return value from %ld to %d\n",
-	      ret, i);
-	ret = (LRESULT) i;
+    if ((i = REBAR_Notify((NMHDR *) &nmmouse, infoPtr, NM_NCHITTEST)))
+    {
+        TRACE("notify changed return value from %Id to %d\n", ret, i);
+        ret = (LRESULT) i;
     }
-    TRACE("returning %ld, client point %s\n", ret, wine_dbgstr_point(&clpt));
+    TRACE("returning %Id, client point %s\n", ret, wine_dbgstr_point(&clpt));
     return ret;
 }
 
@@ -3476,13 +3474,12 @@ REBAR_SetRedraw (REBAR_INFO *infoPtr, BOOL redraw)
 static LRESULT
 REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("wParam=%lx, lParam=%lx\n", wParam, lParam);
+    TRACE("wParam %Ix, lParam %Ix\n", wParam, lParam);
 
     /* avoid _Layout resize recursion (but it shouldn't be infinite and it seems Windows does recurse) */
     if (infoPtr->fStatus & SELF_RESIZE) {
 	infoPtr->fStatus &= ~SELF_RESIZE;
-	TRACE("SELF_RESIZE was set, reset, fStatus=%08x lparam=%08lx\n",
-	      infoPtr->fStatus, lParam);
+	TRACE("SELF_RESIZE was set, reset, fStatus=%08x lparam %Ix\n", infoPtr->fStatus, lParam);
 	return 0;
     }
     
@@ -3498,7 +3495,7 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 REBAR_StyleChanged (REBAR_INFO *infoPtr, INT nType, const STYLESTRUCT *lpStyle)
 {
-    TRACE("current style=%08x, styleOld=%08x, style being set to=%08x\n",
+    TRACE("current style %#lx, styleOld %#lx, style being set to %#lx\n",
 	  infoPtr->dwStyle, lpStyle->styleOld, lpStyle->styleNew);
     if (nType == GWL_STYLE)
     {
@@ -3538,8 +3535,8 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
 
-    TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n",
-	  hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd %p, msg %x, wparam %Ix, lparam %Ix\n", hwnd, uMsg, wParam, lParam);
+
     if (!infoPtr && (uMsg != WM_NCCREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
@@ -3745,8 +3742,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
-		ERR("unknown msg %04x wp=%08lx lp=%08lx\n",
-		     uMsg, wParam, lParam);
+		ERR("unknown msg %04x, wp %Ix, lp %Ix\n", uMsg, wParam, lParam);
 	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }
 }

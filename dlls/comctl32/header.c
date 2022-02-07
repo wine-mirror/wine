@@ -2094,8 +2094,7 @@ static LRESULT HEADER_SetRedraw(HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lPar
 static INT HEADER_StyleChanged(HEADER_INFO *infoPtr, WPARAM wStyleType,
                                const STYLESTRUCT *lpss)
 {
-    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
-          wStyleType, lpss->styleOld, lpss->styleNew);
+    TRACE("styletype %Ix, styleOld %#lx, styleNew %#lx\n", wStyleType, lpss->styleOld, lpss->styleNew);
 
     if (wStyleType != GWL_STYLE) return 0;
 
@@ -2128,7 +2127,8 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = (HEADER_INFO *)GetWindowLongPtrW(hwnd, 0);
 
-    TRACE("hwnd=%p msg=%x wparam=%lx lParam=%lx\n", hwnd, msg, wParam, lParam);
+    TRACE("hwnd %p, msg %x, wparam %Ix, lParam %Ix\n", hwnd, msg, wParam, lParam);
+
     if (!infoPtr && (msg != WM_CREATE))
 	return DefWindowProcW (hwnd, msg, wParam, lParam);
     switch (msg) {
@@ -2266,8 +2266,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         default:
             if ((msg >= WM_USER) && (msg < WM_APP) && !COMCTL32_IsReflectedMessage(msg))
-		ERR("unknown msg %04x wp=%04lx lp=%08lx\n",
-		     msg, wParam, lParam );
+                ERR("unknown msg %04x, wp %#Ix, lp %#Ix\n", msg, wParam, lParam );
 	    return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
 }

@@ -349,7 +349,7 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HD
                                          NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
 		if (FAILED(hr))
 		{
-			WARN("ScriptStringAnalyse failed (%x)\n",hr);
+			WARN("ScriptStringAnalyse failed, hr %#lx.\n", hr);
 			line_def->ssa = NULL;
 		}
 
@@ -2355,7 +2355,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
     /* The text buffer handle belongs to the app */
     es->hlocapp = es->hloc32W;
 
-    TRACE("Returning %p, LocalSize() = %ld\n", es->hlocapp, LocalSize(es->hlocapp));
+    TRACE("Returning %p, LocalSize() = %Id\n", es->hlocapp, LocalSize(es->hlocapp));
     return es->hlocapp;
 }
 
@@ -3896,7 +3896,7 @@ static LRESULT  EDIT_WM_StyleChanged ( EDITSTATE *es, WPARAM which, const STYLES
         } else if (GWL_EXSTYLE == which) {
                 ; /* FIXME - what is needed here */
         } else {
-                WARN ("Invalid style change %ld\n",which);
+                WARN ("Invalid style change %#Ix.\n", which);
         }
 
         return 0;
@@ -4045,7 +4045,7 @@ static LRESULT EDIT_WM_HScroll(EDITSTATE *es, INT action, INT pos)
 		    INT fw = es->format_rect.right - es->format_rect.left;
 		    ret = es->text_width ? es->x_offset * 100 / (es->text_width - fw) : 0;
 		}
-		TRACE("EM_GETTHUMB: returning %ld\n", ret);
+		TRACE("EM_GETTHUMB: returning %Id\n", ret);
 		return ret;
 	}
 	case EM_LINESCROLL:
@@ -4168,7 +4168,7 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 		    INT vlc = get_vertical_line_count(es);
 		    ret = es->line_count ? es->y_offset * 100 / (es->line_count - vlc) : 0;
 		}
-		TRACE("EM_GETTHUMB: returning %ld\n", ret);
+		TRACE("EM_GETTHUMB: returning %Id\n", ret);
 		return ret;
 	}
 	case EM_LINESCROLL:
@@ -4401,7 +4401,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 	EDITSTATE *es;
 	UINT alloc_size;
 
-    TRACE("Creating edit control, style = %08x\n", lpcs->style);
+    TRACE("Creating edit control, style = %#lx\n", lpcs->style);
 
     if (!(es = heap_alloc_zero(sizeof(*es))))
         return FALSE;
@@ -4600,7 +4600,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     LRESULT result = 0;
     RECT *rect;
 
-    TRACE("hwnd=%p msg=%#x wparam=%lx lparam=%lx\n", hwnd, msg, wParam, lParam);
+    TRACE("hwnd %p, msg %#x, wparam %Ix, lparam %Ix\n", hwnd, msg, wParam, lParam);
 
     if (!es && msg != WM_NCCREATE)
         return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -5108,7 +5108,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     if (IsWindow(hwnd) && es && msg != EM_GETHANDLE)
         EDIT_UnlockBuffer(es, FALSE);
 
-    TRACE("hwnd=%p msg=%x -- 0x%08lx\n", hwnd, msg, result);
+    TRACE("hwnd=%p msg=%x -- %#Ix\n", hwnd, msg, result);
 
     return result;
 }

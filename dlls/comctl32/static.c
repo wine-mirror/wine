@@ -438,7 +438,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
 
         if (style < 0L || style > SS_TYPEMASK)
         {
-            ERR("Unknown style 0x%02x\n", style );
+            ERR("Unknown style %#lx\n", style );
             return -1;
         }
 
@@ -613,7 +613,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
             lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
             break;
         default:
-            FIXME("STM_SETIMAGE: Unhandled type %lx\n", wParam);
+            FIXME("STM_SETIMAGE: Unhandled type %Ix\n", wParam);
             break;
         }
         STATIC_TryPaintFcn( hwnd, full_style );

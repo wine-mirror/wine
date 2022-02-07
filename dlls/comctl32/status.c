@@ -110,7 +110,7 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
     margin = (tm.tmInternalLeading ? tm.tmInternalLeading : 2);
     height = max(tm.tmHeight + margin + 2*GetSystemMetrics(SM_CYBORDER), infoPtr->minHeight) + infoPtr->verticalBorder;
 
-    TRACE("    textHeight=%d+%d, final height=%d\n", tm.tmHeight, tm.tmInternalLeading, height);
+    TRACE("    textHeight=%ld+%ld, final height=%d\n", tm.tmHeight, tm.tmInternalLeading, height);
     return height;
 }
 
@@ -542,7 +542,7 @@ STATUSBAR_SetBkColor (STATUS_INFO *infoPtr, COLORREF color)
     infoPtr->clrBk = color;
     InvalidateRect(infoPtr->Self, NULL, FALSE);
 
-    TRACE("CREF: %08x -> %08x\n", oldBkColor, infoPtr->clrBk);
+    TRACE("CREF: %#lx -> %#lx\n", oldBkColor, infoPtr->clrBk);
     return oldBkColor;
 }
 
@@ -1101,7 +1101,7 @@ STATUSBAR_SendMouseNotify(const STATUS_INFO *infoPtr, UINT code, UINT msg, WPARA
 {
     NMMOUSE  nm;
 
-    TRACE("code %04x, lParam=%lx\n", code, lParam);
+    TRACE("code %04x, lParam %Ix\n", code, lParam);
     nm.hdr.hwndFrom = infoPtr->Self;
     nm.hdr.idFrom = GetWindowLongPtrW(infoPtr->Self, GWLP_ID);
     nm.hdr.code = code;
@@ -1128,7 +1128,8 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     INT nPart = ((INT) wParam) & 0x00ff;
     LRESULT res;
 
-    TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n", hwnd, msg, wParam, lParam);
+    TRACE("hwnd %p, msg %x, wparam %Ix, lparam %Ix\n", hwnd, msg, wParam, lParam);
+
     if (!infoPtr && msg != WM_CREATE)
         return DefWindowProcW (hwnd, msg, wParam, lParam);
 
@@ -1267,8 +1268,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if ((msg >= WM_USER) && (msg < WM_APP) && !COMCTL32_IsReflectedMessage(msg))
-		ERR("unknown msg %04x wp=%04lx lp=%08lx\n",
-		     msg, wParam, lParam);
+		ERR("unknown msg %04x wp=%Ix lp=%Ix\n", msg, wParam, lParam);
 	    return DefWindowProcW (hwnd, msg, wParam, lParam);
     }
 }

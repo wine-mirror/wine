@@ -576,8 +576,7 @@ UPDOWN_Buddy_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 {
     UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr((HWND)ref_data);
 
-    TRACE("hwnd=%p, uMsg=%04x, wParam=%08lx, lParam=%08lx\n",
-          hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd %p, uMsg %04x, wParam %Ix, lParam %Ix\n", hwnd, uMsg, wParam, lParam);
 
     switch(uMsg)
     {
@@ -892,7 +891,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
     UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd);
     HTHEME theme;
 
-    TRACE("hwnd=%p msg=%04x wparam=%08lx lparam=%08lx\n", hwnd, message, wParam, lParam);
+    TRACE("hwnd %p, msg %04x, wparam %Id, lparam %Ix\n", hwnd, message, wParam, lParam);
 
     if (!infoPtr && (message != WM_CREATE))
         return DefWindowProcW (hwnd, message, wParam, lParam);
@@ -1088,7 +1087,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    return infoPtr->Base;
 
 	case UDM_SETBASE:
-	    TRACE("UpDown Ctrl new base(%ld), hwnd=%p\n", wParam, hwnd);
+	    TRACE("UpDown Ctrl new base(%Id), hwnd=%p\n", wParam, hwnd);
 	    if (wParam==10 || wParam==16) {
 		WPARAM old_base = infoPtr->Base;
 		infoPtr->Base = wParam;
@@ -1159,7 +1158,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	}
 	default:
 	    if ((message >= WM_USER) && (message < WM_APP) && !COMCTL32_IsReflectedMessage(message))
-		ERR("unknown msg %04x wp=%04lx lp=%08lx\n", message, wParam, lParam);
+		ERR("unknown msg %04x wp=%Ix lp=%Ix\n", message, wParam, lParam);
 	    return DefWindowProcW (hwnd, message, wParam, lParam);
     }
 

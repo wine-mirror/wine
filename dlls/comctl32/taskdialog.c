@@ -1210,7 +1210,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     struct taskdialog_info *dialog_info;
     LRESULT result;
 
-    TRACE("hwnd=%p msg=0x%04x wparam=%lx lparam=%lx\n", hwnd, msg, wParam, lParam);
+    TRACE("hwnd %p, msg 0x%04x, wparam %Ix, lparam %Ix\n", hwnd, msg, wParam, lParam);
 
     if (msg != WM_INITDIALOG)
         dialog_info = GetPropW(hwnd, taskdialog_info_propnameW);

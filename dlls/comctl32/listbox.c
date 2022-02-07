@@ -2683,7 +2683,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
     }
     if (descr->style & LBS_COMBOBOX) lphc = descr->lphc;
 
-    TRACE("[%p]: msg %#x wp %08lx lp %08lx\n", descr->self, msg, wParam, lParam );
+    TRACE("[%p]: msg %#x, wp %Ix, lp %Ix\n", descr->self, msg, wParam, lParam );
 
     switch(msg)
     {
@@ -3143,8 +3143,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
-            WARN("[%p]: unknown msg %04x wp %08lx lp %08lx\n",
-                 hwnd, msg, wParam, lParam );
+            WARN("[%p]: unknown msg %04x, wp %Ix, lp %Ix\n", hwnd, msg, wParam, lParam );
     }
 
     return DefWindowProcW( hwnd, msg, wParam, lParam );

@@ -228,7 +228,7 @@ TOOLTIPS_notify_customdraw (DWORD dwDrawStage, NMTTCUSTOMDRAW *lpnmttcd)
     LRESULT result;
     lpnmttcd->nmcd.dwDrawStage = dwDrawStage;
 
-    TRACE("Notifying stage %d, flags %x, id %x\n", lpnmttcd->nmcd.dwDrawStage,
+    TRACE("Notifying stage %ld, flags %x, id %x\n", lpnmttcd->nmcd.dwDrawStage,
           lpnmttcd->uDrawFlags, lpnmttcd->nmcd.hdr.code);
 
     result = SendMessageW(GetParent(lpnmttcd->nmcd.hdr.hwndFrom), WM_NOTIFY,
@@ -370,7 +370,7 @@ static void TOOLTIPS_GetDispInfoA(const TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *too
     ttnmdi.uFlags = toolPtr->uFlags;
     ttnmdi.lParam = toolPtr->lParam;
 
-    TRACE("hdr.idFrom = %lx\n", ttnmdi.hdr.idFrom);
+    TRACE("hdr.idFrom = %Ix\n", ttnmdi.hdr.idFrom);
     SendMessageW(toolPtr->hwnd, WM_NOTIFY, toolPtr->uId, (LPARAM)&ttnmdi);
 
     if (IS_INTRESOURCE(ttnmdi.lpszText)) {
@@ -426,7 +426,7 @@ static void TOOLTIPS_GetDispInfoW(const TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *too
     ttnmdi.uFlags = toolPtr->uFlags;
     ttnmdi.lParam = toolPtr->lParam;
 
-    TRACE("hdr.idFrom = %lx\n", ttnmdi.hdr.idFrom);
+    TRACE("hdr.idFrom = %Ix\n", ttnmdi.hdr.idFrom);
     SendMessageW(toolPtr->hwnd, WM_NOTIFY, toolPtr->uId, (LPARAM)&ttnmdi);
 
     if (IS_INTRESOURCE(ttnmdi.lpszText)) {
@@ -616,7 +616,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     toolPtr = &infoPtr->tools[nTool];
     TOOLTIPS_CalcTipSize (infoPtr, &size);
 
-    TRACE("Show tooltip %d, %s, size %d x %d\n", nTool, debugstr_w(infoPtr->szTipText),
+    TRACE("Show tooltip %d, %s, size %ld x %ld\n", nTool, debugstr_w(infoPtr->szTipText),
         size.cx, size.cy);
 
     if (track_activate && (toolPtr->uFlags & TTF_TRACK))
@@ -720,7 +720,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
         }
     }
 
-    TRACE("pos %d - %d\n", rect.left, rect.top);
+    TRACE("pos %ld - %ld\n", rect.left, rect.top);
 
     rect.right = rect.left + size.cx;
     rect.bottom = rect.top + size.cy;
@@ -1045,7 +1045,7 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 
     if (!ti) return FALSE;
 
-    TRACE("add tool (%p) %p %ld%s\n", infoPtr->hwndSelf, ti->hwnd, ti->uId,
+    TRACE("add tool (%p) %p %Id%s\n", infoPtr->hwndSelf, ti->hwnd, ti->uId,
         (ti->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
     if (ti->cbSize > TTTOOLINFOW_V3_SIZE && isW)
@@ -1285,7 +1285,7 @@ TOOLTIPS_GetBubbleSize (const TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolI
     TRACE("tool %d\n", nTool);
 
     TOOLTIPS_CalcTipSize (infoPtr, &size);
-    TRACE("size %d x %d\n", size.cx, size.cy);
+    TRACE("size %ld x %ld\n", size.cx, size.cy);
 
     return MAKELRESULT(size.cx, size.cy);
 }
@@ -1320,7 +1320,7 @@ TOOLTIPS_GetDelayTime (const TOOLTIPS_INFO *infoPtr, DWORD duration)
         return infoPtr->nInitialTime;
 
     default:
-        WARN("Invalid duration flag %x\n", duration);
+        WARN("Invalid duration flag %lx\n", duration);
 	break;
     }
 
@@ -1577,7 +1577,7 @@ TOOLTIPS_SetDelayTime (TOOLTIPS_INFO *infoPtr, DWORD duration, INT nTime)
 	    break;
 
     default:
-        WARN("Invalid duration flag %x\n", duration);
+        WARN("Invalid duration flag %lx\n", duration);
 	break;
     }
 
@@ -1924,7 +1924,7 @@ TOOLTIPS_NCHitTest (const TOOLTIPS_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLTIPS_NotifyFormat (TOOLTIPS_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    FIXME ("hwnd=%p wParam=%lx lParam=%lx\n", infoPtr->hwndSelf, wParam, lParam);
+    FIXME("hwnd %p, wParam %Ix, lParam %Ix\n", infoPtr->hwndSelf, wParam, lParam);
 
     return 0;
 }
@@ -2102,7 +2102,8 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
 
-    TRACE("hwnd=%p msg=%x wparam=%lx lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd %p, msg %x, wparam %Ix, lParam %Ix\n", hwnd, uMsg, wParam, lParam);
+
     if (!infoPtr && (uMsg != WM_CREATE) && (uMsg != WM_NCCREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
@@ -2270,8 +2271,7 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
-		ERR("unknown msg %04x wp=%08lx lp=%08lx\n",
-		     uMsg, wParam, lParam);
+		ERR("unknown msg %04x, wp %Ix, lp %Ix\n", uMsg, wParam, lParam);
 	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }
 }

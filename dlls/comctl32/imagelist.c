@@ -342,13 +342,13 @@ IMAGELIST_InternalExpandBitmaps(HIMAGELIST himl, INT nImageCount)
 
     imagelist_get_bitmap_size(himl, nNewCount, &sz);
 
-    TRACE("Create expanded bitmaps : himl=%p x=%d y=%d count=%d\n", himl, sz.cx, sz.cy, nNewCount);
+    TRACE("Create expanded bitmaps : himl=%p x=%ld y=%ld count=%d\n", himl, sz.cx, sz.cy, nNewCount);
     hdcBitmap = CreateCompatibleDC (0);
 
     hbmNewBitmap = ImageList_CreateImage(hdcBitmap, himl, nNewCount);
 
     if (hbmNewBitmap == 0)
-        ERR("creating new image bitmap (x=%d y=%d)!\n", sz.cx, sz.cy);
+        ERR("creating new image bitmap (x=%ld y=%ld)!\n", sz.cx, sz.cy);
 
     if (himl->cCurImage)
     {
@@ -527,7 +527,8 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     HBITMAP hMaskBitmap;
     COLORREF bkColor;
 
-    TRACE("himl=%p hbitmap=%p clrmask=%x\n", himl, hBitmap, clrMask);
+    TRACE("himl %p, hbitmap %p, clrmask %#lx\n", himl, hBitmap, clrMask);
+
     if (!is_valid(himl))
         return -1;
 
@@ -2209,7 +2210,7 @@ static void *read_bitmap(IStream *pstm, BITMAPINFO *bmi)
     if ((bmi->bmiHeader.biSize != sizeof(bmi->bmiHeader)))
         return NULL;
 
-    TRACE("width %u, height %u, planes %u, bpp %u\n",
+    TRACE("width %lu, height %lu, planes %u, bpp %u\n",
           bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight,
           bmi->bmiHeader.biPlanes, bmi->bmiHeader.biBitCount);
 
@@ -2793,7 +2794,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 BOOL WINAPI
 ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 {
-    FIXME("(%p 0x%x 0x%x):empty stub!\n", himl, i, dwFilter);
+    FIXME("%p, %d, %#lx:empty stub!\n", himl, i, dwFilter);
 
     return FALSE;
 }
@@ -2818,7 +2819,7 @@ ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 DWORD WINAPI
 ImageList_SetFlags(HIMAGELIST himl, DWORD flags)
 {
-    FIXME("(%p %08x):empty stub\n", himl, flags);
+    FIXME("(%p %#lx):empty stub\n", himl, flags);
     return 0;
 }
 
@@ -3043,7 +3044,7 @@ static BOOL _write_bitmap(HBITMAP hBitmap, IStream *pstm)
     if (!result)
 	goto failed;
 
-    TRACE("width %u, height %u, planes %u, bpp %u\n",
+    TRACE("width %lu, height %lu, planes %u, bpp %u\n",
           bmih->biWidth, bmih->biHeight,
           bmih->biPlanes, bmih->biBitCount);
 
@@ -3063,7 +3064,7 @@ failed:
  */
 HRESULT WINAPI ImageList_WriteEx(HIMAGELIST himl, DWORD flags, IStream *pstm)
 {
-    FIXME("%p %08x %p: semi-stub\n", himl, flags, pstm);
+    FIXME("%p %#lx %p: semi-stub\n", himl, flags, pstm);
     return ImageList_Write(himl, pstm) ? S_OK : E_FAIL;
 }
 
@@ -3140,7 +3141,7 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count)
         char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
         BITMAPINFO *bmi = (BITMAPINFO *)buffer;
 
-        TRACE("Creating DIBSection %d x %d, %d Bits per Pixel\n",
+        TRACE("Creating DIBSection %ld x %ld, %d Bits per Pixel\n",
               sz.cx, sz.cy, himl->uBitsPixel);
 
         memset( buffer, 0, sizeof(buffer) );
@@ -3272,7 +3273,7 @@ static ULONG WINAPI ImageListImpl_AddRef(IImageList2 *iface)
     HIMAGELIST imgl = impl_from_IImageList2(iface);
     ULONG ref = InterlockedIncrement(&imgl->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("%p, refcount %lu\n", iface, ref);
     return ref;
 }
 
@@ -3281,7 +3282,7 @@ static ULONG WINAPI ImageListImpl_Release(IImageList2 *iface)
     HIMAGELIST This = impl_from_IImageList2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) refcount=%u\n", iface, ref);
+    TRACE("%p, refcount %lu\n", iface, ref);
 
     if (ref == 0)
     {
@@ -3673,7 +3674,7 @@ static HRESULT WINAPI ImageListImpl_Resize(IImageList2 *iface, INT cx, INT cy)
 
 static HRESULT WINAPI ImageListImpl_GetOriginalSize(IImageList2 *iface, INT image, DWORD flags, INT *cx, INT *cy)
 {
-    FIXME("(%p)->(%d %x %p %p): stub\n", iface, image, flags, cx, cy);
+    FIXME("(%p)->(%d %lx %p %p): stub\n", iface, image, flags, cx, cy);
     return E_NOTIMPL;
 }
 
@@ -3697,13 +3698,13 @@ static HRESULT WINAPI ImageListImpl_GetCallback(IImageList2 *iface, REFIID riid,
 
 static HRESULT WINAPI ImageListImpl_ForceImagePresent(IImageList2 *iface, INT image, DWORD flags)
 {
-    FIXME("(%p)->(%d %x): stub\n", iface, image, flags);
+    FIXME("(%p)->(%d %lx): stub\n", iface, image, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImageListImpl_DiscardImages(IImageList2 *iface, INT first_image, INT last_image, DWORD flags)
 {
-    FIXME("(%p)->(%d %d %x): stub\n", iface, first_image, last_image, flags);
+    FIXME("(%p)->(%d %d %lx): stub\n", iface, first_image, last_image, flags);
     return E_NOTIMPL;
 }
 
@@ -3727,14 +3728,14 @@ static HRESULT WINAPI ImageListImpl_Initialize(IImageList2 *iface, INT cx, INT c
 
 static HRESULT WINAPI ImageListImpl_Replace2(IImageList2 *iface, INT i, HBITMAP image, HBITMAP mask, IUnknown *unk, DWORD flags)
 {
-    FIXME("(%p)->(%d %p %p %p %x): stub\n", iface, i, image, mask, unk, flags);
+    FIXME("(%p)->(%d %p %p %p %lx): stub\n", iface, i, image, mask, unk, flags);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImageListImpl_ReplaceFromImageList(IImageList2 *iface, INT i, IImageList *imagelist, INT src,
     IUnknown *unk, DWORD flags)
 {
-    FIXME("(%p)->(%d %p %d %p %x): stub\n", iface, i, imagelist, src, unk, flags);
+    FIXME("(%p)->(%d %p %d %p %lx): stub\n", iface, i, imagelist, src, unk, flags);
     return E_NOTIMPL;
 }
 

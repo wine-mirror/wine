@@ -624,7 +624,7 @@ TREEVIEW_SendCustomDrawNotify(const TREEVIEW_INFO *infoPtr, DWORD dwDrawStage,
     NMTVCUSTOMDRAW nmcdhdr;
     NMCUSTOMDRAW *nmcd;
 
-    TRACE("drawstage:0x%x hdc:%p\n", dwDrawStage, hdc);
+    TRACE("drawstage %#lx, hdc %p\n", dwDrawStage, hdc);
 
     nmcd = &nmcdhdr.nmcd;
     nmcd->dwDrawStage = dwDrawStage;
@@ -671,7 +671,7 @@ TREEVIEW_SendCustomDrawItemNotify(const TREEVIEW_INFO *infoPtr, HDC hdc,
     nmcd->lItemlParam = item->lParam;
     nmcdhdr->iLevel = item->iLevel;
 
-    TRACE("drawstage:0x%x hdc:%p item:%lx, itemstate:0x%x, lItemlParam:0x%lx\n",
+    TRACE("drawstage %#lx hdc:%p item:%Ix, itemstate:0x%x, lItemlParam:%Ix\n",
 	  nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
 	  nmcd->uItemState, nmcd->lItemlParam);
 
@@ -2005,7 +2005,7 @@ TREEVIEW_SetInsertMarkColor(TREEVIEW_INFO *infoPtr, COLORREF color)
 {
     COLORREF prevColor = infoPtr->clrInsertMark;
 
-    TRACE("0x%08x\n", color);
+    TRACE("%#lx\n", color);
     infoPtr->clrInsertMark = color;
 
     return (LRESULT)prevColor;
@@ -2079,7 +2079,7 @@ static inline LRESULT
 TREEVIEW_GetVisibleCount(const TREEVIEW_INFO *infoPtr)
 {
     /* Surprise! This does not take integral height into account. */
-    TRACE("client=%d, item=%d\n", infoPtr->clientHeight, infoPtr->uItemHeight);
+    TRACE("client=%ld, item=%d\n", infoPtr->clientHeight, infoPtr->uItemHeight);
     return infoPtr->clientHeight / infoPtr->uItemHeight;
 }
 
@@ -3113,7 +3113,7 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, HDC hdc_ref)
 static LRESULT
 TREEVIEW_PrintClient(TREEVIEW_INFO *infoPtr, HDC hdc, DWORD options)
 {
-    FIXME("Partial Stub: (hdc=%p options=0x%08x)\n", hdc, options);
+    FIXME("Partial Stub: (hdc=%p options=%#lx)\n", hdc, options);
 
     if ((options & PRF_CHECKVISIBLE) && !IsWindowVisible(infoPtr->hwnd))
         return 0;
@@ -3789,7 +3789,7 @@ TREEVIEW_HitTest(const TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
     }
 
     lpht->hItem = item;
-    TRACE("(%d,%d):result 0x%x\n", lpht->pt.x, lpht->pt.y, lpht->flags);
+    TRACE("(%ld, %ld) : result 0x%x\n", lpht->pt.x, lpht->pt.y, lpht->flags);
 
     return item;
 }
@@ -3866,7 +3866,7 @@ TREEVIEW_Edit_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("code=0x%x, id=0x%x, handle=0x%lx\n", HIWORD(wParam), LOWORD(wParam), lParam);
+    TRACE("code 0x%x, id=0x%x, handle %Ix\n", HIWORD(wParam), LOWORD(wParam), lParam);
 
     switch (HIWORD(wParam))
     {
@@ -4472,7 +4472,7 @@ TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     else
         GetTextExtentPoint32A(hdc, "", 0, &size);
 
-    TRACE("%d %d %s\n", size.cx, size.cy, debugstr_w(dragItem->pszText));
+    TRACE("%ld, %ld, %s\n", size.cx, size.cy, debugstr_w(dragItem->pszText));
     hbmp = CreateCompatibleBitmap(htopdc, size.cx, size.cy);
     hOldbmp = SelectObject(hdc, hbmp);
 
@@ -4804,7 +4804,7 @@ TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
 
     viscount = TREEVIEW_GetVisibleCount(infoPtr);
 
-    TRACE("%p (%s) %d - %d viscount(%d)\n", item, TREEVIEW_ItemName(item), item->visibleOrder,
+    TRACE("%p (%s) %ld - %ld viscount(%d)\n", item, TREEVIEW_ItemName(item), item->visibleOrder,
         hasFirstVisible ? infoPtr->firstVisible->visibleOrder : -1, viscount);
 
     if (hasFirstVisible)
@@ -4939,7 +4939,7 @@ TREEVIEW_VScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 
     int nScrollCode = LOWORD(wParam);
 
-    TRACE("wp %lx\n", wParam);
+    TRACE("wp %Ix\n", wParam);
 
     if (!(infoPtr->uInternalStatus & TV_VSCROLL))
 	return 0;
@@ -5009,7 +5009,7 @@ TREEVIEW_HScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
     int scrollX = infoPtr->scrollX;
     int nScrollCode = LOWORD(wParam);
 
-    TRACE("wp %lx\n", wParam);
+    TRACE("wp %Ix\n", wParam);
 
     if (!(infoPtr->uInternalStatus & TV_HSCROLL))
 	return FALSE;
@@ -5131,7 +5131,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     TREEVIEW_INFO *infoPtr;
     LOGFONTW lf;
 
-    TRACE("wnd %p, style 0x%x\n", hwnd, GetWindowLongW(hwnd, GWL_STYLE));
+    TRACE("wnd %p, style %#lx\n", hwnd, GetWindowLongW(hwnd, GWL_STYLE));
 
     infoPtr = heap_alloc_zero(sizeof(TREEVIEW_INFO));
 
@@ -5323,7 +5323,7 @@ TREEVIEW_KeyDown(TREEVIEW_INFO *infoPtr, WPARAM wParam)
     TREEVIEW_ITEM *prevItem = infoPtr->selectedItem;
     NMTVKEYDOWN nmkeydown;
 
-    TRACE("%lx\n", wParam);
+    TRACE("%Ix\n", wParam);
 
     nmkeydown.wVKey = wParam;
     nmkeydown.flags = 0;
@@ -5538,13 +5538,13 @@ TREEVIEW_Notify(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 	if (lppgc->dwFlag == PGF_CALCWIDTH) {
 	    lppgc->iWidth = infoPtr->treeWidth;
-            TRACE("got PGN_CALCSIZE, returning horz size = %d, client=%d\n",
+            TRACE("got PGN_CALCSIZE, returning horz size = %ld, client= %ld\n",
 		  infoPtr->treeWidth, infoPtr->clientWidth);
 	}
 	else {
 	    lppgc->iHeight = infoPtr->treeHeight;
-            TRACE("got PGN_CALCSIZE, returning vert size = %d, client=%d\n",
-		  infoPtr->treeHeight, infoPtr->clientHeight);
+            TRACE("got PGN_CALCSIZE, returning vert size = %ld, client = %ld\n", infoPtr->treeHeight,
+                   infoPtr->clientHeight);
 	}
 	return 0;
     }
@@ -5565,7 +5565,7 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     }
     else
     {
-	FIXME("WM_SIZE flag %lx %lx not handled\n", wParam, lParam);
+        FIXME("WM_SIZE flag %Ix %Ix not handled\n", wParam, lParam);
     }
 
     TREEVIEW_Invalidate(infoPtr, NULL);
@@ -5575,7 +5575,7 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("(%lx %lx)\n", wParam, lParam);
+    TRACE("%Ix, %Ix.\n", wParam, lParam);
 
     if (wParam == GWL_STYLE)
     {
@@ -5699,7 +5699,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
 
-    TRACE("hwnd %p msg %04x wp=%08lx lp=%08lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd %p, msg %04x, wp %Ix, lp %Ix\n", hwnd, uMsg, wParam, lParam);
 
     if (infoPtr) TREEVIEW_VerifyTree(infoPtr);
     else
@@ -5954,7 +5954,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     default:
 	/* This mostly catches MFC and Delphi messages. :( */
 	if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
-	    TRACE("Unknown msg %04x wp=%08lx lp=%08lx\n", uMsg, wParam, lParam);
+	    TRACE("Unknown msg %04x wp %Ix lp %Ix\n", uMsg, wParam, lParam);
 def:
 	return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }
