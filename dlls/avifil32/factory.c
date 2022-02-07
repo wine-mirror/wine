@@ -70,7 +70,7 @@ static ULONG WINAPI IClassFactory_fnAddRef(IClassFactory *iface)
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", This, ref);
+    TRACE("(%p) ref = %lu\n", This, ref);
     return ref;
 }
 
@@ -79,7 +79,7 @@ static ULONG WINAPI IClassFactory_fnRelease(IClassFactory *iface)
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref = %u\n", This, ref);
+    TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref)
         HeapFree(GetProcessHeap(), 0, This);
@@ -196,7 +196,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID pclsid, REFIID piid, LPVOID *ppv)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 {
-  TRACE("(%p,%d,%p)\n", hInstDll, fdwReason, lpvReserved);
+  TRACE("(%p,%ld,%p)\n", hInstDll, fdwReason, lpvReserved);
 
   switch (fdwReason) {
   case DLL_PROCESS_ATTACH:

@@ -309,7 +309,7 @@ HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile, LPAVIFILEINFOA afi, LONG size)
   AVIFILEINFOW afiw;
   HRESULT      hres;
 
-  TRACE("(%p,%p,%d)\n", pfile, afi, size);
+  TRACE("(%p,%p,%ld)\n", pfile, afi, size);
 
   if (pfile == NULL)
     return AVIERR_BADHANDLE;
@@ -331,7 +331,7 @@ HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile, LPAVIFILEINFOA afi, LONG size)
  */
 HRESULT WINAPI AVIFileInfoW(PAVIFILE pfile, LPAVIFILEINFOW afiw, LONG size)
 {
-  TRACE("(%p,%p,%d)\n", pfile, afiw, size);
+  TRACE("(%p,%p,%ld)\n", pfile, afiw, size);
 
   if (pfile == NULL)
     return AVIERR_BADHANDLE;
@@ -345,7 +345,7 @@ HRESULT WINAPI AVIFileInfoW(PAVIFILE pfile, LPAVIFILEINFOW afiw, LONG size)
 HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile, PAVISTREAM *avis,
 				DWORD fccType, LONG lParam)
 {
-  TRACE("(%p,%p,'%4.4s',%d)\n", pfile, avis, (char*)&fccType, lParam);
+  TRACE("(%p,%p,'%4.4s',%ld)\n", pfile, avis, (char*)&fccType, lParam);
 
   if (pfile == NULL)
     return AVIERR_BADHANDLE;
@@ -394,7 +394,7 @@ HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile, PAVISTREAM *avis,
  */
 HRESULT WINAPI AVIFileWriteData(PAVIFILE pfile,DWORD fcc,LPVOID lp,LONG size)
 {
-  TRACE("(%p,'%4.4s',%p,%d)\n", pfile, (char*)&fcc, lp, size);
+  TRACE("(%p,'%4.4s',%p,%ld)\n", pfile, (char*)&fcc, lp, size);
 
   if (pfile == NULL)
     return AVIERR_BADHANDLE;
@@ -466,7 +466,7 @@ HRESULT WINAPI AVIStreamCreate(PAVISTREAM *ppavi, LONG lParam1, LONG lParam2,
 {
   HRESULT hr;
 
-  TRACE("(%p,0x%08X,0x%08X,%s)\n", ppavi, lParam1, lParam2,
+  TRACE("(%p,0x%08lX,0x%08lX,%s)\n", ppavi, lParam1, lParam2,
 	debugstr_guid(pclsidHandler));
 
   if (ppavi == NULL)
@@ -499,7 +499,7 @@ HRESULT WINAPI AVIStreamInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
   AVISTREAMINFOW asiw;
   HRESULT	 hres;
 
-  TRACE("(%p,%p,%d)\n", pstream, asi, size);
+  TRACE("(%p,%p,%ld)\n", pstream, asi, size);
 
   if (pstream == NULL)
     return AVIERR_BADHANDLE;
@@ -522,7 +522,7 @@ HRESULT WINAPI AVIStreamInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
 HRESULT WINAPI AVIStreamInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
 			      LONG size)
 {
-  TRACE("(%p,%p,%d)\n", pstream, asi, size);
+  TRACE("(%p,%p,%ld)\n", pstream, asi, size);
 
   if (pstream == NULL)
     return AVIERR_BADHANDLE;
@@ -535,7 +535,7 @@ HRESULT WINAPI AVIStreamInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
  */
 LONG WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, LONG flags)
 {
-  TRACE("(%p,%d,0x%X)\n", pstream, pos, flags);
+  TRACE("(%p,%ld,0x%lX)\n", pstream, pos, flags);
 
   if (pstream == NULL)
     return -1;
@@ -549,7 +549,7 @@ LONG WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, LONG flags)
 HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM pstream, LONG pos,
 				   LPVOID format, LPLONG formatsize)
 {
-  TRACE("(%p,%d,%p,%p)\n", pstream, pos, format, formatsize);
+  TRACE("(%p,%ld,%p,%p)\n", pstream, pos, format, formatsize);
 
   if (pstream == NULL)
     return AVIERR_BADHANDLE;
@@ -563,7 +563,7 @@ HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM pstream, LONG pos,
 HRESULT WINAPI AVIStreamSetFormat(PAVISTREAM pstream, LONG pos,
 				  LPVOID format, LONG formatsize)
 {
-  TRACE("(%p,%d,%p,%d)\n", pstream, pos, format, formatsize);
+  TRACE("(%p,%ld,%p,%ld)\n", pstream, pos, format, formatsize);
 
   if (pstream == NULL)
     return AVIERR_BADHANDLE;
@@ -578,7 +578,7 @@ HRESULT WINAPI AVIStreamRead(PAVISTREAM pstream, LONG start, LONG samples,
 			     LPVOID buffer, LONG buffersize,
 			     LPLONG bytesread, LPLONG samplesread)
 {
-  TRACE("(%p,%d,%d,%p,%d,%p,%p)\n", pstream, start, samples, buffer,
+  TRACE("(%p,%ld,%ld,%p,%ld,%p,%p)\n", pstream, start, samples, buffer,
 	buffersize, bytesread, samplesread);
 
   if (pstream == NULL)
@@ -595,7 +595,7 @@ HRESULT WINAPI AVIStreamWrite(PAVISTREAM pstream, LONG start, LONG samples,
 			      LPVOID buffer, LONG buffersize, DWORD flags,
 			      LPLONG sampwritten, LPLONG byteswritten)
 {
-  TRACE("(%p,%d,%d,%p,%d,0x%X,%p,%p)\n", pstream, start, samples, buffer,
+  TRACE("(%p,%ld,%ld,%p,%ld,0x%lX,%p,%p)\n", pstream, start, samples, buffer,
 	buffersize, flags, sampwritten, byteswritten);
 
   if (pstream == NULL)
@@ -625,7 +625,7 @@ HRESULT WINAPI AVIStreamReadData(PAVISTREAM pstream, DWORD fcc, LPVOID lp,
 HRESULT WINAPI AVIStreamWriteData(PAVISTREAM pstream, DWORD fcc, LPVOID lp,
 				  LONG size)
 {
-  TRACE("(%p,'%4.4s',%p,%d)\n", pstream, (char*)&fcc, lp, size);
+  TRACE("(%p,'%4.4s',%p,%ld)\n", pstream, (char*)&fcc, lp, size);
 
   if (pstream == NULL)
     return AVIERR_BADHANDLE;
@@ -663,7 +663,7 @@ PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pstream,
  */
 LPVOID WINAPI AVIStreamGetFrame(PGETFRAME pg, LONG pos)
 {
-  TRACE("(%p,%d)\n", pg, pos);
+  TRACE("(%p,%ld)\n", pg, pos);
 
   if (pg == NULL)
     return NULL;
@@ -764,7 +764,7 @@ HRESULT WINAPI AVIStreamOpenFromFileA(PAVISTREAM *ppavi, LPCSTR szFile,
   PAVIFILE pfile = NULL;
   HRESULT  hr;
 
-  TRACE("(%p,%s,'%4.4s',%d,0x%X,%s)\n", ppavi, debugstr_a(szFile),
+  TRACE("(%p,%s,'%4.4s',%ld,0x%X,%s)\n", ppavi, debugstr_a(szFile),
 	(char*)&fccType, lParam, mode, debugstr_guid(pclsidHandler));
 
   if (ppavi == NULL || szFile == NULL)
@@ -792,7 +792,7 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
   PAVIFILE pfile = NULL;
   HRESULT  hr;
 
-  TRACE("(%p,%s,'%4.4s',%d,0x%X,%s)\n", ppavi, debugstr_w(szFile),
+  TRACE("(%p,%s,'%4.4s',%ld,0x%X,%s)\n", ppavi, debugstr_w(szFile),
 	(char*)&fccType, lParam, mode, debugstr_guid(pclsidHandler));
 
   if (ppavi == NULL || szFile == NULL)
@@ -818,7 +818,7 @@ LONG WINAPI AVIStreamBeginStreaming(PAVISTREAM pavi, LONG lStart, LONG lEnd, LON
   IAVIStreaming* pstream = NULL;
   HRESULT hr;
 
-  TRACE("(%p,%d,%d,%d)\n", pavi, lStart, lEnd, lRate);
+  TRACE("(%p,%ld,%ld,%ld)\n", pavi, lStart, lEnd, lRate);
 
   if (pavi == NULL)
     return AVIERR_BADHANDLE;
@@ -896,7 +896,7 @@ LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample)
   AVISTREAMINFOW asiw;
   LONG time;
 
-  TRACE("(%p,%d)\n", pstream, lSample);
+  TRACE("(%p,%ld)\n", pstream, lSample);
 
   if (pstream == NULL)
     return -1;
@@ -917,7 +917,7 @@ LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample)
   else
     time = (LONG)(((float)lSample * asiw.dwScale * 1000 + (asiw.dwRate - 1)) / asiw.dwRate);
 
-  TRACE(" -> %d\n",time);
+  TRACE(" -> %ld\n",time);
   return time;
 }
 
@@ -929,7 +929,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
   AVISTREAMINFOW asiw;
   ULONG sample;
 
-  TRACE("(%p,%d)\n", pstream, lTime);
+  TRACE("(%p,%ld)\n", pstream, lTime);
 
   if (pstream == NULL || lTime < 0)
     return -1;
@@ -950,7 +950,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
   if (sample > asiw.dwStart + asiw.dwLength)
     sample = asiw.dwStart + asiw.dwLength;
 
-  TRACE(" -> %d\n", sample);
+  TRACE(" -> %ld\n", sample);
   return sample;
 }
 
@@ -963,7 +963,7 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
   LPWSTR  wszFilter;
   HRESULT hr;
 
-  TRACE("(%p,%d,%d)\n", szFilter, cbFilter, fSaving);
+  TRACE("(%p,%ld,%d)\n", szFilter, cbFilter, fSaving);
 
   /* check parameters */
   if (szFilter == NULL)
@@ -1005,7 +1005,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   LONG       size;
   DWORD      count = 0;
 
-  TRACE("(%p,%d,%d)\n", szFilter, cbFilter, fSaving);
+  TRACE("(%p,%ld,%d)\n", szFilter, cbFilter, fSaving);
 
   /* check parameters */
   if (szFilter == NULL)
@@ -1243,7 +1243,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
     HeapFree(GetProcessHeap(), 0, afmtc.pwfxEnum);
     return ret == S_OK;
   } else {
-    ERR(": unknown streamtype 0x%08X\n", sInfo.fccType);
+    ERR(": unknown streamtype 0x%08lX\n", sInfo.fccType);
     return FALSE;
   }
 }
@@ -1616,7 +1616,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	lFirstVideo = curStream;
     } else if (!dwInterleave) {
       /* check if any non-video stream wants to be interleaved */
-      WARN("options.flags=0x%X options.dwInterleave=%u\n",plpOptions[curStream]->dwFlags,plpOptions[curStream]->dwInterleaveEvery);
+      WARN("options.flags=0x%lX options.dwInterleave=%lu\n",plpOptions[curStream]->dwFlags,plpOptions[curStream]->dwInterleaveEvery);
       if (plpOptions[curStream] != NULL &&
 	  plpOptions[curStream]->dwFlags & AVICOMPRESSF_INTERLEAVE)
 	dwInterleave = plpOptions[curStream]->dwInterleaveEvery;
@@ -1794,7 +1794,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
 	}
 
 	/* copy needed samples now */
-	WARN("copy from stream %d samples %d to %d...\n",curStream,
+	WARN("copy from stream %d samples %ld to %ld...\n",curStream,
 	      lStart[curStream],lFirstVideo);
 	while (lFirstVideo > lStart[curStream]) {
 	  DWORD flags = 0;
@@ -2068,7 +2068,7 @@ HRESULT WINAPI EditStreamPaste(PAVISTREAM pDest, LONG *plStart, LONG *plLength,
   PAVIEDITSTREAM pEdit = NULL;
   HRESULT        hr;
 
-  TRACE("(%p,%p,%p,%p,%d,%d)\n", pDest, plStart, plLength,
+  TRACE("(%p,%p,%p,%p,%ld,%ld)\n", pDest, plStart, plLength,
 	pSource, lStart, lEnd);
 
   if (pDest == NULL || pSource == NULL)
@@ -2095,7 +2095,7 @@ HRESULT WINAPI EditStreamSetInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
 {
   AVISTREAMINFOW asiw;
 
-  TRACE("(%p,%p,%d)\n", pstream, asi, size);
+  TRACE("(%p,%p,%ld)\n", pstream, asi, size);
 
   if (size >= 0 && size < sizeof(AVISTREAMINFOA))
     return AVIERR_BADSIZE;
@@ -2115,7 +2115,7 @@ HRESULT WINAPI EditStreamSetInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
   PAVIEDITSTREAM pEdit = NULL;
   HRESULT        hr;
 
-  TRACE("(%p,%p,%d)\n", pstream, asi, size);
+  TRACE("(%p,%p,%ld)\n", pstream, asi, size);
 
   if (size >= 0 && size < sizeof(AVISTREAMINFOA))
     return AVIERR_BADSIZE;
