@@ -1088,17 +1088,10 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
     }
     if (flags & SPINST_FILES)
     {
-        struct files_callback_info info;
         HSPFILEQ queue;
 
         if (!(queue = SetupOpenFileQueue())) return FALSE;
-        info.queue      = queue;
-        info.src_root   = src_root;
-        info.copy_flags = copy_flags;
-        info.layout     = hinf;
-        ret = (iterate_section_fields( hinf, section, L"CopyFiles", copy_files_callback, &info ) &&
-               iterate_section_fields( hinf, section, L"DelFiles", delete_files_callback, &info ) &&
-               iterate_section_fields( hinf, section, L"RenFiles", rename_files_callback, &info ) &&
+        ret = (SetupInstallFilesFromInfSectionW( hinf, NULL, queue, section, src_root, copy_flags ) &&
                SetupCommitFileQueueW( owner, queue, callback, context ));
         SetupCloseFileQueue( queue );
         if (!ret) return FALSE;
