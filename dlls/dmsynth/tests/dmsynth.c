@@ -65,6 +65,9 @@ static void test_dmsynth(void)
     ULONG value;
     ULONG bytes;
     DMUS_PORTCAPS caps;
+    DMUS_PORTPARAMS params;
+    const DWORD all_params = DMUS_PORTPARAMS_VOICES|DMUS_PORTPARAMS_CHANNELGROUPS|DMUS_PORTPARAMS_AUDIOCHANNELS|
+            DMUS_PORTPARAMS_SAMPLERATE|DMUS_PORTPARAMS_EFFECTS|DMUS_PORTPARAMS_SHARE|DMUS_PORTPARAMS_FEATURES;
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (LPVOID*)&dmsynth);
     ok(hr == S_OK, "CoCreateInstance returned: %#lx\n", hr);
@@ -120,6 +123,72 @@ static void test_dmsynth(void)
     /* Synth isn't fully initialized yet */
     hr = IDirectMusicSynth_Activate(dmsynth, TRUE);
     ok(hr == DMUS_E_NOSYNTHSINK, "IDirectMusicSynth_Activate returned: %#lx\n", hr);
+
+    /* Open / Close */
+    hr = IDirectMusicSynth_Open(dmsynth, NULL);
+    ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    hr = IDirectMusicSynth_Open(dmsynth, NULL);
+    ok(hr == DMUS_E_ALREADYOPEN, "Open failed: %#lx\n", hr);
+    hr = IDirectMusicSynth_Close(dmsynth);
+    ok(hr == S_OK, "Close failed: %#lx\n", hr);
+    hr = IDirectMusicSynth_Close(dmsynth);
+    ok(hr == DMUS_E_ALREADYCLOSED, "Close failed: %#lx\n", hr);
+    memset(&params, 0, sizeof(params));
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == E_INVALIDARG, "Open failed: %#lx\n", hr);
+    params.dwSize = sizeof(DMUS_PORTPARAMS7);
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    IDirectMusicSynth_Close(dmsynth);
+    /* All params supported and set to 0 */
+    params.dwSize = sizeof(params);
+    params.dwValidParams = all_params;
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_OK, "Open failed: %#lx\n", hr);
+    ok(params.dwSize == sizeof(params), "dwSize: %ld\n", params.dwSize);
+    ok(params.dwValidParams == all_params, "dwValidParams: %#lx\n", params.dwValidParams);
+    ok(params.dwVoices == 32, "dwVoices: %ld\n", params.dwVoices);
+    ok(params.dwChannelGroups == 2, "dwChannelGroups: %ld\n", params.dwChannelGroups);
+    ok(params.dwAudioChannels == 2, "dwAudioChannels: %ld\n", params.dwAudioChannels);
+    ok(params.dwSampleRate == 22050, "dwSampleRate: %ld\n", params.dwSampleRate);
+    ok(params.dwEffectFlags == DMUS_EFFECT_REVERB, "params.dwEffectFlags: %#lx\n", params.dwEffectFlags);
+    ok(params.fShare == FALSE, "fShare: %d\n", params.fShare);
+    ok(params.dwFeatures == 0, "dwFeatures: %#lx\n", params.dwFeatures);
+    IDirectMusicSynth_Close(dmsynth);
+    /* Requesting more than supported */
+    params.dwValidParams = DMUS_PORTPARAMS_SAMPLERATE;
+    params.dwSampleRate = 100003;
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_FALSE, "Open failed: %#lx\n", hr);
+    ok(params.dwValidParams == all_params, "dwValidParams: %#lx\n", params.dwValidParams);
+    ok(params.dwSampleRate == 96000, "dwSampleRate: %ld\n", params.dwSampleRate);
+    IDirectMusicSynth_Close(dmsynth);
+    /* Minimums */
+    params.dwValidParams = DMUS_PORTPARAMS_VOICES|DMUS_PORTPARAMS_CHANNELGROUPS|DMUS_PORTPARAMS_AUDIOCHANNELS|
+            DMUS_PORTPARAMS_SAMPLERATE;
+    params.dwVoices = 1;
+    params.dwChannelGroups = 1;
+    params.dwAudioChannels = 1;
+    params.dwSampleRate = 1;
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_FALSE, "Open failed: %#lx\n", hr);
+    ok(params.dwValidParams == all_params, "dwValidParams: %#lx\n", params.dwValidParams);
+    ok(params.dwVoices == 1, "dwVoices: %ld\n", params.dwVoices);
+    ok(params.dwChannelGroups == 1, "dwChannelGroups: %ld\n", params.dwChannelGroups);
+    ok(params.dwAudioChannels == 1, "dwAudioChannels: %ld\n", params.dwAudioChannels);
+    ok(params.dwSampleRate == 11025, "dwSampleRate: %ld\n", params.dwSampleRate);
+    IDirectMusicSynth_Close(dmsynth);
+    /* Test share and features */
+    params.dwValidParams = DMUS_PORTPARAMS_SHARE|DMUS_PORTPARAMS_FEATURES;
+    params.fShare = TRUE;
+    params.dwFeatures = DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING;
+    hr = IDirectMusicSynth_Open(dmsynth, &params);
+    ok(hr == S_FALSE, "Open failed: %#lx\n", hr);
+    ok(params.dwValidParams == all_params, "dwValidParams: %#lx\n", params.dwValidParams);
+    ok(params.fShare == FALSE, "fShare: %d\n", params.fShare);
+    ok(params.dwFeatures == (DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING),
+            "dwFeatures: %#lx\n", params.dwFeatures);
+    IDirectMusicSynth_Close(dmsynth);
 
     /* Synth has no default clock */
     hr = IDirectMusicSynth_GetLatencyClock(dmsynth, &clock_synth);
