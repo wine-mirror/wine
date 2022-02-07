@@ -165,7 +165,7 @@ static DWORD WINAPI stream_thread(void *arg)
 
         LeaveCriticalSection(&filter->state_cs);
 
-        if (FAILED(hr = BaseOutputPinImpl_GetDeliveryBuffer(&filter->source, &sample, NULL, NULL, 0)))
+        if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &sample, NULL, NULL, 0)))
         {
             ERR("Failed to get sample, hr %#x.\n", hr);
             break;

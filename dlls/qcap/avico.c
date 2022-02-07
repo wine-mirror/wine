@@ -350,9 +350,14 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
         return hres;
     }
 
-    hres = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &out_sample, &start, &stop, 0);
-    if(FAILED(hres))
+    if (FAILED(hres = IMemAllocator_GetBuffer(This->source.pAllocator, &out_sample, &start, &stop, 0)))
+    {
+        ERR("Failed to get sample, hr %#x.\n", hres);
         return hres;
+    }
+
+    if (FAILED(hres = IMediaSample_SetTime(out_sample, &start, &stop)))
+        ERR("Failed to set time, hr %#x.\n", hres);
 
     hres = IMediaSample_GetPointer(out_sample, &buf);
     if(FAILED(hres))
