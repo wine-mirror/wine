@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(acledit);
 
 LONG WINAPI FMExtensionProcW(HWND hWnd, WORD wEvent, LONG lParam)
 {
-    FIXME("(%p, %d, 0x%x) stub\n", hWnd, wEvent, lParam);
+    FIXME("(%p, %d, 0x%lx) stub\n", hWnd, wEvent, lParam);
     return 0;
 
 }
