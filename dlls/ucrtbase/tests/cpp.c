@@ -52,7 +52,7 @@ static int (CDECL *p___std_type_info_compare)(const type_info140*, const type_in
 static const char* (CDECL *p___std_type_info_name)(type_info140*, SLIST_HEADER*);
 static void (CDECL *p___std_type_info_destroy_list)(SLIST_HEADER*);
 static size_t (CDECL *p___std_type_info_hash)(type_info140*);
-
+static char* (__cdecl *p___unDName)(char*,const char*,int,void*,void*,unsigned short int);
 
 static BOOL init(void)
 {
@@ -72,6 +72,7 @@ static BOOL init(void)
     p___std_type_info_name = (void*)GetProcAddress(module, "__std_type_info_name");
     p___std_type_info_destroy_list = (void*)GetProcAddress(module, "__std_type_info_destroy_list");
     p___std_type_info_hash = (void*)GetProcAddress(module, "__std_type_info_hash");
+    p___unDName = (void*)GetProcAddress(module, "__unDName");
     return TRUE;
 }
 
@@ -189,9 +190,27 @@ static void test___std_type_info(void)
     ok(hash1 != hash2, "hash1 == hash2 for different strings\n");
 }
 
+static void test___unDName(void)
+{
+    char *name;
+
+    name = p___unDName(0, "??4QDnsDomainNameRecord@@QAEAAV0@$$QAV0@@Z", 0, malloc, free, 0);
+    ok(!strcmp(name, "public: class QDnsDomainNameRecord & __thiscall "
+                "QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord &&)"),
+            "unDName returned %s\n", wine_dbgstr_a(name));
+    free(name);
+
+    name = p___unDName(0, "??4QDnsDomainNameRecord@@QAEAAV0@$$QEAV0@@Z", 0, malloc, free, 0);
+    ok(!strcmp(name, "public: class QDnsDomainNameRecord & __thiscall "
+                "QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord && __ptr64)"),
+            "unDName returned %s\n", wine_dbgstr_a(name));
+    free(name);
+}
+
 START_TEST(cpp)
 {
     if (!init()) return;
     test___std_exception();
     test___std_type_info();
+    test___unDName();
 }
