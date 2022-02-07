@@ -1313,10 +1313,15 @@ static void *record_parameter(struct d3dx_effect *effect, struct d3dx_parameter 
 
 static void set_dirty(struct d3dx_parameter *param)
 {
-    struct d3dx_shared_data *shared_data;
     struct d3dx_top_level_parameter *top_param = param->top_level_param;
-    ULONG64 new_update_version = next_update_version(top_param->version_counter);
+    struct d3dx_shared_data *shared_data;
+    ULONG64 new_update_version;
 
+    /* This is true for annotations. */
+    if (!top_param)
+        return;
+
+    new_update_version = next_update_version(top_param->version_counter);
     if ((shared_data = top_param->shared_data))
         shared_data->update_version = new_update_version;
     else
