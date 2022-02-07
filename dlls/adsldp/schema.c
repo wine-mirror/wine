@@ -198,7 +198,7 @@ static WCHAR *parse_name(WCHAR **str, ULONG *name_count)
             tmp_name = parse_name(&p, &dummy);
             if (!tmp_name) break;
 
-            TRACE("NAME[%u] %s\n", *name_count, debugstr_w(tmp_name));
+            TRACE("NAME[%lu] %s\n", *name_count, debugstr_w(tmp_name));
 
             count = wcslen(tmp_name);
 
@@ -368,7 +368,7 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_single_count, ULONG *at_m
     err = ldap_search_sW(ld, NULL, LDAP_SCOPE_BASE, (WCHAR *)L"(objectClass=*)", subschema, FALSE, &res);
     if (err != LDAP_SUCCESS)
     {
-        TRACE("ldap_search_sW error %#x\n", err);
+        TRACE("ldap_search_sW error %#lx\n", err);
         return NULL;
     }
 
@@ -382,7 +382,7 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_single_count, ULONG *at_m
     err = ldap_search_sW(ld, schema[0], LDAP_SCOPE_BASE, (WCHAR *)L"(objectClass=*)", attribute_types, FALSE, &res);
     if (err != LDAP_SUCCESS)
     {
-        TRACE("ldap_search_sW error %#x\n", err);
+        TRACE("ldap_search_sW error %#lx\n", err);
         ldap_value_freeW(schema);
         return NULL;
     }
@@ -419,7 +419,7 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_single_count, ULONG *at_m
                     continue;
                 }
 
-                TRACE("oid %s, name %s, name_count %u, syntax %s, single-value %d\n", debugstr_w(at[count].oid),
+                TRACE("oid %s, name %s, name_count %lu, syntax %s, single-value %d\n", debugstr_w(at[count].oid),
                       debugstr_w(at[count].name), at[count].name_count, debugstr_w(at[count].syntax), at[count].single_value);
 
                 if (at[count].name_count > 1)
