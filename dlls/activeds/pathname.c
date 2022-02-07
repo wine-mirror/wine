@@ -98,21 +98,21 @@ static HRESULT WINAPI path_GetTypeInfoCount(IADsPathname *iface, UINT *count)
 
 static HRESULT WINAPI path_GetTypeInfo(IADsPathname *iface, UINT index, LCID lcid, ITypeInfo **info)
 {
-    FIXME("%p,%u,%#x,%p: stub\n", iface, index, lcid, info);
+    FIXME("%p,%u,%#lx,%p: stub\n", iface, index, lcid, info);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI path_GetIDsOfNames(IADsPathname *iface, REFIID riid, LPOLESTR *names,
                                          UINT count, LCID lcid, DISPID *dispid)
 {
-    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    FIXME("%p,%s,%p,%u,%lu,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI path_Invoke(IADsPathname *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
                                   DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+    FIXME("%p,%ld,%s,%04lx,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
           params, result, excepinfo, argerr);
     return E_NOTIMPL;
 }
@@ -180,7 +180,7 @@ static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
     HRESULT hr;
     BSTR provider, server, dn;
 
-    TRACE("%p,%s,%d\n", iface, debugstr_w(adspath), type);
+    TRACE("%p,%s,%ld\n", iface, debugstr_w(adspath), type);
 
     if (!adspath) return E_INVALIDARG;
 
@@ -207,7 +207,7 @@ static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
 
     if (type != ADS_SETTYPE_FULL)
     {
-        FIXME("type %d not implemented\n", type);
+        FIXME("type %ld not implemented\n", type);
         return E_INVALIDARG;
     }
 
@@ -227,7 +227,7 @@ static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
 
 static HRESULT WINAPI path_SetDisplayType(IADsPathname *iface, LONG type)
 {
-    FIXME("%p,%d: stub\n", iface, type);
+    FIXME("%p,%ld: stub\n", iface, type);
     return E_NOTIMPL;
 }
 
@@ -236,14 +236,14 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
     Pathname *path = impl_from_IADsPathname(iface);
     int len;
 
-    TRACE("%p,%d,%p\n", iface, type, adspath);
+    TRACE("%p,%ld,%p\n", iface, type, adspath);
 
     if (!adspath) return E_INVALIDARG;
 
     switch (type)
     {
     default:
-        FIXME("type %d not implemented\n", type);
+        FIXME("type %ld not implemented\n", type);
         /* fall through */
 
     case ADS_FORMAT_X500:
@@ -320,7 +320,7 @@ static HRESULT WINAPI path_GetElement(IADsPathname *iface, LONG index, BSTR *ele
     WCHAR *p, *end;
     LONG count;
 
-    TRACE("%p,%d,%p\n", iface, index, element);
+    TRACE("%p,%ld,%p\n", iface, index, element);
 
     if (!element) return E_INVALIDARG;
 
@@ -366,7 +366,7 @@ static HRESULT WINAPI path_CopyPath(IADsPathname *iface, IDispatch **path)
 
 static HRESULT WINAPI path_GetEscapedElement(IADsPathname *iface, LONG reserved, BSTR element, BSTR *str)
 {
-    FIXME("%p,%d,%s,%p: stub\n", iface, reserved, debugstr_w(element), str);
+    FIXME("%p,%ld,%s,%p: stub\n", iface, reserved, debugstr_w(element), str);
     return E_NOTIMPL;
 }
 
@@ -378,7 +378,7 @@ static HRESULT WINAPI path_get_EscapedMode(IADsPathname *iface, LONG *mode)
 
 static HRESULT WINAPI path_put_EscapedMode(IADsPathname *iface, LONG mode)
 {
-    FIXME("%p,%d: stub\n", iface, mode);
+    FIXME("%p,%ld: stub\n", iface, mode);
     return E_NOTIMPL;
 }
 
@@ -469,7 +469,7 @@ static ULONG WINAPI factory_AddRef(IClassFactory *iface)
     class_factory *factory = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&factory->ref);
 
-    TRACE("(%p) ref %u\n", iface, ref);
+    TRACE("(%p) ref %lu\n", iface, ref);
 
     return ref;
 }
@@ -479,7 +479,7 @@ static ULONG WINAPI factory_Release(IClassFactory *iface)
     class_factory *factory = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&factory->ref);
 
-    TRACE("(%p) ref %u\n", iface, ref);
+    TRACE("(%p) ref %lu\n", iface, ref);
 
     if (!ref)
         heap_free(factory);
