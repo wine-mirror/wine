@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = aclui.dll
 IMPORTLIB = aclui
 IMPORTS   = comctl32 user32 advapi32 gdi32

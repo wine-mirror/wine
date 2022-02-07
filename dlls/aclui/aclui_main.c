@@ -238,7 +238,7 @@ static void init_users(struct security_page *page)
 
     if (!GetSecurityDescriptorDacl(page->sd, &present, &dacl, &defaulted))
     {
-        ERR("Failed to query descriptor information, error %u.\n", GetLastError());
+        ERR("Failed to query descriptor information, error %lu.\n", GetLastError());
         return;
     }
 
@@ -339,14 +339,14 @@ static void security_page_init_dlg(HWND hwnd, struct security_page *page)
     if (FAILED(hr = ISecurityInformation_GetSecurity(page->security,
             DACL_SECURITY_INFORMATION, &page->sd, FALSE)))
     {
-        ERR("Failed to get security descriptor, hr %#x.\n", hr);
+        ERR("Failed to get security descriptor, hr %#lx.\n", hr);
         return;
     }
 
     if (FAILED(hr = ISecurityInformation_GetAccessRights(page->security,
             NULL, 0, &page->access, &page->access_count, &def)))
     {
-        ERR("Failed to get access mapping, hr %#x.\n", hr);
+        ERR("Failed to get access mapping, hr %#lx.\n", hr);
         return;
     }
 
