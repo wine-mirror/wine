@@ -2340,7 +2340,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         allow_fd_caching( sock->fd );
 
         unix_len = sizeof(unix_addr);
-        if (!sock->bound && !getsockname( unix_fd, &unix_addr.addr, &unix_len ))
+        if (!getsockname( unix_fd, &unix_addr.addr, &unix_len ))
             sock->addr_len = sockaddr_from_unix( &unix_addr, &sock->addr.addr, sizeof(sock->addr) );
         sock->bound = 1;
 
