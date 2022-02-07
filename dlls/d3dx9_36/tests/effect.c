@@ -3081,6 +3081,12 @@ static void test_effect_states(IDirect3DDevice9 *device)
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
 
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+
     /* State affected in passes saved/restored even if no pass
        was performed. States not present in passes are not saved &
        restored */

@@ -4001,6 +4001,12 @@ static HRESULT WINAPI d3dx_effect_BeginPass(ID3DXEffect *iface, UINT pass)
 
     TRACE("iface %p, pass %u\n", effect, pass);
 
+    if (!effect->started)
+    {
+        WARN("Effect is not started, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     if (technique && pass < technique->pass_count && !effect->active_pass)
     {
         HRESULT hr;
