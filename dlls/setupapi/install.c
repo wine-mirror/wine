@@ -1027,7 +1027,9 @@ BOOL WINAPI SetupInstallFilesFromInfSectionW( HINF hinf, HINF hlayout, HSPFILEQ 
     info.src_root   = src_root;
     info.copy_flags = flags;
     info.layout     = hlayout;
-    return iterate_section_fields( hinf, section, L"CopyFiles", copy_files_callback, &info );
+    return iterate_section_fields( hinf, section, L"CopyFiles", copy_files_callback, &info ) &&
+           iterate_section_fields( hinf, section, L"DelFiles", delete_files_callback, &info ) &&
+           iterate_section_fields( hinf, section, L"RenFiles", rename_files_callback, &info );
 }
 
 
