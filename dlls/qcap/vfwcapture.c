@@ -199,6 +199,9 @@ static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
+    if (!filter->source.pin.peer)
+        return S_OK;
+
     if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
         ERR("Failed to commit allocator, hr %#x.\n", hr);
 
@@ -215,6 +218,9 @@ static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
+    if (!filter->source.pin.peer)
+        return S_OK;
+
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Running;
     LeaveCriticalSection(&filter->state_cs);
@@ -226,6 +232,9 @@ static HRESULT vfw_capture_stop_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
+    if (!filter->source.pin.peer)
+        return S_OK;
+
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Paused;
     LeaveCriticalSection(&filter->state_cs);
@@ -236,6 +245,9 @@ static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
+
+    if (!filter->source.pin.peer)
+        return S_OK;
 
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Stopped;
@@ -255,7 +267,11 @@ static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
 
 static HRESULT vfw_capture_wait_state(struct strmbase_filter *iface, DWORD timeout)
 {
-    return iface->state == State_Paused ? VFW_S_CANT_CUE : S_OK;
+    struct vfw_capture *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->source.pin.peer && filter->filter.state == State_Paused)
+        return VFW_S_CANT_CUE;
+    return S_OK;
 }
 
 static const struct strmbase_filter_ops filter_ops =
