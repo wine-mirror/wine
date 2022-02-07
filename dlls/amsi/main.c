@@ -46,7 +46,7 @@ void WINAPI AmsiCloseSession( HAMSICONTEXT context, HAMSISESSION session )
 HRESULT WINAPI AmsiScanBuffer( HAMSICONTEXT context, void *buffer, ULONG length, const WCHAR *name,
                                HAMSISESSION session, AMSI_RESULT *result )
 {
-    FIXME( "%p, %p, %u, %s, %p, %p\n", context, buffer, length, debugstr_w(name), session, result );
+    FIXME( "%p, %p, %lu, %s, %p, %p\n", context, buffer, length, debugstr_w(name), session, result );
     *result = AMSI_RESULT_NOT_DETECTED;
     return S_OK;
 }
