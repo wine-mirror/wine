@@ -3034,13 +3034,11 @@ TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
 
     rc.left = width;
     rc.right = rc.left + width;
-    DrawFrameControl(hdc, &rc, DFC_BUTTON,
-                     DFCS_BUTTONCHECK|DFCS_FLAT);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_MONO);
 
     rc.left = width * 2;
     rc.right = rc.left + width;
-    DrawFrameControl(hdc, &rc, DFC_BUTTON,
-                     DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_MONO | DFCS_CHECKED);
 
     SelectObject(hdc, hbmOld);
     nIndex = ImageList_AddMasked(infoPtr->himlState, hbm,
