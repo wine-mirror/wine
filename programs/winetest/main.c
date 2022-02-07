@@ -124,7 +124,7 @@ static char * get_file_version(char * file_name)
                 VS_FIXEDFILEINFO *pFixedVersionInfo;
                 UINT len;
                 if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
-                    sprintf(version, "%d.%d.%d.%d",
+                    sprintf(version, "%ld.%ld.%ld.%ld",
                             pFixedVersionInfo->dwFileVersionMS >> 16,
                             pFixedVersionInfo->dwFileVersionMS & 0xffff,
                             pFixedVersionInfo->dwFileVersionLS >> 16,
@@ -132,14 +132,14 @@ static char * get_file_version(char * file_name)
                 } else
                     sprintf(version, "version not found");
             } else
-                sprintf(version, "version error %u", GetLastError());
+                sprintf(version, "version error %lu", GetLastError());
             heap_free(data);
         } else
             sprintf(version, "version error %u", ERROR_OUTOFMEMORY);
     } else if (GetLastError() == ERROR_FILE_NOT_FOUND)
         sprintf(version, "dll is missing");
     else
-        sprintf(version, "version not present %u", GetLastError());
+        sprintf(version, "version not present %lu", GetLastError());
 
     return version;
 }
