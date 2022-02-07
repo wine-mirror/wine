@@ -250,7 +250,7 @@ static void HLPFILE_Uncompress2(HLPFILE* hlpfile, const BYTE *ptr, const BYTE *e
 
             if (newptr + (phend - phptr) > newend)
             {
-                WINE_FIXME("buffer overflow %p > %p for %lu bytes\n",
+                WINE_FIXME("buffer overflow %p > %p for %Iu bytes\n",
                            newptr, newend, (SIZE_T)(phend - phptr));
                 return;
             }
@@ -356,7 +356,7 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE* dst, u
         dst += ch;
     }
     if (dst != sdst)
-        WINE_WARN("Buffer X-flow: d(%lu) instead of d(%u)\n",
+        WINE_WARN("Buffer X-flow: d(%Iu) instead of d(%u)\n",
                   (SIZE_T)(dst - (sdst - dstsz)), dstsz);
 }
 
@@ -373,7 +373,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relativ
 
     if (!hlpfile) return 0;
 
-    WINE_TRACE("<%s>[%x]\n", debugstr_a(hlpfile->lpszPath), offset);
+    WINE_TRACE("<%s>[%lx]\n", debugstr_a(hlpfile->lpszPath), offset);
 
     if (offset == 0xFFFFFFFF) return NULL;
     page = NULL;
@@ -387,7 +387,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relativ
         }
     }
     if (!found)
-        WINE_ERR("Page of offset %u not found in file %s\n",
+        WINE_ERR("Page of offset %lu not found in file %s\n",
                  offset, debugstr_a(hlpfile->lpszPath));
     return found;
 }
@@ -424,7 +424,7 @@ static int comp_PageByHash(void *p, const void *key,
     LONG lTest = (INT)GET_UINT(p, 0);
 
     *next = (char *)p+(leaf?8:6);
-    WINE_TRACE("Comparing '%d' with '%d'\n", lKey, lTest);
+    WINE_TRACE("Comparing '%ld' with '%ld'\n", lKey, lTest);
     if (lTest < lKey) return -1;
     if (lTest > lKey) return 1;
     return 0;
@@ -441,7 +441,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
     if (!hlpfile) return NULL;
     if (!lHash) return HLPFILE_Contents(hlpfile, relative);
 
-    WINE_TRACE("<%s>[%x]\n", debugstr_a(hlpfile->lpszPath), lHash);
+    WINE_TRACE("<%s>[%lx]\n", debugstr_a(hlpfile->lpszPath), lHash);
 
     /* For win 3.0 files hash values are really page numbers */
     if (hlpfile->version <= 16)
@@ -453,7 +453,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
     ptr = HLPFILE_BPTreeSearch(hlpfile->Context, LongToPtr(lHash), comp_PageByHash);
     if (!ptr)
     {
-        WINE_ERR("Page of hash %x not found in file %s\n", lHash, debugstr_a(hlpfile->lpszPath));
+        WINE_ERR("Page of hash %lx not found in file %s\n", lHash, debugstr_a(hlpfile->lpszPath));
         return NULL;
     }
 
@@ -470,7 +470,7 @@ HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative)
 
     if (!hlpfile) return 0;
 
-    WINE_TRACE("<%s>[%x]\n", debugstr_a(hlpfile->lpszPath), lMap);
+    WINE_TRACE("<%s>[%lx]\n", debugstr_a(hlpfile->lpszPath), lMap);
 
     for (i = 0; i < hlpfile->wMapLen; i++)
     {
@@ -478,7 +478,7 @@ HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative)
             return HLPFILE_PageByOffset(hlpfile, hlpfile->Map[i].offset, relative);
     }
 
-    WINE_ERR("Page of Map %x not found in file %s\n", lMap, debugstr_a(hlpfile->lpszPath));
+    WINE_ERR("Page of Map %lx not found in file %s\n", lMap, debugstr_a(hlpfile->lpszPath));
     return NULL;
 }
 
@@ -990,7 +990,7 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
     if (bi->bmiHeader.biBitCount > 32) WINE_FIXME("Unknown bit count %u\n", bi->bmiHeader.biBitCount);
     if (bi->bmiHeader.biPlanes != 1) WINE_FIXME("Unsupported planes %u\n", bi->bmiHeader.biPlanes);
     bi->bmiHeader.biSizeImage = (((bi->bmiHeader.biWidth * bi->bmiHeader.biBitCount + 31) & ~31) / 8) * bi->bmiHeader.biHeight;
-    WINE_TRACE("planes=%d bc=%d size=(%d,%d)\n",
+    WINE_TRACE("planes=%d bc=%d size=(%ld,%ld)\n",
                bi->bmiHeader.biPlanes, bi->bmiHeader.biBitCount,
                bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
 
@@ -1032,14 +1032,14 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
     if (!HLPFILE_RtfAddControl(rd, "{\\pict")) goto done;
     if (type == 0x06)
     {
-        sprintf(tmp, "\\dibitmap0\\picw%d\\pich%d",
+        sprintf(tmp, "\\dibitmap0\\picw%ld\\pich%ld",
                 bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
         if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         if (!HLPFILE_RtfAddHexBytes(rd, bi, sizeof(*bi) + nc * sizeof(RGBQUAD))) goto done;
     }
     else
     {
-        sprintf(tmp, "\\wbitmap0\\wbmbitspixel%d\\wbmplanes%d\\picw%d\\pich%d",
+        sprintf(tmp, "\\wbitmap0\\wbmbitspixel%d\\wbmplanes%d\\picw%ld\\pich%ld",
                 bi->bmiHeader.biBitCount, bi->bmiHeader.biPlanes,
                 bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
         if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
@@ -1088,7 +1088,7 @@ static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, HLPFILE* file, const 
 
     HLPFILE_AddHotSpotLinks(rd, file, beg, hs_size, hs_offset);
 
-    WINE_TRACE("sz=%u csz=%u offs=%u/%u,%u/%u\n",
+    WINE_TRACE("sz=%lu csz=%lu offs=%lu/%lu,%lu/%lu\n",
                size, csize, off, (ULONG)(ptr - beg), hs_size, hs_offset);
 
     bits = HLPFILE_DecompressGfx(beg + off, csize, size, pack, &alloc);
@@ -1206,7 +1206,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
     else
         rd->current_link = link;
 
-    WINE_TRACE("Link[%d] to %s@%08x:%d\n",
+    WINE_TRACE("Link[%d] to %s@%08lx:%d\n",
                link->cookie, debugstr_a(link->string), link->hash, link->window);
     return link;
 }
@@ -1323,7 +1323,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     lastcol = -1;
     for (nc = 0; nc < ncol; /**/)
     {
-        WINE_TRACE("looking for format at offset %lu in column %d\n", (SIZE_T)(format - (buf + 0x15)), nc);
+        WINE_TRACE("looking for format at offset %Iu in column %d\n", (SIZE_T)(format - (buf + 0x15)), nc);
         if (!HLPFILE_RtfAddControl(rd, "\\pard")) goto done;
         if (buf[0x14] == HLP_TABLE)
         {
@@ -1566,7 +1566,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                             rd->char_pos++;
                             break;
                         case 1:
-                            WINE_FIXME("does it work ??? %x<%u>#%u\n",
+                            WINE_FIXME("does it work ??? %x<%lu>#%u\n",
                                        GET_SHORT(format, 0),
                                        size, GET_SHORT(format, 2));
                             HLPFILE_RtfAddGfxByAddr(rd, page->file, format + 2, size - 4);
@@ -2131,7 +2131,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 wi->win_style = WS_OVERLAPPEDWINDOW;
                 wi->sr_color = (flags & 0x0100) ? GET_UINT(ptr, 86) : 0xFFFFFF;
                 wi->nsr_color = (flags & 0x0200) ? GET_UINT(ptr, 90) : 0xFFFFFF;
-                WINE_TRACE("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%d,%d)x(%d,%d)\n",
+                WINE_TRACE("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%ld,%ld)x(%ld,%ld)\n",
                            flags & 0x0001 ? 'T' : 't',
                            flags & 0x0002 ? 'N' : 'n',
                            flags & 0x0004 ? 'C' : 'c',
@@ -2604,7 +2604,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
             page->browse_fwd = hlpfile->TOMap[page->browse_fwd];
     }
 
-    WINE_TRACE("Added page[%d]: title=%s %08x << %08x >> %08x\n",
+    WINE_TRACE("Added page[%d]: title=%s %08lx << %08x >> %08lx\n",
                page->wNumber, debugstr_a(page->lpszTitle),
                page->browse_bwd, page->offset, page->browse_fwd);
 
@@ -2707,7 +2707,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
             offset -= 12;
         }
 
-        WINE_TRACE("ref=%08x => [%u/%u]\n", ref, index, offset);
+        WINE_TRACE("ref=%08lx => [%u/%u]\n", ref, index, offset);
 
         if (index >= hlpfile->topic_maplen) {WINE_WARN("maplen\n"); break;}
         buf = hlpfile->topic_map[index] + offset;

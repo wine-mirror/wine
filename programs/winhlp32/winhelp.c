@@ -356,7 +356,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
 
     if (cds->dwData != 0xA1DE505)
     {
-        WINE_FIXME("Wrong magic number (%08lx)\n", cds->dwData);
+        WINE_FIXME("Wrong magic number (%08Ix)\n", cds->dwData);
         return 0;
     }
 
@@ -366,7 +366,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
     {
         char*   ptr = (wh->ofsFilename) ? (LPSTR)wh + wh->ofsFilename : NULL;
 
-        WINE_TRACE("Got[%u]: cmd=%u data=%08x fn=%s\n",
+        WINE_TRACE("Got[%u]: cmd=%u data=%08lx fn=%s\n",
                    wh->size, wh->command, wh->data, debugstr_a(ptr));
         switch (wh->command)
         {
@@ -1591,7 +1591,7 @@ BOOL WINHELP_CreateIndexWindow(BOOL is_search)
     PropertySheetA(&psHead);
     if (id.jump)
     {
-        WINE_TRACE("got %d as an offset\n", id.offset);
+        WINE_TRACE("got %ld as an offset\n", id.offset);
         WINHELP_OpenHelpWindow(HLPFILE_PageByOffset, id.hlpfile, id.offset,
                                Globals.active_win->info, SW_NORMAL);
     }
