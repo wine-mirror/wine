@@ -10551,6 +10551,11 @@ START_TEST(d2d1)
     pD2D1ConvertColorSpace = (void *)GetProcAddress(d2d1_dll, "D2D1ConvertColorSpace");
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
+    /* Some host drivers (MacOS, Mesa radeonsi) never unmap memory even when
+     * requested. When using the chunk allocator, running the tests with more
+     * than one thread can exceed the 32-bit virtual address space. */
+    if (sizeof(void *) == 4 && !strcmp(winetest_platform, "wine"))
+        use_mt = FALSE;
 
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
