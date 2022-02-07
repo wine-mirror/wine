@@ -86,7 +86,7 @@ static LPWSTR ExpandEnv(LPWSTR string)
     size = ExpandEnvironmentStringsW(string, NULL, size);
     if (size == 0)
     {
-        WINE_ERR("cannot expand env vars in %s: %u\n",
+        WINE_ERR("cannot expand env vars in %s: %lu\n",
                 wine_dbgstr_w(string), GetLastError());
         return NULL;
     }
@@ -94,7 +94,7 @@ static LPWSTR ExpandEnv(LPWSTR string)
             (size + 1) * sizeof(WCHAR));
     if (ExpandEnvironmentStringsW(string, expanded_string, size) == 0)
     {
-        WINE_ERR("cannot expand env vars in %s: %u\n",
+        WINE_ERR("cannot expand env vars in %s: %lu\n",
                 wine_dbgstr_w(string), GetLastError());
         HeapFree(GetProcessHeap(), 0, expanded_string);
         return NULL;
@@ -134,7 +134,7 @@ static BOOL AddServiceElem(LPWSTR service_name,
             KEY_READ, &service_hkey);
     if (ret != ERROR_SUCCESS)
     {
-        WINE_ERR("cannot open key %s, err=%d\n",
+        WINE_ERR("cannot open key %s, err=%ld\n",
                 wine_dbgstr_w(service_param_key), ret);
         goto cleanup;
     }
@@ -182,7 +182,7 @@ static BOOL AddServiceElem(LPWSTR service_name,
     library = LoadLibraryExW(dll_name_long, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!library)
     {
-        WINE_ERR("failed to load library %s, err=%u\n",
+        WINE_ERR("failed to load library %s, err=%lu\n",
                 wine_dbgstr_w(dll_name_long), GetLastError());
         goto cleanup;
     }
@@ -240,7 +240,7 @@ static BOOL StartGroupServices(LPWSTR services)
         service_name = service_name + lstrlenW(service_name);
         ++service_name;
     }
-    WINE_TRACE("Service group contains %d services\n", service_count);
+    WINE_TRACE("Service group contains %ld services\n", service_count);
 
     /* Populate the service table */
     service_table = HeapAlloc(GetProcessHeap(), 0,
@@ -263,7 +263,7 @@ static BOOL StartGroupServices(LPWSTR services)
 
     /* Start the services */
     if (!(ret = StartServiceCtrlDispatcherW(service_table)))
-        WINE_ERR("StartServiceCtrlDispatcherW failed to start %s: %u\n",
+        WINE_ERR("StartServiceCtrlDispatcherW failed to start %s: %lu\n",
                 wine_dbgstr_w(services), GetLastError());
 
     HeapFree(GetProcessHeap(), 0, service_table);
@@ -285,7 +285,7 @@ static BOOL LoadGroup(PWCHAR group_name)
             KEY_READ, &group_hkey);
     if (ret != ERROR_SUCCESS)
     {
-        WINE_ERR("cannot open key %s, err=%d\n",
+        WINE_ERR("cannot open key %s, err=%ld\n",
                 wine_dbgstr_w(svchost_path), ret);
         return FALSE;
     }
