@@ -86,7 +86,7 @@ static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
         break;
 
     default:
-        FIXME( "got driver ctrl %x for %s\n", ctrl, wine_dbgstr_w(driver_name) );
+        FIXME( "got driver ctrl %lx for %s\n", ctrl, wine_dbgstr_w(driver_name) );
         break;
     }
 
@@ -113,7 +113,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
         SetEvent( stop_event );
         return NO_ERROR;
     default:
-        FIXME( "got service ctrl %x for %s\n", ctrl, wine_dbgstr_w(service_group) );
+        FIXME( "got service ctrl %lx for %s\n", ctrl, wine_dbgstr_w(service_group) );
         set_service_status( service_handle, SERVICE_RUNNING,
                             SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN );
         return NO_ERROR;
