@@ -126,7 +126,7 @@ static void gdbctx_delete_xpoint(struct gdb_context *gdbctx, struct dbg_thread *
     struct backend_cpu *cpu = process->be_cpu;
 
     if (!cpu->remove_Xpoint(process->handle, process->process_io, ctx, x->type, x->addr, x->value, x->size))
-        ERR("%04x:%04x: Couldn't remove breakpoint at:%p/%x type:%d\n", process->pid, thread ? thread->tid : ~0, x->addr, x->size, x->type);
+        ERR("%04lx:%04lx: Couldn't remove breakpoint at:%p/%x type:%d\n", process->pid, thread ? thread->tid : ~0, x->addr, x->size, x->type);
 
     list_remove(&x->entry);
     HeapFree(GetProcessHeap(), 0, x);
@@ -142,13 +142,13 @@ static void gdbctx_insert_xpoint(struct gdb_context *gdbctx, struct dbg_thread *
 
     if (!cpu->insert_Xpoint(process->handle, process->process_io, ctx, type, addr, &value, size))
     {
-        ERR("%04x:%04x: Couldn't insert breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
+        ERR("%04lx:%04lx: Couldn't insert breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
         return;
     }
 
     if (!(x = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gdb_xpoint))))
     {
-        ERR("%04x:%04x: Couldn't allocate memory for breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
+        ERR("%04lx:%04lx: Couldn't allocate memory for breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
         return;
     }
 
@@ -415,12 +415,12 @@ static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
 
     if (!backend->get_context(thread->handle, &ctx))
     {
-        ERR("get_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
+        ERR("get_context failed for thread %04lx:%04lx\n", thread->process->pid, thread->tid);
         return;
     }
     backend->single_step(&ctx, enable);
     if (!backend->set_context(thread->handle, &ctx))
-        ERR("set_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
+        ERR("set_context failed for thread %04lx:%04lx\n", thread->process->pid, thread->tid);
 }
 
 static unsigned char signal_from_debug_event(DEBUG_EVENT* de)
@@ -467,7 +467,7 @@ static unsigned char signal_from_debug_event(DEBUG_EVENT* de)
     case EXCEPTION_WINE_NAME_THREAD:
         return HOST_SIGTRAP;
     default:
-        ERR("Unknown exception code 0x%08x\n", ec);
+        ERR("Unknown exception code 0x%08lx\n", ec);
         return HOST_SIGABRT;
     }
 }
@@ -494,12 +494,12 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
             if (gdbctx->process->process_io->read( gdbctx->process->handle,
                 threadname->szName, name, sizeof(name), &read) && read == sizeof(name))
             {
-                fprintf(stderr, "Thread ID=%04x renamed to \"%.9s\"\n",
+                fprintf(stderr, "Thread ID=%04lx renamed to \"%.9s\"\n",
                     threadname->dwThreadID, name);
             }
         }
         else
-            ERR("Cannot set name of thread %04x\n", threadname->dwThreadID);
+            ERR("Cannot set name of thread %04lx\n", threadname->dwThreadID);
         return TRUE;
     }
     case EXCEPTION_INVALID_HANDLE:
@@ -536,7 +536,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         QueryFullProcessImageNameW( gdbctx->process->handle, 0, u.buffer, &size );
         dbg_set_process_name(gdbctx->process, u.buffer);
 
-        fprintf(stderr, "%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
+        fprintf(stderr, "%04lx:%04lx: create process '%s'/%p @%p (%lu<%lu>)\n",
                     de->dwProcessId, de->dwThreadId,
                     dbg_W2A(u.buffer, -1),
                     de->u.CreateProcessInfo.lpImageName,
@@ -548,7 +548,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         if (!dbg_init(gdbctx->process->handle, u.buffer, TRUE))
             ERR("Couldn't initiate DbgHelp\n");
 
-        fprintf(stderr, "%04x:%04x: create thread I @%p\n", de->dwProcessId,
+        fprintf(stderr, "%04lx:%04lx: create thread I @%p\n", de->dwProcessId,
             de->dwThreadId, de->u.CreateProcessInfo.lpStartAddress);
 
         dbg_load_module(gdbctx->process->handle, de->u.CreateProcessInfo.hFile, u.buffer,
@@ -562,7 +562,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
     case LOAD_DLL_DEBUG_EVENT:
         fetch_module_name( de->u.LoadDll.lpImageName, de->u.LoadDll.lpBaseOfDll,
                            u.buffer, ARRAY_SIZE(u.buffer) );
-        fprintf(stderr, "%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
+        fprintf(stderr, "%04lx:%04lx: loads DLL %s @%p (%lu<%lu>)\n",
                 de->dwProcessId, de->dwThreadId,
                 dbg_W2A(u.buffer, -1),
                 de->u.LoadDll.lpBaseOfDll,
@@ -575,7 +575,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         return TRUE;
 
     case UNLOAD_DLL_DEBUG_EVENT:
-        fprintf(stderr, "%08x:%08x: unload DLL @%p\n",
+        fprintf(stderr, "%08lx:%08lx: unload DLL @%p\n",
                 de->dwProcessId, de->dwThreadId, de->u.UnloadDll.lpBaseOfDll);
         SymUnloadModule(gdbctx->process->handle,
                         (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
@@ -584,7 +584,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         return TRUE;
 
     case EXCEPTION_DEBUG_EVENT:
-        TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
+        TRACE("%08lx:%08lx: exception code=0x%08lx\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
         if (handle_exception(gdbctx, &de->u.Exception))
@@ -592,7 +592,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
-        fprintf(stderr, "%08x:%08x: create thread D @%p\n", de->dwProcessId,
+        fprintf(stderr, "%08lx:%08lx: create thread D @%p\n", de->dwProcessId,
             de->dwThreadId, de->u.CreateThread.lpStartAddress);
 
         dbg_add_thread(gdbctx->process,
@@ -602,14 +602,14 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         return TRUE;
 
     case EXIT_THREAD_DEBUG_EVENT:
-        fprintf(stderr, "%08x:%08x: exit thread (%u)\n",
+        fprintf(stderr, "%08lx:%08lx: exit thread (%lu)\n",
                 de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
         if ((thread = dbg_get_thread(gdbctx->process, de->dwThreadId)))
             dbg_del_thread(thread);
         return TRUE;
 
     case EXIT_PROCESS_DEBUG_EVENT:
-        fprintf(stderr, "%08x:%08x: exit process (%u)\n",
+        fprintf(stderr, "%08lx:%08lx: exit process (%lu)\n",
                 de->dwProcessId, de->dwThreadId, de->u.ExitProcess.dwExitCode);
 
         dbg_del_process(gdbctx->process);
@@ -620,17 +620,17 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         memory_get_string(gdbctx->process,
                           de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
-        fprintf(stderr, "%08x:%08x: output debug string (%s)\n",
+        fprintf(stderr, "%08lx:%08lx: output debug string (%s)\n",
             de->dwProcessId, de->dwThreadId, debugstr_a(u.bufferA));
         return TRUE;
 
     case RIP_EVENT:
-        fprintf(stderr, "%08x:%08x: rip error=%u type=%u\n", de->dwProcessId,
+        fprintf(stderr, "%08lx:%08lx: rip error=%lu type=%lu\n", de->dwProcessId,
             de->dwThreadId, de->u.RipInfo.dwError, de->u.RipInfo.dwType);
         return TRUE;
 
     default:
-        FIXME("%08x:%08x: unknown event (%u)\n",
+        FIXME("%08lx:%08lx: unknown event (%lu)\n",
             de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
 
@@ -744,7 +744,7 @@ static void get_process_info(struct gdb_context* gdbctx, char* buffer, size_t le
         strcpy(buffer, "Running");
     }
     else
-        snprintf(buffer, len, "Terminated (%u)", status);
+        snprintf(buffer, len, "Terminated (%lu)", status);
 
     switch (GetPriorityClass(gdbctx->process->handle))
     {
@@ -782,12 +782,12 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
             {
             case -1: break;
             case 0:  strcpy(buffer, "Running"); break;
-            default: snprintf(buffer, len, "Suspended (%u)", status - 1);
+            default: snprintf(buffer, len, "Suspended (%lu)", status - 1);
             }
             ResumeThread(thd->handle);
         }
         else
-            snprintf(buffer, len, "Terminated (exit code = %u)", status);
+            snprintf(buffer, len, "Terminated (exit code = %lu)", status);
     }
     else
     {
@@ -1297,7 +1297,7 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 
     if (!backend->set_context(thread->handle, &ctx))
     {
-        ERR("Failed to set context for tid %04x, error %u\n", thread->tid, GetLastError());
+        ERR("Failed to set context for tid %04lx, error %lu\n", thread->tid, GetLastError());
         return packet_error;
     }
 
@@ -1463,7 +1463,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     cpu_register_hex_from(gdbctx, &ctx, reg, (const char**)&ptr);
     if (!backend->set_context(thread->handle, &ctx))
     {
-        ERR("Failed to set context for tid %04x, error %u\n", thread->tid, GetLastError());
+        ERR("Failed to set context for tid %04lx, error %lu\n", thread->tid, GetLastError());
         return packet_error;
     }
 
@@ -1486,7 +1486,7 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
        packet_reply_open(gdbctx);
        packet_reply_add(gdbctx, "O");
        snprintf(buffer, sizeof(buffer),
-                "%*s%04Ix%*s%-17.17s %08x %0*Ix %.14s\n",
+                "%*s%04Ix%*s%-17.17s %08lx %0*Ix %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
                 clsName, GetWindowLongW(hWnd, GWL_STYLE),
                 addr_width(gdbctx), (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
@@ -1550,7 +1550,7 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "O");
         snprintf(buffer, sizeof(buffer),
-                 "%c%08x %-8d %08x '%s'\n",
+                 "%c%08lx %-8ld %08lx '%s'\n",
                  deco, entry.th32ProcessID, entry.cntThreads,
                  entry.th32ParentProcessID, entry.szExeFile);
         packet_reply_hex_to_str(gdbctx, buffer);

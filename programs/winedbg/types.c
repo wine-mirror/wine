@@ -68,7 +68,7 @@ dbg_lgint_t types_extract_as_lgint(const struct dbg_lvalue* lvalue,
     {
         return (LONG_PTR)memory_to_linear_addr(&lvalue->addr);
     }
-    if (tag != SymTagBaseType && lvalue->bitlen) dbg_printf("Unexpected bitfield on tag %d\n", tag);
+    if (tag != SymTagBaseType && lvalue->bitlen) dbg_printf("Unexpected bitfield on tag %ld\n", tag);
 
     if (psize) *psize = 0;
     if (issigned) *issigned = FALSE;
@@ -124,7 +124,7 @@ dbg_lgint_t types_extract_as_lgint(const struct dbg_lvalue* lvalue,
         rtn = (ULONG_PTR)memory_to_linear_addr(&lvalue->addr);
         break;
     default:
-        WINE_FIXME("Unsupported tag %u\n", tag);
+        WINE_FIXME("Unsupported tag %lu\n", tag);
         RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
     }
 
@@ -540,7 +540,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         print_value(&lvalue_field, format, level);
         break;
     default:
-        WINE_FIXME("Unknown tag (%u)\n", tag);
+        WINE_FIXME("Unknown tag (%lu)\n", tag);
         RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     }
@@ -555,7 +555,7 @@ static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
     struct dbg_type     type;
     type.module = sym->ModBase;
     type.id = sym->TypeIndex;
-    dbg_printf("Mod: %0*Ix ID: %08x\n", ADDRWIDTH, type.module, type.id);
+    dbg_printf("Mod: %0*Ix ID: %08lx\n", ADDRWIDTH, type.module, type.id);
     types_print_type(&type, TRUE);
     dbg_printf("\n");
     return TRUE;
@@ -586,7 +586,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
 
     if (type->id == dbg_itype_none || !types_get_info(type, TI_GET_SYMTAG, &tag))
     {
-        dbg_printf("--invalid--<%xh>--", type->id);
+        dbg_printf("--invalid--<%lxh>--", type->id);
         return FALSE;
     }
 
@@ -610,7 +610,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         case UdtStruct: dbg_printf("struct %ls", name); break;
         case UdtUnion:  dbg_printf("union %ls", name); break;
         case UdtClass:  dbg_printf("class %ls", name); break;
-        default:        WINE_ERR("Unsupported UDT type (%d) for %ls\n", udt, name); break;
+        default:        WINE_ERR("Unsupported UDT type (%ld) for %ls\n", udt, name); break;
         }
         if (details &&
             types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
@@ -654,7 +654,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         subtype.module = type->module;
         types_print_type(&subtype, details);
         if (types_get_info(type, TI_GET_COUNT, &count))
-            dbg_printf(" %ls[%d]", name, count);
+            dbg_printf(" %ls[%ld]", name, count);
         else
             dbg_printf(" %ls[]", name);
         break;
@@ -706,7 +706,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         dbg_printf("%ls", name);
         break;
     default:
-        WINE_ERR("Unknown type %u for %ls\n", tag, name);
+        WINE_ERR("Unknown type %lu for %ls\n", tag, name);
         break;
     }
 
@@ -744,7 +744,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
             case btLong:        name = L"long int"; break;
             case btULong:       name = L"unsigned long int"; break;
             case btComplex:     name = L"complex"; break;
-            default:            WINE_FIXME("Unsupported basic type %u\n", bt); return FALSE;
+            default:            WINE_FIXME("Unsupported basic type %lu\n", bt); return FALSE;
             }
             X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
             if (X(WCHAR*))
@@ -913,7 +913,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for XMM register\n", ti); return FALSE;
         }
         break;
-    default: WINE_FIXME("unsupported type id 0x%x\n", type->id);
+    default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
     }
 
 #undef X
@@ -1053,7 +1053,7 @@ BOOL types_compare(struct dbg_type type1, struct dbg_type type2, BOOL* equal)
             /* compare argument type */
             break;
         default:
-            dbg_printf("Unsupported yet tag %d\n", tag1);
+            dbg_printf("Unsupported yet tag %ld\n", tag1);
             return FALSE;
         }
     } while (types_get_info(&type1, TI_GET_TYPE, &type1.id) &&

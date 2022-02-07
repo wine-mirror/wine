@@ -597,7 +597,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
     case SymTagFunction:
     case SymTagPublicSymbol: break;
     default:
-        WINE_FIXME("Unexpected sym-tag 0x%08x\n", sym->Tag);
+        WINE_FIXME("Unexpected sym-tag 0x%08lx\n", sym->Tag);
     case SymTagData:
         return dbg_no_line_info;
     }

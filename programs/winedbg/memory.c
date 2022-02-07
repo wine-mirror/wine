@@ -114,7 +114,7 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &os)) return FALSE;
     if (size != os)
     {
-        dbg_printf("Size mismatch in memory_write_value, got %u from type while expecting %u\n",
+        dbg_printf("Size mismatch in memory_write_value, got %lu from type while expecting %lu\n",
                    (DWORD)os, size);
         return FALSE;
     }
@@ -531,7 +531,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             dbg_printf("%s", val_int ? "true" : "false");
             break;
         default:
-            WINE_FIXME("Unsupported basetype %u\n", bt);
+            WINE_FIXME("Unsupported basetype %lu\n", bt);
             break;
         }
         break;
@@ -619,7 +619,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         }
         break;
     default:
-        WINE_FIXME("Unsupported tag %u\n", tag);
+        WINE_FIXME("Unsupported tag %lu\n", tag);
         break;
     }
 }
@@ -739,7 +739,7 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
 
         il.SizeOfStruct = sizeof(il);
         if (SymGetLineFromAddr64(dbg_curr_process->handle, lin, &disp, &il))
-            dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
+            dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         if (im.SizeOfStruct == 0) /* don't display again module if address is in module+disp form */
         {
             im.SizeOfStruct = sizeof(im);
@@ -828,6 +828,6 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
             return TRUE;
         }
     }
-    if (buffer) snprintf(buffer, len, "<unknown register %u>", regno);
+    if (buffer) snprintf(buffer, len, "<unknown register %lu>", regno);
     return FALSE;
 }

@@ -445,7 +445,7 @@ static LONG WINAPI wine_dbg_cmd(EXCEPTION_POINTERS *eptr)
         dbg_interrupt_debuggee();
         return EXCEPTION_CONTINUE_EXECUTION;
     default:
-        dbg_printf("\nException %x\n", eptr->ExceptionRecord->ExceptionCode);
+        dbg_printf("\nException %lx\n", eptr->ExceptionRecord->ExceptionCode);
         break;
     }
 

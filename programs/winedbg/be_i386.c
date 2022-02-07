@@ -143,7 +143,7 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
     dbg_printf(" FLSW:%04x", LOWORD(ctx->FloatSave.StatusWord));
 
     /* Isolate the condition code bits - note they are not contiguous */
-    dbg_printf("(CC:%d%d%d%d", (ctx->FloatSave.StatusWord & 0x00004000) >> 14,
+    dbg_printf("(CC:%ld%ld%ld%ld", (ctx->FloatSave.StatusWord & 0x00004000) >> 14,
                (ctx->FloatSave.StatusWord & 0x00000400) >> 10,
                (ctx->FloatSave.StatusWord & 0x00000200) >> 9,
                (ctx->FloatSave.StatusWord & 0x00000100) >> 8);
@@ -176,7 +176,7 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
     dbg_printf(")\n");
     
     /* Here are the rest of the registers */
-    dbg_printf(" FLES:%08x  FLDO:%08x  FLDS:%08x  FLCNS:%08x\n",
+    dbg_printf(" FLES:%08lx  FLDO:%08lx  FLDS:%08lx  FLCNS:%08lx\n",
                ctx->FloatSave.ErrorSelector,
                ctx->FloatSave.DataOffset,
                ctx->FloatSave.DataSelector,
@@ -194,7 +194,7 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
 
     xmm_area = (XSAVE_FORMAT *) &ctx->ExtendedRegisters;
 
-    dbg_printf(" mxcsr: %04x (", xmm_area->MxCsr );
+    dbg_printf(" mxcsr: %04lx (", xmm_area->MxCsr );
     for (cnt = 0; cnt < 16; cnt++)
         if (xmm_area->MxCsr & (1 << cnt)) dbg_printf( " %s", mxcsr_flags[cnt] );
     dbg_printf(" )\n");
@@ -251,11 +251,11 @@ static void be_i386_print_context(HANDLE hThread, const dbg_ctx_t *pctx, int all
         break;
     case AddrModeFlat:
     case AddrMode1632:
-        dbg_printf("\n EIP:%08x ESP:%08x EBP:%08x EFLAGS:%08x(%s)\n",
+        dbg_printf("\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n",
                    ctx->Eip, ctx->Esp, ctx->Ebp, ctx->EFlags, buf);
-        dbg_printf(" EAX:%08x EBX:%08x ECX:%08x EDX:%08x\n",
+        dbg_printf(" EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n",
                    ctx->Eax, ctx->Ebx, ctx->Ecx, ctx->Edx);
-        dbg_printf(" ESI:%08x EDI:%08x\n",
+        dbg_printf(" ESI:%08lx EDI:%08lx\n",
                    ctx->Esi, ctx->Edi);
         break;
     }

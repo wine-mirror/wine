@@ -288,7 +288,7 @@ static void stack_print_addr_and_args(void)
         il.SizeOfStruct = sizeof(il);
         if (SymGetLineFromInlineContext(dbg_curr_process->handle, frm->linear_pc, frm->inline_ctx,
                                         0, &disp, &il))
-            dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
+            dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }
     else dbg_printf(" in %s (+0x%Ix)", im.ModuleName, frm->linear_pc - im.BaseOfImage);
@@ -333,7 +333,7 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
     struct dbg_thread*  thread = dbg_curr_thread;
 
     if (!(dbg_curr_thread = dbg_get_thread(pcs, tid)))
-        dbg_printf("Unknown thread id (%04x) in process (%04x)\n", tid, pcs->pid);
+        dbg_printf("Unknown thread id (%04lx) in process (%04lx)\n", tid, pcs->pid);
     else
     {
         dbg_ctx_t ctx = {{0}};
@@ -343,7 +343,7 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
         {
             if (!pcs->be_cpu->get_context(dbg_curr_thread->handle, &ctx))
             {
-                dbg_printf("Can't get context for thread %04x in current process\n",
+                dbg_printf("Can't get context for thread %04lx in current process\n",
                            tid);
             }
             else
@@ -353,7 +353,7 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
             }
             ResumeThread(dbg_curr_thread->handle);
         }
-        else dbg_printf("Can't suspend thread %04x in current process\n", tid);
+        else dbg_printf("Can't suspend thread %04lx in current process\n", tid);
     }
     dbg_curr_thread = thread;
     dbg_curr_tid = thread ? thread->tid : 0;
@@ -399,7 +399,7 @@ static void backtrace_all(void)
             {
                 if (!dbg_attach_debuggee(entry.th32OwnerProcessID))
                 {
-                    dbg_printf("\nwarning: could not attach to %04x\n",
+                    dbg_printf("\nwarning: could not attach to %04lx\n",
                                entry.th32OwnerProcessID);
                     continue;
                 }
@@ -407,7 +407,7 @@ static void backtrace_all(void)
                 dbg_active_wait_for_first_exception();
             }
 
-            dbg_printf("\nBacktracing for thread %04x in process %04x (%s):\n",
+            dbg_printf("\nBacktracing for thread %04lx in process %04lx (%s):\n",
                        entry.th32ThreadID, dbg_curr_pid,
                        dbg_W2A(dbg_curr_process->imageName, -1));
             backtrace_tid(dbg_curr_process, entry.th32ThreadID);

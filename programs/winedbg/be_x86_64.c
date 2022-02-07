@@ -89,7 +89,7 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
             buf[i] = ' ';
 
     dbg_printf("Register dump:\n");
-    dbg_printf(" rip:%016I64x rsp:%016I64x rbp:%016I64x eflags:%08x (%s)\n",
+    dbg_printf(" rip:%016I64x rsp:%016I64x rbp:%016I64x eflags:%08lx (%s)\n",
                ctx->Rip, ctx->Rsp, ctx->Rbp, ctx->EFlags, buf);
     dbg_printf(" rax:%016I64x rbx:%016I64x rcx:%016I64x rdx:%016I64x\n",
                ctx->Rax, ctx->Rbx, ctx->Rcx, ctx->Rdx);
@@ -142,7 +142,7 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
     if (ctx->u.FltSave.StatusWord & 0x00000080) dbg_printf(" #ES"); /* Error Summary */
     if (ctx->u.FltSave.StatusWord & 0x00008000) dbg_printf(" #FB"); /* FPU Busy */
     dbg_printf(")\n");
-    dbg_printf(" flerr:%04x:%08x   fldata:%04x:%08x\n",
+    dbg_printf(" flerr:%04x:%08lx   fldata:%04x:%08lx\n",
                ctx->u.FltSave.ErrorSelector, ctx->u.FltSave.ErrorOffset,
                ctx->u.FltSave.DataSelector, ctx->u.FltSave.DataOffset );
 
@@ -154,7 +154,7 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
     }
     dbg_printf("\n");
 
-    dbg_printf(" mxcsr: %04x (", ctx->u.FltSave.MxCsr );
+    dbg_printf(" mxcsr: %04lx (", ctx->u.FltSave.MxCsr );
     for (i = 0; i < 16; i++)
         if (ctx->u.FltSave.MxCsr & (1 << i)) dbg_printf( " %s", mxcsr_flags[i] );
     dbg_printf(" )\n");
