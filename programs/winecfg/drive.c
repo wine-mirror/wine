@@ -85,7 +85,7 @@ ULONG drive_available_mask(char letter)
   result = ~result;
   if (letter) result |= DRIVE_MASK_BIT(letter);
 
-  WINE_TRACE("finished drive letter loop with %x\n", result);
+  WINE_TRACE("finished drive letter loop with %lx\n", result);
   return result;
 }
 
@@ -97,7 +97,7 @@ BOOL add_drive(char letter, const char *targetpath, const char *device, const WC
     if(drives[driveIndex].in_use)
         return FALSE;
 
-    WINE_TRACE("letter == '%c', unixpath == %s, device == %s, label == %s, serial == %08x, type == %d\n",
+    WINE_TRACE("letter == '%c', unixpath == %s, device == %s, label == %s, serial == %08lx, type == %ld\n",
                letter, wine_dbgstr_a(targetpath), wine_dbgstr_a(device),
                wine_dbgstr_w(label), serial, type);
 
@@ -183,7 +183,7 @@ static void set_drive_serial( WCHAR letter, DWORD serial )
     HANDLE hFile;
 
     filename[0] = letter;
-    WINE_TRACE("Putting serial number of %08X into file %s\n", serial, wine_dbgstr_w(filename));
+    WINE_TRACE("Putting serial number of %08lX into file %s\n", serial, wine_dbgstr_w(filename));
     hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE)
@@ -191,7 +191,7 @@ static void set_drive_serial( WCHAR letter, DWORD serial )
         DWORD w;
         char buffer[16];
 
-        sprintf( buffer, "%X\n", serial );
+        sprintf( buffer, "%lX\n", serial );
         WriteFile(hFile, buffer, strlen(buffer), &w, NULL);
         CloseHandle(hFile);
     }
@@ -204,7 +204,7 @@ static HANDLE open_mountmgr(void)
     if ((ret = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE,
                             FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                             0, 0 )) == INVALID_HANDLE_VALUE)
-        WINE_ERR( "failed to open mount manager err %u\n", GetLastError() );
+        WINE_ERR( "failed to open mount manager err %lu\n", GetLastError() );
     return ret;
 }
 
@@ -315,10 +315,10 @@ void apply_drive_changes(void)
         {
             set_drive_label( drives[i].letter, drives[i].label );
             if (drives[i].in_use) set_drive_serial( drives[i].letter, drives[i].serial );
-            WINE_TRACE( "set drive %c: to %s type %u\n", 'a' + i,
+            WINE_TRACE( "set drive %c: to %s type %lu\n", 'a' + i,
                         wine_dbgstr_a(drives[i].unixpath), drives[i].type );
         }
-        else WINE_WARN( "failed to set drive %c: to %s type %u err %u\n", 'a' + i,
+        else WINE_WARN( "failed to set drive %c: to %s type %lu err %lu\n", 'a' + i,
                        wine_dbgstr_a(drives[i].unixpath), drives[i].type, GetLastError() );
         HeapFree( GetProcessHeap(), 0, ioctl );
     }

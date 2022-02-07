@@ -245,7 +245,7 @@ static void init_dpi_editbox(HWND hDlg)
     updating_ui = TRUE;
 
     dwLogpixels = read_logpixels_reg();
-    WINE_TRACE("%u\n", dwLogpixels);
+    WINE_TRACE("%lu\n", dwLogpixels);
 
     SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, dwLogpixels, FALSE);
 

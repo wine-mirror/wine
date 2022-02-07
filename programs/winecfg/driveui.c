@@ -463,7 +463,7 @@ static void update_controls(HWND dialog)
     set_textW(dialog, IDC_EDIT_LABEL, current_drive->label ? current_drive->label : emptyW);
 
     /* set serial edit text */
-    sprintf( serial, "%X", current_drive->serial );
+    sprintf( serial, "%lX", current_drive->serial );
     set_text(dialog, IDC_EDIT_SERIAL, serial);
 
     set_text(dialog, IDC_EDIT_DEVICE, current_drive->device);
@@ -542,7 +542,7 @@ static void on_edit_changed(HWND dialog, WORD id)
             HeapFree(GetProcessHeap(), 0, serial);
             current_drive->modified = TRUE;
 
-            WINE_TRACE("set serial to %08X\n", current_drive->serial);
+            WINE_TRACE("set serial to %08lX\n", current_drive->serial);
 
             /* enable the apply button  */
             SendMessageW(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);

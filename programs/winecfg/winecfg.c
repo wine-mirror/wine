@@ -120,7 +120,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
         }
         else
         {
-            WINE_ERR("RegOpenKey failed on wine config key (res=%d)\n", res);
+            WINE_ERR("RegOpenKey failed on wine config key (res=%ld)\n", res);
         }
         goto end;
     }
@@ -133,7 +133,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
 	goto end;
     } else if (res != ERROR_SUCCESS)
     {
-        WINE_ERR("Couldn't query value's length (res=%d)\n", res);
+        WINE_ERR("Couldn't query value's length (res=%ld)\n", res);
         goto end;
     }
 
@@ -164,7 +164,7 @@ static int set_config_key(HKEY root, const WCHAR *subkey, REGSAM access, const W
     DWORD res = 1;
     HKEY key = NULL;
 
-    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%d\n", wine_dbgstr_w(subkey),
+    WINE_TRACE("subkey=%s: name=%s, value=%p, type=%ld\n", wine_dbgstr_w(subkey),
                wine_dbgstr_w(name), value, type);
 
     assert( subkey != NULL );
@@ -189,7 +189,7 @@ static int set_config_key(HKEY root, const WCHAR *subkey, REGSAM access, const W
 end:
     if (key && key != root) RegCloseKey(key);
     if (res != 0)
-        WINE_ERR("Unable to set configuration key %s in section %s, res=%d\n",
+        WINE_ERR("Unable to set configuration key %s in section %s, res=%ld\n",
                  wine_dbgstr_w(name), wine_dbgstr_w(subkey), res);
     return res;
 }
@@ -430,13 +430,13 @@ WCHAR **enumerate_values(HKEY root, const WCHAR *path)
             else values = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR*));
 
             values[valueslen++] = strdupW(name);
-            WINE_TRACE("valueslen is now %d\n", valueslen);
+            WINE_TRACE("valueslen is now %ld\n", valueslen);
             i++;
         }
     }
     else
     {
-        WINE_WARN("failed opening registry key %s, res=0x%x\n",
+        WINE_WARN("failed opening registry key %s, res=0x%lx\n",
                   wine_dbgstr_w(path), res);
     }
 
@@ -610,7 +610,7 @@ BOOL initialize(HINSTANCE hInstance)
     DWORD res = RegCreateKeyW(HKEY_CURRENT_USER, WINE_KEY_ROOT, &config_key);
 
     if (res != ERROR_SUCCESS) {
-	WINE_ERR("RegOpenKey failed on wine config key (%d)\n", res);
+	WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
         return TRUE;
     }
 
