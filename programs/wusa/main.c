@@ -1035,7 +1035,7 @@ static void restart_as_x86_64(void)
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
     }
-    else ERR("Failed to restart 64-bit %s, err %u\n", wine_dbgstr_w(filename), GetLastError());
+    else ERR("Failed to restart 64-bit %s, err %lu\n", wine_dbgstr_w(filename), GetLastError());
     Wow64RevertWow64FsRedirection(redir);
 
     ExitProcess(exit_code);
