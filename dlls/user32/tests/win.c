@@ -2256,7 +2256,7 @@ static void test_mdi(void)
     mdi_hwndMain = CreateWindowExA(0, "MDI_parent_Class", "MDI parent window",
                                    WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                    WS_MAXIMIZEBOX /*| WS_VISIBLE*/,
-                                   200, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                   100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
                                    GetDesktopWindow(), 0,
                                    GetModuleHandleA(NULL), NULL);
     assert(mdi_hwndMain);
@@ -12644,6 +12644,10 @@ START_TEST(win)
 
     our_pid = GetWindowThreadProcessId(hwndMain, NULL);
 
+    /* This test is sensitive to other windows created with
+     * CW_USEDEFAULT position, execute it early too */
+    test_mdi();
+
     /* Add the tests below this line */
     test_child_window_from_point();
     test_window_from_point(argv[0]);
@@ -12665,7 +12669,6 @@ START_TEST(win)
     test_parent_owner();
     test_enum_thread_windows();
 
-    test_mdi();
     test_icons();
     test_SetWindowPos(hwndMain, hwndMain2);
     test_SetMenu(hwndMain);
