@@ -79,7 +79,7 @@ static WCHAR *XCOPY_LoadMessage(UINT id) {
     static WCHAR msg[MAXSTRING];
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
-       WINE_FIXME("LoadString failed with %d\n", GetLastError());
+       WINE_FIXME("LoadString failed with %ld\n", GetLastError());
        lstrcpyW(msg, L"Failed!");
     }
     return msg;
@@ -121,7 +121,7 @@ static int WINAPIV XCOPY_wprintf(const WCHAR *format, ...) {
                    MAX_WRITECONSOLE_SIZE/sizeof(*output_bufW), &parms);
     va_end(parms);
     if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE) {
-      WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+      WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
       return 0;
     }
 
@@ -178,7 +178,7 @@ static void XCOPY_FailMessage(DWORD err) {
                             NULL, err, 0,
                             (LPWSTR) &lpMsgBuf, 0, NULL);
     if (!status) {
-      WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
+      WINE_FIXME("FIXME: Cannot display message for error %ld, status %ld\n",
                  err, GetLastError());
     } else {
       XCOPY_wprintf(L"%1\n", lpMsgBuf);
@@ -397,7 +397,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* See if allowed to copy it */
             srcAttribs = GetFileAttributesW(copyFrom);
-            WINE_TRACE("Source attribs: %d\n", srcAttribs);
+            WINE_TRACE("Source attribs: %ld\n", srcAttribs);
 
             if ((srcAttribs & FILE_ATTRIBUTE_HIDDEN) ||
                 (srcAttribs & FILE_ATTRIBUTE_SYSTEM)) {
@@ -414,7 +414,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* See if file exists */
             destAttribs = GetFileAttributesW(copyTo);
-            WINE_TRACE("Dest attribs: %d\n", srcAttribs);
+            WINE_TRACE("Dest attribs: %ld\n", srcAttribs);
 
             /* Check date ranges if a destination file already exists */
             if (!skipFile && (flags & OPT_DATERANGE) &&
@@ -901,7 +901,7 @@ static int XCOPY_ProcessSourceParm(WCHAR *suppliedsource, WCHAR *stem,
      * Validate the source, expanding to full path ensuring it exists
      */
     if (GetFullPathNameW(suppliedsource, MAX_PATH, actualsource, NULL) == 0) {
-        WINE_FIXME("Unexpected failure expanding source path (%d)\n", GetLastError());
+        WINE_FIXME("Unexpected failure expanding source path (%ld)\n", GetLastError());
         return RC_INITERROR;
     }
 
@@ -995,7 +995,7 @@ static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem, WCHAR 
      * Validate the source, expanding to full path ensuring it exists
      */
     if (GetFullPathNameW(supplieddestination, MAX_PATH, actualdestination, NULL) == 0) {
-        WINE_FIXME("Unexpected failure expanding source path (%d)\n", GetLastError());
+        WINE_FIXME("Unexpected failure expanding source path (%ld)\n", GetLastError());
         return RC_INITERROR;
     }
 
