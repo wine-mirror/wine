@@ -9,7 +9,6 @@ SOURCES = \
 	device.c \
 	device8.c \
 	dinput.c \
-	dinput8.c \
 	driver_hid.c \
 	driver_hid.spec \
 	force_feedback.c \
