@@ -188,7 +188,7 @@ static int add_stream( const WCHAR *msifile, const WCHAR *stream, const WCHAR *f
     hr = StgOpenStorage( msifile, NULL, STGM_TRANSACTED|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, NULL, 0, &stg );
     if (hr != S_OK)
     {
-        WINE_WARN( "failed to open storage %s (0x%08x)\n", wine_dbgstr_w(msifile), hr );
+        WINE_WARN( "failed to open storage %s (0x%08lx)\n", wine_dbgstr_w(msifile), hr );
         return 1;
     }
     encname = encode_stream( stream );
@@ -200,13 +200,13 @@ static int add_stream( const WCHAR *msifile, const WCHAR *stream, const WCHAR *f
     hr = IStorage_CreateStream( stg, encname, STGM_CREATE|STGM_WRITE|STGM_SHARE_EXCLUSIVE, 0, 0, &stm );
     if (hr != S_OK)
     {
-        WINE_WARN( "failed to create stream %s (0x%08x)\n", wine_dbgstr_w(encname), hr );
+        WINE_WARN( "failed to create stream %s (0x%08lx)\n", wine_dbgstr_w(encname), hr );
         goto done;
     }
     handle = CreateFileW( file, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     if (handle == INVALID_HANDLE_VALUE)
     {
-        WINE_WARN( "failed to open file %s (%u)\n", wine_dbgstr_w(file), GetLastError() );
+        WINE_WARN( "failed to open file %s (%lu)\n", wine_dbgstr_w(file), GetLastError() );
         goto done;
     }
     low = GetFileSize( handle, &high );
