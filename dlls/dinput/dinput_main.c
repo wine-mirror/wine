@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static const IDirectInput7WVtbl ddi7wvt;
 static const IDirectInput8WVtbl ddi8wvt;
-static const IDirectInputJoyConfig8Vtbl JoyConfig8vt;
+static const IDirectInputJoyConfig8Vtbl joy_config_vtbl;
 
 static inline IDirectInputImpl *impl_from_IDirectInput7W( IDirectInput7W *iface )
 {
@@ -149,7 +149,7 @@ static HRESULT create_directinput_instance(REFIID riid, LPVOID *ppDI, IDirectInp
     This->IDirectInput7W_iface.lpVtbl = &ddi7wvt;
     This->IDirectInput8A_iface.lpVtbl = &dinput8_a_vtbl;
     This->IDirectInput8W_iface.lpVtbl = &ddi8wvt;
-    This->IDirectInputJoyConfig8_iface.lpVtbl = &JoyConfig8vt;
+    This->IDirectInputJoyConfig8_iface.lpVtbl = &joy_config_vtbl;
 
     hr = IDirectInput_QueryInterface( &This->IDirectInput7A_iface, riid, ppDI );
     if (FAILED(hr))
@@ -894,70 +894,72 @@ static inline IDirectInputImpl *impl_from_IDirectInputJoyConfig8(IDirectInputJoy
     return CONTAINING_RECORD( iface, IDirectInputImpl, IDirectInputJoyConfig8_iface );
 }
 
-static HRESULT WINAPI JoyConfig8Impl_QueryInterface(IDirectInputJoyConfig8 *iface, REFIID riid, void** ppobj)
+static HRESULT WINAPI joy_config_QueryInterface( IDirectInputJoyConfig8 *iface, REFIID iid, void **out )
 {
-    IDirectInputImpl *This = impl_from_IDirectInputJoyConfig8( iface );
-    return IDirectInput_QueryInterface( &This->IDirectInput7W_iface, riid, ppobj );
+    IDirectInputImpl *impl = impl_from_IDirectInputJoyConfig8( iface );
+    return IDirectInput7_QueryInterface( &impl->IDirectInput7W_iface, iid, out );
 }
 
-static ULONG WINAPI JoyConfig8Impl_AddRef(IDirectInputJoyConfig8 *iface)
+static ULONG WINAPI joy_config_AddRef( IDirectInputJoyConfig8 *iface )
 {
-    IDirectInputImpl *This = impl_from_IDirectInputJoyConfig8( iface );
-    return IDirectInput_AddRef( &This->IDirectInput7W_iface );
+    IDirectInputImpl *impl = impl_from_IDirectInputJoyConfig8( iface );
+    return IDirectInput7_AddRef( &impl->IDirectInput7W_iface );
 }
 
-static ULONG WINAPI JoyConfig8Impl_Release(IDirectInputJoyConfig8 *iface)
+static ULONG WINAPI joy_config_Release( IDirectInputJoyConfig8 *iface )
 {
-    IDirectInputImpl *This = impl_from_IDirectInputJoyConfig8( iface );
-    return IDirectInput_Release( &This->IDirectInput7W_iface );
+    IDirectInputImpl *impl = impl_from_IDirectInputJoyConfig8( iface );
+    return IDirectInput7_Release( &impl->IDirectInput7W_iface );
 }
 
-static HRESULT WINAPI JoyConfig8Impl_Acquire(IDirectInputJoyConfig8 *iface)
+static HRESULT WINAPI joy_config_Acquire( IDirectInputJoyConfig8 *iface )
 {
-    FIXME( "(%p): stub!\n", iface );
+    FIXME( "iface %p stub!\n", iface );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_Unacquire(IDirectInputJoyConfig8 *iface)
+static HRESULT WINAPI joy_config_Unacquire( IDirectInputJoyConfig8 *iface )
 {
-    FIXME( "(%p): stub!\n", iface );
+    FIXME( "iface %p stub!\n", iface );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_SetCooperativeLevel(IDirectInputJoyConfig8 *iface, HWND hwnd, DWORD flags)
+static HRESULT WINAPI joy_config_SetCooperativeLevel( IDirectInputJoyConfig8 *iface, HWND hwnd, DWORD flags )
 {
-    FIXME( "(%p)->(%p, 0x%08x): stub!\n", iface, hwnd, flags );
+    FIXME( "iface %p, hwnd %p, flags %#x stub!\n", iface, hwnd, flags );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_SendNotify(IDirectInputJoyConfig8 *iface)
+static HRESULT WINAPI joy_config_SendNotify( IDirectInputJoyConfig8 *iface )
 {
-    FIXME( "(%p): stub!\n", iface );
+    FIXME( "iface %p stub!\n", iface );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_EnumTypes(IDirectInputJoyConfig8 *iface, LPDIJOYTYPECALLBACK cb, void *ref)
+static HRESULT WINAPI joy_config_EnumTypes( IDirectInputJoyConfig8 *iface, LPDIJOYTYPECALLBACK callback, void *context )
 {
-    FIXME( "(%p)->(%p, %p): stub!\n", iface, cb, ref );
+    FIXME( "iface %p, callback %p, context %p stub!\n", iface, callback, context );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_GetTypeInfo(IDirectInputJoyConfig8 *iface, LPCWSTR name, LPDIJOYTYPEINFO info, DWORD flags)
+static HRESULT WINAPI joy_config_GetTypeInfo( IDirectInputJoyConfig8 *iface, const WCHAR *name,
+                                              DIJOYTYPEINFO *info, DWORD flags )
 {
-    FIXME( "(%p)->(%s, %p, 0x%08x): stub!\n", iface, debugstr_w(name), info, flags );
+    FIXME( "iface %p, name %s, info %p, flags %#x stub!\n", iface, debugstr_w(name), info, flags );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_SetTypeInfo(IDirectInputJoyConfig8 *iface, LPCWSTR name, LPCDIJOYTYPEINFO info, DWORD flags,
-                                                 LPWSTR new_name)
+static HRESULT WINAPI joy_config_SetTypeInfo( IDirectInputJoyConfig8 *iface, const WCHAR *name,
+                                              const DIJOYTYPEINFO *info, DWORD flags, WCHAR *new_name )
 {
-    FIXME( "(%p)->(%s, %p, 0x%08x, %s): stub!\n", iface, debugstr_w(name), info, flags, debugstr_w(new_name) );
+    FIXME( "iface %p, name %s, info %p, flags %#x, new_name %s stub!\n",
+           iface, debugstr_w(name), info, flags, debugstr_w(new_name) );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_DeleteType(IDirectInputJoyConfig8 *iface, LPCWSTR name)
+static HRESULT WINAPI joy_config_DeleteType( IDirectInputJoyConfig8 *iface, const WCHAR *name )
 {
-    FIXME( "(%p)->(%s): stub!\n", iface, debugstr_w(name) );
+    FIXME( "iface %p, name %s stub!\n", iface, debugstr_w(name) );
     return E_NOTIMPL;
 }
 
@@ -975,13 +977,13 @@ static BOOL CALLBACK find_device_from_index( const DIDEVICEINSTANCEW *instance, 
     return DIENUM_CONTINUE;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPDIJOYCONFIG info, DWORD flags)
+static HRESULT WINAPI joy_config_GetConfig( IDirectInputJoyConfig8 *iface, UINT id, DIJOYCONFIG *info, DWORD flags )
 {
-    IDirectInputImpl *di = impl_from_IDirectInputJoyConfig8(iface);
+    IDirectInputImpl *impl = impl_from_IDirectInputJoyConfig8( iface );
     struct find_device_from_index_params params = {.index = id};
     HRESULT hr;
 
-    FIXME("(%p)->(%d, %p, 0x%08x): semi-stub!\n", iface, id, info, flags);
+    FIXME( "iface %p, id %u, info %p, flags %#x stub!\n", iface, id, info, flags );
 
 #define X(x) if (flags & x) FIXME("\tflags |= "#x"\n");
     X(DIJC_GUIDINSTANCE)
@@ -990,52 +992,53 @@ static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UI
     X(DIJC_CALLOUT)
 #undef X
 
-    hr = IDirectInput8_EnumDevices( &di->IDirectInput8W_iface, DI8DEVCLASS_GAMECTRL, find_device_from_index, &params, 0 );
+    hr = IDirectInput8_EnumDevices( &impl->IDirectInput8W_iface, DI8DEVCLASS_GAMECTRL,
+                                    find_device_from_index, &params, 0 );
     if (FAILED(hr)) return hr;
     if (params.index != ~0) return DIERR_NOMOREITEMS;
     if (flags & DIJC_GUIDINSTANCE) info->guidInstance = params.instance.guidInstance;
     return DI_OK;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_SetConfig(IDirectInputJoyConfig8 *iface, UINT id, LPCDIJOYCONFIG info, DWORD flags)
+static HRESULT WINAPI joy_config_SetConfig( IDirectInputJoyConfig8 *iface, UINT id, const DIJOYCONFIG *info, DWORD flags )
 {
-    FIXME( "(%p)->(%d, %p, 0x%08x): stub!\n", iface, id, info, flags );
+    FIXME( "iface %p, id %u, info %p, flags %#x stub!\n", iface, id, info, flags );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_DeleteConfig(IDirectInputJoyConfig8 *iface, UINT id)
+static HRESULT WINAPI joy_config_DeleteConfig( IDirectInputJoyConfig8 *iface, UINT id )
 {
-    FIXME( "(%p)->(%d): stub!\n", iface, id );
+    FIXME( "iface %p, id %u stub!\n", iface, id );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_GetUserValues(IDirectInputJoyConfig8 *iface, LPDIJOYUSERVALUES info, DWORD flags)
+static HRESULT WINAPI joy_config_GetUserValues( IDirectInputJoyConfig8 *iface, DIJOYUSERVALUES *info, DWORD flags )
 {
-    FIXME( "(%p)->(%p, 0x%08x): stub!\n", iface, info, flags );
+    FIXME( "iface %p, info %p, flags %#x stub!\n", iface, info, flags );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_SetUserValues(IDirectInputJoyConfig8 *iface, LPCDIJOYUSERVALUES info, DWORD flags)
+static HRESULT WINAPI joy_config_SetUserValues( IDirectInputJoyConfig8 *iface, const DIJOYUSERVALUES *info, DWORD flags )
 {
-    FIXME( "(%p)->(%p, 0x%08x): stub!\n", iface, info, flags );
+    FIXME( "iface %p, info %p, flags %#x stub!\n", iface, info, flags );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_AddNewHardware(IDirectInputJoyConfig8 *iface, HWND hwnd, REFGUID guid)
+static HRESULT WINAPI joy_config_AddNewHardware( IDirectInputJoyConfig8 *iface, HWND hwnd, const GUID *guid )
 {
-    FIXME( "(%p)->(%p, %s): stub!\n", iface, hwnd, debugstr_guid(guid) );
+    FIXME( "iface %p, hwnd %p, guid %s stub!\n", iface, hwnd, debugstr_guid( guid ) );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_OpenTypeKey(IDirectInputJoyConfig8 *iface, LPCWSTR name, DWORD security, PHKEY key)
+static HRESULT WINAPI joy_config_OpenTypeKey( IDirectInputJoyConfig8 *iface, const WCHAR *name, DWORD security, HKEY *key )
 {
-    FIXME( "(%p)->(%s, 0x%08x, %p): stub!\n", iface, debugstr_w(name), security, key );
+    FIXME( "iface %p, name %s, security %u, key %p stub!\n", iface, debugstr_w(name), security, key );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI JoyConfig8Impl_OpenAppStatusKey(IDirectInputJoyConfig8 *iface, PHKEY key)
+static HRESULT WINAPI joy_config_OpenAppStatusKey( IDirectInputJoyConfig8 *iface, HKEY *key )
 {
-    FIXME( "(%p)->(%p): stub!\n", iface, key );
+    FIXME( "iface %p, key %p stub!\n", iface, key );
     return E_NOTIMPL;
 }
 
@@ -1066,27 +1069,27 @@ static const IDirectInput8WVtbl ddi8wvt = {
     IDirectInput8WImpl_ConfigureDevices
 };
 
-static const IDirectInputJoyConfig8Vtbl JoyConfig8vt =
+static const IDirectInputJoyConfig8Vtbl joy_config_vtbl =
 {
-    JoyConfig8Impl_QueryInterface,
-    JoyConfig8Impl_AddRef,
-    JoyConfig8Impl_Release,
-    JoyConfig8Impl_Acquire,
-    JoyConfig8Impl_Unacquire,
-    JoyConfig8Impl_SetCooperativeLevel,
-    JoyConfig8Impl_SendNotify,
-    JoyConfig8Impl_EnumTypes,
-    JoyConfig8Impl_GetTypeInfo,
-    JoyConfig8Impl_SetTypeInfo,
-    JoyConfig8Impl_DeleteType,
-    JoyConfig8Impl_GetConfig,
-    JoyConfig8Impl_SetConfig,
-    JoyConfig8Impl_DeleteConfig,
-    JoyConfig8Impl_GetUserValues,
-    JoyConfig8Impl_SetUserValues,
-    JoyConfig8Impl_AddNewHardware,
-    JoyConfig8Impl_OpenTypeKey,
-    JoyConfig8Impl_OpenAppStatusKey
+    joy_config_QueryInterface,
+    joy_config_AddRef,
+    joy_config_Release,
+    joy_config_Acquire,
+    joy_config_Unacquire,
+    joy_config_SetCooperativeLevel,
+    joy_config_SendNotify,
+    joy_config_EnumTypes,
+    joy_config_GetTypeInfo,
+    joy_config_SetTypeInfo,
+    joy_config_DeleteType,
+    joy_config_GetConfig,
+    joy_config_SetConfig,
+    joy_config_DeleteConfig,
+    joy_config_GetUserValues,
+    joy_config_SetUserValues,
+    joy_config_AddNewHardware,
+    joy_config_OpenTypeKey,
+    joy_config_OpenAppStatusKey,
 };
 
 struct class_factory
