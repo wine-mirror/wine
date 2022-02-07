@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = xmllite.dll
 IMPORTS   = xmllite ole32
 
