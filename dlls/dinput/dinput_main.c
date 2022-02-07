@@ -1089,90 +1089,95 @@ static const IDirectInputJoyConfig8Vtbl JoyConfig8vt =
     JoyConfig8Impl_OpenAppStatusKey
 };
 
-/*******************************************************************************
- * DirectInput ClassFactory
- */
-typedef struct
+struct class_factory
 {
-    /* IUnknown fields */
     IClassFactory IClassFactory_iface;
-    LONG          ref;
-} IClassFactoryImpl;
-
-static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
-{
-        return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
-}
-
-static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-
-	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
-}
-
-static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-	return InterlockedIncrement(&(This->ref));
-}
-
-static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&(This->ref));
-}
-
-static HRESULT WINAPI DICF_CreateInstance(
-	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
-) {
-	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-
-	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-        if ( IsEqualGUID( &IID_IUnknown, riid ) ||
-             IsEqualGUID( &IID_IDirectInputA, riid ) ||
-	     IsEqualGUID( &IID_IDirectInputW, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput2A, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput2W, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput7A, riid ) ||
-            IsEqualGUID( &IID_IDirectInput7W, riid ) ||
-            IsEqualGUID( &IID_IDirectInput8A, riid ) ||
-	     IsEqualGUID( &IID_IDirectInput8W, riid ) )
-        {
-		return create_directinput_instance(riid, ppobj, NULL);
-	}
-
-	FIXME("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
-	return E_NOINTERFACE;
-}
-
-static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-	FIXME("(%p)->(%d),stub!\n",This,dolock);
-	return S_OK;
-}
-
-static const IClassFactoryVtbl DICF_Vtbl = {
-	DICF_QueryInterface,
-	DICF_AddRef,
-	DICF_Release,
-	DICF_CreateInstance,
-	DICF_LockServer
 };
-static IClassFactoryImpl DINPUT_CF = {{&DICF_Vtbl}, 1 };
+
+static inline struct class_factory *impl_from_IClassFactory( IClassFactory *iface )
+{
+    return CONTAINING_RECORD( iface, struct class_factory, IClassFactory_iface );
+}
+
+static HRESULT WINAPI class_factory_QueryInterface( IClassFactory *iface, REFIID iid, void **out )
+{
+    struct class_factory *impl = impl_from_IClassFactory(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IClassFactory))
+        *out = &impl->IClassFactory_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI class_factory_AddRef( IClassFactory *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI class_factory_Release( IClassFactory *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI class_factory_CreateInstance( IClassFactory *iface, IUnknown *outer, REFIID iid, void **out )
+{
+    IUnknown *unknown;
+    HRESULT hr;
+
+    TRACE( "iface %p, outer %p, iid %s, out %p.\n", iface, outer, debugstr_guid( iid ), out );
+
+    if (outer) return CLASS_E_NOAGGREGATION;
+
+    if (FAILED(hr = create_directinput_instance( &IID_IUnknown, (void **)&unknown, NULL ))) return hr;
+    hr = IUnknown_QueryInterface( unknown, iid, out );
+    IUnknown_Release( unknown );
+
+    return hr;
+}
+
+static HRESULT WINAPI class_factory_LockServer( IClassFactory *iface, BOOL lock )
+{
+    FIXME( "iface %p, lock %d stub!\n", iface, lock );
+    return S_OK;
+}
+
+static const IClassFactoryVtbl class_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    class_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+static struct class_factory class_factory = {{&class_factory_vtbl}};
 
 /***********************************************************************
  *		DllGetClassObject (DINPUT.@)
  */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **out )
 {
-    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
-        *ppv = &DINPUT_CF;
-	IClassFactory_AddRef((IClassFactory*)*ppv);
-    return S_OK;
-    }
+    TRACE( "clsid %s, iid %s, out %p.\n", debugstr_guid( clsid ), debugstr_guid( iid ), out );
 
-    FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+#if DIRECTINPUT_VERSION == 0x0700
+    if (IsEqualCLSID( &CLSID_DirectInput, clsid ))
+        return IClassFactory_QueryInterface( &class_factory.IClassFactory_iface, iid, out );
+#else
+    if (IsEqualCLSID( &CLSID_DirectInput8, clsid ))
+        return IClassFactory_QueryInterface( &class_factory.IClassFactory_iface, iid, out );
+#endif
+
+    WARN( "%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid( clsid ) );
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

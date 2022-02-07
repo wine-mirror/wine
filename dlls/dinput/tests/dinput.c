@@ -167,7 +167,6 @@ static void test_CoCreateInstance( DWORD version )
                                                 &IID_IDirectInputA, (void **)&unknown );
     else hr = CoCreateInstance( &CLSID_DirectInput8, &outer, CLSCTX_INPROC_SERVER,
                                 &IID_IDirectInput8A, (void **)&unknown );
-    todo_wine
     ok( hr == CLASS_E_NOAGGREGATION, "CoCreateInstance returned %#x\n", hr );
     if (SUCCEEDED( hr )) IUnknown_Release( unknown );
 
