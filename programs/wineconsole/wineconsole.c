@@ -44,7 +44,7 @@ int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
     FreeConsole(); /* make sure we're not connected to inherited console */
     if (!AllocConsole())
     {
-        ERR( "failed to allocate console: %u\n", GetLastError() );
+        ERR( "failed to allocate console: %lu\n", GetLastError() );
         return 1;
     }
 
@@ -63,7 +63,7 @@ int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
         INPUT_RECORD ir;
         DWORD len;
         exit_code = GetLastError();
-        WARN( "CreateProcess failed: %u\n", exit_code );
+        WARN( "CreateProcess failed: %lu\n", exit_code );
         LoadStringW( GetModuleHandleW( NULL ), IDS_CMD_LAUNCH_FAILED, format, ARRAY_SIZE(format) );
         len = wcslen( format ) + wcslen( cmd );
         if ((buf = malloc( len * sizeof(WCHAR) )))
