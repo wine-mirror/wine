@@ -643,7 +643,6 @@ static HRESULT perf_dmport_create(IDirectMusicPerformance8Impl *perf, DMUS_PORTP
     if (FAILED(hr = IDirectMusic8_GetDefaultPort(perf->dmusic, &guid)))
         return hr;
 
-    params->dwSize = sizeof(params);
     params->dwValidParams |= DMUS_PORTPARAMS_SHARE;
     params->fShare = TRUE;
 
@@ -671,6 +670,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort(IDirectMusicPerforman
 
     if (!port) {
         DMUS_PORTPARAMS params = {
+            .dwSize = sizeof(params),
             .dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS,
             .dwChannelGroups = 1
         };
@@ -1148,6 +1148,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 	}
 
         /* Create a port */
+        params.dwSize = sizeof(params);
         params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
         params.dwChannelGroups = (pchannel_count + 15) / 16;
         params.dwAudioChannels = format.nChannels;
