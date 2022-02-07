@@ -139,8 +139,8 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
     /* Update input size to match sample size */
     This->pBihIn->biSizeImage = cbSrcStream;
 
-    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &pOutSample, NULL, NULL, 0);
-    if (FAILED(hr)) {
+    if (FAILED(hr = IMemAllocator_GetBuffer(This->source.pAllocator, &pOutSample, NULL, NULL, 0)))
+    {
         ERR("Failed to get sample, hr %#lx.\n", hr);
         return hr;
     }

@@ -140,8 +140,7 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
 
     while(hr == S_OK && ash.cbSrcLength)
     {
-        hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &pOutSample, NULL, NULL, 0);
-        if (FAILED(hr))
+        if (FAILED(hr = IMemAllocator_GetBuffer(This->source.pAllocator, &pOutSample, NULL, NULL, 0)))
         {
             ERR("Failed to get sample, hr %#lx.\n", hr);
             return hr;
