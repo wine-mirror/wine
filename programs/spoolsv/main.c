@@ -52,7 +52,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
         SetEvent( stop_event );
         return NO_ERROR;
     default:
-        WINE_FIXME( "got service ctrl %x\n", ctrl );
+        WINE_FIXME( "got service ctrl %lx\n", ctrl );
         status.dwCurrentState = SERVICE_RUNNING;
         SetServiceStatus( service_handle, &status );
         return NO_ERROR;
