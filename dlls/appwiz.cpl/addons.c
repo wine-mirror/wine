@@ -127,7 +127,7 @@ static BOOL sha_check(const WCHAR *file_name)
 
     file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
     if(file == INVALID_HANDLE_VALUE) {
-        WARN("Could not open file: %u\n", GetLastError());
+        WARN("Could not open file: %lu\n", GetLastError());
         return FALSE;
     }
 
@@ -189,7 +189,7 @@ static enum install_res install_file(const WCHAR *file_name)
     if(res == ERROR_PRODUCT_VERSION)
         res = MsiInstallProductW(file_name, L"REINSTALL=ALL REINSTALLMODE=vomus");
     if(res != ERROR_SUCCESS) {
-        ERR("MsiInstallProduct failed: %u\n", res);
+        ERR("MsiInstallProduct failed: %lu\n", res);
         return INSTALL_FAILED;
     }
 
@@ -218,7 +218,7 @@ static enum install_res install_from_dos_file(const WCHAR *dir, const WCHAR *sub
     hr = PathAllocCanonicalize( path, PATHCCH_ALLOW_LONG_PATHS, &canonical_path );
     if (FAILED( hr ))
     {
-        ERR( "Failed to canonicalize %s, hr %#x\n", debugstr_w(path), hr );
+        ERR( "Failed to canonicalize %s, hr %#lx\n", debugstr_w(path), hr );
         heap_free( path );
         return INSTALL_NEXT;
     }
@@ -350,7 +350,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
 
     if (ensure_exists && !CreateDirectoryW( cache_dir, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
     {
-        WARN( "%s does not exist and could not be created (%u)\n", debugstr_w(cache_dir), GetLastError() );
+        WARN( "%s does not exist and could not be created (%lu)\n", debugstr_w(cache_dir), GetLastError() );
         heap_free( cache_dir );
         return NULL;
     }
@@ -367,7 +367,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
 
     if (ensure_exists && !CreateDirectoryW( ret, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
     {
-        WARN( "%s does not exist and could not be created (%u)\n", debugstr_w(ret), GetLastError() );
+        WARN( "%s does not exist and could not be created (%lu)\n", debugstr_w(ret), GetLastError() );
         heap_free( ret );
         return NULL;
     }
@@ -477,7 +477,7 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
         if(hresult == E_ABORT)
             TRACE("Binding aborted\n");
         else
-            ERR("Binding failed %08x\n", hresult);
+            ERR("Binding failed %08lx\n", hresult);
         return S_OK;
     }
 

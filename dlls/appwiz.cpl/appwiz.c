@@ -89,7 +89,7 @@ static const WCHAR PathUninstallW[] = L"Software\\Microsoft\\Windows\\CurrentVer
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
                     LPVOID lpvReserved)
 {
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
     {
