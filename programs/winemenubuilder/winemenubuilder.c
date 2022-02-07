@@ -361,33 +361,33 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
         &IID_IWICImagingFactory, (void**)&factory);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating IWICImagingFactory\n", hr);
+        WINE_ERR("error 0x%08lX creating IWICImagingFactory\n", hr);
         goto end;
     }
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, icoFile, NULL,
         WICDecodeMetadataCacheOnDemand, &decoder);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating IWICBitmapDecoder\n", hr);
+        WINE_ERR("error 0x%08lX creating IWICBitmapDecoder\n", hr);
         goto end;
     }
     hr = CoCreateInstance(outputFormat, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating bitmap encoder\n", hr);
+        WINE_ERR("error 0x%08lX creating bitmap encoder\n", hr);
         goto end;
     }
     hr = SHCreateStreamOnFileW(outputFileName, STGM_CREATE | STGM_WRITE, &outputFile);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating output file %s\n", hr, wine_dbgstr_w(outputFileName));
+        WINE_ERR("error 0x%08lX creating output file %s\n", hr, wine_dbgstr_w(outputFileName));
         goto end;
     }
     hr = IWICBitmapEncoder_Initialize(encoder, outputFile, WICBitmapEncoderNoCache);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X initializing encoder\n", hr);
+        WINE_ERR("error 0x%08lX initializing encoder\n", hr);
         goto end;
     }
 
@@ -402,55 +402,55 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
         hr = IWICBitmapDecoder_GetFrame(decoder, indices[i], &sourceFrame);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X getting frame %d\n", hr, indices[i]);
+            WINE_ERR("error 0x%08lX getting frame %d\n", hr, indices[i]);
             goto endloop;
         }
         hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)sourceFrame, &sourceBitmap);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X converting bitmap to 32bppBGRA\n", hr);
+            WINE_ERR("error 0x%08lX converting bitmap to 32bppBGRA\n", hr);
             goto endloop;
         }
         hr = IWICBitmapEncoder_CreateNewFrame(encoder, &dstFrame, &options);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X creating encoder frame\n", hr);
+            WINE_ERR("error 0x%08lX creating encoder frame\n", hr);
             goto endloop;
         }
         hr = IWICBitmapFrameEncode_Initialize(dstFrame, options);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X initializing encoder frame\n", hr);
+            WINE_ERR("error 0x%08lX initializing encoder frame\n", hr);
             goto endloop;
         }
         hr = IWICBitmapSource_GetSize(sourceBitmap, &width, &height);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X getting source bitmap size\n", hr);
+            WINE_ERR("error 0x%08lX getting source bitmap size\n", hr);
             goto endloop;
         }
         hr = IWICBitmapFrameEncode_SetSize(dstFrame, width, height);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X setting destination bitmap size\n", hr);
+            WINE_ERR("error 0x%08lX setting destination bitmap size\n", hr);
             goto endloop;
         }
         hr = IWICBitmapFrameEncode_SetResolution(dstFrame, 96, 96);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X setting destination bitmap resolution\n", hr);
+            WINE_ERR("error 0x%08lX setting destination bitmap resolution\n", hr);
             goto endloop;
         }
         hr = IWICBitmapFrameEncode_WriteSource(dstFrame, sourceBitmap, NULL);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X copying bitmaps\n", hr);
+            WINE_ERR("error 0x%08lX copying bitmaps\n", hr);
             goto endloop;
         }
         hr = IWICBitmapFrameEncode_Commit(dstFrame);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X committing frame\n", hr);
+            WINE_ERR("error 0x%08lX committing frame\n", hr);
             goto endloop;
         }
     endloop:
@@ -467,7 +467,7 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     hr = IWICBitmapEncoder_Commit(encoder);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X committing encoder\n", hr);
+        WINE_ERR("error 0x%08lX committing encoder\n", hr);
         goto end;
     }
 
@@ -619,7 +619,7 @@ static IStream *add_module_icons_to_stream(struct IconData16 *iconData16, HMODUL
     hr = IStream_Write(stream, &iconDir, sizeof(iconDir), &bytesWritten);
     if (FAILED(hr) || bytesWritten != sizeof(iconDir))
     {
-        WINE_ERR("error 0x%08X writing icon stream\n", hr);
+        WINE_ERR("error 0x%08lX writing icon stream\n", hr);
         goto end;
     }
     for (i = 0; i < validEntries; i++)
@@ -627,13 +627,13 @@ static IStream *add_module_icons_to_stream(struct IconData16 *iconData16, HMODUL
     hr = IStream_Write(stream, iconDirEntries, validEntries*sizeof(ICONDIRENTRY), &bytesWritten);
     if (FAILED(hr) || bytesWritten != validEntries*sizeof(ICONDIRENTRY))
     {
-        WINE_ERR("error 0x%08X writing icon dir entries to stream\n", hr);
+        WINE_ERR("error 0x%08lX writing icon dir entries to stream\n", hr);
         goto end;
     }
     hr = IStream_Write(stream, icons, iconOffset, &bytesWritten);
     if (FAILED(hr) || bytesWritten != iconOffset)
     {
-        WINE_ERR("error 0x%08X writing icon images to stream\n", hr);
+        WINE_ERR("error 0x%08lX writing icon images to stream\n", hr);
         goto end;
     }
     zero.QuadPart = 0;
@@ -671,14 +671,14 @@ static HRESULT open_module16_icon(LPCWSTR szFileName, int nIndex, IStream **ppSt
         OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        WINE_WARN("opening %s failed with error %d\n", wine_dbgstr_w(szFileName), GetLastError());
+        WINE_WARN("opening %s failed with error %ld\n", wine_dbgstr_w(szFileName), GetLastError());
         goto end;
     }
 
     hFileMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
     if (hFileMapping == NULL)
     {
-        WINE_WARN("CreateFileMapping failed, error %d\n", GetLastError());
+        WINE_WARN("CreateFileMapping failed, error %ld\n", GetLastError());
         goto end;
     }
 
@@ -687,7 +687,7 @@ static HRESULT open_module16_icon(LPCWSTR szFileName, int nIndex, IStream **ppSt
     fileBytes = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
     if (fileBytes == NULL)
     {
-        WINE_WARN("MapViewOfFile failed, error %d\n", GetLastError());
+        WINE_WARN("MapViewOfFile failed, error %ld\n", GetLastError());
         goto end;
     }
 
@@ -810,7 +810,7 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
             return open_module16_icon(szFileName, nIndex, ppStream);
         else
         {
-            WINE_WARN("LoadLibraryExW (%s) failed, error %d\n",
+            WINE_WARN("LoadLibraryExW (%s) failed, error %ld\n",
                      wine_dbgstr_w(szFileName), GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -819,7 +819,7 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
     if (nIndex < 0)
     {
         hResInfo = FindResourceW(hModule, MAKEINTRESOURCEW(-nIndex), (LPCWSTR)RT_GROUP_ICON);
-        WINE_TRACE("FindResourceW (%s) called, return %p, error %d\n",
+        WINE_TRACE("FindResourceW (%s) called, return %p, error %ld\n",
                    wine_dbgstr_w(szFileName), hResInfo, GetLastError());
     }
     else
@@ -831,7 +831,7 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
                                 EnumResNameProc, (LONG_PTR)&sEnumRes) &&
             sEnumRes.nIndex != -1)
         {
-            WINE_TRACE("EnumResourceNamesW failed, error %d\n", GetLastError());
+            WINE_TRACE("EnumResourceNamesW failed, error %ld\n", GetLastError());
         }
     }
 
@@ -872,7 +872,7 @@ static HRESULT read_ico_direntries(IStream *icoStream, ICONDIRENTRY **ppIconDirE
     if (FAILED(hr) || bytesRead != sizeof(ICONDIR) ||
         (iconDir.idReserved != 0) || (iconDir.idType != 1))
     {
-        WINE_WARN("Invalid ico file format (hr=0x%08X, bytesRead=%d)\n", hr, bytesRead);
+        WINE_WARN("Invalid ico file format (hr=0x%08lX, bytesRead=%ld)\n", hr, bytesRead);
         hr = E_FAIL;
         goto end;
     }
@@ -1143,12 +1143,12 @@ static WCHAR *extract_icon(LPCWSTR icoPathW, int index, const WCHAR *destFilenam
     hr = open_icon(icoPathW, index, bWait, &stream, &pIconDirEntries, &numEntries);
     if (FAILED(hr))
     {
-        WINE_WARN("opening icon %s index %d failed, hr=0x%08X\n", wine_dbgstr_w(icoPathW), index, hr);
+        WINE_WARN("opening icon %s index %d failed, hr=0x%08lX\n", wine_dbgstr_w(icoPathW), index, hr);
         goto end;
     }
     hr = platform_write_icon(stream, pIconDirEntries, numEntries, index, icoPathW, destFilename, &nativeIdentifier);
     if (FAILED(hr))
-        WINE_WARN("writing icon failed, error 0x%08X\n", hr);
+        WINE_WARN("writing icon failed, error 0x%08lX\n", hr);
 
 end:
     if (stream)
@@ -2376,7 +2376,7 @@ static BOOL WaitForParentProcess( void )
     if ((hsnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 )) ==
         INVALID_HANDLE_VALUE)
     {
-        WINE_ERR("CreateToolhelp32Snapshot failed, error %d\n", GetLastError());
+        WINE_ERR("CreateToolhelp32Snapshot failed, error %ld\n", GetLastError());
         goto done;
     }
 
@@ -2389,14 +2389,14 @@ static BOOL WaitForParentProcess( void )
     }
     if (!rc)
     {
-        WINE_WARN("Unable to find current process id %d when listing processes\n", ourpid);
+        WINE_WARN("Unable to find current process id %ld when listing processes\n", ourpid);
         goto done;
     }
 
     if ((hprocess = OpenProcess( SYNCHRONIZE, FALSE, procentry.th32ParentProcessID )) ==
         NULL)
     {
-        WINE_WARN("OpenProcess failed pid=%d, error %d\n", procentry.th32ParentProcessID,
+        WINE_WARN("OpenProcess failed pid=%ld, error %ld\n", procentry.th32ParentProcessID,
                  GetLastError());
         goto done;
     }
@@ -2404,7 +2404,7 @@ static BOOL WaitForParentProcess( void )
     if (MsgWaitForMultipleObjects( 1, &hprocess, FALSE, INFINITE, QS_ALLINPUT ) == WAIT_OBJECT_0)
         ret = TRUE;
     else
-        WINE_ERR("Unable to wait for parent process, error %d\n", GetLastError());
+        WINE_ERR("Unable to wait for parent process, error %ld\n", GetLastError());
 
 done:
     if (hprocess) CloseHandle( hprocess );
@@ -2615,7 +2615,7 @@ static void cleanup_menus(void)
                     i++;
             }
             else if (lret != ERROR_NO_MORE_ITEMS)
-                WINE_ERR("error %d reading registry\n", lret);
+                WINE_ERR("error %ld reading registry\n", lret);
             heap_free(value);
             heap_free(data);
         }
@@ -2651,21 +2651,21 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
                           &IID_IShellLinkW, (LPVOID*)&shellLink);
     if (FAILED(hr))
     {
-        WINE_ERR("could not create IShellLinkW, error 0x%08X\n", hr);
+        WINE_ERR("could not create IShellLinkW, error 0x%08lX\n", hr);
         goto end;
     }
 
     hr = IShellLinkW_QueryInterface(shellLink, &IID_IPersistFile, (LPVOID)&persistFile);
     if (FAILED(hr))
     {
-        WINE_ERR("could not query IPersistFile, error 0x%08X\n", hr);
+        WINE_ERR("could not query IPersistFile, error 0x%08lX\n", hr);
         goto end;
     }
 
     hr = IPersistFile_Load(persistFile, winLnkPath, STGM_READ);
     if (FAILED(hr))
     {
-        WINE_ERR("could not read .lnk, error 0x%08X\n", hr);
+        WINE_ERR("could not read .lnk, error 0x%08lX\n", hr);
         goto end;
     }
 
@@ -2808,7 +2808,7 @@ int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sh
     hr = CoInitialize(NULL);
     if (FAILED(hr))
     {
-        WINE_ERR("could not initialize COM, error 0x%08X\n", hr);
+        WINE_ERR("could not initialize COM, error 0x%08lX\n", hr);
         return 1;
     }
 
