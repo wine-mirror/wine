@@ -286,7 +286,7 @@ static void test_createport(void)
     hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-    todo_wine ok(portparams.dwValidParams, "portparams struct was not filled in\n");
+    ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
 
@@ -312,7 +312,7 @@ static void test_createport(void)
     hr = IDirectMusic_CreatePort(music, &GUID_NULL, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-    todo_wine ok(portparams.dwValidParams, "portparams struct was not filled in\n");
+    ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
 

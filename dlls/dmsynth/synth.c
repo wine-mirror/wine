@@ -94,21 +94,102 @@ static ULONG WINAPI IDirectMusicSynth8Impl_Release(IDirectMusicSynth8 *iface)
 }
 
 /* IDirectMusicSynth8Impl IDirectMusicSynth part: */
-static HRESULT WINAPI IDirectMusicSynth8Impl_Open(IDirectMusicSynth8 *iface,
-        DMUS_PORTPARAMS *pPortParams)
+static HRESULT WINAPI IDirectMusicSynth8Impl_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *params)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
+    BOOL modified = FALSE;
+    const DMUS_PORTPARAMS def = {
+        .dwValidParams = DMUS_PORTPARAMS_VOICES|DMUS_PORTPARAMS_CHANNELGROUPS|
+                DMUS_PORTPARAMS_AUDIOCHANNELS|DMUS_PORTPARAMS_SAMPLERATE|DMUS_PORTPARAMS_EFFECTS|
+                DMUS_PORTPARAMS_SHARE|DMUS_PORTPARAMS_FEATURES,
+        .dwSize = sizeof(def), .dwVoices = 32, .dwChannelGroups = 2, .dwAudioChannels = 2,
+        .dwSampleRate = 22050, .dwEffectFlags = DMUS_EFFECT_REVERB
+    };
 
-    FIXME("(%p)->(%p): stub\n", This, pPortParams);
+    TRACE("(%p, %p)\n", This, params);
 
-    return S_OK;
+    if (This->open)
+        return DMUS_E_ALREADYOPEN;
+    if (params && params->dwSize < sizeof(DMUS_PORTPARAMS7))
+        return E_INVALIDARG;
+
+    This->open = TRUE;
+
+    if (!params) {
+        memcpy(&This->params, &def, sizeof(This->params));
+        return S_OK;
+    }
+
+    if (params->dwValidParams & DMUS_PORTPARAMS_VOICES && params->dwVoices) {
+        if (params->dwVoices > This->caps.dwMaxVoices) {
+            modified = TRUE;
+            params->dwVoices = This->caps.dwMaxVoices;
+        }
+    } else
+        params->dwVoices = def.dwVoices;
+
+    if (params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS && params->dwChannelGroups) {
+        if (params->dwChannelGroups > This->caps.dwMaxChannelGroups) {
+            modified = TRUE;
+            params->dwChannelGroups = This->caps.dwMaxChannelGroups;
+        }
+    } else
+        params->dwChannelGroups = def.dwChannelGroups;
+
+    if (params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS && params->dwAudioChannels) {
+        if (params->dwAudioChannels > This->caps.dwMaxAudioChannels) {
+            modified = TRUE;
+            params->dwAudioChannels = This->caps.dwMaxAudioChannels;
+        }
+    } else
+        params->dwAudioChannels = def.dwAudioChannels;
+
+    if (params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE && params->dwSampleRate) {
+        if (params->dwSampleRate > 96000) {
+            modified = TRUE;
+            params->dwSampleRate = 96000;
+        } else if (params->dwSampleRate < 11025) {
+            modified = TRUE;
+            params->dwSampleRate = 11025;
+        }
+    } else
+        params->dwSampleRate = def.dwSampleRate;
+
+    if (params->dwValidParams & DMUS_PORTPARAMS_EFFECTS && params->dwEffectFlags != def.dwEffectFlags)
+        modified = TRUE;
+    params->dwEffectFlags = def.dwEffectFlags;
+
+    if (params->dwValidParams & DMUS_PORTPARAMS_SHARE && params->fShare)
+        modified = TRUE;
+    params->fShare = FALSE;
+
+    if (params->dwSize >= sizeof(params)) {
+        if (params->dwValidParams & DMUS_PORTPARAMS_FEATURES && params->dwFeatures) {
+            if (params->dwFeatures & ~(DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING)) {
+                modified = TRUE;
+                params->dwFeatures &= DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING;
+            }
+        } else
+            params->dwFeatures = def.dwFeatures;
+        params->dwValidParams = def.dwValidParams;
+    } else
+        params->dwValidParams = def.dwValidParams & ~DMUS_PORTPARAMS_FEATURES;
+
+    memcpy(&This->params, params, min(params->dwSize, sizeof(This->params)));
+
+    return modified ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSynth8Impl_Close(IDirectMusicSynth8 *iface)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("(%p)\n", This);
+
+    if (!This->open)
+        return DMUS_E_ALREADYCLOSED;
+
+    This->open = FALSE;
 
     return S_OK;
 }
