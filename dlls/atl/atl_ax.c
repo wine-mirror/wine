@@ -211,7 +211,7 @@ static ULONG WINAPI OleClientSite_AddRef(IOleClientSite *iface)
 {
     IOCS *This = impl_from_IOleClientSite(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
     return ref;
 }
 
@@ -220,7 +220,7 @@ static ULONG WINAPI OleClientSite_Release(IOleClientSite *iface)
     IOCS *This = impl_from_IOleClientSite(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%ld)\n", This, ref);
 
     if (!ref)
     {
@@ -242,7 +242,7 @@ static HRESULT WINAPI OleClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAs
 {
     IOCS *This = impl_from_IOleClientSite(iface);
 
-    FIXME( "(%p, 0x%x, 0x%x, %p)\n", This, dwAssign, dwWhichMoniker, ppmk );
+    FIXME( "(%p, 0x%lx, 0x%lx, %p)\n", This, dwAssign, dwWhichMoniker, ppmk );
     return E_NOTIMPL;
 }
 
@@ -310,7 +310,7 @@ static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer* iface, IBindC
 static HRESULT WINAPI OleContainer_EnumObjects(IOleContainer* iface, DWORD grfFlags, IEnumUnknown** ppenum)
 {
     IOCS *This = impl_from_IOleContainer(iface);
-    FIXME( "(%p, %u, %p) - stub\n", This, grfFlags, ppenum );
+    FIXME( "(%p, %lu, %p) - stub\n", This, grfFlags, ppenum );
     return E_NOTIMPL;
 }
 
@@ -1067,7 +1067,7 @@ HRESULT WINAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd,
             (void**) &pControl );
     if ( FAILED( hRes ) )
     {
-        WARN( "cannot create ActiveX control %s instance - error 0x%08x\n",
+        WARN( "cannot create ActiveX control %s instance - error 0x%08lx\n",
                 debugstr_guid( &controlId ), hRes );
         return hRes;
     }
@@ -1097,7 +1097,7 @@ HRESULT WINAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd,
 
         hRes = IOleObject_QueryInterface( pControl, &IID_IWebBrowser2, (void**) &browser );
         if ( !browser )
-            WARN( "Cannot query IWebBrowser2 interface: %08x\n", hRes );
+            WARN( "Cannot query IWebBrowser2 interface: %08lx\n", hRes );
         else {
             VARIANT url;
 
@@ -1108,7 +1108,7 @@ HRESULT WINAPI AtlAxCreateControlLicEx(LPCOLESTR lpszName, HWND hWnd,
 
             hRes = IWebBrowser2_Navigate2( browser, &url, NULL, NULL, NULL, NULL );
             if ( FAILED( hRes ) )
-                WARN( "IWebBrowser2::Navigate2 failed: %08x\n", hRes );
+                WARN( "IWebBrowser2::Navigate2 failed: %08lx\n", hRes );
             SysFreeString( V_BSTR(&url) );
 
             IWebBrowser2_Release( browser );
@@ -1331,7 +1331,7 @@ HWND WINAPI AtlAxCreateDialogW(HINSTANCE hInst, LPCWSTR name, HWND owner, DLGPRO
     LPDLGTEMPLATEW newptr;
     HWND res;
 
-    TRACE("(%p %s %p %p %lx)\n", hInst, debugstr_w(name), owner, dlgProc, param);
+    TRACE("(%p %s %p %p %Ix)\n", hInst, debugstr_w(name), owner, dlgProc, param);
 
     hrsrc = FindResourceW( hInst, name, (LPWSTR)RT_DIALOG );
     if ( !hrsrc )

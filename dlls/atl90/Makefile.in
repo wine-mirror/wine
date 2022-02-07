@@ -1,6 +1,6 @@
 MODULE    = atl90.dll
 IMPORTS   = oleaut32 user32 ole32 gdi32 advapi32 uuid shlwapi
-EXTRADEFS = -DWINE_NO_LONG_TYPES -D_ATL_VER=_ATL_VER_90
+EXTRADEFS = -D_ATL_VER=_ATL_VER_90
 PARENTSRC = ../atl
 
 C_SRCS = \
