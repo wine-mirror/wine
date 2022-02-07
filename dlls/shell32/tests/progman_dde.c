@@ -164,7 +164,7 @@ static BOOL check_window_exists(const char *name)
     else
         strcpy(title, name);
 
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < 10; i++)
     {
         Sleep(100 * i);
         if ((window = FindWindowA("ExplorerWClass", title)) ||
@@ -175,7 +175,17 @@ static BOOL check_window_exists(const char *name)
         }
     }
 
-    return (window != NULL);
+    if (!window)
+        return FALSE;
+
+    for (i = 0; i < 10; i++)
+    {
+        Sleep(100 * i);
+        if (!IsWindow(window))
+            break;
+    }
+
+    return TRUE;
 }
 
 static BOOL check_exists(const char *name)
