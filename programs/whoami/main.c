@@ -70,7 +70,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     result = GetUserNameExW(NameSamCompatible, NULL, &size);
     if (result || GetLastError() != ERROR_MORE_DATA)
     {
-        WINE_ERR("GetUserNameExW failed, result %d, error %d\n", result, GetLastError());
+        WINE_ERR("GetUserNameExW failed, result %d, error %ld\n", result, GetLastError());
         return 1;
     }
 
@@ -88,7 +88,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         output_write(L"\r\n", 2);
     }
     else
-        WINE_ERR("GetUserNameExW failed, error %d\n", GetLastError());
+        WINE_ERR("GetUserNameExW failed, error %ld\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, buf);
     return 0;
