@@ -8075,6 +8075,38 @@ static void test_effect_parameter_block(void)
     HWND window;
     HRESULT hr;
 
+    static const DWORD annotation_code[] =
+    {
+#if 0
+        float f <float a = 1.0;>;
+
+        float4 vs_main(float4 pos : POSITION) : POSITION
+        {
+            return pos;
+        }
+
+        technique tech0
+        {
+            pass p
+            {
+                VertexShader = compile vs_2_0 vs_main();
+            }
+        }
+#endif
+        0xfeff0901, 0x00000080, 0x00000000, 0x00000003, 0x00000000, 0x0000004c, 0x00000000, 0x00000000,
+        0x00000001, 0x00000001, 0x00000000, 0x3f800000, 0x00000003, 0x00000000, 0x00000044, 0x00000000,
+        0x00000000, 0x00000001, 0x00000001, 0x00000002, 0x00000061, 0x00000002, 0x00000066, 0x00000001,
+        0x00000010, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000070, 0x00000006,
+        0x68636574, 0x00000030, 0x00000001, 0x00000001, 0x00000002, 0x00000002, 0x00000004, 0x00000020,
+        0x00000000, 0x00000001, 0x00000028, 0x00000024, 0x00000074, 0x00000000, 0x00000001, 0x0000006c,
+        0x00000000, 0x00000001, 0x00000092, 0x00000000, 0x00000058, 0x00000054, 0x00000000, 0x00000001,
+        0x00000000, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000074, 0xfffe0200, 0x0014fffe,
+        0x42415443, 0x0000001c, 0x00000023, 0xfffe0200, 0x00000000, 0x00000000, 0x20000400, 0x0000001c,
+        0x325f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461,
+        0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x0200001f, 0x80000000, 0x900f0000, 0x02000001,
+        0xc00f0000, 0x90e40000, 0x0000ffff,
+    };
+
     if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
             640, 480, NULL, NULL, NULL, NULL)))
     {
@@ -8384,6 +8416,37 @@ static void test_effect_parameter_block(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(!memcmp(&mat_arr[0], &test_mat, sizeof(test_mat))
             && !memcmp(&mat_arr[1], &test_mat, sizeof(test_mat)), "Got unexpected matrix array.\n");
+
+    refcount = effect->lpVtbl->Release(effect);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    hr = D3DXCreateEffect(device, annotation_code, sizeof(annotation_code),
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(float_value == 1.0f, "Got float %.8e.\n", float_value);
+    hr = effect->lpVtbl->SetFloat(effect, "f@a", 2.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(float_value == 2.0f, "Got float %.8e.\n", float_value);
+
+    hr = effect->lpVtbl->BeginParameterBlock(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetFloat(effect, "f@a", 3.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(float_value == 2.0f, "Got float %.8e.\n", float_value);
+    block = effect->lpVtbl->EndParameterBlock(effect);
+    ok(!!block, "Got unexpected block %p.\n", block);
+    hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(float_value == 3.0f, "Got float %.8e.\n", float_value);
 
     refcount = effect->lpVtbl->Release(effect);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
