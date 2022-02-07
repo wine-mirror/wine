@@ -450,6 +450,7 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
     case 'R': str_modif = str_printf(sym, " *%s volatile", ptr_modif); break;
     case 'S': str_modif = str_printf(sym, " *%s const volatile", ptr_modif); break;
     case '?': str_modif = ""; break;
+    case '$': str_modif = str_printf(sym, " &&%s", ptr_modif); break;
     default: return FALSE;
     }
 
@@ -1027,6 +1028,11 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 if (!get_modifier(sym, &ptr, &ptr_modif)) goto done;
                 if (!demangle_datatype(sym, ct, pmt_ref, in_args)) goto done;
                 ct->left = str_printf(sym, "%s %s", ct->left, ptr);
+            }
+            else if (*sym->current == 'Q')
+            {
+                sym->current++;
+                if (!get_modified_type(ct, sym, pmt_ref, '$', in_args)) goto done;
             }
             break;
         }
