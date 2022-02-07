@@ -1301,6 +1301,14 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3D3_Release(d3d);
+
+    if (ddraw_is_warp(ddraw))
+    {
+        /* ddraw4 occasionally crashes in GetRenderTarget. */
+        win_skip("Skipping test that crashes WARP occasionally.\n");
+        goto done;
+    }
+
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface4_IsLost(rt);
@@ -1324,6 +1332,7 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DDevice3_GetRenderTarget(device, &surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(surface == rt, "Got unexpected surface %p.\n", surface);
+    IDirectDrawSurface4_Release(surface);
     hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &value);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(!!value, "Got unexpected z-enable state %#x.\n", value);
@@ -1349,8 +1358,8 @@ static void test_coop_level_d3d_state(void)
             || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
             "Got unexpected color 0x%08x.\n", color);
 
+done:
     destroy_viewport(device, viewport);
-    IDirectDrawSurface4_Release(surface);
     IDirectDrawSurface4_Release(rt);
     IDirect3DDevice3_Release(device);
     IDirectDraw4_Release(ddraw);

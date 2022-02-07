@@ -1076,6 +1076,17 @@ static void test_coop_level_d3d_state(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    if (ddraw_is_warp(ddraw))
+    {
+        /* ddraw2 crashes in EndScene, and if it doesn't crash it fails with
+         * DDERR_SURFACELOST on WARP. */
+        win_skip("Skipping test that crashes WARP occasionally.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1159,12 +1170,9 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, ARRAY_SIZE(quad), 0);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice2_EndScene(device);
-    ok(hr == DD_OK || broken(ddraw_is_warp(ddraw) && hr == DDERR_SURFACELOST), "Got unexpected hr %#x.\n", hr);
-    if (hr == DD_OK)
-    {
-        color = get_surface_color(rt, 320, 240);
-        ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
-    }
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
 
     destroy_viewport(device, viewport);
     destroy_material(background);
