@@ -643,9 +643,6 @@ static HRESULT perf_dmport_create(IDirectMusicPerformance8Impl *perf, DMUS_PORTP
     if (FAILED(hr = IDirectMusic8_GetDefaultPort(perf->dmusic, &guid)))
         return hr;
 
-    params->dwValidParams |= DMUS_PORTPARAMS_SHARE;
-    params->fShare = TRUE;
-
     if (FAILED(hr = IDirectMusic8_CreatePort(perf->dmusic, &guid, params, &port, NULL)))
         return hr;
     if (FAILED(hr = IDirectMusicPort_Activate(port, TRUE))) {
