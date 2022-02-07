@@ -188,7 +188,7 @@ static ULONG WINAPI audio_sample_AddRef(IAudioStreamSample *iface)
 {
     struct audio_sample *sample = impl_from_IAudioStreamSample(iface);
     ULONG refcount = InterlockedIncrement(&sample->ref);
-    TRACE("%p increasing refcount to %u.\n", sample, refcount);
+    TRACE("%p increasing refcount to %lu.\n", sample, refcount);
     return refcount;
 }
 
@@ -196,7 +196,7 @@ static ULONG WINAPI audio_sample_Release(IAudioStreamSample *iface)
 {
     struct audio_sample *sample = impl_from_IAudioStreamSample(iface);
     ULONG refcount = InterlockedDecrement(&sample->ref);
-    TRACE("%p decreasing refcount to %u.\n", sample, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", sample, refcount);
     if (!refcount)
     {
         IAMMediaStream_Release(&sample->parent->IAMMediaStream_iface);
@@ -257,7 +257,7 @@ static HRESULT WINAPI audio_sample_Update(IAudioStreamSample *iface,
     DWORD length;
     HRESULT hr;
 
-    TRACE("sample %p, flags %#x, event %p, apc_func %p, apc_data %#x.\n",
+    TRACE("sample %p, flags %#lx, event %p, apc_func %p, apc_data %#lx.\n",
             sample, flags, event, apc_func, apc_data);
 
     hr = IAudioData_GetInfo(sample->audio_data, &length, &pointer, NULL);
@@ -281,7 +281,7 @@ static HRESULT WINAPI audio_sample_Update(IAudioStreamSample *iface,
 
     if (flags & ~SSUPDATE_ASYNC)
     {
-        FIXME("Unsupported flags %#x.\n", flags);
+        FIXME("Unsupported flags %#lx.\n", flags);
         return E_NOTIMPL;
     }
 
@@ -328,11 +328,11 @@ static HRESULT WINAPI audio_sample_CompletionStatus(IAudioStreamSample *iface, D
     struct audio_sample *sample = impl_from_IAudioStreamSample(iface);
     HRESULT hr;
 
-    TRACE("sample %p, flags %#x, milliseconds %u.\n", sample, flags, milliseconds);
+    TRACE("sample %p, flags %#lx, milliseconds %lu.\n", sample, flags, milliseconds);
 
     if (flags)
     {
-        FIXME("Unhandled flags %#x.\n", flags);
+        FIXME("Unhandled flags %#lx.\n", flags);
         return E_NOTIMPL;
     }
 
@@ -449,7 +449,7 @@ static ULONG WINAPI audio_IAMMediaStream_AddRef(IAMMediaStream *iface)
     struct audio_stream *This = impl_from_IAMMediaStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref = %lu\n", iface, This, ref);
 
     return ref;
 }
@@ -459,7 +459,7 @@ static ULONG WINAPI audio_IAMMediaStream_Release(IAMMediaStream *iface)
     struct audio_stream *This = impl_from_IAMMediaStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref = %lu\n", iface, This, ref);
 
     if (!ref)
     {
@@ -507,7 +507,7 @@ static HRESULT WINAPI audio_IAMMediaStream_SetSameFormat(IAMMediaStream *iface,
 {
     struct audio_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%x) stub!\n", This, iface, pStreamThatHasDesiredFormat, flags);
+    FIXME("(%p/%p)->(%p,%lx) stub!\n", This, iface, pStreamThatHasDesiredFormat, flags);
 
     return S_FALSE;
 }
@@ -517,7 +517,7 @@ static HRESULT WINAPI audio_IAMMediaStream_AllocateSample(IAMMediaStream *iface,
 {
     struct audio_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%x,%p) stub!\n", This, iface, flags, sample);
+    FIXME("(%p/%p)->(%lx,%p) stub!\n", This, iface, flags, sample);
 
     return S_FALSE;
 }
@@ -527,7 +527,7 @@ static HRESULT WINAPI audio_IAMMediaStream_CreateSharedSample(IAMMediaStream *if
 {
     struct audio_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, existing_sample, flags, sample);
+    FIXME("(%p/%p)->(%p,%lx,%p) stub!\n", This, iface, existing_sample, flags, sample);
 
     return S_FALSE;
 }
@@ -536,7 +536,7 @@ static HRESULT WINAPI audio_IAMMediaStream_SendEndOfStream(IAMMediaStream *iface
 {
     struct audio_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%x) stub!\n", This, iface, flags);
+    FIXME("(%p/%p)->(%lx) stub!\n", This, iface, flags);
 
     return S_FALSE;
 }
@@ -547,7 +547,7 @@ static HRESULT WINAPI audio_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
 {
     struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    TRACE("stream %p, source_object %p, flags %x, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
+    TRACE("stream %p, source_object %p, flags %lx, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
             debugstr_guid(purpose_id), stream_type);
 
     if (!purpose_id)
@@ -762,7 +762,7 @@ static HRESULT WINAPI audio_IAudioMediaStream_CreateSample(IAudioMediaStream *if
 {
     struct audio_stream *This = impl_from_IAudioMediaStream(iface);
 
-    TRACE("(%p/%p)->(%p,%u,%p)\n", iface, This, audio_data, flags, sample);
+    TRACE("(%p/%p)->(%p,%lu,%p)\n", iface, This, audio_data, flags, sample);
 
     if (!audio_data)
         return E_POINTER;
@@ -820,7 +820,7 @@ static ULONG WINAPI enum_media_types_AddRef(IEnumMediaTypes *iface)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedIncrement(&enum_media_types->refcount);
-    TRACE("%p increasing refcount to %u.\n", enum_media_types, refcount);
+    TRACE("%p increasing refcount to %lu.\n", enum_media_types, refcount);
     return refcount;
 }
 
@@ -828,7 +828,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedDecrement(&enum_media_types->refcount);
-    TRACE("%p decreasing refcount to %u.\n", enum_media_types, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", enum_media_types, refcount);
     if (!refcount)
         heap_free(enum_media_types);
     return refcount;
@@ -849,7 +849,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
         .cbSize = 0,
     };
 
-    TRACE("iface %p, count %u, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
+    TRACE("iface %p, count %lu, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
 
     if (!ret_count)
         return E_POINTER;
@@ -881,7 +881,7 @@ static HRESULT WINAPI enum_media_types_Skip(IEnumMediaTypes *iface, ULONG count)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("iface %p, count %u.\n", iface, count);
+    TRACE("iface %p, count %lu.\n", iface, count);
 
     enum_media_types->index += count;
     return S_OK;
@@ -1364,7 +1364,7 @@ static HRESULT WINAPI audio_meminput_Receive(IMemInputPin *iface, IMediaSample *
 static HRESULT WINAPI audio_meminput_ReceiveMultiple(IMemInputPin *iface,
         IMediaSample **samples, LONG count, LONG *processed)
 {
-    FIXME("iface %p, samples %p, count %u, processed %p, stub!\n", iface, samples, count, processed);
+    FIXME("iface %p, samples %p, count %lu, processed %p, stub!\n", iface, samples, count, processed);
     return E_NOTIMPL;
 }
 

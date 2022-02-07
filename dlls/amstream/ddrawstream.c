@@ -212,7 +212,7 @@ static ULONG WINAPI ddraw_IAMMediaStream_AddRef(IAMMediaStream *iface)
     struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
+    TRACE("(%p/%p)->(): new ref = %lu\n", iface, This, ref);
 
     return ref;
 }
@@ -222,7 +222,7 @@ static ULONG WINAPI ddraw_IAMMediaStream_Release(IAMMediaStream *iface)
     struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
     ULONG ref = InterlockedDecrement(&stream->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", stream, ref);
+    TRACE("%p decreasing refcount to %lu.\n", stream, ref);
 
     if (!ref)
     {
@@ -272,7 +272,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SetSameFormat(IAMMediaStream *iface,
 {
     struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%x) stub!\n", This, iface, pStreamThatHasDesiredFormat, flags);
+    FIXME("(%p/%p)->(%p,%lx) stub!\n", This, iface, pStreamThatHasDesiredFormat, flags);
 
     return S_FALSE;
 }
@@ -282,7 +282,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_AllocateSample(IAMMediaStream *iface,
 {
     struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%x,%p) stub!\n", This, iface, flags, sample);
+    FIXME("(%p/%p)->(%lx,%p) stub!\n", This, iface, flags, sample);
 
     return S_FALSE;
 }
@@ -292,7 +292,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_CreateSharedSample(IAMMediaStream *if
 {
     struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, existing_sample, flags, sample);
+    FIXME("(%p/%p)->(%p,%lx,%p) stub!\n", This, iface, existing_sample, flags, sample);
 
     return S_FALSE;
 }
@@ -301,7 +301,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SendEndOfStream(IAMMediaStream *iface
 {
     struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%x) stub!\n", This, iface, flags);
+    FIXME("(%p/%p)->(%lx) stub!\n", This, iface, flags);
 
     return S_FALSE;
 }
@@ -313,7 +313,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
     struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
     HRESULT hr;
 
-    TRACE("stream %p, source_object %p, flags %x, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
+    TRACE("stream %p, source_object %p, flags %lx, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
             debugstr_guid(purpose_id), stream_type);
 
     if (!purpose_id)
@@ -327,7 +327,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
 
     if (source_object
             && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw, (void **)&stream->ddraw)))
-        FIXME("Stream object doesn't implement IDirectDraw interface, hr %#x.\n", hr);
+        FIXME("Stream object doesn't implement IDirectDraw interface, hr %#lx.\n", hr);
 
     if (!source_object)
     {
@@ -549,7 +549,7 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
     if (format->dwSize != sizeof(DDSURFACEDESC))
         return E_INVALIDARG;
 
-    TRACE("flags %#x, pixel format flags %#x, bit count %u, size %ux%u.\n",
+    TRACE("flags %#lx, pixel format flags %#lx, bit count %lu, size %lux%lu.\n",
             format->dwFlags, format->ddpfPixelFormat.dwFlags,
             format->ddpfPixelFormat.u1.dwRGBBitCount, format->dwWidth, format->dwHeight);
 
@@ -711,7 +711,7 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_CreateSample(IDirectDrawMedia
     struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
     HRESULT hr;
 
-    TRACE("stream %p, surface %p, rect %s, flags %#x, sample %p.\n",
+    TRACE("stream %p, surface %p, rect %s, flags %#lx, sample %p.\n",
             stream, surface, wine_dbgstr_rect(rect), flags, sample);
 
     if (!surface && rect)
@@ -805,7 +805,7 @@ static ULONG WINAPI enum_media_types_AddRef(IEnumMediaTypes *iface)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedIncrement(&enum_media_types->refcount);
-    TRACE("%p increasing refcount to %u.\n", enum_media_types, refcount);
+    TRACE("%p increasing refcount to %lu.\n", enum_media_types, refcount);
     return refcount;
 }
 
@@ -813,7 +813,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedDecrement(&enum_media_types->refcount);
-    TRACE("%p decreasing refcount to %u.\n", enum_media_types, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", enum_media_types, refcount);
     if (!refcount)
         heap_free(enum_media_types);
     return refcount;
@@ -823,7 +823,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("iface %p, count %u, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
+    TRACE("iface %p, count %lu, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
 
     if (!ret_count)
         return E_POINTER;
@@ -849,7 +849,7 @@ static HRESULT WINAPI enum_media_types_Skip(IEnumMediaTypes *iface, ULONG count)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("iface %p, count %u.\n", iface, count);
+    TRACE("iface %p, count %lu.\n", iface, count);
 
     enum_media_types->index += count;
 
@@ -1430,7 +1430,7 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
 static HRESULT WINAPI ddraw_meminput_ReceiveMultiple(IMemInputPin *iface,
         IMediaSample **samples, LONG count, LONG *processed)
 {
-    FIXME("iface %p, samples %p, count %u, processed %p, stub!\n", iface, samples, count, processed);
+    FIXME("iface %p, samples %p, count %lu, processed %p, stub!\n", iface, samples, count, processed);
     return E_NOTIMPL;
 }
 
@@ -1515,7 +1515,7 @@ static ULONG WINAPI ddraw_sample_AddRef(IDirectDrawStreamSample *iface)
     struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
     ULONG ref = InterlockedIncrement(&sample->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p)->(): new ref = %lu\n", iface, ref);
 
     return ref;
 }
@@ -1525,7 +1525,7 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
     struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
     ULONG ref = InterlockedDecrement(&sample->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, ref);
+    TRACE("(%p)->(): new ref = %lu\n", iface, ref);
 
     if (!ref)
     {
@@ -1592,7 +1592,7 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
 {
     struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
 
-    TRACE("sample %p, flags %#x, event %p, apc_func %p, apc_data %#x.\n",
+    TRACE("sample %p, flags %#lx, event %p, apc_func %p, apc_data %#lx.\n",
             sample, flags, event, apc_func, apc_data);
 
     if (event && apc_func)
@@ -1650,7 +1650,7 @@ static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *ifa
     struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
     HRESULT hr;
 
-    TRACE("sample %p, flags %#x, milliseconds %u.\n", sample, flags, milliseconds);
+    TRACE("sample %p, flags %#lx, milliseconds %lu.\n", sample, flags, milliseconds);
 
     EnterCriticalSection(&sample->parent->cs);
 
@@ -1791,7 +1791,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
         IDirectDraw_Release(ddraw);
         if (FAILED(hr))
         {
-            ERR("failed to create surface, 0x%08x\n", hr);
+            ERR("failed to create surface, 0x%08lx\n", hr);
             IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
             return hr;
         }

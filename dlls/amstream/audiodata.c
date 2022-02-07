@@ -64,7 +64,7 @@ static ULONG WINAPI IAudioDataImpl_AddRef(IAudioData* iface)
     AMAudioDataImpl *This = impl_from_IAudioData(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, This->ref);
+    TRACE("(%p)->(): new ref = %lu\n", iface, This->ref);
 
     return ref;
 }
@@ -74,7 +74,7 @@ static ULONG WINAPI IAudioDataImpl_Release(IAudioData* iface)
     AMAudioDataImpl *This = impl_from_IAudioData(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(): new ref = %u\n", iface, This->ref);
+    TRACE("(%p)->(): new ref = %lu\n", iface, This->ref);
 
     if (!ref)
     {
@@ -94,7 +94,7 @@ static HRESULT WINAPI IAudioDataImpl_SetBuffer(IAudioData* iface, DWORD size, BY
 {
     AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    TRACE("(%p)->(%u,%p,%x)\n", iface, size, data, flags);
+    TRACE("(%p)->(%lu,%p,%lx)\n", iface, size, data, flags);
 
     if (!size)
     {
@@ -154,7 +154,7 @@ static HRESULT WINAPI IAudioDataImpl_SetActual(IAudioData* iface, DWORD data_val
 {
     AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    TRACE("(%p)->(%u)\n", iface, data_valid);
+    TRACE("(%p)->(%lu)\n", iface, data_valid);
 
     if (data_valid > This->size)
     {
