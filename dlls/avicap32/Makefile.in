@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = avicap32.dll
 UNIXLIB   = avicap32.so
 IMPORTLIB = avicap32

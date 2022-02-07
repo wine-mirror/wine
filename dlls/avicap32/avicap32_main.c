@@ -59,13 +59,13 @@ static void register_class(void)
     };
 
     if (!RegisterClassExW(&class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-        ERR("Failed to register class, error %u.\n", GetLastError());
+        ERR("Failed to register class, error %lu.\n", GetLastError());
 }
 
 static void unregister_class(void)
 {
     if (!UnregisterClassW(class_name, avicap_instance) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
-        ERR("Failed to unregister class, error %u.\n", GetLastError());
+        ERR("Failed to unregister class, error %lu.\n", GetLastError());
 }
 
 /***********************************************************************
@@ -74,7 +74,7 @@ static void unregister_class(void)
 HWND VFWAPI capCreateCaptureWindowW(const WCHAR *window_name, DWORD style,
         int x, int y, int width, int height, HWND parent, int id)
 {
-    TRACE("window_name %s, style %#x, x %d, y %d, width %d, height %d, parent %p, id %#x.\n",
+    TRACE("window_name %s, style %#lx, x %d, y %d, width %d, height %d, parent %p, id %#x.\n",
             debugstr_w(window_name), style, x, y, width, height, parent, id);
 
     return CreateWindowW(class_name, window_name, style, x, y, width, height, parent, NULL, avicap_instance, NULL);
