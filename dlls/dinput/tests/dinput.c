@@ -76,6 +76,41 @@ static BOOL CALLBACK dummy_callback(const DIDEVICEINSTANCEA *instance, void *con
     return DIENUM_STOP;
 }
 
+static HRESULT WINAPI outer_QueryInterface( IUnknown *iface, REFIID iid, void **obj )
+{
+    ok( 0, "unexpected call %s\n", debugstr_guid( iid ) );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ))
+    {
+        *obj = (IUnknown *)iface;
+        return S_OK;
+    }
+
+    ok( 0, "unexpected call %s\n", debugstr_guid( iid ) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef( IUnknown *iface )
+{
+    ok( 0, "unexpected call\n" );
+    return 2;
+}
+
+static ULONG WINAPI outer_Release( IUnknown *iface )
+{
+    ok( 0, "unexpected call\n" );
+    return 1;
+}
+
+static IUnknownVtbl outer_vtbl =
+{
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release,
+};
+
+static IUnknown outer = {&outer_vtbl};
+
 static void test_CoCreateInstance( DWORD version )
 {
     static const struct
@@ -113,6 +148,7 @@ static void test_CoCreateInstance( DWORD version )
 
     IDirectInputDeviceA *device;
     IDirectInputA *dinput;
+    IUnknown *unknown;
     HRESULT hr;
     LONG ref;
     int i;
@@ -126,6 +162,14 @@ static void test_CoCreateInstance( DWORD version )
         win_skip( "Failed to instantiate a IDirectInput instance, hr %#x\n", hr );
         return;
     }
+
+    if (version < 0x800) hr = CoCreateInstance( &CLSID_DirectInput, &outer, CLSCTX_INPROC_SERVER,
+                                                &IID_IDirectInputA, (void **)&unknown );
+    else hr = CoCreateInstance( &CLSID_DirectInput8, &outer, CLSCTX_INPROC_SERVER,
+                                &IID_IDirectInput8A, (void **)&unknown );
+    todo_wine
+    ok( hr == CLASS_E_NOAGGREGATION, "CoCreateInstance returned %#x\n", hr );
+    if (SUCCEEDED( hr )) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_device_tests); i++)
     {
@@ -204,6 +248,14 @@ static void test_DirectInputCreate( DWORD version )
     HRESULT hr;
     int i;
 
+    unknown = (void *)0xdeadbeef;
+    hr = DirectInputCreateW( hInstance, version, (IDirectInputW **)&unknown, &outer );
+    todo_wine_if(version == 0x800)
+    ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
+    todo_wine_if(version <= 0x700)
+    ok( unknown == NULL, "got IUnknown %p\n", unknown );
+    if (unknown) IUnknown_Release( unknown );
+
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
     {
         winetest_push_context( "%u", i );
@@ -270,6 +322,14 @@ static void test_DirectInputCreateEx( DWORD version )
         win_skip("DirectInputCreateEx is not available\n");
         return;
     }
+
+    unknown = (void *)0xdeadbeef;
+    hr = pDirectInputCreateEx( hInstance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
+    todo_wine_if(version == 0x800)
+    ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
+    todo_wine_if(version <= 0x700)
+    ok( unknown == NULL, "got IUnknown %p\n", unknown );
+    if (unknown) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
     {
@@ -355,6 +415,13 @@ static void test_DirectInput8Create( DWORD version )
     };
     HRESULT hr;
     int i;
+
+    unknown = (void *)0xdeadbeef;
+    hr = DirectInput8Create( hInstance, version, &IID_IDirectInput8W, (void **)&unknown, &outer );
+    ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
+    todo_wine
+    ok( unknown == NULL, "got IUnknown %p\n", unknown );
+    if (unknown) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
     {
