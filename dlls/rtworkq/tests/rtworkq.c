@@ -33,72 +33,72 @@ static void test_platform_init(void)
 
     /* Startup initializes MTA. */
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#lx.\n", hr);
 
     hr = RtwqStartup();
-    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         ok(apttype == APTTYPE_MTA && qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
                 "Unexpected apartment type %d, qualifier %d.\n", apttype, qualifier);
 
     hr = RtwqShutdown();
-    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#x.\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "Unexpected hr %#lx.\n", hr);
 
     /* Try with STA initialized before startup. */
     hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(apttype == APTTYPE_MAINSTA && qualifier == APTTYPEQUALIFIER_NONE,
             "Unexpected apartment type %d, qualifier %d.\n", apttype, qualifier);
 
     hr = RtwqStartup();
-    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(apttype == APTTYPE_MAINSTA && qualifier == APTTYPEQUALIFIER_NONE,
             "Unexpected apartment type %d, qualifier %d.\n", apttype, qualifier);
 
     hr = RtwqShutdown();
-    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
     CoUninitialize();
 
     /* Startup -> init main STA -> uninitialize -> shutdown */
     hr = RtwqStartup();
-    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         ok(apttype == APTTYPE_MTA && qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
                 "Unexpected apartment type %d, qualifier %d.\n", apttype, qualifier);
 
     hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(apttype == APTTYPE_MAINSTA && qualifier == APTTYPEQUALIFIER_NONE,
             "Unexpected apartment type %d, qualifier %d.\n", apttype, qualifier);
 
     CoUninitialize();
 
     hr = CoGetApartmentType(&apttype, &qualifier);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(apttype == APTTYPE_MTA && qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
             "Unexpected apartment type %d, qualifier %d.\n", apttype, qualifier);
 
     hr = RtwqShutdown();
-    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 }
 
 START_TEST(rtworkq)
