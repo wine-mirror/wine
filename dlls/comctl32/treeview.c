@@ -3011,30 +3011,34 @@ static BOOL TREEVIEW_InitThemedCheckboxes(TREEVIEW_INFO *info)
 static void
 TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
 {
+    int nIndex, width, height;
     RECT rc;
     HBITMAP hbm, hbmOld;
     HDC hdc, hdcScreen;
-    int nIndex;
 
     if (TREEVIEW_InitThemedCheckboxes(infoPtr))
         return;
 
-    infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
+    width = 12 * GetDpiForWindow(infoPtr->hwnd) / 96 + 1;
+    height = width;
+    infoPtr->himlState = ImageList_Create(width, height, ILC_COLOR | ILC_MASK, 3, 0);
 
     hdcScreen = GetDC(0);
 
     hdc = CreateCompatibleDC(hdcScreen);
-    hbm = CreateCompatibleBitmap(hdcScreen, 48, 16);
+    hbm = CreateCompatibleBitmap(hdcScreen, width * 3, height);
     hbmOld = SelectObject(hdc, hbm);
 
-    SetRect(&rc, 0, 0, 48, 16);
+    SetRect(&rc, 0, 0, width * 3, height);
     FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
 
-    SetRect(&rc, 18, 2, 30, 14);
+    rc.left = width;
+    rc.right = rc.left + width;
     DrawFrameControl(hdc, &rc, DFC_BUTTON,
                      DFCS_BUTTONCHECK|DFCS_FLAT);
 
-    SetRect(&rc, 34, 2, 46, 14);
+    rc.left = width * 2;
+    rc.right = rc.left + width;
     DrawFrameControl(hdc, &rc, DFC_BUTTON,
                      DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
 
@@ -3047,8 +3051,8 @@ TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
     DeleteDC(hdc);
     ReleaseDC(0, hdcScreen);
 
-    infoPtr->stateImageWidth = 16;
-    infoPtr->stateImageHeight = 16;
+    infoPtr->stateImageWidth = width;
+    infoPtr->stateImageHeight = height;
 }
 
 static void
