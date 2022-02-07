@@ -74,7 +74,7 @@ WORD WINAPI WinMain16( HINSTANCE16 inst, HINSTANCE16 prev, LPSTR cmdline, WORD s
     {
         /* Give 10 seconds to the app to come up */
         if (wait_input_idle( info.hProcess, 10000 ) == WAIT_FAILED)
-            WINE_WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
+            WINE_WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
         ReleaseThunkLock( &count );
         WaitForSingleObject( info.hProcess, INFINITE );
         RestoreThunkLock( count );
