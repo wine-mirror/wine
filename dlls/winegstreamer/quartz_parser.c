@@ -753,12 +753,9 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
         {
             uint32_t advance;
 
-            hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
-
-            if (FAILED(hr))
+            if (FAILED(hr = IMemAllocator_GetBuffer(pin->pin.pAllocator, &sample, NULL, NULL, 0)))
             {
-                if (hr != VFW_E_NOT_CONNECTED)
-                    ERR("Failed to get a sample, hr %#lx.\n", hr);
+                ERR("Failed to get a sample, hr %#lx.\n", hr);
                 break;
             }
 
@@ -776,12 +773,9 @@ static void send_buffer(struct parser_source *pin, const struct wg_parser_event 
     }
     else
     {
-        hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
-
-        if (FAILED(hr))
+        if (FAILED(hr = IMemAllocator_GetBuffer(pin->pin.pAllocator, &sample, NULL, NULL, 0)))
         {
-            if (hr != VFW_E_NOT_CONNECTED)
-                ERR("Failed to get a sample, hr %#lx.\n", hr);
+            ERR("Failed to get a sample, hr %#lx.\n", hr);
         }
         else
         {
