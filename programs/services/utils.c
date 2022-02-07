@@ -96,7 +96,7 @@ DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output)
     return ERROR_SUCCESS;
 
 failed:
-    WINE_ERR("Error %d while reading value %s\n", err, wine_dbgstr_w(szValue));
+    WINE_ERR("Error %ld while reading value %s\n", err, wine_dbgstr_w(szValue));
     HeapFree(GetProcessHeap(), 0, buf);
     return err;
 }
@@ -131,7 +131,7 @@ DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, BOOL bAllowSingle, LPWSTR *ou
     return ERROR_SUCCESS;
 
 failed:
-    WINE_ERR("Error %d while reading value %s\n", err, wine_dbgstr_w(szValue));
+    WINE_ERR("Error %ld while reading value %s\n", err, wine_dbgstr_w(szValue));
     HeapFree(GetProcessHeap(), 0, buf);
     return err;
 }
@@ -157,6 +157,6 @@ DWORD load_reg_dword(HKEY hKey, LPCWSTR szValue, DWORD *output)
     return ERROR_SUCCESS;
 
 failed:
-    WINE_ERR("Error %d while reading value %s\n", err, wine_dbgstr_w(szValue));
+    WINE_ERR("Error %ld while reading value %s\n", err, wine_dbgstr_w(szValue));
     return err;
 }

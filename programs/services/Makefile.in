@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = services.exe
 IMPORTS   = rpcrt4 advapi32 userenv setupapi
 

@@ -371,7 +371,7 @@ static void CALLBACK delayed_autostart_callback(TP_CALLBACK_INSTANCE *instance, 
             TRACE("Starting delayed auto-start service %s\n", debugstr_w(service->name));
             err = service_start(service, 0, NULL);
             if (err != ERROR_SUCCESS)
-                FIXME("Delayed auto-start service %s failed to start: %d\n",
+                FIXME("Delayed auto-start service %s failed to start: %ld\n",
                       wine_dbgstr_w(service->name), err);
         }
         release_service(service);
@@ -394,7 +394,7 @@ static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned
 
     if (!(delayed_autostart_cleanup = CreateThreadpoolCleanupGroup()))
     {
-        ERR("CreateThreadpoolCleanupGroup failed with error %u\n", GetLastError());
+        ERR("CreateThreadpoolCleanupGroup failed with error %lu\n", GetLastError());
         return FALSE;
     }
 
@@ -413,7 +413,7 @@ static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned
 
     if (!(timer = CreateThreadpoolTimer(delayed_autostart_callback, params, &environment)))
     {
-        ERR("CreateThreadpoolWait failed: %u\n", GetLastError());
+        ERR("CreateThreadpoolWait failed: %lu\n", GetLastError());
         heap_free(params);
         return FALSE;
     }
@@ -456,7 +456,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
         return;
 
     if ((set = SetupDiGetClassDevsW( NULL, rootW, NULL, DIGCF_ALLCLASSES )) == INVALID_HANDLE_VALUE)
-        WINE_ERR("Failed to enumerate devices, error %#x.\n", GetLastError());
+        WINE_ERR("Failed to enumerate devices, error %#lx.\n", GetLastError());
 
     scmdatabase_lock(db);
 
@@ -497,7 +497,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
         }
         err = service_start(service, 0, NULL);
         if (err != ERROR_SUCCESS)
-            WINE_FIXME("Auto-start service %s failed to start: %d\n",
+            WINE_FIXME("Auto-start service %s failed to start: %ld\n",
                        wine_dbgstr_w(service->name), err);
         release_service(service);
     }
@@ -563,7 +563,7 @@ BOOL validate_service_config(struct service_entry *entry)
         }
         break;
     default:
-        WINE_ERR("Service %s has an unknown service type (0x%x)\n", wine_dbgstr_w(entry->name), entry->config.dwServiceType);
+        WINE_ERR("Service %s has an unknown service type (0x%lx)\n", wine_dbgstr_w(entry->name), entry->config.dwServiceType);
         return FALSE;
     }
 
@@ -704,7 +704,7 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
 
         if (err != 0)
         {
-            WINE_ERR("Error %d reading key %d name - skipping\n", err, i);
+            WINE_ERR("Error %ld reading key %d name - skipping\n", err, i);
             continue;
         }
 
@@ -722,7 +722,7 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
 
         if (err != ERROR_SUCCESS)
         {
-            WINE_ERR("Error %d reading registry key for service %s - skipping\n", err, wine_dbgstr_w(szName));
+            WINE_ERR("Error %ld reading registry key for service %s - skipping\n", err, wine_dbgstr_w(szName));
             free_service_entry(entry);
             continue;
         }
@@ -1054,7 +1054,7 @@ found:
 
     if ((err = process_create(service_get_pipe_name(), &process)))
     {
-        WINE_ERR("failed to create process object for %s, error = %u\n",
+        WINE_ERR("failed to create process object for %s, error = %lu\n",
                  wine_dbgstr_w(service_entry->name), err);
         service_unlock(service_entry);
         HeapFree(GetProcessHeap(), 0, path);
@@ -1139,7 +1139,7 @@ static DWORD process_send_start_message(struct process_entry *process, BOOL shar
     DWORD i, len, result;
     WCHAR *str, *p;
 
-    WINE_TRACE("%p %s %p %d\n", process, wine_dbgstr_w(name), argv, argc);
+    WINE_TRACE("%p %s %p %ld\n", process, wine_dbgstr_w(name), argv, argc);
 
     overlapped.hEvent = process->overlapped_event;
     if (!ConnectNamedPipe(process->control_pipe, &overlapped))
@@ -1221,7 +1221,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         release_process(process);
     }
 
-    WINE_TRACE("returning %d\n", err);
+    WINE_TRACE("returning %ld\n", err);
     return err;
 }
 
@@ -1319,6 +1319,6 @@ int __cdecl main(int argc, char *argv[])
     if (environment)
         DestroyEnvironmentBlock(environment);
 
-    WINE_TRACE("services.exe exited with code %d\n", err);
+    WINE_TRACE("services.exe exited with code %ld\n", err);
     return err;
 }

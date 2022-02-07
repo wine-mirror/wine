@@ -222,13 +222,13 @@ static DWORD validate_context_handle(SC_RPC_HANDLE handle, DWORD type, DWORD nee
 
     if (type != SC_HTYPE_DONT_CARE && hdr->type != type)
     {
-        WINE_ERR("Handle is of an invalid type (%d, %d)\n", hdr->type, type);
+        WINE_ERR("Handle is of an invalid type (%d, %ld)\n", hdr->type, type);
         return ERROR_INVALID_HANDLE;
     }
 
     if ((needed_access & hdr->access) != needed_access)
     {
-        WINE_ERR("Access denied - handle created with access %x, needed %x\n", hdr->access, needed_access);
+        WINE_ERR("Access denied - handle created with access %lx, needed %lx\n", hdr->access, needed_access);
         return ERROR_ACCESS_DENIED;
     }
 
@@ -271,7 +271,7 @@ DWORD __cdecl svcctl_OpenSCManagerW(
 {
     struct sc_manager_handle *manager;
 
-    WINE_TRACE("(%s, %s, %x)\n", wine_dbgstr_w(MachineName), wine_dbgstr_w(DatabaseName), dwAccessMask);
+    WINE_TRACE("(%s, %s, %lx)\n", wine_dbgstr_w(MachineName), wine_dbgstr_w(DatabaseName), dwAccessMask);
 
     if (DatabaseName != NULL && DatabaseName[0])
     {
@@ -338,7 +338,7 @@ DWORD __cdecl svcctl_GetServiceDisplayNameW(
     struct service_entry *entry;
     DWORD err;
 
-    WINE_TRACE("(%s, %d)\n", wine_dbgstr_w(lpServiceName), *cchBufSize);
+    WINE_TRACE("(%s, %ld)\n", wine_dbgstr_w(lpServiceName), *cchBufSize);
 
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
@@ -382,7 +382,7 @@ DWORD __cdecl svcctl_GetServiceKeyNameW(
     struct sc_manager_handle *manager;
     DWORD err;
 
-    WINE_TRACE("(%s, %d)\n", wine_dbgstr_w(lpServiceDisplayName), *cchBufSize);
+    WINE_TRACE("(%s, %ld)\n", wine_dbgstr_w(lpServiceDisplayName), *cchBufSize);
 
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
@@ -452,7 +452,7 @@ DWORD __cdecl svcctl_OpenServiceW(
     struct service_entry *entry;
     DWORD err;
 
-    WINE_TRACE("(%s, 0x%x)\n", wine_dbgstr_w(lpServiceName), dwDesiredAccess);
+    WINE_TRACE("(%s, 0x%lx)\n", wine_dbgstr_w(lpServiceName), dwDesiredAccess);
 
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
@@ -564,7 +564,7 @@ static DWORD create_serviceW(
     struct sc_manager_handle *manager;
     DWORD err;
 
-    WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
+    WINE_TRACE("(%s, %s, 0x%lx, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
 
     if ((err = validate_scm_handle(hSCManager, SC_MANAGER_CREATE_SERVICE, &manager)) != ERROR_SUCCESS)
         return err;
@@ -657,7 +657,7 @@ DWORD __cdecl svcctl_CreateServiceW(
     DWORD dwPasswordSize,
     SC_RPC_HANDLE *phService)
 {
-    WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
+    WINE_TRACE("(%s, %s, 0x%lx, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
     return create_serviceW(hSCManager, lpServiceName, lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType,
         dwErrorControl, lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, lpDependencies, dwDependenciesSize, lpServiceStartName,
         lpPassword, dwPasswordSize, phService, FALSE);
@@ -950,13 +950,13 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
         }
         break;
     case SERVICE_CONFIG_FAILURE_ACTIONS:
-        WINE_FIXME( "SERVICE_CONFIG_FAILURE_ACTIONS not implemented: period %u msg %s cmd %s\n",
+        WINE_FIXME( "SERVICE_CONFIG_FAILURE_ACTIONS not implemented: period %lu msg %s cmd %s\n",
                     config.actions->dwResetPeriod,
                     wine_dbgstr_w(config.actions->lpRebootMsg),
                     wine_dbgstr_w(config.actions->lpCommand) );
         break;
     case SERVICE_CONFIG_PRESHUTDOWN_INFO:
-        WINE_TRACE( "changing service %p preshutdown timeout to %d\n",
+        WINE_TRACE( "changing service %p preshutdown timeout to %ld\n",
                 service, config.preshutdown->dwPreshutdownTimeout );
         service_lock( service->service_entry );
         service->service_entry->preshutdown_timeout = config.preshutdown->dwPreshutdownTimeout;
@@ -964,7 +964,7 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
         service_unlock( service->service_entry );
         break;
     default:
-        WINE_FIXME("level %u not implemented\n", config.dwInfoLevel);
+        WINE_FIXME("level %lu not implemented\n", config.dwInfoLevel);
         err = ERROR_INVALID_LEVEL;
         break;
     }
@@ -1025,7 +1025,7 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         break;
 
     default:
-        WINE_FIXME("level %u not implemented\n", level);
+        WINE_FIXME("level %lu not implemented\n", level);
         err = ERROR_INVALID_LEVEL;
         break;
     }
@@ -1168,7 +1168,7 @@ static BOOL process_send_command(struct process_entry *process, const void *data
     if (!r || count != sizeof *result)
     {
         WINE_ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %d!\n", r, count);
+            "r = %d  count = %ld!\n", r, count);
         *result = (!r ? GetLastError() : ERROR_READ_FAULT);
         return FALSE;
     }
@@ -1218,7 +1218,7 @@ DWORD __cdecl svcctl_StartServiceW(
     struct sc_service_handle *service;
     DWORD err;
 
-    WINE_TRACE("(%p, %d, %p)\n", hService, dwNumServiceArgs, lpServiceArgVectors);
+    WINE_TRACE("(%p, %ld, %p)\n", hService, dwNumServiceArgs, lpServiceArgVectors);
 
     if ((err = validate_service_handle(hService, SERVICE_START, &service)) != 0)
         return err;
@@ -1246,7 +1246,7 @@ DWORD __cdecl svcctl_ControlService(
     BOOL shared_process;
     DWORD result;
 
-    WINE_TRACE("(%p, %d, %p)\n", hService, dwControl, lpServiceStatus);
+    WINE_TRACE("(%p, %ld, %p)\n", hService, dwControl, lpServiceStatus);
 
     switch (dwControl)
     {
@@ -1399,7 +1399,7 @@ static BOOL map_state(DWORD state, DWORD mask)
         if (SERVICE_INACTIVE & mask) return TRUE;
         break;
     default:
-        WINE_ERR("unknown state %u\n", state);
+        WINE_ERR("unknown state %lu\n", state);
         break;
     }
     return FALSE;
@@ -1420,7 +1420,7 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
     struct service_entry *service;
     struct enum_service_status *s;
 
-    WINE_TRACE("(%p, 0x%x, 0x%x, %p, %u, %p, %p, %p)\n", hmngr, type, state, buffer, size, needed, returned, resume);
+    WINE_TRACE("(%p, 0x%lx, 0x%lx, %p, %lu, %p, %p, %p)\n", hmngr, type, state, buffer, size, needed, returned, resume);
 
     if (!type || !state)
         return ERROR_INVALID_PARAMETER;
@@ -1536,7 +1536,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
     struct service_entry *service;
     struct enum_service_status_process *s;
 
-    WINE_TRACE("(%p, 0x%x, 0x%x, %p, %u, %p, %p, %s)\n", hmngr, type, state, buffer, size,
+    WINE_TRACE("(%p, 0x%lx, 0x%lx, %p, %lu, %p, %p, %s)\n", hmngr, type, state, buffer, size,
                needed, returned, wine_dbgstr_w(group));
 
     if (resume_handle)
@@ -1654,7 +1654,7 @@ DWORD __cdecl svcctl_CreateServiceWOW64W(
     DWORD password_size,
     SC_RPC_HANDLE *service)
 {
-    WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(servicename), wine_dbgstr_w(displayname), accessmask, wine_dbgstr_w(imagepath));
+    WINE_TRACE("(%s, %s, 0x%lx, %s)\n", wine_dbgstr_w(servicename), wine_dbgstr_w(displayname), accessmask, wine_dbgstr_w(imagepath));
     return create_serviceW(scmanager, servicename, displayname, accessmask, service_type, start_type, error_control, imagepath,
         loadordergroup, tagid, dependencies, depend_size, start_name, password, password_size, service, TRUE);
 }
@@ -1679,7 +1679,7 @@ DWORD __cdecl svcctl_NotifyServiceStatusChange(
     struct sc_notify_handle *notify;
     struct sc_handle *hdr = handle;
 
-    WINE_TRACE("(%p, NotifyMask: 0x%x, %p, %p, %p, %p)\n", handle,
+    WINE_TRACE("(%p, NotifyMask: 0x%lx, %p, %p, %p, %p)\n", handle,
             params.params->dwNotifyMask, clientprocessguid, scmprocessguid,
             createremotequeue, hNotify);
 
@@ -2111,25 +2111,25 @@ DWORD RPC_Init(void)
 
     if (!(cleanup_group = CreateThreadpoolCleanupGroup()))
     {
-        WINE_ERR("CreateThreadpoolCleanupGroup failed with error %u\n", GetLastError());
+        WINE_ERR("CreateThreadpoolCleanupGroup failed with error %lu\n", GetLastError());
         return GetLastError();
     }
 
     if ((err = RpcServerUseProtseqEpW(transport, 0, endpoint, NULL)) != ERROR_SUCCESS)
     {
-        WINE_ERR("RpcServerUseProtseq failed with error %u\n", err);
+        WINE_ERR("RpcServerUseProtseq failed with error %lu\n", err);
         return err;
     }
 
     if ((err = RpcServerRegisterIf(svcctl_v2_0_s_ifspec, 0, 0)) != ERROR_SUCCESS)
     {
-        WINE_ERR("RpcServerRegisterIf failed with error %u\n", err);
+        WINE_ERR("RpcServerRegisterIf failed with error %lu\n", err);
         return err;
     }
 
     if ((err = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE)) != ERROR_SUCCESS)
     {
-        WINE_ERR("RpcServerListen failed with error %u\n", err);
+        WINE_ERR("RpcServerListen failed with error %lu\n", err);
         return err;
     }
 
