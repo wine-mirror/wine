@@ -220,7 +220,7 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
             CloseServiceHandle( service );
             ret = TRUE;
         }
-        else WINE_TRACE("failed to create service %u\n", GetLastError());
+        else WINE_TRACE("failed to create service %lu\n", GetLastError());
     }
     else if (!wcsicmp( argv[1], L"description" ))
     {
@@ -230,10 +230,10 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
             SERVICE_DESCRIPTIONW sd;
             sd.lpDescription = argc > 3 ? (WCHAR *)argv[3] : NULL;
             ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_DESCRIPTION, &sd );
-            if (!ret) WINE_TRACE("failed to set service description %u\n", GetLastError());
+            if (!ret) WINE_TRACE("failed to set service description %lu\n", GetLastError());
             CloseServiceHandle( service );
         }
-        else WINE_TRACE("failed to open service %u\n", GetLastError());
+        else WINE_TRACE("failed to open service %lu\n", GetLastError());
     }
     else if (!wcsicmp( argv[1], L"failure" ))
     {
@@ -244,14 +244,14 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
             if (parse_failure_params( argc - 3, argv + 3, &sfa ))
             {
                 ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_FAILURE_ACTIONS, &sfa );
-                if (!ret) WINE_TRACE("failed to set service failure actions %u\n", GetLastError());
+                if (!ret) WINE_TRACE("failed to set service failure actions %lu\n", GetLastError());
                 HeapFree( GetProcessHeap(), 0, sfa.lpsaActions );
             }
             else
                 WINE_WARN("failed to parse failure parameters\n");
             CloseServiceHandle( service );
         }
-        else WINE_TRACE("failed to open service %u\n", GetLastError());
+        else WINE_TRACE("failed to open service %lu\n", GetLastError());
     }
     else if (!wcsicmp( argv[1], L"delete" ))
     {
@@ -259,10 +259,10 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
         if (service)
         {
             ret = DeleteService( service );
-            if (!ret) WINE_TRACE("failed to delete service %u\n", GetLastError());
+            if (!ret) WINE_TRACE("failed to delete service %lu\n", GetLastError());
             CloseServiceHandle( service );
         }
-        else WINE_TRACE("failed to open service %u\n", GetLastError());
+        else WINE_TRACE("failed to open service %lu\n", GetLastError());
     }
     else if (!wcsicmp( argv[1], L"start" ))
     {
@@ -270,10 +270,10 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
         if (service)
         {
             ret = StartServiceW( service, argc - 3, argv + 3 );
-            if (!ret) WINE_TRACE("failed to start service %u\n", GetLastError());
+            if (!ret) WINE_TRACE("failed to start service %lu\n", GetLastError());
             CloseServiceHandle( service );
         }
-        else WINE_TRACE("failed to open service %u\n", GetLastError());
+        else WINE_TRACE("failed to open service %lu\n", GetLastError());
     }
     else if (!wcsicmp( argv[1], L"stop" ))
     {
@@ -281,10 +281,10 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
         if (service)
         {
             ret = ControlService( service, SERVICE_CONTROL_STOP, &status );
-            if (!ret) WINE_TRACE("failed to stop service %u\n", GetLastError());
+            if (!ret) WINE_TRACE("failed to stop service %lu\n", GetLastError());
             CloseServiceHandle( service );
         }
-        else WINE_TRACE("failed to open service %u\n", GetLastError());
+        else WINE_TRACE("failed to open service %lu\n", GetLastError());
     }
     else if (!wcsicmp( argv[1], L"sdset" ))
     {
