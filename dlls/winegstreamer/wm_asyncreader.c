@@ -146,6 +146,7 @@ static DWORD WINAPI stream_thread(void *arg)
             else if (hr != NS_E_NO_MORE_SAMPLES)
             {
                 ERR("Failed to get sample, hr %#x.\n", hr);
+                LeaveCriticalSection(&reader->stream_cs);
                 return 0;
             }
         }
