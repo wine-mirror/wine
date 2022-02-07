@@ -69,7 +69,7 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 in
     }else{
         hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj);
         if(FAILED(hr)){
-            WARN("CoCreateInstance failed: %08x\n", hr);
+            WARN("CoCreateInstance failed: %08lx\n", hr);
             return hr;
         }
     }
@@ -84,7 +84,7 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 in
             IXAPO_Release(xapo);
 
             if(FAILED(hr)){
-                WARN("Initialize failed: %08x\n", hr);
+                WARN("Initialize failed: %08lx\n", hr);
                 IUnknown_Release(obj);
                 return hr;
             }
@@ -134,7 +134,7 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
     }else{
         hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj);
         if(FAILED(hr)){
-            WARN("CoCreateInstance failed: %08x\n", hr);
+            WARN("CoCreateInstance failed: %08lx\n", hr);
             return hr;
         }
     }

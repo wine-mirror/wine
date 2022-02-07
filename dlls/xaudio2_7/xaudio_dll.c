@@ -80,7 +80,7 @@ static XA2VoiceImpl *impl_from_IXAudio2Voice(IXAudio2Voice *iface);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
 {
-    TRACE("(%p, %d, %p)\n", hinstDLL, reason, pReserved);
+    TRACE("(%p, %ld, %p)\n", hinstDLL, reason, pReserved);
 
     switch (reason)
     {
@@ -1403,7 +1403,7 @@ static ULONG WINAPI IXAudio2Impl_AddRef(IXAudio2 *iface)
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
     ULONG ref = FAudio_AddRef(This->faudio);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     return ref;
 }
 
@@ -1412,7 +1412,7 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
     ULONG ref = FAudio_Release(This->faudio);
 
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
 
     if (!ref) {
         XA2VoiceImpl *v, *v2;
@@ -1792,7 +1792,7 @@ static ULONG WINAPI XAudio2CF_AddRef(IClassFactory *iface)
 {
     struct xaudio2_cf *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     return ref;
 }
 
@@ -1800,7 +1800,7 @@ static ULONG WINAPI XAudio2CF_Release(IClassFactory *iface)
 {
     struct xaudio2_cf *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
     return ref;

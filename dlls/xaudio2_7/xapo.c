@@ -74,7 +74,7 @@ static ULONG WINAPI XAPOFX_AddRef(IXAPO *iface)
 {
     XA2XAPOFXImpl *This = impl_from_IXAPO(iface);
     ULONG ref = This->fapo->AddRef(This->fapo);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     return ref;
 }
 
@@ -83,7 +83,7 @@ static ULONG WINAPI XAPOFX_Release(IXAPO *iface)
     XA2XAPOFXImpl *This = impl_from_IXAPO(iface);
     ULONG ref = This->fapo->Release(This->fapo);
 
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
 
     if(!ref)
         HeapFree(GetProcessHeap(), 0, This);
@@ -286,7 +286,7 @@ static ULONG WINAPI xapocf_AddRef(IClassFactory *iface)
 {
     struct xapo_cf *This = xapo_impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     return ref;
 }
 
@@ -294,7 +294,7 @@ static ULONG WINAPI xapocf_Release(IClassFactory *iface)
 {
     struct xapo_cf *This = xapo_impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     if (!ref)
         HeapFree(GetProcessHeap(), 0, This);
     return ref;
