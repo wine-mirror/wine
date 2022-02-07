@@ -184,14 +184,14 @@ static void read_properties_from_data( PROPVARIANT *prop, LPBYTE data, DWORD sz 
     {
         if( idofs[i].propid >= MSI_MAX_PROPS )
         {
-            ERR("Unknown property ID %d\n", idofs[i].propid );
+            ERR( "unknown property ID %lu\n", idofs[i].propid );
             break;
         }
 
         type = get_type( idofs[i].propid );
         if( type == VT_EMPTY )
         {
-            ERR("propid %d has unknown type\n", idofs[i].propid);
+            ERR( "propid %lu has unknown type\n", idofs[i].propid );
             break;
         }
 
@@ -282,7 +282,7 @@ static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
 
     if( section_hdr.cProperties > MSI_MAX_PROPS )
     {
-        ERR("too many properties %d\n", section_hdr.cProperties);
+        ERR( "too many properties %lu\n", section_hdr.cProperties );
         return ERROR_FUNCTION_FAILED;
     }
 
@@ -298,7 +298,7 @@ static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
     if( SUCCEEDED(r) && count == sz )
         read_properties_from_data( si->property, data, sz + SECT_HDR_SIZE );
     else
-        ERR("failed to read properties %d %d\n", count, sz);
+        ERR( "failed to read properties %lu %lu\n", count, sz );
 
     msi_free( data );
     return ERROR_SUCCESS;
@@ -498,15 +498,14 @@ UINT msi_get_db_suminfo( MSIDATABASE *db, UINT uiUpdateCount, MSISUMMARYINFO **r
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
-              LPCWSTR szDatabase, UINT uiUpdateCount, MSIHANDLE *pHandle )
+UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase, const WCHAR *szDatabase, UINT uiUpdateCount,
+                                       MSIHANDLE *pHandle )
 {
     MSISUMMARYINFO *si;
     MSIDATABASE *db;
     UINT ret;
 
-    TRACE("%d %s %d %p\n", hDatabase, debugstr_w(szDatabase),
-           uiUpdateCount, pHandle);
+    TRACE( "%lu, %s, %u, %p\n", hDatabase, debugstr_w(szDatabase), uiUpdateCount, pHandle );
 
     if( !pHandle )
         return ERROR_INVALID_PARAMETER;
@@ -569,14 +568,13 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
     return ret;
 }
 
-UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE hDatabase,
-              LPCSTR szDatabase, UINT uiUpdateCount, MSIHANDLE *pHandle)
+UINT WINAPI MsiGetSummaryInformationA( MSIHANDLE hDatabase, const char *szDatabase, UINT uiUpdateCount,
+                                       MSIHANDLE *pHandle )
 {
-    LPWSTR szwDatabase = NULL;
+    WCHAR *szwDatabase = NULL;
     UINT ret;
 
-    TRACE("%d %s %d %p\n", hDatabase, debugstr_a(szDatabase),
-          uiUpdateCount, pHandle);
+    TRACE( "%lu, %s, %u, %p\n", hDatabase, debugstr_a(szDatabase), uiUpdateCount, pHandle );
 
     if( szDatabase )
     {
@@ -592,11 +590,11 @@ UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE hDatabase,
     return ret;
 }
 
-UINT WINAPI MsiSummaryInfoGetPropertyCount(MSIHANDLE hSummaryInfo, PUINT pCount)
+UINT WINAPI MsiSummaryInfoGetPropertyCount( MSIHANDLE hSummaryInfo, UINT *pCount )
 {
     MSISUMMARYINFO *si;
 
-    TRACE("%d %p\n", hSummaryInfo, pCount);
+    TRACE( "%lu, %p\n", hSummaryInfo, pCount );
 
     si = msihandle2msiinfo( hSummaryInfo, MSIHANDLETYPE_SUMMARYINFO );
     if( !si )
@@ -723,16 +721,15 @@ LPWSTR msi_get_suminfo_product( IStorage *stg )
     return prod;
 }
 
-UINT WINAPI MsiSummaryInfoGetPropertyA(
-      MSIHANDLE handle, UINT uiProperty, PUINT puiDataType, LPINT piValue,
-      FILETIME *pftValue, LPSTR szValueBuf, LPDWORD pcchValueBuf)
+UINT WINAPI MsiSummaryInfoGetPropertyA( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType, INT *piValue,
+                                        FILETIME *pftValue, char *szValueBuf, DWORD *pcchValueBuf )
 {
     MSISUMMARYINFO *si;
     awstring str;
     UINT r;
 
-    TRACE("%u, %u, %p, %p, %p, %p, %p\n", handle, uiProperty, puiDataType,
-          piValue, pftValue, szValueBuf, pcchValueBuf );
+    TRACE( "%lu, %u, %p, %p, %p, %p, %p\n", handle, uiProperty, puiDataType, piValue, pftValue, szValueBuf,
+           pcchValueBuf );
 
     if (uiProperty >= MSI_MAX_PROPS)
     {
@@ -775,16 +772,15 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(
     return r;
 }
 
-UINT WINAPI MsiSummaryInfoGetPropertyW(
-      MSIHANDLE handle, UINT uiProperty, PUINT puiDataType, LPINT piValue,
-      FILETIME *pftValue, LPWSTR szValueBuf, LPDWORD pcchValueBuf)
+UINT WINAPI MsiSummaryInfoGetPropertyW( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType, INT *piValue,
+                                        FILETIME *pftValue, WCHAR *szValueBuf, DWORD *pcchValueBuf )
 {
     MSISUMMARYINFO *si;
     awstring str;
     UINT r;
 
-    TRACE("%u, %u, %p, %p, %p, %p, %p\n", handle, uiProperty, puiDataType,
-          piValue, pftValue, szValueBuf, pcchValueBuf );
+    TRACE( "%lu, %u, %p, %p, %p, %p, %p\n", handle, uiProperty, puiDataType, piValue, pftValue, szValueBuf,
+           pcchValueBuf );
 
     if (uiProperty >= MSI_MAX_PROPS)
     {
@@ -895,15 +891,14 @@ static UINT msi_set_prop( MSISUMMARYINFO *si, UINT uiProperty, UINT uiDataType,
     return set_prop( si, uiProperty, type, iValue, pftValue, str );
 }
 
-UINT WINAPI MsiSummaryInfoSetPropertyW( MSIHANDLE handle, UINT uiProperty, UINT uiDataType,
-                                        INT iValue, FILETIME *pftValue, LPCWSTR szValue )
+UINT WINAPI MsiSummaryInfoSetPropertyW( MSIHANDLE handle, UINT uiProperty, UINT uiDataType, INT iValue,
+                                        FILETIME *pftValue, const WCHAR *szValue )
 {
     awcstring str;
     MSISUMMARYINFO *si;
     UINT ret;
 
-    TRACE("%u, %u, %u, %d, %p, %s\n", handle, uiProperty, uiDataType, iValue, pftValue,
-          debugstr_w(szValue) );
+    TRACE( "%lu, %u, %u, %d, %p, %s\n", handle, uiProperty, uiDataType, iValue, pftValue, debugstr_w(szValue) );
 
     if (!(si = msihandle2msiinfo( handle, MSIHANDLETYPE_SUMMARYINFO )))
     {
@@ -926,15 +921,14 @@ UINT WINAPI MsiSummaryInfoSetPropertyW( MSIHANDLE handle, UINT uiProperty, UINT 
     return ret;
 }
 
-UINT WINAPI MsiSummaryInfoSetPropertyA( MSIHANDLE handle, UINT uiProperty, UINT uiDataType,
-                                        INT iValue, FILETIME *pftValue, LPCSTR szValue )
+UINT WINAPI MsiSummaryInfoSetPropertyA( MSIHANDLE handle, UINT uiProperty, UINT uiDataType, INT iValue,
+                                        FILETIME *pftValue, const char *szValue )
 {
     awcstring str;
     MSISUMMARYINFO *si;
     UINT ret;
 
-    TRACE("%u, %u, %u, %d, %p, %s\n", handle, uiProperty, uiDataType, iValue, pftValue,
-          debugstr_a(szValue) );
+    TRACE( "%lu, %u, %u, %d, %p, %s\n", handle, uiProperty, uiDataType, iValue, pftValue, debugstr_a(szValue) );
 
     if (!(si = msihandle2msiinfo( handle, MSIHANDLETYPE_SUMMARYINFO )))
     {
@@ -1209,7 +1203,7 @@ UINT WINAPI MsiSummaryInfoPersist( MSIHANDLE handle )
     MSISUMMARYINFO *si;
     UINT ret;
 
-    TRACE("%d\n", handle );
+    TRACE( "%lu\n", handle );
 
     si = msihandle2msiinfo( handle, MSIHANDLETYPE_SUMMARYINFO );
     if( !si )
@@ -1221,12 +1215,13 @@ UINT WINAPI MsiSummaryInfoPersist( MSIHANDLE handle )
     return ret;
 }
 
-UINT WINAPI MsiCreateTransformSummaryInfoA( MSIHANDLE db, MSIHANDLE db_ref, LPCSTR transform, int error, int validation )
+UINT WINAPI MsiCreateTransformSummaryInfoA( MSIHANDLE db, MSIHANDLE db_ref, const char *transform, int error,
+                                            int validation )
 {
     UINT r;
     WCHAR *transformW = NULL;
 
-    TRACE("%u, %u, %s, %d, %d\n", db, db_ref, debugstr_a(transform), error, validation);
+    TRACE( "%lu, %lu, %s, %d, %d\n", db, db_ref, debugstr_a(transform), error, validation );
 
     if (transform && !(transformW = strdupAtoW( transform )))
         return ERROR_OUTOFMEMORY;
@@ -1236,9 +1231,10 @@ UINT WINAPI MsiCreateTransformSummaryInfoA( MSIHANDLE db, MSIHANDLE db_ref, LPCS
     return r;
 }
 
-UINT WINAPI MsiCreateTransformSummaryInfoW( MSIHANDLE db, MSIHANDLE db_ref, LPCWSTR transform, int error, int validation )
+UINT WINAPI MsiCreateTransformSummaryInfoW( MSIHANDLE db, MSIHANDLE db_ref, const WCHAR *transform, int error,
+                                            int validation )
 {
-    FIXME("%u, %u, %s, %d, %d\n", db, db_ref, debugstr_w(transform), error, validation);
+    FIXME( "%lu, %lu, %s, %d, %d\n", db, db_ref, debugstr_w(transform), error, validation );
     return ERROR_FUNCTION_FAILED;
 }
 
