@@ -107,7 +107,7 @@ static HRESULT STDMETHODCALLTYPE RichEditOleCallback_QueryInsertObject(
     LPSTORAGE lpstg,
     LONG cp)
 {
-    WINE_TRACE("(%p, %p, %p, %d)\n", This, lpclsid, lpstg, cp);
+    WINE_TRACE("(%p, %p, %p, %ld)\n", This, lpclsid, lpstg, cp);
     return S_OK;
 }
 
@@ -127,7 +127,7 @@ static HRESULT STDMETHODCALLTYPE RichEditOleCallback_QueryAcceptData(
     BOOL fReally,
     HGLOBAL hMetaPict)
 {
-    WINE_TRACE("(%p, %p, %p, %x, %d, %p)\n",
+    WINE_TRACE("(%p, %p, %p, %lx, %d, %p)\n",
                This, lpdataobj, lpcfFormat, reco, fReally, hMetaPict);
     return S_OK;
 }
@@ -146,7 +146,7 @@ static HRESULT STDMETHODCALLTYPE RichEditOleCallback_GetClipboardData(
     DWORD reco,
     LPDATAOBJECT *lplpdataobj)
 {
-    WINE_TRACE("(%p, %p, %x, %p)\n", This, lpchrg, reco, lplpdataobj);
+    WINE_TRACE("(%p, %p, %lx, %p)\n", This, lpchrg, reco, lplpdataobj);
     return E_NOTIMPL;
 }
 
@@ -156,7 +156,7 @@ static HRESULT STDMETHODCALLTYPE RichEditOleCallback_GetDragDropEffect(
     DWORD grfKeyState,
     LPDWORD pdwEffect)
 {
-    WINE_TRACE("(%p, %d, %x, %p)\n", This, fDrag, grfKeyState, pdwEffect);
+    WINE_TRACE("(%p, %d, %lx, %p)\n", This, fDrag, grfKeyState, pdwEffect);
     if (pdwEffect)
           *pdwEffect = DROPEFFECT_COPY;
     return S_OK;

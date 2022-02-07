@@ -2023,7 +2023,7 @@ static LRESULT OnCreate( HWND hWnd )
 
     if (!hEditorWnd)
     {
-        fprintf(stderr, "Error code %u\n", GetLastError());
+        fprintf(stderr, "Error code %lu\n", GetLastError());
         return -1;
     }
     assert(hEditorWnd);
@@ -2164,7 +2164,7 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
 
             update_font_list();
 
-            sprintf( buf,"selection = %d..%d, line count=%ld",
+            sprintf( buf,"selection = %ld..%ld, line count=%Id",
                      pSC->chrg.cpMin, pSC->chrg.cpMax,
                      SendMessageW(hwndEditor, EM_GETLINECOUNT, 0, 0));
             SetWindowTextA(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
@@ -2451,7 +2451,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SendMessageW(hwndEditor, EM_EXGETSEL, 0, (LPARAM)&range);
         data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * (range.cpMax-range.cpMin+1));
         SendMessageW(hwndEditor, EM_GETSELTEXT, 0, (LPARAM)data);
-        sprintf(buf, "Start = %d, End = %d", range.cpMin, range.cpMax);
+        sprintf(buf, "Start = %ld, End = %ld", range.cpMin, range.cpMax);
         MessageBoxA(hWnd, buf, "Editor", MB_OK);
         MessageBoxW(hWnd, data, wszAppTitle, MB_OK);
         HeapFree( GetProcessHeap(), 0, data);

@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wordpad.exe
 IMPORTS   = comdlg32 uuid ole32 shell32 user32 gdi32 advapi32 comctl32
 
