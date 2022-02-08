@@ -368,7 +368,7 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
             *rec = *prev_rec;
             rec->ExceptionFlags &= ~EH_UNWINDING;
             if(TRACE_ON(seh)) {
-                TRACE("detect rethrow: exception code: %x\n", rec->ExceptionCode);
+                TRACE("detect rethrow: exception code: %lx\n", rec->ExceptionCode);
                 if(rec->ExceptionCode == CXX_EXCEPTION)
                     TRACE("re-propagate: obj: %lx, type: %lx\n",
                             rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
@@ -538,7 +538,7 @@ static LONG CALLBACK se_translation_filter( EXCEPTION_POINTERS *ep, void *c )
 
     if (rec->ExceptionCode != CXX_EXCEPTION)
     {
-        TRACE( "non-c++ exception thrown in SEH handler: %x\n", rec->ExceptionCode );
+        TRACE( "non-c++ exception thrown in SEH handler: %lx\n", rec->ExceptionCode );
         terminate();
     }
 
@@ -601,7 +601,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
         *rec = *msvcrt_get_thread_data()->exc_record;
         rec->ExceptionFlags &= ~EH_UNWINDING;
         if(TRACE_ON(seh)) {
-            TRACE("detect rethrow: exception code: %x\n", rec->ExceptionCode);
+            TRACE("detect rethrow: exception code: %lx\n", rec->ExceptionCode);
             if(rec->ExceptionCode == CXX_EXCEPTION)
                 TRACE("re-propagate: obj: %lx, type: %lx\n",
                         rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
@@ -633,7 +633,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
         thread_data_t *data = msvcrt_get_thread_data();
 
         exc_type = NULL;
-        TRACE("handling C exception code %x  rec %p frame %p trylevel %d descr %p nested_frame %p\n",
+        TRACE("handling C exception code %lx  rec %p frame %p trylevel %d descr %p nested_frame %p\n",
               rec->ExceptionCode,  rec, frame, frame->trylevel, descr, nested_frame );
 
         if (data->se_translator) {
@@ -866,7 +866,7 @@ int CDECL _except_handler2(PEXCEPTION_RECORD rec,
                            PCONTEXT context,
                            EXCEPTION_REGISTRATION_RECORD** dispatcher)
 {
-  FIXME("exception %x flags=%x at %p handler=%p %p %p stub\n",
+  FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->Handler, context, dispatcher);
   return ExceptionContinueSearch;
@@ -883,7 +883,7 @@ int CDECL _except_handler3(PEXCEPTION_RECORD rec,
   EXCEPTION_POINTERS exceptPtrs;
   PSCOPETABLE pScopeTable;
 
-  TRACE("exception %x flags=%x at %p handler=%p %p %p semi-stub\n",
+  TRACE("exception %lx flags=%lx at %p handler=%p %p %p semi-stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->handler, context, dispatcher);
 
@@ -952,7 +952,7 @@ int CDECL _except_handler4_common( ULONG *cookie, void (*check_cookie)(void),
     EXCEPTION_POINTERS exceptPtrs;
     const SCOPETABLE_V4 *scope_table = get_scopetable_v4( frame, *cookie );
 
-    TRACE( "exception %x flags=%x at %p handler=%p %p %p cookie=%x scope table=%p cookies=%d/%x,%d/%x\n",
+    TRACE( "exception %lx flags=%lx at %p handler=%p %p %p cookie=%lx scope table=%p cookies=%d/%lx,%d/%lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
            frame->handler, context, dispatcher, *cookie, scope_table,
            scope_table->gs_cookie_offset, scope_table->gs_cookie_xor,
@@ -1187,7 +1187,7 @@ int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
     rec.Cause.Underflow = rec.Enable.Underflow & rec.Status.Underflow;
     rec.Cause.Inexact = rec.Enable.Inexact & rec.Status.Inexact;
 
-    TRACE("opcode: %x\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
+    TRACE("opcode: %lx\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
 
     if(*(WORD*)ctx->ErrorOffset == 0x35dc) { /* fdiv m64fp */
         if(exception_code==STATUS_FLOAT_DIVIDE_BY_ZERO || exception_code==STATUS_FLOAT_INVALID_OPERATION) {
@@ -1213,7 +1213,7 @@ int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
         return ret;
     }
 
-    FIXME("unsupported opcode: %x\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
+    FIXME("unsupported opcode: %lx\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
     return EXCEPTION_CONTINUE_SEARCH;
 }
 

@@ -854,7 +854,7 @@ int CDECL __crtLCMapStringA(
     WCHAR buf_out[32], *out = buf_out;
     int in_len, out_len, r;
 
-    TRACE("(lcid %x, flags %x, %s(%d), %p(%d), %x, %d), partial stub!\n",
+    TRACE("(lcid %lx, flags %lx, %s(%d), %p(%d), %x, %d), partial stub!\n",
             lcid, mapflags, src, srclen, dst, dstlen, codepage, xflag);
 
     in_len = MultiByteToWideChar(codepage, MB_ERR_INVALID_CHARS, src, srclen, NULL, 0);
@@ -904,7 +904,7 @@ done:
 int CDECL __crtLCMapStringW(LCID lcid, DWORD mapflags, const wchar_t *src,
         int srclen, wchar_t *dst, int dstlen, unsigned int codepage, int xflag)
 {
-    FIXME("(lcid %x, flags %x, %s(%d), %p(%d), %x, %d), partial stub!\n",
+    FIXME("(lcid %lx, flags %lx, %s(%d), %p(%d), %x, %d), partial stub!\n",
             lcid, mapflags, debugstr_w(src), srclen, dst, dstlen, codepage, xflag);
 
     return LCMapStringW(lcid, mapflags, src, srclen, dst, dstlen);
@@ -916,7 +916,7 @@ int CDECL __crtLCMapStringW(LCID lcid, DWORD mapflags, const wchar_t *src,
 int CDECL __crtCompareStringA( LCID lcid, DWORD flags, const char *src1, int len1,
                                const char *src2, int len2 )
 {
-    FIXME("(lcid %x, flags %x, %s(%d), %s(%d), partial stub\n",
+    FIXME("(lcid %lx, flags %lx, %s(%d), %s(%d), partial stub\n",
           lcid, flags, debugstr_a(src1), len1, debugstr_a(src2), len2 );
     /* FIXME: probably not entirely right */
     return CompareStringA( lcid, flags, src1, len1, src2, len2 );
@@ -928,7 +928,7 @@ int CDECL __crtCompareStringA( LCID lcid, DWORD flags, const char *src1, int len
 int CDECL __crtCompareStringW( LCID lcid, DWORD flags, const wchar_t *src1, int len1,
                                const wchar_t *src2, int len2 )
 {
-    FIXME("(lcid %x, flags %x, %s(%d), %s(%d), partial stub\n",
+    FIXME("(lcid %lx, flags %lx, %s(%d), %s(%d), partial stub\n",
           lcid, flags, debugstr_w(src1), len1, debugstr_w(src2), len2 );
     /* FIXME: probably not entirely right */
     return CompareStringW( lcid, flags, src1, len1, src2, len2 );
@@ -939,7 +939,7 @@ int CDECL __crtCompareStringW( LCID lcid, DWORD flags, const wchar_t *src1, int 
  */
 int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, wchar_t *buffer, int len )
 {
-    FIXME("(lcid %x, type %x, %p(%d), partial stub\n", lcid, type, buffer, len );
+    FIXME("(lcid %lx, type %lx, %p(%d), partial stub\n", lcid, type, buffer, len );
     /* FIXME: probably not entirely right */
     return GetLocaleInfoW( lcid, type, buffer, len );
 }
@@ -950,7 +950,7 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, wchar_t *buffer, int len 
  */
 int CDECL __crtGetLocaleInfoEx( const WCHAR *locale, LCTYPE type, wchar_t *buffer, int len )
 {
-    TRACE("(%s, %x, %p, %d)\n", debugstr_w(locale), type, buffer, len);
+    TRACE("(%s, %lx, %p, %d)\n", debugstr_w(locale), type, buffer, len);
     return GetLocaleInfoEx(locale, type, buffer, len);
 }
 #endif
@@ -964,7 +964,7 @@ int CDECL __crtGetLocaleInfoEx( const WCHAR *locale, LCTYPE type, wchar_t *buffe
 BOOL CDECL __crtGetStringTypeW(DWORD unk, DWORD type,
         wchar_t *buffer, int len, WORD *out)
 {
-    FIXME("(unk %x, type %x, wstr %p(%d), %p) partial stub\n",
+    FIXME("(unk %lx, type %lx, wstr %p(%d), %p) partial stub\n",
             unk, type, buffer, len, out);
 
     return GetStringTypeW(type, buffer, len, out);

@@ -350,7 +350,7 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
         }
         __EXCEPT_CTX(cxx_rethrow_filter, &ctx)
         {
-            TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
+            TRACE("detect rethrow: exception code: %lx\n", prev_rec->ExceptionCode);
             ctx.rethrow = TRUE;
 
             if (untrans_rec)
@@ -486,7 +486,7 @@ static LONG CALLBACK se_translation_filter(EXCEPTION_POINTERS *ep, void *c)
 
     if (rec->ExceptionCode != CXX_EXCEPTION)
     {
-        TRACE("non-c++ exception thrown in SEH handler: %x\n", rec->ExceptionCode);
+        TRACE("non-c++ exception thrown in SEH handler: %lx\n", rec->ExceptionCode);
         terminate();
     }
 
@@ -558,7 +558,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                     TRACE("nested exception detected\n");
                     unwindlevel = tryblock->end_level;
                     orig_frame = *(ULONG64*)rva_to_ptr(catchblock->frame, frame);
-                    TRACE("setting orig_frame to %lx\n", orig_frame);
+                    TRACE("setting orig_frame to %I64x\n", orig_frame);
                 }
             }
         }
@@ -591,7 +591,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
         if (TRACE_ON(seh))
         {
-            TRACE("handling C++ exception rec %p frame %lx descr %p\n", rec, frame,  descr);
+            TRACE("handling C++ exception rec %p frame %I64x descr %p\n", rec, frame,  descr);
             dump_exception_type(exc_type, rec->ExceptionInformation[3]);
             dump_function_descr(descr, dispatch->ImageBase);
         }
@@ -601,7 +601,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         thread_data_t *data = msvcrt_get_thread_data();
 
         exc_type = NULL;
-        TRACE("handling C exception code %x rec %p frame %lx descr %p\n",
+        TRACE("handling C exception code %lx rec %p frame %I64x descr %p\n",
                 rec->ExceptionCode, rec, frame, descr);
 
         if (data->se_translator) {
@@ -647,7 +647,7 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
 EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 frame,
                                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    TRACE( "%p %lx %p %p\n", rec, frame, context, dispatch );
+    TRACE( "%p %I64x %p %p\n", rec, frame, context, dispatch );
     return cxx_frame_handler( rec, frame, context, dispatch,
             rva_to_ptr(*(UINT*)dispatch->HandlerData, dispatch->ImageBase) );
 }

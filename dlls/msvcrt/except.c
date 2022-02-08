@@ -272,7 +272,7 @@ int CDECL raise(int sig)
  */
 int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
 {
-    TRACE("(%08x,%p)\n", ex, ptr);
+    TRACE("(%08lx,%p)\n", ex, ptr);
     /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */
     return msvcrt_exception_filter(ptr);
 }

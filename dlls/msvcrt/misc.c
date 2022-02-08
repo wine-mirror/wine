@@ -516,7 +516,7 @@ int CDECL __crtGetShowWindowMode(void)
     STARTUPINFOW si;
 
     GetStartupInfoW(&si);
-    TRACE("flags=%x window=%d\n", si.dwFlags, si.wShowWindow);
+    TRACE("flags=%lx window=%d\n", si.dwFlags, si.wShowWindow);
     return si.dwFlags & STARTF_USESHOWWINDOW ? si.wShowWindow : SW_SHOWDEFAULT;
 }
 
@@ -526,7 +526,7 @@ int CDECL __crtGetShowWindowMode(void)
 BOOL CDECL __crtInitializeCriticalSectionEx(
         CRITICAL_SECTION *cs, DWORD spin_count, DWORD flags)
 {
-    TRACE("(%p %x %x)\n", cs, spin_count, flags);
+    TRACE("(%p %lx %lx)\n", cs, spin_count, flags);
     return InitializeCriticalSectionEx(cs, spin_count, flags);
 }
 
@@ -570,7 +570,7 @@ LONG CDECL __crtUnhandledException(EXCEPTION_POINTERS *ep)
  */
 void CDECL __crtSleep(DWORD timeout)
 {
-  TRACE("(%u)\n", timeout);
+  TRACE("(%lu)\n", timeout);
   Sleep(timeout);
 }
 

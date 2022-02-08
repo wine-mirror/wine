@@ -10318,7 +10318,7 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
     WORD operation;
     int raise = 0;
 
-    TRACE("(%x %x %lf %lf %x %p)\n", fpe, op, arg, res, cw, unk);
+    TRACE("(%lx %x %lf %lf %lx %p)\n", fpe, op, arg, res, cw, unk);
 
 #ifdef _WIN64
     cw = ((cw >> 7) & 0x3f) | ((cw >> 3) & 0xc00);

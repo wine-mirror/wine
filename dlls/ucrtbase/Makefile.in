@@ -1,4 +1,4 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES -D_CRTIMP=
+EXTRADEFS = -D_CRTIMP=
 MODULE    = ucrtbase.dll
 IMPORTLIB = ucrtbase
 IMPORTS   = ntdll

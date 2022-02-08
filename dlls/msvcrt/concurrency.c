@@ -527,7 +527,7 @@ DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor_name, 12)
 scheduler_resource_allocation_error* __thiscall scheduler_resource_allocation_error_ctor_name(
         scheduler_resource_allocation_error *this, const char *name, HRESULT hr)
 {
-    TRACE("(%p %s %x)\n", this, wine_dbgstr_a(name), hr);
+    TRACE("(%p %s %lx)\n", this, wine_dbgstr_a(name), hr);
     __exception_ctor(&this->e, name, &scheduler_resource_allocation_error_vtable);
     this->hr = hr;
     return this;
@@ -1101,7 +1101,7 @@ static void ThreadScheduler_dtor(ThreadScheduler *this)
 {
     int i;
 
-    if(this->ref != 0) WARN("ref = %d\n", this->ref);
+    if(this->ref != 0) WARN("ref = %ld\n", this->ref);
     SchedulerPolicy_dtor(&this->policy);
 
     for(i=0; i<this->shutdown_count; i++)

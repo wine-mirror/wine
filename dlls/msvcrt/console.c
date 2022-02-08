@@ -153,7 +153,7 @@ static BOOL handle_enhanced_keys(INPUT_RECORD *ir, unsigned char *ch1, unsigned 
         }
     }
 
-    WARN("Unmapped char keyState=%x vk=%x\n",
+    WARN("Unmapped char keyState=%lx vk=%x\n",
             ir->Event.KeyEvent.dwControlKeyState, ir->Event.KeyEvent.wVirtualScanCode);
     return FALSE;
 }

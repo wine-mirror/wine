@@ -89,7 +89,7 @@ static inline void msvcrt_free_tls_mem(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-  TRACE("(%p, %s, %p) pid(%x), tid(%x), tls(%u)\n",
+  TRACE("(%p, %s, %p) pid(%lx), tid(%lx), tls(%lu)\n",
         hinstDLL, msvcrt_get_reason(fdwReason), lpvReserved,
         GetCurrentProcessId(), GetCurrentThreadId(),
         msvcrt_tls_index);

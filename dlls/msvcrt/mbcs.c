@@ -325,7 +325,10 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
 
   ret = MultiByteToWideChar(newcp, 0, bufA, charcount, bufW, charcount);
   if (ret != charcount)
-    ERR("MultiByteToWideChar of chars failed for cp %d, ret=%d (exp %d), error=%d\n", newcp, ret, charcount, GetLastError());
+  {
+    ERR("MultiByteToWideChar of chars failed for cp %d, ret=%d (exp %d), error=%ld\n",
+            newcp, ret, charcount, GetLastError());
+  }
 
   GetStringTypeW(CT_CTYPE1, bufW, charcount, chartypes);
   LCMapStringW(lcid, LCMAP_LOWERCASE, bufW, charcount, lowW, charcount);
@@ -350,7 +353,10 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
 
   ret = WideCharToMultiByte(newcp, 0, bufW, charcount, bufA, charcount, NULL, NULL);
   if (ret != charcount)
-    ERR("WideCharToMultiByte failed for cp %d, ret=%d (exp %d), error=%d\n", newcp, ret, charcount, GetLastError());
+  {
+    ERR("WideCharToMultiByte failed for cp %d, ret=%d (exp %d), error=%ld\n",
+            newcp, ret, charcount, GetLastError());
+  }
 
   charcount = 0;
   for (i = 0; i < 256; i++)
