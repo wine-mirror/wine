@@ -112,25 +112,25 @@ static void handle_UserFree(ULONG *pFlags, HANDLE *handle)
 #define IMPL_WIREM_HANDLE(type) \
     ULONG __RPC_USER type##_UserSize(ULONG *pFlags, ULONG StartingSize, type *handle) \
     { \
-        TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, handle); \
+        TRACE("%s, %lu, %p.\n", debugstr_user_flags(pFlags), StartingSize, handle); \
         return handle_UserSize(pFlags, StartingSize, (HANDLE *)handle); \
     } \
     \
     unsigned char * __RPC_USER type##_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
     { \
-        TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *handle); \
+        TRACE("%s, %p, &%p.\n", debugstr_user_flags(pFlags), pBuffer, *handle); \
         return handle_UserMarshal(pFlags, pBuffer, (HANDLE *)handle); \
     } \
     \
     unsigned char * __RPC_USER type##_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
     { \
-        TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, handle); \
+        TRACE("%s, %p, %p.\n", debugstr_user_flags(pFlags), pBuffer, handle); \
         return handle_UserUnmarshal(pFlags, pBuffer, (HANDLE *)handle); \
     } \
     \
     void __RPC_USER type##_UserFree(ULONG *pFlags, type *handle) \
     { \
-        TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *handle); \
+        TRACE("%s, &%p.\n", debugstr_user_flags(pFlags), *handle); \
         handle_UserFree(pFlags, (HANDLE *)handle); \
     }
 
@@ -163,7 +163,7 @@ IMPL_WIREM_HANDLE(HWND)
  */
 ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG size, CLIPFORMAT *pCF)
 {
-    TRACE("%s, %u, %p\n", debugstr_user_flags(pFlags), size, pCF);
+    TRACE("%s, %lu, %p.\n", debugstr_user_flags(pFlags), size, pCF);
 
     ALIGN_LENGTH(size, 3);
 
@@ -363,7 +363,7 @@ void __RPC_USER CLIPFORMAT_UserFree(ULONG *pFlags, CLIPFORMAT *pCF)
  */
 ULONG __RPC_USER HBITMAP_UserSize(ULONG *flags, ULONG size, HBITMAP *bmp)
 {
-    TRACE("(%s, %d, %p)\n", debugstr_user_flags(flags), size, *bmp);
+    TRACE("%s, %lu, %p.\n", debugstr_user_flags(flags), size, *bmp);
 
     ALIGN_LENGTH(size, 3);
 
@@ -642,7 +642,7 @@ ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *ph
 {
     ULONG size = StartingSize;
 
-    TRACE("%s, %u, %p.\n", debugstr_user_flags(pFlags), StartingSize, phGlobal);
+    TRACE("%s, %lu, %p.\n", debugstr_user_flags(pFlags), StartingSize, phGlobal);
 
     ALIGN_LENGTH(size, 3);
 
@@ -886,7 +886,7 @@ ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *pFlags, ULONG RealFlags, U
     DWORD marshal_size = 0;
     HRESULT hr;
 
-    TRACE("%s, %#x, %u, %p, %s.\n", debugstr_user_flags(pFlags), RealFlags, StartingSize, punk, debugstr_guid(riid));
+    TRACE("%s, %#lx, %lu, %p, %s.\n", debugstr_user_flags(pFlags), RealFlags, StartingSize, punk, debugstr_guid(riid));
 
     hr = CoGetMarshalSizeMax(&marshal_size, riid, punk, LOWORD(RealFlags), NULL, MSHLFLAGS_NORMAL);
     if (FAILED(hr)) return StartingSize;
@@ -923,7 +923,7 @@ unsigned char * WINAPI WdtpInterfacePointer_UserMarshal(ULONG *pFlags, ULONG Rea
     DWORD size;
     void *ptr;
 
-    TRACE("%s, %#x, %p, &%p, %s.\n", debugstr_user_flags(pFlags), RealFlags, pBuffer, punk, debugstr_guid(riid));
+    TRACE("%s, %#lx, %p, &%p, %s.\n", debugstr_user_flags(pFlags), RealFlags, pBuffer, punk, debugstr_guid(riid));
 
     if (!h) return NULL;
     if (CreateStreamOnHGlobal(h, TRUE, &stm) != S_OK)

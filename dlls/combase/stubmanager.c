@@ -74,7 +74,7 @@ struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *
     struct ifstub *stub;
     HRESULT hr;
 
-    TRACE("oid=%s, stubbuffer=%p, iid=%s, dest_context=%x\n", wine_dbgstr_longlong(m->oid), sb,
+    TRACE("oid=%s, stubbuffer=%p, iid=%s, dest_context=%lx\n", wine_dbgstr_longlong(m->oid), sb,
           debugstr_guid(iid), dest_context);
 
     stub = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct ifstub));
@@ -300,7 +300,7 @@ static ULONG stub_manager_int_addref(struct stub_manager *m)
     refs = ++m->refs;
     LeaveCriticalSection(&m->apt->cs);
 
-    TRACE("before %d\n", refs - 1);
+    TRACE("before %ld\n", refs - 1);
 
     return refs;
 }
@@ -314,7 +314,7 @@ ULONG stub_manager_int_release(struct stub_manager *m)
     EnterCriticalSection(&apt->cs);
     refs = --m->refs;
 
-    TRACE("after %d\n", refs);
+    TRACE("after %ld\n", refs);
 
     /* remove from apartment so no other thread can access it... */
     if (!refs)
@@ -341,7 +341,7 @@ struct stub_manager * get_stub_manager_from_object(struct apartment *apt, IUnkno
     hres = IUnknown_QueryInterface(obj, &IID_IUnknown, (void**)&object);
     if (FAILED(hres))
     {
-        ERR("QueryInterface(IID_IUnknown failed): %08x\n", hres);
+        ERR("QueryInterface(IID_IUnknown failed): %#lx\n", hres);
         return NULL;
     }
 
@@ -421,7 +421,7 @@ ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak
 
     LeaveCriticalSection(&m->lock);
 
-    TRACE("added %u refs to %p (oid %s), rc is now %u\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
+    TRACE("added %lu refs to %p (oid %s), rc is now %lu\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
 
     /*
      * NOTE: According to tests, creating a stub causes two AddConnection calls followed by
@@ -454,7 +454,7 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tablewea
 
     LeaveCriticalSection(&m->lock);
 
-    TRACE("removed %u refs from %p (oid %s), rc is now %u\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
+    TRACE("removed %lu refs from %p (oid %s), rc is now %lu\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
 
     if (last_extern_ref && m->extern_conn)
         IExternalConnection_ReleaseConnection(m->extern_conn, EXTCONN_STRONG, 0, last_unlock_releases);
@@ -672,7 +672,7 @@ static ULONG WINAPI RemUnknown_AddRef(IRemUnknown *iface)
 
     refs = InterlockedIncrement(&remunk->refs);
 
-    TRACE("%p before: %d\n", iface, refs-1);
+    TRACE("%p before: %ld\n", iface, refs-1);
     return refs;
 }
 
@@ -685,7 +685,7 @@ static ULONG WINAPI RemUnknown_Release(IRemUnknown *iface)
     if (!refs)
         HeapFree(GetProcessHeap(), 0, remunk);
 
-    TRACE("%p after: %d\n", iface, refs);
+    TRACE("%p after: %ld\n", iface, refs);
     return refs;
 }
 
@@ -702,7 +702,7 @@ static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
     DWORD dest_context;
     void *dest_context_data;
 
-    TRACE("%p, %s, %d, %d, %p, %p\n", iface, debugstr_guid(ripid), cRefs, cIids, iids, ppQIResults);
+    TRACE("%p, %s, %ld, %d, %p, %p.\n", iface, debugstr_guid(ripid), cRefs, cIids, iids, ppQIResults);
 
     hr = ipid_to_ifstub(ripid, &apt, &stubmgr, &ifstub);
     if (hr != S_OK) return hr;
@@ -755,7 +755,7 @@ static HRESULT WINAPI RemUnknown_RemAddRef(IRemUnknown *iface,
 
         stub_manager_ext_addref(stubmgr, InterfaceRefs[i].cPublicRefs, FALSE);
         if (InterfaceRefs[i].cPrivateRefs)
-            FIXME("Adding %d refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
+            FIXME("Adding %ld refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
 
         stub_manager_int_release(stubmgr);
         apartment_release(apt);
@@ -788,7 +788,7 @@ static HRESULT WINAPI RemUnknown_RemRelease(IRemUnknown *iface,
 
         stub_manager_ext_release(stubmgr, InterfaceRefs[i].cPublicRefs, FALSE, TRUE);
         if (InterfaceRefs[i].cPrivateRefs)
-            FIXME("Releasing %d refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
+            FIXME("Releasing %ld refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
 
         stub_manager_int_release(stubmgr);
         apartment_release(apt);

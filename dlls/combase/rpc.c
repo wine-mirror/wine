@@ -224,7 +224,7 @@ static BOOL start_rpcss(void)
         } while (status.dwCurrentState == SERVICE_START_PENDING);
 
         if (status.dwCurrentState != SERVICE_RUNNING)
-            WARN("RpcSs failed to start %u\n", status.dwCurrentState);
+            WARN("RpcSs failed to start %lu\n", status.dwCurrentState);
     }
     else
         ERR("Failed to start RpcSs service\n");
@@ -388,7 +388,7 @@ static DWORD start_local_service(const WCHAR *name, DWORD num, LPCWSTR *params)
     SC_HANDLE handle, hsvc;
     DWORD r = ERROR_FUNCTION_FAILED;
 
-    TRACE("Starting service %s %d params\n", debugstr_w(name), num);
+    TRACE("Starting service %s %ld params\n", debugstr_w(name), num);
 
     handle = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
     if (!handle)
@@ -408,7 +408,7 @@ static DWORD start_local_service(const WCHAR *name, DWORD num, LPCWSTR *params)
         r = GetLastError();
     CloseServiceHandle(handle);
 
-    TRACE("StartService returned error %u (%s)\n", r, (r == ERROR_SUCCESS) ? "ok":"failed");
+    TRACE("StartService returned error %lu (%s)\n", r, (r == ERROR_SUCCESS) ? "ok":"failed");
 
     return r;
 }
@@ -601,7 +601,7 @@ HRESULT rpc_register_local_server(REFCLSID clsid, IStream *stream, DWORD flags, 
     SIZE_T size;
     HRESULT hr;
 
-    TRACE("%s, %#x\n", debugstr_guid(clsid), flags);
+    TRACE("%s, %#lx\n", debugstr_guid(clsid), flags);
 
     hr = GetHGlobalFromStream(stream, &hmem);
     if (FAILED(hr)) return hr;
@@ -652,7 +652,7 @@ static ULONG ChannelHooks_ClientGetSize(SChannelHookCallInfo *info, struct chann
 
         IChannelHook_ClientGetSize(entry->hook, &entry->id, &info->iid, &extension_size);
 
-        TRACE("%s: extension_size = %u\n", debugstr_guid(&entry->id), extension_size);
+        TRACE("%s: extension_size = %lu\n", debugstr_guid(&entry->id), extension_size);
 
         extension_size = (extension_size+7)&~7;
         (*data)[hook_index].id = entry->id;
@@ -698,7 +698,7 @@ static unsigned char * ChannelHooks_ClientFillBuffer(SChannelHookCallInfo *info,
         IChannelHook_ClientFillBuffer(entry->hook, &entry->id, &info->iid,
             &extension_size, buffer + FIELD_OFFSET(WIRE_ORPC_EXTENT, data[0]));
 
-        TRACE("%s: extension_size = %u\n", debugstr_guid(&entry->id), extension_size);
+        TRACE("%s: extension_size = %lu\n", debugstr_guid(&entry->id), extension_size);
 
         /* FIXME: set unused portion of wire_orpc_extent->data to 0? */
 
@@ -771,7 +771,7 @@ static ULONG ChannelHooks_ServerGetSize(SChannelHookCallInfo *info,
         IChannelHook_ServerGetSize(entry->hook, &entry->id, &info->iid, S_OK,
                                    &extension_size);
 
-        TRACE("%s: extension_size = %u\n", debugstr_guid(&entry->id), extension_size);
+        TRACE("%s: extension_size = %lu\n", debugstr_guid(&entry->id), extension_size);
 
         extension_size = (extension_size+7)&~7;
         (*data)[hook_index].id = entry->id;
@@ -818,7 +818,7 @@ static unsigned char * ChannelHooks_ServerFillBuffer(SChannelHookCallInfo *info,
                                       &extension_size, buffer + FIELD_OFFSET(WIRE_ORPC_EXTENT, data[0]),
                                       S_OK);
 
-        TRACE("%s: extension_size = %u\n", debugstr_guid(&entry->id), extension_size);
+        TRACE("%s: extension_size = %lu\n", debugstr_guid(&entry->id), extension_size);
 
         /* FIXME: set unused portion of wire_orpc_extent->data to 0? */
 
@@ -1033,7 +1033,7 @@ static HRESULT WINAPI ServerRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     /* save away the message state again */
     msg->Handle = message_state;
 
-    TRACE("-- %d\n", status);
+    TRACE("-- %ld\n", status);
 
     return HRESULT_FROM_WIN32(status);
 }
@@ -1216,7 +1216,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
 
     HeapFree(GetProcessHeap(), 0, channel_hook_data);
 
-    TRACE("-- %d\n", status);
+    TRACE("-- %ld\n", status);
 
     return HRESULT_FROM_WIN32(status);
 }
@@ -1236,7 +1236,7 @@ static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
      * RPC functions do */
     data->status = I_RpcSendReceive((RPC_MESSAGE *)data->msg);
 
-    TRACE("completed with status 0x%x\n", data->status);
+    TRACE("completed with status %#lx\n", data->status);
 
     SetEvent(data->handle);
 
@@ -1267,7 +1267,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     struct apartment *apt = apartment_get_current_or_mta();
     struct tlsdata *tlsdata;
 
-    TRACE("(%p) iMethod=%d\n", olemsg, olemsg->iMethod);
+    TRACE("%p, iMethod %ld\n", olemsg, olemsg->iMethod);
 
     hr = ClientRpcChannelBuffer_IsCorrectApartment(This, apt);
     if (hr != S_OK)
@@ -1311,14 +1311,14 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     message_state->params.msg = olemsg;
     if (message_state->params.bypass_rpcrt)
     {
-        TRACE("Calling apartment thread 0x%08x...\n", message_state->target_tid);
+        TRACE("Calling apartment thread %#lx...\n", message_state->target_tid);
 
         msg->ProcNum &= ~RPC_FLAGS_VALID_BIT;
 
         if (!PostMessageW(message_state->target_hwnd, DM_EXECUTERPC, 0,
                           (LPARAM)&message_state->params))
         {
-            ERR("PostMessage failed with error %u\n", GetLastError());
+            ERR("PostMessage failed with error %lu\n", GetLastError());
 
             /* Note: message_state->params.iface doesn't have a reference and
              * so doesn't need to be released */
@@ -1336,7 +1336,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
          */
         if (!QueueUserWorkItem(rpc_sendreceive_thread, &message_state->params, WT_EXECUTEDEFAULT))
         {
-            ERR("QueueUserWorkItem failed with error %u\n", GetLastError());
+            ERR("QueueUserWorkItem failed with error %lu\n", GetLastError());
             hr = E_UNEXPECTED;
         }
         else
@@ -1363,11 +1363,11 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     orpcthat.flags = ORPCF_NULL;
     orpcthat.extensions = NULL;
 
-    TRACE("RPC call status: 0x%x\n", status);
+    TRACE("RPC call status: %#lx\n", status);
     if (status != RPC_S_OK)
         hr = HRESULT_FROM_WIN32(status);
 
-    TRACE("hrFault = 0x%08x\n", hrFault);
+    TRACE("hrFault = %#lx\n", hrFault);
 
     /* FIXME: this condition should be
      * "hr == S_OK && (!hrFault || msg->BufferLength > FIELD_OFFSET(ORPCTHAT, extensions) + 4)"
@@ -1407,7 +1407,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     if (hr == S_OK)
         hr = hrFault;
 
-    TRACE("-- 0x%08x\n", hr);
+    TRACE("-- %#lx\n", hr);
 
     apartment_release(apt);
     return hr;
@@ -1438,7 +1438,7 @@ static HRESULT WINAPI ServerRpcChannelBuffer_FreeBuffer(LPRPCCHANNELBUFFER iface
 
     msg->Handle = message_state;
 
-    TRACE("-- %d\n", status);
+    TRACE("-- %ld\n", status);
 
     return HRESULT_FROM_WIN32(status);
 }
@@ -1474,7 +1474,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_FreeBuffer(LPRPCCHANNELBUFFER iface
         IRpcChannelBuffer_Release(message_state->params.chan);
     HeapFree(GetProcessHeap(), 0, message_state);
 
-    TRACE("-- %d\n", status);
+    TRACE("-- %ld\n", status);
 
     return HRESULT_FROM_WIN32(status);
 }
@@ -1575,7 +1575,7 @@ HRESULT rpc_create_clientchannel(const OXID *oxid, const IPID *ipid,
 
     if (status != RPC_S_OK)
     {
-        ERR("Couldn't get binding for endpoint %s, status = %d\n", debugstr_w(endpoint), status);
+        ERR("Couldn't get binding for endpoint %s, status = %ld\n", debugstr_w(endpoint), status);
         return HRESULT_FROM_WIN32(status);
     }
 
@@ -1649,7 +1649,7 @@ static HRESULT unmarshal_ORPC_EXTENT_ARRAY(RPC_MESSAGE *msg, const char *end,
         /* arbitrary limit for security (don't know what native does) */
         if (extensions->size > 256)
         {
-            ERR("too many extensions: %d\n", extensions->size);
+            ERR("too many extensions: %ld\n", extensions->size);
             return RPC_S_INVALID_BOUND;
         }
 
@@ -1662,7 +1662,7 @@ static HRESULT unmarshal_ORPC_EXTENT_ARRAY(RPC_MESSAGE *msg, const char *end,
                 return RPC_S_INVALID_BOUND;
             if ((const char *)&wire_orpc_extent->data[wire_orpc_extent->conformance] > end)
                 return RPC_S_INVALID_BOUND;
-            TRACE("size %u, guid %s\n", wire_orpc_extent->size, debugstr_guid(&wire_orpc_extent->id));
+            TRACE("size %lu, guid %s\n", wire_orpc_extent->size, debugstr_guid(&wire_orpc_extent->id));
             wire_orpc_extent = (WIRE_ORPC_EXTENT *)&wire_orpc_extent->data[wire_orpc_extent->conformance];
         }
         msg->Buffer = wire_orpc_extent;
@@ -1716,7 +1716,7 @@ static HRESULT unmarshal_ORPCTHIS(RPC_MESSAGE *msg, ORPCTHIS *orpcthis,
 
     if (orpcthis->flags & ~(ORPCF_LOCAL|ORPCF_RESERVED1|ORPCF_RESERVED2|ORPCF_RESERVED3|ORPCF_RESERVED4))
     {
-        ERR("invalid flags 0x%x\n", orpcthis->flags & ~(ORPCF_LOCAL|ORPCF_RESERVED1|ORPCF_RESERVED2|ORPCF_RESERVED3|ORPCF_RESERVED4));
+        ERR("invalid flags %#lx\n", orpcthis->flags & ~(ORPCF_LOCAL|ORPCF_RESERVED1|ORPCF_RESERVED2|ORPCF_RESERVED3|ORPCF_RESERVED4));
         return RPC_E_INVALID_HEADER;
     }
 
@@ -1759,7 +1759,7 @@ static HRESULT unmarshal_ORPCTHAT(RPC_MESSAGE *msg, ORPCTHAT *orpcthat,
 
     if (orpcthat->flags & ~(ORPCF_LOCAL|ORPCF_RESERVED1|ORPCF_RESERVED2|ORPCF_RESERVED3|ORPCF_RESERVED4))
     {
-        ERR("invalid flags 0x%x\n", orpcthat->flags & ~(ORPCF_LOCAL|ORPCF_RESERVED1|ORPCF_RESERVED2|ORPCF_RESERVED3|ORPCF_RESERVED4));
+        ERR("invalid flags %#lx\n", orpcthat->flags & ~(ORPCF_LOCAL|ORPCF_RESERVED1|ORPCF_RESERVED2|ORPCF_RESERVED3|ORPCF_RESERVED4));
         return RPC_E_INVALID_HEADER;
     }
 
@@ -1842,7 +1842,7 @@ void rpc_execute_call(struct dispatch_params *params)
                                                        UlongToHandle(GetCurrentProcessId()),
                                                        0 /* FIXME */,
                                                        &interface_info);
-        TRACE("IMessageFilter_HandleInComingCall returned %d\n", handlecall);
+        TRACE("IMessageFilter_HandleInComingCall returned %ld\n", handlecall);
         switch (handlecall)
         {
         case SERVERCALL_REJECTED:
@@ -1931,13 +1931,13 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     {
         params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-        TRACE("Calling apartment thread 0x%08x...\n", apt->tid);
+        TRACE("Calling apartment thread %#lx...\n", apt->tid);
 
         if (PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
             WaitForSingleObject(params->handle, INFINITE);
         else
         {
-            ERR("PostMessage failed with error %u\n", GetLastError());
+            ERR("PostMessage failed with error %lu\n", GetLastError());
             IRpcChannelBuffer_Release(params->chan);
             IRpcStubBuffer_Release(params->stub);
         }
@@ -2022,7 +2022,7 @@ HRESULT rpc_register_interface(REFIID riid)
                 list_add_tail(&registered_interfaces, &rif->entry);
             else
             {
-                ERR("RpcServerRegisterIfEx failed with error %d\n", status);
+                ERR("RpcServerRegisterIfEx failed with error %ld\n", status);
                 HeapFree(GetProcessHeap(), 0, rif);
                 hr = HRESULT_FROM_WIN32(status);
             }
@@ -2115,6 +2115,6 @@ BOOL WINAPI DllDebugObjectRPCHook(BOOL trace, /* ORPC_INIT_ARGS * */ void *args)
  */
 HRESULT WINAPI CoDecodeProxy(DWORD client_pid, UINT64 proxy_addr, ServerInformation *server_info)
 {
-    FIXME("%x %s %p\n", client_pid, wine_dbgstr_longlong(proxy_addr), server_info);
+    FIXME("%lx, %s, %p.\n", client_pid, wine_dbgstr_longlong(proxy_addr), server_info);
     return E_NOTIMPL;
 }

@@ -111,7 +111,7 @@ static ULONG WINAPI errorinfo_AddRef(IErrorInfo *iface)
     struct error_info *error_info = impl_from_IErrorInfo(iface);
     ULONG refcount = InterlockedIncrement(&error_info->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -121,7 +121,7 @@ static ULONG WINAPI errorinfo_Release(IErrorInfo *iface)
     struct error_info *error_info = impl_from_IErrorInfo(iface);
     ULONG refcount = InterlockedDecrement(&error_info->refcount);
 
-    TRACE("%p, refcount %u.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -275,7 +275,7 @@ static HRESULT WINAPI create_errorinfo_SetHelpContext(ICreateErrorInfo *iface, D
 {
     struct error_info *error_info = impl_from_ICreateErrorInfo(iface);
 
-    TRACE("%p, %#x.\n", iface, help_context);
+    TRACE("%p, %#lx.\n", iface, help_context);
 
     error_info->help_context = help_context;
 
@@ -365,7 +365,7 @@ HRESULT WINAPI GetErrorInfo(ULONG reserved, IErrorInfo **error_info)
     struct tlsdata *tlsdata;
     HRESULT hr;
 
-    TRACE("%u, %p\n", reserved, error_info);
+    TRACE("%lu, %p\n", reserved, error_info);
 
     if (reserved || !error_info)
         return E_INVALIDARG;
@@ -393,7 +393,7 @@ HRESULT WINAPI SetErrorInfo(ULONG reserved, IErrorInfo *error_info)
     struct tlsdata *tlsdata;
     HRESULT hr;
 
-    TRACE("%u, %p\n", reserved, error_info);
+    TRACE("%lu, %p\n", reserved, error_info);
 
     if (reserved)
         return E_INVALIDARG;

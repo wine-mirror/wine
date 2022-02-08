@@ -465,7 +465,7 @@ static ULONG WINAPI global_options_AddRef(IGlobalOptions *iface)
     struct global_options *options = impl_from_IGlobalOptions(iface);
     LONG refcount = InterlockedIncrement(&options->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     return refcount;
 }
@@ -475,7 +475,7 @@ static ULONG WINAPI global_options_Release(IGlobalOptions *iface)
     struct global_options *options = impl_from_IGlobalOptions(iface);
     LONG refcount = InterlockedDecrement(&options->refcount);
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
         heap_free(options);
@@ -485,7 +485,7 @@ static ULONG WINAPI global_options_Release(IGlobalOptions *iface)
 
 static HRESULT WINAPI global_options_Set(IGlobalOptions *iface, GLOBALOPT_PROPERTIES property, ULONG_PTR value)
 {
-    FIXME("%p, %u, %lx.\n", iface, property, value);
+    FIXME("%p, %u, %Ix.\n", iface, property, value);
 
     return S_OK;
 }
@@ -587,7 +587,7 @@ HRESULT WINAPI FreePropVariantArray(ULONG count, PROPVARIANT *rgvars)
 {
     ULONG i;
 
-    TRACE("%u, %p.\n", count, rgvars);
+    TRACE("%lu, %p.\n", count, rgvars);
 
     if (!rgvars)
         return E_INVALIDARG;
@@ -1030,7 +1030,7 @@ HRESULT WINAPI CoQueryProxyBlanket(IUnknown *proxy, DWORD *authn_service,
         IClientSecurity_Release(client_security);
     }
 
-    if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
+    if (FAILED(hr)) ERR("-- failed with %#lx.\n", hr);
     return hr;
 }
 
@@ -1043,7 +1043,7 @@ HRESULT WINAPI CoSetProxyBlanket(IUnknown *proxy, DWORD authn_service, DWORD aut
     IClientSecurity *client_security;
     HRESULT hr;
 
-    TRACE("%p, %u, %u, %p, %u, %u, %p, %#x.\n", proxy, authn_service, authz_service, servername,
+    TRACE("%p, %lu, %lu, %p, %lu, %lu, %p, %#lx.\n", proxy, authn_service, authz_service, servername,
             authn_level, imp_level, auth_info, capabilities);
 
     hr = IUnknown_QueryInterface(proxy, &IID_IClientSecurity, (void **)&client_security);
@@ -1054,7 +1054,7 @@ HRESULT WINAPI CoSetProxyBlanket(IUnknown *proxy, DWORD authn_service, DWORD aut
         IClientSecurity_Release(client_security);
     }
 
-    if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
+    if (FAILED(hr)) ERR("-- failed with %#lx.\n", hr);
     return hr;
 }
 
@@ -1075,7 +1075,7 @@ HRESULT WINAPI CoCopyProxy(IUnknown *proxy, IUnknown **proxy_copy)
         IClientSecurity_Release(client_security);
     }
 
-    if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
+    if (FAILED(hr)) ERR("-- failed with %#lx.\n", hr);
     return hr;
 }
 
@@ -1149,7 +1149,7 @@ HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR sd, LONG cAuthSvc,
         SOLE_AUTHENTICATION_SERVICE *asAuthSvc, void *reserved1, DWORD authn_level,
         DWORD imp_level, void *reserved2, DWORD capabilities, void *reserved3)
 {
-    FIXME("%p, %d, %p, %p, %d, %d, %p, %d, %p stub\n", sd, cAuthSvc, asAuthSvc, reserved1, authn_level,
+    FIXME("%p, %ld, %p, %p, %ld, %ld, %p, %ld, %p stub\n", sd, cAuthSvc, asAuthSvc, reserved1, authn_level,
             imp_level, reserved2, capabilities, reserved3);
 
     return S_OK;
@@ -1198,7 +1198,7 @@ HRESULT WINAPI CoGetCallState(int arg1, ULONG *arg2)
  */
 HRESULT WINAPI CoGetActivationState(GUID guid, DWORD arg2, DWORD *arg3)
 {
-    FIXME("%s, %x, %p.\n", debugstr_guid(&guid), arg2, arg3);
+    FIXME("%s, %lx, %p.\n", debugstr_guid(&guid), arg2, arg3);
 
     return E_NOTIMPL;
 }
@@ -1235,7 +1235,7 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, CLSID *clsidNew)
 
     hr = CLSIDFromString(buffW, clsidNew);
     if (FAILED(hr))
-        ERR("Failed to get CLSID from string %s, hr %#x.\n", debugstr_w(buffW), hr);
+        ERR("Failed to get CLSID from string %s, hr %#lx.\n", debugstr_w(buffW), hr);
 done:
     if (hkey) RegCloseKey(hkey);
     return hr;
@@ -1667,7 +1667,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(REFCLSID rclsid, IUnknown *out
     MULTI_QI multi_qi = { .pIID = riid };
     HRESULT hr;
 
-    TRACE("%s, %p, %#x, %s, %p.\n", debugstr_guid(rclsid), outer, cls_context, debugstr_guid(riid), obj);
+    TRACE("%s, %p, %#lx, %s, %p.\n", debugstr_guid(rclsid), outer, cls_context, debugstr_guid(riid), obj);
 
     if (!obj)
         return E_POINTER;
@@ -1683,7 +1683,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(REFCLSID rclsid, IUnknown *out
 HRESULT WINAPI CoCreateInstanceFromApp(REFCLSID rclsid, IUnknown *outer, DWORD cls_context,
         void *server_info, ULONG count, MULTI_QI *results)
 {
-    TRACE("%s, %p, %#x, %p, %u, %p\n", debugstr_guid(rclsid), outer, cls_context, server_info,
+    TRACE("%s, %p, %#lx, %p, %lu, %p\n", debugstr_guid(rclsid), outer, cls_context, server_info,
             count, results);
 
     return CoCreateInstanceEx(rclsid, outer, cls_context | CLSCTX_APPCONTAINER, server_info,
@@ -1850,7 +1850,7 @@ static HRESULT com_get_class_object(REFCLSID rclsid, DWORD clscontext,
     }
 
     if (FAILED(hr))
-        ERR("no class object %s could be created for context %#x\n", debugstr_guid(rclsid), clscontext);
+        ERR("no class object %s could be created for context %#lx\n", debugstr_guid(rclsid), clscontext);
 
     return hr;
 }
@@ -1866,7 +1866,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(REFCLSID rclsid, IUnknown *o
     CLSID clsid;
     HRESULT hr;
 
-    TRACE("%s, %p, %#x, %p, %u, %p\n", debugstr_guid(rclsid), outer, cls_context, server_info, count, results);
+    TRACE("%s, %p, %#lx, %p, %lu, %p\n", debugstr_guid(rclsid), outer, cls_context, server_info, count, results);
 
     if (!count || !results)
         return E_INVALIDARG;
@@ -1890,7 +1890,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(REFCLSID rclsid, IUnknown *o
         if (hr == CLASS_E_NOAGGREGATION && outer)
             FIXME("Class %s does not support aggregation\n", debugstr_guid(&clsid));
         else
-            FIXME("no instance created for interface %s of class %s, hr %#x.\n",
+            FIXME("no instance created for interface %s of class %s, hr %#lx.\n",
                     debugstr_guid(results[0].pIID), debugstr_guid(&clsid), hr);
         return hr;
     }
@@ -1904,7 +1904,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(REFCLSID rclsid, IUnknown *o
 HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(REFCLSID rclsid, DWORD clscontext,
         COSERVERINFO *server_info, REFIID riid, void **obj)
 {
-    TRACE("%s, %#x, %s\n", debugstr_guid(rclsid), clscontext, debugstr_guid(riid));
+    TRACE("%s, %#lx, %s\n", debugstr_guid(rclsid), clscontext, debugstr_guid(riid));
 
     return com_get_class_object(rclsid, clscontext, server_info, riid, obj);
 }
@@ -2053,7 +2053,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
     UINT exit_code;
     HRESULT hr;
 
-    TRACE("%#x, %#x, %u, %p, %p\n", flags, timeout, handle_count, handles, index);
+    TRACE("%#lx, %#lx, %lu, %p, %p\n", flags, timeout, handle_count, handles, index);
 
     if (!index)
         return E_INVALIDARG;
@@ -2118,7 +2118,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
                     PENDINGTYPE pendingtype = tlsdata->pending_call_count_server ? PENDINGTYPE_NESTED : PENDINGTYPE_TOPLEVEL;
                     DWORD be_handled = IMessageFilter_MessagePending(apt->filter, 0 /* FIXME */, now - start_time, pendingtype);
 
-                    TRACE("IMessageFilter_MessagePending returned %d\n", be_handled);
+                    TRACE("IMessageFilter_MessagePending returned %ld\n", be_handled);
 
                     switch (be_handled)
                     {
@@ -2188,7 +2188,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
     }
     if (post_quit) PostQuitMessage(exit_code);
 
-    TRACE("-- 0x%08x\n", hr);
+    TRACE("-- %#lx\n", hr);
 
     return hr;
 }
@@ -2562,7 +2562,7 @@ static ULONG WINAPI thread_object_context_Release(IObjContext *iface)
 
 static HRESULT WINAPI thread_object_context_SetProperty(IObjContext *iface, REFGUID propid, CPFLAGS flags, IUnknown *punk)
 {
-    FIXME("%p, %s, %x, %p\n", iface, debugstr_guid(propid), flags, punk);
+    FIXME("%p, %s, %lx, %p\n", iface, debugstr_guid(propid), flags, punk);
 
     return E_NOTIMPL;
 }
@@ -2771,7 +2771,7 @@ static void unlock_init_spies(struct tlsdata *tlsdata)
  */
 HRESULT WINAPI CoInitializeWOW(DWORD arg1, DWORD arg2)
 {
-    FIXME("%#x, %#x\n", arg1, arg2);
+    FIXME("%#lx, %#lx\n", arg1, arg2);
 
     return S_OK;
 }
@@ -2785,7 +2785,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(void *reserved, DWORD model)
     struct init_spy *cursor;
     HRESULT hr;
 
-    TRACE("%p, %#x\n", reserved, model);
+    TRACE("%p, %#lx\n", reserved, model);
 
     if (reserved)
         WARN("Unexpected reserved argument %p\n", reserved);
@@ -2868,7 +2868,7 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
     }
     else if (lockcount < 1)
     {
-        ERR("Unbalanced lock count %d\n", lockcount);
+        ERR("Unbalanced lock count %ld\n", lockcount);
         InterlockedExchangeAdd(&com_lockcount, 1);
     }
 
@@ -2956,7 +2956,7 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid, IUnknown *object, DWORD cl
     struct apartment *apt;
     HRESULT hr = S_OK;
 
-    TRACE("%s, %p, %#x, %#x, %p\n", debugstr_guid(rclsid), object, clscontext, flags, cookie);
+    TRACE("%s, %p, %#lx, %#lx, %p\n", debugstr_guid(rclsid), object, clscontext, flags, cookie);
 
     if (!cookie || !object)
         return E_INVALIDARG;
@@ -3089,7 +3089,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoRevokeClassObject(DWORD cookie)
     struct registered_class *cur;
     struct apartment *apt;
 
-    TRACE("%#x\n", cookie);
+    TRACE("%#lx\n", cookie);
 
     if (!(apt = apartment_get_current_or_mta()))
     {
@@ -3137,7 +3137,7 @@ ULONG WINAPI CoAddRefServerProcess(void)
     refs = ++com_server_process_refcount;
     LeaveCriticalSection(&registered_classes_cs);
 
-    TRACE("refs before: %d\n", refs - 1);
+    TRACE("refs before: %ld\n", refs - 1);
 
     return refs;
 }
@@ -3158,7 +3158,7 @@ ULONG WINAPI CoReleaseServerProcess(void)
 
     LeaveCriticalSection(&registered_classes_cs);
 
-    TRACE("refs after: %d\n", refs);
+    TRACE("refs after: %ld\n", refs);
 
     return refs;
 }
@@ -3173,7 +3173,7 @@ HRESULT WINAPI CoDisconnectObject(IUnknown *object, DWORD reserved)
     IMarshal *marshal;
     HRESULT hr;
 
-    TRACE("%p, %#x\n", object, reserved);
+    TRACE("%p, %#lx\n", object, reserved);
 
     if (!object)
         return E_INVALIDARG;
@@ -3360,7 +3360,7 @@ HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 {
-    TRACE("%p 0x%x %p\n", hinstDLL, reason, reserved);
+    TRACE("%p, %#lx, %p\n", hinstDLL, reason, reserved);
 
     switch (reason)
     {

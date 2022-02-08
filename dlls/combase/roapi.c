@@ -286,7 +286,7 @@ HRESULT WINAPI GetRestrictedErrorInfo(IRestrictedErrorInfo **info)
  */
 BOOL WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown *language_exception)
 {
-    FIXME("(%x %s %p) stub\n", error, debugstr_hstring(message), language_exception);
+    FIXME("%#lx, %s, %p: stub\n", error, debugstr_hstring(message), language_exception);
     return FALSE;
 }
 
@@ -295,7 +295,7 @@ BOOL WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknow
  */
 BOOL WINAPI RoOriginateError(HRESULT error, HSTRING message)
 {
-    FIXME("(%x %s) stub\n", error, debugstr_hstring(message));
+    FIXME("%#lx, %s: stub\n", error, debugstr_hstring(message));
     return FALSE;
 }
 
