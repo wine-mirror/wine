@@ -69,7 +69,7 @@ static ULONG WINAPI IDirectMusicBandImpl_AddRef(IDirectMusicBand *iface)
     IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
@@ -79,7 +79,7 @@ static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
     IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -213,30 +213,30 @@ static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_INSTRUMENT_CHUNK: {
       TRACE_(dmfile)(": Instrument chunk\n");
       if (Chunk.dwSize != sizeof(DMUS_IO_INSTRUMENT) && Chunk.dwSize != DMUS_IO_INSTRUMENT_DX7_SIZE) {
-        ERR_(dmfile)("unexpected size %d\n", Chunk.dwSize);
+        ERR_(dmfile)("unexpected size %ld\n", Chunk.dwSize);
         return E_FAIL;
       }
       IStream_Read (pStm, &inst, Chunk.dwSize, NULL);
       if (Chunk.dwSize != sizeof(DMUS_IO_INSTRUMENT))
         inst.nPitchBendRange = 0;
 
-      TRACE_(dmfile)(" - dwPatch: %u\n", inst.dwPatch);
-      TRACE_(dmfile)(" - dwAssignPatch: %u\n", inst.dwAssignPatch);
-      TRACE_(dmfile)(" - dwNoteRanges[0]: %u\n", inst.dwNoteRanges[0]);
-      TRACE_(dmfile)(" - dwNoteRanges[1]: %u\n", inst.dwNoteRanges[1]);
-      TRACE_(dmfile)(" - dwNoteRanges[2]: %u\n", inst.dwNoteRanges[2]);
-      TRACE_(dmfile)(" - dwNoteRanges[3]: %u\n", inst.dwNoteRanges[3]);
-      TRACE_(dmfile)(" - dwPChannel: %u\n", inst.dwPChannel);
-      TRACE_(dmfile)(" - dwFlags: %x\n", inst.dwFlags);
+      TRACE_(dmfile)(" - dwPatch: %lu\n", inst.dwPatch);
+      TRACE_(dmfile)(" - dwAssignPatch: %lu\n", inst.dwAssignPatch);
+      TRACE_(dmfile)(" - dwNoteRanges[0]: %lu\n", inst.dwNoteRanges[0]);
+      TRACE_(dmfile)(" - dwNoteRanges[1]: %lu\n", inst.dwNoteRanges[1]);
+      TRACE_(dmfile)(" - dwNoteRanges[2]: %lu\n", inst.dwNoteRanges[2]);
+      TRACE_(dmfile)(" - dwNoteRanges[3]: %lu\n", inst.dwNoteRanges[3]);
+      TRACE_(dmfile)(" - dwPChannel: %lu\n", inst.dwPChannel);
+      TRACE_(dmfile)(" - dwFlags: %lx\n", inst.dwFlags);
       TRACE_(dmfile)(" - bPan: %u\n", inst.bPan);
       TRACE_(dmfile)(" - bVolume: %u\n", inst.bVolume);
       TRACE_(dmfile)(" - nTranspose: %d\n", inst.nTranspose);
-      TRACE_(dmfile)(" - dwChannelPriority: %u\n", inst.dwChannelPriority);
+      TRACE_(dmfile)(" - dwChannelPriority: %lu\n", inst.dwChannelPriority);
       TRACE_(dmfile)(" - nPitchBendRange: %d\n", inst.nPitchBendRange);
       break;
     } 
@@ -272,7 +272,7 @@ static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *
       break;						
     }
     }
-    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
+    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
   
   /*
@@ -321,7 +321,7 @@ static HRESULT parse_instruments_list(IDirectMusicBandImpl *This, DMUS_PRIVATE_C
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case FOURCC_LIST: {
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
@@ -351,7 +351,7 @@ static HRESULT parse_instruments_list(IDirectMusicBandImpl *This, DMUS_PRIVATE_C
       break;						
     }
     }
-    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
+    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
   } while (ListCount[0] < ListSize[0]);
 
   return S_OK;
@@ -378,7 +378,7 @@ static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *p
   do {
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
     hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, &This->dmobj.desc);
     if (FAILED(hr)) return hr;
@@ -402,7 +402,7 @@ static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *p
 	  do {
 	    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-            TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+            TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
             hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &This->dmobj.desc);
 	    if (FAILED(hr)) return hr;
@@ -417,7 +417,7 @@ static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *p
 	      }
 	      }
 	    }
-            TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
+            TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
 	  } while (ListCount[0] < ListSize[0]);
 	  break;
 	}
@@ -444,7 +444,7 @@ static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *p
       }
       }
     }
-    TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
+    TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
   } while (StreamCount < StreamSize);  
 
   return S_OK;
@@ -465,11 +465,11 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
   TRACE("(%p,%p): loading\n", This, pStm);
   
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {
   case FOURCC_RIFF: {
     IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case DMUS_FOURCC_BAND_FORM: {
       TRACE_(dmfile)(": Band form\n");
