@@ -93,7 +93,7 @@ struct window
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
     int              nb_extra_bytes;  /* number of extra bytes */
-    char             extra_bytes[1];  /* extra bytes storage */
+    char            *extra_bytes;     /* extra bytes storage */
 };
 
 /* flags that can be set by the client */
@@ -483,7 +483,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         goto failed;
     }
 
-    if (!(win = mem_alloc( sizeof(*win) + extra_bytes - 1 ))) goto failed;
+    if (!(win = mem_alloc( sizeof(*win) ))) goto failed;
     if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
 
     win->parent         = parent;
@@ -511,11 +511,18 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
     win->properties     = NULL;
-    win->nb_extra_bytes = extra_bytes;
+    win->nb_extra_bytes = 0;
+    win->extra_bytes    = NULL;
     win->window_rect = win->visible_rect = win->surface_rect = win->client_rect = empty_rect;
-    memset( win->extra_bytes, 0, extra_bytes );
     list_init( &win->children );
     list_init( &win->unlinked );
+
+    if (extra_bytes)
+    {
+        if (!(win->extra_bytes = mem_alloc( extra_bytes ))) goto failed;
+        memset( win->extra_bytes, 0, extra_bytes );
+        win->nb_extra_bytes = extra_bytes;
+    }
 
     /* if parent belongs to a different thread and the window isn't */
     /* top-level, attach the two threads */
@@ -553,6 +560,7 @@ failed:
     if (win)
     {
         if (win->handle) free_user_handle( win->handle );
+        free( win->extra_bytes );
         free( win );
     }
     release_object( desktop );
@@ -1920,7 +1928,11 @@ void destroy_window( struct window *win )
     if (win->update_region) free_region( win->update_region );
     if (win->class) release_class( win->class );
     free( win->text );
-    memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
+    if (win->nb_extra_bytes)
+    {
+        memset( win->extra_bytes, 0x55, win->nb_extra_bytes );
+        free( win->extra_bytes );
+    }
     free( win );
 }
 
