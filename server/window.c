@@ -2025,7 +2025,15 @@ DECL_HANDLER(create_window)
     atom_t atom;
 
     reply->handle = 0;
-    if (req->parent && !(parent = get_window( req->parent ))) return;
+    if (req->parent)
+    {
+        if (!(parent = get_window( req->parent ))) return;
+        if (is_orphan_window( parent ))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+    }
 
     if (req->owner)
     {

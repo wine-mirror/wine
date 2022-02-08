@@ -765,7 +765,7 @@ static LRESULT CALLBACK test_thread_exit_wnd_proc( HWND hwnd, UINT msg, WPARAM w
 static void test_thread_exit_destroy(void)
 {
     struct test_thread_exit_parent_params params;
-    HWND adopter, child1, child2, child3;
+    HWND adopter, child1, child2, child3, child;
     WNDPROC old_wndproc, wndproc;
     WCHAR buffer[MAX_PATH];
     HANDLE thread;
@@ -888,6 +888,14 @@ static void test_thread_exit_destroy(void)
     ok( HandleToULong(tmp) == 0xdeadbeef, "GetPropW returned %p\n", tmp );
     tmp = GetPropW( child2, L"myprop" );
     ok( HandleToULong(tmp) == 0xdeadbeef, "GetPropW returned %p\n", tmp );
+
+    child = CreateWindowExA( 0, "ToolWindowClass", "Tool window 1", WS_CHILD,
+                             0, 0, 100, 100, child1, 0, 0, NULL );
+    ok( !child && GetLastError() == ERROR_INVALID_PARAMETER,
+        "CreateWindowExA returned %p %u\n", child, GetLastError() );
+
+    ret = MoveWindow( child1, 5, 5, 10, 10, FALSE );
+    ok( ret, "MoveWindow failed: %u\n", GetLastError() );
 
     /* destroying child1 ourselves succeeds */
     ret = DestroyWindow( child1 );
@@ -12789,7 +12797,8 @@ static void test_DragDetect(void)
 static LRESULT WINAPI ncdestroy_test_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     unsigned int ret;
-    HWND parent;
+    HWND parent, child;
+    RECT rect, exp;
 
     switch (msg)
     {
@@ -12805,6 +12814,25 @@ static LRESULT WINAPI ncdestroy_test_proc( HWND hwnd, UINT msg, WPARAM wp, LPARA
         parent = SetParent( hwnd, hwndMain );
         ok( parent == 0, "SetParent returned %p\n", parent );
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+
+        ret = GetWindowRect( hwnd, &rect );
+        ok( ret, "GetWindowRect failed: %u\n", GetLastError() );
+        SetRect( &exp, 10, 20, 110, 220 );
+        ok( EqualRect( &rect, &exp ), "unexpected rect %s, expected %s\n", wine_dbgstr_rect( &rect ),
+            wine_dbgstr_rect( &exp ));
+
+        ret = MoveWindow( hwnd, 11, 12, 20, 30, FALSE );
+        ok( ret, "MoveWindow failed: %u\n", GetLastError() );
+        ret = GetWindowRect( hwnd, &rect );
+        ok( ret, "GetWindowRect failed: %u\n", GetLastError() );
+        SetRect( &exp, 11, 12, 31, 42 );
+        ok( EqualRect( &rect, &exp ), "unexpected rect %s, expected %s\n", wine_dbgstr_rect( &rect ),
+            wine_dbgstr_rect( &exp ));
+
+        child = CreateWindowExA( 0, "ToolWindowClass", "Tool window 1", WS_CHILD,
+                                 0, 0, 100, 100, hwnd, 0, 0, NULL );
+        ok( !child && GetLastError() == ERROR_INVALID_PARAMETER,
+            "CreateWindowExA returned %p %u\n", child, GetLastError() );
         break;
     }
 
@@ -12816,6 +12844,7 @@ static void test_ncdestroy(void)
     HWND hwnd;
     hwnd = create_tool_window( WS_POPUP, 0 );
     SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)ncdestroy_test_proc );
+    MoveWindow( hwnd, 10, 20, 100, 200, FALSE );
     DestroyWindow(hwnd);
 }
 
