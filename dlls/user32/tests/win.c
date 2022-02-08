@@ -865,16 +865,13 @@ static void test_thread_exit_destroy(void)
     SetLastError( 0xdeadbeef );
     tmp = SetParent( child1, adopter );
     ok( tmp == 0, "SetParent returned %p\n", tmp );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     tmp = SetParent( child3, adopter );
     ok( tmp == 0, "SetParent returned %p\n", tmp );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     tmp = GetParent( child1 );
-    todo_wine
     ok( tmp == params.hwnd, "GetParent returned %p, error %u\n", tmp, GetLastError() );
     ok( GetLastError() == 0xdeadbeef, "GetWindowLongW error %u\n", GetLastError() );
 

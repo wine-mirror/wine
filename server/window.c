@@ -200,6 +200,14 @@ static inline int is_desktop_window( const struct window *win )
     return !win->parent;  /* only desktop windows have no parent */
 }
 
+/* check if window is orphaned */
+static int is_orphan_window( struct window *win )
+{
+    do if (!win->handle) return 1;
+    while ((win = win->parent));
+    return 0;
+}
+
 /* get next window in Z-order list */
 static inline struct window *get_next_window( struct window *win )
 {
@@ -2066,7 +2074,7 @@ DECL_HANDLER(set_parent)
     if (!(win = get_window( req->handle ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
 
-    if (is_desktop_window(win))
+    if (is_desktop_window(win) || is_orphan_window( win ) || (parent && is_orphan_window( parent )))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;

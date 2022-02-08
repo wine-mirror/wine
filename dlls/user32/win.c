@@ -3374,7 +3374,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     {
         req->handle = wine_server_user_handle( hwnd );
         req->parent = wine_server_user_handle( parent );
-        if ((ret = !wine_server_call( req )))
+        if ((ret = !wine_server_call_err( req )))
         {
             old_parent = wine_server_ptr_handle( reply->old_parent );
             wndPtr->parent = parent = wine_server_ptr_handle( reply->full_parent );
