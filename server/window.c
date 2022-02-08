@@ -170,6 +170,12 @@ static void window_destroy( struct object *obj )
 
     assert( !win->handle );
 
+    if (win->parent)
+    {
+        list_remove( &win->entry );
+        release_object( win->parent );
+    }
+
     if (win->win_region) free_region( win->win_region );
     if (win->update_region) free_region( win->update_region );
     if (win->class) release_class( win->class );
@@ -312,7 +318,8 @@ static int set_parent_window( struct window *win, struct window *parent )
 
     if (parent)
     {
-        win->parent = parent;
+        if (win->parent) release_object( win->parent );
+        win->parent = (struct window *)grab_object( parent );
         link_window( win, WINPTR_TOP );
 
         if (!is_desktop_window( parent ))
@@ -537,7 +544,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     }
 
     if (!(win = alloc_object( &window_ops ))) goto failed;
-    win->parent         = parent;
+    win->parent         = parent ? (struct window *)grab_object( parent ) : NULL;
     win->owner          = owner ? owner->handle : 0;
     win->thread         = current;
     win->desktop        = desktop;
@@ -1935,6 +1942,8 @@ static void set_window_region( struct window *win, struct region *region, int re
 /* destroy a window */
 void free_window_handle( struct window *win )
 {
+    struct window *child, *next;
+
     assert( win->handle );
 
     /* hide the window */
@@ -1953,10 +1962,16 @@ void free_window_handle( struct window *win )
     }
 
     /* destroy all children */
-    while (!list_empty(&win->children))
-        free_window_handle( LIST_ENTRY( list_head(&win->children), struct window, entry ));
-    while (!list_empty(&win->unlinked))
-        free_window_handle( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
+    LIST_FOR_EACH_ENTRY_SAFE( child, next, &win->children, struct window, entry )
+    {
+        if (!child->handle) continue;
+        free_window_handle( child );
+    }
+    LIST_FOR_EACH_ENTRY_SAFE( child, next, &win->children, struct window, entry )
+    {
+        if (!child->handle) continue;
+        free_window_handle( child );
+    }
 
     /* reset global window pointers, if the corresponding window is destroyed */
     if (win == shell_window) shell_window = NULL;
@@ -1966,7 +1981,6 @@ void free_window_handle( struct window *win )
     free_hotkeys( win->desktop, win->handle );
     cleanup_clipboard_window( win->desktop, win->handle );
     destroy_properties( win );
-    list_remove( &win->entry );
     if (is_desktop_window(win))
     {
         struct desktop *desktop = win->desktop;
@@ -1981,6 +1995,7 @@ void free_window_handle( struct window *win )
 
     detach_window_thread( win );
 
+    if (win->parent) set_parent_window( win, NULL );
     free_user_handle( win->handle );
     win->handle = 0;
     release_object( win );
