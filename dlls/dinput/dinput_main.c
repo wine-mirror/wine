@@ -137,27 +137,23 @@ static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface )
     LeaveCriticalSection( &impl->crit );
 }
 
-static HRESULT dinput_create( REFIID iid, void **out, struct dinput **out_impl )
+static HRESULT dinput_create( IUnknown **out )
 {
-    struct dinput *impl = calloc( 1, sizeof(struct dinput) );
-    HRESULT hr;
+    struct dinput *impl;
 
-    if (!impl) return E_OUTOFMEMORY;
-
+    if (!(impl = calloc( 1, sizeof(struct dinput) ))) return E_OUTOFMEMORY;
     impl->IDirectInput7A_iface.lpVtbl = &dinput7_a_vtbl;
     impl->IDirectInput7W_iface.lpVtbl = &dinput7_vtbl;
     impl->IDirectInput8A_iface.lpVtbl = &dinput8_a_vtbl;
     impl->IDirectInput8W_iface.lpVtbl = &dinput8_vtbl;
     impl->IDirectInputJoyConfig8_iface.lpVtbl = &joy_config_vtbl;
+    impl->ref = 1;
 
-    hr = IDirectInput_QueryInterface( &impl->IDirectInput7A_iface, iid, out );
-    if (FAILED(hr))
-    {
-        free( impl );
-        return hr;
-    }
-
-    if (out_impl) *out_impl = impl;
+#if DIRECTINPUT_VERSION == 0x0700
+    *out = (IUnknown *)&impl->IDirectInput7W_iface;
+#else
+    *out = (IUnknown *)&impl->IDirectInput8W_iface;
+#endif
     return DI_OK;
 }
 
@@ -166,29 +162,27 @@ static HRESULT dinput_create( REFIID iid, void **out, struct dinput **out_impl )
  */
 HRESULT WINAPI DirectInputCreateEx( HINSTANCE hinst, DWORD version, REFIID iid, void **out, IUnknown *outer )
 {
-    struct dinput *impl;
+    IUnknown *unknown;
     HRESULT hr;
 
     TRACE( "hinst %p, version %#x, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
 
-    if (IsEqualGUID( &IID_IDirectInputA,  iid ) ||
-        IsEqualGUID( &IID_IDirectInput2A, iid ) ||
-        IsEqualGUID( &IID_IDirectInput7A, iid ) ||
-        IsEqualGUID( &IID_IDirectInputW,  iid ) ||
-        IsEqualGUID( &IID_IDirectInput2W, iid ) ||
-        IsEqualGUID( &IID_IDirectInput7W, iid ))
-    {
-        hr = dinput_create( iid, out, &impl );
-        if (FAILED(hr))
-            return hr;
-    }
-    else
+    if (!IsEqualGUID( &IID_IDirectInputA, iid ) &&
+        !IsEqualGUID( &IID_IDirectInputW, iid ) &&
+        !IsEqualGUID( &IID_IDirectInput2A, iid ) &&
+        !IsEqualGUID( &IID_IDirectInput2W, iid ) &&
+        !IsEqualGUID( &IID_IDirectInput7A, iid ) &&
+        !IsEqualGUID( &IID_IDirectInput7W, iid ))
         return DIERR_NOINTERFACE;
 
-    hr = IDirectInput_Initialize( &impl->IDirectInput7A_iface, hinst, version );
-    if (FAILED(hr))
+    if (FAILED(hr = dinput_create( &unknown ))) return hr;
+    hr = IUnknown_QueryInterface( unknown, iid, out );
+    IUnknown_Release( unknown );
+    if (FAILED(hr)) return hr;
+
+    if (outer || FAILED(hr = IDirectInput7_Initialize( (IDirectInput7W *)unknown, hinst, version )))
     {
-        IDirectInput_Release( &impl->IDirectInput7A_iface );
+        IUnknown_Release( unknown );
         *out = NULL;
         return hr;
     }
@@ -201,50 +195,31 @@ HRESULT WINAPI DirectInputCreateEx( HINSTANCE hinst, DWORD version, REFIID iid, 
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create( HINSTANCE hinst, DWORD version, REFIID iid, void **out, IUnknown *outer )
 {
-    struct dinput *impl;
+    IUnknown *unknown;
     HRESULT hr;
 
     TRACE( "hinst %p, version %#x, iid %s, out %p, outer %p.\n", hinst, version, debugstr_guid( iid ), out, outer );
 
     if (!out) return E_POINTER;
 
-    if (!IsEqualGUID(&IID_IDirectInput8A, iid) &&
-        !IsEqualGUID(&IID_IDirectInput8W, iid) &&
-        !IsEqualGUID(&IID_IUnknown, iid))
+    if (!IsEqualGUID( &IID_IDirectInput8A, iid ) &&
+        !IsEqualGUID( &IID_IDirectInput8W, iid ) &&
+        !IsEqualGUID( &IID_IUnknown, iid ))
     {
         *out = NULL;
         return DIERR_NOINTERFACE;
     }
 
-    hr = dinput_create( iid, out, &impl );
+    if (FAILED(hr = dinput_create( &unknown ))) return hr;
+    hr = IUnknown_QueryInterface( unknown, iid, out );
+    IUnknown_Release( unknown );
+    if (FAILED(hr)) return hr;
 
-    if (FAILED(hr))
+    if (outer || FAILED(hr = IDirectInput8_Initialize( (IDirectInput8W *)unknown, hinst, version )))
     {
-        ERR("Failed to create DirectInput, hr %#x.\n", hr);
+        IUnknown_Release( (IUnknown *)unknown );
+        *out = NULL;
         return hr;
-    }
-
-    /* When aggregation is used, the application needs to manually call Initialize(). */
-    if (!outer && IsEqualGUID(&IID_IDirectInput8A, iid))
-    {
-        hr = IDirectInput8_Initialize( &impl->IDirectInput8A_iface, hinst, version );
-        if (FAILED(hr))
-        {
-            IDirectInput8_Release( &impl->IDirectInput8A_iface );
-            *out = NULL;
-            return hr;
-        }
-    }
-
-    if (!outer && IsEqualGUID(&IID_IDirectInput8W, iid))
-    {
-        hr = IDirectInput8_Initialize( &impl->IDirectInput8W_iface, hinst, version );
-        if (FAILED(hr))
-        {
-            IDirectInput8_Release( &impl->IDirectInput8W_iface );
-            *out = NULL;
-            return hr;
-        }
     }
 
     return S_OK;
@@ -1118,7 +1093,7 @@ static HRESULT WINAPI class_factory_CreateInstance( IClassFactory *iface, IUnkno
 
     if (outer) return CLASS_E_NOAGGREGATION;
 
-    if (FAILED(hr = dinput_create( &IID_IUnknown, (void **)&unknown, NULL ))) return hr;
+    if (FAILED(hr = dinput_create( &unknown ))) return hr;
     hr = IUnknown_QueryInterface( unknown, iid, out );
     IUnknown_Release( unknown );
 

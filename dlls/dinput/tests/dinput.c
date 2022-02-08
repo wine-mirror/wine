@@ -249,11 +249,8 @@ static void test_DirectInputCreate( DWORD version )
 
     unknown = (void *)0xdeadbeef;
     hr = DirectInputCreateW( hInstance, version, (IDirectInputW **)&unknown, &outer );
-    todo_wine_if(version == 0x800)
     ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
-    todo_wine_if(version <= 0x700)
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
-    if (unknown) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
     {
@@ -324,11 +321,8 @@ static void test_DirectInputCreateEx( DWORD version )
 
     unknown = (void *)0xdeadbeef;
     hr = pDirectInputCreateEx( hInstance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
-    todo_wine_if(version == 0x800)
     ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
-    todo_wine_if(version <= 0x700)
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
-    if (unknown) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
     {
@@ -418,9 +412,7 @@ static void test_DirectInput8Create( DWORD version )
     unknown = (void *)0xdeadbeef;
     hr = DirectInput8Create( hInstance, version, &IID_IDirectInput8W, (void **)&unknown, &outer );
     ok( hr == DI_OK, "DirectInputCreateW returned %#x\n", hr );
-    todo_wine
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
-    if (unknown) IUnknown_Release( unknown );
 
     for (i = 0; i < ARRAY_SIZE(create_tests); i++)
     {
