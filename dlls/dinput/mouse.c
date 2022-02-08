@@ -91,7 +91,7 @@ HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance,
     return DI_OK;
 }
 
-HRESULT mouse_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
+HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
     struct mouse *impl;
     HKEY hkey, appkey;

@@ -54,22 +54,22 @@ static inline IDirectInputDeviceA *IDirectInputDeviceA_from_IDirectInputDeviceW(
     return (IDirectInputDeviceA *)IDirectInputDevice8A_from_IDirectInputDevice8W( (IDirectInputDevice8W *)iface );
 }
 
-static IDirectInputImpl *impl_from_IDirectInput7A( IDirectInput7A *iface )
+static struct dinput *impl_from_IDirectInput7A( IDirectInput7A *iface )
 {
-    return CONTAINING_RECORD( iface, IDirectInputImpl, IDirectInput7A_iface );
+    return CONTAINING_RECORD( iface, struct dinput, IDirectInput7A_iface );
 }
 
-static IDirectInput7W *IDirectInput7W_from_impl( IDirectInputImpl *impl )
+static IDirectInput7W *IDirectInput7W_from_impl( struct dinput *impl )
 {
     return &impl->IDirectInput7W_iface;
 }
 
-static IDirectInputImpl *impl_from_IDirectInput8A( IDirectInput8A *iface )
+static struct dinput *impl_from_IDirectInput8A( IDirectInput8A *iface )
 {
-    return CONTAINING_RECORD( iface, IDirectInputImpl, IDirectInput8A_iface );
+    return CONTAINING_RECORD( iface, struct dinput, IDirectInput8A_iface );
 }
 
-static IDirectInput8W *IDirectInput8W_from_impl( IDirectInputImpl *impl )
+static IDirectInput8W *IDirectInput8W_from_impl( struct dinput *impl )
 {
     return &impl->IDirectInput8W_iface;
 }
@@ -678,28 +678,28 @@ const IDirectInputDevice8AVtbl dinput_device_a_vtbl =
 
 static HRESULT WINAPI dinput8_a_QueryInterface( IDirectInput8A *iface_a, REFIID iid, void **out )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     return IDirectInput8_QueryInterface( iface_w, iid, out );
 }
 
 static ULONG WINAPI dinput8_a_AddRef( IDirectInput8A *iface_a )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     return IDirectInput8_AddRef( iface_w );
 }
 
 static ULONG WINAPI dinput8_a_Release( IDirectInput8A *iface_a )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     return IDirectInput8_Release( iface_w );
 }
 
 static HRESULT WINAPI dinput8_a_CreateDevice( IDirectInput8A *iface_a, REFGUID guid, IDirectInputDevice8A **out, IUnknown *outer )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     IDirectInputDevice8W *outw;
     HRESULT hr;
@@ -730,7 +730,7 @@ static HRESULT WINAPI dinput8_a_EnumDevices( IDirectInput8A *iface_a, DWORD type
                                             void *ref, DWORD flags )
 {
     struct enum_devices_wtoa_params params = {callback, ref};
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
 
     if (!callback) return DIERR_INVALIDPARAM;
@@ -740,28 +740,28 @@ static HRESULT WINAPI dinput8_a_EnumDevices( IDirectInput8A *iface_a, DWORD type
 
 static HRESULT WINAPI dinput8_a_GetDeviceStatus( IDirectInput8A *iface_a, REFGUID instance_guid )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     return IDirectInput8_GetDeviceStatus( iface_w, instance_guid );
 }
 
 static HRESULT WINAPI dinput8_a_RunControlPanel( IDirectInput8A *iface_a, HWND owner, DWORD flags )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     return IDirectInput8_RunControlPanel( iface_w, owner, flags );
 }
 
 static HRESULT WINAPI dinput8_a_Initialize( IDirectInput8A *iface_a, HINSTANCE instance, DWORD version )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     return IDirectInput8_Initialize( iface_w, instance, version );
 }
 
 static HRESULT WINAPI dinput8_a_FindDevice( IDirectInput8A *iface_a, REFGUID guid, const char *name_a, GUID *instance_guid )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     HRESULT hr;
     WCHAR *name_w;
@@ -794,7 +794,7 @@ static HRESULT WINAPI dinput8_a_EnumDevicesBySemantics( IDirectInput8A *iface_a,
                                                        LPDIENUMDEVICESBYSEMANTICSCBA callback, void *ref, DWORD flags )
 {
     struct enum_devices_by_semantics_wtoa_params params = {callback, ref};
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     DIACTIONFORMATW format_w = {sizeof(format_w), sizeof(DIACTIONW)};
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     HRESULT hr;
@@ -821,7 +821,7 @@ static HRESULT WINAPI dinput8_a_EnumDevicesBySemantics( IDirectInput8A *iface_a,
 static HRESULT WINAPI dinput8_a_ConfigureDevices( IDirectInput8A *iface_a, LPDICONFIGUREDEVICESCALLBACK callback,
                                                  DICONFIGUREDEVICESPARAMSA *params_a, DWORD flags, void *ref )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput8A( iface_a );
     IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
     DICONFIGUREDEVICESPARAMSW params_w = {sizeof(params_w)};
     DIACTIONFORMATA *format_a = params_a->lprgFormats;
@@ -873,28 +873,28 @@ const IDirectInput8AVtbl dinput8_a_vtbl =
 
 static HRESULT WINAPI dinput7_a_QueryInterface( IDirectInput7A *iface_a, REFIID iid, void **out )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_QueryInterface( iface_w, iid, out );
 }
 
 static ULONG WINAPI dinput7_a_AddRef( IDirectInput7A *iface_a )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_AddRef( iface_w );
 }
 
 static ULONG WINAPI dinput7_a_Release( IDirectInput7A *iface_a )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_Release( iface_w );
 }
 
 static HRESULT WINAPI dinput7_a_CreateDevice( IDirectInput7A *iface_a, REFGUID guid, IDirectInputDeviceA **out_a, IUnknown *outer )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     IDirectInputDeviceW *out_w;
     HRESULT hr;
@@ -910,7 +910,7 @@ static HRESULT WINAPI dinput7_a_EnumDevices( IDirectInput7A *iface_a, DWORD type
                                              void *ref, DWORD flags )
 {
     struct enum_devices_wtoa_params params = {callback, ref};
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
 
     if (!callback) return DIERR_INVALIDPARAM;
@@ -920,28 +920,28 @@ static HRESULT WINAPI dinput7_a_EnumDevices( IDirectInput7A *iface_a, DWORD type
 
 static HRESULT WINAPI dinput7_a_GetDeviceStatus( IDirectInput7A *iface_a, REFGUID instance_guid )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_GetDeviceStatus( iface_w, instance_guid );
 }
 
 static HRESULT WINAPI dinput7_a_RunControlPanel( IDirectInput7A *iface_a, HWND owner, DWORD flags )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_RunControlPanel( iface_w, owner, flags );
 }
 
 static HRESULT WINAPI dinput7_a_Initialize( IDirectInput7A *iface_a, HINSTANCE instance, DWORD version )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_Initialize( iface_w, instance, version );
 }
 
 static HRESULT WINAPI dinput7_a_FindDevice( IDirectInput7A *iface_a, REFGUID guid, const char *name_a, GUID *instance_guid )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     HRESULT hr;
     WCHAR *name_w;
@@ -955,7 +955,7 @@ static HRESULT WINAPI dinput7_a_FindDevice( IDirectInput7A *iface_a, REFGUID gui
 
 static HRESULT WINAPI dinput7_a_CreateDeviceEx( IDirectInput7A *iface_a, REFGUID guid, REFIID iid, void **out, IUnknown *outer )
 {
-    IDirectInputImpl *impl = impl_from_IDirectInput7A( iface_a );
+    struct dinput *impl = impl_from_IDirectInput7A( iface_a );
     IDirectInput7W *iface_w = IDirectInput7W_from_impl( impl );
     return IDirectInput7_CreateDeviceEx( iface_w, guid, iid, out, outer );
 }

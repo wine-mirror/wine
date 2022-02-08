@@ -2153,8 +2153,8 @@ static const IDirectInputDevice8WVtbl dinput_device_w_vtbl =
     dinput_device_GetImageInfo,
 };
 
-HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl,
-                                   const GUID *guid, IDirectInputImpl *dinput, void **out )
+HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
+                             struct dinput *dinput, void **out )
 {
     struct dinput_device *This;
     DIDATAFORMAT *format;

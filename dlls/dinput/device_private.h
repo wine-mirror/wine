@@ -84,7 +84,7 @@ struct dinput_device
     LONG                        ref;
     GUID                        guid;
     CRITICAL_SECTION            crit;
-    IDirectInputImpl           *dinput;
+    struct dinput              *dinput;
     struct list                 entry;       /* entry into acquired device list */
     HANDLE                      hEvent;
     DIDEVICEINSTANCEW           instance;
@@ -124,7 +124,7 @@ struct dinput_device
 };
 
 extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
-                                    IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
+                                    struct dinput *dinput, void **out ) DECLSPEC_HIDDEN;
 extern HRESULT dinput_device_init( IDirectInputDevice8W *iface );
 extern void dinput_device_destroy( IDirectInputDevice8W *iface );
 
