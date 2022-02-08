@@ -1479,7 +1479,7 @@ BOOL CDECL MSVCP__crtInitializeCriticalSectionEx(
 HANDLE CDECL MSVCP__crtCreateEventExW(
         SECURITY_ATTRIBUTES *attribs, LPCWSTR name, DWORD flags, DWORD access)
 {
-    TRACE("(%p %s 0x%08lx 0x%08lx)\n", attribs, debugstr_w(name), flags, access);
+    TRACE("(%p %s %#lx %#lx)\n", attribs, debugstr_w(name), flags, access);
     return CreateEventExW(attribs, name, flags, access);
 }
 
@@ -1514,7 +1514,7 @@ HANDLE CDECL MSVCP__crtCreateSemaphoreExW(
         SECURITY_ATTRIBUTES *attribs, LONG initial_count, LONG max_count, LPCWSTR name,
         DWORD flags, DWORD access)
 {
-    TRACE("(%p %ld %ld %s 0x%08lx 0x%08lx)\n", attribs, initial_count, max_count, debugstr_w(name),
+    TRACE("(%p %ld %ld %s %#lx %#lx)\n", attribs, initial_count, max_count, debugstr_w(name),
             flags, access);
     return CreateSemaphoreExW(attribs, initial_count, max_count, name, flags, access);
 }
@@ -1544,7 +1544,7 @@ VOID CDECL MSVCP__crtCloseThreadpoolTimer(TP_TIMER *timer)
 VOID CDECL MSVCP__crtSetThreadpoolTimer(TP_TIMER *timer,
         FILETIME *due_time, DWORD period, DWORD window_length)
 {
-    TRACE("(%p %p 0x%08lx 0x%08lx)\n", timer, due_time, period, window_length);
+    TRACE("(%p %p %#lx %#lx)\n", timer, due_time, period, window_length);
     return SetThreadpoolTimer(timer, due_time, period, window_length);
 }
 
