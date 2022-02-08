@@ -79,6 +79,7 @@ struct window
     unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned int     is_layered : 1;  /* has layered info been set? */
+    unsigned int     is_orphan : 1;   /* is window orphaned */
     unsigned int     color_key;       /* color key for a layered window */
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
@@ -203,7 +204,7 @@ static inline int is_desktop_window( const struct window *win )
 /* check if window is orphaned */
 static int is_orphan_window( struct window *win )
 {
-    do if (!win->handle) return 1;
+    do if (win->is_orphan) return 1;
     while ((win = win->parent));
     return 0;
 }
@@ -347,6 +348,7 @@ static int set_parent_window( struct window *win, struct window *parent )
         list_remove( &win->entry );  /* unlink it from the previous location */
         list_add_head( &win->parent->unlinked, &win->entry );
         win->is_linked = 0;
+        win->is_orphan = 1;
     }
     return 1;
 }
@@ -566,6 +568,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_unicode     = 1;
     win->is_linked      = 0;
     win->is_layered     = 0;
+    win->is_orphan      = 0;
     win->dpi_awareness  = DPI_AWARENESS_PER_MONITOR_AWARE;
     win->dpi            = 0;
     win->user_data      = 0;

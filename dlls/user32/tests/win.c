@@ -12786,6 +12786,39 @@ static void test_DragDetect(void)
     ok(!(GetKeyState( VK_LBUTTON ) & 0x8000), "got VK_LBUTTON\n");
 }
 
+static LRESULT WINAPI ncdestroy_test_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    unsigned int ret;
+    HWND parent;
+
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        SetLastError( 0xdeadbeef );
+        ret = SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 100, 100, SWP_NOSIZE|SWP_NOMOVE );
+        todo_wine
+        ok( !ret, "SetWindowPos succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "SetWindowPos returned error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        parent = SetParent( hwnd, hwndMain );
+        ok( parent == 0, "SetParent returned %p\n", parent );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+        break;
+    }
+
+    return DefWindowProcW( hwnd, msg, wp, lp );
+}
+
+static void test_ncdestroy(void)
+{
+    HWND hwnd;
+    hwnd = create_tool_window( WS_POPUP, 0 );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)ncdestroy_test_proc );
+    DestroyWindow(hwnd);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -12900,6 +12933,7 @@ START_TEST(win)
     test_parent_owner();
     test_enum_thread_windows();
     test_thread_exit_destroy();
+    test_ncdestroy();
 
     test_icons();
     test_SetWindowPos(hwndMain, hwndMain2);
