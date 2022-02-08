@@ -32,7 +32,6 @@
 #include <httprequestid.h>
 
 #include "wine/test.h"
-#include "wine/heap.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
