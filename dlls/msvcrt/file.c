@@ -1368,7 +1368,7 @@ int CDECL _locking(int fd, int mode, __msvcrt_long nbytes)
     return -1;
   }
 
-  TRACE(":fd (%d) by 0x%lx mode %s\n",
+  TRACE(":fd (%d) by %#lx mode %s\n",
           fd, nbytes, (mode == _LK_UNLCK) ? "_LK_UNLCK" :
           (mode == _LK_LOCK) ? "_LK_LOCK" :
           (mode == _LK_NBLCK) ? "_LK_NBLCK" :
@@ -1815,7 +1815,7 @@ int CDECL _fstat64(int fd, struct _stat64* buf)
     RtlTimeToSecondsSince1970((LARGE_INTEGER *)&basic_info.LastWriteTime, &dw);
     buf->st_mtime = buf->st_ctime = dw;
     buf->st_nlink = std_info.NumberOfLinks;
-    TRACE(":dwFileAttributes = 0x%lx, mode set to 0x%x\n",
+    TRACE(":dwFileAttributes = %#lx, mode set to %#x\n",
             basic_info.FileAttributes, buf->st_mode);
   }
   release_ioinfo(info);
@@ -2121,7 +2121,7 @@ static unsigned split_oflags(unsigned oflags)
     if ((unsupp = oflags & ~(_O_BINARY | _O_TEXT | _O_APPEND | _O_TRUNC | _O_EXCL | _O_CREAT |
                     _O_RDWR | _O_WRONLY | _O_TEMPORARY | _O_NOINHERIT | _O_SEQUENTIAL |
                     _O_RANDOM | _O_SHORT_LIVED | _O_WTEXT | _O_U16TEXT | _O_U8TEXT)))
-        ERR(":unsupported oflags 0x%04x\n",unsupp);
+        ERR(":unsupported oflags %#x\n",unsupp);
 
     return wxflags;
 }
@@ -2212,7 +2212,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
   int wxflag;
   HANDLE hand;
 
-  TRACE("path: (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x fd*: %p secure: %d\n",
+  TRACE("path: (%s) oflags: %#x shflags: %#x pmode: %#x fd*: %p secure: %d\n",
         debugstr_w(path), oflags, shflags, pmode, fd, secure);
 
   if (!MSVCRT_CHECK_PMT( fd != NULL )) return EINVAL;
@@ -2261,7 +2261,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
       sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
       break;
     default:
-      ERR( "Unhandled shflags 0x%x\n", shflags );
+      ERR( "Unhandled shflags %#x\n", shflags );
       return EINVAL;
   }
 
@@ -2547,7 +2547,7 @@ int CDECL _open_osfhandle(intptr_t handle, int oflags)
   flags |= split_oflags(oflags);
 
   fd = msvcrt_alloc_fd((HANDLE)handle, flags);
-  TRACE(":handle (%Iu) fd (%d) flags 0x%08lx\n", handle, fd, flags);
+  TRACE(":handle (%Iu) fd (%d) flags %#lx\n", handle, fd, flags);
   return fd;
 }
 
