@@ -45,6 +45,11 @@ typedef struct SymWriter {
     WCHAR pdb_filename[MAX_PATH];
 } SymWriter;
 
+typedef struct SymDocumentWriter {
+    ISymUnmanagedDocumentWriter iface;
+    LONG ref;
+} SymDocumentWriter;
+
 static inline SymWriter *impl_from_ISymUnmanagedWriter5(ISymUnmanagedWriter5 *iface)
 {
     return CONTAINING_RECORD(iface, SymWriter, iface);
@@ -54,6 +59,81 @@ static inline SymWriter *impl_from_IPdbWriter(IPdbWriter *iface)
 {
     return CONTAINING_RECORD(iface, SymWriter, IPdbWriter_iface);
 }
+
+static inline SymDocumentWriter *impl_from_ISymUnmanagedDocumentWriter(ISymUnmanagedDocumentWriter *iface)
+{
+    return CONTAINING_RECORD(iface, SymDocumentWriter, iface);
+}
+
+static HRESULT WINAPI SymDocumentWriter_QueryInterface(ISymUnmanagedDocumentWriter *iface, REFIID iid,
+    void **ppv)
+{
+    SymDocumentWriter *This = impl_from_ISymUnmanagedDocumentWriter(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_ISymUnmanagedDocumentWriter, iid))
+    {
+        *ppv = &This->iface;
+    }
+    else
+    {
+        WARN("unknown interface %s\n", debugstr_guid(iid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI SymDocumentWriter_AddRef(ISymUnmanagedDocumentWriter *iface)
+{
+    SymDocumentWriter *This = impl_from_ISymUnmanagedDocumentWriter(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%lu\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI SymDocumentWriter_Release(ISymUnmanagedDocumentWriter *iface)
+{
+    SymDocumentWriter *This = impl_from_ISymUnmanagedDocumentWriter(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%lu\n", iface, ref);
+
+    if (ref == 0)
+    {
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI SymDocumentWriter_SetSource(ISymUnmanagedDocumentWriter *iface, ULONG32 sourceSize,
+    BYTE source[])
+{
+    FIXME("(%p,%u,%p)\n", iface, sourceSize, source);
+    return S_OK;
+}
+
+static HRESULT WINAPI SymDocumentWriter_SetChecksum(ISymUnmanagedDocumentWriter *iface, GUID algorithmID,
+    ULONG32 checkSumSize, BYTE checkSum[])
+{
+    FIXME("(%p,%s,%u,%p)\n", iface, debugstr_guid(&algorithmID), checkSumSize, checkSum);
+    return S_OK;
+}
+
+static const ISymUnmanagedDocumentWriterVtbl SymDocumentWriter_Vtbl = {
+    SymDocumentWriter_QueryInterface,
+    SymDocumentWriter_AddRef,
+    SymDocumentWriter_Release,
+    SymDocumentWriter_SetSource,
+    SymDocumentWriter_SetChecksum
+};
 
 static HRESULT WINAPI SymWriter_QueryInterface(ISymUnmanagedWriter5 *iface, REFIID iid,
     void **ppv)
@@ -117,9 +197,23 @@ static HRESULT WINAPI SymWriter_DefineDocument(ISymUnmanagedWriter5 *iface, cons
     const GUID *language, const GUID *languageVendor, const GUID *documentType,
     ISymUnmanagedDocumentWriter** pRetVal)
 {
+    SymDocumentWriter *result;
+
     FIXME("(%p,%s,%s,%s,%s,%p)\n", iface, debugstr_w(url), debugstr_guid(language),
         debugstr_guid(languageVendor), debugstr_guid(documentType), pRetVal);
-    return E_NOTIMPL;
+
+    if (!pRetVal)
+        return E_POINTER;
+
+    result = heap_alloc(sizeof(*result));
+    if (!result)
+        return E_OUTOFMEMORY;
+
+    result->iface.lpVtbl = &SymDocumentWriter_Vtbl;
+    result->ref = 1;
+    *pRetVal = &result->iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SymWriter_SetUserEntryPoint(ISymUnmanagedWriter5 *iface, mdMethodDef entryMethod)
