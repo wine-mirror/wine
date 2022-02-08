@@ -93,8 +93,10 @@ static FILE *infile;
 static int line_no;
 static const char *infile_name;
 static FILE *outfile;
-static BYTE *output_data;
-static UINT output_pos, output_size;
+
+unsigned char *output_buffer = NULL;
+size_t output_buffer_pos = 0;
+size_t output_buffer_size = 0;
 
 static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 
@@ -136,63 +138,33 @@ static inline BOOL read_bytes( void *data, DWORD size )
 static BOOL write_c_hex_bytes(void)
 {
     UINT i;
-    for (i = 0; i < output_pos; i++)
+    for (i = 0; i < output_buffer_pos; i++)
     {
         if (i % 12 == 0)
             fprintf(outfile, "\n ");
-        fprintf(outfile, " 0x%02x,", output_data[i]);
+        fprintf(outfile, " 0x%02x,", output_buffer[i]);
     }
     return TRUE;
 }
 
 static BOOL write_raw_bytes(void)
 {
-    return fwrite(output_data, output_pos, 1, outfile) > 0;
+    return fwrite(output_buffer, output_buffer_pos, 1, outfile) > 0;
 }
 
-static inline BOOL write_bytes(const void *data, DWORD size)
-{
-    if (output_pos + size > output_size)
-    {
-        output_size = max( output_size * 2, size );
-        output_data = realloc( output_data, output_size );
-        if (!output_data) return FALSE;
-    }
-    memcpy( output_data + output_pos, data, size );
-    output_pos += size;
-    return TRUE;
-}
-
-static inline BOOL write_byte(BYTE value)
-{
-    return write_bytes( &value, sizeof(value) );
-}
-
-static inline BOOL write_word(WORD value)
-{
-    return write_byte( value ) &&
-           write_byte( value >> 8 );
-}
-
-static inline BOOL write_dword(DWORD value)
-{
-    return write_word( value ) &&
-           write_word( value >> 16 );
-}
-
-static inline BOOL write_float(float value)
+static inline void put_float(float value)
 {
     DWORD val;
     memcpy( &val, &value, sizeof(value) );
-    return write_dword( val );
+    return put_dword( val );
 }
 
-static inline BOOL write_guid(const GUID *guid)
+static inline void put_guid(const GUID *guid)
 {
-    return write_dword( guid->Data1 ) &&
-           write_word( guid->Data2 ) &&
-           write_word( guid->Data3 ) &&
-           write_bytes( guid->Data4, sizeof(guid->Data4) );
+    put_dword( guid->Data1 );
+    put_word( guid->Data2 );
+    put_word( guid->Data3 );
+    put_data( guid->Data4, sizeof(guid->Data4) );
 }
 
 static int compare_names(const void *a, const void *b)
@@ -209,10 +181,11 @@ static BOOL parse_keyword( const char *name )
     if (!keyword)
         return FALSE;
 
-    return write_word(keyword->token);
+    put_word(keyword->token);
+    return TRUE;
 }
 
-static BOOL parse_guid(void)
+static void parse_guid(void)
 {
     char buf[39];
     GUID guid;
@@ -238,11 +211,11 @@ static BOOL parse_guid(void)
     guid.Data4[6] = tab[8];
     guid.Data4[7] = tab[9];
 
-    return write_word(TOKEN_GUID) &&
-           write_guid(&guid);
+    put_word(TOKEN_GUID);
+    put_guid(&guid);
 }
 
-static BOOL parse_name(void)
+static void parse_name(void)
 {
     char c;
     int len = 0;
@@ -257,16 +230,15 @@ static BOOL parse_name(void)
     unread_byte(c);
     name[len] = 0;
 
-    if (parse_keyword(name)) {
-        return TRUE;
-    } else {
-        return write_word(TOKEN_NAME) &&
-               write_dword(len) &&
-               write_bytes(name, len);
+    if (!parse_keyword(name))
+    {
+        put_word(TOKEN_NAME);
+        put_dword(len);
+        put_data(name, len);
     }
 }
 
-static BOOL parse_number(void)
+static void parse_number(void)
 {
     int len = 0;
     char c;
@@ -289,17 +261,15 @@ static BOOL parse_number(void)
         float value;
         ret = sscanf(buffer, "%f", &value);
         if (!ret) fatal_error( "invalid float token\n" );
-        ret = write_word(TOKEN_FLOAT) &&
-              write_float(value);
+        put_word(TOKEN_FLOAT);
+        put_float(value);
     } else {
         int value;
         ret = sscanf(buffer, "%d", &value);
         if (!ret) fatal_error( "invalid integer token\n" );
-        ret = write_word(TOKEN_INTEGER) &&
-              write_dword(value);
+        put_word(TOKEN_INTEGER);
+        put_dword(value);
     }
-
-    return ret;
 }
 
 static BOOL parse_token(void)
@@ -317,17 +287,17 @@ static BOOL parse_token(void)
         case '\r':
         case ' ':
         case '\t':
-            return TRUE;
+            break;
 
-        case '{': return write_word(TOKEN_OBRACE);
-        case '}': return write_word(TOKEN_CBRACE);
-        case '[': return write_word(TOKEN_OBRACKET);
-        case ']': return write_word(TOKEN_CBRACKET);
-        case '(': return write_word(TOKEN_OPAREN);
-        case ')': return write_word(TOKEN_CPAREN);
-        case ',': return write_word(TOKEN_COMMA);
-        case ';': return write_word(TOKEN_SEMICOLON);
-        case '.': return write_word(TOKEN_DOT);
+        case '{': put_word(TOKEN_OBRACE); break;
+        case '}': put_word(TOKEN_CBRACE); break;
+        case '[': put_word(TOKEN_OBRACKET); break;
+        case ']': put_word(TOKEN_CBRACKET); break;
+        case '(': put_word(TOKEN_OPAREN); break;
+        case ')': put_word(TOKEN_CPAREN); break;
+        case ',': put_word(TOKEN_COMMA); break;
+        case ';': put_word(TOKEN_SEMICOLON); break;
+        case '.': put_word(TOKEN_DOT); break;
 
         case '/':
             if (!read_byte(&c) || c != '/')
@@ -342,11 +312,11 @@ static BOOL parse_token(void)
             if (c != '\n') fatal_error( "line too long\n" );
             buffer[len] = 0;
             tok = strtok( buffer, " \t" );
-            if (!tok || strcmp( tok, "pragma" )) return TRUE;
+            if (!tok || strcmp( tok, "pragma" )) break;
             tok = strtok( NULL, " \t" );
-            if (!tok || strcmp( tok, "xftmpl" )) return TRUE;
+            if (!tok || strcmp( tok, "xftmpl" )) break;
             tok = strtok( NULL, " \t" );
-            if (!tok) return TRUE;
+            if (!tok) break;
             if (!strcmp( tok, "name" ))
             {
                 tok = strtok( NULL, " \t" );
@@ -357,10 +327,11 @@ static BOOL parse_token(void)
                 tok = strtok( NULL, " \t" );
                 if (tok && !option_inc_size_name) option_inc_size_name = xstrdup( tok );
             }
-            return TRUE;
+            break;
 
         case '<':
-            return parse_guid();
+            parse_guid();
+            break;
 
         case '"':
             len = 0;
@@ -371,17 +342,16 @@ static BOOL parse_token(void)
                     buffer[len++] = c;
             }
             if (c != '"') fatal_error( "unterminated string\n" );
-            return write_word(TOKEN_STRING) &&
-                   write_dword(len) &&
-                   write_bytes(buffer, len);
+            put_word(TOKEN_STRING);
+            put_dword(len);
+            put_data(buffer, len);
+            break;
 
         default:
             unread_byte(c);
-            if (isdigit(c) || c == '-')
-                return parse_number();
-            if (isalpha(c) || c == '_')
-                return parse_name();
-            fatal_error( "invalid character '%c' to start token\n", c );
+            if (isdigit(c) || c == '-') parse_number();
+            else if (isalpha(c) || c == '_') parse_name();
+            else fatal_error( "invalid character '%c' to start token\n", c );
     }
 
     return TRUE;
@@ -489,6 +459,19 @@ int main(int argc, char **argv)
         goto error;
     }
 
+    init_output_buffer();
+    put_data("xof 0302bin 0064", 16);
+
+    line_no = 1;
+    while (parse_token());
+
+    if (ferror(infile))
+    {
+        perror(infile_name);
+        return 1;
+    }
+    fclose(infile);
+
     if (!strcmp(option_outfile_name, "-")) {
         option_outfile_name = "stdout";
         outfile = stdout;
@@ -506,13 +489,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!write_bytes("xof 0302bin 0064", 16))
-        goto error;
-
-    line_no = 1;
-    while (parse_token());
-
-    if (ferror(outfile) || ferror(infile))
+    if (ferror(outfile))
         goto error;
 
     if (option_header)
@@ -543,24 +520,18 @@ int main(int argc, char **argv)
         write_c_hex_bytes();
         fprintf(outfile, "\n};\n\n");
         if (option_inc_size_name)
-            fprintf(outfile, "#define %s %u\n\n", option_inc_size_name, output_pos);
+            fprintf(outfile, "#define %s %u\n\n", option_inc_size_name, (unsigned int)output_buffer_pos);
         fprintf(outfile, "#endif /* __WINE_%s */\n", header_name);
         if (ferror(outfile))
             goto error;
     }
     else write_raw_bytes();
 
-    fclose(infile);
     fclose(outfile);
     output_file = NULL;
 
     return 0;
 error:
-    if (infile) {
-        if (ferror(infile))
-            perror(infile_name);
-        fclose(infile);
-    }
     if (outfile) {
         if (ferror(outfile))
             perror(option_outfile_name);
