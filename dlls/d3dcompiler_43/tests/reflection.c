@@ -22,9 +22,6 @@
  * The functions are e.g.: D3DGet*SignatureBlob, D3DReflect
  */
 
-#ifndef WINE_NO_LONG_TYPES
-#define WINE_NO_LONG_TYPES
-#endif
 #define COBJMACROS
 #include "initguid.h"
 #include "d3dcompiler.h"
@@ -93,22 +90,22 @@ static void test_reflection_references(void)
     ULONG count;
 
     hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == S_OK, "D3DReflect failed, got %x, expected %x\n", hr, S_OK);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D11ShaderReflection, (void **)&ref11_test);
-    ok(hr == S_OK, "QueryInterface failed, got %x, expected %x\n", hr, S_OK);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     count = ref11_test->lpVtbl->Release(ref11_test);
-    ok(count == 1, "Release failed %u\n", count);
+    ok(count == 1, "Release failed %lu\n", count);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D10ShaderReflection, (void **)&ref10);
-    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x\n", hr, E_NOINTERFACE);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x\n", hr, E_NOINTERFACE);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
 
     count = ref11->lpVtbl->Release(ref11);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(!count, "Got unexpected count %lu.\n", count);
 
     /* check invalid cases */
 #if D3D_COMPILER_VERSION >= 46
@@ -118,21 +115,21 @@ static void test_reflection_references(void)
 #endif
     hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection, (void **)&ref10);
     ok(hr == expected || broken(hr == E_NOINTERFACE) /* Windows 8 */,
-       "D3DReflect failed, got %x, expected %x\n", hr, expected);
+            "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == expected || broken(hr == E_NOINTERFACE) /* Windows 8 */,
-       "D3DReflect failed, got %x, expected %x\n", hr, expected);
+            "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(NULL, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DReflect(NULL, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     /* returns different errors with different sizes */
     hr = D3DReflect(test_reflection_blob, 31, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
 #if D3D_COMPILER_VERSION >= 46
     expected = D3DERR_INVALIDCALL;
@@ -140,19 +137,19 @@ static void test_reflection_references(void)
     expected = E_FAIL;
 #endif
     hr = D3DReflect(test_reflection_blob,  32, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(test_reflection_blob, test_reflection_blob[6]-1, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(test_reflection_blob,  31, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == D3DERR_INVALIDCALL, "Got %x, expected %x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DReflect(test_reflection_blob,  32, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(test_reflection_blob,  test_reflection_blob[6]-1, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 }
 #endif
 
@@ -168,51 +165,52 @@ static void test_reflection_interfaces(void)
     expected_hr = D3D_COMPILER_VERSION < 46 ? E_NOINTERFACE : D3D_COMPILER_VERSION == 46 ? E_INVALIDARG : S_OK;
     hr = call_reflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D12ShaderReflection, (void **)&ref12);
     /* Broken with older d3dcompiler_46, d3dcompiler_47. */
-    ok(hr == expected_hr || broken(hr == E_NOINTERFACE), "Got unexpected hr %#x.\n", hr);
+    ok(hr == expected_hr || broken(hr == E_NOINTERFACE),
+            "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
 
     if (hr != S_OK)
         return;
 
     hr = call_reflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref12->lpVtbl->QueryInterface(ref12, &IID_ID3D11ShaderReflection, (void **)&iface);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(iface == (void *)ref12, "Got unexpected interfaces %p, %p.\n", iface, ref12);
     hr = iface->lpVtbl->QueryInterface(iface, &IID_IUnknown, (void **)&iunk);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(iface == iunk, "Got unexpected iface %p.\n", iface);
     iface->lpVtbl->Release(iunk);
     iface->lpVtbl->Release(iface);
 
     hr = ref12->lpVtbl->QueryInterface(ref12, &IID_IUnknown, (void **)&iface);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(iface == (IUnknown *)ref12, "Got unexpected iface %p.\n", iface);
     iface->lpVtbl->Release(iface);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D12ShaderReflection, (void **)&iface);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(iface == (void *)ref11, "Got unexpected interfaces %p, %p.\n", iface, ref11);
     hr = iface->lpVtbl->QueryInterface(iface, &IID_IUnknown, (void **)&iunk);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(iface == iunk, "Got unexpected iface %p.\n", iface);
     iface->lpVtbl->Release(iunk);
     iface->lpVtbl->Release(iface);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_IUnknown, (void **)&iface);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(iface == (IUnknown *)ref11, "Got unexpected iface %p.\n", iface);
     iface->lpVtbl->Release(iface);
 
     hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D10ShaderReflection, (void **)&iface);
-    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
     hr = ref12->lpVtbl->QueryInterface(ref12, &IID_ID3D10ShaderReflection, (void **)&iface);
-    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
 
     count = ref12->lpVtbl->Release(ref12);
-    ok(!count, "Got unexpected ref count %u.\n", count);
+    ok(!count, "Got unexpected ref count %lu.\n", count);
     count = ref11->lpVtbl->Release(ref11);
-    ok(!count, "Got unexpected ref count %u.\n", count);
+    ok(!count, "Got unexpected ref count %lu.\n", count);
 }
 #endif
 
@@ -402,15 +400,15 @@ static void test_reflection_desc_vs(void)
 #endif
 
     hr = call_reflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D12ShaderReflection, (void **)&ref12);
 
     hr = ref11->lpVtbl->GetDesc(ref11, NULL);
-    ok(hr == E_FAIL, "GetDesc failed %x\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
-    ok(hr == S_OK, "GetDesc failed %x\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ok(sdesc11.Version == 65601, "GetDesc failed, got %u, expected %u\n", sdesc11.Version, 65601);
     ok(strcmp(sdesc11.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc11.Creator, (char*)shader_creator);
@@ -454,7 +452,7 @@ static void test_reflection_desc_vs(void)
     if (ref12)
     {
         hr = ref12->lpVtbl->GetDesc(ref12, &sdesc12);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(!memcmp(&sdesc11, &sdesc12, sizeof(sdesc12)), "D3D11 and D3D12 descs do not match.\n");
     }
 
@@ -503,7 +501,7 @@ static void test_reflection_desc_vs(void)
         pdesc = &test_reflection_desc_vs_resultin[i];
 
         hr = ref11->lpVtbl->GetInputParameterDesc(ref11, i, &desc11);
-        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
 
         ok(!strcmp(desc11.SemanticName, pdesc->SemanticName), "Got unexpected SemanticName \"%s\", i %u.\n",
                 desc11.SemanticName, i);
@@ -529,7 +527,7 @@ static void test_reflection_desc_vs(void)
         if (ref12)
         {
             hr = ref12->lpVtbl->GetInputParameterDesc(ref12, i, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
 
             ok(!memcmp(&desc12, &desc11, sizeof(desc11)), "D3D11 and D3D12 descs do not match.\n");
         }
@@ -540,7 +538,7 @@ static void test_reflection_desc_vs(void)
         pdesc = &test_reflection_desc_vs_resultout[i];
 
         hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, i, &desc11);
-        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
 
         ok(!strcmp(desc11.SemanticName, pdesc->SemanticName), "Got unexpected SemanticName \"%s\", i %u.\n",
                 desc11.SemanticName, i);
@@ -566,7 +564,7 @@ static void test_reflection_desc_vs(void)
         if (ref12)
         {
             hr = ref12->lpVtbl->GetOutputParameterDesc(ref12, i, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
 
             ok(!memcmp(&desc12, &desc11, sizeof(desc11)), "D3D11 and D3D12 descs do not match.\n");
         }
@@ -575,11 +573,11 @@ static void test_reflection_desc_vs(void)
     if (ref12)
     {
         count = ref12->lpVtbl->Release(ref12);
-        ok(count == 1, "Got unexpected ref count %u.\n", count);
+        ok(count == 1, "Got unexpected ref count %lu.\n", count);
     }
 
     count = ref11->lpVtbl->Release(ref11);
-    ok(count == 0, "Got unexpected ref count %u.\n", count);
+    ok(count == 0, "Got unexpected ref count %lu.\n", count);
 }
 
 /*
@@ -758,10 +756,10 @@ static void test_reflection_desc_ps(void)
 #endif
 
     hr = call_reflect(test_reflection_desc_ps_blob, test_reflection_desc_ps_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
-    ok(hr == S_OK, "GetDesc failed %x\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ok(sdesc11.Version == 65, "GetDesc failed, got %u, expected %u\n", sdesc11.Version, 65);
     ok(strcmp(sdesc11.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc11.Creator, (char*)shader_creator);
@@ -818,20 +816,20 @@ static void test_reflection_desc_ps(void)
 
     /* check invalid Get*ParameterDesc cases*/
     hr = ref11->lpVtbl->GetInputParameterDesc(ref11, 0, NULL);
-    ok(hr == E_INVALIDARG, "GetInputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetInputParameterDesc(ref11, 0xffffffff, &desc);
-    ok(hr == E_INVALIDARG, "GetInputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0, NULL);
-    ok(hr == E_INVALIDARG, "GetOutputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0xffffffff, &desc);
-    ok(hr == E_INVALIDARG, "GetOutputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
 #if D3D_COMPILER_VERSION
     hr = ref11->lpVtbl->GetPatchConstantParameterDesc(ref11, 0, &desc);
-    ok(hr == E_INVALIDARG, "GetPatchConstantParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 #endif
 
     /* GetIn/OutputParameterDesc */
@@ -840,7 +838,7 @@ static void test_reflection_desc_ps(void)
         pdesc = &test_reflection_desc_ps_resultin[i];
 
         hr = ref11->lpVtbl->GetInputParameterDesc(ref11, i, &desc);
-        ok(hr == S_OK, "GetInputParameterDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "GetInputParameterDesc(%u) SemanticName failed, got \"%s\", expected \"%s\"\n",
                 i, desc.SemanticName, pdesc->SemanticName);
@@ -868,7 +866,7 @@ static void test_reflection_desc_ps(void)
         pdesc = &test_reflection_desc_ps_resultout[i];
 
         hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, i, &desc);
-        ok(hr == S_OK, "GetOutputParameterDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "GetOutputParameterDesc(%u) SemanticName failed, got \"%s\", expected \"%s\"\n",
                 i, desc.SemanticName, pdesc->SemanticName);
@@ -898,7 +896,7 @@ static void test_reflection_desc_ps(void)
     }
 
     count = ref11->lpVtbl->Release(ref11);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(!count, "Got unexpected count %lu.\n", count);
 }
 
 /* The following shaders are stripped, in order to show that the correct
@@ -1038,17 +1036,17 @@ static void test_reflection_desc_ps_output(void)
         hr = call_reflect(tests[i].blob, tests[i].blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
         if (!D3D_COMPILER_VERSION)
         {
-            todo_wine ok(hr == E_INVALIDARG, "(%u): got unexpected hr %x.\n", i, hr);
+            todo_wine ok(hr == E_INVALIDARG, "%u: Got unexpected hr %#lx.\n", i, hr);
             if (SUCCEEDED(hr))
                 ref11->lpVtbl->Release(ref11);
             continue;
         }
-        ok(hr == S_OK, "(%u): got unexpected hr %x.\n", i, hr);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         pdesc = &tests[i].desc;
 
         hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0, &desc);
-        ok(hr == S_OK, "(%u): GetOutputParameterDesc failed, got %x, expected %x\n", i, hr, S_OK);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "(%u): GetOutputParameterDesc SemanticName failed, got \"%s\", expected \"%s\"\n",
                 i, desc.SemanticName, pdesc->SemanticName);
@@ -1077,7 +1075,7 @@ static void test_reflection_desc_ps_output(void)
             ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
 
         count = ref11->lpVtbl->Release(ref11);
-        ok(count == 0, "(%u): Release failed %u\n", i, count);
+        ok(!count, "%u: Got unexpected count %lu.\n", i, count);
     }
 }
 
@@ -1181,7 +1179,8 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
     expected_hr = D3D_COMPILER_VERSION < 47 && target_version >= 0x501 ? E_INVALIDARG : S_OK;
 
     /* Older d3dcompiler_47 does not support sm5.1. */
-    ok(hr == expected_hr || broken(hr == E_INVALIDARG && target_version >= 0x501), "Got unexpected hr %x.\n", hr);
+    ok(hr == expected_hr || broken(hr == E_INVALIDARG && target_version >= 0x501),
+            "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
 
     if (hr == E_INVALIDARG)
         return;
@@ -1204,23 +1203,23 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
 
     /* check invalid cases */
     hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0xffffffff, &desc11);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
 #if D3D_COMPILER_VERSION
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, NULL, &desc11);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "sam", NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", &desc11);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 #endif
 
     /* GetResourceBindingDesc */
@@ -1229,7 +1228,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
         pdesc = &result[i];
 
         hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, i, &desc11);
-        ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(desc11.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc11.Name, i);
         ok(desc11.Type == pdesc->Type, "Got unexpected Type %#x, i %u.\n", desc11.Type, i);
@@ -1253,7 +1252,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
             desc12.uID = 0xdeadbeef;
 
             hr = ref12->lpVtbl->GetResourceBindingDesc(ref12, i, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
             ok(!strcmp(desc12.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc12.Name, i);
             ok(!memcmp(&desc12.Type, &desc11.Type, sizeof(desc11) - offsetof(D3D11_SHADER_INPUT_BIND_DESC, Type)),
@@ -1265,7 +1264,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
             desc12.Space = 0xdeadbeef;
             desc12.uID = 0xdeadbeef;
             hr = ref12_from_d3d11->lpVtbl->GetResourceBindingDesc(ref12_from_d3d11, i, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
             ok(!strcmp(desc12.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc12.Name, i);
             ok(!memcmp(&desc12.Type, &desc11.Type, sizeof(desc11) - offsetof(D3D11_SHADER_INPUT_BIND_DESC, Type)),
@@ -1283,7 +1282,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
             desc12.Space = 0xdeadbeef;
             desc12.uID = 0xdeadbeef;
             hr = ref11_from_d3d12->lpVtbl->GetResourceBindingDesc(ref11_from_d3d12, i, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
             ok(!strcmp(desc12.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc12.Name, i);
             ok(!memcmp(&desc12.Type, &desc11.Type, sizeof(desc11) - offsetof(D3D11_SHADER_INPUT_BIND_DESC, Type)),
                     "D3D11 and D3D12 descs do not match.\n");
@@ -1299,7 +1298,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
         pdesc = &result[i];
 
         hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, pdesc->Name, &desc11);
-        ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(desc11.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc11.Name, i);
         ok(desc11.Type == pdesc->Type, "Got unexpected Type %#x, i %u.\n", desc11.Type, i);
@@ -1317,7 +1316,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
             desc12.uID = 0xdeadbeef;
 
             hr = ref12->lpVtbl->GetResourceBindingDescByName(ref12, pdesc->Name, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
             ok(!strcmp(desc12.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc12.Name, i);
             ok(!memcmp(&desc12.Type, &desc11.Type, sizeof(desc11) - offsetof(D3D11_SHADER_INPUT_BIND_DESC, Type)),
@@ -1329,7 +1328,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
             desc12.Space = 0xdeadbeef;
             desc12.uID = 0xdeadbeef;
             hr = ref12_from_d3d11->lpVtbl->GetResourceBindingDescByName(ref12_from_d3d11, pdesc->Name, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
             ok(!strcmp(desc12.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc12.Name, i);
             ok(!memcmp(&desc12.Type, &desc11.Type, sizeof(desc11) - offsetof(D3D11_SHADER_INPUT_BIND_DESC, Type)),
@@ -1344,7 +1343,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
             desc12.Space = 0xdeadbeef;
             desc12.uID = 0xdeadbeef;
             hr = ref11_from_d3d12->lpVtbl->GetResourceBindingDescByName(ref11_from_d3d12, pdesc->Name, &desc12);
-            ok(hr == S_OK, "Got unexpected hr %x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
             ok(!strcmp(desc12.Name, pdesc->Name), "Got unexpected Name \"%s\", i %u.\n", desc12.Name, i);
             ok(!memcmp(&desc12.Type, &desc11.Type, sizeof(desc11) - offsetof(D3D11_SHADER_INPUT_BIND_DESC, Type)),
                     "D3D11 and D3D12 descs do not match.\n");
@@ -1357,17 +1356,17 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
     if (ref12)
     {
         count = ref11_from_d3d12->lpVtbl->Release(ref11_from_d3d12);
-        ok(count == 1, "Got unexpected ref count %u.\n", count);
+        ok(count == 1, "Got unexpected ref count %lu.\n", count);
 
         count = ref12->lpVtbl->Release(ref12);
-        ok(!count, "Got unexpected ref count %u.\n", count);
+        ok(!count, "Got unexpected ref count %lu.\n", count);
 
         count = ref12_from_d3d11->lpVtbl->Release(ref12_from_d3d11);
-        ok(count == 1, "Got unexpected ref count %u.\n", count);
+        ok(count == 1, "Got unexpected ref count %lu.\n", count);
     }
 
     count = ref11->lpVtbl->Release(ref11);
-    ok(!count, "Got unexpected ref count %u.\n", count);
+    ok(!count, "Got unexpected ref count %lu.\n", count);
 }
 
 #if D3D_COMPILER_VERSION
@@ -1618,7 +1617,7 @@ static void test_reflection_constant_buffer(void)
 
     hr = call_reflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6],
             &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
 #if D3D_COMPILER_VERSION
     call_reflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6],
@@ -1626,7 +1625,7 @@ static void test_reflection_constant_buffer(void)
 #endif
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc);
-    ok(hr == S_OK, "GetDesc failed %x\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     expected = D3D_COMPILER_VERSION ? 80 : 64;
     ok(sdesc.Version == expected, "Got unexpected version %u.\n", sdesc.Version);
@@ -1758,33 +1757,33 @@ static void test_reflection_constant_buffer(void)
     }
 
     hr = cb11_dummy->lpVtbl->GetDesc(cb11_dummy, NULL);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = cb11_dummy->lpVtbl->GetDesc(cb11_dummy, &cbdesc);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = cb11_valid->lpVtbl->GetDesc(cb11_valid, NULL);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     /* variable calls */
     hr = v11_dummy->lpVtbl->GetDesc(v11_dummy, NULL);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = v11_dummy->lpVtbl->GetDesc(v11_dummy, &vdesc);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = v11_valid->lpVtbl->GetDesc(v11_valid, NULL);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     /* type calls */
     hr = t11_dummy->lpVtbl->GetDesc(t11_dummy, NULL);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = t11_dummy->lpVtbl->GetDesc(t11_dummy, &tdesc);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = t11_valid->lpVtbl->GetDesc(t11_valid, NULL);
-    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     string = t11_dummy->lpVtbl->GetMemberTypeName(t11_dummy, 0xffffffff);
     ok(!strcmp(string, "$Invalid"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "$Invalid");
@@ -1812,16 +1811,16 @@ static void test_reflection_constant_buffer(void)
 
 #if D3D_COMPILER_VERSION
     hr = t11_dummy->lpVtbl->IsEqual(t11_dummy, t11_dummy);
-    ok(hr == E_FAIL, "IsEqual failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11_dummy);
-    ok(hr == S_FALSE, "IsEqual failed, got %x, expected %x\n", hr, S_FALSE);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = t11_dummy->lpVtbl->IsEqual(t11_dummy, t11_valid);
-    ok(hr == E_FAIL, "IsEqual failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11_valid);
-    ok(hr == S_OK, "IsEqual failed, got %x, expected %x\n", hr, S_OK);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 #endif
 
     /* constant buffers */
@@ -1833,7 +1832,7 @@ static void test_reflection_constant_buffer(void)
         ok(cb11_dummy != cb11, "Got dummy constant buffer, i %u.\n", i);
 
         hr = cb11->lpVtbl->GetDesc(cb11, &cbdesc);
-        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(cbdesc.Name, pcbdesc->Name), "Got unexpected name \"%s\", i %u.\n", cbdesc.Name, i);
         ok(cbdesc.Type == pcbdesc->Type, "Got unexpected Type %#x, i %u.\n", cbdesc.Type, i);
@@ -1847,7 +1846,7 @@ static void test_reflection_constant_buffer(void)
             ok(cb12_dummy != cb12, "Got dummy constant buffer, i %u.\n", i);
 
             hr = cb12->lpVtbl->GetDesc(cb12, &cbdesc12);
-            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
             ok(!strcmp(cbdesc12.Name, pcbdesc->Name), "Got unexpected name \"%s\", i %u.\n", cbdesc.Name, i);
             ok(cbdesc.Type == pcbdesc->Type, "Got unexpected Type %#x, i %u.\n", cbdesc.Type, i);
@@ -1881,7 +1880,7 @@ static void test_reflection_constant_buffer(void)
         }
 
         hr = v11->lpVtbl->GetDesc(v11, &vdesc);
-        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(!strcmp(vdesc.Name, pvdesc->Name), "Got unexpected name \"%s\", i %u", vdesc.Name, i);
         ok(vdesc.StartOffset == pvdesc->StartOffset, "Got unexpected StartOffset %u, i %u.\n",
@@ -1900,7 +1899,7 @@ static void test_reflection_constant_buffer(void)
             v12 = ref12->lpVtbl->GetVariableByName(ref12, pvdesc->Name);
             ok(v12_dummy != v12, "Test %u, got unexpected variable %p.\n", i, v12);
             hr = v12->lpVtbl->GetDesc(v12, &vdesc12);
-            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
             ok(!strcmp(vdesc12.Name, pvdesc->Name), "Got unexpected name \"%s\", i %u", vdesc12.Name, i);
             ok(!memcmp(&vdesc12.StartOffset, &vdesc.StartOffset,
                     sizeof(vdesc) - offsetof(D3D11_SHADER_VARIABLE_DESC, StartOffset)),
@@ -1919,7 +1918,7 @@ static void test_reflection_constant_buffer(void)
         ok(t11_dummy != t11, "Got unexpected type %p, i %u.\n", t11, i);
 
         hr = t11->lpVtbl->GetDesc(t11, &tdesc);
-        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         ok(tdesc.Class == ptdesc->Class, "Got unexpected Class %u, i %u.\n", tdesc.Class, i);
         ok(tdesc.Type == ptdesc->Type, "Got unexpected Type %u, i %u.\n", tdesc.Type, i);
@@ -1936,7 +1935,7 @@ static void test_reflection_constant_buffer(void)
             ok(t12_dummy != t12, "Got unexpected type %p, i %u.\n", t12, i);
 
             hr = t12->lpVtbl->GetDesc(t12, &tdesc12);
-            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(hr == S_OK, "%u: Got unexpected hr %#lx.\n", i, hr);
             ok(!memcmp(&tdesc12, &tdesc, offsetof(D3D11_SHADER_TYPE_DESC, Name)),
                     "D3D11 and D3D12 descs do not match.\n");
             ok(!strcmp(tdesc12.Name, ptdesc->Name), "Got unexpected Name %s, i %u.\n", debugstr_a(tdesc12.Name), i);
@@ -1974,10 +1973,10 @@ static void test_reflection_constant_buffer(void)
 #if D3D_COMPILER_VERSION
     /* float vs float (in struct) */
     hr = t11->lpVtbl->IsEqual(t11, t11_valid);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     /* float vs float */
     t = t11->lpVtbl->GetMemberTypeByIndex(t11, 0);
@@ -1987,7 +1986,7 @@ static void test_reflection_constant_buffer(void)
     ok(t2 != t11_dummy, "Got unexpected type %p.\n", t2);
 
     hr = t->lpVtbl->IsEqual(t, t2);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 #endif
 
     if (ref12)
@@ -2017,10 +2016,10 @@ static void test_reflection_constant_buffer(void)
         ok(!strcmp(string, "b"), "Got unexpected string \"%s\".\n", string);
 
         hr = t12->lpVtbl->IsEqual(t12, t12_valid);
-        ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
         hr = t12_valid->lpVtbl->IsEqual(t12_valid, t12);
-        ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
         mt12 = t12->lpVtbl->GetMemberTypeByIndex(t12, 0);
         ok(mt12 != t12_dummy, "Got unexpected type %p.\n", mt12);
@@ -2029,13 +2028,13 @@ static void test_reflection_constant_buffer(void)
         ok(mt12_2 != t12_dummy, "Got unexpected type %p.\n", mt12_2);
 
         hr = mt12->lpVtbl->IsEqual(mt12, mt12_2);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         count = ref12->lpVtbl->Release(ref12);
-        ok(!count, "Got unexpected ref count %u.\n", count);
+        ok(!count, "Got unexpected ref count %lu.\n", count);
     }
     count = ref11->lpVtbl->Release(ref11);
-    ok(!count, "Got unexpected ref count %u.\n", count);
+    ok(!count, "Got unexpected ref count %lu.\n", count);
 }
 
 /*

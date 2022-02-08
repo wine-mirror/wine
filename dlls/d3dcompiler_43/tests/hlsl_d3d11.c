@@ -47,7 +47,7 @@ static ID3D10Blob *compile_shader_(unsigned int line, const char *source, const 
     HRESULT hr;
 
     hr = D3DCompile(source, strlen(source), NULL, NULL, NULL, "main", target, flags, 0, &blob, &errors);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to compile shader, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to compile shader, hr %#lx.\n", hr);
     if (errors)
     {
         if (winetest_debug > 1)
@@ -128,12 +128,12 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window)
     HRESULT hr;
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
-    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIDevice_Release(dxgi_device);
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "Failed to get factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 
     dxgi_desc.BufferDesc.Width = 640;
@@ -153,7 +153,7 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window)
     dxgi_desc.Flags = 0;
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &dxgi_desc, &swapchain);
-    ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIFactory_Release(factory);
 
     return swapchain;
@@ -195,10 +195,10 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context)
     context->swapchain = create_swapchain(context->device, context->window);
 
     hr = ID3D11Device_CreateTexture2D(context->device, &texture_desc, NULL, &context->rt);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create texture, hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(context->device, (ID3D11Resource *)context->rt, NULL, &context->rtv);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create rendertarget view, hr %#lx.\n", hr);
 
     ID3D11Device_GetImmediateContext(context->device, &context->immediate_context);
 
@@ -234,7 +234,7 @@ static void release_test_context_(unsigned int line, struct test_context *contex
     DestroyWindow(context->window);
 
     ref = ID3D11Device_Release(context->device);
-    ok_(__FILE__, line)(!ref, "Device has %u references left.\n", ref);
+    ok_(__FILE__, line)(!ref, "Device has %lu references left.\n", ref);
 }
 
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
@@ -252,7 +252,7 @@ static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
     HRESULT hr;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, data ? &resource_data : NULL, &buffer);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create buffer, hr %#lx.\n", hr);
     return buffer;
 }
 
@@ -289,11 +289,11 @@ static void draw_quad_(unsigned int line, struct test_context *context, ID3D10Bl
 
         hr = ID3D11Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
                 ID3D10Blob_GetBufferPointer(vs_code), ID3D10Blob_GetBufferSize(vs_code), &context->input_layout);
-        ok_(__FILE__, line)(hr == S_OK, "Failed to create input layout, hr %#x.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create input layout, hr %#lx.\n", hr);
 
         hr = ID3D11Device_CreateVertexShader(device, ID3D10Blob_GetBufferPointer(vs_code),
                 ID3D10Blob_GetBufferSize(vs_code), NULL, &context->vs);
-        ok_(__FILE__, line)(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create vertex shader, hr %#lx.\n", hr);
     }
 
     if (!context->vb)
@@ -301,7 +301,7 @@ static void draw_quad_(unsigned int line, struct test_context *context, ID3D10Bl
 
     hr = ID3D11Device_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(ps_code),
             ID3D10Blob_GetBufferSize(ps_code), NULL, &ps);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create pixel shader, hr %#lx.\n", hr);
 
     ID3D11DeviceContext_IASetInputLayout(context->immediate_context, context->input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context->immediate_context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -333,11 +333,11 @@ static void init_readback(struct test_context *context, struct readback *rb)
     texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(context->device, &texture_desc, NULL, (ID3D11Texture2D **)&rb->resource);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CopyResource(context->immediate_context, rb->resource, (ID3D11Resource *)context->rt);
     hr = ID3D11DeviceContext_Map(context->immediate_context, rb->resource, 0, D3D11_MAP_READ, 0, &rb->map_desc);
-    ok(hr == S_OK, "Failed to map texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 }
 
 static void release_readback(struct test_context *context, struct readback *rb)
@@ -604,16 +604,16 @@ static void test_sampling(void)
         return;
 
     hr = ID3D11Device_CreateTexture2D(test_context.device, &texture_desc, &resource_data, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srv_desc.Texture2D.MipLevels = 1;
     hr = ID3D11Device_CreateShaderResourceView(test_context.device, (ID3D11Resource *)texture, &srv_desc, &srv);
-    ok(hr == S_OK, "Failed to create SRV, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(test_context.immediate_context, 0, 1, &srv);
 
     hr = ID3D11Device_CreateSamplerState(test_context.device, &sampler_desc, &sampler);
-    ok(hr == S_OK, "Failed to create sampler, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetSamplers(test_context.immediate_context, 0, 1, &sampler);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -831,10 +831,10 @@ static void test_reflection(void)
 
     hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(shader_desc.ConstantBuffers == ARRAY_SIZE(vs_buffers), "Got %u buffers.\n", shader_desc.ConstantBuffers);
     ok(shader_desc.BoundResources == ARRAY_SIZE(vs_bindings), "Got %u resources.\n", shader_desc.BoundResources);
 
@@ -844,7 +844,7 @@ static void test_reflection(void)
 
         cbuffer = reflection->lpVtbl->GetConstantBufferByIndex(reflection, i);
         hr = cbuffer->lpVtbl->GetDesc(cbuffer, &buffer_desc);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(!strcmp(buffer_desc.Name, vs_buffers[i].desc.Name), "Got name %s.\n", debugstr_a(buffer_desc.Name));
         ok(buffer_desc.Type == vs_buffers[i].desc.Type, "Got type %#x.\n", buffer_desc.Type);
         ok(buffer_desc.Variables == vs_buffers[i].desc.Variables, "Got %u variables.\n", buffer_desc.Variables);
@@ -859,7 +859,7 @@ static void test_reflection(void)
 
             var = cbuffer->lpVtbl->GetVariableByIndex(cbuffer, j);
             hr = var->lpVtbl->GetDesc(var, &var_desc);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             ok(!strcmp(var_desc.Name, expect->var_desc.Name), "Got name %s.\n", debugstr_a(var_desc.Name));
             ok(var_desc.StartOffset == expect->var_desc.StartOffset, "Got offset %u.\n", var_desc.StartOffset);
             ok(var_desc.Size == expect->var_desc.Size, "Got size %u.\n", var_desc.Size);
@@ -868,7 +868,7 @@ static void test_reflection(void)
 
             type = var->lpVtbl->GetType(var);
             hr = type->lpVtbl->GetDesc(type, &type_desc);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             check_type_desc(&type_desc, &expect->type_desc);
 
             for (k = 0; k < type_desc.Members; ++k)
@@ -877,7 +877,7 @@ static void test_reflection(void)
 
                 field = type->lpVtbl->GetMemberTypeByIndex(type, k);
                 hr = field->lpVtbl->GetDesc(field, &type_desc);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
                 check_type_desc(&type_desc, &vs_buffers[i].vars[j].field_types[k]);
 
                 winetest_pop_context();
@@ -896,7 +896,7 @@ static void test_reflection(void)
         winetest_push_context("Binding %u", i);
 
         hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         check_resource_binding(&desc, &vs_bindings[i]);
 
         winetest_pop_context();
@@ -904,15 +904,15 @@ static void test_reflection(void)
 
     ID3D10Blob_Release(code);
     refcount = reflection->lpVtbl->Release(reflection);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     code = compile_shader_flags(ps_source, "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
     hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!shader_desc.ConstantBuffers, "Got %u buffers.\n", shader_desc.ConstantBuffers);
     ok(shader_desc.BoundResources == ARRAY_SIZE(ps_bindings), "Got %u resources.\n", shader_desc.BoundResources);
 
@@ -923,7 +923,7 @@ static void test_reflection(void)
         winetest_push_context("Binding %u", i);
 
         hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         check_resource_binding(&desc, &ps_bindings[i]);
 
         winetest_pop_context();
@@ -931,7 +931,7 @@ static void test_reflection(void)
 
     ID3D10Blob_Release(code);
     refcount = reflection->lpVtbl->Release(reflection);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 }
 
 static void check_parameter_desc(const D3D11_SIGNATURE_PARAMETER_DESC *desc,
@@ -1139,10 +1139,10 @@ static void test_semantic_reflection(void)
 
         hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
                 &IID_ID3D11ShaderReflection, (void **)&reflection);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         todo_wine ok(shader_desc.InputParameters == tests[i].input_count,
                 "Got %u input parameters.\n", shader_desc.InputParameters);
         todo_wine ok(shader_desc.OutputParameters == tests[i].output_count,
@@ -1152,7 +1152,7 @@ static void test_semantic_reflection(void)
         {
             winetest_push_context("Input %u", j);
             hr = reflection->lpVtbl->GetInputParameterDesc(reflection, j, &desc);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             check_parameter_desc(&desc, &tests[i].inputs[j]);
             winetest_pop_context();
         }
@@ -1161,14 +1161,14 @@ static void test_semantic_reflection(void)
         {
             winetest_push_context("Output %u", j);
             hr = reflection->lpVtbl->GetOutputParameterDesc(reflection, j, &desc);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             check_parameter_desc(&desc, &tests[i].outputs[j]);
             winetest_pop_context();
         }
 
         ID3D10Blob_Release(code);
         refcount = reflection->lpVtbl->Release(reflection);
-        ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
         winetest_pop_context();
     }
