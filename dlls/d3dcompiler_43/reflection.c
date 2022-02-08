@@ -18,6 +18,9 @@
  *
  */
 
+#ifndef WINE_NO_LONG_TYPES
+#define WINE_NO_LONG_TYPES
+#endif
 #include "initguid.h"
 #include "d3dcompiler_private.h"
 #include "d3d10.h"
@@ -2322,7 +2325,7 @@ HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10Shad
     struct d3dcompiler_shader_reflection *object;
     HRESULT hr;
 
-    TRACE("data %p, data_size %lu, reflector %p.\n", data, data_size, reflector);
+    TRACE("data %p, data_size %Iu, reflector %p.\n", data, data_size, reflector);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
     {
@@ -2356,7 +2359,7 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
     HRESULT hr;
     const DWORD *temp = data;
 
-    TRACE("data %p, data_size %lu, riid %s, blob %p\n", data, data_size, debugstr_guid(riid), reflector);
+    TRACE("data %p, data_size %Iu, riid %s, blob %p.\n", data, data_size, debugstr_guid(riid), reflector);
 
     if (!data || data_size < 32)
     {

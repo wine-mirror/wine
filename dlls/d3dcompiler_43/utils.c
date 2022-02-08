@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef WINE_NO_LONG_TYPES
+#define WINE_NO_LONG_TYPES
+#endif
 #include <stdio.h>
 
 #include "d3dcompiler_private.h"

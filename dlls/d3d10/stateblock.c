@@ -294,7 +294,7 @@ static ULONG STDMETHODCALLTYPE d3d10_stateblock_AddRef(ID3D10StateBlock *iface)
     struct d3d10_stateblock *stateblock = impl_from_ID3D10StateBlock(iface);
     ULONG refcount = InterlockedIncrement(&stateblock->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", stateblock, refcount);
+    TRACE("%p increasing refcount to %lu.\n", stateblock, refcount);
 
     return refcount;
 }
@@ -304,7 +304,7 @@ static ULONG STDMETHODCALLTYPE d3d10_stateblock_Release(ID3D10StateBlock *iface)
     struct d3d10_stateblock *stateblock = impl_from_ID3D10StateBlock(iface);
     ULONG refcount = InterlockedDecrement(&stateblock->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", stateblock, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", stateblock, refcount);
 
     if (!refcount)
     {
