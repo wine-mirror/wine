@@ -44,24 +44,6 @@
 
 struct window_surface;
 
-/* internal messages codes */
-enum wine_internal_message
-{
-    WM_WINE_DESTROYWINDOW = 0x80000000,
-    WM_WINE_SETWINDOWPOS,
-    WM_WINE_SHOWWINDOW,
-    WM_WINE_SETPARENT,
-    WM_WINE_SETWINDOWLONG,
-    WM_WINE_SETSTYLE,
-    WM_WINE_SETACTIVEWINDOW,
-    WM_WINE_KEYBOARD_LL_HOOK,
-    WM_WINE_MOUSE_LL_HOOK,
-    WM_WINE_CLIPCURSOR,
-    WM_WINE_UPDATEWINDOWSTATE,
-    WM_WINE_FIRST_DRIVER_MSG = 0x80001000,  /* range of messages reserved for the USER driver */
-    WM_WINE_LAST_DRIVER_MSG = 0x80001fff
-};
-
 extern const struct user_driver_funcs *USER_Driver DECLSPEC_HIDDEN;
 
 extern void USER_unload_driver(void) DECLSPEC_HIDDEN;

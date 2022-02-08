@@ -27,9 +27,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winternl.h"
+#include "ntuser.h"
 
 #include "object.h"
 #include "request.h"
@@ -1965,12 +1963,18 @@ void free_window_handle( struct window *win )
     LIST_FOR_EACH_ENTRY_SAFE( child, next, &win->children, struct window, entry )
     {
         if (!child->handle) continue;
-        free_window_handle( child );
+        if (!win->thread || !child->thread || win->thread == child->thread)
+            free_window_handle( child );
+        else
+            send_notify_message( child->handle, WM_WINE_DESTROYWINDOW, 0, 0 );
     }
     LIST_FOR_EACH_ENTRY_SAFE( child, next, &win->children, struct window, entry )
     {
         if (!child->handle) continue;
-        free_window_handle( child );
+        if (!win->thread || !child->thread || win->thread == child->thread)
+            free_window_handle( child );
+        else
+            send_notify_message( child->handle, WM_WINE_DESTROYWINDOW, 0, 0 );
     }
 
     /* reset global window pointers, if the corresponding window is destroyed */

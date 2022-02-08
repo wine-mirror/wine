@@ -1208,16 +1208,14 @@ static WND *next_thread_window( HWND *hwnd )
 void destroy_thread_windows(void)
 {
     WND *wndPtr;
-    HWND hwnd = 0, *list;
+    HWND hwnd = 0;
     HMENU menu, sys_menu;
     struct window_surface *surface;
-    int i;
 
     while ((wndPtr = next_thread_window( &hwnd )))
     {
         /* destroy the client-side storage */
 
-        list = WIN_ListChildren( hwnd );
         menu = ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) ? (HMENU)wndPtr->wIDmenu : 0;
         sys_menu = wndPtr->hSysMenu;
         free_dce( wndPtr->dce, hwnd );
@@ -1232,14 +1230,6 @@ void destroy_thread_windows(void)
             register_window_surface( surface, NULL );
             window_surface_release( surface );
         }
-
-        /* free child windows */
-
-        if (!list) continue;
-        for (i = 0; list[i]; i++)
-            if (!WIN_IsCurrentThread( list[i] ))
-                SendNotifyMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
-        HeapFree( GetProcessHeap(), 0, list );
     }
 }
 
